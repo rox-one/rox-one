@@ -231,6 +231,9 @@ export function composeOmpAppendSystemPrompt(input: {
   if (blocks?.lessonsBlock) parts.push(blocks.lessonsBlock);
   if (blocks?.memoryBlock) parts.push(blocks.memoryBlock);
   if (blocks?.sourcesBlock) parts.push(blocks.sourcesBlock);
+  // c1.5/c1.6: recall lanes + standing intents ride the same memory payload.
+  if (blocks?.recallBlock) parts.push(blocks.recallBlock);
+  if (blocks?.intentBlock) parts.push(blocks.intentBlock);
   // Dynamic cognitive profile — derived from third-party web content, so it
   // sits last (after every trusted block) and is sanitized upstream.
   if (input.cognitiveProfileBlock) parts.push(input.cognitiveProfileBlock);
@@ -450,7 +453,7 @@ export class OmpAgent extends BaseAgent {
   private nativeRuntimeError(bin: string, cause?: Error): OmpStartupError {
     const detail = cause ? scrubOmpStderr(cause.message) : '';
     return new OmpStartupError({ code: 'OMP_NOT_CONFIGURED',
-      message: setupI18n().t('errors.omp.runtimeUnavailable.message', { path: scrubOmpStderr(bin) })
+      message: setupI18n().t('errors.roxCli.runtimeUnavailable.message', { path: scrubOmpStderr(bin) })
         + (detail ? `\n${(cause as NodeJS.ErrnoException).code === 'ENOENT' && !/\bENOENT\b/.test(detail) ? 'ENOENT: ' : ''}${detail}` : ''),
       cause,
     });
@@ -903,7 +906,7 @@ export class OmpAgent extends BaseAgent {
       throw new OmpStartupError({
         code: 'OMP_NOT_CONFIGURED',
         message: error instanceof Error ? error.message : String(error),
-        hint: 'Install the omp CLI or set OMP_CLI_PATH to a valid omp binary, then retry.',
+        hint: 'Install the Rox CLI or set OMP_CLI_PATH to a valid omp binary, then retry.',
         cause: error,
       });
     }
@@ -1147,7 +1150,7 @@ export class OmpAgent extends BaseAgent {
           ? nativeInvocation.runtime ? this.nativeRuntimeError(nativeInvocation.bin, error) : new OmpStartupError({
               code: 'OMP_NOT_CONFIGURED',
               message: `OMP executable not found at "${nativeInvocation.bin}".`,
-              hint: 'Install the omp CLI, wait for the toolchain download to finish, or set OMP_CLI_PATH to a valid omp binary.',
+              hint: 'Install the Rox CLI, wait for the toolchain download to finish, or set OMP_CLI_PATH to a valid omp binary.',
               stderr: this.recentStderr.trim(),
               cause: error,
             })
@@ -2388,7 +2391,7 @@ export class OmpAgent extends BaseAgent {
     this.eventQueue.reset();
     this.lastUsage = undefined;
     this.toolNames.clear();
-    this.runtimeObservationRunId = randomUUID();
+    this.runtimeObservationRunId = this.currentRunId() ?? randomUUID();
     this.runtimeTraceBridge.beginRun(this.runtimeObservationRunId, runtimeUserPrompt, runtimeSkills);
     let selectedSeq = 0;
     for (const [slug] of runtimeSkills) {

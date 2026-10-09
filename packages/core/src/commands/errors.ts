@@ -31,6 +31,15 @@ export const COMMAND_ERROR_CODES = [
   'LOCAL_ONLY',
   /** The handler failed unexpectedly; no effect was committed. */
   'INTERNAL',
+  // W1-11 (#1508) — agent governance. The list stays append-only.
+  /** The policy pipeline denied the command (kill switch, scope, ACL, floor…). */
+  'DENIED',
+  /** A token bucket is exhausted (TECH-SPEC §13.8); `details.retryAfter` is seconds. */
+  'RATE_LIMITED',
+  /** Parked as an `approval_request`; the owner decides and the session is resumed. */
+  'PENDING_APPROVAL',
+  /** The approval or the standing approval has passed its expiry. */
+  'EXPIRED',
   // W1-14 (#1511)
   /** A per-field patch conflicts with a newer field revision (TECH-SPEC §11.6). */
   'CONFLICT',

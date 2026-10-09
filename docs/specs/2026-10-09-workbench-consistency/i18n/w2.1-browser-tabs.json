@@ -1,0 +1,14 @@
+{
+  "browser.tabsLabel": {
+    "ru": "Вкладки браузера",
+    "en": "Browser tabs"
+  },
+  "browser.closeTab": {
+    "ru": "Закрыть окно браузера",
+    "en": "Close browser window"
+  },
+  "browser.tabsMenu": {
+    "ru": "Окна браузера",
+    "en": "Browser windows"
+  }
+}

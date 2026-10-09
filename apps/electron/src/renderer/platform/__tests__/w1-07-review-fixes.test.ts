@@ -131,7 +131,7 @@ describe('shell title helpers', () => {
     expect(read('platform/SurfaceTabs.tsx')).toContain('buildRouteTitleKeys(')
     expect(read('platform/SurfaceTabs.tsx')).not.toContain('UNIFIED_MODES')
     expect(read('platform/useModeHotkeys.ts')).toContain('useShellModes()')
-    expect(read('platform/ModeBar.tsx')).toContain('resolveLucideIcon(mode.icon) ?? MODE_ICONS[mode.icon]')
+    expect(read('platform/ModeBar.tsx')).toContain('resolveLucideIcon(surface.icon) ?? MODE_ICONS[surface.icon]')
   })
 })
 
@@ -421,9 +421,11 @@ describe('panel route key resets per unified surface', () => {
   const ctx = { activeWorkspaceId: 'ws1', unavailableWorkspaceSlug: null, activeSessionWorkingDirectory: null }
   const surface = (id: string) => ({ navigator: 'surface', surface: id, details: null }) as unknown as NavigationState
 
-  it('messenger, calendar, goals and contacts get distinct keys', () => {
-    const keys = ['messenger', 'calendar', 'goals', 'contacts'].map((id) => panelRouteKey(surface(id), ctx))
-    expect(new Set(keys).size).toBe(4)
+  it('messenger, calendar and goals get distinct keys; a selected meeting splits calendar', () => {
+    const keys = ['messenger', 'calendar', 'goals'].map((id) => panelRouteKey(surface(id), ctx))
+    expect(new Set(keys).size).toBe(3)
+    const meeting = { navigator: 'surface', surface: 'calendar', details: null, meetingId: 'm-1' } as unknown as NavigationState
+    expect(panelRouteKey(meeting, ctx)).not.toBe(panelRouteKey(surface('calendar'), ctx))
   })
 
   it('every non-surface key is byte-identical to the baseline array', () => {
@@ -496,7 +498,7 @@ describe('«Документы» relabel reaches every Notes label', () => {
   })
 
   it('rail, inspector, compact menu and sidebar link use the flag-aware key', () => {
-    // The rail renders the seven core modes (not APP_NAV_DESTINATIONS), so its
+    // The rail renders the core modes (not APP_NAV_DESTINATIONS), so its
     // Notes title is relabelled through the flag-aware `resolveSeededModes(…,
     // shellFlags)`; pinned end-to-end by the «docs.shared.v1 relabels the rail
     // Notes mode» render case in w1-07-rail-modes.test.tsx.

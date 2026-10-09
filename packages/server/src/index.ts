@@ -3,10 +3,10 @@
  * @rox/server — standalone headless Craft Agent server.
  *
  * Usage:
- *   CRAFT_SERVER_TOKEN=<secret> bun run packages/server/src/index.ts
+ *   ROX_SERVER_TOKEN=<secret> bun run packages/server/src/index.ts
  *
  * Environment:
- *   CRAFT_SERVER_TOKEN         — required bearer token for client auth
+ *   ROX_SERVER_TOKEN           — required bearer token for client auth (CRAFT_SERVER_TOKEN still works)
  *   CRAFT_RPC_HOST             — bind address (default: 127.0.0.1)
  *   CRAFT_RPC_PORT             — bind port (default: 9100)
  *   CRAFT_RPC_TLS_CERT         — path to PEM certificate file (enables TLS/wss)
@@ -18,7 +18,7 @@
  *   CRAFT_VERSION              — app version (default: 0.0.0-dev)
  *   CRAFT_DEBUG                — 'true' for debug logging
  *   CRAFT_WEBUI_DIR            — path to built web UI assets (enables web UI on RPC port)
- *   CRAFT_WEBUI_PASSWORD       — optional shorter password for web login (falls back to CRAFT_SERVER_TOKEN)
+ *   CRAFT_WEBUI_PASSWORD       — optional shorter password for web login (falls back to ROX_SERVER_TOKEN)
  *   CRAFT_WEBUI_SECURE_COOKIE  — optional true/false override for the session cookie Secure flag
  *   CRAFT_WEBUI_WS_URL         — optional browser-facing ws:// or wss:// URL returned by /api/config
  *   CRAFT_WEBUI_ALLOWED_ORIGINS — comma-separated extra origins allowed for cookie-authenticated WebSocket upgrades
@@ -39,7 +39,7 @@ import { bootstrapServer, startHealthHttpServer, generateServerToken, maskTokenF
 import { validateSession, createWebuiHandler, nodeHttpAdapter, readWebDefaultWorkspace } from '@rox/server-core/webui'
 import type { WebuiHandler } from '@rox/server-core/webui'
 import { getCredentialManager } from '@rox/shared/credentials'
-import { getWorkspaces } from '@rox/shared/config'
+import { getWorkspaces, getEnv } from '@rox/shared/config'
 import { createMessagingBootstrap, type MessagingBootstrapHandle } from '@rox/messaging-gateway'
 import { VpsBrowserPaneManager } from './vps-browser-pane-manager'
 
@@ -49,6 +49,7 @@ if (process.argv.includes('--generate-token')) {
   process.exit(0)
 }
 import type { WsRpcTlsOptions } from '@rox/server-core/transport'
+import { probeRuntimeCapabilities } from '@rox/server-core/runtime'
 import { registerCoreRpcHandlers, cleanupCoreClientResources } from '@rox/server-core/handlers/rpc'
 import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@rox/server-core/sessions'
 import { initModelRefreshService, setFetcherPlatform } from '@rox/server-core/model-fetchers'
@@ -151,7 +152,8 @@ const webuiAllowedOrigins = parseOptionalOriginsEnv('CRAFT_WEBUI_ALLOWED_ORIGINS
 const webuiPrintPairingLink = process.env.CRAFT_WEBUI_PAIRING_LINK === 'true'
   || process.env.CRAFT_WEBUI_PAIRING_LINK === '1'
   || process.argv.includes('--print-pairing-url')
-const serverToken = process.env.CRAFT_SERVER_TOKEN
+// Canonical ROX_SERVER_TOKEN, falling back to the legacy CRAFT_SERVER_TOKEN.
+const serverToken = getEnv('SERVER_TOKEN')
 const browserBackend = (process.env.CRAFT_BROWSER_BACKEND ?? 'agent-browser').trim().toLowerCase()
 const vpsBrowserManager = browserBackend === 'none' ? null : new VpsBrowserPaneManager()
 
@@ -181,6 +183,7 @@ if (webuiEnabled && serverToken) {
     wsProtocol: rpcProtocol,
     // WebUI is served on the same port as WS — wsPort matches the RPC port
     wsPort: rpcPort,
+    allowedWebUiOrigins: webuiAllowedOrigins,
     getHealthCheck: () => healthCheckFn?.() ?? { status: 'starting' },
     logger: { info: console.log, warn: console.warn, error: console.error } as any,
   })
@@ -201,6 +204,23 @@ const discordWorkerEntry = process.env.CRAFT_MESSAGING_DISCORD_WORKER
 // Built inside createHandlerDeps (needs sessionManager), populated with the WS
 // publisher after bootstrapServer resolves.
 let messagingHandle: MessagingBootstrapHandle | null = null
+
+// E1.2: runtime capability probe — a real SQLite WAL write in a scratch dir
+// under `<state>/tmp` plus the WAL-reset-safe version floor and NUL round-trip.
+// A failed probe logs the typed downgrade + the user-space runtime fallback
+// under `<state>/tools/`; it never writes outside `<state>`.
+{
+  const report = probeRuntimeCapabilities({ configDir: resolveConfigDir() })
+  const { runtime, runtimeVersion, nodeVersion, sqliteVersion } = report.versions
+  console.log(`[runtime] ${runtime} ${runtimeVersion} (node ${nodeVersion ?? 'n/a'}, sqlite ${sqliteVersion ?? 'unavailable'})`)
+  for (const check of report.checks) {
+    console.log(`[runtime] ${check.ok ? 'ok' : 'FAIL'} ${check.id}: ${check.detail}`)
+  }
+  if (report.downgrade) {
+    console.error(`[runtime] capability probe failed (${report.downgrade.failedChecks.join(', ')}); user-space runtime fallback: ${report.downgrade.fallback.binaryPath}`)
+    console.error(`[runtime] ${report.downgrade.fallback.description}`)
+  }
+}
 
 const instance = await (async () => {
   try {
@@ -367,7 +387,7 @@ console.log(`CRAFT_SERVER_URL=${instance.protocol}://${instance.host}:${instance
 // RX-SEC-0003: полное значение только при явном CRAFT_PRINT_TOKEN=1;
 // CLI-спавнер определяет готовность по CRAFT_SERVER_URL= и хранит токен сам.
 const echoFullToken = process.env.CRAFT_PRINT_TOKEN === '1'
-console.log(`CRAFT_SERVER_TOKEN=${echoFullToken ? instance.token : maskTokenForDisplay(instance.token)}`)
+console.log(`ROX_SERVER_TOKEN=${echoFullToken ? instance.token : maskTokenForDisplay(instance.token)}`)
 if (webuiHandler) {
   console.log(`CRAFT_WEBUI_URL=${serverProto}://0.0.0.0:${instance.port}`)
 }

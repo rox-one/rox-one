@@ -49,7 +49,7 @@ function makeService(opts: {
   const prompts: string[] = []
   const enqueued: SkillCandidate[] = []
   const emitted: Array<[string, unknown[]]> = []
-  const config: MemoryConfig = { enabled: true, distillIdleHours: 3, distillMsgCount: 30, negativeFirst: true, redactExtraPatterns: [], ftsLimit: 20, semantic: opts.semantic ?? false }
+  const config: MemoryConfig = { enabled: true, distillIdleHours: 3, distillMsgCount: 30, negativeFirst: true, redactExtraPatterns: [], ftsLimit: 20, semantic: opts.semantic ?? false, dreamIntervalHours: 4, dreamNotes: true }
   let autoCreate = false
   let fire: ((evt: SessionCompletionLike) => void) | null = null
   const wsFiles = new MemoryFileStore('workspace', root)

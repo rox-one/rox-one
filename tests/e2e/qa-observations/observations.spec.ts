@@ -15,23 +15,23 @@ test('OBS-001: runtime mouse and keyboard selection loads the named detail among
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   await page.goto('/', { waitUntil: 'domcontentloaded' })
-  await expect(page.locator('[data-list-role="omp-skills"] li')).toHaveCount(2214)
+  await expect(page.locator('[data-list-role="runtime-skills"] li')).toHaveCount(2214)
   expect(await page.evaluate(() => (window as any).qa.skills.filter((s: any) => s.source === 'omp').every((s: any) => s.content === ''))).toBe(true)
   expect(await page.evaluate(() => (window as any).qa.metrics.details)).toEqual([])
   // Preserve current-main duplicate-display-name disambiguation.
   await expect(page.locator('[data-list-role="skills"] [data-skill-row]').filter({ hasText: 'Controlled skill workspace-skill' }).getByText('@workspace-skill', { exact: true })).toBeVisible()
   for (const slug of ['md-slides', 'tool-prompt-optimization']) {
     // A delivered browser mouse event, without UIA or forced dispatch.
-    await page.locator('[data-list-role="omp-skills"] li').filter({ hasText: `Controlled skill ${slug}` }).locator('button[aria-pressed]').click()
+    await page.locator('[data-list-role="runtime-skills"] li').filter({ hasText: `Controlled skill ${slug}` }).locator('button[aria-pressed]').click()
     if (await page.getByTestId('route').textContent() === 'skills') {
       expect(await page.evaluate(() => (window as any).qa.metrics.clicks.length)).toBeGreaterThan(0)
       await page.screenshot({ path: `${evidence}/obs-001-baseline-delivered-click.png` })
     }
     await expect(page.getByTestId('route')).toHaveText(`skills/skill/${slug}`)
     await expect(page.getByTestId('detail').locator('pre')).toContainText(`Instructions for ${slug}`)
-    await expect(page.locator('[data-list-role="omp-skills"] button[aria-pressed="true"]')).toContainText(`Controlled skill ${slug}`)
+    await expect(page.locator('[data-list-role="runtime-skills"] button[aria-pressed="true"]')).toContainText(`Controlled skill ${slug}`)
   }
-  const keyboardRow = page.locator('[data-list-role="omp-skills"] li').filter({ hasText: 'Controlled skill md-slides' }).locator('button[aria-pressed]')
+  const keyboardRow = page.locator('[data-list-role="runtime-skills"] li').filter({ hasText: 'Controlled skill md-slides' }).locator('button[aria-pressed]')
   await keyboardRow.focus()
   await keyboardRow.press('Enter')
   await expect(page.getByTestId('route')).toHaveText('skills/skill/md-slides')
@@ -56,13 +56,13 @@ test('OBS-001: runtime mouse and keyboard selection loads the named detail among
 
 test('OBS-001: export does not select; shadowed duplicates remain inactive; craft row still selects', async ({ page }) => {
   await page.goto('/')
-  const row = page.locator('[data-list-role="omp-skills"] li').filter({ hasText: 'Controlled skill md-slides' })
+  const row = page.locator('[data-list-role="runtime-skills"] li').filter({ hasText: 'Controlled skill md-slides' })
   await row.hover()
   await row.getByRole('button', { name: 'More', exact: true }).click()
   await page.getByRole('menuitem').click()
   expect(await page.evaluate(() => (window as any).qa.metrics.imports)).toEqual(['md-slides'])
   await expect(page.getByTestId('route')).toHaveText('skills')
-  const duplicate = page.locator('[data-list-role="omp-skills"] li').filter({ hasText: 'duplicate' })
+  const duplicate = page.locator('[data-list-role="runtime-skills"] li').filter({ hasText: 'duplicate' })
   await duplicate.scrollIntoViewIfNeeded()
   await expect(duplicate.getByRole('button').first()).toBeDisabled()
   const workspaceRow = page.locator('[data-list-role="skills"] [data-skill-row]').filter({ hasText: 'Controlled skill workspace-skill' })
@@ -80,7 +80,7 @@ for (const activation of ['mouse', 'Enter', 'Space']) {
     await expect(page.getByTestId('selection-count')).toHaveText('2')
     await expect(page.getByTestId('detail').getByRole('heading', { name: '2 skills selected' })).toBeVisible()
     if (activation === 'mouse' && process.env.ROX_QA_CAPTURE_DOCS === '1') await page.screenshot({ path: join(docsEvidence, 'skills-before.png') })
-    const runtime = page.locator('[data-list-role="omp-skills"] li').filter({ hasText: 'Controlled skill md-slides' })
+    const runtime = page.locator('[data-list-role="runtime-skills"] li').filter({ hasText: 'Controlled skill md-slides' })
     // Export does not dismiss the bulk intent.
     await runtime.hover()
     await runtime.getByRole('button', { name: 'More', exact: true }).click()
@@ -100,7 +100,7 @@ for (const activation of ['mouse', 'Enter', 'Space']) {
 
 test('OBS-001 selected reads handle missing/error responses and metadata-only change events', async ({ page }) => {
   await page.goto('/')
-  const runtime = page.locator('[data-list-role="omp-skills"] li').filter({ hasText: 'Controlled skill md-slides' }).locator('button[aria-pressed]')
+  const runtime = page.locator('[data-list-role="runtime-skills"] li').filter({ hasText: 'Controlled skill md-slides' }).locator('button[aria-pressed]')
   await page.route('**/qa-rpc', async route => {
     const request = route.request().postDataJSON()
     if (request.channel === 'skills:getDetails') await route.fulfill({ json: null })
@@ -141,7 +141,7 @@ test('OBS-001 delayed prior-workspace detail cannot replace the current selectio
     const request = response.request().postDataJSON()
     return request?.channel === 'skills:getDetails' && request.workspaceId === 'fixture'
   })
-  await page.locator('[data-list-role="omp-skills"] li').filter({ hasText: 'Controlled skill md-slides' }).locator('button[aria-pressed]').click()
+  await page.locator('[data-list-role="runtime-skills"] li').filter({ hasText: 'Controlled skill md-slides' }).locator('button[aria-pressed]').click()
   await started
   await page.getByTestId('workspace-b').click()
   await expect(page.getByTestId('detail').locator('pre')).toContainText('Workspace B instructions')

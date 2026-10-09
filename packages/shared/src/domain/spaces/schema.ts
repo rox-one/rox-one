@@ -1,7 +1,7 @@
 /** W1-06 (#1503) — Spaces: TECH-SPEC §4.10; DATA-MODEL §5.7. */
 import { z } from 'zod'
 import { cmd, colorSchema, createIdShape, emptyPayload, entity, idSchema, nameSchema, principalListSchema, type CommandSchemaMap } from '../common'
-import { taskStatusSchema } from '../tasks/schema'
+import { taskStatusDefinitionSchema } from '../tasks/schema'
 
 export const spaceToolsSchema = z.object({
   goals_projects: z.boolean(), discussions: z.boolean(), docs: z.boolean(), tasks: z.boolean(), kpis: z.boolean(), templates: z.boolean(),
@@ -29,7 +29,7 @@ export const SPACES_COMMAND_SCHEMAS: CommandSchemaMap = {
   'spaces.remove_member': cmd({ principalId: idSchema }),
   'spaces.update_members_permissions': cmd({ members: membersShape }),
   'spaces.update_general_access': cmd({ defaultAccess: spaceAccessSchema }),
-  'spaces.update_task_statuses': cmd({ statuses: z.array(taskStatusSchema).min(1).max(30) }),
+  'spaces.update_task_statuses': cmd({ statuses: z.array(taskStatusDefinitionSchema).min(1).max(30) }),
   'spaces.join': emptyPayload,
   'spaces.leave': emptyPayload,
   'spaces.delete': cmd({ confirmName: nameSchema }),

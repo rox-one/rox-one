@@ -57,11 +57,37 @@ run bun test apps/electron/src/main/__tests__/service-lifecycle-ipc.test.ts
 run bun test packages/shared/src/voice/__tests__
 run bun test packages/server-core/src/handlers/rpc/__tests__/voice-realtime.test.ts
 
+# 7. Wave 2 (rows a1.2, f.4/f.5, f.8, f.9, c1.5-c1.8, e1.2/e1.3, c2.8, b1.5)
+run bun test packages/server-core/src/authority/__tests__/operator-role-policy.test.ts
+run bun test packages/server-core/src/transport/__tests__/operator-role-admission.test.ts
+run bun test packages/server-core/src/authority/__tests__/rox-readiness-ui-001.windows-owner.test.ts
+run bun test packages/server-core/src/nodes
+run bun test packages/server-core/src/scheduler
+run bun test packages/server-core/src/sessions/__tests__/queue-steering.test.ts
+run bun test packages/server-core/src/sessions/__tests__/transcript-fence.test.ts
+run bun test packages/shared/src/agent/__tests__/agent-run-registry.test.ts
+run bun test packages/shared/src/memory/__tests__/context-select-recall.test.ts
+run bun test packages/server-core/src/memory/__tests__/memory-recall-lanes.test.ts
+run bun test packages/server-core/src/memory/__tests__/flush-turn.test.ts
+run bun test packages/server-core/src/memory/__tests__/forget.test.ts
+run bun test packages/server-core/src/runtime/__tests__/capability-probe.test.ts
+run bun test packages/server-core/src/service/__tests__/onboard-daemon-decision.test.ts
+run bun test packages/server-core/src/handlers/rpc/__tests__/skills-tool-runtime.test.ts
+run bun test packages/server-core/src/webui/__tests__/media-ticket.test.ts
+run bun test packages/server-core/src/handlers/rpc/__tests__/nodes-rpc.test.ts
+# read-side visibility (CORRECTION w2-fix-readvis) is covered by the sessions suites above
+
 if [ "$FULL" = "1" ]; then
   run bun run typecheck:all
   run bun test packages/server-core/src/memory
   run bun test packages/core/src/meetings
-  run bun test packages/shared/src/skills
+  # `bun test packages/shared/src/skills` also contains skill-summaries.test.ts and
+  # storage.test.ts, whose loadAllSkills cases exceed the 5 s per-test timeout on this
+  # machine's ~9.1k-entry skill store — reproduced on pristine origin/main (see
+  # STATUS.md § Known pre-existing failures). The port-relevant skills tests run here:
+  run bun test packages/shared/src/skills/__tests__/eligibility.test.ts
+  run bun test packages/shared/src/skills/__tests__/prompt.test.ts
+  run bun test packages/shared/src/skills/__tests__/bundled.test.ts
   run bun test packages/shared/src/collaboration
 fi
 

@@ -34,6 +34,7 @@ export const MESSENGER_COMMAND_SCHEMAS: CommandSchemaMap = {
     alias: z.string().max(200).nullable().optional(), headerButtons: z.array(z.string().max(64)).max(20).optional(), openPanel: z.string().max(64).nullable().optional(),
   }),
   'im.update_policy': cmd({ postingPolicy: z.enum(['all', 'admins']).optional(), invitePolicy: z.enum(['members', 'admins']).optional() }),
+
   'im.edit_message': cmd({ messageId: idSchema, content: messageContentSchema }),
   'im.recall_message': cmd({ messageId: idSchema }),
   'im.forward_messages': cmd({ messageIds: z.array(idSchema).min(1).max(100), toChatId: idSchema }),

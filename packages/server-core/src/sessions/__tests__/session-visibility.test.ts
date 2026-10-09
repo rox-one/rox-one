@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import type { BroPresenceMemberDto } from '@rox/shared/protocol'
 import { SessionActivityTracker } from '../../collaboration/session-activity-tracker'
-import { evaluateSessionWriteAccess } from '../SessionManager'
+import { evaluateSessionReadAccess, evaluateSessionWriteAccess } from '../SessionManager'
 
 const creator = { accountId: 'installation', displayName: 'Local', kind: 'profile' as const }
 const owner = { kind: 'account' as const, id: 'ada', displayName: 'Ada', assignedAt: 1, assignedBy: 'installation' }
@@ -35,6 +35,32 @@ describe('session visibility write access (a2.5)', () => {
     })
     // An unknown actor cannot write to a draft.
     expect(evaluateSessionWriteAccess({ visibility: 'draft', owner }, null)).toMatchObject({ allowed: false, code: 'SESSION_OWNER_ONLY' })
+  })
+})
+
+describe('session visibility read access (a1.3 read side)', () => {
+  const participant = { accountId: 'bob', displayName: 'Bob', username: 'bob', kind: 'profile' as const }
+
+  it('reads shared, suggest, read-only and unattributed sessions for every actor', () => {
+    for (const visibility of ['shared', 'suggest', 'read-only'] as const) {
+      expect(evaluateSessionReadAccess({ visibility, owner, creator }, 'somebody')).toEqual({ allowed: true })
+    }
+    expect(evaluateSessionReadAccess({ creator }, 'somebody')).toEqual({ allowed: true })
+  })
+
+  it('withholds a draft from actors who are not owner, creator, or participant', () => {
+    expect(evaluateSessionReadAccess({ visibility: 'draft', owner, creator }, 'somebody')).toEqual({ allowed: false })
+    expect(evaluateSessionReadAccess({ visibility: 'draft', owner }, null)).toEqual({ allowed: false })
+  })
+
+  it('serves a draft to its owner, its creator, and its participants', () => {
+    expect(evaluateSessionReadAccess({ visibility: 'draft', owner, creator }, 'ada')).toEqual({ allowed: true })
+    expect(evaluateSessionReadAccess({ visibility: 'draft', owner, creator }, 'installation')).toEqual({ allowed: true })
+    expect(evaluateSessionReadAccess({ visibility: 'draft', owner, creator, participants: [participant] }, 'bob')).toEqual({ allowed: true })
+  })
+
+  it('leaves an unattributed draft readable, mirroring the write gate', () => {
+    expect(evaluateSessionReadAccess({ visibility: 'draft' }, 'somebody')).toEqual({ allowed: true })
   })
 })
 

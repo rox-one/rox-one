@@ -41,13 +41,13 @@ const aborted = { calls: 0 }
 
 function registry() {
   const r = createCommandRegistry({ isFlagEnabled: flag => flags.has(flag) })
-  r.define({ type: 'test.slow', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
+  r.define({ type: 'test.slow', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false, riskClass: () => 'routine' })
   r.bind('test.slow', async ctx => {
     const { sql } = ctx.transaction as { sql: SQL }
     await sql.unsafe('SELECT pg_sleep(0.3)')
     return { revision: 1 }
   })
-  r.define({ type: 'test.flaky', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
+  r.define({ type: 'test.flaky', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false, riskClass: () => 'routine' })
   r.bind('test.flaky', async ctx => {
     const { sql } = ctx.transaction as { sql: SQL }
     flaky.calls += 1
@@ -55,7 +55,7 @@ function registry() {
     if (flaky.terminateNext > 0) { flaky.terminateNext -= 1; await sql.unsafe('SELECT pg_terminate_backend(pg_backend_pid())') }
     return { revision: flaky.calls, events: [{ type: 'task.task_status_change' }] }
   })
-  r.define({ type: 'test.timeout', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
+  r.define({ type: 'test.timeout', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false, riskClass: () => 'routine' })
   r.bind('test.timeout', async ctx => {
     // A real statement_timeout cancel (SQLSTATE 57014) inside the command transaction.
     const { sql } = ctx.transaction as { sql: SQL }
@@ -63,9 +63,9 @@ function registry() {
     await sql.unsafe('SELECT pg_sleep(2)')
     return { revision: 1, events: [{ type: 'task.task_status_change' }] }
   })
-  r.define({ type: 'test.flagged', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false, flag: 'test.module.v1' })
+  r.define({ type: 'test.flagged', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false, flag: 'test.module.v1', riskClass: () => 'routine' })
   r.bind('test.flagged', async () => ({ revision: 1, result: { ok: true } }))
-  r.define({ type: 'test.aborted', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
+  r.define({ type: 'test.aborted', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false, riskClass: () => 'routine' })
   r.bind('test.aborted', async ctx => {
     // A handler that swallows a failed statement leaves the transaction aborted:
     // the store's own receipt insert then fails with 25P02 (deterministic).
@@ -74,8 +74,8 @@ function registry() {
     try { await sql.unsafe('SELECT 1 / 0') } catch { /* swallowed */ }
     return { revision: 1 }
   })
-  r.define({ type: 'test.unbound', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
-  r.define({ type: 'test.bump', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false })
+  r.define({ type: 'test.unbound', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false, riskClass: () => 'routine' })
+  r.define({ type: 'test.bump', module: 'test', authority: 'workspace', verb: 'write', schema: PLACEHOLDER_PAYLOAD_SCHEMA, schemaBound: false, riskClass: () => 'routine' })
   r.bind('test.bump', async ctx => {
     // Revision lives in the same transaction as the receipt (ctx.transaction is the PG tx).
     const { sql, prefix } = ctx.transaction as { sql: SQL; prefix: string }

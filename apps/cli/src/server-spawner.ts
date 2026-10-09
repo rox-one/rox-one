@@ -2,7 +2,9 @@
  * Server spawner — start a headless ROX server as a child process.
  *
  * Spawns `bun run <serverEntry>`, reads stdout for the `CRAFT_SERVER_URL=`
- * and `CRAFT_SERVER_TOKEN=` lines, and returns a handle to stop the server.
+ * line and accepts both the canonical `ROX_SERVER_TOKEN=` and the legacy
+ * `CRAFT_SERVER_TOKEN=` lines (ROX preferred), returning a handle to stop
+ * the server.
  */
 
 import { resolve, join } from 'node:path'
@@ -64,7 +66,7 @@ export async function spawnServer(opts?: SpawnServerOptions): Promise<SpawnedSer
     env: {
       ...parentEnv,
       ...opts?.env,
-      CRAFT_SERVER_TOKEN: token,
+      ROX_SERVER_TOKEN: token,
       CRAFT_RPC_PORT: '0',
       CRAFT_RPC_HOST: '127.0.0.1',
     },
@@ -98,6 +100,11 @@ export async function spawnServer(opts?: SpawnServerOptions): Promise<SpawnedSer
 
     let url = ''
     let buffer = ''
+    // Server token echo. Canonical ROX_SERVER_TOKEN= is preferred, the legacy
+    // CRAFT_SERVER_TOKEN= line is still accepted. The server masks the echoed
+    // value unless CRAFT_PRINT_TOKEN=1, so a masked echo is ignored and the
+    // locally generated token is returned instead.
+    let echoedToken = ''
 
     const processLines = () => {
       const lines = buffer.split('\n')
@@ -106,15 +113,22 @@ export async function spawnServer(opts?: SpawnServerOptions): Promise<SpawnedSer
         if (line.startsWith('CRAFT_SERVER_URL=')) {
           url = line.slice('CRAFT_SERVER_URL='.length).trim()
         }
-        if (line.startsWith('CRAFT_SERVER_TOKEN=')) {
-          // Server echoes the token — we already have it but this confirms ready
+        if (line.startsWith('ROX_SERVER_TOKEN=')) {
+          echoedToken = line.slice('ROX_SERVER_TOKEN='.length).trim()
+        } else if (!echoedToken && line.startsWith('CRAFT_SERVER_TOKEN=')) {
+          // Legacy alias — only used when no canonical line was seen.
+          echoedToken = line.slice('CRAFT_SERVER_TOKEN='.length).trim()
         }
         // Once we have the URL, the server is ready
         if (url) {
           clearTimeout(timer)
           resolve({
             url,
-            token,
+            // The server echoes the shared token, but masks it by default
+            // (only CRAFT_PRINT_TOKEN=1 prints the full value). Prefer the
+            // canonical ROX echo when it is a complete token, else keep the
+            // locally generated one.
+            token: echoedToken && !echoedToken.includes('…') ? echoedToken : token,
             stop: async () => {
               proc.kill('SIGTERM')
               await proc.exited

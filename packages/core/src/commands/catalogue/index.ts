@@ -25,6 +25,8 @@ import { NOTIFY_COMMANDS } from './notify.ts'
 import { MAIL_COMMANDS, TEMPLATES_COMMANDS, XFN_CORE_COMMANDS } from './workplace.ts'
 import { IDENTITY_COMMANDS } from './identity.ts'
 import { AGENTS_COMMANDS } from './agents.ts'
+// W1-12 (#1509)
+import { AUTOMATION_COMMANDS } from './automation.ts'
 import { COLLAB_COMMANDS } from './collab.ts'
 import { DRIVE_UPLOAD_COMMANDS } from './drive.ts'
 
@@ -52,6 +54,8 @@ export const COMMAND_CATALOGUE: readonly CommandDefinition<unknown>[] = [
   ...XFN_CORE_COMMANDS,
   ...IDENTITY_COMMANDS,
   ...AGENTS_COMMANDS,
+  // W1-12 (#1509)
+  ...AUTOMATION_COMMANDS,
   // W1-14 (#1511) — collaboration + drive upload contracts
   ...COLLAB_COMMANDS,
   ...DRIVE_UPLOAD_COMMANDS,

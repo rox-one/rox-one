@@ -7,7 +7,7 @@
  *   after a short debounce, Enter searches immediately. Queries the FIRST
  *   connection from `knowledge.listConnections()`.
  * - Result click → Rox Notes deep link when note id resolvable;
- *   otherwise Notes home + honest empty/hint (never SiYuan document routes).
+ *   otherwise Notes home + honest empty/hint (never legacy document routes).
  * - Saved views: `knowledge.viewsList` → click runs `knowledge.viewRun` and
  *   renders hits in EntityList (optional groupBy headers). Preset
  *   `set_attribute` actions go through `knowledge.viewSetAttribute`
@@ -121,7 +121,7 @@ export async function searchKnowledge(
 
 /**
  * Sync note-id resolution for a knowledge search hit.
- * Prefer explicit Rox attributes; accept path-like local ids. Opaque SiYuan
+ * Prefer explicit Rox attributes; accept path-like local ids. Opaque legacy
  * document/block ids return null here — callers may async-lookup the import map.
  */
 export function resolveSearchHitNoteId(
@@ -388,7 +388,7 @@ export function KnowledgeHome() {
   }, [workspaceId])
 
   // Probe whether the legacy external knowledge engine is up. Empty state
-  // Rox Notes only — no SiYuan install/start CTA and no SiYuan document routes.
+  // Rox Notes only — no legacy engine install/start CTA and no legacy document routes.
   // Cached via kernel-availability: repeat tab switches reuse the last verdict
   // (30s TTL) instead of re-firing engineStatus (2.5s bootstrap probe + up to
   // 10s getVersion) on every mount.
@@ -510,7 +510,7 @@ export function KnowledgeHome() {
         navigate(routes.view.notes(migrated.destinationNoteId))
         return
       }
-      // Honest empty: Notes home + hint — never SiYuan document product routes.
+      // Honest empty: Notes home + hint — never legacy document product routes.
       toast.message(t('knowledge.roxNotes.emptyTitle'), {
         description: t('knowledge.roxNotes.emptyBody'),
       })

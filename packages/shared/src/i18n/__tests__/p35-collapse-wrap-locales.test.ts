@@ -103,14 +103,14 @@ const WRAPPED_RU: Record<string, string> = {
   "extensions.catalog.count": "{{count}} записей каталога",
   "extensions.catalog.empty": "Нет совпадающих записей каталога.",
   "extensions.center.skills": "Навыки",
-  "extensions.developer.body": "Для каждой рабочей области хост расширений запускает модули craft-sandbox в изолированном процессе. Здесь задаётся список разрешённых URL для network.request. Плагины SiYuan в этом хосте расширений не выполняются.",
+  "extensions.developer.body": "Для каждой рабочей области хост расширений запускает модули craft-sandbox в изолированном процессе. Здесь задаётся список разрешённых URL для network.request. Плагины Rox Notes в этом хосте расширений не выполняются.",
   "extensions.developer.noHosts": "Нет запущенных хостов расширений",
   "extensions.developer.urlAllowlistEmpty": "Предупреждение: нет списка разрешённых URL — разрешены все URL",
   "extensions.developer.urlAllowlistHint": "Разрешённые префиксы URL для network.request / proxyFetch. Пустой список разрешает все URL (по умолчанию в режиме разработки).",
   "extensions.developer.urlAllowlistSave": "Сохранить список",
   "extensions.developer.urlAllowlistTitle": "Список разрешённых URL",
   "extensions.disabled.empty": "Нет отключённых расширений.",
-  "extensions.host.noSiyuanExec": "Плагины SiYuan выполняются в рантайме SiYuan, не в хосте расширений",
+  "extensions.host.noKernelExec": "Плагины Rox Notes выполняются в рантайме Rox Notes, не в хосте расширений",
   "extensions.host.status": "Хост расширений: {{status}}",
   "extensions.installTarget.global": "Глобально",
   "extensions.installTarget.project": "Проект",
@@ -124,10 +124,10 @@ const WRAPPED_RU: Record<string, string> = {
   "extensions.registries.title": "Поставщики каталога",
   "extensions.runtime.agent-runtime.hint": "Супервизор внешнего процесса агента",
   "extensions.runtime.automation-pack.hint": "Движок автоматизации (server-core)",
-  "extensions.runtime.craft-native.hint": "Собственный код Craft (main/renderer)",
+  "extensions.runtime.craft-native.hint": "Собственный код Rox (main/renderer)",
   "extensions.runtime.craft-sandbox.hint": "Хост расширений utilityProcess (в песочнице)",
   "extensions.runtime.mcp-source.hint": "SourceServerBuilder в server-core",
-  "extensions.runtime.siyuan-plugin.hint": "Внутри runtime SiYuan (не Craft main)",
+  "extensions.runtime.siyuan-plugin.hint": "Внутри runtime Rox Notes (не Rox main)",
   "extensions.runtime.skill-pack.hint": "Документы SKILL.md, которые читает агент",
   "extensions.runtime.web-widget.hint": "Только webContents в песочнице",
   "extensions.status.available": "Доступно",
@@ -212,9 +212,9 @@ const WRAPPED_RU: Record<string, string> = {
   "onboarding.errors.roxConnectFailed": "Не удалось запустить подключение Rox",
   "onboarding.errors.roxConnectIncomplete": "Подключение Rox вернуло неполный ответ устройства",
   "onboarding.gitBash.description": "Rox требуется Git Bash для выполнения команд оболочки в Windows. Он не найден в вашей системе.",
-  "onboarding.ompCredential.description": "Локальному рантайму Rox нужен ключ API Rox или существующую локальную конфигурацию моделей до первого хода.",
-  "onboarding.ompCredential.testFailed": "Проверка подключения Rox не удалась — проверьте локальный рантайм и его конфигурацию моделей",
   "onboarding.providerSelect.otherProvider": "Я использую другого поставщика",
+  "onboarding.roxCliCredential.description": "Локальному рантайму Rox нужен ключ API Rox или существующую локальную конфигурацию моделей до первого хода.",
+  "onboarding.roxCliCredential.testFailed": "Проверка подключения Rox не удалась — проверьте локальный рантайм и его конфигурацию моделей",
   "onboarding.roxConnect.expired": "Код подключения Rox истёк. Начните заново.",
   "onboarding.roxConnect.pollFailed": "Не удалось проверить статус подключения Rox.",
   "overlay.zoomPresets": "Шаблоны масштаба",
@@ -258,6 +258,7 @@ const WRAPPED_RU: Record<string, string> = {
   "settings.accounts.healthOk": "норма",
   "settings.accounts.healthSummary": "{{status}} · проблем: {{count}}",
   "settings.accounts.healthUnknown": "Неизвестно",
+  "settings.accounts.knowledgeCloudDesc": "Облачная синхронизация и подписка для знаний",
   "settings.accounts.loadFailed": "Не удалось загрузить данные аккаунта: {{message}}",
   "settings.accounts.managedInAi": "Управляется в настройках ИИ",
   "settings.accounts.managedInKnowledge": "Управляется в настройках «База знаний»",
@@ -278,7 +279,6 @@ const WRAPPED_RU: Record<string, string> = {
   "settings.accounts.resetFailed": "Не удалось сбросить: {{message}}",
   "settings.accounts.roxServerUrl": "URL сервера Rox",
   "settings.accounts.runHealthCheck": "Проверить состояние",
-  "settings.accounts.siyuanCloudDesc": "Облачная синхронизация и подписка для знаний",
   "settings.accounts.status.connected": "подключено",
   "settings.accounts.status.disconnected": "отключено",
   "settings.accounts.status.error": "ошибка",
@@ -385,7 +385,6 @@ const WRAPPED_RU: Record<string, string> = {
   "sideThread.previewHint": "Просмотрите и отредактируйте запрос перед отправкой",
   "sideThread.previewTitle": "Запрос побочного треда",
   "sidebar.view.exploreDesc": "Сессии в режиме Обзор (только чтение)",
-  "siyuan.openCompat": "Открыть режим совместимости SiYuan",
   "skills.exported": "Навык «{{slug}}» экспортирован в проект",
   "skills.pruneConfirm": "Архивировать {{count}} неиспользуемых навыков?",
   "skills.pruned": "Архивировано навыков: {{count}}",
@@ -417,7 +416,7 @@ describe('P35 leftover wrap collapse', () => {
   })
   it('applies every unique leftover wrap on current Russian catalog keys', () => {
     const keys = Object.keys(WRAPPED_RU)
-    expect(keys).toHaveLength(391)
+    expect(keys).toHaveLength(390)
     expect(keys).toEqual([...keys].sort())
 
     for (const key of keys) {

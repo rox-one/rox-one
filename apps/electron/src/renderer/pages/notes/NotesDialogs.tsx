@@ -226,13 +226,14 @@ export function NotesDialogs({
               })}
             </DialogDescription>
           </DialogHeader>
+          <p className="text-xs text-muted-foreground" data-testid="notes-delete-sleep">{t('notes.dialog.deleteNoteSleep')}</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => onDeleteDialogOpenChange(false)}>{t('notes.dialog.cancel')}</Button>
             <Button variant="destructive" onClick={onDeleteNote}>{t('notes.dialog.delete')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={!!missingLinkTarget} onOpenChange={(open) => { if (!open) onDismissMissingLink() }}>
+      <Dialog open={!!missingLinkTarget} onOpenChange={open => { if (!open) onDismissMissingLink() }}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>{t('notes.dialog.createLinkedNote')}</DialogTitle>

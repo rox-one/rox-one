@@ -1,0 +1,54 @@
+{
+  "extraScreens.library.title": {
+    "ru": "Библиотека",
+    "en": "Library"
+  },
+  "workbench.library.searchPlaceholder": {
+    "ru": "Поиск по библиотеке…",
+    "en": "Search the library…"
+  },
+  "workbench.library.noResults": {
+    "ru": "Ничего не найдено",
+    "en": "Nothing found"
+  },
+  "workbench.library.noWorkspace": {
+    "ru": "Выберите рабочее пространство",
+    "en": "Select a workspace"
+  },
+  "workbench.library.section.mcp": {
+    "ru": "MCP и инструменты",
+    "en": "MCP and tools"
+  },
+  "workbench.library.section.connections": {
+    "ru": "Подключения",
+    "en": "Connections"
+  },
+  "workbench.library.section.extensions": {
+    "ru": "Расширения и маркетплейс",
+    "en": "Extensions and marketplace"
+  },
+  "workbench.library.hint.sources": {
+    "ru": "Источники, доступные рабочему пространству.",
+    "en": "Sources available to the workspace."
+  },
+  "workbench.library.hint.mcp": {
+    "ru": "MCP-серверы и их инструменты.",
+    "en": "MCP servers and their tools."
+  },
+  "workbench.library.hint.connections": {
+    "ru": "Мессенджеры, аккаунты и состояние подключений.",
+    "en": "Messengers, accounts and connection state."
+  },
+  "workbench.library.hint.extensions": {
+    "ru": "Пакеты и расширения из маркетплейса.",
+    "en": "Packages and extensions from the marketplace."
+  },
+  "workbench.library.tab.marketplace": {
+    "ru": "Маркетплейс",
+    "en": "Marketplace"
+  },
+  "workbench.library.tab.extensions": {
+    "ru": "Расширения",
+    "en": "Extensions"
+  }
+}

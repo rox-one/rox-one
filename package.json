@@ -2,7 +2,7 @@
   "name": "rox",
   "version": "0.11.8",
   "license": "Apache-2.0",
-  "description": "ROX desktop workspace and OMP agent runtime",
+  "description": "ROX desktop workspace and Rox CLI agent runtime",
   "type": "module",
   "private": true,
   "trustedDependencies": [
@@ -17,8 +17,7 @@
   "workspaces": [
     "packages/*",
     "apps/*",
-    "!packages/craft-cli",
-    "!packages/craft-agents-commands"
+    "!packages/craft-cli"
   ],
   "scripts": {
     "test": "bun run scripts/test-all.ts",
@@ -53,7 +52,8 @@
     "test:doc-tools": "python3 -m unittest apps.electron.resources.scripts.tests.test_pdf_tool_smoke apps.electron.resources.scripts.tests.test_xlsx_tool_smoke apps.electron.resources.scripts.tests.test_docx_tool_smoke apps.electron.resources.scripts.tests.test_pptx_tool_smoke apps.electron.resources.scripts.tests.test_img_tool_smoke apps.electron.resources.scripts.tests.test_ical_tool_smoke apps.electron.resources.scripts.tests.test_doc_diff_smoke apps.electron.resources.scripts.tests.test_markitdown_smoke apps.electron.resources.scripts.tests.test_hindsight_runner_smoke",
     "perf:startup": "bun apps/electron/scripts/perf/startup-bench.ts",
     "test:perf-budgets": "bun test apps/electron/src/renderer/perf packages/server-core/src/observability && bun run scripts/bench/renderer-perf-report.ts --ci && bun run scripts/bench/renderer-perf-report.ts --ci --session-count 500 && bun run scripts/bench/renderer-perf-report.ts --bundle",
-    "test:runtime-suites": "bun test apps/electron/src/__tests__/transport.test.ts && bun test packages/server-core/src/transport/__tests__ && bun test packages/server-core/src/handlers/rpc/__tests__/plugin-bridge.test.ts && bun test apps/electron/src/renderer/lib/__tests__/session-load.test.ts && bun test apps/electron/src/renderer/lib/__tests__/splash-sessions-ready.test.ts && bun test apps/electron/src/main/__tests__/quit-exit-guard.test.ts && bun test apps/electron/src/renderer/components/app-shell/session-list/__tests__/list-virtualization.test.ts",
+"test:perf:dom": "playwright test --config tests/perf/playwright.config.ts",
+    "test:runtime-suites": "bun test apps/electron/src/__tests__/transport.test.ts && bun test packages/server-core/src/transport/__tests__ && bun test packages/server-core/src/handlers/rpc/__tests__/plugin-bridge.test.ts && bun test apps/electron/src/renderer/lib/__tests__/session-load.test.ts && bun test apps/electron/src/renderer/lib/__tests__/splash-sessions-ready.test.ts && bun test apps/electron/src/main/__tests__/quit-exit-guard.test.ts && bun test apps/electron/src/main/__tests__/browser-pane-manager.test.ts && bun test apps/electron/src/renderer/components/app-shell/session-list/__tests__/list-virtualization.test.ts && bun test apps/electron/src/renderer/components/app-shell/__tests__/entity-list-virtualization.test.ts",
     "test:meetings:unit": "bun test packages/server-core/src/meetings/conation/__tests__ packages/server-core/src/meetings/__tests__/tracker-actions.test.ts packages/server-core/src/meetings/__tests__/followup.test.ts packages/server-core/src/meetings/__tests__/security.test.ts packages/server-core/src/meetings/__tests__/budgets.test.ts packages/server-core/src/meetings/__tests__/sharing-retention.test.ts packages/server-core/src/meetings/__tests__/rooms.test.ts packages/server-core/src/meetings/__tests__/release-gate.test.ts packages/server-core/src/meetings/__tests__/packaging.test.ts packages/shared/src/meeting-agents/__tests__/recipes.test.ts",
     "test:visual": "playwright test",
     "test:meetings:e2e": "ROX_MEETING_E2E_FIXTURE=1 playwright test --config tests/e2e/meeting-agents/playwright.config.ts",
@@ -173,7 +173,6 @@
     "@anthropic-ai/claude-agent-sdk": "0.3.258",
     "@anthropic-ai/sdk": "^0.100.0",
     "@dnd-kit/dom": "^0.4.0-beta-20260227032529",
-
     "@earendil-works/pi-ai": "0.85.1",
     "@earendil-works/pi-coding-agent": "0.85.1",
     "@github/copilot-sdk": "^0.1.23",
@@ -243,5 +242,6 @@
     "@img/sharp-libvips-darwin-x64": "1.2.4",
     "@img/sharp-libvips-linux-arm64": "1.2.4",
     "@img/sharp-libvips-linux-x64": "1.2.4"
-  }
+  },
+  "packageManager": "bun@1.4.2"
 }

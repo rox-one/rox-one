@@ -135,7 +135,9 @@ describe('entity routes: legacy routes are not stolen', () => {
     ['skills/skill/a', 'skills'],
     ['sources/source/a', 'sources'],
     ['automations/automation/a', 'automations'],
-    ['meetings/meeting/a', 'meetings'],
+    // W3.2: not an entity route; the legacy meetings detail aliases to the
+    // calendar surface (entities.links.v1 off in this suite).
+    ['meetings/meeting/a', 'surface'],
     ['inbox/item/a', 'inbox'],
     ['feed/item/a', 'feed'],
     ['memory', 'memory'],

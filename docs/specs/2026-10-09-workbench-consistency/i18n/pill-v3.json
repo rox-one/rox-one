@@ -1,0 +1,11 @@
+{
+  "workbench.pill.agent": { "ru": "Агент", "en": "Agent" },
+  "workbench.pill.allSurfaces": { "ru": "Все поверхности…", "en": "All surfaces…" },
+  "workbench.pill.browser": { "ru": "Браузер", "en": "Browser" },
+  "workbench.pill.exclude": { "ru": "Исключить из пилюли", "en": "Remove from pill" },
+  "workbench.pill.feed": { "ru": "Лента", "en": "Feed" },
+  "workbench.pill.notes": { "ru": "Заметки", "en": "Notes" },
+  "workbench.pill.pin": { "ru": "Закрепить в пилюле", "en": "Pin to pill" },
+  "workbench.pill.team": { "ru": "Команда", "en": "Team" },
+  "workbench.pill.unpin": { "ru": "Открепить", "en": "Unpin" }
+}

@@ -173,8 +173,29 @@ export const routes = {
       if (!skillSlug) return 'skills' as const
       return `skills/skill/${skillSlug}` as const
     },
-    /** Memory view (memory navigator — self-learning panel) */
-    memory: () => 'memory' as const,
+    /**
+     * Memory view (memory navigator — self-learning panel).
+     *
+     * `tab` selects the memory surface: `lessons` (default, bare `memory`),
+     * `repo` (memory repository screen) or `dream` (dream log view). The
+     * repository tab accepts an optional `details` selector so a single file
+     * or commit survives navigation and reloads.
+     */
+    memory: (
+      tab?: 'lessons' | 'repo' | 'dream',
+      details?: { type: 'file'; path: string } | { type: 'commit'; sha: string },
+    ) => {
+      if (tab === 'repo') {
+        if (details?.type === 'file') return `memory/repo/file/${encodeURIComponent(details.path)}` as const
+        if (details?.type === 'commit') return `memory/repo/commit/${encodeURIComponent(details.sha)}` as const
+        return 'memory/repo' as const
+      }
+      if (tab === 'dream') return 'memory/dream' as const
+      return 'memory' as const
+    },
+
+    /** Rox History view (clipboard history navigator) */
+    clipboardHistory: () => 'clipboard-history' as const,
 
     /** Learning view (learning navigator — self-learning dashboard, PRD §25-30) */
     learning: () => 'learning' as const,
@@ -193,6 +214,12 @@ export const routes = {
     /** Mode screen `feed` — `feed[/item/{itemId}]` */
     feed: (itemId?: string) =>
       itemId ? `feed/item/${encodeURIComponent(itemId)}` as const : 'feed' as const,
+    /**
+     * Встречи. W3.2 (Согласованность-20261009): Встречи moved into the
+     * `calendar` surface; this legacy route is an alias — `meetings` resolves
+     * to the calendar surface and `meetings/meeting/{id}` selects that meeting
+     * there. Kept so old deep links and callers keep working.
+     */
     meetings: (meetingId?: string) =>
       meetingId ? `meetings/meeting/${encodeURIComponent(meetingId)}` as const : 'meetings' as const,
 

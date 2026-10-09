@@ -25,6 +25,8 @@ import { SOCIAL_COMMAND_SCHEMAS, SOCIAL_ENTITY_SCHEMAS } from './social/schema'
 import { SPACES_COMMAND_SCHEMAS, SPACES_ENTITY_SCHEMAS } from './spaces/schema'
 import { TASKS_COMMAND_SCHEMAS, TASKS_ENTITY_SCHEMAS } from './tasks/schema'
 import { WORKPLACE_COMMAND_SCHEMAS } from './workplace/schema'
+// W1-12 (#1509)
+import { AUTOMATION_COMMAND_SCHEMAS } from '../automation/schemas'
 import { COLLAB_COMMAND_SCHEMAS } from '../collab/schemas'
 import { DRIVE_CONTRACT_COMMAND_SCHEMAS } from '../drive/schemas'
 import { XSC_COMMAND_SCHEMAS } from '../xsc/schemas'
@@ -71,6 +73,8 @@ export const DOMAIN_COMMAND_SCHEMA_MODULES: Readonly<Record<string, CommandSchem
   identity: IDENTITY_COMMAND_SCHEMAS,
   agents: AGENTS_COMMAND_SCHEMAS,
   workplace: WORKPLACE_COMMAND_SCHEMAS,
+  // W1-12 (#1509): the automation module's own command names (appended).
+  automation: AUTOMATION_COMMAND_SCHEMAS,
   // W1-14 (#1511) — the schemas that replaced #1503's placeholders for the §12,
   // collaboration and drive-quota commands.
   collab: COLLAB_COMMAND_SCHEMAS,
