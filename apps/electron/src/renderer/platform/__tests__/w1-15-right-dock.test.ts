@@ -5,7 +5,8 @@
  * Over widths 960…2560 and every combination of inspector (none / quick 328 /
  * comments 360 / task detail 560) and agent width (closed / 320 / 380 / 560):
  *
- * - whenever the dock takes width, MAIN is at least 640;
+ * - whenever the dock goes side-by-side, MAIN is at least 640 (the shared
+ *   dock, W ≥ 1280, is the fallback and does not re-check MAIN);
  * - the sidebar auto-collapses before MAIN drops below 640;
  * - the mode only ever widens as the window grows (overlay → sharedDock →
  *   sideBySide), never regresses;

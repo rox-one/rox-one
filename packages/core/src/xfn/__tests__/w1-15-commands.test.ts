@@ -330,10 +330,9 @@ describe('W1-15 X-13…X-26 reference handlers', () => {
     const { run, calls } = harness()
     const result = await run('vc.start_meeting', { origin: ref('channel', 'c1'), invite: ['p1', 'p2'] })
     expect(calls).toEqual([
-      { command: 'vc.start_meeting', payload: { originRef: ref('channel', 'c1'), invite: ['p1', 'p2'] } },
       { command: 'links.add', payload: { from: ref('call', 'call-1'), to: ref('channel', 'c1'), relation: 'derived-from', role: 'origin' } },
     ])
-    expect(result).toMatchObject({ result: { invited: 2 } })
+    expect(result).toMatchObject({ ref: ref('call', 'call-1'), result: { invited: 2 } })
   })
 
   it('refuses every capability while xfn.capabilities.v1 is off', async () => {

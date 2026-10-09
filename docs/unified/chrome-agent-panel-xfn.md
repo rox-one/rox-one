@@ -73,7 +73,7 @@ delete block.
 
 ```
 sideBySide  when W ≥ 48 + S + 640 + I + A + 44
-sharedDock  when that does not fit, W ≥ 1280 and MAIN ≥ 640 with one column
+sharedDock  when that does not fit and W ≥ 1280, one column (MAIN is not re-checked)
 overlay     otherwise (the panel floats and takes no layout width)
 ```
 
@@ -81,8 +81,10 @@ overlay     otherwise (the panel floats and takes no layout width)
 sidebar auto-collapses before the agent shrinks MAIN (UI-SPEC §25.5 rule 4).
 `I ∈ {0, 328 quick, 360 comments, 560 task detail}`, `A ∈ [320, 560]` default
 380. The shared dock puts the agent tab first in a 32 px strip and takes
-`max(I, A)` as its column. The table test covers widths 960…2560 × every panel
-combination and asserts MAIN ≥ 640 whenever the dock takes width.
+`max(I, A)` as its column. MAIN ≥ 640 is guaranteed by the side-by-side
+formula alone: the table test covers widths 960…2560 × every panel combination
+and asserts it for every side-by-side row (the shared dock is the W ≥ 1280
+fallback and may drop MAIN below 640).
 
 ## Agent panel (§18)
 

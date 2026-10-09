@@ -31,7 +31,6 @@ import type {
   RiskClass,
 } from '../commands/registry.ts'
 import type { SchemaLike } from '../commands/registry.ts'
-import type { DomainEventDraft } from '../events/types.ts'
 import { EMPTY_LOCAL_PINS_STATE, pinAnchorsForOrder, recordLocalPins, withoutLocalPin, withLocalPin } from '../acl/rules/pin-private.ts'
 import { REMINDER_DUE_KIND, REMINDER_SCHEMA_VERSION, reminderDueNotification, type ReminderRecord } from './reminder.ts'
 import type { XfnPorts } from './ports.ts'
@@ -595,11 +594,9 @@ export function xfnReferenceHandlers(options: XfnReferenceHandlersOptions): Reco
         const appended = await ports.dispatch('docs.append_block', { docRef: payload.minutesRef, block: { type: 'summary', text: payload.summary } }, ctx)
         minutesBlockId = (appended.result as { blockId?: string } | undefined)?.blockId ?? null
       }
-      const events: DomainEventDraft[] = []
       return {
         ref: callRef,
         result: { decisionRefs, taskRefs, minutesBlockId, summary: payload.summary },
-        ...(events.length ? { events } : {}),
       }
     },
 
@@ -744,15 +741,16 @@ export function xfnReferenceHandlers(options: XfnReferenceHandlersOptions): Reco
       return { ref: created.ref, result: { title: payload.title, originRef: payload.originRef ? formatEntityRef(payload.originRef) : null } }
     },
 
-    // X-24 — start a meeting.
+    // X-24 — start a meeting. The owner action is reached through its port,
+    // never re-dispatched as `vc.start_meeting` (which is this very handler).
     'vc.start_meeting': async (ctx) => {
       const payload = ctx.payload as { origin: EntityRef; invite?: readonly string[]; eventRef?: EntityRef; notesDocRef?: EntityRef }
-      const call = await ports.dispatch('vc.start_meeting', {
+      const call = await ports.calls.startMeeting({
         originRef: payload.origin,
         invite: payload.invite ?? [],
         ...(payload.eventRef ? { eventRef: payload.eventRef } : {}),
         ...(payload.notesDocRef ? { notesDocRef: payload.notesDocRef } : {}),
-      }, ctx)
+      })
       await dispatchDerivedFrom(ports, call.ref, payload.origin, ctx)
       return { ...(call.ref ? { ref: call.ref } : {}), result: { invited: payload.invite?.length ?? 0 } }
     },

@@ -70,14 +70,14 @@ const topBar = (
 const CREATE = {
   home: { default: 'tasks.create', menu: ['docs.create_document', 'calendar.create_event', 'im.create_chat', 'vc.start_meeting', 'goals.create'] },
   chat: { default: 'app.newChat', menu: ['app.newChatInPanel'] },
-  messenger: { default: 'im.create_chat', menu: ['im.create_chat', 'im.create_chat', 'im.set_visibility'] },
-  docs: { default: 'docs.create_document', menu: ['docs.create_document', 'docs.create_document', 'drive.upload_file', 'drive.create_folder'] },
+  messenger: { default: 'im.create_chat', menu: ['im.create_chat', 'im.set_visibility'] },
+  docs: { default: 'docs.create_document', menu: ['docs.create_document', 'drive.upload_file', 'drive.create_folder'] },
   wiki: { default: 'wiki.create_space', menu: ['wiki.create_space'] },
   drive: { default: 'drive.upload_file', menu: ['drive.create_folder', 'drive.upload_file', 'docs.create_document'] },
   base: { default: 'tables.insert_row', menu: ['tables.insert_row', 'drive.upload_file'] },
   forms: { default: 'forms.configure_on_submit', menu: ['forms.configure_on_submit'] },
   tasks: { default: 'tasks.create', menu: ['task_lists.create', 'task_sections.create'] },
-  calendar: { default: 'calendar.create_event', menu: ['calendar.create_event', 'calendar.create_time_block', 'calendar.create_event'] },
+  calendar: { default: 'calendar.create_event', menu: ['calendar.create_event', 'calendar.create_time_block'] },
   meetings: { default: 'vc.start_meeting', menu: ['calendar.create_event', 'vc.join'] },
   goals: { default: 'goals.create', menu: ['projects.create', 'kpis.create', 'spaces.create'] },
   contacts: { default: 'people.invite', menu: ['people.invite', 'contacts.create_card'] },
@@ -246,7 +246,4 @@ export const SURFACE_CHROME_FIXTURE: readonly SurfaceChromeContribution[] = SURF
     topBar: TOP_BARS[surface]!,
   }
 })
-
-/** Sidebars every surface package must register, in rail order (§26.2). */
-export const SURFACE_PAGE_SURFACES_WITHOUT_SIDEBAR = SURFACE_TOPBAR_SURFACES.filter((surface) => !SIDEBARS[surface])
 

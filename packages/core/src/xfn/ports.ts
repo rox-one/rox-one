@@ -53,6 +53,19 @@ export interface XfnPorts {
   tables: {
     insertRow(input: { baseRef: EntityRef; tableRef?: EntityRef; row: Record<string, unknown>; idempotencyKey?: string }): Promise<{ ref: EntityRef; rowId: string }>
   }
+  /**
+   * STUB(#1534): the `call` store (kind `call`), written by X-24. The owner
+   * action, called directly — never re-entered as the `vc.start_meeting`
+   * command, which would recurse into this handler.
+   */
+  calls: {
+    startMeeting(input: {
+      originRef: EntityRef
+      invite: readonly string[]
+      eventRef?: EntityRef
+      notesDocRef?: EntityRef
+    }): Promise<{ ref: EntityRef }>
+  }
   /** X-26 pins: local `{configDir}/ui/pins.json` or the workspace `entity_link` store. */
   pins: {
     load(): Promise<LocalPinsState>
@@ -100,7 +113,6 @@ const DISPATCH_RESULT_KIND: Readonly<Record<string, EntityKind | null>> = {
   'calendar.create_event': 'calendar-event',
   'calendar.create_time_block': 'calendar-event',
   'decisions.create': 'decision',
-  'vc.start_meeting': 'call',
   'drive.import_attachment': 'file',
   'im.send_message': 'channel-message',
   'tables.insert_row': 'base-record',
@@ -152,6 +164,12 @@ export function createXfnPorts(options: CreateXfnPortsOptions): XfnPorts {
         seq += 1
         const rowId = String(input.row.id ?? `row-${seq}`)
         return { ref: { kind: 'base-record', id: rowId }, rowId }
+      },
+    },
+    calls: {
+      async startMeeting() {
+        seq += 1
+        return { ref: { kind: 'call', id: `call-${seq}` } }
       },
     },
     pins: {

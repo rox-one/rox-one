@@ -25,7 +25,7 @@
 export const RAIL_WIDTH = 48
 /** Right action rail (`InspectorActionRail`). */
 export const ACTION_RAIL_WIDTH = 44
-/** MAIN never renders narrower than this while the dock holds width. */
+/** MAIN is never narrower than this in side-by-side (`sideBySideFits`); the shared dock (W ≥ 1280) does not re-check it. */
 export const MAIN_MIN_WIDTH = 640
 /** Sidebar widths: default range 220–360, collapsed 56 (§26.1 «Width»). */
 export const SIDEBAR_COLLAPSED_WIDTH = 56
