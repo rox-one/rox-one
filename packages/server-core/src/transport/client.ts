@@ -137,6 +137,11 @@ export class WsRpcClient implements RpcClient {
   private ackTimer: ReturnType<typeof setInterval> | null = null
   private pendingReconnect: { clientId: string; lastSeq: number } | null = null
   private currentHandshakeWasReconnect = false
+  /**
+   * Guards sequence-gap recovery so a burst of gapped frames triggers a single
+   * reconnect. Cleared on a successful handshake and when the socket closes.
+   */
+  private gapRecoveryInFlight = false
   private manualReconnectRequested = false
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private connectTimer: ReturnType<typeof setTimeout> | null = null
@@ -604,6 +609,7 @@ export class WsRpcClient implements RpcClient {
 
     this.manualReconnectRequested = false
     this.currentHandshakeWasReconnect = false
+    this.gapRecoveryInFlight = false
     this.pendingReconnect = null
     this.failReady(new Error('Client destroyed'))
 
@@ -659,6 +665,8 @@ export class WsRpcClient implements RpcClient {
 
         this.currentHandshakeWasReconnect = false
         this.pendingReconnect = null
+        // A completed handshake re-arms gap recovery for any future gap.
+        this.gapRecoveryInFlight = false
         this.clientId = envelope.clientId ?? null
         this._serverVersion = envelope.serverVersion ?? null
         this.serverChannels = envelope.registeredChannels
@@ -755,11 +763,26 @@ export class WsRpcClient implements RpcClient {
         if (typeof envelope.seq === 'number') {
           if (this.lastSeenSeq > 0 && envelope.seq > this.lastSeenSeq + 1) {
             console.warn(`[WsRpc] Sequence gap: expected ${this.lastSeenSeq + 1}, got ${envelope.seq}`)
+            // Hold `lastSeenSeq` at the LAST CONTIGUOUS seq instead of advancing it
+            // to the gapped seq. Both the periodic sequence_ack and the reconnect
+            // handshake read this one field, so holding it (a) stops the next ack
+            // from evicting the un-replayed range server-side and (b) makes a later
+            // reconnect ask the server to replay from before the hole.
+            if (!this.gapRecoveryInFlight && !this.destroyed) {
+              // Same primitive the UI reconnect action uses; guarded so a burst of
+              // gapped frames schedules at most one reconnect.
+              this.gapRecoveryInFlight = true
+              this.reconnectNow()
+            }
+          } else {
+            this.lastSeenSeq = envelope.seq
           }
-          this.lastSeenSeq = envelope.seq
         }
 
         if (envelope.channel) {
+          // Frames are always dispatched, never dropped. After gap recovery the
+          // server replays events from the gap, so a consumer may observe events it
+          // already applied (duplicate delivery) — consumers must stay idempotent.
           // Server is shutting down — stop reconnection before dispatching
           if (envelope.channel === 'server:shuttingDown') {
             this.permanentlyClosed = true
@@ -844,6 +867,9 @@ export class WsRpcClient implements RpcClient {
 
     const manualReconnect = this.manualReconnectRequested
     this.manualReconnectRequested = false
+    // Socket is going away — re-arm gap recovery so the next connection (and any
+    // future gap) can trigger its own reconnect.
+    this.gapRecoveryInFlight = false
 
     const wasConnected = this.connected
     this.connected = false

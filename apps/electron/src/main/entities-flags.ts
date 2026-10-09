@@ -33,7 +33,7 @@
  * (documented W1 limitation).
  */
 
-import type { IpcMain } from 'electron'
+import type { IpcMain, WebContents } from 'electron'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { WORKBENCH_FLAG } from '@rox/core/platform'
@@ -201,6 +201,12 @@ export function __resetEntitiesLinksFlagForTests(): void {
 }
 
 export interface EntitiesLinksIpcOptions {
+  /**
+   * Only managed app windows may report the toggle. Must use the
+   * registered-webcontents form (not the senderFrame clause): the SYNC channel
+   * is a preload sendSync where senderFrame can be null. Evaluated per call.
+   */
+  isTrustedSender?(event: { sender: WebContents }): boolean
   /** Send the effective state to every renderer (index.ts wires webContents). */
   broadcast?: (channel: string, state: EntitiesLinksEffectiveState) => void
 }
@@ -212,9 +218,18 @@ let unsubscribeBroadcast: (() => void) | null = null
  * client and headless hosts) and before the first window loads.
  */
 export function registerEntitiesLinksIpc(ipcMain: Pick<IpcMain, 'handle' | 'on'>, options: EntitiesLinksIpcOptions = {}): void {
-  ipcMain.handle(ENTITIES_LINKS_IPC.SET, async (_event, enabled: unknown) => applyEntitiesLinksFlag(enabled === true))
+  ipcMain.handle(ENTITIES_LINKS_IPC.SET, async (event, enabled: unknown) => {
+    if (options.isTrustedSender && !options.isTrustedSender(event)) throw new Error('IPC_SENDER_DENIED')
+    return applyEntitiesLinksFlag(enabled === true)
+  })
   ipcMain.on(ENTITIES_LINKS_IPC.SYNC, (event, enabled: unknown) => {
     try {
+      // Preload sendSync: a denied sender must not be able to flip the gate —
+      // answer with the current state instead of throwing across sendSync.
+      if (options.isTrustedSender && !options.isTrustedSender(event)) {
+        event.returnValue = getEntitiesLinksState()
+        return
+      }
       event.returnValue = applyEntitiesLinksFlag(enabled === true)
     } catch (error) {
       logger.error('[entities] syncLinksState failed:', error)
