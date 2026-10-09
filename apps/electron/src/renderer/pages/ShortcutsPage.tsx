@@ -4,9 +4,9 @@
  * Displays keyboard shortcuts reference from the centralized action registry.
  */
 
-import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
+import { Kbd } from '@/components/ui/kbd'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
@@ -64,14 +64,6 @@ function useComponentSpecificSections(): ShortcutSection[] {
   ]
 }
 
-function Kbd({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <kbd className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-medium font-sans bg-muted border border-border rounded ${className || ''}`}>
-      {children}
-    </kbd>
-  )
-}
-
 /**
  * Renders a shortcut row for an action from the registry
  */
@@ -93,7 +85,7 @@ function ActionShortcutRow({ actionId }: { actionId: ActionId }) {
       <div className="flex-1 mx-3 h-px bg-[repeating-linear-gradient(90deg,currentColor_0_2px,transparent_2px_8px)] opacity-0 group-hover:opacity-15" />
       <div className="flex items-center gap-1">
         {keys.map((key, keyIndex) => (
-          <Kbd key={keyIndex} className="group-hover:bg-foreground/10 group-hover:border-foreground/20">{key}</Kbd>
+          <Kbd key={keyIndex} className="group-hover:bg-foreground/10">{key}</Kbd>
         ))}
       </div>
     </div>
@@ -142,7 +134,7 @@ export default function ShortcutsPage() {
                       <div className="flex-1 mx-3 h-px bg-[repeating-linear-gradient(90deg,currentColor_0_2px,transparent_2px_8px)] opacity-0 group-hover:opacity-15" />
                       <div className="flex items-center gap-1">
                         {shortcut.keys.map((key, keyIndex) => (
-                          <Kbd key={keyIndex} className="group-hover:bg-foreground/10 group-hover:border-foreground/20">{key}</Kbd>
+                          <Kbd key={keyIndex} className="group-hover:bg-foreground/10">{key}</Kbd>
                         ))}
                       </div>
                     </div>

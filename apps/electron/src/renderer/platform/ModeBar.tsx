@@ -1,62 +1,80 @@
 /**
- * Mode Bar — static application modes (ADR-0001), rendered as ONE centered
- * segmented pill in the titlebar. Every registered mode lives in the pill
- * (no overflow menu); the active one gets a soft glass highlight that
- * slides between items. Icons and labels are muted monochrome (foreground
- * at 55%), never per-mode accent colors.
+ * Mode Bar — the titlebar pill (ADR-0001, D1 «Пилюля v3»).
  *
- * Modes with `rootRoute: null` render disabled with a tooltip. They are not
- * empty pages.
+ * The pill's membership is DATA (`pill-composition.ts`): the starter set is
+ * Лента · Команда · Агент · Заметки · Браузер, reordered by explicit
+ * pins/exclusions and by a per-session-frozen usage counter. Right-clicking an
+ * item pins/excludes it (Radix context menu); «Все панели…» opens the Пульт.
+ *
+ * Modes present in the registry but absent from the composition (Задачи,
+ * Встречи, Входящие, …) are reachable from the Пульт; the pill no longer
+ * renders every registered mode, and unavailable modes are dropped rather than
+ * shown disabled.
  *
  * Styling lives in `components/app-shell/titlebar-mode-pill.css` (plain CSS);
- * Tailwind utility classes in this component are covered by the renderer scan.
- * The pill uses `-webkit-app-region: no-drag`; the surrounding titlebar stays draggable.
+ * glyph size/stroke and radius come from tokens, not literals.
  */
-import { useCallback, useLayoutEffect, useRef, useState, type MutableRefObject } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import {
-  BookOpen,
-  Calendar,
-  CalendarDays,
-  Contact,
-  Home,
+  Check,
+  EyeOff,
   Inbox,
-  ListTodo,
-  MessageSquare,
-  MessagesSquare,
-  NotebookPen,
-  Rss,
-  Target,
+  Layers,
+  LayoutGrid,
+  Pin,
+  PinOff,
+  RotateCcw,
+  Save,
   type LucideIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { isModeNavigable, type ModeContribution } from '@rox/core/platform'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
-import type { Route } from '../../shared/routes'
-import { CORE_MODES, type SeededMode } from './modes-seed'
+import { omniboxOpenAtom } from '@/atoms/omnibox'
+import { primaryPanelRouteAtom } from '@/atoms/panel-stack'
+import { windowWorkspaceIdAtom } from '@/atoms/sessions'
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  StyledContextMenuContent,
+  StyledContextMenuItem,
+  StyledContextMenuSeparator,
+  StyledContextMenuSub,
+  StyledContextMenuSubContent,
+  StyledContextMenuSubTrigger,
+} from '@/components/ui/styled-context-menu'
+import { RenameDialog } from '@/components/ui/rename-dialog'
+import { SEEDED_MODES, type SeededMode } from './modes-seed'
 import { useShellModes } from './useModes'
 import { resolveLucideIcon } from './lucide-icon'
+import { GLYPH_ICONS_BY_NAME } from './glyphs'
+import { surfaceTabFromRoute } from './layout-snapshot'
 import { useInboxBlockingCount } from '@/hooks/useInboxItems'
 import { handleModePillKeyDown } from './mode-pill-keyboard'
+import {
+  PILL_BROWSER_SURFACE_ID,
+  activatePillSurface,
+  recordPillActivation,
+  resetPillSessionUsage,
+  setPillExcluded,
+  setPillPinned,
+  usePillPreferences,
+  visiblePillSurfaces,
+  type ResolvedPillSurface,
+} from './pill-composition'
+import { canOpenPillBrowser, useOpenPillBrowser } from './pill-activate'
+import { activeScene, applyScene, clearScene, createScene, useScenes, type Scene } from './scenes'
 
-/** Name → glyph map for seeded modes; shared with `platform/ActivityRail.tsx`. */
-export const MODE_ICONS: Record<string, LucideIcon> = {
-  BookOpen,
-  Calendar,
-  CalendarDays,
-  Contact,
-  Home,
-  Inbox,
-  ListTodo,
-  MessageSquare,
-  MessagesSquare,
-  NotebookPen,
-  Rss,
-  Target,
-}
+/**
+ * Name → glyph map for seeded modes; the canonical dictionary (`glyphs.ts`).
+ * Shared with `platform/ActivityRail.tsx`. The fallback `resolveLucideIcon`
+ * still resolves names outside the dictionary (wave-2 modes, plugins).
+ */
+export const MODE_ICONS: Record<string, LucideIcon> = GLYPH_ICONS_BY_NAME
 
 const seedById: Record<string, SeededMode> = Object.fromEntries(
-  CORE_MODES.map((mode) => [mode.contribution.id, mode]),
+  SEEDED_MODES.map((mode) => [mode.contribution.id, mode]),
 )
 
 export interface ModeBarMetrics {
@@ -71,81 +89,260 @@ export interface ModeBarProps {
   collapsed?: boolean
   /** Reports the natural pill widths so the titlebar can decide when to collapse. */
   onMeasure?: (metrics: ModeBarMetrics) => void
+  /**
+   * Opens the Пульт for the «Все панели…» item. Defaults to the existing ⌘K
+   * omnibox, so the pill needs no dependency on the W1.3 palette slice.
+   */
+  onOpenPalette?: () => void
 }
 
-function PillItems({
-  modes,
-  activeId,
-  collapsed,
-  interactive,
-  itemRefs,
-  badges,
-}: {
-  modes: readonly ModeContribution[]
+function itemBadge(badges: Readonly<Record<string, number>> | undefined, id: string): number {
+  return badges?.[id] ?? 0
+}
+
+interface PillItemsProps {
+  surfaces: readonly ResolvedPillSurface[]
   activeId: string | null
   collapsed: boolean
   interactive: boolean
+  /** Id of the single tabbable item (roving tabindex). */
+  rovingId?: string | null
   itemRefs?: MutableRefObject<Map<string, HTMLButtonElement>>
   /** Per-mode counters (Входящие: requests blocking an agent). */
   badges?: Readonly<Record<string, number>>
-}) {
+  pinnedIds?: ReadonlySet<string>
+  onActivate?: (surface: ResolvedPillSurface) => void
+  onFocusItem?: (id: string) => void
+  onTogglePin?: (id: string) => void
+  onExclude?: (id: string) => void
+  onOpenPalette?: () => void
+  scenes?: readonly Scene[]
+  activeSceneId?: string | null
+  onApplyScene?: (id: string) => void
+  onClearScene?: () => void
+  onSaveScene?: () => void
+}
+
+function PillItems({
+  surfaces,
+  activeId,
+  collapsed,
+  interactive,
+  rovingId,
+  itemRefs,
+  badges,
+  pinnedIds,
+  onActivate,
+  onFocusItem,
+  onTogglePin,
+  onExclude,
+  onOpenPalette,
+  scenes = [],
+  activeSceneId = null,
+  onApplyScene,
+  onClearScene,
+  onSaveScene,
+}: PillItemsProps) {
   const { t } = useTranslation()
-  const { navigate } = useNavigation()
   return (
     <>
-      {modes.map((mode) => {
-        // W1-07 (#1504): the registration's icon name, MODE_ICONS as fallback.
-        const Icon = resolveLucideIcon(mode.icon) ?? MODE_ICONS[mode.icon] ?? Inbox
-        const title = t(mode.titleKey)
-        const disabled = !isModeNavigable(mode)
-        const active = mode.id === activeId
-        const badge = disabled ? 0 : badges?.[mode.id] ?? 0
+      {surfaces.map((surface) => {
+        const Icon = resolveLucideIcon(surface.icon) ?? MODE_ICONS[surface.icon] ?? Inbox
+        const title = t(surface.titleKey)
+        const active = surface.id === activeId
+        const badge = itemBadge(badges, surface.id)
+        const pinned = pinnedIds?.has(surface.id) ?? false
         const button = (
           <button
-            key={mode.id}
-            ref={itemRefs ? (el) => {
-              if (el) itemRefs.current.set(mode.id, el)
-              else itemRefs.current.delete(mode.id)
-            } : undefined}
+            key={surface.id}
+            ref={
+              itemRefs
+                ? (el) => {
+                    if (el) itemRefs.current.set(surface.id, el)
+                    else itemRefs.current.delete(surface.id)
+                  }
+                : undefined
+            }
             type="button"
-            tabIndex={interactive && !disabled ? undefined : -1}
-            data-mode={mode.id}
+            tabIndex={interactive ? (rovingId === surface.id ? 0 : -1) : -1}
+            data-mode={surface.id}
+            data-kind={surface.kind}
             aria-label={badge ? `${title} · ${t('workbench.mode.badge', { count: badge })}` : title}
             aria-current={active ? 'page' : undefined}
-            aria-disabled={disabled || undefined}
-            onClick={!interactive || disabled ? undefined : () => {
-              if (mode.rootRoute) void navigate(mode.rootRoute as Route)
-            }}
+            onFocus={interactive && onFocusItem ? () => onFocusItem(surface.id) : undefined}
+            onClick={
+              interactive && onActivate
+                ? (event) => {
+                    // Middle-click / ⌘-click must keep their native meaning.
+                    if (event.button !== 0 || event.metaKey || event.ctrlKey) return
+                    onActivate(surface)
+                  }
+                : undefined
+            }
             className="rox-mode-pill-item titlebar-no-drag"
           >
-            <Icon className="rox-mode-pill-icon" strokeWidth={1.5} aria-hidden />
+            <Icon className="rox-mode-pill-icon" aria-hidden />
             {!collapsed && <span className="rox-mode-pill-label">{title}</span>}
             {badge > 0 && <span className="rox-mode-pill-badge" aria-hidden>{badge > 99 ? '99+' : badge}</span>}
           </button>
         )
+
         if (!interactive) return button
-        // Expanded + available: the label is visible, so no tooltip noise.
-        if (!collapsed && !disabled) return button
+
+        const menuContent = (
+          <StyledContextMenuContent>
+            <StyledContextMenuItem onSelect={() => onTogglePin?.(surface.id)}>
+              {pinned ? <PinOff /> : <Pin />}
+              {t(pinned ? 'workbench.pill.unpin' : 'workbench.pill.pin')}
+            </StyledContextMenuItem>
+            <StyledContextMenuItem onSelect={() => onExclude?.(surface.id)}>
+              <EyeOff />
+              {t('workbench.pill.exclude')}
+            </StyledContextMenuItem>
+            <StyledContextMenuSeparator />
+            <StyledContextMenuSub>
+              <StyledContextMenuSubTrigger>
+                <Layers />
+                {t('workbench.scenes.menu')}
+              </StyledContextMenuSubTrigger>
+              <StyledContextMenuSubContent>
+                {scenes.length === 0 && (
+                  <StyledContextMenuItem disabled>{t('workbench.scenes.empty')}</StyledContextMenuItem>
+                )}
+                {scenes.map((scene) => (
+                  <StyledContextMenuItem key={scene.id} onSelect={() => onApplyScene?.(scene.id)}>
+                    <Check className={scene.id === activeSceneId ? undefined : 'opacity-0'} aria-hidden />
+                    {scene.name}
+                  </StyledContextMenuItem>
+                ))}
+                <StyledContextMenuSeparator />
+                <StyledContextMenuItem disabled={!activeSceneId} onSelect={() => onClearScene?.()}>
+                  <RotateCcw />
+                  {t('workbench.scenes.clear')}
+                </StyledContextMenuItem>
+                <StyledContextMenuItem onSelect={() => onSaveScene?.()}>
+                  <Save />
+                  {t('workbench.scenes.saveAs')}
+                </StyledContextMenuItem>
+              </StyledContextMenuSubContent>
+            </StyledContextMenuSub>
+            {onOpenPalette && (
+              <>
+                <StyledContextMenuSeparator />
+                <StyledContextMenuItem onSelect={onOpenPalette}>
+                  <LayoutGrid />
+                  {t('workbench.pill.allSurfaces')}
+                </StyledContextMenuItem>
+              </>
+            )}
+          </StyledContextMenuContent>
+        )
+
+        // Expanded + labelled: no tooltip noise; just the context menu.
+        if (!collapsed) {
+          return (
+            <ContextMenu key={surface.id}>
+              <ContextMenuTrigger asChild>{button}</ContextMenuTrigger>
+              {menuContent}
+            </ContextMenu>
+          )
+        }
+        // Collapsed (icon-only): tooltip trigger and context-menu trigger share
+        // the one button through a Slot chain.
         return (
-          <Tooltip key={mode.id}>
-            <TooltipTrigger asChild>{button}</TooltipTrigger>
-            <TooltipContent side="bottom">
-              {disabled ? `${title} · ${t('workbench.mode.unavailable')}` : title}
-            </TooltipContent>
-          </Tooltip>
+          <ContextMenu key={surface.id}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ContextMenuTrigger asChild>{button}</ContextMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{title}</TooltipContent>
+            </Tooltip>
+            {menuContent}
+          </ContextMenu>
         )
       })}
     </>
   )
 }
 
-export function ModeBar({ collapsed = false, onMeasure }: ModeBarProps = {}) {
+export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBarProps = {}) {
   const { t, i18n } = useTranslation()
   const navState = useNavigationState()
+  const { navigate } = useNavigation()
   const { modes } = useShellModes()
-  const activeId = modes.find((mode) => seedById[mode.id]?.isActive(navState))?.id ?? null
+  const prefs = usePillPreferences()
+  const workspaceId = useAtomValue(windowWorkspaceIdAtom)
+  // A workspace switch rebuilds the frozen usage snapshot, so the frequency
+  // ordering computed in one room never carries into another.
+  useEffect(() => {
+    resetPillSessionUsage()
+  }, [workspaceId])
+  const sceneState = useScenes()
+  const scene = useMemo(() => activeScene(sceneState), [sceneState])
   const inboxBlocking = useInboxBlockingCount()
+  const setOmniboxOpen = useSetAtom(omniboxOpenAtom)
+  const primaryRoute = useAtomValue(primaryPanelRouteAtom)
+  const openBrowser = useOpenPillBrowser()
+  const browserAvailable = canOpenPillBrowser()
   const badges = { inbox: inboxBlocking }
+
+  const [focusId, setFocusId] = useState<string | null>(null)
+  const surfaces = useMemo(() => visiblePillSurfaces(modes, prefs, scene), [modes, prefs, scene])
+  const available = useMemo(
+    () => surfaces.filter((surface) => surface.kind !== 'panel' || browserAvailable),
+    [surfaces, browserAvailable],
+  )
+
+  const browserActive =
+    browserAvailable && surfaceTabFromRoute(primaryRoute ?? '')?.kind === 'browser'
+  const activeId = useMemo(() => {
+    if (browserActive && available.some((surface) => surface.id === PILL_BROWSER_SURFACE_ID)) {
+      return PILL_BROWSER_SURFACE_ID
+    }
+    return (
+      available.find(
+        (surface) =>
+          surface.kind === 'mode' &&
+          Boolean(surface.mode && seedById[surface.mode.id]?.isActive(navState)),
+      )?.id ?? null
+    )
+  }, [available, browserActive, navState])
+
+  const rovingId = available.some((surface) => surface.id === focusId)
+    ? focusId
+    : activeId ?? available[0]?.id ?? null
+
+  const pinnedIds = useMemo(() => new Set(prefs.pinned), [prefs.pinned])
+  const handleActivate = useCallback(
+    (surface: ResolvedPillSurface) => {
+      recordPillActivation(surface.id)
+      activatePillSurface(surface, { navigate, openBrowser })
+    },
+    [navigate, openBrowser],
+  )
+  const handleTogglePin = useCallback(
+    (id: string) => setPillPinned(id, !pinnedIds.has(id)),
+    [pinnedIds],
+  )
+  const handleExclude = useCallback((id: string) => setPillExcluded(id, true), [])
+  const handleOpenPalette = useCallback(() => {
+    if (onOpenPalette) onOpenPalette()
+    else setOmniboxOpen(true)
+  }, [onOpenPalette, setOmniboxOpen])
+
+  const [sceneDialogOpen, setSceneDialogOpen] = useState(false)
+  const [sceneName, setSceneName] = useState('')
+  const handleSaveScene = useCallback(() => {
+    setSceneName('')
+    setSceneDialogOpen(true)
+  }, [])
+  const submitScene = useCallback(() => {
+    const created = createScene(
+      sceneName,
+      available.map((surface) => surface.id),
+    )
+    if (created) setSceneDialogOpen(false)
+  }, [sceneName, available])
 
   const navRef = useRef<HTMLElement | null>(null)
   const fullGhostRef = useRef<HTMLDivElement | null>(null)
@@ -154,7 +351,9 @@ export function ModeBar({ collapsed = false, onMeasure }: ModeBarProps = {}) {
   const [indicator, setIndicator] = useState<{ x: number; w: number } | null>(null)
   const [ready, setReady] = useState(false)
 
-  const modeKey = modes.map((mode) => `${mode.id}:${mode.rootRoute ? 1 : 0}:${mode.titleKey}`).join('|')
+  const surfaceKey = available
+    .map((surface) => `${surface.id}:${surface.mode?.rootRoute ? 1 : 0}:${surface.titleKey}`)
+    .join('|')
 
   // Sliding indicator geometry follows the active segment.
   const syncIndicator = useCallback(() => {
@@ -168,7 +367,7 @@ export function ModeBar({ collapsed = false, onMeasure }: ModeBarProps = {}) {
 
   useLayoutEffect(() => {
     syncIndicator()
-  }, [syncIndicator, collapsed, modeKey, i18n.language])
+  }, [syncIndicator, collapsed, surfaceKey, i18n.language])
 
   useLayoutEffect(() => {
     const nav = navRef.current
@@ -208,7 +407,7 @@ export function ModeBar({ collapsed = false, onMeasure }: ModeBarProps = {}) {
     observer.observe(full)
     observer.observe(compact)
     return () => observer.disconnect()
-  }, [onMeasure, modeKey, i18n.language])
+  }, [onMeasure, surfaceKey, i18n.language])
 
   return (
     <>
@@ -227,15 +426,43 @@ export function ModeBar({ collapsed = false, onMeasure }: ModeBarProps = {}) {
           data-visible={indicator ? true : undefined}
           style={indicator ? { width: indicator.w, transform: `translateX(${indicator.x}px)` } : undefined}
         />
-        <PillItems modes={modes} activeId={activeId} collapsed={collapsed} interactive itemRefs={itemRefs} badges={badges} />
+        <PillItems
+          surfaces={available}
+          activeId={activeId}
+          collapsed={collapsed}
+          interactive
+          rovingId={rovingId}
+          itemRefs={itemRefs}
+          badges={badges}
+          pinnedIds={pinnedIds}
+          onActivate={handleActivate}
+          onFocusItem={setFocusId}
+          onTogglePin={handleTogglePin}
+          onExclude={handleExclude}
+          onOpenPalette={handleOpenPalette}
+          scenes={sceneState.scenes}
+          activeSceneId={sceneState.activeSceneId}
+          onApplyScene={applyScene}
+          onClearScene={clearScene}
+          onSaveScene={handleSaveScene}
+        />
       </nav>
+      <RenameDialog
+        open={sceneDialogOpen}
+        onOpenChange={setSceneDialogOpen}
+        title={t('workbench.scenes.saveTitle')}
+        value={sceneName}
+        onValueChange={setSceneName}
+        onSubmit={submitScene}
+        placeholder={t('workbench.scenes.namePlaceholder')}
+      />
       {onMeasure && (
         <>
           <div ref={fullGhostRef} aria-hidden className="rox-mode-pill rox-mode-pill-ghost">
-            <PillItems modes={modes} activeId={null} collapsed={false} interactive={false} badges={badges} />
+            <PillItems surfaces={available} activeId={null} collapsed={false} interactive={false} badges={badges} />
           </div>
           <div ref={compactGhostRef} aria-hidden className="rox-mode-pill rox-mode-pill-ghost" data-collapsed>
-            <PillItems modes={modes} activeId={null} collapsed interactive={false} badges={badges} />
+            <PillItems surfaces={available} activeId={null} collapsed interactive={false} badges={badges} />
           </div>
         </>
       )}

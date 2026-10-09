@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { peekRoxAccountAuthority, setRoxAccountAuthority, type RoxAccountAuthority } from '@rox/shared/auth'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
-import type { HandlerDeps } from '../handler-deps'
 import type { HandlerFn, RequestContext, RpcServer } from '../../transport'
 import { configureTelegramLinkService, registerTgLinkHandlers, type FetchLike } from './tg-link'
 
@@ -34,7 +33,7 @@ function harness() {
     push() {}, async invokeClient() {}, hasClientCapability() { return false },
     findClientsWithCapability() { return [] }, isRequestContextCurrent() { return true },
   } as unknown as RpcServer
-  registerTgLinkHandlers(server, { platform: { logger: { error() {}, warn() {}, info() {}, debug() {} } } } as unknown as HandlerDeps)
+  registerTgLinkHandlers(server)
   const invoke = (channel: string, ...args: unknown[]) => {
     const handler = handlers.get(channel)
     if (!handler) throw new Error(`channel not registered: ${channel}`)

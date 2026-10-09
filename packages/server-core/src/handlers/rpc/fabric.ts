@@ -115,33 +115,6 @@ function sanitizeReason(error: unknown, redact?: string): string {
   return message
 }
 
-/**
- * Ensure provider.write registers the credential ref into the runtime registry
- * before the broker's acquireLease (resolveRef uses registry.get).
- */
-function withRegistrySyncWrite<T>(
-  runtime: ReturnType<typeof getFabricRuntime>,
-  fn: () => Promise<T>,
-): Promise<T> {
-  const provider = runtime.provider
-  const originalWrite = provider.write.bind(provider)
-  provider.write = async (input) => {
-    const version = await originalWrite(input)
-    if (!runtime.registry.get(version.credentialRefId)) {
-      runtime.registry.register({
-        id: version.credentialRefId,
-        kind: input.kind,
-        providerId: provider.id,
-        locator: input.locator,
-      })
-    }
-    return version
-  }
-  return fn().finally(() => {
-    provider.write = originalWrite
-  })
-}
-
 /** Public surface of the device-flow link controller used by the handlers. */
 interface GithubLinkFlow {
   start(): Promise<GithubDeviceLinkStartView>

@@ -6,3 +6,5 @@ export * from './property-dictionary.ts'
 export * from './block-identity.ts'
 export * from './list-tree.ts'
 export * from './rox-authority.ts'
+// W1-12 (#1509)
+export * from './daily.ts'

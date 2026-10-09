@@ -180,7 +180,7 @@ export function registerCoreRpcHandlers(
   registerBrowserProfileImportHandlers(server, deps)
   registerEntitiesHandlers(server, deps, options?.entities ?? { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
   // R4: Telegram account linking (local rox-tg-linkd daemon).
-  registerTgLinkHandlers(server, deps)
+  registerTgLinkHandlers(server)
   // W1-03 (#1500)
   registerCommandsHandlers(server, deps, options?.commands)
   // W1-04 (#1501): Dossier export IPC (flag contacts.dossier-export.v1, default OFF).

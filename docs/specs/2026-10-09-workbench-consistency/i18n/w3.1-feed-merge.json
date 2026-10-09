@@ -1,0 +1,5 @@
+{
+  "feed.section.inbox": { "ru": "Входящие", "en": "Inbox" },
+  "feed.section.label": { "ru": "Секции ленты", "en": "Feed sections" },
+  "feed.section.stream": { "ru": "Поток", "en": "Stream" }
+}
