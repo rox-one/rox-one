@@ -21,14 +21,18 @@ export {
   type InvokeError,
   type InvokeErrorCode,
   type PendingInvokeHandle,
+  type PendingInvokeOwner,
   type PendingInvokeTrackerOptions,
   type TerminalInvokeResult,
 } from './pending-invokes.ts'
 
 export {
   NodeRegistry,
+  type InvokeOwnershipRefusal,
+  type InvokeOwnershipRefusalCode,
   type InvokeRefusal,
   type InvokeRefusalCode,
+  type InvokeSettlement,
   type NodeAllowlist,
   type NodeDeclaration,
   type NodeInvokeDispatch,
@@ -37,3 +41,10 @@ export {
   type PresenceSweepResult,
   type RegisteredNode,
 } from './registry.ts'
+
+export {
+  NodeClient,
+  type NodeClientOptions,
+  type NodeInvokeHandler,
+  type NodeInvokeRequest,
+} from './node-client.ts'

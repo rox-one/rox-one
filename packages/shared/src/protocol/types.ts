@@ -147,6 +147,12 @@ export type ErrorCode =
   // Named operator role ceiling (a1.2): the connection's role lacks the method's
   // required scope. Typed so a client can render a role-specific message.
   | 'OPERATOR_ACCESS_DENIED'
+  // Node-plane fencing (wave 4, row e2.2): a settlement (`nodes:invokeResult`)
+  // or heartbeat arrives from a connection that is not the node's live one —
+  // e.g. superseded by a newer registration or an impostor. Typed so the
+  // stale connection is refused rather than silently ignored, and the pending
+  // invoke stays unsettled for its real owner.
+  | 'NODE_CONNECTION_MISMATCH'
   // Voice provider registry failures (S8): typed so a client can branch on an
   // unconfigured provider instead of receiving a collapsed HANDLER_ERROR.
   | 'unconfigured'
@@ -208,6 +214,7 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'SESSION_READ_ONLY',
   'SESSION_OWNER_ONLY',
   'OPERATOR_ACCESS_DENIED',
+  'NODE_CONNECTION_MISMATCH',
   'unconfigured',
   'unknown-provider',
   'unsupported',
