@@ -105,8 +105,8 @@ describe('negative paths', () => {
     expect(flagged.flag).toBeDefined()
     expect(await f.run(envelope('tasks.update_status', {}))).toMatchObject({ status: 'rejected', error: { code: 'UNAVAILABLE' } })
     f.flags.add(flagged.flag!)
-    // tasks.update_status is by-target; the local executor can run it once bound.
-    expect(await f.run(envelope('tasks.update_status', {}))).toMatchObject({ status: 'rejected', error: { code: 'NOT_BOUND' } })
+    // tasks.update_status is by-target and bound (W1-06 domain schema + reference handler): the payload is validated.
+    expect(await f.run(envelope('tasks.update_status', {}))).toMatchObject({ status: 'rejected', error: { code: 'VALIDATION' } })
   })
 
   test('FORBIDDEN via the Authorizer port (fail-closed on throw)', async () => {

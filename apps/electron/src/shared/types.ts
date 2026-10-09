@@ -2154,6 +2154,7 @@ export interface ElectronAPI {
   listVoiceModels(): Promise<{ families: string[]; catalog: unknown[] }>
   onVoiceJob(callback: (job: import('@rox/shared/voice').VoiceJob) => void): () => void
   onVoiceOverlay(callback: (state: import('@rox/shared/voice').OverlayState) => void): () => void
+  publishVoiceLevel?(level: number): void
   onVoiceHotkey(callback: (payload: import('@rox/shared/voice/hotkey-types').VoiceHotkeyPayload) => void): () => void
   // d1.3: realtime bridge control (credentials stay in main; renderer gets ephemeral tokens).
   talkStart(args?: { sessionId?: string; mode?: string; voice?: string }): Promise<{ sessionId: string }>

@@ -1,0 +1,69 @@
+{
+  "projects": [
+    {
+      "id": "p-work",
+      "name": "Work",
+      "areaId": "a-home",
+      "order": 1,
+      "notes": "n",
+      "deadlineAt": 1795000000000,
+      "createdAt": 1760000000000
+    }
+  ],
+  "areas": [
+    {
+      "id": "a-home",
+      "name": "Home",
+      "order": 0,
+      "collapsed": true
+    }
+  ],
+  "headings": [
+    {
+      "id": "h-plan",
+      "title": "Planning",
+      "projectId": "p-work",
+      "order": 3
+    }
+  ],
+  "audit": [
+    {
+      "at": 1,
+      "action": "x"
+    }
+  ],
+  "work": {
+    "schemaVersion": 3,
+    "taskLists": [
+      {
+        "id": "p-work",
+        "ownerType": "user",
+        "ownerId": "local",
+        "name": "Work",
+        "notes": "n",
+        "deadlineAt": "2026-11-18T11:06:40.000Z",
+        "groupId": "a-home",
+        "sortKey": "o0001000000001000",
+        "statusSetEnabled": false,
+        "createdAt": "2025-10-09T08:53:20.000Z"
+      }
+    ],
+    "taskSections": [
+      {
+        "id": "h-plan",
+        "taskListId": "p-work",
+        "title": "Planning",
+        "sortKey": "o0001000000003000"
+      }
+    ],
+    "taskListGroups": [
+      {
+        "id": "a-home",
+        "principalId": "local",
+        "name": "Home",
+        "sortKey": "o0001000000000000",
+        "collapsed": true
+      }
+    ]
+  }
+}

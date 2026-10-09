@@ -150,6 +150,9 @@ export const KEYS = {
   // W1-07 (#1504): generic per-id workbench flag store for flags without a
   // dedicated key (`craft-workbench-flag:<flag id>`, e.g. workbench.mode.messenger.v1).
   workbenchFlag: 'workbench-flag',
+  // «Мои транскрипты» mirror: meeting transcript generations already filed as
+  // notes (`<meetingId>:<generation>`), so an app restart never duplicates a note.
+  meetingsTranscriptNotes: 'meetings-transcript-notes',
 } as const
 
 export const EVENTS = {

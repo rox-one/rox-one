@@ -119,6 +119,7 @@ import {
   resolveWorkbenchAvailability,
 } from "../../platform"
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
+import { GlobalVoiceDictation } from "@/voice/global-dictation"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
 import { WorkspaceBrowserRegistry } from "../browser/WorkspaceBrowserRegistry"
@@ -3766,6 +3767,9 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
       <OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} presentationAllowed={!productLearning?.enabled || (navState.navigator === 'memory' && ['idle', 'paused', 'blocked', 'finished'].includes(productLearning.state.phase))} />
 
       <SuperEngineeringShellExtras />
+
+      {/* Global voice dictation: records + drafts a new session when no active composer owns the mic. */}
+      <GlobalVoiceDictation />
 
       </ShellSidebarContext.Provider>
     </AppShellProvider>

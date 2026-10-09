@@ -72,6 +72,8 @@ export const WORKBENCH_FLAG = {
   entitiesPreviewsV1: 'entities.previews.v1',
   /** Visible Rox home (W1-13, #1510) — `~/rox` resolution + MIG-13 auto-migration. Default OFF. */
   storageVisibleRootV1: 'storage.visible-root.v1',
+  /** Goals module (W1-06, #1503): gates the MIG-04/05 OKR / roadmap import into the work store. Default OFF. */
+  goalsV1: 'goals.v1',
 } as const;
 
 export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
@@ -243,6 +245,8 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   // W1-13 (#1510): visible Rox home — default OFF, inert until explicitly
   // enabled (turns ON by default only after the W3-02 rehearsal, PRD D-v2-12).
   { id: WORKBENCH_FLAG.storageVisibleRootV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  // W1-06 (#1503): goals module + MIG-04/05 import — default OFF, inert until enabled.
+  { id: WORKBENCH_FLAG.goalsV1, defaultValue: false, dependencies: [], rollbackSafe: true, migrationRequired: true },
   // Extra screens («Ещё»): workbench.mode.<id>.v1, default ON
   ...EXTRA_SCREEN_FEATURE_FLAGS,
   // W1-07 (#1504): unified mode screens + Docs relabel — default OFF, inert when off.

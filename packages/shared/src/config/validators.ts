@@ -1660,8 +1660,6 @@ const MaterialRangeSchema = (min: number, max: number) =>
  */
 export const MaterialSettingsSchema = z.object({
   enabled: z.boolean().optional(),
-  nativeTint: z.enum(['theme', 'custom', 'off']).optional(),
-  tintColor: CSSColorSchema.optional(),
   blur: z.object(Object.fromEntries(
     MATERIAL_SURFACES.map(surface => [surface, MaterialRangeSchema(0, 64)]),
   )).strict().optional(),

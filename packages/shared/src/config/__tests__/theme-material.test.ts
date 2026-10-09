@@ -14,7 +14,6 @@ describe('material settings schema', () => {
   it('accepts a full material block in overrides and presets', () => {
     const material = {
       enabled: true,
-      nativeTint: 'theme',
       blur: { topbar: 24, rail: 0, chat: 64 },
       opacity: { topbar: 0.8, sidebar: 0.5 },
       tint: { hue: 12, saturation: -20, lightness: 4 },
