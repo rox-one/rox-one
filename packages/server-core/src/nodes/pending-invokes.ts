@@ -68,7 +68,7 @@ interface PendingInvokeRecord {
   readonly nodeId: string
   readonly command: string
   readonly deadlineAt: number
-  readonly timer: unknown
+  timer: unknown
   settled: boolean
   readonly settle: (result: TerminalInvokeResult) => void
 }

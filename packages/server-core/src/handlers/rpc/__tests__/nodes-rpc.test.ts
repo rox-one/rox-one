@@ -104,7 +104,7 @@ describe('nodes:* handlers', () => {
     const invokeId = pushedInvoke.invokeId
     expect(pushed!.args[0]).toMatchObject({ nodeId: 'mac-1', command: 'system.run', payload: { argv: ['ls'] } })
 
-    expect(f.call(RPC_CHANNELS.nodes.INVOKE_RESULT, { invokeId, payload: { exitCode: 0 } })).toEqual({ ok: true })
+    expect(f.call<{ ok: boolean }>(RPC_CHANNELS.nodes.INVOKE_RESULT, { invokeId, payload: { exitCode: 0 } })).toEqual({ ok: true })
     expect(await pending).toMatchObject({ status: 'ok', payload: { exitCode: 0 } })
 
     // Second report for the same invoke is a typed NOT_FOUND, never a double-settle.
@@ -129,8 +129,8 @@ describe('nodes:* handlers', () => {
     const cancelPush = f.pushes.find((push) => push.channel === RPC_CHANNELS.nodes.INVOKE)!.args[0] as { invokeId: string }
     const invokeId = cancelPush.invokeId
 
-    expect(f.call(RPC_CHANNELS.nodes.INVOKE_CANCEL, { invokeId })).toEqual({ cancelled: true })
+    expect(f.call<{ cancelled: boolean }>(RPC_CHANNELS.nodes.INVOKE_CANCEL, { invokeId })).toEqual({ cancelled: true })
     expect(await pending).toMatchObject({ status: 'error', error: { code: 'CANCELLED' } })
-    expect(f.call(RPC_CHANNELS.nodes.INVOKE_CANCEL, { invokeId })).toEqual({ cancelled: false })
+    expect(f.call<{ cancelled: boolean }>(RPC_CHANNELS.nodes.INVOKE_CANCEL, { invokeId })).toEqual({ cancelled: false })
   })
 })
