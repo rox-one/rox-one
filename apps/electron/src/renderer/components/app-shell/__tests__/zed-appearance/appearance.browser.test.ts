@@ -211,8 +211,9 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
         rect: { left: rect.left, right: rect.right, width: rect.width, top: rect.top, bottom: rect.bottom, height: rect.height },
       }]
     }))
-    return { ...result, attrs: { runtime: document.documentElement.dataset.shellRuntime, material: document.documentElement.dataset.shellMaterial, cssMaterial: document.documentElement.dataset.shellCssMaterial, mode: document.documentElement.className, mismatch: document.documentElement.dataset.themeMismatch }, media: { coarse: matchMedia('(pointer: coarse)').matches, reducedTransparency: matchMedia('(prefers-reduced-transparency: reduce)').matches, moreContrast: matchMedia('(prefers-contrast: more)').matches, forcedColors: matchMedia('(forced-colors: active)').matches } } as any
+    return { ...result, attrs: { runtime: document.documentElement.dataset.shellRuntime, material: document.documentElement.dataset.shellMaterial, cssMaterial: document.documentElement.dataset.shellCssMaterial, layer: document.documentElement.dataset.material, texture: document.documentElement.dataset.materialTexture, mode: document.documentElement.className, mismatch: document.documentElement.dataset.themeMismatch }, media: { coarse: matchMedia('(pointer: coarse)').matches, reducedTransparency: matchMedia('(prefers-reduced-transparency: reduce)').matches, moreContrast: matchMedia('(prefers-contrast: more)').matches, forcedColors: matchMedia('(forced-colors: active)').matches } } as any
   })
+  const cssVar = (name: string) => page.evaluate(variable => getComputedStyle(document.documentElement).getPropertyValue(variable).trim(), name)
   const seam = (styles: any, hit: number) => {
     expect(styles.row.gap).toBe('0px')
     expect(styles.row.padding).toEqual(['0px', '0px', '0px', '0px'])
@@ -636,4 +637,50 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     expect(fallback.work.rgba).toEqual(initial.work.rgba)
     await proof('desktop-policy-fallback-synthetic')
   }, 45_000)
+
+  describe('configurable material layer', () => {
+    it('applies an enabled material override through data attributes, tokens and browser glass', async () => {
+      await load('material=on')
+      const html = page.locator('html')
+      await expectDOM(html).toHaveAttribute('data-material', 'on')
+      await expectDOM(html).toHaveAttribute('data-material-texture', 'grain')
+      // ThemeContext injects the per-surface tokens the material CSS consumes.
+      expect(await cssVar('--material-blur-topbar')).toBe('30px')
+      expect(await cssVar('--material-opacity-topbar')).toBe('50%')
+      expect(await cssVar('--material-texture-kind')).toBe('grain')
+      const styles = await computed()
+      expect(styles.attrs.layer).toBe('on')
+      expect(styles.attrs.texture).toBe('grain')
+      // --material-opacity-topbar: 50% halves the opaque titlebar tint.
+      expect(styles.topbar.rgba[3] / 255).toBeCloseTo(0.5, 1)
+      expect(styles.topbar.backdrop).toContain('blur(30px)')
+      await proof('material-enabled')
+    }, 45_000)
+
+    it('keeps the static chrome when the material override is absent', async () => {
+      await load()
+      const styles = await computed()
+      expect(styles.attrs.layer).toBeUndefined()
+      expect(styles.attrs.texture).toBeUndefined()
+      // No app override means ThemeContext injects no --material-* tokens, so
+      // the shipped 20px/84% fallbacks stay in charge instead of the 30px/50%
+      // material override.
+      expect(await cssVar('--material-blur-topbar')).toBe('20px')
+      expect(styles.topbar.rgba[3]).toBeGreaterThan(0)
+      expect(styles.topbar.rgba[3]).toBeLessThan(255)
+      expect(styles.topbar.backdrop).toContain('blur(20px)')
+    }, 45_000)
+
+    it.each([
+      ['prefers-reduced-transparency', 'reduce'],
+      ['prefers-contrast', 'more'],
+    ] as const)('forces the material override solid under %s', async (feature, value) => {
+      await emulateFeature(feature, value)
+      await load('material=on')
+      const styles = await computed()
+      expect(styles.attrs.layer).toBeUndefined()
+      expect(styles.topbar.rgba[3]).toBe(255)
+      expect(styles.topbar.backdrop).toBe('none')
+    }, 45_000)
+  })
 })
