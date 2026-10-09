@@ -78,6 +78,7 @@ import { loadWorkspaceConfig, saveWorkspaceConfig } from '@rox/shared/workspaces
 import {
   // Session persistence functions
   listSessions as listStoredSessions,
+  listSessionsFromHeaders,
   loadSession as loadStoredSession,
   saveSession as saveStoredSession,
   createSession as createStoredSession,
@@ -152,7 +153,7 @@ import { formatPathsToRelative, formatToolInputPaths, perf, encodeIconToDataUrlA
 import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache, toSkillSummaries, type LoadedSkill } from '@rox/shared/skills'
 import { assertProfileSources, assertProfileSkills, type AgentProfileSnapshot } from '@rox/shared/workspace-work'
 import { captureAgentProfileSnapshot } from '../workspace-work/profile.ts'
-import { sessionStateProjector } from '../state/sessions-projection.ts'
+import { sessionStateProjector, type SessionStateProjector } from '../state/sessions-projection.ts'
 import { invalidateContextFileCache, formatSourceRetrieveForPrompt } from '@rox/shared/prompts/system'
 import { retrieveSourcesForPrompt } from '../sources/source-index-facade'
 import { getToolIconsDir, getMiniModel, isRoxPublicModelId, ROX_DEFAULT_SUBAGENT_MODEL } from '@rox/shared/config'
@@ -1474,6 +1475,24 @@ export function resolveMidStreamDeliveryOutcome(
     shouldQueue: !steered,
     wasInterrupted: behavior === 'steer' && !steered,
   }
+}
+
+/**
+ * Boot path: session-list metadata for one workspace without scanning headers.
+ *
+ * The state projection serves full headers from `session_index.header` when its
+ * freshness cookie still matches the directory; otherwise fall back to the
+ * scanning `listSessions` and queue a rebuild so the next boot is fast.
+ */
+export function loadWorkspaceSessionMetadata(
+  workspaceRootPath: string,
+  projector: SessionStateProjector = sessionStateProjector(),
+): SessionMetadata[] {
+  const headers = projector.readFreshHeaders(workspaceRootPath)
+  if (headers) return listSessionsFromHeaders(workspaceRootPath, headers)
+  const scanned = listStoredSessions(workspaceRootPath)
+  void projector.rebuildWorkspace(workspaceRootPath)
+  return scanned
 }
 
 export class SessionManager implements ISessionManager {
@@ -3026,7 +3045,7 @@ export class SessionManager implements ISessionManager {
       // Iterate over each workspace and load its sessions
       for (const workspace of workspaces) {
         const workspaceRootPath = workspace.rootPath
-        const sessionMetadata = listStoredSessions(workspaceRootPath)
+        const sessionMetadata = loadWorkspaceSessionMetadata(workspaceRootPath)
         // Load workspace config once per workspace for default working directory
         const wsConfig = loadWorkspaceConfig(workspaceRootPath)
         const wsDefaultWorkingDir = wsConfig?.defaults?.workingDirectory
@@ -3518,7 +3537,17 @@ export class SessionManager implements ISessionManager {
     if (this.sessions.has(sessionId)) return
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) return
-    const meta = listStoredSessions(workspace.rootPath).find((session) => session.id === sessionId)
+    const projector = sessionStateProjector()
+    const headers = projector.readFreshHeaders(workspace.rootPath)
+    let meta: SessionMetadata | undefined
+    if (headers) {
+      const header = headers.find((candidate) => candidate.id === sessionId)
+      if (header) [meta] = listSessionsFromHeaders(workspace.rootPath, [header])
+    }
+    if (!meta) {
+      meta = listStoredSessions(workspace.rootPath).find((session) => session.id === sessionId)
+      if (!headers) void projector.rebuildWorkspace(workspace.rootPath)
+    }
     if (!meta) return
     const wsConfig = loadWorkspaceConfig(workspace.rootPath)
     this.sessions.set(
