@@ -425,6 +425,18 @@ export const CHANNEL_MAP = {
   readProjectRepositorySpan: invoke(RPC_CHANNELS.codeIntelligence.READ_SPAN),
   checkProjectRepositoryFreshness: invoke(RPC_CHANNELS.codeIntelligence.FRESHNESS),
   cancelProjectRepositoryRequest: invoke(RPC_CHANNELS.codeIntelligence.CANCEL),
+  // Developer Space (02-SPEC-foundations §4–§8) — repository catalog + local job pipeline.
+  listDevSpaceRepositories: invoke(RPC_CHANNELS.devSpace.LIST_REPOSITORIES),
+  addDevSpaceRepository: invoke(RPC_CHANNELS.devSpace.ADD_REPOSITORY),
+  startDevSpaceClone: invoke(RPC_CHANNELS.devSpace.START_CLONE),
+  removeDevSpaceRepository: invoke(RPC_CHANNELS.devSpace.REMOVE_REPOSITORY),
+  refreshDevSpaceRepository: invoke(RPC_CHANNELS.devSpace.REFRESH_REPOSITORY),
+  cancelDevSpaceRequest: invoke(RPC_CHANNELS.devSpace.CANCEL),
+  getDevSpaceCapabilities: invoke(RPC_CHANNELS.devSpace.CAPABILITIES),
+  listDevSpaceRuns: invoke(RPC_CHANNELS.devSpace.LIST_RUNS),
+  onDevSpaceCloneProgress: listener(RPC_CHANNELS.devSpace.CLONE_PROGRESS),
+  onDevSpaceChanged: listener(RPC_CHANNELS.devSpace.CHANGED),
+  onDevSpaceRunProgress: listener(RPC_CHANNELS.devSpace.RUN_PROGRESS),
   listNotes: invoke(RPC_CHANNELS.notes.LIST),
   readNote: invoke(RPC_CHANNELS.notes.READ),
   saveNote: invoke(RPC_CHANNELS.notes.SAVE),
@@ -1155,6 +1167,24 @@ export const CHANNEL_MAP = {
   entitiesLinks: invoke(RPC_CHANNELS.entities.LINKS),
   entitiesResolve: invoke(RPC_CHANNELS.entities.RESOLVE),
   onEntitiesLinksChanged: listener(RPC_CHANNELS.entities.LINKS_CHANGED),
+
+  // Rox History — clipboard history (Electron main store + monitor; LOCAL_ONLY)
+  listClipboardEntries: invoke(RPC_CHANNELS.clipboard.LIST),
+  getClipboardEntry: invoke(RPC_CHANNELS.clipboard.GET),
+  setClipboardEntryStarred: invoke(RPC_CHANNELS.clipboard.STAR),
+  setClipboardEntryTags: invoke(RPC_CHANNELS.clipboard.TAGS),
+  deleteClipboardEntry: invoke(RPC_CHANNELS.clipboard.DELETE),
+  clearClipboardHistory: invoke(RPC_CHANNELS.clipboard.CLEAR),
+  copyClipboardEntry: invoke(RPC_CHANNELS.clipboard.COPY),
+  writeClipboardTextConcealed: invoke(RPC_CHANNELS.clipboard.WRITE_CONCEALED),
+  getClipboardSettings: invoke(RPC_CHANNELS.clipboard.SETTINGS_GET),
+  saveClipboardSettings: invoke(RPC_CHANNELS.clipboard.SETTINGS_SET),
+  getClipboardTagCounts: invoke(RPC_CHANNELS.clipboard.TAG_COUNTS),
+  getClipboardStats: invoke(RPC_CHANNELS.clipboard.STATS),
+  onClipboardChanged: listener(RPC_CHANNELS.clipboard.CHANGED),
+
+  // Knowledge map — auto-generated user knowledge graph (server-core builder)
+  buildKnowledgeMap: invoke(RPC_CHANNELS.knowledgeMap.GET),
 
   // Telegram account linking (R4) — local rox-tg-linkd daemon.
   tgLinkStart: invoke(RPC_CHANNELS.tgLink.START),

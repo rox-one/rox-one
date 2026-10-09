@@ -314,7 +314,7 @@ describe('authenticated onboarding profile persistence', () => {
 describe('useOnboarding welcome advance', () => {
   it('finishes the first run with the Rox runtime instead of a provider picker', () => {
     const source = readFileSync(join(import.meta.dir, '../../../hooks/useOnboarding.ts'), 'utf8')
-    expect(source).toContain('nextStepAfterUsername')
+    expect(source).toContain('nextStepAfterRole')
     expect(source).not.toMatch(/nextStepAfterUsername\(\{[\s\S]*isFullyConfigured/)
     expect(source).toMatch(/if \(next === 'finish'\)/)
     expect(source).toContain('ensureRoxRuntimeDefault')

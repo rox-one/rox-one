@@ -52,6 +52,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       // A failed address owns a content surface, including compact mode.
       return true
     case 'memory':
+    case 'clipboard-history':
     case 'learning':
     case 'connections':
     case 'search':
@@ -62,6 +63,9 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       return navState.details !== null
     case 'home':
       return true
+case 'developers':
+    case 'playbooks':
+      // Top-level Dev Space / Playbooks surfaces own the content panel like Home.
     case 'drive':
       // Drive owns the content panel at the root and inside folders; it has no
       // separate navigator column.

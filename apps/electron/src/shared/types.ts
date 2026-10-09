@@ -160,6 +160,16 @@ import type { VoiceHealth, VoicePrefs } from '@rox/shared/voice';
 import type { EnvironmentPrefs, QuestionId } from '@rox/shared/environment';
 import type { ContextDocContent, ContextDocInfo } from '@rox/shared/context-docs';
 import type {
+  ClipChangedPayload,
+  ClipEntryDetail,
+  ClipListQuery,
+  ClipListResult,
+  ClipSettings,
+  ClipStats,
+  ClipTagCount,
+} from '@rox/shared/clipboard-history'
+import type { KnowledgeMapDto } from '@rox/shared/knowledge/knowledge-map-types'
+import type {
   AutomationGraphProjection,
   SaveAutomationGraphPayload,
   SavedAutomationGraph,
@@ -566,6 +576,23 @@ export interface TransportConnectionState {
 
 // Re-import types for ElectronAPI
 import type { WorkspaceInfo, Workspace, SessionMetadata, StoredAttachment as StoredAttachmentType } from '@rox/core/types';
+import type {
+  DevSpaceAddRepositoryInput,
+  DevSpaceCancelInput,
+  DevSpaceCapabilities,
+  DevSpaceCapabilitiesInput,
+  DevSpaceCloneProgress,
+  DevSpaceListRepositoriesInput,
+  DevSpaceListRunsInput,
+  DevSpaceListRunsResult,
+  DevSpaceRemoveRepositoryInput,
+  DevSpaceRemoveRepositoryResult,
+  DevSpaceRepositoryCatalog,
+  DevSpaceRepositoryRecord,
+  DevSpaceRepositoryRequestInput,
+  DevSpaceRepositoryStatus,
+  DevSpaceRunProgress,
+} from '@rox/shared/dev-space';
 
 // Import protocol types used by ElectronAPI (they come through the `export *` above,
 // but we need them in scope for the interface definition)
@@ -1222,6 +1249,18 @@ export interface ElectronAPI {
   readProjectRepositorySpan(input: import('@rox/shared/code-intelligence').RepositoryReadSpanInput): Promise<import('@rox/shared/code-intelligence').FileSpan>
   checkProjectRepositoryFreshness(input: import('@rox/shared/code-intelligence').RepositorySnapshotInput): Promise<import('@rox/shared/code-intelligence').RepositoryFreshness>
   cancelProjectRepositoryRequest(input: import('@rox/shared/code-intelligence').RepositoryProjectInput): Promise<boolean>
+  // Developer Space (02-SPEC-foundations §4–§8) — repository catalog + local job pipeline.
+  listDevSpaceRepositories(input: DevSpaceListRepositoriesInput): Promise<DevSpaceRepositoryCatalog>
+  addDevSpaceRepository(input: DevSpaceAddRepositoryInput): Promise<DevSpaceRepositoryRecord>
+  startDevSpaceClone(input: DevSpaceRepositoryRequestInput): Promise<DevSpaceRepositoryRecord>
+  removeDevSpaceRepository(input: DevSpaceRemoveRepositoryInput): Promise<DevSpaceRemoveRepositoryResult>
+  refreshDevSpaceRepository(input: DevSpaceRepositoryRequestInput): Promise<DevSpaceRepositoryRecord>
+  cancelDevSpaceRequest(input: DevSpaceCancelInput): Promise<boolean>
+  getDevSpaceCapabilities(input: DevSpaceCapabilitiesInput): Promise<DevSpaceCapabilities>
+  listDevSpaceRuns(input: DevSpaceListRunsInput): Promise<DevSpaceListRunsResult>
+  onDevSpaceCloneProgress(callback: (progress: DevSpaceCloneProgress) => void): () => void
+  onDevSpaceChanged(callback: (change: { repositoryId: string; status: DevSpaceRepositoryStatus }) => void): () => void
+  onDevSpaceRunProgress(callback: (progress: DevSpaceRunProgress) => void): () => void
   saveNote(workspaceId: string, noteId: string, content: string, expectedRevision?: string, operationOrSourceStoreId?: NoteMutationOptions | string): Promise<NoteDocument>
   createNote(workspaceId: string, title: string, folder?: string, operation?: NoteCreateOptions): Promise<NoteDocument>
   renameNote(workspaceId: string, noteId: string, nextTitle: string, operation?: NoteMutationOptions): Promise<NoteRenameResult>
@@ -2484,6 +2523,25 @@ export interface ElectronAPI {
   }): Promise<{ ok: true } | { ok: false; error: string }>
   onMemoryChanged(callback: (workspaceId: string | null, scope: LessonScope | 'both') => void): () => void
 
+  // Rox History — clipboard history (first-party; Electron main store + monitor)
+  listClipboardEntries(query?: ClipListQuery): Promise<ClipListResult>
+  getClipboardEntry(id: number): Promise<ClipEntryDetail | null>
+  setClipboardEntryStarred(id: number, starred: boolean): Promise<{ ok: true }>
+  setClipboardEntryTags(id: number, tags: string[]): Promise<{ ok: true }>
+  deleteClipboardEntry(id: number): Promise<{ ok: true }>
+  clearClipboardHistory(keepStarred: boolean): Promise<{ removed: number }>
+  copyClipboardEntry(id: number): Promise<{ ok: true }>
+  /** First-party secret copy: writes text + concealed marker so history skips it. */
+  writeClipboardTextConcealed(text: string): Promise<{ ok: true }>
+  getClipboardSettings(): Promise<ClipSettings>
+  saveClipboardSettings(settings: Partial<ClipSettings>): Promise<ClipSettings>
+  getClipboardTagCounts(): Promise<ClipTagCount[]>
+  getClipboardStats(): Promise<ClipStats>
+  onClipboardChanged(callback: (payload: ClipChangedPayload) => void): () => void
+
+  // Knowledge map — auto-generated user knowledge graph (server-core builder)
+  buildKnowledgeMap(): Promise<KnowledgeMapDto>
+
   // Statuses (workspace-scoped)
   listStatuses(workspaceId: string): Promise<import('@rox/shared/statuses').StatusConfig[]>
   reorderStatuses(workspaceId: string, orderedIds: string[]): Promise<void>
@@ -3202,6 +3260,15 @@ export interface MemoryNavigationState {
 }
 
 /**
+ * Rox History navigator state (clipboard history panel)
+ */
+export interface ClipboardHistoryNavigationState {
+  navigator: 'clipboard-history'
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Learning navigator state (self-learning dashboard — PRD §25-30)
  */
 export interface LearningNavigationState {
@@ -3230,6 +3297,24 @@ export interface FeedNavigationState {
 
 export interface ConnectionsNavigationState {
   navigator: 'connections'
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
+ * Developer Space navigation state (2026-10-09 pack, D2) — `developers`, or
+ * `developers?repo=<id>` with `devSpaceRepoId` focused on one repo workspace.
+ */
+export interface DevelopersNavigationState {
+  navigator: 'developers'
+  devSpaceRepoId?: string
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
+/** Playbooks notebook surface navigation state (2026-10-09 pack, D12). */
+export interface PlaybooksNavigationState {
+  navigator: 'playbooks'
   details: null
   rightSidebar?: RightSidebarPanel
 }
@@ -3376,6 +3461,7 @@ export type NavigationState =
   | PagesNavigationState
   | BrowserNavigationState
   | MemoryNavigationState
+  | ClipboardHistoryNavigationState
   | LearningNavigationState
   | TasksNavigationState
   | FeedNavigationState
@@ -3387,6 +3473,8 @@ export type NavigationState =
   | TerminalNavigationState
   | EntityNavigationState
   | ConnectionsNavigationState
+  | DevelopersNavigationState
+  | PlaybooksNavigationState
   | HomeNavigationState
   | DriveNavigationState
   | ScreenNavigationState
@@ -3440,6 +3528,10 @@ export const isMemoryNavigation = (
   state: NavigationState
 ): state is MemoryNavigationState => state.navigator === 'memory'
 
+export const isClipboardHistoryNavigation = (
+  state: NavigationState
+): state is ClipboardHistoryNavigationState => state.navigator === 'clipboard-history'
+
 export const isLearningNavigation = (
   state: NavigationState
 ): state is LearningNavigationState => state.navigator === 'learning'
@@ -3459,6 +3551,14 @@ export const isInboxNavigation = (
 export const isConnectionsNavigation = (
   state: NavigationState
 ): state is ConnectionsNavigationState => state.navigator === 'connections'
+
+export const isDevelopersNavigation = (
+  state: NavigationState
+): state is DevelopersNavigationState => state.navigator === 'developers'
+
+export const isPlaybooksNavigation = (
+  state: NavigationState
+): state is PlaybooksNavigationState => state.navigator === 'playbooks'
 
 export const isScreenNavigation = (
   state: NavigationState
@@ -3570,6 +3670,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
     }
     return 'memory'
   }
+  if (state.navigator === 'clipboard-history') {
+    return 'clipboard-history'
+  }
   if (state.navigator === 'learning') {
     return 'learning'
   }
@@ -3584,6 +3687,14 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'connections') {
     return 'connections'
+  }
+  if (state.navigator === 'developers') {
+    return state.devSpaceRepoId
+      ? `developers?repo=${encodeURIComponent(state.devSpaceRepoId)}`
+      : 'developers'
+  }
+  if (state.navigator === 'playbooks') {
+    return 'playbooks'
   }
   if (state.navigator === 'home') {
     return 'home'
@@ -3830,6 +3941,14 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
 
   if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'home') return { navigator: 'home', details: null }
+if (key === 'playbooks') return { navigator: 'playbooks', details: null }
+  if (key === 'developers') return { navigator: 'developers', details: null }
+  if (key.startsWith('developers?repo=')) {
+    const devSpaceRepoId = decodeURIComponent(key.slice('developers?repo='.length))
+    return devSpaceRepoId
+      ? { navigator: 'developers', devSpaceRepoId, details: null }
+      : { navigator: 'developers', details: null }
+  }
 
   // ROX Drive (wave 1) — `drive[/folder/{folderId}]`
   if (key === 'drive') return { navigator: 'drive', details: null }

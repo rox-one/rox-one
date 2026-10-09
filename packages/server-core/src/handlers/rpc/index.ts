@@ -29,6 +29,7 @@ import { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './se
 import { registerRuntimeTraceHandlers } from './runtime-trace'
 import { registerSessionForeignImportHandlers } from './session-foreign-import'
 import { registerNotesHandlers, cleanupNotesWatchForClient } from './notes'
+import { registerKnowledgeMapHandlers } from './knowledge-map'
 import { registerNativeDataHandlers } from './native-data.ts'
 import { registerTgLinkHandlers } from './tg-link.ts'
 export { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './sessions'
@@ -47,6 +48,7 @@ import { registerVoiceRealtimeHandlers } from './voice-realtime'
 import { registerEnvironmentHandlers } from './environment'
 import { registerProjectsHandlers } from './projects'
 import { registerCodeIntelligenceHandlers } from './code-intelligence'
+import { registerDevSpaceHandlers, DEFAULT_ENVIRONMENT as DEV_SPACE_DEFAULT_ENVIRONMENT, type HandlerEnvironment as DevSpaceHandlerEnvironment } from './dev-space'
 import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
 import { registerPersonalTasksHandlers } from './personal-tasks'
@@ -108,6 +110,11 @@ export interface CoreRpcRegistrationOptions {
   // W1-03 (#1500)
   /** Runtime for the command bus handlers (live `commands.bus.v1`, default OFF). */
   commands?: CommandsHandlerRuntime
+  /**
+   * Optional Dev Space environment. The host composes `resolveGithubToken` from
+   * its credential fabric; without it dev-space stays a public-only host.
+   */
+  devSpace?: Partial<DevSpaceHandlerEnvironment>
 }
 
 export function registerCoreRpcHandlers(
@@ -152,6 +159,9 @@ export function registerCoreRpcHandlers(
   registerEnvironmentHandlers(server, deps)
   registerProjectsHandlers(server, deps)
   registerCodeIntelligenceHandlers(server, deps)
+  registerDevSpaceHandlers(server, deps, options?.devSpace
+    ? { ...DEV_SPACE_DEFAULT_ENVIRONMENT, ...options.devSpace }
+    : DEV_SPACE_DEFAULT_ENVIRONMENT)
   registerPagesHandlers(server, deps)
   registerKanbanHandlers(server, deps)
   registerPersonalTasksHandlers(server, deps)
@@ -179,6 +189,7 @@ export function registerCoreRpcHandlers(
   registerSkillsPendingHandlers(server, deps)
   registerLearningHandlers(server, deps)
   registerNotesHandlers(server, deps)
+  registerKnowledgeMapHandlers(server)
   if (deps.nativeData) registerNativeDataHandlers(server, deps)
   registerKnowledgeHandlers(server, deps)
   registerMindmapHandlers(server, deps)

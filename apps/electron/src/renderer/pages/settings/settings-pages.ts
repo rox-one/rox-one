@@ -41,6 +41,8 @@ const ServerSettingsPage = lazy(() => import('./ServerSettingsPage'))
 const CloudRunsSettingsPage = lazy(() => import('./CloudRunsSettingsPage'))
 const SecuritySettingsPage = lazy(() => import('./SecuritySettingsPage'))
 const ShortcutsPage = lazy(() => import('./ShortcutsPage'))
+const DeveloperSettingsPage = lazy(() => import('./DeveloperSettingsPage'))
+const PlaybooksSettingsPage = lazy(() => import('./PlaybooksSettingsPage'))
 
 /**
  * Map of settings subpage IDs to their page components.
@@ -73,6 +75,8 @@ export const SETTINGS_PAGE_COMPONENTS: Record<
   security: SecuritySettingsPage,
   cloudRuns: CloudRunsSettingsPage,
   shortcuts: ShortcutsPage,
+  developers: DeveloperSettingsPage,
+  playbooks: PlaybooksSettingsPage,
 }
 
 /**

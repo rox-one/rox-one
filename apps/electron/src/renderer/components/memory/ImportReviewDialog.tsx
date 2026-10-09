@@ -34,10 +34,10 @@ function KindBadge({ kind }: { kind: MemoryRepoImportEdit['kind'] }) {
   const { t } = useTranslation()
   return (
     <span data-testid="import-edit-kind" className={cn(
-      'shrink-0 rounded-[var(--radius-control)] px-1.5 py-0.5 text-[11px]',
-      kind === 'add' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+      'shrink-0 rounded-[var(--radius-control)] px-1.5 py-0.5 text-caption',
+      kind === 'add' ? 'bg-status-success/10 text-status-success'
         : kind === 'delete' ? 'bg-destructive/12 text-destructive'
-        : 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
+        : 'bg-accent/10 text-accent',
     )}>
       {t(`memory.repo.import.kind.${kind}`)}
     </span>
@@ -135,8 +135,8 @@ export function ImportReviewDialog({ bankId, open, onOpenChange, onApplied, onRe
               const pending = selected.has(edit.path)
               const overridden = overrides.has(edit.path)
               return (
-                <li key={edit.path} data-testid="import-edit" data-path={edit.path} className="rounded-[var(--radius-control)] border border-foreground/8 bg-foreground/[0.02] p-2">
-                  <div className="flex flex-wrap items-center gap-2 text-[12px]">
+                <li key={edit.path} data-testid="import-edit" data-path={edit.path} className="rounded-[var(--radius-control)] border border-border-subtle bg-surface-hover p-2">
+                  <div className="flex flex-wrap items-center gap-2 text-small">
                     <input
                       type="checkbox"
                       checked={pending}
@@ -148,13 +148,13 @@ export function ImportReviewDialog({ bankId, open, onOpenChange, onApplied, onRe
                     <span className="min-w-0 flex-1 truncate font-mono">{edit.path}</span>
                     <KindBadge kind={edit.kind} />
                     {edit.conflict ? (
-                      <span data-testid="import-conflict" className="shrink-0 rounded-[var(--radius-control)] bg-amber-500/12 px-1.5 py-0.5 text-[11px] text-amber-700 dark:text-amber-400">
+                      <span data-testid="import-conflict" className="shrink-0 rounded-[var(--radius-control)] bg-status-warning/12 px-1.5 py-0.5 text-caption text-status-warning">
                         {t(CONFLICT_KEY[edit.conflict])}
                       </span>
                     ) : null}
                   </div>
                   {edit.conflict ? (
-                    <label className="mt-1.5 flex items-center gap-1.5 text-[11px] text-text-secondary">
+                    <label className="mt-1.5 flex items-center gap-1.5 text-caption text-text-secondary">
                       <input
                         type="checkbox"
                         checked={overridden}
@@ -166,7 +166,7 @@ export function ImportReviewDialog({ bankId, open, onOpenChange, onApplied, onRe
                     </label>
                   ) : null}
                   {edit.diff ? (
-                    <div className="mt-2 max-h-[240px] overflow-auto rounded-[var(--radius-control)] border border-foreground/8" data-testid="import-edit-diff">
+                    <div className="mt-2 max-h-[240px] overflow-auto rounded-[var(--radius-control)] border border-border-subtle" data-testid="import-edit-diff">
                       <UnifiedDiffViewer unifiedDiff={edit.diff} filePath={edit.path} diffStyle="unified" />
                     </div>
                   ) : null}

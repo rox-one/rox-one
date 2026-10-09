@@ -244,26 +244,7 @@ export const TASKS_REFERENCE_SPECS: ReferenceSpecMap = {
     const row = await tx.upsert('task-status-set', owner, { statuses: tx.payload.statuses }, { ownerType: target?.kind ?? 'workspace', ownerId: target?.id ?? tx.ctx.workspaceId })
     return { collection: 'task-status-set', id: row.id, revision: row.revision, ref: target ?? null, changes: ['statuses'] }
   },
-  'tasks.create_from_selection': { op: createTaskFrom(selectionOrigin, originFields(tx => tx.payload.text, selectionOrigin)), event: 'task.task_adding' },
-  'tasks.create_many_from_checklist': {
-    event: 'task.task_adding',
-    op: async tx => {
-      await authorizeTaskOrigin(tx, tx.payload.docRef as EntityRef)
-      const items = (tx.payload.items as Array<{ blockId: string; text: string }>).map((item, index) => ({
-        item, id: tx.newId(`item-${index}`), origin: { ...tx.payload.docRef, fragment: `block-${item.blockId}` } as EntityRef,
-      }))
-      // Validate every item before the first write.
-      for (const { id, origin } of items) validateLink({ kind: 'task', id }, origin, 'derived-from')
-      await tx.assertAbsent('task', ...items.map(entry => entry.id))
-      const ids: string[] = []
-      for (const { item, id, origin } of items) {
-        await tx.insert('task', id, { ...(await taskDefaults(tx)), title: item.text, ...(tx.payload.listId ? { listId: tx.payload.listId } : {}), origin: { kind: origin.kind, id: origin.id, fragment: origin.fragment } })
-        await addLink(tx, { kind: 'task', id }, origin, 'derived-from', { role: 'origin' })
-        ids.push(id)
-      }
-      return { collection: 'task', id: ids[0]!, ref: { kind: 'task', id: ids[0]! }, result: { ids }, changes: ['title'] }
-    },
-  },
-  'tasks.create_from_message': { op: createTaskFrom(messageOrigin, originFields(tx => refString(messageOrigin(tx)), messageOrigin)), event: 'task.task_adding' },
+  // W1-14 (#1511): tasks.create_from_selection / _from_message / _many_from_checklist
+  // are handled by @rox/server-core/xsc (TECH-SPEC §12).
   'tasks.create_from_email': { op: createTaskFrom(mailOrigin, originFields(tx => refString(mailOrigin(tx)), mailOrigin)), event: 'task.task_adding' },
 }

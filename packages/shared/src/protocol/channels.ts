@@ -209,6 +209,20 @@ export const RPC_CHANNELS = {
     FRESHNESS: 'codeIntelligence:freshness',
     CANCEL: 'codeIntelligence:cancel',
   },
+  devSpace: {
+    LIST_REPOSITORIES: 'devSpace:listRepositories',
+    ADD_REPOSITORY: 'devSpace:addRepository',
+    START_CLONE: 'devSpace:startClone',
+    REMOVE_REPOSITORY: 'devSpace:removeRepository',
+    REFRESH_REPOSITORY: 'devSpace:refreshRepository',
+    CANCEL: 'devSpace:cancel',
+    CAPABILITIES: 'devSpace:capabilities',
+    LIST_RUNS: 'devSpace:listRuns',
+    CLONE_PROGRESS: 'devSpace:cloneProgress',
+    CHANGED: 'devSpace:changed',
+    RUN_PROGRESS: 'devSpace:runProgress',
+    SOFT_SIGNAL: 'devSpace:softSignal',
+  },
   notes: {
     LIST: 'notes:list',
     READ: 'notes:read',
@@ -249,6 +263,24 @@ export const RPC_CHANNELS = {
   notesImport: {
     PREVIEW: 'notesImport:preview',
     EXECUTE: 'notesImport:execute',
+  },
+  // clipboard — Rox History (first-party clipboard history). Owned by the
+  // Electron main process (store + monitor); CHANGED is a broadcast push.
+  clipboard: {
+    LIST: 'clipboard:list',
+    GET: 'clipboard:get',
+    STAR: 'clipboard:star',
+    TAGS: 'clipboard:tags',
+    DELETE: 'clipboard:delete',
+    CLEAR: 'clipboard:clear',
+    COPY: 'clipboard:copy',
+    /** First-party secret copy: writes text + the concealed pasteboard marker. */
+    WRITE_CONCEALED: 'clipboard:writeConcealed',
+    SETTINGS_GET: 'clipboard:settingsGet',
+    SETTINGS_SET: 'clipboard:settingsSet',
+    TAG_COUNTS: 'clipboard:tagCounts',
+    STATS: 'clipboard:stats',
+    CHANGED: 'clipboard:changed',
   },
   // knowledge — P1 read-only knowledge provider (spec 03) plus P3 write-back
   // mutation-proposal channels (spec 05) plus P4 Session→Knowledge publication
@@ -316,6 +348,13 @@ export const RPC_CHANNELS = {
     // P6 knowledge change watcher (poll) — start/stop per connection; emits into AutomationSystem.
     WATCH: 'knowledge:watch',
     UNWATCH: 'knowledge:unwatch',
+  },
+  // knowledgeMap — the user's auto-generated knowledge graph, built by
+  // server-core (fs scan) and rendered in profile/context settings. CHANGED is
+  // emitted after a rebuild when a watcher-triggered refresh occurs.
+  knowledgeMap: {
+    GET: 'knowledgeMap:get',
+    CHANGED: 'knowledgeMap:changed',
   },
   // siyuan — P2 native knowledge surface (spec 03/P2): embedded SiYuan desktop
   // hosted in a browser pane, keyed by durable document keys (`siyuan:{kind}:{id}`)
@@ -655,6 +694,10 @@ export const RPC_CHANNELS = {
     WAKE_SET: 'voice:wakeSet',
     WAKE_CHANGED: 'voice:wakeChanged',
     TRIGGER: 'voice:trigger',
+  },
+  podcast: {
+    /** Podcast generation run; `voice:job` stays for dictation/ASR (§5.1, D13). */
+    JOB: 'podcast:job',
   },
   environment: {
     GET: 'environment:get',

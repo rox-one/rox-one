@@ -53,6 +53,7 @@ import {
   syncExtraction,
 } from './decisions-store'
 import { toErrorMessage } from '@/lib/errors'
+import { useEffectiveVisible } from '@/lib/surface-keepalive'
 
 const STATUSES: DecisionStatus[] = ['accepted', 'superseded', 'reverted']
 const PERIODS: (number | null)[] = [7, 30, 90, null]
@@ -78,6 +79,8 @@ export default function DecisionsPage({ itemId }: { itemId: string | null }) {
   const language: 'ru' | 'en' = i18n.language.startsWith('ru') ? 'ru' : 'en'
   const workspace = useActiveWorkspace()
   const workspaceId = workspace?.id ?? null
+  // PERF-10 (#1577): a retired surface keeps this page mounted but stops the poll.
+  const visible = useEffectiveVisible()
   const [data, setData] = useState<DecisionsData>(() => loadDecisions(workspaceId))
   const [filter, setFilter] = useState<DecisionFilter>({ query: '', status: 'all', source: 'all', periodDays: null })
   const [memoryRules, setMemoryRules] = useState<Set<string> | null>(null)
@@ -99,13 +102,13 @@ export default function DecisionsPage({ itemId }: { itemId: string | null }) {
   const pending = data.extractions.filter((e) => !e.parsedAt)
   const pendingKey = pending.map((e) => e.id).join(',')
   useEffect(() => {
-    if (!workspaceId || !pendingKey) return
+    if (!workspaceId || !pendingKey || !visible) return
     const ids = pendingKey.split(',')
     const tick = () => { for (const id of ids) void syncExtraction(workspaceId, id) }
     tick()
     const timer = window.setInterval(tick, 5000)
     return () => window.clearInterval(timer)
-  }, [workspaceId, pendingKey])
+  }, [workspaceId, pendingKey, visible])
 
   const save = useCallback((next: DecisionsData) => {
     setData(next)

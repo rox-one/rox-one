@@ -14,7 +14,9 @@ import {
   Cloud,
   DownloadCloud,
   FileText,
+  FolderGit2,
   Keyboard,
+  NotebookPen,
   MessageSquare,
   Palette,
   Server,
@@ -49,6 +51,8 @@ export const ServerSettingsIcon = ({ className }: IconProps) => <Server classNam
 export const SecuritySettingsIcon = ({ className }: IconProps) => <ShieldAlert className={className} />
 export const PrivacySettingsIcon = ({ className }: IconProps) => <Shield className={className} />
 export const ShortcutsIcon = ({ className }: IconProps) => <Keyboard className={className} />
+export const DevelopersIcon = ({ className }: IconProps) => <FolderGit2 className={className} />
+export const PlaybooksIcon = ({ className }: IconProps) => <NotebookPen className={className} />
 export const RuntimeIcon = ({ className }: IconProps) => <Settings className={className} />
 export const ContextIcon = ({ className }: IconProps) => <FileText className={className} />
 export const KnowledgeIcon = ({ className }: IconProps) => <BookOpen className={className} />
@@ -83,4 +87,6 @@ export const SETTINGS_ICONS: Record<SettingsSubpage, React.ComponentType<IconPro
   security: SecuritySettingsIcon,
   cloudRuns: CloudRunsIcon,
   shortcuts: ShortcutsIcon,
+  developers: DevelopersIcon,
+  playbooks: PlaybooksIcon,
 }

@@ -97,6 +97,36 @@ describe('buildSurfaceTabViews: home', () => {
   })
 })
 
+describe('buildSurfaceTabViews: navigator panels', () => {
+  it('names a Rox History tab from the route title, not the generic "Panel"', () => {
+    const route = routes.view.clipboardHistory()
+    const [tab] = buildSurfaceTabViews({
+      entries: [{ id: 'p-clip', route, proportion: 1, panelType: 'clipboard-history', laneId: 'main' }],
+      focusedPanelId: null,
+      resolveSessionTitle: () => null,
+      // The shell resolves 'clipboard-history' → clipboard.title through
+      // buildRouteTitleKeys / APP_NAV_DESTINATIONS.
+      resolveRouteTitle: (r) => (r.split('?')[0] === 'clipboard-history' ? 'Clipboard History' : null),
+      labels: LABELS,
+    })
+    expect(tab.title).toBe('Clipboard History')
+    expect(tab.title).not.toBe(LABELS.panel)
+    // Lane policy keeps the dedicated PanelType; the surface kind still degrades.
+    expect(tab.panelType).toBe('clipboard-history')
+    expect(tab.kind).toBeNull()
+  })
+
+  it('falls back to "Panel" when no route title resolves', () => {
+    const [tab] = buildSurfaceTabViews({
+      entries: [{ id: 'p-clip', route: routes.view.clipboardHistory(), proportion: 1, panelType: 'clipboard-history', laneId: 'main' }],
+      focusedPanelId: null,
+      resolveSessionTitle: () => null,
+      labels: LABELS,
+    })
+    expect(tab.title).toBe(LABELS.panel)
+  })
+})
+
 describe('panelContextKeysFromRoute', () => {
   it('publishes activeSurface knowledge for a knowledge document route', () => {
     expect(panelContextKeysFromRoute('knowledge/document/doc-1')).toEqual({ activeSurface: 'knowledge' })

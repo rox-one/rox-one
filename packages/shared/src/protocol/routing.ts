@@ -24,6 +24,19 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.codeIntelligence.READ_SPAN,
   RPC_CHANNELS.codeIntelligence.FRESHNESS,
   RPC_CHANNELS.codeIntelligence.CANCEL,
+  // Dev Space — repository catalog + clone/analysis jobs run in the local server (02-SPEC-foundations §5–§6).
+  RPC_CHANNELS.devSpace.LIST_REPOSITORIES,
+  RPC_CHANNELS.devSpace.ADD_REPOSITORY,
+  RPC_CHANNELS.devSpace.START_CLONE,
+  RPC_CHANNELS.devSpace.REMOVE_REPOSITORY,
+  RPC_CHANNELS.devSpace.REFRESH_REPOSITORY,
+  RPC_CHANNELS.devSpace.CANCEL,
+  RPC_CHANNELS.devSpace.CAPABILITIES,
+  RPC_CHANNELS.devSpace.LIST_RUNS,
+  RPC_CHANNELS.devSpace.CLONE_PROGRESS,
+  RPC_CHANNELS.devSpace.CHANGED,
+  RPC_CHANNELS.devSpace.RUN_PROGRESS,
+  RPC_CHANNELS.devSpace.SOFT_SIGNAL,
   // remote — local connectivity management (reaches out to remote server from local app)
   RPC_CHANNELS.remote.TEST_CONNECTION,
 
@@ -364,6 +377,27 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.bundledSkills.SET_DISABLED,
   RPC_CHANNELS.bundledSkills.CHANGED,
 
+  // Rox History — clipboard history store + monitor live in the local Electron
+  // main process (local OS clipboard, host config dir).
+  RPC_CHANNELS.clipboard.LIST,
+  RPC_CHANNELS.clipboard.GET,
+  RPC_CHANNELS.clipboard.STAR,
+  RPC_CHANNELS.clipboard.TAGS,
+  RPC_CHANNELS.clipboard.DELETE,
+  RPC_CHANNELS.clipboard.CLEAR,
+  RPC_CHANNELS.clipboard.COPY,
+  RPC_CHANNELS.clipboard.WRITE_CONCEALED,
+  RPC_CHANNELS.clipboard.SETTINGS_GET,
+  RPC_CHANNELS.clipboard.SETTINGS_SET,
+  RPC_CHANNELS.clipboard.TAG_COUNTS,
+  RPC_CHANNELS.clipboard.STATS,
+  RPC_CHANNELS.clipboard.CHANGED,
+
+  // knowledge map — built from the local config dir (context + memory) and the
+  // workspace notes root, so it runs on the host.
+  RPC_CHANNELS.knowledgeMap.GET,
+  RPC_CHANNELS.knowledgeMap.CHANGED,
+
   // marketplace — curated installs into the local config dir (skills/context/toolchain deferral)
   RPC_CHANNELS.marketplace.CATALOG,
   RPC_CHANNELS.marketplace.STATS,
@@ -621,6 +655,8 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.voice.PROCESS,
   RPC_CHANNELS.voice.MODELS_LIST,
   RPC_CHANNELS.voice.JOB,
+  // Podcast generation rides the workspace server alongside voice jobs (02-SPEC-foundations §5.1).
+  RPC_CHANNELS.podcast.JOB,
   RPC_CHANNELS.voice.OVERLAY,
   RPC_CHANNELS.voice.HOTKEY,
   RPC_CHANNELS.voice.TALK_START,

@@ -83,11 +83,13 @@ import {
   isPagesNavigation,
   isBrowserNavigation,
   isMemoryNavigation,
+  isClipboardHistoryNavigation,
   isLearningNavigation,
   isTasksNavigation,
   isInboxNavigation,
   isFeedNavigation,
   isConnectionsNavigation,
+  isDevelopersNavigation,
   isHomeNavigation,
   isDriveNavigation,
   isKnowledgeNavigation,
@@ -95,6 +97,7 @@ import {
   isCloudRunNavigation,
   isTerminalNavigation,
   isExtensionNavigation,
+  isPlaybooksNavigation,
   DEFAULT_NAVIGATION_STATE,
 } from '../../shared/types'
 import { sessionMetaMapAtom, updateSessionMetaAtom, type SessionMeta } from '@/atoms/sessions'
@@ -122,7 +125,7 @@ export type { Route }
 
 // Re-export navigation state types for consumers
 export type { NavigationState, SessionFilter }
-export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isLearningNavigation, isTasksNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isDriveNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
+export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isClipboardHistoryNavigation, isLearningNavigation, isTasksNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isDriveNavigation, isDevelopersNavigation, isPlaybooksNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
 
 /** Deep-link sources whose parameters must not be trusted to drive the app (SEC-01). */
 const UNTRUSTED_DEEPLINK_SOURCES: Record<string, true> = { 'browser-pane': true }

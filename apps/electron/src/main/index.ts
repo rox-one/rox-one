@@ -101,9 +101,10 @@ import { RPC_CHANNELS } from '@rox/shared/protocol'
 
 import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@rox/server-core/sessions'
 import { PageThumbnailer } from './page-thumbnailer'
-import { registerAllRpcHandlers } from './handlers/index'
+import { registerAllRpcHandlers, startClipboardMonitor } from './handlers/index'
 import { createDriveService } from './drive/register'
 import { registerCoreRpcHandlers, cleanupCoreClientResources } from '@rox/server-core/handlers/rpc'
+import { NodeRegistry, DEFAULT_PRESENCE_TTL_MS } from '@rox/server-core/nodes'
 import { createWorkGraphKernel, type WorkGraphKernel } from '@rox/server-core/workgraph'
 import type { PlatformServices } from '../runtime/platform'
 import { createElectronPlatform } from './platform'
@@ -1252,6 +1253,10 @@ app.whenReady().then(async () => {
 
       // Bootstrap the WS RPC server via shared bootstrap function.
       let localNativeAuthority: NonNullable<HandlerDeps['nativeData']>['authority'] | null = null
+      // f.9 — server-owned node/device registry (default bounds). Mirrors the
+      // standalone headless server so `nodes:*` is live instead of
+      // CHANNEL_NOT_FOUND on the real WS RPC server.
+      const nodeRegistry = new NodeRegistry()
       const instance = await bootstrapServer<SessionManager, HandlerDeps>({
         serverToken,
         rpcHost,
@@ -1407,18 +1412,24 @@ app.whenReady().then(async () => {
             ...(learning ? { learning } : {}),
             // ROX Drive (wave 1): device-local storage engine.
             drive: createDriveService(),
+            // f.9 — node/device RPC surface (see the headless server for context).
+            nodes: nodeRegistry,
           }
         },
         // Headless: register only core handlers (no GUI handlers for browser, settings, etc.)
         // GUI: register all handlers plus the main-process-owned WorkGraph profile.
         registerAllRpcHandlers: isHeadless
           ? (server, deps, serverCtx) => registerCoreRpcHandlers(server, deps, serverCtx)
-          : (server, deps, serverCtx) => registerAllRpcHandlers(
-              server,
-              deps,
-              serverCtx,
-              workGraphKernel ?? undefined,
-            ),
+          : (server, deps, serverCtx) => {
+              registerAllRpcHandlers(
+                server,
+                deps,
+                serverCtx,
+                workGraphKernel ?? undefined,
+              )
+              // Rox History capture loop: idempotent, fail-soft without storage.
+              startClipboardMonitor(deps)
+            },
         setSessionEventSink: (sm, sink) => sm.setEventSink(sink),
         initializeSessionManager: (sm) => sm.initialize(),
         initModelRefreshService: () => initModelRefreshService(async (slug: string) => {
@@ -1457,6 +1468,13 @@ app.whenReady().then(async () => {
       })
 
       markStartup(STARTUP_MARKS.serverReady)
+      // f.9 — drive node presence TTL expiry. The bootstrap-owned scheduler owns
+      // the timer; Electron's quit path terminates the process, which reclaims it.
+      instance.scheduler.scheduleEvery({
+        id: 'nodes:presence-sweep',
+        everyMs: DEFAULT_PRESENCE_TTL_MS,
+        run: () => { nodeRegistry.sweep() },
+      })
       // Capture module-level references for before-quit cleanup and deep-link handlers
       sessionManager = instance.sessionManager
       oauthFlowStore = instance.oauthFlowStore

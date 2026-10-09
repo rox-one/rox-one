@@ -79,9 +79,18 @@ function fenceDigest(principal: NativePrincipal, workspaceId: string, action: Na
 }
 
 
+/** True when the value contains a C0 control character, DEL, or (with includeC1) a C1 control character. */
+function hasControlChar(value: string, includeC1 = false): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    if (code <= 0x1f || code === 0x7f || (includeC1 && code >= 0x80 && code <= 0x9f)) return true
+  }
+  return false
+}
+
 function validLabel(value: string): string {
   const label = value.trim()
-  if (!label || label.length > 120 || /[\u0000-\u001f\u007f]/.test(label)) throw new Error('invalid label')
+  if (!label || label.length > 120 || hasControlChar(label)) throw new Error('invalid label')
   return label
 }
 
@@ -92,7 +101,7 @@ function validId(value: string): string {
 
 function validRoleName(value: unknown): string {
   const name = typeof value === 'string' ? value.trim() : ''
-  if (!name || name.length > 128 || /[\u0000-\u001f\u007f]/.test(name)) throw new Error('invalid operator role name')
+  if (!name || name.length > 128 || hasControlChar(name)) throw new Error('invalid operator role name')
   return name
 }
 
@@ -484,7 +493,7 @@ export class NativeAuthority {
     if (!this.authorize(principal, binding.workspaceId, 'write', nativeRoot)) throw new Error('Native binding registration denied')
     const grant = this.#currentAuthorization(principal, binding.workspaceId, 'write')!
     for (const value of [binding.id, binding.workspaceId, binding.sessionId, binding.platform]) validId(value)
-    if (typeof binding.channelId !== 'string' || !binding.channelId.length || binding.channelId.length > 512 || /[\u0000-\u001f\u007f]/.test(binding.channelId)) throw new Error('Invalid native binding channel')
+    if (typeof binding.channelId !== 'string' || !binding.channelId.length || binding.channelId.length > 512 || hasControlChar(binding.channelId)) throw new Error('Invalid native binding channel')
     if (binding.threadId !== undefined && !Number.isSafeInteger(binding.threadId)) throw new Error('Invalid native binding thread')
     const previous = this.#db.prepare('SELECT issuer,subject_id FROM session_messaging_bindings WHERE binding_id=?').get(binding.id) as { issuer: string; subject_id: string } | undefined
     if (previous && (previous.issuer !== principal.issuer || previous.subject_id !== principal.subject)) throw new Error('Native binding owner changed')
@@ -534,9 +543,9 @@ export class NativeAuthority {
   updateSelfProfile(principal: NativePrincipal, workspaceId: string, updates: { name?: unknown }): { name?: string } {
     if (!this.authorize(principal, workspaceId, 'read')) throw new Error('Native self profile denied');
     if (!updates || typeof updates !== 'object' || typeof updates.name !== 'string') throw new Error('Native profile name is required');
-    if (/[\u0000-\u001f\u007f-\u009f]/u.test(updates.name)) throw new Error('Invalid native profile name');
+    if (hasControlChar(updates.name, true)) throw new Error('Invalid native profile name');
     const name = updates.name.normalize('NFC').trim().replace(/\s+/gu, ' ');
-    if (!name || name.length > 100 || /[\u0000-\u001f\u007f-\u009f]/u.test(name)) throw new Error('Invalid native profile name');
+    if (!name || name.length > 100 || hasControlChar(name, true)) throw new Error('Invalid native profile name');
     this.#db.prepare(`INSERT INTO self_profiles(issuer,subject_id,name,updated_at) VALUES(?,?,?,?)
       ON CONFLICT(issuer,subject_id) DO UPDATE SET name=excluded.name,updated_at=excluded.updated_at`)
       .run(principal.issuer, principal.subject, name, Date.now());

@@ -17,6 +17,7 @@ export const SE_MONOCHROME_NAV_IDS: Record<AppNavDestinationId, true> = {
   sources: true,
   skills: true,
   memory: true,
+  clipboardHistory: true,
   memoryRepo: true,
   browser: true,
   tasks: true,
@@ -28,6 +29,8 @@ export const SE_MONOCHROME_NAV_IDS: Record<AppNavDestinationId, true> = {
   home: true,
   drive: true,
   knowledge: true,
+  developers: true,
+  playbooks: true,
   settings: true,
   learning: true,
 }

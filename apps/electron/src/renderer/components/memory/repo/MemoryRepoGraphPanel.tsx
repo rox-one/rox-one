@@ -69,7 +69,7 @@ export function MemoryGraphNodeButton({ id, data, onOpen }: { id: string; data: 
       type="button"
       data-testid={`memory-repo-graph-node-${id}`}
       onClick={() => openGraphNode({ data }, onOpen)}
-      className={cn('w-[184px] truncate rounded-[var(--radius-control)] border px-2.5 py-1.5 text-left text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-accent', KIND_TONE[data.kind])}
+      className={cn('w-[184px] truncate rounded-[var(--radius-control)] border px-2.5 py-1.5 text-left text-small outline-none focus-visible:ring-2 focus-visible:ring-accent', KIND_TONE[data.kind])}
     >
       {data.label}
     </button>
@@ -100,8 +100,8 @@ function MemoryGraphNodeWrapper(props: NodeProps<MemoryGraphFlowNode>) {
 export function MemoryRepoGraphLegend() {
   const { t } = useTranslation()
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-foreground/8 px-4 py-2 text-[11px]" data-testid="memory-repo-graph-legend">
-      <span className="text-[10px] font-medium uppercase tracking-wide text-text-muted/70">{t('memory.repo.graph.legend')}</span>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border-subtle px-4 py-2 text-caption" data-testid="memory-repo-graph-legend">
+      <span className="text-caption font-medium uppercase tracking-wide text-text-muted/70">{t('memory.repo.graph.legend')}</span>
       {LEGEND_KINDS.map((kind) => (
         <span key={kind} className="inline-flex items-center gap-1.5">
           <span className={cn('size-2.5 rounded-full border', KIND_TONE[kind])} aria-hidden="true" />
@@ -151,7 +151,7 @@ export function MemoryRepoGraphPanel({ graph, onOpenFile }: MemoryRepoGraphPanel
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-5 text-center" data-testid="memory-repo-graph-empty">
         <span className="grid size-12 place-items-center rounded-[var(--radius-control)] bg-accent/10 text-accent">
-          <Network aria-hidden="true" className="size-6" />
+          <Network aria-hidden="true" className="icon-empty" />
         </span>
         <p className="text-sm text-text-secondary">{t('memory.repo.graph.empty')}</p>
       </div>

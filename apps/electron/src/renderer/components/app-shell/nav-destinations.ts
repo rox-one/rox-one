@@ -17,13 +17,41 @@
  * Action-backed entries (`action: 'open-browser'`) carry `route: null` too,
  * but open their existing native surface instead of a route.
  */
-import { GitBranch, HardDrive, type LucideIcon } from 'lucide-react'
+import {
+  BookOpen,
+  Brain,
+  Cable,
+  Calendar,
+  ClipboardList,
+  DatabaseZap,
+  FolderGit2,
+  FolderKanban,
+  GitBranch,
+  Globe,
+  GraduationCap,
+  HardDrive,
+  House,
+  ListTodo,
+  MessageSquare,
+  NotebookPen,
+  NotebookText,
+  PanelsTopLeft,
+  Settings,
+  Workflow,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react'
+import { atom, type Atom } from 'jotai'
 import { GLYPHS } from '../../platform/glyphs'
 import { routes, type ViewRoute } from '../../../shared/routes'
+import { devSpaceEnabledAtom } from '../../atoms/dev-space'
+import { playbooksEnabledAtom } from '../../atoms/playbooks'
 import {
   isAutomationsNavigation,
   isBrowserNavigation,
+  isClipboardHistoryNavigation,
   isConnectionsNavigation,
+  isDevelopersNavigation,
   isDiffNavigation,
   isDriveNavigation,
   isHomeNavigation,
@@ -31,6 +59,7 @@ import {
   isNotesNavigation,
   isMemoryNavigation,
   isLearningNavigation,
+  isPlaybooksNavigation,
   isTasksNavigation,
   isPagesNavigation,
   isProjectsNavigation,
@@ -47,6 +76,7 @@ export type AppNavDestinationId =
   | 'sources'
   | 'skills'
   | 'memory'
+  | 'clipboardHistory'
   | 'memoryRepo'
   | 'learning'
   | 'browser'
@@ -59,6 +89,8 @@ export type AppNavDestinationId =
   | 'drive'
   | 'home'
   | 'knowledge'
+  | 'developers'
+  | 'playbooks'
   | 'settings'
 
 export interface AppNavDestination {
@@ -86,6 +118,12 @@ export interface AppNavDestination {
    * with this i18n key as the tooltip (spec S-03 §3.2 degradation).
    */
   disabledTooltipKey?: string
+  /**
+   * Feature flag gating the whole entry (spec 2026-10-09 §2.3): the
+   * destination is hidden while the flag is off (undefined = always shown).
+   * Enumerating consumers read `visibleNavDestinationsAtom`.
+   */
+  flagAtom?: Atom<boolean>
 }
 
 /** Primary ordering is stable; supporting services keep their prior identities. */
@@ -198,6 +236,16 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     isActive: isLearningNavigation,
   },
   {
+    id: 'clipboardHistory',
+    linkId: 'nav:clipboardHistory',
+    icon: ClipboardList,
+    labelKey: 'clipboard.title',
+    railGroup: 'more',
+    contextLinkIds: ['nav:clipboardHistory'],
+    route: () => routes.view.clipboardHistory(),
+    isActive: isClipboardHistoryNavigation,
+  },
+  {
     // W3.2: Встречи merged into the calendar surface — the entry keeps its
     // `meetings` id, `nav:meetings` linkId and `routes.view.meetings()` route so
     // deep links resolve, but it is presented as «Календарь» (the surface name).
@@ -273,6 +321,28 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     isActive: (navState) => isKnowledgeNavigation(navState) || isDiffNavigation(navState),
   },
   {
+    id: 'developers',
+    linkId: 'nav:developers',
+    icon: FolderGit2,
+    labelKey: 'sidebar.developers',
+    railGroup: 'more',
+    contextLinkIds: ['nav:developers'],
+    route: () => routes.view.developers(),
+    isActive: isDevelopersNavigation,
+    flagAtom: devSpaceEnabledAtom,
+  },
+  {
+    id: 'playbooks',
+    linkId: 'nav:playbooks',
+    icon: NotebookText,
+    labelKey: 'sidebar.playbooks',
+    railGroup: 'more',
+    contextLinkIds: ['nav:playbooks'],
+    route: () => routes.view.playbooks(),
+    isActive: isPlaybooksNavigation,
+    flagAtom: playbooksEnabledAtom,
+  },
+  {
     id: 'settings',
     linkId: 'nav:settings',
     icon: GLYPHS.settings,
@@ -296,3 +366,12 @@ export const APP_NAV_DESTINATIONS_BY_ID: Record<AppNavDestinationId, AppNavDesti
     AppNavDestinationId,
     AppNavDestination
   >
+
+/**
+ * Destinations whose feature flag is on (`flagAtom` undefined = always
+ * visible). Enumerating consumers read this atom instead of the raw array so
+ * gated entries (Developers, Playbooks) stay hidden while their flag is off.
+ */
+export const visibleNavDestinationsAtom = atom((get) =>
+  APP_NAV_DESTINATIONS.filter((destination) => !destination.flagAtom || get(destination.flagAtom)),
+)

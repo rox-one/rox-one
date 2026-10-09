@@ -48,6 +48,7 @@ import {
 } from './omnibox-providers'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
 import { registerConationOmniboxCommands } from './omnibox-conation'
+import { registerClipboardHistoryOmniboxCommands } from './omnibox-clipboard-history'
 // W1-07 (#1504): entity provider (inert until a flagged source registers).
 import { createEntityOmniboxProvider } from './omnibox-entities'
 import { currentShellFlags } from './unified-flags'
@@ -99,6 +100,7 @@ export function bootstrapOmnibox(options?: { t?: LabelResolver }): OmniboxPlatfo
 
   registerActionCommands(p.commands)
   registerKnowledgeCommands(p.commands)
+  registerClipboardHistoryCommands(p.commands)
   registerConationCommands(p.commands, options?.t)
   registerResourceProviders(p.resources, options?.t)
   // Fail-soft: never block palette bootstrap if plugin bridge is missing.
@@ -265,6 +267,19 @@ function registerKnowledgeCommands(commands: CommandRegistry): void {
     track(commands.register(openCompatAlias))
   } catch (err) {
     console.error('[omnibox] failed to register knowledge commands', err)
+  }
+}
+
+function registerClipboardHistoryCommands(commands: CommandRegistry): void {
+  try {
+    for (const d of registerClipboardHistoryOmniboxCommands(commands, {
+      title: i18n.t('clipboard.title'),
+      category: i18n.t('clipboard.title'),
+    })) {
+      track(d)
+    }
+  } catch (err) {
+    console.error('[omnibox] failed to register clipboard history commands', err)
   }
 }
 

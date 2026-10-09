@@ -33,7 +33,10 @@
     "./memory/learning/*": "./src/memory/learning/*.ts",
     "./workspace-work/*": "./src/workspace-work/*.ts",
     "./commands": "./src/commands/index.ts",
-    "./workspace-sync": "./src/workspace-sync/index.ts"
+    "./workspace-sync": "./src/workspace-sync/index.ts",
+    "./collab": "./src/collab/index.ts",
+    "./drive": "./src/drive/index.ts",
+    "./xsc": "./src/xsc/index.ts"
   },
   "scripts": {},
   "dependencies": {
@@ -47,7 +50,7 @@
     "gray-matter": "^4.0.3",
     "jose": "^6.0.0",
     "js-yaml": "^4.1.1",
-    "sharp": "0.35.4",
+    "sharp": "0.35.5",
     "ws": "^8.19.0"
   },
   "devDependencies": {
