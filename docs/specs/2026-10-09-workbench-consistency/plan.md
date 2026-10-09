@@ -182,3 +182,19 @@ CI PR: `component-recovery`, `route-fixtures (ubuntu)`, `Renderer bundle-size bu
 - Дерево заметок — апстримная `WindowedTreeList` (`pages/notes/NotesNavigationSidebar.tsx`), цикл-локальный `notes-navigation-virtualization.ts` не переносился; `flattenNotesTree`/`notesScrollToKey`/порог 200 — из main.
 - DOM-харнесс: `perf/dom-scenario.tsx` передаёт навигатору заметок `viewportRef`, `perf-dom.tsx` отдаёт ему `#perf-notes` (тот же контракт, что у `NotesPage`) — гейт `dom_notes_navigator_first_render` снова меряет окнированный производственный путь, а не полное дерево.
 - Сьюты вкладок/полосы/пилюли/диплинков переведены с чтения исходников на монтирование и взаимодействие; фальсифицируемость проверена мутацией `tabNavigationTarget`-ветки (падают ровно два теста навигации).
+
+### Слияние 7c4a0c85f (10.10) — 57 коммитов main, 16 конфликтных файлов
+
+Main ушёл вперёд волной Keeper/Drive/GCal/онбординг + native-calendar-helper; ветка к этому моменту была на `bb5678858`. Решения по конфликтам:
+
+| Файл | Решение |
+|---|---|
+| `apps/electron/src/shared/route-parser.ts` | union `NavigatorType`: `'meetings'` (база) и `'drive'` (main) вместе; слой legacy-алиасов цикла (W3.2/W3.3) сохранён — `meetings`/`contacts` резолвятся в unified-поверхности раньше entity-гейта, поэтому `meetings/meeting/{id}` остаётся календарём |
+| `apps/electron/src/renderer/contexts/NavigationContext.tsx` | экспорт-линия = версия ветки + `isDriveNavigation`; `isMeetingsNavigation` не возвращается: в цикле Встречи рендерятся внутри календарной поверхности (W3.2), helper удалён из `shared/types`, `AppShell`/`MainContentPanel` используют `isSurfaceNavigation` (фиксирует `meetings-nav.test.ts`) |
+| `apps/electron/src/renderer/components/app-shell/nav-destinations.ts` | импорты: `GLYPHS` ветки + `HardDrive` из main (новая запись `drive`) |
+| `eslint-baselines/ui-tokens.json` | пер-сторонний максимум (2660/1651/2188): рост относительно `HEAD^1` нулевой, `lint:ui-tokens --check` — 0 новых правил при 118 записанных уменьшениях |
+| 12 локалей `packages/shared/src/i18n/locales/*.json` | union обеих сторон (`extraScreens.health.*` ветки + `extraScreens.keeper.*` main), затем `scripts/sort-locales.ts` |
+
+`bun.lock` после слияния совпадает с `origin/main` побайтово (регенерация #1661 под bun 1.3.14); `bun install --frozen-lockfile` на слитом дереве проходит.
+
+Добавлено при слиянии: `route-parser-drive.test.ts` — регрессия на стык «drive-навигатор × legacy-алиасы» (5/5): round-trip `drive`/`drive/folder/{id}`, percent-encoding, отказ на неизвестном подпути и `meetings/meeting/{id}` → `surface: 'calendar'`.
