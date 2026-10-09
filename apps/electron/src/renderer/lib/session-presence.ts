@@ -147,6 +147,27 @@ export interface ViewerIdentity {
 
 export const EMPTY_VIEWER_IDENTITY: ViewerIdentity = { accountId: null, username: null, displayName: null }
 
+/**
+ * Resolve the local viewer from the server's self actor id and the cloud
+ * account snapshot. The server id wins because it is the value the server
+ * compares for session attribution and write access — on the desktop path the
+ * cloud account id can never equal the local `installation` identity. Falls
+ * back to the cloud account when the server id is absent (older server/offline).
+ */
+export function resolveViewerIdentity(input: {
+  serverActorId?: string | null
+  accountId?: string | null
+  username?: string | null
+  displayName?: string | null
+}): ViewerIdentity {
+  const serverActorId = input.serverActorId?.trim() || null
+  return {
+    accountId: serverActorId ?? input.accountId ?? null,
+    username: input.username ?? null,
+    displayName: input.displayName ?? serverActorId,
+  }
+}
+
 export function hasViewerIdentity(viewer: ViewerIdentity): boolean {
   return Boolean(viewer.accountId || viewer.username || viewer.displayName)
 }

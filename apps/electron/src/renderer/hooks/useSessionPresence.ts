@@ -15,6 +15,7 @@ import {
   EMPTY_SESSION_ACTIVITY,
   TypingBeacon,
   VIEWER_WATCH_HEARTBEAT_MS,
+  resolveViewerIdentity,
   type SessionActivityState,
   type ViewerIdentity,
 } from '@/lib/session-presence'
@@ -25,14 +26,30 @@ export function useSessionActivityState(sessionId: string): SessionActivityState
   return activity.get(sessionId) ?? EMPTY_SESSION_ACTIVITY
 }
 
-/** The local viewer's identity, from the Rox cloud account snapshot. */
+/** The local viewer's identity, from the server self actor id + cloud account. */
 export function useViewerIdentity(): ViewerIdentity {
   const { account, connected } = useRoxCloudAccount()
-  return React.useMemo(() => ({
+  const [serverActorId, setServerActorId] = React.useState<string | null>(null)
+  React.useEffect(() => {
+    let cancelled = false
+    const load = () => {
+      void window.electronAPI?.identityGetState?.()
+        .then(state => { if (!cancelled) setServerActorId(state?.sessionActorId ?? null) })
+        .catch(() => { if (!cancelled) setServerActorId(null) })
+    }
+    load()
+    const off = window.electronAPI?.onIdentityChanged?.(load)
+    return () => {
+      cancelled = true
+      off?.()
+    }
+  }, [])
+  return React.useMemo(() => resolveViewerIdentity({
+    serverActorId,
     accountId: connected && account ? account.user.id : null,
     username: connected && account ? account.user.handle : null,
     displayName: connected && account ? account.user.name ?? account.user.email : null,
-  }), [account, connected])
+  }), [account, connected, serverActorId])
 }
 
 /**

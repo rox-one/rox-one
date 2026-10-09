@@ -6,6 +6,7 @@ import {
   collectSessionOwnerOptions,
   filterLocalTypingActors,
   reduceSessionActivityEvent,
+  resolveViewerIdentity,
   sessionInvolvesViewer,
   sessionMatchesOwnerFilter,
   UNASSIGNED_OWNER_FILTER_ID,
@@ -122,6 +123,27 @@ describe('involving-me filter', () => {
 
   it('never matches without a viewer identity', () => {
     expect(sessionInvolvesViewer({ creator: { accountId: 'acc-b', displayName: 'Анна', kind: 'profile' } }, unknownViewer)).toBe(false)
+  })
+})
+
+describe('viewer identity resolution', () => {
+  it('prefers the server actor id so desktop self-assignment matches server comparison', () => {
+    const viewer = resolveViewerIdentity({
+      serverActorId: 'installation', accountId: 'rox-cloud-1', username: 'ada', displayName: 'Ada',
+    })
+    expect(viewer).toEqual({ accountId: 'installation', username: 'ada', displayName: 'Ada' })
+    // The chip/filter then match the locally attributed creator id.
+    expect(sessionInvolvesViewer(
+      { creator: { accountId: 'installation', displayName: 'Local', kind: 'profile' } }, viewer,
+    )).toBe(true)
+  })
+
+  it('falls back to the cloud account when the server id is absent', () => {
+    expect(resolveViewerIdentity({ serverActorId: null, accountId: 'rox-cloud-1', username: 'ada', displayName: 'Ada' }))
+      .toEqual({ accountId: 'rox-cloud-1', username: 'ada', displayName: 'Ada' })
+    // A local actor id alone still supplies a usable display name for "assign to me".
+    expect(resolveViewerIdentity({ serverActorId: 'installation' }))
+      .toEqual({ accountId: 'installation', username: null, displayName: 'installation' })
   })
 })
 
