@@ -89,7 +89,7 @@ export function KnowledgeMapPanel({ workspaceId, compact = false, onOpenFull }: 
 
   const truncated = truncatedSummary(dto.stats)
   const truncatedNotice = truncated ? (
-    <span className="rounded border border-border px-1.5 py-0.5 text-warning">
+    <span className="rounded border border-border px-1.5 py-0.5 text-status-warning">
       {t(truncated.key, { shown: truncated.shown, total: truncated.total })}
     </span>
   ) : null

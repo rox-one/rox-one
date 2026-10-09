@@ -106,7 +106,7 @@ export function MemoryProposalCard({ proposal, workspaceId, onChanged }: MemoryP
           <span>{t('memory.proposal.consent')}: {proposal.provenance.consentEventId}</span>
         )}
         {proposal.conflicts.length > 0 && (
-          <span className="text-warning">{t('memory.proposal.conflict')}</span>
+          <span className="text-status-warning">{t('memory.proposal.conflict')}</span>
         )}
       </div>
       {receipt?.writtenAt && <p role="status" className="mt-2 text-xs text-success">{t('memory.proposal.savedToTarget', { target: t(`memory.proposal.target.${receipt.scope}`) })} · {new Date(receipt.writtenAt).toLocaleString()}</p>}

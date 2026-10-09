@@ -94,6 +94,16 @@ describe('swallowed session-load failures are repaired on reconnect', () => {
     expect(reconnectIdx).toBeGreaterThanOrEqual(0)
     const reconnectBody = appSource.slice(reconnectIdx, appSource.indexOf('return cleanup', reconnectIdx))
     expect(reconnectBody).toContain('swallowedSessionLoadRef.current')
-    expect(reconnectBody).toContain('await loadSessionsFromServer()')
+    expect(reconnectBody).toContain('await boundedSessionRepair.run()')
+  })
+
+  it('bounds the repair with the single-flight, attempt-capped controller', () => {
+    expect(appSource).toContain('createBoundedReconnectRepair')
+    // The load reports genuine success, and the controller arms/disarms the swallow
+    // flag itself so it is re-armed only on a real failure, never on the deadline.
+    expect(appSource).toContain('return !swallowedSessionLoadRef.current')
+    expect(appSource).toContain('arm: () => {')
+    expect(appSource).toContain('disarm: () => {')
+    expect(appSource).toContain('boundedSessionRepair.inFlight')
   })
 })

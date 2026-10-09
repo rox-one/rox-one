@@ -158,7 +158,7 @@ export function Chip({
       : tone === 'ok'
         ? 'bg-success/15 text-success'
         : tone === 'warn'
-          ? 'bg-warning/15 text-warning'
+          ? 'bg-status-warning/15 text-status-warning'
           : tone === 'err'
             ? 'bg-destructive/15 text-destructive'
             : 'bg-foreground/[0.07] text-muted-foreground',

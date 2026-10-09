@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import * as Icons from "lucide-react"
+import { AppWindow, ExternalLink, HelpCircle, LogOut, Settings } from "lucide-react"
 import { getMenuIcon } from './menu-icons'
 import { isMac } from "@/lib/platform"
 import { useActionLabel } from "@/actions"
@@ -75,7 +75,7 @@ function renderSubmenuItem(
       <StyledDropdownMenuItem key={item.id} onClick={() => window.electronAPI.openUrl(item.url)}>
         {Icon && <Icon className="h-3.5 w-3.5" />}
         {t(item.labelKey)}
-        <Icons.ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
+        <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
       </StyledDropdownMenuItem>
     )
   }
@@ -193,7 +193,7 @@ export function DesktopAppMenu({
         </StyledDropdownMenuItem>
         {onNewWindow && (
           <StyledDropdownMenuItem onClick={onNewWindow}>
-            <Icons.AppWindow className="h-3.5 w-3.5" />
+            <AppWindow className="h-3.5 w-3.5" />
             {t(ROOT_MENU.newWindow.labelKey)}
             {newWindowHotkey && <DropdownMenuShortcut className="pl-6">{newWindowHotkey}</DropdownMenuShortcut>}
           </StyledDropdownMenuItem>
@@ -209,12 +209,12 @@ export function DesktopAppMenu({
 
         <DropdownMenuSub>
           <StyledDropdownMenuSubTrigger>
-            <Icons.Settings className="h-3.5 w-3.5" />
+            <Settings className="h-3.5 w-3.5" />
             {t("sidebar.settings")}
           </StyledDropdownMenuSubTrigger>
           <StyledDropdownMenuSubContent>
             <StyledDropdownMenuItem onClick={onOpenSettings}>
-              <Icons.Settings className="h-3.5 w-3.5" />
+              <Settings className="h-3.5 w-3.5" />
               {t("menu.settings")}
               {settingsHotkey && <DropdownMenuShortcut className="pl-6">{settingsHotkey}</DropdownMenuShortcut>}
             </StyledDropdownMenuItem>
@@ -236,7 +236,7 @@ export function DesktopAppMenu({
 
         <DropdownMenuSub>
           <StyledDropdownMenuSubTrigger>
-            <Icons.HelpCircle className="h-3.5 w-3.5" />
+            <HelpCircle className="h-3.5 w-3.5" />
             {t("menu.help")}
           </StyledDropdownMenuSubTrigger>
           <StyledDropdownMenuSubContent>
@@ -249,7 +249,7 @@ export function DesktopAppMenu({
                 >
                   {Icon && <Icon className="h-3.5 w-3.5" />}
                   {t(link.labelKey)}
-                  <Icons.ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
+                  <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
                 </StyledDropdownMenuItem>
               )
             })}
@@ -261,7 +261,7 @@ export function DesktopAppMenu({
         <StyledDropdownMenuSeparator />
 
         <StyledDropdownMenuItem onClick={() => window.electronAPI.menuQuit()}>
-          <Icons.LogOut className="h-3.5 w-3.5" />
+          <LogOut className="h-3.5 w-3.5" />
           {t(ROOT_MENU.quit.labelKey)}
           {quitHotkey && <DropdownMenuShortcut className="pl-6">{quitHotkey}</DropdownMenuShortcut>}
         </StyledDropdownMenuItem>
