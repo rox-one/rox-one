@@ -38,11 +38,11 @@
 | R4 | Регистрация/вход по телефону через Telegram-бота (поделиться контактом) | ✅ сайт: `/login` → бот → контакт → сессия, без кода; демон владеет ботом на CT101 | — |
 | R5 | Ответ: лимиты Resend free | — | см. §5 |
 | R6 | Google Calendar интеграция (sync) | 🔴 | ⏳ GCalAdapter ❓ OAuth client |
-| R7 | Google Drive импорт файлов в наш диск | 🔴 (только OAuth-scope) | волна 2 ❓ OAuth client |
+| R7 | Google Drive импорт файлов в наш диск | ✅ (волна 4: провайдер `packages/shared/src/drive/importers/providers/google-drive.ts`, PR #1635; OAuth-клиент создан, приёмник — self-hosted S3) | — |
 | R8 | Apple Calendar синхронизация | 🔴 (EventKit только упоминание) | волна 3 (native helper) |
-| R9 | Импорт из OneDrive / iCloud / Яндекс Диска | 🔴 | волна 3 |
+| R9 | Импорт из OneDrive / iCloud / Яндекс Диска | ✅ код (волна 4, PR #1635: OneDrive/Яндекс + честный iCloud-unsupported); OneDrive/Яндекс ждут регистраций приложений — issue #1727 | — |
 | R10 | Аналитика: ON по умолчанию | ✅ | — |
-| R11 | Свой хостинг аналитики: PostHog + OpenTelemetry (`posthog.rox.one`, `otel.rox.one`), флаги, русский, быстро | 🔴 | ⏳ OtelDeploy + ⏳ AnalyticsSdk ❓ решение по хосту PostHog |
+| R11 | Свой хостинг аналитики: PostHog + OpenTelemetry (`posthog.rox.one`, `otel.rox.one`), флаги, русский, быстро | ✅ хостинг и клиент (волна 2: `posthog.rox.one` отвечает, клиент `packages/shared/src/telemetry/posthog.ts`, OTel-коллектор); остаётся решение по стоимости VM (§5) | — |
 | R12 | ROX Keeper (переименованный и нативный Infisical): пароли, sharing, папки/проекты, приглашения, TOTP/2FA/passkey, Touch ID, CLI/MCP | 🟡 (только импорт+запечатывание) | ⏳ KeeperCore (личное хранилище) → волна 2 (орг-шаринг, CLI/MCP) |
 | R13 | ROX Drive/Space: 1 ТБ отображение, все данные приложения там | 🔴 | ⏳ DriveSurface |
 | R14 | Тайлы: «Настроить бэкап устройства» / «Импорт из Google Drive» / «Импорт из других хранилищ» | 🔴 | ⏳ DriveSurface |
