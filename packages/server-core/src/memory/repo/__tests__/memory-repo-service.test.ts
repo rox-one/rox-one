@@ -11,6 +11,14 @@ import { MemoryRepoService, type MemoryRepoServiceDeps, type RepoMaterializeResu
 import type { RepoSourceProvider } from '../RepoSourceProvider'
 import { listRepoFiles, readSnapshots } from '../snapshots'
 
+/** Hermetic git identity: CI runners have no global git config (user.email/user.name unset). */
+const GIT_IDENTITY = {
+  GIT_AUTHOR_NAME: 'Rox Test',
+  GIT_AUTHOR_EMAIL: 'rox-test@example.com',
+  GIT_COMMITTER_NAME: 'Rox Test',
+  GIT_COMMITTER_EMAIL: 'rox-test@example.com',
+} as const
+
 const dirs: string[] = []
 
 function tempDir(prefix: string): string {
@@ -117,7 +125,7 @@ function simulateKilledSnapshotBatch(repoPath: string): void {
 
 /** `git --git-dir <repo>/.git-rox --work-tree <repo> <args>` → stdout. */
 function memGit(repoPath: string, args: string[]): string {
-  return execFileSync('git', ['--git-dir', join(repoPath, '.git-rox'), '--work-tree', repoPath, ...args], { encoding: 'utf8' })
+  return execFileSync('git', ['--git-dir', join(repoPath, '.git-rox'), '--work-tree', repoPath, ...args], { encoding: 'utf8', env: { ...process.env, ...GIT_IDENTITY } })
 }
 
 /** CRC-32 (IEEE 802.3) table, built independently of the exporter's own. */
@@ -354,11 +362,11 @@ describe('MemoryRepoService', () => {
 
   test('foreign tree: memory commits land only in .git-rox', async () => {
     const userRepo = tempDir('user-repo')
-    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: userRepo })
+    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: userRepo, env: { ...process.env, ...GIT_IDENTITY } })
     mkdirSync(join(userRepo, 'src'), { recursive: true })
     writeFileSync(join(userRepo, 'src', 'file.ts'), 'export {}\n')
-    execFileSync('git', ['add', '-A'], { cwd: userRepo })
-    execFileSync('git', ['commit', '-q', '-m', 'user commit'], { cwd: userRepo })
+    execFileSync('git', ['add', '-A'], { cwd: userRepo, env: { ...process.env, ...GIT_IDENTITY } })
+    execFileSync('git', ['commit', '-q', '-m', 'user commit'], { cwd: userRepo, env: { ...process.env, ...GIT_IDENTITY } })
 
     const memRepoDir = join(userRepo, '.memory-repo')
     const service = makeService(new FakeProvider(bundleFor('main')), {
@@ -368,17 +376,17 @@ describe('MemoryRepoService', () => {
     const result = await service.materialize('main', 'test')
     expect(result.committed).toBe(true)
 
-    const userTop = execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: userRepo, encoding: 'utf8' }).trim()
+    const userTop = execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: userRepo, encoding: 'utf8', env: { ...process.env, ...GIT_IDENTITY } }).trim()
     expect(realpathSync(userTop)).not.toBe(realpathSync(repoPath))
-    expect(execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: userRepo, encoding: 'utf8' }).trim().endsWith('.memory-repo')).toBe(false)
+    expect(execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: userRepo, encoding: 'utf8', env: { ...process.env, ...GIT_IDENTITY } }).trim().endsWith('.memory-repo')).toBe(false)
 
     // the user's history has only their own commit; memory commits live in .git-rox
-    const userLog = execFileSync('git', ['log', '--format=%s'], { cwd: userRepo, encoding: 'utf8' }).trim().split('\n')
+    const userLog = execFileSync('git', ['log', '--format=%s'], { cwd: userRepo, encoding: 'utf8', env: { ...process.env, ...GIT_IDENTITY } }).trim().split('\n')
     expect(userLog).toEqual(['user commit'])
     const memoryLog = execFileSync(
       'git',
       ['--git-dir', join(repoPath, '.git-rox'), '--work-tree', repoPath, 'log', '--format=%s'],
-      { encoding: 'utf8' },
+      { encoding: 'utf8', env: { ...process.env, ...GIT_IDENTITY } },
     ).trim().split('\n')
     expect(memoryLog).toHaveLength(1)
     expect(memoryLog[0]).toMatch(/^memory\(main\):/)
@@ -390,10 +398,10 @@ describe('MemoryRepoService', () => {
 
   test('default repo location: materialize leaves the workspace git tree clean', async () => {
     const workspaceRoot = tempDir('ws-default')
-    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: workspaceRoot })
+    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: workspaceRoot, env: { ...process.env, ...GIT_IDENTITY } })
     writeFileSync(join(workspaceRoot, 'keep.txt'), 'keep\n')
-    execFileSync('git', ['add', '-A'], { cwd: workspaceRoot })
-    execFileSync('git', ['commit', '-q', '-m', 'workspace commit'], { cwd: workspaceRoot })
+    execFileSync('git', ['add', '-A'], { cwd: workspaceRoot, env: { ...process.env, ...GIT_IDENTITY } })
+    execFileSync('git', ['commit', '-q', '-m', 'workspace commit'], { cwd: workspaceRoot, env: { ...process.env, ...GIT_IDENTITY } })
 
     const service = makeService(new FakeProvider(bundleFor('main')))
     const repoPath = service.repoPathFor('main', '')
@@ -403,7 +411,7 @@ describe('MemoryRepoService', () => {
     const result = await service.materialize('main', 'test')
     expect(result.committed).toBe(true)
 
-    const porcelain = execFileSync('git', ['status', '--porcelain'], { cwd: workspaceRoot, encoding: 'utf8' })
+    const porcelain = execFileSync('git', ['status', '--porcelain'], { cwd: workspaceRoot, encoding: 'utf8', env: { ...process.env, ...GIT_IDENTITY } })
     expect(porcelain.trim()).toBe('')
     await service.dispose()
   })
