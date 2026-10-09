@@ -1,0 +1,26 @@
+{
+ "handoff.page.title": {
+  "en": "Pairing device",
+  "ru": "Подключение устройства"
+ },
+ "handoff.page.redeeming": {
+  "en": "Redeeming the pairing link…",
+  "ru": "Активация ссылки для подключения…"
+ },
+ "handoff.page.missingToken": {
+  "en": "This pairing link is missing its token.",
+  "ru": "В этой ссылке для подключения отсутствует токен."
+ },
+ "handoff.page.invalidToken": {
+  "en": "This pairing link is invalid or has expired.",
+  "ru": "Ссылка для подключения недействительна или истекла."
+ },
+ "handoff.page.failed": {
+  "en": "Pairing failed. Please try again.",
+  "ru": "Не удалось подключиться. Попробуйте ещё раз."
+ },
+ "handoff.page.noscript": {
+  "en": "JavaScript is required to complete pairing.",
+  "ru": "Для подключения требуется JavaScript."
+ }
+}
