@@ -281,6 +281,46 @@ describe('UI-001 address preservation through actual navigation callbacks', () =
     }
   })
 
+  it('does not auto-send a new-session deep link from an untrusted source', async () => {
+    const sends: unknown[] = [], timers: Array<() => void> = [], writes: unknown[] = []
+    const actionEpochRef = { current: 1 }
+    const action = callback('handleActionNavigation', {
+      workspaceId: 'a', workspaceIdRef: { current: 'a' }, actionEpochRef,
+      onCreateSession: async () => ({ id: 'new' }), onInputChange: () => {},
+      window: { electronAPI: { sendMessage: async (...args: unknown[]) => sends.push(args) } },
+      updateSessionMeta: () => {}, pushPanel: () => {}, store: { set: (_atom: unknown, value: unknown) => writes.push(value) },
+      updateFocusedPanelRouteAtom: {}, buildRouteFromNavigationState,
+      setTimeout: (fn: () => void) => timers.push(fn), toast: { error: () => {} }, t: (key: string) => key,
+      UNTRUSTED_DEEPLINK_SOURCES: { 'browser-pane': true },
+    })
+    await action({ name: 'new-session', params: { input: 'hello', send: 'true' } }, { source: 'browser-pane' })
+    timers.forEach(fn => fn()); await settle()
+    expect(sends).toEqual([])
+  })
+
+  it('ignores dangerous new-session parameters from an untrusted source', async () => {
+    const captured: unknown[] = [], writes: unknown[] = []
+    const actionEpochRef = { current: 1 }
+    const action = callback('handleActionNavigation', {
+      workspaceId: 'a', workspaceIdRef: { current: 'a' }, actionEpochRef,
+      onCreateSession: async (_workspaceId: string, options?: unknown) => { captured.push(options); return { id: 'new' } },
+      onInputChange: () => {},
+      window: { electronAPI: { sendMessage: async () => {} } },
+      updateSessionMeta: () => {}, pushPanel: () => {}, store: { set: (_atom: unknown, value: unknown) => writes.push(value) },
+      updateFocusedPanelRouteAtom: {}, buildRouteFromNavigationState,
+      setTimeout: (fn: () => void) => {}, toast: { error: () => {} }, t: (key: string) => key,
+      UNTRUSTED_DEEPLINK_SOURCES: { 'browser-pane': true },
+    })
+    await action(
+      { name: 'new-session', params: { mode: 'allow-all', workdir: '/tmp', systemPrompt: 'evil', input: 'hi', send: 'true' } },
+      { source: 'browser-pane' },
+    )
+    expect(captured).toHaveLength(1)
+    expect(captured[0]).not.toHaveProperty('permissionMode')
+    expect(captured[0]).not.toHaveProperty('workingDirectory')
+    expect(captured[0]).not.toHaveProperty('systemPromptPreset')
+  })
+
   it('waits for accepted startup workspace restoration and cancels the old action instead of recovering into its old workspace', async () => {
     const waiting = navigationHarness(false), ready = navigationHarness(true)
     await waiting.navigate('action/new-session?name=old-workspace')

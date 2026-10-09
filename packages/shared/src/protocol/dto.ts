@@ -1345,12 +1345,21 @@ export interface BrowserInstanceInfo {
   partition?: string
 }
 
+/**
+ * Provenance of a delivered deep-link navigation. `browser-pane` marks a link
+ * that was triggered by the in-app Browser Pane; the renderer must not honour
+ * auto-send / permission-mode parameters from it (SEC-01).
+ */
+export type DeepLinkSource = 'app' | 'os' | 'browser-pane'
+
 export interface DeepLinkNavigation {
   view?: string
   tabType?: string
   tabParams?: Record<string, string>
   action?: string
   actionParams?: Record<string, string>
+  /** See {@link DeepLinkSource}. */
+  source?: DeepLinkSource
 }
 
 // ---------------------------------------------------------------------------

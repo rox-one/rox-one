@@ -2737,6 +2737,20 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     return url.includes(`/${BROWSER_EMPTY_STATE_PAGE}`) || url.includes(`\\${BROWSER_EMPTY_STATE_PAGE}`)
   }
 
+  /**
+   * SEC-01 trust boundary: a `craftagents://` navigation from the pane is
+   * honoured only when the pane's current document is the app's own
+   * empty-state page. Remote sites loaded in the pane (and their popups) must
+   * not be able to drive the app — a crafted
+   * `craftagents://action/new-session?…&send=true&mode=allow-all` URL can
+   * otherwise create an allow-all session and auto-send an attacker prompt
+   * with no user gesture.
+   */
+  private isDeeplinkAllowedFromPage(instance: BrowserInstance): boolean {
+    const currentUrl = instance.pageView.webContents.getURL?.() ?? instance.currentUrl
+    return this.isBrowserEmptyStateUrl(currentUrl)
+  }
+
   private normalizePageState(url: string, title: string): { url: string; title: string } {
     if (this.isBrowserEmptyStateUrl(url)) {
       return { url: 'about:blank', title: i18n.t('browser.newTab') }
@@ -2766,7 +2780,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       const { handleDeepLink } = await import('./deep-link')
       const sink = this.windowManager.getRpcEventSink() ?? undefined
       const resolver = (wcId: number) => this.windowManager?.getClientIdForWindow(wcId)
-      const result = await handleDeepLink(url, this.windowManager, sink, resolver)
+      const result = await handleDeepLink(url, this.windowManager, sink, resolver, undefined, 'browser-pane')
       if (!result.success) {
         mainLog.warn(`[browser-pane] deep-link handling failed: ${result.error ?? 'unknown error'} url=${url}`)
       }
@@ -4118,10 +4132,14 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     })
 
     pageWc.on('will-navigate', (event, url) => {
-      if (url.startsWith(CRAFT_DEEPLINK_SCHEME_PREFIX)) {
-        event.preventDefault()
-        void this.handleDeepLinkUrl(url)
+      if (!url.startsWith(CRAFT_DEEPLINK_SCHEME_PREFIX)) return
+      // Always prevent the scheme from being handed to the OS; decide afterwards.
+      event.preventDefault()
+      if (!this.isDeeplinkAllowedFromPage(instance)) {
+        mainLog.warn(`[browser-pane] blocked deep-link navigation from untrusted page id=${instance.id} url=${url}`)
+        return
       }
+      void this.handleDeepLinkUrl(url)
     })
 
     pageWc.on('did-create-window', (popupWindow, details) => {
@@ -4135,7 +4153,11 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       )
 
       if (details.url.startsWith(CRAFT_DEEPLINK_SCHEME_PREFIX)) {
-        void this.handleDeepLinkUrl(details.url)
+        if (this.isDeeplinkAllowedFromPage(instance)) {
+          void this.handleDeepLinkUrl(details.url)
+        } else {
+          mainLog.warn(`[browser-pane] blocked deep-link popup from untrusted page id=${instance.id} url=${details.url}`)
+        }
         return { action: 'deny' }
       }
 

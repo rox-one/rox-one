@@ -366,7 +366,7 @@ app.on('open-url', (event, url) => {
   mainLog.info('Received deeplink:', url)
 
   if (windowManager) {
-    handleDeepLink(url, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).catch(err => {
+    handleDeepLink(url, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined, undefined, 'os').catch(err => {
       mainLog.error('Failed to handle deep link:', err)
     })
   } else {
@@ -395,7 +395,7 @@ if (!gotTheLock) {
     )
     if (url && windowManager) {
       mainLog.info('Received deeplink from second instance:', url)
-      handleDeepLink(url, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).catch(err => {
+      handleDeepLink(url, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined, undefined, 'os').catch(err => {
         mainLog.error('Failed to handle deep link:', err)
       })
     } else if (url) {
@@ -1839,7 +1839,7 @@ app.whenReady().then(async () => {
       const coldStartLink = pendingDeepLink
       pendingDeepLink = null
       mainLog.info('Processing pending deep link:', coldStartLink)
-      handleDeepLink(coldStartLink, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).catch(err => {
+      handleDeepLink(coldStartLink, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined, undefined, 'os').catch(err => {
         mainLog.error('Failed to handle pending deep link (dropped, no retry):', err)
       })
     }
