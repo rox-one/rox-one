@@ -3,6 +3,7 @@ import { readFile, rm, mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { RuntimeTraceService, type RuntimeTraceSession } from './service'
 import { createSession, loadSession, saveSession, getSessionPath, getSessionFilePath } from '@rox/shared/sessions'
+import { OMP_TASK_TOOL_NAME } from '@rox/shared/utils/toolNames'
 import type { StoredMessage, StoredSession } from '@rox/shared/sessions'
 import type { RuntimeEvent } from '@rox/core/runtime-trace'
 
@@ -91,7 +92,7 @@ if (process.argv[2] === 'legacy') {
   const run = await trace.begin(session.id, 'Original user request', { messageId: 'original-user-request' })
   const outputFile = join(workspace, 'private-background-output.txt')
   await writeFile(outputFile, 'Actual isolated background output')
-  await trace.agentEvent(session.id, { type: 'tool_start', toolName: 'task', toolUseId: 'background-tool', input: {} }, { originRun: run })
+  await trace.agentEvent(session.id, { type: 'tool_start', toolName: OMP_TASK_TOOL_NAME, toolUseId: 'background-tool', input: {} }, { originRun: run })
   await trace.agentEvent(session.id, { type: 'task_backgrounded', taskId: 'background-task', toolUseId: 'background-tool' }, { originRun: run })
   const manager = Object.create(SessionManager.prototype) as InstanceType<typeof SessionManager>
   const jobs: Promise<void>[] = []

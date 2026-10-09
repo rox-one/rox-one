@@ -26,6 +26,17 @@ is_allowed_legacy_send() {
     "apps/electron/src/main/browser-pane-manager.ts|instance.toolbarView.webContents.send(TOOLBAR_CHANNELS.FORCE_CLOSE_MENU, { reason })" ) return 0 ;;
     "apps/electron/src/main/browser-pane-manager.ts|instance.toolbarView.webContents.send(TOOLBAR_CHANNELS.STATE_UPDATE, state)" ) return 0 ;;
     "apps/electron/src/main/browser-pane-manager.ts|instance.toolbarView.webContents.send(TOOLBAR_CHANNELS.THEME_COLOR, color)" ) return 0 ;;
+    # Baseline frozen 2026-10-09: the remaining direct sends, all introduced
+    # before or in the same wave as this check (385aaf59d, 2026-10-08).
+    # New sends must use the typed EventSink (@rox/server-core/transport) or
+    # the window-manager relay that already tries the sink first, so these
+    # stay frozen by exact text and the list is meant to shrink.
+    "apps/electron/src/main/index.ts|if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(channel, state)" ) return 0 ;;
+    "apps/electron/src/main/index.ts|if (!window.isDestroyed() && window.webContents.id !== initiatingSenderId) window.webContents.send('__project-authority:configuration-changed')" ) return 0 ;;
+    "apps/electron/src/main/mail/local-ipc.ts|if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(C.CHANGED, { at: Date.now(), status })" ) return 0 ;;
+    "apps/electron/src/main/meetings/local-ipc.ts|if (!win.isDestroyed() && !win.webContents.isDestroyed()) win.webContents.send(C.CHANGED, { id })" ) return 0 ;;
+    "apps/electron/src/main/voice/overlay-owner.ts|child.webContents.send(VOICE_OVERLAY_STATE, { ...latest!.state, rms: levels.get(owner!.webContents.id) ?? 0 })" ) return 0 ;;
+    "apps/electron/src/main/browser-pane-manager.ts|host.webContents.send('window:panel-focus-direction', direction)" ) return 0 ;;
   esac
 
   return 1
