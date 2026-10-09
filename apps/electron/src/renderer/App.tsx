@@ -331,6 +331,11 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   const [startupAttempt, setStartupAttempt] = useState(0)
   const [callerAuthority, setCallerAuthority] = useState<'native' | 'local' | null>(null)
   const callerAuthorityRef = useRef(callerAuthority)
+  // Set when a session-load failure was swallowed because the transport banner
+  // explained it (see shouldSurfaceSessionLoadFailure). The banner disappears once the
+  // transport reconnects, so the erased failure must be repaired on that reconnect —
+  // otherwise the shell stays empty with no error and no retry affordance.
+  const swallowedSessionLoadRef = useRef(false)
   callerAuthorityRef.current = callerAuthority
 
   // Per-session Jotai atom setters for isolated updates
@@ -706,8 +711,11 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
       if (!shouldSurfaceSessionLoadFailure(transportState)) {
         console.error('[App] Treating session load failure as transport fallback:', transportState)
+        // The banner is visible now, but it disappears on reconnect and the failure would
+        // otherwise never be repaired (non-stale reconnects do not refresh the list).
+        swallowedSessionLoadRef.current = true
         rendererLog.warn(
-          '[App] Session load failure swallowed as transport fallback; the transport banner is visible and explains it',
+          '[App] Session load failure swallowed as transport fallback; will retry after the transport reconnects',
           { transportState, error: err },
         )
         setSessionsLoaded(true)
@@ -1529,14 +1537,21 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     })
 
     return cleanup
-  }, [refreshSessionListMetadataFromServer, windowWorkspaceId])
+  }, [loadSessionsFromServer, refreshSessionListMetadataFromServer, windowWorkspaceId])
 
   // Transport reconnect recovery — refresh session metadata plus active/processing
   // session content after stale reconnects.
   useEffect(() => {
     const cleanup = window.electronAPI.onReconnected(async (isStale: boolean) => {
+      if (swallowedSessionLoadRef.current) {
+        // A previous load failed while the transport banner was visible; the banner is gone
+        // now, so reload instead of leaving an empty shell behind.
+        swallowedSessionLoadRef.current = false
+        console.warn('[App] Reconnected after a swallowed session-load failure — reloading sessions')
+        await loadSessionsFromServer()
+      }
       if (!isStale) {
-        // Server replayed buffered events — we're caught up, nothing to do
+        // Server replayed buffered events — we're caught up, nothing else to do
         console.info('[App] Reconnected with event replay — no refresh needed')
         return
       }
