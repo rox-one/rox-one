@@ -9040,7 +9040,7 @@
   "settings.runtime.secretDenied": "不允许使用“{{envVar}}”（{{code}}）",
   "settings.runtime.secretDesc": "注入新代理会话的命名密钥引用。值保留在保险库中，此处仅保存引用。",
   "settings.runtime.secretEnvVarPlaceholder": "ENV_VAR",
-  "settings.runtime.secretInfisicalUnavailable": "Infisical 不可用（INFISICAL_UNAVAILABLE）。请设置 INFISICAL_TOKEN、INFISICAL_PROJECT_ID 和 INFISICAL_ENVIRONMENT。",
+  "settings.runtime.secretInfisicalUnavailable": "Rox Keeper 不可用（INFISICAL_UNAVAILABLE）。请设置 INFISICAL_TOKEN、INFISICAL_PROJECT_ID 和 INFISICAL_ENVIRONMENT。",
   "settings.runtime.secretNamePlaceholder": "名称",
   "settings.runtime.secretNextSession": "应用于新启动的会话。已运行的会话保留启动时的环境。",
   "settings.runtime.secretProvider": "提供方",

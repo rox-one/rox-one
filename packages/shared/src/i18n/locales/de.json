@@ -9040,7 +9040,7 @@
   "settings.runtime.secretDenied": "„{{envVar}}“ ist nicht erlaubt ({{code}})",
   "settings.runtime.secretDesc": "Benannte Secret-Referenzen, die in neue Agent-Sitzungen injiziert werden. Werte bleiben im Tresor; hier werden nur Referenzen gespeichert.",
   "settings.runtime.secretEnvVarPlaceholder": "ENV_VAR",
-  "settings.runtime.secretInfisicalUnavailable": "Infisical ist nicht verfügbar (INFISICAL_UNAVAILABLE). Setzen Sie INFISICAL_TOKEN, INFISICAL_PROJECT_ID und INFISICAL_ENVIRONMENT.",
+  "settings.runtime.secretInfisicalUnavailable": "Rox Keeper ist nicht verfügbar (INFISICAL_UNAVAILABLE). Setzen Sie INFISICAL_TOKEN, INFISICAL_PROJECT_ID und INFISICAL_ENVIRONMENT.",
   "settings.runtime.secretNamePlaceholder": "Name",
   "settings.runtime.secretNextSession": "Gilt für neu gestartete Sitzungen. Aktive Sitzungen behalten die Umgebung, mit der sie gestartet wurden.",
   "settings.runtime.secretProvider": "Anbieter",
