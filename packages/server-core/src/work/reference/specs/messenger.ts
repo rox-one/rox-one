@@ -14,16 +14,25 @@ const ADMIN_ROLES = new Set(['owner', 'admin'])
  * or was removed comes back with `role` (a former owner does not regain it).
  */
 async function addMembers(tx: ReferenceTx, chatId: string, principalIds: Iterable<string>, role = 'member'): Promise<void> {
+  const added: string[] = []
   for (const principalId of new Set(principalIds)) {
     const id = `${chatId}:${principalId}`
     const current = await tx.get('channel-member', id)
     if (memberRole(current) !== undefined) continue
     await tx.upsert('channel-member', id, { state: 'active', role, joinedAt: tx.now }, { chatId, principalId })
+    added.push(principalId)
+  }
+  // W1-14 (#1511): the channel carries its member index, so `attendees: 'chat'`
+  // (TECH-SPEC §12) and the member lists resolve without a query API.
+  const chat = await tx.get('channel', chatId)
+  if (chat && added.length > 0) {
+    const known = Array.isArray(chat.data.memberIds) ? (chat.data.memberIds as string[]) : []
+    await tx.update('channel', chat, { memberIds: [...new Set([...known, ...added])] })
   }
 }
 
 async function createChat(tx: ReferenceTx, id: string, data: RecordData, memberIds: readonly string[] = []): Promise<StoredRecord> {
-  const record = await tx.insert('channel', id, { postingPolicy: 'all', invitePolicy: 'members', ...data })
+  const record = await tx.insert('channel', id, { postingPolicy: 'all', invitePolicy: 'members', ownerId: tx.actor, memberIds: [tx.actor], ...data })
   await addMembers(tx, id, [tx.actor], 'owner')
   await addMembers(tx, id, memberIds.filter(member => member !== tx.actor))
   return record
@@ -91,16 +100,20 @@ function ownMembership(map: (tx: ReferenceTx) => RecordData) {
  * Append a message to a chat (next `seq`). Posting needs active membership of
  * the chat and its posting policy (`admins` → owner / admin only).
  */
-export async function appendMessage(tx: ReferenceTx, chat: StoredRecord, content: unknown, extra: RecordData = {}, salt = 'message'): Promise<StoredRecord> {
+export async function appendMessage(tx: ReferenceTx, chat: StoredRecord, content: unknown, extra: RecordData = {}, salt = 'message', explicitId?: string): Promise<StoredRecord> {
   await assertCanPost(tx, chat)
-  const id = salt === 'message' ? tx.createId() : tx.newId(salt)
+  const id = explicitId ?? (salt === 'message' ? tx.createId() : tx.newId(salt))
   // Retry with a lost receipt: the message is already there — don't burn another `seq`.
   const existing = await tx.get('channel-message', id)
   if (existing && existing.data[LAST_COMMAND_FIELD] === tx.ctx.envelope.commandId) return existing
   await tx.assertAbsent('channel-message', id)
   const sequence = await tx.get('channel-sequence', chat.id)
   const seq = Number(sequence?.data.lastSeq ?? 0) + 1
-  await tx.upsert('channel-sequence', chat.id, { lastSeq: seq }, { chatId: chat.id })
+  // W1-14 (#1511): the chat's sequence row indexes `seq → message id`, so the
+  // §12 commands that name messages by `seq` (docs.create_from_messages,
+  // calendar.create_event_from_message, tasks.create_from_message) can resolve them.
+  const seqIndex = sequence && typeof sequence.data.seqIndex === 'object' && sequence.data.seqIndex !== null ? (sequence.data.seqIndex as Record<string, string>) : {}
+  await tx.upsert('channel-sequence', chat.id, { lastSeq: seq, seqIndex: { ...seqIndex, [String(seq)]: id } }, { chatId: chat.id })
   return tx.insert('channel-message', id, { chatId: chat.id, seq, senderId: tx.actor, content, ...extra })
 }
 
@@ -114,10 +127,8 @@ async function ownMessage(tx: ReferenceTx): Promise<StoredRecord> {
 const chatOutcome = (record: StoredRecord, changes: string[], result?: Record<string, unknown>): ReferenceOutcome => ({ collection: 'channel', id: record.id, revision: record.revision, changes, ...(result ? { result } : {}) })
 
 export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
-  'im.create_chat': async tx => {
-    const record = await createChat(tx, tx.createId(), omit(tx.payload, ['id', 'memberIds']), tx.payload.memberIds ?? [])
-    return chatOutcome(record, ['kind', 'name', 'visibility'])
-  },
+  // W1-14 (#1511): im.create_chat, im.send_message and im.mark_read are handled
+  // by @rox/server-core/xsc and @rox/server-core/collab (TECH-SPEC §12, §11.7).
   'im.update_chat': { op: adminOnly(update('channel')), event: 'im.chat.updated_v1' },
   'im.disband_chat': { op: softDelete('channel'), event: 'im.chat.disbanded_v1' },
   'im.get_or_create_p2p': async tx => {
@@ -159,14 +170,6 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
   },
   'im.update_member_state': ownMembership(tx => ({ ...tx.payload })),
   'im.update_policy': adminOnly(update('channel')),
-  'im.send_message': {
-    event: 'im.message.receive_v1',
-    op: async tx => {
-      const chat = await tx.requireTarget('channel')
-      const message = await appendMessage(tx, chat, tx.payload.content, tx.payload.replyTo ? { replyTo: tx.payload.replyTo } : {})
-      return { collection: 'channel-message', id: message.id, revision: message.revision, changes: ['content'], result: { seq: message.data.seq } }
-    },
-  },
   'im.edit_message': async tx => {
     const message = await ownMessage(tx)
     const record = await tx.update('channel-message', message, { content: tx.payload.content, editedAt: tx.now })
@@ -217,7 +220,6 @@ export const MESSENGER_REFERENCE_SPECS: ReferenceSpecMap = {
   }),
   'im.update_tab': adminOnly(childUpdate('channel-tab', 'channel', 'chatId', 'tabId')),
   'im.delete_tab': adminOnly(childDelete('channel-tab', 'channel', 'chatId', 'tabId')),
-  'im.mark_read': { op: ownMembership(tx => ({ lastReadSeq: tx.payload.seq })), event: 'im.message.message_read_v1' },
   'im.mark_unread': ownMembership(tx => ({ lastReadSeq: Math.max(0, tx.payload.seq - 1) })),
   'im.create_label': adminOnly(childCreate('channel-label', 'channel', 'chatId')),
   'im.label_chats': adminOnly(childUpdate('channel-label', 'channel', 'chatId', 'labelId', tx => ({ messageIds: tx.payload.messageIds }))),

@@ -86,14 +86,14 @@ describe('payload containers and destinations are authorized', () => {
     const setup = harness()
     await setup.run({ type: 'calendar.create_calendar', payload: { id: U('cal-a'), name: 'A' } })
     await setup.run({ type: 'calendar.create_calendar', payload: { id: U('cal-b'), name: 'B' } })
-    const event = { title: 'Sync', startAt: at(10), endAt: at(11) }
-    expect(await setup.run({ type: 'calendar.create_event', target: { kind: 'calendar', id: U('cal-a') }, payload: { ...event, calendarId: U('cal-b') } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    const event = { title: 'Sync', start: at(10), end: at(11), tz: 'UTC' }
+    expect(await setup.run({ type: 'calendar.create_event', target: { kind: 'calendar', id: U('cal-a') }, payload: { ...event, calendarRef: { kind: 'calendar', id: U('cal-b') } } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     const { calls, authorizer } = denyId(U('cal-b'))
     const guarded = harness(authorizer)
-    expect(await guarded.run({ type: 'calendar.create_event', payload: { ...event, calendarId: U('cal-b') } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(await guarded.run({ type: 'calendar.create_event', payload: { ...event, calendarRef: { kind: 'calendar', id: U('cal-b') } } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     expect(calls).toContainEqual(expect.objectContaining({ verb: 'write', ref: { kind: 'calendar', id: U('cal-b') } }))
     expect(records('calendar-event')).toEqual([])
-    expect(await guarded.run({ type: 'calendar.create_event', payload: { ...event, calendarId: U('cal-a') } })).toMatchObject({ status: 'applied' })
+    expect(await guarded.run({ type: 'calendar.create_event', payload: { ...event, calendarRef: { kind: 'calendar', id: U('cal-a') } } })).toMatchObject({ status: 'applied' })
   })
 
   test('comments.create: the parent is the target; a thread must be on the same entity (kind and id)', async () => {
@@ -115,13 +115,14 @@ describe('payload containers and destinations are authorized', () => {
     await setup.run({ type: 'docs.create_document', payload: { id: docB.id, title: 'B' } })
     expect(await setup.run({ type: 'docs.append_block', payload: { docRef: docB, markdown: 'x' } })).toMatchObject({ error: { code: 'VALIDATION' } })
     expect(await setup.run({ type: 'docs.append_block', target: docA, payload: { docRef: docB, markdown: 'x' } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
-    expect(await setup.run({ type: 'docs.insert_task_block', target: docA, payload: { docRef: docB, taskRef: { kind: 'task', id: U('t') } } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    const block = { blockId: 'b1', task: { title: 'Nested' } }
+    expect(await setup.run({ type: 'docs.insert_task_block', target: docA, payload: { ...block, docRef: docB } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     expect(await setup.run({ type: 'docs.apply_patch', payload: { noteId: 'Notes/b.md', patch: '@@' } })).toMatchObject({ error: { code: 'VALIDATION' } })
     expect(await setup.run({ type: 'docs.apply_patch', target: { kind: 'note', id: 'Notes/a.md' }, payload: { noteId: 'Notes/b.md', patch: '@@' } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
-    // The embedded task is only referenced: read.
-    const { calls, authorizer } = recording(call => !(call.ref?.id === U('t') && call.verb === 'read'))
-    expect(await harness(authorizer).run({ type: 'docs.insert_task_block', target: docA, payload: { docRef: docA, taskRef: { kind: 'task', id: U('t') } } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
-    expect(calls).toContainEqual(expect.objectContaining({ verb: 'read', ref: { kind: 'task', id: U('t') } }))
+    // The list the nested task lands in is written into: write.
+    const { calls, authorizer } = recording(call => !(call.ref?.id === U('list-b') && call.verb === 'write'))
+    expect(await harness(authorizer).run({ type: 'docs.insert_task_block', target: docA, payload: { ...block, docRef: docA, task: { title: 'Nested', listRef: { kind: 'task-list', id: U('list-b') } } } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(calls).toContainEqual(expect.objectContaining({ verb: 'write', ref: { kind: 'task-list', id: U('list-b') } }))
     expect(await setup.run({ type: 'docs.append_block', target: docA, payload: { docRef: docA, markdown: 'x' } })).toMatchObject({ status: 'applied' })
   })
 
@@ -137,12 +138,12 @@ describe('payload containers and destinations are authorized', () => {
 describe('chat destinations need membership, posting policy and write', () => {
   async function chats() {
     const setup = harness()
-    await setup.run({ type: 'im.create_chat', payload: { id: U('src'), name: 'src', visibility: 'public' } })
-    await setup.run({ type: 'im.send_message', target: { kind: 'channel', id: U('src') }, payload: { id: U('m'), content: { doc: 'hi' } } })
+    await setup.run({ type: 'im.create_chat', payload: { id: U('src'), kind: 'group', name: 'src', visibility: 'public', members: [] } })
+    await setup.run({ type: 'im.send_message', target: { kind: 'channel', id: U('src') }, payload: { messageId: U('m'), body: { doc: 'hi' }, mentions: [] } })
     // BOB's chat: the actor is not a member.
-    await setup.run({ type: 'im.create_chat', payload: { id: U('bobs'), name: 'bobs', visibility: 'public' }, actor: BOB })
+    await setup.run({ type: 'im.create_chat', payload: { id: U('bobs'), kind: 'group', name: 'bobs', visibility: 'public', members: [] }, actor: BOB })
     // A chat the actor belongs to.
-    await setup.run({ type: 'im.create_chat', payload: { id: U('dest'), name: 'dest', visibility: 'public', memberIds: [ACTOR_ID] }, actor: BOB })
+    await setup.run({ type: 'im.create_chat', payload: { id: U('dest'), kind: 'group', name: 'dest', visibility: 'public', members: [ACTOR_ID] }, actor: BOB })
     return setup
   }
   const messagesIn = (chatId: string) => records('channel-message').filter(message => message.data.chatId === chatId)
@@ -164,7 +165,7 @@ describe('chat destinations need membership, posting policy and write', () => {
 
   test('meetings.publish_outcomes', async () => {
     const setup = await chats()
-    await setup.run({ type: 'vc.start_meeting', payload: { id: U('call'), title: 'Standup' } })
+    await setup.run({ type: 'vc.start_meeting', payload: { id: U('call') } })
     const outcome = { decisions: [{ title: 'Ship' }] }
     expect(await setup.run({ type: 'meetings.publish_outcomes', target: { kind: 'call', id: U('call') }, payload: { ...outcome, toChatId: U('bobs') } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     const { calls, authorizer } = denyId(U('dest'))
@@ -177,9 +178,9 @@ describe('chat destinations need membership, posting policy and write', () => {
 
   test('im.send_message: a non-member cannot post in a public chat', async () => {
     const setup = await chats()
-    expect(await setup.run({ type: 'im.send_message', target: { kind: 'channel', id: U('bobs') }, payload: { content: { doc: 'x' } } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(await setup.run({ type: 'im.send_message', target: { kind: 'channel', id: U('bobs') }, payload: { body: { doc: 'x' }, mentions: [] } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     await setup.run({ type: 'im.join_chat', target: { kind: 'channel', id: U('bobs') }, payload: {} })
-    expect(await setup.run({ type: 'im.send_message', target: { kind: 'channel', id: U('bobs') }, payload: { content: { doc: 'x' } } })).toMatchObject({ status: 'applied' })
+    expect(await setup.run({ type: 'im.send_message', target: { kind: 'channel', id: U('bobs') }, payload: { body: { doc: 'x' }, mentions: [] } })).toMatchObject({ status: 'applied' })
   })
 })
 
@@ -239,14 +240,14 @@ describe('deletes, reorders, ownership and approvals', () => {
     const setup = harness()
     expect(await setup.run({ type: 'agents.decide_approval', payload: { approvalId: U('nope'), decision: 'approve' } })).toMatchObject({ error: { code: 'NOT_FOUND' } })
     await setup.run({ type: 'agents.provision_personal_agent', payload: { id: U('agent'), ownerId: ACTOR_ID } })
-    expect(await setup.run({ type: 'agents.invoke', payload: { id: U('inv'), agentId: U('agent'), prompt: 'x' } })).toMatchObject({ status: 'applied', result: { approvalId: U('inv') } })
+    expect(await setup.run({ type: 'agents.invoke', payload: { id: U('inv'), agentRef: { kind: 'person', id: U('agent') }, instruction: 'x', origin: { kind: 'comment', commentId: U('c') } } })).toMatchObject({ status: 'applied' })
     expect(records('agent-approval')[0]!.data).toMatchObject({ status: 'pending', approverIds: [ACTOR_ID], invocationId: U('inv') })
     expect(await setup.run({ type: 'agents.decide_approval', payload: { approvalId: U('inv'), decision: 'approve' }, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     expect(await setup.run({ type: 'agents.decide_approval', payload: { approvalId: U('inv'), decision: 'deny' } })).toMatchObject({ status: 'applied' })
     expect(records('agent-approval')[0]!.data).toMatchObject({ status: 'denied', decidedBy: ACTOR_ID })
     expect(await setup.run({ type: 'agents.decide_approval', payload: { approvalId: U('inv'), decision: 'approve' } })).toMatchObject({ error: { code: 'VALIDATION' } })
     // Someone else's agent cannot be invoked.
-    expect(await setup.run({ type: 'agents.invoke', payload: { agentId: U('agent'), prompt: 'x' }, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(await setup.run({ type: 'agents.invoke', payload: { agentRef: { kind: 'person', id: U('agent') }, instruction: 'x', origin: { kind: 'comment', commentId: U('c') } }, actor: BOB })).toMatchObject({ error: { code: 'FORBIDDEN' } })
   })
 
   test('entities.drop: link / attach write the source (FROM side); embed only references it', async () => {

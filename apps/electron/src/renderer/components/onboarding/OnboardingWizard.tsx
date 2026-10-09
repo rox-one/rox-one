@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { WelcomeStep } from "./WelcomeStep"
+import { RoleStep } from "./RoleStep"
 import { QuestionnaireStep, type QuestionnaireStepPayload } from "./QuestionnaireStep"
 import {
   saveFirstRunDraft,
@@ -22,6 +23,7 @@ import type { CustomEndpointApi } from '@config/llm-connections'
 export type OnboardingStep =
   | 'welcome'
   | 'questionnaire'
+  | 'role'
   | 'rox-connect'
   | 'git-bash'
   | 'provider-select'
@@ -118,9 +120,10 @@ interface OnboardingWizardProps {
 /**
  * OnboardingWizard - Full-screen onboarding / provider setup container
  *
- * First run: Welcome (username) only, then the app opens with the Rox runtime.
- * Settings → ИИ: Provider Select (Rox / Claude / ChatGPT / Copilot / API Key /
- * Local) → Credentials or Local Model → closes when the connection is saved.
+ * First run: Welcome (username) → Role («Who are you?»), then the app opens
+ * with the Rox runtime. Settings → ИИ: Provider Select (Rox / Claude / ChatGPT /
+ * Copilot / API Key / Local) → Credentials or Local Model → closes when the
+ * connection is saved.
  * Reaching 'complete' calls onFinish once; there is no completion screen.
  */
 export function OnboardingWizard({
@@ -207,7 +210,7 @@ export function OnboardingWizard({
           </div>
         )
 
-      case 'questionnaire':
+case 'questionnaire':
         return (
           <QuestionnaireStep
             onContinue={(payload) => {
@@ -219,6 +222,16 @@ export function OnboardingWizard({
               onContinue()
             }}
             {...(firstRun ? { rewards: firstRun.rewards } : {})}
+          />
+        )
+
+      case 'role':
+        return (
+          <RoleStep
+            onContinue={onContinue}
+            onBack={onBack}
+            isLoading={state.isCheckingGitBash}
+            isFinishing={state.isFinishing}
           />
         )
 

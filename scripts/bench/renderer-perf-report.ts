@@ -20,7 +20,7 @@ const sessionCountFlag = args.indexOf('--session-count')
 const sessionCountRaw = sessionCountFlag >= 0 ? Number(args[sessionCountFlag + 1]) : 2000
 const sessionCount: 500 | 2000 = sessionCountRaw === 500 ? 500 : 2000
 
-const report = runPerfHarness({
+const report = await runPerfHarness({
   sessionCount,
   switchIterations: sessionCount === 500 ? 24 : 60,
   includeBundleProfile: includeBundle,

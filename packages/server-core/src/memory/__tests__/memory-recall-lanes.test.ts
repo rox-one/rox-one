@@ -15,6 +15,7 @@ import {
   RECALL_ESCALATION_MAX_PROMPT_CHARS,
 } from '@rox/shared/memory/context-select'
 import type { MemoryConfig, MemoryChunkProvenance } from '@rox/shared/memory/types'
+import { DEFAULT_MEMORY_CONFIG } from '@rox/shared/memory/types'
 import { MemoryService } from '../MemoryService'
 import { MemoryFileStore } from '../MemoryFileStore'
 import { LessonStore } from '../LessonStore'
@@ -38,17 +39,10 @@ function makeService(opts: { recallAgent?: (prompt: string) => Promise<string>; 
   const wsLessons = new LessonStore(wsFiles.lessonsPath, 'workspace')
   const globalLessons = new LessonStore(new MemoryFileStore('global', root, join(root, 'global-config')).lessonsPath, 'global')
   const intentStore = new StandingIntentStore(wsFiles.intentsPath)
-  const config: MemoryConfig = {
-    enabled: true,
-    distillIdleHours: 3,
-    distillMsgCount: 30,
-    negativeFirst: true,
-    redactExtraPatterns: [],
-    ftsLimit: 20,
-    semantic: false,
-    dreamIntervalHours: 4,
-    dreamNotes: true,
-  }
+  // Spread the shared defaults instead of re-listing them: this literal went
+  // stale the moment MemoryConfig gained the dream fields, and tsc then failed
+  // the whole server-core project.
+  const config: MemoryConfig = { ...DEFAULT_MEMORY_CONFIG }
   const svc = new MemoryService({
     workspaceRoot: root,
     workspaceId: 'ws-1',

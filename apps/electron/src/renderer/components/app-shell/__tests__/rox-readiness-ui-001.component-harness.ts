@@ -20,6 +20,8 @@ export function rendererNodeBoundaryPlugin() {
 
 const main = resolve(import.meta.dir, '../MainContentPanel.tsx')
 const panelSlot = resolve(import.meta.dir, '../PanelSlot.tsx')
+// PERF-10 (#1577): the shared lazy-page registry the panel imports its pages from.
+const routePages = resolve(import.meta.dir, '../route-pages.ts')
 const types = resolve(import.meta.dir, '../../../../shared/types.ts')
 const parser = resolve(import.meta.dir, '../../../../shared/route-parser.ts')
 const tooltip = resolve(import.meta.dir, '../../../../../../../packages/ui/src/components/tooltip.tsx')
@@ -55,8 +57,9 @@ export const NavigationContext=NavContext; // PanelSlot reads/provides the same 
 export const useNavigation=()=>({...React.useContext(NavigationStatusContext),navigateToSource:()=>{}});
 export const useActiveWorkspace=()=>({id:React.useContext(ShellContext)?.activeWorkspaceId});
 export { isSessionsNavigation,isSourcesNavigation,isSettingsNavigation,isSkillsNavigation,isMemoryNavigation,
- isLearningNavigation,isTasksNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,isAutomationsNavigation,
- isProjectsNavigation,isPagesNavigation,isBrowserNavigation,isKnowledgeNavigation,isDiffNavigation,isExtensionNavigation,
+isLearningNavigation,isTasksNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,isAutomationsNavigation,
+ isProjectsNavigation,isPagesNavigation,isBrowserNavigation,isKnowledgeNavigation,isDiffNavigation,isDevelopersNavigation,
+ isPlaybooksNavigation,isExtensionNavigation,
  isConnectionsNavigation,isHomeNavigation,isCloudRunNavigation,isTerminalNavigation,isDriveNavigation } from ${JSON.stringify(types)};
 export const sessionMetaMapAtom=atom(new Map()); export const automationsAtom=atom([]);
 export const knowledgeActiveViewIdAtom=atom(null); export const knowledgeHomeViewAtom=atom('search');
@@ -182,7 +185,11 @@ window.ui001.render({});` : ''}
           if (bindingImports.has(args.path)) return { path: 'bindings', namespace: 'ui001' }
           if (args.path === '@/components/ui/PanelHeaderCenterButton') return { path: 'entity-ui', namespace: 'ui001' }
         }
-        if (args.importer !== main) return
+        // PERF-10 (#1577): lazy pages moved into the shared `route-pages`
+        // registry, so their boundary imports now come from that module. Give
+        // them the same stub/boundary treatment the panel used to apply to its
+        // inline `import()`s (the registry resolves the same specifiers).
+        if (args.importer !== main && args.importer !== routePages) return
         if (options.realNavigation && ['@/contexts/NavigationContext', '@/atoms/sessions'].includes(args.path)) return
         if (bindingImports.has(args.path)) return { path: 'bindings', namespace: 'ui001' }
         if (args.path === '../../knowledge/KnowledgeHome') return { path: 'knowledge', namespace: 'ui001' }

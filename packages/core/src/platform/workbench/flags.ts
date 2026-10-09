@@ -72,6 +72,17 @@ export const WORKBENCH_FLAG = {
   entitiesPreviewsV1: 'entities.previews.v1',
   /** Visible Rox home (W1-13, #1510) — `~/rox` resolution + MIG-13 auto-migration. Default OFF. */
   storageVisibleRootV1: 'storage.visible-root.v1',
+  // Developer Space (spec 2026-10-09) — master + sub-flags, default OFF.
+  devSpaceV1: 'devspace.v1',
+  devSpaceIngestV1: 'devspace.ingest.v1',
+  devSpaceToolsV1: 'devspace.tools.v1',
+  devSpaceQuestionsV1: 'devspace.questions.v1',
+  devSpaceToursV1: 'devspace.tours.v1',
+  devSpaceAskV1: 'devspace.ask.v1',
+  // Playbooks surface — master + sub-flags, default OFF.
+  playbooksV1: 'playbooks.v1',
+  playbooksKnowledgeV1: 'playbooks.knowledge.v1',
+  playbooksCodebookV1: 'playbooks.codebook.v1',
   /** Goals module (W1-06, #1503): gates the MIG-04/05 OKR / roadmap import into the work store. Default OFF. */
   goalsV1: 'goals.v1',
 // W1-12 (#1509)
@@ -82,6 +93,12 @@ export const WORKBENCH_FLAG = {
   // by its module: review by goals.checkins.v1, mention by entities.links.v1,
   // assignment by tasks.shared.v1, and the notifications tab by this one.
   notifyInboxV1: 'notify.inbox.v1',
+  // W1-15 (#1512) — surface chrome, agent panel and cross-functional
+  // capabilities. All default OFF: with them off the shell renders exactly as
+  // before (no UI, no writes, no new routes, no background work).
+  agentPanelV1: 'agent.panel.v1',
+  workbenchChromeSurfacesV1: 'workbench.chrome.surfaces.v1',
+  xfnCapabilitiesV1: 'xfn.capabilities.v1',
 } as const;
 
 export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
@@ -263,11 +280,28 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   { id: WORKBENCH_FLAG.modeGoalsV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.modeContactsV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.docsSharedV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+// Dev Space (spec 2026-10-09): default OFF, inert until explicitly enabled.
+  // The onboarding «разработчик» choice writes devspace.v1=true; the flag default stays false.
+  { id: WORKBENCH_FLAG.devSpaceV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.devSpaceIngestV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.devSpaceV1], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.devSpaceToolsV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.devSpaceV1], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.devSpaceQuestionsV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.devSpaceV1], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.devSpaceToursV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.devSpaceV1], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.devSpaceAskV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.devSpaceV1], rollbackSafe: true },
+  // Playbooks (spec 2026-10-09): default OFF, inert until explicitly enabled.
+  { id: WORKBENCH_FLAG.playbooksV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.playbooksKnowledgeV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.playbooksV1], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.playbooksCodebookV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.playbooksV1], rollbackSafe: true },
   // W1-12 (#1509): domain rules R1–R5 — default OFF, consumers inert (no subscription).
   { id: WORKBENCH_FLAG.automationRulesV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   // W1-09 (#1506): Inbox Review / Mentions / Assignments are gated by their
   // module flags (registered by their owners); this one gates the notify tab.
   { id: WORKBENCH_FLAG.notifyInboxV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  // W1-15 (#1512): surface chrome, agent panel, X-13…X-26 capabilities —
+  // default OFF, inert until explicitly enabled.
+  { id: WORKBENCH_FLAG.agentPanelV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.workbenchChromeSurfacesV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.xfnCapabilitiesV1, defaultValue: false, dependencies: [], rollbackSafe: true },
 ];
 
 export function resolveEnabledFlags(

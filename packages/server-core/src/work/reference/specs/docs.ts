@@ -7,8 +7,6 @@ import { addLink, assertNotOwner, authorizeBound, authorizeId, authorizeOrigin, 
 import type { RecordData, StoredRecord } from '../types'
 import type { ReferenceSpecMap } from './types'
 
-const UPLOAD_SESSION_TTL_MS = 24 * 60 * 60 * 1000
-
 const PUBLIC_TOKEN_BYTES = 16
 
 /**
@@ -141,16 +139,9 @@ export const DOCS_REFERENCE_SPECS: ReferenceSpecMap = {
       return { collection: 'note', id: note.id, revision: note.revision, changes: ['permissions'] }
     },
   },
-  'docs.suggest_changes': childCreate('doc-suggestion', 'note', 'docId', payloadFields(), tx => ({ authorId: tx.actor, status: 'open' })),
-  'docs.decide_suggestion': childUpdate('doc-suggestion', 'note', 'docId', 'suggestionId', tx => ({ status: tx.payload.decision, decidedBy: tx.actor, decidedAt: tx.now })),
-  'docs.sync_suggestions': transition('note', tx => ({ suggestionsSyncedAt: tx.now, syncedSuggestionIds: tx.payload.suggestionIds })),
-  'docs.record_view': async tx => {
-    const note = await tx.requireTarget('note')
-    const id = `${note.id}:${tx.actor}`
-    const current = await tx.get('doc-view', id)
-    const record = await tx.upsert('doc-view', id, { lastViewedAt: tx.now, viewCount: Number(current?.data.viewCount ?? 0) + 1 }, { docId: note.id, principalId: tx.actor, firstViewedAt: tx.now })
-    return { collection: 'doc-view', id, revision: record.revision, ref: tx.rawTarget ?? null, changes: ['viewCount'] }
-  },
+  // W1-14 (#1511): `docs.suggest_changes`, `docs.sync_suggestions`,
+  // `docs.decide_suggestion` and `docs.record_view` are handled by the collab
+  // module (@rox/server-core/collab).
   'docs.apply_patch': async tx => {
     // The patched doc is the authorized target.
     boundRef(tx, { kind: 'note', id: tx.payload.noteId }, { requireTarget: true })
@@ -172,17 +163,13 @@ export const DOCS_REFERENCE_SPECS: ReferenceSpecMap = {
     return { collection: 'note', id: note.id, revision: note.revision, changes: ['blocks'] }
   },
   'docs.create_meeting_notes': { op: noteFrom(tx => tx.payload.eventRef, tx => ({ subtype: 'minutes', title: tx.payload.title ?? refString(tx.payload.eventRef) })), event: 'docs.document_created' },
-  'docs.insert_task_block': block('task', 'taskRef'),
-  'docs.insert_event_block': block('event', 'eventRef'),
-  'docs.insert_meeting_block': block('meeting', 'callRef'),
-  'docs.embed_view': block('view', 'viewRef'),
-  'docs.create_from_messages': { op: noteFrom(tx => ({ kind: 'channel', id: tx.payload.chatId }), tx => ({ title: tx.payload.title ?? `channel:${tx.payload.chatId}`, sourceMessages: { chatId: tx.payload.chatId, seqs: tx.payload.seqs } })), event: 'docs.document_created' },
+  // W1-14 (#1511): the §12 cross-surface commands (insert_*_block, embed_view,
+  // create_from_messages) are handled by @rox/server-core/xsc.
   'docs.append_block': block('markdown'),
   'docs.create_from_email': { op: noteFrom(tx => ({ kind: 'mail-thread', id: tx.payload.threadId }), tx => ({ title: tx.payload.title ?? `mail-thread:${tx.payload.threadId}` })), event: 'docs.document_created' },
 }
 
 const importAttachment = create('file', tx => ({ name: tx.payload.name ?? tx.payload.attachmentId, sourceRef: `${refString(tx.payload.source)}#${tx.payload.attachmentId}`, ...(tx.payload.folderId ? { folderId: tx.payload.folderId } : {}) }), { defaults: tx => ({ uploadedBy: tx.actor, currentVersion: 1 }) })
-const openUpload = create('upload-session', payloadFields(), { defaults: tx => ({ status: 'open', expiresAt: new Date(Date.parse(tx.now) + UPLOAD_SESSION_TTL_MS).toISOString(), ownerPrincipalId: tx.actor }) })
 
 export const DRIVE_REFERENCE_SPECS: ReferenceSpecMap = {
   'drive.create_folder': async tx => {
@@ -248,26 +235,9 @@ export const DRIVE_REFERENCE_SPECS: ReferenceSpecMap = {
     const record = await tx.upsert('folder-item', `${folder.id}:${refString(tx.payload.item)}`, { isShortcut: true, addedBy: tx.actor }, { folderId: folder.id, itemRef: refString(tx.payload.item) })
     return { collection: 'folder-item', id: record.id, revision: record.revision, ref: { kind: 'folder', id: folder.id }, changes: ['shortcut'] }
   },
-  'drive.provision': async tx => {
-    const record = await tx.upsert('drive-quota', tx.actor, { state: 'active', ...(tx.payload.quotaBytes ? { quotaBytes: tx.payload.quotaBytes } : {}) }, { ownerPrincipalId: tx.actor, rootFolderId: tx.newId('root') })
-    return { collection: 'drive-quota', id: record.id, revision: record.revision, ref: null, changes: ['state'] }
-  },
-  'drive.open_upload': async tx => {
-    await authorizeId(tx, 'folder', tx.payload.folderId, 'write')
-    return openUpload(tx)
-  },
-  'drive.complete_upload': async tx => {
-    const session = await tx.require('upload-session', tx.payload.uploadSessionId)
-    if (session.data.ownerPrincipalId !== tx.actor) throw new CommandRejection('FORBIDDEN', 'upload session belongs to another user')
-    if (session.data.status !== 'open') throw new CommandRejection('VALIDATION', `upload session is ${String(session.data.status)}`)
-    if (typeof session.data.expiresAt === 'string' && Date.parse(session.data.expiresAt) <= Date.parse(tx.now)) throw new CommandRejection('VALIDATION', 'upload session expired')
-    // The file lands in the session's folder: still writable now.
-    await authorizeId(tx, 'folder', session.data.folderId, 'write')
-    await tx.update('upload-session', session, { status: 'completed', sha256: tx.payload.sha256 })
-    const id = tx.newId('file')
-    const file = await tx.insert('file', id, { name: session.data.fileName, sizeBytes: session.data.sizeExpected, sha256: tx.payload.sha256, uploadedBy: tx.actor, currentVersion: 1, ...(session.data.folderId ? { folderId: session.data.folderId } : {}), ...(session.data.contentType ? { contentType: session.data.contentType } : {}) })
-    return { collection: 'file', id, revision: file.revision, changes: ['sha256'], result: { uploadSessionId: session.id } }
-  },
+  // W1-14 (#1511): drive.provision / drive.open_upload / drive.complete_upload
+  // (the quota-bearing upload protocol of §16) are handled by
+  // @rox/server-core/drive.
   'drive.import_attachment': async tx => {
     await authorizeRef(tx, tx.payload.source as EntityRef, 'read')
     await authorizeId(tx, 'folder', tx.payload.folderId, 'write')

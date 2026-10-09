@@ -93,6 +93,8 @@ export interface ParsedRoute {
 // =============================================================================
 
 export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'search' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'clipboard-history' | 'learning' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home' | 'drive'
+  // Developer Space / Playbooks (2026-10-09 pack): top-level destinations.
+  | 'developers' | 'playbooks'
   // Extra workbench screens («Ещё»): one navigator, screen id in `screen`
   | 'screen'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
@@ -107,6 +109,8 @@ export interface ParsedCompoundRoute {
   navigator: NavigatorType
   /** Search page query (only for search navigator). */
   query?: string
+  /** Developer Space focused repo (only for the `developers` navigator). */
+  devSpaceRepoId?: string
   /** Session filter (only for sessions navigator) */
   sessionFilter?: SessionFilter
   /** Source filter (only for sources navigator) */
@@ -142,7 +146,9 @@ export interface ParsedCompoundRoute {
  * handler so `rox://search?q=...` is accepted like renderer navigation.
  */
 export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'clipboard-history', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home', 'drive',
+'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'clipboard-history', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home', 'drive',
+  // Developer Space / Playbooks (2026-10-09 pack) — top-level destinations.
+  'developers', 'playbooks',
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
   // Kind-first entity surfaces (W1-01). Shared with the deep-link handler so
   // `rox://docs/wiki/{id}` etc. reach the renderer parser.
@@ -274,6 +280,18 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
       query: queryPart ? new URLSearchParams(queryPart).get('q') ?? '' : '',
       details: null,
     }
+  }
+  // Developer Space (2026-10-09 pack, D2) — `developers` or
+  // `developers?repo=<id>` focusing one repo workspace.
+  if (first === 'developers') {
+    if (segments.length !== 1) return null
+    const devSpaceRepoId = queryPart ? new URLSearchParams(queryPart).get('repo') ?? undefined : undefined
+    return { navigator: 'developers', ...(devSpaceRepoId ? { devSpaceRepoId } : {}), details: null }
+  }
+  // Playbooks notebook surface (2026-10-09 pack, D12).
+  if (first === 'playbooks') {
+    if (segments.length !== 1) return null
+    return { navigator: 'playbooks', details: null }
   }
   // Kanban board — standalone route. A view of all sessions in board mode.
   // Encoded as its own prefix (not `allSessions/board`) so it never collides
@@ -816,6 +834,16 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return 'home'
   }
 
+  if (parsed.navigator === 'developers') {
+    return parsed.devSpaceRepoId
+      ? `developers?${new URLSearchParams({ repo: parsed.devSpaceRepoId }).toString()}`
+      : 'developers'
+  }
+
+  if (parsed.navigator === 'playbooks') {
+    return 'playbooks'
+  }
+
   if (parsed.navigator === 'surface' && parsed.surface) {
     // W3.2: a calendar meeting carried by the legacy alias keeps the
     // `meetings/meeting/{id}` address so the deep link round-trips.
@@ -1074,6 +1102,18 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
 
   if (compound.navigator === 'home') {
     return { type: 'view', name: 'home', params: {} }
+  }
+
+  if (compound.navigator === 'developers') {
+    return {
+      type: 'view',
+      name: 'developers',
+      params: compound.devSpaceRepoId ? { repo: compound.devSpaceRepoId } : {},
+    }
+  }
+
+  if (compound.navigator === 'playbooks') {
+    return { type: 'view', name: 'playbooks', params: {} }
   }
 
   if (compound.navigator === 'surface' && compound.surface) {
@@ -1398,6 +1438,18 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return { navigator: 'home', details: null }
   }
 
+  if (compound.navigator === 'developers') {
+    return {
+      navigator: 'developers',
+      ...(compound.devSpaceRepoId ? { devSpaceRepoId: compound.devSpaceRepoId } : {}),
+      details: null,
+    }
+  }
+
+  if (compound.navigator === 'playbooks') {
+    return { navigator: 'playbooks', details: null }
+  }
+
   if (compound.navigator === 'surface' && compound.surface) {
     // W3.2: the legacy `meetings/meeting/{id}` alias carries the meeting in
     // `details`; keep it on the surface state as `meetingId`.
@@ -1649,6 +1701,12 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return { navigator: 'tasks', details: null }
     case 'connections':
       return { navigator: 'connections', details: null }
+    case 'developers':
+      return parsed.params.repo
+        ? { navigator: 'developers', devSpaceRepoId: parsed.params.repo, details: null }
+        : { navigator: 'developers', details: null }
+    case 'playbooks':
+      return { navigator: 'playbooks', details: null }
     case 'home':
       return { navigator: 'home', details: null }
     case 'surface': {
@@ -1938,6 +1996,21 @@ function navigationStateToCompoundRoute(state: Exclude<NavigationState, Unavaila
   if (state.navigator === 'home') {
     return {
       navigator: 'home',
+      details: null,
+    }
+  }
+
+  if (state.navigator === 'developers') {
+    return {
+      navigator: 'developers',
+      devSpaceRepoId: state.devSpaceRepoId,
+      details: null,
+    }
+  }
+
+  if (state.navigator === 'playbooks') {
+    return {
+      navigator: 'playbooks',
       details: null,
     }
   }

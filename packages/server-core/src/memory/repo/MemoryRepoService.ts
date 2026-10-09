@@ -718,7 +718,6 @@ export class MemoryRepoService {
   async graph(bankId: string): Promise<MemoryRepoGraph> {
     bankId = this.canonicalBankId(bankId)
     const bundle = await this.provider.loadBundle(bankId)
-    const repoPath = this.repoPathFor(bankId, '')
     const rendered = renderRepoFiles(bundle, { generatedAt: this.nowProvider().toISOString() })
     const lessonFiles = new Map<string, RenderedRepoFile>()
     for (const file of rendered) if (file.kind === 'lesson' && file.lessonKey) lessonFiles.set(file.lessonKey, file)
