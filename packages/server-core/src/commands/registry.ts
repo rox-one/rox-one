@@ -16,6 +16,7 @@
 
 import { CommandRegistry, registerCommandCatalogue } from '@rox/core/commands'
 import { bindSystemPing } from './ping'
+import { NOTIFY_COMMAND_MODULE } from './notify'
 import { bindDomainSchemas, bindReferenceHandlers } from '../work/reference/module'
 import { COLLAB_COMMAND_MODULE } from '../collab/module'
 import { DRIVE_COMMAND_MODULE } from '../drive/module'
@@ -52,6 +53,8 @@ export const COMMAND_MODULES: readonly CommandModule[] = Object.freeze([
   COLLAB_COMMAND_MODULE,
   DRIVE_COMMAND_MODULE,
   XSC_COMMAND_MODULE,
+  // W1-09 (#1506): notifications.* (binds only while a notify host is installed).
+  NOTIFY_COMMAND_MODULE,
   REFERENCE_COMMAND_MODULE,
 ])
 

@@ -175,7 +175,8 @@
     "./domain": "./src/domain/index.ts",
     "./collab": "./src/collab/index.ts",
     "./drive": "./src/drive/index.ts",
-    "./xsc": "./src/xsc/index.ts"
+    "./xsc": "./src/xsc/index.ts",
+    "./notify/schemas": "./src/notify/schemas.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",
