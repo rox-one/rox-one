@@ -1,9 +1,16 @@
-import { afterEach, describe, expect, it } from 'bun:test'
+import { afterEach, describe, expect, it, setDefaultTimeout } from 'bun:test'
 import { createHash } from 'node:crypto'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createWebuiHandler, resolveWebuiFile, startWebuiHttpServer } from '../http-server'
+
+// Every test in this file starts a real HTTP server, writes a temp webui dir and performs real
+// scrypt password verification per login; the bun default 5 s per-test budget is machine-load
+// dependent (observed timing out inside a full gate run while other suites were in flight) and
+// the login rate-limit tests issue 6-7 verifications in one test. Budget only - no assertion here
+// was relaxed. Passes 14/14 in isolation on both this branch and pristine main.
+setDefaultTimeout(30_000)
 
 const SECRET = 'test-server-secret'
 const PASSWORD = 'test-password'
