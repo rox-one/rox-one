@@ -30,6 +30,7 @@ export const DENIED_OPERATOR_CEILING: OperatorRoleCeiling = Object.freeze({
   configured: true,
   role: null,
   scopes: Object.freeze([] as OperatorScope[]),
+  accessPolicyPlugin: null,
 })
 
 const SESSION_CHANNEL_PREFIX = 'sessions:'
@@ -219,7 +220,7 @@ export function resolveOperatorRoleCeiling(
   const hasDefinitions = Object.keys(registry.definitions ?? {}).length > 0
   const defaultName = typeof registry.default === 'string' && registry.default.trim() ? registry.default.trim() : null
   if (!hasDefinitions && !defaultName) {
-    return Object.freeze({ configured: false, role: null, scopes: ALL_OPERATOR_SCOPES })
+    return Object.freeze({ configured: false, role: null, scopes: ALL_OPERATOR_SCOPES, accessPolicyPlugin: null })
   }
   const requested = typeof roleName === 'string' && roleName.trim() ? roleName.trim() : null
   const definition = resolveDefinition(registry, requested) ?? resolveDefinition(registry, defaultName)
@@ -228,18 +229,19 @@ export function resolveOperatorRoleCeiling(
     configured: true,
     role: definition.name,
     scopes: Object.freeze([...definition.scopes]),
+    accessPolicyPlugin: definition.accessPolicyPlugin,
   })
 }
 
 function resolveDefinition(
   registry: OperatorRoleRegistry,
   name: string | null,
-): { name: string; scopes: OperatorScope[] } | null {
+): { name: string; scopes: OperatorScope[]; accessPolicyPlugin: string | null } | null {
   if (!name) return null
   if (!Object.hasOwn(registry.definitions, name)) return null
   const normalized = normalizeOperatorRoleDefinition(registry.definitions[name])
   if (!normalized) return null
-  return { name, scopes: [...normalized.scopes] }
+  return { name, scopes: [...normalized.scopes], accessPolicyPlugin: normalized.accessPolicyPlugin ?? null }
 }
 
 // ---------------------------------------------------------------------------
