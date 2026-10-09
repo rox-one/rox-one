@@ -10,8 +10,9 @@
  *   FAILS with a message saying what it expected: fail closed, never a
  *   silent pending.
  * - Exception: the visual, axe and one-rail DOM gates need rendered screens
- *   from the wave-2 browser driver. They stay `pending` until that driver
- *   exists, and say so in their output (see `pendingUntilBrowserDriver`).
+ *   from the wave-2 browser driver. They stay `pending` while its capture
+ *   artifacts (`../capture.ts`) are absent, and say how to produce them (see
+ *   `pendingUntilBrowserDriver`).
  * - `warn` is report-only (e.g. perf micro-benchmarks on PRs) and never
  *   changes the exit code.
  */
@@ -29,7 +30,7 @@ export function pending(gate: string, inputPath: string, ownerIssue: string): Ga
 }
 
 export const BROWSER_DRIVER_NOTE =
-  'pending until the wave-2 browser driver exists: rendered screens are produced and checked only by the driver (packages/test-harness/README.md)'
+  'no capture artifacts yet: run `bun run visual:capture` (the wave-2 browser driver) to produce them, and `bun run visual:capture --update-baselines` to (re)record the committed visual baselines (packages/test-harness/README.md)'
 
 export function pendingUntilBrowserDriver(gate: string, what: string): GateResult {
   return { gate, status: 'pending', summary: `${BROWSER_DRIVER_NOTE}; needs ${what}` }

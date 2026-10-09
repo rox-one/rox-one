@@ -39,5 +39,21 @@ export {
   type VisualSnapshotPlan,
 } from './visual.ts'
 export { runAxeAudit, type AxeAuditResult, type AxeViolation } from './axe.ts'
+export {
+	CAPTURE_SCHEMA_VERSION,
+	VISUAL_ARTIFACTS_DIR,
+	CAPTURE_FILE,
+	VISUAL_BASELINES_FILE,
+	snapshotKey,
+	railElements,
+	readArtifacts,
+	writeArtifacts,
+	readBaselines,
+	writeBaselines,
+	type CapturedScreen,
+	type CapturedSnapshot,
+	type CaptureArtifacts,
+	type VisualBaselines,
+} from './capture.ts'
 export * from './gates/index.ts'
 export * from './fixtures/index.ts'

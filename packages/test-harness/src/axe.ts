@@ -3,7 +3,9 @@
  *
  * `runAxeAudit(html)` is a dependency-free structural audit over an HTML
  * string (img alt, button names, input labels, html lang); results are
- * marked `engine: 'builtin'`.
+ * marked `engine: 'builtin'`. Element rules apply to any audit root; the
+ * document-level `html-lang` rule applies only when the HTML is a whole
+ * document (`<html>` present), since the driver captures a surface fragment.
  *
  * axe-core is deliberately NOT used here: `axe.run()` needs a live DOM
  * (document / element context), and Bun has none, so feeding it an HTML
@@ -40,7 +42,12 @@ function builtinAudit(html: string): AxeViolation[] {
   for (const m of inputs) {
     violations.push({ rule: 'input-label', selector: 'input', message: `input without label binding: ${m[0].slice(0, 80)}` })
   }
-  if (!/<html[^>]*\slang=/i.test(html)) {
+  // `html-lang` describes the document element: it only applies when the audit
+  // root is a whole document. The wave-2 driver captures the product surface
+  // (the preview-frame subtree, a fragment), where axe-core reports the rule
+  // inapplicable rather than violated — so it is checked here only when the
+  // audited HTML actually contains an `<html>` element.
+  if (/<html[\s>]/i.test(html) && !/<html[^>]*\slang=/i.test(html)) {
     violations.push({ rule: 'html-lang', selector: 'html', message: 'html element is missing a lang attribute' })
   }
   return violations
