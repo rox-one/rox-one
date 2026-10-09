@@ -8,6 +8,8 @@ import { pushTyped } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { exportSkillToProject, pruneUnusedSkills, readUsage } from '../../memory/skill-usage'
 import { getWorkspaceAllowedDirs, validateFilePath } from '../utils'
+import { registerSkillsToolRuntime } from '@rox/session-tools-core'
+import { createNativeSkillsToolRuntime } from './skills-tool-runtime'
 import {
   isClaimableLive,
   rpcSkillsActResult,
@@ -42,9 +44,13 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.skills.GET_USAGE,
   RPC_CHANNELS.skills.PRUNE_UNUSED,
   RPC_CHANNELS.skills.EXPORT_TO_PROJECT,
+  RPC_CHANNELS.skills.GET_ELIGIBILITY,
 ] as const
 
 export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): void {
+  // The skills_search / skills_read session tools execute in this process;
+  // publish the gated catalog runtime once per registration (last wins on reload).
+  registerSkillsToolRuntime(createNativeSkillsToolRuntime())
   // Panel refresh after mutations: same payload shape as SessionManager's
   // fs-watcher broadcast (workspaceId, skills) that AppShell subscribes to.
   const broadcastSkillsChanged = async (workspaceId: string, workspaceRoot: string): Promise<void> => {
@@ -100,6 +106,31 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     assertSkillWorkspace(ctx, workspaceId, deps)
     if (ctx.principal && !server.isRequestContextCurrent?.(ctx, 'read')) throw new Error('Workspace access denied')
     return loadSkillDetails(workspace.rootPath, skillSlug, projectRoot)
+  }, { nativeAction: 'read' })
+
+  // c2.3/c2.4: gating report for a skill — operator allowlist + pack state +
+  // requires.bins/env/config + os. The frozen ElectronAPI shape is
+  // `{ eligible: boolean; reason?: string }`; the full report rides alongside
+  // so the renderer (and tests) can render per-reason detail and collisions.
+  server.handle(RPC_CHANNELS.skills.GET_ELIGIBILITY, async (ctx, workspaceId: string, skillSlug: string) => {
+    assertSkillWorkspace(ctx, workspaceId, deps)
+    const read = rpcSkillsReadResult({ source: 'native', nativeId: skillSlug })
+    if (!isClaimableLive(read.result)) throw new Error('skill eligibility is not live')
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error('Workspace not found')
+    const { buildSkillEligibilityReport } = await import('@rox/shared/skills')
+    const report = await buildSkillEligibilityReport({ workspaceRoot: workspace.rootPath, slugs: [skillSlug] })
+    const eligibleSkill = report.eligible.find(skill => skill.slug === skillSlug)
+    const rejection = report.ineligible.find(entry => entry.skill.slug === skillSlug)
+    return {
+      eligible: Boolean(eligibleSkill),
+      ...(eligibleSkill
+        ? {}
+        : { reason: rejection
+            ? rejection.reasons.map(reason => reason.detail).join('; ')
+            : `skill not found: ${skillSlug}` }),
+      report,
+    }
   }, { nativeAction: 'read' })
 
   // Get files in a skill directory

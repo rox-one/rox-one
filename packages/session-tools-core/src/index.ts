@@ -183,6 +183,23 @@ export type {
 } from './knowledge/runtime.ts';
 export { parseKnowledgeRefArg, KNOWLEDGE_REF_ACCEPTED_FORMS } from './knowledge/parse-ref.ts';
 
+// Skills tool runtime (c2.7) — registered by the server-core skills RPC layer;
+// consumed by the skills_search / skills_read handlers.
+export {
+  registerSkillsToolRuntime,
+  getSkillsToolRuntime,
+  clearSkillsToolRuntime,
+} from './skills/runtime.ts';
+export type {
+  SkillCatalogEntry,
+  SkillCatalogSource,
+  SkillReadOutcome,
+  SkillSearchHit,
+  SkillsRuntimeScope,
+  SkillsToolRuntime,
+} from './skills/runtime.ts';
+export { isSafeSkillSlug, skillsRuntimeScope } from './skills/scope.ts';
+
 // Handlers
 export {
   // SubmitPlan
@@ -234,6 +251,14 @@ export {
   KNOWLEDGE_SEARCH_MAX_LIMIT,
   KNOWLEDGE_READ_MAX_MARKDOWN_CHARS,
   KNOWLEDGE_BACKLINKS_MAX_ITEMS,
+} from './handlers/index.ts';
+
+// Skills catalog handlers (registered in SESSION_TOOL_DEFS)
+export {
+  handleSkillsSearch,
+  handleSkillsRead,
+  SKILLS_SEARCH_MAX_LIMIT,
+  SKILLS_READ_MAX_CHARS,
 } from './handlers/index.ts';
 
 export type {
@@ -294,6 +319,9 @@ export {
   KnowledgeReadSchema,
   KnowledgeGetBacklinksSchema,
   KnowledgeProposeSchema,
+  // Skills tool schemas
+  SkillsSearchSchema,
+  SkillsReadSchema,
   // Descriptions
   TOOL_DESCRIPTIONS,
   // Registry
@@ -335,6 +363,8 @@ export type {
   KnowledgeSearchArgs,
   KnowledgeReadArgs,
   KnowledgeGetBacklinksArgs,
+  SkillsSearchArgs,
+  SkillsReadArgs,
 } from './tool-defs.ts';
 
 // Script runtime resolution + path containment (also used by the shared

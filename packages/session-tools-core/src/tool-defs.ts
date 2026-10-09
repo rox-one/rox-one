@@ -57,6 +57,8 @@ import { handleKnowledgeSearch } from './handlers/knowledge-search.ts';
 import { handleKnowledgeRead } from './handlers/knowledge-read.ts';
 import { handleKnowledgeGetBacklinks } from './handlers/knowledge-backlinks.ts';
 import { handleKnowledgePropose } from './handlers/knowledge-propose.ts';
+import { handleSkillsSearch } from './handlers/skills-search.ts';
+import { handleSkillsRead } from './handlers/skills-read.ts';
 
 // ============================================================
 // Canonical Zod Schemas
@@ -417,6 +419,20 @@ export type KnowledgeSearchArgs = z.infer<typeof KnowledgeSearchSchema>;
 export type KnowledgeReadArgs = z.infer<typeof KnowledgeReadSchema>;
 export type KnowledgeGetBacklinksArgs = z.infer<typeof KnowledgeGetBacklinksSchema>;
 export type KnowledgeProposeArgs = z.infer<typeof KnowledgeProposeSchema>;
+
+// Skills catalog tools (c2.7). The wire names use underscores; the catalog
+// advertises and the tools resolve slugs (never raw paths).
+export const SkillsSearchSchema = z.object({
+  query: z.string().describe('Keyword query over skill slug, name, description, and body text'),
+  limit: z.number().optional().describe('Max results to return (default 10, hard cap 25)'),
+});
+
+export const SkillsReadSchema = z.object({
+  slug: z.string().describe('Skill slug from skills_search or the available-skills catalog (no path separators)'),
+});
+
+export type SkillsSearchArgs = z.infer<typeof SkillsSearchSchema>;
+export type SkillsReadArgs = z.infer<typeof SkillsReadSchema>;
 
 // ============================================================
 // Canonical Tool Descriptions (base — no DOC_REFS)
@@ -812,6 +828,23 @@ Errors are typed: INVALID_REF, CONNECTION_UNAVAILABLE, CAPABILITY_DISABLED, PROV
 
   unbind_messaging_channel: `Disconnect a messaging channel from the current session.
 Messages will no longer be forwarded between the chat app and this session.`,
+
+  skills_search: `Search the installed skills (agent skill catalog) by keyword. Read-only.
+
+Use it to find a skill that matches the task before loading one — the available-skills
+catalog in your system prompt is bounded and may omit entries. Returns each match's slug,
+display name, source tier, absolute path, and a short excerpt. Load a match with
+skills_read. Search matches slug, name, description, and body text.
+
+Errors are typed: INVALID_ARGUMENT, SKILLS_UNAVAILABLE, SKILLS_ERROR.`,
+
+  skills_read: `Load one skill's SKILL.md instructions by slug. Read-only.
+
+Pass the exact slug returned by skills_search or advertised in the available-skills block.
+Returns the skill name, source path, and full instruction body (bounded, with a truncation
+marker). Follow the returned instructions for the task at hand.
+
+Errors are typed: INVALID_ARGUMENT, SKILL_NOT_FOUND, SKILLS_UNAVAILABLE, SKILLS_ERROR.`,
 } as const;
 
 // ============================================================
@@ -908,6 +941,10 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   { name: 'knowledge_read', description: TOOL_DESCRIPTIONS.knowledge_read, inputSchema: KnowledgeReadSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleKnowledgeRead },
   { name: 'knowledge_get_backlinks', description: TOOL_DESCRIPTIONS.knowledge_get_backlinks, inputSchema: KnowledgeGetBacklinksSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleKnowledgeGetBacklinks },
   { name: 'knowledge_propose', description: TOOL_DESCRIPTIONS.knowledge_propose, inputSchema: KnowledgeProposeSchema, executionMode: 'registry', safeMode: 'block', handler: handleKnowledgePropose },
+  // Skills catalog tools (c2.7) — read-only over the eligible skill catalog via
+  // the registered skills runtime; safe in Explore mode, typed unavailable otherwise.
+  { name: 'skills_search', description: TOOL_DESCRIPTIONS.skills_search, inputSchema: SkillsSearchSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleSkillsSearch },
+  { name: 'skills_read', description: TOOL_DESCRIPTIONS.skills_read, inputSchema: SkillsReadSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleSkillsRead },
 ];
 
 export interface SessionToolFilterOptions {

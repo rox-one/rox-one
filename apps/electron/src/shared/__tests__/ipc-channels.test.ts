@@ -702,6 +702,7 @@ const EXPECTED_CHANNELS: string[] = [
   'skills:exportToProject',
   'skills:get',
   'skills:getDetails',
+  'skills:getEligibility',
   'skills:getFiles',
   'skills:getUsage',
   'skills:importOmp',
