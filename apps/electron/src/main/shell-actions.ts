@@ -19,14 +19,9 @@ export function dispatchShellAction(
   if (!windowManager) return false
   const window = windowManager.getFocusedWindow() ?? windowManager.getLastActiveWindow()
   if (!window || window.isDestroyed() || window.webContents.isDestroyed()) return false
-  const sink = windowManager.getRpcEventSink()
-  const clientId = windowManager.getClientIdForWindow(window.webContents.id)
-  if (sink && clientId) {
-    sink(RPC_CHANNELS.shell.ACTION, { to: 'client', clientId }, payload)
-    return true
-  }
-  // No RPC client (e.g. before the server handshake settled) — fall back to the
-  // window's own webContents, mirroring WindowManager.pushToWindow.
-  window.webContents.send(RPC_CHANNELS.shell.ACTION, payload)
+  // Delivery goes through the window-manager relay: the typed RPC event sink
+  // when the client is known, and its own pre-handshake fallback otherwise —
+  // never a second copy of that logic here (`scripts/check-raw-sends.sh`).
+  windowManager.pushToWindow(window, RPC_CHANNELS.shell.ACTION, payload)
   return true
 }
