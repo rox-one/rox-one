@@ -2,6 +2,7 @@ import { Buffer } from 'buffer'
 import process from 'process'
 import { migrateConationFlagsDefaultOff } from './lib/migrate-conation-flags-default-off'
 import { migrateSidePanelDefaults } from './lib/shell-layout-preferences'
+import { installStaleChunkReload } from './lib/stale-chunk-reload'
 import { preloadRendererLocales } from '@rox/shared/i18n/lazy'
 
 const rendererGlobals = globalThis as typeof globalThis & {
@@ -13,6 +14,12 @@ const rendererGlobals = globalThis as typeof globalThis & {
 rendererGlobals.Buffer ??= Buffer
 rendererGlobals.global ??= globalThis
 rendererGlobals.process ??= process
+
+// b1.2: install the one-shot stale-chunk recovery before the first dynamic
+// import. A build that outlived its chunk filenames (post-update launch) would
+// otherwise leave the loading shell spinning forever; this reloads the window
+// exactly once per session, so a genuinely offline renderer does not loop.
+installStaleChunkReload()
 
 // One-shot: sticky craft-feature-workbench-conation-*=true must not keep
 // Fund/Board LIVE ON after atom defaults went false. Must run before
