@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import type { Authorizer } from '@rox/core/commands'
 import { InMemoryCommandStore } from '../../commands/store'
 import { configureReferenceRuntime, referenceMemoryRecords, resetReferenceMemory, resetReferenceRuntime, storedAclRole } from '../reference'
-import { createHarness } from './reference-harness'
+import { createHarness, REFERENCE_LAYER_MODULES } from './reference-harness'
 import { ACTOR_ID, BOB, U, WORKSPACE_ID } from './reference-scenario'
 
 const NOW = new Date('2026-10-08T12:00:00.000Z')
@@ -34,7 +34,7 @@ function recording(allow: (call: Call) => boolean, options: { answersForAnyPrinc
 const denyId = (id: string, verb?: string) => recording(call => !(call.ref?.id === id && (verb === undefined || call.verb === verb)))
 
 function harness(authorizer?: Authorizer) {
-  return createHarness({ local: new InMemoryCommandStore(), workspace: new InMemoryCommandStore(), ...(authorizer ? { authorizer } : {}) })
+  return createHarness({ local: new InMemoryCommandStore(), workspace: new InMemoryCommandStore(), modules: REFERENCE_LAYER_MODULES, ...(authorizer ? { authorizer } : {}) })
 }
 const records = (collection: string) => referenceMemoryRecords(WORKSPACE_ID, collection)
 const live = (collection: string) => records(collection).filter(record => !record.data.deletedAt)

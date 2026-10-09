@@ -6,7 +6,15 @@
 
 import type { BrowserCapabilityRequest } from './browser-capability'
 import type { RpcServer } from './types'
-import { PROTOCOL_CLIENT_CAPABILITIES } from '@rox/shared/protocol'
+import {
+  CLIENT_BROWSER_INVOKE,
+  CLIENT_CONFIRM_DIALOG,
+  CLIENT_OPEN_EXTERNAL,
+  CLIENT_OPEN_FILE_DIALOG,
+  CLIENT_OPEN_PATH,
+  CLIENT_SHOW_IN_FOLDER,
+  PROTOCOL_CLIENT_CAPABILITIES,
+} from '@rox/shared/protocol'
 
 /** Capability: open a URL in the client's default browser. */
 export {

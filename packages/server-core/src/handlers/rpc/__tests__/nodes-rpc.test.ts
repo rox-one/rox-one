@@ -184,7 +184,7 @@ describe('nodes:* handlers', () => {
     expect(f.registry.pendingCountFor('mac-1')).toBe(1)
 
     // The real owner still settles it.
-    expect(f.callAs('conn-a', RPC_CHANNELS.nodes.INVOKE_RESULT, { invokeId, payload: { ok: 1 } })).toEqual({ ok: true })
+    expect(f.callAs<{ ok: true }>('conn-a', RPC_CHANNELS.nodes.INVOKE_RESULT, { invokeId, payload: { ok: 1 } })).toEqual({ ok: true })
     expect(await pending).toMatchObject({ status: 'ok', payload: { ok: 1 } })
   })
 

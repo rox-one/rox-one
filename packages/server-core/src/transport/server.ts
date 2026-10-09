@@ -503,6 +503,13 @@ export class WsRpcServer implements RpcServer {
    * Whether the connection's persisted operator ceiling permits `channel`.
    * Non-native clients are unaffected. A native principal without a resolved
    * ceiling is denied (fail-closed).
+   *
+   * LOCAL_ONLY channels are exempt: their admission is decided solely by the
+   * server-verified locality fence (unbound clients were already refused before
+   * this point). A client that HOLDS a current local binding may reach them
+   * regardless of its named-role scopes; otherwise the ceiling's LOCAL_ONLY
+   * denial would make desktop-only methods (e.g. toolchain:update) unreachable
+   * for the very local connection they exist for (a1.2 regression).
    */
   private operatorCeilingAllows(
     client: ClientConnection,
@@ -510,7 +517,12 @@ export class WsRpcServer implements RpcServer {
     nativeAction: RegisteredHandler['nativeAction'],
   ): boolean {
     if (!client.principal) return true
-    if (typeof channel !== 'string' || !client.operatorCeiling) return false
+    if (typeof channel !== 'string') return false
+    // Both markers mean "reachable only from a bound local client": the static
+    // LOCAL_ONLY list and an `access: 'localElectron'` registration. The locality
+    // fence already refused unbound clients, so the binding is the authority.
+    if (isLocalOnly(channel) || this.localElectronChannels.has(channel)) return this.hasCurrentLocalBinding(client)
+    if (!client.operatorCeiling) return false
     return isChannelWithinOperatorCeiling(client.operatorCeiling, channel, nativeAction)
   }
 

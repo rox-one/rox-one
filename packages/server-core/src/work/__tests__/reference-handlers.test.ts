@@ -6,7 +6,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { COMMAND_CATALOGUE, CommandRegistry, registerCommandCatalogue } from '@rox/core/commands'
+import { COMMAND_CATALOGUE, CommandRegistry, registerCommandCatalogue, type CommandType } from '@rox/core/commands'
 import { COMMAND_PAYLOAD_SCHEMAS } from '@rox/shared/domain'
 import { InMemoryCommandStore } from '../../commands/store'
 import { COMMAND_MODULES, boundCommandTypes } from '../../commands/registry'
@@ -37,7 +37,7 @@ const EPHEMERAL_COMMANDS: ReadonlySet<string> = new Set(['presence.heartbeat', '
  * exist. Every assertion below pins this list to what the registry reports, so
  * lifting the deferral fails this suite instead of shrinking it silently.
  */
-const XFN_DEFERRED_TYPES: readonly string[] = ['decisions.create', 'tables.insert_row']
+const XFN_DEFERRED_TYPES: readonly CommandType[] = ['decisions.create', 'tables.insert_row']
 
 /**
  * Types the domain payload-schema map does not cover yet: W1-15's two XFN names,
@@ -199,11 +199,15 @@ describe('reference handlers: negative paths (PLAN §1.4)', () => {
 
   test('the unknown-member exemption is exactly the catalogue the domain schema map does not cover', () => {
     // Drift guard for the sweep above: the exemption may only name the types
-    // `COMMAND_PAYLOAD_SCHEMAS` is missing (W1-15's XFN deferral + W1-11's
-    // non-strict browse schema). A schema arriving (#1534) shrinks the right
-    // side and fails here, so the exemption is removed with the gap — and a
-    // stray name on the left fails too.
-    expect(Object.keys(UNSCHEMAED_TYPES).sort()).toEqual(CATALOGUE_TYPES.filter(type => !(type in COMMAND_PAYLOAD_SCHEMAS)))
+    // `COMMAND_PAYLOAD_SCHEMAS` is missing for a reason *other than* an owner
+    // module — i.e. W1-15's XFN deferral. W1-11's schemas (now bound by
+    // `AGENTS_COMMAND_MODULE`, and excluded from the domain map) are swept like
+    // every other command, so they are filtered out here. A schema arriving
+    // (#1534) shrinks the right side and fails here, so the exemption is removed
+    // with the gap — and a stray name on the left fails too.
+    expect(Object.keys(UNSCHEMAED_TYPES).sort()).toEqual(
+      CATALOGUE_TYPES.filter(type => !(type in COMMAND_PAYLOAD_SCHEMAS) && !W1_11_OWNED_TYPES.includes(type)),
+    )
   })
 
   test.each(REFERENCE_TYPES)('%s: permission denied is FORBIDDEN and writes nothing', async type => {

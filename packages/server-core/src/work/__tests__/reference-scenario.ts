@@ -28,7 +28,7 @@ const s = (type: string, target: ScenarioStep['target'], payload: Record<string,
 
 export const REFERENCE_SCENARIO: readonly ScenarioStep[] = [
   // identity / spaces
-  s('workspaces.create', undefined, { id: U('ws2'), name: 'Acme' }),
+  s('workspaces.create', undefined, { name: 'Acme', slug: 'acme' }),
   s('spaces.create', undefined, { id: U('space'), name: 'Eng', memberIds: [BOB] }),
   s('spaces.update', t('space', 'space'), { purpose: 'Engineering' }),
   s('spaces.update_tools', t('space', 'space'), { tools: { kpis: true } }),
@@ -41,7 +41,7 @@ export const REFERENCE_SCENARIO: readonly ScenarioStep[] = [
   s('spaces.leave', t('space', 'space'), {}, BOB),
   s('spaces.join', t('space', 'space'), {}, BOB),
   // messenger
-  s('im.create_chat', undefined, { id: U('chat'), kind: 'group', name: 'general', visibility: 'public', members: [BOB] }),
+  s('im.create_chat', undefined, { kind: 'group', name: 'general', visibility: 'public', members: [BOB] }),
   s('im.update_chat', t('channel', 'chat'), { name: 'general-2' }),
   s('im.add_members', t('channel', 'chat'), { memberIds: [U('carol')] }),
   s('im.remove_members', t('channel', 'chat'), { memberIds: [U('carol')] }),
@@ -65,9 +65,9 @@ export const REFERENCE_SCENARIO: readonly ScenarioStep[] = [
   s('im.get_or_create_p2p', undefined, { peerId: BOB }),
   s('im.create_space_chat', undefined, { spaceId: U('space'), name: 'eng-chat' }),
   s('im.create_entity_chat', undefined, { subject: t('project', 'project') }),
-  s('im.set_visibility', t('channel', 'chat'), { visibility: 'public' }),
-  s('im.leave_chat', t('channel', 'chat')),
-  s('im.join_chat', t('channel', 'chat')),
+  s('im.set_visibility', t('channel', 'chat'), { chatId: U('chat'), visibility: 'public', confirmHistoryExposure: true }),
+  s('im.leave_chat', t('channel', 'chat'), { chatId: U('chat') }),
+  s('im.join_chat', t('channel', 'chat'), { chatId: U('chat') }),
   s('im.recall_message', t('channel', 'chat'), { messageId: U('msg') }),
   // presence (W1-14, §11.1: heartbeat / object presence — ephemeral, no domain event)
   s('presence.heartbeat', undefined, { status: 'online', device: 'desktop' }),
@@ -248,7 +248,7 @@ export const REFERENCE_SCENARIO: readonly ScenarioStep[] = [
   // people & contacts
   s('people.update_profile', undefined, { displayName: 'Me' }),
   s('people.set_manager', t('person', 'bob'), { managerId: U('carol') }),
-  s('people.invite', undefined, { id: U('invite'), email: 'dave@example.com' }),
+  s('people.invite', undefined, { workspaceId: U('workspace'), emails: ['dave@example.com'] }),
   s('people.add_workspace_member', undefined, { principalId: U('dave'), role: 'member' }),
   s('people.convert_to_guest', t('person', 'dave')),
   s('contacts.create_card', undefined, { id: U('card'), displayName: 'Eve' }),
@@ -291,16 +291,16 @@ export const REFERENCE_SCENARIO: readonly ScenarioStep[] = [
   s('entities.reorder_pins', undefined, { order: [t('goal', 'goal')] }),
   s('entities.unpin', undefined, { entity: t('goal', 'goal') }),
   // identity & agents
-  s('identity.ensure_placeholder', undefined, { id: U('ph'), displayName: 'Frank', email: 'frank@example.com' }),
-  s('identity.activate_placeholder', undefined, { placeholderId: U('ph'), principalId: U('frank') }),
-  s('identity.ensure_placeholder', undefined, { id: U('ph2'), displayName: 'Gina' }),
-  s('identity.merge_placeholder', undefined, { placeholderId: U('ph2'), intoPrincipalId: BOB }),
+  s('identity.ensure_placeholder', undefined, { workspaceId: U('workspace'), email: 'frank@example.com', invitedBy: ACTOR_ID }),
+  s('identity.activate_placeholder', undefined, { authSubject: 'subject-frank', verifiedEmail: 'frank@example.com' }),
+  s('identity.ensure_placeholder', undefined, { workspaceId: U('workspace'), email: 'gina@example.com', invitedBy: ACTOR_ID }),
+  s('identity.merge_placeholder', undefined, { placeholderId: U('ph2'), accountId: BOB, confirmedBy: ACTOR_ID }),
   s('onboarding.seed_starter_content', t('space', 'space')),
-  s('agents.provision_personal_agent', undefined, { id: U('agent'), ownerId: ACTOR_ID }),
-  s('agents.invoke', undefined, { id: U('invocation'), agentRef: { kind: 'person', id: U('agent') }, instruction: 'Summarise', origin: { kind: 'comment', commentId: U('comment') } }),
+  s('agents.provision_personal_agent', undefined, { workspaceId: U('workspace'), ownerPrincipalId: ACTOR_ID }),
+  s('agents.invoke', undefined, { workspaceId: U('workspace'), agentPrincipalId: U('agent'), ownerPrincipalId: ACTOR_ID, instruction: 'Summarise', provenance: { trigger: 'mention' } }),
   // agents.invoke opened a pending approval (id = invocation id) for the agent's owner.
-  s('agents.decide_approval', undefined, { approvalId: U('invocation'), decision: 'approve' }),
-  s('agents.pause', undefined, { agentId: U('agent') }),
+  s('agents.decide_approval', undefined, { approvalRequestId: U('invocation'), decision: 'approve' }),
+  s('agents.pause', undefined, { agentPrincipalId: U('agent'), paused: true }),
   // workplace
   s('mail.share_to_chat', t('channel', 'chat'), { threadId: 'thread-1' }),
   s('mail.create_task_from_thread', { kind: 'mail-thread', id: 'thread-1' }, { id: U('reply-task'), threadId: 'thread-1', title: 'Reply' }),

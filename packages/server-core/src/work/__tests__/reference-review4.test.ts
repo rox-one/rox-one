@@ -11,13 +11,13 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { InMemoryCommandStore } from '../../commands/store'
 import { MemoryRecordBackend, configureReferenceRuntime, deterministicId, referenceMemoryRecords, resetReferenceMemory, resetReferenceRuntime, type StoredRecord } from '../reference'
-import { createHarness, type Harness } from './reference-harness'
+import { createHarness, REFERENCE_LAYER_MODULES, type Harness } from './reference-harness'
 import { ACTOR_ID, BOB, U, WORKSPACE_ID } from './reference-scenario'
 
 const NOW = new Date('2026-10-08T12:00:00.000Z')
 const CAROL = U('carol')
 
-const harness = (): Harness => createHarness({ local: new InMemoryCommandStore(), workspace: new InMemoryCommandStore() })
+const harness = (): Harness => createHarness({ local: new InMemoryCommandStore(), workspace: new InMemoryCommandStore(), modules: REFERENCE_LAYER_MODULES })
 const records = (collection: string): StoredRecord[] => referenceMemoryRecords(WORKSPACE_ID, collection)
 
 /** Direct memory write of a legacy owner row: no command can create one any more. */

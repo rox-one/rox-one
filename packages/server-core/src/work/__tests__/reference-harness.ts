@@ -2,7 +2,7 @@
 
 import { CATALOGUE_FLAGS, COMMAND_CATALOGUE, CommandRegistry, registerCommandCatalogue, type Authorizer, type CommandReceipt } from '@rox/core/commands'
 import { CommandExecutor } from '../../commands/executor'
-import { COMMAND_MODULES, boundCommandTypes, createWiredCommandRegistry } from '../../commands/registry'
+import { COMMAND_MODULES, boundCommandTypes, createWiredCommandRegistry, type CommandModule } from '../../commands/registry'
 import { REFERENCE_SPECS } from '../reference'
 import type { CommandStore } from '../../commands/store'
 import { ACTOR_ID, REFERENCE_SCENARIO, U, WORKSPACE_ID, type ScenarioStep } from './reference-scenario'
@@ -89,6 +89,21 @@ export function isW1_11Shadow(step: ScenarioStep): boolean {
 /** The reference-owned remainder of the scenario: the steps that must apply here. */
 export const REFERENCE_OWNED_SCENARIO: readonly ScenarioStep[] = REFERENCE_SCENARIO.filter(step => !isW1_11Shadow(step))
 
+/**
+ * The W1-06/W1-14 **reference layer's own** module list: `COMMAND_MODULES`
+ * without `AGENTS_COMMAND_MODULE` (W1-11 #1508), whose handlers shadow the
+ * reference specs for the identity / team-chat / agent-governance commands it
+ * owns. The reference-layer regression suites (`reference-guards`,
+ * `reference-review4`, `reference-authorization`, `xsc/reference-handlers`) use
+ * this when they assert that layer's behaviour — the *wired* behaviour of those
+ * commands is asserted by the agents suite against the full `COMMAND_MODULES`.
+ * Every other module is kept, so the reference layer binds exactly the handlers
+ * and schemas it owns.
+ */
+export const REFERENCE_LAYER_MODULES: readonly CommandModule[] = Object.freeze(
+  COMMAND_MODULES.filter(module => module.name !== 'agents'),
+)
+
 export interface Harness {
   registry: CommandRegistry
   run(step: ScenarioStep, extra?: Record<string, unknown>): Promise<CommandReceipt>
@@ -102,11 +117,24 @@ export function createHarness(options: {
   flags?: ReadonlySet<string>
   authorizer?: Authorizer
   workspaceId?: string
+  /**
+   * Module list to bind (default `COMMAND_MODULES`). Pass `REFERENCE_LAYER_MODULES`
+   * to assert the reference layer itself, without the W1-11 agents module that
+   * shadows its identity / chat / agent handlers in the wired registry.
+   */
+  modules?: readonly CommandModule[]
   /** Unexpected handler / store errors (the receipt only says INTERNAL). */
   onError?: (error: unknown, type: string) => void
 }): Harness {
   const flags = options.flags ?? ALL_FLAGS
-  const registry = createWiredCommandRegistry({ isFlagEnabled: flag => flags.has(flag) })
+  const registry = options.modules
+    ? (() => {
+        const custom = new CommandRegistry({ isFlagEnabled: (flag: string) => flags.has(flag) })
+        registerCommandCatalogue(custom)
+        for (const module of options.modules!) module.bind(custom)
+        return custom
+      })()
+    : createWiredCommandRegistry({ isFlagEnabled: flag => flags.has(flag) })
   const authorizer = options.authorizer ?? ALLOW_ALL
   const hooks = options.onError
     ? { onHandlerError: (error: unknown, envelope: { type: string }) => options.onError!(error, envelope.type), onStoreError: (error: unknown, envelope: { type: string }) => options.onError!(error, envelope.type) }

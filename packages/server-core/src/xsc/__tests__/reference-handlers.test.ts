@@ -11,14 +11,14 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import type { Authorizer } from '@rox/core/commands'
 import { InMemoryCommandStore } from '../../commands/store'
 import { configureReferenceRuntime, referenceMemoryRecords, resetReferenceMemory, resetReferenceRuntime } from '../../work/reference'
-import { createHarness } from '../../work/__tests__/reference-harness'
+import { createHarness, REFERENCE_LAYER_MODULES } from '../../work/__tests__/reference-harness'
 import { ACTOR_ID, BOB, U, WORKSPACE_ID } from '../../work/__tests__/reference-scenario'
 
 const NOW = new Date('2026-10-08T12:00:00.000Z')
 const ALLOW_ALL: Authorizer = { can: async () => true }
 
 function memoryHarness(options: { authorizer?: Authorizer } = {}) {
-  return createHarness({ local: new InMemoryCommandStore(), workspace: new InMemoryCommandStore(), authorizer: options.authorizer ?? ALLOW_ALL })
+  return createHarness({ local: new InMemoryCommandStore(), workspace: new InMemoryCommandStore(), modules: REFERENCE_LAYER_MODULES, authorizer: options.authorizer ?? ALLOW_ALL })
 }
 
 beforeEach(() => {

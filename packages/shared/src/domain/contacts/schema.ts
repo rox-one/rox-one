@@ -14,8 +14,10 @@ export const personSchema = entity({
   role: memberRoleSchema.optional(), state: z.enum(['active', 'placeholder', 'guest', 'suspended']).optional(),
 })
 
+// `people.invite` is owned by `AGENTS_COMMAND_MODULE` (W1-11 #1508,
+// `@rox/shared/identity/schemas.ts: invitePeopleSchema`); its W1-06 placeholder
+// that used to shadow it here was removed.
 export const CONTACTS_COMMAND_SCHEMAS: CommandSchemaMap = {
-  'people.invite': cmd({ ...createIdShape, email: emailSchema, displayName: nameSchema.optional(), role: memberRoleSchema.default('member'), spaceIds: z.array(idSchema).max(100).optional() }),
   'people.add_workspace_member': cmd({
     principalId: principalIdSchema, role: memberRoleSchema.default('member'),
     // W1-12 (#1509): R4 adds placeholders as invited members (DATA-MODEL §5.16);

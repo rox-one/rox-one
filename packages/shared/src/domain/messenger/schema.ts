@@ -50,9 +50,9 @@ export const MESSENGER_COMMAND_SCHEMAS: CommandSchemaMap = {
   'im.label_chats': cmd({ labelId: idSchema, messageIds: z.array(idSchema).max(500) }),
   'im.create_space_chat': cmd({ ...createIdShape, spaceId: idSchema, name: nameSchema, memberIds: principalListSchema.optional() }),
   'im.create_entity_chat': cmd({ ...createIdShape, subject: refSchema, name: z.string().trim().max(200).optional(), memberIds: principalListSchema.optional() }),
-  'im.join_chat': emptyPayload,
-  'im.leave_chat': emptyPayload,
-  'im.set_visibility': cmd({ visibility: chatVisibilitySchema }),
+  // `im.join_chat` / `im.leave_chat` / `im.set_visibility` are owned by
+  // `AGENTS_COMMAND_MODULE` (W1-11 #1508, `@rox/shared/identity/schemas.ts`);
+  // their W1-06 placeholders that used to shadow them here were removed.
   'im.share_entity': cmd({ entity: refSchema, comment: z.string().max(5000).optional() }),
 }
 
