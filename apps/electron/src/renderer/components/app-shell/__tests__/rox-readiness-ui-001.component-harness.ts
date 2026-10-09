@@ -155,6 +155,13 @@ window.ui001.render({});` : ''}
         }
         if (options.realNavigation && /\/contexts\/NavigationContext\.tsx$/.test(args.importer)
           && ['react-i18next', 'sonner'].includes(args.path)) return { path: 'bindings', namespace: 'ui001' }
+        // The panel header control is a fixture boundary from PanelSlot (below); the
+        // team surface reaches it through its own session button, so the same
+        // tooltip-only resolution keeps the chat/markdown font assets out of the
+        // bundle there too.
+        if (/\/components\/ui\/PanelHeaderCenterButton\.tsx$/.test(args.importer) && args.path === '@rox/ui') {
+          return { path: tooltip }
+        }
         if (options.realEntityPages && /\/pages\/(SourceInfoPage|SkillInfoPage)\.tsx$/.test(args.importer)) {
           // Source availability uses the shipped status derivation; the detail
           // fixture must not replace that collaborator with a generic UI stub.
