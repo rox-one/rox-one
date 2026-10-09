@@ -54,7 +54,7 @@ export const NavigationContext=NavContext; // PanelSlot reads/provides the same 
 export const useNavigation=()=>({...React.useContext(NavigationStatusContext),navigateToSource:()=>{}});
 export const useActiveWorkspace=()=>({id:React.useContext(ShellContext)?.activeWorkspaceId});
 export { isSessionsNavigation,isSourcesNavigation,isSettingsNavigation,isSkillsNavigation,isMemoryNavigation,
- isLearningNavigation,isTasksNavigation,isMeetingsNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,isAutomationsNavigation,
+ isLearningNavigation,isTasksNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,isAutomationsNavigation,
  isProjectsNavigation,isPagesNavigation,isBrowserNavigation,isKnowledgeNavigation,isDiffNavigation,isExtensionNavigation,
  isConnectionsNavigation,isHomeNavigation,isCloudRunNavigation,isTerminalNavigation } from ${JSON.stringify(types)};
 export const sessionMetaMapAtom=atom(new Map()); export const automationsAtom=atom([]);

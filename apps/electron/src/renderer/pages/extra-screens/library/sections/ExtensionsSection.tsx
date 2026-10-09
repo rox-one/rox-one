@@ -20,8 +20,8 @@ export default function ExtensionsSection() {
             aria-pressed={tab === id}
             onClick={() => setTab(id)}
             className={cn(
-              'rounded-[var(--radius-control)] px-2.5 py-1 text-[12px]',
-              tab === id ? 'bg-foreground/[0.08] text-foreground' : 'text-muted-foreground hover:bg-foreground/5',
+              'rounded-[var(--radius-control)] px-2.5 py-1 text-small',
+              tab === id ? 'bg-surface-pressed text-foreground' : 'text-muted-foreground hover:bg-surface-hover',
             )}
           >
             {t(`workbench.library.tab.${id}`)}

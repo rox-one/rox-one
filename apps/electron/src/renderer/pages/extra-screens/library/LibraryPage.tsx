@@ -112,7 +112,7 @@ export default function LibraryPage({ itemId }: { itemId: string | null }) {
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto pb-3" data-testid="library-section-nav">
           {navSections.length === 0 && (
-            <div className="px-4 py-2 text-[12px] text-muted-foreground">{t('workbench.library.noResults')}</div>
+            <div className="px-4 py-2 text-small text-muted-foreground">{t('workbench.library.noResults')}</div>
           )}
           {navSections.map((section) => {
             const Icon = SECTION_ICON[section.id]
@@ -122,10 +122,10 @@ export default function LibraryPage({ itemId }: { itemId: string | null }) {
               <ListRow key={section.id} active={active === section.id && !searching} onClick={() => { setActive(section.id); setQuery('') }}>
                 <Icon aria-hidden className="icon-inline mt-0.5 text-muted-foreground" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13px]">{t(section.labelKey)}</span>
-                  {hint && <span className="block truncate text-[12px] text-muted-foreground">{hint}</span>}
+                  <span className="block truncate text-body">{t(section.labelKey)}</span>
+                  {hint && <span className="block truncate text-small text-muted-foreground">{hint}</span>}
                 </span>
-                {typeof count === 'number' && <span className="shrink-0 text-[12px] text-muted-foreground">{count}</span>}
+                {typeof count === 'number' && <span className="shrink-0 text-small text-muted-foreground">{count}</span>}
               </ListRow>
             )
           })}
@@ -137,9 +137,9 @@ export default function LibraryPage({ itemId }: { itemId: string | null }) {
           <EmptyState title={t('workbench.library.noWorkspace')} />
         ) : searching ? (
           <div className="mx-auto w-full max-w-[760px]" data-testid="library-search-results">
-            {index.loading && <div className="text-[12px] text-muted-foreground">{t('common.loading')}</div>}
+            {index.loading && <div className="text-small text-muted-foreground">{t('common.loading')}</div>}
             {!index.loading && results.length === 0 && (
-              <div className="text-[12px] text-muted-foreground">{t('workbench.library.noResults')}</div>
+              <div className="text-small text-muted-foreground">{t('workbench.library.noResults')}</div>
             )}
             {results.map((group) => (
               <section key={group.section.id} className="mb-5">
@@ -149,10 +149,10 @@ export default function LibraryPage({ itemId }: { itemId: string | null }) {
                     key={`${group.section.id}:${row.id}`}
                     type="button"
                     onClick={() => openEntry(row)}
-                    className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/5"
+                    className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-surface-hover"
                   >
                     <span className="min-w-0 flex-1 truncate">{row.title}</span>
-                    {row.subtitle && <span className="max-w-[45%] shrink-0 truncate text-[12px] text-muted-foreground">{row.subtitle}</span>}
+                    {row.subtitle && <span className="max-w-[45%] shrink-0 truncate text-small text-muted-foreground">{row.subtitle}</span>}
                   </button>
                 ))}
               </section>

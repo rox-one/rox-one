@@ -85,7 +85,6 @@ import {
   isMemoryNavigation,
   isLearningNavigation,
   isTasksNavigation,
-  isMeetingsNavigation,
   isInboxNavigation,
   isFeedNavigation,
   isConnectionsNavigation,
@@ -122,7 +121,7 @@ export type { Route }
 
 // Re-export navigation state types for consumers
 export type { NavigationState, SessionFilter }
-export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isLearningNavigation, isTasksNavigation, isMeetingsNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
+export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isMemoryNavigation, isLearningNavigation, isTasksNavigation, isInboxNavigation, isFeedNavigation, isConnectionsNavigation, isHomeNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isTerminalNavigation, isExtensionNavigation }
 
 /** Deep-link sources whose parameters must not be trusted to drive the app (SEC-01). */
 const UNTRUSTED_DEEPLINK_SOURCES: Record<string, true> = { 'browser-pane': true }

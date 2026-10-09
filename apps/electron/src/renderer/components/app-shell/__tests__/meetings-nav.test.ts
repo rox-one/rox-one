@@ -17,10 +17,12 @@ describe('RMA-I012 Meetings nav and surface', () => {
     expect(dest?.linkId).toBe('nav:meetings')
   })
 
-  it('wires Meetings into AppShell and MainContentPanel', () => {
+  it('wires Meetings into AppShell and the calendar surface', () => {
     expect(appShellSource).toContain('id: "nav:meetings"')
     expect(appShellSource).toContain('handleMeetingsClick')
-    expect(mainContentSource).toContain('isMeetingsNavigation')
-    expect(mainContentSource).toContain('MeetingsPage')
+    // W3.2: Встречи render inside the unified calendar surface, not a mode.
+    expect(mainContentSource).not.toContain('isMeetingsNavigation')
+    expect(mainContentSource).toContain('SurfaceHost')
+    expect(mainContentSource).toContain('isSurfaceNavigation')
   })
 })

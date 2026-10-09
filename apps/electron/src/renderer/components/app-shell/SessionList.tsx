@@ -1075,6 +1075,17 @@ export function SessionList({
     selectedIdOverride: focusedSessionId,
   })
 
+  // Rows kept mounted while virtualized so roving focus / scroll-to-selected can
+  // reach the active session even when it sits outside the scrollport.
+  const ensureVisibleKeys = useMemo(() => {
+    const keys = new Set<string>()
+    if (selectionStore.state.selected) keys.add(selectionStore.state.selected)
+    if (focusedSessionId) keys.add(focusedSessionId)
+    const active = flatRows[interactions.keyboard.activeIndex]
+    if (active) keys.add(active.item.id)
+    return keys
+  }, [selectionStore.state.selected, focusedSessionId, flatRows, interactions.keyboard.activeIndex])
+
   // Sync activeIndex when selection changes externally (e.g. from ChatDisplay)
   useEffect(() => {
     const newIndex = flatRows.findIndex(row => row.item.id === selectionStore.state.selected)
@@ -1459,6 +1470,10 @@ export function SessionList({
         onSelectGroup={handleSelectGroup}
         dropGroupKey={dropGroupKey}
         onEmptyGroupDragOver={handleEmptyGroupDragOver}
+        virtualize
+        estimateRowHeight={48}
+        ensureVisibleKeys={ensureVisibleKeys}
+        revealKey={selectionStore.state.selected}
       />
       </SessionListProvider>
 

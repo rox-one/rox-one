@@ -137,9 +137,9 @@ export default function HealthPage(_props: { itemId: string | null }) {
         />
         <div className="shrink-0 px-4 pb-2">
           {allClear ? (
-            <div className="rounded-[var(--radius-card)] bg-foreground/[0.04] px-3 py-2.5" data-testid="health-all-ok">
+            <div className="rounded-[var(--radius-card)] bg-surface-hover px-3 py-2.5" data-testid="health-all-ok">
               <div className="font-bold text-success">{t('extraScreens.health.allOkTitle')}</div>
-              <div className="mt-0.5 text-[12px] text-muted-foreground">{t('extraScreens.health.allOkBody')}</div>
+              <div className="mt-0.5 text-small text-muted-foreground">{t('extraScreens.health.allOkBody')}</div>
             </div>
           ) : (
             <div
@@ -158,14 +158,14 @@ export default function HealthPage(_props: { itemId: string | null }) {
                     key={row.id}
                     type="button"
                     onClick={() => setSelectedId(row.id)}
-                    className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-1 py-0.5 text-left text-[12px] text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+                    className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-1 py-0.5 text-left text-small text-muted-foreground hover:bg-surface-hover hover:text-foreground"
                   >
                     <HealthStatusDot status={row.status} />
                     <span className="min-w-0 flex-1 truncate">{t(row.labelKey, row.labelParams)}</span>
                   </button>
                 ))}
                 {attention.length > 4 && (
-                  <div className="px-1 pt-0.5 text-[12px] text-muted-foreground">
+                  <div className="px-1 pt-0.5 text-small text-muted-foreground">
                     {t('extraScreens.health.andMore', { count: attention.length - 4 })}
                   </div>
                 )}
@@ -187,10 +187,10 @@ export default function HealthPage(_props: { itemId: string | null }) {
           <HealthRowDetail row={selectedRow} onFix={onFix} extra={detailExtra} />
         ) : (
           <div className="min-w-0 max-w-[720px]">
-            <h2 className="text-[17px] font-bold leading-tight">{t('extraScreens.health.title')}</h2>
+            <h2 className="text-title font-bold leading-tight">{t('extraScreens.health.title')}</h2>
             <p className="mt-1 text-muted-foreground">{t('extraScreens.health.subtitle')}</p>
             {allClear ? (
-              <p className="mt-4 text-foreground/85">{t('extraScreens.health.allOkBody')}</p>
+              <p className="mt-4 text-text-secondary">{t('extraScreens.health.allOkBody')}</p>
             ) : (
               <div className="mt-4 space-y-1">
                 {attention.map((row) => (
@@ -198,11 +198,11 @@ export default function HealthPage(_props: { itemId: string | null }) {
                     key={row.id}
                     type="button"
                     onClick={() => setSelectedId(row.id)}
-                    className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/5"
+                    className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-surface-hover"
                   >
                     <HealthStatusDot status={row.status} />
                     <span className="min-w-0 flex-1 truncate">{t(row.labelKey, row.labelParams)}</span>
-                    <span className="shrink-0 truncate text-[12px] text-muted-foreground">{t(row.detailKey, row.detailParams)}</span>
+                    <span className="shrink-0 truncate text-small text-muted-foreground">{t(row.detailKey, row.detailParams)}</span>
                   </button>
                 ))}
               </div>

@@ -54,10 +54,18 @@ function fakeIpc() {
 
 describe('surface route IPC', () => {
   it('default-closed: every mode root is rejected until the renderer pushes', () => {
-    for (const surface of ['messenger', 'calendar', 'goals', 'contacts']) {
+    for (const surface of ['messenger', 'calendar', 'goals']) {
       expect(parseDeepLink(`rox://${surface}`)).toBeNull()
       expect(parseDeepLink(`rox://workspace/ws1/${surface}`)).toBeNull()
     }
+  })
+
+  it('W3.2/W3.3: the meetings/contacts aliases stay reachable with every gate off', () => {
+    expect(parseDeepLink('rox://meetings')?.view).toBe('meetings')
+    expect(parseDeepLink('rox://meetings/meeting/m-1')?.view).toBe('meetings/meeting/m-1')
+    expect(parseDeepLink('rox://contacts')?.view).toBe('contacts')
+    expect(parseRouteToNavigationState('meetings')).toEqual({ navigator: 'surface', surface: 'calendar', details: null })
+    expect(parseRouteToNavigationState('contacts')).toEqual({ navigator: 'surface', surface: 'messenger', details: null })
   })
 
   it('the handler opens exactly the pushed surfaces', async () => {

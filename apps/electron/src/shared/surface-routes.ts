@@ -24,8 +24,14 @@ import { entityRoute, type EntityKind, type EntityRef } from '@rox/core/entities
 // 1. Unified mode roots + route gate
 // ---------------------------------------------------------------------------
 
-/** The four new rail modes (UI-SPEC §3.1). Order = rail order. */
-export const UNIFIED_SURFACE_IDS = ['messenger', 'calendar', 'goals', 'contacts'] as const
+/**
+ * The unified rail modes (UI-SPEC §3.1). Order = rail order.
+ *
+ * W3.3 (Согласованность-20261009): `contacts` was removed — the empty
+ * contacts shell is merged into «Команда». Its bare route and persisted keys
+ * now alias to the `messenger` surface (see `LEGACY_SURFACE_ALIASES`).
+ */
+export const UNIFIED_SURFACE_IDS = ['messenger', 'calendar', 'goals'] as const
 
 export type UnifiedSurfaceId = (typeof UNIFIED_SURFACE_IDS)[number]
 
@@ -39,7 +45,26 @@ export const UNIFIED_SURFACE_FLAGS: Readonly<Record<UnifiedSurfaceId, string>> =
   messenger: 'workbench.mode.messenger.v1',
   calendar: 'workbench.mode.calendar.v1',
   goals: 'workbench.mode.goals.v1',
-  contacts: 'workbench.mode.contacts.v1',
+}
+
+/**
+ * Legacy route aliases of the W3 merges (Согласованность-20261009):
+ * - `meetings` (and `meetings/meeting/{id}`) → `calendar` (Встречи → Календарь)
+ * - `contacts` → `messenger` (Контакты → Команда)
+ *
+ * Aliases stay reachable independently of the target surface's mode flag so
+ * pre-existing deep links and persisted tabs keep resolving.
+ */
+export const LEGACY_SURFACE_ALIASES: Readonly<Record<string, UnifiedSurfaceId>> = {
+  meetings: 'calendar',
+  contacts: 'messenger',
+}
+
+/** True for a bare alias root (`meetings`, `contacts`). */
+export function isLegacySurfaceAliasRoot(route: string): boolean {
+  const path = route.split('#')[0]!.split('?')[0]!
+  const segments = path.split('/').filter(Boolean)
+  return segments.length === 1 && LEGACY_SURFACE_ALIASES[segments[0]!] !== undefined
 }
 
 export function isUnifiedSurfaceId(value: unknown): value is UnifiedSurfaceId {
@@ -113,14 +138,12 @@ const STATIC_ROUTE_IDS = {
   'home.root': 'home',
   'chat.root': 'allSessions',
   'messenger.home': 'messenger',
-  'meetings.home': 'meetings',
   'calendar.home': 'calendar',
   'tasks.home': 'tasks',
   'goals.home': 'goals',
   'goals.workMap': 'goals',
   // PRD §11 #2: the Notes route id stays `notes` after the «Документы» relabel.
   'docs.home': 'notes',
-  'contacts.home': 'contacts',
   'feed.home': 'feed',
   'inbox.home': 'inbox',
 } as const satisfies Record<string, string>

@@ -4,9 +4,11 @@
  * The board renders cards inside per-column scroll containers, and each column
  * window-virtualizes its cards, so off-window cards are not in the DOM. Grid
  * navigation therefore works off a *model* of the visible grid — the same
- * ordering the board uses for rendering (`buildKanbanGrid`, mirroring
- * `flattenVisibleKanbanTaskIds`) — and the component layer turns a target
- * `KanbanFocus` back into DOM focus (scrolling when the row is virtualized out).
+ * ordering the board renders and selection targets, owned by
+ * `visibleKanbanColumnTaskIds` in `kanban-selection` (collapsed columns/groups
+ * skipped, priority sections before project sections) — and the component layer
+ * turns a target `KanbanFocus` back into DOM focus (scrolling when the row is
+ * virtualized out).
  *
  * This module is pure: no DOM, no React. It owns the movement contract
  * (arrows, Home/End, column boundaries, empty columns) so it can be unit-tested
@@ -14,6 +16,7 @@
  */
 
 import type { KanbanProjectGroup } from './KanbanColumn'
+import { visibleKanbanColumnTaskIds } from './kanban-selection'
 import type { KanbanColumnId, KanbanColumnMeta, KanbanTask } from './types'
 
 /** One navigable column: its id plus the visible card ids top→bottom. */
@@ -67,9 +70,11 @@ export interface KanbanGridPosition {
 }
 
 /**
- * Build the navigable grid from the board's render inputs. Mirrors
- * `flattenVisibleKanbanTaskIds` exactly (collapsed columns and collapsed groups
- * are skipped) so keyboard order matches the visual order.
+ * Build the navigable grid from the board's render inputs. Per-column card
+ * order comes from `visibleKanbanColumnTaskIds` — the single ordering rule the
+ * board renders and selection flattens (`flattenVisibleKanbanTaskIds`) — so
+ * keyboard order always matches the visual order. Collapsed columns are not
+ * navigable at all; an expanded but empty column stays navigable as a container.
  */
 export function buildKanbanGrid(
   columns: readonly KanbanColumnMeta[],
@@ -80,19 +85,14 @@ export function buildKanbanGrid(
 ): KanbanGrid {
   const result: KanbanGridColumn[] = []
   for (const column of columns) {
-    if (column.collapsed ?? column.defaultCollapsed ?? false) continue
-    const sections =
-      priorityGroupsByColumn?.get(column.id) ?? groupsByColumn?.get(column.id)
-    const taskIds: string[] = []
-    if (sections) {
-      for (const section of sections) {
-        const groupKey = section.projectId ?? '__none__'
-        if (collapsedGroupKeys?.has(groupKey)) continue
-        for (const task of section.tasks) taskIds.push(task.id)
-      }
-    } else {
-      for (const task of tasksByColumn.get(column.id) ?? []) taskIds.push(task.id)
-    }
+    const taskIds = visibleKanbanColumnTaskIds(
+      column,
+      tasksByColumn,
+      groupsByColumn,
+      priorityGroupsByColumn,
+      collapsedGroupKeys,
+    )
+    if (!taskIds) continue
     result.push({ id: column.id, taskIds })
   }
   return { columns: result }

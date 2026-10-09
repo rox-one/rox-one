@@ -199,7 +199,15 @@ export function topSources(sessions: readonly ActivitySession[], limit = 5): Act
     .slice(0, limit)
 }
 
-/** Compact count for summary tiles: 999, 1.2k, 3.4M. Negative/NaN → "0". */
+/**
+ * Compact count for summary tiles: 999, 1.2k, 3.4M. Non-finite → "0"; finite
+ * negatives keep their sign (-1500 → "-1.5k").
+ *
+ * Local twin of `formatTokens` (platform/home/home-data.ts): the two agree on
+ * every finite non-negative input and differ only for non-finite values and
+ * for |n| ≥ 1000 negatives — consolidating the whole humanizer family is
+ * separate work.
+ */
 export function formatCompactCount(value: number): string {
   const n = typeof value === 'number' && Number.isFinite(value) ? value : 0
   const abs = Math.abs(n)

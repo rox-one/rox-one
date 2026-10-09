@@ -21,11 +21,14 @@ describe('GG catalog deeplinks — meetings + wiring', () => {
   })
 
   it('MainContentPanel passes route selectedIds', () => {
-    expect(main).toContain('<TasksPage selectedId={navState.details?.taskId ?? null} />')
-    expect(main).toContain('<MeetingsPage selectedId={navState.details?.meetingId ?? null} />')
+    // Contract, tolerant of JSX formatting: the route's task id reaches TasksPage
+    // (W3.2 reformatted the call site when the calendar surface took the meeting id).
+    expect(main).toMatch(/<TasksPage\s+selectedId=\{navState\.details\?\.taskId \?\? null\}/)
+    // W3.2: the calendar surface receives the legacy meetings deep-link id.
+    expect(main).toContain('meetingId={navState.meetingId ?? null}')
   })
 
-  it('isDetailNavState treats tasks/meetings details as detail', () => {
-    expect(navHelpers).toMatch(/case 'tasks':\s*case 'meetings':\s*return navState\.details !== null/)
+  it('isDetailNavState treats surface (incl. calendar meeting) routes as detail', () => {
+    expect(navHelpers).toMatch(/case 'surface':[\s\S]*?return true/)
   })
 })

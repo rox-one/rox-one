@@ -6,6 +6,8 @@ import {
   normalizePanelTracks,
   panelGridShape,
   panelGridFocusTarget,
+  reconcilePanelFullScreen,
+  togglePanelFullScreen,
   parsePanelWorkspaceLayout,
   resizePanelTracks,
   resolvePanelGridTracks,
@@ -121,6 +123,25 @@ describe('directional workspace focus', () => {
     expect(panelGridFocusTarget(ids, 'a', focus, 'right')).toBeNull()
     expect(panelGridFocusTarget(ids, 'a', focus, 'down')).toBeNull()
     expect(panelGridFocusTarget(ids, 'a', { columns: 0, rows: 2 }, 'right')).toBeNull()
+  })
+})
+
+describe('panel full-screen mode', () => {
+  it('expands the target, restores on the same target and never clears on an unknown id', () => {
+    const ids = ['a', 'b', 'c']
+    expect(togglePanelFullScreen(null, 'b', ids)).toBe('b')
+    expect(togglePanelFullScreen('b', 'b', ids)).toBeNull()
+    expect(togglePanelFullScreen('b', 'c', ids)).toBe('c')
+    // A stale menu click must keep the current expansion.
+    expect(togglePanelFullScreen('b', 'gone', ids)).toBe('b')
+    expect(togglePanelFullScreen(null, 'gone', ids)).toBeNull()
+    expect(togglePanelFullScreen('b', null, ids)).toBe('b')
+  })
+
+  it('reconciles a promoted panel that left the stack back to the shared grid', () => {
+    expect(reconcilePanelFullScreen('a', ['a', 'b'])).toBe('a')
+    expect(reconcilePanelFullScreen('z', ['a', 'b'])).toBeNull()
+    expect(reconcilePanelFullScreen(null, ['a'])).toBeNull()
   })
 })
 

@@ -2,8 +2,9 @@
  * Registry of the extra workbench screens shown in the ActivityRail «Ещё»
  * group (spec: rox-shots/screens-spec2). Order = rail order.
  */
-import { Activity, Bot, Contact, Gavel, KeyRound, Library, Radar, Timer, ChartColumn, type LucideIcon } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { EXTRA_SCREEN_FLAG } from '@rox/core/platform'
+import { GLYPHS } from '../../platform/glyphs'
 import type { ExtraScreenId } from '../../../shared/extra-screens'
 
 export interface ExtraScreenDef {
@@ -16,15 +17,15 @@ export interface ExtraScreenDef {
 }
 
 export const EXTRA_SCREENS: readonly ExtraScreenDef[] = [
-  { id: 'dossier', icon: Contact, labelKey: 'extraScreens.dossier.title', flag: EXTRA_SCREEN_FLAG.dossier },
-  { id: 'radar', icon: Radar, labelKey: 'extraScreens.radar.title', flag: EXTRA_SCREEN_FLAG.radar },
-  { id: 'decisions', icon: Gavel, labelKey: 'extraScreens.decisions.title', flag: EXTRA_SCREEN_FLAG.decisions },
-  { id: 'agents', icon: Bot, labelKey: 'extraScreens.agents.title', flag: EXTRA_SCREEN_FLAG.agents },
-  { id: 'focus', icon: Timer, labelKey: 'extraScreens.focus.title', flag: EXTRA_SCREEN_FLAG.focus },
-  { id: 'secrets', icon: KeyRound, labelKey: 'extraScreens.secrets.title', flag: EXTRA_SCREEN_FLAG.secrets },
-  { id: 'activity', icon: ChartColumn, labelKey: 'extraScreens.activity.title', flag: EXTRA_SCREEN_FLAG.activity },
-  { id: 'library', icon: Library, labelKey: 'extraScreens.library.title', flag: EXTRA_SCREEN_FLAG.library },
-  { id: 'health', icon: Activity, labelKey: 'extraScreens.health.title', flag: EXTRA_SCREEN_FLAG.health },
+  { id: 'dossier', icon: GLYPHS.dossier, labelKey: 'extraScreens.dossier.title', flag: EXTRA_SCREEN_FLAG.dossier },
+  { id: 'radar', icon: GLYPHS.radar, labelKey: 'extraScreens.radar.title', flag: EXTRA_SCREEN_FLAG.radar },
+  { id: 'decisions', icon: GLYPHS.decisions, labelKey: 'extraScreens.decisions.title', flag: EXTRA_SCREEN_FLAG.decisions },
+  { id: 'agents', icon: GLYPHS.agents, labelKey: 'extraScreens.agents.title', flag: EXTRA_SCREEN_FLAG.agents },
+  { id: 'focus', icon: GLYPHS.focus, labelKey: 'extraScreens.focus.title', flag: EXTRA_SCREEN_FLAG.focus },
+  { id: 'secrets', icon: GLYPHS.secrets, labelKey: 'extraScreens.secrets.title', flag: EXTRA_SCREEN_FLAG.secrets },
+  { id: 'activity', icon: GLYPHS.activity, labelKey: 'extraScreens.activity.title', flag: EXTRA_SCREEN_FLAG.activity },
+  { id: 'library', icon: GLYPHS.library, labelKey: 'extraScreens.library.title', flag: EXTRA_SCREEN_FLAG.library },
+  { id: 'health', icon: GLYPHS.health, labelKey: 'extraScreens.health.title', flag: EXTRA_SCREEN_FLAG.health },
 ]
 
 export function extraScreenDef(id: ExtraScreenId): ExtraScreenDef | undefined {

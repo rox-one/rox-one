@@ -167,7 +167,7 @@ browserTest('OBT-22 preserves an existing selected meeting and accepts the nativ
   const page = await setup()
   try {
     await page.evaluate(() => (window as any).learningProviderTest.navigate('meetings/meeting/meeting-a'))
-    await page.waitForFunction(() => (window as any).learningProviderTest.navSnapshot.navigationState.details?.meetingId === 'meeting-a')
+    await page.waitForFunction(() => (window as any).learningProviderTest.navSnapshot.navigationState.meetingId === 'meeting-a')
     await page.evaluate(() => (window as any).learningProviderTest.controller.start('OBT-22'))
     await page.waitForSelector('[data-product-tour-step="meetings.list"]')
     expect(await page.evaluate(() => (window as any).learningProviderTest.controller.state.attempt.binding.entityId)).toBe('meeting-a')

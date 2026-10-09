@@ -64,7 +64,7 @@ export function HealthSectionList({
                 <span className="block truncate" data-testid={`health-row-${row.id}`}>
                   {t(row.labelKey, row.labelParams)}
                 </span>
-                <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">
+                <span className="mt-0.5 block truncate text-small text-muted-foreground">
                   {t(row.detailKey, row.detailParams)}
                 </span>
               </span>
@@ -90,22 +90,22 @@ export function HealthRowDetail({
     <div className="min-w-0 max-w-[720px]">
       <div className="flex flex-wrap items-center gap-2">
         <HealthStatusDot status={row.status} className="size-2.5" />
-        <h2 className="text-[17px] font-bold leading-tight">{t(row.labelKey, row.labelParams)}</h2>
+        <h2 className="text-title font-bold leading-tight">{t(row.labelKey, row.labelParams)}</h2>
         <HealthStatusChip status={row.status} />
         <span className="flex-1" />
         {row.fix && onFix && (
           <button
             type="button"
             onClick={() => onFix(row)}
-            className="inline-flex h-7 items-center rounded-[var(--radius-control)] bg-foreground/[0.07] px-2.5 text-[12px] text-foreground transition-colors hover:bg-foreground/[0.11] focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
+            className="inline-flex h-7 items-center rounded-[var(--radius-control)] bg-surface-hover px-2.5 text-small text-foreground transition-colors hover:bg-surface-pressed focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
           >
             {t('extraScreens.health.fix')}
           </button>
         )}
       </div>
-      <p className="mt-2 text-foreground/85">{t(row.detailKey, row.detailParams)}</p>
+      <p className="mt-2 text-text-secondary">{t(row.detailKey, row.detailParams)}</p>
       {row.rawDetail && (
-        <pre className="mt-2 whitespace-pre-wrap [overflow-wrap:anywhere] rounded-[var(--radius-card)] bg-foreground/[0.04] px-3 py-2 font-mono text-[12px] leading-[1.5] text-muted-foreground">
+        <pre className="mt-2 whitespace-pre-wrap [overflow-wrap:anywhere] rounded-[var(--radius-card)] bg-surface-hover px-3 py-2 font-mono text-small text-muted-foreground">
           {row.rawDetail}
         </pre>
       )}

@@ -17,25 +17,8 @@
  * Action-backed entries (`action: 'open-browser'`) carry `route: null` too,
  * but open their existing native surface instead of a route.
  */
-import {
-  Brain,
-  BookOpen,
-  Calendar,
-  Cable,
-  DatabaseZap,
-  FolderKanban,
-  Globe,
-  GraduationCap,
-  House,
-  ListTodo,
-  MessageSquare,
-  NotebookPen,
-  PanelsTopLeft,
-  Settings,
-  Workflow,
-  Zap,
-  type LucideIcon,
-} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { GLYPHS } from '../../platform/glyphs'
 import { routes, type ViewRoute } from '../../../shared/routes'
 import {
   isAutomationsNavigation,
@@ -48,7 +31,6 @@ import {
   isMemoryNavigation,
   isLearningNavigation,
   isTasksNavigation,
-  isMeetingsNavigation,
   isPagesNavigation,
   isProjectsNavigation,
   isSessionsNavigation,
@@ -111,7 +93,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     // MessageSquare = the Mode Bar «Сессии» icon. The Inbox glyph belongs to
     // «Входящие» (routes.view.inbox); using it here made «Сессии» look like
     // the inbox screen.
-    icon: MessageSquare,
+    icon: GLYPHS.sessions,
     labelKey: 'sidebar.allSessions',
     railLabelKey: 'serviceRail.agents',
     railGroup: 'primary',
@@ -122,7 +104,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'notes',
     linkId: 'nav:notes',
-    icon: NotebookPen,
+    icon: GLYPHS.notes,
     labelKey: 'sidebar.notes',
     railGroup: 'primary',
     contextLinkIds: ['nav:notes'],
@@ -132,7 +114,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'memory',
     linkId: 'nav:memory',
-    icon: Brain,
+    icon: GLYPHS.memory,
     labelKey: 'sidebar.memory',
     railGroup: 'primary',
     contextLinkIds: ['nav:memory'],
@@ -142,7 +124,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'browser',
     linkId: 'nav:browser',
-    icon: Globe,
+    icon: GLYPHS.browser,
     labelKey: 'surfaceTabs.browser',
     railGroup: 'primary',
     contextLinkIds: ['nav:browser'],
@@ -153,7 +135,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'automations',
     linkId: 'nav:automations',
-    icon: Workflow, // ListTodo is «Задачи»
+    icon: GLYPHS.automations, // ListTodo is «Задачи»
     labelKey: 'sidebar.automations',
     railGroup: 'primary',
     contextLinkIds: ['nav:automations'],
@@ -163,7 +145,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'projects',
     linkId: 'nav:projects',
-    icon: FolderKanban,
+    icon: GLYPHS.projects,
     labelKey: 'sidebar.projects',
     railGroup: 'more',
     contextLinkIds: ['nav:projects'],
@@ -173,7 +155,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'pages',
     linkId: 'nav:pages',
-    icon: PanelsTopLeft,
+    icon: GLYPHS.pages,
     labelKey: 'sidebar.pages',
     railGroup: 'more',
     contextLinkIds: ['nav:pages'],
@@ -183,7 +165,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'tasks',
     linkId: 'nav:tasks',
-    icon: ListTodo, // same glyph as the Mode Bar «Задачи»
+    icon: GLYPHS.tasks, // same glyph as the Mode Bar «Задачи»
     labelKey: 'sidebar.tasks',
     railGroup: 'more',
     contextLinkIds: ['nav:tasks'],
@@ -193,7 +175,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'learning',
     linkId: 'nav:learning',
-    icon: GraduationCap,
+    icon: GLYPHS.learning,
     labelKey: 'sidebar.learning',
     railGroup: 'more',
     contextLinkIds: ['nav:learning'],
@@ -203,17 +185,18 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'meetings',
     linkId: 'nav:meetings',
-    icon: Calendar,
+    icon: GLYPHS.calendar,
     labelKey: 'sidebar.meetings',
     railGroup: 'more',
     contextLinkIds: ['nav:meetings'],
     route: () => routes.view.meetings(),
-    isActive: isMeetingsNavigation,
+    // W3.2: the route aliases to the calendar surface; highlight it there.
+    isActive: (navState) => navState.navigator === 'surface' && navState.surface === 'calendar',
   },
   {
     id: 'sources',
     linkId: 'nav:sources',
-    icon: DatabaseZap,
+    icon: GLYPHS.sources,
     labelKey: 'sidebar.sources',
     railGroup: 'more',
     contextLinkIds: ['nav:sources'],
@@ -223,7 +206,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'skills',
     linkId: 'nav:skills',
-    icon: Zap,
+    icon: GLYPHS.skills,
     labelKey: 'sidebar.skills',
     railGroup: 'more',
     contextLinkIds: ['nav:skills'],
@@ -233,7 +216,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'connections',
     linkId: 'nav:connections',
-    icon: Cable,
+    icon: GLYPHS.connections,
     labelKey: 'sidebar.connections',
     railGroup: 'more',
     contextLinkIds: ['nav:connections'],
@@ -243,7 +226,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'home',
     linkId: 'nav:home',
-    icon: House,
+    icon: GLYPHS.home,
     labelKey: 'workbench.mode.home',
     railGroup: 'more',
     contextLinkIds: ['nav:home'],
@@ -253,7 +236,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'knowledge',
     linkId: 'nav:knowledge',
-    icon: BookOpen,
+    icon: GLYPHS.knowledge,
     labelKey: 'knowledge.nav.title',
     railGroup: 'more',
     contextLinkIds: ['nav:knowledge'],
@@ -263,7 +246,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'settings',
     linkId: 'nav:settings',
-    icon: Settings,
+    icon: GLYPHS.settings,
     labelKey: 'sidebar.settings',
     railGroup: 'footer',
     contextLinkIds: ['nav:settings'],

@@ -34,9 +34,9 @@ const WEEKS = 12
 
 function StatTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-[var(--radius-card)] bg-foreground/[0.04] px-2.5 py-2" title={hint}>
-      <div className="text-[11px] uppercase tracking-[0.05em] text-muted-foreground">{label}</div>
-      <div className="mt-0.5 text-[18px] font-bold tabular-nums leading-none">{value}</div>
+    <div className="rounded-[var(--radius-card)] bg-surface-hover px-2.5 py-2" title={hint}>
+      <div className="text-caption uppercase text-muted-foreground">{label}</div>
+      <div className="mt-0.5 text-title font-bold tabular-nums leading-none">{value}</div>
     </div>
   )
 }
@@ -84,7 +84,7 @@ function TrendBars({
               onClick={() => onSelectDay?.(point.key)}
               className={cn(
                 'flex h-full w-2.5 shrink-0 items-end rounded-[var(--radius-control)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-foreground',
-                point.sessions > 0 ? 'bg-accent/70' : 'bg-foreground/10',
+                point.sessions > 0 ? 'bg-accent/70' : 'bg-surface-pressed',
                 selected && 'ring-1 ring-foreground',
               )}
             >
@@ -146,7 +146,7 @@ export default function ActivityPage(_props: { itemId: string | null }) {
               </div>
 
               <Card>
-                <div className="text-[12px] text-muted-foreground">
+                <div className="text-small text-muted-foreground">
                   {t('extraScreens.activity.recentSummary', {
                     days: DAYS,
                     sessions: recent.sessions,
@@ -158,12 +158,12 @@ export default function ActivityPage(_props: { itemId: string | null }) {
               <div className="mt-5">
                 <SectionLabel>{t('extraScreens.activity.topProjects')}</SectionLabel>
                 {projectsTop.length === 0 ? (
-                  <div className="text-[12px] text-muted-foreground">{t('extraScreens.activity.noProjects')}</div>
+                  <div className="text-small text-muted-foreground">{t('extraScreens.activity.noProjects')}</div>
                 ) : (
                   projectsTop.map((project) => (
                     <div key={project.id} className="flex items-center gap-2 py-1">
                       <span className="min-w-0 flex-1 truncate" title={project.name}>{project.name}</span>
-                      <span className="shrink-0 text-[12px] tabular-nums text-muted-foreground">
+                      <span className="shrink-0 text-small tabular-nums text-muted-foreground">
                         {t('extraScreens.activity.projectCount', { sessions: project.sessions })}
                       </span>
                     </div>
@@ -174,12 +174,12 @@ export default function ActivityPage(_props: { itemId: string | null }) {
               <div className="mt-5">
                 <SectionLabel>{t('extraScreens.activity.topSources')}</SectionLabel>
                 {sourcesTop.length === 0 ? (
-                  <div className="text-[12px] text-muted-foreground">{t('extraScreens.activity.noSources')}</div>
+                  <div className="text-small text-muted-foreground">{t('extraScreens.activity.noSources')}</div>
                 ) : (
                   sourcesTop.map((source) => (
                     <div key={source.family} className="flex items-center gap-2 py-1">
                       <span className="min-w-0 flex-1 truncate">{t(`collection.filter.agentFamily.${source.family}`)}</span>
-                      <span className="shrink-0 text-[12px] tabular-nums text-muted-foreground">
+                      <span className="shrink-0 text-small tabular-nums text-muted-foreground">
                         {t('extraScreens.activity.projectCount', { sessions: source.sessions })}
                       </span>
                     </div>
