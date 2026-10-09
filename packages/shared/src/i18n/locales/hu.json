@@ -5809,6 +5809,7 @@
   "openui.label": "Interaktív válasz",
   "openui.loading": "Az interaktív válasz összeállítása…",
   "openui.renderError": "Az interaktív választ nem sikerült megjeleníteni. A forráskód alább látható.",
+  "operator.access_denied": "Az operátor szerepköröd nem engedélyezi ezt a műveletet. Kérd meg a gateway adminisztrátort a szerepkör frissítésére.",
   "overlay.code": "Kód",
   "overlay.mermaidDiagram": "Mermaid diagram",
   "overlay.nextItem": "Következő elem",

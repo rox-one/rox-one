@@ -49,6 +49,7 @@ if (process.argv.includes('--generate-token')) {
   process.exit(0)
 }
 import type { WsRpcTlsOptions } from '@rox/server-core/transport'
+import { probeRuntimeCapabilities } from '@rox/server-core/runtime'
 import { registerCoreRpcHandlers, cleanupCoreClientResources } from '@rox/server-core/handlers/rpc'
 import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@rox/server-core/sessions'
 import { initModelRefreshService, setFetcherPlatform } from '@rox/server-core/model-fetchers'
@@ -181,6 +182,7 @@ if (webuiEnabled && serverToken) {
     wsProtocol: rpcProtocol,
     // WebUI is served on the same port as WS — wsPort matches the RPC port
     wsPort: rpcPort,
+    allowedWebUiOrigins: webuiAllowedOrigins,
     getHealthCheck: () => healthCheckFn?.() ?? { status: 'starting' },
     logger: { info: console.log, warn: console.warn, error: console.error } as any,
   })
@@ -201,6 +203,23 @@ const discordWorkerEntry = process.env.CRAFT_MESSAGING_DISCORD_WORKER
 // Built inside createHandlerDeps (needs sessionManager), populated with the WS
 // publisher after bootstrapServer resolves.
 let messagingHandle: MessagingBootstrapHandle | null = null
+
+// E1.2: runtime capability probe — a real SQLite WAL write in a scratch dir
+// under `<state>/tmp` plus the WAL-reset-safe version floor and NUL round-trip.
+// A failed probe logs the typed downgrade + the user-space runtime fallback
+// under `<state>/tools/`; it never writes outside `<state>`.
+{
+  const report = probeRuntimeCapabilities({ configDir: resolveConfigDir() })
+  const { runtime, runtimeVersion, nodeVersion, sqliteVersion } = report.versions
+  console.log(`[runtime] ${runtime} ${runtimeVersion} (node ${nodeVersion ?? 'n/a'}, sqlite ${sqliteVersion ?? 'unavailable'})`)
+  for (const check of report.checks) {
+    console.log(`[runtime] ${check.ok ? 'ok' : 'FAIL'} ${check.id}: ${check.detail}`)
+  }
+  if (report.downgrade) {
+    console.error(`[runtime] capability probe failed (${report.downgrade.failedChecks.join(', ')}); user-space runtime fallback: ${report.downgrade.fallback.binaryPath}`)
+    console.error(`[runtime] ${report.downgrade.fallback.description}`)
+  }
+}
 
 const instance = await (async () => {
   try {

@@ -82,6 +82,9 @@ import { getEntitiesWorkbenchFlags } from '../../entities/workbench-flags.ts'
 import { registerCommandsHandlers, type CommandsHandlerRuntime } from './commands.ts'
 // W1-04 (#1501)
 import { registerDirectoryHandlers } from './directory.ts'
+// f.9 — node/device registry handlers (only when the host composes a registry).
+import { registerNodeHandlers } from './nodes.ts'
+export { registerNodeHandlers } from './nodes.ts'
 // ROX Drive (wave 1)
 import { registerDriveHandlers } from './drive.ts'
 
@@ -182,6 +185,10 @@ export function registerCoreRpcHandlers(
   registerCommandsHandlers(server, deps, options?.commands)
   // W1-04 (#1501): Dossier export IPC (flag contacts.dossier-export.v1, default OFF).
   registerDirectoryHandlers(server, deps, { enabledWorkbenchFlags: getEntitiesWorkbenchFlags })
+  // f.9 — node/device registry. Registered only when the host composes a
+  // registry (mirrors the nativeData gating) so hosts without device
+  // connectivity do not advertise dead node channels.
+  if (deps.nodes) registerNodeHandlers(server, deps)
   // ROX Drive (wave 1) — local-first storage surface.
   registerDriveHandlers(server, deps)
   if (options?.browserPane !== false) registerBrowserPaneHandlers(server, deps)

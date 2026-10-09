@@ -5809,6 +5809,7 @@
   "openui.label": "交互式回答",
   "openui.loading": "正在生成交互式回答…",
   "openui.renderError": "无法渲染交互式回答。源代码见下方。",
+  "operator.access_denied": "你的操作员角色无权执行此操作。请联系网关管理员更新你的角色。",
   "overlay.code": "代码",
   "overlay.mermaidDiagram": "Mermaid 图表",
   "overlay.nextItem": "下一项",

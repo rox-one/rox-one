@@ -1225,6 +1225,18 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.commands.EXECUTE,
   RPC_CHANNELS.commands.LIST,
   RPC_CHANNELS.commands.EVENT,
+
+  // f.9 — node/device registry lives on the server that owns the node
+  // connections (the answering host), never proxied to a fixed local surface.
+  // Claims are declared by the node; the answering server enforces its own
+  // allowlist before any node.invoke dispatch.
+  RPC_CHANNELS.nodes.REGISTER,
+  RPC_CHANNELS.nodes.LIST,
+  RPC_CHANNELS.nodes.PRESENCE,
+  RPC_CHANNELS.nodes.INVOKE,
+  RPC_CHANNELS.nodes.INVOKE_RESULT,
+  RPC_CHANNELS.nodes.INVOKE_CANCEL,
+  RPC_CHANNELS.nodes.CHANGED,
 ]
 
 export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>(REMOTE_ELIGIBLE_CHANNEL_LIST)

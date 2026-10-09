@@ -54,13 +54,62 @@ export const WEBUI_SECURITY_HEADERS: Readonly<Record<string, string>> = {
 }
 
 /**
+ * Convert a configured endpoint into the explicit `connect-src` source the
+ * browser needs for its WebSocket.
+ *
+ * `http://host:port` / `ws://host:port` -> `ws://host:port`, and
+ * `https://host:port` / `wss://host:port` -> `wss://host:port`. The host and
+ * port are preserved verbatim. Returns `null` for anything that is not a
+ * usable http(s)/ws(s) URL.
+ */
+function toConnectSrcOrigin(endpoint: string): string | null {
+  let url: URL
+  try {
+    url = new URL(endpoint)
+  } catch {
+    return null
+  }
+  const protocol = url.protocol === 'http:' || url.protocol === 'ws:'
+    ? 'ws:'
+    : url.protocol === 'https:' || url.protocol === 'wss:'
+      ? 'wss:'
+      : null
+  if (!protocol || !url.hostname) return null
+  return `${protocol}//${url.host}`
+}
+
+/**
+ * Build the `connect-src` directive.
+ *
+ * The bare `ws:` / `wss:` *scheme* sources MUST NEVER be emitted: as bare
+ * schemes they authorize WebSocket connections to ANY host, which silently
+ * defeats CSP's exfiltration boundary. The default policy is therefore
+ * `connect-src 'self'` alone — correct for the standard single-port deployment
+ * where the browser-facing WebSocket shares the document's own origin.
+ *
+ * Cross-origin WebSocket endpoints a deployment legitimately configures (the
+ * browser-facing WS URL override and the allowed-WebUI-origins setting) are
+ * added as EXPLICIT origins, never as schemes: `http`/`ws` -> `ws:` and
+ * `https`/`wss` -> `wss:`, host and port preserved.
+ */
+export function buildConnectSrcDirective(origins: readonly string[] = []): string {
+  const tokens = ["'self'"]
+  for (const origin of origins) {
+    const source = toConnectSrcOrigin(origin)
+    if (source && !tokens.includes(source)) tokens.push(source)
+  }
+  return `connect-src ${tokens.join(' ')}`
+}
+
+/**
  * Build the CSP header value for a WebUI document.
  *
  * `html` should be the exact document body the browser will receive; its inline
  * scripts are hashed so the strict `script-src` admits them without
- * `'unsafe-inline'`.
+ * `'unsafe-inline'`. `connectSrcOrigins` are the explicit cross-origin
+ * WebSocket endpoints to admit (see {@link buildConnectSrcDirective}).
  */
-export function buildWebuiCspHeader(html: string): string {
+export function buildWebuiCspHeader(html: string, connectSrcOrigins?: readonly string[]): string {
   const scriptTokens = ["'self'", ...computeInlineScriptHashes(html).map(hash => `'${hash}'`)]
   return [
     "default-src 'self'",
@@ -74,7 +123,7 @@ export function buildWebuiCspHeader(html: string): string {
     "img-src 'self' data: blob:",
     "font-src 'self' https://fonts.gstatic.com",
     "media-src 'self' data: blob:",
-    "connect-src 'self' ws: wss:",
+    buildConnectSrcDirective(connectSrcOrigins),
     "worker-src 'self' blob:",
     "manifest-src 'self'",
   ].join('; ')
@@ -84,11 +133,15 @@ export function buildWebuiCspHeader(html: string): string {
  * Apply security headers in place to a mutable header bag. `html` is the served
  * document body when the response is HTML; omit it for non-document responses.
  */
-export function applyWebuiSecurityHeaders(headers: Headers, html?: string): void {
+export function applyWebuiSecurityHeaders(
+  headers: Headers,
+  html?: string,
+  connectSrcOrigins?: readonly string[],
+): void {
   for (const [name, value] of Object.entries(WEBUI_SECURITY_HEADERS)) {
     headers.set(name, value)
   }
-  headers.set('Content-Security-Policy', buildWebuiCspHeader(html ?? ''))
+  headers.set('Content-Security-Policy', buildWebuiCspHeader(html ?? '', connectSrcOrigins))
 }
 
 /**
@@ -96,11 +149,14 @@ export function applyWebuiSecurityHeaders(headers: Headers, html?: string): void
  * (via clone) so their inline-script hashes can be computed; other responses get
  * the hash-free baseline policy.
  */
-export async function withWebuiSecurityHeaders(res: Response): Promise<Response> {
+export async function withWebuiSecurityHeaders(
+  res: Response,
+  connectSrcOrigins?: readonly string[],
+): Promise<Response> {
   const headers = new Headers(res.headers)
   const contentType = (headers.get('content-type') ?? '').toLowerCase()
   const html = contentType.includes('text/html') ? await res.clone().text() : undefined
-  applyWebuiSecurityHeaders(headers, html)
+  applyWebuiSecurityHeaders(headers, html, connectSrcOrigins)
   return new Response(res.body, {
     status: res.status,
     statusText: res.statusText,

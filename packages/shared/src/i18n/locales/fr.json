@@ -5812,6 +5812,7 @@
   "openui.label": "Réponse interactive",
   "openui.loading": "Création de la réponse interactive…",
   "openui.renderError": "Impossible d’afficher la réponse interactive. Le code source figure ci-dessous.",
+  "operator.access_denied": "Votre rôle d'opérateur n'autorise pas cette action. Demandez à un administrateur de la passerelle de mettre à jour votre rôle.",
   "overlay.code": "Code",
   "overlay.mermaidDiagram": "Diagramme Mermaid",
   "overlay.nextItem": "Élément suivant",

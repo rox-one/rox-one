@@ -118,6 +118,7 @@
     "./openclaw": "./src/openclaw/index.ts",
     "./openclaw/types": "./src/openclaw/types.ts",
     "./orgs": "./src/orgs/index.ts",
+    "./orgs/types": "./src/orgs/types.ts",
     "./os/user-display-name": "./src/os/user-display-name.ts",
     "./pages": "./src/pages/index.ts",
     "./pages/data-store": "./src/pages/data-store.ts",

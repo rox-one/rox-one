@@ -5809,6 +5809,7 @@
   "openui.label": "互動式回答",
   "openui.loading": "正在產生互動式回答…",
   "openui.renderError": "無法呈現互動式回答。原始碼如下。",
+  "operator.access_denied": "你的操作員角色無權執行此操作。請聯絡閘道管理員更新你的角色。",
   "overlay.code": "程式碼",
   "overlay.mermaidDiagram": "Mermaid 圖表",
   "overlay.nextItem": "下一項",

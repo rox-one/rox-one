@@ -5809,6 +5809,7 @@
   "openui.label": "Interactive answer",
   "openui.loading": "Building the interactive answer…",
   "openui.renderError": "Could not render the interactive answer. The source is below.",
+  "operator.access_denied": "Your operator role cannot perform this action. Ask a gateway administrator to update your role.",
   "overlay.code": "Code",
   "overlay.mermaidDiagram": "Mermaid Diagram",
   "overlay.nextItem": "Next item",

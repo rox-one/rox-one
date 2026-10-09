@@ -5823,6 +5823,7 @@
   "openui.label": "Odpowiedź interaktywna",
   "openui.loading": "Tworzę interaktywną odpowiedź…",
   "openui.renderError": "Nie udało się wyrenderować interaktywnej odpowiedzi. Kod źródłowy znajduje się poniżej.",
+  "operator.access_denied": "Twoja rola operatora nie pozwala na tę operację. Poproś administratora bramy o zaktualizowanie roli.",
   "overlay.code": "Kod",
   "overlay.mermaidDiagram": "Diagram Mermaid",
   "overlay.nextItem": "Następny element",

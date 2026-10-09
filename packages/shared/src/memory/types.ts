@@ -135,6 +135,9 @@ export type AuditAction =
   | 'conflict'
   | 'approved'
   | 'dismissed'
+  /** c1.8 forget: the corpus line + index chunk + embeddings for a chunk id
+   *  were removed; the audit `detail` carries only a content hash, never text. */
+  | 'forget'
   /** Knowledge bridge actions (spec K-05 §3.8: knowledge.proposal.created/…). */
   | `knowledge.${string}`
 
@@ -279,6 +282,59 @@ export interface WorkspaceMemory {
 }
 
 /**
+ * One recalled memory reference (spec c1.5): the lane that produced it and the
+ * chunk it points at. Lane 2 (escalation) references are always chosen from
+ * provenance-eligible candidates — an untrusted chunk never appears here.
+ */
+export interface RecallPromptReference {
+  chunkId: string
+  /** Document path relative to the workspace root. */
+  path: string
+  /** Deterministic lexical trigger score in [0, 1]. */
+  score: number
+  origin: MemoryOriginClass
+}
+
+/**
+ * Provenance of the recall block: which lane produced it (`1` deterministic
+ * lexical trigger, `2` escalation sub-agent) and exactly what was injected.
+ */
+export interface RecallPromptProvenance {
+  lane: 1 | 2
+  refs: RecallPromptReference[]
+}
+
+/**
+ * Lifecycle state of a standing intent (spec c1.6, prospective memory).
+ * `armed` may fire; `fired` is cooling down; `done` exhausted maxFires;
+ * `cancelled` is user-disabled.
+ */
+export type StandingIntentStatus = 'armed' | 'fired' | 'done' | 'cancelled'
+
+/**
+ * A standing intent (spec c1.6): a prospective, event-conditioned rule the
+ * agent should recall when a future prompt matches its trigger. `trigger` is a
+ * keyword phrase — every trigger token must appear in the prompt for the
+ * intent to fire. Time-only reminders are NOT standing intents: scheduling
+ * belongs to cron (see `isTimeOnlyIntent`), so such intents are rejected at
+ * creation and ignored at match time.
+ */
+export interface StandingIntent {
+  id: string
+  /** Human-readable intent text injected into the prompt when it fires. */
+  text: string
+  /** Keyword phrase whose tokens gate firing (all tokens must be present). */
+  trigger: string
+  createdAt: string
+  status: StandingIntentStatus
+  fireCount: number
+  maxFires: number
+  lastFiredAt?: string
+  /** Injection gate (spec c1.2): only owner/agent intents ever enter a prompt. */
+  provenance: MemoryChunkProvenance
+}
+
+/**
  * Pre-formatted prompt blocks produced by formatLessonsForPrompt /
  * formatWorkspaceMemoryForPrompt and injected into agent system prompts.
  * Resolved by the server core (MemoryService) and passed into the agent
@@ -314,6 +370,23 @@ export interface MemoryPromptBlocks {
    * the same order. Absent when the block was not assembled.
    */
   bootstrap?: Array<{ path: string; provenance: MemoryChunkProvenance }>
+  /**
+   * c1.5: recall-lane block — deterministic lexical trigger matches (lane 1)
+   * or, only when lane 1 is inconclusive and the message shows recall intent,
+   * escalation sub-agent picks (lane 2). Absent when nothing was recalled.
+   * Untrusted chunks never appear here.
+   */
+  recallBlock?: string
+  /** Provenance of exactly what `recallBlock` injected, in injection order. */
+  recall?: RecallPromptProvenance
+  /**
+   * c1.6: standing-intent block — event-conditioned prospective memories that
+   * matched the current prompt, deduplicated and injected once per turn.
+   * Absent when no intent fired. Time-only reminders never appear here.
+   */
+  intentBlock?: string
+  /** Ids of exactly the standing intents folded into `intentBlock`. */
+  intents?: string[]
 }
 
 /** One lesson that was injected into an agent prompt (spec F4). */
@@ -477,6 +550,40 @@ export interface MemoryGetResult {
   origin: MemoryOriginClass
   provenance: MemoryChunkProvenance
   metadata?: Record<string, unknown>
+}
+
+/**
+ * c1.8: one forgotten chunk in a lineage record. Content-free by construction —
+ * only a hash of the removed text is retained, so a lineage entry is auditable
+ * but never retrievable as memory and never re-injected.
+ */
+export interface MemoryForgetEntry {
+  chunkId: string
+  /** Workspace-relative document path the chunk was removed from. */
+  path: string
+  /** SHA-1 of the removed text — the text itself is NOT retained. */
+  textHash: string
+}
+
+/** c1.8: append-only lineage record of one forget operation. */
+export interface MemoryForgetLineage {
+  /** ISO timestamp. */
+  ts: string
+  actor: AuditActor
+  /** Chunk ids forgotten by this operation, deterministic order. */
+  ids: string[]
+  reason: string
+  entries: MemoryForgetEntry[]
+}
+
+/** Result of a forget operation (memory_forget tool / forget surface). */
+export interface MemoryForgetResult {
+  /** Chunk ids whose corpus line was removed and index chunk dropped. */
+  forgotten: string[]
+  /** Requested ids that resolved to nothing — already forgotten (clean no-op). */
+  alreadyForgotten: string[]
+  /** Lineage record written for this operation; null when nothing was forgotten. */
+  lineage: MemoryForgetLineage | null
 }
 
 /** Lifecycle state of the workspace memory index. */

@@ -5809,6 +5809,7 @@
   "openui.label": "대화형 응답",
   "openui.loading": "대화형 응답을 생성하는 중…",
   "openui.renderError": "대화형 응답을 렌더링하지 못했습니다. 소스는 아래에 표시됩니다.",
+  "operator.access_denied": "현재 운영자 역할로는 이 작업을 수행할 수 없습니다. 게이트웨이 관리자에게 역할 업데이트를 요청하세요.",
   "overlay.code": "코드",
   "overlay.mermaidDiagram": "Mermaid 다이어그램",
   "overlay.nextItem": "다음 항목",

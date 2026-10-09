@@ -59,6 +59,7 @@ import { handleKnowledgeGetBacklinks } from './handlers/knowledge-backlinks.ts';
 import { handleKnowledgePropose } from './handlers/knowledge-propose.ts';
 import { handleMemorySearch } from './handlers/memory-search.ts';
 import { handleMemoryGet } from './handlers/memory-get.ts';
+import { handleMemoryForget } from './handlers/memory-forget.ts';
 import { handleSkillsSearch } from './handlers/skills-search.ts';
 import { handleSkillsRead } from './handlers/skills-read.ts';
 
@@ -433,8 +434,15 @@ export const MemorySearchSchema = z.object({
 export const MemoryGetSchema = z.object({
   chunkId: z.string().describe('Chunk id from a memory_search hit.'),
 });
+// c1.8 forget: mutating — removes the corpus line, index chunk and embeddings
+// for the given chunk ids and records a content-free lineage entry.
+export const MemoryForgetSchema = z.object({
+  ids: z.array(z.string()).describe('Chunk ids to forget (from memory_search hits).'),
+  reason: z.string().optional().describe('Why the chunks are being forgotten (recorded in the lineage).'),
+});
 export type MemorySearchToolArgs = z.infer<typeof MemorySearchSchema>;
 export type MemoryGetToolArgs = z.infer<typeof MemoryGetSchema>;
+export type MemoryForgetToolArgs = z.infer<typeof MemoryForgetSchema>;
 // Skills catalog tools (c2.7). The wire names use underscores; the catalog
 // advertises and the tools resolve slugs (never raw paths).
 export const SkillsSearchSchema = z.object({
@@ -864,6 +872,17 @@ Pass a \`chunkId\` from a memory_search hit to get the complete text with its so
 path and line span. The response repeats the chunk's provenance and carries the same
 gated badge: \`untrusted\` chunks are returned but never injected into the prompt.
 An unknown id is reported honestly as "not found".`,
+
+  memory_forget: `Permanently forget one or more memory chunks by id. Mutating.
+
+Removes each id's content from the durable corpus (the source document line), from
+the search index, and from cached embeddings, then records a content-free lineage
+entry (chunk id, path, text hash, reason, author) in the workspace audit log.
+After forgetting, memory_search no longer returns the content and the lineage is
+retained for audit only — it is never injected into prompts.
+
+Pass \`chunkId\`s from memory_search hits. Forgetting an id that is already gone is a
+clean no-op. Use this when the user asks you to forget/remove remembered information.`,
   skills_search: `Search the installed skills (agent skill catalog) by keyword. Read-only.
 
 Use it to find a skill that matches the task before loading one — the available-skills
@@ -980,6 +999,9 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   // workspace memory index through the ctx.memory callbacks (SessionManager).
   { name: 'memory_search', description: TOOL_DESCRIPTIONS.memory_search, inputSchema: MemorySearchSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleMemorySearch },
   { name: 'memory_get', description: TOOL_DESCRIPTIONS.memory_get, inputSchema: MemoryGetSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleMemoryGet },
+  // c1.8 forget — mutating (removes corpus lines + chunks + embeddings), so it
+  // is blocked in Explore/Safe mode like other write tools.
+  { name: 'memory_forget', description: TOOL_DESCRIPTIONS.memory_forget, inputSchema: MemoryForgetSchema, executionMode: 'registry', safeMode: 'block', readOnly: false, handler: handleMemoryForget },
   // Skills catalog tools (c2.7) — read-only over the eligible skill catalog via
   // the registered skills runtime; safe in Explore mode, typed unavailable otherwise.
   { name: 'skills_search', description: TOOL_DESCRIPTIONS.skills_search, inputSchema: SkillsSearchSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleSkillsSearch },

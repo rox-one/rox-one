@@ -1,6 +1,8 @@
 import { getRoxAccountAuthority, peekRoxAccountAuthority, type RoxExecutionContext } from '@rox/shared/auth'
 import type { EventSink, RpcServer } from '@rox/server-core/transport'
 import { annotationPayloadRejection } from './annotation-payload'
+import { planSteeringSubmit, QueueSteering, type SteeringVerb } from './queue-steering'
+import { TranscriptFence } from './transcript-fence'
 import { RuntimeTraceService, type RuntimeTraceRun } from './runtime-trace/service'
 import { NOOP_SESSION_EVENT_BUS, SessionEventBus, summarizeToolArgs, type SessionCreatedReason, type SessionLifecycleEvent, type SessionLifecycleEventMap, type SessionLifecycleEventType } from './SessionEventBus'
 import { known, unknown, type RuntimeContextBlock, type RuntimeTraceQuery, type RuntimeEventsQuery, type RuntimePayloadQuery, type RuntimeLaunch } from '@rox/core/runtime-trace'
@@ -132,7 +134,7 @@ import { isParentTaskTool } from '@rox/shared/utils/toolNames'
 import { restoreFiles } from '@rox/shared/utils/bundle-files'
 import { getCredentialManager } from '@rox/shared/credentials'
 import { CraftMcpClient, McpClientPool, McpPoolServer } from '@rox/shared/mcp'
-import { type Session, type SessionEvent, type FileAttachment, type SendMessageOptions, type UnreadSummary, type RemoteSessionTransferPayload, type ImportRemoteSessionTransferResult, type PermissionModeState, type SessionActorRef, type SessionVisibility, type SessionCreatedActor, type SessionOwnerRef, type SessionParticipantIdentity, RPC_CHANNELS, CodedError, generateMessageId } from '@rox/shared/protocol'
+import { type Session, type SessionEvent, type FileAttachment, type SendMessageOptions, type UnreadSummary, type RemoteSessionTransferPayload, type ImportRemoteSessionTransferResult, type PermissionModeState, type SessionActorRef, type SessionVisibility, type SessionCreatedActor, type SessionOwnerRef, type SessionParticipantIdentity, type CreateSessionOptions, RPC_CHANNELS, CodedError, generateMessageId } from '@rox/shared/protocol'
 import type {
   BulkUpdateSessionsInput,
   BulkUpdateSessionsPatch,
@@ -1027,6 +1029,11 @@ interface ManagedSession {
     options?: SendMessageOptions
     messageId?: string  // Pre-generated ID for matching with UI
     optimisticMessageId?: string  // Frontend's ID for reliable event matching
+    /**
+     * f.4 queue verb this entry was queued under. `steer`/`collect` entries
+     * coalesce with a following entry of the same verb; `followup` never does.
+     */
+    verb?: SteeringVerb
     rpcContext?: { callerClientId?: string; nativeMemoryContext?: NativeMemoryContext; roxExecutionContext?: RoxExecutionContext; runtimeLaunch?: RuntimeLaunch }
     roxExecutionContext?: RoxExecutionContext // Captured host owner, retained through deferred replay.
     roxOwnerResource?: string // Sealed exact-generation owner for crash/restart recovery.
@@ -1107,6 +1114,12 @@ interface ManagedSession {
   // Whether the previous turn was interrupted (for context injection on next message).
   // Ephemeral — not persisted to disk. Cleared after one-shot injection.
   wasInterrupted?: boolean
+  /**
+   * f.5: runId of the turn currently holding the session's transcript writer
+   * lock. Appends tagged with any other run id are rejected (see the
+   * session event bus's `transcriptFence`).
+   */
+  activeWriterRunId?: string
   /**
    * Runtime-only: Pi SDK message id → Craft assistant message id.
    * Populated when a `text_complete` arrives carrying `sdkMessageId`, and read
@@ -1290,6 +1303,33 @@ export function evaluateSessionWriteAccess(
     : { allowed: false, code: 'SESSION_OWNER_ONLY', message: 'Session is a private draft owned by another actor' }
 }
 
+/** Result of the server-side session read-visibility check (a1.3 read side). */
+export type SessionReadAccess = { allowed: true } | { allowed: false }
+
+/**
+ * Decide whether `actorAccountId` may READ a session by its visibility.
+ *
+ * The read gate shares one visibility policy with `evaluateSessionWriteAccess`,
+ * but admits participants as well: `shared`, `suggest`, and `read-only` are
+ * readable by every workspace member; only a private `draft` is withheld, and
+ * then only from actors who are neither the owner, the creator, nor a bound
+ * participant. A session with no attribution at all stays readable, mirroring
+ * the write gate's permissive legacy default.
+ */
+export function evaluateSessionReadAccess(
+  session: Pick<ManagedSession, 'owner' | 'creator' | 'participants' | 'visibility'>,
+  actorAccountId: string | null,
+): SessionReadAccess {
+  const visibility = session.visibility ?? 'shared'
+  if (visibility !== 'draft') return { allowed: true }
+  const attributed = new Set<string>()
+  if (session.creator?.accountId) attributed.add(session.creator.accountId)
+  if (session.owner?.id) attributed.add(session.owner.id)
+  for (const participant of session.participants ?? []) attributed.add(participant.accountId)
+  if (attributed.size === 0) return { allowed: true }
+  return actorAccountId && attributed.has(actorAccountId) ? { allowed: true } : { allowed: false }
+}
+
 /**
  * Resolve supportsBranching for a managed session.
  * Prefers the live agent instance; falls back to true for all backends.
@@ -1435,6 +1475,18 @@ export function resolveMidStreamDeliveryOutcome(
 
 export class SessionManager implements ISessionManager {
   private roxExecutions = new Map<string, RoxExecutionContext>()
+  /**
+   * f.4 global lane: serializes cross-session work that must not overlap. The
+   * runner is never invoked (session work runs on the existing per-session
+   * `isProcessing` lane); the lane is used through {@link runGlobal}.
+   */
+  private readonly steeringLane = new QueueSteering(async () => {})
+  /**
+   * f.5 transcript writer fence. One active writer run id per session; every
+   * transcript append made by a turn goes through {@link appendTranscript} with
+   * that turn's run id, so a superseded run cannot commit after a newer one.
+   */
+  private readonly transcriptFence = new TranscriptFence()
   private roxResourceLeases = new Map<string, { context?: RoxExecutionContext; count: number }>()
   private sameRoxExecution(a?: RoxExecutionContext, b?: RoxExecutionContext): boolean {
     return a === b || !!(a && b && a.caller.issuer === b.caller.issuer && a.caller.subject === b.caller.subject && a.cloudAccountId === b.cloudAccountId && a.authGeneration === b.authGeneration)
@@ -1642,6 +1694,33 @@ export class SessionManager implements ISessionManager {
    *  Resolves immediately if already initialized. */
   waitForInit(): Promise<void> {
     return this.initGate.wait()
+  }
+
+  /**
+   * f.5: the runId currently holding `sessionId`'s transcript writer lock, or
+   * undefined between turns.
+   */
+  getActiveWriterRunId(sessionId: string): string | undefined {
+    return this.sessions.get(sessionId)?.activeWriterRunId
+  }
+
+  /**
+   * f.5: apply a transcript append/mutation for `runId`. Throws
+   * {@link StaleTranscriptWriterError} when `runId` is not the session's active
+   * writer, so a stale run can never append after a newer run started.
+   */
+  private appendTranscript<T>(managed: ManagedSession, runId: string, mutate: () => T): T {
+    return this.transcriptFence.append(managed.id, runId, mutate)
+  }
+
+  private claimTranscriptWriter(managed: ManagedSession, runId: string): void {
+    this.transcriptFence.claim(managed.id, runId)
+    managed.activeWriterRunId = runId
+  }
+
+  private releaseTranscriptWriter(managed: ManagedSession, runId: string): void {
+    this.transcriptFence.release(managed.id, runId)
+    if (managed.activeWriterRunId === runId) managed.activeWriterRunId = undefined
   }
   private getAgentBudgetLedger(): AgentBudgetLedger {
     if (!this.budgetLedger) {
@@ -3639,11 +3718,22 @@ export class SessionManager implements ISessionManager {
 
   async createSession(
     workspaceId: string,
-    options?: import('@rox/shared/protocol').CreateSessionOptions,
+    options?: CreateSessionOptions,
     // Transport concern, deliberately NOT on the wire DTO: by default every created session is
     // announced to the renderer (see notifySessionCreated). Callers that register the session
     // themselves — the `sessions:create` RPC adds it from the return value — pass
     // `{ emitCreatedEvent: false }` to avoid a redundant hydrate.
+    internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext; initialAssistantMessage?: string; agentProfileSnapshot?: AgentProfileSnapshot | null; actor?: SessionCreatedActor },
+  ): Promise<Session> {
+    // f.4 global lane: session creation mutates the shared workspace sessions
+    // index and its JSONL store, so it runs exclusively (FIFO across sessions) —
+    // two creations can never interleave their index writes.
+    return this.steeringLane.runGlobal(() => this.createSessionUnlocked(workspaceId, options, internal))
+  }
+
+  private async createSessionUnlocked(
+    workspaceId: string,
+    options?: CreateSessionOptions,
     internal?: { emitCreatedEvent?: boolean; nativeMemoryContext?: NativeMemoryContext; initialAssistantMessage?: string; agentProfileSnapshot?: AgentProfileSnapshot | null; actor?: SessionCreatedActor },
   ): Promise<Session> {
     internal?.nativeMemoryContext?.assertAuthorized()
@@ -5778,15 +5868,21 @@ export class SessionManager implements ISessionManager {
             this.enqueuePageThumbnail(managed.workspace.id, managed.workspace.rootPath, pageSlug)
           },
         }),
-        // Memory recall tools (memory_search / memory_get) — bound to the
-        // invoking session's workspace chunk index. Absent when the session is
+        // Memory recall tools (memory_search / memory_get / memory_forget) — bound to
+        // the invoking session's workspace chunk index. Absent when the session is
         // temporary / has no memory scope (no read, no write — spec F3), or when
         // the workspace disables memory (memoryServiceFor returns null), so the
         // handlers report a truthful "unavailable" instead of faking recall.
-        memory: memoryToolCallbacksForSession(
-          { memoryMode: managed.memoryMode, memoryScope: managed.agentProfileSnapshot?.memoryScope },
-          this.memoryServiceFor(managed.workspace)?.indexService,
-        ),
+        // c1.8: the forget executor removes corpus lines + chunks + embeddings and
+        // records the content-free lineage; the actor is always 'agent' here.
+        memory: (() => {
+          const memoryService = this.memoryServiceFor(managed.workspace)
+          return memoryToolCallbacksForSession(
+            { memoryMode: managed.memoryMode, memoryScope: managed.agentProfileSnapshot?.memoryScope },
+            memoryService?.indexService,
+            (args) => memoryService!.forgetChunks(args.ids, 'agent', args.reason),
+          )
+        })(),
         getSessionInfoFn: (sessionId?: string) => {
           const targetId = sessionId ?? managed.id
           const session = this.sessions.get(targetId)
@@ -7507,34 +7603,38 @@ export class SessionManager implements ISessionManager {
     await this.ensureMessagesLoaded(managed)
     rpcContext?.nativeMemoryContext?.assertAuthorized()
 
-    // If currently processing, behavior depends on the connection's
-    // `midStreamBehavior` (resolved via {@link resolveMidStreamBehavior},
-    // defaults to provider-appropriate value):
+    // If currently processing, the message is handled by the f.4 queue-steering
+    // policy. The verb is `options.queueMode` when the caller supplies one;
+    // otherwise it is derived from the connection's `midStreamBehavior`
+    // ({@link resolveMidStreamBehavior}) — 'steer' → steer, 'queue' → followup.
     //
     // - 'steer': try to deliver into the in-flight turn. Pi steers natively;
-    //   Claude emulates via PreToolUse hook. If `redirect()` returns false
-    //   (Claude with no live query, or backend can't steer), the backend has
-    //   already called forceAbort(Redirect) and we queue for replay.
-    // - 'queue': hold the message untouched; the current turn keeps running
-    //   to natural completion; replay as a new turn afterwards. NO call to
-    //   `agent.redirect()`, NO forceAbort, NO interruption.
+    //   Claude emulates via PreToolUse hook. If `redirect()` returns false the
+    //   backend has already called forceAbort(Redirect) and the message becomes a
+    //   queued followup (coalescing into a trailing queued steer).
+    // - 'followup': hold the message untouched; the current turn keeps running to
+    //   natural completion; replay as a new turn afterwards.
+    // - 'collect': like followup, but coalesces into a trailing queued collect so
+    //   the replay runs one combined turn.
+    // - 'interrupt': abort the active run and DROP every already-queued message
+    //   for this session; the newest message runs next.
     if (managed.isProcessing || this.nativeMemoryStarts.has(sessionId)
       && this.nativeMemoryStarts.get(sessionId) !== rpcContext?.nativeMemoryContext) {
       const connection = resolveSessionConnection(managed.llmConnection, undefined)
       // Fallback to 'steer' when no connection is resolvable — preserves
       // today's exact behavior (call redirect, take whatever it returns).
       const behavior = !managed.isProcessing ? 'queue' : connection ? resolveMidStreamBehavior(connection) : 'steer'
+      const verb: SteeringVerb = options?.queueMode ?? (behavior === 'steer' ? 'steer' : 'followup')
 
       const agent = managed.agent
-      let steered = false
-      if (behavior === 'steer') {
-        steered = agent?.redirect(message) ?? false
-      }
-      // For 'queue': skip redirect entirely. The current turn is undisturbed.
+      const steered = verb === 'steer' ? (agent?.redirect(message) ?? false) : false
+      const steerDelivery = resolveMidStreamDeliveryOutcome('steer', steered)
+      const shouldQueue = verb === 'steer' ? steerDelivery.shouldQueue : true
 
       sessionLog.info('mid-stream send', {
         sessionId,
         behavior,
+        verb,
         steered,
         queueLengthBefore: managed.messageQueue.length,
         backend: agent ? agent.constructor.name : 'none',
@@ -7556,34 +7656,57 @@ export class SessionManager implements ISessionManager {
       managed.messages.push(userMessage)
       if (rpcContext?.runtimeLaunch) (managed.runtimeLaunchByMessageId ??= new Map()).set(userMessage.id, rpcContext.runtimeLaunch)
 
-      const delivery = resolveMidStreamDeliveryOutcome(behavior, steered)
+      if (verb === 'interrupt') {
+        // Deterministic preemption: cancel every queued item, report which were
+        // dropped, and abort the active run so the newest message starts next.
+        const dropped = managed.messageQueue
+          .map((queued) => queued.messageId)
+          .filter((id): id is string => !!id)
+        managed.messageQueue = []
+        sessionLog.info(`queue interrupt: dropped ${dropped.length} queued message(s)`, { sessionId, dropped })
+        if (managed.isProcessing && agent) agent.forceAbort(AbortReason.UserStop)
+      }
 
       // Emit to UI — 'accepted' iff a steer succeeded; 'queued' otherwise
-      // (covers both queue-direct and queue-after-abort paths).
+      // (covers followup/collect/interrupt and the queue-after-steer-abort path).
       this.sendEvent({
         type: 'user_message',
         sessionId,
         message: userMessage,
-        status: delivery.shouldQueue ? 'queued' : 'accepted',
+        status: shouldQueue ? 'queued' : 'accepted',
         optimisticMessageId: options?.optimisticMessageId
       }, managed.workspace.id)
 
-      if (delivery.shouldQueue) {
-        // Push for FIFO replay on next onProcessingStopped tick. Same shape
-        // for both queue-direct (current turn still running) and
-        // queue-after-abort (backend already aborted) — the replay path in
-        // processNextQueuedMessage is identical.
-        const roxOwnerResource = `queued-message:${managed.workspace.id}:${sessionId}:${userMessage.id}`
-        if (execution) await getRoxAccountAuthority().bind(roxOwnerResource, execution)
-        this.assertRoxSessionExecution(sessionId, execution)
-        rpcContext?.nativeMemoryContext?.assertAuthorized()
-        managed.messageQueue.push({ message, attachments, storedAttachments, options, messageId: userMessage.id, optimisticMessageId: options?.optimisticMessageId, rpcContext, roxExecutionContext: execution, ...(execution ? { roxOwnerResource } : {}) })
+      if (shouldQueue) {
+        // f.4: the shared kernel decides whether this submission coalesces into
+        // an existing queued item or appends. It is the SAME kernel the lane
+        // executor uses, so runtime and in-memory queues cannot drift.
+        const plan = planSteeringSubmit(
+          managed.messageQueue.map((q) => ({ id: q.messageId ?? q.message.slice(0, 32), verb: q.verb ?? 'followup' })),
+          undefined,
+          verb,
+        )
+        if (plan.disposition === 'coalesced' && plan.coalesceIndex !== undefined) {
+          const target = managed.messageQueue[plan.coalesceIndex]
+          if (target) {
+            target.message = target.message.length ? `${target.message}\n\n${message}` : message
+            if (options) target.options = options
+            if (storedAttachments) target.storedAttachments = storedAttachments
+            if (attachments) target.attachments = attachments
+          }
+        } else {
+          const roxOwnerResource = `queued-message:${managed.workspace.id}:${sessionId}:${userMessage.id}`
+          if (execution) await getRoxAccountAuthority().bind(roxOwnerResource, execution)
+          this.assertRoxSessionExecution(sessionId, execution)
+          rpcContext?.nativeMemoryContext?.assertAuthorized()
+          managed.messageQueue.push({ message, attachments, storedAttachments, options, messageId: userMessage.id, optimisticMessageId: options?.optimisticMessageId, verb, rpcContext, roxExecutionContext: execution, ...(execution ? { roxOwnerResource } : {}) })
+        }
         // Only claim interruption when a steer attempt actually aborted the
         // in-flight turn. In 'queue' mode the current turn runs to natural
         // completion, so the replayed turn must NOT inject the "previous response
         // was interrupted" reminder (it would falsely tell the model its own
         // complete answer was cut off → confusion).
-        if (delivery.wasInterrupted) managed.wasInterrupted = true
+        if (verb === 'steer' && steerDelivery.wasInterrupted) managed.wasInterrupted = true
       }
 
       this.persistSession(managed)
@@ -7886,6 +8009,7 @@ export class SessionManager implements ISessionManager {
       sendSpan.mark('servers.applied')
     }
 
+    let writerRunId: string | undefined
     try {
       sessionLog.info('Starting chat for session:', sessionId)
       sessionLog.info('Workspace:', JSON.stringify(managed.workspace, null, 2))
@@ -7998,7 +8122,17 @@ export class SessionManager implements ISessionManager {
       sendSpan.mark('chat.starting')
       this.assertRoxSessionExecution(sessionId, execution)
       rpcContext?.nativeMemoryContext?.assertAuthorized()
-      const chatIterator = agent.chat(effectiveMessage, modelInputAttachments.attachments)
+      // f.5: a send returns its runId IMMEDIATELY; streaming continues through
+      // the returned iterator. The run id becomes the session's active
+      // transcript writer so a superseded run cannot append after a newer one.
+      const chatHandle = agent.startRun
+        ? agent.startRun(effectiveMessage, modelInputAttachments.attachments)
+        : { runId: undefined, events: agent.chat(effectiveMessage, modelInputAttachments.attachments) }
+      const chatIterator = chatHandle.events
+      if (chatHandle.runId) {
+        writerRunId = chatHandle.runId
+        this.claimTranscriptWriter(managed, chatHandle.runId)
+      }
       sessionLog.info('Got chat iterator, starting iteration...')
 
       this.assertRoxSessionExecution(sessionId, execution)
@@ -8094,7 +8228,8 @@ export class SessionManager implements ISessionManager {
                   : [apiError.message],
                 errorCanRetry: false,
               }
-              managed.messages.push(errorMessage)
+              if (writerRunId) this.appendTranscript(managed, writerRunId, () => managed.messages.push(errorMessage))
+              else managed.messages.push(errorMessage)
               this.sendEvent({
                 type: 'typed_error',
                 sessionId,
@@ -8176,6 +8311,10 @@ export class SessionManager implements ISessionManager {
         this.onProcessingStopped(sessionId, 'error', runtimeOrigin)
       }
     } finally {
+      // f.5: this turn no longer owns the transcript writer. Releasing only
+      // clears the lock when this run is still the session's active writer, so a
+      // newer run's claim is never clobbered by a late release.
+      if (writerRunId) this.releaseTranscriptWriter(managed, writerRunId)
       // Only handle cleanup for unexpected exits (loop break without complete event)
       // Normal completion returns early after calling onProcessingStopped
       // Errors are handled in catch block
@@ -9576,6 +9715,19 @@ export class SessionManager implements ISessionManager {
     if (!managed) return
     const access = evaluateSessionWriteAccess(managed, actorAccountId)
     if (!access.allowed) throw new CodedError(access.code, access.message)
+  }
+
+  /**
+   * a1.3 read-side: whether `actorAccountId` may receive `sessionId`'s record
+   * or content. Read projections refuse by ABSENCE (null / filtered list), so
+   * callers must not reveal whether the withheld session exists at all.
+   * Unknown sessions report readable so the existing not-found semantics are
+   * untouched and only visibility withholds a record.
+   */
+  canReadSession(sessionId: string, actorAccountId: string | null): boolean {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) return true
+    return evaluateSessionReadAccess(managed, actorAccountId).allowed
   }
 
   /**

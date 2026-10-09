@@ -94,6 +94,7 @@ export { handleKnowledgePropose, parseProposeOps } from './knowledge-propose.ts'
 // Memory recall tools (c1.3)
 export { handleMemorySearch, MEMORY_SEARCH_MAX_LIMIT } from './memory-search.ts';
 export { handleMemoryGet } from './memory-get.ts';
+export { handleMemoryForget, MEMORY_FORGET_MAX_IDS } from './memory-forget.ts';
 // Skills catalog tools (c2.7; read-only over the registered skills runtime)
 export { handleSkillsSearch, SKILLS_SEARCH_MAX_LIMIT } from './skills-search.ts';
 export { handleSkillsRead, SKILLS_READ_MAX_CHARS } from './skills-read.ts';

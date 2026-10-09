@@ -5809,6 +5809,7 @@
   "openui.label": "Interaktive Antwort",
   "openui.loading": "Die interaktive Antwort wird erstellt…",
   "openui.renderError": "Die interaktive Antwort konnte nicht gerendert werden. Der Quellcode steht unten.",
+  "operator.access_denied": "Deine Betreiberrolle erlaubt diese Aktion nicht. Bitte einen Gateway-Administrator, deine Rolle zu aktualisieren.",
   "overlay.code": "Code",
   "overlay.mermaidDiagram": "Mermaid-Diagramm",
   "overlay.nextItem": "Nächstes Element",

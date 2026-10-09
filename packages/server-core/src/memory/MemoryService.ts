@@ -30,6 +30,22 @@ import {
   formatWorkspaceMemoryForPrompt,
 } from '@rox/shared/prompts/system'
 import { isMemoryDocumentInjectable, loadMemoryProvenanceOverrides } from '@rox/shared/memory/document-provenance'
+import {
+  RECALL_CANDIDATE_LIMIT,
+  RECALL_ESCALATION_BUDGET_MS,
+  RECALL_ESCALATION_MAX_CANDIDATES,
+  RECALL_ESCALATION_MAX_PROMPT_CHARS,
+  buildRecallBlock,
+  buildStandingIntentBlock,
+  matchStandingIntents,
+  parseRecallEscalationReply,
+  resolveRecallEscalationDecision,
+  scoreLexicalRecall,
+  selectLaneOneRecall,
+  type RecallLaneMode,
+} from '@rox/shared/memory/context-select'
+import { isMemoryOriginEligibleForAutomaticInjection } from './provenance-gate'
+import { StandingIntentStore } from './StandingIntentStore'
 import { buildTransferredSessionContext } from '@rox/shared/agent/conversation-summary'
 import type { StoredMessage, SessionMemoryMode } from '@rox/core/types'
 import type {
@@ -41,15 +57,20 @@ import type {
   LessonTrigger,
   MemoryConfig,
   MemoryPromptBlocks,
+  MemorySearchHit,
   SkillCandidate,
   WorkspaceMemory,
 } from '@rox/shared/memory/types'
+import type { AuditActor, MemoryForgetResult } from '@rox/shared/memory/types'
 import { dirname } from 'path'
 import { createHash } from 'crypto'
 import { LessonStore, lessonKey } from './LessonStore'
 import { MemoryFileStore } from './MemoryFileStore'
+import { MemoryProposalStore } from './MemoryProposalStore'
 import { SkillPendingQueue } from './SkillPendingQueue'
 import { AuditLog } from './AuditLog'
+import { flushMemoryWrites, type FlushTurnResult } from './flush-turn'
+import { forgetMemoryChunks } from './forget'
 import { search as ftsSearch } from './fts-index'
 import { compactWorkspaceHistory } from './decay'
 import { EpisodicMemory, withTimeout as episodicWithTimeout } from './episodic-memory'
@@ -152,6 +173,20 @@ export interface MemoryServiceDeps {
    * items and receive per-context usage attribution.
    */
   learningService?: LearningServicePorts
+  /**
+   * c1.5 lane-two mode. 'off' never escalates; 'auto' (default) escalates only
+   * on recall intent with no lane-one hit; 'always' escalates whenever
+   * eligible candidates exist.
+   */
+  recallMode?: RecallLaneMode
+  /**
+   * c1.5 lane-two sub-agent: prompt → strict JSON `{"ids":[...]}`. Bounded by
+   * RECALL_ESCALATION_BUDGET_MS. Absent → lane two is unavailable and the
+   * deterministic lane-one result stands (fail-soft, like the distiller seam).
+   */
+  recallAgent?: (prompt: string) => Promise<string>
+  /** c1.6 standing-intent store. Injectable for tests; defaults to the workspace memory dir. */
+  standingIntentStore?: StandingIntentStore
 }
 
 /**
@@ -299,6 +334,15 @@ export class MemoryService {
     return subscribeFn((evt) => {
       try {
         this.recordActivity(evt.sessionId)
+        // c1.8 flush turn: the session boundary is where pending memory writes
+        // are committed durably. Runs even for disabled/incognito sessions —
+        // it only recovers already-approved write intents, it never creates new
+        // memory. Fail-soft: never block the completion handler.
+        try {
+          this.flushTurn()
+        } catch (err) {
+          this.logger.warn(`MemoryService: flush turn failed for ${evt.sessionId}`, err)
+        }
         if (!this.config.enabled) return
         if (this.skipsWrites(evt.sessionId)) return
         if (evt.reason === 'complete') {
@@ -514,8 +558,112 @@ export class MemoryService {
     } catch (err) {
       this.logger.warn('MemoryService: curated bootstrap assembly failed', err)
     }
+    // c1.5: recall lanes + c1.6: standing intents — appended to the SAME
+    // memoryBlocks payload the existing injection path already renders (no
+    // second prompt path). Both are provenance-gated: untrusted chunks never
+    // reach a prompt, and neither lane ever calls a model for lane one.
+    if (query && !owner) await this.assembleRecall(blocks, query)
+    if (!owner) this.assembleStandingIntents(blocks, opts?.query?.trim() ?? '')
     opts?.nativeContext?.assertAuthorized()
     return blocks
+  }
+
+  /**
+   * c1.5: lane one (deterministic lexical trigger, ≥0.65, top 3) and, only
+   * when it is inconclusive, lane two (bounded escalation sub-agent). All
+   * candidates are provenance-eligible chunks from the workspace index — an
+   * untrusted chunk is dropped before scoring, so it can never be recalled.
+   * Fail-soft: any index/sub-agent error just omits the recall block.
+   */
+  private async assembleRecall(blocks: MemoryPromptBlocks, query: string): Promise<void> {
+    try {
+      const hits = this.indexService
+        .search(query, RECALL_CANDIDATE_LIMIT)
+        .hits.filter((hit) => isMemoryOriginEligibleForAutomaticInjection(hit.origin))
+      const laneOne = selectLaneOneRecall(
+        query,
+        hits.map((hit) => ({ item: hit, orderKey: hit.chunkId, text: hit.text })),
+      )
+      if (laneOne.length > 0) {
+        blocks.recallBlock = buildRecallBlock(laneOne.map((m) => ({ text: m.item.snippet, source: `${m.item.path}#L${m.item.startLine}` })))
+        blocks.recall = {
+          lane: 1,
+          refs: laneOne.map((m) => ({ chunkId: m.item.chunkId, path: m.item.path, score: m.score, origin: m.item.origin })),
+        }
+        return
+      }
+      const decision = resolveRecallEscalationDecision({
+        mode: this.deps.recallMode ?? 'auto',
+        message: query,
+        hasStrongLaneOneHit: false,
+        eligibleCandidateCount: Math.min(hits.length, RECALL_ESCALATION_MAX_CANDIDATES),
+      })
+      if (decision !== 'recall' || !this.deps.recallAgent) return
+      const picked = await this.escalateRecall(query, hits, this.deps.recallAgent)
+      if (picked.length > 0) {
+        blocks.recallBlock = buildRecallBlock(picked.map((h) => ({ text: h.snippet, source: `${h.path}#L${h.startLine}` })))
+        blocks.recall = {
+          lane: 2,
+          refs: picked.map((h) => ({ chunkId: h.chunkId, path: h.path, score: scoreLexicalRecall(query, h.text), origin: h.origin })),
+        }
+      }
+    } catch (err) {
+      this.logger.warn('MemoryService: recall lane assembly failed', err)
+    }
+  }
+
+  /**
+   * c1.5 lane two: ask the bounded sub-agent which of the OFFERED (already
+   * provenance-eligible) chunks to recall. The reply is validated against the
+   * offered id set, so the sub-agent cannot surface anything it was not
+   * offered. Budget: RECALL_ESCALATION_BUDGET_MS, at most
+   * RECALL_ESCALATION_MAX_CANDIDATES offered, at most
+   * RECALL_ESCALATION_MAX_RESULTS injected.
+   */
+  private async escalateRecall(query: string, candidates: MemorySearchHit[], agent: (prompt: string) => Promise<string>): Promise<MemorySearchHit[]> {
+    const offered = candidates.slice(0, RECALL_ESCALATION_MAX_CANDIDATES)
+    if (offered.length === 0) return []
+    const listing = offered.map((hit, index) => `${index + 1}. id=${hit.chunkId} :: ${hit.snippet}`).join('\n')
+    const prompt = [
+      'You are a memory recall sub-agent. From the CANDIDATES below, pick only the excerpts that help answer the user MESSAGE.',
+      'Reply with STRICT JSON only: {"ids":["<candidate id>", ...]}. Pick at most 3. If none help, return {"ids":[]}.',
+      '',
+      `MESSAGE: ${query}`,
+      '',
+      'CANDIDATES:',
+      listing,
+    ].join('\n').slice(0, RECALL_ESCALATION_MAX_PROMPT_CHARS)
+    let raw: string
+    try {
+      raw = await episodicWithTimeout(agent(prompt), RECALL_ESCALATION_BUDGET_MS)
+    } catch (err) {
+      this.logger.warn('MemoryService: recall escalation failed', err)
+      return []
+    }
+    const byId = new Map(offered.map((hit) => [hit.chunkId, hit]))
+    return parseRecallEscalationReply(raw, offered.map((hit) => hit.chunkId))
+      .map((id) => byId.get(id))
+      .filter((hit): hit is MemorySearchHit => hit !== undefined)
+  }
+
+  /**
+   * c1.6: standing intents matched against the current prompt, deduplicated,
+   * injected once per turn and provenance-gated (untrusted intents never
+   * enter a prompt). Time-only reminders are ignored by the matcher — cron
+   * owns scheduling. Matched intents are marked fired so they are not
+   * re-injected on the next turn.
+   */
+  private assembleStandingIntents(blocks: MemoryPromptBlocks, prompt: string): void {
+    if (!prompt) return
+    try {
+      const matched = matchStandingIntents(this.intentStore.listArmed(), prompt)
+      if (matched.length === 0) return
+      this.intentStore.markFired(matched.map((intent) => intent.id))
+      blocks.intentBlock = buildStandingIntentBlock(matched)
+      blocks.intents = matched.map((intent) => intent.id)
+    } catch (err) {
+      this.logger.warn('MemoryService: standing intent matching failed', err)
+    }
   }
 
   /**
@@ -590,9 +738,46 @@ export class MemoryService {
     return (this.indexServiceInstance ??= memoryIndexServiceFor(this.deps.workspaceRoot, this.deps.workspaceId))
   }
 
+  /** c1.6: standing-intent store (workspace memory dir unless injected). */
+  get intentStore(): StandingIntentStore {
+    return (this.deps.standingIntentStore ??= new StandingIntentStore(this.fileStore.intentsPath, { clock: this.clock }))
+  }
+
   private auditLog: AuditLog | null = null
   private get audit(): AuditLog {
     return (this.auditLog ??= new AuditLog('workspace', this.deps.workspaceRoot))
+  }
+
+  private proposalStoreInstance: MemoryProposalStore | null = null
+  private get proposalStore(): MemoryProposalStore {
+    return (this.proposalStoreInstance ??= new MemoryProposalStore(this.fileStore.memoryDir))
+  }
+
+  /**
+   * c1.8 flush turn: commit every pending memory write intent for this
+   * workspace deterministically, idempotently and crash-safely. Safe to call at
+   * any turn/session boundary; already-durable intents are skipped.
+   */
+  flushTurn(now: Date = new Date(this.clock())): FlushTurnResult {
+    return flushMemoryWrites({ store: this.proposalStore, workspaceRoot: this.deps.workspaceRoot, now })
+  }
+
+  /**
+   * c1.8 forget: remove the corpus lines, index chunks and embedding artifacts
+   * for the given chunk ids and append a content-free lineage record. `by` is
+   * the authenticated actor (an agent tool or the UI), never renderer input.
+   */
+  forgetChunks(ids: readonly string[], by: AuditActor, reason?: string): MemoryForgetResult {
+    return forgetMemoryChunks({
+      index: this.indexService,
+      workspaceRoot: this.deps.workspaceRoot,
+      audit: this.audit,
+      ids,
+      by,
+      ...(reason ? { reason } : {}),
+      now: new Date(this.clock()),
+      episodic: this.episodic,
+    })
   }
 
   private defaultLessonStore(scope: LessonScope): LessonStore {
