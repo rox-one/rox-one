@@ -141,3 +141,20 @@ Tailwind compilation confirms generated settings padding, header height, dialog
 radius, and scoped overlay-motion rules, with one typography block and unchanged
 reset count. `git diff --check` passed. Browser/native visual acceptance remains
 open under the limitation documented above.
+
+## 2026-10-09 UI/UX upgrade — token deltas
+
+Program: [docs/plans/2026-10-09-rox-uiux-upgrade.md](../plans/2026-10-09-rox-uiux-upgrade.md). Wave 1 (G8+G9+G10) changed:
+
+| Area | Was | Now |
+| --- | --- | --- |
+| Muted text | foreground 48% mix | 65% light / 56% dark; new `--text-subtle` 72% / 74% |
+| Panel header height | 36 compact / 40 comfortable | 32 / 36 / 48 coarse — equals the tab strip at every density |
+| Chrome material | `--shell-glass-*` inert unless `data-shell-runtime="web"` | `--chrome-plate-*` ladder + `html[data-chrome-material]` derived from the shipped material preference; glass = only blur step, never animated |
+| Focus ring | 1px at 55% opacity, mixed mechanisms | 2px outline `var(--focus)` (3px coarse), per-surface offsets; halo only on overlays |
+| Elevation | popover ring `--border-subtle` light / `--border-strong` dark | one ring (`--elev-ring` = `--border-strong`) in both modes + two-layer depth |
+| State layers | 5 / 9 / 14 / 22% | hover 4/7% · pressed 8/12% · selected 12/18% · selected-strong 18/26% · disabled-fill 4/6% + static marker |
+| Motion names | tokens only | `--motion-disclosure` 180ms, `--motion-overlay` 240ms, `--ease-exit`, `--ease-emphasis`; zeroed by the performance profile |
+| Control floor | 28px mouse floor existed | enforced across rail, session list, menus, toasts, composer, terminal, browser, settings and the compact mobile list (44px coarse) |
+
+Verification on the merged tree (origin/main + bundle + pilots): `lint:ui-tokens` no growth (8060 baselined vs 8227 at program start), i18n parity 10772 keys × 12 locales, curated renderer suite 129/129, `tokens-v2` 33/33, electron typecheck 0 errors. Screenshots (`impl-*`) live in the program workspace; visual baselines refreshed under `tests/visual/playground.spec.ts-snapshots`.
