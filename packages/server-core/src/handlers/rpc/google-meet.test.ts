@@ -80,7 +80,10 @@ describe('meet:* handlers — Developer-Preview gate', () => {
 describe('meet:* handlers — artifact parsing', () => {
   const seen: Array<{ url: string; auth: string | null }> = []
 
-  function fixtureFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  // Parameters come from `typeof fetch` so the fixture cannot drift from the
+  // production seam (`GoogleMeetConfig.fetchImpl`); the cast is only for bun's
+  // extra `preconnect` member, which a plain function cannot declare.
+  const fixtureFetch = ((input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
     const url = String(input)
     seen.push({ url, auth: new Headers(init?.headers).get('Authorization') })
     if (url.includes('/v2/spaces/abc')) {
@@ -145,7 +148,7 @@ describe('meet:* handlers — artifact parsing', () => {
       }))
     }
     return Promise.resolve(jsonResponse({}, 404))
-  }
+  }) as typeof fetch
 
   const config: GoogleMeetConfig = {
     enrollmentAcknowledged: true,
@@ -203,7 +206,7 @@ describe('meet:* handlers — artifact parsing', () => {
       conferenceRecord: 'conferenceRecords/rec-1',
     }) as { ok: boolean; recordings: Array<{ name: string; driveDestination?: { file?: string } }> }
     expect(recordings.ok).toBe(true)
-    expect(recordings.recordings[0]).toEqual({
+    expect(recordings.recordings[0] as unknown as Record<string, unknown>).toEqual({
       name: 'conferenceRecords/rec-1/recordings/r1',
       state: 'FILE_GENERATED',
       driveDestination: { file: 'drive/file-1', exportUri: 'https://drive.google.com/file/d/file-1' },
@@ -214,7 +217,7 @@ describe('meet:* handlers — artifact parsing', () => {
       conferenceRecord: 'conferenceRecords/rec-1',
     }) as { ok: boolean; transcripts: Array<{ name: string; docsDestination?: { document?: string } }> }
     expect(transcripts.ok).toBe(true)
-    expect(transcripts.transcripts[0]).toEqual({
+    expect(transcripts.transcripts[0] as unknown as Record<string, unknown>).toEqual({
       name: 'conferenceRecords/rec-1/transcripts/t1',
       state: 'FILE_GENERATED',
       docsDestination: { document: 'documents/doc-1', exportUri: 'https://docs.google.com/document/d/doc-1' },
@@ -228,7 +231,7 @@ describe('meet:* handlers — artifact parsing', () => {
       conferenceRecord: 'conferenceRecords/rec-1',
     }) as { ok: boolean; smartNotes: Array<{ name: string; docsDestination?: { document?: string } }> }
     expect(result.ok).toBe(true)
-    expect(result.smartNotes[0]).toEqual({
+    expect(result.smartNotes[0] as unknown as Record<string, unknown>).toEqual({
       name: 'conferenceRecords/rec-1/smartNotes/s1',
       state: 'FILE_GENERATED',
       docsDestination: { document: 'documents/note-1' },
