@@ -1,4 +1,8 @@
 import { describe, expect, it, mock } from 'bun:test'
+// NOTE: this file installs a PROCESS-GLOBAL `electron` mock via `mock.module`.
+// It must not share a single `bun test` invocation with another file that mocks
+// `electron` differently (bun caches the first mock across files) — the repo's
+// gate script runs such files in separate groups for this reason.
 import {
   ROX_DESKTOP_BRIDGE_CHANNEL,
   ROX_DESKTOP_BRIDGE_METHODS,

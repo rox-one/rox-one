@@ -198,7 +198,11 @@ export class AppControlServer {
   }
 
   private refuseAndClose(socket: Socket, id: string, code: AppControlRefusalCode, message: string): void {
-    this.write(socket, appControlError(id, code, message), () => socket.destroy())
+    if (socket.destroyed || socket.writableEnded) return
+    // Graceful FIN, not destroy(): destroying immediately after the write can
+    // reset the connection before the peer reads the frame, so the caller sees
+    // a raw EPIPE instead of the typed refusal code it was sent.
+    socket.end(encodeFrame(appControlError(id, code, message)))
   }
 
   private write(socket: Socket, response: AppControlResponse, after?: () => void): void {
