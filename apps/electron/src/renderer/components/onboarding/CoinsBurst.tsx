@@ -42,9 +42,10 @@ export function RoxCoinIcon({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
       <defs>
         <linearGradient id={gradientId} x1="6" y1="2" x2="18" y2="22" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#FFE9A3" />
-          <stop offset="0.5" stopColor="#F5C542" />
-          <stop offset="1" stopColor="#C98A12" />
+          {/* Warm gold from the status scale — light → mid → deep, no raw hex. */}
+          <stop stopColor="color-mix(in oklab, var(--status-warning) 35%, white)" />
+          <stop offset="0.5" stopColor="var(--status-warning)" />
+          <stop offset="1" stopColor="color-mix(in oklab, var(--status-warning) 82%, black)" />
         </linearGradient>
       </defs>
       <circle cx="12" cy="12" r="9.25" fill={`url(#${gradientId})`} stroke="currentColor" strokeOpacity="0.35" />
@@ -125,13 +126,14 @@ export function CoinsBurst({
         aria-label={ariaLabel}
         data-testid="onboarding-coins-static"
         className={cn(
+          // eslint-disable-next-line rox/prefer-primitives -- non-interactive celebration layer (pointer-events-none, role=status); a modal Dialog/Sheet would trap focus and block the app
           'pointer-events-none fixed inset-0 z-toast flex items-center justify-center',
           className,
         )}
       >
-        <div className="flex flex-col items-center gap-1 rounded-2xl border border-amber-400/40 bg-background/95 px-4 py-3 shadow-lg">
+        <div className="flex flex-col items-center gap-1 rounded-lg border border-status-warning/40 bg-background/95 px-4 py-3 shadow-modal-small">
           <div className="flex items-center gap-2 text-foreground">
-            <RoxCoinIcon className="size-6 text-amber-500" />
+            <RoxCoinIcon className="size-6 text-status-warning" />
             <span className="text-lg font-semibold tabular-nums">{amount}</span>
             <span className="text-sm font-medium">{CURRENCY_NAME}</span>
           </div>
@@ -155,13 +157,17 @@ export function CoinsBurst({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className={cn('pointer-events-none fixed inset-0 z-toast overflow-hidden', className)}
+          className={cn(
+            // eslint-disable-next-line rox/prefer-primitives -- non-interactive celebration layer (pointer-events-none, role=status); a modal Dialog/Sheet would trap focus and block the app
+            'pointer-events-none fixed inset-0 z-toast overflow-hidden',
+            className,
+          )}
         >
           {Array.from({ length: COINS_BURST_COIN_COUNT }, (_, index) => (
             <motion.span
               key={index}
               aria-hidden="true"
-              className="absolute top-0 text-amber-500"
+              className="absolute top-0 text-status-warning"
               style={{ left: `${((index * 37) % 92) + 4}%` } as CSSProperties}
               initial={{ y: '-12vh', opacity: 0, rotate: 0 }}
               animate={{ y: '112vh', opacity: [0, 1, 1, 0], rotate: 360 * (index % 2 === 0 ? 1 : -1) }}
@@ -182,9 +188,9 @@ export function CoinsBurst({
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 320, damping: 22 }}
           >
-            <div className="flex flex-col items-center gap-1 rounded-2xl border border-amber-400/50 bg-background/95 px-5 py-3 shadow-xl">
+            <div className="flex flex-col items-center gap-1 rounded-lg border border-status-warning/50 bg-background/95 px-5 py-3 shadow-modal-small">
               <div className="flex items-center gap-2 text-foreground">
-                <RoxCoinIcon className="size-6 text-amber-500" />
+                <RoxCoinIcon className="size-6 text-status-warning" />
                 <span className="text-xl font-semibold tabular-nums">{amount}</span>
                 <span className="text-sm font-medium">{CURRENCY_NAME}</span>
               </div>

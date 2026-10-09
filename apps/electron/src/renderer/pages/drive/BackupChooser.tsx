@@ -82,14 +82,14 @@ export function BackupChooser({ workspaceId, api, onClose, onUploaded }: BackupC
   }
 
   return (
-    <section data-testid="drive-backup-chooser" className="rounded-xl border border-border/60 bg-card/60 p-4">
+    <section data-testid="drive-backup-chooser" className="rounded-lg border border-border/60 bg-card/60 p-4">
       <header className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <HardDriveDownload className="h-4 w-4 text-primary" />
+          <HardDriveDownload className="icon-toolbar text-primary" />
           <h2 className="text-sm font-medium">{t('drive.backup.title')}</h2>
         </div>
         <Button variant="ghost" size="sm" onClick={onClose} disabled={phase.kind === 'uploading'}>
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="icon-toolbar" />
           {t('drive.backup.close')}
         </Button>
       </header>
@@ -106,7 +106,7 @@ export function BackupChooser({ workspaceId, api, onClose, onUploaded }: BackupC
                 onClick={() => void pickSource(kind)}
                 className="flex items-center gap-2 rounded-lg border border-border/60 px-3 py-2 text-left text-sm hover:border-primary/50"
               >
-                <FolderLock className="h-4 w-4 text-muted-foreground" />
+                <FolderLock className="icon-toolbar text-muted-foreground" />
                 {t(`drive.backup.source.${kind}`)}
               </button>
             ))}
@@ -116,7 +116,7 @@ export function BackupChooser({ workspaceId, api, onClose, onUploaded }: BackupC
 
       {phase.kind === 'scanning' && (
         <div role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="icon-toolbar animate-spin" />
           {t('drive.backup.scanning')}
         </div>
       )}
@@ -138,7 +138,7 @@ export function BackupChooser({ workspaceId, api, onClose, onUploaded }: BackupC
             </p>
           )}
           {phase.scan.truncated && (
-            <p className="text-xs text-amber-500">{t('drive.backup.truncated')}</p>
+            <p className="text-xs text-status-warning">{t('drive.backup.truncated')}</p>
           )}
           <ul className="max-h-40 space-y-0.5 overflow-y-auto rounded-lg border border-border/60 p-2 text-xs text-muted-foreground">
             {phase.scan.files.slice(0, CONSENT_PREVIEW_COUNT).map(file => (
@@ -178,7 +178,7 @@ export function BackupChooser({ workspaceId, api, onClose, onUploaded }: BackupC
         <div className="space-y-2" data-testid="drive-backup-done">
           <p className="text-sm">{t('drive.backup.done', { done: phase.scan.files.length - phase.failed.length, total: phase.scan.files.length })}</p>
           {phase.failed.length > 0 && (
-            <ul className="space-y-0.5 text-xs text-amber-500">
+            <ul className="space-y-0.5 text-xs text-status-warning">
               {phase.failed.map(file => (
                 <li key={file.name}>{t('drive.backup.failedFile', { name: file.name, code: file.code ?? '—' })}</li>
               ))}

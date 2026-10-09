@@ -79,7 +79,7 @@ function PermissionStatusChip({ rowKey, status }: { rowKey: PermissionKey; statu
       data-status={status}
       className={cn('inline-flex items-center gap-1 text-xs', STATUS_CLASS[status])}
     >
-      <Icon className="size-3.5" aria-hidden="true" />
+      <Icon className="icon-caption" aria-hidden="true" />
       {t(`onboarding.permissions.status.${status}`)}
     </span>
   )
@@ -203,7 +203,7 @@ export function ProfilePermissionsColumn({
                     onClick={() => { void openSettings(key) }}
                     className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-2 hover:underline"
                   >
-                    <Settings2 className="size-3" aria-hidden="true" />
+                    <Settings2 className="icon-status" aria-hidden="true" />
                     {t('onboarding.permissions.open')}
                   </button>
                 ) : null}
@@ -214,7 +214,7 @@ export function ProfilePermissionsColumn({
 
               {openFailure?.key === key ? (
                 <p data-testid={`permission-open-failure-${key}`} className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                  <AlertTriangle className="size-3" aria-hidden="true" />
+                  <AlertTriangle className="icon-status" aria-hidden="true" />
                   {t(`onboarding.permissions.openHint.${openFailure.hint}`)}
                 </p>
               ) : null}
@@ -224,7 +224,7 @@ export function ProfilePermissionsColumn({
                   data-testid="permission-installed-apps-notice"
                   className="mt-1.5 flex items-center gap-2 rounded border border-border bg-muted/40 px-2 py-1.5"
                 >
-                  <AlertTriangle className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  <AlertTriangle className="icon-caption shrink-0 text-muted-foreground" aria-hidden="true" />
                   <span className="text-xs text-muted-foreground">
                     {t('onboarding.permissions.installedApps.blocked')}
                   </span>

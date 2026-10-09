@@ -23,8 +23,8 @@ export interface CalendarConnectorChipsProps {
 
 function chipClasses(disabled: boolean, interactive: boolean): string {
   return cn(
-    'rounded-full bg-foreground/[0.05] px-2 py-0.5',
-    disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-foreground/10',
+    'rounded-full bg-surface-hover px-2 py-0.5',
+    disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-surface-pressed',
     interactive && 'underline underline-offset-2',
   )
 }

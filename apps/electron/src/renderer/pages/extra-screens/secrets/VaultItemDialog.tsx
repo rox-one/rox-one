@@ -99,10 +99,11 @@ export function VaultItemDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
-      <div className="max-h-full w-full max-w-[560px] overflow-y-auto rounded-[var(--radius-card)] bg-background p-4 shadow-xl">
+    // eslint-disable-next-line rox/prefer-primitives -- hand-rolled editor keeps its own non-trapping layout; Dialog/Sheet would add a focus trap plus ESC/backdrop-close behaviour this form does not have
+    <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
+      <div className="max-h-full w-full max-w-[560px] overflow-y-auto rounded-[var(--radius-card)] bg-background p-4 shadow-modal-small">
         <div className="flex items-center gap-2">
-          <h2 className="flex-1 text-[16px] font-bold">
+          <h2 className="flex-1 text-title-sm font-bold">
             {editing ? t('extraScreens.secrets.vault.dialogEditTitle') : t('extraScreens.secrets.vault.dialogCreateTitle')}
           </h2>
           <ScreenButton variant="ghost" onClick={onClose}>{t('common.cancel')}</ScreenButton>

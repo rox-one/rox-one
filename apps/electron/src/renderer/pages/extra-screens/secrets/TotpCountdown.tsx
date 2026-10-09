@@ -26,10 +26,10 @@ export function TotpCountdown({ code, onExpire }: { code: KeeperTotpCode; onExpi
 
   return (
     <div className="flex items-center gap-3">
-      <span className="font-mono text-[20px] tabular-nums tracking-[0.12em] text-foreground">{formatTotpCode(code.code)}</span>
+      <span className="font-mono text-title tabular-nums tracking-widest text-foreground">{formatTotpCode(code.code)}</span>
       <span className="relative flex h-7 w-7 shrink-0 items-center justify-center">
         <svg viewBox="0 0 36 36" className="h-7 w-7 -rotate-90">
-          <circle cx="18" cy="18" r="15" fill="none" strokeWidth="3" className="stroke-foreground/10" />
+          <circle cx="18" cy="18" r="15" fill="none" strokeWidth="3" className="stroke-border-subtle" />
           <circle
             cx="18"
             cy="18"
@@ -41,7 +41,7 @@ export function TotpCountdown({ code, onExpire }: { code: KeeperTotpCode; onExpi
             className="stroke-accent"
           />
         </svg>
-        <span className="absolute text-[10px] tabular-nums text-muted-foreground">{left}</span>
+        <span className="absolute text-caption tabular-nums text-muted-foreground">{left}</span>
       </span>
     </div>
   )

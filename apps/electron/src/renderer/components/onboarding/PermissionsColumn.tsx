@@ -47,9 +47,9 @@ export interface PermissionsColumnProps {
 }
 
 const STATUS_CHIP: Record<GrantStatus, string> = {
-  granted: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600',
+  granted: 'border-status-success/30 bg-status-success/10 text-success',
   denied: 'border-destructive/30 bg-destructive/10 text-destructive',
-  'not-determined': 'border-border/60 bg-foreground/5 text-muted-foreground',
+  'not-determined': 'border-border/60 bg-surface-hover text-muted-foreground',
 }
 
 const STATUS_KEY: Record<GrantStatus, string> = {
@@ -102,7 +102,7 @@ export function PermissionsColumn({
       className={cn('flex flex-col gap-3 text-left', className)}
     >
       <div className="flex items-center gap-2">
-        <ShieldCheck className="size-4 shrink-0 text-emerald-500" aria-hidden="true" />
+        <ShieldCheck className="icon-toolbar shrink-0 text-success" aria-hidden="true" />
         <h3 className="text-sm font-semibold">{t('onboarding.permissions.title')}</h3>
       </div>
       <p className="text-xs leading-relaxed text-muted-foreground">
@@ -128,7 +128,7 @@ export function PermissionsColumn({
               onClick={decision.blocked ? () => notifyBlocked(entry.id) : undefined}
               className={cn(
                 'flex items-start gap-3 px-3 py-3 transition-colors motion-reduce:transition-none',
-                decision.blocked && 'cursor-not-allowed bg-foreground/[0.02] opacity-60',
+                decision.blocked && 'cursor-not-allowed bg-foreground-2 opacity-60',
               )}
             >
               <Switch
@@ -145,7 +145,7 @@ export function PermissionsColumn({
                   <Badge
                     variant="outline"
                     data-testid={`permission-status-${entry.id}`}
-                    className={cn('px-1.5 py-0 text-[10px] font-medium', STATUS_CHIP[status])}
+                    className={cn('px-1.5 py-0 text-caption font-medium', STATUS_CHIP[status])}
                   >
                     {t(`onboarding.permissions.status.${STATUS_KEY[status]}`)}
                   </Badge>
@@ -158,7 +158,7 @@ export function PermissionsColumn({
                     type="button"
                     size="sm"
                     variant="outline"
-                    className="mt-2 h-6 rounded-full px-2.5 text-[11px]"
+                    className="mt-2 h-6 rounded-full px-2.5 text-caption"
                     data-testid={`permission-grant-${entry.id}`}
                     onClick={() => onRequestGrant?.(entry.id)}
                   >

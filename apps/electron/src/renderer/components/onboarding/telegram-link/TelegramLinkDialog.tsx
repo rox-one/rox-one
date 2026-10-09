@@ -128,7 +128,7 @@ export function TelegramLinkDialog({
           <div className="space-y-3 text-sm text-muted-foreground">
             <p>{t('onboarding.telegram.idleHint')}</p>
             <Button data-testid="telegram-link-open" disabled={busy} onClick={() => void run(start)}>
-              {busy ? <Loader2 className="size-4 animate-spin" /> : <ExternalLink className="size-4" />}
+              {busy ? <Loader2 className="icon-toolbar animate-spin" /> : <ExternalLink className="icon-toolbar" />}
               {t('onboarding.telegram.open')}
             </Button>
           </div>
@@ -147,7 +147,7 @@ export function TelegramLinkDialog({
               disabled={busy}
               onClick={() => void run(start)}
             >
-              <ExternalLink className="size-4" />
+              <ExternalLink className="icon-toolbar" />
               {t('onboarding.telegram.reopen')}
             </Button>
           </div>
@@ -185,7 +185,7 @@ export function TelegramLinkDialog({
               disabled={busy || code.length !== CODE_LENGTH}
               onClick={() => void run(() => submitCode(code))}
             >
-              {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+              {busy ? <Loader2 className="icon-toolbar animate-spin" /> : null}
               {t('onboarding.telegram.verify')}
             </Button>
             {error ? (
@@ -200,9 +200,9 @@ export function TelegramLinkDialog({
 
         {status === 'confirmed' && (
           <div className="flex items-start gap-3 text-sm" data-testid="telegram-link-confirmed">
-            <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-500" aria-hidden="true" />
+            <CheckCircle2 className="mt-0.5 icon-rail shrink-0 text-success" aria-hidden="true" />
             <div className="space-y-1">
-              <p className="font-medium text-emerald-600 dark:text-emerald-400">
+              <p className="font-medium text-success">
                 {t('onboarding.telegram.confirmedTitle')}
               </p>
               <p className="text-muted-foreground">{t('onboarding.telegram.confirmedHint')}</p>
@@ -215,7 +215,7 @@ export function TelegramLinkDialog({
             <p className="font-medium text-foreground">{t('onboarding.telegram.expiredTitle')}</p>
             <p className="text-muted-foreground">{t('onboarding.telegram.expiredHint')}</p>
             <Button data-testid="telegram-link-restart" disabled={busy} onClick={() => void run(start)}>
-              {busy ? <Loader2 className="size-4 animate-spin" /> : <ExternalLink className="size-4" />}
+              {busy ? <Loader2 className="icon-toolbar animate-spin" /> : <ExternalLink className="icon-toolbar" />}
               {t('onboarding.telegram.restart')}
             </Button>
           </div>

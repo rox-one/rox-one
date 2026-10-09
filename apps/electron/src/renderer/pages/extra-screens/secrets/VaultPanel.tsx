@@ -80,14 +80,14 @@ export function VaultPanel({
         <div className="min-h-0 flex-1 overflow-y-auto">
           {visible.map((item) => (
             <ListRow key={item.id} active={item.id === selectedId} onClick={() => onSelect(item)}>
-              <span className="mt-0.5 w-4 shrink-0 text-center text-[13px]" aria-hidden>
+              <span className="mt-0.5 w-4 shrink-0 text-center text-body" aria-hidden>
                 {item.favorite ? '★' : ''}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-medium">{item.title}</span>
-                {item.username && <span className="block truncate text-[12px] text-muted-foreground">{item.username}</span>}
+                <span className="block truncate text-body font-medium">{item.title}</span>
+                {item.username && <span className="block truncate text-small text-muted-foreground">{item.username}</span>}
               </span>
-              {item.totp && <span className="mt-0.5 shrink-0 font-mono text-[12px] text-accent">{item.totp.code}</span>}
+              {item.totp && <span className="mt-0.5 shrink-0 font-mono text-small text-accent">{item.totp.code}</span>}
             </ListRow>
           ))}
         </div>
@@ -97,7 +97,7 @@ export function VaultPanel({
         type="button"
         onClick={onImportBrowser}
         disabled={importing}
-        className="shrink-0 self-start text-[12px] text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
+        className="shrink-0 self-start text-small text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
       >
         {importing ? t('extraScreens.secrets.vault.importing') : t('extraScreens.secrets.vault.importBrowser')}
       </button>

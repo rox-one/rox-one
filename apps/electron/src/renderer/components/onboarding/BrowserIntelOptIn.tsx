@@ -98,7 +98,7 @@ export function BrowserIntelOptIn({
   return (
     <div className={cn('space-y-2 text-left', className)} data-testid="browser-intel-opt-in">
       <label className={cn('flex cursor-pointer items-center gap-2.5 rounded-[var(--radius-control)] border px-3 py-2.5 text-sm transition-colors motion-reduce:transition-none',
-        checked ? 'border-accent/25 bg-accent/5' : 'border-border/60 bg-background/30 hover:bg-foreground/5')}>
+        checked ? 'border-accent/25 bg-accent/5' : 'border-border/60 bg-background/30 hover:bg-surface-hover')}>
         <input
           type="checkbox"
           className="accent-accent"
@@ -106,7 +106,7 @@ export function BrowserIntelOptIn({
           disabled={saving}
           onChange={() => void apply(!checked)}
         />
-        <ShieldCheck className="size-4 shrink-0 text-emerald-500" aria-hidden="true" />
+        <ShieldCheck className="icon-toolbar shrink-0 text-success" aria-hidden="true" />
         <span>{t('onboarding.browserIntel.enable')}</span>
       </label>
       <p className="px-1 text-xs leading-relaxed text-muted-foreground">{t('onboarding.browserIntel.description')}</p>

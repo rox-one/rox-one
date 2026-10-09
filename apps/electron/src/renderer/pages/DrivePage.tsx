@@ -33,7 +33,7 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
   const [quota, setQuota] = useState<DriveQuota | null>(null)
   const [listing, setListing] = useState<DriveListing | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [errorText, setErrorText] = useState<string | null>(null)
   const [notice, setNotice] = useState<Notice | null>(null)
   const [backupOpen, setBackupOpen] = useState(false)
   const [uploads, setUploads] = useState<DriveFileUploadProgress[]>([])
@@ -45,11 +45,11 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
   const refresh = useCallback(async () => {
     if (!workspaceId) {
       setLoading(false)
-      setError(t('drive.errors.noWorkspace'))
+      setErrorText(t('drive.errors.noWorkspace'))
       return
     }
     setLoading(true)
-    setError(null)
+    setErrorText(null)
     try {
       const [nextQuota, nextListing] = await Promise.all([
         window.electronAPI.driveQuota(workspaceId),
@@ -58,7 +58,7 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
       setQuota(nextQuota)
       setListing(nextListing)
     } catch (cause) {
-      setError(toErrorMessage(cause))
+      setErrorText(toErrorMessage(cause))
       setListing(null)
     } finally {
       setLoading(false)
@@ -78,7 +78,7 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
       await window.electronAPI.driveDelete(workspaceId, fileId)
       await refresh()
     } catch (cause) {
-      setError(toErrorMessage(cause))
+      setErrorText(toErrorMessage(cause))
     }
   }
 
@@ -91,7 +91,7 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
       setFolderName('')
       await refresh()
     } catch (cause) {
-      setError(toErrorMessage(cause))
+      setErrorText(toErrorMessage(cause))
     }
   }
 
@@ -115,7 +115,7 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
         setUploads(previous => previous.filter(entry => entry.name !== file.name))
       } catch (cause) {
         setUploads(previous => previous.filter(entry => entry.name !== file.name))
-        setError(`${file.name}: ${toErrorMessage(cause)}${isRetryableUploadError(cause) ? ` (${t('drive.errors.retryable')})` : ''}`)
+        setErrorText(`${file.name}: ${toErrorMessage(cause)}${isRetryableUploadError(cause) ? ` (${t('drive.errors.retryable')})` : ''}`)
       }
     }
     await refresh()
@@ -132,8 +132,8 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
       />
 
       {notice && (
-        <div role="status" data-testid={`drive-notice-${notice}`} data-available={String(EXTERNAL_IMPORT_NOTICES[notice].available)} className="flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
-          <Info className="mt-0.5 h-4 w-4 text-amber-500" />
+        <div role="status" data-testid={`drive-notice-${notice}`} data-available={String(EXTERNAL_IMPORT_NOTICES[notice].available)} className="flex items-start gap-2 rounded-lg border border-status-warning/40 bg-status-warning/5 p-3 text-sm">
+          <Info className="mt-0.5 icon-toolbar text-status-warning" />
           <div className="space-y-0.5">
             <p className="font-medium">{t(EXTERNAL_IMPORT_NOTICES[notice].titleKey)}</p>
             <p className="text-xs text-muted-foreground">{t(EXTERNAL_IMPORT_NOTICES[notice].bodyKey)}</p>
@@ -151,9 +151,9 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
         />
       )}
 
-      {error && (
-        <div role="alert" data-testid="drive-error" className="rounded-lg border border-red-500/40 bg-red-500/5 px-3 py-2 text-xs text-red-500">
-          {error}
+      {errorText && (
+        <div role="alert" data-testid="drive-error" className="rounded-lg border border-status-danger/40 bg-status-danger/5 px-3 py-2 text-xs text-status-danger">
+          {errorText}
         </div>
       )}
 

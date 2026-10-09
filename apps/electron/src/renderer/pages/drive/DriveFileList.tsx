@@ -39,7 +39,7 @@ export function DriveFileList({
 }: DriveFileListProps) {
   const { t } = useTranslation()
   return (
-    <section data-testid="drive-file-list" className="flex min-h-0 flex-1 flex-col rounded-xl border border-border/60 bg-card/60">
+    <section data-testid="drive-file-list" className="flex min-h-0 flex-1 flex-col rounded-lg border border-border/60 bg-card/60">
       <header className="flex flex-wrap items-center gap-2 border-b border-border/50 px-3 py-2">
         <nav aria-label={t('drive.list.breadcrumb')} className="flex min-w-0 flex-1 items-center gap-1 text-xs text-muted-foreground">
           {breadcrumb.map((crumb, index) => (
@@ -57,7 +57,7 @@ export function DriveFileList({
         </nav>
         <Button variant="ghost" size="sm" onClick={onCreateFolder}>{t('drive.list.newFolder')}</Button>
         <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border/60 px-2 py-1 text-xs hover:border-primary/50">
-          <HardDriveUpload className="h-3.5 w-3.5" />
+          <HardDriveUpload className="icon-caption" />
           {t('drive.list.upload')}
           <input
             type="file"
@@ -76,7 +76,7 @@ export function DriveFileList({
         <ul className="space-y-1 border-b border-border/50 px-3 py-2" data-testid="drive-active-uploads">
           {activeUploads.map(upload => (
             <li key={upload.name} className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <Loader2 className="icon-status animate-spin" />
               <span className="truncate">{upload.name}</span>
               <span className="ml-auto tabular-nums">{formatBytes(upload.doneBytes)} / {formatBytes(upload.totalBytes)}</span>
             </li>
@@ -87,7 +87,7 @@ export function DriveFileList({
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
         {loading ? (
           <p role="status" className="flex items-center gap-2 p-3 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />{t('common.loading')}
+            <Loader2 className="icon-toolbar animate-spin" />{t('common.loading')}
           </p>
         ) : !listing || (listing.folders.length === 0 && listing.files.length === 0) ? (
           <p className="p-3 text-sm text-muted-foreground" data-testid="drive-empty">{t('drive.list.empty')}</p>
@@ -101,16 +101,16 @@ export function DriveFileList({
                   onClick={() => onOpenFolder(folder.id)}
                   className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted/60"
                 >
-                  <Folder className="h-4 w-4 text-primary/80" />
+                  <Folder className="icon-toolbar text-primary/80" />
                   <span className="truncate">{folder.name}</span>
                 </button>
               </li>
             ))}
             {listing.files.map(file => (
               <li key={file.id} data-testid={`drive-file-${file.id}`} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/60">
-                <FileIcon className="h-4 w-4 text-muted-foreground" />
+                <FileIcon className="icon-toolbar text-muted-foreground" />
                 <span className="truncate">{file.name}</span>
-                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{t(SOURCE_LABEL_KEY[file.source])}</span>
+                <span className="rounded bg-muted px-1.5 py-0.5 text-caption text-muted-foreground">{t(SOURCE_LABEL_KEY[file.source])}</span>
                 <span className="ml-auto tabular-nums text-xs text-muted-foreground">{formatBytes(file.size)}</span>
                 <Button
                   variant="ghost"
@@ -118,7 +118,7 @@ export function DriveFileList({
                   aria-label={t('drive.list.delete')}
                   onClick={() => onDeleteFile(file.id)}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="icon-caption" />
                 </Button>
               </li>
             ))}

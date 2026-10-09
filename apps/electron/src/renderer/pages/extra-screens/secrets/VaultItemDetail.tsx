@@ -3,6 +3,7 @@
  * (the parent clears it after 30 s); copying re-fetches the value one-shot.
  */
 import { useTranslation } from 'react-i18next'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import type { KeeperItemView } from '../../../../shared/types'
 import { Card, Chip, ScreenButton, SectionLabel } from '../ui'
 import { isExpired } from './vault-model'
@@ -12,7 +13,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   return (
     <div className="grid grid-cols-[120px_1fr] items-start gap-2 py-1.5">
       <span className="pt-0.5 text-small text-muted-foreground">{label}</span>
-      <span className="min-w-0 break-words text-[13px]">{children}</span>
+      <span className="min-w-0 break-words text-body">{children}</span>
     </div>
   )
 }
@@ -48,10 +49,17 @@ export function VaultItemDetail({
   return (
     <div className="min-w-0 max-w-[720px]">
       <div className="flex items-start gap-2">
-        <h2 className="min-w-0 flex-1 break-words text-[17px] font-bold">{item.title}</h2>
-        <ScreenButton variant="ghost" onClick={onToggleFavorite} title={t('extraScreens.secrets.vault.favorite')}>
-          {item.favorite ? '★' : '☆'}
-        </ScreenButton>
+        <h2 className="min-w-0 flex-1 break-words text-title-sm font-bold">{item.title}</h2>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">
+              <ScreenButton variant="ghost" onClick={onToggleFavorite} aria-label={t('extraScreens.secrets.vault.favorite')}>
+                {item.favorite ? '★' : '☆'}
+              </ScreenButton>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>{t('extraScreens.secrets.vault.favorite')}</TooltipContent>
+        </Tooltip>
         <ScreenButton onClick={onEdit}>{t('extraScreens.secrets.vault.edit')}</ScreenButton>
         <ScreenButton variant="danger" onClick={onDelete}>{t('extraScreens.secrets.vault.delete')}</ScreenButton>
       </div>

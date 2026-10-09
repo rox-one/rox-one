@@ -17,6 +17,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronsRight, CornerDownLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { isMac, isWindows } from '@/lib/platform'
 import { Button } from '@/components/ui/button'
 import { CoinsBurst } from './CoinsBurst'
 import { InterestBubbles } from './InterestBubbles'
@@ -88,11 +89,12 @@ export interface QuestionnaireStepProps {
 }
 
 function detectPlatform(): PermissionPlatform {
-  if (typeof navigator === 'undefined') return 'other'
-  const platform = navigator.platform?.toLowerCase() ?? ''
-  const ua = navigator.userAgent?.toLowerCase() ?? ''
-  if (platform.includes('win') || ua.includes('windows')) return 'win'
-  if (platform.includes('mac') || ua.includes('mac os')) return 'mac'
+  if (isWindows) return 'win'
+  if (isMac) return 'mac'
+  // User-agent fallback for environments where navigator.platform is absent.
+  const ua = typeof navigator === 'undefined' ? '' : navigator.userAgent?.toLowerCase() ?? ''
+  if (ua.includes('windows')) return 'win'
+  if (ua.includes('mac os')) return 'mac'
   return 'other'
 }
 
@@ -294,7 +296,7 @@ export function QuestionnaireStep({
           className="gap-2"
           onClick={handleSkip}
         >
-          <ChevronsRight className="size-4" aria-hidden="true" />
+          <ChevronsRight className="icon-toolbar" aria-hidden="true" />
           {t('onboarding.questionnaire.skip')}
         </Button>
         <Button
@@ -305,7 +307,7 @@ export function QuestionnaireStep({
           disabled={!complete}
           onClick={handleContinue}
         >
-          <CornerDownLeft className="size-4" aria-hidden="true" />
+          <CornerDownLeft className="icon-toolbar" aria-hidden="true" />
           {t('onboarding.questionnaire.continue')}
         </Button>
       </div>

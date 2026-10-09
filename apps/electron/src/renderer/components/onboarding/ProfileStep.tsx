@@ -193,9 +193,9 @@ export function ProfileStep({
                 data-testid="profile-suggest"
                 disabled={suggestLoading}
                 onClick={() => void handleSuggest()}
-                className="group relative overflow-hidden rounded-full border-transparent bg-gradient-to-r from-rose-400/40 via-amber-300/40 to-sky-400/40 bg-[length:200%_100%] bg-left text-foreground shadow-sm transition-[background-position] duration-500 hover:bg-right"
+                className="group relative overflow-hidden rounded-full border-transparent bg-gradient-to-r from-status-danger/40 via-status-warning/40 to-accent/40 bg-[length:200%_100%] bg-left text-foreground shadow-minimal transition-[background-position] duration-500 hover:bg-right"
               >
-                <Sparkles className="size-4" aria-hidden="true" />
+                <Sparkles className="icon-toolbar" aria-hidden="true" />
                 {suggestLoading ? t('onboarding.profile.suggesting') : t('onboarding.profile.suggest')}
               </Button>
             </div>
@@ -262,7 +262,7 @@ export function ProfileStep({
           data-testid="profile-skip"
           onClick={onSkip}
         >
-          <ChevronsRight className="size-4" aria-hidden="true" />
+          <ChevronsRight className="icon-toolbar" aria-hidden="true" />
           {t('onboarding.profile.skip')}
         </Button>
         <Button
@@ -271,7 +271,7 @@ export function ProfileStep({
           disabled={!canContinue}
           onClick={onContinue}
         >
-          <CornerDownLeft className="size-4" aria-hidden="true" />
+          <CornerDownLeft className="icon-toolbar" aria-hidden="true" />
           {t('onboarding.profile.continue')}
         </Button>
       </div>

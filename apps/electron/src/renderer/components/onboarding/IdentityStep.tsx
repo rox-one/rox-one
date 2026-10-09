@@ -101,8 +101,8 @@ export function IdentityCoinBadge({ gold, label }: { gold: boolean; label: strin
       data-state={gold ? 'gold' : 'grey'}
       title={label}
       className={cn(
-        'inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tabular-nums',
-        gold ? 'text-amber-500' : 'text-muted-foreground/50',
+        'inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium tabular-nums',
+        gold ? 'text-status-warning' : 'text-muted-foreground/50',
       )}
     >
       <RoxCoinIcon className="size-3.5" />
@@ -116,7 +116,7 @@ function usernameHint(status: HandleCheckStatus, t: (key: string) => string) {
     case 'checking':
       return <p className="text-xs text-muted-foreground">{t('onboarding.identity.checking')}</p>
     case 'available':
-      return <p className="text-xs text-emerald-600 dark:text-emerald-400">{t('onboarding.identity.available')}</p>
+      return <p className="text-xs text-success">{t('onboarding.identity.available')}</p>
     case 'taken':
       return <p className="text-xs text-destructive">{t('onboarding.identity.taken')}</p>
     case 'reserved':
@@ -299,7 +299,7 @@ export function IdentityStep({
               maxLength={ONBOARDING_USERNAME_MAX}
               aria-required
               aria-invalid={usernameStatus === 'invalid' || usernameStatus === 'taken' || usernameStatus === 'reserved'}
-              className="h-10 rounded-full border-foreground/[0.08] bg-background/40 px-4 shadow-none focus-visible:border-foreground/20 focus-visible:ring-0"
+              className="h-10 rounded-full border-border-subtle bg-background/40 px-4 shadow-none focus-visible:border-border-strong focus-visible:ring-0"
             />
             {usernameHint(usernameStatus, t)}
           </div>
@@ -323,7 +323,7 @@ export function IdentityStep({
               placeholder={organizationPlaceholder}
               maxLength={ONBOARDING_ORGANIZATION_MAX}
               aria-invalid={organizationInvalid}
-              className="h-10 rounded-full border-foreground/[0.08] bg-background/40 px-4 shadow-none focus-visible:border-foreground/20 focus-visible:ring-0"
+              className="h-10 rounded-full border-border-subtle bg-background/40 px-4 shadow-none focus-visible:border-border-strong focus-visible:ring-0"
             />
             {organizationInvalid ? (
               <p className="text-xs text-destructive">{t('onboarding.identity.organizationInvalid')}</p>
@@ -333,7 +333,7 @@ export function IdentityStep({
           {addresses ? (
             <div
               data-testid="identity-reserved-addresses"
-              className="space-y-1 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-emerald-600 dark:text-emerald-400"
+              className="space-y-1 rounded-lg border border-status-success/30 bg-status-success/5 p-3 text-xs text-success"
             >
               <p>{t('onboarding.identity.reservedUsername')}{' '}<strong className="font-semibold">{addresses.handle}</strong></p>
               <p>{t('onboarding.identity.reservedOrganization')}{' '}<strong className="font-semibold">{addresses.organization}</strong></p>
@@ -389,7 +389,7 @@ export function IdentityStep({
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
         </div>
 
-        <aside data-testid="identity-rewards" className="space-y-2 self-start rounded-xl border border-border/60 bg-background/30 p-3">
+        <aside data-testid="identity-rewards" className="space-y-2 self-start rounded-lg border border-border/60 bg-background/30 p-3">
           <h3 className="text-sm font-semibold">{t('onboarding.identity.rewards.title')}</h3>
           <ul className="space-y-2">
             {rewardRows.map((row) => (

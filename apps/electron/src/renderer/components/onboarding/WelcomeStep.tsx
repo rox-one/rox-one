@@ -70,8 +70,8 @@ function CoinBadge({ gold, label }: { gold: boolean; label: string }) {
       data-state={gold ? "gold" : "grey"}
       title={label}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tabular-nums",
-        gold ? "text-amber-500" : "text-muted-foreground/50",
+        "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium tabular-nums",
+        gold ? "text-status-warning" : "text-muted-foreground/50",
       )}
     >
       <RoxCoinIcon className="size-3.5" />
@@ -246,7 +246,7 @@ export function WelcomeStep({
       case "checking":
         return <p className="text-xs text-muted-foreground">{t("onboarding.welcome.usernameChecking")}</p>
       case "available":
-        return <p className="text-xs text-emerald-600 dark:text-emerald-400">{t("onboarding.welcome.usernameAvailable")}</p>
+        return <p className="text-xs text-success">{t("onboarding.welcome.usernameAvailable")}</p>
       case "taken":
         return <p className="text-xs text-destructive">{t("onboarding.welcome.usernameTaken")}</p>
       case "reserved":
@@ -304,7 +304,7 @@ export function WelcomeStep({
               maxLength={ONBOARDING_USERNAME_MAX}
               aria-required
               aria-invalid={usernameStatus === "invalid" || usernameStatus === "taken" || usernameStatus === "reserved"}
-              className="h-10 rounded-full border-foreground/[0.08] bg-background/40 px-4 shadow-none focus-visible:border-foreground/20 focus-visible:ring-0"
+              className="h-10 rounded-full border-border-subtle bg-background/40 px-4 shadow-none focus-visible:border-border-strong focus-visible:ring-0"
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault()
@@ -327,7 +327,7 @@ export function WelcomeStep({
               placeholder={organizationPlaceholder}
               maxLength={ONBOARDING_ORGANIZATION_MAX}
               aria-invalid={organizationInvalid}
-              className="h-10 rounded-full border-foreground/[0.08] bg-background/40 px-4 shadow-none focus-visible:border-foreground/20 focus-visible:ring-0"
+              className="h-10 rounded-full border-border-subtle bg-background/40 px-4 shadow-none focus-visible:border-border-strong focus-visible:ring-0"
             />
             {organizationInvalid && (
               <p className="text-xs text-destructive">{t("onboarding.welcome.organizationInvalid")}</p>
@@ -335,11 +335,11 @@ export function WelcomeStep({
           </div>
 
           {addresses && (
-            <div className="space-y-1 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-emerald-600 dark:text-emerald-400">
+            <div className="space-y-1 rounded-lg border border-status-success/30 bg-status-success/5 p-3 text-xs text-success">
               <p>{t("onboarding.welcome.reservedUsername")}{" "}<strong className="font-semibold">{addresses.handle}</strong></p>
               <p>{t("onboarding.welcome.reservedOrganization")}{" "}<strong className="font-semibold">{addresses.organization}</strong></p>
               <p>{t("onboarding.welcome.reservedEmail")}{" "}<strong className="font-semibold">{addresses.email}</strong></p>
-              <p className="text-[11px] opacity-70">{t("onboarding.welcome.reservedEmailNote")}</p>
+              <p className="text-caption opacity-70">{t("onboarding.welcome.reservedEmailNote")}</p>
             </div>
           )}
 

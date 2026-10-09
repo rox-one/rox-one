@@ -476,12 +476,13 @@ export function useOnboarding({
         break
 
       case 'welcome':
-        // First run: the identity screen follows the name screen.
-        setState(s => ({ ...s, step: 'identity' }))
+        // First run: the welcome screen itself collects the public identity
+        // (nickname, organization, coins); the two-column questionnaire follows.
+        setState(s => ({ ...s, step: 'questionnaire' }))
         break
 
       case 'identity':
-        // The identity screen persists the handle itself; advance to the questionnaire.
+        // Legacy standalone identity screen (kept for pre-existing drafts).
         setState(s => ({ ...s, step: 'questionnaire' }))
         break
 
@@ -544,7 +545,7 @@ export function useOnboarding({
         }
         break
       case 'questionnaire':
-        setState(s => ({ ...s, step: 'identity' }))
+        setState(s => ({ ...s, step: 'welcome' }))
         break
       case 'profile':
         if (initialStep === 'welcome') {

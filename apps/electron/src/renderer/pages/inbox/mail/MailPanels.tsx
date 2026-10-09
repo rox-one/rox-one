@@ -88,7 +88,7 @@ export function MailNavSection({ mail, activeFolderId, onSelectFolder }: {
               {copied ? t('inbox.mail.copied') : t('inbox.mail.copy')}
             </button>
           </div>
-          <div className="pt-0.5 text-[11px] text-text-muted" data-testid="mail-storage">
+          <div className="pt-0.5 text-caption text-text-muted" data-testid="mail-storage">
             {quota ? t('inbox.mail.storage', quota) : t('inbox.mail.storageUnknown')}
           </div>
         </div>

@@ -281,9 +281,9 @@ export function ProfileQuestionnaireColumn({
             />
             <span className="relative inline-flex items-center gap-1.5">
               {suggesting ? (
-                <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+                <Loader2 className="icon-caption animate-spin" aria-hidden="true" />
               ) : (
-                <Sparkles className="size-3.5" aria-hidden="true" />
+                <Sparkles className="icon-caption" aria-hidden="true" />
               )}
               {suggesting
                 ? t('onboarding.profile.suggesting')

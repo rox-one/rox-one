@@ -10,15 +10,15 @@ import { DRIVE_DEFAULT_QUOTA_BYTES, meterFraction, meterLevel, type DriveQuota }
 import { formatBytes } from './format'
 
 const FILL_BY_LEVEL: Record<'ok' | 'warn' | 'critical', string> = {
-  ok: 'bg-emerald-500',
-  warn: 'bg-amber-500',
-  critical: 'bg-red-500',
+  ok: 'bg-status-success',
+  warn: 'bg-status-warning',
+  critical: 'bg-status-danger',
 }
 
 const TEXT_BY_LEVEL: Record<'ok' | 'warn' | 'critical', string> = {
   ok: 'text-muted-foreground',
-  warn: 'text-amber-500',
-  critical: 'text-red-500',
+  warn: 'text-status-warning',
+  critical: 'text-status-danger',
 }
 
 export function DriveQuotaMeter({ quota }: { quota: DriveQuota | null }) {
@@ -33,11 +33,11 @@ export function DriveQuotaMeter({ quota }: { quota: DriveQuota | null }) {
       data-testid="drive-quota-meter"
       data-level={level}
       aria-label={t('drive.quota.label')}
-      className="rounded-xl border border-border/60 bg-card/60 px-4 py-3"
+      className="rounded-lg border border-border/60 bg-card/60 px-4 py-3"
     >
       <div className="flex items-baseline justify-between gap-3">
         <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-semibold tabular-nums">{t('drive.quota.title')}</span>
+          <span className="text-display font-semibold tabular-nums">{t('drive.quota.title')}</span>
           <span className="text-xs text-muted-foreground">{t('drive.quota.total', { total: formatBytes(totalBytes, 0) })}</span>
         </div>
         <div className={`text-xs tabular-nums ${TEXT_BY_LEVEL[level]}`} data-testid="drive-quota-used">
@@ -57,7 +57,7 @@ export function DriveQuotaMeter({ quota }: { quota: DriveQuota | null }) {
           style={{ width: `${Math.max(fraction > 0 ? 2 : 0, fraction * 100)}%` }}
         />
       </div>
-      <div className="mt-1.5 flex justify-between text-[11px] text-muted-foreground">
+      <div className="mt-1.5 flex justify-between text-caption text-muted-foreground">
         <span>{t('drive.quota.free', { free: formatBytes(quota?.freeBytes ?? totalBytes) })}</span>
         {level !== 'ok' && (
           <span className={TEXT_BY_LEVEL[level]} data-testid="drive-quota-warning">
