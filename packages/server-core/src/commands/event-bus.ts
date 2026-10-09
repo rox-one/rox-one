@@ -13,10 +13,15 @@ import {
   TopicLog,
   type DomainEvent,
   type RealtimeEventFrame,
+  type RealtimePublication,
   type TopicReplay,
 } from '@rox/core/events'
 
-export type EventBusListener = (workspaceId: string, frame: RealtimeEventFrame, event: DomainEvent) => void
+/**
+ * `event` is the `domain_event` the frame projects; `null` for module-owned
+ * publications (`publishPublications`) that have no domain_event row.
+ */
+export type EventBusListener = (workspaceId: string, frame: RealtimeEventFrame, event: DomainEvent | null) => void
 
 /** Answers whether a workspace's log must survive an idle sweep (e.g. it has live realtime subscribers). */
 export type EventBusRetainer = (workspaceId: string) => boolean
@@ -103,20 +108,52 @@ export class InProcessEventBus {
         continue
       }
       for (const publication of publications) {
-        const frame = log.append(publication.topic, {
-          type: publication.type,
-          payload: publication.payload ?? {},
+        frames.push(...this.appendPublication(event.workspaceId, log, publication, {
           eventId: event.eventId,
           domainType: event.type,
           at: (this.options.now?.() ?? new Date()).toISOString(),
-        })
-        frames.push(frame)
-        for (const listener of this.listeners) {
-          try { listener(event.workspaceId, frame, event) } catch (error) { this.options.onListenerError?.(error) }
-        }
+          event,
+        }))
       }
     }
     return frames
+  }
+
+  /**
+   * Publish module-owned publications that are not the projection of a
+   * `domain_event` row (W1-09 #1506: the notify module's per-recipient
+   * `user:{id}` frames). Sequencing, replay window, per-delivery ACL and
+   * listener fan-out are identical to `publish`; the frame just carries no
+   * `eventId` / `domainType`. Listeners receive `event: null`.
+   */
+  publishPublications(workspaceId: string, publications: readonly RealtimePublication[]): RealtimeEventFrame[] {
+    if (publications.length === 0) return []
+    const log = this.log(workspaceId)
+    const at = (this.options.now?.() ?? new Date()).toISOString()
+    const frames: RealtimeEventFrame[] = []
+    for (const publication of publications) {
+      frames.push(...this.appendPublication(workspaceId, log, publication, { at, event: null }))
+    }
+    return frames
+  }
+
+  private appendPublication(
+    workspaceId: string,
+    log: TopicLog,
+    publication: RealtimePublication,
+    source: { at: string; eventId?: string; domainType?: string; event: DomainEvent | null },
+  ): RealtimeEventFrame[] {
+    const frame = log.append(publication.topic, {
+      type: publication.type,
+      payload: publication.payload ?? {},
+      ...(source.eventId ? { eventId: source.eventId } : {}),
+      ...(source.domainType ? { domainType: source.domainType } : {}),
+      at: source.at,
+    })
+    for (const listener of this.listeners) {
+      try { listener(workspaceId, frame, source.event) } catch (error) { this.options.onListenerError?.(error) }
+    }
+    return [frame]
   }
 
   private reportProjectorError(error: ProjectorError, event: DomainEvent): void {

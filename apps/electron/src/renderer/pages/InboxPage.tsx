@@ -31,6 +31,7 @@ import {
   type Tone,
 } from '@/components/mode-screen/ModeScreen'
 import {
+  EVERY_KIND,
   filterInbox,
   markDone,
   reopen,
@@ -68,8 +69,14 @@ const KIND_TONE: Record<InboxKind, Tone> = {
   error: 'danger',
   mail: 'info',
   'team-recipient': 'info',
+  // W1-09 (#1506) — activity surfaces (only rendered while their flag is on).
+  review: 'warning',
+  mention: 'accent',
+  assignment: 'info',
+  notification: 'muted',
 }
 
+/** Kinds the pre-W1-09 screens offer; activity surfaces are appended only while enabled. */
 const KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'reply', 'error', 'team-recipient']
 const SWITCH_CLASS = 'relative h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-foreground/20 transition-colors checked:bg-accent before:absolute before:left-0.5 before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-white before:shadow-xs before:transition-transform checked:before:translate-x-3 motion-reduce:transition-none motion-reduce:before:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-wait disabled:opacity-60'
 
@@ -92,7 +99,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     [teamInboxEnabled, teamInboxConnected, trustedViewer, teamRoster.selfUserId, teamRoster.members, teamState],
   )
   const teamActorKey = trustedViewer && teamRoster.selfUserId ? JSON.stringify(['native', teamRoster.identityIssuer, teamRoster.selfUserId]) : null
-  const { items, state, setState, counts, now, loaded, loading, errors, staleSources, reload, workspaceId, shell, sessions, actorContext, actorContextRef: contextRef } = useInboxItems({ withRemote: true, teamInbox, teamActorKey })
+  const { items, state, setState, counts, activityKinds, now, loaded, loading, errors, staleSources, reload, workspaceId, shell, sessions, actorContext, actorContextRef: contextRef } = useInboxItems({ withRemote: true, teamInbox, teamActorKey })
   const [preferences, setPreferences] = useAtom(inboxPreferencesAtom)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<InboxPageFilter>('all')
@@ -179,7 +186,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     snoozed: countFor('snoozed'),
     done: countFor('done'),
     blocking: filterInbox(allItems, state, 'all', now).filter(matchesQuery).filter((item) => item.blocking).length,
-    byKind: Object.fromEntries(KINDS.concat('mail').map((kind) => [kind, countFor({ kind })])) as typeof counts.byKind,
+    byKind: Object.fromEntries([...EVERY_KIND, ...activityKinds].map((kind) => [kind, countFor({ kind })])) as typeof counts.byKind,
   }
 
   useEffect(() => {
@@ -402,7 +409,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
 
   const navigator = <InboxSidebar filter={filter} counts={filteredCounts} onSelect={setFilter} mail={mail} onSelectFolder={openFolder}
     onOpenMeetings={() => navigate(routes.view.meetings())} onConnectTeam={() => navigate(routes.view.settings('organizations'))}
-    teamNeedsConnection={teamInboxEnabled && !teamInboxConnected} />
+    teamNeedsConnection={teamInboxEnabled && !teamInboxConnected} activityKinds={activityKinds} />
 
   const row = (item: InboxItem) => {
     const sourceKey = item.kind === 'memory' ? 'memory' : item.kind === 'skill' ? 'skills' : item.kind === 'sender' ? 'senders' : null
@@ -787,6 +794,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
               className="min-w-0 flex-1 rounded-lg border border-foreground/10 bg-background px-2 py-1.5 text-foreground">
               {(['all', 'decisions', 'messages', 'snoozed', 'done'] as const).map((view) => <option key={view} value={view}>{t(`inbox.view.${view}`)}</option>)}
               {KINDS.map((kind) => <option key={kind} value={kind}>{kindLabel(kind)}</option>)}
+              {activityKinds.map((kind) => <option key={kind} value={kind}>{kindLabel(kind)}</option>)}
               {mail.folders.length ? mail.folders.map((folder) => <option key={folder.id} value={`mail:${folder.id}`}>{folderLabel(t, folder)}</option>) : <option value="mail:inbox">{t('inbox.kind.mail')}</option>}
             </select>
           </label>

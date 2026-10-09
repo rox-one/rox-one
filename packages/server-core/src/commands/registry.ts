@@ -16,6 +16,7 @@
 
 import { CommandRegistry, registerCommandCatalogue } from '@rox/core/commands'
 import { bindSystemPing } from './ping'
+import { NOTIFY_COMMAND_MODULE } from './notify'
 import { bindDomainSchemas, bindReferenceHandlers } from '../work/reference/module'
 
 /** One owner module's bindings (handlers + schemas) for its catalogue types. */
@@ -44,6 +45,8 @@ export const COMMAND_MODULES: readonly CommandModule[] = Object.freeze([
   SYSTEM_COMMAND_MODULE,
   // W1-06 (#1503)
   DOMAIN_SCHEMA_COMMAND_MODULE,
+  // W1-09 (#1506): notifications.* (binds only while a notify host is installed).
+  NOTIFY_COMMAND_MODULE,
   REFERENCE_COMMAND_MODULE,
 ])
 
