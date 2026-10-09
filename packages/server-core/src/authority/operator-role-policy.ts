@@ -20,7 +20,7 @@ import {
   type OperatorRoleCeiling,
   type OperatorRoleDefinition,
   type OperatorScope,
-} from '@rox/shared/orgs'
+} from '@rox/shared/orgs/types'
 
 /** Every scope an unrestricted (owner) connection holds. */
 export const ALL_OPERATOR_SCOPES: readonly OperatorScope[] = OPERATOR_SCOPES

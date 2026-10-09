@@ -36,7 +36,7 @@ import {
 } from '../observability/rpc-call-counter'
 import type { NativeAuthority, NativePrincipal } from '../authority/native-authority'
 import { isChannelWithinOperatorCeiling } from '../authority/operator-role-policy'
-import type { OperatorRoleCeiling } from '@rox/shared/orgs'
+import type { OperatorRoleCeiling } from '@rox/shared/orgs/types'
 
 // ---------------------------------------------------------------------------
 // Client connection state
