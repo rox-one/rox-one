@@ -1962,7 +1962,9 @@ export class SessionManager implements ISessionManager {
       sessionLog.info(`External metadata change detected for session ${sessionId}`)
 
       // Prevent stale pending writes from reverting externally-updated metadata.
-      sessionPersistenceQueue.cancel(sessionId)
+      // Not cancel(): the session stays alive, so the re-persist below must be
+      // allowed to enqueue.
+      sessionPersistenceQueue.dropPendingWrites(sessionId)
       this.persistSession(managed)
     }
 
@@ -3372,7 +3374,7 @@ export class SessionManager implements ISessionManager {
       this.setMetadataWriteGuard(managed)
       this.persistSession(managed)
       // getSessions is sync — enqueue + fire-and-forget flush (same durability path).
-      void this.flushSession(managed.id)
+      this.flushSession(managed.id).catch(err => sessionLog.warn(`Failed to flush session ${managed.id} after rank backfill:`, err))
     }
   }
 
@@ -4695,7 +4697,7 @@ export class SessionManager implements ISessionManager {
           sessionLog.info(`SDK session ID captured for ${managed.id}: ${sdkSessionId}`)
         }
         this.persistSession(managed)
-        sessionPersistenceQueue.flush(managed.id)
+        sessionPersistenceQueue.flush(managed.id).catch(err => sessionLog.warn(`Failed to flush session ${managed.id} after persist:`, err))
       }
 
       const onSdkSessionIdCleared = () => {
@@ -4703,7 +4705,7 @@ export class SessionManager implements ISessionManager {
         managed.sdkSessionId = undefined
         sessionLog.info(`SDK session ID cleared for ${managed.id} (resume recovery)`)
         this.persistSession(managed)
-        sessionPersistenceQueue.flush(managed.id)
+        sessionPersistenceQueue.flush(managed.id).catch(err => sessionLog.warn(`Failed to flush session ${managed.id} after persist:`, err))
       }
 
       const onBranchForkInvalidated = () => {
@@ -4714,7 +4716,7 @@ export class SessionManager implements ISessionManager {
         managed.branchFromSdkTurnId = undefined
         sessionLog.info(`Branch fork invalidated for ${managed.id}: cleared all fork metadata`)
         this.persistSession(managed)
-        sessionPersistenceQueue.flush(managed.id)
+        sessionPersistenceQueue.flush(managed.id).catch(err => sessionLog.warn(`Failed to flush session ${managed.id} after persist:`, err))
       }
 
       const getRecoveryMessages = () => {
@@ -7257,8 +7259,10 @@ export class SessionManager implements ISessionManager {
     this.clearAdminRememberApprovalsForSession(sessionId)
     this.clearPendingPermissionRequestsForSession(sessionId)
 
-    // Cancel any pending persistence write (session is being deleted, no need to save)
-    sessionPersistenceQueue.cancel(sessionId)
+    // Cancel any pending persistence write (session is being deleted, no need to save).
+    // Must await: an already in-flight write would otherwise finish after
+    // deleteStoredSession below and resurrect the deleted session on disk.
+    await sessionPersistenceQueue.cancel(sessionId)
 
     // Clean up session-scoped tool callbacks to prevent memory accumulation
     unregisterSessionScopedToolCallbacks(sessionId)
@@ -7299,8 +7303,16 @@ export class SessionManager implements ISessionManager {
       automationSystem.removeSessionMetadata(sessionId)
     }
 
-    // Delete from disk too
-    deleteStoredSession(workspaceRootPath, sessionId)
+    // Delete from disk too. Only a successful delete lifts the persistence
+    // seal: the id becomes reusable once its directory is gone, so leaving the
+    // tombstone would make a later session that reuses the id silently fail to
+    // persist. On failure the tombstone stays to keep a late metadata echo from
+    // resurrecting the still-present file.
+    if (deleteStoredSession(workspaceRootPath, sessionId)) {
+      sessionPersistenceQueue.unseal(sessionId)
+    } else {
+      sessionLog.warn(`Failed to delete session ${sessionId} from disk; persistence seal retained`)
+    }
 
     // Notify all windows for this workspace that the session was deleted
     this.sendEvent({ type: 'session_deleted', sessionId }, managed.workspace.id)
@@ -7917,7 +7929,7 @@ export class SessionManager implements ISessionManager {
             sessionLog.info(`Captured SDK session ID via fallback: ${sdkId}`)
             // Also flush here since we're in fallback mode
             this.persistSession(managed)
-            sessionPersistenceQueue.flush(managed.id)
+            sessionPersistenceQueue.flush(managed.id).catch(err => sessionLog.warn(`Failed to flush session ${managed.id} after persist:`, err))
           }
         }
 
