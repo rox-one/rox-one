@@ -40,11 +40,11 @@ export function SessionParticipantsList({ creator, owner, participants = [] }: S
     <div className="flex flex-col gap-3 min-w-[220px]">
       {creator && (
         <section data-participant-role="creator">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+          <div className="text-caption font-medium uppercase tracking-wider text-muted-foreground/70">
             {t('sessionOwner.createdBy', { name: creator.displayName })}
           </div>
           <div className="mt-1 flex items-center gap-2 text-sm">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-foreground/10 text-[10px] font-medium">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-surface-pressed text-caption font-medium">
               {personInitials(creator.displayName)}
             </span>
             <span className="truncate">{creator.displayName}</span>
@@ -53,24 +53,24 @@ export function SessionParticipantsList({ creator, owner, participants = [] }: S
       )}
 
       <section data-participant-role="owner">
-        <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+        <div className="text-caption font-medium uppercase tracking-wider text-muted-foreground/70">
           {owner ? t('sessionOwner.ownedBy', { name: owner.displayName }) : t('sessionOwner.unassigned')}
         </div>
         <div className="mt-1 flex items-center gap-2 text-sm">
-          <Crown className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+          <Crown className="icon-caption text-accent" aria-hidden="true" />
           <span className="truncate">
             {owner ? owner.displayName : t('sessionOwner.unassigned')}
           </span>
         </div>
         {owner && (
-          <div className="mt-0.5 text-[10px] text-muted-foreground">
+          <div className="mt-0.5 text-caption text-muted-foreground">
             {t('sessionOwner.assignedBy', { name: owner.assignedBy })}
           </div>
         )}
       </section>
 
       <section data-participant-role="participants">
-        <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+        <div className="text-caption font-medium uppercase tracking-wider text-muted-foreground/70">
           {t('participants.count', { count: participants.length })}
         </div>
         {participants.length === 0 ? (
@@ -79,12 +79,12 @@ export function SessionParticipantsList({ creator, owner, participants = [] }: S
           <ul className="mt-1 flex flex-col gap-1">
             {participants.map(participant => (
               <li key={participant.accountId} className="flex items-center gap-2 text-sm">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-foreground/10 text-[10px] font-medium">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-surface-pressed text-caption font-medium">
                   {personInitials(participant.displayName)}
                 </span>
                 <span className="truncate flex-1">{participant.displayName}</span>
                 {participant.kind !== 'profile' && (
-                  <span className="text-[10px] text-muted-foreground">{participant.kind}</span>
+                  <span className="text-caption text-muted-foreground">{participant.kind}</span>
                 )}
               </li>
             ))}
@@ -107,7 +107,7 @@ export function SessionParticipantsPopover({ trigger, ...list }: SessionParticip
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent align="end" className="w-auto p-3">
         <div className="mb-2 flex items-center gap-1.5 text-xs font-medium">
-          <Users className="h-3.5 w-3.5" aria-hidden="true" />
+          <Users className="icon-caption" aria-hidden="true" />
           <span>{t('participants.count', { count: list.participants?.length ?? 0 })}</span>
         </div>
         <SessionParticipantsList {...list} />
@@ -118,5 +118,5 @@ export function SessionParticipantsPopover({ trigger, ...list }: SessionParticip
 
 /** Small icon used to trigger the participant popover in the header. */
 export function ParticipantsTriggerIcon() {
-  return <UserRound className="h-4 w-4" />
+  return <UserRound className="icon-toolbar" />
 }

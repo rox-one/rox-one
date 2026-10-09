@@ -19,8 +19,7 @@
   },
   "description": "Shared business logic for Craft Agents - agent, auth, config, credentials, MCP integration",
   "devDependencies": {
-    "@types/shell-quote": "^1.7.5",
-    "@types/uuid": "^11.0.0"
+    "@types/shell-quote": "^1.7.5"
   },
   "exports": {
     ".": "./src/index.ts",
@@ -173,7 +172,8 @@
     "./workspace-domain/licenses/contracts": "./src/workspace-domain/licenses/contracts.ts",
     "./config/server-services": "./src/config/server-services.ts",
     "./commands": "./src/commands/index.ts",
-    "./commands/schemas": "./src/commands/schemas.ts"
+    "./commands/schemas": "./src/commands/schemas.ts",
+    "./domain": "./src/domain/index.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",

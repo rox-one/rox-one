@@ -32,6 +32,7 @@ async function fixtureBundle() {
     let state, pagesChanged, switchMode='ok'; const switches=[];
     const pageRequests=[], pageSubscriptions=[], deepSubscriptions=[], createRequests=[], commands=[], inputs=[], messages=[], scheduled=[];
     const nativeSetTimeout=window.setTimeout;
+    const confirmAnswer=true; window.confirm=()=>confirmAnswer;
     window.electronAPI = {
       getPages: workspaceId=>new Promise(resolve=>pageRequests.push({workspaceId,resolve})),
       onPagesChanged: callback=>{pagesChanged=callback;pageSubscriptions.push(callback);return()=>{if(pagesChanged===callback)pagesChanged=undefined}},

@@ -13,9 +13,14 @@ import {
   uncontractedNavSectionPresentation,
   navSectionPresentation,
   UNCONTRACTED_NAV_SECTION_IDS,
+  flattenNotebookRows,
+  KNOWLEDGE_TREE_WINDOW_THRESHOLD,
+  type KnowledgeTreeRow,
   type KnowledgeNavigatorApi,
 } from '../KnowledgeNotebookTree'
 import { mergeFolderChildren, type SiyuanDocTreeNode } from '../knowledge-tree'
+import { ENTITY_LIST_OVERSCAN, flattenEntityListGroups } from '@/components/ui/entity-list'
+import { virtualTableWindow } from '@/components/app-shell/session-table/table-virtualization'
 
 function envelope(id: string, overrides: Partial<KnowledgeWorkEnvelope> = {}): KnowledgeWorkEnvelope {
   return {
@@ -237,5 +242,58 @@ describe('mergeFolderChildren', () => {
     ]
     const merged = mergeFolderChildren(tree, '/projects', [])
     expect(merged[0]?.children).toEqual([])
+  })
+})
+
+function documentNodes(count: number, prefix = 'n'): SiyuanDocTreeNode[] {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `${prefix}-${i}`,
+    name: `Node ${i}`,
+    path: `/n/${i}`,
+    kind: 'document' as const,
+  }))
+}
+
+function mountedCount(rows: KnowledgeTreeRow[], scrollTop: number): number {
+  const flattened = flattenEntityListGroups(undefined, rows, new Set<string>(), {
+    getItemKey: (row) => row.key,
+    rowHeight: 30,
+    headerHeight: 0,
+  })
+  const range = virtualTableWindow(flattened.entries, scrollTop, 640, ENTITY_LIST_OVERSCAN)
+  return range.endIndex - range.startIndex
+}
+
+describe('flattenNotebookRows', () => {
+  it('emits one row per notebook plus its expanded, filtered tree nodes', () => {
+    const rows = flattenNotebookRows(NOTEBOOKS, { 'nb-1': documentNodes(500) }, 'all')
+    expect(rows.filter((row) => row.kind === 'notebook')).toHaveLength(NOTEBOOKS.length)
+    expect(rows.filter((row) => row.kind === 'node')).toHaveLength(500)
+    expect(rows.length).toBeGreaterThan(KNOWLEDGE_TREE_WINDOW_THRESHOLD)
+  })
+
+  it('mounts far fewer rows than the total when windowed', () => {
+    const rows = flattenNotebookRows(NOTEBOOKS, { 'nb-1': documentNodes(500) }, 'all')
+    const bound = Math.ceil((640 + 2 * ENTITY_LIST_OVERSCAN) / 30) + 4
+    expect(mountedCount(rows, 0)).toBeGreaterThan(0)
+    expect(mountedCount(rows, 0)).toBeLessThan(bound)
+    expect(mountedCount(rows, 3000)).toBeLessThan(bound)
+    expect(mountedCount(rows, 0)).toBeLessThan(rows.length / 10)
+  })
+
+  it('shows a loading row instead of nodes while a notebook tree is fetched', () => {
+    const rows = flattenNotebookRows(NOTEBOOKS, { 'nb-1': 'loading' }, 'all')
+    expect(rows.filter((row) => row.kind === 'loading')).toHaveLength(1)
+    expect(rows.filter((row) => row.kind === 'node')).toHaveLength(0)
+  })
+
+  it('drops documents under the databases filter', () => {
+    const tree: SiyuanDocTreeNode[] = [
+      ...documentNodes(20),
+      { id: 'db-1', name: 'Grid', path: '/grid', kind: 'database' },
+    ]
+    const rows = flattenNotebookRows([NOTEBOOKS[0]!], { 'nb-1': tree }, 'databases')
+    expect(rows.filter((row) => row.kind === 'node')).toHaveLength(1)
+    expect(rows.find((row) => row.kind === 'node')?.node.id).toBe('db-1')
   })
 })

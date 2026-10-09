@@ -134,6 +134,24 @@ export class WsRpcClient implements RpcClient {
   private connected = false
   private reconnectAttempt = 0
   private lastSeenSeq = 0
+  /**
+   * Sequence numbers of events already delivered to listeners while they could
+   * not advance `lastSeenSeq` (they arrived after a hole, so `lastSeenSeq` was
+   * held below the gap and the events were applied out of order). The server
+   * replays every buffered `seq > lastSeq` after a reconnect, which would
+   * re-deliver exactly these events; membership suppresses that duplicate
+   * dispatch. Entries leave the set when their replay frame is suppressed, and
+   * the whole set is dropped whenever the sequence baseline changes (fresh
+   * handshake or stale reconnect), so it can never grow across a baseline shift.
+   */
+  private deliveredSeqs = new Set<number>()
+  /**
+   * Set when a handshake_ack reports a stale reconnect (the server could not
+   * replay and may have continued or reset its per-client sequence). The next
+   * event's seq becomes the new baseline without being read as a gap — the
+   * renderer already ran a full refresh for that hole.
+   */
+  private awaitingBaseline = false
   private ackTimer: ReturnType<typeof setInterval> | null = null
   private pendingReconnect: { clientId: string; lastSeq: number } | null = null
   private currentHandshakeWasReconnect = false
@@ -610,6 +628,8 @@ export class WsRpcClient implements RpcClient {
     this.manualReconnectRequested = false
     this.currentHandshakeWasReconnect = false
     this.gapRecoveryInFlight = false
+    this.awaitingBaseline = false
+    this.deliveredSeqs.clear()
     this.pendingReconnect = null
     this.failReady(new Error('Client destroyed'))
 
@@ -649,6 +669,15 @@ export class WsRpcClient implements RpcClient {
     try {
       envelope = deserializeEnvelope(raw)
     } catch {
+      // A frame we cannot decode may have carried a push event, so the client
+      // can no longer assume it has every event. Treat it exactly like a gap:
+      // hold the watermark and run the same guarded recovery, so the server
+      // replays the undecodable event instead of it being lost silently.
+      if (!this.gapRecoveryInFlight && !this.destroyed) {
+        console.warn(`[WsRpc] Undecodable frame; requesting recovery (seq watermark held at ${this.lastSeenSeq})`)
+        this.gapRecoveryInFlight = true
+        this.reconnectNow()
+      }
       return
     }
 
@@ -681,7 +710,13 @@ export class WsRpcClient implements RpcClient {
 
         if (!serverRecognizedReconnect) {
           this.lastSeenSeq = 0
+          this.deliveredSeqs.clear()
         }
+        // A stale reconnect has no replay: the renderer already ran a full
+        // refresh, so the next event's seq establishes the new baseline instead
+        // of being read as a gap. A recognized non-stale reconnect keeps the
+        // watermark and the delivered-seq set, so the pending replay is suppressed.
+        this.awaitingBaseline = serverRecognizedReconnect && envelope.stale === true
 
         if (this.connectTimer) {
           clearTimeout(this.connectTimer)
@@ -759,30 +794,66 @@ export class WsRpcClient implements RpcClient {
       }
 
       case 'event': {
-        // Track sequence numbers for reliable delivery
+        // Track sequence numbers for reliable delivery. The watermark only
+        // advances across a contiguous run: a gap means an event was lost and
+        // must never be acknowledged away, or the server would evict the
+        // buffered copy and make the hole permanent.
+        //
+        // Events delivered while the watermark is held below a hole are recorded
+        // in `deliveredSeqs` (they were applied out of order). The server replays
+        // every buffered `seq > lastSeq` after a reconnect, so those same events
+        // come back; a replay frame whose seq was already delivered is suppressed
+        // instead of re-dispatched (neither lose the missing one nor double the
+        // ones already applied).
+        let suppressDispatch = false
         if (typeof envelope.seq === 'number') {
-          if (this.lastSeenSeq > 0 && envelope.seq > this.lastSeenSeq + 1) {
-            console.warn(`[WsRpc] Sequence gap: expected ${this.lastSeenSeq + 1}, got ${envelope.seq}`)
+          const seq = envelope.seq
+          if (this.awaitingBaseline) {
+            // Stale reconnect: the server sent no replay and the renderer already
+            // ran a full refresh, so the first post-reconnect seq is the new floor.
+            this.awaitingBaseline = false
+            this.lastSeenSeq = seq
+            this.deliveredSeqs.clear()
+          } else if (this.deliveredSeqs.has(seq)) {
+            // Replay of an event already applied after a hole — drop the duplicate.
+            // The frame still proves delivery, so let the watermark catch up when
+            // it is the next expected sequence.
+            this.deliveredSeqs.delete(seq)
+            suppressDispatch = true
+            if (seq === this.lastSeenSeq + 1) {
+              this.lastSeenSeq = seq
+            }
+          } else if (seq === this.lastSeenSeq + 1 || this.lastSeenSeq === 0) {
+            // Contiguous with the watermark, or the first frame on a fresh
+            // baseline — advance/adopt it.
+            this.lastSeenSeq = seq
+          } else if (seq > this.lastSeenSeq) {
             // Hold `lastSeenSeq` at the LAST CONTIGUOUS seq instead of advancing it
             // to the gapped seq. Both the periodic sequence_ack and the reconnect
             // handshake read this one field, so holding it (a) stops the next ack
             // from evicting the un-replayed range server-side and (b) makes a later
             // reconnect ask the server to replay from before the hole.
+            console.warn(`[WsRpc] Sequence gap: expected ${this.lastSeenSeq + 1}, got ${seq}`)
             if (!this.gapRecoveryInFlight && !this.destroyed) {
               // Same primitive the UI reconnect action uses; guarded so a burst of
               // gapped frames schedules at most one reconnect.
               this.gapRecoveryInFlight = true
               this.reconnectNow()
             }
-          } else {
-            this.lastSeenSeq = envelope.seq
+            // Delivered out of order: remember it so a later replay of the same
+            // event is not applied twice.
+            this.deliveredSeqs.add(seq)
           }
+          // seq <= lastSeenSeq and not tracked: a duplicate already covered by the
+          // watermark. The cursor never moves backwards; the frame is still
+          // dispatched (consumers must stay idempotent).
         }
 
-        if (envelope.channel) {
-          // Frames are always dispatched, never dropped. After gap recovery the
-          // server replays events from the gap, so a consumer may observe events it
-          // already applied (duplicate delivery) — consumers must stay idempotent.
+        if (envelope.channel && !suppressDispatch) {
+          // Frames are dispatched, never dropped: only a replay of an event that
+          // was already delivered live after a hole (recorded in `deliveredSeqs`)
+          // is suppressed. Plain duplicate frames below the watermark are still
+          // dispatched, so consumers must stay idempotent.
           // Server is shutting down — stop reconnection before dispatching
           if (envelope.channel === 'server:shuttingDown') {
             this.permanentlyClosed = true

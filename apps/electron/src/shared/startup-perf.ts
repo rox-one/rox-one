@@ -68,8 +68,11 @@ export interface StartupTimeline {
 
 /**
  * Startup budgets from PERF-AUDIT §3.1 (reference hardware). `ciMultiplier`
- * relaxes them for shared CI runners / xvfb; the bench is report-only until
- * P2 (shell-first boot) lands.
+ * relaxes them for shared CI runners / xvfb. Shell-first boot (PERF-01) now
+ * creates the window before the server bootstrap, but the bench stays
+ * report-only: `--strict` is deferred because the ×4 `window-created` budget
+ * (1200 ms on darwin) has no headroom (runner medians 1563–2633 ms) and warm
+ * FMP sits at the 3200 ms boundary (e.g. 3302/3365 ms in some runs).
  */
 export const STARTUP_BUDGETS = {
   windowCreatedMs: { darwin: 300, win32: 500, linux: 500 },
