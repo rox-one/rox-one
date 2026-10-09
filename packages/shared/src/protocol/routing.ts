@@ -171,6 +171,11 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
 
   // menu — local menu events
   RPC_CHANNELS.menu.NEW_CHAT,
+  RPC_CHANNELS.menu.OPEN_DASHBOARD,
+  RPC_CHANNELS.menu.OPEN_NATIVE_CONSOLE,
+  RPC_CHANNELS.menu.SHOW_SERVICE_STATUS,
+  RPC_CHANNELS.menu.RUN_DOCTOR,
+  RPC_CHANNELS.menu.TRAY_STATUS_CHANGED,
   RPC_CHANNELS.menu.NEW_WINDOW,
   RPC_CHANNELS.menu.OPEN_SETTINGS,
   RPC_CHANNELS.menu.KEYBOARD_SHORTCUTS,
@@ -368,6 +373,12 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.meetings.FINALIZE,
   RPC_CHANNELS.meetings.ADD_MANUAL_NOTE,
   RPC_CHANNELS.meetings.CORRECT_SEGMENT,
+  // Meetings live observation — device-local capture/playback, never proxied.
+  RPC_CHANNELS.meetings.OBSERVE_START,
+  RPC_CHANNELS.meetings.OBSERVE_STOP,
+  RPC_CHANNELS.meetings.OBSERVE_STATE,
+  RPC_CHANNELS.meetings.SESSION_SUMMARY,
+  RPC_CHANNELS.meetings.TRANSCRIPT_LINES,
 
   // extensions — Extension Center catalog/state (local config dir + projections; same host as marketplace)
   RPC_CHANNELS.extensions.LIST_CATALOG,
@@ -491,6 +502,19 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   // W1-04 (#1501) — Dossier export writes the host's local contact store.
   RPC_CHANNELS.directory.EXPORT_DOSSIER,
 
+  // serviceLifecycle — OS service (launchd/systemd/Windows) control is host-local.
+  RPC_CHANNELS.serviceLifecycle.GET_STATUS,
+  RPC_CHANNELS.serviceLifecycle.INSTALL,
+  RPC_CHANNELS.serviceLifecycle.START,
+  RPC_CHANNELS.serviceLifecycle.STOP,
+  RPC_CHANNELS.serviceLifecycle.RESTART,
+  RPC_CHANNELS.serviceLifecycle.UNINSTALL,
+  RPC_CHANNELS.serviceLifecycle.STATUS_CHANGED,
+
+  // diagnostics — host doctor checks read local service/port/config/log state.
+  RPC_CHANNELS.diagnostics.RUN,
+  RPC_CHANNELS.diagnostics.GET_LAST,
+
 ]
 
 export const LOCAL_ONLY_CHANNELS = new Set<string>(LOCAL_ONLY_CHANNEL_LIST)
@@ -547,6 +571,23 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.voice.JOB,
   RPC_CHANNELS.voice.OVERLAY,
   RPC_CHANNELS.voice.HOTKEY,
+  RPC_CHANNELS.voice.TALK_START,
+  RPC_CHANNELS.voice.TALK_STOP,
+  RPC_CHANNELS.voice.TALK_AUDIO,
+  RPC_CHANNELS.voice.TALK_EVENT,
+  RPC_CHANNELS.voice.TALK_CLIENT_SECRET,
+  RPC_CHANNELS.voice.TTS_STREAM_START,
+  RPC_CHANNELS.voice.TTS_STREAM_CHUNK,
+  RPC_CHANNELS.voice.TTS_STREAM_STOP,
+  RPC_CHANNELS.voice.STT_START,
+  RPC_CHANNELS.voice.STT_AUDIO,
+  RPC_CHANNELS.voice.STT_STOP,
+  RPC_CHANNELS.voice.STT_EVENT,
+  RPC_CHANNELS.voice.PROVIDERS,
+  RPC_CHANNELS.voice.WAKE_GET,
+  RPC_CHANNELS.voice.WAKE_SET,
+  RPC_CHANNELS.voice.WAKE_CHANGED,
+  RPC_CHANNELS.voice.TRIGGER,
 
 
   // Identity profile reads/edits are caller-scoped for native principals. The
@@ -612,6 +653,7 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.sessions.IMPORT,
   RPC_CHANNELS.sessions.EXPORT_REMOTE_TRANSFER,
   RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER,
+  RPC_CHANNELS.sessions.ASSIGN_OWNER,
 
   // transfer — chunked large-payload import (sessions, resources)
   RPC_CHANNELS.transfer.START,
@@ -770,6 +812,10 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.memory.REJECT_PROPOSAL,
   RPC_CHANNELS.memory.EDIT_PROPOSAL,
   RPC_CHANNELS.memory.DELETE_PROPOSAL,
+  RPC_CHANNELS.memory.SEARCH,
+  RPC_CHANNELS.memory.GET,
+  RPC_CHANNELS.memory.INDEX_STATUS,
+  RPC_CHANNELS.memory.REBUILD_INDEX,
 
   // learning — candidates/evidence/outcomes/policies live under the
   // workspace's memory/learning dir on the workspace-owning server (PRD §5/§15).
@@ -903,6 +949,7 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.skills.GET_USAGE,
   RPC_CHANNELS.skills.PRUNE_UNUSED,
   RPC_CHANNELS.skills.EXPORT_TO_PROJECT,
+  RPC_CHANNELS.skills.GET_ELIGIBILITY,
   RPC_CHANNELS.skills.CHANGED,
 
   // statuses — workspace metadata

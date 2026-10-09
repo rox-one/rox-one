@@ -167,6 +167,7 @@
     "./capabilities/agents-md": "./src/capabilities/agents-md.ts",
     "./code-intelligence": "./src/code-intelligence/index.ts",
     "./security": "./src/security/index.ts",
+    "./service-lifecycle": "./src/service-lifecycle.ts",
     "./workspace-domain/licenses/contracts": "./src/workspace-domain/licenses/contracts.ts",
     "./config/server-services": "./src/config/server-services.ts",
     "./commands": "./src/commands/index.ts",

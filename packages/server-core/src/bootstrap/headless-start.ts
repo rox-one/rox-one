@@ -509,10 +509,12 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
       RPC_CHANNELS.skillsPending.CHANGED, RPC_CHANNELS.messaging.PENDING_CHANGED, RPC_CHANNELS.messaging.BINDING_CHANGED,
       RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED, RPC_CHANNELS.personalTasks.CHANGED,
       RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
+      RPC_CHANNELS.voice.TALK_EVENT, RPC_CHANNELS.voice.STT_EVENT, RPC_CHANNELS.voice.WAKE_CHANGED,
     ]),
     nativeClientEventChannels: new Set([
       RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED, RPC_CHANNELS.personalTasks.CHANGED,
       RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
+      RPC_CHANNELS.voice.TALK_EVENT, RPC_CHANNELS.voice.STT_EVENT, RPC_CHANNELS.voice.WAKE_CHANGED,
     ]),
     projectNativeEvent: (channel, args, workspaceId, principal) => {
       if (channel === RPC_CHANNELS.notes.CHANGED) return projectNativeNotesChanged(nativeAuthority, args, workspaceId, principal)

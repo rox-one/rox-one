@@ -25,6 +25,9 @@ import type {
   ShareResult,
   BulkUpdateSessionsInput,
   BulkUpdateSessionsResult,
+  SessionEvent,
+  SessionActorRef,
+  SessionVisibility,
 } from '@rox/shared/protocol'
 import type { SessionBundle, DispatchMode } from '@rox/shared/sessions'
 import type { AgentProfileSnapshot } from '@rox/shared/workspace-work'
@@ -119,6 +122,12 @@ export interface ISessionManager {
   /** Optional owner port; metadata only, never project permission. */
   unlinkProjectFromSessions?(workspaceId: string, projectId: string): Promise<number>
   setKanbanColumn(sessionId: string, column: string | null): Promise<void>
+  /** a1.3: assign or clear the session owner. `owner === null` clears; creator is never overwritten. */
+  assignSessionOwner(sessionId: string, owner: SessionActorRef | null, assignedBy: string): Promise<void>
+  /** a2.5: set the session visibility ('shared' | 'read-only' | 'suggest' | 'draft'). */
+  setSessionVisibility(sessionId: string, visibility: SessionVisibility): Promise<void>
+  /** a1.4: push an ephemeral collaboration signal (typing/presence) for a session. */
+  broadcastSessionActivity?(sessionId: string, event: SessionEvent): void
   setPriority(sessionId: string, priority: SessionPriority): Promise<void>
   setDueDate(sessionId: string, dueDate: number | null): Promise<void>
   setRank(sessionId: string, rank: string): Promise<void>

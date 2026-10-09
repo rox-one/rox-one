@@ -9,6 +9,9 @@ import {
   type FileAttachment,
   type SendMessageOptions,
   type SessionEvent,
+  type SessionActorRef,
+  type SessionVisibility,
+  type BroPresenceMemberDto,
 } from '@rox/shared/protocol'
 import type { StoredAttachment, SessionMemoryMode } from '@rox/core/types'
 import { isRuntimeLaunch } from '@rox/core/runtime-trace'
@@ -36,6 +39,7 @@ import { assertValidBulkUpdateInput, assertValidBulkUpdatePatch } from '../../se
 import { disposeBroInviteService, getBroInviteService } from '../../collaboration/bro-invite-service.ts'
 import { parseInviteUrl } from '@rox/shared/collaboration'
 import { getNativeSessionCollaboration, NATIVE_SHARING_COMMANDS } from './native-session-collaboration'
+import { SessionActivityTracker } from '../../collaboration/session-activity-tracker'
 import {
   isClaimableLive,
   rpcSessionsActResult,
@@ -192,6 +196,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sessions.RESPOND_TO_PERMISSION,
   RPC_CHANNELS.sessions.RESPOND_TO_CREDENTIAL,
   RPC_CHANNELS.sessions.COMMAND,
+  RPC_CHANNELS.sessions.ASSIGN_OWNER,
   RPC_CHANNELS.sessions.BULK_UPDATE,
   RPC_CHANNELS.sessions.GET_PENDING_PLAN_EXECUTION,
   RPC_CHANNELS.sessions.GET_PERMISSION_MODE_STATE,
@@ -227,6 +232,25 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   const { sessionManager, platform } = deps
   if (deps.nativeData) sessionManager.setNativeMemoryContextPolicy?.(workspaceId => deps.nativeData!.authority.isRegisteredWorkspace(workspaceId))
   const log = platform.logger
+  // a1.3/a1.4: actor identity + ephemeral collaboration signals. A local caller
+  // (no cloud principal) resolves to the installation identity, matching the
+  // Rox caller plumbing used by the sharing arms below.
+  const sessionActorId = (ctx: RequestContext): string => ctx.principal?.subject ?? LOCAL_ROX_CALLER.subject
+  const sessionActorName = (ctx: RequestContext): string => ctx.principal
+    ? (deps.nativeData?.authority.getSelfProfile(ctx.principal, ctx.workspaceId ?? '')?.name ?? ctx.principal.subject)
+    : 'Local'
+  const sessionViewer = (ctx: RequestContext): BroPresenceMemberDto => ({
+    accountId: sessionActorId(ctx),
+    displayName: sessionActorName(ctx),
+    username: ctx.principal?.subject ?? LOCAL_ROX_CALLER.subject,
+    role: 'editor',
+    status: 'online',
+    joinedAt: Date.now(),
+  })
+  const sessionActivity = new SessionActivityTracker({
+    typingChanged: (sessionId, actors) => sessionManager.broadcastSessionActivity?.(sessionId, { type: 'session_typing', sessionId, actors }),
+    presenceChanged: (sessionId, viewers) => sessionManager.broadcastSessionActivity?.(sessionId, { type: 'session_presence', sessionId, viewers }),
+  })
   server.onShutdown?.(disposeBroInviteService)
   // Provenance comes from the persistence acknowledgement, never an optimistic
   // renderer id or a workspace event subscriber. Completed replies credit only
@@ -261,6 +285,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   })
   const unsubscribeOrigins = server.onClientDisconnect?.(clientId => {
     for (const [key, origin] of nativeTurnOrigins) if (origin.context.clientId === clientId) nativeTurnOrigins.delete(key)
+    sessionActivity.removeClient(clientId)
   })
   server.onShutdown?.(() => {
     unsubscribeOrigins?.(); unsubscribeCompletion?.(); releaseXpPolicy?.(); nativeTurnOrigins.clear()
@@ -535,7 +560,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
           workspaceId: ctx.workspaceId!, workspaceRootPath: workspace!.rootPath, sessionId,
         }, command, session, assertCurrent, log, displayName)
       }
-      const allowed = new Set(['addAnnotation', 'removeAnnotation', 'updateAnnotation', 'flag', 'unflag', 'archive', 'unarchive', 'rename', 'markRead', 'markUnread', 'setActiveViewing', 'setSessionStatus', 'setPermissionMode'])
+      const allowed = new Set(['addAnnotation', 'removeAnnotation', 'updateAnnotation', 'flag', 'unflag', 'archive', 'unarchive', 'rename', 'markRead', 'markUnread', 'setActiveViewing', 'setSessionStatus', 'setPermissionMode', 'assignOwner', 'setVisibility', 'setTyping', 'watchSession', 'unwatchSession'])
       if (!allowed.has(command?.type)) throw new CodedError('FORBIDDEN', 'Native session command denied')
       if (command.type === 'setActiveViewing' && command.workspaceId !== ctx.workspaceId) throw new CodedError('FORBIDDEN', 'Workspace access denied')
       if (command.type === 'addAnnotation' || command.type === 'removeAnnotation' || command.type === 'updateAnnotation') {
@@ -692,11 +717,39 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         return sessionManager.updateMessageAnnotation(sessionId, command.messageId, command.annotationId, command.patch)
       case 'undo':
         return sessionManager.undoLastUserMessage(sessionId)
+      // a1.3/a1.4/a2.5: ownership, visibility, and ephemeral collaboration signals.
+      case 'assignOwner':
+        return sessionManager.assignSessionOwner(sessionId, command.owner, sessionActorId(ctx))
+      case 'setVisibility':
+        return sessionManager.setSessionVisibility(sessionId, command.visibility)
+      case 'setTyping':
+        sessionActivity.setTyping(sessionId, ctx.clientId, { accountId: sessionActorId(ctx), displayName: sessionActorName(ctx) }, command.typing)
+        return
+      case 'watchSession':
+        sessionActivity.watch(sessionId, ctx.clientId, sessionViewer(ctx))
+        return
+      case 'unwatchSession':
+        sessionActivity.unwatch(sessionId, ctx.clientId)
+        return
       default: {
         const _exhaustive: never = command
         throw new Error(`Unknown session command: ${JSON.stringify(command)}`)
       }
     }
+  }, { nativeAction: 'write' })
+
+  // a1.3: dedicated ownership channel (the renderer's assignSessionOwner method).
+  // Ownership is metadata about who drives the session; it never grants access.
+  server.handle(RPC_CHANNELS.sessions.ASSIGN_OWNER, async (
+    ctx,
+    sessionId: string,
+    owner: SessionActorRef | null,
+  ) => {
+    assertNativeSession(ctx, deps, server, sessionId)
+    if (ctx.principal && !server.isRequestContextCurrent?.(ctx, 'write')) {
+      throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+    }
+    await sessionManager.assignSessionOwner(sessionId, owner ?? null, sessionActorId(ctx))
   }, { nativeAction: 'write' })
 
   // B4: one caller-authorized, per-target atomic collection update.

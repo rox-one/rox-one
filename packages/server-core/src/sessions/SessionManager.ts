@@ -131,7 +131,7 @@ import { isParentTaskTool } from '@rox/shared/utils/toolNames'
 import { restoreFiles } from '@rox/shared/utils/bundle-files'
 import { getCredentialManager } from '@rox/shared/credentials'
 import { CraftMcpClient, McpClientPool, McpPoolServer } from '@rox/shared/mcp'
-import { type Session, type SessionEvent, type FileAttachment, type SendMessageOptions, type UnreadSummary, type RemoteSessionTransferPayload, type ImportRemoteSessionTransferResult, type PermissionModeState, RPC_CHANNELS, generateMessageId } from '@rox/shared/protocol'
+import { type Session, type SessionEvent, type FileAttachment, type SendMessageOptions, type UnreadSummary, type RemoteSessionTransferPayload, type ImportRemoteSessionTransferResult, type PermissionModeState, type SessionActorRef, type SessionVisibility, type SessionCreatedActor, type SessionOwnerRef, type SessionParticipantIdentity, RPC_CHANNELS, generateMessageId } from '@rox/shared/protocol'
 import type {
   BulkUpdateSessionsInput,
   BulkUpdateSessionsPatch,
@@ -866,6 +866,8 @@ type CollectionMutableField =
   | 'projectIds'
   | 'labels'
   | 'kanbanColumn'
+  | 'owner'
+  | 'visibility'
 
 interface ManagedSession {
   id: string
@@ -1122,6 +1124,12 @@ interface ManagedSession {
     /** True after the first matching sendMessage consumes the slot; later matches drop. */
     committed: boolean
   }
+  // Session attribution (a1.3/a2.5): creator/origin (write-once), current owner,
+  // bound participants, and viewer visibility.
+  creator?: SessionCreatedActor
+  owner?: SessionOwnerRef
+  participants?: SessionParticipantIdentity[]
+  visibility?: SessionVisibility
 }
 
 const PI_SDK_MESSAGE_ID_CACHE_LIMIT = 256
@@ -9290,6 +9298,12 @@ export class SessionManager implements ISessionManager {
             case 'kanbanColumn':
               managed.kanbanColumn = before.kanbanColumn
               break
+            case 'owner':
+              managed.owner = before.owner
+              break
+            case 'visibility':
+              managed.visibility = before.visibility
+              break
           }
         }
         failed.push({
@@ -9415,6 +9429,51 @@ export class SessionManager implements ISessionManager {
       const watcher = this.configWatchers.get(managed.workspace.rootPath)
       watcher?.notifyFileChange(`sessions/${sessionId}/session.jsonl`)
     }
+  }
+
+  /**
+   * a1.3: assign or clear the session owner. `owner === null` clears the
+   * assignment. The creator is write-once and is never rewritten here.
+   */
+  async assignSessionOwner(sessionId: string, owner: SessionActorRef | null, assignedBy: string): Promise<void> {
+    const managed = this.sessions.get(sessionId)
+    if (managed) {
+      const next = owner ? { ...owner, assignedAt: Date.now(), assignedBy } : undefined
+      this.markCollectionFieldMutations(managed, ['owner'])
+      managed.owner = next
+      this.setMetadataWriteGuard(managed)
+
+      this.sendEvent({ type: 'session_owner_changed', sessionId, owner: next ?? null }, managed.workspace.id)
+      this.persistSession(managed)
+      await this.flushSession(managed.id)
+      const watcher = this.configWatchers.get(managed.workspace.rootPath)
+      watcher?.notifyFileChange(`sessions/${sessionId}/session.jsonl`)
+    }
+  }
+
+  /**
+   * a2.5: set the session visibility ('shared' | 'read-only' | 'suggest' | 'draft').
+   * Server-side authority for the sharing menu; never a UI-only flag.
+   */
+  async setSessionVisibility(sessionId: string, visibility: SessionVisibility): Promise<void> {
+    const managed = this.sessions.get(sessionId)
+    if (managed) {
+      this.markCollectionFieldMutations(managed, ['visibility'])
+      managed.visibility = visibility
+      this.setMetadataWriteGuard(managed)
+
+      this.sendEvent({ type: 'session_visibility_changed', sessionId, visibility }, managed.workspace.id)
+      this.persistSession(managed)
+      await this.flushSession(managed.id)
+      const watcher = this.configWatchers.get(managed.workspace.rootPath)
+      watcher?.notifyFileChange(`sessions/${sessionId}/session.jsonl`)
+    }
+  }
+
+  /** a1.4: push an ephemeral collaboration signal (typing/presence) to the session's workspace. */
+  broadcastSessionActivity(sessionId: string, event: SessionEvent): void {
+    const managed = this.sessions.get(sessionId)
+    if (managed) this.sendEvent(event, managed.workspace.id)
   }
 
   /**

@@ -92,6 +92,7 @@ export const RPC_CHANNELS = {
     FOREIGN_AUTO_STATUS: 'sessions:foreignAutoStatus',
     FOREIGN_AUTO_RUN: 'sessions:foreignAutoRun',
     FOREIGN_AUTO_SET: 'sessions:foreignAutoSet',
+    ASSIGN_OWNER: 'sessions:assignOwner',
   },
   transfer: {
     START: 'transfer:start',
@@ -374,6 +375,11 @@ export const RPC_CHANNELS = {
   },
   menu: {
     NEW_CHAT: 'menu:newChat',
+    OPEN_DASHBOARD: 'menu:openDashboard',
+    OPEN_NATIVE_CONSOLE: 'menu:openNativeConsole',
+    SHOW_SERVICE_STATUS: 'menu:showServiceStatus',
+    RUN_DOCTOR: 'menu:runDoctor',
+    TRAY_STATUS_CHANGED: 'menu:trayStatusChanged',
     NEW_WINDOW: 'menu:newWindow',
     OPEN_SETTINGS: 'menu:openSettings',
     KEYBOARD_SHORTCUTS: 'menu:keyboardShortcuts',
@@ -606,6 +612,23 @@ export const RPC_CHANNELS = {
     JOB: 'voice:job',
     OVERLAY: 'voice:overlay',
     HOTKEY: 'voice:hotkey',
+    TALK_START: 'voice:talkStart',
+    TALK_STOP: 'voice:talkStop',
+    TALK_AUDIO: 'voice:talkAudio',
+    TALK_EVENT: 'voice:talkEvent',
+    TALK_CLIENT_SECRET: 'voice:talkClientSecret',
+    TTS_STREAM_START: 'voice:ttsStreamStart',
+    TTS_STREAM_CHUNK: 'voice:ttsStreamChunk',
+    TTS_STREAM_STOP: 'voice:ttsStreamStop',
+    STT_START: 'voice:sttStart',
+    STT_AUDIO: 'voice:sttAudio',
+    STT_STOP: 'voice:sttStop',
+    STT_EVENT: 'voice:sttEvent',
+    PROVIDERS: 'voice:providers',
+    WAKE_GET: 'voice:wakeGet',
+    WAKE_SET: 'voice:wakeSet',
+    WAKE_CHANGED: 'voice:wakeChanged',
+    TRIGGER: 'voice:trigger',
   },
   environment: {
     GET: 'environment:get',
@@ -665,6 +688,7 @@ export const RPC_CHANNELS = {
     PRUNE_UNUSED: 'skills:pruneUnused',
     // T1: copy a workspace skill into {projectRoot}/.agents/skills/<slug>
     EXPORT_TO_PROJECT: 'skills:exportToProject',
+    GET_ELIGIBILITY: 'skills:getEligibility',
     CHANGED: 'skills:changed',
   },
   skillsPending: {
@@ -699,6 +723,10 @@ export const RPC_CHANNELS = {
     REJECT_PROPOSAL: 'memory:rejectProposal',
     EDIT_PROPOSAL: 'memory:editProposal',
     DELETE_PROPOSAL: 'memory:deleteProposal',
+    SEARCH: 'memory:search',
+    GET: 'memory:get',
+    INDEX_STATUS: 'memory:indexStatus',
+    REBUILD_INDEX: 'memory:rebuildIndex',
     CHANGED: 'memory:changed',
   },
   /** Continual learning (PRD §15): candidates/evidence/outcomes/policies.
@@ -747,6 +775,22 @@ export const RPC_CHANNELS = {
     PROVISION: 'openclawRuntime:provision',
     START: 'openclawRuntime:start',
     STOP: 'openclawRuntime:stop',
+  },
+  // serviceLifecycle — OS-level service control (launchd/systemd/Windows service).
+  // Managed by the local Electron main process; never proxied.
+  serviceLifecycle: {
+    GET_STATUS: 'serviceLifecycle:getStatus',
+    INSTALL: 'serviceLifecycle:install',
+    START: 'serviceLifecycle:start',
+    STOP: 'serviceLifecycle:stop',
+    RESTART: 'serviceLifecycle:restart',
+    UNINSTALL: 'serviceLifecycle:uninstall',
+    STATUS_CHANGED: 'serviceLifecycle:statusChanged',
+  },
+  // diagnostics — local host doctor checks (service/port/runtime/config/logs).
+  diagnostics: {
+    RUN: 'diagnostics:run',
+    GET_LAST: 'diagnostics:getLast',
   },
   securityAudit: {
     RUN: 'securityAudit:run',
@@ -1122,6 +1166,11 @@ export const RPC_CHANNELS = {
     FINALIZE: 'meetings:finalize',
     ADD_MANUAL_NOTE: 'meetings:addManualNote',
     CORRECT_SEGMENT: 'meetings:correctSegment',
+    OBSERVE_START: 'meetings:observeStart',
+    OBSERVE_STOP: 'meetings:observeStop',
+    OBSERVE_STATE: 'meetings:observeState',
+    SESSION_SUMMARY: 'meetings:sessionSummary',
+    TRANSCRIPT_LINES: 'meetings:transcriptLines',
   },
   entities: {
     /** Query/command dispatcher for the local entity-link store. */
