@@ -87,3 +87,21 @@ Persisted-идентификаторы; каждый пункт требует �
 - RPC-каналы `siyuan.*` и `fabric:infisical*`; провайдер секретов `'infisical'`.
 - Имена классов/файлов: `OmpAgent`, `omp-*.ts`, `SiyuanKernelClient`, `providers/siyuan/**`, `infisical-provider.ts`, модули `conation/**`; ключи UI `menu.*CraftAgents`, `security.finding.sourceCraft`, `extensions.runtime.craft-native|craft-sandbox`, `extensions.runtime.siyuan-plugin`.
 - Инженерные доки `docs/omp-rpc-notes.md`, `docs/omp-integration-gap.md`.
+
+## Проверки (выполнены локально)
+
+| Проверка | Результат |
+|---|---|
+| `bun run scripts/check-config-paths.ts` | чисто (в этом изменении исправлена одна собственная находка гейта) |
+| `lint-baseline.ts --check` (ESLint ratchet) | OK — нет новых нарушений, на 118 меньше базлайна |
+| Terminology linter (`terms.ts`) | 10/10 зелёных; на main было 275 нарушений, сейчас 0 |
+| `packages/shared` `tsc --noEmit` | 0 ошибок |
+| i18n-сьюты (90 файлов) + docs-placeholder + config-сьюты | зелёные |
+| CLI-сьюта | 110 pass / 2 fail — те же 2 падают на чистом main; здесь +1 новый проходящий тест |
+| `typecheck:all` | все шаги прошли; шаг `workspace-service` падает **идентично** на чистом main (7c4a0c85f) — пре-существующая краснота |
+| Браузерные фикстуры и Radix-тесты (A/B, одинаковые свежие `node_modules`) | `kernel-availability.browser` 5 fail / `AppearanceSettingsPage` 3 fail — **идентично на main** |
+| Агентные `omp-*` интеграционные тесты | падают по таймауту (внутренние дедлайны 5 с против 30–150 с при нагрузке); точечный A/B затронутого теста падает так же на main |
+| Сборка рендерера + скан бандла | `Infisical`/`SiYuan`/`lukilabs`/`craft-agents-oss` в бандле — только интеграционные привязки (см. ниже); `Rox CLI` — 73 вхождения |
+| Browser-target сборка `doc-links` | 0 ссылок на `node:fs` (модуль снова import-free) |
+
+Bundle-остатки, подтверждённые как привязки: манифест toolchain для Infisical CLI (`github.com/Infisical/cli`, `app.infisical.com`), npm-URL пиннутого рантайма `@oh-my-pi/pi-coding-agent@18.4.12`, provider-ids `siyuan-cloud`/`siyuan-local`, deep-links `conation.dev`, коды ошибок и env внешнего рантайма.
