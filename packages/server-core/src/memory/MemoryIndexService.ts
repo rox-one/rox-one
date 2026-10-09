@@ -195,6 +195,11 @@ export class MemoryIndexService {
     return join(this.deps.workspaceRoot, 'memory')
   }
 
+  /** Workspace root this index is bound to (e.g. the wiki store derives its dir from it). */
+  get workspaceRoot(): string {
+    return this.deps.workspaceRoot
+  }
+
   private get backendInstance(): MemoryIndexBackend {
     return (this.backend ??= createMemoryIndexBackend(this.memoryDir))
   }

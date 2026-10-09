@@ -64,6 +64,9 @@ export const SESSION_MCP_ESSENTIAL_SUFFIXES = new Set([
   'memory_search',
   'memory_get',
   'memory_forget',
+  'wiki_search',
+  'wiki_get',
+  'wiki_apply',
 ])
 
 export function isEssentialHostTool(name: string): boolean {

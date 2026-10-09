@@ -16,7 +16,7 @@ import type {
   MicrosoftService,
   McpSourceConfig,
 } from './types.ts';
-import type { MemorySearchToolArgs, MemoryGetToolArgs, MemoryForgetToolArgs } from './tool-defs.ts';
+import type { MemorySearchToolArgs, MemoryGetToolArgs, MemoryForgetToolArgs, WikiSearchToolArgs, WikiGetToolArgs, WikiApplyToolArgs } from './tool-defs.ts';
 
 // ============================================================
 // Source Credential Types
@@ -162,6 +162,20 @@ export interface MemoryToolCallbacks {
    * backend that only wires recall degrades to a typed "unavailable" result.
    */
   forget?(args: MemoryForgetToolArgs): Promise<ToolResult>;
+  /**
+   * c1.7 workspace wiki: evidence-backed claims (`wiki_search` / `wiki_get` /
+   * `wiki_apply`). Nested and optional — a backend that wires only the chunk
+   * index leaves the wiki tools reporting a typed "unavailable" result, so they
+   * are effectively listed only when these callbacks are wired.
+   */
+  wiki?: MemoryWikiCallbacks;
+}
+
+/** c1.7 — workspace wiki callbacks (claims/evidence + lint surface). */
+export interface MemoryWikiCallbacks {
+  search(args: WikiSearchToolArgs): Promise<ToolResult>;
+  get(args: WikiGetToolArgs): Promise<ToolResult>;
+  apply(args: WikiApplyToolArgs): Promise<ToolResult>;
 }
 
 // ============================================================
