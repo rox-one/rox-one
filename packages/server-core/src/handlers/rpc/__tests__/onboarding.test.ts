@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock } from 'bun:test'
+import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
@@ -13,7 +13,9 @@ let localOmpBlocked = false
 let accountVaultRegistered = true
 let cloudRequired = true
 
+const actualAuth = await import('@rox/shared/auth')
 mock.module('@rox/shared/auth', () => ({
+  ...actualAuth,
   LOCAL_ROX_CALLER: { issuer: 'rox:local-electron', subject: 'installation' },
   isRoxCloudRequired: () => cloudRequired,
   peekRoxAccountAuthority: () => accountVaultRegistered ? ({ state: async () => ({ connected: cloudConnected, account: null }) }) : undefined,
@@ -75,7 +77,9 @@ mock.module('@rox/shared/auth', () => ({
   },
 }))
 
+const actualConfig = await import('@rox/shared/config')
 mock.module('@rox/shared/config', () => ({
+  ...actualConfig,
   isSetupDeferred: () => {
     setupDeferredReadCount += 1
     return setupDeferred
@@ -85,8 +89,11 @@ mock.module('@rox/shared/config', () => ({
     setupDeferred = deferred
   },
 }))
+afterAll(() => { mock.module('@rox/shared/config', () => actualConfig) })
 
+const actualCredentials = await import('@rox/shared/credentials')
 mock.module('@rox/shared/credentials', () => ({
+  ...actualCredentials,
   getCredentialManager: () => ({
     setLlmOAuth: async () => {},
     setClaudeOAuthCredentials: async () => {},
@@ -94,9 +101,16 @@ mock.module('@rox/shared/credentials', () => ({
   }),
 }))
 
+const actualMcp = await import('@rox/shared/mcp')
 mock.module('@rox/shared/mcp', () => ({
+  ...actualMcp,
   validateMcpConnection: async () => ({ success: true }),
 }))
+afterAll(() => {
+  mock.module('@rox/shared/auth', () => actualAuth)
+  mock.module('@rox/shared/credentials', () => actualCredentials)
+  mock.module('@rox/shared/mcp', () => actualMcp)
+})
 
 type Handler = (ctx: unknown, ...args: unknown[]) => unknown | Promise<unknown>
 

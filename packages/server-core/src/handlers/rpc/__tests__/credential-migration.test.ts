@@ -1,4 +1,4 @@
-import { describe, expect, it, mock } from 'bun:test'
+import { afterAll, describe, expect, it, mock } from 'bun:test'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 
 const previewFn = mock(async () => ({
@@ -49,7 +49,14 @@ const rollbackFn = mock(async (migrationId: string) => ({
   invalid: 0,
 }))
 
+// mock.module is process-global and bun never resets module mocks, so a partial
+// factory breaks every later suite that imports another named export
+// (e.g. applyTrustedHttpHeader via fabric -> workgraph). We must spread the real
+// module; dynamic import is deliberate — a static import is hoisted under the
+// mock and would resolve to the mock itself (test-module-loading exception).
+const actualCredentials = await import('@rox/shared/credentials')
 mock.module('@rox/shared/credentials', () => ({
+  ...actualCredentials,
   getCredentialManager: () => ({
     checkHealth: async () => ({ healthy: true, issues: [] }),
     list: async () => [],
@@ -60,6 +67,7 @@ mock.module('@rox/shared/credentials', () => ({
   getCredentialMigrationStatus: statusFn,
   rollbackCredentialMigration: rollbackFn,
 }))
+afterAll(() => { mock.module('@rox/shared/credentials', () => actualCredentials) })
 
 const {
   HANDLED_CHANNELS,

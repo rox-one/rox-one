@@ -7,7 +7,7 @@
  * - envelope get/upsert/list round-trip
  */
 import '../memory-test-setup'
-import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
+import { afterAll, afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { mkdtempSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -38,7 +38,9 @@ import {
 const credentials = new Map<string, { value: string }>()
 let workspaceRoot: string
 
+const actualCredentials = await import('@rox/shared/credentials')
 mock.module('@rox/shared/credentials', () => ({
+  ...actualCredentials,
   getCredentialManager: () => ({
     async get(id: CredentialId) {
       return credentials.get(`${id.type}::${id.workspaceId}::${id.sourceId}`) ?? null
@@ -50,12 +52,18 @@ mock.module('@rox/shared/credentials', () => ({
   }),
 }))
 
+const actualConfig = await import('@rox/shared/config')
 mock.module('@rox/shared/config', () => ({
+  ...actualConfig,
   getWorkspaceByNameOrId: (id: string) =>
     id === 'ws1' ? { id: 'ws1', name: 'ws1', rootPath: workspaceRoot } : null,
   getWorkspaces: () =>
     workspaceRoot ? [{ id: 'ws1', name: 'ws1', rootPath: workspaceRoot }] : [],
 }))
+afterAll(() => {
+  mock.module('@rox/shared/config', () => actualConfig)
+  mock.module('@rox/shared/credentials', () => actualCredentials)
+})
 
 const DOC_NEEDS: KnowledgeRef = { scheme: 'siyuan', kind: 'document', id: 'doc-needs' }
 const DOC_OK: KnowledgeRef = { scheme: 'siyuan', kind: 'document', id: 'doc-ok' }

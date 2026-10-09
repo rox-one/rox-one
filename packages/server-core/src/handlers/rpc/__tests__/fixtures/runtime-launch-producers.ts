@@ -19,8 +19,17 @@ const { SessionManager } = await import('../../../../sessions/SessionManager')
 const { RuntimeTraceService } = await import('../../../../sessions/runtime-trace/service')
 const { isRuntimeEvent } = await import('@rox/core/runtime-trace')
 const { nativeRuntimeTraceEvent, nativeRuntimeTraceRunSummary } = await import('../../native-session-scope')
+const { sanitizeRuntimeTrace } = await import('../../../../sessions/runtime-trace/privacy')
 const privatePath = join(workspace, 'host-generator-template.txt')
 writeFileSync(privatePath, 'Isolated private generator template')
+// automations:test with an automationId resolves the saved matcher before running
+// (automations.ts TEST throws 'Automation not found' otherwise).
+writeFileSync(join(workspace, 'automations.json'), JSON.stringify({
+  version: 2,
+  automations: {
+    SessionStatusChange: [{ id: 'saved-automation-id', name: 'Saved fixture automation', enabled: true, actions: [{ type: 'prompt', prompt: 'Saved fixture prompt' }] }],
+  },
+}))
 const handlers = new Map<string, (context: RequestContext, ...args: unknown[]) => unknown>()
 const listeners = new Set<(event: SessionCompletionEvent) => void>()
 const sends: Parameters<ISessionManager['sendMessage']>[] = []
@@ -103,7 +112,10 @@ for (const scheduledAt of ['2026-11-01T05:30:00.000Z', '2026-11-01T06:30:00.000Z
   const run = await trace.begin(`scheduled-${scheduledAt}`, 'Observed scheduler action', { launch: observed })
   const snapshot = await trace.getSnapshot({ workspaceId: 'launch-workspace', sessionId: run.sessionId })
   const accepted = snapshot.events.find(event => event.kind === 'run.accepted')
-  assert.deepEqual(accepted?.kind === 'run.accepted' && accepted.payload.launch, observed)
+  // The journal stores the sanitized launch (privacy.ts rebuilds records with
+  // Object.create(null)); bun >=1.4 deepStrictEqual now compares prototypes like
+  // Node, so compare against the sanitized form rather than the live object.
+  assert.deepEqual(accepted?.kind === 'run.accepted' && accepted.payload.launch, sanitizeRuntimeTrace(observed))
 }
 for (const pending of [{}, { scheduledAt: 'invalid schedule instant' }, { scheduledAt: '1969-12-31T23:59:59.000Z' }]) {
   const observed = launch(pending)

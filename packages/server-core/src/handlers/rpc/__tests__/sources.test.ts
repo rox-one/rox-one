@@ -16,7 +16,7 @@
  * against the sandboxed CRAFT_CONFIG_DIR (env-lazy store paths).
  */
 import '../memory-test-setup' // must run before any module reading CRAFT_CONFIG_DIR
-import { beforeEach, describe, expect, it, mock } from 'bun:test'
+import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -33,7 +33,9 @@ import { resolveConfigDir } from '@rox/shared/config/paths'
 // Credential id string ↔ in-memory store key (`type::workspaceId::sourceId`).
 const credentials = new Map<string, { value: string }>()
 
+const actualCredentials = await import('@rox/shared/credentials')
 mock.module('@rox/shared/credentials', () => ({
+  ...actualCredentials,
   getCredentialManager: () => ({
     async get(id: CredentialId) {
       return credentials.get(`${id.type}::${id.workspaceId}::${id.sourceId}`) ?? null
@@ -52,11 +54,17 @@ const mockWorkspaces = [
   { id: 'ws-active', name: 'ws-active', rootPath: '' },
 ]
 
+const actualConfig = await import('@rox/shared/config')
 mock.module('@rox/shared/config', () => ({
+  ...actualConfig,
   getWorkspaceByNameOrId: (nameOrId: string) =>
     mockWorkspaces.find((w) => w.id === nameOrId || w.name === nameOrId) ?? null,
   getWorkspaces: () => [...mockWorkspaces],
 }))
+afterAll(() => {
+  mock.module('@rox/shared/config', () => actualConfig)
+  mock.module('@rox/shared/credentials', () => actualCredentials)
+})
 
 function writeConfigDefaults(): void {
   writeFileSync(join(resolveConfigDir(), 'config-defaults.json'), JSON.stringify({

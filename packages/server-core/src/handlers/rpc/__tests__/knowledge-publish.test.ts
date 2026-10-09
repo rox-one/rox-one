@@ -34,7 +34,9 @@ import { HANDLED_CHANNELS, registerKnowledgeHandlers, __setKnowledgeTestConstruc
 const credentials = new Map<string, { value: string }>()
 let workspaceRoot: string
 
+const actualCredentials = await import('@rox/shared/credentials')
 mock.module('@rox/shared/credentials', () => ({
+  ...actualCredentials,
   getCredentialManager: () => ({
     async get(id: CredentialId) {
       return credentials.get(`${id.type}::${id.workspaceId}::${id.sourceId}`) ?? null
@@ -46,12 +48,18 @@ mock.module('@rox/shared/credentials', () => ({
   }),
 }))
 
+const actualConfig = await import('@rox/shared/config')
 mock.module('@rox/shared/config', () => ({
+  ...actualConfig,
   getWorkspaceByNameOrId: (id: string) =>
     id === 'ws1' ? { id: 'ws1', name: 'ws1', rootPath: workspaceRoot } : null,
   getWorkspaces: () =>
     workspaceRoot ? [{ id: 'ws1', name: 'ws1', rootPath: workspaceRoot }] : [],
 }))
+afterAll(() => {
+  mock.module('@rox/shared/config', () => actualConfig)
+  mock.module('@rox/shared/credentials', () => actualCredentials)
+})
 
 /** Seed an InMemory provider so prepare/apply do not depend on SiYuan kernel fixtures. */
 function useInMemoryProvider() {
