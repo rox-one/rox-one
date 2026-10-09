@@ -1,4 +1,4 @@
-import { describe, expect, it, mock } from 'bun:test'
+import { afterAll, describe, expect, it, mock } from 'bun:test'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 
 const previewFn = mock(async () => ({
@@ -49,7 +49,12 @@ const rollbackFn = mock(async (migrationId: string) => ({
   invalid: 0,
 }))
 
+// Real namespace must be captured before the mock is registered; a static import
+// would be hoisted past this file's mock.module ordering.
+const actualCredentials = await import('@rox/shared/credentials')
+
 mock.module('@rox/shared/credentials', () => ({
+  ...actualCredentials,
   getCredentialManager: () => ({
     checkHealth: async () => ({ healthy: true, issues: [] }),
     list: async () => [],
@@ -200,3 +205,5 @@ describe('credential migration RPC handlers', () => {
     assertSecretFree(result)
   })
 })
+
+afterAll(() => mock.restore())
