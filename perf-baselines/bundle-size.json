@@ -4,83 +4,83 @@
   "budgets": {
     "EntityPicker": {
       "totalRawBytes": 414236,
-      "gzipTotalBytes": 141129
+      "gzipTotalBytes": 141132
     },
     "MarkdownOpenUIBlock": {
       "totalRawBytes": 2278852,
-      "gzipTotalBytes": 618214
+      "gzipTotalBytes": 618245
     },
     "PDFPreviewOverlay": {
       "totalRawBytes": 469720,
-      "gzipTotalBytes": 138903
+      "gzipTotalBytes": 138901
     },
     "ar": {
-      "totalRawBytes": 728831,
-      "gzipTotalBytes": 184139
+      "totalRawBytes": 735786,
+      "gzipTotalBytes": 185648
     },
     "cpp": {
       "totalRawBytes": 626122,
       "gzipTotalBytes": 43805
     },
     "de": {
-      "totalRawBytes": 660102,
-      "gzipTotalBytes": 177644
+      "totalRawBytes": 666549,
+      "gzipTotalBytes": 179122
     },
     "emacs-lisp": {
       "totalRawBytes": 779902,
       "gzipTotalBytes": 197173
     },
     "en": {
-      "totalRawBytes": 620681,
-      "gzipTotalBytes": 159768
+      "totalRawBytes": 626521,
+      "gzipTotalBytes": 161055
     },
     "es": {
-      "totalRawBytes": 657424,
-      "gzipTotalBytes": 175580
+      "totalRawBytes": 663642,
+      "gzipTotalBytes": 176980
     },
     "fr": {
-      "totalRawBytes": 669215,
-      "gzipTotalBytes": 178150
+      "totalRawBytes": 675582,
+      "gzipTotalBytes": 179589
     },
     "hu": {
-      "totalRawBytes": 671639,
-      "gzipTotalBytes": 182771
+      "totalRawBytes": 678077,
+      "gzipTotalBytes": 184272
     },
     "index": {
       "totalRawBytes": 3217308,
-      "gzipTotalBytes": 976535
+      "gzipTotalBytes": 976527
     },
     "ja": {
-      "totalRawBytes": 710487,
-      "gzipTotalBytes": 183200
+      "totalRawBytes": 717604,
+      "gzipTotalBytes": 184727
     },
     "katex": {
       "totalRawBytes": 261117,
       "gzipTotalBytes": 77061
     },
     "ko": {
-      "totalRawBytes": 671934,
-      "gzipTotalBytes": 178369
+      "totalRawBytes": 678513,
+      "gzipTotalBytes": 179824
     },
     "main": {
-      "totalRawBytes": 754786,
-      "gzipTotalBytes": 204768
+      "totalRawBytes": 741971,
+      "gzipTotalBytes": 201455
     },
     "pl": {
-      "totalRawBytes": 653544,
-      "gzipTotalBytes": 180124
+      "totalRawBytes": 659804,
+      "gzipTotalBytes": 181623
     },
     "playground": {
       "totalRawBytes": 777269,
-      "gzipTotalBytes": 284606
+      "gzipTotalBytes": 284607
     },
     "project-authority": {
-      "totalRawBytes": 2720974,
-      "gzipTotalBytes": 709013
+      "totalRawBytes": 2728787,
+      "gzipTotalBytes": 710446
     },
     "ru": {
-      "totalRawBytes": 883949,
-      "gzipTotalBytes": 200799
+      "totalRawBytes": 891734,
+      "gzipTotalBytes": 202486
     },
     "wasm": {
       "totalRawBytes": 634427,
@@ -91,12 +91,12 @@
       "gzipTotalBytes": 77357
     },
     "zh-Hans": {
-      "totalRawBytes": 613640,
-      "gzipTotalBytes": 173998
+      "totalRawBytes": 619460,
+      "gzipTotalBytes": 175382
     },
     "zh-Hant": {
-      "totalRawBytes": 616407,
-      "gzipTotalBytes": 175215
+      "totalRawBytes": 622230,
+      "gzipTotalBytes": 176605
     }
   },
   "stylesheets": {
@@ -105,14 +105,14 @@
       "gzipTotalBytes": 33330
     },
     "index": {
-      "totalRawBytes": 389497,
-      "gzipTotalBytes": 62866
+      "totalRawBytes": 389967,
+      "gzipTotalBytes": 62920
     }
   },
   "totals": {
-    "jsRawBytes": 33922457,
-    "jsGzipBytes": 9168187,
-    "cssRawBytes": 798477,
-    "cssGzipBytes": 121210
+    "jsRawBytes": 34043748,
+    "jsGzipBytes": 9198728,
+    "cssRawBytes": 798947,
+    "cssGzipBytes": 121264
   }
 }

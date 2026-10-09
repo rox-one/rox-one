@@ -695,7 +695,12 @@ export const EXPECTED_CHANNELS: string[] = [
   'pluginBridge:openCompat',
   'pluginBridge:setEnabled',
   'pluginBridge:uninstallBazaar',
+  'podcast:audio',
+  'podcast:audioUrl',
+  'podcast:cancel',
+  'podcast:episodes',
   'podcast:job',
+  'podcast:start',
   'power:getKeepAwake',
   'power:setKeepAwake',
   'preferences:read',
@@ -1026,4 +1031,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'workspaces:updateRemote',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1022
+export const EXPECTED_CHANNEL_COUNT = 1027
