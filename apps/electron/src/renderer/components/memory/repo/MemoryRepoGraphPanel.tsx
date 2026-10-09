@@ -29,10 +29,10 @@ export type MemoryGraphFlowNode = Node<MemoryGraphNodeData, 'memoryNode'>
 const KIND_TONE: Record<MemoryRepoGraph['nodes'][number]['kind'], string> = {
   lesson: 'border-accent/40 bg-accent/12 text-accent',
   topic: 'border-success/40 bg-success/12 text-success',
-  context: 'border-warning/40 bg-warning/12 text-warning',
-  session: 'border-foreground/20 bg-foreground/8 text-text-secondary',
+  context: 'border-status-warning/40 bg-status-warning/12 text-status-warning',
+  session: 'border-border-strong bg-foreground-10 text-text-secondary',
   note: 'border-accent/25 bg-accent/10 text-accent',
-  file: 'border-foreground/15 bg-background text-foreground/90',
+  file: 'border-border-strong bg-background text-foreground-90',
 }
 
 const LEGEND_KINDS: Array<MemoryRepoGraph['nodes'][number]['kind']> = ['lesson', 'topic', 'context', 'session', 'note', 'file']

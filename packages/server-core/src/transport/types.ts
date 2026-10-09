@@ -89,7 +89,7 @@ export interface RpcClient {
    * only, so a long-running handler is not cut off by the default 30 s bound.
    * Optional: lightweight adapters may omit it; callers fall back to invoke().
    */
-  invokeWithTimeout?(channel: string, timeoutMs: number, ...args: any[]): Promise<any>
+  invokeWithTimeout?(channel: string, timeoutMs: number, ...args: unknown[]): Promise<unknown>
   on(channel: string, callback: (...args: any[]) => void): () => void
   handleCapability(channel: string, handler: (...args: any[]) => Promise<any> | any): void
 }

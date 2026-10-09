@@ -208,7 +208,7 @@ export function MemoryRepoSearchOverlay({
           <FileText aria-hidden="true" className="icon-caption shrink-0 text-text-muted" />
           <span className="min-w-0 flex-1 truncate font-mono">{row.path}</span>
           {row.node.badges?.map((badge) => (
-            <span key={badge} className="shrink-0 rounded-[var(--radius-control)] border border-border-strong px-1 text-caption text-text-muted">{t(`memory.repo.file.badge${badge === 'edited' ? 'Edited' : 'Dreamed'}`)}</span>
+            <span key={badge} className="shrink-0 rounded-[var(--radius-control)] border border-border-subtle px-1 text-caption text-text-muted">{t(`memory.repo.file.badge${badge === 'edited' ? 'Edited' : 'Dreamed'}`)}</span>
           ))}
         </button>
       )
@@ -277,7 +277,7 @@ export function MemoryRepoSearchOverlay({
     // eslint-disable-next-line rox/prefer-primitives -- inline ⌘K palette: it mounts inside its host and owns ↑/↓/Enter/Esc; a portaled Dialog/Sheet would move the DOM out of the mount container the overlay suite queries and add a focus trap this keyboard-first palette does not use
     <div className="fixed inset-0 z-modal flex justify-center bg-black/30 pt-[10vh]" role="dialog" aria-modal="true" aria-label={t('memory.repo.search.placeholder')} data-testid="memory-repo-search" onKeyDown={onKeyDown}>
       <div className="absolute inset-0" onClick={close} aria-hidden="true" />
-      <div className="relative m-0 h-fit w-[min(640px,92vw)] overflow-hidden rounded-[var(--radius-control)] border border-border bg-popover shadow-strong">
+      <div className="relative m-0 h-fit w-[min(640px,92vw)] overflow-hidden rounded-[var(--radius-control)] border border-border bg-popover shadow-2xl">
         <div className="flex items-center gap-2 border-b border-border/60 px-3">
           <Search aria-hidden="true" className="icon-toolbar shrink-0 text-text-muted" />
           <input

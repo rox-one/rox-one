@@ -10,7 +10,7 @@
  */
 import { successResponse, errorResponse, type MemoryToolCallbacks, type MemoryWikiCallbacks } from '@rox/session-tools-core'
 import type { SessionMemoryMode } from '@rox/core/types'
-import type { WikiClaim, WikiClaimEvidence, WikiMutation } from '@rox/shared/memory/types'
+import type { WikiClaimEvidence, WikiMutation } from '@rox/shared/memory/types'
 import type { MemoryForgetResult } from '@rox/shared/memory/types'
 import { join } from 'path'
 import { isMemoryOriginEligibleForAutomaticInjection } from './provenance-gate'
