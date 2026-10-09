@@ -42,19 +42,30 @@ describe('titlebar mode pill layout', () => {
 })
 
 describe('titlebar mode pill source contract', () => {
-  it('renders every mode in one pill with no overflow menu', () => {
-    // W1-07 (#1504): flag-gated modes come from the reactive shared list
-    // (flag context keys + late registrations), see platform/useModes.ts.
+  it('renders the composition pill with a per-item context menu', () => {
+    // W1.4 (D1): membership comes from the composition module, not a hardcoded
+    // mode list; each item carries a Radix context menu for pin/exclude.
     expect(modeBar).toContain('useShellModes()')
+    expect(modeBar).toContain('visiblePillSurfaces(')
+    expect(modeBar).toContain('ContextMenu')
     expect(modeBar).not.toContain('listPinnedModes')
-    expect(modeBar).not.toContain('DropdownMenu')
     expect(modeBar).toContain('rox-mode-pill-indicator')
+    // No literal lucide stroke width — the shared `svg.lucide` token wins.
+    expect(modeBar).not.toContain('strokeWidth')
   })
 
   it('is no-drag and keeps high contrast accessible', () => {
     expect(pillCss).toContain('-webkit-app-region: no-drag')
     expect(pillCss).not.toMatch(/border:\s*1px/)
     expect(pillCss).toContain('html[data-contrast="high"] .rox-mode-pill-indicator')
+  })
+
+  it('takes glyph, control and radius geometry from tokens', () => {
+    expect(pillCss).toContain('width: var(--icon-toolbar)')
+    expect(pillCss).toContain('height: var(--icon-toolbar)')
+    expect(pillCss).toContain('height: var(--control-sm)')
+    expect(pillCss).toContain('height: var(--control-md)')
+    expect(pillCss).toContain('border-radius: var(--radius-control)')
   })
 
   it('mounts the pill centered in the titlebar, outside the left group', () => {
