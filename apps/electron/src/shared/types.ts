@@ -3940,7 +3940,7 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
 
   if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'home') return { navigator: 'home', details: null }
-  if (key === 'playbooks') return { navigator: 'playbooks', details: null }
+if (key === 'playbooks') return { navigator: 'playbooks', details: null }
   if (key === 'developers') return { navigator: 'developers', details: null }
   if (key.startsWith('developers?repo=')) {
     const devSpaceRepoId = decodeURIComponent(key.slice('developers?repo='.length))

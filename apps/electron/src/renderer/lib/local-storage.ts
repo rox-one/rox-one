@@ -154,7 +154,7 @@ export const KEYS = {
   // W1-07 (#1504): generic per-id workbench flag store for flags without a
   // dedicated key (`craft-workbench-flag:<flag id>`, e.g. workbench.mode.messenger.v1).
   workbenchFlag: 'workbench-flag',
-  // Developer Space + Playbooks (spec 2026-10-09) — renderer-only state; the
+// Developer Space + Playbooks (spec 2026-10-09) — renderer-only state; the
   // master flags default OFF and only the user enables them explicitly.
   devSpaceV1: 'dev-space-v1',
   devSpaceReminderState: 'dev-space-reminder-state',

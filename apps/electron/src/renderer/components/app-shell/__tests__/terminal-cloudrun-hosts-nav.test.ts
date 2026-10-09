@@ -42,12 +42,15 @@ const SURFACE_KEYS = [
 
 // Execute the production dispatcher with context/hooks and leaf host boundaries
 // controlled. This checks addresses delivered to hosts, not installed UI state.
+// PERF-10 (#1577): the dispatcher lives in `SurfaceRoutePanel` (the keep-alive
+// host in `MainContentPanel` only retains it), so the harness drives that.
 function dispatch(route: string): React.ReactElement {
   const file = ts.createSourceFile('MainContentPanel.tsx', mainContentSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-  const declaration = file.statements.find((statement): statement is ts.FunctionDeclaration =>
-    ts.isFunctionDeclaration(statement) && statement.name?.text === 'MainContentPanel')
-  if (!declaration) throw new Error('MainContentPanel production dispatcher is missing')
-  const javascript = ts.transpileModule(declaration.getText(file).replace(/^export /, '') + ';return MainContentPanel', {
+  const declaration = file.statements.find((statement): statement is ts.VariableStatement =>
+    ts.isVariableStatement(statement)
+    && statement.declarationList.declarations.some(item => item.name.getText(file) === 'SurfaceRoutePanel'))
+  if (!declaration) throw new Error('SurfaceRoutePanel production dispatcher is missing')
+  const javascript = ts.transpileModule(declaration.getText(file).replace(/^export /, '') + ';return SurfaceRoutePanel', {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None, jsx: ts.JsxEmit.React },
   }).outputText
   const selection = {
@@ -73,8 +76,23 @@ function dispatch(route: string): React.ReactElement {
     TourPanelScope: ({ children }: { children: React.ReactNode }) => children, sourceSelection: selection, skillSelection: selection, automationSelection: selection,
     useSelectedResourceAvailability: () => ({ status: 'ready', retry() {} }),
   }
-  const panel = Function(...Object.keys(bindings), javascript)(...Object.values(bindings))
-  return panel({ navStateOverride: state })
+  const evaluated = Function(...Object.keys(bindings), javascript)(...Object.values(bindings)) as
+    unknown
+  // PERF-10: the dispatcher is memoized; drive the inner function directly.
+  const panel = (typeof evaluated === 'function'
+    ? evaluated
+    : (evaluated as { type?: unknown }).type) as (props: Record<string, unknown>) => React.ReactElement
+  if (typeof panel !== 'function') throw new Error('SurfaceRoutePanel is not callable')
+  const routeKey = panelRouteKey(state, { activeWorkspaceId: 'workspace-owner', unavailableWorkspaceSlug: undefined, activeSessionWorkingDirectory: undefined })
+  return panel({
+    navState: state,
+    requestedNavState: state,
+    routeKey,
+    panelId: 'shell',
+    className: undefined,
+    isSidebarAndNavigatorHidden: false,
+    openSendDialog() {},
+  })
 }
 
 function element(root: unknown, type: string): React.ReactElement<Record<string, unknown>> | undefined {

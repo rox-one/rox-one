@@ -54,7 +54,7 @@ export const DEDICATED_FLAG_ATOMS: ReadonlyMap<string, Atom<boolean>> = new Map<
   [WORKBENCH_FLAG.harnessAgentTeams, featureWorkbenchHarnessAgentTeamsAtom],
   // W1-02 (#1499) owns entities.links.v1: its Settings toggle / storage key.
   [WORKBENCH_FLAG.entitiesLinksV1, featureEntitiesLinksV1Atom],
-  // Spec 2026-10-09: Developer Space master (devspace.v1) and Playbooks master
+// Spec 2026-10-09: Developer Space master (devspace.v1) and Playbooks master
   // (playbooks.v1) own dedicated atoms; their sub-flags stay in the generic store.
   [WORKBENCH_FLAG.devSpaceV1, devSpaceEnabledAtom],
   [WORKBENCH_FLAG.playbooksV1, playbooksEnabledAtom],

@@ -6,6 +6,8 @@ export const PERF_MARK_NAMES = [
   'browser_chrome',
   'dropdown_open',
   'canvas_layout',
+  'surface_revisit',
+  'surface_first_warm',
 ] as const
 
 export type PerfMarkName = (typeof PERF_MARK_NAMES)[number]

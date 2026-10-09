@@ -200,7 +200,7 @@ export const routes = {
     /** Learning view (learning navigator — self-learning dashboard, PRD §25-30) */
     learning: () => 'learning' as const,
 
-    /**
+/**
      * Developer Space home (2026-10-09 pack, D2) — `developers`, or
      * `developers?repo=<id>` to focus one repo workspace.
      */

@@ -22,8 +22,8 @@ import type { CustomEndpointApi } from '@config/llm-connections'
 
 export type OnboardingStep =
   | 'welcome'
-  | 'role'
   | 'questionnaire'
+  | 'role'
   | 'rox-connect'
   | 'git-bash'
   | 'provider-select'
@@ -210,7 +210,7 @@ export function OnboardingWizard({
           </div>
         )
 
-      case 'questionnaire':
+case 'questionnaire':
         return (
           <QuestionnaireStep
             onContinue={(payload) => {

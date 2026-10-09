@@ -4,12 +4,12 @@
  * Manages the state machine for the onboarding wizard.
  *
  * First run (initialStep 'welcome'):
- * 1. Welcome — the name screen («Начать»); collects public handle + organization,
+* 1. Welcome — the name screen («Начать»); collects public handle + organization,
  *    reserved rox.one addresses, coin bonuses
- * 2. Questionnaire — bubble clouds (left) and permissions (right); Continue/Skip
- * 3. Role — «Who are you?» (developer + adjacent roles; skip is safe)
- * 4. Git Bash (Windows only, if not found) / Rox Connect (explicit startup gate only)
- * 5. Finish — the Rox runtime becomes the default connection automatically and
+ * 2. Questionnaire — bubble clouds (left) and permissions (right); Continue/Skip,
+ *    then the «Who are you?» role step (developer + adjacent roles; skip is safe)
+ * 3. Git Bash (Windows only, if not found) / Rox Connect (explicit startup gate only)
+ * 4. Finish — the Rox runtime becomes the default connection automatically and
  *    the app opens. There is no provider picker or completion screen.
  *
  * Settings → ИИ (initialStep 'provider-select'): provider picker →
@@ -461,15 +461,15 @@ export function useOnboarding({
         break
 
       case 'welcome':
+case 'welcome':
         // First run: the welcome screen itself collects the public identity
         // (nickname, organization, coins); the two-column questionnaire follows.
         setState(s => ({ ...s, step: 'questionnaire' }))
         break
 
       case 'questionnaire':
-        // The questionnaire writes the first-run preferences draft; the
-        // «Who are you?» step then delegates the git-bash / rox-connect / finish
-        // decision (nextStepAfterRole — same contract as nextStepAfterUsername).
+        // The questionnaire draft is written by the wizard; the «Who are you?»
+        // role step follows, and it delegates the git-bash / rox-connect / finish decision.
         setState(s => ({ ...s, step: 'role' }))
         break
 

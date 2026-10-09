@@ -39,7 +39,7 @@ export function panelRouteKey(navState: NavigationState, context: PanelRouteKeyC
     unavailableWorkspaceSlug,
     isSkillsNavigation(navState) ? activeSessionWorkingDirectory : null,
     ...(isSurfaceNavigation(navState) ? [navState.surface] : []),
-    // Developer Space: the focused repo changes the routed content (home vs
+// Developer Space: the focused repo changes the routed content (home vs
     // one repo workspace); append only for this navigator like `surface`.
     ...(isDevelopersNavigation(navState) ? [navState.devSpaceRepoId ?? null] : []),
     // W3.2: the calendar surface hosts Встречи; a selected meeting is distinct

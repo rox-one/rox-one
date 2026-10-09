@@ -146,7 +146,7 @@ export interface ParsedCompoundRoute {
  * handler so `rox://search?q=...` is accepted like renderer navigation.
  */
 export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'clipboard-history', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home', 'drive',
+'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'search', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'clipboard-history', 'learning', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home', 'drive',
   // Developer Space / Playbooks (2026-10-09 pack) — top-level destinations.
   'developers', 'playbooks',
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',

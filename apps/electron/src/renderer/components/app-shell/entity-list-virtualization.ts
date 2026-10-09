@@ -108,6 +108,57 @@ export function virtualEntryIndices(
   return indices
 }
 
+/**
+ * Index of the group header entry that covers the window start: the last
+ * header strictly before `startIndex`, or null when the window already starts
+ * on a header (or at the very top). Pinning it keeps the group header mounted
+ * while its group fills the scrollport, so the header's `sticky top-0` element
+ * can stay pinned exactly like in the non-windowed layout.
+ */
+export function coveringHeaderIndex<T>(
+  entries: FlattenedTableGroups<T, { key: string }>['entries'],
+  startIndex: number,
+): number | null {
+  const first = entries[startIndex]
+  if (startIndex <= 0 || !first || first.kind === 'header') return null
+  const headerIndexes: number[] = []
+  for (let index = 0; index < entries.length; index++) {
+    if (entries[index]!.kind === 'header') headerIndexes.push(index)
+  }
+  // First header at or after the window start; its predecessor covers the top.
+  let low = 0
+  let high = headerIndexes.length
+  while (low < high) {
+    const middle = (low + high) >> 1
+    if (headerIndexes[middle]! < startIndex) low = middle + 1
+    else high = middle
+  }
+  return low > 0 ? headerIndexes[low - 1]! : null
+}
+
+/**
+ * Scroll offset where each header entry's group ends: the next header entry's
+ * offset, or the list total for the last group. The header's absolutely
+ * positioned slot spans this range while the inner header keeps its own height,
+ * which is what lets `sticky top-0` stick until the next group arrives.
+ */
+export function groupEndByHeaderKey<T>(
+  entries: FlattenedTableGroups<T, { key: string }>['entries'],
+  totalHeight: number,
+): Map<string, number> {
+  const headerIndexes: number[] = []
+  for (let index = 0; index < entries.length; index++) {
+    if (entries[index]!.kind === 'header') headerIndexes.push(index)
+  }
+  const ends = new Map<string, number>()
+  headerIndexes.forEach((entryIndex, position) => {
+    const entry = entries[entryIndex]!
+    const nextIndex = headerIndexes[position + 1]
+    ends.set(entry.key, nextIndex == null ? totalHeight : entries[nextIndex]!.offset)
+  })
+  return ends
+}
+
 /** Row entry index by item key, so DOM ids can be mapped to scroll offsets. */
 export function rowEntryIndexByItemKey<T>(
   entries: FlattenedTableGroups<T, { key: string }>['entries'],
