@@ -292,8 +292,8 @@ function CollapsibleGroupHeader({
  * dropping it would make arrow nav silently dead until the user clicks a mounted row again.
  */
 export function withMountedAnchor<T, G>(
-  slice: VirtualTableEntry<T, G>[],
-  all: VirtualTableEntry<T, G>[],
+  slice: readonly VirtualTableEntry<T, G>[],
+  all: readonly VirtualTableEntry<T, G>[],
   anchorKey: string | null,
 ): VirtualTableEntry<T, G>[] {
   if (!anchorKey || slice.some((entry) => entry.key === anchorKey)) return slice
