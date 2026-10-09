@@ -734,6 +734,8 @@ export const CHANNEL_MAP = {
   driveImportPause: invoke(RPC_CHANNELS.drive.IMPORT_PAUSE),
   driveImportResume: invoke(RPC_CHANNELS.drive.IMPORT_RESUME),
   driveImportStatus: invoke(RPC_CHANNELS.drive.IMPORT_STATUS),
+  driveImportAuthStart: invoke(RPC_CHANNELS.drive.IMPORT_AUTH_START),
+  driveImportAuthComplete: invoke(RPC_CHANNELS.drive.IMPORT_AUTH_COMPLETE),
 
   // Statuses
   listStatuses: invoke(RPC_CHANNELS.statuses.LIST),

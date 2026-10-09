@@ -74,11 +74,33 @@ describe('AWS SigV4 signing', () => {
       'SignedHeaders=content-type;host;x-amz-content-sha256;x-amz-date;x-amz-meta-note',
     )
   })
+
+  test('sorts the canonical query by encoded name, then value', async () => {
+    const result = await signAwsV4({
+      method: 'GET',
+      // `a` is a prefix of `a-b`: sorting the joined `name=value` strings would
+      // put `a-b=2` first, but the canonical order is by name.
+      url: 'https://s3.example/bucket?b=2&a-b=2&a=1',
+      payloadHash: EMPTY_SHA256,
+      region: 'auto',
+      accessKeyId: 'KEY',
+      secretAccessKey: 'SECRET',
+      date: new Date('2026-01-01T00:00:00Z'),
+    })
+    expect(result.canonicalRequest.split('\n')[2]).toBe('a=1&a-b=2&b=2')
+  })
 })
 
 describe('encodeObjectKeyPath', () => {
   test('encodes reserved characters but preserves separators', () => {
     expect(encodeObjectKeyPath('Folder a/b+c#d.txt')).toBe('Folder%20a/b%2Bc%23d.txt')
+  })
+
+  test('percent-encodes dot segments so they cannot escape the prefix', () => {
+    expect(encodeObjectKeyPath('job/../x')).toBe('job/%2E%2E/x')
+    expect(encodeObjectKeyPath('job/./x')).toBe('job/%2E/x')
+    // A dot inside a segment is left untouched (only whole `.`/`..` segments).
+    expect(encodeObjectKeyPath('job/a.b/x')).toBe('job/a.b/x')
   })
 })
 
@@ -158,5 +180,38 @@ describe('createS3UploadTarget', () => {
       code: 'DRIVE_IMPORT_S3_PUT_FAILED',
       status: 403,
     })
+  })
+
+  test('escapes dot segments so a key cannot escape the job prefix when signed and fetched', async () => {
+    const captured: CapturedRequest[] = []
+    const target = createS3UploadTarget({
+      ...base,
+      fetch: fixedFetch(new Response('', { status: 200 }), captured),
+    })
+    await target.put('job/../x', new Uint8Array(0), { sizeBytes: 0 })
+
+    expect(captured).toHaveLength(1)
+    const request = captured[0]!
+    // WHATWG URL normalisation would collapse `job/../x`; the escaped key is
+    // what is signed and sent so the object stays under the job prefix.
+    expect(request.url).toBe('https://acct.r2.cloudflarestorage.com/drive/job/%2E%2E/x')
+    expect(new URL('https://acct.r2.cloudflarestorage.com/drive/job/../x').pathname).toBe('/drive/x')
+
+    // The signature binds the escaped path, not the collapsed one.
+    const signing = {
+      method: 'PUT',
+      headers: { 'content-length': '0' },
+      payloadHash: EMPTY_SHA256,
+      region: 'auto',
+      accessKeyId: 'KEY',
+      secretAccessKey: 'SECRET',
+      date: new Date('2026-01-01T00:00:00Z'),
+    }
+    const escaped = await signAwsV4({ ...signing, url: request.url })
+    const collapsed = await signAwsV4({ ...signing, url: 'https://acct.r2.cloudflarestorage.com/drive/x' })
+    expect(escaped.canonicalRequest.split('\n')[1]).toBe('/drive/job/%2E%2E/x')
+    expect(collapsed.canonicalRequest.split('\n')[1]).toBe('/drive/x')
+    expect(request.headers.authorization).toBe(escaped.authorization)
+    expect(escaped.signature).not.toBe(collapsed.signature)
   })
 })

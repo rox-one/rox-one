@@ -323,13 +323,30 @@ const CLIENT_ID = 'test-client'
 interface FakeIssuer {
   issuer: string
   setNonce: (nonce: string) => void
+  /** Override minted id_token claims (`iss`/`aud`/`exp`). */
+  setClaims: (patch: { iss?: string; aud?: string | string[]; exp?: number }) => void
+  /** Sign id_tokens with a key that is NOT in the served JWKS. */
+  setBrokenSignature: (broken: boolean) => void
+  /** Rotate the signing key and served JWKS (new kid). */
+  rotateKey: () => void
+  /** How many times `/jwks` has been served. */
+  jwksRequests: () => number
   stop: () => void
 }
 
 function createFakeIssuer(): FakeIssuer {
-  const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
-  const jwk = { ...publicKey.export({ format: 'jwk' }), kid: 'test-key', use: 'sig', alg: 'RS256' }
+  const generate = (kid: string) => {
+    const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
+    const jwk = { ...publicKey.export({ format: 'jwk' }), kid, use: 'sig', alg: 'RS256' }
+    return { jwk, privateKey }
+  }
+
+  let current = generate('test-key')
+  const foreign = generateKeyPairSync('rsa', { modulusLength: 2048 })
   let nonceToSign = ''
+  let claimOverrides: { iss?: string; aud?: string | string[]; exp?: number } = {}
+  let brokenSignature = false
+  let jwksServed = 0
 
   const server: Bun.Server<undefined> = Bun.serve({
     port: 0,
@@ -345,23 +362,25 @@ function createFakeIssuer(): FakeIssuer {
         })
       }
       if (url.pathname === '/jwks') {
-        return Response.json({ keys: [jwk] })
+        jwksServed++
+        return Response.json({ keys: [current.jwk] })
       }
       if (url.pathname === '/token') {
         const now = Math.floor(Date.now() / 1000)
-        const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT', kid: 'test-key' })).toString('base64url')
+        const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT', kid: current.jwk.kid })).toString('base64url')
         const payload = Buffer.from(JSON.stringify({
-          iss: base,
-          aud: CLIENT_ID,
+          iss: claimOverrides.iss ?? base,
+          aud: claimOverrides.aud ?? CLIENT_ID,
           sub: 'rox-user-1',
           email: 'user@rox.one',
           name: 'Rox User',
           preferred_username: 'roxuser',
           nonce: nonceToSign,
           iat: now,
-          exp: now + 300,
+          exp: claimOverrides.exp ?? now + 300,
         })).toString('base64url')
-        const signature = sign('RSA-SHA256', Buffer.from(`${header}.${payload}`), privateKey).toString('base64url')
+        const signingKey = brokenSignature ? foreign.privateKey : current.privateKey
+        const signature = sign('RSA-SHA256', Buffer.from(`${header}.${payload}`), signingKey).toString('base64url')
         return Response.json({ id_token: `${header}.${payload}.${signature}` })
       }
       return new Response('not found', { status: 404 })
@@ -371,6 +390,10 @@ function createFakeIssuer(): FakeIssuer {
   return {
     issuer: `http://127.0.0.1:${server.port}`,
     setNonce: (nonce: string) => { nonceToSign = nonce },
+    setClaims: (patch) => { claimOverrides = { ...claimOverrides, ...patch } },
+    setBrokenSignature: (broken: boolean) => { brokenSignature = broken },
+    rotateKey: () => { current = generate('test-key-2') },
+    jwksRequests: () => jwksServed,
     stop: () => server.stop(true),
   }
 }
@@ -388,7 +411,7 @@ describe('WebUI OIDC (Rox ID) sessions', () => {
     }
   })
 
-  function createHandler(oidc?: OidcConfig) {
+  function createHandler(options?: { oidc?: OidcConfig; allowPasswordLogin?: boolean }) {
     const handler = createWebuiHandler({
       webuiDir: createTestWebuiDir(),
       secret: SECRET,
@@ -397,19 +420,23 @@ describe('WebUI OIDC (Rox ID) sessions', () => {
       wsPort: 9100,
       getHealthCheck: () => ({ status: 'ok' }),
       logger,
-      ...(oidc ? { oidc } : {}),
+      ...(options?.oidc ? { oidc: options.oidc } : {}),
+      ...(options?.allowPasswordLogin !== undefined ? { allowPasswordLogin: options.allowPasswordLogin } : {}),
     })
     HANDLERS.push(handler)
     return handler
   }
 
-  function oidcHandler() {
+  function oidcHandler(overrides?: { allowPasswordLogin?: boolean; publicUrl?: string }) {
     const issuer = createFakeIssuer()
     ISSUERS.push(issuer)
     const handler = createHandler({
-      issuer: issuer.issuer,
-      clientId: CLIENT_ID,
-      publicUrl: 'http://127.0.0.1:3100',
+      oidc: {
+        issuer: issuer.issuer,
+        clientId: CLIENT_ID,
+        publicUrl: overrides?.publicUrl ?? 'http://127.0.0.1:3100',
+      },
+      allowPasswordLogin: overrides?.allowPasswordLogin,
     })
     return { handler, issuer }
   }
@@ -418,16 +445,25 @@ describe('WebUI OIDC (Rox ID) sessions', () => {
     const res = await handler.fetch(new Request('http://127.0.0.1/api/auth/login'))
     expect(res.status).toBe(302)
     const location = new URL(res.headers.get('location')!)
+    const stateCookieHeader = res.headers.get('set-cookie')!
     return {
       url: location,
       state: location.searchParams.get('state')!,
       nonce: location.searchParams.get('nonce')!,
+      stateCookieHeader,
+      stateCookie: stateCookieHeader.split(';')[0]!,
     }
+  }
+
+  function callbackRequest(state: string, stateCookie?: string | null, code = 'auth-code') {
+    return new Request(`http://127.0.0.1/api/auth/callback?code=${code}&state=${state}`, {
+      headers: stateCookie ? { cookie: stateCookie } : {},
+    })
   }
 
   it('redirects to the IdP with PKCE, state and nonce', async () => {
     const { handler, issuer } = oidcHandler()
-    const { url, state, nonce } = await startLogin(handler)
+    const { url, state, nonce, stateCookieHeader } = await startLogin(handler)
 
     expect(url.origin).toBe(issuer.issuer)
     expect(url.pathname).toBe('/authorize')
@@ -439,20 +475,27 @@ describe('WebUI OIDC (Rox ID) sessions', () => {
     expect(url.searchParams.get('code_challenge')).toBeTruthy()
     expect(state).toBeTruthy()
     expect(nonce).toBeTruthy()
+
+    // The state cookie binds the callback to this browser.
+    expect(stateCookieHeader).toContain(`oidc_state=${state}`)
+    expect(stateCookieHeader).toContain('HttpOnly')
+    expect(stateCookieHeader).toContain('SameSite=Lax')
+    expect(stateCookieHeader).toContain('Path=/')
+    expect(stateCookieHeader).toContain('Max-Age=600')
   })
 
   it('sets a session cookie on a valid callback and authorizes protected endpoints', async () => {
     const { handler, issuer } = oidcHandler()
-    const { state, nonce } = await startLogin(handler)
+    const { state, nonce, stateCookie } = await startLogin(handler)
     issuer.setNonce(nonce)
 
-    const callback = await handler.fetch(
-      new Request(`http://127.0.0.1/api/auth/callback?code=auth-code&state=${state}`),
-    )
+    const callback = await handler.fetch(callbackRequest(state, stateCookie))
     expect(callback.status).toBe(302)
     expect(callback.headers.get('location')).toBe('/')
     const cookie = callback.headers.get('set-cookie')
     expect(cookie).toContain('craft_session=')
+    // The one-time state cookie is cleared once consumed.
+    expect(cookie).toContain('oidc_state=;')
 
     const cookieHeader = cookie!.split(';')[0]!
     const config = await handler.fetch(new Request('http://127.0.0.1/api/config', {
@@ -474,12 +517,10 @@ describe('WebUI OIDC (Rox ID) sessions', () => {
 
   it('rejects a tampered state without setting a cookie', async () => {
     const { handler, issuer } = oidcHandler()
-    await startLogin(handler)
+    const { stateCookie } = await startLogin(handler)
     issuer.setNonce('irrelevant')
 
-    const callback = await handler.fetch(
-      new Request('http://127.0.0.1/api/auth/callback?code=auth-code&state=tampered-state'),
-    )
+    const callback = await handler.fetch(callbackRequest('tampered-state', stateCookie))
     expect(callback.status).toBe(400)
     expect(callback.headers.get('set-cookie')).toBeNull()
     const body = await callback.text()
@@ -488,15 +529,167 @@ describe('WebUI OIDC (Rox ID) sessions', () => {
 
   it('rejects an id_token with the wrong nonce', async () => {
     const { handler, issuer } = oidcHandler()
-    const { state } = await startLogin(handler)
+    const { state, stateCookie } = await startLogin(handler)
     issuer.setNonce('wrong-nonce')
 
-    const callback = await handler.fetch(
-      new Request(`http://127.0.0.1/api/auth/callback?code=auth-code&state=${state}`),
-    )
+    const callback = await handler.fetch(callbackRequest(state, stateCookie))
+    expect(callback.status).toBe(400)
+    expect(callback.headers.get('set-cookie')).not.toContain('craft_session=')
+    expect(await callback.text()).toContain('Не удалось войти')
+  })
+
+  it('rejects an id_token with an invalid signature', async () => {
+    const { handler, issuer } = oidcHandler()
+    const { state, nonce, stateCookie } = await startLogin(handler)
+    issuer.setNonce(nonce)
+    issuer.setBrokenSignature(true)
+
+    const callback = await handler.fetch(callbackRequest(state, stateCookie))
+    expect(callback.status).toBe(400)
+    expect(callback.headers.get('set-cookie')).not.toContain('craft_session=')
+    expect(await callback.text()).toContain('Не удалось войти')
+  })
+
+  it('rejects an id_token with the wrong issuer', async () => {
+    const { handler, issuer } = oidcHandler()
+    const { state, nonce, stateCookie } = await startLogin(handler)
+    issuer.setNonce(nonce)
+    issuer.setClaims({ iss: 'https://evil.example' })
+
+    const callback = await handler.fetch(callbackRequest(state, stateCookie))
+    expect(callback.status).toBe(400)
+    expect(callback.headers.get('set-cookie')).not.toContain('craft_session=')
+    expect(await callback.text()).toContain('Не удалось войти')
+  })
+
+  it('rejects an id_token with the wrong audience', async () => {
+    const { handler, issuer } = oidcHandler()
+    const { state, nonce, stateCookie } = await startLogin(handler)
+    issuer.setNonce(nonce)
+    issuer.setClaims({ aud: 'some-other-client' })
+
+    const callback = await handler.fetch(callbackRequest(state, stateCookie))
+    expect(callback.status).toBe(400)
+    expect(callback.headers.get('set-cookie')).not.toContain('craft_session=')
+    expect(await callback.text()).toContain('Не удалось войти')
+  })
+
+  it('rejects an expired id_token', async () => {
+    const { handler, issuer } = oidcHandler()
+    const { state, nonce, stateCookie } = await startLogin(handler)
+    issuer.setNonce(nonce)
+    issuer.setClaims({ exp: Math.floor(Date.now() / 1000) - 3600 })
+
+    const callback = await handler.fetch(callbackRequest(state, stateCookie))
+    expect(callback.status).toBe(400)
+    expect(callback.headers.get('set-cookie')).not.toContain('craft_session=')
+    expect(await callback.text()).toContain('Не удалось войти')
+  })
+
+  it('rejects a callback with no oidc_state cookie', async () => {
+    const { handler, issuer } = oidcHandler()
+    const { state, nonce } = await startLogin(handler)
+    issuer.setNonce(nonce)
+
+    const callback = await handler.fetch(callbackRequest(state, null))
     expect(callback.status).toBe(400)
     expect(callback.headers.get('set-cookie')).toBeNull()
     expect(await callback.text()).toContain('Не удалось войти')
+  })
+
+  it('rejects a callback carrying a foreign oidc_state cookie', async () => {
+    const { handler, issuer } = oidcHandler()
+    const { state, nonce } = await startLogin(handler)
+    issuer.setNonce(nonce)
+
+    const callback = await handler.fetch(callbackRequest(state, 'oidc_state=attacker-controlled'))
+    expect(callback.status).toBe(400)
+    expect(callback.headers.get('set-cookie')).toBeNull()
+    expect(await callback.text()).toContain('Не удалось войти')
+  })
+
+  it('rejects a replayed state on the second callback', async () => {
+    const { handler, issuer } = oidcHandler()
+    const { state, nonce, stateCookie } = await startLogin(handler)
+    issuer.setNonce(nonce)
+
+    const first = await handler.fetch(callbackRequest(state, stateCookie))
+    expect(first.status).toBe(302)
+    expect(first.headers.get('set-cookie')).toContain('craft_session=')
+
+    const replay = await handler.fetch(callbackRequest(state, stateCookie))
+    expect(replay.status).toBe(400)
+    expect(replay.headers.get('set-cookie')).not.toContain('craft_session=')
+    expect(await replay.text()).toContain('Не удалось войти')
+  })
+
+  it('refetches JWKS once when the id_token kid is unknown (key rotation)', async () => {
+    const { handler, issuer } = oidcHandler()
+
+    // Warm the cached JWKS with the original key.
+    const first = await startLogin(handler)
+    issuer.setNonce(first.nonce)
+    const firstCallback = await handler.fetch(callbackRequest(first.state, first.stateCookie))
+    expect(firstCallback.status).toBe(302)
+    const jwksAfterFirst = issuer.jwksRequests()
+    expect(jwksAfterFirst).toBe(1)
+
+    // Rotate the IdP signing key: the cached set no longer has the new kid.
+    issuer.rotateKey()
+
+    const second = await startLogin(handler)
+    issuer.setNonce(second.nonce)
+    const secondCallback = await handler.fetch(callbackRequest(second.state, second.stateCookie))
+    expect(secondCallback.status).toBe(302)
+    expect(secondCallback.headers.get('set-cookie')).toContain('craft_session=')
+    // Exactly one cache-bypassing refetch recovered the rotated key.
+    expect(issuer.jwksRequests()).toBe(jwksAfterFirst + 1)
+  })
+
+  it('rate-limits OIDC login starts per client IP before allocating state', async () => {
+    const issuer = createFakeIssuer()
+    ISSUERS.push(issuer)
+    const handler = createHandler({
+      oidc: { issuer: issuer.issuer, clientId: CLIENT_ID, publicUrl: 'http://127.0.0.1:3100' },
+    })
+
+    for (let i = 0; i < 5; i++) {
+      const res = await handler.fetch(new Request('http://127.0.0.1/api/auth/login'))
+      expect(res.status).toBe(302)
+    }
+    const limited = await handler.fetch(new Request('http://127.0.0.1/api/auth/login'))
+    expect(limited.status).toBe(429)
+  })
+
+  it('returns 404 for password login when OIDC is enabled and not opted in', async () => {
+    const { handler } = oidcHandler()
+
+    const auth = await handler.fetch(new Request('http://127.0.0.1/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: PASSWORD }),
+    }))
+    expect(auth.status).toBe(404)
+  })
+
+  it('keeps password login when OIDC is enabled and explicitly opted in', async () => {
+    const { handler } = oidcHandler({ allowPasswordLogin: true })
+
+    const auth = await handler.fetch(new Request('http://127.0.0.1/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: PASSWORD }),
+    }))
+    expect(auth.status).toBe(200)
+    expect(auth.headers.get('set-cookie')).toContain('craft_session=')
+  })
+
+  it('forces Secure cookies for an https OIDC public URL without proxy headers', async () => {
+    const { handler } = oidcHandler({ publicUrl: 'https://rox.example.com' })
+
+    const res = await handler.fetch(new Request('http://127.0.0.1/api/auth/login'))
+    expect(res.status).toBe(302)
+    expect(res.headers.get('set-cookie')).toContain('Secure')
   })
 
   it('keeps the password flow unchanged when OIDC is not configured', async () => {

@@ -178,7 +178,6 @@ function githubLinkFlow(): GithubLinkFlow {
   }
   return cachedGithubLinkFlow.flow
 }
-
 export function registerFabricHandlers(server: RpcServer, _deps: HandlerDeps): void {
   server.handle(RPC_CHANNELS.fabric.LIST_CONNECTIONS, async (_ctx, workspaceIdOrArgs?: unknown) => {
     const listed = rpcFabricListResult({ source: 'native' })
@@ -359,19 +358,17 @@ export function registerFabricHandlers(server: RpcServer, _deps: HandlerDeps): v
 
     const runtime = getFabricRuntime()
     try {
-      const result = await withRegistrySyncWrite(runtime, () =>
-        runGithubVertical({
-          workspaceId: DEFAULT_WORKSPACE_ID,
-          requestedBy: 'operator',
-          consumer: { kind: 'agent', id: 'fabric-github-status', workspaceId: DEFAULT_WORKSPACE_ID },
-          stack: { provider: runtime.provider, importers: runtime.importers },
-          graph: runtime.graph,
-          grants: runtime.grants,
-          broker: runtime.broker,
-          injectedToken: token,
-          fetch: globalThis.fetch.bind(globalThis),
-        }),
-      )
+      const result = await runGithubVertical({
+        workspaceId: DEFAULT_WORKSPACE_ID,
+        requestedBy: 'operator',
+        consumer: { kind: 'agent', id: 'fabric-github-status', workspaceId: DEFAULT_WORKSPACE_ID },
+        stack: { provider: runtime.provider, importers: runtime.importers, registry: runtime.registry },
+        graph: runtime.graph,
+        grants: runtime.grants,
+        broker: runtime.broker,
+        injectedToken: token,
+        fetch: globalThis.fetch.bind(globalThis),
+      })
       return stripSecrets({
         available: true,
         login: result.login,

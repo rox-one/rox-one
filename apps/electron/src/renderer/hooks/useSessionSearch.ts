@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { isToday, isYesterday, format, startOfDay } from "date-fns"
 
 import { searchLog } from "@/lib/logger"
@@ -16,8 +16,6 @@ import { toErrorMessage } from "@/lib/errors"
 // Constants
 // ---------------------------------------------------------------------------
 
-const INITIAL_DISPLAY_LIMIT = 50
-const BATCH_SIZE = 50
 const MAX_SEARCH_RESULTS = 100
 
 // ---------------------------------------------------------------------------
@@ -61,8 +59,6 @@ export interface UseSessionSearchOptions {
   groupingMode?: ListGroupingMode
   /** sessionId → family bucket representative; keeps session families in one collapse bucket */
   bucketRepresentatives?: Map<string, SessionMeta>
-  /** Ref to the ScrollArea viewport element — used for scroll-based pagination */
-  scrollViewportRef?: React.RefObject<HTMLDivElement>
 }
 
 export interface UseSessionSearchResult {
@@ -85,8 +81,6 @@ export interface UseSessionSearchResult {
   dateGroups: DateGroup[]
   sessionIndexMap: Map<string, number>
 
-  // Pagination
-  hasMore: boolean
   /** Metadata for collapsed groups (key + item count) — used to build header-only placeholder groups */
   collapsedGroupsMeta: CollapsedGroupMeta[]
 
@@ -153,7 +147,7 @@ export function computeCollapsedPagination(
     getCollapseGroupKey(bucketRepresentatives?.get(item.id) ?? item, groupingMode)
 
   // `date` grouping is inherently chronological, so a single global window
-  // (newest-first, grow on scroll) is the correct lazy-load behavior.
+  // (newest-first, bounded by the caller-provided `displayLimit`) is correct.
   //
   // `status` / `unread` grouping is NOT chronological: an old To-do/Needs-review
   // or unread session should surface in its group regardless of age. A global
@@ -161,7 +155,8 @@ export function computeCollapsedPagination(
   // fall past the loaded window (#501). For these modes we therefore paginate
   // *per group* — each group reveals up to `displayLimit` of its own most-recent
   // items — so small open-work groups show in full while large groups (e.g.
-  // Done) stay bounded. `displayLimit` still grows on scroll via the caller.
+  // Done) stay bounded. The sidebar now passes `Infinity` (EntityList windowing
+  // bounds rendering instead of a live-growing `displayLimit`).
   const perGroup =
     groupingMode === 'status' ||
     groupingMode === 'unread' ||
@@ -337,13 +332,11 @@ export function useSessionSearch({
   collapsedGroups,
   groupingMode,
   bucketRepresentatives,
-  scrollViewportRef,
 }: UseSessionSearchOptions): UseSessionSearchResult {
 
   const [contentSearchResults, setContentSearchResults] = useState<Map<string, ContentSearchResult>>(new Map())
   const [isSearchingContent, setIsSearchingContent] = useState(false)
   const [isSearchUnavailable, setIsSearchUnavailable] = useState(false)
-  const [displayLimit, setDisplayLimit] = useState(INITIAL_DISPLAY_LIMIT)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Search mode is active when search is open AND query has 2+ characters
@@ -512,41 +505,21 @@ export function useSessionSearch({
     return { matchingFilterItems: matching, otherResultItems: others, exceededSearchLimit: exceeded }
   }, [searchFilteredItems, currentFilter, evaluateViews, isSearchMode, statusFilter, labelFilterMap, labelConfigs, searchQuery])
 
-  // --- Pagination ---
-
-  useEffect(() => {
-    setDisplayLimit(INITIAL_DISPLAY_LIMIT)
-  }, [searchQuery])
-
-  // Collapse-aware pagination: collapsed items are excluded entirely from
-  // paginatedItems (and therefore flatItems / keyboard nav). Their counts are
-  // returned as collapsedGroupsMeta so the renderer can show header-only groups.
-  const { paginatedItems, hasMore, collapsedGroupsMeta } = useMemo(() => {
-    return computeCollapsedPagination(searchFilteredItems, displayLimit, collapsedGroups, groupingMode, bucketRepresentatives)
-  }, [searchFilteredItems, displayLimit, collapsedGroups, groupingMode, bucketRepresentatives])
-
-  const loadMore = useCallback(() => {
-    setDisplayLimit(prev => Math.min(prev + BATCH_SIZE, searchFilteredItems.length))
-  }, [searchFilteredItems.length])
-
-  // Scroll-based pagination: listen for scroll on the actual ScrollArea viewport
-  // (IntersectionObserver with root=null doesn't detect scroll inside Radix ScrollArea)
-  useEffect(() => {
-    if (!hasMore) return
-    const viewport = scrollViewportRef?.current
-    if (!viewport) return
-
-    const check = () => {
-      const { scrollTop, scrollHeight, clientHeight } = viewport
-      if (scrollHeight - scrollTop - clientHeight < 200) {
-        loadMore()
-      }
-    }
-
-    check() // fill viewport on mount / after group expand
-    viewport.addEventListener('scroll', check, { passive: true })
-    return () => viewport.removeEventListener('scroll', check)
-  }, [hasMore, loadMore, displayLimit, scrollViewportRef])
+  // --- Collapse-aware selection ---
+  // Windowing (EntityList `windowed`) renders only the visible slice, so the
+  // sidebar keeps the full item list in memory and there is no scroll-driven
+  // 50-row append anymore. `computeCollapsedPagination` is still used for the
+  // collapsed-group accounting (items of collapsed groups are excluded; their
+  // key + count are surfaced as `collapsedGroupsMeta`).
+  const { paginatedItems, collapsedGroupsMeta } = useMemo(() => {
+    return computeCollapsedPagination(
+      searchFilteredItems,
+      Number.POSITIVE_INFINITY,
+      collapsedGroups,
+      groupingMode,
+      bucketRepresentatives,
+    )
+  }, [searchFilteredItems, collapsedGroups, groupingMode, bucketRepresentatives])
 
   // --- Derived render data ---
 
@@ -577,7 +550,6 @@ export function useSessionSearch({
     flatItems,
     dateGroups,
     sessionIndexMap,
-    hasMore,
     collapsedGroupsMeta,
     searchInputRef,
   }

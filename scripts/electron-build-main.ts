@@ -75,7 +75,6 @@ const BAKED_ENV_DEFAULTS: Record<string, string> = {
   POSTHOG_KEY: "phc_sbFWoBoNgqGS82Q6Lone2Hvv2jVy8FMt8dFBLcBBk5X3",
   OTEL_EXPORTER_OTLP_ENDPOINT: "https://otel.rox.one",
 };
-
 function getBuildDefines(): string[] {
   const definedVars = [
     "SLACK_OAUTH_CLIENT_ID",

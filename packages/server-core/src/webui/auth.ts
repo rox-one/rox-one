@@ -13,6 +13,7 @@ import {
   createHash,
   createPublicKey,
   randomBytes,
+  timingSafeEqual,
   verify as cryptoVerify,
 } from 'node:crypto'
 
@@ -149,6 +150,68 @@ export function extractSessionCookie(cookieHeader: string | null): string | null
     if (name === SESSION_COOKIE_NAME) return rest.join('=')
   }
   return null
+}
+
+// ---------------------------------------------------------------------------
+// OIDC login-state cookie (login CSRF / session-fixation guard)
+// ---------------------------------------------------------------------------
+
+const OIDC_STATE_COOKIE_NAME = 'oidc_state'
+
+/**
+ * Short-lived, one-time cookie carrying the OIDC `state` of the login this
+ * browser started. The callback only proceeds when the cookie value matches
+ * the `state` query parameter, which binds the callback to the initiating
+ * browser so a pre-authorized URL cannot mint a session for an attacker's
+ * identity (login CSRF / session fixation).
+ *
+ * `SameSite=Lax` (not `Strict`, unlike the session cookie) because the IdP
+ * redirect back to the callback is a top-level cross-site GET. `Secure` is
+ * kept consistent with the session cookie.
+ */
+export function buildOidcStateCookie(state: string, secure: boolean, maxAgeSeconds: number): string {
+  const parts = [
+    `${OIDC_STATE_COOKIE_NAME}=${state}`,
+    'HttpOnly',
+    'SameSite=Lax',
+    'Path=/',
+    `Max-Age=${maxAgeSeconds}`,
+  ]
+  if (secure) parts.push('Secure')
+  return parts.join('; ')
+}
+
+/** Expire the OIDC login-state cookie (set once the callback consumes it). */
+export function buildClearedOidcStateCookie(secure: boolean): string {
+  const parts = [
+    `${OIDC_STATE_COOKIE_NAME}=`,
+    'HttpOnly',
+    'SameSite=Lax',
+    'Path=/',
+    'Max-Age=0',
+  ]
+  if (secure) parts.push('Secure')
+  return parts.join('; ')
+}
+
+export function extractOidcStateCookie(cookieHeader: string | null): string | null {
+  if (!cookieHeader) return null
+  for (const pair of cookieHeader.split(';')) {
+    const [name, ...rest] = pair.trim().split('=')
+    if (name === OIDC_STATE_COOKIE_NAME) return rest.join('=')
+  }
+  return null
+}
+
+/**
+ * Constant-time string comparison for equal-length secrets (cookie vs query
+ * `state`). Length mismatch returns false without leaking content.
+ */
+export function constantTimeEqual(a: string, b: string): boolean {
+  const left = Buffer.from(a)
+  const right = Buffer.from(b)
+  if (left.length !== right.length) return false
+  return timingSafeEqual(left, right)
 }
 
 // ---------------------------------------------------------------------------
@@ -363,13 +426,13 @@ function isRsaSignatureJwk(value: unknown): value is JsonWebKey {
 /** Fetch (and cache) the JWKS document, keeping only RSA signature keys. */
 export async function fetchJwks(
   jwksUri: string,
-  options: { fetchImpl?: typeof fetch; ttlMs?: number; now?: number } = {},
+  options: { fetchImpl?: typeof fetch; ttlMs?: number; now?: number; bypassCache?: boolean } = {},
 ): Promise<JsonWebKey[]> {
   const fetchImpl = options.fetchImpl ?? fetch
   const ttlMs = options.ttlMs ?? OIDC_CACHE_TTL_MS
   const now = options.now ?? Date.now()
   const cached = jwksCache.get(jwksUri)
-  if (cached && now - cached.fetchedAt < ttlMs) return cached.keys
+  if (!options.bypassCache && cached && now - cached.fetchedAt < ttlMs) return cached.keys
 
   const res = await fetchImpl(jwksUri, { headers: { Accept: 'application/json' } })
   if (!res.ok) throw new Error(`JWKS fetch failed (${res.status})`)
@@ -403,10 +466,22 @@ function decodeJwtSegment(segment: string): Record<string, unknown> {
   return parsed as Record<string, unknown>
 }
 
+/**
+ * Thrown when the id_token `kid` is absent from the supplied JWKS. Typed so
+ * callers can retry once against a freshly fetched key set (IdP key rotation)
+ * and still fail closed if the key remains unknown.
+ */
+export class UnknownSigningKeyError extends Error {
+  constructor(message = 'No JWKS key matches the id_token kid') {
+    super(message)
+    this.name = 'UnknownSigningKeyError'
+  }
+}
+
 function selectSigningKey(keys: JsonWebKey[], kid: string | undefined): JsonWebKey {
   if (kid) {
     const match = keys.find(key => key.kid === kid)
-    if (!match) throw new Error('No JWKS key matches the id_token kid')
+    if (!match) throw new UnknownSigningKeyError()
     return match
   }
   if (keys.length === 1) return keys[0]!
@@ -452,5 +527,42 @@ export function verifyOidcIdToken(
     ...(email ? { email } : {}),
     ...(name ? { name } : {}),
     ...(username ? { username } : {}),
+  }
+}
+
+/**
+ * Verify an id_token against a JWKS URI, tolerating IdP key rotation.
+ *
+ * The cached key set may lag a rotation for up to its TTL, which would fail
+ * otherwise-valid logins. When the token's `kid` is not in the cached set, the
+ * JWKS is refetched exactly once bypassing the cache and verification is
+ * retried; a second miss fails closed with `UnknownSigningKeyError`. This
+ * mirrors the workspace-service pattern of letting the remote key set refetch
+ * on an unknown kid (apps/workspace-service/src/auth/verified-actor.ts).
+ */
+export async function verifyOidcIdTokenWithJwks(
+  idToken: string,
+  options: {
+    jwksUri: string
+    issuer: string
+    clientId: string
+    nonce: string
+    fetchImpl?: typeof fetch
+    nowSeconds?: number
+  },
+): Promise<OidcUser> {
+  const jwks = await fetchJwks(options.jwksUri, { fetchImpl: options.fetchImpl })
+  const verifyOptions = {
+    issuer: options.issuer,
+    clientId: options.clientId,
+    nonce: options.nonce,
+    nowSeconds: options.nowSeconds,
+  }
+  try {
+    return verifyOidcIdToken(idToken, { jwks, ...verifyOptions })
+  } catch (err) {
+    if (!(err instanceof UnknownSigningKeyError)) throw err
+    const refreshed = await fetchJwks(options.jwksUri, { fetchImpl: options.fetchImpl, bypassCache: true })
+    return verifyOidcIdToken(idToken, { jwks: refreshed, ...verifyOptions })
   }
 }

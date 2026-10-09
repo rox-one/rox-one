@@ -518,6 +518,19 @@ api.connectGoogleCalendar = async (): Promise<{ success: boolean; error?: string
   }
 }
 
+// ── ROX Drive cloud-import OAuth loopback ────────────────────────────────
+// The Google Drive import broker reuses the same main-process loopback callback
+// server as the Calendar connector; the renderer only orchestrates begin →
+// start → open → await → complete. No token crosses this boundary.
+api.driveImportOAuthBegin = async (): Promise<CalendarOAuthSession> =>
+  ipcRenderer.invoke(CALENDAR_OAUTH_IPC.BEGIN) as Promise<CalendarOAuthSession>
+api.driveImportOAuthOpen = async (url: string): Promise<boolean> =>
+  ipcRenderer.invoke(CALENDAR_OAUTH_IPC.OPEN, url) as Promise<boolean>
+api.driveImportOAuthAwait = async (handle: string): Promise<CalendarOAuthCallback> =>
+  ipcRenderer.invoke(CALENDAR_OAUTH_IPC.AWAIT, handle) as Promise<CalendarOAuthCallback>
+api.driveImportOAuthCancel = async (handle: string): Promise<boolean> =>
+  ipcRenderer.invoke(CALENDAR_OAUTH_IPC.CANCEL, handle) as Promise<boolean>
+
 // ── startClaudeOAuth ─────────────────────────────────────────────────────
 // Override the channel-map stub: the server now returns authUrl without opening
 // the browser. We open it locally so it works in remote mode.

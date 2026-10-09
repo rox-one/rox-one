@@ -1206,6 +1206,19 @@ export const RPC_CHANNELS = {
     IMPORT_RESUME: 'drive:importResume',
     /** Wave 4: one job by id, or every known job when the id is omitted. */
     IMPORT_STATUS: 'drive:importStatus',
+    /**
+     * Wave 4: begin cloud-import authorization. The host owns the OAuth clients
+     * and runs providers whose token flow must not live in the renderer; returns
+     * either a stored-token fast path, a device-code challenge, or a URL the
+     * caller opens (Google PKCE broker / Yandex code flow).
+     */
+    IMPORT_AUTH_START: 'drive:importAuthStart',
+    /**
+     * Wave 4: finish cloud-import authorization — exchange the pasted/returned
+     * code or poll the device token — and persist tokens through the same store
+     * the providers read.
+     */
+    IMPORT_AUTH_COMPLETE: 'drive:importAuthComplete',
   },
   /**
    * Telegram account linking (owner spec R4) — the desktop dialog talks to the

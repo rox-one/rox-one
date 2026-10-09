@@ -1,4 +1,5 @@
 import { writeFile } from 'fs/promises'
+import { randomBytes } from 'node:crypto'
 import { dirname } from 'path'
 import type { StoredSession, SessionHeader } from './types.js'
 import { getSessionFilePath, ensureSessionsDir, ensureSessionDir } from './storage.js'
@@ -166,7 +167,11 @@ class SessionPersistenceQueue {
 
       const wrotePrimary = await trySessionJournalPrimary(sessionDir, lines)
       if (!wrotePrimary) {
-        const tmpFile = filePath + '.tmp'
+        // Unique tmp per writer: two writers (or a concurrent crash-recovery
+        // pass over the sibling tmp family) must not target one shared
+        // session.jsonl.tmp, which can make this rename throw ENOENT and drop
+        // the write.
+        const tmpFile = `${filePath}.${process.pid}.${randomBytes(6).toString('hex')}.tmp`
         await writeFile(tmpFile, lines.join('\n') + '\n', 'utf-8')
         await replaceFileAtomically(tmpFile, filePath)
       }

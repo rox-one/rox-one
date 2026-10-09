@@ -88,9 +88,18 @@ function encodeRfc3986(value: string): string {
   return encodeURIComponent(value).replace(/[!'()*]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase()}`)
 }
 
-/** Encode an object key for the URL path, preserving `/` separators. */
+/**
+ * Encode an object key for the URL path, preserving `/` separators.
+ *
+ * `.`/`..` segments are percent-encoded: URL path normalisation collapses them
+ * (so `job/../x` would escape the job prefix), while `%2E` is left intact by
+ * the WHATWG URL parser and by S3.
+ */
 export function encodeObjectKeyPath(key: string): string {
-  return key.split('/').map(encodeRfc3986).join('/')
+  return key
+    .split('/')
+    .map(segment => (segment === '.' || segment === '..' ? segment.replace(/[.]/g, '%2E') : encodeRfc3986(segment)))
+    .join('/')
 }
 
 function amzDateParts(date: Date): { amzDate: string; dateStamp: string } {
@@ -99,11 +108,36 @@ function amzDateParts(date: Date): { amzDate: string; dateStamp: string } {
 }
 
 function canonicalQueryString(url: URL): string {
-  const pairs: string[] = []
+  const pairs: Array<[string, string]> = []
   for (const [name, value] of url.searchParams.entries()) {
-    pairs.push(`${encodeRfc3986(name)}=${encodeRfc3986(value)}`)
+    pairs.push([encodeRfc3986(name), encodeRfc3986(value)])
   }
-  return pairs.sort().join('&')
+  // Canonical form sorts by encoded name, then by encoded value — not by the
+  // joined `name=value` string, where a separator byte can invert a prefix
+  // relationship (`a-b` would sort before `a`).
+  pairs.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0))
+  return pairs.map(([name, value]) => `${name}=${value}`).join('&')
+}
+
+/**
+ * The path exactly as it appears in the URL text, before WHATWG normalisation.
+ *
+ * `new URL(...).pathname` collapses `.`/`..` segments — including their
+ * percent-encoded forms `%2E`/`%2E%2E` — so a key such as `job/../x` would sign
+ * (and, once `fetch` normalises it, write) an object outside its prefix. SigV4
+ * canonicalises the request URI as sent, so the signature must bind the path we
+ * actually intend; a mismatch then fails closed at the server instead of
+ * silently relocating the object.
+ */
+function encodedPathOf(url: string | URL): string {
+  if (typeof url !== 'string') return url.pathname || '/'
+  const schemeEnd = url.indexOf('://')
+  const rest = schemeEnd === -1 ? url : url.slice(schemeEnd + 3)
+  const pathStart = rest.indexOf('/')
+  if (pathStart === -1) return '/'
+  const path = rest.slice(pathStart)
+  const cut = path.search(/[?#]/)
+  return (cut === -1 ? path : path.slice(0, cut)) || '/'
 }
 
 /** AWS collapses runs of whitespace and trims header values before signing. */
@@ -137,7 +171,7 @@ export async function signAwsV4(input: SigV4Input): Promise<SigV4Result> {
 
   const canonicalRequest = [
     input.method.toUpperCase(),
-    url.pathname || '/',
+    encodedPathOf(input.url),
     canonicalQueryString(url),
     canonicalHeaders,
     signedHeaders,

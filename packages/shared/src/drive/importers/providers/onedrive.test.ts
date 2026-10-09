@@ -8,6 +8,8 @@ import {
   OneDriveProvider,
   startMsDeviceCode,
   pollMsDeviceToken,
+  MS_DEVICE_CODE_URL,
+  MS_TOKEN_URL,
 } from './onedrive'
 
 const FAR_FUTURE = 4_000_000_000_000
@@ -93,7 +95,7 @@ describe('OneDriveProvider.stream', () => {
     const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
       if (init?.method === 'POST') {
         tokenPosts += 1
-        expect(String(input)).toBe('https://login.microsoftonline.com/consumers/oauth2/v2.0/token')
+        expect(String(input)).toBe('https://login.microsoftonline.com/common/oauth2/v2.0/token')
         expect(new URLSearchParams(String(init.body)).get('grant_type')).toBe('refresh_token')
         return json({ access_token: 'fresh', refresh_token: 'rt2', expires_in: 3600, token_type: 'Bearer' })
       }
@@ -112,11 +114,18 @@ describe('OneDriveProvider.stream', () => {
 })
 
 describe('Microsoft device code flow', () => {
+  test('targets the /common tenant so work and school accounts can sign in', () => {
+    expect(MS_DEVICE_CODE_URL).toBe('https://login.microsoftonline.com/common/oauth2/v2.0/devicecode')
+    expect(MS_TOKEN_URL).toBe('https://login.microsoftonline.com/common/oauth2/v2.0/token')
+    expect(MS_DEVICE_CODE_URL).not.toContain('/consumers/')
+    expect(MS_TOKEN_URL).not.toContain('/consumers/')
+  })
+
   test('starts the flow and polls through authorization_pending to success', async () => {
     const started = await startMsDeviceCode({
       clientId: 'cid',
       fetchImpl: (async (input: string | URL | Request, init?: RequestInit) => {
-        expect(String(input)).toBe('https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode')
+        expect(String(input)).toBe('https://login.microsoftonline.com/common/oauth2/v2.0/devicecode')
         const body = new URLSearchParams(String(init?.body))
         expect(body.get('scope')).toBe('Files.Read offline_access User.Read')
         return json({ device_code: 'dc', user_code: 'UC', verification_uri: 'https://microsoft.com/devicelogin', expires_in: 900, interval: 1, message: 'go' })

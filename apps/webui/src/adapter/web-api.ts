@@ -11,6 +11,7 @@
 import i18n from 'i18next'
 import { toast } from 'sonner'
 import { openExternalUrl } from '@rox/ui'
+import type { OrgCallerIdentity } from '@rox/shared/orgs'
 import { WsRpcClient } from '../../../electron/src/transport/client'
 import { buildClientApi } from '../../../electron/src/transport/build-api'
 import { CHANNEL_MAP } from '../../../electron/src/transport/channel-map'
@@ -130,7 +131,7 @@ export function createWebApi(options: WebApiOptions): {
     // Session identity — the browser authenticates with the HttpOnly session
     // cookie, so read the signed-in Rox ID user over HTTP instead of the
     // WS org-identity RPC (which has no client principal in web mode).
-    getOrgIdentity: async () => {
+    getOrgIdentity: async (): Promise<OrgCallerIdentity> => {
       try {
         const res = await fetch('/api/auth/me', { credentials: 'same-origin' })
         if (res.ok) {
@@ -145,7 +146,7 @@ export function createWebApi(options: WebApiOptions): {
             const username = 'username' in user && typeof user.username === 'string' ? user.username : undefined
             const email = 'email' in user && typeof user.email === 'string' ? user.email : undefined
             return {
-              userId: user.sub,
+              userId: data.user.sub,
               authority: 'native',
               ...(issuer ? { issuer } : {}),
               ...(name ? { name } : {}),
@@ -157,7 +158,9 @@ export function createWebApi(options: WebApiOptions): {
       } catch {
         /* fall back to the RPC identity below */
       }
-      return baseApi.getOrgIdentity()
+      // The generated RPC client types this channel more loosely (e.g. `userId:
+      // unknown`) than the OrgCallerIdentity contract; the runtime object is the same.
+      return baseApi.getOrgIdentity() as unknown as OrgCallerIdentity
     },
 
     // Logout — clear the web session cookie and return to the login page.

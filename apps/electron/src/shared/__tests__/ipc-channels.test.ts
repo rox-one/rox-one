@@ -188,6 +188,8 @@ const EXPECTED_CHANNELS: string[] = [
   'drive:completeUpload',
   'drive:createFolder',
   'drive:delete',
+  'drive:importAuthComplete',
+  'drive:importAuthStart',
   'drive:importPause',
   'drive:importPlan',
   'drive:importResume',

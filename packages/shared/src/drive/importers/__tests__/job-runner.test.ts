@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { existsSync } from 'node:fs'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createImportJobRunner } from '../job-runner'
@@ -303,5 +303,142 @@ describe('import job runner', () => {
   test('rejects a provider that was never registered', async () => {
     const runner = createImportJobRunner({ target: recordingTarget([]), stateDir })
     await expect(runner.plan('onedrive')).rejects.toMatchObject({ code: 'DRIVE_IMPORT_PROVIDER_UNKNOWN' })
+  })
+
+  test('reports a plan-errored empty job as error on start, never as done', async () => {
+    const provider: ImportProvider = {
+      id: 'google-drive',
+      async list(): Promise<ImportSourceEntry[]> {
+        throw new Error('listing failed: expired token')
+      },
+      async stream(): Promise<ReadableStream<Uint8Array>> {
+        throw new Error('unreachable')
+      },
+    }
+    const runner = createImportJobRunner({
+      target: recordingTarget([]),
+      stateDir,
+      providers: [provider],
+      generateId: () => 'job-listing-error',
+    })
+    const job = await runner.plan('google-drive')
+    expect(job.status).toBe('error')
+    expect(job.plan).toHaveLength(0)
+    expect(job.error).toContain('expired token')
+
+    // The listing failure must survive a start: no fake success.
+    const started = await runner.start(job.id)
+    expect(started.status).toBe('error')
+    expect(started.error).toContain('expired token')
+    expect(started.progress).toMatchObject({ filesTotal: 0, filesDone: 0 })
+
+    const status = await runner.status(job.id)
+    expect(status && !Array.isArray(status) ? status.status : null).toBe('error')
+
+    // A genuinely empty (but successfully listed) folder still completes.
+    const emptyRunner = createImportJobRunner({
+      target: recordingTarget([]),
+      stateDir,
+      providers: [new FakeProvider({ [ROOT]: [] })],
+      generateId: () => 'job-truly-empty',
+    })
+    const empty = await emptyRunner.plan('google-drive')
+    expect(empty.status).toBe('idle')
+    expect((await emptyRunner.start(empty.id)).status).toBe('done')
+  })
+
+  test('clamps a zero or non-finite attempt budget instead of importing nothing', async () => {
+    for (const maxAttempts of [0, Number.NaN, -2]) {
+      const provider = sampleTree()
+      const record: PutRecord[] = []
+      const runner = createImportJobRunner({
+        target: recordingTarget(record),
+        stateDir,
+        providers: [provider],
+        concurrency: 1,
+        maxAttempts,
+        sleep: async () => {},
+      })
+      const job = await runner.plan('google-drive')
+      const done = await runner.start(job.id)
+      expect(done.status).toBe('done')
+      expect(done.progress.filesDone).toBe(3)
+      expect(record.map(entry => entry.key)).toEqual([
+        `${job.id}/a.txt`,
+        `${job.id}/Folder/b.txt`,
+        `${job.id}/c.txt`,
+      ])
+    }
+  })
+
+  test('does not double-count bytes drained by a failed attempt for unknown-size files', async () => {
+    const provider = new FakeProvider({ [ROOT]: [{ id: 'u', name: 'u.bin', kind: 'file' }] })
+    provider.streams.set('u', new Uint8Array([1, 2, 3, 4]))
+    let attempt = 0
+    const committed: number[] = []
+    const target: DriveUploadTarget = {
+      async put(_key, body) {
+        attempt += 1
+        if (attempt === 1) {
+          // Drain part of the stream, then fail: the retry must count only the
+          // bytes it commits, not the ones the failed attempt already touched.
+          const reader = (body as ReadableStream<Uint8Array>).getReader()
+          await reader.read()
+          await reader.cancel()
+          throw new Error('flaky upload')
+        }
+        const bytes = new Uint8Array(await new Response(body).arrayBuffer())
+        committed.push(bytes.length)
+      },
+    }
+    const runner = createImportJobRunner({
+      target,
+      stateDir,
+      providers: [provider],
+      concurrency: 1,
+      maxAttempts: 3,
+      sleep: async () => {},
+    })
+    const job = await runner.plan('google-drive')
+    const done = await runner.start(job.id)
+    expect(done.status).toBe('done')
+    expect(committed).toEqual([4])
+    expect(done.progress.bytesDone).toBe(4)
+  })
+
+  test('rejects job ids that could read or write outside the state directory', async () => {
+    const runner = createImportJobRunner({
+      target: recordingTarget([]),
+      stateDir,
+      providers: [sampleTree()],
+      generateId: () => 'safe-id',
+    })
+    const job = await runner.plan('google-drive')
+
+    // A planted, otherwise-valid job file one level up must be unreachable.
+    const escapedFile = join(stateDir, '..', 'escaped-job.json')
+    await writeFile(
+      escapedFile,
+      JSON.stringify({
+        version: 1,
+        job: { id: 'escaped-job', provider: 'google-drive', status: 'idle', plan: [{ sourceId: 'a', path: 'a.txt', sizeBytes: 3 }], progress: { filesDone: 0, filesTotal: 1, bytesDone: 0, bytesTotal: 3 } },
+        committedBytes: [-1],
+      }),
+      'utf8',
+    )
+    try {
+      expect(await runner.status('../escaped-job')).toBeNull()
+      await expect(runner.start('../escaped-job')).rejects.toMatchObject({ code: 'DRIVE_IMPORT_NOT_FOUND' })
+      await expect(runner.pause('../escaped-job')).rejects.toMatchObject({ code: 'DRIVE_IMPORT_NOT_FOUND' })
+      await expect(runner.cancel('../escaped-job')).rejects.toMatchObject({ code: 'DRIVE_IMPORT_NOT_FOUND' })
+    } finally {
+      await rm(escapedFile, { force: true })
+    }
+
+    // Separators and dotted ids are refused; a safe id still resolves.
+    expect(await runner.status('a/b')).toBeNull()
+    expect(await runner.status('..')).toBeNull()
+    const known = await runner.status(job.id)
+    expect(known && !Array.isArray(known) ? known.id : null).toBe('safe-id')
   })
 })

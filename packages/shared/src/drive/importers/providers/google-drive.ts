@@ -13,8 +13,16 @@
  *  - tree: `listGoogleDriveTree()` walks folders recursively.
  *  - stream: `files.get?alt=media` with an HTTP `Range` header.
  *
+ * Native Google documents (Docs/Sheets/Slides/…) are filtered out of `list()`
+ * (see `googleSkipReason`): they have no binary body, so `files.get?alt=media`
+ * answers 403 for them.
+ *
  * Env: ROX_GOOGLE_CLIENT_ID (required), ROX_GOOGLE_CLIENT_SECRET (optional —
  * only desktop/installed clients that were issued a secret).
+ *
+ * Scope: `drive.readonly` is a restricted/sensitive scope, so public production
+ * use requires Google app verification (OAuth brand review); an unverified app
+ * still works in testing mode for explicitly listed test users.
  *
  * Range semantics: `{ start, end }` map 1:1 onto an inclusive HTTP Range
  * (`bytes=start-end`), matching the Drive API.
@@ -37,13 +45,37 @@ export const GOOGLE_DEVICE_CODE_URL = 'https://oauth2.googleapis.com/device/code
 export const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 export const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 export const GOOGLE_DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3'
+// `drive.file` only exposes files this app created or opened (there is no
+// Picker in this flow), so an import would enumerate nothing; `drive.readonly`
+// is what lets the provider list the user's own Drive.
 export const GOOGLE_SCOPES: readonly string[] = [
   'openid',
   'email',
-  'https://www.googleapis.com/auth/drive.file',
+  'https://www.googleapis.com/auth/drive.readonly',
 ]
 
 const GOOGLE_FOLDER_MIME = 'application/vnd.google-apps.folder'
+const GOOGLE_NATIVE_MIME_PREFIX = 'application/vnd.google-apps.'
+
+/**
+ * Typed reason a Drive entry cannot be imported: native Google formats
+ * (Docs, Sheets, Slides, Forms, Sites, …) exist only server-side — `files.get`
+ * with `alt=media` answers HTTP 403 for them, which would exhaust the runner's
+ * retries and fail the whole job.
+ */
+export const GOOGLE_NATIVE_SKIP_REASON = 'google-native-document'
+
+/**
+ * Provider-local, pre-filter marker: `'google-native-document'` when `mimeType`
+ * denotes a native Google document (no downloadable byte stream), else `null`.
+ * `GoogleDriveProvider.list()` drops such entries so the import plan skips them
+ * instead of scheduling a download that can never succeed. Folders share the
+ * `application/vnd.google-apps.*` prefix but are traversable, so they are kept.
+ */
+export function googleSkipReason(mimeType: unknown): typeof GOOGLE_NATIVE_SKIP_REASON | null {
+  if (typeof mimeType !== 'string' || !mimeType.startsWith(GOOGLE_NATIVE_MIME_PREFIX)) return null
+  return mimeType === GOOGLE_FOLDER_MIME ? null : GOOGLE_NATIVE_SKIP_REASON
+}
 
 export function googleClientId(explicit?: string): string {
   return explicit ?? process.env.ROX_GOOGLE_CLIENT_ID ?? ''
@@ -435,6 +467,9 @@ export class GoogleDriveProvider implements ImportProvider {
       await ensureOk(this.id, response, `Не удалось получить список файлов («${parent}»)`)
       const body = (await response.json()) as GoogleFileList
       for (const file of body.files ?? []) {
+        // Native Google documents have no `alt=media` bytes; dropping them here
+        // keeps the plan free of files that would 403 at download time.
+        if (googleSkipReason(file.mimeType)) continue
         const entry = mapGoogleFile(file)
         if (entry) entries.push(entry)
       }

@@ -12,6 +12,9 @@ import {
   startGoogleDeviceCode,
   pollGoogleDeviceToken,
   listGoogleDriveTree,
+  googleSkipReason,
+  GOOGLE_NATIVE_SKIP_REASON,
+  GOOGLE_SCOPES,
 } from './google-drive'
 
 const FAR_FUTURE = 4_000_000_000_000
@@ -74,6 +77,33 @@ describe('GoogleDriveProvider.list', () => {
     await provider.list("it's")
     expect(q).toBe("'it\\'s' in parents and trashed=false")
   })
+
+  test('skips native Google documents that have no downloadable bytes', async () => {
+    const auth = await authed()
+    const fetchImpl = (async () => json({
+      files: [
+        { id: 'd1', name: 'Отчёт', mimeType: 'application/vnd.google-apps.document', modifiedTime: '2026-02-01T00:00:00Z' },
+        { id: 's1', name: 'Бюджет', mimeType: 'application/vnd.google-apps.spreadsheet' },
+        { id: 'x1', name: 'a.txt', mimeType: 'text/plain', size: '3' },
+        { id: 'f1', name: 'Папка', mimeType: 'application/vnd.google-apps.folder' },
+      ],
+    })) as unknown as typeof fetch
+    const provider = new GoogleDriveProvider({ auth, fetchImpl })
+    const entries = await provider.list()
+
+    expect(entries.map((entry) => entry.id)).toEqual(['x1', 'f1'])
+    expect(entries.map((entry) => entry.kind)).toEqual(['file', 'folder'])
+    expect(entries.some((entry) => entry.id === 'd1' || entry.id === 's1')).toBe(false)
+  })
+
+  test('googleSkipReason marks native documents but keeps folders and binaries', () => {
+    expect(googleSkipReason('application/vnd.google-apps.document')).toBe(GOOGLE_NATIVE_SKIP_REASON)
+    expect(googleSkipReason('application/vnd.google-apps.spreadsheet')).toBe(GOOGLE_NATIVE_SKIP_REASON)
+    expect(googleSkipReason('application/vnd.google-apps.presentation')).toBe(GOOGLE_NATIVE_SKIP_REASON)
+    expect(googleSkipReason('application/vnd.google-apps.folder')).toBeNull()
+    expect(googleSkipReason('text/plain')).toBeNull()
+    expect(googleSkipReason(undefined)).toBeNull()
+  })
 })
 
 describe('GoogleDriveProvider.stream', () => {
@@ -132,9 +162,17 @@ describe('Google OAuth helpers', () => {
     expect(`${url.origin}${url.pathname}`).toBe('https://accounts.google.com/o/oauth2/v2/auth')
     expect(url.searchParams.get('code_challenge_method')).toBe('S256')
     expect(url.searchParams.get('code_challenge')).toBe(pkce.codeChallenge)
-    expect(url.searchParams.get('scope')).toContain('https://www.googleapis.com/auth/drive.file')
+    expect(url.searchParams.get('scope')).toContain('https://www.googleapis.com/auth/drive.readonly')
+    expect(url.searchParams.get('scope')).not.toContain('drive.file')
     expect(url.searchParams.get('access_type')).toBe('offline')
     expect(url.searchParams.get('redirect_uri')).toBe('http://127.0.0.1:1234/cb')
+  })
+
+  test('GOOGLE_SCOPES requests read-only Drive access and never drive.file', () => {
+    expect(GOOGLE_SCOPES).toContain('openid')
+    expect(GOOGLE_SCOPES).toContain('email')
+    expect(GOOGLE_SCOPES).toContain('https://www.googleapis.com/auth/drive.readonly')
+    expect(GOOGLE_SCOPES.some((scope) => scope.includes('drive.file'))).toBe(false)
   })
 
   test('completeGoogleAuth exchanges the code and computes expiresAt', async () => {
@@ -161,6 +199,7 @@ describe('Google OAuth helpers', () => {
       fetchImpl: (async (_input: string | URL | Request, init?: RequestInit) => {
         const body = new URLSearchParams(String(init?.body))
         expect(body.get('client_id')).toBe('cid')
+        expect(body.get('scope')).toContain('https://www.googleapis.com/auth/drive.readonly')
         return json({ device_code: 'dc', user_code: 'UC', verification_url: 'https://g.co/device', expires_in: 600, interval: 1 })
       }) as unknown as typeof fetch,
     })

@@ -44,6 +44,7 @@ import type { WindowManager } from './window-manager'
 import { RPC_CHANNELS } from '../shared/types'
 import type { EventSink } from '@rox/server-core/transport'
 import { isRoxDeeplinkProtocol } from '@rox/shared/identity'
+import type { DeepLinkSource } from '@rox/shared/protocol'
 import { ENTITY_ONLY_ROUTE_PREFIXES, isCompoundRoutePrefix } from '../shared/route-parser'
 // W1-07 (#1504)
 import { isClosedUnifiedSurfaceRoot, isUnifiedSurfaceRoot } from '../shared/surface-routes'
@@ -81,6 +82,8 @@ export interface DeepLinkNavigation {
   /** Action route (e.g., 'new-chat', 'delete-session') */
   action?: string
   actionParams?: Record<string, string>
+  /** Provenance for renderer-side defence in depth (SEC-01). */
+  source?: DeepLinkSource
 }
 
 /**
@@ -404,6 +407,7 @@ export async function handleDeepLink(
   sink?: EventSink,
   resolveClientId?: (webContentsId: number) => string | undefined,
   preferredClientId?: string,
+  source?: DeepLinkSource,
 ): Promise<DeepLinkResult> {
   const { target, dropped } = await resolveDeepLinkTargetDetailed(url, { external: true })
 
@@ -491,6 +495,7 @@ export async function handleDeepLink(
       action: target.action,
       actionParams: target.actionParams,
     }
+    if (source) navigation.source = source
     const wsId = target.workspaceId ?? windowManager.getWorkspaceForWindow(window.webContents.id)
     const resolvedClientId = resolveClientId?.(window.webContents.id)
 

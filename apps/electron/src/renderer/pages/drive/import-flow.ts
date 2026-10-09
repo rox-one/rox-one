@@ -1,65 +1,45 @@
 /**
  * Drive cloud-import flow (wave 4) — renderer model.
  *
- * Provider descriptors plus an authorization client built on the shared
- * provider helpers (`@rox/shared/drive/importers/providers/*`). The client is
- * injectable so tests drive every branch without network or a live host; the
- * default implementation reads its OAuth client ids from the host env and
- * talks to Google / Microsoft / Yandex over plain `fetch`.
+ * Provider descriptors plus a thin authorization client that talks to the
+ * host-side OAuth broker (`drive:importAuthStart` / `drive:importAuthComplete`).
+ * The renderer never runs an OAuth flow itself and never sees a token: the host
+ * owns the OAuth clients, mints the tokens and persists them where the import
+ * providers read them. The client is injectable so tests drive every branch
+ * without network, IPC or a live host.
  *
- * Honest by construction: an unset client id surfaces as «…-доступ не настроен»
- * instead of a half-started flow, and iCloud renders the shared
- * `ICLOUD_UNSUPPORTED_MESSAGE` rather than a dead button.
+ * Honest by construction: an unset host OAuth client surfaces as
+ * «…-доступ не настроен» instead of a half-started flow, and iCloud renders the
+ * shared `ICLOUD_UNSUPPORTED_MESSAGE` rather than a dead button.
  */
-import type { ImportJob, ImportProviderId } from '@rox/shared/drive/importers/types'
+import type { ImportProviderId } from '@rox/shared/drive/importers/types'
 import { ICLOUD_UNSUPPORTED_MESSAGE } from '@rox/shared/drive/importers/providers/icloud'
-import {
-  startGoogleDeviceCode,
-  pollGoogleDeviceToken,
-} from '@rox/shared/drive/importers/providers/google-drive'
-import {
-  startMsDeviceCode,
-  pollMsDeviceToken,
-} from '@rox/shared/drive/importers/providers/onedrive'
-import {
-  buildYandexAuthUrl,
-  completeYandexAuth,
-} from '@rox/shared/drive/importers/providers/yandex-disk'
 
-/** Yandex shows the authorization code on this fixed page for manual pasting. */
-export const YANDEX_VERIFICATION_REDIRECT = 'https://oauth.yandex.ru/verification_code'
-
-export type ImportAuthKind = 'device-code' | 'yandex-code' | 'unsupported'
+/** How a provider obtains authorization. */
+export type ImportAuthKind = 'browser' | 'device-code' | 'pasted-code' | 'unsupported'
 
 export interface ImportProviderDescriptor {
   id: ImportProviderId
   labelKey: string
   authKind: ImportAuthKind
-  /** Env var the host must set for this provider's OAuth client. Empty when unsupported. */
+  /**
+   * Host env var that must carry this provider's OAuth client. Main-process
+   * only; the renderer never reads it.
+   */
   clientIdEnv: string
   /** Honest message for providers with no public file API (iCloud). */
   unsupportedMessage?: string
 }
 
 export const IMPORT_PROVIDERS: readonly ImportProviderDescriptor[] = [
-  { id: 'google-drive', labelKey: 'drive.import.provider.google', authKind: 'device-code', clientIdEnv: 'ROX_GOOGLE_CLIENT_ID' },
+  { id: 'google-drive', labelKey: 'drive.import.provider.google', authKind: 'browser', clientIdEnv: 'GOOGLE_OAUTH_CLIENT_ID' },
   { id: 'onedrive', labelKey: 'drive.import.provider.onedrive', authKind: 'device-code', clientIdEnv: 'ROX_MS_CLIENT_ID' },
-  { id: 'yandex-disk', labelKey: 'drive.import.provider.yandex', authKind: 'yandex-code', clientIdEnv: 'ROX_YANDEX_CLIENT_ID' },
+  { id: 'yandex-disk', labelKey: 'drive.import.provider.yandex', authKind: 'pasted-code', clientIdEnv: 'ROX_YANDEX_CLIENT_ID' },
   { id: 'icloud', labelKey: 'drive.import.provider.icloud', authKind: 'unsupported', clientIdEnv: '', unsupportedMessage: ICLOUD_UNSUPPORTED_MESSAGE },
 ]
 
 export function importProviderDescriptor(id: ImportProviderId): ImportProviderDescriptor | undefined {
   return IMPORT_PROVIDERS.find(provider => provider.id === id)
-}
-
-/** Human provider name used in the «…-доступ не настроен» message. */
-export function importProviderName(id: ImportProviderId): string {
-  switch (id) {
-    case 'google-drive': return 'Google'
-    case 'onedrive': return 'OneDrive'
-    case 'yandex-disk': return 'Яндекс'
-    case 'icloud': return 'iCloud'
-  }
 }
 
 /** A device code the user types at the provider's verification page. */
@@ -68,15 +48,6 @@ export interface ImportDeviceCode {
   verificationUri: string
   intervalSeconds: number
   expiresInSeconds: number
-}
-
-/**
- * The public device-code view plus the opaque `deviceCode` the token endpoint
- * needs. The raw value is never rendered — the dialog reads only the view
- * fields — but polling requires it.
- */
-export interface ImportDeviceCodeCarrier extends ImportDeviceCode {
-  deviceCode: string
 }
 
 export type ImportFlowErrorKind = 'not-configured' | 'auth-failed' | 'aborted'
@@ -95,184 +66,177 @@ export class DriveImportFlowError extends Error {
 }
 
 export interface ImportAuthCallOptions {
-  /** Aborting stops device-code polling and the pending HTTP exchange. */
+  /** Aborting stops a pending loopback wait / device poll and any pending HTTP exchange. */
   signal?: AbortSignal
 }
 
-/** Authorization surface consumed by the flow controller. */
-export interface DriveImportAuthClient {
-  /** Resolve the OAuth client id for a provider, or `null` when the env is unset. */
-  isConfigured(provider: ImportProviderId): boolean
-  /** Begin the provider's device-code flow. */
-  startDeviceCode(provider: ImportProviderId, options?: ImportAuthCallOptions): Promise<ImportDeviceCodeCarrier>
-  /** Resolve once authorized; reject on denial, expiry or abort. */
-  pollDeviceCode(provider: ImportProviderId, code: ImportDeviceCodeCarrier, options?: ImportAuthCallOptions): Promise<void>
-  /** Consent-screen URL for the Yandex authorization-code flow. */
-  yandexAuthUrl(provider: ImportProviderId, options?: ImportAuthCallOptions): Promise<string>
-  /** Exchange a pasted Yandex authorization code for tokens. */
-  completeYandexCode(provider: ImportProviderId, code: string, options?: ImportAuthCallOptions): Promise<void>
-}
-
-/** Env/config overrides for the default client; unset values fall back to the host env. */
-export interface DriveImportAuthEnv {
-  googleClientId?: string
-  googleClientSecret?: string
-  msClientId?: string
-  yandexClientId?: string
-  yandexClientSecret?: string
-  fetchImpl?: typeof fetch
-}
-
-/** Reads one `process.env` entry, tolerating hosts that expose no `process`. */
-export function readHostEnv(name: string): string | undefined {
-  const globalProcess: unknown = Reflect.get(globalThis, 'process')
-  if (typeof globalProcess !== 'object' || globalProcess === null || !('env' in globalProcess)) return undefined
-  const env = globalProcess.env
-  if (typeof env !== 'object' || env === null || !(name in env)) return undefined
-  const value = Reflect.get(env, name)
-  return typeof value === 'string' && value.length > 0 ? value : undefined
-}
-
-/** `setTimeout` that rejects as soon as `signal` aborts, so polling stops cleanly. */
-function abortableSleep(signal?: AbortSignal): (ms: number) => Promise<void> {
-  return (ms) => {
-    const { promise, resolve, reject } = Promise.withResolvers<void>()
-    if (signal?.aborted) {
-      reject(new DriveImportFlowError('aborted', 'Авторизация отменена'))
-      return promise
-    }
-    const onAbort = () => {
-      clearTimeout(timer)
-      reject(new DriveImportFlowError('aborted', 'Авторизация отменена'))
-    }
-    const timer = setTimeout(() => {
-      signal?.removeEventListener('abort', onAbort)
-      resolve()
-    }, ms)
-    signal?.addEventListener('abort', onAbort, { once: true })
-    return promise
-  }
-}
-
-function toFlowError(cause: unknown, provider: ImportProviderId): DriveImportFlowError {
-  if (cause instanceof DriveImportFlowError) return cause
-  const message = cause instanceof Error && cause.message ? cause.message : 'Авторизация не удалась'
-  return new DriveImportFlowError('auth-failed', message, provider)
+export interface ImportAuthCompleteOptions extends ImportAuthCallOptions {
+  /** Authorization code for the pasted-code (Yandex) flow. */
+  code?: string
 }
 
 /**
- * Default authorization client. Client ids/secrets are read from an explicit
- * override first and the host env second, and are always passed to the shared
- * helpers explicitly so the helpers never touch a missing `process.env`
- * in the renderer.
+ * Outcome of `drive.importAuthStart` from the caller's point of view:
+ *  - `authorized`  — stored tokens already exist; skip auth and go to planning.
+ *  - `device-code` — show `deviceCode`, then `complete()`.
+ *  - `auth-url`    — the consent URL (opened for Google; shown for Yandex).
  */
-export function createDriveImportAuthClient(env: DriveImportAuthEnv = {}): DriveImportAuthClient {
-  const googleId = env.googleClientId ?? readHostEnv('ROX_GOOGLE_CLIENT_ID')
-  const googleSecret = env.googleClientSecret ?? readHostEnv('ROX_GOOGLE_CLIENT_SECRET') ?? ''
-  const msId = env.msClientId ?? readHostEnv('ROX_MS_CLIENT_ID')
-  const yandexId = env.yandexClientId ?? readHostEnv('ROX_YANDEX_CLIENT_ID')
-  const yandexSecret = env.yandexClientSecret ?? readHostEnv('ROX_YANDEX_CLIENT_SECRET') ?? ''
-  const fetchImpl = env.fetchImpl
+export type ImportAuthStart =
+  | { status: 'authorized' }
+  | { status: 'device-code'; flowId: string; deviceCode: ImportDeviceCode }
+  | { status: 'auth-url'; flowId: string; authUrl: string }
 
-  function requireClientId(provider: ImportProviderId): string {
-    const value = provider === 'google-drive' ? googleId : provider === 'onedrive' ? msId : yandexId
-    if (!value) {
-      throw new DriveImportFlowError('not-configured', `${importProviderName(provider)}-доступ не настроен`, provider)
+/** Authorization surface consumed by the flow controller. */
+export interface DriveImportAuthClient {
+  /** Begin a provider's authorization; resolves the stored-token fast path or a pending flow. */
+  start(provider: ImportProviderId, options?: ImportAuthCallOptions): Promise<ImportAuthStart>
+  /** Finish a pending flow (code exchange or device poll) and persist the tokens host-side. */
+  complete(provider: ImportProviderId, flowId: string, options?: ImportAuthCompleteOptions): Promise<void>
+  /** Abandon a pending flow (best effort). */
+  abort(provider: ImportProviderId): void
+}
+
+/** Raw shapes returned by the host broker RPCs. */
+export type HostAuthStartResponse =
+  | { ok: true; status: 'authorized' }
+  | { ok: true; status: 'pending'; flowId: string; authUrl?: string; deviceCode?: ImportDeviceCode }
+  | { ok: false; code: string; error: string }
+
+export type HostAuthCompleteResponse =
+  | { ok: true; email?: string }
+  | { ok: false; code: string; error: string }
+
+/**
+ * The mechanics the renderer contributes to a broker flow: the two RPCs plus
+ * the main-process loopback callback server used by the Google PKCE broker.
+ * Injected so the client is testable without Electron.
+ */
+export interface DriveImportBrokerTransport {
+  start(provider: ImportProviderId, options?: { callbackUrl?: string }): Promise<HostAuthStartResponse>
+  complete(flowId: string, code?: string): Promise<HostAuthCompleteResponse>
+  beginLoopback(): Promise<{ handle: string; callbackUrl: string }>
+  openUrl(url: string): Promise<void>
+  awaitLoopback(handle: string): Promise<Record<string, string>>
+  cancelLoopback(handle: string): Promise<void>
+}
+
+/** Default transport: `window.electronAPI` (channel-map RPCs + loopback IPC). */
+export function createElectronDriveImportTransport(api: Window['electronAPI']): DriveImportBrokerTransport {
+  return {
+    start: (provider, options) => api.driveImportAuthStart(provider, options),
+    complete: (flowId, code) => api.driveImportAuthComplete(flowId, code),
+    beginLoopback: () => api.driveImportOAuthBegin(),
+    openUrl: async (url) => { await api.driveImportOAuthOpen(url) },
+    awaitLoopback: async (handle) => (await api.driveImportOAuthAwait(handle)).query,
+    cancelLoopback: async (handle) => { await api.driveImportOAuthCancel(handle) },
+  }
+}
+
+function abortedError(): DriveImportFlowError {
+  return new DriveImportFlowError('aborted', 'Авторизация отменена')
+}
+
+/** Reject as soon as `signal` aborts, without cancelling the underlying work. */
+function withAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise
+  if (signal.aborted) return Promise.reject(abortedError())
+  const { promise: wrapped, resolve, reject } = Promise.withResolvers<T>()
+  const onAbort = () => reject(abortedError())
+  signal.addEventListener('abort', onAbort, { once: true })
+  promise.then(
+    value => { signal.removeEventListener('abort', onAbort); resolve(value) },
+    error => { signal.removeEventListener('abort', onAbort); reject(error) },
+  )
+  return wrapped
+}
+
+function toStartError(provider: ImportProviderId, response: { code: string; error: string }): DriveImportFlowError {
+  const kind: ImportFlowErrorKind =
+    response.code === 'no-oauth-client' || response.code === 'unsupported' ? 'not-configured' : 'auth-failed'
+  return new DriveImportFlowError(kind, response.error, provider)
+}
+
+interface PendingFlow {
+  flowId: string
+  /** Loopback handle for the Google PKCE flow; absent for device/code flows. */
+  handle?: string
+}
+
+/**
+ * Broker-backed authorization client. Google binds the main-process loopback
+ * callback server, opens the consent URL and awaits the redirect; OneDrive
+ * surfaces a device code; Yandex returns a consent URL for the pasted code.
+ */
+export function createDriveImportAuthClient(transport: DriveImportBrokerTransport): DriveImportAuthClient {
+  const pending = new Map<ImportProviderId, PendingFlow>()
+
+  async function startGoogle(provider: ImportProviderId, options?: ImportAuthCallOptions): Promise<ImportAuthStart> {
+    const session = await withAbort(transport.beginLoopback(), options?.signal)
+    let response: HostAuthStartResponse
+    try {
+      response = await withAbort(transport.start(provider, { callbackUrl: session.callbackUrl }), options?.signal)
+    } catch (cause) {
+      await transport.cancelLoopback(session.handle).catch(() => {})
+      throw cause
     }
-    return value
+    if (!response.ok) {
+      await transport.cancelLoopback(session.handle).catch(() => {})
+      throw toStartError(provider, response)
+    }
+    if (response.status === 'authorized') {
+      await transport.cancelLoopback(session.handle).catch(() => {})
+      return { status: 'authorized' }
+    }
+    pending.set(provider, { flowId: response.flowId, handle: session.handle })
+    const authUrl = response.authUrl ?? ''
+    if (authUrl) await withAbort(transport.openUrl(authUrl), options?.signal)
+    return { status: 'auth-url', flowId: response.flowId, authUrl }
+  }
+
+  async function startGeneric(provider: ImportProviderId, options?: ImportAuthCallOptions): Promise<ImportAuthStart> {
+    const response = await withAbort(transport.start(provider), options?.signal)
+    if (!response.ok) throw toStartError(provider, response)
+    if (response.status === 'authorized') return { status: 'authorized' }
+    pending.set(provider, { flowId: response.flowId })
+    if (response.deviceCode) return { status: 'device-code', flowId: response.flowId, deviceCode: response.deviceCode }
+    return { status: 'auth-url', flowId: response.flowId, authUrl: response.authUrl ?? '' }
   }
 
   return {
-    isConfigured(provider) {
-      if (provider === 'google-drive') return Boolean(googleId)
-      if (provider === 'onedrive') return Boolean(msId)
-      if (provider === 'yandex-disk') return Boolean(yandexId)
-      return false
+    async start(provider, options) {
+      if (provider === 'google-drive') return startGoogle(provider, options)
+      return startGeneric(provider, options)
     },
 
-    async startDeviceCode(provider, options) {
+    async complete(provider, flowId, options) {
+      const entry = pending.get(provider)
+      let code = options?.code
+      if (entry?.handle) {
+        // Google: the loopback server receives the provider redirect.
+        let query: Record<string, string>
+        try {
+          query = await withAbort(transport.awaitLoopback(entry.handle), options?.signal)
+        } finally {
+          pending.delete(provider)
+        }
+        if (query.error) {
+          throw new DriveImportFlowError('auth-failed', query.error_description || query.error, provider)
+        }
+        code = query.code
+        if (!code) throw new DriveImportFlowError('auth-failed', 'No authorization code received', provider)
+      }
       try {
-        if (provider === 'google-drive') {
-          const started = await startGoogleDeviceCode({ clientId: requireClientId(provider), ...(fetchImpl ? { fetchImpl } : {}) })
-          return {
-            deviceCode: started.deviceCode,
-            userCode: started.userCode,
-            verificationUri: started.verificationUrl,
-            intervalSeconds: started.interval,
-            expiresInSeconds: started.expiresIn,
-          }
-        }
-        if (provider === 'onedrive') {
-          const started = await startMsDeviceCode({ clientId: requireClientId(provider), ...(fetchImpl ? { fetchImpl } : {}) })
-          return {
-            deviceCode: started.deviceCode,
-            userCode: started.userCode,
-            verificationUri: started.verificationUri,
-            intervalSeconds: started.interval,
-            expiresInSeconds: started.expiresIn,
-          }
-        }
-        throw new DriveImportFlowError('auth-failed', 'Для этого провайдера не поддерживается код устройства', provider)
-      } catch (cause) {
-        options?.signal?.throwIfAborted?.()
-        throw toFlowError(cause, provider)
+        const response = await withAbort(transport.complete(flowId, code), options?.signal)
+        if (!response.ok) throw new DriveImportFlowError('auth-failed', response.error, provider)
+      } finally {
+        pending.delete(provider)
       }
     },
 
-    async pollDeviceCode(provider, code, options) {
-      const sleep = abortableSleep(options?.signal)
-      try {
-        if (provider === 'google-drive') {
-          await pollGoogleDeviceToken({
-            deviceCode: code.deviceCode,
-            clientId: requireClientId(provider),
-            clientSecret: googleSecret,
-            interval: code.intervalSeconds,
-            expiresIn: code.expiresInSeconds,
-            sleep,
-            ...(fetchImpl ? { fetchImpl } : {}),
-          })
-          return
-        }
-        if (provider === 'onedrive') {
-          await pollMsDeviceToken({
-            deviceCode: code.deviceCode,
-            clientId: requireClientId(provider),
-            interval: code.intervalSeconds,
-            expiresIn: code.expiresInSeconds,
-            sleep,
-            ...(fetchImpl ? { fetchImpl } : {}),
-          })
-          return
-        }
-        throw new DriveImportFlowError('auth-failed', 'Для этого провайдера не поддерживается код устройства', provider)
-      } catch (cause) {
-        if (cause instanceof DriveImportFlowError && cause.kind === 'aborted') throw cause
-        throw toFlowError(cause, provider)
-      }
-    },
-
-    async yandexAuthUrl(provider, options) {
-      try {
-        return buildYandexAuthUrl({ redirectUri: YANDEX_VERIFICATION_REDIRECT, clientId: requireClientId(provider) })
-      } catch (cause) {
-        options?.signal?.throwIfAborted?.()
-        throw toFlowError(cause, provider)
-      }
-    },
-
-    async completeYandexCode(provider, code, options) {
-      try {
-        await completeYandexAuth({
-          code,
-          clientId: requireClientId(provider),
-          clientSecret: yandexSecret,
-          ...(fetchImpl ? { fetchImpl } : {}),
-        })
-      } catch (cause) {
-        if (cause instanceof DriveImportFlowError && cause.kind === 'aborted') throw cause
-        throw toFlowError(cause, provider)
-      }
+    abort(provider) {
+      const entry = pending.get(provider)
+      pending.delete(provider)
+      if (entry?.handle) void transport.cancelLoopback(entry.handle).catch(() => {})
     },
   }
 }

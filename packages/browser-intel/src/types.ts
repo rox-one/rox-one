@@ -172,6 +172,11 @@ export interface HindsightRunnerDeps {
   env?: NodeJS.ProcessEnv
   exists?: (path: string) => boolean
   stat?: (path: string) => { isFile(): boolean }
+  /**
+   * Test seam: replaces the `uv` runtime probe behind the python-module
+   * fallback so resolution is independent of the ambient toolchain.
+   */
+  resolveRuntime?: () => { command: string; argsPrefix: string[] }
 }
 
 /** Where the Hindsight executable came from. */

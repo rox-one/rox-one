@@ -10,6 +10,7 @@
  * For `device-backup` sessions the host reads the slice itself and the renderer
  * sends no payload, so a device backup never ships file bytes through the UI.
  */
+import { randomUUID } from 'node:crypto'
 import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   DRIVE_BACKUP_SOURCE_KINDS,
@@ -27,6 +28,17 @@ import {
   type ImportProvider,
   type ImportProviderId,
 } from '@rox/shared/drive/importers'
+import { exchangeGoogleOAuth, prepareGoogleOAuth } from '@rox/shared/auth'
+import { getImportAuth, ImportProviderError } from '@rox/shared/drive/importers/providers/auth'
+import {
+  ICLOUD_UNSUPPORTED_MESSAGE,
+} from '@rox/shared/drive/importers/providers/icloud'
+import { pollMsDeviceToken, startMsDeviceCode } from '@rox/shared/drive/importers/providers/onedrive'
+import {
+  YANDEX_VERIFICATION_REDIRECT,
+  buildYandexAuthUrl,
+  completeYandexAuth,
+} from '@rox/shared/drive/importers/providers/yandex-disk'
 import type { RequestContext, RpcServer } from '@rox/server-core/transport'
 import type { DriveService, HandlerDeps, OpenUploadInput } from '../handler-deps'
 
@@ -45,6 +57,8 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.drive.IMPORT_PAUSE,
   RPC_CHANNELS.drive.IMPORT_RESUME,
   RPC_CHANNELS.drive.IMPORT_STATUS,
+  RPC_CHANNELS.drive.IMPORT_AUTH_START,
+  RPC_CHANNELS.drive.IMPORT_AUTH_COMPLETE,
 ] as const
 
 /** Provider ids accepted by `drive:importPlan`. */
@@ -195,6 +209,92 @@ function normalizeImportProvider(value: unknown): ImportProviderId {
   return id
 }
 
+// ── Cloud-import OAuth broker ───────────────────────────────────────────────
+// Tokens must be minted by the host, not the renderer: Google's Drive scope has
+// no device-code flow (Google rejects it with `invalid_scope`), and a renderer
+// has no access to the OAuth client secrets. This broker mirrors
+// `calendar:googleConnect`: `drive:importAuthStart` prepares a flow and returns
+// what the caller must open, `drive:importAuthComplete` exchanges the result and
+// persists it through the same store the providers read.
+
+/** Google Drive scope for a whole-Drive import, plus openid/email identity. */
+export const GOOGLE_DRIVE_IMPORT_SCOPES: readonly string[] = [
+  'https://www.googleapis.com/auth/drive.readonly',
+  'openid',
+  'email',
+]
+
+const IMPORT_AUTH_FLOW_TTL_MS = 15 * 60 * 1000
+
+interface PendingImportAuthFlow {
+  provider: ImportProviderId
+  ownerClientId: string
+  expiresAt: number
+  // Google PKCE broker.
+  codeVerifier?: string
+  redirectUri?: string
+  clientId?: string
+  clientSecret?: string
+  tokenEndpoint?: string
+  // OneDrive device code.
+  deviceCode?: string
+  intervalSeconds?: number
+  expiresInSeconds?: number
+  // Yandex authorization code.
+  yandexClientId?: string
+  yandexClientSecret?: string
+}
+
+/** Pending prepares, keyed by opaque flow id. Server-side only; never serialized. */
+const pendingImportAuthFlows = new Map<string, PendingImportAuthFlow>()
+
+/** Host result of `drive:importAuthStart`. */
+export type ImportAuthStartResult =
+  | { ok: true; status: 'authorized' }
+  | {
+    ok: true
+    status: 'pending'
+    flowId: string
+    /** Present for the URL flows (Google PKCE broker, Yandex code flow). */
+    authUrl?: string
+    /** Present for the device-code flow (OneDrive). */
+    deviceCode?: { userCode: string; verificationUri: string; intervalSeconds: number; expiresInSeconds: number }
+  }
+  | { ok: false; code: 'no-oauth-client' | 'unsupported' | 'invalid-payload'; error: string }
+
+/** Host result of `drive:importAuthComplete`. */
+export type ImportAuthCompleteResult =
+  | { ok: true; email?: string }
+  | { ok: false; code: string; error: string }
+
+const IMPORT_PROVIDER_LABELS: Record<ImportProviderId, string> = {
+  'google-drive': 'Google',
+  onedrive: 'OneDrive',
+  'yandex-disk': 'Яндекс',
+  icloud: 'iCloud',
+}
+
+function envValue(name: string): string | undefined {
+  const value = process.env[name]
+  return typeof value === 'string' && value.length > 0 ? value : undefined
+}
+
+function notConfigured(provider: ImportProviderId): ImportAuthStartResult {
+  return { ok: false, code: 'no-oauth-client', error: `${IMPORT_PROVIDER_LABELS[provider]}-доступ не настроен` }
+}
+
+function prunePendingImportAuthFlows(now = Date.now()): void {
+  for (const [id, flow] of pendingImportAuthFlows) {
+    if (now > flow.expiresAt) pendingImportAuthFlows.delete(id)
+  }
+}
+
+function importFlowError(error: unknown): ImportAuthCompleteResult {
+  if (error instanceof ImportProviderError) return { ok: false, code: error.code, error: error.message }
+  const message = error instanceof Error && error.message ? error.message : 'Не удалось завершить авторизацию'
+  return { ok: false, code: 'oauth-failed', error: message }
+}
+
 export function registerDriveHandlers(server: RpcServer, deps: HandlerDeps): void {
   server.handle(RPC_CHANNELS.drive.QUOTA, async (_ctx: RequestContext, workspaceId: string) => {
     return requireDrive(deps).getQuota(requireWorkspaceId(workspaceId))
@@ -272,5 +372,173 @@ export function registerDriveHandlers(server: RpcServer, deps: HandlerDeps): voi
 
   server.handle(RPC_CHANNELS.drive.IMPORT_STATUS, async (_ctx: RequestContext, jobId?: string | null) => {
     return requireImport().status(jobId === undefined || jobId === null ? undefined : requireId(jobId, 'jobId'))
+  })
+
+  // Wave 4 — host-side OAuth broker for imports (tokens never reach the renderer).
+  server.handle(RPC_CHANNELS.drive.IMPORT_AUTH_START, async (
+    ctx: RequestContext,
+    provider: unknown,
+    options?: { callbackUrl?: unknown; callbackPort?: unknown } | null,
+  ): Promise<ImportAuthStartResult> => {
+    const id = normalizeImportProvider(provider)
+    prunePendingImportAuthFlows()
+    if (id === 'icloud') {
+      return { ok: false, code: 'unsupported', error: ICLOUD_UNSUPPORTED_MESSAGE }
+    }
+    // A provider with stored tokens skips auth entirely and goes to planning.
+    const stored = await getImportAuth().getTokens(id)
+    if (stored?.accessToken) return { ok: true, status: 'authorized' }
+
+    const flowId = randomUUID()
+    const ownerClientId = ctx.clientId
+
+    if (id === 'google-drive') {
+      const clientId = envValue('GOOGLE_OAUTH_CLIENT_ID')
+      const clientSecret = envValue('GOOGLE_OAUTH_CLIENT_SECRET')
+      if (!clientId || !clientSecret) return notConfigured(id)
+      const callbackUrl = typeof options?.callbackUrl === 'string' ? options.callbackUrl : undefined
+      const callbackPort = typeof options?.callbackPort === 'number' ? options.callbackPort : undefined
+      if (!callbackUrl && callbackPort === undefined) {
+        return { ok: false, code: 'invalid-payload', error: 'callbackUrl or callbackPort is required to prepare a Google flow' }
+      }
+      let prepared
+      try {
+        prepared = prepareGoogleOAuth({
+          scopes: [...GOOGLE_DRIVE_IMPORT_SCOPES],
+          ...(callbackUrl ? { callbackUrl } : {}),
+          ...(callbackPort !== undefined ? { callbackPort } : {}),
+          clientId,
+          clientSecret,
+        })
+      } catch {
+        return notConfigured(id)
+      }
+      pendingImportAuthFlows.set(flowId, {
+        provider: id,
+        ownerClientId,
+        expiresAt: Date.now() + IMPORT_AUTH_FLOW_TTL_MS,
+        codeVerifier: prepared.codeVerifier,
+        redirectUri: prepared.redirectUri,
+        clientId: prepared.clientId,
+        clientSecret: prepared.clientSecret,
+        tokenEndpoint: prepared.tokenEndpoint,
+      })
+      return { ok: true, status: 'pending', flowId, authUrl: prepared.authUrl }
+    }
+
+    if (id === 'onedrive') {
+      const clientId = envValue('ROX_MS_CLIENT_ID')
+      if (!clientId) return notConfigured(id)
+      try {
+        const started = await startMsDeviceCode({ clientId })
+        pendingImportAuthFlows.set(flowId, {
+          provider: id,
+          ownerClientId,
+          expiresAt: Date.now() + started.expiresIn * 1000,
+          deviceCode: started.deviceCode,
+          intervalSeconds: started.interval,
+          expiresInSeconds: started.expiresIn,
+        })
+        return {
+          ok: true,
+          status: 'pending',
+          flowId,
+          deviceCode: {
+            userCode: started.userCode,
+            verificationUri: started.verificationUri,
+            intervalSeconds: started.interval,
+            expiresInSeconds: started.expiresIn,
+          },
+        }
+      } catch (error) {
+        const message = error instanceof Error && error.message ? error.message : 'Не удалось начать авторизацию'
+        return { ok: false, code: 'invalid-payload', error: message }
+      }
+    }
+
+    const clientId = envValue('ROX_YANDEX_CLIENT_ID')
+    const clientSecret = envValue('ROX_YANDEX_CLIENT_SECRET')
+    if (!clientId) return notConfigured(id)
+    const authUrl = buildYandexAuthUrl({ redirectUri: YANDEX_VERIFICATION_REDIRECT, clientId })
+    pendingImportAuthFlows.set(flowId, {
+      provider: id,
+      ownerClientId,
+      expiresAt: Date.now() + IMPORT_AUTH_FLOW_TTL_MS,
+      yandexClientId: clientId,
+      yandexClientSecret: clientSecret,
+    })
+    return { ok: true, status: 'pending', flowId, authUrl }
+  })
+
+  server.handle(RPC_CHANNELS.drive.IMPORT_AUTH_COMPLETE, async (
+    ctx: RequestContext,
+    flowId: unknown,
+    code?: unknown,
+  ): Promise<ImportAuthCompleteResult> => {
+    if (typeof flowId !== 'string' || flowId.length === 0 || flowId.length > MAX_ID_LENGTH) {
+      return { ok: false, code: 'unknown-flow', error: 'Unknown or expired authorization flow' }
+    }
+    prunePendingImportAuthFlows()
+    const flow = pendingImportAuthFlows.get(flowId)
+    if (!flow) return { ok: false, code: 'unknown-flow', error: 'Unknown or expired authorization flow' }
+    if (flow.ownerClientId !== ctx.clientId) {
+      return { ok: false, code: 'unknown-flow', error: 'Authorization flow belongs to a different client' }
+    }
+
+    if (flow.provider === 'google-drive') {
+      if (typeof code !== 'string' || code.length === 0) {
+        return { ok: false, code: 'invalid-payload', error: 'Authorization code is required' }
+      }
+      const result = await exchangeGoogleOAuth({
+        code,
+        codeVerifier: flow.codeVerifier ?? '',
+        tokenEndpoint: flow.tokenEndpoint ?? '',
+        clientId: flow.clientId ?? '',
+        clientSecret: flow.clientSecret,
+        redirectUri: flow.redirectUri ?? '',
+      })
+      if (!result.success || !result.accessToken) {
+        return { ok: false, code: 'oauth-failed', error: result.error ?? 'Google OAuth exchange failed' }
+      }
+      await getImportAuth().setTokens('google-drive', {
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        expiresAt: result.expiresAt,
+        tokenType: 'Bearer',
+      })
+      pendingImportAuthFlows.delete(flowId)
+      return { ok: true, email: result.email }
+    }
+
+    if (flow.provider === 'onedrive') {
+      try {
+        const tokens = await pollMsDeviceToken({
+          deviceCode: flow.deviceCode ?? '',
+          interval: flow.intervalSeconds,
+          expiresIn: flow.expiresInSeconds,
+        })
+        await getImportAuth().setTokens('onedrive', tokens)
+      } catch (error) {
+        return importFlowError(error)
+      }
+      pendingImportAuthFlows.delete(flowId)
+      return { ok: true }
+    }
+
+    if (typeof code !== 'string' || code.length === 0) {
+      return { ok: false, code: 'invalid-payload', error: 'Authorization code is required' }
+    }
+    try {
+      const tokens = await completeYandexAuth({
+        code,
+        clientId: flow.yandexClientId,
+        clientSecret: flow.yandexClientSecret,
+      })
+      await getImportAuth().setTokens('yandex-disk', tokens)
+    } catch (error) {
+      return importFlowError(error)
+    }
+    pendingImportAuthFlows.delete(flowId)
+    return { ok: true }
   })
 }

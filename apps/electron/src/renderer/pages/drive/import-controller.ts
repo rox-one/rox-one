@@ -2,20 +2,24 @@
  * Drive cloud-import flow controller (wave 4).
  *
  * Framework-agnostic state machine the dialog subscribes to: pick a provider →
- * authorize (device code for Google/OneDrive, pasted code for Yandex) → plan +
- * start the host job (`drive:import*`) → poll `drive:importStatus` every
- * `pollMs` and expose pause/resume. The controller owns no timers of its own —
- * `schedule`/`cancelSchedule` are injected so tests step time by hand.
+ * authorize through the host broker → plan + start the host job
+ * (`drive:import*`) → poll `drive:importStatus` every `pollMs` and expose
+ * pause/resume. The controller owns no timers of its own — `schedule`/
+ * `cancelSchedule` are injected so tests step time by hand.
  *
  * It never invents progress: every phase change is driven by an RPC result or
  * an authorization result, and failures carry the provider's own message
  * (`«Google-доступ не настроен»`, `UNSUPPORTED_OPERATION`, …).
+ *
+ * A generation counter invalidates in-flight work: `start`/`cancel`/`reset`/
+ * `dispose` bump it, and every await re-checks it, so a late status/pause
+ * promise cannot resurrect the dialog or re-arm polling.
  */
 import type { ImportJob, ImportProviderId } from '@rox/shared/drive/importers/types'
+import { toErrorMessage } from '../../lib/errors'
 import {
   DriveImportFlowError,
   importProviderDescriptor,
-  importProviderName,
   type DriveImportAuthClient,
   type ImportDeviceCode,
 } from './import-flow'
@@ -92,9 +96,8 @@ const INITIAL_STATE: DriveImportState = {
 }
 
 function messageOf(cause: unknown): string {
-  if (cause instanceof Error && cause.message) return cause.message
-  if (typeof cause === 'string' && cause.length > 0) return cause
-  return 'Импорт не удался'
+  const message = toErrorMessage(cause)
+  return message.trim().length > 0 ? message : 'Импорт не удался'
 }
 
 export function createDriveImportController(deps: DriveImportControllerDeps): DriveImportController {
@@ -110,6 +113,19 @@ export function createDriveImportController(deps: DriveImportControllerDeps): Dr
   let authAbort: AbortController | null = null
   let pollHandle: unknown = null
   let disposed = false
+  /** Pending Yandex flow id, kept between `start` and `submitYandexCode`. */
+  let yandexFlowId: string | null = null
+  /** Bumped by every state transition that must invalidate in-flight work. */
+  let generation = 0
+
+  function bumpGeneration(): number {
+    generation += 1
+    return generation
+  }
+
+  function stale(gen: number): boolean {
+    return disposed || gen !== generation
+  }
 
   function emit(next: Partial<DriveImportState>): void {
     if (disposed) return
@@ -127,15 +143,17 @@ export function createDriveImportController(deps: DriveImportControllerDeps): Dr
   function abortAuthorization(): void {
     authAbort?.abort()
     authAbort = null
+    if (state.provider) deps.auth.abort(state.provider)
   }
 
-  function schedulePoll(jobId: string): void {
+  function schedulePoll(jobId: string, gen: number): void {
     stopPolling()
     const tick = async () => {
       pollHandle = null
-      if (disposed) return
+      if (stale(gen)) return
       try {
         const value = await deps.api.driveImportStatus(jobId)
+        if (stale(gen)) return
         const job = Array.isArray(value) ? value.find(entry => entry.id === jobId) ?? value[0] ?? null : value
         if (!job) {
           pollHandle = schedule(() => void tick(), pollMs)
@@ -152,61 +170,88 @@ export function createDriveImportController(deps: DriveImportControllerDeps): Dr
         emit({ phase: 'job', job, error: null })
         pollHandle = schedule(() => void tick(), pollMs)
       } catch (cause) {
+        if (stale(gen)) return
         emit({ phase: 'error', error: messageOf(cause), retryable: true })
       }
     }
     pollHandle = schedule(() => void tick(), pollMs)
   }
 
-  async function planAndStart(provider: ImportProviderId): Promise<void> {
+  async function planAndStart(provider: ImportProviderId, gen: number): Promise<void> {
     emit({ phase: 'planning', provider, error: null, retryable: true })
     try {
       const planned = await deps.api.driveImportPlan(provider)
+      if (stale(gen)) return
       const started = await deps.api.driveImportStart(planned.id)
+      if (stale(gen)) return
       emit({ phase: 'job', job: started, error: started.error ?? null })
-      schedulePoll(planned.id)
+      schedulePoll(planned.id, gen)
     } catch (cause) {
+      if (stale(gen)) return
       emit({ phase: 'error', provider, error: messageOf(cause), retryable: true })
     }
   }
 
-  async function runDeviceCode(provider: ImportProviderId): Promise<void> {
+  async function runAuthorization(provider: ImportProviderId, gen: number): Promise<void> {
     const controller = new AbortController()
     authAbort = controller
     emit({ phase: 'authorizing', provider, deviceCode: null, expiresAt: null, error: null, retryable: true })
     try {
-      const code = await deps.auth.startDeviceCode(provider, { signal: controller.signal })
-      if (controller.signal.aborted || disposed) return
-      emit({
-        deviceCode: {
-          userCode: code.userCode,
-          verificationUri: code.verificationUri,
-          intervalSeconds: code.intervalSeconds,
-          expiresInSeconds: code.expiresInSeconds,
-        },
-        expiresAt: now() + code.expiresInSeconds * 1000,
-      })
-      await deps.auth.pollDeviceCode(provider, code, { signal: controller.signal })
-      if (controller.signal.aborted || disposed) return
+      const begun = await deps.auth.start(provider, { signal: controller.signal })
+      if (stale(gen)) return
+      if (begun.status === 'authorized') {
+        authAbort = null
+        await planAndStart(provider, gen)
+        return
+      }
+      if (begun.status === 'device-code') {
+        emit({
+          deviceCode: begun.deviceCode,
+          expiresAt: now() + begun.deviceCode.expiresInSeconds * 1000,
+        })
+      }
+      await deps.auth.complete(provider, begun.flowId, { signal: controller.signal })
+      if (stale(gen)) return
       authAbort = null
-      await planAndStart(provider)
+      await planAndStart(provider, gen)
     } catch (cause) {
       if (cause instanceof DriveImportFlowError && cause.kind === 'aborted') return
-      emit({ phase: 'error', provider, error: messageOf(cause), retryable: true })
+      if (stale(gen)) return
+      emit({
+        phase: 'error',
+        provider,
+        error: messageOf(cause),
+        retryable: !(cause instanceof DriveImportFlowError && cause.kind === 'not-configured'),
+      })
     }
   }
 
-  async function runYandexConsent(provider: ImportProviderId): Promise<void> {
+  async function runYandexConsent(provider: ImportProviderId, gen: number): Promise<void> {
     const controller = new AbortController()
     authAbort = controller
     emit({ phase: 'yandex-code', provider, yandexUrl: null, error: null, retryable: true })
     try {
-      const url = await deps.auth.yandexAuthUrl(provider, { signal: controller.signal })
-      if (controller.signal.aborted || disposed) return
-      emit({ yandexUrl: url })
+      const begun = await deps.auth.start(provider, { signal: controller.signal })
+      if (stale(gen)) return
+      if (begun.status === 'authorized') {
+        authAbort = null
+        await planAndStart(provider, gen)
+        return
+      }
+      if (begun.status === 'auth-url') {
+        yandexFlowId = begun.flowId
+        emit({ yandexUrl: begun.authUrl })
+      }
+      authAbort = null
     } catch (cause) {
       if (cause instanceof DriveImportFlowError && cause.kind === 'aborted') return
-      emit({ phase: 'error', provider, error: messageOf(cause), retryable: true })
+      if (stale(gen)) return
+      emit({
+        phase: 'error',
+        provider,
+        error: messageOf(cause),
+        retryable: !(cause instanceof DriveImportFlowError && cause.kind === 'not-configured'),
+      })
     }
   }
 
@@ -220,8 +265,10 @@ export function createDriveImportController(deps: DriveImportControllerDeps): Dr
 
     start(provider) {
       if (disposed) return
+      const gen = bumpGeneration()
       abortAuthorization()
       stopPolling()
+      yandexFlowId = null
       const descriptor = importProviderDescriptor(provider)
       if (!descriptor) return
       emit({ ...INITIAL_STATE, provider })
@@ -229,38 +276,37 @@ export function createDriveImportController(deps: DriveImportControllerDeps): Dr
         emit({ phase: 'unsupported', provider, error: descriptor.unsupportedMessage ?? null, retryable: false })
         return
       }
-      if (!deps.auth.isConfigured(provider)) {
-        emit({
-          phase: 'error',
-          provider,
-          error: `${importProviderName(provider)}-доступ не настроен`,
-          retryable: false,
-        })
+      if (descriptor.authKind === 'pasted-code') {
+        void runYandexConsent(provider, gen)
         return
       }
-      if (descriptor.authKind === 'device-code') {
-        void runDeviceCode(provider)
-        return
-      }
-      void runYandexConsent(provider)
+      void runAuthorization(provider, gen)
     },
 
     submitYandexCode(code) {
       const provider = state.provider
       const trimmed = code.trim()
-      if (disposed || !provider || state.phase !== 'yandex-code' || trimmed.length === 0) return
+      const flowId = yandexFlowId
+      if (disposed || !provider || !flowId || state.phase !== 'yandex-code' || trimmed.length === 0) return
+      const gen = generation
       const controller = new AbortController()
       authAbort = controller
-      emit({ phase: 'authorizing', error: null, retryable: true })
+      emit({ phase: 'authorizing', yandexUrl: null, error: null, retryable: true })
       void (async () => {
         try {
-          await deps.auth.completeYandexCode(provider, trimmed, { signal: controller.signal })
-          if (controller.signal.aborted || disposed) return
+          await deps.auth.complete(provider, flowId, { code: trimmed, signal: controller.signal })
+          if (stale(gen)) return
           authAbort = null
-          await planAndStart(provider)
+          await planAndStart(provider, gen)
         } catch (cause) {
           if (cause instanceof DriveImportFlowError && cause.kind === 'aborted') return
-          emit({ phase: 'error', provider, error: messageOf(cause), retryable: true })
+          if (stale(gen)) return
+          emit({
+            phase: 'error',
+            provider,
+            error: messageOf(cause),
+            retryable: !(cause instanceof DriveImportFlowError && cause.kind === 'not-configured'),
+          })
         }
       })()
     },
@@ -268,23 +314,27 @@ export function createDriveImportController(deps: DriveImportControllerDeps): Dr
     pause() {
       const job = state.job
       if (disposed || !job) return
+      const gen = generation
       void deps.api.driveImportPause(job.id)
-        .then(next => emit({ job: next }))
-        .catch(cause => emit({ error: messageOf(cause) }))
+        .then(next => { if (!stale(gen)) emit({ job: next }) })
+        .catch(cause => { if (!stale(gen)) emit({ error: messageOf(cause) }) })
     },
 
     resume() {
       const job = state.job
       if (disposed || !job) return
+      const gen = generation
       void deps.api.driveImportResume(job.id)
-        .then(next => emit({ phase: 'job', job: next, error: null }))
-        .catch(cause => emit({ error: messageOf(cause) }))
+        .then(next => { if (!stale(gen)) emit({ phase: 'job', job: next, error: null }) })
+        .catch(cause => { if (!stale(gen)) emit({ error: messageOf(cause) }) })
     },
 
     cancel() {
       const job = state.job
+      bumpGeneration()
       abortAuthorization()
       stopPolling()
+      yandexFlowId = null
       if (job && job.status !== 'done' && job.status !== 'error') {
         void deps.api.driveImportPause(job.id).catch(() => {})
       }
@@ -292,12 +342,15 @@ export function createDriveImportController(deps: DriveImportControllerDeps): Dr
     },
 
     reset() {
+      bumpGeneration()
       abortAuthorization()
       stopPolling()
+      yandexFlowId = null
       emit({ ...INITIAL_STATE })
     },
 
     dispose() {
+      bumpGeneration()
       disposed = true
       abortAuthorization()
       stopPolling()

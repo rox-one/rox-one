@@ -265,7 +265,7 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
         deps.platform.logger.info('[OPEN_URL] Handling as deep link')
         const { handleDeepLink } = await import('../deep-link')
         const resolver = (wcId: number) => windowManager.getClientIdForWindow(wcId)
-        const result = await handleDeepLink(url, windowManager, server.push.bind(server), resolver, ctx.clientId)
+        const result = await handleDeepLink(url, windowManager, server.push.bind(server), resolver, ctx.clientId, 'app')
         deps.platform.logger.info('[OPEN_URL] Deep link result:', result)
         return
       }

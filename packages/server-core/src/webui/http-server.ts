@@ -20,10 +20,13 @@ import {
   validateSession,
   buildSessionCookie,
   buildLogoutCookie,
+  buildOidcStateCookie,
+  buildClearedOidcStateCookie,
+  extractOidcStateCookie,
+  constantTimeEqual,
   readOidcConfigFromEnv,
   discoverOidc,
-  fetchJwks,
-  verifyOidcIdToken,
+  verifyOidcIdTokenWithJwks,
   createPkcePair,
   createRandomToken,
   type OidcConfig,
@@ -142,6 +145,19 @@ export function resolveWebSocketUrl(
 const OIDC_STATE_TTL_MS = 10 * 60_000
 
 /**
+ * Hard cap on concurrent pending OIDC login records. `GET /api/auth/login` is
+ * unauthenticated and previously inserted one (verifier+nonce) record per
+ * request with only a 10-minute TTL sweep, so an attacker could grow the map
+ * without bound (memory DoS). Beyond this maximum the oldest record is evicted
+ * (Map iteration is insertion-ordered) so a legitimate in-flight login is only
+ * dropped under sustained abuse.
+ */
+const OIDC_MAX_PENDING_LOGINS = 256
+
+/** Lifetime of the one-time OIDC `state` cookie — matches the server-side TTL. */
+const OIDC_STATE_COOKIE_MAX_AGE_SECONDS = Math.floor(OIDC_STATE_TTL_MS / 1000)
+
+/**
  * Minimal, honest Russian error page for failed Rox ID logins. No stack traces
  * or internal error identifiers leak to the browser.
  */
@@ -178,10 +194,10 @@ function renderLoginErrorPage(message: string): string {
 </html>`
 }
 
-function loginErrorResponse(message: string, status: number): Response {
+function loginErrorResponse(message: string, status: number, extraHeaders?: Record<string, string>): Response {
   return new Response(renderLoginErrorPage(message), {
     status,
-    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    headers: { 'Content-Type': 'text/html; charset=utf-8', ...extraHeaders },
   })
 }
 
@@ -211,6 +227,13 @@ export interface WebuiHandlerOptions {
    * password login behaves exactly as before.
    */
   oidc?: OidcConfig
+  /**
+   * When OIDC is configured the shared-password route is disabled (404) so
+   * enabling Rox ID actually removes master-token access. Set this to `true`
+   * (or `ROX_WEBUI_PASSWORD_LOGIN=1` in the environment) to keep the residual
+   * password path as a deliberate operator choice. Ignored when OIDC is unset.
+   */
+  allowPasswordLogin?: boolean
   /** RPC WebSocket protocol used when building a browser-facing fallback URL. */
   wsProtocol: 'ws' | 'wss'
   /** RPC WebSocket port used when building a browser-facing fallback URL. */
@@ -281,6 +304,17 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     }
   }, 120_000)
 
+  // With OIDC enabled the shared-password route is disabled unless explicitly
+  // opted in, so Rox ID actually replaces master-token access.
+  const allowPasswordLogin = options.allowPasswordLogin
+    ?? process.env.ROX_WEBUI_PASSWORD_LOGIN === '1'
+  // OIDC public URLs over https always get Secure cookies; header-based
+  // inference stays in play only for http (e.g. local deployments).
+  const oidcPublicUrlIsHttps = oidc ? /^https:/i.test(oidc.publicUrl) : false
+  if (oidc && !oidcPublicUrlIsHttps) {
+    logger.warn('[webui] OIDC public URL is not https; session cookies follow request scheme inference')
+  }
+
   const loginPassword = password || secret
   const trustedProxySet = new Set(trustedProxies ?? [])
 
@@ -303,7 +337,7 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
   async function handleRequest(req: Request): Promise<Response> {
     const url = new URL(req.url)
     const path = url.pathname
-    const useSecureCookies = shouldUseSecureCookies(req, secureCookies)
+    const useSecureCookies = oidcPublicUrlIsHttps || shouldUseSecureCookies(req, secureCookies)
 
     // ── Health endpoint (no auth) ──
     if (path === '/health') {
@@ -345,11 +379,26 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     // ── OIDC login: redirect to the IdP authorization endpoint with PKCE ──
     if (path === '/api/auth/login' && req.method === 'GET') {
       if (!oidc) return new Response('OIDC login is not enabled', { status: 404 })
+
+      // Unauthenticated route that allocates pending state: apply the same
+      // per-IP rate limit as the password POST before doing any work.
+      const ip = getClientIp(req)
+      if (!rateLimiter.check(ip)) {
+        logger.warn(`[webui] Rate limited OIDC login start from ${ip}`)
+        return loginErrorResponse('Слишком много попыток входа. Попробуйте позже.', 429)
+      }
+
       try {
         const discovery = await discoverOidc(oidc.issuer)
         const state = createRandomToken(16)
         const nonce = createRandomToken(16)
         const { codeVerifier, codeChallenge } = createPkcePair()
+
+        // Bound the pending map: evict the oldest record before inserting.
+        if (pendingOidcLogins.size >= OIDC_MAX_PENDING_LOGINS) {
+          const oldest = pendingOidcLogins.keys().next().value
+          if (oldest !== undefined) pendingOidcLogins.delete(oldest)
+        }
         pendingOidcLogins.set(state, { codeVerifier, nonce, createdAt: Date.now() })
 
         const authorizationUrl = new URL(discovery.authorization_endpoint)
@@ -362,7 +411,14 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
         authorizationUrl.searchParams.set('code_challenge', codeChallenge)
         authorizationUrl.searchParams.set('code_challenge_method', 'S256')
 
-        return new Response(null, { status: 302, headers: { Location: authorizationUrl.toString() } })
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: authorizationUrl.toString(),
+            // One-time binding of this login to the initiating browser (see auth.ts).
+            'Set-Cookie': buildOidcStateCookie(state, useSecureCookies, OIDC_STATE_COOKIE_MAX_AGE_SECONDS),
+          },
+        })
       } catch (err) {
         logger.error(`[webui] OIDC login start failed: ${err instanceof Error ? err.message : 'unknown'}`)
         return loginErrorResponse('Сервис Rox ID сейчас недоступен. Попробуйте позже.', 502)
@@ -373,19 +429,29 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     if (path === '/api/auth/callback' && req.method === 'GET') {
       if (!oidc) return new Response('Not Found', { status: 404 })
 
+      const clearStateCookie = { 'Set-Cookie': buildClearedOidcStateCookie(useSecureCookies) }
       const state = url.searchParams.get('state')
+      const cookieState = extractOidcStateCookie(req.headers.get('cookie'))
+
+      // Bind the callback to the browser that started the login: the one-time
+      // oidc_state cookie must match the state query param exactly (login CSRF /
+      // session-fixation guard) before any state lookup, code exchange or minting.
+      if (!state || !cookieState || !constantTimeEqual(cookieState, state)) {
+        return loginErrorResponse('Запрос входа не соответствует этой сессии браузера. Начните вход заново.', 400)
+      }
+
       const code = url.searchParams.get('code')
-      const pending = state ? pendingOidcLogins.get(state) : undefined
-      if (state) pendingOidcLogins.delete(state)
+      const pending = pendingOidcLogins.get(state)
+      pendingOidcLogins.delete(state)
 
       if (!pending || Date.now() - pending.createdAt > OIDC_STATE_TTL_MS) {
-        return loginErrorResponse('Сессия входа истекла или параметр state недействителен. Начните вход заново.', 400)
+        return loginErrorResponse('Сессия входа истекла или параметр state недействителен. Начните вход заново.', 400, clearStateCookie)
       }
       if (url.searchParams.get('error')) {
-        return loginErrorResponse('Провайдер Rox ID отклонил вход. Попробуйте ещё раз.', 400)
+        return loginErrorResponse('Провайдер Rox ID отклонил вход. Попробуйте ещё раз.', 400, clearStateCookie)
       }
       if (!code) {
-        return loginErrorResponse('Провайдер Rox ID не вернул код авторизации.', 400)
+        return loginErrorResponse('Провайдер Rox ID не вернул код авторизации.', 400, clearStateCookie)
       }
 
       try {
@@ -414,9 +480,8 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
           throw new Error('token endpoint did not return an id_token')
         }
 
-        const jwks = await fetchJwks(discovery.jwks_uri)
-        const user = verifyOidcIdToken(tokenBody.id_token, {
-          jwks,
+        const user = await verifyOidcIdTokenWithJwks(tokenBody.id_token, {
+          jwksUri: discovery.jwks_uri,
           issuer: oidc.issuer,
           clientId: oidc.clientId,
           nonce: pending.nonce,
@@ -431,21 +496,23 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
         })
         logger.info(`[webui] OIDC login succeeded for ${user.sub}`)
 
-        return new Response(null, {
-          status: 302,
-          headers: {
-            Location: '/',
-            'Set-Cookie': buildSessionCookie(jwt, useSecureCookies),
-          },
-        })
+        const successHeaders = new Headers()
+        successHeaders.set('Location', '/')
+        successHeaders.append('Set-Cookie', buildSessionCookie(jwt, useSecureCookies))
+        successHeaders.append('Set-Cookie', buildClearedOidcStateCookie(useSecureCookies))
+        return new Response(null, { status: 302, headers: successHeaders })
       } catch (err) {
         logger.warn(`[webui] OIDC callback failed: ${err instanceof Error ? err.message : 'unknown'}`)
-        return loginErrorResponse('Не удалось завершить вход через Rox ID. Попробуйте ещё раз.', 400)
+        return loginErrorResponse('Не удалось завершить вход через Rox ID. Попробуйте ещё раз.', 400, clearStateCookie)
       }
     }
 
     // ── Auth endpoint ──
     if (path === '/api/auth' && req.method === 'POST') {
+      // With OIDC enabled, password login is a deliberate opt-in; otherwise the
+      // route does not exist so master-token access is genuinely removed.
+      if (oidc && !allowPasswordLogin) return new Response('Not Found', { status: 404 })
+
       await passwordReady
       const ip = getClientIp(req)
 

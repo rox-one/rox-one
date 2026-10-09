@@ -1,8 +1,8 @@
 /**
  * OneDrive (Microsoft Graph) import provider — device-code flow, pure fetch.
  *
- * Auth (consumers tenant, personal + work accounts):
- *  - POST /consumers/oauth2/v2.0/devicecode, then poll /token with the
+ * Auth (common tenant — personal + work/school accounts):
+ *  - POST /common/oauth2/v2.0/devicecode, then poll /token with the
  *    `urn:ietf:params:oauth:grant-type:device_code` grant, honoring the
  *    server `interval` and `slow_down` backoff.
  *
@@ -29,8 +29,10 @@ import {
   type SleepFn,
 } from './auth'
 
-export const MS_DEVICE_CODE_URL = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode'
-export const MS_TOKEN_URL = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token'
+// `/common` admits both personal Microsoft accounts and work/school (Entra)
+// accounts; `/consumers` admits personal accounts only.
+export const MS_DEVICE_CODE_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/devicecode'
+export const MS_TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/token'
 export const MS_GRAPH_BASE = 'https://graph.microsoft.com/v1.0'
 export const ONEDRIVE_SCOPES = 'Files.Read offline_access User.Read'
 

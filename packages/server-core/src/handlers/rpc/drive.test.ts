@@ -10,6 +10,7 @@ import {
   configureDriveImport,
   resetDriveImport,
   registerDriveHandlers,
+  registerImportProvider,
   HANDLED_CHANNELS,
 } from './drive'
 
@@ -125,5 +126,19 @@ describe('drive import RPC handlers', () => {
     await expect(invoke(RPC_CHANNELS.drive.IMPORT_PLAN, 'google-drive')).rejects.toMatchObject({
       code: 'UNSUPPORTED_OPERATION',
     })
+  })
+
+  test('host composition: registerImportProvider + configureDriveImport serves importPlan', async () => {
+    resetDriveImport()
+    const target: DriveUploadTarget = { async put() {} }
+    // The host composition path registers adapters first and then composes the
+    // runner without an explicit provider list (as apps/electron does).
+    registerImportProvider(provider)
+    configureDriveImport({ stateDir, target, concurrency: 1, sleep: async () => {} })
+
+    const { invoke } = harness()
+    const job = await invoke(RPC_CHANNELS.drive.IMPORT_PLAN, 'google-drive') as { status: string; plan: unknown[] }
+    expect(job.status).toBe('idle')
+    expect(job.plan).toHaveLength(2)
   })
 })

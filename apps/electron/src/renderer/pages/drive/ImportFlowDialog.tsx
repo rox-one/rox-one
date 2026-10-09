@@ -22,7 +22,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { formatBytes } from './format'
-import { IMPORT_PROVIDERS, createDriveImportAuthClient, type DriveImportAuthClient } from './import-flow'
+import {
+  IMPORT_PROVIDERS,
+  createDriveImportAuthClient,
+  createElectronDriveImportTransport,
+  type DriveImportAuthClient,
+} from './import-flow'
 import { createDriveImportController, type DriveImportApi } from './import-controller'
 
 export interface ImportFlowDialogProps {
@@ -61,7 +66,7 @@ export function ImportFlowDialog({ open, onOpenChange, api, auth, initialProvide
   const controller = useMemo(() => {
     if (!open) return null
     return createDriveImportController({
-      auth: auth ?? createDriveImportAuthClient(),
+      auth: auth ?? createDriveImportAuthClient(createElectronDriveImportTransport(window.electronAPI)),
       api,
       ...(pollMs !== undefined ? { pollMs } : {}),
     })
@@ -318,6 +323,11 @@ export function ImportFlowDialog({ open, onOpenChange, api, auth, initialProvide
                   {t('drive.import.control.cancel')}
                 </Button>
               </div>
+            )}
+            {state?.error && (
+              <p role="alert" className="text-sm text-destructive" data-testid="drive-import-control-error">
+                {state.error}
+              </p>
             )}
           </div>
         )}

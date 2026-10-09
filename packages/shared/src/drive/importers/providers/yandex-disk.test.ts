@@ -30,11 +30,13 @@ describe('YandexDiskProvider.list', () => {
   test('paginates with limit/offset until _embedded.total is reached', async () => {
     const auth = await authed()
     const offsets: string[] = []
+    const fields: (string | null)[] = []
     const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
       const url = new URL(String(input))
       expect(url.pathname).toBe('/v1/disk/resources')
       expect(url.searchParams.get('path')).toBe('disk:/')
       expect(new Headers(init?.headers).get('authorization')).toBe('Bearer tok')
+      fields.push(url.searchParams.get('fields'))
       const offset = url.searchParams.get('offset') ?? ''
       offsets.push(offset)
       if (offset === '0') {
@@ -55,6 +57,12 @@ describe('YandexDiskProvider.list', () => {
     const entries = await provider.list()
 
     expect(offsets).toEqual(['0', '2'])
+    // The Disk API needs comma-separated dotted paths; the function-call syntax
+    // `_embedded.items(...)` silently excludes the items array.
+    expect(fields).toEqual([
+      '_embedded.total,_embedded.items.name,_embedded.items.path,_embedded.items.type,_embedded.items.size,_embedded.items.modified',
+      '_embedded.total,_embedded.items.name,_embedded.items.path,_embedded.items.type,_embedded.items.size,_embedded.items.modified',
+    ])
     expect(entries).toHaveLength(3)
     expect(entries[0]).toMatchObject({ id: 'disk:/Docs', name: 'Docs', kind: 'folder' })
     expect(entries[1]).toMatchObject({ id: 'disk:/a.txt', kind: 'file', sizeBytes: 11, modifiedAt: '2026-01-02T00:00:00Z' })

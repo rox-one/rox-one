@@ -32,6 +32,8 @@ export const YANDEX_TOKEN_URL = 'https://oauth.yandex.ru/token'
 export const YANDEX_DISK_API_BASE = 'https://cloud-api.yandex.net/v1/disk'
 export const YANDEX_DEFAULT_SCOPE = 'cloud_api:disk.read'
 export const YANDEX_ROOT_PATH = 'disk:/'
+/** Yandex shows the authorization code on this fixed page for manual pasting. */
+export const YANDEX_VERIFICATION_REDIRECT = 'https://oauth.yandex.ru/verification_code'
 
 export function yandexClientId(explicit?: string): string {
   return explicit ?? process.env.ROX_YANDEX_CLIENT_ID ?? ''
@@ -265,7 +267,10 @@ export class YandexDiskProvider implements ImportProvider {
         path,
         limit: String(this.pageSize),
         offset: String(offset),
-        fields: '_embedded.total,_embedded.items(name,path,type,size,modified)',
+        // The Disk API takes comma-separated *dotted* paths, not a function-call
+        // syntax: `_embedded.items(name,…)` selects only `total` and yields no
+        // items, which makes every folder look empty.
+        fields: '_embedded.total,_embedded.items.name,_embedded.items.path,_embedded.items.type,_embedded.items.size,_embedded.items.modified',
       })
       const { response } = await fetchWithAuthRetry({
         auth: this.auth,

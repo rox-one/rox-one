@@ -58,6 +58,9 @@ const DEFAULT_CONCURRENCY = 4
 const DEFAULT_MAX_ATTEMPTS = 3
 const DEFAULT_RETRY_BASE_MS = 250
 
+/** Job ids are used verbatim as `<id>.json` file names under `stateDir`. */
+const SAFE_JOB_ID = /^[A-Za-z0-9_-]+$/
+
 /**
  * A provider reported a folder that contains itself (directly or through a
  * ring). The tree can never be flattened, so `plan` rejects with this instead
@@ -128,7 +131,12 @@ function countingStream(
 
 export function createImportJobRunner(options: ImportJobRunnerOptions): ImportJobRunner {
   const concurrency = options.concurrency ?? DEFAULT_CONCURRENCY
-  const maxAttempts = options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS
+  // A zero/NaN/negative budget would make the per-file loop never run and
+  // silently import nothing, so clamp to at least one attempt.
+  const requestedAttempts = options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS
+  const maxAttempts = Number.isFinite(requestedAttempts)
+    ? Math.max(1, Math.floor(requestedAttempts))
+    : DEFAULT_MAX_ATTEMPTS
   const retryBaseMs = options.retryBaseMs ?? DEFAULT_RETRY_BASE_MS
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)))
   const generateId = options.generateId ?? randomUUID
@@ -187,6 +195,9 @@ export function createImportJobRunner(options: ImportJobRunnerOptions): ImportJo
   }
 
   async function load(jobId: string): Promise<JobState | null> {
+    // The id becomes a file name; anything with a separator or `..` could read
+    // or write outside `stateDir`. Unsafe ids are simply "not found".
+    if (!SAFE_JOB_ID.test(jobId)) return null
     const existing = states.get(jobId)
     if (existing) return existing
     const file = join(options.stateDir, `${jobId}.json`)
@@ -305,6 +316,10 @@ export function createImportJobRunner(options: ImportJobRunnerOptions): ImportJo
   async function runJob(state: JobState): Promise<ImportJob> {
     if (state.running) return cloneJob(state.job)
     if (state.job.plan.length === 0) {
+      // `plan` persists a listing failure as an empty plan with status 'error'.
+      // Starting such a job must surface that error to the caller, not report a
+      // successful "imported 0 of 0 files".
+      if (state.job.status === 'error') return cloneJob(state.job)
       state.job.status = 'done'
       state.job.error = undefined
       await persist(state)
@@ -349,9 +364,11 @@ export function createImportJobRunner(options: ImportJobRunnerOptions): ImportJo
       const runFile = async (index: number): Promise<void> => {
         const node = state.job.plan[index]
         if (!node) return
-        const counter = { bytes: 0 }
         for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
           if (state.cancelled) return
+          // Fresh counter per attempt: bytes drained by a failed attempt must
+          // not inflate the committed total of the retry that succeeds.
+          const counter = { bytes: 0 }
           try {
             state.job.progress.currentPath = node.path
             emit({ type: 'progress', jobId, progress: { ...state.job.progress } })

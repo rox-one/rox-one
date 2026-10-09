@@ -184,7 +184,8 @@
     "./workspace-domain/licenses/contracts": "./src/workspace-domain/licenses/contracts.ts",
     "./config/server-services": "./src/config/server-services.ts",
     "./commands": "./src/commands/index.ts",
-    "./commands/schemas": "./src/commands/schemas.ts"
+    "./commands/schemas": "./src/commands/schemas.ts",
+    "./drive/importers/providers/auth": "./src/drive/importers/providers/auth.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",
