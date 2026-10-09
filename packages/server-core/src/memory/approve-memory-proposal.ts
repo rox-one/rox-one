@@ -19,6 +19,13 @@ export interface DurableProposalApprovalInput {
   /** From the authenticated transport, never a renderer argument. */
   owner?: LessonOwner
   now?: Date
+  /**
+   * c1.8 test seam: invoked immediately after the durable write-intent is
+   * persisted but before the canonical corpus write. Throwing here simulates a
+   * crash mid-flush — the intent must survive and a later flush must recover it
+   * without duplicating the corpus entry. Production never sets this.
+   */
+  faultAfterIntent?: () => void
 }
 
 function flushFile(path: string): void {
@@ -72,6 +79,9 @@ export function approveMemoryProposalDurably(input: DurableProposalApprovalInput
   const approval = { scope: input.scope, projectId, ...(input.owner ? { owner: input.owner } : {}), consentEventId, textHash: hash }
   const pending = { ...next, status: 'pending' as const, approval }
   input.store.save(pending)
+  // Crash seam: the write-intent is durable now; a throw here leaves the corpus
+  // untouched but recoverable (flushMemoryWrites replays pendingWriteIntents).
+  input.faultAfterIntent?.()
 
   if (input.scope === 'project') {
     const marker = `<!-- rox-memory-proposal:${createHash('sha256').update(`${current.id}\0${consentEventId}`).digest('hex')} -->`

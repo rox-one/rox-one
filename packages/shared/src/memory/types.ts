@@ -135,6 +135,9 @@ export type AuditAction =
   | 'conflict'
   | 'approved'
   | 'dismissed'
+  /** c1.8 forget: the corpus line + index chunk + embeddings for a chunk id
+   *  were removed; the audit `detail` carries only a content hash, never text. */
+  | 'forget'
   /** Knowledge bridge actions (spec K-05 §3.8: knowledge.proposal.created/…). */
   | `knowledge.${string}`
 
@@ -547,6 +550,40 @@ export interface MemoryGetResult {
   origin: MemoryOriginClass
   provenance: MemoryChunkProvenance
   metadata?: Record<string, unknown>
+}
+
+/**
+ * c1.8: one forgotten chunk in a lineage record. Content-free by construction —
+ * only a hash of the removed text is retained, so a lineage entry is auditable
+ * but never retrievable as memory and never re-injected.
+ */
+export interface MemoryForgetEntry {
+  chunkId: string
+  /** Workspace-relative document path the chunk was removed from. */
+  path: string
+  /** SHA-1 of the removed text — the text itself is NOT retained. */
+  textHash: string
+}
+
+/** c1.8: append-only lineage record of one forget operation. */
+export interface MemoryForgetLineage {
+  /** ISO timestamp. */
+  ts: string
+  actor: AuditActor
+  /** Chunk ids forgotten by this operation, deterministic order. */
+  ids: string[]
+  reason: string
+  entries: MemoryForgetEntry[]
+}
+
+/** Result of a forget operation (memory_forget tool / forget surface). */
+export interface MemoryForgetResult {
+  /** Chunk ids whose corpus line was removed and index chunk dropped. */
+  forgotten: string[]
+  /** Requested ids that resolved to nothing — already forgotten (clean no-op). */
+  alreadyForgotten: string[]
+  /** Lineage record written for this operation; null when nothing was forgotten. */
+  lineage: MemoryForgetLineage | null
 }
 
 /** Lifecycle state of the workspace memory index. */

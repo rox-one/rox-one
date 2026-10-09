@@ -60,6 +60,7 @@ export const SESSION_MCP_ESSENTIAL_SUFFIXES = new Set([
   'delete_page',
   'memory_search',
   'memory_get',
+  'memory_forget',
 ])
 
 export function isEssentialHostTool(name: string): boolean {
