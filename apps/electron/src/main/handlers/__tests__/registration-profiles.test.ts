@@ -5,6 +5,11 @@ import { WORKSPACE_WORK_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/w
 import { HANDLED_CHANNELS as RUNTIME_TRACE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/runtime-trace'
 import { HANDLED_CHANNELS as CODE_INTELLIGENCE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/code-intelligence'
 import { HANDLED_CHANNELS as LEARNING_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/learning'
+import { VOICE_REALTIME_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/voice-realtime'
+import { HANDLED_CHANNELS as DRIVE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/drive'
+import { HANDLED_CHANNELS as ONBOARDING_SUGGEST_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/onboarding-suggest'
+import { HANDLED_CHANNELS as TG_LINK_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/tg-link'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 
 const registeredChannels: string[] = []
 
@@ -289,6 +294,11 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     ...transfer.HANDLED_CHANNELS,
     ...messaging.HANDLED_CHANNELS,
     ...LEARNING_HANDLED_CHANNELS,
+    ...VOICE_REALTIME_HANDLED_CHANNELS,
+    ...DRIVE_HANDLED_CHANNELS,
+    ...ONBOARDING_SUGGEST_HANDLED_CHANNELS,
+    ...TG_LINK_HANDLED_CHANNELS,
+    ...Object.values(RPC_CHANNELS.calendar),
     ...entities.HANDLED_CHANNELS,
   ])
 }
