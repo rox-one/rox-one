@@ -3165,15 +3165,20 @@
 - id: RX-ADR-0020
   title: Ревизия выбора инструментов code intelligence (D4)
   kind: adr
-  status: planned
-  refs: [RX-SPC-0025]
+  path: docs/architecture/adr/0020-dev-space-code-intel-tools-revision.md
+  status: active
+  refs: [RX-SPC-0025, RX-FEA-0034]
   note: |
-    Новая ревизия поверх CI-DEC-EXTEND-EXISTING-01; согласовать CURRENT_SOURCE_CONFLICT/REJECTED_CODE_INTEL_TOOLS (O1/O2/O7).
+    Шесть инструментов, alwaysOn=false, без демонов, «одна операция — один инструмент». O1: канонический
+    codegraph = CodeGraphContext 0.6.13 (ColbyMcHenry отвергнут: watcher/телеметрия по умолчанию, дубль).
+    O2: groma↔archify не схлопывать. O7: пины/лицензии на 2026-10-09. Протокол аудита
+    audits/d4-tools-revision-2026-10-09.md; согласование CI-G-08 (packs/types/provider/builtin-mcp).
 
 - id: RX-ADR-0021
   title: Job-движок пайплайнов анализа (O3)
   kind: adr
-  status: planned
+  path: docs/architecture/adr/0021-dev-space-analysis-job-engine.md
+  status: active
   refs: [RX-FEA-0034]
   note: |
     Выбор движка по критериям 02 §6.3; рекомендация — job-runner на паттерне agent SDK subprocess + voice job-machine.
@@ -3181,7 +3186,8 @@
 - id: RX-ADR-0022
   title: Правило путей хранения клонов (O4)
   kind: adr
-  status: planned
+  path: docs/architecture/adr/0022-dev-space-clone-storage-paths.md
+  status: active
   refs: [RX-FEA-0034]
   note: |
     Клон в projects/<slug> как репо-проект; согласовать с резолвом проекта code-intelligence.

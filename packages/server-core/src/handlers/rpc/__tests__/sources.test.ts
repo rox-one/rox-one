@@ -198,7 +198,6 @@ describe('sources:get — local default source seeding', () => {
       'firecrawl',
       'brave',
       'e2b',
-      'deepwiki',
       'context7',
       'firecrawl-mcp',
       'playwright',

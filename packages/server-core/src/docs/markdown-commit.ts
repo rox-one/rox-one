@@ -163,6 +163,21 @@ export class MarkdownCommitStore {
     } finally { await release() }
   }
 
+  /**
+   * Window-free read of one note under the store's path/symlink guards, returning
+   * the exact revision `commit` compares against (`markdownRevision(content)`), or
+   * `null` when the note is absent. Authorization mirrors the receipt lookup: the
+   * owner decides, and a missing `sourceStoreId` is not a read precondition.
+   */
+  async readNote(actorPrincipalId: string, workspaceId: string, noteId: string): Promise<{ revision: string; content: string } | null> {
+    await this.assertAuthorized(actorPrincipalId, { workspaceId, noteId }, true)
+    let file: string
+    try { file = await this.notePath(noteId) }
+    catch (error) { if (error instanceof MarkdownCommitError && error.kind === 'deleted') return null; throw error }
+    const content = await this.readContent(file)
+    return { revision: markdownRevision(content), content }
+  }
+
   async getReceipt(actorPrincipalId: string, workspaceId: string, noteId: string, operationId: string): Promise<MarkdownCommitReceipt | null> {
     await this.assertAuthorized(actorPrincipalId, { workspaceId, noteId }, true)
     if (!await this.hasStateDirectory()) return null

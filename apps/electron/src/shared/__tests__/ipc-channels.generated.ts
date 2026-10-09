@@ -198,13 +198,17 @@ export const EXPECTED_CHANNELS: string[] = [
   'devSpace:capabilities',
   'devSpace:changed',
   'devSpace:cloneProgress',
+  'devSpace:generateQuestions',
+  'devSpace:listArtifacts',
   'devSpace:listRepositories',
   'devSpace:listRuns',
+  'devSpace:readArtifact',
   'devSpace:refreshRepository',
   'devSpace:removeRepository',
   'devSpace:runProgress',
   'devSpace:softSignal',
   'devSpace:startClone',
+  'devSpace:startRun',
   'diagnostics:getLast',
   'diagnostics:run',
   'dialog:openFolder',
@@ -1044,4 +1048,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1040
+export const EXPECTED_CHANNEL_COUNT = 1044

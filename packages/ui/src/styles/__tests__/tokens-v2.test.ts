@@ -75,7 +75,7 @@ const px = (v: string) => {
 }
 
 const LAYERS = [
-  'base', 'raised', 'sticky', 'chrome', 'sash', 'popover', 'scrim', 'modal',
+  'base', 'raised', 'sticky', 'chrome', 'sash', 'tour-vignette', 'popover', 'scrim', 'modal',
   'toast', 'fullscreen', 'menu-backdrop', 'island', 'island-popover', 'tooltip', 'splash',
 ] as const
 
@@ -182,7 +182,7 @@ describe('token foundation v2: z layers', () => {
     const root = rootOf(token('z.css'))
     const values = Object.fromEntries(LAYERS.map((l) => [l, Number(resolve(root[`--z-${l}`]!, root))]))
     expect(values).toEqual({
-      base: 0, raised: 1, sticky: 10, chrome: 20, sash: 30, popover: 100, scrim: 200, modal: 210,
+      base: 0, raised: 1, sticky: 10, chrome: 20, sash: 30, 'tour-vignette': 90, popover: 100, scrim: 200, modal: 210,
       toast: 300, fullscreen: 350, 'menu-backdrop': 390, island: 400, 'island-popover': 410, tooltip: 450, splash: 600,
     })
     const ordered = LAYERS.map((l) => values[l]!)

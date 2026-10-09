@@ -4,11 +4,18 @@ import { useTranslation } from 'react-i18next'
 import type { TourBinding, TourStep, TourTargetRegistration } from '../contracts'
 import type { TargetGeometry } from './geometry'
 
+export interface TourProgressCounter {
+  /** 1-based index of the active step within the run. */
+  readonly current: number
+  readonly total: number
+}
+
 export interface TourPopoverProps {
   readonly target: TourTargetRegistration
   readonly step: TourStep
   readonly binding: TourBinding
   readonly geometry: TargetGeometry
+  readonly progress?: TourProgressCounter
   readonly onNext?: () => void
   readonly onBack?: () => void
   readonly onSkip?: () => void
@@ -18,11 +25,18 @@ export interface TourPopoverProps {
 }
 
 /** Radix positioning without its capture-phase Escape handler or a modal FocusScope. */
-export const TourPopover = forwardRef<HTMLDivElement, TourPopoverProps>(function TourPopover({ target, step, binding, geometry, onNext, onBack, onSkip, onPause, onDismiss, canNext = true }, ref) {
-  const { t } = useTranslation()
+export const TourPopover = forwardRef<HTMLDivElement, TourPopoverProps>(function TourPopover({ target, step, binding, geometry, progress, onNext, onBack, onSkip, onPause, onDismiss, canNext = true }, ref) {
+  const { t, i18n } = useTranslation()
   const titleId = useId()
   const descriptionId = useId()
   const copyPrefix = step.copyKey.replace(/\.$/, '')
+  const language = (i18n?.resolvedLanguage ?? i18n?.language ?? 'en').startsWith('ru') ? 'ru' : 'en'
+  // Static tours carry locale keys; generated tours fall back to their inline copy (D9).
+  const copy = (suffix: 'title' | 'body'): string => {
+    const key = `${copyPrefix}.${suffix}`
+    const translated = t(key)
+    return translated === key ? step.copy[language][suffix] : translated
+  }
   const virtualRef = useMemo(() => ({ current: { getBoundingClientRect: () => geometry.rect } }), [geometry])
   const action = (callback: () => void) => (event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); callback() }
   const focusTarget = () => {
@@ -59,8 +73,22 @@ export const TourPopover = forwardRef<HTMLDivElement, TourPopoverProps>(function
         data-product-tour-run={binding.runToken}
         onKeyDown={(event) => { if (event.key === 'Enter') event.stopPropagation() }}
       >
-        <h2 id={titleId} className="mb-2 text-sm font-semibold">{t(`${copyPrefix}.title`)}</h2>
-        <p id={descriptionId} className="text-sm text-muted-foreground whitespace-pre-line break-words">{t(`${copyPrefix}.body`)}</p>
+        <h2 id={titleId} className="mb-2 text-sm font-semibold">{copy('title')}</h2>
+        <p id={descriptionId} className="text-sm text-muted-foreground whitespace-pre-line break-words">{copy('body')}</p>
+        {progress && (
+          <div className="mt-3" data-product-tour-progress="">
+            <span className="text-xs text-muted-foreground">{t('productTour.common.stepProgress', { current: progress.current, total: progress.total })}</span>
+            <div
+              className="mt-1 h-1 w-full overflow-hidden rounded-full bg-surface-pressed"
+              role="progressbar"
+              aria-valuemin={1}
+              aria-valuemax={progress.total}
+              aria-valuenow={progress.current}
+            >
+              <div className="h-full rounded-full bg-accent transition-[width] motion-reduce:transition-none" style={{ width: `${progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0}%` }} />
+            </div>
+          </div>
+        )}
         <button type="button" className={`${buttonClass} mt-3 text-accent`} onClick={action(focusTarget)}>
           {t('productTour.controls.focusTarget')}
         </button>
