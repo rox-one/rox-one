@@ -58,6 +58,12 @@ jobs:
           git rev-parse HEAD
           bun --version
           node --version
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
       - name: Install exact lockfile
         run: bun install --frozen-lockfile
         env:
