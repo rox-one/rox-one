@@ -346,6 +346,14 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.calendar.GOOGLE_CONNECT,
   RPC_CHANNELS.calendar.GOOGLE_DISCONNECT,
   RPC_CHANNELS.calendar.GOOGLE_SYNC,
+  // meet — Google Meet artifacts share the local OAuth broker + credential
+  // manager with the calendar connector (wave 5, row d2.6).
+  RPC_CHANNELS.meet.SPACE,
+  RPC_CHANNELS.meet.CONFERENCE_RECORDS,
+  RPC_CHANNELS.meet.PARTICIPANTS,
+  RPC_CHANNELS.meet.RECORDINGS,
+  RPC_CHANNELS.meet.TRANSCRIPTS,
+  RPC_CHANNELS.meet.SMART_NOTES,
   RPC_CHANNELS.settings.GET_NETWORK_PROXY,
   RPC_CHANNELS.settings.SET_NETWORK_PROXY,
 

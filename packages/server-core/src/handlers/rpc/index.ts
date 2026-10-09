@@ -21,6 +21,7 @@ import { registerOrgsHandlers } from './orgs'
 import { registerLlmConnectionsHandlers } from './llm-connections'
 import { registerOAuthHandlers } from './oauth'
 import { registerCalendarGoogleHandlers } from './calendar-google'
+import { registerGoogleMeetHandlers } from './google-meet'
 import { registerResourcesHandlers } from './resources'
 import { registerOnboardingHandlers } from './onboarding'
 import { registerOnboardingSuggestHandlers } from './onboarding-suggest'
@@ -145,6 +146,8 @@ export function registerCoreRpcHandlers(
   registerLlmConnectionsHandlers(server, deps)
   registerOAuthHandlers(server, deps)
   registerCalendarGoogleHandlers(server, deps)
+  // Google Meet artifacts (wave 5, row d2.6) — read-only Developer-Preview surface.
+  registerGoogleMeetHandlers(server, deps)
   registerOnboardingHandlers(server, deps)
   registerOnboardingSuggestHandlers(server, deps)
   registerOnboardingPermissionsHandlers(server, deps)

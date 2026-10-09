@@ -32,6 +32,12 @@ export interface CalendarEvent {
   recurrence?: string
   /** Provider-specific stable instance key; recurrence is the series rule. */
   occurrenceId?: string
+  /**
+   * Video-conference join URI for the event (Google Meet `hangoutLink` /
+   * `conferenceData` video entry point). Absent when the event has no
+   * conference. Presence is what lets the meeting stack bind a room.
+   */
+  meetUri?: string
   /** Latest remote revision explicitly reviewed while retaining a local draft. */
   acknowledgedRemoteRevision?: string
   deleted: boolean
