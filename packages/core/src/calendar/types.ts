@@ -3,7 +3,7 @@
  * Events never become personal tasks.
  */
 
-export type CalendarProvider = 'google' | 'outlook' | 'yandex' | 'mailru' | 'appleReminders'
+export type CalendarProvider = 'google' | 'outlook' | 'yandex' | 'mailru' | 'appleReminders' | 'appleCalendar'
 export type AccountStatus = 'disconnected' | 'pending' | 'connected' | 'revoked'
 export type SyncConflictKind = 'update' | 'delete' | 'timezone'
 export type CalendarUiStatus = 'none' | 'pending' | 'connected' | 'conflict' | 'timezone' | 'localChanges'

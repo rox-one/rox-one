@@ -56,7 +56,7 @@ export const useActiveWorkspace=()=>({id:React.useContext(ShellContext)?.activeW
 export { isSessionsNavigation,isSourcesNavigation,isSettingsNavigation,isSkillsNavigation,isMemoryNavigation,
  isLearningNavigation,isTasksNavigation,isMeetingsNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,isAutomationsNavigation,
  isProjectsNavigation,isPagesNavigation,isBrowserNavigation,isKnowledgeNavigation,isDiffNavigation,isExtensionNavigation,
- isConnectionsNavigation,isHomeNavigation,isCloudRunNavigation,isTerminalNavigation } from ${JSON.stringify(types)};
+ isConnectionsNavigation,isHomeNavigation,isCloudRunNavigation,isTerminalNavigation,isDriveNavigation } from ${JSON.stringify(types)};
 export const sessionMetaMapAtom=atom(new Map()); export const automationsAtom=atom([]);
 export const knowledgeActiveViewIdAtom=atom(null); export const knowledgeHomeViewAtom=atom('search');
 const selection={useIsMultiSelectActive:()=>false,useSelectionCount:()=>0,useSelectedIds:()=>new Set(),useSelection:()=>({clearMultiSelect:()=>{}})};

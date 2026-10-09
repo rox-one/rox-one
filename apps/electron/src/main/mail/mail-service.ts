@@ -20,6 +20,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import {
+  DEFAULT_MAILBOX_QUOTA_BYTES,
   JmapClient,
   JmapError,
   normalizeBaseUrl,
@@ -250,6 +251,22 @@ export class MailService {
     })
   }
 
+  /**
+   * Best-effort mailbox storage usage from the JMAP Quotas capability
+   * (RFC 9425). Servers that do not expose it (or an unexpected payload)
+   * yield null — the UI then states the usage is unknown rather than guessing.
+   */
+  private async readQuota(client: JmapClient): Promise<{ used: number; limit: number | null } | null> {
+    const session = await client.session()
+    const accountId = session.primaryAccounts['urn:ietf:params:jmap:quota']
+    if (!accountId) return null
+    const [[, res]] = await client.call([['Quota/get', { accountId }, 'q']], ['urn:ietf:params:jmap:core', 'urn:ietf:params:jmap:quota'])
+    const list = (res?.list ?? []) as Array<{ resourceType?: unknown; used?: unknown; hardLimit?: unknown }>
+    const storage = list.find((q) => q.resourceType === 'octets') ?? list[0]
+    if (!storage || typeof storage.used !== 'number') return null
+    return { used: storage.used, limit: typeof storage.hardLimit === 'number' ? storage.hardLimit : null }
+  }
+
   async status(): Promise<MailStatus> {
     await this.activateMailbox()
     const cfg = this.config()
@@ -294,9 +311,17 @@ export class MailService {
     try {
       const fetchImpl = this.deps.fetch ? (i: string, init?: RequestInit) => this.deps.fetch!(i, init) : undefined
       const jmapBase = this.record.jmapUrl || cfg.serverUrl
-      await new JmapClient({ baseUrl: jmapBase, username: this.record.address, secret }, { fetch: fetchImpl }).accountId()
+      const client = new JmapClient({ baseUrl: jmapBase, username: this.record.address, secret }, { fetch: fetchImpl })
+      await client.accountId()
+      const quota = await this.readQuota(client).catch(() => null)
       this.lastError = undefined
-      return { ...base, state: 'ready', error: undefined }
+      return {
+        ...base,
+        state: 'ready',
+        error: undefined,
+        quotaBytes: quota?.limit ?? DEFAULT_MAILBOX_QUOTA_BYTES,
+        quotaUsedBytes: quota?.used ?? null,
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Mail server rejected the mailbox connection'
       this.lastError = message

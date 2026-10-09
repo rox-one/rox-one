@@ -26,4 +26,5 @@ export const electronMockExports = {
   webContents: { fromId: () => null },
   protocol: { handle() {} },
   clipboard: { readText: () => '', writeText() {} },
+  safeStorage: { isEncryptionAvailable: () => false, encryptString: () => Buffer.alloc(0), decryptString: () => '' },
 }
