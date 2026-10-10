@@ -18,6 +18,7 @@ const answers = read('knowledge/SourceAnswerList.tsx')
 const sourceIndex = read('knowledge/useSourceIndex.ts')
 const studio = read('podcast/PodcastStudio.tsx')
 const podcastClient = read('podcast/podcast-client.ts')
+const podcastRoles = read('podcast/podcast-roles.ts')
 
 describe('Playbooks home (С-12)', () => {
   it('is a self-contained default-export page gated on playbooks.v1 + playbooks.knowledge.v1', () => {
@@ -98,13 +99,26 @@ describe('Podcast studio (С-14)', () => {
     expect(home).toContain('projectSlug={activeNotebook.projectSlug}')
   })
 
-  it('offers engine system|edge, optional segment count, and editable roles', () => {
+  it('offers engine system|edge, optional segment count, and an editable 2..6 role list', () => {
     expect(studio).toContain('data-testid="playbooks-podcast-engine"')
     expect(studio).toContain('<SelectItem value="system">')
     expect(studio).toContain('<SelectItem value="edge">')
     expect(studio).toContain('data-testid="playbooks-podcast-segments"')
-    expect(studio).toContain("t('playbooks.podcast.roleHost')")
-    expect(studio).toContain("t('playbooks.podcast.roleExpert')")
+    expect(studio).toContain("t('playbooks.podcast.rolesLabel')")
+    expect(studio).toContain('data-testid="playbooks-podcast-role-add"')
+    expect(studio).toContain('data-testid={`playbooks-podcast-role-remove-${index}`}')
+    expect(studio).toContain("t('playbooks.podcast.rolesHint')")
+    expect(studio).toContain('roles.length >= MAX_PODCAST_ROLES')
+    expect(studio).toContain('roles.length <= MIN_PODCAST_ROLES')
+  })
+
+  it('persists the last role composition defensively (N-agent preset)', () => {
+    expect(podcastRoles).toContain("'rox.playbooks.podcastRoles.v1'")
+    expect(podcastRoles).toContain('export function loadRolePreset')
+    expect(podcastRoles).toContain('export function saveRolePreset')
+    expect(podcastRoles).toContain('export function nextGuestRoleId')
+    expect(studio).toContain('loadRolePreset()')
+    expect(studio).toContain('saveRolePreset(roles)')
   })
 
   it('shows stage/segment progress, an audio player and mp3/srt export', () => {
