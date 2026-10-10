@@ -29,13 +29,13 @@ export function Section({
   return (
     <section id={`project-section-${id}`} data-testid={`project-section-${id}`} className={cn('min-w-0 scroll-mt-4', className)}>
       <div className="flex min-h-7 items-center gap-2">
-        <h3 className="text-[13px] font-semibold text-foreground/90">{title}</h3>
+        <h3 className="text-base font-semibold text-foreground/90">{title}</h3>
         {typeof count === 'number' && count > 0 ? (
-          <span className="text-[12px] tabular-nums text-muted-foreground">{count}</span>
+          <span className="text-sm numeric text-muted-foreground">{count}</span>
         ) : null}
         <div className="ml-auto flex items-center gap-1">{actions}</div>
       </div>
-      {hint ? <p className="mb-2 text-[12px] leading-5 text-muted-foreground">{hint}</p> : null}
+      {hint ? <p className="mb-2 text-sm leading-5 text-muted-foreground">{hint}</p> : null}
       <div className="mt-1 min-w-0">{children}</div>
     </section>
   )
@@ -87,7 +87,7 @@ export function AutoTextarea({
         }
       }}
       className={cn(
-        'block w-full resize-none overflow-hidden rounded-md bg-transparent px-2 py-1.5 text-[13px] leading-5 text-foreground outline-none transition-colors',
+        'block w-full resize-none overflow-hidden rounded-md bg-transparent px-2 py-1.5 text-base text-foreground outline-none transition-colors',
         'placeholder:text-muted-foreground/70 hover:bg-foreground/[0.03] focus:bg-foreground/[0.04]',
         className,
       )}
@@ -134,7 +134,7 @@ export function InlineInput({
         }
       }}
       className={cn(
-        'h-7 min-w-0 w-full rounded-md bg-transparent px-2 text-[13px] text-foreground outline-none transition-colors',
+        'h-7 min-w-0 w-full rounded-md bg-transparent px-2 text-base text-foreground outline-none transition-colors',
         'placeholder:text-muted-foreground/70 hover:bg-foreground/[0.03] focus:bg-foreground/[0.04]',
         className,
       )}
@@ -171,7 +171,7 @@ export function AddRow({
           }
           if (e.key === 'Escape') setDraft('')
         }}
-        className="h-7 min-w-0 flex-1 bg-transparent px-1 text-[13px] text-foreground outline-none placeholder:text-muted-foreground/70"
+        className="h-7 min-w-0 flex-1 bg-transparent px-1 text-base text-foreground outline-none placeholder:text-muted-foreground/70"
       />
     </div>
   )
@@ -237,7 +237,7 @@ export function TextButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-[12px] font-medium transition-colors disabled:pointer-events-none disabled:opacity-40',
+        'inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-40',
         tone === 'default' && 'bg-foreground/[0.05] text-foreground hover:bg-foreground/[0.09]',
         tone === 'primary' && 'bg-foreground text-background hover:bg-foreground/90',
         tone === 'ghost' && 'text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground',
@@ -324,7 +324,7 @@ export function EditableItemList({
 /** Honest, compact empty state line — one sentence, optional single action. */
 export function EmptyLine({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg bg-foreground/[0.025] px-3 py-2.5 text-[12px] leading-5 text-muted-foreground">
+    <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg bg-foreground/[0.025] px-3 py-2.5 text-sm leading-5 text-muted-foreground">
       <span className="min-w-0 flex-1">{children}</span>
       {action}
     </div>

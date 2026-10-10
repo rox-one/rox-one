@@ -39,7 +39,7 @@ export function CommandGatewaySection({ workspaceId }: CommandGatewaySectionProp
               <li key={c.id} className="rounded-md border p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate font-mono text-xs text-muted-foreground">{c.command}</p>
+                    <p className="truncate font-mono text-xs text-muted-foreground" title={c.command}>{c.command}</p>
                     <p className="mt-1 text-sm">{c.reason}</p>
                     {c.impact ? (
                       <p className="text-xs italic text-muted-foreground">{c.impact}</p>

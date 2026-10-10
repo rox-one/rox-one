@@ -98,7 +98,7 @@ export function ActivityHeatmap({
             <ChevronLeft className="icon-caption" aria-hidden />
             <span className="sr-only">{t('extraScreens.activity.prevYear')}</span>
           </ScreenButton>
-          <span className="text-small font-semibold tabular-nums">{year}</span>
+          <span className="text-small font-semibold numeric">{year}</span>
           <ScreenButton
             variant="ghost"
             className="px-1"

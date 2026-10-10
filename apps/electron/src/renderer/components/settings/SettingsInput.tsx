@@ -100,8 +100,8 @@ export function SettingsInput({
         <div className={cn(
           settingsUI.fieldFrame,
           'flex-1',
-          error && 'ring-1 ring-destructive'
-        )}>
+          error && 'border border-status-danger'
+        )} data-state={error ? 'error' : undefined}>
           <Input
             id={id}
             type={inputType}
@@ -124,7 +124,7 @@ export function SettingsInput({
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               disabled={disabled}
-              aria-label={t(showPassword ? 'settings.fields.hideValue' : 'settings.fields.showValue')}
+              aria-label={t(showPassword ? 'settings.input.hidePassword' : 'settings.input.showPassword')}
               aria-controls={id}
               className="rox-control absolute right-1 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
             >
@@ -208,8 +208,8 @@ export function SettingsInputRow({
       <div data-layout="settings-control" className={cn(
         settingsUI.fieldFrame,
         'shrink-0',
-        error && 'ring-1 ring-destructive'
-      )}>
+        error && 'border border-status-danger'
+      )} data-state={error ? 'error' : undefined}>
         <Input
           id={id}
           type={type}
@@ -294,8 +294,8 @@ export function SettingsSecretInput({
       )}
       <div className={cn(
         settingsUI.fieldFrame,
-        error && 'ring-1 ring-destructive'
-      )}>
+        error && 'border border-status-danger'
+      )} data-state={error ? 'error' : undefined}>
         <Input
           id={id}
           type={showValue ? 'text' : 'password'}
@@ -313,7 +313,7 @@ export function SettingsSecretInput({
           type="button"
           onClick={() => setShowValue(!showValue)}
           disabled={disabled}
-          aria-label={t(showValue ? 'settings.fields.hideValue' : 'settings.fields.showValue')}
+          aria-label={t(showValue ? 'settings.input.hidePassword' : 'settings.input.showPassword')}
           aria-controls={id}
           className="rox-control absolute right-1 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
         >

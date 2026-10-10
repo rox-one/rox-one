@@ -125,7 +125,7 @@ export function Overlay({
         aria-label={label}
         data-testid={testId}
         style={{ width, maxWidth: '100%' }}
-        className="flex max-h-[76vh] flex-col overflow-hidden rounded-[var(--radius-card)] bg-background font-sans text-[13px] text-foreground shadow-strong"
+        className="flex max-h-[76vh] flex-col overflow-hidden rounded-[var(--radius-card)] bg-background font-sans text-base text-foreground shadow-strong"
       >
         {children}
       </div>
@@ -154,11 +154,11 @@ export function ConfirmDialog({
   return (
     <Overlay onClose={onCancel} label={title} width={400} align="center" testId="confirm-dialog">
       <div className="px-4 pb-3 pt-4">
-        <div className="text-[15px] font-semibold">{title}</div>
-        {body ? <div className="mt-1.5 text-[12px] text-text-secondary">{body}</div> : null}
+        <div className="text-lg font-semibold">{title}</div>
+        {body ? <div className="mt-1.5 text-sm text-text-secondary">{body}</div> : null}
       </div>
       <div className="flex justify-end gap-1.5 px-4 pb-4">
-        <button type="button" onClick={onCancel} className="h-7 rounded-[var(--radius-control)] px-3 text-[12px] text-text-secondary hover:bg-foreground/[0.06]">
+        <button type="button" onClick={onCancel} className="h-7 rounded-[var(--radius-control)] px-3 text-sm text-text-secondary hover:bg-foreground/[0.06]">
           {t('common.cancel')}
         </button>
         <button
@@ -167,7 +167,7 @@ export function ConfirmDialog({
           onClick={onConfirm}
           data-testid="confirm-dialog-ok"
           className={cn(
-            'h-7 rounded-[var(--radius-card)] px-3 text-[12px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-accent',
+            'h-7 rounded-[var(--radius-card)] px-3 text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-accent',
             danger ? 'bg-destructive text-white hover:brightness-110' : 'bg-accent text-[var(--accent-foreground,white)] hover:brightness-110',
           )}
         >
@@ -210,10 +210,10 @@ export function MiniCalendar({
     <div className="select-none" data-testid="mini-calendar">
       <div className="flex items-center justify-between px-1 pb-1">
         <button type="button" aria-label="‹" onClick={() => shift(-1)} className="size-6 rounded-[var(--radius-control)] text-text-secondary hover:bg-foreground/[0.07]">‹</button>
-        <span className="text-[12px] font-semibold capitalize">{monthFmt.format(first)}</span>
+        <span className="text-sm font-semibold capitalize">{monthFmt.format(first)}</span>
         <button type="button" aria-label="›" onClick={() => shift(1)} className="size-6 rounded-[var(--radius-control)] text-text-secondary hover:bg-foreground/[0.07]">›</button>
       </div>
-      <div className="grid grid-cols-7 gap-0.5 text-center text-[11px]">
+      <div className="grid grid-cols-7 gap-0.5 text-center text-xs">
         {heads.map((head, i) => <div key={i} className="h-5 leading-5 text-text-muted">{head}</div>)}
         {cells.map((at, i) => at == null ? <div key={i} /> : (
           <button
@@ -221,7 +221,7 @@ export function MiniCalendar({
             type="button"
             onClick={() => onPick(at)}
             className={cn(
-              'h-6 rounded-[var(--radius-control)] tabular-nums outline-none hover:bg-foreground/[0.08] focus-visible:ring-2 focus-visible:ring-accent',
+              'h-6 rounded-[var(--radius-control)] numeric outline-none hover:bg-foreground/[0.08] focus-visible:ring-2 focus-visible:ring-accent',
               new Date(at).toDateString() === valueKey && 'bg-accent font-semibold text-[var(--accent-foreground,white)] hover:bg-accent',
               new Date(at).toDateString() === todayKey && new Date(at).toDateString() !== valueKey && 'font-semibold text-accent',
               at < new Date(now).setHours(0, 0, 0, 0) && 'text-text-muted',

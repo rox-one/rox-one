@@ -203,7 +203,7 @@ function SummaryWidget({ edit, width }: WidgetProps) {
         <WidgetStat label={t('workbench.home.summary.conductor')} value={snap.tasks == null ? unknown : snap.tasks} onClick={() => navigate(routes.view.tasks())} />
         <WidgetStat label={t('workbench.home.summary.tokens')} value={snap.tokens == null ? unknown : formatTokenCount(snap.tokens)} />
         <WidgetStat label={t('workbench.home.summary.cost')} value={snap.costUsd == null ? unknown : formatDashboardCost(snap.costUsd)} />
-        <WidgetStat label={t('dashboard.syncCloud')} value={<span className="text-[15px]">{t(syncStatusLabelKey(snap.sync))}</span>} />
+        <WidgetStat label={t('dashboard.syncCloud')} value={<span className="text-lg">{t(syncStatusLabelKey(snap.sync))}</span>} />
       </div>
     </WidgetFrame>
   )
@@ -308,13 +308,13 @@ function QuickActionsWidget({ edit, width }: WidgetProps) {
           >
             <span className="text-foreground">{a.icon}</span>
             <span className="flex w-full min-w-0 items-baseline gap-1">
-              <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-foreground">{a.label}</span>
-              {a.hint ? <span className="shrink-0 text-[11px] text-muted-foreground">{a.hint}</span> : null}
+              <span className="min-w-0 flex-1 truncate text-base font-bold text-foreground" title={a.label}>{a.label}</span>
+              {a.hint ? <span className="shrink-0 text-xs text-muted-foreground">{a.hint}</span> : null}
             </span>
           </button>
         ))}
       </div>
-      {error ? <p className="absolute inset-x-0 bottom-0 truncate text-[12px] text-destructive" role="alert">{error}</p> : null}
+      {error ? <p className="absolute inset-x-0 bottom-0 truncate text-sm text-destructive" role="alert">{error}</p> : null}
     </WidgetFrame>
   )
 }
@@ -402,7 +402,7 @@ function AgentsWidget({ edit, size = 'S' }: WidgetProps) {
           <WidgetStat label={t('workbench.home.agents.stuck')} value={center.stuck.length} tone={center.stuck.length ? 'danger' : undefined} onClick={open} />
         </div>
         {rows.length === 0 ? (
-          <p className="mt-2 text-[12px] leading-4 text-muted-foreground">{t('workbench.home.agents.idle')}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{t('workbench.home.agents.idle')}</p>
         ) : (
           <div className="mt-1 min-h-0">
             <WidgetList>
@@ -413,7 +413,7 @@ function AgentsWidget({ edit, size = 'S' }: WidgetProps) {
           </div>
         )}
         <span className="flex-1" />
-        <p className="truncate text-[12px] text-muted-foreground">{t('workbench.home.agents.costToday', { cost: center.budget ? formatUsd(center.budget.spentUsd) : t('common.unavailable') })}</p>
+        <p className="truncate text-sm text-muted-foreground">{t('workbench.home.agents.costToday', { cost: center.budget ? formatUsd(center.budget.spentUsd) : t('common.unavailable') })}</p>
       </div>
     </WidgetFrame>
   )
@@ -489,11 +489,11 @@ function UsageWidget({ edit, width, size = 'S' }: WidgetProps) {
                     className={cn('w-full max-w-7 rounded-[var(--radius-control)]', d.start === usage.today.start ? 'bg-accent' : 'bg-foreground/30')}
                     style={{ height: d.tokens > 0 ? `${Math.max(6, Math.round((d.tokens / max) * 100))}%` : 2 }}
                   />
-                  <span className="text-[11px] leading-3 text-muted-foreground">{fmt.weekday(d.start)}</span>
+                  <span className="text-xs text-muted-foreground">{fmt.weekday(d.start)}</span>
                 </div>
               ))}
             </div>
-            <p className="mt-1 truncate text-[11px] text-muted-foreground" title={t('workbench.home.usage.attribution')}>{t('workbench.home.usage.attribution')}</p>
+            <p className="mt-1 truncate text-xs text-muted-foreground" title={t('workbench.home.usage.attribution')}>{t('workbench.home.usage.attribution')}</p>
           </div>
           {wide && models.length > 0 ? (
             <div className="flex w-[38%] min-w-0 shrink-0 flex-col">
@@ -639,10 +639,10 @@ function BalanceWidget({ edit }: WidgetProps) {
       <div className="flex h-full min-h-0 flex-col">
         <WidgetStat
           label={t('workbench.home.balance.credits')}
-          value={<span className="text-[28px] leading-9">{state.status === 'ok' ? fmt.num(state.balance) : state.status === 'loading' ? '…' : '—'}</span>}
+          value={<span className="text-display numeric">{state.status === 'ok' ? fmt.num(state.balance) : state.status === 'loading' ? '…' : '—'}</span>}
         />
         {state.status === 'ok' ? (
-          <span className="px-1.5 text-small leading-4 text-muted-foreground" data-home-balance-note="">
+          <span className="px-1.5 text-small text-muted-foreground" data-home-balance-note="">
             {state.updating
               ? t('workbench.home.balance.updating')
               : state.syncedAt ? t('workbench.home.balance.updated', { time: fmt.when(state.syncedAt, Date.now()) }) : ''}
@@ -650,16 +650,16 @@ function BalanceWidget({ edit }: WidgetProps) {
         ) : state.status === 'disconnected' ? (
           <div className="flex min-w-0 flex-col items-start gap-1 px-1.5">
             <WidgetButton onClick={open}>{t('workbench.home.balance.connect')}</WidgetButton>
-            <span className="line-clamp-2 text-[12px] leading-4 text-muted-foreground">{t('workbench.home.balance.disconnectedHint')}</span>
+            <span className="line-clamp-2 text-sm text-muted-foreground">{t('workbench.home.balance.disconnectedHint')}</span>
           </div>
         ) : state.status === 'error' || state.status === 'unavailable' ? (
-          <p className="px-1.5 text-[12px] leading-4 text-muted-foreground" data-home-balance-note="">{t('workbench.home.balance.error')}</p>
+          <p className="px-1.5 text-sm text-muted-foreground" data-home-balance-note="">{t('workbench.home.balance.error')}</p>
         ) : null}
         <span className="flex-1" />
         {usage.hasData ? (
           <div className="grid grid-cols-2 gap-1">
-            <WidgetStat label={t('workbench.home.usage.todayCost')} value={<span className="text-[15px]">{formatUsd(usage.today.costUsd)}</span>} />
-            <WidgetStat label={t('workbench.home.usage.weekCost')} value={<span className="text-[15px]">{formatUsd(usage.totalCostUsd)}</span>} />
+            <WidgetStat label={t('workbench.home.usage.todayCost')} value={<span className="text-lg">{formatUsd(usage.today.costUsd)}</span>} />
+            <WidgetStat label={t('workbench.home.usage.weekCost')} value={<span className="text-lg">{formatUsd(usage.totalCostUsd)}</span>} />
           </div>
         ) : null}
       </div>
@@ -691,7 +691,7 @@ function TasksWidget({ edit, width, size = 'S' }: WidgetProps) {
         <WidgetEmpty text={t('workbench.home.tasks.empty')} hint={t('workbench.home.tasks.emptyHint')} action={{ label: t('workbench.home.tasks.add'), onClick: () => navigate(routes.view.tasks()) }} />
       ) : (
         <div className="flex h-full min-h-0 flex-col">
-          {top.overdue > 0 ? <p className="mb-0.5 text-[12px] font-bold text-destructive">{t('workbench.home.tasks.overdue', { count: top.overdue })}</p> : null}
+          {top.overdue > 0 ? <p className="mb-0.5 text-sm font-bold text-destructive">{t('workbench.home.tasks.overdue', { count: top.overdue })}</p> : null}
           <WidgetList columns={widgetContentLayout(width).listColumns}>
             {top.top.map((task) => (
               <WidgetRow
@@ -765,7 +765,7 @@ function MeetingsWidget({ edit, width, size = 'S' }: WidgetProps) {
             ) : null}
             <SectionLabel>{t('workbench.home.meetings.upcoming')}</SectionLabel>
             {overview.upcoming.length === 0 ? (
-              <p className="text-[12px] leading-4 text-muted-foreground">{t('workbench.home.meetings.noUpcoming')}</p>
+              <p className="text-sm text-muted-foreground">{t('workbench.home.meetings.noUpcoming')}</p>
             ) : (
               <WidgetList>
                 {overview.upcoming.map((m) => (
@@ -874,11 +874,11 @@ function FocusWidget({ edit }: WidgetProps) {
         </div>
         <SectionLabel>{t('workbench.home.focus.top3')}</SectionLabel>
         {top3.length === 0 ? (
-          <p className="text-[12px] leading-4 text-muted-foreground">{t('workbench.home.focus.top3Empty')}</p>
+          <p className="text-sm text-muted-foreground">{t('workbench.home.focus.top3Empty')}</p>
         ) : (
           <WidgetList>
             {top3.map((task, i) => (
-              <WidgetRow key={task.id} testId={task.id} onClick={() => navigate(routes.view.tasks(task.id))} leading={<span className="text-[12px] font-bold">{i + 1}</span>} title={<span className={cn(task.completedAt && 'text-muted-foreground line-through')}>{task.title}</span>} />
+              <WidgetRow key={task.id} testId={task.id} onClick={() => navigate(routes.view.tasks(task.id))} leading={<span className="text-sm font-bold">{i + 1}</span>} title={<span className={cn(task.completedAt && 'text-muted-foreground line-through')}>{task.title}</span>} />
             ))}
           </WidgetList>
         )}
@@ -1018,7 +1018,7 @@ function AutomationsWidget({ edit, size = 'S' }: WidgetProps) {
               )
             })}
           </WidgetList>
-          {toggleError ? <p className="mt-1 text-[12px] text-destructive" role="alert">{t('toast.failedToToggleAutomation')}</p> : null}
+          {toggleError ? <p className="mt-1 text-sm text-destructive" role="alert">{t('toast.failedToToggleAutomation')}</p> : null}
         </div>
       )}
     </WidgetFrame>
@@ -1055,7 +1055,7 @@ function FeedWidget({ edit, width, size = 'S' }: WidgetProps) {
       ) : (
         <>
           {feed.error ? (
-            <div className="flex items-center justify-between gap-2 px-1.5 py-1 text-[11px] text-destructive" role="status">
+            <div className="flex items-center justify-between gap-2 px-1.5 py-1 text-xs text-destructive" role="status">
               <span className="min-w-0">{t('workbench.home.feed.refreshFailed')}</span>
               <WidgetButton onClick={feed.retry} title={t('workbench.home.feed.retry')} disabled={feed.refreshing}>
                 <RotateCcw className="h-3 w-3" />
@@ -1241,18 +1241,18 @@ function TaskTrackerWidget({ edit, width }: WidgetProps) {
                 <span key={l} className={listTone[l]} style={{ width: `${(stats.byList[l] / total) * 100}%` }} />
               ))}
             </div>
-            <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[12px] text-muted-foreground">
+            <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
               {TASK_LISTS.filter((l) => stats.byList[l] > 0).map((l) => (
                 <li key={l} className="flex items-center gap-1">
                   <span className={cn('inline-block h-2 w-2 rounded-full', listTone[l])} aria-hidden="true" />
                   <span>{t(`tasks.projection.${l}`)}</span>
-                  <span className="font-bold tabular-nums text-foreground">{stats.byList[l]}</span>
+                  <span className="font-bold numeric text-foreground">{stats.byList[l]}</span>
                 </li>
               ))}
             </ul>
           </div>
         ) : (
-          <p className="mt-1 px-1.5 text-[12px] leading-4 text-muted-foreground">{t('workbench.home.tasks.emptyHint')}</p>
+          <p className="mt-1 px-1.5 text-sm text-muted-foreground">{t('workbench.home.tasks.emptyHint')}</p>
         )}
         <span className="flex-1" />
         <QuickTaskInput disabled={Boolean(edit)} onCreate={(title, previousAttempt) => createPersonalTaskConfirmed({ title, list: 'inbox' }, previousAttempt)} />
@@ -1281,17 +1281,17 @@ function InboxTrackerWidget({ edit, width, size = 'S' }: WidgetProps) {
         </div>
         <SectionLabel>{t('workbench.home.inboxTracker.byType')}</SectionLabel>
         {kinds.length === 0 ? (
-          <p className="text-[12px] leading-4 text-muted-foreground">{loaded ? t('workbench.home.inbox.empty') : '…'}</p>
+          <p className="text-sm text-muted-foreground">{loaded ? t('workbench.home.inbox.empty') : '…'}</p>
         ) : (
           <ul className={cn('min-w-0', widgetContentLayout(width).listColumns === 2 ? 'grid grid-cols-2 gap-x-4' : 'flex flex-col')}>
             {kinds.slice(0, widgetItemLimit(size, 4, widgetContentLayout(width).listColumns)).map((k) => (
               <li key={k} className="min-w-0" data-home-row={`kind-${k}`}>
                 <button type="button" onClick={open} className="rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[var(--radius-control)] px-1.5 py-1 text-left">
-                  <span className="w-[42%] min-w-0 shrink-0 truncate text-[13px] leading-5 text-foreground">{t(`inbox.kind.${k}`)}</span>
+                  <span className="w-[42%] min-w-0 shrink-0 truncate text-base text-foreground">{t(`inbox.kind.${k}`)}</span>
                   <span className="flex h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-foreground/[0.08]">
                     <span className={cn('rounded-full', k === 'error' ? 'bg-destructive' : (['permission', 'credential', 'plan', 'memory', 'skill', 'sender'] as string[]).includes(k) ? 'bg-[var(--warning,#d9a13b)]' : 'bg-foreground/50')} style={{ width: `${(counts.byKind[k] / max) * 100}%` }} />
                   </span>
-                  <span className="w-6 shrink-0 text-right text-[12px] font-bold tabular-nums text-foreground">{counts.byKind[k]}</span>
+                  <span className="w-6 shrink-0 text-right text-sm font-bold numeric text-foreground">{counts.byKind[k]}</span>
                 </button>
               </li>
             ))}
@@ -1355,8 +1355,8 @@ function CalendarWidget({ edit, width, size = 'S' }: WidgetProps) {
               return (
                 <div key={day.start} className={cn('flex min-h-0 min-w-0 flex-col rounded-[var(--radius-card)] px-1 py-1', isToday ? 'bg-foreground/[0.08]' : 'bg-foreground/[0.03]')} data-home-day={isToday ? 'today' : ''}>
                   <div className="flex items-baseline gap-1 px-0.5">
-                    <span className={cn('text-[11px] uppercase tracking-wide', isToday ? 'font-bold text-foreground' : 'text-muted-foreground')}>{fmt.weekday(day.start)}</span>
-                    <span className={cn('truncate text-[12px] tabular-nums', isToday ? 'font-bold text-accent' : 'text-muted-foreground')}>{fmt.dayMonth(day.start)}</span>
+                    <span className={cn('text-xs uppercase caps-label', isToday ? 'font-bold text-foreground' : 'text-muted-foreground')}>{fmt.weekday(day.start)}</span>
+                    <span className={cn('truncate text-sm numeric', isToday ? 'font-bold text-accent' : 'text-muted-foreground')}>{fmt.dayMonth(day.start)}</span>
                   </div>
                   <ul className="mt-0.5 flex min-h-0 flex-col gap-px">
                     {shown.map((e) => {
@@ -1367,16 +1367,16 @@ function CalendarWidget({ edit, width, size = 'S' }: WidgetProps) {
                             type="button"
                             onClick={() => openEvent(e.kind, e.id)}
                             title={`${t(`workbench.home.calendar.kind.${e.kind}`)} · ${e.title}`}
-                            className="rox-home-row flex w-full min-w-0 items-center gap-1 rounded-[var(--radius-control)] px-0.5 text-left text-[12px] leading-4"
+                            className="rox-home-row flex w-full min-w-0 items-center gap-1 rounded-[var(--radius-control)] px-0.5 text-left text-sm"
                           >
                             <Icon className={cn('h-3 w-3 shrink-0', e.overdue ? 'text-destructive' : 'text-muted-foreground')} />
-                            {e.kind !== 'task' && e.kind !== 'note' ? <span className="shrink-0 tabular-nums text-muted-foreground">{fmt.time(e.at)}</span> : null}
-                            <span className={cn('min-w-0 flex-1 truncate', e.overdue ? 'text-destructive' : 'text-foreground')}>{e.title}</span>
+                            {e.kind !== 'task' && e.kind !== 'note' ? <span className="shrink-0 numeric text-muted-foreground">{fmt.time(e.at)}</span> : null}
+                            <span className={cn('min-w-0 flex-1 truncate', e.overdue ? 'text-destructive' : 'text-foreground')} title={e.title}>{e.title}</span>
                           </button>
                         </li>
                       )
                     })}
-                    {day.events.length > shown.length ? <li className="px-0.5 text-[11px] text-muted-foreground">{t('workbench.home.calendar.more', { count: day.events.length - shown.length })}</li> : null}
+                    {day.events.length > shown.length ? <li className="px-0.5 text-xs text-muted-foreground">{t('workbench.home.calendar.more', { count: day.events.length - shown.length })}</li> : null}
                   </ul>
                 </div>
               )
@@ -1390,7 +1390,7 @@ function CalendarWidget({ edit, width, size = 'S' }: WidgetProps) {
               return (
                 <li key={day.start} className="min-w-0 shrink-0">
                   {shown.length === 0 ? (
-                    <div className="flex items-center gap-2 px-1.5 py-0.5 text-[12px] text-muted-foreground">
+                    <div className="flex items-center gap-2 px-1.5 py-0.5 text-sm text-muted-foreground">
                       <span className={cn('w-12 shrink-0 uppercase', isToday && 'font-bold text-accent')}>{fmt.weekday(day.start)} {new Date(day.start).getDate()}</span>
                       <span>—</span>
                     </div>
@@ -1405,12 +1405,12 @@ function CalendarWidget({ edit, width, size = 'S' }: WidgetProps) {
                         data-home-row={`calendar-${event.kind}-${event.id}`}
                         className="rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[var(--radius-control)] px-1.5 py-0.5 text-left"
                       >
-                        <span className={cn('w-12 shrink-0 text-[12px] uppercase', isToday ? 'font-bold text-accent' : 'text-muted-foreground')}>
+                        <span className={cn('w-12 shrink-0 text-sm uppercase', isToday ? 'font-bold text-accent' : 'text-muted-foreground')}>
                           {index === 0 ? `${fmt.weekday(day.start)} ${new Date(day.start).getDate()}` : null}
                         </span>
                         <Icon className={cn('h-3 w-3 shrink-0', event.overdue ? 'text-destructive' : 'text-muted-foreground')} />
-                        <span className={cn('min-w-0 flex-1 truncate text-[12px]', event.overdue ? 'text-destructive' : 'text-foreground')}>{event.title}</span>
-                        {index === 0 && day.events.length > shown.length ? <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">+{day.events.length - shown.length}</span> : null}
+                        <span className={cn('min-w-0 flex-1 truncate text-sm', event.overdue ? 'text-destructive' : 'text-foreground')} title={event.title}>{event.title}</span>
+                        {index === 0 && day.events.length > shown.length ? <span className="shrink-0 text-xs numeric text-muted-foreground">+{day.events.length - shown.length}</span> : null}
                       </button>
                     )
                   })}
@@ -1419,7 +1419,7 @@ function CalendarWidget({ edit, width, size = 'S' }: WidgetProps) {
             })}
           </ul>
         )}
-        <p className="mt-auto shrink-0 truncate pt-1 text-[11px] text-muted-foreground" title={t('workbench.home.calendar.external')} data-home-calendar-note="">
+        <p className="mt-auto shrink-0 truncate pt-1 text-xs text-muted-foreground" title={t('workbench.home.calendar.external')} data-home-calendar-note="">
           {t('workbench.home.calendar.external')}
         </p>
       </div>

@@ -247,7 +247,7 @@ export function PDFPreviewOverlay({
             </label>
             <div className="flex items-center gap-1">
               <button type="button" aria-label={t('overlay.zoomOut')} title={t('overlay.zoomOut')} onClick={() => setScale((value) => Math.max(0.5, Math.round((value - 0.1) * 10) / 10))} className="rounded border p-1.5 hover:bg-muted"><Minus className="h-4 w-4" /></button>
-              <span className="min-w-12 text-center text-sm tabular-nums">{Math.round(scale * 100)}%</span>
+              <span className="min-w-12 text-center text-sm numeric">{Math.round(scale * 100)}%</span>
               <button type="button" aria-label={t('overlay.zoomIn')} title={t('overlay.zoomIn')} onClick={() => setScale((value) => Math.min(2.5, Math.round((value + 0.1) * 10) / 10))} className="rounded border p-1.5 hover:bg-muted"><Plus className="h-4 w-4" /></button>
               <button type="button" onClick={() => setScale(1)} className="rounded border px-2 py-1 text-sm">{t('overlay.zoomToFit')}</button>
             </div>
@@ -275,7 +275,7 @@ export function PDFPreviewOverlay({
               </button>
               {matchingPages.length > 0 && (
                 <>
-                  <span aria-live="polite" className="whitespace-nowrap text-xs tabular-nums">{currentMatch + 1}/{matchingPages.length}</span>
+                  <span aria-live="polite" className="whitespace-nowrap text-xs numeric">{currentMatch + 1}/{matchingPages.length}</span>
                   <button type="button" aria-label={t('pdf.previousResult')} onClick={() => navigateMatch(-1)} className="rounded border px-2 py-1 text-sm">‹</button>
                   <button type="button" aria-label={t('pdf.nextResult')} onClick={() => navigateMatch(1)} className="rounded border px-2 py-1 text-sm">›</button>
                 </>

@@ -16,7 +16,9 @@
  * credentials / local model → closes as soon as the connection is saved.
  */
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
+import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
+import { featureLayoutEngineAtom } from '@/atoms/unified-shell'
 import {
   decideRoxConnectPoll,
   roxConnectDeadline,
@@ -453,6 +455,15 @@ export function useOnboarding({
     setState(s => ({ ...s, isFinishing: false, step: 'complete', completionStatus: 'complete' }))
   }, [onConfigSaved, t, firstRunRewards])
 
+  // G4 «Студия»: the «starting layout» step sits between the profile/gate
+  // stages and the finish step, but only when the layout-engine flag is ON.
+  // With the flag OFF the first run jumps straight to finish — byte-identical.
+  const layoutEngineEnabled = useAtomValue(featureLayoutEngineAtom)
+  const advanceToFinishWithLayout = useCallback(() => {
+    if (layoutEngineEnabled) setState(s => ({ ...s, step: 'layout' }))
+    else void finishFirstRun()
+  }, [layoutEngineEnabled, finishFirstRun])
+
   // Continue to next step
   const handleContinue = useCallback(async () => {
     switch (state.step) {
@@ -479,7 +490,7 @@ case 'welcome':
           gitBashMissing: state.gitBashStatus?.platform === 'win32' && !state.gitBashStatus?.found,
         })
         if (next === 'finish') {
-          void finishFirstRun()
+          advanceToFinishWithLayout()
         } else {
           setState(s => ({ ...s, step: next }))
         }
@@ -491,8 +502,14 @@ case 'welcome':
         break
 
       case 'git-bash':
-        if (isFirstRun) void finishFirstRun()
+        if (isFirstRun) advanceToFinishWithLayout()
         else setState(s => ({ ...s, step: 'provider-select' }))
+        break
+
+      case 'layout':
+        // G4 «Студия»: the starting-layout choice is already persisted by the
+        // step; continuing finishes the first run.
+        void finishFirstRun()
         break
 
       case 'local-model':
@@ -507,7 +524,7 @@ case 'welcome':
         onComplete()
         break
     }
-  }, [state.step, state.gitBashStatus, onComplete, initialSetupNeeds?.needsRoxCloud, shouldApplyStartupGate, isFirstRun, finishFirstRun])
+  }, [state.step, state.gitBashStatus, onComplete, initialSetupNeeds?.needsRoxCloud, shouldApplyStartupGate, isFirstRun, finishFirstRun, advanceToFinishWithLayout])
 
   // Go back to previous step. If at the initial step, call onDismiss instead.
   const handleBack = useCallback(() => {
@@ -518,6 +535,10 @@ case 'welcome':
     switch (state.step) {
       case 'role':
         setState(s => ({ ...s, step: 'welcome' }))
+        break
+      case 'layout':
+        // Back from «starting layout» returns to the last profile step.
+        setState(s => ({ ...s, step: 'role' }))
         break
       case 'git-bash':
         if (initialStep === 'welcome') {
@@ -739,12 +760,12 @@ case 'welcome':
       if (gitBashMissingRef.current) {
         setState(s => ({ ...s, step: 'git-bash' }))
       } else if (isFirstRun) {
-        void finishFirstRun()
+        advanceToFinishWithLayout()
       } else {
         setState(s => ({ ...s, step: 'provider-select' }))
       }
     }, 400)
-  }, [isFirstRun, finishFirstRun])
+  }, [isFirstRun, advanceToFinishWithLayout])
 
   useEffect(() => {
     return () => {
@@ -1217,14 +1238,14 @@ case 'welcome':
         gitBashStatus: { ...s.gitBashStatus!, found: true, path },
         ...(isFirstRun ? {} : { step: 'provider-select' as const }),
       }))
-      if (isFirstRun) void finishFirstRun()
+      if (isFirstRun) advanceToFinishWithLayout()
     } else {
       setState(s => ({
         ...s,
         errorMessage: visibleError(result.error, t('onboarding.errors.invalidPath')),
       }))
     }
-  }, [t, isFirstRun, finishFirstRun])
+  }, [t, isFirstRun, advanceToFinishWithLayout])
 
   const handleRecheckGitBash = useCallback(async () => {
     setState(s => ({ ...s, isRecheckingGitBash: true }))
@@ -1237,12 +1258,12 @@ case 'welcome':
         // If found, automatically continue to next step
         step: status.found && !isFirstRun ? 'provider-select' : s.step,
       }))
-      if (status.found && isFirstRun) void finishFirstRun()
+      if (status.found && isFirstRun) advanceToFinishWithLayout()
     } catch (error) {
       console.error('[Onboarding] Failed to recheck Git Bash:', error)
       setState(s => ({ ...s, isRecheckingGitBash: false }))
     }
-  }, [isFirstRun, finishFirstRun])
+  }, [isFirstRun, advanceToFinishWithLayout])
 
   const handleClearError = useCallback(() => {
     setState(s => ({ ...s, errorMessage: undefined }))

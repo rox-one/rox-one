@@ -121,8 +121,8 @@ html[data-contrast="high"] .rox-home-quick-task .rox-home-quick-task-add:focus-v
   background: var(--popover);
   color: var(--popover-foreground);
   border: 1px solid var(--border);
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--text-small);
+  line-height: var(--text-small--line-height);
   white-space: normal;
   visibility: hidden;
   opacity: 0;

@@ -195,7 +195,7 @@ export function useWorkspaceCreationFlow({
 
 function sectionLabel(text: string) {
   return (
-    <div className="px-2 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+    <div className="px-2 pt-1.5 pb-1 text-xs font-semibold uppercase caps-label text-muted-foreground/80">
       {text}
     </div>
   )
@@ -203,7 +203,7 @@ function sectionLabel(text: string) {
 
 function drawerSectionLabel(text: string) {
   return (
-    <div className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+    <div className="px-3 pt-3 pb-1 text-xs font-semibold uppercase caps-label text-muted-foreground/80">
       {text}
     </div>
   )
@@ -444,7 +444,7 @@ export function AccountMenu({
       ref={tourWorkspaceTarget}
       data-account-menu={compact ? 'compact' : 'topbar'}
       className={cn(
-        'header-icon-btn titlebar-no-drag ml-1 flex min-w-0 items-center justify-start gap-0.5 h-[30px] rounded-[var(--radius-control)] border border-border/50 bg-[var(--surface-elevated)] text-[13px] text-foreground/70 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground',
+        'header-icon-btn titlebar-no-drag ml-1 flex min-w-0 items-center justify-start gap-0.5 h-[30px] rounded-[var(--radius-control)] border border-border/50 bg-[var(--surface-elevated)] text-base text-foreground/70 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground',
         compact ? 'flex-1 px-2' : 'flex-1 px-3',
       )}
       aria-label={t('workspace.selectWorkspace')}
@@ -456,7 +456,7 @@ export function AccountMenu({
         className="h-4 w-4 mr-1.5 rounded-full ring-1 ring-border/50"
         fallbackClassName="rounded-full"
       />
-      <span className="truncate min-w-0 flex-1 text-left">{triggerLabel}</span>
+      <span className="truncate min-w-0 flex-1 text-left" title={triggerLabel}>{triggerLabel}</span>
       {selectedWorkspace?.remoteServer &&
         (isRemoteDisconnected(selectedWorkspace.id) ? (
           <CloudOff
@@ -498,7 +498,7 @@ export function AccountMenu({
               <div className="flex items-center gap-3 px-3 py-3">
                 <ProfileAvatar src={profile?.avatar} className="h-7 w-7 shadow-minimal" />
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-medium">
+                  <div className="truncate text-sm font-medium" title={displayName}>
                     {displayName}
                   </div>
                   <div className="text-xs text-foreground/50">
@@ -539,7 +539,7 @@ export function AccountMenu({
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="truncate text-sm font-medium">{workspace.name}</span>
+                          <span className="truncate text-sm font-medium" title={workspace.name}>{workspace.name}</span>
                           {workspaceUnreadMap?.[workspace.id] && (
                             <span className="h-2 w-2 rounded-full bg-accent shrink-0" />
                           )}
@@ -669,10 +669,10 @@ export function AccountMenu({
           <div className="flex items-center gap-3 px-2 py-1.5">
             <ProfileAvatar src={profile?.avatar} className="h-8 w-8 shadow-minimal" />
             <div className="min-w-0">
-              <div className="truncate text-sm font-medium">
+              <div className="truncate text-sm font-medium" title={displayName}>
                 {displayName}
               </div>
-              <div className="text-[11px] text-muted-foreground">{profileModeLabel}</div>
+              <div className="text-xs text-muted-foreground">{profileModeLabel}</div>
             </div>
           </div>
           <StyledDropdownMenuItem onClick={openAccountPage} className="font-sans">
@@ -708,7 +708,7 @@ export function AccountMenu({
                     className="h-5 w-5 rounded-full ring-1 ring-border/50"
                     fallbackClassName="rounded-full text-xs"
                   />
-                  <span className="truncate">{workspace.name}</span>
+                  <span className="truncate" title={workspace.name}>{workspace.name}</span>
                   {workspace.remoteServer &&
                     (disconnected ? (
                       <span title={getDisconnectTooltip(workspace.id)} className="shrink-0">

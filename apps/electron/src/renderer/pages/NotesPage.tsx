@@ -2550,7 +2550,7 @@ h1,h2,h3{margin-top:1.5em}
           )}
         >
           <div className="truncate text-xs font-medium">{note.title}</div>
-          <div className="truncate text-[11px] text-muted-foreground">{wikiMatchSubtitle(note, wikiQuery ?? '')}</div>
+          <div className="truncate text-xs text-muted-foreground">{wikiMatchSubtitle(note, wikiQuery ?? '')}</div>
         </button>
       ))}
       {showWikiCreate && wikiCreateLabel ? (
@@ -2566,7 +2566,7 @@ h1,h2,h3{margin-top:1.5em}
           {t('notes.editor.wikiCreate', { title: wikiCreateLabel })}
         </button>
       ) : null}
-      <div className="border-t border-border/50 px-2 py-1 text-[10px] text-muted-foreground">
+      <div className="border-t border-border/50 px-2 py-1 text-xs text-muted-foreground">
         {t('notes.editor.wikiHint')}
       </div>
     </div>
@@ -2641,17 +2641,17 @@ h1,h2,h3{margin-top:1.5em}
           </div>
           {allTags.length > 0 && (
             <details open className="group/notes-tags mt-2 rounded-[var(--radius-card)] bg-foreground/[0.03] p-1" data-notes-disclosure>
-              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-[var(--radius-control)] px-2 py-1 text-[11px] font-medium text-muted-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-[var(--radius-control)] px-2 py-1 text-xs font-medium text-muted-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
                 <ChevronRight className="h-3 w-3 shrink-0 transition-transform duration-150 group-open/notes-tags:rotate-90 motion-reduce:transition-none" aria-hidden="true" />
                 <Tags className="h-3.5 w-3.5 shrink-0 text-violet-500" aria-hidden="true" />
                 <span className="flex-1">{t('notes.inspector.tags')}</span>
-                <span className="tabular-nums">{allTags.length}</span>
+                <span className="numeric">{allTags.length}</span>
               </summary>
               <div className="max-h-36 overflow-y-auto">
               <button
                 aria-pressed={!selectedTag}
                 className={cn(
-                  'flex w-full items-center rounded-[var(--radius-control)] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
+                  'flex w-full items-center rounded-[var(--radius-control)] px-2 py-1 text-left text-xs hover:bg-foreground/[0.06]',
                   !selectedTag && 'bg-foreground/[0.08]'
                 )}
                 onClick={() => setSelectedTag(null)}
@@ -2663,7 +2663,7 @@ h1,h2,h3{margin-top:1.5em}
                   key={tag}
                   aria-pressed={selectedTag === tag}
                   className={cn(
-                    'flex w-full items-center rounded-[var(--radius-control)] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
+                    'flex w-full items-center rounded-[var(--radius-control)] px-2 py-1 text-left text-xs hover:bg-foreground/[0.06]',
                     selectedTag === tag && 'bg-foreground/[0.08]'
                   )}
                   onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
@@ -2701,7 +2701,7 @@ h1,h2,h3{margin-top:1.5em}
           />
         </div>
         </DndContext>
-        <div className="shrink-0 px-3 py-2 text-[11px] text-muted-foreground/80">
+        <div className="shrink-0 px-3 py-2 text-xs text-muted-foreground/80">
           {t('notes.vault.noteCount', { count: scopedNotes.length })} · {assetsUnavailable
             ? `${t('notes.inspector.assets')}: ${t('common.unavailable')}`
             : t('notes.vault.assetCount', { count: allAssets.length })}
@@ -2723,8 +2723,8 @@ h1,h2,h3{margin-top:1.5em}
             ) : (
               <div className="truncate text-sm font-medium">{t(notesHeaderTitleKey)}</div>
             )}
-            {activeNote && <div className="min-w-0 truncate text-[11px] text-muted-foreground/60">{activeNoteStats}</div>}
-            {activeNote && <button type="button" data-testid="notes-content-authority" aria-haspopup="dialog" onClick={() => setSourceInfoOpen(true)} className="shrink-0 rounded bg-foreground/[0.04] px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.08]" title={t('notes.content.authorityHint')}>
+            {activeNote && <div className="min-w-0 truncate text-xs text-muted-foreground/60">{activeNoteStats}</div>}
+            {activeNote && <button type="button" data-testid="notes-content-authority" aria-haspopup="dialog" onClick={() => setSourceInfoOpen(true)} className="shrink-0 rounded bg-foreground/[0.04] px-2 py-0.5 text-xs text-muted-foreground hover:bg-foreground/[0.08]" title={t('notes.content.authorityHint')}>
               {contentResolution?.status === 'ok' ? t('notes.content.markdown') : t('notes.content.readOnly')}
             </button>}
           </div>
@@ -2764,7 +2764,7 @@ h1,h2,h3{margin-top:1.5em}
           <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title={t('notes.toolbar.delete')}>
             <Trash2 className="h-4 w-4" />
           </button>
-          <span className={cn('w-20 text-right text-[11px]', saveError ? 'text-destructive' : 'text-muted-foreground')} title={t('notes.save.autosaveHint')}>
+          <span className={cn('w-20 text-right text-xs', saveError ? 'text-destructive' : 'text-muted-foreground')} title={t('notes.save.autosaveHint')}>
             {saveError ? t('notes.save.failed') : saving ? t('common.saving') : dirty ? t('notes.save.autosaving') : activeNote ? t('notes.save.saved') : ''}
           </span>
         </div>
@@ -3192,7 +3192,7 @@ h1,h2,h3{margin-top:1.5em}
                 />
               ) : null}
               {richParts.frontmatter && (
-                <div className="mx-auto mt-4 max-w-[70ch] rounded-[var(--radius-card)] bg-foreground/[0.04] px-3 py-2 text-[11px] text-muted-foreground">
+                <div className="mx-auto mt-4 max-w-[70ch] rounded-[var(--radius-card)] bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground">
                   {t('notes.frontmatterPreserved')}
                 </div>
               )}

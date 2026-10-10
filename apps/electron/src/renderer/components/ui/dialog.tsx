@@ -79,7 +79,7 @@ function DialogContent({
         data-slot="dialog-content"
         data-overlay-motion="true"
         className={cn(
-          "popover-styled fixed top-1/2 left-1/2 z-modal grid w-full max-w-[calc(100vw-32px)] max-h-[calc(100dvh-32px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto gap-4 p-[var(--dialog-padding)] text-[13px] outline-none sm:max-w-lg",
+          "popover-styled fixed top-1/2 left-1/2 z-modal grid w-full max-w-[calc(100vw-32px)] max-h-[calc(100dvh-32px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto gap-4 p-[var(--dialog-padding)] text-base outline-none sm:max-w-lg",
           className
         )}
         {...props}
@@ -129,7 +129,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-[16px] leading-snug font-semibold text-text-primary", className)}
+      className={cn("text-title-md font-semibold text-text-primary", className)}
       {...props}
     />
   )
@@ -142,7 +142,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn("text-text-secondary text-[13px] leading-relaxed", className)}
+      className={cn("text-text-secondary text-base", className)}
       {...props}
     />
   )

@@ -150,9 +150,9 @@ export const DEFAULT_SLASH_COMMAND_GROUPS: CommandGroup[] = [
 
 const MENU_CONTAINER_STYLE = 'min-w-[200px] overflow-hidden rounded-md bg-background text-foreground shadow-modal-small'
 const MENU_LIST_STYLE = 'max-h-[260px] overflow-y-auto py-1'
-const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-2 rounded-[var(--radius-control)] mx-1 px-2 py-1.5 text-[13px]'
+const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-2 rounded-[var(--radius-control)] mx-1 px-2 py-1.5 text-base'
 const MENU_ITEM_SELECTED = 'bg-foreground/5'
-const MENU_SECTION_HEADER = 'px-3 py-1.5 mb-0.5 text-[12px] font-medium text-muted-foreground border-b border-foreground/5'
+const MENU_SECTION_HEADER = 'px-3 py-1.5 mb-0.5 text-sm font-medium text-muted-foreground border-b border-foreground/5'
 
 // ============================================================================
 // Shared: Filter utilities
@@ -514,7 +514,7 @@ export function InlineSlashCommand({
                     <div className="shrink-0 text-muted-foreground">
                       <Icon_Folder className={MENU_ICON_SIZE} strokeWidth={1.75} />
                     </div>
-                    <div className="flex-1 min-w-0 truncate">
+                    <div className="flex-1 min-w-0 truncate" title={item.label}>
                       <span>{item.label}</span>
                       <span className="text-muted-foreground ml-1.5">{item.description}</span>
                     </div>

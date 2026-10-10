@@ -142,7 +142,7 @@ export function EntityPickerPanel({ workspaceId, onSelect, onCancel, initialQuer
           aria-controls={listId}
           aria-activedescendant={activeId}
           aria-autocomplete="list"
-          className="h-8 flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-text-muted"
+          className="h-8 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-text-muted"
         />
       </div>
       <div role="group" aria-label={t('entities.ui.picker.kindFilter')} className="flex flex-wrap gap-1 px-3 py-2">
@@ -153,7 +153,7 @@ export function EntityPickerPanel({ workspaceId, onSelect, onCancel, initialQuer
             aria-pressed={kind === value}
             onClick={() => setKind(value)}
             className={cn(
-              'rounded-full px-2 py-0.5 text-[12px] text-text-secondary hover:bg-foreground/[0.05]',
+              'rounded-full px-2 py-0.5 text-sm text-text-secondary hover:bg-foreground/[0.05]',
               kind === value && cn(SELECTED_TINT, 'text-foreground'),
               MOTION_FAST,
               FOCUS_RING,
@@ -165,14 +165,14 @@ export function EntityPickerPanel({ workspaceId, onSelect, onCancel, initialQuer
       </div>
       <ul id={listId} role="listbox" aria-label={t('entities.ui.picker.title')} className="max-h-[360px] overflow-y-auto px-1 pb-1">
         {items.length === 0 && (
-          <li role="presentation" className="px-3 py-6 text-center text-[13px] text-text-muted">{t('entities.ui.picker.empty')}</li>
+          <li role="presentation" className="px-3 py-6 text-center text-base text-text-muted">{t('entities.ui.picker.empty')}</li>
         )}
         {items.map((item, index) => {
           const showHeader = item.section !== 'literal' && (index === 0 || items[index - 1]!.section !== item.section)
           return (
             <React.Fragment key={`${item.section}:${formatEntityRef(item.ref)}`}>
               {showHeader && (
-                <li role="presentation" className="px-3 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-text-muted">
+                <li role="presentation" className="px-3 pt-2 pb-1 text-xs font-medium uppercase caps-label text-text-muted">
                   {sectionLabel(item.section)}
                 </li>
               )}
@@ -183,19 +183,19 @@ export function EntityPickerPanel({ workspaceId, onSelect, onCancel, initialQuer
                 data-entity-ref={formatEntityRef(item.ref)}
                 onMouseEnter={() => setActive(index)}
                 onMouseDown={(event) => { event.preventDefault(); choose(item) }}
-                className={cn('flex h-9 cursor-pointer items-center gap-2 rounded-[6px] px-3 text-[13px]', index === active && SELECTED_TINT)}
+                className={cn('flex h-9 cursor-pointer items-center gap-2 rounded-[6px] px-3 text-base', index === active && SELECTED_TINT)}
               >
                 <EntityKindIcon kind={item.ref.kind} className="size-4 shrink-0 text-text-muted" />
-                <span className="truncate text-foreground">
+                <span className="truncate text-foreground" title={item.title}>
                   {item.section === 'literal' ? t('entities.ui.picker.literal', { ref: item.title }) : item.title}
                 </span>
-                <span className="ml-auto shrink-0 text-[11px] text-text-muted">{entityKindLabel(t, item.ref.kind)}</span>
+                <span className="ml-auto shrink-0 text-xs text-text-muted">{entityKindLabel(t, item.ref.kind)}</span>
               </li>
             </React.Fragment>
           )
         })}
       </ul>
-      <p className="border-t border-border px-3 py-1.5 text-[11px] text-text-muted">{t('entities.ui.picker.hint')}</p>
+      <p className="border-t border-border px-3 py-1.5 text-xs text-text-muted">{t('entities.ui.picker.hint')}</p>
     </div>
   )
 }

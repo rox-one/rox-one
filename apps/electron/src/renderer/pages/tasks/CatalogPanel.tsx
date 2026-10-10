@@ -17,7 +17,7 @@ export function CatalogSelect<T extends string>(props: {
     <div className={props.className ?? 'min-w-0'}>
       <label htmlFor={id} className="catalog-label">{props.label}</label>
       <Select value={props.value} onValueChange={(value) => props.onChange(value as T)}>
-        <SelectTrigger id={id} data-testid={props.testId} className="h-8 text-[13px]">
+        <SelectTrigger id={id} data-testid={props.testId} className="h-8 text-base">
           <SelectValue>{props.options.find((option) => option.value === props.value)?.label}</SelectValue>
         </SelectTrigger>
         <SelectContent>

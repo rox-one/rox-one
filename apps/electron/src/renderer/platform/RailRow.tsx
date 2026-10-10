@@ -2,7 +2,8 @@
  * Shared ActivityRail row (main destinations, «Ещё» screens, collapse toggle).
  * Expanded: full-width 28px row, 16px icon + label, radius 6, gap 8 (4px grid).
  * Collapsed: 28×28 icon button with a right-side tooltip carrying the label.
- * Active = accent tint + accent text in both states; no borders.
+ * Active = --state-selected-strong fill + a static 2px accent marker in both
+ * states; focus comes from the global :focus-visible system (no local ring).
  */
 import type { ComponentType } from 'react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
@@ -17,6 +18,7 @@ export interface RailRowProps {
   active?: boolean
   disabled?: boolean
   onClick?: () => void
+  /** Dimmed default text (secondary rail groups, e.g. the mode list). */
   muted?: boolean
   testId?: string
 }
@@ -24,7 +26,7 @@ export interface RailRowProps {
 /**
  * One rail row. Expanded: 28px row, 16px icon + label (truncated), radius 6.
  * Collapsed: 28×28 icon button with a right-side tooltip carrying the label.
- * Active = accent tint + accent text (same token in both states).
+ * Active = selected-strong fill + a static accent marker (never motion alone).
  */
 export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disabled, onClick, muted, testId }: RailRowProps) {
   const button = (
@@ -37,20 +39,25 @@ export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disable
       data-testid={testId}
       data-rail-row=""
       className={cn(
-        'rox-rail-row flex h-[28px] shrink-0 items-center rounded-[var(--radius-control)] text-[13px] leading-none transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
-        collapsed ? 'w-[28px] justify-center' : 'w-full gap-[8px] px-[8px] text-left',
+        'rox-rail-row relative flex min-h-[var(--control-hit-min)] shrink-0 items-center rounded-[var(--radius-control)] text-base leading-none transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)]',
+        collapsed ? 'w-[var(--control-hit-min)] justify-center' : 'w-full gap-[8px] px-[8px] text-left',
         disabled
-          ? 'cursor-not-allowed text-muted-foreground/40'
+          ? 'cursor-not-allowed text-[var(--text-disabled)]'
           : active
-            ? 'bg-accent/10 text-accent font-medium'
+            ? cn(
+                'bg-[var(--state-selected-strong)] font-medium text-accent',
+                "before:absolute before:rounded-full before:bg-accent before:content-['']",
+                collapsed
+                  ? 'before:bottom-[2px] before:left-1/2 before:h-[var(--state-marker-width)] before:w-[var(--state-marker-height)] before:-translate-x-1/2'
+                  : 'before:left-0 before:top-1/2 before:h-[var(--state-marker-height)] before:w-[var(--state-marker-width)] before:-translate-y-1/2',
+              )
             : muted
-              ? 'text-foreground/45 hover:bg-foreground/5 hover:text-foreground'
-              : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+              ? 'text-[var(--text-muted)] hover:bg-[var(--state-hover)] hover:text-[var(--text-primary)]'
+              : 'text-[var(--chrome-label)] hover:bg-[var(--state-hover)] hover:text-[var(--text-primary)]',
       )}
     >
-      <Icon className="h-[16px] w-[16px] shrink-0" />
-      {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
+      <Icon className={collapsed ? 'icon-rail' : 'icon-toolbar'} />
+      {!collapsed && <span className="min-w-0 flex-1 truncate label-tracking" title={label}>{label}</span>}
     </button>
   )
 

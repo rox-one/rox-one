@@ -17,9 +17,9 @@ function PlannerKanbanScreenStory() {
       <header className="flex h-12 shrink-0 items-center justify-between border-b border-border/60 px-4">
         <div>
           <h2 className="text-sm font-semibold text-foreground">Planner board</h2>
-          <p className="text-[11px] text-muted-foreground">Production KanbanBoard with deterministic fixture data.</p>
+          <p className="text-xs text-muted-foreground">Production KanbanBoard with deterministic fixture data.</p>
         </div>
-        <span className="rounded-full bg-accent/10 px-2.5 py-1 text-[11px] font-medium text-accent">
+        <span className="rounded-full bg-accent/10 px-2.5 py-1 text-xs font-medium text-accent">
           Visual CI
         </span>
       </header>

@@ -115,7 +115,7 @@ function Badge({ label, tone }: { label: string; tone: 'edited' | 'dreamed' }) {
     <span
       data-testid={`memory-repo-badge-${tone}`}
       className={cn(
-        'shrink-0 rounded-[var(--radius-control)] px-1.5 py-px text-caption leading-4',
+        'shrink-0 rounded-[var(--radius-control)] px-1.5 py-px text-caption',
         tone === 'edited' ? 'bg-status-warning/15 text-status-warning' : 'bg-accent/12 text-accent',
       )}
     >
@@ -172,7 +172,7 @@ export function MemoryRepoFilesPanel({
             <FolderClosed aria-hidden="true" className="icon-rail" />
           </span>
           <p className="text-body font-medium">{t('memory.repo.state.empty')}</p>
-          <p className="max-w-[220px] text-caption leading-5 text-text-muted">
+          <p className="max-w-[220px] text-caption text-text-muted">
             {t('memory.repo.state.emptyHint')}
           </p>
         </div>
@@ -190,7 +190,7 @@ export function MemoryRepoFilesPanel({
                     style={indent}
                   >
                     <FolderClosed aria-hidden="true" className="icon-caption shrink-0" />
-                    <span className="truncate">{node.name}</span>
+                    <span className="truncate" title={node.name}>{node.name}</span>
                   </div>
                 </li>
               )
@@ -209,7 +209,7 @@ export function MemoryRepoFilesPanel({
                   style={indent}
                 >
                   <FileText aria-hidden="true" className="icon-caption shrink-0 text-text-muted" />
-                  <span className="min-w-0 flex-1 truncate">{node.name}</span>
+                  <span className="min-w-0 flex-1 truncate" title={node.name}>{node.name}</span>
                   {node.badges?.includes('edited') ? <Badge tone="edited" label={t('memory.repo.file.badgeEdited')} /> : null}
                   {node.badges?.includes('dreamed') ? <Badge tone="dreamed" label={t('memory.repo.file.badgeDreamed')} /> : null}
                 </button>
@@ -243,7 +243,7 @@ export function MemoryRepoFilesPanel({
     return (
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4" data-testid="memory-repo-file-viewer">
         <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-body font-medium">{file.path}</span>
+          <span className="min-w-0 flex-1 truncate text-body font-medium" title={file.path}>{file.path}</span>
           {file.edited ? <Badge tone="edited" label={t('memory.repo.file.badgeEdited')} /> : null}
         </div>
         {file.edited ? (
@@ -258,20 +258,20 @@ export function MemoryRepoFilesPanel({
         ) : null}
         {parsed && parsed.entries.length > 0 ? (
           <table className="mb-4 w-full table-fixed border-collapse overflow-hidden rounded-[var(--radius-control)] text-caption" data-testid="memory-repo-files-frontmatter">
-            <caption className="pb-1 text-left text-caption font-medium uppercase tracking-wide text-text-muted/70">
+            <caption className="pb-1 text-left text-caption font-medium uppercase caps-label text-text-muted/70">
               {t('memory.repo.file.frontmatter')}
             </caption>
             <tbody>
               {parsed.entries.map((entry) => (
                 <tr key={entry.key} className="border-b border-border-subtle last:border-b-0">
-                  <th scope="row" className="w-[38%] truncate px-2 py-1 text-left font-medium text-text-secondary">{entry.key}</th>
+                  <th scope="row" className="w-[38%] truncate px-2 py-1 text-left font-medium text-text-secondary" title={entry.key}>{entry.key}</th>
                   <td className="truncate px-2 py-1 text-foreground-90" title={entry.value}>{entry.value}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : null}
-        <div className="markdown-content text-body leading-6" data-testid="memory-repo-file-body">
+        <div className="markdown-content text-body" data-testid="memory-repo-file-body">
           <Markdown mode="minimal" onFileClick={handleBodyLink} onUrlClick={handleBodyLink}>
             {parsed ? linkifyWikilinks(parsed.body) : ''}
           </Markdown>

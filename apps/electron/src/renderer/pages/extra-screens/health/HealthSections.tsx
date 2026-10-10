@@ -90,7 +90,7 @@ export function HealthRowDetail({
     <div className="min-w-0 max-w-[720px]">
       <div className="flex flex-wrap items-center gap-2">
         <HealthStatusDot status={row.status} className="size-2.5" />
-        <h2 className="text-title font-bold leading-tight">{t(row.labelKey, row.labelParams)}</h2>
+        <h2 className="text-title font-bold">{t(row.labelKey, row.labelParams)}</h2>
         <HealthStatusChip status={row.status} />
         <span className="flex-1" />
         {row.fix && onFix && (

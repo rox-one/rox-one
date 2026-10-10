@@ -200,7 +200,7 @@ export function NotesDialogs({
                 <div className="max-h-36 overflow-y-auto">
                   {renameImpact.updatedNotes.map(note => (
                     <div key={note.noteId} className="flex items-center justify-between gap-3 py-1">
-                      <span className="min-w-0 flex-1 truncate">{note.title}</span>
+                      <span className="min-w-0 flex-1 truncate" title={note.title}>{note.title}</span>
                       <span className="text-muted-foreground">{note.replacements}</span>
                     </div>
                   ))}
@@ -286,8 +286,8 @@ export function NotesDialogs({
                 <div key={asset.relativePath} className="flex items-center gap-3 border-b border-border/50 px-3 py-2 last:border-b-0">
                   <AssetThumbnail asset={asset} size="md" />
                   <button className="min-w-0 flex-1 text-left" onClick={() => onOpenFile(asset.path)}>
-                    <div className="truncate text-xs font-medium">{asset.name}</div>
-                    <div className="truncate text-[11px] text-muted-foreground">
+                    <div className="truncate text-xs font-medium" title={asset.name}>{asset.name}</div>
+                    <div className="truncate text-xs text-muted-foreground">
                       {asset.relativePath} · {formatBytes(asset.size)} · {refCount
                         ? t('notes.dialog.assetUsedBy', {
                             label: `${refLabel}${refCount > 2 ? ` +${refCount - 2}` : ''}`,

@@ -82,6 +82,8 @@ export function BrowserTabStripView({
     return (
       <>
         <StyledDropdownMenuItem
+          className="min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)]"
+          aria-label={t('workbench.browser.showWindow')}
           disabled={!liveWindowActions}
           onSelect={() => onFocusWindow(instance)}
         >
@@ -90,6 +92,8 @@ export function BrowserTabStripView({
         </StyledDropdownMenuItem>
 
         <StyledDropdownMenuItem
+          className="min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)]"
+          aria-label={openSessionLabel}
           disabled={!canOpenSession}
           onSelect={() => onOpenSession(instance)}
         >
@@ -100,6 +104,8 @@ export function BrowserTabStripView({
         <StyledDropdownMenuSeparator />
 
         <StyledDropdownMenuItem
+          className="min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)]"
+          aria-label={t('workbench.browser.terminate')}
           variant="destructive"
           disabled={!liveWindowActions}
           onSelect={() => onTerminate(instance)}
@@ -136,7 +142,7 @@ export function BrowserTabStripView({
       items={tabItems}
       activeId={activeInstanceId}
       variant="browser"
-      density="compact"
+      density="full"
       overflow="menu"
       keyboard
       className="min-w-0"
@@ -159,7 +165,7 @@ export function BrowserTabStripView({
               className="titlebar-no-drag inline-flex h-[var(--control-sm)] shrink-0 items-center gap-0.5 rounded-[var(--radius-control)] px-1.5 text-caption font-medium text-text-secondary outline-none transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             >
               {overflowCount > 0 && (
-                <span className="tabular-nums">+{overflowCount}</span>
+                <span className="numeric">+{overflowCount}</span>
               )}
               <ChevronDown className="icon-status opacity-70" aria-hidden />
             </button>
@@ -169,7 +175,7 @@ export function BrowserTabStripView({
               <DropdownMenuSub key={instance.id}>
                 <StyledDropdownMenuSubTrigger>
                   <BrowserTabGlyph instance={instance} />
-                  <span className="truncate">{browserLabel(instance)}</span>
+                  <span className="truncate" title={browserLabel(instance)}>{browserLabel(instance)}</span>
                 </StyledDropdownMenuSubTrigger>
                 <StyledDropdownMenuSubContent minWidth="min-w-56">
                   {renderBrowserActions(instance)}

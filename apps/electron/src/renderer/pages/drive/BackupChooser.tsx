@@ -144,7 +144,7 @@ export function BackupChooser({ workspaceId, api, onClose, onUploaded }: BackupC
             {phase.scan.files.slice(0, CONSENT_PREVIEW_COUNT).map(file => (
               <li key={file.relativePath} className="flex justify-between gap-2">
                 <span className="truncate">{file.relativePath}</span>
-                <span className="tabular-nums">{formatBytes(file.size, 0)}</span>
+                <span className="numeric">{formatBytes(file.size, 0)}</span>
               </li>
             ))}
             {phase.scan.files.length > CONSENT_PREVIEW_COUNT && (

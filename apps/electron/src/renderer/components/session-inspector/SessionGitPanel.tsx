@@ -27,13 +27,13 @@ export function SessionGitPanel({ cwd }: { cwd: string | undefined }) {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
         <GitBranch className="h-6 w-6 text-muted-foreground/40" />
-        <span className="text-[13px] text-muted-foreground/70">{t('inspector.git.notRepo')}</span>
+        <span className="text-base text-muted-foreground/70">{t('inspector.git.notRepo')}</span>
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-2 text-[12px]">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-2 text-sm">
       <div className="mb-2 font-medium text-foreground/90">
         {t('inspector.git.branch')}: {status.branch ?? '—'}
         {status.ahead > 0 ? ` +${status.ahead}` : ''}
@@ -44,7 +44,7 @@ export function SessionGitPanel({ cwd }: { cwd: string | undefined }) {
       ) : (
         <ul className="flex flex-col gap-1 font-mono">
           {status.entries.map((entry) => (
-            <li key={entry.path} className={cn('truncate text-foreground/80')}>
+            <li key={entry.path} className={cn('truncate text-foreground/80')} title={entry.path}>
               <span className="text-muted-foreground/70">{entry.index}{entry.worktree}</span>
               {' '}
               {entry.path}

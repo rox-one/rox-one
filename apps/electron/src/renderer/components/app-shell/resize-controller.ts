@@ -4,7 +4,7 @@
  */
 
 import { beginPanelResizeActivity, endPanelResizeActivity } from './resize-activity'
-import { solveSplit, type SplitResult } from './resize-math'
+import { solveSplit, type SnapPercent, type SplitResult, type SplitSnap } from './resize-math'
 
 export interface ResizeBounds {
   leftId: string
@@ -16,7 +16,18 @@ export interface ResizeBounds {
   maxA: number
   minB: number
   maxB: number
+  /** Magnetic targets (G4 «Студия»); absent when the layout-engine flag is OFF. */
+  snap?: SplitSnap
 }
+
+/** Live magnetic state, exposed for the sash to render its guide and readout. */
+export interface ResizeSnapState {
+  snapped: boolean
+  percent: SnapPercent | null
+  width: number
+}
+
+const IDLE_SNAP: ResizeSnapState = { snapped: false, percent: null, width: 0 }
 
 export interface ResizeControllerHandlers {
   onPreview: (sizeA: number, sizeB: number) => void
@@ -33,6 +44,8 @@ export interface ResizeController {
   readonly previewCount: number
   readonly commitCount: number
   readonly cancelCount: number
+  /** Current magnetic state (snapped + percent + px width). */
+  readonly snapState: ResizeSnapState
   start(bounds: ResizeBounds): boolean
   moveTo(sizeA: number): void
   moveBy(delta: number, immediate?: boolean): void
@@ -55,6 +68,7 @@ export function createResizeController(handlers: ResizeControllerHandlers): Resi
   let snapshot: ResizeBounds | null = null
   let currentA = 0
   let currentB = 0
+  let snapState: ResizeSnapState = IDLE_SNAP
   let ended: 'commit' | 'cancel' | null = null
   let previewCount = 0
   let commitCount = 0
@@ -87,6 +101,7 @@ export function createResizeController(handlers: ResizeControllerHandlers): Resi
     if (!result.feasible) return
     currentA = result.sizeA
     currentB = result.sizeB
+    snapState = { snapped: result.snapped === true, percent: result.snapPercent ?? null, width: result.sizeA }
     pending = { a: result.sizeA, b: result.sizeB }
     if (immediate) {
       if (frame) cancelFrame(frame)
@@ -102,6 +117,7 @@ export function createResizeController(handlers: ResizeControllerHandlers): Resi
     get previewCount() { return previewCount },
     get commitCount() { return commitCount },
     get cancelCount() { return cancelCount },
+    get snapState() { return snapState },
     start(bounds) {
       const first = solveSplit({
         total: bounds.total,
@@ -111,6 +127,7 @@ export function createResizeController(handlers: ResizeControllerHandlers): Resi
         minB: bounds.minB,
         maxB: bounds.maxB,
         delta: 0,
+        snap: bounds.snap,
       })
       if (!first.feasible) return false
       snapshot = bounds
@@ -129,6 +146,7 @@ export function createResizeController(handlers: ResizeControllerHandlers): Resi
         minB: snapshot.minB,
         maxB: snapshot.maxB,
         delta: sizeA - snapshot.sizeA,
+        snap: snapshot.snap,
       }), false)
     },
     moveBy(delta, immediate = false) {
@@ -141,6 +159,7 @@ export function createResizeController(handlers: ResizeControllerHandlers): Resi
         minB: snapshot.minB,
         maxB: snapshot.maxB,
         delta,
+        snap: snapshot.snap,
       }), immediate)
     },
     commit() {
@@ -150,6 +169,7 @@ export function createResizeController(handlers: ResizeControllerHandlers): Resi
       commitCount += 1
       handlers.onCommit(currentA, currentB)
       snapshot = null
+      snapState = IDLE_SNAP
       releaseActivity()
     },
     cancel() {
@@ -161,6 +181,7 @@ export function createResizeController(handlers: ResizeControllerHandlers): Resi
       cancelCount += 1
       handlers.onCancel(restoreA, restoreB)
       snapshot = null
+      snapState = IDLE_SNAP
       releaseActivity()
     },
     neighborChanged(leftId, rightId) {

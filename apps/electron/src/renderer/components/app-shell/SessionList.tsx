@@ -21,6 +21,7 @@ import { EntityList, type EntityListGroup } from "@/components/ui/entity-list"
 import { RenameDialog } from "@/components/ui/rename-dialog"
 import { SessionSearchHeader } from "./SessionSearchHeader"
 import { SessionItem } from "./SessionItem"
+import { SessionLanes } from "./SessionLanes"
 import { CollectionBulkBar } from "./collection/CollectionBulkBar"
 import { SessionListProvider, type SessionListContextValue } from "@/context/SessionListContext"
 import { useSessionSelection, useSessionSelectionStore } from "@/hooks/useSession"
@@ -39,6 +40,7 @@ import {
   type SessionMeta,
 } from "@/atoms/sessions"
 import { collectionDisplayAtom } from "@/atoms/collection-display"
+import { featureSessionLanesV1Atom } from "@/atoms/unified-shell"
 import { collectionFiltersAtom } from "@/atoms/collection-filters"
 import { activeFilterCount } from "./collection/collection-filter-count"
 import { compareSessions, lexorankBetween } from "@rox/shared/sessions/collection"
@@ -211,6 +213,7 @@ export function SessionList({
   const newTarget = useTourTarget('session.new', { workspaceId, sessionId: focusedSessionId ?? undefined })
   const setSendToWorkspace = useSetAtom(sendToWorkspaceAtom)
   const collectionDisplay = useAtomValue(collectionDisplayAtom)
+  const sessionLanesEnabled = useAtomValue(featureSessionLanesV1Atom)
   const collectionFilters = useAtomValue(collectionFiltersAtom)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)
   const updateMeta = useSetAtom(updateSessionMetaAtom)
@@ -1261,7 +1264,7 @@ export function SessionList({
         <button
           type="button"
           onClick={() => { void setCollectionFilters({}); navigate(routes.view.allSessions()) }}
-          className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors"
+          className="inline-flex items-center min-h-[var(--control-hit-min)] px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors duration-[var(--motion-fast)]"
         >
           {t("collection.filter.clear")}
         </button>
@@ -1282,7 +1285,7 @@ export function SessionList({
             else if (currentFilter?.kind === 'label') params.label = currentFilter.labelId
             navigate(routes.action.newSession(Object.keys(params).length > 0 ? params : undefined))
           }}
-          className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors"
+          className="inline-flex items-center min-h-[var(--control-hit-min)] px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors duration-[var(--motion-fast)]"
         >
           {t("session.newSession")}
         </button>
@@ -1315,6 +1318,31 @@ export function SessionList({
   return (
     <div ref={listTarget} className="flex flex-col flex-1 min-h-0">
       <SessionListProvider value={listContext}>
+      {sessionLanesEnabled ? (
+        <div className="flex flex-1 min-h-0 flex-col">
+          <SessionSearchHeader
+            searchQuery={searchQuery}
+            onSearchChange={onSearchChange}
+            onSearchClose={() => {
+              onSearchChange?.('')
+              onSearchClose?.()
+            }}
+            onKeyDown={handleSearchKeyDown}
+            onFocus={() => setIsSearchInputFocused(true)}
+            onBlur={() => setIsSearchInputFocused(false)}
+            isSearching={isSearchingContent}
+            isUnavailable={isSearchUnavailable}
+            resultCount={matchingFilterItems.length + otherResultItems.length}
+            exceededLimit={exceededSearchLimit}
+            inputRef={searchInputRef}
+          />
+          <SessionLanes
+            rows={flatRows}
+            selectedId={selectionStore.state.selected}
+            onSelect={handleSelectSessionById}
+          />
+        </div>
+      ) : (
       <EntityList<SessionListRow>
         groups={rowData.groups}
         getKey={(row) => row.item.id}
@@ -1351,16 +1379,16 @@ export function SessionList({
                     e.stopPropagation()
                     toggleGroupCollapse(head.collapseKey)
                   }}
-                  className="absolute left-2 top-0 bottom-0 z-10 flex items-center gap-0.5 px-1 text-muted-foreground/60 hover:text-muted-foreground cursor-pointer"
+                  className="absolute left-2 top-0 bottom-0 z-10 flex items-center justify-center gap-0.5 px-1 min-w-[var(--control-hit-min)] text-muted-foreground/60 hover:text-muted-foreground cursor-pointer"
                 >
                   <ChevronRight
                     className={cn(
-                      "h-3 w-3 transition-transform",
+                      "h-3 w-3 transition-transform duration-[var(--motion-fast)]",
                       !head.collapsed && "rotate-90"
                     )}
                   />
                   {head.collapsed && (
-                    <span className="text-[10px] tabular-nums text-muted-foreground/50">{head.branchCount}</span>
+                    <span className="text-xs numeric text-muted-foreground/50">{head.branchCount}</span>
                   )}
                 </button>
                 {sessionItem}
@@ -1391,7 +1419,7 @@ export function SessionList({
             >
               <span
                 aria-hidden
-                className="absolute right-1 top-1/2 z-10 -translate-y-1/2 cursor-grab text-muted-foreground/40 opacity-0 transition-opacity group-hover/rankdrag:opacity-100 active:cursor-grabbing"
+                className="absolute right-1 top-1/2 z-10 -translate-y-1/2 cursor-grab text-muted-foreground/40 opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover/rankdrag:opacity-100 active:cursor-grabbing"
               >
                 <GripVertical className="h-3.5 w-3.5" />
               </span>
@@ -1433,7 +1461,7 @@ export function SessionList({
               </p>
               <button
                 onClick={() => onSearchChange?.('')}
-                className="text-xs text-foreground hover:underline mt-2"
+                className="inline-flex items-center min-h-[var(--control-hit-min)] text-xs text-foreground hover:underline mt-2"
               >
                 {t("session.clearSearch")}
               </button>
@@ -1465,6 +1493,7 @@ export function SessionList({
         ensureVisibleKeys={ensureVisibleKeys}
         revealKey={selectionStore.state.selected}
       />
+      )}
       </SessionListProvider>
 
       <CollectionBulkBar

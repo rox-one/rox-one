@@ -390,7 +390,7 @@ function Section({
 }) {
   return (
     <div className="pt-3">
-      <div className="px-3 pb-1 flex items-center gap-1.5 text-caption font-medium text-muted-foreground/70 uppercase tracking-wider">
+      <div className="px-3 pb-1 flex items-center gap-1.5 text-caption font-medium text-muted-foreground/70 uppercase caps-label">
         {icon}
         <span>{title}</span>
       </div>

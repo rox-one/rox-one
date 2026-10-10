@@ -72,7 +72,7 @@ export function SkillSelectorPopover({
       renderItem={(skill, state) => (
         <div
           className={cn(
-            'flex cursor-pointer select-none items-center gap-3 rounded-[var(--radius-control)] px-3 py-2 text-[13px]',
+            'flex cursor-pointer select-none items-center gap-3 rounded-[var(--radius-control)] px-3 py-2 text-base',
             state.highlighted && 'bg-foreground/5',
             state.selected && 'bg-foreground/3',
           )}
@@ -80,7 +80,7 @@ export function SkillSelectorPopover({
           <div className="shrink-0 text-muted-foreground flex items-center">
             <SkillAvatar skill={skill} size="sm" workspaceId={workspaceId} />
           </div>
-          <div className="flex-1 min-w-0 truncate">{skill.metadata.name}</div>
+          <div className="flex-1 min-w-0 truncate" title={skill.metadata.name}>{skill.metadata.name}</div>
           <div
             className={cn(
               'shrink-0 h-4 w-4 rounded-full bg-current flex items-center justify-center',

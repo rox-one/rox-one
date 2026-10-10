@@ -260,7 +260,7 @@ export function KeeperItemsPane({ scope, rpc, actions }: KeeperItemsPaneProps) {
                 </ListRow>
                 {space.folders.map((folder) => (
                   <ListRow key={folder.path} active={path === folder.path} onClick={() => selectFolder(folder.path)}>
-                    <span className="min-w-0 flex-1 truncate pl-3 text-muted-foreground">{folder.name}</span>
+                    <span className="min-w-0 flex-1 truncate pl-3 text-muted-foreground" title={folder.name}>{folder.name}</span>
                   </ListRow>
                 ))}
                 {space.folders.length === 0 && (
@@ -301,9 +301,9 @@ export function KeeperItemsPane({ scope, rpc, actions }: KeeperItemsPaneProps) {
           {visibleItems.map((item) => (
             <ListRow key={item.key} active={draft?.key === item.key} onClick={() => selectItem(item)}>
               <span className="min-w-0 flex-1">
-                <span className="block truncate">{item.value.title || item.key}</span>
+                <span className="block truncate" title={item.value.title || item.key}>{item.value.title || item.key}</span>
                 {item.value.username && (
-                  <span className="block truncate text-small text-muted-foreground">{item.value.username}</span>
+                  <span className="block truncate text-small text-muted-foreground" title={item.value.username}>{item.value.username}</span>
                 )}
               </span>
               <Chip tone={item.raw ? 'warn' : item.value.shared ? 'ok' : 'neutral'}>

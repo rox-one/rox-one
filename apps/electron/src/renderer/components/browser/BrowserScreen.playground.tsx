@@ -48,7 +48,7 @@ function BrowserScreenStory() {
     <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="flex h-12 shrink-0 items-center gap-3 border-b border-border/60 px-3">
         <BrowserTabStrip activeSessionId="session-open-design" instancesOverride={mockInstances} maxVisibleBadges={4} />
-        <div className="ml-auto flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-[11px] text-muted-foreground">
+        <div className="ml-auto flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-xs text-muted-foreground">
           <Sparkles className="h-3.5 w-3.5 text-accent" />
           Visual CI fixture
         </div>
@@ -63,7 +63,7 @@ function BrowserScreenStory() {
         onUrlChange={setUrl}
         leadingContent={<Globe2 className="h-4 w-4 text-muted-foreground" />}
         trailingContent={
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-600">
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-600">
             <LockKeyhole className="h-3 w-3" />
             Local runtime
           </span>

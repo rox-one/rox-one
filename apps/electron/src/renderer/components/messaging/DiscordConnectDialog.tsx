@@ -122,7 +122,7 @@ export function DiscordConnectDialog({
               onClick={handleTest}
               disabled={!ready || test.state === 'testing' || saving}
             >
-              {test.state === 'testing' && <Spinner className="mr-1 text-[14px]" />}
+              {test.state === 'testing' && <Spinner className="mr-1 text-base" />}
               {t('settings.messaging.discord.testConnection')}
             </Button>
 
@@ -151,7 +151,7 @@ export function DiscordConnectDialog({
             onClick={handleSave}
             disabled={!ready || test.state !== 'success' || saving}
           >
-            {saving && <Spinner className="mr-1 text-[14px]" />}
+            {saving && <Spinner className="mr-1 text-base" />}
             {t('settings.messaging.discord.save')}
           </Button>
         </DialogFooter>

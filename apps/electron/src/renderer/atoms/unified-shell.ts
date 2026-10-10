@@ -355,3 +355,87 @@ export const bottomTerminalOpenAtom = atomWithStorage<boolean>(
   undefined,
   { getOnInit: true },
 )
+
+// ── Intelligent UI pilot flags (all default OFF) ──────────────────────────
+
+/** Orbit board: orbital session/entity layout surface. */
+export const featureOrbitBoardAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureOrbitBoard),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Aurora field: ambient gradient backdrop layer. */
+export const featureAuroraFieldAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureAuroraField),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Session lanes v1: lane-based session list layout. */
+export const featureSessionLanesV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureSessionLanesV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Lens morph v1: morphing lens navigation between surfaces. */
+export const featureLensMorphV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureLensMorphV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Missions board v1: mission tracking board surface. */
+export const featureMissionsBoardV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureMissionsBoardV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Layout engine: adaptive layout composition. */
+export const featureLayoutEngineAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureLayoutEngine),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+// ── Wave 2 pilot flags (all default OFF) ─────────────────────────────────
+
+/** Dialog continuum v1: chat transcript as a spine document (G5). */
+export const featureDialogContinuumV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureDialogContinuumV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Dialog artifacts v1: inline objects + inline approvals in the turn (G5). */
+export const featureDialogArtifactsV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureDialogArtifactsV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Composer deck v1: chip control plane over the composer (G5). */
+export const featureComposerDeckV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureComposerDeckV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Panel swap v1: swap panels by drag or ⌥⌘S (G6 wave 2). */
+export const featurePanelSwapV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featurePanelSwapV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)

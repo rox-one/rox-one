@@ -155,7 +155,7 @@ function StubSessionList() {
                 style={{ backgroundColor: project?.color ?? 'var(--muted-foreground)' }}
                 aria-hidden
               />
-              <span className="flex-1 truncate text-sm text-foreground">{task.title}</span>
+              <span className="flex-1 truncate text-sm text-foreground" title={task.title}>{task.title}</span>
               {status && <StatusBadge status={status} />}
               <ModelChip model={task.model} />
             </div>
@@ -252,7 +252,7 @@ function TaskWindowOverlay({ windowProps, onClose }: { windowProps: TaskWindowPr
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-border/40 bg-foreground/[0.02] px-3 py-1.5">
-          <span className="text-[11px] font-medium text-foreground/40">Session window</span>
+          <span className="text-xs font-medium text-foreground/40">Session window</span>
           <button
             type="button"
             onClick={onClose}

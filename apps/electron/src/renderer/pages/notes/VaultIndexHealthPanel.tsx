@@ -42,31 +42,31 @@ export function VaultIndexHealthPanel({
         <div className="text-xs font-medium">
           {health.ok ? t('notes.inspector.indexOk') : t('notes.inspector.indexUnavailable')}
         </div>
-        <div className="text-[11px] text-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           {t('notes.inspector.indexSchema', { version: health.schemaVersion ?? '—' })}
           {' · '}
           {t('notes.inspector.indexDocuments', { count: health.documentCount })}
         </div>
-        <div className="text-[11px] text-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           {t('notes.inspector.indexStats', {
             indexed: health.indexed,
             unchanged: health.unchanged,
             skipped: health.skipped,
           })}
         </div>
-        <div className="text-[11px] text-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           {health.watching ? t('notes.inspector.indexWatching') : t('notes.inspector.indexNotWatching')}
           {lastChange ? ` · ${t('notes.inspector.indexLastChange', { time: lastChange })}` : null}
         </div>
         {health.recovered ? (
-          <div className="text-[11px] text-muted-foreground">{t('notes.inspector.indexRecovered')}</div>
+          <div className="text-xs text-muted-foreground">{t('notes.inspector.indexRecovered')}</div>
         ) : null}
         {health.truncated ? (
-          <div className="text-[11px] text-muted-foreground">{t('notes.inspector.indexTruncated')}</div>
+          <div className="text-xs text-muted-foreground">{t('notes.inspector.indexTruncated')}</div>
         ) : null}
         <button
           type="button"
-          className="mt-1 inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] px-2 text-[11px] hover:bg-foreground/[0.06]"
+          className="mt-1 inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] px-2 text-xs hover:bg-foreground/[0.06]"
           onClick={onRebuild}
           disabled={rebuilding}
         >

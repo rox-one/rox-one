@@ -84,12 +84,12 @@ function LabelBadgeRowPlayground({ showValues, labelCount }: LabelBadgeRowPlaygr
         onLabelsChange={setSessionLabels}
       />
       {/* Simulated input area */}
-      <div className="px-5 py-4 min-h-[80px] text-foreground/30 text-[14px]">
+      <div className="px-5 py-4 min-h-[80px] text-foreground/30 text-base">
         Message...
       </div>
       {/* Simulated bottom bar */}
       <div className="border-t border-border/50 px-3 py-2 flex items-center">
-        <span className="text-[12px] text-foreground/40">
+        <span className="text-sm text-foreground/40">
           {sessionLabels.length} label{sessionLabels.length !== 1 ? 's' : ''} applied
         </span>
       </div>

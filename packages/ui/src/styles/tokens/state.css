@@ -1,13 +1,29 @@
 /* Interaction state overlays (UI-AUDIT §3.8). Hover is neutral; accent means
    selection, focus and the primary action. Translucent, so they read the
    same on any surface; the opaque --surface-hover/pressed/selected mixes in
-   ../index.css use the same percentages. */
+   ../index.css use the same percentages.
+
+   Recalibrated (G8): the shipped 5/9/14/22 % set left dark selected hotter
+   than pressed (1.48:1) and light pressed/selected indistinguishable. Dark
+   surfaces compress, so dark needs a stronger overlay than light. Selection is
+   always fill + a static marker (--state-marker-*), never motion or hue alone. */
 :root {
-  --state-hover: color-mix(in oklch, var(--foreground) 5%, transparent);
-  --state-pressed: color-mix(in oklch, var(--foreground) 9%, transparent);
-  --state-selected: color-mix(in oklch, var(--accent) 14%, transparent);
-  --state-selected-strong: color-mix(in oklch, var(--accent) 22%, transparent);
+  --state-hover: color-mix(in oklch, var(--foreground) 4%, transparent);
+  --state-pressed: color-mix(in oklch, var(--foreground) 8%, transparent);
+  --state-selected: color-mix(in oklch, var(--accent) 12%, transparent);
+  --state-selected-strong: color-mix(in oklch, var(--accent) 18%, transparent);
+  --state-disabled-fill: color-mix(in oklch, var(--foreground) 4%, transparent);
+  --state-marker-width: 2px;
+  --state-marker-height: 16px;
   --text-disabled: color-mix(in oklch, var(--foreground) 38%, var(--canvas));
+}
+
+.dark {
+  --state-hover: color-mix(in oklch, var(--foreground) 7%, transparent);
+  --state-pressed: color-mix(in oklch, var(--foreground) 12%, transparent);
+  --state-selected: color-mix(in oklch, var(--accent) 18%, transparent);
+  --state-selected-strong: color-mix(in oklch, var(--accent) 26%, transparent);
+  --state-disabled-fill: color-mix(in oklch, var(--foreground) 6%, transparent);
 }
 
 @theme inline {
@@ -15,5 +31,6 @@
   --color-state-pressed: var(--state-pressed);
   --color-state-selected: var(--state-selected);
   --color-state-selected-strong: var(--state-selected-strong);
+  --color-state-disabled-fill: var(--state-disabled-fill);
   --color-text-disabled: var(--text-disabled);
 }

@@ -14,7 +14,7 @@ import type { OpenDesignApi } from './open-design'
 import { buildExtraScreenRoute, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import { parseEntityRoute } from './entity-routes'
 import { isUnifiedSurfaceRouteEnabled, type UnifiedSurfaceId } from './surface-routes'
-import { isEntityRoutesEnabled } from './route-parser'
+import { isEntityRoutesEnabled, isMissionsRoutesEnabled } from './route-parser'
 import type { EntitiesLinksEffectiveState } from '@rox/shared/feature-flags'
 import type {
   Message as CoreMessage,
@@ -3601,6 +3601,17 @@ export interface HomeNavigationState {
 }
 
 /**
+ * G3 «Миссии» board (pilot, `featureMissionsBoardV1Atom`). `details.missionId`
+ * is the focused mission when the board is reached via `missions/mission/{id}`;
+ * null = the workspace board. The prefix is inert while the flag is off.
+ */
+export interface MissionsNavigationState {
+  navigator: 'missions'
+  details: { type: 'mission'; missionId: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * ROX Drive (wave 1) — local-first storage surface. `details.folderId` is the
  * folder focused in the file list; null = the root «Мой диск».
  */
@@ -3748,6 +3759,7 @@ export type NavigationState =
   | DevelopersNavigationState
   | PlaybooksNavigationState
   | HomeNavigationState
+  | MissionsNavigationState
   | DriveNavigationState
   | ScreenNavigationState
   | SurfaceNavigationState
@@ -3839,6 +3851,10 @@ export const isScreenNavigation = (
 export const isHomeNavigation = (
   state: NavigationState
 ): state is HomeNavigationState => state.navigator === 'home'
+
+export const isMissionsNavigation = (
+  state: NavigationState
+): state is MissionsNavigationState => state.navigator === 'missions'
 
 export const isDriveNavigation = (
   state: NavigationState
@@ -3970,6 +3986,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'home') {
     return 'home'
+  }
+  if (state.navigator === 'missions') {
+    return state.details ? `missions/mission/${encodeURIComponent(state.details.missionId)}` : 'missions'
   }
   if (state.navigator === 'surface') {
     // W3.2: a calendar meeting selected via the legacy alias keeps its
@@ -4220,6 +4239,18 @@ if (key === 'playbooks') return { navigator: 'playbooks', details: null }
     return devSpaceRepoId
       ? { navigator: 'developers', devSpaceRepoId, details: null }
       : { navigator: 'developers', details: null }
+  }
+
+  // G3 «Миссии» board (pilot) — keys restore only while the flag is on.
+  if (key === 'missions') {
+    return isMissionsRoutesEnabled() ? { navigator: 'missions', details: null } : null
+  }
+  if (key.startsWith('missions/mission/')) {
+    if (!isMissionsRoutesEnabled()) return null
+    const missionId = decodeURIComponent(key.slice('missions/mission/'.length))
+    return missionId
+      ? { navigator: 'missions', details: { type: 'mission', missionId } }
+      : { navigator: 'missions', details: null }
   }
 
   // ROX Drive (wave 1) — `drive[/folder/{folderId}]`

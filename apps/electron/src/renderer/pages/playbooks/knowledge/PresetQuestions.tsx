@@ -20,7 +20,7 @@ export function PresetQuestions({ disabled, onSelect }: { disabled: boolean; onS
     <div className="px-3 py-2">
       <button
         type="button"
-        className="flex w-full items-center gap-1.5 text-caption font-medium uppercase tracking-wide text-muted-foreground"
+        className="flex w-full items-center gap-1.5 text-caption font-medium uppercase caps-label text-muted-foreground"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         data-testid="playbooks-notebook-presets-toggle"

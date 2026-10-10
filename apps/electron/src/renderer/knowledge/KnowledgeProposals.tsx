@@ -82,7 +82,7 @@ export function KnowledgeProposals({ className }: { className?: string }) {
             onClick={() => setStatusFilter((prev) => (prev === s ? null : s))}
             aria-pressed={statusFilter === s}
             className={cn(
-              'shrink-0 rounded-full border border-border px-2 py-0.5 text-[11px]',
+              'shrink-0 rounded-full border border-border px-2 py-0.5 text-xs',
               'hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
               statusFilter === s
                 ? 'bg-accent text-foreground'
@@ -107,15 +107,15 @@ export function KnowledgeProposals({ className }: { className?: string }) {
         getKey={(p) => p.id}
         emptyState={
           state === 'loading' ? (
-            <p className="px-3 py-6 text-center text-[12px] text-muted-foreground">
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">
               {t('knowledge.surface.loading')}
             </p>
           ) : state === 'error' ? (
-            <p className="px-3 py-6 text-center text-[12px] text-destructive">
+            <p className="px-3 py-6 text-center text-sm text-destructive">
               {t('knowledge.surface.error')}
             </p>
           ) : (
-            <p className="px-3 py-6 text-center text-[12px] leading-snug text-muted-foreground">
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">
               {t('knowledge.proposals.empty')}
             </p>
           )
@@ -131,12 +131,12 @@ export function KnowledgeProposals({ className }: { className?: string }) {
           >
             <span className="flex items-center gap-2">
               <FileDiff className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-              <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">
+              <span className="min-w-0 flex-1 truncate text-base font-medium text-foreground" title={proposal.targetRef.id}>
                 {proposal.targetRef.id}
               </span>
               <span
                 className={cn(
-                  'shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium',
+                  'shrink-0 rounded-full px-1.5 py-0.5 text-xs font-medium',
                   proposal.status === 'conflict'
                     ? 'bg-destructive/15 text-destructive'
                     : 'bg-muted text-muted-foreground',
@@ -145,7 +145,7 @@ export function KnowledgeProposals({ className }: { className?: string }) {
                 {t(`knowledge.proposals.status.${proposal.status}`)}
               </span>
             </span>
-            <span className="truncate text-[11px] text-muted-foreground">
+            <span className="truncate text-xs text-muted-foreground" title={proposal.ops.map((op) => op.op).join(', ') || proposal.id}>
               {proposal.ops.map((op) => op.op).join(', ') || proposal.id}
               {' · '}
               {new Date(proposal.createdAt).toLocaleString(getAppLocale())}

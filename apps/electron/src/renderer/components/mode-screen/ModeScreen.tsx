@@ -69,7 +69,7 @@ function FallbackModeScreenLayout({
     .filter(item => item !== 'navigation' || !target)
     .map(item => ({ id: item, label: t(`navigation.modePanes.${item}`), title: t(`navigation.modePanes.${item}`) }))
   return (
-    <div ref={root} className="flex h-full min-h-0 flex-col bg-background font-sans text-[13px] text-foreground" data-testid={testId} data-mode-layout={layout}>
+    <div ref={root} className="flex h-full min-h-0 flex-col bg-background font-sans text-base text-foreground" data-testid={testId} data-mode-layout={layout}>
       {narrow && (
         <TabsCore
           items={paneItems}
@@ -107,7 +107,7 @@ function FallbackModeScreenLayout({
         )}
       </div>
       {status ? (
-        <div className="flex min-h-7 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 bg-surface-rail px-3 py-1 text-[11px] text-text-muted" role="status">
+        <div className="flex min-h-7 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 bg-surface-rail px-3 py-1 text-xs text-text-muted" role="status">
           {status}
         </div>
       ) : null}
@@ -116,13 +116,13 @@ function FallbackModeScreenLayout({
 }
 
 export function NavTitle({ children }: { children: React.ReactNode }) {
-  return <h1 className="px-2 pb-2 text-[15px] font-semibold">{children}</h1>
+  return <h1 className="px-2 pb-2 text-lg font-semibold">{children}</h1>
 }
 
 export function NavSection({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
   return (
     <details open className="group mt-3">
-      <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-medium uppercase tracking-wide text-text-muted outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium uppercase caps-label text-text-muted outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
         <ChevronRight className="size-3 shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none" aria-hidden />{title}
       </summary>
       <div className="ml-2 flex flex-col gap-0.5 border-l border-foreground/10 pl-2 py-1">{children}</div>
@@ -180,7 +180,7 @@ export function NavItem({
       aria-current={active ? 'page' : undefined}
       data-testid={testId}
       className={cn(
-        'flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 text-left text-[13px] outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring',
+        'flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 text-left text-base outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring',
         active
           ? 'border-l-accent bg-accent/15 font-semibold text-foreground'
           : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground',
@@ -197,7 +197,7 @@ export function NavItem({
       </span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {count != null && count > 0 ? (
-        <span className={cn('shrink-0 tabular-nums text-[11px]', active ? 'text-accent' : 'text-text-muted')}>{count}</span>
+        <span className={cn('shrink-0 numeric text-xs', active ? 'text-accent' : 'text-text-muted')}>{count}</span>
       ) : null}
     </button>
   )
@@ -214,8 +214,8 @@ export function ListHeader({
 }) {
   return (
     <header className="flex min-h-[44px] shrink-0 flex-wrap items-center gap-2 px-3 pt-2">
-      <h2 className="text-[15px] font-semibold">{title}</h2>
-      {subtitle ? <span className="truncate text-[12px] text-text-muted">{subtitle}</span> : null}
+      <h2 className="text-lg font-semibold">{title}</h2>
+      {subtitle ? <span className="truncate text-sm text-text-muted">{subtitle}</span> : null}
       {/* Wrap instead of overflowing: in a narrow list column the action row drops to its own
           line (and wraps internally) so a later button is never clipped by Panel's overflow-hidden. */}
       <div className="ml-auto flex flex-wrap items-center justify-end gap-1">{actions}</div>
@@ -224,7 +224,7 @@ export function ListHeader({
 }
 
 export function GroupLabel({ children }: { children: React.ReactNode }) {
-  return <div className="px-3 pb-1 pt-3 text-[11px] uppercase tracking-wide text-text-muted">{children}</div>
+  return <div className="px-3 pb-1 pt-3 text-xs uppercase caps-label text-text-muted">{children}</div>
 }
 
 export function ListRow({
@@ -270,7 +270,7 @@ export function Badge({ tone = 'muted', children }: { tone?: Tone; children: Rea
     info: 'bg-info/15 text-info',
     muted: 'bg-foreground/[0.07] text-text-secondary',
   }
-  return <span className={cn('inline-flex h-[18px] shrink-0 items-center rounded-[var(--radius-control)] px-1.5 text-[11px] font-medium', cls[tone])}>{children}</span>
+  return <span className={cn('inline-flex h-[18px] shrink-0 items-center rounded-[var(--radius-control)] px-1.5 text-xs font-medium', cls[tone])}>{children}</span>
 }
 
 export function Button({
@@ -283,7 +283,7 @@ export function Button({
       type="button"
       {...props}
       className={cn(
-        'inline-flex h-7 shrink-0 items-center gap-1.5 rounded-[var(--radius-control)] px-2.5 text-[12px] font-medium outline-none disabled:opacity-50',
+        'inline-flex h-7 shrink-0 items-center gap-1.5 rounded-[var(--radius-control)] px-2.5 text-sm font-medium outline-none disabled:opacity-50',
         variant === 'primary' && 'bg-accent text-[var(--accent-foreground,white)] hover:brightness-110',
         variant === 'secondary' && 'bg-foreground/[0.07] text-foreground hover:bg-foreground/[0.11]',
         variant === 'danger' && 'bg-destructive/12 text-destructive hover:bg-destructive/20',
@@ -312,7 +312,7 @@ export function Tabs<T extends string>({
       label: tab.label,
       title: tab.label,
       icon: <Icon className={cn('icon-caption', value === tab.id ? 'text-accent' : 'text-text-muted')} aria-hidden />,
-      badge: tab.count ? <span className="tabular-nums text-text-muted">{tab.count}</span> : undefined,
+      badge: tab.count ? <span className="numeric text-text-muted">{tab.count}</span> : undefined,
     }
   })
   return (
@@ -336,7 +336,7 @@ export function Chip({ active, onClick, children }: { active?: boolean; onClick?
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        'inline-flex h-6 items-center rounded-[var(--radius-control)] px-2 text-[12px] outline-none',
+        'inline-flex h-6 items-center rounded-[var(--radius-control)] px-2 text-sm outline-none',
         active ? 'bg-accent/15 font-semibold text-foreground' : 'bg-foreground/[0.05] text-text-secondary hover:bg-foreground/[0.09]',
       )}
     >
@@ -346,7 +346,7 @@ export function Chip({ active, onClick, children }: { active?: boolean; onClick?
 }
 
 export function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <div className="pb-1.5 pt-4 text-[11px] uppercase tracking-wide text-text-muted">{children}</div>
+  return <div className="pb-1.5 pt-4 text-xs uppercase caps-label text-text-muted">{children}</div>
 }
 
 export function Card({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -366,8 +366,8 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-start gap-1.5 px-4 py-8" data-testid={testId} role="status">
-      <div className="text-[14px] font-semibold">{title}</div>
-      {body ? <div className="max-w-[420px] text-[12px] text-text-secondary">{body}</div> : null}
+      <div className="text-lg font-semibold">{title}</div>
+      {body ? <div className="max-w-[420px] text-sm text-text-secondary">{body}</div> : null}
       {action ? <div className="pt-1">{action}</div> : null}
     </div>
   )

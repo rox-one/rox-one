@@ -4,8 +4,10 @@
 
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAtomValue } from 'jotai'
 
 import { cn } from '@/lib/utils'
+import { featureLayoutEngineAtom } from '@/atoms/unified-shell'
 import { useResizeGradient } from '@/hooks/useResizeGradient'
 import { useHorizontalResizeGradient } from '@/hooks/useHorizontalResizeGradient'
 import { useDocumentResizingFlag } from '@/hooks/useDocumentResizingFlag'
@@ -15,6 +17,7 @@ import {
   PANEL_SASH_LINE_WIDTH,
 } from './panel-constants'
 import { KEYBOARD_RESIZE_LARGE_STEP, KEYBOARD_RESIZE_STEP } from './resize-math'
+import type { ResizeSnapState } from './resize-controller'
 
 export interface ResizeHandleProps {
   orientation?: 'vertical' | 'horizontal'
@@ -25,6 +28,8 @@ export interface ResizeHandleProps {
   valueMax: number
   dragging?: boolean
   disabled?: boolean
+  /** Live magnetic state (G4 «Студия»); only rendered with the engine flag ON. */
+  snap?: ResizeSnapState
   /** A bottom dock grows upward; Home/End still target the value bounds. */
   reverseArrowKeys?: boolean
   className?: string
@@ -58,6 +63,7 @@ export function ResizeHandle({
   valueMax,
   dragging = false,
   disabled = false,
+  snap,
   reverseArrowKeys = false,
   className,
   style,
@@ -73,6 +79,7 @@ export function ResizeHandle({
   ...rest
 }: ResizeHandleProps & React.HTMLAttributes<HTMLDivElement>) {
   const { t } = useTranslation()
+  const layoutEngineOn = useAtomValue(featureLayoutEngineAtom)
   const vertical = orientation === 'vertical'
   const verticalGradient = useResizeGradient()
   const horizontalGradient = useHorizontalResizeGradient()
@@ -82,6 +89,9 @@ export function ResizeHandle({
   // Covers drags driven outside usePanelResize (AppShell sidebar/navigator).
   useDocumentResizingFlag(dragging)
   const valueText = t('shell.resize.valuePx', { value: Math.round(valueNow) })
+  // Magnetic seam affordances (G4 «Студия») render only with the engine flag ON
+  // and only while dragging + snapped — flag OFF stays byte-identical.
+  const showSnap = layoutEngineOn && dragging && snap?.snapped === true && snap.percent != null
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (disabled) return
@@ -131,6 +141,7 @@ export function ResizeHandle({
       aria-valuenow={Math.round(valueNow)}
       aria-valuetext={valueText}
       aria-disabled={disabled || undefined}
+      data-snap={showSnap ? 'true' : undefined}
       tabIndex={disabled ? -1 : 0}
       {...rest}
       className={cn(
@@ -170,6 +181,32 @@ export function ResizeHandle({
             : gradientStyle),
         }}
       />
+      {showSnap ? (
+        <span
+          aria-hidden="true"
+          data-snap-guide="true"
+          className={cn(
+            'pointer-events-none absolute',
+            vertical ? 'inset-y-0 left-1/2 w-px -translate-x-1/2' : 'inset-x-0 top-1/2 h-px -translate-y-1/2',
+          )}
+          style={{ background: 'var(--panel-snap-guide)' }}
+        />
+      ) : null}
+      {showSnap && snap && snap.percent != null ? (
+        <span
+          data-snap-badge="true"
+          className={cn(
+            'pointer-events-none absolute flex items-center whitespace-nowrap rounded-[var(--radius-control)]',
+            'border border-border-subtle bg-surface-elevated px-1.5 py-0.5 font-mono numeric text-text-primary',
+            'shadow-[var(--shadow-popover)]',
+            vertical ? 'left-1/2 top-2 -translate-x-1/2' : 'left-2 top-1/2 -translate-y-1/2',
+          )}
+        >
+          <span>{t('shell.resize.valuePx', { value: Math.round(snap.width) })}</span>
+          <span aria-hidden="true" className="px-1 text-muted-foreground">·</span>
+          <span>{t('shell.resize.snap', { percent: snap.percent })}</span>
+        </span>
+      ) : null}
     </div>
   )
 }

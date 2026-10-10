@@ -1,7 +1,10 @@
 import * as React from 'react'
+import { Provider as JotaiProvider, createStore, useSetAtom } from 'jotai'
 import { Circle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ChatDisplay } from './ChatDisplay'
+import { featureDialogArtifactsV1Atom, featureDialogContinuumV1Atom } from '@/atoms/unified-shell'
+import { KEYS, getKeyString } from '@/lib/local-storage'
 import { AppShellProvider, type AppShellContextType } from '@/context/AppShellContext'
 import { FocusProvider } from '@/context/FocusContext'
 import { ModalProvider } from '@/context/ModalContext'
@@ -185,8 +188,32 @@ const playgroundNavigationContext: React.ComponentProps<typeof NavigationContext
   navigateToSession: noop,
 }
 
-function ChatDisplayScreenStory() {
+/**
+ * Hydrates the isolated store with both G5 dialog flags ON for the variant's
+ * lifetime, restoring storage on unmount (the pilot flags ship OFF).
+ */
+function HydrateDialogFlags({ children }: { children: React.ReactNode }) {
+  const setContinuum = useSetAtom(featureDialogContinuumV1Atom)
+  const setArtifacts = useSetAtom(featureDialogArtifactsV1Atom)
+  React.useEffect(() => {
+    const keys = [getKeyString(KEYS.featureDialogContinuumV1), getKeyString(KEYS.featureDialogArtifactsV1)]
+    const previous = keys.map((key) => localStorage.getItem(key))
+    setContinuum(true)
+    setArtifacts(true)
+    return () => {
+      keys.forEach((key, index) => {
+        const value = previous[index]
+        if (value === null) localStorage.removeItem(key)
+        else localStorage.setItem(key, value)
+      })
+    }
+  }, [setContinuum, setArtifacts])
+  return <>{children}</>
+}
+
+function ChatDisplayScreenStory({ continuum = false }: { continuum?: boolean }) {
   const { t } = useTranslation()
+  const store = React.useMemo(() => createStore(), [])
   const [model, setModel] = React.useState('rox/standard')
   const [permissionMode, setPermissionMode] = React.useState(session.permissionMode ?? 'ask')
   const [inputValue, setInputValue] = React.useState('')
@@ -194,7 +221,7 @@ function ChatDisplayScreenStory() {
 
   ensureMockElectronAPI()
 
-  return (
+  const tree = (
     <NavigationContext.Provider value={playgroundNavigationContext}>
       <FocusProvider>
         <AppShellProvider value={playgroundContext}>
@@ -231,6 +258,13 @@ function ChatDisplayScreenStory() {
       </FocusProvider>
     </NavigationContext.Provider>
   )
+
+  if (!continuum) return tree
+  return (
+    <JotaiProvider store={store}>
+      <HydrateDialogFlags>{tree}</HydrateDialogFlags>
+    </JotaiProvider>
+  )
 }
 
 const viewportIds: PlaygroundViewportPresetId[] = ['desktop', 'tablet', 'mobile']
@@ -242,7 +276,18 @@ export default viewportIds.map((viewportId) => definePlaygroundStory({
   level: 'Screens',
   description: 'Production ChatDisplay with deterministic messages and no live session runtime.',
   component: ChatDisplayScreenStory,
-  props: [],
+  props: [
+    {
+      name: 'continuum',
+      description: 'Render through the G5 dialog continuum shell (both dialog flags ON)',
+      control: { type: 'boolean' },
+      defaultValue: false,
+    },
+  ],
+  variants: [
+    { name: 'Legacy card stack', props: { continuum: false } },
+    { name: 'Continuum (flags ON)', props: { continuum: true } },
+  ],
   layout: 'full',
   viewport: PLAYGROUND_VIEWPORT_PRESETS[viewportId],
 }))

@@ -74,7 +74,7 @@ export function SettingsRow({
       <div className="flex-1 min-w-0">
         <div id={labelId} className={settingsUI.label}>{label}</div>
         {description && (
-          <div id={descriptionId} className={cn(settingsUI.description, settingsUI.labelDescriptionGap, wrapDescription ? 'whitespace-normal break-words' : 'truncate')}>
+          <div id={descriptionId} className={cn(settingsUI.description, settingsUI.labelDescriptionGap, wrapDescription ? 'whitespace-normal break-words' : 'truncate')} title={typeof description === 'string' ? description : undefined}>
             {description}
           </div>
         )}

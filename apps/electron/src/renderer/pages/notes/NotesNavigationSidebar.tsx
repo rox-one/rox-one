@@ -170,7 +170,7 @@ function NoteNavigationItem({ note, depth, activeNoteId, dreamNoteIds, ...action
         >
           <span className="flex items-center gap-1.5">
             <FileText className="icon-caption shrink-0 text-accent" aria-hidden="true" />
-            <span className="min-w-0 flex-1 truncate text-sm">{note.title}</span>
+            <span className="min-w-0 flex-1 truncate text-sm" title={note.title}>{note.title}</span>
           </span>
           {dreamState ? (
             <span className="mt-1 flex flex-wrap gap-1 pl-5">
@@ -269,8 +269,8 @@ function FolderNavigationItem({ node, depth, expanded, onToggleFolder, ...action
         >
           <ChevronRight className={cn('icon-caption shrink-0 transition-transform duration-150 motion-reduce:transition-none', expanded && 'rotate-90')} aria-hidden="true" />
           <FolderIcon className={cn('icon-inline shrink-0', depth === 0 ? 'text-status-warning' : depth === 1 ? 'text-accent' : 'text-status-success')} aria-hidden="true" />
-          <span className="min-w-0 flex-1 truncate text-left">{node.name}</span>
-          <span className="text-xs text-muted-foreground/50 tabular-nums">{countFolderNotes(node)}</span>
+          <span className="min-w-0 flex-1 truncate text-left" title={node.name}>{node.name}</span>
+          <span className="text-xs text-muted-foreground/50 numeric">{countFolderNotes(node)}</span>
         </button>
       </ContextMenuTrigger>
       <StyledContextMenuContent>

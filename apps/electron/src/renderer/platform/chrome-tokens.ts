@@ -15,6 +15,11 @@ export type ChromeTokenName =
   | 'railButton'
   | 'rowH'
   | 'rowH2line'
+  | 'laneGutterWidth'
+  | 'laneRuleWidth'
+  | 'laneRuleActiveHeight'
+  | 'laneRuleQuietHeight'
+  | 'lensDockMinWidth'
   | 'chromeTopbarHeight'
   | 'chromeRailWidth'
   | 'chromeRailExpandedWidth'
@@ -24,6 +29,7 @@ export type ChromeTokenName =
   | 'chromeStatusHeight'
   | 'chromePanelHeaderHeight'
   | 'chromeGap'
+  | 'chromeRhythm'
   | 'panelGap'
   | 'panelEdgeInset'
   | 'panelMinWidth'
@@ -36,6 +42,7 @@ export type ChromeTokenName =
   | 'panelSashHitWidth'
   | 'panelSashHitWidthCoarse'
   | 'panelSashLineWidth'
+  | 'panelSnapThreshold'
 
 /** Compact density (the default). */
 export const CHROME_TOKENS: Readonly<Record<ChromeTokenName, number>> = Object.freeze({
@@ -55,6 +62,16 @@ export const CHROME_TOKENS: Readonly<Record<ChromeTokenName, number>> = Object.f
   rowH: 28,
   /** --row-h-2line */
   rowH2line: 44,
+  /** --lane-gutter-width */
+  laneGutterWidth: 14,
+  /** --lane-rule-width */
+  laneRuleWidth: 2,
+  /** --lane-rule-active-height */
+  laneRuleActiveHeight: 18,
+  /** --lane-rule-quiet-height */
+  laneRuleQuietHeight: 8,
+  /** --lens-dock-min-width */
+  lensDockMinWidth: 1148,
   /** --chrome-topbar-height */
   chromeTopbarHeight: 40,
   /** --chrome-rail-width */
@@ -70,9 +87,11 @@ export const CHROME_TOKENS: Readonly<Record<ChromeTokenName, number>> = Object.f
   /** --chrome-status-height */
   chromeStatusHeight: 24,
   /** --chrome-panel-header-height */
-  chromePanelHeaderHeight: 36,
+  chromePanelHeaderHeight: 32,
   /** --chrome-gap */
   chromeGap: 4,
+  /** --chrome-rhythm */
+  chromeRhythm: 4,
   /** --panel-gap */
   panelGap: 0,
   /** --panel-edge-inset */
@@ -97,6 +116,8 @@ export const CHROME_TOKENS: Readonly<Record<ChromeTokenName, number>> = Object.f
   panelSashHitWidthCoarse: 24,
   /** --panel-sash-line-width */
   panelSashLineWidth: 1,
+  /** --panel-snap-threshold */
+  panelSnapThreshold: 12,
 })
 
 /** `html[data-density="comfortable"]` values (compact merged with overrides). */
@@ -117,6 +138,16 @@ export const CHROME_TOKENS_COMFORTABLE: Readonly<Record<ChromeTokenName, number>
   rowH: 32,
   /** --row-h-2line */
   rowH2line: 52,
+  /** --lane-gutter-width */
+  laneGutterWidth: 14,
+  /** --lane-rule-width */
+  laneRuleWidth: 2,
+  /** --lane-rule-active-height */
+  laneRuleActiveHeight: 18,
+  /** --lane-rule-quiet-height */
+  laneRuleQuietHeight: 8,
+  /** --lens-dock-min-width */
+  lensDockMinWidth: 1148,
   /** --chrome-topbar-height */
   chromeTopbarHeight: 44,
   /** --chrome-rail-width */
@@ -132,9 +163,11 @@ export const CHROME_TOKENS_COMFORTABLE: Readonly<Record<ChromeTokenName, number>
   /** --chrome-status-height */
   chromeStatusHeight: 24,
   /** --chrome-panel-header-height */
-  chromePanelHeaderHeight: 40,
+  chromePanelHeaderHeight: 36,
   /** --chrome-gap */
   chromeGap: 4,
+  /** --chrome-rhythm */
+  chromeRhythm: 4,
   /** --panel-gap */
   panelGap: 0,
   /** --panel-edge-inset */
@@ -159,4 +192,6 @@ export const CHROME_TOKENS_COMFORTABLE: Readonly<Record<ChromeTokenName, number>
   panelSashHitWidthCoarse: 24,
   /** --panel-sash-line-width */
   panelSashLineWidth: 1,
+  /** --panel-snap-threshold */
+  panelSnapThreshold: 12,
 })

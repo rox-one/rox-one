@@ -89,7 +89,7 @@ function ItemActions({ onAccept, onReject }: { onAccept: () => void; onReject: (
         type="button"
         onClick={onAccept}
         data-testid="project-ai-accept"
-        className="inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-success hover:bg-success/10"
+        className="inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-xs font-medium text-success hover:bg-success/10"
       >
         <Check className="h-3 w-3" />
         {t('projectRoadmap.ai.accept')}
@@ -112,13 +112,13 @@ function DiffText({ before, after }: { before: string; after: string }) {
   return (
     <div className="flex min-w-0 flex-col gap-1">
       {before ? (
-        <div className="rounded-md bg-destructive/[0.06] px-2 py-1 text-[12px] leading-5 text-muted-foreground line-through decoration-destructive/40">
+        <div className="rounded-md bg-destructive/[0.06] px-2 py-1 text-sm leading-5 text-muted-foreground line-through decoration-destructive/40">
           {before}
         </div>
       ) : (
-        <div className="text-[11px] text-muted-foreground/70">{t('projectRoadmap.ai.wasEmpty')}</div>
+        <div className="text-xs text-muted-foreground/70">{t('projectRoadmap.ai.wasEmpty')}</div>
       )}
-      <div className="rounded-md bg-success/[0.08] px-2 py-1 text-[12px] leading-5 text-foreground">{after}</div>
+      <div className="rounded-md bg-success/[0.08] px-2 py-1 text-sm leading-5 text-foreground">{after}</div>
     </div>
   )
 }
@@ -212,15 +212,15 @@ export function ProjectAiPanel({
   const isPending = (key: ProposalItemKey) => !state.decided.includes(proposalItemId(key))
 
   const sectionTitle = (text: string) => (
-    <div className="mt-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/80">{text}</div>
+    <div className="mt-2 px-1 text-xs font-medium uppercase caps-label text-muted-foreground/80">{text}</div>
   )
 
   return (
     <div className="min-w-0 rounded-lg bg-foreground/[0.03] p-2" data-testid="project-ai-panel">
       <div className="flex min-w-0 items-center gap-2 px-1 pb-1">
         <Sparkles className="h-3.5 w-3.5 shrink-0 text-accent" />
-        <span className="text-[13px] font-semibold text-foreground/90">{t('projectRoadmap.ai.title')}</span>
-        <span className="ml-auto min-w-0 truncate text-[11px] text-muted-foreground" data-testid="project-ai-model">
+        <span className="text-base font-semibold text-foreground/90">{t('projectRoadmap.ai.title')}</span>
+        <span className="ml-auto min-w-0 truncate text-xs text-muted-foreground" data-testid="project-ai-model">
           {status === null
             ? t('projectRoadmap.ai.checking')
             : available
@@ -230,7 +230,7 @@ export function ProjectAiPanel({
       </div>
 
       {status !== null && !available ? (
-        <p className="px-1 pb-1 text-[12px] leading-5 text-muted-foreground" data-testid="project-ai-unavailable">
+        <p className="px-1 pb-1 text-sm leading-5 text-muted-foreground" data-testid="project-ai-unavailable">
           {t('projectRoadmap.ai.unavailableBody')}
         </p>
       ) : null}
@@ -243,7 +243,7 @@ export function ProjectAiPanel({
         data-testid="project-ai-brief"
         aria-label={t('projectRoadmap.ai.briefLabel')}
         placeholder={t('projectRoadmap.ai.briefPlaceholder')}
-        className="block w-full resize-y rounded-md bg-background/70 px-2 py-1.5 text-[13px] leading-5 text-foreground outline-none placeholder:text-muted-foreground/70 focus:bg-background disabled:opacity-60"
+        className="block w-full resize-y rounded-md bg-background/70 px-2 py-1.5 text-base text-foreground outline-none placeholder:text-muted-foreground/70 focus:bg-background disabled:opacity-60"
       />
 
       <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-1">
@@ -260,14 +260,14 @@ export function ProjectAiPanel({
           {busy === 'improve' ? t('projectRoadmap.ai.thinking') : t('projectRoadmap.ai.improve')}
         </TextButton>
       </div>
-      {available ? <p className="mt-1 px-1 text-[11px] leading-4 text-muted-foreground/80">{t('projectRoadmap.ai.consent', { model: status?.model ?? '—' })}</p> : null}
+      {available ? <p className="mt-1 px-1 text-xs leading-4 text-muted-foreground/80">{t('projectRoadmap.ai.consent', { model: status?.model ?? '—' })}</p> : null}
       <RoadmapModelResult result={result ?? null} t={t} />
-      {error ? <p className="mt-1 px-1 text-[12px] text-destructive" role="alert">{error}</p> : null}
+      {error ? <p className="mt-1 px-1 text-sm text-destructive" role="alert">{error}</p> : null}
 
       {briefImprove !== null ? (
         <div className="mt-2 min-w-0 rounded-md bg-background/60 p-2">
           <div className="mb-1 flex items-center gap-2">
-            <span className="text-[12px] font-medium">{t('projectRoadmap.ai.improvedBrief')}</span>
+            <span className="text-sm font-medium">{t('projectRoadmap.ai.improvedBrief')}</span>
             <div className="ml-auto">
               <ItemActions
                 onAccept={() => {
@@ -285,7 +285,7 @@ export function ProjectAiPanel({
       {improve ? (
         <div className="mt-2 min-w-0 rounded-md bg-background/60 p-2" data-testid="project-ai-field-improve">
           <div className="mb-1 flex items-center gap-2">
-            <span className="text-[12px] font-medium">{t(`projectRoadmap.ai.improvedField.${improve.target}`)}</span>
+            <span className="text-sm font-medium">{t(`projectRoadmap.ai.improvedField.${improve.target}`)}</span>
             <div className="ml-auto">
               <ItemActions
                 onAccept={() => {
@@ -311,12 +311,12 @@ export function ProjectAiPanel({
           <div className="flex flex-col gap-1.5 pt-1">
             {state.questions.map((q, i) => (
               <label key={`${i}-${q}`} className="block min-w-0 px-1">
-                <span className="block text-[12px] leading-5 text-foreground/90">{q}</span>
+                <span className="block text-sm leading-5 text-foreground/90">{q}</span>
                 <input
                   value={state.answers[i] ?? ''}
                   onChange={(e) => setState((s) => ({ ...s, answers: { ...s.answers, [i]: e.target.value } }))}
                   placeholder={t('projectRoadmap.ai.answerPlaceholder')}
-                  className="mt-0.5 h-7 w-full rounded-md bg-background/70 px-2 text-[12px] outline-none focus:bg-background"
+                  className="mt-0.5 h-7 w-full rounded-md bg-background/70 px-2 text-sm outline-none focus:bg-background"
                 />
               </label>
             ))}
@@ -335,8 +335,8 @@ export function ProjectAiPanel({
       {proposal ? (
         <div className="mt-2 min-w-0" data-testid="project-ai-proposal">
           <div className="flex min-w-0 flex-wrap items-center gap-1 px-1">
-            <span className="text-[12px] font-semibold text-foreground/90">{t('projectRoadmap.ai.proposal')}</span>
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-sm font-semibold text-foreground/90">{t('projectRoadmap.ai.proposal')}</span>
+            <span className="text-xs text-muted-foreground">
               {pending.length ? t('projectRoadmap.ai.pendingCount', { count: pending.length }) : t('projectRoadmap.ai.allDecided')}
             </span>
             <div className="ml-auto flex items-center gap-1">
@@ -384,12 +384,12 @@ export function ProjectAiPanel({
               body: (
                 <div className="min-w-0">
                   <div className="flex min-w-0 items-baseline gap-2">
-                    <span className="truncate font-medium">{m.title}</span>
-                    <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{t('projectRoadmap.ai.days', { count: m.durationDays })}</span>
+                    <span className="truncate font-medium" title={m.title}>{m.title}</span>
+                    <span className="shrink-0 text-xs numeric text-muted-foreground">{t('projectRoadmap.ai.days', { count: m.durationDays })}</span>
                   </div>
-                  {m.description ? <div className="text-[12px] text-muted-foreground">{m.description}</div> : null}
+                  {m.description ? <div className="text-sm text-muted-foreground">{m.description}</div> : null}
                   {m.stages.length ? (
-                    <ul className="mt-0.5 text-[12px] text-foreground/80">
+                    <ul className="mt-0.5 text-sm text-foreground/80">
                       {m.stages.map((s, si) => (
                         <li key={si} className="min-w-0">
                           <span className="text-muted-foreground">— </span>{s.title}
@@ -411,10 +411,10 @@ export function ProjectAiPanel({
               key: { section: 'requirements', index } as ProposalItemKey,
               body: (
                 <div className="min-w-0">
-                  <span className="mr-1 rounded-xs bg-foreground/[0.06] px-1 text-[11px] text-muted-foreground">{t(`projectRoadmap.requirementKind.${r.kind}`)}</span>
+                  <span className="mr-1 rounded-xs bg-foreground/[0.06] px-1 text-xs text-muted-foreground">{t(`projectRoadmap.requirementKind.${r.kind}`)}</span>
                   {r.text}
                   {r.acceptance.length ? (
-                    <ul className="mt-0.5 text-[12px] text-muted-foreground">
+                    <ul className="mt-0.5 text-sm text-muted-foreground">
                       {r.acceptance.map((a, ai) => <li key={ai}>✓ {a}</li>)}
                     </ul>
                   ) : null}
@@ -466,7 +466,7 @@ function ProposalList({
       {sectionTitle(title)}
       <div className="flex flex-col">
         {visible.map((item) => (
-          <div key={proposalItemId(item.key)} className={cn('flex min-w-0 items-start gap-2 rounded-md px-1 py-1 text-[13px] leading-5 hover:bg-foreground/[0.03]')}>
+          <div key={proposalItemId(item.key)} className={cn('flex min-w-0 items-start gap-2 rounded-md px-1 py-1 text-base hover:bg-foreground/[0.03]')}>
             <div className="min-w-0 flex-1">{item.body}</div>
             <ItemActions onAccept={() => decide([item.key], true)} onReject={() => decide([item.key], false)} />
           </div>

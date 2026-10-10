@@ -830,7 +830,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
             placeholder={t('projectRoadmap.expectedResultPlaceholder')}
             onCommit={(expectedResult) => updateRoadmap((r) => ({ ...r, expectedResult }))}
           />
-          <div className="mt-1 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">{t('projectRoadmap.doneCriteria')}</div>
+          <div className="mt-1 px-1 text-xs font-medium uppercase caps-label text-muted-foreground/70">{t('projectRoadmap.doneCriteria')}</div>
           <EditableItemList
             testId="project-done-criteria"
             items={roadmap.doneCriteria}
@@ -879,7 +879,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
         title={t('projectInfo.tabTasks')}
         count={projectTasks.length}
         actions={
-          <button type="button" onClick={() => navigate(routes.view.tasks())} className="h-6 rounded-md px-1.5 text-[12px] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground">
+          <button type="button" onClick={() => navigate(routes.view.tasks())} className="h-6 rounded-md px-1.5 text-sm text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground">
             {t('projectRoadmap.openTasks')}
           </button>
         }
@@ -891,14 +891,14 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
             onChange={(event) => setNewTaskTitle(event.target.value)}
             placeholder={t('tasks.quickEntryPlaceholder')}
             aria-label={t('tasks.newTask')}
-            className="h-8 min-w-0 flex-1 bg-transparent px-1 text-[13px] outline-none placeholder:text-muted-foreground/70"
+            className="h-8 min-w-0 flex-1 bg-transparent px-1 text-base outline-none placeholder:text-muted-foreground/70"
           />
           {roadmap.milestones.length ? (
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <button type="button" className="inline-flex h-6 max-w-[160px] shrink-0 items-center gap-1 rounded-md px-1.5 text-[12px] text-muted-foreground hover:bg-foreground/[0.06]">
+                <button type="button" className="inline-flex h-6 max-w-[160px] shrink-0 items-center gap-1 rounded-md px-1.5 text-sm text-muted-foreground hover:bg-foreground/[0.06]">
                   <Flag className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{roadmap.milestones.find((m) => m.id === newTaskMilestone)?.title ?? t('projectRoadmap.noMilestone')}</span>
+                  <span className="truncate" title={roadmap.milestones.find((m) => m.id === newTaskMilestone)?.title ?? t('projectRoadmap.noMilestone')}>{roadmap.milestones.find((m) => m.id === newTaskMilestone)?.title ?? t('projectRoadmap.noMilestone')}</span>
                 </button>
               </DropdownMenuTrigger>
               <StyledDropdownMenuContent align="end">
@@ -914,7 +914,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
             type="submit"
             data-testid="project-new-task"
             disabled={!newTaskTitle.trim()}
-            className="inline-flex h-7 shrink-0 items-center rounded-md px-2.5 text-[12px] font-medium text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+            className="inline-flex h-7 shrink-0 items-center rounded-md px-2.5 text-sm font-medium text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
           >
             {t('projectInfo.newTaskButton')}
           </button>
@@ -925,7 +925,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
           <div className="flex min-w-0 flex-col" data-testid="project-task-list">
             {tasksByGroup.map((group) => (
               <div key={group.milestone?.id ?? 'none'} className="min-w-0">
-                <div className="mt-1 flex items-center gap-1.5 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">
+                <div className="mt-1 flex items-center gap-1.5 px-1 text-xs font-medium uppercase caps-label text-muted-foreground/70">
                   <Flag className="h-3 w-3" />
                   {group.milestone ? group.milestone.title : t('projectRoadmap.noMilestone')}
                 </div>
@@ -937,7 +937,8 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
                       <button
                         type="button"
                         onClick={() => navigate(routes.view.tasks(task.id))}
-                        className={cn('min-w-0 flex-1 truncate py-1 text-left text-[13px]', task.completedAt && 'text-muted-foreground line-through')}
+                        className={cn('min-w-0 flex-1 truncate py-1 text-left text-base', task.completedAt && 'text-muted-foreground line-through')}
+                        title={task.title}
                       >
                         {task.title}
                       </button>
@@ -965,7 +966,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
                         </DropdownMenu>
                       ) : null}
                       {sessionLink ? (
-                        <button type="button" onClick={() => navigate(routes.view.allSessions(sessionLink.id))} className="inline-flex h-6 shrink-0 items-center gap-1 rounded-md px-1.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground">
+                        <button type="button" onClick={() => navigate(routes.view.allSessions(sessionLink.id))} className="inline-flex h-6 shrink-0 items-center gap-1 rounded-md px-1.5 text-xs text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground">
                           <MessageSquare className="h-3 w-3" />
                           {t('projectRoadmap.taskSession')}
                         </button>
@@ -974,7 +975,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
                           type="button"
                           disabled={delegatingId !== null}
                           onClick={() => void delegateTask(task)}
-                          className="inline-flex h-6 shrink-0 items-center gap-1 rounded-md px-1.5 text-[11px] text-muted-foreground opacity-0 hover:bg-foreground/[0.06] hover:text-foreground group-hover:opacity-100 focus:opacity-100 disabled:opacity-40"
+                          className="inline-flex h-6 shrink-0 items-center gap-1 rounded-md px-1.5 text-xs text-muted-foreground opacity-0 hover:bg-foreground/[0.06] hover:text-foreground group-hover:opacity-100 focus:opacity-100 disabled:opacity-40"
                           title={t('tasks.delegate.body')}
                         >
                           <Bot className="h-3 w-3" />
@@ -1013,8 +1014,8 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
                 className="flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1.5 text-left hover:bg-foreground/[0.04]"
               >
                 <MessageSquare className={cn('h-3.5 w-3.5 shrink-0', s.processing ? 'text-accent' : 'text-muted-foreground')} />
-                <span className="min-w-0 flex-1 truncate text-[13px]">{s.name}</span>
-                {s.lastMessageAt ? <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{relTime.format(new Date(s.lastMessageAt))}</span> : null}
+                <span className="min-w-0 flex-1 truncate text-base" title={s.name}>{s.name}</span>
+                {s.lastMessageAt ? <span className="shrink-0 text-xs numeric text-muted-foreground">{relTime.format(new Date(s.lastMessageAt))}</span> : null}
               </button>
             ))}
           </div>
@@ -1062,7 +1063,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
               <InlineInput
                 value={project.config.name}
                 ariaLabel={t('projectInfo.title')}
-                className="h-8 -ml-2 text-[18px] font-semibold"
+                className="h-8 -ml-2 text-xl font-semibold"
                 onCommit={(name) => name && void patchProject({ name })}
               />
               <InlineInput
@@ -1072,12 +1073,12 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
                 className="-ml-2 text-muted-foreground"
                 onCommit={(description) => void patchProject({ description: description || undefined })}
               />
-              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground" data-testid="project-meta">
-                <span className="tabular-nums">{t('projectRoadmap.metaMilestones', { done: stats.milestonesDone, total: stats.milestonesTotal })}</span>
-                {stats.stagesTotal ? <span className="tabular-nums">{t('projectRoadmap.metaStages', { done: stats.stagesDone, total: stats.stagesTotal })}</span> : null}
-                <span className="tabular-nums">{t('projectRoadmap.metaTasks', { done: stats.tasksDone, total: stats.tasksTotal })}</span>
+              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground" data-testid="project-meta">
+                <span className="numeric">{t('projectRoadmap.metaMilestones', { done: stats.milestonesDone, total: stats.milestonesTotal })}</span>
+                {stats.stagesTotal ? <span className="numeric">{t('projectRoadmap.metaStages', { done: stats.stagesDone, total: stats.stagesTotal })}</span> : null}
+                <span className="numeric">{t('projectRoadmap.metaTasks', { done: stats.tasksDone, total: stats.tasksTotal })}</span>
                 {stats.start && stats.end ? (
-                  <span className="tabular-nums">{shortDate.format(new Date(`${stats.start}T00:00`))} — {shortDate.format(new Date(`${stats.end}T00:00`))}</span>
+                  <span className="numeric">{shortDate.format(new Date(`${stats.start}T00:00`))} — {shortDate.format(new Date(`${stats.end}T00:00`))}</span>
                 ) : null}
                 <button type="button" onClick={() => onOpenFile(project.folderPath)} className="inline-flex min-w-0 max-w-[280px] items-center gap-1 hover:text-foreground" title={project.folderPath}>
                   <FolderOpen className="h-3 w-3 shrink-0" />
@@ -1085,10 +1086,10 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
                 </button>
                 {project.config.workingDirectory ? (
                   <span className="inline-flex min-w-0 max-w-[280px] items-center gap-1" title={project.config.workingDirectory}>
-                    <span className="truncate font-mono text-[11px]">{project.config.workingDirectory.replace(/^\/Users\/[^/]+/, '~')}</span>
+                    <span className="truncate font-mono text-xs">{project.config.workingDirectory.replace(/^\/Users\/[^/]+/, '~')}</span>
                   </span>
                 ) : null}
-                <span className={cn('tabular-nums', saveState === 'error' && 'text-destructive')} data-testid="project-save-state" aria-live="polite">
+                <span className={cn('numeric', saveState === 'error' && 'text-destructive')} data-testid="project-save-state" aria-live="polite">
                   {saveState === 'saving' ? t('projectRoadmap.saving') : saveState === 'saved' ? t('projectRoadmap.saved') : saveState === 'error' ? t('projectRoadmap.saveFailed') : ''}
                 </span>
               </div>
@@ -1112,7 +1113,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
           </div>
 
           {roadmapCorrupt ? (
-            <div className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-[12px] text-destructive" role="alert">{t('projectRoadmap.corrupt')}</div>
+            <div className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">{t('projectRoadmap.corrupt')}</div>
           ) : null}
 
           <nav className="mt-3 flex min-w-0 flex-wrap items-center gap-0.5" aria-label={t('projectRoadmap.sectionsNav')}>
@@ -1121,7 +1122,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
                 key={id}
                 type="button"
                 onClick={() => document.getElementById(`project-section-${id}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' })}
-                className="h-6 rounded-md px-2 text-[12px] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+                className="h-6 rounded-md px-2 text-sm text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
               >
                 {t(`projectRoadmap.nav.${id}`)}
               </button>
@@ -1140,7 +1141,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
             <button
               type="button"
               onClick={() => setSettingsOpen((v) => !v)}
-              className="flex h-7 items-center gap-1.5 rounded-md px-1 text-[13px] font-semibold text-foreground/80 hover:text-foreground"
+              className="flex h-7 items-center gap-1.5 rounded-md px-1 text-base font-semibold text-foreground/80 hover:text-foreground"
             >
               <Settings2 className="h-3.5 w-3.5" />
               {t('projectInfo.tabSettings')}
@@ -1158,7 +1159,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
                 </Field>
                 <Field label={t('projectInfo.icon')} hint={t('projectInfo.iconHint')}>
                   <div className="flex items-center gap-2">
-                    <label className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-foreground/[0.05] px-2.5 text-[12px] font-medium hover:bg-foreground/[0.09]">
+                    <label className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-foreground/[0.05] px-2.5 text-sm font-medium hover:bg-foreground/[0.09]">
                       <ImagePlus className="h-3.5 w-3.5" />
                       {t('projectInfo.iconUpload')}
                       <input
@@ -1217,9 +1218,9 @@ function Field({
 }) {
   return (
     <div className="block min-w-0">
-      <div className="mb-1 text-[12px] font-medium text-foreground/70">{label}</div>
+      <div className="mb-1 text-sm font-medium text-foreground/70">{label}</div>
       {children}
-      {hint && <div className="mt-1 text-[12px] text-muted-foreground">{hint}</div>}
+      {hint && <div className="mt-1 text-sm text-muted-foreground">{hint}</div>}
     </div>
   )
 }

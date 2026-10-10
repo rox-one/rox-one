@@ -57,7 +57,7 @@ export function GanttView({ items, zoom: zoomProp, onZoomChange, today, onResche
   return (
     <section aria-label={t('entities.ui.gantt.label')} className={cn('flex min-w-0 flex-col gap-2', className)}>
       <div className="flex items-center gap-2">
-        <span className="text-[13px] font-semibold">{t('entities.ui.gantt.label')}</span>
+        <span className="text-base font-semibold">{t('entities.ui.gantt.label')}</span>
         <div role="radiogroup" aria-label={t('entities.ui.gantt.zoom')} className="ml-auto inline-flex rounded-[6px] bg-foreground/[0.05] p-0.5">
           {GANTT_ZOOMS.map((z) => (
             <button
@@ -66,7 +66,7 @@ export function GanttView({ items, zoom: zoomProp, onZoomChange, today, onResche
               role="radio"
               aria-checked={zoom === z}
               onClick={() => setZoom(z)}
-              className={cn('h-6 rounded-[5px] px-2 text-[12px]', HOVER_TINT, FOCUS_RING, zoom === z && cn(SELECTED_TINT, 'font-semibold'))}
+              className={cn('h-6 rounded-[5px] px-2 text-sm', HOVER_TINT, FOCUS_RING, zoom === z && cn(SELECTED_TINT, 'font-semibold'))}
             >
               {t(`entities.ui.gantt.zoom.${z}`)}
             </button>
@@ -74,7 +74,7 @@ export function GanttView({ items, zoom: zoomProp, onZoomChange, today, onResche
         </div>
       </div>
       {!layout ? (
-        <div className="py-6 text-center text-[12px] text-text-muted">{t('entities.ui.gantt.empty')}</div>
+        <div className="py-6 text-center text-sm text-text-muted">{t('entities.ui.gantt.empty')}</div>
       ) : (
         <div className="relative overflow-x-auto rounded-[8px] border border-border">
           <div className="relative" style={{ width: layout.totalWidth, height: 28 + valid.length * 32 + 8 }}>
@@ -82,7 +82,7 @@ export function GanttView({ items, zoom: zoomProp, onZoomChange, today, onResche
               <div
                 key={col.key}
                 aria-hidden="true"
-                className="absolute top-0 h-full border-l border-border/60 pl-1 pt-1 text-[10px] text-text-muted"
+                className="absolute top-0 h-full border-l border-border/60 pl-1 pt-1 text-xs text-text-muted"
                 style={{ left: col.x, width: col.width }}
               >
                 {fmtCol(col.start, col.kind)}
@@ -91,7 +91,7 @@ export function GanttView({ items, zoom: zoomProp, onZoomChange, today, onResche
             {layout.todayX !== null ? (
               <div className="absolute top-0 h-full" style={{ left: layout.todayX }} aria-hidden="true">
                 <div className="h-full w-px bg-accent" />
-                <span className="absolute left-1 top-[14px] whitespace-nowrap text-[10px] font-semibold text-accent">{t('entities.ui.gantt.today')}</span>
+                <span className="absolute left-1 top-[14px] whitespace-nowrap text-xs font-semibold text-accent">{t('entities.ui.gantt.today')}</span>
               </div>
             ) : null}
             {layout.bars.map((bar) => {
@@ -127,7 +127,7 @@ export function GanttView({ items, zoom: zoomProp, onZoomChange, today, onResche
                     if (d && d.id === bar.id) reschedule(item, d.days)
                   }}
                   className={cn(
-                    'absolute flex h-6 items-center overflow-hidden rounded-[6px] px-2 text-left text-[11px] font-medium',
+                    'absolute flex h-6 items-center overflow-hidden rounded-[6px] px-2 text-left text-xs font-medium',
                     'bg-[color-mix(in_oklch,currentColor_18%,transparent)] transition-[left] duration-200 ease-out motion-reduce:transition-none',
                     statusToneTextClass(item.tone ?? 'info'),
                     onReschedule ? 'cursor-grab active:cursor-grabbing' : 'cursor-default',

@@ -26,6 +26,7 @@ import type { ToolIconMapping } from '../../../shared/types'
 import {
   SettingsSection,
   SettingsCard,
+  SettingsCardContent,
   SettingsRow,
   SettingsSegmentedControl,
   SettingsMenuSelect,
@@ -37,6 +38,14 @@ import { useWorkspaceIcons } from '@/hooks/useWorkspaceIcon'
 import { WorkspaceAvatar } from '@/components/ui/workspace-avatar'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { workspaceAvatarColorsAtom } from '@/atoms/workspace-avatar-colors'
+import { featureLayoutEngineAtom } from '@/atoms/unified-shell'
+import { PANEL_LAYOUT_PRESETS, type PanelLayoutPreset } from '@/lib/panel-workspace-layout'
+import {
+  getDefaultLayoutPreset,
+  setDefaultLayoutPreset,
+  isLayoutRememberedPerWorkspace,
+  setLayoutRememberedPerWorkspace,
+} from '@/lib/layout-defaults'
 import { kanbanColumnColorsAtom, kanbanColumnStatusAtom, kanbanLivePulseAtom } from '@/atoms/kanban'
 import { sessionMetaMapAtom, updateSessionMetaAtom } from '@/atoms/sessions'
 import { Button } from '@/components/ui/button'
@@ -210,7 +219,7 @@ function MaterialSliderRow({
           aria-label={ariaLabel}
           className="material-slider-input"
         />
-        <span className="material-slider-value tabular-nums">{display}</span>
+        <span className="material-slider-value numeric">{display}</span>
       </div>
     </SettingsRow>
   )
@@ -731,6 +740,32 @@ export default function AppearanceSettingsPage() {
     if (!appearancePrefLive()) return
     void saveUiAppearancePatch({ accentSource: value === 'system' ? 'system' : 'brand' })
   }, [])
+  // G4 «Студия» — default layout preset for new workspaces + remember toggle.
+  // Both are plain localStorage preferences (layout-defaults) and only shown
+  // when the layout-engine flag is ON.
+  const layoutEngineEnabled = useAtomValue(featureLayoutEngineAtom)
+  const [defaultLayoutPreset, setDefaultLayoutPresetState] = useState<PanelLayoutPreset>(
+    () => getDefaultLayoutPreset() ?? 'auto',
+  )
+  const [layoutRemembered, setLayoutRememberedState] = useState(() => isLayoutRememberedPerWorkspace())
+  const handleDefaultLayoutPresetChange = useCallback((value: string) => {
+    if (!appearancePrefLive()) return
+    const preset = value as PanelLayoutPreset
+    setDefaultLayoutPresetState(preset)
+    setDefaultLayoutPreset(preset)
+  }, [])
+  const handleLayoutRememberChange = useCallback((checked: boolean) => {
+    if (!appearancePrefLive()) return
+    setLayoutRememberedState(checked)
+    setLayoutRememberedPerWorkspace(checked)
+  }, [])
+  const layoutPresetOptions = useMemo(
+    () => PANEL_LAYOUT_PRESETS.map((preset) => ({
+      value: preset,
+      label: t(`layout.deck.preset.${preset}`, { defaultValue: preset === 'auto' ? 'Auto' : preset }),
+    })),
+    [t],
+  )
   // Kanban column assignment lives on session metadata; used to migrate tiles when a
   // custom column is removed from settings (mirrors the board's own removal path).
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
@@ -1187,7 +1222,7 @@ export default function AppearanceSettingsPage() {
                         className="w-44 accent-primary"
                         aria-label={t("settings.appearance.defaultZoomLevel")}
                       />
-                      <span className="w-12 text-right text-sm font-medium tabular-nums">
+                      <span className="w-12 text-right text-sm font-medium numeric">
                         {defaultZoomLevel}%
                       </span>
                     </div>
@@ -1248,6 +1283,33 @@ export default function AppearanceSettingsPage() {
                   </SettingsRow>
                 </SettingsCard>
               </SettingsSection>
+
+              {/* Layout — G4 «Студия»: the default preset applied to new
+                  workspaces and whether each workspace remembers its own
+                  arrangement. Shown only when the layout engine is on. */}
+              {layoutEngineEnabled && (
+                <SettingsSection
+                  title={t('settings.appearance.layout.defaultPresetTitle')}
+                  description={t('settings.appearance.layout.defaultPresetHint')}
+                >
+                  <SettingsCard>
+                    <SettingsCardContent>
+                      <SettingsMenuSelect
+                        value={defaultLayoutPreset}
+                        onValueChange={handleDefaultLayoutPresetChange}
+                        options={layoutPresetOptions}
+                        aria-label={t('settings.appearance.layout.defaultPresetTitle')}
+                      />
+                    </SettingsCardContent>
+                    <SettingsToggle
+                      label={t('settings.appearance.layout.rememberTitle')}
+                      description={t('settings.appearance.layout.rememberHint')}
+                      checked={layoutRemembered}
+                      onCheckedChange={handleLayoutRememberChange}
+                    />
+                  </SettingsCard>
+                </SettingsSection>
+              )}
 
               <MaterialEffectsSection />
 
@@ -1326,7 +1388,7 @@ export default function AppearanceSettingsPage() {
                           />
                           <input
                             type="text"
-                            className="h-8 min-w-0 flex-1 rounded-[var(--radius-control)] border border-foreground/10 bg-transparent px-2 text-[13px] outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                            className="h-8 min-w-0 flex-1 rounded-[var(--radius-control)] border border-foreground/10 bg-transparent px-2 text-base outline-none focus-visible:ring-1 focus-visible:ring-accent"
                             placeholder={t('settings.appearance.kanbanColumnStatusCustom')}
                             value={dropStatusId}
                             onChange={(e) => setColumnStatus(column.id, e.target.value)}

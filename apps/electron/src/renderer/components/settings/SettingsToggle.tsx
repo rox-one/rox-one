@@ -59,12 +59,17 @@ export function SettingsToggle({
       className={cn(
         settingsUI.row,
         inCard ? settingsUI.rowPadding : settingsUI.rowPaddingStandalone,
-        disabled && 'opacity-50',
         className
       )}
     >
-      <label htmlFor={id} className="flex-1 min-w-0 cursor-pointer select-none">
-        <div id={labelId} className={settingsUI.label}>{label}</div>
+      <label
+        htmlFor={id}
+        className={cn(
+          'flex-1 min-w-0 select-none',
+          disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+        )}
+      >
+        <div id={labelId} className={cn(settingsUI.label, disabled && 'text-text-disabled')}>{label}</div>
         {description && (
           <div id={descriptionId} className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</div>
         )}

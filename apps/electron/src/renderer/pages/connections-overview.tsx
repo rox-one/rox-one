@@ -397,7 +397,7 @@ export function ConnectionsOverview({ workspaceId, reloadKey }: { workspaceId: s
                 key={connection.id}
                 icon={providerIcon
                   ? <img src={providerIcon} alt="" className="h-5 w-5 rounded-[var(--radius-card)]" />
-                  : <span aria-hidden className="h-5 w-5 rounded-[var(--radius-card)] bg-foreground/10 text-center text-[11px] font-semibold leading-5 text-foreground/70">{label.slice(0, 1).toUpperCase()}</span>}
+                  : <span aria-hidden className="h-5 w-5 rounded-[var(--radius-card)] bg-foreground/10 text-center text-xs font-semibold leading-5 text-foreground/70">{label.slice(0, 1).toUpperCase()}</span>}
                 title={label}
                 subtitle={subtitle}
                 status={status}

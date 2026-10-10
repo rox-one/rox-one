@@ -7,7 +7,7 @@ export function RoadmapModelResult({ result, t }: {
 }) {
   if (!result) return null
   return (
-    <div className="mt-1 px-1 text-[11px] text-muted-foreground" data-testid="project-ai-result-provenance">
+    <div className="mt-1 px-1 text-xs text-muted-foreground" data-testid="project-ai-result-provenance">
       <p data-testid="project-ai-effective-model">{typeof result.effectiveModel === 'string'
         ? t('projectRoadmap.ai.effectiveKnown', { model: result.effectiveModel })
         : t('projectRoadmap.ai.effectiveUnknown')}</p>

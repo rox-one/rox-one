@@ -338,6 +338,34 @@ export const actions = {
     category: 'Navigation',
     when: '!inputFocus && !menuOpen',
   },
+  'panel.swap': {
+    id: 'panel.swap',
+    labelKey: 'shortcuts.action.swapPanel',
+    description: 'Swap the focused panel with its neighbour',
+    defaultHotkey: 'mod+alt+s',
+    category: 'Navigation',
+    when: '!inputFocus && !menuOpen',
+  },
+  'missions.open': {
+    id: 'missions.open',
+    labelKey: 'shortcuts.action.openMissions',
+    description: 'Open the mission board',
+    defaultHotkey: null,
+    category: 'Navigation',
+    when: '!inputFocus && !menuOpen',
+  },
+
+  // ═══════════════════════════════════════════
+  // Studio (layout engine)
+  // ═══════════════════════════════════════════
+  'layout.deck': {
+    id: 'layout.deck',
+    labelKey: 'shortcuts.action.layoutDeck',
+    description: 'Open the layout deck (Studio presets)',
+    defaultHotkey: 'mod+\\',
+    category: 'Navigation',
+    when: '!inputFocus && !menuOpen',
+  },
 
   // ═══════════════════════════════════════════
   // Chat

@@ -587,7 +587,7 @@ export function MindMapHost({
 
   const body = (
     <>
-      <div className="flex min-w-0 flex-wrap items-center gap-2 px-3 py-1.5 border-b border-border/30 text-[11px] text-muted-foreground shrink-0">
+      <div className="flex min-w-0 flex-wrap items-center gap-2 px-3 py-1.5 border-b border-border/30 text-xs text-muted-foreground shrink-0">
         <span className="inline-flex items-center rounded-full bg-foreground/5 px-2 py-0.5 font-medium text-foreground/80">
           {enriching
             ? t('mindmap.enriching')
@@ -608,10 +608,10 @@ export function MindMapHost({
         </span>
         {mode === 'map' ? (
           <span className="inline-flex shrink-0 rounded-md border border-border/50 p-0.5">
-            <span className="rounded px-1.5 py-0.5 text-[10px] font-medium bg-foreground/10 text-foreground">
+            <span className="rounded px-1.5 py-0.5 text-xs font-medium bg-foreground/10 text-foreground">
               {t('entityView.workbenchCameraMap')}
             </span>
-            <span className="rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            <span className="rounded px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
               {t('entityView.workbenchCameraFlow')}
             </span>
           </span>
@@ -682,7 +682,7 @@ export function MindMapHost({
             onClick={handleTogglePin}
           >
             {showPinnedStructure ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
-            <span className="text-[11px] font-medium">
+            <span className="text-xs font-medium">
               {showPinnedStructure ? t('mindmap.pinned') : t('mindmap.pin')}
             </span>
           </button>
@@ -707,7 +707,7 @@ export function MindMapHost({
             }}
           >
             {zen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-            <span className="text-[11px] font-medium">{t('mindmap.zen')}</span>
+            <span className="text-xs font-medium">{t('mindmap.zen')}</span>
           </button>
 
           <button
@@ -722,7 +722,7 @@ export function MindMapHost({
             onClick={() => void handleMaterialize()}
           >
             <FileDown className={cn('h-3.5 w-3.5', materializing && 'motion-safe:animate-pulse')} />
-            <span className="text-[11px] font-medium">
+            <span className="text-xs font-medium">
               {materializing ? t('mindmap.materializing') : t('mindmap.materialize')}
             </span>
           </button>
@@ -742,7 +742,7 @@ export function MindMapHost({
             onClick={() => void handleEnrich()}
           >
             <Sparkles className={cn('h-3.5 w-3.5', enriching && 'motion-safe:animate-pulse')} />
-            <span className="text-[11px] font-medium">
+            <span className="text-xs font-medium">
               {enriching ? t('mindmap.enriching') : t('mindmap.enrich')}
             </span>
           </button>
@@ -766,7 +766,7 @@ export function MindMapHost({
       </div>
 
       {enrichDraft ? (
-        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border/50 bg-muted/60 text-[11px] text-foreground shrink-0">
+        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border/50 bg-muted/60 text-xs text-foreground shrink-0">
           <span className="flex-1 truncate">{t('mindmap.enrichDraftBanner')}</span>
           <button
             type="button"
@@ -786,7 +786,7 @@ export function MindMapHost({
       ) : null}
 
       {pinStale ? (
-        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border/50 bg-muted/60 text-[11px] text-foreground shrink-0">
+        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border/50 bg-muted/60 text-xs text-foreground shrink-0">
           <span className="flex-1 truncate">{t('mindmap.staleBanner')}</span>
           <button
             type="button"
@@ -851,7 +851,7 @@ export function MindMapHost({
               {selectedNodeComments.map((comment) => (
                 <article key={comment.id} className="rounded border border-border/40 px-2 py-1.5" data-comment-id={comment.id} data-parent-comment-id={comment.parentCommentId}>
                   <p className="whitespace-pre-wrap text-sm">{comment.body}</p>
-                  <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{teamRoster.members.find((member) => member.userId === comment.authorUserId)?.displayName || t('mindmap.comments.authorFallback')}</span>
                     <span>{t(`teamCollab.commentStatus.${comment.sync}`)}</span>
                     <button type="button" className="ml-auto hover:text-foreground" onClick={() => setReplyToCommentId(comment.id)}>{t('mindmap.comments.reply')}</button>
@@ -922,11 +922,11 @@ export function MindMapHost({
             in zen portal into this surface's own root, above its content. */}
         <OverlayPortalRoot>
           <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border/30 shrink-0">
-            <span className="text-[11px] font-medium text-muted-foreground">{t('mindmap.zen')}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t('mindmap.zen')}</span>
             <div className="ml-auto">
               <button
                 type="button"
-                className="h-7 inline-flex items-center gap-1 rounded-[var(--radius-control)] px-2 text-[11px] font-medium text-foreground hover:bg-foreground/5"
+                className="h-7 inline-flex items-center gap-1 rounded-[var(--radius-control)] px-2 text-xs font-medium text-foreground hover:bg-foreground/5"
                 aria-label={t('common.close')}
                 onClick={() => {
                   setZen(false)

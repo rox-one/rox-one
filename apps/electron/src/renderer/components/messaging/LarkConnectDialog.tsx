@@ -173,7 +173,7 @@ export function LarkConnectDialog({
               onClick={handleTest}
               disabled={!ready || test.state === 'testing' || saving}
             >
-              {test.state === 'testing' && <Spinner className="mr-1 text-[14px]" />}
+              {test.state === 'testing' && <Spinner className="mr-1 text-base" />}
               {t('settings.messaging.lark.testConnection')}
             </Button>
 
@@ -202,7 +202,7 @@ export function LarkConnectDialog({
             onClick={handleSave}
             disabled={!ready || test.state !== 'success' || saving}
           >
-            {saving && <Spinner className="mr-1 text-[14px]" />}
+            {saving && <Spinner className="mr-1 text-base" />}
             {t('settings.messaging.lark.save')}
           </Button>
         </DialogFooter>

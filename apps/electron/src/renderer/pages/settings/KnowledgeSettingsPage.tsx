@@ -205,7 +205,7 @@ export default function KnowledgeSettingsPage() {
         title={t('settings.knowledge.title')}
         actions={<HeaderMenu route={routes.view.settings('knowledge')} />}
       />
-      <div className="flex-1 min-h-0 mask-fade-y">
+      <div className="flex-1 min-h-0 mask-fade-y overflow-y-auto max-h-full overscroll-contain">
         <ScrollArea className="h-full">
           <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-7">
             <p className="whitespace-normal break-words text-sm text-muted-foreground">
@@ -223,7 +223,7 @@ export default function KnowledgeSettingsPage() {
             <div className="flex w-full max-w-xl flex-col gap-2 pt-1">
               {NOTES_AI_ACTIONS.map((mode: AIActionMode) => (
                 <label key={mode} className="block">
-                  <span className="mb-1 block text-[11px] text-muted-foreground">
+                  <span className="mb-1 block text-xs text-muted-foreground">
                     {t(
                       mode === 'extract-tasks'
                         ? 'notes.ai.extractTasks'
@@ -380,8 +380,8 @@ export default function KnowledgeSettingsPage() {
               connections.map((conn) => (
                 <div key={conn.id} className="flex items-center gap-3 px-4 py-3">
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{conn.label}</div>
-                    <div className="truncate text-xs text-muted-foreground">
+                    <div className="truncate text-sm font-medium" title={conn.label}>{conn.label}</div>
+                    <div className="truncate text-xs text-muted-foreground" title={`${conn.baseUrl ?? DEFAULT_BASE_URL} · ${conn.provider}`}>
                       {conn.baseUrl ?? DEFAULT_BASE_URL} · {conn.provider}
                     </div>
                   </div>

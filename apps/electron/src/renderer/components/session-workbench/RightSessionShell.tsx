@@ -65,14 +65,14 @@ export function RightSessionShell({
         {chips?.map((chip) => (
           <div
             key={chip.id}
-            className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 py-1 text-[11px]"
+            className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 py-1 text-xs"
           >
             <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
-            <span className="truncate font-medium">{chip.title}</span>
-            {chip.detail ? <span className="truncate text-muted-foreground">{chip.detail}</span> : null}
+            <span className="truncate font-medium" title={chip.title}>{chip.title}</span>
+            {chip.detail ? <span className="truncate text-muted-foreground" title={chip.detail}>{chip.detail}</span> : null}
           </div>
         ))}
-        <div className="text-[11px] text-muted-foreground">{t('notes.sideSession.hint')}</div>
+        <div className="text-xs text-muted-foreground">{t('notes.sideSession.hint')}</div>
       </div>
       <div className="flex-1 min-h-0 px-3 pb-3 flex flex-col gap-2">
         <textarea
@@ -80,7 +80,7 @@ export function RightSessionShell({
           data-testid={RIGHT_SESSION_PROMPT_TEST_ID}
           value={prompt}
           onChange={(e) => onPromptChange(e.target.value)}
-          className="min-h-0 flex-1 w-full resize-none rounded-[var(--radius-card)] border border-border/60 bg-background p-2.5 text-xs leading-relaxed outline-none focus-visible:border-foreground/30"
+          className="min-h-0 flex-1 w-full resize-none rounded-[var(--radius-card)] border border-border/60 bg-background p-2.5 text-xs outline-none focus-visible:border-foreground/30"
           placeholder={t('notes.sideSession.promptPlaceholder')}
         />
         <div className="flex items-center justify-end gap-2 shrink-0">

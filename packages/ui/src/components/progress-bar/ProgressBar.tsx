@@ -57,7 +57,7 @@ export function ProgressBar({ tone = 'info', showLabel = true, className, ...val
           style={{ width: `${percent}%` }}
         />
       </div>
-      {showLabel ? <span className="shrink-0 text-[11px] tabular-nums text-text-secondary">{label}</span> : null}
+      {showLabel ? <span className="shrink-0 text-xs numeric text-text-secondary">{label}</span> : null}
     </div>
   )
 }

@@ -13,12 +13,12 @@ export function ConationInspectorPanel() {
       aria-label="Conation"
     >
       <div className="flex h-8 shrink-0 items-center border-b border-border/40 px-3">
-        <span className="chrome-label truncate text-xs font-medium tracking-tight text-foreground/80">
+        <span className="chrome-label truncate text-xs font-medium text-foreground/80" title={t('inspector.tab.context', { defaultValue: 'Контекст' })}>
           {t('inspector.tab.context', { defaultValue: 'Контекст' })}
         </span>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
-        <p className="text-sm leading-relaxed text-muted-foreground">{CONATION_INSPECTOR_PLACEHOLDER}</p>
+        <p className="text-sm text-muted-foreground">{CONATION_INSPECTOR_PLACEHOLDER}</p>
       </div>
     </aside>
   )

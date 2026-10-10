@@ -211,7 +211,7 @@ export function LabelValuePopover({
                   }}
                   placeholder={t('labels.datePlaceholder')}
                   className={cn(
-                    'flex-1 h-7 px-2 text-[13px]',
+                    'flex-1 h-7 px-2 text-base',
                     'bg-transparent',
                     'text-foreground placeholder:text-foreground/30',
                     'outline-none'
@@ -258,7 +258,7 @@ export function LabelValuePopover({
             </div>
             {/* Show the resolved date below the input when parsing succeeds */}
             {parsedDate && (
-              <div className="px-2 text-[11px] text-foreground/50">
+              <div className="px-2 text-xs text-foreground/50">
                 {format(parsedDate, 'EEE, MMM d, yyyy', { locale: dateLocale })}
               </div>
             )}
@@ -284,7 +284,7 @@ export function LabelValuePopover({
                     : t('labels.valuePlaceholder')
               }
               className={cn(
-                'w-full h-7 px-2 text-[13px]',
+                'w-full h-7 px-2 text-base',
                 'bg-transparent',
                 'text-foreground placeholder:text-foreground/30',
                 'outline-none'
@@ -304,7 +304,7 @@ export function LabelValuePopover({
               }}
               className={cn(
                 'w-full flex items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)]',
-                'text-[13px] text-foreground',
+                'text-base text-foreground',
                 'hover:bg-foreground/[0.03] focus:bg-foreground/[0.03]',
                 'transition-colors cursor-pointer outline-none'
               )}
@@ -322,7 +322,7 @@ export function LabelValuePopover({
             }}
             className={cn(
               'w-full flex items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)]',
-              'text-[13px] text-destructive',
+              'text-base text-destructive',
               'hover:bg-foreground/[0.03] focus:bg-foreground/[0.03]',
               'transition-colors cursor-pointer outline-none'
             )}

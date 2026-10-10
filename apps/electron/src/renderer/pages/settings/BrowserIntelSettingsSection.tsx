@@ -273,7 +273,7 @@ export function BrowserIntelSettingsSection() {
               label={t('onboarding.browserIntel.indexing')}
               data-testid="browser-intel-progress-live"
             >
-              <span className="text-sm tabular-nums text-muted-foreground">
+              <span className="text-sm numeric text-muted-foreground">
                 {progress && progress.total > 0
                   ? t('onboarding.browserIntel.progress', { done: progress.current, total: progress.total })
                   : null}
@@ -281,27 +281,27 @@ export function BrowserIntelSettingsSection() {
             </SettingsRow>
           ) : null}
           <SettingsRow label={t('settings.browserIntel.statsProfiles')}>
-            <span className="text-sm tabular-nums" data-stat="profiles">
+            <span className="text-sm numeric" data-stat="profiles">
               {formatCount(stats?.profiles)}
             </span>
           </SettingsRow>
           <SettingsRow label={t('settings.browserIntel.statsUrls')}>
-            <span className="text-sm tabular-nums" data-stat="urls">
+            <span className="text-sm numeric" data-stat="urls">
               {formatCount(stats?.urls)}
             </span>
           </SettingsRow>
           <SettingsRow label={t('settings.browserIntel.statsVisits')}>
-            <span className="text-sm tabular-nums" data-stat="visits">
+            <span className="text-sm numeric" data-stat="visits">
               {formatCount(stats?.visits)}
             </span>
           </SettingsRow>
           <SettingsRow label={t('settings.browserIntel.statsSlots')}>
-            <span className="text-sm tabular-nums" data-stat="slots">
+            <span className="text-sm numeric" data-stat="slots">
               {formatCount(stats?.slots)}
             </span>
           </SettingsRow>
           <SettingsRow label={t('settings.browserIntel.statsDbSize')}>
-            <span className="text-sm tabular-nums" data-stat="dbSize">
+            <span className="text-sm numeric" data-stat="dbSize">
               {formatBytes(stats?.dbBytes)}
             </span>
           </SettingsRow>
@@ -313,7 +313,7 @@ export function BrowserIntelSettingsSection() {
           {visibleSlots.length > 0 ? (
             visibleSlots.map((record) => (
               <SettingsRow key={record.slot} label={record.slot}>
-                <span className="text-sm tabular-nums">
+                <span className="text-sm numeric">
                   {`${slotPercent(record.confidence)}%`}
                 </span>
               </SettingsRow>

@@ -63,7 +63,7 @@ function CoinBadge({ gold, label }: { gold: boolean; label: string }) {
       data-state={gold ? "gold" : "grey"}
       title={label}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium tabular-nums",
+        "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium numeric",
         gold ? "text-status-warning" : "text-muted-foreground/50",
       )}
     >
@@ -230,6 +230,7 @@ export function WelcomeStep({
   }
 
   const usernameBlocked = usernameStatus === "taken" || usernameStatus === "reserved"
+  const continueBusy = isLoading || saving || preferenceSaving || intelSaving || isFinishing
   const continueDisabled = isExistingUser
     ? isLoading || isFinishing
     : isLoading || isFinishing || saving || preferenceSaving || intelSaving || !parsedUsername || usernameBlocked
@@ -273,7 +274,8 @@ export function WelcomeStep({
           onClick={() => void handleContinue()}
           className="w-full"
           disabled={continueDisabled}
-          loading={isLoading || saving || preferenceSaving || intelSaving || isFinishing}
+          loading={continueBusy}
+          aria-busy={continueBusy || undefined}
           loadingText={isFinishing ? t("onboarding.completion.settingUp") : (preferenceSaving || intelSaving) ? t('common.saving') : t("common.checking")}
         >
           {isExistingUser ? t("onboarding.welcome.continue") : t("onboarding.welcome.getStarted")}

@@ -136,7 +136,7 @@ export function InlineExecution({
 
         {/* Result message - rendered as markdown */}
         {result && (
-          <div className={cn("text-muted-foreground leading-relaxed prose-compact", SIZE_CONFIG.fontSize)}>
+          <div className={cn("text-muted-foreground prose-compact", SIZE_CONFIG.fontSize)}>
             <Markdown>{result}</Markdown>
           </div>
         )}
@@ -172,7 +172,7 @@ export function InlineExecution({
 
       {/* Error message - rendered as markdown */}
       {error && (
-        <div className={cn("text-destructive/80 leading-relaxed prose-compact", SIZE_CONFIG.fontSize)}>
+        <div className={cn("text-destructive/80 prose-compact", SIZE_CONFIG.fontSize)}>
           <Markdown>{error}</Markdown>
         </div>
       )}

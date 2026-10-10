@@ -30,7 +30,7 @@ export function TeamActivityFeed({ limit = 50 }: { limit?: number }) {
           const actor = memberName(roster.members, e.actorUserId, roster.selfUserId, t)
           return (
             <div key={e.id} className="flex items-center gap-2.5 px-1 py-1.5 text-sm">
-              <span aria-hidden className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground/[0.1] text-[10px] font-semibold">
+              <span aria-hidden className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground/[0.1] text-xs font-semibold">
                 {memberInitials(actor)}
               </span>
               <span className="min-w-0 flex-1 truncate">{activityText(e, roster.members, roster.selfUserId, t)}</span>

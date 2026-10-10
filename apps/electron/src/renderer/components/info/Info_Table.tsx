@@ -51,7 +51,7 @@ function Info_TableRow({ label, value, children, className }: Info_TableRowProps
   const content = children ?? value
 
   return (
-    <div data-layout="info-property" className={cn('flex gap-3 py-2 px-[var(--settings-row-x)] text-[13px] leading-5', className)}>
+    <div data-layout="info-property" className={cn('flex gap-3 py-2 px-[var(--settings-row-x)] text-base', className)}>
       <dt
         className="text-text-muted shrink-0"
         style={{ width: 'var(--label-width)' }}

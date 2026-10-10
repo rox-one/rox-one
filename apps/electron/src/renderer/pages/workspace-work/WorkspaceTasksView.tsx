@@ -5,8 +5,8 @@ import { WORKSPACE_TASK_STATUSES, type WorkspaceTask, type WorkspaceTaskInput, t
 import { useWorkspaceWork } from '@/lib/useWorkspaceWork'
 import { localDateTimeInput, parseLocalDateTime, workspaceProjectOptions, type WorkspaceProjectOption } from '@/lib/workspace-work-client'
 
-const fieldClass = 'w-full rounded-lg border border-border/70 bg-background px-2.5 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
-const buttonClass = 'inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-border/70 px-2.5 py-1.5 text-[13px] transition-colors motion-reduce:transition-none hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none'
+const fieldClass = 'w-full rounded-lg border border-border/70 bg-background px-2.5 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
+const buttonClass = 'inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-border/70 px-2.5 py-1.5 text-base transition-colors motion-reduce:transition-none hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none'
 type TaskDraft = { id: string | null; title: string; description: string; status: WorkspaceTaskStatus; assigneeId: string; projectId: string; due: string; links: WorkspaceTaskLink[]; expectedRevision: number }
 
 export function WorkspaceTasksView({ workspaceId, projectId, selectedTaskId }: { workspaceId: string; projectId?: string; selectedTaskId?: string }) {
@@ -77,9 +77,9 @@ export function WorkspaceTasksView({ workspaceId, projectId, selectedTaskId }: {
   const comments = draft?.id ? snapshot?.comments.filter(item => item.taskId === draft.id) ?? [] : []
   const time = (at: number) => new Date(at).toLocaleString(i18n.resolvedLanguage ?? i18n.language)
 
-  return <section className="flex h-full min-h-0 flex-col bg-background font-sans text-[13px]" data-testid="workspace-tasks-view">
+  return <section className="flex h-full min-h-0 flex-col bg-background font-sans text-base" data-testid="workspace-tasks-view">
     <header className="flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3">
-      <ListTodo className="size-4 text-accent" aria-hidden /><h2 className="mr-auto text-[15px] font-semibold">{t('navigation.work.tasks.title')}</h2>
+      <ListTodo className="size-4 text-accent" aria-hidden /><h2 className="mr-auto text-lg font-semibold">{t('navigation.work.tasks.title')}</h2>
       <button type="button" className={buttonClass} disabled={work.loading} onClick={() => { void work.refresh(); setProjectReload(value => value + 1) }} aria-label={t('navigation.work.refresh')}><RefreshCw className="size-3.5" aria-hidden /></button>
       <button type="button" className={buttonClass} disabled={!canWrite || busy} onClick={() => begin()}><Plus className="size-3.5" aria-hidden />{t('navigation.work.tasks.new')}</button>
     </header>

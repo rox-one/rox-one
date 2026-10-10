@@ -18,12 +18,12 @@
  * Mounted by `WorkspaceSurfaceHost` (platform/index.tsx) — rendered only when
  * the two-key Workbench rollout is enabled, so there is no flag check here.
  */
-import { useSyncExternalStore, type ReactNode } from 'react'
-import { useAtom, useAtomValue } from 'jotai'
-import { ChevronsLeft, ChevronsRight, Inbox, Settings } from 'lucide-react'
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { ChevronsLeft, ChevronsRight, Inbox, LayoutGrid, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { isModeNavigable, type ModeContribution } from '@rox/core/platform'
-import { activityRailCollapsedAtom, activityRailNarrowOverrideAtom } from '@/atoms/unified-shell'
+import { activityRailCollapsedAtom, activityRailNarrowOverrideAtom, featureLayoutEngineAtom } from '@/atoms/unified-shell'
 import { modeScreenFlagsAtom } from '@/atoms/mode-flags'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
@@ -33,6 +33,8 @@ import { CORE_MODES, resolveSeededModes, type SeededMode } from './modes-seed'
 import { ExtraScreensRailGroup } from '../pages/extra-screens/ExtraScreensRailGroup'
 import { RailRow } from './RailRow'
 import { ModesRailGroup } from './ModesRailGroup'
+import { layoutDeckOpenAtom } from './LayoutDeck'
+import { MissionsRailGroup } from './MissionsRailGroup'
 import { useShellModes } from './useModes'
 import { routes, type Route } from '../../shared/routes'
 import { preloadRoute } from '../components/app-shell/route-pages'
@@ -50,23 +52,45 @@ export function activityRailWidth(collapsed: boolean): number {
 }
 
 /**
- * Below this window width the expanded rail would push sidebar (180) +
+ * Below this shell-root width the expanded rail would push sidebar (180) +
  * navigator (240) + centre (420) + workspace/inspector rails past the edge,
  * so the rail auto-collapses to icons (display-only; persisted state kept).
  */
 export const RAIL_AUTO_COLLAPSE_BELOW = 1140
 
-function subscribeResize(cb: () => void): () => void {
-  window.addEventListener('resize', cb)
-  return () => window.removeEventListener('resize', cb)
-}
-
-export function useNarrowWindow(threshold = RAIL_AUTO_COLLAPSE_BELOW): boolean {
-  return useSyncExternalStore(
-    subscribeResize,
-    () => window.innerWidth < threshold,
-    () => false,
-  )
+/**
+ * Container-aware narrow check: measures the shell root (the rail's parent)
+ * with a ResizeObserver so a narrow container inside a wide window collapses
+ * too, and falls back to the window check when no parent/observer exists.
+ */
+export function useNarrowRailContainer(threshold = RAIL_AUTO_COLLAPSE_BELOW): {
+  narrow: boolean
+  railRef: RefObject<HTMLElement>
+} {
+  const railRef = useRef<HTMLElement>(null)
+  const [narrow, setNarrow] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const measure = () => {
+      const container = railRef.current?.parentElement
+      const width = container ? container.getBoundingClientRect().width : window.innerWidth
+      setNarrow(width < threshold)
+    }
+    measure()
+    const container = railRef.current?.parentElement
+    if (typeof ResizeObserver === 'undefined' || !container) {
+      window.addEventListener('resize', measure)
+      return () => window.removeEventListener('resize', measure)
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(container)
+    window.addEventListener('resize', measure)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', measure)
+    }
+  }, [threshold])
+  return { narrow, railRef }
 }
 
 export function resolveRailCollapsed(input: { persisted: boolean; narrow: boolean; override: boolean }): boolean {
@@ -77,10 +101,11 @@ export function resolveRailCollapsed(input: { persisted: boolean; narrow: boolea
 export function useEffectiveRailCollapsed(): {
   collapsed: boolean
   toggle: () => void
+  railRef: RefObject<HTMLElement>
 } {
   const [persisted, setPersisted] = useAtom(activityRailCollapsedAtom)
   const [override, setOverride] = useAtom(activityRailNarrowOverrideAtom)
-  const narrow = useNarrowWindow()
+  const { narrow, railRef } = useNarrowRailContainer()
   const collapsed = resolveRailCollapsed({ persisted, narrow, override })
   const toggle = () => {
     if (collapsed) {
@@ -91,7 +116,7 @@ export function useEffectiveRailCollapsed(): {
       setOverride(false)
     }
   }
-  return { collapsed, toggle }
+  return { collapsed, toggle, railRef }
 }
 
 const seedById: Record<string, SeededMode> = Object.fromEntries(
@@ -157,10 +182,12 @@ function RailSection({ collapsed, children }: { collapsed: boolean; children: Re
 export function ActivityRail() {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { collapsed, toggle } = useEffectiveRailCollapsed()
+  const { collapsed, toggle, railRef } = useEffectiveRailCollapsed()
   const toggleLabel = collapsed ? t('rail.expand') : t('rail.collapse')
   const navState = useNavigationState()
   const modeFlags = useAtomValue(modeScreenFlagsAtom)
+  const layoutEngineOn = useAtomValue(featureLayoutEngineAtom)
+  const openLayoutDeck = useSetAtom(layoutDeckOpenAtom)
   const { shellFlags } = useShellModes()
   const modes = resolveSeededModes(
     CORE_MODES.map((mode) => mode.contribution),
@@ -171,6 +198,7 @@ export function ActivityRail() {
 
   return (
     <nav
+      ref={railRef}
       aria-label={t('rail.title')}
       className={cn(
         'chrome-rail rox-shell-pane rox-shell-divider-r flex h-full shrink-0 flex-col overflow-y-auto overflow-x-hidden py-[8px] font-sans',
@@ -180,6 +208,8 @@ export function ActivityRail() {
       data-shell-role="activity-rail"
       data-rail-state={collapsed ? 'collapsed' : 'expanded'}
     >
+      {/* G3 «Миссии» pilot: flag-gated section above the seven core modes. */}
+      <MissionsRailGroup collapsed={collapsed} />
       <RailSection collapsed={collapsed}>
         {modes.map((mode) => (
           <RailModeItem key={mode.id} mode={mode} active={mode.id === activeId} collapsed={collapsed} />
@@ -188,12 +218,24 @@ export function ActivityRail() {
       {/* W1-07 (#1504): registered modes in pill order; renders nothing with every mode flag off. */}
       <ModesRailGroup collapsed={collapsed} />
       <ExtraScreensRailGroup collapsed={collapsed} />
-      <div className={cn('mt-auto flex flex-col gap-[4px] pt-[8px]', collapsed ? 'items-center' : 'items-stretch')}>
+      {/* G4 «Студия»: the layout deck trigger, only while the engine flag is ON. */}
+      {layoutEngineOn && (
+        <RailSection collapsed={collapsed}>
+          <RailRow
+            icon={LayoutGrid}
+            label={t('layout.deck.title', { defaultValue: 'Раскладка' })}
+            tooltip={t('layout.deck.rail', { defaultValue: 'Раскладка (⌘\\)' })}
+            collapsed={collapsed}
+            onClick={() => openLayoutDeck(true)}
+            testId="rail-layout-deck"
+          />
+        </RailSection>
+      )}
+      <div className={cn('mt-auto flex flex-col gap-[4px] border-t border-border-subtle pt-[8px]', collapsed ? 'items-center' : 'items-stretch')}>
         <RailRow
           icon={Settings}
           label={t('sidebar.settings')}
           collapsed={collapsed}
-          muted
           onClick={() => void navigate(routes.view.settings())}
           testId="rail-settings"
         />
@@ -201,7 +243,6 @@ export function ActivityRail() {
           icon={collapsed ? ChevronsRight : ChevronsLeft}
           label={toggleLabel}
           collapsed={collapsed}
-          muted
           onClick={toggle}
           testId="rail-toggle"
         />

@@ -71,10 +71,10 @@ function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRo
   }
 
   return (
-    <div className="settings-item" data-selected={isSelected || undefined}>
-      {/* Separator - only show if not first */}
+    <div className="settings-item [contain:layout_paint]" data-selected={isSelected || undefined}>
+      {/* Separator - only show if not first; 44px aligns with the label column */}
       {!isFirst && (
-        <div className="settings-separator pl-12 pr-4">
+        <div className="settings-separator pl-[44px] pr-4">
           <Separator />
         </div>
       )}
@@ -94,7 +94,7 @@ function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRo
           type="button"
           onClick={onSelect}
           className={cn(
-            'flex w-full items-start gap-2 pl-2 pr-4 py-3 text-left text-sm outline-none rounded-[var(--radius-card)]',
+            'flex w-full items-start gap-2 pl-2 pr-4 py-3 text-left text-sm rounded-[var(--radius-card)]',
             // Fast hover transition (75ms vs default 150ms)
             'transition-[background-color] duration-75',
             isSelected
@@ -114,7 +114,7 @@ function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRo
             >
               {item.label}
             </span>
-            <span className="text-xs text-foreground/60 line-clamp-1">
+            <span className="text-xs text-text-secondary line-clamp-1" title={item.description}>
               {item.description}
             </span>
           </div>
@@ -124,15 +124,21 @@ function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRo
           data-touch-reveal="true"
           className={cn(
             'absolute right-2 top-2 transition-opacity z-10',
-            menuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            menuOpen
+              ? 'opacity-100'
+              : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 group-focus-within:pointer-events-auto'
           )}
         >
           <div className="flex items-center rounded-[var(--radius-control)] overflow-hidden border border-transparent hover:border-border/50">
             <DropdownMenu modal={true} onOpenChange={setMenuOpen}>
               <DropdownMenuTrigger asChild>
-                <div className="p-1.5 hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer">
+                <button
+                  type="button"
+                  aria-label={t('sessionMenu.openInNewWindow')}
+                  className="p-1.5 hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
+                >
                   <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                </div>
+                </button>
               </DropdownMenuTrigger>
               <StyledDropdownMenuContent align="end">
                 <DropdownMenuProvider>
@@ -191,7 +197,7 @@ export default function SettingsNavigator({
             placeholder={t('settings.navigator.search')}
             aria-label={t('settings.navigator.search')}
             data-testid="settings-navigator-search"
-            className="h-9 pl-9 pr-9"
+            className="h-[var(--control-lg)] pl-9 pr-9"
           />
           {query.length > 0 && (
             <button
@@ -211,7 +217,7 @@ export default function SettingsNavigator({
           <div className="pb-6">
             {groupedSettingsItems.map(({ group, pages }) => (
               <section key={group.id} className="pt-3 first:pt-1">
-                <h2 className="px-5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <h2 className="px-5 pb-1.5 text-xs font-semibold uppercase caps-label text-text-secondary">
                   {t(group.labelKey)}
                 </h2>
                 {pages.map((item, index) => (

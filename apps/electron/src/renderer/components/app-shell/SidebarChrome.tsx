@@ -65,14 +65,14 @@ export function SidebarChrome({
           the column stays centred. */}
       <div className={cn('flex flex-col', collapsed ? '-mx-1.5 items-center gap-0.5' : 'items-start gap-1 px-1')}>
         {showPin ? (
-          <button type="button" data-testid="rail-pin" onClick={onPin} aria-pressed={pinned} aria-label={t(pinned ? 'rail.unpin' : 'rail.pin')} title={t(pinned ? 'rail.unpin' : 'rail.pin')} className={cn('grid size-8 place-items-center rounded-lg text-foreground/80 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring', pinned && 'bg-surface-pressed text-foreground')}>
+          <button type="button" data-testid="rail-pin" onClick={onPin} aria-pressed={pinned} aria-label={t(pinned ? 'rail.unpin' : 'rail.pin')} title={t(pinned ? 'rail.unpin' : 'rail.pin')} className={cn('grid size-8 place-items-center rounded-lg text-foreground/80 hover:bg-foreground/[0.08]', pinned && 'bg-surface-pressed text-foreground')}>
             <Pin className={cn('size-4', pinned && 'fill-current')} aria-hidden />
           </button>
         ) : null}
-        <button type="button" data-testid="rail-toggle" onClick={onToggleSidebar} aria-label={t(collapsed ? 'sidebar.show' : 'sidebar.hide')} title={t(collapsed ? 'sidebar.show' : 'sidebar.hide')} aria-expanded={!collapsed} className={cn('grid place-items-center rounded-lg text-foreground/45 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring', collapsed ? 'size-6' : 'size-8')}>
+        <button type="button" data-testid="rail-toggle" onClick={onToggleSidebar} aria-label={t(collapsed ? 'sidebar.show' : 'sidebar.hide')} title={t(collapsed ? 'sidebar.show' : 'sidebar.hide')} aria-expanded={!collapsed} className={cn('grid place-items-center rounded-lg text-foreground/45 hover:bg-foreground/[0.08]', collapsed ? 'size-6' : 'size-8')}>
           {collapsed ? <ChevronsRight className="size-4" aria-hidden /> : <ChevronsLeft className="size-4" aria-hidden />}
         </button>
-        <button type="button" data-testid="rail-settings" onClick={onOpenSettings} aria-label={t('sidebar.settings')} title={t('sidebar.settings')} className={cn('grid place-items-center rounded-lg text-foreground/45 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring', collapsed ? 'size-6' : 'size-8')}>
+        <button type="button" data-testid="rail-settings" onClick={onOpenSettings} aria-label={t('sidebar.settings')} title={t('sidebar.settings')} className={cn('grid place-items-center rounded-lg text-foreground/45 hover:bg-foreground/[0.08]', collapsed ? 'size-6' : 'size-8')}>
           <Settings className="size-4" aria-hidden />
         </button>
       </div>

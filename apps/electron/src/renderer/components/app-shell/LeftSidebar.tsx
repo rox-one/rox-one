@@ -181,7 +181,7 @@ const itemVariants: Variants = {
  * sidebar keyboard navigation. This component just renders the items.
  *
  * Styling matches agent items in the sidebar for consistency:
- * - py-[7px] px-2 text-[13px] rounded-md
+ * - py-[7px] px-2 text-base rounded-md
  * - Icon: h-4 w-4, muted idle tone lifting to foreground on row hover
  *
  * Link variants:
@@ -710,7 +710,7 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
         aria-controls={link.expandable ? sectionId : undefined}
         aria-label={groupAriaLabel}
         className={cn(
-          "group flex min-h-7 w-full min-w-0 items-center gap-2 rounded-lg text-[13px] select-none outline-none transition-colors [@media(pointer:coarse)]:min-h-11",
+          "group flex min-h-7 w-full min-w-0 items-center gap-2 rounded-lg text-base select-none outline-none transition-colors [@media(pointer:coarse)]:min-h-11",
           "focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring",
           // Compact mode: 4px less total height (py-[3px] vs py-[5px])
           link.compact ? "py-[3px]" : "py-[5px]",
@@ -753,7 +753,7 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
         )}
         {/* Useful counts and nonnumeric status labels keep a stable right edge. */}
         {badge && (
-          <span data-touch-reveal="true" className={cn(link.afterTitle || link.hasUnseen ? 'ml-0' : 'ml-auto', 'shrink-0 text-xs tabular-nums text-text-secondary opacity-100')}>
+          <span data-touch-reveal="true" className={cn(link.afterTitle || link.hasUnseen ? 'ml-0' : 'ml-auto', 'shrink-0 text-xs numeric text-text-secondary opacity-100')}>
             {badge}
           </span>
         )}

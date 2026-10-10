@@ -132,7 +132,7 @@ export default function KnowledgeNotebookPage({ notebook, onBack, onUpdate, onGe
 
       <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)_minmax(280px,360px)]">
         <aside className="min-h-0 overflow-auto border-b border-border-subtle lg:border-b-0 lg:border-r" data-testid="playbooks-notebook-sources">
-          <h2 className="px-3 pt-3 text-caption font-medium uppercase tracking-wide text-muted-foreground">
+          <h2 className="px-3 pt-3 text-caption font-medium uppercase caps-label text-muted-foreground">
             {t('playbooks.notebook.sourcesTitle')}
           </h2>
           {index.loading ? (
@@ -159,7 +159,7 @@ export default function KnowledgeNotebookPage({ notebook, onBack, onUpdate, onGe
             />
           )}
           {index.status !== null ? (
-            <p className="px-3 pb-3 text-caption text-muted-foreground tabular-nums" data-testid="playbooks-notebook-index-status">
+            <p className="px-3 pb-3 text-caption text-muted-foreground numeric" data-testid="playbooks-notebook-index-status">
               {t('playbooks.notebook.indexStatus', { count: index.status.indexed })}
               {' · '}
               {index.status.primary === 'native' ? t('playbooks.notebook.indexNative') : t('playbooks.notebook.indexTs')}
@@ -198,7 +198,7 @@ export default function KnowledgeNotebookPage({ notebook, onBack, onUpdate, onGe
           <div className="flex min-h-0 flex-1 flex-col border-t border-border-subtle">
             <div className="flex items-center gap-2 px-3 py-2">
               <Sparkles className="icon-caption text-muted-foreground" aria-hidden />
-              <span className="text-caption font-medium uppercase tracking-wide text-muted-foreground">
+              <span className="text-caption font-medium uppercase caps-label text-muted-foreground">
                 {t('playbooks.notebook.askTitle')}
               </span>
             </div>

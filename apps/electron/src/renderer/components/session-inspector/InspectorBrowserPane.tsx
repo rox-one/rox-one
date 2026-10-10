@@ -120,15 +120,15 @@ export function InspectorBrowserPane() {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
         <Globe className="h-6 w-6 text-destructive/70" />
-        <span className="text-[13px] font-medium text-foreground/80">{t('toast.failedToCreateBrowser')}</span>
-        <span className="text-[12px] text-muted-foreground/70">{error}</span>
+        <span className="text-base font-medium text-foreground/80">{t('toast.failedToCreateBrowser')}</span>
+        <span className="text-sm text-muted-foreground/70">{error}</span>
       </div>
     )
   }
 
   if (!instanceId) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-[12px] text-muted-foreground">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-sm text-muted-foreground">
         {t('common.loading')}
       </div>
     )

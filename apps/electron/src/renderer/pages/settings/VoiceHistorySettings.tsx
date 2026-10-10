@@ -128,7 +128,7 @@ export function VoiceHistorySettings() {
         {loading && <p role="status">{t('common.loading')}</p>}
         {!loading && page?.page.length === 0 && <p>{t('settings.input.voiceHistoryEmpty')}</p>}
         {page?.page.map(item => <div key={item.id} className="flex items-center justify-between gap-2 text-sm">
-          <button type="button" aria-pressed={selected.current === item.id} onClick={() => open(item.id)} className="truncate">{item.id}</button>
+          <button type="button" aria-pressed={selected.current === item.id} onClick={() => open(item.id)} className="truncate" title={item.id}>{item.id}</button>
           <button type="button" disabled={busy} onClick={() => { selected.current = item.id; stopAudio(); setDetail(null); setConfirmDelete(false); mutate(() => window.electronAPI.favoriteVoiceRecording({ id: item.id, favorite: !item.favorite })) }}>{t(item.favorite ? 'voice.history.unfavorite' : 'voice.history.favorite')}</button>
         </div>)}
         {page && !page.isDone && page.continueCursor && <button type="button" disabled={loading} onClick={() => loadPage(page.continueCursor!)}>{t('voice.history.next')}</button>}

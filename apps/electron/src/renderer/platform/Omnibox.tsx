@@ -279,9 +279,9 @@ export function Omnibox({
                     value={`nav:${item.id}`}
                     onSelect={() => runResource(item)}
                   >
-                    <span className="truncate flex-1">{item.title}</span>
+                    <span className="truncate flex-1" title={item.title}>{item.title}</span>
                     {item.subtitle && (
-                      <span className="ml-2 truncate text-xs text-muted-foreground">
+                      <span className="ml-2 truncate text-data text-muted-foreground" title={item.subtitle}>
                         {item.subtitle}
                       </span>
                     )}
@@ -300,7 +300,7 @@ export function Omnibox({
                     value={entry.value}
                     onSelect={() => runResource(entry.item)}
                   >
-                    <span className="truncate flex-1">
+                    <span className="truncate flex-1" title={t('omnibox.context.open', { title: entry.item.title })}>
                       {t('omnibox.context.open', {
                         title: entry.item.title,
                       })}
@@ -327,8 +327,8 @@ export function Omnibox({
                         void runCommand(cmd)
                       }}
                     >
-                      <span className="truncate flex-1">{cmd.title}</span>
-                      <span className="ml-2 text-xs text-muted-foreground">
+                      <span className="truncate flex-1" title={cmd.title}>{cmd.title}</span>
+                      <span className="ml-2 text-data text-muted-foreground">
                         {cmd.category}
                       </span>
                       {hotkey && <CommandShortcut>{hotkey}</CommandShortcut>}

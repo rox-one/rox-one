@@ -40,7 +40,7 @@ export interface TeamSessionButtonProps {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{title}</div>
+      <div className="text-xs uppercase caps-label text-muted-foreground">{title}</div>
       {children}
     </div>
   )

@@ -59,7 +59,7 @@ export function KnowledgeNavigator({ layout }: KnowledgeNavigatorProps = {}) {
       className="flex h-full w-full flex-col bg-background"
     >
       <header className="border-b border-border px-3 py-2">
-        <h2 className="truncate text-[13px] font-semibold text-foreground">
+        <h2 className="truncate text-base font-semibold text-foreground">
           {t('knowledge.nav.title')}
         </h2>
       </header>
@@ -81,7 +81,7 @@ export function KnowledgeNavigator({ layout }: KnowledgeNavigatorProps = {}) {
           )}
         >
           <FileDiff className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-          <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-foreground/80">
+          <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground/80" title={t('knowledge.proposals.title')}>
             {t('knowledge.proposals.title')}
           </span>
         </button>
@@ -95,7 +95,7 @@ export function KnowledgeNavigator({ layout }: KnowledgeNavigatorProps = {}) {
               navigate(routes.view.notes())
             }}
             className={cn(
-              'w-full rounded-md px-2 py-1.5 text-left text-[11px] leading-snug text-muted-foreground',
+              'w-full rounded-md px-2 py-1.5 text-left text-xs text-muted-foreground',
               'hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             )}
           >

@@ -81,7 +81,7 @@ const STATE_CONTROL = {
 export function EntityChipStory({ state = 'ok' }: { state?: PreviewState }) {
   const { entityRef, preview } = previewFor(state)
   return (
-    <p className="text-[14px] text-foreground">
+    <p className="text-base text-foreground">
       Смотри <EntityChip entityRef={entityRef} label="Release 2.4" preview={preview} previewsEnabled={false} onOpen={() => {}} /> перед стендапом.
     </p>
   )

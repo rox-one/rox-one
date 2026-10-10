@@ -246,7 +246,7 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
                 {list.snapshotId ? <p className="text-xs text-muted-foreground" data-testid="dev-space-snapshot">{t('devSpace.artifact.snapshot', { sha: list.snapshotId.slice(-12) })}</p> : null}
 
                 <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('devSpace.repo.overview.artifacts')}</h3>
+                  <h3 className="mb-2 text-xs font-semibold uppercase caps-label text-muted-foreground">{t('devSpace.repo.overview.artifacts')}</h3>
                   <ul className="grid list-none gap-3 p-0 sm:grid-cols-2 xl:grid-cols-3">
                     {DEV_SPACE_SURFACES.map((surface) => {
                       const count = countsByKind.get(surface.kind) ?? 0
@@ -257,7 +257,7 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
                             <span className="text-sm font-medium">{t(surface.labelKey)}</span>
                             <span className="flex items-center gap-2 text-xs text-muted-foreground">
                               <Badge variant={count > 0 && !list.stale ? 'default' : 'outline'}>{count > 0 ? (list.stale ? t('devSpace.repository.outdated') : t('devSpace.artifact.ready')) : t('devSpace.artifact.absent')}</Badge>
-                              <span className="tabular-nums">{t('devSpace.artifact.count', { count })}</span>
+                              <span className="numeric">{t('devSpace.artifact.count', { count })}</span>
                             </span>
                           </button>
                         </li>
@@ -267,7 +267,7 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
                 </div>
 
                 <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('devSpace.repo.runs.title')}</h3>
+                  <h3 className="mb-2 text-xs font-semibold uppercase caps-label text-muted-foreground">{t('devSpace.repo.runs.title')}</h3>
                   {runs.length === 0 ? (
                     <p className="text-sm text-muted-foreground" data-testid="dev-space-runs-empty">{t('devSpace.repo.runs.empty')}</p>
                   ) : (
@@ -276,7 +276,7 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
                         <li key={item.id} className="flex flex-wrap items-center gap-2 rounded-md border border-border-subtle px-3 py-1.5">
                           <Badge variant="secondary">{t(DEV_SPACE_RUN_STATUS_KEYS[item.status])}</Badge>
                           <span className="text-muted-foreground">{t(DEV_SPACE_STAGE_KEYS[item.progress.stage])}</span>
-                          <span className="tabular-nums">{item.progress.done}/{item.progress.total}</span>
+                          <span className="numeric">{item.progress.done}/{item.progress.total}</span>
                           <span className="ml-auto font-mono text-muted-foreground">{new Date(item.startedAt).toISOString().slice(0, 16).replace('T', ' ')}</span>
                         </li>
                       ))}

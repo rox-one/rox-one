@@ -21,13 +21,17 @@ import {
   Cable,
   CalendarDays,
   ChartColumn,
+  ClipboardList,
   Contact,
   DatabaseZap,
   FilePlus2,
+  FolderGit2,
   FolderKanban,
   Gavel,
+  GitBranch,
   Globe,
   GraduationCap,
+  HardDrive,
   House,
   Inbox,
   KeyRound,
@@ -37,6 +41,7 @@ import {
   MessageSquare,
   MessagesSquare,
   NotebookPen,
+  NotebookText,
   PanelsTopLeft,
   Radar,
   Rss,
@@ -67,6 +72,7 @@ export const GLYPHS = {
   calendar: CalendarDays,
   goals: Target,
   memory: Brain,
+  memoryRepo: GitBranch,
   skills: Zap,
   learning: GraduationCap,
   sources: DatabaseZap,
@@ -89,6 +95,11 @@ export const GLYPHS = {
   activity: ChartColumn,
   library: Library,
   health: Activity,
+  // Newer rail destinations (clipboard history, drive, developers, playbooks).
+  clipboardHistory: ClipboardList,
+  drive: HardDrive,
+  developers: FolderGit2,
+  playbooks: NotebookText,
 } as const satisfies Record<string, LucideIcon>
 
 /** Every entity concept the shell renders a glyph for. */
@@ -110,6 +121,7 @@ export const GLYPH_NAMES = {
   calendar: 'CalendarDays',
   goals: 'Target',
   memory: 'Brain',
+  memoryRepo: 'GitBranch',
   skills: 'Zap',
   learning: 'GraduationCap',
   sources: 'DatabaseZap',
@@ -132,6 +144,10 @@ export const GLYPH_NAMES = {
   activity: 'ChartColumn',
   library: 'Library',
   health: 'Activity',
+  clipboardHistory: 'ClipboardList',
+  drive: 'HardDrive',
+  developers: 'FolderGit2',
+  playbooks: 'NotebookText',
 } as const satisfies Record<GlyphConcept, string>
 
 /**

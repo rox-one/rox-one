@@ -139,11 +139,11 @@ export function PageTile({ page, project, onOpen, onDelete }: PageTileProps) {
 
           {/* Footer: title, then metadata */}
           <div className="flex min-w-0 flex-col gap-1 px-3.5 py-3">
-            <span className="truncate text-[13px] font-semibold text-foreground">{config.name}</span>
+            <span className="truncate text-base font-semibold text-foreground" title={config.name}>{config.name}</span>
             <span className="flex min-w-0 items-center gap-2">
               <PageKindBadge kind={config.kind} />
               {project && (
-                <span className="inline-flex min-w-0 items-center gap-1.5 text-[11px] text-foreground/50">
+                <span className="inline-flex min-w-0 items-center gap-1.5 text-xs text-foreground/50">
                   <span
                     className="h-2 w-2 shrink-0 rounded-full"
                     style={{ backgroundColor: project.color ?? 'var(--muted-foreground)' }}

@@ -175,7 +175,7 @@ export function PagesHome() {
           type="button"
           onClick={handleCreatePage}
           disabled={!activeWorkspaceId}
-          className="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-control)] bg-foreground/[0.06] px-2.5 text-[12.5px] font-semibold text-foreground transition-colors hover:bg-foreground/[0.1] disabled:opacity-50"
+          className="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-control)] bg-foreground/[0.06] px-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-foreground/[0.1] disabled:opacity-50"
         >
           <Plus className="h-3.5 w-3.5" strokeWidth={2.5} /> {t('pages.newPage')}
         </button>

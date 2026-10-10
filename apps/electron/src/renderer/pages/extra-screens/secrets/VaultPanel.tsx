@@ -84,8 +84,8 @@ export function VaultPanel({
                 {item.favorite ? '★' : ''}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-body font-medium">{item.title}</span>
-                {item.username && <span className="block truncate text-small text-muted-foreground">{item.username}</span>}
+                <span className="block truncate text-body font-medium" title={item.title}>{item.title}</span>
+                {item.username && <span className="block truncate text-small text-muted-foreground" title={item.username}>{item.username}</span>}
               </span>
               {item.totp && <span className="mt-0.5 shrink-0 font-mono text-small text-accent">{item.totp.code}</span>}
             </ListRow>

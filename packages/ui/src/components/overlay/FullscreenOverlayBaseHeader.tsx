@@ -165,7 +165,7 @@ function FilePathBadge({ filePath }: FilePathBadgeProps) {
             <button
               className={cn(
                 'flex items-center gap-1.5 h-[26px] px-2.5 rounded-[var(--radius-control)]',
-                'font-sans text-[13px] font-medium text-foreground/70',
+                'font-sans text-base font-medium text-foreground/70',
                 'bg-background shadow-minimal',
                 'min-w-0 cursor-pointer group'
               )}
@@ -224,9 +224,11 @@ export function FullscreenOverlayBaseHeader({
           onClick={handleCopy}
           className={cn(
             'p-1.5 rounded-[var(--radius-control)] bg-background shadow-minimal cursor-pointer',
+            'min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] inline-flex items-center justify-center',
             'opacity-70 hover:opacity-100 transition-opacity',
             'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring'
           )}
+          aria-label={t('terminal.copy')}
           title={copied ? t('common.copied') : t('common.copyAll')}
         >
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}

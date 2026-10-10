@@ -3,7 +3,7 @@
 ## Source of truth
 
 - Status: Active
-- Last refreshed: 2026-09-02
+- Last refreshed: 2026-10-09
 - Primary product surfaces: Sessions, Map Canvas, Local Knowledge/Notes, embedded Browser, Tasks/Calendar, onboarding.
 - Evidence reviewed: live Electron screenshots from 2026-09-02, `docs/superpowers/specs/2026-09-02-rox-local-first-platform-epic.md`, `apps/electron/src/renderer/pages/NotesPage.tsx`, `KnowledgeHome.tsx`, `KnowledgeNotebookTree.tsx`, `SessionWorkflowEditor.tsx`, and the current playground/visual baselines.
 
@@ -44,11 +44,23 @@
 ## Visual language
 
 - Color: graphite/dark neutral base, clearly separated elevated panels, one restrained Rox accent for active/primary state; errors are red but not glassy or noisy.
-- Typography: use locally installed `Geist` as the default Electron face and `Geist Mono` for code, token counts, paths and other technical values. The portable fallback chain is the system sans-serif/mono stack. Do not bundle a font asset without a separate license decision.
+- Typography: `Inter` is the product UI face (bundled locally, OFL) and `Rox` (Ioskeley Mono, OFL) is the monospace face for code, terminal and command input (`--font-sans` / `--font-mono`, role-switchable via `data-font` / `data-chat-font` / `data-terminal-font`); the portable fallback chain is the system sans-serif/mono stack. Do not bundle a font asset without a separate license decision.
 - Spacing/layout rhythm: 4/8px grid, document columns separated by subtle borders and deliberate gutters; no visually merged panes.
 - Shape/radius/elevation: 6–8px controls, 10–12px floating surfaces, thin high-contrast border plus restrained shadow.
 - Motion: 160–220ms ease-out for side rail collapse/expand; respect reduced motion.
 - Imagery/iconography: thin Lucide-style icons with a contrast hierarchy; icons support labels rather than replace comprehensibility.
+
+## UI/UX upgrade program (2026-10-09)
+
+Adopted from the ten-proposal round (evidence: `~/Projects/2026-10-09-rox-uiux-proposals/`; plan of record: [docs/plans/2026-10-09-rox-uiux-upgrade.md](docs/plans/2026-10-09-rox-uiux-upgrade.md)). Wave 1 ships the G8+G9+G10 polish bundle; the structural proposals ride behind default-OFF `craft-feature-*` flags.
+
+- Chrome material ladder: one plate (`--chrome-plate-bg/-border/-shadow/-blur`, `data-chrome-material` = dense | tint | glass) paints rail, topbar, surface tabs, panel headers, inspector and status bar. `glass` is the only step that composites a backdrop blur, never animated; high contrast and reduced transparency flatten to dense; the shipped material preference derives the attribute (no demo driver).
+- One focus system: `:focus-visible` outline `2px var(--focus)` — 2px offset on the canvas, inset inside chrome plates, halo only on floating overlays; coarse pointers use 3px.
+- Text tiers: `--text-secondary` (68% mix), `--text-muted` (65% light / 56% dark), `--text-subtle` (72% / 74%). Rail/tab/header labels resolve to `--chrome-label` (= secondary); every control label clears WCAG AA.
+- Rhythm: panel headers equal the tab strip at every density (32 compact / 36 comfortable / 48 coarse). The control floor is 28px mouse (`--control-hit-min`) / 44px coarse and is enforced across rail, session list, menus, toasts, composer, terminal, browser, settings and the compact mobile surface.
+- State layers: hover 4/7% · pressed 8/12% · selected 12/18% · selected-strong 18/26% · disabled-fill 4/6%; selection is fill + a static 2px marker, never motion or hue alone.
+- Motion classes: state 120ms, disclosure/popover 180ms, overlays 240ms (`--motion-disclosure/--motion-overlay`), zeroed under `data-render-profile="performance"` and reduced motion; blur is never transitioned.
+- Flagged pilots (all default OFF): G1 orbit board, G2 aurora field, G3 missions lens, G4 panel layout presets, G6 session lanes + inspector lens. Each renders nothing without its flag; roll out per surface after review.
 
 ## Components
 

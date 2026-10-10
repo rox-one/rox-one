@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'bun:test'
 import {
+  applyPanelLayoutProfile,
   capturePanelResizeTracks,
   defaultPanelWorkspaceLayout,
   compactPanelShowsContent,
+  deletePanelLayoutProfile,
   normalizePanelTracks,
   panelGridShape,
   panelGridFocusTarget,
   reconcilePanelFullScreen,
+  savePanelLayoutProfile,
   togglePanelFullScreen,
   parsePanelWorkspaceLayout,
   resizePanelTracks,
@@ -14,6 +17,7 @@ import {
 } from '../panel-workspace-layout'
 import { isDetailNavState } from '../nav-helpers'
 import { parseRouteToNavigationState } from '../../../shared/route-parser'
+import { computeLayout } from '../layout-engine'
 
 describe('workspace arrangements', () => {
   it('shows a single panel, 2×2 and 3×2 grids without dropping extra panels', () => {
@@ -148,8 +152,24 @@ describe('panel full-screen mode', () => {
 describe('persisted panel geometry validation', () => {
   it('rejects foreign workspaces and unknown schemas', () => {
     expect(parsePanelWorkspaceLayout({ schemaVersion: 1, workspaceId: 'b' }, 'a')).toBeNull()
-    expect(parsePanelWorkspaceLayout({ schemaVersion: 2, workspaceId: 'a' }, 'a')).toBeNull()
+    expect(parsePanelWorkspaceLayout({ schemaVersion: 3, workspaceId: 'a' }, 'a')).toBeNull()
     expect(parsePanelWorkspaceLayout(null, 'a')).toBeNull()
+  })
+
+  it('migrates a v1 record additively and defaults the preset to auto', () => {
+    const migrated = parsePanelWorkspaceLayout({
+      schemaVersion: 1,
+      workspaceId: 'a',
+      mode: 'grid-2',
+      grids: { '2x2': { columns: [0.6, 0.4], rows: [0.7, 0.3] } },
+    }, 'a')!
+    expect(migrated.schemaVersion).toBe(2)
+    expect(migrated.mode).toBe('grid-2')
+    expect(migrated.preset).toBe('auto')
+    expect(migrated.grids['2x2']).toEqual({ columns: [0.6, 0.4], rows: [0.7, 0.3] })
+    // A v2 record with a named preset round-trips; an unknown preset falls back.
+    expect(parsePanelWorkspaceLayout({ schemaVersion: 2, workspaceId: 'a', mode: 'auto', preset: 'triptych' }, 'a')!.preset).toBe('triptych')
+    expect(parsePanelWorkspaceLayout({ schemaVersion: 2, workspaceId: 'a', mode: 'auto', preset: 'obsolete' }, 'a')!.preset).toBe('auto')
   })
 
   it('recovers invalid modes and track data without NaN or invisible panels', () => {
@@ -176,5 +196,107 @@ describe('persisted panel geometry validation', () => {
     const restored = parsePanelWorkspaceLayout(JSON.parse(JSON.stringify(preferences)), 'a')!
     expect(resolvePanelGridTracks(restored, { columns: 2, rows: 2 }, [1, 1, 1, 1])).toEqual(preferences.grids['2x2'])
     expect(resolvePanelGridTracks(restored, { columns: 3, rows: 2 }, [1, 1, 1, 1, 1, 1])).toEqual(preferences.grids['3x2'])
+  })
+})
+
+describe('saved layout profiles', () => {
+  const profile = {
+    id: 'p1',
+    name: 'Утро',
+    preset: 'triptych' as const,
+    grids: { '3x2': { columns: [0.25, 0.5, 0.25], rows: [0.4, 0.6] } },
+  }
+
+  it('keeps valid profiles, dedupes ids and defaults an absent list to empty', () => {
+    const restored = parsePanelWorkspaceLayout({
+      schemaVersion: 2,
+      workspaceId: 'a',
+      mode: 'auto',
+      preset: 'auto',
+      profiles: [profile, { ...profile }],
+    }, 'a')!
+    expect(restored.profiles).toEqual([profile])
+    expect(parsePanelWorkspaceLayout({ schemaVersion: 2, workspaceId: 'a', mode: 'auto' }, 'a')!.profiles).toEqual([])
+    expect(defaultPanelWorkspaceLayout('a').profiles).toEqual([])
+  })
+
+  it('drops malformed profile entries without losing the valid ones', () => {
+    const restored = parsePanelWorkspaceLayout({
+      schemaVersion: 2,
+      workspaceId: 'a',
+      mode: 'auto',
+      preset: 'auto',
+      profiles: [
+        profile,
+        null,
+        { id: '', name: 'x', preset: 'focus', grids: {} },
+        { id: 'p2', name: '   ', preset: 'focus', grids: {} },
+        { id: 'p3', name: 'y', preset: 'obsolete', grids: {} },
+        { id: 'p4', name: 'z', preset: 'focus', grids: { bad: { columns: [1], rows: [1] }, '1x1': 'nope' } },
+      ],
+    }, 'a')!
+    expect(restored.profiles!.map((entry) => entry.id)).toEqual(['p1', 'p4'])
+    expect(restored.profiles![1].grids).toEqual({})
+  })
+
+  it('round-trips a profile through save, apply and delete', () => {
+    const base = {
+      ...defaultPanelWorkspaceLayout('a'),
+      preset: 'dialog' as const,
+      grids: { '2x2': { columns: [0.6, 0.4], rows: [0.7, 0.3] } },
+    }
+    const saved = savePanelLayoutProfile(base, 'Вечер')
+    expect(saved.profiles!.map((entry) => entry.name)).toEqual(['Вечер'])
+    // Name collision replaces rather than appending a second entry.
+    expect(savePanelLayoutProfile(saved, 'Вечер').profiles).toHaveLength(1)
+    const committed = parsePanelWorkspaceLayout(JSON.parse(JSON.stringify(saved)), 'a')!
+    expect(committed.profiles).toEqual(saved.profiles)
+    const id = saved.profiles![0].id
+    // Moving on and applying the profile restores its preset and captured tracks.
+    const applied = applyPanelLayoutProfile({ ...committed, preset: 'wall' as const, grids: {} }, id)
+    expect(applied.preset).toBe('dialog')
+    expect(applied.grids).toEqual(base.grids)
+    expect(applyPanelLayoutProfile(applied, 'missing')).toEqual(applied)
+    expect(deletePanelLayoutProfile(applied, id).profiles).toEqual([])
+    expect(deletePanelLayoutProfile(applied, 'missing').profiles).toEqual(applied.profiles)
+  })
+})
+
+describe('studio layout engine', () => {
+  it('resolves focus, dialog, triptych and wall to columns and tiles', () => {
+    expect(computeLayout(1600, 'focus', 4)).toMatchObject({ columns: 1, rows: 1, singlePanel: true, tiles: false, requiredWidth: 420 })
+    expect(computeLayout(1600, 'dialog', 4)).toMatchObject({ columns: 2, rows: 2, singlePanel: false, tiles: false, requiredWidth: 860 })
+    expect(computeLayout(1600, 'triptych', 4)).toMatchObject({ columns: 3, rows: 2, singlePanel: false, tiles: false, requiredWidth: 1300 })
+    expect(computeLayout(800, 'wall', 4)).toMatchObject({ columns: 2, rows: 2, singlePanel: false, tiles: true, requiredWidth: 640, requiredHeight: 480 })
+    // A preset never renders empty cells: the column count is capped by panels.
+    expect(computeLayout(1600, 'triptych', 2).columns).toBe(2)
+  })
+
+  it('reflows down the chain before squeezing a column below its minimum', () => {
+    const wide = computeLayout(1400, 'triptych', 3)
+    expect(wide.effective).toBe('triptych')
+    expect(wide.fits).toBe(true)
+    const mid = computeLayout(1000, 'triptych', 3)
+    expect(mid.effective).toBe('dialog')
+    expect(mid.columns).toBe(2)
+    expect(mid.fits).toBe(true)
+    const narrow = computeLayout(700, 'triptych', 3)
+    expect(narrow.effective).toBe('focus')
+    expect(narrow.singlePanel).toBe(true)
+    expect(narrow.fits).toBe(true)
+    expect(computeLayout(500, 'wall', 4).effective).toBe('focus')
+    expect(computeLayout(400, 'focus', 4)).toMatchObject({ effective: 'focus', fits: false })
+  })
+
+  it('treats auto as a no-op that preserves the legacy shape', () => {
+    const auto = computeLayout(1600, 'auto', 4)
+    expect(auto).toMatchObject({ effective: 'auto', columns: 2, rows: 2, singlePanel: false })
+    expect(auto.requestedWidth).toBe(0)
+  })
+
+  it('never throws on malformed widths or panel counts', () => {
+    expect(computeLayout(Number.NaN, 'triptych', 3).columns).toBeGreaterThan(0)
+    expect(computeLayout(1600, 'dialog', -4).columns).toBeGreaterThan(0)
+    expect(computeLayout(-100, 'wall', Number.POSITIVE_INFINITY).singlePanel).toBe(true)
   })
 })

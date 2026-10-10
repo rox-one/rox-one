@@ -40,11 +40,9 @@ const deferred = <T>() => {
   return { promise, resolve, reject }
 }
 const flush = async () => { await Promise.resolve(); await Promise.resolve() }
-// These lifecycle cases have no active learning runtime. Keep its explicit
-// capability/target ports inert while executing the actual PageView hooks.
-const inactiveKnowledgeSignals = {
-  capture: () => null, publish() {}, capability: () => () => {},
-}
+// The actual learning hooks (compiled below) execute against this fixture's
+// runtime port, so published signals are recorded by the real adapter rather
+// than stubbed away. Rendering binds them via `scopes` below.
 const page = (workspaceId = 'a', digest = 'digest-1') => ({
   workspaceId, workspaceRootPath: `/${workspaceId}`, config: { slug: 'shared', name: workspaceId, contentDigest: digest, updatedAt: 1 },
 })
@@ -99,12 +97,24 @@ function fixture(api: Record<string, unknown> = {}) {
     },
     useEffect(create: () => (() => void) | undefined, deps: unknown[]) { pending.push({ create, deps }) },
   }
-  const run = new Function('React', 'useAppShellContext', 'useTranslation', 'useNavigation', 'useAtomValue', 'pagesAtom', 'window', 'pageSlug', 'useKnowledgeSignals', 'useTourTarget', executable)
+  // Execute the real hook bodies (hookExecutable) with this fixture's scheduler
+  // and runtime port. 5890bb5fd had replaced them with inert stubs, which left
+  // "real learning hooks publish ..." unable to produce any signal at all.
+  const realHooks = new Function('React', 'useContext', 'useMemo', 'useCallback', 'useEffect', 'useRef',
+    'TourRuntimeContext', 'TourScopeContext', 'deriveKnowledgeSignals',
+    `${hookExecutable}\nreturn { useTourTarget, useTourSignals, useKnowledgeSignals }`,
+  )(React, React.useContext, React.useMemo, React.useCallback, React.useEffect, React.useRef,
+    TourRuntimeContext, TourScopeContext, deriveKnowledgeSignals) as {
+      useTourTarget: unknown, useTourSignals: unknown, useKnowledgeSignals: unknown
+    }
+  const run = new Function('React', 'useAppShellContext', 'useTranslation', 'useNavigation', 'useAtomValue', 'pagesAtom', 'window', 'pageSlug', 'useKnowledgeSignals', 'useTourTarget', 'pageLeaseMatches', executable)
   const render = (workspaceId: string | null, pages: ReturnType<typeof page>[] = []) => {
     stateCursor = 0; pending = []
+    if (workspaceId && !scopes.has(workspaceId)) scopes.set(workspaceId, { workspaceId, panelId: 'fixture-panel' })
+    inheritedScope = workspaceId ? scopes.get(workspaceId)! : null
     const value = run(React, () => ({ activeWorkspaceId: workspaceId, workspaces: workspaceId ? [{ id: workspaceId, rootPath: `/${workspaceId}` }] : [] }),
-      () => ({ t: (key: string) => key }), () => ({ navigate: () => {} }), () => pages, {}, { electronAPI: actualApi }, 'shared',
-      () => inactiveKnowledgeSignals, () => () => {})
+      () => ({ t: translate }), () => ({ navigate: () => {} }), () => pages, {}, { electronAPI: actualApi }, 'shared',
+      realHooks.useKnowledgeSignals, realHooks.useTourTarget, pageLeaseMatches)
     const scheduled = pending
     return {
       ...value,
@@ -225,13 +235,17 @@ describe('UI-001 actual PageView fallback, lease and snapshot lifecycle', () => 
     expect(f.signals).toHaveLength(1)
     f.dispose()
   })
-  test('expired native lease never becomes a current host or learning evidence', async () => {
+  // 095aad3fa moved pageLeaseMatches out of currentLease into the publish gate:
+  // recovery retains the displayed host lease, while learning evidence stays fenced.
+  test('expired native lease keeps its host ownership during recovery but never becomes learning evidence', async () => {
     const expired = lease(); expired.lease.expiresAt = Date.now() - 1
     const f = fixture({ createPageLease: async () => expired }), pages = [page()]
     f.render('a', pages).commit(); await flush()
     const loaded = f.render('a', pages)
-    expect(loaded.currentLease).toBeNull()
+    // 095aad3fa: an expired lease still owns its mounted host (recovery continuity).
+    expect(loaded.currentLease?.lease.leaseId).toBe('lease-1')
     loaded.markHostRendered('lease-1'); f.render('a', pages).commit()
+    // ...but the publish gate rejects it, so no learning evidence leaves the adapter.
     expect(f.signals).toEqual([])
     f.dispose()
   })

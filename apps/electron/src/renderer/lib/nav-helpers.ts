@@ -63,7 +63,10 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       return navState.details !== null
     case 'home':
       return true
-case 'developers':
+case 'missions':
+      // G3 «Миссии» board owns the whole content panel (no navigator column).
+      return true
+    case 'developers':
     case 'playbooks':
       // Top-level Dev Space / Playbooks surfaces own the content panel like Home.
     case 'drive':

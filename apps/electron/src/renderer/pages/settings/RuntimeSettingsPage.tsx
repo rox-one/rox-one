@@ -22,6 +22,7 @@ import { Spinner } from '@rox/ui'
 import {
   SettingsSection,
   SettingsCard,
+  SettingsCardFooter,
   SettingsRow,
   SettingsToggle,
   SettingsMenuSelectRow,
@@ -165,7 +166,7 @@ function StatusBadge({ tone, children }: { tone: 'muted' | 'warn' | 'error' | 'o
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 h-5 px-2 text-[11px] font-medium rounded-[var(--radius-control)]',
+        'inline-flex items-center gap-1 h-5 px-2 text-xs font-medium rounded-[var(--radius-control)]',
         tone === 'muted' && 'bg-background shadow-minimal text-foreground/60',
         tone === 'ok' && 'bg-background shadow-minimal text-foreground/60',
         tone === 'warn' && 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
@@ -311,7 +312,7 @@ function ToolRow({ tool, isUpdating, onUpdate }: ToolRowProps) {
       <div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium">{TOOL_LABELS[tool.name] ?? tool.name}</div>
-          <div className="text-sm text-muted-foreground truncate">
+          <div className="text-sm text-muted-foreground truncate" title={meta}>
             {meta}
             {tool.phase === 'error' && tool.error && (
               <span className="text-destructive" title={tool.error}>
@@ -321,7 +322,7 @@ function ToolRow({ tool, isUpdating, onUpdate }: ToolRowProps) {
             )}
           </div>
           {needsGuide && guide ? (
-            <div className="mt-1 font-mono text-[11px] text-muted-foreground/90 truncate" title={guide.command}>
+            <div className="mt-1 font-mono text-xs text-muted-foreground/90 truncate" title={guide.command}>
               {guide.command}
             </div>
           ) : null}
@@ -628,14 +629,14 @@ export default function RuntimeSettingsPage() {
                     <div className="px-4 py-3.5 space-y-2">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 space-y-1">
-                          <div className="text-sm font-medium truncate">{defaultLlmConnection.name}</div>
+                          <div className="text-sm font-medium truncate" title={defaultLlmConnection.name}>{defaultLlmConnection.name}</div>
                           <div className="text-xs text-muted-foreground space-y-0.5">
                             <div>
                               <span className="text-foreground/70">{t('settings.runtime.llmProvider')}: </span>
                               <span className="font-mono">{defaultLlmConnection.providerType === 'omp' ? ROX_VISIBLE_TERMS.product : defaultLlmConnection.providerType}</span>
                             </div>
                             {defaultLlmConnection.defaultModel && (
-                              <div className="truncate">
+                              <div className="truncate" title={defaultLlmConnection.defaultModel}>
                                 <span className="text-foreground/70">{t('settings.runtime.llmModel')}: </span>
                                 <span className="font-mono">{defaultLlmConnection.defaultModel}</span>
                               </div>
@@ -833,23 +834,22 @@ export default function RuntimeSettingsPage() {
                           </Button>
                         </div>
                       ))}
-                      <div className="flex items-center justify-between pt-1 gap-2">
+                      <div className="pt-1">
                         <Button variant="ghost" size="sm" onClick={addEnvEntry}>
                           <Plus className="w-3 h-3 mr-1" />
                           {t('settings.runtime.envAdd')}
                         </Button>
-                        <div className="flex items-center gap-2">
-                          {envSavedFlash ? (
-                            <span className="text-xs text-muted-foreground">{t('settings.runtime.envSaved')}</span>
-                          ) : null}
-                          <Button size="sm" onClick={() => void saveEnvOverrides()} disabled={envSaving || !envDirty}>
-                            {envSaving ? <Spinner className="w-3 h-3" /> : t('settings.runtime.envSave')}
-                          </Button>
-                        </div>
                       </div>
                     </>
                   )}
                 </div>
+                {envEntries !== null && (
+                  <SettingsCardFooter saved={envSavedFlash}>
+                    <Button size="sm" onClick={() => void saveEnvOverrides()} disabled={envSaving || !envDirty}>
+                      {envSaving ? <Spinner className="w-3 h-3" /> : t('settings.runtime.envSave')}
+                    </Button>
+                  </SettingsCardFooter>
+                )}
               </SettingsCard>
             </SettingsSection>
 

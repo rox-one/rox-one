@@ -16,6 +16,7 @@ import {
   Globe,
   Image as ImageIcon,
   Sparkles,
+  Gauge,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Icon_Home, Spinner } from '@rox/ui'
@@ -97,7 +98,7 @@ import {
 } from './prompt-history'
 import { formatCostUsd, resolveTurnPhase } from './turn-progress'
 import { useAtomValue } from 'jotai'
-import { featureWorkbenchHarnessChatChromeV1Atom } from '@/atoms/unified-shell'
+import { featureComposerDeckV1Atom, featureWorkbenchHarnessChatChromeV1Atom } from '@/atoms/unified-shell'
 import { devSpaceEnabledAtom } from '@/atoms/dev-space'
 import { emitDevSpaceSoftSignal, isGitHubRepoLink } from '@/components/dev-space/DevSpaceNudgeBanner'
 import { clearPendingFocusForSession, consumePendingFocusForSession } from './focus-input-events'
@@ -117,6 +118,8 @@ import {
   stripPiPrefixForDisplay,
 } from './model-picker-helpers'
 import { VoiceDictationControl } from './VoiceDictationControl'
+import { ComposerDeck } from './deck/ComposerDeck'
+import { DeckChip } from './deck/DeckChip'
 import { ROX_PUBLIC_MODEL_DESCRIPTION_KEYS, isRoxPublicModelId } from '@rox/shared/config/rox-public-models'
 import { toErrorMessage } from '@/lib/errors'
 
@@ -439,6 +442,9 @@ export function FreeFormInput({
   }, [tourSignals])
   React.useEffect(() => tourSignals.capability('attachments.available', { state: 'ready' }), [tourSignals])
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
+// G5 composer deck (default OFF): flag ON swaps the desktop composer chrome
+  // for the deck. OFF renders the legacy composer byte-for-byte.
+  const composerDeckFlag = useAtomValue(featureComposerDeckV1Atom)
   const devSpaceEnabled = useAtomValue(devSpaceEnabledAtom)
   const promptHistoryRef = React.useRef<PromptHistory>(EMPTY_PROMPT_HISTORY)
   React.useEffect(() => {
@@ -1731,6 +1737,11 @@ export function FreeFormInput({
     onStop?.(silent)
   }
 
+  /** Deck context chip: run the same manual compaction the legacy badge offers. */
+  const handleCompactContext = () => {
+    if (!isProcessing) onSubmit('/compact', [])
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // During IME composition, ESC should cancel composition, not trigger app/menu ESC behavior.
     if (e.key === 'Escape' && e.nativeEvent.isComposing) {
@@ -2026,6 +2037,288 @@ export function FreeFormInput({
     && isCompatProvider(effectiveConnectionDetails.providerType)
     && !modelSupportsImages(effectiveConnectionDetails, currentModel)
 
+  // G5 composer deck. `composerDeckActive` is the desktop composer only: the
+  // compact composer (EditPopover / WebUI mobile) keeps its own layout, and the
+  // flag OFF path below is the untouched legacy render.
+  const composerDeckActive = composerDeckFlag && !compactMode
+  const deckFailedAttachment = attachments.find(a => a.type === 'audio' && a.transcript?.status === 'error')
+  const deckErrorText = deckFailedAttachment
+    ? t('composer.deck.error.attachment', {
+        defaultValue: 'Не удалось расшифровать {{name}}. Запись сохранена — повторите расшифровку.',
+        name: deckFailedAttachment.name,
+      })
+    : null
+  const deckContextWindow = contextStatus?.contextWindow || getModelContextWindow(currentModel)
+  const deckContextPercent = contextStatus?.inputTokens && deckContextWindow
+    ? Math.min(99, Math.round((contextStatus.inputTokens / deckContextWindow) * 100))
+    : null
+
+  const composerInputRegion = (
+    <>
+        {/* Follow-up context chips */}
+        <AnimatePresence initial={false}>
+          {followUpItems.length > 0 && (
+            <motion.div
+              key="follow-up-chips"
+              layout={!prefersReducedMotion && animateFollowUpLayout}
+              initial={prefersReducedMotion ? false : { opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.18, ease: [0.2, 0, 0.2, 1] }}
+              className="overflow-hidden"
+            >
+              <motion.div layout={!prefersReducedMotion && animateFollowUpLayout} className="px-3 pt-2 pb-0">
+                <motion.div layout={!prefersReducedMotion && animateFollowUpLayout} className="flex flex-wrap gap-1">
+                  <AnimatePresence initial={false}>
+                    {followUpItems.map((item, idx) => {
+                      const chipIndex = item.index ?? idx + 1
+                      const tooltipText = item.selectedText.trim() || t('chat.selectedText')
+                      const selectedExcerpt = formatFollowUpChipText(item.selectedText, t('chat.selectedText'), 50)
+                      const noteExcerpt = formatFollowUpChipText(item.noteLabel, t('chat.followUp'), 50)
+
+                      return (
+                        <motion.div
+                          key={item.id}
+                          layout={!prefersReducedMotion && animateFollowUpLayout}
+                          initial={prefersReducedMotion ? false : { opacity: 0, y: 6, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -4, scale: 0.98 }}
+                          transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: [0.2, 0, 0.2, 1] }}
+                          className="inline-flex max-w-full items-center gap-0.5 overflow-hidden rounded-[var(--radius-control)] border border-border/50 bg-foreground/2 text-base text-foreground/80"
+                        >
+                          <Tooltip delayDuration={250}>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                aria-label={`${t('chat.selectedText')} ${chipIndex}: ${tooltipText}`}
+                                className="input-toolbar-btn inline-flex h-6 min-w-6 cursor-pointer items-center justify-center rounded-[var(--radius-control)] px-1 text-xs font-medium text-muted-foreground hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                onMouseDown={(event) => {
+                                  event.preventDefault()
+                                  event.stopPropagation()
+                                }}
+                                onClick={(event) => {
+                                  event.preventDefault()
+                                  event.stopPropagation()
+                                  onFollowUpIndexClick?.(item)
+                                }}
+                              >
+                                {chipIndex}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-[420px] break-words text-xs">
+                              {tooltipText}
+                            </TooltipContent>
+                          </Tooltip>
+                          <button
+                            type="button"
+                            className="input-toolbar-btn min-h-6 min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-[var(--radius-control)] px-1.5 text-left hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            onClick={(event) => {
+                              const rect = event.currentTarget.getBoundingClientRect()
+                              onFollowUpClick?.(item, {
+                                x: rect.left + rect.width / 2,
+                                y: rect.top - 8,
+                              })
+                            }}
+                          >
+                            <span className="italic text-foreground/60">{selectedExcerpt}</span>
+                            <span className="mx-1 text-foreground/40">·</span>
+                            <span>{noteExcerpt}</span>
+                          </button>
+                        </motion.div>
+                      )
+                    })}
+                  </AnimatePresence>
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Rich Text Input with inline mention badges */}
+        {/* In compact mode, hide input while the agent is processing — until the
+            user clicks / hovers the collapsed bar to expand it back. */}
+        {!isCollapsedInCompact && (
+        <div ref={node => { inputTarget(node); skillsTarget(node) }} onPaste={handleComposerPaste}><RichTextInput
+          ref={richInputRef}
+          value={input}
+          onChange={handleInputChange}
+          onInput={handleRichInput}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          onLongTextPaste={handleLongTextPaste}
+          onFocus={() => { setIsFocused(true); onFocusChange?.(true) }}
+          onBlur={() => {
+            // Save caret position before losing focus (for restoration via craft:focus-input)
+            lastCaretPositionRef.current = richInputRef.current?.selectionStart ?? null
+            setIsFocused(false)
+            onFocusChange?.(false)
+          }}
+          placeholder={effectivePlaceholder}
+          disabled={disabled}
+          skills={skills}
+          sources={sources}
+          workspaceId={workspaceSlug}
+          className={cn(
+            'overflow-y-auto',
+            compactMode && isWebUI
+              ? 'px-3 pt-2 pb-1 min-h-[44px]'
+              : 'px-3 pt-3 pb-2 min-h-[72px]',
+          )}
+          style={{ maxHeight: inputMaxHeight }}
+          data-tutorial="chat-input"
+          spellCheck={spellCheck}
+        /></div>
+        )}
+    </>
+  )
+
+  /** Deck chip row: the controls that shape the next request, in one 28 px row. */
+  const composerDeckChips = (
+    <>
+      <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileInputChange} />
+      <span ref={attachTarget} className="inline-flex shrink-0">
+        <DeckChip
+          label={t('composer.deck.chip.files', { defaultValue: 'Файлы' })}
+          icon={<Paperclip className="icon-toolbar" />}
+          value={attachments.length > 0
+            ? t('composer.deck.chip.filesCount', { defaultValue: 'вложений: {{total}}', total: attachments.length })
+            : t('composer.deck.chip.filesEmpty', { defaultValue: 'не приложены' })}
+          focusOrder={20}
+          disabled={disabled}
+          onClick={handleAttachClick}
+        />
+      </span>
+      <DeckChip as="div" label={t('composer.deck.chip.model', { defaultValue: 'Модель' })} focusOrder={21} disabled={disabled}>
+        <CompactModelSelector
+          currentModel={currentModel}
+          currentConnection={currentConnection}
+          onModelChange={onModelChange}
+          onConnectionChange={onConnectionChange}
+          thinkingLevel={thinkingLevel}
+          onThinkingLevelChange={onThinkingLevelChange}
+          isEmptySession={isEmptySession}
+          connectionUnavailable={connectionUnavailable}
+          contextStatus={contextStatus}
+          variant="deck"
+        />
+      </DeckChip>
+      {onPermissionModeChange && (
+        <DeckChip as="div" label={t('composer.deck.chip.mode', { defaultValue: 'Режим' })} focusOrder={22} disabled={disabled}>
+          <CompactPermissionModeSelector
+            permissionMode={permissionMode}
+            onPermissionModeChange={onPermissionModeChange}
+            variant="deck"
+          />
+        </DeckChip>
+      )}
+      {onWorkingDirectoryChange && (
+        <DeckChip as="div" label={t('composer.deck.chip.folder', { defaultValue: 'Папка' })} focusOrder={23} disabled={disabled}>
+          <WorkingDirectorySelector
+            workingDirectory={workingDirectory}
+            onWorkingDirectoryChange={onWorkingDirectoryChange}
+            sessionFolderPath={sessionFolderPath}
+            workspaceId={workspaceId}
+            renderTrigger={({ open, hasFolder, folderName }) => (
+              <button
+                type="button"
+                data-tutorial="working-directory-button"
+                disabled={disabled}
+                aria-expanded={open}
+                className={cn(
+                  'inline-flex h-7 max-w-[200px] shrink items-center rounded-[var(--radius-control)] px-1 text-caption transition-colors duration-[var(--motion-fast)] motion-reduce:transition-none',
+                  'font-medium text-text-primary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus-ring',
+                  open && 'bg-surface-hover',
+                  disabled && 'opacity-45',
+                )}
+              >
+                <span className="truncate" title={hasFolder ? folderName : t('composer.deck.chip.folderEmpty', { defaultValue: 'не выбрана' })}>{hasFolder ? folderName : t('composer.deck.chip.folderEmpty', { defaultValue: 'не выбрана' })}</span>
+              </button>
+            )}
+          />
+        </DeckChip>
+      )}
+      <DeckChip as="div" label={t('composer.deck.chip.context', { defaultValue: 'Контекст' })} focusOrder={24}>
+        <FreeFormInputContextBadge
+          variant="deck"
+          icon={<Gauge className="icon-toolbar" />}
+          label={deckContextPercent !== null
+            ? t('composer.deck.chip.contextUsage', {
+                defaultValue: '{{percent}}% · {{tokens}}',
+                percent: deckContextPercent,
+                tokens: formatTokenCount(contextStatus?.inputTokens ?? 0),
+              })
+            : t('composer.deck.chip.contextUnknown', { defaultValue: 'нет данных' })}
+          hasSelection={deckContextPercent !== null}
+          isExpanded
+          showChevron={false}
+          onClick={handleCompactContext}
+          tooltip={t('composer.deck.chip.contextTooltip', { defaultValue: 'Использование контекста. Нажмите, чтобы сжать.' })}
+          disabled={contextStatus?.inputTokens == null}
+        />
+      </DeckChip>
+    </>
+  )
+
+  /** Deck trailing group: improve, dictate, send/stop. */
+  const composerDeckTrailing = (
+    <>
+      {sessionId && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              disabled={disabled || disableSend || improvingPrompt}
+              aria-busy={improvingPrompt}
+              onClick={() => { void handleImprovePrompt() }}
+              aria-label={t('chat.improvePromptAria')}
+              className="inline-flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-text-secondary transition-colors duration-[var(--motion-fast)] hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus-ring disabled:opacity-45 motion-reduce:transition-none"
+              data-focus-order={30}
+            >
+              {improvingPrompt ? <Spinner className="h-4 w-4" /> : <Sparkles className="icon-toolbar" />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {improvingPrompt ? t('chat.improvingPrompt') : t('chat.improvePromptTooltip')}
+          </TooltipContent>
+        </Tooltip>
+      )}
+      <VoiceDictationControl
+        variant="deck"
+        disabled={disabled}
+        inputValue={input}
+        sessionId={sessionId}
+        onInputChange={handleInputChange}
+      />
+      {isProcessing ? (
+        <button
+          type="button"
+          aria-label={t('chat.stopResponse')}
+          data-focus-order={32}
+          onClick={() => handleStop(false)}
+          className="inline-flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-text-secondary transition-colors duration-[var(--motion-fast)] hover:bg-surface-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus-ring motion-reduce:transition-none"
+        >
+          <Square className="icon-caption fill-current" />
+        </button>
+      ) : (
+        <button
+          ref={sendTarget}
+          type="submit"
+          aria-label={t('shortcuts.sendMessage')}
+          disabled={!hasContent || disabled || disableSend || transcriptionPending}
+          data-focus-order={32}
+          data-tutorial="send-button"
+          className={cn(
+            'inline-flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-control)] transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus-ring motion-reduce:transition-none',
+            'bg-foreground text-background hover:bg-foreground-90',
+            (!hasContent || disabled || disableSend || transcriptionPending) && 'opacity-45',
+          )}
+        >
+          <ArrowUp className="icon-toolbar" />
+        </button>
+      )}
+    </>
+  )
+
   return (
     <form onSubmit={handleSubmit}>
       <div
@@ -2120,12 +2413,12 @@ export function FreeFormInput({
             {magicWorkflows.map((workflow) => (
               <Tooltip key={workflow.id} delayDuration={200}>
                 <TooltipTrigger asChild>
-                  <span className="inline-flex max-w-full items-center gap-1 rounded-[var(--radius-control)] bg-foreground/5 px-2 py-0.5 text-[12px] text-foreground/80">
+                  <span className="inline-flex max-w-full items-center gap-1 rounded-[var(--radius-control)] bg-foreground/5 px-2 py-0.5 text-sm text-foreground/80">
                     {t(`workflows.label.${workflow.id}`)}
                     <span className="text-foreground/50">{t(`workflows.cost.${workflow.costClass}`)}</span>
                   </span>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs text-[12px]">
+                <TooltipContent side="top" className="max-w-xs text-sm">
                   <div>{t(`workflows.hint.${workflow.id}`)}</div>
                   <div>{t('workflows.skills')}: {workflow.skills.join(', ')}</div>
                   <div>{t('workflows.stop')}: {workflow.stopCondition}</div>
@@ -2136,6 +2429,38 @@ export function FreeFormInput({
           </div>
         )}
 
+        {/* Composer deck — flag ON replaces the attachment strip and control
+            row with the deck chrome; the writing area is the same input. */}
+        {composerDeckActive ? (
+          <ComposerDeck
+            attachments={attachments}
+            onRemoveAttachment={handleRemoveAttachment}
+            onRetryTranscription={(index) => {
+              const attachment = attachmentsRef.current[index]
+              if (attachment?.type === 'audio') void transcribeAudioAttachment(attachment)
+            }}
+            loadingCount={loadingCount}
+            disabled={disabled}
+            errorText={deckErrorText}
+            chips={composerDeckChips}
+            trailing={composerDeckTrailing}
+            statusSlot={
+              <ToolbarStatusSlot
+                showEscapeOverlay={isProcessing && showEscapeOverlay}
+                sessionId={sessionId}
+                turnProgress={chatChromeEnabled && isProcessing ? {
+                  phase: resolveTurnPhase(contextStatus?.statusType, true, contextStatus?.outputTokens) ?? 'thinking',
+                  outputTokens: contextStatus?.outputTokens ?? 0,
+                  startedAt: contextStatus?.startedAt,
+                } : null}
+              />
+            }
+            focusOrderBase={10}
+          >
+            {composerInputRegion}
+          </ComposerDeck>
+        ) : (
+          <>
         {/* Attachment Preview */}
         <div ref={attachments.length || loadingCount ? attachmentsTarget : undefined}><AttachmentPreview
           attachments={attachments}
@@ -2148,120 +2473,7 @@ export function FreeFormInput({
           loadingCount={loadingCount}
         /></div>
 
-        {/* Follow-up context chips */}
-        <AnimatePresence initial={false}>
-          {followUpItems.length > 0 && (
-            <motion.div
-              key="follow-up-chips"
-              layout={!prefersReducedMotion && animateFollowUpLayout}
-              initial={prefersReducedMotion ? false : { opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: prefersReducedMotion ? 0 : 0.18, ease: [0.2, 0, 0.2, 1] }}
-              className="overflow-hidden"
-            >
-              <motion.div layout={!prefersReducedMotion && animateFollowUpLayout} className="px-3 pt-2 pb-0">
-                <motion.div layout={!prefersReducedMotion && animateFollowUpLayout} className="flex flex-wrap gap-1">
-                  <AnimatePresence initial={false}>
-                    {followUpItems.map((item, idx) => {
-                      const chipIndex = item.index ?? idx + 1
-                      const tooltipText = item.selectedText.trim() || t('chat.selectedText')
-                      const selectedExcerpt = formatFollowUpChipText(item.selectedText, t('chat.selectedText'), 50)
-                      const noteExcerpt = formatFollowUpChipText(item.noteLabel, t('chat.followUp'), 50)
-
-                      return (
-                        <motion.div
-                          key={item.id}
-                          layout={!prefersReducedMotion && animateFollowUpLayout}
-                          initial={prefersReducedMotion ? false : { opacity: 0, y: 6, scale: 0.98 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -4, scale: 0.98 }}
-                          transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: [0.2, 0, 0.2, 1] }}
-                          className="inline-flex max-w-full items-center gap-0.5 overflow-hidden rounded-[var(--radius-control)] border border-border/50 bg-foreground/2 text-[13px] text-foreground/80"
-                        >
-                          <Tooltip delayDuration={250}>
-                            <TooltipTrigger asChild>
-                              <button
-                                type="button"
-                                aria-label={`${t('chat.selectedText')} ${chipIndex}: ${tooltipText}`}
-                                className="input-toolbar-btn inline-flex h-6 min-w-6 cursor-pointer items-center justify-center rounded-[var(--radius-control)] px-1 text-[9px] font-medium text-muted-foreground hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                onMouseDown={(event) => {
-                                  event.preventDefault()
-                                  event.stopPropagation()
-                                }}
-                                onClick={(event) => {
-                                  event.preventDefault()
-                                  event.stopPropagation()
-                                  onFollowUpIndexClick?.(item)
-                                }}
-                              >
-                                {chipIndex}
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-[420px] break-words text-xs">
-                              {tooltipText}
-                            </TooltipContent>
-                          </Tooltip>
-                          <button
-                            type="button"
-                            className="input-toolbar-btn min-h-6 min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-[var(--radius-control)] px-1.5 text-left hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            onClick={(event) => {
-                              const rect = event.currentTarget.getBoundingClientRect()
-                              onFollowUpClick?.(item, {
-                                x: rect.left + rect.width / 2,
-                                y: rect.top - 8,
-                              })
-                            }}
-                          >
-                            <span className="italic text-foreground/60">{selectedExcerpt}</span>
-                            <span className="mx-1 text-foreground/40">·</span>
-                            <span>{noteExcerpt}</span>
-                          </button>
-                        </motion.div>
-                      )
-                    })}
-                  </AnimatePresence>
-                </motion.div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Rich Text Input with inline mention badges */}
-        {/* In compact mode, hide input while the agent is processing — until the
-            user clicks / hovers the collapsed bar to expand it back. */}
-        {!isCollapsedInCompact && (
-        <div ref={node => { inputTarget(node); skillsTarget(node) }} onPaste={handleComposerPaste}><RichTextInput
-          ref={richInputRef}
-          value={input}
-          onChange={handleInputChange}
-          onInput={handleRichInput}
-          onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-          onLongTextPaste={handleLongTextPaste}
-          onFocus={() => { setIsFocused(true); onFocusChange?.(true) }}
-          onBlur={() => {
-            // Save caret position before losing focus (for restoration via craft:focus-input)
-            lastCaretPositionRef.current = richInputRef.current?.selectionStart ?? null
-            setIsFocused(false)
-            onFocusChange?.(false)
-          }}
-          placeholder={effectivePlaceholder}
-          disabled={disabled}
-          skills={skills}
-          sources={sources}
-          workspaceId={workspaceSlug}
-          className={cn(
-            'overflow-y-auto',
-            compactMode && isWebUI
-              ? 'px-3 pt-2 pb-1 min-h-[44px]'
-              : 'px-3 pt-3 pb-2 min-h-[72px]',
-          )}
-          style={{ maxHeight: inputMaxHeight }}
-          data-tutorial="chat-input"
-          spellCheck={spellCheck}
-        /></div>
-        )}
+        {composerInputRegion}
 
         {/* Bottom Row: Controls - wrapped in relative container for status slot overlay */}
         <div className="relative">
@@ -2277,7 +2489,7 @@ export function FreeFormInput({
           />
 
           <div className={cn(
-            "flex items-center gap-1 px-2",
+            "flex items-center gap-1 px-2 min-h-[var(--control-hit-min)]",
             compactMode && isWebUI ? "py-1" : "py-2",
             !compactMode && "border-t border-border/50",
           )}>
@@ -2316,7 +2528,7 @@ export function FreeFormInput({
                 contextStatus={contextStatus}
               />
               {chatChromeEnabled && formatCostUsd(contextStatus?.costUsd) && (
-                <span className="text-[9px] text-muted-foreground tabular-nums shrink-0" data-testid="chat-session-cost">
+                <span className="text-xs text-muted-foreground numeric shrink-0" data-testid="chat-session-cost">
                   {t('workbench.status.cost', { amount: formatCostUsd(contextStatus?.costUsd) })}
                 </span>
               )}
@@ -2390,7 +2602,7 @@ export function FreeFormInput({
                             ))}
                             {remainingCount > 0 && (
                               <div
-                                className="-ml-1 h-5 w-5 rounded-[var(--radius-control)] bg-background shadow-minimal flex items-center justify-center text-[8px] font-medium text-muted-foreground"
+                                className="-ml-1 h-5 w-5 rounded-[var(--radius-control)] bg-background shadow-minimal flex items-center justify-center text-xs font-medium text-muted-foreground"
                                 style={{ zIndex: displaySources.length + 1 }}
                               >
                                 +{remainingCount}
@@ -2522,7 +2734,7 @@ export function FreeFormInput({
                             ))}
                             {remainingCount > 0 && (
                               <div
-                                className="-ml-1 h-5 w-5 rounded-[var(--radius-control)] bg-background shadow-minimal flex items-center justify-center text-[8px] font-medium text-muted-foreground"
+                                className="-ml-1 h-5 w-5 rounded-[var(--radius-control)] bg-background shadow-minimal flex items-center justify-center text-xs font-medium text-muted-foreground"
                                 style={{ zIndex: displaySources.length + 1 }}
                               >
                                 +{remainingCount}
@@ -2639,7 +2851,7 @@ export function FreeFormInput({
                     type="button"
                     aria-label={`${t('common.model')}: ${connectionUnavailable ? t('common.unavailable') : currentModelDisplayName}`}
                     className={cn(
-                      "input-toolbar-btn inline-flex items-center h-6 px-1.5 gap-0.5 text-[9px] shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/5 transition-colors select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                      "input-toolbar-btn inline-flex items-center h-6 px-1.5 gap-0.5 text-xs shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/5 transition-colors select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                       modelDropdownOpen && "bg-foreground/5",
                       connectionUnavailable && "text-destructive",
                     )}
@@ -2677,7 +2889,7 @@ export function FreeFormInput({
                 connectionsByProvider.map(([providerName, connections], index) => (
                   <React.Fragment key={providerName}>
                     {/* Provider group label */}
-                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide select-none">
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase caps-label select-none">
                       {providerName}
                     </div>
                     {connections.map((conn) => {
@@ -3027,7 +3239,7 @@ export function FreeFormInput({
                     onClick={handleCompactClick}
                     disabled={isProcessing}
                     aria-label={t(isProcessing ? 'chat.contextUsageWait' : 'chat.contextUsageCompact', { percent: usagePercent })}
-                    className="inline-flex items-center h-6 px-2 text-[12px] font-medium bg-info/10 rounded-[var(--radius-control)] shadow-tinted select-none cursor-pointer hover:bg-info/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center h-6 px-2 text-sm font-medium numeric bg-info/10 rounded-[var(--radius-control)] shadow-tinted select-none cursor-pointer hover:bg-info/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       '--shadow-color': 'var(--info-rgb)',
                       color: 'color-mix(in oklab, var(--info) 30%, var(--foreground))',
@@ -3071,6 +3283,8 @@ export function FreeFormInput({
           </div>
           </div>
         </div>
+          </>
+        )}
       </div>
     </form>
   )

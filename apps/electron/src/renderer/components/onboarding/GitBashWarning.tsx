@@ -4,6 +4,7 @@ import { Download, FolderOpen, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { StepFormLayout, BackButton } from "./primitives"
+import { OnboardingError } from "./OnboardingError"
 import type { GitBashStatus } from "../../../shared/types"
 
 export type { GitBashStatus }
@@ -66,6 +67,12 @@ export function GitBashWarning({
       description={t("onboarding.gitBash.description")}
     >
       <div className="space-y-4">
+        <OnboardingError
+          message={errorMessage}
+          onRetry={onRecheck}
+          onDismiss={onClearError}
+        />
+
         {/* Primary action: Download Git */}
         <div className="rounded-lg border border-border bg-foreground-2 p-4">
           <h3 className="text-sm font-medium text-foreground">
@@ -112,9 +119,6 @@ export function GitBashWarning({
               >
                 {t("onboarding.gitBash.useThisPath")}
               </Button>
-              {errorMessage && (
-                <p className="text-xs text-red-500">{errorMessage}</p>
-              )}
             </div>
           ) : (
             <div className="mt-3 flex gap-2">

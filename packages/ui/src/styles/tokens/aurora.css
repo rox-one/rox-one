@@ -1,0 +1,121 @@
+/* =============================================================================
+   G2 «Сияние» / Aurora — ambient field layer (pilot, default OFF).
+
+   Extracted from report/g02-aurora.md + prototypes/g02-aurora/aurora.css.
+   Scope: the FIELD only — four static radial glows over one linear base wash,
+   composited once, never animated. Deck/bloom/layer material belongs to a later
+   workstream and is intentionally absent here.
+
+   PERF CONTRACT
+   - one element, a fixed list of pre-computed gradients, painted once;
+   - no animation at idle, no animated gradient, no `filter` on the field;
+   - every decorative layer degrades to `none` in high contrast, scenic, zen,
+     the low-power render profile, reduced transparency and higher contrast.
+
+   Palette-owned vars (--canvas, --foreground, …) are never redefined here;
+   every new value is a NEW token in the `--aurora-*` namespace, defined once in
+   `:root` and overridden in `.dark`.
+============================================================================= */
+
+:root {
+  /* ── Aurora hue anchors ─────────────────────────────────────────────────
+     Four chromatic anchors that read as one prism. Light anchors lean pale
+     (a wash on paper); dark adds chroma so the glow reads as emission.       */
+  --aurora-hue-1: oklch(0.64 0.17 252); /* prism blue   */
+  --aurora-hue-2: oklch(0.72 0.13 196); /* cyan         */
+  --aurora-hue-3: oklch(0.68 0.16 318); /* violet       */
+  --aurora-hue-4: oklch(0.74 0.12 158); /* mint         */
+
+  /* ── Field strength (single opacity knob on the whole field) ───────────── */
+  --aurora-field-strength: 0.55;
+
+  /* ── Field layers: 4 radial glows + 1 linear base wash ────────────────── */
+  --aurora-field-1: radial-gradient(62% 48% at 14% 6%, color-mix(in oklab, var(--aurora-hue-1) 22%, transparent) 0%, transparent 66%);
+  --aurora-field-2: radial-gradient(54% 44% at 86% 4%, color-mix(in oklab, var(--aurora-hue-2) 18%, transparent) 0%, transparent 64%);
+  --aurora-field-3: radial-gradient(72% 62% at 74% 98%, color-mix(in oklab, var(--aurora-hue-3) 16%, transparent) 0%, transparent 68%);
+  --aurora-field-4: radial-gradient(46% 42% at 30% 66%, color-mix(in oklab, var(--aurora-hue-4) 12%, transparent) 0%, transparent 66%);
+  --aurora-field-base: linear-gradient(180deg,
+      color-mix(in oklab, var(--aurora-hue-1) 5%, var(--canvas)) 0%,
+      var(--canvas) 42%,
+      var(--canvas) 100%);
+  /* Top-most first: four glows over one cooler-top base wash. */
+  --aurora-field: var(--aurora-field-1), var(--aurora-field-2), var(--aurora-field-3), var(--aurora-field-4), var(--aurora-field-base);
+}
+
+/* ── Dark: the field is a real aurora in graphite (lighter, more chromatic) ─ */
+.dark {
+  --aurora-hue-1: oklch(0.72 0.16 252);
+  --aurora-hue-2: oklch(0.80 0.13 196);
+  --aurora-hue-3: oklch(0.70 0.17 320);
+  --aurora-hue-4: oklch(0.80 0.13 158);
+  --aurora-field-strength: 0.85;
+}
+
+/* =============================================================================
+   Degradation — the field never paints in these modes.
+   All are attribute selectors on <html> (specificity 0,1,1) so they win over
+   the `.dark` strength override above; the media queries follow .dark and win
+   by source order.
+============================================================================= */
+
+/* High contrast: kill the decoration, keep the structure. */
+html[data-contrast="high"] {
+  --aurora-field: none;
+  --aurora-field-strength: 0;
+}
+
+/* Scenic mode already paints its own full-page backdrop; the field would fight it. */
+html[data-scenic] {
+  --aurora-field: none;
+  --aurora-field-strength: 0;
+}
+
+/* Zen strips glass and reads as the flat token set. */
+html[data-shell-style="zen"] {
+  --aurora-field: none;
+  --aurora-field-strength: 0;
+}
+
+/* Low-power profile kills backdrop-filter but NOT background-image, so the
+   field needs an explicit off-switch here (PERF-07). */
+html[data-render-profile="performance"] {
+  --aurora-field: none;
+  --aurora-field-strength: 0;
+}
+
+/* OS-level preferences. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --aurora-field: none;
+    --aurora-field-strength: 0;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --aurora-field: none;
+    --aurora-field-strength: 0;
+  }
+}
+
+/* =============================================================================
+   The field element — painted once, never animated.
+============================================================================= */
+.aurora-field {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-base);
+  pointer-events: none;
+  background-color: var(--canvas);
+  background-image: var(--aurora-field);
+  opacity: var(--aurora-field-strength);
+  transition: opacity var(--motion-slow) var(--ease-standard);
+}
+
+/* Reduced motion (and the shell's own `html[data-resizing]` rule) make the
+   opacity swap instant; nothing else on the field ever transitions. */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-field {
+    transition-duration: 0ms;
+  }
+}

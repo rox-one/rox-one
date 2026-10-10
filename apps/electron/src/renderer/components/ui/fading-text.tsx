@@ -22,6 +22,9 @@ interface FadingTextProps {
 export function FadingText({ children, className, fadeWidth = 24 }: FadingTextProps) {
   const ref = useRef<HTMLSpanElement>(null)
   const [isOverflowing, setIsOverflowing] = useState(false)
+  // A masked (clipped) label must still be reachable in full — only plain
+  // string children can be mirrored onto a native `title`.
+  const titleText = typeof children === 'string' ? children : undefined
 
   useLayoutEffect(() => {
     const el = ref.current
@@ -36,6 +39,7 @@ export function FadingText({ children, className, fadeWidth = 24 }: FadingTextPr
   return (
     <span
       ref={ref}
+      title={isOverflowing ? titleText : undefined}
       className={cn("overflow-hidden whitespace-nowrap min-w-0", className)}
       style={isOverflowing ? {
         maskImage: `linear-gradient(to right, black calc(100% - ${fadeWidth}px), transparent)`

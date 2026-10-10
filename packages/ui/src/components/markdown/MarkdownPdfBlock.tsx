@@ -190,7 +190,7 @@ export function MarkdownPdfBlock({ code, className, onCreateRegionAnnotation: _o
         {/* Header */}
         <div className="px-3 py-2 bg-muted/50 border-b flex items-center gap-2">
           <FileText className="w-3.5 h-3.5 text-muted-foreground/50" />
-          <span className="text-[12px] text-muted-foreground font-medium flex-1">
+          <span className="text-sm text-muted-foreground font-medium flex-1">
             {spec.title || t('preview.pdfPreview')}
           </span>
           <div className="flex items-center gap-1">
@@ -199,11 +199,13 @@ export function MarkdownPdfBlock({ code, className, onCreateRegionAnnotation: _o
               onClick={() => setIsFullscreen(true)}
               className={cn(
                 "p-1 rounded-[var(--radius-control)] transition-all select-none",
+                "min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] inline-flex items-center justify-center",
                 "bg-background shadow-minimal",
                 "text-muted-foreground/50 hover:text-foreground",
                 "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100",
-                hasMultiple ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                hasMultiple ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
               )}
+              aria-label={t('common.viewFullscreen')}
               title={t('common.viewFullscreen')}
             >
               <Maximize2 className="w-3.5 h-3.5" />
@@ -219,10 +221,10 @@ export function MarkdownPdfBlock({ code, className, onCreateRegionAnnotation: _o
               <Document
                 key={`${activeItem!.src}:${renderAttempt}`}
                 file={activeFileObj}
-                loading={<div className="py-8 text-center text-muted-foreground text-[13px]">{t('common.rendering')}</div>}
+                loading={<div className="py-8 text-center text-muted-foreground text-base">{t('common.rendering')}</div>}
                 error={
                   <div className="flex flex-col items-center gap-2 py-6 text-destructive/70">
-                    <span className="text-[13px]">{t('preview.failedToRenderPdf')}</span>
+                    <span className="text-base">{t('preview.failedToRenderPdf')}</span>
                     <button type="button" onClick={() => setRenderAttempt((attempt) => attempt + 1)} className="rounded border px-3 py-1.5 text-sm hover:bg-muted">
                       {t('common.retry')}
                     </button>
@@ -241,13 +243,13 @@ export function MarkdownPdfBlock({ code, className, onCreateRegionAnnotation: _o
 
           {/* Loading state for uncached active item */}
           {!activePdfData && loading && (
-            <div className="py-8 text-center text-muted-foreground text-[13px]">{t('common.loading')}</div>
+            <div className="py-8 text-center text-muted-foreground text-base">{t('common.loading')}</div>
           )}
 
           {/* Error state for uncached active item */}
           {!activePdfData && !loading && error && (
             <div className="flex flex-col items-center gap-2 py-6 text-center">
-              <p className="text-[13px] text-destructive/70">{error}</p>
+              <p className="text-base text-destructive/70">{error}</p>
               <button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)} className="rounded border px-3 py-1.5 text-sm hover:bg-muted">
                 {t('common.retry')}
               </button>

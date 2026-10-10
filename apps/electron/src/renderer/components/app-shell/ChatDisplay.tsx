@@ -1,5 +1,6 @@
 import * as React from "react"
-import { useAtom } from "jotai"
+import { useAtom, useAtomValue } from "jotai"
+import { featureDialogArtifactsV1Atom, featureDialogContinuumV1Atom } from "@/atoms/unified-shell"
 import { suggestionHistoryAtom } from "@/atoms/header-status"
 import { rememberSuggestion } from "@/lib/contextual-suggestions"
 import { appendStarterPrompt, canShowStarterPrompts, selectStarterPrompts, starterHistoryId, type StarterPrompt } from "@/lib/starter-prompts"
@@ -87,6 +88,11 @@ import {
 } from "@rox/ui"
 import { MemoizedAuthRequestCard } from "@/components/chat/AuthRequestCard"
 import { ChatInputZone, type StructuredInputState, type StructuredResponse, type PermissionResponse, type AdminApprovalResponse } from "./input"
+import { ContinuumTurn } from "./chat-continuum/ContinuumTurn"
+import { ArtifactStack } from "./chat-continuum/ArtifactShell"
+import { SessionDivider } from "./chat-continuum/SessionDivider"
+import { InlineApprovalCard } from "./chat-continuum/InlineApprovalCard"
+import { InlineCredentialCard } from "./chat-continuum/InlineCredentialCard"
 import { MemoryProvenanceStrip } from "./MemoryProvenanceStrip"
 import type { RichTextInputHandle } from "@/components/ui/rich-text-input"
 import { useBackgroundTasks } from "@/hooks/useBackgroundTasks"
@@ -107,6 +113,53 @@ function isRoxCliCredentialChatError(code?: string): boolean {
   return code === 'OMP_NO_MODELS' || code === 'OMP_AUTH_REQUIRED' || code === 'OMP_NOT_CONFIGURED'
 }
 import * as storage from "@/lib/local-storage"
+
+// ============================================================================
+// G5 Dialog Continuum
+// ============================================================================
+
+/** Gutter clock label (`HH:MM`) for a turn. */
+function formatTurnClock(timestamp: number): string {
+  const date = new Date(timestamp)
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+/**
+ * Wraps a rendered turn in the continuum shell when the feature flag is ON.
+ * The children are untouched production components; this only supplies the
+ * gutter (clock + marker + spine), optional reasoning row and streaming caret.
+ * When the flag is OFF it is a keyed passthrough — byte-identical legacy path.
+ */
+function TurnShell({
+  enabled,
+  kind,
+  time,
+  streaming,
+  thinking,
+  focusOrder,
+  children,
+}: {
+  enabled: boolean
+  kind: 'user' | 'assistant' | 'system'
+  time: string
+  streaming?: boolean
+  thinking?: { text: string; isStreaming: boolean; steps?: number }
+  focusOrder?: number
+  children: React.ReactNode
+}) {
+  if (!enabled) return <>{children}</>
+  return (
+    <ContinuumTurn
+      kind={kind}
+      time={time}
+      streaming={streaming}
+      thinking={thinking}
+      focusOrder={focusOrder}
+    >
+      {children}
+    </ContinuumTurn>
+  )
+}
 
 // ============================================================================
 // CSS Custom Highlight API helper
@@ -437,10 +490,10 @@ function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorPr
   const displayMessage = statusMessage || t(PROCESSING_MESSAGE_KEYS[messageIndex])
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1 -mb-1 text-[13px] text-muted-foreground">
+    <div className="flex items-center gap-2 px-3 py-1 -mb-1 text-base text-muted-foreground">
       {/* Spinner in same location as TurnCard chevron */}
       <div className="w-3 h-3 flex items-center justify-center shrink-0">
-        <Spinner className="text-[10px]" />
+        <Spinner className="text-xs" />
       </div>
       {/* Label with crossfade animation on content change only */}
       <span className="relative h-5 flex items-center">
@@ -456,7 +509,7 @@ function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorPr
           </motion.span>
         </AnimatePresence>
         {elapsed >= 1 && (
-          <span className="text-muted-foreground/60 ml-1 tabular-nums">
+          <span className="text-muted-foreground/60 ml-1 numeric">
             {formatElapsed(elapsed)}
           </span>
         )}
@@ -633,6 +686,11 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   }, [session?.id, runtimePanelId])
 
   const [starterHistory, setStarterHistory] = useAtom(suggestionHistoryAtom)
+  // G5 dialog flags (both default OFF → legacy path, byte-identical). The
+  // continuum is the main-transcript treatment; the compact EditPopover keeps
+  // the legacy card stack (a 72px gutter in a ~440px popover is cramped).
+  const continuumEnabled = useAtomValue(featureDialogContinuumV1Atom) && !compactMode
+  const artifactsEnabled = useAtomValue(featureDialogArtifactsV1Atom)
   const emptyWelcome = Boolean(session && session.messages.length === 0 && !compactMode && !messagesLoading && !messagesLoadError && !session.isProcessing)
   const starterOptions = {
     session,
@@ -1752,13 +1810,15 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
           },
         }
       }
+      if (artifactsEnabled) return undefined
       return { type: 'permission', data: pendingPermission }
     }
     if (pendingCredential) {
+      if (artifactsEnabled) return undefined
       return { type: 'credential', data: pendingCredential }
     }
     return undefined
-  }, [pendingPermission, pendingCredential])
+  }, [pendingPermission, pendingCredential, artifactsEnabled])
 
   const tourSignals = useTourSignals({ sessionId: session?.id, workspaceId: session?.workspaceId })
   const tourVariant = compactMode ? 'compact' : 'regular'
@@ -2037,15 +2097,15 @@ const handleFollowUpChipClick = useCallback((item: {
                             '--shadow-color': 'var(--destructive-rgb)',
                           } as React.CSSProperties}
                         >
-                          <AlertTriangle className="mx-auto mb-2 h-4 w-4 text-destructive/70" />
+                          <AlertTriangle className="mx-auto mb-2 h-4 w-4 text-[var(--destructive-text)]" />
                           <div className="text-sm font-medium text-destructive">{t("chat.failedToLoadConversation")}</div>
-                          <p className="mt-1 break-words text-xs text-destructive/70">{messagesLoadError}</p>
+                          <p className="mt-1 break-words text-xs text-[var(--destructive-text)]">{messagesLoadError}</p>
                           {onRetryMessagesLoad && (
                             <button
                               type="button"
                               onClick={onRetryMessagesLoad}
                               disabled={messagesRetrying}
-                              className="mt-3 rounded border border-destructive/20 px-2 py-0.5 text-xs text-destructive/70 transition-colors hover:border-destructive/40 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
+                              className="mt-3 inline-flex items-center justify-center min-h-[var(--control-hit-min)] rounded border border-destructive/20 px-2 py-0.5 text-xs text-[var(--destructive-text)] transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)] hover:border-destructive/40 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {messagesRetrying ? t("common.retrying") : t("common.retry")}
                             </button>
@@ -2094,6 +2154,12 @@ const handleFollowUpChipClick = useCallback((item: {
                       ↑ {t('chat.scrollUpForEarlier', { count: startIndex })}
                     </div>
                   )}
+                  {continuumEnabled && turns.length > 0 && (
+                    <SessionDivider
+                      label={session.name}
+                      time={formatTurnClock(turns[0]?.timestamp ?? session.lastMessageAt)}
+                    />
+                  )}
                   {turns.map((turn, index) => {
                     // Compute turn key and check if it's a search match
                     const turnKey = getTurnKey(turn)
@@ -2104,12 +2170,18 @@ const handleFollowUpChipClick = useCallback((item: {
                     // Extra padding creates visual separation from AI responses
                     if (turn.type === 'user') {
                       return (
+                      <TurnShell
+                        key={turnKey}
+                        enabled={continuumEnabled}
+                        kind="user"
+                        time={formatTurnClock(turn.timestamp)}
+                      >
                         <div
                           key={turnKey}
                           ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
                           className={cn(
                             compactMode ? "pt-2 pb-1" : CHAT_LAYOUT.userMessagePadding,
-                            "rounded-lg transition-all duration-200",
+                            "rounded-lg transition-all duration-[var(--motion-base)] ease-[var(--ease-standard)]",
                             isCurrentMatch && "ring-2 ring-info ring-offset-2 ring-offset-background",
                             isAnyMatch && !isCurrentMatch && "ring-1 ring-info/30"
                           )}
@@ -2131,17 +2203,24 @@ const handleFollowUpChipClick = useCallback((item: {
                             onBranch={session?.supportsBranching && !turn.message.isPending && !turn.message.isQueued ? handleMessageBranch : undefined}
                           />
                         </div>
+                      </TurnShell>
                       )
                     }
 
                     // System turns (error, status, info, warning) - render with MemoizedMessageBubble
                     if (turn.type === 'system') {
                       return (
+                      <TurnShell
+                        key={turnKey}
+                        enabled={continuumEnabled}
+                        kind="system"
+                        time={formatTurnClock(turn.timestamp)}
+                      >
                         <div
                           key={turnKey}
                           ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
                           className={cn(
-                            "rounded-lg transition-all duration-200",
+                            "rounded-lg transition-all duration-[var(--motion-base)] ease-[var(--ease-standard)]",
                             isCurrentMatch && "ring-2 ring-info ring-offset-2 ring-offset-background",
                             isAnyMatch && !isCurrentMatch && "ring-1 ring-info/30"
                           )}
@@ -2162,6 +2241,7 @@ const handleFollowUpChipClick = useCallback((item: {
                             } : undefined}
                           />
                         </div>
+                      </TurnShell>
                       )
                     }
 
@@ -2171,11 +2251,17 @@ const handleFollowUpChipClick = useCallback((item: {
                       // Interactive only if no user message follows
                       const isAuthInteractive = !turns.slice(index + 1).some(t => t.type === 'user')
                       return (
+                      <TurnShell
+                        key={turnKey}
+                        enabled={continuumEnabled}
+                        kind="system"
+                        time={formatTurnClock(turn.timestamp)}
+                      >
                         <div
                           key={turnKey}
                           ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
                           className={cn(
-                            "mt-2 rounded-lg transition-all duration-200",
+                            "mt-2 rounded-lg transition-all duration-[var(--motion-base)] ease-[var(--ease-standard)]",
                             isCurrentMatch && "ring-2 ring-info ring-offset-2 ring-offset-background",
                             isAnyMatch && !isCurrentMatch && "ring-1 ring-info/30"
                           )}
@@ -2187,6 +2273,7 @@ const handleFollowUpChipClick = useCallback((item: {
                             isInteractive={isAuthInteractive}
                           />
                         </div>
+                      </TurnShell>
                       )
                     }
 
@@ -2200,6 +2287,16 @@ const handleFollowUpChipClick = useCallback((item: {
                     const isNativeFinal = !!turn.response?.messageId && turn.response.messageId === tourFinalMessageId
                     const hasNativeSourceResult = isLatestAssistantTurn && turn.activities.some(activity => activity.type === 'tool' && activity.status === 'completed' && !activity.error && !!activity.toolName && !!resolvePublishedToolSource(activity.toolName, session.enabledSourceSlugs ?? []))
                     return (
+                      <TurnShell
+                        key={turnKey}
+                        enabled={continuumEnabled}
+                        kind="assistant"
+                        time={formatTurnClock(turn.timestamp)}
+                        streaming={turn.isStreaming}
+                        thinking={continuumEnabled && turn.thinking?.text
+                          ? { text: turn.thinking.text, isStreaming: !!turn.thinking.isStreaming, steps: turn.activities.length }
+                          : undefined}
+                      >
                       <div
                         key={turnKey}
                         ref={el => {
@@ -2213,7 +2310,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         }}
                         className={cn(
                           "pt-2",
-                          "rounded-lg transition-all duration-200",
+                          "rounded-lg transition-all duration-[var(--motion-base)] ease-[var(--ease-standard)]",
                           isCurrentMatch && "ring-2 ring-info ring-offset-2 ring-offset-background",
                           isAnyMatch && !isCurrentMatch && "ring-1 ring-info/30"
                         )}
@@ -2225,7 +2322,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         turnId={turn.turnId}
                         activities={turn.activities}
                         response={turn.response}
-                        thinking={turn.thinking}
+                        thinking={continuumEnabled ? undefined : turn.thinking}
                         intent={turn.intent}
                         isStreaming={turn.isStreaming}
                         isComplete={turn.isComplete}
@@ -2354,7 +2451,9 @@ const handleFollowUpChipClick = useCallback((item: {
                             })
                           }
                         }}
+                        continuum={continuumEnabled}
                       />
+                      {artifactsEnabled && <ArtifactStack activities={turn.activities} />}
                       {session.memoryMode !== 'temporary' && (
                         <MemoryProvenanceStrip
                           sessionId={session.id}
@@ -2363,8 +2462,36 @@ const handleFollowUpChipClick = useCallback((item: {
                         />
                       )}
                       </div>
+                      </TurnShell>
                     )
                   })}
+                    {artifactsEnabled && pendingPermission && pendingPermission.type !== 'admin_approval' && (
+                      <TurnShell
+                        key="g05-inline-approval"
+                        enabled={continuumEnabled}
+                        kind="assistant"
+                        time={formatTurnClock(session.lastMessageAt)}
+                      >
+                        <InlineApprovalCard
+                          request={pendingPermission}
+                          onResponse={handleStructuredResponse}
+                          state="pending"
+                        />
+                      </TurnShell>
+                    )}
+                    {artifactsEnabled && pendingCredential && (
+                      <TurnShell
+                        key="g05-inline-credential"
+                        enabled={continuumEnabled}
+                        kind="assistant"
+                        time={formatTurnClock(session.lastMessageAt)}
+                      >
+                        <InlineCredentialCard
+                          request={pendingCredential}
+                          onResponse={handleStructuredResponse}
+                        />
+                      </TurnShell>
+                    )}
                     <SessionMemoryProposalLane
                       workspaceId={workspaceId ?? session.workspaceId}
                       sessionId={session.id}
@@ -2701,7 +2828,7 @@ function ErrorMessage({ message, onOpenUrl, sessionId, onRetry }: { message: Mes
           '--shadow-color': 'var(--destructive-rgb)',
         } as React.CSSProperties}
       >
-        <div className="text-xs text-destructive/50 mb-0.5 font-semibold">
+        <div className="text-xs text-[var(--destructive-text)] mb-0.5 font-semibold">
           {message.errorTitle || t('common.error')}
         </div>
         <p className="text-sm text-destructive">{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</p>
@@ -2719,7 +2846,7 @@ function ErrorMessage({ message, onOpenUrl, sessionId, onRetry }: { message: Mes
                     onRetry,
                   })
                 }}
-                className="text-xs px-2 py-0.5 rounded border border-destructive/20 text-destructive/70 hover:text-destructive hover:border-destructive/40 transition-colors"
+                className="inline-flex items-center justify-center text-xs px-2 py-0.5 min-h-[var(--control-hit-min)] rounded border border-destructive/20 text-[var(--destructive-text)] hover:border-destructive/40 transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)]"
               >
                 {action.label}{action.action === 'open_url' ? ' ↗' : ''}
               </button>
@@ -2732,7 +2859,7 @@ function ErrorMessage({ message, onOpenUrl, sessionId, onRetry }: { message: Mes
           <div className="mt-2">
             <button
               onClick={() => setDetailsOpen(!detailsOpen)}
-              className="flex items-center gap-1 text-xs text-destructive/70 hover:text-destructive transition-colors"
+              className="flex items-center gap-1 text-xs min-h-[var(--control-hit-min)] text-[var(--destructive-text)] transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)]"
             >
               {detailsOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
               <span>{detailsOpen ? t('chat.hideTechnicalDetails') : t('chat.showTechnicalDetails')}</span>
@@ -2819,7 +2946,7 @@ function MessageBubble({
             <button
               onClick={() => onPopOut(message)}
               data-touch-reveal="true"
-              className="absolute top-2 right-2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-foreground/5"
+              className="absolute top-2 right-2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--motion-fast)] ease-[var(--ease-standard)] hover:bg-foreground/5"
               title={t("sidebarMenu.openInNewWindow")}
             >
               <ExternalLink className="w-4 h-4 text-muted-foreground hover:text-foreground" />
@@ -2843,7 +2970,7 @@ function MessageBubble({
                 onUrlClick={onOpenUrl}
                 onFileClick={onOpenFile}
                 id={message.id}
-                className="text-sm"
+                className="prose-body prose-measure"
                 collapsible
                 blockScope={blockScope}
               >
@@ -2881,10 +3008,10 @@ function MessageBubble({
   // === STATUS MESSAGE: Matches ProcessingIndicator layout for visual consistency ===
   if (message.role === 'status') {
     return (
-      <div className="flex items-center gap-2 px-3 py-1 -mb-1 text-[13px] text-muted-foreground">
+      <div className="flex items-center gap-2 px-3 py-1 -mb-1 text-base text-muted-foreground">
         {/* Spinner in same location as TurnCard chevron */}
         <div className="w-3 h-3 flex items-center justify-center shrink-0">
-          <Spinner className="text-[10px]" />
+          <Spinner className="text-xs" />
         </div>
         <span>{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</span>
       </div>
@@ -2917,7 +3044,7 @@ function MessageBubble({
     const Icon = config.icon
 
     return (
-      <div className={cn('flex items-center gap-2 px-3 py-1 text-[13px] select-none', config.className)}>
+      <div className={cn('flex items-center gap-2 px-3 py-1 text-base select-none', config.className)}>
         <div className="w-3 h-3 flex items-center justify-center shrink-0">
           <Icon className="w-3 h-3" />
         </div>

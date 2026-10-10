@@ -29,7 +29,7 @@ import { ClipboardHistorySettings } from './ClipboardHistorySettings'
 import { ClipboardTagBar, ClipboardTagEditor } from './ClipboardTagBar'
 import { useClipboardHistory } from './use-clipboard-history'
 
-const INPUT = 'h-7 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
+const INPUT = 'h-7 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-sm outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 const KINDS = ['all', 'text', 'image'] as const
 const FORMATS: ReadonlyArray<{ value: ClipFormatFilter; label: string }> = [
   { value: 'all', label: 'clipboard.filter.formatAll' },

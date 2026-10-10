@@ -182,7 +182,7 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
         >
           <ArrowRight className="size-4" />
         </Button>
-        <label className="flex max-w-[180px] shrink-0 items-center gap-1 text-[11px] text-muted-foreground" title={canUseImportedCookies ? cookieStatus?.domains?.join(', ') : t('settings.browserImport.auto.noImportedConsent')}>
+        <label className="flex max-w-[180px] shrink-0 items-center gap-1 text-xs text-muted-foreground" title={canUseImportedCookies ? cookieStatus?.domains?.join(', ') : t('settings.browserImport.auto.noImportedConsent')}>
           <input
             type="checkbox"
             checked={useImportedCookies}
@@ -192,7 +192,7 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
           <span className="truncate">{t('settings.browserImport.auto.useImportedCookies')}</span>
         </label>
         {cookieStatus?.consent && (cookieStatus.profileName || cookieStatus.domains?.length) ? (
-          <span className="max-w-[96px] truncate text-[9px] text-muted-foreground" title={cookieStatus.domains?.join(', ')}>
+          <span className="max-w-[96px] truncate text-xs text-muted-foreground" title={cookieStatus.domains?.join(', ')}>
             {cookieStatus.profileName ?? ''}{cookieStatus.domains?.length ? ` · ${cookieStatus.domains.join(', ')}` : ''}
           </span>
         ) : null}
@@ -213,7 +213,7 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
             value={address}
             onChange={(event) => setAddress(event.target.value)}
             onFocus={(event) => event.currentTarget.select()}
-            className="h-9 w-full rounded-[var(--radius-control)] border border-black/[0.12] bg-black/[0.04] px-3 text-[14px] outline-none transition focus:border-black/25 focus:bg-background"
+            className="h-9 w-full rounded-[var(--radius-control)] border border-black/[0.12] bg-black/[0.04] px-3 text-base outline-none transition focus:border-black/25 focus:bg-background"
             placeholder={t('browser.urlPlaceholder')}
             inputMode="url"
             autoCapitalize="none"

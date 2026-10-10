@@ -58,8 +58,8 @@ export function AutomationCard({
 
         {/* Name + summary */}
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium truncate">{automation.name}</div>
-          <div className="text-xs text-foreground/50 truncate">{automation.summary}</div>
+          <div className="text-sm font-medium truncate" title={automation.name}>{automation.name}</div>
+          <div className="text-xs text-foreground/50 truncate" title={automation.summary}>{automation.summary}</div>
         </div>
 
         {/* Enable toggle */}
@@ -76,7 +76,7 @@ export function AutomationCard({
         <div className="border-t border-border/30 px-4 py-3 space-y-3">
           {/* Trigger info */}
           <div className="space-y-1">
-            <h5 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('automations.sectionWhen')}</h5>
+            <h5 className="text-xs font-medium text-muted-foreground uppercase caps-label">{t('automations.sectionWhen')}</h5>
             <div className="text-xs text-foreground/70">
               <span className="font-medium">{getEventDisplayName(automation.event)}</span>
               {automation.matcher && (
@@ -94,7 +94,7 @@ export function AutomationCard({
 
           {/* Actions */}
           <div className="space-y-1">
-            <h5 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t('automations.sectionThen')}</h5>
+            <h5 className="text-xs font-medium text-muted-foreground uppercase caps-label">{t('automations.sectionThen')}</h5>
             <AutomationActionPreview actions={automation.actions} />
           </div>
 

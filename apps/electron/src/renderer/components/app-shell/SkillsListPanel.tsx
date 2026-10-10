@@ -318,14 +318,14 @@ export function SkillsListPanel({
       <div className="mx-2 mb-1 flex items-center justify-end gap-1.5" data-list-role="skills-prune">
         {pruneConfirmOpen ? (
           <>
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {t('skills.pruneConfirm', { count: pruneCandidates.length })}
             </span>
             <button
               type="button"
               disabled={pruneBusy}
               onClick={() => void handlePrune()}
-              className="inline-flex items-center h-5 px-1.5 text-[10px] font-medium rounded-[var(--radius-control)] bg-destructive/15 text-destructive hover:bg-destructive/25 transition-colors disabled:opacity-50"
+              className="inline-flex items-center h-5 px-1.5 text-xs font-medium rounded-[var(--radius-control)] bg-destructive/15 text-destructive hover:bg-destructive/25 transition-colors disabled:opacity-50"
             >
               {t('skills.pruneButton')}
             </button>
@@ -333,7 +333,7 @@ export function SkillsListPanel({
               type="button"
               disabled={pruneBusy}
               onClick={() => setPruneConfirmOpen(false)}
-              className="inline-flex items-center h-5 px-1.5 text-[10px] font-medium rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 transition-colors disabled:opacity-50"
+              className="inline-flex items-center h-5 px-1.5 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 transition-colors disabled:opacity-50"
             >
               {t('common.cancel')}
             </button>
@@ -375,12 +375,12 @@ export function SkillsListPanel({
         badges: (
           <span className="flex items-center gap-1.5 min-w-0">
             {repeatedSkillNames.has(skill.metadata.name) && (
-              <span className="shrink-0 max-w-48 truncate rounded-full bg-foreground/5 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground" title={skill.slug}>
+              <span className="shrink-0 max-w-48 truncate rounded-full bg-foreground/5 px-1.5 py-0.5 font-mono text-xs text-muted-foreground" title={skill.slug}>
                 @{skill.slug}
               </span>
             )}
             {skill.source === 'project' && (
-              <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
+              <span className="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
                 {t('skillsList.projectBadge')}
               </span>
             )}
@@ -403,7 +403,7 @@ export function SkillsListPanel({
                     count: used,
                     date: lastUsedAt ? new Date(lastUsedAt).toLocaleDateString() : '—',
                   })}
-                  className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground"
+                  className="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground numeric"
                 >
                   {used}×
                 </span>
@@ -457,9 +457,9 @@ export function SkillsListPanel({
     {/* Pending skill candidates awaiting approval */}
     {pendingSkills.length > 0 && (
       <div className="mb-2 pb-1.5 border-b border-foreground/5" data-list-role="pending-skills">
-        <div className="px-2 pb-1 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">
+        <div className="px-2 pb-1 flex items-center gap-1.5 text-xs font-medium uppercase caps-label text-muted-foreground/70">
           {t('pendingSkills.section')}
-          <span className="inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-accent/15 text-accent text-[10px] font-semibold">
+          <span className="inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-accent/15 text-accent text-xs font-semibold numeric">
             {pendingSkills.length}
           </span>
         </div>
@@ -489,7 +489,7 @@ export function SkillsListPanel({
                   return (
                   <div className="mt-1.5 pl-4 space-y-1.5">
                     {isUpdate && (
-                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <RefreshCw className="size-3 shrink-0" />
                         {t('pendingSkills.updatesNote', { slug: candidate.updates, version: candidate.nextVersion ?? 2 })}
                       </div>
@@ -504,7 +504,7 @@ export function SkillsListPanel({
                             return (
                               <span
                                 key={flag}
-                                className="inline-flex items-center gap-1 h-5 px-1.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-medium"
+                                className="inline-flex items-center gap-1 h-5 px-1.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-medium"
                               >
                                 <Icon className="size-3" />
                                 {t(RISK_FLAG_I18N_KEY[flag])}
@@ -516,7 +516,7 @@ export function SkillsListPanel({
                     })()}
                     {/* S2: script-validation block reason */}
                     {violations.length > 0 && (
-                      <div className="flex items-start gap-1.5 rounded-[var(--radius-card)] bg-destructive/10 px-2 py-1.5 text-[11px] leading-snug text-destructive-foreground">
+                      <div className="flex items-start gap-1.5 rounded-[var(--radius-card)] bg-destructive/10 px-2 py-1.5 text-xs text-destructive-foreground">
                         <TriangleAlert className="size-3 mt-0.5 shrink-0 text-destructive" />
                         <span>
                           <span className="font-medium">{t('pendingSkills.violationsBlock')}</span>{' '}
@@ -526,13 +526,13 @@ export function SkillsListPanel({
                     )}
                     {isUpdate && diff && diff.base !== null ? (
                       <div>
-                        <div className="flex items-center gap-1.5 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">
+                        <div className="flex items-center gap-1.5 pb-1 text-xs font-medium uppercase caps-label text-muted-foreground/70">
                           {t('pendingSkills.diffTitle')}
                           <span className="normal-case tracking-normal text-muted-foreground/50">
                             {t('pendingSkills.diffCurrent')} → {t('pendingSkills.diffProposed')}
                           </span>
                         </div>
-                        <pre className="max-h-56 overflow-auto rounded-[var(--radius-card)] bg-foreground/[0.03] p-2 text-[11px] leading-snug text-foreground/80">
+                        <pre className="max-h-56 overflow-auto rounded-[var(--radius-card)] bg-foreground/[0.03] p-2 text-xs text-foreground/80">
                           {lineDiff(diff.base, diff.candidate).map((line, idx) => (
                             <span
                               key={idx}
@@ -551,7 +551,7 @@ export function SkillsListPanel({
                         </pre>
                       </div>
                     ) : (
-                      <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-[var(--radius-card)] bg-foreground/[0.03] p-2 text-[11px] leading-snug text-foreground/80">
+                      <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-[var(--radius-card)] bg-foreground/[0.03] p-2 text-xs text-foreground/80">
                         {candidate.content}
                       </pre>
                     )}
@@ -563,7 +563,7 @@ export function SkillsListPanel({
                           ? t('pendingSkills.approveDisabledReason', { reasons: violationReasons.join(', ') })
                           : undefined}
                         onClick={() => void handlePendingAction(candidate.slug, 'approve')}
-                        className="inline-flex items-center gap-1 h-6 px-2 text-[11px] font-medium rounded-[var(--radius-control)] bg-accent/15 text-accent hover:bg-accent/25 transition-colors disabled:opacity-50 disabled:hover:bg-accent/15 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-1 h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-accent/15 text-accent hover:bg-accent/25 transition-colors disabled:opacity-50 disabled:hover:bg-accent/15 disabled:cursor-not-allowed"
                       >
                         <Check className="size-3" />
                         {t('pendingSkills.approve')}
@@ -572,7 +572,7 @@ export function SkillsListPanel({
                         <button
                           type="button"
                           onClick={() => void handlePendingAction(candidate.slug, 'approve', undefined, true)}
-                          className="h-6 px-1 text-[11px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground transition-colors"
+                          className="h-6 px-1 text-xs text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground transition-colors"
                         >
                           {t('pendingSkills.approveAnyway')}
                         </button>
@@ -580,7 +580,7 @@ export function SkillsListPanel({
                       <button
                         type="button"
                         onClick={() => void handlePendingAction(candidate.slug, 'dismiss', candidate.description)}
-                        className="inline-flex items-center gap-1 h-6 px-2 text-[11px] font-medium rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors"
+                        className="inline-flex items-center gap-1 h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors"
                       >
                         <X className="size-3" />
                         {t('pendingSkills.dismiss')}
@@ -599,10 +599,10 @@ export function SkillsListPanel({
     {/* Bundled skill packs — enable/disable presets shipped with the app */}
     {bundledPacks !== null && bundledPacks.length > 0 && (
       <div className="mb-2 pb-1.5 border-b border-foreground/5" data-list-role="bundled-skill-packs">
-        <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">
+        <div className="px-2 pb-1 text-xs font-medium uppercase caps-label text-muted-foreground/70">
           {t('settings.context.bundledTitle')}
         </div>
-        <p className="px-2 pb-1.5 text-[11px] text-muted-foreground/80 leading-snug">
+        <p className="px-2 pb-1.5 text-xs text-muted-foreground/80">
           {t('settings.context.bundledDesc')}
         </p>
         <ul>
@@ -610,7 +610,7 @@ export function SkillsListPanel({
             <li key={pack.slug} style={SKILL_ROW_STYLE} className="flex items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)] hover:bg-foreground/[0.03]">
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm">{pack.slug}</span>
-                <span className="block truncate text-[11px] text-muted-foreground">
+                <span className="block truncate text-xs text-muted-foreground">
                   {[
                     pack.commit ? pack.commit.slice(0, 8) : null,
                     pack.localModified ? t('settings.context.bundledLocalModified') : null,
@@ -643,7 +643,7 @@ export function SkillsListPanel({
     {/* Runtime skills — read-only group with export action */}
     {ompSkills.length > 0 && (
       <div className="mt-3 pt-1.5" data-list-role="runtime-skills">
-        <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">
+        <div className="px-2 pb-1 text-xs font-medium uppercase caps-label text-muted-foreground/70">
           {t('skillsList.roxCliSection')}
         </div>
         <ul>
@@ -665,7 +665,7 @@ export function SkillsListPanel({
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5 min-w-0">
                     <span className="truncate text-sm">{skill.metadata.name}</span>
-                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
+                    <span className="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
                       {t('skillsList.roxCliBadge')}
                     </span>
                   </span>

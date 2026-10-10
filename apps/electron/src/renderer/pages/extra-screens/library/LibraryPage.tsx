@@ -151,8 +151,8 @@ export default function LibraryPage({ itemId }: { itemId: string | null }) {
                     onClick={() => openEntry(row)}
                     className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-surface-hover"
                   >
-                    <span className="min-w-0 flex-1 truncate">{row.title}</span>
-                    {row.subtitle && <span className="max-w-[45%] shrink-0 truncate text-small text-muted-foreground">{row.subtitle}</span>}
+                    <span className="min-w-0 flex-1 truncate" title={row.title}>{row.title}</span>
+                    {row.subtitle && <span className="max-w-[45%] shrink-0 truncate text-small text-muted-foreground" title={row.subtitle}>{row.subtitle}</span>}
                   </button>
                 ))}
               </section>

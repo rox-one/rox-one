@@ -893,13 +893,13 @@ export default function TasksPage(props: TasksPageProps = {}) {
                 placeholder={navCreate === 'area' ? t('tasks.nav.newAreaPlaceholder') : t('tasks.nav.newProjectPlaceholder')}
                 aria-label={navCreate === 'area' ? t('tasks.nav.newArea') : t('tasks.nav.newProject')}
                 data-testid="tasks-nav-create-input"
-                className="h-7 w-full rounded-[var(--radius-card)] bg-foreground/[0.06] px-2 text-[12px] outline-none placeholder:text-text-muted"
+                className="h-7 w-full rounded-[var(--radius-card)] bg-foreground/[0.06] px-2 text-sm outline-none placeholder:text-text-muted"
               />
             </form>
           ) : (
             <div className="flex gap-1 px-1">
-              <button type="button" data-testid="tasks-new-project" onClick={() => setNavCreate('project')} className="h-7 min-w-0 flex-1 truncate rounded-[var(--radius-control)] px-2 text-left text-[12px] text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground">+ {t('tasks.nav.newProject')}</button>
-              <button type="button" data-testid="tasks-new-area" onClick={() => setNavCreate('area')} className="h-7 shrink-0 rounded-[var(--radius-control)] px-2 text-[12px] text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground">+ {t('tasks.nav.newArea')}</button>
+              <button type="button" data-testid="tasks-new-project" onClick={() => setNavCreate('project')} className="h-7 min-w-0 flex-1 truncate rounded-[var(--radius-control)] px-2 text-left text-sm text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground">+ {t('tasks.nav.newProject')}</button>
+              <button type="button" data-testid="tasks-new-area" onClick={() => setNavCreate('area')} className="h-7 shrink-0 rounded-[var(--radius-control)] px-2 text-sm text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground">+ {t('tasks.nav.newArea')}</button>
             </div>
           )}
         </div>
@@ -943,7 +943,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
         placeholder={t('tasks.quickEntry.placeholder')}
         aria-label={t('tasks.newTask')}
         data-testid="tasks-inline-input"
-        className="h-5 min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-text-muted"
+        className="h-5 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-text-muted"
       />
     </form>
   )
@@ -1015,21 +1015,21 @@ export default function TasksPage(props: TasksPageProps = {}) {
               {chip ? <Badge tone={CHIP_TONE[chip.chip]}>{t(`tasks.chip.${chip.chip}`)}</Badge> : null}
             </div>
             {hasMeta ? (
-              <div className="flex min-w-0 items-center gap-2 truncate text-[11px] text-text-muted">
+              <div className="flex min-w-0 items-center gap-2 truncate text-xs text-text-muted">
                 {done && task.completedAt ? <span>{t('tasks.row.doneAt', { time: timeFmt.format(task.completedAt) })}</span> : null}
                 {place ? <span className="truncate">{place}</span> : null}
                 {showStart ? <span>{dateFmt.format(task.startAt!)}</span> : null}
-                {progress.total ? <span className="tabular-nums">☑ {progress.done}/{progress.total}</span> : null}
+                {progress.total ? <span className="numeric">☑ {progress.done}/{progress.total}</span> : null}
                 {subs.length ? <span>{t('tasks.row.subtasks', { done: subs.filter((s) => s.completedAt).length, total: subs.length })}</span> : null}
                 {source ? <span className="inline-flex items-center gap-0.5 truncate">{Glyph.link}{t(`tasks.linkKind.${source.kind}`)}</span> : null}
               </div>
             ) : null}
           </div>
           {task.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="mt-[1px] inline-flex h-[18px] max-w-[96px] shrink-0 items-center truncate rounded-[var(--radius-control)] bg-foreground/[0.07] px-1.5 text-[11px] text-text-secondary">{tag}</span>
+            <span key={tag} className="mt-[1px] inline-flex h-[18px] max-w-[96px] shrink-0 items-center truncate rounded-[var(--radius-control)] bg-foreground/[0.07] px-1.5 text-xs text-text-secondary">{tag}</span>
           ))}
           {task.dueAt != null && !done ? (
-            <span className={cn('mt-[1px] inline-flex h-[18px] shrink-0 items-center gap-1 text-[11px] tabular-nums', daysUntil(task.dueAt, now) <= 0 ? 'font-semibold text-destructive' : 'text-text-secondary')} title={`${t('tasks.field.deadline')}: ${dateFmt.format(task.dueAt)}`}>
+            <span className={cn('mt-[1px] inline-flex h-[18px] shrink-0 items-center gap-1 text-xs numeric', daysUntil(task.dueAt, now) <= 0 ? 'font-semibold text-destructive' : 'text-text-secondary')} title={`${t('tasks.field.deadline')}: ${dateFmt.format(task.dueAt)}`}>
               {Glyph.flag}{formatDeadline(task.dueAt)}
             </span>
           ) : null}
@@ -1044,8 +1044,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
       const date = new Date(section.day)
       return (
         <div className="flex items-baseline gap-2 border-b border-foreground/10 px-3.5 pb-1 pt-3">
-          <span className="text-[22px] font-bold leading-none tabular-nums">{date.getDate()}</span>
-          <span className="text-[13px] font-semibold">{section.title}</span>
+          <span className="text-stat font-bold leading-none numeric">{date.getDate()}</span>
+          <span className="text-base font-semibold">{section.title}</span>
         </div>
       )
     }
@@ -1061,17 +1061,17 @@ export default function TasksPage(props: TasksPageProps = {}) {
             aria-label={t('tasks.heading.rename')}
             onBlur={(event) => { const title = event.target.value.trim(); if (title && title !== heading.title) mutate((current) => current.updateHeading(heading.id, { title })) }}
             onKeyDown={(event) => { if (event.key === 'Enter') (event.target as HTMLInputElement).blur(); event.stopPropagation() }}
-            className="min-w-0 flex-1 bg-transparent text-[13px] font-semibold text-accent outline-none"
+            className="min-w-0 flex-1 bg-transparent text-base font-semibold text-accent outline-none"
           />
         ) : section.onOpen ? (
-          <button type="button" onClick={section.onOpen} className="min-w-0 truncate text-left text-[13px] font-semibold hover:underline">{section.title}</button>
+          <button type="button" onClick={section.onOpen} className="min-w-0 truncate text-left text-base font-semibold hover:underline" title={typeof section.title === 'string' ? section.title : undefined}>{section.title}</button>
         ) : (
-          <span className="min-w-0 truncate text-[13px] font-semibold">{section.title}</span>
+          <span className="min-w-0 truncate text-base font-semibold" title={typeof section.title === 'string' ? section.title : undefined}>{section.title}</span>
         )}
-        {section.subtitle ? <span className="text-[11px] text-text-muted">{section.subtitle}</span> : null}
+        {section.subtitle ? <span className="text-xs text-text-muted">{section.subtitle}</span> : null}
         <span className="flex-1" />
         {heading ? (
-          <button type="button" onClick={() => setConfirm({ kind: 'removeHeading', id: heading.id })} className="rounded-[var(--radius-control)] px-1.5 text-[11px] text-text-muted opacity-0 hover:text-destructive focus:opacity-100 group-hover:opacity-100">{t('tasks.heading.remove')}</button>
+          <button type="button" onClick={() => setConfirm({ kind: 'removeHeading', id: heading.id })} className="rounded-[var(--radius-control)] px-1.5 text-xs text-text-muted opacity-0 hover:text-destructive focus:opacity-100 group-hover:opacity-100">{t('tasks.heading.remove')}</button>
         ) : null}
       </div>
     )
@@ -1094,7 +1094,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           {inlineTop ? renderInline() : null}
           {section.tasks.map((task) => renderTaskRow(task, section))}
           {!section.tasks.length && !inlineTop && section.emptyHint ? (
-            <div className="px-3.5 py-1 text-[12px] text-text-muted">{t('tasks.section.emptyDrop')}</div>
+            <div className="px-3.5 py-1 text-sm text-text-muted">{t('tasks.section.emptyDrop')}</div>
           ) : null}
         </div>
       </div>
@@ -1183,7 +1183,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           title={t('tasks.magicPlusHint')}
           aria-label={t('tasks.magicPlus')}
           data-testid="tasks-magic-plus"
-          className="inline-flex size-8 shrink-0 items-center justify-center rounded-[6px] bg-accent text-[20px] leading-none text-accent-foreground outline-none transition-colors hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-[6px] bg-accent text-stat leading-none text-accent-foreground outline-none transition-colors hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring"
         >
           +
         </button>
@@ -1194,11 +1194,11 @@ export default function TasksPage(props: TasksPageProps = {}) {
     <div className="relative flex h-full min-h-0 flex-col">
       <header className="shrink-0 px-3 pt-2" data-testid="tasks-list-header">
         <div className="flex min-w-0 items-center gap-2">
-          <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold">{titleNode}</h2>
+          <h2 className="min-w-0 flex-1 truncate text-lg font-semibold">{titleNode}</h2>
           {magicPlusControl}
         </div>
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 py-1">
-          <span className="min-w-0 text-[12px] text-text-muted">{t('tasks.status.open', { count: view.kind === 'agents' ? agentList.length : visible.filter(isOpenTask).length })}</span>
+          <span className="min-w-0 text-sm text-text-muted">{t('tasks.status.open', { count: view.kind === 'agents' ? agentList.length : visible.filter(isOpenTask).length })}</span>
           <div className="flex min-w-0 flex-wrap items-center gap-1">{headerControls}</div>
         </div>
       </header>
@@ -1212,7 +1212,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           rows={1}
           onBlur={(event) => { const notes = event.target.value; if (notes !== (currentProject.notes ?? '')) mutate((current) => current.updateProject(currentProject.id, { notes })) }}
           onKeyDown={(event) => event.stopPropagation()}
-          className="mx-3.5 mb-1 resize-none bg-transparent text-[12px] text-text-secondary outline-none placeholder:text-text-muted"
+          className="mx-3.5 mb-1 resize-none bg-transparent text-sm text-text-secondary outline-none placeholder:text-text-muted"
         />
       ) : null}
       {view.kind !== 'agents' ? (
@@ -1230,7 +1230,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
               placeholder={t('tasks.search.placeholder')}
               aria-label={t('tasks.search.label')}
               data-testid="tasks-search"
-              className="h-6 min-w-0 flex-1 bg-transparent text-[12px] outline-none placeholder:text-text-muted"
+              className="h-6 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted"
             />
           </div>
         </div>
@@ -1238,7 +1238,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       {view.kind !== 'agents' && viewTags.length && !searching ? (
         <div className="flex flex-wrap gap-1 px-3.5 pb-1.5" role="group" aria-label={t('tasks.tagFilter')}>
           {viewTags.slice(0, 10).map((tag) => (
-            <button key={tag} type="button" aria-pressed={tagFilter === tag} onClick={() => setTagFilter((cur) => (cur === tag ? null : tag))} className={cn('h-[20px] rounded-[var(--radius-control)] px-1.5 text-[11px]', tagFilter === tag ? 'bg-accent text-accent-foreground' : 'bg-foreground/[0.06] text-text-secondary hover:text-foreground')}>
+            <button key={tag} type="button" aria-pressed={tagFilter === tag} onClick={() => setTagFilter((cur) => (cur === tag ? null : tag))} className={cn('h-[20px] rounded-[var(--radius-control)] px-1.5 text-xs', tagFilter === tag ? 'bg-accent text-accent-foreground' : 'bg-foreground/[0.06] text-text-secondary hover:text-foreground')}>
               {tag}
             </button>
           ))}
@@ -1254,7 +1254,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
             placeholder={t('tasks.quickEntryPlaceholder')}
             aria-label={t('tasks.newTask')}
             data-testid="tasks-quick-input"
-            className="h-7 min-w-0 flex-1 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted"
+            className="h-7 min-w-0 flex-1 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-sm outline-none placeholder:text-text-muted"
           />
           <Button type="submit" data-testid="new-task-button">{t('tasks.newTask')}</Button>
         </form>
@@ -1278,7 +1278,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
               onClick={() => navigate(routes.view.allSessions(session.id))}
               className="mx-1.5 flex w-[calc(100%-12px)] items-center gap-2 rounded-[var(--radius-control)] px-2 py-[5px] text-left hover:bg-foreground/[0.04]"
             >
-              <span className="min-w-0 flex-1 truncate">{getSessionTitle(session as never)}</span>
+              <span className="min-w-0 flex-1 truncate" title={getSessionTitle(session as never)}>{getSessionTitle(session as never)}</span>
               {session.sessionStatus ? <Badge tone="muted">{String(session.sessionStatus)}</Badge> : null}
             </button>
           ))
@@ -1394,7 +1394,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           {t('common.backToList')}
         </Button>
       ) : (
-        <div className="grid max-w-[360px] grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[12px]" aria-label={t('tasks.status.keys')}>
+        <div className="grid max-w-[360px] grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm" aria-label={t('tasks.status.keys')}>
           {shortcuts.map(([key, id]) => (
             <React.Fragment key={id}>
               <kbd className="font-sans font-semibold text-text-secondary">{key}</kbd>
@@ -1419,16 +1419,16 @@ export default function TasksPage(props: TasksPageProps = {}) {
         html[data-render-profile="performance"] .task-check-draw { animation: none }
       `}</style>
       {personalTasksLoadStatus() === 'quarantine' ? (
-        <div className="bg-destructive/10 px-3 py-1.5 text-[12px] text-destructive" role="alert" data-testid="tasks-quarantine">
+        <div className="bg-destructive/10 px-3 py-1.5 text-sm text-destructive" role="alert" data-testid="tasks-quarantine">
           {t('tasks.quarantineBanner')}
         </div>
       ) : null}
       {personalTasksSyncConflicts().length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2 border-b border-status-warning/30 bg-status-warning/10 px-3 py-2 text-[12px]" role="alert" data-testid="tasks-sync-conflicts">
+        <div className="flex flex-wrap items-center gap-2 border-b border-status-warning/30 bg-status-warning/10 px-3 py-2 text-sm" role="alert" data-testid="tasks-sync-conflicts">
           <span>{t('tasks.sync.conflict')}</span>
           {personalTasksSyncConflicts().map((conflict) => (
             <span key={conflict.id} className="inline-flex items-center gap-1">
-              <span className="max-w-40 truncate">{conflict.current?.task.title ?? store.get(conflict.id)?.title ?? conflict.id}</span>
+              <span className="max-w-40 truncate" title={conflict.current?.task.title ?? store.get(conflict.id)?.title ?? conflict.id}>{conflict.current?.task.title ?? store.get(conflict.id)?.title ?? conflict.id}</span>
               <Button variant="secondary" onClick={() => resolvePersonalTaskConflict(conflict.id, 'local')}>{t('tasks.sync.keepLocal')}</Button>
               <Button variant="ghost" onClick={() => resolvePersonalTaskConflict(conflict.id, 'server')}>{t('tasks.sync.useServer')}</Button>
             </span>

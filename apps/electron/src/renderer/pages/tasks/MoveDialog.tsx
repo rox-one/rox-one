@@ -42,7 +42,7 @@ export function MoveDialog({
   return (
     <Overlay onClose={onClose} label={title} width={420} testId="tasks-move-dialog">
       <div className="px-3 pb-2 pt-3">
-        <div className="pb-1.5 text-[11px] uppercase tracking-wide text-text-muted">{title}</div>
+        <div className="pb-1.5 text-xs uppercase caps-label text-text-muted">{title}</div>
         <input
           autoFocus
           value={query}
@@ -62,17 +62,17 @@ export function MoveDialog({
           }}
           placeholder={t('tasks.move.placeholder')}
           aria-label={t('tasks.move.placeholder')}
-          className="h-8 w-full rounded-sm bg-foreground/[0.05] px-2 text-[13px] outline-none placeholder:text-text-muted"
+          className="h-8 w-full rounded-sm bg-foreground/[0.05] px-2 text-base outline-none placeholder:text-text-muted"
         />
       </div>
       <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2" role="listbox" aria-label={title}>
-        {filtered.length === 0 ? <div className="px-2 py-3 text-[12px] text-text-muted">{t('tasks.move.none')}</div> : null}
+        {filtered.length === 0 ? <div className="px-2 py-3 text-sm text-text-muted">{t('tasks.move.none')}</div> : null}
         {filtered.map((dest, index) => {
           const header = dest.group !== lastGroup ? dest.group : null
           lastGroup = dest.group
           return (
             <React.Fragment key={dest.id}>
-              {header ? <div className="px-2 pb-0.5 pt-2 text-[11px] uppercase tracking-wide text-text-muted">{header}</div> : null}
+              {header ? <div className="px-2 pb-0.5 pt-2 text-xs uppercase caps-label text-text-muted">{header}</div> : null}
               <button
                 type="button"
                 role="option"
@@ -81,13 +81,13 @@ export function MoveDialog({
                 onMouseEnter={() => setActive(index)}
                 onClick={() => onPick(dest.id)}
                 className={cn(
-                  'flex h-7 w-full items-center gap-2 rounded-[var(--radius-control)] px-2 text-left text-[13px] outline-none',
+                  'flex h-7 w-full items-center gap-2 rounded-[var(--radius-control)] px-2 text-left text-base outline-none',
                   dest.indent && 'pl-6',
                   index === active ? 'bg-accent/15 font-semibold ring-2 ring-inset ring-accent' : 'hover:bg-foreground/[0.05]',
                 )}
               >
-                <span className="min-w-0 flex-1 truncate">{dest.label}</span>
-                {dest.hint ? <span className="shrink-0 text-[11px] text-text-muted">{dest.hint}</span> : null}
+                <span className="min-w-0 flex-1 truncate" title={dest.label}>{dest.label}</span>
+                {dest.hint ? <span className="shrink-0 text-xs text-text-muted">{dest.hint}</span> : null}
               </button>
             </React.Fragment>
           )

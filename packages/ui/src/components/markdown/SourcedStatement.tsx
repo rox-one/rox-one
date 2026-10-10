@@ -34,8 +34,8 @@ export function SourcedStatement({ source, children, className, withinLink = fal
         {children}
       </span>
       <span role="tooltip" className="rox-sourced-card">
-        <span className="block text-[12px] font-medium text-foreground">{source.title}</span>
-        <span className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-muted-foreground">
+        <span className="block text-sm font-medium text-foreground">{source.title}</span>
+        <span className="mt-1 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
           <span>{reliability}</span>
           <span>{dateLabel}</span>
           {source.primary ? <span>{t('research.citation.primary')}</span> : null}

@@ -274,7 +274,7 @@ function CardSeparator() {
 function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div className="px-4 pt-3 pb-1">
-      <div className="text-xs font-medium uppercase tracking-wide text-foreground/50">
+      <div className="text-xs font-medium uppercase caps-label text-foreground/50">
         {title}
       </div>
       <div className="mt-0.5 text-xs text-foreground/50">{subtitle}</div>

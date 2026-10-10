@@ -119,7 +119,7 @@ export function OwnerMenuSection({
             <span className="w-3.5 shrink-0">
               {ownerId === candidate.id && <Check className="icon-caption text-foreground" />}
             </span>
-            <span className="flex-1 truncate">{candidate.displayName}</span>
+            <span className="flex-1 truncate" title={candidate.displayName}>{candidate.displayName}</span>
           </MenuItem>
         ))}
       </SubContent>
@@ -255,7 +255,7 @@ export function LabelMenuItems({
                 <LabelIcon label={label} size="sm" hasChildren />
                 <span className="flex-1">{resolveLabelDisplayName(label, t)}</span>
                 {subtreeCount > 0 && (
-                  <span className="text-caption text-foreground/50 tabular-nums -mr-2.5">
+                  <span className="text-caption text-foreground/50 numeric -mr-2.5">
                     {subtreeCount}
                   </span>
                 )}

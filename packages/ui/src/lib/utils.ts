@@ -35,7 +35,22 @@ export const ROX_Z_LAYERS = [
  * (`--text-*`). tailwind-merge would otherwise classify an unknown
  * `text-<name>` as a text colour and drop e.g. `text-foreground`.
  */
-export const ROX_TEXT_SIZES = ['caption', 'small', 'body', 'reading', 'title', 'title-sm', 'display'] as const
+export const ROX_TEXT_SIZES = [
+  'caption',
+  'small',
+  'body',
+  'reading',
+  'title',
+  'title-sm',
+  'display',
+  'data',
+  'prose',
+  'title-md',
+  'stat',
+  'hero',
+  'floor',
+  'mark',
+] as const
 
 /** tailwind-merge instance that understands the Rox token utilities. */
 export const roxTwMerge = extendTailwindMerge({

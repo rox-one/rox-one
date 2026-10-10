@@ -4,7 +4,7 @@
  * The z layer names and the deprecated alias names are read from the A1 token
  * file (packages/ui/src/styles/tokens/z.css) so the lint rules can never drift
  * from the tokens. Everything else mirrors the owner decisions recorded in the
- * token files: radii 0/4/6/8/12, the 11/12/13/15/15/18/24 type scale, and the
+ * token files: radii 0/4/6/8/12, the 9/11/12/13/15/15/16/18/20/24/44 type scale, and the
  * icon-* utilities.
  */
 
@@ -66,17 +66,22 @@ const RADIUS_NAMES = ['none', 'xs', 'sm', 'md', 'lg', 'full']
 const RADIUS_VARS = ['none', 'xs', 'sm', 'md', 'lg', 'full', 'control', 'card', 'composer', 'overlay']
 const RETIRED_RADIUS_NAMES = ['xl', '2xl', '3xl', '4xl']
 
-/** px -> token name for the type scale (owner decision 11/12/13/15/15/18/24). */
+/** px -> token name for the type scale (owner decision 9/11/12/13/15/15/16/18/20/24/44). */
 const TEXT_SIZE_BY_PX = {
+  9: 'text-mark',
   11: 'text-caption',
   12: 'text-small',
   13: 'text-body',
   15: 'text-reading or text-title-sm',
+  16: 'text-title-md',
   18: 'text-title',
+  20: 'text-stat',
   24: 'text-display',
+  44: 'text-hero',
 }
 const TEXT_SIZE_NAMES = [
   'caption', 'small', 'body', 'reading', 'title-sm', 'title', 'display',
+  'data', 'prose', 'title-md', 'stat', 'hero', 'floor', 'mark',
   'xs', 'sm', 'base', 'lg', 'xl',
 ]
 const OFF_SCALE_TEXT_SIZES = ['2xl', '3xl', '4xl', '5xl', '6xl', '7xl', '8xl', '9xl']

@@ -185,7 +185,7 @@ export function MarkdownHtmlBlock({ code, className }: MarkdownHtmlBlockProps) {
         {/* Header */}
         <div className="px-3 py-2 bg-muted/50 border-b flex items-center gap-2">
           <Globe className="w-3.5 h-3.5 text-muted-foreground/50" />
-          <span className="text-[12px] text-muted-foreground font-medium flex-1">
+          <span className="text-sm text-muted-foreground font-medium flex-1">
             {spec.title || t('preview.htmlPreview')}
           </span>
           <div className="flex items-center gap-1">
@@ -194,11 +194,13 @@ export function MarkdownHtmlBlock({ code, className }: MarkdownHtmlBlockProps) {
               onClick={() => setIsFullscreen(true)}
               className={cn(
                 "p-1 rounded-[var(--radius-control)] transition-all select-none",
+                "min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] inline-flex items-center justify-center",
                 "bg-background shadow-minimal",
                 "text-muted-foreground/50 hover:text-foreground",
                 "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100",
-                hasMultiple ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                hasMultiple ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
               )}
+              aria-label={t('common.viewFullscreen')}
               title={t('common.viewFullscreen')}
             >
               <Maximize2 className="w-3.5 h-3.5" />
@@ -229,12 +231,12 @@ export function MarkdownHtmlBlock({ code, className }: MarkdownHtmlBlockProps) {
 
           {/* Loading state for uncached active item */}
           {!activeHtml && loading && (
-            <div className="py-8 text-center text-muted-foreground text-[13px]">{t('common.loading')}</div>
+            <div className="py-8 text-center text-muted-foreground text-base">{t('common.loading')}</div>
           )}
 
           {/* Error state for uncached active item */}
           {!activeHtml && !loading && error && (
-            <div className="py-6 text-center text-destructive/70 text-[13px]">{error}</div>
+            <div className="py-6 text-center text-destructive/70 text-base">{error}</div>
           )}
 
           {/* Bottom fade gradient */}

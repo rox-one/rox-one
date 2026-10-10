@@ -78,7 +78,7 @@ export function DriveFileList({
             <li key={upload.name} className="flex items-center gap-2 text-xs text-muted-foreground">
               <Loader2 className="icon-status animate-spin" />
               <span className="truncate">{upload.name}</span>
-              <span className="ml-auto tabular-nums">{formatBytes(upload.doneBytes)} / {formatBytes(upload.totalBytes)}</span>
+              <span className="ml-auto numeric">{formatBytes(upload.doneBytes)} / {formatBytes(upload.totalBytes)}</span>
             </li>
           ))}
         </ul>
@@ -111,7 +111,7 @@ export function DriveFileList({
                 <FileIcon className="icon-toolbar text-muted-foreground" />
                 <span className="truncate">{file.name}</span>
                 <span className="rounded bg-muted px-1.5 py-0.5 text-caption text-muted-foreground">{t(SOURCE_LABEL_KEY[file.source])}</span>
-                <span className="ml-auto tabular-nums text-xs text-muted-foreground">{formatBytes(file.size)}</span>
+                <span className="ml-auto numeric text-xs text-muted-foreground">{formatBytes(file.size)}</span>
                 <Button
                   variant="ghost"
                   size="icon"

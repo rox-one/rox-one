@@ -480,7 +480,7 @@ export default function ConnectionsPage() {
   const renderRevokeControls = (row: ConnectionListRow) => (
     confirmingId === row.id ? (
       <div className="flex flex-col items-end gap-1">
-        <div className="font-mono text-[11px]" data-testid="connections-confirm-target">
+        <div className="font-mono text-xs" data-testid="connections-confirm-target">
           {row.id} {row.credentialRefId}
         </div>
         <div className="flex gap-1">
@@ -791,7 +791,7 @@ export default function ConnectionsPage() {
                   <OverviewRow
                     key={row.id}
                     testId="connections-credential-row"
-                    icon={<span className="h-5 w-5 rounded-[var(--radius-card)] bg-foreground/10 text-center text-[11px] font-semibold leading-5 text-foreground/70">{row.integrationId.slice(0, 1).toUpperCase()}</span>}
+                    icon={<span className="h-5 w-5 rounded-[var(--radius-card)] bg-foreground/10 text-center text-xs font-semibold leading-5 text-foreground/70">{row.integrationId.slice(0, 1).toUpperCase()}</span>}
                     title={row.integrationId}
                     subtitle={[row.credentialRefId, row.storageMode, rowNote[row.id]].filter(Boolean).join(' · ')}
                     status={rowStatus[row.id] ?? 'pending'}
@@ -873,7 +873,7 @@ export default function ConnectionsPage() {
                 {row.storageMode === 'copy' ? (
                   convertingId === row.id ? (
                     <div className="flex flex-col items-end gap-1">
-                      <div className="font-mono text-[11px]">{row.id} {row.credentialRefId}</div>
+                      <div className="font-mono text-xs">{row.id} {row.credentialRefId}</div>
                       <div className="flex gap-1">
                         <button type="button" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground" onClick={() => confirmConvert(row.id)}>
                           {t('connections.convertConfirm')}

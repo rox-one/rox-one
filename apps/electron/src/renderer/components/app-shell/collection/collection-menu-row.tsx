@@ -3,7 +3,7 @@ import { Check, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const COLLECTION_MENU_ROW =
-  'group/row flex w-full cursor-pointer items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left text-[12.5px] text-foreground/90 outline-none transition-[background-color,color,opacity] duration-150 hover:bg-foreground/[0.055] hover:text-foreground focus-visible:bg-foreground/[0.07] focus-visible:text-foreground focus-visible:ring-1 focus-visible:ring-ring/70 motion-reduce:transition-none'
+  'group/row flex w-full cursor-pointer items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left text-base text-foreground/90 outline-none transition-[background-color,color,opacity] duration-150 hover:bg-foreground/[0.055] hover:text-foreground focus-visible:bg-foreground/[0.07] focus-visible:text-foreground focus-visible:ring-1 focus-visible:ring-ring/70 motion-reduce:transition-none'
 
 export function CollectionMenuCheck({
   selected,
@@ -64,7 +64,7 @@ export function CollectionMenuRow({
       className={cn(COLLECTION_MENU_ROW, selected && 'bg-foreground/[0.035] text-foreground', className)}
     >
       <CollectionMenuCheck selected={selected} />
-      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <span className="min-w-0 flex-1 truncate" title={typeof label === 'string' ? label : undefined}>{label}</span>
       {trailing}
     </button>
   )
@@ -96,7 +96,7 @@ export function CollectionMenuRadioRow({
       className={cn(COLLECTION_MENU_ROW, selected && 'bg-foreground/[0.035] text-foreground', className)}
     >
       <CollectionMenuCheck selected={selected} variant="radio" />
-      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <span className="min-w-0 flex-1 truncate" title={typeof label === 'string' ? label : undefined}>{label}</span>
     </button>
   )
 }
@@ -110,7 +110,7 @@ export function CollectionMenuSection({
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5" role="group" aria-label={label}>
-      <div className="px-2 pb-0.5 pt-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/70">
+      <div className="px-2 pb-0.5 pt-1.5 text-xs font-medium uppercase caps-label text-muted-foreground/70">
         {label}
       </div>
       {children}
@@ -142,8 +142,8 @@ export function CollectionMenuDisclosure({
         onClick={() => setOpen((v) => !v)}
         className={cn(COLLECTION_MENU_ROW, 'text-foreground')}
       >
-        <span className="min-w-0 flex-1 truncate">{label}</span>
-        <span className="max-w-[7rem] truncate text-[11px] text-muted-foreground">{valueLabel}</span>
+        <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
+        <span className="max-w-[7rem] truncate text-xs text-muted-foreground" title={valueLabel}>{valueLabel}</span>
         <ChevronRight
           className={cn(
             'h-3 w-3 shrink-0 text-foreground/70 transition-transform duration-150',

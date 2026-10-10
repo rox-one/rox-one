@@ -7,15 +7,15 @@
     },
     "rox/icon-size-tokens": {
       "severity": "warn",
-      "total": 2570
+      "total": 2525
     },
     "rox/no-arbitrary-radius": {
       "severity": "warn",
-      "total": 171
+      "total": 169
     },
     "rox/no-arbitrary-text-size": {
       "severity": "warn",
-      "total": 1640
+      "total": 28
     },
     "rox/no-backdrop-on-overlay": {
       "severity": "error",
@@ -23,7 +23,7 @@
     },
     "rox/no-foreground-opacity": {
       "severity": "warn",
-      "total": 2161
+      "total": 2127
     },
     "rox/no-hardcoded-z-index": {
       "severity": "warn",
@@ -31,11 +31,11 @@
     },
     "rox/no-raw-color": {
       "severity": "warn",
-      "total": 535
+      "total": 530
     },
     "rox/prefer-primitives": {
       "severity": "warn",
-      "total": 269
+      "total": 262
     },
     "stylelint/color-no-hex": {
       "severity": "warn",
@@ -43,7 +43,7 @@
     },
     "stylelint/declaration-property-unit-disallowed-list": {
       "severity": "warn",
-      "total": 524
+      "total": 517
     },
     "stylelint/rox-css/no-apply-numeric-z": {
       "severity": "error",
@@ -55,7 +55,7 @@
     },
     "stylelint/scale-unlimited/declaration-strict-value": {
       "severity": "warn",
-      "total": 175
+      "total": 174
     }
   },
   "files": {
@@ -64,7 +64,6 @@
     },
     "apps/electron/src/renderer/browser-preview/BrowserPreview.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 9,
       "rox/no-foreground-opacity": 22,
       "rox/no-hardcoded-z-index": 2,
       "rox/no-raw-color": 12
@@ -79,9 +78,6 @@
       "stylelint/declaration-property-unit-disallowed-list": 1,
       "stylelint/scale-unlimited/declaration-strict-value": 1
     },
-    "apps/electron/src/renderer/components/KeyboardShortcutsDialog.tsx": {
-      "rox/no-arbitrary-text-size": 1
-    },
     "apps/electron/src/renderer/components/ResetConfirmationDialog.tsx": {
       "rox/icon-size-tokens": 2,
       "rox/no-raw-color": 4
@@ -95,7 +91,6 @@
     },
     "apps/electron/src/renderer/components/apisetup/ApiKeyInput.tsx": {
       "rox/icon-size-tokens": 9,
-      "rox/no-arbitrary-text-size": 5,
       "rox/no-foreground-opacity": 19,
       "rox/prefer-primitives": 1
     },
@@ -108,17 +103,14 @@
     },
     "apps/electron/src/renderer/components/app-menu/MobileMenuItem.tsx": {
       "rox/icon-size-tokens": 6,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 5
     },
     "apps/electron/src/renderer/components/app-menu/MobileMenuPage.tsx": {
       "rox/icon-size-tokens": 6,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 4
     },
     "apps/electron/src/renderer/components/app-shell/AccountMenu.tsx": {
       "rox/icon-size-tokens": 34,
-      "rox/no-arbitrary-text-size": 4,
       "rox/no-foreground-opacity": 21,
       "rox/prefer-primitives": 2
     },
@@ -128,14 +120,12 @@
     },
     "apps/electron/src/renderer/components/app-shell/AppShell.tsx": {
       "rox/icon-size-tokens": 12,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 5,
       "rox/no-raw-color": 3,
       "rox/prefer-primitives": 2
     },
     "apps/electron/src/renderer/components/app-shell/AttachmentPreview.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 1,
       "rox/no-hardcoded-z-index": 1
     },
@@ -158,7 +148,6 @@
     },
     "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx": {
       "rox/icon-size-tokens": 10,
-      "rox/no-arbitrary-text-size": 5,
       "rox/no-foreground-opacity": 6,
       "rox/no-hardcoded-z-index": 1,
       "rox/prefer-primitives": 1
@@ -168,7 +157,6 @@
     },
     "apps/electron/src/renderer/components/app-shell/CompactSessionMenu.tsx": {
       "rox/icon-size-tokens": 66,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 13
     },
     "apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu.tsx": {
@@ -176,12 +164,10 @@
     },
     "apps/electron/src/renderer/components/app-shell/DeviceStatusChip.tsx": {
       "rox/icon-size-tokens": 1,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/app-shell/EntityViewTabs.tsx": {
-      "rox/no-foreground-opacity": 5,
-      "rox/prefer-primitives": 2
+      "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/app-shell/FabNewChat.tsx": {
       "rox/icon-size-tokens": 2
@@ -191,7 +177,6 @@
       "rox/no-foreground-opacity": 3
     },
     "apps/electron/src/renderer/components/app-shell/LeftSidebar.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 4
     },
     "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": {
@@ -199,21 +184,13 @@
     },
     "apps/electron/src/renderer/components/app-shell/MemoryListPanel.tsx": {
       "rox/icon-size-tokens": 10,
-      "rox/no-arbitrary-text-size": 31,
       "rox/no-foreground-opacity": 40,
       "rox/prefer-primitives": 2
     },
     "apps/electron/src/renderer/components/app-shell/MemoryProposalCard.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 10,
       "rox/no-foreground-opacity": 5,
       "rox/prefer-primitives": 2
-    },
-    "apps/electron/src/renderer/components/app-shell/MemoryProvenanceStrip.tsx": {
-      "rox/no-arbitrary-text-size": 2
-    },
-    "apps/electron/src/renderer/components/app-shell/MiniDashboardCards.tsx": {
-      "rox/no-arbitrary-text-size": 4
     },
     "apps/electron/src/renderer/components/app-shell/MiniSessionSurface.tsx": {
       "rox/icon-size-tokens": 4,
@@ -225,15 +202,12 @@
       "rox/no-foreground-opacity": 9
     },
     "apps/electron/src/renderer/components/app-shell/OnboardingDialog.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/app-shell/PanelGridResizeSash.tsx": {
       "rox/no-hardcoded-z-index": 1
     },
     "apps/electron/src/renderer/components/app-shell/PanelHeader.tsx": {
-      "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-hardcoded-z-index": 7
     },
     "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx": {
@@ -244,16 +218,11 @@
       "rox/no-hardcoded-z-index": 1,
       "rox/prefer-primitives": 1
     },
-    "apps/electron/src/renderer/components/app-shell/PanelWorkspaceMenu.tsx": {
-      "rox/icon-size-tokens": 3,
-      "rox/prefer-primitives": 1
-    },
     "apps/electron/src/renderer/components/app-shell/ProjectMultiSelectFilter.tsx": {
       "rox/icon-size-tokens": 6,
       "rox/no-foreground-opacity": 7
     },
     "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 3
     },
     "apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx": {
@@ -262,14 +231,12 @@
     },
     "apps/electron/src/renderer/components/app-shell/PromoSlot.tsx": {
       "rox/icon-size-tokens": 1,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 1,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/components/app-shell/QuestProgressCard.tsx": {
       "rox/icon-size-tokens": 11,
       "rox/no-arbitrary-radius": 8,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 5,
       "rox/no-raw-color": 11
     },
@@ -289,25 +256,21 @@
       "rox/no-raw-color": 1
     },
     "apps/electron/src/renderer/components/app-shell/SessionItem.tsx": {
-      "rox/icon-size-tokens": 15,
-      "rox/no-arbitrary-text-size": 5
+      "rox/icon-size-tokens": 15
     },
     "apps/electron/src/renderer/components/app-shell/SessionList.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 7,
       "rox/no-hardcoded-z-index": 2,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/components/app-shell/SessionMenu.tsx": {
-      "rox/icon-size-tokens": 54,
-      "rox/no-arbitrary-text-size": 1
+      "rox/icon-size-tokens": 54
     },
     "apps/electron/src/renderer/components/app-shell/SessionMenuParts.tsx": {
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/app-shell/SessionProjectColorWrapper.tsx": {
@@ -315,7 +278,6 @@
     },
     "apps/electron/src/renderer/components/app-shell/SessionSearchHeader.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 2,
       "rox/no-hardcoded-z-index": 1,
       "rox/prefer-primitives": 1
@@ -343,7 +305,6 @@
     },
     "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx": {
       "rox/icon-size-tokens": 11,
-      "rox/no-arbitrary-text-size": 22,
       "rox/no-foreground-opacity": 23,
       "rox/no-raw-color": 5,
       "rox/prefer-primitives": 2
@@ -353,7 +314,6 @@
     },
     "apps/electron/src/renderer/components/app-shell/SourcesListPanel.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 5,
       "rox/no-foreground-opacity": 5,
       "rox/prefer-primitives": 1
     },
@@ -371,8 +331,7 @@
       "rox/no-raw-color": 8
     },
     "apps/electron/src/renderer/components/app-shell/TopBar.tsx": {
-      "rox/icon-size-tokens": 13,
-      "rox/no-arbitrary-text-size": 1,
+      "rox/icon-size-tokens": 9,
       "rox/no-foreground-opacity": 1,
       "rox/prefer-primitives": 1
     },
@@ -381,7 +340,6 @@
     },
     "apps/electron/src/renderer/components/app-shell/WhatsNewTimeline.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/app-shell/collection/CollectionBulkBar.tsx": {
@@ -394,18 +352,15 @@
     },
     "apps/electron/src/renderer/components/app-shell/collection/CollectionDisplayPopover.tsx": {
       "rox/icon-size-tokens": 3,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 8,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/components/app-shell/collection/CollectionFilterChips.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 8
     },
     "apps/electron/src/renderer/components/app-shell/collection/CollectionFilterMenu.tsx": {
       "rox/icon-size-tokens": 3,
-      "rox/no-arbitrary-text-size": 8,
       "rox/no-foreground-opacity": 9
     },
     "apps/electron/src/renderer/components/app-shell/collection/CollectionGroupByMenu.tsx": {
@@ -419,18 +374,15 @@
     },
     "apps/electron/src/renderer/components/app-shell/collection/collection-menu-row.tsx": {
       "rox/icon-size-tokens": 6,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 3
     },
     "apps/electron/src/renderer/components/app-shell/diagnostics/LazyDiagnostics.tsx": {
       "rox/icon-size-tokens": 5,
-      "rox/no-arbitrary-text-size": 23,
       "rox/no-foreground-opacity": 6,
       "rox/prefer-primitives": 4
     },
     "apps/electron/src/renderer/components/app-shell/input/CompactModelSelector.tsx": {
       "rox/icon-size-tokens": 22,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 29
     },
     "apps/electron/src/renderer/components/app-shell/input/CompactPermissionModeSelector.tsx": {
@@ -439,12 +391,10 @@
     },
     "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx": {
       "rox/icon-size-tokens": 46,
-      "rox/no-arbitrary-text-size": 9,
       "rox/no-foreground-opacity": 28
     },
     "apps/electron/src/renderer/components/app-shell/input/FreeFormInputContextBadge.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 3
     },
     "apps/electron/src/renderer/components/app-shell/input/ImageSupportWarningBanner.tsx": {
@@ -461,7 +411,6 @@
     },
     "apps/electron/src/renderer/components/app-shell/input/ToolbarStatusSlot.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/app-shell/input/VoiceDictationControl.tsx": {
@@ -473,20 +422,14 @@
     },
     "apps/electron/src/renderer/components/app-shell/input/structured/AdminApprovalRequest.tsx": {
       "rox/icon-size-tokens": 6,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/app-shell/input/structured/CredentialRequest.tsx": {
-      "rox/icon-size-tokens": 26,
-      "rox/no-arbitrary-text-size": 2
+      "rox/icon-size-tokens": 26
     },
     "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx": {
       "rox/icon-size-tokens": 8,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 5
-    },
-    "apps/electron/src/renderer/components/app-shell/kanban/KanbanBoard.playground.tsx": {
-      "rox/no-arbitrary-text-size": 2
     },
     "apps/electron/src/renderer/components/app-shell/kanban/KanbanBoard.tsx": {
       "rox/icon-size-tokens": 3,
@@ -496,32 +439,24 @@
     },
     "apps/electron/src/renderer/components/app-shell/kanban/KanbanBoardContainer.tsx": {
       "rox/icon-size-tokens": 3,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 10,
       "rox/no-raw-color": 1
     },
     "apps/electron/src/renderer/components/app-shell/kanban/KanbanColumn.tsx": {
       "rox/icon-size-tokens": 15,
-      "rox/no-arbitrary-text-size": 11,
       "rox/no-foreground-opacity": 14,
       "rox/no-raw-color": 4,
       "rox/prefer-primitives": 2
     },
     "apps/electron/src/renderer/components/app-shell/kanban/ModelChip.tsx": {
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 4
     },
     "apps/electron/src/renderer/components/app-shell/kanban/NewTaskComposer.tsx": {
       "rox/icon-size-tokens": 3,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 2
     },
-    "apps/electron/src/renderer/components/app-shell/kanban/StatusBadge.tsx": {
-      "rox/no-arbitrary-text-size": 1
-    },
     "apps/electron/src/renderer/components/app-shell/kanban/SubtaskProgress.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 1,
       "rox/no-raw-color": 1
     },
@@ -532,12 +467,10 @@
     },
     "apps/electron/src/renderer/components/app-shell/kanban/TaskChatPreview.tsx": {
       "rox/icon-size-tokens": 6,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 5
     },
     "apps/electron/src/renderer/components/app-shell/kanban/TaskEditor.tsx": {
       "rox/icon-size-tokens": 81,
-      "rox/no-arbitrary-text-size": 47,
       "rox/no-foreground-opacity": 71,
       "rox/no-raw-color": 18,
       "rox/prefer-primitives": 1
@@ -545,7 +478,6 @@
     "apps/electron/src/renderer/components/app-shell/kanban/TaskTile.tsx": {
       "rox/icon-size-tokens": 31,
       "rox/no-arbitrary-radius": 2,
-      "rox/no-arbitrary-text-size": 6,
       "rox/no-foreground-opacity": 22,
       "rox/no-hardcoded-z-index": 2,
       "rox/no-raw-color": 2,
@@ -553,18 +485,15 @@
     },
     "apps/electron/src/renderer/components/app-shell/session-heatmap/SessionHeatmapHost.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 5,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/components/app-shell/session-table/SessionTableGroupHeader.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 5,
       "rox/no-hardcoded-z-index": 1
     },
     "apps/electron/src/renderer/components/app-shell/session-table/SessionTableHost.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 1,
       "rox/no-hardcoded-z-index": 1
     },
@@ -574,7 +503,7 @@
       "rox/no-raw-color": 3
     },
     "apps/electron/src/renderer/components/app-shell/titlebar-mode-pill.css": {
-      "stylelint/declaration-property-unit-disallowed-list": 24,
+      "stylelint/declaration-property-unit-disallowed-list": 18,
       "stylelint/scale-unlimited/declaration-strict-value": 3
     },
     "apps/electron/src/renderer/components/automations/ActionTypeIcon.tsx": {
@@ -584,32 +513,24 @@
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/automations/AutomationActionRow.tsx": {
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/automations/AutomationCard.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 7
     },
     "apps/electron/src/renderer/components/automations/AutomationEditor.tsx": {
       "rox/icon-size-tokens": 8,
-      "rox/no-arbitrary-text-size": 1,
       "rox/prefer-primitives": 18
     },
     "apps/electron/src/renderer/components/automations/AutomationEventTimeline.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 20,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 4
-    },
-    "apps/electron/src/renderer/components/automations/AutomationGraphWorkspaceEditor.tsx": {
-      "rox/no-arbitrary-text-size": 2
     },
     "apps/electron/src/renderer/components/automations/AutomationInfoPage.tsx": {
       "rox/icon-size-tokens": 3,
@@ -623,7 +544,6 @@
     },
     "apps/electron/src/renderer/components/automations/AutomationsListPanel.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-raw-color": 1,
       "rox/prefer-primitives": 1
     },
@@ -637,7 +557,6 @@
     },
     "apps/electron/src/renderer/components/automations/CronBuilder.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 6
     },
     "apps/electron/src/renderer/components/automations/automations.css": {
@@ -647,7 +566,6 @@
     "apps/electron/src/renderer/components/browser/BrowserScreen.playground.tsx": {
       "rox/icon-size-tokens": 6,
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-raw-color": 3
     },
     "apps/electron/src/renderer/components/browser/BrowserToolbar.tsx": {
@@ -655,7 +573,6 @@
     },
     "apps/electron/src/renderer/components/browser/ElementInspectConfirm.tsx": {
       "rox/icon-size-tokens": 3,
-      "rox/no-arbitrary-text-size": 10,
       "rox/no-foreground-opacity": 7,
       "rox/no-raw-color": 1
     },
@@ -665,24 +582,20 @@
     "apps/electron/src/renderer/components/browser/WebBrowserPanel.tsx": {
       "rox/icon-size-tokens": 6,
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-raw-color": 1,
       "rox/prefer-primitives": 5
     },
     "apps/electron/src/renderer/components/calendar/CalendarStatusStrip.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 1,
       "rox/no-raw-color": 1
     },
     "apps/electron/src/renderer/components/chat/AuthRequestCard.tsx": {
-      "rox/icon-size-tokens": 20,
-      "rox/no-arbitrary-text-size": 4
+      "rox/icon-size-tokens": 20
     },
     "apps/electron/src/renderer/components/chat/EmptyChatWelcome.tsx": {
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/chat/EmptyStateHint.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/chat/StarterPromptList.tsx": {
@@ -691,7 +604,6 @@
     },
     "apps/electron/src/renderer/components/cloud-runs/CloudRunsChip.tsx": {
       "rox/icon-size-tokens": 32,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 2,
       "rox/prefer-primitives": 1
     },
@@ -700,13 +612,9 @@
       "rox/no-foreground-opacity": 7,
       "rox/prefer-primitives": 2
     },
-    "apps/electron/src/renderer/components/entities/BacklinksPanel.tsx": {
-      "rox/no-arbitrary-text-size": 9
-    },
     "apps/electron/src/renderer/components/entities/EntityCard.tsx": {
       "rox/icon-size-tokens": 1,
       "rox/no-arbitrary-radius": 3,
-      "rox/no-arbitrary-text-size": 10,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/entities/EntityChip.tsx": {
@@ -716,7 +624,6 @@
     "apps/electron/src/renderer/components/entities/EntityPicker.tsx": {
       "rox/icon-size-tokens": 1,
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 7,
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/files/FileViewer.tsx": {
@@ -727,7 +634,6 @@
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/icons/ConnectionIcon.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/info/AutoRulesDataTable.tsx": {
@@ -749,11 +655,7 @@
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/components/info/Info_Page.tsx": {
-      "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 2
-    },
-    "apps/electron/src/renderer/components/info/Info_Table.tsx": {
-      "rox/no-arbitrary-text-size": 1
+      "rox/icon-size-tokens": 2
     },
     "apps/electron/src/renderer/components/info/LabelsDataTable.tsx": {
       "rox/icon-size-tokens": 4,
@@ -766,29 +668,24 @@
     },
     "apps/electron/src/renderer/components/knowledge/PublishSessionDialog.tsx": {
       "rox/icon-size-tokens": 10,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/knowledge/SessionPublishedChip.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/components/learning/LearningScreen.tsx": {
       "rox/icon-size-tokens": 14,
-      "rox/no-arbitrary-text-size": 80,
       "rox/no-foreground-opacity": 30,
       "rox/no-hardcoded-z-index": 1,
       "rox/no-raw-color": 2,
       "rox/prefer-primitives": 2
     },
     "apps/electron/src/renderer/components/meetings/MeetingRecordingIndicator.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/components/memory/MemoryScreen.tsx": {
       "rox/icon-size-tokens": 18,
-      "rox/no-arbitrary-text-size": 46,
       "rox/no-foreground-opacity": 44,
       "rox/no-hardcoded-z-index": 1,
       "rox/no-raw-color": 10,
@@ -796,12 +693,10 @@
     },
     "apps/electron/src/renderer/components/messaging/DiscordConnectDialog.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-raw-color": 2
     },
     "apps/electron/src/renderer/components/messaging/LarkConnectDialog.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-raw-color": 2
     },
     "apps/electron/src/renderer/components/messaging/MessagingPlatformIcon.tsx": {
@@ -817,7 +712,6 @@
     },
     "apps/electron/src/renderer/components/messaging/TelegramConnectDialog.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-raw-color": 2
     },
     "apps/electron/src/renderer/components/messaging/TelegramSupergroupPairingDialog.tsx": {
@@ -827,12 +721,10 @@
     },
     "apps/electron/src/renderer/components/messaging/WeChatConnectDialog.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-raw-color": 1
     },
     "apps/electron/src/renderer/components/messaging/WhatsAppConnectDialog.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-raw-color": 1
     },
     "apps/electron/src/renderer/components/messaging/access/AccessModeBanner.tsx": {
@@ -847,7 +739,6 @@
     },
     "apps/electron/src/renderer/components/messaging/access/OwnersListEditor.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 5,
       "rox/no-raw-color": 3
     },
@@ -861,14 +752,11 @@
     },
     "apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx": {
       "rox/icon-size-tokens": 1,
-      "rox/no-arbitrary-text-size": 16,
-      "rox/no-foreground-opacity": 16,
-      "rox/no-raw-color": 3,
-      "rox/prefer-primitives": 2
+      "rox/no-foreground-opacity": 15,
+      "rox/no-raw-color": 3
     },
     "apps/electron/src/renderer/components/mode-screen/ResponsiveModeScreen.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/notes/NotesImportButton.tsx": {
@@ -876,11 +764,7 @@
     },
     "apps/electron/src/renderer/components/onboarding/APISetupStep.tsx": {
       "rox/icon-size-tokens": 7,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 3
-    },
-    "apps/electron/src/renderer/components/onboarding/BrowserImportPreferences.tsx": {
-      "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/onboarding/CompletionStep.tsx": {
       "rox/no-arbitrary-text-size": 1,
@@ -895,8 +779,7 @@
     },
     "apps/electron/src/renderer/components/onboarding/GitBashWarning.tsx": {
       "rox/icon-size-tokens": 3,
-      "rox/no-foreground-opacity": 4,
-      "rox/no-raw-color": 1
+      "rox/no-foreground-opacity": 4
     },
     "apps/electron/src/renderer/components/onboarding/LocalModelStep.tsx": {
       "rox/no-foreground-opacity": 3
@@ -906,20 +789,16 @@
       "rox/no-arbitrary-radius": 4,
       "rox/no-foreground-opacity": 4
     },
-    "apps/electron/src/renderer/components/onboarding/RoxCliCredentialStep.tsx": {
-      "rox/icon-size-tokens": 1
-    },
-    "apps/electron/src/renderer/components/onboarding/OnboardingWelcomeProgress.tsx": {
-      "rox/no-foreground-opacity": 1
-    },
     "apps/electron/src/renderer/components/onboarding/ProviderSelectStep.tsx": {
       "rox/icon-size-tokens": 3,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/onboarding/ReauthScreen.tsx": {
       "rox/icon-size-tokens": 2,
       "rox/no-foreground-opacity": 2
+    },
+    "apps/electron/src/renderer/components/onboarding/RoxCliCredentialStep.tsx": {
+      "rox/icon-size-tokens": 1
     },
     "apps/electron/src/renderer/components/onboarding/RoxConnectStep.tsx": {
       "rox/icon-size-tokens": 2,
@@ -936,7 +815,7 @@
       "rox/no-raw-color": 2
     },
     "apps/electron/src/renderer/components/onboarding/primitives.tsx": {
-      "rox/no-foreground-opacity": 2
+      "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/pages/PageGrantRequestDialog.tsx": {
       "rox/icon-size-tokens": 2,
@@ -954,7 +833,7 @@
     },
     "apps/electron/src/renderer/components/pages/PageTile.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 3,
+      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 10
     },
     "apps/electron/src/renderer/components/pages/PageView.tsx": {
@@ -964,7 +843,6 @@
     },
     "apps/electron/src/renderer/components/pages/PagesHome.tsx": {
       "rox/icon-size-tokens": 7,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 8
     },
     "apps/electron/src/renderer/components/pages/SharePageDialog.tsx": {
@@ -973,12 +851,10 @@
       "rox/no-raw-color": 10
     },
     "apps/electron/src/renderer/components/pages/page-visuals.tsx": {
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 4,
       "rox/no-raw-color": 4
     },
     "apps/electron/src/renderer/components/preview/TableOfContents.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/projects/ProjectAuthorityConnectionPanel.tsx": {
@@ -992,7 +868,6 @@
     "apps/electron/src/renderer/components/right-sidebar/SessionFilesSection.tsx": {
       "rox/icon-size-tokens": 6,
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 3
     },
     "apps/electron/src/renderer/components/runtime-map/AgentLane.tsx": {
@@ -1031,62 +906,52 @@
     },
     "apps/electron/src/renderer/components/session-inspector/InspectorBrowserPane.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/session-inspector/InspectorTerminal.tsx": {
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-raw-color": 2
     },
     "apps/electron/src/renderer/components/session-inspector/SessionContextPanel.tsx": {
-      "rox/no-arbitrary-text-size": 5,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/session-inspector/SessionGitPanel.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/session-workbench/PlaybookHoleList.tsx": {
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/session-workbench/RightSessionShell.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 2,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/components/session-workbench/SceneNode.tsx": {
-      "rox/no-arbitrary-text-size": 8,
+      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 4,
       "rox/no-raw-color": 7
     },
     "apps/electron/src/renderer/components/session-workbench/SessionFanOutSheet.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/session-workbench/SessionFlowCanvas.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 4,
       "rox/no-foreground-opacity": 3,
       "rox/no-hardcoded-z-index": 2,
       "rox/no-raw-color": 3
     },
     "apps/electron/src/renderer/components/session-workbench/SessionGitOutline.tsx": {
       "rox/icon-size-tokens": 8,
-      "rox/no-arbitrary-text-size": 6,
       "rox/no-foreground-opacity": 7,
       "rox/no-raw-color": 2
     },
     "apps/electron/src/renderer/components/session-workbench/SessionWorkbench.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 8,
       "rox/no-foreground-opacity": 3
     },
     "apps/electron/src/renderer/components/session-workbench/SessionWorkflowEditor.tsx": {
       "rox/icon-size-tokens": 20,
-      "rox/no-arbitrary-text-size": 29,
+      "rox/no-arbitrary-text-size": 5,
       "rox/no-foreground-opacity": 34,
       "rox/no-hardcoded-z-index": 5,
       "rox/no-raw-color": 26,
@@ -1109,11 +974,7 @@
     },
     "apps/electron/src/renderer/components/settings/SettingsMenuSelect.tsx": {
       "rox/icon-size-tokens": 3,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 1
-    },
-    "apps/electron/src/renderer/components/settings/SettingsSection.tsx": {
-      "rox/no-arbitrary-text-size": 1
     },
     "apps/electron/src/renderer/components/settings/SettingsSegmentedControl.tsx": {
       "rox/no-arbitrary-radius": 1
@@ -1122,7 +983,6 @@
       "rox/no-raw-color": 8
     },
     "apps/electron/src/renderer/components/team/TeamActivityFeed.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/team/TeamInboxSection.tsx": {
@@ -1130,7 +990,6 @@
     },
     "apps/electron/src/renderer/components/team/TeamSessionButton.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 9,
       "rox/no-hardcoded-z-index": 1
     },
@@ -1159,19 +1018,14 @@
     },
     "apps/electron/src/renderer/components/ui/SkillSelectorPopover.tsx": {
       "rox/icon-size-tokens": 3,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/ui/SourceSelectorPopover.tsx": {
       "rox/icon-size-tokens": 5,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/ui/TopBarButton.tsx": {
       "rox/no-foreground-opacity": 2
-    },
-    "apps/electron/src/renderer/components/ui/avatar-group.tsx": {
-      "rox/no-arbitrary-text-size": 1
     },
     "apps/electron/src/renderer/components/ui/badge.tsx": {
       "rox/no-foreground-opacity": 3
@@ -1195,19 +1049,14 @@
     },
     "apps/electron/src/renderer/components/ui/context-menu.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 8
     },
     "apps/electron/src/renderer/components/ui/dialog.tsx": {
-      "rox/no-arbitrary-text-size": 3,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/components/ui/dropdown-menu.tsx": {
       "rox/icon-size-tokens": 3,
       "rox/no-foreground-opacity": 6
-    },
-    "apps/electron/src/renderer/components/ui/entity-list-badge.tsx": {
-      "rox/no-arbitrary-text-size": 1
     },
     "apps/electron/src/renderer/components/ui/entity-list-empty.playground.tsx": {
       "rox/icon-size-tokens": 1
@@ -1215,19 +1064,14 @@
     "apps/electron/src/renderer/components/ui/entity-list-empty.tsx": {
       "rox/no-foreground-opacity": 2
     },
-    "apps/electron/src/renderer/components/ui/entity-list-label-badge.tsx": {
-      "rox/no-arbitrary-text-size": 1
-    },
     "apps/electron/src/renderer/components/ui/entity-list.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 2,
-      "rox/no-foreground-opacity": 5,
       "rox/no-hardcoded-z-index": 2
     },
     "apps/electron/src/renderer/components/ui/entity-row.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 2,
-      "rox/no-foreground-opacity": 9,
+      "rox/no-arbitrary-text-size": 1,
+      "rox/no-foreground-opacity": 7,
       "rox/no-hardcoded-z-index": 1
     },
     "apps/electron/src/renderer/components/ui/inline-color-picker-row.tsx": {
@@ -1235,21 +1079,17 @@
     },
     "apps/electron/src/renderer/components/ui/label-menu.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/ui/label-value-popover.tsx": {
       "rox/icon-size-tokens": 6,
-      "rox/no-arbitrary-text-size": 5,
       "rox/no-foreground-opacity": 10
     },
     "apps/electron/src/renderer/components/ui/mention-badge.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 3
     },
     "apps/electron/src/renderer/components/ui/mention-menu.tsx": {
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/ui/metadata-badge.tsx": {
@@ -1274,7 +1114,6 @@
       "rox/no-foreground-opacity": 5
     },
     "apps/electron/src/renderer/components/ui/skill-mention-menu.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/ui/slash-command-menu.tsx": {
@@ -1296,15 +1135,8 @@
     "apps/electron/src/renderer/components/ui/table.tsx": {
       "rox/no-hardcoded-z-index": 1
     },
-    "apps/electron/src/renderer/components/ui/workspace-avatar.tsx": {
-      "rox/no-arbitrary-text-size": 1
-    },
-    "apps/electron/src/renderer/components/views/ViewPurposeList.tsx": {
-      "rox/no-arbitrary-text-size": 2
-    },
     "apps/electron/src/renderer/components/workspace/AddWorkspaceStep_Choice.tsx": {
       "rox/icon-size-tokens": 8,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 3
     },
     "apps/electron/src/renderer/components/workspace/AddWorkspaceStep_ConnectRemote.tsx": {
@@ -1319,7 +1151,6 @@
     },
     "apps/electron/src/renderer/components/workspace/AddWorkspaceStep_Ssh.tsx": {
       "rox/icon-size-tokens": 18,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 9,
       "rox/no-raw-color": 3
     },
@@ -1332,7 +1163,6 @@
     },
     "apps/electron/src/renderer/components/workspace/WorkspaceNavigator.tsx": {
       "rox/icon-size-tokens": 3,
-      "rox/no-arbitrary-text-size": 7,
       "rox/no-foreground-opacity": 2,
       "rox/no-hardcoded-z-index": 1,
       "rox/no-raw-color": 4
@@ -1358,44 +1188,36 @@
     },
     "apps/electron/src/renderer/knowledge/KnowledgeDiff.tsx": {
       "rox/icon-size-tokens": 7,
-      "rox/no-arbitrary-text-size": 12,
       "rox/no-foreground-opacity": 5
     },
     "apps/electron/src/renderer/knowledge/KnowledgeHome.tsx": {
       "rox/icon-size-tokens": 6,
-      "rox/no-arbitrary-text-size": 26,
       "rox/no-foreground-opacity": 3,
       "rox/no-hardcoded-z-index": 3,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/knowledge/KnowledgeNavigator.tsx": {
       "rox/icon-size-tokens": 1,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/knowledge/KnowledgeNotebookTree.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 4,
       "rox/no-foreground-opacity": 3
     },
     "apps/electron/src/renderer/knowledge/KnowledgeProposals.tsx": {
-      "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 7
+      "rox/icon-size-tokens": 2
     },
     "apps/electron/src/renderer/main.tsx": {
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/mindmap/MindMapHost.tsx": {
       "rox/icon-size-tokens": 29,
-      "rox/no-arbitrary-text-size": 12,
       "rox/no-foreground-opacity": 26,
       "rox/no-raw-color": 2,
       "rox/prefer-primitives": 9
     },
     "apps/electron/src/renderer/mindmap/MindMapOutline.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 4,
       "rox/prefer-primitives": 1
     },
@@ -1405,7 +1227,6 @@
     },
     "apps/electron/src/renderer/mindmap/engine/svg-engine.tsx": {
       "rox/icon-size-tokens": 8,
-      "rox/no-arbitrary-text-size": 8,
       "rox/no-foreground-opacity": 16,
       "rox/no-hardcoded-z-index": 2,
       "rox/prefer-primitives": 4
@@ -1418,7 +1239,6 @@
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/pages/CloudRunSurfacePage.tsx": {
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 7
     },
     "apps/electron/src/renderer/pages/ConnectionLifecyclePanel.tsx": {
@@ -1427,30 +1247,20 @@
     },
     "apps/electron/src/renderer/pages/ConnectionsPage.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 53,
       "rox/prefer-primitives": 3
     },
     "apps/electron/src/renderer/pages/FeedPage.tsx": {
       "rox/icon-size-tokens": 12,
-      "rox/no-arbitrary-text-size": 30,
       "rox/no-foreground-opacity": 8,
       "rox/prefer-primitives": 7
     },
     "apps/electron/src/renderer/pages/GithubDeviceLoginPanel.tsx": {
       "rox/no-foreground-opacity": 2
     },
-    "apps/electron/src/renderer/pages/InboxPage.tsx": {
-      "rox/icon-size-tokens": 6,
-      "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 33,
-      "rox/no-foreground-opacity": 8,
-      "rox/prefer-primitives": 1
-    },
     "apps/electron/src/renderer/pages/IntegrationsCatalogPage.tsx": {
       "rox/icon-size-tokens": 4,
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 6,
       "rox/no-foreground-opacity": 7,
       "rox/prefer-primitives": 1
     },
@@ -1459,14 +1269,11 @@
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/pages/MeetingsPage.tsx": {
-      "rox/no-arbitrary-text-size": 9,
       "rox/no-foreground-opacity": 3,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/pages/NotesPage.tsx": {
       "rox/icon-size-tokens": 34,
-      "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 10,
       "rox/no-foreground-opacity": 30,
       "rox/no-hardcoded-z-index": 2,
       "rox/no-raw-color": 5,
@@ -1479,7 +1286,6 @@
     },
     "apps/electron/src/renderer/pages/ProjectRoadmapPage.tsx": {
       "rox/icon-size-tokens": 38,
-      "rox/no-arbitrary-text-size": 20,
       "rox/no-foreground-opacity": 17,
       "rox/prefer-primitives": 3
     },
@@ -1487,8 +1293,7 @@
       "rox/icon-size-tokens": 1
     },
     "apps/electron/src/renderer/pages/ShortcutsPage.tsx": {
-      "rox/no-arbitrary-text-size": 1,
-      "rox/no-foreground-opacity": 4
+      "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/pages/SkillInfoPage.tsx": {
       "rox/icon-size-tokens": 6,
@@ -1497,7 +1302,6 @@
     "apps/electron/src/renderer/pages/SkillsCatalogPage.tsx": {
       "rox/icon-size-tokens": 6,
       "rox/no-arbitrary-radius": 2,
-      "rox/no-arbitrary-text-size": 4,
       "rox/no-foreground-opacity": 5,
       "rox/prefer-primitives": 2
     },
@@ -1507,7 +1311,6 @@
     },
     "apps/electron/src/renderer/pages/TasksPage.tsx": {
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 25,
       "rox/no-foreground-opacity": 11,
       "rox/no-raw-color": 2,
       "rox/prefer-primitives": 1
@@ -1516,174 +1319,138 @@
       "rox/no-foreground-opacity": 4
     },
     "apps/electron/src/renderer/pages/connections-overview.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 3
     },
     "apps/electron/src/renderer/pages/extra-screens/agents/AgentCenterPage.tsx": {
-      "rox/no-arbitrary-text-size": 10,
+      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 4
     },
     "apps/electron/src/renderer/pages/extra-screens/decisions/DecisionsPage.tsx": {
-      "rox/no-arbitrary-text-size": 14,
       "rox/no-foreground-opacity": 4
     },
     "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx": {
-      "rox/no-arbitrary-text-size": 11,
       "rox/no-foreground-opacity": 6,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/pages/extra-screens/focus/FocusPage.tsx": {
-      "rox/no-arbitrary-text-size": 17,
       "rox/no-foreground-opacity": 6
     },
     "apps/electron/src/renderer/pages/extra-screens/radar/RadarPage.tsx": {
       "rox/icon-size-tokens": 28,
       "rox/no-arbitrary-radius": 11,
-      "rox/no-arbitrary-text-size": 6,
       "rox/no-foreground-opacity": 8,
       "rox/no-raw-color": 10,
       "rox/prefer-primitives": 2
     },
     "apps/electron/src/renderer/pages/extra-screens/ui.tsx": {
-      "rox/no-arbitrary-text-size": 14,
+      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 14
     },
     "apps/electron/src/renderer/pages/feed/FeedParts.tsx": {
       "rox/icon-size-tokens": 5,
-      "rox/no-arbitrary-text-size": 5,
       "rox/no-foreground-opacity": 10,
       "rox/no-raw-color": 13,
       "rox/prefer-primitives": 3
     },
     "apps/electron/src/renderer/pages/feed/FeedSidebar.tsx": {
       "rox/icon-size-tokens": 1,
-      "rox/no-arbitrary-text-size": 4,
       "rox/no-foreground-opacity": 4
     },
     "apps/electron/src/renderer/pages/feed/FeedSources.tsx": {
       "rox/icon-size-tokens": 10,
-      "rox/no-arbitrary-text-size": 34,
       "rox/no-foreground-opacity": 9,
       "rox/no-raw-color": 1,
       "rox/prefer-primitives": 2
     },
     "apps/electron/src/renderer/pages/inbox/InboxSidebar.tsx": {
       "rox/icon-size-tokens": 1,
-      "rox/no-arbitrary-text-size": 5,
       "rox/no-foreground-opacity": 6,
       "rox/no-raw-color": 2
     },
     "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx": {
-      "rox/no-arbitrary-text-size": 43,
       "rox/no-foreground-opacity": 21,
       "rox/prefer-primitives": 2
     },
     "apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx": {
       "rox/icon-size-tokens": 5,
       "rox/no-arbitrary-radius": 4,
-      "rox/no-arbitrary-text-size": 52,
       "rox/no-foreground-opacity": 22,
       "rox/prefer-primitives": 5
     },
-    "apps/electron/src/renderer/pages/meetings/MeetingDetail.tsx": {
-      "rox/no-arbitrary-text-size": 2
-    },
     "apps/electron/src/renderer/pages/meetings/MeetingsSidebar.tsx": {
       "rox/icon-size-tokens": 1,
-      "rox/no-arbitrary-text-size": 6,
       "rox/no-foreground-opacity": 5
     },
     "apps/electron/src/renderer/pages/meetings/ProposalInbox.tsx": {
-      "rox/no-arbitrary-text-size": 4,
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/pages/notes/NoteInspector.tsx": {
       "rox/icon-size-tokens": 34,
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 16,
       "rox/no-foreground-opacity": 21,
       "rox/prefer-primitives": 6
     },
     "apps/electron/src/renderer/pages/notes/NotesAIMenu.tsx": {
       "rox/icon-size-tokens": 5,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 4,
       "rox/prefer-primitives": 2
     },
     "apps/electron/src/renderer/pages/notes/NotesDialogs.tsx": {
-      "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 1
+      "rox/icon-size-tokens": 4
     },
     "apps/electron/src/renderer/pages/notes/NotesDocumentChrome.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 4,
       "rox/no-foreground-opacity": 8,
       "rox/no-hardcoded-z-index": 2
     },
     "apps/electron/src/renderer/pages/notes/NotesNavigationSidebar.tsx": {
-      "rox/icon-size-tokens": 28,
-      "rox/no-arbitrary-text-size": 1,
-      "rox/no-foreground-opacity": 3,
-      "rox/no-raw-color": 4
+      "rox/icon-size-tokens": 2
     },
     "apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 12,
       "rox/no-foreground-opacity": 14,
       "rox/no-hardcoded-z-index": 3
     },
     "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx": {
       "rox/icon-size-tokens": 10,
-      "rox/no-arbitrary-text-size": 15,
       "rox/no-foreground-opacity": 12,
       "rox/prefer-primitives": 3
     },
     "apps/electron/src/renderer/pages/notes/NotesWorkspaceChrome.tsx": {
       "rox/icon-size-tokens": 6,
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 3,
       "rox/prefer-primitives": 3
     },
     "apps/electron/src/renderer/pages/notes/VaultIndexHealthPanel.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 6,
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/pages/notes/VaultInsightsPanel.tsx": {
       "rox/icon-size-tokens": 10,
-      "rox/no-arbitrary-text-size": 10,
       "rox/no-foreground-opacity": 7
     },
     "apps/electron/src/renderer/pages/project/ProjectAiPanel.tsx": {
       "rox/icon-size-tokens": 12,
-      "rox/no-arbitrary-text-size": 23,
       "rox/no-foreground-opacity": 8,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/pages/project/ProjectInputs.tsx": {
       "rox/icon-size-tokens": 16,
-      "rox/no-arbitrary-text-size": 15,
       "rox/no-foreground-opacity": 11
     },
     "apps/electron/src/renderer/pages/project/ProjectRequirements.tsx": {
       "rox/icon-size-tokens": 6,
-      "rox/no-arbitrary-text-size": 7,
       "rox/no-foreground-opacity": 5,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/pages/project/ProjectTimeline.tsx": {
       "rox/icon-size-tokens": 14,
-      "rox/no-arbitrary-text-size": 16,
       "rox/no-foreground-opacity": 13,
       "rox/prefer-primitives": 1
     },
-    "apps/electron/src/renderer/pages/project/RoadmapModelResult.tsx": {
-      "rox/no-arbitrary-text-size": 1
-    },
     "apps/electron/src/renderer/pages/project/roadmap-ui.tsx": {
       "rox/icon-size-tokens": 7,
-      "rox/no-arbitrary-text-size": 8,
       "rox/no-foreground-opacity": 16
     },
     "apps/electron/src/renderer/pages/settings/AccountSettingsPage.tsx": {
@@ -1691,7 +1458,6 @@
     },
     "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx": {
       "rox/icon-size-tokens": 37,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 12,
       "rox/no-raw-color": 13,
       "rox/prefer-primitives": 1
@@ -1700,13 +1466,11 @@
       "stylelint/declaration-property-unit-disallowed-list": 3
     },
     "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 1,
       "rox/prefer-primitives": 2
     },
     "apps/electron/src/renderer/pages/settings/BrowserProfileImportPanel.tsx": {
       "rox/icon-size-tokens": 24,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 4,
       "rox/no-raw-color": 3
     },
@@ -1715,20 +1479,15 @@
     },
     "apps/electron/src/renderer/pages/settings/ContextSettingsPage.tsx": {
       "rox/icon-size-tokens": 10,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-raw-color": 2
     },
     "apps/electron/src/renderer/pages/settings/ExtensionsSettingsPage.tsx": {
       "rox/icon-size-tokens": 30,
-      "rox/no-arbitrary-text-size": 7,
       "rox/no-raw-color": 15
     },
     "apps/electron/src/renderer/pages/settings/ImportSettingsPage.tsx": {
       "rox/icon-size-tokens": 12,
       "rox/no-foreground-opacity": 2
-    },
-    "apps/electron/src/renderer/pages/settings/KnowledgeSettingsPage.tsx": {
-      "rox/no-arbitrary-text-size": 1
     },
     "apps/electron/src/renderer/pages/settings/LabelsSettingsPage.tsx": {
       "rox/icon-size-tokens": 10,
@@ -1741,7 +1500,6 @@
     },
     "apps/electron/src/renderer/pages/settings/MarketplaceSettingsPage.tsx": {
       "rox/icon-size-tokens": 12,
-      "rox/no-arbitrary-text-size": 11,
       "rox/no-foreground-opacity": 4,
       "rox/no-hardcoded-z-index": 1,
       "rox/no-raw-color": 20,
@@ -1752,7 +1510,6 @@
       "rox/no-foreground-opacity": 14
     },
     "apps/electron/src/renderer/pages/settings/OrganizationsSettingsPage.tsx": {
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 2,
       "rox/no-raw-color": 3
     },
@@ -1762,7 +1519,6 @@
     },
     "apps/electron/src/renderer/pages/settings/RuntimeSettingsPage.tsx": {
       "rox/icon-size-tokens": 14,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 9,
       "rox/no-raw-color": 3
     },
@@ -1770,25 +1526,19 @@
       "rox/icon-size-tokens": 4
     },
     "apps/electron/src/renderer/pages/settings/ServerSettingsPage.tsx": {
-      "rox/icon-size-tokens": 12,
-      "rox/no-arbitrary-text-size": 3
+      "rox/icon-size-tokens": 12
     },
     "apps/electron/src/renderer/pages/settings/SettingsNavigator.tsx": {
       "rox/icon-size-tokens": 8,
-      "rox/no-arbitrary-text-size": 1,
-      "rox/no-foreground-opacity": 8,
+      "rox/no-foreground-opacity": 7,
       "rox/no-hardcoded-z-index": 2
     },
     "apps/electron/src/renderer/pages/settings/SettingsOverviewPage.tsx": {
       "rox/icon-size-tokens": 2,
       "rox/no-raw-color": 2
     },
-    "apps/electron/src/renderer/pages/settings/ShortcutsPage.tsx": {
-      "rox/no-arbitrary-text-size": 1
-    },
     "apps/electron/src/renderer/pages/settings/StorageVisibleRootSettings.tsx": {
-      "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 1
+      "rox/icon-size-tokens": 4
     },
     "apps/electron/src/renderer/pages/settings/VoiceHistorySettings.tsx": {
       "rox/prefer-primitives": 1
@@ -1797,7 +1547,6 @@
       "rox/no-raw-color": 1
     },
     "apps/electron/src/renderer/pages/settings/WorkspaceSettingsPage.tsx": {
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 9
     },
     "apps/electron/src/renderer/pages/settings/security/RoxRuntimeCard.tsx": {
@@ -1808,25 +1557,20 @@
       "rox/no-raw-color": 12
     },
     "apps/electron/src/renderer/pages/tasks/CatalogPanel.tsx": {
-      "rox/icon-size-tokens": 1,
-      "rox/no-arbitrary-text-size": 1
+      "rox/icon-size-tokens": 1
     },
     "apps/electron/src/renderer/pages/tasks/MoveDialog.tsx": {
-      "rox/no-arbitrary-text-size": 6,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx": {
-      "rox/no-arbitrary-text-size": 9,
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx": {
-      "rox/no-arbitrary-text-size": 32,
       "rox/no-foreground-opacity": 26,
       "rox/no-hardcoded-z-index": 1
     },
     "apps/electron/src/renderer/pages/tasks/TaskSidebar.tsx": {
       "rox/icon-size-tokens": 1,
-      "rox/no-arbitrary-text-size": 6,
       "rox/no-foreground-opacity": 4
     },
     "apps/electron/src/renderer/pages/tasks/catalog-panel.css": {
@@ -1834,21 +1578,18 @@
       "stylelint/scale-unlimited/declaration-strict-value": 3
     },
     "apps/electron/src/renderer/pages/tasks/parts.tsx": {
-      "rox/no-arbitrary-text-size": 7,
       "rox/no-foreground-opacity": 4,
       "rox/no-hardcoded-z-index": 1,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/pages/workspace-work/AgentProfilesView.tsx": {
       "rox/icon-size-tokens": 5,
-      "rox/no-arbitrary-text-size": 5,
       "rox/no-foreground-opacity": 1,
       "rox/no-raw-color": 1,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/pages/workspace-work/WorkspacePlanView.tsx": {
       "rox/icon-size-tokens": 6,
-      "rox/no-arbitrary-text-size": 5,
       "rox/no-foreground-opacity": 2,
       "rox/no-raw-color": 7,
       "rox/prefer-primitives": 2
@@ -1859,14 +1600,12 @@
     },
     "apps/electron/src/renderer/pages/workspace-work/WorkspaceTasksView.tsx": {
       "rox/icon-size-tokens": 3,
-      "rox/no-arbitrary-text-size": 4,
       "rox/no-foreground-opacity": 1,
       "rox/no-raw-color": 1,
       "rox/prefer-primitives": 4
     },
     "apps/electron/src/renderer/platform/ConnectionInfoSection.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/platform/GitStatusBar.tsx": {
@@ -1876,7 +1615,6 @@
     },
     "apps/electron/src/renderer/platform/HomeFrontPage.tsx": {
       "rox/icon-size-tokens": 24,
-      "rox/no-arbitrary-text-size": 16,
       "rox/no-foreground-opacity": 7,
       "rox/no-hardcoded-z-index": 1,
       "rox/prefer-primitives": 1
@@ -1887,24 +1625,11 @@
     },
     "apps/electron/src/renderer/platform/InspectorHost.tsx": {
       "rox/icon-size-tokens": 8,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 7
     },
     "apps/electron/src/renderer/platform/InspectorResizeSash.tsx": {
       "rox/no-foreground-opacity": 2,
       "rox/no-hardcoded-z-index": 1
-    },
-    "apps/electron/src/renderer/platform/RailRow.tsx": {
-      "rox/no-arbitrary-text-size": 1,
-      "rox/no-foreground-opacity": 3
-    },
-    "apps/electron/src/renderer/platform/SurfaceHost.tsx": {
-      "rox/no-arbitrary-text-size": 1
-    },
-    "apps/electron/src/renderer/platform/SurfaceTabs.tsx": {
-      "rox/icon-size-tokens": 2,
-      "rox/no-foreground-opacity": 2,
-      "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/platform/WorkspaceSurfaceHost.tsx": {
       "rox/no-foreground-opacity": 1,
@@ -1912,43 +1637,37 @@
     },
     "apps/electron/src/renderer/platform/conation/ConationBoardPanel.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 5
     },
     "apps/electron/src/renderer/platform/conation/ConationFundPanel.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 5
     },
     "apps/electron/src/renderer/platform/conation/ConationInspectorPanel.tsx": {
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/platform/home/QuickTaskInput.tsx": {
-      "rox/icon-size-tokens": 6,
-      "rox/no-arbitrary-text-size": 4
+      "rox/icon-size-tokens": 6
     },
     "apps/electron/src/renderer/platform/home/quick-task-input.css": {
-      "stylelint/declaration-property-unit-disallowed-list": 7,
-      "stylelint/scale-unlimited/declaration-strict-value": 7
+      "stylelint/declaration-property-unit-disallowed-list": 6,
+      "stylelint/scale-unlimited/declaration-strict-value": 6
     },
     "apps/electron/src/renderer/platform/home/widget-appearance-controls.tsx": {
       "rox/icon-size-tokens": 9,
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 9,
       "rox/no-foreground-opacity": 8,
       "rox/no-raw-color": 1,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/platform/home/widget-kit.tsx": {
       "rox/icon-size-tokens": 6,
-      "rox/no-arbitrary-text-size": 15,
       "rox/no-foreground-opacity": 8,
       "rox/no-raw-color": 1,
       "rox/prefer-primitives": 3
     },
     "apps/electron/src/renderer/platform/home/widgets.tsx": {
       "rox/icon-size-tokens": 40,
-      "rox/no-arbitrary-text-size": 33,
       "rox/no-foreground-opacity": 6,
       "rox/no-raw-color": 1,
       "rox/prefer-primitives": 1
@@ -1965,7 +1684,6 @@
     },
     "apps/electron/src/renderer/playground/Sidebar.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/playground/ThemeToggle.tsx": {
@@ -1999,16 +1717,13 @@
     },
     "apps/electron/src/renderer/playground/demos/mobile-webui/MobileWebUIFrame.tsx": {
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/playground/registry/automations.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/playground/registry/browser-ui.tsx": {
       "rox/no-arbitrary-radius": 5,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 12,
       "rox/no-hardcoded-z-index": 7,
       "rox/no-raw-color": 35
@@ -2021,18 +1736,15 @@
     "apps/electron/src/renderer/playground/registry/collection.tsx": {
       "rox/icon-size-tokens": 9,
       "rox/no-arbitrary-radius": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-hardcoded-z-index": 1
     },
     "apps/electron/src/renderer/playground/registry/container-transitions.tsx": {
       "rox/icon-size-tokens": 11,
       "rox/no-arbitrary-radius": 17,
-      "rox/no-arbitrary-text-size": 6,
       "rox/no-foreground-opacity": 49
     },
     "apps/electron/src/renderer/playground/registry/custom-shadows.tsx": {
       "rox/no-arbitrary-radius": 15,
-      "rox/no-arbitrary-text-size": 7,
       "rox/no-foreground-opacity": 23
     },
     "apps/electron/src/renderer/playground/registry/edit-popover.tsx": {
@@ -2041,12 +1753,10 @@
     "apps/electron/src/renderer/playground/registry/entity-lists.tsx": {
       "rox/icon-size-tokens": 17,
       "rox/no-arbitrary-radius": 4,
-      "rox/no-arbitrary-text-size": 12,
       "rox/no-foreground-opacity": 15
     },
     "apps/electron/src/renderer/playground/registry/entity-primitives.tsx": {
-      "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 1
+      "rox/no-arbitrary-radius": 1
     },
     "apps/electron/src/renderer/playground/registry/image-support.tsx": {
       "rox/icon-size-tokens": 4,
@@ -2056,33 +1766,28 @@
     "apps/electron/src/renderer/playground/registry/kanban.tsx": {
       "rox/icon-size-tokens": 3,
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 9,
       "rox/no-hardcoded-z-index": 2
     },
     "apps/electron/src/renderer/playground/registry/label-badges.tsx": {
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 2,
       "rox/no-raw-color": 14
     },
     "apps/electron/src/renderer/playground/registry/messages.tsx": {
       "rox/icon-size-tokens": 2,
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 4,
       "rox/no-foreground-opacity": 11
     },
     "apps/electron/src/renderer/playground/registry/notes.tsx": {
       "rox/icon-size-tokens": 2,
       "rox/no-arbitrary-radius": 4,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 3,
       "rox/no-hardcoded-z-index": 1
     },
     "apps/electron/src/renderer/playground/registry/planner.tsx": {
       "rox/icon-size-tokens": 22,
       "rox/no-arbitrary-radius": 8,
-      "rox/no-arbitrary-text-size": 7,
       "rox/no-foreground-opacity": 26,
       "rox/no-hardcoded-z-index": 2
     },
@@ -2092,18 +1797,15 @@
     "apps/electron/src/renderer/playground/registry/project-colors.tsx": {
       "rox/icon-size-tokens": 13,
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 5,
       "rox/no-hardcoded-z-index": 1,
       "rox/no-raw-color": 11
     },
     "apps/electron/src/renderer/playground/registry/session-list.tsx": {
-      "rox/icon-size-tokens": 9,
-      "rox/no-arbitrary-text-size": 1
+      "rox/icon-size-tokens": 9
     },
     "apps/electron/src/renderer/playground/registry/slash-command.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 1,
       "rox/no-hardcoded-z-index": 1,
       "rox/no-raw-color": 1
@@ -2111,7 +1813,6 @@
     "apps/electron/src/renderer/playground/registry/task-editor.tsx": {
       "rox/icon-size-tokens": 56,
       "rox/no-arbitrary-radius": 9,
-      "rox/no-arbitrary-text-size": 29,
       "rox/no-foreground-opacity": 42,
       "rox/no-raw-color": 16
     },
@@ -2168,12 +1869,8 @@
     "apps/webui/src/index.css": {
       "stylelint/declaration-property-unit-disallowed-list": 1
     },
-    "packages/ui/src/components/activity-timeline/ActivityTimeline.tsx": {
-      "rox/no-arbitrary-text-size": 3
-    },
     "packages/ui/src/components/annotations/AnnotationIslandMenu.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 2
     },
     "packages/ui/src/components/annotations/AnnotationOverlayLayer.tsx": {
@@ -2183,8 +1880,7 @@
       "rox/no-foreground-opacity": 3
     },
     "packages/ui/src/components/chat/AcceptPlanDropdown.tsx": {
-      "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 2
+      "rox/icon-size-tokens": 2
     },
     "packages/ui/src/components/chat/CompactAcceptPlanDrawer.tsx": {
       "rox/icon-size-tokens": 2,
@@ -2209,7 +1905,6 @@
     },
     "packages/ui/src/components/chat/TurnCard.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 11,
       "rox/no-foreground-opacity": 5,
       "rox/no-hardcoded-z-index": 1,
       "rox/no-raw-color": 1,
@@ -2221,33 +1916,25 @@
     "packages/ui/src/components/chat/UserMessageBubble.tsx": {
       "rox/icon-size-tokens": 2,
       "rox/no-arbitrary-radius": 4,
-      "rox/no-arbitrary-text-size": 10,
       "rox/no-foreground-opacity": 12
     },
     "packages/ui/src/components/code-viewer/DiffViewerControls.tsx": {
-      "rox/no-arbitrary-radius": 2,
-      "rox/no-arbitrary-text-size": 1
-    },
-    "packages/ui/src/components/code-viewer/ShikiCodeViewer.tsx": {
-      "rox/no-arbitrary-text-size": 6
+      "rox/no-arbitrary-radius": 2
     },
     "packages/ui/src/components/code-viewer/UnifiedDiffViewer.tsx": {
       "rox/no-foreground-opacity": 1
     },
     "packages/ui/src/components/comments/CommentsThread.tsx": {
       "rox/no-arbitrary-radius": 4,
-      "rox/no-arbitrary-text-size": 9,
       "rox/no-foreground-opacity": 1
     },
     "packages/ui/src/components/contextual-date/ContextualDatePicker.tsx": {
       "rox/no-arbitrary-radius": 6,
-      "rox/no-arbitrary-text-size": 5,
       "rox/no-hardcoded-z-index": 1,
       "rox/prefer-primitives": 1
     },
     "packages/ui/src/components/gantt/GanttView.tsx": {
       "rox/no-arbitrary-radius": 4,
-      "rox/no-arbitrary-text-size": 6,
       "rox/no-foreground-opacity": 1
     },
     "packages/ui/src/components/markdown/CodeBlock.tsx": {
@@ -2256,12 +1943,8 @@
     "packages/ui/src/components/markdown/CollapsibleSection.tsx": {
       "rox/icon-size-tokens": 2
     },
-    "packages/ui/src/components/markdown/Markdown.tsx": {
-      "rox/no-arbitrary-text-size": 7
-    },
     "packages/ui/src/components/markdown/MarkdownDatatableBlock.tsx": {
       "rox/icon-size-tokens": 16,
-      "rox/no-arbitrary-text-size": 10,
       "rox/no-foreground-opacity": 6,
       "rox/no-hardcoded-z-index": 6,
       "rox/prefer-primitives": 2
@@ -2270,17 +1953,14 @@
       "rox/no-arbitrary-radius": 1
     },
     "packages/ui/src/components/markdown/MarkdownDocBlock.tsx": {
-      "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 3
+      "rox/icon-size-tokens": 4
     },
     "packages/ui/src/components/markdown/MarkdownHtmlBlock.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 3,
       "rox/prefer-primitives": 1
     },
     "packages/ui/src/components/markdown/MarkdownImageBlock.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-hardcoded-z-index": 1,
       "rox/prefer-primitives": 1
     },
@@ -2295,13 +1975,11 @@
     },
     "packages/ui/src/components/markdown/MarkdownPdfBlock.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 5,
       "rox/no-hardcoded-z-index": 1,
       "rox/prefer-primitives": 1
     },
     "packages/ui/src/components/markdown/MarkdownSpreadsheetBlock.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 10,
       "rox/no-foreground-opacity": 12,
       "rox/no-hardcoded-z-index": 1,
       "rox/prefer-primitives": 1
@@ -2310,7 +1988,6 @@
       "rox/icon-size-tokens": 2
     },
     "packages/ui/src/components/markdown/SourcedStatement.tsx": {
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 1
     },
     "packages/ui/src/components/markdown/TableExportDropdown.tsx": {
@@ -2350,8 +2027,7 @@
       "rox/no-foreground-opacity": 1
     },
     "packages/ui/src/components/overlay/DocumentFormattedMarkdownOverlay.tsx": {
-      "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1
+      "rox/icon-size-tokens": 2
     },
     "packages/ui/src/components/overlay/FullscreenOverlayBase.tsx": {
       "rox/no-hardcoded-z-index": 1,
@@ -2359,7 +2035,6 @@
     },
     "packages/ui/src/components/overlay/FullscreenOverlayBaseHeader.tsx": {
       "rox/icon-size-tokens": 4,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 3
     },
     "packages/ui/src/components/overlay/ImagePreviewOverlay.tsx": {
@@ -2367,7 +2042,6 @@
     },
     "packages/ui/src/components/overlay/ItemNavigator.tsx": {
       "rox/icon-size-tokens": 10,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 2,
       "rox/no-hardcoded-z-index": 1,
       "rox/prefer-primitives": 3
@@ -2395,66 +2069,51 @@
     },
     "packages/ui/src/components/overlay/ZoomControls.tsx": {
       "rox/icon-size-tokens": 8,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 4,
       "rox/prefer-primitives": 4
     },
     "packages/ui/src/components/person-field/PeopleList.tsx": {
       "rox/no-arbitrary-radius": 2,
-      "rox/no-arbitrary-text-size": 6,
       "rox/no-foreground-opacity": 2
     },
     "packages/ui/src/components/person-field/PersonField.tsx": {
       "rox/no-arbitrary-radius": 2,
-      "rox/no-arbitrary-text-size": 7,
       "rox/no-hardcoded-z-index": 1
     },
     "packages/ui/src/components/privacy-field/PrivacyField.tsx": {
-      "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 4
+      "rox/no-arbitrary-radius": 1
     },
     "packages/ui/src/components/progress-bar/ProgressBar.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 1
     },
     "packages/ui/src/components/reactions/ReactionsBar.tsx": {
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-foreground-opacity": 1,
       "rox/no-hardcoded-z-index": 1
     },
-    "packages/ui/src/components/status-badge/StatusBadge.tsx": {
-      "rox/no-arbitrary-text-size": 4
-    },
     "packages/ui/src/components/subscribers-picker/SubscribersPicker.tsx": {
       "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 3,
       "rox/no-hardcoded-z-index": 1
     },
     "packages/ui/src/components/terminal/TerminalOutput.tsx": {
       "rox/icon-size-tokens": 12,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-raw-color": 6
     },
     "packages/ui/src/components/tree-table/TreeTable.tsx": {
-      "rox/no-arbitrary-radius": 1,
-      "rox/no-arbitrary-text-size": 3
+      "rox/no-arbitrary-radius": 1
     },
     "packages/ui/src/components/ui/BrowserControls.tsx": {
       "rox/icon-size-tokens": 14,
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 10,
       "rox/no-raw-color": 14
     },
     "packages/ui/src/components/ui/BrowserEmptyStateCard.tsx": {
-      "rox/no-arbitrary-text-size": 4,
       "rox/no-foreground-opacity": 5
     },
     "packages/ui/src/components/ui/BrowserShader.tsx": {
       "rox/no-raw-color": 2
     },
     "packages/ui/src/components/ui/FilterableSelectPopover.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 2,
       "rox/prefer-primitives": 1
     },
@@ -2476,16 +2135,13 @@
     },
     "packages/ui/src/components/ui/PreviewHeader.tsx": {
       "rox/icon-size-tokens": 2,
-      "rox/no-arbitrary-text-size": 1,
       "rox/prefer-primitives": 1
     },
     "packages/ui/src/components/ui/SimpleDropdown.tsx": {
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 3
     },
     "packages/ui/src/components/ui/StyledDropdown.tsx": {
       "rox/icon-size-tokens": 1,
-      "rox/no-arbitrary-text-size": 1,
       "rox/no-foreground-opacity": 1
     },
     "packages/ui/src/components/ui/drawer.tsx": {
@@ -2502,14 +2158,14 @@
     "rox/no-raw-error-render": {
       "until": "#1569 (UI-A3: presentError)",
       "messageIds": null,
-      "total": 193
+      "total": 204
     },
     "rox/prefer-primitives": {
       "until": "#1592 (UI-C1: Checkbox primitive)",
       "messageIds": [
         "rawCheckbox"
       ],
-      "total": 43
+      "total": 46
     }
   }
 }

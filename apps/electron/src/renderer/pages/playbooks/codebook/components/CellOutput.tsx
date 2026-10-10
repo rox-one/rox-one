@@ -47,7 +47,7 @@ export function CellOutput({ result, workspaceId, projectSlug }: CellOutputProps
           {t(`playbooks.codebook.stepState.${result.status}`)}
         </span>
         {typeof exitCode === 'number' ? (
-          <span className="tabular-nums text-muted-foreground">{t('playbooks.codebook.output.exit', { code: exitCode })}</span>
+          <span className="numeric text-muted-foreground">{t('playbooks.codebook.output.exit', { code: exitCode })}</span>
         ) : null}
       </div>
 
@@ -57,7 +57,7 @@ export function CellOutput({ result, workspaceId, projectSlug }: CellOutputProps
 
       {result.output?.stderr ? (
         <div>
-          <span className="text-caption uppercase tracking-wide text-muted-foreground">{t('playbooks.codebook.output.stderr')}</span>
+          <span className="text-caption uppercase caps-label text-muted-foreground">{t('playbooks.codebook.output.stderr')}</span>
           <pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded-[var(--radius-control)] bg-surface-pressed p-2 font-mono text-caption text-destructive">{result.output.stderr}</pre>
         </div>
       ) : null}
