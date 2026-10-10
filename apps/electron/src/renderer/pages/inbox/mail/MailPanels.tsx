@@ -106,9 +106,9 @@ export function MailNavSection({ mail, activeFolderId, onSelectFolder }: {
               testId={`mail-folder-${f.role ?? f.id}`}
             />
           ))
-        : (
-            <NavItem label={t('inbox.kind.mail')} dot="muted" active={activeFolderId === 'inbox'} onClick={() => onSelectFolder({ id: 'inbox', name: 'Inbox', role: 'inbox', total: 0, unread: 0 })} testId="mail-folder-inbox" />
-          )}
+        : s?.enabled === false
+          ? <NavItem label={t('inbox.kind.mail')} dot="muted" disabled testId="mail-folder-inbox" />
+          : <NavItem label={t('inbox.kind.mail')} dot="muted" active={activeFolderId === 'inbox'} onClick={() => onSelectFolder({ id: 'inbox', name: 'Inbox', role: 'inbox', total: 0, unread: 0 })} testId="mail-folder-inbox" />}
     </NavSection>
   )
 }

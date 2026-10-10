@@ -1,0 +1,15 @@
+# Проверка-носитель правила «строгая свежесть ветки» для main.
+# Тривиальная и мгновенная: сама ничего не проверяет, но включает механизм,
+# при котором устаревшую ветку нельзя слить, пока она не обновлена на актуальный main.
+name: main-freshness
+on:
+  pull_request:
+    branches: [main]
+permissions: {}
+jobs:
+  freshness:
+    name: freshness
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: echo "ok"

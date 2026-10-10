@@ -13,6 +13,24 @@ on:
     branches: [main]
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - 'packages/server-core/**'
+      - 'packages/core/**'
+      - 'apps/webui/**'
+      - 'apps/viewer/**'
+      - 'apps/cli/**'
+      - 'packages/messaging-gateway/**'
+      - 'packages/messaging-discord-worker/**'
+      - 'packages/messaging-whatsapp-worker/**'
+      - 'packages/browser-intel/**'
+      - 'packages/test-harness/**'
+      - 'eslint-baselines/workspaces/**'
+      - 'scripts/eslint/**'
+      - 'scripts/eslint-workspace-ratchet.ts'
+      - 'scripts/__tests__/eslint-workspace-ratchet.test.ts'
+      - 'bun.lock'
+      - 'package.json'
+      - '.github/workflows/eslint-workspaces.yml'
   workflow_dispatch:
 permissions:
   contents: read

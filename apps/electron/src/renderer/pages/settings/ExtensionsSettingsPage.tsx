@@ -57,6 +57,7 @@ import { featureWorkbenchHarnessExtCenterV1Atom } from '@/atoms/unified-shell'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { settingsPageActionResult } from './settings-rox2-surface'
 import { toErrorMessage } from '@/lib/errors'
+import { RoversSection } from '@/features/rovers/RoversSection'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -71,6 +72,7 @@ type SectionId =
   | 'disabled'
   | 'developer'
   | 'registries'
+  | 'rovers'
 
 type CategoryFilter = CatalogCategory | 'all'
 
@@ -82,6 +84,7 @@ const SECTIONS: SectionId[] = [
   'disabled',
   'developer',
   'registries',
+  'rovers',
 ]
 
 function isHighRisk(perm: ExtensionPermission): boolean {
@@ -871,7 +874,9 @@ export default function ExtensionsSettingsPage() {
                   section === id ? 'bg-muted font-medium' : 'opacity-70 hover:opacity-100'
                 }`}
               >
-                {t(`extensions.section.${id}`, { defaultValue: id })}
+                {id === 'rovers'
+                  ? t('rovers.section.nav')
+                  : t(`extensions.section.${id}`, { defaultValue: id })}
               </button>
             ))}
           </div>
@@ -973,6 +978,7 @@ export default function ExtensionsSettingsPage() {
                   </section>
                 )
               })}
+              <RoversSection />
             </div>
           ) : null}
 
@@ -1350,6 +1356,8 @@ export default function ExtensionsSettingsPage() {
               ))}
             </div>
           ) : null}
+
+          {!loading && !unifiedCenter && section === 'rovers' ? <RoversSection /> : null}
         </div>
       </ScrollArea>
       </div>

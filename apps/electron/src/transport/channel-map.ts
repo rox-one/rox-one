@@ -76,6 +76,7 @@ export const CHANNEL_MAP = {
   deleteMeeting: invoke(RPC_CHANNELS.meetings.DELETE),
   createMeeting: invoke(RPC_CHANNELS.meetings.CREATE),
   createMeetingProposal: invoke(RPC_CHANNELS.meetings.CREATE_PROPOSAL),
+  listMeetingProposals: invoke(RPC_CHANNELS.meetings.LIST_PROPOSALS),
   approveMeetingProposal: invoke(RPC_CHANNELS.meetings.APPROVE_PROPOSAL),
   rejectMeetingProposal: invoke(RPC_CHANNELS.meetings.REJECT_PROPOSAL),
   openMeetingTarget: invoke(RPC_CHANNELS.meetings.OPEN_TARGET),
@@ -316,6 +317,9 @@ export const CHANNEL_MAP = {
   extensionsSetEnabled: invoke(RPC_CHANNELS.extensions.SET_ENABLED),
   extensionsGetState: invoke(RPC_CHANNELS.extensions.GET_STATE),
   onExtensionsChanged: listener(RPC_CHANNELS.extensions.CHANGED),
+
+  // Rovers catalog (Slice A, info-only)
+  roversList: invoke(RPC_CHANNELS.rovers.LIST),
 
   // SiYuan plugin bridge (W6)
   pluginBridgeListPlugins: invoke(RPC_CHANNELS.pluginBridge.LIST_PLUGINS),

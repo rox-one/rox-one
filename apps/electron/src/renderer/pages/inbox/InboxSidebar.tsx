@@ -75,13 +75,13 @@ function Count({ count, urgent }: { count?: number; urgent?: boolean }) {
   return count ? <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 text-xs numeric', urgent ? 'bg-[var(--warning,#d9a13b)]/15 text-[var(--warning,#d9a13b)]' : 'bg-foreground/[0.05] text-text-muted')}>{count}</span> : null
 }
 
-function InboxNavButton({ label, count, active, icon: Icon, tone = 'muted', onClick, testId }: {
-  label: string; count?: number; active?: boolean; icon: LucideIcon; tone?: Tone
+function InboxNavButton({ label, count, active, disabled, icon: Icon, tone = 'muted', onClick, testId }: {
+  label: string; count?: number; active?: boolean; disabled?: boolean; icon: LucideIcon; tone?: Tone
   onClick: () => void; testId: string
 }) {
   return (
-    <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined} data-testid={testId}
-      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-sm outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'rox-nav-shimmer bg-surface-hover text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
+<button type="button" onClick={onClick} disabled={disabled} aria-current={active ? 'page' : undefined} data-testid={testId}
+      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-sm outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'rox-nav-shimmer bg-surface-hover text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground', disabled && 'cursor-default opacity-50 hover:bg-transparent hover:text-text-secondary')}>
       <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-lg', ICON_TONE[tone])}><Icon className="size-3.5" strokeWidth={1.75} /></span>
       <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
       <Count count={count} />
@@ -172,7 +172,9 @@ export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, o
         ) : <p className="px-2 pb-1 text-xs text-text-muted">{t(statusKey(status), { address: status?.address ?? '', url: status?.serverUrl ?? '', error: status?.error ?? '', flag: status?.flag ?? '' })}</p>}
         {status?.state === 'ready' ? mail.folders.map((folder) => (
           <InboxNavButton key={folder.id} label={folderLabel(t, folder)} count={folder.role === 'drafts' || folder.role === 'sent' ? folder.total : folder.unread} active={inMail && filter.mail === folder.id} icon={folder.role ? FOLDER_ICONS[folder.role] : Mail} tone={folder.role === 'junk' || folder.role === 'trash' ? 'muted' : 'info'} onClick={() => onSelectFolder(folder)} testId={`mail-folder-${folder.role ?? folder.id}`} />
-        )) : <InboxNavButton label={t('inbox.kind.mail')} active={inMail && filter.mail === 'inbox'} icon={Inbox} tone="muted" onClick={() => onSelectFolder({ id: 'inbox', name: t('inbox.mail.folder.inbox'), role: 'inbox', total: 0, unread: 0 })} testId="mail-folder-inbox" />}
+        )) : status?.enabled === false ? (
+          <InboxNavButton label={t('inbox.kind.mail')} disabled icon={Inbox} tone="muted" onClick={() => onSelectFolder({ id: 'inbox', name: t('inbox.mail.folder.inbox'), role: 'inbox', total: 0, unread: 0 })} testId="mail-folder-inbox" />
+        ) : <InboxNavButton label={t('inbox.kind.mail')} active={inMail && filter.mail === 'inbox'} icon={Inbox} tone="muted" onClick={() => onSelectFolder({ id: 'inbox', name: t('inbox.mail.folder.inbox'), role: 'inbox', total: 0, unread: 0 })} testId="mail-folder-inbox" />}
       </InboxNavGroup>
       <div className="mt-3 space-y-0.5 border-t border-foreground/[0.06] pt-2">
         <InboxNavButton label={t('inbox.view.snoozed')} count={counts.snoozed} active={filter === 'snoozed'} icon={Clock3} tone="warning" onClick={() => onSelect('snoozed')} testId="inbox-nav-snoozed" />

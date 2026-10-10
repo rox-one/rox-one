@@ -803,7 +803,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
               {(['all', 'decisions', 'messages', 'snoozed', 'done'] as const).map((view) => <option key={view} value={view}>{t(`inbox.view.${view}`)}</option>)}
               {KINDS.map((kind) => <option key={kind} value={kind}>{kindLabel(kind)}</option>)}
               {activityKinds.map((kind) => <option key={kind} value={kind}>{kindLabel(kind)}</option>)}
-              {mail.folders.length ? mail.folders.map((folder) => <option key={folder.id} value={`mail:${folder.id}`}>{folderLabel(t, folder)}</option>) : <option value="mail:inbox">{t('inbox.kind.mail')}</option>}
+              {mail.folders.length ? mail.folders.map((folder) => <option key={folder.id} value={`mail:${folder.id}`}>{folderLabel(t, folder)}</option>) : mail.status?.enabled === false ? null : <option value="mail:inbox">{t('inbox.kind.mail')}</option>}
             </select>
           </label>
           {listPanel}

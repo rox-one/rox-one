@@ -99,5 +99,7 @@ if [ "$FULL" = "1" ]; then
   run bun test packages/shared/src/collaboration
 fi
 
+printf '\n[scope] port gates only: no UI-token / ESLint ratchets, no UI-001 recovery, no bundle-size budget.\n'
+printf '[scope] "ALL-GREEN" here means the port checks pass, NOT that CI is green — see STATUS.md § "What run-gates.sh does NOT cover".\n'
 printf '\n=== RESULT: %s\n' "$([ $fail -eq 0 ] && echo ALL-GREEN || echo FAILURES-PRESENT)"
 exit $fail

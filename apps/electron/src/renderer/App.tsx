@@ -25,11 +25,7 @@ import { observeChatSessionEvent, bindChatOptimisticMessage, observeChatPermissi
 import { collectionBulkOperationRegistry } from '@/components/app-shell/collection/collection-bulk-optimistic'
 import { viewportBand } from '@/platform/viewport-band'
 import type { AppShellContextType } from '@/context/AppShellContext'
-import { OnboardingWizard, ReauthScreen, ensureRoxRuntimeDefault } from '@/components/onboarding'
 import { openFirstSessionWelcome } from '@/components/onboarding/first-session-welcome'
-import { WorkspacePicker } from '@/components/workspace'
-import { ResetConfirmationDialog } from '@/components/ResetConfirmationDialog'
-import { DoctorReportDialog } from '@/components/DoctorReportDialog'
 import { installTrayNavigation } from '@/features/native-integrations/tray-navigation'
 import { ShellActionBridge } from '@/features/native-integrations/ShellActionBridge'
 import { SplashScreen } from '@/components/SplashScreen'
@@ -130,6 +126,36 @@ import { markFirstMeaningfulPaint, markRendererOnce } from './lib/startup-perf'
 const KeyboardShortcutsDialog = React.lazy(() =>
   import('@/components/KeyboardShortcutsDialog').then((m) => ({ default: m.KeyboardShortcutsDialog })),
 )
+
+// #1675: the onboarding wizard / reauth screen / their step + APISetup subtree
+// render only outside the `ready` shell (first run, re-auth, workspace picker,
+// diagnostics). Loading them through React.lazy keeps that subtree out of
+// index.html's preloaded startup closure; each render site gets its own
+// `<Suspense fallback={null}>`, matching the KeyboardShortcutsDialog pattern.
+const OnboardingWizard = React.lazy(() =>
+  import('@/components/onboarding').then((m) => ({ default: m.OnboardingWizard })),
+)
+const ReauthScreen = React.lazy(() =>
+  import('@/components/onboarding').then((m) => ({ default: m.ReauthScreen })),
+)
+const WorkspacePicker = React.lazy(() =>
+  import('@/components/workspace').then((m) => ({ default: m.WorkspacePicker })),
+)
+const ResetConfirmationDialog = React.lazy(() =>
+  import('@/components/ResetConfirmationDialog').then((m) => ({ default: m.ResetConfirmationDialog })),
+)
+const DoctorReportDialog = React.lazy(() =>
+  import('@/components/DoctorReportDialog').then((m) => ({ default: m.DoctorReportDialog })),
+)
+
+/**
+ * `ensureRoxRuntimeDefault` still lives in the (otherwise lazy) onboarding
+ * barrel; reach it through a dynamic import so the startup graph keeps only
+ * this edge's cost. Called from startup/reauth flows well before first paint,
+ * so the one-off chunk fetch is off the critical render path.
+ */
+const loadEnsureRoxRuntimeDefault = async () =>
+  (await import('@/components/onboarding')).ensureRoxRuntimeDefault
 
 type AppState = 'loading' | 'onboarding' | 'reauth' | 'workspace-picker' | 'ready' | 'transport-unavailable'
 
@@ -914,6 +940,10 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       setCallerAuthority(identity.authority)
       const needs = identity.authority === 'local' ? await window.electronAPI.getSetupNeeds() : null
       if (identity?.name?.trim()) {
+        // Static import would drag the whole onboarding barrel into the startup
+        // closure; this call only runs in the reauth flow, so a dynamic import
+        // is required to keep it lazy (see loadEnsureRoxRuntimeDefault).
+        const ensureRoxRuntimeDefault = await loadEnsureRoxRuntimeDefault()
         const runtime = await ensureRoxRuntimeDefault(window.electronAPI)
         if (runtime.status === 'failed') {
           toast.error(t('onboarding.errors.saveConfigFailed'))
@@ -1024,6 +1054,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           // Reuse the identity read above and the runtime check's own connection
           // list (when it changed nothing); skip the OAuth network refresh at boot.
           const runtimeRead: { connections: readonly LlmConnectionWithStatus[] | null } = { connections: null }
+          // See loadEnsureRoxRuntimeDefault: static import would pull the lazy
+          // onboarding barrel back into index.html's startup closure.
+          const ensureRoxRuntimeDefault = await loadEnsureRoxRuntimeDefault()
           const runtimeProbe = await probeWithRetry(
             () => ensureRoxRuntimeDefault(window.electronAPI, {
               identity,
@@ -2732,15 +2765,17 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       <DismissibleLayerProvider>
         <ModalProvider>
           <WindowCloseHandler />
-          <ReauthScreen
-            onLogin={handleReauthLogin}
-            onReset={handleReauthReset}
-          />
-          <ResetConfirmationDialog
-            open={showResetDialog}
-            onConfirm={executeReset}
-            onCancel={() => setShowResetDialog(false)}
-          />
+          <React.Suspense fallback={null}>
+            <ReauthScreen
+              onLogin={handleReauthLogin}
+              onReset={handleReauthReset}
+            />
+            <ResetConfirmationDialog
+              open={showResetDialog}
+              onConfirm={executeReset}
+              onCancel={() => setShowResetDialog(false)}
+            />
+          </React.Suspense>
         </ModalProvider>
       </DismissibleLayerProvider>
     )
@@ -2754,33 +2789,35 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       <DismissibleLayerProvider>
         <ModalProvider>
           <WindowCloseHandler />
-          <OnboardingWizard
-            state={onboarding.state}
-            onContinue={onboarding.handleContinue}
-            onBack={onboarding.handleBack}
-            onSelectProvider={onboarding.handleSelectProvider}
-            roxConnectCodes={onboarding.roxConnectCodes}
-            roxConnectStatus={onboarding.roxConnectStatus}
-            roxConnectError={onboarding.roxConnectError}
-            roxAuthBaseUrl={onboarding.roxAuthBaseUrl}
-            onStartRoxConnect={onboarding.handleStartRoxConnect}
-            onOpenRoxConnectBrowser={onboarding.handleOpenRoxConnectBrowser}
-            onSelectApiSetupMethod={onboarding.handleSelectApiSetupMethod}
-            onSubmitCredential={onboarding.handleSubmitCredential}
-            onSubmitOmpCredential={onboarding.handleSubmitOmpCredential}
-            onSubmitLocalModel={onboarding.handleSubmitLocalModel}
-            onStartOAuth={onboarding.handleStartOAuth}
-            onFinish={onboarding.handleFinish}
-            isWaitingForCode={onboarding.isWaitingForCode}
-            isProviderOAuthPending={onboarding.isProviderOAuthPending}
-            onSubmitAuthCode={onboarding.handleSubmitAuthCode}
-            onCancelOAuth={onboarding.handleCancelOAuth}
-            copilotDeviceCode={onboarding.copilotDeviceCode}
-            onBrowseGitBash={onboarding.handleBrowseGitBash}
-            onUseGitBashPath={onboarding.handleUseGitBashPath}
-            onRecheckGitBash={onboarding.handleRecheckGitBash}
-            onClearError={onboarding.handleClearError}
-          />
+          <React.Suspense fallback={null}>
+            <OnboardingWizard
+              state={onboarding.state}
+              onContinue={onboarding.handleContinue}
+              onBack={onboarding.handleBack}
+              onSelectProvider={onboarding.handleSelectProvider}
+              roxConnectCodes={onboarding.roxConnectCodes}
+              roxConnectStatus={onboarding.roxConnectStatus}
+              roxConnectError={onboarding.roxConnectError}
+              roxAuthBaseUrl={onboarding.roxAuthBaseUrl}
+              onStartRoxConnect={onboarding.handleStartRoxConnect}
+              onOpenRoxConnectBrowser={onboarding.handleOpenRoxConnectBrowser}
+              onSelectApiSetupMethod={onboarding.handleSelectApiSetupMethod}
+              onSubmitCredential={onboarding.handleSubmitCredential}
+              onSubmitOmpCredential={onboarding.handleSubmitOmpCredential}
+              onSubmitLocalModel={onboarding.handleSubmitLocalModel}
+              onStartOAuth={onboarding.handleStartOAuth}
+              onFinish={onboarding.handleFinish}
+              isWaitingForCode={onboarding.isWaitingForCode}
+              isProviderOAuthPending={onboarding.isProviderOAuthPending}
+              onSubmitAuthCode={onboarding.handleSubmitAuthCode}
+              onCancelOAuth={onboarding.handleCancelOAuth}
+              copilotDeviceCode={onboarding.copilotDeviceCode}
+              onBrowseGitBash={onboarding.handleBrowseGitBash}
+              onUseGitBashPath={onboarding.handleUseGitBashPath}
+              onRecheckGitBash={onboarding.handleRecheckGitBash}
+              onClearError={onboarding.handleClearError}
+            />
+          </React.Suspense>
         </ModalProvider>
       </DismissibleLayerProvider>
     )
@@ -2792,14 +2829,16 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       <DismissibleLayerProvider>
         <ModalProvider>
           <WindowCloseHandler />
-          <WorkspacePicker
-            onSelectWorkspace={async (id) => {
-              const scope = sessionScopeRef.current
-              await runPersonalTaskScopeTransition(() => window.electronAPI.switchWorkspace(id), () => sessionScopeRef.current === scope, scope)
-              setWindowWorkspaceId(id)
-              setAppState('ready')
-            }}
-          />
+          <React.Suspense fallback={null}>
+            <WorkspacePicker
+              onSelectWorkspace={async (id) => {
+                const scope = sessionScopeRef.current
+                await runPersonalTaskScopeTransition(() => window.electronAPI.switchWorkspace(id), () => sessionScopeRef.current === scope, scope)
+                setWindowWorkspaceId(id)
+                setAppState('ready')
+              }}
+            />
+          </React.Suspense>
         </ModalProvider>
       </DismissibleLayerProvider>
     )
@@ -2902,12 +2941,14 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
                   />
                 )}
               </div>
-              <ResetConfirmationDialog
-                open={showResetDialog}
-                onConfirm={executeReset}
-                onCancel={() => setShowResetDialog(false)}
-              />
-              <DoctorReportDialog report={doctorReport} onClose={() => setDoctorReport(null)} />
+              <React.Suspense fallback={null}>
+                <ResetConfirmationDialog
+                  open={showResetDialog}
+                  onConfirm={executeReset}
+                  onCancel={() => setShowResetDialog(false)}
+                />
+                <DoctorReportDialog report={doctorReport} onClose={() => setDoctorReport(null)} />
+              </React.Suspense>
               <React.Suspense fallback={null}>
                 <KeyboardShortcutsDialog
                   open={showShortcuts}

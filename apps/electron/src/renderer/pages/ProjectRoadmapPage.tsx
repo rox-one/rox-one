@@ -44,6 +44,7 @@ import {
   tasksForWorkspaceProject,
 } from '@/lib/personal-tasks'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
+import { devSpaceEnabledAtom } from '@/atoms/dev-space'
 import { Info_Page } from '@/components/info'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -108,6 +109,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
   const workspace = useActiveWorkspace()
   const workspaceId = workspace?.id
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const devSpaceEnabled = useAtomValue(devSpaceEnabledAtom)
   const shell = useAppShellContext()
   const { onCreateSession, onOpenFile } = shell
 
@@ -751,11 +753,13 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
           if (!await flushRef.current()) throw new Error('PROJECT_ROADMAP_SAVE_REQUIRED')
         }}
       />
-      <div className="flex justify-end" data-testid="project-dev-space-link">
-        <Button type="button" variant="outline" size="sm" onClick={() => navigate(routes.view.developers(project.config.id))}>
-          <FolderGit2 className="icon-caption" aria-hidden />{t('devSpace.openInDevSpace')}
-        </Button>
-      </div>
+      {devSpaceEnabled ? (
+        <div className="flex justify-end" data-testid="project-dev-space-link">
+          <Button type="button" variant="outline" size="sm" onClick={() => navigate(routes.view.developers(project.config.id))}>
+            <FolderGit2 className="icon-caption" aria-hidden />{t('devSpace.openInDevSpace')}
+          </Button>
+        </div>
+      ) : null}
       <RepositorySnapshotPanel
         key={`${workspaceId}:${project.config.id}:${project.config.workingDirectory ?? ''}`}
         workspaceId={workspaceId!}

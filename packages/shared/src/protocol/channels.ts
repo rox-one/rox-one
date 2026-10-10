@@ -1345,6 +1345,14 @@ export const RPC_CHANNELS = {
     PROGRESS: 'marketplace:progress',
     CHANGED: 'marketplace:CHANGED',
   },
+  rovers: {
+    /**
+     * Rovers service catalog (info-only Slice A): the validated bundled catalog
+     * entries. Read-only; the renderer's Rovers section and the rovers_* session
+     * tools read the same catalog. No deploy engine.
+     */
+    LIST: 'rovers:list',
+  },
   meetings: {
     PLAN_ACTIONS: 'meetings:planActions',
     LIST: 'meetings:list',
@@ -1353,6 +1361,8 @@ export const RPC_CHANNELS = {
     DELETE: 'meetings:delete',
     CREATE: 'meetings:create',
     CREATE_PROPOSAL: 'meetings:createProposal',
+    /** Read the workspace's meeting → native proposals for the inbox. */
+    LIST_PROPOSALS: 'meetings:listProposals',
     APPROVE_PROPOSAL: 'meetings:approveProposal',
     REJECT_PROPOSAL: 'meetings:rejectProposal',
     OPEN_TARGET: 'meetings:openTarget',

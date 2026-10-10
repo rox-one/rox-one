@@ -13,6 +13,22 @@ on:
   pull_request:
     # labeled/unlabeled: adding or removing `ui-baseline-override` re-runs the check.
     types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - 'apps/electron/src/**'
+      - 'apps/electron/eslint-rules/**'
+      - 'packages/ui/src/**'
+      - 'packages/ui/eslint-rules/**'
+      - 'apps/viewer/src/**'
+      - 'apps/webui/src/**'
+      - '.stylelintrc.cjs'
+      - 'eslint-baselines/ui-tokens.json'
+      - 'eslint-baselines/README.md'
+      - 'scripts/lint-baseline.ts'
+      - 'scripts/__tests__/lint-baseline.test.ts'
+      - 'scripts/__tests__/stylelint-rules.test.ts'
+      - 'bun.lock'
+      - 'package.json'
+      - '.github/workflows/ui-lint-ratchet.yml'
   workflow_dispatch:
 permissions:
   contents: read

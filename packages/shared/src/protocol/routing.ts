@@ -448,12 +448,16 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.marketplace.PROGRESS,
   RPC_CHANNELS.marketplace.CHANGED,
 
+  // rovers — the curated service catalog is a bundled, signed resource (local).
+  RPC_CHANNELS.rovers.LIST,
+
   RPC_CHANNELS.meetings.LIST,
   RPC_CHANNELS.meetings.GET,
   RPC_CHANNELS.meetings.SEARCH,
   RPC_CHANNELS.meetings.DELETE,
   RPC_CHANNELS.meetings.CREATE,
   RPC_CHANNELS.meetings.CREATE_PROPOSAL,
+  RPC_CHANNELS.meetings.LIST_PROPOSALS,
   RPC_CHANNELS.meetings.APPROVE_PROPOSAL,
   RPC_CHANNELS.meetings.REJECT_PROPOSAL,
   RPC_CHANNELS.meetings.OPEN_TARGET,

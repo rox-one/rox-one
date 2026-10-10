@@ -449,23 +449,12 @@ export const actions = {
   // W1-07 (#1504): unified-shell actions. Each carries a workbench `flag`; while
   // it is off the action has no hotkey, is not listed (shortcut pages,
   // Omnibox) and never intercepts a key — the shell is the baseline.
+  //
+  // A6/A7 (decision 010-ui-agent-task-controls.md): the ⌘J / ⌘⇧J
+  // `agent.togglePanel` / `agent.askAboutSelection` actions were removed — no
+  // agent panel is mounted, so the actions were dead key registrations that
+  // promised a surface that does not exist. Re-add them together with the panel.
   // ═══════════════════════════════════════════
-  'agent.togglePanel': {
-    id: 'agent.togglePanel',
-    labelKey: 'shortcuts.action.agentTogglePanel',
-    description: 'Show or hide the @rox agent panel',
-    defaultHotkey: 'mod+j',
-    category: 'View',
-    flag: W1_07_ACTION_FLAG.agentPanel,
-  },
-  'agent.askAboutSelection': {
-    id: 'agent.askAboutSelection',
-    labelKey: 'shortcuts.action.agentAskAboutSelection',
-    description: 'Ask @rox about the current selection',
-    defaultHotkey: 'mod+shift+j',
-    category: 'View',
-    flag: W1_07_ACTION_FLAG.agentPanel,
-  },
   // ⌃1…4 on macOS. On Windows/Linux Ctrl+1…4 is ⌘1…4 (`mode.slot*`), so the
   // quick panels use Alt+1…4 there. ⌘⇧1…4 stay `collection.view*`.
   'messenger.quickPanelDocs': {

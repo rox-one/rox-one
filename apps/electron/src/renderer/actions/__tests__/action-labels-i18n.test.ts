@@ -68,8 +68,6 @@ const NEW_LABEL_KEYS = [
   'shortcuts.action.layoutDeck',
   'shortcuts.action.openMissions',
   // W1-07 (#1504): flag-gated shell actions.
-  'shortcuts.action.agentAskAboutSelection',
-  'shortcuts.action.agentTogglePanel',
   'shortcuts.action.findInDoc',
   'shortcuts.action.quickPanelCalendar',
   'shortcuts.action.quickPanelContacts',

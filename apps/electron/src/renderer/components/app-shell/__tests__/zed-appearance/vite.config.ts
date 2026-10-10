@@ -7,12 +7,10 @@ const repository = resolve(root, '../../../../../../../..')
 
 // Retain the renderer's production aliases, package resolver, Tailwind plugin
 // and browser-safe node stubs. No appearance styles or components are mocked.
-// The production config is a `defineConfig(({ command }) => …)` function
-// (aliases, plugins and the package resolver live inside it), so it must be
-// invoked — spreading the function object strips every alias.
-const production = (typeof rendererConfig === 'function'
-  ? (rendererConfig as (env: { command: 'build'; mode: string }) => UserConfig)({ command: 'build', mode: 'production' })
-  : rendererConfig) as UserConfig
+// `apps/electron/vite.config.ts` exports a `defineConfig(({ command }) => …)`
+// factory, so resolve it with the fixture's build environment instead of
+// spreading it: spreading a function drops every alias, plugin and stub.
+const production: UserConfig = rendererConfig({ command: 'build', mode: 'production' })
 export default defineConfig({
   ...production,
   root,
