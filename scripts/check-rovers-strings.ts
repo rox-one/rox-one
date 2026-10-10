@@ -11,10 +11,10 @@
  *   2. user-visible JSX attributes written as plain string literals
  *      (`placeholder="…"`, `title="…"`, `aria-label="…"`).
  *
- * Attribute values written as expressions (`placeholder={t('…')}`) and any
- * line that already routes through `t(` / `i18n.t(` are ignored, as are
- * comment lines. Developer-facing string literals in non-JSX positions
- * (log/diagnostic messages, parse reasons) are out of scope.
+ * Attribute values written as expressions (a translation call inside braces) and
+ * any line that already routes through i18n are ignored, as are comment lines.
+ * Developer-facing string literals in non-JSX positions (log/diagnostic
+ * messages, parse reasons) are out of scope.
  *
  * Exits 1 with a file:line report when a violation is found, 0 otherwise.
  * Wired into the local `lint` script only (no CI workflow edits).
