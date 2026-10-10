@@ -167,8 +167,32 @@ w1-07 baseline-фикстура (3 новых экшена), UI-001 harness stub
 Гейты на финальном дереве: `typecheck:all` — 0 ошибок; i18n parity **11 502 × 11** + sorted/
 coverage/budget ✓; `lint:ui-tokens` — **0 новых** (6479 заbaselined, на 6 меньше базы);
 `lint:css` — 0 ошибок (730 warning-класса базлайна); `tokens-v2` **36/36**; фикс-кластер
-**209/209** (9 сьютов по отдельности); полный serial-прогон — [впишется после финального прогона].
+**209/209** (9 сьютов по отдельности); визуальные базлайны пересняты — **5 экранов × 112
+снапшотов (560)**, `run-unified-gates` 13 pass / 2 advisory-fail (config-paths — унаследовано,
+plan.md:161; axe — input-label/button-name), артефакты `.visual-artifacts/`.
 
-Известные предсуществующие (не наши, подтверждено git-историей): `provider.browser.test.ts`
-(30-секундные таймауты), 7 `react-hooks/rules-of-hooks` в `lint:electron`, env-фейл
-`header-status-presence` (react-dom/server в bun).
+Полный serial-прогон (**2 660 сьютов**, bun 1.4.2, финальное дерево): **2 579 passed / 81
+failed = 22 новых + 59 known-red** (до починки фикстур было 31 новых). Все 22 файла новых падений
+байт-в-байт совпадают с `origin/main` (кроме `product-learning-results.browser.test.ts` — наша
+правка пути chromium, и `tests/visual/playground.spec.ts` — 15-минутный whole-suite дедлайн);
+каждый воспроизведён поодиночке. Это предсуществующее семейство, вскрытое скоупом полного
+прогона (прошлый прогон видел 762 сьюта), а не волна-3. Починены нашим фиксом и проверены
+зелёными: `openui-block` 11/11, `kernel-availability` 5/5, `panel-workspace` 9/9 (в тишине;
+в полной нагрузке возможен флейк хука), `connections-lifecycle` 7/7, `radar-lifecycle` 1/1,
+`boot-manifest` 7/7 (регенерация после G7/G4: 48 boot-chunk, 15 маршрутов), `switch-contrast`,
+`glyphs`/`menu-icons`/`design-token-classes`. Остаточный дрейф (appearance 4–5
+материал/клавиатура-ассертов, chat-scroll 2 скролл-тайминга под полной нагрузкой,
+product-learning 1 IO-ассерт) — наблюдаемый после починки сборки, не связан с содержимым
+волны-3. Main-класс (server/agent/e2e/lark + `configuration-guide` без `craft-cli.md` на main,
+`check-config-paths` — унаследован по plan.md:161) оставлен как есть и передан владельцу;
+checked-in `test-baseline.json` (130 записей) не трогали — по прецеденту репо наследованное
+документируется, а не абсорбируется. Единственный реальный gap волны, закрытый приёмкой:
+boot-manifest не был перегенерирован в коммите волны (`bun run scripts/boot-manifest.ts`).
+
+Живая проверка G4 ON-пути (флаг через `localStorage craft-feature-layout-engine=true` в
+zed-фикстуре): реальный драг шва → `data-snap="true"`, гайд, бейдж «530 px·snap 50 %», коммит в
+снап-цель, 0 ошибок страницы; скриншот `~/Pictures/Shots/Agents/rox-g4-snap/on-path-*.png`.
+
+Окруженческие грабли, найденные приёмкой: `~/.bun/bin/bun` (1.3.10) в PATH затеняет
+репо-пинованный 1.4.2 — под ним playwright-фикстуры падают с «Target page … has been closed»;
+playwright-chromium-1248 имел битую подпись бандла (переустановлен).
