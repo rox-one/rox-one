@@ -1339,6 +1339,14 @@ export const RPC_CHANNELS = {
     PROGRESS: 'marketplace:progress',
     CHANGED: 'marketplace:CHANGED',
   },
+  rovers: {
+    /**
+     * Rovers service catalog (info-only Slice A): the validated bundled catalog
+     * entries. Read-only; the renderer's Rovers section and the rovers_* session
+     * tools read the same catalog. No deploy engine.
+     */
+    LIST: 'rovers:list',
+  },
   meetings: {
     PLAN_ACTIONS: 'meetings:planActions',
     LIST: 'meetings:list',

@@ -14,6 +14,7 @@ import { registerAutomationsHandlers } from './automations'
 import { registerContextDocsHandlers } from './context-docs'
 import { registerBundledSkillsHandlers } from './bundled-skills'
 import { registerMarketplaceHandlers } from './marketplace'
+import { registerRoversHandlers } from './rovers'
 import { registerMeetingHandlers } from './meetings.ts'
 import { registerFilesHandlers } from './files'
 import { registerLabelsHandlers } from './labels'
@@ -153,6 +154,7 @@ export function registerCoreRpcHandlers(
   registerAutomationsHandlers(server, deps)
   registerContextDocsHandlers(server, deps)
   registerMarketplaceHandlers(server, deps)
+  registerRoversHandlers(server, deps)
   registerMeetingHandlers(server, deps)
   registerBundledSkillsHandlers(server, deps)
   registerFilesHandlers(server, deps)
