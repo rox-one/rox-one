@@ -17,7 +17,7 @@ import { initializeAuthenticatedWebTransport } from './adapter/transport-bootstr
 import { WEBUI_REQUIRES_CONATION_FLAG } from './rox2-webui-surface'
 import { WebModesLanding } from './web-modes-landing'
 import { CloudVmSurface } from './cloud-vm-surface'
-import { isWebSession, type WebEntryModeId } from './web-modes'
+import { isModesLandingEnabled, isWebSession, parseWebEntryMode, probeCloudVmState, type WebEntryModeId } from './web-modes'
 import { navigate, routes } from '@/lib/navigate'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { ROX_THEME_ID } from '@config/theme'
@@ -98,14 +98,29 @@ export default function App() {
   // null = not yet confirmed. The two-mode landing is offered only to a
   // confirmed web session; an unconfirmed session keeps the desktop-like flow.
   const [webSession, setWebSession] = useState<boolean | null>(null)
+  // The operator's landing switch (`ROX_WEBUI_MODES_LANDING` via /api/config).
+  // null = not read yet; the flag defaults to enabled when the config is
+  // unreadable (see isModesLandingEnabled).
+  const [modesLanding, setModesLanding] = useState<boolean | null>(null)
+  // A validated `?mode=` deep link skips the landing and enters that mode. An
+  // invalid or absent value is ignored (undefined). `chat` is known up front, so
+  // it enters synchronously; `cloud-vm` needs the honest availability gate and
+  // is resolved by the effect below.
+  const [deepLinkMode] = useState(() => parseWebEntryMode(new URLSearchParams(window.location.search).get('mode')))
   // Chosen entry mode (null = landing not yet answered) + whether the cloud-VM
-  // surface overlay is open above the mounted renderer.
-  const [enteredMode, setEnteredMode] = useState<WebEntryModeId | null>(null)
+  // surface overlay is open above the mounted renderer. `chat` shows the shared
+  // renderer; `cloud-vm` opens CloudVmSurface above it. `?mode=chat` seeds the
+  // mode so the deep link enters the chat surface without the landing.
+  const [enteredMode, setEnteredMode] = useState<WebEntryModeId | null>(deepLinkMode === 'chat' ? 'chat' : null)
   const [cloudVmOpen, setCloudVmOpen] = useState(false)
   // A `?sessionId=` deep link («Продолжить в веб») goes straight to its session.
   const [directSessionId] = useState(() => new URLSearchParams(window.location.search).get('sessionId'))
   // «Вошли» = a mode was chosen on the landing (null = landing still shown).
   const entered = enteredMode !== null
+  // A `?mode=cloud-vm` deep link must pass the same honest availability gate as
+  // the landing tile: it enters only once the host reports a usable cloud-VM
+  // provider, and otherwise falls back to the landing state text.
+  const [cloudLinkChecking, setCloudLinkChecking] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -115,6 +130,7 @@ export default function App() {
     setError('')
     setBootstrap(null)
     setWebSession(null)
+    setModesLanding(null)
 
     void initializeAuthenticatedWebTransport({
       fetch: window.fetch.bind(window),
@@ -142,6 +158,17 @@ export default function App() {
         .catch(() => {
           if (!controller.signal.aborted) setWebSession(false)
         })
+      // The operator's landing switch lives in `/api/config`. An unreadable or
+      // non-object payload keeps the documented default (landing enabled) — see
+      // isModesLandingEnabled — so a config hiccup never changes the entry flow.
+      void fetch('/api/config', { credentials: 'same-origin' })
+        .then(res => (res.ok ? res.json() : null))
+        .then(payload => {
+          if (!controller.signal.aborted) setModesLanding(isModesLandingEnabled(payload))
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setModesLanding(true)
+        })
       unsubscribe = client.onConnectionStateChanged(state => {
         if (state.status === 'connected' && client.getAcknowledgedWorkspaceId() !== verified.workspaceId) {
           setError('Server acknowledged workspace does not match the configured workspace')
@@ -166,13 +193,40 @@ export default function App() {
     }
   }, [attempt])
 
+  // `?mode=cloud-vm` deep link: enter only when the host actually reports a
+  // usable cloud-VM provider. Otherwise the landing (with the honest reason from
+  // web-modes.ts) takes over — never a dead entry into a mode that is not there.
+  useEffect(() => {
+    if (deepLinkMode !== 'cloud-vm' || entered) return
+    if (!webSession || directSessionId || modesLanding !== true) return
+    let cancelled = false
+    setCloudLinkChecking(true)
+    void probeCloudVmState(window.electronAPI).then(state => {
+      if (cancelled) return
+      setCloudLinkChecking(false)
+      if (state.status === 'available') {
+        setEnteredMode('cloud-vm')
+        setCloudVmOpen(true)
+      }
+    })
+    return () => {
+      cancelled = true
+      setCloudLinkChecking(false)
+    }
+  }, [deepLinkMode, entered, webSession, directSessionId, modesLanding])
+
   if (phase === 'loading') return <LoadingScreen />
   if (phase === 'error') return <ErrorScreen message={error} onRetry={() => setAttempt(value => value + 1)} />
   if (!bootstrap || webSession === null) return <LoadingScreen />
   // The two-mode landing is strictly a web-session entry; direct session deep
-  // links and non-web (unconfirmed) sessions mount the renderer as before.
+  // links and non-web (unconfirmed) sessions mount the renderer as before. A
+  // valid `?mode=` deep link, the operator's `modesLanding: false` switch and an
+  // already-chosen mode all skip the landing. `?sessionId=` always wins.
   if (webSession && !entered && !directSessionId) {
-    return (
+    // Wait for the operator switch before deciding, and for an in-flight
+    // cloud-VM deep-link probe so we never flash the landing before entering.
+    if (modesLanding === null || cloudLinkChecking) return <LoadingScreen />
+    if (modesLanding) return (
       <WebModesLanding host={window.electronAPI} onEnter={(mode) => {
         setEnteredMode(mode)
         setCloudVmOpen(mode === 'cloud-vm')
