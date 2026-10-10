@@ -342,10 +342,25 @@ describe('devSpace:setWatch (v1.x O10)', () => {
     const set = f.call(RPC_CHANNELS.devSpace.SET_WATCH)
     const enabled = await set({ workspaceId: 'ws', repositoryId: added.id, watchEnabled: true, watchIntervalMs: 7_200_000 })
     expect(enabled.watchAutoPull).toBe(false)
+    expect(enabled.watchRegenerate).toBe(false)
     expect(enabled.watchIntervalMs).toBe(7_200_000)
     const disabled = await set({ workspaceId: 'ws', repositoryId: added.id, watchEnabled: false })
     expect(disabled.watchEnabled).toBe(false)
     expect(disabled.watchIntervalMs).toBe(7_200_000)
+  })
+
+  it('stores watchRegenerate and keeps it across a disable (В11)', async () => {
+    const f = fixture()
+    const added = await addGitRepo(f)
+    const set = f.call(RPC_CHANNELS.devSpace.SET_WATCH)
+    const enabled = await set({
+      workspaceId: 'ws', repositoryId: added.id, watchEnabled: true, watchAutoPull: true, watchRegenerate: true,
+    })
+    expect(enabled).toMatchObject({ watchEnabled: true, watchAutoPull: true, watchRegenerate: true })
+    const onDisk = JSON.parse(readFileSync(join(f.root, 'dev-space-repositories.json'), 'utf8'))
+    expect(onDisk.repositories[0]).toMatchObject({ watchRegenerate: true })
+    const disabled = await set({ workspaceId: 'ws', repositoryId: added.id, watchEnabled: false })
+    expect(disabled).toMatchObject({ watchEnabled: false, watchAutoPull: true, watchRegenerate: true })
   })
 
   it('rejects out-of-range intervals and non-boolean flags', async () => {
@@ -356,6 +371,8 @@ describe('devSpace:setWatch (v1.x O10)', () => {
     await expect(set({ workspaceId: 'ws', repositoryId: added.id, watchEnabled: true, watchIntervalMs: 25 * 3_600_000 })).rejects.toThrow()
     await expect(set({ workspaceId: 'ws', repositoryId: added.id, watchEnabled: 'yes' })).rejects.toThrow()
     await expect(set({ workspaceId: 'ws', repositoryId: added.id, watchEnabled: true, watchAutoPull: 1 })).rejects.toThrow()
+    await expect(set({ workspaceId: 'ws', repositoryId: added.id, watchEnabled: true, watchRegenerate: 1 })).rejects.toThrow()
+    await expect(set({ workspaceId: 'ws', repositoryId: added.id, watchEnabled: true, watchRegenerate: 'yes' })).rejects.toThrow()
     await expect(set({ workspaceId: 'ws', repositoryId: `devrepo_${'a'.repeat(64)}`, watchEnabled: true })).rejects.toThrow()
   })
 })

@@ -1779,6 +1779,8 @@
   "devSpace.watch.interval": "Интервал проверки",
   "devSpace.watch.intervalHours": "{{hours}} ч",
   "devSpace.watch.networkError": "Не удалось обновить настройки слежения.",
+  "devSpace.watch.regenerate": "Обновлять артефакты после pull",
+  "devSpace.watch.regenerateHint": "Требует согласия на модельные коннекты для LLM-части; без него обновятся структурные артефакты.",
   "devSpace.watch.toggle": "Следить",
   "devSpace.watch.toggleHint": "Разрешить фоновый git fetch для этого репозитория (сетевой доступ).",
   "devSpaceQuestions.answerLoading": "Загрузка ответа…",

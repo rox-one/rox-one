@@ -1777,6 +1777,8 @@
   "devSpace.watch.interval": "فاصل الفحص",
   "devSpace.watch.intervalHours": "{{hours}} ساعة",
   "devSpace.watch.networkError": "تعذّر تحديث إعدادات المراقبة.",
+  "devSpace.watch.regenerate": "تحديث المخرجات بعد السحب",
+  "devSpace.watch.regenerateHint": "يتطلب موافقة على موصّلات النماذج للجزء الخاص بالـLLM؛ وبدونها تُحدَّث المخرجات البنيوية فقط.",
   "devSpace.watch.toggle": "مراقبة",
   "devSpace.watch.toggleHint": "السماح بـ git fetch في الخلفية لهذا المستودع (وصول الشبكة).",
   "devSpaceQuestions.answerLoading": "جارٍ تحميل الإجابة…",

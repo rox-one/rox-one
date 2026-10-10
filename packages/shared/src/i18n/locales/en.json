@@ -1769,6 +1769,8 @@
   "devSpace.watch.interval": "Check interval",
   "devSpace.watch.intervalHours": "{{hours}} h",
   "devSpace.watch.networkError": "Could not update watch settings.",
+  "devSpace.watch.regenerate": "Regenerate artifacts after pull",
+  "devSpace.watch.regenerateHint": "Requires model-connector consent for the LLM part; without it the structural artifacts are still refreshed.",
   "devSpace.watch.toggle": "Watch",
   "devSpace.watch.toggleHint": "Allow background git fetch for this repository (network access).",
   "devSpaceQuestions.answerLoading": "Loading answer…",

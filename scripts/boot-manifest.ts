@@ -69,10 +69,12 @@ export interface ChunkGraphEntry {
 }
 
 export interface BootRouteEntry {
-  /** The route's own (lazily loaded) chunk. */
+  /** The route's own (lazily loaded) chunk (informational: hashes move per build). */
   chunk: string
   /** Every chunk reachable at boot for this route (entry + main + route closure). */
   chunks: string[]
+  /** STABLE identity of the closure: the source modules it was built from (sorted). */
+  sources: string[]
 }
 
 export interface BootManifest {
@@ -81,6 +83,8 @@ export interface BootManifest {
   entry: string
   /** Chunks loaded by every boot, before any route is reached (sorted). */
   bootChunks: string[]
+  /** STABLE identity of the boot closure: its source modules (sorted). */
+  bootSources: string[]
   routes: Record<string, BootRouteEntry>
 }
 
@@ -241,6 +245,7 @@ export function deriveBootManifest(input: DeriveInput): BootManifest {
     for (const file of staticClosure(chunk, graph)) boot.add(file)
   }
   const bootChunks = [...boot].sort()
+  const bootSources = closureSources(graph, bootChunks)
 
   const routes: Record<string, BootRouteEntry> = {}
   for (const [id, suffix] of Object.entries(routeModules).sort(([a], [b]) => a.localeCompare(b))) {
@@ -248,17 +253,21 @@ export function deriveBootManifest(input: DeriveInput): BootManifest {
     if (!chunk) throw new Error(`boot-manifest: no chunk for route "${id}" (${suffix})`)
     const chunks = new Set(bootChunks)
     for (const file of staticClosure(chunk, graph)) chunks.add(file)
-    routes[id] = { chunk, chunks: [...chunks].sort() }
+    const routeChunks = [...chunks].sort()
+    routes[id] = { chunk, chunks: routeChunks, sources: closureSources(graph, routeChunks) }
   }
 
-  return { version: 1, generator: 'scripts/boot-manifest.ts', entry, bootChunks, routes }
+  return { version: 1, generator: 'scripts/boot-manifest.ts', entry, bootChunks, bootSources, routes }
 }
 
 export interface ManifestDiff {
   ok: boolean
   entry?: { expected: string; actual: string }
   bootChunks: { missing: string[]; extra: string[] }
+  bootSources: { missing: string[]; extra: string[] }
   routes: Record<string, { missing: string[]; extra: string[]; chunk?: { expected: string; actual: string } }>
+  /** Chunk renames only: informational, never a failure (hashes move per build). */
+  renames?: Record<string, { expected: string; actual: string }>
 }
 
 /** Structural diff of a derived manifest against the committed one. */
@@ -270,6 +279,7 @@ export function diffBootManifest(expected: BootManifest, actual: BootManifest): 
   const diff: ManifestDiff = {
     ok: true,
     bootChunks: setDiff(expected.bootChunks, actual.bootChunks),
+    bootSources: setDiff(expected.bootSources ?? [], actual.bootSources ?? []),
     routes: {},
   }
   if (expected.entry !== actual.entry) {
@@ -279,20 +289,22 @@ export function diffBootManifest(expected: BootManifest, actual: BootManifest): 
     const want = expected.routes[id]
     const have = actual.routes[id]
     if (!want || !have) {
-      diff.routes[id] = { missing: want ? want.chunks : [], extra: have ? have.chunks : [] }
+      diff.routes[id] = { missing: want ? want.sources : [], extra: have ? have.sources : [] }
       continue
     }
-    const entryDiff = setDiff(want.chunks, have.chunks)
+    const entryDiff = setDiff(want.sources ?? [], have.sources ?? [])
     const violation: { missing: string[]; extra: string[]; chunk?: { expected: string; actual: string } } = {
       ...entryDiff,
     }
+    // A renamed chunk is informational: the closure's source set is the identity
+    // the gate compares, so an unrelated renderer edit cannot red it.
     if (want.chunk !== have.chunk) violation.chunk = { expected: want.chunk, actual: have.chunk }
-    if (entryDiff.missing.length || entryDiff.extra.length || violation.chunk) diff.routes[id] = violation
+    if (entryDiff.missing.length || entryDiff.extra.length) diff.routes[id] = violation
+    else if (violation.chunk) (diff.renames ??= {})[id] = violation.chunk
   }
   diff.ok =
-    !diff.entry &&
-    diff.bootChunks.missing.length === 0 &&
-    diff.bootChunks.extra.length === 0 &&
+    diff.bootSources.missing.length === 0 &&
+    diff.bootSources.extra.length === 0 &&
     Object.keys(diff.routes).length === 0
   return diff
 }
@@ -353,6 +365,31 @@ export function readRouteModules(): Record<string, string> {
   return modules
 }
 
+
+/**
+ * Source modules a chunk set was built from, normalised to a repo-relative
+ * POSIX path. Emitted chunk names (and therefore their hashes) change on almost
+ * every renderer edit, so they cannot be the identity a gate compares; the
+ * source closure can.
+ */
+function normaliseSource(source: string): string {
+  const posixSource = source.replace(/\\/g, '/')
+  const anchors = ['/src/', '/packages/', '/apps/', '/node_modules/']
+  for (const anchor of anchors) {
+    const at = posixSource.lastIndexOf(anchor)
+    if (at !== -1) return posixSource.slice(at + 1)
+  }
+  return posixSource.replace(/^\.\.?\//, '')
+}
+
+function closureSources(graph: ReadonlyMap<string, ChunkGraphEntry>, files: readonly string[]): string[] {
+  const out = new Set<string>()
+  for (const file of files) {
+    for (const source of graph.get(file)?.sources ?? []) out.add(normaliseSource(source))
+  }
+  return [...out].sort()
+}
+
 export function deriveFromDist(distDir: string): BootManifest {
   const graph = buildChunkGraph(readRawChunks(distDir))
   return deriveBootManifest({ graph, routeModules: readRouteModules() })
@@ -365,8 +402,8 @@ export function deriveFromDist(distDir: string): BootManifest {
 function formatDiff(diff: ManifestDiff): string {
   const lines: string[] = []
   if (diff.entry) lines.push(`  entry: ${diff.entry.expected} → ${diff.entry.actual}`)
-  if (diff.bootChunks.missing.length || diff.bootChunks.extra.length) {
-    lines.push(`  bootChunks -${diff.bootChunks.missing.join(',') || '∅'} +${diff.bootChunks.extra.join(',') || '∅'}`)
+  if (diff.bootSources.missing.length || diff.bootSources.extra.length) {
+    lines.push(`  bootSources -${diff.bootSources.missing.join(',') || '∅'} +${diff.bootSources.extra.join(',') || '∅'}`)
   }
   for (const [id, entry] of Object.entries(diff.routes)) {
     if (entry.chunk) lines.push(`  ${id}: chunk ${entry.chunk.expected} → ${entry.chunk.actual}`)

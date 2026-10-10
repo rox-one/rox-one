@@ -1769,6 +1769,8 @@
   "devSpace.watch.interval": "確認間隔",
   "devSpace.watch.intervalHours": "{{hours}} 時間",
   "devSpace.watch.networkError": "監視設定を更新できませんでした。",
+  "devSpace.watch.regenerate": "pull 後に成果物を再生成",
+  "devSpace.watch.regenerateHint": "LLM 部分にはモデルコネクタの同意が必要です。同意がない場合は構造的な成果物のみ更新されます。",
   "devSpace.watch.toggle": "監視",
   "devSpace.watch.toggleHint": "このリポジトリのバックグラウンド git fetch を許可する（ネットワークアクセス）。",
   "devSpaceQuestions.answerLoading": "回答を読み込み中…",

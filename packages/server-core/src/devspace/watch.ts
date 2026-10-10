@@ -1,5 +1,5 @@
 /**
- * Dev Space auto-watch (P6/D3 v1.x lever, "В8"; closed 2026-10-10).
+ * Dev Space auto-watch (P6/D3 v1.x levers "В8" watch + "В11" auto-regeneration; closed 2026-10-10).
  *
  * No daemon, no separate process: the sweep lives in the app process, defers a
  * first run (STARTUP_DELAY), then repeats on a fixed cadence. Both timers are
@@ -9,8 +9,10 @@
  * Consent model: `watchEnabled === true` is an explicit per-repository opt-in to
  * background network git operations for that repository only. Watching refreshes
  * remote-tracking refs and (only with `watchAutoPull`) fast-forwards the working
- * copy; it NEVER regenerates artifacts and never runs an LLM. Cadence is
- * per-repo (`watchIntervalMs`) enforced against `lastWatchAt`.
+ * copy. Auto-regeneration is a further per-repo opt-in (`watchRegenerate`, В11):
+ * after a successful fast-forward the tick awaits the injected `regenerate` sink
+ * under try/catch — a failure is audited, never fatal. Cadence is per-repo
+ * (`watchIntervalMs`) enforced against `lastWatchAt`.
  */
 import type { DevSpaceRepositoryRecord, DevSpaceRepositoryStatus } from '@rox/shared/dev-space'
 import { DEV_SPACE_WATCH_DEFAULT_INTERVAL_MS } from '@rox/shared/dev-space'
@@ -43,6 +45,17 @@ export interface DevSpaceWatchDeps {
   /** Catalog-change notification; the tick only fires it when a status actually moved. */
   readonly pushChanged: (workspaceId: string, repositoryId: string, status: DevSpaceRepositoryStatus) => void
   readonly resolveToken?: (workspaceId: string, repositoryId: string) => Promise<string | null>
+  /**
+   * Auto-regeneration sink (В11): refresh the snapshot and run the pipeline for
+   * a repository whose fast-forward just succeeded. Only invoked for a record
+   * carrying `watchEnabled && watchAutoPull && watchRegenerate`. The signal is
+   * the handle's own controller, so `stop()` aborts an in-flight regeneration's
+   * git work exactly like any other tick. Absent means watching never
+   * regenerates — the pre-В11 behaviour.
+   */
+  readonly regenerate?: (record: DevSpaceRepositoryRecord, signal: AbortSignal) => Promise<void>
+  /** Best-effort audit sink for the regeneration trail; a failure here never affects the tick. */
+  readonly audit?: (root: string, projectSlug: string, event: Record<string, unknown>) => Promise<void>
   readonly now?: () => number
   readonly fetch?: (input: GitFetchInput) => Promise<void>
   readonly pull?: (input: GitFetchInput) => Promise<void>
@@ -95,18 +108,19 @@ export function startDevSpaceWatch(deps: DevSpaceWatchDeps): DevSpaceWatchHandle
 
   /**
    * Inspect one opted-in repository: fetch, compare local `HEAD` with `@{u}`,
-   * and (optionally) fast-forward. Returns the next record, or null when the
-   * repository has no working copy. Never throws.
+   * and (optionally) fast-forward. Returns the next record plus whether a pull
+   * actually ran to success, or a null record when the repository has no
+   * working copy. Never throws.
    */
-  async function inspect(root: string, record: DevSpaceRepositoryRecord, at: number): Promise<DevSpaceRepositoryRecord | null> {
+  async function inspect(root: string, record: DevSpaceRepositoryRecord, at: number): Promise<{ next: DevSpaceRepositoryRecord | null; pulled: boolean }> {
     const workingDirectory = deps.workingDirectoryFor(root, record)
-    if (workingDirectory === null) return null
+    if (workingDirectory === null) return { next: null, pulled: false }
     const token = await resolveToken(record)
     try {
       await fetch({ workingDirectory, repositoryId: record.repositoryId, token, signal: controller.signal })
     } catch (error) {
       const code = error instanceof CloneError ? error.code : 'fetch-failed'
-      return { ...record, lastWatchAt: at, lastError: { code, at } }
+      return { next: { ...record, lastWatchAt: at, lastError: { code, at } }, pulled: false }
     }
 
     let head: string
@@ -117,7 +131,7 @@ export function startDevSpaceWatch(deps: DevSpaceWatchDeps): DevSpaceWatchHandle
       upstream = state.upstream
     } catch (error) {
       const code = error instanceof CloneError ? error.code : 'tracking-unavailable'
-      return { ...record, lastWatchAt: at, lastError: { code, at } }
+      return { next: { ...record, lastWatchAt: at, lastError: { code, at } }, pulled: false }
     }
 
     const behind = upstream !== null && upstream !== head
@@ -125,18 +139,41 @@ export function startDevSpaceWatch(deps: DevSpaceWatchDeps): DevSpaceWatchHandle
       let next: DevSpaceRepositoryRecord = {
         ...omitError(record), status: 'stale', lastWatchAt: at, lastRemoteHead: upstream,
       }
+      let pulled = false
       if (record.watchAutoPull === true) {
         try {
           await pull({ workingDirectory, repositoryId: record.repositoryId, token, signal: controller.signal })
+          pulled = true
         } catch (error) {
           const code = error instanceof CloneError ? error.code : 'pull-failed'
           next = { ...next, lastError: { code, at } }
         }
       }
-      return next
+      return { next, pulled }
     }
 
-    return { ...omitError(record), lastWatchAt: at, ...(upstream !== null ? { lastRemoteHead: upstream } : {}) }
+    return { next: { ...omitError(record), lastWatchAt: at, ...(upstream !== null ? { lastRemoteHead: upstream } : {}) }, pulled: false }
+  }
+
+  /** Regeneration is audited but never fatal to the tick (В11). */
+  async function audit(root: string, projectSlug: string, event: Record<string, unknown>): Promise<void> {
+    try {
+      await deps.audit?.(root, projectSlug, event)
+    } catch (error) {
+      log(`watch audit failed for ${projectSlug}`, error)
+    }
+  }
+
+  async function regenerate(root: string, record: DevSpaceRepositoryRecord): Promise<void> {
+    if (!deps.regenerate) return
+    await audit(root, record.projectSlug, { event: 'watch-regenerate-started', repositoryId: record.repositoryId })
+    try {
+      await deps.regenerate(record, controller.signal)
+      await audit(root, record.projectSlug, { event: 'watch-regenerate-succeeded', repositoryId: record.repositoryId })
+    } catch (error) {
+      log(`watch regeneration failed for ${record.repositoryId}`, error)
+      await audit(root, record.projectSlug, { event: 'watch-regenerate-failed', repositoryId: record.repositoryId })
+    }
   }
 
   async function tick(): Promise<void> {
@@ -153,23 +190,30 @@ export function startDevSpaceWatch(deps: DevSpaceWatchDeps): DevSpaceWatchHandle
           continue
         }
         let changed = false
+        // Regeneration runs only after the sweep's catalog write, so the
+        // refresh+pipeline observe the freshly persisted record instead of
+        // clobbering this tick's status/lastWatchAt.
+        const regenerations: DevSpaceRepositoryRecord[] = []
         for (const record of catalog.repositories) {
           if (stopped) break
           if (record.watchEnabled !== true) continue
           const at = now()
           const interval = record.watchIntervalMs ?? DEV_SPACE_WATCH_DEFAULT_INTERVAL_MS
           if (record.lastWatchAt !== undefined && at - record.lastWatchAt < interval) continue
-          let next: DevSpaceRepositoryRecord | null
+          const wantsRegenerate = record.watchEnabled === true && record.watchAutoPull === true && record.watchRegenerate === true
+          let inspected: { next: DevSpaceRepositoryRecord | null; pulled: boolean }
           try {
-            next = await inspect(workspace.rootPath, record, at)
+            inspected = await inspect(workspace.rootPath, record, at)
           } catch (error) {
             log(`watch inspection threw for ${record.repositoryId}`, error)
             continue
           }
+          const next = inspected.next
           if (next === null) continue
           if (next.status !== record.status) deps.pushChanged(record.workspaceId, record.repositoryId, next.status)
           catalog.repositories = catalog.repositories.map((entry) => (entry.id === next.id ? next : entry))
           changed = true
+          if (inspected.pulled && wantsRegenerate) regenerations.push(next)
         }
         if (changed) {
           try {
@@ -177,6 +221,10 @@ export function startDevSpaceWatch(deps: DevSpaceWatchDeps): DevSpaceWatchHandle
           } catch (error) {
             log(`catalog write failed for workspace ${workspace.id}`, error)
           }
+        }
+        for (const record of regenerations) {
+          if (stopped) break
+          await regenerate(workspace.rootPath, record)
         }
       }
     } catch (error) {

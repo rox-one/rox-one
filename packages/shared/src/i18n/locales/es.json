@@ -1771,6 +1771,8 @@
   "devSpace.watch.interval": "Intervalo de comprobación",
   "devSpace.watch.intervalHours": "{{hours}} h",
   "devSpace.watch.networkError": "No se pudo actualizar la configuración de vigilancia.",
+  "devSpace.watch.regenerate": "Regenerar artefactos tras el pull",
+  "devSpace.watch.regenerateHint": "Requiere consentimiento de los conectores de modelos para la parte LLM; sin él solo se actualizan los artefactos estructurales.",
   "devSpace.watch.toggle": "Vigilar",
   "devSpace.watch.toggleHint": "Permitir git fetch en segundo plano para este repositorio (acceso a la red).",
   "devSpaceQuestions.answerLoading": "Cargando respuesta…",
