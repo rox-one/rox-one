@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 import { chromium, expect as browserExpect, type Browser, type Page } from 'playwright/test'
 
 const repository = resolve(import.meta.dirname, '../../../../../../..'), fixture = resolve(import.meta.dirname, 'fixtures/product-learning-results')
-const endpoint = 'http://127.0.0.1:5246', executablePath = process.env.CHROMIUM_EXECUTABLE ?? '/usr/lib/chromium/chromium'
+const endpoint = 'http://127.0.0.1:5246', executablePath = process.env.CHROMIUM_EXECUTABLE ?? chromium.executablePath()
 const check = browserExpect.configure({ timeout: 15000 }), timeout = 60000
 const action = (page: Page, code: string) => page.evaluate(code)
 const resolveTarget = (page: Page, id: string, override: object = {}) => page.evaluate(({ id, override }) => (window as any).__learningResults.resolve(id, override), { id, override })
