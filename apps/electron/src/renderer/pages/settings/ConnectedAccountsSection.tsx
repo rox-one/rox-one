@@ -17,6 +17,13 @@ import type { ServiceConnection, ServiceProvider } from '../../../shared/types'
 import { SettingsCard, SettingsRow, SettingsSection } from '@/components/settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { connectionAccountSubtitle, connectionProviderLabel } from '@/lib/connection-labels'
 import { navigate, routes } from '@/lib/navigate'
 import { toErrorMessage } from '@/lib/errors'
@@ -200,18 +207,24 @@ export function ConnectedAccountsSection({
               <span className="text-xs text-muted-foreground">
                 {t('settings.accounts.connectProviderField')}
               </span>
-              <select
-                aria-label={t('settings.accounts.connectProviderField')}
-                className="h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm"
+              <Select
                 value={provider}
-                onChange={(e) => setProvider(e.target.value as ServiceProvider)}
+                onValueChange={(value) => setProvider(value as ServiceProvider)}
               >
-                {CONNECTABLE_PROVIDERS.map((candidate) => (
-                  <option key={candidate} value={candidate}>
-                    {connectionProviderLabel(candidate, t)}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  aria-label={t('settings.accounts.connectProviderField')}
+                  className="h-8 w-full"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONNECTABLE_PROVIDERS.map((candidate) => (
+                    <SelectItem key={candidate} value={candidate}>
+                      {connectionProviderLabel(candidate, t)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </label>
             <label className="space-y-1">
               <span className="text-xs text-muted-foreground">
