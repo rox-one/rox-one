@@ -22,6 +22,7 @@ import {
 import type { RpcClient } from './types'
 import { serializeEnvelope, deserializeEnvelope } from './codec'
 import type { PeerTrustVerifier, RemoteTlsSocketOptions } from './peer-trust'
+import { computeDeviceProof, isDeviceChallengeNonce } from './device-auth'
 
 // ---------------------------------------------------------------------------
 // Pending request state
@@ -94,6 +95,13 @@ export interface WsRpcClientOptions {
   localClientProof?: string
   /** Bearer token for remote auth. */
   token?: string
+  /**
+   * e2.2 ROX identity credential (see `resolveRoxIdentityCredential`). When set,
+   * the client defers its handshake until the server's `connect.challenge` and
+   * answers it with a `deviceProof` over the nonce. Omitted ⇒ handshake is sent
+   * immediately (server without a challenge).
+   */
+  identityCredential?: string
   /** Request timeout in ms. Default: 30_000 */
   requestTimeout?: number
   /** Max reconnection backoff in ms. Default: 30_000 */
@@ -188,6 +196,7 @@ export class WsRpcClient implements RpcClient {
   private readonly workspaceId: string | undefined
   private readonly webContentsId: number | undefined
   private readonly localClientProof: string | undefined
+  private readonly identityCredential: string | undefined
   private token: string | undefined
   private readonly resolveTarget?: () => Promise<{ url: string; token?: string }>
   private readonly clientCapabilities: string[]
@@ -204,6 +213,7 @@ export class WsRpcClient implements RpcClient {
     this.workspaceId = opts?.workspaceId
     this.webContentsId = opts?.webContentsId
     this.localClientProof = opts?.localClientProof
+    this.identityCredential = opts?.identityCredential
     this.token = opts?.token
     this.clientCapabilities = opts?.clientCapabilities ?? []
     this.requestTimeout = opts?.requestTimeout ?? REQUEST_TIMEOUT_MS
@@ -605,6 +615,20 @@ export class WsRpcClient implements RpcClient {
     }
 
     if (this.ws !== ws) return
+    // e2.2: with an identity credential, wait for the server's challenge before
+    // handshaking; the connect timeout bounds the wait. Without one, handshake
+    // immediately (server issues no challenge, or the client cannot answer it).
+    if (this.identityCredential) return
+    await this.sendHandshake(ws)
+  }
+
+  /**
+   * Send the handshake, optionally answering a server-issued challenge nonce
+   * with a proof over the ROX identity credential. Reconnect state is captured
+   * here so a deferred (challenge-gated) handshake still reports it correctly.
+   */
+  private async sendHandshake(ws: WebSocket, challengeNonce?: string): Promise<void> {
+    if (this.ws !== ws || this.connected) return
     const reconnectSnapshot = this.pendingReconnect
     this.currentHandshakeWasReconnect = reconnectSnapshot !== null
 
@@ -620,6 +644,12 @@ export class WsRpcClient implements RpcClient {
       reconnectClientId: reconnectSnapshot?.clientId,
       lastSeq: reconnectSnapshot?.lastSeq,
     }
+    if (challengeNonce !== undefined) {
+      if (!this.identityCredential) return
+      handshake.challengeNonce = challengeNonce
+      handshake.deviceProof = await computeDeviceProof(challengeNonce, this.identityCredential)
+    }
+    if (this.ws !== ws || this.connected) return
     this.trySendEnvelope(ws, handshake)
   }
 
@@ -700,6 +730,16 @@ export class WsRpcClient implements RpcClient {
     }
 
     switch (envelope.type) {
+      case 'connect.challenge': {
+        // e2.2: answer a server challenge. Without a credential we cannot, and
+        // the handshake was already sent on open, so nothing to do.
+        const nonce = envelope.challengeNonce
+        if (this.identityCredential && this.ws && isDeviceChallengeNonce(nonce)) {
+          void this.sendHandshake(this.ws, nonce)
+        }
+        break
+      }
+
       case 'handshake_ack': {
         const wasReconnectAttempt = this.currentHandshakeWasReconnect
         const serverRecognizedReconnect = envelope.reconnected === true
