@@ -206,7 +206,7 @@
 
 Закрытие 2026-10-10 (этот PR): O1, O2, O6, O7, O8 были решены кодом ещё в волнах и подтверждены
 ревизией; O3/O4 закреплены ADR-0021/ADR-0022; O5 вынесен в v1.x целиком; O9 и O11 получили
-кодовые гейты; O10 зафиксирован кап-константами и последовательным LLM-слоем.
+кодовые гейты; O10 зафиксирован кап-константами и bounded-параллелизмом LLM-слоя (v1.x, внедрён).
 
 | # | Вопрос | Статус 2026-10-10 | Где решение |
 |---|---|---|---|
@@ -219,5 +219,5 @@
 | O7 | Пины/лицензии шести инструментов | **resolved** — пины в коде и аудите (openwiki 0.7.1 MIT; Understand-Anything 1d7418b8 MIT; codegraph 0.6.13 MIT; graphify Apache-2.0; …) | ADR-0020 §D4; `audits/d4-tools-revision-2026-10-09.md` §2.3 |
 | O8 | Пересчёт при «грязном» дереве | **resolved** — по явной команде `devSpace:generateQuestions`; dirty — только контекст вопроса | `devspace/questions/blocks.ts:14`; `handlers/rpc/dev-space.ts:644` |
 | O9 | Лимиты клона и глубина истории | **resolved** — full history + `MAX_REPO_BYTES` = 2 ГиБ (гард после clone/pull), таймаут 30 мин | `devspace/clone.ts` (`CLONE_DEPTH`, `MAX_REPO_BYTES`, `clone-too-large`) |
-| O10 | Параллелизм LLM и лимит журнала | **resolved** — 128 прогонов на проект / 200 кодбук; LLM-слой последовательный by design | `devspace/runs.ts:18`; `playbooks/codebook/runs.ts`; `devspace/stages/llm.ts` |
+| O10 | Параллелизм LLM и лимит журнала | **resolved + v1.x внедрён** — 128 прогонов на проект / 200 кодбук; LLM-слой — bounded-параллелизм =2 (`LLM_STAGE_CONCURRENCY`), детерминированный порядок артефактов | `devspace/runs.ts:18`; `playbooks/codebook/runs.ts`; `devspace/stages/llm.ts` |
 | O11 | Бюджет i18n-строк | **resolved** — 12 000 ключей en (11 286 на закрытии), гейт в `validate:ci` | `scripts/check-i18n-budget.ts`; `package.json` (`lint:i18n:budget`) |
