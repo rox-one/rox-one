@@ -7,7 +7,7 @@
  * bun run test [--root <checkout>] [--list] [--filter <path-substring>]
  *   [--timeout <test-ms>] [--suite-timeout <process-ms>]
  *   [--shard <k/n>] [--concurrency <n>] [--baseline <path>|--no-baseline]
- *   [--update-baseline [--force-subset-baseline]] [--strict]
+ *   [--update-baseline [--force-subset-baseline]] [--strict] [--ratchet]
  * ROX_TEST_ROOT and ROX_TEST_ARTIFACT_DIR support immutable baseline comparisons.
  * Every invocation retains its own manifest, logs and incremental result report.
  *
@@ -22,6 +22,12 @@
  * suites that are already red on main. Their failures no longer fail the run;
  * only *new* failures (or stale baseline entries) change the exit code, so the
  * nightly signal is "no new regressions". --strict restores "any red fails".
+ *
+ * Debt ratchet: --ratchet compares the recorded knownRed[] against the file's
+ * knownRedCeiling. Growth past the ceiling fails the run and prints the excess;
+ * equality passes; a shrink passes and suggests lowering the ceiling. Stale
+ * baseline entries keep being reported, and --update-baseline never raises the
+ * ceiling, so the checked-in debt count may only go down.
  */
 import { createHash } from 'node:crypto'
 import { accessSync, constants, existsSync, readFileSync, statSync } from 'node:fs'
@@ -86,6 +92,12 @@ export interface BaselineFile {
   description?: string
   /** Free-form provenance of the recorded redness (report path, revision). */
   source?: string
+  /**
+   * Debt ratchet ceiling: the largest knownRed[] this file may declare. --ratchet
+   * fails when the recorded debt exceeds it, and --update-baseline never raises
+   * it, so the count may only fall between accepted changes.
+   */
+  knownRedCeiling?: number
   knownRed: string[]
 }
 export interface ReportBaseline {
@@ -430,13 +442,30 @@ export async function loadBaseline(path: string): Promise<BaselineFile | null> {
   const baseline = parsed as Partial<BaselineFile>
   if (baseline?.schemaVersion !== 1 || !Array.isArray(baseline.knownRed) || baseline.knownRed.some(entry => typeof entry !== 'string'))
     throw new Error(`Test baseline must declare schemaVersion 1 and a string knownRed[]: ${path}`)
-  return { schemaVersion: 1, description: baseline.description, source: baseline.source, knownRed: baseline.knownRed }
+  if (baseline.knownRedCeiling !== undefined && (!Number.isInteger(baseline.knownRedCeiling) || baseline.knownRedCeiling < 0))
+    throw new Error(`Test baseline knownRedCeiling must be a non-negative integer: ${path}`)
+  return { schemaVersion: 1, description: baseline.description, source: baseline.source,
+    ...(baseline.knownRedCeiling === undefined ? {} : { knownRedCeiling: baseline.knownRedCeiling }),
+    knownRed: baseline.knownRed }
 }
 
-export async function writeBaseline(path: string, knownRed: Iterable<string>, description?: string): Promise<void> {
-  const file: BaselineFile = { schemaVersion: 1, description, knownRed: [...new Set(knownRed)].sort() }
+export async function writeBaseline(path: string, knownRed: Iterable<string>, description?: string, knownRedCeiling?: number): Promise<void> {
+  const file: BaselineFile = { schemaVersion: 1, description,
+    ...(knownRedCeiling === undefined ? {} : { knownRedCeiling }),
+    knownRed: [...new Set(knownRed)].sort() }
   await mkdir(dirname(path), { recursive: true })
   await writeFile(path, JSON.stringify(file, null, 2) + '\n')
+}
+
+/** The --ratchet verdict for a baseline file: its recorded knownRed[] debt
+ *  versus the ceiling. Growth is a failure; a shrink is fine and worth
+ *  tightening; equality is the steady state. `line` is the printed summary. */
+export function ratchetReport(knownRed: number, ceiling: number): { exceeded: boolean; line: string } {
+  if (knownRed > ceiling)
+    return { exceeded: true, line: `knownRed: ${knownRed}/${ceiling} exceeds the ceiling by ${knownRed - ceiling}; reduce the known-red debt or raise knownRedCeiling deliberately` }
+  if (knownRed < ceiling)
+    return { exceeded: false, line: `knownRed: ${knownRed}/${ceiling}; lower knownRedCeiling to ${knownRed} to tighten the ratchet` }
+  return { exceeded: false, line: `knownRed: ${knownRed}/${ceiling}` }
 }
 
 /** Split results into expected redness and regressions against the baseline.
@@ -921,6 +950,7 @@ async function main() {
   let updateBaseline = false
   let forceSubsetBaseline = false
   let strict = false
+  let ratchet = false
   const args: string[] = []
   // Accept both `--flag value` and `--flag=value` (the task's `--shard=k/n`).
   for (const raw of process.argv.slice(2)) {
@@ -935,6 +965,7 @@ async function main() {
     else if (arg === '--update-baseline') updateBaseline = true
     else if (arg === '--force-subset-baseline') forceSubsetBaseline = true
     else if (arg === '--strict') strict = true
+    else if (arg === '--ratchet') ratchet = true
     else if (arg === '--root' || arg === '--filter' || arg === '--timeout' || arg === '--suite-timeout'
       || arg === '--shard' || arg === '--concurrency' || arg === '--baseline') {
       const value = args[++index]
@@ -949,6 +980,7 @@ async function main() {
     } else throw new Error(`Unknown test runner option: ${arg}`)
   }
   if (noBaseline && baselineFlag) throw new Error('--baseline and --no-baseline are mutually exclusive')
+  if (ratchet && updateBaseline) throw new Error('--ratchet and --update-baseline are mutually exclusive')
   root = resolve(root)
   const bunTimeoutMs = testTimeout(timeout)
   const wholeSuiteTimeoutMs = wholeSuiteTimeout(suiteTimeout)
@@ -980,9 +1012,10 @@ async function main() {
   const baselinePath = noBaseline ? null : baselineFlag ? resolve(baselineFlag) : defaultBaselinePath
   let baseline: Set<string> | null = null
   let baselineUsed: string | null = null
+  let baselineFile: BaselineFile | null = null
   if (baselinePath && !updateBaseline) {
     const file = await loadBaseline(baselinePath)
-    if (file) { baseline = new Set(file.knownRed); baselineUsed = baselinePath }
+    if (file) { baseline = new Set(file.knownRed); baselineUsed = baselinePath; baselineFile = file }
     else if (baselineFlag) throw new Error(`Test baseline not found: ${baselinePath}`)
   }
   process.stderr.write(`test-all: ${manifest.suites.length} suites, concurrency ${concurrency}${shard ? `, shard ${shard.index}/${shard.total}` : ''}${baselineUsed ? `, baseline ${baselineUsed}` : ''}\n`)
@@ -997,17 +1030,34 @@ async function main() {
   if (updateBaseline) {
     const target = baselinePath ?? defaultBaselinePath
     const red = report.results.filter(result => result.status !== 'passed').map(result => result.path)
-    await writeBaseline(target, red, 'Suites already red on main; scripts/test-all.ts treats these as expected redness, not regressions.')
-    console.log(JSON.stringify({ status: 'baseline-updated', path: target, knownRed: red.length }))
+    // The ratchet may only fall: keep the checked-in ceiling when the rewritten
+    // debt would raise it, and tighten it when the debt actually shrank.
+    const previousCeiling = (await loadBaseline(target))?.knownRedCeiling
+    const knownRedCeiling = previousCeiling === undefined ? undefined : Math.min(previousCeiling, red.length)
+    await writeBaseline(target, red, 'Suites already red on main; scripts/test-all.ts treats these as expected redness, not regressions.', knownRedCeiling)
+    console.log(JSON.stringify({ status: 'baseline-updated', path: target, knownRed: red.length, knownRedCeiling: knownRedCeiling ?? null }))
     return
   }
   process.stderr.write(`test-all: ${report.summary.passed} passed, ${report.summary.failed} failed, ${report.summary.blocked} blocked; ${report.summary.newFailures} new failure(s), ${report.summary.knownRed} known-red, ${report.summary.stalePass} stale baseline entr(y|ies)\n`)
+  // --ratchet judges the recorded debt in the baseline file itself, so it is
+  // shard-independent: the ceiling is a property of the checked-in file, not of
+  // the suites this invocation happened to schedule. Stale entries above stay
+  // in the run summary, so the ratchet never hides them.
+  let ratchetResult: { knownRed: number; ceiling: number; exceeded: boolean; line: string } | null = null
+  if (ratchet) {
+    if (!baselineFile) throw new Error('--ratchet requires a test baseline file; pass --baseline <path> (or drop --no-baseline)')
+    if (baselineFile.knownRedCeiling === undefined) throw new Error(`--ratchet requires knownRedCeiling in ${baselineUsed}`)
+    const verdict = ratchetReport(baselineFile.knownRed.length, baselineFile.knownRedCeiling)
+    process.stderr.write(`test-all: ${verdict.line}\n`)
+    ratchetResult = { knownRed: baselineFile.knownRed.length, ceiling: baselineFile.knownRedCeiling, exceeded: verdict.exceeded, line: verdict.line }
+  }
   console.log(JSON.stringify({
     status: report.status, root, reportPath: report.reportPath, filter: filter ?? null, shard, concurrency,
     summary: report.summary,
     baseline: { path: report.baseline.path, knownRed: report.baseline.knownRed, newFailures: report.baseline.newFailures, stalePass: report.baseline.stalePass },
+    ratchet: ratchetResult,
   }))
-  process.exitCode = report.status === 'passed' ? 0 : 1
+  process.exitCode = report.status === 'passed' && ratchetResult?.exceeded !== true ? 0 : 1
 }
 
 if (import.meta.main) main().catch(error => { console.error(error instanceof Error ? error.message : String(error)); process.exitCode = 1 })
