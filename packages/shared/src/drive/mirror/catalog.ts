@@ -38,6 +38,14 @@ const SKIP_FILE_NAMES: Record<string, true> = { '.DS_Store': true }
 const SKIP_FILE_SUFFIXES = ['.lock'] as const
 
 /**
+ * Path segments excluded at any depth. `embedding-cache` is the Qdrant blob
+ * cache under `workspaces/<id>/sources/qdrant/` — regenerable from the source
+ * data, not user data, so mirroring it is pure waste. Other files under
+ * `sources/` are unaffected.
+ */
+const SKIP_PATH_SEGMENTS: Record<string, true> = { 'embedding-cache': true }
+
+/**
  * Mandatory exclusions applied regardless of slice policy.
  *
  * `*.key.enc` is the Keeper vault key wrapped by Electron `safeStorage`; it is
@@ -161,6 +169,10 @@ export async function scanMirrorCatalog(options: MirrorCatalogOptions): Promise<
     for (const dirent of dirents) {
       const relativePath = relativeDir ? `${relativeDir}/${dirent.name}` : dirent.name
       const absolutePath = join(absoluteDir, dirent.name)
+
+      // Segment exclusion prunes the whole subtree (checked before the
+      // directory recursion) and any file whose own name matches.
+      if (relativePath.split('/').some(segment => SKIP_PATH_SEGMENTS[segment] === true)) continue
 
       if (dirent.isDirectory()) {
         if (SKIP_DIR_NAMES[dirent.name] === true) continue

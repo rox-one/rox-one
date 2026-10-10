@@ -96,7 +96,9 @@ describe('createMirrorQueue', () => {
     writeFiles(root, { 'a.json': 'aaa', 'b.json': 'bbb' })
     const journal = createMirrorJournal({ stateDir, mirrorId: 'm', now: () => 7 })
     const target = createFakeTarget()
-    const queue = createMirrorQueue({ journal, uploadTarget: target, now: () => 7 })
+    // maxParallel 1 makes the upload order (and thus the assertion below)
+    // deterministic; the queue itself only promises the plan's plan order.
+    const queue = createMirrorQueue({ journal, uploadTarget: target, now: () => 7, maxParallel: 1 })
 
     const plan = planMirrorDiff([entryFor(root, 'a.json'), entryFor(root, 'b.json')], await journal.load())
     expect(plan.add).toHaveLength(2)
@@ -268,6 +270,34 @@ describe('createMirrorQueue', () => {
     expect(result.errors).toHaveLength(2)
     expect(result.added).toBe(0)
     expect(queue.status().state).toBe('error')
+  })
+
+  test('a fresh successful run clears the previous run errors', async () => {
+    writeFiles(root, { 'a.json': 'a' })
+    const journal = createMirrorJournal({ stateDir, mirrorId: 'm' })
+    let broken = true
+    const puts: PutRecord[] = []
+    const target: FakeTarget = {
+      puts,
+      async put(key, body, opts) {
+        if (broken) throw new Error('receiver down')
+        puts.push({ key, bytes: body instanceof Uint8Array ? [...body] : [], sizeBytes: opts?.sizeBytes })
+      },
+    }
+    const queue = createMirrorQueue({ journal, uploadTarget: target, sleep: async () => {}, maxParallel: 1 })
+    queue.enqueue(planMirrorDiff([entryFor(root, 'a.json')], await journal.load()))
+
+    const first = await queue.run()
+    expect(first.errors).toHaveLength(1)
+    expect(first.added).toBe(0)
+    expect(queue.status().state).toBe('error')
+
+    broken = false
+    const second = await queue.run()
+    expect(second.errors).toEqual([])
+    expect(second.added).toBe(1)
+    expect(queue.status().state).toBe('idle')
+    expect((await journal.load()).entries['a.json']).toBeDefined()
   })
 
   test('enqueue is rejected while a run is in flight', async () => {
