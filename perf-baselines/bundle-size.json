@@ -4,7 +4,7 @@
   "budgets": {
     "EntityPicker": {
       "totalRawBytes": 815750,
-      "gzipTotalBytes": 265400
+      "gzipTotalBytes": 265396
     },
     "MarkdownMermaidBlock": {
       "totalRawBytes": 1547066,
@@ -68,7 +68,7 @@
     },
     "main": {
       "totalRawBytes": 481577,
-      "gzipTotalBytes": 147399
+      "gzipTotalBytes": 147383
     },
     "pl": {
       "totalRawBytes": 682054,
@@ -76,15 +76,15 @@
     },
     "playground": {
       "totalRawBytes": 800962,
-      "gzipTotalBytes": 295223
+      "gzipTotalBytes": 295219
     },
     "ru": {
       "totalRawBytes": 919542,
       "gzipTotalBytes": 208470
     },
     "team-labels": {
-      "totalRawBytes": 1770588,
-      "gzipTotalBytes": 524523
+      "totalRawBytes": 1770586,
+      "gzipTotalBytes": 524510
     },
     "wasm": {
       "totalRawBytes": 634427,
@@ -114,8 +114,8 @@
     }
   },
   "totals": {
-    "jsRawBytes": 33716699,
-    "jsGzipBytes": 9266794,
+    "jsRawBytes": 33716697,
+    "jsGzipBytes": 9266739,
     "cssRawBytes": 805802,
     "cssGzipBytes": 122598
   },
@@ -131,13 +131,13 @@
       "fileCount": 13
     },
     "index.html": {
-      "jsRawBytes": 4038979,
-      "gzipTotalBytes": 1228656,
+      "jsRawBytes": 4038977,
+      "gzipTotalBytes": 1228617,
       "fileCount": 58
     },
     "playground.html": {
-      "jsRawBytes": 16565904,
-      "gzipTotalBytes": 4741628,
+      "jsRawBytes": 16565902,
+      "gzipTotalBytes": 4741599,
       "fileCount": 136
     },
     "voice-overlay.html": {
