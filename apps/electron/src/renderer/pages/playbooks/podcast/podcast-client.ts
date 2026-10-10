@@ -15,6 +15,7 @@ import type {
   PodcastEpisodeAudioChunk,
   PodcastEpisodeAudioInput,
   PodcastEngine,
+  PodcastEnginesResult,
   PodcastEpisodesInput,
   PodcastEpisodesResult,
   PodcastJob,
@@ -29,6 +30,7 @@ export type {
   PodcastCancelResult,
   PodcastEpisode,
   PodcastEngine,
+  PodcastEnginesResult,
   PodcastEpisodesInput,
   PodcastEpisodesResult,
   PodcastJob,
@@ -97,6 +99,11 @@ export function readPodcastEpisodeAudio(params: PodcastAudioParams): Promise<Pod
 
 export function podcastAudioUrl(workspaceId: string, episode: PodcastEpisode): Promise<string | null> {
   return window.electronAPI.podcastEpisodeAudioUrl({ workspaceId, episode })
+}
+
+/** Honest engine availability probed on the host (`podcast:engines`). */
+export function podcastEngines(): Promise<PodcastEnginesResult> {
+  return window.electronAPI.podcastEngines()
 }
 
 export async function exportPodcastEpisode(input: {

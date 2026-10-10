@@ -106,6 +106,10 @@ export { handleMemoryForget, MEMORY_FORGET_MAX_IDS } from './memory-forget.ts';
 export { handleWikiSearch, WIKI_SEARCH_MAX_LIMIT } from './wiki-search.ts';
 export { handleWikiGet } from './wiki-get.ts';
 export { handleWikiApply } from './wiki-apply.ts';
+// Visitor access tools (port row a1.6; invite/revoke mutate, list reads)
+export { handleVisitorInvite } from './visitors.ts';
+export { handleVisitorRevoke } from './visitors.ts';
+export { handleVisitorList } from './visitors.ts';
 // Skills catalog tools (c2.7; read-only over the registered skills runtime)
 export { handleSkillsSearch, SKILLS_SEARCH_MAX_LIMIT } from './skills-search.ts';
 export { handleSkillsRead, SKILLS_READ_MAX_CHARS } from './skills-read.ts';

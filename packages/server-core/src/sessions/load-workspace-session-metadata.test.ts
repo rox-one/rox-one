@@ -1,5 +1,5 @@
 import './__test-config-isolation.ts'
-import { afterEach, describe, expect, it, spyOn } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test'
 import { existsSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -7,7 +7,7 @@ import * as sessions from '@rox/shared/sessions'
 import { createSession, getSessionFilePath, listSessions, sessionPersistenceQueue, updateSessionMetadata, type SessionMetadata } from '@rox/shared/sessions'
 import { addWorkspace } from '@rox/shared/config'
 import { closeStateStore, openStateStore, resetStateStores, type StateStore } from '../state/state-store.ts'
-import { createSessionStateProjector, resetSessionStateProjector, sessionIndexFilePath, sessionStateProjector, type SessionStateProjector } from '../state/sessions-projection.ts'
+import { bindSessionStateProjector, createSessionStateProjector, resetSessionStateProjector, sessionIndexFilePath, sessionStateProjector, type SessionStateProjector } from '../state/sessions-projection.ts'
 import { loadWorkspaceSessionMetadata, SessionManager } from './SessionManager.ts'
 
 const roots: string[] = []
@@ -31,7 +31,10 @@ afterEach(() => {
 function fixture(): { root: string; store: StateStore; projector: SessionStateProjector } {
   const root = scratch('rox-boot-ws-', roots)
   const configDir = scratch('rox-boot-cfg-', configDirs)
-  const store = openStateStore({ configDir })
+  // This fixture exercises the projection's write path directly, the way the
+  // server does while holding the writer lock; the lock itself is covered by
+  // state-store.test.ts, so the store is opened with the explicit opt-out.
+  const store = openStateStore({ configDir, lock: 'allow-unlocked' })
   return { root, store, projector: createSessionStateProjector({ store }) }
 }
 
@@ -113,6 +116,11 @@ describe('loadWorkspaceSessionMetadata boot fast path', () => {
 })
 
 describe('ingestImportedSession index fast path', () => {
+  // The ingest path reads through the process-wide projector; bind it to this
+  // suite's store (opened with the explicit lock opt-out above) rather than
+  // letting it open a second, unlocked store on the real config dir.
+  beforeEach(() => bindSessionStateProjector(fixture().store))
+
   it('loads one imported session from a fresh index with zero header reads', async () => {
     const workspace = addWorkspace({ name: 'Ingest fast', rootPath: mkdtempSync(join(tmpdir(), 'rox-ingest-ws-')) })
     roots.push(workspace.rootPath)

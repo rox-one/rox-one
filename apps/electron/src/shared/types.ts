@@ -66,7 +66,7 @@ import type { RoxAccountSnapshot } from '@rox/shared/auth'
 import type { TtsStreamChunk, VoiceWakeTrigger } from '@rox/shared/voice'
 import type {
   PodcastCancelInput, PodcastCancelResult, PodcastEpisodeAudioChunk, PodcastEpisodeAudioInput,
-  PodcastEpisodeAudioUrlInput, PodcastEpisodeAudioUrlResult, PodcastEpisodesInput, PodcastEpisodesResult,
+  PodcastEpisodeAudioUrlInput, PodcastEpisodeAudioUrlResult, PodcastEnginesResult, PodcastEpisodesInput, PodcastEpisodesResult,
   PodcastJob, PodcastStartInput, PodcastStartResult,
 } from '@rox/shared/voice'
 import type {
@@ -89,7 +89,6 @@ import type {
   DoctorReport,
   ServiceLifecycleResult,
   ServiceStatus,
-  TrayStatus,
 } from '@rox/shared/service-lifecycle'
 import type { OrgMember, OrgInvite, OrgRole } from '@rox/shared/orgs'
 import type {
@@ -1883,8 +1882,10 @@ export interface ElectronAPI {
   onMenuToggleSidebar(callback: () => void): () => void
   onMenuToggleInspector(callback: () => void): () => void
   onMenuToggleChatPictureInPicture(callback: () => void): () => void
-  /** e2.1: tray/menu service+agent status push. */
-  onMenuTrayStatusChanged(callback: (status: TrayStatus) => void): () => void
+  /** e2.1: tray "Open dashboard" navigation. */
+  onMenuOpenDashboard(callback: () => void): () => void
+  /** e2.1: tray "Run diagnostics" — the consumer runs the host doctor. */
+  onMenuRunDoctor(callback: () => void): () => void
 
   // Deep link navigation listener (for external craftagents:// URLs)
   onDeepLinkNavigate(callback: (nav: DeepLinkNavigation) => void): () => void
@@ -2347,6 +2348,8 @@ export interface ElectronAPI {
   podcastEpisodes(input: PodcastEpisodesInput): Promise<PodcastEpisodesResult>
   readPodcastEpisodeAudio(input: PodcastEpisodeAudioInput): Promise<PodcastEpisodeAudioChunk>
   podcastEpisodeAudioUrl(input: PodcastEpisodeAudioUrlInput): Promise<PodcastEpisodeAudioUrlResult>
+  /** Honest engine availability for the studio engine picker (`podcast:engines`). */
+  podcastEngines(): Promise<PodcastEnginesResult>
   onPodcastJob(callback: (job: PodcastJob) => void): () => void
   // Playbooks codebook (D12, В5): notebook runs execute host-local; the renderer
   // follows `playbooks:codebookJob` and lists the durable run journal.

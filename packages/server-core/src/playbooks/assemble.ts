@@ -13,7 +13,7 @@
  *   typed `ffmpeg-unavailable` failure and is NEVER installed (§6.4, D4).
  * - The external call is a `spawn` of the binary, never `shell:exec` (§3.8).
  */
-import { spawn } from 'node:child_process'
+import { spawn, type ChildProcess } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { resolveConfigDir } from '@rox/shared/config'
@@ -56,7 +56,7 @@ function srtTimestamp(ms: number): string {
 /** Sequence cue timings from per-segment durations; the last cue ends the episode. */
 export function cuesFromDurations(
   segments: readonly PodcastSegment[],
-  labels: Readonly<Record<PodcastSegment['speaker'], string>>,
+  labels: Readonly<Record<string, string>>,
   durationsMs: readonly number[],
   source: PodcastTimings['source'],
 ): PodcastTimings {
@@ -65,7 +65,7 @@ export function cuesFromDurations(
   let cursor = 0
   segments.forEach((segment, index) => {
     const duration = Math.max(MIN_CUE_MS, Math.round(durationsMs[index] ?? 0))
-    cues.push({ speaker: segment.speaker, label: labels[segment.speaker], text: segment.text, startMs: cursor, endMs: cursor + duration })
+    cues.push({ speaker: segment.speaker, label: labels[segment.speaker] ?? segment.speaker, text: segment.text, startMs: cursor, endMs: cursor + duration })
     cursor += duration
   })
   return { cues, durationMs: cursor, source }
@@ -118,8 +118,17 @@ export type ProcessRunner = (command: string, args: readonly string[], signal: A
 
 /** `spawn`-based runner with abort → SIGTERM; stderr is bounded and never carries segment text. */
 export const runProcess: ProcessRunner = (command, args, signal) => {
-  const child = spawn(command, args, { shell: false, stdio: ['ignore', 'pipe', 'pipe'] })
   const { promise, resolve, reject } = Promise.withResolvers<ProcessResult>()
+  let child: ChildProcess
+  try {
+    child = spawn(command, args, { shell: false, stdio: ['ignore', 'pipe', 'pipe'] })
+  } catch (error) {
+    // Some runtimes (Bun today, Node on certain paths) throw ENOENT synchronously
+    // for a missing binary instead of emitting 'error'; keep the promise contract
+    // so every caller can degrade instead of crashing at the call site.
+    reject(error instanceof Error ? error : new Error(String(error)))
+    return promise
+  }
   let stdout = ''
   let stderr = ''
   let settled = false
@@ -133,10 +142,10 @@ export const runProcess: ProcessRunner = (command, args, signal) => {
   const onAbort = () => child.kill('SIGTERM')
   if (signal.aborted) onAbort()
   else signal.addEventListener('abort', onAbort, { once: true })
-  child.stdout.on('data', (chunk: Buffer) => { stdout = (stdout + chunk.toString('utf8')).slice(-4_000) })
-  child.stderr.on('data', (chunk: Buffer) => { stderr = (stderr + chunk.toString('utf8')).slice(-4_000) })
-  child.once('error', error => finish(error))
-  child.once('close', code => finish({ code, stdout, stderr }))
+  child.stdout?.on('data', (chunk: Buffer) => { stdout = (stdout + chunk.toString('utf8')).slice(-4_000) })
+  child.stderr?.on('data', (chunk: Buffer) => { stderr = (stderr + chunk.toString('utf8')).slice(-4_000) })
+  child.once('error', (error: Error) => finish(error))
+  child.once('close', (code: number | null) => finish({ code, stdout, stderr }))
   return promise
 }
 
@@ -158,7 +167,11 @@ export function resolveFfprobeCommand(ffmpeg: string): string | null {
 }
 
 async function probeOne(ffprobe: string, file: string, signal: AbortSignal, run: ProcessRunner): Promise<number | null> {
+  // A missing/unspawnable probe degrades to estimates (jobs falls back on `null`),
+  // while a real cancellation keeps propagating.
   const result = await run(ffprobe, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', file], signal)
+    .catch((error: unknown) => { if (signal.aborted) throw error; return null })
+  if (result === null) return null
   const seconds = Number.parseFloat(result.stdout.trim())
   return result.code === 0 && Number.isFinite(seconds) && seconds > 0 ? Math.round(seconds * 1_000) : null
 }

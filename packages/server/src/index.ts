@@ -23,6 +23,7 @@
  *   CRAFT_WEBUI_WS_URL         — optional browser-facing ws:// or wss:// URL returned by /api/config
  *   CRAFT_WEBUI_ALLOWED_ORIGINS — comma-separated extra origins allowed for cookie-authenticated WebSocket upgrades
  *   CRAFT_WEBUI_PAIRING_LINK   — 'true'/'1' (or --print-pairing-url) prints a one-time pairing URL on startup
+ *   ROX_WEBUI_MODES_LANDING    — '0'/'false' hides the R16 two-mode landing and enters chat directly (default: on)
  *   CRAFT_BROWSER_BACKEND       — headless browser backend (agent-browser, none; default: agent-browser)
  *   CRAFT_BROWSER_PROFILE       — persistent Chrome profile directory
  *   CRAFT_AGENT_BROWSER_BIN     — agent-browser executable path (default: agent-browser)

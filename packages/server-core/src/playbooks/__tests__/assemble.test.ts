@@ -23,7 +23,7 @@ const SEGMENTS: readonly PodcastSegment[] = [
   { speaker: 'expert', text: 'Потому что индекс ускоряет поиск.' },
 ]
 
-const LABELS: Record<PodcastSegment['speaker'], string> = { host: 'Ведущий', expert: 'Эксперт' }
+const LABELS: Record<string, string> = { host: 'Ведущий', expert: 'Эксперт' }
 
 function codeOf(error: unknown): string | undefined {
   return error instanceof PodcastPipelineError ? error.code : undefined
@@ -54,6 +54,23 @@ describe('podcast timings → srt', () => {
 
   it('rejects a duration list that does not match the segments', () => {
     expect(() => cuesFromDurations(SEGMENTS, LABELS, [1000], 'probed')).toThrow(PodcastPipelineError)
+  })
+
+  it('sequences cues from an arbitrary speaker→label map (N roles)', () => {
+    const segments: readonly PodcastSegment[] = [
+      { speaker: 'host', text: 'Вопрос?' },
+      { speaker: 'expert', text: 'Ответ.' },
+      { speaker: 'guest1', text: 'Добавление.' },
+    ]
+    const timings = cuesFromDurations(segments, { host: 'Ведущий', expert: 'Эксперт', guest1: 'Гость' }, [1000, 1000, 1000], 'probed')
+    expect(timings.durationMs).toBe(3000)
+    expect(timings.cues.map(cue => cue.label)).toEqual(['Ведущий', 'Эксперт', 'Гость'])
+    expect(buildSrt(timings.cues)).toContain('Гость: Добавление.')
+  })
+
+  it('falls back to the speaker id when a label is missing', () => {
+    const timings = cuesFromDurations(SEGMENTS, {}, [1000, 1000], 'estimated')
+    expect(timings.cues.map(cue => cue.label)).toEqual(['host', 'expert'])
   })
 
   it('estimates from text length only as the documented fallback', () => {
@@ -142,6 +159,11 @@ describe('podcast duration probing', () => {
 
   it('never claims a probed timing when ffprobe is absent', async () => {
     expect(await probeDurations('ffprobe', ['/nonexistent-audio-file'], new AbortController().signal)).toBeNull()
+  })
+
+  it('degrades to null when the probe binary cannot be spawned at all', async () => {
+    const run: ProcessRunner = async () => { throw Object.assign(new Error('spawn ffprobe ENOENT'), { code: 'ENOENT' }) }
+    expect(await probeDurations('ffprobe', ['a'], new AbortController().signal, run)).toBeNull()
   })
 })
 

@@ -261,4 +261,50 @@ describe('auditMacOSSigning driver (injected runner)', () => {
     expect(result.ok).toBe(false);
     expect(result.failures.join('\n')).toContain('not found');
   });
+
+  it('fails closed when codesign cannot read an entitlements blob (not the "no entitlements" case)', () => {
+    withFixtureApp((appPath) => {
+      const exec = join(appPath, 'Contents', 'MacOS', 'Rox');
+      const nested = join(appPath, 'Contents', 'Resources', 'app', 'vendor', 'bun', 'bun');
+      const runner: CommandRunner = (file, args) => {
+        const path = args[args.length - 1]!;
+        if (file === 'codesign' && args.includes('-dv')) return { status: 0, stdout: codesignDv(TEAM), stderr: '' };
+        if (file === 'codesign' && args.includes('--entitlements')) {
+          // The app binary's blob is unreadable for a reason other than "no
+          // entitlements" — previously collapsed to [], hiding a possible JIT grant.
+          if (path === exec) return { status: 1, stdout: '', stderr: 'the codesign_allocate helper tool cannot be found' };
+          return { status: 0, stdout: entitlementsXml(['com.apple.security.cs.allow-jit']), stderr: '' };
+        }
+        if (file === 'codesign' && args.includes('--verify')) return OK;
+        if (file === 'spctl') return OK_SPCTL;
+        return { status: 1, stdout: '', stderr: `unexpected command: ${file}` };
+      };
+      const result = auditMacOSSigning(appPath, { runner });
+      expect(result.ok).toBe(false);
+      expect(result.failures.join('\n')).toContain('could not read entitlements');
+      expect(result.failures.join('\n')).toContain(exec);
+      expect(formatReport(appPath, result)).toContain('VERDICT: FAIL');
+    });
+  });
+
+  it('accepts the explicit "no entitlements" answer, so nested dylibs do not fail the audit', () => {
+    withFixtureApp((appPath) => {
+      const exec = join(appPath, 'Contents', 'MacOS', 'Rox');
+      const nested = join(appPath, 'Contents', 'Resources', 'app', 'vendor', 'bun', 'bun');
+      const runner: CommandRunner = (file, args) => {
+        const path = args[args.length - 1]!;
+        if (file === 'codesign' && args.includes('-dv')) return { status: 0, stdout: codesignDv(TEAM), stderr: '' };
+        if (file === 'codesign' && args.includes('--entitlements')) {
+          if (path === exec) return { status: 0, stdout: entitlementsXml(['com.apple.security.device.audio-input']), stderr: '' };
+          return { status: 1, stdout: '', stderr: 'code has no entitlements' };
+        }
+        if (file === 'codesign' && args.includes('--verify')) return OK;
+        if (file === 'spctl') return OK_SPCTL;
+        return { status: 1, stdout: '', stderr: `unexpected command: ${file}` };
+      };
+      // No nested JIT ⇒ the split rule still fails, but NOT with a read error.
+      const result = auditMacOSSigning(appPath, { runner });
+      expect(result.failures.join('\n')).not.toContain('could not read entitlements');
+    });
+  });
 });

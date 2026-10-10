@@ -14,6 +14,7 @@ import type { LLMQueryRequest, LLMQueryResult } from './llm-tool.ts';
 import type { SpawnSessionFn } from './spawn-session-tool.ts';
 import type { BrowserPaneFns } from './browser-tools.ts';
 import type { AuthRequest, MemoryToolCallbacks } from '@rox/session-tools-core';
+import type { VisitorToolCallbacks } from '@rox/session-tools-core';
 import type { BoardWidgetToolCallbacks } from '@rox/session-tools-core';
 import { debug } from '../utils/debug.ts';
 
@@ -106,6 +107,13 @@ export interface SessionScopedToolCallbacks {
    * session's workspace chunk index.
    */
   memory?: MemoryToolCallbacks;
+  /**
+   * Visitor-access tools (visitor_invite / visitor_revoke / visitor_list) —
+   * grouped because the three operations always ship together. Wired by
+   * SessionManager when visitor config is present; undefined otherwise, and the
+   * handlers then report a typed VISITOR_STORE_UNAVAILABLE result.
+   */
+  visitors?: VisitorToolCallbacks;
 }
 
 // Registry of callbacks keyed by sessionId

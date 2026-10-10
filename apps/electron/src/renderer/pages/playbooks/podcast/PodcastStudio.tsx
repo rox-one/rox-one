@@ -1,18 +1,20 @@
 /**
  * С-14 «Студия подкаста» (docs/specs/2026-10-09-dev-space-and-playbooks 04-UI-SPEC B.14,
  * D13). Generation dialog: topic from the selected source/question, engine
- * `system|edge`, optional segment cap, editable two-voice roles. Progress comes
+ * `system|edge|kokoro` (kokoro only when its CLI is present — `podcast:engines`),
+ * optional segment cap, editable two-voice roles. Progress comes
  * from the `podcast:job` push stream; the player and mp3/srt export consume the
  * produced episode (`podcast:episodes`).
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, Ban, Download, Loader2, Mic2, Play } from 'lucide-react'
+import { AlertCircle, Ban, Download, Loader2, Mic2, Play, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { MAX_PODCAST_ROLES, MIN_PODCAST_ROLES } from '@rox/shared/voice'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import {
   cancelPodcast,
@@ -20,13 +22,17 @@ import {
   listPodcastEpisodes,
   onPodcastJob,
   podcastAudioUrl,
+  podcastEngines,
   startPodcast,
   type PodcastEngine,
+  type PodcastEnginesResult,
   type PodcastEpisode,
   type PodcastExportFormat,
   type PodcastJob,
   type PodcastRoleTemplate,
 } from './podcast-client'
+import { loadRolePreset, nextGuestRoleId, saveRolePreset } from './podcast-roles'
+import type { StudioRole } from './podcast-roles'
 
 const STAGES: readonly PodcastJob['state'][] = ['queued', 'scripting', 'synthesizing', 'assembling', 'done']
 
@@ -47,9 +53,9 @@ export function PodcastStudio({ open, onOpenChange, projectSlug, seed, onComplet
   const workspaceId = workspace?.id ?? null
   const [topic, setTopic] = useState(seed.question ?? '')
   const [engine, setEngine] = useState<PodcastEngine>('system')
+  const [engines, setEngines] = useState<PodcastEnginesResult | null>(null)
   const [segmentCap, setSegmentCap] = useState('')
-  const [roleHost, setRoleHost] = useState('')
-  const [roleExpert, setRoleExpert] = useState('')
+  const [roles, setRoles] = useState<StudioRole[]>(() => loadRolePreset())
   const [job, setJob] = useState<PodcastJob | null>(null)
   const [episode, setEpisode] = useState<PodcastEpisode | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
@@ -63,6 +69,24 @@ export function PodcastStudio({ open, onOpenChange, projectSlug, seed, onComplet
   useEffect(() => {
     if (open) setTopic(seed.question ?? '')
   }, [open, seed.question])
+
+  // Probe honest engine availability once the dialog opens: a missing kokoro CLI
+  // disables the option (with a hint) instead of failing a render at synthesis.
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    void (async () => {
+      try {
+        const result = await podcastEngines()
+        if (!cancelled) setEngines(result)
+      } catch {
+        /* bridge unavailable — keep the optimistic default (system|edge) */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -119,19 +143,14 @@ export function PodcastStudio({ open, onOpenChange, projectSlug, seed, onComplet
     completedRef.current = false
     try {
       const cap = Number(segmentCap.trim())
-      const roles: PodcastRoleTemplate[] | undefined =
-        roleHost.trim() || roleExpert.trim()
-          ? [
-              { id: 'host', label: roleHost.trim() || t('playbooks.podcast.roleHost'), prompt: '' },
-              { id: 'expert', label: roleExpert.trim() || t('playbooks.podcast.roleExpert'), prompt: '' },
-            ]
-          : undefined
+      const roleTemplates: PodcastRoleTemplate[] = roles.map(role => ({ id: role.id, label: role.label.trim(), prompt: '' }))
+      saveRolePreset(roles)
       const { jobId } = await startPodcast({
         workspaceId,
         projectSlug,
         source: { kind: 'topic', topic: topic.trim() },
         engine,
-        roles,
+        roles: roleTemplates,
         maxSegments: Number.isFinite(cap) && cap > 0 ? cap : undefined,
       })
       jobIdRef.current = jobId
@@ -141,6 +160,21 @@ export function PodcastStudio({ open, onOpenChange, projectSlug, seed, onComplet
     } finally {
       setStarting(false)
     }
+  }
+
+  const addRole = () => {
+    setRoles((current) => {
+      const id = nextGuestRoleId(current)
+      return id ? [...current, { id, label: '' }] : current
+    })
+  }
+
+  const removeRole = (index: number) => {
+    setRoles((current) => (index === 0 || current.length <= MIN_PODCAST_ROLES ? current : current.filter((_, position) => position !== index)))
+  }
+
+  const setRoleLabel = (index: number, label: string) => {
+    setRoles((current) => current.map((role, position) => (position === index ? { ...role, label } : role)))
   }
 
   const cancel = async () => {
@@ -199,10 +233,23 @@ export function PodcastStudio({ open, onOpenChange, projectSlug, seed, onComplet
                 <SelectContent>
                   <SelectItem value="system">{t('playbooks.podcast.engineSystem')}</SelectItem>
                   <SelectItem value="edge">{t('playbooks.podcast.engineEdge')}</SelectItem>
+                  <SelectItem
+                    value="kokoro"
+                    disabled={engines?.kokoro.available === false}
+                    data-testid="playbooks-podcast-engine-kokoro"
+                  >
+                    {t('playbooks.podcast.engineKokoro')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
               {offline && engine === 'edge' ? (
                 <p className="text-caption text-muted-foreground" role="status">{t('playbooks.podcast.edgeOffline')}</p>
+              ) : null}
+              {engines?.kokoro.available === false ? (
+                <p className="text-caption text-muted-foreground" role="status">{t('playbooks.podcast.kokoroMissing')}</p>
+              ) : null}
+              {engine === 'kokoro' ? (
+                <p className="text-caption text-muted-foreground" role="status">{t('playbooks.podcast.kokoroEnglishOnly')}</p>
               ) : null}
             </div>
             <div className="space-y-1">
@@ -219,14 +266,44 @@ export function PodcastStudio({ open, onOpenChange, projectSlug, seed, onComplet
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label htmlFor="podcast-role-host">{t('playbooks.podcast.roleHost')}</Label>
-              <Input id="podcast-role-host" value={roleHost} onChange={(event) => setRoleHost(event.target.value)} placeholder={t('playbooks.podcast.roleHostPlaceholder')} />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="podcast-role-expert">{t('playbooks.podcast.roleExpert')}</Label>
-              <Input id="podcast-role-expert" value={roleExpert} onChange={(event) => setRoleExpert(event.target.value)} placeholder={t('playbooks.podcast.roleExpertPlaceholder')} />
+          <div className="space-y-2">
+            <Label>{t('playbooks.podcast.rolesLabel')}</Label>
+            {roles.map((role, index) => {
+              const placeholder = role.id === 'host'
+                ? t('playbooks.podcast.roleHostPlaceholder')
+                : role.id === 'expert' ? t('playbooks.podcast.roleExpertPlaceholder') : t('playbooks.podcast.rolePlaceholder')
+              return (
+                <div key={role.id} className="flex items-center gap-2">
+                  <Input
+                    id={`podcast-role-${index}`}
+                    value={role.label}
+                    onChange={(event) => setRoleLabel(index, event.target.value)}
+                    placeholder={placeholder}
+                    aria-label={placeholder}
+                    data-testid={`playbooks-podcast-role-${index}`}
+                  />
+                  {index > 0 ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      disabled={roles.length <= MIN_PODCAST_ROLES}
+                      aria-label={t('playbooks.podcast.removeRole')}
+                      onClick={() => removeRole(index)}
+                      data-testid={`playbooks-podcast-role-remove-${index}`}
+                    >
+                      <Trash2 className="icon-caption" aria-hidden />
+                    </Button>
+                  ) : null}
+                </div>
+              )
+            })}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={addRole} disabled={roles.length >= MAX_PODCAST_ROLES} data-testid="playbooks-podcast-role-add">
+                <Plus className="icon-caption" aria-hidden />
+                {t('playbooks.podcast.addRole')}
+              </Button>
+              <p className="text-caption text-muted-foreground" data-testid="playbooks-podcast-roles-hint">{t('playbooks.podcast.rolesHint')}</p>
             </div>
           </div>
 

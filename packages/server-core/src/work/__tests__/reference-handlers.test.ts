@@ -102,7 +102,9 @@ describe('reference handlers: wiring', () => {
     // schema, so they are the only holes. Pinning both sides to that list means
     // a third unwired command, or a lifted deferral, fails this suite.
     expect(boundCommandTypes(registry)).toEqual(COMMAND_CATALOGUE.map(d => d.type).sort().filter(type => !XFN_DEFERRED_TYPES.includes(type)))
-    expect(registry.list().filter(d => !d.schemaBound && !d.type.startsWith('system.')).map(d => d.type)).toEqual([...XFN_DEFERRED_TYPES].sort())
+    // `d.type` carries the template-literal command-id type; widen it to `string`
+    // so the plain-string deferral list has a matching overload.
+    expect(registry.list().filter(d => !d.schemaBound && !d.type.startsWith('system.')).map(d => String(d.type))).toEqual([...XFN_DEFERRED_TYPES].sort())
     // `COMMAND_MODULES` is an open registry: owner modules append before the
     // reference module (W1-12 added `automation`, W1-14 added `collab`/`drive`/`xsc`).
     // The fixed ends are the contract.

@@ -1,0 +1,20 @@
+{
+  "identities": [
+    {
+      "name": "rox-drive",
+      "credentials": [
+        {
+          "accessKey": "REPLACE_WITH_ACCESS_KEY_ID",
+          "secretKey": "REPLACE_WITH_SECRET_ACCESS_KEY"
+        }
+      ],
+      "actions": [
+        "Admin",
+        "Read",
+        "Write",
+        "List",
+        "Tagging"
+      ]
+    }
+  ]
+}

@@ -77,6 +77,14 @@ run bun test packages/server-core/src/webui/__tests__/media-ticket.test.ts
 run bun test packages/server-core/src/handlers/rpc/__tests__/nodes-rpc.test.ts
 # read-side visibility (CORRECTION w2-fix-readvis) is covered by the sessions suites above
 
+# 8. Renderer boot manifest (row b1.2): the committed route→chunk boundary must
+#    match the fresh build. A stale manifest means a rail surface silently
+#    joined the boot graph (or moved), which the idle warm-up cannot heal.
+#    `--check` builds the renderer only when dist is missing.
+run bun run scripts/boot-manifest.ts --check
+run bun test scripts/__tests__/boot-manifest.test.ts
+run bun test apps/electron/src/renderer/lib/__tests__/stale-chunk-reload.test.ts
+
 if [ "$FULL" = "1" ]; then
   run bun run typecheck:all
   run bun test packages/server-core/src/memory

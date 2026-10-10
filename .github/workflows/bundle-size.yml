@@ -11,6 +11,8 @@ on:
       - 'apps/electron/**'
       - 'packages/**'
       - 'scripts/check-bundle-size.ts'
+      - 'scripts/boot-manifest.ts'
+      - 'apps/electron/src/shared/rail-surfaces.ts'
       - 'scripts/electron-build-renderer.ts'
       - 'apps/electron/vite.config.ts'
       - 'perf-baselines/bundle-size.json'
@@ -24,6 +26,8 @@ on:
       - 'apps/electron/**'
       - 'packages/**'
       - 'scripts/check-bundle-size.ts'
+      - 'scripts/boot-manifest.ts'
+      - 'apps/electron/src/shared/rail-surfaces.ts'
       - 'scripts/electron-build-renderer.ts'
       - 'apps/electron/vite.config.ts'
       - 'perf-baselines/bundle-size.json'
@@ -56,5 +60,9 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
       - name: Bundle-size budget gate
         run: bun scripts/check-bundle-size.ts --check
+      - name: Boot-manifest reproducibility gate
+        run: bun run scripts/boot-manifest.ts --check --no-build
       - name: Bundle-size unit tests
         run: bun test scripts/__tests__/check-bundle-size.test.ts
+      - name: Boot-manifest + stale-chunk unit tests
+        run: bun test scripts/__tests__/boot-manifest.test.ts apps/electron/src/renderer/lib/__tests__/stale-chunk-reload.test.ts

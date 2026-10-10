@@ -51,6 +51,8 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.podcast.EPISODES,
   RPC_CHANNELS.podcast.AUDIO,
   RPC_CHANNELS.podcast.AUDIO_URL,
+  // Engine availability is a host capability probe (never proxied).
+  RPC_CHANNELS.podcast.ENGINES,
   // Codebook — notebook runs spawn local executables and reuse local sessions (§9, D12, В5).
   RPC_CHANNELS.playbooks.RUN_CODEBOOK,
   RPC_CHANNELS.playbooks.CANCEL_CODEBOOK,
@@ -217,10 +219,7 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   // menu — local menu events
   RPC_CHANNELS.menu.NEW_CHAT,
   RPC_CHANNELS.menu.OPEN_DASHBOARD,
-  RPC_CHANNELS.menu.OPEN_NATIVE_CONSOLE,
-  RPC_CHANNELS.menu.SHOW_SERVICE_STATUS,
   RPC_CHANNELS.menu.RUN_DOCTOR,
-  RPC_CHANNELS.menu.TRAY_STATUS_CHANGED,
   RPC_CHANNELS.menu.NEW_WINDOW,
   RPC_CHANNELS.menu.OPEN_SETTINGS,
   RPC_CHANNELS.menu.KEYBOARD_SHORTCUTS,

@@ -431,10 +431,7 @@ export const RPC_CHANNELS = {
   menu: {
     NEW_CHAT: 'menu:newChat',
     OPEN_DASHBOARD: 'menu:openDashboard',
-    OPEN_NATIVE_CONSOLE: 'menu:openNativeConsole',
-    SHOW_SERVICE_STATUS: 'menu:showServiceStatus',
     RUN_DOCTOR: 'menu:runDoctor',
-    TRAY_STATUS_CHANGED: 'menu:trayStatusChanged',
     NEW_WINDOW: 'menu:newWindow',
     OPEN_SETTINGS: 'menu:openSettings',
     KEYBOARD_SHORTCUTS: 'menu:keyboardShortcuts',
@@ -727,6 +724,8 @@ export const RPC_CHANNELS = {
     AUDIO: 'podcast:audio',
     /** A `data:` URL for the player when the episode fits a single message. */
     AUDIO_URL: 'podcast:audioUrl',
+    /** Honest per-engine availability probe (`system`/`edge`/`kokoro`) for the studio. */
+    ENGINES: 'podcast:engines',
   },
   playbooks: {
     /** Start a local codebook notebook run (cells → script/agent/artifact steps). */

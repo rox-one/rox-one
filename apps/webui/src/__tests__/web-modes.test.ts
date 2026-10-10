@@ -3,7 +3,9 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   cloudVmStateMessageKey,
+  isModesLandingEnabled,
   isWebSession,
+  parseWebEntryMode,
   probeCloudVmState,
   resolveCloudVmState,
 } from '../web-modes.ts'
@@ -105,6 +107,52 @@ describe('isWebSession', () => {
   })
 })
 
+describe('parseWebEntryMode — deep-link validation', () => {
+  test('accepts exactly the two known modes', () => {
+    expect(parseWebEntryMode('chat')).toBe('chat')
+    expect(parseWebEntryMode('cloud-vm')).toBe('cloud-vm')
+  })
+
+  test('ignores anything else so the default entry flow stays', () => {
+    expect(parseWebEntryMode(null)).toBeUndefined()
+    expect(parseWebEntryMode(undefined)).toBeUndefined()
+    expect(parseWebEntryMode('')).toBeUndefined()
+    expect(parseWebEntryMode('CHAT')).toBeUndefined()
+    expect(parseWebEntryMode('cloud')).toBeUndefined()
+    expect(parseWebEntryMode('cloud-vm ')).toBeUndefined()
+    expect(parseWebEntryMode('chat&mode=cloud-vm')).toBeUndefined()
+  })
+})
+
+describe('cloud-vm entry gate — an unavailable backend is never entered', () => {
+  test('a disabled host resolves to the honest unavailable state, not available', () => {
+    const state = resolveCloudVmState({ enabled: false, tokenConfigured: false })
+    expect(state.status).toBe('unavailable')
+    expect(state.status === 'available').toBe(false)
+  })
+
+  test('a rejected / missing probe never reports available', async () => {
+    expect((await probeCloudVmState(undefined)).status).toBe('error')
+    const down = { getCloudRunsConfig: async () => { throw new Error('bridge down') } }
+    expect((await probeCloudVmState(down)).status).toBe('error')
+  })
+})
+
+describe('isModesLandingEnabled — operator switch from /api/config', () => {
+  test('defaults to enabled when the config is unreadable or omits the field', () => {
+    expect(isModesLandingEnabled(null)).toBe(true)
+    expect(isModesLandingEnabled(undefined)).toBe(true)
+    expect(isModesLandingEnabled('nope')).toBe(true)
+    expect(isModesLandingEnabled({})).toBe(true)
+    expect(isModesLandingEnabled({ wsUrl: 'wss://x' })).toBe(true)
+    expect(isModesLandingEnabled({ modesLanding: true })).toBe(true)
+  })
+
+  test('disables only on an explicit false', () => {
+    expect(isModesLandingEnabled({ modesLanding: false })).toBe(false)
+  })
+})
+
 describe('web entry wiring', () => {
   const app = readFileSync(join(import.meta.dir, '../App.tsx'), 'utf8')
   const landing = readFileSync(join(import.meta.dir, '../web-modes-landing.tsx'), 'utf8')
@@ -113,6 +161,29 @@ describe('web entry wiring', () => {
     expect(app).toContain('isWebSession')
     expect(app).toContain('webSession && !entered && !directSessionId')
     expect(app).toContain("new URLSearchParams(window.location.search).get('sessionId')")
+  })
+
+  test('the chosen mode drives the branch (chat vs cloud-VM overlay)', () => {
+    expect(app).toContain("parseWebEntryMode(new URLSearchParams(window.location.search).get('mode'))")
+    expect(app).toContain("useState<WebEntryModeId | null>(deepLinkMode === 'chat' ? 'chat' : null)")
+    expect(app).toContain('setEnteredMode(mode)')
+    expect(app).toContain("setCloudVmOpen(mode === 'cloud-vm')")
+    // The cloud-VM overlay mechanism from main is kept.
+    expect(app).toContain("import { CloudVmSurface } from './cloud-vm-surface'")
+    expect(app).toContain('{cloudVmOpen && (')
+  })
+
+  test('a cloud-vm entry passes the honest availability gate', () => {
+    expect(app).toContain("deepLinkMode !== 'cloud-vm'")
+    expect(app).toContain('probeCloudVmState(window.electronAPI)')
+    expect(app).toContain("setEnteredMode('cloud-vm')")
+    expect(app).toContain('setCloudVmOpen(true)')
+  })
+
+  test('the operator switch suppresses the landing', () => {
+    expect(app).toContain('isModesLandingEnabled')
+    expect(app).toContain("fetch('/api/config'")
+    expect(app).toContain('if (modesLanding === null || cloudLinkChecking) return <LoadingScreen />')
   })
 
   test('the landing reads cloud-runs availability from the host adapter', () => {

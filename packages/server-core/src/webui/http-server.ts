@@ -251,6 +251,17 @@ export function resolveWebSocketUrl(
   return `${wsProtocol}://127.0.0.1:${wsPort}`
 }
 
+/**
+ * Operator switch for the R16 two-mode landing (`ROX_WEBUI_MODES_LANDING`,
+ * published by `GET /api/config` as `modesLanding`). The landing is on by
+ * default; only an explicit `0`/`false` (case-insensitive) turns it off so the
+ * web UI enters the chat surface directly.
+ */
+export function readModesLandingFromEnv(env: Record<string, string | undefined> = process.env): boolean {
+  const raw = env.ROX_WEBUI_MODES_LANDING?.trim().toLowerCase()
+  return raw !== '0' && raw !== 'false'
+}
+
 // ---------------------------------------------------------------------------
 // Handler options (shared between embedded and standalone modes)
 // ---------------------------------------------------------------------------
@@ -347,6 +358,13 @@ export interface WebuiHandlerOptions {
    * password path as a deliberate operator choice. Ignored when OIDC is unset.
    */
   allowPasswordLogin?: boolean
+  /**
+   * Offer the R16 two-mode landing at the web entry. Defaults to `true`; set to
+   * `false` (or `ROX_WEBUI_MODES_LANDING=0|false` in the environment) to skip
+   * the landing and enter the chat surface directly, as before R16. Published as
+   * `modesLanding` by `GET /api/config`.
+   */
+  modesLanding?: boolean
   /** RPC WebSocket protocol used when building a browser-facing fallback URL. */
   wsProtocol: 'ws' | 'wss'
   /** RPC WebSocket port used when building a browser-facing fallback URL. */
@@ -446,6 +464,9 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
   // OIDC is opt-in: explicit option wins, otherwise the ROX_WEBUI_* environment.
   const oidc = options.oidc ?? readOidcConfigFromEnv()
   const authMode: 'password' | 'oidc' = oidc ? 'oidc' : 'password'
+  // The landing switch is an operator setting (env or option); it is not tied to
+  // auth mode and defaults to on.
+  const modesLanding = options.modesLanding ?? readModesLandingFromEnv()
   const pendingOidcLogins = new Map<string, OidcLoginState & { createdAt: number }>()
   const cleanupTimer = setInterval(() => {
     rateLimiter.cleanup()
@@ -960,6 +981,10 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
       }
       return Response.json({
         wsUrl: resolveWebSocketUrl(req, { publicWsUrl, wsProtocol, wsPort }),
+        // The operator's landing switch is advertised in both auth modes (unlike
+        // `authMode`, which is OIDC-only) so the web entry can honour
+        // ROX_WEBUI_MODES_LANDING.
+        modesLanding,
         // Password mode keeps its exact historical response shape; OIDC mode
         // advertises the auth mode so the client can adapt.
         ...(oidc ? { authMode } : {}),

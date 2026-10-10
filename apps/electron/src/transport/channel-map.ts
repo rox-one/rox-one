@@ -261,7 +261,9 @@ export const CHANNEL_MAP = {
   onMenuToggleSidebar: listener(RPC_CHANNELS.menu.TOGGLE_SIDEBAR),
   onMenuToggleInspector: listener(RPC_CHANNELS.menu.TOGGLE_INSPECTOR),
   onMenuToggleChatPictureInPicture: listener(RPC_CHANNELS.menu.TOGGLE_CHAT_PICTURE_IN_PICTURE),
-  onMenuTrayStatusChanged: listener(RPC_CHANNELS.menu.TRAY_STATUS_CHANGED),
+  // Tray navigation (e2.1): the tray dispatches these; the renderer consumes them.
+  onMenuOpenDashboard: listener(RPC_CHANNELS.menu.OPEN_DASHBOARD),
+  onMenuRunDoctor: listener(RPC_CHANNELS.menu.RUN_DOCTOR),
 
   // Deep link
   onDeepLinkNavigate: listener(RPC_CHANNELS.deeplink.NAVIGATE),
@@ -652,6 +654,7 @@ export const CHANNEL_MAP = {
   podcastEpisodes: invoke(RPC_CHANNELS.podcast.EPISODES),
   readPodcastEpisodeAudio: invoke(RPC_CHANNELS.podcast.AUDIO),
   podcastEpisodeAudioUrl: invoke(RPC_CHANNELS.podcast.AUDIO_URL),
+  podcastEngines: invoke(RPC_CHANNELS.podcast.ENGINES),
   onPodcastJob: listener(RPC_CHANNELS.podcast.JOB),
   // Playbooks codebook (В5, D12) — local notebook run; progress rides the playbooks:codebookJob push.
   runCodebook: invoke(RPC_CHANNELS.playbooks.RUN_CODEBOOK),
