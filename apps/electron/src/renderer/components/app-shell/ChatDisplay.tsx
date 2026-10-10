@@ -759,7 +759,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   })
 
   // Background tasks management
-  const { tasks: backgroundTasks, killTask } = useBackgroundTasks({
+  const { tasks: backgroundTasks, stopShellTask } = useBackgroundTasks({
     sessionId: session?.id ?? ''
   })
 
@@ -2416,7 +2416,12 @@ const handleFollowUpChipClick = useCallback((item: {
             tasks={backgroundTasks}
             sessionId={session.id}
             sessionFolderPath={sessionFolderPath}
-            onKillTask={(taskId) => killTask(taskId, backgroundTasks.find(t => t.id === taskId)?.type === 'shell' ? 'shell' : 'agent')}
+            onKillTask={(taskId) => {
+              // Only background shells have a renderer-reachable stop; the menu
+              // never offers it for agent/workflow tasks, but guard anyway.
+              const task = backgroundTasks.find(t => t.id === taskId)
+              if (task?.type === 'shell') void stopShellTask(taskId)
+            }}
             onInsertMessage={onInputChange}
             sessionLabels={session.labels}
             labels={labels}

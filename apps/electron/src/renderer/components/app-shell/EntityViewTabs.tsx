@@ -1,6 +1,6 @@
 /**
  * Entity multi-view tabs: Standard | Map | Outline | Graph | Rox Notes map | …
- * Generalizes SessionViewTabs for session / note / knowledge surfaces.
+ * Generalizes the (now removed) SessionViewTabs for session / note / knowledge surfaces.
  * Spec: docs/superpowers/specs/2026-08-08-entity-mindmap-views-design.md
  */
 
@@ -47,33 +47,51 @@ const DEFAULT_ICONS: Record<EntityViewId, LucideIcon> = {
   canvas: Network,
 }
 
+/**
+ * The i18n key for every view id — the single source the capability tables below
+ * expose as `labelKey`. Kept explicit so no caller fabricates a key from the id
+ * (`entityView.teamchat`, `entityView.mindmap`) that does not exist in the
+ * locale files; the shipped keys are `entityView.teamChat` and
+ * `entityView.mindmapKnowledge`.
+ */
+export const ENTITY_VIEW_LABEL_KEYS: Record<EntityViewId, string> = {
+  standard: 'entityView.standard',
+  map: 'entityView.map',
+  outline: 'entityView.outline',
+  graph: 'entityView.graph',
+  mindmap: 'entityView.mindmapKnowledge',
+  teamchat: 'entityView.teamChat',
+  table: 'entityView.table',
+  canvas: 'entityView.canvas',
+}
+
 export function defaultSessionEntityCapabilities(opts?: {
   siyuanConnected?: boolean
 }): EntityViewCapability[] {
   const siyuan = opts?.siyuanConnected ?? false
   return [
-    { id: 'standard', available: true, labelKey: 'entityView.standard', icon: DEFAULT_ICONS.standard },
-    { id: 'map', available: true, labelKey: 'entityView.map', icon: DEFAULT_ICONS.map },
-    { id: 'outline', available: true, labelKey: 'entityView.outline', icon: DEFAULT_ICONS.outline },
-    { id: 'graph', available: siyuan, labelKey: 'entityView.graph', icon: DEFAULT_ICONS.graph },
+    { id: 'standard', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.standard, icon: DEFAULT_ICONS.standard },
+    { id: 'map', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.map, icon: DEFAULT_ICONS.map },
+    { id: 'outline', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.outline, icon: DEFAULT_ICONS.outline },
+    { id: 'graph', available: siyuan, labelKey: ENTITY_VIEW_LABEL_KEYS.graph, icon: DEFAULT_ICONS.graph },
     {
       id: 'mindmap',
       available: siyuan,
-      labelKey: 'entityView.mindmapKnowledge',
+      labelKey: ENTITY_VIEW_LABEL_KEYS.mindmap,
       icon: DEFAULT_ICONS.mindmap,
     },
-    { id: 'teamchat', available: false, labelKey: 'entityView.teamChat', icon: DEFAULT_ICONS.teamchat },
+    { id: 'teamchat', available: false, labelKey: ENTITY_VIEW_LABEL_KEYS.teamchat, icon: DEFAULT_ICONS.teamchat },
   ]
 }
 
 export function defaultNoteEntityCapabilities(): EntityViewCapability[] {
   return [
-    { id: 'standard', available: true, labelKey: 'entityView.standard', icon: DEFAULT_ICONS.standard },
-    { id: 'table', available: true, labelKey: 'entityView.table', icon: DEFAULT_ICONS.table },
-    { id: 'canvas', available: true, labelKey: 'entityView.canvas', icon: DEFAULT_ICONS.canvas },
-    { id: 'outline', available: true, labelKey: 'entityView.outline', icon: DEFAULT_ICONS.outline },
-    { id: 'graph', available: true, labelKey: 'entityView.graph', icon: DEFAULT_ICONS.graph },
-    { id: 'map', available: true, labelKey: 'entityView.map', icon: DEFAULT_ICONS.map },
+    { id: 'standard', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.standard, icon: DEFAULT_ICONS.standard },
+    { id: 'table', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.table, icon: DEFAULT_ICONS.table },
+    { id: 'canvas', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.canvas, icon: DEFAULT_ICONS.canvas },
+    { id: 'outline', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.outline, icon: DEFAULT_ICONS.outline },
+    { id: 'graph', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.graph, icon: DEFAULT_ICONS.graph },
+    { id: 'map', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.map, icon: DEFAULT_ICONS.map },
   ]
 }
 
@@ -82,10 +100,10 @@ export function defaultKnowledgeEntityCapabilities(opts?: {
 }): EntityViewCapability[] {
   const siyuan = opts?.siyuanConnected ?? false
   return [
-    { id: 'standard', available: true, labelKey: 'entityView.standard', icon: DEFAULT_ICONS.standard },
-    { id: 'map', available: true, labelKey: 'entityView.map', icon: DEFAULT_ICONS.map },
-    { id: 'outline', available: true, labelKey: 'entityView.outline', icon: DEFAULT_ICONS.outline },
-    { id: 'graph', available: siyuan, labelKey: 'entityView.graph', icon: DEFAULT_ICONS.graph },
+    { id: 'standard', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.standard, icon: DEFAULT_ICONS.standard },
+    { id: 'map', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.map, icon: DEFAULT_ICONS.map },
+    { id: 'outline', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.outline, icon: DEFAULT_ICONS.outline },
+    { id: 'graph', available: siyuan, labelKey: ENTITY_VIEW_LABEL_KEYS.graph, icon: DEFAULT_ICONS.graph },
   ]
 }
 
@@ -198,13 +216,19 @@ export function EntityViewTabs({ value, onChange, capabilities, className, varia
 
 export interface EntityViewPlaceholderProps {
   view: EntityViewId
+  /**
+   * Explicit label key from the view's capability (`EntityViewCapability.labelKey`
+   * / `ENTITY_VIEW_LABEL_KEYS`). When omitted the placeholder resolves the same
+   * single-source map instead of fabricating `entityView.${view}` (which produced
+   * keys that do not exist: `entityView.teamchat`, `entityView.mindmap`).
+   */
   labelKey?: string
 }
 
 export function EntityViewPlaceholder({ view, labelKey }: EntityViewPlaceholderProps) {
   const { t } = useTranslation()
   const Icon = DEFAULT_ICONS[view] ?? Network
-  const key = labelKey ?? `entityView.${view}`
+  const key = labelKey ?? ENTITY_VIEW_LABEL_KEYS[view] ?? 'entityView.comingSoon'
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center min-h-0">

@@ -52,11 +52,8 @@ import {
 import { resolveEffectiveConnectionSlug, isSessionConnectionUnavailable } from '@config/llm-connections'
 import {
   defaultSessionEntityCapabilities,
-  EntityViewPlaceholder,
   EntityViewTabs,
   useEntityView,
-  type EntityViewCapability,
-  type EntityViewId,
 } from '@/components/app-shell/EntityViewTabs'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
 import type { FanOutChildJob } from '@/components/session-workbench/fan-out-jobs'
@@ -90,16 +87,6 @@ function SessionSecondaryFallback() {
   )
 }
 
-function buildSessionEntityCapabilities(siyuanConnected: boolean): EntityViewCapability[] {
-  return defaultSessionEntityCapabilities({ siyuanConnected }).map((cap) => {
-    // teamchat remains placeholder; legacy SiYuan mindmap stays available with distinct label.
-    if (cap.id === 'teamchat') {
-      return { ...cap, available: false }
-    }
-    return cap
-  })
-}
-
 export interface ChatPageProps {
   sessionId: string
 }
@@ -113,8 +100,10 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   }, [sessionId])
 
   const siyuanConnected = useSiyuanConnected()
+  // Single source of truth: the strip's own capability table decides what is
+  // shown (teamchat stays `available:false` there; graph/mindmap require SiYuan).
   const sessionEntityCapabilities = React.useMemo(
-    () => buildSessionEntityCapabilities(siyuanConnected ?? false),
+    () => defaultSessionEntityCapabilities({ siyuanConnected: siyuanConnected ?? false }),
     [siyuanConnected],
   )
 
@@ -922,7 +911,11 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
           </div>
         )
       }
-      return <EntityViewPlaceholder view={sessionView as EntityViewId} />
+      // No placeholder branch: the capability table only exposes views this
+      // function renders (standard | map | graph | mindmap | outline). An
+      // unhandled id cannot be selected, so it returns nothing rather than a
+      // fabricated "Coming soon" surface (see decisions/007).
+      return null
     },
     [
       sessionView,

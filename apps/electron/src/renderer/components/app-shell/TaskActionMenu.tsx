@@ -46,7 +46,7 @@ export interface TaskActionMenuProps {
   task: BackgroundTask
   /** Session ID for opening preview windows */
   sessionId: string
-  /** Callback when kill button is clicked */
+  /** Callback when the Stop action is used — shells only; the shell is killed. */
   onKillTask: (taskId: string) => void
   /** Callback to insert message into input field */
   onInsertMessage?: (text: string) => void
@@ -62,7 +62,11 @@ export interface TaskActionMenuProps {
  * Provides contextual actions for background tasks:
  * - View Output: Opens task output in terminal overlay
  * - Dismiss: Hides the renderer-only chip without stopping the task
- * - Stop Task: Kills shell tasks (agent tasks show warning)
+ * - Stop Task: kills the underlying shell process (`sessions:killShell`) —
+ *   offered for SHELL tasks only. A background AGENT/workflow task has no
+ *   renderer-reachable stop (its cancellation belongs to the agent runtime),
+ *   so those chips show only View Output and Dismiss — never a dead Stop that
+ *   would pretend to kill a task the renderer cannot touch.
  */
 export function TaskActionMenu({ task, sessionId, onKillTask, onInsertMessage, onShowTerminalOverlay, className }: TaskActionMenuProps) {
   const { t } = useTranslation()
@@ -124,7 +128,7 @@ export function TaskActionMenu({ task, sessionId, onKillTask, onInsertMessage, o
     }
   }
 
-  const handleStopTask = () => {
+  const handleStopShell = () => {
     onKillTask(task.id)
     setOpen(false)
   }
@@ -251,17 +255,19 @@ export function TaskActionMenu({ task, sessionId, onKillTask, onInsertMessage, o
           {t('chat.viewOutput')}
         </StyledDropdownMenuItem>
 
-        {/* Dismiss - remove the chip (renderer-only; does not kill the task) */}
-        <StyledDropdownMenuItem onClick={handleDismiss}>
+        {/* Dismiss - remove the chip (renderer-only; does not kill the task).
+            The hint makes the honest meaning explicit: it only hides the chip. */}
+        <StyledDropdownMenuItem onClick={handleDismiss} title={t('chat.taskDismissHint')}>
           <X />
           {t('common.dismiss')}
         </StyledDropdownMenuItem>
 
-        {/* Stop Task - Only show for shell tasks (inserts kill command into input) */}
+        {/* Stop Task — shells only: really kills the process via sessions:killShell.
+            Agent/workflow tasks have no renderer-reachable stop, so no Stop item. */}
         {task.type === 'shell' && (
           <>
             <StyledDropdownMenuSeparator />
-            <StyledDropdownMenuItem onClick={handleStopTask}>
+            <StyledDropdownMenuItem onClick={handleStopShell}>
               <Square />
               {t('chat.stopTask')}
             </StyledDropdownMenuItem>
