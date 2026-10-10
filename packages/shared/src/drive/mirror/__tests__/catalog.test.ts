@@ -23,6 +23,8 @@ const TREE: Record<string, string> = {
   'workspaces/alpha/sources/src/config.json': '{}',
   'workspaces/alpha/pages/index.html': '<html></html>',
   'workspaces/alpha/sessions/s-1/session.jsonl': '{"type":"header"}',
+  'workspaces/w1/sources/real.json': '{"source":true}',
+  'workspaces/w1/sources/qdrant/embedding-cache/blobs/aa': 'cached-vector',
   'keeper/personal/vault.json': '{"cipher":"..."}',
   'keeper/personal/vault.key.enc': 'wrapped-key',
   'drive/notes.json': '{}',
@@ -47,6 +49,7 @@ const EXPECTED: Record<string, DriveMirrorSliceId> = {
   'workspaces/alpha/sources/src/config.json': 'workspaces',
   'workspaces/alpha/pages/index.html': 'workspaces',
   'workspaces/alpha/sessions/s-1/session.jsonl': 'sessions',
+  'workspaces/w1/sources/real.json': 'workspaces',
   'keeper/personal/vault.json': 'keeper',
 }
 
@@ -100,6 +103,14 @@ describe('scanMirrorCatalog', () => {
     expect(paths.some(path => path.startsWith('drive/'))).toBe(false)
     expect(paths.some(path => path.startsWith('meetings/'))).toBe(false)
     expect(paths.some(path => path.startsWith('clipboard/'))).toBe(false)
+  })
+
+  test('skips the regenerable Qdrant embedding cache but keeps sibling sources', async () => {
+    const entries = await scanMirrorCatalog({ configDir: root })
+    const paths = entries.map(entry => entry.relativePath)
+    expect(paths).toContain('workspaces/w1/sources/real.json')
+    expect(paths.some(path => path.includes('embedding-cache'))).toBe(false)
+    expect(paths).not.toContain('workspaces/w1/sources/qdrant/embedding-cache/blobs/aa')
   })
 
   test('hashes files at or below the slice limit', async () => {
