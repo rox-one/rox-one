@@ -1,8 +1,13 @@
 /**
  * W1-07 (#1504): new shell shortcuts register without collisions on macOS
  * (⌘) and Windows/Linux (Ctrl). UI-SPEC §15 v2.1 audit:
- * ⌃1…4 quick panels (⌘⇧1…4 = collection.view*), ⌘J agent panel, ⌘⇧J ask
- * @rox, ⌘F find in doc as a mode-aware takeover of `app.search`.
+ * ⌃1…4 quick panels (⌘⇧1…4 = `collection.view*`), ⌘F find in doc as a
+ * mode-aware takeover of `app.search`.
+ *
+ * A6/A7 (decision 010-ui-agent-task-controls.md): the ⌘J / ⌘⇧J `agent.*`
+ * actions were removed as dead key registrations (no agent panel is mounted),
+ * so they are not part of the W1-07 set here. The chord *matcher* tests for
+ * mod+j / mod+shift+j stay — they exercise `matchesHotkey`, not the actions.
  */
 import { describe, expect, it } from 'bun:test'
 import { actions, actionList, actionsByCategory } from '../definitions'
@@ -14,7 +19,6 @@ import { formatHotkeyDisplay } from '@/lib/platform'
 
 const ALL = Object.values(actions) as ActionDefinition[]
 const W107_IDS = [
-  'agent.togglePanel', 'agent.askAboutSelection',
   'messenger.quickPanelDocs', 'messenger.quickPanelTasks', 'messenger.quickPanelCalendar', 'messenger.quickPanelContacts',
   'docs.findInDoc',
 ]
@@ -27,8 +31,6 @@ function key(init: Partial<KeyboardEvent> & { key: string }) {
 describe('W1-07 shortcut chords', () => {
   it('declares the spec chords', () => {
     const chord = (id: string, mac: boolean) => resolveDefaultHotkey(actions[id as keyof typeof actions] as ActionDefinition, mac)
-    expect(chord('agent.togglePanel', true)).toBe('mod+j')
-    expect(chord('agent.askAboutSelection', true)).toBe('mod+shift+j')
     expect(['Docs', 'Tasks', 'Calendar', 'Contacts'].map((name) => chord(`messenger.quickPanel${name}`, true))).toEqual(['ctrl+1', 'ctrl+2', 'ctrl+3', 'ctrl+4'])
     expect(['Docs', 'Tasks', 'Calendar', 'Contacts'].map((name) => chord(`messenger.quickPanel${name}`, false))).toEqual(['alt+1', 'alt+2', 'alt+3', 'alt+4'])
     expect(chord('docs.findInDoc', true)).toBeNull()
@@ -102,10 +104,6 @@ describe('flag gating', () => {
       expect(listed.has(id)).toBe(false)
       expect(categorized.has(id)).toBe(false)
     }
-  })
-
-  it('⌘J is gated by the #1512 agent panel flag (STUB until registered)', () => {
-    expect(actions['agent.togglePanel'].flag).toBe('agent.panel.v1')
   })
 
   it('⌘F takeover: declared once over app.search, active only with docs.shared.v1', () => {
