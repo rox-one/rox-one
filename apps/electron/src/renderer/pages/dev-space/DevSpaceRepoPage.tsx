@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs } from '@/components/ui/tabs'
 import { useActiveWorkspace } from '@/context/AppShellContext'
+import { devSpaceEnabledAtom } from '@/atoms/dev-space'
+import { navigate, routes } from '@/lib/navigate'
 import { workbenchFlagAtom } from '@/platform/unified-flags'
 import { RepoWatchControls } from './components/RepoWatchControls'
 import { ArtifactSurface } from './components/ArtifactSurface'
@@ -42,7 +44,11 @@ interface ArtifactListState { projectSlug: string | null; snapshotId?: string; s
 export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPageProps) {
   const { t } = useTranslation()
   const workspace = useActiveWorkspace()
-  const autoWatchEnabled = useAtomValue(workbenchFlagAtom(WORKBENCH_FLAG.devSpaceAutoWatchV1))
+  const devSpaceEnabled = useAtomValue(devSpaceEnabledAtom)
+  const autoWatchFlag = useAtomValue(workbenchFlagAtom(WORKBENCH_FLAG.devSpaceAutoWatchV1))
+  // В8 auto-watch is a sub-flag of the Developer Space master: it can only be
+  // active when `devspace.v1` is on.
+  const autoWatchEnabled = devSpaceEnabled && autoWatchFlag
   const workspaceId = workspace?.id ?? null
   const [record, setRecord] = useState<DevSpaceRepositoryRecord | null>(null)
   const [loading, setLoading] = useState(true)
@@ -163,6 +169,22 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
     for (const artifact of list.artifacts) counts.set(artifact.kind, (counts.get(artifact.kind) ?? 0) + 1)
     return counts
   }, [list.artifacts])
+
+  // Honest disabled state (sample: pages/extra-screens/ExtraScreenHost.tsx): a
+  // deep-link into a repository while `devspace.v1` is off shows why, not a
+  // blank or half-working workspace.
+  if (!devSpaceEnabled) {
+    return (
+      <div className="flex h-full min-h-0 flex-col" data-testid="dev-space-disabled">
+        <PanelHeader title={t('devSpace.home.title')} />
+        <div className="min-h-0 flex-1 overflow-auto p-5">
+          <p className="mb-2 max-w-2xl text-sm" role="status" data-testid="dev-space-disabled-notice">{t('devSpace.disabled.title')}</p>
+          <p className="mb-4 max-w-2xl text-sm text-muted-foreground">{t('devSpace.disabled.body')}</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => navigate(routes.view.settings('developers'))}>{t('devSpace.disabled.openSettings')}</Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="dev-space-repo">
