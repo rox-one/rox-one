@@ -37,6 +37,13 @@ const server=Bun.serve({hostname:'127.0.0.1',port:5199,async fetch(request){
   await sessionPersistenceQueue.flush('parent');result={annotations:loadSession(fake.workspaceRoot,'parent')!.messages.find((message:any)=>message.id===args.messageId)?.annotations??[]}
  }else if(method==='branch'){
   result=await handlers.get(RPC_CHANNELS.sessions.CREATE)(ctx,workspace.id,{branchFromSessionId:'parent',branchFromMessageId:args.messageId,llmConnection:'rox-test',model:'kimi-k2',name:`Branch of ${args.messageId}`})
+ }else if(method==='warmup'){
+  // The first branch in a fresh config dir pays one-time cost (OMP native-policy
+  // overlay build + workspace skill materialization, measured 6-16s cold, <1s warm).
+  // Run it once before assertions so every branch test observes steady-state timing.
+  const warm=await handlers.get(RPC_CHANNELS.sessions.CREATE)(ctx,workspace.id,{branchFromSessionId:'parent',branchFromMessageId:'canonical-user',llmConnection:'rox-test',model:'kimi-k2',name:'Synthetic warmup branch'})
+  await manager.deleteSession(warm.id)
+  result={ok:true}
  }else if(method==='branchFollowUp'){
   await manager.sendMessage(args.sessionId,args.text)
   result=await manager.getSession(args.sessionId)

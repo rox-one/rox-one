@@ -173,43 +173,59 @@ export interface RetainedSurfaceEntry {
   node: React.ReactNode
 }
 
+/** The retention the host has already applied, plus the key/capacity it belongs to. */
+interface AppliedRetention {
+  key: string
+  capacity: number
+  retention: RetentionState
+}
+
 /**
  * Retain the last `capacity` surfaces. Every render the active key's node is
  * refreshed; retired keys keep the element they had when they were active, so
  * their mounted trees (state, scroll, subscriptions) survive.
+ *
+ * The adjustment is a render-phase state update (the outgoing surface must be
+ * snapshotted before this render commits, or its tree is unmounted for one
+ * commit and loses the state keep-alive exists to preserve). Both the decision
+ * and the outgoing node come from *committed* data — the `applied` state and a
+ * ref written in a layout effect — because a render React discards (StrictMode's
+ * double render, a concurrent restart) must not advance the bookkeeping: a ref
+ * mutated during render would swallow the update and the host would commit no
+ * surface at all.
  */
 export function useKeepAliveSurfaces(
   activeKey: string,
   activeNode: React.ReactNode,
   capacity: number,
 ): readonly RetainedSurfaceEntry[] {
-  const [state, setState] = React.useState<RetentionState>(
-    () => advanceRetention(EMPTY_RETENTION, null, activeKey, capacity),
-  )
-  const lastRender = React.useRef<{ key: string; node: React.ReactNode } | null>(null)
-  const applied = React.useRef<{ key: string; capacity: number } | null>(null)
+  const [applied, setApplied] = React.useState<AppliedRetention>(() => ({
+    key: activeKey,
+    capacity,
+    retention: advanceRetention(EMPTY_RETENTION, null, activeKey, capacity),
+  }))
+  // Written only on commit, so it always names the surface that is actually
+  // mounted when the next route change needs to snapshot it.
+  const committed = React.useRef<{ key: string; node: React.ReactNode } | null>(null)
+  React.useLayoutEffect(() => {
+    committed.current = { key: activeKey, node: activeNode }
+  })
 
-  const previous = lastRender.current
-  lastRender.current = { key: activeKey, node: activeNode }
-
-  if (applied.current === null) applied.current = { key: activeKey, capacity }
-  if (applied.current.key !== activeKey || applied.current.capacity !== capacity) {
-    // Render-phase adjustment (React's "adjust state while rendering"): the
-    // outgoing surface must be snapshotted before this render commits,
-    // otherwise its tree would be unmounted for one commit and lose the state
-    // keep-alive exists to preserve. React re-runs this component with the new
-    // state before committing, so the stale pass below is discarded.
-    applied.current = { key: activeKey, capacity }
-    setState(advanceRetention(state, previous, activeKey, capacity))
+  if (applied.key !== activeKey || applied.capacity !== capacity) {
+    setApplied({
+      key: activeKey,
+      capacity,
+      retention: advanceRetention(applied.retention, committed.current, activeKey, capacity),
+    })
   }
 
   const entries: RetainedSurfaceEntry[] = []
-  for (const key of state.keys) {
+  for (const key of applied.retention.keys) {
     if (key === activeKey) {
       entries.push({ key, node: activeNode })
       continue
     }
-    const node = state.snapshots.get(key)
+    const node = applied.retention.snapshots.get(key)
     if (node === undefined) continue
     entries.push({ key, node })
   }

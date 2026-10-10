@@ -120,6 +120,12 @@ async function selected(navigator: string, id?: string) {
     return state.navigator === navigator && (!id || JSON.stringify(state.details).includes(id))
   }, { navigator, id }, { timeout: 3500 })
 }
+// The keep-alive host leaves the last visited surfaces mounted but hidden, so a
+// route state that several of those surfaces can render (missing sessions are
+// one) must be addressed on the surface the shell is actually showing.
+function surface(testId: string) {
+  return page.locator(`[data-surface-active="true"] [data-testid="${testId}"]`)
+}
 try {
   await check('The mounted NavigationProvider restores a source deep link, back/forward and reload', async () => {
     await page.goto(`${origin}?ws=workspace-a&route=sources/source/one&sidebar=files/src/main.ts`)
@@ -145,9 +151,9 @@ try {
   await check('Missing and deleted explicit sessions stay selected instead of choosing another chat', async () => {
     await page.goto(`${origin}?ws=workspace-a&route=allSessions/session/missing`)
     await selected('sessions', 'missing')
-    await page.locator('[data-testid="route-session-missing"]').waitFor()
+    await surface('route-session-missing').waitFor()
     assert.equal(new URL(page.url()).searchParams.get('route'), 'allSessions/session/' + (await state()).details.sessionId)
-    assert.equal(await page.locator('[data-testid="route-session-missing"]').getAttribute('data-route-entity'), 'missing')
+    assert.equal(await surface('route-session-missing').getAttribute('data-route-entity'), 'missing')
     assert.equal(new URL(page.url()).searchParams.get('ws'), 'workspace-a')
     assert.equal(new URL(page.url()).searchParams.get('route'), 'allSessions/session/missing')
     assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 0)
@@ -156,9 +162,9 @@ try {
     await selected('sessions', 'local')
     await page.evaluate(() => (window as any).ui001.removeSession('local'))
     await selected('sessions', 'local')
-    await page.locator('[data-testid="route-session-missing"]').waitFor()
+    await surface('route-session-missing').waitFor()
     assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 0)
-    assert.equal(await page.locator('[data-testid="route-session-missing"]').getAttribute('data-route-entity'), 'local')
+    assert.equal(await surface('route-session-missing').getAttribute('data-route-entity'), 'local')
     assert.equal(new URL(page.url()).searchParams.get('ws'), 'workspace-a')
     assert.equal(new URL(page.url()).searchParams.get('route'), 'allSessions/session/local')
   })
