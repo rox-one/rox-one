@@ -18,6 +18,7 @@ export const MEETING_RPC_METHODS = [
   'meetings:search',
   'meetings:create',
   'meetings:createProposal',
+  'meetings:listProposals',
   'meetings:correctSegment',
   'meetings:addManualNote',
   'meetings:approveProposal',
