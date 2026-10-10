@@ -218,7 +218,7 @@ describe('layout-snapshot restore → inspector contribution', () => {
     const route = surfaceTabToRoute(snapshot.tabs[snapshot.focusedIndex].tab)
     const ctx = panelContextKeysFromRoute(route)
     expect(ctx.activeSurface).toBe('knowledge')
-    const listed = getAppPanelRegistry().list('inspector', ctx)
+    const listed = getAppPanelRegistry().list('inspector', { ...ctx, unifiedShell: true })
     expect(listed.map((p) => p.id)).toContain(KNOWLEDGE_INSPECTOR_PANEL_ID)
   })
 
@@ -230,7 +230,34 @@ describe('layout-snapshot restore → inspector contribution', () => {
       SAVED_AT,
     )
     const route = surfaceTabToRoute(snapshot.tabs[snapshot.focusedIndex].tab)
-    const listed = getAppPanelRegistry().list('inspector', panelContextKeysFromRoute(route))
+    const listed = getAppPanelRegistry().list('inspector', { ...panelContextKeysFromRoute(route), unifiedShell: true })
+    expect(listed.map((p) => p.id)).not.toContain(KNOWLEDGE_INSPECTOR_PANEL_ID)
+  })
+
+  it('saves → restores through panel entries and still lists the knowledge panel (flag on)', () => {
+    registerCorePanels(getAppPanelRegistry(), () => null)
+    // Save: live layout → URL transport → snapshot (the exact persistence path).
+    const saved = snapshotToUrlSearch(makeSnapshot([sessionTab, knowledgeTab], 1, [0.5, 0.5]))
+    // Restore: reconcilePanelStackAtom consumes these entries.
+    const restored = snapshotFromUrlSearch(saved, WS, SAVED_AT)
+    const { entries, focusedIndex } = snapshotToPanelEntries(restored)
+    expect(entries.map((e) => e.route)).toEqual([
+      'allSessions/session/session-1',
+      'knowledge/document/doc-1',
+    ])
+    expect(focusedIndex).toBe(1)
+    const focusedRoute = entries[focusedIndex].route
+    const ctx = { ...panelContextKeysFromRoute(focusedRoute), unifiedShell: true }
+    const listed = getAppPanelRegistry().list('inspector', ctx)
+    expect(listed.map((p) => p.id)).toContain(KNOWLEDGE_INSPECTOR_PANEL_ID)
+  })
+
+  it('restored knowledge panel stays hidden while the unified shell flag is off', () => {
+    registerCorePanels(getAppPanelRegistry(), () => null)
+    const restored = snapshotFromUrlSearch(snapshotToUrlSearch(makeSnapshot([knowledgeTab], 0)), WS, SAVED_AT)
+    const { entries, focusedIndex } = snapshotToPanelEntries(restored)
+    const ctx = { ...panelContextKeysFromRoute(entries[focusedIndex].route), unifiedShell: false }
+    const listed = getAppPanelRegistry().list('inspector', ctx)
     expect(listed.map((p) => p.id)).not.toContain(KNOWLEDGE_INSPECTOR_PANEL_ID)
   })
 })

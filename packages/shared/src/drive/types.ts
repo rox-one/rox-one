@@ -8,7 +8,14 @@
  * completed files (never trusted from a running counter).
  */
 
-/** Default per-workspace quota: 1 tebibyte. */
+/**
+ * Default per-workspace quota: 1 tebibyte (1 ТБ).
+ *
+ * R13 («ROX Drive/Space: 1 ТБ отображение») fixes the displayed figure at
+ * 1 ТБ — `docs/plans/2026-10-09-platform-program.md` line 47, «DriveSurface:
+ * 1 ТБ». 1024 ** 4 (= 1 099 511 627 776) renders as «1 ТБ»/«1 TB» via the
+ * Drive byte formatter, so the meter's title and total agree with the spec.
+ */
 export const DRIVE_DEFAULT_QUOTA_BYTES = 1024 ** 4
 
 /** One upload part is 16 MiB; the renderer uploads 8 in parallel. */

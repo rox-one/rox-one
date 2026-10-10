@@ -44,6 +44,14 @@ describe('UnifiedShellLayout PanelHost wiring', () => {
     expect(host).not.toContain('void contribution')
   })
 
+  it('injects the unified shell flag into the when-context so flag OFF keeps the classic path', () => {
+    const host = readFileSync(hostPath, 'utf8')
+    expect(host).toContain('useAtomValue(featureUnifiedShellAtom)')
+    expect(host).toMatch(/unifiedShell:\s*unifiedShellEnabled/)
+    const corePanels = readFileSync(join(__dirname, '..', 'core-panels.ts'), 'utf8')
+    expect(corePanels).toContain('activeSurface==\'knowledge\' && unifiedShell')
+  })
+
   it('owns runtime-gated Conation registrations only from the inspector host', () => {
     const host = readFileSync(hostPath, 'utf8')
     expect(host).toContain('useAtomValue(featureWorkbenchConationShellAtom)')
