@@ -382,6 +382,16 @@ export function createSessionStateProjector(options: SessionStateProjectorOption
   return new SessionStateProjector(options)
 }
 
+/**
+ * Bind the process-wide projector to an explicit store. The bootstrap path
+ * relies on `openStateStore`'s per-configDir cache handing back the store the
+ * server already opened WITH its writer lock; tests (and any pre-bootstrap
+ * caller) bind their own store here instead of opening a second unlocked one.
+ */
+export function bindSessionStateProjector(store: StateStore): void {
+  defaultProjector = new SessionStateProjector({ store })
+}
+
 /** Test hook: forget the process-wide projector (the store stays open). */
 export function resetSessionStateProjector(): void {
   defaultProjector = null

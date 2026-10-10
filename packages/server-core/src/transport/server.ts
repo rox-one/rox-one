@@ -1075,7 +1075,7 @@ export class WsRpcServer implements RpcServer {
               reason: verdict.reason,
             })
             ws.close(4005, 'Auth failed')
-            clearTimeout(handshakeTimeout)
+            clearTimeout(handshakeTimeout ?? undefined)
             return
           }
         }
