@@ -71,10 +71,21 @@ describe('boot manifest derivation', () => {
       'assets/shared.js',
       'assets/vendor.js',
     ])
-    expect(manifest.routes.notes).toEqual({
-      chunk: 'assets/NotesPage.js',
-      chunks: ['assets/NotesPage.js', 'assets/editor.js', 'assets/entry.js', 'assets/main.js', 'assets/shared.js', 'assets/vendor.js'],
-    })
+    expect(manifest.routes.notes.chunk).toBe('assets/NotesPage.js')
+    expect(manifest.routes.notes.chunks).toEqual([
+      'assets/NotesPage.js',
+      'assets/editor.js',
+      'assets/entry.js',
+      'assets/main.js',
+      'assets/shared.js',
+      'assets/vendor.js',
+    ])
+    // The closure's STABLE identity: the source modules it was built from.
+    expect(manifest.routes.notes.sources).toEqual([
+      'src/renderer/bootstrap.ts',
+      'src/renderer/main.tsx',
+      'src/renderer/pages/NotesPage.tsx',
+    ])
     expect(manifest.routes.tasks.chunks).toEqual([
       'assets/TasksPage.js',
       'assets/entry.js',
@@ -107,10 +118,9 @@ describe('boot manifest derivation', () => {
 
     const diff = diffBootManifest(expected, derived)
     expect(diff.ok).toBe(false)
-    expect(diff.bootChunks.extra).toContain('assets/NotesPage.js')
-    expect(diff.bootChunks.extra).toContain('assets/editor.js')
-    // ...and every route that did not already reach the leaked modules grew.
-    expect(diff.routes.tasks.extra).toEqual(['assets/NotesPage.js', 'assets/editor.js'])
+    expect(diff.bootSources.extra).toContain('src/renderer/pages/NotesPage.tsx')
+    // ...and every route that did not already reach the leaked module grew too.
+    expect(diff.routes.tasks.extra).toEqual(['src/renderer/pages/NotesPage.tsx'])
   })
 
   it('accepts an unchanged bundle and every route id the boot warm-up preloads', () => {
@@ -170,9 +180,16 @@ describe.skipIf(!existsSync(DIST) || !existsSync(MANIFEST_PATH))('boot manifest 
     expect(diff).toEqual({
       ok: true,
       bootChunks: { missing: [], extra: [] },
+      bootSources: { missing: [], extra: [] },
       routes: {},
     })
-    expect(serializeBootManifest(derived)).toBe(serializeBootManifest(committed))
+    // Chunk names (hashes) move with any renderer edit; the closure's source set
+    // is the identity the gate compares, so assert on that (and on the route ids).
+    expect(derived.bootSources).toEqual(committed.bootSources)
+    expect(Object.keys(derived.routes).sort()).toEqual(Object.keys(committed.routes).sort())
+    for (const id of Object.keys(derived.routes)) {
+      expect(derived.routes[id].sources).toEqual(committed.routes[id].sources)
+    }
   })
 })
 
