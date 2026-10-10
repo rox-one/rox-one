@@ -8,10 +8,9 @@
    Line heights are FIXED px boxes (not unitless ratios): the listed px is
    the line box on the element itself and is inherited as an absolute length,
    so nested text keeps the row rhythm instead of re-scaling by ratio.
-   The rhythm roles below (`--leading-*`, `--tracking-*`, `--numeric-features`,
-   `--wrap-identifier`, `--hyphens-prose`, `--truncate-lines*`, `--weight-data`)
-   back the `.numeric`, `.caps-label`, `.label-tracking`, `.prose-body` and
-   `.prose-measure` utilities in ../index.css. */
+   The rhythm roles below back the `.numeric`, `.caps-label`, `.label-tracking`,
+   `.prose-body` and `.prose-measure` utilities in ../index.css; `--text-floor`
+   is the enforced minimum of the px scale (asserted in tokens-v2). */
 @theme {
   --text-caption: 11px;
   --text-caption--line-height: 16px;
@@ -48,21 +47,20 @@
   --text-title-md--line-height: 22px;
   --text-stat: 20px;
   --text-stat--line-height: 28px;
+  /* Hero numerals (focus timer, single big readouts). */
+  --text-hero: 44px;
+  --text-hero--line-height: 48px;
 
   /* Floor and rhythm roles. */
   --text-floor: 11px;
+  /* Glyph marks (avatar initials, +N overflow, inline badge tiles) sit below
+     the text floor by design: they are graphics in fixed tiles, not labels. */
+  --text-mark: 9px;
+  --text-mark--line-height: 12px;
   --leading-caps: 1.15;
-  --leading-ui: 1.385;
-  --leading-prose: 1.6;
   --prose-measure: 68ch;
   --tracking-caps: 0.06em;
   --tracking-label: 0.02em;
-  --tracking-display: -0.02em;
-  --tracking-data: 0em;
   --numeric-features: "tnum" 1, "zero" 1, "case" 1;
-  --wrap-identifier: anywhere;
   --hyphens-prose: auto;
-  --truncate-lines: 1;
-  --truncate-lines-desc: 2;
-  --weight-data: 500;
 }

@@ -285,6 +285,18 @@ export function loadPanelWorkspaceLayout(
   workspaceId: string,
   store: PanelWorkspaceLayoutStore = storage,
 ): PanelWorkspaceLayoutPreferences {
+  // Remember-per-workspace OFF: every workspace opens with the default layout.
+  // The stored record is left untouched, so turning the toggle back on restores
+  // it; this single load path is the only place the preference is honoured.
+  // Read defensively: a throwing module keeps the shipped remember-on behaviour
+  // instead of blocking every load.
+  let remembered = true
+  try {
+    remembered = layoutDefaults.isLayoutRememberedPerWorkspace()
+  } catch {
+    // layout-defaults unavailable — keep remembering.
+  }
+  if (!remembered) return defaultPanelWorkspaceLayout(workspaceId)
   return parsePanelWorkspaceLayout(store.get(storage.KEYS.panelWorkspaceLayout, null, workspaceId), workspaceId)
     ?? defaultPanelWorkspaceLayout(workspaceId)
 }

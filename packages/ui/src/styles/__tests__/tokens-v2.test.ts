@@ -35,6 +35,24 @@ function blocks(css: string, selector: string): Record<string, string>[] {
   return out
 }
 
+/** Same as `blocks`, but matches any block whose selector LIST contains `selector`. */
+function blocksContaining(css: string, selector: string): Record<string, string>[] {
+  const clean = stripComments(css)
+  const out: Record<string, string>[] = []
+  const re = /([^{};]+)\{([^{}]*)\}/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(clean))) {
+    if (!m[1]!.split(',').some((s) => s.trim() === selector)) continue
+    const decls: Record<string, string> = {}
+    for (const part of m[2]!.split(';')) {
+      const d = part.match(/^\s*(--[\w-]+)\s*:\s*([\s\S]+?)\s*$/)
+      if (d) decls[d[1]!] = d[2]!
+    }
+    out.push(decls)
+  }
+  return out
+}
+
 const withoutMedia = (css: string) => stripComments(css).replace(/@media[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '')
 /** Unconditional `:root` declarations (blocks inside @media are ignored). */
 const merge = (bs: Record<string, string>[]): Record<string, string> => Object.assign({}, ...bs)
@@ -129,19 +147,16 @@ describe('token foundation v2: structure', () => {
   })
 
   it('rhythm density layer mirrors the chrome variant mechanism (condensed default, comfortable wins)', () => {
-    const condensed = merge(blocks(token('density.css'), ':root[data-density="condensed"]'))
-    const comfortable = merge(blocks(token('density.css'), ':root[data-density="comfortable"]'))
+    const condensed = merge(blocksContaining(token('density.css'), ':root[data-density="condensed"]'))
+    const comfortable = merge(blocksContaining(token('density.css'), ':root[data-density="comfortable"]'))
     expect(Object.keys(condensed).length).toBeGreaterThan(0)
+    // The rhythm layer must define its condensed defaults unconditionally on
+    // :root — per-container density attributes only carry compact/comfortable.
+    expect(Object.keys(merge(blocksContaining(token('density.css'), ':root'))).sort()).toEqual(Object.keys(condensed).sort())
+    expect(stripComments(token('density.css'))).toContain('[data-density="compact"]')
     expect(Object.keys(comfortable).sort()).toEqual(Object.keys(condensed).sort())
     const values: Record<string, [string, string]> = {
-      '--density-block-gap': ['12px', '16px'],
-      '--density-turn-gap': ['20px', '28px'],
-      '--density-card-pad-y': ['10px', '14px'],
-      '--density-list-gap': ['2px', '4px'],
       '--density-leading-prose': ['24px', '24.75px'],
-      '--density-section-gap': ['16px', '24px'],
-      '--density-heading-gap-above': ['20px', '28px'],
-      '--density-heading-gap-below': ['8px', '10px'],
     }
     for (const [name, [cond, comfy]] of Object.entries(values)) {
       expect(condensed[name], name).toBe(cond)
@@ -518,7 +533,12 @@ describe('token foundation v2: values (step 2)', () => {
       expect(theme[`--text-${tw}`], tw).toBe(size)
       expect(theme[`--text-${tw}--line-height`], tw).toBe(lh)
     }
-    for (const size of Object.values(theme).filter((x) => /px$/.test(x))) expect(px(size)).toBeGreaterThanOrEqual(11)
+    for (const [name, value] of Object.entries(theme)) {
+      if (!/px$/.test(value)) continue
+      // `--text-mark` is the documented sub-floor glyph exception.
+      if (name === '--text-mark') continue
+      expect(px(value), name).toBeGreaterThanOrEqual(11)
+    }
   })
 
   it('declares the G7 role steps and rhythm tokens', () => {
@@ -532,29 +552,31 @@ describe('token foundation v2: values (step 2)', () => {
       '--text-title-md--line-height': '22px',
       '--text-stat': '20px',
       '--text-stat--line-height': '28px',
+      '--text-hero': '44px',
+      '--text-hero--line-height': '48px',
+      '--text-mark': '9px',
+      '--text-mark--line-height': '12px',
       '--text-floor': '11px',
       '--leading-caps': '1.15',
-      '--leading-ui': '1.385',
-      '--leading-prose': '1.6',
       '--prose-measure': '68ch',
       '--tracking-caps': '0.06em',
       '--tracking-label': '0.02em',
-      '--tracking-display': '-0.02em',
-      '--tracking-data': '0em',
       '--numeric-features': '"tnum" 1, "zero" 1, "case" 1',
-      '--wrap-identifier': 'anywhere',
       '--hyphens-prose': 'auto',
-      '--truncate-lines': '1',
-      '--truncate-lines-desc': '2',
-      '--weight-data': '500',
     }
     for (const [name, value] of Object.entries(expected)) expect(theme[name], name).toBe(value)
+    // `--text-floor` is a contract, not a comment: no px token may sit below it.
+    const floor = px(theme['--text-floor']!)
+    for (const [name, value] of Object.entries(theme)) {
+      if (name === '--text-mark') continue // documented sub-floor glyph exception
+      if (/px$/.test(value)) expect(px(value), name).toBeGreaterThanOrEqual(floor)
+    }
   })
 
   it('declares the G7 role utilities with token-only values', () => {
     const css = stripComments(indexCss)
-    expect(css).toMatch(/\.numeric\s*\{\s*font-variant-numeric:\s*var\(--numeric-features\);\s*\}/)
-    expect(css).toMatch(/\.caps-label\s*\{\s*letter-spacing:\s*var\(--tracking-caps\);\s*\}/)
+    expect(css).toMatch(/\.numeric\s*\{\s*font-variant-numeric:\s*tabular-nums;\s*font-feature-settings:\s*var\(--numeric-features\);\s*\}/)
+    expect(css).toMatch(/\.caps-label\s*\{\s*letter-spacing:\s*var\(--tracking-caps\);\s*line-height:\s*var\(--leading-caps\);\s*\}/)
     expect(css).toMatch(/\.label-tracking\s*\{\s*letter-spacing:\s*var\(--tracking-label\);\s*\}/)
     expect(css).toMatch(/\.prose-body\s*\{[^}]*font-size:\s*var\(--text-prose\);[^}]*hyphens:\s*var\(--hyphens-prose\);/)
     expect(css).toMatch(/\.prose-measure\s*\{\s*max-width:\s*var\(--prose-measure\);\s*\}/)

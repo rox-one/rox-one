@@ -175,7 +175,7 @@ export default function FocusPage(_props: { itemId: string | null }) {
             <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
               <div className="min-w-0">
                 <CardTitle>{t('extraScreens.focus.deepWork')}</CardTitle>
-                <div className="mt-1 text-display font-bold numeric leading-none" role="timer" aria-live="off">
+                <div className="mt-1 text-hero font-bold numeric leading-none" role="timer" aria-live="off">
                   {running && focus.active ? mmss(focus.active.endsAt - now) : mmss(25 * 60000)}
                 </div>
                 <div className="mt-1 text-sm text-muted-foreground">

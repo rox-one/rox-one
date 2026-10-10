@@ -228,7 +228,7 @@ function GroupHeader({
           !isCollapsed && 'rotate-90'
         )}
       />
-      <span className="text-xs font-medium uppercase caps-labelr text-muted-foreground relative">
+      <span className="text-xs font-medium uppercase caps-label text-muted-foreground relative">
         {label}
         {isCollapsed && (
           <>

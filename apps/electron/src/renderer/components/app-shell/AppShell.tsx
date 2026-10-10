@@ -130,13 +130,14 @@ import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
 import { WorkspaceBrowserRegistry } from "../browser/WorkspaceBrowserRegistry"
 import { featureWorkbenchBrowserSurfaceV2Atom } from "@/atoms/unified-shell"
-import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, featureLayoutEngineAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
 import { EscapeInterruptProvider, useEscapeInterrupt } from "@/context/EscapeInterruptContext"
 import { useTheme } from "@/context/ThemeContext"
 import { usePanelResize } from "@/hooks/usePanelResize"
+import { SNAP_PERCENTS, type SplitSnap } from "./resize-math"
 import { useAction, useActionLabel } from "@/actions"
 import { useFocusZone } from "@/hooks/keyboard"
 import { useFocusContext } from "@/context/FocusContext"
@@ -556,6 +557,11 @@ function AppShellContent({
 
   const [isResizing, setIsResizing] = React.useState<'sidebar' | 'session-list' | null>(null)
   const workspaceIdForLayout = activeWorkspaceId ?? '_default'
+  // G4 «Студия»: the magnetic targets travel with each seam's bounds (the same
+  // channel `PanelResizeSash` uses); the live snapped state surfaces through the
+  // controller for the handle's guide/badge. Flag OFF keeps both undefined.
+  const layoutEngineOn = useAtomValue(featureLayoutEngineAtom)
+  const seamSnap: SplitSnap | undefined = layoutEngineOn ? { percents: SNAP_PERCENTS } : undefined
   const sidebarResize = usePanelResize({
     onPreview: (sizeA) => setSidebarWidth(sizeA),
     onCommit: (sizeA) => {
@@ -3497,6 +3503,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           valueMin={SIDEBAR_WIDTH_MIN}
           valueMax={SIDEBAR_WIDTH_MAX}
           dragging={sidebarResize.dragging || isResizing === 'sidebar'}
+          snap={layoutEngineOn ? sidebarResize.controller.current?.snapState : undefined}
           className="absolute"
           style={{
             top: PANEL_STACK_TOP_INSET,
@@ -3515,6 +3522,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               maxA: SIDEBAR_WIDTH_MAX,
               minB: PANEL_MIN_WIDTH,
               maxB: Number.POSITIVE_INFINITY,
+              snap: seamSnap,
             })
           }}
           onPointerMove={sidebarResize.handlePointerMove}
@@ -3555,6 +3563,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           valueMin={NAVIGATOR_WIDTH_MIN}
           valueMax={NAVIGATOR_WIDTH_MAX}
           dragging={navigatorResize.dragging || isResizing === 'session-list'}
+          snap={layoutEngineOn ? navigatorResize.controller.current?.snapState : undefined}
           className="absolute"
           style={{
             top: PANEL_STACK_TOP_INSET,
@@ -3579,6 +3588,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               maxA: NAVIGATOR_WIDTH_MAX,
               minB: PANEL_MIN_WIDTH,
               maxB: Number.POSITIVE_INFINITY,
+              snap: seamSnap,
             })
           }}
           onPointerMove={navigatorResize.handlePointerMove}
@@ -3596,6 +3606,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               maxA: NAVIGATOR_WIDTH_MAX,
               minB: PANEL_MIN_WIDTH,
               maxB: Number.POSITIVE_INFINITY,
+              snap: seamSnap,
             })
           }}
           onKeyCommit={navigatorResize.handleKeyCommit}
@@ -3611,6 +3622,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               maxA: NAVIGATOR_WIDTH_MAX,
               minB: PANEL_MIN_WIDTH,
               maxB: Number.POSITIVE_INFINITY,
+              snap: seamSnap,
             }, NAVIGATOR_WIDTH_DEFAULT)
           }}
         />

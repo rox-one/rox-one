@@ -182,6 +182,11 @@ export function PanelStackContainer({
       surfacePx: Math.round(columnsWidth),
     })
   }, [engineLayout, availableWidth, isSidebarAndNavigatorHidden, sidebarWidth, navigatorWidth, setPanelLayoutGeometry])
+  // The published geometry belongs to this container: clear it on unmount so a
+  // stale readout cannot survive. The publish effect above stays the single
+  // writer while mounted; the atom setter identity is stable, so this fires on
+  // unmount only.
+  useEffect(() => () => setPanelLayoutGeometry(null), [setPanelLayoutGeometry])
   const singlePanel = isExpanded || (hasTools
     ? visibleIds.length <= 1
     : isCompact || panels.length <= 1 || (engineLayout ? engineLayout.singlePanel : mode === 'focus'))

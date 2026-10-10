@@ -162,7 +162,7 @@ export function BrowserTabStripView({
             <button
               type="button"
               aria-label={t('browser.tabsMenu')}
-              className="titlebar-no-drag inline-flex min-h-[var(--control-md)] shrink-0 items-center gap-0.5 rounded-[var(--radius-control)] px-1.5 text-caption font-medium text-text-secondary outline-none transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              className="titlebar-no-drag inline-flex h-[var(--control-sm)] shrink-0 items-center gap-0.5 rounded-[var(--radius-control)] px-1.5 text-caption font-medium text-text-secondary outline-none transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             >
               {overflowCount > 0 && (
                 <span className="numeric">+{overflowCount}</span>

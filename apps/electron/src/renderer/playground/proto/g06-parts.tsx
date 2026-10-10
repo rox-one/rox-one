@@ -741,7 +741,7 @@ export function SessionLanes({
               >
                 {collapsed ? <ChevronRight className="icon-status" /> : <ChevronDown className="icon-status" />}
               </button>
-              <span className="text-caption font-medium uppercase caps-labelr text-text-secondary">{lane.label}</span>
+              <span className="text-caption font-medium uppercase caps-label text-text-secondary">{lane.label}</span>
               <span className="text-caption numeric text-text-secondary">{lane.sessions.length || ''}</span>
               <span className="ml-auto flex items-center gap-1">
                 {lane.sessions.some((session) => session.processing) ? (

@@ -539,15 +539,14 @@ describe('a mention right after a literal `!` (#1505 fix3)', () => {
 
   for (const engine of ['legacy', 'official'] as const) {
     it(`${engine}: \`\\![[…]]\` parses as a literal \`!\` + mention; unescaped \`![[…]]\` mid-line stays text`, () => {
-      // @tiptap/markdown drops marked's escape tokens (main does the same with
-      // the flag off: `Done\\!` loads as `Done`), so there the `!` is lost but
-      // the mention is still a mention, never an embed.
-      const bang = engine === 'legacy' ? '!' : null
+      // Both engines keep marked's escape token as a literal `!` before the
+      // mention: `\!` never blocks it (db056c501), so `Done\![[task:1]]` loads
+      // as the text `Done!` plus a mention — never an embed.
       const escaped = makeEditor(engine, 'Done\\![[task:1]]')
-      expect(shape(escaped)).toEqual([['paragraph', [bang ? 'Done!' : 'Done', 'mention']]])
+      expect(shape(escaped)).toEqual([['paragraph', ['Done!', 'mention']]])
       escaped.destroy()
       const lone = makeEditor(engine, '\\![[task:1]]')
-      expect(shape(lone)).toEqual([['paragraph', bang ? [bang, 'mention'] : ['mention']]])
+      expect(shape(lone)).toEqual([['paragraph', ['!', 'mention']]])
       expect(entityNodes(lone).map((n) => n.type)).toEqual(['mention'])
       lone.destroy()
       const unescaped = makeEditor(engine, 'Done![[task:1]]')

@@ -123,7 +123,7 @@ function AutomationAvatarGallery() {
     <div className="space-y-6">
       {/* Size variants */}
       <div>
-        <h4 className="text-xs font-medium text-muted-foreground uppercase caps-labelr mb-3">Sizes</h4>
+        <h4 className="text-xs font-medium text-muted-foreground uppercase caps-label mb-3">Sizes</h4>
         <div className="flex items-end gap-4">
           {(['xs', 'sm', 'md', 'lg'] as const).map(size => (
             <div key={size} className="flex flex-col items-center gap-1">
@@ -136,7 +136,7 @@ function AutomationAvatarGallery() {
 
       {/* All event types */}
       <div>
-        <h4 className="text-xs font-medium text-muted-foreground uppercase caps-labelr mb-3">All Events</h4>
+        <h4 className="text-xs font-medium text-muted-foreground uppercase caps-label mb-3">All Events</h4>
         <div className="grid grid-cols-4 gap-3">
           {events.map(event => (
             <div key={event} className="flex items-center gap-2">

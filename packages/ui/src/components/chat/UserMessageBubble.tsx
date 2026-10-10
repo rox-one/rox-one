@@ -78,7 +78,7 @@ function InlineBadge({ badge }: { badge: ContentBadge }) {
           className="h-[12px] w-[12px] rounded-[2px] shrink-0"
         />
       ) : (
-        <span className="h-[12px] w-[12px] rounded-[2px] bg-foreground/5 flex items-center justify-center text-foreground/50 shrink-0 text-xs">
+        <span className="h-[12px] w-[12px] rounded-[2px] bg-foreground/5 flex items-center justify-center text-foreground/50 shrink-0 text-mark">
           {badge.type === 'skill' ? SKILL_ICON_TEXT : badge.type === 'context' ? CONTEXT_ICON_TEXT : badge.type === 'knowledge' ? KNOWLEDGE_ICON_TEXT : SOURCE_ICON_TEXT}
         </span>
       )}
@@ -97,7 +97,7 @@ function CommandBadge({ badge }: { badge: ContentBadge }) {
       className="inline-flex items-center gap-1 h-[22px] px-1.5 mx-0.5 rounded-[var(--radius-control)] bg-background shadow-minimal text-sm align-middle"
       style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }}
     >
-      <span className="h-[12px] w-[12px] rounded-[2px] bg-foreground/5 flex items-center justify-center text-foreground/50 shrink-0 text-xs font-medium">
+      <span className="h-[12px] w-[12px] rounded-[2px] bg-foreground/5 flex items-center justify-center text-foreground/50 shrink-0 text-mark font-medium">
         {COMMAND_ICON_TEXT}
       </span>
       <span className="truncate max-w-[200px]" title={badge.label}>{badge.label}</span>
@@ -120,7 +120,7 @@ function ContextBadge({ badge }: { badge: ContentBadge }) {
       style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }}
       title={t('chat.contextBadge')}
     >
-      <span className="h-[12px] w-[12px] rounded-[2px] bg-foreground/5 flex items-center justify-center text-foreground/50 shrink-0 text-xs">
+      <span className="h-[12px] w-[12px] rounded-[2px] bg-foreground/5 flex items-center justify-center text-foreground/50 shrink-0 text-mark">
         {CONTEXT_ICON_TEXT}
       </span>
       <span className="truncate max-w-[200px] text-muted-foreground">{displayLabel}</span>

@@ -33,12 +33,14 @@ describe('ship-rox-chrome-leftover-post-960', () => {
     expect(browserSrc).not.toContain('bg-background/95')
   })
 
-  it('aligns FreeFormInput toolbar leftovers to 9px / h-6', () => {
+  it('aligns FreeFormInput toolbar leftovers to the ramp / h-6', () => {
     expect(input).toContain('data-testid="chat-session-cost"')
-    expect(input).toMatch(/chat-session-cost[\s\S]{0,80}text-\[9px\]|text-\[9px\][\s\S]{0,80}chat-session-cost/)
+    // G7: the cost readout carries the ramp class + numeric role; the 9px
+    // optical size stays a chrome-CSS concern, not a markup literal.
+    expect(input).toMatch(/chat-session-cost[\s\S]{0,80}text-xs|text-xs[\s\S]{0,80}chat-session-cost/)
     const toolbar = input.split('\n').filter((l) => l.includes('input-toolbar-btn'))
-    expect(toolbar.some((l) => l.includes('h-6') && l.includes('text-[9px]'))).toBe(true)
-    expect(toolbar.every((l) => !l.includes('text-[11px]') && !l.includes('h-7'))).toBe(true)
+    expect(toolbar.some((l) => l.includes('h-6') && l.includes('text-xs'))).toBe(true)
+    expect(toolbar.every((l) => !l.includes('text-[11px]') && !l.includes('h-7') && !l.includes('text-[9px]'))).toBe(true)
   })
 
   it('does not reopen inspector strip host from #958/#959', () => {

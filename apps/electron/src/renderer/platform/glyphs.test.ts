@@ -22,6 +22,7 @@ const NAV_CONCEPT: Record<string, GlyphConcept> = {
   sessions: 'sessions',
   notes: 'notes',
   memory: 'memory',
+  memoryRepo: 'memoryRepo',
   browser: 'browser',
   automations: 'automations',
   projects: 'projects',
@@ -35,6 +36,10 @@ const NAV_CONCEPT: Record<string, GlyphConcept> = {
   home: 'home',
   knowledge: 'knowledge',
   settings: 'settings',
+  clipboardHistory: 'clipboardHistory',
+  drive: 'drive',
+  developers: 'developers',
+  playbooks: 'playbooks',
 }
 
 const CORE_CONCEPT: Record<string, GlyphConcept> = {

@@ -88,7 +88,7 @@ export function StatusBadge({ status, size = 'sm', className }: StatusBadgeProps
         className,
       )}
     >
-      <span aria-hidden="true" className="text-xs leading-none">
+      <span aria-hidden="true" className="text-mark leading-none">
         {spec.glyph}
       </span>
       <span className={size === 'xs' ? 'text-text-secondary' : undefined}>{label}</span>

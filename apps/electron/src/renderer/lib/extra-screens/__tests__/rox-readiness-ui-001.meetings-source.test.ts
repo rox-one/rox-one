@@ -110,7 +110,9 @@ describe('UI-001 actual meeting source effect completion and ownership', () => {
     let cleared = 0
     let currentOwner!: () => boolean
     const cleanup = rendererEffect(radarSource, 'syncRadarSweep(workspaceId, sweep.id,', {
-      workspaceId: 'b', context: { current: { workspaceId: 'b', generation: 0 } }, sweep: { id: 'sweep' },
+      // d75b1ba04 (PERF-10) gates the poller on useEffectiveVisible; bind it true so
+      // this ownership/disposal case still exercises the mounted, visible sweep host.
+      workspaceId: 'b', context: { current: { workspaceId: 'b', generation: 0 } }, sweep: { id: 'sweep' }, visible: true,
       syncRadarSweep: (requestedWorkspace: string, requestedSweep: string, options: { isCurrent: () => boolean }) => {
         expect(requestedWorkspace).toBe('b'); expect(requestedSweep).toBe('sweep')
         currentOwner = options.isCurrent
@@ -128,7 +130,8 @@ describe('UI-001 actual meeting source effect completion and ownership', () => {
     const oldContext = { current: { workspaceId: 'a', generation: 0 } }
     let oldOwner!: () => boolean
     const oldCleanup = rendererEffect(radarSource, 'syncRadarSweep(workspaceId, sweep.id,', {
-      workspaceId: 'a', context: oldContext, sweep: { id: 'old-sweep' },
+      // Same d75b1ba04 gate applies to the A-B-A stale-owner effect.
+      workspaceId: 'a', context: oldContext, sweep: { id: 'old-sweep' }, visible: true,
       syncRadarSweep: (requestedWorkspace: string, requestedSweep: string, options: { isCurrent: () => boolean }) => {
         expect(requestedWorkspace).toBe('a'); expect(requestedSweep).toBe('old-sweep')
         oldOwner = options.isCurrent

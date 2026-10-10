@@ -410,7 +410,7 @@ function SubtaskCard({
             onChange={(e) => onChange({ prompt: e.target.value })}
             rows={2}
             placeholder={t('tasks.promptPlaceholder')}
-            className="mt-1.5 w-full resize-none rounded-md border border-border/60 bg-background px-2 py-1.5 text-sm outline-none focus:border-foreground/25 field-sizing-content max-h-40"
+            className="mt-1.5 w-full resize-none rounded-md border border-border/60 bg-background px-2 py-1.5 text-sm leading-relaxed outline-none focus:border-foreground/25 field-sizing-content max-h-40"
           />
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <ModelSelect
@@ -1197,7 +1197,7 @@ export function TaskEditor({
               <div className="flex items-center gap-2 text-base font-semibold text-foreground/70">
                 <LoadingIndicator label={t('tasks.generatingTitle')} showElapsed />
               </div>
-              <p className="text-sm text-foreground/50">{t('tasks.generatingBody')}</p>
+              <p className="text-sm leading-relaxed text-foreground/50">{t('tasks.generatingBody')}</p>
               {/* Skeleton subtask cards: the long author wait reads as "drafting nodes", not frozen. */}
               {[0, 1, 2].map((i) => (
                 <div key={i} className="animate-pulse rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] p-3">
@@ -1293,7 +1293,7 @@ function ResultsPanel({
       {results.acceptanceCriteria && (
         <div className="rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] px-3 py-2.5">
           <div className="text-xs font-bold uppercase caps-label text-foreground/45">{t('tasks.acceptanceCriteria')}</div>
-          <p className="mt-1 text-sm text-foreground/70">{results.acceptanceCriteria}</p>
+          <p className="mt-1 text-sm leading-relaxed text-foreground/70">{results.acceptanceCriteria}</p>
         </div>
       )}
 
@@ -1326,7 +1326,7 @@ function ResultsPanel({
                 </span>
               )}
             </div>
-            {verdict.reason && <p className="mt-0.5 text-sm text-foreground/65">{verdict.reason}</p>}
+            {verdict.reason && <p className="mt-0.5 text-sm leading-relaxed text-foreground/65">{verdict.reason}</p>}
             {verdict.nodes && verdict.nodes.length > 0 && (
               <p className="mt-1 text-xs text-foreground/45">{t('tasks.repairNodes', { nodes: verdict.nodes.join(', ') })}</p>
             )}
@@ -1376,7 +1376,7 @@ function ResultsPanel({
             )}
           </div>
           {node.output ? (
-            <div className="mt-2 max-h-72 overflow-y-auto rounded-md border border-border/50 bg-background px-3 py-2 text-sm">
+            <div className="mt-2 max-h-72 overflow-y-auto rounded-md border border-border/50 bg-background px-3 py-2 text-sm leading-relaxed">
               <Markdown>{node.output}</Markdown>
             </div>
           ) : (

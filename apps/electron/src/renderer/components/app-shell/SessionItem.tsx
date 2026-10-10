@@ -395,7 +395,7 @@ export function SessionItem({
       titleTrailing={hasMatch ? (
         <span
           className={cn(
-            "inline-flex items-center justify-center min-w-[24px] px-1 py-0.5 rounded-[var(--radius-control)] text-xs font-medium numeric whitespace-nowrap border bg-[var(--shell-selected,var(--element-selected,var(--foreground-5)))] text-foreground",
+            "inline-flex items-center justify-center min-w-[24px] px-1 py-0.5 rounded-[var(--radius-control)] text-xs leading-tight font-medium numeric whitespace-nowrap border bg-[var(--shell-selected,var(--element-selected,var(--foreground-5)))] text-foreground",
             isSelected
               ? "border-info"
               : "border-info/40"

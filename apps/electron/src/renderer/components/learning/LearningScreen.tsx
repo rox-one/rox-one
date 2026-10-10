@@ -541,7 +541,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
     <section className="flex min-w-0 w-full flex-1 flex-col items-center justify-center gap-3 px-6 py-10 text-center" data-testid="learning-unavailable">
       <span className="grid size-10 place-items-center rounded-[var(--radius-control)] bg-foreground/[0.05] text-text-muted"><AlertTriangle aria-hidden="true" className="size-5" /></span>
       <h2 className="text-base font-semibold">{t('learning.screen.title')}</h2>
-      <p className="max-w-[440px] text-base text-text-secondary">{t('learning.screen.unavailable.body')}</p>
+      <p className="max-w-[440px] text-base leading-6 text-text-secondary">{t('learning.screen.unavailable.body')}</p>
       <Btn onClick={load} testId="learning-retry">{t('learning.screen.retry')}</Btn>
     </section>
   )
@@ -615,7 +615,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
         ) : visible.length === 0 ? (
           <div className="mx-4 my-6 flex flex-col items-center rounded-[var(--radius-control)] border border-dashed border-foreground/12 bg-background/60 px-5 py-10 text-center" data-testid="learning-empty">
             <span className="mb-4 grid size-12 place-items-center rounded-[var(--radius-control)] bg-accent/10 text-accent"><GraduationCap aria-hidden="true" className="size-6" /></span>
-            <p className="max-w-[360px] text-sm text-text-secondary">{all.length ? t('learning.screen.noMatches') : t('learning.screen.empty')}</p>
+            <p className="max-w-[360px] text-sm leading-6 text-text-secondary">{all.length ? t('learning.screen.noMatches') : t('learning.screen.empty')}</p>
             {all.length ? <div className="mt-4"><Btn onClick={clearFacets}>{t('learning.screen.clearFilters')}</Btn></div> : null}
           </div>
         ) : visible.map(renderRow)}
@@ -773,7 +773,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
   const dashboard = (
     <section className="min-h-0 flex-1 overflow-y-auto px-5 py-5" data-testid="learning-dashboard">
       <h2 className="text-lg font-semibold">{t('learning.screen.dashboard.title')}</h2>
-      <p className="mt-1 max-w-[620px] text-sm text-text-secondary">{t('learning.screen.subtitle')}</p>
+      <p className="mt-1 max-w-[620px] text-sm leading-5 text-text-secondary">{t('learning.screen.subtitle')}</p>
       <section className="mt-4 max-w-[680px]">
         <h3 className="text-base font-semibold">{t('learning.screen.dashboard.stats')}</h3>
         {stats ? (
@@ -936,31 +936,31 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
   const help = (
     <section className="min-h-0 flex-1 overflow-y-auto px-5 py-5" data-testid="learning-help">
       <h2 className="text-lg font-semibold">{t('learning.screen.help.title')}</h2>
-      <p className="mt-1 max-w-[680px] text-sm text-text-secondary">{t('learning.screen.help.intro')}</p>
+      <p className="mt-1 max-w-[680px] text-sm leading-5 text-text-secondary">{t('learning.screen.help.intro')}</p>
       <div className="mt-4 max-w-[680px] space-y-4">
         <section>
           <h3 className="text-base font-semibold">{t('learning.screen.help.definitionTitle')}</h3>
-          <p className="mt-1 text-sm text-text-secondary">{t('learning.screen.help.definition')}</p>
+          <p className="mt-1 text-sm leading-5 text-text-secondary">{t('learning.screen.help.definition')}</p>
         </section>
         <section>
           <h3 className="text-base font-semibold">{t('learning.screen.help.unitsTitle')}</h3>
-          <p className="mt-1 text-sm text-text-secondary">{t('learning.screen.help.units')}</p>
+          <p className="mt-1 text-sm leading-5 text-text-secondary">{t('learning.screen.help.units')}</p>
         </section>
         <section>
           <h3 className="text-base font-semibold">{t('learning.screen.help.formulaTitle')}</h3>
-          <p className="mt-1 font-mono text-xs text-text-secondary">{t('learning.screen.help.confidenceFormula')}</p>
-          <p className="mt-1 font-mono text-xs text-text-secondary">{t('learning.screen.help.effectivenessFormula')}</p>
+          <p className="mt-1 font-mono text-xs leading-5 text-text-secondary">{t('learning.screen.help.confidenceFormula')}</p>
+          <p className="mt-1 font-mono text-xs leading-5 text-text-secondary">{t('learning.screen.help.effectivenessFormula')}</p>
         </section>
         <section>
           <h3 className="text-base font-semibold">{t('learning.screen.help.sourcesTitle')}</h3>
-          <p className="mt-1 text-sm text-text-secondary">{t('learning.screen.help.sources')}</p>
+          <p className="mt-1 text-sm leading-5 text-text-secondary">{t('learning.screen.help.sources')}</p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {LEARNING_EVIDENCE_TYPES.map((type) => <Chip key={type} tone="muted">{evidenceLabel(type)}</Chip>)}
           </div>
         </section>
         <section>
           <h3 className="text-base font-semibold">{t('learning.screen.help.examplesTitle')}</h3>
-          <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-text-secondary">
+          <ul className="mt-1 list-disc space-y-1 pl-4 text-sm leading-5 text-text-secondary">
             <li>{t('learning.screen.help.exampleLesson')}</li>
             <li>{t('learning.screen.help.exampleSkill')}</li>
           </ul>

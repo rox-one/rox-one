@@ -698,7 +698,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       <p className="numeric">
         {t('memory.screen.meterValue', { tokens: budget.injectedTokens.toLocaleString(i18n.language), count: budget.injectedCount, total: budget.activeCount })}
       </p>
-      <p>{t('memory.screen.meterHint', { limit: LESSON_LIMITS.context })}</p>
+      <p className="leading-5">{t('memory.screen.meterHint', { limit: LESSON_LIMITS.context })}</p>
       </div>
     </details>
   )
@@ -734,7 +734,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
         />
         <span className={cn('mt-0.5 grid size-7 shrink-0 place-items-center rounded-[var(--radius-control)]', lesson.category === 'preference' ? 'bg-pink-500/10 text-pink-500' : lesson.category === 'correction' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : lesson.category === 'workflow' ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400' : 'bg-violet-500/10 text-violet-500')}><Icon aria-hidden="true" className="size-4" /></span>
         <div className="min-w-0 flex-1">
-          <div className="line-clamp-4 whitespace-pre-wrap break-words text-base">
+          <div className="line-clamp-4 whitespace-pre-wrap break-words prose-body">
             {lesson.negative ? <span className="mr-1 font-semibold text-destructive">{t('memory.screen.mustNot')}</span> : null}
             {lesson.rule}
           </div>
@@ -914,7 +914,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
         ) : lessons === null ? (
           <div className="px-4 py-6 text-base text-text-muted">{t('memory.screen.loading')}</div>
         ) : visible.length === 0 ? (
-          <div className="mx-4 my-6 flex flex-col items-center rounded-[var(--radius-control)] border border-dashed border-foreground/12 bg-background/60 px-5 py-10 text-center" data-testid="memory-empty"><span className="mb-4 grid size-12 place-items-center rounded-[var(--radius-control)] bg-accent/10 text-accent"><Brain aria-hidden="true" className="size-6" /></span><p className="max-w-[360px] text-sm text-text-secondary">{all.length ? t('memory.screen.noMatches') : t('memory.screen.empty')}</p><div className="mt-4">{all.length ? <Btn onClick={() => { clearFacets(); setFilter({}) }}>{t('memory.screen.clearFilters')}</Btn> : <Btn primary onClick={() => setAdding(true)}>{t('memory.addLesson')}</Btn>}</div></div>
+          <div className="mx-4 my-6 flex flex-col items-center rounded-[var(--radius-control)] border border-dashed border-foreground/12 bg-background/60 px-5 py-10 text-center" data-testid="memory-empty"><span className="mb-4 grid size-12 place-items-center rounded-[var(--radius-control)] bg-accent/10 text-accent"><Brain aria-hidden="true" className="size-6" /></span><p className="max-w-[360px] text-sm leading-6 text-text-secondary">{all.length ? t('memory.screen.noMatches') : t('memory.screen.empty')}</p><div className="mt-4">{all.length ? <Btn onClick={() => { clearFacets(); setFilter({}) }}>{t('memory.screen.clearFilters')}</Btn> : <Btn primary onClick={() => setAdding(true)}>{t('memory.addLesson')}</Btn>}</div></div>
         ) : groups.map((group) => (
           <div key={group.key} className="pb-1">
             {group.label ? (
@@ -966,7 +966,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
             </div>
           </div>
         ) : (
-          <button type="button" onClick={() => { setDraft(selected.rule); setEditing(true) }} title={t('memory.editLesson')} className="whitespace-pre-wrap break-words rounded-[var(--radius-control)] bg-foreground/[0.025] p-4 text-left text-lg outline-none hover:bg-foreground/[0.04] focus-visible:ring-2 focus-visible:ring-accent" data-testid="memory-rule">
+          <button type="button" onClick={() => { setDraft(selected.rule); setEditing(true) }} title={t('memory.editLesson')} className="whitespace-pre-wrap break-words rounded-[var(--radius-control)] bg-foreground/[0.025] p-4 text-left text-lg leading-7 outline-none hover:bg-foreground/[0.04] focus-visible:ring-2 focus-visible:ring-accent" data-testid="memory-rule">
             {selected.negative ? <span className="mr-1 font-semibold text-destructive">{t('memory.screen.mustNot')}</span> : null}
             {selected.rule}
           </button>
