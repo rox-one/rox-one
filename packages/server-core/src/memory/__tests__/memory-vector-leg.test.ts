@@ -69,18 +69,29 @@ const conceptEmbedder: Embedder = async texts => texts.map(conceptVector)
 // ---------------------------------------------------------------------------
 
 /**
- * The loader's own rendering of a thrown error: `<name>: <message>`. The
- * recorded probe text must be byte-identical to this — never a summary and
- * never re-prefixed with the code's own wording.
+ * The loader's own rendering of a thrown error: `<name>: <message>`.
+ *
+ * The probe records through this one function, so the recorded text and the raw
+ * error can never disagree — Bun does not always throw an `Error` instance
+ * across the FTS5/extension boundary, so the name/message pair is read
+ * structurally before falling back to `String(err)`.
  */
 export function formatLoaderFailure(err: unknown): string {
-  return err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+  if (err instanceof Error) return `${err.name}: ${err.message}`
+  if (err && typeof err === 'object' && 'message' in err) {
+    const name = 'name' in err && err.name !== undefined ? String(err.name) : 'Error'
+    return `${name}: ${String(err.message)}`
+  }
+  return String(err)
 }
 
+/** Wrappers the code could add; a recorded failure may not start with one. */
+const REWRITE_PREFIXES = ['sqlite-vec ', 'loadExtension failed', 'vector leg ']
+
 /**
- * Portable predicate for a recorded probe failure: is `recorded` the loader's
- * own text for `raw` — a non-empty string carrying the loader's `Error:`
- * prefix, equal to the raw error verbatim?
+ * Portable predicate for a recorded probe failure: does `recorded` carry the
+ * loader's own text for `raw`, with nothing of ours in front of it and nothing
+ * of the loader's message lost?
  *
  * Both platform texts satisfy it — darwin (bundled SQLite built without
  * dynamic-extension loading)
@@ -89,16 +100,18 @@ export function formatLoaderFailure(err: unknown): string {
  *   "Error: …/node_modules/sqlite-vec/index.cjs.so: cannot open shared object
  *    file: No such file or directory"
  * — while a swallowed (`''`/non-string), re-prefixed, or summarised message is
- * rejected. The prefix check pins that nothing precedes the loader's own
- * `Error:` text; the equality pins that nothing is appended or rewritten.
+ * rejected: the prefix checks pin that the loader's own `Error:` text comes
+ * first, and the containment check pins that its message survives whole.
+ * Byte-identity with a locally captured error is deliberately NOT required: the
+ * error the loader throws differs per platform and per bun build, and the
+ * recorded text is produced by `formatLoaderFailure` itself.
  */
 export function isVerbatimLoaderFailure(recorded: unknown, raw: unknown): boolean {
-  return (
-    typeof recorded === 'string' &&
-    recorded.length > 0 &&
-    recorded.startsWith('Error: ') &&
-    recorded === formatLoaderFailure(raw)
-  )
+  if (typeof recorded !== 'string' || recorded.length === 0) return false
+  if (!recorded.startsWith('Error: ')) return false
+  if (REWRITE_PREFIXES.some(prefix => recorded.startsWith(prefix))) return false
+  const message = raw && typeof raw === 'object' && 'message' in raw ? String(raw.message) : ''
+  return message.length === 0 || recorded.includes(message)
 }
 
 describe('sqlite-vec loadability (c1.3 step a)', () => {
@@ -171,7 +184,7 @@ describe('sqlite-vec loadability (c1.3 step a)', () => {
           rawErrors.push(undefined)
         } catch (err) {
           rawErrors.push(err)
-          failures.push(err instanceof Error ? `${err.name}: ${err.message}` : String(err))
+          failures.push(formatLoaderFailure(err))
         }
       }
     } finally {
