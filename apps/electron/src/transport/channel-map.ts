@@ -651,6 +651,7 @@ export const CHANNEL_MAP = {
   podcastEpisodes: invoke(RPC_CHANNELS.podcast.EPISODES),
   readPodcastEpisodeAudio: invoke(RPC_CHANNELS.podcast.AUDIO),
   podcastEpisodeAudioUrl: invoke(RPC_CHANNELS.podcast.AUDIO_URL),
+  podcastEngines: invoke(RPC_CHANNELS.podcast.ENGINES),
   onPodcastJob: listener(RPC_CHANNELS.podcast.JOB),
   // Playbooks codebook (В5, D12) — local notebook run; progress rides the playbooks:codebookJob push.
   runCodebook: invoke(RPC_CHANNELS.playbooks.RUN_CODEBOOK),

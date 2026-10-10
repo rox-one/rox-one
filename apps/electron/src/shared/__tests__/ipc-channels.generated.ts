@@ -723,6 +723,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'podcast:audio',
   'podcast:audioUrl',
   'podcast:cancel',
+  'podcast:engines',
   'podcast:episodes',
   'podcast:job',
   'podcast:start',
@@ -1063,4 +1064,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1059
+export const EXPECTED_CHANNEL_COUNT = 1060

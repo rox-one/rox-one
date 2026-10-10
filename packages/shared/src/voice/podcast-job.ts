@@ -22,8 +22,30 @@ export type PodcastJobState =
   | 'failed'
   | 'cancelled'
 
-/** TTS engines reused from `types.ts` for the podcast (no new engine, O5). */
-export type PodcastEngine = 'system' | 'edge'
+/**
+ * TTS engines reused from `types.ts` for the podcast. `system`/`edge` are the
+ * v1 pair; `kokoro` is the optional third engine (O5): the offline `kokoro-tts`
+ * CLI, macOS/Linux only, English-only voices in v1.0 — never installed by us.
+ */
+export type PodcastEngine = 'system' | 'edge' | 'kokoro'
+
+/**
+ * Honest per-engine availability probed on the host (`podcast:engines`). A
+ * missing binary is reported, never installed; the renderer maps `reason` to a
+ * locale hint instead of guessing from a failed render.
+ */
+export interface PodcastEngineAvailability {
+  readonly available: boolean
+  /** Machine code, absent when `available`. */
+  readonly reason?: 'platform' | 'missing'
+}
+
+/** `podcast:engines` result: one honest probe per engine (O5 closes for podcasts). */
+export interface PodcastEnginesResult {
+  readonly system: PodcastEngineAvailability
+  readonly edge: PodcastEngineAvailability
+  readonly kokoro: PodcastEngineAvailability
+}
 
 export type PodcastRoleId = 'host' | 'expert'
 

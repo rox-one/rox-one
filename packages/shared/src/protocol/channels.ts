@@ -726,6 +726,8 @@ export const RPC_CHANNELS = {
     AUDIO: 'podcast:audio',
     /** A `data:` URL for the player when the episode fits a single message. */
     AUDIO_URL: 'podcast:audioUrl',
+    /** Honest per-engine availability probe (`system`/`edge`/`kokoro`) for the studio. */
+    ENGINES: 'podcast:engines',
   },
   playbooks: {
     /** Start a local codebook notebook run (cells → script/agent/artifact steps). */

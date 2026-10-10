@@ -156,6 +156,27 @@ describe('podcast pipeline output', () => {
     expect(progress.map(entry => entry.state)).toEqual(['scripting', 'synthesizing', 'synthesizing', 'synthesizing', 'assembling'])
     expect(progress.at(-1)!.doneSegments).toBe(2)
   })
+
+  it('publishes an episode through the kokoro engine when it is selected', async () => {
+    const dir = root()
+    const episode = await runPodcastPipeline({
+      root: dir, projectSlug: SLUG, episodeId: 'podcast_0123456789abcdef', sourceText: 'x', title: 't', engine: 'kokoro',
+      roles: ROLES, maxSegments: 8, consent: consent(true), signal: new AbortController().signal, onProgress: () => {},
+    }, {
+      connector: { providerId: 'c', version: '1', async complete() { return 'ВЕДУЩИЙ: a\nЭКСПЕРТ: b' } },
+      synthesizer: () => ({
+        engine: 'kokoro',
+        async synthesize() { return { bytes: new Uint8Array([1, 2, 3]), extension: 'wav', mimeType: 'audio/wav' } },
+      }),
+      resolveFfmpeg: async () => 'ffmpeg',
+      resolveFfprobe: () => null,
+      run: ffmpegWritingRun(),
+    })
+    expect(episode.engine).toBe('kokoro')
+    expect(episode.segments).toBe(2)
+    const audio = readdirSync(join(devSpaceDirectory(dir, SLUG), 'audio')).sort()
+    expect(audio).toContain('podcast_0123456789abcdef.mp3')
+  })
 })
 
 function readAudioFile(dir: string, name: string): string {

@@ -39,7 +39,7 @@ import type { RequestContext } from '../transport/types'
 import {
   assertPodcastConsent, buildPodcastPrompt, maskPodcastSource, parsePodcastScript, resolveMaxSegments, resolvePodcastRoles,
 } from './script.ts'
-import { createEdgeSegmentSynthesizer, createSystemSegmentSynthesizer, type SegmentSynthesizer } from './tts.ts'
+import { createEdgeSegmentSynthesizer, createKokoroSegmentSynthesizer, createSystemSegmentSynthesizer, probePodcastEngines, type SegmentSynthesizer } from './tts.ts'
 import {
   buildSrt, cuesFromDurations, estimateDurations, mixdownSegments, probeDurations, resolveFfmpegCommand,
   resolveFfprobeCommand, runProcess, type ProcessRunner,
@@ -271,7 +271,7 @@ export async function runPodcastPipeline(input: PodcastPipelineInput, deps: Podc
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.podcast.START, RPC_CHANNELS.podcast.CANCEL, RPC_CHANNELS.podcast.EPISODES,
-  RPC_CHANNELS.podcast.AUDIO, RPC_CHANNELS.podcast.AUDIO_URL,
+  RPC_CHANNELS.podcast.AUDIO, RPC_CHANNELS.podcast.AUDIO_URL, RPC_CHANNELS.podcast.ENGINES,
 ] as const
 
 interface ActiveJob {
@@ -349,6 +349,10 @@ export function registerPodcastHandlers(server: RpcServer, deps: HandlerDeps,
     return { slug, config }
   }
 
+  // Honest engine availability for the studio engine picker: never installs a
+  // binary, so the UI can disable `kokoro` with a reason instead of failing a run.
+  server.handle(RPC_CHANNELS.podcast.ENGINES, () => probePodcastEngines(), { access: 'localElectron' })
+
   server.handle(RPC_CHANNELS.podcast.START, async (context, raw: unknown): Promise<PodcastStartResult> => {
     try {
       return await startPodcast(context, raw)
@@ -360,7 +364,7 @@ export function registerPodcastHandlers(server: RpcServer, deps: HandlerDeps,
   async function startPodcast(context: RequestContext, raw: unknown): Promise<PodcastStartResult> {
     const input = envelope(raw, ['projectSlug', 'source', 'title', 'engine', 'roles', 'maxSegments'])
     const source = parseSource(input.source)
-    const engine: PodcastEngine = input.engine === undefined ? 'system' : input.engine === 'edge' || input.engine === 'system' ? input.engine : invalid('invalid-engine')
+    const engine: PodcastEngine = input.engine === undefined ? 'system' : input.engine === 'edge' || input.engine === 'system' || input.engine === 'kokoro' ? input.engine : invalid('invalid-engine')
     const roles = resolvePodcastRoles(parseRoles(input.roles))
     const maxSegments = input.maxSegments === undefined
       ? resolveMaxSegments()
@@ -394,7 +398,7 @@ export function registerPodcastHandlers(server: RpcServer, deps: HandlerDeps,
       ...(environment.connector ? { connector: environment.connector } : {}),
       synthesizer: environment.synthesizer ?? (engine => engine === 'system'
         ? createSystemSegmentSynthesizer()
-        : createEdgeSegmentSynthesizer()),
+        : engine === 'kokoro' ? createKokoroSegmentSynthesizer() : createEdgeSegmentSynthesizer()),
       resolveFfmpeg: environment.resolveFfmpeg ?? DEFAULT_ENVIRONMENT.resolveFfmpeg!,
       resolveFfprobe: environment.resolveFfprobe ?? DEFAULT_ENVIRONMENT.resolveFfprobe!,
       run: environment.run ?? DEFAULT_ENVIRONMENT.run,

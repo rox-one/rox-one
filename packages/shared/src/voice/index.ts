@@ -236,6 +236,8 @@ export {
   type PodcastJobError,
   type PodcastErrorCode,
   type PodcastEngine,
+  type PodcastEngineAvailability,
+  type PodcastEnginesResult,
   type PodcastRoleId,
   type PodcastRoleTemplate,
   type PodcastSourceInput,

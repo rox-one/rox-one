@@ -66,7 +66,7 @@ import type { RoxAccountSnapshot } from '@rox/shared/auth'
 import type { TtsStreamChunk, VoiceWakeTrigger } from '@rox/shared/voice'
 import type {
   PodcastCancelInput, PodcastCancelResult, PodcastEpisodeAudioChunk, PodcastEpisodeAudioInput,
-  PodcastEpisodeAudioUrlInput, PodcastEpisodeAudioUrlResult, PodcastEpisodesInput, PodcastEpisodesResult,
+  PodcastEpisodeAudioUrlInput, PodcastEpisodeAudioUrlResult, PodcastEnginesResult, PodcastEpisodesInput, PodcastEpisodesResult,
   PodcastJob, PodcastStartInput, PodcastStartResult,
 } from '@rox/shared/voice'
 import type {
@@ -2345,6 +2345,8 @@ export interface ElectronAPI {
   podcastEpisodes(input: PodcastEpisodesInput): Promise<PodcastEpisodesResult>
   readPodcastEpisodeAudio(input: PodcastEpisodeAudioInput): Promise<PodcastEpisodeAudioChunk>
   podcastEpisodeAudioUrl(input: PodcastEpisodeAudioUrlInput): Promise<PodcastEpisodeAudioUrlResult>
+  /** Honest engine availability for the studio engine picker (`podcast:engines`). */
+  podcastEngines(): Promise<PodcastEnginesResult>
   onPodcastJob(callback: (job: PodcastJob) => void): () => void
   // Playbooks codebook (D12, В5): notebook runs execute host-local; the renderer
   // follows `playbooks:codebookJob` and lists the durable run journal.
