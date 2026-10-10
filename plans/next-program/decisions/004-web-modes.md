@@ -103,6 +103,28 @@ A ticket that lands the cloud-VM backend inside this repository (a real start /
 open action, not a navigation) and/or a website change for the R16 buttons.
 Until then, keep the landing honest: no fabricated success, no dead buttons.
 
+## Update — 2026-10-09 (wave 6, PR #1731): the web-only cloud surface is in this repository
+
+The owner asked for the remaining R16 work to be done in-repo. The previous-gen
+web application (`rox-one/old`, `apps/web`) is not available on this machine, so
+the surface was built from what this repository already provides:
+
+- `apps/webui/src/cloud-vm-surface.tsx` — the «Облачная ВМ» surface opened over
+  the mounted renderer after the mode is chosen: it lists runs
+  (`cloudRuns.list`), starts one (`cloudRuns.submit`, required `topic`),
+  cancels active ones (`cloudRuns.cancel`), opens a run through
+  `navigate(routes.view.cloudRun(id))`, and reuses the landing's honest
+  availability resolution (`web-modes.ts`) — no fabricated success, no dead
+  button.
+- `apps/webui/src/cloud-vm-runs.ts` — the pure logic (state → i18n key, cancel
+  eligibility, deterministic ordering, submit validation) with unit tests.
+- `apps/webui/src/App.tsx` — the landing no longer discards the chosen mode; a
+  `cloud-vm` entry opens the surface above the mounted renderer.
+
+What still gates a real cloud run on a web host: `cloudRuns.enabled` plus a
+provider credential (`<configDir>/cloud-runs.env`). That is operator
+configuration, not code.
+
 ## Evidence
 
 - R16 requirement: `docs/plans/2026-10-09-platform-program.md:50`.

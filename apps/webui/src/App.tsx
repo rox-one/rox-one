@@ -16,7 +16,9 @@ import type { AuthenticatedWebTransportBootstrap } from '../../electron/src/rend
 import { initializeAuthenticatedWebTransport } from './adapter/transport-bootstrap'
 import { WEBUI_REQUIRES_CONATION_FLAG } from './rox2-webui-surface'
 import { WebModesLanding } from './web-modes-landing'
-import { isWebSession } from './web-modes'
+import { CloudVmSurface } from './cloud-vm-surface'
+import { isWebSession, type WebEntryModeId } from './web-modes'
+import { navigate, routes } from '@/lib/navigate'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { ROX_THEME_ID } from '@config/theme'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
@@ -96,9 +98,14 @@ export default function App() {
   // null = not yet confirmed. The two-mode landing is offered only to a
   // confirmed web session; an unconfirmed session keeps the desktop-like flow.
   const [webSession, setWebSession] = useState<boolean | null>(null)
-  const [entered, setEntered] = useState(false)
+  // Chosen entry mode (null = landing not yet answered) + whether the cloud-VM
+  // surface overlay is open above the mounted renderer.
+  const [enteredMode, setEnteredMode] = useState<WebEntryModeId | null>(null)
+  const [cloudVmOpen, setCloudVmOpen] = useState(false)
   // A `?sessionId=` deep link («Продолжить в веб») goes straight to its session.
   const [directSessionId] = useState(() => new URLSearchParams(window.location.search).get('sessionId'))
+  // «Вошли» = a mode was chosen on the landing (null = landing still shown).
+  const entered = enteredMode !== null
 
   useEffect(() => {
     const controller = new AbortController()
@@ -165,8 +172,40 @@ export default function App() {
   // The two-mode landing is strictly a web-session entry; direct session deep
   // links and non-web (unconfirmed) sessions mount the renderer as before.
   if (webSession && !entered && !directSessionId) {
-    return <WebModesLanding host={window.electronAPI} onEnter={() => setEntered(true)} />
+    return (
+      <WebModesLanding host={window.electronAPI} onEnter={(mode) => {
+        setEnteredMode(mode)
+        setCloudVmOpen(mode === 'cloud-vm')
+      }} />
+    )
   }
 
-  return <ReadyRenderer bootstrap={bootstrap} />
+  // The renderer always mounts (its RPC must be live), with the cloud-VM
+  // surface as a fixed overlay when that mode was chosen. «Перейти в чат»
+  // simply closes the overlay; «Открыть» navigates the renderer underneath.
+  return (
+    <>
+      <ReadyRenderer bootstrap={bootstrap} />
+      {cloudVmOpen && (
+        <div className="fixed inset-0 z-50 overflow-auto bg-background" data-cloud-vm-surface-overlay="true">
+          <CloudVmSurface
+            host={window.electronAPI}
+            onOpenRun={(id) => {
+              // The shared renderer mounts lazily behind this overlay, so a
+              // single dispatch can beat NavigationContext's subscription and
+              // be dropped. Re-dispatch while the overlay still owns the
+              // screen (the user cannot navigate elsewhere underneath it) and
+              // close only after the last attempt.
+              const route = routes.view.cloudRun(id)
+              for (const delay of [0, 700, 1600]) {
+                window.setTimeout(() => navigate(route), delay)
+              }
+              window.setTimeout(() => setCloudVmOpen(false), 1900)
+            }}
+            onGoToChat={() => setCloudVmOpen(false)}
+          />
+        </div>
+      )}
+    </>
+  )
 }
