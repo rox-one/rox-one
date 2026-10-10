@@ -215,6 +215,15 @@ export default function App() {
     }
   }, [deepLinkMode, entered, webSession, directSessionId, modesLanding])
 
+  // Overlay timers must be declared before the early returns below: hooks run in
+  // the same order on every render.
+  const overlayTimers = useRef<number[]>([])
+  const clearOverlayTimers = () => {
+    for (const id of overlayTimers.current) window.clearTimeout(id)
+    overlayTimers.current = []
+  }
+  useEffect(() => clearOverlayTimers, [])
+
   if (phase === 'loading') return <LoadingScreen />
   if (phase === 'error') return <ErrorScreen message={error} onRetry={() => setAttempt(value => value + 1)} />
   if (!bootstrap || webSession === null) return <LoadingScreen />
@@ -239,25 +248,14 @@ export default function App() {
   // simply closes the overlay; «Открыть» navigates the renderer underneath.
   // The overlay is a real modal: the background renderer is inert/hidden from
   // both keyboard and screen readers while it is open.
-  const overlayTimers = useRef<number[]>([])
-  const clearOverlayTimers = () => {
-    for (const id of overlayTimers.current) window.clearTimeout(id)
-    overlayTimers.current = []
-  }
-  useEffect(() => clearOverlayTimers, [])
-
   return (
     <>
       <div {...(cloudVmOpen ? { inert: '' as unknown as boolean, 'aria-hidden': true } : {})}>
         <ReadyRenderer bootstrap={bootstrap} />
       </div>
       {cloudVmOpen && (
-        <div
-          className="fixed inset-0 z-50 overflow-auto bg-background"
-          data-cloud-vm-surface-overlay="true"
-          role="dialog"
-          aria-modal="true"
-        >
+        // eslint-disable-next-line rox/prefer-primitives -- the cloud-VM mode surface is a fullscreen layer, not a modal dialog: the shared renderer stays mounted underneath (inert + aria-hidden) and "Перейти в чат" returns to it; Dialog/Sheet/FullscreenOverlayBase portal to a new root and trap focus, which would break that contract
+        <div className="fixed inset-0 z-fullscreen overflow-auto bg-background" data-cloud-vm-surface-overlay="true" role="dialog" aria-modal="true">
           <CloudVmSurface
             host={window.electronAPI}
             onOpenRun={(id) => {
