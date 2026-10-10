@@ -199,18 +199,25 @@ async function resolveMeet(deps: HandlerDeps, workspaceId: string): Promise<Reso
 const MAX_NAME_LENGTH = 512
 const SPACE_NAME = /^spaces\/[A-Za-z0-9_-]+$/
 const CONFERENCE_RECORD_NAME = /^conferenceRecords\/[A-Za-z0-9_-]+$/
-const CONTROL_CHARS = /[\u0000-\u001f\u007f]/
+/** True when the value contains a C0 control character or DEL, which resource names reject. */
+function hasControlChar(value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    if (code <= 0x1f || code === 0x7f) return true
+  }
+  return false
+}
 
 function requireSpaceName(value: unknown): string {
   if (typeof value !== 'string' || value.length === 0 || value.length > MAX_NAME_LENGTH) return invalid('space')
-  if (CONTROL_CHARS.test(value)) return invalid('space')
+  if (hasControlChar(value)) return invalid('space')
   if (!SPACE_NAME.test(value)) return invalid('space')
   return value
 }
 
 function requireConferenceRecord(value: unknown): string {
   if (typeof value !== 'string' || value.length === 0 || value.length > MAX_NAME_LENGTH) return invalid('conferenceRecord')
-  if (CONTROL_CHARS.test(value)) return invalid('conferenceRecord')
+  if (hasControlChar(value)) return invalid('conferenceRecord')
   if (!CONFERENCE_RECORD_NAME.test(value)) return invalid('conferenceRecord')
   return value
 }
