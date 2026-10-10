@@ -112,6 +112,7 @@ import type { HandlerDeps } from './handlers/handler-deps'
 import { resolveNativeTransportCredential } from './native-transport-credential'
 import { createBrowserCredentialPermissionAdapter } from './browser-credential-permissions'
 import { createOnboardingPermissionsHost } from './onboarding-permissions'
+import { NodeModeCoordinator, isNodeModeEnabled, nodeModeUrl } from './node-mode'
 import { registerDesktopBridgeIpc, type DesktopBridgeBrowserHost } from './desktop-bridge'
 import { createBrowserCredentialVaultKeyStore } from './browser-credential-vault-keys'
 import { bootstrapServer, releaseServerLock, maskTokenForDisplay } from '@rox/server-core/bootstrap'
@@ -324,6 +325,8 @@ let openClawRuntimeManager: OpenClawRuntimeManager | null = null
 let openClawSecurityAuditService: OpenClawSecurityAuditService | null = null
 let workGraphKernel: WorkGraphKernel | null = null
 let cleanupNativeReplicaIpc: (() => void) | null = null
+// e2.4 — the node-side capability advertisement, when enabled.
+let nodeModeCoordinator: NodeModeCoordinator | null = null
 const localClientBindingRegistry = createLocalClientBindingRegistry()
 
 // PERF-01 shell-first boot: the window is created before the RPC server
@@ -1515,6 +1518,30 @@ app.whenReady().then(async () => {
         everyMs: DEFAULT_PRESENCE_TTL_MS,
         run: () => { nodeRegistry.sweep() },
       })
+
+      // e2.4 — node-side capability advertisement. Default OFF (`ROX_NODE_MODE=1`
+      // enables it): the app declares its OS-confirmed capabilities on a node
+      // connection to this host's own gateway and answers the declared invokes.
+      // The advertisement is exactly the probed, resolved grant set — never an
+      // `unknown` or a `denied`, and a later change is advisory only.
+      if (isNodeModeEnabled()) {
+        const coordinator = new NodeModeCoordinator({
+          url: nodeModeUrl(instance),
+          nodeId: process.env.ROX_NODE_ID ?? 'local-app',
+          token: instance.token,
+          kind: 'desktop',
+          platform: process.platform,
+          label: app.getName(),
+          handlers: {
+            // Liveness only: the app advertises no command it cannot serve.
+            'sys.ping': () => ({ pong: true, pid: process.pid }),
+          },
+        })
+        nodeModeCoordinator = coordinator
+        void coordinator.start().catch((error) => {
+          mainLog.warn('[node-mode] failed to advertise node capabilities:', error instanceof Error ? error.message : error)
+        })
+      }
       // Capture module-level references for before-quit cleanup and deep-link handlers
       sessionManager = instance.sessionManager
       oauthFlowStore = instance.oauthFlowStore
@@ -2298,6 +2325,12 @@ async function performQuitCleanup(): Promise<void> {
   if (cleanupNativeReplicaIpc) {
     cleanupNativeReplicaIpc()
     cleanupNativeReplicaIpc = null
+  }
+
+  // e2.4 — drop the node-mode connection and stop its heartbeat.
+  if (nodeModeCoordinator) {
+    nodeModeCoordinator.destroy()
+    nodeModeCoordinator = null
   }
 
   if (sessionManager) {
