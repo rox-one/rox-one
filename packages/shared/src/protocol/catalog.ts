@@ -109,7 +109,9 @@ export const BROADCAST_EVENT_CHANNELS = [
   RPC_CHANNELS.devSpace.RUN_PROGRESS,
   RPC_CHANNELS.devSpace.SOFT_SIGNAL,
   RPC_CHANNELS.podcast.JOB,
+  RPC_CHANNELS.playbooks.CODEBOOK_JOB,
   RPC_CHANNELS.appearance.SHELL_CHANGED,
+  RPC_CHANNELS.appearance.ACCENT_CHANGED,
   RPC_CHANNELS.theme.APP_CHANGED,
   RPC_CHANNELS.theme.SYSTEM_CHANGED,
   RPC_CHANNELS.theme.PREFERENCES_CHANGED,
@@ -153,6 +155,7 @@ export const BROADCAST_EVENT_CHANNELS = [
   RPC_CHANNELS.serviceLifecycle.STATUS_CHANGED,
   RPC_CHANNELS.messaging.BINDING_CHANGED,
   RPC_CHANNELS.messaging.PLATFORM_STATUS,
+  RPC_CHANNELS.shell.ACTION,
 ] as const
 
 /** Compile-time guard: every `BroadcastEventMap` key is listed above. */

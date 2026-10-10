@@ -223,7 +223,7 @@ export function SecretRefsSection({ onError }: { onError?: (message: string | nu
                     </Button>
                   </div>
                   {secretRefRowShowsUnavailable(draft, infisicalAvailable) && (
-                    <div className="text-small text-warning">{t('settings.runtime.secretRefVaultDown')}</div>
+                    <div className="text-small text-status-warning">{t('settings.runtime.secretRefVaultDown')}</div>
                   )}
                 </div>
               ))}

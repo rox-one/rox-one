@@ -98,6 +98,8 @@ import { playbooksEnabledAtom } from "@/atoms/playbooks"
 import { type ProfileStripData } from "./ProfileStrip"
 import { accountProfileStrip } from "./profile-strip-account"
 import { SidebarChrome } from "./SidebarChrome"
+import { StatusBar } from "./StatusBar"
+import { useUiAppearance } from "@/lib/ui-appearance-store"
 import { focusServicePanelAtom } from "./service-navigation"
 import type { AppNavDestinationId } from "./nav-destinations"
 import { usePromoInsights } from "@/hooks/usePromoInsights"
@@ -454,6 +456,10 @@ function AppShellContent({
     statusBarEnabled && (unifiedShellEnabled || workbenchEnabled),
     isAutoCompact,
   )
+  // A6: the compact bar is the shipping status strip; it yields to the
+  // experimental workbench bar so the two never stack.
+  const { statusBarVisible: uiStatusBarVisible } = useUiAppearance()
+  const showCompactStatusBar = uiStatusBarVisible && !isAutoCompact && !showStatusBar
 
   const effectiveSidebarAndNavigatorHidden = isSidebarAndNavigatorHidden || isAutoCompact
 
@@ -3141,7 +3147,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
         data-viewport={shellWidth > 0 ? viewportBand(shellWidth) : undefined}
         style={{
           paddingRight: isAutoCompact ? 0 : PANEL_EDGE_INSET,
-          paddingBottom: isAutoCompact && !isSidebarAndNavigatorHidden ? 48 : showStatusBar ? 0 : PANEL_EDGE_INSET,
+          paddingBottom: isAutoCompact && !isSidebarAndNavigatorHidden ? 48 : (showStatusBar || showCompactStatusBar) ? 0 : PANEL_EDGE_INSET,
           paddingLeft: 0,
           gap: PANEL_GAP,
         }}
@@ -3601,6 +3607,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
 
       </div>
       {showStatusBar && <StatusBarHost />}
+      {showCompactStatusBar && <StatusBar account={roxCloudAccount} />}
       </div>
 
       {/* ============================================================================

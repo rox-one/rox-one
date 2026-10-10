@@ -54,12 +54,33 @@ describe('Dev Space repo workspace (С-03)', () => {
     expect(repo).toContain('data-testid="dev-space-repo-not-found"')
   })
 
-  it('renders the six artifact surface stubs with literal tab keys', () => {
+  it('renders the six artifact surfaces from literal tab keys', () => {
     for (const surface of ['wiki', 'understanding', 'graph', 'schemas', 'knowledgeGraph', 'c4']) {
-      expect(repo).toContain(`devSpace.repo.tabs.${surface}`)
+      expect(parts).toContain(`devSpace.repo.tabs.${surface}`)
     }
-    expect(repo).toContain("t('devSpace.repo.stub.title')")
-    expect(repo).toContain('data-testid={`dev-space-surface-${item.id}`}')
+    expect(repo).toContain('<ArtifactSurface')
+    expect(parts).toContain('data-testid={`dev-space-surface-${kind}`}')
+    expect(parts).not.toContain("t('devSpace.repo.stub.title')")
+  })
+
+  it('walks the artifact read bridge and starts the analysis pipeline', () => {
+    expect(repo).toContain('window.electronAPI.listDevSpaceArtifacts')
+    expect(repo).toContain('window.electronAPI.startDevSpaceRun')
+    expect(repo).toContain('window.electronAPI.onDevSpaceRunProgress')
+    expect(repo).toContain('window.electronAPI.refreshDevSpaceRepository')
+    expect(parts).toContain('window.electronAPI.readDevSpaceArtifact')
+  })
+
+  it('renders markdown artifacts through the shared Notes markdown pipeline', () => {
+    expect(parts).toContain("from '@/components/markdown'")
+    expect(parts).toContain('<Markdown mode="full">')
+  })
+
+  it('covers empty and stale surfaces with literal keys', () => {
+    expect(parts).toContain("t('devSpace.artifact.emptyTitle')")
+    expect(parts).toContain("t('devSpace.artifact.emptyAction')")
+    expect(parts).toContain('data-testid="dev-space-artifact-stale"')
+    expect(parts).toContain("t('devSpace.repository.outdated')")
   })
 
   it('shows the outdated badge from the lastSnapshotId rule', () => {
@@ -68,11 +89,12 @@ describe('Dev Space repo workspace (С-03)', () => {
   })
 })
 
-describe('Playbooks home (С-12 stub) and roadmap deep link', () => {
-  it('renders the flag-gated Playbooks stub', () => {
+describe('Playbooks home (С-12) and roadmap deep link', () => {
+  it('gates the notebook surface on playbooks.v1', () => {
     expect(playbooks).toContain('export default function PlaybooksHomePage')
     expect(playbooks).toContain("t('playbooks.home.title')")
-    expect(playbooks).toContain("t('playbooks.home.enabledNotice')")
+    expect(playbooks).toContain('playbooksEnabledAtom')
+    expect(playbooks).toContain("t('playbooks.home.disabledNotice')")
   })
 
   it('adds the open-in-dev-space button without disturbing the snapshot panel', () => {

@@ -19,6 +19,7 @@ import {
   serializeMaterialExport,
   setChatEffect,
   setDeepGlass,
+  setHaze,
   setMaterialEnabled,
   setSurfaceBlur,
   setSurfaceOpacity,
@@ -42,6 +43,9 @@ describe('material-settings effective values', () => {
     expect(effectiveHaze(null)).toEqual({
       enabled: MATERIAL_DEFAULTS.haze.enabled,
       intensity: MATERIAL_DEFAULTS.haze.intensity,
+      overlay: MATERIAL_DEFAULTS.haze.overlay,
+      emptyOpacity: MATERIAL_DEFAULTS.haze.emptyOpacity,
+      activeOpacity: MATERIAL_DEFAULTS.haze.activeOpacity,
     })
     expect(effectiveChatEffect(null)).toEqual({
       kind: MATERIAL_DEFAULTS.chatEffect.kind,
@@ -85,16 +89,26 @@ describe('material-settings immutable patches', () => {
 
     const deep = setDeepGlass({ deepGlass: { content: true } }, 'lists', true)
     expect(deep.deepGlass).toEqual({ content: true, lists: true })
+
+    const haze = setHaze({ haze: { enabled: true, intensity: 0.4 } }, { overlay: true, emptyOpacity: 0.24, activeOpacity: 0.5 })
+    expect(haze.haze).toEqual({ enabled: true, intensity: 0.4, overlay: true, emptyOpacity: 0.24, activeOpacity: 0.5 })
   })
 })
 
 describe('material-settings presets and rows', () => {
-  it('ships glass, deep-glass, and matte presets that keep the layer enabled', () => {
-    expect(MATERIAL_PRESETS.map(preset => preset.id)).toEqual(['glass', 'deepGlass', 'matte'])
+  it('ships glass, zed-blurred, deep-glass, and matte presets that keep the layer enabled', () => {
+    expect(MATERIAL_PRESETS.map(preset => preset.id)).toEqual(['glass', 'zedBlurred', 'deepGlass', 'matte'])
     for (const preset of MATERIAL_PRESETS) {
       expect(preset.material.enabled).toBe(true)
       expect(preset.labelKey.startsWith('settings.appearance.material.preset')).toBe(true)
     }
+    // Zed parity: chrome/panels translucent, reading surfaces opaque.
+    const zed = MATERIAL_PRESETS.find(preset => preset.id === 'zedBlurred')?.material
+    expect(zed?.opacity).toEqual({
+      topbar: 0.82, rail: 0.82, strip: 0.86, inspector: 0.84,
+      sidebar: 0.82, navigator: 0.82, chat: 0.55, composer: 0.7, popover: 0.88,
+    })
+    expect(zed?.deepGlass).toBeUndefined()
     expect(MATERIAL_PRESETS.find(preset => preset.id === 'deepGlass')?.material.deepGlass).toEqual({
       content: true,
       editor: true,

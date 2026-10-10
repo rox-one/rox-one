@@ -5,6 +5,7 @@
  */
 
 import { afterEach, describe, expect, it } from 'bun:test'
+import type { Authorizer } from '@rox/core/commands'
 import { createAgentsHarness, type AgentsHarness } from './harness.ts'
 
 const harnesses: AgentsHarness[] = []
@@ -17,6 +18,24 @@ function harness(options: Parameters<typeof createAgentsHarness>[0] = {}): Agent
   harnesses.push(created)
   created.seedWorkspace()
   return created
+}
+
+/**
+ * Deny every authorization call naming one target id, recording the calls (the
+ * reference suites' `denyId`): a denied id must answer FORBIDDEN before the
+ * handler loads anything.
+ */
+function denyId(id: string): { calls: Array<{ verb: string; id: string | null }>; authorizer: Authorizer } {
+  const calls: Array<{ verb: string; id: string | null }> = []
+  return {
+    calls,
+    authorizer: {
+      can: async (_principal, verb, ref) => {
+        calls.push({ verb, id: ref?.id ?? null })
+        return ref?.id !== id
+      },
+    },
+  }
 }
 
 describe('workspaces.create (D-v2-2: the team gets one General chat)', () => {
@@ -267,6 +286,26 @@ describe('team chats (D-v2-2)', () => {
       expect(h.registry.get(type)?.schemaBound, type).toBe(true)
     }
   })
+
+  it('a rejoin restores the default role and a second leave is idempotent', async () => {
+    const h = harness()
+    await h.run('workspaces.create', { name: 'Rox', slug: 'rox' })
+    const channel = await h.run('im.create_chat', { kind: 'channel', name: 'Отчёты', visibility: 'public' })
+    const created = channel.result as { chatId: string } // create_chat result shape
+    const chatId = created.chatId
+    // The creator holds the owner role; leaving and rejoining must not keep it.
+    expect(h.runtime.identity.chatMember(chatId, 'owner-1')?.role).toBe('owner')
+    await h.run('im.leave_chat', { chatId })
+    expect(h.runtime.identity.chatMember(chatId, 'owner-1')?.state).toBe('left')
+    // A second leave is idempotent — the row stays `left` and the command applies
+    // again (`NOT_FOUND` is a principal with no membership row at all, not a
+    // member already in `left`).
+    expect(await h.run('im.leave_chat', { chatId })).toMatchObject({ status: 'applied', result: { left: true } })
+    expect(h.runtime.identity.chatMember(chatId, 'owner-1')?.state).toBe('left')
+    // The rejoin is a fresh membership: the default role, never the owner role.
+    expect(await h.run('im.join_chat', { chatId })).toMatchObject({ status: 'applied' })
+    expect(h.runtime.identity.chatMember(chatId, 'owner-1')).toMatchObject({ state: 'active', role: 'member' })
+  })
 })
 
 /**
@@ -361,5 +400,84 @@ describe('identity and team-chat refusals (§15.1, §15.2)', () => {
     const receipt = await h.run('im.set_visibility', { chatId: created.chatId, visibility: 'public', confirmHistoryExposure: true }, { actor: { principalId: 'member-2', kind: 'user' } })
     expect(receipt.status).toBe('rejected')
     expect(receipt.error).toMatchObject({ code: 'FORBIDDEN' })
+  })
+})
+
+/**
+ * W1-06 (#1503) review 3 — the guards the reference suites lost to the W1-11
+ * takeover of `agents.provision_personal_agent` / `identity.*`: a repeated
+ * provisioning is idempotent per (workspace, owner), the email key reuses a
+ * pending invitation, and an answer never carries another owner's id. The
+ * deny-before-load property of `identity.activate_placeholder` is asserted
+ * here too, because its handler runs on the agent-governance runtime the
+ * reference harness never backs.
+ */
+describe('provisioning guards and email dedupe (§5.11, §5.12)', () => {
+  it('agents.provision_personal_agent is idempotent per (workspace, owner) and never leaks the other owner\'s agent', async () => {
+    const h = harness()
+    await h.run('workspaces.create', { name: 'Rox', slug: 'rox' })
+    const first = await h.run('agents.provision_personal_agent', { workspaceId: 'ws-1', ownerPrincipalId: 'owner-1', username: 'mark' })
+    expect(first.status).toBe('applied')
+    const provisioned = first.result as { agentPrincipalId: string; created: boolean } // provision_personal_agent result shape
+    expect(provisioned.created).toBe(true)
+
+    // Idempotent per (workspace, owner): the second call reports the existing
+    // binding (`created: false`) instead of minting a second agent.
+    const again = await h.run('agents.provision_personal_agent', { workspaceId: 'ws-1', ownerPrincipalId: 'owner-1', username: 'mark' })
+    expect(again).toMatchObject({ status: 'applied', result: { agentPrincipalId: provisioned.agentPrincipalId, created: false } })
+
+    // Another owner is a separate binding: a new agent, and the receipt that
+    // answers one owner never carries the other owner's agent id.
+    const other = await h.run('agents.provision_personal_agent', { workspaceId: 'ws-1', ownerPrincipalId: 'bob', username: 'other' }, { actor: { principalId: 'bob', kind: 'user' } })
+    expect(other.status).toBe('applied')
+    const otherAgent = other.result as { agentPrincipalId: string } // provision_personal_agent result shape
+    expect(otherAgent.agentPrincipalId).not.toBe(provisioned.agentPrincipalId)
+    expect(JSON.stringify(other)).not.toContain(provisioned.agentPrincipalId)
+    expect(JSON.stringify(again)).not.toContain(otherAgent.agentPrincipalId)
+    expect(h.runtime.governance.bindingOfOwner('ws-1', 'owner-1')?.agentPrincipalId).toBe(provisioned.agentPrincipalId)
+    expect(h.runtime.governance.bindingOfOwner('ws-1', 'bob')?.agentPrincipalId).toBe(otherAgent.agentPrincipalId)
+  })
+
+  it('identity.ensure_placeholder reuses a pending invitation and never duplicates the placeholder', async () => {
+    const h = harness()
+    await h.run('workspaces.create', { name: 'Rox', slug: 'rox' })
+    const first = await h.run('identity.ensure_placeholder', { workspaceId: 'ws-1', email: 'gina@example.com', invitedBy: 'owner-1' })
+    expect(first.status).toBe('applied')
+    const created = first.result as { invitationId: string; existingAccount: boolean } // ensure_placeholder result shape
+    expect(created.existingAccount).toBe(false)
+    const gina = first.ref as { kind: string; id: string } // person:<principalId>
+    expect(h.runtime.identity.principalByEmail('gina@example.com')?.principalId).toBe(gina.id)
+
+    const frank = await h.run('identity.ensure_placeholder', { workspaceId: 'ws-1', email: 'frank@example.com', invitedBy: 'owner-1' })
+    const frankRef = frank.ref as { kind: string; id: string } // person:<principalId>
+
+    // The same email gets its own pending invitation back (`reused`), and the
+    // answer never leaks the other placeholder's id.
+    const again = await h.run('identity.ensure_placeholder', { workspaceId: 'ws-1', email: 'gina@example.com', invitedBy: 'owner-1' })
+    expect(again).toMatchObject({ status: 'applied', ref: { kind: 'person', id: gina.id }, result: { invitationId: created.invitationId, reused: true } })
+    expect(JSON.stringify(again)).not.toContain(frankRef.id)
+    expect(h.runtime.identity.principalByEmail('gina@example.com')?.principalId).toBe(gina.id)
+    expect(h.runtime.identity.membershipsOf(gina.id)).toHaveLength(1)
+
+    // An active account is the `existingAccount` outcome: no placeholder row,
+    // the account keeps its own id.
+    h.runtime.identity.createPrincipal({ principalId: 'eve-account', kind: 'human', status: 'active', primaryEmail: 'eve@example.com' })
+    const existing = await h.run('identity.ensure_placeholder', { workspaceId: 'ws-1', email: 'eve@example.com', invitedBy: 'owner-1' })
+    expect(existing).toMatchObject({ status: 'applied', ref: { kind: 'person', id: 'eve-account' }, result: { existingAccount: true } })
+  })
+
+  it('identity.activate_placeholder answers FORBIDDEN — never NOT_FOUND — when the target is denied', async () => {
+    const { calls, authorizer } = denyId('person-missing')
+    const h = harness({ authorizer })
+    const receipt = await h.run('identity.activate_placeholder', { authSubject: 'oidc|x', verifiedEmail: 'nobody@example.com' }, { target: { kind: 'person', id: 'person-missing' } })
+    expect(receipt.status).toBe('rejected')
+    expect(receipt.error).toMatchObject({ code: 'FORBIDDEN' })
+    expect(calls).toContainEqual({ verb: 'write', id: 'person-missing' })
+
+    // The same call without the denial reaches the handler, whose own answer for
+    // an unknown email is NOT_FOUND — the denial must win.
+    const open = await harness().run('identity.activate_placeholder', { authSubject: 'oidc|x', verifiedEmail: 'nobody@example.com' }, { target: { kind: 'person', id: 'person-missing' } })
+    expect(open.status).toBe('rejected')
+    expect(open.error).toMatchObject({ code: 'NOT_FOUND' })
   })
 })

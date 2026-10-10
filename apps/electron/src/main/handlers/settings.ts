@@ -1,9 +1,11 @@
 import { BrowserWindow } from 'electron'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
+import type { UiAppearanceSnapshot } from '@rox/shared/protocol'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
-import { setRenderProfilePreference, setZenShellPreference } from '@rox/shared/config'
+import { getUiPreferences, setUiPreferences, setRenderProfilePreference, setZenShellPreference } from '@rox/shared/config'
 import { parseZenShellPatch } from '../../shared/shell-appearance'
 import { peekZenShellSnapshotForWindow, reapplyZenShellOnAllWindows } from '../shell-material'
+import { attachSystemAccentSubscription, broadcastSystemAccent, readSystemAccent } from '../system-accent'
 import type { HandlerDeps } from './handler-deps'
 
 export const GUI_HANDLED_CHANNELS = [
@@ -12,6 +14,8 @@ export const GUI_HANDLED_CHANNELS = [
   RPC_CHANNELS.appearance.SET_DEFAULT_ZOOM_LEVEL,
   RPC_CHANNELS.appearance.GET_SHELL_SNAPSHOT,
   RPC_CHANNELS.appearance.SET_ZEN_SHELL,
+  RPC_CHANNELS.appearance.GET_UI_PREFERENCES,
+  RPC_CHANNELS.appearance.SET_UI_PREFERENCES,
 ] as const
 
 // ============================================================
@@ -64,5 +68,21 @@ export function registerSettingsGuiHandlers(server: RpcServer, deps: HandlerDeps
       if (clientId) pushTyped(server, RPC_CHANNELS.appearance.SHELL_CHANGED, { to: 'client', clientId }, peekZenShellSnapshotForWindow(window))
     }
     return peekZenShellSnapshotForWindow(deps.windowManager?.getWindowByWebContentsId(ctx.webContentsId!))
+  })
+
+  // A6 + B10 — persisted «Интерфейс» prefs + the live macOS accent. One
+  // process-level subscription drives the ACCENT_CHANGED push.
+  attachSystemAccentSubscription(server)
+  server.handle(RPC_CHANNELS.appearance.GET_UI_PREFERENCES, async (): Promise<UiAppearanceSnapshot> => {
+    return { ...getUiPreferences(), accent: readSystemAccent() }
+  })
+  server.handle(RPC_CHANNELS.appearance.SET_UI_PREFERENCES, async (_ctx, patch: unknown): Promise<UiAppearanceSnapshot> => {
+    const next = patch && typeof patch === 'object' ? patch as Record<string, unknown> : {}
+    const statusBarVisible = typeof next.statusBarVisible === 'boolean' ? next.statusBarVisible : undefined
+    const accentSource = next.accentSource === 'brand' || next.accentSource === 'system' ? next.accentSource : undefined
+    setUiPreferences({ statusBarVisible, accentSource })
+    // A switched accent source must repaint every window immediately.
+    if (accentSource !== undefined) broadcastSystemAccent()
+    return { ...getUiPreferences(), accent: readSystemAccent() }
   })
 }

@@ -143,7 +143,7 @@ export default function HealthPage(_props: { itemId: string | null }) {
             </div>
           ) : (
             <div
-              className={summary.error > 0 ? 'rounded-[var(--radius-card)] bg-destructive/10 px-3 py-2.5' : 'rounded-[var(--radius-card)] bg-warning/10 px-3 py-2.5'}
+              className={summary.error > 0 ? 'rounded-[var(--radius-card)] bg-destructive/10 px-3 py-2.5' : 'rounded-[var(--radius-card)] bg-status-warning/10 px-3 py-2.5'}
               data-testid="health-attention"
             >
               <div className="flex items-center gap-2">

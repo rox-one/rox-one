@@ -252,7 +252,7 @@ describe('W1-06 reference handlers over PostgreSQL (skips without a database)', 
     expect(await harness.run({ type: 'im.create_chat', payload: { id: U('pg-chat'), kind: 'group', name: 'pg', visibility: 'public', members: [] } })).toMatchObject({ status: 'rejected', error: { code: 'NOT_FOUND' } })
     const fromMessage = await harness.run({ type: 'tasks.create_from_message', payload: { id: U('pg-from-msg'), origin: { kind: 'message', chatRef: `channel:${U('pg-chat')}`, seq: 3 }, title: 'From message', assignee: BOB } })
     expect(fromMessage).toMatchObject({ status: 'rejected', error: { code: 'NOT_FOUND' } })
-    expect(await db.unsafe<unknown[]>(`SELECT 1 FROM "${schema}".work_item WHERE work_item_id = $1`, [U('pg-from-msg')])).toEqual([])
+    expect(await db.unsafe<{ one: number }[]>(`SELECT 1 FROM "${schema}".work_item WHERE work_item_id = $1`, [U('pg-from-msg')])).toEqual([])
     const fromSelection = await harness.run({ type: 'tasks.create_from_selection', payload: { id: U('pg-from-sel'), origin: { kind: 'doc-block', docRef: `note:${U('pg-doc')}`, blockId: 'b1' }, title: 'Do it' } })
     expect(fromSelection).toMatchObject({ status: 'applied' })
     const rows = await db.unsafe<{ work_item_id: string; origin_ref: string }[]>(`SELECT work_item_id, origin_ref FROM "${schema}".work_item WHERE work_item_id = $1 ORDER BY origin_ref`, [U('pg-from-sel')])

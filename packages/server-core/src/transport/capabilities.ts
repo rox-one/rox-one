@@ -16,7 +16,7 @@ import {
   PROTOCOL_CLIENT_CAPABILITIES,
 } from '@rox/shared/protocol'
 
-/** Capability: open a URL in the client's default browser. */
+/** All capabilities a client can perform, re-exported for convenience. */
 export {
   CLIENT_OPEN_EXTERNAL,
   CLIENT_OPEN_PATH,

@@ -277,7 +277,7 @@ function CloudRunsChipInner({
               <div
                 role="alert"
                 data-cloud-runs-key-missing
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-warning/10 px-3 py-2 text-sm"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-status-warning/10 px-3 py-2 text-sm"
               >
                 <div className="min-w-0 flex-1">
                   <div className="font-medium text-foreground">{t('cloudRuns.keyMissingTitle')}</div>

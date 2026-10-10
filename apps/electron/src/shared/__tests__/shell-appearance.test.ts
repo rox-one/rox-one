@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'bun:test'
 import {
+  DEFAULT_SHELL_MATERIAL_DEPTH,
   WINDOWS_MICA_BUILD,
   ZEN_SHELL_FLAG,
+  parseShellMaterialDepth,
   parseShellMaterialPreference,
   parseZenShellEnabled,
   parseZenShellPatch,
   resolveShellMaterial,
   snapshotZenShell,
+  vibrancyForDepth,
   type ResolveShellMaterialInput,
 } from '../shell-appearance'
 
@@ -57,6 +60,30 @@ describe('parseZenShellPatch', () => {
     expect(() => parseZenShellPatch({ enabled: true, titleBarStyle: 'hiddenInset' })).toThrow(/Unexpected zen shell field/)
     expect(() => parseZenShellPatch(null)).toThrow(/Invalid zen shell patch/)
     expect(() => parseZenShellPatch('glass')).toThrow(/Invalid zen shell patch/)
+  })
+
+  it('accepts and validates the A3 materialDepth field', () => {
+    expect(parseZenShellPatch({ materialDepth: 'deep' })).toEqual({ materialDepth: 'deep' })
+    expect(parseZenShellPatch({ materialDepth: 'standard' })).toEqual({ materialDepth: 'standard' })
+    expect(() => parseZenShellPatch({ materialDepth: 'hud' })).toThrow(/materialDepth must be light, standard, or deep/)
+    expect(() => parseZenShellPatch({ materialDepth: 3 })).toThrow(/materialDepth must be light, standard, or deep/)
+    // A patch without the field keeps the previous behaviour.
+    expect(parseZenShellPatch({ enabled: true })).toEqual({ enabled: true })
+  })
+})
+
+describe('A3 material depth', () => {
+  it('maps depth onto Electron vibrancy values', () => {
+    expect(vibrancyForDepth('light')).toBe('sidebar')
+    expect(vibrancyForDepth('standard')).toBe('under-window')
+    expect(vibrancyForDepth('deep')).toBe('hud')
+  })
+
+  it('normalizes unknown depth to the standard default', () => {
+    expect(DEFAULT_SHELL_MATERIAL_DEPTH).toBe('standard')
+    expect(parseShellMaterialDepth(undefined)).toBe('standard')
+    expect(parseShellMaterialDepth('hud')).toBe('standard')
+    expect(parseShellMaterialDepth('light')).toBe('light')
   })
 })
 
@@ -133,5 +160,9 @@ describe('snapshotZenShell', () => {
     expect(snap.material).toBe('vibrancy')
     expect(snap.preference).toBe('glass')
     expect(snap.platform).toBe('darwin')
+    // A3: depth defaults to standard and follows the input when set.
+    expect(snap.materialDepth).toBe('standard')
+    expect(snapshotZenShell(base({ materialDepth: 'deep' })).materialDepth).toBe('deep')
+    expect(snapshotZenShell(base({ materialDepth: 'light' })).materialDepth).toBe('light')
   })
 })

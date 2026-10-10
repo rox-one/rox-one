@@ -26,6 +26,7 @@ import { SecretRefEntrySchema } from '../secrets/types.ts';
 import {
   MATERIAL_CHAT_EFFECT_KINDS,
   MATERIAL_CONTENT_PANES,
+  MATERIAL_SURFACE_HINT_KEYS,
   MATERIAL_SURFACES,
   MATERIAL_TEXTURE_KINDS,
   TERMINAL_ANSI_COLOR_NAMES,
@@ -1680,6 +1681,10 @@ export const MaterialSettingsSchema = z.object({
   haze: z.object({
     enabled: z.boolean().optional(),
     intensity: MaterialRangeSchema(0, 1),
+    // Zed/MonoCode haze parity: static scanline overlay over the chat surface.
+    overlay: z.boolean().optional(),
+    emptyOpacity: MaterialRangeSchema(0, 1),
+    activeOpacity: MaterialRangeSchema(0, 1),
   }).strict().optional(),
   matte: MaterialRangeSchema(0, 1),
   deepGlass: z.object(Object.fromEntries(
@@ -1690,6 +1695,15 @@ export const MaterialSettingsSchema = z.object({
     intensity: MaterialRangeSchema(0, 1),
   }).strict().optional(),
 }).strict();
+
+/**
+ * Per-surface alpha hints (0..1) a blurred preset derives from its Zed roles,
+ * e.g. `{ navigatorOpacity: 0.82, topbarOpacity: 0.82 }`. Strict: unknown
+ * keys and out-of-range values are rejected; the runtime resolver clamps.
+ */
+export const MaterialSurfaceHintsSchema = z.object(Object.fromEntries(
+  MATERIAL_SURFACE_HINT_KEYS.map(key => [key, MaterialRangeSchema(0, 1)]),
+)).strict();
 
 /**
  * Zod schema for app-level theme override files (~/.craft-agent/theme.json).
@@ -1704,6 +1718,8 @@ export const ThemeOverrideSchema = z.object({
   dark: ThemeDarkOverrideSchema.optional(),
   // Material (glass) layer
   material: MaterialSettingsSchema.optional(),
+  // Zed role alpha hints consumed by the blurred auto-glass resolver
+  surfaces: MaterialSurfaceHintsSchema.optional(),
 }).strict()
   .refine(
     (data) => {
@@ -1736,11 +1752,19 @@ export const PresetThemeSchema = z.object({
   dark: ThemeDarkOverrideSchema.optional(),
   // Material (glass) layer
   material: MaterialSettingsSchema.optional(),
+  // Zed role alpha hints consumed by the blurred auto-glass resolver
+  surfaces: MaterialSurfaceHintsSchema.optional(),
   // Shiki theme for syntax highlighting
   shikiTheme: z.object({
     light: z.string().optional(),
     dark: z.string().optional(),
   }).optional(),
+  // Zed syntax captures preserved by the C1 importer (runtime ignores it).
+  syntax: z.record(z.string(), z.object({
+    color: z.string(),
+    fontStyle: z.string().optional(),
+    fontWeight: z.number().optional(),
+  })).optional(),
 }).refine(
   (data) => {
     const colorProps = ['background', 'foreground', 'accent', 'info', 'success', 'destructive'];

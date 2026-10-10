@@ -2,7 +2,8 @@
 
 macOS EventKit bridge for the Rox Apple Calendar connector. The Electron main
 process spawns this small CLI; the JS-side adapter
-(`packages/core/src/calendar/apple-calendar-adapter.ts`) only speaks JSON with it.
+(`packages/core/src/calendar/apple-calendar-adapter.ts`) parses the JSON frame
+the host decodes from stdout.
 
 Read-only: the helper never writes to the user's calendars.
 
@@ -42,7 +43,9 @@ already gitignored (they hold other platform binaries too).
 
 ## Subcommands
 
-Exactly one line of JSON on stdout; failures exit non-zero with `{"error":"<code>"}`.
+Exactly one length-prefixed JSON frame on stdout — a 4-byte big-endian payload
+length followed by the UTF-8 JSON bytes (the `@rox/shared/local-ipc/framing`
+codec) — and failures exit non-zero with the frame `{"error":"<code>"}`.
 
 | Command | Output |
 | --- | --- |

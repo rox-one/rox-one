@@ -67,7 +67,7 @@ export function StorageVisibleRootSettings() {
       {state.restartRequired && (
         <div
           data-testid="storage-visible-root-restart"
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning/10 border border-warning/20 text-xs text-warning"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-status-warning/10 border border-status-warning/20 text-xs text-status-warning"
         >
           <RotateCw className="h-3.5 w-3.5 shrink-0" />
           <span className="flex-1">{t('storage.settings.restartRequired')}</span>

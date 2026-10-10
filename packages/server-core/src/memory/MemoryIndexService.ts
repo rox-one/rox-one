@@ -488,6 +488,18 @@ export interface MemoryIndexServiceOptions {
   configDir?: string
 }
 
+/**
+ * The single mapping from the resolved memory config to index-factory options.
+ * MemoryService and the RPC handlers both go through this, so a semantic-on
+ * workspace cannot end up with a second, lexical instance: the two would read
+ * and write a different index, clobber each other's `embedded` meta and never
+ * agree on rebuilds. Reading `semantic` anywhere else in the process re-creates
+ * that split (issue: shared-instance drift).
+ */
+export function memoryIndexServiceOptions(config: { semantic?: boolean }): MemoryIndexServiceOptions {
+  return { semantic: config.semantic === true }
+}
+
 export function memoryIndexServiceFor(
   workspaceRoot: string,
   workspaceId?: string,

@@ -29,7 +29,7 @@ export type ApiAuthType = 'bearer' | 'header' | 'query' | 'basic' | 'oauth' | 'n
 /**
  * Google service types for OAuth scope selection
  */
-export type GoogleService = 'gmail' | 'calendar' | 'drive' | 'docs' | 'sheets' | 'youtube' | 'searchconsole';
+export type GoogleService = 'gmail' | 'calendar' | 'drive' | 'docs' | 'sheets' | 'youtube' | 'searchconsole' | 'meet';
 
 /**
  * Slack service types for OAuth scope selection
@@ -68,6 +68,7 @@ export function inferGoogleServiceFromUrl(baseUrl: string | undefined): GoogleSe
   if (hostname === 'sheets.googleapis.com') return 'sheets';
   if (hostname === 'youtube.googleapis.com') return 'youtube';
   if (hostname === 'searchconsole.googleapis.com' || hostname === 'webmasters.googleapis.com') return 'searchconsole';
+  if (hostname === 'meet.googleapis.com') return 'meet';
 
   // Fallback: check path patterns only on googleapis.com domains
   if (hostname === 'www.googleapis.com' || hostname === 'googleapis.com') {

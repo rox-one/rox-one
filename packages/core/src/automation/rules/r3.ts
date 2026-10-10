@@ -101,7 +101,7 @@ export const R3: DomainRule = {
         name: 'provision-agent',
         actor: 'system',
         commandId: personalAgentCommandId(ctx.workspaceId, member),
-        command: { type: 'agents.provision_personal_agent', payload: { ownerId: member, id: agentId }, target: memberRef },
+        command: { type: 'agents.provision_personal_agent', payload: { workspaceId: ctx.workspaceId, ownerPrincipalId: member }, target: memberRef },
       },
       {
         name: 'open-agent-dm',
@@ -123,9 +123,13 @@ export const R3: DomainRule = {
         actor: { agentOf: member },
         command: {
           type: 'im.send_message',
+          // W1-14 (#1511) `@rox/shared/xsc` schema: `body` carries the copy,
+          // `mentions` the mentioned principals, `messageId` the deterministic id.
           payload: {
-            id: welcomeMessageId(member),
-            content: { doc: welcomeText(params, name), mentions: [memberRef] },
+            messageId: welcomeMessageId(member),
+            body: { doc: welcomeText(params, name) },
+            // `mentions` are principal ids (the §12 `PersonRef` shorthand).
+            mentions: [member],
             attribution: 'unprompted',
             notify: 'mentions_only',
           },

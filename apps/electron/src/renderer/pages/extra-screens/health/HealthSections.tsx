@@ -12,7 +12,7 @@ import type { HealthRow, HealthSection, HealthStatus } from './health-model'
 
 const DOT_CLS: Record<HealthStatus, string> = {
   ok: 'bg-success',
-  warn: 'bg-warning',
+  warn: 'bg-status-warning',
   error: 'bg-destructive',
   unknown: 'bg-text-muted',
 }

@@ -18,7 +18,7 @@ markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
 
-import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, session, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, safeStorage, session, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { createHash, randomUUID } from 'crypto'
 
 
@@ -112,6 +112,7 @@ import type { HandlerDeps } from './handlers/handler-deps'
 import { resolveNativeTransportCredential } from './native-transport-credential'
 import { createBrowserCredentialPermissionAdapter } from './browser-credential-permissions'
 import { createOnboardingPermissionsHost } from './onboarding-permissions'
+import { registerDesktopBridgeIpc, type DesktopBridgeBrowserHost } from './desktop-bridge'
 import { createBrowserCredentialVaultKeyStore } from './browser-credential-vault-keys'
 import { bootstrapServer, releaseServerLock, maskTokenForDisplay } from '@rox/server-core/bootstrap'
 import { isAllowedServerEndpoint } from './server-endpoint-policy'
@@ -120,6 +121,10 @@ import { getCredentialManager } from '@rox/shared/credentials'
 import { initModelRefreshService, getModelRefreshService, setFetcherPlatform } from '@rox/server-core/model-fetchers'
 import { setSearchPlatform, setImageProcessor } from '@rox/server-core/services'
 import { createApplicationMenu } from './menu'
+import { dispatchShellAction } from './shell-actions'
+import { initQuickComposer, disposeQuickComposer } from './quick-composer'
+import { nativeAccessibilityPrefersSolid } from './shell-material'
+import { getQuickComposerShortcut, setQuickComposerShortcut } from '@rox/shared/config'
 import { WindowManager } from './window-manager'
 import { readBoundWindowWorkspace } from './bootstrap-window-workspace'
 import { stopAllExtensionHosts } from './extension-host-manager'
@@ -1209,10 +1214,45 @@ app.whenReady().then(async () => {
               const browserWindowOptions = options as unknown as BrowserWindowConstructorOptions
               return new BrowserWindow(browserWindowOptions)
             },
+            desktopBridge: {
+              isClientOnly,
+              preloadPath: join(__dirname, 'rox-desktop-preload.cjs'),
+            },
             confirm: async ({ action, workspaceId, owner }) => {
               const ownerWindow = windowManager?.getWindowByWebContentsId(owner.webContents.id)
               if (!ownerWindow) return false
               return confirmOpenClawHostControl({ action, workspaceId, owner: ownerWindow })
+            },
+          })
+
+          // Main-process side of the embedded desktop bridge. Handlers reuse the
+          // BrowserPaneManager, the onboarding permission host, the OpenClaw
+          // runtime manager, the system clipboard opener and native notifications.
+          const browserPaneHost = browserPaneManager!
+          const desktopBridgeBrowser: DesktopBridgeBrowserHost = {
+            async openInstance({ id, workspaceId, url, show }) {
+              const instanceId = browserPaneHost.createInstance(id, { workspaceId, show, ownerType: 'manual' })
+              if (url) await browserPaneHost.navigate(instanceId, url)
+              return instanceId
+            },
+            navigateInstance: ({ id, url }) => browserPaneHost.navigate(id, url),
+            async releaseScope({ workspaceId }) {
+              const released = browserPaneHost
+                .listInstances()
+                .filter(info => info.workspaceId === workspaceId)
+                .map(info => info.id)
+              for (const instanceId of released) browserPaneHost.destroyInstance(instanceId)
+              return { released }
+            },
+          }
+          registerDesktopBridgeIpc({
+            ipcMain,
+            browser: desktopBridgeBrowser,
+            permissions: { probePermissions: () => createOnboardingPermissionsHost().probePermissions() },
+            openExternal: url => shell.openExternal(url),
+            gateway: { getStatus: workspaceId => openClawSecurity.runtimeManager.getRuntimeStatus(workspaceId) },
+            notify: ({ title, body }) => {
+              if (Notification.isSupported()) new Notification({ title, body }).show()
             },
           })
         }
@@ -1919,6 +1959,37 @@ app.whenReady().then(async () => {
       const { setNotificationEventSink } = await import('./notifications')
       setNotificationEventSink(moduleSink!, resolveClientId)
 
+      // Native integration — floating quick composer + its global accelerator.
+      // GUI-only: the window is a real renderer (same preload) bound to a
+      // workspace, and the accelerator is a host-level global shortcut.
+      if (!isHeadless && !isClientOnly) {
+        initQuickComposer({
+          createWindow: options => new BrowserWindow(options),
+          registerAuxiliaryWindow: (win, workspaceId) => { windowManager?.registerAuxiliaryWindow(win, workspaceId) },
+          shortcuts: globalShortcut,
+          readShortcut: getQuickComposerShortcut,
+          writeShortcut: setQuickComposerShortcut,
+          resolveWorkspaceId: () => {
+            const win = windowManager?.getFocusedWindow() ?? windowManager?.getLastActiveWindow() ?? null
+            return win ? windowManager?.getWorkspaceForWindow(win.webContents.id) ?? null : null
+          },
+          isMac: process.platform === 'darwin',
+          prefersSolid: nativeAccessibilityPrefersSolid,
+        })
+        app.once('will-quit', () => disposeQuickComposer())
+      }
+
+      // Dock menu (macOS): the native integration actions, dispatched as one
+      // structured `shell:action` to the focused (or first) window.
+      if (!isHeadless && process.platform === 'darwin' && app.dock) {
+        app.dock.setMenu(Menu.buildFromTemplate([
+          { label: i18n.t('menu.newNote'), click: () => { dispatchShellAction(windowManager, { action: 'new-note' }) } },
+          { label: i18n.t('menu.newTask'), click: () => { dispatchShellAction(windowManager, { action: 'new-task' }) } },
+          { label: i18n.t('menu.quickComposer'), click: () => { dispatchShellAction(windowManager, { action: 'quick-composer' }) } },
+          { label: i18n.t('menu.openInbox'), click: () => { dispatchShellAction(windowManager, { action: 'open-inbox' }) } },
+        ]))
+      }
+
 // Release the local transport to the shell window(s): every renderer RPC
       // (`__resolve-local-ws-token`, then the WS transport itself) is now wired.
       publishWsPort(instance.port)
@@ -2023,6 +2094,14 @@ app.whenReady().then(async () => {
           translate: key => i18n.t(key),
           // The channel set comes from the tray model, never from IPC input.
           dispatchChannel: channel => dispatchMenuChannel(channel as MenuBroadcastChannel),
+          dispatchShellAction: action => { dispatchShellAction(windowManager, { action }) },
+          showWindow: () => {
+            const win = windowManager?.getLastActiveWindow() ?? windowManager?.getAllWindows()[0]?.window ?? null
+            if (!win || win.isDestroyed()) return
+            if (win.isMinimized()) win.restore()
+            win.show()
+            win.focus()
+          },
           broadcastStatus: status => pushTyped(instance.wsServer, RPC_CHANNELS.menu.TRAY_STATUS_CHANGED, { to: 'all' }, status),
           quit: () => app.quit(),
         })

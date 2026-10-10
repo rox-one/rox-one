@@ -13,8 +13,8 @@ import {
 } from './refs.ts'
 import type { RepositoryBinding, RepositoryScope, RepositorySnapshot } from './refs.ts'
 
-export const CODE_INTELLIGENCE_SELECTION_REVISION = 'CI-DEC-EXTEND-EXISTING-01'
-export type CodeIntelligenceOperation = 'symbols' | 'sbom' | 'search' | 'repo-wiki' | 'diagram' | 'source-graph' | 'c4'
+export const CODE_INTELLIGENCE_SELECTION_REVISION = 'CI-DEC-EXTEND-EXISTING-02'
+export type CodeIntelligenceOperation = 'symbols' | 'sbom' | 'search' | 'repo-wiki' | 'diagram' | 'source-graph' | 'c4' | 'learning' | 'knowledge-graph'
 
 export interface CodeIntelligenceProvider {
   readonly id: string
@@ -47,7 +47,15 @@ export const CODE_INTELLIGENCE_PROVIDER_DECISION = Object.freeze({
   inventoryDeclarationIsUpstreamVerification: false,
 })
 
-const OPERATIONS = new Set<CodeIntelligenceOperation>(['symbols', 'sbom', 'search', 'repo-wiki', 'diagram', 'source-graph', 'c4'])
+const OPERATIONS: Record<CodeIntelligenceOperation, true> = {
+  symbols: true, sbom: true, search: true, 'repo-wiki': true, diagram: true,
+  'source-graph': true, c4: true, learning: true, 'knowledge-graph': true,
+}
+const OPERATION_COUNT = Object.keys(OPERATIONS).length
+/** Membership guard for the `unknown` values reached through `Array.isArray` narrowing. */
+function isOperation(value: unknown): value is CodeIntelligenceOperation {
+  return typeof value === 'string' && Object.prototype.hasOwnProperty.call(OPERATIONS, value)
+}
 function reject(code: string): never { throw new RepositoryContractError(code) }
 function providerId(id: unknown): string {
   if (typeof id !== 'string' || !/^[a-z][a-z0-9-]{0,63}$/.test(id)) reject('invalid-provider-id')
@@ -69,8 +77,8 @@ export class CodeIntelligenceProviderRegistry {
     if (isRejected(id)) reject('rejected-provider')
     if (this.providers.has(id)) reject('duplicate-provider')
     if (input.alwaysOn !== false || typeof input.version !== 'string' || !input.version || input.version.length > 128
-      || !Array.isArray(input.operations) || !input.operations.length || input.operations.length > OPERATIONS.size
-      || input.operations.some(operation => !OPERATIONS.has(operation))
+      || !Array.isArray(input.operations) || !input.operations.length || input.operations.length > OPERATION_COUNT
+      || input.operations.some(operation => !isOperation(operation))
       || new Set(input.operations).size !== input.operations.length
       || !['local', 'remote'].includes(input.execution)
       || !['ready', 'requires-runtime-probe'].includes(input.readiness)) reject('invalid-provider')

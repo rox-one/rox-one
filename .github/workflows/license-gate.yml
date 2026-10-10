@@ -44,27 +44,27 @@ jobs:
           [[ "$TRUSTED_REVIEW_REVISION" =~ ^[a-f0-9]{40}$ ]] || exit 1
           [[ "$TRUSTED_AUDITOR_REVISION" =~ ^[a-f0-9]{40}$ ]] || exit 1
           test "$REVIEW_REVISION" = "$TRUSTED_REVIEW_REVISION" || exit 1
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ vars.LICENSE_AUDITOR_REVISION }}
           path: .compliance/auditor
           persist-credentials: false
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with: { bun-version: '1.4.2' }
       - name: Install only the independently trusted checker without lifecycle scripts
         working-directory: .compliance/auditor
         run: bun install --frozen-lockfile --ignore-scripts
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ inputs.source-revision }}
           path: .compliance/source
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ vars.LICENSE_REVIEW_REVISION }}
           path: .compliance/review
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: ${{ inputs.producer-artifact-name }}
           path: .compliance/input
@@ -97,7 +97,7 @@ jobs:
           bun -e 'const {createHash}=require("node:crypto");const {readFileSync}=require("node:fs");process.stdout.write("audit-sha256="+createHash("sha256").update(readFileSync(process.env.AUDIT_PATH)).digest("hex")+"\n")' >> "$GITHUB_OUTPUT"
       - name: Preserve audit evidence even when review is required
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: exact-artifact-license-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: .compliance/evidence/${{ github.run_id }}-${{ github.run_attempt }}/

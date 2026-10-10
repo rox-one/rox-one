@@ -7,7 +7,7 @@ import type { DomainEvent } from '../../events/types'
 import type { EntityRef } from '../../entities/refs'
 import { dailyLinkBlockId, dailyNoteId } from '../../docs/daily'
 import { AUTOMATION_RULES_FLAG, type RuleCtx, type RuleSettings } from '../rule'
-import { DOMAIN_RULES, R1, R2, R3, R4, R5, readR1Params, r1Key, r1Owners, systemListId } from '../rules'
+import { DOMAIN_RULES, R1, R2, R3, R4, R5, readR1Params, r1Key, r1Owners, systemListId, welcomeMessageId } from '../rules'
 import { calendarTriggerOf, memberAddedOf } from '../events'
 
 const WS = 'ws-1'
@@ -290,9 +290,15 @@ describe('R2 / R3 / R4 / R5 conditions', () => {
     ])
     expect(await R4.key(ctx(ORGANISER, {}, 'anna@example.com'), invited)).toBe('R4:ws-1:anna@example.com')
     const steps = await R4.steps(ctx(ORGANISER, {}, 'anna@example.com'), invited)
-    expect(steps.map(step => step.name)).toEqual(['ensure-placeholder', 'add-workspace-member', 'join-team-chat', 'send-invite-email'])
-    expect(steps[1]!.command.payload).toEqual({ principalId: (steps[0]!.command.payload as { id: string }).id, role: 'member', status: 'invited' })
-    expect(steps[3]!.commandId).toBe('R4-invite:ws-1:anna@example.com')
+    // W1-11 (#1508) `identity.ensure_placeholder` owns the placeholder, its
+    // member row and (from `chatIds`) the General-chat membership.
+    expect(steps.map(step => step.name)).toEqual(['ensure-placeholder', 'send-invite-email'])
+    expect(steps[0]!.command.type).toBe('identity.ensure_placeholder')
+    expect(steps[0]!.command.payload).toEqual({
+      workspaceId: WS, email: 'anna@example.com', invitedBy: ORGANISER, role: 'member', chatIds: ['chat-general'],
+    })
+    expect(steps[1]!.commandId).toBe('R4-invite:ws-1:anna@example.com')
+    expect(steps[1]!.command.payload).toEqual({ email: 'anna@example.com', role: 'member', workspaceId: WS })
   })
 
   test('R5 provisions the personal drive with the D-v2-8 quota', async () => {
@@ -313,8 +319,12 @@ describe('R2/R3 actor and welcome contract', () => {
     expect(welcome.command.type).toBe('im.send_message')
     expect(welcome.command.payload.attribution).toBe('unprompted')
     expect(welcome.command.payload.notify).toBe('mentions_only')
-    expect((welcome.command.payload.content as { doc: string }).doc).toContain('Привет, Марк!')
-    expect((welcome.command.payload.content as { mentions: EntityRef[] }).mentions).toEqual([{ kind: 'person', id: ORGANISER }])
+    // W1-14 (#1511) `@rox/shared/xsc`: the copy is `body`, the mentioned people
+    // are principal ids, and `messageId` carries the deterministic welcome id.
+    const body = welcome.command.payload.body
+    expect(body && typeof body === 'object' && 'doc' in body ? String(body.doc) : '').toContain('Привет, Марк!')
+    expect(welcome.command.payload.mentions).toEqual([ORGANISER])
+    expect(welcome.command.payload.messageId).toBe(welcomeMessageId(ORGANISER))
     expect(welcome.command.target).toEqual({ kind: 'channel', id: `p2p:${ORGANISER}:${AGENT}` })
   })
 
@@ -323,7 +333,7 @@ describe('R2/R3 actor and welcome contract', () => {
     const steps = await R2.steps(ctx(ATTENDEE), member)
     expect(steps[0]!.command.target).toEqual({ kind: 'channel', id: 'chat-general' })
     expect(steps[0]!.command.payload).toEqual({ memberIds: [ATTENDEE] })
-    expect(steps[1]!.command.payload).toEqual({ ownerId: ATTENDEE, id: 'agent-anna' })
+    expect(steps[1]!.command.payload).toEqual({ workspaceId: WS, ownerPrincipalId: ATTENDEE })
   })
 
   test('R2 posts no join card when the announce param is off', async () => {

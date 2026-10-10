@@ -6,6 +6,12 @@ import { cn } from '@/lib/utils'
 import type { NoteAsset, NoteDocument, NoteEntityMerge, NoteFootnoteChrome, NoteIndexHealth, NoteInsights, NoteLinkSuggestion, NoteSummary } from '../../../shared/types'
 import { VaultInsightsPanel } from './VaultInsightsPanel'
 import { VaultIndexHealthPanel } from './VaultIndexHealthPanel'
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  StyledContextMenuContent,
+} from '@/components/ui/styled-context-menu'
+import { NativeFileExtraMenuItems } from '@/platform/native-file-actions'
 
 // ---------------------------------------------------------------------------
 // Types shared between inspector and dialogs
@@ -477,24 +483,36 @@ export function NoteInspector({
               <button className="h-6 rounded-[6px] px-2 text-[11px] hover:bg-foreground/[0.06]" onClick={onRetryAssets}>{t('common.retry')}</button>
             </div>
           ) : currentNoteAssets.length ? currentNoteAssets.map(asset => (
-            <button
-              key={asset.relativePath}
-              className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
-              onClick={() => onOpenFile(asset.path)}
-            >
-              <AssetThumbnail asset={asset} size="sm" />
-              <span className="min-w-0 flex-1 truncate text-xs">{asset.name}</span>
-              <span className="text-[10px] text-muted-foreground">{formatBytes(asset.size)}</span>
-            </button>
+            <ContextMenu key={asset.relativePath}>
+              <ContextMenuTrigger asChild>
+                <button
+                  className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
+                  onClick={() => onOpenFile(asset.path)}
+                >
+                  <AssetThumbnail asset={asset} size="sm" />
+                  <span className="min-w-0 flex-1 truncate text-xs">{asset.name}</span>
+                  <span className="text-[10px] text-muted-foreground">{formatBytes(asset.size)}</span>
+                </button>
+              </ContextMenuTrigger>
+              <StyledContextMenuContent>
+                <NativeFileExtraMenuItems path={asset.path} />
+              </StyledContextMenuContent>
+            </ContextMenu>
           )) : activeNote.assetRefs.length ? activeNote.assetRefs.map(ref => (
-            <button
-              key={ref}
-              className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
-              onClick={() => onOpenFile(resolveNoteAssetPath(activeNote, ref))}
-            >
-              <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              <span className="min-w-0 flex-1 truncate text-xs">{ref}</span>
-            </button>
+            <ContextMenu key={ref}>
+              <ContextMenuTrigger asChild>
+                <button
+                  className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
+                  onClick={() => onOpenFile(resolveNoteAssetPath(activeNote, ref))}
+                >
+                  <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 truncate text-xs">{ref}</span>
+                </button>
+              </ContextMenuTrigger>
+              <StyledContextMenuContent>
+                <NativeFileExtraMenuItems path={resolveNoteAssetPath(activeNote, ref)} />
+              </StyledContextMenuContent>
+            </ContextMenu>
           )) : <span className="text-xs text-muted-foreground">{t('notes.inspector.noAssets')}</span>}
         </div>
       </section>

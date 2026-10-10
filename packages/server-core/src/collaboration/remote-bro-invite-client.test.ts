@@ -13,7 +13,8 @@ import { WorkspaceBroInvitationAuthority, type HostedSessionScope } from '../../
 import { SqliteHostedSessionRegistry } from '../../../../apps/workspace-service/src/modules/collaboration/session-publication-registry.ts'
 import { BroInviteService, resetBroInviteServiceForTests, setBroInviteService } from './bro-invite-service.ts'
 import { registerSessionsHandlers } from '../handlers/rpc/sessions.ts'
-import { RPC_CHANNELS, type Session, type SessionCommand } from '@rox/shared/protocol'
+import { evaluateSessionWriteAccess, upsertSessionParticipant } from '../sessions/SessionManager'
+import { RPC_CHANNELS, CodedError, type Session, type SessionCommand, type SessionParticipantIdentity } from '@rox/shared/protocol'
 import type { HandlerFn, RpcServer } from '../transport/index.ts'
 import type { HandlerDeps } from '../handlers/handler-deps.ts'
 import type { AuthenticatedActor, SharedProjectAuthority } from '@rox/shared/workspace-domain/identity/contracts'
@@ -180,7 +181,31 @@ describe('authenticated Bro invitation transport', () => {
         const handlers = new Map<string, HandlerFn>()
         const server = { handle: (channel: string, handler: HandlerFn) => handlers.set(channel, handler), push() {}, async invokeClient() {},
           hasClientCapability: () => false, findClientsWithCapability: () => [] } as RpcServer
-        registerSessionsHandlers(server, { sessionManager: { getSession: async (id: string) => localSessions.get(id) ?? null },
+        registerSessionsHandlers(server, { sessionManager: {
+          getSession: async (id: string) => localSessions.get(id) ?? null,
+          // a2.5: the command handler gates every write command through
+          // `assertSessionWriteAccess` (sessions.ts:597) before dispatch, so the
+          // fake must model that seam. Delegate to the same pure evaluator
+          // production uses; these fixture sessions carry no owner/visibility,
+          // which the evaluator treats as the open legacy default.
+          assertSessionWriteAccess: (id: string, actorAccountId: string | null) => {
+            const session = localSessions.get(id)
+            if (!session) return
+            const access = evaluateSessionWriteAccess(session, actorAccountId)
+            if (!access.allowed) throw new CodedError(access.code, access.message)
+          },
+          // a1.3: write commands attribute the writer as a bound participant
+          // (sessions.ts:652). Reuse the pure upsert production uses so the
+          // fake cannot drift from the manager's "persist only on change" rule.
+          noteSessionParticipant: async (id: string, participant: SessionParticipantIdentity) => {
+            const session = localSessions.get(id)
+            if (!session) return false
+            const participants = upsertSessionParticipant(session.participants, participant)
+            if (!participants) return false
+            session.participants = participants
+            return true
+          },
+        },
           platform: { logger: { info() {}, error() {}, warn() {}, debug() {} } } } as unknown as HandlerDeps)
         return { service, localStore, command: async (id: string, command: SessionCommand) => {
           setBroInviteService(service)

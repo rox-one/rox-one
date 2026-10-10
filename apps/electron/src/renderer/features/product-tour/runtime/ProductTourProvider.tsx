@@ -8,8 +8,9 @@ import { useDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
 import * as storage from '@/lib/local-storage'
 import type { CapabilityId, CapabilitySnapshot, EngineSnapshot, Phase, RuntimeState, SafeReason, TourBinding, TourDefinition, TourEffect, TourId, TourInput, TourProgress, TourScope, TourTargetRegistration, WindowLease } from '../contracts'
 import { initialRuntimeState, transition } from '../core'
-import { productTourCatalogue } from '../catalogue'
-import { createTargetRegistry, SpotlightOverlay, TourErrorBoundary } from '../ui'
+import { productTourCatalogue, DynamicTourIdPattern } from '../catalogue'
+import { listDynamicTours, subscribeDynamicTours } from '../catalogue/dynamic'
+import { createTargetRegistry, SpotlightOverlay, TourErrorBoundary, TourVignette } from '../ui'
 import { createProgressRepository, createLeaseRepository, createLearningProfileRepository, createLearningScopeKey, LearningLeaseLostError, type LearningPreferences } from '../persistence'
 import { createLearningDiagnosticsRepository, type LearningEventName } from '../analytics'
 import { clearChatObservations } from '../adapters/chat'
@@ -100,6 +101,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const pendingMode = useRef<'new' | 'resume' | 'replay'>('new')
   const [target, setTarget] = useState<TourTargetRegistration | null>(null)
   const [capRevision, setCapRevision] = useState(0)
+  const [dynamicRevision, setDynamicRevision] = useState(0)
   const capabilityRecords = useRef(new Map<string, { token: object; value: CapabilitySnapshot[CapabilityId]; projects?: Map<object, NonNullable<CapabilitySnapshot[CapabilityId]>> }>())
   const repositories = useMemo(() => enabled ? {
     progress: createProgressRepository(), lease: createLeaseRepository({ allowMemoryOnlyLease: true }), profile: createLearningProfileRepository(), diagnostics: createLearningDiagnosticsRepository(),
@@ -306,6 +308,28 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     return () => { lifetime.current += 1; launchSequence.current += 1; pause('scope-changed'); setPendingTour(null); setProgress({}); setProfileId(null) }
   }, [enabled, repositories, workspaceId, pause])
 
+  // Generated tours join the same engine and persistence as the static catalogue (D9).
+  useEffect(() => {
+    if (!enabled) return
+    return subscribeDynamicTours(() => setDynamicRevision(value => value + 1))
+  }, [enabled])
+
+  useEffect(() => {
+    if (!enabled || !repositories || !profileId || !workspaceId) return
+    const dynamic = listDynamicTours()
+    if (!dynamic.length) return
+    const generation = lifetime.current
+    const key = createLearningScopeKey(profileId, workspaceId)
+    void Promise.all(dynamic.map(async tour => [tour.id, await repositories.progress.read(key, tour.id)] as const)).then(loaded => {
+      if (generation !== lifetime.current) return
+      setProgress(previous => {
+        const next = { ...previous }
+        for (const [id, result] of loaded) if (result.status !== 'failed' && result.value) next[id] = result.value
+        return next
+      })
+    }).catch(() => {})
+  }, [enabled, repositories, profileId, workspaceId, dynamicRevision])
+
   useEffect(() => {
     if (!enabled) return
     const records = capabilityRecords.current
@@ -375,7 +399,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   }, [active, repositories, profileId, pause])
 
   const start = useCallback(async (id: TourId, mode: 'new' | 'resume' | 'replay' = 'new') => {
-    const tour = productTourCatalogue.find(item => item.id === id)
+    const tour = [...productTourCatalogue, ...listDynamicTours()].find(item => item.id === id)
     if (!tour || !enabledRef.current || !repositories || !profileRef.current || !shellReady) return
     setLaunchReason(null)
     const prerequisite = prerequisiteRoute(tour, navRef.current.navigationState)
@@ -413,7 +437,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   }, [repositories, shellReady, pause, acquireLease])
   useEffect(() => {
     if (pendingTour) {
-      const tour = productTourCatalogue.find(item => item.id === pendingTour)
+      const tour = [...productTourCatalogue, ...listDynamicTours()].find(item => item.id === pendingTour)
       if (tour && !prerequisiteRoute(tour, nav.navigationState)) void start(pendingTour, pendingMode.current)
     }
   }, [pendingTour, nav.navigationRevision, nav.navigationState, start])
@@ -518,13 +542,19 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   }, [pause, repositories, acquireLease, releaseLease])
   const controller: LearningController = { enabled, ready: !!profileId && !!workspaceId, setEnabled, state, progress, preferences, setPreferences, storageStatus, pendingTour, start, pause, reset, capabilities }
   const step = state.definition?.steps.find(item => item.id === state.attempt?.stepId)
+  const demo = state.definition !== null && DynamicTourIdPattern.test(state.definition.id)
+  const stepCount = state.definition?.steps.length ?? 0
+  const stepIndex = state.definition && state.attempt ? state.definition.steps.findIndex(item => item.id === state.attempt?.stepId) + 1 : 0
   const evidence = step ? state.attemptEvidence[step.id] : undefined
   const canNext = step?.completion.kind === 'ack' || !!(evidence?.level && (step?.completion.evidence === 'observed' || evidence.level === 'verified'))
   const input = (type: 'ACK' | 'BACK' | 'SKIP' | 'RETRY') => { if (state.attempt) sendRef.current({ type, runToken: state.attempt.binding.runToken, stepId: state.attempt.stepId, at: Date.now() }) }
   const presentation = <>
       {enabled && welcomeSessionId && preferences.invitationsEnabled && !active && !progress['OBT-01'] && context.sessionId === welcomeSessionId && modal.getSnapshot().length === 0 && <aside data-testid="learning-welcome-invitation" className="fixed bottom-4 right-4 z-40 rounded-xl border bg-background p-3 shadow-modal-small"><button type="button" onClick={() => void start('OBT-01')}>{t('productTour.welcomeInvitation')}</button></aside>}
       <TourErrorBoundary key={enabled ? state.attempt?.binding.runToken ?? 'enabled' : 'disabled'} onError={() => pause('operation-failed')}>
-        {active && target && step && state.attempt && (state.phase === 'presenting' || state.phase === 'waiting-action') && <SpotlightOverlay target={target} step={step} binding={state.attempt.binding} onPause={pause} onNext={() => input('ACK')} onBack={() => input('BACK')} onSkip={() => input('SKIP')} onDismiss={() => void dismiss()} canNext={canNext} />}
+        {active && target && step && state.attempt && (state.phase === 'presenting' || state.phase === 'waiting-action') && <>
+          {demo && <TourVignette />}
+          <SpotlightOverlay target={target} step={step} binding={state.attempt.binding} pulse={demo} progress={demo && stepCount > 0 ? { current: stepIndex, total: stepCount } : undefined} onPause={pause} onNext={() => input('ACK')} onBack={() => input('BACK')} onSkip={() => input('SKIP')} onDismiss={() => void dismiss()} canNext={canNext} />
+        </>}
       </TourErrorBoundary>
       {enabled && (state.phase === 'paused' || state.phase === 'blocked' || pendingTour || launchReason) && <aside data-testid="product-tour-status" role="status" className="fixed bottom-4 right-4 z-40 max-w-xs rounded-xl border bg-background p-3 text-sm shadow-modal-small">
         <p>{t(pendingTour ? 'productTour.chooseEntity' : `productTour.reasons.${launchReason ?? state.attempt?.reason ?? 'user-paused'}`)}</p>

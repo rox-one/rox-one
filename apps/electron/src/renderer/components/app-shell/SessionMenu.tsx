@@ -49,7 +49,7 @@ import type { SessionStatus } from '@/config/session-status-config'
 import type { LabelConfig } from '@rox/shared/labels'
 import type { SessionActorRef } from '@rox/shared/protocol'
 import { LabelMenuItems, StatusMenuItems, ShareMenuItems, OwnerMenuSection, VisibilityMenuSection } from './SessionMenuParts'
-import { openSessionSuggestions } from './SessionSuggestionsHost'
+import { openSessionSuggestions, resolveSuggestionOwnerId } from './SessionSuggestionsHost'
 import { getFileManagerName } from '@/lib/platform'
 import type { SessionMeta } from '@/atoms/sessions'
 import { getSessionStatus, hasUnreadMeta, hasMessagesMeta } from '@/utils/session'
@@ -355,10 +355,13 @@ export function SessionMenu({
       {currentVisibility === 'suggest' && (
         <MenuItem onClick={() => openSessionSuggestions({
           sessionId,
-          ownerId: item.owner?.id ?? undefined,
-          viewerId: actions.viewer.accountId ?? undefined,
+          // a2.5: the same owner the server's write gate resolves (assigned
+          // owner, else creator) so accept/dismiss is offered to exactly the
+          // viewer the resolve RPC will accept.
+          ownerId: resolveSuggestionOwnerId(item),
+          viewerId: actions.viewer.accountId,
         })}>
-          <MessageSquarePlus className="h-3.5 w-3.5" />
+          <MessageSquarePlus className="icon-caption" />
           <span className="flex-1">{t('sessionSuggestions.open')}</span>
         </MenuItem>
       )}

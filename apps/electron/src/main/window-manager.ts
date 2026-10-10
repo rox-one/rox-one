@@ -58,6 +58,12 @@ export interface CreateWindowOptions {
 
 export class WindowManager {
   private windows: Map<number, ManagedWindow> = new Map()  // webContents.id → ManagedWindow
+  /**
+   * Auxiliary windows (e.g. the floating quick composer): bound to a workspace
+   * for preload proof/token resolution, but deliberately excluded from window
+   * enumeration, title policy, broadcast fan-out and persistence.
+   */
+  private auxiliaryWindows: Map<number, ManagedWindow> = new Map()
   private readonly workspaceBindingGenerations = new Map<number, number>()
   private focusedModeWindows: Set<number> = new Set()  // webContents.id of windows in focused mode
   private lastActiveWindowId: number | null = null
@@ -93,7 +99,13 @@ export class WindowManager {
   }
 
   /** Push an event to a specific window via the RPC event sink. Falls back to webContents.send. */
-  private pushToWindow(window: BrowserWindow, channel: string, ...args: any[]): void {
+  /**
+   * The sanctioned main→renderer delivery path: the typed event sink when the
+   * client is known, and the raw `webContents.send` fallback before the WS
+   * handshake settles (allowlisted by `scripts/check-raw-sends.sh`). Callers
+   * outside this class must use it instead of sending on a window directly.
+   */
+  pushToWindow(window: BrowserWindow, channel: string, ...args: unknown[]): void {
     if (this.eventSink && this.clientResolver) {
       const clientId = this.clientResolver(window.webContents.id)
       if (clientId) {
@@ -696,7 +708,9 @@ export class WindowManager {
    */
   getWindowByWebContentsId(wcId: number): BrowserWindow | null {
     const managed = this.windows.get(wcId)
-    return managed?.window ?? null
+    if (managed) return managed.window
+    const auxiliary = this.auxiliaryWindows.get(wcId)
+    return auxiliary?.window ?? null
   }
 
   /**
@@ -740,7 +754,8 @@ export class WindowManager {
 
   getWorkspaceForWindow(webContentsId: number): string | null {
     const managed = this.windows.get(webContentsId)
-    return managed?.workspaceId ?? null
+    if (managed) return managed.workspaceId
+    return this.auxiliaryWindows.get(webContentsId)?.workspaceId ?? null
   }
 
   /**
@@ -840,6 +855,24 @@ export class WindowManager {
     // Re-apply window-title policy after re-registration (e.g. post-refresh).
     this.refreshWindowTitles()
     windowLog.info(`Registered window ${webContentsId} for workspace ${workspaceId}`)
+  }
+
+  /**
+   * Register a lightweight auxiliary window (floating quick composer) that must
+   * resolve a workspace binding for the preload's synchronous proof/token
+   * channels, yet never appear in window enumeration, title policy or state
+   * persistence. Auto-unregisters when the window closes.
+   */
+  registerAuxiliaryWindow(window: BrowserWindow, workspaceId: string): void {
+    const webContentsId = window.webContents.id
+    this.workspaceBindingGenerations.set(webContentsId, (this.workspaceBindingGenerations.get(webContentsId) ?? 0) + 1)
+    this.auxiliaryWindows.set(webContentsId, { window, workspaceId })
+    window.once('closed', () => this.unregisterAuxiliaryWindow(webContentsId))
+  }
+
+  unregisterAuxiliaryWindow(webContentsId: number): void {
+    this.auxiliaryWindows.delete(webContentsId)
+    this.workspaceBindingGenerations.delete(webContentsId)
   }
 
   /**

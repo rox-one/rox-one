@@ -63,7 +63,7 @@ import { toErrorMessage } from '@/lib/errors'
 import { useEffectiveVisible } from '@/lib/surface-keepalive'
 
 const NS = 'dossier'
-const AVATAR_TONES = ['bg-accent/25', 'bg-info/25', 'bg-success/25', 'bg-warning/25', 'bg-foreground/15']
+const AVATAR_TONES = ['bg-accent/25', 'bg-info/25', 'bg-success/25', 'bg-status-warning/25', 'bg-foreground/15']
 
 function toneFor(id: string): string {
   let hash = 0
