@@ -91,12 +91,23 @@ function safeSessionStorage(): Storage | undefined {
 }
 
 /**
+ * Installations already wired, keyed by the window. Two calls on the same
+ * window must not register two listener pairs (each with its own one-shot
+ * guard), or a single chunk failure would fire two reloads.
+ */
+const installed = new WeakMap<Window, () => void>()
+
+/**
  * Wire the one-shot recovery into the window. Must run before the first
- * dynamic import that can outlive a build. Returns a disposer.
+ * dynamic import that can outlive a build. Returns a disposer. Idempotent: a
+ * second call for the same window returns the existing disposer and registers
+ * nothing new, so the reload can never double-fire.
  */
 export function installStaleChunkReload(target?: Window): () => void {
   const win = target ?? (typeof window === 'undefined' ? undefined : window)
   if (!win || typeof win.addEventListener !== 'function') return () => {}
+  const existing = installed.get(win)
+  if (existing) return existing
   const storage = safeSessionStorage()
   const recovery = createStaleChunkReload({
     reload: () => win.location.reload(),
@@ -121,8 +132,11 @@ export function installStaleChunkReload(target?: Window): () => void {
 
   win.addEventListener('vite:preloadError', onPreloadError)
   win.addEventListener('unhandledrejection', onUnhandledRejection as EventListener)
-  return () => {
+  const dispose = () => {
+    installed.delete(win)
     win.removeEventListener('vite:preloadError', onPreloadError)
     win.removeEventListener('unhandledrejection', onUnhandledRejection as EventListener)
   }
+  installed.set(win, dispose)
+  return dispose
 }

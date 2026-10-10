@@ -201,7 +201,7 @@ function modulePreloadMainChunkPlugin(): Plugin {
   }
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     react({
       babel: {
@@ -210,7 +210,15 @@ export default defineConfig({
           // so that HMR module re-execution returns stable atom references
           // instead of creating new (empty) atoms that orphan existing data.
           'jotai/babel/plugin-debug-label',
-          ['jotai/babel/plugin-react-refresh', { customAtomNames: ['atomFamily'] }],
+          // Dev/HMR only. This plugin keys the atom cache on `state.filename` —
+          // the ABSOLUTE source path — so a `vite build` that ran it would embed
+          // local paths into chunk text and make the emitted chunk hash depend on
+          // the build directory (breaking reproducible build-manifest checks) and
+          // leak the developer's checkout path into shipped bundles. HMR only
+          // runs under `serve`, so builds omit it.
+          ...(command === 'serve'
+            ? ([['jotai/babel/plugin-react-refresh', { customAtomNames: ['atomFamily'] }]] as const)
+            : []),
         ],
       },
     }),
@@ -277,4 +285,4 @@ export default defineConfig({
   define: {
     global: 'globalThis',
   },
-})
+}))
