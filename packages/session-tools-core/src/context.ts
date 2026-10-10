@@ -17,6 +17,7 @@ import type {
   McpSourceConfig,
 } from './types.ts';
 import type { MemorySearchToolArgs, MemoryGetToolArgs, MemoryForgetToolArgs, WikiSearchToolArgs, WikiGetToolArgs, WikiApplyToolArgs } from './tool-defs.ts';
+import type { VisitorInviteToolArgs, VisitorRevokeToolArgs, VisitorListToolArgs } from './tool-defs.ts';
 
 // ============================================================
 // Source Credential Types
@@ -176,6 +177,23 @@ export interface MemoryWikiCallbacks {
   search(args: WikiSearchToolArgs): Promise<ToolResult>;
   get(args: WikiGetToolArgs): Promise<ToolResult>;
   apply(args: WikiApplyToolArgs): Promise<ToolResult>;
+}
+
+// ============================================================
+// Visitor access (visitor_invite / visitor_revoke / visitor_list)
+// ============================================================
+
+/**
+ * Visitor-access tool callbacks — the port-matrix row a1.6 grant surface.
+ * Grouped in one object (the three operations always ship together) and
+ * injected by the backend (SessionManager) over the live VisitorAccessService.
+ * A backend without the service leaves this undefined and the handlers report
+ * a typed VISITOR_STORE_UNAVAILABLE result.
+ */
+export interface VisitorToolCallbacks {
+  invite(args: VisitorInviteToolArgs): Promise<ToolResult>;
+  revoke(args: VisitorRevokeToolArgs): Promise<ToolResult>;
+  list(args: VisitorListToolArgs): Promise<ToolResult>;
 }
 
 // ============================================================
@@ -459,6 +477,18 @@ export interface SessionToolContext {
    * Injected by the backend (SessionManager); undefined in backends without it.
    */
   memory?: MemoryToolCallbacks;
+
+  // ============================================================
+  // Visitor access (visitor_invite / visitor_revoke / visitor_list)
+  // ============================================================
+
+  /**
+   * Visitor-access callbacks over the live VisitorAccessService (port row a1.6).
+   * Injected by the backend (SessionManager); undefined in backends without it,
+   * and in deployments where visitor config is absent — the handlers then
+   * report a typed VISITOR_STORE_UNAVAILABLE result.
+   */
+  visitors?: VisitorToolCallbacks;
 
   // ============================================================
   // Inter-Session Messaging
