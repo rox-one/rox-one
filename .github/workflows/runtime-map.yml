@@ -21,6 +21,9 @@ on:
       - '.github/workflows/runtime-map.yml'
 permissions:
   contents: read
+concurrency:
+  group: runtime-map-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   native-loop:
     runs-on: ubuntu-24.04

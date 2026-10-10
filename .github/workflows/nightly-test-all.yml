@@ -3,9 +3,11 @@
 # whole aggregate suite in bounded parallel against the known-red baseline
 # (scripts/test-baseline.json), so only *new* failures are surfaced.
 #
-# It is deliberately non-blocking: the job never fails the run, and the
-# scheduled trigger does not gate PRs or merges. New regressions are published
-# as workflow annotations and as the uploaded report artifact.
+# It is deliberately non-blocking for PRs: the workflow only runs on a schedule
+# and manual dispatch, never on pull_request, and the suite step itself keeps
+# continue-on-error. The one hard gate is the test-debt ratchet step: the
+# recorded knownRed[] must not exceed knownRedCeiling, so the checked-in debt
+# can only fall.
 name: nightly-test-all
 
 on:
@@ -101,13 +103,13 @@ jobs:
           '
       - name: Run the aggregate suite against the known-red baseline
         id: test-all
-        # The runner's exit code is still 1 on new failures; `continue-on-error`
-        # keeps the nightly green so it never blocks anything. The report below
-        # carries the signal.
+        # The runner's exit code is 1 on new failures and on a ratchet breach;
+        # `continue-on-error` keeps this suite step non-blocking so it never
+        # hides the report. The dedicated ratchet step is the one hard gate.
         continue-on-error: true
         env:
           CONCURRENCY: ${{ github.event.inputs.concurrency || '4' }}
-        run: bun scripts/test-all.ts --shard "${{ matrix.shard }}/2" --concurrency "$CONCURRENCY" ${{ github.event.inputs.strict == 'true' && '--strict' || '' }} | tee test-all.stdout.json
+        run: bun scripts/test-all.ts --shard "${{ matrix.shard }}/2" --concurrency "$CONCURRENCY" --ratchet ${{ github.event.inputs.strict == 'true' && '--strict' || '' }} | tee test-all.stdout.json
       - name: Publish new-regression signal
         if: always()
         run: |
@@ -138,6 +140,24 @@ jobs:
             } else {
               console.log("::notice::no new test failures");
             }
+          '
+      - name: Enforce the test-debt ratchet ceiling
+        if: always()
+        # The nightly's one hard gate: the recorded knownRed[] in
+        # scripts/test-baseline.json may not exceed knownRedCeiling. The suite
+        # step above keeps continue-on-error, so only this step fails the job,
+        # and the workflow never runs on pull_request, so no PR is blocked.
+        run: |
+          bun -e '
+            import { readFileSync, existsSync } from "node:fs";
+            if (!existsSync("test-all.stdout.json")) { console.log("::warning::test-all produced no receipt to ratchet"); process.exit(0); }
+            let receipt;
+            try { receipt = JSON.parse(readFileSync("test-all.stdout.json", "utf8")); }
+            catch { console.log("::warning::test-all receipt is not readable JSON"); process.exit(0); }
+            const ratchet = receipt?.ratchet;
+            if (!ratchet) { console.log("::warning::test-all receipt carries no ratchet verdict"); process.exit(0); }
+            if (ratchet.exceeded) { console.log(`::error::${ratchet.line}`); process.exit(1); }
+            console.log(`::notice::${ratchet.line}`);
           '
       - name: Upload test-all evidence
         if: always()

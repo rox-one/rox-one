@@ -20,27 +20,38 @@ const platformDir = join(import.meta.dir, '..')
 describe('getAppPanelRegistry after registerCorePanels', () => {
   const registry = registerCorePanels(getAppPanelRegistry(), () => null)
 
-  it('lists knowledge.inspector on slot inspector when activeSurface is knowledge', () => {
-    const listed = registry.list('inspector', { activeSurface: 'knowledge' })
+  it('lists knowledge.inspector on slot inspector when activeSurface is knowledge and the flag is on', () => {
+    const listed = registry.list('inspector', { activeSurface: 'knowledge', unifiedShell: true })
     expect(listed.map((p) => p.id)).toContain(KNOWLEDGE_INSPECTOR_PANEL_ID)
     const panel = listed.find((p) => p.id === KNOWLEDGE_INSPECTOR_PANEL_ID)
     expect(panel?.slot).toBe('inspector')
-    expect(panel?.when).toBe("activeSurface=='knowledge'")
+    expect(panel?.when).toBe("activeSurface=='knowledge' && unifiedShell")
     expect(panel?.source).toEqual({ type: 'core', id: 'knowledge' })
   })
 
+  it('does not list knowledge.inspector when the unified shell flag is off or absent', () => {
+    // Flag OFF ⇒ PanelHost contributes nothing, classic companion aside stays.
+    expect(registry.list('inspector', { activeSurface: 'knowledge', unifiedShell: false }).map((p) => p.id)).not.toContain(
+      KNOWLEDGE_INSPECTOR_PANEL_ID,
+    )
+    expect(registry.list('inspector', { activeSurface: 'knowledge' }).map((p) => p.id)).not.toContain(
+      KNOWLEDGE_INSPECTOR_PANEL_ID,
+    )
+  })
+
   it('does not list knowledge.inspector when activeSurface is session', () => {
-    expect(registry.list('inspector', { activeSurface: 'session' }).map((p) => p.id)).not.toContain(
+    expect(registry.list('inspector', { activeSurface: 'session', unifiedShell: true }).map((p) => p.id)).not.toContain(
       KNOWLEDGE_INSPECTOR_PANEL_ID,
     )
   })
 
   it('does not list knowledge.inspector when activeSurface is undefined', () => {
+    expect(registry.list('inspector', { unifiedShell: true }).map((p) => p.id)).not.toContain(KNOWLEDGE_INSPECTOR_PANEL_ID)
     expect(registry.list('inspector', {}).map((p) => p.id)).not.toContain(KNOWLEDGE_INSPECTOR_PANEL_ID)
   })
 
   it('leaves other PanelHost slots empty (this ticket registers inspector only)', () => {
-    const ctx = { activeSurface: 'knowledge' }
+    const ctx = { activeSurface: 'knowledge', unifiedShell: true }
     expect(registry.list('activity', ctx)).toEqual([])
     expect(registry.list('navigator-primary', ctx)).toEqual([])
     expect(registry.list('navigator-secondary', ctx)).toEqual([])

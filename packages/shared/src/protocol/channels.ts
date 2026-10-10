@@ -1361,6 +1361,8 @@ export const RPC_CHANNELS = {
     DELETE: 'meetings:delete',
     CREATE: 'meetings:create',
     CREATE_PROPOSAL: 'meetings:createProposal',
+    /** Read the workspace's meeting → native proposals for the inbox. */
+    LIST_PROPOSALS: 'meetings:listProposals',
     APPROVE_PROPOSAL: 'meetings:approveProposal',
     REJECT_PROPOSAL: 'meetings:rejectProposal',
     OPEN_TARGET: 'meetings:openTarget',

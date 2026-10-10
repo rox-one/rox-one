@@ -34,6 +34,7 @@ import type {
   ServerHealth,
 } from '@rox/core/types';
 import type { EntityRef } from '@rox/core/entities'
+import type { MeetingProposal } from '@rox/core/meetings'
 import type { SessionSuggestion, SessionSuggestionResolution } from '@rox/shared/protocol'
 // W1-08 (#1505): entity links/preview bridge types.
 import type { EntityLink, EntityPreview } from '@rox/core/entities'
@@ -1052,6 +1053,12 @@ export interface ElectronAPI {
     actorId: string,
     grant: import('@rox/shared/meeting-agents').MeetingGrant | null,
   ): Promise<{ proposal: import('@rox/core/meetings').MeetingProposal | null; error?: { code: string } }>
+  listMeetingProposals(
+    workspaceId: string,
+  ): Promise<{
+    proposals: MeetingProposal[]
+    error?: { code: string }
+  }>
   approveMeetingProposal(
     workspaceId: string,
     proposalId: string,

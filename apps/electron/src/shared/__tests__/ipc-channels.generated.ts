@@ -454,6 +454,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'meetings:get',
   'meetings:importMedia',
   'meetings:list',
+  'meetings:listProposals',
   'meetings:mailPrepare',
   'meetings:mailSend',
   'meetings:mailThreads',

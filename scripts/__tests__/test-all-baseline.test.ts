@@ -155,8 +155,13 @@ describe('known-red baseline', () => {
     expect(JSON.parse(readFileSync(path, 'utf8'))).toEqual({ schemaVersion: 1, description: 'test baseline', knownRed: ['a.test.ts', 'b.test.ts'] })
     expect(await api.loadBaseline(path)).toEqual({ schemaVersion: 1, description: 'test baseline', knownRed: ['a.test.ts', 'b.test.ts'] })
     expect(await api.loadBaseline(join(root, 'absent.json'))).toBeNull()
+    await api.writeBaseline(path, ['a.test.ts'], 'with ceiling', 3)
+    expect(JSON.parse(readFileSync(path, 'utf8'))).toEqual({ schemaVersion: 1, description: 'with ceiling', knownRedCeiling: 3, knownRed: ['a.test.ts'] })
+    expect(await api.loadBaseline(path)).toEqual({ schemaVersion: 1, description: 'with ceiling', knownRedCeiling: 3, knownRed: ['a.test.ts'] })
     writeFileSync(path, JSON.stringify({ schemaVersion: 2, knownRed: [] }))
     await expect(api.loadBaseline(path)).rejects.toThrow('schemaVersion 1')
+    writeFileSync(path, JSON.stringify({ schemaVersion: 1, knownRedCeiling: 1.5, knownRed: [] }))
+    await expect(api.loadBaseline(path)).rejects.toThrow('knownRedCeiling')
     writeFileSync(path, '{ not json')
     await expect(api.loadBaseline(path)).rejects.toThrow('not valid JSON')
   })
@@ -314,5 +319,90 @@ describe('update-baseline guard', () => {
     const forced = await run(['--update-baseline', '--shard=1/2', '--force-subset-baseline'])
     expect(forced.exitCode).toBe(0)
     expect(JSON.parse(readFileSync(baselinePath, 'utf8')).knownRed).toEqual(['tests/red.test.ts'])
+  }, 30_000)
+})
+
+describe('known-red debt ratchet', () => {
+  test('growth past the ceiling fails and prints the excess', async () => {
+    const root = fixture()
+    file(root, 'tests/red.test.ts', FAILING)
+    const api = await runner()
+    const baselinePath = join(root, 'baseline.json')
+    // Two recorded entries against a ceiling of one: the run itself is green
+    // (the red suite is known-red), so only the ratchet can fail it.
+    writeFileSync(baselinePath, JSON.stringify({ schemaVersion: 1, knownRedCeiling: 1, knownRed: ['tests/red.test.ts', 'tests/gone.test.ts'] }))
+    const result = await api.captureTestCommand([process.execPath, runnerPath, '--root', root, '--baseline', baselinePath, '--ratchet'],
+      { cwd: import.meta.dir, environment: { ...process.env, ROX_TEST_ARTIFACT_DIR: join(root, 'evidence') } })
+    expect(result.exitCode).not.toBe(0)
+    expect(result.stderr).toContain('knownRed: 2/1')
+    expect(result.stderr).toContain('exceeds the ceiling by 1')
+    const receipt = JSON.parse(result.stdout.trim())
+    expect(receipt.status).toBe('passed')
+    expect(receipt.ratchet).toMatchObject({ knownRed: 2, ceiling: 1, exceeded: true })
+  }, 30_000)
+
+  test('equality passes silently and a decrease passes with a tightening hint', async () => {
+    const root = fixture()
+    file(root, 'tests/green.test.ts', PASSING)
+    const api = await runner()
+    const equalPath = join(root, 'equal.json')
+    writeFileSync(equalPath, JSON.stringify({ schemaVersion: 1, knownRedCeiling: 1, knownRed: ['tests/gone.test.ts'] }))
+    const equal = await api.captureTestCommand([process.execPath, runnerPath, '--root', root, '--baseline', equalPath, '--ratchet'],
+      { cwd: import.meta.dir, environment: { ...process.env, ROX_TEST_ARTIFACT_DIR: join(root, 'evidence') } })
+    expect(equal.exitCode).toBe(0)
+    expect(equal.stderr).toContain('knownRed: 1/1')
+    expect(JSON.parse(equal.stdout.trim()).ratchet).toMatchObject({ knownRed: 1, ceiling: 1, exceeded: false })
+
+    const slackPath = join(root, 'slack.json')
+    writeFileSync(slackPath, JSON.stringify({ schemaVersion: 1, knownRedCeiling: 4, knownRed: ['tests/a.test.ts', 'tests/b.test.ts'] }))
+    const slack = await api.captureTestCommand([process.execPath, runnerPath, '--root', root, '--baseline', slackPath, '--ratchet'],
+      { cwd: import.meta.dir, environment: { ...process.env, ROX_TEST_ARTIFACT_DIR: join(root, 'evidence') } })
+    expect(slack.exitCode).toBe(0)
+    expect(slack.stderr).toContain('knownRed: 2/4')
+    expect(slack.stderr).toContain('lower knownRedCeiling to 2')
+  }, 30_000)
+
+  test('stale baseline entries stay visible when the ratchet runs', async () => {
+    const root = fixture()
+    file(root, 'tests/green.test.ts', PASSING)
+    file(root, 'tests/red.test.ts', FAILING)
+    const api = await runner()
+    const baselinePath = join(root, 'baseline.json')
+    writeFileSync(baselinePath, JSON.stringify({ schemaVersion: 1, knownRedCeiling: 2, knownRed: ['tests/red.test.ts', 'tests/green.test.ts'] }))
+    const result = await api.captureTestCommand([process.execPath, runnerPath, '--root', root, '--baseline', baselinePath, '--ratchet'],
+      { cwd: import.meta.dir, environment: { ...process.env, ROX_TEST_ARTIFACT_DIR: join(root, 'evidence') } })
+    expect(result.exitCode).toBe(0)
+    const receipt = JSON.parse(result.stdout.trim())
+    expect(receipt.summary).toMatchObject({ knownRed: 1, stalePass: 1 })
+    expect(receipt.baseline.stalePass).toEqual(['tests/green.test.ts'])
+    expect(receipt.ratchet).toMatchObject({ knownRed: 2, ceiling: 2, exceeded: false })
+    expect(result.stderr).toContain('stale')
+  }, 30_000)
+
+  test('--update-baseline records the new debt without raising the ceiling', async () => {
+    const root = fixture()
+    file(root, 'tests/red.test.ts', FAILING)
+    file(root, 'tests/red2.test.ts', FAILING)
+    const api = await runner()
+    const baselinePath = join(root, 'baseline.json')
+    writeFileSync(baselinePath, JSON.stringify({ schemaVersion: 1, knownRedCeiling: 1, knownRed: ['tests/red.test.ts'] }))
+    const update = await api.captureTestCommand([process.execPath, runnerPath, '--root', root, '--baseline', baselinePath, '--update-baseline'],
+      { cwd: import.meta.dir, environment: { ...process.env, ROX_TEST_ARTIFACT_DIR: join(root, 'evidence') } })
+    expect(update.exitCode).toBe(0)
+    const written = JSON.parse(readFileSync(baselinePath, 'utf8'))
+    expect(written.knownRed).toEqual(['tests/red.test.ts', 'tests/red2.test.ts'])
+    expect(written.knownRedCeiling).toBe(1)
+  }, 30_000)
+
+  test('--ratchet refuses a baseline without a ceiling', async () => {
+    const root = fixture()
+    file(root, 'tests/green.test.ts', PASSING)
+    const api = await runner()
+    const baselinePath = join(root, 'baseline.json')
+    writeFileSync(baselinePath, JSON.stringify({ schemaVersion: 1, knownRed: [] }))
+    const result = await api.captureTestCommand([process.execPath, runnerPath, '--root', root, '--baseline', baselinePath, '--ratchet'],
+      { cwd: import.meta.dir, environment: { ...process.env, ROX_TEST_ARTIFACT_DIR: join(root, 'evidence') } })
+    expect(result.exitCode).not.toBe(0)
+    expect(result.stderr).toContain('knownRedCeiling')
   }, 30_000)
 })
