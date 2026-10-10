@@ -1,0 +1,77 @@
+# Wave-2 visual-capture driver. Renders the Playground story screens with
+# Playwright ("bun run visual:capture") and writes .visual-artifacts/
+# (capture.json + PNGs). The visual-snapshots / axe / one-rail-dom unified
+# gates consume that directory; without it they stay "pending" (the documented
+# default), so this scheduled job is the only place they actually evaluate.
+#
+# It is deliberately NOT wired into the PR-gating jobs: it needs a browser and
+# its pixel hashes are machine-sensitive. Baselines live in
+# packages/test-harness/visual-baselines.json and record the environment that
+# produced them, so a mismatch on a different runner is ADVISORY, never a merge
+# gate. Regenerate them locally only — `bun run visual:capture
+# --update-baselines` (the ROX_VISUAL_UPDATE-style path) — and commit the file;
+# never regenerate from CI.
+name: visual-capture
+
+on:
+  schedule:
+    # 03:30 UTC every day.
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-capture
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: '1.4.2'
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        continue-on-error: true
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      - name: Install exact lockfile
+        run: bun install --frozen-lockfile
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/Library/Caches/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+      - name: Install Chromium and browser runtime dependencies
+        run: bunx playwright install --with-deps chromium
+      - name: Capture visual snapshots
+        run: bun run visual:capture
+      - name: Evaluate unified gates against the captured artifacts
+        # Advisory on a non-baseline machine: `packages/test-harness/visual-baselines.json`
+        # records the environment that produced its pixel hashes (darwin-arm64
+        # today), so a Linux runner reports mismatches instead of regressions.
+        # The step still runs and prints the gate verdict; the artifacts it
+        # uploads are what a darwin machine compares against.
+        continue-on-error: true
+        run: bun run scripts/run-unified-gates.ts
+      - name: Upload visual artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: visual-artifacts-${{ github.sha }}
+          path: .visual-artifacts/
+          if-no-files-found: warn
+          retention-days: 14

@@ -63,12 +63,13 @@ export {
   IPC_SENDS_TIMEOUT_MS,
   TOOL_NAME_CHECKS_TIMEOUT_MS,
 } from './script-gates.ts'
-export { checkVisualGate, checkAxeGate } from './visual-axe.ts'
+export { checkVisualGate, checkAxeGate, VISUAL_CAPTURE_COMMAND, VISUAL_CAPTURE_UPDATE_COMMAND, MAX_REPORTED_KEYS } from './visual-axe.ts'
 export {
   lintChromeSchemas,
   checkChromeLintGate,
   checkOneRailGate,
   checkOneRailGatePending,
+  checkOneRailGateAll,
   checkDockLayoutGate,
   type ChromeSchema,
 } from './chrome-dock.ts'

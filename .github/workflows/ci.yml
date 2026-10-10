@@ -14,13 +14,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with: { node-version: '24' }
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with: { bun-version: '1.4.2' }
-      - uses: astral-sh/setup-uv@v5
-      - uses: actions/cache@v4
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         continue-on-error: true
         with:
           path: ~/.bun/install/cache
@@ -46,6 +46,38 @@ jobs:
         # takeover of im.create_chat / workspaces.create left them unable to
         # create a chat - and every gate stayed green, so nothing noticed.
         run: bun test packages/server-core/src/work
+      - name: Verify scheduler suites
+        # packages/server-core/src/scheduler runs in no other workflow. Its
+        # /hooks ingress case (a path outside the prefix must never have its
+        # body read) was red on main until 7d16f3126 restored the bound, and
+        # nothing else runs this directory - this step keeps that regression
+        # from going invisible again.
+        run: bun test packages/server-core/src/scheduler
+      - name: Verify uncovered server-core suites
+        # These packages/server-core/src directories run in no other workflow,
+        # so a regression in any of them could merge with every gate green.
+        run: bun test packages/server-core/src/authority packages/server-core/src/automations packages/server-core/src/board packages/server-core/src/bootstrap packages/server-core/src/command-gateway packages/server-core/src/commands packages/server-core/src/contacts packages/server-core/src/domain packages/server-core/src/drive packages/server-core/src/entities packages/server-core/src/execution packages/server-core/src/feed packages/server-core/src/knowledge packages/server-core/src/meetings packages/server-core/src/nodes packages/server-core/src/openclaw packages/server-core/src/pages packages/server-core/src/runtime packages/server-core/src/security packages/server-core/src/service packages/server-core/src/services packages/server-core/src/state packages/server-core/src/tasks packages/server-core/src/utils packages/server-core/src/workboard packages/server-core/src/workflows packages/server-core/src/workgraph packages/server-core/src/workspace-sync packages/server-core/src/workspace-work packages/server-core/src/xsc
+      - name: Verify uncovered renderer suites
+        # These apps/electron/src/renderer directories run in no other
+        # workflow, so a renderer regression there could merge green.
+        run: bun test apps/electron/src/renderer/actions apps/electron/src/renderer/atoms apps/electron/src/renderer/config apps/electron/src/renderer/event-processor apps/electron/src/renderer/mindmap apps/electron/src/renderer/playground apps/electron/src/renderer/shims apps/electron/src/renderer/utils apps/electron/src/renderer/voice
+      - name: Verify ui component suites
+        # packages/ui/src runs in no other workflow. markdown runs in its own
+        # invocation: its DOM setup leaks into primitives/dom-env-restore when
+        # both run in the same process.
+        run: |
+          bun test packages/ui/src/components/markdown/__tests__
+          bun test packages/ui/src/__tests__ packages/ui/src/components/annotations/__tests__ packages/ui/src/components/chat/__tests__ packages/ui/src/components/code-viewer/__tests__ packages/ui/src/components/comments/__tests__ packages/ui/src/components/markdown/extensions/__tests__ packages/ui/src/components/overlay/__tests__ packages/ui/src/components/primitives/__tests__ packages/ui/src/components/terminal/__tests__ packages/ui/src/components/ui/__tests__ packages/ui/src/context/__tests__ packages/ui/src/lib/__tests__ packages/ui/src/styles/__tests__
+      - name: Verify shared domain-schema suite
+        # packages/shared/src/domain runs in no other workflow. validate:ci's
+        # test:shared:all covers other shared suites only, so a broken domain
+        # entity schema (contacts, tasks, calendar, ...) could merge green.
+        run: bun test packages/shared/src/domain
+      - name: Verify renderer warmup suite
+        # apps/electron/src/renderer/lib/__tests__/warmup.test.ts runs in no
+        # other workflow, so a renderer warmup regression could otherwise
+        # merge with every gate green.
+        run: bun test apps/electron/src/renderer/lib/__tests__/warmup.test.ts
       - run: bun run validate:ci
         env:
           # The hosted Electron TypeScript graph exceeded Node's default ~2 GiB heap.
@@ -81,10 +113,10 @@ jobs:
       # Fail instead of silently skipping the database runs.
       ROX_TEST_PG_REQUIRED: '1'
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with: { bun-version: '1.4.2' }
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         continue-on-error: true
         with:
           path: ~/.bun/install/cache
@@ -119,15 +151,15 @@ jobs:
     env:
       ROX_TEST_PG_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           # Full history: check-provenance diffs against the merge-base with
           # origin/$GITHUB_BASE_REF and fails closed when it cannot resolve it;
           # the shrink-only allowlists compare against the same base.
           fetch-depth: 0
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with: { bun-version: '1.4.2' }
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         continue-on-error: true
         with:
           path: ~/.bun/install/cache

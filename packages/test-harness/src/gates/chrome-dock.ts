@@ -26,6 +26,7 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { pending, pendingUntilBrowserDriver, inputBroken, errorMessage, gateFromViolations, type GateResult } from './types.ts'
 import { buildDockTable, type DockMode } from '../fixtures/dock.ts'
+import { railElements, type CaptureArtifacts } from '../capture.ts'
 
 export const CHROME_PATH = join('packages', 'core', 'src', 'platform', 'chrome.ts')
 export const RIGHT_DOCK_PATH = join('apps', 'electron', 'src', 'renderer', 'platform', 'right-dock.ts')
@@ -127,7 +128,7 @@ export async function checkChromeLintGate(opts: { repoRoot?: string } = {}): Pro
 
 export function checkOneRailGate(html: string): GateResult {
   const gate = 'one-rail-dom'
-  const matches = html.match(/<[^>]*\brole=["']navigation["'][^>]*\bdata-rail\b[^>]*>|<[^>]*\bdata-rail\b[^>]*\brole=["']navigation["'][^>]*>/gi) ?? []
+  const matches = railElements(html)
   return gateFromViolations(
     gate,
     matches.length === 1 ? [] : [`expected exactly one rail element, found ${matches.length}`],
@@ -138,6 +139,40 @@ export function checkOneRailGate(html: string): GateResult {
 /** The rendered shell DOM only exists inside the wave-2 browser driver. */
 export function checkOneRailGatePending(): GateResult {
   return pendingUntilBrowserDriver('one-rail-dom', 'the rendered shell HTML (#1512 surfaces)')
+}
+
+/**
+ * Run the real {@link checkOneRailGate} over every captured screen that reports
+ * an app shell (`hasAppShell`). Screens whose surface mounts no app shell (the
+ * Playground's component previews) are skipped: there is no rail to assert on.
+ *
+ * - no artifacts (default CI) → pending;
+ * - artifacts but no shell surface → pending, naming why (component-preview
+ *   surfaces only) — never a vacuous pass, never a false failure;
+ * - a shell surface with the wrong rail count → fail, naming the screen id.
+ */
+export function checkOneRailGateAll(artifacts?: CaptureArtifacts | null): GateResult {
+  const gate = 'one-rail-dom'
+  if (!artifacts || artifacts.screens.length === 0) {
+    return pendingUntilBrowserDriver(gate, 'the rendered shell HTML (#1512 surfaces)')
+  }
+  const shellScreens = artifacts.screens.filter((screen) => screen.hasAppShell)
+  if (shellScreens.length === 0) {
+    return {
+      gate,
+      status: 'pending',
+      summary:
+        `pending: the driver currently renders component-preview surfaces (${artifacts.screens.length} screen(s), none with an app shell) ` +
+        'and no shell surface is captured yet, so there is no rail element to assert on; capture a screen whose surface mounts ' +
+        '`role="navigation"` + `data-rail` to turn this gate on (packages/test-harness/README.md)',
+    }
+  }
+  const violations: string[] = []
+  for (const screen of shellScreens) {
+    const res = checkOneRailGate(screen.shellHtml)
+    if (res.status !== 'pass') violations.push(`${screen.id}: ${(res.violations ?? ['rail check failed']).join('; ')}`)
+  }
+  return gateFromViolations(gate, violations, `${shellScreens.length} shell surface(s) carry exactly one rail element`)
 }
 
 type DockDiscovery = { kind: 'absent' } | { kind: 'broken'; problem: string } | { kind: 'ok'; fn: DockFn }
