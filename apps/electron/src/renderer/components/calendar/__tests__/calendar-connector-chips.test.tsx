@@ -1,28 +1,48 @@
 import { useDomForFile } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
-import { act } from 'react'
+import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, describe, expect, it, mock } from 'bun:test'
-import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, beforeAll, describe, expect, it, mock } from 'bun:test'
+import { createInstance, type i18n as I18n } from 'i18next'
+import { I18nextProvider } from 'react-i18next'
+import { TooltipProvider } from '@rox/ui'
+import { CALENDAR_PROVIDERS, CalendarConnectorChips } from '../CalendarConnectorChips'
 
 useDomForFile()
 
-mock.module('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string, values?: Record<string, string>) => {
-      const value = key.startsWith('calendar.provider.') ? key.slice('calendar.provider.'.length) : key
-      return values ? `${key}:${values.provider}` : value
+// A local i18n instance with identity fallback beats `mock.module('react-i18next')`:
+// Bun module mocks are process-wide and installed at import time, so a global mock
+// here silently re-writes every other suite that loads `react-i18next` in the same
+// run (a real regression we hit). Keys the assertions name verbatim stay identity
+// keys; only the interpolated hints need concrete templates.
+let i18n: I18n
+beforeAll(async () => {
+  i18n = createInstance()
+  await i18n.init({
+    lng: 'en',
+    fallbackLng: 'en',
+    keySeparator: false,
+    parseMissingKeyHandler: (key: string) => key,
+    resources: {
+      en: {
+        translation: {
+          ...Object.fromEntries(CALENDAR_PROVIDERS.map(provider => [`calendar.provider.${provider}`, provider])),
+          'calendar.googleUnavailableHint': 'calendar.googleUnavailableHint:{{provider}}',
+          'calendar.appleCalendarUnavailableHint': 'calendar.appleCalendarUnavailableHint:{{provider}}',
+          'calendar.connectionUnavailable': 'calendar.connectionUnavailable:{{provider}}',
+        },
+      },
     },
-  }),
-}))
+  })
+})
 
-mock.module('@rox/ui', () => ({
-  Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  TooltipTrigger: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-  TooltipContent: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-}))
-
-import { CALENDAR_PROVIDERS, CalendarConnectorChips } from '../CalendarConnectorChips'
+function wrap(node: ReactNode): ReactNode {
+  return (
+    <I18nextProvider i18n={i18n}>
+      <TooltipProvider>{node}</TooltipProvider>
+    </I18nextProvider>
+  )
+}
 
 function disabledCount(html: string): number {
   return (html.match(/<button[^>]*disabled=""/g) ?? []).length
@@ -39,7 +59,7 @@ async function render(node: ReactNode): Promise<{ container: HTMLElement; root: 
   const container = document.createElement('div')
   document.body.appendChild(container)
   const root = createRoot(container)
-  await act(async () => { root.render(node) })
+  await act(async () => { root.render(wrap(node)) })
   return { container, root }
 }
 
@@ -58,7 +78,7 @@ afterEach(async () => {
 
 describe('calendar connector controls', () => {
   it('keeps every provider disabled with an honest hint by default', () => {
-    const html = renderToStaticMarkup(<CalendarConnectorChips />)
+    const html = renderToStaticMarkup(wrap(<CalendarConnectorChips />))
 
     expect(disabledCount(html)).toBe(CALENDAR_PROVIDERS.length)
     expect(html).toContain('calendar.googleUnavailableHint:google')
@@ -69,7 +89,7 @@ describe('calendar connector controls', () => {
   })
 
   it('enables the Google chip with a connect hint when the connector is disconnected', () => {
-    const html = renderToStaticMarkup(<CalendarConnectorChips googleStatus="disconnected" />)
+    const html = renderToStaticMarkup(wrap(<CalendarConnectorChips googleStatus="disconnected" />))
 
     expect(disabledCount(html)).toBe(CALENDAR_PROVIDERS.length - 1)
     expect(html).toContain('calendar.googleConnectHint')
@@ -77,30 +97,30 @@ describe('calendar connector controls', () => {
   })
 
   it('enables the Google chip with a disconnect hint when the connector is connected', () => {
-    const html = renderToStaticMarkup(<CalendarConnectorChips googleStatus="connected" />)
+    const html = renderToStaticMarkup(wrap(<CalendarConnectorChips googleStatus="connected" />))
 
     expect(disabledCount(html)).toBe(CALENDAR_PROVIDERS.length - 1)
     expect(html).toContain('calendar.googleConnectedHint')
   })
 
   it('disables the Google chip while a connect request is in flight', () => {
-    const html = renderToStaticMarkup(<CalendarConnectorChips googleStatus="disconnected" googleBusy />)
+    const html = renderToStaticMarkup(wrap(<CalendarConnectorChips googleStatus="disconnected" googleBusy />))
 
     expect(disabledCount(html)).toBe(CALENDAR_PROVIDERS.length)
   })
 
   it('shows the Apple unavailable hint without a live helper and keeps the chip disabled', () => {
-    const html = renderToStaticMarkup(<CalendarConnectorChips appleStatus="unavailable" />)
+    const html = renderToStaticMarkup(wrap(<CalendarConnectorChips appleStatus="unavailable" />))
     expect(buttonTagFor(html, 'calendar.appleCalendarUnavailableHint:appleCalendar')).toContain('disabled=""')
   })
 
   it('keeps the Apple chip disabled with a denial hint when macOS access was denied', () => {
-    const html = renderToStaticMarkup(<CalendarConnectorChips appleStatus="denied" />)
+    const html = renderToStaticMarkup(wrap(<CalendarConnectorChips appleStatus="denied" />))
     expect(buttonTagFor(html, 'calendar.appleCalendarDeniedHint')).toContain('disabled=""')
   })
 
   it('keeps the Apple chip disabled while a connect request is in flight', () => {
-    const html = renderToStaticMarkup(<CalendarConnectorChips appleStatus="disconnected" appleBusy />)
+    const html = renderToStaticMarkup(wrap(<CalendarConnectorChips appleStatus="disconnected" appleBusy />))
     expect(buttonTagFor(html, 'calendar.appleCalendarConnectHint')).toContain('disabled=""')
   })
 
