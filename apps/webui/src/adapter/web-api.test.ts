@@ -109,7 +109,7 @@ describe('web adapter protocol feature gating', () => {
     const { api, client } = createWebApi({ serverUrl: 'ws://127.0.0.1:1' })
     CLIENTS.push(client)
     // Simulate a handshake whose `features.methods` omits everything.
-    client.isMethodAdvertised = () => false
+    client.isMethodAdvertised = (_channel: string) => false
 
     let error: unknown
     try {

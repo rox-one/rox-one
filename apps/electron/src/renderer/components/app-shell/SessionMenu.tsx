@@ -355,8 +355,8 @@ export function SessionMenu({
       {currentVisibility === 'suggest' && (
         <MenuItem onClick={() => openSessionSuggestions({
           sessionId,
-          ownerId: item.owner?.id,
-          viewerId: actions.viewer.accountId,
+          ownerId: item.owner?.id ?? undefined,
+          viewerId: actions.viewer.accountId ?? undefined,
         })}>
           <MessageSquarePlus className="h-3.5 w-3.5" />
           <span className="flex-1">{t('sessionSuggestions.open')}</span>
