@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
@@ -11,6 +11,7 @@ import {
   closeStateStore,
   openStateStore,
   stateDatabasePath,
+  stateDirectory,
   stateWriterLockPath,
   type StateMigration,
 } from '../state-store.ts'
@@ -100,6 +101,38 @@ describe('state store migrations', () => {
     db.close()
   })
 
+  it('drops the unused session_transcript table from a v1 database (f.10)', () => {
+    const db = new DatabaseSync(':memory:')
+    // Materialise the v1 schema — including the transcript half — exactly as a
+    // store created before the f.10 deletion did, then populate a row.
+    applyMigrations(db, [MIGRATIONS[0]!])
+    expect(userVersion(db)).toBe(1)
+    expect(tableNames(db)).toContain('session_transcript')
+    db.prepare('INSERT INTO session_transcript (session_id, seq, entry) VALUES (?, ?, ?)').run('s1', 0, '{}')
+
+    expect(applyMigrations(db)).toBe(LATEST_STATE_USER_VERSION)
+    expect(userVersion(db)).toBe(LATEST_STATE_USER_VERSION)
+    // The table (and its index) are gone; the INDEX half survives.
+    expect(tableNames(db)).not.toContain('session_transcript')
+    expect(tableNames(db)).toContain('session_index')
+    expect(db.prepare("SELECT name FROM sqlite_master WHERE name LIKE '%session_transcript%'").all().length).toBe(0)
+    db.close()
+  })
+
+  it('opens an on-disk v1 store that holds transcript rows, dropping the table (f.10)', () => {
+    const configDir = scratch()
+    mkdirSync(stateDirectory(configDir), { recursive: true })
+    const db = new DatabaseSync(stateDatabasePath(configDir))
+    applyMigrations(db, [MIGRATIONS[0]!])
+    db.prepare('INSERT INTO session_transcript (session_id, seq, entry) VALUES (?, ?, ?)').run('s1', 0, '{"a":1}')
+    db.close()
+
+    const store = openStateStore({ configDir, lock: 'allow-unlocked' })
+    expect(store.userVersion).toBe(LATEST_STATE_USER_VERSION)
+    expect(tableNames(store.db)).not.toContain('session_transcript')
+    expect(store.getKV('missing')).toBeUndefined()
+  })
+
   it('openStateStore creates and migrates <configDir>/state/rox-state.sqlite', () => {
     const configDir = scratch()
     const store = openStateStore({ configDir, lock: 'allow-unlocked' })
@@ -108,10 +141,12 @@ describe('state store migrations', () => {
     expect(store.userVersion).toBe(LATEST_STATE_USER_VERSION)
     expect(LATEST_STATE_USER_VERSION).toBe(MIGRATIONS[MIGRATIONS.length - 1]!.version)
     const tables = tableNames(store.db)
-    expect(tables).toEqual(expect.arrayContaining(['state_kv', 'session_index', 'session_transcript']))
+    expect(tables).toEqual(expect.arrayContaining(['state_kv', 'session_index']))
+    // f.10: the transcript half is deleted — neither the table nor its index exists.
+    expect(tables).not.toContain('session_transcript')
     expect(
-      store.db.prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_session_transcript_session_seq'").all().length,
-    ).toBe(1)
+      store.db.prepare("SELECT name FROM sqlite_master WHERE name LIKE '%session_transcript%'").all().length,
+    ).toBe(0)
 
     // Round-trips through the write queue.
     return store.putKV('k', 'v').then(() => {
