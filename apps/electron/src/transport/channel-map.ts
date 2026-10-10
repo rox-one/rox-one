@@ -261,7 +261,9 @@ export const CHANNEL_MAP = {
   onMenuToggleSidebar: listener(RPC_CHANNELS.menu.TOGGLE_SIDEBAR),
   onMenuToggleInspector: listener(RPC_CHANNELS.menu.TOGGLE_INSPECTOR),
   onMenuToggleChatPictureInPicture: listener(RPC_CHANNELS.menu.TOGGLE_CHAT_PICTURE_IN_PICTURE),
-  onMenuTrayStatusChanged: listener(RPC_CHANNELS.menu.TRAY_STATUS_CHANGED),
+  // Tray navigation (e2.1): the tray dispatches these; the renderer consumes them.
+  onMenuOpenDashboard: listener(RPC_CHANNELS.menu.OPEN_DASHBOARD),
+  onMenuRunDoctor: listener(RPC_CHANNELS.menu.RUN_DOCTOR),
 
   // Deep link
   onDeepLinkNavigate: listener(RPC_CHANNELS.deeplink.NAVIGATE),
@@ -444,6 +446,7 @@ export const CHANNEL_MAP = {
   listDevSpaceArtifacts: invoke(RPC_CHANNELS.devSpace.LIST_ARTIFACTS),
   readDevSpaceArtifact: invoke(RPC_CHANNELS.devSpace.READ_ARTIFACT),
   generateDevSpaceQuestions: invoke(RPC_CHANNELS.devSpace.GENERATE_QUESTIONS),
+  setDevSpaceWatch: invoke(RPC_CHANNELS.devSpace.SET_WATCH),
   onDevSpaceCloneProgress: listener(RPC_CHANNELS.devSpace.CLONE_PROGRESS),
   onDevSpaceChanged: listener(RPC_CHANNELS.devSpace.CHANGED),
   onDevSpaceRunProgress: listener(RPC_CHANNELS.devSpace.RUN_PROGRESS),
@@ -651,6 +654,7 @@ export const CHANNEL_MAP = {
   podcastEpisodes: invoke(RPC_CHANNELS.podcast.EPISODES),
   readPodcastEpisodeAudio: invoke(RPC_CHANNELS.podcast.AUDIO),
   podcastEpisodeAudioUrl: invoke(RPC_CHANNELS.podcast.AUDIO_URL),
+  podcastEngines: invoke(RPC_CHANNELS.podcast.ENGINES),
   onPodcastJob: listener(RPC_CHANNELS.podcast.JOB),
   // Playbooks codebook (В5, D12) — local notebook run; progress rides the playbooks:codebookJob push.
   runCodebook: invoke(RPC_CHANNELS.playbooks.RUN_CODEBOOK),
@@ -724,6 +728,14 @@ export const CHANNEL_MAP = {
   googleCalendarStatus: invoke(RPC_CHANNELS.calendar.GOOGLE_STATUS),
   googleCalendarDisconnect: invoke(RPC_CHANNELS.calendar.GOOGLE_DISCONNECT),
   googleCalendarSync: invoke(RPC_CHANNELS.calendar.GOOGLE_SYNC),
+
+  // Apple Calendar connector (R8, macOS EventKit). No browser popup — connect
+  // triggers the host helper's TCC prompt directly, so the whole surface is a
+  // plain routed invoke set.
+  appleCalendarStatus: invoke(RPC_CHANNELS.calendar.APPLE_STATUS),
+  connectAppleCalendar: invoke(RPC_CHANNELS.calendar.APPLE_CONNECT),
+  appleCalendarDisconnect: invoke(RPC_CHANNELS.calendar.APPLE_DISCONNECT),
+  appleCalendarSync: invoke(RPC_CHANNELS.calendar.APPLE_SYNC),
 
   // Google Meet artifacts (wave 5, row d2.6). Read-only Developer-Preview
   // surface; every call refuses with PREVIEW_NOT_ACKNOWLEDGED until the host

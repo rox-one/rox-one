@@ -17,6 +17,7 @@ export const ROX_Z_LAYERS = [
   'sticky',
   'chrome',
   'sash',
+  'tour-vignette',
   'popover',
   'scrim',
   'modal',

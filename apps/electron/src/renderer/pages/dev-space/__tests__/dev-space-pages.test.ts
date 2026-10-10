@@ -11,6 +11,7 @@ const repo = read(devSpaceDir, 'DevSpaceRepoPage.tsx')
 const playbooks = read(devSpaceDir, '..', 'playbooks', 'PlaybooksHomePage.tsx')
 const roadmap = read(devSpaceDir, '..', 'ProjectRoadmapPage.tsx')
 const parts = [home, repo, ...readdirSync(componentsDir).filter((name) => name.endsWith('.ts') || name.endsWith('.tsx')).map((name) => read(componentsDir, name))].join('\n')
+const watchControls = read(componentsDir, 'RepoWatchControls.tsx')
 
 describe('Dev Space home (С-01)', () => {
   it('is a self-contained default-export page using literal i18n keys', () => {
@@ -86,6 +87,23 @@ describe('Dev Space repo workspace (С-03)', () => {
   it('shows the outdated badge from the lastSnapshotId rule', () => {
     expect(parts).toContain('lastSnapshotId !== record.lastAnalyzedSnapshotId')
     expect(parts).toContain('data-testid="dev-space-outdated"')
+  })
+})
+
+describe('Dev Space repo auto-watch (В8)', () => {
+  it('renders the watch controls only while devspace.autoWatch.v1 is enabled', () => {
+    expect(repo).toContain('workbenchFlagAtom(WORKBENCH_FLAG.devSpaceAutoWatchV1)')
+    expect(repo).toContain('{autoWatchEnabled ? <RepoWatchControls')
+  })
+
+  it('routes per-repo consent through devSpace:setWatch with literal i18n keys', () => {
+    expect(watchControls).toContain('window.electronAPI.setDevSpaceWatch')
+    expect(watchControls).toContain('<Switch')
+    expect(watchControls).toContain('type="checkbox"')
+    expect(watchControls).toContain('<SelectTrigger')
+    for (const key of ['toggle', 'toggleHint', 'interval', 'intervalHours', 'autoPull', 'autoPullHint', 'networkError']) {
+      expect(watchControls).toContain(`devSpace.watch.${key}`)
+    }
   })
 })
 

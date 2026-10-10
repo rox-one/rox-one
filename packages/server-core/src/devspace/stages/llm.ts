@@ -216,10 +216,18 @@ function artifactName(name: string, format: DevSpaceArtifactFormat): string {
 }
 
 /**
- * Run the LLM adapters in sequence behind the consent gate, returning the manifest
- * entry ids produced and `partial: true` when consent is missing, a tool is
- * unavailable or a generation reported an error.
+ * Run the LLM adapters behind the consent gate with bounded concurrency
+ * (`LLM_STAGE_CONCURRENCY`), returning the manifest entry ids produced and
+ * `partial: true` when consent is missing, a tool is unavailable, no sources
+ * are available or a generation reported an error.
+ *
+ * O10 (v1.x, 2026-10-10): bounded parallelism replaced the strictly sequential
+ * loop — each adapter is a local agentic CLI, so two in flight keeps the total
+ * load sane while halving the wall clock. Artifacts and audit writes stay
+ * deterministic: results are merged strictly in adapter order.
  */
+export const LLM_STAGE_CONCURRENCY = 2
+
 export async function runLlmStage(
   adapters: readonly LlmAdapter[], context: DevSpaceStageContext,
 ): Promise<DevSpaceStageOutcome> {
@@ -234,68 +242,85 @@ export async function runLlmStage(
 
   const cwd = resolveWorkingCopy(context.root, context.record)
   const total = adapters.length
-  const artifacts: string[] = []
-  let partial = false
   let done = 0
-  let sources: LlmSourceFile[] | null = null
+  let sourcesPromise: Promise<LlmSourceFile[]> | null = null
+  const getSources = (): Promise<LlmSourceFile[]> => (sourcesPromise ??= collectMaskedSources(cwd))
   context.report(0, total)
 
-  for (const adapter of adapters) {
-    if (context.signal.aborted) { partial = true; break }
+  const runOne = async (adapter: LlmAdapter): Promise<{ outputs: Array<Parameters<typeof writeDevSpaceArtifact>[0]>; partial: boolean }> => {
     const detection = await adapter.detect()
     if (!detection.available) {
-      partial = true
       await appendLlmAudit(context, {
         event: 'llm-adapter', adapter: adapter.id, version: adapter.version, status: 'skip', reason: 'unavailable',
         ...(detection.detail !== undefined ? { detail: detection.detail } : {}),
       })
-      done += 1
-      context.report(done, total)
-      continue
+      return { outputs: [], partial: true }
     }
 
-    sources ??= await collectMaskedSources(cwd)
+    const sources = await getSources()
     if (sources.length === 0) {
-      partial = true
       await appendLlmAudit(context, { event: 'llm-adapter', adapter: adapter.id, version: adapter.version, status: 'skip', reason: 'no-sources' })
-      done += 1
-      context.report(done, total)
-      continue
+      return { outputs: [], partial: true }
     }
 
     const result = await adapter.generate({ sources, signal: context.signal, report: context.report })
-    if (result.status === 'ok') {
-      for (const output of result.artifacts) {
-        const entry = await writeDevSpaceArtifact({
-          root: context.root,
-          projectSlug: context.projectSlug,
-          repositoryId: context.repositoryId,
-          snapshotId: context.snapshotId,
-          runId: context.runId,
-          kind: adapter.kind,
-          name: artifactName(output.name, output.format),
-          format: output.format,
-          content: output.content,
-          producedBy: { providerId: adapter.id, version: adapter.version },
-        })
-        artifacts.push(entry.id)
-      }
-      await appendLlmAudit(context, {
-        event: 'llm-adapter', adapter: adapter.id, version: adapter.version, status: 'run', artifactCount: result.artifacts.length,
-      })
-    } else {
-      partial = true
+    if (result.status !== 'ok') {
       await appendLlmAudit(context, {
         event: 'llm-adapter', adapter: adapter.id, version: adapter.version,
         status: result.status === 'unavailable' ? 'skip' : 'error',
         reason: result.status,
         ...(result.detail !== undefined ? { detail: result.detail } : {}),
       })
+      return { outputs: [], partial: true }
     }
-    done += 1
-    context.report(done, total)
+
+    const outputs: Array<Parameters<typeof writeDevSpaceArtifact>[0]> = result.artifacts.map(output => ({
+      root: context.root,
+      projectSlug: context.projectSlug,
+      repositoryId: context.repositoryId,
+      snapshotId: context.snapshotId,
+      runId: context.runId,
+      kind: adapter.kind,
+      name: artifactName(output.name, output.format),
+      format: output.format,
+      content: output.content,
+      producedBy: { providerId: adapter.id, version: adapter.version },
+    }))
+    await appendLlmAudit(context, {
+      event: 'llm-adapter', adapter: adapter.id, version: adapter.version, status: 'run', artifactCount: result.artifacts.length,
+    })
+    return { outputs, partial: false }
   }
 
+  const results: Array<{ outputs: Array<Parameters<typeof writeDevSpaceArtifact>[0]>; partial: boolean } | undefined> = new Array(adapters.length)
+  let next = 0
+  let stopped = false
+  const worker = async (): Promise<void> => {
+    while (!stopped) {
+      if (context.signal.aborted) { stopped = true; return }
+      const index = next
+      next += 1
+      if (index >= adapters.length) return
+      results[index] = await runOne(adapters[index]!)
+      done += 1
+      context.report(done, total)
+    }
+  }
+  const workerCount = Math.max(1, Math.min(LLM_STAGE_CONCURRENCY, adapters.length))
+  await Promise.all(Array.from({ length: workerCount }, () => worker()))
+
+  // Artifact writes stay ordered by adapter, so the manifest is byte-identical
+  // to the sequential stage regardless of completion order.
+  const artifacts: string[] = []
+  let partial = stopped || context.signal.aborted
+  for (const outcome of results) {
+    if (!outcome) continue
+    partial ||= outcome.partial
+    for (const input of outcome.outputs) {
+      const entry = await writeDevSpaceArtifact(input)
+      artifacts.push(entry.id)
+    }
+  }
   return { artifacts, partial }
 }
 

@@ -1,0 +1,17 @@
+[Unit]
+Description=Rox Drive S3 object store (SeaweedFS)
+# Single-node SeaweedFS (master + volume + filer + S3 gateway) for the Drive
+# import target. Loopback-only: the public https://s3.rox.one endpoint is
+# terminated by Caddy on this host and reverse-proxied to 127.0.0.1:8333.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/opt/rox-drive/bin/weed server -dir=/opt/rox-drive/data -s3 -s3.port=8333 -s3.config=/opt/rox-drive/s3.json -master.volumeSizeLimitMB=1024 -ip=127.0.0.1 -ip.bind=127.0.0.1
+Restart=always
+RestartSec=3
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

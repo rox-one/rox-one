@@ -9,7 +9,7 @@ import type { DevSpaceConsent } from '@rox/shared/dev-space'
 import type { PodcastJob, PodcastRoleTemplate } from '@rox/shared/voice'
 import type { HandlerFn, RequestContext, RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../../handlers/handler-deps'
-import { DEFAULT_PODCAST_ROLES } from '../script.ts'
+import { DEFAULT_PODCAST_ROLES, resolvePodcastRoles } from '../script.ts'
 import { writePodcastEpisode } from '../episodes.ts'
 import type { SegmentAudio, SegmentSynthesizer } from '../tts.ts'
 import type { ProcessRunner } from '../assemble.ts'
@@ -155,6 +155,58 @@ describe('podcast pipeline output', () => {
 
     expect(progress.map(entry => entry.state)).toEqual(['scripting', 'synthesizing', 'synthesizing', 'synthesizing', 'assembling'])
     expect(progress.at(-1)!.doneSegments).toBe(2)
+  })
+
+  it('renders a three-role episode and keeps speaker order in the srt', async () => {
+    const dir = root()
+    const { synthesizer } = countingSynthesizer()
+    const roles = resolvePodcastRoles([
+      { id: 'host', label: 'Ведущий', prompt: '' },
+      { id: 'expert', label: 'Эксперт', prompt: '' },
+      { id: 'guest1', label: 'Гость', prompt: '' },
+    ])
+    const episode = await runPodcastPipeline({
+      root: dir, projectSlug: SLUG, episodeId: 'podcast_0123456789abcdef', sourceText: 'x', title: 't', engine: 'edge',
+      roles, maxSegments: 12, consent: consent(true), signal: new AbortController().signal, onProgress: () => {},
+    }, {
+      connector: {
+        providerId: 'c', version: '1',
+        async complete() { return 'ВЕДУЩИЙ: Вопрос?\nЭКСПЕРТ: Ответ.\nГОСТЬ: Добавление.' },
+      },
+      synthesizer: () => synthesizer,
+      resolveFfmpeg: async () => 'ffmpeg',
+      resolveFfprobe: () => null,
+      run: ffmpegWritingRun(),
+    })
+    expect(episode.segments).toBe(3)
+    const srt = readFileSync(join(devSpaceDirectory(dir, SLUG), 'audio', 'podcast_0123456789abcdef.srt'), 'utf8')
+    const host = srt.indexOf('Ведущий: Вопрос?')
+    const expert = srt.indexOf('Эксперт: Ответ.')
+    const guest = srt.indexOf('Гость: Добавление.')
+    expect(host).toBeGreaterThanOrEqual(0)
+    expect(host).toBeLessThan(expert)
+    expect(expert).toBeLessThan(guest)
+  })
+
+  it('publishes an episode through the kokoro engine when it is selected', async () => {
+    const dir = root()
+    const episode = await runPodcastPipeline({
+      root: dir, projectSlug: SLUG, episodeId: 'podcast_0123456789abcdef', sourceText: 'x', title: 't', engine: 'kokoro',
+      roles: ROLES, maxSegments: 8, consent: consent(true), signal: new AbortController().signal, onProgress: () => {},
+    }, {
+      connector: { providerId: 'c', version: '1', async complete() { return 'ВЕДУЩИЙ: a\nЭКСПЕРТ: b' } },
+      synthesizer: () => ({
+        engine: 'kokoro',
+        async synthesize() { return { bytes: new Uint8Array([1, 2, 3]), extension: 'wav', mimeType: 'audio/wav' } },
+      }),
+      resolveFfmpeg: async () => 'ffmpeg',
+      resolveFfprobe: () => null,
+      run: ffmpegWritingRun(),
+    })
+    expect(episode.engine).toBe('kokoro')
+    expect(episode.segments).toBe(2)
+    const audio = readdirSync(join(devSpaceDirectory(dir, SLUG), 'audio')).sort()
+    expect(audio).toContain('podcast_0123456789abcdef.mp3')
   })
 })
 

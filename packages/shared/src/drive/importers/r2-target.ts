@@ -3,16 +3,19 @@
  *
  * Implements AWS Signature Version 4 with `fetch` + WebCrypto only: no
  * `aws-sdk`, no new dependencies. Point it at any S3-compatible endpoint
- * (Cloudflare R2, MinIO, AWS S3) through:
+ * (self-hosted SeaweedFS, MinIO, AWS S3) through:
  *
- *   ROX_DRIVE_S3_ENDPOINT          https://<account>.r2.cloudflarestorage.com
- *   ROX_DRIVE_S3_BUCKET            drive-imports
- *   ROX_DRIVE_S3_REGION            auto (default)
+ *   ROX_DRIVE_S3_ENDPOINT          https://<host>          (base path, no bucket)
+ *   ROX_DRIVE_S3_BUCKET            <bucket>
+ *   ROX_DRIVE_S3_REGION            us-east-1              (must be explicit; `auto` is R2-only)
  *   ROX_DRIVE_S3_ACCESS_KEY_ID     …
  *   ROX_DRIVE_S3_SECRET_ACCESS_KEY …
  *
- * Path-style addressing is used (`<endpoint>/<bucket>/<key>`), which R2 and
- * MinIO both accept. Streaming bodies are signed with `UNSIGNED-PAYLOAD`
+ * The production deployment is self-hosted: SeaweedFS on host `sw`, bucket
+ * `rox-drive`, exposed as https://s3.rox.one (Caddy TLS) — see
+ * docs/drive-object-storage.md. Path-style addressing is used
+ * (`<endpoint>/<bucket>/<key>`), which SeaweedFS, R2 and MinIO all accept.
+ * Streaming bodies are signed with `UNSIGNED-PAYLOAD`
  * (mandatory over TLS for unknown-length uploads); byte bodies are hashed.
  *
  * Timeouts: a streamed PUT is **stall-aware** — the connection is aborted only

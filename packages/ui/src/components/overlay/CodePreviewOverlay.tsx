@@ -10,7 +10,14 @@ import { useTranslation } from 'react-i18next'
 import { BookOpen, PenLine } from 'lucide-react'
 import { PreviewOverlay } from './PreviewOverlay'
 import { ContentFrame } from './ContentFrame'
-import { ShikiCodeViewer } from '../code-viewer/ShikiCodeViewer'
+
+// ShikiCodeViewer pulls the Shiki highlighter chunk (registerShikiThemes,
+// Shiki core). Load it when the overlay first renders its content instead of
+// at startup, the same way LazyPDFPreviewOverlay defers react-pdf. Public
+// props/exports are unchanged and the loaded UI is identical.
+const ShikiCodeViewer = React.lazy(() =>
+  import('../code-viewer/ShikiCodeViewer').then((module) => ({ default: module.ShikiCodeViewer }))
+)
 
 export interface CodePreviewOverlayProps {
   /** Whether the overlay is visible */
@@ -97,13 +104,15 @@ export function CodePreviewOverlay({
 
       <ContentFrame title={t('overlay.code')} fitContent minWidth={850}>
         <div>
-          <ShikiCodeViewer
-            code={content}
-            filePath={filePath}
-            language={language}
-            startLine={startLine}
-            theme={theme}
-          />
+          <React.Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm">{t('common.loading')}</div>}>
+            <ShikiCodeViewer
+              code={content}
+              filePath={filePath}
+              language={language}
+              startLine={startLine}
+              theme={theme}
+            />
+          </React.Suspense>
         </div>
       </ContentFrame>
     </PreviewOverlay>

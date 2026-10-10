@@ -7,6 +7,7 @@ const UINT8_WIRE_TYPE = 'u8'
 const MESSAGE_TYPES = new Set([
   'handshake',
   'handshake_ack',
+  'connect.challenge',
   'request',
   'response',
   'event',

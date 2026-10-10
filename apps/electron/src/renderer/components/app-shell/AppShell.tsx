@@ -210,7 +210,6 @@ import { beginChatSessionCreation } from '@/features/product-tour/adapters/chat'
 import { FabNewChat } from "./FabNewChat"
 import { SendToWorkspaceDialog } from "./SendToWorkspaceDialog"
 import { CreateProjectDialog } from "../projects/CreateProjectDialog"
-import { MessagingDialogHost } from "@/components/messaging/MessagingDialogHost"
 import { PublishSessionDialogHost } from "@/components/knowledge/PublishSessionDialogHost"
 import { EditPopover, getEditConfig, type EditContextKey } from "@/components/ui/EditPopover"
 import SettingsNavigator from "@/pages/settings/SettingsNavigator"
@@ -248,6 +247,17 @@ const PRIMARY_MODE_LINK_IDS: readonly string[] = [
   "nav:feed",
   "nav:inbox",
 ]
+
+/**
+ * #1675: the messaging dialog host pulls the WhatsApp/WeChat connect dialogs
+ * (and qrcode.react) into the eager startup closure. Load it lazily — the
+ * dialogs only ever open via messagingDialogAtom.
+ */
+const MessagingDialogHost = React.lazy(() =>
+  import("@/components/messaging/MessagingDialogHost").then((m) => ({
+    default: m.MessagingDialogHost,
+  })),
+)
 
 /**
  * AppShellProps - Minimal props interface for AppShell component
@@ -3833,7 +3843,9 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
 
       {/* Messaging dialogs (pairing-code + WA connect) — driven by messagingDialogAtom.
           Mounted here so they survive context-menu / dropdown close. */}
-      <MessagingDialogHost />
+      <React.Suspense fallback={null}>
+        <MessagingDialogHost />
+      </React.Suspense>
       <PublishSessionDialogHost />
 
       {/* Y4: first-run memory onboarding — shown once when no lessons exist */}

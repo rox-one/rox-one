@@ -39,6 +39,12 @@ export interface AppleCalendarHelperResult {
   stderr: string
 }
 
+/** Outcome of `request-access`: the resulting state plus whether macOS granted it. */
+export interface AppleCalendarAccessResult {
+  status: AppleCalendarAuthStatus
+  granted: boolean
+}
+
 /** Injected process spawner: runs the helper with `args` and returns raw output. */
 export type AppleCalendarRunHelper = (args: readonly string[]) => Promise<AppleCalendarHelperResult>
 
@@ -206,13 +212,47 @@ export class AppleCalendarAdapter implements CalendarAdapter {
     return { start: now - 30 * DAY_MS, end: now + 90 * DAY_MS }
   }
 
+  /**
+   * Read the EventKit authorization state without prompting (`auth-status` is
+   * read-only). Throws `AppleCalendarHelperError` when the helper is unreachable
+   * or answers with an unknown status.
+   */
+  async authStatus(): Promise<AppleCalendarAuthStatus> {
+    return this.readAuthStatus(await this.invoke(['auth-status']))
+  }
+
+  /**
+   * Ask macOS for Calendar access (`request-access`). Triggers the one-time TCC
+   * prompt when the state is `notDetermined`; on an already-decided state it
+   * returns the current status without a prompt. Never throws for a denial —
+   * callers inspect `granted`/`status`.
+   */
+  async requestAccess(): Promise<AppleCalendarAccessResult> {
+    const payload = await this.invoke(['request-access'])
+    const status = this.readAuthStatus(payload)
+    const granted = typeof payload === 'object' && payload !== null && 'granted' in payload
+      ? payload.granted === true
+      : status === 'authorized' || status === 'limited'
+    return { status, granted }
+  }
+
   /** Refuse to list until the host reports full (or limited) EventKit access. */
   private async ensureAuthorized(): Promise<void> {
-    const payload = await this.invoke(['auth-status'])
-    const status = typeof payload === 'object' && payload !== null && 'status' in payload ? payload.status : undefined
+    const status = await this.authStatus()
     if (status === 'authorized' || status === 'limited') return
-    if (status === 'denied' || status === 'restricted' || status === 'notDetermined') {
-      throw new AppleCalendarAuthDeniedError(status)
+    throw new AppleCalendarAuthDeniedError(status)
+  }
+
+  private readAuthStatus(payload: unknown): AppleCalendarAuthStatus {
+    const status = typeof payload === 'object' && payload !== null && 'status' in payload ? payload.status : undefined
+    if (
+      status === 'authorized' ||
+      status === 'limited' ||
+      status === 'denied' ||
+      status === 'restricted' ||
+      status === 'notDetermined'
+    ) {
+      return status
     }
     throw new AppleCalendarHelperError(0, `Apple Calendar helper returned unknown auth status: ${String(status)}`)
   }

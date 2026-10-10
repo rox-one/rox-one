@@ -24,6 +24,7 @@
     "./knowledge": "./src/knowledge/index.ts",
     "./openclaw": "./src/openclaw/index.ts",
     "./scheduler": "./src/scheduler/index.ts",
+    "./visitors": "./src/visitors/index.ts",
     "./service": "./src/service/index.ts",
     "./workgraph": "./src/workgraph/index.ts",
     "./observability": "./src/observability/index.ts",

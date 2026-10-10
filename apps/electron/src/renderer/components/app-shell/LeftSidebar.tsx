@@ -22,7 +22,11 @@ import {
 } from '@/components/ui/styled-context-menu'
 import { ContextMenuProvider } from '@/components/ui/menu-context'
 import { SidebarMenu, type SidebarMenuType } from './SidebarMenu'
-import { SortableList, type SortableItemData } from '@/components/ui/sortable-list'
+// PERF-11 (#1675): @dnd-kit (~104 KB ESM across core/sortable/utilities) entered
+// main.tsx's eager startup closure only because SortableList was imported
+// statically here. The sidebar chrome always mounts; the sortable list renders
+// only for `link.sortable`. Type-only import stays erased at runtime.
+import type { SortableItemData } from '@/components/ui/sortable-list'
 import type { AppNavDestinationId } from './nav-destinations'
 import { getServiceContextLinks } from './service-navigation'
 import { preloadRoute } from './route-pages'
@@ -461,6 +465,22 @@ function renderExpandedContent(
 // SortableStatusList — flat sortable wrapper for status items
 // ============================================================
 
+/** Props consumed from `SortableList` (generic instantiated for LinkItem rows). */
+type SortableListComponent = React.ComponentType<{
+  items: (LinkItem & SortableItemData)[]
+  onReorder: (items: (LinkItem & SortableItemData)[]) => void
+  className?: string
+  renderItem: (item: LinkItem & SortableItemData, isDragging: boolean) => React.ReactNode
+  renderOverlay?: (item: LinkItem & SortableItemData) => React.ReactNode
+}>
+
+// PERF-11 (#1675): loaded on demand so @dnd-kit stays out of the startup graph.
+const LazySortableList = React.lazy(() =>
+  import('@/components/ui/sortable-list').then(m => ({
+    default: m.SortableList as unknown as SortableListComponent,
+  })),
+)
+
 interface SortableStatusListProps {
   items: SidebarItem[]
   onReorder: (orderedIds: string[]) => void
@@ -490,6 +510,49 @@ function SortableStatusList({ items, onReorder, getItemProps, focusedItemId, tra
     onReorder(orderedIds)
   }, [onReorder])
 
+  // One row renderer shared by the sortable list and its loading fallback so the
+  // two forms cannot drift.
+  const renderRow = (item: LinkItem & SortableItemData) => (
+    <div className="group/section">
+      {item.contextMenu ? (
+        <ContextMenu modal={true}>
+          <ContextMenuTrigger asChild>
+            <SidebarButton
+              link={item}
+              itemProps={getItemProps?.(item.id)}
+            />
+          </ContextMenuTrigger>
+          <StyledContextMenuContent>
+            <ContextMenuProvider>
+              <SidebarMenu
+                type={item.contextMenu.type}
+                statusId={item.contextMenu.statusId}
+                labelId={item.contextMenu.labelId}
+                onConfigureStatuses={item.contextMenu.onConfigureStatuses}
+                onMarkAllRead={item.contextMenu.onMarkAllRead}
+                onConfigureLabels={item.contextMenu.onConfigureLabels}
+                onAddLabel={item.contextMenu.onAddLabel}
+                onDeleteLabel={item.contextMenu.onDeleteLabel}
+                onAddSource={item.contextMenu.onAddSource}
+                onAddSkill={item.contextMenu.onAddSkill}
+                onAddAutomation={item.contextMenu.onAddAutomation}
+                sourceType={item.contextMenu.sourceType}
+                onConfigureViews={item.contextMenu.onConfigureViews}
+                viewId={item.contextMenu.viewId}
+                onDeleteView={item.contextMenu.onDeleteView}
+              />
+            </ContextMenuProvider>
+          </StyledContextMenuContent>
+        </ContextMenu>
+      ) : (
+        <SidebarButton
+          link={item}
+          itemProps={getItemProps?.(item.id)}
+        />
+      )}
+    </div>
+  )
+
   return (
     <div className="flex flex-col select-none">
       <div className="pl-5 pr-0 relative">
@@ -498,57 +561,31 @@ function SortableStatusList({ items, onReorder, getItemProps, focusedItemId, tra
           className="absolute left-[13px] top-1 bottom-1 w-px bg-foreground/10"
           aria-hidden="true"
         />
-        <SortableList
-          items={sortableItems}
-          onReorder={handleReorder}
-          className="grid gap-0.5"
-          renderItem={(item) => (
-            <div className="group/section">
-              {item.contextMenu ? (
-                <ContextMenu modal={true}>
-                  <ContextMenuTrigger asChild>
-                    <SidebarButton
-                      link={item}
-                      itemProps={getItemProps?.(item.id)}
-                    />
-                  </ContextMenuTrigger>
-                  <StyledContextMenuContent>
-                    <ContextMenuProvider>
-                      <SidebarMenu
-                        type={item.contextMenu.type}
-                        statusId={item.contextMenu.statusId}
-                        labelId={item.contextMenu.labelId}
-                        onConfigureStatuses={item.contextMenu.onConfigureStatuses}
-                        onMarkAllRead={item.contextMenu.onMarkAllRead}
-                        onConfigureLabels={item.contextMenu.onConfigureLabels}
-                        onAddLabel={item.contextMenu.onAddLabel}
-                        onDeleteLabel={item.contextMenu.onDeleteLabel}
-                        onAddSource={item.contextMenu.onAddSource}
-                        onAddSkill={item.contextMenu.onAddSkill}
-                        onAddAutomation={item.contextMenu.onAddAutomation}
-                        sourceType={item.contextMenu.sourceType}
-                        onConfigureViews={item.contextMenu.onConfigureViews}
-                        viewId={item.contextMenu.viewId}
-                        onDeleteView={item.contextMenu.onDeleteView}
-                      />
-                    </ContextMenuProvider>
-                  </StyledContextMenuContent>
-                </ContextMenu>
-              ) : (
-                <SidebarButton
-                  link={item}
-                  itemProps={getItemProps?.(item.id)}
-                />
-              )}
+        {/* PERF-11 (#1675): the DnD chunk loads lazily. Until it lands, render
+            the identical rows non-sortable so the links are visible on the
+            first paint (the pre-dnd-kit behaviour for these items). */}
+        <React.Suspense
+          fallback={
+            <div className="grid gap-0.5">
+              {sortableItems.map(item => (
+                <div key={item.id}>{renderRow(item)}</div>
+              ))}
             </div>
-          )}
-          renderOverlay={(item) => (
-            <SidebarButton
-              link={item}
-              isOverlay={true}
-            />
-          )}
-        />
+          }
+        >
+          <LazySortableList
+            items={sortableItems}
+            onReorder={handleReorder}
+            className="grid gap-0.5"
+            renderItem={renderRow}
+            renderOverlay={(item) => (
+              <SidebarButton
+                link={item}
+                isOverlay={true}
+              />
+            )}
+          />
+        </React.Suspense>
         {/* Non-sortable trailing items (e.g., Flagged, Archived) */}
         {trailingItems && trailingItems.length > 0 && (
           <>

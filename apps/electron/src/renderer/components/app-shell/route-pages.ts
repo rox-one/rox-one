@@ -43,6 +43,18 @@ export const ROUTE_PAGE_LOADERS = {
   devSpaceHome: () => import('@/pages/dev-space/DevSpaceHomePage'),
   devSpaceRepo: () => import('@/pages/dev-space/DevSpaceRepoPage'),
   playbooksHome: () => import('@/pages/playbooks/PlaybooksHomePage'),
+  // #1675: these eight route screens used to be static imports in
+  // MainContentPanel, so their subtrees (incl. the shiki diff stack behind
+  // memory/ImportReviewDialog) rode index.html's preloaded startup closure.
+  homeFront: () => import('@/platform/HomeFrontPage').then((m) => ({ default: m.HomeFrontPage })),
+  missionBoard: () => import('@/platform/MissionBoard').then((m) => ({ default: m.MissionBoard })),
+  memory: () => import('../memory/MemoryScreen').then((m) => ({ default: m.MemoryScreen })),
+  memoryRepo: () => import('../memory/MemoryRepoScreen').then((m) => ({ default: m.MemoryRepoScreen })),
+  learning: () => import('../learning/LearningScreen').then((m) => ({ default: m.LearningScreen })),
+  projectsHome: () => import('./ProjectsHomeInMain').then((m) => ({ default: m.ProjectsHomeInMain })),
+  settingsOverview: () => import('@/pages/settings/SettingsOverviewPage').then((m) => ({ default: m.SettingsOverviewPage })),
+  pageView: () => import('../pages/PageView').then((m) => ({ default: m.PageView })),
+  sessionHeatmap: () => import('./session-heatmap/SessionHeatmapHost').then((m) => ({ default: m.SessionHeatmapHost })),
 }
 
 export type RoutePageName = keyof typeof ROUTE_PAGE_LOADERS

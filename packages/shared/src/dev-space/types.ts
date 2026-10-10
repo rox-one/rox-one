@@ -46,7 +46,42 @@ export interface DevSpaceRepositoryRecord {
   readonly lastSnapshotId?: string
   /** Rule source for "устарело" (§7): `lastSnapshotId !== lastAnalyzedSnapshotId`. */
   readonly lastAnalyzedSnapshotId?: string
+  /**
+   * v1.x auto-watch (O10, "закрыто" 2026-10-10): explicit per-repo consent for
+   * background `git fetch` against this repository. Default false — the app
+   * never touches the network for a repo the user has not opted in. Watching by
+   * itself never regenerates artifacts; that is the separate `watchRegenerate` opt-in.
+   */
+  readonly watchEnabled?: boolean
+  /** With watching on, fast-forward the working copy (`git pull --ff-only`) when the upstream moved. Default false. */
+  readonly watchAutoPull?: boolean
+  /**
+   * v1.x auto-regeneration (В11, "закрыто" 2026-10-10): after a *successful*
+   * `watchAutoPull` fast-forward, refresh the repository snapshot and run the
+   * `reconcile → structural → llm → publish` pipeline. Default false. Only
+   * meaningful with `watchEnabled && watchAutoPull`; the LLM phase degrades to
+   * `partial` without model-connector consent, while the structural artifacts
+   * are always regenerated.
+   */
+  readonly watchRegenerate?: boolean
+  /** Watch cadence in ms (`DEV_SPACE_WATCH_MIN_INTERVAL_MS`…`DEV_SPACE_WATCH_MAX_INTERVAL_MS`); absent = 60 min. */
+  readonly watchIntervalMs?: number
+  /** Epoch ms of the last watch tick that inspected this repository. */
+  readonly lastWatchAt?: number
+  /** Upstream (`@{u}`) sha observed by the last watch tick. */
+  readonly lastRemoteHead?: string
   readonly lastError?: { readonly code: string; readonly at: number }
+}
+
+/** Auto-watch cadence bounds and default (v1.x O10). The server validates every `setWatch`. */
+export const DEV_SPACE_WATCH_MIN_INTERVAL_MS = 15 * 60 * 1000
+export const DEV_SPACE_WATCH_MAX_INTERVAL_MS = 24 * 60 * 60 * 1000
+export const DEV_SPACE_WATCH_DEFAULT_INTERVAL_MS = 60 * 60 * 1000
+
+/** True when `value` is an integer inside the accepted watch interval range. */
+export function isValidDevSpaceWatchInterval(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value)
+    && value >= DEV_SPACE_WATCH_MIN_INTERVAL_MS && value <= DEV_SPACE_WATCH_MAX_INTERVAL_MS
 }
 
 /** Server-owned catalog (`dev-space-repositories.json`), read by the renderer without secrets. */
@@ -197,6 +232,23 @@ export interface DevSpaceRemoveRepositoryInput {
   readonly repositoryId: string
   /** Must be `true`; the server rejects removal without explicit confirmation. */
   readonly confirm: boolean
+}
+
+/**
+ * `setWatch` (v1.x O10/В11): per-repository auto-watch consent. `watchEnabled`
+ * is the consent flag itself; `watchAutoPull`, `watchRegenerate` and
+ * `watchIntervalMs` are optional refinements kept when omitted. The server
+ * validates the interval range and returns the updated catalog record.
+ */
+export interface DevSpaceSetWatchInput {
+  readonly workspaceId: string
+  readonly requestId?: string
+  /** Catalog record id (`devrepo_<...>`). */
+  readonly repositoryId: string
+  readonly watchEnabled: boolean
+  readonly watchAutoPull?: boolean
+  readonly watchRegenerate?: boolean
+  readonly watchIntervalMs?: number
 }
 
 /** `removeRepository` returns the id of the removed catalog record. */

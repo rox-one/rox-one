@@ -21,8 +21,11 @@
  *      never crossed,
  *   5. write `apps/electron/src/renderer/boot-manifest.json`.
  *
- * The route ids are the ones `perf/surface-sim.ts` models (`KEEPALIVE_WARM_SURFACES`),
- * read from source so a rename fails loudly instead of silently drifting.
+ * The route ids are the real boot warm-up set: `lib/shell-warmup.ts` preloads
+ * every entry of `RAIL_SURFACE_ROUTES`, which aliases `RAIL_SURFACE_ROUTE_IDS`
+ * in `shared/rail-surfaces.ts`. We read that import-free list from source so a
+ * rename fails loudly instead of silently drifting (the perf-simulation
+ * constant `KEEPALIVE_WARM_SURFACES` models a subset and is NOT the source).
  *
  * Real-Chromium alternative (NOT taken): the installed Playwright could load the
  * built index.html and record requests, but the app shell needs `window.electronAPI`
@@ -40,14 +43,14 @@
  *   bun run scripts/boot-manifest.ts --no-build # never build; fail if dist is missing
  */
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
-import { join, posix, relative, resolve } from 'node:path'
+import { isAbsolute, join, posix, relative, resolve } from 'node:path'
 
 const ROOT = resolve(import.meta.dir, '..')
 const ELECTRON_DIR = join(ROOT, 'apps/electron')
 const RENDERER_SRC = join(ELECTRON_DIR, 'src/renderer')
 const DIST_DIR = join(ELECTRON_DIR, 'dist/renderer')
 const MANIFEST_PATH = join(RENDERER_SRC, 'boot-manifest.json')
-const SURFACE_SIM = join(RENDERER_SRC, 'perf/surface-sim.ts')
+const RAIL_SURFACES = join(ELECTRON_DIR, 'src/shared/rail-surfaces.ts')
 const ROUTE_PAGES = join(RENDERER_SRC, 'components/app-shell/route-pages.ts')
 
 /** Rendering-source modules that are always loaded at boot. */
@@ -66,10 +69,12 @@ export interface ChunkGraphEntry {
 }
 
 export interface BootRouteEntry {
-  /** The route's own (lazily loaded) chunk. */
+  /** The route's own (lazily loaded) chunk (informational: hashes move per build). */
   chunk: string
   /** Every chunk reachable at boot for this route (entry + main + route closure). */
   chunks: string[]
+  /** STABLE identity of the closure: the source modules it was built from (sorted). */
+  sources: string[]
 }
 
 export interface BootManifest {
@@ -78,6 +83,8 @@ export interface BootManifest {
   entry: string
   /** Chunks loaded by every boot, before any route is reached (sorted). */
   bootChunks: string[]
+  /** STABLE identity of the boot closure: its source modules (sorted). */
+  bootSources: string[]
   routes: Record<string, BootRouteEntry>
 }
 
@@ -238,6 +245,7 @@ export function deriveBootManifest(input: DeriveInput): BootManifest {
     for (const file of staticClosure(chunk, graph)) boot.add(file)
   }
   const bootChunks = [...boot].sort()
+  const bootSources = closureSources(graph, bootChunks)
 
   const routes: Record<string, BootRouteEntry> = {}
   for (const [id, suffix] of Object.entries(routeModules).sort(([a], [b]) => a.localeCompare(b))) {
@@ -245,17 +253,21 @@ export function deriveBootManifest(input: DeriveInput): BootManifest {
     if (!chunk) throw new Error(`boot-manifest: no chunk for route "${id}" (${suffix})`)
     const chunks = new Set(bootChunks)
     for (const file of staticClosure(chunk, graph)) chunks.add(file)
-    routes[id] = { chunk, chunks: [...chunks].sort() }
+    const routeChunks = [...chunks].sort()
+    routes[id] = { chunk, chunks: routeChunks, sources: closureSources(graph, routeChunks) }
   }
 
-  return { version: 1, generator: 'scripts/boot-manifest.ts', entry, bootChunks, routes }
+  return { version: 1, generator: 'scripts/boot-manifest.ts', entry, bootChunks, bootSources, routes }
 }
 
 export interface ManifestDiff {
   ok: boolean
   entry?: { expected: string; actual: string }
   bootChunks: { missing: string[]; extra: string[] }
+  bootSources: { missing: string[]; extra: string[] }
   routes: Record<string, { missing: string[]; extra: string[]; chunk?: { expected: string; actual: string } }>
+  /** Chunk renames only: informational, never a failure (hashes move per build). */
+  renames?: Record<string, { expected: string; actual: string }>
 }
 
 /** Structural diff of a derived manifest against the committed one. */
@@ -267,6 +279,7 @@ export function diffBootManifest(expected: BootManifest, actual: BootManifest): 
   const diff: ManifestDiff = {
     ok: true,
     bootChunks: setDiff(expected.bootChunks, actual.bootChunks),
+    bootSources: setDiff(expected.bootSources ?? [], actual.bootSources ?? []),
     routes: {},
   }
   if (expected.entry !== actual.entry) {
@@ -276,20 +289,22 @@ export function diffBootManifest(expected: BootManifest, actual: BootManifest): 
     const want = expected.routes[id]
     const have = actual.routes[id]
     if (!want || !have) {
-      diff.routes[id] = { missing: want ? want.chunks : [], extra: have ? have.chunks : [] }
+      diff.routes[id] = { missing: want ? want.sources : [], extra: have ? have.sources : [] }
       continue
     }
-    const entryDiff = setDiff(want.chunks, have.chunks)
+    const entryDiff = setDiff(want.sources ?? [], have.sources ?? [])
     const violation: { missing: string[]; extra: string[]; chunk?: { expected: string; actual: string } } = {
       ...entryDiff,
     }
+    // A renamed chunk is informational: the closure's source set is the identity
+    // the gate compares, so an unrelated renderer edit cannot red it.
     if (want.chunk !== have.chunk) violation.chunk = { expected: want.chunk, actual: have.chunk }
-    if (entryDiff.missing.length || entryDiff.extra.length || violation.chunk) diff.routes[id] = violation
+    if (entryDiff.missing.length || entryDiff.extra.length) diff.routes[id] = violation
+    else if (violation.chunk) (diff.renames ??= {})[id] = violation.chunk
   }
   diff.ok =
-    !diff.entry &&
-    diff.bootChunks.missing.length === 0 &&
-    diff.bootChunks.extra.length === 0 &&
+    diff.bootSources.missing.length === 0 &&
+    diff.bootSources.extra.length === 0 &&
     Object.keys(diff.routes).length === 0
   return diff
 }
@@ -340,7 +355,7 @@ export function readRawChunks(distDir: string): RawChunk[] {
 /** Build the route→source-suffix map from the renderer's own registry. */
 export function readRouteModules(): Record<string, string> {
   const loaders = parseRoutePageLoaders(readFileSync(ROUTE_PAGES, 'utf8'))
-  const bootIds = parseStringArray(readFileSync(SURFACE_SIM, 'utf8'), 'KEEPALIVE_WARM_SURFACES')
+  const bootIds = parseStringArray(readFileSync(RAIL_SURFACES, 'utf8'), 'RAIL_SURFACE_ROUTE_IDS')
   const modules: Record<string, string> = {}
   for (const id of bootIds) {
     const specifier = loaders[id]
@@ -348,6 +363,31 @@ export function readRouteModules(): Record<string, string> {
     modules[id] = loaderSourceSuffix(specifier)
   }
   return modules
+}
+
+
+/**
+ * Source modules a chunk set was built from, normalised to a repo-relative
+ * POSIX path. Emitted chunk names (and therefore their hashes) change on almost
+ * every renderer edit, so they cannot be the identity a gate compares; the
+ * source closure can.
+ */
+function normaliseSource(source: string): string {
+  const posixSource = source.replace(/\\/g, '/')
+  const anchors = ['/src/', '/packages/', '/apps/', '/node_modules/']
+  for (const anchor of anchors) {
+    const at = posixSource.lastIndexOf(anchor)
+    if (at !== -1) return posixSource.slice(at + 1)
+  }
+  return posixSource.replace(/^\.\.?\//, '')
+}
+
+function closureSources(graph: ReadonlyMap<string, ChunkGraphEntry>, files: readonly string[]): string[] {
+  const out = new Set<string>()
+  for (const file of files) {
+    for (const source of graph.get(file)?.sources ?? []) out.add(normaliseSource(source))
+  }
+  return [...out].sort()
 }
 
 export function deriveFromDist(distDir: string): BootManifest {
@@ -362,8 +402,8 @@ export function deriveFromDist(distDir: string): BootManifest {
 function formatDiff(diff: ManifestDiff): string {
   const lines: string[] = []
   if (diff.entry) lines.push(`  entry: ${diff.entry.expected} → ${diff.entry.actual}`)
-  if (diff.bootChunks.missing.length || diff.bootChunks.extra.length) {
-    lines.push(`  bootChunks -${diff.bootChunks.missing.join(',') || '∅'} +${diff.bootChunks.extra.join(',') || '∅'}`)
+  if (diff.bootSources.missing.length || diff.bootSources.extra.length) {
+    lines.push(`  bootSources -${diff.bootSources.missing.join(',') || '∅'} +${diff.bootSources.extra.join(',') || '∅'}`)
   }
   for (const [id, entry] of Object.entries(diff.routes)) {
     if (entry.chunk) lines.push(`  ${id}: chunk ${entry.chunk.expected} → ${entry.chunk.actual}`)
@@ -374,10 +414,50 @@ function formatDiff(diff: ManifestDiff): string {
   return lines.join('\n')
 }
 
+/** Source roots whose edits invalidate a built renderer. */
+const STALENESS_ROOTS = [
+  'apps/electron/src',
+  'apps/electron/vite.config.ts',
+  'apps/electron/index.html',
+  'packages/shared/src',
+] as const
+
+/** Newest mtime (ms) under a file or directory tree, ignoring build output. */
+function newestMtimeMs(target: string): number {
+  const stat = statSync(target, { throwIfNoEntry: false })
+  if (!stat) return 0
+  if (!stat.isDirectory()) return stat.mtimeMs
+  let newest = stat.mtimeMs
+  for (const entry of readdirSync(target, { withFileTypes: true })) {
+    if (entry.name === 'node_modules' || entry.name === '.vite' || entry.name === 'dist') continue
+    newest = Math.max(newest, newestMtimeMs(join(target, entry.name)))
+  }
+  return newest
+}
+
+/**
+ * A built renderer is usable only when its entry is newer than every source it
+ * was built from. Checking existence alone let a stale `dist/` through, which
+ * surfaced as a confusing "no chunk for route …" deep inside the derivation.
+ */
+export function distNeedsBuild(distEntry: string, roots: readonly string[] = STALENESS_ROOTS): boolean {
+  const entry = statSync(distEntry, { throwIfNoEntry: false })
+  if (!entry) return true
+  return roots.some((root) => newestMtimeMs(isAbsolute(root) ? root : join(ROOT, root)) > entry.mtimeMs)
+}
+
 async function ensureDist(allowBuild: boolean): Promise<void> {
-  if (existsSync(DIST_DIR)) return
-  if (!allowBuild) throw new Error(`boot-manifest: ${DIST_DIR} is missing and --no-build was given`)
-  console.log('[boot-manifest] dist missing — building the renderer (vite build)…')
+  const distEntry = join(DIST_DIR, 'index.html')
+  const present = existsSync(DIST_DIR)
+  if (present && !distNeedsBuild(distEntry)) return
+  if (!allowBuild) {
+    throw new Error(
+      present
+        ? `boot-manifest: ${DIST_DIR} is older than the renderer sources and --no-build was given (rebuild with \`bun run vite build\` or drop --no-build)`
+        : `boot-manifest: ${DIST_DIR} is missing and --no-build was given`,
+    )
+  }
+  console.log(`[boot-manifest] dist ${present ? 'is older than the renderer sources' : 'missing'} — building the renderer (vite build)…`)
   const proc = Bun.spawn({
     cmd: ['bun', 'run', 'vite', 'build', '--config', 'apps/electron/vite.config.ts'],
     cwd: ROOT,

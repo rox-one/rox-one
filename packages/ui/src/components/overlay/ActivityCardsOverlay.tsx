@@ -7,12 +7,19 @@ import { githubLightTheme } from '@uiw/react-json-view/githubLight'
 import { Layers, Check, Copy } from 'lucide-react'
 import { PreviewOverlay } from './PreviewOverlay'
 import { ContentFrame } from './ContentFrame'
-import { ShikiCodeViewer } from '../code-viewer/ShikiCodeViewer'
 import { TerminalOutput } from '../terminal/TerminalOutput'
 import { Markdown } from '../markdown'
 import { CodeBlock } from '../markdown/CodeBlock'
 import { detectLanguage } from './GenericOverlay'
 import type { OverlayCard } from '../../lib/tool-parsers'
+
+// ShikiCodeViewer pulls the Shiki highlighter chunk (registerShikiThemes,
+// Shiki core). Load it when the overlay first renders its content instead of
+// at startup, the same way CodePreviewOverlay defers Shiki. Public
+// props/exports are unchanged and the loaded UI is identical.
+const ShikiCodeViewer = React.lazy(() =>
+  import('../code-viewer/ShikiCodeViewer').then((module) => ({ default: module.ShikiCodeViewer }))
+)
 
 export interface ActivityCardsOverlayProps {
   isOpen: boolean
@@ -148,13 +155,15 @@ export function ActivityCardsOverlay({
     if (data.type === 'code') {
       return (
         <ContentFrame title={card.label} fitContent minWidth={850}>
-          <ShikiCodeViewer
-            code={data.content}
-            filePath={data.filePath}
-            language={undefined}
-            startLine={data.startLine}
-            theme={theme}
-          />
+          <React.Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm">{t('common.loading')}</div>}>
+            <ShikiCodeViewer
+              code={data.content}
+              filePath={data.filePath}
+              language={undefined}
+              startLine={data.startLine}
+              theme={theme}
+            />
+          </React.Suspense>
         </ContentFrame>
       )
     }

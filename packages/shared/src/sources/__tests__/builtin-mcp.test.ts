@@ -111,7 +111,9 @@ describe('built-in MCP provisioning', () => {
     const credential = { TELEGRAM_API_ID: '123', TELEGRAM_API_HASH: 'hash', TELEGRAM_SESSION_STRING: 'session' };
     expect(getBuiltinMcpReadiness(source, { env: {}, credential }).status).toBe('ready');
     const runtime = buildRuntimeBuiltinMcpConfig(source, { env: {}, credential });
-    expect(runtime.mcp?.env).toEqual(credential);
+    // The spec env rides along with the credentials: uvx is pinned to the
+    // app-managed 3.12 (uv's default stable interpreter builds PyO3<0.25 fail).
+    expect(runtime.mcp?.env).toEqual({ ...credential, UV_PYTHON: '3.12' });
     expect(new SourceCredentialManager().getCredentialId(loaded(source)).type).toBe('source_apikey');
     expect(new SourceCredentialManager().getCredentialId(loaded(config('firecrawl-mcp'))).type).toBe('source_bearer');
     const options = { env: { TELEGRAM_API_ID: '123', TELEGRAM_API_HASH: 'hash', TELEGRAM_SESSION_NAME: '/private/session' }, fileExists: (path: string) => path === '/private/session.session' };

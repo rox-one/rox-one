@@ -2,11 +2,11 @@
  * Tray shell (e2.1) — a menu-bar status indicator plus navigation dispatch.
  *
  * The menu is a pure model (`buildTrayMenuModel`) so items and enablement are
- * testable without Electron. The controller owns a `Tray`-like surface, keeps
- * the tooltip/indicator in sync with the current `TrayStatus`, and broadcasts
- * every transition over `menu:trayStatusChanged`. Navigation items dispatch the
- * frozen `menu:*` channels through the injected dispatcher (the same event-sink
- * path the application menu uses) — never a raw `webContents.send`.
+ * testable without Electron. The controller owns a `Tray`-like surface and keeps
+ * the tooltip/indicator in sync with the current `TrayStatus`. Navigation items
+ * dispatch the frozen `menu:*` channels through the injected dispatcher (the
+ * same event-sink path the application menu uses) — never a raw
+ * `webContents.send`.
  */
 
 import type { ServiceState, TrayStatus } from '@rox/shared/service-lifecycle'
@@ -20,8 +20,6 @@ export type TrayMenuItemId =
   | 'quickComposer'
   | 'openInbox'
   | 'openDashboard'
-  | 'openApp'
-  | 'serviceStatus'
   | 'runDoctor'
   | 'settings'
   | 'showWindow'
@@ -54,8 +52,6 @@ export const TRAY_ITEM_CHANNEL: Record<TrayMenuItemId, string | undefined> = {
   quickComposer: undefined,
   openInbox: undefined,
   openDashboard: RPC_CHANNELS.menu.OPEN_DASHBOARD,
-  openApp: RPC_CHANNELS.menu.OPEN_NATIVE_CONSOLE,
-  serviceStatus: RPC_CHANNELS.menu.SHOW_SERVICE_STATUS,
   runDoctor: RPC_CHANNELS.menu.RUN_DOCTOR,
   settings: RPC_CHANNELS.menu.OPEN_SETTINGS,
   showWindow: undefined,
@@ -70,8 +66,6 @@ export const TRAY_ITEM_SHELL_ACTION: Record<TrayMenuItemId, ShellActionPayload['
   quickComposer: 'quick-composer',
   openInbox: 'open-inbox',
   openDashboard: undefined,
-  openApp: undefined,
-  serviceStatus: undefined,
   runDoctor: undefined,
   settings: undefined,
   showWindow: undefined,
@@ -97,8 +91,6 @@ export function buildTrayMenuModel(status: TrayStatus): readonly TrayMenuItemMod
     { id: 'quickComposer', labelKey: 'menu.quickComposer', enabled: true },
     { id: 'openInbox', labelKey: 'menu.openInbox', enabled: true },
     { id: 'openDashboard', labelKey: 'tray.menu.openDashboard', enabled: true },
-    { id: 'openApp', labelKey: 'tray.menu.openApp', enabled: true },
-    { id: 'serviceStatus', labelKey: 'tray.menu.serviceStatus', enabled: true },
     { id: 'runDoctor', labelKey: 'tray.menu.runDoctor', enabled: true },
     { id: 'settings', labelKey: 'tray.menu.settings', enabled: true },
     { id: 'showWindow', labelKey: 'menu.showWindow', enabled: true },
@@ -124,7 +116,7 @@ export function toTrayTemplate(
 ): readonly TrayTemplateItem[] {
   const template: TrayTemplateItem[] = []
   for (const item of model) {
-    if (item.id === 'newNote' || item.id === 'openDashboard' || item.id === 'serviceStatus' || item.id === 'quit') {
+    if (item.id === 'newNote' || item.id === 'openDashboard' || item.id === 'quit') {
       template.push({ type: 'separator' })
     }
     template.push({
@@ -154,7 +146,6 @@ export interface TrayControllerDependencies {
   readonly dispatchShellAction?: (action: ShellActionPayload['action']) => void
   /** Show + focus an existing window (or restore the last one). */
   readonly showWindow?: () => void
-  readonly broadcastStatus: (status: TrayStatus) => void
   readonly quit: () => void
 }
 
@@ -171,11 +162,10 @@ export class TrayController {
     return this.status
   }
 
-  /** Applies a new status: indicator, tooltip, menu, then broadcast. */
+  /** Applies a new status: indicator, tooltip, then menu. */
   setStatus(status: TrayStatus): void {
     this.status = status
     this.apply()
-    this.deps.broadcastStatus(status)
   }
 
   private apply(): void {

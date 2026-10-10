@@ -138,4 +138,26 @@ describe('installStaleChunkReload', () => {
     expect(prevented).toBe(true)
     expect(unrelatedPrevented).toBe(true)
   })
+
+  it('is idempotent: a second install on the same window does not double-fire', () => {
+    const win = fakeWindow()
+    const first = installStaleChunkReload(win.target)
+    const second = installStaleChunkReload(win.target)
+    // The same disposer is handed back, and only one listener pair exists, so a
+    // single failure reloads exactly once (two pairs would each carry their own
+    // one-shot guard and reload twice).
+    expect(second).toBe(first)
+    win.emit('vite:preloadError', { payload: new Error('Failed to fetch dynamically imported module') })
+    expect(win.reloadCount()).toBe(1)
+
+    // After disposing, a fresh install re-arms normally.
+    first()
+    const third = installStaleChunkReload(win.target)
+    expect(third).not.toBe(first)
+    win.emit('unhandledrejection', {
+      reason: new Error('Failed to fetch dynamically imported module: ./X.js'),
+      preventDefault: () => {},
+    })
+    expect(win.reloadCount()).toBe(2)
+  })
 })

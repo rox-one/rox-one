@@ -203,6 +203,7 @@ export {
 export type {
   AppleCalendarAdapterOptions,
   AppleCalendarAuthStatus,
+  AppleCalendarAccessResult,
   AppleCalendarHelperBinding,
   AppleCalendarHelperEvent,
   AppleCalendarHelperResult,

@@ -122,12 +122,58 @@ RPC-поверхность `packages/server-core/src/playbooks/codebook/index.ts
 
 По итогу реализации медиа-стадии подкаста (В4):
 
-- **O5 (Kokoro)** — остаётся v1.x: `TtsEngine` расширен значением `'kokoro'`, но движок в v1 не
-  включается; работают `system` (macOS `say`) и `edge`. Не входит в поставленный объём.
+- **O5 (Kokoro)** — закрыт **по подкасту** 2026-10-10: третий движок `kokoro` (offline `kokoro-tts`
+  CLI, MIT/PyPI, модель ставит юзер) добавлен ТОЛЬКО в подкаст — `PodcastEngine = 'system'|'edge'|'kokoro'`
+  (`shared/src/voice/podcast-job.ts`), реестр голосов + `resolveKokoroCommand`/`probeKokoro`/`createKokoroSegmentSynthesizer`
+  (`server-core/src/playbooks/tts.ts`), гейт `process.platform !== 'win32'`, без uv-фолбэка (нет CLI → честный
+  `tts-unavailable`), новый канал `podcast:engines` даёт availability. **Границы:** диктовка не тронута
+  (`TtsEngine` = `system|edge`, voice RPC/storage/VoiceSettings без изменений), русских голосов у Kokoro v1.0 нет —
+  для русского остаются `edge`/`system`, в UI честный хинт `kokoroEnglishOnly`.
+- **O9 (лимиты клона)** — решено 2026-10-10: полная история по умолчанию (`CLONE_DEPTH='full'`),
+  таймаут 30 мин, гард размера `MAX_REPO_BYTES` = 2 ГиБ после clone/pull (`clone-too-large`).
+- **O10 (капы и параллелизм)** — решено 2026-10-10, v1.x-часть внедрена: 128 прогонов на проект / 200
+  кодбук-прогонов; LLM-слой — bounded-параллелизм `LLM_STAGE_CONCURRENCY`=2 (артефакты и журнал
+  детерминированы порядком адаптеров; тест `llm-concurrency.test.ts`).
+- **O11 (бюджет i18n)** — решено 2026-10-10: 12 000 ключей en (11 286 на закрытии), гейт
+  `lint:i18n:budget` в `validate:ci`.
+- **P6/D3 → v1.x auto-watch (В8, закрыто 2026-10-10)** — вынесенный из P6 v1.x-рычаг реализован под
+  флагом `devspace.autoWatch.v1` (**default OFF**, зависимость `devspace.v1`). Границы жёсткие:
+  - согласие — **явное пер-репо** (`watchEnabled`, default false); ни одна сетевая git-операция не
+    выполняется для репо без него. Поля: `watchEnabled → watchAutoPull → watchIntervalMs`
+    (15 мин…24 ч, дефолт 60 мин), а также `lastWatchAt` / `lastRemoteHead` в
+    `DevSpaceRepositoryRecord`.
+  - **без демонов**: таймер живёт в процессе приложения (`devspace/watch.ts`, старт рядом с
+    регистрацией dev-space, стоп на `onShutdown`), оба таймера `.unref()`, повторный вход в тик
+    заблокирован, тик никогда не бросает.
+  - авто-регенерация вынесена в отдельный рычаг В11 (ниже) — сам sweep делает только `git fetch --quiet --prune`
+    и, при `watchAutoPull`, `git pull --ff-only`.
+- **P6/D3 → v1.x авто-регенерация после auto-pull (В11, закрыто 2026-10-10)** — надстройка над В8, отдельный
+  пер-репо флаг `watchRegenerate` (`DevSpaceRepositoryRecord`, default false; канал `devSpace:setWatch`).
+  Границы жёсткие:
+  - срабатывает **только после успешного** fast-forward (`pull` вернулся без ошибки) и только при тройном
+    согласии `watchEnabled && watchAutoPull && watchRegenerate`; при ошибке fetch/pull тик, как и раньше,
+    лишь пишет `lastError`/`stale` и никого не регенерирует;
+  - **без демонов**: регенерация идёт в том же процессе и в том же тике watch (после записи каталога), в
+    `try/catch`; ошибка регенерации не роняет тик, а журналируется (`watch-regenerate-started/succeeded/failed`
+    в `projects/<slug>/dev-space/audit.jsonl`);
+  - регенерация переиспользует боевые пути через вынесенные `refreshRepositoryInternal`/`startRunInternal`
+    (те же `git pull`→bind→snapshot→pipeline `reconcile→structural→llm→publish`), поэтому артефакты
+    структурной фазы обновляются **всегда**; LLM-фаза без согласия на модельные коннекты честно деградирует в
+    `partial` (никаких фейковых артефактов);
+  - прогресс/`changed` для этого пути уходят в воркспейс (`pushTyped … {to:'workspace'}`), отменяемость
+    конвейера и `abortAllDevSpaceRuns()` на shutdown сохраняются.
 - **O6 (srt)** — «да» и реализовано: сегментные тайминги TTS дают `.srt`; экспорт плеера — `srt` через
   `devSpace:readArtifact` + диалог текстового сохранения, `mp3` — конкатенацией фреймового чтения
   (`podcast:audio`) в Blob-загрузку (существующий паттерн экспорта рендера).
-- **N-агентный подкаст** — v1.x; v1 = два голоса (ведущий + эксперт) из фиксированного реестра (D13).
+- **N-агентный подкаст** — реализовано (v1.x-рычаг): `PodcastRoleTemplate[]` принимает 2..6 ролей
+  (`id`: `host` первым, `expert` вторым, далее `guest1`..`guest4`; уникальность обязательна; порядок массива
+  = порядок представления, первую роль (`host`) открывает и закрывает итогом). Промпт сценария перечисляет
+  все роли, парсер матчит `speaker` по `id` или ярлыку (было). Границы: голоса берутся циклично из
+  `PODCAST_VOICE_REGISTRY` по полу роли (по умолчанию первая female, вторая male, далее чередование; только
+  RU-голоса) — при ролей больше голосов они **переиспользуются** (честный хинт в студии); порядок ролей
+  фиксирован (`host` первым), `MAX_PODCAST_SEGMENTS` не менялся.
+- **v1 (базовый)** — два голоса (ведущий + эксперт) остаются дефолтом `DEFAULT_PODCAST_ROLES` и формой
+  запуска без `roles` (D13).
 - **Post-media потолки** — оставлены явными: `data:` URL ≤ 32 MiB (`PODCAST_AUDIO_URL_MAX_BYTES`),
   окно `podcast:audio` 192 KiB, лимиты эпизода/манифеста в `episodes.ts`. Для эпизодов свыше 32 MiB
   плеер обязан идти фреймовым чтением, а не `audioUrl`.

@@ -25,12 +25,12 @@ import type { ProjectConfig } from '@rox/shared/projects'
 import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import type { ErrorCode } from '@rox/shared/protocol'
 import {
-  PodcastPipelineError, advancePodcastJob, createPodcastJob,
+  PodcastPipelineError, advancePodcastJob, createPodcastJob, isPodcastRoleId,
 } from '@rox/shared/voice'
 import type { DevSpaceConsent } from '@rox/shared/dev-space'
 import type {
   PodcastCancelResult, PodcastEngine, PodcastEpisode, PodcastEpisodesResult, PodcastJob, PodcastJobState,
-  PodcastRoleTemplate, PodcastSourceInput, PodcastStartResult,
+  PodcastRoleGender, PodcastRoleId, PodcastRoleTemplate, PodcastSourceInput, PodcastStartResult,
 } from '@rox/shared/voice'
 import { pushTyped } from '@rox/server-core/transport'
 import type { RpcServer } from '@rox/server-core/transport'
@@ -39,7 +39,10 @@ import type { RequestContext } from '../transport/types'
 import {
   assertPodcastConsent, buildPodcastPrompt, maskPodcastSource, parsePodcastScript, resolveMaxSegments, resolvePodcastRoles,
 } from './script.ts'
-import { createEdgeSegmentSynthesizer, createSystemSegmentSynthesizer, type SegmentSynthesizer } from './tts.ts'
+import {
+  createEdgeSegmentSynthesizer, createKokoroSegmentSynthesizer, createSystemSegmentSynthesizer,
+  planPodcastVoices, probePodcastEngines, type SegmentSynthesizer,
+} from './tts.ts'
 import {
   buildSrt, cuesFromDurations, estimateDurations, mixdownSegments, probeDurations, resolveFfmpegCommand,
   resolveFfprobeCommand, runProcess, type ProcessRunner,
@@ -63,7 +66,7 @@ export interface HandlerEnvironment {
   saveProject?(root: string, config: ProjectConfig): void
   /** Absent means the host has no model connector composed: start fails `connector-unavailable`. */
   connector?: PodcastScenarioConnector
-  synthesizer?: (engine: PodcastEngine) => SegmentSynthesizer
+  synthesizer?: (engine: PodcastEngine, voiceForRole: (role: PodcastRoleId) => string) => SegmentSynthesizer
   resolveFfmpeg?: () => Promise<string>
   resolveFfprobe?: (ffmpeg: string) => string | null
   run?: ProcessRunner
@@ -141,10 +144,14 @@ function parseRoles(raw: unknown): readonly PodcastRoleTemplate[] | undefined {
   const roles: PodcastRoleTemplate[] = raw.map(entry => {
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return invalid('roles')
     const value = entry as Record<string, unknown>
-    if (Object.keys(value).some(key => !['id', 'label', 'prompt'].includes(key))
-      || (value.id !== 'host' && value.id !== 'expert')
-      || typeof value.label !== 'string' || typeof value.prompt !== 'string') return invalid('roles')
-    return { id: value.id, label: value.label, prompt: value.prompt }
+    if (Object.keys(value).some(key => !['id', 'label', 'prompt', 'gender'].includes(key))
+      || !isPodcastRoleId(value.id)
+      || typeof value.label !== 'string' || typeof value.prompt !== 'string'
+      || (value.gender !== undefined && value.gender !== 'female' && value.gender !== 'male')) return invalid('roles')
+    return {
+      id: value.id, label: value.label, prompt: value.prompt,
+      ...(value.gender ? { gender: value.gender as PodcastRoleGender } : {}),
+    }
   })
   return roles
 }
@@ -181,7 +188,7 @@ async function artifactSourceText(root: string, projectSlug: string, path: strin
 
 export interface PodcastPipelineDeps {
   readonly connector?: PodcastScenarioConnector
-  readonly synthesizer: (engine: PodcastEngine) => SegmentSynthesizer
+  readonly synthesizer: (engine: PodcastEngine, voiceForRole: (role: PodcastRoleId) => string) => SegmentSynthesizer
   readonly resolveFfmpeg: () => Promise<string>
   readonly resolveFfprobe?: (ffmpeg: string) => string | null
   readonly run?: ProcessRunner
@@ -228,7 +235,7 @@ export async function runPodcastPipeline(input: PodcastPipelineInput, deps: Podc
     assertNotAborted(input.signal)
     const segments = parsePodcastScript(raw, input.roles, input.maxSegments)
 
-    const synthesizer = deps.synthesizer(input.engine)
+    const synthesizer = deps.synthesizer(input.engine, planPodcastVoices(input.engine, input.roles))
     const files: string[] = []
     input.onProgress({ state: 'synthesizing', doneSegments: 0, totalSegments: segments.length })
     for (const [index, segment] of segments.entries()) {
@@ -247,7 +254,7 @@ export async function runPodcastPipeline(input: PodcastPipelineInput, deps: Podc
     const probed = ffprobe ? await probeDurations(ffprobe, files, input.signal, deps.run).catch(() => null) : null
     const timings = cuesFromDurations(
       segments,
-      { host: input.roles.find(role => role.id === 'host')?.label ?? 'Host', expert: input.roles.find(role => role.id === 'expert')?.label ?? 'Expert' },
+      Object.fromEntries(input.roles.map(role => [role.id, role.label])),
       probed ?? estimateDurations(segments),
       probed ? 'probed' : 'estimated',
     )
@@ -271,7 +278,7 @@ export async function runPodcastPipeline(input: PodcastPipelineInput, deps: Podc
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.podcast.START, RPC_CHANNELS.podcast.CANCEL, RPC_CHANNELS.podcast.EPISODES,
-  RPC_CHANNELS.podcast.AUDIO, RPC_CHANNELS.podcast.AUDIO_URL,
+  RPC_CHANNELS.podcast.AUDIO, RPC_CHANNELS.podcast.AUDIO_URL, RPC_CHANNELS.podcast.ENGINES,
 ] as const
 
 interface ActiveJob {
@@ -349,6 +356,10 @@ export function registerPodcastHandlers(server: RpcServer, deps: HandlerDeps,
     return { slug, config }
   }
 
+  // Honest engine availability for the studio engine picker: never installs a
+  // binary, so the UI can disable `kokoro` with a reason instead of failing a run.
+  server.handle(RPC_CHANNELS.podcast.ENGINES, () => probePodcastEngines(), { access: 'localElectron' })
+
   server.handle(RPC_CHANNELS.podcast.START, async (context, raw: unknown): Promise<PodcastStartResult> => {
     try {
       return await startPodcast(context, raw)
@@ -360,7 +371,7 @@ export function registerPodcastHandlers(server: RpcServer, deps: HandlerDeps,
   async function startPodcast(context: RequestContext, raw: unknown): Promise<PodcastStartResult> {
     const input = envelope(raw, ['projectSlug', 'source', 'title', 'engine', 'roles', 'maxSegments'])
     const source = parseSource(input.source)
-    const engine: PodcastEngine = input.engine === undefined ? 'system' : input.engine === 'edge' || input.engine === 'system' ? input.engine : invalid('invalid-engine')
+    const engine: PodcastEngine = input.engine === undefined ? 'system' : input.engine === 'edge' || input.engine === 'system' || input.engine === 'kokoro' ? input.engine : invalid('invalid-engine')
     const roles = resolvePodcastRoles(parseRoles(input.roles))
     const maxSegments = input.maxSegments === undefined
       ? resolveMaxSegments()
@@ -392,9 +403,9 @@ export function registerPodcastHandlers(server: RpcServer, deps: HandlerDeps,
       onProgress: patch => transition(job, patch.state, { totalSegments: patch.totalSegments, doneSegments: patch.doneSegments }),
     }, {
       ...(environment.connector ? { connector: environment.connector } : {}),
-      synthesizer: environment.synthesizer ?? (engine => engine === 'system'
-        ? createSystemSegmentSynthesizer()
-        : createEdgeSegmentSynthesizer()),
+      synthesizer: environment.synthesizer ?? ((engine, voiceForRole) => engine === 'system'
+        ? createSystemSegmentSynthesizer({ voiceForRole })
+        : engine === 'kokoro' ? createKokoroSegmentSynthesizer({ voiceForRole }) : createEdgeSegmentSynthesizer({ voiceForRole })),
       resolveFfmpeg: environment.resolveFfmpeg ?? DEFAULT_ENVIRONMENT.resolveFfmpeg!,
       resolveFfprobe: environment.resolveFfprobe ?? DEFAULT_ENVIRONMENT.resolveFfprobe!,
       run: environment.run ?? DEFAULT_ENVIRONMENT.run,

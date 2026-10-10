@@ -15,21 +15,10 @@
  *    `boot-manifest.json`, so the checked-in file cannot silently drift.
  */
 import { describe, expect, it } from 'bun:test'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import {
-  buildChunkGraph,
-  deriveBootManifest,
-  deriveFromDist,
-  diffBootManifest,
-  parseRoutePageLoaders,
-  parseStringArray,
-  readRouteModules,
-  serializeBootManifest,
-  staticClosure,
-  type BootManifest,
-  type RawChunk,
-} from '../boot-manifest'
+import { buildChunkGraph, deriveBootManifest, deriveFromDist, diffBootManifest, distNeedsBuild, parseRoutePageLoaders, parseStringArray, readRouteModules, serializeBootManifest, staticClosure, type BootManifest, type RawChunk } from '../boot-manifest'
 
 const ROOT = resolve(import.meta.dir, '..', '..')
 const RENDERER_SRC = join(ROOT, 'apps/electron/src/renderer')
@@ -82,10 +71,21 @@ describe('boot manifest derivation', () => {
       'assets/shared.js',
       'assets/vendor.js',
     ])
-    expect(manifest.routes.notes).toEqual({
-      chunk: 'assets/NotesPage.js',
-      chunks: ['assets/NotesPage.js', 'assets/editor.js', 'assets/entry.js', 'assets/main.js', 'assets/shared.js', 'assets/vendor.js'],
-    })
+    expect(manifest.routes.notes.chunk).toBe('assets/NotesPage.js')
+    expect(manifest.routes.notes.chunks).toEqual([
+      'assets/NotesPage.js',
+      'assets/editor.js',
+      'assets/entry.js',
+      'assets/main.js',
+      'assets/shared.js',
+      'assets/vendor.js',
+    ])
+    // The closure's STABLE identity: the source modules it was built from.
+    expect(manifest.routes.notes.sources).toEqual([
+      'src/renderer/bootstrap.ts',
+      'src/renderer/main.tsx',
+      'src/renderer/pages/NotesPage.tsx',
+    ])
     expect(manifest.routes.tasks.chunks).toEqual([
       'assets/TasksPage.js',
       'assets/entry.js',
@@ -118,25 +118,57 @@ describe('boot manifest derivation', () => {
 
     const diff = diffBootManifest(expected, derived)
     expect(diff.ok).toBe(false)
-    expect(diff.bootChunks.extra).toContain('assets/NotesPage.js')
-    expect(diff.bootChunks.extra).toContain('assets/editor.js')
-    // ...and every route that did not already reach the leaked modules grew.
-    expect(diff.routes.tasks.extra).toEqual(['assets/NotesPage.js', 'assets/editor.js'])
+    expect(diff.bootSources.extra).toContain('src/renderer/pages/NotesPage.tsx')
+    // ...and every route that did not already reach the leaked module grew too.
+    expect(diff.routes.tasks.extra).toEqual(['src/renderer/pages/NotesPage.tsx'])
   })
 
-  it('accepts an unchanged bundle and every route id the surface sim models', () => {
+  it('accepts an unchanged bundle and every route id the boot warm-up preloads', () => {
     const expected = deriveFixture()
     expect(diffBootManifest(expected, deriveFixture()).ok).toBe(true)
     const bootIds = readRouteModules()
-    expect(Object.keys(bootIds).sort()).toEqual(['inbox', 'notes', 'planWorkspace', 'skillsCatalog', 'tasks'])
+    expect(Object.keys(bootIds).sort()).toEqual([
+      'agentsWorkspace',
+      'automationEditor',
+      'browser',
+      'cloudRun',
+      'connections',
+      'feed',
+      'inbox',
+      'integrationsCatalog',
+      'knowledgeHome',
+      'notes',
+      'pagesHome',
+      'planWorkspace',
+      'skillsCatalog',
+      'tasks',
+      'terminal',
+    ])
   })
 
   it('reads the route→chunk mapping and boot route ids from the renderer source', () => {
     const loaders = parseRoutePageLoaders(readFileSync(join(RENDERER_SRC, 'components/app-shell/route-pages.ts'), 'utf8'))
     expect(loaders.notes).toBe('@/pages/NotesPage')
     expect(loaders.inbox).toBe('@/pages/InboxPage')
-    const warm = parseStringArray(readFileSync(join(RENDERER_SRC, 'perf/surface-sim.ts'), 'utf8'), 'KEEPALIVE_WARM_SURFACES')
-    expect(warm).toEqual(['notes', 'tasks', 'skillsCatalog', 'inbox', 'planWorkspace'])
+    const rail = parseStringArray(readFileSync(join(ROOT, 'apps/electron/src/shared/rail-surfaces.ts'), 'utf8'), 'RAIL_SURFACE_ROUTE_IDS')
+    expect(rail).toHaveLength(15)
+    expect(rail).toEqual([
+      'notes',
+      'tasks',
+      'planWorkspace',
+      'agentsWorkspace',
+      'inbox',
+      'feed',
+      'skillsCatalog',
+      'integrationsCatalog',
+      'knowledgeHome',
+      'pagesHome',
+      'connections',
+      'browser',
+      'terminal',
+      'cloudRun',
+      'automationEditor',
+    ])
   })
 })
 
@@ -148,8 +180,53 @@ describe.skipIf(!existsSync(DIST) || !existsSync(MANIFEST_PATH))('boot manifest 
     expect(diff).toEqual({
       ok: true,
       bootChunks: { missing: [], extra: [] },
+      bootSources: { missing: [], extra: [] },
       routes: {},
     })
-    expect(serializeBootManifest(derived)).toBe(serializeBootManifest(committed))
+    // Chunk names (hashes) move with any renderer edit; the closure's source set
+    // is the identity the gate compares, so assert on that (and on the route ids).
+    expect(derived.bootSources).toEqual(committed.bootSources)
+    expect(Object.keys(derived.routes).sort()).toEqual(Object.keys(committed.routes).sort())
+    for (const id of Object.keys(derived.routes)) {
+      expect(derived.routes[id].sources).toEqual(committed.routes[id].sources)
+    }
+  })
+})
+
+describe('dist staleness guard', () => {
+  it('treats a missing entry, an older entry and ignored build dirs correctly', () => {
+    const root = mkdtempSync(join(tmpdir(), 'boot-manifest-stale-'))
+    try {
+      const distEntry = join(root, 'dist', 'index.html')
+      const src = join(root, 'src')
+      mkdirSync(src, { recursive: true })
+      const sourceFile = join(src, 'page.tsx')
+      writeFileSync(sourceFile, 'export const page = 1\n')
+
+      // 1) missing entry -> build
+      expect(distNeedsBuild(distEntry, [src])).toBe(true)
+
+      // 2) entry newer than every source -> reuse
+      mkdirSync(join(root, 'dist'), { recursive: true })
+      writeFileSync(distEntry, '<html></html>\n')
+      const future = new Date(Date.now() + 60_000)
+      utimesSync(distEntry, future, future)
+      expect(distNeedsBuild(distEntry, [src])).toBe(false)
+
+      // 3) a source edited after the build -> rebuild
+      const later = new Date(Date.now() + 120_000)
+      utimesSync(sourceFile, later, later)
+      expect(distNeedsBuild(distEntry, [src])).toBe(true)
+
+      // 4) build output inside the root must not count as a source edit
+      utimesSync(distEntry, new Date(Date.now() + 240_000), new Date(Date.now() + 240_000))
+      mkdirSync(join(src, 'dist'), { recursive: true })
+      const nested = join(src, 'dist', 'chunk.js')
+      writeFileSync(nested, 'x\n')
+      utimesSync(nested, new Date(Date.now() + 300_000), new Date(Date.now() + 300_000))
+      expect(distNeedsBuild(distEntry, [src])).toBe(false)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
   })
 })

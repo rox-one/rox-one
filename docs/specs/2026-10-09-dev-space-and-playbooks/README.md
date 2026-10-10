@@ -79,11 +79,26 @@
 | В5 | Playbooks «Кодбук»: ноутбуки-пайплайны по коду | [#1739](https://github.com/rox-one/rox-one/pull/1739) |
 | fix | `playbooks:codebookJob` в `BROADCAST_EVENT_CHANNELS` + пере-запись бюджетов бандла | [#1741](https://github.com/rox-one/rox-one/pull/1741) |
 
+Открытые вопросы O1–O11 закрыты 2026-10-10 (статусы и ссылки — `07-DECISIONS.md`): O1/O2/O6/O7/O8
+подтверждены кодом и ревизией D4, O3 — ADR-0021, O4 — ADR-0022, O5 — v1.x, O9 — full history +
+`MAX_REPO_BYTES` (2 ГиБ), O10 — капы журналов 128/200 + bounded-параллелизм LLM (2), O11 — бюджет
+12 000 ключей с гейтом `lint:i18n:budget` в `validate:ci`.
+
+v1.x-рычаги поставлены 2026-10-10 (PR #1767/#1768/#1770/#1771/#1774 + фикс #1773): третий движок
+подкаста Kokoro, N-агентный подкаст 2–6 говорящих, auto-watch репозиториев (off by default, без
+демонов), bounded-параллелизм LLM-слоя, R16-слайс-2 веб-режимов — статусы и границы в
+`08-V1X-BACKLOG.md`.
+
+В8 (v1.x-рычаг из P6/D3, 2026-10-10) — **auto-watch репозиториев**: флаг `devspace.autoWatch.v1`
+(default OFF), явное пер-репо согласие (`watchEnabled`), таймер в процессе приложения (`.unref()`,
+стоп на shutdown), только `git fetch` + опциональный `pull --ff-only` — без авто-регенерации
+артефактов и без демонов (`packages/server-core/src/devspace/watch.ts`).
+
 Карта кода (где что лежит):
 
-- **Dev Space, серверное ядро** — `packages/server-core/src/devspace/` (`clone.ts`, `runner.ts`,
-  `artifacts.ts`, `runs.ts`, `publish-port.ts`, `tool-runtime.ts`, `questions/`, `security/`,
-  `stages/`, `adapters/`); RPC `packages/server-core/src/handlers/rpc/dev-space.ts`.
+- **Dev Space, серверное ядро** — `packages/server-core/src/devspace/` (`clone.ts`, `watch.ts`,
+  `runner.ts`, `artifacts.ts`, `runs.ts`, `publish-port.ts`, `tool-runtime.ts`, `questions/`,
+  `security/`, `stages/`, `adapters/`); RPC `packages/server-core/src/handlers/rpc/dev-space.ts`.
 - **Модель данных** — `packages/shared/src/dev-space/` (`types.ts`, `index.ts`).
 - **Агентские session-tools** — `packages/session-tools-core/src/handlers/dev-space-{read,search,propose}.ts`
   + `packages/session-tools-core/src/dev-space/{runtime,scope}.ts`.

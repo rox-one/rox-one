@@ -79,6 +79,8 @@ export const WORKBENCH_FLAG = {
   devSpaceQuestionsV1: 'devspace.questions.v1',
   devSpaceToursV1: 'devspace.tours.v1',
   devSpaceAskV1: 'devspace.ask.v1',
+  /** v1.x O10 auto-watch: per-repo consent UI + background sweep. Default OFF. */
+  devSpaceAutoWatchV1: 'devspace.autoWatch.v1',
   // Playbooks surface — master + sub-flags, default OFF.
   playbooksV1: 'playbooks.v1',
   playbooksKnowledgeV1: 'playbooks.knowledge.v1',
@@ -288,6 +290,8 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   { id: WORKBENCH_FLAG.devSpaceQuestionsV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.devSpaceV1], rollbackSafe: true },
   { id: WORKBENCH_FLAG.devSpaceToursV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.devSpaceV1], rollbackSafe: true },
   { id: WORKBENCH_FLAG.devSpaceAskV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.devSpaceV1], rollbackSafe: true },
+  // v1.x O10: auto-watch sub-flag — default OFF, depends on the Dev Space master.
+  { id: WORKBENCH_FLAG.devSpaceAutoWatchV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.devSpaceV1], rollbackSafe: true },
   // Playbooks (spec 2026-10-09): default OFF, inert until explicitly enabled.
   { id: WORKBENCH_FLAG.playbooksV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.playbooksKnowledgeV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.playbooksV1], rollbackSafe: true },

@@ -225,6 +225,7 @@ export const RPC_CHANNELS = {
     LIST_ARTIFACTS: 'devSpace:listArtifacts',
     READ_ARTIFACT: 'devSpace:readArtifact',
     GENERATE_QUESTIONS: 'devSpace:generateQuestions',
+    SET_WATCH: 'devSpace:setWatch',
     CLONE_PROGRESS: 'devSpace:cloneProgress',
     CHANGED: 'devSpace:changed',
     RUN_PROGRESS: 'devSpace:runProgress',
@@ -430,10 +431,7 @@ export const RPC_CHANNELS = {
   menu: {
     NEW_CHAT: 'menu:newChat',
     OPEN_DASHBOARD: 'menu:openDashboard',
-    OPEN_NATIVE_CONSOLE: 'menu:openNativeConsole',
-    SHOW_SERVICE_STATUS: 'menu:showServiceStatus',
     RUN_DOCTOR: 'menu:runDoctor',
-    TRAY_STATUS_CHANGED: 'menu:trayStatusChanged',
     NEW_WINDOW: 'menu:newWindow',
     OPEN_SETTINGS: 'menu:openSettings',
     KEYBOARD_SHORTCUTS: 'menu:keyboardShortcuts',
@@ -726,6 +724,8 @@ export const RPC_CHANNELS = {
     AUDIO: 'podcast:audio',
     /** A `data:` URL for the player when the episode fits a single message. */
     AUDIO_URL: 'podcast:audioUrl',
+    /** Honest per-engine availability probe (`system`/`edge`/`kokoro`) for the studio. */
+    ENGINES: 'podcast:engines',
   },
   playbooks: {
     /** Start a local codebook notebook run (cells → script/agent/artifact steps). */
@@ -775,6 +775,12 @@ export const RPC_CHANNELS = {
     GOOGLE_CONNECT: 'calendar:googleConnect',
     GOOGLE_DISCONNECT: 'calendar:googleDisconnect',
     GOOGLE_SYNC: 'calendar:googleSync',
+    // Apple Calendar connector (R8, macOS EventKit). Read-only local sync; the
+    // helper binary is host-local, so the whole namespace is LOCAL_ONLY.
+    APPLE_STATUS: 'calendar:appleStatus',
+    APPLE_CONNECT: 'calendar:appleConnect',
+    APPLE_DISCONNECT: 'calendar:appleDisconnect',
+    APPLE_SYNC: 'calendar:appleSync',
   },
   /**
    * Google Meet artifacts (wave 5, row d2.6) — read-only Developer-Preview

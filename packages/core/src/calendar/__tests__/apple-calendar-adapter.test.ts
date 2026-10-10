@@ -232,6 +232,40 @@ describe('AppleCalendarAdapter', () => {
     await expect(adapter.listEvents('acct-1')).rejects.toBeInstanceOf(AppleCalendarUnavailableError)
     expect(runner.calls).toHaveLength(0)
   })
+
+  it('authStatus() reports the EventKit state without listing events', async () => {
+    const runner = fakeRunner({ 'auth-status': () => result({ status: 'denied' }) })
+    const adapter = new AppleCalendarAdapter({ runHelper: runner.run, range: RANGE })
+
+    expect(await adapter.authStatus()).toBe('denied')
+    expect(runner.calls).toEqual([['auth-status']])
+  })
+
+  it('authStatus() throws a helper error for an unknown status payload', async () => {
+    const runner = fakeRunner({ 'auth-status': () => result({ status: 'something-else' }) })
+    const adapter = new AppleCalendarAdapter({ runHelper: runner.run, range: RANGE })
+
+    await expect(adapter.authStatus()).rejects.toBeInstanceOf(AppleCalendarHelperError)
+  })
+
+  it('requestAccess() surfaces the granted flag and resulting status', async () => {
+    const granted = fakeRunner({ 'request-access': () => result({ status: 'authorized', granted: true }) })
+    const allowed = new AppleCalendarAdapter({ runHelper: granted.run, range: RANGE })
+    expect(await allowed.requestAccess()).toEqual({ status: 'authorized', granted: true })
+
+    const refused = fakeRunner({ 'request-access': () => result({ status: 'denied', granted: false }) })
+    const denied = new AppleCalendarAdapter({ runHelper: refused.run, range: RANGE })
+    expect(await denied.requestAccess()).toEqual({ status: 'denied', granted: false })
+  })
+
+  it('maps a spawn failure to a typed helper error', async () => {
+    const adapter = new AppleCalendarAdapter({
+      runHelper: async () => { throw new Error('ENOENT') },
+      range: RANGE,
+    })
+
+    await expect(adapter.authStatus()).rejects.toMatchObject({ code: 'APPLE_CALENDAR_HELPER' })
+  })
 })
 
 describe('apple calendar production gate', () => {
