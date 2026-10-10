@@ -68,7 +68,7 @@
     },
     "main": {
       "totalRawBytes": 481577,
-      "gzipTotalBytes": 147373
+      "gzipTotalBytes": 147386
     },
     "pl": {
       "totalRawBytes": 678233,
@@ -76,7 +76,7 @@
     },
     "playground": {
       "totalRawBytes": 800990,
-      "gzipTotalBytes": 295241
+      "gzipTotalBytes": 295250
     },
     "ru": {
       "totalRawBytes": 914271,
@@ -84,7 +84,7 @@
     },
     "team-labels": {
       "totalRawBytes": 1770528,
-      "gzipTotalBytes": 524502
+      "gzipTotalBytes": 524505
     },
     "wasm": {
       "totalRawBytes": 634427,
@@ -114,8 +114,8 @@
     }
   },
   "totals": {
-    "jsRawBytes": 33652744,
-    "jsGzipBytes": 9248736,
+    "jsRawBytes": 33653113,
+    "jsGzipBytes": 9248617,
     "cssRawBytes": 805134,
     "cssGzipBytes": 122467
   },
@@ -132,12 +132,12 @@
     },
     "index.html": {
       "jsRawBytes": 4030670,
-      "gzipTotalBytes": 1226366,
+      "gzipTotalBytes": 1226348,
       "fileCount": 58
     },
     "playground.html": {
       "jsRawBytes": 16504141,
-      "gzipTotalBytes": 4725464,
+      "gzipTotalBytes": 4725394,
       "fileCount": 137
     },
     "voice-overlay.html": {
