@@ -9,7 +9,13 @@ describe('dom-env restore', () => {
     const g = globalThis as Record<string, unknown>
     const keys = ['window', 'document', 'navigator', 'localStorage', 'Event', 'HTMLElement', 'IS_REACT_ACT_ENVIRONMENT']
     const before = new Map(keys.map((key) => [key, Object.getOwnPropertyDescriptor(g, key)]))
+    // Import-time install is unreliable in a multi-file `bun test` process: an
+    // earlier file may have imported (and later uninstalled) this module, so it
+    // stays cached with active === false and the module body never re-runs.
+    // The dynamic import is the subject here (install-on-import boundary): a
+    // static import would hoist above `before` and hide that timing.
     const env = await import('./dom-env')
+    env.installDom() // idempotent; returns the same window reused below
     expect(env.isDomInstalled()).toBe(true)
     expect(typeof g.document).toBe('object')
     env.uninstallDom()
