@@ -112,7 +112,7 @@ export function MobileAppMenu(props: AppMenuProps) {
   }, [])
 
   const pages = useMemo(
-    () => buildMobileMenuPages({ hasNewWindow: !!props.onNewWindow, isDebugMode }),
+    () => buildMobileMenuPages({ hasNewWindow: !!props.onNewWindow, isDebugMode, isWeb: isWebUI }),
     [props.onNewWindow, isDebugMode],
   )
 

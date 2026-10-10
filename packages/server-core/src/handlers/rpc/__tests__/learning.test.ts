@@ -11,7 +11,7 @@ import '../memory-test-setup' // must run before any module reading CRAFT_CONFIG
 import { describe, expect, it } from 'bun:test'
 import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import type { HandlerFn, RequestContext, RpcHandlerOptions, RpcServer } from '@rox/server-core/transport'
-import type { LearningPolicy, TaskOutcome, UserCorrection } from '@rox/shared/memory/learning'
+import type { LearningMutation, LearningPolicy, TaskOutcome, UserCorrection } from '@rox/shared/memory/learning'
 import type { HandlerDeps, LearningRpcService } from '../../handler-deps'
 import { HANDLED_CHANNELS, registerLearningHandlers } from '../learning'
 
@@ -87,6 +87,14 @@ function createService(recorded: Recorded[], policies: LearningPolicy[] = []): L
     listEvidence: (workspaceId, candidateId) => {
       record('listEvidence', workspaceId, candidateId)
       return []
+    },
+    listCorrections: workspaceId => {
+      record('listCorrections', workspaceId)
+      return [] as UserCorrection[]
+    },
+    listMutations: workspaceId => {
+      record('listMutations', workspaceId)
+      return [] as LearningMutation[]
     },
     getOutcome: (workspaceId, id) => {
       record('getOutcome', workspaceId, id)
@@ -247,6 +255,8 @@ const READ_CHANNELS = [
   CH.LIST_CANDIDATES,
   CH.GET_CANDIDATE,
   CH.LIST_EVIDENCE,
+  CH.LIST_CORRECTIONS,
+  CH.LIST_MUTATIONS,
   CH.GET_OUTCOME,
   CH.GET_EXPERIMENT,
   CH.GET_STATS,
@@ -269,7 +279,7 @@ const AGENT_CHANNELS = [CH.OBSERVE, CH.RECORD_OUTCOME, CH.RECORD_CORRECTION] as 
 describe('learning:* registration', () => {
   it('registers every channel in HANDLED_CHANNELS and nothing else', () => {
     const harness = createHarness()
-    expect(HANDLED_CHANNELS).toHaveLength(20)
+    expect(HANDLED_CHANNELS).toHaveLength(22)
     expect(Object.keys(harness.handlers).sort()).toEqual([...HANDLED_CHANNELS].sort())
   })
 
@@ -350,6 +360,16 @@ describe('learning:* reads', () => {
     expect(harness.recorded).toEqual([
       { method: 'listEvidence', args: ['ws1', undefined] },
       { method: 'listEvidence', args: ['ws1', 'cand-1'] },
+    ])
+  })
+
+  it('reads the workspace correction and mutation ledgers', async () => {
+    const harness = createHarness()
+    await harness.invoke(CH.LIST_CORRECTIONS, 'ws1')
+    await harness.invoke(CH.LIST_MUTATIONS, 'ws1')
+    expect(harness.recorded).toEqual([
+      { method: 'listCorrections', args: ['ws1'] },
+      { method: 'listMutations', args: ['ws1'] },
     ])
   })
 

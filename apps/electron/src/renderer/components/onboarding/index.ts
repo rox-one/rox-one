@@ -16,7 +16,6 @@ export { APISetupStep, type ApiSetupMethod } from './APISetupStep'
 export { CredentialsStep, type CredentialStatus } from './CredentialsStep'
 export { LocalModelStep, type LocalModelSubmitData } from './LocalModelStep'
 export { RoxCliCredentialStep, type RoxCliCredentialSubmitData } from './RoxCliCredentialStep'
-export { ReauthScreen } from './ReauthScreen'
 export { GitBashWarning, type GitBashStatus } from './GitBashWarning'
 export { EnvironmentFields } from './EnvironmentFields'
 

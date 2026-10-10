@@ -22,6 +22,7 @@ is recorded so the next agent does not “fix” it.
 | [009](./009-meetings-calls-honesty.md) | Meetings calls/rooms | **Fail-closed** — no fake dialer, `bindCall`/`joinRoom` blocked | ACCEPTED (current ship) | product |
 | [010](./010-ui-agent-task-controls.md) | UI agent-task controls (T11 A6/A7) | **Honest chip stop** (shells only); dead ⌘J/⌘⇧J actions removed | ACCEPTED (shipped slice) | product |
 | [011](./011-screens.md) | Screens honest flag states (T12) | **Every flag has a decision**; dead sub-flags kept | ACCEPTED (shipped) — E4 OPEN | product / lane-UI-5 |
+| [012](./012-t13-misc-stubs.md) | Misc stubs: learning reads, web balance, reauth, mobile menu (T13) | Each stub **implemented or deleted**; reauth removed, web debug rows gated | ACCEPTED (shipped slice) | product |
 
 Human owner for this program: **pzd** (`go@trysota.ru`). Legal review for 001 is still outstanding.
 

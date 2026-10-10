@@ -17,6 +17,7 @@ import type {
   LearningCandidateStatus,
   LearningEvidence,
   LearningExperiment,
+  LearningMutation,
   LearningPolicy,
   LearningStatsDto,
   LearningTimelineEntryDto,
@@ -34,6 +35,8 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.learning.LIST_CANDIDATES,
   RPC_CHANNELS.learning.GET_CANDIDATE,
   RPC_CHANNELS.learning.LIST_EVIDENCE,
+  RPC_CHANNELS.learning.LIST_CORRECTIONS,
+  RPC_CHANNELS.learning.LIST_MUTATIONS,
   RPC_CHANNELS.learning.GET_OUTCOME,
   RPC_CHANNELS.learning.GET_EXPERIMENT,
   RPC_CHANNELS.learning.GET_STATS,
@@ -299,6 +302,22 @@ export function registerLearningHandlers(server: RpcServer, deps: HandlerDeps): 
     const scoped = authorizeLearningWorkspace(ctx, workspaceId, deps)
     const evidenceFor = candidateId === undefined || candidateId === null ? undefined : requireId(candidateId, 'candidateId')
     return requireLearning(deps).listEvidence(scoped, evidenceFor)
+  }, { nativeAction: 'read' })
+
+  server.handle(RPC_CHANNELS.learning.LIST_CORRECTIONS, async (
+    ctx: RequestContext,
+    workspaceId: string,
+  ): Promise<UserCorrection[]> => {
+    const scoped = authorizeLearningWorkspace(ctx, workspaceId, deps)
+    return requireLearning(deps).listCorrections(scoped)
+  }, { nativeAction: 'read' })
+
+  server.handle(RPC_CHANNELS.learning.LIST_MUTATIONS, async (
+    ctx: RequestContext,
+    workspaceId: string,
+  ): Promise<LearningMutation[]> => {
+    const scoped = authorizeLearningWorkspace(ctx, workspaceId, deps)
+    return requireLearning(deps).listMutations(scoped)
   }, { nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.learning.GET_OUTCOME, async (

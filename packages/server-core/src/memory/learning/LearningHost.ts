@@ -19,9 +19,11 @@ import type {
   LearningCandidate,
   LearningCandidateStatus,
   LearningEvidence,
+  LearningMutation,
   LearningPolicy,
   LearningStatsDto,
   LearningTimelineEntryDto,
+  UserCorrection,
 } from '@rox/shared/memory/learning'
 import type { AuditActor, Lesson, LessonCategory, LessonScope } from '@rox/shared/memory/types'
 import { invalidateSkillsCache } from '@rox/shared/skills/storage'
@@ -494,6 +496,12 @@ export class LearningHost implements LearningRpcService {
 
   listEvidence: LearningRpcService['listEvidence'] = (workspaceId, candidateId) =>
     this.withService(workspaceId, (service) => service.listEvidence(workspaceId, candidateId), [] as LearningEvidence[])
+
+  listCorrections: LearningRpcService['listCorrections'] = (workspaceId) =>
+    this.withService(workspaceId, (service) => service.listCorrections(workspaceId), [] as UserCorrection[])
+
+  listMutations: LearningRpcService['listMutations'] = (workspaceId) =>
+    this.withService(workspaceId, (service) => service.listMutations(workspaceId), [] as LearningMutation[])
 
   getOutcome: LearningRpcService['getOutcome'] = (workspaceId, id) =>
     this.withService(workspaceId, (service) => service.getOutcome(workspaceId, id), null)

@@ -28,6 +28,7 @@ import type {
   LearningEvidence,
   LearningEvidenceType,
   LearningExperiment,
+  LearningMutation,
   LearningObservation,
   LearningPolicy,
   LearningPromotionThresholds,
@@ -1036,6 +1037,26 @@ export class LearningService implements LearningServicePorts, LearningRpcService
       return this.stores.evidence.listByIds(candidate.evidence.map((ref) => ref.evidenceId))
     } catch (error) {
       this.logger.warn('LearningService: listEvidence failed', error)
+      return []
+    }
+  }
+
+  /** User corrections flattened from the observation ledger (PRD §30), newest first. */
+  listCorrections(_workspaceId: string): UserCorrection[] {
+    try {
+      return this.stores.observations.listCorrections()
+    } catch (error) {
+      this.logger.warn('LearningService: listCorrections failed', error)
+      return []
+    }
+  }
+
+  /** Every durable mutation recorded for the workspace (PRD §3.6/§40). */
+  listMutations(_workspaceId: string): LearningMutation[] {
+    try {
+      return this.stores.mutations.list()
+    } catch (error) {
+      this.logger.warn('LearningService: listMutations failed', error)
       return []
     }
   }

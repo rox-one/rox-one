@@ -105,10 +105,12 @@ import type {
   LearningCandidateStatus,
   LearningEvidence,
   LearningExperiment,
+  LearningMutation,
   LearningPolicy,
   LearningStatsDto,
   LearningTimelineEntryDto,
   TaskOutcome,
+  UserCorrection,
 } from '@rox/shared/memory/learning'
 import type { DriveMirrorStartResult, DriveMirrorStatusResult } from '@rox/server-core/handlers/rpc/drive'
 import type { EffectivenessReport, PromotionResult, RollbackResult } from '@rox/server-core/memory/learning/learning-types'
@@ -2650,6 +2652,8 @@ export interface ElectronAPI {
   listLearningCandidates(workspaceId: string, filter?: { status?: LearningCandidateStatus }): Promise<LearningCandidate[]>
   getLearningCandidate(workspaceId: string, id: string): Promise<LearningCandidate | null>
   listLearningEvidence(workspaceId: string, candidateId?: string): Promise<LearningEvidence[]>
+  listLearningCorrections(workspaceId: string): Promise<UserCorrection[]>
+  listLearningMutations(workspaceId: string): Promise<LearningMutation[]>
   getLearningOutcome(workspaceId: string, id: string): Promise<TaskOutcome | null>
   getLearningExperiment(workspaceId: string, id: string): Promise<LearningExperiment | null>
   getLearningStats(workspaceId: string): Promise<LearningStatsDto>

@@ -40,6 +40,12 @@ export interface MobileMenuPage {
 interface BuildOptions {
   hasNewWindow: boolean
   isDebugMode: boolean
+  /**
+   * True inside the browser (webUI) host. It has no Electron menu bridge, so
+   * the update/devtools rows — which can only be served by `electronAPI` —
+   * are dropped rather than rendered as dead no-ops (inventory A17).
+   */
+  isWeb: boolean
 }
 
 /**
@@ -50,11 +56,14 @@ interface BuildOptions {
  * - View (Zoom, sidebar/focus toggles) — browser-native zoom; sidebar/focus are no-ops in compact.
  * - Window (Minimize/Maximize) — meaningless in a browser tab.
  * - Quit — also meaningless in a browser tab.
+ * - Debug (update / install / devtools) — served by `electronAPI`; the debug
+ *   page and its rows are dropped entirely on the web host (`isWeb`), which has
+ *   no menu bridge, instead of shipping no-op rows.
  *
  * Adding a new help link requires only an addition to `HELP_LINKS`. Adding a new
  * settings page requires only an addition to `SETTINGS_PAGES`. Both fan out here.
  */
-export function buildMobileMenuPages({ hasNewWindow, isDebugMode }: BuildOptions): MobileMenuPage[] {
+export function buildMobileMenuPages({ hasNewWindow, isDebugMode, isWeb }: BuildOptions): MobileMenuPage[] {
   const rootRows: MobileMenuRow[] = [
     {
       id: ROOT_MENU.newChat.id,
@@ -87,7 +96,7 @@ export function buildMobileMenuPages({ hasNewWindow, isDebugMode }: BuildOptions
       action: { kind: 'navigate', to: 'help' },
     },
   )
-  if (isDebugMode) {
+  if (isDebugMode && !isWeb) {
     rootRows.push({
       id: 'debug',
       iconName: DEBUG_MENU.icon,
@@ -119,7 +128,7 @@ export function buildMobileMenuPages({ hasNewWindow, isDebugMode }: BuildOptions
     action: { kind: 'url', url: link.url },
   }))
 
-  const debugRows: MobileMenuRow[] = DEBUG_MENU.items
+  const debugRows: MobileMenuRow[] = isWeb ? [] : DEBUG_MENU.items
     .filter((item) => item.type === 'action')
     .map<MobileMenuRow>((item) => {
       // Narrowed by the filter above.
@@ -138,10 +147,14 @@ export function buildMobileMenuPages({ hasNewWindow, isDebugMode }: BuildOptions
       }
     })
 
-  return [
+  const pages: MobileMenuPage[] = [
     { id: 'root', titleKey: 'menu.craftMenu', rows: rootRows },
     { id: 'settings', titleKey: 'sidebar.settings', rows: settingsRows },
     { id: 'help', titleKey: 'menu.help', rows: helpRows },
-    { id: 'debug', titleKey: DEBUG_MENU.labelKey, rows: debugRows },
   ]
+  // The debug page only exists when it has rows to serve (never on the web host).
+  if (debugRows.length > 0) {
+    pages.push({ id: 'debug', titleKey: DEBUG_MENU.labelKey, rows: debugRows })
+  }
+  return pages
 }

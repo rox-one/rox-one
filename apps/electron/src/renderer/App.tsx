@@ -125,16 +125,13 @@ const KeyboardShortcutsDialog = React.lazy(() =>
   import('@/components/KeyboardShortcutsDialog').then((m) => ({ default: m.KeyboardShortcutsDialog })),
 )
 
-// #1675: the onboarding wizard / reauth screen / their step + APISetup subtree
-// render only outside the `ready` shell (first run, re-auth, workspace picker,
-// diagnostics). Loading them through React.lazy keeps that subtree out of
-// index.html's preloaded startup closure; each render site gets its own
-// `<Suspense fallback={null}>`, matching the KeyboardShortcutsDialog pattern.
+// #1675: the onboarding wizard / its step + APISetup subtree render only
+// outside the `ready` shell (first run, workspace picker, diagnostics). Loading
+// them through React.lazy keeps that subtree out of index.html's preloaded
+// startup closure; each render site gets its own `<Suspense fallback={null}>`,
+// matching the KeyboardShortcutsDialog pattern.
 const OnboardingWizard = React.lazy(() =>
   import('@/components/onboarding').then((m) => ({ default: m.OnboardingWizard })),
-)
-const ReauthScreen = React.lazy(() =>
-  import('@/components/onboarding').then((m) => ({ default: m.ReauthScreen })),
 )
 const WorkspacePicker = React.lazy(() =>
   import('@/components/workspace').then((m) => ({ default: m.WorkspacePicker })),
@@ -149,13 +146,13 @@ const DoctorReportDialog = React.lazy(() =>
 /**
  * `ensureRoxRuntimeDefault` still lives in the (otherwise lazy) onboarding
  * barrel; reach it through a dynamic import so the startup graph keeps only
- * this edge's cost. Called from startup/reauth flows well before first paint,
+ * this edge's cost. Called from the startup flow well before first paint,
  * so the one-off chunk fetch is off the critical render path.
  */
 const loadEnsureRoxRuntimeDefault = async () =>
   (await import('@/components/onboarding')).ensureRoxRuntimeDefault
 
-type AppState = 'loading' | 'onboarding' | 'reauth' | 'workspace-picker' | 'ready' | 'transport-unavailable'
+type AppState = 'loading' | 'onboarding' | 'workspace-picker' | 'ready' | 'transport-unavailable'
 
 /** Type for the Jotai store returned by useStore() */
 type JotaiStore = ReturnType<typeof getDefaultStore>
@@ -521,7 +518,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   useEffect(() => {
     if (isFullyReady) markFirstMeaningfulPaint()
   }, [isFullyReady])
-  // First settled screen of any kind (onboarding/picker/reauth on fresh profiles).
+  // First settled screen of any kind (onboarding/picker on fresh profiles).
   useEffect(() => {
     if (appState !== 'loading') markRendererOnce(`renderer:interactive:${appState}`)
   }, [appState])
@@ -926,47 +923,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     // Onboarding is the single name screen; provider setup lives in Settings → ИИ.
     initialStep: 'welcome',
   })
-
-  // Reauth login handler - placeholder (reauth is not currently used)
-  const handleReauthLogin = useCallback(async () => {
-    setPersonalTaskScope(null)
-    try {
-      const identity = await window.electronAPI.getOrgIdentity()
-      if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
-        throw new Error('runtime-identity-unavailable')
-      }
-      setCallerAuthority(identity.authority)
-      const needs = identity.authority === 'local' ? await window.electronAPI.getSetupNeeds() : null
-      if (identity?.name?.trim()) {
-        // Static import would drag the whole onboarding barrel into the startup
-        // closure; this call only runs in the reauth flow, so a dynamic import
-        // is required to keep it lazy (see loadEnsureRoxRuntimeDefault).
-        const ensureRoxRuntimeDefault = await loadEnsureRoxRuntimeDefault()
-        const runtime = await ensureRoxRuntimeDefault(window.electronAPI)
-        if (runtime.status === 'failed') {
-          toast.error(t('onboarding.errors.saveConfigFailed'))
-          setSetupNeeds(needs)
-          setAppState('onboarding')
-          return
-        }
-        const current = await window.electronAPI.getWindowWorkspace()
-        if (!current && identity.authority === 'native') throw new Error('native-workspace-unavailable')
-        setWindowWorkspaceId(current)
-        setAppState(current ? 'ready' : 'workspace-picker')
-      } else {
-        setSetupNeeds(needs)
-        setAppState('onboarding')
-      }
-    } catch (error) {
-      toast.error(t('settings.account.loadFailed', { message: toErrorMessage(error) }))
-      setAppState('onboarding')
-    }
-  }, [t])
-
-  // Reauth reset handler - open reset confirmation dialog
-  const handleReauthReset = useCallback(() => {
-    setShowResetDialog(true)
-  }, [])
 
   // Set when startup published the LLM connection list for a ready local app.
   const startupLlmConnectionsPublishedRef = useRef(false)
@@ -2753,29 +2709,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           setStartupAttempt(attempt => attempt + 1)
         }}>{t('common.retry')}</button>
       </div>
-    )
-  }
-
-  // Reauth state - session expired, need to re-login
-  // ModalProvider + WindowCloseHandler ensures X button works on Windows
-  if (appState === 'reauth') {
-    return (
-      <DismissibleLayerProvider>
-        <ModalProvider>
-          <WindowCloseHandler />
-          <React.Suspense fallback={null}>
-            <ReauthScreen
-              onLogin={handleReauthLogin}
-              onReset={handleReauthReset}
-            />
-            <ResetConfirmationDialog
-              open={showResetDialog}
-              onConfirm={executeReset}
-              onCancel={() => setShowResetDialog(false)}
-            />
-          </React.Suspense>
-        </ModalProvider>
-      </DismissibleLayerProvider>
     )
   }
 

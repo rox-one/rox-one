@@ -5,7 +5,7 @@ import { join } from 'node:path'
 const playground = join(import.meta.dir, '../..')
 
 describe('uncovered playground screens', () => {
-  it('registers Security, Cloud Runs, quest empty, and Reauth stories', () => {
+  it('registers Security, Cloud Runs, and quest empty stories', () => {
     const settings = readFileSync(join(playground, 'registry/settings.tsx'), 'utf8')
     const onboarding = readFileSync(join(playground, 'registry/onboarding.tsx'), 'utf8')
     expect(settings).toContain("id: 'settings-security'")
@@ -41,8 +41,6 @@ describe('uncovered playground screens', () => {
     expect(settings).toContain("id: 'home-quests-empty'")
     expect(settings).toContain("id: 'home-quests-active'")
     expect(settings).toContain('QuestProgressCard')
-    expect(onboarding).toContain("id: 'onboarding-reauth'")
-    expect(onboarding).toContain('ReauthScreen')
     // First-run onboarding is the name screen only: no environment or completion step.
     expect(onboarding).not.toContain('EnvironmentSetupStep')
     expect(onboarding).not.toContain('CompletionStep')
