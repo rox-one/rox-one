@@ -1,0 +1,1550 @@
+{
+  "version": 1,
+  "generated_at": "2026-10-10T14:47:46.504Z",
+  "source": {
+    "repo": "agisota/2026-10-09-rox-rovers",
+    "commit": "6bc8b44ebbd6a147ba477a2e6e327cf5870c278a"
+  },
+  "entries": [
+    {
+      "id": "9router",
+      "name": "9Router",
+      "category": "gateway",
+      "tagline": {
+        "ru": "Шлюз для Claude Code/Codex/Cursor к 40+ провайдерам.",
+        "en": "Gateway for Claude Code/Codex/Cursor to 40+ providers."
+      },
+      "description": {
+        "ru": "Шлюз для Claude Code/Codex/Cursor к 40+ провайдерам. Позволяет инструментам разработки работать с десятками провайдеров.",
+        "en": "A gateway that connects Claude Code, Codex and Cursor to 40+ providers."
+      },
+      "icon": "icons/9router.svg",
+      "spdx": "NOASSERTION",
+      "homepage": "https://github.com/decolua/9router",
+      "verified": false,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "activepieces",
+      "name": "Activepieces",
+      "category": "automation",
+      "tagline": {
+        "ru": "No-code автоматизация с открытым исходным кодом.",
+        "en": "Open-source no-code automation."
+      },
+      "description": {
+        "ru": "No-code автоматизация с открытым исходным кодом. No-code автоматизация с открытым исходным кодом.",
+        "en": "Open-source no-code automation."
+      },
+      "icon": "icons/activepieces.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/activepieces/activepieces",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "airflow",
+      "name": "Apache Airflow",
+      "category": "automation",
+      "tagline": {
+        "ru": "Оркестратор DAG-пайплайнов данных.",
+        "en": "Orchestrator for data DAG pipelines."
+      },
+      "description": {
+        "ru": "Оркестратор DAG-пайплайнов данных. Оркестратор DAG-пайплайнов обработки данных.",
+        "en": "An orchestrator for data DAG pipelines."
+      },
+      "icon": "icons/airflow.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/apache/airflow",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "anythingllm",
+      "name": "AnythingLLM",
+      "category": "chat-ui",
+      "tagline": {
+        "ru": "RAG-рабочее пространство для документов и агентов.",
+        "en": "RAG workspace for documents and agents."
+      },
+      "description": {
+        "ru": "RAG-рабочее пространство для документов и агентов. Организует документы в рабочие пространства с поиском.",
+        "en": "A RAG workspace for documents and agents."
+      },
+      "icon": "icons/anythingllm.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/Mintplex-Labs/anything-llm",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "apprise",
+      "name": "Apprise",
+      "category": "comms",
+      "tagline": {
+        "ru": "Единый API уведомлений в 100+ сервисов.",
+        "en": "One notification API for 100+ services."
+      },
+      "description": {
+        "ru": "Единый API уведомлений в 100+ сервисов. Единый API уведомлений в более чем 100 сервисов.",
+        "en": "A single notification API covering 100+ services."
+      },
+      "icon": "icons/apprise.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/caronc/apprise-api",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "ayugram-tooling",
+      "name": "AyuGram-adjacent tooling",
+      "category": "rox-ecosystem",
+      "tagline": {
+        "ru": "Инструменты вокруг форка Telegram-клиента AyuGram.",
+        "en": "Tooling around the AyuGram Telegram client fork."
+      },
+      "description": {
+        "ru": "Инструменты вокруг форка Telegram-клиента AyuGram. Инструменты вокруг форка Telegram-клиента AyuGram.",
+        "en": "Tooling around the AyuGram Telegram client fork."
+      },
+      "icon": "icons/ayugram-tooling.svg",
+      "spdx": "GPL-3.0",
+      "homepage": "https://github.com/AyuGram/AyuGramDesktop",
+      "verified": false,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "bifrost",
+      "name": "Bifrost",
+      "category": "gateway",
+      "tagline": {
+        "ru": "Быстрый LLM-шлюз с observability и балансировкой.",
+        "en": "Fast LLM gateway with observability and load balancing."
+      },
+      "description": {
+        "ru": "Быстрый LLM-шлюз с observability и балансировкой. Балансирует нагрузку и показывает метрики запросов.",
+        "en": "A fast LLM gateway with observability and load balancing."
+      },
+      "icon": "icons/bifrost.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/maximhq/bifrost",
+      "verified": false,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "big-agi",
+      "name": "Big-AGI",
+      "category": "chat-ui",
+      "tagline": {
+        "ru": "Продвинутый AGI-интерфейс с мультимодальностью.",
+        "en": "Advanced AGI interface with multimodality."
+      },
+      "description": {
+        "ru": "Продвинутый AGI-интерфейс с мультимодальностью. Работает с текстом, изображениями и несколькими моделями.",
+        "en": "An advanced AGI-style interface with multimodal input."
+      },
+      "icon": "icons/big-agi.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/enricoros/big-AGI",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "browser-use",
+      "name": "browser-use",
+      "category": "agent-tooling",
+      "tagline": {
+        "ru": "Агентный контроль браузера для автоматизации.",
+        "en": "Agentic browser control for automation."
+      },
+      "description": {
+        "ru": "Агентный контроль браузера для автоматизации. Агентное управление браузером для автоматизации.",
+        "en": "Agentic browser control for automation."
+      },
+      "icon": "icons/browser-use.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/browser-use/browser-use",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "chroma",
+      "name": "Chroma",
+      "category": "vector-db",
+      "tagline": {
+        "ru": "Простая встраиваемая векторная БД для прототипов.",
+        "en": "Simple embeddable vector DB for prototypes."
+      },
+      "description": {
+        "ru": "Простая встраиваемая векторная БД для прототипов. Легко встраивается в прототипы и небольшие проекты.",
+        "en": "A simple embeddable vector database for prototypes."
+      },
+      "icon": "icons/chroma.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/chroma-core/chroma",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "clickhouse",
+      "name": "ClickHouse",
+      "category": "database",
+      "tagline": {
+        "ru": "Колоночная аналитическая СУБД реального времени.",
+        "en": "Real-time columnar analytical database."
+      },
+      "description": {
+        "ru": "Колоночная аналитическая СУБД реального времени. Аналитика в реальном времени по колоночному хранилищу.",
+        "en": "A columnar analytical database for real-time analytics."
+      },
+      "icon": "icons/clickhouse.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/ClickHouse/ClickHouse",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "code-server",
+      "name": "code-server",
+      "category": "dev-env",
+      "tagline": {
+        "ru": "VS Code в браузере для команд разработки.",
+        "en": "VS Code in the browser for dev teams."
+      },
+      "description": {
+        "ru": "VS Code в браузере для команд разработки. VS Code в браузере для командной работы.",
+        "en": "VS Code running in the browser for dev teams."
+      },
+      "icon": "icons/code-server.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/coder/code-server",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "comfyui",
+      "name": "ComfyUI",
+      "category": "media",
+      "tagline": {
+        "ru": "Нодовая генерация изображений и видео (Stable Diffusion).",
+        "en": "Node-based image and video generation (Stable Diffusion)."
+      },
+      "description": {
+        "ru": "Нодовая генерация изображений и видео (Stable Diffusion). Генерирует изображения и видео через граф узлов.",
+        "en": "Node-based image and video generation with Stable Diffusion."
+      },
+      "icon": "icons/comfyui.svg",
+      "spdx": "GPL-3.0",
+      "homepage": "https://github.com/comfyanonymous/ComfyUI",
+      "verified": false,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "crawl4ai",
+      "name": "Crawl4AI",
+      "category": "agent-tooling",
+      "tagline": {
+        "ru": "Асинхронный краулер, оптимизированный под LLM.",
+        "en": "Async crawler optimised for LLMs."
+      },
+      "description": {
+        "ru": "Асинхронный краулер, оптимизированный под LLM. Асинхронный краулер, оптимизированный под LLM.",
+        "en": "An asynchronous crawler optimised for LLMs."
+      },
+      "icon": "icons/crawl4ai.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/unclecode/crawl4ai",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "dify",
+      "name": "Dify",
+      "category": "vector-db",
+      "tagline": {
+        "ru": "Платформа LLM-приложений и визуальных агентов.",
+        "en": "LLM app platform and visual agents."
+      },
+      "description": {
+        "ru": "Платформа LLM-приложений и визуальных агентов. Собирает LLM-приложения и агентов в визуальном редакторе.",
+        "en": "A platform for building LLM applications and visual agents."
+      },
+      "icon": "icons/dify.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/langgenius/dify",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "faster-whisper",
+      "name": "faster-whisper (Speaches)",
+      "category": "media",
+      "tagline": {
+        "ru": "Быстрая локальная транскрипция речи (OpenAI-совместимо).",
+        "en": "Fast local speech transcription (OpenAI-compatible)."
+      },
+      "description": {
+        "ru": "Быстрая локальная транскрипция речи (OpenAI-совместимо). Быстрая локальная транскрипция речи с OpenAI-совместимым API.",
+        "en": "Fast local speech transcription with an OpenAI-compatible API."
+      },
+      "icon": "icons/faster-whisper.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/speaches-ai/speaches",
+      "verified": false,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "firecrawl",
+      "name": "Firecrawl",
+      "category": "agent-tooling",
+      "tagline": {
+        "ru": "Краулер, отдающий Markdown для LLM-пайплайнов.",
+        "en": "Crawler that returns Markdown for LLM pipelines."
+      },
+      "description": {
+        "ru": "Краулер, отдающий Markdown для LLM-пайплайнов. Краулер, отдающий Markdown для LLM-пайплайнов.",
+        "en": "A crawler that returns Markdown for LLM pipelines."
+      },
+      "icon": "icons/firecrawl.svg",
+      "spdx": "AGPL-3.0",
+      "homepage": "https://github.com/mendableai/firecrawl",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "flaresolverr",
+      "name": "FlareSolverr",
+      "category": "agent-tooling",
+      "tagline": {
+        "ru": "Обход Cloudflare/DDoS-GuARD для агентов.",
+        "en": "Bypasses Cloudflare/DDoS-Guard for agents."
+      },
+      "description": {
+        "ru": "Обход Cloudflare/DDoS-GuARD для агентов. Обходит Cloudflare и DDoS-GuARD для агентов.",
+        "en": "Bypasses Cloudflare and DDoS-Guard challenges for agents."
+      },
+      "icon": "icons/flaresolverr.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/FlareSolverr/FlareSolverr",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "flowise",
+      "name": "Flowise",
+      "category": "automation",
+      "tagline": {
+        "ru": "Визуальный конструктор LLM-цепочек и агентов.",
+        "en": "Visual builder for LLM chains and agents."
+      },
+      "description": {
+        "ru": "Визуальный конструктор LLM-цепочек и агентов. Собирает цепочки LLM и агентов визуально.",
+        "en": "A visual builder for LLM chains and agents."
+      },
+      "icon": "icons/flowise.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/FlowiseAI/Flowise",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "forgejo",
+      "name": "Forgejo",
+      "category": "dev-env",
+      "tagline": {
+        "ru": "100% свободный форк Gitea с Actions-раннером.",
+        "en": "Fully free Gitea fork with an Actions runner."
+      },
+      "description": {
+        "ru": "100% свободный форк Gitea с Actions-раннером. Полностью свободный форк Gitea с раннером Actions.",
+        "en": "A fully free Gitea fork with an Actions runner."
+      },
+      "icon": "icons/forgejo.svg",
+      "spdx": "GPL-3.0",
+      "homepage": "https://codeberg.org/forgejo/forgejo",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "garage",
+      "name": "Garage",
+      "category": "object-storage",
+      "tagline": {
+        "ru": "Лёгкое распределённое S3-хранилище на Rust.",
+        "en": "Lightweight distributed S3 storage in Rust."
+      },
+      "description": {
+        "ru": "Лёгкое распределённое S3-хранилище на Rust. Распределённое S3-хранилище, написанное на Rust.",
+        "en": "A lightweight distributed S3 store written in Rust."
+      },
+      "icon": "icons/garage.svg",
+      "spdx": "AGPL-3.0",
+      "homepage": "https://git.deuxfleurs.fr/Deuxfleurs/garage",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "gitea",
+      "name": "Gitea",
+      "category": "dev-env",
+      "tagline": {
+        "ru": "Лёгкий self-hosted Git-сервер с CI и реестром.",
+        "en": "Lightweight self-hosted Git server with CI and registry."
+      },
+      "description": {
+        "ru": "Лёгкий self-hosted Git-сервер с CI и реестром. Лёгкий сервер Git с CI и реестром пакетов.",
+        "en": "A lightweight self-hosted Git server with CI and a package registry."
+      },
+      "icon": "icons/gitea.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/go-gitea/gitea",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "gotify",
+      "name": "Gotify",
+      "category": "comms",
+      "tagline": {
+        "ru": "Простой self-hosted сервер сообщений и пушей.",
+        "en": "Simple self-hosted message and push server."
+      },
+      "description": {
+        "ru": "Простой self-hosted сервер сообщений и пушей. Простой self-hosted сервер сообщений и пушей.",
+        "en": "A simple self-hosted message and push server."
+      },
+      "icon": "icons/gotify.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/gotify/server",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "category": "observability",
+      "tagline": {
+        "ru": "Дашборды и визуализация метрик и логов.",
+        "en": "Dashboards and visualisation for metrics and logs."
+      },
+      "description": {
+        "ru": "Дашборды и визуализация метрик и логов. Визуализирует метрики и логи в дашбордах.",
+        "en": "Dashboards and visualisation for metrics and logs."
+      },
+      "icon": "icons/grafana.svg",
+      "spdx": "AGPL-3.0",
+      "homepage": "https://github.com/grafana/grafana",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "hermes",
+      "name": "Hermes",
+      "category": "rox-ecosystem",
+      "tagline": {
+        "ru": "Агентный рантайм Hermes Agent (Nous Research) в составе экосистемы Rox.",
+        "en": "Hermes Agent runtime (Nous Research) in the Rox ecosystem."
+      },
+      "description": {
+        "ru": "Агентный рантайм Hermes Agent (Nous Research) в составе экосистемы Rox. Агентный рантайм Hermes Agent в составе экосистемы Rox.",
+        "en": "The Hermes Agent runtime (Nous Research) in the Rox ecosystem."
+      },
+      "icon": "icons/hermes.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/NousResearch/hermes-agent",
+      "verified": false,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "invokeai",
+      "name": "InvokeAI",
+      "category": "media",
+      "tagline": {
+        "ru": "Художественный генератор изображений с холстом.",
+        "en": "Artistic image generator with a canvas."
+      },
+      "description": {
+        "ru": "Художественный генератор изображений с холстом. Генерирует изображения на холсте с тонкой настройкой.",
+        "en": "An artistic image generator with a canvas workflow."
+      },
+      "icon": "icons/invokeai.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/invoke-ai/InvokeAI",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "jaeger",
+      "name": "Jaeger",
+      "category": "observability",
+      "tagline": {
+        "ru": "Распределённый трейсинг запросов (OpenTelemetry).",
+        "en": "Distributed request tracing (OpenTelemetry)."
+      },
+      "description": {
+        "ru": "Распределённый трейсинг запросов (OpenTelemetry). Распределённый трейсинг запросов по стандарту OpenTelemetry.",
+        "en": "Distributed request tracing based on OpenTelemetry."
+      },
+      "icon": "icons/jaeger.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/jaegertracing/jaeger",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "jupyterlab",
+      "name": "JupyterLab",
+      "category": "dev-env",
+      "tagline": {
+        "ru": "Интерактивные ноутбуки для данных и ML.",
+        "en": "Interactive notebooks for data and ML."
+      },
+      "description": {
+        "ru": "Интерактивные ноутбуки для данных и ML. Интерактивные ноутбуки для работы с данными и ML.",
+        "en": "Interactive notebooks for data and ML work."
+      },
+      "icon": "icons/jupyterlab.svg",
+      "spdx": "BSD-3-Clause",
+      "homepage": "https://github.com/jupyterlab/jupyterlab",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "kokoro-fastapi",
+      "name": "Kokoro-FastAPI",
+      "category": "media",
+      "tagline": {
+        "ru": "Качественный TTS с OpenAI-совместимым API.",
+        "en": "Quality TTS with an OpenAI-compatible API."
+      },
+      "description": {
+        "ru": "Качественный TTS с OpenAI-совместимым API. Качественный синтез речи с OpenAI-совместимым API.",
+        "en": "Quality text-to-speech exposed through an OpenAI-compatible API."
+      },
+      "icon": "icons/kokoro-fastapi.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/remsky/Kokoro-FastAPI",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "langflow",
+      "name": "Langflow",
+      "category": "automation",
+      "tagline": {
+        "ru": "Drag-and-drop сборка агентов и RAG-пайплайнов.",
+        "en": "Drag-and-drop agents and RAG pipelines."
+      },
+      "description": {
+        "ru": "Drag-and-drop сборка агентов и RAG-пайплайнов. Собирает агентов и RAG-пайплайны перетаскиванием.",
+        "en": "Drag-and-drop authoring of agents and RAG pipelines."
+      },
+      "icon": "icons/langflow.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/langflow-ai/langflow",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "langfuse",
+      "name": "Langfuse",
+      "category": "observability",
+      "tagline": {
+        "ru": "Трейсинг и оценка качества LLM-приложений.",
+        "en": "Tracing and quality evaluation for LLM apps."
+      },
+      "description": {
+        "ru": "Трейсинг и оценка качества LLM-приложений. Трассирует запросы и оценивает качество LLM-приложений.",
+        "en": "Tracing and quality evaluation for LLM applications."
+      },
+      "icon": "icons/langfuse.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/langfuse/langfuse",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "langfuse-rox",
+      "name": "Langfuse (Rox)",
+      "category": "rox-ecosystem",
+      "tagline": {
+        "ru": "Наблюдаемость ИИ-агентов Rox — трейсы, оценки, затраты.",
+        "en": "Rox AI-agent observability — traces, scores, cost."
+      },
+      "description": {
+        "ru": "Наблюдаемость ИИ-агентов Rox — трейсы, оценки, затраты. Наблюдаемость ИИ-агентов Rox: трейсы, оценки, затраты.",
+        "en": "Rox AI-agent observability: traces, scores and cost."
+      },
+      "icon": "icons/langfuse-rox.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/langfuse/langfuse",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "librechat",
+      "name": "LibreChat",
+      "category": "chat-ui",
+      "tagline": {
+        "ru": "Мульти-провайдерный чат-клиент с агентами и артефактами.",
+        "en": "Multi-provider chat client with agents and artifacts."
+      },
+      "description": {
+        "ru": "Мульти-провайдерный чат-клиент с агентами и артефактами. Поддерживает агентов, артефакты и множество провайдеров.",
+        "en": "A multi-provider chat client with agents and artifacts."
+      },
+      "icon": "icons/librechat.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/danny-avila/LibreChat",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "litellm",
+      "name": "LiteLLM Proxy",
+      "category": "gateway",
+      "tagline": {
+        "ru": "Единый шлюз к 100+ LLM-провайдерам с учётом расходов.",
+        "en": "One gateway to 100+ LLM providers with cost tracking."
+      },
+      "description": {
+        "ru": "Единый шлюз к 100+ LLM-провайдерам с учётом расходов. Считает расходы и приводит всех провайдеров к одному API.",
+        "en": "A single gateway to 100+ LLM providers with spend tracking."
+      },
+      "icon": "icons/litellm.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/BerriAI/litellm",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "llama-cpp",
+      "name": "llama.cpp",
+      "category": "llm-runtime",
+      "tagline": {
+        "ru": "Лёгкий сервер GGUF-моделей с поддержкой CPU и GPU.",
+        "en": "Lightweight GGUF model server for CPU and GPU."
+      },
+      "description": {
+        "ru": "Лёгкий сервер GGUF-моделей с поддержкой CPU и GPU. Работает с GGUF-моделями на CPU и GPU без тяжёлых зависимостей.",
+        "en": "Serves GGUF models on CPU and GPU with minimal dependencies."
+      },
+      "icon": "icons/llama-cpp.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/ggml-org/llama.cpp",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "lobe-chat",
+      "name": "Lobe Chat",
+      "category": "chat-ui",
+      "tagline": {
+        "ru": "Современный чат-UI с плагинами и магазином ассистентов.",
+        "en": "Modern chat UI with plugins and an assistant marketplace."
+      },
+      "description": {
+        "ru": "Современный чат-UI с плагинами и магазином ассистентов. Плагины и магазин ассистентов в современном интерфейсе.",
+        "en": "A modern chat UI with plugins and an assistant marketplace."
+      },
+      "icon": "icons/lobe-chat.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/lobehub/lobe-chat",
+      "verified": false,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "localai",
+      "name": "LocalAI",
+      "category": "llm-runtime",
+      "tagline": {
+        "ru": "OpenAI-совместимый стек: LLM, эмбеддинги, изображения, звук.",
+        "en": "OpenAI-compatible stack for LLM, embeddings, images and audio."
+      },
+      "description": {
+        "ru": "OpenAI-совместимый стек: LLM, эмбеддинги, изображения, звук. Один API для текста, эмбеддингов, изображений и звука.",
+        "en": "A single OpenAI-compatible endpoint for text, embeddings, images and audio."
+      },
+      "icon": "icons/localai.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/mudler/LocalAI",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "loki",
+      "name": "Grafana Loki",
+      "category": "observability",
+      "tagline": {
+        "ru": "Хранилище логов, вдохновлённое Prometheus.",
+        "en": "Log storage inspired by Prometheus."
+      },
+      "description": {
+        "ru": "Хранилище логов, вдохновлённое Prometheus. Собирает логи и индексирует их как метки.",
+        "en": "A log store inspired by Prometheus."
+      },
+      "icon": "icons/loki.svg",
+      "spdx": "AGPL-3.0",
+      "homepage": "https://github.com/grafana/loki",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "mariadb",
+      "name": "MariaDB",
+      "category": "database",
+      "tagline": {
+        "ru": "Открытый форк MySQL без лицензионных ограничений.",
+        "en": "Open MySQL fork without licensing restrictions."
+      },
+      "description": {
+        "ru": "Открытый форк MySQL без лицензионных ограничений. Совместимый с MySQL форк под свободной лицензией.",
+        "en": "An open MySQL-compatible fork free of licensing restrictions."
+      },
+      "icon": "icons/mariadb.svg",
+      "spdx": "GPL-2.0",
+      "homepage": "https://github.com/MariaDB/server",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "mattermost",
+      "name": "Mattermost",
+      "category": "comms",
+      "tagline": {
+        "ru": "Командный мессенджер с ботами и вебхуками.",
+        "en": "Team messenger with bots and webhooks."
+      },
+      "description": {
+        "ru": "Командный мессенджер с ботами и вебхуками. Командный мессенджер с ботами и вебхуками.",
+        "en": "A team messenger with bots and webhooks."
+      },
+      "icon": "icons/mattermost.svg",
+      "spdx": "NOASSERTION",
+      "homepage": "https://github.com/mattermost/mattermost",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "mautrix-whatsapp",
+      "name": "mautrix-whatsapp",
+      "category": "comms",
+      "tagline": {
+        "ru": "Мост WhatsApp ↔ Matrix для авто-ответов.",
+        "en": "WhatsApp ↔ Matrix bridge for auto-replies."
+      },
+      "description": {
+        "ru": "Мост WhatsApp ↔ Matrix для авто-ответов. Соединяет WhatsApp и Matrix для авто-ответов.",
+        "en": "A WhatsApp ↔ Matrix bridge for auto-replies."
+      },
+      "icon": "icons/mautrix-whatsapp.svg",
+      "spdx": "AGPL-3.0",
+      "homepage": "https://github.com/mautrix/whatsapp",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "milvus",
+      "name": "Milvus",
+      "category": "vector-db",
+      "tagline": {
+        "ru": "Распределённая векторная БД для больших коллекций.",
+        "en": "Distributed vector DB for large collections."
+      },
+      "description": {
+        "ru": "Распределённая векторная БД для больших коллекций. Рассчитана на большие коллекции и горизонтальное масштабирование.",
+        "en": "A distributed vector database built for large collections."
+      },
+      "icon": "icons/milvus.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/milvus-io/milvus",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "minio",
+      "name": "MinIO",
+      "category": "object-storage",
+      "tagline": {
+        "ru": "S3-совместимое объектное хранилище для артефактов и данных.",
+        "en": "S3-compatible object storage for artifacts and data."
+      },
+      "description": {
+        "ru": "S3-совместимое объектное хранилище для артефактов и данных. S3-совместимое хранилище для артефактов и данных.",
+        "en": "S3-compatible object storage for artifacts and data."
+      },
+      "icon": "icons/minio.svg",
+      "spdx": "AGPL-3.0",
+      "homepage": "https://github.com/minio/minio",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "mongodb",
+      "name": "MongoDB",
+      "category": "database",
+      "tagline": {
+        "ru": "Документо-ориентированная БД для гибких схем.",
+        "en": "Document database for flexible schemas."
+      },
+      "description": {
+        "ru": "Документо-ориентированная БД для гибких схем. Хранит документы с гибкой схемой.",
+        "en": "A document database for flexible schemas."
+      },
+      "icon": "icons/mongodb.svg",
+      "spdx": "SSPL-1.0",
+      "homepage": "https://github.com/mongodb/mongo",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "mysql",
+      "name": "MySQL",
+      "category": "database",
+      "tagline": {
+        "ru": "Популярная реляционная СУБД с широкой экосистемой.",
+        "en": "Popular relational database with a broad ecosystem."
+      },
+      "description": {
+        "ru": "Популярная реляционная СУБД с широкой экосистемой. Широкая экосистема инструментов и драйверов.",
+        "en": "A popular relational database with a broad ecosystem."
+      },
+      "icon": "icons/mysql.svg",
+      "spdx": "GPL-2.0",
+      "homepage": "https://github.com/mysql/mysql-server",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "n8n",
+      "name": "n8n",
+      "category": "automation",
+      "tagline": {
+        "ru": "Визуальная автоматизация с 400+ интеграциями и ИИ.",
+        "en": "Visual automation with 400+ integrations and AI."
+      },
+      "description": {
+        "ru": "Визуальная автоматизация с 400+ интеграциями и ИИ. Лицензия SUL: только бесплатное некоммерческое использование.",
+        "en": "Visual automation with 400+ integrations and AI; its SUL licence restricts commercial hosting."
+      },
+      "icon": "icons/n8n.svg",
+      "spdx": "SUL-1.0",
+      "homepage": "https://github.com/n8n-io/n8n",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "node-red",
+      "name": "Node-RED",
+      "category": "automation",
+      "tagline": {
+        "ru": "Потоковое программирование для устройств и API.",
+        "en": "Flow programming for devices and APIs."
+      },
+      "description": {
+        "ru": "Потоковое программирование для устройств и API. Соединяет устройства и API в потоки.",
+        "en": "Flow-based programming for devices and APIs."
+      },
+      "icon": "icons/node-red.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/node-red/node-red",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "ntfy",
+      "name": "ntfy",
+      "category": "comms",
+      "tagline": {
+        "ru": "Пуш-уведомления по HTTP для агентов и людей.",
+        "en": "HTTP push notifications for agents and people."
+      },
+      "description": {
+        "ru": "Пуш-уведомления по HTTP для агентов и людей. Пуш-уведомления по HTTP для агентов и людей.",
+        "en": "HTTP push notifications for agents and people."
+      },
+      "icon": "icons/ntfy.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/binwiederhier/ntfy",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "ollama",
+      "name": "Ollama",
+      "category": "llm-runtime",
+      "tagline": {
+        "ru": "Локальный запуск LLM одной командой, OpenAI-совместимый API.",
+        "en": "Run local LLMs with one command and an OpenAI-compatible API."
+      },
+      "description": {
+        "ru": "Локальный запуск LLM одной командой, OpenAI-совместимый API. Модели хранятся на диске и работают без интернета.",
+        "en": "Runs local LLMs with an OpenAI-compatible API; models live on disk and work offline."
+      },
+      "icon": "icons/ollama.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/ollama/ollama",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "omniroute",
+      "name": "OmniRoute",
+      "category": "gateway",
+      "tagline": {
+        "ru": "Бесплатный MIT-роутер ИИ-запросов с авто-фолбэком.",
+        "en": "Free MIT AI request router with automatic fallback."
+      },
+      "description": {
+        "ru": "Бесплатный MIT-роутер ИИ-запросов с авто-фолбэком. Автоматически переключается между провайдерами при сбоях.",
+        "en": "A free MIT router for AI requests with automatic provider fallback."
+      },
+      "icon": "icons/omniroute.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/diegosouzapw/OmniRoute",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "omniroute-rox",
+      "name": "OmniRoute (Rox build)",
+      "category": "rox-ecosystem",
+      "tagline": {
+        "ru": "Шлюз маршрутизации запросов ИИ в стеке Rox.",
+        "en": "AI request routing gateway in the Rox stack."
+      },
+      "description": {
+        "ru": "Шлюз маршрутизации запросов ИИ в стеке Rox. Шлюз маршрутизации запросов ИИ в стеке Rox.",
+        "en": "The AI request routing gateway used in the Rox stack."
+      },
+      "icon": "icons/omniroute-rox.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/diegosouzapw/OmniRoute",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "open-webui",
+      "name": "Open WebUI",
+      "category": "chat-ui",
+      "tagline": {
+        "ru": "Мощный приватный чат с RAG, ролью админа и плагинами.",
+        "en": "Powerful private chat with RAG, admin role and plugins."
+      },
+      "description": {
+        "ru": "Мощный приватный чат с RAG, ролью админа и плагинами. Лицензия запрещает переименование: используйте без изменения бренда.",
+        "en": "A capable private chat with RAG, an admin role and plugins; its licence forbids rebranding."
+      },
+      "icon": "icons/open-webui.svg",
+      "spdx": "NOASSERTION",
+      "homepage": "https://github.com/open-webui/open-webui",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "openclaw",
+      "name": "OpenClaw",
+      "category": "rox-ecosystem",
+      "tagline": {
+        "ru": "Персональный ИИ-ассистент в ваших чатах (Telegram, WhatsApp…).",
+        "en": "Personal AI assistant in your chats (Telegram, WhatsApp…)."
+      },
+      "description": {
+        "ru": "Персональный ИИ-ассистент в ваших чатах (Telegram, WhatsApp…). Персональный ИИ-ассистент в ваших чатах.",
+        "en": "A personal AI assistant living inside your chats."
+      },
+      "icon": "icons/openclaw.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/openclaw/openclaw",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "pgvector",
+      "name": "pgvector",
+      "category": "vector-db",
+      "tagline": {
+        "ru": "Векторный поиск прямо в PostgreSQL.",
+        "en": "Vector search right inside PostgreSQL."
+      },
+      "description": {
+        "ru": "Векторный поиск прямо в PostgreSQL. Добавляет векторный поиск к обычной PostgreSQL.",
+        "en": "Adds vector search to a standard PostgreSQL database."
+      },
+      "icon": "icons/pgvector.svg",
+      "spdx": "PostgreSQL",
+      "homepage": "https://github.com/pgvector/pgvector",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "piper",
+      "name": "Piper TTS",
+      "category": "media",
+      "tagline": {
+        "ru": "Быстрый офлайн-синтез речи на многих языках.",
+        "en": "Fast offline speech synthesis in many languages."
+      },
+      "description": {
+        "ru": "Быстрый офлайн-синтез речи на многих языках. Быстрый офлайн-синтез речи на многих языках.",
+        "en": "Fast offline speech synthesis in many languages."
+      },
+      "icon": "icons/piper.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/rhasspy/piper",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "playwright-mcp",
+      "name": "Playwright MCP",
+      "category": "agent-tooling",
+      "tagline": {
+        "ru": "Управление браузером для агентов через MCP.",
+        "en": "Browser control for agents via MCP."
+      },
+      "description": {
+        "ru": "Управление браузером для агентов через MCP. Управляет браузером для агентов через MCP.",
+        "en": "Browser control for agents over MCP."
+      },
+      "icon": "icons/playwright-mcp.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/microsoft/playwright-mcp",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "portkey-gateway",
+      "name": "Portkey AI Gateway",
+      "category": "gateway",
+      "tagline": {
+        "ru": "Шлюз с маршрутизацией, кэшем и защитой от сбоев.",
+        "en": "Gateway with routing, caching and failure protection."
+      },
+      "description": {
+        "ru": "Шлюз с маршрутизацией, кэшем и защитой от сбоев. Кэширует ответы и защищает от сбоев провайдеров.",
+        "en": "A gateway offering routing, caching and resilience against provider failures."
+      },
+      "icon": "icons/portkey-gateway.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/Portkey-AI/gateway",
+      "verified": false,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "postgresql",
+      "name": "PostgreSQL",
+      "category": "database",
+      "tagline": {
+        "ru": "Надёжная реляционная СУБД №1 для продакшена.",
+        "en": "The reliable relational database for production."
+      },
+      "description": {
+        "ru": "Надёжная реляционная СУБД №1 для продакшена. Проверенная временем СУБД для продакшена.",
+        "en": "The dependable relational database for production workloads."
+      },
+      "icon": "icons/postgresql.svg",
+      "spdx": "PostgreSQL",
+      "homepage": "https://github.com/postgres/postgres",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "prometheus",
+      "name": "Prometheus",
+      "category": "observability",
+      "tagline": {
+        "ru": "Сбор и хранение метрик с языком PromQL.",
+        "en": "Metrics collection and storage with PromQL."
+      },
+      "description": {
+        "ru": "Сбор и хранение метрик с языком PromQL. Собирает метрики и отвечает на запросы PromQL.",
+        "en": "Collects and stores metrics queried with PromQL."
+      },
+      "icon": "icons/prometheus.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/prometheus/prometheus",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "qdrant",
+      "name": "Qdrant",
+      "category": "vector-db",
+      "tagline": {
+        "ru": "Векторная база с фильтрацией и REST/gRPC API.",
+        "en": "Vector database with filtering and REST/gRPC API."
+      },
+      "description": {
+        "ru": "Векторная база с фильтрацией и REST/gRPC API. Хранит векторы и ищет по ним за миллисекунды.",
+        "en": "A vector database with payload filtering and REST/gRPC APIs."
+      },
+      "icon": "icons/qdrant.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/qdrant/qdrant",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "ragflow",
+      "name": "RAGFlow",
+      "category": "vector-db",
+      "tagline": {
+        "ru": "RAG-движок глубокого понимания документов.",
+        "en": "Deep document-understanding RAG engine."
+      },
+      "description": {
+        "ru": "RAG-движок глубокого понимания документов. Разбирает документы и строит ответы с опорой на источники.",
+        "en": "A RAG engine focused on deep document understanding."
+      },
+      "icon": "icons/ragflow.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/infiniflow/ragflow",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "redis",
+      "name": "Redis",
+      "category": "database",
+      "tagline": {
+        "ru": "Быстрый кэш и брокер в памяти (v8 tri-license).",
+        "en": "Fast in-memory cache and broker (v8 tri-license)."
+      },
+      "description": {
+        "ru": "Быстрый кэш и брокер в памяти (v8 tri-license). Три-лицензия v8: используйте вариант AGPLv3.",
+        "en": "A fast in-memory cache and broker; v8 ships under a tri-license."
+      },
+      "icon": "icons/redis.svg",
+      "spdx": "NOASSERTION",
+      "homepage": "https://github.com/redis/redis",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "searxng",
+      "name": "SearXNG",
+      "category": "agent-tooling",
+      "tagline": {
+        "ru": "Метапоисковик без рекламы и слежки для агентов.",
+        "en": "Ad-free, tracker-free metasearch for agents."
+      },
+      "description": {
+        "ru": "Метапоисковик без рекламы и слежки для агентов. Метапоисковик без рекламы и слежки для агентов.",
+        "en": "An ad-free, tracker-free metasearch engine for agents."
+      },
+      "icon": "icons/searxng.svg",
+      "spdx": "AGPL-3.0",
+      "homepage": "https://github.com/searxng/searxng",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "seaweedfs",
+      "name": "SeaweedFS",
+      "category": "object-storage",
+      "tagline": {
+        "ru": "Блочное и объектное хранилище с S3-шлюзом.",
+        "en": "Blob and object storage with an S3 gateway."
+      },
+      "description": {
+        "ru": "Блочное и объектное хранилище с S3-шлюзом. Блочное и объектное хранилище со S3-шлюзом.",
+        "en": "Blob and object storage exposed through an S3 gateway."
+      },
+      "icon": "icons/seaweedfs.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/seaweedfs/seaweedfs",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "sglang",
+      "name": "SGLang",
+      "category": "llm-runtime",
+      "tagline": {
+        "ru": "Быстрый сервер LLM с RadixAttention и структурированным выводом.",
+        "en": "Fast LLM server with RadixAttention and structured output."
+      },
+      "description": {
+        "ru": "Быстрый сервер LLM с RadixAttention и структурированным выводом. Ускоряет генерацию через RadixAttention и поддерживает структурированный вывод.",
+        "en": "A fast LLM server with RadixAttention and first-class structured output."
+      },
+      "icon": "icons/sglang.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/sgl-project/sglang",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "stable-diffusion-webui",
+      "name": "Stable Diffusion WebUI",
+      "category": "media",
+      "tagline": {
+        "ru": "Классический веб-UI для Stable Diffusion.",
+        "en": "Classic web UI for Stable Diffusion."
+      },
+      "description": {
+        "ru": "Классический веб-UI для Stable Diffusion. Классический веб-интерфейс для Stable Diffusion.",
+        "en": "The classic web UI for Stable Diffusion."
+      },
+      "icon": "icons/stable-diffusion-webui.svg",
+      "spdx": "AGPL-3.0",
+      "homepage": "https://github.com/AUTOMATIC1111/stable-diffusion-webui",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "stirling-pdf",
+      "name": "Stirling-PDF",
+      "category": "agent-tooling",
+      "tagline": {
+        "ru": "Локальная обработка PDF (конвертация, OCR, подписи).",
+        "en": "Local PDF processing (convert, OCR, sign)."
+      },
+      "description": {
+        "ru": "Локальная обработка PDF (конвертация, OCR, подписи). Локальная обработка PDF: конвертация, OCR, подписи.",
+        "en": "Local PDF processing: conversion, OCR and signing."
+      },
+      "icon": "icons/stirling-pdf.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/Stirling-Tools/Stirling-PDF",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "surrealdb",
+      "name": "SurrealDB",
+      "category": "database",
+      "tagline": {
+        "ru": "Мультимодельная БД: документы, графы, вектор.",
+        "en": "Multi-model database: documents, graphs, vectors."
+      },
+      "description": {
+        "ru": "Мультимодельная БД: документы, графы, вектор. Совмещает документы, графы и векторы в одной БД.",
+        "en": "A multi-model database covering documents, graphs and vectors."
+      },
+      "icon": "icons/surrealdb.svg",
+      "spdx": "BSL-1.1",
+      "homepage": "https://github.com/surrealdb/surrealdb",
+      "verified": false,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "synapse",
+      "name": "Synapse (Matrix)",
+      "category": "comms",
+      "tagline": {
+        "ru": "Домашний сервер Matrix для federated-чатов.",
+        "en": "Home Matrix server for federated chats."
+      },
+      "description": {
+        "ru": "Домашний сервер Matrix для federated-чатов. Домашний сервер Matrix для federated-чатов.",
+        "en": "A home Matrix server for federated chat."
+      },
+      "icon": "icons/synapse.svg",
+      "spdx": "AGPL-3.0",
+      "homepage": "https://github.com/element-hq/synapse",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "telegram-bot-api",
+      "name": "Telegram Bot API server",
+      "category": "comms",
+      "tagline": {
+        "ru": "Локальный сервер Bot API с большими лимитами.",
+        "en": "Local Bot API server with higher limits."
+      },
+      "description": {
+        "ru": "Локальный сервер Bot API с большими лимитами. Локальный сервер Bot API с большими лимитами.",
+        "en": "A local Bot API server with higher limits."
+      },
+      "icon": "icons/telegram-bot-api.svg",
+      "spdx": "BSL-1.0",
+      "homepage": "https://github.com/tdlib/telegram-bot-api",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "text-generation-webui",
+      "name": "Text Generation WebUI",
+      "category": "llm-runtime",
+      "tagline": {
+        "ru": "Универсальный веб-интерфейс для локальных моделей.",
+        "en": "All-in-one web UI for local models."
+      },
+      "description": {
+        "ru": "Универсальный веб-интерфейс для локальных моделей. Поддерживает множество бэкендов и форматов моделей.",
+        "en": "An all-in-one web UI for running local models across many backends."
+      },
+      "icon": "icons/text-generation-webui.svg",
+      "spdx": "AGPL-3.0",
+      "homepage": "https://github.com/oobabooga/text-generation-webui",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "uptime-kuma",
+      "name": "Uptime Kuma",
+      "category": "observability",
+      "tagline": {
+        "ru": "Мониторинг доступности сервисов с алертами.",
+        "en": "Service uptime monitoring with alerts."
+      },
+      "description": {
+        "ru": "Мониторинг доступности сервисов с алертами. Следит за доступностью сервисов и шлёт алерты.",
+        "en": "Monitors service uptime and raises alerts."
+      },
+      "icon": "icons/uptime-kuma.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/louislam/uptime-kuma",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "valkey",
+      "name": "Valkey",
+      "category": "database",
+      "tagline": {
+        "ru": "Redis-совместимый кэш под лицензией BSD.",
+        "en": "Redis-compatible cache under a BSD licence."
+      },
+      "description": {
+        "ru": "Redis-совместимый кэш под лицензией BSD. Совместим с Redis, но под лицензией BSD.",
+        "en": "A Redis-compatible cache published under a BSD licence."
+      },
+      "icon": "icons/valkey.svg",
+      "spdx": "BSD-3-Clause",
+      "homepage": "https://github.com/valkey-io/valkey",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "vllm",
+      "name": "vLLM",
+      "category": "llm-runtime",
+      "tagline": {
+        "ru": "Высокопроизводительный сервер вывода LLM (PagedAttention).",
+        "en": "High-throughput LLM inference server (PagedAttention)."
+      },
+      "description": {
+        "ru": "Высокопроизводительный сервер вывода LLM (PagedAttention). Использует PagedAttention для высокой пропускной способности; рассчитан на GPU.",
+        "en": "A high-throughput LLM inference server built on PagedAttention; best with a GPU."
+      },
+      "icon": "icons/vllm.svg",
+      "spdx": "Apache-2.0",
+      "homepage": "https://github.com/vllm-project/vllm",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "weaviate",
+      "name": "Weaviate",
+      "category": "vector-db",
+      "tagline": {
+        "ru": "Векторный движок с гибридным поиском и модулями.",
+        "en": "Vector engine with hybrid search and modules."
+      },
+      "description": {
+        "ru": "Векторный движок с гибридным поиском и модулями. Сочетает векторный и полнотекстовый поиск через модули.",
+        "en": "A vector engine with hybrid search and pluggable modules."
+      },
+      "icon": "icons/weaviate.svg",
+      "spdx": "BSD-3-Clause",
+      "homepage": "https://github.com/weaviate/weaviate",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "whisper-cpp",
+      "name": "whisper.cpp",
+      "category": "media",
+      "tagline": {
+        "ru": "Инференс Whisper на CPU без зависимостей.",
+        "en": "Whisper inference on CPU without dependencies."
+      },
+      "description": {
+        "ru": "Инференс Whisper на CPU без зависимостей. Запускает Whisper на CPU без тяжёлых зависимостей.",
+        "en": "Runs Whisper inference on CPU without heavy dependencies."
+      },
+      "icon": "icons/whisper-cpp.svg",
+      "spdx": "MIT",
+      "homepage": "https://github.com/ggml-org/whisper.cpp",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    },
+    {
+      "id": "windmill",
+      "name": "Windmill",
+      "category": "automation",
+      "tagline": {
+        "ru": "Скрипты в воркфлоу и внутренние инструменты из кода.",
+        "en": "Scripts to workflows and internal tools from code."
+      },
+      "description": {
+        "ru": "Скрипты в воркфлоу и внутренние инструменты из кода. Превращает скрипты в воркфлоу и внутренние инструменты.",
+        "en": "Turns scripts into workflows and internal tools."
+      },
+      "icon": "icons/windmill.svg",
+      "spdx": "AGPL-3.0",
+      "homepage": "https://github.com/windmill-labs/windmill",
+      "verified": true,
+      "deploy": {
+        "kind": "none"
+      }
+    }
+  ]
+}
