@@ -159,26 +159,31 @@ describe('web entry wiring', () => {
 
   test('the landing is gated to confirmed web sessions and skips deep links', () => {
     expect(app).toContain('isWebSession')
-    expect(app).toContain('webSession && !directSessionId && entryMode === null')
+    expect(app).toContain('webSession && !entered && !directSessionId')
     expect(app).toContain("new URLSearchParams(window.location.search).get('sessionId')")
   })
 
-  test('the selected mode is stored and used rather than ignored', () => {
+  test('the chosen mode drives the branch (chat vs cloud-VM overlay)', () => {
     expect(app).toContain("parseWebEntryMode(new URLSearchParams(window.location.search).get('mode'))")
-    expect(app).toContain('useState<WebEntryModeId | null>(deepLinkMode === \'chat\' ? \'chat\' : null)')
-    expect(app).toContain('onEnter={setEntryMode}')
+    expect(app).toContain("useState<WebEntryModeId | null>(deepLinkMode === 'chat' ? 'chat' : null)")
+    expect(app).toContain('setEnteredMode(mode)')
+    expect(app).toContain("setCloudVmOpen(mode === 'cloud-vm')")
+    // The cloud-VM overlay mechanism from main is kept.
+    expect(app).toContain("import { CloudVmSurface } from './cloud-vm-surface'")
+    expect(app).toContain('{cloudVmOpen && (')
   })
 
   test('a cloud-vm entry passes the honest availability gate', () => {
     expect(app).toContain("deepLinkMode !== 'cloud-vm'")
     expect(app).toContain('probeCloudVmState(window.electronAPI)')
-    expect(app).toContain("state.status === 'available') setEntryMode('cloud-vm')")
+    expect(app).toContain("setEnteredMode('cloud-vm')")
+    expect(app).toContain('setCloudVmOpen(true)')
   })
 
   test('the operator switch suppresses the landing', () => {
     expect(app).toContain('isModesLandingEnabled')
     expect(app).toContain("fetch('/api/config'")
-    expect(app).toContain('if (modesLanding) return <WebModesLanding')
+    expect(app).toContain('if (modesLanding === null || cloudLinkChecking) return <LoadingScreen />')
   })
 
   test('the landing reads cloud-runs availability from the host adapter', () => {

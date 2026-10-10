@@ -21,7 +21,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createEdgeSpeakAdapter } from '@rox/shared/voice/adapters/edge-tts'
 import { PodcastPipelineError } from '@rox/shared/voice'
-import type { PodcastEngine, PodcastRoleId, SpeakAdapter } from '@rox/shared/voice'
+import type { PodcastEngine, PodcastRoleId, PodcastRoleTemplate, SpeakAdapter } from '@rox/shared/voice'
 
 export interface PodcastVoice {
   readonly engine: PodcastEngine
@@ -44,12 +44,42 @@ export const PODCAST_VOICE_REGISTRY: readonly PodcastVoice[] = [
   { engine: 'system', id: 'Yuri', label: 'Yuri (system, RU)', language: 'ru', gender: 'male' },
 ]
 
+/** The scenario prompt is Russian, so the N-role planner stays within the RU voices. */
+const PODCAST_VOICE_LANGUAGE: PodcastVoice['language'] = 'ru'
+
 /** host→female, expert→male keeps the two voices distinct within every engine. */
 export function defaultVoiceForRole(engine: PodcastEngine, role: PodcastRoleId): PodcastVoice {
   const gender = role === 'host' ? 'female' : 'male'
   const voice = PODCAST_VOICE_REGISTRY.find(candidate => candidate.engine === engine && candidate.gender === gender)
   if (!voice) throw new PodcastPipelineError('tts-unavailable', `podcast.voice-${engine}`)
   return voice
+}
+
+/**
+ * Assign every role a registry voice for the chosen engine. Gender comes from the
+ * role (default by position: first female, second male, then alternation), and
+ * voices of that gender are handed out round-robin, so more roles than voices
+ * reuse voices cyclically instead of failing (the v1.x N-agent boundary). An
+ * engine with no voice of a requested gender is a typed `tts-unavailable`.
+ */
+export function planPodcastVoices(
+  engine: PodcastEngine,
+  roles: readonly PodcastRoleTemplate[],
+): (role: PodcastRoleId) => string {
+  const pool = (gender: PodcastVoice['gender']) =>
+    PODCAST_VOICE_REGISTRY.filter(candidate => candidate.engine === engine && candidate.language === PODCAST_VOICE_LANGUAGE && candidate.gender === gender)
+  const voices = { female: pool('female'), male: pool('male') }
+  if (!voices.female.length && !voices.male.length) throw new PodcastPipelineError('tts-unavailable', `podcast.voice-${engine}`)
+  const cursor = { female: 0, male: 0 }
+  const assigned = new Map<PodcastRoleId, string>()
+  roles.forEach((role, index) => {
+    const gender = role.gender ?? (index % 2 === 0 ? 'female' : 'male')
+    const available = voices[gender].length ? voices[gender] : voices[gender === 'female' ? 'male' : 'female']
+    if (!available.length) throw new PodcastPipelineError('tts-unavailable', `podcast.voice-${engine}`)
+    const voice = available[cursor[gender]++ % available.length]!
+    assigned.set(role.id, voice.id)
+  })
+  return role => assigned.get(role) ?? defaultVoiceForRole(engine, role).id
 }
 
 export interface SegmentAudio {

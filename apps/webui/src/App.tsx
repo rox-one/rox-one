@@ -16,7 +16,9 @@ import type { AuthenticatedWebTransportBootstrap } from '../../electron/src/rend
 import { initializeAuthenticatedWebTransport } from './adapter/transport-bootstrap'
 import { WEBUI_REQUIRES_CONATION_FLAG } from './rox2-webui-surface'
 import { WebModesLanding } from './web-modes-landing'
+import { CloudVmSurface } from './cloud-vm-surface'
 import { isModesLandingEnabled, isWebSession, parseWebEntryMode, probeCloudVmState, type WebEntryModeId } from './web-modes'
+import { navigate, routes } from '@/lib/navigate'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { ROX_THEME_ID } from '@config/theme'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
@@ -105,11 +107,16 @@ export default function App() {
   // it enters synchronously; `cloud-vm` needs the honest availability gate and
   // is resolved by the effect below.
   const [deepLinkMode] = useState(() => parseWebEntryMode(new URLSearchParams(window.location.search).get('mode')))
-  // The mode the user entered. null = still on the landing (or a deep link is
-  // still being resolved). The selected mode is used to pick the entry branch.
-  const [entryMode, setEntryMode] = useState<WebEntryModeId | null>(deepLinkMode === 'chat' ? 'chat' : null)
+  // Chosen entry mode (null = landing not yet answered) + whether the cloud-VM
+  // surface overlay is open above the mounted renderer. `chat` shows the shared
+  // renderer; `cloud-vm` opens CloudVmSurface above it. `?mode=chat` seeds the
+  // mode so the deep link enters the chat surface without the landing.
+  const [enteredMode, setEnteredMode] = useState<WebEntryModeId | null>(deepLinkMode === 'chat' ? 'chat' : null)
+  const [cloudVmOpen, setCloudVmOpen] = useState(false)
   // A `?sessionId=` deep link («Продолжить в веб») goes straight to its session.
   const [directSessionId] = useState(() => new URLSearchParams(window.location.search).get('sessionId'))
+  // «Вошли» = a mode was chosen on the landing (null = landing still shown).
+  const entered = enteredMode !== null
   // A `?mode=cloud-vm` deep link must pass the same honest availability gate as
   // the landing tile: it enters only once the host reports a usable cloud-VM
   // provider, and otherwise falls back to the landing state text.
@@ -190,34 +197,69 @@ export default function App() {
   // usable cloud-VM provider. Otherwise the landing (with the honest reason from
   // web-modes.ts) takes over — never a dead entry into a mode that is not there.
   useEffect(() => {
-    if (deepLinkMode !== 'cloud-vm' || entryMode !== null) return
+    if (deepLinkMode !== 'cloud-vm' || entered) return
     if (!webSession || directSessionId || modesLanding !== true) return
     let cancelled = false
     setCloudLinkChecking(true)
     void probeCloudVmState(window.electronAPI).then(state => {
       if (cancelled) return
       setCloudLinkChecking(false)
-      if (state.status === 'available') setEntryMode('cloud-vm')
+      if (state.status === 'available') {
+        setEnteredMode('cloud-vm')
+        setCloudVmOpen(true)
+      }
     })
     return () => {
       cancelled = true
       setCloudLinkChecking(false)
     }
-  }, [deepLinkMode, entryMode, webSession, directSessionId, modesLanding])
+  }, [deepLinkMode, entered, webSession, directSessionId, modesLanding])
 
   if (phase === 'loading') return <LoadingScreen />
   if (phase === 'error') return <ErrorScreen message={error} onRetry={() => setAttempt(value => value + 1)} />
   if (!bootstrap || webSession === null) return <LoadingScreen />
   // The two-mode landing is strictly a web-session entry; direct session deep
   // links and non-web (unconfirmed) sessions mount the renderer as before. A
-  // valid `?mode=` deep link and the operator's `modesLanding: false` switch both
-  // resolve `entryMode` (or fall through to the chat surface) without the landing.
-  if (webSession && !directSessionId && entryMode === null) {
+  // valid `?mode=` deep link, the operator's `modesLanding: false` switch and an
+  // already-chosen mode all skip the landing. `?sessionId=` always wins.
+  if (webSession && !entered && !directSessionId) {
     // Wait for the operator switch before deciding, and for an in-flight
     // cloud-VM deep-link probe so we never flash the landing before entering.
     if (modesLanding === null || cloudLinkChecking) return <LoadingScreen />
-    if (modesLanding) return <WebModesLanding host={window.electronAPI} onEnter={setEntryMode} />
+    if (modesLanding) return (
+      <WebModesLanding host={window.electronAPI} onEnter={(mode) => {
+        setEnteredMode(mode)
+        setCloudVmOpen(mode === 'cloud-vm')
+      }} />
+    )
   }
 
-  return <ReadyRenderer bootstrap={bootstrap} />
+  // The renderer always mounts (its RPC must be live), with the cloud-VM
+  // surface as a fixed overlay when that mode was chosen. «Перейти в чат»
+  // simply closes the overlay; «Открыть» navigates the renderer underneath.
+  return (
+    <>
+      <ReadyRenderer bootstrap={bootstrap} />
+      {cloudVmOpen && (
+        <div className="fixed inset-0 z-50 overflow-auto bg-background" data-cloud-vm-surface-overlay="true">
+          <CloudVmSurface
+            host={window.electronAPI}
+            onOpenRun={(id) => {
+              // The shared renderer mounts lazily behind this overlay, so a
+              // single dispatch can beat NavigationContext's subscription and
+              // be dropped. Re-dispatch while the overlay still owns the
+              // screen (the user cannot navigate elsewhere underneath it) and
+              // close only after the last attempt.
+              const route = routes.view.cloudRun(id)
+              for (const delay of [0, 700, 1600]) {
+                window.setTimeout(() => navigate(route), delay)
+              }
+              window.setTimeout(() => setCloudVmOpen(false), 1900)
+            }}
+            onGoToChat={() => setCloudVmOpen(false)}
+          />
+        </div>
+      )}
+    </>
+  )
 }
