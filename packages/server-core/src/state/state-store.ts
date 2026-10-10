@@ -54,6 +54,18 @@ export const MIGRATIONS: readonly StateMigration[] = [
       `)
     },
   },
+  {
+    // Row f.10: the projection's transcript half was never wired on either end —
+    // nothing wrote `session_transcript` and nothing read it, and the JSONL session
+    // files are authoritative. A store stamped at v1 may have the table (empty or
+    // populated); drop it here. Fresh stores run v1 then this DROP, converging on
+    // the same table set as an upgraded store.
+    version: 2,
+    name: 'drop-unused-session-transcript',
+    up: (db) => {
+      db.exec('DROP TABLE IF EXISTS session_transcript')
+    },
+  },
 ]
 
 export const STATE_DATABASE_FILENAME = 'rox-state.sqlite'
@@ -249,24 +261,6 @@ export class StateStore {
       entries.push({ sessionId: row.session_id, header: row.header, updatedAt: row.updated_at })
     }
     return entries
-  }
-
-  replaceSessionTranscript(sessionId: string, entries: readonly string[]): Promise<void> {
-    return this.run({
-      keys: ['session_transcript', sessionId],
-      fn: (db) => {
-        db.prepare('DELETE FROM session_transcript WHERE session_id = ?').run(sessionId)
-        const insert = db.prepare('INSERT INTO session_transcript (session_id, seq, entry) VALUES (?, ?, ?)')
-        entries.forEach((entry, seq) => insert.run(sessionId, seq, entry))
-      },
-    })
-  }
-
-  readSessionTranscript(sessionId: string): string[] {
-    const rows = this.#db.prepare(
-      'SELECT entry FROM session_transcript WHERE session_id = ? ORDER BY seq',
-    ).all(sessionId)
-    return rows.flatMap((row) => (typeof row.entry === 'string' ? [row.entry] : []))
   }
 
   close(): void {
