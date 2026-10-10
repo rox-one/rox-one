@@ -489,10 +489,13 @@ describe('BrowserPaneManager', () => {
     expect(manager.listInstances()).toHaveLength(1)
   })
 
-  it('allows http(s) popups with shared browser partition', () => {
+  it('converts an http(s) window.open into a new pane and denies the popup', () => {
     manager.createInstance('popup-allow')
-    const instance = (manager as any).instances.get('popup-allow')
-    const openHandler = instance.pageView.webContents.setWindowOpenHandler.mock.calls[0][0]
+    const pageView = panePageView(manager, 'popup-allow')
+    const openHandler = pageView.setWindowOpenHandler.mock.calls[0][0]
+    const stateEvents: BrowserInstanceInfo[] = []
+    manager.onStateChange((info) => stateEvents.push(info))
+    const before = manager.listInstances().length
 
     const result = openHandler({
       url: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -500,10 +503,55 @@ describe('BrowserPaneManager', () => {
       frameName: 'oauth-popup',
     })
 
-    expect(result.action).toBe('allow')
-    expect(result.overrideBrowserWindowOptions?.webPreferences?.partition).toBe('persist:browser-pane')
-    expect(result.overrideBrowserWindowOptions?.webPreferences?.nodeIntegration).toBe(false)
-    expect(result.overrideBrowserWindowOptions?.webPreferences?.contextIsolation).toBe(true)
+    expect(result).toEqual({ action: 'deny' })
+
+    const after = manager.listInstances()
+    expect(after).toHaveLength(before + 1)
+    const created = after.find((info) => info.id !== 'popup-allow')
+    if (!created) throw new Error('Expected a new pane for the window.open target')
+    // Same profile as the opener, not a fresh ad-hoc window.
+    expect(created.partition).toBe('persist:browser-pane')
+    expect(manager.getInstance(created.id)?.partition).toBe('persist:browser-pane')
+    // Reported to the renderer tab strip without any list/reload.
+    expect(stateEvents.some((event) => event.id === created.id)).toBe(true)
+  })
+
+  it('denies a non-http(s) window.open without creating a pane', () => {
+    manager.createInstance('popup-non-http')
+    const pageView = panePageView(manager, 'popup-non-http')
+    const openHandler = pageView.setWindowOpenHandler.mock.calls[0][0]
+    const before = manager.listInstances().length
+
+    const result = openHandler({
+      url: 'mailto:ops@example.test',
+      disposition: 'new-popup',
+      frameName: '',
+    })
+
+    expect(result).toEqual({ action: 'deny' })
+    expect(manager.listInstances()).toHaveLength(before)
+  })
+
+  it('creates a distinct pane for two rapid window.opens and reports both', () => {
+    manager.createInstance('popup-rapid')
+    const pageView = panePageView(manager, 'popup-rapid')
+    const openHandler = pageView.setWindowOpenHandler.mock.calls[0][0]
+    const stateEvents: BrowserInstanceInfo[] = []
+    manager.onStateChange((info) => stateEvents.push(info))
+
+    const first = openHandler({ url: 'https://a.example.test/', disposition: 'new-popup', frameName: '' })
+    const second = openHandler({ url: 'https://b.example.test/', disposition: 'new-popup', frameName: '' })
+
+    expect(first).toEqual({ action: 'deny' })
+    expect(second).toEqual({ action: 'deny' })
+
+    const created = manager.listInstances().filter((info) => info.id !== 'popup-rapid')
+    expect(created).toHaveLength(2)
+    expect(created[0].id).not.toBe(created[1].id)
+
+    const reportedIds = new Set(stateEvents.map((event) => event.id))
+    expect(reportedIds.has(created[0].id)).toBe(true)
+    expect(reportedIds.has(created[1].id)).toBe(true)
   })
 
   it('forwards app deep-link popups from the trusted empty-state page', async () => {

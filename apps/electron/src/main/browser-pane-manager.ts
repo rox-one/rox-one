@@ -219,6 +219,8 @@ interface CreateBrowserInstanceOptions {
   ownerSessionId?: string
   workspaceId?: string | null
   useImportedCookies?: boolean
+  /** Explicit profile partition; used to mirror an opener's profile for popup-derived tabs. */
+  partition?: string
 }
 
 export interface BrowserScreenshotOptions {
@@ -417,10 +419,19 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       return instanceId
     }
 
+    const requestedPartition =
+      typeof options?.partition === 'string' && options.partition.trim().length > 0
+        ? options.partition.trim()
+        : null
     const partition =
-      options?.useImportedCookies === true && this.cookieImportConsent
-        ? BROWSER_COOKIE_IMPORT_PARTITION
-        : SESSION_PARTITION
+      requestedPartition === BROWSER_COOKIE_IMPORT_PARTITION
+        ? this.cookieImportConsent
+          ? BROWSER_COOKIE_IMPORT_PARTITION
+          : SESSION_PARTITION
+        : requestedPartition
+          ?? (options?.useImportedCookies === true && this.cookieImportConsent
+            ? BROWSER_COOKIE_IMPORT_PARTITION
+            : SESSION_PARTITION)
     const ses = session.fromPartition(partition)
     this.setupSessionPermissions(ses)
     this.setupSessionObservers(ses)
@@ -3725,6 +3736,49 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     }
   }
 
+  /**
+   * b2.6 residual (popup-not-tab): a page-hosted `window.open` / `target=_blank`
+   * must not become an unmanaged popup window. Convert an allowed http(s)
+   * target into a new managed pane that mirrors the opener's profile
+   * (partition), owner and workspace, then bring it into the host.
+   *
+   * The opener's identity aliasing (empty-state page → about:blank, and the
+   * deep-link trust boundary derived from it) is deliberately untouched: this
+   * only ever adds a sibling pane.
+   *
+   * The new pane is announced to the renderer through the existing
+   * STATE_CHANGED push (emitted by create*), so the tab strip shows it without
+   * a reload. Windowed panes are focused here; embedded panes surface as a tab
+   * in the host window's strip.
+   */
+  private openWindowOpenTargetAsPane(parentInstance: BrowserInstance, url: string): string {
+    let id: string
+    if (parentInstance.embedded) {
+      id = this.createEmbeddedInstance({
+        url,
+        partition: parentInstance.partition,
+        workspaceId: parentInstance.workspaceId,
+      })
+    } else {
+      id = this.createInstance(undefined, {
+        show: true,
+        ownerType: parentInstance.ownerType,
+        ownerSessionId: parentInstance.ownerSessionId ?? undefined,
+        workspaceId: parentInstance.workspaceId,
+        partition: parentInstance.partition,
+      })
+      void this.navigate(id, url).catch((error) => {
+        mainLog.warn(
+          `[browser-pane] window-open tab navigate failed parent=${parentInstance.id} id=${id} url=${url}: ${error instanceof Error ? error.message : String(error)}`,
+        )
+      })
+      this.focus(id)
+    }
+
+    mainLog.info(`[browser-pane] window-open converted to tab parent=${parentInstance.id} id=${id} embedded=${parentInstance.embedded} url=${url}`)
+    return id
+  }
+
   private pushNetworkLog(instance: BrowserInstance, entry: BrowserNetworkEntry): void {
     instance.networkLogs.push(entry)
     if (instance.networkLogs.length > MAX_NETWORK_LOG_ENTRIES) {
@@ -4178,26 +4232,11 @@ export class BrowserPaneManager implements IBrowserPaneManager {
         return { action: 'deny' }
       }
 
-      return {
-        action: 'allow',
-        overrideBrowserWindowOptions: {
-          width: 520,
-          height: 720,
-          minWidth: 420,
-          minHeight: 520,
-          show: true,
-          autoHideMenuBar: true,
-          parent: instance.window ?? undefined,
-          modal: false,
-          webPreferences: {
-            partition: instance.partition,
-            session: pageWc.session,
-            contextIsolation: true,
-            nodeIntegration: false,
-            sandbox: true,
-          },
-        },
-      }
+      // b2.6 residual: turn the popup into a managed tab in the opener's host
+      // rather than an unmanaged popup BrowserWindow. The request itself is
+      // still denied as a popup — the new pane is created by the manager.
+      this.openWindowOpenTargetAsPane(instance, details.url)
+      return { action: 'deny' }
     })
 
     pageWc.on('focus', () => {
