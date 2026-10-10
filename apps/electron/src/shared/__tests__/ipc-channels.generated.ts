@@ -235,6 +235,10 @@ export const EXPECTED_CHANNELS: string[] = [
   'drive:importStart',
   'drive:importStatus',
   'drive:list',
+  'drive:mirrorCancel',
+  'drive:mirrorPause',
+  'drive:mirrorStart',
+  'drive:mirrorStatus',
   'drive:openUpload',
   'drive:quota',
   'drive:scanSource',
@@ -1068,4 +1072,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1064
+export const EXPECTED_CHANNEL_COUNT = 1068
