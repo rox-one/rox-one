@@ -278,6 +278,20 @@ and an un-normalized pre-filter handed the downstream handler a drained socket, 
 request), and the `typecheck:all` chain had been hiding two more error batches because it stops at the first failing
 workspace.
 
+- `packages/server-core/src/sessions/pi-retry-streaming.test.ts`: 4 failures (`discards pending failed deltas before
+  backoff and never sends them later`, `discards already-flushed partials and persists only the recovered answer`,
+  `a discard for another identity cannot wipe a newer stream or its batch`, `repeated failed attempts leave no fused
+  text or unfinished delta timer`). Reproduced in the merged-state sweep, per-file, and on a pristine pre-port
+  worktree (base `c0c1200db`) whose `SessionManager` retained-execution lookup is byte-identical — not caused by the
+  port; they are the reason `bun test packages/server-core/src/sessions` is 290/4 rather than 294/0.
+
+### What `run-gates.sh` does NOT cover
+
+The port's gate script runs **48** checks (it grew from 45 when wave 6 added the boot-manifest step) and deliberately
+contains no repo-wide ratchets: the **UI-token ratchet**, the **ESLint workspace ratchet**, and **UI-001 recovery**
+(`status-bar` accessibility). "Gates green" is therefore not "CI green" — main was measurably red on those three
+(at `034f63d71`) and was greened by a separate PR (#1786), not by the port's gates.
+
 
 ## a1 (7 rows)
 
