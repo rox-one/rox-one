@@ -371,7 +371,9 @@ function kokoroToFile(
   let settled = false
   let exitCode: number | null = null
   let timedOut = false
-  let killTimer: NodeJS.Timeout | undefined
+  // A stalled render is bounded like a segment budget; the CLI gets SIGTERM first.
+  const killTimer = setTimeout(() => { timedOut = true; child.kill('SIGTERM') }, timeoutMs)
+  killTimer.unref()
   const onAbort = () => child.kill('SIGTERM')
   const finish = (error?: Error) => {
     if (settled) return
@@ -389,9 +391,6 @@ function kokoroToFile(
     exitCode = typeof code === 'number' ? code : null
     finish(timedOut ? new PodcastPipelineError('tts-failed', 'podcast.kokoro-timeout') : undefined)
   })
-  // A stalled render is bounded like a segment budget; the CLI gets SIGTERM first.
-  killTimer = setTimeout(() => { timedOut = true; child.kill('SIGTERM') }, timeoutMs)
-  killTimer.unref()
   if (signal.aborted) onAbort()
   else signal.addEventListener('abort', onAbort, { once: true })
   child.stdin?.end(text)
