@@ -120,6 +120,9 @@ export { handleDevSpaceRead, DEVSPACE_READ_MAX_CONTENT_CHARS } from './dev-space
 export { handleDevSpaceSearch, DEVSPACE_SEARCH_MAX_LIMIT } from './dev-space-search.ts';
 export { handleDevSpacePropose, parseDevSpaceProposeOps } from './dev-space-propose.ts';
 
+// Rovers catalog tools (read-only; the info-only slice never deploys)
+export { handleRoversList, handleRoversSearch, handleRoversShow } from './rovers.ts';
+
 // Pages
 export {
   handleListPages,
