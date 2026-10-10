@@ -289,8 +289,15 @@ workspace.
 
 The port's gate script runs **48** checks (it grew from 45 when wave 6 added the boot-manifest step) and deliberately
 contains no repo-wide ratchets: the **UI-token ratchet**, the **ESLint workspace ratchet**, and **UI-001 recovery**
-(`status-bar` accessibility). "Gates green" is therefore not "CI green" — main was measurably red on those three
-(at `034f63d71`) and was greened by a separate PR (#1786), not by the port's gates.
+(`status-bar` accessibility). "Gates green" is therefore not "CI green".
+
+Live state of those CI-only gates (checked 2026-10-10, tip `61767183b`): `ui-lint-ratchet` and `eslint-workspaces`
+are **green** (both were red on `034f63d71`; #1786 fixed the process-global `react-i18next` mock leak that had
+re-broken UI-001's *component* step). **UI-001 recovery is still red on main**: its last run (`1843b6d30`, run
+38063381658) fails at the browser step `component-recovery :: Mounted NavigationProvider and browser history` with
+four deterministic session/route assertions, and `bundle-size` is red on the same two main runs (`1843b6d30`,
+`8a3ee9b18`). Those two are main-wide gates outside the port's scope — but they are not green, and a port report
+must not imply they are.
 
 
 ## a1 (7 rows)
