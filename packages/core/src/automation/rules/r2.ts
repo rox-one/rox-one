@@ -77,7 +77,6 @@ export const R2: DomainRule = {
     const general: EntityRef = { kind: 'channel', id: chatId }
     const member = ctx.subject
     const name = (await ctx.displayName(member)) ?? member
-    const agentId = await ctx.personalAgent(member)
 
     const steps: RuleStep[] = [
       {
@@ -92,7 +91,9 @@ export const R2: DomainRule = {
         commandId: personalAgentCommandId(ctx.workspaceId, member),
         command: {
           type: 'agents.provision_personal_agent',
-          payload: { ownerId: member, ...(agentId ? { id: agentId } : {}) },
+          // W1-11 (#1508) schema: the handler keys the binding by
+          // (workspaceId, ownerPrincipalId) and mints the agent id itself.
+          payload: { workspaceId: ctx.workspaceId, ownerPrincipalId: member },
           target: { kind: 'person', id: member },
         },
       },
@@ -104,7 +105,9 @@ export const R2: DomainRule = {
         optional: true,
         command: {
           type: 'im.send_message',
-          payload: { content: { doc: joinCardText(params.joinCardTemplate, name) }, attribution: 'unprompted' },
+          // W1-14 (#1511) `@rox/shared/xsc` schema: `body` (TipTap JSON) +
+          // `mentions`; the join card mentions nobody.
+          payload: { body: { doc: joinCardText(params.joinCardTemplate, name) }, mentions: [], attribution: 'unprompted' },
           target: general,
         },
       })

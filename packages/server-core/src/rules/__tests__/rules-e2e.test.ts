@@ -30,6 +30,7 @@ import { createWiredCommandRegistry } from '../../commands/registry'
 import { CommandStoreUnavailable } from '../../commands/store'
 import { EntityLinkStore } from '../../entities/link-store'
 import { PersonalTaskPersistStore } from '../../tasks/personal-persist'
+import { configureAgentsRuntime, createAgentsRuntime, type AgentsRuntime } from '../../agents/runtime.ts'
 import { configureReferenceRuntime, resetReferenceRuntime } from '../../work/reference'
 import { collectionSpec } from '../../work/reference/collections'
 import { LocalWorkStore } from '../../work/local-work-store'
@@ -68,6 +69,7 @@ beforeEach(() => {
   bus = new InProcessEventBus()
 })
 afterEach(() => {
+  configureAgentsRuntime(null)
   resetReferenceRuntime()
   store.close()
   rmSync(root, { recursive: true, force: true })
@@ -94,6 +96,8 @@ interface Harness {
   rules: InMemoryRulesStore
   settings: RuleSettingsService
   work: LocalWorkStore
+  /** W1-11 agent-governance runtime the rules' `agents.*` steps run on. */
+  agents: AgentsRuntime
   handle(event: DomainEvent): Promise<RuleRunOutcome[]>
   run(type: string, payload: Record<string, unknown>, actor?: string): Promise<{ status: string; ref?: unknown }>
   list(collection: string): Array<Record<string, unknown>>
@@ -110,6 +114,16 @@ function createHarness(options: HarnessOptions = {}): Harness {
   const enabled = (flag: string): boolean => flags.has(flag)
   links = new EntityLinkStore({ workspaceRoot: root })
   configureReferenceRuntime({ now: () => clock, workspaceRoot: () => root, personalTaskStore: () => tasks, linkIndex: () => links, isFlagEnabled: enabled })
+  // W1-11 (#1508): the rules' `agents.provision_personal_agent` and
+  // `identity.ensure_placeholder` steps run on the governance runtime, so this
+  // harness installs one and seeds the workspace + General chat + organiser
+  // membership `identity.ensure_placeholder` (R4) requires.
+  const agents = createAgentsRuntime({ now: () => clock, audit: { append: async () => ({ prevHash: null, hash: 'audit-stub' }) } })
+  agents.identity.createWorkspace({ workspaceId: WS, name: 'ws-1', slug: 'ws-1', generalChatId: GENERAL_CHAT, chatCreation: 'members', createdBy: ORGANISER, createdAt: NOW })
+  agents.identity.createChat({ chatId: GENERAL_CHAT, workspaceId: WS, kind: 'group', visibility: 'public', systemRole: 'general', name: 'Общий', createdBy: ORGANISER, archivedAt: null, postingPolicy: 'all', invitePolicy: 'members' })
+  agents.identity.upsertMembership({ workspaceId: WS, principalId: ORGANISER, role: 'admin', status: 'active', joinedAt: NOW })
+  agents.identity.upsertChatMember({ chatId: GENERAL_CHAT, principalId: ORGANISER, role: 'owner', state: 'active' })
+  configureAgentsRuntime(agents)
 
   const registry = createWiredCommandRegistry({ isFlagEnabled: enabled })
   const executor = new CommandExecutor({
@@ -171,6 +185,7 @@ function createHarness(options: HarnessOptions = {}): Harness {
     rules,
     settings: new RuleSettingsService({ store: rules, workspaceId: WS, now: () => clock, isAdmin: async () => true }),
     work,
+    agents,
     handle: event => engine.handleEvent(event),
     async run(type, payload, actor = ORGANISER) {
       counter += 1
@@ -531,10 +546,11 @@ describe('R2 + R3 ordering: one personal agent, one welcome', () => {
     const [r3] = await harness.handle(accountCreated(MEMBER))
     expect(r3).toMatchObject({ ruleId: 'R3', key: `R3:${MEMBER}`, status: 'succeeded' })
 
-    // One agent, provisioned by R2; R3's step is an idempotent duplicate.
-    const agents = harness.list('agent')
-    expect(agents).toHaveLength(1)
-    expect(agents[0]).toMatchObject({ ownerId: MEMBER })
+    // One agent, provisioned by R2; R3's step is an idempotent duplicate
+    // (both share `personalAgentCommandId`). W1-11 owns the agent principal, so
+    // the binding — not a work-store row — is the record.
+    const binding = harness.agents.governance.bindingOfOwner(WS, MEMBER)!
+    expect(binding).toMatchObject({ ownerPrincipalId: MEMBER, status: 'active' })
     expect(r3!.steps.find(step => step.action === 'provision-agent')!.receipt_status).toBe('duplicate')
 
     // One welcome message in the agent DM, sent by the agent principal (plus
@@ -542,13 +558,17 @@ describe('R2 + R3 ordering: one personal agent, one welcome', () => {
     const messages = harness.list('channel-message')
     const welcome = messages.filter(message => message.id === welcomeMessageId(MEMBER))
     expect(welcome).toHaveLength(1)
-    expect(welcome[0]).toMatchObject({ senderId: agents[0]!.id })
-    expect(String((welcome[0]!.content as { doc: string }).doc)).toContain('Привет')
+    expect(welcome[0]).toMatchObject({ senderId: binding.agentPrincipalId })
+    const welcomeContent = welcome[0]!.content
+    const welcomeDoc = welcomeContent && typeof welcomeContent === 'object' && 'doc' in welcomeContent ? welcomeContent.doc : undefined
+    expect(String(welcomeDoc)).toContain('Привет')
     expect(messages).toHaveLength(2)
 
     // The DM holds both members; the R2 join card went to the General chat.
     const channels = harness.list('channel').map(channel => channel.id).sort()
     expect(channels).toEqual([GENERAL_CHAT, welcome[0]!.chatId].sort())
+    expect(harness.list('channel-member').filter(member => member.chatId === welcome[0]!.chatId).map(member => member.principalId).sort())
+      .toEqual([MEMBER, binding.agentPrincipalId].sort())
   })
 
   test('R3 first, then R2: still exactly one agent and one welcome', async () => {
@@ -558,8 +578,17 @@ describe('R2 + R3 ordering: one personal agent, one welcome', () => {
     expect(r3).toMatchObject({ status: 'succeeded' })
     const [r2] = await harness.handle(memberAdded())
     expect(r2!.steps.find(step => step.action === 'provision-agent')!.receipt_status).toBe('duplicate')
-    expect(harness.list('agent')).toHaveLength(1)
-    expect(harness.list('channel-message').filter(message => message.id === welcomeMessageId(MEMBER))).toHaveLength(1)
+    // Exactly one governance binding: the agent principal id is deterministic
+    // per (workspace, owner), so R3's plan already addresses R2's agent.
+    const binding = harness.agents.governance.bindingOfOwner(WS, MEMBER)!
+    expect(harness.agents.governance.bindingsIn(WS)).toHaveLength(1)
+    const welcome = harness.list('channel-message').filter(message => message.id === welcomeMessageId(MEMBER))
+    expect(welcome).toHaveLength(1)
+    expect(welcome[0]).toMatchObject({ senderId: binding.agentPrincipalId })
+    // The DM R3 opened is with that same agent principal (the ordering that a
+    // non-deterministic agent id would break).
+    expect(harness.list('channel-member').filter(member => member.chatId === welcome[0]!.chatId).map(member => member.principalId).sort())
+      .toEqual([MEMBER, binding.agentPrincipalId].sort())
   })
 })
 
@@ -569,16 +598,22 @@ describe('R4 and R5', () => {
     seedGeneralChat(harness, [ORGANISER, MEMBER])
     const [outcome] = await harness.handle(invitationsSent())
     expect(outcome).toMatchObject({ ruleId: 'R4', key: `R4:${WS}:anna@example.com`, status: 'succeeded' })
-    const placeholders = harness.list('placeholder')
-    expect(placeholders).toHaveLength(1)
-    expect(placeholders[0]).toMatchObject({ email: 'anna@example.com', state: 'placeholder' })
+    // W1-11 `identity.ensure_placeholder` owns the placeholder principal, its
+    // member row and the General-chat membership (the rule passes `chatIds`), so
+    // those are read from the governance store.
+    const placeholder = harness.agents.identity.principalByEmail('anna@example.com')!
+    expect(placeholder).toMatchObject({ status: 'placeholder', primaryEmail: 'anna@example.com' })
+    expect(harness.agents.identity.membership(WS, placeholder.principalId)).toMatchObject({ role: 'member', status: 'invited' })
+    expect(harness.agents.identity.chatMember(GENERAL_CHAT, placeholder.principalId)).toMatchObject({ state: 'pending_activation' })
+    // The invite email is the automation module's queued `invitation` row.
     const inviteEmails = harness.list('invitation')
     expect(inviteEmails).toHaveLength(1)
     expect(inviteEmails[0]).toMatchObject({ email: 'anna@example.com', state: 'queued' })
 
-    // Replay: still exactly one of each.
+    // Replay: still exactly one placeholder principal and one email.
     await harness.handle(invitationsSent())
-    expect(harness.list('placeholder')).toHaveLength(1)
+    expect(harness.agents.identity.invitationsIn(WS)).toHaveLength(1)
+    expect(harness.agents.identity.allPrincipals().filter(principal => principal.primaryEmail === 'anna@example.com')).toHaveLength(1)
     expect(harness.list('invitation')).toHaveLength(1)
   })
 
@@ -590,11 +625,14 @@ describe('R4 and R5', () => {
     const drives = harness.list('drive-quota')
     expect(drives).toHaveLength(1)
     expect(drives[0]).toMatchObject({ ownerPrincipalId: ORGANISER, state: 'active', quotaBytes: 1024 ** 4 })
-    expect(harness.list('folder').map(folder => folder.name).sort()).toEqual(['Артефакты', 'Записи', 'Файлы чатов'].sort())
+    // `drive.provision` writes the «Мой диск» root folder itself (DATA-MODEL
+    // §5.16, `drive/reference-handlers.ts`); R5 registers the three virtual
+    // folders under it.
+    expect(harness.list('folder').map(folder => folder.name).sort()).toEqual(['Мой диск', 'Артефакты', 'Записи', 'Файлы чатов'].sort())
 
     await harness.handle(accountCreated())
     expect(harness.list('drive-quota')).toHaveLength(1)
-    expect(harness.list('folder')).toHaveLength(3)
+    expect(harness.list('folder')).toHaveLength(4)
   })
 
   test('one account runs R3 and R5, R3 first', async () => {
