@@ -16,15 +16,25 @@
 import * as React from 'react'
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { PencilLine, FilePlus, X } from 'lucide-react'
-import { parseDiffFromFile, parsePatchFiles, type FileContents } from '@pierre/diffs'
-import { ShikiDiffViewer } from '../code-viewer/ShikiDiffViewer'
-import { UnifiedDiffViewer } from '../code-viewer/UnifiedDiffViewer'
+import { parseDiffFromFile, type FileContents } from '@pierre/diffs'
 import { getDiffStats, getUnifiedDiffStats } from '../code-viewer/diff-stats'
 import { DiffViewerControls } from '../code-viewer/DiffViewerControls'
 import { LANGUAGE_MAP } from '../code-viewer/language-map'
 import { PreviewOverlay, type BadgeVariant } from './PreviewOverlay'
 import { usePlatform } from '../../context/PlatformContext'
 import { cn } from '../../lib/utils'
+
+// The diff renderers pull @pierre/diffs' Shiki-based renderer plus the Zed
+// theme / Shiki chunks; load them when a diff is first rendered instead of with
+// the module, the same way LazyPDFPreviewOverlay defers react-pdf. Public
+// props/exports are unchanged and the rendered output is identical.
+const loadShikiDiffViewer = () =>
+  import('../code-viewer/ShikiDiffViewer').then((module) => ({ default: module.ShikiDiffViewer }))
+const loadUnifiedDiffViewer = () =>
+  import('../code-viewer/UnifiedDiffViewer').then((module) => ({ default: module.UnifiedDiffViewer }))
+
+const ShikiDiffViewer = React.lazy(loadShikiDiffViewer)
+const UnifiedDiffViewer = React.lazy(loadUnifiedDiffViewer)
 
 /**
  * A single file change (Edit or Write)
@@ -360,29 +370,33 @@ export function MultiDiffPreviewOverlay({
                       </div>
                     ) : change.unifiedDiff ? (
                       // Codex format: pre-computed unified diff
-                      <UnifiedDiffViewer
-                        unifiedDiff={change.unifiedDiff}
-                        filePath={change.filePath}
-                        diffStyle={diffStyle}
-                        disableBackground={disableBackground}
-                        disableFileHeader={false}
-                        onFileHeaderClick={onOpenFileExternal}
-                        theme={theme}
-                        onReady={handleDiffReady}
-                      />
+                      <React.Suspense fallback={null}>
+                        <UnifiedDiffViewer
+                          unifiedDiff={change.unifiedDiff}
+                          filePath={change.filePath}
+                          diffStyle={diffStyle}
+                          disableBackground={disableBackground}
+                          disableFileHeader={false}
+                          onFileHeaderClick={onOpenFileExternal}
+                          theme={theme}
+                          onReady={handleDiffReady}
+                        />
+                      </React.Suspense>
                     ) : (
                       // Claude Code format: original/modified strings
-                      <ShikiDiffViewer
-                        original={change.original}
-                        modified={change.modified}
-                        filePath={change.filePath}
-                        diffStyle={diffStyle}
-                        disableBackground={disableBackground}
-                        disableFileHeader={false}
-                        onFileHeaderClick={onOpenFileExternal}
-                        theme={theme}
-                        onReady={handleDiffReady}
-                      />
+                      <React.Suspense fallback={null}>
+                        <ShikiDiffViewer
+                          original={change.original}
+                          modified={change.modified}
+                          filePath={change.filePath}
+                          diffStyle={diffStyle}
+                          disableBackground={disableBackground}
+                          disableFileHeader={false}
+                          onFileHeaderClick={onOpenFileExternal}
+                          theme={theme}
+                          onReady={handleDiffReady}
+                        />
+                      </React.Suspense>
                     )}
                   </div>
                 ))}

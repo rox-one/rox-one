@@ -12,16 +12,22 @@ import { join, resolve } from 'node:path'
 import {
   BUDGET_SLACK_BYTES,
   MAX_NEW_CHUNK_BYTES,
+  MAX_NEW_STARTUP_BYTES,
   MIN_BUDGET_BYTES,
   assetKind,
   buildBudgets,
   bundleTotals,
   chunkPrefix,
   evaluateAssets,
+  evaluateStartup,
   formatFailure,
+  formatStartupFailure,
   measureRendererChunks,
+  measureStartup,
+  parseHtmlReferences,
   type BundleBaseline,
   type MeasuredChunk,
+  type StartupMeasurement,
 } from '../check-bundle-size'
 import { minifyHangChecksum } from '../../apps/electron/src/renderer/perf/bundle-profile'
 
@@ -59,6 +65,34 @@ function seedBaseline(root: string, baseline: Partial<BundleBaseline>): void {
     join(root, 'perf-baselines/bundle-size.json'),
     JSON.stringify({ description: 'test', ...baseline }),
   )
+}
+
+/** A synthetic startup measurement for the pure gate, with one js file of `jsRawBytes`. */
+function startupMeasurement(
+  html: string,
+  jsRawBytes: number,
+  overrides: Partial<StartupMeasurement> = {},
+): StartupMeasurement {
+  return {
+    html,
+    jsRawBytes,
+    gzipTotalBytes: Math.floor(jsRawBytes / 4),
+    fileCount: jsRawBytes > 0 ? 1 : 0,
+    cssRawBytes: 0,
+    cssGzipBytes: 0,
+    cssFileCount: 0,
+    files: jsRawBytes > 0 ? [{ file: `assets/${html}.js`, kind: 'js', rawBytes: jsRawBytes, gzipBytes: 0 }] : [],
+    missing: [],
+    ...overrides,
+  }
+}
+
+/** A throwaway renderer tree carrying one html file with the given markup and its `assets/` files. */
+function seedStartupBuild(root: string, html: string, files: Record<string, number>) {
+  const rendererDist = join(root, 'apps/electron/dist/renderer')
+  mkdirSync(join(rendererDist, 'assets'), { recursive: true })
+  writeFileSync(join(rendererDist, 'index.html'), html)
+  for (const [name, size] of Object.entries(files)) writeFileSync(join(rendererDist, 'assets', name), Buffer.alloc(size))
 }
 
 function runCli(root: string, args: string[] = ['--check']) {
@@ -360,6 +394,170 @@ describe('CLI exit codes', () => {
     const result = runCli(root)
     expect(result.code).toBe(1)
     expect(result.err).toContain('no renderer build found - run bun run electron:build:renderer first')
+  })
+})
+
+describe('startup closure parsing (script src + modulepreload + style preload)', () => {
+  it('collects js from <script src> and modulepreload, css from preload-as-style, ignoring inline scripts', () => {
+    const refs = parseHtmlReferences(
+      [
+        '<!doctype html><html><head>',
+        '<script type="module" crossorigin src="./assets/main-aaaaaaaa.js"></script>',
+        '<link rel="modulepreload" crossorigin href="./assets/vendor-react-bbbbbbbb.js">',
+        '<link rel="preload" as="style" crossorigin href="./assets/main-cccccccc.css">',
+        '<link rel="modulepreload" href="./assets/main-aaaaaaaa.js">',
+        '<link rel="icon" href="./favicon.ico">',
+        '</head><body><script>window.inline = 1</script></body></html>',
+      ].join('\n'),
+    )
+    expect(refs.js).toEqual([
+      './assets/main-aaaaaaaa.js',
+      './assets/vendor-react-bbbbbbbb.js',
+      './assets/main-aaaaaaaa.js',
+    ])
+    expect(refs.css).toEqual(['./assets/main-cccccccc.css'])
+  })
+
+  it('resolves ./assets hrefs relative to the html file and counts a duplicate reference once', () => {
+    const root = tempRoot()
+    const rendererDist = join(root, 'apps/electron/dist/renderer')
+    seedStartupBuild(
+      root,
+      [
+        '<script type="module" src="./assets/main-aaaaaaaa.js"></script>',
+        '<link rel="modulepreload" href="./assets/vendor-react-bbbbbbbb.js">',
+        '<link rel="modulepreload" href="./assets/main-aaaaaaaa.js">',
+        '<link rel="preload" as="style" href="./assets/main-cccccccc.css">',
+      ].join('\n'),
+      { 'main-aaaaaaaa.js': 1200, 'vendor-react-bbbbbbbb.js': 800, 'main-cccccccc.css': 300 },
+    )
+
+    const [measured] = measureStartup(rendererDist)!
+    expect(measured!.html).toBe('index.html')
+    // 1200 + 800 — the twice-referenced main chunk counts once.
+    expect(measured!.jsRawBytes).toBe(2000)
+    expect(measured!.fileCount).toBe(2)
+    expect(measured!.cssRawBytes).toBe(300)
+    expect(measured!.cssFileCount).toBe(1)
+    expect(measured!.missing).toEqual([])
+    expect(measured!.gzipTotalBytes).toBeGreaterThan(0)
+    expect(measured!.gzipTotalBytes).toBeLessThan(measured!.jsRawBytes)
+  })
+
+  it('reports a referenced file missing from the build instead of counting it as 0', () => {
+    const root = tempRoot()
+    const rendererDist = join(root, 'apps/electron/dist/renderer')
+    seedStartupBuild(
+      root,
+      [
+        '<script type="module" src="./assets/main-aaaaaaaa.js"></script>',
+        '<link rel="modulepreload" href="./assets/gone-bbbbbbbb.js">',
+      ].join('\n'),
+      { 'main-aaaaaaaa.js': 1200 },
+    )
+
+    const [measured] = measureStartup(rendererDist)!
+    expect(measured!.jsRawBytes).toBe(1200)
+    expect(measured!.missing).toEqual(['assets/gone-bbbbbbbb.js'])
+
+    const failures = evaluateStartup([measured!], {})
+    expect(failures).toHaveLength(1)
+    expect(failures[0]!.missing).toEqual(['assets/gone-bbbbbbbb.js'])
+    expect(formatStartupFailure(failures[0]!)).toContain('references 1 file(s) missing from the build')
+  })
+})
+
+describe('startup gate (pure)', () => {
+  it('fails when the measured closure exceeds the recorded budget beyond slack', () => {
+    const recorded = { 'index.html': { jsRawBytes: 1000, gzipTotalBytes: 10, fileCount: 1 } }
+    expect(evaluateStartup([startupMeasurement('index.html', 1000 + BUDGET_SLACK_BYTES)], recorded)).toEqual([])
+
+    const failures = evaluateStartup([startupMeasurement('index.html', 1000 + BUDGET_SLACK_BYTES + 1)], recorded)
+    expect(failures).toHaveLength(1)
+    expect(failures[0]).toMatchObject({ html: 'index.html', jsRawBytes: 1001 + BUDGET_SLACK_BYTES, budget: 1000, unbudgeted: false, overBudget: true })
+    const line = formatStartupFailure(failures[0]!)
+    expect(line).toContain(`startup: index.html static JS closure is ${1001 + BUDGET_SLACK_BYTES} B, budget 1000 B`)
+    expect(line).toContain('heaviest referenced files for index.html')
+  })
+
+  it('gates an html file with no recorded entry against MAX_NEW_STARTUP_BYTES', () => {
+    expect(evaluateStartup([startupMeasurement('new.html', MAX_NEW_STARTUP_BYTES)], {})).toEqual([])
+
+    const failures = evaluateStartup([startupMeasurement('new.html', MAX_NEW_STARTUP_BYTES + BUDGET_SLACK_BYTES + 1)], {})
+    expect(failures).toHaveLength(1)
+    expect(failures[0]).toMatchObject({ html: 'new.html', budget: MAX_NEW_STARTUP_BYTES, unbudgeted: true, overBudget: true })
+    expect(formatStartupFailure(failures[0]!)).toContain(`ceiling ${MAX_NEW_STARTUP_BYTES} B (unbudgeted entry page)`)
+  })
+
+  it('passes a fully budgeted closure that stays within slack', () => {
+    const recorded = { 'index.html': { jsRawBytes: 2000, gzipTotalBytes: 20, fileCount: 2 } }
+    expect(evaluateStartup([startupMeasurement('index.html', 2000)], recorded)).toEqual([])
+  })
+})
+
+describe('startup gate (CLI)', () => {
+  it('records the startup section for every html file and passes when within budget', () => {
+    const root = tempRoot()
+    seedStartupBuild(
+      root,
+      '<script type="module" src="./assets/main-aaaaaaaa.js"></script>',
+      { 'main-aaaaaaaa.js': 1000 },
+    )
+    seedBaseline(root, {
+      budgets: { main: { totalRawBytes: 2000, gzipTotalBytes: 1 } },
+      startup: { 'index.html': { jsRawBytes: 1000, gzipTotalBytes: 10, fileCount: 1 } },
+    })
+    const result = runCli(root)
+    expect(result.code).toBe(0)
+    expect(result.out).toContain('startup: 1 entry page(s) measured')
+    expect(result.out).toContain('index.html')
+    expect(result.out).toContain('1000')
+  })
+
+  it('exits 1 and prints the top referenced files when an entry closure regresses', () => {
+    const root = tempRoot()
+    seedStartupBuild(
+      root,
+      [
+        '<script type="module" src="./assets/main-aaaaaaaa.js"></script>',
+        '<link rel="modulepreload" href="./assets/vendor-bbbbbbbb.js">',
+      ].join('\n'),
+      { 'main-aaaaaaaa.js': 5000, 'vendor-bbbbbbbb.js': 1000 },
+    )
+    seedBaseline(root, { budgets: {}, startup: { 'index.html': { jsRawBytes: 1000, gzipTotalBytes: 10, fileCount: 1 } } })
+    const result = runCli(root)
+    expect(result.code).toBe(1)
+    expect(result.err).toContain('startup: index.html static JS closure is 6000 B, budget 1000 B')
+    expect(result.err).toContain('heaviest referenced files for index.html')
+    expect(result.err).toContain('assets/main-aaaaaaaa.js: 5000 B')
+  })
+
+  it('exits 1 when a referenced startup file is missing from the build', () => {
+    const root = tempRoot()
+    seedStartupBuild(
+      root,
+      [
+        '<script type="module" src="./assets/main-aaaaaaaa.js"></script>',
+        '<link rel="modulepreload" href="./assets/gone-bbbbbbbb.js">',
+      ].join('\n'),
+      { 'main-aaaaaaaa.js': 1000 },
+    )
+    seedBaseline(root, { budgets: {} })
+    const result = runCli(root)
+    expect(result.code).toBe(1)
+    expect(result.err).toContain('missing from the build')
+    expect(result.err).toContain('assets/gone-bbbbbbbb.js')
+  })
+
+  it('behaves exactly as before when the baseline has no startup section', () => {
+    const root = tempRoot()
+    seedBuild(root, { 'main-aaaaaaaa.js': 1000 })
+    seedBaseline(root, { budgets: { main: { totalRawBytes: 2000, gzipTotalBytes: 1 } } })
+    const result = runCli(root)
+    expect(result.code).toBe(0)
+    // The empty index.html closure is unbudgeted and well under the ceiling.
+    expect(result.out).toContain('index.html')
+    expect(result.out).toContain('unbudgeted')
   })
 })
 

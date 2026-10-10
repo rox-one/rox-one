@@ -105,6 +105,12 @@ function nodeBuiltinStubPlugin() {
  *   blocks, which Markdown renders through lazy wrappers (lazy-blocks.tsx).
  *   The same applies to MarkdownOpenUIBlock (OpenUI + recharts), rendered
  *   through the same lazy wrapper list.
+ * - #1675: the markdown barrel still re-exports the entity nodes and the
+ *   official (tiptap) markdown adapter, and `@rox/session-tools-core`
+ *   re-exports its gray-matter-backed validation module; the renderer consumes
+ *   those through barrel imports whose bindings it never uses, so the same
+ *   opt-out keeps @tiptap/core + prosemirror, `marked`, `gray-matter` and
+ *   js-yaml out of the startup chunks.
  */
 const SIDE_EFFECT_FREE_MODULES = [
   /[\\/]packages[\\/]shared[\\/]src[\\/]i18n[\\/](?:registry\.ts|setupI18n\.ts|locales[\\/][^\\/]+\.json)$/,
@@ -113,6 +119,18 @@ const SIDE_EFFECT_FREE_MODULES = [
   // load; marked here so the @rox/ui barrel re-export alone does not pull them
   // (and Shiki) into startup. Wherever they are used, that code still runs.
   /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]code-viewer[\\/](?:ShikiDiffViewer|UnifiedDiffViewer)\.tsx$/,
+  // #1675: reached only through the `@rox/ui` barrel and the lazily loaded
+  // Notes editor (TiptapMarkdownEditor.tsx) - one @tiptap/core import drags
+  // the eight prosemirror packages, and official-markdown drags @tiptap/markdown
+  // + `marked`. Their real consumers keep importing them normally.
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]markdown[\\/]official-markdown\.ts$/,
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]markdown[\\/]extensions[\\/](?:EntityMention|EntityEmbed|entity-input-rules)\.ts$/,
+  // #1675: the renderer imports the dependency-free leaf
+  // (`@rox/session-tools-core/tool-defs-filtering`) from
+  // session-inspector/SessionContextPanel.tsx; this mark keeps the package
+  // barrel from dragging gray-matter + js-yaml back into startup for any other
+  // barrel consumer.
+  /[\\/]packages[\\/]session-tools-core[\\/]src[\\/]validation\.ts$/,
 ]
 
 /**
