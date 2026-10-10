@@ -284,6 +284,9 @@ export function createWebApi(options: WebApiOptions): {
     onMenuToggleSidebar: () => () => {},
     onMenuToggleInspector: () => () => {},
     onMenuToggleChatPictureInPicture: () => () => {},
+    // Tray navigation is Electron-only (the web surface has no tray).
+    onMenuOpenDashboard: () => () => {},
+    onMenuRunDoctor: () => () => {},
     onDeepLinkNavigate: () => () => {},
 
     // Menu actions — no-ops (web has no native menu)

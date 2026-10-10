@@ -189,7 +189,6 @@ import {
   ROX_SERVICE_LABEL,
   runDoctor,
 } from '@rox/server-core/service'
-import { pushTyped } from '@rox/server-core/transport'
 import { registerServiceLifecycleIpc } from './service-lifecycle-ipc'
 import type { MenuBroadcastChannel } from './menu'
 import { TrayController } from './tray'
@@ -2084,7 +2083,7 @@ app.whenReady().then(async () => {
       })
 
       // Menu-bar status shell (e2.1). Only with a real UI; the indicator tracks
-      // the service state and every transition is broadcast to the renderer.
+      // the service state.
       if (!isHeadless && process.platform === 'darwin') {
         const iconPath = resolveAppIconPngPath()
         const tray = new Tray(iconPath ? nativeImage.createFromPath(iconPath).resize({ width: 18, height: 18 }) : nativeImage.createEmpty())
@@ -2102,7 +2101,6 @@ app.whenReady().then(async () => {
             win.show()
             win.focus()
           },
-          broadcastStatus: status => pushTyped(instance.wsServer, RPC_CHANNELS.menu.TRAY_STATUS_CHANGED, { to: 'all' }, status),
           quit: () => app.quit(),
         })
         let lastTrayState: string | null = null
