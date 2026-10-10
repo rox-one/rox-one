@@ -419,7 +419,9 @@ export const EXPECTED_CHANNELS: string[] = [
   'learning:getStats',
   'learning:getTimeline',
   'learning:listCandidates',
+  'learning:listCorrections',
   'learning:listEvidence',
+  'learning:listMutations',
   'learning:observe',
   'learning:recordCorrection',
   'learning:recordOutcome',
@@ -1066,4 +1068,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1062
+export const EXPECTED_CHANNEL_COUNT = 1064

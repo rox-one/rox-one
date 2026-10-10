@@ -829,6 +829,8 @@ export const CHANNEL_MAP = {
   listLearningCandidates: invoke(RPC_CHANNELS.learning.LIST_CANDIDATES),
   getLearningCandidate: invoke(RPC_CHANNELS.learning.GET_CANDIDATE),
   listLearningEvidence: invoke(RPC_CHANNELS.learning.LIST_EVIDENCE),
+  listLearningCorrections: invoke(RPC_CHANNELS.learning.LIST_CORRECTIONS),
+  listLearningMutations: invoke(RPC_CHANNELS.learning.LIST_MUTATIONS),
   getLearningOutcome: invoke(RPC_CHANNELS.learning.GET_OUTCOME),
   getLearningExperiment: invoke(RPC_CHANNELS.learning.GET_EXPERIMENT),
   getLearningStats: invoke(RPC_CHANNELS.learning.GET_STATS),

@@ -18,6 +18,7 @@ is recorded so the next agent does not “fix” it.
 | [005](./005-website-client-id.md) | Connect `clientId` flip | Blocked on private website repo | OPEN — access | product |
 | [006](./006-branch-deletion.md) | Remote branch deletion | **Do not execute** §5 | ACCEPTED (current ship) | product |
 | [007](./007-session-views-honesty.md) | Session view tabs honesty (T8) | **Real views only**; placeholder removed; SiYuan branches conditional-only | ACCEPTED (shipped slice) | product |
+| [012](./012-t13-misc-stubs.md) | Misc stubs: learning reads, web balance, reauth, mobile menu (T13) | Each stub **implemented or deleted**; reauth removed, web debug rows gated | ACCEPTED (shipped slice) | product |
 
 Human owner for this program: **pzd** (`go@trysota.ru`). Legal review for 001 is still outstanding.
 

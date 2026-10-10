@@ -6,8 +6,9 @@
  * entities into it. This module is the missing seam:
  *
  *  - `loadLearningMapInput` reads the read-only `learning:*` RPC surface
- *    (`listLearningCandidates` / `listLearningEvidence` / `getLearningOutcome` /
- *    `getLearningPolicy`) and fails soft: an absent API, an
+ *    (`listLearningCandidates` / `listLearningEvidence` / `listLearningCorrections` /
+ *    `listLearningMutations` / `getLearningOutcome` / `getLearningPolicy`) and fails
+ *    soft: an absent API, an
  *    `UNSUPPORTED_OPERATION` host or any failed read yields `undefined`, i.e.
  *    zero extra nodes and no error.
  *  - `learningOverlay` runs `deriveLearningMap` over that input (empty overlay
@@ -25,8 +26,10 @@ import type {
   LearningCandidate,
   LearningEvidence,
   LearningEvidenceType,
+  LearningMutation,
   LearningPolicy,
   TaskOutcome,
+  UserCorrection,
 } from '@rox/shared/memory/learning'
 import { deriveLearningMap, type LearningMapEdge, type LearningMapInput, type LearningMapNode } from './learning-nodes'
 
@@ -34,6 +37,8 @@ import { deriveLearningMap, type LearningMapEdge, type LearningMapInput, type Le
 export interface LearningReadApi {
   listLearningCandidates(workspaceId: string): Promise<LearningCandidate[]>
   listLearningEvidence(workspaceId: string, candidateId?: string): Promise<LearningEvidence[]>
+  listLearningCorrections(workspaceId: string): Promise<UserCorrection[]>
+  listLearningMutations(workspaceId: string): Promise<LearningMutation[]>
   getLearningOutcome(workspaceId: string, id: string): Promise<TaskOutcome | null>
   getLearningPolicy(workspaceId: string, id?: string): Promise<LearningPolicy[]>
 }
@@ -132,8 +137,9 @@ async function settle<T>(read: () => Promise<T>, fallback: T): Promise<T> {
  * no learning API (`UNSUPPORTED_OPERATION` or a missing method) or when the
  * candidate list itself is unavailable — the map then renders zero extra nodes.
  *
- * Corrections and mutations have no read-only RPC method in this build;
- * `deriveLearningMap` skips those steps rather than fabricating them.
+ * Corrections/mutations read through their own `learning:list*` methods; a host
+ * without them degrades to empty arrays, so `deriveLearningMap` simply skips
+ * those chain steps rather than fabricating them.
  */
 export async function loadLearningMapInput(
   workspaceId: string | undefined,
@@ -151,10 +157,14 @@ export async function loadLearningMapInput(
   if (candidates.length === 0) return { candidates: [] }
 
   const listEvidence = api.listLearningEvidence
+  const listCorrections = api.listLearningCorrections
+  const listMutations = api.listLearningMutations
   const getPolicy = api.getLearningPolicy
   const getOutcome = api.getLearningOutcome
-  const [evidence, policies] = await Promise.all([
+  const [evidence, corrections, mutations, policies] = await Promise.all([
     typeof listEvidence === 'function' ? settle(() => listEvidence(workspaceId), []) : Promise.resolve([]),
+    typeof listCorrections === 'function' ? settle(() => listCorrections(workspaceId), []) : Promise.resolve([]),
+    typeof listMutations === 'function' ? settle(() => listMutations(workspaceId), []) : Promise.resolve([]),
     typeof getPolicy === 'function' ? settle(() => getPolicy(workspaceId), []) : Promise.resolve([]),
   ])
 
@@ -170,5 +180,5 @@ export async function loadLearningMapInput(
     for (const outcome of settled) if (outcome) outcomes.push(outcome)
   }
 
-  return { candidates, evidence, policies, outcomes }
+  return { candidates, evidence, corrections, mutations, policies, outcomes }
 }
