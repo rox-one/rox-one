@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "description": "Suites already red on main; scripts/test-all.ts treats these as expected redness, not regressions. Refresh with: bun scripts/test-all.ts --update-baseline",
   "source": "work/test-all/run-2C21KU/report.json (revision 13f029bb28101bdbcb290c2e61ece08e405a280a) - 132 non-passing non-vendored suites, minus paths absent at b22d6a245",
+  "knownRedCeiling": 130,
   "knownRed": [
     "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
     "apps/electron/src/main/__tests__/native-replica-bootstrap.test.ts",

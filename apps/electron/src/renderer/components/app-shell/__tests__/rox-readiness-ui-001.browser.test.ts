@@ -20,6 +20,22 @@ function productionFunctions(): string {
     .map((node) => node.getText(file).replace(/^export /, '')).join('\n')
 }
 
+// Derive the navigation-guard surface from the shipped module instead of a hand-maintained list,
+// so a guard added to shared/types.ts (e.g. isClipboardHistoryNavigation) is bound automatically.
+function navigationGuardNames(): string[] {
+  const source = readFileSync(join(root, 'apps/electron/src/shared/types.ts'), 'utf8')
+  const file = ts.createSourceFile('types.ts', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+  const names: string[] = []
+  for (const node of file.statements) {
+    if (!ts.isVariableStatement(node) || !node.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword)) continue
+    for (const declaration of node.declarationList.declarations) {
+      const name = declaration.name.getText(file)
+      if (/^is[A-Za-z]*Navigation$/.test(name) && !names.includes(name)) names.push(name)
+    }
+  }
+  return names.sort()
+}
+
 function workspaceRestoreEffect() {
   const source = readFileSync(join(import.meta.dir, '../AppShell.tsx'), 'utf8')
   const file = ts.createSourceFile('AppShell.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
@@ -37,6 +53,9 @@ function workspaceRestoreEffect() {
 async function fixtureBundle() {
   if (process.env.ROX_UI001_MAIN_FIXTURE_BUNDLE) return readFileSync(process.env.ROX_UI001_MAIN_FIXTURE_BUNDLE, 'utf8')
   const dispatcher = productionFunctions()
+  const guardNames = navigationGuardNames()
+  const missingGuards = [...new Set(dispatcher.match(/\bis[A-Za-z]*Navigation\b/g) ?? [])].filter((name) => !guardNames.includes(name)).sort()
+  if (missingGuards.length) throw new Error(`Fixture navigation guards are out of sync with shared/types.ts: ${missingGuards.join(', ')}`)
   const contents = `
     import * as React from 'react';
     import { lazyRoutePage, RouteErrorBoundary } from './apps/electron/src/renderer/lib/route-recovery';
@@ -64,12 +83,7 @@ async function fixtureBundle() {
     import { inspectorPanelWidthAtom, bottomTerminalOpenAtom } from './apps/electron/src/renderer/atoms/unified-shell';
     import CloudRunSurfacePage from './apps/electron/src/renderer/pages/CloudRunSurfacePage';
     import TerminalSurfacePage from './apps/electron/src/renderer/pages/TerminalSurfacePage';
-    const { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isMemoryNavigation, isSurfaceNavigation,
-      isLearningNavigation,
-      isTasksNavigation, isInboxNavigation, isFeedNavigation, isNotesNavigation,
-      isAutomationsNavigation, isProjectsNavigation, isPagesNavigation, isBrowserNavigation, isKnowledgeNavigation,
-      isDiffNavigation, isExtensionNavigation, isConnectionsNavigation, isHomeNavigation, isCloudRunNavigation,
-      isTerminalNavigation, isScreenNavigation } = guards;
+    const { ${guardNames.join(', ')} } = guards;
     const sources = [{ config: { slug: 'a', name: 'Source A', type: 'local' } }];
     let rows = sources, workspace = 'ws-a', nav = parseRouteToNavigationState('home');
     let sessionMetas = new Map(), sessionsReady = true, remoteWorkspaceId;
@@ -95,7 +109,11 @@ async function fixtureBundle() {
     const useNavigation = () => ({...useFixtureNavigation(),isSessionsReady:sessionsReady});
     const useAppShellContext = () => ({activeWorkspaceId:workspace,workspaces:[{id:workspace,remoteServer:remoteWorkspaceId?{remoteWorkspaceId}:undefined}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[],skills:[],localMcpEnabled:false});
     const useTranslation = () => ({ t: key => key });
-    const useAtomValue = atom => atom === sessionMetaMapAtom ? sessionMetas
+    // The shipped sessionMetaMapAtom is a jotai atom; mirror its subscription so the memoized
+    // SurfaceRoutePanel re-renders when session metadata changes (props stay identical otherwise).
+    const sessionMetaListeners = new Set();
+    const subscribeSessionMetas = callback => { sessionMetaListeners.add(callback); return () => sessionMetaListeners.delete(callback); };
+    const useAtomValue = atom => atom === sessionMetaMapAtom ? React.useSyncExternalStore(subscribeSessionMetas, () => sessionMetas, () => sessionMetas)
       : atom === automationsAtom || atom === knowledgeHomeViewAtom || atom === knowledgeActiveViewIdAtom ? [] : useRuntimeAtomValue(atom);
     const useSetAtom = () => () => {};
     const sessionMetaMapAtom = Symbol(), automationsAtom = Symbol(), knowledgeHomeViewAtom = Symbol(), knowledgeActiveViewIdAtom = Symbol();
@@ -158,7 +176,7 @@ async function fixtureBundle() {
     const store = createStore(); store.sub(inspectorPanelWidthAtom,()=>{});
     window.ui001 = {
       navigate(route, ws='ws-a') { workspace=ws; nav=parseRouteToNavigationState(route); rerender(); },
-      sessions(rows, ready=true, alias) { sessionMetas=new Map(rows.map(row=>[row.id,row])); sessionsReady=ready; remoteWorkspaceId=alias; rerender(); },
+      sessions(rows, ready=true, alias) { sessionMetas=new Map(rows.map(row=>[row.id,row])); sessionMetaListeners.forEach(callback=>callback()); sessionsReady=ready; remoteWorkspaceId=alias; rerender(); },
       emitSources(next, ws=workspace) { rows=next; sourceListeners.forEach(callback=>callback(ws, next)); },
       sourceRows: sources, reads,
       dockOpen() {return getDefaultStore().get(bottomTerminalOpenAtom)},
