@@ -38,7 +38,7 @@ import {
 } from '../observability/rpc-call-counter'
 import type { NativeAuthority, NativePrincipal } from '../authority/native-authority'
 import { isChannelWithinOperatorCeiling } from '../authority/operator-role-policy'
-import { isAccessPolicyAdmitted, lookupAccessPolicyPlugin } from '../authority/access-policy-registry'
+import { isAccessPolicyAdmitted, isAccessPolicyResumed, lookupAccessPolicyPlugin } from '../authority/access-policy-registry'
 import type { OperatorRoleCeiling } from '@rox/shared/orgs/types'
 import {
   DEVICE_CHALLENGE_TTL_MS,
@@ -591,6 +591,24 @@ export class WsRpcServer implements RpcServer {
       role: client.operatorCeiling?.role ?? null,
       subject: client.principal.subject,
     })
+  }
+
+  /**
+   * Whether a RESUMED connection — a reconnect of a client whose persisted
+   * ceiling names an access-policy plugin — is still admitted. A refusal clears
+   * the ceiling so every subsequent request fails closed with the same typed
+   * OPERATOR_ACCESS_DENIED; a ceiling that names no plugin is unchanged.
+   */
+  private async resumeAccessPolicy(client: ClientConnection): Promise<void> {
+    const plugin = client.operatorCeiling?.accessPolicyPlugin
+    if (!plugin || !client.principal) return
+    const admitted = await isAccessPolicyResumed(plugin, {
+      channel: '',
+      nativeAction: undefined,
+      role: client.operatorCeiling?.role ?? null,
+      subject: client.principal.subject,
+    })
+    if (!admitted) client.operatorCeiling = null
   }
 
   private requestPermissionFence(client: ClientConnection, registration: RegisteredHandler): string | null {
@@ -1225,6 +1243,7 @@ export class WsRpcServer implements RpcServer {
               prevClient.localBindingCandidate = localBindingCandidate
               if (principal) {
                 this.revalidateOperatorCeiling(prevClient)
+                await this.resumeAccessPolicy(prevClient)
                 this.refreshSubscription(prevClient)
               }
               prevClient.alive = true

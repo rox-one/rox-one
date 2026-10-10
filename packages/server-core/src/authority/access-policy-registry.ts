@@ -32,6 +32,13 @@ export interface AccessPolicyPlugin {
    * refuses; only an explicit `true` admits. Fail-closed by construction.
    */
   authorize(request: AccessPolicyRequest): boolean | Promise<boolean>
+  /**
+   * Decide whether a RESUMED connection (a reconnecting client whose persisted
+   * ceiling names this plugin) is still admitted. Optional: a plugin that omits
+   * it falls back to {@link authorize}. Returning false (or throwing) drops the
+   * connection's ceiling so every subsequent request fails closed.
+   */
+  resume?(request: AccessPolicyRequest): boolean | Promise<boolean>
 }
 
 const registry = new Map<string, AccessPolicyPlugin>()
@@ -72,6 +79,27 @@ export async function isAccessPolicyAdmitted(
   if (!plugin || typeof plugin.authorize !== 'function') return false
   try {
     return (await plugin.authorize(request)) === true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Fail-closed admission decision for a RESUMED connection. Identical shape and
+ * fail-closed guarantees as {@link isAccessPolicyAdmitted}, but consults the
+ * plugin's `resume` when it declares one and otherwise falls back to
+ * `authorize`. A name without a registered plugin still refuses.
+ */
+export async function isAccessPolicyResumed(
+  pluginName: string | null | undefined,
+  request: AccessPolicyRequest,
+): Promise<boolean> {
+  if (typeof pluginName !== 'string' || pluginName.length === 0) return true
+  const plugin = lookupAccessPolicyPlugin(pluginName)
+  if (!plugin || typeof plugin.authorize !== 'function') return false
+  const decide = typeof plugin.resume === 'function' ? plugin.resume : plugin.authorize
+  try {
+    return (await decide.call(plugin, request)) === true
   } catch {
     return false
   }

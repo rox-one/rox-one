@@ -29,6 +29,7 @@ import { resolveConfigDir } from "@rox/shared/config/paths"
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { projectNativeRegisteredWorkspaceEvent } from '../handlers/rpc/native-session-scope'
 import { composeHooksNodeHandler, createHooksHttpIngress, HostScheduler, type HooksIngressSnapshot, type HooksWakePayload } from '../scheduler/index.ts'
+import { configureVisitorAccess } from '../visitors/index.ts'
 import { projectNativeNotesChanged } from '../handlers/rpc/native-notes-events'
 import { projectNativeFeedChanged } from '../handlers/rpc/native-feed'
 import { projectNativeInboxChanged } from '../handlers/rpc/native-inbox-events'
@@ -554,6 +555,19 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     },
   })
 
+  // Visitor access (port row a1.6): config-gated registration of the
+  // `visitor-access` access-policy plugin + hourly grant sweep. Absent config
+  // registers NOTHING, so a role naming the plugin keeps being refused typed.
+  const visitorRuntime = configureVisitorAccess({
+    config: loadStoredConfig(),
+    scheduler,
+    log: (message) => platform.logger.info(`[visitors] ${message}`),
+  })
+  if (visitorRuntime.service) {
+    const sm = sessionManager as unknown as { setVisitorAccessService?: (service: unknown) => void }
+    sm.setVisitorAccessService?.(visitorRuntime.service)
+  }
+
   // External `/hooks` webhook ingress (port row f.8). Installed only when a
   // token is configured, so an unconfigured deployment has no route and no 401
   // oracle. The wake route drives the existing SessionManager message path.
@@ -712,6 +726,12 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
       await scheduler.stop()
     } catch (error) {
       platform.logger.error('[bootstrap] Failed to stop scheduler:', error)
+    }
+
+    try {
+      await visitorRuntime.dispose()
+    } catch (error) {
+      platform.logger.error('[bootstrap] Failed to dispose visitor access:', error)
     }
 
     try {

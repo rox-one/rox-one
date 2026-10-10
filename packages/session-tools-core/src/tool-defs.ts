@@ -62,6 +62,7 @@ import { handleMemoryRepoRead, handleMemoryRepoSearch } from './handlers/memory-
 import { handleMemorySearch } from './handlers/memory-search.ts';
 import { handleMemoryGet } from './handlers/memory-get.ts';
 import { handleMemoryForget } from './handlers/memory-forget.ts';
+import { handleVisitorInvite, handleVisitorRevoke, handleVisitorList } from './handlers/visitors.ts';
 import { handleWikiSearch } from './handlers/wiki-search.ts';
 import { handleWikiGet } from './handlers/wiki-get.ts';
 import { handleWikiApply } from './handlers/wiki-apply.ts';
@@ -520,6 +521,23 @@ export const WikiApplySchema = z.object({
 export type WikiSearchToolArgs = z.infer<typeof WikiSearchSchema>;
 export type WikiGetToolArgs = z.infer<typeof WikiGetSchema>;
 export type WikiApplyToolArgs = z.infer<typeof WikiApplySchema>;
+// Visitor access tools (port-matrix row a1.6). Grants are keyed by email or
+// GitHub account id; invite/revoke are mutating (blocked in Explore/Safe mode),
+// list is read-only.
+export const VisitorInviteSchema = z.object({
+  email: z.string().optional().describe('Visitor email address. Pass exactly one of email / github.'),
+  github: z.string().optional().describe('Visitor GitHub account id. Pass exactly one of email / github.'),
+  ttlDays: z.number().optional().describe('Grant lifetime in days (default 14).'),
+  note: z.string().optional().describe('Why access was granted (shown by visitor_list).'),
+});
+export const VisitorRevokeSchema = z.object({
+  email: z.string().optional().describe('Visitor email address. Pass exactly one of email / github.'),
+  github: z.string().optional().describe('Visitor GitHub account id. Pass exactly one of email / github.'),
+});
+export const VisitorListSchema = z.object({});
+export type VisitorInviteToolArgs = z.infer<typeof VisitorInviteSchema>;
+export type VisitorRevokeToolArgs = z.infer<typeof VisitorRevokeSchema>;
+export type VisitorListToolArgs = z.infer<typeof VisitorListSchema>;
 // Skills catalog tools (c2.7). The wire names use underscores; the catalog
 // advertises and the tools resolve slugs (never raw paths).
 export const SkillsSearchSchema = z.object({
@@ -1043,6 +1061,28 @@ retracted by \`claimId\`. Empty text and contradiction edges to unknown claim id
 rejected. Blocked in Explore/Safe mode. Use this to record a durable, evidence-backed
 assertion the workspace should keep.`,
 
+  visitor_invite: `Grant time-boxed visitor access to an external identity. Mutating.
+
+Pass exactly one of \`email\` or \`github\` (account id). The grant admits that identity
+through the workspace's visitor-access policy until it expires (default 14 days;
+override with \`ttlDays\`). Re-inviting an existing visitor renews the grant and resets
+its lifetime. Blocked in Explore/Safe mode.
+
+Refusals are typed: VISITOR_SUBJECT_INVALID (neither/both selectors, bad address),
+VISITOR_STORE_UNAVAILABLE (visitor access is not configured in this process).`,
+
+  visitor_revoke: `Revoke a visitor's access immediately. Mutating.
+
+Pass exactly one of \`email\` or \`github\` (account id). A revoked visitor is refused on
+their next request. Revoking an identity that holds no live grant is reported as
+VISITOR_GRANT_NOT_FOUND. Blocked in Explore/Safe mode.`,
+
+  visitor_list: `List the active visitor grants. Read-only.
+
+Returns each grant's identity (email or github account), its expiry and any note.
+Only live grants are listed — expired ones are already gone. Typed
+VISITOR_STORE_UNAVAILABLE when visitor access is not configured in this process.`,
+
   skills_search: `Search the installed skills (agent skill catalog) by keyword. Read-only.
 
 Use it to find a skill that matches the task before loading one — the available-skills
@@ -1217,6 +1257,13 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   { name: 'wiki_search', description: TOOL_DESCRIPTIONS.wiki_search, inputSchema: WikiSearchSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleWikiSearch },
   { name: 'wiki_get', description: TOOL_DESCRIPTIONS.wiki_get, inputSchema: WikiGetSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleWikiGet },
   { name: 'wiki_apply', description: TOOL_DESCRIPTIONS.wiki_apply, inputSchema: WikiApplySchema, executionMode: 'registry', safeMode: 'block', readOnly: false, handler: handleWikiApply },
+  // Visitor access tools (port row a1.6) — invite/revoke are mutating writes
+  // (blocked in Explore/Safe mode), list is read-only. All three reach the
+  // grant store through the ctx.visitors callbacks (SessionManager) and report a
+  // typed unavailable result when visitor access is not configured.
+  { name: 'visitor_invite', description: TOOL_DESCRIPTIONS.visitor_invite, inputSchema: VisitorInviteSchema, executionMode: 'registry', safeMode: 'block', readOnly: false, handler: handleVisitorInvite },
+  { name: 'visitor_revoke', description: TOOL_DESCRIPTIONS.visitor_revoke, inputSchema: VisitorRevokeSchema, executionMode: 'registry', safeMode: 'block', readOnly: false, handler: handleVisitorRevoke },
+  { name: 'visitor_list', description: TOOL_DESCRIPTIONS.visitor_list, inputSchema: VisitorListSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleVisitorList },
   // Skills catalog tools (c2.7) — read-only over the eligible skill catalog via
   // the registered skills runtime; safe in Explore mode, typed unavailable otherwise.
   { name: 'skills_search', description: TOOL_DESCRIPTIONS.skills_search, inputSchema: SkillsSearchSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleSkillsSearch },

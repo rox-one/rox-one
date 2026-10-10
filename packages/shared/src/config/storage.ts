@@ -117,6 +117,17 @@ export interface StoredConfig {
     daytonaApiUrl?: string;
     daytonaSecretRef?: string;
   };
+  // Visitor access (port-matrix row a1.6). Present + not disabled registers the
+  // `visitor-access` access-policy plugin at boot; absent registers nothing.
+  visitors?: {
+    enabled?: boolean;
+    /** Identity provider id, e.g. 'cloudflare-access'. Live calls need credentials. */
+    provider?: string;
+    /** Grant lifetime in days (default 14). */
+    grantTtlDays?: number;
+    /** Expiry sweep cadence in minutes (default 60). */
+    sweepIntervalMinutes?: number;
+  };
   // LLM Connections (authoritative source for auth and model config)
   llmConnections?: LlmConnection[];
   defaultLlmConnection?: string;  // Slug of default connection for new sessions

@@ -124,6 +124,8 @@ import { buildPagesToolCallbacks } from '../pages/tool-callbacks'
 import { buildBoardWidgetToolCallbacks } from '../board/tool-callbacks'
 import type { BoardWidgetToolRecord } from '@rox/session-tools-core'
 import { memoryToolCallbacksForSession } from '../memory/tool-callbacks'
+import { buildVisitorToolCallbacks } from '../visitors/tool-callbacks'
+import type { VisitorAccessService } from '../visitors/service'
 import { buildServersFromSources as buildServersFromSourcesShared } from '../sources/build-servers'
 import { resolveDefaultSessionSources } from '../sources/default-session-sources'
 import { BuiltinMcpStartup } from '../sources/builtin-mcp-startup'
@@ -1603,6 +1605,12 @@ export class SessionManager implements ISessionManager {
     return selected ?? restored
   }
   private sessions: Map<string, ManagedSession> = new Map()
+  /**
+   * Visitor-access service (port row a1.6). Set at bootstrap only when visitor
+   * config is present; the visitor_* tools read it lazily so a late set is
+   * picked up by already-created contexts.
+   */
+  private visitorAccessService: VisitorAccessService | null = null
   private readonly runtimeTrace = new RuntimeTraceService(id => {
     const session = this.sessions.get(id)
     return session ? { id, workspaceId: session.workspace.id, directory: getSessionStoragePath(session.workspace.rootPath, id), parentSessionId: session.parentSessionId } : undefined
@@ -1626,6 +1634,15 @@ export class SessionManager implements ISessionManager {
   }
 
   getRuntimeTraceSnapshot(query: RuntimeTraceQuery) { return this.runtimeTrace.getSnapshot(query) }
+
+  /**
+   * Attach (or clear) the visitor-access service. Called at bootstrap after the
+   * config-gated registration; the visitor_* tool callbacks resolve it lazily,
+   * so a set that lands after a context was built is still visible.
+   */
+  setVisitorAccessService(service: VisitorAccessService | null): void {
+    this.visitorAccessService = service
+  }
   readRuntimeTraceEvents(query: RuntimeEventsQuery) { return this.runtimeTrace.readEvents(query) }
   readRuntimeTracePayload(query: RuntimePayloadQuery) { return this.runtimeTrace.readPayload(query) }
 
@@ -6013,6 +6030,10 @@ export class SessionManager implements ISessionManager {
             (args) => memoryService!.forgetChunks(args.ids, 'agent', args.reason),
           )
         })(),
+        // Visitor access tools (port row a1.6) — bound to the process-wide
+        // VisitorAccessService set by bootstrap when visitor config is present.
+        // Absent (null) → the handlers report a typed VISITOR_STORE_UNAVAILABLE.
+        visitors: buildVisitorToolCallbacks(() => this.visitorAccessService),
         getSessionInfoFn: (sessionId?: string) => {
           const targetId = sessionId ?? managed.id
           const session = this.sessions.get(targetId)
