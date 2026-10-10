@@ -596,7 +596,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
       <div
         role="alert"
         data-testid="meetings-proposals-error"
-        className="mx-3 mt-2 flex items-center gap-2 rounded-[var(--radius-card)] bg-destructive/10 px-2 py-1 text-[12px] text-destructive"
+        className="mx-3 mt-2 flex items-center gap-2 rounded-[var(--radius-card)] bg-destructive/10 px-2 py-1 text-sm text-destructive"
       >
         <span className="min-w-0 flex-1">{t(i18nKeyForProposalError(proposalError ?? undefined))}</span>
         <Button variant="ghost" data-testid="meetings-proposals-retry" onClick={() => setProposalReload((n) => n + 1)}>{t('common.retry')}</Button>

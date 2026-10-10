@@ -3,88 +3,88 @@
   "comment": "Recorded by `bun scripts/check-bundle-size.ts --update` against a real renderer build.",
   "budgets": {
     "EntityPicker": {
-      "totalRawBytes": 815750,
-      "gzipTotalBytes": 265398
+      "totalRawBytes": 815885,
+      "gzipTotalBytes": 265455
     },
     "MarkdownMermaidBlock": {
-      "totalRawBytes": 1547066,
-      "gzipTotalBytes": 469236
+      "totalRawBytes": 1547234,
+      "gzipTotalBytes": 469274
     },
     "MarkdownOpenUIBlock": {
-      "totalRawBytes": 2295441,
-      "gzipTotalBytes": 618320
+      "totalRawBytes": 2378699,
+      "gzipTotalBytes": 638504
     },
     "PDFPreviewOverlay": {
-      "totalRawBytes": 469477,
-      "gzipTotalBytes": 138872
+      "totalRawBytes": 469467,
+      "gzipTotalBytes": 138869
     },
     "ar": {
-      "totalRawBytes": 757240,
-      "gzipTotalBytes": 190248
+      "totalRawBytes": 771627,
+      "gzipTotalBytes": 193895
     },
     "audio-transcript-actions": {
-      "totalRawBytes": 954867,
-      "gzipTotalBytes": 293323
+      "totalRawBytes": 965064,
+      "gzipTotalBytes": 295861
     },
     "cpp": {
       "totalRawBytes": 626122,
       "gzipTotalBytes": 43805
     },
     "de": {
-      "totalRawBytes": 683739,
-      "gzipTotalBytes": 183194
+      "totalRawBytes": 696108,
+      "gzipTotalBytes": 186619
     },
     "emacs-lisp": {
       "totalRawBytes": 779902,
       "gzipTotalBytes": 197173
     },
     "en": {
-      "totalRawBytes": 641928,
-      "gzipTotalBytes": 164647
+      "totalRawBytes": 653420,
+      "gzipTotalBytes": 167670
     },
     "es": {
-      "totalRawBytes": 681151,
-      "gzipTotalBytes": 180925
+      "totalRawBytes": 693662,
+      "gzipTotalBytes": 184316
     },
     "fr": {
-      "totalRawBytes": 693611,
-      "gzipTotalBytes": 183680
+      "totalRawBytes": 706342,
+      "gzipTotalBytes": 187173
     },
     "hu": {
-      "totalRawBytes": 695723,
-      "gzipTotalBytes": 188526
+      "totalRawBytes": 708718,
+      "gzipTotalBytes": 192201
     },
     "ja": {
-      "totalRawBytes": 737156,
-      "gzipTotalBytes": 189121
+      "totalRawBytes": 751175,
+      "gzipTotalBytes": 192867
     },
     "katex": {
       "totalRawBytes": 261117,
       "gzipTotalBytes": 77061
     },
     "ko": {
-      "totalRawBytes": 696293,
-      "gzipTotalBytes": 183942
+      "totalRawBytes": 709040,
+      "gzipTotalBytes": 187497
     },
     "main": {
-      "totalRawBytes": 481675,
-      "gzipTotalBytes": 147410
+      "totalRawBytes": 348532,
+      "gzipTotalBytes": 108785
     },
     "pl": {
-      "totalRawBytes": 677239,
-      "gzipTotalBytes": 185935
+      "totalRawBytes": 689520,
+      "gzipTotalBytes": 189422
     },
     "playground": {
-      "totalRawBytes": 800990,
-      "gzipTotalBytes": 295237
+      "totalRawBytes": 907658,
+      "gzipTotalBytes": 323040
     },
     "ru": {
-      "totalRawBytes": 912976,
-      "gzipTotalBytes": 206993
+      "totalRawBytes": 929078,
+      "gzipTotalBytes": 210838
     },
-    "team-labels": {
-      "totalRawBytes": 1770777,
-      "gzipTotalBytes": 524578
+    "useOnboarding": {
+      "totalRawBytes": 2068179,
+      "gzipTotalBytes": 607096
     },
     "wasm": {
       "totalRawBytes": 634427,
@@ -95,12 +95,12 @@
       "gzipTotalBytes": 77357
     },
     "zh-Hans": {
-      "totalRawBytes": 634827,
-      "gzipTotalBytes": 179220
+      "totalRawBytes": 646280,
+      "gzipTotalBytes": 182602
     },
     "zh-Hant": {
-      "totalRawBytes": 637777,
-      "gzipTotalBytes": 180433
+      "totalRawBytes": 649451,
+      "gzipTotalBytes": 183855
     }
   },
   "stylesheets": {
@@ -109,40 +109,40 @@
       "gzipTotalBytes": 33330
     },
     "index": {
-      "totalRawBytes": 395172,
-      "gzipTotalBytes": 63631
+      "totalRawBytes": 419861,
+      "gzipTotalBytes": 67268
     }
   },
   "totals": {
-    "jsRawBytes": 33627279,
-    "jsGzipBytes": 9245801,
-    "cssRawBytes": 804968,
-    "cssGzipBytes": 122455
+    "jsRawBytes": 34136052,
+    "jsGzipBytes": 9368805,
+    "cssRawBytes": 830282,
+    "cssGzipBytes": 126152
   },
   "startup": {
     "browser-empty-state.html": {
-      "jsRawBytes": 1177362,
-      "gzipTotalBytes": 368125,
+      "jsRawBytes": 1187621,
+      "gzipTotalBytes": 370662,
       "fileCount": 11
     },
     "browser-toolbar.html": {
-      "jsRawBytes": 1172782,
-      "gzipTotalBytes": 366961,
+      "jsRawBytes": 1182979,
+      "gzipTotalBytes": 369482,
       "fileCount": 13
     },
     "index.html": {
-      "jsRawBytes": 4031582,
-      "gzipTotalBytes": 1226631,
-      "fileCount": 58
+      "jsRawBytes": 4174814,
+      "gzipTotalBytes": 1260098,
+      "fileCount": 48
     },
     "playground.html": {
-      "jsRawBytes": 16492239,
-      "gzipTotalBytes": 4721931,
-      "fileCount": 137
+      "jsRawBytes": 17074831,
+      "gzipTotalBytes": 4880656,
+      "fileCount": 135
     },
     "voice-overlay.html": {
       "jsRawBytes": 211538,
-      "gzipTotalBytes": 70718,
+      "gzipTotalBytes": 70710,
       "fileCount": 8
     }
   }
