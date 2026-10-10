@@ -200,17 +200,28 @@ function resolveServerPath(hostRuntime: BackendHostRuntimeContext, serverName: s
 function resolveRipgrepPath(hostRuntime: BackendHostRuntimeContext): string | undefined {
   const binaryName = process.platform === 'win32' ? 'rg.exe' : 'rg';
   const ripgrepRelative = join('node_modules', '@vscode', 'ripgrep', 'bin', binaryName);
+  // `@vscode/ripgrep` >= 1.18 ships the binary in a per-platform package
+  // instead of a materialised `ripgrep/bin`, so an install that only has the
+  // platform package has no legacy path at all — exactly how the Ubuntu CI
+  // runner looked: the binary was installed, this resolver could not see it,
+  // and session search threw SearchUnavailableError. `copyRipgrep` already
+  // materialises the legacy path when packaging; resolving has to accept both.
+  const platformPackageRelative = join('node_modules', '@vscode', `ripgrep-${process.platform}-${process.arch}`, 'bin', binaryName)
 
   if (hostRuntime.isPackaged) {
-    const packaged = join(hostRuntime.appRootPath, ripgrepRelative);
-    if (existsSync(packaged)) return packaged;
+    for (const relative of [ripgrepRelative, platformPackageRelative]) {
+      const packaged = join(hostRuntime.appRootPath, relative);
+      if (existsSync(packaged)) return packaged;
+    }
   }
 
-  const fromHostRoot = resolveUpwards(hostRuntime.appRootPath, ripgrepRelative, 10);
-  if (fromHostRoot) return fromHostRoot;
+  for (const relative of [ripgrepRelative, platformPackageRelative]) {
+    const fromHostRoot = resolveUpwards(hostRuntime.appRootPath, relative, 10);
+    if (fromHostRoot) return fromHostRoot;
 
-  const cwdFallback = join(process.cwd(), ripgrepRelative);
-  if (existsSync(cwdFallback)) return cwdFallback;
+    const cwdFallback = join(process.cwd(), relative);
+    if (existsSync(cwdFallback)) return cwdFallback;
+  }
 
   // Non-packaged (headless server, dev mode): fall back to system rg via PATH.
   // Packaged apps must use vendored binary only — never resolve from PATH
