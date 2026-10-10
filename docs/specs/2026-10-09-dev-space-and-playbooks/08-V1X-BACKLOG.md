@@ -11,11 +11,16 @@
 | V4 | Bounded-параллелизм LLM-слоя | **поставлено** | `packages/server-core/src/devspace/stages/llm.ts` (`LLM_STAGE_CONCURRENCY=2`; артефакты и журнал детерминированы порядком адаптеров) | [#1767](https://github.com/rox-one/rox-one/pull/1767) |
 | V5 | R16 слайс-2: режим из лендинга реально используется, `?mode=`, операторский выключатель | **поставлено** | `apps/webui/src/App.tsx` + `web-modes.ts`, `ROX_WEBUI_MODES_LANDING` → `/api/config` (`modesLanding`), решение `plans/next-program/decisions/004-web-modes.md` | [#1770](https://github.com/rox-one/rox-one/pull/1770) |
 | V6 | Отсутствие ffprobe деградирует к оценкам (не сырой ENOENT) | **поставлено** (бонус) | `packages/server-core/src/playbooks/assemble.ts` (`runProcess` всегда промис; `probeOne` → `null`) | [#1773](https://github.com/rox-one/rox-one/pull/1773) |
+| V7 | Авто-регенерация артефактов после auto-pull (В11) | **поставлено** | `devspace/watch.ts` (`regenerate`-хук + аудит `watch-regenerate-started/succeeded/failed`), флаг `watchRegenerate` в `DevSpaceRepositoryRecord`/`devSpace:setWatch`, `refreshRepositoryInternal`/`startRunInternal` в `handlers/rpc/dev-space.ts`, чекбокс в `RepoWatchControls` | ветка `feat/v1x-watch-regenerate` |
 
 ## Границы: что осознанно осталось следующим рычагам
 
 - **Per-repo shallow-clone lever** — `CLONE_DEPTH` зафиксирован как `full` (O9); per-repo глубина не вводилась.
-- **Авто-регенерация артефактов после auto-pull** — по P6 остаётся ручной кнопкой («проверить свежесть»), watch только помечает `stale`.
+- **Авто-регенерация артефактов после auto-pull** — закрыта в В11 (строка V7). Границы жёсткие: запускается
+  **только после успешного** `git pull --ff-only` и только при тройном согласии пер-репо
+  `watchEnabled && watchAutoPull && watchRegenerate`; **без демонов** (тот же процесс/таймер watch). Без согласия
+  на модельные коннекты LLM-фаза честно деградирует в `partial`, структурные артефакты обновляются всегда;
+  ручная кнопка «проверить свежесть» остаётся для остальных случаев.
 - **Выделенная cloud-VM-поверхность в веб-портале** — бэкенд режимов вне этого репо; внутри репо лендинг+оверлей уже честные.
 - **Kokoro в диктовке (TtsEngine)** — сознательно не расширялся: движок живёт только в подкасте (`PodcastEngine`).
 - **Русские голоса Kokoro** — в Kokoro v1.0 их нет; UI честно предупреждает, для русского остаются `edge`/`system`.

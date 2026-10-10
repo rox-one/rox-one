@@ -108,7 +108,8 @@ describe('OmpAgent session flow — healthy turn', () => {
 
     const argv = fake.readArgvLog().find(args => args.includes('--append-system-prompt'))!;
     const briefing = argv[argv.indexOf('--append-system-prompt') + 1]!;
-    expect(briefing).toContain('DeepWiki: understanding public repositories');
+    expect(briefing).toContain('Context7: current library and framework documentation');
+    expect(briefing).not.toContain('DeepWiki');
     expect(briefing).toContain('Superpowers and Understand Anything are skills/plugins, not MCP servers');
     expect(briefing).toContain('interactive OpenUI block');
     expect(briefing).toContain('~/.rox/docs/openui.md');

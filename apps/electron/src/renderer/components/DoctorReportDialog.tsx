@@ -23,8 +23,8 @@ import { useRegisterModal } from '@/context/ModalContext'
 import type { DoctorReport, DoctorSeverity } from '@rox/shared/service-lifecycle'
 
 const SEVERITY_STYLE: Record<DoctorSeverity, { icon: typeof CheckCircle2; className: string }> = {
-  ok: { icon: CheckCircle2, className: 'text-emerald-600 dark:text-emerald-400' },
-  warn: { icon: AlertTriangle, className: 'text-amber-600 dark:text-amber-400' },
+  ok: { icon: CheckCircle2, className: 'text-status-success' },
+  warn: { icon: AlertTriangle, className: 'text-status-warning' },
   error: { icon: XCircle, className: 'text-destructive' },
 }
 

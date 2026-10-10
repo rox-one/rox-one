@@ -49,12 +49,21 @@ export interface DevSpaceRepositoryRecord {
   /**
    * v1.x auto-watch (O10, "закрыто" 2026-10-10): explicit per-repo consent for
    * background `git fetch` against this repository. Default false — the app
-   * never touches the network for a repo the user has not opted in. No artifact
-   * or LLM regeneration is triggered by watching.
+   * never touches the network for a repo the user has not opted in. Watching by
+   * itself never regenerates artifacts; that is the separate `watchRegenerate` opt-in.
    */
   readonly watchEnabled?: boolean
   /** With watching on, fast-forward the working copy (`git pull --ff-only`) when the upstream moved. Default false. */
   readonly watchAutoPull?: boolean
+  /**
+   * v1.x auto-regeneration (В11, "закрыто" 2026-10-10): after a *successful*
+   * `watchAutoPull` fast-forward, refresh the repository snapshot and run the
+   * `reconcile → structural → llm → publish` pipeline. Default false. Only
+   * meaningful with `watchEnabled && watchAutoPull`; the LLM phase degrades to
+   * `partial` without model-connector consent, while the structural artifacts
+   * are always regenerated.
+   */
+  readonly watchRegenerate?: boolean
   /** Watch cadence in ms (`DEV_SPACE_WATCH_MIN_INTERVAL_MS`…`DEV_SPACE_WATCH_MAX_INTERVAL_MS`); absent = 60 min. */
   readonly watchIntervalMs?: number
   /** Epoch ms of the last watch tick that inspected this repository. */
@@ -226,10 +235,10 @@ export interface DevSpaceRemoveRepositoryInput {
 }
 
 /**
- * `setWatch` (v1.x O10): per-repository auto-watch consent. `watchEnabled` is
- * the consent flag itself; `watchAutoPull` and `watchIntervalMs` are optional
- * refinements kept when omitted. The server validates the interval range and
- * returns the updated catalog record.
+ * `setWatch` (v1.x O10/В11): per-repository auto-watch consent. `watchEnabled`
+ * is the consent flag itself; `watchAutoPull`, `watchRegenerate` and
+ * `watchIntervalMs` are optional refinements kept when omitted. The server
+ * validates the interval range and returns the updated catalog record.
  */
 export interface DevSpaceSetWatchInput {
   readonly workspaceId: string
@@ -238,6 +247,7 @@ export interface DevSpaceSetWatchInput {
   readonly repositoryId: string
   readonly watchEnabled: boolean
   readonly watchAutoPull?: boolean
+  readonly watchRegenerate?: boolean
   readonly watchIntervalMs?: number
 }
 

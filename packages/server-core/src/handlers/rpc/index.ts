@@ -22,6 +22,7 @@ import { registerOrgsHandlers } from './orgs'
 import { registerLlmConnectionsHandlers } from './llm-connections'
 import { registerOAuthHandlers } from './oauth'
 import { registerCalendarGoogleHandlers } from './calendar-google'
+import { registerCalendarAppleHandlers } from './calendar-apple'
 import { registerGoogleMeetHandlers } from './google-meet'
 import { registerResourcesHandlers } from './resources'
 import { registerOnboardingHandlers } from './onboarding'
@@ -163,6 +164,8 @@ export function registerCoreRpcHandlers(
   registerLlmConnectionsHandlers(server, deps)
   registerOAuthHandlers(server, deps)
   registerCalendarGoogleHandlers(server, deps)
+  // Apple Calendar (R8, macOS EventKit) — read-only local sync via the host helper.
+  registerCalendarAppleHandlers(server, deps)
   // Google Meet artifacts (wave 5, row d2.6) — read-only Developer-Preview surface.
   registerGoogleMeetHandlers(server, deps)
   registerOnboardingHandlers(server, deps)

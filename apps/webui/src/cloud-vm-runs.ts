@@ -85,10 +85,29 @@ export interface CloudVmSurfaceHost {
   cancelCloudRun(id: string): Promise<unknown>
 }
 
+/**
+ * Background poll cadence for the cloud-VM surface, in milliseconds. Matches
+ * the desktop `CloudRunsChip` `POLL_MS` (5 s) so both surfaces observe the same
+ * provider updates: short enough that a run's progress feels live, long enough
+ * that a single open surface does not hammer `listCloudRuns`.
+ */
+export const CLOUD_VM_REFRESH_MS = 5_000
+
 /** True when the run's provider state can still be cancelled. */
 export function canCancelRun(run: CloudRunListItem): boolean {
   const state = run.status?.state
   return typeof state === 'string' && (CLOUD_RUN_ACTIVE_STATES as readonly string[]).includes(state)
+}
+
+/**
+ * True while at least one listed run is still non-terminal — the signal the
+ * surface's background poll follows. Cheap `some` over the same active-state
+ * set `canCancelRun` uses, so the poll and the «Отменить» button never
+ * disagree about what "active" means. An empty list (or one with only
+ * done/failed/cancelled/expired rows) is not active, which lets the poll stop.
+ */
+export function hasActiveRuns(runs: readonly CloudRunListItem[]): boolean {
+  return runs.some(canCancelRun)
 }
 
 /**

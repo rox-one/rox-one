@@ -732,6 +732,14 @@ export const CHANNEL_MAP = {
   googleCalendarDisconnect: invoke(RPC_CHANNELS.calendar.GOOGLE_DISCONNECT),
   googleCalendarSync: invoke(RPC_CHANNELS.calendar.GOOGLE_SYNC),
 
+  // Apple Calendar connector (R8, macOS EventKit). No browser popup — connect
+  // triggers the host helper's TCC prompt directly, so the whole surface is a
+  // plain routed invoke set.
+  appleCalendarStatus: invoke(RPC_CHANNELS.calendar.APPLE_STATUS),
+  connectAppleCalendar: invoke(RPC_CHANNELS.calendar.APPLE_CONNECT),
+  appleCalendarDisconnect: invoke(RPC_CHANNELS.calendar.APPLE_DISCONNECT),
+  appleCalendarSync: invoke(RPC_CHANNELS.calendar.APPLE_SYNC),
+
   // Google Meet artifacts (wave 5, row d2.6). Read-only Developer-Preview
   // surface; every call refuses with PREVIEW_NOT_ACKNOWLEDGED until the host
   // acknowledges enrollment.

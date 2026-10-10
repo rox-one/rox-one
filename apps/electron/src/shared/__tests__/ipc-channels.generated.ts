@@ -105,6 +105,10 @@ export const EXPECTED_CHANNELS: string[] = [
   'caching:getExtendedPromptCache',
   'caching:setEnable1MContext',
   'caching:setExtendedPromptCache',
+  'calendar:appleConnect',
+  'calendar:appleDisconnect',
+  'calendar:appleStatus',
+  'calendar:appleSync',
   'calendar:googleConnect',
   'calendar:googleDisconnect',
   'calendar:googleStatus',
@@ -1063,4 +1067,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1059
+export const EXPECTED_CHANNEL_COUNT = 1063

@@ -31,6 +31,7 @@ import {
 import type {
   DevSpaceArtifactSummary, DevSpaceGenerateQuestionsResult, DevSpaceListArtifactsResult, DevSpaceManifestEntry,
   DevSpaceReadArtifactResult, DevSpaceRepositoryCatalog, DevSpaceRepositoryRecord, DevSpaceRepositoryStatus, DevSpaceRun,
+  DevSpaceRunProgress,
 } from '@rox/shared/dev-space'
 import { atomicWriteFileSync } from '@rox/shared/utils/files'
 import { pushTyped } from '@rox/server-core/transport'
@@ -434,11 +435,103 @@ export function registerDevSpaceHandlers(server: RpcServer, deps: HandlerDeps,
   registerDevSpaceLlmStage(environment.llmAdapters)
   registerDevSpacePublishStage(environment.publishPort)
 
+  // -------------------------------------------------------------------------
+  // Internal seams (В11): the RPC handlers below wrap exactly these two
+  // functions so the background auto-regeneration path can reuse the same
+  // behaviour without a renderer client. The only difference is where the
+  // "changed"/progress notifications are routed.
+  // -------------------------------------------------------------------------
+
+  /** Body of `refreshRepository`; identical work for the handler and the watch. */
+  async function refreshRepositoryInternal(catalog: DevSpaceCatalogFile, found: DevSpaceRepositoryRecord,
+    workspaceId: string, root: string, signal: AbortSignal,
+    notify: (repositoryId: string, status: DevSpaceRepositoryStatus) => void): Promise<DevSpaceRepositoryRecord> {
+    const project = await loadProjectConfigFor(root, found)
+    const projectFolder = projectFolderPath(root, found.projectSlug)
+    await noSymlinks(root, projectFolder)
+    if (found.origin.kind === 'git-url') {
+      const destination = gitUrlDestination(root, found.projectSlug, found.origin.url)
+      if (!inside(join(root, 'projects'), destination)) invalid('path-denied')
+      const token = environment.resolveGithubToken ? await environment.resolveGithubToken(workspaceId, found.repositoryId) : null
+      try {
+        await runGitPull({ workingDirectory: destination, repositoryId: found.repositoryId, token, signal })
+      } catch (error) { asCoded(error) }
+    }
+    const workingDirectory = found.origin.kind === 'git-url'
+      ? gitUrlDestination(root, found.projectSlug, found.origin.url) : found.origin.path
+    const scope: RepositoryScope = { workspaceId, projectId: project.id }
+    const binding = await bindWorkingCopy(scope, workingDirectory, signal)
+    const store = join(projectFolder, 'code-intelligence', binding.id, repositoryPolicyFingerprint(binding.policy))
+    await noSymlinks(root, store)
+    const snapshot = await captureRepositorySnapshot(binding, { scope, signal })
+    await saveRepositoryBinding(binding, store, scope)
+    await saveRepositorySnapshot(snapshot, binding, store, scope)
+    await persistBinding(root, project, workingDirectory, binding)
+    // The freshly captured snapshot id is the freshness identity assessSnapshotFreshness compares against;
+    // comparing it to the last analyzed id avoids a redundant second full capture.
+    const stale = found.lastAnalyzedSnapshotId !== undefined && found.lastAnalyzedSnapshotId !== snapshot.id
+    const record: DevSpaceRepositoryRecord = {
+      ...withoutError(found),
+      lastSnapshotId: snapshot.id,
+      bindingId: binding.id,
+      status: stale ? 'stale' : found.lastAnalyzedSnapshotId === undefined ? 'bound' : 'ready',
+      updatedAt: Date.now(),
+    }
+    replaceRecord(catalog, record)
+    await writeCatalog(root, catalog)
+    await appendAudit(root, record.projectSlug, { event: 'refresh', repositoryId: record.repositoryId, stale })
+    notify(record.repositoryId, record.status)
+    return record
+  }
+
+  interface StartedDevSpaceRun { readonly run: DevSpaceRun; readonly detached: boolean }
+
+  /**
+   * Body of `startRun` after the request bookkeeping: idempotent run creation
+   * plus the detached pipeline launch. `detached` reports whether a pipeline was
+   * actually launched, so the handler can keep its cancellation entry alive.
+   */
+  async function startRunInternal(input: {
+    readonly record: DevSpaceRepositoryRecord
+    readonly root: string
+    readonly clientId: string
+    readonly controller: AbortController
+    readonly emit: (progress: DevSpaceRunProgress) => void
+    /** Called once the detached pipeline reaches a terminal status (handler request cleanup). */
+    readonly onSettled?: () => void
+  }): Promise<StartedDevSpaceRun> {
+    const { record, root, clientId, controller, emit } = input
+    // Run id is idempotent per (repositoryId, snapshotId, planHash): reconcile the
+    // snapshot first so a rerun over the same state hits the same journal entry.
+    const snapshotId = await reconcileSnapshot({ root, record, signal: controller.signal })
+    const runId = devSpaceRunId(record.repositoryId, snapshotId, devSpacePlanHash(DEV_SPACE_RUN_STAGES))
+    const existing = await readDevSpaceRun(root, record.projectSlug, runId)
+    if (existing && (existing.status === 'succeeded' || existing.status === 'running' || existing.status === 'queued')) {
+      return { run: existing, detached: false }
+    }
+    const run: DevSpaceRun = existing ?? {
+      schemaVersion: 1, id: runId, repositoryId: record.repositoryId, snapshotId, stages: DEV_SPACE_RUN_STAGES,
+      status: 'queued', progress: { stage: 'reconcile', done: 1, total: 1 }, startedAt: Date.now(),
+      completedStages: ['reconcile'], artifacts: [],
+    }
+    await writeDevSpaceRun(root, record.projectSlug, run)
+    await appendAudit(root, record.projectSlug, { event: 'run', repositoryId: record.repositoryId, runId, resume: existing !== null })
+    registerDevSpaceActiveRun(runId, controller)
+    void runDevSpacePipeline({ run, record, root, clientId, signal: controller.signal, emit,
+      audit: event => { void appendAudit(root, record.projectSlug, event) },
+    }).then(finished => appendAudit(root, record.projectSlug,
+      { event: 'finish', repositoryId: record.repositoryId, runId, status: finished.status }),
+    ).catch(() => undefined).finally(() => { unregisterDevSpaceActiveRun(runId); input.onSettled?.() })
+    return { run, detached: true }
+  }
+
   server.onShutdown?.(() => { abortAllDevSpaceRuns() })
 
-  // v1.x auto-watch (O10): the sweep lives in this process — no daemon. It only
-  // touches repositories whose record carries `watchEnabled: true` (explicit
-  // consent) and, on shutdown, aborts its in-flight git work and clears timers.
+  // v1.x auto-watch (O10) + auto-regeneration (В11): the sweep lives in this
+  // process — no daemon. It only touches repositories whose record carries
+  // `watchEnabled: true` (explicit consent); regeneration additionally needs
+  // `watchAutoPull && watchRegenerate`, and on shutdown the sweep aborts its
+  // in-flight git work and clears timers.
   const watch = startDevSpaceWatch({
     listWorkspaces: environment.listWorkspaces ?? NO_WORKSPACES,
     readCatalog,
@@ -450,6 +543,34 @@ export function registerDevSpaceHandlers(server: RpcServer, deps: HandlerDeps,
       pushTyped(server, RPC_CHANNELS.devSpace.CHANGED, { to: 'workspace', workspaceId }, { repositoryId, status })
     },
     ...(environment.resolveGithubToken ? { resolveToken: environment.resolveGithubToken } : {}),
+    audit: appendAudit,
+    // В11 auto-regeneration: only reached after a successful fast-forward, and
+    // only for a record carrying watchEnabled+watchAutoPull+watchRegenerate.
+    // The LLM phase degrades on its own without model-connector consent (the
+    // `llm` stage reports `partial`), while the structural artifacts are
+    // regenerated unconditionally.
+    regenerate: async (record, signal) => {
+      const workspace = environment.getWorkspace(record.workspaceId)
+      if (!workspace || workspace.id !== record.workspaceId) return
+      const root = await realpath(workspace.rootPath)
+      const controller = new AbortController()
+      // Cancellation follows the watch handle: `stop()` aborts the refresh pull
+      // and the pipeline, like any other in-flight tick work.
+      signal.addEventListener('abort', () => controller.abort(), { once: true })
+      if (signal.aborted) controller.abort()
+      const catalog = await readCatalog(root)
+      const current = catalog.repositories.find(entry => entry.id === record.id)
+      if (!current) return
+      const notify = (repositoryId: string, status: DevSpaceRepositoryStatus): void => {
+        pushTyped(server, RPC_CHANNELS.devSpace.CHANGED, { to: 'workspace', workspaceId: current.workspaceId }, { repositoryId, status })
+      }
+      const refreshed = await refreshRepositoryInternal(catalog, current, current.workspaceId, root, controller.signal, notify)
+      // `clientId` is unused by the runner (progress goes through `emit`); the
+      // workspace id is the honest correlation token on this clientless path.
+      await startRunInternal({ record: refreshed, root, clientId: refreshed.workspaceId, controller,
+        emit: progress => pushTyped(server, RPC_CHANNELS.devSpace.RUN_PROGRESS,
+          { to: 'workspace', workspaceId: refreshed.workspaceId }, progress) })
+    },
   })
   server.onShutdown?.(() => { watch.stop() })
 
@@ -554,43 +675,8 @@ export function registerDevSpaceHandlers(server: RpcServer, deps: HandlerDeps,
   operation(RPC_CHANNELS.devSpace.REFRESH_REPOSITORY, ['repositoryId'], async (context, input, signal, root) => {
     const catalog = await readCatalog(root)
     const found = findRecord(catalog, input.repositoryId)
-    const workspaceId = input.workspaceId as string
-    const project = await loadProjectConfigFor(root, found)
-    const projectFolder = projectFolderPath(root, found.projectSlug)
-    await noSymlinks(root, projectFolder)
-    if (found.origin.kind === 'git-url') {
-      const destination = gitUrlDestination(root, found.projectSlug, found.origin.url)
-      if (!inside(join(root, 'projects'), destination)) invalid('path-denied')
-      const token = environment.resolveGithubToken ? await environment.resolveGithubToken(workspaceId, found.repositoryId) : null
-      try {
-        await runGitPull({ workingDirectory: destination, repositoryId: found.repositoryId, token, signal })
-      } catch (error) { asCoded(error) }
-    }
-    const workingDirectory = found.origin.kind === 'git-url'
-      ? gitUrlDestination(root, found.projectSlug, found.origin.url) : found.origin.path
-    const scope: RepositoryScope = { workspaceId, projectId: project.id }
-    const binding = await bindWorkingCopy(scope, workingDirectory, signal)
-    const store = join(projectFolder, 'code-intelligence', binding.id, repositoryPolicyFingerprint(binding.policy))
-    await noSymlinks(root, store)
-    const snapshot = await captureRepositorySnapshot(binding, { scope, signal })
-    await saveRepositoryBinding(binding, store, scope)
-    await saveRepositorySnapshot(snapshot, binding, store, scope)
-    await persistBinding(root, project, workingDirectory, binding)
-    // The freshly captured snapshot id is the freshness identity assessSnapshotFreshness compares against;
-    // comparing it to the last analyzed id avoids a redundant second full capture.
-    const stale = found.lastAnalyzedSnapshotId !== undefined && found.lastAnalyzedSnapshotId !== snapshot.id
-    const record: DevSpaceRepositoryRecord = {
-      ...withoutError(found),
-      lastSnapshotId: snapshot.id,
-      bindingId: binding.id,
-      status: stale ? 'stale' : found.lastAnalyzedSnapshotId === undefined ? 'bound' : 'ready',
-      updatedAt: Date.now(),
-    }
-    replaceRecord(catalog, record)
-    await writeCatalog(root, catalog)
-    await appendAudit(root, record.projectSlug, { event: 'refresh', repositoryId: record.repositoryId, stale })
-    pushChanged(context.clientId, record.repositoryId, record.status)
-    return record
+    return refreshRepositoryInternal(catalog, found, input.workspaceId as string, root, signal,
+      (repositoryId, status) => pushChanged(context.clientId, repositoryId, status))
   })
 
   operation(RPC_CHANNELS.devSpace.REMOVE_REPOSITORY, ['repositoryId', 'confirm'], async (context, input, _signal, root) => {
@@ -775,21 +861,23 @@ export function registerDevSpaceHandlers(server: RpcServer, deps: HandlerDeps,
     }
   })
 
-  // v1.x auto-watch (O10) — per-repository consent for the background sweep.
-  // Only the flag itself is required; auto-pull/interval are refinements kept
-  // when omitted. Consent is a plain record field, so disable never clears the
-  // chosen cadence and re-enabling restores the previous settings.
-  operation(RPC_CHANNELS.devSpace.SET_WATCH, ['repositoryId', 'watchEnabled', 'watchAutoPull', 'watchIntervalMs'],
+  // v1.x auto-watch (O10/В11) — per-repository consent for the background sweep.
+  // Only the flag itself is required; auto-pull/regenerate/interval are
+  // refinements kept when omitted. Consent is a plain record field, so disable
+  // never clears the chosen cadence/flags and re-enabling restores them.
+  operation(RPC_CHANNELS.devSpace.SET_WATCH, ['repositoryId', 'watchEnabled', 'watchAutoPull', 'watchRegenerate', 'watchIntervalMs'],
     async (context, input, _signal, root) => {
       const catalog = await readCatalog(root)
       const found = findRecord(catalog, input.repositoryId)
       if (typeof input.watchEnabled !== 'boolean') invalid('invalid-watch-enabled')
       if (input.watchAutoPull !== undefined && typeof input.watchAutoPull !== 'boolean') invalid('invalid-watch-auto-pull')
+      if (input.watchRegenerate !== undefined && typeof input.watchRegenerate !== 'boolean') invalid('invalid-watch-regenerate')
       if (input.watchIntervalMs !== undefined && !isValidDevSpaceWatchInterval(input.watchIntervalMs)) invalid('invalid-watch-interval')
       const record: DevSpaceRepositoryRecord = {
         ...withoutError(found),
         watchEnabled: input.watchEnabled,
         watchAutoPull: input.watchAutoPull ?? found.watchAutoPull ?? false,
+        watchRegenerate: input.watchRegenerate ?? found.watchRegenerate ?? false,
         watchIntervalMs: input.watchIntervalMs ?? found.watchIntervalMs ?? DEV_SPACE_WATCH_DEFAULT_INTERVAL_MS,
         updatedAt: Date.now(),
       }
@@ -814,31 +902,12 @@ export function registerDevSpaceHandlers(server: RpcServer, deps: HandlerDeps,
       const root = await workspaceRoot(context, input.workspaceId as string, controller.signal)
       const catalog = await readCatalog(root)
       const record = findRecord(catalog, input.repositoryId)
-      // Run id is idempotent per (repositoryId, snapshotId, planHash): reconcile the
-      // snapshot first so a rerun over the same state hits the same journal entry.
-      const snapshotId = await reconcileSnapshot({ root, record, signal: controller.signal })
-      const runId = devSpaceRunId(record.repositoryId, snapshotId, devSpacePlanHash(DEV_SPACE_RUN_STAGES))
-      const existing = await readDevSpaceRun(root, record.projectSlug, runId)
-      if (existing && (existing.status === 'succeeded' || existing.status === 'running' || existing.status === 'queued')) return existing
-      const run: DevSpaceRun = existing ?? {
-        schemaVersion: 1, id: runId, repositoryId: record.repositoryId, snapshotId, stages: DEV_SPACE_RUN_STAGES,
-        status: 'queued', progress: { stage: 'reconcile', done: 1, total: 1 }, startedAt: Date.now(),
-        completedStages: ['reconcile'], artifacts: [],
-      }
-      await writeDevSpaceRun(root, record.projectSlug, run)
-      await appendAudit(root, record.projectSlug, { event: 'run', repositoryId: record.repositoryId, runId, resume: existing !== null })
-      detached = true
-      registerDevSpaceActiveRun(runId, controller)
-      void runDevSpacePipeline({ run, record, root, clientId: context.clientId, signal: controller.signal,
+      const started = await startRunInternal({ record, root, clientId: context.clientId, controller,
         emit: progress => pushTyped(server, RPC_CHANNELS.devSpace.RUN_PROGRESS, { to: 'client', clientId: context.clientId }, progress),
-        audit: event => { void appendAudit(root, record.projectSlug, event) },
-      }).then(finished => appendAudit(root, record.projectSlug,
-        { event: 'finish', repositoryId: record.repositoryId, runId, status: finished.status }),
-      ).catch(() => undefined).finally(() => {
-        unregisterDevSpaceActiveRun(runId)
-        requests.delete(key)
+        onSettled: () => { requests.delete(key) },
       })
-      return run
+      detached = started.detached
+      return started.run
     } finally {
       if (!detached) requests.delete(key)
     }

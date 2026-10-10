@@ -5,6 +5,7 @@ import {
   CLOUD_RUN_ACTIVE_STATES,
   buildSubmitArgs,
   canCancelRun,
+  hasActiveRuns,
   runStateMessageKey,
   sortRunsNewestFirst,
   type CloudRunListItem,
@@ -50,6 +51,35 @@ describe('canCancelRun — active vs terminal states', () => {
   test('a missing status is not cancellable', () => {
     expect(canCancelRun(run({ id: 'r', status: null }))).toBe(false)
     expect(canCancelRun(run({ id: 'r' }))).toBe(false)
+  })
+})
+
+describe('hasActiveRuns — background-poll gate', () => {
+  test('an empty list has no active runs', () => {
+    expect(hasActiveRuns([])).toBe(false)
+  })
+
+  test('a list of only terminal states has no active runs', () => {
+    const terminal: CloudRunState[] = ['done', 'failed', 'cancelled', 'expired']
+    expect(hasActiveRuns(terminal.map((state, index) => run({ id: `r${index}`, status: { state } })))).toBe(false)
+  })
+
+  test('a missing/ghost status is not active', () => {
+    expect(hasActiveRuns([run({ id: 'a', status: null }), run({ id: 'b' })])).toBe(false)
+    expect(hasActiveRuns([run({ id: 'c', status: { state: 'teleporting' } })])).toBe(false)
+  })
+
+  test('any one active run makes the list active', () => {
+    for (const state of CLOUD_RUN_ACTIVE_STATES) {
+      expect(hasActiveRuns([run({ id: 'r', status: { state } })])).toBe(true)
+    }
+    expect(
+      hasActiveRuns([
+        run({ id: 'done', status: { state: 'done' } }),
+        run({ id: 'running', status: { state: 'running' } }),
+        run({ id: 'failed', status: { state: 'failed' } }),
+      ]),
+    ).toBe(true)
   })
 })
 
@@ -113,5 +143,13 @@ describe('cloud-VM surface wiring', () => {
     expect(surface).toContain('buildSubmitArgs')
     expect(surface).toContain('canCancelRun')
     expect(surface).toContain('runStateMessageKey')
+    expect(surface).toContain('hasActiveRuns')
+  })
+
+  test('the surface auto-refreshes while runs are active and clears the interval', () => {
+    expect(surface).toContain('CLOUD_VM_REFRESH_MS')
+    expect(surface).toContain('setInterval')
+    expect(surface).toContain('clearInterval')
+    expect(surface).toContain('aria-live="polite"')
   })
 })

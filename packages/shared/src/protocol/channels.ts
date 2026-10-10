@@ -775,6 +775,12 @@ export const RPC_CHANNELS = {
     GOOGLE_CONNECT: 'calendar:googleConnect',
     GOOGLE_DISCONNECT: 'calendar:googleDisconnect',
     GOOGLE_SYNC: 'calendar:googleSync',
+    // Apple Calendar connector (R8, macOS EventKit). Read-only local sync; the
+    // helper binary is host-local, so the whole namespace is LOCAL_ONLY.
+    APPLE_STATUS: 'calendar:appleStatus',
+    APPLE_CONNECT: 'calendar:appleConnect',
+    APPLE_DISCONNECT: 'calendar:appleDisconnect',
+    APPLE_SYNC: 'calendar:appleSync',
   },
   /**
    * Google Meet artifacts (wave 5, row d2.6) — read-only Developer-Preview

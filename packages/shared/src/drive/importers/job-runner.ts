@@ -54,7 +54,8 @@ export interface ImportJobRunnerOptions {
 }
 
 const STATE_VERSION = 1
-const DEFAULT_CONCURRENCY = 4
+/** R15: eight parallel file workers by default (imports are network-bound). */
+const DEFAULT_CONCURRENCY = 8
 const DEFAULT_MAX_ATTEMPTS = 3
 const DEFAULT_RETRY_BASE_MS = 250
 
