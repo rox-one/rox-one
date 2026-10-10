@@ -317,6 +317,9 @@ export const CHANNEL_MAP = {
   extensionsGetState: invoke(RPC_CHANNELS.extensions.GET_STATE),
   onExtensionsChanged: listener(RPC_CHANNELS.extensions.CHANGED),
 
+  // Rovers catalog (Slice A, info-only)
+  roversList: invoke(RPC_CHANNELS.rovers.LIST),
+
   // SiYuan plugin bridge (W6)
   pluginBridgeListPlugins: invoke(RPC_CHANNELS.pluginBridge.LIST_PLUGINS),
   pluginBridgeGetProjections: invoke(RPC_CHANNELS.pluginBridge.GET_PROJECTIONS),
