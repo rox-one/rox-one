@@ -3145,6 +3145,17 @@
     Сеть только под per-repo согласием cveNetwork (волны В2/В3). Поставлен волнами В2/В3; external runtime
     (сеть OSV) — optional по согласию.
 
+- id: RX-INT-0044
+  title: Каталог Rovers — read-only RPC rovers:list
+  kind: integration
+  path: apps/electron/src/renderer/lib/rovers-client.ts
+  status: done
+  refs: [RX-PLG-0014]
+  note: |
+    Read-only контур каталога Rovers (Slice A, только информация): board RPC rovers:list отдаёт записи
+    подписанного bundled-каталога; рендерер читает их через rovers-client и рисует карточку ```rovers-card
+    и раздел в Центре расширений. Движка развёртывания нет.
+
 - id: RX-API-0013
   title: Dev Space — RPC-контур ингеста (devSpace:*)
   kind: api
@@ -3183,6 +3194,16 @@
   note: |
     Реестр адаптеров поверх CI-DEC-EXTEND-EXISTING-01; alwaysOn=false, без демонов. Поставлен волной В2 (PR #1705);
     внешние инструменты подключаются как optional runtime, реестр активен.
+
+- id: RX-PLG-0014
+  title: Поверхность «Роверы» (инфо-каталог)
+  kind: plugin
+  path: apps/electron/src/renderer/features/rovers
+  status: done
+  refs: [RX-PLG-0001, RX-INT-0044]
+  note: |
+    Инфо-каталог Rovers (Slice A): карточка сервиса ```rovers-card в чате агента и read-only раздел в
+    Центре расширений. Никаких кнопок развёртывания — только описания, лицензия и ссылка «Инструкция».
 
 - id: RX-AUT-0031
   title: Пайплайн анализа Developer Space

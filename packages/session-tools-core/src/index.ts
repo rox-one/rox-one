@@ -252,6 +252,14 @@ export type {
 export { DevSpaceError, isDevSpaceArtifactId } from './dev-space/scope.ts';
 export type { DevSpaceErrorCode } from './dev-space/scope.ts';
 
+// Rovers catalog tool runtime — registered by the server-core rovers RPC layer;
+// consumed by the rovers_list / rovers_search / rovers_show handlers.
+export {
+  registerRoversToolRuntime,
+  getRoversToolRuntime,
+  clearRoversToolRuntime,
+} from './rovers/runtime.ts';
+
 // Handlers
 export {
   // SubmitPlan
@@ -352,6 +360,13 @@ export {
   DEVSPACE_SEARCH_MAX_LIMIT,
 } from './handlers/index.ts';
 
+// Rovers catalog handlers (registered in SESSION_TOOL_DEFS)
+export {
+  handleRoversList,
+  handleRoversSearch,
+  handleRoversShow,
+} from './handlers/index.ts';
+
 export type {
   SubmitPlanArgs,
   ConfigValidateArgs,
@@ -413,6 +428,10 @@ export {
   // Skills tool schemas
   SkillsSearchSchema,
   SkillsReadSchema,
+  // Rovers catalog schemas
+  RoversListSchema,
+  RoversSearchSchema,
+  RoversShowSchema,
   // Visitor access schemas
   VisitorInviteSchema,
   VisitorRevokeSchema,
@@ -474,6 +493,9 @@ export type {
   DevSpaceReadArgs,
   DevSpaceSearchArgs,
   DevSpaceProposeArgs,
+  RoversListArgs,
+  RoversSearchArgs,
+  RoversShowArgs,
 } from './tool-defs.ts';
 
 // Script runtime resolution + path containment (also used by the shared

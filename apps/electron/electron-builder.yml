@@ -107,6 +107,14 @@ extraResources:
     filter:
       - "**/*"
       - "!**/.gitkeep"
+  # Rovers service catalog (info-only Slice A). resources/rovers/** is also copied
+  # to dist/resources/ by build:copy; this rule guarantees the exact directory
+  # getBundledAssetsDir('rovers') resolves in the packaged app (app/dist/resources/rovers).
+  - from: resources/rovers
+    to: app/dist/resources/rovers
+    filter:
+      - "**/*"
+      - "!**/.gitkeep"
 
 mac:
   category: public.app-category.productivity

@@ -18,6 +18,7 @@ import {
   LazyMarkdownOpenUIBlock as MarkdownOpenUIBlock,
 } from './lazy-blocks'
 import { MarkdownHtmlBlock } from './MarkdownHtmlBlock'
+import { MarkdownRoversCardBlock } from './MarkdownRoversCardBlock'
 import { MarkdownImageBlock } from './MarkdownImageBlock'
 import { MarkdownDocBlock } from './MarkdownDocBlock'
 import { preprocessLinks } from './linkify'
@@ -490,6 +491,10 @@ function createComponents(
               props.node?.position,
             )
           }
+          // Rovers service cards → compact info-only card (no deploy action)
+          if (match?.[1] === 'rovers-card') {
+            return wrapBlock('rovers-card', code, <MarkdownRoversCardBlock code={code} className="my-2" />, props.node?.position)
+          }
           return wrapBlock('code', code, <CodeBlock code={code} language={match?.[1]} mode="full" className="my-2" />, props.node?.position)
         }
 
@@ -644,6 +649,10 @@ function createComponents(
             />,
             props.node?.position,
           )
+        }
+        // Rovers service cards → compact info-only card (no deploy action)
+        if (match?.[1] === 'rovers-card') {
+          return wrapBlock('rovers-card', code, <MarkdownRoversCardBlock code={code} className="my-2" />, props.node?.position)
         }
         return wrapBlock('code', code, <CodeBlock code={code} language={match?.[1]} mode="full" className="my-2" />, props.node?.position)
       }
