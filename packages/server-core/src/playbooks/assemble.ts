@@ -56,7 +56,7 @@ function srtTimestamp(ms: number): string {
 /** Sequence cue timings from per-segment durations; the last cue ends the episode. */
 export function cuesFromDurations(
   segments: readonly PodcastSegment[],
-  labels: Readonly<Record<PodcastSegment['speaker'], string>>,
+  labels: Readonly<Record<string, string>>,
   durationsMs: readonly number[],
   source: PodcastTimings['source'],
 ): PodcastTimings {
@@ -65,7 +65,7 @@ export function cuesFromDurations(
   let cursor = 0
   segments.forEach((segment, index) => {
     const duration = Math.max(MIN_CUE_MS, Math.round(durationsMs[index] ?? 0))
-    cues.push({ speaker: segment.speaker, label: labels[segment.speaker], text: segment.text, startMs: cursor, endMs: cursor + duration })
+    cues.push({ speaker: segment.speaker, label: labels[segment.speaker] ?? segment.speaker, text: segment.text, startMs: cursor, endMs: cursor + duration })
     cursor += duration
   })
   return { cues, durationMs: cursor, source }

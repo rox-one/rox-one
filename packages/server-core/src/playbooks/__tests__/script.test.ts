@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { PodcastPipelineError } from '@rox/shared/voice'
 import type { DevSpaceConsent } from '@rox/shared/dev-space'
+import type { PodcastRoleTemplate } from '@rox/shared/voice'
 import {
   DEFAULT_PODCAST_ROLES, MAX_PODCAST_SEGMENTS, assertPodcastConsent, buildPodcastPrompt, maskPodcastSource,
   parsePodcastScript, resolveMaxSegments, resolvePodcastRoles,
@@ -63,6 +64,66 @@ describe('podcast roles', () => {
       { id: 'host', label: 'x'.repeat(64), prompt: 'B' },
       { id: 'expert', label: 'C', prompt: 'D' },
     ])).toThrow(PodcastPipelineError)
+  })
+})
+
+describe('podcast roles — N-agent (2..6)', () => {
+  const three: readonly PodcastRoleTemplate[] = [
+    { id: 'host', label: 'Ведущий', prompt: '' },
+    { id: 'expert', label: 'Эксперт', prompt: '' },
+    { id: 'guest1', label: 'Гость', prompt: '' },
+  ]
+
+  it('accepts 2..6 roles, keeps the authored order and assigns a positional gender', () => {
+    const resolved = resolvePodcastRoles(three)
+    expect(resolved.map(role => role.id)).toEqual(['host', 'expert', 'guest1'])
+    expect(resolved.map(role => role.gender)).toEqual(['female', 'male', 'female'])
+    const six = resolvePodcastRoles([
+      { id: 'host', label: 'A', prompt: '' }, { id: 'expert', label: 'B', prompt: '' },
+      { id: 'guest1', label: 'C', prompt: '' }, { id: 'guest2', label: 'D', prompt: '' },
+      { id: 'guest3', label: 'E', prompt: '' }, { id: 'guest4', label: 'F', prompt: '' },
+    ])
+    expect(six).toHaveLength(6)
+  })
+
+  it('falls back an empty guest label/prompt to the generated default', () => {
+    const resolved = resolvePodcastRoles([
+      { id: 'host', label: 'Ведущий', prompt: '' },
+      { id: 'expert', label: 'Эксперт', prompt: '' },
+      { id: 'guest1', label: '   ', prompt: '' },
+    ])
+    expect(resolved[2]!.label).toBe('Гость 1')
+    expect(resolved[2]!.prompt.length).toBeGreaterThan(0)
+  })
+
+  it('rejects fewer than two, more than six, duplicate ids and a non-host opener', () => {
+    expect(() => resolvePodcastRoles([{ id: 'host', label: 'A', prompt: 'B' }])).toThrow(PodcastPipelineError)
+    expect(() => resolvePodcastRoles([
+      { id: 'host', label: 'A', prompt: '' }, { id: 'expert', label: 'B', prompt: '' },
+      { id: 'guest1', label: 'C', prompt: '' }, { id: 'guest2', label: 'D', prompt: '' },
+      { id: 'guest3', label: 'E', prompt: '' }, { id: 'guest4', label: 'F', prompt: '' },
+      { id: 'guest5', label: 'G', prompt: '' },
+    ])).toThrow(PodcastPipelineError)
+    expect(() => resolvePodcastRoles([
+      { id: 'host', label: 'A', prompt: '' }, { id: 'host', label: 'B', prompt: '' },
+    ])).toThrow(PodcastPipelineError)
+    expect(() => resolvePodcastRoles([
+      { id: 'expert', label: 'B', prompt: '' }, { id: 'host', label: 'A', prompt: '' },
+    ])).toThrow(PodcastPipelineError)
+  })
+
+  it('names every role in the prompt and parses three distinct speakers in order', () => {
+    const roles = resolvePodcastRoles(three)
+    const prompt = buildPodcastPrompt({ sourceText: 'Тема: индексация.', roles, maxSegments: 12 })
+    expect(prompt).toContain('Ведущий')
+    expect(prompt).toContain('Эксперт')
+    expect(prompt).toContain('Гость')
+    const segments = parsePodcastScript([
+      'ВЕДУЩИЙ: Почему это важно?',
+      'ЭКСПЕРТ: Потому что индекс ускоряет поиск.',
+      'ГОСТЬ: И снижает стоимость.',
+    ].join('\n'), roles, 10)
+    expect(segments.map(segment => segment.speaker)).toEqual(['host', 'expert', 'guest1'])
   })
 })
 
