@@ -14,8 +14,9 @@
  *   runtime-gated Conation panels contribute to the `inspector` slot.
  *
  * The default context snapshot publishes `activeSurface` from the focused
- * panel route (`panelContextKeysFromRoute`); callers may pass a full
- * `contextKeys` to override.
+ * panel route (`panelContextKeysFromRoute`) plus the `unifiedShell` flag from
+ * `featureUnifiedShellAtom`; callers may pass a full `contextKeys` to override
+ * `activeSurface` (the flag key is always host-injected).
  *
  * Write path for future panel chrome (hide/pin/reorder menus):
  * `upsertPanelOverride` + `storage.set(KEYS.panelState, …, workspaceId)` —
@@ -41,6 +42,7 @@ import {
   featureWorkbenchConationCanvasAtom,
   featureWorkbenchConationMailAtom,
   featureWorkbenchConationNotesBridgeAtom,
+  featureUnifiedShellAtom,
 } from '@/atoms/unified-shell'
 import * as storage from '@/lib/local-storage'
 import { KEYS } from '@/lib/local-storage'
@@ -99,6 +101,7 @@ export function PanelHost({
   const windowWorkspaceId = useAtomValue(windowWorkspaceIdAtom)
   const activeWorkspaceId = workspaceId === undefined ? windowWorkspaceId : workspaceId
   const route = useAtomValue(focusedPanelRouteAtom)
+  const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const conationShellEnabled = useAtomValue(featureWorkbenchConationShellAtom)
   const conationInspectorEnabled = useAtomValue(featureWorkbenchConationInspectorAtom)
   const conationCanvasEnabled = useAtomValue(featureWorkbenchConationCanvasAtom)
@@ -217,8 +220,11 @@ export function PanelHost({
   ])
 
   const ctx = React.useMemo<ContextKeys>(
-    () => contextKeys ?? panelContextKeysFromRoute(route),
-    [contextKeys, route],
+    // `unifiedShell` mirrors KnowledgeEntityPage's `!unifiedShellEnabled` gate:
+    // flag OFF ⇒ the knowledge inspector contribution is not listed, so the
+    // classic companion aside is the only knowledge inspector on screen.
+    () => ({ ...(contextKeys ?? panelContextKeysFromRoute(route)), unifiedShell: unifiedShellEnabled }),
+    [contextKeys, route, unifiedShellEnabled],
   )
 
   const panels = React.useMemo(
