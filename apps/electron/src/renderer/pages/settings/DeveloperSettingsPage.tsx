@@ -9,9 +9,11 @@
 import * as React from 'react'
 import { useAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
+import { WORKBENCH_FLAG } from '@rox/core/platform'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { devSpaceEnabledAtom } from '@/atoms/dev-space'
 import { useAppShellContext } from '@/context/AppShellContext'
+import { workbenchFlagAtom } from '@/platform/unified-flags'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { SettingsCard, SettingsSection, SettingsToggle } from '@/components/settings'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -57,6 +59,7 @@ function readRepositoryEntries(value: unknown): DevSpaceRepositoryEntry[] {
 export default function DeveloperSettingsPage() {
   const { t } = useTranslation()
   const [enabled, setEnabled] = useAtom(devSpaceEnabledAtom)
+  const [autoWatch, setAutoWatch] = useAtom(workbenchFlagAtom(WORKBENCH_FLAG.devSpaceAutoWatchV1))
   const { activeWorkspaceId } = useAppShellContext()
   const [repositories, setRepositories] = React.useState<DevSpaceRepositoryEntry[]>([])
   const [repositoriesState, setRepositoriesState] = React.useState<RepositoriesState>('empty')
@@ -110,6 +113,13 @@ export default function DeveloperSettingsPage() {
                   description={t('settings.developers.toggleDesc')}
                   checked={enabled}
                   onCheckedChange={setEnabled}
+                />
+                <SettingsToggle
+                  label={t('settings.developers.autoWatch.toggle')}
+                  description={t('settings.developers.autoWatch.toggleDesc')}
+                  checked={autoWatch && enabled}
+                  onCheckedChange={setAutoWatch}
+                  disabled={!enabled}
                 />
               </SettingsCard>
             </SettingsSection>
