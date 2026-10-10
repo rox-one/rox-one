@@ -112,6 +112,10 @@ export function createMirrorQueue(options: MirrorQueueOptions): MirrorQueue {
     if (running) return running
     paused = false
     cancelled = false
+    // `errors` describes this run only: a fresh run that succeeds must not
+    // inherit the previous run's failures (which would also mis-classify a
+    // fully successful run as 'error').
+    errors = []
     state = 'running'
     running = (async (): Promise<MirrorRunResult> => {
       // Removing an object is not part of `DriveUploadTarget`; the deletion is
