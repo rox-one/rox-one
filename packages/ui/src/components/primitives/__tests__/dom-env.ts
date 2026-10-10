@@ -16,7 +16,7 @@ import { afterAll } from 'bun:test'
 import { Window } from 'happy-dom'
 
 const GLOBAL_KEYS = [
-  'window', 'document', 'navigator', 'Node', 'Text', 'Element', 'HTMLElement', 'HTMLInputElement',
+  'window', 'document', 'navigator', 'Node', 'Text', 'Element', 'HTMLElement', 'HTMLFormElement', 'HTMLInputElement',
   'HTMLTextAreaElement', 'HTMLButtonElement', 'HTMLAnchorElement', 'SVGElement', 'DocumentFragment', 'NodeList',
   'HTMLCollection', 'MutationObserver', 'getComputedStyle', 'Event', 'KeyboardEvent', 'MouseEvent', 'PointerEvent',
   'FocusEvent', 'InputEvent', 'CustomEvent', 'DragEvent', 'DataTransfer', 'Range', 'Selection', 'DOMParser',
