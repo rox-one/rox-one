@@ -1766,6 +1766,8 @@
   "devSpace.watch.interval": "Prüfintervall",
   "devSpace.watch.intervalHours": "{{hours}} Std.",
   "devSpace.watch.networkError": "Beobachtungseinstellungen konnten nicht aktualisiert werden.",
+  "devSpace.watch.regenerate": "Artefakte nach dem Pull neu erzeugen",
+  "devSpace.watch.regenerateHint": "Erfordert Zustimmung zu Modell-Konnektoren für den LLM-Teil; ohne sie werden nur die strukturellen Artefakte aktualisiert.",
   "devSpace.watch.toggle": "Beobachten",
   "devSpace.watch.toggleHint": "Hintergrund-git-fetch für dieses Repository erlauben (Netzwerkzugriff).",
   "devSpaceQuestions.answerLoading": "Antwort wird geladen…",

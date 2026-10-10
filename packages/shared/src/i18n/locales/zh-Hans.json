@@ -1766,6 +1766,8 @@
   "devSpace.watch.interval": "检查间隔",
   "devSpace.watch.intervalHours": "{{hours}} 小时",
   "devSpace.watch.networkError": "无法更新监视设置。",
+  "devSpace.watch.regenerate": "拉取后重新生成产物",
+  "devSpace.watch.regenerateHint": "LLM 部分需要模型连接器授权；没有授权时仍会刷新结构化产物。",
   "devSpace.watch.toggle": "监视",
   "devSpace.watch.toggleHint": "允许对此仓库进行后台 git fetch（网络访问）。",
   "devSpaceQuestions.answerLoading": "正在加载回答…",

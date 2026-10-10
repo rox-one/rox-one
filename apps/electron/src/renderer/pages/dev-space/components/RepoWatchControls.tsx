@@ -18,15 +18,19 @@ export interface RepoWatchControlsProps {
 interface WatchPatch {
   watchEnabled?: boolean
   watchAutoPull?: boolean
+  watchRegenerate?: boolean
   watchIntervalMs?: number
 }
 
 /**
- * v1.x O10 auto-watch controls (rendered only while `devspace.autoWatch.v1` is
- * on): the switch is the per-repo consent for background network git work, the
- * checkbox opts into fast-forwarding the working copy, and the select picks the
- * cadence. Any failure surfaces one inline key; a failed save never invents a
- * local state change.
+ * v1.x O10/В11 auto-watch controls (rendered only while `devspace.autoWatch.v1`
+ * is on): the switch is the per-repo consent for background network git work,
+ * the checkbox opts into fast-forwarding the working copy, and — only once
+ * auto-pull is on — a second checkbox opts into regenerating artifacts after a
+ * successful fast-forward (the LLM phase needs model-connector consent; without
+ * it the structural artifacts still refresh). The select picks the cadence. Any
+ * failure surfaces one inline key; a failed save never invents a local state
+ * change.
  */
 export function RepoWatchControls({ record, onChanged }: RepoWatchControlsProps) {
   const { t } = useTranslation()
@@ -34,6 +38,7 @@ export function RepoWatchControls({ record, onChanged }: RepoWatchControlsProps)
   const [errorKey, setErrorKey] = useState<string | null>(null)
   const enabled = record.watchEnabled === true
   const autoPull = record.watchAutoPull === true
+  const regenerate = record.watchRegenerate === true
   const intervalHours = Math.round((record.watchIntervalMs ?? DEV_SPACE_WATCH_DEFAULT_INTERVAL_MS) / 3_600_000)
   // Keep the record's cadence selectable even if it is not one of the presets.
   const hourOptions = [...new Set([...INTERVAL_HOUR_OPTIONS, intervalHours])].sort((left, right) => left - right)
@@ -48,6 +53,7 @@ export function RepoWatchControls({ record, onChanged }: RepoWatchControlsProps)
         requestId: crypto.randomUUID(),
         watchEnabled: patch.watchEnabled ?? enabled,
         watchAutoPull: patch.watchAutoPull ?? autoPull,
+        watchRegenerate: patch.watchRegenerate ?? regenerate,
         watchIntervalMs: patch.watchIntervalMs ?? record.watchIntervalMs ?? DEV_SPACE_WATCH_DEFAULT_INTERVAL_MS,
       })
       onChanged(next)
@@ -56,7 +62,7 @@ export function RepoWatchControls({ record, onChanged }: RepoWatchControlsProps)
     } finally {
       setBusy(false)
     }
-  }, [record, enabled, autoPull, onChanged])
+  }, [record, enabled, autoPull, regenerate, onChanged])
 
   return (
     <div className="flex flex-wrap items-center gap-3" data-testid="dev-space-watch-controls">
@@ -83,6 +89,19 @@ export function RepoWatchControls({ record, onChanged }: RepoWatchControlsProps)
             />
             {t('devSpace.watch.autoPull')}
           </label>
+          {autoPull ? (
+            <label className="flex items-center gap-1 text-xs text-text-secondary" title={t('devSpace.watch.regenerateHint')}>
+              <input
+                type="checkbox"
+                checked={regenerate}
+                disabled={busy}
+                onChange={(event) => void save({ watchEnabled: true, watchAutoPull: true, watchRegenerate: event.target.checked })}
+                data-testid="dev-space-watch-regenerate"
+                className="accent-[var(--accent)]"
+              />
+              {t('devSpace.watch.regenerate')}
+            </label>
+          ) : null}
           <Select
             value={String(intervalHours)}
             disabled={busy}

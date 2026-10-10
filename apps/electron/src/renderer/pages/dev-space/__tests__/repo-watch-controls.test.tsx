@@ -27,6 +27,8 @@ beforeAll(async () => {
           'devSpace.watch.intervalHours': '{{hours}} h',
           'devSpace.watch.autoPull': 'Auto-pull',
           'devSpace.watch.autoPullHint': 'Fast-forward the working copy.',
+          'devSpace.watch.regenerate': 'Regenerate artifacts after pull',
+          'devSpace.watch.regenerateHint': 'Requires model-connector consent for the LLM part.',
           'devSpace.watch.networkError': 'Could not update watch settings.',
         },
       },
@@ -56,7 +58,7 @@ const render = (value: DevSpaceRepositoryRecord) =>
     React.createElement(I18nextProvider, { i18n }, React.createElement(RepoWatchControls, { record: value, onChanged() {} })),
   )
 
-describe('RepoWatchControls (В8)', () => {
+describe('RepoWatchControls (В8/В11)', () => {
   it('renders the consent switch and hides the refinements while off', () => {
     const html = render(record())
     expect(html).toContain('dev-space-watch-toggle')
@@ -73,5 +75,16 @@ describe('RepoWatchControls (В8)', () => {
     expect(html).toContain('aria-label="Check interval"')
     expect(html).toContain('Auto-pull')
     expect(html).toContain('Fast-forward the working copy.')
+  })
+
+  it('gates the regenerate checkbox on auto-pull (В11)', () => {
+    const withoutPull = render(record({ watchEnabled: true }))
+    expect(withoutPull).not.toContain('dev-space-watch-regenerate')
+    expect(withoutPull).not.toContain('Requires model-connector consent for the LLM part.')
+
+    const withPull = render(record({ watchEnabled: true, watchAutoPull: true }))
+    expect(withPull).toContain('dev-space-watch-regenerate')
+    expect(withPull).toContain('Regenerate artifacts after pull')
+    expect(withPull).toContain('Requires model-connector consent for the LLM part.')
   })
 })

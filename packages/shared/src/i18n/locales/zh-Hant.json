@@ -1766,6 +1766,8 @@
   "devSpace.watch.interval": "檢查間隔",
   "devSpace.watch.intervalHours": "{{hours}} 小時",
   "devSpace.watch.networkError": "無法更新監視設定。",
+  "devSpace.watch.regenerate": "拉取後重新產生產物",
+  "devSpace.watch.regenerateHint": "LLM 部分需要模型連接器同意；沒有同意時仍會重新整理結構化產物。",
   "devSpace.watch.toggle": "監視",
   "devSpace.watch.toggleHint": "允許對此倉庫進行背景 git fetch（網路存取）。",
   "devSpaceQuestions.answerLoading": "正在載入回答…",

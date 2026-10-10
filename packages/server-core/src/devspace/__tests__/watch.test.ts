@@ -34,6 +34,9 @@ interface Harness {
   readonly pullCalls: GitFetchInput[]
   readonly pushes: Array<{ workspaceId: string; repositoryId: string; status: string }>
   readonly writes: DevSpaceWatchCatalog[]
+  readonly regenerations: DevSpaceRepositoryRecord[]
+  readonly regenerateSignals: AbortSignal[]
+  readonly audits: Array<{ root: string; projectSlug: string; event: Record<string, unknown> }>
   readonly handle: DevSpaceWatchHandle
   tick(): Promise<void>
 }
@@ -46,6 +49,9 @@ function harness(options: {
   tracking?: (input: GitTrackingInput) => Promise<GitTrackingState>
   fetch?: (input: GitFetchInput) => Promise<void>
   pull?: (input: GitFetchInput) => Promise<void>
+  regenerate?: (record: DevSpaceRepositoryRecord, signal: AbortSignal) => Promise<void>
+  /** Simulates a host that composed no regeneration sink at all. */
+  omitRegenerate?: boolean
   now?: number
   startupDelayMs?: number
 }): Harness {
@@ -54,6 +60,9 @@ function harness(options: {
   const pullCalls: GitFetchInput[] = []
   const pushes: Harness['pushes'] = []
   const writes: DevSpaceWatchCatalog[] = []
+  const regenerations: DevSpaceRepositoryRecord[] = []
+  const regenerateSignals: AbortSignal[] = []
+  const audits: Harness['audits'] = []
   const handle = startDevSpaceWatch({
     listWorkspaces: () => [{ id: 'ws', rootPath: ROOT }],
     readCatalog: async () => catalog,
@@ -66,9 +75,17 @@ function harness(options: {
     fetch: async (input) => { fetchCalls.push(input); if (options.fetch) await options.fetch(input) },
     pull: async (input) => { pullCalls.push(input); if (options.pull) await options.pull(input) },
     readTracking: options.tracking ?? (async () => ({ head: 'head', upstream: null })),
+    audit: async (root, projectSlug, event) => { audits.push({ root, projectSlug, event }) },
+    ...(options.omitRegenerate ? {} : {
+      regenerate: async (record: DevSpaceRepositoryRecord, signal: AbortSignal) => {
+        regenerations.push(record)
+        regenerateSignals.push(signal)
+        if (options.regenerate) await options.regenerate(record, signal)
+      },
+    }),
   })
   handles.push(handle)
-  return { catalog, fetchCalls, pullCalls, pushes, writes, handle, tick: () => handle.tick() }
+  return { catalog, fetchCalls, pullCalls, pushes, writes, regenerations, regenerateSignals, audits, handle, tick: () => handle.tick() }
 }
 
 describe('dev-space auto-watch (O10)', () => {
@@ -104,6 +121,83 @@ describe('dev-space auto-watch (O10)', () => {
     await h.tick()
     expect(h.pullCalls).toHaveLength(1)
     expect(h.catalog.repositories[0]!.status).toBe('stale')
+  })
+
+  it('regenerates after a successful pull when watchRegenerate is on (В11)', async () => {
+    const h = harness({
+      records: [record({ id: 'devrepo_watch', repositoryId: 'repo_watch', watchEnabled: true, watchAutoPull: true, watchRegenerate: true })],
+      tracking: async () => ({ head: 'aaaa', upstream: 'bbbb' }),
+    })
+    await h.tick()
+    expect(h.pullCalls).toHaveLength(1)
+    expect(h.regenerations.map((entry) => entry.id)).toEqual(['devrepo_watch'])
+    // Audit trail brackets the run: started then succeeded, both on the project.
+    expect(h.audits.map((entry) => entry.event.event)).toEqual(['watch-regenerate-started', 'watch-regenerate-succeeded'])
+    expect(h.audits.every((entry) => entry.root === ROOT && entry.projectSlug === 'demo')).toBe(true)
+  })
+
+  it('does not regenerate without watchRegenerate or without auto-pull', async () => {
+    const optedOut = harness({
+      records: [record({ id: 'devrepo_watch', repositoryId: 'repo_watch', watchEnabled: true, watchAutoPull: true })],
+      tracking: async () => ({ head: 'aaaa', upstream: 'bbbb' }),
+    })
+    await optedOut.tick()
+    expect(optedOut.pullCalls).toHaveLength(1)
+    expect(optedOut.regenerations).toHaveLength(0)
+
+    const noPull = harness({
+      records: [record({ id: 'devrepo_watch', repositoryId: 'repo_watch', watchEnabled: true, watchRegenerate: true })],
+      tracking: async () => ({ head: 'aaaa', upstream: 'bbbb' }),
+    })
+    await noPull.tick()
+    expect(noPull.pullCalls).toHaveLength(0)
+    expect(noPull.regenerations).toHaveLength(0)
+    expect(noPull.audits).toHaveLength(0)
+  })
+
+  it('does not regenerate when the pull itself fails', async () => {
+    const h = harness({
+      records: [record({ id: 'devrepo_watch', repositoryId: 'repo_watch', watchEnabled: true, watchAutoPull: true, watchRegenerate: true })],
+      tracking: async () => ({ head: 'aaaa', upstream: 'bbbb' }),
+      pull: async () => { throw new CloneError('network-unavailable') },
+    })
+    await h.tick()
+    expect(h.regenerations).toHaveLength(0)
+    expect(h.catalog.repositories[0]!.lastError?.code).toBe('network-unavailable')
+  })
+
+  it('keeps the tick alive and audits a failed regeneration', async () => {
+    const h = harness({
+      records: [record({ id: 'devrepo_watch', repositoryId: 'repo_watch', watchEnabled: true, watchAutoPull: true, watchRegenerate: true })],
+      tracking: async () => ({ head: 'aaaa', upstream: 'bbbb' }),
+      regenerate: async () => { throw new Error('pipeline exploded') },
+    })
+    await expect(h.tick()).resolves.toBeUndefined()
+    expect(h.audits.map((entry) => entry.event.event)).toEqual(['watch-regenerate-started', 'watch-regenerate-failed'])
+    expect(h.catalog.repositories[0]!.status).toBe('stale')
+  })
+
+  it('hands the handle\'s own abort signal to the regeneration sink', async () => {
+    const h = harness({
+      records: [record({ id: 'devrepo_watch', repositoryId: 'repo_watch', watchEnabled: true, watchAutoPull: true, watchRegenerate: true })],
+      tracking: async () => ({ head: 'aaaa', upstream: 'bbbb' }),
+    })
+    await h.tick()
+    expect(h.regenerateSignals).toHaveLength(1)
+    expect(h.regenerateSignals[0]!.aborted).toBe(false)
+    h.handle.stop()
+    expect(h.regenerateSignals[0]!.aborted).toBe(true)
+  })
+
+  it('is a no-op when the host composed no regeneration sink', async () => {
+    const h = harness({
+      records: [record({ id: 'devrepo_watch', repositoryId: 'repo_watch', watchEnabled: true, watchAutoPull: true, watchRegenerate: true })],
+      tracking: async () => ({ head: 'aaaa', upstream: 'bbbb' }),
+      omitRegenerate: true,
+    })
+    await expect(h.tick()).resolves.toBeUndefined()
+    expect(h.pullCalls).toHaveLength(1)
+    expect(h.audits).toHaveLength(0)
   })
 
   it('records lastError and never throws when fetch fails', async () => {
