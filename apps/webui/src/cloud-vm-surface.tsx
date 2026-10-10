@@ -53,20 +53,35 @@ export function CloudVmSurface({ host, onOpenRun, onGoToChat }: CloudVmSurfacePr
   const [topic, setTopic] = React.useState('')
   const [submitting, setSubmitting] = React.useState(false)
   const [submitError, setSubmitError] = React.useState<string | null>(null)
-  const [cancelingId, setCancelingId] = React.useState<string | null>(null)
+  const [cancelingIds, setCancelingIds] = React.useState<ReadonlySet<string>>(new Set<string>())
 
-  /** Read the list and publish it (newest first). Never fabricates rows. */
+  /** Read the list and publish it (newest first). Never fabricates rows.
+   * Serialised by request id: an older, slower read must not overwrite a newer
+   * one (e.g. cancel + manual refresh racing). Only the latest call publishes. */
+  const listSeq = React.useRef(0)
   const loadRuns = React.useCallback(async () => {
+    const id = ++listSeq.current
     setListLoading(true)
     try {
       const result = await host.listCloudRuns()
-      setRuns(sortRunsNewestFirst(result.runs))
-      setListError(null)
+      if (id === listSeq.current) {
+        if (result.enabled === false) {
+          // Provider was disabled after the availability probe; do not show a
+          // fake "no runs yet" — report the real reason instead.
+          setRuns([])
+          setListError(t('webui.cloudVm.listFailed'))
+        } else {
+          setRuns(sortRunsNewestFirst(result.runs))
+          setListError(null)
+        }
+      }
     } catch {
-      setRuns([])
-      setListError(t('webui.cloudVm.listFailed'))
+      if (id === listSeq.current) {
+        setRuns([])
+        setListError(t('webui.cloudVm.listFailed'))
+      }
     } finally {
-      setListLoading(false)
+      if (id === listSeq.current) setListLoading(false)
     }
   }, [host, t])
 
@@ -137,14 +152,18 @@ export function CloudVmSurface({ host, onOpenRun, onGoToChat }: CloudVmSurfacePr
 
   const cancel = React.useCallback(
     async (runId: string) => {
-      setCancelingId(runId)
+      setCancelingIds(previous => new Set(previous).add(runId))
       try {
         await host.cancelCloudRun(runId)
       } catch {
         // Cancel is best-effort; the refresh below shows the host's real state
         // rather than a fabricated success.
       } finally {
-        setCancelingId(null)
+        setCancelingIds(previous => {
+          const next = new Set(previous)
+          next.delete(runId)
+          return next
+        })
         await loadRuns()
       }
     },
@@ -299,10 +318,10 @@ export function CloudVmSurface({ host, onOpenRun, onGoToChat }: CloudVmSurfacePr
                           <button
                             type="button"
                             className={SECONDARY_BUTTON_CLASS}
-                            disabled={cancelingId === run.id}
-                            onClick={() => void cancel(run.id)}
-                          >
-                            {cancelingId === run.id ? t('webui.cloudVm.canceling') : t('webui.cloudVm.cancel')}
+disabled={cancelingIds.has(run.id)}
+                          onClick={() => void cancel(run.id)}
+                        >
+                          {cancelingIds.has(run.id) ? t('webui.cloudVm.canceling') : t('webui.cloudVm.cancel')}
                           </button>
                         )}
                       </div>
