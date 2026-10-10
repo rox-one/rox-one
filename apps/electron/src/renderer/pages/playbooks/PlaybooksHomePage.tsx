@@ -24,8 +24,12 @@ type PlaybooksView = { kind: 'home' } | { kind: 'notebook'; id: string }
 export default function PlaybooksHomePage() {
   const { t } = useTranslation()
   const enabled = useAtomValue(playbooksEnabledAtom)
-  const knowledgeEnabled = useAtomValue(workbenchFlagAtom(WORKBENCH_FLAG.playbooksKnowledgeV1))
-  const codebookEnabled = useAtomValue(workbenchFlagAtom(WORKBENCH_FLAG.playbooksCodebookV1))
+  const knowledgeFlag = useAtomValue(workbenchFlagAtom(WORKBENCH_FLAG.playbooksKnowledgeV1))
+  const codebookFlag = useAtomValue(workbenchFlagAtom(WORKBENCH_FLAG.playbooksCodebookV1))
+  // Sub-flags are ANDed with the master: with `playbooks.v1` off the whole
+  // surface is off, so neither mode may activate on its own.
+  const knowledgeEnabled = enabled && knowledgeFlag
+  const codebookEnabled = enabled && codebookFlag
   const [notebooks, setNotebooks] = useState<PlaybookNotebook[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
