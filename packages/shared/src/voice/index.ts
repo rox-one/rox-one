@@ -227,10 +227,13 @@ export { resolveTtsProviderId, TTS_PROVIDER_PRECEDENCE, type TtsProviderInputs }
 export type { OpenAiRealtimeServerEvent } from './realtime-providers/openai.ts'
 export {
   PODCAST_JOB_TRANSITIONS,
+  MAX_PODCAST_ROLES,
+  MIN_PODCAST_ROLES,
   PodcastPipelineError,
   createPodcastJob,
   applyPodcastJobEvent,
   advancePodcastJob,
+  isPodcastRoleId,
   type PodcastJob,
   type PodcastJobState,
   type PodcastJobError,
@@ -239,6 +242,7 @@ export {
   type PodcastEngineAvailability,
   type PodcastEnginesResult,
   type PodcastRoleId,
+  type PodcastRoleGender,
   type PodcastRoleTemplate,
   type PodcastSourceInput,
   type PodcastStartInput,

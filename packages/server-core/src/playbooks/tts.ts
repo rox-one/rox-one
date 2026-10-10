@@ -8,8 +8,8 @@
  * so this module adds no dictation engine: it adds the three
  * things the podcast needs on top of them —
  *
- * 1. a **fixed voice registry** (§8.4) so the two roles get two distinct voices
- *    instead of the language-based defaults,
+ * 1. a **fixed voice registry** (§8.4) so each of the 2–6 roles gets a distinct
+ *    registry voice per engine instead of the language-based defaults,
  * 2. **segment synthesis to files** with an `AbortSignal`, because a long render
  *    is cancelled per segment and mixed down later, and
  * 3. an **honest availability probe** (`podcast:engines`) so the studio offers
@@ -27,7 +27,7 @@ import { resolveConfigDir } from '@rox/shared/config'
 import { createResolver, toolchainPaths } from '@rox/shared/toolchain'
 import { createEdgeSpeakAdapter } from '@rox/shared/voice/adapters/edge-tts'
 import { PodcastPipelineError } from '@rox/shared/voice'
-import type { PodcastEngine, PodcastEngineAvailability, PodcastEnginesResult, PodcastRoleId, SpeakAdapter } from '@rox/shared/voice'
+import type { PodcastEngine, PodcastEngineAvailability, PodcastEnginesResult, PodcastRoleId, PodcastRoleTemplate, SpeakAdapter } from '@rox/shared/voice'
 
 export interface PodcastVoice {
   readonly engine: PodcastEngine
@@ -53,12 +53,51 @@ export const PODCAST_VOICE_REGISTRY: readonly PodcastVoice[] = [
   { engine: 'kokoro', id: 'am_adam', label: 'Adam (kokoro, EN)', language: 'en', gender: 'male' },
 ]
 
+/**
+ * The scenario prompt is Russian, so the N-role planner prefers registry voices in
+ * this language. Engines without one (kokoro v1.0 is EN-only) fall back to their
+ * own voices instead of failing.
+ */
+const PODCAST_VOICE_LANGUAGE: PodcastVoice['language'] = 'ru'
+
 /** host→female, expert→male keeps the two voices distinct within every engine. */
 export function defaultVoiceForRole(engine: PodcastEngine, role: PodcastRoleId): PodcastVoice {
   const gender = role === 'host' ? 'female' : 'male'
   const voice = PODCAST_VOICE_REGISTRY.find(candidate => candidate.engine === engine && candidate.gender === gender)
   if (!voice) throw new PodcastPipelineError('tts-unavailable', `podcast.voice-${engine}`)
   return voice
+}
+
+/**
+ * Assign every role a registry voice for the chosen engine. Gender comes from the
+ * role (default by position: first female, second male, then alternation), and
+ * voices of that gender are handed out round-robin, so more roles than voices
+ * reuse voices cyclically instead of failing (the v1.x N-agent boundary). An
+ * engine with no voice of a requested gender is a typed `tts-unavailable`.
+ */
+export function planPodcastVoices(
+  engine: PodcastEngine,
+  roles: readonly PodcastRoleTemplate[],
+): (role: PodcastRoleId) => string {
+  const pool = (gender: PodcastVoice['gender']) => {
+    const forEngine = PODCAST_VOICE_REGISTRY.filter(candidate => candidate.engine === engine && candidate.gender === gender)
+    // Prefer the RU registry language (the scenario prompt is Russian), but fall
+    // back to the engine's own voices when it has none — kokoro v1.0 is EN-only.
+    const preferred = forEngine.filter(candidate => candidate.language === PODCAST_VOICE_LANGUAGE)
+    return preferred.length ? preferred : forEngine
+  }
+  const voices = { female: pool('female'), male: pool('male') }
+  if (!voices.female.length && !voices.male.length) throw new PodcastPipelineError('tts-unavailable', `podcast.voice-${engine}`)
+  const cursor = { female: 0, male: 0 }
+  const assigned = new Map<PodcastRoleId, string>()
+  roles.forEach((role, index) => {
+    const gender = role.gender ?? (index % 2 === 0 ? 'female' : 'male')
+    const available = voices[gender].length ? voices[gender] : voices[gender === 'female' ? 'male' : 'female']
+    if (!available.length) throw new PodcastPipelineError('tts-unavailable', `podcast.voice-${engine}`)
+    const voice = available[cursor[gender]++ % available.length]!
+    assigned.set(role.id, voice.id)
+  })
+  return role => assigned.get(role) ?? defaultVoiceForRole(engine, role).id
 }
 
 export interface SegmentAudio {
