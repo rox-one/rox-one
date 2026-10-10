@@ -1,7 +1,8 @@
 /**
  * С-14 «Студия подкаста» (docs/specs/2026-10-09-dev-space-and-playbooks 04-UI-SPEC B.14,
  * D13). Generation dialog: topic from the selected source/question, engine
- * `system|edge`, optional segment cap, editable two-voice roles. Progress comes
+ * `system|edge|kokoro` (kokoro only when its CLI is present — `podcast:engines`),
+ * optional segment cap, editable two-voice roles. Progress comes
  * from the `podcast:job` push stream; the player and mp3/srt export consume the
  * produced episode (`podcast:episodes`).
  */
@@ -21,8 +22,10 @@ import {
   listPodcastEpisodes,
   onPodcastJob,
   podcastAudioUrl,
+  podcastEngines,
   startPodcast,
   type PodcastEngine,
+  type PodcastEnginesResult,
   type PodcastEpisode,
   type PodcastExportFormat,
   type PodcastJob,
@@ -50,6 +53,7 @@ export function PodcastStudio({ open, onOpenChange, projectSlug, seed, onComplet
   const workspaceId = workspace?.id ?? null
   const [topic, setTopic] = useState(seed.question ?? '')
   const [engine, setEngine] = useState<PodcastEngine>('system')
+  const [engines, setEngines] = useState<PodcastEnginesResult | null>(null)
   const [segmentCap, setSegmentCap] = useState('')
   const [roles, setRoles] = useState<StudioRole[]>(() => loadRolePreset())
   const [job, setJob] = useState<PodcastJob | null>(null)
@@ -65,6 +69,24 @@ export function PodcastStudio({ open, onOpenChange, projectSlug, seed, onComplet
   useEffect(() => {
     if (open) setTopic(seed.question ?? '')
   }, [open, seed.question])
+
+  // Probe honest engine availability once the dialog opens: a missing kokoro CLI
+  // disables the option (with a hint) instead of failing a render at synthesis.
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    void (async () => {
+      try {
+        const result = await podcastEngines()
+        if (!cancelled) setEngines(result)
+      } catch {
+        /* bridge unavailable — keep the optimistic default (system|edge) */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -211,10 +233,23 @@ export function PodcastStudio({ open, onOpenChange, projectSlug, seed, onComplet
                 <SelectContent>
                   <SelectItem value="system">{t('playbooks.podcast.engineSystem')}</SelectItem>
                   <SelectItem value="edge">{t('playbooks.podcast.engineEdge')}</SelectItem>
+                  <SelectItem
+                    value="kokoro"
+                    disabled={engines?.kokoro.available === false}
+                    data-testid="playbooks-podcast-engine-kokoro"
+                  >
+                    {t('playbooks.podcast.engineKokoro')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
               {offline && engine === 'edge' ? (
                 <p className="text-caption text-muted-foreground" role="status">{t('playbooks.podcast.edgeOffline')}</p>
+              ) : null}
+              {engines?.kokoro.available === false ? (
+                <p className="text-caption text-muted-foreground" role="status">{t('playbooks.podcast.kokoroMissing')}</p>
+              ) : null}
+              {engine === 'kokoro' ? (
+                <p className="text-caption text-muted-foreground" role="status">{t('playbooks.podcast.kokoroEnglishOnly')}</p>
               ) : null}
             </div>
             <div className="space-y-1">

@@ -122,9 +122,13 @@ RPC-поверхность `packages/server-core/src/playbooks/codebook/index.ts
 
 По итогу реализации медиа-стадии подкаста (В4):
 
-- **O5 (Kokoro)** — решено 2026-10-10: остаётся целиком в v1.x. `TtsEngine` = `system|edge`
-  (значение `'kokoro'` не добавлялось — движка нет, и тип не должен обещать несуществующий рунтайм);
-  при включении Kokoro тип расширяется первым шагом вместе с реальной интеграцией.
+- **O5 (Kokoro)** — закрыт **по подкасту** 2026-10-10: третий движок `kokoro` (offline `kokoro-tts`
+  CLI, MIT/PyPI, модель ставит юзер) добавлен ТОЛЬКО в подкаст — `PodcastEngine = 'system'|'edge'|'kokoro'`
+  (`shared/src/voice/podcast-job.ts`), реестр голосов + `resolveKokoroCommand`/`probeKokoro`/`createKokoroSegmentSynthesizer`
+  (`server-core/src/playbooks/tts.ts`), гейт `process.platform !== 'win32'`, без uv-фолбэка (нет CLI → честный
+  `tts-unavailable`), новый канал `podcast:engines` даёт availability. **Границы:** диктовка не тронута
+  (`TtsEngine` = `system|edge`, voice RPC/storage/VoiceSettings без изменений), русских голосов у Kokoro v1.0 нет —
+  для русского остаются `edge`/`system`, в UI честный хинт `kokoroEnglishOnly`.
 - **O9 (лимиты клона)** — решено 2026-10-10: полная история по умолчанию (`CLONE_DEPTH='full'`),
   таймаут 30 мин, гард размера `MAX_REPO_BYTES` = 2 ГиБ после clone/pull (`clone-too-large`).
 - **O10 (капы и параллелизм)** — решено 2026-10-10, v1.x-часть внедрена: 128 прогонов на проект / 200

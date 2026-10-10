@@ -99,10 +99,11 @@ describe('Podcast studio (С-14)', () => {
     expect(home).toContain('projectSlug={activeNotebook.projectSlug}')
   })
 
-  it('offers engine system|edge, optional segment count, and an editable 2..6 role list', () => {
+  it('offers engine system|edge|kokoro, optional segment count, and an editable 2..6 role list', () => {
     expect(studio).toContain('data-testid="playbooks-podcast-engine"')
     expect(studio).toContain('<SelectItem value="system">')
     expect(studio).toContain('<SelectItem value="edge">')
+    expect(studio).toContain('value="kokoro"')
     expect(studio).toContain('data-testid="playbooks-podcast-segments"')
     expect(studio).toContain("t('playbooks.podcast.rolesLabel')")
     expect(studio).toContain('data-testid="playbooks-podcast-role-add"')
@@ -119,6 +120,15 @@ describe('Podcast studio (С-14)', () => {
     expect(podcastRoles).toContain('export function nextGuestRoleId')
     expect(studio).toContain('loadRolePreset()')
     expect(studio).toContain('saveRolePreset(roles)')
+  })
+
+  it('disables kokoro when its CLI is missing and hints English-only voices', () => {
+    expect(studio).toContain('disabled={engines?.kokoro.available === false}')
+    expect(studio).toContain('podcastEngines()')
+    expect(podcastClient).toContain('window.electronAPI.podcastEngines')
+    expect(studio).toContain("t('playbooks.podcast.kokoroMissing')")
+    expect(studio).toContain("t('playbooks.podcast.kokoroEnglishOnly')")
+    expect(studio).toContain("t('playbooks.podcast.engineKokoro')")
   })
 
   it('shows stage/segment progress, an audio player and mp3/srt export', () => {
