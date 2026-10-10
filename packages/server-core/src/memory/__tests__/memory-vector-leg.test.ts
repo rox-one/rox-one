@@ -122,7 +122,7 @@ describe('sqlite-vec loadability (c1.3 step a)', () => {
     expect(capability.vector).toBe(false)
   })
 
-  test("probe records the loader's own, unrewritten loadExtension failure text", () => {
+  test("probe records each path's outcome; a load failure is the loader's own, unrewritten text", () => {
     // VERBATIM PROBE OUTCOME — bun 1.4.2 (bundled SQLite), sqlite-vec 0.1.9;
     // first recorded darwin-arm64 (2026-10-09 worktree port/w4-s6), then
     // observed to differ on linux/CI (ubuntu-24.04):
@@ -192,16 +192,23 @@ describe('sqlite-vec loadability (c1.3 step a)', () => {
     }
     expect(failures).toHaveLength(paths.length)
     for (let i = 0; i < failures.length; i++) {
-      // Each path must FAIL to load here (the vector leg is unavailable), and the
-      // recorded text must be the loader's own wording, verbatim — not one
-      // platform's fixed string, but the property every platform satisfies.
-      expect(isVerbatimLoaderFailure(failures[i], rawErrors[i])).toBe(true)
+      // A path either loaded — the platform's SQLite accepts this extension, and
+      // the capability test above still pins what the probe reports — or failed,
+      // and then the recorded text must be the loader's own wording, verbatim:
+      // not one platform's fixed string, but the property every platform
+      // satisfies. The failure message carries both texts so a future platform
+      // difference is self-explaining in CI.
+      if (failures[i] === 'OK') {
+        expect(rawErrors[i]).toBeUndefined()
+        continue
+      }
+      const raw = rawErrors[i]
+      const rawText = raw && typeof raw === 'object' && 'message' in raw ? String((raw as { message: unknown }).message) : String(raw)
+      expect(
+        isVerbatimLoaderFailure(failures[i], raw),
+        `path=${paths[i]} recorded=${JSON.stringify(failures[i])} raw=${JSON.stringify(rawText)}`,
+      ).toBe(true)
     }
-    // The exact wording is no longer a ledger entitlement (darwin says
-    // "does not support dynamic extension loading", linux says "cannot open
-    // shared object file"). If a future SQLite build starts accepting the
-    // extension, `failures` holds 'OK' and the assert above fails — the signal
-    // to re-record the finding.
   })
 
   test('the verbatim check is portable: both platform texts pass, rewrites are rejected', () => {
