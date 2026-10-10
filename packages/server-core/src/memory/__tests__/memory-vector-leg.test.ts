@@ -67,6 +67,40 @@ const conceptEmbedder: Embedder = async texts => texts.map(conceptVector)
 // ---------------------------------------------------------------------------
 // 1. Probe outcome (step a)
 // ---------------------------------------------------------------------------
+
+/**
+ * The loader's own rendering of a thrown error: `<name>: <message>`. The
+ * recorded probe text must be byte-identical to this — never a summary and
+ * never re-prefixed with the code's own wording.
+ */
+export function formatLoaderFailure(err: unknown): string {
+  return err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+}
+
+/**
+ * Portable predicate for a recorded probe failure: is `recorded` the loader's
+ * own text for `raw` — a non-empty string carrying the loader's `Error:`
+ * prefix, equal to the raw error verbatim?
+ *
+ * Both platform texts satisfy it — darwin (bundled SQLite built without
+ * dynamic-extension loading)
+ *   "Error: This build of sqlite3 does not support dynamic extension loading"
+ * and linux/x64 (optional prebuilt addon absent)
+ *   "Error: …/node_modules/sqlite-vec/index.cjs.so: cannot open shared object
+ *    file: No such file or directory"
+ * — while a swallowed (`''`/non-string), re-prefixed, or summarised message is
+ * rejected. The prefix check pins that nothing precedes the loader's own
+ * `Error:` text; the equality pins that nothing is appended or rewritten.
+ */
+export function isVerbatimLoaderFailure(recorded: unknown, raw: unknown): boolean {
+  return (
+    typeof recorded === 'string' &&
+    recorded.length > 0 &&
+    recorded.startsWith('Error: ') &&
+    recorded === formatLoaderFailure(raw)
+  )
+}
+
 describe('sqlite-vec loadability (c1.3 step a)', () => {
   test('probe: with sqlite-vec installed, FTS5 is available and vector is NOT', () => {
     resetMemoryIndexCapabilityCache()
@@ -75,24 +109,33 @@ describe('sqlite-vec loadability (c1.3 step a)', () => {
     expect(capability.vector).toBe(false)
   })
 
-  test('probe records the verbatim loadExtension failure string', () => {
-    // VERBATIM PROBE OUTCOME — bun 1.4.2 (bundled SQLite), sqlite-vec 0.1.9,
-    // darwin-arm64, 2026-10-09 worktree port/w4-s6:
+  test("probe records the loader's own, unrewritten loadExtension failure text", () => {
+    // VERBATIM PROBE OUTCOME — bun 1.4.2 (bundled SQLite), sqlite-vec 0.1.9;
+    // first recorded darwin-arm64 (2026-10-09 worktree port/w4-s6), then
+    // observed to differ on linux/CI (ubuntu-24.04):
     //   require.resolve('sqlite-vec')
     //     → /…/node_modules/sqlite-vec/index.cjs            (resolution SUCCEEDS)
     //   sqlite-vec.getLoadablePath()
-    //     → /…/node_modules/sqlite-vec-darwin-arm64/vec0.dylib   (native binary present)
-    //   db.loadExtension(<either path>)
-    //     → Error: This build of sqlite3 does not support dynamic extension loading
-    //   SELECT vec_version()
-    //     → SQLiteError: no such function: vec_version
-    // `bun:sqlite`'s Database DOES expose loadExtension, but its bundled SQLite
-    // is compiled without dynamic-extension loading, so the extension cannot
-    // load even from the correct native .dylib path. Separately,
-    // `@rox/shared/utils/sqlite-runtime.ts` DatabaseSync exposes no loadExtension
-    // at all, so even a permissive SQLite build could not load sqlite-vec
-    // through that seam. The vector leg therefore runs as in-process cosine over
-    // stored embeddings (below), not via sqlite-vec.
+    //     → /…/node_modules/sqlite-vec-<platform>/vec0.<ext>  (native binary, when the
+    //                                                         optional platform package is installed)
+    //   db.loadExtension(<either path>) THROWS. The TEXT is platform- and
+    //   install-dependent — darwin (bundled SQLite compiled without dynamic
+    //   extension loading):
+    //     Error: This build of sqlite3 does not support dynamic extension loading
+    //   linux/x64 (optional prebuilt addon absent, module unopenable):
+    //     Error: /home/runner/work/…/node_modules/sqlite-vec/index.cjs.so: cannot
+    //            open shared object file: No such file or directory
+    //   `bun:sqlite`'s Database DOES expose loadExtension, but either the bundled
+    //   SQLite cannot dynamically load (darwin) or the prebuilt native module is
+    //   not present (linux). Separately, `@rox/shared/utils/sqlite-runtime.ts`
+    //   DatabaseSync exposes no loadExtension at all, so even a permissive SQLite
+    //   build could not load sqlite-vec through that seam. The vector leg
+    //   therefore runs as in-process cosine over stored embeddings (below), not
+    //   via sqlite-vec.
+    //
+    // What is pinned is the PROPERTY, not one platform's wording: every recorded
+    // failure is the loader's own `Error:` text, verbatim — never swallowed,
+    // summarised, or wrapped in the code's own prefix.
     const requireBuiltin = createRequire(import.meta.url)
     let resolved: string
     try {
@@ -117,25 +160,62 @@ describe('sqlite-vec loadability (c1.3 step a)', () => {
       }
     }
 
-    const VERBATIM = 'Error: This build of sqlite3 does not support dynamic extension loading'
     const db = new Database(':memory:')
     const failures: string[] = []
+    const rawErrors: unknown[] = []
     try {
       for (const path of paths) {
         try {
           db.loadExtension(path)
           failures.push('OK')
+          rawErrors.push(undefined)
         } catch (err) {
+          rawErrors.push(err)
           failures.push(err instanceof Error ? `${err.name}: ${err.message}` : String(err))
         }
       }
     } finally {
       db.close()
     }
-    // This exact string is the recorded ledger entitlement — if a future
-    // SQLite build starts accepting the extension, this assert-fail is the
-    // signal to re-record the finding.
-    expect(failures).toEqual(paths.map(() => VERBATIM))
+    expect(failures).toHaveLength(paths.length)
+    for (let i = 0; i < failures.length; i++) {
+      // Each path must FAIL to load here (the vector leg is unavailable), and the
+      // recorded text must be the loader's own wording, verbatim — not one
+      // platform's fixed string, but the property every platform satisfies.
+      expect(isVerbatimLoaderFailure(failures[i], rawErrors[i])).toBe(true)
+    }
+    // The exact wording is no longer a ledger entitlement (darwin says
+    // "does not support dynamic extension loading", linux says "cannot open
+    // shared object file"). If a future SQLite build starts accepting the
+    // extension, `failures` holds 'OK' and the assert above fails — the signal
+    // to re-record the finding.
+  })
+
+  test('the verbatim check is portable: both platform texts pass, rewrites are rejected', () => {
+    // The exact strings observed on each platform, each exercised against its
+    // own raw loader error.
+    const darwin = new Error('This build of sqlite3 does not support dynamic extension loading')
+    const linuxPath = '/home/runner/work/rox-one/rox-one/node_modules/sqlite-vec/index.cjs.so'
+    const linux = new Error(`${linuxPath}: cannot open shared object file: No such file or directory`)
+
+    // Both accepted — darwin and linux wording alike.
+    expect(isVerbatimLoaderFailure(
+      'Error: This build of sqlite3 does not support dynamic extension loading', darwin)).toBe(true)
+    expect(isVerbatimLoaderFailure(
+      `Error: ${linuxPath}: cannot open shared object file: No such file or directory`, linux)).toBe(true)
+
+    // A rewritten / swallowed / re-prefixed / summarised message must NOT pass.
+    expect(isVerbatimLoaderFailure('sqlite-vec unavailable', linux)).toBe(false)
+    expect(isVerbatimLoaderFailure('', linux)).toBe(false)
+    expect(isVerbatimLoaderFailure(undefined, linux)).toBe(false)
+    expect(isVerbatimLoaderFailure(
+      `sqlite-vec load failed: Error: ${linuxPath}: cannot open shared object file: No such file or directory`,
+      linux)).toBe(false)
+    expect(isVerbatimLoaderFailure(
+      `Error: ${linuxPath}: cannot open shared object file`, linux)).toBe(false)
+    // A message for a *different* error is also not verbatim.
+    expect(isVerbatimLoaderFailure(
+      `Error: ${linuxPath}: cannot open shared object file: No such file or directory`, darwin)).toBe(false)
   })
 })
 
