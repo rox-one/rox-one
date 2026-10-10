@@ -8,6 +8,7 @@ import type { ThemeOverrides } from '@config/theme'
 import { useSetAtom, useStore, useAtomValue, useAtom } from 'jotai'
 import type { Session, Workspace, SessionEvent, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, SetupNeeds, SessionStatus, NewChatActionParams, ContentBadge, LlmConnectionWithStatus, PermissionModeState } from '../shared/types'
 import type { StartupRuntimeSummary } from '@rox/shared/protocol'
+import type { DoctorReport } from '@rox/shared/service-lifecycle'
 import type { SessionDraft, DraftAttachmentRef } from '@rox/shared/config'
 import type { SessionOptions, SessionOptionUpdates } from './hooks/useSessionOptions'
 import { defaultSessionOptions, mergeSessionOptions } from './hooks/useSessionOptions'
@@ -28,6 +29,8 @@ import { OnboardingWizard, ReauthScreen, ensureRoxRuntimeDefault } from '@/compo
 import { openFirstSessionWelcome } from '@/components/onboarding/first-session-welcome'
 import { WorkspacePicker } from '@/components/workspace'
 import { ResetConfirmationDialog } from '@/components/ResetConfirmationDialog'
+import { DoctorReportDialog } from '@/components/DoctorReportDialog'
+import { installTrayNavigation } from '@/features/native-integrations/tray-navigation'
 import { ShellActionBridge } from '@/features/native-integrations/ShellActionBridge'
 import { SplashScreen } from '@/components/SplashScreen'
 import { TooltipProvider } from '@rox/ui'
@@ -458,6 +461,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   const [appTheme, setAppTheme] = useState<ThemeOverrides | null>(null)
   // Reset confirmation dialog
   const [showResetDialog, setShowResetDialog] = useState(false)
+  // Tray "Run diagnostics" report (row b2.7) — non-null opens the dialog.
+  const [doctorReport, setDoctorReport] = useState<DoctorReport | null>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
 
   // Auto-update state
@@ -1692,10 +1697,21 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     const unsubShortcuts = window.electronAPI.onMenuKeyboardShortcuts(() => {
       navigate(routes.view.settings('shortcuts'))
     })
+    // Tray navigation (row b2.7): the dashboard + doctor items previously
+    // dispatched channels with no consumer. This is that consumer.
+    const unsubTray = installTrayNavigation({
+      onOpenDashboard: window.electronAPI.onMenuOpenDashboard,
+      onRunDoctor: window.electronAPI.onMenuRunDoctor,
+      navigateHome: () => navigate(routes.view.home()),
+      runDoctor: () => window.electronAPI.runDiagnostics(),
+      presentDoctor: setDoctorReport,
+      reportError: () => toast.error(t('doctor.error')),
+    })
     return () => {
       unsubNewChat()
       unsubSettings()
       unsubShortcuts()
+      unsubTray()
     }
   }, [])
 
@@ -2883,6 +2899,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
                 onConfirm={executeReset}
                 onCancel={() => setShowResetDialog(false)}
               />
+              <DoctorReportDialog report={doctorReport} onClose={() => setDoctorReport(null)} />
               <React.Suspense fallback={null}>
                 <KeyboardShortcutsDialog
                   open={showShortcuts}

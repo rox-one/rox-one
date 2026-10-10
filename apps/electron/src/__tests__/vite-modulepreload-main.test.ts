@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { join } from 'node:path'
-import config from '../../vite.config'
+import configFn from '../../vite.config'
 
 type Handler = (html: string, ctx: Record<string, unknown>) => Array<{ tag: string; attrs: Record<string, unknown> }> | undefined
 
@@ -11,6 +11,9 @@ type LoaderPlugin = {
 }
 
 const PLUGIN_NAME = 'rox-modulepreload-main-chunk'
+// The config is a function of the build environment; resolve it for a build
+// (the plugin under test has `apply: 'build'`).
+const config = configFn({ command: 'build', mode: 'production' })
 const flatPlugins: readonly unknown[] = (config.plugins ?? []).flat()
 const plugin = flatPlugins.find(
   (p): p is LoaderPlugin => !!p && typeof p === 'object' && 'name' in p && p.name === PLUGIN_NAME,

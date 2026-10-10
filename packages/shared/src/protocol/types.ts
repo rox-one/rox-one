@@ -11,6 +11,7 @@
 export type MessageType =
   | 'handshake'
   | 'handshake_ack'
+  | 'connect.challenge'
   | 'request'
   | 'response'
   | 'event'
@@ -70,6 +71,17 @@ export interface MessageEnvelope {
   localClientProof?: string
   /** Client capabilities advertised on handshake. */
   clientCapabilities?: string[]
+  /**
+   * e2.2 device-auth challenge: server-minted per-connection nonce sent in a
+   * `connect.challenge` frame; the client echoes it on `handshake` together
+   * with its `deviceProof`. Flat so the same field carries the issued nonce
+   * and the echoed copy.
+   */
+  challengeNonce?: string
+  /** e2.2: freshness stamp (epoch ms) of the server-issued challenge nonce. */
+  challengeIssuedAt?: number
+  /** e2.2: client's HMAC over `challengeNonce`, keyed by the ROX identity credential. */
+  deviceProof?: string
   /** Server-registered channels, sent in handshake_ack. Clients use this to avoid calling unavailable channels. */
   registeredChannels?: string[]
   /** Protocol feature block, sent in handshake_ack. Optional for back-compat. */

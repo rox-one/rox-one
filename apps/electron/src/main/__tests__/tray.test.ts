@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import {
   buildTrayMenuModel,
   SERVICE_STATE_LABEL_KEY,
+  TRAY_ITEM_CHANNEL,
   toTrayTemplate,
   trayStatusIndicator,
   trayTooltipKey,
@@ -9,6 +10,7 @@ import {
   type TrayTemplateItem,
 } from '../tray'
 import { RPC_CHANNELS } from '../../shared/types'
+import { CHANNEL_MAP } from '../../transport/channel-map'
 
 function createHarness() {
   const tooltips: string[] = []
@@ -16,7 +18,6 @@ function createHarness() {
   const menus: TrayTemplateItem[][] = []
   const dispatched: string[] = []
   const shellActions: string[] = []
-  const broadcasts: unknown[] = []
   let shown = 0
   let quits = 0
   let destroyed = 0
@@ -32,12 +33,11 @@ function createHarness() {
     dispatchChannel: channel => { dispatched.push(channel) },
     dispatchShellAction: action => { shellActions.push(action) },
     showWindow: () => { shown += 1 },
-    broadcastStatus: status => { broadcasts.push(status) },
     quit: () => { quits += 1 },
   })
   return {
     controller,
-    tooltips, titles, menus, dispatched, shellActions, broadcasts,
+    tooltips, titles, menus, dispatched, shellActions,
     shown: () => shown,
     quits: () => quits,
     destroyed: () => destroyed,
@@ -51,13 +51,13 @@ describe('tray model', () => {
     expect(model.map(item => item.id)).toEqual([
       'service-status',
       'newNote', 'newTask', 'quickComposer', 'openInbox',
-      'openDashboard', 'openApp', 'serviceStatus', 'runDoctor', 'settings',
+      'openDashboard', 'runDoctor', 'settings',
       'showWindow', 'quit',
     ])
     expect(model[0]).toMatchObject({ labelKey: 'service.state.running', enabled: false })
     expect(model[1]).toMatchObject({ labelKey: 'menu.newNote', enabled: true })
     expect(model[4]).toMatchObject({ labelKey: 'menu.openInbox', enabled: true })
-    expect(model[10]).toMatchObject({ labelKey: 'menu.showWindow', enabled: true })
+    expect(model[8]).toMatchObject({ labelKey: 'menu.showWindow', enabled: true })
     expect(SERVICE_STATE_LABEL_KEY.failed).toBe('service.state.failed')
   })
 
@@ -79,11 +79,20 @@ describe('tray model', () => {
     expect(template.map(item => item.type)).toEqual([
       'normal', 'separator',
       'normal', 'normal', 'normal', 'normal',
-      'separator', 'normal', 'normal',
       'separator', 'normal', 'normal', 'normal', 'normal',
       'separator', 'normal',
     ])
     expect(template[0]).toMatchObject({ label: 'service.state.installed', enabled: false })
+  })
+
+  it('every dispatched tray item has a real consumer channel', () => {
+    // A tray item whose channel is absent from CHANNEL_MAP would silently do
+    // nothing (row b2.7). Every mapped item must resolve to a listener.
+    for (const [id, channel] of Object.entries(TRAY_ITEM_CHANNEL)) {
+      if (!channel) continue
+      const entry = Object.values(CHANNEL_MAP).find(candidate => candidate.channel === channel)
+      expect(`${id}:${entry?.type}`).toBe(`${id}:listener`)
+    }
   })
 })
 
@@ -92,17 +101,14 @@ describe('tray controller', () => {
     const h = createHarness()
     expect(h.tooltips).toEqual(['tray.tooltip.idle'])
     expect(h.titles).toEqual(['●'])
-    expect(h.broadcasts).toEqual([])
 
     h.controller.setStatus({ agentState: 'working', serviceState: 'running' })
     expect(h.tooltips.at(-1)).toBe('tray.tooltip.working')
     expect(h.titles.at(-1)).toBe('◐')
-    expect(h.broadcasts).toEqual([{ agentState: 'working', serviceState: 'running' }])
     expect(h.lastMenu()[0]).toMatchObject({ label: 'service.state.running' })
 
     h.controller.setStatus({ agentState: 'error', serviceState: 'failed' })
     expect(h.titles.at(-1)).toBe('▲')
-    expect(h.broadcasts).toHaveLength(2)
   })
 
   it('dispatches native shell actions, menu channels, show-window and quit', () => {
@@ -119,14 +125,10 @@ describe('tray controller', () => {
     expect(h.shellActions).toEqual(['new-note', 'new-task', 'quick-composer', 'open-inbox'])
 
     click('tray.menu.openDashboard')
-    click('tray.menu.openApp')
-    click('tray.menu.serviceStatus')
     click('tray.menu.runDoctor')
     click('tray.menu.settings')
     expect(h.dispatched).toEqual([
       RPC_CHANNELS.menu.OPEN_DASHBOARD,
-      RPC_CHANNELS.menu.OPEN_NATIVE_CONSOLE,
-      RPC_CHANNELS.menu.SHOW_SERVICE_STATUS,
       RPC_CHANNELS.menu.RUN_DOCTOR,
       RPC_CHANNELS.menu.OPEN_SETTINGS,
     ])

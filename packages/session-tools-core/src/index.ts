@@ -155,6 +155,8 @@ export type {
   // Memory types
   MemoryToolCallbacks,
   MemoryWikiCallbacks,
+  // Visitor access types
+  VisitorToolCallbacks,
 } from './context.ts';
 
 export { createNodeFileSystem } from './context.ts';
@@ -325,6 +327,13 @@ export {
   WIKI_SEARCH_MAX_LIMIT,
 } from './handlers/index.ts';
 
+// Visitor access handlers (registered in SESSION_TOOL_DEFS)
+export {
+  handleVisitorInvite,
+  handleVisitorRevoke,
+  handleVisitorList,
+} from './handlers/index.ts';
+
 // Skills catalog handlers (registered in SESSION_TOOL_DEFS)
 export {
   handleSkillsSearch,
@@ -404,6 +413,10 @@ export {
   // Skills tool schemas
   SkillsSearchSchema,
   SkillsReadSchema,
+  // Visitor access schemas
+  VisitorInviteSchema,
+  VisitorRevokeSchema,
+  VisitorListSchema,
   // Descriptions
   TOOL_DESCRIPTIONS,
   // Registry
@@ -453,6 +466,9 @@ export type {
   WikiSearchToolArgs,
   WikiGetToolArgs,
   WikiApplyToolArgs,
+  VisitorInviteToolArgs,
+  VisitorRevokeToolArgs,
+  VisitorListToolArgs,
   SkillsSearchArgs,
   SkillsReadArgs,
   DevSpaceReadArgs,

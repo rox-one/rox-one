@@ -109,6 +109,13 @@ export interface MachOReport {
   path: string;
   teamId: string | null;
   entitlements: string[];
+  /**
+   * Set when `codesign --entitlements` failed for a reason OTHER than the
+   * explicit "no entitlements" answer. The keys are then unknown, so the report
+   * MUST fail closed: an empty `entitlements` array alone would let a binary
+   * carrying JIT slip past the split rule.
+   */
+  entitlementsError?: string;
 }
 
 export interface AuditResult {
@@ -161,6 +168,11 @@ export function evaluateAudit(input: {
   }
 
   // 4. Entitlement split: JIT only on nested runtime binaries, never on the app.
+  // A blob we could not read is a failure in its own right — its keys are
+  // unknown, so treating it as "no entitlements" could hide a leaked JIT grant.
+  for (const file of input.machoFiles) {
+    if (file.entitlementsError) failures.push(file.entitlementsError);
+  }
   const app = input.machoFiles.find((f) => resolve(f.path) === resolve(input.appExecutable));
   if (!app) {
     failures.push(`app main executable not among the Mach-O files: ${input.appExecutable}`);
@@ -237,11 +249,18 @@ export function auditMacOSSigning(
   const machoFiles = walkMachOFiles(app).map((path) => {
     const dv = runner('codesign', ['-dv', '--verbose=4', path]);
     const ent = runner('codesign', ['-d', '--entitlements', ':-', path]);
-    const entOk = ent.status === 0 || /no entitlements/i.test(ent.stderr);
+    // Exit 0 ⇒ parse. A non-zero exit is only benign for the explicit
+    // "no entitlements" answer; any other error means the blob is unreadable
+    // and the file MUST fail closed (its JIT keys are unknown).
+    const noEntitlements = ent.status !== 0 && /no entitlements/i.test(ent.stderr);
+    const ok = ent.status === 0 || noEntitlements;
     return {
       path,
       teamId: dv.status === 0 ? parseTeamIdentifier(dv.stdout) : null,
-      entitlements: entOk ? parseEntitlements(ent.stdout) : [],
+      entitlements: ok ? parseEntitlements(ent.stdout) : [],
+      entitlementsError: ok
+        ? undefined
+        : `could not read entitlements for ${path} (status ${ent.status}): ${firstOutputLine(ent.stderr || ent.stdout)}`,
     };
   });
 

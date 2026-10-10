@@ -124,19 +124,52 @@ describe('boot manifest derivation', () => {
     expect(diff.routes.tasks.extra).toEqual(['assets/NotesPage.js', 'assets/editor.js'])
   })
 
-  it('accepts an unchanged bundle and every route id the surface sim models', () => {
+  it('accepts an unchanged bundle and every route id the boot warm-up preloads', () => {
     const expected = deriveFixture()
     expect(diffBootManifest(expected, deriveFixture()).ok).toBe(true)
     const bootIds = readRouteModules()
-    expect(Object.keys(bootIds).sort()).toEqual(['inbox', 'notes', 'planWorkspace', 'skillsCatalog', 'tasks'])
+    expect(Object.keys(bootIds).sort()).toEqual([
+      'agentsWorkspace',
+      'automationEditor',
+      'browser',
+      'cloudRun',
+      'connections',
+      'feed',
+      'inbox',
+      'integrationsCatalog',
+      'knowledgeHome',
+      'notes',
+      'pagesHome',
+      'planWorkspace',
+      'skillsCatalog',
+      'tasks',
+      'terminal',
+    ])
   })
 
   it('reads the route→chunk mapping and boot route ids from the renderer source', () => {
     const loaders = parseRoutePageLoaders(readFileSync(join(RENDERER_SRC, 'components/app-shell/route-pages.ts'), 'utf8'))
     expect(loaders.notes).toBe('@/pages/NotesPage')
     expect(loaders.inbox).toBe('@/pages/InboxPage')
-    const warm = parseStringArray(readFileSync(join(RENDERER_SRC, 'perf/surface-sim.ts'), 'utf8'), 'KEEPALIVE_WARM_SURFACES')
-    expect(warm).toEqual(['notes', 'tasks', 'skillsCatalog', 'inbox', 'planWorkspace'])
+    const rail = parseStringArray(readFileSync(join(ROOT, 'apps/electron/src/shared/rail-surfaces.ts'), 'utf8'), 'RAIL_SURFACE_ROUTE_IDS')
+    expect(rail).toHaveLength(15)
+    expect(rail).toEqual([
+      'notes',
+      'tasks',
+      'planWorkspace',
+      'agentsWorkspace',
+      'inbox',
+      'feed',
+      'skillsCatalog',
+      'integrationsCatalog',
+      'knowledgeHome',
+      'pagesHome',
+      'connections',
+      'browser',
+      'terminal',
+      'cloudRun',
+      'automationEditor',
+    ])
   })
 })
 

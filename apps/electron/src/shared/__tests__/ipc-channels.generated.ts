@@ -522,20 +522,17 @@ export const EXPECTED_CHANNELS: string[] = [
   'menu:newChat',
   'menu:newWindow',
   'menu:openDashboard',
-  'menu:openNativeConsole',
   'menu:openSettings',
   'menu:paste',
   'menu:quit',
   'menu:redo',
   'menu:runDoctor',
   'menu:selectAll',
-  'menu:showServiceStatus',
   'menu:toggleChatPictureInPicture',
   'menu:toggleDevTools',
   'menu:toggleFocusMode',
   'menu:toggleInspector',
   'menu:toggleSidebar',
-  'menu:trayStatusChanged',
   'menu:undo',
   'menu:zoomIn',
   'menu:zoomOut',
@@ -1064,4 +1061,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1060
+export const EXPECTED_CHANNEL_COUNT = 1057

@@ -38,8 +38,14 @@ import {
 } from '../observability/rpc-call-counter'
 import type { NativeAuthority, NativePrincipal } from '../authority/native-authority'
 import { isChannelWithinOperatorCeiling } from '../authority/operator-role-policy'
-import { isAccessPolicyAdmitted, lookupAccessPolicyPlugin } from '../authority/access-policy-registry'
+import { isAccessPolicyAdmitted, isAccessPolicyResumed, lookupAccessPolicyPlugin } from '../authority/access-policy-registry'
 import type { OperatorRoleCeiling } from '@rox/shared/orgs/types'
+import {
+  DEVICE_CHALLENGE_TTL_MS,
+  DeviceChallengeRegistry,
+  verifyDeviceProof,
+} from './device-auth'
+import { resolveRoxIdentityCredential } from './identity-credential'
 
 // ---------------------------------------------------------------------------
 // Client connection state
@@ -129,6 +135,17 @@ export interface WsRpcTlsOptions {
   passphrase?: string
 }
 
+export interface WsRpcDeviceAuthOptions {
+  /**
+   * ROX identity credential keying the device-auth proof. A string, or a
+   * resolver (fail-closed when it returns null). Default: this installation's
+   * identity store profile (`@rox/core/platform/identity`) — not a new key.
+   */
+  credential?: string | (() => string | null)
+  /** Freshness window for challenge nonces (ms). Default: 30s. */
+  challengeTtlMs?: number
+}
+
 export interface WsRpcServerOptions {
   /** Host to bind to. Default: '127.0.0.1' */
   host?: string
@@ -136,6 +153,13 @@ export interface WsRpcServerOptions {
   port?: number
   /** Whether to require a bearer token on handshake. Default: false */
   requireAuth?: boolean
+  /**
+   * e2.2 device-auth challenge. When enabled, the server issues a per-connection
+   * `connect.challenge` nonce and refuses any handshake that does not answer it
+   * with a fresh, single-use `deviceProof` over the ROX identity credential —
+   * before any `handshake_ack`. Omitted ⇒ no challenge is issued (legacy).
+   */
+  deviceAuth?: boolean | WsRpcDeviceAuthOptions
   /**
    * TEST ONLY. When true, `LOCAL_ONLY` enforcement is skipped entirely so
    * transport tests can exercise LOCAL_ONLY-gated handlers without an
@@ -284,6 +308,26 @@ export function isWebUiUpgradeOriginAllowed(
 // WsRpcServer
 // ---------------------------------------------------------------------------
 
+interface ResolvedDeviceAuth {
+  readonly resolveCredential: () => string | null
+  readonly challengeTtlMs: number
+}
+
+/**
+ * Normalize the `deviceAuth` option into a credential resolver, or null when
+ * disabled. `true` means "this installation's ROX identity credential".
+ */
+function resolveDeviceAuthOption(
+  option: boolean | WsRpcDeviceAuthOptions | undefined,
+): ResolvedDeviceAuth | null {
+  if (option === undefined || option === false) return null
+  const challengeTtlMs = option === true ? DEVICE_CHALLENGE_TTL_MS : (option.challengeTtlMs ?? DEVICE_CHALLENGE_TTL_MS)
+  const credential = option === true ? undefined : option.credential
+  if (typeof credential === 'function') return { resolveCredential: credential, challengeTtlMs }
+  if (typeof credential === 'string') return { resolveCredential: () => credential, challengeTtlMs }
+  return { resolveCredential: () => resolveRoxIdentityCredential(), challengeTtlMs }
+}
+
 export class WsRpcServer implements RpcServer {
   private wss: WebSocketServer | null = null
   private httpServer: HttpServer | null = null
@@ -320,6 +364,7 @@ export class WsRpcServer implements RpcServer {
   private readonly allowedWebUiOrigins: readonly string[]
   private readonly rpcCallCounter: RpcCallCounter | null
   private readonly nativeAuthority: NativeAuthority | null
+  private readonly deviceAuth: ResolvedDeviceAuth | null
   private readonly nativeEventChannels: ReadonlySet<string>
   private readonly nativeClientEventChannels: ReadonlySet<string>
   private readonly projectNativeEvent: WsRpcServerOptions['projectNativeEvent']
@@ -362,6 +407,7 @@ export class WsRpcServer implements RpcServer {
     this.webUiAppearanceWorkspaceId = opts?.webUiAppearanceWorkspaceId
     this.allowedWebUiOrigins = opts?.allowedWebUiOrigins ?? []
     this.nativeAuthority = opts?.nativeAuthority ?? null
+    this.deviceAuth = resolveDeviceAuthOption(opts?.deviceAuth)
     this.nativeEventChannels = new Set(opts?.nativeEventChannels ?? [])
     this.nativeClientEventChannels = new Set(opts?.nativeClientEventChannels ?? [])
     this.projectNativeEvent = opts?.projectNativeEvent
@@ -545,6 +591,24 @@ export class WsRpcServer implements RpcServer {
       role: client.operatorCeiling?.role ?? null,
       subject: client.principal.subject,
     })
+  }
+
+  /**
+   * Whether a RESUMED connection — a reconnect of a client whose persisted
+   * ceiling names an access-policy plugin — is still admitted. A refusal clears
+   * the ceiling so every subsequent request fails closed with the same typed
+   * OPERATOR_ACCESS_DENIED; a ceiling that names no plugin is unchanged.
+   */
+  private async resumeAccessPolicy(client: ClientConnection): Promise<void> {
+    const plugin = client.operatorCeiling?.accessPolicyPlugin
+    if (!plugin || !client.principal) return
+    const admitted = await isAccessPolicyResumed(plugin, {
+      channel: '',
+      nativeAction: undefined,
+      role: client.operatorCeiling?.role ?? null,
+      subject: client.principal.subject,
+    })
+    if (!admitted) client.operatorCeiling = null
   }
 
   private requestPermissionFence(client: ClientConnection, registration: RegisteredHandler): string | null {
@@ -930,6 +994,21 @@ export class WsRpcServer implements RpcServer {
     let sharedHandshakeInProgress = false
     let handshakeTimeout: ReturnType<typeof setTimeout> | null = null
 
+    // e2.2 device-auth: mint a per-connection, single-use challenge nonce and
+    // send it before the client may handshake. The handshake must answer it, or
+    // it is refused before any ack.
+    let deviceChallenges: DeviceChallengeRegistry | null = null
+    if (this.deviceAuth) {
+      deviceChallenges = new DeviceChallengeRegistry({ ttlMs: this.deviceAuth.challengeTtlMs })
+      const challenge = deviceChallenges.issue()
+      this.safeSend(ws, serializeEnvelope({
+        id: randomUUID(),
+        type: 'connect.challenge',
+        challengeNonce: challenge.nonce,
+        challengeIssuedAt: challenge.issuedAt,
+      }))
+    }
+
     // Give the client 5 seconds to send a handshake
     handshakeTimeout = setTimeout(() => {
       if (!handshakeCompleted) {
@@ -978,6 +1057,29 @@ export class WsRpcServer implements RpcServer {
           return
         }
 
+        // e2.2 device-auth: answer is verified BEFORE any auth branch or ack.
+        // Every refusal is the same typed AUTH_FAILED (no oracle); the specific
+        // reason travels in error.data for logs/tests only.
+        if (this.deviceAuth && deviceChallenges) {
+          const credential = this.deviceAuth.resolveCredential()
+          const verdict = credential === null
+            ? { ok: false as const, reason: 'mismatched_credential' as const }
+            : await verifyDeviceProof({
+                registry: deviceChallenges,
+                credential,
+                nonce: envelope.challengeNonce,
+                proof: envelope.deviceProof,
+              })
+          if (!verdict.ok) {
+            this.sendError(ws, envelope.id, 'AUTH_FAILED', 'Device authentication required', {
+              reason: verdict.reason,
+            })
+            ws.close(4005, 'Auth failed')
+            clearTimeout(handshakeTimeout ?? undefined)
+            return
+          }
+        }
+
         // Reserved native credentials never fall back to legacy bearer/cookie auth.
         let principal: NativePrincipal | null = null
         const nativeToken = typeof envelope.token === 'string'
@@ -987,6 +1089,10 @@ export class WsRpcServer implements RpcServer {
         if (this.workspaceAuthority) {
           sharedHandshakeInProgress = true
           const fields = new Set(['id', 'type', 'protocolVersion', 'token', 'workspaceId', 'clientCapabilities', 'reconnectClientId', 'lastSeq'])
+          if (this.deviceAuth) {
+            fields.add('challengeNonce')
+            fields.add('deviceProof')
+          }
           try {
             if (Object.keys(envelope).some(key => !fields.has(key))
               || !Object.hasOwn(envelope, 'token') || !Object.hasOwn(envelope, 'workspaceId')
@@ -1137,6 +1243,7 @@ export class WsRpcServer implements RpcServer {
               prevClient.localBindingCandidate = localBindingCandidate
               if (principal) {
                 this.revalidateOperatorCeiling(prevClient)
+                await this.resumeAccessPolicy(prevClient)
                 this.refreshSubscription(prevClient)
               }
               prevClient.alive = true
@@ -1690,11 +1797,11 @@ export class WsRpcServer implements RpcServer {
   }
 
   /** Protocol-level errors only (handshake rejection, version mismatch). May close connection. */
-  private sendError(ws: WebSocket, id: string, code: ErrorCode, message: string): void {
+  private sendError(ws: WebSocket, id: string, code: ErrorCode, message: string, data?: unknown): void {
     const envelope: MessageEnvelope = {
       id,
       type: 'error',
-      error: { code, message },
+      error: data === undefined ? { code, message } : { code, message, data },
     }
     this.safeSend(ws, serializeEnvelope(envelope))
   }
