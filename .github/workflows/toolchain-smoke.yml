@@ -16,6 +16,9 @@ on:
       - '.github/workflows/toolchain-smoke.yml'
   workflow_dispatch:
 
+concurrency:
+  group: toolchain-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   toolchain-smoke-selfhosted:
     # Self-hosted linux runner — вне биллинг-блокировки
