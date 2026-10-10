@@ -8,4 +8,5 @@
 export * from './schemas.ts'
 export * from './types'
 export * from './plan'
+export * from './app-data'
 export * from './importers/types'
