@@ -14,7 +14,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { ServiceConnection, ServiceProvider } from '../../../shared/types'
-import { SettingsCard, SettingsRow, SettingsSection } from '@/components/settings'
+import { SettingsCard, SettingsRow, SettingsSection, SettingsSelect } from '@/components/settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { connectionAccountSubtitle, connectionProviderLabel } from '@/lib/connection-labels'
@@ -196,23 +196,15 @@ export function ConnectedAccountsSection({
               void handleConnect()
             }}
           >
-            <label className="space-y-1">
-              <span className="text-xs text-muted-foreground">
-                {t('settings.accounts.connectProviderField')}
-              </span>
-              <select
-                aria-label={t('settings.accounts.connectProviderField')}
-                className="h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm"
-                value={provider}
-                onChange={(e) => setProvider(e.target.value as ServiceProvider)}
-              >
-                {CONNECTABLE_PROVIDERS.map((candidate) => (
-                  <option key={candidate} value={candidate}>
-                    {connectionProviderLabel(candidate, t)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <SettingsSelect
+              label={t('settings.accounts.connectProviderField')}
+              value={provider}
+              onValueChange={(value) => setProvider(value as ServiceProvider)}
+              options={CONNECTABLE_PROVIDERS.map((candidate) => ({
+                value: candidate,
+                label: connectionProviderLabel(candidate, t),
+              }))}
+            />
             <label className="space-y-1">
               <span className="text-xs text-muted-foreground">
                 {t('settings.accounts.accountLabelField')}

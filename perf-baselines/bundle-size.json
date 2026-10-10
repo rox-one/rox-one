@@ -4,7 +4,7 @@
   "budgets": {
     "EntityPicker": {
       "totalRawBytes": 414236,
-      "gzipTotalBytes": 141131
+      "gzipTotalBytes": 141133
     },
     "MarkdownOpenUIBlock": {
       "totalRawBytes": 2278852,
@@ -63,8 +63,8 @@
       "gzipTotalBytes": 182770
     },
     "main": {
-      "totalRawBytes": 747238,
-      "gzipTotalBytes": 203187
+      "totalRawBytes": 747232,
+      "gzipTotalBytes": 203194
     },
     "pl": {
       "totalRawBytes": 673496,
@@ -72,11 +72,11 @@
     },
     "playground": {
       "totalRawBytes": 777357,
-      "gzipTotalBytes": 284623
+      "gzipTotalBytes": 284628
     },
     "project-authority": {
-      "totalRawBytes": 2769465,
-      "gzipTotalBytes": 720516
+      "totalRawBytes": 2768979,
+      "gzipTotalBytes": 720471
     },
     "ru": {
       "totalRawBytes": 907910,
@@ -110,8 +110,8 @@
     }
   },
   "totals": {
-    "jsRawBytes": 34330485,
-    "jsGzipBytes": 9266763,
+    "jsRawBytes": 34329957,
+    "jsGzipBytes": 9266752,
     "cssRawBytes": 804761,
     "cssGzipBytes": 122113
   }
