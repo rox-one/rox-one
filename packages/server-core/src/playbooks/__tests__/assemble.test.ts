@@ -160,5 +160,10 @@ describe('podcast duration probing', () => {
   it('never claims a probed timing when ffprobe is absent', async () => {
     expect(await probeDurations('ffprobe', ['/nonexistent-audio-file'], new AbortController().signal)).toBeNull()
   })
+
+  it('degrades to null when the probe binary cannot be spawned at all', async () => {
+    const run: ProcessRunner = async () => { throw Object.assign(new Error('spawn ffprobe ENOENT'), { code: 'ENOENT' }) }
+    expect(await probeDurations('ffprobe', ['a'], new AbortController().signal, run)).toBeNull()
+  })
 })
 
