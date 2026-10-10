@@ -8,7 +8,9 @@ const repository = resolve(root, '../../../../../../../..')
 // Retain the renderer's production aliases, package resolver, Tailwind plugin
 // and browser-safe node stubs. The real @rox/ui Markdown and the lazy OpenUI
 // chunk are compiled exactly as the app ships them — nothing is mocked.
-const production = rendererConfig as UserConfig
+// The renderer config is a factory (defineConfig(({ command }) => …)); call it
+// so the fixture keeps the full production alias/plugin set.
+const production: UserConfig = rendererConfig({ command: 'build', mode: 'production' })
 export default defineConfig({
   ...production,
   root,
