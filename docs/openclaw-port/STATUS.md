@@ -285,6 +285,10 @@ workspace.
   worktree (base `c0c1200db`) whose `SessionManager` retained-execution lookup is byte-identical — not caused by the
   port; they are the reason `bun test packages/server-core/src/sessions` is 290/4 rather than 294/0.
 
+- `packages/shared/src/agent/__tests__/omp-builtin-read-permissions.test.ts` is **load-sensitive**: repeated runs on
+  one host under varying load have produced 13/0, 10/3, 7/6 and 5/8 (2026-10-10), every failure a 15 s per-test
+  timeout on tests that normally take seconds. Treat a green here as "green when idle"; re-run before believing a red.
+
 ### What `run-gates.sh` does NOT cover
 
 The port's gate script runs **48** checks (it grew from 45 when wave 6 added the boot-manifest step) and deliberately
@@ -292,10 +296,11 @@ contains no repo-wide ratchets: the **UI-token ratchet**, the **ESLint workspace
 (`status-bar` accessibility). "Gates green" is therefore not "CI green".
 
 Live state of those CI-only gates (checked 2026-10-10, tip `61767183b`): `ui-lint-ratchet` and `eslint-workspaces`
-are **green** (both were red on `034f63d71`; #1786 fixed the process-global `react-i18next` mock leak that had
-re-broken UI-001's *component* step). **UI-001 recovery is still red on main**: its last run (`1843b6d30`, run
-38063381658) fails at the browser step `component-recovery :: Mounted NavigationProvider and browser history` with
-four deterministic session/route assertions, and `bundle-size` is red on the same two main runs (`1843b6d30`,
+are **green** (their last red runs were `38061296368` at `9ec645eec` and `38060953546` at `022335f7b`; at
+`034f63d71` every gate was cancelled). #1786 fixed the process-global `react-i18next` mock leak that had re-broken
+UI-001's *component* step. **UI-001 recovery is still red on main**: its last run (`1843b6d30`, run 38063381658)
+fails at the browser step `component-recovery :: Mounted NavigationProvider and browser history` with four
+deterministic session/route assertions, and `bundle-size` is red on the same two main runs (`1843b6d30`,
 `8a3ee9b18`). Those two are main-wide gates outside the port's scope — but they are not green, and a port report
 must not imply they are.
 
