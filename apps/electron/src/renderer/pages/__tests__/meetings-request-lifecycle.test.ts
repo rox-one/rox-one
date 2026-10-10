@@ -72,6 +72,7 @@ function fixture() {
       setLoadedWorkspaceId: () => {}, setMeetings: set('meetings'), setLoadState: set('load'), setEngine: set('engine'), setTranscriptText: set('transcripts'), setLocalSelectedId: set('selected'),
       setBanner: set('banner'), setPlanning: set('planning'), setPlanTitle: set('title'), setPlanAt: set('at'),
       setPlanningPending: set('planningPending'), setImportRequestId: set('importId'), setCancelingImport: set('canceling'),
+      setProposalRows: () => {}, setProposalLoad: () => {}, setProposalError: () => {}, setProposalPendingIds: () => {},
       setTab: set('tab'), selectMeeting: set('selected'), newLocalId: () => 'import-' + ++serial,
       upsert: (meeting: any) => { state.meetings = [...state.meetings.filter(item => item.id !== meeting.id), meeting] },
       startRecording: () => { recordCalls++; return record() }, t: () => 'Recorded', dayFmt: { format: () => '' }, timeFmt: { format: () => '' },

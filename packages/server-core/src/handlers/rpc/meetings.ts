@@ -136,6 +136,7 @@ export const MEETING_HANDLED_CHANNELS = [
   RPC_CHANNELS.meetings.DELETE,
   RPC_CHANNELS.meetings.CREATE,
   RPC_CHANNELS.meetings.CREATE_PROPOSAL,
+  RPC_CHANNELS.meetings.LIST_PROPOSALS,
   RPC_CHANNELS.meetings.APPROVE_PROPOSAL,
   RPC_CHANNELS.meetings.REJECT_PROPOSAL,
   RPC_CHANNELS.meetings.OPEN_TARGET,
@@ -271,6 +272,12 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
       return { proposal: created.proposal }
     },
   )
+  server.handle(RPC_CHANNELS.meetings.LIST_PROPOSALS, async (_ctx, workspaceId: string) => {
+    const persistRootDir = meetingPersistRoot(workspaceId)
+    if (!persistRootDir) return { proposals: [], error: { code: 'config-dir-required' } }
+    const store = storeFor(workspaceId)
+    return { proposals: store.items.filter((item) => item.workspaceId === workspaceId) }
+  })
   server.handle(RPC_CHANNELS.meetings.APPROVE_PROPOSAL, async (_ctx, workspaceId: string, proposalId: string, actorId: string, grant: MeetingGrant | null, payload: Record<string, unknown>) => {
     const persistRootDir = meetingPersistRoot(workspaceId)
     const store = storeFor(workspaceId)
