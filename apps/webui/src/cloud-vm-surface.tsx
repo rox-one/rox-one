@@ -13,8 +13,10 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { cloudVmStateMessageKey, probeCloudVmState, type CloudVmState } from './web-modes'
 import {
+  CLOUD_VM_REFRESH_MS,
   buildSubmitArgs,
   canCancelRun,
+  hasActiveRuns,
   runStateMessageKey,
   sortRunsNewestFirst,
   type CloudRunListItem,
@@ -85,6 +87,36 @@ export function CloudVmSurface({ host, onOpenRun, onGoToChat }: CloudVmSurfacePr
   React.useEffect(() => {
     void refresh()
   }, [refresh])
+
+  /**
+   * Silent background refresh used only by the auto-poll below: re-reads the
+   * list without toggling `listLoading` (no spinner flicker, buttons stay
+   * live) and without surfacing a poll error — a transient RPC blip keeps the
+   * last known rows instead of blanking them. Manual refresh still reports
+   * failures honestly.
+   */
+  const pollRuns = React.useCallback(async () => {
+    try {
+      const result = await host.listCloudRuns()
+      setRuns(sortRunsNewestFirst(result.runs))
+    } catch {
+      // Best-effort poll; keep the last known list.
+    }
+  }, [host])
+
+  // Auto-refresh the list while any run is still active, so progress is
+  // visible without pressing «Обновить». `hasActive` is a boolean, so a poll
+  // that only changes row data does not restart the 5 s timer; when the last
+  // active run reaches a terminal state the dependency flips and the cleanup
+  // clears the interval — the poll stops on its own.
+  const hasActive = hasActiveRuns(runs)
+  React.useEffect(() => {
+    if (cloud.status !== 'available' || !hasActive) return
+    const timer = window.setInterval(() => {
+      void pollRuns()
+    }, CLOUD_VM_REFRESH_MS)
+    return () => window.clearInterval(timer)
+  }, [cloud.status, hasActive, pollRuns])
 
   const submit = React.useCallback(async () => {
     const args = buildSubmitArgs(topic)
@@ -244,7 +276,7 @@ export function CloudVmSurface({ host, onOpenRun, onGoToChat }: CloudVmSurfacePr
                         {run.topic ?? run.name ?? run.id}
                       </p>
                       {progress && (
-                        <p className="text-xs text-text-muted">
+                        <p aria-live="polite" className="text-xs text-text-muted">
                           {progress.completed}/{progress.total}
                         </p>
                       )}
