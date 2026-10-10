@@ -13,7 +13,11 @@ import { createInstance, type i18n as I18n } from 'i18next'
 import { I18nextProvider } from 'react-i18next'
 import {
   EntityViewTabs,
+  EntityViewPlaceholder,
+  ENTITY_VIEW_LABEL_KEYS,
   defaultSessionEntityCapabilities,
+  defaultNoteEntityCapabilities,
+  defaultKnowledgeEntityCapabilities,
   type EntityViewId,
   type EntityViewTabsProps,
 } from '../EntityViewTabs'
@@ -34,7 +38,11 @@ beforeAll(async () => {
       'entityView.outline': 'Outline',
       'entityView.graph': 'Graph',
       'entityView.mindmapSiyuan': 'Mind map',
+      'entityView.mindmapKnowledge': 'Rox Notes map',
       'entityView.teamChat': 'Team chat',
+      'entityView.table': 'Table',
+      'entityView.canvas': 'Canvas',
+      'entityView.comingSoon': 'Coming soon',
     } } },
   })
 })
@@ -121,5 +129,39 @@ describe('EntityViewTabs delegates behaviour to the shared primitive', () => {
     })
     await act(async () => { tab(container, 'outline').click() })
     expect(changed).toEqual(['outline'])
+  })
+})
+
+// --- label keys are a single explicit source, never fabricated from the id ---
+
+const renderPlaceholder = (view: EntityViewId, labelKey?: string) =>
+  renderToStaticMarkup(
+    React.createElement(I18nextProvider, { i18n },
+      React.createElement(EntityViewPlaceholder, { view, ...(labelKey != null ? { labelKey } : {}) })),
+  )
+
+describe('EntityViewPlaceholder labels come from the capability key map', () => {
+  it('every capability labelKey is exactly ENTITY_VIEW_LABEL_KEYS[id]', () => {
+    // catches: a capability shipping a key the placeholder/id map does not know about.
+    const all = [
+      ...defaultSessionEntityCapabilities({ siyuanConnected: true }),
+      ...defaultNoteEntityCapabilities(),
+      ...defaultKnowledgeEntityCapabilities({ siyuanConnected: true }),
+    ]
+    for (const cap of all) {
+      expect(cap.labelKey).toBe(ENTITY_VIEW_LABEL_KEYS[cap.id])
+    }
+  })
+
+  it('placeholder resolves real keys for teamchat/mindmap instead of fabricating them', () => {
+    // catches: `entityView.${view}` regression — entityView.teamchat / entityView.mindmap do not exist.
+    expect(renderPlaceholder('teamchat')).toContain('Team chat')
+    expect(renderPlaceholder('teamchat')).not.toContain('entityView.teamchat')
+    expect(renderPlaceholder('mindmap')).toContain('Rox Notes map')
+    expect(renderPlaceholder('mindmap')).not.toContain('entityView.mindmap')
+  })
+
+  it('an explicit capability labelKey wins over the id default', () => {
+    expect(renderPlaceholder('teamchat', 'entityView.map')).toContain('Map')
   })
 })

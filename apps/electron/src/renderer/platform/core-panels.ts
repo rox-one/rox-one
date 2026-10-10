@@ -3,8 +3,14 @@
  *
  * W1 shipped an empty app registry — PanelHost was a no-op. This module
  * registers the first real contribution: Knowledge inspector, gated by
- * `activeSurface=='knowledge'`. Other slots stay empty on purpose
- * (KEEP_EXPERIMENTAL — see docs/unified-shell-verdict.md).
+ * `activeSurface=='knowledge' && unifiedShell`. Other slots stay empty on
+ * purpose (KEEP_EXPERIMENTAL — see docs/unified-shell-verdict.md).
+ *
+ * The `unifiedShell` key is injected by PanelHost from
+ * `featureUnifiedShellAtom` and MUST mirror the `!unifiedShellEnabled` gate
+ * KnowledgeEntityPage uses for its classic companion aside: flag OFF ⇒
+ * PanelHost contributes nothing (classic path untouched), flag ON ⇒
+ * PanelHost owns the single inspector.
  *
  * `render` is injected so listing tests stay React-free; PanelHost passes
  * `KnowledgeInspectorPanel` (real KnowledgeInspector, not a stub).
@@ -22,7 +28,7 @@ import { getAppPanelRegistry } from './panel-registry-state'
 
 export const KNOWLEDGE_INSPECTOR_PANEL_ID = 'knowledge.inspector'
 
-export const KNOWLEDGE_INSPECTOR_WHEN = "activeSurface=='knowledge'"
+export const KNOWLEDGE_INSPECTOR_WHEN = "activeSurface=='knowledge' && unifiedShell"
 
 export const SESSION_INSPECTOR_WHEN = "activeSurface=='session'"
 

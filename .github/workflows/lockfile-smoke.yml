@@ -16,6 +16,7 @@ on:
     paths:
       - 'bun.lock'
       - '**/package.json'
+      - '.github/workflows/lockfile-smoke.yml'
 
 concurrency:
   group: lockfile-smoke-${{ github.ref }}

@@ -16,6 +16,7 @@ import { toErrorMessage } from '@/lib/errors'
 import { RenameDialog } from '@/components/ui/rename-dialog'
 import { DriveQuotaMeter } from './drive/DriveQuotaMeter'
 import { DriveActionTiles } from './drive/DriveActionTiles'
+import { DriveAppDataSection } from './drive/DriveAppDataSection'
 import { BackupChooser } from './drive/BackupChooser'
 import { ImportFlowDialog } from './drive/ImportFlowDialog'
 import { DriveFileList, type DriveFileUploadProgress } from './drive/DriveFileList'
@@ -135,6 +136,8 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
           setImportOpen(true)
         }}
       />
+
+      <DriveAppDataSection onOpenBackup={() => setBackupOpen(true)} />
 
       <ImportFlowDialog
         open={importOpen}
