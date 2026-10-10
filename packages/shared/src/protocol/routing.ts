@@ -629,6 +629,11 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.drive.IMPORT_STATUS,
   RPC_CHANNELS.drive.IMPORT_AUTH_START,
   RPC_CHANNELS.drive.IMPORT_AUTH_COMPLETE,
+  // R13 — app-config mirror (catalog, journal and bytes are host-local).
+  RPC_CHANNELS.drive.MIRROR_STATUS,
+  RPC_CHANNELS.drive.MIRROR_START,
+  RPC_CHANNELS.drive.MIRROR_PAUSE,
+  RPC_CHANNELS.drive.MIRROR_CANCEL,
   RPC_CHANNELS.tgLink.START,
   RPC_CHANNELS.tgLink.VERIFY,
   RPC_CHANNELS.tgLink.STATUS,

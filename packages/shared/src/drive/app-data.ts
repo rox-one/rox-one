@@ -17,18 +17,20 @@
  *    Изображения / Рабочий стол / Скриншоты) can be copied into ROX Drive on
  *    demand through `BackupChooser` (`drive:scanSource` → upload queue).
  *    Nothing runs automatically.
- *  - `app-config` — the app's own config directory (`packages/shared/src/config/env.ts`,
- *    workspaces, chat sessions, settings, Keeper vault) is NOT mirrored into
- *    ROX Drive: no engine exists yet. This is the honest remaining gap of R13.
+ *  - `app-config` — the app's own config directory (settings, workspaces, chat
+ *    sessions, Keeper vault) can be mirrored into ROX Drive on demand through
+ *    the R13 mirror engine (`apps/electron/src/main/drive/mirror.ts` →
+ *    `drive:mirror*`). Nothing runs automatically: the engine only exists when
+ *    the host has an S3 destination configured (`ROX_DRIVE_S3_*`).
  */
 
 /** How (or whether) a slice of app data reaches ROX Drive today. */
 export type DriveAppDataStatus =
   /** Stored in ROX Drive whenever the user adds it. */
   | 'in-drive'
-  /** Not stored yet, but the user can copy it in on demand. */
+  /** Not stored yet, but the user can copy or mirror it in on demand. */
   | 'on-demand'
-  /** Not stored, and no engine exists to do so. */
+  /** Not stored, and no engine exists to do so. No entry uses this today. */
   | 'not-backed-up'
 
 export interface DriveAppDataEntry {
@@ -69,7 +71,7 @@ export const DRIVE_APP_DATA_ENTRIES: readonly DriveAppDataEntry[] = [
   },
   {
     id: 'app-config',
-    status: 'not-backed-up',
+    status: 'on-demand',
     titleKey: 'drive.appData.entry.appConfig.title',
     detailKey: 'drive.appData.entry.appConfig.detail',
   },
