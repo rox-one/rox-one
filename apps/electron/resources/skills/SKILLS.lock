@@ -153,6 +153,17 @@
       ]
     },
     {
+      "slug": "keeper",
+      "origin": "bundled",
+      "commit": "local",
+      "license": "MIT",
+      "licenseFile": null,
+      "note": "First-party ROX Keeper skill: agent-facing guidance for the local secret vault (session MCP tool + `craft-cli keeper`), mask-by-default projections with an explicit two-factor reveal gate (ROX_KEEPER_ALLOW_REVEAL + --reveal).",
+      "skills": [
+        "keeper"
+      ]
+    },
+    {
       "slug": "impeccable",
       "origin": "https://github.com/pbakaus/impeccable",
       "commit": "e103efe779e2dd01274dabae83531fef00bf2563",

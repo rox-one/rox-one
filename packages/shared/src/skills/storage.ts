@@ -22,7 +22,7 @@ import type { LoadedSkill, SkillMetadata, SkillRequires, SkillSource } from './t
 import { readSkillInstructions } from './read-instructions.ts';
 import { listOmpSkills, OMP_GLOBAL_SKILLS_DIR, OMP_SHARED_SKILLS_DIR, OMP_WORKSPACE_SKILLS_DIR } from './omp-discovery.ts';
 import { getWorkspaceSkillsPath } from '../workspaces/storage.ts';
-import { getEnv, resolveConfigDir } from '../config/paths.ts';
+import { resolveConfigDir } from '../config/paths.ts';
 import { getBundledSkillsDisabled } from '../config/storage.ts';
 import { SLUG_RE } from '../tasks/schema.ts';
 import { chooseManagedSkillName, isInsideSkillStore, isSafeSkillName } from './managed.ts';
@@ -49,13 +49,29 @@ export const APP_MANAGED_SKILLS_DIR = join(resolveConfigDir(), 'skills');
  *
  * Ambient links target `~/.agents/skills` and are a PRIMARY-install feature: a
  * normally launched app mirrors its skills into the user's external agent
- * catalog. An explicitly overridden config root (`ROX_CONFIG_DIR` /
- * `CRAFT_CONFIG_DIR`) isolates the instance — benches, e2e runs, dev
- * instances — and MUST never publish links there. Callers that pass an
- * explicit `linksRoot` are unaffected: this only decides the ambient default.
+ * catalog. Isolation is a RESOLVED LOCATION, not the presence of an override:
+ * this instance is isolated only when its config root — as resolved by
+ * `resolveConfigDir()` — differs from the root a plain launch of this install
+ * would use. An override that merely pins that same root (the app's own
+ * supervised service sets `ROX_CONFIG_DIR` to it) therefore keeps publishing
+ * links; an override rooted anywhere else — benches, e2e runs, dev instances —
+ * gets null and MUST never publish into the shared home. Both sides are
+ * `~`-expanded and resolved before comparison, so a trailing slash, a `.`/`..`
+ * segment or a `~/` spelling of one directory all compare equal; a relative
+ * spelling resolves against the working directory exactly as every other use
+ * of the configured root does, so it can never match the absolute default
+ * root. The default side is resolved by the same resolver with the config-dir
+ * override removed, so it also runs that resolver's ordinary
+ * import-on-first-use path. Callers that pass an explicit `linksRoot` are
+ * unaffected: this only decides the ambient default.
  */
 export function ambientSkillLinksRoot(): string | null {
-  return getEnv('CONFIG_DIR') ? null : GLOBAL_AGENT_SKILLS_DIR;
+  const [resolved, defaultRoot] = [
+    resolveConfigDir(),
+    // The root a plain launch of this install would use, with the override removed.
+    resolveConfigDir({ ...process.env, ROX_CONFIG_DIR: undefined, CRAFT_CONFIG_DIR: undefined }),
+  ].map((root) => resolve(root === '~' ? homedir() : root.startsWith('~/') ? join(homedir(), root.slice(2)) : root));
+  return resolved === defaultRoot ? GLOBAL_AGENT_SKILLS_DIR : null;
 }
 
 /** Project-level agent skills relative directory name */
