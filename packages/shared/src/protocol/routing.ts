@@ -373,6 +373,11 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.calendar.GOOGLE_CONNECT,
   RPC_CHANNELS.calendar.GOOGLE_DISCONNECT,
   RPC_CHANNELS.calendar.GOOGLE_SYNC,
+  // calendar — Apple EventKit helper + local sync run inside the Electron host
+  RPC_CHANNELS.calendar.APPLE_STATUS,
+  RPC_CHANNELS.calendar.APPLE_CONNECT,
+  RPC_CHANNELS.calendar.APPLE_DISCONNECT,
+  RPC_CHANNELS.calendar.APPLE_SYNC,
   // meet — Google Meet artifacts share the local OAuth broker + credential
   // manager with the calendar connector (wave 5, row d2.6).
   RPC_CHANNELS.meet.SPACE,

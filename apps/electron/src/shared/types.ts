@@ -454,6 +454,11 @@ import type { SecretRefEntry, SecretRefsSettingsPayload, InfisicalAccountPreview
 export type { SecretRefEntry, SecretRefsSettingsPayload, InfisicalAccountPreview, InfisicalAccountPreviewInput };
 import type { ZenShellSnapshot } from './shell-appearance';
 import type { ListDocTreeResult } from '@rox/core/knowledge/providers/siyuan';
+import type {
+  AppleCalendarStatus,
+  AppleConnectResult,
+  AppleSyncResult,
+} from '@rox/server-core/handlers/rpc/calendar-apple';
 
 /**
  * Keeper («Секреты») Infisical item/folder contracts. Secret values cross to the
@@ -2477,6 +2482,10 @@ export interface ElectronAPI {
     code?: 'CALENDAR_AUTH_EXPIRED' | 'CALENDAR_NOT_CONNECTED'
     error?: string
   }>
+  appleCalendarStatus(): Promise<AppleCalendarStatus>
+  connectAppleCalendar(): Promise<AppleConnectResult>
+  appleCalendarDisconnect(): Promise<{ success: boolean }>
+  appleCalendarSync(): Promise<AppleSyncResult>
 
   // Google Meet artifacts (row d2.6) — read-only Developer-Preview surface.
   // Every call refuses typed (PREVIEW_NOT_ACKNOWLEDGED) until the host
