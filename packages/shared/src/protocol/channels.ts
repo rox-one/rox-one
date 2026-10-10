@@ -430,10 +430,7 @@ export const RPC_CHANNELS = {
   menu: {
     NEW_CHAT: 'menu:newChat',
     OPEN_DASHBOARD: 'menu:openDashboard',
-    OPEN_NATIVE_CONSOLE: 'menu:openNativeConsole',
-    SHOW_SERVICE_STATUS: 'menu:showServiceStatus',
     RUN_DOCTOR: 'menu:runDoctor',
-    TRAY_STATUS_CHANGED: 'menu:trayStatusChanged',
     NEW_WINDOW: 'menu:newWindow',
     OPEN_SETTINGS: 'menu:openSettings',
     KEYBOARD_SHORTCUTS: 'menu:keyboardShortcuts',

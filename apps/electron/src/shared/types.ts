@@ -89,7 +89,6 @@ import type {
   DoctorReport,
   ServiceLifecycleResult,
   ServiceStatus,
-  TrayStatus,
 } from '@rox/shared/service-lifecycle'
 import type { OrgMember, OrgInvite, OrgRole } from '@rox/shared/orgs'
 import type {
@@ -1881,8 +1880,10 @@ export interface ElectronAPI {
   onMenuToggleSidebar(callback: () => void): () => void
   onMenuToggleInspector(callback: () => void): () => void
   onMenuToggleChatPictureInPicture(callback: () => void): () => void
-  /** e2.1: tray/menu service+agent status push. */
-  onMenuTrayStatusChanged(callback: (status: TrayStatus) => void): () => void
+  /** e2.1: tray "Open dashboard" navigation. */
+  onMenuOpenDashboard(callback: () => void): () => void
+  /** e2.1: tray "Run diagnostics" — the consumer runs the host doctor. */
+  onMenuRunDoctor(callback: () => void): () => void
 
   // Deep link navigation listener (for external craftagents:// URLs)
   onDeepLinkNavigate(callback: (nav: DeepLinkNavigation) => void): () => void
