@@ -5,7 +5,7 @@ import { useModalRegistry } from '../../../context/ModalContext'
 import { useDismissibleLayerRegistry } from '../../../context/DismissibleLayerContext'
 import { measureTourTargetGeometry, type TargetGeometry } from './geometry'
 import { observeTargetGeometry } from './geometry-observer'
-import { TourPopover } from './TourPopover'
+import { TourPopover, type TourProgressCounter } from './TourPopover'
 
 export interface SpotlightOverlayProps {
   readonly target: TourTargetRegistration
@@ -20,6 +20,10 @@ export interface SpotlightOverlayProps {
   readonly onHandoffChange?: (open: boolean) => void
   readonly canNext?: boolean
   readonly returnFocus?: HTMLElement | null
+  /** Demo mode (D10): pulse the target border. */
+  readonly pulse?: boolean
+  /** "Step N of M" counter; omitted for definitions without an ordered run. */
+  readonly progress?: TourProgressCounter
 }
 
 function sameGeometry(a: TargetGeometry | null, b: TargetGeometry | null) {
@@ -29,7 +33,7 @@ function sameGeometry(a: TargetGeometry | null, b: TargetGeometry | null) {
 }
 
 /** Decorative mask and interactive non-modal popup share one portal and the existing close registries. */
-export function SpotlightOverlay({ target, step, binding, open = true, onPause, onNext, onBack, onSkip, onDismiss, onHandoffChange, canNext, returnFocus }: SpotlightOverlayProps) {
+export function SpotlightOverlay({ target, step, binding, open = true, onPause, onNext, onBack, onSkip, onDismiss, onHandoffChange, canNext, returnFocus, pulse, progress }: SpotlightOverlayProps) {
   const modals = useModalRegistry()
   const layers = useDismissibleLayerRegistry()
   const modalSnapshot = useSyncExternalStore(modals.subscribe, modals.getSnapshot, modals.getSnapshot)
@@ -100,10 +104,11 @@ export function SpotlightOverlay({ target, step, binding, open = true, onPause, 
         <div className="fixed inset-0 z-popover pointer-events-none" aria-hidden="true" data-product-tour-overlay="">
           <svg className="h-full w-full" data-product-tour-mask="" aria-hidden="true">
             <path fill="black" fillOpacity="0.4" fillRule="evenodd" d={`M0 0H${geometry.viewport.width}V${geometry.viewport.height}H0Z M${hole.left} ${hole.top}H${hole.right}V${hole.bottom}H${hole.left}Z`} />
+            {pulse && <rect className="tour-target-pulse motion-reduce:animate-none" data-product-tour-pulse="" x={hole.left} y={hole.top} width={hole.width} height={hole.height} rx={8} fill="none" stroke="currentColor" strokeWidth={2} />}
             <rect x={hole.left} y={hole.top} width={hole.width} height={hole.height} rx={8} fill="none" stroke="currentColor" strokeOpacity={0.35} strokeWidth={1} />
           </svg>
         </div>
-        <TourPopover ref={popupRef} target={target} step={step} binding={binding} geometry={geometry} onPause={() => onPause('user-paused')} onNext={onNext} onBack={onBack} onSkip={onSkip} onDismiss={onDismiss} canNext={canNext} />
+        <TourPopover ref={popupRef} target={target} step={step} binding={binding} geometry={geometry} progress={progress} onPause={() => onPause('user-paused')} onNext={onNext} onBack={onBack} onSkip={onSkip} onDismiss={onDismiss} canNext={canNext} />
         </div>
       </Popover.Portal>
     </Popover.Root>

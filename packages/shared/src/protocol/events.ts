@@ -26,6 +26,8 @@ import type {
   SiyuanSurfaceState,
   ExtensionSurfaceState,
   SessionsBulkChangedEvent,
+  ShellActionPayload,
+  SystemAccentSnapshot,
 } from './dto'
 import type { ExtensionsChangedPayload } from '../extensions/types'
 import type { CommandBusPushEvent } from '../commands/push'
@@ -37,6 +39,9 @@ import type { TalkEvent } from '../voice/talk-events.ts'
 import type { TtsStreamChunk } from '../voice/tts/streaming.ts'
 import type { RealtimeTranscriptionEvent } from '../voice/realtime-transcription.ts'
 import type { VoiceWakeChangedPayload, VoiceWakeTrigger } from '../voice/wake-list.ts'
+import type { PodcastJob } from '../voice/podcast-job.ts'
+import type { CodebookJob } from '../playbooks/codebook.ts'
+import type { DevSpaceCloneProgress, DevSpaceRepositoryStatus, DevSpaceRunProgress } from '../dev-space/types.ts'
 import type { EnvironmentPrefs } from '../environment'
 import type { PrivacyDto } from '../privacy/types.ts'
 import type { ServiceStatus, TrayStatus } from '../service-lifecycle.ts'
@@ -97,6 +102,10 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.projects.CHANGED]: [workspaceId: string, projects: LoadedProject[]]
   [RPC_CHANNELS.pages.CHANGED]: [workspaceId: string, pages: LoadedPage[]]
   [RPC_CHANNELS.kanban.CHANGED]: [workspaceId: string, config: KanbanBoardConfig]
+  // Wave 3 — workboard + board widget pushes. Payload-only (mirrors the
+  // feed/personalTasks changed events): the receiver re-reads by revision.
+  [RPC_CHANNELS.workboard.CHANGED]: [payload: { revision: number }]
+  [RPC_CHANNELS.board.CHANGED]: [payload: { widgetId: string; revision: number }]
   [RPC_CHANNELS.personalTasks.CHANGED]: [payload: { at: number }]
   [RPC_CHANNELS.feed.CHANGED]: [payload: { at: number }]
   [RPC_CHANNELS.collection.CHANGED]: [workspaceId: string, display: CollectionDisplay]
@@ -130,12 +139,23 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.voice.TRIGGER]: [payload: VoiceWakeTrigger]
   [RPC_CHANNELS.environment.CHANGED]: [payload: EnvironmentPrefs]
 
+  // Developer Space (02-SPEC-foundations §5–§6) — repository + run push (local-only).
+  [RPC_CHANNELS.devSpace.CLONE_PROGRESS]: [payload: DevSpaceCloneProgress]
+  [RPC_CHANNELS.devSpace.CHANGED]: [payload: { repositoryId: string; status: DevSpaceRepositoryStatus }]
+  [RPC_CHANNELS.devSpace.RUN_PROGRESS]: [payload: DevSpaceRunProgress]
+  [RPC_CHANNELS.devSpace.SOFT_SIGNAL]: [payload: { kind: 'repo-link-pasted' | 'git-detected' }]
+  // Podcast generation (D13) — replaces `voice:job` for the podcast flow.
+  [RPC_CHANNELS.podcast.JOB]: [payload: PodcastJob]
+  // Codebook notebook run (D12, В5) — per-cell progress with a monotonic seq.
+  [RPC_CHANNELS.playbooks.CODEBOOK_JOB]: [payload: CodebookJob]
+
   // Theme broadcasts (global)
   [RPC_CHANNELS.appearance.SHELL_CHANGED]: [snapshot: {
     flag: 'shell.zen.v1'
     enabled: boolean
     preference: 'system' | 'glass' | 'opaque'
     material: 'vibrancy' | 'mica' | 'solid'
+    materialDepth: 'light' | 'standard' | 'deep'
     platform: 'darwin' | 'win32' | 'linux' | 'web'
     fallbackReason?: string
   }]
@@ -143,6 +163,8 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.theme.SYSTEM_CHANGED]: [isDark: boolean]
   [RPC_CHANNELS.theme.PREFERENCES_CHANGED]: [preferences: { mode: string; colorTheme: string; font: string }]
   [RPC_CHANNELS.theme.WORKSPACE_THEME_CHANGED]: [data: { workspaceId: string; themeId: string | null }]
+  // B10 — macOS system accent colour change (device-local, global).
+  [RPC_CHANNELS.appearance.ACCENT_CHANGED]: [accent: SystemAccentSnapshot]
 
   // Update broadcasts (global)
   [RPC_CHANNELS.update.AVAILABLE]: [info: UpdateInfo]
@@ -198,6 +220,10 @@ export interface BroadcastEventMap {
   // Navigation events (per-window)
   [RPC_CHANNELS.notification.NAVIGATE]: [data: { workspaceId: string; sessionId: string }]
   [RPC_CHANNELS.deeplink.NAVIGATE]: [navigation: DeepLinkNavigation]
+
+  // Native shell affordances (dock menu, tray, app menu, notification click) —
+  // main pushes one structured action to the focused (or first) window.
+  [RPC_CHANNELS.shell.ACTION]: [payload: ShellActionPayload]
 
   // Copilot device code event
   [RPC_CHANNELS.copilot.DEVICE_CODE]: [data: { userCode: string; verificationUri: string }]

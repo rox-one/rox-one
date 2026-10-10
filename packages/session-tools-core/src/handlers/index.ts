@@ -102,9 +102,19 @@ export {
 export { handleMemorySearch, MEMORY_SEARCH_MAX_LIMIT } from './memory-search.ts';
 export { handleMemoryGet } from './memory-get.ts';
 export { handleMemoryForget, MEMORY_FORGET_MAX_IDS } from './memory-forget.ts';
+// Workspace wiki tools (c1.7; read-only search/get + mutating apply)
+export { handleWikiSearch, WIKI_SEARCH_MAX_LIMIT } from './wiki-search.ts';
+export { handleWikiGet } from './wiki-get.ts';
+export { handleWikiApply } from './wiki-apply.ts';
 // Skills catalog tools (c2.7; read-only over the registered skills runtime)
 export { handleSkillsSearch, SKILLS_SEARCH_MAX_LIMIT } from './skills-search.ts';
 export { handleSkillsRead, SKILLS_READ_MAX_CHARS } from './skills-read.ts';
+
+// Developer Space tools (spec 02 §9; artifact reads + propose via the registered
+// dev-space runtime — propose only ever drafts, it never applies)
+export { handleDevSpaceRead, DEVSPACE_READ_MAX_CONTENT_CHARS } from './dev-space-read.ts';
+export { handleDevSpaceSearch, DEVSPACE_SEARCH_MAX_LIMIT } from './dev-space-search.ts';
+export { handleDevSpacePropose, parseDevSpaceProposeOps } from './dev-space-propose.ts';
 
 // Pages
 export {
@@ -123,3 +133,7 @@ export type {
   WritePageDataArgs,
   DeletePageArgs,
 } from './pages.ts';
+
+// Board widgets
+export { handleShowWidget } from './show-widget.ts';
+export type { ShowWidgetArgs } from './show-widget.ts';

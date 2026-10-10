@@ -200,6 +200,16 @@ export const routes = {
     /** Learning view (learning navigator — self-learning dashboard, PRD §25-30) */
     learning: () => 'learning' as const,
 
+/**
+     * Developer Space home (2026-10-09 pack, D2) — `developers`, or
+     * `developers?repo=<id>` to focus one repo workspace.
+     */
+    developers: (repoId?: string) =>
+      `developers${toQueryString(repoId ? { repo: repoId } : undefined)}` as const,
+
+    /** Playbooks notebook surface (2026-10-09 pack, D12) — `playbooks`. */
+    playbooks: () => 'playbooks' as const,
+
     /** ROX Drive (wave 1) — `drive[/folder/{folderId}]` local-first storage. */
     drive: (folderId?: string) =>
       folderId ? `drive/folder/${encodeURIComponent(folderId)}` as const : 'drive' as const,

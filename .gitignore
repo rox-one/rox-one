@@ -102,3 +102,6 @@ work/test-all/
 # Local scratch space and Playwright/browser-test output
 .scratch/
 test-results/
+
+# Visual-capture artifacts (bun run visual:capture; hashes live in visual-baselines.json)
+.visual-artifacts/

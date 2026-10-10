@@ -50,6 +50,24 @@ function resolve(value: string, scope: Record<string, string>, depth = 0): strin
   })
 }
 
+/**
+ * Numeric value of a z-index expression. Token substitution happens first, so
+ * `calc(var(--z-base) - 1)` reduces to `calc(0 - 1)`; the sum is then evaluated
+ * so a token-derived value is judged by the same layer-set rule as a literal.
+ */
+function numeric(value: string, scope: Record<string, string>): number {
+  const resolved = resolve(value, scope).trim()
+  const calc = resolved.match(/^calc\((.*)\)$/)
+  if (!calc) return Number(resolved)
+  let total = 0
+  for (const term of calc[1]!.split(/(?=[+-])/)) {
+    const n = Number(term.replace(/[()\s]/g, ''))
+    if (!Number.isFinite(n)) throw new Error(`unsupported calc term "${term}" in ${value}`)
+    total += n
+  }
+  return total
+}
+
 const px = (v: string) => {
   const m = v.trim().match(/^(-?\d+(?:\.\d+)?)px$/)
   if (!m) throw new Error(`not a px value: ${v}`)
@@ -57,7 +75,7 @@ const px = (v: string) => {
 }
 
 const LAYERS = [
-  'base', 'raised', 'sticky', 'chrome', 'sash', 'popover', 'scrim', 'modal',
+  'base', 'raised', 'sticky', 'chrome', 'sash', 'tour-vignette', 'popover', 'scrim', 'modal',
   'toast', 'fullscreen', 'menu-backdrop', 'island', 'island-popover', 'tooltip', 'splash',
 ] as const
 
@@ -164,7 +182,7 @@ describe('token foundation v2: z layers', () => {
     const root = rootOf(token('z.css'))
     const values = Object.fromEntries(LAYERS.map((l) => [l, Number(resolve(root[`--z-${l}`]!, root))]))
     expect(values).toEqual({
-      base: 0, raised: 1, sticky: 10, chrome: 20, sash: 30, popover: 100, scrim: 200, modal: 210,
+      base: 0, raised: 1, sticky: 10, chrome: 20, sash: 30, 'tour-vignette': 90, popover: 100, scrim: 200, modal: 210,
       toast: 300, fullscreen: 350, 'menu-backdrop': 390, island: 400, 'island-popover': 410, tooltip: 450, splash: 600,
     })
     const ordered = LAYERS.map((l) => values[l]!)
@@ -182,9 +200,10 @@ describe('token foundation v2: z layers', () => {
     // Literal z-index declarations in the shared and renderer CSS use the layer set.
     for (const css of [indexCss, rendererCss]) {
       for (const m of stripComments(css).matchAll(/z-index:\s*([^;]+);/g)) {
-        const value = m[1]!.trim()
-        if (/^-\d+$/.test(value)) continue // behind-content pseudo layers (scenic wallpaper)
-        expect(layerValues.has(Number(resolve(value, root))), `z-index: ${value}`).toBe(true)
+        const raw = m[1]!.trim()
+        const value = numeric(raw, root)
+        if (value < 0) continue // behind-content pseudo layers (scenic wallpaper)
+        expect(layerValues.has(value), `z-index: ${raw} = ${value}`).toBe(true)
       }
     }
   })

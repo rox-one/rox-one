@@ -30,6 +30,40 @@ The run table has a `skills inline` column: it shows the time of the
 `main:skills-sync:inline` mark when the merge fell back to the main thread
 (worker script missing or crashed). On a healthy build it is empty.
 
+## Warm-up probe (PERF-10, `perf:warmup-probe`)
+
+`warmup-heap-probe.ts` launches the built app like the startup bench, waits for
+`window.__roxWarmup()` (the `shell-warmup.ts` diagnostics hook) to report a
+terminal queue state, and prints **one** JSON document:
+
+| field | meaning |
+|---|---|
+| `cpuMs` | idle CPU the queue spent (`≤ 1.5 s`) |
+| `longestSliceMs` | longest idle slice (`≤ 50 ms`) |
+| `heapDeltaMb` | renderer V8 heap growth — `Runtime.getHeapUsage` after `HeapProfiler.collectGarbage` over the CDP session, else `performance.memory` (`≤ 25 MB`) |
+| `longTasks` | `longtask` PerformanceObserver summary; `over50Ms` is the criterion |
+| `retainedSurfaces` | mounted keep-alive panes when the queue settled |
+| `probeOk`, `note` | whether the measurement completed, with every boundary spelled out |
+
+```sh
+bun run electron:build
+bun run perf:warmup-probe -- --out warmup-probe.json       # report only
+bun run perf:warmup-probe -- --profile /tmp/rox-profile    # reused (warm) profile
+# Linux: wrap in `xvfb-run -a`.
+```
+
+Flags: `--out <path>`, `--main <path>`, `--timeout <ms>`, `--profile <dir>`,
+`--attempts N` (default 2 — a first-run profile has no workspace to warm, so the
+second launch on the same profile is the one measured). The probe exits 1
+whenever it could not measure: a missing `dist/main.cjs`, a renderer without the
+hook (stale build), or a queue that never settles. It prints the JSON and the
+reason on stderr either way. The CI job (`warmup-probe`) is report-only
+(`continue-on-error: true`) and archives `warmup-probe.json`.
+
+Boundaries: the heap is the renderer's JS heap only (DOM/C++ and the main
+process are not counted) and `longTasks` covers the measured window's renderer
+from the observer install onwards.
+
 ## Dev / unstamped bundles: fingerprint walk
 
 `bun run electron:build` (via `electron:build:resources`) writes

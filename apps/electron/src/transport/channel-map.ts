@@ -8,8 +8,8 @@
 import { RPC_CHANNELS } from '../shared/types'
 import type { ChannelMap } from './build-api'
 
-function invoke(channel: string, transform?: (result: any) => any) {
-  return { type: 'invoke' as const, channel, ...(transform && { transform }) }
+function invoke(channel: string, transform?: (result: any) => any, timeoutMs?: number) {
+  return { type: 'invoke' as const, channel, ...(transform && { transform }), ...(timeoutMs !== undefined && { timeoutMs }) }
 }
 
 function listener(channel: string) {
@@ -137,6 +137,9 @@ export const CHANNEL_MAP = {
   setMemoryMode: invoke(RPC_CHANNELS.sessions.SET_MEMORY_MODE),
   getSessionProvenance: invoke(RPC_CHANNELS.sessions.GET_PROVENANCE),
   assignSessionOwner: invoke(RPC_CHANNELS.sessions.ASSIGN_OWNER),
+  listSessionSuggestions: invoke(RPC_CHANNELS.sessions.SUGGEST_LIST),
+  addSessionSuggestion: invoke(RPC_CHANNELS.sessions.SUGGEST_ADD),
+  resolveSessionSuggestion: invoke(RPC_CHANNELS.sessions.SUGGEST_RESOLVE),
 
   // Event listeners
   onSessionEvent: listener(RPC_CHANNELS.sessions.EVENT),
@@ -335,6 +338,9 @@ export const CHANNEL_MAP = {
   extensionHostProxyFetch: invoke(RPC_CHANNELS.extensionHost.PROXY_FETCH),
   extensionHostGetUrlAllowlist: invoke(RPC_CHANNELS.extensionHost.GET_URL_ALLOWLIST),
   extensionHostSetUrlAllowlist: invoke(RPC_CHANNELS.extensionHost.SET_URL_ALLOWLIST),
+  extensionHostListDescriptors: invoke(RPC_CHANNELS.extensionHost.LIST_DESCRIPTORS),
+  extensionHostActivate: invoke(RPC_CHANNELS.extensionHost.ACTIVATE),
+  extensionHostReload: invoke(RPC_CHANNELS.extensionHost.RELOAD),
 
   // Onboarding
   getAuthState: invoke(RPC_CHANNELS.onboarding.GET_AUTH_STATE),
@@ -425,6 +431,22 @@ export const CHANNEL_MAP = {
   readProjectRepositorySpan: invoke(RPC_CHANNELS.codeIntelligence.READ_SPAN),
   checkProjectRepositoryFreshness: invoke(RPC_CHANNELS.codeIntelligence.FRESHNESS),
   cancelProjectRepositoryRequest: invoke(RPC_CHANNELS.codeIntelligence.CANCEL),
+  // Developer Space (02-SPEC-foundations §4–§8) — repository catalog + local job pipeline.
+  listDevSpaceRepositories: invoke(RPC_CHANNELS.devSpace.LIST_REPOSITORIES),
+  addDevSpaceRepository: invoke(RPC_CHANNELS.devSpace.ADD_REPOSITORY),
+  startDevSpaceClone: invoke(RPC_CHANNELS.devSpace.START_CLONE),
+  removeDevSpaceRepository: invoke(RPC_CHANNELS.devSpace.REMOVE_REPOSITORY),
+  refreshDevSpaceRepository: invoke(RPC_CHANNELS.devSpace.REFRESH_REPOSITORY),
+  cancelDevSpaceRequest: invoke(RPC_CHANNELS.devSpace.CANCEL),
+  getDevSpaceCapabilities: invoke(RPC_CHANNELS.devSpace.CAPABILITIES),
+  listDevSpaceRuns: invoke(RPC_CHANNELS.devSpace.LIST_RUNS),
+  startDevSpaceRun: invoke(RPC_CHANNELS.devSpace.START_RUN),
+  listDevSpaceArtifacts: invoke(RPC_CHANNELS.devSpace.LIST_ARTIFACTS),
+  readDevSpaceArtifact: invoke(RPC_CHANNELS.devSpace.READ_ARTIFACT),
+  generateDevSpaceQuestions: invoke(RPC_CHANNELS.devSpace.GENERATE_QUESTIONS),
+  onDevSpaceCloneProgress: listener(RPC_CHANNELS.devSpace.CLONE_PROGRESS),
+  onDevSpaceChanged: listener(RPC_CHANNELS.devSpace.CHANGED),
+  onDevSpaceRunProgress: listener(RPC_CHANNELS.devSpace.RUN_PROGRESS),
   listNotes: invoke(RPC_CHANNELS.notes.LIST),
   readNote: invoke(RPC_CHANNELS.notes.READ),
   saveNote: invoke(RPC_CHANNELS.notes.SAVE),
@@ -623,6 +645,18 @@ export const CHANNEL_MAP = {
   processVoiceTranscript: invoke(RPC_CHANNELS.voice.PROCESS),
   listVoiceModels: invoke(RPC_CHANNELS.voice.MODELS_LIST),
   onVoiceJob: listener(RPC_CHANNELS.voice.JOB),
+  // Podcast (D13) — local generation job; progress rides the podcast:job push.
+  startPodcast: invoke(RPC_CHANNELS.podcast.START),
+  cancelPodcast: invoke(RPC_CHANNELS.podcast.CANCEL),
+  podcastEpisodes: invoke(RPC_CHANNELS.podcast.EPISODES),
+  readPodcastEpisodeAudio: invoke(RPC_CHANNELS.podcast.AUDIO),
+  podcastEpisodeAudioUrl: invoke(RPC_CHANNELS.podcast.AUDIO_URL),
+  onPodcastJob: listener(RPC_CHANNELS.podcast.JOB),
+  // Playbooks codebook (В5, D12) — local notebook run; progress rides the playbooks:codebookJob push.
+  runCodebook: invoke(RPC_CHANNELS.playbooks.RUN_CODEBOOK),
+  cancelCodebook: invoke(RPC_CHANNELS.playbooks.CANCEL_CODEBOOK),
+  listCodebookRuns: invoke(RPC_CHANNELS.playbooks.CODEBOOK_RUNS),
+  onCodebookJob: listener(RPC_CHANNELS.playbooks.CODEBOOK_JOB),
   onVoiceOverlay: listener(RPC_CHANNELS.voice.OVERLAY),
   onVoiceHotkey: listener(RPC_CHANNELS.voice.HOTKEY),
   talkStart: invoke(RPC_CHANNELS.voice.TALK_START),
@@ -691,6 +725,16 @@ export const CHANNEL_MAP = {
   googleCalendarDisconnect: invoke(RPC_CHANNELS.calendar.GOOGLE_DISCONNECT),
   googleCalendarSync: invoke(RPC_CHANNELS.calendar.GOOGLE_SYNC),
 
+  // Google Meet artifacts (wave 5, row d2.6). Read-only Developer-Preview
+  // surface; every call refuses with PREVIEW_NOT_ACKNOWLEDGED until the host
+  // acknowledges enrollment.
+  meetSpace: invoke(RPC_CHANNELS.meet.SPACE),
+  meetConferenceRecords: invoke(RPC_CHANNELS.meet.CONFERENCE_RECORDS),
+  meetParticipants: invoke(RPC_CHANNELS.meet.PARTICIPANTS),
+  meetRecordings: invoke(RPC_CHANNELS.meet.RECORDINGS),
+  meetTranscripts: invoke(RPC_CHANNELS.meet.TRANSCRIPTS),
+  meetSmartNotes: invoke(RPC_CHANNELS.meet.SMART_NOTES),
+
   // Sources change listener
   onSourcesChanged: listener(RPC_CHANNELS.sources.CHANGED),
 
@@ -753,7 +797,7 @@ export const CHANNEL_MAP = {
   getMemoryRepoGraph: invoke(RPC_CHANNELS.memory.REPO_GRAPH),
   exportMemoryRepo: invoke(RPC_CHANNELS.memory.REPO_EXPORT),
   getMemoryDreamStatus: invoke(RPC_CHANNELS.memory.DREAM_STATUS),
-  runMemoryDream: invoke(RPC_CHANNELS.memory.DREAM_RUN),
+  runMemoryDream: invoke(RPC_CHANNELS.memory.DREAM_RUN, undefined, 240_000),
   getMemoryDreamLog: invoke(RPC_CHANNELS.memory.DREAM_LOG),
   previewMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_PREVIEW_IMPORT),
   applyMemoryRepoImport: invoke(RPC_CHANNELS.memory.REPO_APPLY_IMPORT),
@@ -762,6 +806,11 @@ export const CHANNEL_MAP = {
   onMemoryDreamEvent: listener(RPC_CHANNELS.memory.DREAM_EVENT),
   onMemoryDreamDone: listener(RPC_CHANNELS.memory.DREAM_DONE),
   onMemoryRepoImportReady: listener(RPC_CHANNELS.memory.REPO_IMPORT_READY),
+  // Wave 3 — workspace memory wiki (claims/evidence + lint).
+  listMemoryWiki: invoke(RPC_CHANNELS.memory.WIKI_LIST),
+  getMemoryWiki: invoke(RPC_CHANNELS.memory.WIKI_GET),
+  applyMemoryWiki: invoke(RPC_CHANNELS.memory.WIKI_APPLY),
+  lintMemoryWiki: invoke(RPC_CHANNELS.memory.WIKI_LINT),
 
   // Learning (continual learning, PRD §15) — agent/native actions
   // (`learning:observe|recordOutcome|recordCorrection`) are intentionally absent.
@@ -796,6 +845,7 @@ export const CHANNEL_MAP = {
   driveImportPlan: invoke(RPC_CHANNELS.drive.IMPORT_PLAN),
   driveImportStart: invoke(RPC_CHANNELS.drive.IMPORT_START),
   driveImportPause: invoke(RPC_CHANNELS.drive.IMPORT_PAUSE),
+  driveImportCancel: invoke(RPC_CHANNELS.drive.IMPORT_CANCEL),
   driveImportResume: invoke(RPC_CHANNELS.drive.IMPORT_RESUME),
   driveImportStatus: invoke(RPC_CHANNELS.drive.IMPORT_STATUS),
   driveImportAuthStart: invoke(RPC_CHANNELS.drive.IMPORT_AUTH_START),
@@ -861,6 +911,27 @@ export const CHANNEL_MAP = {
   getNotificationsEnabled: invoke(RPC_CHANNELS.notification.GET_ENABLED),
   setNotificationsEnabled: invoke(RPC_CHANNELS.notification.SET_ENABLED),
 
+  // Native integration — floating quick composer (window + global shortcut).
+  'quickComposer.open': invoke(RPC_CHANNELS.quickComposer.OPEN),
+  'quickComposer.close': invoke(RPC_CHANNELS.quickComposer.CLOSE),
+  'quickComposer.getShortcut': invoke(RPC_CHANNELS.quickComposer.GET_SHORTCUT),
+  'quickComposer.setShortcut': invoke(RPC_CHANNELS.quickComposer.SET_SHORTCUT),
+
+  // Native integration — OS login item.
+  'appIntegration.getLoginItem': invoke(RPC_CHANNELS.appIntegration.GET_LOGIN_ITEM),
+  'appIntegration.setLoginItem': invoke(RPC_CHANNELS.appIntegration.SET_LOGIN_ITEM),
+
+  // Files — Finder/filesystem affordances.
+  revealInFinder: invoke(RPC_CHANNELS.files.REVEAL_IN_FINDER),
+  openPath: invoke(RPC_CHANNELS.files.OPEN_PATH),
+  copyPath: invoke(RPC_CHANNELS.files.COPY_PATH),
+  quickLook: invoke(RPC_CHANNELS.files.QUICK_LOOK),
+  quickLookClose: invoke(RPC_CHANNELS.files.QUICK_LOOK_CLOSE),
+  startDrag: invoke(RPC_CHANNELS.files.START_DRAG),
+
+  // Native shell actions push (dock/tray/menu/notification click).
+  onShellAction: listener(RPC_CHANNELS.shell.ACTION),
+
   // Input settings
   getAutoCapitalisation: invoke(RPC_CHANNELS.input.GET_AUTO_CAPITALISATION),
   setAutoCapitalisation: invoke(RPC_CHANNELS.input.SET_AUTO_CAPITALISATION),
@@ -881,6 +952,14 @@ export const CHANNEL_MAP = {
   getShellSnapshot: invoke(RPC_CHANNELS.appearance.GET_SHELL_SNAPSHOT),
   setZenShell: invoke(RPC_CHANNELS.appearance.SET_ZEN_SHELL),
   onShellChanged: listener(RPC_CHANNELS.appearance.SHELL_CHANGED),
+  // A6/B10 — UI prefs (status bar + accent source) and the macOS accent push.
+  getUiPreferences: invoke(RPC_CHANNELS.appearance.GET_UI_PREFERENCES),
+  setUiPreferences: invoke(RPC_CHANNELS.appearance.SET_UI_PREFERENCES),
+  onAccentChanged: listener(RPC_CHANNELS.appearance.ACCENT_CHANGED),
+
+  // C1 — Zed theme import (LOCAL_ONLY filesystem).
+  listZedThemes: invoke(RPC_CHANNELS.zedThemes.LIST),
+  importZedTheme: invoke(RPC_CHANNELS.zedThemes.IMPORT),
 
   // Tools settings
   getBrowserToolEnabled: invoke(RPC_CHANNELS.tools.GET_BROWSER_TOOL_ENABLED),
@@ -1049,6 +1128,17 @@ export const CHANNEL_MAP = {
   mindmapPinClear: invoke(RPC_CHANNELS.mindmap.PIN_CLEAR),
   setKanbanConfig: invoke(RPC_CHANNELS.kanban.SET_CONFIG),
   onKanbanConfigChanged: listener(RPC_CHANNELS.kanban.CHANGED),
+
+  // Wave 3 — workboard (workspace task board) + board widgets
+  readWorkboard: invoke(RPC_CHANNELS.workboard.READ),
+  moveWorkboard: invoke(RPC_CHANNELS.workboard.MOVE),
+  onWorkboardChanged: listener(RPC_CHANNELS.workboard.CHANGED),
+  putBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_PUT),
+  getBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_GET),
+  mountBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_MOUNT),
+  releaseBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_RELEASE),
+  validateBoardWidget: invoke(RPC_CHANNELS.board.WIDGET_VALIDATE),
+  onBoardChanged: listener(RPC_CHANNELS.board.CHANGED),
 
   // Sessions collection display
   getCollectionDisplay: invoke(RPC_CHANNELS.collection.GET_DISPLAY),

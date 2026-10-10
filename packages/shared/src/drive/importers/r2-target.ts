@@ -14,8 +14,23 @@
  * Path-style addressing is used (`<endpoint>/<bucket>/<key>`), which R2 and
  * MinIO both accept. Streaming bodies are signed with `UNSIGNED-PAYLOAD`
  * (mandatory over TLS for unknown-length uploads); byte bodies are hashed.
+ *
+ * Timeouts: a streamed PUT is **stall-aware** — the connection is aborted only
+ * after `DEFAULT_STALL_TIMEOUT_MS` (30s) with no byte of progress, never on
+ * total duration, so a large upload is not killed mid-flight (the runner would
+ * have to re-send the whole object). A byte body carries no progress signal, so
+ * it gets a hard `DEFAULT_REQUEST_TIMEOUT_MS` (30s) cap instead. A timeout
+ * keeps the coded `DRIVE_IMPORT_S3_PUT_FAILED` surface and adds `timeout: true`.
  */
 import type { DriveUploadTarget } from './types'
+import {
+  DEFAULT_REQUEST_TIMEOUT_MS,
+  DEFAULT_STALL_TIMEOUT_MS,
+  FetchTimeoutError,
+  StallTimeoutMonitor,
+  guardStreamWithStall,
+  isTimeoutError,
+} from './timeout'
 
 const UNSIGNED_PAYLOAD = 'UNSIGNED-PAYLOAD'
 const ALGORITHM = 'AWS4-HMAC-SHA256'
@@ -32,6 +47,10 @@ export interface S3TargetOptions {
   fetch?: typeof fetch
   /** Clock seam; defaults to `new Date()`. */
   now?: () => Date
+  /** Hard cap for a byte-body PUT; defaults to `DEFAULT_REQUEST_TIMEOUT_MS`. */
+  requestTimeoutMs?: number
+  /** Max time with no upload progress before aborting; defaults to `DEFAULT_STALL_TIMEOUT_MS`. */
+  stallTimeoutMs?: number
 }
 
 export interface SigV4Input {
@@ -214,6 +233,8 @@ export function createS3UploadTarget(options: S3TargetOptions): DriveUploadTarge
   const region = options.region ?? 'auto'
   const fetchImpl = options.fetch ?? globalThis.fetch
   const now = options.now ?? (() => new Date())
+  const requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS
+  const stallTimeoutMs = options.stallTimeoutMs ?? DEFAULT_STALL_TIMEOUT_MS
 
   return {
     async put(key, body, opts = {}) {
@@ -248,7 +269,36 @@ export function createS3UploadTarget(options: S3TargetOptions): DriveUploadTarge
       // Undici requires an explicit half-duplex marker for streamed request bodies.
       if (!isBytes) init.duplex = 'half'
 
-      const response = await fetchImpl(url, init)
+      // A streamed upload is aborted only on a stall (no progress for a full
+      // window); a byte body has no progress signal and gets a hard cap.
+      const monitor = isBytes ? undefined : new StallTimeoutMonitor(stallTimeoutMs)
+      let timer: ReturnType<typeof setTimeout> | undefined
+      if (monitor) {
+        monitor.arm()
+        init.body = guardStreamWithStall(body as ReadableStream<Uint8Array>, monitor) as unknown as RequestInit['body']
+        init.signal = monitor.signal
+      } else {
+        const controller = new AbortController()
+        timer = setTimeout(() => controller.abort(new FetchTimeoutError(requestTimeoutMs)), requestTimeoutMs)
+        init.signal = controller.signal
+      }
+
+      let response: Response
+      try {
+        response = await fetchImpl(url, init)
+      } catch (cause) {
+        if (isTimeoutError(cause) || monitor?.timedOut || init.signal?.aborted) {
+          throw Object.assign(new Error(`S3 PUT ${key} failed: timed out${monitor ? ` after ${stallTimeoutMs} ms without progress` : ` after ${requestTimeoutMs} ms`}`), {
+            code: 'DRIVE_IMPORT_S3_PUT_FAILED',
+            key,
+            timeout: true,
+          })
+        }
+        throw cause
+      } finally {
+        monitor?.clear()
+        clearTimeout(timer)
+      }
       if (!response.ok) {
         const detail = await response.text().catch(() => '')
         throw Object.assign(new Error(`S3 PUT ${key} failed: ${response.status} ${response.statusText}${detail ? ` — ${detail.slice(0, 200)}` : ''}`), {

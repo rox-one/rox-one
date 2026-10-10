@@ -115,9 +115,14 @@ describe('jsonPropToZod', () => {
       expect(schema.safeParse({}).success).toBe(false) // name is required
     })
 
-    it('falls back to z.record for object without properties', () => {
+    it('falls back to an open string→unknown map for object without properties', () => {
       const schema = jsonPropToZod({ type: 'object' })
       expect(schema.safeParse({ anything: 'goes' }).success).toBe(true)
+      // Equivalent to the former z.record(z.string(), z.unknown()): arbitrary
+      // string keys/values, non-objects rejected.
+      expect(schema.safeParse({ nested: { deep: [1, 2] } }).success).toBe(true)
+      expect(schema.safeParse('not-an-object').success).toBe(false)
+      expect(schema.safeParse([1, 2]).success).toBe(false)
     })
   })
 

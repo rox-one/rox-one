@@ -5,6 +5,11 @@ import { WORKSPACE_WORK_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/w
 import { HANDLED_CHANNELS as RUNTIME_TRACE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/runtime-trace'
 import { HANDLED_CHANNELS as CODE_INTELLIGENCE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/code-intelligence'
 import { HANDLED_CHANNELS as LEARNING_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/learning'
+import { VOICE_REALTIME_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/voice-realtime'
+import { HANDLED_CHANNELS as DRIVE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/drive'
+import { HANDLED_CHANNELS as ONBOARDING_SUGGEST_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/onboarding-suggest'
+import { HANDLED_CHANNELS as TG_LINK_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/tg-link'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 
 const registeredChannels: string[] = []
 
@@ -156,6 +161,12 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     transfer,
     messaging,
     entities,
+    knowledgeMap,
+    devSpace,
+    podcast,
+    codebook,
+    workboard,
+    board,
   ] = await Promise.all([
     import('@rox/server-core/handlers/rpc/auth'),
     import('@rox/server-core/handlers/rpc/automations'),
@@ -214,6 +225,12 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     import('@rox/server-core/handlers/rpc/transfer'),
     import('@rox/server-core/handlers/rpc/messaging'),
     import('@rox/server-core/handlers/rpc/entities'),
+    import('@rox/server-core/handlers/rpc/knowledge-map'),
+    import('@rox/server-core/handlers/rpc/dev-space'),
+import('@rox/server-core/playbooks/jobs'),
+    import('@rox/server-core/playbooks/codebook'),
+    import('@rox/server-core/handlers/rpc/workboard'),
+    import('@rox/server-core/handlers/rpc/board'),
   ])
 
   const [meetings, personalTasks, feed, runtimeTrace] = await Promise.all([
@@ -289,12 +306,23 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     ...transfer.HANDLED_CHANNELS,
     ...messaging.HANDLED_CHANNELS,
     ...LEARNING_HANDLED_CHANNELS,
+    ...VOICE_REALTIME_HANDLED_CHANNELS,
+    ...DRIVE_HANDLED_CHANNELS,
+    ...ONBOARDING_SUGGEST_HANDLED_CHANNELS,
+    ...TG_LINK_HANDLED_CHANNELS,
+    ...Object.values(RPC_CHANNELS.calendar),
     ...entities.HANDLED_CHANNELS,
+    ...knowledgeMap.HANDLED_CHANNELS,
+    ...devSpace.HANDLED_CHANNELS,
+    ...podcast.HANDLED_CHANNELS,
+    ...codebook.HANDLED_CHANNELS,
+    ...workboard.WORKBOARD_HANDLED_CHANNELS,
+    ...board.BOARD_HANDLED_CHANNELS,
   ])
 }
 
 async function getExpectedGuiChannels(): Promise<Set<string>> {
-  const [browser, browserIntel, system, workspace, settings, siyuan, extensionHost, extensionSurface, voiceClipboard, keeper] = await Promise.all([
+  const [browser, browserIntel, system, workspace, settings, siyuan, extensionHost, extensionSurface, voiceClipboard, keeper, nativeIntegration, zedThemes, clipboardHistory] = await Promise.all([
     import('../browser'),
     import('../browser-intel'),
     import('../system'),
@@ -305,6 +333,9 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
     import('../extension-surface'),
     import('../voice-clipboard'),
     import('@rox/server-core/handlers/rpc/keeper'),
+    import('../native-integration'),
+    import('../zed-themes'),
+    import('../clipboard-history'),
   ])
 
   return new Set([
@@ -318,6 +349,9 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
     ...extensionSurface.HANDLED_CHANNELS,
     ...voiceClipboard.HANDLED_CHANNELS,
     ...keeper.KEEPER_CHANNELS,
+    ...nativeIntegration.HANDLED_CHANNELS,
+    ...zedThemes.HANDLED_CHANNELS,
+    ...clipboardHistory.HANDLED_CHANNELS,
   ])
 }
 

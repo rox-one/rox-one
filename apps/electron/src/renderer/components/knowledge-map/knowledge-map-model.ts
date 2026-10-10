@@ -1,15 +1,18 @@
 /**
  * knowledge-map-model — pure helpers for the knowledge-map UI: node search,
  * area labels/colors mapped to Rox design tokens, degree/stat aggregation and
- * the stats/truncated text builders. No DOM, no i18n coupling — helpers return
- * i18n KEYS (plan §4) that the components resolve through `t()`.
+ * the stats/truncated text builders. No DOM: helpers return i18n KEYS (plan §4)
+ * that the components resolve through `t()`; `formatStatItems` takes that `t`
+ * as a callback so counts pluralise without the model importing i18next.
  */
 
+import type { TFunction } from 'i18next'
 import type {
   KnowledgeMapNode,
   KnowledgeMapEdge,
   KnowledgeMapStats,
 } from '@rox/shared/knowledge/knowledge-map-types'
+import { formatBytes } from '@/pages/drive/format'
 
 export type KnowledgeMapAreaKey = KnowledgeMapNode['area']
 
@@ -81,17 +84,51 @@ export function degreeOf(nodeId: string, edges: KnowledgeMapEdge[]): number {
 export interface StatItem {
   /** i18n key from plan §4. */
   key: string
-  value: string
+  /**
+   * Count for plural-sensitive items (`files`/`links`/`areas`). The component
+   * resolves the key through `t(key, { count })` so i18next picks the form.
+   */
+  count?: number
+  /** Pre-formatted value for plain `label: value` items (`bytes`). */
+  value?: string
 }
 
-/** One stat line item per format-count token, formatted with a locale. */
-export function buildStatItems(stats: KnowledgeMapStats, locale: string): StatItem[] {
+/** Translator shape the panel passes: `t(key, { count })` for plural items. */
+export type StatTranslator = TFunction
+
+/** Plural-safe count fragments: files, links, areas (plan §4). */
+export function buildCountItems(stats: KnowledgeMapStats): StatItem[] {
   return [
-    { key: 'knowledgeMap.stats.files', value: formatCount(stats.files, locale) },
-    { key: 'knowledgeMap.stats.links', value: formatCount(stats.links, locale) },
-    { key: 'knowledgeMap.stats.areas', value: formatCount(stats.areas, locale) },
-    { key: 'knowledgeMap.stats.bytes', value: formatCount(stats.bytes, locale) },
+    { key: 'knowledgeMap.stats.files', count: stats.files },
+    { key: 'knowledgeMap.stats.links', count: stats.links },
+    { key: 'knowledgeMap.stats.areas', count: stats.areas },
   ]
+}
+
+/**
+ * Full stat line: the plural-safe counts followed by the source size as a
+ * plain `label: value` item formatted with the Drive byte helper (`Б/КБ/МБ`).
+ */
+export function buildStatItems(stats: KnowledgeMapStats): StatItem[] {
+  return [
+    ...buildCountItems(stats),
+    { key: 'knowledgeMap.stats.bytes', value: formatBytes(stats.bytes) },
+  ]
+}
+
+/**
+ * Renders stat items through the component's translator — pluralising counts
+ * and appending the pre-formatted value for plain items — joined with `·`.
+ * Shared by the full panel line and the compact settings card headline.
+ */
+export function formatStatItems(items: StatItem[], translate: StatTranslator): string {
+  return items
+    .map((item) =>
+      item.count === undefined
+        ? `${translate(item.key)}: ${item.value ?? ''}`
+        : translate(item.key, { count: item.count }),
+    )
+    .join(' · ')
 }
 
 export interface TruncatedSummary {
@@ -143,13 +180,4 @@ export function buildTree(nodes: KnowledgeMapNode[]): TreeArea[] {
     })
   }
   return groups
-}
-
-/** Grouped integer formatting; falls back to the raw value on bad locales. */
-export function formatCount(value: number, locale: string): string {
-  try {
-    return new Intl.NumberFormat(locale).format(value)
-  } catch {
-    return String(value)
-  }
 }

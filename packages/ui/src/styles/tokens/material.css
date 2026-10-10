@@ -71,6 +71,32 @@
       transparent 1px 6px
     );
   --material-haze-intensity: 0.5;
+  /* Haze scanline overlay (Zed/MonoCode parity): static layer on the chat
+     surface only. `emptyOpacity`/`activeOpacity` come from the resolver when
+     the overlay is on; these ship the MonoCode defaults. The soft/strong blur
+     masks are the MonoCode radii, applied on the browser path only. */
+  --material-haze-overlay-empty: 0.24;
+  --material-haze-overlay-active: 0.5;
+  --material-haze-mask-blur-soft: 7px;
+  --material-haze-mask-blur-strong: 18px;
+  --material-haze-mask-blur-soft-active: 5px;
+  --material-haze-mask-blur-strong-active: 12px;
   --material-matte: 0;
   --material-chat-effect-intensity: 0.5;
+
+  /* A7 — glass polish.
+     `--material-chrome-muted-mix`: foreground share of the chrome muted text
+     when the material layer is on (the base palette uses 48%; translucent
+     chrome needs a stronger mix to hold the 4.5:1 invariant).
+     `--material-light-tint-lift`: extra lightness (0..100 hsl L units) added to
+     the glass surfaces on light palettes so a dark backdrop does not muddy the
+     panels; dark palettes keep 0 (see `html.dark` below). */
+  --material-chrome-muted-mix: 62%;
+  --material-light-tint-lift: 3;
+}
+
+/* Light palettes lift the glass; dark palettes keep the source lightness. The
+   :root default above is the light value, so only dark needs the reset. */
+html.dark {
+  --material-light-tint-lift: 0;
 }

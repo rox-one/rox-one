@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { DraftPersistence } from '@/lib/draft-persistence'
-import { waitForTransportConnected } from './lib/transport-wait'
+import { createBoundedReconnectRepair, DEFAULT_TIMEOUT_MS, waitForTransportConnected } from './lib/transport-wait'
 import { decideStartupAppState, isStartupAuthorityDenial, probeWithRetry } from './lib/startup-setup-needs'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
@@ -17,6 +17,7 @@ import { ingestRuntimeTraceEvent, ingestRuntimeTraceHealth, removeRuntimeTraceSe
 import type { AgentEvent, Effect } from './event-processor'
 import { AppShell } from '@/components/app-shell/AppShell'
 import { SessionSharingHost } from '@/components/app-shell/SessionSharingHost'
+import { SessionSuggestionsHost } from '@/components/app-shell/SessionSuggestionsHost'
 import { ProductTourProvider, ProductTourHost } from '@/features/product-tour/runtime'
 import { publishTourSignal } from '@/features/product-tour/runtime/bridge'
 import { observeChatSessionEvent, bindChatOptimisticMessage, observeChatPermissionResponse, cancelChatUserTurn, observeChatSessionCreated } from '@/features/product-tour/adapters/chat'
@@ -27,7 +28,7 @@ import { OnboardingWizard, ReauthScreen, ensureRoxRuntimeDefault } from '@/compo
 import { openFirstSessionWelcome } from '@/components/onboarding/first-session-welcome'
 import { WorkspacePicker } from '@/components/workspace'
 import { ResetConfirmationDialog } from '@/components/ResetConfirmationDialog'
-import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog'
+import { ShellActionBridge } from '@/features/native-integrations/ShellActionBridge'
 import { SplashScreen } from '@/components/SplashScreen'
 import { TooltipProvider } from '@rox/ui'
 import { FocusProvider } from '@/context/FocusContext'
@@ -119,7 +120,13 @@ import { toast } from 'sonner'
 import { initializeAuthenticatedWebRenderer, loadAuthenticatedWebWorkspaceMetadata, type AuthenticatedWebTransportBootstrap } from '@/lib/authenticated-web-bootstrap'
 import { runPersonalTaskScopeTransition, setPersonalTaskScope } from '@/lib/personal-tasks'
 import { toErrorMessage } from '@/lib/errors'
-import { markFirstMeaningfulPaint, markRendererOnce } from '@/lib/startup-perf'
+import { markFirstMeaningfulPaint, markRendererOnce } from './lib/startup-perf'
+
+// #1675: lazy so the dialog's `actions/useVisibleActions` graph is not dragged into the
+// entry chunk; it only renders while the user has the shortcuts dialog open.
+const KeyboardShortcutsDialog = React.lazy(() =>
+  import('@/components/KeyboardShortcutsDialog').then((m) => ({ default: m.KeyboardShortcutsDialog })),
+)
 
 type AppState = 'loading' | 'onboarding' | 'reauth' | 'workspace-picker' | 'ready' | 'transport-unavailable'
 
@@ -1574,14 +1581,56 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
   // Transport reconnect recovery — refresh session metadata plus active/processing
   // session content after stale reconnects.
+  //
+  // Bounded repair for a session-load failure that was swallowed while the transport
+  // banner was visible (see shouldSurfaceSessionLoadFailure above). The controller
+  // caps the attempts, waits backoff between them, collapses a reconnect that lands
+  // during an in-flight repair into that repair instead of starting a second
+  // concurrent loadSessionsFromServer, and leaves the swallow flag armed only when
+  // the load genuinely failed or timed out.
+  const boundedSessionRepair = useMemo(
+    () =>
+      createBoundedReconnectRepair({
+        load: async () => {
+          swallowedSessionLoadRef.current = false
+          await loadSessionsFromServer()
+          // loadSessionsFromServer swallows a transport-fallback failure by re-arming
+          // the flag, so a disarmed flag after the await means the load truly happened.
+          return !swallowedSessionLoadRef.current
+        },
+        arm: () => {
+          swallowedSessionLoadRef.current = true
+        },
+        disarm: () => {
+          swallowedSessionLoadRef.current = false
+        },
+        onAttemptTimeout: (attempt) =>
+          rendererLog.warn(
+            '[App] Session-load repair after reconnect exceeded its deadline; re-armed for the next reconnect',
+            { attempt, timeoutMs: DEFAULT_TIMEOUT_MS },
+          ),
+        onExhausted: (attempts) =>
+          rendererLog.warn(
+            '[App] Session-load repair after reconnect failed; re-armed for the next reconnect',
+            { attempts },
+          ),
+      }),
+    [loadSessionsFromServer],
+  )
+
   useEffect(() => {
     const cleanup = window.electronAPI.onReconnected(async (isStale: boolean) => {
       if (swallowedSessionLoadRef.current) {
-        // A previous load failed while the transport banner was visible; the banner is gone
-        // now, so reload instead of leaving an empty shell behind.
-        swallowedSessionLoadRef.current = false
-        console.warn('[App] Reconnected after a swallowed session-load failure — reloading sessions')
-        await loadSessionsFromServer()
+        if (boundedSessionRepair.inFlight) {
+          // A repair is already running; joining it avoids a second concurrent
+          // loadSessionsFromServer while the first one may still be in flight.
+          console.info('[App] Reconnect arrived during an in-flight session-load repair — joining it')
+        } else {
+          // A previous load failed while the transport banner was visible; the banner is
+          // gone now, so reload instead of leaving an empty shell behind.
+          console.warn('[App] Reconnected after a swallowed session-load failure — reloading sessions')
+        }
+        await boundedSessionRepair.run()
       }
       if (!isStale) {
         // Server replayed buffered events — we're caught up, nothing else to do
@@ -1632,7 +1681,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     })
 
     return cleanup
-  }, [store, sessionSelection.selected, refreshSessionFromServer, refreshSessionListMetadataFromServer])
+  }, [store, sessionSelection.selected, refreshSessionFromServer, refreshSessionListMetadataFromServer, boundedSessionRepair])
 
   // Listen for menu bar events
   useEffect(() => {
@@ -2770,6 +2819,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           <ProductTourProvider workspaceId={windowWorkspaceId} shellReady={appState === 'ready' && sessionsLoaded && !showSplash && !sessionLoadError} welcomeSessionId={tourWelcome?.workspaceId === windowWorkspaceId ? tourWelcome.sessionId : null}>
           <ProductTourHost />
           <WindowCloseHandler />
+          {/* Native shell actions (menu / tray / global shortcuts) */}
+          <ShellActionBridge />
 
           {/* W3 Omnibox — unified ⌘K palette (S-04). Renderer hotkey + embedded
               SiYuan webContents ⌘K bridge are both implemented. */}
@@ -2781,6 +2832,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
             <LayoutDeckHost />
           </AppShellProvider>
           <SessionSharingHost activeWorkspaceId={windowWorkspaceId} onSwitchWorkspace={handleSelectWorkspaceForUI} />
+          <SessionSuggestionsHost />
 
           {/* Splash screen overlay - fades out when fully ready */}
           {showSplash && (
@@ -2839,10 +2891,12 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
                 onConfirm={executeReset}
                 onCancel={() => setShowResetDialog(false)}
               />
-              <KeyboardShortcutsDialog
-                open={showShortcuts}
-                onOpenChange={setShowShortcuts}
-              />
+              <React.Suspense fallback={null}>
+                <KeyboardShortcutsDialog
+                  open={showShortcuts}
+                  onOpenChange={setShowShortcuts}
+                />
+              </React.Suspense>
             </div>
           </div>
 

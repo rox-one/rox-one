@@ -29,11 +29,18 @@
     "./observability": "./src/observability/index.ts",
     "./meetings": "./src/meetings/index.ts",
     "./docs/*": "./src/docs/*.ts",
+    "./devspace/*": "./src/devspace/*.ts",
     "./entities/*": "./src/entities/*.ts",
     "./memory/learning/*": "./src/memory/learning/*.ts",
     "./workspace-work/*": "./src/workspace-work/*.ts",
     "./commands": "./src/commands/index.ts",
-    "./workspace-sync": "./src/workspace-sync/index.ts"
+    "./workspace-sync": "./src/workspace-sync/index.ts",
+    "./collab": "./src/collab/index.ts",
+    "./drive": "./src/drive/index.ts",
+    "./xsc": "./src/xsc/index.ts",
+    "./playbooks/jobs": "./src/playbooks/jobs.ts",
+    "./playbooks/codebook": "./src/playbooks/codebook/index.ts",
+    "./handlers/rpc/google-meet": "./src/handlers/rpc/google-meet.ts"
   },
   "scripts": {},
   "dependencies": {
@@ -48,6 +55,7 @@
     "jose": "^6.0.0",
     "js-yaml": "^4.1.1",
     "sharp": "0.35.5",
+    "sqlite-vec": "^0.1.6",
     "ws": "^8.19.0"
   },
   "devDependencies": {

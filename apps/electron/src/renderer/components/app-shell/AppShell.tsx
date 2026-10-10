@@ -92,9 +92,14 @@ import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { enabledExtraScreenIdsAtom } from "@/atoms/extra-screens"
 import { visibleExtraScreens } from "@/pages/extra-screens/registry"
+import { devSpaceEnabledAtom } from "@/atoms/dev-space"
+import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
+import { playbooksEnabledAtom } from "@/atoms/playbooks"
 import { type ProfileStripData } from "./ProfileStrip"
 import { accountProfileStrip } from "./profile-strip-account"
 import { SidebarChrome } from "./SidebarChrome"
+import { StatusBar } from "./StatusBar"
+import { useUiAppearance } from "@/lib/ui-appearance-store"
 import { focusServicePanelAtom } from "./service-navigation"
 import type { AppNavDestinationId } from "./nav-destinations"
 import { usePromoInsights } from "@/hooks/usePromoInsights"
@@ -160,6 +165,7 @@ import { resolveEntityColor } from "@rox/shared/colors"
 import * as storage from "@/lib/local-storage"
 import { commitShellLayout, loadShellLayout, NAVIGATOR_WIDTH_DEFAULT, NAVIGATOR_WIDTH_MAX, NAVIGATOR_WIDTH_MIN, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from "@/lib/shell-layout-preferences"
 import { sessionCatalogOwnsWorkspace } from "@/lib/nav-helpers"
+import { installShellWarmup } from "@/lib/shell-warmup"
 import { toast } from "sonner"
 import { navigate, routes } from "@/lib/navigate"
 import {
@@ -179,10 +185,12 @@ import {
   isHomeNavigation,
   isDriveNavigation,
   isConnectionsNavigation,
+  isDevelopersNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
   isProjectsNavigation,
   isPagesNavigation,
+  isPlaybooksNavigation,
   type NavigationState,
 } from "@/contexts/NavigationContext"
 import type { SettingsSubpage } from "../../../shared/types"
@@ -383,6 +391,8 @@ function AppShellContent({
   const isPrimarySidebarRendered = true
   const [shellSidebarSlot, setShellSidebarSlot] = useState<HTMLElement | null>(null)
   const extraScreens = visibleExtraScreens(useAtomValue(enabledExtraScreenIdsAtom))
+  const devSpaceEnabled = useAtomValue(devSpaceEnabledAtom)
+  const playbooksEnabled = useAtomValue(playbooksEnabledAtom)
   const [storedSidebarWidth, setSidebarWidth] = React.useState(() => {
     return loadShellLayout(activeWorkspaceId).sidebarWidth
   })
@@ -447,6 +457,10 @@ function AppShellContent({
     statusBarEnabled && (unifiedShellEnabled || workbenchEnabled),
     isAutoCompact,
   )
+  // A6: the compact bar is the shipping status strip; it yields to the
+  // experimental workbench bar so the two never stack.
+  const { statusBarVisible: uiStatusBarVisible } = useUiAppearance()
+  const showCompactStatusBar = uiStatusBarVisible && !isAutoCompact && !showStatusBar
 
   const effectiveSidebarAndNavigatorHidden = isSidebarAndNavigatorHidden || isAutoCompact
 
@@ -558,7 +572,7 @@ function AppShellContent({
   })
   const [session, setSession] = useSession()
   const { resolvedMode, isDark, setMode } = useTheme()
-  const { canGoBack, canGoForward, goBack, goForward, navigateToSource, navigateToSession } = useNavigation()
+  const { canGoBack, canGoForward, goBack, goForward, navigateToSource, navigateToSession, isSessionsReady } = useNavigation()
 
   // Double-Esc interrupt feature: first Esc shows warning, second Esc interrupts
   const { handleEscapePress } = useEscapeInterrupt()
@@ -676,7 +690,7 @@ function AppShellContent({
   // (ClipboardHistoryPanel) with its own header; keeping the middle navigator
   // mounted would leave an empty sidebar-wide column beside it.
   const hideModuleMiddleNav =
-    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProjectsView || isPagesView || isLearningView || isModeScreenView || isClipboardHistoryNavigation(navState) || (isSettingsNavigation(navState) && !isAutoCompact)
+navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProjectsView || isPagesView || isLearningView || isDriveNavigation(navState) || isModeScreenView || isClipboardHistoryNavigation(navState) || (isSettingsNavigation(navState) && !isAutoCompact)
     // G3 «Миссии» board renders full-width in the content panel.
     || isMissionsNavigation(navState)
   // A single session catalog is the workspace until an actual session is opened.
@@ -1644,6 +1658,15 @@ function AppShellContent({
     load()
     return () => { disposed = true; revision += 1; cleanup() }
   }, [activeWorkspaceId, activeSessionWorkingDirectory, setSkillsSyncing])
+
+  // PERF-10 (#1577): idle warm-up for the surfaces the user is most likely to
+  // open next. Starts once the session metadata and the active workspace exist;
+  // the returned stop cancels the queue on unmount or workspace switch (user
+  // input cancels it too) and the effect re-installs for the new workspace.
+  React.useEffect(() => {
+    if (!isSessionsReady || !activeWorkspaceId) return
+    return installShellWarmup()
+  }, [isSessionsReady, activeWorkspaceId])
 
   // Filter session metadata by active workspace
   // Also exclude hidden sessions (mini-agent sessions) from all counts and lists
@@ -2821,6 +2844,22 @@ function AppShellContent({
         onClick: () => navigate(routes.view.pages(p.config.slug)),
       })),
     },
+    // Developers / Playbooks (2026-10-09 pack) — additive, flag-gated entries.
+    // Presence, icon and label come from the single nav-destination registry.
+    ...(devSpaceEnabled ? [{
+      id: "nav:developers",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.developers.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.developers.icon,
+      variant: isDevelopersNavigation(navState) ? "default" as const : "ghost" as const,
+      onClick: () => navigate(routes.view.developers()),
+    }] : []),
+    ...(playbooksEnabled ? [{
+      id: "nav:playbooks",
+      title: t(APP_NAV_DESTINATIONS_BY_ID.playbooks.labelKey),
+      icon: APP_NAV_DESTINATIONS_BY_ID.playbooks.icon,
+      variant: isPlaybooksNavigation(navState) ? "default" as const : "ghost" as const,
+      onClick: () => navigate(routes.view.playbooks()),
+    }] : []),
     // --- Separator after projects ---
     { id: "separator:projects-memory", type: "separator" },
     {
@@ -3100,6 +3139,8 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           leftInset={topBarLeftInset}
         />
 
+        <DevSpaceNudgeBanner />
+
         {isWebUI && <WebBrowserPanel open={webBrowserOpen} onClose={() => setWebBrowserOpen(false)} />}
 
       {/* === OUTER LAYOUT: Unified Panel Stack | Right Sidebar === */}
@@ -3110,7 +3151,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
         data-viewport={shellWidth > 0 ? viewportBand(shellWidth) : undefined}
         style={{
           paddingRight: isAutoCompact ? 0 : PANEL_EDGE_INSET,
-          paddingBottom: isAutoCompact && !isSidebarAndNavigatorHidden ? 48 : showStatusBar ? 0 : PANEL_EDGE_INSET,
+          paddingBottom: isAutoCompact && !isSidebarAndNavigatorHidden ? 48 : (showStatusBar || showCompactStatusBar) ? 0 : PANEL_EDGE_INSET,
           paddingLeft: 0,
           gap: PANEL_GAP,
         }}
@@ -3570,6 +3611,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
 
       </div>
       {showStatusBar && <StatusBarHost />}
+      {showCompactStatusBar && <StatusBar account={roxCloudAccount} />}
       </div>
 
       {/* ============================================================================

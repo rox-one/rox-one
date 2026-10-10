@@ -29,24 +29,59 @@ input file exists, the gate must evaluate it. If it cannot, the gate fails
 with a message that says what it expected. Pending never hides a broken
 wiring.
 
-### Visual, axe and one-rail gates: pending until the wave-2 browser driver
+### Visual, axe and one-rail gates: driven by the capture artifacts
 
 `visual-snapshots`, `axe` and `one-rail-dom` need rendered screens. Only the
-wave-2 E2E browser driver (Playwright) produces those. Until it exists:
+wave-2 E2E browser driver (`scripts/visual-capture.ts`) produces those: it
+renders every screen with Playwright and writes the capture to
+`.visual-artifacts/capture.json` (gitignored; shape in `src/capture.ts`).
 
-- these three gates report `pending until the wave-2 browser driver exists…`
-  on every run, by design;
-- `visual-snapshots` still builds the full deterministic plan (1440×900 and
+```bash
+bun run visual:capture                     # render screens → .visual-artifacts/
+bun run visual:capture --update-baselines  # also rewrite packages/test-harness/visual-baselines.json
+```
+
+`runAllGates` reads the artifacts once per run (`readArtifacts` /
+`readBaselines`) and injects them into the three gates:
+
+**Surface contract.** Each captured screen records the *product surface*, not
+the harness page. `html` is the Playground preview-frame subtree — the same
+element the snapshot screenshot captures, with the Playground header / sidebar /
+injected stylesheet excluded (`shellHtml` is captured separately). `shellHtml`
+is the app-shell subtree, but only when the surface really mounts an app shell
+(a `role="navigation"` element with `data-rail`); otherwise it is `''` and the
+screen records `hasAppShell: false`. The driver's default screens today render
+Playground **component previews**, which have no app shell, so every screen
+records `hasAppShell: false`.
+
+- `visual-snapshots` builds the full deterministic plan (1440×900 and
   1280×800, `rox` and `se` profiles, light/dark, RU/EN, hover / focus-visible /
-  motion frames, reduced motion, fixed clock `2026-10-08T09:00:00Z`).
-  `ROX_VISUAL_DRIVER=1` **fails**, because wave 1 has no driver to execute
-  the plan. It never reports a vacuous pass;
-- `axe` audits only explicitly injected HTML, using the built-in rule set
-  (`src/axe.ts`). axe-core needs a live DOM, so it runs only inside the browser
-  driver against the rendered page and never in Bun.
+  motion frames, reduced motion, fixed clock `2026-10-08T09:00:00Z`) from the
+  captured screen ids, and passes only when every planned `snapshotKey(plan)`
+  exists in the artifacts **and** in the committed baselines with an identical
+  `pixelHash`. Missing or changed keys fail (the first five are listed); run
+  `bun run visual:capture --update-baselines` when the change is intended. The
+  hash is only comparable against a baseline produced by the same rendering
+  environment (`environment` in the baselines file records which one);
+- `axe` audits the captured **surface** HTML (`html`) through the built-in rule
+  set (`src/axe.ts`). Element rules (img alt, button names, input labels) apply
+  to the surface; the document-level `html-lang` rule applies only when the
+  audited HTML is a whole document (`<html>` present), since a preview-frame
+  fragment has no document element — axe-core would report that rule
+  *inapplicable*, not violated. axe-core itself needs a live DOM, so it runs
+  only inside the driver against the rendered page and never in Bun;
+- `one-rail-dom` runs the real checker over the `shellHtml` of every screen
+  with `hasAppShell: true`, and passes only when each such shell carries exactly
+  one rail; a shell screen with the wrong rail count fails, naming its id.
+  Screens without an app shell are skipped (there is no rail to assert on).
+  When **no** captured surface has an app shell — the current driver renders
+  component-preview surfaces only — the gate stays `pending` and says so: it
+  can never assert the one-rail rule until a shell surface is captured, and it
+  never reports a vacuous pass or a false failure.
 
-The wave-2 driver package turns these gates on by passing screens and
-documents to `checkVisualGate`, `checkAxeGate` and `checkOneRailGate`.
+With no `.visual-artifacts/` directory (default CI) all three stay `pending`
+and say so. Requesting execution with `ROX_VISUAL_DRIVER=1` while artifacts or
+baselines are absent **fails** — never a vacuous pass.
 
 ## Gate inputs and wiring contracts
 
@@ -56,13 +91,16 @@ documents to `checkVisualGate`, `checkAxeGate` and `checkOneRailGate`.
 | `permission-matrix` | `packages/core/src/entities/permissions.ts` | #1501 | `export function generatePermissionMatrix()` returning #1501's frozen rows `{ action, role, tags, championAbsent, hasChildren, kind, effectiveRole, allowed, reason? }`. The gate checks the shape (role lattice `minimal < viewer < commenter < editor < manager < owner` or `null`, known tags), no duplicate rows (keyed on kind, action, role, tags, championAbsent, hasChildren), and DATA-MODEL §8 against its own transcription: `effectiveRole` from the §8.2.2 tag roles, no access without a tag, viewer/minimal never edit, minimal only sees titles, only the owner transfers, a denied row has a `reason`, and every `allowed` equals the §8.3 rule (champion/reviewer grants, reviewer check-in only while the champion is absent, no goal deletion while children exist). An action the transcription does not know fails. `export const PERMISSION_MATRIX_TAG_SCENARIOS` (`{ tags, championAbsent }[]`) is **required** (missing, renamed or malformed fails). **Completeness** is pinned by the harness, not read back from #1501 alone (#1507 review 4): every kind present **plus** the pinned kinds `goal`, `project`, `task`, `note` × every §8.3 action × every role (`minimal` … `owner` plus `null`) × every scenario (no tag, the pinned `champion`, `reviewer` with `championAbsent` false and true, plus every exported scenario) × `hasChildren` false **and** true needs a row; the export itself must list the pinned scenarios. A generator that drops a kind, an action, a role, a tag scenario (even from its own export too) or the `hasChildren: true` rows (the goal-delete blocker) fails. #1501 at 3f3c41b6 emits exactly this grid: 4 × 12 × 7 × 7 × 2 = 4704 rows. |
 | `risk-class` | `packages/core/src/commands/catalogue/index.ts` (`COMMAND_CATALOGUE`); once it exists, `packages/server-core/src/commands/registry.ts` (`createWiredCommandRegistry()`) is **required** | #1500, #1508 | The **runtime** catalogue is imported (tuple-form `moduleCatalogue(…)` entries included); bindings and `riskClass` are read from the fully wired registry (see [Command registry contract](#command-registry-contract)), and the gate covers the union of `COMMAND_CATALOGUE` and `registry.list()` (a registry type missing from the catalogue fails), because modules bind handlers there and #1508 sets `riskClass` through `bindSchema`. Every **gated** command (bound handler or `schemaBound: true`) has a `riskClass` function. Unbound placeholders are reported as pending, never as failures. A missing registry module or export fails. Exceptions: `allowlists/command-gates.json#riskClass`. |
 | `negative-tests` | same catalogue / registry | #1500 | Each gated command has its own non-skipped test block with a negative outcome, in one of the [supported test shapes](#negative-test-shapes): an unambiguous keyword in the test or an enclosing `describe` title (denied, forbidden, unauthorized, rate limited, quota exceeded, expired, rejected), scope / rate-limit wording in the test's **own** title (wrong scope, out of scope, rate limit), or a **negative assertion**: an `expect(…)` chain (or `expect*` / `assert*` helper call) containing an exact error-code literal (`'FORBIDDEN'`, `'RATE_LIMITED'`, `'conflict'`, …) or 403·409·429. The bare `quota` / `conflict(s)` never count by themselves (`'shows quota usage'`, `describe('conflict resolution')`); they count only in the test's own title next to a negative assertion. The block covers only the ids named **in a title, in an `.each` table, or inside that negative assertion call** (`await expect(run('tasks.delete')).rejects.toMatchObject({ code: 'FORBIDDEN' })`): setup calls elsewhere in the body (`run('tasks.create')`), an id asserted in a later statement, and codes or statuses outside an assertion (a mocked `{ status: 403 }` fixture) do not count. Identifiers such as `resolveConflict` do not count. Only `*.test`/`*.spec` files under `packages`, `apps/workspace-service`, `tests` and `e2e` are read; `packages/test-harness` (self-test fixtures) is skipped and symlinks are not followed. Exceptions: `allowlists/command-gates.json#negativeTests`. |
-| `config-paths` | `scripts/check-config-paths.ts` | #1510 | Script exit code decides. The run is capped at 180 s (`CONFIG_PATHS_TIMEOUT_MS`); a script that overruns is killed and the gate **fails** with a timeout message. |
+| `config-paths` | `scripts/check-config-paths.ts` | #1510 | Script exit code decides. The run is capped at 600 s (`CONFIG_PATHS_TIMEOUT_MS`); a script that overruns is killed and the gate **fails** with a timeout message. (The cap only catches a hung scan: the same scan is allowed 300 s in its own unit test and takes 40–120 s on a loaded box.) |
+| `ipc-sends` | `scripts/check-raw-sends.sh` | #1507 | Script exit code decides. Fails on raw `webContents` \| `sender` \| `window.send(` outside the exact-line legacy allowlist. |
+| `tool-name-checks` | `scripts/check-task-tool-checks.sh` | #1507 | Script exit code decides. Fails on legacy `toolName` literal / comparisons (use `isParentTaskTool` \| `PARENT_TASK_TOOLS`). |
+| `version-parity` | `scripts/check-version.ts` | #1507 | Script exit code decides. Fails when the 15 product `package.json` versions drift from the root version. |
 | `chrome-schema-lint` | `packages/core/src/platform/chrome.ts` | #1512 | Exports `CHROME_SCHEMAS` \| `chromeSchemas` \| `SURFACE_CHROME_SCHEMAS` \| `listChromeSchemas()` \| `getChromeSchemas()` of `{ surface, rightZone \| right, centerControls \| center }`. Optional `CHROME_SURFACES: string[]` lists surfaces that must have a schema. |
 | `dock-layout` | `apps/electron/src/renderer/platform/right-dock.ts` | #1512 | Exports `computeDockMode` \| `dockMode` \| `resolveDockMode` `(width, sidebar, inspector, agent) → mode` or `{ mode, … }`, mode ∈ `'sideBySide' \| 'sharedDock' \| 'overlay'`. `sidebar` is the **pre-collapse** width: per §18.4 the engine tries the expanded sidebar, then the auto-collapsed one (56 px), before falling back to sharedDock (W ≥ 1280) / overlay. Example: W=1280, S=280, I=328, A=0 → `sideBySide` with the sidebar auto-collapsed. Checked against the §18.4 table. |
 | `agent-panel-privacy` | `packages/core/src/agent-panel/context.ts` | #1512 | Exports `decideAttach` \| `decideAutoAttach` \| `autoAttachDecision` `(candidate: PrivacyCandidate, actor: PrivacyActor) → { attach, redacted }`. The candidate carries every fact the decision needs (`ref`, `entityKind`, `authority`, `isFocus`, `isDm`, `isOpenDm`, `canRead`); the actor is `{ principalId, workspaceId }`. The harness's own `kind` label per fixture (it encodes the expected answer) is stripped before the call. Checked against the §18.3 fixtures. |
-| `visual-snapshots`, `axe`, `one-rail-dom` | wave-2 browser driver | wave 2 | See above. |
+| `visual-snapshots`, `axe`, `one-rail-dom` | `.visual-artifacts/capture.json` (`bun run visual:capture`) + `packages/test-harness/visual-baselines.json` | #1507 (driver) | See above. Every planned `snapshotKey` must be captured and match its baseline hash; axe runs the built-in rules over the captured **surface** HTML (`html` — a preview-frame fragment, so `html-lang` applies only to whole documents); one-rail runs the real checker over the `shellHtml` of screens with `hasAppShell: true`, and stays `pending` when no captured surface mounts an app shell. |
 | `perf-microbench` | built in | #1507 | See [Perf micro-benchmarks](#perf-micro-benchmarks). |
-| provenance (`scripts/check-provenance.ts`) | built in | #1507 | Diffs against `ROX_PROVENANCE_BASE`, else `origin/$GITHUB_BASE_REF`, else `origin/main`. On **push** events CI sets `ROX_PROVENANCE_BASE` to `github.event.before` (`HEAD~1` when that is the all-zero SHA), so a direct push is checked over the pushed range instead of against itself; the shrink-only allowlists use the same base. Fails closed if git or the base cannot answer (CI uses `fetch-depth: 0`). All rules apply to **source files only** (docs, NOTICE and JSON inventories may quote the rules): GPL/AGPL licence headers and SPDX ids; Operately derivation claims without the provenance header; and Enterprise-Edition origin declarations in comments: a `Source:` line naming the Operately EE tree, a §6.1 `file:` line pointing into the EE app directory, or a GitHub `operately/operately` blob/tree URL into it. Only the gate's own fixture files (listed in `FIXTURE_FILES`) are exempt from the first two rules; nothing is exempt from the EE rule. |
+| `provenance` | `scripts/check-provenance.ts` | #1507 | The unified gate net now runs this checked-in script (no longer invoked separately by CI). Diffs against `ROX_PROVENANCE_BASE`, else `origin/$GITHUB_BASE_REF`, else `origin/main`. On **push** events CI sets `ROX_PROVENANCE_BASE` to `github.event.before` (`HEAD~1` when that is the all-zero SHA), so a direct push is checked over the pushed range instead of against itself; the shrink-only allowlists use the same base. Fails closed if git or the base cannot answer (CI uses `fetch-depth: 0`). All rules apply to **source files only** (docs, NOTICE and JSON inventories may quote the rules): GPL/AGPL licence headers and SPDX ids; Operately derivation claims without the provenance header; and Enterprise-Edition origin declarations in comments: a `Source:` line naming the Operately EE tree, a §6.1 `file:` line pointing into the EE app directory, or a GitHub `operately/operately` blob/tree URL into it. Only the gate's own fixture files (listed in `FIXTURE_FILES`) are exempt from the first two rules; nothing is exempt from the EE rule. |
 
 ## Command registry contract
 

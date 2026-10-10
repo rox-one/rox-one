@@ -14,6 +14,8 @@ import type { HandlerDeps } from '../handler-deps'
 import { getToolchainManager } from '@rox/shared/toolchain-runtime'
 import type { ToolName } from '@rox/shared/toolchain'
 import {
+  assessRegistryTrust,
+  assertTrustAllowsInstall,
   createConfigMetaStore,
   createFileStatsStore,
   fetchMarketplaceStats,
@@ -29,6 +31,7 @@ import {
   type MarketplaceFetch,
   type MarketplaceMeta,
   type MarketplaceStatsFetch,
+  type RegistryTrustAssessment,
 } from '@rox/shared/marketplace'
 import { getExtensionStateStore, seedDefaultMarketplaceInstalls } from '@rox/shared/extensions'
 import { resolveConfigDir } from '@rox/shared/config/paths'
@@ -89,17 +92,40 @@ export function registerMarketplaceHandlers(server: RpcServer, _deps: HandlerDep
     return { ...result, installs: readLock(marketplacePaths(dir).lockFile).entries }
   }
 
-  const requireEntry = async (id: string): Promise<MarketplaceEntry> => {
+  const requireEntry = async (id: string): Promise<{
+    entry: MarketplaceEntry
+    /** True only when the served catalog body passed Ed25519 verification. */
+    catalogSignatureVerified: boolean
+  }> => {
     const read = rpcMarketplaceReadResult({ source: 'native', nativeId: id })
     if (!isClaimableLive(read.result)) {
       throw new CodedError('MARKETPLACE_ENTRY_NOT_FOUND', 'marketplace entry is not live')
     }
-    const { catalog } = await getCatalog({ metaStore, fetchFn: catalogFetch })
+    const { catalog, signatureVerified } = await getCatalog({ metaStore, fetchFn: catalogFetch })
     const entry = catalog.entries.find((e) => e.id === id)
     if (!entry) {
       throw new CodedError('MARKETPLACE_ENTRY_NOT_FOUND', `Marketplace entry '${id}' is not in the catalog`)
     }
-    return entry
+    return { entry, catalogSignatureVerified: signatureVerified === true }
+  }
+
+  /**
+   * Catalog entry + its registry trust verdict. The verdict is computed and
+   * asserted BEFORE any install work: a `blocked` verdict throws
+   * REGISTRY_TRUST_BLOCKED with zero clone/fetch messages sent.
+   */
+  const trustedEntry = async (id: string): Promise<{
+    entry: MarketplaceEntry
+    trust: RegistryTrustAssessment
+  }> => {
+    const { entry, catalogSignatureVerified } = await requireEntry(id)
+    const trust = assessRegistryTrust({
+      provider: 'catalog',
+      entry,
+      catalogSignatureVerified,
+    })
+    assertTrustAllowsInstall(trust.verdict)
+    return { entry, trust }
   }
 
   // One mutation per slug at a time (in-memory). Installs are serialized in
@@ -144,6 +170,13 @@ export function registerMarketplaceHandlers(server: RpcServer, _deps: HandlerDep
     const lockPath = paths.lockFile
     const existing = readLock(lockPath).entries[entry.id]
     const now = Date.now()
+    const trustFields = existing?.trustVerdict
+      ? {
+          trustVerdict: existing.trustVerdict,
+          trustReasons: existing.trustReasons,
+          assessedAt: existing.assessedAt,
+        }
+      : {}
     if (status.phase === 'ready') {
       upsertLockRecord(lockPath, {
         id: entry.id,
@@ -155,6 +188,7 @@ export function registerMarketplaceHandlers(server: RpcServer, _deps: HandlerDep
         status: 'installed',
         targets: status.installedPath ? [status.installedPath] : [],
         toolName,
+        ...trustFields,
       })
       return {
         id: entry.id,
@@ -175,6 +209,7 @@ export function registerMarketplaceHandlers(server: RpcServer, _deps: HandlerDep
       status: 'deferred',
       targets: [],
       toolName,
+      ...trustFields,
     })
     throw new CodedError(
       'MARKETPLACE_TOOL_INSTALL_FAILED',
@@ -187,11 +222,11 @@ export function registerMarketplaceHandlers(server: RpcServer, _deps: HandlerDep
     const act = rpcMarketplaceActResult({ source: 'native', action: 'write', nativeId: id })
     if (!isClaimableLive(act)) throw new Error('marketplace install is not live')
     return exclusive(id, async () => {
-      const entry = await requireEntry(id)
+      const { entry, trust } = await trustedEntry(id)
       const onProgress = (phase: 'clone' | 'verify' | 'install' | 'fetch' | 'collision', detail?: string) => {
         pushTyped(server, RPC_CHANNELS.marketplace.PROGRESS, { to: 'all' }, { id, phase, detail })
       }
-      const result = await installEntry(entry, { fetchFn: catalogFetch, onProgress })
+      const result = await installEntry(entry, { fetchFn: catalogFetch, onProgress, trust })
       if (result.kind === 'tool' && result.toolName) {
         const final = await finalizeToolInstall(entry, result.toolName, 'installed')
         pushTyped(server, RPC_CHANNELS.marketplace.CHANGED, { to: 'all' }, { id, action: 'installed', ref: entry.source.ref })
@@ -224,11 +259,11 @@ export function registerMarketplaceHandlers(server: RpcServer, _deps: HandlerDep
       if (!readLock(marketplacePaths().lockFile).entries[id]) {
         throw new CodedError('MARKETPLACE_ENTRY_NOT_INSTALLED', `Marketplace entry '${id}' is not installed`)
       }
-      const entry = await requireEntry(id)
+      const { entry, trust } = await trustedEntry(id)
       const onProgress = (phase: 'clone' | 'verify' | 'install' | 'fetch' | 'collision', detail?: string) => {
         pushTyped(server, RPC_CHANNELS.marketplace.PROGRESS, { to: 'all' }, { id, phase, detail })
       }
-      const result = await installEntry(entry, { fetchFn: catalogFetch, onProgress })
+      const result = await installEntry(entry, { fetchFn: catalogFetch, onProgress, trust })
       if (result.kind === 'tool' && result.toolName) {
         const final = await finalizeToolInstall(entry, result.toolName, 'updated')
         pushTyped(server, RPC_CHANNELS.marketplace.CHANGED, { to: 'all' }, { id, action: 'updated', ref: entry.source.ref })

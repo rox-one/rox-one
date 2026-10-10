@@ -3,7 +3,7 @@ import type { ElectronAPI } from '../../../shared/types'
 import type { ZenShellSnapshot } from '../../../shared/shell-appearance'
 import { subscribeDesktopShellAppearance } from '../shell-appearance-subscription'
 
-const initial: ZenShellSnapshot = { flag: 'shell.zen.v1', enabled: true, preference: 'system', platform: 'darwin', material: 'vibrancy' }
+const initial: ZenShellSnapshot = { flag: 'shell.zen.v1', enabled: true, preference: 'system', material: 'vibrancy', materialDepth: 'standard', platform: 'darwin' }
 const fallback: ZenShellSnapshot = { ...initial, material: 'solid', fallbackReason: 'gpu-failure' }
 
 function bridge(pending: Promise<ZenShellSnapshot>) {

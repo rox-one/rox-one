@@ -18,6 +18,8 @@ export interface RailRowProps {
   active?: boolean
   disabled?: boolean
   onClick?: () => void
+  /** Dimmed default text (secondary rail groups, e.g. the mode list). */
+  muted?: boolean
   testId?: string
 }
 
@@ -26,7 +28,7 @@ export interface RailRowProps {
  * Collapsed: 28×28 icon button with a right-side tooltip carrying the label.
  * Active = selected-strong fill + a static accent marker (never motion alone).
  */
-export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disabled, onClick, testId }: RailRowProps) {
+export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disabled, onClick, muted, testId }: RailRowProps) {
   const button = (
     <button
       type="button"
@@ -49,7 +51,9 @@ export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disable
                   ? 'before:bottom-[2px] before:left-1/2 before:h-[var(--state-marker-width)] before:w-[var(--state-marker-height)] before:-translate-x-1/2'
                   : 'before:left-0 before:top-1/2 before:h-[var(--state-marker-height)] before:w-[var(--state-marker-width)] before:-translate-y-1/2',
               )
-            : 'text-[var(--chrome-label)] hover:bg-[var(--state-hover)] hover:text-[var(--text-primary)]',
+            : muted
+              ? 'text-[var(--text-muted)] hover:bg-[var(--state-hover)] hover:text-[var(--text-primary)]'
+              : 'text-[var(--chrome-label)] hover:bg-[var(--state-hover)] hover:text-[var(--text-primary)]',
       )}
     >
       <Icon className={collapsed ? 'icon-rail' : 'icon-toolbar'} />

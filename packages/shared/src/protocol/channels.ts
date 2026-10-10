@@ -93,6 +93,9 @@ export const RPC_CHANNELS = {
     FOREIGN_AUTO_RUN: 'sessions:foreignAutoRun',
     FOREIGN_AUTO_SET: 'sessions:foreignAutoSet',
     ASSIGN_OWNER: 'sessions:assignOwner',
+    SUGGEST_ADD: 'sessions:suggestAdd',
+    SUGGEST_LIST: 'sessions:suggestList',
+    SUGGEST_RESOLVE: 'sessions:suggestResolve',
   },
   transfer: {
     START: 'transfer:start',
@@ -208,6 +211,24 @@ export const RPC_CHANNELS = {
     READ_SPAN: 'codeIntelligence:readSpan',
     FRESHNESS: 'codeIntelligence:freshness',
     CANCEL: 'codeIntelligence:cancel',
+  },
+  devSpace: {
+    LIST_REPOSITORIES: 'devSpace:listRepositories',
+    ADD_REPOSITORY: 'devSpace:addRepository',
+    START_CLONE: 'devSpace:startClone',
+    REMOVE_REPOSITORY: 'devSpace:removeRepository',
+    REFRESH_REPOSITORY: 'devSpace:refreshRepository',
+    CANCEL: 'devSpace:cancel',
+    CAPABILITIES: 'devSpace:capabilities',
+    LIST_RUNS: 'devSpace:listRuns',
+    START_RUN: 'devSpace:startRun',
+    LIST_ARTIFACTS: 'devSpace:listArtifacts',
+    READ_ARTIFACT: 'devSpace:readArtifact',
+    GENERATE_QUESTIONS: 'devSpace:generateQuestions',
+    CLONE_PROGRESS: 'devSpace:cloneProgress',
+    CHANGED: 'devSpace:changed',
+    RUN_PROGRESS: 'devSpace:runProgress',
+    SOFT_SIGNAL: 'devSpace:softSignal',
   },
   notes: {
     LIST: 'notes:list',
@@ -399,6 +420,12 @@ export const RPC_CHANNELS = {
     OPEN_FILE: 'shell:openFile',
     SHOW_IN_FOLDER: 'shell:showInFolder',
     EXEC: 'shell:exec',
+    /**
+     * Main → renderer push: a native shell affordance (dock menu, tray, app
+     * menu, notification click) dispatches one structured action to the
+     * focused (or first) window. Payload: `ShellActionPayload`.
+     */
+    ACTION: 'shell:action',
   },
   menu: {
     NEW_CHAT: 'menu:newChat',
@@ -527,6 +554,11 @@ export const RPC_CHANNELS = {
     PROXY_FETCH: 'extensionHost:proxyFetch',
     GET_URL_ALLOWLIST: 'extensionHost:getUrlAllowlist',
     SET_URL_ALLOWLIST: 'extensionHost:setUrlAllowlist',
+    // S-05 §3.5 wave 3 — descriptor discovery + activation lifecycle. LOCAL_ONLY
+    // (the craft-sandbox utilityProcess lives in the local Electron host only).
+    LIST_DESCRIPTORS: 'extensionHost:listDescriptors',
+    ACTIVATE: 'extensionHost:activate',
+    RELOAD: 'extensionHost:reload',
   },
 
   // extensionSurface — sandboxed embedded BrowserView for extension UI
@@ -681,6 +713,30 @@ export const RPC_CHANNELS = {
     WAKE_CHANGED: 'voice:wakeChanged',
     TRIGGER: 'voice:trigger',
   },
+  podcast: {
+    /** Podcast generation run; `voice:job` stays for dictation/ASR (§5.1, D13). */
+    JOB: 'podcast:job',
+    /** Start a local generation run (scenario → segment TTS → ffmpeg mixdown). */
+    START: 'podcast:start',
+    /** Cancel the active local generation run; a partial mixdown is never published. */
+    CANCEL: 'podcast:cancel',
+    /** List generated episodes of a project from the audio index + manifest. */
+    EPISODES: 'podcast:episodes',
+    /** Frame-aligned read of an episode's mp3 (player + export). */
+    AUDIO: 'podcast:audio',
+    /** A `data:` URL for the player when the episode fits a single message. */
+    AUDIO_URL: 'podcast:audioUrl',
+  },
+  playbooks: {
+    /** Start a local codebook notebook run (cells → script/agent/artifact steps). */
+    RUN_CODEBOOK: 'playbooks:runCodebook',
+    /** Cancel the active codebook run; no partial run journal is published. */
+    CANCEL_CODEBOOK: 'playbooks:cancelCodebook',
+    /** List the durable codebook run journal of a project. */
+    CODEBOOK_RUNS: 'playbooks:codebookRuns',
+    /** Codebook run progress; monotonic `seq`, one stream per job (§9, D12). */
+    CODEBOOK_JOB: 'playbooks:codebookJob',
+  },
   environment: {
     GET: 'environment:get',
     SAVE: 'environment:save',
@@ -719,6 +775,28 @@ export const RPC_CHANNELS = {
     GOOGLE_CONNECT: 'calendar:googleConnect',
     GOOGLE_DISCONNECT: 'calendar:googleDisconnect',
     GOOGLE_SYNC: 'calendar:googleSync',
+  },
+  /**
+   * Google Meet artifacts (wave 5, row d2.6) — read-only Developer-Preview
+   * surface over a meeting space's conference records (participants,
+   * recordings, transcripts, smart notes). The local app server holds the
+   * OAuth broker + credential manager, so the whole namespace is LOCAL_ONLY;
+   * every channel refuses with `PREVIEW_NOT_ACKNOWLEDGED` until the host
+   * acknowledges Developer-Preview enrollment.
+   */
+  meet: {
+    /** `spaces.get` — resolve a space (meeting URL / code → space + Meet URI). */
+    SPACE: 'meet:space',
+    /** `conferenceRecords.list` — a space's conference records. */
+    CONFERENCE_RECORDS: 'meet:conferenceRecords',
+    /** `conferenceRecords.participants.list`. */
+    PARTICIPANTS: 'meet:participants',
+    /** `conferenceRecords.recordings.list`. */
+    RECORDINGS: 'meet:recordings',
+    /** `conferenceRecords.transcripts.list`. */
+    TRANSCRIPTS: 'meet:transcripts',
+    /** `conferenceRecords.smartNotes.list`. */
+    SMART_NOTES: 'meet:smartNotes',
   },
   workspace: {
     GET_PERMISSIONS: 'workspace:getPermissions',
@@ -808,6 +886,12 @@ export const RPC_CHANNELS = {
     DREAM_EVENT: 'memory:dreamEvent',
     DREAM_DONE: 'memory:dreamDone',
     REPO_IMPORT_READY: 'memory:repoImportReady',
+    // Wave 3 — workspace memory wiki (claims/evidence + lint). REMOTE_ELIGIBLE
+    // like the rest of the memory namespace (workspace data on the owning server).
+    WIKI_LIST: 'memory:wikiList',
+    WIKI_GET: 'memory:wikiGet',
+    WIKI_APPLY: 'memory:wikiApply',
+    WIKI_LINT: 'memory:wikiLint',
   },
   /** Continual learning (PRD §15): candidates/evidence/outcomes/policies.
    *  OBSERVE/RECORD_OUTCOME/RECORD_CORRECTION are agent/native actions — they
@@ -939,6 +1023,16 @@ export const RPC_CHANNELS = {
     GET_SHELL_SNAPSHOT: 'appearance:getShellSnapshot',
     SET_ZEN_SHELL: 'appearance:setZenShell',
     SHELL_CHANGED: 'appearance:shellChanged',
+    /** DISPATCH A6/B10 — persisted UI preferences (status bar + accent source). */
+    GET_UI_PREFERENCES: 'appearance:getUiPreferences',
+    SET_UI_PREFERENCES: 'appearance:setUiPreferences',
+    /** DISPATCH B10 — macOS system accent colour push (LOCAL_ONLY). */
+    ACCENT_CHANGED: 'appearance:accentChanged',
+  },
+  /** DISPATCH C1 — import themes from an installed Zed (LOCAL_ONLY, filesystem). */
+  zedThemes: {
+    LIST: 'zedThemes:list',
+    IMPORT: 'zedThemes:import',
   },
   tools: {
     GET_BROWSER_TOOL_ENABLED: 'tools:getBrowserToolEnabled',
@@ -1119,6 +1213,24 @@ export const RPC_CHANNELS = {
     GET_CONFIG: 'kanban:getConfig',
     SET_CONFIG: 'kanban:setConfig',
     CHANGED: 'kanban:changed',
+  },
+  // workboard — wave-3 workspace task board (WorkBoard state, revision-guarded).
+  // Classified like kanban:* (REMOTE_ELIGIBLE workspace board config).
+  workboard: {
+    READ: 'workboard:read',
+    MOVE: 'workboard:move',
+    CHANGED: 'workboard:changed',
+  },
+  // board — wave-3 workspace board widgets (authored widget code mounted in a
+  // ticket-scoped sandbox). Classified like pages:* (REMOTE_ELIGIBLE workspace content).
+  board: {
+    WIDGET_PUT: 'board:widgetPut',
+    WIDGET_GET: 'board:widgetGet',
+    WIDGET_MOUNT: 'board:widgetMount',
+    WIDGET_RELEASE: 'board:widgetRelease',
+    /** Validate a frame ticket over the wire; refusal is one uniform typed error. */
+    WIDGET_VALIDATE: 'board:widgetValidate',
+    CHANGED: 'board:changed',
   },
   collection: {
     GET_DISPLAY: 'collection:getDisplay',
@@ -1318,6 +1430,8 @@ export const RPC_CHANNELS = {
     IMPORT_START: 'drive:importStart',
     /** Wave 4: stop scheduling new files once in-flight work settles. */
     IMPORT_PAUSE: 'drive:importPause',
+    /** Wave 4: abandon an import job — in-flight files settle, no further files start. */
+    IMPORT_CANCEL: 'drive:importCancel',
     /** Wave 4: resume a paused/errored import job. */
     IMPORT_RESUME: 'drive:importResume',
     /** Wave 4: one job by id, or every known job when the id is omitted. */
@@ -1345,6 +1459,36 @@ export const RPC_CHANNELS = {
     START: 'tg-link:start',
     VERIFY: 'tg-link:verify',
     STATUS: 'tg-link:status',
+  },
+  /**
+   * Native integration — floating quick composer. All LOCAL_ONLY: the window,
+   * the global shortcut and the persisted accelerator live in the main process.
+   */
+  quickComposer: {
+    OPEN: 'quickComposer:open',
+    CLOSE: 'quickComposer:close',
+    GET_SHORTCUT: 'quickComposer:getShortcut',
+    SET_SHORTCUT: 'quickComposer:setShortcut',
+  },
+  /**
+   * Native app integration — OS-level app settings (login item / launch at
+   * startup). LOCAL_ONLY: written by the host OS, never proxied to a server.
+   */
+  appIntegration: {
+    GET_LOGIN_ITEM: 'appIntegration:getLoginItem',
+    SET_LOGIN_ITEM: 'appIntegration:setLoginItem',
+  },
+  /**
+   * Finder / filesystem affordances for a user-visible path. LOCAL_ONLY: they
+   * act on the host machine (reveal, open, clipboard, Quick Look, drag-out).
+   */
+  files: {
+    REVEAL_IN_FINDER: 'files:revealInFinder',
+    OPEN_PATH: 'files:openPath',
+    COPY_PATH: 'files:copyPath',
+    QUICK_LOOK: 'files:quickLook',
+    QUICK_LOOK_CLOSE: 'files:quickLookClose',
+    START_DRAG: 'files:startDrag',
   },
 } as const
 

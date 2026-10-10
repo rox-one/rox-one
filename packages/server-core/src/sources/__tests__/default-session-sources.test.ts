@@ -15,17 +15,16 @@ describe('default session MCP selection', () => {
 
   it('attaches public and local servers when no explicit defaults exist', () => {
     const selected = resolveDefaultSessionSources(root)
-    expect(selected).toContain('deepwiki')
     expect(selected).toContain('context7')
     expect(selected).toContain('playwright')
     expect(selected).toContain('codegraph')
     expect(selected).toContain('qmd')
     expect(selected).toContain('qdrant')
-    expect(selected.filter(slug => slug === 'deepwiki')).toHaveLength(1)
+    expect(selected.filter(slug => slug === 'context7')).toHaveLength(1)
   })
 
   it('honors workspace default toggles and removes duplicate selections', () => {
-    expect(resolveDefaultSessionSources(root, undefined, ['notes', 'deepwiki', 'deepwiki'])).toEqual(['notes', 'deepwiki'])
+    expect(resolveDefaultSessionSources(root, undefined, ['notes', 'context7', 'context7'])).toEqual(['notes', 'context7'])
     expect(resolveDefaultSessionSources(root, undefined, [])).toEqual([])
   })
 

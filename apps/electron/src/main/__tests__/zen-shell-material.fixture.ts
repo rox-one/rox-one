@@ -10,6 +10,7 @@ let build = '10.0.22621'
 // Native material scenarios run on the standard profile; PERF-07 low-power
 // clearing is covered by render-profile.fixture.ts.
 const renderProfilePreference = 'standard'
+let depth: 'light' | 'standard' | 'deep' = 'standard'
 const windows = new Set<FakeWindow>()
 
 class FakeWindow extends EventEmitter {
@@ -43,8 +44,8 @@ mock.module('electron', () => ({
   systemPreferences: { getUserDefault: () => macReduceTransparency },
 }))
 mock.module('os', () => ({ release: () => build }))
-mock.module('@rox/shared/config', () => ({ isZenShellEnabled: () => zenEnabled, getZenShellMaterialPreference: () => 'system', getRenderProfilePreference: () => renderProfilePreference }))
-mock.module('../logger', () => ({ windowLog: { warn() {} } }))
+mock.module('@rox/shared/config', () => ({ isZenShellEnabled: () => zenEnabled, getZenShellMaterialPreference: () => 'system', getZenShellMaterialDepth: () => depth, getRenderProfilePreference: () => renderProfilePreference }))
+mock.module('../logger', () => ({ windowLog: { warn() {} }, mainLog: { info() {} } }))
 
 const policy = await import('../shell-material')
 type Window = Parameters<typeof policy.attachZenWindowPolicy>[0]
@@ -120,6 +121,22 @@ electronApp.emit('child-process-gone', {}, { type: 'GPU' })
 assert.equal(liveUpdates.at(-1), 'solid')
 live.close()
 
+// A3: macOS vibrancy depth maps to the actual setVibrancy argument and ships
+// in the snapshot; changing it re-applies live.
+const depthWindow = new FakeWindow()
+policy.attachZenWindowPolicy(asWindow(depthWindow)); depthWindow.emit('ready-to-show')
+assert.equal(depthWindow.vibrancy, 'under-window')
+assert.equal(policy.peekZenShellSnapshotForWindow(asWindow(depthWindow)).materialDepth, 'standard')
+depth = 'light'
+policy.reapplyZenShellOnWindow(asWindow(depthWindow))
+assert.equal(depthWindow.vibrancy, 'sidebar')
+assert.equal(policy.peekZenShellSnapshotForWindow(asWindow(depthWindow)).materialDepth, 'light')
+depth = 'deep'
+policy.reapplyZenShellOnWindow(asWindow(depthWindow))
+assert.equal(depthWindow.vibrancy, 'hud')
+depth = 'standard'
+depthWindow.close()
+
 platform('win32')
 build = '10.0.22620'
 const oldWindows = new FakeWindow()
@@ -141,4 +158,4 @@ assert.equal(mica.backgroundMaterial, 'mica')
 mica.close()
 assert.equal(electronApp.listenerCount('child-process-gone'), 0)
 
-process.stdout.write(JSON.stringify({ passed: true, scenarios: 8, nativeHardware: false }) + '\n')
+process.stdout.write(JSON.stringify({ passed: true, scenarios: 9, nativeHardware: false }) + '\n')

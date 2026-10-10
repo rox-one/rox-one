@@ -3,14 +3,21 @@
  * time labels, format/size formatting, hidden-tag rules, the filter/query
  * reducer and the keyboard mapping are all testable in isolation.
  *
- * Semantics are ported from the copyosity donor (`overlay-filters.ts`,
+ * Semantics are ported from the donor clipboard manager (`overlay-filters.ts`,
  * `image-meta.ts`, `text-kind.ts`, `quick-look-keyboard.ts`) and re-expressed
  * against the Rox DTOs in `@rox/shared/clipboard-history`.
  */
 import type { ClipEntryKind, ClipEntrySummary, ClipTagCount } from '@rox/shared/clipboard-history'
+import { formatBytes } from '@/pages/drive/format'
+
+// The house byte formatter (Cyrillic `Б/КБ/МБ`) is reused so every Rox surface
+// reports sizes identically; re-exported for the card/quick-look consumers that
+// still import it from this module.
+export { formatBytes }
 
 export type ClipboardTab = 'history' | 'starred'
 export type ClipboardKindFilter = ClipEntryKind | 'all'
+export type ClipFormatFilter = 'all' | 'png' | 'gif' | 'jpg'
 
 /** Internal classification tags. They are never surfaced as filter chips. */
 export const HIDDEN_TAGS: ReadonlySet<string> = new Set(['code', 'otp', 'token', 'log'])
@@ -48,6 +55,7 @@ export interface ClipboardFilters {
   tab: ClipboardTab
   query: string
   kind: ClipboardKindFilter
+  format: ClipFormatFilter
   tag: string | null
 }
 
@@ -55,6 +63,7 @@ export const EMPTY_CLIPBOARD_FILTERS: ClipboardFilters = {
   tab: 'history',
   query: '',
   kind: 'all',
+  format: 'all',
   tag: null,
 }
 
@@ -62,10 +71,11 @@ export type ClipboardFilterAction =
   | { type: 'tab'; tab: ClipboardTab }
   | { type: 'query'; query: string }
   | { type: 'kind'; kind: ClipboardKindFilter }
+  | { type: 'format'; format: ClipFormatFilter }
   | { type: 'tag'; tag: string | null }
   | { type: 'reset' }
 
-/** Reset keeps the active tab; it only clears query, kind and tag. */
+/** Reset keeps the active tab; it only clears query, kind, format and tag. */
 export function clipboardFiltersReducer(
   state: ClipboardFilters,
   action: ClipboardFilterAction,
@@ -77,22 +87,26 @@ export function clipboardFiltersReducer(
       return state.query === action.query ? state : { ...state, query: action.query }
     case 'kind':
       return state.kind === action.kind ? state : { ...state, kind: action.kind }
+    case 'format':
+      return state.format === action.format ? state : { ...state, format: action.format }
     case 'tag':
       return state.tag === action.tag ? state : { ...state, tag: action.tag }
     case 'reset':
-      return state.query === '' && state.kind === 'all' && state.tag === null
+      return state.query === '' && state.kind === 'all' && state.format === 'all' && state.tag === null
         ? state
-        : { ...state, query: '', kind: 'all', tag: null }
+        : { ...state, query: '', kind: 'all', format: 'all', tag: null }
   }
 }
 
 export function hasActiveFilters(state: ClipboardFilters): boolean {
-  return state.query.trim() !== '' || state.kind !== 'all' || state.tag !== null
+  return state.query.trim() !== '' || state.kind !== 'all' || state.format !== 'all' || state.tag !== null
 }
 
 /** Which empty state to show when the list has no entries. */
 export function emptyStateKind(state: ClipboardFilters): 'search' | 'history' {
-  return state.query.trim() !== '' || state.tag !== null || state.kind !== 'all' ? 'search' : 'history'
+  return state.query.trim() !== '' || state.tag !== null || state.kind !== 'all' || state.format !== 'all'
+    ? 'search'
+    : 'history'
 }
 
 // ── time ───────────────────────────────────────────────────────────────────
@@ -128,12 +142,27 @@ export function formatRelativeTime(t: Translate, iso: string, now: number): stri
 
 // ── formatting ─────────────────────────────────────────────────────────────
 
-export function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 10 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+/** Char-count footer via the `clipboard.charCount` key (`{{count}} симв.`). */
+export function formatChars(t: Translate, count: number): string {
+  return t('clipboard.charCount', { count })
+}
+
+/** Grouped integer for image dimensions; falls back to the raw value on bad locales. */
+export function formatInteger(value: number, locale?: string): string {
+  try {
+    return new Intl.NumberFormat(locale).format(value)
+  } catch {
+    return String(value)
+  }
+}
+
+/**
+ * Keyboard hint line via the `clipboard.screen.keysHint` key. The search chord
+ * is interpolated from the house `formatHotkeyDisplay('mod+f')` helper by the
+ * caller; the rest of the line is literal Russian inside the locale string.
+ */
+export function formatKeysHint(t: Translate, searchChord: string): string {
+  return t('clipboard.screen.keysHint', { search: searchChord })
 }
 
 const GIF_PREFIX = 'R0lGOD'
@@ -159,15 +188,30 @@ export function imageFormatBadge(
   return 'PNG'
 }
 
-/** `1 920 × 1 080 · 1.2 MB`-style image footer via the `clipboard.image.meta` key. */
-export function formatImageMeta(t: Translate, entry: ClipEntrySummary): string | null {
+/** `1 920 × 1 080 · 1.2 МБ`-style image footer via the `clipboard.image.meta` key. */
+export function formatImageMeta(t: Translate, entry: ClipEntrySummary, locale?: string): string | null {
   const width = entry.imageWidth ?? 0
   const height = entry.imageHeight ?? 0
   const size = entry.imageByteSize && entry.imageByteSize > 0 ? formatBytes(entry.imageByteSize) : null
   const hasDimensions = width > 0 && height > 0
-  if (hasDimensions && size) return t('clipboard.image.meta', { width, height, size })
-  if (hasDimensions) return `${width}×${height}`
+  const dimensions = hasDimensions ? `${formatInteger(width, locale)}×${formatInteger(height, locale)}` : ''
+  if (hasDimensions && size) {
+    return t('clipboard.image.meta', { width: formatInteger(width, locale), height: formatInteger(height, locale), size })
+  }
+  if (hasDimensions) return dimensions
   return size
+}
+
+// ── errors ─────────────────────────────────────────────────────────────────
+
+export type ClipboardErrorAction = 'copy' | 'delete' | 'clear' | 'save'
+
+/** Per-action toast keys so a failed mutation names what actually failed. */
+export const CLIPBOARD_ERROR_KEYS: Record<ClipboardErrorAction, string> = {
+  copy: 'clipboard.error.copy',
+  delete: 'clipboard.error.delete',
+  clear: 'clipboard.error.clear',
+  save: 'clipboard.error.save',
 }
 
 // ── text preview ───────────────────────────────────────────────────────────

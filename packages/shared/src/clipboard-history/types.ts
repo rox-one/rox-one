@@ -6,13 +6,16 @@
 
 export type ClipEntryKind = 'text' | 'image'
 
+/** Stored image formats; other decoded MIME types (webp/tiff) are never captured. */
+export type ClipImageFormat = 'png' | 'gif' | 'jpg'
+
 export interface ClipEntrySummary {
   id: number
   kind: ClipEntryKind
   preview: string
   text: string | null
   charCount: number | null
-  imageFormat: 'png' | 'gif' | 'jpg' | null
+  imageFormat: ClipImageFormat | null
   imageWidth: number | null
   imageHeight: number | null
   imageByteSize: number | null
@@ -37,6 +40,11 @@ export interface ClipCounts {
 export interface ClipListQuery {
   q?: string
   kind?: ClipEntryKind | 'all'
+  /**
+   * Restrict to a single stored image format. Only image entries carry a format;
+   * `'all'` and `undefined` both mean "no format filter".
+   */
+  format?: ClipImageFormat | 'all'
   starredOnly?: boolean
   tag?: string
   limit?: number

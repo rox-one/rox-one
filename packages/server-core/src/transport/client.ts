@@ -17,6 +17,7 @@ import {
   assertNativeCredentialTransport,
   type ErrorCode,
   type MessageEnvelope,
+  type ProtocolFeatures,
 } from '@rox/shared/protocol'
 import type { RpcClient } from './types'
 import { serializeEnvelope, deserializeEnvelope } from './codec'
@@ -177,6 +178,9 @@ export class WsRpcClient implements RpcClient {
   private rejectReady: ((error: Error) => void) | null = null
   private connectionState: TransportConnectionState
   private serverChannels: Set<string> | null = null
+  /** Advertised protocol features from handshake_ack (null when not advertised). */
+  private serverFeatures: ProtocolFeatures | null = null
+  private serverMethodSet: Set<string> | null = null
 
   // Mutable so an SSH-backed reconnect can re-target a fresh forwarded port/token
   // via `resolveTarget`. Plain connections never reassign these.
@@ -225,6 +229,11 @@ export class WsRpcClient implements RpcClient {
   // -------------------------------------------------------------------------
 
   async invoke(channel: string, ...args: any[]): Promise<any> {
+    return this.invokeWithTimeout(channel, this.requestTimeout, ...args)
+  }
+
+  /** Like invoke(), with a per-call timeout override (see RpcClient). */
+  async invokeWithTimeout(channel: string, timeoutMs: number, ...args: unknown[]): Promise<unknown> {
     await this.ensureConnected(channel)
 
     return await new Promise((resolve, reject) => {
@@ -236,8 +245,8 @@ export class WsRpcClient implements RpcClient {
       const id = crypto.randomUUID()
       const timeout = setTimeout(() => {
         this.pending.delete(id)
-        reject(new Error(`Request timeout: ${channel} (${this.requestTimeout}ms)`))
-      }, this.requestTimeout)
+        reject(new Error(`Request timeout: ${channel} (${timeoutMs}ms)`))
+      }, timeoutMs)
 
       this.pending.set(id, { resolve, reject, timeout })
 
@@ -284,6 +293,15 @@ export class WsRpcClient implements RpcClient {
   isChannelAvailable(channel: string): boolean {
     if (!this.serverChannels) return true // server didn't advertise — assume available
     return this.serverChannels.has(channel)
+  }
+
+  /**
+   * True iff the server advertised `channel` in handshake_ack `features.methods`.
+   * Returns true when no feature block was advertised (backwards compat).
+   */
+  isMethodAdvertised(channel: string): boolean {
+    if (!this.serverMethodSet) return true
+    return this.serverMethodSet.has(channel)
   }
 
   /** Server version from handshake_ack (null if server didn't send one / not yet connected). */
@@ -701,6 +719,8 @@ export class WsRpcClient implements RpcClient {
         this.serverChannels = envelope.registeredChannels
           ? new Set(envelope.registeredChannels)
           : null
+        this.serverFeatures = envelope.features ?? null
+        this.serverMethodSet = envelope.features ? new Set(envelope.features.methods) : null
         this.connected = true
         this.connectError = null
         // Delay backoff reset — only reset after 10s of stable connection.

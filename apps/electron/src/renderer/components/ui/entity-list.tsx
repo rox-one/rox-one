@@ -30,8 +30,10 @@ import {
   ENTITY_LIST_EMPTY_LANE_HEIGHT,
   ENTITY_LIST_GROUP_HEADER_HEIGHT,
   ENTITY_LIST_OVERSCAN,
+  coveringHeaderIndex,
   entityListWindow,
   flattenEntityListRows,
+  groupEndByHeaderKey,
   revealEntryScrollTop,
   rowEntryIndexByItemKey,
   virtualEntryIndices,
@@ -205,16 +207,22 @@ function SectionHeader({
   label,
   itemCount,
   onSelectGroup,
+  elementRef,
+  style,
 }: {
   label: string
   itemCount: number
   onSelectGroup?: () => void
+  /** Ref onto the sticky element, so windowed mode measures the header, not its slot. */
+  elementRef?: React.Ref<HTMLDivElement>
+  /** Inline style for the sticky element (windowed mode re-enables pointer events). */
+  style?: React.CSSProperties
 }) {
   const { t } = useTranslation()
   return (
     <ContextMenu modal>
       <ContextMenuTrigger asChild>
-        <div className="sticky top-0 z-10 bg-background px-5 py-2">
+<div ref={elementRef} style={style} className="sticky top-0 z-10 bg-background px-5 py-2">
           <span className="text-caption font-medium text-text-secondary uppercase tracking-wider">
             {label} <> · <span className="text-muted-foreground/50">{itemCount}</span></>
           </span>
@@ -240,6 +248,8 @@ function CollapsibleGroupHeader({
   onCollapseAll,
   onExpandAll,
   onSelectGroup,
+  elementRef,
+  style,
 }: {
   label: string
   isCollapsed: boolean
@@ -248,12 +258,18 @@ function CollapsibleGroupHeader({
   onCollapseAll?: () => void
   onExpandAll?: () => void
   onSelectGroup?: () => void
+  /** Ref onto the sticky element, so windowed mode measures the header, not its slot. */
+  elementRef?: React.Ref<HTMLButtonElement>
+  /** Inline style for the sticky element (windowed mode re-enables pointer events). */
+  style?: React.CSSProperties
 }) {
   const { t } = useTranslation()
   return (
     <ContextMenu modal>
       <ContextMenuTrigger asChild>
         <button
+          ref={elementRef}
+          style={style}
           onClick={onToggle}
           className="sticky top-0 z-10 flex w-full cursor-pointer items-center gap-1.5 bg-background px-5 py-2 group/header relative"
         >
@@ -421,13 +437,13 @@ function VirtualEntityListBody<T>({
     }
   }, [])
 
-  const refCallbacks = React.useRef(new Map<string, (element: HTMLDivElement | null) => void>())
+  const refCallbacks = React.useRef(new Map<string, (element: HTMLElement | null) => void>())
   const measureRef = React.useCallback((registration: string, logicalKey?: string) => {
     logicalKeyRef.current.set(registration, logicalKey ?? registration)
     let callback = refCallbacks.current.get(registration)
     if (!callback) {
-      let current: HTMLDivElement | null = null
-      callback = (element: HTMLDivElement | null) => {
+      let current: HTMLElement | null = null
+      callback = (element: HTMLElement | null) => {
         if (current && current !== element) {
           observerRef.current?.unobserve(current)
           observedRef.current.delete(current)
@@ -490,7 +506,24 @@ function VirtualEntityListBody<T>({
     }
     return indices
   }, [ensureVisibleKeys, keyIndex])
-  const visibleIndices = virtualEntryIndices(baseWindow, flattened.entries.length, pinnedIndices)
+  // Keep the group header that covers the window start mounted while its group
+  // is on screen. Without it the header entry leaves the window mid-group and
+  // the sticky header disappears — the non-windowed layout keeps it.
+  const covering = React.useMemo(
+    () => coveringHeaderIndex(flattened.entries, baseWindow.startIndex),
+    [flattened.entries, baseWindow.startIndex],
+  )
+  const pinnedWithCovering = React.useMemo(
+    () => (covering == null ? pinnedIndices : [...pinnedIndices, covering]),
+    [pinnedIndices, covering],
+  )
+  // Where each header's group ends: the slot spans this far so `sticky top-0`
+  // stays pinned until the next group scrolls in.
+  const groupEnds = React.useMemo(
+    () => groupEndByHeaderKey(flattened.entries, flattened.totalHeight),
+    [flattened.entries, flattened.totalHeight],
+  )
+  const visibleIndices = virtualEntryIndices(baseWindow, flattened.entries.length, pinnedWithCovering)
   const visible = visibleIndices.map((index) => flattened.entries[index]!)
 
   // Reveal an externally selected item with the least scroll movement.
@@ -516,8 +549,17 @@ function VirtualEntityListBody<T>({
           const group = groupByKey.get(entry.bucket.key)
           if (!group) return null
           const isCollapsed = group.collapsible && collapsedSet.has(group.key)
+          const headerRef = measureRef(`h:${entry.bucket.key}`, MEASURE_HEADER_KEY)
+          // The slot spans the whole group and stays click-through; the inner
+          // sticky header owns its own height and re-enables pointer events, so
+          // it sticks until the next group arrives (same as non-windowed).
+          const headerStyle: React.CSSProperties = {
+            ...style,
+            height: Math.max(entry.height, (groupEnds.get(entry.key) ?? flattened.totalHeight) - entry.offset),
+            pointerEvents: 'none',
+          }
           return (
-            <div key={entry.key} style={style} ref={measureRef(`h:${entry.bucket.key}`, MEASURE_HEADER_KEY)}>
+            <div key={entry.key} data-windowed-header={group.key} style={headerStyle}>
               {group.collapsible && onToggleCollapse ? (
                 <CollapsibleGroupHeader
                   label={group.label}
@@ -527,12 +569,16 @@ function VirtualEntityListBody<T>({
                   onCollapseAll={onCollapseAll}
                   onExpandAll={onExpandAll}
                   onSelectGroup={onSelectGroup ? () => onSelectGroup(group.key) : undefined}
+                  elementRef={headerRef}
+                  style={{ pointerEvents: 'auto' }}
                 />
               ) : (
                 <SectionHeader
                   label={group.label}
                   itemCount={group.items.length}
                   onSelectGroup={onSelectGroup ? () => onSelectGroup(group.key) : undefined}
+                  elementRef={headerRef}
+                  style={{ pointerEvents: 'auto' }}
                 />
               )}
             </div>

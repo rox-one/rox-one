@@ -1,15 +1,23 @@
 import { afterEach, describe, expect, test, vi } from 'bun:test'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createGitExec, type GitExec } from '@rox/shared/memory/git-exec'
 import type { MemoryRepoBankInfo } from '@rox/shared/memory/repo'
 import type { RepoSourceBundle, RepoSourceLesson } from '../MemoryRepoMaterializer'
-import { MemoryRepoService, type MemoryRepoServiceDeps } from '../MemoryRepoService'
+import { MemoryRepoService, type MemoryRepoServiceDeps, type RepoMaterializeResult } from '../MemoryRepoService'
 import type { RepoSourceProvider } from '../RepoSourceProvider'
 import { listRepoFiles, readSnapshots } from '../snapshots'
+
+/** Hermetic git identity: CI runners have no global git config (user.email/user.name unset). */
+const GIT_IDENTITY = {
+  GIT_AUTHOR_NAME: 'Rox Test',
+  GIT_AUTHOR_EMAIL: 'rox-test@example.com',
+  GIT_COMMITTER_NAME: 'Rox Test',
+  GIT_COMMITTER_EMAIL: 'rox-test@example.com',
+} as const
 
 const dirs: string[] = []
 
@@ -117,7 +125,7 @@ function simulateKilledSnapshotBatch(repoPath: string): void {
 
 /** `git --git-dir <repo>/.git-rox --work-tree <repo> <args>` → stdout. */
 function memGit(repoPath: string, args: string[]): string {
-  return execFileSync('git', ['--git-dir', join(repoPath, '.git-rox'), '--work-tree', repoPath, ...args], { encoding: 'utf8' })
+  return execFileSync('git', ['--git-dir', join(repoPath, '.git-rox'), '--work-tree', repoPath, ...args], { encoding: 'utf8', env: { ...process.env, ...GIT_IDENTITY } })
 }
 
 /** CRC-32 (IEEE 802.3) table, built independently of the exporter's own. */
@@ -354,11 +362,11 @@ describe('MemoryRepoService', () => {
 
   test('foreign tree: memory commits land only in .git-rox', async () => {
     const userRepo = tempDir('user-repo')
-    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: userRepo })
+    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: userRepo, env: { ...process.env, ...GIT_IDENTITY } })
     mkdirSync(join(userRepo, 'src'), { recursive: true })
     writeFileSync(join(userRepo, 'src', 'file.ts'), 'export {}\n')
-    execFileSync('git', ['add', '-A'], { cwd: userRepo })
-    execFileSync('git', ['commit', '-q', '-m', 'user commit'], { cwd: userRepo })
+    execFileSync('git', ['add', '-A'], { cwd: userRepo, env: { ...process.env, ...GIT_IDENTITY } })
+    execFileSync('git', ['commit', '-q', '-m', 'user commit'], { cwd: userRepo, env: { ...process.env, ...GIT_IDENTITY } })
 
     const memRepoDir = join(userRepo, '.memory-repo')
     const service = makeService(new FakeProvider(bundleFor('main')), {
@@ -368,17 +376,17 @@ describe('MemoryRepoService', () => {
     const result = await service.materialize('main', 'test')
     expect(result.committed).toBe(true)
 
-    const userTop = execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: userRepo, encoding: 'utf8' }).trim()
+    const userTop = execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: userRepo, encoding: 'utf8', env: { ...process.env, ...GIT_IDENTITY } }).trim()
     expect(realpathSync(userTop)).not.toBe(realpathSync(repoPath))
-    expect(execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: userRepo, encoding: 'utf8' }).trim().endsWith('.memory-repo')).toBe(false)
+    expect(execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: userRepo, encoding: 'utf8', env: { ...process.env, ...GIT_IDENTITY } }).trim().endsWith('.memory-repo')).toBe(false)
 
     // the user's history has only their own commit; memory commits live in .git-rox
-    const userLog = execFileSync('git', ['log', '--format=%s'], { cwd: userRepo, encoding: 'utf8' }).trim().split('\n')
+    const userLog = execFileSync('git', ['log', '--format=%s'], { cwd: userRepo, encoding: 'utf8', env: { ...process.env, ...GIT_IDENTITY } }).trim().split('\n')
     expect(userLog).toEqual(['user commit'])
     const memoryLog = execFileSync(
       'git',
       ['--git-dir', join(repoPath, '.git-rox'), '--work-tree', repoPath, 'log', '--format=%s'],
-      { encoding: 'utf8' },
+      { encoding: 'utf8', env: { ...process.env, ...GIT_IDENTITY } },
     ).trim().split('\n')
     expect(memoryLog).toHaveLength(1)
     expect(memoryLog[0]).toMatch(/^memory\(main\):/)
@@ -390,10 +398,10 @@ describe('MemoryRepoService', () => {
 
   test('default repo location: materialize leaves the workspace git tree clean', async () => {
     const workspaceRoot = tempDir('ws-default')
-    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: workspaceRoot })
+    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: workspaceRoot, env: { ...process.env, ...GIT_IDENTITY } })
     writeFileSync(join(workspaceRoot, 'keep.txt'), 'keep\n')
-    execFileSync('git', ['add', '-A'], { cwd: workspaceRoot })
-    execFileSync('git', ['commit', '-q', '-m', 'workspace commit'], { cwd: workspaceRoot })
+    execFileSync('git', ['add', '-A'], { cwd: workspaceRoot, env: { ...process.env, ...GIT_IDENTITY } })
+    execFileSync('git', ['commit', '-q', '-m', 'workspace commit'], { cwd: workspaceRoot, env: { ...process.env, ...GIT_IDENTITY } })
 
     const service = makeService(new FakeProvider(bundleFor('main')))
     const repoPath = service.repoPathFor('main', '')
@@ -403,7 +411,7 @@ describe('MemoryRepoService', () => {
     const result = await service.materialize('main', 'test')
     expect(result.committed).toBe(true)
 
-    const porcelain = execFileSync('git', ['status', '--porcelain'], { cwd: workspaceRoot, encoding: 'utf8' })
+    const porcelain = execFileSync('git', ['status', '--porcelain'], { cwd: workspaceRoot, encoding: 'utf8', env: { ...process.env, ...GIT_IDENTITY } })
     expect(porcelain.trim()).toBe('')
     await service.dispose()
   })
@@ -960,6 +968,91 @@ describe('MemoryRepoService', () => {
     const failed = await service.materialize('ws:w1', 'failed')
     expect(failed.committed).toBe(false)
     expect(failed.error).toContain('injected commit failure')
+    await service.dispose()
+  }, 30_000)
+
+  test('stale index lock: a >60s lock left by a killed run is quarantined and the batch retries to success', async () => {
+    const provider = new MutableProvider(bundleFor('workspace'))
+    const service = makeService(provider)
+    const repoPath = service.repoPathFor('ws:w1', '')
+    expect((await service.materialize('ws:w1', 'first')).committed).toBe(true)
+
+    // A SIGKILLed run left its index lock behind; it is two minutes old, so it
+    // cannot belong to a live git invocation.
+    const lockPath = join(repoPath, '.git-rox', 'index.lock')
+    writeFileSync(lockPath, '')
+    const old = new Date(Date.now() - 120_000)
+    utimesSync(lockPath, old, old)
+
+    const warns: unknown[][] = []
+    const originalWarn = console.warn
+    console.warn = (...args: unknown[]) => {
+      warns.push(args)
+    }
+    let recovered: RepoMaterializeResult
+    try {
+      provider.bundle = { ...provider.bundle, context: '# Context\nB\n' }
+      recovered = await service.materialize('ws:w1', 'after-kill')
+    } finally {
+      console.warn = originalWarn
+    }
+
+    // The quarantine + single retry lands the batch, with no error.
+    expect(recovered.committed).toBe(true)
+    expect(recovered.error).toBeUndefined()
+    expect(recovered.recoveredLock).toBeDefined()
+    expect(recovered.recoveredLock!.startsWith(`${lockPath}.stale-`)).toBe(true)
+    // quarantined (renamed, bytes preserved), not deleted
+    expect(existsSync(recovered.recoveredLock!)).toBe(true)
+    expect(existsSync(lockPath)).toBe(false)
+    expect(warns.some((args) => String(args[0]).includes('quarantined stale index lock'))).toBe(true)
+    expect(await service.listCommits('ws:w1')).toHaveLength(2)
+    await service.dispose()
+  }, 30_000)
+
+  test('fresh index lock: a live run\'s lock is never touched and stays an honest error', async () => {
+    const provider = new MutableProvider(bundleFor('workspace'))
+    const service = makeService(provider)
+    const repoPath = service.repoPathFor('ws:w1', '')
+    expect((await service.materialize('ws:w1', 'first')).committed).toBe(true)
+
+    // mtime == now → a live git invocation owns this lock.
+    const lockPath = join(repoPath, '.git-rox', 'index.lock')
+    writeFileSync(lockPath, '')
+
+    provider.bundle = { ...provider.bundle, context: '# Context\nB\n' }
+    const failed = await service.materialize('ws:w1', 'fresh-lock')
+
+    expect(failed.committed).toBe(false)
+    expect(failed.error).toContain('index.lock')
+    expect(failed.recoveredLock).toBeUndefined()
+    // the lock is left exactly where it was, and no quarantine copy was minted
+    expect(existsSync(lockPath)).toBe(true)
+    expect(readdirSync(join(repoPath, '.git-rox')).some((name) => name.startsWith('index.lock.stale-'))).toBe(false)
+    await service.dispose()
+  }, 30_000)
+
+  test('status() on a settled git bank spawns exactly two git commands', async () => {
+    const provider = new FakeProvider(bundleFor('main'))
+    const real = createGitExec()
+    const calls: string[][] = []
+    const recordingGit: GitExec = {
+      available: () => real.available(),
+      async run(args, opts) {
+        calls.push(args)
+        return real.run(args, opts)
+      },
+    }
+    const service = makeService(provider, { git: recordingGit })
+    await service.materialize('main', 'test')
+    calls.length = 0
+
+    const status = await service.status('main')
+    // No `rev-parse --show-toplevel` probes: the two remaining spawns are the
+    // head log and the dirty `status --porcelain`.
+    expect(status.mode).toBe('git')
+    expect(status.foreignTree).toBe(false)
+    expect(calls.map((args) => args[0])).toEqual(['log', 'status'])
     await service.dispose()
   }, 30_000)
 })

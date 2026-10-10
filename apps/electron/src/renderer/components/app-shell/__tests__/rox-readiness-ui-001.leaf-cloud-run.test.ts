@@ -5,7 +5,7 @@ import { deferred, elementIn, leafComponent, rendererEffect, settle } from './ro
 const source = new URL('../../../pages/CloudRunSurfacePage.tsx', import.meta.url)
 const row = { id: 'run-A', name: 'Run A', provider: 'native', createdAt: 1, status: { id: 'run-A', state: 'running' } }
 
-function cloudHost(api: Record<string, unknown>, initialState: any = { kind: 'loading' }) {
+function cloudHost(api: Record<string, unknown>, initialState: any = { kind: 'loading' }, options: { visible?: boolean } = {}) {
   const target = new EventTarget()
   const document = Object.assign(new EventTarget(), { visibilityState: 'visible' })
   let tick: (() => void) | undefined
@@ -14,6 +14,10 @@ function cloudHost(api: Record<string, unknown>, initialState: any = { kind: 'lo
   let state = initialState
   const bindings = {
     runId: 'run-A', window, document, CLOUD_RUN_REFRESH_INTERVAL_MS: 5_000,
+    // PERF-10 (#1577): the production effect gates its whole body on the
+    // `useEffectiveVisible()` result, so the extracted closure receives it as a
+    // seam. Defaults to a visible host; callers can drill the hidden case.
+    visible: options.visible ?? true,
     setSnapshot: (value: any) => { state = value.state },
     setInterval: (callback: () => void) => { tick = callback; return 1 },
     clearInterval: () => { cleared = true },
@@ -85,6 +89,9 @@ describe('UI-001 selected cloud run refresh and recovery', () => {
     let stateCall = 0
     const Component = leafComponent(source, 'CloudRunSurfacePage', {
       React: { ...React, useState: () => ++stateCall === 1 ? [{ runId: 'run-A', state: { kind: 'unavailable', reason: 'error' } }, () => {}] : [attempt, (update: (value: number) => number) => { attempt = update(attempt) }], useCallback: (fn: unknown) => fn, useEffect: () => {} },
+      // PERF-10 (#1577): production reads the effective-visibility hook; the
+      // active visible surface is the case under test here.
+      useEffectiveVisible: () => true,
       useTranslation: () => ({ t: (key: string) => key }), useNavigation: () => ({ navigate: () => {} }), routes: { view: { settings: () => 'settings/cloudRuns' } },
     })
     const tree = Component({ runId: 'run-A' })

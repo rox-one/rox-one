@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
-import { Markdown } from '@tiptap/markdown'
+import { PerEditorMarkdown } from '../../official-markdown'
 import { Schema } from '@tiptap/pm/model'
 import { EditorState } from '@tiptap/pm/state'
 import {
@@ -120,7 +120,8 @@ describe('ROX block syntax', () => {
   it('recognizes a normal external Obsidian callout in the official Markdown parser', () => {
     const source = '> [!spoiler]- Reveal later\n> Hidden body'
     const editor = new Editor({
-      extensions: [StarterKit, Markdown],
+      // Production official engine: `OfficialMarkdown` in TiptapMarkdownEditor.
+      extensions: [StarterKit, PerEditorMarkdown.configure({ markedOptions: { gfm: true } })],
       content: source,
       contentType: 'markdown',
     })

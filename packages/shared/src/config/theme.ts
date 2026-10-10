@@ -118,6 +118,15 @@ export interface MaterialHazeSettings {
   enabled?: boolean;
   /** Haze strength, 0..1. */
   intensity?: number;
+  /**
+   * Static scanline overlay over the chat surface (Zed/MonoCode haze parity).
+   * Painted as a CSS layer only; never animated (PERF-07).
+   */
+  overlay?: boolean;
+  /** Overlay strength on an empty chat surface, 0..1 (MonoCode default 0.24). */
+  emptyOpacity?: number;
+  /** Overlay strength on a populated/active chat surface, 0..1 (default 0.5). */
+  activeOpacity?: number;
 }
 
 export interface MaterialChatEffectSettings {
@@ -161,12 +170,97 @@ export const MATERIAL_DEFAULTS = {
     sidebar: 0.86, navigator: 0.86, chat: 0.55, composer: 0.7, popover: 0.92,
   },
   texture: { kind: 'none', intensity: 0.35, scale: 1 },
-  haze: { enabled: false, intensity: 0.5 },
+  haze: { enabled: false, intensity: 0.5, overlay: false, emptyOpacity: 0.24, activeOpacity: 0.5 },
   chatEffect: { kind: 'none', intensity: 0.5 },
 } as const;
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
+
+/**
+ * Per-surface alpha hints a blurred preset can carry, derived from its Zed
+ * role alphas (`titlebar: '#RRGGBBAA'`, `panel.background: transparent`, …).
+ * Keys are the material surface names with an `Opacity` suffix; values are
+ * fractions of the opaque surface colour (0..1). The auto-glass resolver
+ * applies them on top of the built-in Zed-parity profile.
+ */
+export const MATERIAL_SURFACE_HINT_KEYS = [
+  'topbarOpacity', 'railOpacity', 'stripOpacity', 'inspectorOpacity',
+  'sidebarOpacity', 'navigatorOpacity', 'chatOpacity', 'composerOpacity', 'popoverOpacity',
+] as const;
+export type MaterialSurfaceHintKey = typeof MATERIAL_SURFACE_HINT_KEYS[number];
+export type MaterialSurfaceHints = Partial<Record<MaterialSurfaceHintKey, number>>;
+
+/** Map a surface to its hint key (`topbar` -> `topbarOpacity`). */
+export function materialSurfaceHintKey(surface: MaterialSurface): MaterialSurfaceHintKey {
+  return `${surface}Opacity` as MaterialSurfaceHintKey;
+}
+
+/**
+ * Zed-parity blurred profile: chrome and side panels are translucent over the
+ * native material, reading surfaces stay opaque. Alphas are the *most
+ * translucent* values that still hold the WCAG ≥ 4.5:1 worst-composite
+ * invariant solved in the preset import (`docs/themes/zed-import.md`); Zed's
+ * raw titlebar alphas (≈0.75) sit below that floor for the shipped palettes,
+ * so the presets pin the validated values. Used both for the `zedBlurred`
+ * material preset and for the automatic glass a `mode:'blurred'` theme opts
+ * into (see `effectiveMaterialSettings`).
+ */
+export const ZED_BLURRED_MATERIAL: MaterialSettings = {
+  enabled: true,
+  opacity: {
+    // Zed roles: titlebar #1A1A1Ac0 (≈0.75), panel/rail transparent. Held at
+    // or above the worst-composite contrast floor (0.82) on every surface that
+    // can carry the palette's UI text; popovers stay near-opaque.
+    topbar: 0.82, rail: 0.82, strip: 0.86, inspector: 0.84,
+    sidebar: 0.82, navigator: 0.82, chat: 0.55, composer: 0.7, popover: 0.88,
+  },
+};
+
+/** Convert preset alpha hints into an `opacity` patch; `undefined` when empty. */
+export function surfaceHintsToOpacity(
+  hints: MaterialSurfaceHints | undefined,
+): Partial<Record<MaterialSurface, number>> | undefined {
+  if (!hints) return undefined;
+  const opacity: Partial<Record<MaterialSurface, number>> = {};
+  for (const surface of MATERIAL_SURFACES) {
+    const value = hints[materialSurfaceHintKey(surface)];
+    if (typeof value === 'number') opacity[surface] = value;
+  }
+  return Object.keys(opacity).length > 0 ? opacity : undefined;
+}
+
+/**
+ * Single source of truth for "which material settings actually apply".
+ * A blurred theme with no explicit `enabled` decision auto-activates the
+ * Zed-parity profile; any explicit `enabled` (true or false) wins, so a user
+ * override — including disabling the layer — is never overridden. Preset
+ * surface hints refine the profile's opacity; user/preset material fields
+ * still deep-merge on top.
+ */
+export function effectiveMaterialSettings(
+  material: MaterialSettings | undefined,
+  context: MaterialActivationContext = {},
+): MaterialSettings | undefined {
+  if (material?.enabled !== undefined) return material;
+  if (context.mode !== 'blurred') return material;
+  const hinted = surfaceHintsToOpacity(context.surfaces);
+  const profile: MaterialSettings = hinted
+    ? { ...ZED_BLURRED_MATERIAL, opacity: { ...ZED_BLURRED_MATERIAL.opacity, ...hinted } }
+    : ZED_BLURRED_MATERIAL;
+  const merged = mergeMaterialSettings(profile, material) ?? profile;
+  // A stray `enabled: undefined` key in the override must not silently switch
+  // the auto-activated layer back off.
+  return merged.enabled === undefined ? { ...merged, enabled: true } : merged;
+}
+
+/** Context for the blurred auto-activation (`effectiveMaterialSettings`). */
+export interface MaterialActivationContext {
+  /** Resolved theme mode; `'blurred'` opts the layer in automatically. */
+  mode?: ThemeMode;
+  /** Preset surface alpha hints derived from Zed roles. */
+  surfaces?: MaterialSurfaceHints;
+}
 
 /** Deep-merge material settings (override wins per field/subfield). */
 export function mergeMaterialSettings(
@@ -202,6 +296,10 @@ export interface MaterialResolveContext {
   reduceTransparency?: boolean;
   highContrast?: boolean;
   renderProfile?: 'standard' | 'performance';
+  /** Resolved theme mode; `'blurred'` auto-activates the Zed-parity profile. */
+  mode?: ThemeMode;
+  /** Preset surface alpha hints (see `MaterialSurfaceHints`). */
+  surfaces?: MaterialSurfaceHints;
 }
 
 export interface ResolvedMaterial {
@@ -227,22 +325,31 @@ export function resolveMaterial(
   material: MaterialSettings | undefined,
   context: MaterialResolveContext = {},
 ): ResolvedMaterial {
+  // Single source of truth: a blurred theme with no explicit `enabled`
+  // decision activates the Zed-parity profile here (and in `themeToCSS`).
+  const effective = effectiveMaterialSettings(material, {
+    mode: context.mode,
+    surfaces: context.surfaces,
+  });
   const blur = {} as Record<MaterialSurface, number>;
   const opacity = {} as Record<MaterialSurface, number>;
   for (const surface of MATERIAL_SURFACES) {
-    blur[surface] = clampNumber(material?.blur?.[surface] ?? MATERIAL_DEFAULTS.blur[surface], 0, 64);
-    opacity[surface] = clampNumber(material?.opacity?.[surface] ?? MATERIAL_DEFAULTS.opacity[surface], 0, 1);
+    blur[surface] = clampNumber(effective?.blur?.[surface] ?? MATERIAL_DEFAULTS.blur[surface], 0, 64);
+    opacity[surface] = clampNumber(effective?.opacity?.[surface] ?? MATERIAL_DEFAULTS.opacity[surface], 0, 1);
   }
   const resolved: ResolvedMaterial = {
-    enabled: Boolean(material?.enabled),
+    enabled: Boolean(effective?.enabled),
     blur,
     opacity,
-    tint: material?.tint ? { ...material.tint } : undefined,
-    texture: { kind: 'none', intensity: 0.35, scale: 1, ...material?.texture },
-    haze: { enabled: false, intensity: 0.5, ...material?.haze },
-    matte: clampNumber(material?.matte ?? 0, 0, 1),
-    deepGlass: { ...material?.deepGlass },
-    chatEffect: { kind: 'none', intensity: 0.5, ...material?.chatEffect },
+    tint: effective?.tint ? { ...effective.tint } : undefined,
+    texture: { kind: 'none', intensity: 0.35, scale: 1, ...effective?.texture },
+    haze: {
+      enabled: false, intensity: 0.5, overlay: false, emptyOpacity: 0.24, activeOpacity: 0.5,
+      ...effective?.haze,
+    },
+    matte: clampNumber(effective?.matte ?? 0, 0, 1),
+    deepGlass: { ...effective?.deepGlass },
+    chatEffect: { kind: 'none', intensity: 0.5, ...effective?.chatEffect },
   };
   if (!resolved.enabled) return { ...resolved, disabledReason: 'off' };
   if (context.highContrast) return { ...resolved, enabled: false, disabledReason: 'high-contrast' };
@@ -278,6 +385,13 @@ export interface ThemeOverrides extends ThemeColors, SurfaceColors {
    * per-surface opt-ins. Absent keeps the current solid surface behavior.
    */
   material?: MaterialSettings;
+
+  /**
+   * Per-surface alpha hints (Zed role mapping) a blurred preset can carry,
+   * e.g. `{ navigatorOpacity: 0.82, titlebarOpacity: 0.82 }`. Consumed by the
+   * auto-glass resolver for `mode:'blurred'`; explicit `material` wins.
+   */
+  surfaces?: MaterialSurfaceHints;
 }
 
 /**
@@ -364,6 +478,9 @@ export function mergeThemeOverrides(
   // Deep merge material (glass) settings
   const material = mergeMaterialSettings(base.material, override.material);
   if (material !== undefined) result.material = material;
+
+  // Per-surface Zed role hints (override wins per key)
+  if (override.surfaces) result.surfaces = { ...base.surfaces, ...override.surfaces };
 
   return result;
 }
@@ -583,9 +700,12 @@ export function themeToCSS(theme: ThemeOverrides, isDark: boolean = false): stri
   const mode = theme.mode || 'solid';
   vars.push(`--theme-mode: ${mode};`);
 
-  // Material (glass) layer variables. Emitted only when the layer is enabled;
-  // consumers fall back to their static shell tokens otherwise.
-  const material = theme.material;
+  // Material (glass) layer variables. A blurred theme with no explicit
+  // `enabled` decision activates the Zed-parity profile (single source of
+  // truth shared with `resolveMaterial`); otherwise the layer emits only when
+  // the resolved material enables it. Consumers fall back to their static
+  // shell tokens when nothing is emitted.
+  const material = effectiveMaterialSettings(theme.material, { mode, surfaces: theme.surfaces });
   if (material?.enabled) {
     const blur = { ...MATERIAL_DEFAULTS.blur, ...material.blur };
     const opacity = { ...MATERIAL_DEFAULTS.opacity, ...material.opacity };
@@ -607,7 +727,13 @@ export function themeToCSS(theme: ThemeOverrides, isDark: boolean = false): stri
       vars.push(`--material-texture-scale: ${clampNumber(texture.scale, 0.5, 3)};`);
     }
     const haze = { ...MATERIAL_DEFAULTS.haze, ...material.haze };
-    if (haze.enabled) vars.push(`--material-haze-intensity: ${clampNumber(haze.intensity, 0, 1)};`);
+    if (haze.enabled) {
+      vars.push(`--material-haze-intensity: ${clampNumber(haze.intensity, 0, 1)};`);
+      if (haze.overlay) {
+        vars.push(`--material-haze-overlay-empty: ${clampNumber(haze.emptyOpacity, 0, 1)};`);
+        vars.push(`--material-haze-overlay-active: ${clampNumber(haze.activeOpacity, 0, 1)};`);
+      }
+    }
     if (material.matte !== undefined) vars.push(`--material-matte: ${clampNumber(material.matte, 0, 1)};`);
     const chatEffect = { ...MATERIAL_DEFAULTS.chatEffect, ...material.chatEffect };
     if (chatEffect.kind !== 'none') {
@@ -706,6 +832,11 @@ export interface ThemeFile extends ThemeOverrides {
   shikiTheme?: ShikiThemeConfig;
   /** Optional shell profile for `html[data-ui-profile]` (e.g. super-engineering). */
   uiProfile?: string;
+  /**
+   * Zed syntax captures mapped on import (C1). Kept verbatim so a later Shiki
+   * build can consume the source palette; the runtime ignores it.
+   */
+  syntax?: Record<string, { color: string; fontStyle?: string; fontWeight?: number }>;
 }
 
 /**

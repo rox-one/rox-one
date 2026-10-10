@@ -68,7 +68,7 @@ import {
   migrateAutoCreateFromSessions,
   type SkillsLearningPolicy,
 } from '../memory/learning.ts';
-import { isValidProviderAuthCombination, getDefaultModelsForConnection, getDefaultModelForConnection, isPiProvider, toBedrockNativeId, type LlmProviderType } from './llm-connections.ts';
+import { isValidProviderAuthCombination, getDefaultModelsForConnection, getDefaultModelForConnection, isPiProvider, toBedrockNativeId, filterLlmConnectionsForProfile, type LlmProviderType } from './llm-connections.ts';
 import {
   getModelProvider,
   getModelById,
@@ -127,9 +127,17 @@ export interface StoredConfig {
   activeSessionId: string | null;  // Currently active session (primary scope)
   // Notifications
   notificationsEnabled?: boolean;  // Desktop notifications for task completion (default: true)
+  // Native integration — global accelerator that opens the floating quick
+  // composer. `null` = explicitly disabled; missing = default ('Alt+Space').
+  quickComposerShortcut?: string | null;
   // Appearance
   colorTheme?: string;  // Selected preset ID; existing profiles without this key retain config-defaults.
   defaultZoomLevel?: number;  // Default app zoom percentage (50-150, default: 90)
+  // «Интерфейс» UI preferences (A6 compact status bar, B10 accent source).
+  ui?: {
+    statusBar?: boolean;  // Show the compact bottom status bar (default: true)
+    accentSource?: 'brand' | 'system';  // Accent source (default: 'brand')
+  };
   // Auto-update
   dismissedUpdateVersion?: string;  // Version that user dismissed (skip notifications for this version)
   // Input settings
@@ -1174,6 +1182,31 @@ export function setNotificationsEnabled(enabled: boolean): void {
   saveConfig(config);
 }
 
+/** Default global accelerator for the floating quick composer. */
+export const DEFAULT_QUICK_COMPOSER_SHORTCUT = 'Alt+Space';
+
+/**
+ * Get the persisted global accelerator that opens the quick composer.
+ * Missing key → default ('Alt+Space'); explicit `null` → disabled.
+ */
+export function getQuickComposerShortcut(): string | null {
+  const config = loadStoredConfig();
+  if (config && config.quickComposerShortcut !== undefined) {
+    return config.quickComposerShortcut;
+  }
+  return DEFAULT_QUICK_COMPOSER_SHORTCUT;
+}
+
+/**
+ * Persist the quick-composer accelerator. `null` disables the global shortcut.
+ */
+export function setQuickComposerShortcut(accelerator: string | null): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  config.quickComposerShortcut = accelerator;
+  saveConfig(config);
+}
+
 /**
  * Get whether auto-capitalisation is enabled.
  * Defaults to true if not set.
@@ -1285,6 +1318,43 @@ export function setRichToolDescriptions(enabled: boolean): void {
   const config = loadStoredConfig();
   if (!config) return;
   config.richToolDescriptions = enabled;
+  saveConfig(config);
+}
+
+/**
+ * «Интерфейс» UI preferences (A6 status bar visibility, B10 accent source).
+ * Defaults: status bar visible, brand accent. Read idempotently; a missing or
+ * unreadable global config returns the defaults rather than throwing, so the
+ * shell renders before the first successful config write.
+ */
+export function getUiPreferences(): { statusBarVisible: boolean; accentSource: 'brand' | 'system' } {
+  const config = loadStoredConfig();
+  const ui = config?.ui;
+  return {
+    statusBarVisible: ui?.statusBar !== false,
+    accentSource: ui?.accentSource === 'system' ? 'system' : 'brand',
+  };
+}
+
+/** Persist a UI preference patch; never rewrites the file when unchanged. */
+export function setUiPreferences(patch: { statusBarVisible?: boolean; accentSource?: 'brand' | 'system' }): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  const current = getUiPreferences();
+  const next = {
+    statusBar: patch.statusBarVisible !== undefined ? patch.statusBarVisible : current.statusBarVisible,
+    ...(patch.accentSource !== undefined
+      ? { accentSource: patch.accentSource }
+      : config.ui?.accentSource !== undefined ? { accentSource: config.ui.accentSource } : {}),
+  };
+  if (
+    config.ui?.statusBar === next.statusBar &&
+    config.ui?.accentSource === next.accentSource &&
+    (next.accentSource !== undefined || config.ui?.statusBar !== undefined)
+  ) {
+    return;
+  }
+  config.ui = next;
   saveConfig(config);
 }
 
@@ -2648,6 +2718,26 @@ export function loadPresetTheme(id: string): PresetTheme | null {
  */
 export function getPresetThemesDir(): string {
   return getAppThemesDir();
+}
+
+/**
+ * Write a preset theme JSON into the app themes directory (C1 Zed import).
+ * Refuses an unsafe id or an existing file, so an import can never silently
+ * overwrite a bundled/user preset — the caller chooses a fresh id.
+ */
+export function writePresetThemeFile(id: string, theme: unknown, dir?: string): boolean {
+  if (!isSafeThemeId(id)) throw new Error('Invalid theme id');
+  const themesDir = dir ?? getAppThemesDir();
+  mkdirSync(themesDir, { recursive: true });
+  const destPath = join(themesDir, `${id}.json`);
+  try {
+    // Exclusive create: never overwrite an existing preset (atomic, no pre-check race).
+    writeFileSync(destPath, JSON.stringify(theme, null, 2), { encoding: 'utf-8', flag: 'wx' });
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException | null)?.code === 'EEXIST') return false;
+    throw error;
+  }
 }
 
 /**
@@ -4044,13 +4134,19 @@ export async function migrateLegacyCredentials(): Promise<void> {
  *
  * Note: This function is read-only and never modifies config.
  * Call migrateLegacyLlmConnectionsConfig() on app startup to handle migration.
+ *
+ * @param profileId - Optional Identity Center profile to scope the read to.
+ *   When omitted (the pre-existing contract) the stored array is returned
+ *   unchanged, byte-identically. When supplied, connections keyed to another
+ *   profile are filtered out while unkeyed (shared) connections stay visible.
  */
-export function getLlmConnections(): LlmConnection[] {
+export function getLlmConnections(profileId?: string): LlmConnection[] {
   const config = loadStoredConfig();
   if (!config) return [];
 
   // Return empty array if not migrated yet - caller should call migration on startup
-  return config.llmConnections || [];
+  const connections = config.llmConnections || [];
+  return filterLlmConnectionsForProfile(connections, profileId);
 }
 
 /**

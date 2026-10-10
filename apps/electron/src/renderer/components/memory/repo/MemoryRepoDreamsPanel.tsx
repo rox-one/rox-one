@@ -24,7 +24,7 @@ const RUN_STATUS_TONE: Record<MemoryDreamRun['status'], string> = {
   running: 'bg-accent/12 text-accent',
   ok: 'bg-success/12 text-success',
   error: 'bg-destructive/12 text-destructive',
-  skipped: 'bg-foreground/8 text-text-muted',
+  skipped: 'bg-foreground-10 text-text-muted',
 }
 
 const RUN_STATUS_KEY: Record<MemoryDreamRun['status'], string> = {
@@ -180,7 +180,7 @@ export function MemoryRepoDreamsPanel({ status, log, running, onRunNow }: Memory
               {log.map((event, index) => (
                 <li key={`${event.dreamId}:${index}`} className="flex min-w-0 items-baseline gap-2" data-testid="memory-repo-dreams-event" data-kind={event.kind}>
                   <span className="shrink-0 tabular-nums text-text-muted">{formatEventTime(event.ts)}</span>
-                  <span className="shrink-0 rounded-[var(--radius-control)] bg-surface-hover px-1 text-caption text-text-secondary">{t(`memory.repo.dreams.kind.${event.kind}`)}</span>
+                  <span className="shrink-0 rounded-[var(--radius-control)] bg-foreground-5 px-1 text-caption text-text-secondary">{t(`memory.repo.dreams.kind.${event.kind}`)}</span>
                   <span className="min-w-0 flex-1 truncate" title={event.message}>{event.message}</span>
                   {typeof event.inputTokens === 'number' || typeof event.outputTokens === 'number' ? (
                     <span className="shrink-0 tabular-nums text-text-muted">

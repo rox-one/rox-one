@@ -21,10 +21,10 @@ import { getDefaultStatusConfig } from '@rox/shared/statuses'
 import { getToolchainManager } from '@rox/shared/toolchain-runtime'
 import { getDefaultGamificationState, saveGamificationState } from '@rox/shared/gamification'
 import { projectNativeRegisteredWorkspaceEvent } from '../../native-session-scope'
-import { RPC_CHANNELS, type Session, type SessionEvent } from '@rox/shared/protocol'
+import { RPC_CHANNELS, CodedError, type Session, type SessionEvent, type SessionParticipantIdentity } from '@rox/shared/protocol'
 import type { AnnotationV1 } from '@rox/core/types'
 import type { RequestContext } from '../../../../transport/types'
-import type { SessionCompletionEvent } from '../../../../sessions/SessionManager'
+import { evaluateSessionReadAccess, evaluateSessionWriteAccess, upsertSessionParticipant, type SessionCompletionEvent } from '../../../../sessions/SessionManager'
 import type { ToolStatus } from '@rox/shared/toolchain'
 import type { LoadedSource } from '@rox/shared/sources'
 import { filterSessionMeta } from '@rox/shared/sessions/collection'
@@ -109,6 +109,39 @@ const manager = {
     if (autoComplete) emitCompletion(completion)
   },
   cancelProcessing: async () => { writes++ },
+  // a1.3/a2.5 port slices: `sessions.ts` gates reads through `canReadSession`
+  // (:355) and writes through `assertSessionWriteAccess` (:489/:597/:823/:876/:923).
+  // The fixture delegates to the SAME pure evaluators production uses so the
+  // visibility policy is never duplicated; fixture sessions are unattributed
+  // (no owner/creator/participants/visibility), which the evaluators treat as the
+  // open legacy default — exactly what the real manager does for these records.
+  // Production semantics mirrored: an unknown session id keeps its downstream
+  // not-found behaviour (read: true, write: no-op) and a denial throws the same
+  // typed CodedError the real gate throws.
+  canReadSession(sessionId: string, actorAccountId: string | null) {
+    const session = sessions.find(candidate => candidate.id === sessionId)
+    if (!session) return true
+    return evaluateSessionReadAccess(session, actorAccountId).allowed
+  },
+  assertSessionWriteAccess(sessionId: string, actorAccountId: string | null) {
+    const session = sessions.find(candidate => candidate.id === sessionId)
+    if (!session) return
+    const access = evaluateSessionWriteAccess(session, actorAccountId)
+    if (!access.allowed) throw new CodedError(access.code, access.message)
+  },
+  // a1.3/a1.4 port slice: the write paths attribute durable writers through
+  // `noteSessionParticipant` (sessions.ts:543/:652). The fake reuses the pure
+  // `upsertSessionParticipant` helper production uses and persists through the
+  // fixture's canonical store, mirroring the manager's "persist only on change".
+  async noteSessionParticipant(sessionId: string, participant: SessionParticipantIdentity) {
+    const session = sessions.find(candidate => candidate.id === sessionId)
+    if (!session) return false
+    const participants = upsertSessionParticipant(session.participants, participant)
+    if (!participants) return false
+    session.participants = participants
+    persist()
+    return true
+  },
 }
 const authority = new NativeAuthority({ stateDir: join(directory, 'authority') })
 const descriptor = Object.getOwnPropertyDescriptor(process.stdin, 'isTTY')

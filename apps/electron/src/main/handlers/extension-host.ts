@@ -21,6 +21,7 @@ import { RPC_CHANNELS } from '../../shared/types'
 import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
 import {
+  ExtensionHostReloadError,
   getExtensionHostManager,
   listExtensionHostStatuses,
 } from '../extension-host-manager'
@@ -29,8 +30,16 @@ import {
   setUrlAllowlist,
 } from '../extension-host/extension-url-allowlist'
 import type { ExtensionHostStatus } from '@rox/shared/extensions'
-import {getWorkspaceByNameOrId } from '@rox/shared/config'
-import { loadRawWorkspacePermissions } from '@rox/shared/agent'
+import { resolveExtensionGrantsFromPermissions } from '../extension-host/grants'
+import {
+  activateExtension,
+  listSandboxDescriptors,
+} from '../extension-host/startup'
+import type {
+  ExtensionHostActivateResult,
+  ExtensionHostListDescriptorsResult,
+  ExtensionHostReloadResult,
+} from '../../shared/types'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.extensionHost.STATUS,
@@ -47,34 +56,17 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.extensionHost.PROXY_FETCH,
   RPC_CHANNELS.extensionHost.GET_URL_ALLOWLIST,
   RPC_CHANNELS.extensionHost.SET_URL_ALLOWLIST,
+  RPC_CHANNELS.extensionHost.LIST_DESCRIPTORS,
+  RPC_CHANNELS.extensionHost.ACTIVATE,
+  RPC_CHANNELS.extensionHost.RELOAD,
 ] as const
 
 type WorkspaceArgs = { workspaceId?: string | null }
 
-/**
- * Resolve effective extension grants from workspace permissions.json.
- * grants = entry.granted filtered by not-in entry.revoked.
- * Missing workspace / missing entry → [].
- */
-export function resolveExtensionGrantsFromPermissions(
-  workspaceId: string | null | undefined,
-  extensionId: string,
-): string[] {
-  const id = typeof extensionId === 'string' ? extensionId.trim() : ''
-  if (!id) return []
-  if (typeof workspaceId !== 'string' || !workspaceId.trim()) return []
-  try {
-    const workspace = getWorkspaceByNameOrId(workspaceId.trim())
-    if (!workspace?.rootPath) return []
-    const raw = loadRawWorkspacePermissions(workspace.rootPath)
-    const entry = raw?.extensions?.[id]
-    if (!entry) return []
-    const revoked = new Set(entry.revoked ?? [])
-    return (entry.granted ?? []).filter((g) => typeof g === 'string' && !revoked.has(g))
-  } catch {
-    return []
-  }
-}
+// Grants resolve solely from workspace permissions.json. The implementation
+// lives in extension-host/grants.ts (leaf) so the startup activation path can
+// share it without an import cycle; re-exported here for existing callers.
+export { resolveExtensionGrantsFromPermissions } from '../extension-host/grants'
 
 
 export function registerExtensionHostHandlers(
@@ -324,6 +316,106 @@ export function registerExtensionHostHandlers(
       return {
         prefixes: setUrlAllowlist(args.extensionId, args.prefixes, resolveConfigDir()),
       }
+    },
+  )
+
+  // S-05 §3.5 wave 3 — descriptor plane. Never forks the host: discovery is a
+  // pure filesystem scan and getStatus() is a snapshot. Only validated
+  // packages appear in `descriptors`; invalid/shadowed ids stay visible via
+  // their `descriptor-invalid` / `shadowed:` plan reason.
+  server.handle(
+    RPC_CHANNELS.extensionHost.LIST_DESCRIPTORS,
+    async (_ctx, args?: WorkspaceArgs): Promise<ExtensionHostListDescriptorsResult> => {
+      const listing = listSandboxDescriptors({ workspaceId: args?.workspaceId })
+      const loaded = new Set(listing.loaded)
+      return {
+        descriptors: listing.descriptors.flatMap((descriptor) => {
+          if (descriptor.status !== 'ok' || !descriptor.entryPath) return []
+          return [
+            {
+              extensionId: descriptor.id,
+              entryPath: descriptor.entryPath,
+              manifestPath: join(descriptor.dir, 'manifest.json'),
+              ...(descriptor.manifest
+                ? { name: descriptor.manifest.name, version: descriptor.manifest.version }
+                : {}),
+              active: loaded.has(descriptor.id),
+              grantedPermissions: resolveExtensionGrantsFromPermissions(
+                args?.workspaceId,
+                descriptor.id,
+              ),
+            },
+          ]
+        }),
+        plan: listing.plan.map((item) => ({ extensionId: item.id, reason: item.reason })),
+        loaded: listing.loaded,
+      }
+    },
+  )
+
+  // Explicit activation: descriptor ok + enabled + craft-sandbox + fresh grants.
+  // Refusals are typed (ExtensionActivationError.code) for the renderer.
+  server.handle(
+    RPC_CHANNELS.extensionHost.ACTIVATE,
+    async (
+      _ctx,
+      args: { extensionId: string; trigger?: string; workspaceId?: string | null },
+    ): Promise<ExtensionHostActivateResult> => {
+      if (!args || typeof args.extensionId !== 'string') {
+        throw new Error('extensionHost.activate requires { extensionId }')
+      }
+      const commands = await activateExtension({
+        extensionId: args.extensionId,
+        workspaceId: args.workspaceId,
+      })
+      return { commands }
+    },
+  )
+
+  // Hot reload (wave-3 c2.6). Manifest identity/runtime is re-checked against
+  // the package on disk before the swap; grants come exclusively from the
+  // workspace permissions.json, never from the caller. The frozen
+  // `ExtensionHostReloadResult` wire shape carries the host lifecycle status
+  // plus reload provenance: `entryHash`+`generation` on a swap, `reason` on
+  // restartRequired/failed.
+  server.handle(
+    RPC_CHANNELS.extensionHost.RELOAD,
+    async (
+      _ctx,
+      args: { extensionId: string; entryPath: string; workspaceId?: string | null },
+    ): Promise<ExtensionHostReloadResult> => {
+      if (!args || typeof args.extensionId !== 'string' || typeof args.entryPath !== 'string') {
+        throw new Error('extensionHost.reload requires { extensionId, entryPath }')
+      }
+      const roots = resolveSandboxRoots({ configDir: resolveConfigDir() })
+      const manifestPath = assertPathAllowlisted(join(dirname(args.entryPath), 'manifest.json'), roots)
+      const manifest = parseExtensionManifest(JSON.parse(readFileSync(manifestPath, 'utf8')))
+      if (manifest.id !== args.extensionId || manifest.runtime !== 'craft-sandbox') {
+        throw new ExtensionHostReloadError(
+          'MANIFEST_MISMATCH',
+          'Extension manifest identity/runtime does not match the loaded package',
+        )
+      }
+      const grants = resolveExtensionGrantsFromPermissions(args.workspaceId, args.extensionId)
+      const declared = new Set(manifest.permissions)
+      const operations = manifest.operations ?? {}
+      for (const [method, permissions] of Object.entries(operations)) {
+        if (permissions.some((permission) => !declared.has(permission))) {
+          throw new Error(`Extension operation '${method}' requires a capability absent from its manifest`)
+        }
+      }
+
+      const manager = getExtensionHostManager(args.workspaceId)
+      const outcome = await manager.reloadExtension(args.extensionId, {
+        entryPath: args.entryPath,
+        grantedPermissions: grants,
+        operations,
+      })
+      const status = manager.getStatus().status
+      if (outcome.status === 'swapped') {
+        return { status, generation: outcome.generation, entryHash: outcome.entryHash }
+      }
+      return { status, reason: outcome.reason }
     },
   )
 }

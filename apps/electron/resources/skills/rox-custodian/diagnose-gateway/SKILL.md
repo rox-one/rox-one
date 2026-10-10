@@ -9,6 +9,7 @@ metadata:
     os:
       - darwin
       - linux
+    always: true
 ---
 
 <!--

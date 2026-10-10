@@ -6,15 +6,18 @@
  * for visual / axe / one-rail, the wave-2 browser driver is); an input
  * that exists but cannot be evaluated fails (see types.ts).
  */
+import { join } from 'node:path'
 import { checkDdlZodParity } from './ddl-parity.ts'
 import { runPermissionMatrixGate } from './permission-matrix.ts'
 import { checkRiskClassPresence } from './risk-class.ts'
 import { checkNegativeTestPresence } from './negative-tests.ts'
 import { runConfigPathsGate } from './config-paths.ts'
+import { runProvenanceGate, runVersionParityGate, runIpcSendsGate, runToolNameChecksGate } from './script-gates.ts'
 import { checkVisualGate, checkAxeGate } from './visual-axe.ts'
-import { checkChromeLintGate, checkOneRailGatePending, checkDockLayoutGate } from './chrome-dock.ts'
+import { checkChromeLintGate, checkOneRailGateAll, checkDockLayoutGate } from './chrome-dock.ts'
 import { checkAgentPrivacyGate } from './agent-privacy.ts'
 import { benchRunsFromEnv, runMicroBenchmarks, type MicroBenchResult } from '../bench.ts'
+import { readArtifacts, readBaselines } from '../capture.ts'
 import { errorMessage, type GateResult } from './types.ts'
 
 /** A gate that throws is a failure (fail closed), never a crash of the whole run. */
@@ -33,12 +36,16 @@ export const GATE_NAMES = [
   'risk-class',
   'negative-tests',
   'config-paths',
+  'provenance',
   'visual-snapshots',
   'axe',
   'chrome-schema-lint',
   'one-rail-dom',
   'dock-layout',
   'agent-panel-privacy',
+  'ipc-sends',
+  'tool-name-checks',
+  'version-parity',
   'perf-microbench',
 ] as const
 export type GateName = (typeof GATE_NAMES)[number]
@@ -47,7 +54,13 @@ export async function runAllGates(
   opts: { repoRoot?: string; env?: Record<string, string | undefined>; only?: readonly string[] } = {},
 ): Promise<GateResult[]> {
   const env = opts.env ?? process.env
-  const gateOpts = { repoRoot: opts.repoRoot }
+  const repoRoot = opts.repoRoot ?? join(import.meta.dir, '..', '..', '..', '..')
+  const gateOpts = { repoRoot }
+  // The wave-2 browser driver's artifacts are read once per run and injected
+  // into the gates that consume them (visual / axe / one-rail); absent → those
+  // three stay pending. See ../capture.ts.
+  const artifacts = await readArtifacts(repoRoot)
+  const baselines = await readBaselines(repoRoot)
   const unknown = (opts.only ?? []).filter((name) => !(GATE_NAMES as readonly string[]).includes(name))
   if (unknown.length > 0) throw new Error(`unknown gate(s): ${unknown.join(', ')} (known: ${GATE_NAMES.join(', ')})`)
   const runners: Record<GateName, () => GateResult | Promise<GateResult>> = {
@@ -56,12 +69,16 @@ export async function runAllGates(
     'risk-class': () => checkRiskClassPresence(gateOpts),
     'negative-tests': () => checkNegativeTestPresence(gateOpts),
     'config-paths': () => runConfigPathsGate(gateOpts),
-    'visual-snapshots': () => checkVisualGate(gateOpts),
-    axe: () => checkAxeGate(gateOpts),
+    provenance: () => runProvenanceGate(gateOpts),
+    'visual-snapshots': () => checkVisualGate({ ...gateOpts, env, artifacts, baselines }),
+    axe: () => checkAxeGate({ ...gateOpts, artifacts }),
     'chrome-schema-lint': () => checkChromeLintGate(gateOpts),
-    'one-rail-dom': () => checkOneRailGatePending(),
+    'one-rail-dom': () => checkOneRailGateAll(artifacts),
     'dock-layout': () => checkDockLayoutGate(gateOpts),
     'agent-panel-privacy': () => checkAgentPrivacyGate(gateOpts),
+    'ipc-sends': () => runIpcSendsGate(gateOpts),
+    'tool-name-checks': () => runToolNameChecksGate(gateOpts),
+    'version-parity': () => runVersionParityGate(gateOpts),
     'perf-microbench': () => perfGate(runMicroBenchmarks({ runs: benchRunsFromEnv(env) }), env),
   }
   const results: GateResult[] = []

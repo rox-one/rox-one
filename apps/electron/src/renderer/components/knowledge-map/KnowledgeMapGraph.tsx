@@ -6,7 +6,8 @@
  * Pan/zoom use pointer + wheel handlers; the view transform is owned by the
  * parent (`KnowledgeMapPanel`) so its toolbar buttons can drive it. Keyboard:
  * Enter/Space opens the node, arrow keys move selection to the nearest node in
- * that direction.
+ * that direction. The SVG root is a labelled `role="group"` whose
+ * `aria-describedby` points at the panel's legend/keyboard hint.
  */
 
 import * as React from 'react'
@@ -34,6 +35,8 @@ interface KnowledgeMapGraphProps {
   view: GraphView
   onViewChange: (view: GraphView) => void
   compact?: boolean
+  /** Id of the legend element describing the graph (keyboard + colour hint). */
+  describedById?: string
 }
 
 const ARROW_DIRECTIONS: Record<string, [number, number]> = {
@@ -56,6 +59,7 @@ export function KnowledgeMapGraph({
   view,
   onViewChange,
   compact = false,
+  describedById,
 }: KnowledgeMapGraphProps) {
   const { t } = useTranslation()
   const svgRef = React.useRef<SVGSVGElement | null>(null)
@@ -168,8 +172,9 @@ export function KnowledgeMapGraph({
     <svg
       ref={svgRef}
       viewBox={viewBox}
-      role="application"
-      aria-label={dto.rootLabel}
+      role="group"
+      aria-label={t('knowledgeMap.title')}
+      aria-describedby={describedById}
       className="h-full w-full touch-none select-none overflow-hidden text-muted-foreground motion-reduce:transition-none"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}

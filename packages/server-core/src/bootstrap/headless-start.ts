@@ -7,6 +7,8 @@ import { NativeJournal } from '../authority/native-journal.ts'
 import { CollaborationSyncService } from '../collaboration/sync-service.ts'
 import { join, basename } from 'node:path'
 import { lockHolderMatchesLock, parseTasklistImageName, type LockIdentity } from './lock-identity.ts'
+import { acquireStateWriterLock, type StateWriterLock } from '../state/writer-lock.ts'
+import { closeStateStore, openStateStore, stateWriterLockPath } from '../state/state-store.ts'
 import { OAuthFlowStore } from '@rox/shared/auth'
 import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig, getConfigPath, createInitialStoredConfig, getBundledSkillsDisabled, getWorkspaces } from '@rox/shared/config'
 import { ensureContextDocs } from '@rox/shared/context-docs'
@@ -26,7 +28,7 @@ import { stopAllSourceIndexWatches } from '../sources/source-index-watch.ts'
 import { resolveConfigDir } from "@rox/shared/config/paths"
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { projectNativeRegisteredWorkspaceEvent } from '../handlers/rpc/native-session-scope'
-import { HostScheduler } from '../scheduler/index.ts'
+import { composeHooksNodeHandler, createHooksHttpIngress, HostScheduler, type HooksIngressSnapshot, type HooksWakePayload } from '../scheduler/index.ts'
 import { projectNativeNotesChanged } from '../handlers/rpc/native-notes-events'
 import { projectNativeFeedChanged } from '../handlers/rpc/native-feed'
 import { projectNativeInboxChanged } from '../handlers/rpc/native-inbox-events'
@@ -41,14 +43,14 @@ export const NATIVE_EVENT_CHANNELS: ReadonlySet<string> = new Set([
   RPC_CHANNELS.sessions.EVENT, RPC_CHANNELS.sources.CHANGED, RPC_CHANNELS.memory.CHANGED, RPC_CHANNELS.notes.CHANGED, RPC_CHANNELS.feed.CHANGED,
   RPC_CHANNELS.skillsPending.CHANGED, RPC_CHANNELS.messaging.PENDING_CHANGED, RPC_CHANNELS.messaging.BINDING_CHANGED,
   RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED, RPC_CHANNELS.personalTasks.CHANGED,
-  RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
+  RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.podcast.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
   RPC_CHANNELS.voice.TALK_EVENT, RPC_CHANNELS.voice.STT_EVENT, RPC_CHANNELS.voice.WAKE_CHANGED,
   RPC_CHANNELS.voice.TTS_STREAM_CHUNK, RPC_CHANNELS.voice.TRIGGER,
 ])
 
 export const NATIVE_CLIENT_EVENT_CHANNELS: ReadonlySet<string> = new Set([
   RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED, RPC_CHANNELS.personalTasks.CHANGED,
-  RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
+  RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.podcast.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
   RPC_CHANNELS.voice.TALK_EVENT, RPC_CHANNELS.voice.STT_EVENT, RPC_CHANNELS.voice.WAKE_CHANGED,
   RPC_CHANNELS.voice.TTS_STREAM_CHUNK, RPC_CHANNELS.voice.TRIGGER,
 ])
@@ -112,6 +114,12 @@ export interface ServerBootstrapOptions<TSessionManager, THandlerDeps> {
    * When provided, the WsRpcServer serves HTTP (e.g. WebUI) on the same port.
    */
   httpHandler?: (req: import('node:http').IncomingMessage, res: import('node:http').ServerResponse) => void
+  /**
+   * Shared secret for the external `/hooks` webhook ingress. Defaults to
+   * `ROX_HOOKS_TOKEN` (`CRAFT_HOOKS_TOKEN` still works). When absent the route
+   * is not installed at all.
+   */
+  hooksToken?: string
 }
 
 export interface ServerHandlerContext {
@@ -137,6 +145,12 @@ export interface ServerInstance<TSessionManager> {
    * with the server and closed/joined from `stop()`.
    */
   scheduler: HostScheduler
+  /**
+   * Live snapshot of the external `/hooks` webhook ingress (port row f.8).
+   * Returns null when no hooks token was configured, in which case the route
+   * is not installed at all.
+   */
+  hooksIngressSnapshot: () => HooksIngressSnapshot | null
   stop: () => Promise<void>
 }
 
@@ -198,6 +212,32 @@ export function secureTokenCompare(provided: string, expected: string): boolean 
 export function maskTokenForDisplay(token: string): string {
   if (token.length < 12) return '***'
   return `${token.slice(0, 4)}…${token.slice(-4)}`
+}
+
+/**
+ * Minimal host seam the `/hooks/wake` route drives. The bootstrap binds it to
+ * the real `SessionManager.sendMessage`, so a wake delivery gets exactly the
+ * same visibility, queueing and persistence semantics as a message sent over
+ * RPC — there is deliberately no second delivery path.
+ */
+export interface HooksWakeSessionManager {
+  sendMessage?: (sessionId: string, message: string) => Promise<void>
+}
+
+/**
+ * Bind the external `/hooks/wake` route to the host's EXISTING session-message
+ * path.
+ */
+export function createHooksWakeDispatcher(
+  sessionManager: HooksWakeSessionManager,
+): (payload: HooksWakePayload) => Promise<void> {
+  const send = sessionManager.sendMessage
+  if (typeof send !== 'function') {
+    throw new Error('createHooksWakeDispatcher: session manager does not implement sendMessage')
+  }
+  return async ({ sessionId, text }) => {
+    await send.call(sessionManager, sessionId, text)
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -493,6 +533,19 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
   ensureGlobalConfigExists(platform)
   acquireServerLock(platform.logger)
 
+  // Unified state store: one writer per config dir for the server lifetime.
+  // The lock makes a second server refuse to start instead of racing SQLite;
+  // opening the store creates + migrates `<configDir>/state/rox-state.sqlite`.
+  const stateConfigDir = resolveConfigDir()
+  let stateWriterLock: StateWriterLock
+  try {
+    stateWriterLock = acquireStateWriterLock(stateWriterLockPath(stateConfigDir), { label: 'rox-server' })
+    openStateStore({ configDir: stateConfigDir, lock: stateWriterLock })
+  } catch (error) {
+    releaseServerLock()
+    throw error
+  }
+
   const modelRefreshService = options.initModelRefreshService()
   const sessionManager = options.createSessionManager()
   const scheduler = new HostScheduler({
@@ -500,6 +553,20 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
       error: (message, error) => platform.logger.error(`[scheduler] ${message}`, error),
     },
   })
+
+  // External `/hooks` webhook ingress (port row f.8). Installed only when a
+  // token is configured, so an unconfigured deployment has no route and no 401
+  // oracle. The wake route drives the existing SessionManager message path.
+  const hooksToken = options.hooksToken ?? getEnv('HOOKS_TOKEN')
+  const hooksIngress = hooksToken
+    ? createHooksHttpIngress({
+        hooks: scheduler.hooks,
+        token: hooksToken,
+        dispatchWake: createHooksWakeDispatcher(sessionManager as unknown as HooksWakeSessionManager),
+        logger: { warn: (message) => platform.logger.warn(message) },
+      })
+    : null
+  const composedHttpHandler = composeHooksNodeHandler(hooksIngress, options.httpHandler)
 
   const rpcHost = options.rpcHost ?? process.env.CRAFT_RPC_HOST ?? '127.0.0.1'
   const rpcPortRaw = options.rpcPort ?? parseInt(process.env.CRAFT_RPC_PORT ?? '9100', 10)
@@ -512,6 +579,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
   try {
     nativeAuthority = new NativeAuthority({ stateDir: nativeStateDir })
   } catch (error) {
+    stateWriterLock.release()
     releaseServerLock()
     throw error
   }
@@ -530,6 +598,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     nativeAuthority.close()
     try { modelRefreshService.stopAll?.() } catch { /* preserve startup failure */ }
     try { await options.cleanupSessionManager?.(sessionManager) } catch { /* preserve startup failure */ }
+    stateWriterLock.release()
     releaseServerLock()
     throw error
   }
@@ -558,7 +627,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     serverId: options.serverId ?? 'headless',
     serverVersion: options.serverVersion,
     tls: options.tls,
-    httpHandler: options.httpHandler,
+    httpHandler: composedHttpHandler,
     onClientConnected: options.onClientConnected,
     resolveLocalClientBinding: options.resolveLocalClientBinding,
     onClientDisconnected: (clientId) => {
@@ -693,6 +762,12 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
       platform.logger.error('[bootstrap] Failed to dispose OAuth flow store:', error)
     }
 
+    try {
+      closeStateStore(stateConfigDir)
+    } catch (error) {
+      platform.logger.error('[bootstrap] Failed to close state store:', error)
+    }
+    stateWriterLock.release()
     releaseServerLock()
   }
 
@@ -707,6 +782,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     token: serverToken,
     serverHandlerContext,
     scheduler,
+    hooksIngressSnapshot: () => hooksIngress?.snapshot() ?? null,
     stop,
   }
   } catch (error) {
@@ -718,6 +794,8 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     try { await options.cleanupSessionManager?.(sessionManager) } catch { /* preserve startup failure */ }
     try { nativeAuthority.close() } catch { /* preserve startup failure */ }
     try { oauthFlowStore.dispose() } catch { /* preserve startup failure */ }
+    try { closeStateStore(stateConfigDir) } catch { /* preserve startup failure */ }
+    try { stateWriterLock.release() } catch { /* preserve startup failure */ }
     try { releaseServerLock() } catch { /* preserve startup failure */ }
     throw error
   }

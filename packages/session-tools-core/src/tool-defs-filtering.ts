@@ -54,15 +54,22 @@ export const SESSION_MCP_ESSENTIAL_SUFFIXES = new Set([
   'memory_repo_search',
   'skills_search',
   'skills_read',
+  'devspace_search',
+  'devspace_read',
+  'devspace_propose',
   'list_pages',
   'get_page',
   'create_page',
   'update_page',
   'write_page_data',
   'delete_page',
+  'show_widget',
   'memory_search',
   'memory_get',
   'memory_forget',
+  'wiki_search',
+  'wiki_get',
+  'wiki_apply',
 ])
 
 export function isEssentialHostTool(name: string): boolean {

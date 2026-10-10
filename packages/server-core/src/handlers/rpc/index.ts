@@ -21,6 +21,7 @@ import { registerOrgsHandlers } from './orgs'
 import { registerLlmConnectionsHandlers } from './llm-connections'
 import { registerOAuthHandlers } from './oauth'
 import { registerCalendarGoogleHandlers } from './calendar-google'
+import { registerGoogleMeetHandlers } from './google-meet'
 import { registerResourcesHandlers } from './resources'
 import { registerOnboardingHandlers } from './onboarding'
 import { registerOnboardingSuggestHandlers } from './onboarding-suggest'
@@ -48,10 +49,15 @@ import { registerVoiceRealtimeHandlers } from './voice-realtime'
 import { registerEnvironmentHandlers } from './environment'
 import { registerProjectsHandlers } from './projects'
 import { registerCodeIntelligenceHandlers } from './code-intelligence'
+import { registerDevSpaceHandlers, DEFAULT_ENVIRONMENT as DEV_SPACE_DEFAULT_ENVIRONMENT, type HandlerEnvironment as DevSpaceHandlerEnvironment } from './dev-space'
+import { registerPodcastHandlers, DEFAULT_ENVIRONMENT as PODCAST_DEFAULT_ENVIRONMENT, type HandlerEnvironment as PodcastHandlerEnvironment } from '../../playbooks/jobs.ts'
+import { registerCodebookHandlers, DEFAULT_ENVIRONMENT as CODEBOOK_DEFAULT_ENVIRONMENT, type HandlerEnvironment as CodebookHandlerEnvironment } from '../../playbooks/codebook/index.ts'
 import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
 import { registerPersonalTasksHandlers } from './personal-tasks'
 import { registerWorkspaceWorkHandlers } from './workspace-work'
+import { registerWorkboardHandlers } from './workboard'
+import { registerBoardHandlers } from './board'
 import { registerFeedHandlers } from './feed'
 import { registerCollectionHandlers } from './collection'
 
@@ -109,6 +115,24 @@ export interface CoreRpcRegistrationOptions {
   // W1-03 (#1500)
   /** Runtime for the command bus handlers (live `commands.bus.v1`, default OFF). */
   commands?: CommandsHandlerRuntime
+  /**
+   * Optional Dev Space environment. The host composes `resolveGithubToken` from
+   * its credential fabric; without it dev-space stays a public-only host.
+   */
+  devSpace?: Partial<DevSpaceHandlerEnvironment>
+  /**
+   * Optional podcast environment. The host composes the scenario model connector
+   * and may substitute the synthesizer; without a connector, `podcast:start`
+   * honestly answers `connector-unavailable` instead of inventing a script.
+   */
+  podcast?: Partial<PodcastHandlerEnvironment>
+  /**
+   * Optional codebook environment (В5). The host composes the artifact
+   * resolver/publisher and may substitute the agent runner; without an artifact
+   * resolver an `artifact` cell answers `artifact-unavailable`, and without a
+   * session mechanism an `agent` cell does the same — never invented output.
+   */
+  codebook?: Partial<CodebookHandlerEnvironment>
 }
 
 export function registerCoreRpcHandlers(
@@ -137,6 +161,8 @@ export function registerCoreRpcHandlers(
   registerLlmConnectionsHandlers(server, deps)
   registerOAuthHandlers(server, deps)
   registerCalendarGoogleHandlers(server, deps)
+  // Google Meet artifacts (wave 5, row d2.6) — read-only Developer-Preview surface.
+  registerGoogleMeetHandlers(server, deps)
   registerOnboardingHandlers(server, deps)
   registerOnboardingSuggestHandlers(server, deps)
   registerOnboardingPermissionsHandlers(server, deps)
@@ -153,10 +179,19 @@ export function registerCoreRpcHandlers(
   registerEnvironmentHandlers(server, deps)
   registerProjectsHandlers(server, deps)
   registerCodeIntelligenceHandlers(server, deps)
+  registerDevSpaceHandlers(server, deps, options?.devSpace
+    ? { ...DEV_SPACE_DEFAULT_ENVIRONMENT, ...options.devSpace }
+    : DEV_SPACE_DEFAULT_ENVIRONMENT)
+  // Podcast (D13) — local render pipeline; the scenario connector is host-composed.
+  registerPodcastHandlers(server, deps, { ...PODCAST_DEFAULT_ENVIRONMENT, ...options?.podcast })
+  // Codebook (В5) — local notebook runs; agent/artifact seams are host-composed.
+  registerCodebookHandlers(server, deps, { ...CODEBOOK_DEFAULT_ENVIRONMENT, ...options?.codebook })
   registerPagesHandlers(server, deps)
   registerKanbanHandlers(server, deps)
   registerPersonalTasksHandlers(server, deps)
   registerWorkspaceWorkHandlers(server, deps)
+  registerWorkboardHandlers(server, deps)
+  registerBoardHandlers(server, deps)
   registerFeedHandlers(server, deps)
   registerCollectionHandlers(server, deps)
 

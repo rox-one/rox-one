@@ -21,6 +21,8 @@ import {
   isErrorCode,
   isLocalOnly,
   CodedError,
+  buildProtocolFeatures,
+  buildProtocolPolicy,
   type MessageEnvelope,
   type PushTarget,
   type ErrorCode,
@@ -36,6 +38,7 @@ import {
 } from '../observability/rpc-call-counter'
 import type { NativeAuthority, NativePrincipal } from '../authority/native-authority'
 import { isChannelWithinOperatorCeiling } from '../authority/operator-role-policy'
+import { isAccessPolicyAdmitted, lookupAccessPolicyPlugin } from '../authority/access-policy-registry'
 import type { OperatorRoleCeiling } from '@rox/shared/orgs/types'
 
 // ---------------------------------------------------------------------------
@@ -423,6 +426,10 @@ export class WsRpcServer implements RpcServer {
   }
 
   private registeredChannelsFor(client: ClientConnection): string[] {
+    // A named-but-unregistered access-policy plugin fails closed: advertise
+    // nothing rather than a channel set the request path will refuse (a1.6).
+    const plugin = client.operatorCeiling?.accessPolicyPlugin
+    if (plugin && !lookupAccessPolicyPlugin(plugin)) return []
     return [...this.handlers].flatMap(([channel, registration]) => {
       if (registration.access === 'localElectron' && !client.localBinding) return []
       if (!this.canRequest(client, registration)) return []
@@ -496,6 +503,13 @@ export class WsRpcServer implements RpcServer {
    * Whether the connection's persisted operator ceiling permits `channel`.
    * Non-native clients are unaffected. A native principal without a resolved
    * ceiling is denied (fail-closed).
+   *
+   * LOCAL_ONLY channels are exempt: their admission is decided solely by the
+   * server-verified locality fence (unbound clients were already refused before
+   * this point). A client that HOLDS a current local binding may reach them
+   * regardless of its named-role scopes; otherwise the ceiling's LOCAL_ONLY
+   * denial would make desktop-only methods (e.g. toolchain:update) unreachable
+   * for the very local connection they exist for (a1.2 regression).
    */
   private operatorCeilingAllows(
     client: ClientConnection,
@@ -503,8 +517,34 @@ export class WsRpcServer implements RpcServer {
     nativeAction: RegisteredHandler['nativeAction'],
   ): boolean {
     if (!client.principal) return true
-    if (typeof channel !== 'string' || !client.operatorCeiling) return false
+    if (typeof channel !== 'string') return false
+    // Both markers mean "reachable only from a bound local client": the static
+    // LOCAL_ONLY list and an `access: 'localElectron'` registration. The locality
+    // fence already refused unbound clients, so the binding is the authority.
+    if (isLocalOnly(channel) || this.localElectronChannels.has(channel)) return this.hasCurrentLocalBinding(client)
+    if (!client.operatorCeiling) return false
     return isChannelWithinOperatorCeiling(client.operatorCeiling, channel, nativeAction)
+  }
+
+  /**
+   * Whether the connection's declared access-policy plugin admits this request.
+   * Non-native clients and roles without the field are unaffected. A named but
+   * unregistered plugin fails closed, and the caller renders it with the SAME
+   * typed OPERATOR_ACCESS_DENIED as a scope denial (no oracle about which
+   * plugin is missing). Port-matrix row a1.6, fail-closed half.
+   */
+  private async accessPolicyAllows(
+    client: ClientConnection,
+    channel: string,
+    nativeAction: RegisteredHandler['nativeAction'],
+  ): Promise<boolean> {
+    if (!client.principal) return true
+    return isAccessPolicyAdmitted(client.operatorCeiling?.accessPolicyPlugin, {
+      channel,
+      nativeAction,
+      role: client.operatorCeiling?.role ?? null,
+      subject: client.principal.subject,
+    })
   }
 
   private requestPermissionFence(client: ClientConnection, registration: RegisteredHandler): string | null {
@@ -1224,6 +1264,10 @@ export class WsRpcServer implements RpcServer {
           webContentsId: client.webContentsId ?? undefined,
           workspaceId: client.workspaceId ?? undefined,
           stale: this.workspaceAuthority && envelope.reconnectClientId ? true : undefined,
+          // Optional protocol feature block (back-compat: registeredChannels is
+          // untouched; older clients ignore these fields).
+          features: buildProtocolFeatures(),
+          policy: buildProtocolPolicy(),
         }
         this.safeSend(ws, serializeEnvelope(ack))
 
@@ -1367,6 +1411,14 @@ export class WsRpcServer implements RpcServer {
     // channels were already refused above; every other method must be inside
     // the ceiling, and the denial is typed for the client to render.
     if (!this.operatorCeilingAllows(client, channel, registration.nativeAction)) {
+      this.sendResponseError(client.ws, id, channel, 'OPERATOR_ACCESS_DENIED', 'Operator role cannot invoke this method')
+      return
+    }
+
+    // Access-policy plugin (a1.6): a role that NAMES a plugin must have that
+    // plugin admit the request. A missing registration, a deny, or a throw all
+    // refuse with the same typed denial as the scope ceiling above.
+    if (!await this.accessPolicyAllows(client, channel, registration.nativeAction)) {
       this.sendResponseError(client.ws, id, channel, 'OPERATOR_ACCESS_DENIED', 'Operator role cannot invoke this method')
       return
     }

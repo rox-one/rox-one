@@ -43,7 +43,8 @@ async function createEvent(tx: ReferenceTx, fields: RecordData, origin?: EntityR
 }
 
 export const CALENDAR_REFERENCE_SPECS: ReferenceSpecMap = {
-  'calendar.create_event': { op: tx => createEvent(tx, tx.payload), event: 'calendar.calendar.event.changed_v4' },
+  // W1-14 (#1511): calendar.create_event and calendar.create_event_from_message
+  // follow the §12 signatures and are handled by @rox/server-core/xsc.
   'calendar.update_event': {
     event: 'calendar.calendar.event.changed_v4',
     op: async tx => {
@@ -84,7 +85,6 @@ export const CALENDAR_REFERENCE_SPECS: ReferenceSpecMap = {
     return out('room-booking', row, ['roomId', 'startAt', 'endAt'], { ref: { kind: 'room', id: tx.payload.roomId } })
   },
   'calendar.create_time_block': tx => createEvent(tx, { ...tx.payload, kind: 'time_block' }, tx.payload.source),
-  'calendar.create_event_from_message': tx => createEvent(tx, tx.payload, { kind: 'channel-message', id: `${tx.payload.chatId}:${tx.payload.seq}` }),
   'calendar.create_event_from_email': tx => createEvent(tx, tx.payload, { kind: 'mail-thread', id: tx.payload.threadId }),
 }
 
@@ -103,14 +103,8 @@ async function hostCall(tx: ReferenceTx): Promise<StoredRecord> {
 }
 
 export const MEETINGS_REFERENCE_SPECS: ReferenceSpecMap = {
-  'vc.start_meeting': async tx => {
-    await authorizeId(tx, 'calendar-event', tx.payload.eventId, 'read')
-    await authorizeId(tx, 'channel', tx.payload.chatId, 'write')
-    const id = tx.createId()
-    const record = await tx.insert('call', id, { ...payloadFields('inviteeIds')(tx), hostId: tx.actor, state: 'live', startedAt: tx.now, recording: false })
-    await tx.upsert('call-participant', `${id}:${tx.actor}`, { joinedAt: tx.now, role: 'host' }, { callId: id, principalId: tx.actor })
-    return out('call', record, ['state'], { result: { invited: tx.payload.inviteeIds ?? [] } })
-  },
+  // W1-14 (#1511): vc.start_meeting follows the §12 signature and is handled by
+  // @rox/server-core/xsc.
   'vc.join': async tx => {
     const call = await payloadCall(tx)
     if (call.data.state === 'ended') throw new CommandRejection('VALIDATION', 'meeting has ended')
@@ -534,18 +528,8 @@ export const AGENTS_REFERENCE_SPECS: ReferenceSpecMap = {
    * behind a pending approval (id = invocation id) its owner decides with
    * `agents.decide_approval`; context refs are only read.
    */
-  'agents.invoke': async tx => {
-    const agent = await tx.require('agent', tx.payload.agentId)
-    if (agent.data.ownerId !== tx.actor) throw new CommandRejection('FORBIDDEN', 'only the owner can invoke a personal agent')
-    if (agent.data.status === 'paused') throw new CommandRejection('UNAVAILABLE', 'agent is paused')
-    for (const ref of (tx.payload.context ?? []) as EntityRef[]) await authorizeRef(tx, ref, 'read')
-    const id = tx.createId()
-    await tx.assertAbsent('agent-invocation', id)
-    await tx.assertAbsent('agent-approval', id)
-    const record = await tx.insert('agent-invocation', id, { ...payloadFields()(tx), status: 'queued', invokedBy: tx.actor, approvalId: id })
-    await tx.insert('agent-approval', id, { invocationId: id, agentId: agent.id, status: 'pending', approverIds: [String(agent.data.ownerId)], requestedBy: tx.actor })
-    return out('agent-invocation', record, ['status'], { ref: tx.rawTarget ?? null, result: { approvalId: id } })
-  },
+  // W1-14 (#1511): agents.invoke follows the §12 signature (agentRef, instruction,
+  // origin) and is handled by @rox/server-core/xsc.
   'agents.decide_approval': async tx => {
     // Only an existing, pending approval can be decided, and only by one of its approvers.
     const current = await tx.require('agent-approval', tx.payload.approvalId)

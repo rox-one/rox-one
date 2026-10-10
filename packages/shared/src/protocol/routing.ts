@@ -24,6 +24,36 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.codeIntelligence.READ_SPAN,
   RPC_CHANNELS.codeIntelligence.FRESHNESS,
   RPC_CHANNELS.codeIntelligence.CANCEL,
+  // Dev Space — repository catalog + clone/analysis jobs run in the local server (02-SPEC-foundations §5–§6).
+  RPC_CHANNELS.devSpace.LIST_REPOSITORIES,
+  RPC_CHANNELS.devSpace.ADD_REPOSITORY,
+  RPC_CHANNELS.devSpace.START_CLONE,
+  RPC_CHANNELS.devSpace.REMOVE_REPOSITORY,
+  RPC_CHANNELS.devSpace.REFRESH_REPOSITORY,
+  RPC_CHANNELS.devSpace.CANCEL,
+  RPC_CHANNELS.devSpace.CAPABILITIES,
+  RPC_CHANNELS.devSpace.LIST_RUNS,
+  RPC_CHANNELS.devSpace.START_RUN,
+  // Artifact reads resolve the local store under `projects/<slug>/dev-space/`, never proxied.
+  RPC_CHANNELS.devSpace.LIST_ARTIFACTS,
+  RPC_CHANNELS.devSpace.READ_ARTIFACT,
+  // Question/security generation reuses the local store + consent (§3/D8), never proxied.
+  RPC_CHANNELS.devSpace.GENERATE_QUESTIONS,
+  RPC_CHANNELS.devSpace.CLONE_PROGRESS,
+  RPC_CHANNELS.devSpace.CHANGED,
+  RPC_CHANNELS.devSpace.RUN_PROGRESS,
+  RPC_CHANNELS.devSpace.SOFT_SIGNAL,
+  // Podcast — the render pipeline (system/edge TTS + ffmpeg mixdown) is host-local (§8, D13).
+  RPC_CHANNELS.podcast.START,
+  RPC_CHANNELS.podcast.CANCEL,
+  RPC_CHANNELS.podcast.EPISODES,
+  RPC_CHANNELS.podcast.AUDIO,
+  RPC_CHANNELS.podcast.AUDIO_URL,
+  // Codebook — notebook runs spawn local executables and reuse local sessions (§9, D12, В5).
+  RPC_CHANNELS.playbooks.RUN_CODEBOOK,
+  RPC_CHANNELS.playbooks.CANCEL_CODEBOOK,
+  RPC_CHANNELS.playbooks.CODEBOOK_RUNS,
+  RPC_CHANNELS.playbooks.CODEBOOK_JOB,
   // remote — local connectivity management (reaches out to remote server from local app)
   RPC_CHANNELS.remote.TEST_CONNECTION,
 
@@ -121,6 +151,8 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.shell.OPEN_FILE,
   RPC_CHANNELS.shell.SHOW_IN_FOLDER,
   RPC_CHANNELS.shell.EXEC,
+  // shell:action — main→renderer native affordance push (dock/tray/menu/notification).
+  RPC_CHANNELS.shell.ACTION,
   RPC_CHANNELS.workspace.OPEN_IN_EDITOR,
   RPC_CHANNELS.sessions.FOREIGN_DISCOVER,
   RPC_CHANNELS.sessions.FOREIGN_PERSIST,
@@ -237,6 +269,13 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.appearance.GET_SHELL_SNAPSHOT,
   RPC_CHANNELS.appearance.SET_ZEN_SHELL,
   RPC_CHANNELS.appearance.SHELL_CHANGED,
+  // A6/B10 — local UI prefs + macOS accent push (device-local).
+  RPC_CHANNELS.appearance.GET_UI_PREFERENCES,
+  RPC_CHANNELS.appearance.SET_UI_PREFERENCES,
+  RPC_CHANNELS.appearance.ACCENT_CHANGED,
+  // C1 — reads the local Zed install and writes the local theme catalog.
+  RPC_CHANNELS.zedThemes.LIST,
+  RPC_CHANNELS.zedThemes.IMPORT,
 
   // caching — prompt cache and context settings
   RPC_CHANNELS.caching.GET_EXTENDED_PROMPT_CACHE,
@@ -333,6 +372,14 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.calendar.GOOGLE_CONNECT,
   RPC_CHANNELS.calendar.GOOGLE_DISCONNECT,
   RPC_CHANNELS.calendar.GOOGLE_SYNC,
+  // meet — Google Meet artifacts share the local OAuth broker + credential
+  // manager with the calendar connector (wave 5, row d2.6).
+  RPC_CHANNELS.meet.SPACE,
+  RPC_CHANNELS.meet.CONFERENCE_RECORDS,
+  RPC_CHANNELS.meet.PARTICIPANTS,
+  RPC_CHANNELS.meet.RECORDINGS,
+  RPC_CHANNELS.meet.TRANSCRIPTS,
+  RPC_CHANNELS.meet.SMART_NOTES,
   RPC_CHANNELS.settings.GET_NETWORK_PROXY,
   RPC_CHANNELS.settings.SET_NETWORK_PROXY,
 
@@ -454,6 +501,9 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.extensionHost.PROXY_FETCH,
   RPC_CHANNELS.extensionHost.GET_URL_ALLOWLIST,
   RPC_CHANNELS.extensionHost.SET_URL_ALLOWLIST,
+  RPC_CHANNELS.extensionHost.LIST_DESCRIPTORS,
+  RPC_CHANNELS.extensionHost.ACTIVATE,
+  RPC_CHANNELS.extensionHost.RELOAD,
 
   // extensionSurface — sandboxed extension UI BrowserViews (partition persist:ext-*)
   RPC_CHANNELS.extensionSurface.CREATE_EMBEDDED,
@@ -568,6 +618,7 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.drive.IMPORT_PLAN,
   RPC_CHANNELS.drive.IMPORT_START,
   RPC_CHANNELS.drive.IMPORT_PAUSE,
+  RPC_CHANNELS.drive.IMPORT_CANCEL,
   RPC_CHANNELS.drive.IMPORT_RESUME,
   RPC_CHANNELS.drive.IMPORT_STATUS,
   RPC_CHANNELS.drive.IMPORT_AUTH_START,
@@ -587,6 +638,22 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   // diagnostics — host doctor checks read local service/port/config/log state.
   RPC_CHANNELS.diagnostics.RUN,
   RPC_CHANNELS.diagnostics.GET_LAST,
+
+  // native integration — floating quick composer (window + global shortcut + persisted accelerator).
+  RPC_CHANNELS.quickComposer.OPEN,
+  RPC_CHANNELS.quickComposer.CLOSE,
+  RPC_CHANNELS.quickComposer.GET_SHORTCUT,
+  RPC_CHANNELS.quickComposer.SET_SHORTCUT,
+  // native integration — OS login item; written by the host OS.
+  RPC_CHANNELS.appIntegration.GET_LOGIN_ITEM,
+  RPC_CHANNELS.appIntegration.SET_LOGIN_ITEM,
+  // files — Finder/filesystem affordances act on the host machine.
+  RPC_CHANNELS.files.REVEAL_IN_FINDER,
+  RPC_CHANNELS.files.OPEN_PATH,
+  RPC_CHANNELS.files.COPY_PATH,
+  RPC_CHANNELS.files.QUICK_LOOK,
+  RPC_CHANNELS.files.QUICK_LOOK_CLOSE,
+  RPC_CHANNELS.files.START_DRAG,
 ]
 
 export const LOCAL_ONLY_CHANNELS = new Set<string>(LOCAL_ONLY_CHANNEL_LIST)
@@ -641,6 +708,8 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.voice.PROCESS,
   RPC_CHANNELS.voice.MODELS_LIST,
   RPC_CHANNELS.voice.JOB,
+  // Podcast generation rides the workspace server alongside voice jobs (02-SPEC-foundations §5.1).
+  RPC_CHANNELS.podcast.JOB,
   RPC_CHANNELS.voice.OVERLAY,
   RPC_CHANNELS.voice.HOTKEY,
   RPC_CHANNELS.voice.TALK_START,
@@ -726,6 +795,9 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.sessions.EXPORT_REMOTE_TRANSFER,
   RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER,
   RPC_CHANNELS.sessions.ASSIGN_OWNER,
+  RPC_CHANNELS.sessions.SUGGEST_ADD,
+  RPC_CHANNELS.sessions.SUGGEST_LIST,
+  RPC_CHANNELS.sessions.SUGGEST_RESOLVE,
 
   // transfer — chunked large-payload import (sessions, resources)
   RPC_CHANNELS.transfer.START,
@@ -909,6 +981,13 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.memory.DREAM_EVENT,
   RPC_CHANNELS.memory.DREAM_DONE,
   RPC_CHANNELS.memory.REPO_IMPORT_READY,
+
+  // memory — wave-3 workspace memory wiki (claims/evidence + lint); same
+  // REMOTE_ELIGIBLE classification as the rest of the memory namespace.
+  RPC_CHANNELS.memory.WIKI_LIST,
+  RPC_CHANNELS.memory.WIKI_GET,
+  RPC_CHANNELS.memory.WIKI_APPLY,
+  RPC_CHANNELS.memory.WIKI_LINT,
 
   // learning — candidates/evidence/outcomes/policies live under the
   // workspace's memory/learning dir on the workspace-owning server (PRD §5/§15).
@@ -1168,6 +1247,21 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.kanban.GET_CONFIG,
   RPC_CHANNELS.kanban.SET_CONFIG,
   RPC_CHANNELS.kanban.CHANGED,
+
+  // workboard — wave-3 workspace task board (same classification as kanban:*:
+  // workspace board state on whichever server owns the workspace).
+  RPC_CHANNELS.workboard.READ,
+  RPC_CHANNELS.workboard.MOVE,
+  RPC_CHANNELS.workboard.CHANGED,
+
+  // board — wave-3 workspace board widgets (same classification as pages:*
+  // workspace content on the workspace-owning server).
+  RPC_CHANNELS.board.WIDGET_PUT,
+  RPC_CHANNELS.board.WIDGET_GET,
+  RPC_CHANNELS.board.WIDGET_MOUNT,
+  RPC_CHANNELS.board.WIDGET_RELEASE,
+  RPC_CHANNELS.board.WIDGET_VALIDATE,
+  RPC_CHANNELS.board.CHANGED,
 
   // collection — workspace sessions collection display prefs + filters
   RPC_CHANNELS.collection.GET_DISPLAY,

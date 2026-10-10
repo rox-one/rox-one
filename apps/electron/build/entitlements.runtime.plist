@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <!-- Runtime-binary entitlements.
+         Applied (via electron-builder.yml `entitlementsInherit`) to the nested
+         Mach-O binaries the app spawns or loads, NOT to the app's own main
+         executable (build/entitlements.mac.plist):
+           - vendor/bun/bun                                   (bundled JS runtime)
+           - Resources/app/node_modules/@anthropic-ai/claude-agent-sdk-binary/claude
+           - Resources/app/node_modules/@vscode/ripgrep/bin/rg
+           - Resources/app/node_modules/@tursodatabase/**/*.node (libSQL NAPI)
+           - Resources/pi-agent-server/node_modules/koffi/**/*.node
+           - Resources/bin/darwin-<arch>/rox-calendar-helper
+           - Electron Framework and Helper processes
+         https://github.com/electron/electron-notarize#prerequisites -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <!-- V8/runtime binaries load third-party frameworks signed by other teams. -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+  </dict>
+</plist>

@@ -32,8 +32,9 @@ import {
   writeInstallMarker,
   type MarketplaceLockRecord,
 } from './lock.ts'
+import { assertTrustAllowsInstall, type RegistryTrustAssessment } from './trust.ts'
 import { resolveConfigDir } from "../config/paths.ts"
-import { GLOBAL_AGENT_SKILLS_DIR, invalidateSkillsCache } from '../skills/storage.ts'
+import { ambientSkillLinksRoot, invalidateSkillsCache } from '../skills/storage.ts'
 import { invalidateOmpSkillsCache } from '../skills/omp-discovery.ts'
 import { chooseManagedSkillName, isSafeSkillName, isSkillLinkTo, linkManagedSkill, pathEntryExists, unlinkManagedSkill } from '../skills/managed.ts'
 
@@ -71,6 +72,15 @@ export interface InstallOptions {
   fetchFn?: MarketplaceFetch
   now?: () => number
   onProgress?: (phase: 'clone' | 'verify' | 'install' | 'fetch' | 'collision', detail?: string) => void
+  /**
+   * Registry trust assessment (wave-3 c2.7). When supplied the installer
+   * re-asserts it before ANY work (defense in depth: the RPC handler also
+   * aborts earlier) and records it on the lock record after the content-pin
+   * verify. Absent for direct installer callers that sit below the gate.
+   */
+  trust?: RegistryTrustAssessment
+  /** Operator confirmation for a `review-required` verdict. */
+  confirmReview?: boolean
 }
 
 export type MarketplaceInstallResult =
@@ -296,11 +306,33 @@ export function installEntry(entry: MarketplaceEntry, options: InstallOptions = 
   installInProgress += 1
   return installById('__marketplace-install__', async () => {
     try {
+      // Defense in depth: the RPC handler already refuses a blocked verdict
+      // before reaching here, but a direct caller passing an assessment must
+      // not bypass it. No fetch/clone/lock work happens before this assert.
+      if (options.trust) {
+        assertTrustAllowsInstall(options.trust.verdict, { confirmReview: options.confirmReview })
+      }
       return await installEntryUnlocked(entry, options)
     } finally {
       installInProgress -= 1
     }
   })
+}
+
+/**
+ * Stamp the pre-install trust assessment onto a lock record. Called after the
+ * content-pin verify (the record is written once), so a recorded `clean`
+ * verdict is only ever persisted for content whose pins already held.
+ */
+function applyTrustAssessment(
+  record: MarketplaceLockRecord,
+  options: InstallOptions,
+  now: number,
+): void {
+  if (!options.trust) return
+  record.trustVerdict = options.trust.verdict
+  record.trustReasons = [...options.trust.reasons]
+  record.assessedAt = now
 }
 
 async function installEntryUnlocked(entry: MarketplaceEntry, options: InstallOptions = {}): Promise<MarketplaceInstallResult> {
@@ -315,7 +347,7 @@ async function installEntryUnlocked(entry: MarketplaceEntry, options: InstallOpt
     }
     const paths = marketplacePaths(options.configDir)
     const now = (options.now ?? (() => Date.now()))()
-    upsertLockRecord(paths.lockFile, {
+    const toolRecord: MarketplaceLockRecord = {
       id: entry.id,
       kind: 'tool',
       repo: entry.source.repo,
@@ -324,7 +356,9 @@ async function installEntryUnlocked(entry: MarketplaceEntry, options: InstallOpt
       status: 'deferred',
       targets: [],
       toolName,
-    })
+    }
+    applyTrustAssessment(toolRecord, options, now)
+    upsertLockRecord(paths.lockFile, toolRecord)
     return { id: entry.id, kind: 'tool', status: 'deferred', ref: entry.source.ref, toolName }
   }
   if (entry.kind === 'context-doc') return installContextDoc(entry, options)
@@ -336,7 +370,7 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
   const configDir = options.configDir ?? resolveConfigDir()
   const paths = marketplacePaths(configDir)
   const skillsDir = options.skillsDir ?? join(configDir, 'skills')
-  const linksRoot = options.linksRoot === undefined ? (options.skillsDir ? null : GLOBAL_AGENT_SKILLS_DIR) : options.linksRoot
+  const linksRoot = options.linksRoot === undefined ? (options.skillsDir ? null : ambientSkillLinksRoot()) : options.linksRoot
   const previous = readLock(paths.lockFile).entries[entry.id]
   const execFileFn = options.execFileFn ?? defaultExecFile
   const now = () => (options.now ?? (() => Date.now()))()
@@ -513,6 +547,8 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
       rollbackInstall()
       throw err
     }
+    // Content pins for every installed target have now been verified.
+    applyTrustAssessment(record, options, now())
     const result: MarketplaceInstallResult = {
       id: entry.id,
       kind: 'skillpack',
@@ -702,6 +738,8 @@ async function installContextDoc(entry: MarketplaceEntry, options: InstallOption
     )
   }
 
+  // Content pins for every written document have now been verified.
+  applyTrustAssessment(record, options, now)
   try {
     upsertLockRecord(paths.lockFile, record)
   } catch (err) {

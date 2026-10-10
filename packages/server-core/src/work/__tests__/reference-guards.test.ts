@@ -1,15 +1,21 @@
 /**
  * W1-06 (#1503) review 3 — membership rows, ACL owner protection, inherited
  * containers, subscriptions for other people, real drive moves, actor-private
- * check-in drafts, create conflicts on someone else's ids, and
- * authorize-before-load (a denied payload id is FORBIDDEN, never NOT_FOUND).
+ * check-in drafts, and authorize-before-load (a denied payload id is
+ * FORBIDDEN, never NOT_FOUND).
+ *
+ * W1-11 (#1508) later took ownership of `im.create_chat` / `im.join_chat` /
+ * `im.leave_chat` / `identity.*` / `agents.*`; those run on the agent-governance
+ * runtime this reference harness does not back, so the tests that exercised
+ * them now live in `packages/server-core/src/agents/__tests__/` and the chats
+ * here are seeded with `seedReferenceChat`.
  */
 
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import type { Authorizer } from '@rox/core/commands'
 import { InMemoryCommandStore } from '../../commands/store'
-import { configureReferenceRuntime, referenceMemoryRecords, resetReferenceMemory, resetReferenceRuntime, storedAclRole } from '../reference'
-import { createHarness } from './reference-harness'
+import { configureReferenceRuntime, MemoryRecordBackend, referenceMemoryRecords, resetReferenceMemory, resetReferenceRuntime, storedAclRole } from '../reference'
+import { createHarness, seedReferenceChat } from './reference-harness'
 import { ACTOR_ID, BOB, U, WORKSPACE_ID } from './reference-scenario'
 
 const NOW = new Date('2026-10-08T12:00:00.000Z')
@@ -51,7 +57,9 @@ describe('chat membership', () => {
 
   async function bobsChat() {
     const setup = harness()
-    await setup.run({ type: 'im.create_chat', payload: { id: chat.id, name: 'bob', visibility: 'public' }, actor: BOB })
+    // W1-11 (#1508) owns `im.create_chat`; the chat is seeded into the reference
+    // backend instead (see `seedReferenceChat`).
+    await seedReferenceChat({ id: chat.id, ownerId: BOB, kind: 'group', name: 'bob', visibility: 'public' })
     return setup
   }
 
@@ -66,21 +74,34 @@ describe('chat membership', () => {
     expect(await setup.run({ type: 'im.mark_read', target: chat, payload: { seq: 1 }, actor: BOB })).toMatchObject({ status: 'applied' })
   })
 
-  test('leave_chat sets state left; a left member cannot post, mark read or regain a role, and rejoins with the default role', async () => {
+  // W1-11 (#1508) owns `im.join_chat` / `im.leave_chat`, whose handlers run on
+  // the agent-governance runtime this harness never backs, so a `left` row is
+  // seeded below instead of produced by a command (the transitions themselves —
+  // a second leave is idempotent and a rejoin restores the default role — are
+  // asserted in the owner module's suite,
+  // `packages/server-core/src/agents/__tests__/identity-handlers.test.ts`,
+  // "a rejoin restores the default role and a second leave is idempotent").
+  // The three handlers that need an *active* membership are this harness's own,
+  // so their refusal is asserted right here.
+
+  test('a member who left cannot post, mark read or add people', async () => {
     const setup = await bobsChat()
-    await setup.run({ type: 'im.join_chat', target: chat, payload: {} })
-    expect(await setup.run({ type: 'im.leave_chat', target: chat, payload: {} })).toMatchObject({ status: 'applied' })
-    expect(memberRow(ACTOR_ID)!.data).toMatchObject({ state: 'left' })
+    // No command can put a membership into `left` here (W1-11 owns the two that
+    // can), so the row is written straight into the backend the W1-06 handlers
+    // read — the same shape `seedReferenceChatMember` writes, with `left`.
+    await new MemoryRecordBackend(WORKSPACE_ID).put({
+      collection: 'channel-member',
+      id: `${chat.id}:${ACTOR_ID}`,
+      expectedRevision: null,
+      data: { state: 'left', role: 'member', joinedAt: NOW.toISOString(), chatId: chat.id, principalId: ACTOR_ID },
+    })
+    expect(await setup.run({ type: 'im.send_message', target: chat, payload: { body: { doc: 'x' }, mentions: [] } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     expect(await setup.run({ type: 'im.mark_read', target: chat, payload: { seq: 1 } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
-    expect(memberRow(ACTOR_ID)!.data).toMatchObject({ state: 'left' })
-    expect(await setup.run({ type: 'im.send_message', target: chat, payload: { content: { doc: 'x' } } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
     expect(await setup.run({ type: 'im.add_members', target: chat, payload: { memberIds: [CAROL] } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
-    expect(await setup.run({ type: 'im.leave_chat', target: chat, payload: {} })).toMatchObject({ error: { code: 'NOT_FOUND' } })
-    // The owner who left comes back as a plain member.
-    expect(await setup.run({ type: 'im.leave_chat', target: chat, payload: {}, actor: BOB })).toMatchObject({ status: 'applied' })
-    expect(await setup.run({ type: 'im.join_chat', target: chat, payload: {}, actor: BOB })).toMatchObject({ status: 'applied' })
-    expect(memberRow(BOB)!.data).toMatchObject({ state: 'active' })
-    expect(memberRow(BOB)!.data.role).not.toBe('owner')
+    expect(memberRow(CAROL)).toBeUndefined()
+    expect(records('channel-message')).toEqual([])
+    // The owner's active row is unaffected: posting still works.
+    expect(await setup.run({ type: 'im.send_message', target: chat, payload: { body: { doc: 'x' }, mentions: [] }, actor: BOB })).toMatchObject({ status: 'applied' })
   })
 
   test('add_members: a non-member cannot add people (invitePolicy members)', async () => {
@@ -111,12 +132,12 @@ describe('chat membership', () => {
     expect(records('channel').find(record => record.id === id)!.data.deletedAt).toBeTruthy()
     expect(await setup.run({ type: 'im.get_or_create_p2p', payload: { peerId: BOB } })).toMatchObject({ status: 'applied', result: { existed: false } })
     expect(records('channel').find(record => record.id === id)!.data.deletedAt).toBeFalsy()
-    expect(await setup.run({ type: 'im.send_message', target: { kind: 'channel', id }, payload: { content: { doc: 'back' } } })).toMatchObject({ status: 'applied' })
+    expect(await setup.run({ type: 'im.send_message', target: { kind: 'channel', id }, payload: { body: { doc: 'back' }, mentions: [] } })).toMatchObject({ status: 'applied' })
   })
 
   test('meetings.publish_outcomes: membership and posting policy are checked before the first write', async () => {
     const setup = await bobsChat()
-    await setup.run({ type: 'vc.start_meeting', payload: { id: U('call'), title: 'Standup' } })
+    await setup.run({ type: 'vc.start_meeting', payload: { id: U('call') } })
     const receipt = await setup.run({ type: 'meetings.publish_outcomes', target: { kind: 'call', id: U('call') }, payload: { decisions: [{ title: 'Ship' }], tasks: [{ title: 'Do it' }], toChatId: chat.id } })
     expect(receipt).toMatchObject({ error: { code: 'FORBIDDEN' } })
     expect(records('task')).toEqual([])
@@ -195,7 +216,7 @@ describe('inherited containers are authorized at write', () => {
   })
 })
 
-describe('spaces, drafts, subscriptions, drive, own-id conflicts', () => {
+describe('spaces, drafts, subscriptions and drive', () => {
   test('spaces.join leaves an existing membership (and its role) unchanged', async () => {
     const setup = harness()
     await setup.run({ type: 'spaces.create', payload: { id: U('space'), name: 'Eng' } })
@@ -259,18 +280,18 @@ describe('spaces, drafts, subscriptions, drive, own-id conflicts', () => {
     expect(await setup.run({ type: 'drive.move_items', target: { kind: 'folder', id: U('to') }, payload: { items: [{ kind: 'folder', id: U('to') }], toFolderId: U('to') } })).toMatchObject({ error: { code: 'VALIDATION' } })
   })
 
-  test('provision_personal_agent / ensure_placeholder: another owner\'s id is a create conflict', async () => {
-    const setup = harness()
-    await setup.run({ type: 'agents.provision_personal_agent', payload: { id: U('agent'), ownerId: BOB }, actor: BOB })
-    const agent = await setup.run({ type: 'agents.provision_personal_agent', payload: { id: U('agent'), ownerId: ACTOR_ID } })
-    expect(agent).toMatchObject({ status: 'conflict' })
-    expect(JSON.stringify(agent)).not.toContain(BOB)
-    await setup.run({ type: 'identity.ensure_placeholder', payload: { id: U('ph'), displayName: 'Frank' }, actor: BOB })
-    expect(await setup.run({ type: 'identity.ensure_placeholder', payload: { id: U('ph'), displayName: 'Other' } })).toMatchObject({ status: 'conflict' })
-    // The email key still dedupes across people.
-    await setup.run({ type: 'identity.ensure_placeholder', payload: { displayName: 'Gina', email: 'gina@example.com' }, actor: BOB })
-    expect(await setup.run({ type: 'identity.ensure_placeholder', payload: { displayName: 'Gina', email: 'gina@example.com' } })).toMatchObject({ status: 'applied', result: { existed: true } })
-  })
+  // W1-11 (#1508) owns `agents.provision_personal_agent` and `identity.*`, whose
+  // handlers run on the agent-governance runtime (`getAgentsRuntime`) this
+  // harness never backs; the W1-06 guards for them are asserted by the owner
+  // module's suite
+  // (`packages/server-core/src/agents/__tests__/identity-handlers.test.ts`):
+  // "agents.provision_personal_agent is idempotent per (workspace, owner) and
+  // never leaks the other owner's agent" and "identity.ensure_placeholder reuses
+  // a pending invitation and never duplicates the placeholder".
+  // The wired contract is idempotent, not a create conflict: a repeat for the
+  // same (workspace, owner) answers `created: false` (this module's `existed`),
+  // the email key answers `reused: true`, and neither answer carries the other
+  // owner's agent id (nor the other placeholder's person id).
 })
 
 describe('authorize before load: a denied missing id is FORBIDDEN, not NOT_FOUND', () => {
@@ -286,7 +307,12 @@ describe('authorize before load: a denied missing id is FORBIDDEN, not NOT_FOUND
     { name: 'drive.add_shortcut', step: { type: 'drive.add_shortcut', payload: { item: { kind: 'note', id: U('n') }, folderId: missing } } },
     { name: 'drive.move_items', step: { type: 'drive.move_items', payload: { items: [{ kind: 'note', id: U('n') }], toFolderId: missing } } },
     { name: 'im.create_space_chat', step: { type: 'im.create_space_chat', payload: { spaceId: missing, name: 'x' } } },
-    { name: 'identity.activate_placeholder', step: { type: 'identity.activate_placeholder', payload: { placeholderId: missing, principalId: BOB } } },
+    // W1-11 (#1508) owns `identity.activate_placeholder`: its handler runs on the
+    // agent-governance runtime, not this reference harness, and the deny-before-load
+    // property is asserted by the owner suite
+    // (`packages/server-core/src/agents/__tests__/identity-handlers.test.ts`,
+    // "identity.activate_placeholder answers FORBIDDEN — never NOT_FOUND — when
+    // the target is denied").
     { name: 'contacts.merge_cards', setup: run => run.run({ type: 'contacts.create_card', payload: { id: U('card'), displayName: 'E' } }), step: { type: 'contacts.merge_cards', target: { kind: 'person', id: U('card') }, payload: { sourceIds: [missing] } } },
   ]
   for (const { name, step, setup } of cases) {

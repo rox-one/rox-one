@@ -931,6 +931,33 @@ html[data-ui-profile="super-engineering"] .input-container {
   animation: rox-overlay-out var(--motion-fast) ease both;
 }
 
+/* Product tour demo mode (D10): the edge vignette "breathes" and the target
+   border pulses. Both are decorative; under reduced motion the vignette keeps
+   a static gradient and the pulse stops (see the reduced-motion block below). */
+@keyframes tour-vignette-breathe {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.18; }
+}
+
+.tour-vignette {
+  background: radial-gradient(
+    120% 100% at 50% 50%,
+    transparent 55%,
+    color-mix(in srgb, var(--foreground) 55%, transparent) 100%
+  );
+  opacity: 0.14;
+  animation: tour-vignette-breathe 5s ease-in-out infinite;
+}
+
+@keyframes tour-target-pulse {
+  0%, 100% { stroke-opacity: 0.2; }
+  50% { stroke-opacity: 0.6; }
+}
+
+.tour-target-pulse {
+  animation: tour-target-pulse 5s ease-in-out infinite;
+}
+
 /* Text semantics stay consistent across rendered answers and documents. */
 .markdown-content {
   color: var(--text-primary);
@@ -1437,6 +1464,12 @@ html[data-shell-material="solid"] {
   /* The sweep freezes at its transparent end; keep a solid hairline instead. */
   .rox-nav-shimmer::after {
     background: var(--accent);
+  }
+
+  /* Product tour demo (D10): static vignette gradient, no target pulse. */
+  .tour-vignette,
+  .tour-target-pulse {
+    animation: none !important;
   }
 }
 

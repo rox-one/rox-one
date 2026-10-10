@@ -125,6 +125,72 @@ describe('s3TargetOptionsFromEnv', () => {
   })
 })
 
+describe('createS3UploadTarget timeouts', () => {
+  const base = {
+    endpoint: 'https://acct.r2.cloudflarestorage.com',
+    bucket: 'drive',
+    region: 'auto',
+    accessKeyId: 'KEY',
+    secretAccessKey: 'SECRET',
+    now: () => new Date('2026-01-01T00:00:00Z'),
+  }
+
+  /** fetch that only settles when its signal aborts (a hung connection). */
+  function hangingFetch(): typeof fetch {
+    return ((_input: string | URL | Request, init?: RequestInit) => {
+      const { promise, reject } = Promise.withResolvers<Response>()
+      const signal = init?.signal
+      if (!signal) return promise
+      if (signal.aborted) {
+        reject(signal.reason)
+        return promise
+      }
+      signal.addEventListener('abort', () => reject(signal.reason), { once: true })
+      return promise
+    }) as unknown as typeof fetch
+  }
+
+  test('aborts a stalled streamed PUT with the coded timeout error', async () => {
+    const target = createS3UploadTarget({ ...base, fetch: hangingFetch(), stallTimeoutMs: 20 })
+    const stalled = new ReadableStream<Uint8Array>({ start() {} })
+    await expect(target.put('big.bin', stalled)).rejects.toMatchObject({
+      code: 'DRIVE_IMPORT_S3_PUT_FAILED',
+      timeout: true,
+    })
+  })
+
+  test('aborts a hung byte-body PUT under the request timeout', async () => {
+    const target = createS3UploadTarget({ ...base, fetch: hangingFetch(), requestTimeoutMs: 20 })
+    await expect(target.put('small.bin', new Uint8Array([1, 2, 3]))).rejects.toMatchObject({
+      code: 'DRIVE_IMPORT_S3_PUT_FAILED',
+      timeout: true,
+    })
+  })
+
+  test('does not abort a streamed PUT that keeps producing bytes', async () => {
+    const drainFetch = (async (_input: string | URL | Request, init?: RequestInit) => {
+      const body = init?.body as ReadableStream<Uint8Array>
+      await new Response(body).arrayBuffer()
+      return new Response('', { status: 200 })
+    }) as unknown as typeof fetch
+    // The window must sit well above the inter-chunk latency under `bun test`
+    // (stream pulls in this harness can lag tens–hundreds of ms); the invariant
+    // under test is that a *moving* stream is never aborted, which the tight
+    // windows in the neighbouring stall tests prove from the other side.
+    const target = createS3UploadTarget({ ...base, fetch: drainFetch, stallTimeoutMs: 5000 })
+    const trickle = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        for (let i = 0; i < 3; i += 1) {
+          await new Promise(resolve => setTimeout(resolve, 10))
+          controller.enqueue(new Uint8Array([i]))
+        }
+        controller.close()
+      },
+    })
+    await expect(target.put('slow.bin', trickle)).resolves.toBeUndefined()
+  })
+})
+
 describe('createS3UploadTarget', () => {
   const base = {
     endpoint: 'https://acct.r2.cloudflarestorage.com/',

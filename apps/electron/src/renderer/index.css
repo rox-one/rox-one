@@ -1077,44 +1077,54 @@ html[data-shell-runtime="electron"][data-material="on"]:is([data-shell-material=
     from var(--surface-titlebar, var(--surface-elevated))
     calc(h + var(--material-tint-hue, 0))
     calc(s + var(--material-tint-saturation, 0))
-    calc(l + var(--material-tint-lightness, 0))
+    calc(l + var(--material-tint-lightness, 0) + var(--material-light-tint-lift, 0))
     / var(--material-alpha-topbar)
   );
   --shell-glass-rail: hsl(
     from var(--surface-rail)
     calc(h + var(--material-tint-hue, 0))
     calc(s + var(--material-tint-saturation, 0))
-    calc(l + var(--material-tint-lightness, 0))
+    calc(l + var(--material-tint-lightness, 0) + var(--material-light-tint-lift, 0))
     / var(--material-alpha-rail)
   );
   --shell-glass-strip: hsl(
     from var(--surface-toolbar, var(--surface-elevated))
     calc(h + var(--material-tint-hue, 0))
     calc(s + var(--material-tint-saturation, 0))
-    calc(l + var(--material-tint-lightness, 0))
+    calc(l + var(--material-tint-lightness, 0) + var(--material-light-tint-lift, 0))
     / var(--material-alpha-strip)
   );
   --shell-glass-inspector: hsl(
     from var(--surface-rail)
     calc(h + var(--material-tint-hue, 0))
     calc(s + var(--material-tint-saturation, 0))
-    calc(l + var(--material-tint-lightness, 0))
+    calc(l + var(--material-tint-lightness, 0) + var(--material-light-tint-lift, 0))
     / var(--material-alpha-inspector)
   );
   --shell-glass-sidebar: hsl(
     from var(--surface-rail)
     calc(h + var(--material-tint-hue, 0))
     calc(s + var(--material-tint-saturation, 0))
-    calc(l + var(--material-tint-lightness, 0))
+    calc(l + var(--material-tint-lightness, 0) + var(--material-light-tint-lift, 0))
     / var(--material-alpha-sidebar)
   );
   --shell-glass-navigator: hsl(
     from var(--surface-rail)
     calc(h + var(--material-tint-hue, 0))
     calc(s + var(--material-tint-saturation, 0))
-    calc(l + var(--material-tint-lightness, 0))
+    calc(l + var(--material-tint-lightness, 0) + var(--material-light-tint-lift, 0))
     / var(--material-alpha-navigator)
   );
+}
+
+/* A7(a): muted/secondary text on translucent chrome loses contrast against the
+   native material. Strengthen it on exactly the material surfaces via the token
+   mix. Material is disabled under high contrast / reduce-transparency, so the
+   high-contrast token (which outranks nothing here) still applies. Raw mix
+   values live in tokens/material.css. */
+html[data-material="on"] :is(.chrome-topbar, .chrome-rail, .chrome-strip, [data-inspector-panel], .rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) {
+  --text-muted: color-mix(in oklch, var(--foreground) var(--material-chrome-muted-mix), var(--canvas));
+  --muted-foreground: var(--text-muted);
 }
 
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -1216,6 +1226,56 @@ html[data-material="on"][data-material-haze] .material-layer--haze {
   background: linear-gradient(to bottom, transparent, var(--canvas));
 }
 
+/* Haze scanline overlay (Zed/MonoCode parity) — a STATIC CSS layer confined to
+   the chat surface (no dedicated DOM node, no animation). `ThemeContext`
+   publishes `data-material-haze-overlay="on"` only when the layer is enabled
+   and the overlay flag is on; the resolver emits the empty/active opacity pair.
+   The layer sits below the chat's content (z-index 0 vs the content's z-10),
+   so it paints a texture over the chat tint without covering text. */
+html[data-material="on"][data-material-haze-overlay] [data-focus-zone="chat"] {
+  position: relative;
+}
+html[data-material="on"][data-material-haze-overlay] [data-focus-zone="chat"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--material-texture-scanlines);
+  opacity: var(--material-haze-overlay-active, 0.5);
+}
+/* Empty chat surface uses the softer MonoCode empty opacity. */
+html[data-material="on"][data-material-haze-overlay] [data-focus-zone="chat"]:has([data-testid="empty-chat-welcome"])::after {
+  opacity: var(--material-haze-overlay-empty, 0.24);
+}
+
+/* Blurred presets (Zed parity) — `data-blurred` marks `mode:'blurred'`. The
+   marker is consumed so the reading surfaces stay opaque while the chrome and
+   side panels are the only translucent tiers. On the browser runtime it also
+   clears the page canvas alongside the material layer, so the wallpaper shows
+   through the shell glass. */
+html[data-blurred="true"][data-material="on"]:not([data-material-deep]) [data-shell-role="content"] {
+  background: var(--canvas);
+}
+html[data-shell-runtime="web"][data-blurred="true"]:not([data-shell-css-material="solid"]):not([data-render-profile="performance"]) :is(body, #root) {
+  background: transparent;
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  /* MonoCode haze blur masks — browser CSS-glass path only (Electron keeps the
+     native compositor, PERF-07/B14). Two stacked masks (soft + strong); the
+     active chat uses the lighter radii, the empty chat the stronger ones.
+     Static layer: never animated. */
+  html[data-shell-runtime="web"][data-material="on"][data-material-haze-overlay] [data-focus-zone="chat"]::after {
+    backdrop-filter: blur(var(--material-haze-mask-blur-soft-active)) blur(var(--material-haze-mask-blur-strong-active));
+    -webkit-backdrop-filter: blur(var(--material-haze-mask-blur-soft-active)) blur(var(--material-haze-mask-blur-strong-active));
+  }
+  html[data-shell-runtime="web"][data-material="on"][data-material-haze-overlay] [data-focus-zone="chat"]:has([data-testid="empty-chat-welcome"])::after {
+    backdrop-filter: blur(var(--material-haze-mask-blur-soft)) blur(var(--material-haze-mask-blur-strong));
+    -webkit-backdrop-filter: blur(var(--material-haze-mask-blur-soft)) blur(var(--material-haze-mask-blur-strong));
+  }
+}
+
 /* Surface tints — mirror the shell material block's capability gates and
    specificity so the material wins over the static solid surface rules. The
    alpha is the matte-adjusted material fraction (`--material-alpha-*`), so the
@@ -1286,16 +1346,20 @@ html[data-material="on"][data-material-deep*="lists"] [data-list-role] {
    removes no background images, so the procedural texture/chat layers must be
    hidden explicitly, lens2-F4). */
 html[data-contrast="high"] .material-layer,
-html[data-render-profile="performance"] .material-layer {
+html[data-render-profile="performance"] .material-layer,
+html[data-contrast="high"] [data-material-haze-overlay] [data-focus-zone="chat"]::after,
+html[data-render-profile="performance"] [data-material-haze-overlay] [data-focus-zone="chat"]::after {
   display: none !important;
 }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-  html .material-layer {
+  html .material-layer,
+  html [data-material-haze-overlay] [data-focus-zone="chat"]::after {
     display: none !important;
   }
 }
 @media (forced-colors: active) {
-  html .material-layer {
+  html .material-layer,
+  html [data-material-haze-overlay] [data-focus-zone="chat"]::after {
     display: none !important;
   }
 }

@@ -32,7 +32,10 @@ function fixture() {
   const ctx: RequestContext = { clientId: 'c', workspaceId: null, webContentsId: null }
   const call = <T = unknown>(channel: string, input?: unknown): T =>
     handlers.get(channel)!(ctx, input) as T
-  return { handlers, pushes, registry, call, advance: (ms: number) => { now += ms } }
+  /** Call as an arbitrary connection, to exercise connection fencing. */
+  const callAs = <T = unknown>(clientId: string, channel: string, input?: unknown): T =>
+    handlers.get(channel)!({ clientId, workspaceId: null, webContentsId: null }, input) as T
+  return { handlers, pushes, registry, call, callAs, advance: (ms: number) => { now += ms } }
 }
 
 describe('nodes:* handlers', () => {
@@ -98,7 +101,8 @@ describe('nodes:* handlers', () => {
       { nodeId: 'mac-1', command: 'system.run', payload: { argv: ['ls'] } },
     )
     const pushed = f.pushes.find((push) => push.channel === RPC_CHANNELS.nodes.INVOKE)
-    expect(pushed?.target).toEqual({ to: 'all' })
+    // Fenced: the invoke is addressed to the registering connection, never broadcast.
+    expect(pushed?.target).toEqual({ to: 'client', clientId: 'c' })
     // Handler-owned push shape: { invokeId, nodeId, command, payload? }.
     const pushedInvoke = pushed!.args[0] as { invokeId: string }
     const invokeId = pushedInvoke.invokeId
@@ -132,5 +136,84 @@ describe('nodes:* handlers', () => {
     expect(f.call<{ cancelled: boolean }>(RPC_CHANNELS.nodes.INVOKE_CANCEL, { invokeId })).toEqual({ cancelled: true })
     expect(await pending).toMatchObject({ status: 'error', error: { code: 'CANCELLED' } })
     expect(f.call<{ cancelled: boolean }>(RPC_CHANNELS.nodes.INVOKE_CANCEL, { invokeId })).toEqual({ cancelled: false })
+  })
+
+  it('a re-registration under a new connection supersedes in-flight invokes', async () => {
+    const f = fixture()
+    f.registry.setAllowlist('mac-1', { commands: ['system.run'] })
+    f.callAs('conn-a', RPC_CHANNELS.nodes.REGISTER, { nodeId: 'mac-1', declaredCommands: ['system.run'] })
+
+    const pending = f.callAs<Promise<{ status: string; error: { code: string } }>>(
+      'requester', RPC_CHANNELS.nodes.INVOKE, { nodeId: 'mac-1', command: 'system.run' },
+    )
+    const invokePush = f.pushes.find((push) => push.channel === RPC_CHANNELS.nodes.INVOKE)!.args[0] as { invokeId: string }
+    const invokeId = invokePush.invokeId
+
+    f.callAs('conn-b', RPC_CHANNELS.nodes.REGISTER, { nodeId: 'mac-1', declaredCommands: ['system.run'] })
+    expect(await pending).toMatchObject({ status: 'error', error: { code: 'SUPERSEDED' } })
+
+    // The stale connection's late answer is refused typed; nothing is re-settled.
+    try {
+      f.callAs('conn-a', RPC_CHANNELS.nodes.INVOKE_RESULT, { invokeId, payload: { late: true } })
+      throw new Error('expected throw')
+    } catch (error) {
+      const coded = error as CodedError
+      expect(coded.code).toBe('NOT_FOUND')
+    }
+  })
+
+  it('refuses an invoke result presented by a connection that does not own it', async () => {
+    const f = fixture()
+    f.registry.setAllowlist('mac-1', { commands: ['system.run'] })
+    f.callAs('conn-a', RPC_CHANNELS.nodes.REGISTER, { nodeId: 'mac-1', declaredCommands: ['system.run'] })
+
+    const pending = f.callAs<Promise<{ status: string; payload: unknown }>>(
+      'requester', RPC_CHANNELS.nodes.INVOKE, { nodeId: 'mac-1', command: 'system.run' },
+    )
+    const invokePush = f.pushes.find((push) => push.channel === RPC_CHANNELS.nodes.INVOKE)!.args[0] as { invokeId: string }
+    const invokeId = invokePush.invokeId
+
+    // An impostor connection is refused typed and must NOT settle the invoke.
+    try {
+      f.callAs('conn-b', RPC_CHANNELS.nodes.INVOKE_RESULT, { invokeId, payload: { stolen: true } })
+      throw new Error('expected throw')
+    } catch (error) {
+      const coded = error as CodedError
+      expect(coded.code).toBe('NODE_CONNECTION_MISMATCH')
+    }
+    expect(f.registry.pendingCountFor('mac-1')).toBe(1)
+
+    // The real owner still settles it.
+    expect(f.callAs<{ ok: boolean }>('conn-a', RPC_CHANNELS.nodes.INVOKE_RESULT, { invokeId, payload: { ok: 1 } })).toEqual({ ok: true })
+    expect(await pending).toMatchObject({ status: 'ok', payload: { ok: 1 } })
+  })
+
+  it('refuses a heartbeat from a superseded connection', () => {
+    const f = fixture()
+    f.callAs('conn-a', RPC_CHANNELS.nodes.REGISTER, { nodeId: 'mac-1' })
+    f.callAs('conn-b', RPC_CHANNELS.nodes.REGISTER, { nodeId: 'mac-1' })
+
+    expect(f.callAs('conn-b', RPC_CHANNELS.nodes.PRESENCE, { nodeId: 'mac-1' })).toMatchObject({ online: true })
+    try {
+      f.callAs('conn-a', RPC_CHANNELS.nodes.PRESENCE, { nodeId: 'mac-1' })
+      throw new Error('expected throw')
+    } catch (error) {
+      const coded = error as CodedError
+      expect(coded.code).toBe('NODE_CONNECTION_MISMATCH')
+    }
+  })
+
+  it('settles a node with no connection identity as UNROUTABLE instead of broadcasting', async () => {
+    const f = fixture()
+    // A host-composed node (registered directly, no transport connection).
+    f.registry.registerNode({ nodeId: 'mac-1', declaredCommands: ['system.run'] })
+    f.registry.setAllowlist('mac-1', { commands: ['system.run'] })
+
+    const result = await f.callAs<Promise<unknown>>('requester', RPC_CHANNELS.nodes.INVOKE, {
+      nodeId: 'mac-1', command: 'system.run',
+    })
+    expect(result).toMatchObject({ status: 'error', error: { code: 'NODE_UNROUTABLE' } })
+    // Nothing was pushed to any client — the payload never leaks.
+    expect(f.pushes.some((push) => push.channel === RPC_CHANNELS.nodes.INVOKE)).toBe(false)
   })
 })

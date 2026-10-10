@@ -12,6 +12,8 @@ import { join } from 'path'
 import { readFileSync } from 'fs'
 import { mainLog } from './logger'
 import { RPC_CHANNELS } from '../shared/types'
+import type { NotificationDeepLink } from '../shared/types'
+import { dispatchShellAction } from './shell-actions'
 import type { WindowManager } from './window-manager'
 import type { EventSink } from '@rox/server-core/transport'
 
@@ -55,7 +57,8 @@ export function showNotification(
   title: string,
   body: string,
   workspaceId: string,
-  sessionId: string
+  sessionId: string,
+  deepLink?: NotificationDeepLink
 ): void {
   if (!Notification.isSupported()) {
     mainLog.info('Notifications not supported on this platform')
@@ -72,7 +75,10 @@ export function showNotification(
   })
 
   notification.on('click', () => {
-    mainLog.info('Notification clicked:', { workspaceId, sessionId })
+    mainLog.info('Notification clicked:', { workspaceId, sessionId, deepLink })
+    // A caller-supplied deep link wins: it is dispatched as a structured
+    // `shell:action` to the focused (or first) window, which owns routing.
+    if (deepLink && dispatchShellAction(windowManager, { action: 'navigate', deepLink })) return
     handleNotificationClick(workspaceId, sessionId)
   })
 

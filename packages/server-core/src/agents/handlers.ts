@@ -56,6 +56,7 @@ import {
   type ApprovalRequest,
 } from '@rox/core/agents'
 import { getAgentsRuntime, type AgentsRuntime } from './runtime.ts'
+import { deterministicId } from '../work/reference/engine.ts'
 import type { ChatMemberRecord, PrincipalRecord, WorkspaceRecord } from './store.ts'
 
 /** The subject an invitation audit row uses (`rate_limit_policy` naming). */
@@ -609,7 +610,12 @@ export async function provisionPersonalAgent(ctx: CommandHandlerContext<Provisio
   const existing = runtime.governance.bindingOfOwner(payload.workspaceId, payload.ownerPrincipalId)
   if (existing) return { ref: personRef(existing.agentPrincipalId), revision: 1, result: { agentPrincipalId: existing.agentPrincipalId, created: false } }
 
-  const agentPrincipalId = runtime.newId()
+  // The personal agent's principal id is deterministic per (workspace, owner):
+  // the automation rules (W1-12 R2/R3) plan the agent DM and the welcome actor
+  // from the pre-provision id (`rules/host.ts` `localAgentId`), so provisioning
+  // must land on that same id for both orderings (R2-then-R3 and R3-then-R2) to
+  // address one agent and one DM.
+  const agentPrincipalId = deterministicId(payload.workspaceId, 'agent', payload.ownerPrincipalId)
   const now = runtime.now().toISOString()
   runtime.identity.createPrincipal({
     principalId: agentPrincipalId,

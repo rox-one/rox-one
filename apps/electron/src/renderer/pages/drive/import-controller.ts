@@ -29,6 +29,7 @@ export interface DriveImportApi {
   driveImportPlan(provider: ImportProviderId, folderId?: string): Promise<ImportJob>
   driveImportStart(jobId: string): Promise<ImportJob>
   driveImportPause(jobId: string): Promise<ImportJob>
+  driveImportCancel(jobId: string): Promise<ImportJob>
   driveImportResume(jobId: string): Promise<ImportJob>
   driveImportStatus(jobId: string): Promise<ImportJob | ImportJob[] | null>
 }
@@ -40,6 +41,7 @@ export type DriveImportPhase =
   | 'planning'
   | 'job'
   | 'done'
+  | 'cancelled'
   | 'error'
   | 'unsupported'
 
@@ -75,7 +77,10 @@ export interface DriveImportController {
   submitYandexCode(code: string): void
   pause(): void
   resume(): void
-  /** Stop the running job (via `drive:importPause`) and return to the picker. */
+  /**
+   * Cancel the running job (via `drive:importCancel`) and render its cancelled
+   * state. With no live job this just abandons any authorization.
+   */
   cancel(): void
   /** Abandon any authorization and return to the picker. */
   reset(): void
@@ -330,15 +335,19 @@ export function createDriveImportController(deps: DriveImportControllerDeps): Dr
     },
 
     cancel() {
+      if (disposed) return
       const job = state.job
-      bumpGeneration()
+      const gen = bumpGeneration()
       abortAuthorization()
       stopPolling()
       yandexFlowId = null
-      if (job && job.status !== 'done' && job.status !== 'error') {
-        void deps.api.driveImportPause(job.id).catch(() => {})
+      if (!job || job.status === 'done' || job.status === 'error' || job.status === 'cancelled') {
+        emit({ ...INITIAL_STATE })
+        return
       }
-      emit({ ...INITIAL_STATE })
+      void deps.api.driveImportCancel(job.id)
+        .then(next => { if (!stale(gen)) emit({ phase: 'cancelled', job: next, error: null }) })
+        .catch(cause => { if (!stale(gen)) emit({ phase: 'error', job, error: messageOf(cause), retryable: true }) })
     },
 
     reset() {

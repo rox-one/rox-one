@@ -318,7 +318,7 @@ export function createClaudeContext(options: ClaudeContextOptions): SessionToolC
     },
 
     // Service inference
-    inferGoogleService: (url?: string): GoogleService | undefined => {
+    inferGoogleService: (url?: string | undefined): GoogleService | undefined => {
       return inferGoogleServiceFromUrl(url);
     },
     inferSlackService: (url?: string): SlackService | undefined => {

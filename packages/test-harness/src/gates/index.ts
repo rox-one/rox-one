@@ -49,12 +49,27 @@ export {
   type AllowlistInputs,
 } from './allowlist.ts'
 export { runConfigPathsGate, CONFIG_PATHS_SCRIPT } from './config-paths.ts'
-export { checkVisualGate, checkAxeGate } from './visual-axe.ts'
+export {
+  runProvenanceGate,
+  runVersionParityGate,
+  runIpcSendsGate,
+  runToolNameChecksGate,
+  PROVENANCE_SCRIPT,
+  VERSION_PARITY_SCRIPT,
+  IPC_SENDS_SCRIPT,
+  TOOL_NAME_CHECKS_SCRIPT,
+  PROVENANCE_TIMEOUT_MS,
+  VERSION_PARITY_TIMEOUT_MS,
+  IPC_SENDS_TIMEOUT_MS,
+  TOOL_NAME_CHECKS_TIMEOUT_MS,
+} from './script-gates.ts'
+export { checkVisualGate, checkAxeGate, VISUAL_CAPTURE_COMMAND, VISUAL_CAPTURE_UPDATE_COMMAND, MAX_REPORTED_KEYS } from './visual-axe.ts'
 export {
   lintChromeSchemas,
   checkChromeLintGate,
   checkOneRailGate,
   checkOneRailGatePending,
+  checkOneRailGateAll,
   checkDockLayoutGate,
   type ChromeSchema,
 } from './chrome-dock.ts'
