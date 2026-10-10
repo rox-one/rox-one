@@ -12,7 +12,7 @@ import type { Authorizer } from '@rox/core/commands'
 import { InMemoryCommandStore } from '../../commands/store'
 import { collabPresenceStore, configureCollabRuntime, resetCollabRuntime } from '../reference-handlers'
 import { configureReferenceRuntime, referenceMemoryRecords, resetReferenceMemory, resetReferenceRuntime } from '../../work/reference'
-import { createHarness } from '../../work/__tests__/reference-harness'
+import { createHarness, seedReferenceChat } from '../../work/__tests__/reference-harness'
 import { ACTOR_ID, BOB, U, WORKSPACE_ID } from '../../work/__tests__/reference-scenario'
 
 const NOW = new Date('2026-10-08T12:00:00.000Z')
@@ -77,7 +77,11 @@ describe('presence (§11.1)', () => {
 describe('read receipts (§11.7)', () => {
   async function chat(): Promise<ReturnType<typeof memoryHarness>> {
     const harness = memoryHarness()
-    await harness.run({ type: 'im.create_chat', payload: { id: U('chat'), kind: 'group', name: 'general', visibility: 'public', members: [BOB] } })
+    // W1-11 (#1508) owns `im.create_chat` on the agent runtime, which this
+    // reference harness does not back, so the channel and membership rows are
+    // seeded straight into the reference store `im.mark_read` reads
+    // (see `seedReferenceChat`).
+    await seedReferenceChat({ id: U('chat'), ownerId: ACTOR_ID, memberIds: [BOB], kind: 'group', name: 'general', visibility: 'public' })
     return harness
   }
 
@@ -95,7 +99,9 @@ describe('read receipts (§11.7)', () => {
 
   test('im.mark_read on a chat you are not a member of is FORBIDDEN and writes nothing', async () => {
     const harness = memoryHarness()
-    await harness.run({ type: 'im.create_chat', payload: { id: U('closed'), kind: 'group', name: 'closed', visibility: 'public', members: [] } })
+    // W1-11 owns `im.create_chat`; the chat is seeded without BOB so the
+    // non-member path runs against the store `im.mark_read` reads.
+    await seedReferenceChat({ id: U('closed'), ownerId: ACTOR_ID, kind: 'group', name: 'closed', visibility: 'public' })
     const target = { kind: 'channel' as const, id: U('closed') }
     const receipt = await harness.run({ type: 'im.mark_read', target, payload: { seq: 3 }, actor: BOB })
     expect(receipt).toMatchObject({ status: 'rejected', error: { code: 'FORBIDDEN' } })

@@ -14,6 +14,7 @@ import {
   type RuleSettings,
 } from '@rox/core/automation'
 import { deterministicId } from '../work/reference/engine'
+import { getAgentsRuntime } from '../agents/runtime.ts'
 import { collectionSpec } from '../work/reference/collections'
 import { LocalWorkStore, type LocalWorkRecord } from '../work/local-work-store'
 import type { RuleEngineHost, RuleScheduler } from './engine'
@@ -96,10 +97,15 @@ export function createLocalRuleHost(options: LocalRuleHostOptions): RuleEngineHo
       return found ? found.id : undefined
     },
     async personalAgent(principalId) {
+      // W1-11 (#1508) owns the agent principal: when the governance binding
+      // exists it is the single source of the agent id, so the rule's planned
+      // actor (R3's welcome) and the `provision_personal_agent` receipt agree.
+      const binding = getAgentsRuntime().governance.bindingOfOwner(options.workspaceId, principalId)
+      if (binding) return binding.agentPrincipalId
       const found = work.list<Record<string, unknown>>(workDir('agent')).find(entry => recordValue(entry, 'ownerId') === principalId)
-      // STUB(#1508): a host may answer before the agent row exists — the R3 step
-      // provisions it at this deterministic id, so both agree by construction
-      // (W1-11 replaces this with the real registry lookup).
+      // STUB(#1508): a host may answer before the agent row exists — R3/R2
+      // provision it in the same execution, so the pre-provision answer is the
+      // deterministic id the reference layer used to seed.
       return found ? found.id : localAgentId(options.workspaceId, principalId)
     },
     async directChatRef(subjectPrincipalId, peerPrincipalId) {

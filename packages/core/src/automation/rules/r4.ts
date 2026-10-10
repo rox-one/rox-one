@@ -8,10 +8,8 @@
  * placeholder. When the invitee later activates, R2 fires (activation).
  */
 
-import type { EntityRef } from '../../entities/refs.ts'
 import type { DomainEvent } from '../../events/types.ts'
 import { invitationsSentOf } from '../events.ts'
-import { uuidv5 } from '../ids.ts'
 import type { DomainRule, RuleStep, RuleTarget } from '../rule.ts'
 
 export interface R4Params {
@@ -26,22 +24,12 @@ export function readR4Params(params: Readonly<Record<string, unknown>> = {}): R4
   return { role: role === 'owner' || role === 'admin' || role === 'member' ? role : R4_DEFAULT_PARAMS.role }
 }
 
-/** Deterministic placeholder principal id for one invitation. */
-export function placeholderIdFor(workspaceId: string, email: string): string {
-  return uuidv5(`placeholder:${workspaceId}:${email.toLowerCase()}`)
-}
-
 export function invitationCommandId(workspaceId: string, email: string): string {
   return `R4-invite:${workspaceId}:${email.toLowerCase()}`
 }
 
 export function r4Key(workspaceId: string, email: string): string {
   return `R4:${workspaceId}:${email.toLowerCase()}`
-}
-
-function emailDisplayName(email: string): string {
-  const local = email.slice(0, Math.max(0, email.indexOf('@')))
-  return local || email
 }
 
 export const R4: DomainRule = {
@@ -79,37 +67,31 @@ export const R4: DomainRule = {
     const invitation = invitationsSentOf(event).invitations.find(entry => entry.email.toLowerCase() === email)
     if (!invitation) return []
     const params = readR4Params(await ctx.params('R4'))
-    const placeholderId = invitation.principalId ?? placeholderIdFor(ctx.workspaceId, email)
     const chatId = (await ctx.generalChatId()) ?? undefined
+    const role = invitation.role ?? params.role
 
+    // W1-11 (#1508) owns `identity.ensure_placeholder`: the handler mints the
+    // placeholder principal id itself and, from `chatIds`, owns its membership
+    // row and chat memberships. The rule cannot name that id in later steps
+    // (the plan is static), so the placeholder / member / team-chat work is
+    // carried by this one command instead of separate
+    // `people.add_workspace_member` / `im.add_members` steps.
     const steps: RuleStep[] = [
       {
         name: 'ensure-placeholder',
         actor: 'system',
         command: {
           type: 'identity.ensure_placeholder',
-          payload: { id: placeholderId, email, displayName: emailDisplayName(email) },
-          target: { kind: 'person', id: placeholderId },
-        },
-      },
-      {
-        name: 'add-workspace-member',
-        actor: 'system',
-        command: {
-          type: 'people.add_workspace_member',
-          payload: { principalId: placeholderId, role: invitation.role ?? params.role, status: 'invited' },
-          target: { kind: 'person', id: placeholderId },
+          payload: {
+            workspaceId: ctx.workspaceId,
+            email,
+            invitedBy: ctx.subject,
+            role,
+            ...(chatId ? { chatIds: [chatId] } : {}),
+          },
         },
       },
     ]
-    if (chatId) {
-      steps.push({
-        name: 'join-team-chat',
-        actor: 'system',
-        optional: true,
-        command: { type: 'im.add_members', payload: { memberIds: [placeholderId] }, target: { kind: 'channel', id: chatId } },
-      })
-    }
     steps.push({
       name: 'send-invite-email',
       actor: 'system',
@@ -117,16 +99,10 @@ export const R4: DomainRule = {
       optional: true,
       command: {
         type: 'notify.send_invite_email',
-        payload: { email, principalId: placeholderId, role: invitation.role ?? params.role, workspaceId: ctx.workspaceId },
-        target: { kind: 'person', id: placeholderId },
+        // `principalId` is omitted: only the handler knows the placeholder id.
+        payload: { email, role, workspaceId: ctx.workspaceId },
       },
     })
     return steps
   },
 } satisfies DomainRule<DomainEvent>
-
-/** Chat targets of an invitation (D-v2-2: the General chat plus explicit targets). */
-export function invitationChatTargets(generalChatId: string | undefined, invitation: { targets?: readonly EntityRef[] }): EntityRef[] {
-  const refs = invitation.targets ?? []
-  return generalChatId ? [{ kind: 'channel', id: generalChatId }, ...refs] : [...refs]
-}
