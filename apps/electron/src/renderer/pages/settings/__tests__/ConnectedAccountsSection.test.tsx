@@ -116,7 +116,7 @@ describe('ConnectedAccountsSection', () => {
     expect(container.textContent).not.toContain('Github')
   })
 
-  it('dispatches identity.connect when an account is connected', async () => {
+  it('dispatches identity.connect with the provider chosen from the Select primitive', async () => {
     await render([], 'ws-1')
 
     await act(async () => {
@@ -125,13 +125,31 @@ describe('ConnectedAccountsSection', () => {
 
     const form = container.querySelector('form')
     expect(form).not.toBeNull()
+
+    // Drive the shared Select primitive: open its trigger, then pick a provider
+    // other than the default so the dispatched provider proves the selection.
+    const trigger = container.querySelector<HTMLElement>('[data-slot="select-trigger"]')
+    expect(trigger).not.toBeNull()
+    await act(async () => {
+      trigger!.click()
+    })
+
+    const option = Array.from(document.querySelectorAll<HTMLElement>('[role="option"]')).find(
+      (node) => node.textContent === 'Anthropic',
+    )
+    expect(option).toBeDefined()
+    await act(async () => {
+      option!.click()
+    })
+    expect(trigger!.textContent).toContain('Anthropic')
+
     await act(async () => {
       form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
     })
 
     expect(identityConnect).toHaveBeenCalledTimes(1)
     expect(identityConnect.mock.calls[0]?.[0]).toMatchObject({
-      provider: 'github',
+      provider: 'anthropic',
       workspaceId: 'ws-1',
     })
   })

@@ -14,9 +14,16 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { ServiceConnection, ServiceProvider } from '../../../shared/types'
-import { SettingsCard, SettingsRow, SettingsSection, SettingsSelect } from '@/components/settings'
+import { SettingsCard, SettingsRow, SettingsSection } from '@/components/settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { connectionAccountSubtitle, connectionProviderLabel } from '@/lib/connection-labels'
 import { navigate, routes } from '@/lib/navigate'
 import { toErrorMessage } from '@/lib/errors'
@@ -196,15 +203,29 @@ export function ConnectedAccountsSection({
               void handleConnect()
             }}
           >
-            <SettingsSelect
-              label={t('settings.accounts.connectProviderField')}
-              value={provider}
-              onValueChange={(value) => setProvider(value as ServiceProvider)}
-              options={CONNECTABLE_PROVIDERS.map((candidate) => ({
-                value: candidate,
-                label: connectionProviderLabel(candidate, t),
-              }))}
-            />
+            <div className="space-y-1">
+              <span className="text-xs text-muted-foreground">
+                {t('settings.accounts.connectProviderField')}
+              </span>
+              <Select
+                value={provider}
+                onValueChange={(value) => setProvider(value as ServiceProvider)}
+              >
+                <SelectTrigger
+                  aria-label={t('settings.accounts.connectProviderField')}
+                  className="h-8 w-full text-sm"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONNECTABLE_PROVIDERS.map((candidate) => (
+                    <SelectItem key={candidate} value={candidate}>
+                      {connectionProviderLabel(candidate, t)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <label className="space-y-1">
               <span className="text-xs text-muted-foreground">
                 {t('settings.accounts.accountLabelField')}
