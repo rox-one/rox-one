@@ -126,3 +126,49 @@ w1-07 baseline-фикстура (3 новых экшена), UI-001 harness stub
 Гейт-заготовка: `panel.swap` (⌥⌘S) и `layout.deck` (⌘\) зарегистрированы как действия, при OFF-флаге
 клавиши не перехватываются (handler `enabled`); «Миссии» получили достижимость (`missions.open` в ⌘K).
 Все флаги волны 2 — default OFF; флаг OFF ⇒ байт-идентичное прежнее поведение.
+
+### Волна 3 — G7 «Типографика и плотность 2.0» + завершение G4 «Студия» — выполнено (2026-10-10)
+
+Состав — коммит `53c4c8db1` (426 файлов, +3607/−2666), слияние с main (+94 коммита) — `b37771358`:
+
+- **G7 токен-слой**: px-боксы строк на рампе (11/16 · 12/16 · 13/20 · 15/24 · 18/24 · 24/32),
+  новые шаги `data 13/18`, `prose 15/24`, `title-md 16/22`, `stat 20/28`, `hero 44/48`,
+  `mark 9/12`, `--text-floor 11px`; трекинг-роли (`--tracking-caps/label`), `--numeric-features`
+  с ролью `.numeric`, утилиты `.caps-label / .label-tracking / .prose-body / .prose-measure`,
+  слой плотности `tokens/density.css`; `--text-code-size 12.5px`.
+- **G7 свип**: ~1450 px-литералов в ~230 файлах приведены к рампе; `tabular-nums → .numeric`
+  (0 пропусков), `tracking-wide/wider → .caps-label` на капс-ранах, `title=` на усечённом
+  тексте (334), покрытые leading сняты.
+- **G4 завершение** (за `craft-feature-layout-engine`, OFF ⇒ байт-идентично): магнитные швы
+  25/50/75 % на **реальных** сёмах (сайдбар, навигатор, grid) с гайдом и бейджем размера,
+  профили раскладок (additive `profiles[]`), геометрия в статус-баре, секция «Раскладка»
+  в настройках (пресет по умолчанию + «помнить на пространство») и шаг онбординга; i18n +17 ×12.
+
+Волна ревью — коммит `09c931d18` (4 адверсариальные линзы: токены, свип, G4-движок, контракты):
+
+- `.numeric` был молчаливым no-op (`font-variant-numeric` не принимает feature-tag синтаксис) →
+  `font-feature-settings: var(--numeric-features)` + `tabular-nums`: 177 сайтов вернули табличные цифры.
+- Плотность: condensed-дефолты объявлены безусловно на `:root`, алиасы `compact`/`comfortable`
+  совпадают со значениями приложения (атрибут живёт на контейнерах); неиспользуемые gap-токены удалены.
+- Рампа: `--text-hero` вернул таймер Focus (был срезан 44→24px), `--text-mark` — единственное
+  документированное под-флорное исключение для глифов в фиксированных плитках (инициалы, «+N»,
+  плитки бейджей); пол — контракт с ассертом в `tokens-v2` (все px-шаги ≥ `--text-floor`).
+- Регрессии свипа: 19 line-box'ов восстановлены (Learning/TaskEditor/Memory), `leading-tight`
+  счётчика SessionItem, эмодзи-иконки на рампе, опечатка `caps-labelr`; реестры `ROX_TEXT_SIZES` /
+  `ui-tokens.cjs` / `lucide-icon` дополнены.
+- G4: снап подключён к производственным швам (`bounds.snap`), тоггл «помнить раскладку» управляет
+  загрузкой, атом геометрии чистится на unmount.
+- Контракты и устаревшие пины: глиф-концепты `clipboardHistory/drive/developers/playbooks`
+  (+lucide-реестр), `menu-icons` (`FolderGit2/NotebookPen`), `expired → text-status-warning`,
+  `control-sm` в BrowserTabStrip (merge-артефакт), пины composer/chrome-leftover/switch-contrast/
+  mention-roundtrip/UI-001 lifecycle ×3 — обновлены с git-доказательствами (5890bb5fd, 095aad3fa,
+  d75b1ba04, db056c501); снапшот entity-stories перегенерирован (112).
+
+Гейты на финальном дереве: `typecheck:all` — 0 ошибок; i18n parity **11 502 × 11** + sorted/
+coverage/budget ✓; `lint:ui-tokens` — **0 новых** (6479 заbaselined, на 6 меньше базы);
+`lint:css` — 0 ошибок (730 warning-класса базлайна); `tokens-v2` **36/36**; фикс-кластер
+**209/209** (9 сьютов по отдельности); полный serial-прогон — [впишется после финального прогона].
+
+Известные предсуществующие (не наши, подтверждено git-историей): `provider.browser.test.ts`
+(30-секундные таймауты), 7 `react-hooks/rules-of-hooks` в `lint:electron`, env-фейл
+`header-status-presence` (react-dom/server в bun).
