@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import { applyMcpLens } from '@rox/session-tools-core'
+import { applyMcpLens } from '@rox/session-tools-core/tool-defs-filtering'
 import {
   assembleContextShares,
   sessionMessagesToTranscript,

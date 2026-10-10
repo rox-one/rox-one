@@ -13,6 +13,16 @@
  * builds emit a handful of chunks, so gating only the max lets a secondary chunk grow unbounded up to
  * its sibling's size.
  *
+ * The `startup` section gates a different regression class (issue #1675): a heavy chunk added to an
+ * entry page's STATIC closure ships eagerly even when every chunk-prefix budget still passes. Each
+ * `*.html` in the renderer dist is parsed for `<script src>` and `<link rel="modulepreload" href>`
+ * references; their deduped raw bytes (and gzip, reported alongside) are the gated number. A path
+ * referenced twice counts once, a reference missing from the build is a hard failure (never a silent
+ * 0), and `<link rel="preload" as="style">` is summed into a css total that is reported but never
+ * gated. The gate fails when an html file's measured raw total exceeds its recorded entry, or
+ * MAX_NEW_STARTUP_BYTES when the build emits an html file with no recorded entry; `--update` records
+ * every html file found, with no MIN floor.
+ *
  * Usage:
  *   bun scripts/check-bundle-size.ts              # --check (default): fail on any budget overrun
  *   bun scripts/check-bundle-size.ts --check      # same, explicit
@@ -22,11 +32,15 @@
  * Options:
  *   --baseline <file>   baseline path (default perf-baselines/bundle-size.json)
  *
- * Exit code: 1 when the renderer build is missing, or any prefix/extension total exceeds its budget or
- * the ceiling; 0 otherwise. Budgets are keyed by the chunk-name prefix
+ * Exit code: 1 when the renderer build is missing, when any prefix/extension total exceeds its budget or
+ * the ceiling, when an entry page's static JS closure exceeds its recorded budget or MAX_NEW_STARTUP_BYTES,
+ * or when an entry page references a file missing from the build; 0 otherwise. Budgets are keyed by the
+ * chunk-name prefix
  * (basename.replace(/\.(?:js|css)$/, '').replace(/-[A-Za-z0-9_-]{8}$/, '')) — never the content hash —
  * so a rebuild that only changes hashes does not move the budget. JS prefixes live under `budgets` and
- * CSS prefixes under `stylesheets`, so the two extensions can never collide.
+ * CSS prefixes under `stylesheets`, so the two extensions can never collide; entry pages live under
+ * `startup`, keyed by html file name. `--check` prints one startup line per html file and, on failure,
+ * the 5 heaviest referenced files behind each offending page.
  */
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
@@ -51,6 +65,13 @@ export const MIN_BUDGET_BYTES = 250_000
  * the gate compares against `recorded + BUDGET_SLACK_BYTES` and reports the raw recorded number.
  */
 export const BUDGET_SLACK_BYTES = 4096
+
+/**
+ * An entry page (html file) that exists in the build but has no recorded `startup` entry may not pull
+ * more than this many raw bytes of static JS into its `<script src>` + modulepreload closure. Bounds
+ * the blast radius of a brand-new unbudgeted entry page; real index.html sits near 6.4 MB.
+ */
+export const MAX_NEW_STARTUP_BYTES = 8_000_000
 
 /**
  * Vite/Rollup hashed-chunk suffix: a dash plus the 8-character content hash.
@@ -87,6 +108,18 @@ export interface BundleBaseline {
   stylesheets?: Record<string, ChunkBudget>
   /** Whole-extension totals; raw bytes are gated, gzip is recorded and reported. */
   totals?: BundleTotals
+  /** Entry-page (html file name) -> static JS closure total. Absent in pre-startup baselines. */
+  startup?: Record<string, StartupEntry>
+}
+
+/** One recorded entry page: its deduped static JS closure totals. */
+export interface StartupEntry {
+  /** Gated number: raw bytes of every deduped `<script src>` + modulepreload referenced file. */
+  jsRawBytes: number
+  /** gzip level 9 of the same deduped files, summed; informational. */
+  gzipTotalBytes: number
+  /** Number of distinct JS files in the closure. */
+  fileCount: number
 }
 
 /** The recorded numbers the pure gate reads; every part is optional so a missing baseline degrades cleanly. */
@@ -119,6 +152,49 @@ export interface BudgetFailure {
   file: string
   /** Raw bytes of that largest chunk. */
   fileRawBytes: number
+}
+
+/** One referenced file in an entry page's startup closure. */
+export interface StartupFile {
+  /** Path relative to the renderer dist dir, e.g. `assets/main-B3-J8HY7.js`. */
+  file: string
+  kind: AssetKind
+  rawBytes: number
+  gzipBytes: number
+}
+
+/** One measured entry page: the deduped static closure of its `*.html` file. */
+export interface StartupMeasurement {
+  /** Html file name (not a path), e.g. `index.html`. */
+  html: string
+  /** Gated number: raw bytes of the deduped JS closure. */
+  jsRawBytes: number
+  /** gzip level 9 of the deduped JS closure, summed. */
+  gzipTotalBytes: number
+  /** Distinct JS files in the closure. */
+  fileCount: number
+  /** `<link rel="preload" as="style">` raw bytes; reported, never gated. */
+  cssRawBytes: number
+  cssGzipBytes: number
+  cssFileCount: number
+  /** Every referenced file, sorted by raw bytes descending (for the failure report). */
+  files: StartupFile[]
+  /** Referenced paths (relative to the renderer dist) that are missing from the build. */
+  missing: string[]
+}
+
+/** A failing entry page: over its recorded budget/ceiling, or referencing a missing file. */
+export interface StartupFailure {
+  html: string
+  jsRawBytes: number
+  /** Recorded total, or MAX_NEW_STARTUP_BYTES for an html file with no recorded entry. */
+  budget: number
+  /** True when the html file had no recorded entry (compared against the ceiling). */
+  unbudgeted: boolean
+  overBudget: boolean
+  missing: string[]
+  /** Up to 5 largest referenced files, by raw bytes. */
+  topFiles: StartupFile[]
 }
 
 export interface Paths {
@@ -186,6 +262,185 @@ export function measureRendererChunks(assetsDir: string = paths().assets): Measu
     }
   }
   return chunks
+}
+
+/** gzip level 9, mtime 0 — the deterministic informational number recorded alongside raw bytes. */
+function gzipSize(content: Buffer): number {
+  // Bun accepts `mtime: 0` (deterministic gzip) beyond Node's ZlibOptions type.
+  return gzipSync(content, { level: 9, mtime: 0 } as unknown as Parameters<typeof gzipSync>[1]).length
+}
+
+/** `name="value"` attribute pairs of a single start tag; a bare attribute is ignored. */
+function tagAttributes(tag: string): Record<string, string> {
+  const attrs: Record<string, string> = {}
+  for (const match of tag.matchAll(/([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*"([^"]*)"/g)) {
+    attrs[match[1]!.toLowerCase()] = match[2]!
+  }
+  return attrs
+}
+
+/**
+ * The startup-closure references of an html document, in document order (duplicates preserved — the
+ * caller dedupes by resolved path). `<script src>` and `<link rel="modulepreload">` are JS;
+ * `<link rel="preload" as="style">` is CSS. An inline `<script>` (no src) contributes nothing.
+ */
+export function parseHtmlReferences(html: string): { js: string[]; css: string[] } {
+  const js: string[] = []
+  const css: string[] = []
+  for (const match of html.matchAll(/<(script|link)\b[^>]*>/gi)) {
+    const name = match[1]!.toLowerCase()
+    const attrs = tagAttributes(match[0]!)
+    if (name === 'script') {
+      if (attrs.src) js.push(attrs.src)
+      continue
+    }
+    const rels = (attrs.rel ?? '').toLowerCase().split(/\s+/)
+    if (!attrs.href) continue
+    if (rels.includes('modulepreload')) js.push(attrs.href)
+    else if (rels.includes('preload') && (attrs.as ?? '').toLowerCase() === 'style') css.push(attrs.href)
+  }
+  return { js, css }
+}
+
+/**
+ * An href resolved against the html file's own directory, or `undefined` for a non-file reference
+ * (absolute URL, protocol-relative, or fragment) that cannot live in the build output.
+ */
+function resolveReference(htmlDir: string, href: string): string | undefined {
+  if (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith('//')) return undefined
+  const path = href.split(/[?#]/)[0]!
+  if (!path) return undefined
+  return resolve(htmlDir, path)
+}
+
+/**
+ * Measure every `*.html` entry page in the renderer dist: parse its static JS closure (`<script src>`
+ * + modulepreload) and CSS preloads, resolve each href relative to the html file's directory, and sum
+ * the raw + gzip bytes of the deduped referenced files. A referenced file missing from disk is captured
+ * in `missing` (the caller fails on it) rather than counted as 0.
+ */
+export function measureStartup(rendererDist: string = paths().rendererDist): StartupMeasurement[] {
+  let htmlFiles: string[]
+  try {
+    htmlFiles = readdirSync(rendererDist).filter((file) => file.endsWith('.html'))
+  } catch {
+    // No (readable) build output yet; the caller fails closed.
+    return []
+  }
+  const measurements: StartupMeasurement[] = []
+  for (const html of htmlFiles.sort()) {
+    let text: string
+    try {
+      text = readFileSync(join(rendererDist, html), 'utf8')
+    } catch {
+      // Vanished between listing and reading (concurrent build) — skip this page.
+      continue
+    }
+    const refs = parseHtmlReferences(text)
+    const htmlDir = dirname(join(rendererDist, html))
+    const seen = new Set<string>()
+    const files: StartupFile[] = []
+    const missing: string[] = []
+    for (const [kind, hrefs] of [
+      ['js', refs.js],
+      ['css', refs.css],
+    ] as const) {
+      for (const href of hrefs) {
+        const resolved = resolveReference(htmlDir, href)
+        if (!resolved || seen.has(resolved)) continue
+        seen.add(resolved)
+        const file = relative(rendererDist, resolved) || html
+        let content: Buffer
+        try {
+          content = readFileSync(resolved)
+        } catch {
+          missing.push(file)
+          continue
+        }
+        files.push({ file, kind, rawBytes: content.length, gzipBytes: gzipSize(content) })
+      }
+    }
+    files.sort((a, b) => b.rawBytes - a.rawBytes)
+    const js = files.filter((entry) => entry.kind === 'js')
+    const css = files.filter((entry) => entry.kind === 'css')
+    measurements.push({
+      html,
+      jsRawBytes: js.reduce((sum, entry) => sum + entry.rawBytes, 0),
+      gzipTotalBytes: js.reduce((sum, entry) => sum + entry.gzipBytes, 0),
+      fileCount: js.length,
+      cssRawBytes: css.reduce((sum, entry) => sum + entry.rawBytes, 0),
+      cssGzipBytes: css.reduce((sum, entry) => sum + entry.gzipBytes, 0),
+      cssFileCount: css.length,
+      files,
+      missing,
+    })
+  }
+  return measurements
+}
+
+/** The recorded `startup` section for `--update` / `--print`: one entry per html file, no MIN floor. */
+export function buildStartupEntries(measurements: StartupMeasurement[]): Record<string, StartupEntry> {
+  const entries: Record<string, StartupEntry> = {}
+  for (const measurement of measurements) {
+    entries[measurement.html] = {
+      jsRawBytes: measurement.jsRawBytes,
+      gzipTotalBytes: measurement.gzipTotalBytes,
+      fileCount: measurement.fileCount,
+    }
+  }
+  return entries
+}
+
+/**
+ * Pure startup gate. Fails an entry page when its measured static JS closure exceeds its recorded total
+ * (or MAX_NEW_STARTUP_BYTES when unbudgeted), each with BUDGET_SLACK_BYTES of platform noise allowed,
+ * and fails any entry page referencing a file that is missing from the build.
+ */
+export function evaluateStartup(
+  measurements: StartupMeasurement[],
+  recorded: Record<string, StartupEntry> = {},
+): StartupFailure[] {
+  const failures: StartupFailure[] = []
+  for (const measurement of measurements) {
+    const entry = recorded[measurement.html]
+    const budget = entry?.jsRawBytes ?? MAX_NEW_STARTUP_BYTES
+    const unbudgeted = entry?.jsRawBytes === undefined
+    const overBudget = measurement.jsRawBytes > budget + BUDGET_SLACK_BYTES
+    if (!overBudget && measurement.missing.length === 0) continue
+    failures.push({
+      html: measurement.html,
+      jsRawBytes: measurement.jsRawBytes,
+      budget,
+      unbudgeted,
+      overBudget,
+      missing: [...measurement.missing],
+      topFiles: measurement.files.slice(0, 5),
+    })
+  }
+  return failures
+}
+
+/** The multi-line startup failure report: the overrun or the missing-file list, then the 5 heaviest files. */
+export function formatStartupFailure(failure: StartupFailure): string {
+  const lines: string[] = []
+  if (failure.overBudget) {
+    const label = failure.unbudgeted ? `ceiling ${failure.budget} B (unbudgeted entry page)` : `budget ${failure.budget} B`
+    lines.push(
+      `startup: ${failure.html} static JS closure is ${failure.jsRawBytes} B, ${label} ` +
+        `(+${failure.jsRawBytes - failure.budget} B). Move the payload behind a lazy import`,
+    )
+  }
+  if (failure.missing.length > 0) {
+    lines.push(
+      `startup: ${failure.html} references ${failure.missing.length} file(s) missing from the build: ` +
+        failure.missing.join(', '),
+    )
+  }
+  if (failure.topFiles.length > 0) {
+    lines.push(`  heaviest referenced files for ${failure.html}:`)
+    for (const file of failure.topFiles) lines.push(`    ${file.file}: ${file.rawBytes} B`)
+  }
+  return lines.join('\n')
 }
 
 interface PrefixGroup {
@@ -326,7 +581,9 @@ const DESCRIPTION =
   'Renderer bundle-size budgets. Generated by `bun scripts/check-bundle-size.ts --update`; each entry is ' +
   'the TOTAL rawBytes of every emitted assets chunk sharing that chunk-name prefix (js under `budgets`, ' +
   'css under `stylesheets`), gzip reported alongside, plus `totals` summing each extension. Over a ' +
-  'recorded total the gate fails (or 2,500,000 B for an unbudgeted prefix).'
+  'recorded total the gate fails (or 2,500,000 B for an unbudgeted prefix). `startup` records, per entry ' +
+  'html file, the raw + gzip bytes of the deduped static JS closure (`<script src>` + modulepreload); ' +
+  'the gate fails when it grows past the recorded total, or 8,000,000 B for an html file with no entry.'
 
 /** The largest prefix totals, with their gate budget, for the success table (top 5 by raw bytes). */
 function topPrefixes(
@@ -375,6 +632,23 @@ function printSuccessTable(
   }
 }
 
+/** One line per entry html file: measured static-closure totals and the recorded budget (or `unbudgeted`). */
+function printStartupTable(measurements: StartupMeasurement[], recorded: Record<string, StartupEntry>) {
+  console.log(
+    `startup: ${measurements.length} entry page(s) measured (static JS closure = <script src> + <link rel="modulepreload">; css reported, not gated)`,
+  )
+  console.log(
+    `  ${'html'.padEnd(28)} ${'jsRaw'.padStart(10)} ${'jsGzip'.padStart(10)} ${'files'.padStart(6)} ${'cssRaw'.padStart(10)} ${'budget'.padStart(10)}`,
+  )
+  for (const measurement of measurements) {
+    const entry = recorded[measurement.html]
+    const budget = entry ? String(entry.jsRawBytes) : 'unbudgeted'
+    console.log(
+      `  ${measurement.html.padEnd(28)} ${String(measurement.jsRawBytes).padStart(10)} ${String(measurement.gzipTotalBytes).padStart(10)} ${String(measurement.fileCount).padStart(6)} ${String(measurement.cssRawBytes).padStart(10)} ${budget.padStart(10)}`,
+    )
+  }
+}
+
 export function main(argv: string[] = process.argv.slice(2), env: Record<string, string | undefined> = process.env): number {
   const p = paths(env.ROX_BUNDLE_SIZE_ROOT ?? DEFAULT_ROOT)
   const baselineArg = argValue(argv, '--baseline')
@@ -404,11 +678,35 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
   const budgets = buildBudgets(chunks, 'js')
   const stylesheets = buildBudgets(chunks, 'css')
   const totals = bundleTotals(chunks)
+  const startup = measureStartup(p.rendererDist)
+  const startupEntries = buildStartupEntries(startup)
+
+  // A reference that resolves to nothing on disk means the build is incomplete: recording 0 bytes for it
+  // (and calling the page within budget) would hide the regression, so fail closed in every mode.
+  const missing = startup.filter((measurement) => measurement.missing.length > 0)
+  if (missing.length > 0) {
+    for (const measurement of missing) {
+      console.error(
+        formatStartupFailure({
+          html: measurement.html,
+          jsRawBytes: measurement.jsRawBytes,
+          budget: startupEntries[measurement.html]?.jsRawBytes ?? MAX_NEW_STARTUP_BYTES,
+          unbudgeted: startupEntries[measurement.html] === undefined,
+          overBudget: false,
+          missing: measurement.missing,
+          topFiles: measurement.files.slice(0, 5),
+        }),
+      )
+    }
+    console.error('startup: the renderer build references file(s) that are missing - run bun run electron:build:renderer first')
+    return 1
+  }
 
   if (printArg) {
-    writeJson(resolve(printArg), { description: DESCRIPTION, budgets, stylesheets, totals })
+    writeJson(resolve(printArg), { description: DESCRIPTION, budgets, stylesheets, totals, startup: startupEntries })
     console.log(
-      `bundle-size: wrote ${Object.keys(budgets).length} js + ${Object.keys(stylesheets).length} css prefix budget(s) to ${printArg}`,
+      `bundle-size: wrote ${Object.keys(budgets).length} js + ${Object.keys(stylesheets).length} css prefix budget(s) ` +
+        `and ${Object.keys(startupEntries).length} startup entry page(s) to ${printArg}`,
     )
     return 0
   }
@@ -420,6 +718,7 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
       budgets,
       stylesheets,
       totals,
+      startup: startupEntries,
     })
     console.log(
       `bundle-size: wrote ${relative(p.root, baselinePath)} (${Object.keys(budgets).length} js + ${Object.keys(stylesheets).length} css prefix budget(s))`,
@@ -432,6 +731,9 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
     }
     console.log(`  js  total: raw ${totals.jsRawBytes} B, gzip ${totals.jsGzipBytes} B`)
     console.log(`  css total: raw ${totals.cssRawBytes} B, gzip ${totals.cssGzipBytes} B`)
+    for (const [html, entry] of Object.entries(startupEntries).sort()) {
+      console.log(`  startup ${html}: js raw ${entry.jsRawBytes} B, gzip ${entry.gzipTotalBytes} B, ${entry.fileCount} file(s)`)
+    }
     return 0
   }
 
@@ -447,11 +749,15 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
     stylesheets: baseline.stylesheets ?? {},
     totals: baseline.totals,
   })
-  if (failures.length > 0) {
+  const startupRecorded = baseline.startup ?? {}
+  const startupFailures = evaluateStartup(startup, startupRecorded)
+  printStartupTable(startup, startupRecorded)
+  if (failures.length > 0 || startupFailures.length > 0) {
     for (const failure of failures) console.error(formatFailure(failure))
+    for (const failure of startupFailures) console.error(formatStartupFailure(failure))
     console.error(
-      `bundle-size: ${failures.length} budget(s) over limit. If the growth is intended, owner-approve ` +
-        `it and re-record with \`bun scripts/check-bundle-size.ts --update\`.`,
+      `bundle-size: ${failures.length + startupFailures.length} budget(s) over limit. If the growth is ` +
+        `intended, owner-approve it and re-record with \`bun scripts/check-bundle-size.ts --update\`.`,
     )
     return 1
   }

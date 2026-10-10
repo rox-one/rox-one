@@ -9,10 +9,6 @@ import { MessageSquarePlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import { navigate, routes } from '@/lib/navigate'
-import { MemoryScreen } from '../memory/MemoryScreen'
-import { MemoryRepoScreen } from '../memory/MemoryRepoScreen'
-import { LearningScreen } from '../learning/LearningScreen'
-import { ProjectsHomeInMain } from './ProjectsHomeInMain'
 import { MultiSelectPanel } from './MultiSelectPanel'
 import { CollectionBulkBar } from './collection/CollectionBulkBar'
 import { useAppShellContext } from '@/context/AppShellContext'
@@ -56,12 +52,8 @@ import { sourceSelection, skillSelection, automationSelection } from '@/hooks/us
 import { isScreenNavigation, isSurfaceNavigation, type LoadedSource, type LoadedSkill, type NavigationState } from '../../../shared/types'
 import { buildRouteFromNavigationState } from '../../../shared/route-parser'
 import ChatPage from '@/pages/ChatPage'
-import { HomeFrontPage } from '@/platform/HomeFrontPage'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
-import { SettingsOverviewPage } from '@/pages/settings/SettingsOverviewPage'
 import { recordRecentSetting } from '@/lib/settings-recent'
-import { PageView } from '../pages/PageView'
-import { SessionHeatmapHost } from './session-heatmap/SessionHeatmapHost'
 import { automationsAtom } from '@/atoms/automations'
 import { SendResourceToWorkspaceDialog, type SendResourceType } from './SendResourceToWorkspaceDialog'
 import {
@@ -122,6 +114,17 @@ const KnowledgeProposals = lazyRoutePage(ROUTE_PAGE_LOADERS.knowledgeProposals)
 const DevSpaceHomePage = lazyRoutePage(ROUTE_PAGE_LOADERS.devSpaceHome)
 const DevSpaceRepoPage = lazyRoutePage(ROUTE_PAGE_LOADERS.devSpaceRepo)
 const PlaybooksHomePage = lazyRoutePage(ROUTE_PAGE_LOADERS.playbooksHome)
+// #1675: these eight screens were static imports, so their subtrees (including
+// the shiki diff stack behind memory/ImportReviewDialog) rode main.tsx's eager
+// startup closure, which index.html preloads whole. Same lazy idiom as above.
+const MemoryScreen = lazyRoutePage(ROUTE_PAGE_LOADERS.memory)
+const MemoryRepoScreen = lazyRoutePage(ROUTE_PAGE_LOADERS.memoryRepo)
+const LearningScreen = lazyRoutePage(ROUTE_PAGE_LOADERS.learning)
+const ProjectsHomeInMain = lazyRoutePage(ROUTE_PAGE_LOADERS.projectsHome)
+const HomeFrontPage = lazyRoutePage(ROUTE_PAGE_LOADERS.homeFront)
+const SettingsOverviewPage = lazyRoutePage(ROUTE_PAGE_LOADERS.settingsOverview)
+const PageView = lazyRoutePage(ROUTE_PAGE_LOADERS.pageView)
+const SessionHeatmapHost = lazyRoutePage(ROUTE_PAGE_LOADERS.sessionHeatmap)
 
 type SelectedResourceStatus = 'loading' | 'ready' | 'missing' | 'unavailable'
 
