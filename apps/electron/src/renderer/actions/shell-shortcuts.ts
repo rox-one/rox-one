@@ -7,8 +7,10 @@
  * handler, highest priority first.
  *
  * ⌘F: `app.search` everywhere; in Docs (flag `docs.shared.v1`) the open
- * document's find (`docs.findInDoc`). Lark's Docs ⌘J moved here because ⌘J is
- * the agent panel.
+ * document's find (`docs.findInDoc`). Lark's Docs ⌘J is deliberately not
+ * rebound here: ⌘J stays reserved for the @rox agent panel. That panel is not
+ * mounted yet, so its actions are removed (A7, decision
+ * 010-ui-agent-task-controls.md) and no action currently claims ⌘J.
  */
 import { currentShellFlags } from '@/platform/unified-flags'
 import { actions, type ActionId } from './definitions'

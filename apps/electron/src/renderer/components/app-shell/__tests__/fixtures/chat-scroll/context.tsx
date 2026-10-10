@@ -3,7 +3,7 @@ export const FocusContext=React.createContext(true)
 export const useAppShellContext=()=>({isFocusedPanel:React.useContext(FocusContext)})
 export const useAuthenticatedReactionActor=()=>null
 export const useFocusZone=()=>({zoneRef:React.useRef(null),isFocused:false})
-export const useBackgroundTasks=()=>({tasks:[],killTask:()=>{}})
+export const useBackgroundTasks=()=>({tasks:[],stopShellTask:async()=>{}})
 export const useContextualSuggestions=()=>{}
 export const useTheme=()=>({isDark:false})
 export const useNavigation=()=>({navigate:()=>{}})
