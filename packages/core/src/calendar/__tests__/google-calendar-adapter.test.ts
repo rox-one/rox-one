@@ -140,6 +140,47 @@ describe('GoogleCalendarAdapter', () => {
     expect(page.events[3]!.deleted).toBe(true)
   })
 
+  it('surfaces the Meet URI from hangoutLink and conferenceData video entry points', async () => {
+    const adapter = new GoogleCalendarAdapter({
+      credentials: accessor(),
+      range: RANGE,
+      fetchImpl: async () => jsonResponse({
+        items: [
+          {
+            id: 'meet-link',
+            summary: 'With hangoutLink',
+            hangoutLink: 'https://meet.google.com/aaa-bbbb-ccc',
+            start: { dateTime: '2026-09-02T09:00:00Z' },
+            end: { dateTime: '2026-09-02T09:30:00Z' },
+          },
+          {
+            id: 'meet-entrypoint',
+            summary: 'With conferenceData entry point',
+            conferenceData: {
+              entryPoints: [
+                { entryPointType: 'phone', uri: 'tel:+1-555-0100' },
+                { entryPointType: 'video', uri: 'https://meet.google.com/ddd-eeee-fff' },
+              ],
+            },
+            start: { dateTime: '2026-09-02T10:00:00Z' },
+            end: { dateTime: '2026-09-02T10:30:00Z' },
+          },
+          {
+            id: 'no-conference',
+            summary: 'No conference',
+            start: { dateTime: '2026-09-02T11:00:00Z' },
+            end: { dateTime: '2026-09-02T11:30:00Z' },
+          },
+        ],
+      }),
+    })
+
+    const page = await adapter.listEvents('acct-1')
+    expect(page.events[0]!.meetUri).toBe('https://meet.google.com/aaa-bbbb-ccc')
+    expect(page.events[1]!.meetUri).toBe('https://meet.google.com/ddd-eeee-fff')
+    expect(page.events[2]!.meetUri).toBeUndefined()
+  })
+
   it('follows nextPageToken and returns a resume cursor while bounded by maxPages', async () => {
     const calls: string[] = []
     const adapter = new GoogleCalendarAdapter({

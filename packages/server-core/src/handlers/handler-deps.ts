@@ -39,6 +39,7 @@ import type {
   DriveScanResult,
   DriveUploadSession,
 } from '@rox/shared/drive'
+import type { GoogleMeetService } from './rpc/google-meet'
 
 export interface OpenClawSecurityWorkspaceInput {
   readonly workspaceId: string
@@ -169,6 +170,11 @@ export interface HandlerDeps<
    * (no config-dir bytes) answer UNSUPPORTED_OPERATION until it is present.
    */
   drive?: DriveService
+  /**
+   * Optional because the Google Meet connector is host-composed (wave 5, row
+   * d2.6); hosts that never compose it answer `MEET_NOT_CONFIGURED`.
+   */
+  meet?: GoogleMeetService
   /** Optional GUI-only overlay; never controlled through an untrusted SET_OVERLAY RPC. */
   voiceOverlay?: NativeVoiceOverlayHost
   /**

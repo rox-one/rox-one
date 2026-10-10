@@ -33,7 +33,7 @@ export function VaultPanel({
   }
   if (unlock && !unlock.available) {
     return (
-      <div className="px-4 text-small text-warning" role="status">
+      <div className="px-4 text-small text-status-warning" role="status">
         {t('extraScreens.secrets.vault.locked')}
       </div>
     )

@@ -1,6 +1,7 @@
 # Developer Space + Playbooks — ТЗ-пак
 
-Статус: **DRAFT для ревью** (дата пака 2026-10-09; база `rox-one` @ `0c918497d`, ветка `fix/product-tour-native-green`).
+Статус: **ПОСТАВЛЕНО** — волны В1–В5 слиты в `main` (2026-10-10); исходно пак был DRAFT для ревью
+(дата пака 2026-10-09; база `rox-one` @ `0c918497d`, ветка `fix/product-tour-native-green`).
 
 ## Назначение
 
@@ -65,9 +66,52 @@
   и открытые вопросы O1–O11.
 - Машиночитаемая приёмка (`06-acceptance-cases.json`) связана с FR-xx из PRD и DoD волн из PLAN.
 
+## Статус реализации (2026-10-10)
+
+Все волны В1–В5 поставлены и слиты в `main` (одна волна = один PR, D14):
+
+| Волна | Содержание | PR |
+|---|---|---|
+| В1 | роль-шаг «Кто вы?», флаги, поверхность «Разработчикам», ингест репозиториев, каналы | [#1658](https://github.com/rox-one/rox-one/pull/1658) |
+| В2 | шесть инструментов-адаптеров, пайплайн/артефакты, поверхности репо-воркспейса, session-tools | [#1705](https://github.com/rox-one/rox-one/pull/1705) |
+| В3 | блоки вопросов, SBOM/CVE (OSV), динамические туры + демо-режим, «свой вопрос» | [#1737](https://github.com/rox-one/rox-one/pull/1737) |
+| В4 | Playbooks «Знания»: источники, пресет-вопросы, подкаст (сценарий → TTS → ffmpeg → плеер/экспорт) | [#1738](https://github.com/rox-one/rox-one/pull/1738) |
+| В5 | Playbooks «Кодбук»: ноутбуки-пайплайны по коду | [#1739](https://github.com/rox-one/rox-one/pull/1739) |
+| fix | `playbooks:codebookJob` в `BROADCAST_EVENT_CHANNELS` + пере-запись бюджетов бандла | [#1741](https://github.com/rox-one/rox-one/pull/1741) |
+
+Карта кода (где что лежит):
+
+- **Dev Space, серверное ядро** — `packages/server-core/src/devspace/` (`clone.ts`, `runner.ts`,
+  `artifacts.ts`, `runs.ts`, `publish-port.ts`, `tool-runtime.ts`, `questions/`, `security/`,
+  `stages/`, `adapters/`); RPC `packages/server-core/src/handlers/rpc/dev-space.ts`.
+- **Модель данных** — `packages/shared/src/dev-space/` (`types.ts`, `index.ts`).
+- **Агентские session-tools** — `packages/session-tools-core/src/handlers/dev-space-{read,search,propose}.ts`
+  + `packages/session-tools-core/src/dev-space/{runtime,scope}.ts`.
+- **Playbooks (подкаст + ноутбук-обвязка)** — `packages/server-core/src/playbooks/` (`jobs.ts`,
+  `script.ts`, `tts.ts`, `assemble.ts`, `episodes.ts`, `codebook/`); контракты —
+  `packages/shared/src/playbooks/codebook.ts`, job-канал — `packages/shared/src/voice/podcast-job.ts`.
+- **Renderer Dev Space** — `apps/electron/src/renderer/pages/dev-space/` (`DevSpaceHomePage.tsx`,
+  `DevSpaceRepoPage.tsx`, `components/`); настройки — `pages/settings/DeveloperSettingsPage.tsx`;
+  онбординг — `components/onboarding/RoleStep.tsx`; nudge — `components/dev-space/DevSpaceNudgeBanner.tsx`.
+- **Renderer Playbooks** — `apps/electron/src/renderer/pages/playbooks/` (`knowledge/`, `codebook/`,
+  `podcast/`, `components/`).
+- **Флаги/атомы** — `packages/core/src/platform/workbench/{flags,extra-screen-flags}.ts`,
+  `apps/electron/src/renderer/atoms/{dev-space,playbooks}.ts`.
+- **Реестр RX** — `registry/rx-registry.yaml` (блок «Developer Space + Playbooks»).
+
+Ссылки:
+
+- Решения: `../../architecture/adr/0020-dev-space-code-intel-tools-revision.md` (D4, O1/O2/O7),
+  `0021-dev-space-analysis-job-engine.md` (O3), `0022-dev-space-clone-storage-paths.md` (O4).
+- Аудит ревизии инструментов: `audits/d4-tools-revision-2026-10-09.md`.
+- Отклонения/решения реализации (каналы сверх фриза, Tabs W1.1, шим узла, ipc-каталог и др.):
+  `IMPLEMENTATION-NOTES.md`.
+
 ## Следующий шаг
 
-Ревью пака и старт волны **В1** (роль+флаги+пространство+клонирование, D14); волны **В1–В5** расписаны в `05-PLAN.md`.
+Волны **В1–В5** поставлены; дальнейшая работа — сопровождение поверхностей (SRF-0052/0053 в статусе
+`active`), подключение внешних инструментов как optional runtime (INT-0037…0043) и наблюдение за
+рисками RSK-0001…0010. План волн — `05-PLAN.md`.
 
 Требования к документам пака: русский язык; утверждения о существующем коде подкреплены точными путями
 из `00-BRIEF.md`; новые сущности помечены «новое»/«расширение»; неизвестное — `TODO(open)` (O1–O11);

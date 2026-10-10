@@ -17,7 +17,7 @@ import { LessonStore, lessonKey } from '../../memory/LessonStore'
 import { buildConflictPrompt, parseConflicts, promoteLessonToGlobal, scanPromotionCandidates } from '../../memory/lesson-graph'
 import type { LessonConflictVerdict } from '../../memory/lesson-graph'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
-import { MemoryIndexService, memoryIndexServiceFor } from '../../memory/MemoryIndexService'
+import { MemoryIndexService, memoryIndexServiceFor, memoryIndexServiceOptions } from '../../memory/MemoryIndexService'
 import { WikiClaimStore } from '../../memory/WikiClaimStore'
 import { compileWikiDigest } from '../../memory/wiki-lint'
 import type { MemoryGetResult, MemoryIndexStatus, MemorySearchHit } from '@rox/shared/memory/types'
@@ -445,7 +445,11 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
     if (!authorizedWorkspaceId) throw new Error('Workspace access denied')
     const workspace = getWorkspaceByNameOrId(authorizedWorkspaceId)
     if (!workspace) throw new Error('Workspace not found')
-    return { index: memoryIndexServiceFor(workspace.rootPath, workspace.id), workspaceId: workspace.id }
+    // Same options as MemoryService (global memory config is the canonical
+    // source: SessionManager constructs MemoryService without getConfig), so
+    // both paths land on the one cached instance for this workspace.
+    const index = memoryIndexServiceFor(workspace.rootPath, workspace.id, memoryIndexServiceOptions(getMemoryConfig()))
+    return { index, workspaceId: workspace.id }
   }
 
   server.handle(
@@ -559,7 +563,9 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
       // memory chunk id. After a forget, the id no longer resolves and the lint
       // flags `evidence-missing` (never throws on an unreadable index).
       const workspace = getWorkspaceByNameOrId(workspaceId)
-      const index = workspace ? memoryIndexServiceFor(workspace.rootPath, workspace.id) : null
+      const index = workspace
+        ? memoryIndexServiceFor(workspace.rootPath, workspace.id, memoryIndexServiceOptions(getMemoryConfig()))
+        : null
       const { report, digestPath } = compileWikiDigest({
         memoryDir: store.memoryDir,
         scope: 'workspace',

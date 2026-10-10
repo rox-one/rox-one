@@ -166,7 +166,7 @@ export default function KnowledgeNotebookPage({ notebook, onBack, onUpdate, onGe
             </p>
           ) : null}
           {partial ? (
-            <p className="px-3 pb-3 text-caption text-warning" role="status" data-testid="playbooks-notebook-partial">
+            <p className="px-3 pb-3 text-caption text-status-warning" role="status" data-testid="playbooks-notebook-partial">
               {t('playbooks.notebook.partial')}
             </p>
           ) : null}

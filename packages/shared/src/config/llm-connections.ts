@@ -200,6 +200,17 @@ export interface LlmConnection {
    */
   midStreamBehavior?: MidStreamBehavior;
 
+  /**
+   * Optional per-person key. When set, the connection belongs to the Identity
+   * Center `Profile.id` named here and is hidden from other profiles by
+   * {@link filterLlmConnectionsForProfile}. When absent the connection is shared
+   * (global) — visible to every profile, exactly as before this field existed.
+   * Optional for backward compat: absent must never change stored bytes or
+   * behaviour, so reads go through {@link filterLlmConnectionsForProfile}, which
+   * is a no-op when no profile is supplied.
+   */
+  profileId?: string;
+
   // --- Resolved Anthropic OAuth identity (issue #838) ---
   // Captured from the token-exchange response; lets the UI flag two Claude
   // connections that resolve to the same underlying account. All optional and
@@ -755,6 +766,29 @@ export function resolveEffectiveConnectionSlug(
     ?? workspaceDefault
     ?? connections.find(c => c.isDefault)?.slug
     ?? connections[0]?.slug
+}
+
+/**
+ * Filter LLM connections to those visible to one Identity Center profile.
+ *
+ * Per-person keying, without a migration: a connection with a matching
+ * `profileId` is that profile's; a connection with no `profileId` is shared and
+ * stays visible to every profile. When `profileId` is omitted (or blank) this is
+ * a strict no-op — it returns a shallow copy of the input, so pre-existing
+ * configs behave and persist byte-identically.
+ *
+ * Note on the falsy test: it covers both `undefined` (never keyed) and an
+ * explicit empty string, matching the "absent means shared" contract.
+ */
+export function filterLlmConnectionsForProfile(
+  connections: readonly LlmConnection[],
+  profileId?: string,
+): LlmConnection[] {
+  const key = profileId?.trim();
+  if (!key) return [...connections];
+  return connections.filter(
+    (connection) => !connection.profileId || connection.profileId === key,
+  );
 }
 
 /**

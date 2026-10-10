@@ -81,7 +81,7 @@ export const MAX_WIDGET_FRAME_HEIGHT_PX = 8192
  * `bootstrap`; both are deliberately dropped, so no privileged channel is ever
  * established. `type` and `height` must be OWN properties — a payload that
  * inherits them from its prototype is not a wire message and is rejected.
- * Anything that is not a finite, positive `size` height returns `null`; a
+ * Anything that is not a finite, non-negative `size` height returns `null`; a
  * finite height above {@link MAX_WIDGET_FRAME_HEIGHT_PX} is clamped, never
  * dropped, and can therefore never reach component state unbounded.
  */
@@ -91,7 +91,7 @@ export function parseWidgetFrameMessage(data: unknown): number | null {
   const record = data as { type?: unknown; height?: unknown }
   if (record.type !== WIDGET_SIZE_MESSAGE_TYPE) return null
   const height = record.height
-  if (typeof height !== 'number' || !Number.isFinite(height) || height <= 0) return null
+  if (typeof height !== 'number' || !Number.isFinite(height) || height < 0) return null
   return Math.min(height, MAX_WIDGET_FRAME_HEIGHT_PX)
 }
 

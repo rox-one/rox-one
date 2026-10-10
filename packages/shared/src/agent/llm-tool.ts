@@ -536,7 +536,14 @@ const AttachmentSchema = z.union([
 
 const OutputSchemaParam = z.object({
   type: z.literal('object'),
-  properties: z.record(z.string(), z.unknown()),
+  // NOTE: z.record() here crashes MCP tool listing. The Claude Agent SDK
+  // bundles zod 4.4.x and converts tool input schemas with that older copy's
+  // toJSONSchema, whose context lacks `ctx.deferred`; zod 4.6.x's record
+  // processor pushes onto ctx.deferred, so a z.record field throws
+  // "undefined is not an object (evaluating 'ctx.deferred.push')" before the
+  // tool can mount. z.object({}).catchall(z.unknown()) is the exact
+  // equivalent open string→unknown map.
+  properties: z.object({}).catchall(z.unknown()),
   required: z.array(z.string()).optional(),
 }).describe('JSON Schema for structured output');
 

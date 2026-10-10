@@ -150,17 +150,14 @@ export const XSC_COMMAND_SCHEMAS: CommandSchemaMap = {
     ]),
     format: z.enum(['quotes', 'plain']),
   }),
-  'im.create_chat': cmd({
-    ...createIdShape,
-    kind: z.enum(['group', 'channel']),
-    name: z.string().trim().min(1).max(200).optional(),
-    description: z.string().max(2000).optional(),
-    visibility: z.enum(['public', 'private']),
-    members: z.array(personRefSchema).max(500),
-    postingPolicy: z.enum(['all', 'admins']).optional(),
-    from: xscOriginSchema.optional(),
-    carryContext: z.object({ lastN: z.number().int().positive().max(500) }).strict().optional(),
-  }),
+  // `im.create_chat` and `agents.invoke` are owned by `AGENTS_COMMAND_MODULE`
+  // (W1-11 #1508): the wired registry runs that module's handler, so the §12
+  // signatures that used to be bound here would only shadow the real schemas
+  // (`@rox/shared/identity/schemas.ts: createChatSchema` /
+  // `@rox/shared/agents/schemas.ts: agentInvokeSchema`). Their §12 risk class
+  // also comes from the catalogue (`@rox/core/agents/risk.ts`), not from here.
+  // Both remain in `XSC_COMMAND_TYPES` / `XSC_COMMAND_RISK` as the §12 record.
+
   'im.send_message': cmd({
     chatRef: refSchema.optional(),
     /** TipTap JSON; mentions are nodes inside it (§11.3), never parsed from text. */
@@ -169,12 +166,5 @@ export const XSC_COMMAND_SCHEMAS: CommandSchemaMap = {
     attribution: z.enum(['user', 'agent', 'unprompted']).optional(),
     notify: z.enum(['default', 'mentions_only']).optional(),
     messageId: idSchema.optional(),
-  }),
-  'agents.invoke': cmd({
-    ...createIdShape,
-    agentRef: refSchema,
-    instruction: z.string().min(1).max(50_000),
-    origin: xscOriginSchema,
-    context: z.array(refSchema).max(100).optional(),
   }),
 }

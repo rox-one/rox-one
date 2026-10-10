@@ -363,7 +363,14 @@ export function createApiTool(
     {
       path: z.string().describe('API endpoint path, e.g., "/search" or "/v1/completions"'),
       method: z.enum(['GET', 'POST', 'PUT', 'DELETE', 'PATCH']).describe('HTTP method - check documentation for correct method per endpoint'),
-      params: z.record(z.string(), z.unknown()).optional().describe('Request body (POST/PUT/PATCH) or query parameters (GET). For non-JSON bodies, pass { _rawBody: "raw string content", _contentType: "text/plain" } — _rawBody is sent as-is without JSON encoding, _contentType defaults to text/plain if omitted'),
+      // NOTE: do NOT use z.record() here. The Claude Agent SDK bundles zod 4.4.x
+      // and converts tool input schemas with that older copy's toJSONSchema,
+      // whose context predates `ctx.deferred`. zod 4.6.x's recordProcessor pushes
+      // onto ctx.deferred, so a z.record field crashes the whole MCP server with
+      // "undefined is not an object (evaluating 'ctx.deferred.push')" before the
+      // API source can mount. z.object({}).catchall(z.unknown()) is the exact
+      // equivalent (an open string→unknown map) that the older converter handles.
+      params: z.object({}).catchall(z.unknown()).optional().describe('Request body (POST/PUT/PATCH) or query parameters (GET). For non-JSON bodies, pass { _rawBody: "raw string content", _contentType: "text/plain" } — _rawBody is sent as-is without JSON encoding, _contentType defaults to text/plain if omitted'),
       _intent: z.string().optional().describe('REQUIRED: Describe what you are trying to accomplish with this API call (1-2 sentences)'),
     },
     async (args) => {

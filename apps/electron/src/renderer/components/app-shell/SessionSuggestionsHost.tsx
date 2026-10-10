@@ -15,10 +15,39 @@ export const SESSION_SUGGESTIONS_EVENT = 'rox:session-suggestions'
 
 export interface SessionSuggestionsEventDetail {
   sessionId: string
-  /** Owner account id (absent when the session is unattributed). */
-  ownerId?: string
-  /** The viewer's own account id, to decide whether accept/dismiss is offered. */
-  viewerId?: string
+  /**
+   * Effective owner account id — the assigned owner, else the session creator.
+   * `null`/absent only when the session has no attribution at all, which the
+   * server treats as open (everyone may resolve).
+   */
+  ownerId?: string | null
+  /** The viewer's own account id (null when no account is connected), to decide whether accept/dismiss is offered. */
+  viewerId?: string | null
+}
+
+/** Attribution slice needed to resolve who may resolve a suggestion. */
+export interface SessionSuggestionOwnerFields {
+  owner?: { id: string }
+  creator?: { accountId: string }
+}
+
+/**
+ * Resolve the account id the server will accept a suggestion-resolve from,
+ * mirroring `evaluateSessionWriteAccess` (`session.owner?.id ?? session.creator?.accountId
+ * ?? null`, SessionManager.ts): an assigned owner wins, otherwise the creator.
+ * `null` means the session is unattributed and the server leaves it open.
+ */
+export function resolveSuggestionOwnerId(meta: SessionSuggestionOwnerFields): string | null {
+  return meta.owner?.id ?? meta.creator?.accountId ?? null
+}
+
+/**
+ * Whether the dialog offers accept/dismiss to this viewer. The rule is the same
+ * one the resolve RPC enforces: unattributed sessions are open to everyone,
+ * otherwise only the effective owner passes the write gate.
+ */
+export function viewerMayResolveSuggestions(ownerId: string | null | undefined, viewerId: string | null | undefined): boolean {
+  return !ownerId || ownerId === viewerId
 }
 
 export function openSessionSuggestions(detail: SessionSuggestionsEventDetail): void {
@@ -66,7 +95,7 @@ export function SessionSuggestionsHost() {
     return () => window.removeEventListener(SESSION_SUGGESTIONS_EVENT, open)
   }, [refresh, t])
 
-  const isOwner = !target?.ownerId || target.ownerId === target.viewerId
+  const isOwner = viewerMayResolveSuggestions(target?.ownerId, target?.viewerId)
 
   const propose = async () => {
     const sessionId = target?.sessionId

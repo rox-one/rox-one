@@ -68,6 +68,19 @@ export const GOOGLE_SERVICE_SCOPES: Record<GoogleService, string[]> = {
     'https://www.googleapis.com/auth/webmasters.readonly', // Read Search Console data
     'https://www.googleapis.com/auth/userinfo.email',
   ],
+  // Google Meet artifacts (conference records, transcripts, smart notes).
+  // The Meet REST API is a Developer Preview API; these scopes are the preview
+  // surface plus the read-only Calendar/Drive scopes needed to resolve a
+  // meeting's space and its Drive/docs exports.
+  meet: [
+    'https://www.googleapis.com/auth/meetings.space.created',
+    'https://www.googleapis.com/auth/meetings.space.readonly',
+    'https://www.googleapis.com/auth/meetings.space.settings',
+    'https://www.googleapis.com/auth/meetings.conference.media.readonly',
+    'https://www.googleapis.com/auth/calendar.events.readonly',
+    'https://www.googleapis.com/auth/drive.meet.readonly',
+    'https://www.googleapis.com/auth/userinfo.email',
+  ],
 };
 
 /**

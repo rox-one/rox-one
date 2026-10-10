@@ -21,6 +21,7 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { app } from 'electron'
+import { decodeFrame, isLocalIpcFramingError } from '@rox/shared/local-ipc/framing'
 import {
   appleCalendarLiveEnabled,
   registerAppleCalendarHelper,
@@ -82,19 +83,39 @@ export function runAppleCalendarHelper(
     return promise
   }
 
-  let stdout = ''
+  let stdout: string
   let stderr = ''
-  child.stdout?.setEncoding('utf8')
+  const stdoutChunks: Buffer[] = []
   child.stderr?.setEncoding('utf8')
-  child.stdout?.on('data', (chunk: string) => {
-    stdout += chunk
+  child.stdout?.on('data', (chunk: Buffer) => {
+    stdoutChunks.push(chunk)
   })
   child.stderr?.on('data', (chunk: string) => {
     stderr += chunk
   })
   child.once('error', reject)
-  child.once('close', (code) => resolve({ exitCode: code ?? 1, stdout, stderr }))
+  child.once('close', (code) => {
+    stdout = decodeHelperFrame(Buffer.concat(stdoutChunks))
+    resolve({ exitCode: code ?? 1, stdout, stderr })
+  })
   return promise
+}
+
+/**
+ * The helper writes exactly one length-prefixed JSON frame to stdout
+ * (`@rox/shared/local-ipc/framing`). Decode it and hand the JSON text back so
+ * the adapter's existing `JSON.parse(stdout)` is unchanged. A helper that
+ * emitted nothing decodable — a crash, or a stale binary on the legacy
+ * delimiter — yields an empty string, which the adapter treats as a failure.
+ */
+function decodeHelperFrame(bytes: Buffer): string {
+  if (bytes.byteLength === 0) return ''
+  try {
+    return JSON.stringify(decodeFrame(bytes))
+  } catch (error) {
+    if (isLocalIpcFramingError(error)) return ''
+    throw error
+  }
 }
 
 const AUTH_STATUS_BY_NAME: Record<string, AppleCalendarAuthStatus> = {

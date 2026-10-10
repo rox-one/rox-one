@@ -1,7 +1,9 @@
 // rox-calendar-helper — macOS EventKit bridge for Rox Apple Calendar integration.
 //
-// A tiny CLI the Electron main process spawns. Every subcommand writes exactly one
-// line of JSON to stdout and exits non-zero with {"error":"<code>"} on failure.
+// A tiny CLI the Electron main process spawns. Every subcommand writes exactly
+// one length-prefixed JSON frame to stdout — a 4-byte big-endian payload length
+// followed by the UTF-8 JSON bytes — and exits non-zero with {"error":"<code>"}
+// on failure. The frame matches `@rox/shared/local-ipc/framing`.
 //
 //   auth-status                                  -> {"status":"<state>"}
 //   request-access                               -> {"status":"<state>","granted":<bool>}
@@ -18,14 +20,20 @@ import Foundation
 
 // MARK: - Output
 
+func writeFrame(_ payload: Data) {
+    var header = UInt32(payload.count).bigEndian
+    let headerData = withUnsafeBytes(of: &header) { Data($0) }
+    FileHandle.standardOutput.write(headerData)
+    FileHandle.standardOutput.write(payload)
+}
+
 func emit(_ value: Any) {
     guard JSONSerialization.isValidJSONObject(value),
-          let data = try? JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]),
-          let line = String(data: data, encoding: .utf8) else {
+          let data = try? JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]) else {
         FileHandle.standardError.write(Data("{\"error\":\"encode-failed\"}\n".utf8))
         exit(1)
     }
-    print(line)
+    writeFrame(data)
 }
 
 func fail(_ code: String) -> Never {

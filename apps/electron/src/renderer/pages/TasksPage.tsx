@@ -1424,7 +1424,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
         </div>
       ) : null}
       {personalTasksSyncConflicts().length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2 border-b border-warning/30 bg-warning/10 px-3 py-2 text-[12px]" role="alert" data-testid="tasks-sync-conflicts">
+        <div className="flex flex-wrap items-center gap-2 border-b border-status-warning/30 bg-status-warning/10 px-3 py-2 text-[12px]" role="alert" data-testid="tasks-sync-conflicts">
           <span>{t('tasks.sync.conflict')}</span>
           {personalTasksSyncConflicts().map((conflict) => (
             <span key={conflict.id} className="inline-flex items-center gap-1">

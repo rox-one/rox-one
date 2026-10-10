@@ -68,7 +68,7 @@ import {
   migrateAutoCreateFromSessions,
   type SkillsLearningPolicy,
 } from '../memory/learning.ts';
-import { isValidProviderAuthCombination, getDefaultModelsForConnection, getDefaultModelForConnection, isPiProvider, toBedrockNativeId, type LlmProviderType } from './llm-connections.ts';
+import { isValidProviderAuthCombination, getDefaultModelsForConnection, getDefaultModelForConnection, isPiProvider, toBedrockNativeId, filterLlmConnectionsForProfile, type LlmProviderType } from './llm-connections.ts';
 import {
   getModelProvider,
   getModelById,
@@ -4134,13 +4134,19 @@ export async function migrateLegacyCredentials(): Promise<void> {
  *
  * Note: This function is read-only and never modifies config.
  * Call migrateLegacyLlmConnectionsConfig() on app startup to handle migration.
+ *
+ * @param profileId - Optional Identity Center profile to scope the read to.
+ *   When omitted (the pre-existing contract) the stored array is returned
+ *   unchanged, byte-identically. When supplied, connections keyed to another
+ *   profile are filtered out while unkeyed (shared) connections stay visible.
  */
-export function getLlmConnections(): LlmConnection[] {
+export function getLlmConnections(profileId?: string): LlmConnection[] {
   const config = loadStoredConfig();
   if (!config) return [];
 
   // Return empty array if not migrated yet - caller should call migration on startup
-  return config.llmConnections || [];
+  const connections = config.llmConnections || [];
+  return filterLlmConnectionsForProfile(connections, profileId);
 }
 
 /**

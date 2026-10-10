@@ -97,7 +97,7 @@ export function KeeperItemEditor({
 
         {readOnly && (
           <div className="mt-3">
-            <div className="font-semibold text-warning">{t('extraScreens.keeper.rawItem')}</div>
+            <div className="font-semibold text-status-warning">{t('extraScreens.keeper.rawItem')}</div>
             <div className="mt-0.5 text-small text-muted-foreground">{t('extraScreens.keeper.rawItemHint')}</div>
           </div>
         )}

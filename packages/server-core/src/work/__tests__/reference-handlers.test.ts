@@ -199,11 +199,15 @@ describe('reference handlers: negative paths (PLAN §1.4)', () => {
 
   test('the unknown-member exemption is exactly the catalogue the domain schema map does not cover', () => {
     // Drift guard for the sweep above: the exemption may only name the types
-    // `COMMAND_PAYLOAD_SCHEMAS` is missing (W1-15's XFN deferral + W1-11's
-    // non-strict browse schema). A schema arriving (#1534) shrinks the right
-    // side and fails here, so the exemption is removed with the gap — and a
-    // stray name on the left fails too.
-    expect(Object.keys(UNSCHEMAED_TYPES).sort()).toEqual(CATALOGUE_TYPES.filter(type => !(type in COMMAND_PAYLOAD_SCHEMAS)))
+    // `COMMAND_PAYLOAD_SCHEMAS` is missing for a reason *other than* an owner
+    // module — i.e. W1-15's XFN deferral. W1-11's schemas (now bound by
+    // `AGENTS_COMMAND_MODULE`, and excluded from the domain map) are swept like
+    // every other command, so they are filtered out here. A schema arriving
+    // (#1534) shrinks the right side and fails here, so the exemption is removed
+    // with the gap — and a stray name on the left fails too.
+    expect(Object.keys(UNSCHEMAED_TYPES).sort()).toEqual(
+      CATALOGUE_TYPES.filter(type => !(type in COMMAND_PAYLOAD_SCHEMAS) && !W1_11_OWNED_TYPES.includes(type)),
+    )
   })
 
   test.each(REFERENCE_TYPES)('%s: permission denied is FORBIDDEN and writes nothing', async type => {

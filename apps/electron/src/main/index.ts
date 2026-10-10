@@ -18,7 +18,7 @@ markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
 
-import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, session, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, safeStorage, session, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { createHash, randomUUID } from 'crypto'
 
 
@@ -112,6 +112,7 @@ import type { HandlerDeps } from './handlers/handler-deps'
 import { resolveNativeTransportCredential } from './native-transport-credential'
 import { createBrowserCredentialPermissionAdapter } from './browser-credential-permissions'
 import { createOnboardingPermissionsHost } from './onboarding-permissions'
+import { registerDesktopBridgeIpc, type DesktopBridgeBrowserHost } from './desktop-bridge'
 import { createBrowserCredentialVaultKeyStore } from './browser-credential-vault-keys'
 import { bootstrapServer, releaseServerLock, maskTokenForDisplay } from '@rox/server-core/bootstrap'
 import { isAllowedServerEndpoint } from './server-endpoint-policy'
@@ -1213,10 +1214,45 @@ app.whenReady().then(async () => {
               const browserWindowOptions = options as unknown as BrowserWindowConstructorOptions
               return new BrowserWindow(browserWindowOptions)
             },
+            desktopBridge: {
+              isClientOnly,
+              preloadPath: join(__dirname, 'rox-desktop-preload.cjs'),
+            },
             confirm: async ({ action, workspaceId, owner }) => {
               const ownerWindow = windowManager?.getWindowByWebContentsId(owner.webContents.id)
               if (!ownerWindow) return false
               return confirmOpenClawHostControl({ action, workspaceId, owner: ownerWindow })
+            },
+          })
+
+          // Main-process side of the embedded desktop bridge. Handlers reuse the
+          // BrowserPaneManager, the onboarding permission host, the OpenClaw
+          // runtime manager, the system clipboard opener and native notifications.
+          const browserPaneHost = browserPaneManager!
+          const desktopBridgeBrowser: DesktopBridgeBrowserHost = {
+            async openInstance({ id, workspaceId, url, show }) {
+              const instanceId = browserPaneHost.createInstance(id, { workspaceId, show, ownerType: 'manual' })
+              if (url) await browserPaneHost.navigate(instanceId, url)
+              return instanceId
+            },
+            navigateInstance: ({ id, url }) => browserPaneHost.navigate(id, url),
+            async releaseScope({ workspaceId }) {
+              const released = browserPaneHost
+                .listInstances()
+                .filter(info => info.workspaceId === workspaceId)
+                .map(info => info.id)
+              for (const instanceId of released) browserPaneHost.destroyInstance(instanceId)
+              return { released }
+            },
+          }
+          registerDesktopBridgeIpc({
+            ipcMain,
+            browser: desktopBridgeBrowser,
+            permissions: { probePermissions: () => createOnboardingPermissionsHost().probePermissions() },
+            openExternal: url => shell.openExternal(url),
+            gateway: { getStatus: workspaceId => openClawSecurity.runtimeManager.getRuntimeStatus(workspaceId) },
+            notify: ({ title, body }) => {
+              if (Notification.isSupported()) new Notification({ title, body }).show()
             },
           })
         }

@@ -158,7 +158,7 @@ export default function FocusPage(_props: { itemId: string | null }) {
           {pendingInbox.length === 0 && <div className="text-muted-foreground">{t('extraScreens.focus.inboxEmpty')}</div>}
           {pendingInbox.slice(0, 6).map((item) => (
             <button key={item.id} type="button" onClick={() => navigate(routes.view.inbox(item.id))} className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/5">
-              {item.blocking && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />}
+              {item.blocking && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-status-warning" />}
               <span className="min-w-0 flex-1 truncate">{item.title}</span>
               <span className="shrink-0 truncate text-[12px] text-muted-foreground">{item.source}</span>
             </button>

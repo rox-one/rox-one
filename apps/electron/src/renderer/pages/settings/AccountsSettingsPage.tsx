@@ -23,8 +23,9 @@ import type {
   ServiceConnection,
 } from '../../../shared/types'
 import { navigate, routes } from '@/lib/navigate'
-import { connectionAccountSubtitle, connectionProviderLabel } from '@/lib/connection-labels'
+import { connectionAccountSubtitle } from '@/lib/connection-labels'
 import { CredentialMigrationCard } from './CredentialMigrationCard'
+import { ConnectedAccountsSection, connectionStatusTone } from './ConnectedAccountsSection'
 import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
 import { toErrorMessage } from '@/lib/errors'
@@ -33,14 +34,6 @@ import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
   slug: 'accounts',
-}
-
-const STATUS_TONE: Record<ServiceConnection['status'], string> = {
-  connected: 'text-success',
-  syncing: 'text-accent',
-  expired: 'text-warning',
-  error: 'text-destructive',
-  disconnected: 'text-muted-foreground',
 }
 
 export default function AccountsSettingsPage() {
@@ -177,17 +170,6 @@ export default function AccountsSettingsPage() {
     }
   }
 
-  const handleRefresh = async () => {
-    try {
-      const next = await window.electronAPI.identityRefreshStatus(
-        workspaceId ? { workspaceId } : undefined,
-      )
-      setState(next)
-    } catch (error) {
-      toast.error(t('settings.accounts.refreshFailed', { message: toErrorMessage(error) }))
-    }
-  }
-
   const handleReset = async () => {
     try {
       const confirmed = await window.electronAPI.showLogoutConfirmation()
@@ -212,8 +194,6 @@ export default function AccountsSettingsPage() {
   const genericConnections = connections.filter(
     (connection) => connection.provider !== 'siyuan-cloud' && connection.provider !== 'siyuan-local',
   )
-  const owned = genericConnections.filter((connection) => !connection.readOnly)
-  const reflections = genericConnections.filter((connection) => connection.readOnly)
   const notesCloud = connections.find(
     (connection) => connection.provider === 'siyuan-cloud' && !connection.readOnly,
   )
@@ -279,63 +259,8 @@ export default function AccountsSettingsPage() {
           </SettingsCard>
         </SettingsSection>
 
-        {/* SERVICE CONNECTIONS */}
-        <SettingsSection
-          title={t('settings.accounts.connectionsSection')}
-          action={
-            <Button variant="ghost" size="sm" onClick={() => void handleRefresh()}>
-              {t('settings.accounts.refresh')}
-            </Button>
-          }
-        >
-          <SettingsCard>
-            {genericConnections.length === 0 && (
-              <SettingsRow
-                label={t('settings.accounts.notConnected')}
-                description={t('settings.accounts.noConnections')}
-                wrapDescription
-              />
-            )}
-            {owned.map((conn) => (
-              <SettingsRow
-                key={conn.id}
-                label={connectionProviderLabel(conn.provider, t)}
-                description={connectionAccountSubtitle(conn.accountLabel, t('connections.account.connected'))}
-              >
-                <span className={`text-xs ${STATUS_TONE[conn.status]}`}>{statusText(conn.status)}</span>
-                {conn.status !== 'disconnected' && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={busyId === conn.id}
-                    onClick={() => void handleDisconnect(conn.id)}
-                  >
-                    {t('settings.accounts.signOut')}
-                  </Button>
-                )}
-              </SettingsRow>
-            ))}
-            {reflections.map((conn) => {
-              const accountLabel = connectionAccountSubtitle(conn.accountLabel, '')
-              return (
-                <SettingsRow
-                  key={conn.id}
-                  label={connectionProviderLabel(conn.provider, t)}
-                  description={
-                    accountLabel
-                      ? `${accountLabel} · ${t('settings.accounts.managedInAi')}`
-                      : t('settings.accounts.managedInAi')
-                  }
-                >
-                  <span className={`text-xs ${STATUS_TONE[conn.status]}`}>{statusText(conn.status)}</span>
-                  <Button size="sm" variant="ghost" onClick={() => navigate(routes.view.settings('ai'))}>
-                    {t('settings.accounts.openAiSettings')}
-                  </Button>
-                </SettingsRow>
-              )
-            })}
-          </SettingsCard>
-        </SettingsSection>
+        {/* CONNECTED ACCOUNTS — per-person list: IdentityStore connections + LLM reflections */}
+        <ConnectedAccountsSection connections={genericConnections} workspaceId={workspaceId} />
 
         {/* NOTES — sole owner of Notes connection presentation */}
         <SettingsSection title={t(notesTitleKey)}>
@@ -349,7 +274,7 @@ export default function AccountsSettingsPage() {
                     : connectionAccountSubtitle(notesLocal.accountLabel, t('connections.account.connected'))
                 }
               >
-                <span className={`text-xs ${STATUS_TONE[notesLocal.status]}`}>{statusText(notesLocal.status)}</span>
+                <span className={`text-xs ${connectionStatusTone[notesLocal.status]}`}>{statusText(notesLocal.status)}</span>
                 {notesLocal.readOnly ? (
                   <Button size="sm" variant="ghost" onClick={() => navigate(routes.view.settings('knowledge'))}>
                     {t('settings.accounts.openKnowledgeSettings')}
@@ -380,7 +305,7 @@ export default function AccountsSettingsPage() {
               wrapDescription
             >
               <span
-                className={`text-xs ${notesCloud ? STATUS_TONE[notesCloud.status] : 'text-muted-foreground'}`}
+                className={`text-xs ${notesCloud ? connectionStatusTone[notesCloud.status] : 'text-muted-foreground'}`}
               >
                 {notesCloud ? statusText(notesCloud.status) : t('settings.accounts.notConnected')}
               </span>
@@ -504,7 +429,7 @@ export default function AccountsSettingsPage() {
               }
               wrapDescription
             >
-              <span className={`text-xs ${healthOk === null ? 'text-muted-foreground' : healthOk ? 'text-success' : 'text-warning'}`}>
+              <span className={`text-xs ${healthOk === null ? 'text-muted-foreground' : healthOk ? 'text-success' : 'text-status-warning'}`}>
                 {healthOk === null ? '' : healthOk ? t('settings.accounts.healthOk') : t('settings.accounts.healthIssues')}
               </span>
               <Button
