@@ -206,6 +206,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'devSpace:refreshRepository',
   'devSpace:removeRepository',
   'devSpace:runProgress',
+  'devSpace:setWatch',
   'devSpace:softSignal',
   'devSpace:startClone',
   'devSpace:startRun',
@@ -1061,4 +1062,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1057
+export const EXPECTED_CHANNEL_COUNT = 1058

@@ -136,6 +136,17 @@ RPC-поверхность `packages/server-core/src/playbooks/codebook/index.ts
   детерминированы порядком адаптеров; тест `llm-concurrency.test.ts`).
 - **O11 (бюджет i18n)** — решено 2026-10-10: 12 000 ключей en (11 286 на закрытии), гейт
   `lint:i18n:budget` в `validate:ci`.
+- **P6/D3 → v1.x auto-watch (В8, закрыто 2026-10-10)** — вынесенный из P6 v1.x-рычаг реализован под
+  флагом `devspace.autoWatch.v1` (**default OFF**, зависимость `devspace.v1`). Границы жёсткие:
+  - согласие — **явное пер-репо** (`watchEnabled`, default false); ни одна сетевая git-операция не
+    выполняется для репо без него. Поля: `watchEnabled → watchAutoPull → watchIntervalMs`
+    (15 мин…24 ч, дефолт 60 мин), а также `lastWatchAt` / `lastRemoteHead` в
+    `DevSpaceRepositoryRecord`.
+  - **без демонов**: таймер живёт в процессе приложения (`devspace/watch.ts`, старт рядом с
+    регистрацией dev-space, стоп на `onShutdown`), оба таймера `.unref()`, повторный вход в тик
+    заблокирован, тик никогда не бросает.
+  - **без авто-регенерации**: sweep делает только `git fetch --quiet --prune` и, при
+    `watchAutoPull`, `git pull --ff-only`; артефакты и LLM-стадии не запускаются.
 - **O6 (srt)** — «да» и реализовано: сегментные тайминги TTS дают `.srt`; экспорт плеера — `srt` через
   `devSpace:readArtifact` + диалог текстового сохранения, `mp3` — конкатенацией фреймового чтения
   (`podcast:audio`) в Blob-загрузку (существующий паттерн экспорта рендера).

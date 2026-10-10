@@ -24,6 +24,12 @@ export const CLONE_DEPTH = 'full'
 /** Long clones must outlive the short `shell:exec` budget (O9 keeps 30 min). */
 export const CLONE_TIMEOUT_MS = 30 * 60 * 1000
 const PULL_TIMEOUT_MS = 10 * 60 * 1000
+/** v1.x auto-watch (O10): a `--quiet --prune` fetch is bounded well below a full pull. */
+const FETCH_TIMEOUT_MS = 5 * 60 * 1000
+/** Local-only `rev-parse` reads; no network step, so a short timeout is enough. */
+const REV_PARSE_TIMEOUT_MS = 30_000
+/** Hooks/fsmonitor are disabled for every repo-scoped git invocation (untrusted checkout). */
+const LOCAL_HARDENING = ['-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/dev/null'] as const
 /** O9: a checkout whose `.git` exceeds this (`size` + `size-pack`) is rejected after fetch. */
 export const MAX_REPO_BYTES = 2 * 1024 * 1024 * 1024
 /** `--progress` streams to stderr; keep a generous cap so a large clone never trips maxBuffer. */
@@ -208,18 +214,83 @@ export async function runGitClone(input: {
   await assertRepoSizeWithinBudget(input.destination)
 }
 
-export async function runGitPull(input: {
+/** Shared input for the repo-scoped pull/fetch transports; the token is never an argument. */
+export interface GitFetchInput {
   readonly workingDirectory: string
   readonly repositoryId: string
   readonly token: string | null
   readonly signal: AbortSignal
-}): Promise<void> {
+}
+
+export async function runGitPull(input: GitFetchInput): Promise<void> {
   await runGit({
-    args: ['-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/dev/null', '-C', input.workingDirectory, 'pull', '--ff-only'],
+    args: [...LOCAL_HARDENING, '-C', input.workingDirectory, 'pull', '--ff-only'],
     token: input.token,
     signal: input.signal,
     timeoutMs: PULL_TIMEOUT_MS,
     repositoryId: input.repositoryId,
   })
   await assertRepoSizeWithinBudget(input.workingDirectory)
+}
+
+/**
+ * v1.x auto-watch (O10): refresh remote-tracking refs only (`--quiet --prune`);
+ * the working copy is left untouched so the user's checkout is never rewritten
+ * by a background sweep. Errors surface as `CloneError`, exactly like pull.
+ */
+export async function runGitFetch(input: GitFetchInput): Promise<void> {
+  await runGit({
+    args: [...LOCAL_HARDENING, '-C', input.workingDirectory, 'fetch', '--quiet', '--prune'],
+    token: input.token,
+    signal: input.signal,
+    timeoutMs: FETCH_TIMEOUT_MS,
+    repositoryId: input.repositoryId,
+  })
+}
+
+export interface GitTrackingState {
+  /** Local `HEAD` sha. */
+  readonly head: string
+  /** Upstream (`@{u}`) sha, or null when the branch has no upstream configured. */
+  readonly upstream: string | null
+}
+
+/** Local-only `git` read; never carries a token and never touches the network. */
+async function execGitStdout(args: readonly string[], signal: AbortSignal): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    execFile('git', [...args], {
+      env: gitProcessEnv(process.env, null),
+      signal,
+      timeout: REV_PARSE_TIMEOUT_MS,
+      maxBuffer: MAX_OUTPUT_BYTES,
+      windowsHide: true,
+      encoding: 'utf8',
+    }, (error, stdout) => {
+      if (error) reject(error)
+      else resolve(String(stdout ?? ''))
+    })
+  })
+}
+
+export interface GitTrackingInput {
+  readonly workingDirectory: string
+  readonly signal: AbortSignal
+}
+
+/**
+ * Read the local `HEAD` and the branch upstream sha for the watch comparison
+ * (O10). A missing upstream is not an error: it yields `upstream: null`, so the
+ * tick treats a branch without tracking as "no remote movement observed".
+ */
+export async function readGitTrackingState(input: GitTrackingInput): Promise<GitTrackingState> {
+  const head = (await execGitStdout([...LOCAL_HARDENING, '-C', input.workingDirectory, 'rev-parse', 'HEAD'], input.signal)).trim()
+  let upstream: string | null = null
+  try {
+    const raw = (await execGitStdout([...LOCAL_HARDENING, '-C', input.workingDirectory, 'rev-parse', '--verify', '--quiet', '@{u}'], input.signal)).trim()
+    upstream = raw.length > 0 ? raw : null
+  } catch (error) {
+    if (input.signal.aborted) throw error
+    upstream = null
+  }
+  return { head, upstream }
 }
