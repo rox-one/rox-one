@@ -868,6 +868,11 @@ export const CHANNEL_MAP = {
   driveImportStatus: invoke(RPC_CHANNELS.drive.IMPORT_STATUS),
   driveImportAuthStart: invoke(RPC_CHANNELS.drive.IMPORT_AUTH_START),
   driveImportAuthComplete: invoke(RPC_CHANNELS.drive.IMPORT_AUTH_COMPLETE),
+  // ROX Drive (R13) — app-config mirror.
+  driveMirrorStatus: invoke(RPC_CHANNELS.drive.MIRROR_STATUS),
+  driveMirrorStart: invoke(RPC_CHANNELS.drive.MIRROR_START),
+  driveMirrorPause: invoke(RPC_CHANNELS.drive.MIRROR_PAUSE),
+  driveMirrorCancel: invoke(RPC_CHANNELS.drive.MIRROR_CANCEL),
 
   // Statuses
   listStatuses: invoke(RPC_CHANNELS.statuses.LIST),
