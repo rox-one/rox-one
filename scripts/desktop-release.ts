@@ -3,7 +3,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync } fr
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { verifyUpdateMetadata } from './verify-update-metadata';
-import { copySDK, copyRipgrep, verifySDKCopy, downloadBun, downloadUv, type BuildConfig } from './build/common';
+import { copySDK, copyRipgrep, verifySDKCopy, downloadBun, downloadUv, downloadLima, type BuildConfig } from './build/common';
 
 // GitHub exposes absent optional secrets as empty environment values. Builder
 // treats an empty CSC_LINK as a certificate path, so omit unset credentials.
@@ -35,6 +35,7 @@ if (!process.argv.includes('--verify-only')) {
   }
   await downloadBun(config);
   await downloadUv(config);
+  await downloadLima(config);
   await run(['bun', 'run', 'scripts/build/stage-servers.ts', platform, arch]);
   // Explicit target names keep the base YAML from adding other architectures.
   const targets = platform === 'darwin'
@@ -56,6 +57,14 @@ const binaryRoot = platform === 'darwin' ? app : resources;
 await run([join(binaryRoot, 'vendor/bun', platform === 'win32' ? 'bun.exe' : 'bun'), '--version']);
 await run([join(app, `resources/bin/${platform}-${arch}`, platform === 'win32' ? 'uv.exe' : 'uv'), '--version']);
 await run([join(app, 'node_modules/@anthropic-ai/claude-agent-sdk-binary', platform === 'win32' ? 'claude.exe' : 'claude'), '--version']);
+// Lima VM host for the Rovers local engine (vendored per arch by downloadLima).
+// Verified only when present: an artifact without it still boots, it just ships
+// an Unavailable engine. Must keep com.apple.security.virtualization on re-sign.
+const vmHelper = join(resources, 'bin', `darwin-${arch}`, 'limactl');
+if (platform === 'darwin' && existsSync(vmHelper)) {
+  await run([vmHelper, '--version']);
+  console.log(`Verified packaged Lima VM host limactl at ${vmHelper}`);
+}
 const extensions = platform === 'darwin' ? ['dmg', 'zip'] : ['exe'];
 const artifacts = extensions.map(ext => `Rox-${arch}.${ext}`).map(name => {
   const file = join(releaseDir, name);

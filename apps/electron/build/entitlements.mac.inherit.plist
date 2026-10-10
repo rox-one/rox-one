@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <!-- Inherited (nested-binary) entitlements, applied (via electron-builder.yml
+         `entitlementsInherit`) to every nested Mach-O binary the app spawns or
+         loads, NOT to the app's own main executable (build/entitlements.mac.plist):
+           - vendor/bun/bun                                   (bundled JS runtime)
+           - Resources/app/node_modules/@anthropic-ai/claude-agent-sdk-binary/claude
+           - Resources/app/node_modules/@vscode/ripgrep/bin/rg
+           - Resources/app/node_modules/@tursodatabase/**/*.node (libSQL NAPI)
+           - Resources/pi-agent-server/node_modules/koffi/**/*.node
+           - Resources/bin/darwin-<arch>/rox-calendar-helper
+           - Resources/bin/darwin-<arch>/limactl              (bundled Lima VM host)
+           - Electron Framework and Helper processes
+         https://github.com/electron/electron-notarize#prerequisites
+
+         This file is the superset of build/entitlements.runtime.plist: it keeps
+         every runtime key and adds com.apple.security.virtualization, required by
+         the Lima VM helpers that host Apple's Virtualization.framework (Lima's own
+         vz.entitlements: network.client + network.server + virtualization). The
+         official Lima `limactl` binary ships ad-hoc signed WITH that entitlement;
+         electron-builder re-signs nested binaries with THIS file, so the key must
+         be present here or the virtualization grant is stripped on re-sign. -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <!-- V8/runtime binaries load third-party frameworks signed by other teams. -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    <!-- Lima VM host (limactl / lima-driver-vz) creates Virtualization.framework VMs. -->
+    <key>com.apple.security.virtualization</key>
+    <true/>
+  </dict>
+</plist>
