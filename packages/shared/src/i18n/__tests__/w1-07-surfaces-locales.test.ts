@@ -30,8 +30,6 @@ const EXPLICIT_KEYS = [
   "workbench.mode.docs",
   // `surfaces.${surface}.emptyTitle|emptyBody` (template literal in SurfaceHost).
   ...UNIFIED_SURFACES.flatMap((surface) => [`surfaces.${surface}.emptyTitle`, `surfaces.${surface}.emptyBody`]),
-  "shortcuts.action.agentAskAboutSelection",
-  "shortcuts.action.agentTogglePanel",
   "shortcuts.action.findInDoc",
   "shortcuts.action.quickPanelCalendar",
   "shortcuts.action.quickPanelContacts",
