@@ -8,7 +8,7 @@
  * in the shared renderer components — no webui-specific layout hacks needed.
  */
 
-import React, { useState, useEffect, lazy, Suspense } from 'react'
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { createWebApi } from './adapter/web-api'
@@ -237,11 +237,27 @@ export default function App() {
   // The renderer always mounts (its RPC must be live), with the cloud-VM
   // surface as a fixed overlay when that mode was chosen. «Перейти в чат»
   // simply closes the overlay; «Открыть» navigates the renderer underneath.
+  // The overlay is a real modal: the background renderer is inert/hidden from
+  // both keyboard and screen readers while it is open.
+  const overlayTimers = useRef<number[]>([])
+  const clearOverlayTimers = () => {
+    for (const id of overlayTimers.current) window.clearTimeout(id)
+    overlayTimers.current = []
+  }
+  useEffect(() => clearOverlayTimers, [])
+
   return (
     <>
-      <ReadyRenderer bootstrap={bootstrap} />
+      <div {...(cloudVmOpen ? { inert: '' as unknown as boolean, 'aria-hidden': true } : {})}>
+        <ReadyRenderer bootstrap={bootstrap} />
+      </div>
       {cloudVmOpen && (
-        <div className="fixed inset-0 z-50 overflow-auto bg-background" data-cloud-vm-surface-overlay="true">
+        <div
+          className="fixed inset-0 z-50 overflow-auto bg-background"
+          data-cloud-vm-surface-overlay="true"
+          role="dialog"
+          aria-modal="true"
+        >
           <CloudVmSurface
             host={window.electronAPI}
             onOpenRun={(id) => {
@@ -249,14 +265,21 @@ export default function App() {
               // single dispatch can beat NavigationContext's subscription and
               // be dropped. Re-dispatch while the overlay still owns the
               // screen (the user cannot navigate elsewhere underneath it) and
-              // close only after the last attempt.
+              // close only after the last attempt. Any previous run-open is
+              // cancelled so a second click cannot interleave two routes.
+              clearOverlayTimers()
               const route = routes.view.cloudRun(id)
               for (const delay of [0, 700, 1600]) {
-                window.setTimeout(() => navigate(route), delay)
+                overlayTimers.current.push(window.setTimeout(() => navigate(route), delay))
               }
-              window.setTimeout(() => setCloudVmOpen(false), 1900)
+              overlayTimers.current.push(window.setTimeout(() => setCloudVmOpen(false), 1900))
             }}
-            onGoToChat={() => setCloudVmOpen(false)}
+            onGoToChat={() => {
+              // The user explicitly leaves the cloud surface: cancel any queued
+              // navigate so a previous «Открыть» cannot pull the chat back out.
+              clearOverlayTimers()
+              setCloudVmOpen(false)
+            }}
           />
         </div>
       )}
