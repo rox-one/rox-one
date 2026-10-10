@@ -39,7 +39,7 @@
 | R5 | Ответ: лимиты Resend free | — | см. §5 |
 | R6 | Google Calendar интеграция (sync) | 🔴 | ⏳ GCalAdapter ❓ OAuth client |
 | R7 | Google Drive импорт файлов в наш диск | ✅ (волна 4: провайдер `packages/shared/src/drive/importers/providers/google-drive.ts`, PR #1635; OAuth-клиент создан, приёмник — self-hosted S3) | — |
-| R8 | Apple Calendar синхронизация | 🔴 (EventKit только упоминание) | волна 3 (native helper) |
+| R8 | Apple Calendar синхронизация | 🟡 (RPC-проводка готова: каналы `calendar:appleStatus/Connect/Disconnect/Sync` `LOCAL_ONLY`, серверный хендлер `calendar-apple.ts` читает EventKit-хелпер, `AppleCalendarAdapter` read-only, чип Apple Calendar в UI, локали ×12; остаётся ручной E2E: сборка Swift-хелпера → `APPLE_CALENDAR_LIVE=1` → разрешение на Календари) | волна 3 (native helper) |
 | R9 | Импорт из OneDrive / iCloud / Яндекс Диска | ✅ код (волна 4, PR #1635: OneDrive/Яндекс + честный iCloud-unsupported); OneDrive/Яндекс ждут регистраций приложений — issue #1727 | — |
 | R10 | Аналитика: ON по умолчанию | ✅ | — |
 | R11 | Свой хостинг аналитики: PostHog + OpenTelemetry (`posthog.rox.one`, `otel.rox.one`), флаги, русский, быстро | ✅ хостинг и клиент (волна 2: `posthog.rox.one` отвечает, клиент `packages/shared/src/telemetry/posthog.ts`, OTel-коллектор); остаётся решение по стоимости VM (§5) | — |
