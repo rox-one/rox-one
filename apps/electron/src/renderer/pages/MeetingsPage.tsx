@@ -380,7 +380,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   )
 
   const bannerNode = banner ? (
-    <div role="alert" data-testid="meetings-error" className="mx-3 mt-2 flex items-start gap-2 rounded-[var(--radius-card)] bg-destructive/10 px-2 py-1 text-[12px] text-destructive">
+    <div role="alert" data-testid="meetings-error" className="mx-3 mt-2 flex items-start gap-2 rounded-[var(--radius-card)] bg-destructive/10 px-2 py-1 text-sm text-destructive">
       <span className="min-w-0 flex-1">{t(ERROR_KEYS[banner] ?? 'meetings.local.err.generic', { code: banner })}</span>
       <button type="button" aria-label={t('common.close')} className="shrink-0 hover:underline" onClick={() => setBanner(null)}>×</button>
     </div>
@@ -421,8 +421,8 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
       />
       {planning ? (
         <form className="mx-3 mt-1 flex items-center gap-2" data-testid="meetings-plan-form" onSubmit={(e) => { e.preventDefault(); void handlePlan() }}>
-          <input autoFocus value={planTitle} onChange={(e) => setPlanTitle(e.target.value)} placeholder={t('meetings.local.planTitle')} aria-label={t('meetings.local.planTitle')} className="h-7 min-w-0 flex-1 rounded-[var(--radius-control)] bg-foreground/[0.05] px-2 text-[13px] outline-none placeholder:text-text-muted" />
-          <input type="datetime-local" value={planAt} onChange={(e) => setPlanAt(e.target.value)} aria-label={t('meetings.local.planAt')} className="h-7 rounded-[var(--radius-control)] bg-foreground/[0.05] px-2 text-[12px] outline-none" />
+          <input autoFocus value={planTitle} onChange={(e) => setPlanTitle(e.target.value)} placeholder={t('meetings.local.planTitle')} aria-label={t('meetings.local.planTitle')} className="h-7 min-w-0 flex-1 rounded-[var(--radius-control)] bg-foreground/[0.05] px-2 text-base outline-none placeholder:text-text-muted" />
+          <input type="datetime-local" value={planAt} onChange={(e) => setPlanAt(e.target.value)} aria-label={t('meetings.local.planAt')} className="h-7 rounded-[var(--radius-control)] bg-foreground/[0.05] px-2 text-sm outline-none" />
           <Button type="submit" disabled={!planTitle.trim() || planningPending}>{t('meetings.screen.add')}</Button>
         </form>
       ) : null}
@@ -436,9 +436,9 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
           aria-label={t('meetings.local.searchPlaceholder')}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => { if (event.key === 'Escape') setQuery('') }}
-          className="h-7 min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-text-muted"
+          className="h-7 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-text-muted"
         />
-        {query ? <button type="button" className="text-[11px] text-text-muted hover:text-foreground" onClick={() => setQuery('')}>{t('meetings.screen.clearSearch')}</button> : <span className="text-[11px] text-text-muted">{formatHotkeyDisplay('mod+f')}</span>}
+        {query ? <button type="button" className="text-xs text-text-muted hover:text-foreground" onClick={() => setQuery('')}>{t('meetings.screen.clearSearch')}</button> : <span className="text-xs text-text-muted">{formatHotkeyDisplay('mod+f')}</span>}
       </div>
       {bannerNode}
       <div ref={listTarget} role="listbox" aria-label={t('meetings.title')} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="meetings-list">
@@ -463,10 +463,10 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
                 const live = isLiveMeeting(m)
                 return (
                   <ListRow key={m.id} testId={`meeting-row-${m.id}`} selected={m.id === selectedId} onClick={() => selectMeeting(m.id)}>
-                    <span className="w-10 shrink-0 pt-px text-[12px] tabular-nums text-text-muted">{timeFmt.format(meetingTime(m))}</span>
+                    <span className="w-10 shrink-0 pt-px text-sm numeric text-text-muted">{timeFmt.format(meetingTime(m))}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{m.title}</span>
-                      <span className="block truncate text-[11px] text-text-muted">
+                      <span className="block truncate text-xs text-text-muted">
                         {live
                           ? (rec.meetingId === m.id ? formatDuration(recordedMs(rec)) : t('meetings.local.recShort'))
                           : m.durationMs ? formatDuration(m.durationMs) : m.status === 'planned' ? `${t('meetings.badge.planned')} · ${dayFmt.format(meetingTime(m))}` : '—'}
@@ -510,7 +510,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   ) : (
     // Nothing selected: one short hint, no repeated headline or buttons.
     <div className="flex h-full items-center justify-center px-6" data-testid="meetings-selection-status">
-      <p className="max-w-[320px] text-center text-[12px] text-text-muted">
+      <p className="max-w-[320px] text-center text-sm text-text-muted">
         {meetings.length ? t('meetings.local.selectHint') : t('meetings.local.firstHint')}
       </p>
     </div>

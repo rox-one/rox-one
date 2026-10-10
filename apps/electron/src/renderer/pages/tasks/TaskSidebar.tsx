@@ -54,16 +54,16 @@ function TaskSidebarItem({
       aria-current={active ? 'page' : undefined}
       data-testid={testId}
       className={cn(
-        'flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 text-left text-[13px] outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring',
+        'flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 text-left text-base outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring',
         active ? 'border-l-accent bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground',
       )}
     >
       <span className={cn('grid size-5 shrink-0 place-items-center rounded-md bg-foreground/[0.05]', ICON_TONE[tone])}>
         <Icon className="size-3.5" strokeWidth={1.75} aria-hidden />
       </span>
-      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <span className="min-w-0 flex-1 truncate" title={typeof label === 'string' ? label : undefined}>{label}</span>
       {progress}
-      {count != null && count > 0 ? <span className={cn('shrink-0 text-[11px] tabular-nums', active ? 'text-accent' : 'text-text-muted')}>{count}</span> : null}
+      {count != null && count > 0 ? <span className={cn('shrink-0 text-xs numeric', active ? 'text-accent' : 'text-text-muted')}>{count}</span> : null}
     </button>
   )
 }
@@ -107,10 +107,10 @@ function TaskSidebarGroup({
           aria-controls={sectionId}
           aria-label={t(expanded ? 'sidebar.disclosure.collapse' : 'sidebar.disclosure.expand', { section: title })}
           onClick={toggle}
-          className="flex min-h-8 w-full items-center gap-2 rounded-lg px-2 text-left text-[12px] font-medium text-text-secondary outline-none hover:bg-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-ring"
+          className="flex min-h-8 w-full items-center gap-2 rounded-lg px-2 text-left text-sm font-medium text-text-secondary outline-none hover:bg-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-ring"
         >
           <Icon className={cn('size-4 shrink-0', ICON_TONE[tone])} aria-hidden />
-          <span className="min-w-0 flex-1 truncate">{title}</span>
+          <span className="min-w-0 flex-1 truncate" title={title}>{title}</span>
           <ChevronRight className={cn('size-3.5 shrink-0 transition-transform motion-reduce:transition-none', expanded && 'rotate-90')} aria-hidden />
         </button>
       )}
@@ -160,14 +160,14 @@ export function TaskSidebar({
 
   return (
     <div data-task-sidebar="true" onKeyDown={handleSidebarTreeKeyDown} className="flex min-h-0 flex-1 flex-col">
-      <h1 className="px-2 pb-2 text-[15px] font-semibold">{t('workbench.mode.tasks')}</h1>
+      <h1 className="px-2 pb-2 text-lg font-semibold">{t('workbench.mode.tasks')}</h1>
       <TaskSidebarGroup title={t('tasks.nav.statuses')} icon={ClipboardList} tone="accent">
         {LISTS.map(({ id, icon, tone, destination }) => (
           <div key={id} {...dropProps(destination)}>
             <TaskSidebarItem
               label={<span className="inline-flex items-center gap-1.5">
                 {t(`tasks.projection.${id}`)}
-                {id === 'today' && overdueCount ? <span className="text-[11px] font-semibold text-destructive">{t('tasks.nav.overdue', { count: overdueCount })}</span> : null}
+                {id === 'today' && overdueCount ? <span className="text-xs font-semibold text-destructive">{t('tasks.nav.overdue', { count: overdueCount })}</span> : null}
               </span>}
               icon={icon} tone={tone}
               count={id === 'trash' ? trashCount : id === 'inbox' || id === 'today' || id === 'upcoming' ? listCount(id) : null}
@@ -204,7 +204,7 @@ export function TaskSidebar({
 
       <TaskSidebarGroup title={t('tasks.nav.workspaceProjects')} icon={FolderOpen} tone="success">
         <span className="sr-only">{t('tasks.filterProject')}</span>
-        {workspaceProjects.length ? workspaceProjects.map(projectItem) : <div className="px-2 text-[12px] text-text-muted">{t('tasks.nav.noProjects')}</div>}
+        {workspaceProjects.length ? workspaceProjects.map(projectItem) : <div className="px-2 text-sm text-text-muted">{t('tasks.nav.noProjects')}</div>}
       </TaskSidebarGroup>
 
       {tags.length ? (

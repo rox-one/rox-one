@@ -60,7 +60,7 @@ export function ContinuumTurn({
       <time
         dateTime={time}
         className={cn(
-          'absolute left-0 top-[3px] w-10 text-right text-caption tabular-nums',
+          'absolute left-0 top-[3px] w-10 text-right text-caption numeric',
           kind === 'user' ? 'font-medium text-text-secondary' : 'text-text-secondary',
         )}
       >
@@ -88,7 +88,7 @@ export function ContinuumProse({
   className?: string
 }) {
   return (
-    <div className={cn('max-w-[68ch] text-reading text-text-primary', className)}>{children}</div>
+    <div className={cn('prose-body prose-measure text-text-primary', className)}>{children}</div>
   )
 }
 
@@ -124,7 +124,7 @@ export function ContinuumThinkingDisclosure({
   const panelId = React.useId()
 
   return (
-    <div data-g05-thinking className="mb-3 max-w-[68ch]">
+    <div data-g05-thinking className="mb-3 prose-measure">
       <button
         type="button"
         aria-expanded={open}
@@ -155,7 +155,7 @@ export function ContinuumThinkingDisclosure({
       {open && (
         <div
           id={panelId}
-          className="mt-1.5 border-l border-border-subtle pl-4 text-small leading-relaxed text-text-secondary"
+          className="mt-1.5 border-l border-border-subtle pl-4 text-small text-text-secondary"
         >
           {children}
         </div>

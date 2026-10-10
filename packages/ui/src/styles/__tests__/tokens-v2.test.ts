@@ -81,7 +81,7 @@ const LAYERS = [
 
 describe('token foundation v2: structure', () => {
   it('ships the token families as separate files imported by the shared theme', () => {
-    for (const f of ['grid', 'radius', 'type', 'icon', 'chrome', 'z', 'elevation', 'motion', 'state']) {
+    for (const f of ['grid', 'radius', 'type', 'icon', 'chrome', 'density', 'z', 'elevation', 'motion', 'state']) {
       expect(tokenFiles).toContain(`${f}.css`)
       expect(token('index.css')).toContain(`@import "./${f}.css";`)
     }
@@ -126,6 +126,30 @@ describe('token foundation v2: structure', () => {
       expect(compact[name], name).toBeDefined()
       expect(px(value)).toBeGreaterThanOrEqual(px(compact[name]!))
     }
+  })
+
+  it('rhythm density layer mirrors the chrome variant mechanism (condensed default, comfortable wins)', () => {
+    const condensed = merge(blocks(token('density.css'), ':root[data-density="condensed"]'))
+    const comfortable = merge(blocks(token('density.css'), ':root[data-density="comfortable"]'))
+    expect(Object.keys(condensed).length).toBeGreaterThan(0)
+    expect(Object.keys(comfortable).sort()).toEqual(Object.keys(condensed).sort())
+    const values: Record<string, [string, string]> = {
+      '--density-block-gap': ['12px', '16px'],
+      '--density-turn-gap': ['20px', '28px'],
+      '--density-card-pad-y': ['10px', '14px'],
+      '--density-list-gap': ['2px', '4px'],
+      '--density-leading-prose': ['24px', '24.75px'],
+      '--density-section-gap': ['16px', '24px'],
+      '--density-heading-gap-above': ['20px', '28px'],
+      '--density-heading-gap-below': ['8px', '10px'],
+    }
+    for (const [name, [cond, comfy]] of Object.entries(values)) {
+      expect(condensed[name], name).toBe(cond)
+      expect(comfortable[name], name).toBe(comfy)
+      expect(px(comfy), name).toBeGreaterThanOrEqual(px(cond))
+    }
+    // `:root[data-density="…"]` (0,2,0) outranks `html[data-density="…"]` (0,1,1).
+    expect(stripComments(token('density.css'))).toMatch(/:root\[data-density="comfortable"\]/)
   })
 
   it('coarse-pointer hit-target floors win over data-density', () => {
@@ -471,32 +495,69 @@ describe('token foundation v2: values (step 2)', () => {
     for (const step of ['xl', '2xl', '3xl', '4xl']) expect(root[`--radius-${step}`]).toBe('var(--radius-lg)')
   })
 
-  it('remaps text-xs…xl onto caption/small/body/reading/title', () => {
+  it('remaps text-xs…xl onto caption/small/body/reading/title with fixed px boxes', () => {
     const theme = merge(blocks(token('type.css'), '@theme'))
     const pairs: Record<string, [string, string]> = {
-      caption: ['11px', '14px'], small: ['12px', '16px'], body: ['13px', '20px'], reading: ['15px', '24px'],
+      caption: ['11px', '16px'], small: ['12px', '16px'], body: ['13px', '20px'], reading: ['15px', '24px'],
       'title-sm': ['15px', '20px'], title: ['18px', '24px'], display: ['24px', '32px'],
     }
-    // Line heights are unitless ratios that resolve to the listed px on the element.
-    const ratio = (v: string) => {
-      const m = v.match(/^calc\((\d+(?:\.\d+)?) \/ (\d+(?:\.\d+)?)\)$/)
-      if (!m) throw new Error(`not a unitless calc ratio: ${v}`)
-      return Number(m[1]) / Number(m[2])
-    }
+    // G7: line boxes are fixed px (no unitless ratios) so descendants inherit
+    // an absolute row height instead of re-scaling by ratio.
     for (const [step, [size, lh]] of Object.entries(pairs)) {
       expect(theme[`--text-${step}`], step).toBe(size)
-      expect(ratio(theme[`--text-${step}--line-height`]!) * px(size), step).toBeCloseTo(px(lh), 6)
+      expect(theme[`--text-${step}--line-height`], step).toBe(lh)
     }
     for (const [name, value] of Object.entries(theme)) {
-      if (name.endsWith('--line-height')) expect(value, name).not.toMatch(/px/)
+      if (name.endsWith('--line-height') && !value.startsWith('var(')) expect(value, name).toMatch(/px$/)
     }
     expect(stripComments(indexCss)).toMatch(/body\s*\{[^}]*line-height:\s*var\(--text-body--line-height\);/)
-    const remap = { xs: 'caption', sm: 'small', base: 'body', lg: 'reading', xl: 'title' }
-    for (const [tw, step] of Object.entries(remap)) {
-      expect(theme[`--text-${tw}`], tw).toBe(theme[`--text-${step}`])
-      expect(theme[`--text-${tw}--line-height`], tw).toBe(theme[`--text-${step}--line-height`])
+    const remap: Record<string, [string, string]> = {
+      xs: ['11px', '16px'], sm: ['12px', '16px'], base: ['13px', '20px'], lg: ['15px', '24px'], xl: ['18px', '24px'],
+    }
+    for (const [tw, [size, lh]] of Object.entries(remap)) {
+      expect(theme[`--text-${tw}`], tw).toBe(size)
+      expect(theme[`--text-${tw}--line-height`], tw).toBe(lh)
     }
     for (const size of Object.values(theme).filter((x) => /px$/.test(x))) expect(px(size)).toBeGreaterThanOrEqual(11)
+  })
+
+  it('declares the G7 role steps and rhythm tokens', () => {
+    const theme = merge(blocks(token('type.css'), '@theme'))
+    const expected: Record<string, string> = {
+      '--text-data': '13px',
+      '--text-data--line-height': '18px',
+      '--text-prose': 'var(--text-reading)',
+      '--text-prose--line-height': 'var(--text-reading--line-height)',
+      '--text-title-md': '16px',
+      '--text-title-md--line-height': '22px',
+      '--text-stat': '20px',
+      '--text-stat--line-height': '28px',
+      '--text-floor': '11px',
+      '--leading-caps': '1.15',
+      '--leading-ui': '1.385',
+      '--leading-prose': '1.6',
+      '--prose-measure': '68ch',
+      '--tracking-caps': '0.06em',
+      '--tracking-label': '0.02em',
+      '--tracking-display': '-0.02em',
+      '--tracking-data': '0em',
+      '--numeric-features': '"tnum" 1, "zero" 1, "case" 1',
+      '--wrap-identifier': 'anywhere',
+      '--hyphens-prose': 'auto',
+      '--truncate-lines': '1',
+      '--truncate-lines-desc': '2',
+      '--weight-data': '500',
+    }
+    for (const [name, value] of Object.entries(expected)) expect(theme[name], name).toBe(value)
+  })
+
+  it('declares the G7 role utilities with token-only values', () => {
+    const css = stripComments(indexCss)
+    expect(css).toMatch(/\.numeric\s*\{\s*font-variant-numeric:\s*var\(--numeric-features\);\s*\}/)
+    expect(css).toMatch(/\.caps-label\s*\{\s*letter-spacing:\s*var\(--tracking-caps\);\s*\}/)
+    expect(css).toMatch(/\.label-tracking\s*\{\s*letter-spacing:\s*var\(--tracking-label\);\s*\}/)
+    expect(css).toMatch(/\.prose-body\s*\{[^}]*font-size:\s*var\(--text-prose\);[^}]*hyphens:\s*var\(--hyphens-prose\);/)
+    expect(css).toMatch(/\.prose-measure\s*\{\s*max-width:\s*var\(--prose-measure\);\s*\}/)
   })
 
   it('sets the lucide stroke in CSS and sizes icons 20-in-36 / 16-in-28', () => {

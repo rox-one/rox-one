@@ -76,7 +76,7 @@ export function MeetingActionToTask({ action, meeting, workspaceId, onChanged }:
   return <><Button data-testid="meeting-action-to-task" disabled={conversion.busy} onClick={() => { void conversion.convert() }}>{t('meetings.local.toTask')}</Button>{conversion.failed ? <span role="alert" data-testid="meeting-task-error" className="text-xs text-destructive">{t('tasks.toastCreateFailed')}</span> : null}</>
 }
 
-const input = 'h-7 min-w-0 rounded-[var(--radius-control)] bg-foreground/[0.05] px-2 text-[13px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
+const input = 'h-7 min-w-0 rounded-[var(--radius-control)] bg-foreground/[0.05] px-2 text-base outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 
 export function transcriptTone(m: LocalMeeting): { tone: Tone; key: string } {
   switch (m.transcript.status) {
@@ -381,16 +381,17 @@ export function LocalMeetingDetail(props: {
           key={`${m.id}:${m.title}`}
           data-testid="meeting-title"
           defaultValue={m.title}
+          title={m.title}
           aria-label={t('meetings.local.titleLabel')}
           onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== m.title) void update({ title: v }) }}
           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
-          className="min-w-0 flex-1 truncate rounded-[var(--radius-control)] bg-transparent px-1 -mx-1 text-[17px] font-semibold outline-none hover:bg-foreground/[0.04] focus:bg-foreground/[0.06]"
+          className="min-w-0 flex-1 truncate rounded-[var(--radius-control)] bg-transparent px-1 -mx-1 text-xl font-semibold outline-none hover:bg-foreground/[0.04] focus:bg-foreground/[0.06]"
         />
         {recordingThis
           ? <Badge tone="danger">● {t('meetings.local.recShort')}</Badge>
           : <Badge tone={tr.tone}>{t(tr.key, { progress: m.transcript.progress })}</Badge>}
       </div>
-      <p className="pt-1 text-[12px] text-text-muted" data-testid="meeting-meta">
+      <p className="pt-1 text-sm text-text-muted" data-testid="meeting-meta">
         {m.status === 'planned' && m.scheduledAt ? `${t('meetings.local.plannedFor')} ${dateFmt.format(m.scheduledAt)}` : dateFmt.format(meetingTime(m))}
         {m.durationMs > 0 || recordingThis ? ` · ${formatDuration(recordingThis ? recordedMs(rec) : m.durationMs)}` : ''}
         {` · ${sourceLabel}`}
@@ -419,7 +420,7 @@ export function LocalMeetingDetail(props: {
           >
             {playing ? <Pause className="size-3.5" aria-hidden /> : <Play className="size-3.5" aria-hidden />}
           </button>
-          <span className="shrink-0 text-[12px] tabular-nums text-text-muted">
+          <span className="shrink-0 text-sm numeric text-text-muted">
             {formatDuration(playMs)} / {formatDuration(totalMs)}
           </span>
           <input
@@ -453,10 +454,10 @@ export function LocalMeetingDetail(props: {
     <div className="flex flex-col gap-1">
       <SectionLabel>{t('meetings.local.summary')}</SectionLabel>
       {extractionBusy(m) ? (
-        <p className="text-[12px] text-text-secondary" role="status">{t('meetings.local.summaryRunning')}</p>
+        <p className="text-sm text-text-secondary" role="status">{t('meetings.local.summaryRunning')}</p>
       ) : null}
       {m.extraction?.status === 'failed' || m.extraction?.status === 'superseded' ? (
-        <p className="rounded-lg bg-status-warning/10 px-3 py-2 text-[12px] text-text-secondary" role="status" data-testid="meeting-extraction-failure">
+        <p className="rounded-lg bg-status-warning/10 px-3 py-2 text-sm text-text-secondary" role="status" data-testid="meeting-extraction-failure">
           {t(m.extraction.status === 'superseded' ? 'meetings.local.extractionSuperseded' : 'meetings.local.extractionFailed')}
         </p>
       ) : null}
@@ -473,10 +474,10 @@ export function LocalMeetingDetail(props: {
           void update({ summary: text.trim() ? { ...m.summary, text, generated: false, updatedAt: Date.now() } : null }).then(() => { if (currentMeetingId.current === meetingId) summaryDirty.current = false })
         }}
         rows={m.summary ? 5 : 3}
-        className="w-full resize-y rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 py-1 text-[13px] leading-5 outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
+        className="w-full resize-y rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 py-1 text-base outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
       />
       {m.summary?.generated && transcript && m.summary.sourceTranscriptRevision !== transcript.revision ? (
-        <p role="status" className="text-[11px] text-text-muted">{t('meetings.local.analysisStale')}</p>
+        <p role="status" className="text-xs text-text-muted">{t('meetings.local.analysisStale')}</p>
       ) : null}
       {m.summary?.generated && m.summary.sourceTranscriptRevision === transcript?.revision ? renderSourceLinks(m.summary.sourceSegmentIds) : null}
       {(() => {
@@ -496,7 +497,7 @@ export function LocalMeetingDetail(props: {
               <span>{t('meetings.local.summary.rolling')}</span>
               <span data-testid="meeting-rolling-summary-generator">{t(rolling.generatorKey)}</span>
               {rolling.stale ? <span className="text-status-warning">{t('meetings.local.analysisStale')}</span> : null}
-              <span className="ml-auto font-mono tabular-nums">{t('meetings.local.summary.updatedAt', { time: new Date(rolling.updatedAt).toLocaleTimeString() })}</span>
+              <span className="ml-auto font-mono numeric">{t('meetings.local.summary.updatedAt', { time: new Date(rolling.updatedAt).toLocaleTimeString() })}</span>
             </div>
             <p className="text-body leading-5">{rolling.text}</p>
           </section>
@@ -507,14 +508,14 @@ export function LocalMeetingDetail(props: {
           <SectionLabel>{t('meetings.local.openQuestions')}</SectionLabel>
           {m.summary.questions.map((question) => (
             <div key={question.id} className="rounded-[var(--radius-card)] bg-foreground/[0.04] px-2 py-1">
-              <p className="text-[13px]">{question.text}</p>
+              <p className="text-base">{question.text}</p>
               {m.summary?.sourceTranscriptRevision === transcript?.revision ? renderSourceLinks(question.sourceSegmentIds) : null}
             </div>
           ))}
         </>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-2 text-[12px] text-text-secondary">
+        <label className="flex items-center gap-2 text-sm text-text-secondary">
           {t('meetings.local.analysisProfile')}
           <select
             data-testid="meeting-analysis-profile"
@@ -522,7 +523,7 @@ export function LocalMeetingDetail(props: {
             value={m.recipeId ?? 'standup'}
             disabled={extractionBusy(m)}
             onChange={(event) => void update({ recipeId: event.target.value as MeetingProfileId })}
-            className="h-7 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px]"
+            className="h-7 rounded-[6px] bg-foreground/[0.05] px-2 text-sm"
           >
             {MEETING_PROFILE_IDS.map(id => <option key={id} value={id}>{t(`meetings.local.profile.${id}`)}</option>)}
           </select>
@@ -534,9 +535,9 @@ export function LocalMeetingDetail(props: {
           value={recipeSlash}
           disabled={extractionBusy(m)}
           onChange={(event) => setRecipeSlash(event.target.value)}
-          className="h-7 min-w-0 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px]"
+          className="h-7 min-w-0 rounded-[6px] bg-foreground/[0.05] px-2 text-sm"
         />
-        {m.summary?.generated ? <span className="text-[11px] text-text-muted">{t('meetings.local.generatedLabel')}</span> : null}
+        {m.summary?.generated ? <span className="text-xs text-text-muted">{t('meetings.local.generatedLabel')}</span> : null}
         <Button
           data-testid="meeting-generate-summary"
           disabled={!workspaceId || !transcript?.segments.length || extractionBusy(m)}
@@ -550,7 +551,7 @@ export function LocalMeetingDetail(props: {
       <SectionLabel>{t('meetings.local.participants')}</SectionLabel>
       <div className="flex flex-wrap items-center gap-1">
         {m.participants.map((p) => (
-          <span key={p} className="inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] bg-foreground/[0.06] pl-2 pr-1 text-[12px]">
+          <span key={p} className="inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] bg-foreground/[0.06] pl-2 pr-1 text-sm">
             {p}
             <button type="button" aria-label={t('meetings.local.removeParticipant', { name: p })} className="rounded-[var(--radius-control)] px-1 text-text-muted hover:text-foreground" onClick={() => void update({ participants: m.participants.filter((x) => x !== p) })}>×</button>
           </span>
@@ -568,17 +569,17 @@ export function LocalMeetingDetail(props: {
         placeholder={t('meetings.local.notesPlaceholder')}
         onBlur={(e) => { if (e.target.value !== m.notes) void update({ notes: e.target.value }) }}
         rows={4}
-        className="w-full resize-y rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 py-1 text-[13px] leading-5 outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
+        className="w-full resize-y rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 py-1 text-base outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
       />
 
       <SectionLabel>{t('meetings.local.details')}</SectionLabel>
-      <dl className="grid grid-cols-[120px_1fr] gap-x-2 gap-y-1 text-[12px]">
+      <dl className="grid grid-cols-[120px_1fr] gap-x-2 gap-y-1 text-sm">
         <dt className="text-text-muted">{t('meetings.local.started')}</dt>
         <dd>{m.startedAt ? shortFmt.format(m.startedAt) : '—'}</dd>
         <dt className="text-text-muted">{t('meetings.local.ended')}</dt>
         <dd>{m.endedAt ? shortFmt.format(m.endedAt) : '—'}</dd>
         <dt className="text-text-muted">{t('meetings.local.duration')}</dt>
-        <dd className="tabular-nums">{recordingThis ? formatDuration(recordedMs(rec)) : m.durationMs ? formatDuration(m.durationMs) : '—'}</dd>
+        <dd className="numeric">{recordingThis ? formatDuration(recordedMs(rec)) : m.durationMs ? formatDuration(m.durationMs) : '—'}</dd>
         <dt className="text-text-muted">{t('meetings.local.transcriptEngine')}</dt>
         <dd>{m.transcript.engine ? `${m.transcript.engine} · ${m.transcript.model ?? ''}${m.transcript.language ? ` · ${m.transcript.language}` : ''}` : '—'}</dd>
       </dl>
@@ -617,15 +618,15 @@ export function LocalMeetingDetail(props: {
   const recordingTab = recordingThis ? (
     <RecordingPanel />
   ) : m.audio ? (
-    <div className="flex flex-col gap-1 text-[12px]">
+    <div className="flex flex-col gap-1 text-sm">
       <SectionLabel>{t('meetings.local.file')}</SectionLabel>
       <dl className="grid grid-cols-[120px_1fr] gap-x-2 gap-y-1">
         <dt className="text-text-muted">{t('meetings.local.fileName')}</dt>
-        <dd className="truncate">{m.audio.originalName ? `${m.audio.file} ← ${m.audio.originalName}` : m.audio.file}</dd>
+        <dd className="truncate" title={m.audio.originalName ? `${m.audio.file} ← ${m.audio.originalName}` : m.audio.file}>{m.audio.originalName ? `${m.audio.file} ← ${m.audio.originalName}` : m.audio.file}</dd>
         <dt className="text-text-muted">{t('meetings.local.fileSize')}</dt>
         <dd>{formatBytes(m.audio.bytes)} · {m.audio.mimeType}</dd>
         <dt className="text-text-muted">{t('meetings.local.duration')}</dt>
-        <dd className="tabular-nums">{formatDuration(m.durationMs)}</dd>
+        <dd className="numeric">{formatDuration(m.durationMs)}</dd>
       </dl>
       {m.audio.recovered ? <p className="pt-1 text-text-secondary">{t('meetings.local.recoveredNote')}</p> : null}
       <p className="pt-1 text-text-muted">{t('meetings.local.storedLocally')}</p>
@@ -672,7 +673,7 @@ export function LocalMeetingDetail(props: {
       </div> : null}
       {m.transcript.status === 'running' || m.transcript.status === 'queued' ? (
         <div role="status" data-testid="meeting-transcript-progress" className="flex flex-col gap-1">
-          <div className="text-[12px] text-text-secondary">{t(m.transcript.status === 'queued' ? 'meetings.local.tr.queuedBody' : 'meetings.local.tr.runningBody', { progress: m.transcript.progress, model: m.transcript.model ?? engine?.model ?? '' })}</div>
+          <div className="text-sm text-text-secondary">{t(m.transcript.status === 'queued' ? 'meetings.local.tr.queuedBody' : 'meetings.local.tr.runningBody', { progress: m.transcript.progress, model: m.transcript.model ?? engine?.model ?? '' })}</div>
           <div className="h-1 w-full overflow-hidden rounded-full bg-foreground/[0.08]">
             <div className="h-full bg-accent transition-[width]" style={{ width: `${m.transcript.progress}%` }} />
           </div>
@@ -680,7 +681,7 @@ export function LocalMeetingDetail(props: {
         </div>
       ) : null}
       {m.transcript.status === 'partial' || m.transcript.status === 'cancelled'
-        ? <p role="status" className="text-[12px] text-text-secondary">{t(m.transcript.status === 'partial' ? 'meetings.local.tr.partial' : 'meetings.local.tr.cancelled')}</p>
+        ? <p role="status" className="text-sm text-text-secondary">{t(m.transcript.status === 'partial' ? 'meetings.local.tr.partial' : 'meetings.local.tr.cancelled')}</p>
         : null}
       {!transcript?.segments.length && m.transcript.status === 'failed' ? (
         <EmptyState title={t('meetings.local.tr.failedTitle')} body={m.transcript.error} action={<Button onClick={() => void api?.transcribe(m.id).then((r) => { if (r.ok) onChanged(r.value); else onBanner(r.code) })}>{t('meetings.local.retranscribe')}</Button>} />
@@ -698,7 +699,7 @@ export function LocalMeetingDetail(props: {
         <>
           <div className="flex items-center gap-2">
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('meetings.local.searchTranscript')} aria-label={t('meetings.local.searchTranscript')} data-testid="meeting-transcript-search" className={cn(input, 'flex-1')} />
-            <span className="shrink-0 text-[11px] text-text-muted">
+            <span className="shrink-0 text-xs text-text-muted">
               {t('meetings.local.tr.meta', { engine: transcript.engine, model: transcript.model, language: transcript.language ?? 'auto', seconds: Math.round(transcript.elapsedMs / 1000) })}
               {' · '}{transcript.provenance?.sourceKind ?? m.source}
               {transcript.provenance?.sourceHash ? ` · ${transcript.provenance.sourceHash.slice(0, 12)}` : ''}
@@ -712,7 +713,7 @@ export function LocalMeetingDetail(props: {
                 .slice()
                 .sort((a, b) => b.revision - a.revision)
                 .map((version) => (
-                  <div key={version.revision} className="flex flex-wrap items-center gap-2 text-[11px]">
+                  <div key={version.revision} className="flex flex-wrap items-center gap-2 text-xs">
                     <span className="min-w-0 flex-1 text-text-secondary">
                       {new Date(version.createdAt).toLocaleString()}
                       {' · '}{t(`meetings.local.tr.revision.${version.reason}`)}
@@ -725,13 +726,13 @@ export function LocalMeetingDetail(props: {
               {revisionPreview ? (
                 <div className="flex flex-col gap-1 border-t border-foreground/10 pt-2" data-testid="meeting-transcript-revision-preview">
                   <div className="flex items-center gap-2">
-                    <span className="min-w-0 flex-1 text-[12px] text-text-secondary">{t('meetings.local.tr.revisionPreview', { revision: revisionPreview.revision })}</span>
+                    <span className="min-w-0 flex-1 text-sm text-text-secondary">{t('meetings.local.tr.revisionPreview', { revision: revisionPreview.revision })}</span>
                     <Button disabled={restoringRevision} onClick={() => void restoreTranscriptRevision()}>{t('meetings.local.tr.restoreRevision')}</Button>
                   </div>
                   <ol className="flex max-h-48 flex-col overflow-y-auto">
                     {revisionPreview.transcript.segments.map((segment) => (
-                      <li key={segment.id} className="flex items-start gap-2 px-2 py-1 text-[12px]">
-                        <span className="w-12 shrink-0 font-mono tabular-nums text-text-muted">{formatRecClock(segment.startMs)}</span>
+                      <li key={segment.id} className="flex items-start gap-2 px-2 py-1 text-sm">
+                        <span className="w-12 shrink-0 font-mono numeric text-text-muted">{formatRecClock(segment.startMs)}</span>
                         <span>{segment.speakerId ? `${segment.speakerId}: ` : ''}{segment.text}</span>
                       </li>
                     ))}
@@ -741,7 +742,7 @@ export function LocalMeetingDetail(props: {
             </section>
           ) : null}
           {segmentEditError ? (
-            <div role="alert" className="flex items-center gap-2 text-[12px] text-destructive">
+            <div role="alert" className="flex items-center gap-2 text-sm text-destructive">
               <span className="flex-1">{t(segmentEditError === 'revision-conflict' ? 'meetings.local.revisionConflict' : segmentEditError === 'invalid-timecode' ? 'meetings.local.invalidTimecode' : 'meetings.local.err.generic')}</span>
               {segmentEditError === 'revision-conflict' ? <Button variant="ghost" onClick={() => void api?.readTranscript(m.id).then((current) => { setTranscript(current); setSegmentEdits({}); setSegmentEditError(null) }).catch(() => onBanner('unavailable'))}>{t('common.retry')}</Button> : null}
             </div>
@@ -763,8 +764,8 @@ export function LocalMeetingDetail(props: {
                     disabled={!audioUrl}
                     className={cn('flex w-full items-start gap-2 rounded-[var(--radius-control)] border-l-2 border-transparent px-2 py-1 text-left hover:bg-foreground/[0.04]', s.id === activeId && 'border-accent bg-accent/10')}
                   >
-                    <span className="w-12 shrink-0 pt-px font-mono text-[11px] tabular-nums text-text-muted">{formatRecClock(s.startMs)}</span>
-                    <span className="min-w-0 flex-1 text-[13px] leading-5">{s.speakerId ? `${s.speakerId}: ` : ''}{s.text}</span>
+                    <span className="w-12 shrink-0 pt-px font-mono text-xs numeric text-text-muted">{formatRecClock(s.startMs)}</span>
+                    <span className="min-w-0 flex-1 text-base">{s.speakerId ? `${s.speakerId}: ` : ''}{s.text}</span>
                     {chip.present ? (
                       <span
                         data-testid="meeting-transcript-provenance"
@@ -788,7 +789,7 @@ export function LocalMeetingDetail(props: {
                 </li>
               )
             })}
-            {segments.length === 0 ? <li className="px-2 py-2 text-[12px] text-text-muted">{t('meetings.local.noMatches')}</li> : null}
+            {segments.length === 0 ? <li className="px-2 py-2 text-sm text-text-muted">{t('meetings.local.noMatches')}</li> : null}
           </ol>
           <div className="flex gap-2 pt-1">
             <Button variant="ghost" onClick={() => void api?.transcribe(m.id).then((r) => { if (r.ok) onChanged(r.value); else onBanner(r.code) })}>{t('meetings.local.retranscribe')}</Button>
@@ -818,7 +819,7 @@ export function LocalMeetingDetail(props: {
   const decisionEditor = (id: string, candidate: boolean) => decisionEdit?.id === id && decisionEdit.candidate === candidate ? (
     <form className="flex flex-col gap-2 py-1" onSubmit={(e) => { e.preventDefault(); saveDecisionEdit() }} data-testid="meeting-decision-editor">
       <input autoFocus value={decisionEdit.title} aria-label={t('meetings.local.decisionTitle')} onChange={(e) => setDecisionEdit({ ...decisionEdit, title: e.target.value })} className={cn(input, 'w-full')} />
-      <textarea value={decisionEdit.why} aria-label={t('meetings.local.decisionWhy')} onChange={(e) => setDecisionEdit({ ...decisionEdit, why: e.target.value })} className="min-h-16 w-full resize-y rounded-lg bg-foreground/5 px-2 py-1 text-[13px] outline-none" />
+      <textarea value={decisionEdit.why} aria-label={t('meetings.local.decisionWhy')} onChange={(e) => setDecisionEdit({ ...decisionEdit, why: e.target.value })} className="min-h-16 w-full resize-y rounded-lg bg-foreground/5 px-2 py-1 text-base outline-none" />
       <div className="flex gap-2"><Button type="submit" disabled={!decisionEdit.title.trim()}>{t('common.save')}</Button><Button variant="ghost" onClick={() => setDecisionEdit(null)}>{t('common.cancel')}</Button></div>
     </form>
   ) : null
@@ -854,9 +855,9 @@ export function LocalMeetingDetail(props: {
           {candidates.map((c) => (
             <div key={c.id} className="flex items-start gap-2 rounded-[var(--radius-card)] bg-accent/[0.06] px-2 py-1">
               <span className="min-w-0 flex-1">
-                {decisionEdit?.id === c.id ? decisionEditor(c.id, true) : <><span className="block text-[13px]">{c.title}</span>{c.why ? <span className="block text-[12px] text-text-secondary">{c.why}</span> : null}</>}
+                {decisionEdit?.id === c.id ? decisionEditor(c.id, true) : <><span className="block text-base">{c.title}</span>{c.why ? <span className="block text-sm text-text-secondary">{c.why}</span> : null}</>}
                 {renderSourceLinks(c.source.segmentId ? [c.source.segmentId] : undefined)}
-                <span className="block text-[11px] text-text-muted">{t('meetings.local.generatedLabel')}</span>
+                <span className="block text-xs text-text-muted">{t('meetings.local.generatedLabel')}</span>
               </span>
               <Button variant="ghost" aria-label={t('meetings.local.editDecision')} onClick={() => setDecisionEdit({ id: c.id, candidate: true, title: c.title, why: c.why })}><Pencil className="size-3.5" aria-hidden /></Button>
               <Button onClick={() => {
@@ -886,9 +887,9 @@ export function LocalMeetingDetail(props: {
           <li key={d.id} className="group flex items-start gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]">
             <span aria-hidden className={cn('mt-2 size-1.5 shrink-0 rounded-full', d.status === 'accepted' ? 'bg-success' : 'bg-text-muted')} />
             <span className="min-w-0 flex-1">
-              {decisionEdit?.id === d.id ? decisionEditor(d.id, false) : <><button type="button" className="block text-left text-[13px]" onClick={() => setDecisionEdit({ id: d.id, candidate: false, title: d.title, why: d.why })}>{d.title}</button>{d.why ? <span className="block text-[12px] text-text-secondary">{d.why}</span> : null}</>}
+              {decisionEdit?.id === d.id ? decisionEditor(d.id, false) : <><button type="button" className="block text-left text-base" onClick={() => setDecisionEdit({ id: d.id, candidate: false, title: d.title, why: d.why })}>{d.title}</button>{d.why ? <span className="block text-sm text-text-secondary">{d.why}</span> : null}</>}
               {renderSourceLinks(d.source.segmentId ? [d.source.segmentId] : undefined)}
-              {d.status !== 'accepted' ? <span className="block text-[11px] text-text-muted">{t(`extraScreens.decisions.status.${d.status}`, { defaultValue: d.status })}</span> : null}
+              {d.status !== 'accepted' ? <span className="block text-xs text-text-muted">{t(`extraScreens.decisions.status.${d.status}`, { defaultValue: d.status })}</span> : null}
             </span>
             <span className="flex shrink-0 gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
               <Button variant="ghost" aria-label={t('meetings.local.editDecision')} onClick={() => setDecisionEdit({ id: d.id, candidate: false, title: d.title, why: d.why })}><Pencil className="size-3.5" aria-hidden /></Button>
@@ -910,7 +911,7 @@ export function LocalMeetingDetail(props: {
         {decisionDraft.trim() ? (
           <input value={decisionWhy} onChange={(e) => setDecisionWhy(e.target.value)} placeholder={t('meetings.local.decisionWhy')} aria-label={t('meetings.local.decisionWhy')} className={cn(input, 'w-full')} />
         ) : null}
-        <p className="text-[11px] text-text-muted">{t('meetings.local.decisionsSyncNote')}</p>
+        <p className="text-xs text-text-muted">{t('meetings.local.decisionsSyncNote')}</p>
       </form>
     </div>
   )
@@ -992,14 +993,14 @@ export function LocalMeetingDetail(props: {
         {m.actions.map((a) => (
           <li key={a.id} className="group flex flex-wrap items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]">
             <input type="checkbox" className="accent-[var(--accent)]" checked={a.done} aria-label={a.text} onChange={(e) => void saveAction(a.id, { done: e.target.checked })} />
-            <div className={cn('min-w-0 flex-1 text-[13px]', actionEdit?.id === a.id && 'basis-[calc(100%-32px)]', a.done && 'text-text-muted line-through')}>
+            <div className={cn('min-w-0 flex-1 text-base', actionEdit?.id === a.id && 'basis-[calc(100%-32px)]', a.done && 'text-text-muted line-through')}>
               {actionEdit?.id === a.id ? (
                 <form className="flex w-full flex-col gap-2" data-testid="meeting-action-editor" onSubmit={(e) => { e.preventDefault(); if (actionEdit.text.trim()) { void saveAction(a.id, { text: actionEdit.text }); setActionEdit(null) } }}>
                   <input autoFocus value={actionEdit.text} onChange={(e) => setActionEdit({ ...actionEdit, text: e.target.value })} aria-label={t('meetings.local.actionText')} className={cn(input, 'w-full')} />
                   <div className="flex gap-2"><Button type="submit" disabled={!actionEdit.text.trim()}>{t('common.save')}</Button><Button variant="ghost" onClick={() => setActionEdit(null)}>{t('common.cancel')}</Button></div>
                 </form>
               ) : a.text}
-              {a.generated ? <span className="pl-2 text-[11px] text-text-muted">{t('meetings.local.generatedShort')}</span> : null}
+              {a.generated ? <span className="pl-2 text-xs text-text-muted">{t('meetings.local.generatedShort')}</span> : null}
             </div>
             {a.sourceTranscriptRevision === transcript?.revision ? renderSourceLinks(a.sourceSegmentIds) : null}
             {actionEdit?.id !== a.id ? <Button variant="ghost" aria-label={t('meetings.local.editAction')} onClick={() => setActionEdit({ id: a.id, text: a.text })}><Pencil className="size-3.5" aria-hidden /></Button> : null}
@@ -1013,24 +1014,24 @@ export function LocalMeetingDetail(props: {
             )}
             <Button variant="ghost" aria-label={t('meetings.local.remove')} className="opacity-0 group-hover:opacity-100 focus:opacity-100" onClick={() => void saveAction(a.id, undefined, true)}>×</Button>
             {taskChoice?.actionId === a.id && <form className="basis-full space-y-2 rounded-[6px] border border-border/60 p-3" data-testid="meeting-task-choice" onSubmit={event => { event.preventDefault(); void confirmActionTask() }}>
-              <p className="text-[12px] text-text-muted">{t('navigation.meetingTask.hint')}</p>
-              <label className="flex flex-col gap-1 text-[12px]">{t('navigation.meetingTask.scope')}<select className={input} value={taskChoice.scope} disabled={taskChoice.pending || Boolean(taskChoice.knownRef)} onChange={event => setTaskChoice({ ...taskChoice, scope: event.target.value as 'personal' | 'workspace', error: undefined })}>
+              <p className="text-sm text-text-muted">{t('navigation.meetingTask.hint')}</p>
+              <label className="flex flex-col gap-1 text-sm">{t('navigation.meetingTask.scope')}<select className={input} value={taskChoice.scope} disabled={taskChoice.pending || Boolean(taskChoice.knownRef)} onChange={event => setTaskChoice({ ...taskChoice, scope: event.target.value as 'personal' | 'workspace', error: undefined })}>
                 <option value="personal">{t('navigation.taskScopes.personal')}</option><option value="workspace" disabled={!workspaceId || m.workspaceId !== workspaceId}>{t('navigation.taskScopes.workspace')}</option>
               </select></label>
               {taskChoice.scope === 'workspace' && <>
-                {!taskCatalog && !taskCatalogError && <p role="status" className="text-[12px]">{t('navigation.work.loading')}</p>}
-                {taskCatalogError && <p role="alert" className="text-[12px] text-destructive">{t(`navigation.work.errors.${taskCatalogError}`)}</p>}
-                {taskCatalog && !taskCatalog.snapshot.access.canWrite && <p role="status" className="text-[12px]">{t('navigation.work.readOnly')}</p>}
+                {!taskCatalog && !taskCatalogError && <p role="status" className="text-sm">{t('navigation.work.loading')}</p>}
+                {taskCatalogError && <p role="alert" className="text-sm text-destructive">{t(`navigation.work.errors.${taskCatalogError}`)}</p>}
+                {taskCatalog && !taskCatalog.snapshot.access.canWrite && <p role="status" className="text-sm">{t('navigation.work.readOnly')}</p>}
                 <div className="grid grid-cols-2 gap-2">
-                  <label className="flex flex-col gap-1 text-[12px]">{t('navigation.work.tasks.assignee')}<select className={input} value={taskChoice.assigneeId} disabled={taskChoice.pending || !taskCatalog || Boolean(taskChoice.knownRef)} onChange={event => setTaskChoice({ ...taskChoice, assigneeId: event.target.value, error: undefined })}>
+                  <label className="flex flex-col gap-1 text-sm">{t('navigation.work.tasks.assignee')}<select className={input} value={taskChoice.assigneeId} disabled={taskChoice.pending || !taskCatalog || Boolean(taskChoice.knownRef)} onChange={event => setTaskChoice({ ...taskChoice, assigneeId: event.target.value, error: undefined })}>
                     <option value="">{t('navigation.work.tasks.unassigned')}</option>{taskCatalog?.snapshot.members.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}
                   </select></label>
-                  <label className="flex flex-col gap-1 text-[12px]">{t('navigation.work.tasks.project')}<select className={input} value={taskChoice.projectId} disabled={taskChoice.pending || !taskCatalog || Boolean(taskChoice.knownRef)} onChange={event => setTaskChoice({ ...taskChoice, projectId: event.target.value, error: undefined })}>
+                  <label className="flex flex-col gap-1 text-sm">{t('navigation.work.tasks.project')}<select className={input} value={taskChoice.projectId} disabled={taskChoice.pending || !taskCatalog || Boolean(taskChoice.knownRef)} onChange={event => setTaskChoice({ ...taskChoice, projectId: event.target.value, error: undefined })}>
                     <option value="">{t('navigation.work.tasks.noProject')}</option>{taskCatalog?.projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}
                   </select></label>
                 </div>
               </>}
-              {taskChoice.error && <p role="alert" className="text-[12px] text-destructive">{t(taskChoice.error === 'backlink' ? 'navigation.meetingTask.backlinkFailed' : `navigation.work.errors.${taskChoice.error}`)}</p>}
+              {taskChoice.error && <p role="alert" className="text-sm text-destructive">{t(taskChoice.error === 'backlink' ? 'navigation.meetingTask.backlinkFailed' : `navigation.work.errors.${taskChoice.error}`)}</p>}
               <div className="flex gap-2"><Button type="submit" disabled={taskChoice.pending || taskChoice.scope === 'workspace' && (!taskCatalog || !taskCatalog.snapshot.access.canWrite && !taskChoice.knownRef)}>{t(taskChoice.knownRef ? 'common.retry' : 'navigation.meetingTask.confirm')}</Button><Button variant="ghost" disabled={taskChoice.pending} onClick={() => setTaskChoice(null)}>{t('common.cancel')}</Button></div>
             </form>}
           </li>
@@ -1071,7 +1072,7 @@ export function LocalMeetingDetail(props: {
     >
       <div className="flex items-center gap-2">
         <Button data-testid="meeting-attach" onClick={() => void attachPaths()}>{t('meetings.local.attachFiles')}</Button>
-        <span className="text-[11px] text-text-muted">{t('meetings.local.dropHint')}</span>
+        <span className="text-xs text-text-muted">{t('meetings.local.dropHint')}</span>
       </div>
       {m.documents.length === 0 ? (
         <EmptyState title={t('meetings.local.documentsEmptyTitle')} body={t('meetings.local.documentsEmptyBody')} />
@@ -1079,8 +1080,8 @@ export function LocalMeetingDetail(props: {
         <ul className="flex flex-col pt-1">
           {m.documents.map((d) => (
             <li key={d.id} className="group flex items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]">
-              <button type="button" className="min-w-0 flex-1 truncate text-left text-[13px]" onClick={() => void api?.openDocument(m.id, d.id)} title={t('meetings.local.open')}>{d.name}</button>
-              <span className="shrink-0 text-[11px] tabular-nums text-text-muted">{formatBytes(d.bytes)} · {shortFmt.format(d.addedAt)}</span>
+              <button type="button" className="min-w-0 flex-1 truncate text-left text-base" onClick={() => void api?.openDocument(m.id, d.id)} title={t('meetings.local.open')}>{d.name}</button>
+              <span className="shrink-0 text-xs numeric text-text-muted">{formatBytes(d.bytes)} · {shortFmt.format(d.addedAt)}</span>
               <span className="flex shrink-0 gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
                 <Button variant="ghost" onClick={() => void api?.reveal(m.id, d.id)}>{t('meetings.local.revealInFinder')}</Button>
                 <Button variant="ghost" aria-label={t('meetings.local.remove')} onClick={() => void api?.removeDocument(m.id, d.id).then((next) => { if (next) onChanged(next) })}>×</Button>
@@ -1089,7 +1090,7 @@ export function LocalMeetingDetail(props: {
           ))}
         </ul>
       )}
-      <p className="pt-1 text-[11px] text-text-muted">{t('meetings.local.documentsNote')}</p>
+      <p className="pt-1 text-xs text-text-muted">{t('meetings.local.documentsNote')}</p>
     </div>
   )
 
@@ -1109,7 +1110,7 @@ export function LocalMeetingDetail(props: {
       </div>
       {recordingThis && tab !== 'recording' ? <div className="px-5 pb-3"><RecordingPanel compact /></div> : null}
       {!recordingThis ? (
-        <footer className="flex items-center gap-2 px-5 pb-3 text-[11px] text-text-muted">
+        <footer className="flex items-center gap-2 px-5 pb-3 text-xs text-text-muted">
           <button type="button" className="hover:text-foreground" onClick={() => void api?.reveal(m.id)}>{t('meetings.local.openFolder')}</button>
           <span aria-hidden>·</span>
           {confirmTrash ? (
@@ -1143,13 +1144,13 @@ export function RecordingPanel({ compact }: { compact?: boolean }) {
   return (
     <div data-testid="meeting-recording-panel" className={cn('flex items-center gap-3 rounded-[var(--radius-control)] bg-destructive/[0.06] px-3', compact ? 'py-2' : 'py-3')}>
       <span aria-hidden data-live-indicator className={cn('size-2.5 shrink-0 rounded-full bg-destructive', rec.status === 'recording' && 'animate-pulse')} />
-      <span className={cn('shrink-0 font-semibold tabular-nums', compact ? 'text-[15px]' : 'text-[22px]')} data-testid="meeting-rec-timer">{formatRecClock(recordedMs(rec))}</span>
+      <span className={cn('shrink-0 font-semibold numeric', compact ? 'text-lg' : 'text-stat')} data-testid="meeting-rec-timer">{formatRecClock(recordedMs(rec))}</span>
       <span className="flex h-4 min-w-0 flex-1 items-end gap-[2px]" aria-label={t('meetings.local.level')} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(rec.level * 100)}>
         {Array.from({ length: bars }, (_, i) => (
           <span key={i} className={cn('w-1 rounded-full', i < lit ? (i > bars * 0.85 ? 'bg-destructive' : 'bg-success') : 'bg-foreground/[0.1]')} style={{ height: `${30 + (i / bars) * 70}%` }} />
         ))}
       </span>
-      <span className="shrink-0 text-[11px] text-text-muted">{rec.status === 'stopping' ? t('meetings.local.saving') : rec.status === 'paused' ? t('meetings.local.paused') : t('meetings.local.micOnly')}</span>
+      <span className="shrink-0 text-xs text-text-muted">{rec.status === 'stopping' ? t('meetings.local.saving') : rec.status === 'paused' ? t('meetings.local.paused') : t('meetings.local.micOnly')}</span>
       {rec.status === 'recording' ? (
         <Button data-testid="meeting-rec-pause" onClick={pauseRecording}>❚❚ {t('meetings.screen.pause')}</Button>
       ) : rec.status === 'paused' ? (

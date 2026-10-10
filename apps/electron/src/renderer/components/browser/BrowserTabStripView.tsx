@@ -165,7 +165,7 @@ export function BrowserTabStripView({
               className="titlebar-no-drag inline-flex min-h-[var(--control-md)] shrink-0 items-center gap-0.5 rounded-[var(--radius-control)] px-1.5 text-caption font-medium text-text-secondary outline-none transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             >
               {overflowCount > 0 && (
-                <span className="tabular-nums">+{overflowCount}</span>
+                <span className="numeric">+{overflowCount}</span>
               )}
               <ChevronDown className="icon-status opacity-70" aria-hidden />
             </button>
@@ -175,7 +175,7 @@ export function BrowserTabStripView({
               <DropdownMenuSub key={instance.id}>
                 <StyledDropdownMenuSubTrigger>
                   <BrowserTabGlyph instance={instance} />
-                  <span className="truncate">{browserLabel(instance)}</span>
+                  <span className="truncate" title={browserLabel(instance)}>{browserLabel(instance)}</span>
                 </StyledDropdownMenuSubTrigger>
                 <StyledDropdownMenuSubContent minWidth="min-w-56">
                   {renderBrowserActions(instance)}

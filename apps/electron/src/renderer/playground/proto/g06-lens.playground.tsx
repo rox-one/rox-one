@@ -101,12 +101,12 @@ function LensStory({ mode, section, stageWidth }: { mode: LensModeProp; section:
         )}
       </div>
       <div className="flex h-6 shrink-0 items-center gap-2 border-t border-border-subtle bg-surface-elevated px-2 text-caption text-text-secondary" data-testid="g06-lens-status">
-        <span className="tabular-nums">Контейнер {Math.round(width)}px</span>
+        <span className="numeric">Контейнер {Math.round(width)}px</span>
         <span aria-hidden="true">·</span>
         <span>порог дока {LENS_DOCK_MIN}px</span>
         <span aria-hidden="true">·</span>
         <span data-testid="g06-lens-decision">Решение: {resolved === 'docked' ? 'колонка' : 'оверлей'}</span>
-        <span className="ml-auto tabular-nums">морфинг {resolved === 'docked' ? '180 мс' : '180 мс + бэкдроп 120 мс'}</span>
+        <span className="ml-auto numeric">морфинг {resolved === 'docked' ? '180 мс' : '180 мс + бэкдроп 120 мс'}</span>
       </div>
     </div>
   )

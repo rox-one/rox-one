@@ -432,7 +432,7 @@ export default function WorkspaceSettingsPage() {
                     )}
                   >
                     {isUploadingIcon ? (
-                      <Spinner className="text-muted-foreground text-[8px]" />
+                      <Spinner className="text-muted-foreground text-xs" />
                     ) : wsIconUrl ? (
                       <img src={wsIconUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -479,7 +479,7 @@ export default function WorkspaceSettingsPage() {
                         <span className="text-sm font-mono break-all">{tlsTrust.spkiSha256}</span>
                       </SettingsRow>
                       <SettingsRow label={t('workspace.tlsEnrolledAt')}>
-                        <span className="text-sm tabular-nums">
+                        <span className="text-sm numeric">
                           {new Date(tlsTrust.enrolledAt).toISOString()}
                         </span>
                       </SettingsRow>
@@ -558,7 +558,7 @@ export default function WorkspaceSettingsPage() {
                     { key: 'api' as const, labelKey: 'sourcesList.filterApi', items: availableSources.filter((s) => s.config.type !== 'local' && s.config.type !== 'mcp') },
                   ]).map((group) => group.items.length === 0 ? null : (
                     <div key={group.key} className="mb-3 last:mb-0" data-testid={`default-sources-${group.key}`}>
-                      <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                      <p className="mb-1.5 text-xs font-medium uppercase caps-label text-muted-foreground">
                         {t(group.labelKey)}
                       </p>
                       <SettingsCard>

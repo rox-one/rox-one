@@ -263,10 +263,10 @@ function PanelsStory({ frozen, section }: { frozen: boolean; section: LensSectio
         className="flex h-6 shrink-0 items-center gap-2 border-t border-border-subtle bg-surface-elevated px-2 text-caption text-text-secondary"
         data-testid="g06-panel-status"
       >
-        <span className="tabular-nums">Стек {Math.round(stageWidth)}px · чат {Math.round(chatWidth)}px</span>
+        <span className="numeric">Стек {Math.round(stageWidth)}px · чат {Math.round(chatWidth)}px</span>
         <span aria-hidden="true">·</span>
         <span className="min-w-0 truncate">{lastAction}</span>
-        <span className="ml-auto hidden shrink-0 items-center gap-2 tabular-nums sm:flex">
+        <span className="ml-auto hidden shrink-0 items-center gap-2 numeric sm:flex">
           <span>⌥⌘←/→ — фокус</span>
           <span>⌥⌘S — своп</span>
         </span>

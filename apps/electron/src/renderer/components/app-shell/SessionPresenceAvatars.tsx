@@ -26,7 +26,7 @@ export function SessionPresenceFacepile({ viewers }: SessionPresenceFacepileProp
         <span
           key={member.accountId}
           title={member.displayName}
-          className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-foreground/15 text-[9px] font-medium text-foreground ring-1 ring-background"
+          className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-foreground/15 text-xs font-medium text-foreground ring-1 ring-background"
           data-presence-status={member.status}
         >
           {initials(member.displayName)}

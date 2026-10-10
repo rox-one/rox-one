@@ -13,8 +13,8 @@ export function ViewPurposeList({ className }: { className?: string }) {
     <ul className={cn('flex flex-col gap-2', className)} data-testid="view-purpose-list">
       {SESSION_VIEW_PURPOSES.map((view) => (
         <li key={view.id} data-view-purpose={view.id}>
-          <p className="text-[13px] font-medium">{t(view.nameKey)}</p>
-          <p className="text-[11px] text-muted-foreground">{t(view.purposeKey)}</p>
+          <p className="text-base font-medium">{t(view.nameKey)}</p>
+          <p className="text-xs text-muted-foreground">{t(view.purposeKey)}</p>
         </li>
       ))}
     </ul>

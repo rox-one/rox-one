@@ -22,7 +22,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent }
 import { atom, useAtom, useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
-import { Check, Columns2, Columns3, Focus, Grid2X2, X, type LucideIcon } from 'lucide-react'
+import { Check, Columns2, Columns3, Focus, Grid2X2, Plus, RotateCcw, Trash2, X, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAction } from '@/actions'
 import { panelCountAtom } from '@/atoms/panel-stack'
@@ -30,6 +30,7 @@ import { featureLayoutEngineAtom } from '@/atoms/unified-shell'
 import { useOptionalPanelWorkspaceLayout } from '@/hooks/usePanelWorkspaceLayout'
 import { useOptionalDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
+import { defaultPanelLayoutPreset, type PanelLayoutPreset } from '@/lib/panel-workspace-layout'
 import { computeLayout, type PanelLayout, type PanelLayoutNamedPreset } from '@/lib/layout-engine'
 
 /** Deck visibility — shared by the rail trigger and the Host. */
@@ -51,6 +52,14 @@ const DECK_PRESETS: readonly DeckPreset[] = [
   { preset: 'triptych', key: 'triptych', ariaKey: 'triptychAria', icon: Columns3 },
   { preset: 'wall', key: 'wall', ariaKey: 'wallAria', icon: Grid2X2 },
 ] as const
+
+/** `layout.deck.preset.<key>` for a saved profile's preset; `auto` has no label. */
+const PROFILE_PRESET_LABEL_KEY: Partial<Record<PanelLayoutPreset, string>> = {
+  focus: 'focus',
+  dialog: 'dialog',
+  triptych: 'triptych',
+  wall: 'wall',
+}
 
 /**
  * Width of the columns area the engine reflows — the panel-stack grid viewport
@@ -136,7 +145,7 @@ const FOCUSABLE_SELECTOR =
 /** The deck itself; the Host owns the open state and the ⌘\ action. */
 export function LayoutDeck({ open, onOpenChange }: LayoutDeckProps) {
   const { t } = useTranslation()
-  const { preset, setPreset } = useOptionalPanelWorkspaceLayout()
+  const { preset, setPreset, resetLayout, profiles, saveProfile, applyProfile, deleteProfile } = useOptionalPanelWorkspaceLayout()
   const panelCount = useAtomValue(panelCountAtom)
   const columnsArea = useColumnsAreaWidth(open)
   const reduceMotion = usePrefersReducedMotion()
@@ -144,8 +153,36 @@ export function LayoutDeck({ open, onOpenChange }: LayoutDeckProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const buttonRefs = useRef(new Map<string, HTMLButtonElement | null>())
   const [focusedPreset, setFocusedPreset] = useState<PanelLayoutNamedPreset>('dialog')
+  const [profileName, setProfileName] = useState('')
 
   const close = useCallback(() => onOpenChange(false), [onOpenChange])
+
+  const saveCurrentProfile = useCallback(() => {
+    const name = profileName.trim()
+      || t('shell.layout.profiles.defaultName', { n: profiles.length + 1, defaultValue: 'Профиль {{n}}' })
+    saveProfile(name)
+    setProfileName('')
+  }, [profileName, profiles.length, saveProfile, t])
+
+  const resetToDefault = useCallback(() => {
+    setPreset(defaultPanelLayoutPreset())
+    resetLayout()
+  }, [setPreset, resetLayout])
+
+  // The profiles section keeps its own keys: not one digit, `Enter` or arrow may
+  // leak to the deck's preset roving. `Esc` still closes the deck and `Tab`
+  // still reaches the deck's focus trap, so tab order inside the dialog holds.
+  const handleProfilesKeyDown = useCallback((event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Escape' || event.key === 'Tab') return
+    event.stopPropagation()
+  }, [])
+
+  const handleProfileNameKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Enter') return
+    event.preventDefault()
+    event.stopPropagation()
+    saveCurrentProfile()
+  }, [saveCurrentProfile])
 
   // Esc closes through the shell's dismissible-layer stack (the Host path); the
   // local keydown handler covers isolated mounts that have no registry.
@@ -283,6 +320,14 @@ export function LayoutDeck({ open, onOpenChange }: LayoutDeckProps) {
 
   const currentLayout = preset === 'auto' ? undefined : layouts[preset]
   const title = t('layout.deck.title', { defaultValue: 'Раскладка' })
+  const profilesTitle = t('shell.layout.profiles.title', { defaultValue: 'Профили раскладки' })
+  const profilesHint = t('shell.layout.profiles.hint', { defaultValue: 'Сохраните текущую раскладку и вернитесь к ней одним нажатием' })
+  const profilesEmpty = t('shell.layout.profiles.empty', { defaultValue: 'Профилей пока нет' })
+  const profilesSave = t('shell.layout.profiles.save', { defaultValue: 'Сохранить' })
+  const profilesApply = t('shell.layout.profiles.apply', { defaultValue: 'Применить' })
+  const profilesDelete = t('shell.layout.profiles.delete', { defaultValue: 'Удалить' })
+  const profilesReset = t('shell.layout.profiles.reset', { defaultValue: 'Сбросить раскладку' })
+  const profilesName = t('shell.layout.profiles.name', { defaultValue: 'Название профиля' })
 
   return (
     <div
@@ -366,7 +411,7 @@ export function LayoutDeck({ open, onOpenChange }: LayoutDeckProps) {
                 </span>
                 <DeckPreview layout={layout} disabled={!feasible} current={current} />
                 {!feasible && (
-                  <span className="text-caption tabular-nums">
+                  <span className="text-caption numeric">
                     {t('layout.deck.infeasible', { defaultValue: '{{preset}} — нужно {{needed}} px', preset: label, needed: shortfallFor(value) })}
                   </span>
                 )}
@@ -376,10 +421,96 @@ export function LayoutDeck({ open, onOpenChange }: LayoutDeckProps) {
         </div>
 
         <div className="flex items-center gap-2 text-caption text-text-secondary" data-layout-deck-readout>
-          <span className="tabular-nums">
+          <span className="numeric">
             {t('layout.deck.available', { defaultValue: 'Доступно {{width}} px', width: Math.round(columnsArea) })}
           </span>
         </div>
+
+        <section
+          aria-label={profilesTitle}
+          data-layout-deck-profiles
+          onKeyDown={handleProfilesKeyDown}
+          className="flex flex-col gap-2 border-t border-border-subtle pt-2"
+        >
+          <div className="flex items-baseline gap-2">
+            <h3 className="shrink-0 text-caption font-medium text-text-primary">{profilesTitle}</h3>
+            <span className="min-w-0 flex-1 truncate text-caption text-text-secondary" title={profilesHint}>{profilesHint}</span>
+          </div>
+
+          {profiles.length > 0 ? (
+            <ul className="flex flex-col gap-1" data-layout-deck-profiles-list>
+              {profiles.map((profile) => {
+                const presetKey = PROFILE_PRESET_LABEL_KEY[profile.preset]
+                return (
+                  <li
+                    key={profile.id}
+                    data-layout-deck-profile-item={profile.id}
+                    className="flex items-center gap-1.5 rounded-[var(--radius-control)] border border-border-subtle bg-canvas px-2 py-1"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-caption font-medium text-text-primary" title={profile.name}>{profile.name}</span>
+                    {presetKey && (
+                      <span className="shrink-0 text-caption text-text-secondary">
+                        {t(`layout.deck.preset.${presetKey}`, { defaultValue: presetKey })}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      aria-label={`${profilesApply}: ${profile.name}`}
+                      title={profilesApply}
+                      onClick={() => applyProfile(profile.id)}
+                      className="grid h-[var(--control-hit-min)] w-[var(--control-hit-min)] shrink-0 place-items-center rounded-[var(--radius-control)] text-text-secondary hover:bg-surface-hover hover:text-text-primary focus-visible:ring-2 focus-visible:ring-focus"
+                    >
+                      <Check className="icon-caption" aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`${profilesDelete}: ${profile.name}`}
+                      title={profilesDelete}
+                      onClick={() => deleteProfile(profile.id)}
+                      className="grid h-[var(--control-hit-min)] w-[var(--control-hit-min)] shrink-0 place-items-center rounded-[var(--radius-control)] text-text-secondary hover:bg-surface-hover hover:text-destructive focus-visible:ring-2 focus-visible:ring-focus"
+                    >
+                      <Trash2 className="icon-caption" aria-hidden />
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          ) : (
+            <p className="text-caption text-text-secondary" data-layout-deck-profiles-empty>{profilesEmpty}</p>
+          )}
+
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={profileName}
+              onChange={(event) => setProfileName(event.target.value)}
+              onKeyDown={handleProfileNameKeyDown}
+              aria-label={profilesName}
+              placeholder={profilesName}
+              data-layout-deck-profile-name
+              className="min-w-0 flex-1 rounded-[var(--radius-control)] border border-border-subtle bg-canvas px-2 py-1 text-caption text-text-primary outline-none placeholder:text-text-secondary focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
+            />
+            <button
+              type="button"
+              onClick={saveCurrentProfile}
+              className="inline-flex shrink-0 items-center gap-1 rounded-[var(--radius-control)] border border-border-subtle bg-canvas px-2 py-1 text-caption text-text-primary hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-focus"
+            >
+              <Plus className="icon-caption" aria-hidden />
+              <span>{profilesSave}</span>
+            </button>
+          </div>
+
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={resetToDefault}
+              className="inline-flex shrink-0 items-center gap-1 rounded-[var(--radius-control)] px-2 py-1 text-caption text-text-secondary hover:bg-surface-hover hover:text-text-primary focus-visible:ring-2 focus-visible:ring-focus"
+            >
+              <RotateCcw className="icon-caption" aria-hidden />
+              <span>{profilesReset}</span>
+            </button>
+          </div>
+        </section>
       </motion.div>
     </div>
   )

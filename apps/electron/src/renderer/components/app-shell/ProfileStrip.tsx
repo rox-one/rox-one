@@ -137,6 +137,7 @@ export function ProfileStrip({
                 'block truncate font-medium',
                 compact ? 'text-caption text-text-secondary' : 'text-body text-text-primary',
               )}
+              title={displayName}
             >
               {displayName}
             </span>
@@ -144,11 +145,11 @@ export function ProfileStrip({
               <span className="truncate rounded-md border border-border-subtle bg-surface-hover px-1.5 font-medium text-text-secondary">
                 {planLabel}
               </span>
-              <span className="truncate text-text-secondary tabular-nums">
+              <span className="truncate text-text-secondary numeric">
                 {t('profile.level', { level: data.level })}
               </span>
               <span
-                className="min-w-0 truncate text-muted-foreground tabular-nums"
+                className="min-w-0 truncate text-muted-foreground numeric"
                 data-testid="profile-strip-balance"
                 title={spentLabel ? t('profile.spentTooltip') : undefined}
               >

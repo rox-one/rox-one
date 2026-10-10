@@ -122,7 +122,7 @@ export const FreeFormInputContextBadge = React.forwardRef<HTMLButtonElement, Fre
           // Base styles - shrink + min-w-0 allows badge to compress in tight layouts
           variant === 'deck'
             ? 'inline-flex items-center gap-1.5 h-7 rounded-[var(--radius-control)] text-caption text-text-primary transition-colors select-none shrink min-w-0'
-            : 'input-toolbar-btn inline-flex items-center gap-1.5 h-6 rounded-[var(--radius-control)] text-[9px] text-foreground transition-colors select-none shrink min-w-0',
+            : 'input-toolbar-btn inline-flex items-center gap-1.5 h-6 rounded-[var(--radius-control)] text-xs text-foreground transition-colors select-none shrink min-w-0',
           "disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring motion-reduce:transition-none",
           // Padding: more padding when showing label
           showLabel ? "px-2" : "px-1.5",
@@ -146,7 +146,7 @@ export const FreeFormInputContextBadge = React.forwardRef<HTMLButtonElement, Fre
         {showLabel && (
           isExpanded ? (
             // Expanded: simple truncate, placeholder (no selection) gets 60% opacity
-            <span className={cn("truncate max-w-[120px] min-w-0 shrink", !hasSelection && "opacity-50")}>
+            <span className={cn("truncate max-w-[120px] min-w-0 shrink", !hasSelection && "opacity-50")} title={label}>
               {label}
             </span>
           ) : (

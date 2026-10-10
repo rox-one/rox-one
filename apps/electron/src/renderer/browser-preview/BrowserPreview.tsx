@@ -161,16 +161,16 @@ function PreviewNodeCard({ data, selected }: NodeProps<PreviewNode>) {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <p className="truncate text-[13px] font-semibold leading-5">{data.title}</p>
+            <p className="truncate text-base font-semibold" title={data.title}>{data.title}</p>
             <span
-              className="shrink-0 rounded-full border border-foreground/10 px-2 py-0.5 text-[10px] uppercase tracking-normal text-foreground/60"
+              className="shrink-0 rounded-full border border-foreground/10 px-2 py-0.5 text-xs uppercase tracking-normal text-foreground/60"
               style={{ color: meta.color }}
             >
               {statusLabel}
             </span>
           </div>
-          <p className="mt-0.5 text-[11px] leading-4 text-foreground/48">{meta.label}</p>
-          <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-foreground/68">{data.detail}</p>
+          <p className="mt-0.5 text-xs text-foreground/48">{meta.label}</p>
+          <p className="mt-2 line-clamp-2 text-sm leading-5 text-foreground/68">{data.detail}</p>
         </div>
       </div>
       <Handle type="source" position={Position.Right} className="!h-2.5 !w-2.5 !border-background !bg-foreground/35" />
@@ -292,11 +292,11 @@ function BrowserCanvasPreview() {
           <GitBranch className="h-4 w-4" />
         </div>
         <div>
-          <p className="text-[13px] font-semibold leading-4">Sample canvas — no live session data</p>
-          <p className="text-[11px] leading-4 text-foreground/55">Browser preview; Electron-only surfaces disabled</p>
+          <p className="text-base font-semibold leading-4">Sample canvas — no live session data</p>
+          <p className="text-xs text-foreground/55">Browser preview; Electron-only surfaces disabled</p>
         </div>
         <button
-          className="ml-2 h-7 rounded-md border border-foreground/10 px-2 text-[11px] text-foreground/60 hover:bg-foreground/6 focus:outline-none focus:ring-1 focus:ring-accent/50"
+          className="ml-2 h-7 rounded-md border border-foreground/10 px-2 text-xs text-foreground/60 hover:bg-foreground/6 focus:outline-none focus:ring-1 focus:ring-accent/50"
           onClick={resetSample}
         >
           Reset sample
@@ -353,8 +353,8 @@ function BrowserCanvasPreview() {
                     <Icon className="h-3.5 w-3.5" />
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-[12px] font-medium leading-4">{meta.label}</span>
-                    <span className="block truncate text-[11px] leading-4 text-foreground/50">{meta.detail}</span>
+                    <span className="block text-sm font-medium">{meta.label}</span>
+                    <span className="block truncate text-xs text-foreground/50">{meta.detail}</span>
                   </span>
                 </button>
               )

@@ -188,7 +188,7 @@ function SessionListSearchPreview({
               <div className="flex flex-col pb-4">
                 {/* Date header */}
                 <div className="px-4 py-2">
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  <span className="text-xs font-medium uppercase caps-labelr text-muted-foreground">
                     {t('common.today')}
                   </span>
                 </div>

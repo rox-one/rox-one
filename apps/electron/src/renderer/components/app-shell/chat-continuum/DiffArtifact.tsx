@@ -91,7 +91,7 @@ export function DiffArtifact({
               row.kind === 'hunk' && 'text-text-muted',
             )}
           >
-            <span className="select-none text-right tabular-nums text-text-secondary">
+            <span className="select-none text-right numeric text-text-secondary">
               {row.kind === 'hunk' ? '' : (row.newLine ?? row.oldLine ?? '')}
             </span>
             <span className="min-w-0 text-text-primary">

@@ -172,7 +172,7 @@ function loadPrefs(workspaceId: string | null, caller?: FeedCaller): FeedPagePre
   }
 }
 
-const INPUT = 'h-7 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
+const INPUT = 'h-7 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-sm outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 
 export function FeedStream({ selectedId }: { selectedId?: string | null }) {
   const { t } = useTranslation()
@@ -613,13 +613,13 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
           {colorBar}
           {leading(item, 28)}
           <span className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="flex min-w-0 items-center gap-1 text-[11px] text-text-muted">
+            <span className="flex min-w-0 items-center gap-1 text-xs text-text-muted">
               {unreadDot}
               <span className="truncate">{metaOf(item)}</span>
-              <span className="ml-auto shrink-0 tabular-nums">{when(item.at)}</span>
+              <span className="ml-auto shrink-0 numeric">{when(item.at)}</span>
             </span>
-            <span className={cn('line-clamp-2 text-[14px] leading-5', unread && 'font-semibold', item.status === 'error' && 'text-destructive')}>{titleOf(item)}</span>
-            {item.summary ? <span className="line-clamp-3 text-[12px] leading-4 text-text-secondary">{item.summary}</span> : null}
+            <span className={cn('line-clamp-2 text-base', unread && 'font-semibold', item.status === 'error' && 'text-destructive')}>{titleOf(item)}</span>
+            {item.summary ? <span className="line-clamp-3 text-sm leading-4 text-text-secondary">{item.summary}</span> : null}
             {item.tags.length || item.starred || (item.status && item.status !== 'ok') ? (
               <span className="flex min-w-0 flex-wrap items-center gap-1 pt-1">
                 {item.starred ? <span role="img" aria-label={t('feed.mark.starred')}>{starIcon(true)}</span> : null}
@@ -648,16 +648,16 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
         {colorBar}
         {leading(item, 20)}
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="flex min-w-0 items-center gap-1 text-[11px] text-text-muted">
+          <span className="flex min-w-0 items-center gap-1 text-xs text-text-muted">
             {unreadDot}
             <span className="truncate">{metaOf(item)}</span>
             {item.tags.slice(0, 2).map((x) => <span key={x} className="max-w-[96px] shrink-0 truncate">#{x}</span>)}
           </span>
-          <span className={cn('block truncate text-[13px]', unread && 'font-semibold', item.status === 'error' && 'text-destructive')}>{titleOf(item)}</span>
-          {item.summary ? <span className="block truncate text-[12px] text-text-secondary">{item.summary}</span> : null}
+          <span className={cn('block truncate text-base', unread && 'font-semibold', item.status === 'error' && 'text-destructive')} title={titleOf(item)}>{titleOf(item)}</span>
+          {item.summary ? <span className="block truncate text-sm text-text-secondary">{item.summary}</span> : null}
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1">
-          <span className="text-[11px] tabular-nums text-text-muted">{when(item.at)}</span>
+          <span className="text-xs numeric text-text-muted">{when(item.at)}</span>
           <span className="flex items-center gap-1">
             {item.starred ? <span role="img" aria-label={t('feed.mark.starred')}>{starIcon(true)}</span> : null}
             {item.status && item.status !== 'ok' ? <Badge tone={STATUS_TONE[item.status]}>{t(`feed.status.${item.status}`)}</Badge> : null}
@@ -690,8 +690,8 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const feedList = (
     <>
       <header className="flex min-h-[44px] shrink-0 items-center gap-2 px-3 pt-2">
-        <h2 className="min-w-0 truncate text-[15px] font-semibold">{sourceFilter && sourceById.get(sourceFilter) ? sourceLabel(sourceById.get(sourceFilter)!) : t(`feed.tab.${tab}`)}</h2>
-        {data.generatedAt ? <span className="hidden shrink-0 text-[11px] text-text-muted min-[1600px]:inline">{t('feed.updatedAt', { time: timeFmt.format(data.generatedAt) })}</span> : null}
+        <h2 className="min-w-0 truncate text-lg font-semibold" title={sourceFilter && sourceById.get(sourceFilter) ? sourceLabel(sourceById.get(sourceFilter)!) : t(`feed.tab.${tab}`)}>{sourceFilter && sourceById.get(sourceFilter) ? sourceLabel(sourceById.get(sourceFilter)!) : t(`feed.tab.${tab}`)}</h2>
+        {data.generatedAt ? <span className="hidden shrink-0 text-xs text-text-muted min-[1600px]:inline">{t('feed.updatedAt', { time: timeFmt.format(data.generatedAt) })}</span> : null}
         <div className="ml-auto flex shrink-0 items-center gap-1">
           {readable && unreadCount ? (
             <Button variant="ghost" className="px-2" title={t('feed.markAllRead')} aria-label={t('feed.markAllRead')} onClick={() => annotate(visible.filter((i) => !i.read).map((i) => i.id), { read: true })} data-testid="feed-mark-all-read">
@@ -775,16 +775,16 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
               {data.sources.map((s) => <option key={s.id} value={s.id}>{sourceLabel(s)}</option>)}
             </select>
           ) : null}
-          {filtersActive ? <button type="button" onClick={resetFilters} className="ml-auto text-[11px] text-text-muted underline-offset-2 outline-none hover:text-foreground hover:underline">{t('feed.empty.resetFilters')}</button> : null}
+          {filtersActive ? <button type="button" onClick={resetFilters} className="ml-auto text-xs text-text-muted underline-offset-2 outline-none hover:text-foreground hover:underline">{t('feed.empty.resetFilters')}</button> : null}
         </div>
       </div>
-      {loadError ? <div role="alert" className="mx-3 mb-1 rounded-[var(--radius-control)] bg-destructive/10 px-2 py-1 text-[12px] text-destructive">{t('feed.loadError')}</div> : null}
+      {loadError ? <div role="alert" className="mx-3 mb-1 rounded-[var(--radius-control)] bg-destructive/10 px-2 py-1 text-sm text-destructive">{t('feed.loadError')}</div> : null}
       <div ref={!selected ? readerTourRef : undefined} data-tour-id={!selected ? 'feed.reader' : undefined} role="listbox" aria-label={t(`feed.tab.${tab}`)} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="feed-list" data-density={prefs.density}>
         {visible.length === 0 ? emptyForTab() : groups.map((g) => (
           <div key={g.key}>
-            <div className="flex items-center gap-2 px-3 pb-1 pt-3 text-[11px] uppercase tracking-wide text-text-muted" data-testid="feed-day">
+            <div className="flex items-center gap-2 px-3 pb-1 pt-3 text-xs uppercase caps-label text-text-muted" data-testid="feed-day">
               <span className="truncate">{g.label === 'earlier' ? dayFmt.format(g.day) : t(`feed.day.${g.label}`)}</span>
-              <span className="tabular-nums">{g.items.length}</span>
+              <span className="numeric">{g.items.length}</span>
               {g.items.length > 1 ? (
                 <button
                   type="button"
@@ -814,20 +814,20 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
       <Card>
         {xConnected ? (
           <div className="flex items-center gap-2">
-            <span className="flex-1 text-[13px]">{t('feed.x.connectedAs', { username: data.x.username ?? '' })}</span>
+            <span className="flex-1 text-base">{t('feed.x.connectedAs', { username: data.x.username ?? '' })}</span>
             <Button variant="danger" disabled={busy === 'x'} onClick={() => void run('x', async () => { setXResult(await api!.feedClearX()); await load() })}>{t('feed.x.disconnect')}</Button>
           </div>
         ) : (
           <form className="flex flex-col gap-2" onSubmit={(e) => { e.preventDefault(); void run('x', async () => { const r = await api!.feedSetXToken(xToken); setXResult(r); if (r.state === 'connected') setXToken(''); await load() }) }}>
-            <p className="text-[12px] text-text-secondary">{t('feed.x.connectBody')}</p>
+            <p className="text-sm text-text-secondary">{t('feed.x.connectBody')}</p>
             <div className="flex gap-1">
               <input type="password" autoComplete="off" value={xToken} onChange={(e) => setXToken(e.target.value)} placeholder={t('feed.x.tokenPlaceholder')} aria-label={t('feed.x.tokenPlaceholder')} className={cn(INPUT, 'min-w-0 flex-1')} />
               <Button type="submit" variant="primary" disabled={!xToken.trim() || busy === 'x' || !api?.feedSetXToken}>{busy === 'x' ? t('feed.x.checking') : t('feed.x.connectShort')}</Button>
             </div>
-            <p className="text-[11px] text-text-muted">{t('feed.x.privacy')}</p>
+            <p className="text-xs text-text-muted">{t('feed.x.privacy')}</p>
           </form>
         )}
-        {xResult?.state === 'error' ? <p role="alert" className="pt-2 text-[12px] text-destructive">{t('feed.x.error', { message: xResult.message === 'network-error' ? t('feed.loadError') : xResult.message ?? '' })}</p> : null}
+        {xResult?.state === 'error' ? <p role="alert" className="pt-2 text-sm text-destructive">{t('feed.x.error', { message: xResult.message === 'network-error' ? t('feed.loadError') : xResult.message ?? '' })}</p> : null}
       </Card>
     </div>
   )
@@ -837,14 +837,14 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const selSource = selected?.sourceId ? sourceById.get(selected.sourceId) : undefined
   const itemDetail = selected ? (
     <div ref={readerTourRef} data-tour-id="feed.reader" className="flex flex-col px-6 py-4" data-testid="feed-detail" data-kind={selected.kind}>
-      <div className="flex min-w-0 items-center gap-2 text-[12px] text-text-muted">
+      <div className="flex min-w-0 items-center gap-2 text-sm text-text-muted">
         {selSource ? <SourceIcon source={selSource} size={20} /> : null}
-        <span className="min-w-0 truncate">{selected.author ?? (selSource ? sourceLabel(selSource) : selected.sourceTitle) ?? ''}</span>
+        <span className="min-w-0 truncate" title={selected.author ?? (selSource ? sourceLabel(selSource) : selected.sourceTitle) ?? ''}>{selected.author ?? (selSource ? sourceLabel(selSource) : selected.sourceTitle) ?? ''}</span>
         <Badge tone={selected.status ? STATUS_TONE[selected.status] : 'muted'}>{t(`feed.kind.${selected.kind}`)}</Badge>
         {selected.status && selected.status !== 'ok' ? <Badge tone={STATUS_TONE[selected.status]}>{t(`feed.status.${selected.status}`)}</Badge> : null}
-        <span className="ml-auto shrink-0 tabular-nums">{longFmt.format(selected.at)}</span>
+        <span className="ml-auto shrink-0 numeric">{longFmt.format(selected.at)}</span>
       </div>
-      <h2 className="max-w-[720px] pt-3 text-[20px] font-semibold leading-7">{titleOf(selected)}</h2>
+      <h2 className="max-w-[720px] pt-3 text-stat font-semibold leading-7">{titleOf(selected)}</h2>
 
       <div className="flex flex-wrap items-center gap-1 pt-3" data-testid="feed-reader-actions">
         {selected.url ? (
@@ -866,7 +866,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
         ) : null}
       </div>
       {sent && sent.itemId === selected.id ? (
-        <p className="pt-2 text-[12px] text-success" role="status" data-testid="feed-sent">
+        <p className="pt-2 text-sm text-success" role="status" data-testid="feed-sent">
           {sent.kind === 'task' ? t('feed.reader.taskCreated') : t('feed.reader.noteCreated')}{' '}
           <button type="button" className="underline underline-offset-2" onClick={() => navigate(sent.kind === 'task' ? routes.view.tasks(sent.id) : routes.view.notes(sent.id))}>
             {sent.kind === 'task' ? t('feed.reader.openTask') : t('feed.reader.openNote')}
@@ -874,11 +874,11 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
         </p>
       ) : null}
 
-      <div className="grid max-w-[720px] grid-cols-[auto_1fr] items-start gap-x-4 gap-y-2 pt-4 text-[12px]" data-testid="feed-labels">
+      <div className="grid max-w-[720px] grid-cols-[auto_1fr] items-start gap-x-4 gap-y-2 pt-4 text-sm" data-testid="feed-labels">
         <span className="pt-0.5 text-text-muted">{t('feed.color.label')}</span>
         <div className="flex flex-wrap items-center gap-2">
           <ColorPicker value={selected.ownColor} onChange={(c) => annotate([selected.id], { color: c })} testId="feed-item-color" />
-          {!selected.ownColor && selected.color ? <span className="text-[11px] text-text-muted">{t('feed.color.inherited', { color: t(`feed.color.${selected.color}`) })}</span> : null}
+          {!selected.ownColor && selected.color ? <span className="text-xs text-text-muted">{t('feed.color.inherited', { color: t(`feed.color.${selected.color}`) })}</span> : null}
         </div>
         <span className="pt-1 text-text-muted">{t('feed.tags.label')}</span>
         <TagEditor value={selected.ownTags} inherited={selSource?.tags} onChange={(tags) => annotate([selected.id], { tags })} suggestions={suggestions} testId="feed-item-tags" />
@@ -887,13 +887,13 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
       {selected.summary ? (
         <div className="max-w-[720px] pt-4">
           <SectionLabel>{t('feed.reader.summary')}</SectionLabel>
-          <p className="whitespace-pre-wrap text-[14px] leading-6 text-foreground">{selected.summary}</p>
+          <p className="whitespace-pre-wrap text-lg text-foreground">{selected.summary}</p>
         </div>
       ) : selected.url ? (
-        <p className="max-w-[720px] pt-4 text-[12px] text-text-muted">{t('feed.reader.noSummary')}</p>
+        <p className="max-w-[720px] pt-4 text-sm text-text-muted">{t('feed.reader.noSummary')}</p>
       ) : null}
-      {selected.error ? <pre className="mt-2 max-w-[720px] overflow-x-auto whitespace-pre-wrap rounded-[var(--radius-control)] bg-destructive/10 p-2 font-mono text-[12px] text-destructive">{selected.error === 'automation-run-failed' ? t('feed.status.error') : selected.error}</pre> : null}
-      {selected.url ? <p className="max-w-[720px] break-all pt-3 text-[11px] text-text-muted">{selected.url}</p> : null}
+      {selected.error ? <pre className="mt-2 max-w-[720px] overflow-x-auto whitespace-pre-wrap rounded-[var(--radius-control)] bg-destructive/10 p-2 font-mono text-sm text-destructive">{selected.error === 'automation-run-failed' ? t('feed.status.error') : selected.error}</pre> : null}
+      {selected.url ? <p className="max-w-[720px] break-all pt-3 text-xs text-text-muted">{selected.url}</p> : null}
 
       {selected.kind === 'automation-run' ? (
         <div className="flex flex-wrap gap-1 pt-4">
@@ -916,10 +916,10 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
           <Button variant="ghost" onClick={() => { switchView('sources'); setSelectedSource(selSource.id) }}>{t('feed.reader.sourceSettings')}</Button>
         </div>
       ) : null}
-      {retryState === 'success' ? <p className="pt-2 text-[12px] text-success">{t('feed.retryOk')}</p> : retryState === 'error' ? <p role="alert" className="pt-2 text-[12px] text-destructive">{t('feed.retryFailed')}</p> : null}
-      {selected.kind === 'automation-run' && selected.automationId && !automationNames.has(selected.automationId) ? <p className="pt-2 text-[12px] text-text-muted">{t('feed.automationGone')}</p> : null}
-      {actionError ? <p role="alert" className="pt-2 text-[12px] text-destructive">{actionError}</p> : null}
-      <p className="pt-6 text-[11px] text-text-muted">{t('feed.reader.keys')}</p>
+      {retryState === 'success' ? <p className="pt-2 text-sm text-success">{t('feed.retryOk')}</p> : retryState === 'error' ? <p role="alert" className="pt-2 text-sm text-destructive">{t('feed.retryFailed')}</p> : null}
+      {selected.kind === 'automation-run' && selected.automationId && !automationNames.has(selected.automationId) ? <p className="pt-2 text-sm text-text-muted">{t('feed.automationGone')}</p> : null}
+      {actionError ? <p role="alert" className="pt-2 text-sm text-destructive">{actionError}</p> : null}
+      <p className="pt-6 text-xs text-text-muted">{t('feed.reader.keys')}</p>
     </div>
   ) : (
     <EmptyState title={t('feed.selectTitle')} body={t('feed.reader.keys')} />

@@ -53,11 +53,11 @@ export function VaultInsightsPanel({
               key={`${suggestion.targetId}:${suggestion.line}:${suggestion.mention}`}
               className="rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-foreground/[0.04]"
             >
-              <div className="truncate text-xs font-medium">[[{suggestion.targetTitle}]]</div>
-              <div className="line-clamp-2 text-[11px] text-muted-foreground">{suggestion.preview}</div>
+              <div className="truncate text-xs font-medium" title={suggestion.targetTitle}>[[{suggestion.targetTitle}]]</div>
+              <div className="line-clamp-2 text-xs text-muted-foreground">{suggestion.preview}</div>
               <button
                 type="button"
-                className="mt-1 h-6 rounded-[var(--radius-control)] px-2 text-[11px] hover:bg-foreground/[0.06]"
+                className="mt-1 h-6 rounded-[var(--radius-control)] px-2 text-xs hover:bg-foreground/[0.06]"
                 onClick={() => onApplyLink(suggestion)}
               >
                 {t('notes.inspector.applyLink')}
@@ -75,8 +75,8 @@ export function VaultInsightsPanel({
         <div className="space-y-1">
           {insights.entities.length ? insights.entities.slice(0, 10).map((entity) => (
             <div key={`${entity.id}:${entity.line}:${entity.name}`} className="rounded-[var(--radius-card)] px-2 py-1.5">
-              <div className="truncate text-xs font-medium">{entity.name}</div>
-              <div className="text-[11px] text-muted-foreground">{entity.kind} · {entity.evidence}</div>
+              <div className="truncate text-xs font-medium" title={entity.name}>{entity.name}</div>
+              <div className="text-xs text-muted-foreground">{entity.kind} · {entity.evidence}</div>
             </div>
           )) : <span className="text-xs text-muted-foreground">{t('notes.inspector.noEntities')}</span>}
         </div>
@@ -85,13 +85,13 @@ export function VaultInsightsPanel({
             {insights.suggestedMerges.slice(0, 4).map((merge) => (
               <div key={`${merge.fromId}:${merge.toId}`} className="rounded-[var(--radius-card)] border border-dashed border-border/70 px-2 py-1.5">
                 <div className="text-xs">{t('notes.inspector.mergeEntities', { name: merge.toName })}</div>
-                <div className="text-[11px] text-muted-foreground">{merge.fromName} → {merge.toName}</div>
+                <div className="text-xs text-muted-foreground">{merge.fromName} → {merge.toName}</div>
                 <div className="mt-1 flex gap-1">
-                  <button type="button" className="h-6 rounded-[var(--radius-control)] px-2 text-[11px] hover:bg-foreground/[0.06]" onClick={() => onApplyMerge(merge)}>
+                  <button type="button" className="h-6 rounded-[var(--radius-control)] px-2 text-xs hover:bg-foreground/[0.06]" onClick={() => onApplyMerge(merge)}>
                     <Merge className="mr-1 inline h-3 w-3" />
                     {t('notes.inspector.applyMerge')}
                   </button>
-                  <button type="button" className="h-6 rounded-[var(--radius-control)] px-2 text-[11px] hover:bg-foreground/[0.06]" onClick={() => onUndoMerge(merge)}>
+                  <button type="button" className="h-6 rounded-[var(--radius-control)] px-2 text-xs hover:bg-foreground/[0.06]" onClick={() => onUndoMerge(merge)}>
                     {t('notes.inspector.undoMerge')}
                   </button>
                 </div>
@@ -122,10 +122,10 @@ export function VaultInsightsPanel({
           {insights.footnotes.length ? insights.footnotes.map((footnote) => (
             <div key={footnote.id} className="rounded-[var(--radius-card)] px-2 py-1.5">
               <button type="button" className="w-full text-left" onClick={() => onJumpFootnote(footnote)}>
-                <div className="truncate text-xs font-medium">[^{footnote.id}]</div>
-                <div className="line-clamp-2 text-[11px] text-muted-foreground">{footnote.text || t('notes.inspector.footnotePlaceholder')}</div>
-                {footnote.orphan ? <div className="text-[11px] text-destructive">{t('notes.inspector.footnoteOrphan')}</div> : null}
-                {footnote.unused ? <div className="text-[11px] text-muted-foreground">{t('notes.inspector.footnoteUnused')}</div> : null}
+                <div className="truncate text-xs font-medium" title={`[^${footnote.id}]`}>[^{footnote.id}]</div>
+                <div className="line-clamp-2 text-xs text-muted-foreground">{footnote.text || t('notes.inspector.footnotePlaceholder')}</div>
+                {footnote.orphan ? <div className="text-xs text-destructive">{t('notes.inspector.footnoteOrphan')}</div> : null}
+                {footnote.unused ? <div className="text-xs text-muted-foreground">{t('notes.inspector.footnoteUnused')}</div> : null}
               </button>
               <input
                 defaultValue={footnote.text}
@@ -145,8 +145,8 @@ export function VaultInsightsPanel({
         <div className="space-y-1">
           {insights.brokenLinks.length ? insights.brokenLinks.map((link) => (
             <div key={`${link.target}:${link.line}`} className="rounded-[var(--radius-card)] px-2 py-1.5">
-              <div className="truncate text-xs font-medium">[[{link.target}]]</div>
-              <div className="line-clamp-2 text-[11px] text-muted-foreground">{link.preview}</div>
+              <div className="truncate text-xs font-medium" title={`[[${link.target}]]`}>[[{link.target}]]</div>
+              <div className="line-clamp-2 text-xs text-muted-foreground">{link.preview}</div>
             </div>
           )) : <span className="text-xs text-muted-foreground">{t('notes.inspector.noBrokenLinks')}</span>}
         </div>

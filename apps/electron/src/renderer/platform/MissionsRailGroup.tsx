@@ -42,7 +42,7 @@ const RAIL_MISSION_CAP = 9
 function missionMonogram(initial: string, status: MissionView['status']) {
   function Monogram() {
     return (
-      <span className="relative flex h-4 w-4 items-center justify-center text-caption font-bold uppercase leading-none">
+      <span className="relative flex h-4 w-4 items-center justify-center text-caption font-bold uppercase">
         {initial}
         <span aria-hidden className={cn('absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full', MISSION_DOT_CLASS[status])} />
       </span>

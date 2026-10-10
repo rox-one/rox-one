@@ -226,8 +226,8 @@ export function CompactModelSelector({
             variant === 'deck'
               ? 'min-h-[28px] gap-1 rounded-[var(--radius-control)] flex items-center pl-0.5 pr-0.5 text-caption font-medium text-text-primary outline-none select-none shrink min-w-0 hover:bg-surface-hover transition-colors duration-[var(--motion-fast)]'
               : isWebUI
-                ? 'min-h-[var(--control-md)] min-w-[var(--control-md)] p-0 text-[9px] font-medium rounded-[var(--radius-control)] flex items-center justify-center outline-none select-none shrink-0'
-                : 'min-h-[var(--control-md)] pl-1.5 pr-1.5 text-[9px] font-medium rounded-[var(--radius-control)] flex items-center gap-1 outline-none select-none min-w-[56px] shrink',
+? 'min-h-[var(--control-md)] min-w-[var(--control-md)] p-0 text-xs font-medium rounded-[var(--radius-control)] flex items-center justify-center outline-none select-none shrink-0'
+              : 'min-h-[var(--control-md)] pl-1.5 pr-1.5 text-xs font-medium rounded-[var(--radius-control)] flex items-center gap-1 outline-none select-none min-w-[56px] shrink',
             variant === 'deck'
               ? (connectionUnavailable ? 'text-[var(--destructive-text)]' : 'text-text-primary')
               : isWebUI
@@ -250,7 +250,7 @@ export function CompactModelSelector({
                   {showConnectionIcon && effectiveConnectionDetails && (
                     <ConnectionIcon connection={effectiveConnectionDetails} size={14} />
                   )}
-                  <span className="truncate min-w-0">{currentModelDisplayName}</span>
+                  <span className="truncate min-w-0" title={currentModelDisplayName}>{currentModelDisplayName}</span>
                   {pickerMode !== 'locked-single' && (
                     <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />
                   )}
@@ -297,7 +297,7 @@ export function CompactModelSelector({
           ) : pickerMode === 'switcher' ? (
             connectionsByProvider.map(([providerName, connections]) => (
               <React.Fragment key={providerName}>
-                <div className="px-3 pt-3 pb-1 text-xs font-medium text-foreground/60 uppercase tracking-wide select-none">
+                <div className="px-3 pt-3 pb-1 text-xs font-medium text-foreground/60 uppercase caps-label select-none">
                   {providerName}
                 </div>
                 {connections.map(conn => {
@@ -322,7 +322,7 @@ export function CompactModelSelector({
                       >
                         <ConnectionIcon connection={conn} size={14} />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{conn.name}</div>
+                          <div className="text-sm font-medium truncate" title={conn.name}>{conn.name}</div>
                           {connectionMeta && (
                             <div className="text-xs text-foreground/50 truncate mt-0.5">{connectionMeta}</div>
                           )}
@@ -367,7 +367,7 @@ export function CompactModelSelector({
                                       : 'hover:bg-foreground/5',
                                   )}
                                 >
-                                  <span className="text-sm font-medium truncate">{modelName}</span>
+                                  <span className="text-sm font-medium truncate" title={modelName}>{modelName}</span>
                                   <div className="flex items-center gap-1 ml-3 shrink-0">
                                     {showVision && (
                                       <VisionToggle
@@ -428,7 +428,7 @@ export function CompactModelSelector({
                     )}
                   >
                     <div className="min-w-0">
-                      <div className="text-sm font-medium truncate">{modelName}</div>
+                      <div className="text-sm font-medium truncate" title={modelName}>{modelName}</div>
                       {description && (
                         <div className="text-xs text-foreground/50 truncate">
                           {description}
@@ -463,7 +463,7 @@ export function CompactModelSelector({
           {/* === Thinking section === */}
           {THINKING_LEVELS.length > 0 && pickerMode !== 'unavailable' && (
             <>
-              <div className="px-3 pt-4 pb-1 text-xs font-medium text-foreground/60 uppercase tracking-wide select-none">
+              <div className="px-3 pt-4 pb-1 text-xs font-medium text-foreground/60 uppercase caps-label select-none">
                 {t('chat.modelPicker.thinkingSection')}
               </div>
               {THINKING_LEVELS.map(({ id, nameKey, descriptionKey }) => {
@@ -500,12 +500,12 @@ export function CompactModelSelector({
           {/* === Context section === */}
           {contextStatus?.inputTokens != null && contextStatus.inputTokens > 0 && (
             <>
-              <div className="px-3 pt-4 pb-1 text-xs font-medium text-foreground/60 uppercase tracking-wide select-none">
+              <div className="px-3 pt-4 pb-1 text-xs font-medium text-foreground/60 uppercase caps-label select-none">
                 {t('chat.modelPicker.contextSection')}
               </div>
               <div className="flex items-center justify-between px-3 py-2 text-xs text-foreground/60 select-none">
                 <span>{t('chat.context')}</span>
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1.5 numeric">
                   {contextStatus.isCompacting && <Spinner className="h-3 w-3" />}
                   {t('chat.tokensUsed', {
                     displayCount: formatTokenCount(contextStatus.inputTokens),
@@ -540,7 +540,7 @@ function LockedSingleRow({
   return (
     <div className="flex items-center justify-between px-3 py-2 rounded-lg opacity-80 select-none">
       <div className="min-w-0">
-        <div className="text-sm font-medium truncate">{stripPiPrefixForDisplay(modelId)}</div>
+        <div className="text-sm font-medium truncate" title={stripPiPrefixForDisplay(modelId)}>{stripPiPrefixForDisplay(modelId)}</div>
         <div className="text-xs text-foreground/50">{t('chat.connectionDefault')}</div>
       </div>
       <div className="flex items-center gap-1 ml-3 shrink-0">

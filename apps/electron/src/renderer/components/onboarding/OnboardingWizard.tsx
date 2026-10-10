@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { WelcomeStep } from "./WelcomeStep"
 import { RoleStep } from "./RoleStep"
+import { LayoutStep } from "./LayoutStep"
 import { QuestionnaireStep, type QuestionnaireStepPayload } from "./QuestionnaireStep"
 import {
   saveFirstRunDraft,
@@ -23,6 +24,8 @@ export type OnboardingStep =
   | 'welcome'
   | 'questionnaire'
   | 'role'
+  /** «Choose your starting layout» (G4, flag-gated: layout engine). */
+  | 'layout'
   | 'rox-connect'
   | 'git-bash'
   | 'provider-select'
@@ -229,6 +232,9 @@ case 'questionnaire':
             isFinishing={state.isFinishing}
           />
         )
+
+      case 'layout':
+        return <LayoutStep onContinue={onContinue} onBack={onBack} />
 
       case 'rox-connect':
         return (

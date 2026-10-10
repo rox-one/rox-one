@@ -261,7 +261,7 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
             {sweep && (syncState === 'failed' || syncState === 'missing') && <div role="alert" className="mx-4 mb-3 rounded-xl bg-amber-500/10 p-3"><p className="flex items-start gap-2"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />{t('extraScreens.radar.error.' + (sweep.error ?? 'invalid-output'))}</p><div className="mt-2 flex flex-wrap gap-2"><ScreenButton disabled={busy} onClick={() => { void runNow() }}><RefreshCw className="h-3.5 w-3.5" />{t('extraScreens.radar.retry')}</ScreenButton>{sweep.sessionId && <ScreenButton variant="ghost" onClick={() => navigate(routes.view.allSessions(sweep.sessionId))}>{t('extraScreens.common.openSession')}</ScreenButton>}</div></div>}
             {sweep?.notes && <p className="mx-4 mb-3 rounded-xl bg-foreground/[0.04] p-3 text-xs text-muted-foreground">{t('extraScreens.radar.agentNotes')}: {sweep.notes}</p>}
             {sweep?.error === 'unsupported-items' && <p className="px-4 pb-3 text-xs text-muted-foreground">{t('extraScreens.radar.error.unsupported-items')}</p>}
-            {BUCKETS.map(bucket => groups[bucket].length > 0 && <div key={bucket} data-radar-bucket={bucket}><GroupLabel><span className="inline-flex items-center gap-2"><Sparkles className={'h-3.5 w-3.5 ' + (bucket === 'reaction' ? 'text-amber-500' : bucket === 'important' ? 'text-violet-500' : 'text-sky-500')} />{t('extraScreens.radar.bucket.' + bucket)} · {groups[bucket].length}</span></GroupLabel>{groups[bucket].map(item => <ListRow key={item.id} active={item.id === itemId} onClick={() => select(item.id)} className="py-3"><div className="min-w-0 flex-1"><div className="break-words font-medium">{item.title}</div>{item.summary && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.summary}</p>}<div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-muted-foreground"><span>{item.origin === 'local' ? t('extraScreens.radar.local.' + (item.ref?.kind ?? 'session')) : item.source}</span>{item.topic && <span>· {item.topic}</span>}{item.at && <span>· {relTime(item.at)}</span>}</div></div><ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" /></ListRow>)}</div>)}
+            {BUCKETS.map(bucket => groups[bucket].length > 0 && <div key={bucket} data-radar-bucket={bucket}><GroupLabel><span className="inline-flex items-center gap-2"><Sparkles className={'h-3.5 w-3.5 ' + (bucket === 'reaction' ? 'text-amber-500' : bucket === 'important' ? 'text-violet-500' : 'text-sky-500')} />{t('extraScreens.radar.bucket.' + bucket)} · {groups[bucket].length}</span></GroupLabel>{groups[bucket].map(item => <ListRow key={item.id} active={item.id === itemId} onClick={() => select(item.id)} className="py-3"><div className="min-w-0 flex-1"><div className="break-words font-medium">{item.title}</div>{item.summary && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.summary}</p>}<div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground"><span>{item.origin === 'local' ? t('extraScreens.radar.local.' + (item.ref?.kind ?? 'session')) : item.source}</span>{item.topic && <span>· {item.topic}</span>}{item.at && <span>· {relTime(item.at)}</span>}</div></div><ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" /></ListRow>)}</div>)}
             {visibleCount === 0 && (syncState === 'done' || !sweep) && <EmptyState title={t('extraScreens.radar.nothingNew', { n: data.topics.length })} body={t('extraScreens.radar.emptyHint')} />}
           </>}
         </section>
@@ -277,10 +277,10 @@ export function ItemDetail({ item, language, onDismiss, workspaceId }: { item: R
   const taskId = taskConversion.taskId
   return (
     <div className="max-w-[760px]">
-      <div className="text-[12px] text-muted-foreground">
+      <div className="text-sm text-muted-foreground">
         {[t(`extraScreens.radar.bucket.${item.bucket}`), item.origin === 'local' ? t('extraScreens.radar.inRox') : item.source, item.topic].filter(Boolean).join(' · ')}
       </div>
-      <h2 className="mt-1 text-[19px] font-bold leading-tight">{item.title}</h2>
+      <h2 className="mt-1 text-xl font-bold">{item.title}</h2>
       {item.at && <p data-testid="radar-item-date" className="mt-2 text-xs text-muted-foreground">{t('extraScreens.radar.publishedAt', { when: new Date(item.at).toLocaleString() })}</p>}
       {item.summary && <p className="mt-2 text-foreground/90">{item.summary}</p>}
       {item.why && (
@@ -296,7 +296,7 @@ export function ItemDetail({ item, language, onDismiss, workspaceId }: { item: R
         </Card>
       )}
       {item.url && (
-        <button type="button" className="mt-3 block max-w-full truncate text-left text-accent" onClick={() => { void window.electronAPI.openUrl(item.url!) }}>
+        <button type="button" className="mt-3 block max-w-full truncate text-left text-accent" onClick={() => { void window.electronAPI.openUrl(item.url!) }} title={item.url}>
           {item.url}
         </button>
       )}
@@ -318,11 +318,11 @@ export function ItemDetail({ item, language, onDismiss, workspaceId }: { item: R
       </div>
       {taskConversion.failed ? <p role="alert" data-testid="radar-task-error" className="text-xs text-destructive">{t('tasks.toastCreateFailed')}</p> : null}
       {taskId && (
-        <button type="button" className="mt-2 text-[12px] text-accent" onClick={() => navigate(routes.view.tasks(taskId))}>
+        <button type="button" className="mt-2 text-sm text-accent" onClick={() => navigate(routes.view.tasks(taskId))}>
           {t('extraScreens.common.taskCreated')}
         </button>
       )}
-      <div className="mt-4 text-[12px] text-muted-foreground">{t('extraScreens.radar.draftOnly')}</div>
+      <div className="mt-4 text-sm text-muted-foreground">{t('extraScreens.radar.draftOnly')}</div>
     </div>
   )
 }
@@ -364,7 +364,7 @@ function TopicEditor({ topic, sources, onUpdate, onDelete }: { topic: RadarTopic
         <TextField value={keyword} onChange={setKeyword} onEnter={addKeyword} placeholder={t('extraScreens.radar.keywordPlaceholder')} ariaLabel={t('extraScreens.radar.keywordPlaceholder')} />
         <ScreenButton onClick={addKeyword} disabled={!keyword.trim()}>{t('extraScreens.common.add')}</ScreenButton>
       </div>
-      <div className="mt-3 text-[12px] text-muted-foreground">{t('extraScreens.radar.topicHint')}</div>
+      <div className="mt-3 text-sm text-muted-foreground">{t('extraScreens.radar.topicHint')}</div>
       <div className="mt-4"><SectionLabel>{t('extraScreens.radar.sourceHeading')}</SectionLabel></div>
       <label className="mb-2 flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1 accent-[var(--accent)]" checked={topic.sourceSlugs === undefined} onChange={event => onUpdate({ sourceSlugs: event.target.checked ? undefined : [] })} />{t('extraScreens.radar.sourceAll')}</label>
       <div className="grid gap-2 sm:grid-cols-2">

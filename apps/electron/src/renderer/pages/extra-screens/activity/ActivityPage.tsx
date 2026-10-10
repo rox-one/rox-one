@@ -36,7 +36,7 @@ function StatTile({ label, value, hint }: { label: string; value: string; hint?:
   return (
     <div className="rounded-[var(--radius-card)] bg-surface-hover px-2.5 py-2" title={hint}>
       <div className="text-caption uppercase text-muted-foreground">{label}</div>
-      <div className="mt-0.5 text-title font-bold tabular-nums leading-none">{value}</div>
+      <div className="mt-0.5 text-title font-bold numeric leading-none">{value}</div>
     </div>
   )
 }
@@ -163,7 +163,7 @@ export default function ActivityPage(_props: { itemId: string | null }) {
                   projectsTop.map((project) => (
                     <div key={project.id} className="flex items-center gap-2 py-1">
                       <span className="min-w-0 flex-1 truncate" title={project.name}>{project.name}</span>
-                      <span className="shrink-0 text-small tabular-nums text-muted-foreground">
+                      <span className="shrink-0 text-small numeric text-muted-foreground">
                         {t('extraScreens.activity.projectCount', { sessions: project.sessions })}
                       </span>
                     </div>
@@ -179,7 +179,7 @@ export default function ActivityPage(_props: { itemId: string | null }) {
                   sourcesTop.map((source) => (
                     <div key={source.family} className="flex items-center gap-2 py-1">
                       <span className="min-w-0 flex-1 truncate">{t(`collection.filter.agentFamily.${source.family}`)}</span>
-                      <span className="shrink-0 text-small tabular-nums text-muted-foreground">
+                      <span className="shrink-0 text-small numeric text-muted-foreground">
                         {t('extraScreens.activity.projectCount', { sessions: source.sessions })}
                       </span>
                     </div>

@@ -92,7 +92,7 @@ export function StatusMenu({
         <button
           type="button"
           aria-label={t('projectRoadmap.statusLabel', { status: t(`projectRoadmap.status.${status}`) })}
-          className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md px-1.5 text-[12px] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+          className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md px-1.5 text-sm text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
         >
           <span className={cn('h-2 w-2 rounded-full', STATUS_DOT[status])} />
           <span className="hidden @[520px]:inline">{t(`projectRoadmap.status.${status}`)}</span>
@@ -202,7 +202,7 @@ export function RoadmapTimeline({
             <span
               key={`${tick.left}-${tick.label}`}
               style={{ left: tick.left }}
-              className={cn('absolute top-0 whitespace-nowrap pl-1 text-[11px]', tick.major ? 'font-medium text-foreground/70' : 'text-muted-foreground/70')}
+              className={cn('absolute top-0 whitespace-nowrap pl-1 text-xs', tick.major ? 'font-medium text-foreground/70' : 'text-muted-foreground/70')}
             >
               {tick.label}
             </span>
@@ -230,10 +230,10 @@ export function RoadmapTimeline({
                   type="button"
                   style={{ width: LABEL_COL }}
                   onClick={() => onFocusMilestone(m.id)}
-                  className="flex shrink-0 items-center gap-2 truncate pr-2 text-left text-[12px] text-foreground/80 hover:text-foreground"
+                  className="flex shrink-0 items-center gap-2 truncate pr-2 text-left text-sm text-foreground/80 hover:text-foreground"
                 >
                   <span className={cn('h-2 w-2 shrink-0 rounded-full', STATUS_DOT[m.status])} />
-                  <span className="truncate">{m.title}</span>
+                  <span className="truncate" title={m.title}>{m.title}</span>
                 </button>
                 <div className="relative h-full min-w-0 flex-1">
                   {ticks.filter((tk) => tk.major).map((tick) => (
@@ -263,7 +263,7 @@ export function RoadmapTimeline({
                   >
                     <div className={cn('absolute inset-y-0 left-0', STATUS_FILL[m.status])} style={{ width: `${Math.round(pct * 100)}%` }} />
                     {width > 72 ? (
-                      <span className="relative block truncate px-2 text-[11px] leading-5 text-foreground/80">
+                      <span className="relative block truncate px-2 text-xs leading-5 text-foreground/80">
                         {dateFmt.format(parseIsoDate(start))} — {dateFmt.format(parseIsoDate(due))}
                       </span>
                     ) : null}
@@ -290,10 +290,10 @@ export function RoadmapTimeline({
           ) : null}
         </div>
       ) : (
-        <p className="py-2 text-[12px] text-muted-foreground">{t('projectRoadmap.timelineNoDates')}</p>
+        <p className="py-2 text-sm text-muted-foreground">{t('projectRoadmap.timelineNoDates')}</p>
       )}
       {undated.length && dated.length ? (
-        <p className="mt-1 truncate text-[11px] text-muted-foreground">
+        <p className="mt-1 truncate text-xs text-muted-foreground">
           {t('projectRoadmap.timelineUndated', { names: undated.map((m) => m.title).join(', ') })}
         </p>
       ) : null}
@@ -313,7 +313,7 @@ function DateField({ value, onChange, label }: { value?: string; onChange: (next
       title={label}
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value || undefined)}
-      className="h-6 w-[118px] shrink-0 rounded-md bg-transparent px-1 text-[12px] tabular-nums text-muted-foreground outline-none hover:bg-foreground/[0.04] focus:bg-foreground/[0.05] focus:text-foreground"
+      className="h-6 w-[118px] shrink-0 rounded-md bg-transparent px-1 text-sm numeric text-muted-foreground outline-none hover:bg-foreground/[0.04] focus:bg-foreground/[0.05] focus:text-foreground"
     />
   )
 }
@@ -348,7 +348,7 @@ function StageRow({
           <button
             type="button"
             onClick={() => onToTask(stage.title)}
-            className="h-6 rounded-md px-1.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
+            className="h-6 rounded-md px-1.5 text-xs text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
             title={t('projectRoadmap.stageToTaskHint')}
           >
             {t('projectRoadmap.stageToTask')}
@@ -370,7 +370,7 @@ function StageRow({
               <InlineInput
                 value={ss.title}
                 ariaLabel={ss.title}
-                className={cn('text-[12px]', ss.done && 'text-muted-foreground line-through')}
+                className={cn('text-sm', ss.done && 'text-muted-foreground line-through')}
                 onCommit={(title) =>
                   onChange({
                     ...stage,
@@ -506,7 +506,7 @@ export function MilestoneList({
               >
                 {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
               </IconButton>
-              <span className="w-4 shrink-0 text-right text-[12px] tabular-nums text-muted-foreground">{index + 1}</span>
+              <span className="w-4 shrink-0 text-right text-sm numeric text-muted-foreground">{index + 1}</span>
               <StatusMenu status={m.status} onChange={(status) => update(m.id, (x) => ({ ...x, status }))} />
               <InlineInput
                 value={m.title}
@@ -514,11 +514,11 @@ export function MilestoneList({
                 className="font-medium"
                 onCommit={(title) => title && update(m.id, (x) => ({ ...x, title }))}
               />
-              <span className="hidden shrink-0 text-[12px] tabular-nums text-muted-foreground @[560px]:inline" title={t('projectRoadmap.stagesProgress')}>
+              <span className="hidden shrink-0 text-sm numeric text-muted-foreground @[560px]:inline" title={t('projectRoadmap.stagesProgress')}>
                 {progress.total ? `${progress.done}/${progress.total}` : ''}
               </span>
               {tasks.open + tasks.done > 0 ? (
-                <span className="hidden shrink-0 text-[12px] tabular-nums text-muted-foreground @[640px]:inline">
+                <span className="hidden shrink-0 text-sm numeric text-muted-foreground @[640px]:inline">
                   {t('projectRoadmap.milestoneTasks', { done: tasks.done, total: tasks.open + tasks.done })}
                 </span>
               ) : null}
@@ -528,7 +528,7 @@ export function MilestoneList({
                   value={m.startDate}
                   onChange={(startDate) => update(m.id, (x) => ({ ...x, startDate, ...(startDate && x.dueDate && startDate > x.dueDate ? { dueDate: startDate } : {}) }))}
                 />
-                <span className="text-[12px] text-muted-foreground/60">—</span>
+                <span className="text-sm text-muted-foreground/60">—</span>
                 <DateField
                   label={t('projectRoadmap.dueDate')}
                   value={m.dueDate}
@@ -540,7 +540,7 @@ export function MilestoneList({
               <div className="min-w-0 pb-2 pl-12 pr-2">
                 <div className="mb-1 flex items-center gap-1 @[460px]:hidden">
                   <DateField label={t('projectRoadmap.startDate')} value={m.startDate} onChange={(startDate) => update(m.id, (x) => ({ ...x, startDate }))} />
-                  <span className="text-[12px] text-muted-foreground/60">—</span>
+                  <span className="text-sm text-muted-foreground/60">—</span>
                   <DateField label={t('projectRoadmap.dueDate')} value={m.dueDate} onChange={(dueDate) => update(m.id, (x) => ({ ...x, dueDate }))} />
                 </div>
                 <AutoTextarea
@@ -550,7 +550,7 @@ export function MilestoneList({
                   className="text-muted-foreground"
                   onCommit={(description) => update(m.id, (x) => ({ ...x, description }))}
                 />
-                <div className="mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">{t('projectRoadmap.stages')}</div>
+                <div className="mt-1 text-xs font-medium uppercase caps-label text-muted-foreground/70">{t('projectRoadmap.stages')}</div>
                 <div className="flex flex-col">
                   {m.stages.map((stage) => (
                     <StageRow
@@ -574,7 +574,7 @@ export function MilestoneList({
                         onChange(milestones.filter((x) => x.id !== m.id))
                       }
                     }}
-                    className="inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[12px] text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    className="inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     {t('projectRoadmap.deleteMilestone')}

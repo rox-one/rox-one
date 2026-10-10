@@ -5,6 +5,8 @@
    into apps/electron/src/renderer/platform/chrome-tokens.ts by
    scripts/generate-chrome-tokens.ts. Only plain `px` values or `var()`
    references to tokens declared earlier in the same block are allowed there.
+   Non-px aliases (colours, motion) stay outside the two compiled blocks in
+   their own `:root` block, so the generator's px-only contract holds.
    Run `bun run scripts/generate-chrome-tokens.ts` after editing. */
 :root {
   /* Controls (compact density is the default). */
@@ -53,6 +55,13 @@
   --panel-sash-hit-width: 8px;
   --panel-sash-hit-width-coarse: 24px;
   --panel-sash-line-width: 1px;
+  --panel-snap-threshold: 12px;
+}
+
+/* G4 «Студия» magnetic seams: the snap-guide colour alias is CSS-only (the
+   generator exports px geometry), so it lives in its own uncompiled block. */
+:root {
+  --panel-snap-guide: var(--accent);
 }
 
 /* Density swaps values, never class names. Nothing sets data-density yet;

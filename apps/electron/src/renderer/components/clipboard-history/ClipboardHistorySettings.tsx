@@ -19,8 +19,8 @@ const RETENTION_OPTIONS: ReadonlyArray<{ days: number; key: string }> = [
 ]
 
 const ROW = 'flex items-start justify-between gap-3 py-1.5'
-const HINT = 'text-[11px] text-text-muted'
-const INPUT = 'h-7 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
+const HINT = 'text-xs text-text-muted'
+const INPUT = 'h-7 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-sm outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 
 function Check({ checked, label, onChange }: { checked: boolean; label: string; onChange: (value: boolean) => void }) {
   return (

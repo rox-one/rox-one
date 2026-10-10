@@ -69,6 +69,7 @@ export function MemoryGraphNodeButton({ id, data, onOpen }: { id: string; data: 
       type="button"
       data-testid={`memory-repo-graph-node-${id}`}
       onClick={() => openGraphNode({ data }, onOpen)}
+      title={data.label}
       className={cn('w-[184px] truncate rounded-[var(--radius-control)] border px-2.5 py-1.5 text-left text-small outline-none focus-visible:ring-2 focus-visible:ring-accent', KIND_TONE[data.kind])}
     >
       {data.label}
@@ -101,7 +102,7 @@ export function MemoryRepoGraphLegend() {
   const { t } = useTranslation()
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border-subtle px-4 py-2 text-caption" data-testid="memory-repo-graph-legend">
-      <span className="text-caption font-medium uppercase tracking-wide text-text-muted/70">{t('memory.repo.graph.legend')}</span>
+      <span className="text-caption font-medium uppercase caps-label text-text-muted/70">{t('memory.repo.graph.legend')}</span>
       {LEGEND_KINDS.map((kind) => (
         <span key={kind} className="inline-flex items-center gap-1.5">
           <span className={cn('size-2.5 rounded-full border', KIND_TONE[kind])} aria-hidden="true" />

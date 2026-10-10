@@ -67,7 +67,7 @@ export function PermissionRequest({ request, onResponse, unstyled = false, tourV
             <ShieldAlert className="h-3.5 w-3.5 text-info" />
             <span>{t('chat.permissionRequired')}</span>
           </div>
-          <div className="text-xs leading-[18px] text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             <span className="font-medium text-foreground">{t('chat.permission.tool')}</span> {request.toolName}
             <br />
             {request.description}
@@ -82,7 +82,7 @@ export function PermissionRequest({ request, onResponse, unstyled = false, tourV
         )}
 
         {shadow && (
-          <div className="text-[11px] text-muted-foreground" data-testid="permission-shadow-review">
+          <div className="text-xs text-muted-foreground" data-testid="permission-shadow-review">
             {t(`chat.permissionShadow.${shadow.verdict}`)}
             {' · '}
             {t('chat.permissionShadow.hint')}
@@ -122,7 +122,7 @@ export function PermissionRequest({ request, onResponse, unstyled = false, tourV
         </Button>
 
         {/* Tip text */}
-        <span className="min-w-0 flex-1 basis-full text-[10px] text-muted-foreground sm:basis-auto sm:text-right">
+        <span className="min-w-0 flex-1 basis-full text-xs text-muted-foreground sm:basis-auto sm:text-right">
           {t('chat.alwaysAllowTip')}
         </span>
       </div>

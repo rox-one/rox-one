@@ -86,11 +86,11 @@ export function ClipboardQuickLook({
         {entry ? (
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-text-muted" data-testid="clipboard-quick-look-details">
-              <span className="uppercase tracking-wide">{t('clipboard.quickLook.details')}</span>
+              <span className="uppercase caps-label">{t('clipboard.quickLook.details')}</span>
               {isImage ? <Badge tone="info">{imageFormatBadge(entry.imageFormat, entry.thumbDataUrl) ?? t('clipboard.image.label')}</Badge> : null}
               {isImage && formatImageMeta(t, entry, locale) ? <span>{formatImageMeta(t, entry, locale)}</span> : null}
               {!isImage && entry.charCount != null ? <span>{formatChars(t, entry.charCount)}</span> : null}
-              <span className="tabular-nums">{formatRelativeTime(t, entry.createdAt, now)}</span>
+              <span className="numeric">{formatRelativeTime(t, entry.createdAt, now)}</span>
               {entry.sourceApp ? <span className="min-w-0 truncate">{entry.sourceApp}</span> : null}
             </div>
 

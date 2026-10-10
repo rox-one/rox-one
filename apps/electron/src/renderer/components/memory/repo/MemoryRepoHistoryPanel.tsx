@@ -85,7 +85,7 @@ export function MemoryRepoHistoryPanel({
                     <span className="ml-auto text-caption text-text-muted">{formatCommitTime(commit.ts)}</span>
                   </span>
                   <span className="line-clamp-2 text-small text-foreground-90">{commit.message}</span>
-                  <span className="flex items-center gap-2 text-caption tabular-nums">
+                  <span className="flex items-center gap-2 text-caption numeric">
                     <span className="text-success">+{commit.stats.added}</span>
                     <span className="text-destructive">−{commit.stats.deleted}</span>
                   </span>
@@ -121,11 +121,11 @@ export function MemoryRepoHistoryPanel({
         <ul className="flex flex-col gap-1" data-testid="memory-repo-history-diff">
           {diff.map((change) => (
             <li key={`${change.op}:${change.path}`} className="flex min-w-0 items-center gap-2 rounded-[var(--radius-control)] border border-border-subtle bg-background px-2.5 py-1.5">
-              <span className={cn('shrink-0 rounded-[var(--radius-control)] px-1.5 py-px text-caption leading-4', OP_TONE[change.op])} data-testid={`memory-repo-diff-op-${change.op}`}>
+              <span className={cn('shrink-0 rounded-[var(--radius-control)] px-1.5 py-px text-caption', OP_TONE[change.op])} data-testid={`memory-repo-diff-op-${change.op}`}>
                 {t(`memory.repo.history.op.${change.op}`)}
               </span>
               <span className="min-w-0 flex-1 truncate text-small" title={change.path}>{change.path}</span>
-              <span className="shrink-0 text-caption tabular-nums">
+              <span className="shrink-0 text-caption numeric">
                 <span className="text-success">+{change.additions}</span>{' '}
                 <span className="text-destructive">−{change.deletions}</span>
               </span>
@@ -151,7 +151,7 @@ export function MemoryRepoHistoryPanel({
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <code className="text-caption text-text-secondary">{shortSha(selectedCommit.sha)}</code>
               <span className="text-caption text-text-muted">{formatCommitTime(selectedCommit.ts)}</span>
-              <span className="flex items-center gap-2 text-caption tabular-nums">
+              <span className="flex items-center gap-2 text-caption numeric">
                 <span className="text-success">+{selectedCommit.stats.added}</span>
                 <span className="text-destructive">−{selectedCommit.stats.deleted}</span>
               </span>

@@ -80,7 +80,7 @@ export function NotesResponsiveRail({
           if (returnScopeRef.current === scopeKey && canFocusNotesControl(target)) target.focus({ preventScroll: true })
         }}
       >
-        <DialogTitle className="shrink-0 border-b border-border-subtle px-4 py-3 pr-12 text-[13px]">{title}</DialogTitle>
+        <DialogTitle className="shrink-0 border-b border-border-subtle px-4 py-3 pr-12 text-base">{title}</DialogTitle>
         <div className="flex min-h-0 flex-1 overflow-hidden [&>aside]:!w-full [&>aside]:!border-0">{children}</div>
       </DialogContent>
     </Dialog>
@@ -123,9 +123,9 @@ export function NotesViewMenu({ value, onChange, capabilities, compact = false }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button" className="rox-control shrink-0 gap-1 px-2 text-[12px]" aria-label={`${t('entityView.tabsLabel')}: ${active ? t(active.labelKey) : ''}`}>
+        <button type="button" className="rox-control shrink-0 gap-1 px-2 text-sm" aria-label={`${t('entityView.tabsLabel')}: ${active ? t(active.labelKey) : ''}`}>
           {Icon ? <Icon className="size-3.5 shrink-0" aria-hidden="true" /> : null}
-          <span className={compact ? 'sr-only' : 'max-w-24 truncate'}>{active ? t(active.labelKey) : t('entityView.tabsLabel')}</span>
+          <span className={compact ? 'sr-only' : 'max-w-24 truncate'} title={active ? t(active.labelKey) : t('entityView.tabsLabel')}>{active ? t(active.labelKey) : t('entityView.tabsLabel')}</span>
           <ChevronDown className="size-3 shrink-0 text-text-muted" aria-hidden="true" />
         </button>
       </DropdownMenuTrigger>

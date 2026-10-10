@@ -14,7 +14,7 @@ export function SessionDivider({ label, time }: { label?: string; time: string }
         <span aria-hidden className="px-1.5">
           ·
         </span>
-        <span className="tabular-nums">{time}</span>
+        <span className="numeric">{time}</span>
       </span>
       <span aria-hidden className="h-px flex-1 bg-border-subtle" />
     </div>

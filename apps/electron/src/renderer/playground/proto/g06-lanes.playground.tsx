@@ -33,7 +33,7 @@ function LanesStory({ selectedId, showGroups, startCollapsed, comfortable }: Lan
     <div className="flex h-[560px] w-[392px] flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface-canvas">
       <div className="flex h-[var(--chrome-panel-header-height)] shrink-0 items-center gap-1.5 border-b border-border-subtle bg-surface-elevated px-2">
         <span className="text-body font-semibold text-text-primary">Сессии</span>
-        <span className="rounded-[var(--radius-control)] bg-surface-hover px-1 text-caption font-medium tabular-nums text-text-secondary">12</span>
+        <span className="rounded-[var(--radius-control)] bg-surface-hover px-1 text-caption font-medium numeric text-text-secondary">12</span>
         <span className="ml-auto flex items-center gap-0.5">
           <button
             type="button"
@@ -72,7 +72,7 @@ function LanesStory({ selectedId, showGroups, startCollapsed, comfortable }: Lan
           aria-label="Поиск по сессиям"
           className="min-h-[var(--control-hit-min)] min-w-0 flex-1 bg-transparent text-small text-text-primary placeholder:text-text-disabled focus:outline-none"
         />
-        <span className="shrink-0 rounded-[var(--radius-xs)] border border-border-subtle px-1 text-caption tabular-nums text-text-secondary">⌘K</span>
+        <span className="shrink-0 rounded-[var(--radius-xs)] border border-border-subtle px-1 text-caption numeric text-text-secondary">⌘K</span>
       </div>
 
       <SessionLanes
@@ -88,9 +88,9 @@ function LanesStory({ selectedId, showGroups, startCollapsed, comfortable }: Lan
       />
 
       <div className="flex shrink-0 items-center gap-2 border-t border-border-subtle px-2 py-1 text-caption text-text-secondary">
-        <span className="tabular-nums">j / k — перейти</span>
-        <span className="tabular-nums">⏎ — открыть</span>
-        <span className="ml-auto tabular-nums">⌘⏎ — в панель</span>
+        <span className="numeric">j / k — перейти</span>
+        <span className="numeric">⏎ — открыть</span>
+        <span className="ml-auto numeric">⌘⏎ — в панель</span>
       </div>
     </div>
   )

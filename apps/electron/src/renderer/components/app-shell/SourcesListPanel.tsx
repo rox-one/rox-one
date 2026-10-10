@@ -190,7 +190,7 @@ export function SourcesListPanel({
             const tokens = estimateTokensFromGuide(source.guide?.raw)
             if (tokens <= 0) return null
             return (
-              <EntityListBadge colorClass="bg-foreground/5 text-foreground/55" className="cursor-default tabular-nums">
+              <EntityListBadge colorClass="bg-foreground/5 text-foreground/55" className="cursor-default numeric">
                 {t('sourcesList.tokenEstimate', { tokens: formatApproxTokens(tokens) })}
               </EntityListBadge>
             )
@@ -244,7 +244,7 @@ export function SourcesListPanel({
     <div className="flex items-center justify-end gap-2 px-3 pt-2 pb-1">
       {indexFileCount != null && (
         <span
-          className="text-[11px] text-muted-foreground tabular-nums"
+          className="text-xs text-muted-foreground numeric"
           title={
             indexPrimary === 'native'
               ? t('sourcesList.indexStatusHintNative')
@@ -268,7 +268,7 @@ export function SourcesListPanel({
         disabled={reindexing || !activeWorkspaceId}
         className={cn(
           'inline-flex h-7 items-center gap-1.5 rounded-[var(--radius-control)] bg-foreground/[0.06] px-2.5 hover:bg-foreground/[0.1]',
-          'text-[11px] font-medium text-muted-foreground shadow-minimal',
+          'text-xs font-medium text-muted-foreground shadow-minimal',
           'hover:bg-foreground/[0.03] hover:text-foreground disabled:opacity-50',
         )}
         title={t('sourcesList.reindexHint')}
@@ -284,7 +284,7 @@ export function SourcesListPanel({
         <div data-testid="sources-grouped-list">
           {groupedSources.microservices.length > 0 && (
             <section>
-              <h3 className="px-3 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <h3 className="px-3 pt-2 pb-1 text-xs font-medium uppercase caps-label text-muted-foreground">
                 {t('sourcesList.groupMicroservices')}
               </h3>
               <EntityPanel<LoadedSource>
@@ -301,7 +301,7 @@ export function SourcesListPanel({
           )}
           {groupedSources.mcp.length > 0 && (
             <section>
-              <h3 className="px-3 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <h3 className="px-3 pt-2 pb-1 text-xs font-medium uppercase caps-label text-muted-foreground">
                 {t('sourcesList.groupMcp')}
               </h3>
               <EntityPanel<LoadedSource>
@@ -318,7 +318,7 @@ export function SourcesListPanel({
           )}
           {groupedSources.other.length > 0 && (
             <section>
-              <h3 className="px-3 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <h3 className="px-3 pt-2 pb-1 text-xs font-medium uppercase caps-label text-muted-foreground">
                 {t('sourcesList.filterApi')}
               </h3>
               <EntityPanel<LoadedSource>

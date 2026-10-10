@@ -217,7 +217,7 @@ export default function SettingsNavigator({
           <div className="pb-6">
             {groupedSettingsItems.map(({ group, pages }) => (
               <section key={group.id} className="pt-3 first:pt-1">
-                <h2 className="px-5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-secondary">
+                <h2 className="px-5 pb-1.5 text-xs font-semibold uppercase caps-label text-text-secondary">
                   {t(group.labelKey)}
                 </h2>
                 {pages.map((item, index) => (

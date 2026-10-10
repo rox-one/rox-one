@@ -166,7 +166,7 @@ function ProjectColorEditor({
         {projects.map(project => (
           <li key={project.id} className="flex items-center gap-3 flex-wrap">
             <FolderKanban className="h-3.5 w-3.5 text-foreground/40" />
-            <span className="text-sm w-28 truncate">{project.name}</span>
+            <span className="text-sm w-28 truncate" title={project.name}>{project.name}</span>
             <div className="flex items-center gap-1">
               {PROJECT_PALETTE.map(swatch => {
                 const isActive = swatch.toLowerCase() === project.color.toLowerCase()
@@ -228,7 +228,7 @@ function GroupHeader({
           !isCollapsed && 'rotate-90'
         )}
       />
-      <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground relative">
+      <span className="text-xs font-medium uppercase caps-labelr text-muted-foreground relative">
         {label}
         {isCollapsed && (
           <>

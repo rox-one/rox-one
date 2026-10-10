@@ -170,8 +170,8 @@
   --tracking-normal: 0em;
 
   --text-body-leading: 1.65;
-  --text-heading-tracking: -0.015em;
-  --text-code-size: 13px;
+  --text-heading-tracking: -0.02em;
+  --text-code-size: 12.5px;
   --settings-row-x: 14px;
   --settings-row-y: 10px;
   --settings-section-gap: 8px;
@@ -186,7 +186,7 @@
   /* Workbench chrome type and glass (geometry: ./tokens/chrome.css) */
   --chrome-font-size: 12px;
   --chrome-font-size-sm: 11px;
-  --chrome-tracking: 0.01em;
+  --chrome-tracking: 0.02em;
 
   /* --- G8 material ladder: one plate, three translucencies ----------------
      Every structural chrome region (rail, surface tabs, panel headers, panel
@@ -845,6 +845,31 @@ html[data-ui-profile="super-engineering"] .input-container {
     border-radius: var(--popover-radius, var(--radius-md));
     border: none;
     box-shadow: var(--shadow-popover);
+  }
+
+  /* G7 typographic roles. Every value is a token reference so the rhythm can
+     be retuned from type.css / density.css without touching call sites. */
+  .numeric {
+    font-variant-numeric: var(--numeric-features);
+  }
+
+  .caps-label {
+    letter-spacing: var(--tracking-caps);
+  }
+
+  .label-tracking {
+    letter-spacing: var(--tracking-label);
+  }
+
+  .prose-body {
+    font-size: var(--text-prose);
+    line-height: var(--density-leading-prose, var(--text-prose--line-height));
+    hyphens: var(--hyphens-prose);
+    overflow-wrap: break-word;
+  }
+
+  .prose-measure {
+    max-width: var(--prose-measure);
   }
 }
 

@@ -160,7 +160,7 @@ export function CollectionFilterMenu({
         >
           <ListFilter className="h-3.5 w-3.5" strokeWidth={2} />
           {count > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-foreground px-0.5 text-[9px] font-semibold text-background">
+            <span className="absolute -right-0.5 -top-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-foreground px-0.5 text-xs font-semibold numeric text-background">
               {count}
             </span>
           )}
@@ -203,9 +203,9 @@ export function CollectionFilterMenu({
                       setRenamingId(null)
                     }
                   }}
-                  className="h-7 min-w-0 flex-1 rounded-[var(--radius-card)] border border-border/50 bg-foreground/[0.03] px-2 text-[12px] outline-none"
+                  className="h-7 min-w-0 flex-1 rounded-[var(--radius-card)] border border-border/50 bg-foreground/[0.03] px-2 text-sm outline-none"
                 />
-                <button type="submit" className="h-7 rounded-[var(--radius-control)] px-2 text-[11px] font-medium hover:bg-foreground/[0.055]">
+                <button type="submit" className="h-7 rounded-[var(--radius-control)] px-2 text-xs font-medium hover:bg-foreground/[0.055]">
                   {t('collection.slice.rename')}
                 </button>
               </form>
@@ -228,7 +228,7 @@ export function CollectionFilterMenu({
                     <span
                       role="button"
                       tabIndex={0}
-                      className="text-[10px] text-muted-foreground hover:text-foreground"
+                      className="text-xs text-muted-foreground hover:text-foreground"
                       onClick={(event) => {
                         event.stopPropagation()
                         setRenamingId(slice.id)
@@ -248,7 +248,7 @@ export function CollectionFilterMenu({
                     <span
                       role="button"
                       tabIndex={0}
-                      className="text-[10px] text-muted-foreground hover:text-foreground"
+                      className="text-xs text-muted-foreground hover:text-foreground"
                       onClick={(event) => {
                         event.stopPropagation()
                         removeSaved(slice.id)
@@ -271,7 +271,7 @@ export function CollectionFilterMenu({
           {count > 0 && !saving && (
             <button
               type="button"
-              className="mx-1 mt-0.5 h-7 rounded-[var(--radius-control)] px-2 text-left text-[11px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.055] hover:text-foreground"
+              className="mx-1 mt-0.5 h-7 rounded-[var(--radius-control)] px-2 text-left text-xs font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.055] hover:text-foreground"
               onClick={() => setSaving(true)}
             >
               {t('collection.slice.save')}
@@ -290,11 +290,11 @@ export function CollectionFilterMenu({
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder={t('collection.slice.savePlaceholder')}
-                className="h-7 min-w-0 flex-1 rounded-[var(--radius-card)] border border-border/50 bg-foreground/[0.03] px-2 text-[12px] outline-none placeholder:text-muted-foreground/70 focus:border-foreground/25"
+                className="h-7 min-w-0 flex-1 rounded-[var(--radius-card)] border border-border/50 bg-foreground/[0.03] px-2 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-foreground/25"
               />
               <button
                 type="submit"
-                className="h-7 rounded-[var(--radius-control)] px-2 text-[11px] font-medium hover:bg-foreground/[0.055]"
+                className="h-7 rounded-[var(--radius-control)] px-2 text-xs font-medium hover:bg-foreground/[0.055]"
               >
                 {t('collection.slice.save')}
               </button>

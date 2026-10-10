@@ -74,7 +74,7 @@ function PickMenu({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-[12px] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+          className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-sm text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
         >
           <Icon className="h-3.5 w-3.5" />
           {label}
@@ -82,11 +82,11 @@ function PickMenu({
       </DropdownMenuTrigger>
       <StyledDropdownMenuContent align="end" className="max-h-[320px] max-w-[320px] overflow-y-auto">
         {options.length === 0 ? (
-          <div className="px-2 py-1.5 text-[12px] text-muted-foreground">{emptyLabel}</div>
+          <div className="px-2 py-1.5 text-sm text-muted-foreground">{emptyLabel}</div>
         ) : (
           options.map((o) => (
             <StyledDropdownMenuItem key={o.id} onSelect={() => onPick(o)}>
-              <span className="truncate">{o.title}</span>
+              <span className="truncate" title={o.title}>{o.title}</span>
             </StyledDropdownMenuItem>
           ))
         )}
@@ -265,7 +265,7 @@ export function ProjectInputs({
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-[12px] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+          className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-sm text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
         >
           <Paperclip className="h-3.5 w-3.5" />
           {t('projectRoadmap.inputFile')}
@@ -273,7 +273,7 @@ export function ProjectInputs({
         <button
           type="button"
           onClick={() => setComposer('link')}
-          className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-[12px] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+          className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-sm text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
         >
           <Link2 className="h-3.5 w-3.5" />
           {t('projectRoadmap.inputLink')}
@@ -281,7 +281,7 @@ export function ProjectInputs({
         <button
           type="button"
           onClick={() => setComposer('text')}
-          className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-[12px] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+          className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-sm text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
         >
           <Type className="h-3.5 w-3.5" />
           {t('projectRoadmap.inputText')}
@@ -307,7 +307,7 @@ export function ProjectInputs({
           emptyLabel={t('projectRoadmap.inputSourceEmpty')}
           onPick={(o) => addInput('source', o.id, o.title)}
         />
-        {uploading > 0 ? <span className="ml-auto text-[12px] text-muted-foreground">{t('projectRoadmap.uploading')}</span> : null}
+        {uploading > 0 ? <span className="ml-auto text-sm text-muted-foreground">{t('projectRoadmap.uploading')}</span> : null}
         <input
           ref={fileRef}
           type="file"
@@ -334,7 +334,7 @@ export function ProjectInputs({
               }}
               placeholder="https://…"
               aria-label={t('projectRoadmap.inputLink')}
-              className="h-7 rounded-md bg-foreground/[0.04] px-2 text-[13px] outline-none"
+              className="h-7 rounded-md bg-foreground/[0.04] px-2 text-base outline-none"
             />
           ) : (
             <textarea
@@ -348,7 +348,7 @@ export function ProjectInputs({
               }}
               placeholder={t('projectRoadmap.inputTextPlaceholder')}
               aria-label={t('projectRoadmap.inputText')}
-              className="resize-y rounded-md bg-foreground/[0.04] px-2 py-1.5 text-[13px] leading-5 outline-none"
+              className="resize-y rounded-md bg-foreground/[0.04] px-2 py-1.5 text-base outline-none"
             />
           )}
           <div className="flex min-w-0 items-center gap-1">
@@ -360,7 +360,7 @@ export function ProjectInputs({
               }}
               placeholder={t('projectRoadmap.inputTitlePlaceholder')}
               aria-label={t('projectRoadmap.inputTitlePlaceholder')}
-              className="h-7 min-w-0 flex-1 rounded-md bg-foreground/[0.04] px-2 text-[12px] outline-none"
+              className="h-7 min-w-0 flex-1 rounded-md bg-foreground/[0.04] px-2 text-sm outline-none"
             />
             <TextButton tone="ghost" onClick={() => setComposer(null)}>{t('common.cancel')}</TextButton>
             <TextButton tone="primary" onClick={commitComposer} disabled={!draftValue.trim()}>{t('projectRoadmap.add')}</TextButton>
@@ -369,7 +369,7 @@ export function ProjectInputs({
       ) : null}
 
       {total === 0 && !composer ? (
-        <div className="flex min-w-0 items-center gap-2 px-2 py-3 text-[12px] leading-5 text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-2 px-2 py-3 text-sm leading-5 text-muted-foreground">
           <Upload className="h-4 w-4 shrink-0 opacity-60" />
           <span>{t('projectRoadmap.inputsEmpty')}</span>
         </div>
@@ -383,12 +383,12 @@ export function ProjectInputs({
               <button
                 type="button"
                 onClick={() => onOpenFile(asset.absolutePath)}
-                className="min-w-0 flex-1 truncate text-left text-[13px] text-foreground"
+                className="min-w-0 flex-1 truncate text-left text-base text-foreground"
                 title={asset.filename}
               >
                 {asset.filename}
               </button>
-              <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{formatSize(asset.sizeBytes)}</span>
+              <span className="shrink-0 text-xs numeric text-muted-foreground">{formatSize(asset.sizeBytes)}</span>
               <IconButton label={t('projectRoadmap.remove')} className="opacity-0 group-hover:opacity-100 focus:opacity-100" onClick={() => onDeleteAsset(asset)}>
                 <X className="h-3.5 w-3.5" />
               </IconButton>
@@ -405,11 +405,11 @@ export function ProjectInputs({
                   onClick={() => openInput(input)}
                   disabled={input.kind === 'text'}
                   title={input.kind === 'text' ? input.value.slice(0, 600) : input.value}
-                  className="min-w-0 flex-1 truncate text-left text-[13px] text-foreground disabled:cursor-default"
+                  className="min-w-0 flex-1 truncate text-left text-base text-foreground disabled:cursor-default"
                 >
                   {title}
                 </button>
-                <span className="shrink-0 text-[11px] text-muted-foreground">{t(`projectRoadmap.inputKind.${input.kind}`)}</span>
+                <span className="shrink-0 text-xs text-muted-foreground">{t(`projectRoadmap.inputKind.${input.kind}`)}</span>
                 {input.kind === 'link' ? <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/60" /> : null}
                 <IconButton
                   label={t('projectRoadmap.remove')}
@@ -423,7 +423,7 @@ export function ProjectInputs({
           })}
         </div>
       ) : null}
-      {total > 0 ? <p className="mt-1 px-1.5 text-[11px] text-muted-foreground/70">{t('projectRoadmap.inputsDropHint')}</p> : null}
+      {total > 0 ? <p className="mt-1 px-1.5 text-xs text-muted-foreground/70">{t('projectRoadmap.inputsDropHint')}</p> : null}
     </div>
   )
 }

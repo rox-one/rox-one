@@ -93,7 +93,7 @@ function Btn({
     <button
       type="button"
       className={cn(
-        'inline-flex h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-[12.5px] font-semibold transition-colors',
+        'inline-flex h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-base font-semibold transition-colors',
         'disabled:pointer-events-none disabled:opacity-60',
         BTN_VARIANT[variant],
         className,
@@ -117,7 +117,7 @@ const SelectButton = React.forwardRef<
       className={cn(
         'inline-flex items-center gap-1.5 rounded-lg border border-border bg-background font-medium text-foreground',
         'transition-colors hover:bg-foreground/[0.03] data-[state=open]:bg-foreground/[0.03]',
-        size === 'sm' ? 'h-7 px-2 text-[11.5px]' : 'h-8 px-2.5 text-[12.5px]',
+        size === 'sm' ? 'h-7 px-2 text-sm' : 'h-8 px-2.5 text-base',
         className,
       )}
       {...rest}
@@ -145,17 +145,17 @@ function ModelSelect({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <SelectButton size={size} style={{ width }}>
-          <span className="truncate">{resolveModelName(groups, value)}</span>
+          <span className="truncate" title={resolveModelName(groups, value)}>{resolveModelName(groups, value)}</span>
         </SelectButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="max-h-[320px] min-w-[180px]">
         {groups.map((g, gi) => (
           <React.Fragment key={`${g.provider}-${gi}`}>
             {gi > 0 && <DropdownMenuSeparator />}
-            <DropdownMenuLabel className="text-[11px] text-foreground/50">{g.label}</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-xs text-foreground/50">{g.label}</DropdownMenuLabel>
             {g.models.map((m) => (
               <DropdownMenuItem key={m.id} className="text-xs" onSelect={() => onChange(m.id)}>
-                <span className="truncate">{m.name}</span>
+                <span className="truncate" title={m.name}>{m.name}</span>
                 {m.id === value && <Check className="ml-auto h-3.5 w-3.5 shrink-0" strokeWidth={2} />}
               </DropdownMenuItem>
             ))}
@@ -169,7 +169,7 @@ function ModelSelect({
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-[12.5px] font-medium text-foreground/55">{label}</span>
+      <span className="text-base font-medium text-foreground/55">{label}</span>
       <div className="shrink-0">{children}</div>
     </div>
   )
@@ -198,7 +198,7 @@ function AvatarStack({ avatars }: { avatars: React.ReactNode[] }) {
       ))}
       {remaining > 0 && (
         <div
-          className="-ml-1 flex h-5 w-5 items-center justify-center rounded-[var(--radius-control)] bg-background text-[8px] font-medium text-muted-foreground shadow-minimal"
+          className="-ml-1 flex h-5 w-5 items-center justify-center rounded-[var(--radius-control)] bg-background text-xs font-medium numeric text-muted-foreground shadow-minimal"
           style={{ zIndex: display.length + 1 }}
         >
           +{remaining}
@@ -249,7 +249,7 @@ function SourcesField({
         ) : (
           <AvatarStack avatars={selected.map((s) => <SourceAvatar key={s.config.slug} source={s} size="xs" />)} />
         )}
-        <span className={cn('min-w-0 flex-1 truncate text-left', values.length === 0 && 'text-foreground/50')}>{label}</span>
+        <span className={cn('min-w-0 flex-1 truncate text-left', values.length === 0 && 'text-foreground/50')} title={label}>{label}</span>
       </SelectButton>
       <SourceSelectorPopover
         open={open}
@@ -308,7 +308,7 @@ function SkillsField({
         ) : (
           <AvatarStack avatars={selected.map((s) => <SkillAvatar key={s.slug} skill={s} size="xs" workspaceId={workspaceId} />)} />
         )}
-        <span className={cn('min-w-0 flex-1 truncate text-left', values.length === 0 && 'text-foreground/50')}>{label}</span>
+        <span className={cn('min-w-0 flex-1 truncate text-left', values.length === 0 && 'text-foreground/50')} title={label}>{label}</span>
       </SelectButton>
       <SkillSelectorPopover
         open={open}
@@ -349,7 +349,7 @@ function FolderField({
       renderTrigger={({ hasFolder, folderName }) => (
         <SelectButton style={{ width: 168 }} title={t('tasks.workingDirectoryHint')}>
           <Folder className="h-3.5 w-3.5 shrink-0 text-foreground/40" strokeWidth={2} />
-          <span className={cn('min-w-0 flex-1 truncate text-left', !hasFolder && 'text-foreground/50')}>
+          <span className={cn('min-w-0 flex-1 truncate text-left', !hasFolder && 'text-foreground/50')} title={folderName ?? t('chat.workInFolder')}>
             {folderName ?? t('chat.workInFolder')}
           </span>
         </SelectButton>
@@ -395,7 +395,7 @@ function SubtaskCard({
   return (
     <div className="group rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] p-3">
       <div className="flex items-start gap-2">
-        <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-indigo-500/10 text-[12px] font-bold text-indigo-500 dark:text-indigo-300">
+        <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-indigo-500/10 text-sm font-bold numeric text-indigo-500 dark:text-indigo-300">
           {index + 1}
         </div>
         <div className="min-w-0 flex-1">
@@ -403,14 +403,14 @@ function SubtaskCard({
             value={subtask.title}
             onChange={(e) => onChange({ title: e.target.value })}
             placeholder={t('tasks.subtaskTitlePlaceholder')}
-            className="w-full bg-transparent text-[13.5px] font-semibold text-foreground outline-none placeholder:text-foreground/30"
+            className="w-full bg-transparent text-base font-semibold text-foreground outline-none placeholder:text-foreground/30"
           />
           <textarea
             value={subtask.prompt}
             onChange={(e) => onChange({ prompt: e.target.value })}
             rows={2}
             placeholder={t('tasks.promptPlaceholder')}
-            className="mt-1.5 w-full resize-none rounded-md border border-border/60 bg-background px-2 py-1.5 text-[12px] leading-relaxed outline-none focus:border-foreground/25 field-sizing-content max-h-40"
+            className="mt-1.5 w-full resize-none rounded-md border border-border/60 bg-background px-2 py-1.5 text-sm outline-none focus:border-foreground/25 field-sizing-content max-h-40"
           />
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <ModelSelect
@@ -423,9 +423,9 @@ function SubtaskCard({
             {subtask.dependsOn.map((depUid) => (
               <span
                 key={depUid}
-                className="inline-flex h-7 max-w-[168px] items-center gap-1 rounded-lg border border-border bg-foreground/[0.03] pl-2 pr-1 text-[11.5px] font-medium text-foreground/70"
+                className="inline-flex h-7 max-w-[168px] items-center gap-1 rounded-lg border border-border bg-foreground/[0.03] pl-2 pr-1 text-sm font-medium text-foreground/70"
               >
-                <span className="truncate">{t('tasks.dependsOnLabel', { title: depTitle(depUid) })}</span>
+                <span className="truncate" title={t('tasks.dependsOnLabel', { title: depTitle(depUid) })}>{t('tasks.dependsOnLabel', { title: depTitle(depUid) })}</span>
                 <button
                   type="button"
                   onClick={() => removeDep(depUid)}
@@ -439,7 +439,7 @@ function SubtaskCard({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SelectButton size="sm" style={{ width: 144 }}>
-                  <span className="truncate text-foreground/70">
+                  <span className="truncate text-foreground/70" title={subtask.dependsOn.length === 0 ? t('tasks.noDependencies') : t('tasks.addDependency')}>
                     {subtask.dependsOn.length === 0 ? t('tasks.noDependencies') : t('tasks.addDependency')}
                   </span>
                 </SelectButton>
@@ -447,11 +447,11 @@ function SubtaskCard({
               <DropdownMenuContent align="start" className="max-w-[240px]">
                 {candidates.map((c) => (
                   <DropdownMenuItem key={c.uid} className="text-xs" onSelect={() => addDep(c.uid)}>
-                    <span className="truncate">{c.title || t('tasks.untitledSubtask')}</span>
+                    <span className="truncate" title={c.title || t('tasks.untitledSubtask')}>{c.title || t('tasks.untitledSubtask')}</span>
                   </DropdownMenuItem>
                 ))}
                 {candidates.length === 0 && (
-                  <div className="px-2 py-1.5 text-[11px] text-foreground/40">{t('tasks.noAvailableSubtasks')}</div>
+                  <div className="px-2 py-1.5 text-xs text-foreground/40">{t('tasks.noAvailableSubtasks')}</div>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -929,7 +929,7 @@ export function TaskEditor({
                 key={tb}
                 onClick={() => setTab(tb)}
                 className={cn(
-                  'rounded-[var(--radius-card)] px-3 py-1 text-[12.5px] font-semibold transition-colors',
+                  'rounded-[var(--radius-card)] px-3 py-1 text-base font-semibold transition-colors',
                   tab === tb ? 'bg-card text-foreground shadow-minimal' : 'text-foreground/55 hover:text-foreground/80',
                 )}
               >
@@ -979,7 +979,7 @@ export function TaskEditor({
       <div className="grid min-h-0 flex-1 grid-cols-[minmax(360px,2fr)_3fr] gap-3">
         {/* Left — definition */}
         <div className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-minimal">
-          <div className="text-[15px] font-bold">{t('tasks.definition')}</div>
+          <div className="text-lg font-bold">{t('tasks.definition')}</div>
 
           <div className="inline-flex w-fit rounded-[var(--radius-card)] bg-foreground/[0.05] p-0.5">
             {(['manual', 'generate'] as Mode[]).map((m) => (
@@ -987,7 +987,7 @@ export function TaskEditor({
                 key={m}
                 onClick={() => setMode(m)}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
+                  'inline-flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-1.5 text-base font-semibold transition-colors',
                   mode === m ? 'bg-card text-foreground shadow-minimal' : 'text-foreground/55 hover:text-foreground/80',
                 )}
               >
@@ -998,20 +998,20 @@ export function TaskEditor({
           </div>
 
           <div>
-            <div className="mb-1.5 text-[12px] font-semibold text-foreground/55">{t('tasks.title')}</div>
+            <div className="mb-1.5 text-sm font-semibold text-foreground/55">{t('tasks.title')}</div>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('tasks.titlePlaceholder')}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13.5px] font-semibold outline-none focus:border-foreground/25"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-base font-semibold outline-none focus:border-foreground/25"
             />
           </div>
 
           {mode === 'generate' && (
             <div>
               <div className="mb-1.5 flex items-baseline justify-between">
-                <span className="text-[12px] font-semibold text-foreground/55">{t('tasks.goal')}</span>
-                <span className="text-[10.5px] text-foreground/35">{t('tasks.goalHint')}</span>
+                <span className="text-sm font-semibold text-foreground/55">{t('tasks.goal')}</span>
+                <span className="text-xs text-foreground/35">{t('tasks.goalHint')}</span>
               </div>
               <textarea
                 value={goal}
@@ -1022,7 +1022,7 @@ export function TaskEditor({
                 }}
                 rows={4}
                 placeholder={t('tasks.goalPlaceholder')}
-                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-[12.5px] leading-relaxed outline-none focus:border-foreground/25 field-sizing-content max-h-64 overflow-y-auto"
+                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-base outline-none focus:border-foreground/25 field-sizing-content max-h-64 overflow-y-auto"
               />
             </div>
           )}
@@ -1030,8 +1030,8 @@ export function TaskEditor({
           {mode !== 'generate' && (
             <div>
               <div className="mb-1.5 flex items-baseline justify-between">
-                <span className="text-[12px] font-semibold text-foreground/55">{t('kanban.field.goal')}</span>
-                <span className="text-[10.5px] text-foreground/35">{t('tasks.acceptanceCriteriaHint')}</span>
+                <span className="text-sm font-semibold text-foreground/55">{t('kanban.field.goal')}</span>
+                <span className="text-xs text-foreground/35">{t('tasks.acceptanceCriteriaHint')}</span>
               </div>
               <textarea
                 value={acceptanceCriteria}
@@ -1042,7 +1042,7 @@ export function TaskEditor({
                 }}
                 rows={4}
                 placeholder={t('tasks.acceptanceCriteriaPlaceholder')}
-                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-[12.5px] leading-relaxed outline-none focus:border-foreground/25 field-sizing-content max-h-64 overflow-y-auto"
+                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-base outline-none focus:border-foreground/25 field-sizing-content max-h-64 overflow-y-auto"
               />
             </div>
           )}
@@ -1052,7 +1052,7 @@ export function TaskEditor({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SelectButton style={{ width: 168 }}>
-                    <span className="truncate">{project ? project.config.name : t('tasks.noProject')}</span>
+                    <span className="truncate" title={project ? project.config.name : t('tasks.noProject')}>{project ? project.config.name : t('tasks.noProject')}</span>
                   </SelectButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[160px]">
@@ -1067,7 +1067,7 @@ export function TaskEditor({
                   )}
                   {projects.map((p) => (
                     <DropdownMenuItem key={p.config.id} className="text-xs" onSelect={() => setProjectId(p.config.id)}>
-                      <span className="truncate">{p.config.name}</span>
+                      <span className="truncate" title={p.config.name}>{p.config.name}</span>
                       {projectId === p.config.id && <Check className="ml-auto h-3.5 w-3.5 shrink-0" strokeWidth={2} />}
                     </DropdownMenuItem>
                   ))}
@@ -1092,13 +1092,13 @@ export function TaskEditor({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SelectButton style={{ width: 168 }}>
-                    <span className="truncate">{t(`mode.${permissionMode}`)}</span>
+                    <span className="truncate" title={t(`mode.${permissionMode}`)}>{t(`mode.${permissionMode}`)}</span>
                   </SelectButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[160px]">
                   {(['allow-all', 'ask', 'safe'] as const).map((m) => (
                     <DropdownMenuItem key={m} className="text-xs" onSelect={() => setPermissionMode(m)}>
-                      <span className="truncate">{t(`mode.${m}`)}</span>
+                      <span className="truncate" title={t(`mode.${m}`)}>{t(`mode.${m}`)}</span>
                       {permissionMode === m && <Check className="ml-auto h-3.5 w-3.5 shrink-0" strokeWidth={2} />}
                     </DropdownMenuItem>
                   ))}
@@ -1144,7 +1144,7 @@ export function TaskEditor({
                 onChange={(e) => setMaxRepairs(e.target.value)}
                 placeholder={String(DEFAULT_REPAIR_ATTEMPTS)}
                 title={t('tasks.maxRepairsHint')}
-                className="h-8 w-[88px] rounded-lg border border-border bg-background px-2.5 text-right text-[12.5px] tabular-nums outline-none focus:border-foreground/25 placeholder:text-foreground/30"
+                className="h-8 w-[88px] rounded-lg border border-border bg-background px-2.5 text-right text-base numeric outline-none focus:border-foreground/25 placeholder:text-foreground/30"
               />
             </FieldRow>
           </div>
@@ -1155,11 +1155,11 @@ export function TaskEditor({
           {mode === 'manual' ? (
             <>
               <div className="flex shrink-0 items-center gap-2 px-4 pt-4">
-                <span className="text-[15px] font-bold">{t('kanban.subtasks')}</span>
-                <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-foreground/[0.06] px-1.5 text-[11px] font-bold text-foreground/55">
+                <span className="text-lg font-bold">{t('kanban.subtasks')}</span>
+                <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-foreground/[0.06] px-1.5 text-xs font-bold numeric text-foreground/55">
                   {subtasks.length}
                 </span>
-                <Btn variant="secondary" className="ml-auto h-7 px-2.5 text-[12px]" onClick={addSubtask}>
+                <Btn variant="secondary" className="ml-auto h-7 px-2.5 text-sm" onClick={addSubtask}>
                   <Plus className="h-3.5 w-3.5" strokeWidth={2.5} /> {t('kanban.addSubtask')}
                 </Btn>
               </div>
@@ -1181,23 +1181,23 @@ export function TaskEditor({
                 {subtasks.length === 0 && (
                   <button
                     onClick={addSubtask}
-                    className="flex w-full items-center justify-center gap-1.5 rounded-[var(--radius-control)] border border-dashed border-border py-2.5 text-[12.5px] font-semibold text-foreground/40 transition-colors hover:border-foreground/30 hover:text-foreground/60"
+                    className="flex w-full items-center justify-center gap-1.5 rounded-[var(--radius-control)] border border-dashed border-border py-2.5 text-base font-semibold text-foreground/40 transition-colors hover:border-foreground/30 hover:text-foreground/60"
                   >
                     <Plus className="h-3.5 w-3.5" strokeWidth={2.5} /> {t('tasks.addFirstSubtask')}
                   </button>
                 )}
               </div>
 
-              <div className="shrink-0 border-t border-border/60 px-4 py-2.5 text-[10.5px] text-foreground/40">
+              <div className="shrink-0 border-t border-border/60 px-4 py-2.5 text-xs text-foreground/40">
                 {t('tasks.subtaskFooter')}
               </div>
             </>
           ) : busy ? (
             <div className="flex min-h-full flex-col gap-3 p-4">
-              <div className="flex items-center gap-2 text-[13px] font-semibold text-foreground/70">
+              <div className="flex items-center gap-2 text-base font-semibold text-foreground/70">
                 <LoadingIndicator label={t('tasks.generatingTitle')} showElapsed />
               </div>
-              <p className="text-[12px] leading-relaxed text-foreground/50">{t('tasks.generatingBody')}</p>
+              <p className="text-sm text-foreground/50">{t('tasks.generatingBody')}</p>
               {/* Skeleton subtask cards: the long author wait reads as "drafting nodes", not frozen. */}
               {[0, 1, 2].map((i) => (
                 <div key={i} className="animate-pulse rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] p-3">
@@ -1220,12 +1220,12 @@ export function TaskEditor({
               <div className="grid h-12 w-12 place-items-center rounded-full bg-indigo-500/10 text-indigo-500 dark:text-indigo-300">
                 <Sparkles className="h-6 w-6" strokeWidth={2} />
               </div>
-              <div className="text-[14px] font-bold">{t('tasks.generatePlan')}</div>
-              <p className="max-w-[360px] text-[12.5px] leading-relaxed text-foreground/55">{t('tasks.generateBody')}</p>
+              <div className="text-lg font-bold">{t('tasks.generatePlan')}</div>
+              <p className="max-w-[360px] text-base text-foreground/55">{t('tasks.generateBody')}</p>
               <Btn variant="primary" onClick={generatePlan} disabled={busy}>
                 <Sparkles className="h-3.5 w-3.5" strokeWidth={2.5} /> {t('tasks.generatePlan')}
               </Btn>
-              <span className="text-[11px] text-foreground/40">{t('tasks.generateHint')}</span>
+              <span className="text-xs text-foreground/40">{t('tasks.generateHint')}</span>
             </div>
           )}
         </div>
@@ -1241,7 +1241,7 @@ export function TaskEditor({
         >
           <div className="flex items-center gap-2 border-b border-border/60 px-4 py-2.5">
             <span className="text-body font-bold">{t('board.widget.sectionTitle')}</span>
-            <span className="truncate text-caption text-muted-foreground">{editSlug}</span>
+            <span className="truncate text-caption text-muted-foreground" title={editSlug}>{editSlug}</span>
           </div>
           <div className="h-[280px] overflow-auto p-3">
             <WidgetCard widgetId={editSlug} title={title || editSlug} />
@@ -1280,7 +1280,7 @@ function ResultsPanel({
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 rounded-[var(--radius-control)] border border-border bg-card px-6 text-center text-muted-foreground shadow-minimal">
         <CircleSlash className="h-6 w-6 text-muted-foreground" strokeWidth={2} />
-        <p className="text-[12.5px]">{t('tasks.resultsEmpty')}</p>
+        <p className="text-base">{t('tasks.resultsEmpty')}</p>
       </div>
     )
   }
@@ -1292,8 +1292,8 @@ function ResultsPanel({
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-minimal">
       {results.acceptanceCriteria && (
         <div className="rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] px-3 py-2.5">
-          <div className="text-[11px] font-bold uppercase tracking-wide text-foreground/45">{t('tasks.acceptanceCriteria')}</div>
-          <p className="mt-1 text-[12px] leading-relaxed text-foreground/70">{results.acceptanceCriteria}</p>
+          <div className="text-xs font-bold uppercase caps-label text-foreground/45">{t('tasks.acceptanceCriteria')}</div>
+          <p className="mt-1 text-sm text-foreground/70">{results.acceptanceCriteria}</p>
         </div>
       )}
 
@@ -1317,18 +1317,18 @@ function ResultsPanel({
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-[13px] font-bold">
+              <span className="text-base font-bold">
                 {verdict.result === 'pass' ? t('tasks.verdictPass') : verdict.result === 'fail' ? t('tasks.verdictFail') : t('tasks.verdictUnparsed')}
               </span>
               {repair && (
-                <span className="ml-auto shrink-0 rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[10.5px] font-bold text-foreground/55">
+                <span className="ml-auto shrink-0 rounded-full bg-foreground/[0.06] px-2 py-0.5 text-xs font-bold numeric text-foreground/55">
                   {t('tasks.repairAttempt', { used: repair.used, max: repair.max })}
                 </span>
               )}
             </div>
-            {verdict.reason && <p className="mt-0.5 text-[12px] leading-relaxed text-foreground/65">{verdict.reason}</p>}
+            {verdict.reason && <p className="mt-0.5 text-sm text-foreground/65">{verdict.reason}</p>}
             {verdict.nodes && verdict.nodes.length > 0 && (
-              <p className="mt-1 text-[11px] text-foreground/45">{t('tasks.repairNodes', { nodes: verdict.nodes.join(', ') })}</p>
+              <p className="mt-1 text-xs text-foreground/45">{t('tasks.repairNodes', { nodes: verdict.nodes.join(', ') })}</p>
             )}
           </div>
         </div>
@@ -1336,10 +1336,10 @@ function ResultsPanel({
 
       {verdicts.length > 1 && (
         <div className="rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] px-3 py-2.5">
-          <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-foreground/45">{t('tasks.verdictHistory')}</div>
+          <div className="mb-1.5 text-xs font-bold uppercase caps-label text-foreground/45">{t('tasks.verdictHistory')}</div>
           <div className="flex flex-col gap-1">
             {verdicts.map((v, i) => (
-              <div key={i} className="flex items-start gap-2 text-[11.5px]">
+              <div key={i} className="flex items-start gap-2 text-sm">
                 {v.result === 'pass' ? (
                   <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" strokeWidth={2.5} />
                 ) : v.result === 'fail' ? (
@@ -1361,26 +1361,26 @@ function ResultsPanel({
         return (
         <div key={node.id} className="rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] p-3">
           <div className="flex items-center gap-2">
-            <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{node.title}</span>
-            <span className={cn('shrink-0 rounded-full border px-2 py-0.5 text-[10.5px] font-bold', pill.className)}>
+            <span className="min-w-0 flex-1 truncate text-base font-semibold" title={node.title}>{node.title}</span>
+            <span className={cn('shrink-0 rounded-full border px-2 py-0.5 text-xs font-bold', pill.className)}>
               {pill.labelKey ? t(pill.labelKey) : node.state}
             </span>
             {node.sessionId && onOpenChildSession && (
               <button
                 type="button"
                 onClick={() => onOpenChildSession(node.sessionId!)}
-                className="inline-flex shrink-0 items-center gap-1 rounded text-[11.5px] font-semibold text-indigo-500 hover:underline dark:text-indigo-300"
+                className="inline-flex shrink-0 items-center gap-1 rounded text-sm font-semibold text-indigo-500 hover:underline dark:text-indigo-300"
               >
                 <ExternalLink className="h-3 w-3" strokeWidth={2.5} /> {t('tasks.openSession')}
               </button>
             )}
           </div>
           {node.output ? (
-            <div className="mt-2 max-h-72 overflow-y-auto rounded-md border border-border/50 bg-background px-3 py-2 text-[12px] leading-relaxed">
+            <div className="mt-2 max-h-72 overflow-y-auto rounded-md border border-border/50 bg-background px-3 py-2 text-sm">
               <Markdown>{node.output}</Markdown>
             </div>
           ) : (
-            <p className="mt-1.5 text-[11.5px] text-foreground/40">{t('tasks.noOutput')}</p>
+            <p className="mt-1.5 text-sm text-foreground/40">{t('tasks.noOutput')}</p>
           )}
         </div>
         )

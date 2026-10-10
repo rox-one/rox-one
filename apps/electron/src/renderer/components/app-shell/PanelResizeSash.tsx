@@ -9,15 +9,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSetAtom, useAtomValue } from 'jotai'
 import { panelStackAtom, resizePanelsAtom } from '@/atoms/panel-stack'
+import { featureLayoutEngineAtom } from '@/atoms/unified-shell'
 import {
   PANEL_MIN_WIDTH,
+  CENTER_MIN_WIDTH,
   inlineSashGeometry,
   PANEL_STACK_VERTICAL_OVERFLOW,
 } from './panel-constants'
 import { sashHitWidthPx } from './ResizeHandle'
 import { PanelSeam, type PanelSeamSwapGrip, type PanelSwapSide } from './PanelSeam'
 import { usePanelResize } from '@/hooks/usePanelResize'
-import { equalSplit } from './resize-math'
+import { equalSplit, SNAP_PERCENTS, type SplitSnap } from './resize-math'
 import type { ResizeBounds } from './resize-controller'
 
 export { PANEL_MIN_WIDTH }
@@ -54,6 +56,8 @@ function boundsFromSash(
   sash: HTMLElement,
   leftId: string,
   rightId: string,
+  neighbourMin: number,
+  snap: SplitSnap | undefined,
 ): ResizeBounds | null {
   const leftPanel = sash.previousElementSibling as HTMLElement | null
   const rightPanel = sash.nextElementSibling as HTMLElement | null
@@ -61,15 +65,20 @@ function boundsFromSash(
   const sizeA = leftPanel.getBoundingClientRect().width
   const sizeB = rightPanel.getBoundingClientRect().width
   const total = sizeA + sizeB
+  // Derived maximum: neither side may grow past the point where its neighbour
+  // falls under its minimum. With the engine OFF this is PANEL_MIN_WIDTH, i.e.
+  // exactly the shipped bound.
+  const maxA = Math.max(neighbourMin, total - neighbourMin)
   return {
     leftId,
     rightId,
     total,
     sizeA,
-    minA: PANEL_MIN_WIDTH,
-    maxA: Math.max(PANEL_MIN_WIDTH, total - PANEL_MIN_WIDTH),
-    minB: PANEL_MIN_WIDTH,
-    maxB: Math.max(PANEL_MIN_WIDTH, total - PANEL_MIN_WIDTH),
+    minA: neighbourMin,
+    maxA,
+    minB: neighbourMin,
+    maxB: maxA,
+    snap,
   }
 }
 
@@ -80,11 +89,15 @@ export function PanelResizeSash({
 }: PanelResizeSashProps) {
   const resizePanels = useSetAtom(resizePanelsAtom)
   const panelStack = useAtomValue(panelStackAtom)
+  const layoutEngineOn = useAtomValue(featureLayoutEngineAtom)
   const left = panelStack[leftIndex]
   const right = panelStack[rightIndex]
   const leftId = left?.id ?? `missing-left-${leftIndex}`
   const rightId = right?.id ?? `missing-right-${rightIndex}`
   const [sizeA, setSizeA] = useState(PANEL_MIN_WIDTH)
+  // Engine OFF keeps the shipped PANEL_MIN_WIDTH bounds and no targets.
+  const neighbourMin = layoutEngineOn ? CENTER_MIN_WIDTH : PANEL_MIN_WIDTH
+  const snap: SplitSnap | undefined = layoutEngineOn ? { percents: SNAP_PERCENTS } : undefined
 
   const applyProportions = useCallback((leftPx: number, rightPx: number, combined: number) => {
     const sash = document.querySelector(`[data-sash-pair="${leftId}::${rightId}"]`)
@@ -109,6 +122,10 @@ export function PanelResizeSash({
     onCommit: (a, b) => applyProportions(a, b, combinedProportion),
     onCancel: (a, b) => applyProportions(a, b, combinedProportion),
   })
+
+  // Read the live magnetic state the controller keeps during preview/commit;
+  // each preview re-renders through applyProportions, so this stays current.
+  const snapState = layoutEngineOn ? resize.controller.current?.snapState : undefined
 
   useEffect(() => {
     resize.neighborChanged(leftId, rightId)
@@ -138,6 +155,7 @@ export function PanelResizeSash({
       valueMax={Math.max(PANEL_MIN_WIDTH, sizeA + PANEL_MIN_WIDTH)}
       dragging={resize.dragging}
       disabled={!left || !right}
+      snap={snapState}
       data-sash-pair={`${leftId}::${rightId}`}
       swapGrip={swapGrip}
       className="relative z-sash flex justify-center"
@@ -152,7 +170,7 @@ export function PanelResizeSash({
         // `currentTarget` is the inner handle: bounds must come from the seam
         // wrapper (`data-sash-pair`), whose siblings are the two panels.
         const sash = (event.currentTarget as HTMLElement).closest<HTMLElement>('[data-sash-pair]')
-        resize.handlePointerDown(event, sash ? boundsFromSash(sash, leftId, rightId) : null)
+        resize.handlePointerDown(event, sash ? boundsFromSash(sash, leftId, rightId, neighbourMin, snap) : null)
       }}
       onPointerMove={resize.handlePointerMove}
       onPointerUp={resize.handlePointerUp}
@@ -161,14 +179,14 @@ export function PanelResizeSash({
       onKeyAdjust={(delta) => {
         const sash = document.querySelector(`[data-sash-pair="${leftId}::${rightId}"]`) as HTMLElement | null
         if (!sash) return
-        resize.handleKeyAdjust(delta, boundsFromSash(sash, leftId, rightId))
+        resize.handleKeyAdjust(delta, boundsFromSash(sash, leftId, rightId, neighbourMin, snap))
       }}
       onKeyCommit={resize.handleKeyCommit}
       onKeyCancel={resize.handleKeyCancel}
       onReset={() => {
         const sash = document.querySelector(`[data-sash-pair="${leftId}::${rightId}"]`) as HTMLElement | null
         if (!sash) return
-        const bounds = boundsFromSash(sash, leftId, rightId)
+        const bounds = boundsFromSash(sash, leftId, rightId, neighbourMin, snap)
         if (!bounds) return
         const equal = equalSplit(bounds.total, bounds.minA, bounds.maxA, bounds.minB, bounds.maxB)
         if (!equal.feasible) return

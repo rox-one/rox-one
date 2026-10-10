@@ -2084,14 +2084,14 @@ export function FreeFormInput({
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -4, scale: 0.98 }}
                           transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: [0.2, 0, 0.2, 1] }}
-                          className="inline-flex max-w-full items-center gap-0.5 overflow-hidden rounded-[var(--radius-control)] border border-border/50 bg-foreground/2 text-[13px] text-foreground/80"
+                          className="inline-flex max-w-full items-center gap-0.5 overflow-hidden rounded-[var(--radius-control)] border border-border/50 bg-foreground/2 text-base text-foreground/80"
                         >
                           <Tooltip delayDuration={250}>
                             <TooltipTrigger asChild>
                               <button
                                 type="button"
                                 aria-label={`${t('chat.selectedText')} ${chipIndex}: ${tooltipText}`}
-                                className="input-toolbar-btn inline-flex h-6 min-w-6 cursor-pointer items-center justify-center rounded-[var(--radius-control)] px-1 text-[9px] font-medium text-muted-foreground hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                className="input-toolbar-btn inline-flex h-6 min-w-6 cursor-pointer items-center justify-center rounded-[var(--radius-control)] px-1 text-xs font-medium text-muted-foreground hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 onMouseDown={(event) => {
                                   event.preventDefault()
                                   event.stopPropagation()
@@ -2231,7 +2231,7 @@ export function FreeFormInput({
                   disabled && 'opacity-45',
                 )}
               >
-                <span className="truncate">{hasFolder ? folderName : t('composer.deck.chip.folderEmpty', { defaultValue: 'не выбрана' })}</span>
+                <span className="truncate" title={hasFolder ? folderName : t('composer.deck.chip.folderEmpty', { defaultValue: 'не выбрана' })}>{hasFolder ? folderName : t('composer.deck.chip.folderEmpty', { defaultValue: 'не выбрана' })}</span>
               </button>
             )}
           />
@@ -2413,12 +2413,12 @@ export function FreeFormInput({
             {magicWorkflows.map((workflow) => (
               <Tooltip key={workflow.id} delayDuration={200}>
                 <TooltipTrigger asChild>
-                  <span className="inline-flex max-w-full items-center gap-1 rounded-[var(--radius-control)] bg-foreground/5 px-2 py-0.5 text-[12px] text-foreground/80">
+                  <span className="inline-flex max-w-full items-center gap-1 rounded-[var(--radius-control)] bg-foreground/5 px-2 py-0.5 text-sm text-foreground/80">
                     {t(`workflows.label.${workflow.id}`)}
                     <span className="text-foreground/50">{t(`workflows.cost.${workflow.costClass}`)}</span>
                   </span>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs text-[12px]">
+                <TooltipContent side="top" className="max-w-xs text-sm">
                   <div>{t(`workflows.hint.${workflow.id}`)}</div>
                   <div>{t('workflows.skills')}: {workflow.skills.join(', ')}</div>
                   <div>{t('workflows.stop')}: {workflow.stopCondition}</div>
@@ -2528,7 +2528,7 @@ export function FreeFormInput({
                 contextStatus={contextStatus}
               />
               {chatChromeEnabled && formatCostUsd(contextStatus?.costUsd) && (
-                <span className="text-[9px] text-muted-foreground tabular-nums shrink-0" data-testid="chat-session-cost">
+                <span className="text-xs text-muted-foreground numeric shrink-0" data-testid="chat-session-cost">
                   {t('workbench.status.cost', { amount: formatCostUsd(contextStatus?.costUsd) })}
                 </span>
               )}
@@ -2602,7 +2602,7 @@ export function FreeFormInput({
                             ))}
                             {remainingCount > 0 && (
                               <div
-                                className="-ml-1 h-5 w-5 rounded-[var(--radius-control)] bg-background shadow-minimal flex items-center justify-center text-[8px] font-medium text-muted-foreground"
+                                className="-ml-1 h-5 w-5 rounded-[var(--radius-control)] bg-background shadow-minimal flex items-center justify-center text-xs font-medium text-muted-foreground"
                                 style={{ zIndex: displaySources.length + 1 }}
                               >
                                 +{remainingCount}
@@ -2734,7 +2734,7 @@ export function FreeFormInput({
                             ))}
                             {remainingCount > 0 && (
                               <div
-                                className="-ml-1 h-5 w-5 rounded-[var(--radius-control)] bg-background shadow-minimal flex items-center justify-center text-[8px] font-medium text-muted-foreground"
+                                className="-ml-1 h-5 w-5 rounded-[var(--radius-control)] bg-background shadow-minimal flex items-center justify-center text-xs font-medium text-muted-foreground"
                                 style={{ zIndex: displaySources.length + 1 }}
                               >
                                 +{remainingCount}
@@ -2851,7 +2851,7 @@ export function FreeFormInput({
                     type="button"
                     aria-label={`${t('common.model')}: ${connectionUnavailable ? t('common.unavailable') : currentModelDisplayName}`}
                     className={cn(
-                      "input-toolbar-btn inline-flex items-center h-6 px-1.5 gap-0.5 text-[9px] shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/5 transition-colors select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                      "input-toolbar-btn inline-flex items-center h-6 px-1.5 gap-0.5 text-xs shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/5 transition-colors select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                       modelDropdownOpen && "bg-foreground/5",
                       connectionUnavailable && "text-destructive",
                     )}
@@ -2889,7 +2889,7 @@ export function FreeFormInput({
                 connectionsByProvider.map(([providerName, connections], index) => (
                   <React.Fragment key={providerName}>
                     {/* Provider group label */}
-                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide select-none">
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase caps-label select-none">
                       {providerName}
                     </div>
                     {connections.map((conn) => {
@@ -3239,7 +3239,7 @@ export function FreeFormInput({
                     onClick={handleCompactClick}
                     disabled={isProcessing}
                     aria-label={t(isProcessing ? 'chat.contextUsageWait' : 'chat.contextUsageCompact', { percent: usagePercent })}
-                    className="inline-flex items-center h-6 px-2 text-[12px] font-medium bg-info/10 rounded-[var(--radius-control)] shadow-tinted select-none cursor-pointer hover:bg-info/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center h-6 px-2 text-sm font-medium numeric bg-info/10 rounded-[var(--radius-control)] shadow-tinted select-none cursor-pointer hover:bg-info/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       '--shadow-color': 'var(--info-rgb)',
                       color: 'color-mix(in oklab, var(--info) 30%, var(--foreground))',

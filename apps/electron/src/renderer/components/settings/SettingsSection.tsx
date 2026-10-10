@@ -94,7 +94,7 @@ export interface SettingsGroupProps {
 export function SettingsGroup({ title, children, className }: SettingsGroupProps) {
   return (
     <div className={cn('space-y-4', className)}>
-      <h2 className="text-[12px] font-semibold text-text-secondary pb-2 border-b border-border-subtle">
+      <h2 className="text-sm font-semibold text-text-secondary pb-2 border-b border-border-subtle">
         {title}
       </h2>
       <div className="space-y-[var(--page-section-gap)]">{children}</div>

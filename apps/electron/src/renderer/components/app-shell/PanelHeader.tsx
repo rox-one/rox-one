@@ -353,7 +353,7 @@ export function PanelHeader({
       <h1 className={cn(
         "text-body font-semibold truncate font-sans leading-tight text-text-primary",
         isRegeneratingTitle && "animate-shimmer-text"
-      )}>{title}</h1>
+      )} title={title ?? undefined}>{title}</h1>
       {badge}
     </motion.div>
   )

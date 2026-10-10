@@ -91,7 +91,7 @@ export function KnowledgeMapDocView({ node, workspaceId }: KnowledgeMapDocViewPr
         <h4 className="truncate text-sm font-medium" title={node.relPath ?? node.label}>
           {node.label}
         </h4>
-        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+        <span className="shrink-0 text-xs text-muted-foreground numeric">
           {t('knowledgeMap.node.links', { count: node.linkCount })}
         </span>
       </div>

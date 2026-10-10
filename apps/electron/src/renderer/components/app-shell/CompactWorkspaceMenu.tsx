@@ -110,7 +110,7 @@ export function CompactWorkspaceMenu({ onOpenBrowser, showServices = true }: { o
                     className="min-h-9 [@media(pointer:coarse)]:min-h-11"
                   >
                     <Icon className="size-4 shrink-0" aria-hidden />
-                    <span className="min-w-0 flex-1 truncate">{title}</span>
+                    <span className="min-w-0 flex-1 truncate" title={title}>{title}</span>
                     {tab.focused && <Check className="size-3.5 shrink-0" aria-hidden />}
                   </StyledDropdownMenuItem>
                 )

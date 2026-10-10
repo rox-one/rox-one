@@ -134,8 +134,8 @@ export function SessionFanOutSheet({
                   job.status === 'running' && 'bg-foreground/5',
                 )}
               >
-                <span className="truncate">{job.title}</span>
-                <span className="ml-2 shrink-0 text-[10px] uppercase text-muted-foreground">
+                <span className="truncate" title={job.title}>{job.title}</span>
+                <span className="ml-2 shrink-0 text-xs uppercase text-muted-foreground">
                   {job.status === 'running' ? t('entityView.fanOutRunning') : t('entityView.fanOutQueued')}
                 </span>
               </li>

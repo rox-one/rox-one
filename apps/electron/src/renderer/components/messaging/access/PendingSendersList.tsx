@@ -64,9 +64,9 @@ function PendingRow({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
-          <span className="truncate text-sm">{primary}</span>
+          <span className="truncate text-sm" title={primary}>{primary}</span>
           {sender.username && (
-            <span className="shrink-0 truncate text-xs text-foreground/40">
+            <span className="shrink-0 truncate text-xs text-foreground/40" title={sender.username}>
               @{sender.username}
             </span>
           )}

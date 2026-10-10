@@ -210,7 +210,7 @@ function SessionLanesStory() {
           <div className="flex h-[560px] w-[392px] flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface-canvas">
             <div className="flex h-[var(--chrome-panel-header-height)] shrink-0 items-center gap-1.5 border-b border-border-subtle bg-surface-elevated px-2">
               <span className="text-body font-semibold text-text-primary">Сессии</span>
-              <span className="rounded-[var(--radius-control)] bg-surface-hover px-1 text-caption font-medium tabular-nums text-text-secondary">
+              <span className="rounded-[var(--radius-control)] bg-surface-hover px-1 text-caption font-medium numeric text-text-secondary">
                 {rows.length}
               </span>
             </div>

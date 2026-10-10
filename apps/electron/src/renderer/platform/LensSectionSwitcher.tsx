@@ -43,7 +43,7 @@ export function LensSectionSwitcher({
       title: entry.label,
       icon: <Icon className="icon-caption shrink-0" aria-hidden="true" />,
       badge: entry.count ? (
-        <span className="shrink-0 tabular-nums text-caption text-text-secondary">{entry.count}</span>
+        <span className="shrink-0 numeric text-caption text-text-secondary">{entry.count}</span>
       ) : undefined,
     }
   })

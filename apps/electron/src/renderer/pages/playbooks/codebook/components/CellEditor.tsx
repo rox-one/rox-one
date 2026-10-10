@@ -45,7 +45,7 @@ export function CellEditor({ cell, index, total, result, workspaceId, projectSlu
       tabIndex={-1}
     >
       <div className="flex items-center gap-2">
-        <span className="text-caption tabular-nums text-muted-foreground" aria-hidden>{index + 1}</span>
+        <span className="text-caption numeric text-muted-foreground" aria-hidden>{index + 1}</span>
         <Select value={cell.kind} onValueChange={(value) => onChange({ kind: value as CodebookCellKind })} disabled={busy}>
           <SelectTrigger className="h-7 w-32 text-xs" aria-label={t('playbooks.codebook.kindLabel')} data-testid={`playbooks-codebook-kind-${cell.id}`}>
             <SelectValue />

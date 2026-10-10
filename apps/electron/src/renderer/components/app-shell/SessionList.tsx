@@ -1388,7 +1388,7 @@ export function SessionList({
                     )}
                   />
                   {head.collapsed && (
-                    <span className="text-[10px] tabular-nums text-muted-foreground/50">{head.branchCount}</span>
+                    <span className="text-xs numeric text-muted-foreground/50">{head.branchCount}</span>
                   )}
                 </button>
                 {sessionItem}

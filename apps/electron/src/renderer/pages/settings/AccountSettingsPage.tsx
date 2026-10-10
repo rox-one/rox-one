@@ -421,7 +421,7 @@ export default function AccountSettingsPage() {
               </SettingsRow>
             ) : null}
             <SettingsRow label={t('profile.balanceLabel')} description={t('settings.account.cloud.title')}>
-              <span className="text-sm tabular-nums">{formatBalance(cloudAccount ? Number(cloudAccount.balance.availableRox) : null, t)}</span>
+              <span className="text-sm numeric">{formatBalance(cloudAccount ? Number(cloudAccount.balance.availableRox) : null, t)}</span>
             </SettingsRow>
             <SettingsToggle
               label={t('settings.account.analyticsConsent')}
@@ -443,7 +443,7 @@ export default function AccountSettingsPage() {
               description={t('settings.account.xpHint')}
             >
               <div className="min-w-[220px] space-y-1.5">
-                <div className="flex justify-between text-xs text-muted-foreground tabular-nums">
+                <div className="flex justify-between text-xs text-muted-foreground numeric">
                   <span>
                     {nextThreshold == null
                       ? t('profile.xpMax', { xp: lifetimeXp })
@@ -484,7 +484,7 @@ export default function AccountSettingsPage() {
                       className="flex items-center justify-between gap-3 border-b border-border/40 py-1.5 last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0"
                     >
                       <span>{t(XP_EVENT_KEYS[event.type] ?? event.type)}</span>
-                      <span className="tabular-nums text-muted-foreground">+{event.xp}</span>
+                      <span className="numeric text-muted-foreground">+{event.xp}</span>
                     </li>
                   ))}
                 </ul>

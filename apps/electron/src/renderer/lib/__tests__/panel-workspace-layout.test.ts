@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'bun:test'
 import {
+  applyPanelLayoutProfile,
   capturePanelResizeTracks,
   defaultPanelWorkspaceLayout,
   compactPanelShowsContent,
+  deletePanelLayoutProfile,
   normalizePanelTracks,
   panelGridShape,
   panelGridFocusTarget,
   reconcilePanelFullScreen,
+  savePanelLayoutProfile,
   togglePanelFullScreen,
   parsePanelWorkspaceLayout,
   resizePanelTracks,
@@ -193,6 +196,69 @@ describe('persisted panel geometry validation', () => {
     const restored = parsePanelWorkspaceLayout(JSON.parse(JSON.stringify(preferences)), 'a')!
     expect(resolvePanelGridTracks(restored, { columns: 2, rows: 2 }, [1, 1, 1, 1])).toEqual(preferences.grids['2x2'])
     expect(resolvePanelGridTracks(restored, { columns: 3, rows: 2 }, [1, 1, 1, 1, 1, 1])).toEqual(preferences.grids['3x2'])
+  })
+})
+
+describe('saved layout profiles', () => {
+  const profile = {
+    id: 'p1',
+    name: 'Утро',
+    preset: 'triptych' as const,
+    grids: { '3x2': { columns: [0.25, 0.5, 0.25], rows: [0.4, 0.6] } },
+  }
+
+  it('keeps valid profiles, dedupes ids and defaults an absent list to empty', () => {
+    const restored = parsePanelWorkspaceLayout({
+      schemaVersion: 2,
+      workspaceId: 'a',
+      mode: 'auto',
+      preset: 'auto',
+      profiles: [profile, { ...profile }],
+    }, 'a')!
+    expect(restored.profiles).toEqual([profile])
+    expect(parsePanelWorkspaceLayout({ schemaVersion: 2, workspaceId: 'a', mode: 'auto' }, 'a')!.profiles).toEqual([])
+    expect(defaultPanelWorkspaceLayout('a').profiles).toEqual([])
+  })
+
+  it('drops malformed profile entries without losing the valid ones', () => {
+    const restored = parsePanelWorkspaceLayout({
+      schemaVersion: 2,
+      workspaceId: 'a',
+      mode: 'auto',
+      preset: 'auto',
+      profiles: [
+        profile,
+        null,
+        { id: '', name: 'x', preset: 'focus', grids: {} },
+        { id: 'p2', name: '   ', preset: 'focus', grids: {} },
+        { id: 'p3', name: 'y', preset: 'obsolete', grids: {} },
+        { id: 'p4', name: 'z', preset: 'focus', grids: { bad: { columns: [1], rows: [1] }, '1x1': 'nope' } },
+      ],
+    }, 'a')!
+    expect(restored.profiles!.map((entry) => entry.id)).toEqual(['p1', 'p4'])
+    expect(restored.profiles![1].grids).toEqual({})
+  })
+
+  it('round-trips a profile through save, apply and delete', () => {
+    const base = {
+      ...defaultPanelWorkspaceLayout('a'),
+      preset: 'dialog' as const,
+      grids: { '2x2': { columns: [0.6, 0.4], rows: [0.7, 0.3] } },
+    }
+    const saved = savePanelLayoutProfile(base, 'Вечер')
+    expect(saved.profiles!.map((entry) => entry.name)).toEqual(['Вечер'])
+    // Name collision replaces rather than appending a second entry.
+    expect(savePanelLayoutProfile(saved, 'Вечер').profiles).toHaveLength(1)
+    const committed = parsePanelWorkspaceLayout(JSON.parse(JSON.stringify(saved)), 'a')!
+    expect(committed.profiles).toEqual(saved.profiles)
+    const id = saved.profiles![0].id
+    // Moving on and applying the profile restores its preset and captured tracks.
+    const applied = applyPanelLayoutProfile({ ...committed, preset: 'wall' as const, grids: {} }, id)
+    expect(applied.preset).toBe('dialog')
+    expect(applied.grids).toEqual(base.grids)
+    expect(applyPanelLayoutProfile(applied, 'missing')).toEqual(applied)
+    expect(deletePanelLayoutProfile(applied, id).profiles).toEqual([])
+    expect(deletePanelLayoutProfile(applied, 'missing').profiles).toEqual(applied.profiles)
   })
 })
 

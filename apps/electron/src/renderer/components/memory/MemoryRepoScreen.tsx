@@ -309,7 +309,7 @@ export function MemoryRepoScreen({ workspaceId }: MemoryRepoScreenProps) {
             onClick={() => setBankMenuOpen((value) => !value)}
             className="flex h-7 items-center gap-1 rounded-[var(--radius-control)] border border-border-strong bg-background px-2 text-small outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
-            <span className="truncate">{banks.find((bank) => bank.id === effectiveBankId)?.label ?? banks.find((bank) => bank.id === effectiveBankId)?.id ?? effectiveBankId}</span>
+            <span className="truncate" title={banks.find((bank) => bank.id === effectiveBankId)?.label ?? banks.find((bank) => bank.id === effectiveBankId)?.id ?? effectiveBankId}>{banks.find((bank) => bank.id === effectiveBankId)?.label ?? banks.find((bank) => bank.id === effectiveBankId)?.id ?? effectiveBankId}</span>
           </button>
           {bankMenuOpen ? (
             <ul role="listbox" className="absolute left-0 top-8 z-chrome min-w-[180px] rounded-[var(--radius-control)] border border-border bg-popover p-1 shadow-lg">
@@ -323,7 +323,7 @@ export function MemoryRepoScreen({ workspaceId }: MemoryRepoScreenProps) {
                     onClick={() => { setBankMenuOpen(false); setBankId(bank.id); setTab('files') }}
                     className={cn('flex w-full items-center rounded-[var(--radius-control)] px-2 py-1 text-left text-small', bank.id === effectiveBankId ? 'bg-surface-pressed font-semibold' : 'hover:bg-surface-hover')}
                   >
-                    <span className="min-w-0 flex-1 truncate">{bank.label}</span>
+                    <span className="min-w-0 flex-1 truncate" title={bank.label}>{bank.label}</span>
                     <span className="shrink-0 text-caption text-text-muted">{t(bank.isMain ? 'memory.repo.bank.main' : 'memory.repo.bank.workspace')}</span>
                   </button>
                 </li>
@@ -342,7 +342,7 @@ export function MemoryRepoScreen({ workspaceId }: MemoryRepoScreenProps) {
         </span>
 
         <span className="ml-auto flex shrink-0 items-center gap-1 text-caption text-text-muted" data-testid="memory-repo-head">
-          {t('memory.repo.head')} <span className="font-mono tabular-nums">{headLabel}</span>
+          {t('memory.repo.head')} <span className="font-mono numeric">{headLabel}</span>
         </span>
 
         <button type="button" data-testid="memory-repo-refresh" onClick={reload} className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] border border-border-strong px-2 text-small hover:bg-surface-hover">

@@ -490,10 +490,10 @@ function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorPr
   const displayMessage = statusMessage || t(PROCESSING_MESSAGE_KEYS[messageIndex])
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1 -mb-1 text-[13px] text-muted-foreground">
+    <div className="flex items-center gap-2 px-3 py-1 -mb-1 text-base text-muted-foreground">
       {/* Spinner in same location as TurnCard chevron */}
       <div className="w-3 h-3 flex items-center justify-center shrink-0">
-        <Spinner className="text-[10px]" />
+        <Spinner className="text-xs" />
       </div>
       {/* Label with crossfade animation on content change only */}
       <span className="relative h-5 flex items-center">
@@ -509,7 +509,7 @@ function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorPr
           </motion.span>
         </AnimatePresence>
         {elapsed >= 1 && (
-          <span className="text-muted-foreground/60 ml-1 tabular-nums">
+          <span className="text-muted-foreground/60 ml-1 numeric">
             {formatElapsed(elapsed)}
           </span>
         )}
@@ -2965,7 +2965,7 @@ function MessageBubble({
                 onUrlClick={onOpenUrl}
                 onFileClick={onOpenFile}
                 id={message.id}
-                className="text-sm"
+                className="prose-body prose-measure"
                 collapsible
                 blockScope={blockScope}
               >
@@ -3003,10 +3003,10 @@ function MessageBubble({
   // === STATUS MESSAGE: Matches ProcessingIndicator layout for visual consistency ===
   if (message.role === 'status') {
     return (
-      <div className="flex items-center gap-2 px-3 py-1 -mb-1 text-[13px] text-muted-foreground">
+      <div className="flex items-center gap-2 px-3 py-1 -mb-1 text-base text-muted-foreground">
         {/* Spinner in same location as TurnCard chevron */}
         <div className="w-3 h-3 flex items-center justify-center shrink-0">
-          <Spinner className="text-[10px]" />
+          <Spinner className="text-xs" />
         </div>
         <span>{message.errorCode === 'NATIVE_SESSION_REQUEST_FAILED' ? t('chat.sessionRequestFailed') : message.content}</span>
       </div>
@@ -3039,7 +3039,7 @@ function MessageBubble({
     const Icon = config.icon
 
     return (
-      <div className={cn('flex items-center gap-2 px-3 py-1 text-[13px] select-none', config.className)}>
+      <div className={cn('flex items-center gap-2 px-3 py-1 text-base select-none', config.className)}>
         <div className="w-3 h-3 flex items-center justify-center shrink-0">
           <Icon className="w-3 h-3" />
         </div>

@@ -37,7 +37,7 @@ export function continuumToneClass(tone: ContinuumTone): string {
 /** Keyboard hint chip. Caption size (11px floor), mono, token borders only. */
 export function ContinuumKbd({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-[var(--radius-xs)] border border-border-subtle bg-surface-elevated px-1 font-mono text-caption leading-none text-text-secondary">
+    <kbd className="inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-[var(--radius-xs)] border border-border-subtle bg-surface-elevated px-1 font-mono text-caption text-text-secondary">
       {children}
     </kbd>
   )
@@ -58,7 +58,7 @@ export function ContinuumBadge({
       data-g05-badge={tone}
       className={cn(
         'inline-flex items-center gap-1.5 text-caption whitespace-nowrap',
-        mono && 'font-mono tabular-nums',
+        mono && 'font-mono numeric',
         continuumToneClass(tone),
       )}
     >

@@ -127,7 +127,7 @@ export function TerminalOutput({
             <span>{t('terminal.output')}</span>
             {exitCode !== undefined && (
               <span
-                className="px-1.5 py-0.5 rounded text-[10px]"
+                className="px-1.5 py-0.5 rounded text-xs"
                 style={{
                   backgroundColor: `color-mix(in srgb, var(--terminal-ansi-${exitCode === 0 ? 'green' : 'red'}) 20%, transparent)`,
                   color: `var(--terminal-ansi-${exitCode === 0 ? 'green' : 'red'})`,

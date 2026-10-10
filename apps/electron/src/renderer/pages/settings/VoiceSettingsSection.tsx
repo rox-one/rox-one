@@ -70,7 +70,7 @@ function DictationStateRow() {
           defaultValue: 'Предпросмотр строки диктовки: состояние и остаток времени.',
         })}
       </span>
-      <span className="shrink-0 text-caption tabular-nums text-text-secondary">
+      <span className="shrink-0 text-caption numeric text-text-secondary">
         {t('composer.deck.dictation.remaining', {
           defaultValue: 'осталось {{time}}',
           time: formatDictationClock(remaining),

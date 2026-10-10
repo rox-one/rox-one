@@ -984,10 +984,10 @@ export function OrbitBoard() {
         style={{ height: 'var(--chrome-status-height)' }}
       >
         <span>
-          <b className="font-medium text-[color:var(--text-secondary)]">{CARDS.length}</b>{' '}
+          <b className="font-medium numeric text-[color:var(--text-secondary)]">{CARDS.length}</b>{' '}
           {t('orbit.statusCards', { defaultValue: 'карточек на доске' })}
         </span>
-        <span className="truncate">
+        <span className="truncate" title={selectedCard.title}>
           {t('orbit.statusFocus', { defaultValue: 'фокус' })}:{' '}
           <b className="font-medium text-[color:var(--text-secondary)]">{selectedCard.title}</b>
         </span>
@@ -997,7 +997,7 @@ export function OrbitBoard() {
           </span>
         )}
         <span className="ml-auto">
-          <b className="font-medium text-[color:var(--text-secondary)]">{zoomPct}%</b>
+          <b className="font-medium numeric text-[color:var(--text-secondary)]">{zoomPct}%</b>
         </span>
       </footer>
 
@@ -1213,7 +1213,7 @@ function BoardCard({ card, lod, z, selected, hovered, transition, onHover, onFoc
       {lod === 'mini' ? (
         <div className="flex flex-1 items-center gap-2 px-2.5">
           <Icon className="icon-toolbar shrink-0 text-[color:var(--orbit-text-quiet)]" aria-hidden />
-          <span className="truncate text-[length:var(--text-small)] font-medium text-[color:var(--text-primary)]">{card.title}</span>
+          <span className="truncate text-[length:var(--text-small)] font-medium text-[color:var(--text-primary)]" title={card.title}>{card.title}</span>
           <span className="ml-auto">
             <Dot status={card.status} />
           </span>
@@ -1222,7 +1222,7 @@ function BoardCard({ card, lod, z, selected, hovered, transition, onHover, onFoc
         <>
           <div className="flex h-[34px] shrink-0 items-center gap-2 border-b border-[color:var(--border-subtle)] px-2.5">
             <Icon className="icon-toolbar shrink-0 text-[color:var(--orbit-text-quiet)]" aria-hidden />
-            <span className="truncate text-[length:var(--text-small)] font-semibold text-[color:var(--text-primary)]">{card.title}</span>
+            <span className="truncate text-[length:var(--text-small)] font-semibold text-[color:var(--text-primary)]" title={card.title}>{card.title}</span>
             <span className="ml-auto flex shrink-0 items-center gap-1.5">
               {statusChip}
               <ChevronRight className="icon-caption text-[color:var(--orbit-text-quiet)]" aria-hidden />
@@ -1359,7 +1359,7 @@ function renderBlock(
             {block.r === 'ai' ? 'R' : 'В'}
           </span>
           <span
-            className="line-clamp-2 min-w-0 text-[length:var(--text-small)] leading-normal"
+            className="line-clamp-2 min-w-0 text-[length:var(--text-small)]"
             style={{ color: block.r === 'ai' ? 'var(--text-primary)' : 'var(--text-secondary)' }}
           >
             {block.t}
@@ -1397,7 +1397,7 @@ function renderBlock(
           </span>
           <div className="min-w-0 flex-1">
             <div className="mb-0.5 text-[length:var(--text-caption)] text-[color:var(--orbit-text-quiet)]">{block.name}</div>
-            <div className="text-[length:var(--text-body)] leading-relaxed" style={{ color: block.r === 'ai' ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+            <div className="text-[length:var(--text-body)]" style={{ color: block.r === 'ai' ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
               {block.t.map((p, i) => (
                 <p key={i} className="mb-1.5 last:mb-0">
                   {p}
@@ -1406,7 +1406,7 @@ function renderBlock(
               {block.ul && (
                 <ul className="mt-0.5 list-disc pl-4 text-[length:var(--text-small)]">
                   {block.ul.map((li, i) => (
-                    <li key={i} className="leading-relaxed">
+                    <li key={i}>
                       {li}
                     </li>
                   ))}
@@ -1454,7 +1454,7 @@ function renderBlock(
       )
     case 'term':
       return (
-        <div key={key} className="whitespace-pre-wrap break-words font-mono text-[length:var(--text-caption)] leading-relaxed">
+        <div key={key} className="whitespace-pre-wrap break-words font-mono text-[length:var(--text-caption)]">
           {block.lines.map((line, i) => (
             <div key={i}>
               {line.map((seg, j) => (
@@ -1474,7 +1474,7 @@ function renderBlock(
       )
     case 'p':
       return (
-        <p key={key} className="mb-1.5 text-[length:var(--text-small)] leading-normal text-[color:var(--text-secondary)]">
+        <p key={key} className="mb-1.5 text-[length:var(--text-small)] text-[color:var(--text-secondary)]">
           {block.t}
         </p>
       )
@@ -1482,7 +1482,7 @@ function renderBlock(
       return (
         <ul key={key} className="list-disc pl-4">
           {block.li.map((li, i) => (
-            <li key={i} className="text-[length:var(--text-small)] leading-relaxed text-[color:var(--text-secondary)]">
+            <li key={i} className="text-[length:var(--text-small)] text-[color:var(--text-secondary)]">
               {li}
             </li>
           ))}

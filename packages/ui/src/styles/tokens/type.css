@@ -1,37 +1,68 @@
-/* Type scale (UI-AUDIT §3.3). Inter UI, Rox mono.
-   caption 11/14 · small 12/16 · body 13/20 · reading 15/24
+/* Type scale (UI-AUDIT §3.3; G7 «Типографика и плотность 2.0»).
+   caption 11/16 · small 12/16 · body 13/20 · reading 15/24
    title-sm 15/20 · title 18/24 · display 24/32
+   data 13/18 · title-md 16/22 · stat 20/28 · prose = reading
    Floor 11px; weights 400/500/600 only. Tailwind `text-xs|sm|base|lg|xl`
    are remapped onto caption/small/body/reading/title, so existing usages
    snap to the scale.
-   Line heights are unitless ratios (calc(px / px)), exactly the listed px
-   on the element itself, but they inherit as a ratio, so descendants with a
-   smaller font-size and no leading of their own scale (like Tailwind's
-   defaults) instead of inheriting a fixed px line box. */
+   Line heights are FIXED px boxes (not unitless ratios): the listed px is
+   the line box on the element itself and is inherited as an absolute length,
+   so nested text keeps the row rhythm instead of re-scaling by ratio.
+   The rhythm roles below (`--leading-*`, `--tracking-*`, `--numeric-features`,
+   `--wrap-identifier`, `--hyphens-prose`, `--truncate-lines*`, `--weight-data`)
+   back the `.numeric`, `.caps-label`, `.label-tracking`, `.prose-body` and
+   `.prose-measure` utilities in ../index.css. */
 @theme {
   --text-caption: 11px;
-  --text-caption--line-height: calc(14 / 11);
+  --text-caption--line-height: 16px;
   --text-small: 12px;
-  --text-small--line-height: calc(16 / 12);
+  --text-small--line-height: 16px;
   --text-body: 13px;
-  --text-body--line-height: calc(20 / 13);
+  --text-body--line-height: 20px;
   --text-reading: 15px;
-  --text-reading--line-height: calc(24 / 15);
+  --text-reading--line-height: 24px;
   --text-title-sm: 15px;
-  --text-title-sm--line-height: calc(20 / 15);
+  --text-title-sm--line-height: 20px;
   --text-title: 18px;
-  --text-title--line-height: calc(24 / 18);
+  --text-title--line-height: 24px;
   --text-display: 24px;
-  --text-display--line-height: calc(32 / 24);
+  --text-display--line-height: 32px;
 
   --text-xs: 11px;
-  --text-xs--line-height: calc(14 / 11);
+  --text-xs--line-height: 16px;
   --text-sm: 12px;
-  --text-sm--line-height: calc(16 / 12);
+  --text-sm--line-height: 16px;
   --text-base: 13px;
-  --text-base--line-height: calc(20 / 13);
+  --text-base--line-height: 20px;
   --text-lg: 15px;
-  --text-lg--line-height: calc(24 / 15);
+  --text-lg--line-height: 24px;
   --text-xl: 18px;
-  --text-xl--line-height: calc(24 / 18);
+  --text-xl--line-height: 24px;
+
+  /* G7 role steps. */
+  --text-data: 13px;
+  --text-data--line-height: 18px;
+  --text-prose: var(--text-reading);
+  --text-prose--line-height: var(--text-reading--line-height);
+  --text-title-md: 16px;
+  --text-title-md--line-height: 22px;
+  --text-stat: 20px;
+  --text-stat--line-height: 28px;
+
+  /* Floor and rhythm roles. */
+  --text-floor: 11px;
+  --leading-caps: 1.15;
+  --leading-ui: 1.385;
+  --leading-prose: 1.6;
+  --prose-measure: 68ch;
+  --tracking-caps: 0.06em;
+  --tracking-label: 0.02em;
+  --tracking-display: -0.02em;
+  --tracking-data: 0em;
+  --numeric-features: "tnum" 1, "zero" 1, "case" 1;
+  --wrap-identifier: anywhere;
+  --hyphens-prose: auto;
+  --truncate-lines: 1;
+  --truncate-lines-desc: 2;
+  --weight-data: 500;
 }

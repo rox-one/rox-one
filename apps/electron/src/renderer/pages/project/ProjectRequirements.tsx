@@ -42,12 +42,12 @@ function MilestonePicker({
           type="button"
           title={t('projectRoadmap.linkMilestone')}
           className={cn(
-            'inline-flex h-6 max-w-[140px] shrink-0 items-center gap-1 rounded-md px-1.5 text-[11px] hover:bg-foreground/[0.06]',
+            'inline-flex h-6 max-w-[140px] shrink-0 items-center gap-1 rounded-md px-1.5 text-xs hover:bg-foreground/[0.06]',
             current ? 'text-foreground/70' : 'text-muted-foreground/60 opacity-0 group-hover:opacity-100 focus:opacity-100',
           )}
         >
           <Flag className="h-3 w-3 shrink-0" />
-          <span className="truncate">{current ? current.title : t('projectRoadmap.linkMilestone')}</span>
+          <span className="truncate" title={current?.title}>{current ? current.title : t('projectRoadmap.linkMilestone')}</span>
         </button>
       </DropdownMenuTrigger>
       <StyledDropdownMenuContent align="end">
@@ -100,11 +100,11 @@ function RequirementRow({
       <div className="ml-4 flex flex-col">
         {requirement.acceptance.map((line, index) => (
           <div key={`${index}-${line}`} className="group flex min-w-0 items-center gap-1">
-            <span className="shrink-0 pl-1 text-[11px] text-success/80" aria-hidden>✓</span>
+            <span className="shrink-0 pl-1 text-xs text-success/80" aria-hidden>✓</span>
             <InlineInput
               value={line}
               ariaLabel={t('projectRoadmap.acceptance')}
-              className="h-6 text-[12px] text-muted-foreground"
+              className="h-6 text-sm text-muted-foreground"
               onCommit={(text) =>
                 onChange({
                   ...requirement,
@@ -124,7 +124,7 @@ function RequirementRow({
           </div>
         ))}
         <AddRow
-          className="h-6 [&_input]:h-6 [&_input]:text-[12px]"
+          className="h-6 [&_input]:h-6 [&_input]:text-sm"
           placeholder={t('projectRoadmap.addAcceptancePlaceholder')}
           onAdd={(text) => onChange({ ...requirement, acceptance: [...requirement.acceptance, text] })}
         />
@@ -151,9 +151,9 @@ export function ProjectRequirements({
         return (
           <div key={kind} className="@container min-w-0 rounded-lg bg-foreground/[0.025] px-2 py-2" data-testid={`project-requirements-${kind}`}>
             <div className="flex items-baseline gap-2 px-1 pb-1">
-              <span className="text-[12px] font-semibold text-foreground/85">{t(`projectRoadmap.requirementKind.${kind}`)}</span>
-              {items.length ? <span className="text-[11px] tabular-nums text-muted-foreground">{items.length}</span> : null}
-              <span className="ml-auto hidden truncate text-[11px] text-muted-foreground/70 @[300px]:inline">
+              <span className="text-sm font-semibold text-foreground/85">{t(`projectRoadmap.requirementKind.${kind}`)}</span>
+              {items.length ? <span className="text-xs numeric text-muted-foreground">{items.length}</span> : null}
+              <span className="ml-auto hidden truncate text-xs text-muted-foreground/70 @[300px]:inline">
                 {t(`projectRoadmap.requirementKindHint.${kind}`)}
               </span>
             </div>

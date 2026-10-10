@@ -125,7 +125,7 @@ export function TelegramConnectDialog({
               onClick={handleTest}
               disabled={!token.trim() || test.state === 'testing' || saving}
             >
-              {test.state === 'testing' && <Spinner className="mr-1 text-[14px]" />}
+              {test.state === 'testing' && <Spinner className="mr-1 text-base" />}
               {t('settings.messaging.telegram.testConnection')}
             </Button>
 
@@ -156,7 +156,7 @@ export function TelegramConnectDialog({
             onClick={handleSave}
             disabled={!token.trim() || test.state !== 'success' || saving}
           >
-            {saving && <Spinner className="mr-1 text-[14px]" />}
+            {saving && <Spinner className="mr-1 text-base" />}
             {t('settings.messaging.telegram.save')}
           </Button>
         </DialogFooter>

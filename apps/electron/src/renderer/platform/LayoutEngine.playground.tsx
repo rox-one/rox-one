@@ -138,7 +138,7 @@ function Stage({ panelCount }: StageProps) {
               style={{ gridColumn: (index % shape.columns) + 1, gridRow: Math.floor(index / shape.columns) + 1 }}
             >
               <header className="flex h-9 shrink-0 items-center gap-2 border-b border-border-subtle px-3 text-small font-medium">
-                <span className="grid size-4 place-items-center rounded-full bg-accent/10 text-caption text-accent tabular-nums">{index + 1}</span>
+                <span className="grid size-4 place-items-center rounded-full bg-accent/10 text-caption text-accent numeric">{index + 1}</span>
                 <span className="truncate">{label}</span>
                 {index === 0 && <span className="ml-auto rounded-full bg-surface-canvas px-2 py-0.5 text-caption text-text-secondary">фокус</span>}
               </header>
@@ -153,11 +153,11 @@ function Stage({ panelCount }: StageProps) {
         className="flex h-7 shrink-0 items-center gap-2 border-t border-border-subtle bg-surface-elevated px-3 text-caption text-text-secondary"
         data-testid="screen-layout-engine-readout"
       >
-        <span className="font-medium text-text-primary tabular-nums">{readout}</span>
+        <span className="font-medium text-text-primary numeric">{readout}</span>
         <span aria-hidden="true">·</span>
-        <span className="tabular-nums">доступно {Math.round(width)} px</span>
-        {layout && !layout.fits && <span className="text-status-danger tabular-nums">дефицит {shortfall} px</span>}
-        <span className="ml-auto tabular-nums">{`flag ${enabled ? 'ON' : 'OFF'}`}</span>
+        <span className="numeric">доступно {Math.round(width)} px</span>
+        {layout && !layout.fits && <span className="text-status-danger numeric">дефицит {shortfall} px</span>}
+        <span className="ml-auto numeric">{`flag ${enabled ? 'ON' : 'OFF'}`}</span>
       </div>
     </div>
   )

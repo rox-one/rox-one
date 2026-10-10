@@ -67,7 +67,7 @@ export function ClipboardCard({
       <div className="flex min-w-0 items-center gap-2 text-caption text-text-muted">
         {isImage ? <Badge tone="info">{formatBadge ?? t('clipboard.image.label')}</Badge> : null}
         {entry.sourceApp ? <span className="min-w-0 truncate">{entry.sourceApp}</span> : null}
-        <span className="ml-auto shrink-0 tabular-nums">{formatRelativeTime(t, entry.createdAt, now)}</span>
+        <span className="ml-auto shrink-0 numeric">{formatRelativeTime(t, entry.createdAt, now)}</span>
         <button
           type="button"
           aria-pressed={entry.starred}

@@ -37,34 +37,34 @@ export function BacklinksList({ state, onRetry, onLoadMore, previews, previewsEn
 
   return (
     <section aria-labelledby={headingId} className={cn('flex flex-col gap-3', className)} data-entity-backlinks="">
-      <h3 id={headingId} className="flex items-baseline gap-2 text-[13px] font-semibold text-foreground">
+      <h3 id={headingId} className="flex items-baseline gap-2 text-base font-semibold text-foreground">
         {t('entities.ui.backlinks.title')}
         {state.status === 'ready' && total > 0 && (
-          <span className="text-[12px] font-normal text-text-muted">{t('entities.ui.backlinks.count', { count: total })}</span>
+          <span className="text-sm font-normal text-text-muted">{t('entities.ui.backlinks.count', { count: total })}</span>
         )}
       </h3>
       {state.status === 'loading' && state.links.length === 0 && (
-        <p className="text-[12px] text-text-muted" aria-busy="true">{t('entities.ui.backlinks.loading')}</p>
+        <p className="text-sm text-text-muted" aria-busy="true">{t('entities.ui.backlinks.loading')}</p>
       )}
       {state.status === 'error' && (
-        <button type="button" onClick={onRetry} className={cn('self-start text-[12px] text-status-danger underline-offset-2 hover:underline', FOCUS_RING)}>
+        <button type="button" onClick={onRetry} className={cn('self-start text-sm text-status-danger underline-offset-2 hover:underline', FOCUS_RING)}>
           {t('entities.ui.backlinks.error')}
         </button>
       )}
       {state.status === 'ready' && total === 0 && (
-        <p className="text-[12px] text-text-muted">{t('entities.ui.backlinks.empty')}</p>
+        <p className="text-sm text-text-muted">{t('entities.ui.backlinks.empty')}</p>
       )}
       {groups.map(({ group, sources }) => {
         const open = expanded[group] ?? false
         const visible = open ? sources : sources.slice(0, BACKLINKS_GROUP_PREVIEW)
         return (
           <div key={group} className="flex flex-col gap-1" data-backlink-group={group}>
-            <h4 className="text-[11px] font-medium uppercase tracking-wide text-text-muted">
+            <h4 className="text-xs font-medium uppercase caps-label text-text-muted">
               {t(`entities.ui.backlinks.group.${group}`)} · {sources.length}
             </h4>
             <ul className="flex flex-col gap-1">
               {visible.map((source) => (
-                <li key={source.key} className="flex min-w-0 items-center gap-2 text-[12px]">
+                <li key={source.key} className="flex min-w-0 items-center gap-2 text-sm">
                   <EntityChip
                     entityRef={source.link.from}
                     preview={previews?.[source.key]}
@@ -80,7 +80,7 @@ export function BacklinksList({ state, onRetry, onLoadMore, previews, previewsEn
               <button
                 type="button"
                 onClick={() => setExpanded((prev) => ({ ...prev, [group]: true }))}
-                className={cn('self-start text-[12px] text-accent hover:underline', MOTION_FAST, FOCUS_RING)}
+                className={cn('self-start text-sm text-accent hover:underline', MOTION_FAST, FOCUS_RING)}
               >
                 {t('entities.ui.backlinks.showAll')}
               </button>
@@ -89,7 +89,7 @@ export function BacklinksList({ state, onRetry, onLoadMore, previews, previewsEn
         )
       })}
       {state.status === 'ready' && state.nextCursor && (
-        <button type="button" onClick={onLoadMore} className={cn('self-start text-[12px] text-accent hover:underline', FOCUS_RING)}>
+        <button type="button" onClick={onLoadMore} className={cn('self-start text-sm text-accent hover:underline', FOCUS_RING)}>
           {t('entities.ui.backlinks.showAll')}
         </button>
       )}

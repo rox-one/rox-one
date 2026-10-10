@@ -74,7 +74,7 @@ export function StorageVisibleRootSettings() {
           <Button
             variant="outline"
             size="sm"
-            className="h-6 text-[11px] px-2"
+            className="h-6 text-xs px-2"
             onClick={() => { void window.electronAPI.relaunchApp() }}
           >
             {t('storage.settings.restartNow')}

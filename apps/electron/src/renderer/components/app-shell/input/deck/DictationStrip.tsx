@@ -124,7 +124,7 @@ export function DictationStrip({
         <DictationWave level={level} active />
       </span>
       <span className="min-w-0 flex-1" />
-      <span className="shrink-0 text-caption tabular-nums text-text-secondary">
+      <span className="shrink-0 text-caption numeric text-text-secondary">
         {t('composer.deck.dictation.remaining', { defaultValue: 'осталось {{time}}', time: formatClock(remaining) })}
       </span>
       <button

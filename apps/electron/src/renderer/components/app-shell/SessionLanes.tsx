@@ -233,14 +233,14 @@ export function SessionLanes({ rows, selectedId, onSelect, className, density = 
               >
                 {isCollapsed ? <ChevronRight className="icon-status" /> : <ChevronDown className="icon-status" />}
               </button>
-              <span className="text-caption font-medium uppercase tracking-wider text-text-secondary">
+              <span className="text-caption font-medium uppercase caps-label text-text-secondary">
                 {t(`session.lane.${lane.id}`, { defaultValue: lane.id })}
               </span>
-              <span className="rounded-[var(--radius-control)] bg-surface-hover px-1 text-caption font-medium tabular-nums text-text-secondary">
+              <span className="rounded-[var(--radius-control)] bg-surface-hover px-1 text-caption font-medium numeric text-text-secondary">
                 {lane.items.length}
               </span>
               {unreadCount > 0 ? (
-                <span className="rounded-full bg-accent/15 px-1.5 text-caption font-semibold leading-4 tabular-nums text-accent-text" data-lane-unread-chip={lane.id}>
+                <span className="rounded-full bg-accent/15 px-1.5 text-caption font-semibold numeric text-accent-text" data-lane-unread-chip={lane.id}>
                   {unreadCount}
                 </span>
               ) : null}
@@ -254,7 +254,7 @@ export function SessionLanes({ rows, selectedId, onSelect, className, density = 
               </span>
             </div>
             {isCollapsed ? null : lane.items.length === 0 ? (
-              <p className="px-4 py-3 text-small leading-relaxed text-text-secondary" data-lane-empty={lane.id}>
+              <p className="px-4 py-3 text-small text-text-secondary" data-lane-empty={lane.id}>
                 {t(`session.lane.empty.${lane.id}`, { defaultValue: 'Полоса пуста' })}
               </p>
             ) : (
@@ -362,13 +362,13 @@ function LaneItem({
           ) : (
             <StatusIcon className="icon-caption" aria-hidden="true" style={{ color: LANE_STATUS_COLOR[laneStatus] }} />
           )}
-          <span className={cn('min-w-0 flex-1 truncate text-body leading-tight text-text-primary', unread && 'font-medium')}>
+          <span className={cn('min-w-0 flex-1 truncate text-body text-text-primary', unread && 'font-medium')} title={title}>
             {title}
           </span>
           {item.isFlagged ? <Pin className="icon-status text-text-secondary" aria-hidden="true" /> : null}
           {unread ? (
             <span
-              className="shrink-0 rounded-full bg-accent/15 px-1.5 text-caption font-semibold leading-4 tabular-nums text-accent-text"
+              className="shrink-0 rounded-full bg-accent/15 px-1.5 text-caption font-semibold numeric text-accent-text"
               data-testid={`lane-unread-${item.id}`}
               data-unread-count={hasKnownCount ? unreadCount : undefined}
             >
@@ -376,14 +376,14 @@ function LaneItem({
             </span>
           ) : null}
           {time ? (
-            <span className="shrink-0 text-caption tabular-nums text-text-secondary group-hover/row:invisible" data-testid={`lane-time-${item.id}`}>
+            <span className="shrink-0 text-caption numeric text-text-secondary group-hover/row:invisible" data-testid={`lane-time-${item.id}`}>
               {time}
             </span>
           ) : null}
         </span>
         {expanded ? (
           <span className="flex min-w-0 items-center gap-1.5 text-caption text-text-secondary" data-testid={`lane-preview-${item.id}`}>
-            <span className="truncate">{preview}</span>
+            <span className="truncate" title={preview ?? undefined}>{preview}</span>
           </span>
         ) : null}
       </button>
@@ -449,7 +449,7 @@ function LaneItem({
           </DropdownMenu>
         </span>
       </span>
-      <span className="flex w-[52px] shrink-0 flex-col items-end justify-center pr-2 text-caption tabular-nums leading-tight">
+      <span className="flex w-[52px] shrink-0 flex-col items-end justify-center pr-2 text-caption numeric">
         {workspaceName ? (
           <span className="truncate text-text-secondary" title={workspaceName}>{workspaceName}</span>
         ) : null}

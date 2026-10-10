@@ -41,19 +41,19 @@ export function PersonField({ role, person, candidates = [], onChange, readOnly,
     <span className="flex min-w-0 items-center gap-2">
       <PersonAvatar person={person} />
       <span className="min-w-0 text-left">
-        <span className="block truncate text-[13px] font-semibold">{person.name}</span>
+        <span className="block truncate text-base font-semibold" title={person.name}>{person.name}</span>
         {person.placeholder
-          ? <span className="block truncate text-[11px] text-text-muted">{t('entities.ui.person.invited')}</span>
-          : person.title ? <span className="block truncate text-[11px] text-text-muted">{person.title}</span> : null}
+          ? <span className="block truncate text-xs text-text-muted">{t('entities.ui.person.invited')}</span>
+          : person.title ? <span className="block truncate text-xs text-text-muted" title={person.title}>{person.title}</span> : null}
       </span>
     </span>
   ) : (
-    <span className="text-[13px] text-text-muted">{interactive ? t('entities.ui.person.set', { role: roleLabel }) : t('entities.ui.person.empty')}</span>
+    <span className="text-base text-text-muted">{interactive ? t('entities.ui.person.set', { role: roleLabel }) : t('entities.ui.person.empty')}</span>
   )
 
   return (
     <div className={cn('relative flex flex-col gap-1', className)} data-person-role={typeof role === 'string' ? role : 'custom'}>
-      <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+      <div className="flex items-center gap-1 text-xs font-semibold uppercase caps-label text-text-muted">
         <span>{roleLabel}</span>
         {help ? (
           <button
@@ -62,13 +62,13 @@ export function PersonField({ role, person, candidates = [], onChange, readOnly,
             aria-expanded={helpOpen}
             onClick={() => setHelpOpen((v) => !v)}
             onKeyDown={(e) => { if (e.key === 'Escape') setHelpOpen(false) }}
-            className={cn('inline-flex size-4 items-center justify-center rounded-full text-[10px] text-text-muted hover:text-text-secondary', FOCUS_RING)}
+            className={cn('inline-flex size-4 items-center justify-center rounded-full text-xs text-text-muted hover:text-text-secondary', FOCUS_RING)}
           >
             ⓘ
           </button>
         ) : null}
       </div>
-      {helpOpen && help ? <div role="note" className="max-w-[320px] text-[12px] normal-case text-text-secondary">{help}</div> : null}
+      {helpOpen && help ? <div role="note" className="max-w-[320px] text-sm normal-case text-text-secondary">{help}</div> : null}
       {interactive ? (
         <div className="flex items-center gap-1">
           <button

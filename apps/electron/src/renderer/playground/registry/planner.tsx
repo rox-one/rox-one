@@ -794,7 +794,7 @@ function PlannerBoard() {
                 )}
               >
                 <div className="text-sm font-medium">{p.name}</div>
-                <div className="mt-0.5 text-[11px] text-foreground/45">{p.installationHint}</div>
+                <div className="mt-0.5 text-xs text-foreground/45">{p.installationHint}</div>
               </button>
             ))}
           </div>
@@ -854,7 +854,7 @@ function PlannerBoard() {
                         )}
                       >
                         <div className="flex items-center justify-between gap-2 border-b border-border/70 pb-1.5 px-1">
-                          <div className="text-[13px] font-semibold text-foreground">
+                          <div className="text-base font-semibold text-foreground">
                             {heading.title}
                           </div>
                           <DropdownMenu modal={false}>
@@ -912,10 +912,10 @@ function PlannerBoard() {
                         ) : (
                           <Circle className={cn('h-4 w-4', stateStyles[task.state])} />
                         )}
-                        <span className={cn('min-w-0 flex-1 truncate text-sm', task.state === 'done' && 'line-through text-foreground/45')}>
+                        <span className={cn('min-w-0 flex-1 truncate text-sm', task.state === 'done' && 'line-through text-foreground/45')} title={task.title}>
                           {task.title}
                         </span>
-                        <span className="text-[11px] text-foreground/45">{task.due}</span>
+                        <span className="text-xs text-foreground/45">{task.due}</span>
                       </div>
                     </div>
                   )
@@ -938,7 +938,7 @@ function PlannerBoard() {
                   contentEditable
                   suppressContentEditableWarning
                   onBlur={(e) => updateTaskTitle(selectedTask.id, e.currentTarget.textContent ?? '')}
-                  className="text-xl font-bold leading-snug outline-none mb-5"
+                  className="text-xl font-bold outline-none mb-5"
                 >
                   {selectedTask.title}
                 </div>
@@ -983,7 +983,7 @@ function PlannerBoard() {
                   onUpdate={(md) => updateTaskNotes(selectedTask.id, md)}
                   placeholder={t('playground.planner.addNotes')}
                   markdownEngine="official"
-                  className="text-sm leading-relaxed text-foreground/75"
+                  className="text-sm text-foreground/75"
                 />
 
                 {/* Separator */}
@@ -1005,15 +1005,15 @@ function PlannerBoard() {
                           <div className="mb-1 flex items-center justify-between gap-2">
                             <div className="min-w-0 flex items-center gap-1.5">
                               <Link2 className="h-3.5 w-3.5 text-foreground/45" />
-                              <span className="truncate text-xs font-medium">{snap.title}</span>
+                              <span className="truncate text-xs font-medium" title={snap.title}>{snap.title}</span>
                             </div>
-                            <span className={cn('inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px]', meta.cls)}>
+                            <span className={cn('inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs', meta.cls)}>
                               <Icon className="h-3 w-3" />
                               {meta.label}
                             </span>
                           </div>
-                          <p className="text-[11px] text-foreground/60 leading-relaxed">{snap.summary}</p>
-                          <div className="mt-1 text-[10px] text-foreground/45">Updated {snap.lastUpdated}</div>
+                          <p className="text-xs text-foreground/60">{snap.summary}</p>
+                          <div className="mt-1 text-xs text-foreground/45">Updated {snap.lastUpdated}</div>
                         </div>
                       )
                     })
@@ -1033,7 +1033,7 @@ function PlannerBoard() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="text-xs text-foreground/75">{ev.payloadSummary}</div>
-                        <div className="mt-0.5 text-[11px] text-foreground/40">
+                        <div className="mt-0.5 text-xs text-foreground/40">
                           {ev.actor} · {ev.at}
                         </div>
                       </div>

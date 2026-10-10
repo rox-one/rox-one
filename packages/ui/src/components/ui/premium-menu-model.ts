@@ -65,7 +65,7 @@ export const PREMIUM_MENU_TOKENS: Record<PremiumMenuVariant, {
     shadow: 'var(--shadow-modal-small, 0 8px 24px rgb(0 0 0 / 0.18))',
     padX: 10,
     overscan: 6,
-    surfaceClass: 'popover-styled z-island overflow-hidden p-1 text-[13px]',
+    surfaceClass: 'popover-styled z-island overflow-hidden p-1 text-base',
   },
   inspector: {
     rowHeight: 36,

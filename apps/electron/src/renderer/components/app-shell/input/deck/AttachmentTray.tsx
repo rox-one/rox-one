@@ -130,7 +130,7 @@ function AttachmentChip({
         <span className="truncate text-caption text-text-primary" title={attachment.name}>
           {attachment.name}
         </span>
-        <span className={cn('truncate text-caption', transcriptFailed ? 'text-[var(--destructive-text)]' : 'text-text-secondary')}>
+        <span className={cn('truncate text-caption numeric', transcriptFailed ? 'text-[var(--destructive-text)]' : 'text-text-secondary')} title={meta}>
           {meta}
         </span>
       </span>

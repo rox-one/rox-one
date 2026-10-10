@@ -14,6 +14,7 @@ import { motion } from 'motion/react'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { panelStackAtom, primaryPanelIdAtom, lastAuxiliaryToolAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, expandedPanelIdAtom, type PanelSpatialDirection, type PanelStackEntry } from '@/atoms/panel-stack'
 import { bottomTerminalOpenAtom, featureLayoutEngineAtom, featurePanelSwapV1Atom } from '@/atoms/unified-shell'
+import { panelLayoutGeometryAtom } from '@/atoms/panel-workspace'
 import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-parser'
 import { isDetailNavState } from '@/lib/nav-helpers'
 import { compactPanelShowsContent, panelGridFocusTarget, panelGridKey, panelGridShape, reconcilePanelFullScreen, resolvePanelGridTracks, togglePanelFullScreen } from '@/lib/panel-workspace-layout'
@@ -165,6 +166,22 @@ export function PanelStackContainer({
     const columnsWidth = Math.max(0, availableWidth - (isSidebarAndNavigatorHidden ? 0 : sidebarWidth + navigatorWidth))
     return computeLayout(columnsWidth, preset, panels.length)
   }, [layoutEngineEnabled, preset, isCompact, hasTools, availableWidth, isSidebarAndNavigatorHidden, sidebarWidth, navigatorWidth, panels.length])
+  // Publish the resolved geometry for the status-bar readout (G4). The engine
+  // memo is the single source: when it is null (flag OFF, `auto`, compact or
+  // tool tabs) the readout clears. `list` is the navigator column, `surface` is
+  // the columns area handed to `computeLayout`.
+  const setPanelLayoutGeometry = useSetAtom(panelLayoutGeometryAtom)
+  useEffect(() => {
+    if (!engineLayout) { setPanelLayoutGeometry(null); return }
+    const columnsWidth = Math.max(0, availableWidth - (isSidebarAndNavigatorHidden ? 0 : sidebarWidth + navigatorWidth))
+    if (columnsWidth <= 0) { setPanelLayoutGeometry(null); return }
+    setPanelLayoutGeometry({
+      preset: engineLayout.preset,
+      effective: engineLayout.effective,
+      listPx: !isSidebarAndNavigatorHidden && navigatorWidth > 0 ? Math.round(navigatorWidth) : null,
+      surfacePx: Math.round(columnsWidth),
+    })
+  }, [engineLayout, availableWidth, isSidebarAndNavigatorHidden, sidebarWidth, navigatorWidth, setPanelLayoutGeometry])
   const singlePanel = isExpanded || (hasTools
     ? visibleIds.length <= 1
     : isCompact || panels.length <= 1 || (engineLayout ? engineLayout.singlePanel : mode === 'focus'))

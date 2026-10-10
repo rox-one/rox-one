@@ -201,7 +201,7 @@ function Stage({ enabled, frozenDrag }: { enabled: boolean; frozenDrag: boolean 
             >
               <header className="flex h-9 shrink-0 items-center gap-2 border-b border-border-subtle px-3 text-small font-medium">
                 <span className="truncate">{titleOf(entry.id)}</span>
-                <span className="ml-auto tabular-nums text-caption text-text-secondary">
+                <span className="ml-auto numeric text-caption text-text-secondary">
                   {Math.round(entry.proportion * 100)}%
                 </span>
               </header>
@@ -246,13 +246,13 @@ function Stage({ enabled, frozenDrag }: { enabled: boolean; frozenDrag: boolean 
       </div>
 
       <div className="flex h-6 shrink-0 items-center gap-2 border-t border-border-subtle bg-surface-elevated px-2 text-caption text-text-secondary">
-        <span className="tabular-nums" data-testid="panel-swap-order">Стек: {order.join(' · ')}</span>
+        <span className="numeric" data-testid="panel-swap-order">Стек: {order.join(' · ')}</span>
         <span aria-hidden="true">·</span>
-        <span className="tabular-nums">фокус: {titleOf(focusedId)}</span>
+        <span className="numeric">фокус: {titleOf(focusedId)}</span>
         <span aria-hidden="true">·</span>
         <span className="min-w-0 truncate" data-testid="panel-swap-status">{lastAction}</span>
-        <span className="ml-auto shrink-0 tabular-nums">{`flag ${enabled ? 'ON' : 'OFF'}`}</span>
-        <span className="hidden shrink-0 tabular-nums sm:inline">⌥⌘S — своп</span>
+        <span className="ml-auto shrink-0 numeric">{`flag ${enabled ? 'ON' : 'OFF'}`}</span>
+        <span className="hidden shrink-0 numeric sm:inline">⌥⌘S — своп</span>
       </div>
     </div>
   )

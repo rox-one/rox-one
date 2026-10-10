@@ -84,7 +84,7 @@ function Stage({ width }: { width: number }) {
         >
           Открыть деку (⌘\)
         </button>
-        <span className="tabular-nums">{`flag ${enabled ? 'ON' : 'OFF'}`}</span>
+        <span className="numeric">{`flag ${enabled ? 'ON' : 'OFF'}`}</span>
         {!enabled && <span>дека не смонтирована — клавиша не перехватывается</span>}
       </div>
       {enabled && <LayoutDeck open={open} onOpenChange={setOpen} />}

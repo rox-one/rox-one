@@ -194,7 +194,7 @@ export function SettingsMenuSelect({
             }
           }}
           className={cn(
-            'inline-flex min-w-0 max-w-full items-center h-8 px-3 gap-1.5 text-[13px] rounded-md',
+            'inline-flex min-w-0 max-w-full items-center h-8 px-3 gap-1.5 text-base rounded-md',
             'bg-surface-input text-text-primary shadow-minimal',
             settingsUI.interactive,
             'disabled:cursor-not-allowed disabled:opacity-50',
@@ -202,7 +202,7 @@ export function SettingsMenuSelect({
             className
           )}
         >
-          <span id={valueId} className="truncate">{selectedOption?.label || (value ? value : effectivePlaceholder)}</span>
+          <span id={valueId} className="truncate" title={selectedOption?.label || (value ? value : effectivePlaceholder)}>{selectedOption?.label || (value ? value : effectivePlaceholder)}</span>
           <ChevronDown className="size-3.5 shrink-0 text-foreground/70" />
         </button>
       </PopoverTrigger>

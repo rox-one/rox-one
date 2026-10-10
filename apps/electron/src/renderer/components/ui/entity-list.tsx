@@ -223,8 +223,8 @@ function SectionHeader({
     <ContextMenu modal>
       <ContextMenuTrigger asChild>
 <div ref={elementRef} style={style} className="sticky top-0 z-10 bg-background px-5 py-2">
-          <span className="text-caption font-medium text-text-secondary uppercase tracking-wider">
-            {label} <> · <span className="text-muted-foreground/50">{itemCount}</span></>
+          <span className="text-caption font-medium text-text-secondary uppercase caps-label">
+            {label} <> · <span className="text-muted-foreground/50 numeric">{itemCount}</span></>
           </span>
         </div>
       </ContextMenuTrigger>
@@ -280,8 +280,8 @@ function CollapsibleGroupHeader({
               !isCollapsed && "rotate-90"
             )}
           />
-          <span className="text-caption font-medium uppercase tracking-wider text-text-secondary relative">
-            {label} <> · <span className="text-muted-foreground/50">{itemCount}</span></>
+          <span className="text-caption font-medium uppercase caps-label text-text-secondary relative">
+            {label} <> · <span className="text-muted-foreground/50 numeric">{itemCount}</span></>
           </span>
         </button>
       </ContextMenuTrigger>

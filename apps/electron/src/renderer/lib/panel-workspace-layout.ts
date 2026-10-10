@@ -4,6 +4,7 @@
  * track sizes. A resize preview never writes to storage.
  */
 import * as storage from './local-storage'
+import * as layoutDefaults from '@/lib/layout-defaults'
 
 export const PANEL_WORKSPACE_LAYOUT_MODES = ['auto', 'columns', 'grid-2', 'grid-3', 'focus'] as const
 export type PanelWorkspaceLayoutMode = typeof PANEL_WORKSPACE_LAYOUT_MODES[number]
@@ -27,6 +28,17 @@ export interface PanelGridTracks {
   rows: number[]
 }
 
+/**
+ * A named saved arrangement (G4 «Студия» profiles): the preset plus the track
+ * sizes captured at save time, so applying it restores exactly that geometry.
+ */
+export interface PanelLayoutProfile {
+  id: string
+  name: string
+  preset: PanelLayoutPreset
+  grids: Record<string, PanelGridTracks>
+}
+
 export interface PanelWorkspaceLayoutPreferences {
   schemaVersion: 2
   workspaceId: string
@@ -39,6 +51,11 @@ export interface PanelWorkspaceLayoutPreferences {
   preset: PanelLayoutPreset
   /** Track sizes are retained independently for each arrangement. */
   grids: Record<string, PanelGridTracks>
+  /**
+   * Saved named arrangements. Additive and optional: v1/v2 records without it
+   * read as `[]` and the flag being OFF ignores it entirely.
+   */
+  profiles?: PanelLayoutProfile[]
 }
 
 export interface PanelWorkspaceLayoutStore {
@@ -127,8 +144,123 @@ export function normalizePanelTracks(value: unknown, count: number): number[] {
   return value.map((n: number) => n / total)
 }
 
+/**
+ * Default arrangement for a NEW workspace record. Owned by `layout-defaults`
+ * (craft-layout-default-preset / craft-layout-remember); read defensively so a
+ * missing or throwing module never blocks the factory. `auto` is the inert
+ * fallback and keeps the legacy `mode` behaviour.
+ */
+export function defaultPanelLayoutPreset(): PanelLayoutPreset {
+  try {
+    const preset = layoutDefaults.getDefaultLayoutPreset()
+    if (preset && PANEL_LAYOUT_PRESETS.includes(preset)) return preset
+  } catch {
+    // layout-defaults unavailable — keep the inert default.
+  }
+  return 'auto'
+}
+
 export function defaultPanelWorkspaceLayout(workspaceId: string): PanelWorkspaceLayoutPreferences {
-  return { schemaVersion: 2, workspaceId, mode: 'auto', preset: 'auto', grids: {} }
+  return { schemaVersion: 2, workspaceId, mode: 'auto', preset: defaultPanelLayoutPreset(), grids: {}, profiles: [] }
+}
+
+/** Clone the stored tracks so a profile never aliases the live grids object. */
+function clonePanelGrids(grids: Record<string, PanelGridTracks>): Record<string, PanelGridTracks> {
+  const clone: Record<string, PanelGridTracks> = {}
+  for (const [key, tracks] of Object.entries(grids)) clone[key] = { columns: [...tracks.columns], rows: [...tracks.rows] }
+  return clone
+}
+
+function newPanelLayoutProfileId(): string {
+  const cryptoApi = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined
+  if (cryptoApi && typeof cryptoApi.randomUUID === 'function') return cryptoApi.randomUUID()
+  return `profile-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+/** Validate one stored profile; a malformed entry is dropped, never repaired. */
+function parsePanelLayoutProfile(raw: unknown): PanelLayoutProfile | null {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return null
+  const value = raw as Record<string, unknown>
+  if (typeof value.id !== 'string' || value.id.length === 0) return null
+  if (typeof value.name !== 'string' || value.name.trim().length === 0) return null
+  if (!PANEL_LAYOUT_PRESETS.includes(value.preset as PanelLayoutPreset)) return null
+  return {
+    id: value.id,
+    name: value.name,
+    preset: value.preset as PanelLayoutPreset,
+    grids: parsePanelGrids(value.grids),
+  }
+}
+
+/** Track records keyed by `CxR`; malformed keys or tracks are dropped. */
+function parsePanelGrids(value: unknown): Record<string, PanelGridTracks> {
+  const grids: Record<string, PanelGridTracks> = {}
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    for (const [key, tracks] of Object.entries(value)) {
+      const match = /^([1-9]\d?)x([1-9]\d?)$/.exec(key)
+      if (!match || tracks === null || typeof tracks !== 'object' || Array.isArray(tracks)) continue
+      const grid = tracks as Record<string, unknown>
+      grids[key] = {
+        columns: normalizePanelTracks(grid.columns, Number(match[1])),
+        rows: normalizePanelTracks(grid.rows, Number(match[2])),
+      }
+    }
+  }
+  return grids
+}
+
+/** Read the saved profiles, dropping malformed entries and duplicate ids. */
+function parsePanelProfiles(value: unknown): PanelLayoutProfile[] {
+  if (!Array.isArray(value)) return []
+  const profiles: PanelLayoutProfile[] = []
+  const seen = new Set<string>()
+  for (const entry of value) {
+    const profile = parsePanelLayoutProfile(entry)
+    if (!profile || seen.has(profile.id)) continue
+    seen.add(profile.id)
+    profiles.push(profile)
+  }
+  return profiles
+}
+
+/** Capture the current arrangement as a new named profile (name collision replaces). */
+export function savePanelLayoutProfile(
+  preferences: PanelWorkspaceLayoutPreferences,
+  name: string,
+): PanelWorkspaceLayoutPreferences {
+  const trimmed = name.trim()
+  if (!trimmed) return preferences
+  const profiles = preferences.profiles ?? []
+  const existing = profiles.findIndex((profile) => profile.name === trimmed)
+  const profile: PanelLayoutProfile = {
+    id: existing >= 0 ? profiles[existing].id : newPanelLayoutProfileId(),
+    name: trimmed,
+    preset: preferences.preset,
+    grids: clonePanelGrids(preferences.grids),
+  }
+  const next = existing >= 0
+    ? profiles.map((entry, index) => (index === existing ? profile : entry))
+    : [...profiles, profile]
+  return { ...preferences, profiles: next }
+}
+
+/** Restore a saved arrangement: its preset and the captured track sizes. */
+export function applyPanelLayoutProfile(
+  preferences: PanelWorkspaceLayoutPreferences,
+  id: string,
+): PanelWorkspaceLayoutPreferences {
+  const profile = (preferences.profiles ?? []).find((entry) => entry.id === id)
+  if (!profile) return preferences
+  return { ...preferences, preset: profile.preset, grids: clonePanelGrids(profile.grids) }
+}
+
+export function deletePanelLayoutProfile(
+  preferences: PanelWorkspaceLayoutPreferences,
+  id: string,
+): PanelWorkspaceLayoutPreferences {
+  const profiles = preferences.profiles ?? []
+  if (!profiles.some((entry) => entry.id === id)) return preferences
+  return { ...preferences, profiles: profiles.filter((entry) => entry.id !== id) }
 }
 
 /**
@@ -145,19 +277,8 @@ export function parsePanelWorkspaceLayout(raw: unknown, workspaceId: string): Pa
     ? value.mode as PanelWorkspaceLayoutMode : 'auto'
   const preset = PANEL_LAYOUT_PRESETS.includes(value.preset as PanelLayoutPreset)
     ? value.preset as PanelLayoutPreset : 'auto'
-  const grids: Record<string, PanelGridTracks> = {}
-  if (value.grids && typeof value.grids === 'object' && !Array.isArray(value.grids)) {
-    for (const [key, tracks] of Object.entries(value.grids)) {
-      const match = /^([1-9]\d?)x([1-9]\d?)$/.exec(key)
-      if (!match || tracks === null || typeof tracks !== 'object' || Array.isArray(tracks)) continue
-      const grid = tracks as Record<string, unknown>
-      grids[key] = {
-        columns: normalizePanelTracks(grid.columns, Number(match[1])),
-        rows: normalizePanelTracks(grid.rows, Number(match[2])),
-      }
-    }
-  }
-  return { schemaVersion: 2, workspaceId, mode, preset, grids }
+  const grids = parsePanelGrids(value.grids)
+  return { schemaVersion: 2, workspaceId, mode, preset, grids, profiles: parsePanelProfiles(value.profiles) }
 }
 
 export function loadPanelWorkspaceLayout(

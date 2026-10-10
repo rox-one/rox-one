@@ -29,7 +29,7 @@ export function TeamSurfacePage(_props: SurfacePageProps) {
       </header>
 
       <section aria-label={t('teamCollab.members')} className="shrink-0 px-4 py-3">
-        <h2 className="mb-1 text-caption font-medium uppercase tracking-wide text-text-muted">
+        <h2 className="mb-1 text-caption font-medium uppercase caps-label text-text-muted">
           {t('teamCollab.members')}
         </h2>
         {roster.loading ? (

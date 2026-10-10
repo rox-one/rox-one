@@ -441,10 +441,10 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
         <InboxKindIcon kind={item.kind} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-small text-text-muted">{kindLabel(item.kind)} · {item.source}</span>
-          <span className={`block truncate ${unread || item.blocking ? 'font-semibold' : ''}`}>{item.title}</span>
+          <span className={`block truncate ${unread || item.blocking ? 'font-semibold' : ''}`} title={item.title}>{item.title}</span>
         </span>
         <span className="flex shrink-0 flex-col items-end gap-0.5">
-          <span className="text-caption tabular-nums text-text-muted">{when(item.at)}</span>
+          <span className="text-caption numeric text-text-muted">{when(item.at)}</span>
           {item.blocking ? <Badge tone="warning">{t('inbox.blocking')}</Badge> : null}
           {stale ? <Badge tone="warning">{t('inbox.staleSource', { defaultValue: 'Stale' })}</Badge> : null}
         </span>
@@ -768,7 +768,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
       <div className="flex items-center gap-2 text-small text-text-muted">
         <Badge tone={KIND_TONE[selected.kind]}>{kindLabel(selected.kind)}</Badge>
         <span className="truncate">{selected.source}</span>
-        <span className="ml-auto tabular-nums">{when(selected.at)}</span>
+        <span className="ml-auto numeric">{when(selected.at)}</span>
       </div>
       <h2 className="pt-2 text-title font-semibold">{selected.title}</h2>
       <div className="pt-2">{detailBody(selected)}</div>

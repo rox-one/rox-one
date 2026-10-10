@@ -1,0 +1,29 @@
+/* Type-rhythm density layer (G7 «Типографика и плотность 2.0»).
+   Mirrors the chrome.css variant mechanism: density swaps values, never class
+   names. `:root[data-density="condensed"]` is the explicit default and
+   `:root[data-density="comfortable"]` scales the vertical rhythm up.
+
+   Specificity: `:root[data-density="…"]` (0,2,0) outranks the bare
+   `html[data-density="…"]` chrome blocks (0,1,1), so these rhythm values win
+   over the chrome geometry defaults wherever both match. */
+:root[data-density="condensed"] {
+  --density-block-gap: 12px;
+  --density-turn-gap: 20px;
+  --density-card-pad-y: 10px;
+  --density-list-gap: 2px;
+  --density-leading-prose: 24px;
+  --density-section-gap: 16px;
+  --density-heading-gap-above: 20px;
+  --density-heading-gap-below: 8px;
+}
+
+:root[data-density="comfortable"] {
+  --density-block-gap: 16px;
+  --density-turn-gap: 28px;
+  --density-card-pad-y: 14px;
+  --density-list-gap: 4px;
+  --density-leading-prose: 24.75px;
+  --density-section-gap: 24px;
+  --density-heading-gap-above: 28px;
+  --density-heading-gap-below: 10px;
+}

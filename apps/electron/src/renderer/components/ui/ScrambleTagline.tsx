@@ -71,7 +71,7 @@ const { t } = useTranslation()
 
   return (
     <p
-      className={cn('text-sm text-muted-foreground tabular-nums', className)}
+      className={cn('text-sm text-muted-foreground numeric', className)}
       data-testid="scramble-tagline"
       aria-live="polite"
     >

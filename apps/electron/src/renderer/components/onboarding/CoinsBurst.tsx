@@ -134,7 +134,7 @@ export function CoinsBurst({
         <div className="flex flex-col items-center gap-1 rounded-lg border border-status-warning/40 bg-background/95 px-4 py-3 shadow-modal-small">
           <div className="flex items-center gap-2 text-foreground">
             <RoxCoinIcon className="size-6 text-status-warning" />
-            <span className="text-lg font-semibold tabular-nums">{amount}</span>
+            <span className="text-lg font-semibold numeric">{amount}</span>
             <span className="text-sm font-medium">{CURRENCY_NAME}</span>
           </div>
           {label && <span className="text-xs text-muted-foreground">{label}</span>}
@@ -191,7 +191,7 @@ export function CoinsBurst({
             <div className="flex flex-col items-center gap-1 rounded-lg border border-status-warning/50 bg-background/95 px-5 py-3 shadow-modal-small">
               <div className="flex items-center gap-2 text-foreground">
                 <RoxCoinIcon className="size-6 text-status-warning" />
-                <span className="text-xl font-semibold tabular-nums">{amount}</span>
+                <span className="text-xl font-semibold numeric">{amount}</span>
                 <span className="text-sm font-medium">{CURRENCY_NAME}</span>
               </div>
               {label && <span className="text-xs text-muted-foreground">{label}</span>}

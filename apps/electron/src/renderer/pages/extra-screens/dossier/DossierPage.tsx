@@ -262,14 +262,14 @@ export default function DossierPage({ itemId }: { itemId: string | null }) {
               <ListRow key={entity.id} active={entity.id === itemId} onClick={() => select(entity.id)}>
                 <Avatar entity={entity} />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate">{entity.name}</div>
-                  <div className="truncate text-[12px] text-muted-foreground">
+                  <div className="truncate" title={entity.name}>{entity.name}</div>
+                  <div className="truncate text-sm text-muted-foreground">
                     {[entity.org, t('extraScreens.dossier.touches30d', { count: count30d }), open ? t('extraScreens.dossier.openPromises', { count: open }) : null]
                       .filter(Boolean)
                       .join(' · ')}
                   </div>
                 </div>
-                <span className="shrink-0 text-[12px] text-muted-foreground">{last ? relDate(last) : ''}</span>
+                <span className="shrink-0 text-sm text-muted-foreground">{last ? relDate(last) : ''}</span>
               </ListRow>
             )
           })}
@@ -474,7 +474,7 @@ function DossierDetail({
             aria-label={t('extraScreens.dossier.namePlaceholder')}
             defaultValue={entity.name}
             onBlur={(event) => { const v = event.target.value.trim(); if (v && v !== entity.name) onUpdate({ name: v }) }}
-            className="w-full bg-transparent text-[19px] font-bold leading-tight outline-none focus-visible:rounded-[var(--radius-control)] focus-visible:bg-foreground/[0.05]"
+            className="w-full bg-transparent text-xl font-bold outline-none focus-visible:rounded-[var(--radius-control)] focus-visible:bg-foreground/[0.05]"
           />
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-muted-foreground">
             <Chip active={entity.kind === 'person'} onClick={() => onUpdate({ kind: 'person' })}>{t('extraScreens.dossier.person')}</Chip>
@@ -484,11 +484,11 @@ function DossierDetail({
               placeholder={t('extraScreens.dossier.orgPlaceholder')}
               defaultValue={entity.org ?? ''}
               onBlur={(event) => onUpdate({ org: event.target.value.trim() || undefined })}
-              className="h-6 min-w-[160px] rounded-[var(--radius-card)] bg-transparent px-1.5 text-[12px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:bg-foreground/[0.06]"
+              className="h-6 min-w-[160px] rounded-[var(--radius-card)] bg-transparent px-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:bg-foreground/[0.06]"
             />
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-1">
-            <span className="text-[12px] text-muted-foreground">{t('extraScreens.dossier.aliases')}:</span>
+            <span className="text-sm text-muted-foreground">{t('extraScreens.dossier.aliases')}:</span>
             {entity.aliases.map((alias) => (
               <Chip key={alias} onClick={() => onUpdate({ aliases: entity.aliases.filter((a) => a !== alias) })}>
                 {alias} <span aria-hidden>×</span>
@@ -500,7 +500,7 @@ function DossierDetail({
               onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addAlias() } }}
               placeholder={t('extraScreens.dossier.aliasPlaceholder')}
               aria-label={t('extraScreens.dossier.aliasPlaceholder')}
-              className="h-6 w-[180px] rounded-[var(--radius-card)] bg-foreground/[0.05] px-1.5 text-[12px] outline-none placeholder:text-muted-foreground"
+              className="h-6 w-[180px] rounded-[var(--radius-card)] bg-foreground/[0.05] px-1.5 text-sm outline-none placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -525,13 +525,13 @@ function DossierDetail({
             {summary.openTasks.map((task) => (
               <button key={task.id} type="button" onClick={() => navigate(routes.view.tasks(task.id))} className="flex w-full items-center gap-2 py-0.5 text-left hover:text-accent">
                 <span aria-hidden className="h-3.5 w-3.5 shrink-0 rounded-[var(--radius-control)] bg-foreground/15" />
-                <span className="truncate">{task.title}</span>
+                <span className="truncate" title={task.title}>{task.title}</span>
               </button>
             ))}
             {summary.unreadSessions.map((session) => (
               <button key={session.id} type="button" onClick={() => navigate(routes.view.allSessions(session.id))} className="flex w-full items-center gap-2 py-0.5 text-left hover:text-accent">
                 <Chip tone="warn">{t('extraScreens.dossier.unread')}</Chip>
-                <span className="truncate">{getSessionTitle(session)}</span>
+                <span className="truncate" title={getSessionTitle(session)}>{getSessionTitle(session)}</span>
               </button>
             ))}
           </div>
@@ -574,7 +574,7 @@ function DossierDetail({
 
       <Card>
         <CardTitle>{t('extraScreens.dossier.briefTitle')}</CardTitle>
-        <div className="mb-2 mt-0.5 text-[12px] text-muted-foreground">
+        <div className="mb-2 mt-0.5 text-sm text-muted-foreground">
           {!entity.briefSessionId
             ? t('extraScreens.dossier.briefNone')
             : brief?.processing
@@ -595,7 +595,7 @@ function DossierDetail({
             <ScreenButton onClick={() => navigate(routes.view.allSessions(entity.briefSessionId))}>{t('extraScreens.common.openSession')}</ScreenButton>
           )}
         </div>
-        <div className="mt-2 text-[11px] text-muted-foreground">{t('extraScreens.common.agentReadOnly')}</div>
+        <div className="mt-2 text-xs text-muted-foreground">{t('extraScreens.common.agentReadOnly')}</div>
       </Card>
 
       <div className="mt-5">
@@ -611,12 +611,12 @@ function DossierDetail({
             className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-1.5 py-1 text-left hover:bg-foreground/5"
           >
             <span aria-hidden className="w-4 shrink-0 text-center text-muted-foreground">{touchIcon(touch.kind)}</span>
-            <span className="w-16 shrink-0 text-[12px] text-muted-foreground">{relDate(touch.at)}</span>
-            <span className="text-[12px] text-muted-foreground">{t(`extraScreens.dossier.touchKind.${touch.kind}`)}{touch.hint && (touch.kind === 'messenger' || touch.kind === 'feed') ? ` · ${touch.hint}` : ''}</span>
-            <span className="min-w-0 flex-1 truncate">{touch.title}</span>
+            <span className="w-16 shrink-0 text-sm text-muted-foreground">{relDate(touch.at)}</span>
+            <span className="text-sm text-muted-foreground">{t(`extraScreens.dossier.touchKind.${touch.kind}`)}{touch.hint && (touch.kind === 'messenger' || touch.kind === 'feed') ? ` · ${touch.hint}` : ''}</span>
+            <span className="min-w-0 flex-1 truncate" title={touch.title}>{touch.title}</span>
           </button>
         ))}
-        {!summary.feedAvailable && <div className="mt-1 text-[12px] text-muted-foreground">{t('extraScreens.dossier.feedUnavailable')}</div>}
+        {!summary.feedAvailable && <div className="mt-1 text-sm text-muted-foreground">{t('extraScreens.dossier.feedUnavailable')}</div>}
       </div>
 
       <div className="mt-5">

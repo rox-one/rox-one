@@ -72,7 +72,7 @@ export function InboxKindIcon({ kind }: { kind: InboxKind }) {
 }
 
 function Count({ count, urgent }: { count?: number; urgent?: boolean }) {
-  return count ? <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 text-[10px] tabular-nums', urgent ? 'bg-[var(--warning,#d9a13b)]/15 text-[var(--warning,#d9a13b)]' : 'bg-foreground/[0.05] text-text-muted')}>{count}</span> : null
+  return count ? <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 text-xs numeric', urgent ? 'bg-[var(--warning,#d9a13b)]/15 text-[var(--warning,#d9a13b)]' : 'bg-foreground/[0.05] text-text-muted')}>{count}</span> : null
 }
 
 function InboxNavButton({ label, count, active, icon: Icon, tone = 'muted', onClick, testId }: {
@@ -81,9 +81,9 @@ function InboxNavButton({ label, count, active, icon: Icon, tone = 'muted', onCl
 }) {
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined} data-testid={testId}
-      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-[12px] outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'rox-nav-shimmer bg-surface-hover text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
+      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-sm outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'rox-nav-shimmer bg-surface-hover text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
       <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-lg', ICON_TONE[tone])}><Icon className="size-3.5" strokeWidth={1.75} /></span>
-      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
       <Count count={count} />
     </button>
   )
@@ -98,9 +98,9 @@ function InboxNavGroup({ id, label, icon: Icon, tone, count, urgent, active, ini
   useEffect(() => { if (active && ref.current) ref.current.open = true }, [active])
   return (
     <details ref={ref} open={initialOpen || active} data-testid={`inbox-group-${id}`} className="group/inbox-nav mt-1">
-      <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1 text-[12px] font-medium text-foreground outline-none transition-colors hover:bg-foreground/[0.05] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium text-foreground outline-none transition-colors hover:bg-foreground/[0.05] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
         <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-lg', ICON_TONE[tone])}><Icon className="size-3.5" strokeWidth={1.75} /></span>
-        <span className="min-w-0 flex-1 truncate">{label}</span>
+        <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
         <Count count={count} urgent={urgent} />
         <ChevronRight aria-hidden className="size-3 shrink-0 text-text-muted transition-transform duration-200 group-open/inbox-nav:rotate-90 motion-reduce:transition-none" />
       </summary>
@@ -164,12 +164,12 @@ export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, o
       </InboxNavGroup>
       <InboxNavGroup id="mail" label={t('inbox.mail.section')} icon={Mail} tone="info" count={counts.byKind.mail} active={inMail}>
         {status?.state === 'ready' && status.address ? (
-          <div className="flex min-w-0 items-center gap-1 px-2 pb-1 text-[11px]" data-testid="mail-address">
+          <div className="flex min-w-0 items-center gap-1 px-2 pb-1 text-xs" data-testid="mail-address">
             <span className="shrink-0 font-medium text-success" data-testid="mail-connected">{t('inbox.mail.status.connected')}</span>
             <span className="min-w-0 flex-1 select-text truncate text-text-secondary" title={status.address}>{status.address}</span>
             <button type="button" onClick={() => void copyAddress()} className="shrink-0 rounded-md px-1.5 py-1 text-text-muted outline-none hover:bg-foreground/[0.05] focus-visible:ring-2 focus-visible:ring-ring" data-testid="mail-copy">{t(copied ? 'inbox.mail.copied' : 'inbox.mail.copy')}</button>
           </div>
-        ) : <p className="px-2 pb-1 text-[11px] text-text-muted">{t(statusKey(status), { address: status?.address ?? '', url: status?.serverUrl ?? '', error: status?.error ?? '', flag: status?.flag ?? '' })}</p>}
+        ) : <p className="px-2 pb-1 text-xs text-text-muted">{t(statusKey(status), { address: status?.address ?? '', url: status?.serverUrl ?? '', error: status?.error ?? '', flag: status?.flag ?? '' })}</p>}
         {status?.state === 'ready' ? mail.folders.map((folder) => (
           <InboxNavButton key={folder.id} label={folderLabel(t, folder)} count={folder.role === 'drafts' || folder.role === 'sent' ? folder.total : folder.unread} active={inMail && filter.mail === folder.id} icon={folder.role ? FOLDER_ICONS[folder.role] : Mail} tone={folder.role === 'junk' || folder.role === 'trash' ? 'muted' : 'info'} onClick={() => onSelectFolder(folder)} testId={`mail-folder-${folder.role ?? folder.id}`} />
         )) : <InboxNavButton label={t('inbox.kind.mail')} active={inMail && filter.mail === 'inbox'} icon={Inbox} tone="muted" onClick={() => onSelectFolder({ id: 'inbox', name: t('inbox.mail.folder.inbox'), role: 'inbox', total: 0, unread: 0 })} testId="mail-folder-inbox" />}

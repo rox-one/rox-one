@@ -89,17 +89,17 @@ export function MemoryProposalCard({ proposal, workspaceId, onChanged }: MemoryP
       data-memory-proposal={proposal.id}
       className="rounded-lg border border-info/30 bg-info/10 px-3 py-2 text-sm text-foreground"
     >
-      <p className="line-clamp-3 text-[13px] leading-snug">{editing ? null : proposal.text}</p>
+      <p className="line-clamp-3 text-base">{editing ? null : proposal.text}</p>
       {editing && (
         <textarea
           value={draft}
           disabled={busy || approvalStarted}
           onChange={(e) => setDraft(e.target.value)}
           rows={3}
-          className="mb-2 w-full rounded-md border border-info/30 bg-background px-2 py-1 text-[13px]"
+          className="mb-2 w-full rounded-md border border-info/30 bg-background px-2 py-1 text-base"
         />
       )}
-      <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
+      <div className="mt-1.5 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
         <span>{t(`memory.proposal.kind.${proposal.kind}`)}</span>
         {proposal.sessionId && <span>{t('memory.proposal.source')}: {proposal.sessionId}</span>}
         {proposal.provenance.consentEventId && (
@@ -123,19 +123,19 @@ export function MemoryProposalCard({ proposal, workspaceId, onChanged }: MemoryP
             {projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}
             {projectId && !projects.some(project => project.id === projectId) && <option value={projectId} disabled>{t('memory.proposal.projectUnavailable')}</option>}
           </select>}
-          {!personalAvailable && <p className="text-[11px] text-muted-foreground">{t('memory.proposal.personalUnavailable')}</p>}
-          {approvalStarted && <p role="status" className="text-[11px] text-muted-foreground">{t('memory.proposal.retryPendingWrite')}</p>}
+          {!personalAvailable && <p className="text-xs text-muted-foreground">{t('memory.proposal.personalUnavailable')}</p>}
+          {approvalStarted && <p role="status" className="text-xs text-muted-foreground">{t('memory.proposal.retryPendingWrite')}</p>}
           <div className="flex flex-wrap gap-1">
-          <button type="button" disabled={busy || (scope === 'personal' && !personalAvailable) || (scope === 'project' && (!projectId || (!approvalStarted && !projects.some(project => project.id === projectId))))} className="h-6 rounded-md bg-accent/20 px-2 text-[11px] font-medium text-accent disabled:opacity-40" onClick={() => void approve()}>
+          <button type="button" disabled={busy || (scope === 'personal' && !personalAvailable) || (scope === 'project' && (!projectId || (!approvalStarted && !projects.some(project => project.id === projectId))))} className="h-6 rounded-md bg-accent/20 px-2 text-xs font-medium text-accent disabled:opacity-40" onClick={() => void approve()}>
             {t(busy ? 'memory.proposal.saving' : approvalStarted ? 'memory.proposal.retryApproval' : 'memory.proposal.approveTarget')}
           </button>
-          <button type="button" disabled={busy || approvalStarted} className="h-6 rounded-md px-2 text-[11px] text-muted-foreground hover:bg-foreground/10 disabled:opacity-40" onClick={() => { setEditing((v) => !v); setDraft(proposal.text) }}>
+          <button type="button" disabled={busy || approvalStarted} className="h-6 rounded-md px-2 text-xs text-muted-foreground hover:bg-foreground/10 disabled:opacity-40" onClick={() => { setEditing((v) => !v); setDraft(proposal.text) }}>
             {t('memory.proposal.edit')}
           </button>
-          <button type="button" disabled={busy || approvalStarted} className="h-6 rounded-md px-2 text-[11px] text-muted-foreground hover:bg-foreground/10 disabled:opacity-40" onClick={() => void act(() => window.electronAPI.rejectMemoryProposal(workspaceId, proposal.id))}>
+          <button type="button" disabled={busy || approvalStarted} className="h-6 rounded-md px-2 text-xs text-muted-foreground hover:bg-foreground/10 disabled:opacity-40" onClick={() => void act(() => window.electronAPI.rejectMemoryProposal(workspaceId, proposal.id))}>
             {t('memory.proposal.reject')}
           </button>
-          <button type="button" disabled={busy || approvalStarted} className="h-6 rounded-md px-2 text-[11px] text-destructive hover:bg-destructive/10 disabled:opacity-40" onClick={() => void act(() => window.electronAPI.deleteMemoryProposal(workspaceId, proposal.id))}>
+          <button type="button" disabled={busy || approvalStarted} className="h-6 rounded-md px-2 text-xs text-destructive hover:bg-destructive/10 disabled:opacity-40" onClick={() => void act(() => window.electronAPI.deleteMemoryProposal(workspaceId, proposal.id))}>
             {t('memory.proposal.delete')}
           </button>
           </div>
@@ -247,7 +247,7 @@ export function SessionMemoryProposalLane({ workspaceId, sessionId, projectId, m
       {(learning || preview.length > 0) && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {learning && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-          {learning ? t('memory.proposal.learning') : <span className="text-[11px]">{t('memory.proposal.preview')}</span>}
+          {learning ? t('memory.proposal.learning') : <span className="text-xs">{t('memory.proposal.preview')}</span>}
         </div>
       )}
       {!learning && !disabled && lastRun && lastRun.found === 0 && (

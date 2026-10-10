@@ -34,7 +34,7 @@ export function VariantsSidebar({
       {/* Variants Section */}
       {hasVariants && (
         <div className="p-4 border-b border-border">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase caps-label mb-3">
             Variants
           </h2>
           <div className="space-y-1">
@@ -64,7 +64,7 @@ export function VariantsSidebar({
       {/* Props Section */}
       {hasProps && (
         <div className="p-4">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase caps-label mb-3">
             Props
           </h2>
           <div className="space-y-3">

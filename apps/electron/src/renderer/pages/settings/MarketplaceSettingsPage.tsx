@@ -611,7 +611,7 @@ export default function MarketplaceSettingsPage() {
               >
                 <Icon className="w-3.5 h-3.5 opacity-70" />
                 {t(item.labelKey)}
-                <span className="text-[10px] opacity-60 tabular-nums">{count}</span>
+                <span className="text-xs opacity-60 numeric">{count}</span>
               </button>
             )
           })}
@@ -776,25 +776,25 @@ export default function MarketplaceSettingsPage() {
                               {t(`marketplace.kind.${e.kind}`)}
                             </span>
                             {typeof e.sizeHintKb === 'number' && e.sizeHintKb > 0 ? (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground whitespace-nowrap">
+                              <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground whitespace-nowrap">
                                 {formatSizeHint(e.sizeHintKb)}
                               </span>
                             ) : null}
                             {e.license ? (
-                              <span className="text-[10px] opacity-60">{e.license}</span>
+                              <span className="text-xs opacity-60">{e.license}</span>
                             ) : null}
                           </div>
                           <div className="text-xs opacity-70 mt-1 break-words">
                             {e.descriptionRu}
                           </div>
                           {isBusy && progressById[e.id] ? (
-                            <div className="text-[11px] mt-1 text-primary/80 font-mono truncate">
+                            <div className="text-xs mt-1 text-primary/80 font-mono truncate">
                               {progressById[e.id]}
                             </div>
                           ) : null}
                         </div>
 
-                        <div className="text-xs text-right whitespace-nowrap shrink-0 min-w-[4.5rem]">
+                        <div className="text-xs text-right whitespace-nowrap shrink-0 min-w-[4.5rem] numeric">
                           {st && !st.error ? (
                             <>
                               {typeof st.stars === 'number' ? (
@@ -823,13 +823,13 @@ export default function MarketplaceSettingsPage() {
                                 </div>
                               ) : null}
                               {st.stale ? (
-                                <div className="mt-0.5 text-[10px] opacity-50">
+                                <div className="mt-0.5 text-xs opacity-50">
                                   {t('marketplace.statsStale')}
                                 </div>
                               ) : null}
                             </>
                           ) : (
-                            <div className="opacity-40 tabular-nums" title={t('marketplace.statsUnavailable')}>
+                            <div className="opacity-40 numeric" title={t('marketplace.statsUnavailable')}>
                               —
                             </div>
                           )}
@@ -841,10 +841,10 @@ export default function MarketplaceSettingsPage() {
                         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                           <span
                             title={`${e.source.repo}@${e.source.ref}`}
-                            className="group relative text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground cursor-help inline-flex items-center gap-1"
+                            className="group relative text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground cursor-help inline-flex items-center gap-1"
                           >
                             {e.source.repo}@{e.source.ref.slice(0, 8)}
-                            <span className="pointer-events-none absolute bottom-full left-0 z-30 mb-1 hidden w-max max-w-xs rounded-md border border-border bg-popover px-2 py-1.5 text-[10px] text-popover-foreground shadow-modal-small group-hover:block">
+                            <span className="pointer-events-none absolute bottom-full left-0 z-30 mb-1 hidden w-max max-w-xs rounded-md border border-border bg-popover px-2 py-1.5 text-xs text-popover-foreground shadow-modal-small group-hover:block">
                               <span className="font-mono break-all">{e.source.ref}</span>
                               {ghUrl ? (
                                 <a
@@ -863,14 +863,14 @@ export default function MarketplaceSettingsPage() {
                           </span>
                           {groupExtensionPermissions(permissionsForMarketplaceKind(e.kind)).map((group) => (
                             <span key={group.group} className="inline-flex items-center gap-1 flex-wrap">
-                              <span className="text-[10px] uppercase tracking-wide opacity-50">
+                              <span className="text-xs uppercase caps-label opacity-50">
                                 {t(`extensions.permissionGroup.${group.group}`, { defaultValue: group.group })}
                               </span>
                               {group.permissions.map((permission) => (
                             <span
                               key={permission}
                               data-marketplace-permission={permission}
-                              className={`text-[10px] px-2 py-0.5 rounded-full font-mono border ${
+                              className={`text-xs px-2 py-0.5 rounded-full font-mono border ${
                                 isHighRiskMarketplacePermission(permission)
                                   ? 'border-amber-500/60 text-amber-700 dark:text-amber-300 bg-amber-500/10'
                                   : 'bg-muted text-muted-foreground'
@@ -882,7 +882,7 @@ export default function MarketplaceSettingsPage() {
                             </span>
                           ))}
                           {e.tags?.slice(0, 3).map((tag) => (
-                            <span key={tag} className="text-[10px] opacity-60">
+                            <span key={tag} className="text-xs opacity-60">
                               #{tag}
                             </span>
                           ))}
@@ -909,7 +909,7 @@ export default function MarketplaceSettingsPage() {
                                 <span className="text-xs py-1 px-3 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 flex items-center gap-1">
                                   {t('marketplace.deferred')}
                                 </span>
-                                <span className="text-[10px] opacity-60 max-w-[14rem] text-right leading-snug">
+                                <span className="text-xs opacity-60 max-w-[14rem] text-right leading-snug">
                                   {t('marketplace.deferredHint')}
                                 </span>
                               </div>

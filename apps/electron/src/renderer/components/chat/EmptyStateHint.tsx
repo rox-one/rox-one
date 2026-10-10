@@ -190,9 +190,9 @@ export function EmptyStateHint({ hintIndex, className }: EmptyStateHintProps) {
   return (
     <div
       className={cn(
-        'text-center leading-relaxed tracking-tight',
+        'text-center tracking-tight',
         'max-w-md mx-auto select-none',
-        'text-[20px] font-bold text-text-secondary',
+        'text-stat font-bold text-text-secondary',
         className
       )}
     >

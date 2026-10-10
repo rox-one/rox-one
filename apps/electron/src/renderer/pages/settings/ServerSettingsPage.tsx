@@ -279,7 +279,7 @@ export default function ServerSettingsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-6 text-[11px] px-2"
+                  className="h-6 text-xs px-2"
                   onClick={() => {
                     const allowed = settingsPageActionAllowed({
                       pageId: 'server',
@@ -341,7 +341,7 @@ export default function ServerSettingsPage() {
 
                     <SettingsRow label={t("settings.server.token")}>
                       <div className="flex items-center gap-1.5">
-                        <code className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded max-w-[180px] truncate">
+                        <code className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded max-w-[180px] truncate" title={tokenVisible ? status.token : undefined}>
                           {tokenVisible ? status.token : '••••••••••••••••'}
                         </code>
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setTokenVisible(v => !v)}>
@@ -357,10 +357,10 @@ export default function ServerSettingsPage() {
 
                 <SettingsRow label={t("settings.server.certificate")}>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                    <span className="text-xs text-muted-foreground truncate max-w-[200px]" title={form.tlsCertPath || t('settings.server.notConfigured')}>
                       {form.tlsCertPath || t('settings.server.notConfigured')}
                     </span>
-                    <Button variant="outline" size="sm" className="h-6 text-[11px] px-2 shrink-0" onClick={handleBrowseCert}>
+                    <Button variant="outline" size="sm" className="h-6 text-xs px-2 shrink-0" onClick={handleBrowseCert}>
                       {t('common.browse')}
                     </Button>
                   </div>
@@ -368,10 +368,10 @@ export default function ServerSettingsPage() {
 
                 <SettingsRow label={t("settings.server.privateKey")}>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                    <span className="text-xs text-muted-foreground truncate max-w-[200px]" title={form.tlsKeyPath || t('settings.server.notConfigured')}>
                       {form.tlsKeyPath || t('settings.server.notConfigured')}
                     </span>
-                    <Button variant="outline" size="sm" className="h-6 text-[11px] px-2 shrink-0" onClick={handleBrowseKey}>
+                    <Button variant="outline" size="sm" className="h-6 text-xs px-2 shrink-0" onClick={handleBrowseKey}>
                       {t('common.browse')}
                     </Button>
                   </div>

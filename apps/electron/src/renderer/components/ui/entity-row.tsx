@@ -437,7 +437,7 @@ export function EntityRow({
 
           {/* Subtitle line */}
           {subtitle && (
-            <div className="flex items-start gap-[10px] w-full text-[12px] text-text-secondary min-w-0 -mt-1">
+            <div className="flex items-start gap-[10px] w-full text-sm text-text-secondary min-w-0 -mt-1">
               {icon && (
                 <div className="shrink-0 flex items-center gap-[10px] [&>svg]:icon-inline [&>span[role=img]]:w-4 [&>span[role=img]]:h-4 invisible" aria-hidden="true">
                   {icon}

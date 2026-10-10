@@ -63,20 +63,20 @@ function formatCell(value: unknown, type?: ColumnDef['type']): React.ReactNode {
     case 'currency': {
       const num = typeof value === 'number' ? value : Number(value)
       if (isNaN(num)) return String(value)
-      return <span className="tabular-nums">{num.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+      return <span className="numeric">{num.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
     }
     case 'percent': {
       const pct = typeof value === 'number' ? value : Number(value)
       if (isNaN(pct)) return String(value)
       const formatted = (pct * 100).toFixed(1) + '%'
       const positive = pct > 0
-      return <span className={cn('tabular-nums', positive && 'text-success', pct < 0 && 'text-destructive')}>{positive ? '+' : ''}{formatted}</span>
+      return <span className={cn('numeric', positive && 'text-success', pct < 0 && 'text-destructive')}>{positive ? '+' : ''}{formatted}</span>
     }
     case 'number':
     case 'formula': {
       const n = typeof value === 'number' ? value : Number(value)
       if (isNaN(n)) return String(value)
-      return <span className="tabular-nums">{n.toLocaleString()}</span>
+      return <span className="numeric">{n.toLocaleString()}</span>
     }
     default:
       return String(value)
@@ -212,9 +212,9 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
     return (
       <div className={cn('rounded-[var(--radius-card)] overflow-hidden border bg-muted/10', className)}>
         <div className="px-3 py-2 bg-muted/50 border-b">
-          <span className="text-[12px] text-muted-foreground font-medium">{loadingLabel}</span>
+          <span className="text-sm text-muted-foreground font-medium">{loadingLabel}</span>
         </div>
-        <div className="py-8 text-center text-muted-foreground text-[13px]">{t('datatable.loadingData')}</div>
+        <div className="py-8 text-center text-muted-foreground text-base">{t('datatable.loadingData')}</div>
       </div>
     )
   }
@@ -225,10 +225,10 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
     return (
       <div className={cn('rounded-[var(--radius-card)] overflow-hidden border bg-muted/10', className)}>
         <div className="px-3 py-2 bg-muted/50 border-b">
-          <span className="text-[12px] text-muted-foreground font-medium">{errorLabel}</span>
+          <span className="text-sm text-muted-foreground font-medium">{errorLabel}</span>
         </div>
         <div className="flex flex-col items-center gap-3 py-6 text-center">
-          <p className="text-[13px] text-destructive/70">{fileError}</p>
+          <p className="text-base text-destructive/70">{fileError}</p>
           <button
             type="button"
             onClick={() => setLoadAttempt((attempt) => attempt + 1)}
@@ -259,18 +259,18 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
         WebkitMaskImage: maskImage,
       } : { overflowX: 'auto' }}
     >
-      <table className="w-max min-w-full text-[13px]">
+      <table className="w-max min-w-full text-data">
         {/* Column letter headers */}
         <thead>
           <tr className="border-b border-foreground/[0.08] bg-foreground/[0.03]">
-            <th className="text-center py-1 px-2 font-normal text-muted-foreground/40 w-10 border-r border-foreground/[0.06] text-[11px]" />
+            <th className="text-center py-1 px-2 font-normal text-muted-foreground/40 w-10 border-r border-foreground/[0.06] text-xs" />
             {colLetters.map((letter) => (
-              <th key={letter} className="text-center py-1 px-3 font-normal text-muted-foreground/40 border-r border-foreground/[0.06] last:border-0 text-[11px]">{letter}</th>
+              <th key={letter} className="text-center py-1 px-3 font-normal text-muted-foreground/40 border-r border-foreground/[0.06] last:border-0 text-xs">{letter}</th>
             ))}
           </tr>
           {/* Row 1: column labels */}
           <tr className="border-b border-foreground/[0.06] bg-foreground/[0.02]">
-            <td className="text-center py-1.5 px-2 text-muted-foreground/40 border-r border-foreground/[0.06] text-[11px] font-mono">1</td>
+            <td className="text-center py-1.5 px-2 text-muted-foreground/40 border-r border-foreground/[0.06] text-xs font-mono numeric">1</td>
             {parsed.columns.map((col) => (
               <td key={col.key} className="py-1.5 px-3 font-semibold text-foreground border-r border-foreground/[0.06] last:border-0">{col.label}</td>
             ))}
@@ -279,13 +279,13 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
         <tbody>
           {parsed.rows.map((row, i) => (
             <tr key={i} className="border-b border-foreground/[0.03] last:border-0 hover:bg-foreground/[0.015] transition-colors">
-              <td className="text-center py-1.5 px-2 text-muted-foreground/40 border-r border-foreground/[0.06] text-[11px] font-mono">{i + 2}</td>
+              <td className="text-center py-1.5 px-2 text-muted-foreground/40 border-r border-foreground/[0.06] text-xs font-mono numeric">{i + 2}</td>
               {parsed.columns.map((col) => {
                 const val = row[col.key]
                 const numeric = isNumericType(col.type) || isNumericValue(val)
                 return (
                   <td key={col.key} className={cn(
-                    'py-1.5 px-3 border-r border-foreground/[0.06] last:border-0 tabular-nums',
+                    'py-1.5 px-3 border-r border-foreground/[0.06] last:border-0 numeric',
                     numeric && 'text-right',
                     col.type === 'formula' && 'text-info',
                   )}>
@@ -322,7 +322,7 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
 
         {/* Header */}
         <div className="px-3 py-2 bg-muted/50 border-b">
-          <span className="text-[12px] text-muted-foreground font-medium">{label}</span>
+          <span className="text-sm text-muted-foreground font-medium">{label}</span>
         </div>
 
         {/* Table with max height and scroll fade */}

@@ -44,13 +44,13 @@ export function ConationFundPanel({ enabled = true }: Props) {
       className="rox-shell-pane flex min-h-0 flex-1 flex-col overflow-hidden bg-background"
     >
       <div className="flex h-8 shrink-0 items-center border-b border-border/40 px-3">
-        <span className="chrome-label truncate text-xs font-medium tracking-tight text-foreground/80">
+        <span className="chrome-label truncate text-xs font-medium text-foreground/80" title={t('conation.fund.title', { defaultValue: 'Fund' })}>
           {t('conation.fund.title', { defaultValue: 'Fund' })}
         </span>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
-        <p className="text-sm leading-relaxed text-muted-foreground">{t('conation.fund.description')}</p>
-        <code className="rounded-md bg-foreground/[0.04] px-2 py-1.5 font-mono text-[11px] text-foreground/70">
+        <p className="text-sm text-muted-foreground">{t('conation.fund.description')}</p>
+        <code className="rounded-md bg-foreground/[0.04] px-2 py-1.5 font-mono text-xs text-foreground/70">
           {CONATION_FUND_DEEP_LINK}
         </code>
         <button

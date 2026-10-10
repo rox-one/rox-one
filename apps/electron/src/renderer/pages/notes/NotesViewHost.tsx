@@ -185,7 +185,7 @@ function NotesTableView({
   return (
     <div className="h-full overflow-auto p-4" data-testid="notes-table-view">
       <div className="mb-3 flex flex-wrap items-center gap-2" data-testid="notes-table-toolbar">
-        <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
+        <label className="flex items-center gap-1 text-xs text-muted-foreground">
           {t('notes.views.savedLayout')}
           <PremiumMenuSelect
             items={views.map((item) => ({ id: item.id, label: item.name }))}
@@ -195,7 +195,7 @@ function NotesTableView({
             variant="compact"
           />
         </label>
-        <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
+        <label className="flex items-center gap-1 text-xs text-muted-foreground">
           {t('notes.views.groupBy')}
           <PremiumMenuSelect
             items={[
@@ -213,7 +213,7 @@ function NotesTableView({
             variant="compact"
           />
         </label>
-        <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
+        <label className="flex items-center gap-1 text-xs text-muted-foreground">
           {t('notes.views.filterTags')}
           <input
             className="h-7 w-36 rounded-[var(--radius-card)] border border-border/60 bg-background px-2 text-xs"
@@ -221,7 +221,7 @@ function NotesTableView({
             onChange={(event) => patchView(withTagFilter(view, event.target.value))}
           />
         </label>
-        <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
+        <label className="flex items-center gap-1 text-xs text-muted-foreground">
           {t('notes.views.formula')}
           <span data-testid="notes-table-formula">
             <PremiumMenuSelect
@@ -265,7 +265,7 @@ function NotesTableView({
             key={formula.expr}
             type="button"
             data-testid={`notes-table-formula-${formula.expr}`}
-            className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] border border-border/60 px-2 text-[11px] hover:bg-foreground/[0.06]"
+            className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-control)] border border-border/60 px-2 text-xs hover:bg-foreground/[0.06]"
             onClick={() => patchView(removeFormula(view, formula.expr))}
             aria-label={t('notes.views.formulaRemove')}
           >
@@ -276,7 +276,7 @@ function NotesTableView({
       </div>
       <table className="w-full text-left text-xs">
         <thead>
-          <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          <tr className="text-xs uppercase caps-label text-muted-foreground">
             <th className="px-2 py-1">{t('notes.views.colTitle')}</th>
             <th className="px-2 py-1">{t('notes.views.colFolder')}</th>
             <th className="px-2 py-1">{t('notes.views.colTags')}</th>
@@ -297,7 +297,7 @@ function NotesTableView({
               <th key={formula.expr} className="px-2 py-1">
                 <button
                   type="button"
-                  className="uppercase tracking-wider hover:text-foreground"
+                  className="uppercase caps-label hover:text-foreground"
                   aria-label={t('notes.views.formulaSort')}
                   data-testid={`notes-table-sort-${formula.expr}`}
                   onClick={() => patchView(toggleNoteViewSort(view, formula.expr))}
@@ -314,7 +314,7 @@ function NotesTableView({
           <tbody key={group.key || 'all'}>
             {view.groupBy ? (
               <tr>
-                <td colSpan={colSpan} className="px-2 py-1.5 text-[11px] font-medium text-muted-foreground">
+                <td colSpan={colSpan} className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
                   {group.key || t('notes.views.ungrouped')}
                 </td>
               </tr>
@@ -569,8 +569,8 @@ function NotesCanvasView({
               if (node.noteId) onOpenNote(node.noteId)
             }}
           >
-            <div className="truncate font-medium">{node.text || node.file || node.id}</div>
-            {node.noteId ? <div className="mt-1 font-mono text-[10px] text-muted-foreground">{node.noteId}</div> : null}
+            <div className="truncate font-medium" title={node.text || node.file || node.id}>{node.text || node.file || node.id}</div>
+            {node.noteId ? <div className="mt-1 font-mono text-xs text-muted-foreground">{node.noteId}</div> : null}
           </button>
         ))}
       </div>
@@ -692,7 +692,7 @@ function NotesGraphView({
   return (
     <div className="flex h-full min-h-0" data-testid="notes-graph-view">
       <aside className="w-[220px] shrink-0 overflow-y-auto border-r border-border/50 p-3">
-        <div className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        <div className="mb-2 text-xs font-medium uppercase caps-label text-muted-foreground">
           {t('entityView.graph')}
         </div>
         <div className="mb-3 flex flex-col gap-1" data-testid="notes-graph-kind">
@@ -701,7 +701,7 @@ function NotesGraphView({
               key={value}
               type="button"
               className={cn(
-                'rounded-[var(--radius-control)] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
+                'rounded-[var(--radius-control)] px-2 py-1 text-left text-xs hover:bg-foreground/[0.06]',
                 kind === value && 'bg-foreground/[0.08]',
               )}
               aria-pressed={kind === value}
@@ -720,7 +720,7 @@ function NotesGraphView({
           <button
             type="button"
             className={cn(
-              'rounded-[var(--radius-control)] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
+              'rounded-[var(--radius-control)] px-2 py-1 text-left text-xs hover:bg-foreground/[0.06]',
               nearby && 'bg-foreground/[0.08]',
             )}
             aria-pressed={nearby}
@@ -734,7 +734,7 @@ function NotesGraphView({
           </button>
         </div>
         {graph.nodes.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground">{t('notes.views.graphEmpty')}</p>
+          <p className="text-xs text-muted-foreground">{t('notes.views.graphEmpty')}</p>
         ) : (
           graph.nodes.map((node) => (
             <button
@@ -745,6 +745,7 @@ function NotesGraphView({
                 node.id === activeNoteId && 'bg-foreground/[0.08]',
               )}
               onClick={() => onOpenNote(node.id)}
+              title={node.title}
             >
               {node.title}
             </button>
@@ -753,14 +754,14 @@ function NotesGraphView({
       </aside>
       <div className="min-w-0 flex-1 overflow-y-auto p-4">
         {graph.edges.map((edge) => (
-          <div key={`${edge.from}->${edge.to}:${edge.kind}`} className="mb-1 font-mono text-[11px] text-muted-foreground">
+          <div key={`${edge.from}->${edge.to}:${edge.kind}`} className="mb-1 font-mono text-xs text-muted-foreground">
             {edge.from} → {edge.to} · {edge.kind}
           </div>
         ))}
         {graph.hidden > 0 ? (
           <button
             type="button"
-            className="mt-2 rounded-[var(--radius-control)] border border-border/60 px-2 py-1 text-[11px] hover:bg-foreground/[0.06]"
+            className="mt-2 rounded-[var(--radius-control)] border border-border/60 px-2 py-1 text-xs hover:bg-foreground/[0.06]"
             data-testid="notes-graph-more"
             onClick={() => setLimit((prev) => prev + NOTE_GRAPH_PAGE_SIZE)}
           >
@@ -786,7 +787,7 @@ function OutlineTree({ node, onToggle, onOpenBlock }: { node: NoteOutlineNode; o
             {node.collapsed ? '+' : '–'}
           </button>
         ) : null}
-        {node.supertag ? <span className="rounded bg-foreground/10 px-1.5 text-[11px]">#{node.supertag}</span> : null}
+        {node.supertag ? <span className="rounded bg-foreground/10 px-1.5 text-xs">#{node.supertag}</span> : null}
         {node.id.startsWith('block:') ? (
           <button type="button" className="text-left hover:underline" data-block-id={node.id.slice('block:'.length)} onClick={() => onOpenBlock(node.id)}>{node.title}</button>
         ) : <span>{node.title}</span>}

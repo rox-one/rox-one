@@ -42,6 +42,7 @@ export type ChromeTokenName =
   | 'panelSashHitWidth'
   | 'panelSashHitWidthCoarse'
   | 'panelSashLineWidth'
+  | 'panelSnapThreshold'
 
 /** Compact density (the default). */
 export const CHROME_TOKENS: Readonly<Record<ChromeTokenName, number>> = Object.freeze({
@@ -115,6 +116,8 @@ export const CHROME_TOKENS: Readonly<Record<ChromeTokenName, number>> = Object.f
   panelSashHitWidthCoarse: 24,
   /** --panel-sash-line-width */
   panelSashLineWidth: 1,
+  /** --panel-snap-threshold */
+  panelSnapThreshold: 12,
 })
 
 /** `html[data-density="comfortable"]` values (compact merged with overrides). */
@@ -189,4 +192,6 @@ export const CHROME_TOKENS_COMFORTABLE: Readonly<Record<ChromeTokenName, number>
   panelSashHitWidthCoarse: 24,
   /** --panel-sash-line-width */
   panelSashLineWidth: 1,
+  /** --panel-snap-threshold */
+  panelSnapThreshold: 12,
 })

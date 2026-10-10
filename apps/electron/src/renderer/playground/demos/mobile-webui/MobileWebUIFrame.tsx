@@ -76,7 +76,7 @@ export function MobileWebUIFrame({
         style={{ width: size.width, height: size.height }}
       >
         {showBezel && (
-          <div className="h-7 shrink-0 flex items-center justify-center bg-foreground/95 text-background text-[11px] font-medium tabular-nums">
+          <div className="h-7 shrink-0 flex items-center justify-center bg-foreground/95 text-background text-xs font-medium numeric">
             <span>9:41</span>
           </div>
         )}
@@ -88,7 +88,7 @@ export function MobileWebUIFrame({
           {children}
         </div>
       </div>
-      <span className="text-[11px] font-mono text-muted-foreground">
+      <span className="text-xs font-mono text-muted-foreground">
         {size.label} — {contentBox ? `${contentBox.width}×${contentBox.height}` : `${size.width}×${size.height}`}
       </span>
     </div>

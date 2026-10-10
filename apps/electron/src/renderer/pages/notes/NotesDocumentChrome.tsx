@@ -53,7 +53,7 @@ export function NotesBreadcrumbs({
   const vaultTitleKey = useNotesTitleKey('notes.breadcrumb.vault')
   const crumbs = noteBreadcrumbs(noteId, title)
   return (
-    <nav className="flex min-w-0 items-center gap-1 text-[12px] text-text-secondary" aria-label={t('notes.breadcrumb.label')}>
+    <nav className="flex min-w-0 items-center gap-1 text-sm text-text-secondary" aria-label={t('notes.breadcrumb.label')}>
       {crumbs.map((crumb, index) => (
         <React.Fragment key={crumb.id}>
           {index > 0 ? <ChevronRight className="h-3 w-3 shrink-0 opacity-50" /> : null}
@@ -67,6 +67,7 @@ export function NotesBreadcrumbs({
               if (crumb.id === 'vault') onOpenFolder?.(undefined)
               else if (crumb.folder) onOpenFolder?.(crumb.folder)
             }}
+            title={crumb.id === 'vault' ? t(vaultTitleKey) : crumb.label}
           >
             {crumb.id === 'vault' ? t(vaultTitleKey) : crumb.label}
           </button>}
@@ -206,7 +207,7 @@ export function NotesCommandPalette({
         offset += group.items.length
         return (
           <div key={group.subject} data-testid={`notes-command-group-${group.subject}`}>
-            <div className="px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-foreground/70">
+            <div className="px-2 py-1 text-xs font-medium uppercase caps-label text-foreground/70">
               {t(noteCommandGroupKey(group.subject))}
             </div>
             {group.items.map((item, itemIndex) => {
@@ -222,15 +223,15 @@ export function NotesCommandPalette({
                   )}
                   onClick={() => onSelect(item)}
                 >
-                  <span className="truncate">{labelKey ? t(labelKey) : item.label}</span>
-                  <span className="ml-2 shrink-0 font-mono text-[10px] text-muted-foreground">{item.insert}</span>
+                  <span className="truncate" title={labelKey ? t(labelKey) : item.label}>{labelKey ? t(labelKey) : item.label}</span>
+                  <span className="ml-2 shrink-0 font-mono text-xs text-muted-foreground">{item.insert}</span>
                 </button>
               )
             })}
           </div>
         )
       })}
-      <div className="border-t border-foreground/[0.06] px-2 py-1 text-[10px] text-foreground/70">
+      <div className="border-t border-foreground/[0.06] px-2 py-1 text-xs text-foreground/70">
         {t('notes.palette.hint')}
       </div>
     </div>

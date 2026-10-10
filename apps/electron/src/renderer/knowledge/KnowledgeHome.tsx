@@ -644,16 +644,16 @@ export function KnowledgeHome() {
   const emptyState =
     status === 'idle' && (noConnections || kernelHasNoConnections || kernelOffline) ? (
       <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
-        <p className="text-[13px] font-medium text-foreground">
+        <p className="text-base font-medium text-foreground">
           {t('knowledge.roxNotes.emptyTitle')}
         </p>
-        <p className="max-w-sm text-[12px] leading-snug text-muted-foreground">
+        <p className="max-w-sm text-sm text-muted-foreground">
           {t('knowledge.roxNotes.emptyBody')}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-2">
           <button
             type="button"
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-muted"
+            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted"
             onClick={() => navigate(routes.view.notes())}
             data-testid="knowledge-open-rox-notes"
           >
@@ -682,11 +682,11 @@ export function KnowledgeHome() {
         )}
       >
         <FileDiff className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-        <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-foreground/80">
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground/80" title={t('knowledge.proposals.title')}>
           {t('knowledge.proposals.title')}
         </span>
         {actionableProposalCount > 0 && (
-          <span className="shrink-0 rounded-full bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+          <span className="shrink-0 rounded-full bg-background px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
             {t('knowledge.proposals.count', { count: actionableProposalCount })}
           </span>
         )}
@@ -716,7 +716,7 @@ export function KnowledgeHome() {
             type="button"
             onClick={backToSearch}
             className={cn(
-              'mb-2 flex items-center gap-1 rounded-md px-1 py-0.5 text-[12px] text-muted-foreground',
+              'mb-2 flex items-center gap-1 rounded-md px-1 py-0.5 text-sm text-muted-foreground',
               'hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             )}
           >
@@ -726,15 +726,15 @@ export function KnowledgeHome() {
           <div className="flex items-center gap-2 px-1">
             <Bookmark className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[13px] font-medium text-foreground">{title}</div>
+              <div className="truncate text-base font-medium text-foreground" title={title}>{title}</div>
               {activeView?.description && (
-                <div className="truncate text-[11px] text-muted-foreground">
+                <div className="truncate text-xs text-muted-foreground" title={activeView.description}>
                   {activeView.description}
                 </div>
               )}
             </div>
             {viewStatus === 'done' && (
-              <span className="shrink-0 text-[11px] text-muted-foreground">
+              <span className="shrink-0 text-xs text-muted-foreground">
                 {t('knowledge.views.resultCount', { count: viewHits.length })}
               </span>
             )}
@@ -743,12 +743,12 @@ export function KnowledgeHome() {
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           {viewStatus === 'loading' && (
-            <p className="px-3 py-6 text-center text-[12px] text-muted-foreground">
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">
               {t('knowledge.surface.loading')}
             </p>
           )}
           {viewStatus === 'error' && (
-            <p className="px-3 py-6 text-center text-[12px] text-destructive">
+            <p className="px-3 py-6 text-center text-sm text-destructive">
               {t('knowledge.surface.error')}
             </p>
           )}
@@ -763,7 +763,7 @@ export function KnowledgeHome() {
             viewGroups.map((group) => (
               <div key={group.key || '__all'}>
                 {group.key ? (
-                  <div className="sticky top-0 z-[1] bg-background/95 px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground backdrop-blur">
+                  <div className="sticky top-0 z-[1] bg-background/95 px-3 py-1.5 text-xs font-medium uppercase caps-label text-muted-foreground backdrop-blur">
                     {group.key === 'ungrouped'
                       ? t('knowledge.views.ungrouped')
                       : group.key}
@@ -788,10 +788,10 @@ export function KnowledgeHome() {
                           'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm',
                         )}
                       >
-                        <span className="truncate text-[13px] font-medium text-foreground">
+                        <span className="truncate text-base font-medium text-foreground" title={hit.title || hit.ref.id}>
                           {hit.title || hit.ref.id}
                         </span>
-                        <span className="truncate text-[12px] text-muted-foreground">
+                        <span className="truncate text-sm text-muted-foreground">
                           {hit.snippet || hit.notebookPath}
                         </span>
                       </button>
@@ -803,7 +803,7 @@ export function KnowledgeHome() {
                           title={t('knowledge.views.markApproved')}
                           className={cn(
                             'mt-0.5 shrink-0 inline-flex items-center gap-1 rounded-md border border-border',
-                            'bg-background px-2 py-1 text-[11px] font-medium text-foreground/80',
+                            'bg-background px-2 py-1 text-xs font-medium text-foreground/80',
                             'hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
                             'disabled:opacity-50',
                           )}
@@ -857,7 +857,7 @@ export function KnowledgeHome() {
                   placeholder={t('knowledge.search.placeholder')}
                   aria-label={t('knowledge.search.placeholder')}
                   className={cn(
-                    'w-full rounded-md border border-input bg-background py-1.5 pl-8 pr-2 text-[13px]',
+                    'w-full rounded-md border border-input bg-background py-1.5 pl-8 pr-2 text-base',
                     'placeholder:text-muted-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
                   )}
                 />
@@ -870,11 +870,11 @@ export function KnowledgeHome() {
         getKey={(hit) => `${hit.ref.kind}:${hit.ref.id}`}
         emptyState={
           status === 'loading' ? (
-            <p className="px-3 py-6 text-center text-[12px] text-muted-foreground">
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">
               {t('knowledge.surface.loading')}
             </p>
           ) : status === 'error' ? (
-            <p className="px-3 py-6 text-center text-[12px] text-destructive">
+            <p className="px-3 py-6 text-center text-sm text-destructive">
               {t('knowledge.surface.error')}
             </p>
           ) : (
@@ -891,10 +891,10 @@ export function KnowledgeHome() {
               'hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             )}
           >
-            <span className="truncate text-[13px] font-medium text-foreground">
+            <span className="truncate text-base font-medium text-foreground" title={hit.title || hit.ref.id}>
               {hit.title || hit.ref.id}
             </span>
-            <span className="truncate text-[12px] text-muted-foreground">{hit.snippet}</span>
+            <span className="truncate text-sm text-muted-foreground">{hit.snippet}</span>
           </button>
         )}
       />
@@ -903,16 +903,16 @@ export function KnowledgeHome() {
       <div className="border-t border-border px-3 py-2">
         <div className="mb-1.5 flex items-center gap-1.5 px-0.5">
           <Bookmark className="size-3 shrink-0 text-muted-foreground" aria-hidden />
-          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="text-xs font-medium uppercase caps-label text-muted-foreground">
             {t('knowledge.nav.savedViews')}
           </span>
         </div>
         {!viewsLoaded ? (
-          <div className="px-0.5 py-1 text-[11px] text-muted-foreground">
+          <div className="px-0.5 py-1 text-xs text-muted-foreground">
             {t('knowledge.surface.loading')}
           </div>
         ) : savedViews.length === 0 ? (
-          <div className="rounded-md bg-muted/40 px-2.5 py-2 text-[11px] leading-snug text-muted-foreground">
+          <div className="rounded-md bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground">
             {t('knowledge.views.none')}
           </div>
         ) : (
@@ -928,11 +928,11 @@ export function KnowledgeHome() {
                     activeViewId === v.id && 'bg-muted ring-1 ring-ring',
                   )}
                 >
-                  <span className="truncate text-[12px] font-medium text-foreground/90">
+                  <span className="truncate text-sm font-medium text-foreground/90" title={v.name}>
                     {v.name}
                   </span>
                   {v.description ? (
-                    <span className="truncate text-[11px] text-muted-foreground">
+                    <span className="truncate text-xs text-muted-foreground" title={v.description}>
                       {v.description}
                     </span>
                   ) : null}
@@ -948,6 +948,6 @@ export function KnowledgeHome() {
 
 function HomeHint({ text }: { text: string }) {
   return (
-    <p className="px-3 py-6 text-center text-[12px] leading-snug text-muted-foreground">{text}</p>
+    <p className="px-3 py-6 text-center text-sm text-muted-foreground">{text}</p>
   )
 }

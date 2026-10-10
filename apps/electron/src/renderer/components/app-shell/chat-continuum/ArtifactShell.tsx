@@ -56,7 +56,7 @@ export function ArtifactShell({
           {title}
         </h3>
         {subtitle && (
-          <code className="min-w-0 truncate font-mono text-caption text-text-secondary">{subtitle}</code>
+          <code className="min-w-0 truncate font-mono text-caption text-text-secondary" title={subtitle}>{subtitle}</code>
         )}
         {status && <ContinuumBadge tone={statusTone}>{status}</ContinuumBadge>}
         <span className="flex-1" />
@@ -86,7 +86,7 @@ export function ArtifactSkeleton({ title, subtitle }: { title: string; subtitle:
           className="icon-toolbar text-text-muted motion-safe:animate-spin motion-reduce:animate-none"
         />
         <span className="text-small font-medium text-text-primary">{title}</span>
-        <code className="min-w-0 truncate font-mono text-caption text-text-secondary">{subtitle}</code>
+        <code className="min-w-0 truncate font-mono text-caption text-text-secondary" title={subtitle}>{subtitle}</code>
         <span className="flex-1" />
         <ContinuumBadge tone="running">
           {t('chat.continuum.artifact.running', { defaultValue: 'выполняется' })}

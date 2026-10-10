@@ -39,7 +39,7 @@ export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disable
       data-testid={testId}
       data-rail-row=""
       className={cn(
-        'rox-rail-row relative flex min-h-[var(--control-hit-min)] shrink-0 items-center rounded-[var(--radius-control)] text-[13px] leading-none transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)]',
+        'rox-rail-row relative flex min-h-[var(--control-hit-min)] shrink-0 items-center rounded-[var(--radius-control)] text-base leading-none transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)]',
         collapsed ? 'w-[var(--control-hit-min)] justify-center' : 'w-full gap-[8px] px-[8px] text-left',
         disabled
           ? 'cursor-not-allowed text-[var(--text-disabled)]'
@@ -57,7 +57,7 @@ export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disable
       )}
     >
       <Icon className={collapsed ? 'icon-rail' : 'icon-toolbar'} />
-      {!collapsed && <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>}
+      {!collapsed && <span className="min-w-0 flex-1 truncate label-tracking" title={label}>{label}</span>}
     </button>
   )
 

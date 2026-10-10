@@ -210,13 +210,13 @@ function computeEditWriteDiffStats(
 /** Shared size configuration for activity UI - exported for reuse in inline execution */
 export const SIZE_CONFIG = {
   /** Base font size class for all text */
-  fontSize: 'text-[13px]',
+  fontSize: 'text-base',
   /** Icon size class (width and height) */
   iconSize: 'w-3 h-3',
   /** Spinner text size class */
-  spinnerSize: 'text-[10px]',
+  spinnerSize: 'text-xs',
   /** Small spinner for header */
-  spinnerSizeSmall: 'text-[8px]',
+  spinnerSizeSmall: 'text-xs',
   /** Activity row height in pixels (approx for calculation) */
   activityRowHeight: 24,
   /** Max visible activities before scrolling (show ~15 items) */
@@ -841,7 +841,7 @@ export function ActivityStatusIcon({
       const isLikelyEmoji = customIcon.length <= 8 && !/^(https?:\/\/|data:)/.test(customIcon)
       if (isLikelyEmoji) {
         return (
-          <span className={cn(SIZE_CONFIG.iconSize, "shrink-0 flex items-center justify-center text-[10px] leading-none")}>
+          <span className={cn(SIZE_CONFIG.iconSize, "shrink-0 flex items-center justify-center text-xs leading-none")}>
             {customIcon}
           </span>
         )
@@ -1078,7 +1078,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
-                    className="px-1.5 py-0.5 bg-[color-mix(in_oklab,var(--destructive)_4%,var(--background))] shadow-tinted rounded-[var(--radius-control)] text-[10px] text-destructive font-medium cursor-default shrink-0"
+                    className="px-1.5 py-0.5 bg-[color-mix(in_oklab,var(--destructive)_4%,var(--background))] shadow-tinted rounded-[var(--radius-control)] text-xs text-destructive font-medium cursor-default shrink-0"
                     style={{ '--shadow-color': 'var(--destructive-rgb)' } as React.CSSProperties}
                   >
                     {i18n.t('common.error')}
@@ -1091,7 +1091,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
             )}
             {/* Model badge for LLM Query */}
             {activity.toolName === 'mcp__session__call_llm' && activity.toolInput?.model && (
-              <span className="px-1.5 py-0.5 bg-background shadow-minimal rounded-[var(--radius-control)] text-[10px] text-foreground/60 shrink-0">
+              <span className="px-1.5 py-0.5 bg-background shadow-minimal rounded-[var(--radius-control)] text-xs text-foreground/60 shrink-0">
                 {String(activity.toolInput.model)}
               </span>
             )}
@@ -1125,7 +1125,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
         )}
         {/* Diff stats and filename badges - after tool name */}
         {!isMcpOrApiTool && !isBackgrounded && diffStats && (
-          <span className="flex items-center gap-1.5 text-[10px] shrink-0">
+          <span className="flex items-center gap-1.5 text-xs numeric shrink-0">
             {diffStats.deletions > 0 && (
               <span
                 className="px-1.5 py-0.5 bg-[color-mix(in_oklab,var(--destructive)_5%,var(--background))] shadow-tinted rounded-[var(--radius-control)] text-destructive"
@@ -1143,7 +1143,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
               // Claude Code format: file_path
               if (typeof activity.toolInput?.file_path === 'string') {
                 return (
-                  <span className="px-1.5 py-0.5 bg-background shadow-minimal rounded-[var(--radius-control)] text-[11px] text-foreground/70">
+                  <span className="px-1.5 py-0.5 bg-background shadow-minimal rounded-[var(--radius-control)] text-xs text-foreground/70">
                     {normalizePath(activity.toolInput.file_path).split('/').pop()}
                   </span>
                 )
@@ -1153,7 +1153,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
                 const firstChange = activity.toolInput.changes[0] as { path?: string } | undefined
                 if (firstChange?.path) {
                   return (
-                    <span className="px-1.5 py-0.5 bg-background shadow-minimal rounded-[var(--radius-control)] text-[11px] text-foreground/70">
+                    <span className="px-1.5 py-0.5 bg-background shadow-minimal rounded-[var(--radius-control)] text-xs text-foreground/70">
                       {normalizePath(firstChange.path).split('/').pop()}
                     </span>
                   )
@@ -1165,8 +1165,8 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
         )}
         {/* Filename badge for Read tool (no diff stats) */}
         {!isMcpOrApiTool && !isBackgrounded && !diffStats && activity.toolName === 'Read' && typeof activity.toolInput?.file_path === 'string' && (
-          <span className="flex items-center gap-1.5 text-[10px] shrink-0">
-            <span className="px-1.5 py-0.5 bg-background shadow-minimal rounded-[var(--radius-control)] text-[11px] text-foreground/70">
+          <span className="flex items-center gap-1.5 text-xs shrink-0">
+            <span className="px-1.5 py-0.5 bg-background shadow-minimal rounded-[var(--radius-control)] text-xs text-foreground/70">
               {normalizePath(activity.toolInput.file_path).split('/').pop()}
             </span>
           </span>
@@ -1176,7 +1176,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
           <Tooltip>
             <TooltipTrigger asChild>
               <span
-                className="px-1.5 py-0.5 bg-[color-mix(in_oklab,var(--destructive)_4%,var(--background))] shadow-tinted rounded-[var(--radius-control)] text-[10px] text-destructive font-medium cursor-default shrink-0"
+                className="px-1.5 py-0.5 bg-[color-mix(in_oklab,var(--destructive)_4%,var(--background))] shadow-tinted rounded-[var(--radius-control)] text-xs text-destructive font-medium cursor-default shrink-0"
                 style={{ '--shadow-color': 'var(--destructive-rgb)' } as React.CSSProperties}
               >
                 Error
@@ -1352,7 +1352,7 @@ function ActivityGroupRow({
         <ActivityStatusIcon status={group.parent.status} toolName={group.parent.toolName} />
 
         {/* Subagent type badge */}
-        <span className="shrink-0 px-1.5 py-0.5 rounded-[var(--radius-control)] bg-background shadow-minimal text-[10px] font-medium">
+        <span className="shrink-0 px-1.5 py-0.5 rounded-[var(--radius-control)] bg-background shadow-minimal text-xs font-medium">
           {subagentType || 'Task'}
         </span>
 
@@ -1366,7 +1366,7 @@ function ActivityGroupRow({
 
         {/* Duration and token stats from TaskOutput (only when complete) */}
         {isComplete && group.taskOutputData && (
-          <span className="shrink-0 text-text-secondary tabular-nums">
+          <span className="shrink-0 text-text-secondary numeric">
             {group.taskOutputData.durationMs !== undefined && (
               <span>{formatDuration(group.taskOutputData.durationMs)}</span>
             )}
@@ -3073,7 +3073,7 @@ export const TurnCard = React.memo(function TurnCard({
             </motion.div>
 
             {/* Step count badge */}
-            <span className="-ml-0.5 shrink-0 px-1.5 py-0.5 rounded-[var(--radius-control)] bg-background shadow-minimal text-[10px] font-medium tabular-nums">
+            <span className="-ml-0.5 shrink-0 px-1.5 py-0.5 rounded-[var(--radius-control)] bg-background shadow-minimal text-xs font-medium numeric">
               {activities.length}
             </span>
 

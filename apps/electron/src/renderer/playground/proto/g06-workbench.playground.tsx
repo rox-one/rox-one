@@ -267,12 +267,12 @@ function WorkbenchStory({ lens, section, width: widthProp, swap }: {
           className="flex h-6 shrink-0 items-center gap-2 border-t border-border-subtle bg-surface-elevated px-2 text-caption text-text-secondary"
           data-testid="g06-wb-status"
         >
-          <span className="tabular-nums">Сцена {Math.round(stageWidth)}px · чат {Math.round(chatWidth)}px</span>
+          <span className="numeric">Сцена {Math.round(stageWidth)}px · чат {Math.round(chatWidth)}px</span>
           <span aria-hidden="true">·</span>
           <span>порог дока {LENS_DOCK_MIN}px → {resolvedMode === 'docked' ? 'колонка' : 'лист'}</span>
           <span aria-hidden="true">·</span>
           <span className="min-w-0 truncate">{lastAction}</span>
-          <span className="ml-auto hidden shrink-0 items-center gap-3 tabular-nums lg:flex">
+          <span className="ml-auto hidden shrink-0 items-center gap-3 numeric lg:flex">
             <span>panel-or-replace: центр заменяется, пропорции сохраняются</span>
             <span>⌘-клик → панель</span>
             <span>⌥⌘S — своп</span>

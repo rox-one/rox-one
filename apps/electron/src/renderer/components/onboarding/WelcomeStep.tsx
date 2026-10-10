@@ -63,7 +63,7 @@ function CoinBadge({ gold, label }: { gold: boolean; label: string }) {
       data-state={gold ? "gold" : "grey"}
       title={label}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium tabular-nums",
+        "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium numeric",
         gold ? "text-status-warning" : "text-muted-foreground/50",
       )}
     >

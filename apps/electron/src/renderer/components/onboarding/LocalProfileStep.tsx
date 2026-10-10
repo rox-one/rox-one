@@ -81,7 +81,7 @@ export function LocalProfileStep({
             aria-invalid={!trimmedName}
             className="h-11 rounded-xl border-foreground/15 bg-background/70 px-4 text-base shadow-minimal"
           />
-          <p className="text-xs leading-relaxed text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {trimmedName ? t('onboarding.localProfile.displayNameHelper') : t('onboarding.localProfile.displayNameRequired')}
           </p>
         </div>

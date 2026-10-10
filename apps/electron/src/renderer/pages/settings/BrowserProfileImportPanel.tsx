@@ -342,7 +342,7 @@ export default function BrowserProfileImportPanel() {
           <SettingsRow label={<span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-muted-foreground" />{t('settings.browserImport.osAccessTitle')}</span>}
             data-testid="browser-profile-os-access"
             description={credentialDescription} wrapDescription
-            action={<span className="rounded-md bg-foreground/5 px-2 py-1 text-[11px] text-muted-foreground">{credentialSupported ? t('settings.browserImport.credentials.requiresAccess') : t('settings.browserImport.accessUnavailable')}</span>}
+            action={<span className="rounded-md bg-foreground/5 px-2 py-1 text-xs text-muted-foreground">{credentialSupported ? t('settings.browserImport.credentials.requiresAccess') : t('settings.browserImport.accessUnavailable')}</span>}
           />
         </SettingsCard>
       </SettingsSection>
@@ -403,7 +403,7 @@ export default function BrowserProfileImportPanel() {
           {profiles.map((profile) => <label key={profile.id} className={`flex cursor-pointer items-start gap-3 rounded-[var(--radius-control)] border p-3 transition-colors ${selectedId === profile.id ? 'border-accent/40 bg-accent/5' : 'border-border/50 hover:bg-foreground/5'}`}>
             <input type="radio" name="browser-profile" className="mt-1 accent-accent" checked={selectedId === profile.id}
               disabled={loading || profileBound || profile.state === 'locked' || profile.state === 'unsupported'} onChange={() => setSelectedId(profile.id)} />
-            <span className="min-w-0 text-sm"><span className="block truncate font-medium">{profile.name}</span>
+            <span className="min-w-0 text-sm"><span className="block truncate font-medium" title={profile.name}>{profile.name}</span>
               <span className="mt-1 block text-xs text-muted-foreground">{profile.family} · {t(STATE_KEYS[profile.state])}</span>
               {profile.recommended ? <span className="mt-1 block text-xs text-accent">{t('settings.browserImport.recommended')}</span> : null}
             </span>
@@ -416,7 +416,7 @@ export default function BrowserProfileImportPanel() {
             ['settings.browserImport.consentCookies', summary.counts.cookies],
             ['onboarding.environment.browserImportCredentials', summary.counts.credentials],
             ['settings.browserImport.skipped', summary.counts.skipped],
-          ].map(([key, count]) => <div key={key} className="rounded-lg bg-foreground/5 px-3 py-2"><span className="block text-lg font-semibold tabular-nums">{count}</span><span className="text-[11px] text-muted-foreground">{t(String(key))}</span></div>)}
+          ].map(([key, count]) => <div key={key} className="rounded-lg bg-foreground/5 px-3 py-2"><span className="block text-lg font-semibold numeric">{count}</span><span className="text-xs text-muted-foreground">{t(String(key))}</span></div>)}
         </div> : null}
         {summary?.unsupportedCredentials ? <p className="text-xs text-muted-foreground">{t('settings.browserImport.credentials.skipped')}</p> : null}
       </div> : null}

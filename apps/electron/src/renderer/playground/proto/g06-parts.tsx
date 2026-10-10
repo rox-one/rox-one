@@ -403,11 +403,11 @@ export function ProtoPanelHeader({
         </button>
       ) : null}
       <span className="flex min-w-0 flex-1 items-center gap-1.5">
-        <span className="truncate text-body font-semibold leading-tight text-text-primary" title={title}>
+        <span className="truncate text-body font-semibold text-text-primary" title={title}>
           {title}
         </span>
         {count ? (
-          <span className="shrink-0 rounded-[var(--radius-control)] bg-surface-hover px-1 text-caption font-medium tabular-nums text-text-secondary">
+          <span className="shrink-0 rounded-[var(--radius-control)] bg-surface-hover px-1 text-caption font-medium numeric text-text-secondary">
             {count}
           </span>
         ) : null}
@@ -741,8 +741,8 @@ export function SessionLanes({
               >
                 {collapsed ? <ChevronRight className="icon-status" /> : <ChevronDown className="icon-status" />}
               </button>
-              <span className="text-caption font-medium uppercase tracking-wider text-text-secondary">{lane.label}</span>
-              <span className="text-caption tabular-nums text-text-secondary">{lane.sessions.length || ''}</span>
+              <span className="text-caption font-medium uppercase caps-labelr text-text-secondary">{lane.label}</span>
+              <span className="text-caption numeric text-text-secondary">{lane.sessions.length || ''}</span>
               <span className="ml-auto flex items-center gap-1">
                 {lane.sessions.some((session) => session.processing) ? (
                   <span className="text-caption text-text-secondary">идёт работа</span>
@@ -750,7 +750,7 @@ export function SessionLanes({
               </span>
             </div>
             {collapsed ? null : lane.sessions.length === 0 ? (
-              <p className="px-4 py-3 text-small leading-relaxed text-text-secondary" data-lane-empty={lane.id}>
+              <p className="px-4 py-3 text-small text-text-secondary" data-lane-empty={lane.id}>
                 {lane.empty}
               </p>
             ) : (
@@ -873,19 +873,19 @@ export function LaneRow({
           ) : (
             <CircleSlash className="icon-caption text-muted-foreground" aria-label="Прочитано" />
           )}
-          <span className={cn('min-w-0 flex-1 truncate text-body leading-tight', session.unread > 0 ? 'font-medium text-text-primary' : 'text-text-primary')}>
+          <span className={cn('min-w-0 flex-1 truncate text-body', session.unread > 0 ? 'font-medium text-text-primary' : 'text-text-primary')} title={session.title}>
             {session.title}
           </span>
           {session.pinned ? <Pin className="icon-status text-text-secondary" aria-label="Закреплена" /> : null}
           {session.unread > 0 ? (
             <span
-              className="shrink-0 rounded-full bg-accent/15 px-1.5 text-caption font-semibold leading-4 tabular-nums text-accent-text"
+              className="shrink-0 rounded-full bg-accent/15 px-1.5 text-caption font-semibold numeric text-accent-text"
               data-testid={'lane-unread-' + session.id}
             >
               {session.unread}
             </span>
           ) : null}
-          <span className="shrink-0 text-caption tabular-nums text-text-secondary group-hover:invisible" data-testid={'lane-time-' + session.id}>
+          <span className="shrink-0 text-caption numeric text-text-secondary group-hover:invisible" data-testid={'lane-time-' + session.id}>
             {session.updated}
           </span>
         </span>
@@ -925,7 +925,7 @@ export function LaneRow({
           </button>
         </span>
       </span>
-      <span className="flex w-[52px] shrink-0 flex-col items-end justify-center pr-2 text-caption tabular-nums leading-tight">
+      <span className="flex w-[52px] shrink-0 flex-col items-end justify-center pr-2 text-caption numeric">
         <span className="truncate text-text-secondary" title={session.workspace + ' · ' + session.model}>{session.workspace}</span>
       </span>
     </div>
@@ -990,11 +990,11 @@ function FilesBody() {
               )}
             >
               <FileText className="icon-caption text-muted-foreground" />
-              <span className="truncate text-small">{file.name}</span>
+              <span className="truncate text-small" title={file.name}>{file.name}</span>
               <span className="ml-auto flex shrink-0 items-center gap-1">
-                {file.added ? <span className="text-caption tabular-nums text-[var(--status-success)]">A</span> : null}
-                {file.changed ? <span className="text-caption tabular-nums text-[var(--status-warning)]">M</span> : null}
-                <span className="text-caption tabular-nums text-text-secondary">{file.size}</span>
+                {file.added ? <span className="text-caption numeric text-[var(--status-success)]">A</span> : null}
+                {file.changed ? <span className="text-caption numeric text-[var(--status-warning)]">M</span> : null}
+                <span className="text-caption numeric text-text-secondary">{file.size}</span>
               </span>
             </button>
           </li>
@@ -1015,8 +1015,8 @@ function GitBody() {
       <ul className="flex flex-col gap-0.5">
         {rows.map((row) => (
           <li key={row.path} className="flex min-w-0 items-center gap-1.5 rounded-[var(--radius-xs)] px-1 py-1 hover:bg-surface-hover">
-            <span className="truncate text-small">{row.path}</span>
-            <span className="ml-auto shrink-0 text-caption tabular-nums">
+            <span className="truncate text-small" title={row.path}>{row.path}</span>
+            <span className="ml-auto shrink-0 text-caption numeric">
               <span className="text-[var(--status-success)]">+{row.add}</span>{' '}
               <span className="text-[var(--status-danger)]">−{row.del}</span>
             </span>
@@ -1035,7 +1035,7 @@ function BrowserBody() {
         {['127.0.0.1:5300/playground.html', 'docs/design/rox-screen-map-ru.md'].map((tab, index) => (
           <li key={tab} className={cn('flex min-w-0 items-center gap-1.5 rounded-[var(--radius-xs)] px-1 py-1', index === 0 && 'bg-[var(--state-selected)]')}>
             <Globe className="icon-caption text-muted-foreground" />
-            <span className="truncate text-small">{tab}</span>
+            <span className="truncate text-small" title={tab}>{tab}</span>
           </li>
         ))}
       </ul>
@@ -1062,7 +1062,7 @@ function ContextBody() {
           <li key={share.key} className="flex flex-col gap-1">
             <div className="flex items-center justify-between text-small">
               <span>{share.label}</span>
-              <span className="tabular-nums text-text-secondary">{share.percent}%</span>
+              <span className="numeric text-text-secondary">{share.percent}%</span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-surface-hover">
               <div className="h-full rounded-full bg-accent/70" style={{ width: share.percent + '%' }} />
@@ -1104,7 +1104,7 @@ export function LensSectionSwitcher({
     label: entry.label,
     title: entry.label,
     icon: entry.icon,
-    badge: <span className="shrink-0 tabular-nums text-caption text-text-secondary">{counterValue[entry.id]}</span>,
+    badge: <span className="shrink-0 numeric text-caption text-text-secondary">{counterValue[entry.id]}</span>,
   }))
   return (
     <div
@@ -1155,7 +1155,7 @@ export function LensStrip({ counters = DEFAULT_LENS_COUNTERS, onExpand }: { coun
           type="button"
           onClick={onExpand}
           aria-label={entry.label + ': ' + entry.value}
-          className="flex min-h-[var(--control-hit-min)] w-full flex-col items-center justify-center gap-0.5 rounded-[var(--radius-xs)] py-1 text-caption tabular-nums text-text-secondary hover:bg-surface-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          className="flex min-h-[var(--control-hit-min)] w-full flex-col items-center justify-center gap-0.5 rounded-[var(--radius-xs)] py-1 text-caption numeric text-text-secondary hover:bg-surface-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           data-testid={'lens-strip-' + entry.id}
         >
           {LENS_SECTIONS.find((section) => section.id === entry.id)?.icon}
@@ -1265,20 +1265,20 @@ export function ChatStandIn({ title, compact }: { title: string; compact?: boole
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">
         <div className="flex flex-col gap-1">
           <span className="text-caption text-text-secondary">Пользователь · 14:02</span>
-          <p className="text-body leading-relaxed">
+          <p className="text-body">
             Разложи швы панельного стека: нужен видимый захват, цели сброса и своп панелей мышью и с клавиатуры.
           </p>
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-caption text-text-secondary">Агент · 14:03</span>
-          <p className="text-body leading-relaxed">
+          <p className="text-body">
             Готово. Шов получил полосу попадания 8px (24px на тач), захват появляется на наведении и фокусе. Своп — ⌥⌘S.
           </p>
           <div className="mt-1 overflow-hidden rounded-[var(--radius-control)] border border-border-subtle">
             <div className="flex items-center gap-1.5 border-b border-border-subtle bg-surface-hover px-2 py-1 text-caption text-text-secondary">
               <GitBranch className="icon-status" /> PanelSeam.tsx
             </div>
-            <pre className="overflow-x-auto px-2 py-1.5 font-mono text-small leading-relaxed text-text-primary">
+            <pre className="overflow-x-auto px-2 py-1.5 font-mono text-small text-text-primary">
 {`- <div className="seam" />
 + <PanelSeam onDrop={swapPanels} />`}
             </pre>
@@ -1287,7 +1287,7 @@ export function ChatStandIn({ title, compact }: { title: string; compact?: boole
         {compact ? null : (
           <div className="flex flex-col gap-1">
             <span className="text-caption text-text-secondary">Пользователь · 14:06</span>
-            <p className="text-body leading-relaxed">Проверь, что при 1000px линза уходит в оверлей, а третья панель — вкладкой.</p>
+            <p className="text-body">Проверь, что при 1000px линза уходит в оверлей, а третья панель — вкладкой.</p>
           </div>
         )}
       </div>
@@ -1295,7 +1295,7 @@ export function ChatStandIn({ title, compact }: { title: string; compact?: boole
         <div className="flex items-center gap-2 rounded-[var(--radius-composer)] border border-border-subtle bg-input-surface px-2 py-1.5">
           <Plus className="icon-caption text-muted-foreground" />
           <span className="flex-1 truncate text-small text-text-secondary">Написать сообщение агенту…</span>
-          <span className="shrink-0 rounded-[var(--radius-xs)] border border-border-subtle px-1 text-caption tabular-nums text-text-secondary">⌘⏎</span>
+          <span className="shrink-0 rounded-[var(--radius-xs)] border border-border-subtle px-1 text-caption numeric text-text-secondary">⌘⏎</span>
         </div>
       </div>
     </div>

@@ -92,10 +92,10 @@ const SECTION_ICONS: Record<InspectorSectionId, LucideIcon> = {
 function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5 px-2.5 py-1">
-      <span className="chrome-label-sm font-medium uppercase tracking-wide text-muted-foreground/60">
+      <span className="chrome-label-sm font-medium uppercase caps-label text-muted-foreground/60">
         {label}
       </span>
-      <span className={cn('chrome-label break-all text-foreground/90', mono && 'font-mono text-[11px]')}>
+      <span className={cn('chrome-label break-all text-foreground/90', mono && 'font-mono text-xs')}>
         {value}
       </span>
     </div>
@@ -170,10 +170,10 @@ function EmptySection({ section }: { section: InspectorSectionId }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
       <Icon className="h-6 w-6 text-muted-foreground/40" />
-      <span className="text-[13px] font-medium text-foreground/80">
+      <span className="text-base font-medium text-foreground/80">
         {t(`inspector.empty.${section}.title`)}
       </span>
-      <span className="text-[12px] leading-relaxed text-muted-foreground/60">
+      <span className="text-sm leading-relaxed text-muted-foreground/60">
         {t(`inspector.empty.${section}.body`)}
       </span>
     </div>
@@ -552,7 +552,7 @@ export function InspectorHost() {
             onCancel={() => setResizePreview(null)}
           />
           <div className="rox-shell-divider-b flex h-8 shrink-0 items-center justify-between gap-2 pl-2.5 pr-1.5">
-            <span className="chrome-label truncate font-medium tracking-tight">{t(titleKey)}</span>
+            <span className="chrome-label truncate font-medium label-tracking" title={t(titleKey)}>{t(titleKey)}</span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button

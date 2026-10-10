@@ -122,12 +122,12 @@ function Info_PageHero({ avatar, title, tagline, className }: Info_PageHeroProps
       </div>
       <div className="flex-1 min-w-0">
         {title && (
-          <h2 className="text-[16px] font-semibold text-text-primary leading-snug">
+          <h2 className="text-title-md font-semibold text-text-primary">
             {title}
           </h2>
         )}
         {tagline && (
-          <p className={cn('text-[13px] text-text-secondary leading-relaxed break-words', title ? 'mt-0.5' : 'mt-0')}>
+          <p className={cn('text-base text-text-secondary break-words', title ? 'mt-0.5' : 'mt-0')}>
             {tagline}
           </p>
         )}

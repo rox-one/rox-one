@@ -44,7 +44,7 @@ type ScopedPermissionRequest = PermissionRequestType & {
 /** Caption-sized keyboard hint chip (port of `G5Kbd`). */
 function InlineKbd({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-[var(--radius-xs)] border border-border-subtle bg-surface-elevated px-1 font-mono text-caption leading-none text-text-secondary">
+    <kbd className="inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-[var(--radius-xs)] border border-border-subtle bg-surface-elevated px-1 font-mono text-caption text-text-secondary">
       {children}
     </kbd>
   )

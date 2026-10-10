@@ -339,7 +339,7 @@ export default function OrganizationsSettingsPage() {
                           : 'hover:bg-foreground/3'
                       }`}
                     >
-                      <span className="min-w-0 truncate font-medium">{organization.name}</span>
+                      <span className="min-w-0 truncate font-medium" title={organization.name}>{organization.name}</span>
                       <span className="shrink-0 text-xs text-muted-foreground">
                         {t('settings.orgs.memberCount', {
                           count: organization.members.length,
@@ -428,7 +428,7 @@ export default function OrganizationsSettingsPage() {
                             data-testid="org-member-row"
                           >
                             <div className="min-w-0 space-y-1">
-                              <div className="truncate text-sm font-medium">
+                              <div className="truncate text-sm font-medium" title={member.displayLabel || member.username || t('settings.orgs.memberUnknown')}>
                                 {member.displayLabel || member.username || t('settings.orgs.memberUnknown')}
                               </div>
                               <dl className="space-y-0.5 text-xs text-muted-foreground">
@@ -471,7 +471,7 @@ export default function OrganizationsSettingsPage() {
                                 </Button>
                               </div>
                             ) : (
-                              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                                 {roleLabel(member.role, t)}
                               </span>
                             )}
@@ -485,7 +485,7 @@ export default function OrganizationsSettingsPage() {
                           description={t('settings.orgs.pendingInvite')}
                           action={
                             <div className="flex items-center gap-2">
-                              <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-600 dark:text-amber-400">
+                              <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-600 dark:text-amber-400">
                                 {roleLabel(invite.role, t)} · {t('settings.orgs.pending')}
                               </span>
                               {canManageInvites ? (

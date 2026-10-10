@@ -3093,7 +3093,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
 
   const experimentalSidebarNavigation = experimentalLinks.length > 0 && (
     <section className="mx-1 mt-5 py-2" aria-label={t('sidebar.experimentalFeatures')}>
-      {!isSidebarCollapsed && <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-foreground/40">{t('sidebar.experimentalFeatures')}</div>}
+      {!isSidebarCollapsed && <div className="px-3 pb-2 text-xs font-semibold uppercase caps-label text-foreground/40">{t('sidebar.experimentalFeatures')}</div>}
       <LeftSidebar isCollapsed={isSidebarCollapsed} onExpand={handleExpandNavigation} links={experimentalLinks} />
     </section>
   )
@@ -3188,7 +3188,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
                 <div className={cn('flex-1 overflow-y-auto min-h-0 pb-8', !(isSettingsNavigation(navState) && !isAutoCompact) && 'mask-fade-bottom')}>
                 {activeWorkspaceId && !isSidebarCollapsed && (
                   <div className="flex h-[var(--chrome-panel-header-height)] shrink-0 items-center gap-1.5 border-b border-border-subtle px-3">
-                    <label className="shrink-0 text-[10px] text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
+                    <label className="shrink-0 text-xs text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
                     <select id="workspace-project-context" value={selectedProjectId ?? ''}
                       className="min-w-0 flex-1 rounded-md border border-border bg-background px-1.5 py-1 text-caption leading-tight"
                       onChange={event => setProjectContexts(previous => ({ ...previous, [activeWorkspaceId]: event.target.value || null }))}>
@@ -3228,7 +3228,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
                               'flex cursor-pointer list-none items-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden',
                               isSidebarCollapsed
                                 ? 'mx-auto h-7 w-7 justify-center'
-                                : 'gap-2 px-3 py-2.5 text-[11px] font-semibold text-foreground/50',
+                                : 'gap-2 px-3 py-2.5 text-xs font-semibold text-foreground/50',
                             )}
                           >
                             <Layers className="size-3.5 text-accent" aria-hidden />

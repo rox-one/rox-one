@@ -62,7 +62,7 @@ export function DeckChip({
       {icon && <span aria-hidden className="shrink-0 text-text-muted">{icon}</span>}
       <span className="shrink-0 text-text-secondary">{label}</span>
       <span aria-hidden className="text-text-muted">:</span>
-      {children ?? <span className="min-w-0 truncate font-medium text-text-primary">{value}</span>}
+      {children ?? <span className="min-w-0 truncate font-medium text-text-primary" title={value}>{value}</span>}
       {trailing && <span className="shrink-0 text-text-muted">{trailing}</span>}
     </>
   )

@@ -121,15 +121,15 @@ export function MemoryRepoDreamsPanel({ status, log, running, onRunNow }: Memory
 
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="rounded-[var(--radius-control)] border border-border-subtle bg-background px-3 py-2" data-testid="memory-repo-dreams-last-run">
-          <div className="mb-1 text-caption font-medium uppercase tracking-wide text-text-muted/70">{t('memory.repo.lastDream')}</div>
+          <div className="mb-1 text-caption font-medium uppercase caps-label text-text-muted/70">{t('memory.repo.lastDream')}</div>
           {lastRun ? (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-small">
-              <span className={cn('rounded-[var(--radius-control)] px-1.5 py-px text-caption leading-4', RUN_STATUS_TONE[lastRun.status])} data-testid={`memory-repo-dreams-status-${lastRun.status}`}>
+              <span className={cn('rounded-[var(--radius-control)] px-1.5 py-px text-caption', RUN_STATUS_TONE[lastRun.status])} data-testid={`memory-repo-dreams-status-${lastRun.status}`}>
                 {t(RUN_STATUS_KEY[lastRun.status])}
               </span>
               <span className="text-text-muted">{formatEventTime(lastRun.startedAt)}</span>
               {lastRun.model ? <span className="text-text-secondary" data-testid="memory-repo-dreams-model">{lastRun.model}</span> : null}
-              <span className="tabular-nums text-text-secondary" data-testid="memory-repo-dreams-last-cost">
+              <span className="numeric text-text-secondary" data-testid="memory-repo-dreams-last-cost">
                 {fmtUsd(lastRun.costUsd)}
                 {lastRun.costIsEstimate ? <span className="ml-1 text-text-muted">({t('memory.repo.costEstimate')})</span> : null}
               </span>
@@ -143,15 +143,15 @@ export function MemoryRepoDreamsPanel({ status, log, running, onRunNow }: Memory
           <dl className="flex flex-col gap-1 text-small">
             <div className="flex items-center gap-2">
               <dt className="text-text-muted">{t('memory.repo.dreams.interval')}</dt>
-              <dd className="ml-auto tabular-nums">{status.intervalHours} {t('memory.repo.dreams.hours')}</dd>
+              <dd className="ml-auto numeric">{status.intervalHours} {t('memory.repo.dreams.hours')}</dd>
             </div>
             <div className="flex items-center gap-2">
               <dt className="text-text-muted">{t('memory.repo.nextDream')}</dt>
-              <dd className="ml-auto tabular-nums" data-testid="memory-repo-dreams-next">{status.nextRunAt ? formatEventTime(status.nextRunAt) : '—'}</dd>
+              <dd className="ml-auto numeric" data-testid="memory-repo-dreams-next">{status.nextRunAt ? formatEventTime(status.nextRunAt) : '—'}</dd>
             </div>
             <div className="flex items-center gap-2">
               <dt className="text-text-muted">{t('memory.repo.costToday')}</dt>
-              <dd className="ml-auto tabular-nums" data-testid="memory-repo-dreams-cost-today">
+              <dd className="ml-auto numeric" data-testid="memory-repo-dreams-cost-today">
                 {fmtUsd(status.costTodayUsd)}
                 {status.costIsEstimate ? <span className="ml-1 text-text-muted">({t('memory.repo.costEstimate')})</span> : null}
               </dd>
@@ -171,23 +171,23 @@ export function MemoryRepoDreamsPanel({ status, log, running, onRunNow }: Memory
       ) : null}
 
       <div className="min-h-[160px] rounded-[var(--radius-control)] border border-border-subtle bg-background">
-        <div className="border-b border-border-subtle px-3 py-1.5 text-caption font-medium uppercase tracking-wide text-text-muted/70">{t('memory.repo.dreams.stream')}</div>
+        <div className="border-b border-border-subtle px-3 py-1.5 text-caption font-medium uppercase caps-label text-text-muted/70">{t('memory.repo.dreams.stream')}</div>
         <div ref={streamRef} className="max-h-[280px] overflow-y-auto px-3 py-1.5" data-testid="memory-repo-dreams-stream">
           {log.length === 0 ? (
             <p className="py-2 text-small text-text-muted">{t('memory.repo.dreams.empty')}</p>
           ) : (
-            <ul className="flex flex-col gap-0.5 font-mono text-caption leading-5">
+            <ul className="flex flex-col gap-0.5 font-mono text-caption">
               {log.map((event, index) => (
                 <li key={`${event.dreamId}:${index}`} className="flex min-w-0 items-baseline gap-2" data-testid="memory-repo-dreams-event" data-kind={event.kind}>
-                  <span className="shrink-0 tabular-nums text-text-muted">{formatEventTime(event.ts)}</span>
+                  <span className="shrink-0 numeric text-text-muted">{formatEventTime(event.ts)}</span>
                   <span className="shrink-0 rounded-[var(--radius-control)] bg-foreground-5 px-1 text-caption text-text-secondary">{t(`memory.repo.dreams.kind.${event.kind}`)}</span>
                   <span className="min-w-0 flex-1 truncate" title={event.message}>{event.message}</span>
                   {typeof event.inputTokens === 'number' || typeof event.outputTokens === 'number' ? (
-                    <span className="shrink-0 tabular-nums text-text-muted">
+                    <span className="shrink-0 numeric text-text-muted">
                       {event.inputTokens ?? 0}/{event.outputTokens ?? 0}
                     </span>
                   ) : null}
-                  {typeof event.costUsd === 'number' ? <span className="shrink-0 tabular-nums text-text-muted">{fmtUsd(event.costUsd)}</span> : null}
+                  {typeof event.costUsd === 'number' ? <span className="shrink-0 numeric text-text-muted">{fmtUsd(event.costUsd)}</span> : null}
                 </li>
               ))}
             </ul>
@@ -197,14 +197,14 @@ export function MemoryRepoDreamsPanel({ status, log, running, onRunNow }: Memory
 
       {runs.length > 0 ? (
         <div className="rounded-[var(--radius-control)] border border-border-subtle bg-background" data-testid="memory-repo-dreams-runs">
-          <div className="border-b border-border-subtle px-3 py-1.5 text-caption font-medium uppercase tracking-wide text-text-muted/70">{t('memory.repo.dreams.runs')}</div>
+          <div className="border-b border-border-subtle px-3 py-1.5 text-caption font-medium uppercase caps-label text-text-muted/70">{t('memory.repo.dreams.runs')}</div>
           <ul className="flex flex-col gap-0.5 px-2 py-1.5 text-small">
             {runs.map((run) => (
               <li key={run.dreamId} className="flex min-w-0 items-center gap-2" data-testid="memory-repo-dreams-run-row">
-                <span className={cn('shrink-0 rounded-[var(--radius-control)] px-1.5 py-px text-caption leading-4', RUN_STATUS_TONE[run.status])}>{t(RUN_STATUS_KEY[run.status])}</span>
-                <span className="shrink-0 tabular-nums text-text-muted">{formatEventTime(run.startedAt)}</span>
+                <span className={cn('shrink-0 rounded-[var(--radius-control)] px-1.5 py-px text-caption', RUN_STATUS_TONE[run.status])}>{t(RUN_STATUS_KEY[run.status])}</span>
+                <span className="shrink-0 numeric text-text-muted">{formatEventTime(run.startedAt)}</span>
                 <span className="min-w-0 flex-1 truncate text-text-secondary" title={run.dreamId}>{run.dreamId}</span>
-                <span className="shrink-0 tabular-nums text-text-muted">{fmtUsd(run.costUsd)}</span>
+                <span className="shrink-0 numeric text-text-muted">{fmtUsd(run.costUsd)}</span>
               </li>
             ))}
           </ul>
