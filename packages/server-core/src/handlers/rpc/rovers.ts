@@ -66,6 +66,10 @@ export function loadRoversCatalogFromResources(): RoversCatalog {
 }
 
 export function registerRoversHandlers(server: RpcServer, _deps: HandlerDeps): void {
+  // Signature parity with sibling registrars (rpc/index.ts passes deps to all);
+  // the read-only rovers channel needs no handler deps.
+  void _deps
+
   let loaded: RoversCatalog | null = null
   let loadFailure: RoversCatalogError | null = null
 
