@@ -24,8 +24,23 @@ import {
 import { clearRecorderError, meetingsApi, recordedMs, startRecording, useRecorder } from '@/lib/meetings/recorder'
 import { newLocalId } from '@/lib/extra-screens/storage'
 import type { LocalAsrEngine, LocalMeeting } from '../../shared/meetings-local'
+import type { MeetingGrant } from '@rox/shared/meeting-agents/browser'
 import { LocalMeetingDetail, transcriptTone, type DetailTab } from './meetings/LocalMeetingDetail'
 import { MeetingsSidebar } from './meetings/MeetingsSidebar'
+import ProposalInbox from './meetings/ProposalInbox'
+import {
+  approveNativeProposalViaRpc,
+  buildMeetingGrant,
+  i18nKeyForProposalError,
+  listMeetingProposals,
+  MEETING_ACTOR_ID,
+  openNativeProposalTargetViaRpc,
+  rejectNativeProposalViaRpc,
+  resolveMeetingOpenTargetApi,
+  resolveMeetingProposalApi,
+  resolveMeetingProposalListApi,
+  type MeetingProposalRow,
+} from './meetings/proposal-rpc'
 import {
   formatDuration,
   groupLocalMeetings,
@@ -109,6 +124,11 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   const [cancelingImport, setCancelingImport] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const [now, setNow] = useState(() => Date.now())
+  const [proposalRows, setProposalRows] = useState<MeetingProposalRow[]>([])
+  const [proposalLoad, setProposalLoad] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
+  const [proposalError, setProposalError] = useState<string | null>(null)
+  const [proposalPendingIds, setProposalPendingIds] = useState<ReadonlySet<string>>(() => new Set<string>())
+  const [proposalReload, setProposalReload] = useState(0)
 
   // Only a committed workspace may publish reads or action receipts. Cleanup
   // invalidates the old visit even for A → B → A or an unmount without a rerender.
@@ -128,6 +148,10 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     importRequestRef.current = null
     setImportRequestId(null)
     setCancelingImport(false)
+    setProposalRows([])
+    setProposalLoad('idle')
+    setProposalError(null)
+    setProposalPendingIds(new Set<string>())
     return () => { requestTracker.setScope(undefined) }
   }, [api, workspaceId, requestTracker])
 
@@ -162,6 +186,28 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     void api.engine().then((e) => { if (!cancelled && request.isCurrent()) setEngine(e) }, () => {})
     return () => { cancelled = true; request.finish() }
   }, [api, workspaceId, reload, requestTracker])
+
+  // Meeting → native proposals are workspace data read over the local meetings
+  // IPC. Failure keeps an explicit error state so an empty inbox is never a
+  // false "nothing to review" while the read did not actually happen.
+  useEffect(() => {
+    if (!workspaceId) { setProposalRows([]); setProposalLoad('idle'); setProposalError(null); return }
+    const listApi = resolveMeetingProposalListApi()
+    if (!listApi) { setProposalRows([]); setProposalError('rpc-unavailable'); setProposalLoad('error'); return }
+    const request = requestTracker.beginLatest('proposals', workspaceId)
+    if (!request) return
+    let cancelled = false
+    setProposalLoad('loading')
+    void listMeetingProposals({ api: listApi, workspaceId }).then(
+      (result) => {
+        if (cancelled || !request.isCurrent()) return
+        if (!result.ok) { setProposalRows([]); setProposalError(result.code); setProposalLoad('error'); return }
+        setProposalRows(result.rows); setProposalError(null); setProposalLoad('ready')
+      },
+      () => { if (!cancelled && request.isCurrent()) { setProposalRows([]); setProposalError('rpc-unavailable'); setProposalLoad('error') } },
+    ).finally(() => request.finish())
+    return () => { cancelled = true; request.finish() }
+  }, [workspaceId, proposalReload, requestTracker])
 
   useEffect(() => {
     if (!api) return
@@ -356,6 +402,66 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     }
   }
 
+  function meetingGrantFor(): MeetingGrant | null {
+    return workspaceId ? buildMeetingGrant({ workspaceId, actorId: MEETING_ACTOR_ID }) : null
+  }
+
+  function patchProposalRow(next: MeetingProposalRow): void {
+    setProposalRows((rows) => rows.map((row) => (row.id === next.id ? next : row)))
+  }
+
+  async function handleProposalApprove(row: MeetingProposalRow) {
+    setProposalPendingIds((ids) => new Set(ids).add(row.id))
+    try {
+      const result = await approveNativeProposalViaRpc({
+        api: resolveMeetingProposalApi(),
+        workspaceId,
+        actorId: MEETING_ACTOR_ID,
+        grant: meetingGrantFor(),
+        row,
+      })
+      patchProposalRow(result.row)
+    } catch {
+      patchProposalRow({ ...row, errorCode: 'rpc-unavailable' })
+    } finally {
+      setProposalPendingIds((ids) => { const next = new Set(ids); next.delete(row.id); return next })
+    }
+  }
+
+  async function handleProposalReject(row: MeetingProposalRow) {
+    setProposalPendingIds((ids) => new Set(ids).add(row.id))
+    try {
+      const result = await rejectNativeProposalViaRpc({
+        api: resolveMeetingProposalApi(),
+        workspaceId,
+        actorId: MEETING_ACTOR_ID,
+        grant: meetingGrantFor(),
+        row,
+      })
+      patchProposalRow(result.row)
+    } catch {
+      patchProposalRow({ ...row, errorCode: 'rpc-unavailable' })
+    } finally {
+      setProposalPendingIds((ids) => { const next = new Set(ids); next.delete(row.id); return next })
+    }
+  }
+
+  async function handleProposalOpenTarget(row: MeetingProposalRow) {
+    try {
+      const result = await openNativeProposalTargetViaRpc({
+        api: resolveMeetingOpenTargetApi(),
+        workspaceId,
+        actorId: MEETING_ACTOR_ID,
+        grant: meetingGrantFor(),
+        row,
+      })
+      if (result.ok) navigate(result.route)
+      else patchProposalRow({ ...row, errorCode: result.code })
+    } catch {
+      patchProposalRow({ ...row, errorCode: 'rpc-unavailable' })
+    }
+  }
+
   const groupTitle = (group: LocalGroup) => {
     switch (group.kind) {
       case 'now': return t('meetings.screen.groupNow')
@@ -485,8 +591,32 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     </div>
   )
 
+  const proposalSection = workspaceId ? (
+    proposalLoad === 'loading' ? null : proposalLoad === 'error' ? (
+      <div
+        role="alert"
+        data-testid="meetings-proposals-error"
+        className="mx-3 mt-2 flex items-center gap-2 rounded-[var(--radius-card)] bg-destructive/10 px-2 py-1 text-[12px] text-destructive"
+      >
+        <span className="min-w-0 flex-1">{t(i18nKeyForProposalError(proposalError ?? undefined))}</span>
+        <Button variant="ghost" data-testid="meetings-proposals-retry" onClick={() => setProposalReload((n) => n + 1)}>{t('common.retry')}</Button>
+      </div>
+    ) : proposalLoad === 'ready' ? (
+      <div className="mx-3 mt-2">
+        <ProposalInbox
+          proposals={proposalRows}
+          onApprove={(row) => void handleProposalApprove(row)}
+          onReject={(row) => void handleProposalReject(row)}
+          onOpenTarget={(row) => void handleProposalOpenTarget(row)}
+          pendingIds={proposalPendingIds}
+        />
+      </div>
+    ) : null
+  ) : null
+
   const detailPanel = selected ? (
     <div ref={artifactTour.ref} className="min-h-full">
+    {proposalRows.length > 0 || proposalLoad === 'error' ? proposalSection : null}
     <LocalMeetingDetail
       key={selected.id}
       meeting={selected}
@@ -508,11 +638,15 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   ) : selectedId ? (
     <EmptyState testId="meetings-selection-status" title={t('common.loading')} />
   ) : (
-    // Nothing selected: one short hint, no repeated headline or buttons.
-    <div className="flex h-full items-center justify-center px-6" data-testid="meetings-selection-status">
-      <p className="max-w-[320px] text-center text-[12px] text-text-muted">
-        {meetings.length ? t('meetings.local.selectHint') : t('meetings.local.firstHint')}
-      </p>
+    // Nothing selected: the meeting → native proposal inbox plus one short hint,
+    // no repeated headline or buttons.
+    <div className="flex h-full flex-col" data-testid="meetings-selection-status">
+      <div className="min-h-0 flex-1 overflow-y-auto pt-1">{proposalSection}</div>
+      <div className="flex items-center justify-center px-6 py-4">
+        <p className="max-w-[320px] text-center text-[12px] text-text-muted">
+          {meetings.length ? t('meetings.local.selectHint') : t('meetings.local.firstHint')}
+        </p>
+      </div>
     </div>
   )
 

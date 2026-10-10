@@ -17,6 +17,7 @@ is recorded so the next agent does not “fix” it.
 | [004](./004-web-modes.md) | Web version modes (R16) | **Landing + honest states shipped**; cloud-VM backend out of repo | ACCEPTED (shipped slice) | product |
 | [005](./005-website-client-id.md) | Connect `clientId` flip | Blocked on private website repo | OPEN — access | product |
 | [006](./006-branch-deletion.md) | Remote branch deletion | **Do not execute** §5 | ACCEPTED (current ship) | product |
+| [009](./009-meetings-calls-honesty.md) | Meetings calls/rooms | **Fail-closed** — no fake dialer, `bindCall`/`joinRoom` blocked | ACCEPTED (current ship) | product |
 
 Human owner for this program: **pzd** (`go@trysota.ru`). Legal review for 001 is still outstanding.
 
@@ -28,3 +29,4 @@ These records do **not**:
 - change `appId` / `productName`
 - flip the default Connect `clientId`
 - delete remote branches
+- enable a fake dialer or a live room join (see 009)
