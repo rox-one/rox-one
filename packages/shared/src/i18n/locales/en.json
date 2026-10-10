@@ -1688,6 +1688,7 @@
   "devSpace.error.accessDenied": "No repository access. Sign in to GitHub and retry.",
   "devSpace.error.cancelled": "Operation cancelled.",
   "devSpace.error.cloneFailed": "Failed to clone the repository.",
+  "devSpace.error.cloneTooLarge": "Repository is too large for Dev Space (limit 2 GiB).",
   "devSpace.error.failed": "The operation failed.",
   "devSpace.error.invalidPath": "Invalid folder path.",
   "devSpace.error.invalidUrl": "Invalid repository link.",

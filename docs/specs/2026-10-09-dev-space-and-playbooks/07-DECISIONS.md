@@ -1,8 +1,9 @@
 # 07-DECISIONS — журнал решений
 
-Статус документа: **DRAFT для ревью**. Все решения ниже имеют статус
+Статус документа: **исторический журнал**. Все решения ниже имеют статус
 **принято 2026-10-09 (по рекомендации интервью)** — раунд-1 интервью, 14 вопросов, рекомендации приняты
-полностью («делай всё как рекомендуешь»). См. `00-BRIEF.md` §2.
+полностью («делай всё как рекомендуешь»). См. `00-BRIEF.md` §2. Открытые вопросы O1–O11 закрыты
+2026-10-10 — статусы и ссылки в таблице в конце документа.
 
 Формат: для каждого решения — контекст, выбранный вариант, отклонённые альтернативы и причины отказа,
 последствия. Отклонённые альтернативы приведены только те, что зафиксированы брифом.
@@ -199,21 +200,24 @@
 
 ---
 
-## Открытые вопросы (O1–O11)
+## Открытые вопросы (O1–O11) — все закрыты 2026-10-10
 
 Единый список `TODO(open)`: O1–O8 — из `00-BRIEF.md` §6, O9–O11 — из срезов `02-SPEC-foundations.md`.
-Статус всех — **open**.
 
-| # | Вопрос | Где решается |
-|---|---|---|
-| O1 | Канонический codegraph-провайдер (`ColbyMcHenry/codegraph` vs CodeGraphContext). | Аудит ревизии D4 |
-| O2 | Схлопывать ли groma/archify (пересечение диаграмм). | По результатам ревизии D4 |
-| O3 | Точный выбор job-движка для пайплайнов (agent-spawn vs automations vs cloud-runner), с критериями. | SPEC-foundations |
-| O4 | Где хранить клоны: `projects/<slug>` vs отдельный `repos/` (рекомендация SPEC: `projects/<slug>`). | SPEC-foundations |
-| O5 | Kokoro — включать в v1 или v1.x (по объёму работ В4). | PLAN / В4 |
-| O6 | Формат `srt` — обязателен ли в v1 (по умолчанию да, из сегментов). | SPEC-features |
-| O7 | Финальные пины/лицензии всех шести инструментов на момент старта В2. | Ревизия D4, старт В2 |
-| O8 | Политика пересчёта блоков при «грязном» рабочем дереве (dirty snapshot) — по умолчанию пересчёт по явной команде. | SPEC-foundations |
-| O9 | Лимиты клона и глубина истории (02 §5). | SPEC-foundations |
-| O10 | Параллелизм LLM-слоя и лимит журнала прогонов (02 §6). | SPEC-foundations |
-| O11 | Бюджет i18n-строк (02 §11). | SPEC-foundations |
+Закрытие 2026-10-10 (этот PR): O1, O2, O6, O7, O8 были решены кодом ещё в волнах и подтверждены
+ревизией; O3/O4 закреплены ADR-0021/ADR-0022; O5 вынесен в v1.x целиком; O9 и O11 получили
+кодовые гейты; O10 зафиксирован кап-константами и последовательным LLM-слоем.
+
+| # | Вопрос | Статус 2026-10-10 | Где решение |
+|---|---|---|---|
+| O1 | Канонический codegraph-провайдер | **resolved** — CodeGraphContext 0.6.13 (ColbyMcHenry отвергнут: watcher/телеметрия) | ADR-0020 §D2; `capabilities/packs.ts:110`; `sources/builtin-mcp.ts:67`; `devspace/adapters/codegraph.ts:27` |
+| O2 | Схлопывать ли groma/archify | **resolved** — не схлопывать (OKF-markdown vs IR→SVG/HTML) | ADR-0020 §D3; адаптеры и стадии живут раздельно |
+| O3 | Job-движок пайплайнов | **resolved** — локальный in-process runner (spawn-паттерн `omp-agent.ts`); cloud-runner — резерв | ADR-0021; `devspace/runner.ts` |
+| O4 | Где хранить клоны | **resolved** — `projects/<slug>/<repo-dir>` + path-guard | ADR-0022; `handlers/rpc/dev-space.ts:187,450` |
+| O5 | Kokoro в v1 или v1.x | **resolved** — целиком v1.x; `TtsEngine` = `system\|edge` до реальной интеграции | `playbooks/tts.ts:6`; IMPLEMENTATION-NOTES §6 |
+| O6 | Обязательность `srt` | **resolved** — да, из сегментных таймингов TTS | `playbooks/assemble.ts:79`; `playbooks/jobs.ts:261` |
+| O7 | Пины/лицензии шести инструментов | **resolved** — пины в коде и аудите (openwiki 0.7.1 MIT; Understand-Anything 1d7418b8 MIT; codegraph 0.6.13 MIT; graphify Apache-2.0; …) | ADR-0020 §D4; `audits/d4-tools-revision-2026-10-09.md` §2.3 |
+| O8 | Пересчёт при «грязном» дереве | **resolved** — по явной команде `devSpace:generateQuestions`; dirty — только контекст вопроса | `devspace/questions/blocks.ts:14`; `handlers/rpc/dev-space.ts:644` |
+| O9 | Лимиты клона и глубина истории | **resolved** — full history + `MAX_REPO_BYTES` = 2 ГиБ (гард после clone/pull), таймаут 30 мин | `devspace/clone.ts` (`CLONE_DEPTH`, `MAX_REPO_BYTES`, `clone-too-large`) |
+| O10 | Параллелизм LLM и лимит журнала | **resolved** — 128 прогонов на проект / 200 кодбук; LLM-слой последовательный by design | `devspace/runs.ts:18`; `playbooks/codebook/runs.ts`; `devspace/stages/llm.ts` |
+| O11 | Бюджет i18n-строк | **resolved** — 12 000 ключей en (11 286 на закрытии), гейт в `validate:ci` | `scripts/check-i18n-budget.ts`; `package.json` (`lint:i18n:budget`) |

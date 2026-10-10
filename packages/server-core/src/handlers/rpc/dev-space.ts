@@ -138,6 +138,7 @@ const CLONE_ERROR_CODE: Readonly<Record<CloneErrorCode, ErrorCode>> = {
   'authentication-required': 'AUTH_FAILED',
   'network-unavailable': 'PROVIDER_UNAVAILABLE',
   'repository-not-found': 'NOT_FOUND',
+  'clone-too-large': 'TRANSFER_TOO_LARGE',
   'clone-failed': 'PROVIDER_UNAVAILABLE',
 }
 function asCoded(error: unknown): never {

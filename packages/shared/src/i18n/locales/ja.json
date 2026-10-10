@@ -1688,6 +1688,7 @@
   "devSpace.error.accessDenied": "リポジトリにアクセスできません。GitHub にサインインして再試行してください。",
   "devSpace.error.cancelled": "操作をキャンセルしました。",
   "devSpace.error.cloneFailed": "リポジトリのクローンに失敗しました。",
+  "devSpace.error.cloneTooLarge": "リポジトリが Dev Space には大きすぎます（上限 2 GiB）。",
   "devSpace.error.failed": "操作に失敗しました。",
   "devSpace.error.invalidPath": "無効なフォルダーパスです。",
   "devSpace.error.invalidUrl": "無効なリポジトリリンクです。",

@@ -1696,6 +1696,7 @@
   "devSpace.error.accessDenied": "لا يوجد وصول إلى المستودع. سجّل الدخول إلى GitHub وأعد المحاولة.",
   "devSpace.error.cancelled": "تم إلغاء العملية.",
   "devSpace.error.cloneFailed": "تعذّر استنساخ المستودع.",
+  "devSpace.error.cloneTooLarge": "المستودع أكبر من حد Dev Space (الحد 2 GiB).",
   "devSpace.error.failed": "فشلت العملية.",
   "devSpace.error.invalidPath": "مسار مجلد غير صالح.",
   "devSpace.error.invalidUrl": "رابط مستودع غير صالح.",

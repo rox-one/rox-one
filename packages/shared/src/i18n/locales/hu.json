@@ -1688,6 +1688,7 @@
   "devSpace.error.accessDenied": "Nincs hozzáférés a tárhoz. Jelentkezz be a GitHubra, és próbáld újra.",
   "devSpace.error.cancelled": "A művelet megszakítva.",
   "devSpace.error.cloneFailed": "Nem sikerült a tár klónozása.",
+  "devSpace.error.cloneTooLarge": "A repó túl nagy a Dev Space-hez (2 GiB a korlát).",
   "devSpace.error.failed": "A művelet nem sikerült.",
   "devSpace.error.invalidPath": "Érvénytelen mappaútvonal.",
   "devSpace.error.invalidUrl": "Érvénytelen tárhivatkozás.",

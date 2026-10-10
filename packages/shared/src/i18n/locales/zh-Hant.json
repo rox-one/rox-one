@@ -1688,6 +1688,7 @@
   "devSpace.error.accessDenied": "無法存取儲存庫。請登入 GitHub 後重試。",
   "devSpace.error.cancelled": "操作已取消。",
   "devSpace.error.cloneFailed": "無法複製儲存庫。",
+  "devSpace.error.cloneTooLarge": "倉庫過大，超出 Dev Space 限制（上限 2 GiB）。",
   "devSpace.error.failed": "操作失敗。",
   "devSpace.error.invalidPath": "無效的資料夾路徑。",
   "devSpace.error.invalidUrl": "無效的儲存庫連結。",

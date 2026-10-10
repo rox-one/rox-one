@@ -13,11 +13,19 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { DevSpaceCloneProgress } from '@rox/shared/dev-space'
 
-/** TODO(open) O9 — clone depth and size/history limits are not fixed yet; clone full history for now. */
+/**
+ * O9 (closed 2026-10-10): full history is the chosen default — Dev Space
+ * analysis (churn, archaeology, codegraph) needs commits, and the cost stays
+ * bounded by `CLONE_TIMEOUT_MS`, the `--progress` output cap and the
+ * post-clone `MAX_REPO_BYTES` guard. A per-repo shallow lever stays on the
+ * v1.x list.
+ */
 export const CLONE_DEPTH = 'full'
-/** Long clones must outlive the short `shell:exec` budget; provisional until O9. */
+/** Long clones must outlive the short `shell:exec` budget (O9 keeps 30 min). */
 export const CLONE_TIMEOUT_MS = 30 * 60 * 1000
 const PULL_TIMEOUT_MS = 10 * 60 * 1000
+/** O9: a checkout whose `.git` exceeds this (`size` + `size-pack`) is rejected after fetch. */
+export const MAX_REPO_BYTES = 2 * 1024 * 1024 * 1024
 /** `--progress` streams to stderr; keep a generous cap so a large clone never trips maxBuffer. */
 const MAX_OUTPUT_BYTES = 64 * 1024 * 1024
 
@@ -43,6 +51,7 @@ export type CloneErrorCode =
   | 'authentication-required'
   | 'network-unavailable'
   | 'repository-not-found'
+  | 'clone-too-large'
   | 'clone-failed'
 
 export class CloneError extends Error {
@@ -84,6 +93,20 @@ export function parseCloneProgress(repositoryId: string, rawLine: string): DevSp
   if (!(phase in PROGRESS_PHASES)) return null
   const receivedBytes = parseByteSize(line)
   return { repositoryId, phase, ...(receivedBytes !== undefined ? { receivedBytes } : {}) }
+}
+
+/**
+ * `git count-objects -v` reports `size` and `size-pack` in KiB. Sum them into
+ * bytes; a line that is missing or malformed contributes 0, so the guard stays
+ * a backstop and never turns a healthy checkout into a false failure.
+ */
+export function countObjectsBytes(stdout: string): number {
+  let kib = 0
+  for (const line of stdout.split(/\r?\n/)) {
+    const match = /^(?:size|size-pack):\s*(\d+)$/.exec(line.trim())
+    if (match) kib += Number(match[1])
+  }
+  return kib * 1024
 }
 
 /** Temporary askpass helper: username is fixed, password is read from the child env (`GIT_ASKPASS_TOKEN`). */
@@ -150,6 +173,22 @@ async function runGit(options: RunGitOptions): Promise<void> {
   }
 }
 
+/** O9 size guard: reject a checkout whose `.git` (`size` + `size-pack`) exceeds `MAX_REPO_BYTES`. */
+async function assertRepoSizeWithinBudget(directory: string): Promise<void> {
+  const stdout = await new Promise<string>((resolve, reject) => {
+    execFile('git', ['-c', 'core.fsmonitor=false', '-C', directory, 'count-objects', '-v'], {
+      encoding: 'utf8',
+      timeout: 30_000,
+      maxBuffer: MAX_OUTPUT_BYTES,
+      windowsHide: true,
+    }, (error, out) => {
+      if (error) reject(new CloneError(classify(error as NodeJS.ErrnoException, null, false)))
+      else resolve(out)
+    })
+  })
+  if (countObjectsBytes(stdout) > MAX_REPO_BYTES) throw new CloneError('clone-too-large')
+}
+
 export async function runGitClone(input: {
   readonly url: string
   readonly destination: string
@@ -166,6 +205,7 @@ export async function runGitClone(input: {
     repositoryId: input.repositoryId,
     ...(input.onProgress ? { onProgress: input.onProgress } : {}),
   })
+  await assertRepoSizeWithinBudget(input.destination)
 }
 
 export async function runGitPull(input: {
@@ -181,4 +221,5 @@ export async function runGitPull(input: {
     timeoutMs: PULL_TIMEOUT_MS,
     repositoryId: input.repositoryId,
   })
+  await assertRepoSizeWithinBudget(input.workingDirectory)
 }

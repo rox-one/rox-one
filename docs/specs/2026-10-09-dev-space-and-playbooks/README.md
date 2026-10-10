@@ -79,6 +79,11 @@
 | В5 | Playbooks «Кодбук»: ноутбуки-пайплайны по коду | [#1739](https://github.com/rox-one/rox-one/pull/1739) |
 | fix | `playbooks:codebookJob` в `BROADCAST_EVENT_CHANNELS` + пере-запись бюджетов бандла | [#1741](https://github.com/rox-one/rox-one/pull/1741) |
 
+Открытые вопросы O1–O11 закрыты 2026-10-10 (статусы и ссылки — `07-DECISIONS.md`): O1/O2/O6/O7/O8
+подтверждены кодом и ревизией D4, O3 — ADR-0021, O4 — ADR-0022, O5 — v1.x, O9 — full history +
+`MAX_REPO_BYTES` (2 ГиБ), O10 — капы журналов 128/200 + последовательный LLM-слой, O11 — бюджет
+12 000 ключей с гейтом `lint:i18n:budget` в `validate:ci`.
+
 Карта кода (где что лежит):
 
 - **Dev Space, серверное ядро** — `packages/server-core/src/devspace/` (`clone.ts`, `runner.ts`,

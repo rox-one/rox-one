@@ -15,7 +15,7 @@ import type { DevSpaceRun, DevSpaceRunStage, DevSpaceRunStatus } from '@rox/shar
 export const DEV_SPACE_RUN_ID = /^devrun_[a-f0-9]{64}$/
 /** Must mirror `SLUG` in the RPC handler; the slug selects `projects/<slug>`. */
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/
-/** Bounded history per project (§6.2 `TODO(open) O10`). */
+/** Bounded history per project — O10 closed 2026-10-10 (§6.2); mirrors `MAX_RUNS` in playbooks/codebook/runs.ts. */
 export const MAX_RUNS_PER_PROJECT = 128
 
 const RUN_STAGES: Readonly<Record<DevSpaceRunStage, true>> = { reconcile: true, structural: true, llm: true, publish: true }

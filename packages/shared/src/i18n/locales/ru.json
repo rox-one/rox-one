@@ -1698,6 +1698,7 @@
   "devSpace.error.accessDenied": "Нет доступа к репозиторию. Войдите в GitHub и повторите.",
   "devSpace.error.cancelled": "Операция отменена.",
   "devSpace.error.cloneFailed": "Не удалось клонировать репозиторий.",
+  "devSpace.error.cloneTooLarge": "Репозиторий слишком большой для Dev Space (лимит 2 ГиБ).",
   "devSpace.error.failed": "Не удалось выполнить операцию.",
   "devSpace.error.invalidPath": "Недопустимый путь к папке.",
   "devSpace.error.invalidUrl": "Недопустимая ссылка на репозиторий.",
