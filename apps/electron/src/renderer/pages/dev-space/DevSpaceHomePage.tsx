@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAtomValue } from 'jotai'
 import { Loader2, Plus, Search } from 'lucide-react'
 import type { DevSpaceRepositoryRecord } from '@rox/shared/dev-space'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
@@ -8,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
 import { useActiveWorkspace } from '@/context/AppShellContext'
+import { devSpaceEnabledAtom } from '@/atoms/dev-space'
 import { navigate, routes } from '@/lib/navigate'
 import { emitDevSpaceEvent } from '@/features/dev-space/analytics'
 import { AddRepositoryDialog, type AddRepositorySource } from './components/AddRepositoryDialog'
@@ -17,6 +19,7 @@ import { devSpaceErrorKey } from './components/errors'
 /** С-01 «Разработчикам» — catalog of connected repositories (§B.1). */
 export default function DevSpaceHomePage() {
   const { t } = useTranslation()
+  const devSpaceEnabled = useAtomValue(devSpaceEnabledAtom)
   const workspace = useActiveWorkspace()
   const workspaceId = workspace?.id ?? null
   const [repositories, setRepositories] = useState<DevSpaceRepositoryRecord[]>([])
@@ -149,6 +152,21 @@ export default function DevSpaceHomePage() {
   }
 
   const connect = () => { setAddErrorKey(null); setAddOpen(true) }
+
+  // Honest disabled state (sample: pages/extra-screens/ExtraScreenHost.tsx): the
+  // rail entry hides when `devspace.v1` is off, but a deep link must still say so.
+  if (!devSpaceEnabled) {
+    return (
+      <div className="flex h-full min-h-0 flex-col" data-testid="dev-space-disabled">
+        <PanelHeader title={t('devSpace.home.title')} />
+        <div className="min-h-0 flex-1 overflow-auto p-5">
+          <p className="mb-2 max-w-2xl text-sm" role="status" data-testid="dev-space-disabled-notice">{t('devSpace.disabled.title')}</p>
+          <p className="mb-4 max-w-2xl text-sm text-muted-foreground">{t('devSpace.disabled.body')}</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => navigate(routes.view.settings('developers'))}>{t('devSpace.disabled.openSettings')}</Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="dev-space-home">

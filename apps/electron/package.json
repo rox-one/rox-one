@@ -43,6 +43,7 @@
     "@rox/browser-intel": "workspace:*",
     "@rox/core": "workspace:*",
     "@rox/messaging-gateway": "workspace:*",
+    "@rox/rovers-core-lite": "workspace:*",
     "@rox/server-core": "workspace:*",
     "@rox/shared": "workspace:*",
     "@rox/ui": "workspace:*",

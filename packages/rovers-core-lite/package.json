@@ -1,0 +1,22 @@
+{
+  "name": "@rox/rovers-core-lite",
+  "version": "0.11.8",
+  "license": "Apache-2.0",
+  "description": "Environment-agnostic read-only Rovers service catalog (catalog.json v1): zod validation, injected signature verification, and the list/search/show query API shared by the session tools and the rovers:list RPC.",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

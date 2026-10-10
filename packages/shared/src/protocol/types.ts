@@ -143,6 +143,9 @@ export type ErrorCode =
   // before any network work; review-required needs explicit operator confirmation.
   | 'REGISTRY_TRUST_BLOCKED'
   | 'REGISTRY_TRUST_REVIEW_REQUIRED'
+  // Rovers service catalog (info-only Slice A): the bundled catalog is missing,
+  // unsigned, or failed signature/digest validation.
+  | 'ROVERS_CATALOG_UNAVAILABLE'
   // Knowledge provider (P1 read-only), spec 03 §3.2 KnowledgeErrorCode
   | 'CONNECTION_UNAVAILABLE'
   | 'UNSUPPORTED_OPERATION'
@@ -229,6 +232,7 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'MARKETPLACE_TOOL_INSTALL_FAILED',
   'REGISTRY_TRUST_BLOCKED',
   'REGISTRY_TRUST_REVIEW_REQUIRED',
+  'ROVERS_CATALOG_UNAVAILABLE',
   'CONNECTION_UNAVAILABLE',
   'UNSUPPORTED_OPERATION',
   'NOT_FOUND',

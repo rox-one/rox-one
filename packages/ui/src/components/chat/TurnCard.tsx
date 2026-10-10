@@ -26,6 +26,7 @@ import {
   GitBranch,
   Network,
   Volume2,
+  Boxes,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { Markdown } from '../markdown'
@@ -742,6 +743,55 @@ function formatToolDisplay(
   return { name }
 }
 
+/** Read-only Rovers agent tools (Slice A) rendered with a dedicated activity row. */
+const ROVERS_ACTIVITY_TOOLS: Record<string, true> = {
+  rovers_list: true,
+  rovers_search: true,
+  rovers_show: true,
+}
+
+interface RoversActivityDisplay {
+  label: string
+  detail?: string
+  count?: number
+}
+
+/** Count entries in a Rovers tool result (`{entries,total}` or `{entry}`). */
+function roversResultCount(content: string | undefined): number | undefined {
+  if (!content) return undefined
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(content)
+  } catch {
+    return undefined
+  }
+  if (parsed === null || typeof parsed !== 'object') return undefined
+  if ('entries' in parsed && Array.isArray(parsed.entries)) return parsed.entries.length
+  if ('total' in parsed && typeof parsed.total === 'number') return parsed.total
+  if ('entry' in parsed && parsed.entry !== null && typeof parsed.entry === 'object') return 1
+  return undefined
+}
+
+/** Localized label + queried id/category + result count for a rovers_* call. */
+function formatRoversActivity(activity: ActivityItem): RoversActivityDisplay | null {
+  const toolName = activity.toolName
+  if (!toolName || !ROVERS_ACTIVITY_TOOLS[toolName]) return null
+  const input = activity.toolInput ?? {}
+  const detail =
+    typeof input.id === 'string'
+      ? input.id
+      : typeof input.query === 'string'
+        ? input.query
+        : typeof input.category === 'string'
+          ? input.category
+          : undefined
+  return {
+    label: i18n.t(`rovers.activity.${toolName}`, { defaultValue: toolName }),
+    detail,
+    count: roversResultCount(activity.content),
+  }
+}
+
 /** Get the primary preview text for collapsed state */
 function getPreviewText(
   activities: ActivityItem[],
@@ -1053,6 +1103,74 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
         ? `Shell ID: ${activity.shellId}${activity.elapsedSeconds ? `, ${formatDuration(activity.elapsedSeconds * 1000)} elapsed` : ''}`
         : null
     : null
+
+  // Rovers read-only tools (Slice A): dedicated row — icon, localized label,
+  // queried id/category, and the result count parsed from the tool result.
+  const roversDisplay = formatRoversActivity(activity)
+  if (roversDisplay) {
+    return (
+      <div className="flex items-stretch">
+        <TreeViewConnector depth={depth} isLastChild={isLastChild} />
+        <div
+          className={cn(
+            "group/row flex items-center gap-2 py-0.5 text-muted-foreground flex-1 min-w-0",
+            SIZE_CONFIG.fontSize
+          )}
+          onClick={onOpenDetails && isComplete ? onOpenDetails : undefined}
+        >
+          <Boxes className={cn(SIZE_CONFIG.iconSize, "shrink-0")} />
+          <span className={cn("shrink-0", onOpenDetails && isComplete && "group-hover/row:underline")}>
+            {roversDisplay.label}
+          </span>
+          {roversDisplay.detail && (
+            <span className="truncate min-w-0 font-mono opacity-70">{roversDisplay.detail}</span>
+          )}
+          {roversDisplay.count !== undefined && (
+            <span className="px-1.5 py-0.5 bg-background shadow-minimal rounded-[var(--radius-control)] text-caption text-muted-foreground shrink-0">
+              {i18n.t('rovers.activity.results', { count: roversDisplay.count })}
+            </span>
+          )}
+          {activity.status === 'error' && activity.error && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="px-1.5 py-0.5 bg-[color-mix(in_oklab,var(--destructive)_4%,var(--background))] shadow-tinted rounded-[var(--radius-control)] text-caption text-destructive font-medium cursor-default shrink-0"
+                  style={{ '--shadow-color': 'var(--destructive-rgb)' } as React.CSSProperties}
+                >
+                  {i18n.t('common.error')}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[400px]">
+                {activity.error}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {onOpenDetails && isComplete && (
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation()
+                onOpenDetails()
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.stopPropagation()
+                  onOpenDetails()
+                }
+              }}
+              className={cn(
+                "p-0.5 rounded-[var(--radius-control)] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0",
+                "hover:bg-muted/80 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              )}
+            >
+              <ArrowUpRight className={SIZE_CONFIG.iconSize} />
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex items-stretch">

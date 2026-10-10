@@ -375,6 +375,7 @@ import type {
   PluginBridgeUninstallBazaarArgs,
   PluginBridgeUninstallBazaarResult,
 } from '@rox/shared/extensions'
+import type { RoversEntryFull } from '@rox/rovers-core-lite'
 export type {
   BridgeProjectedContributions,
   CatalogEntry,
@@ -877,6 +878,11 @@ export interface BoardWidgetValidateResult {
 export interface BoardChangedPush {
   widgetId: string
   revision: number
+}
+
+/** Result of the `rovers:list` board RPC (Rovers Slice A, info-only). */
+export interface RoversListResult {
+  entries: RoversEntryFull[]
 }
 
 export interface ElectronAPI {
@@ -1972,6 +1978,9 @@ export interface ElectronAPI {
   }): Promise<ExtensionsListInstalledResult>
   extensionsSetEnabled(args: { id: string; enabled: boolean }): Promise<ExtensionsSetEnabledResult>
   extensionsGetState(): Promise<ExtensionsGetStateResult>
+
+  // Rovers catalog (Slice A, info-only)
+  roversList(): Promise<RoversListResult>
   onExtensionsChanged(callback: (payload: ExtensionsChangedPayload) => void): () => void
 
   // SiYuan plugin bridge (W6)
