@@ -21,8 +21,11 @@
  *      never crossed,
  *   5. write `apps/electron/src/renderer/boot-manifest.json`.
  *
- * The route ids are the ones `perf/surface-sim.ts` models (`KEEPALIVE_WARM_SURFACES`),
- * read from source so a rename fails loudly instead of silently drifting.
+ * The route ids are the real boot warm-up set: `lib/shell-warmup.ts` preloads
+ * every entry of `RAIL_SURFACE_ROUTES`, which aliases `RAIL_SURFACE_ROUTE_IDS`
+ * in `shared/rail-surfaces.ts`. We read that import-free list from source so a
+ * rename fails loudly instead of silently drifting (the perf-simulation
+ * constant `KEEPALIVE_WARM_SURFACES` models a subset and is NOT the source).
  *
  * Real-Chromium alternative (NOT taken): the installed Playwright could load the
  * built index.html and record requests, but the app shell needs `window.electronAPI`
@@ -47,7 +50,7 @@ const ELECTRON_DIR = join(ROOT, 'apps/electron')
 const RENDERER_SRC = join(ELECTRON_DIR, 'src/renderer')
 const DIST_DIR = join(ELECTRON_DIR, 'dist/renderer')
 const MANIFEST_PATH = join(RENDERER_SRC, 'boot-manifest.json')
-const SURFACE_SIM = join(RENDERER_SRC, 'perf/surface-sim.ts')
+const RAIL_SURFACES = join(ELECTRON_DIR, 'src/shared/rail-surfaces.ts')
 const ROUTE_PAGES = join(RENDERER_SRC, 'components/app-shell/route-pages.ts')
 
 /** Rendering-source modules that are always loaded at boot. */
@@ -340,7 +343,7 @@ export function readRawChunks(distDir: string): RawChunk[] {
 /** Build the route→source-suffix map from the renderer's own registry. */
 export function readRouteModules(): Record<string, string> {
   const loaders = parseRoutePageLoaders(readFileSync(ROUTE_PAGES, 'utf8'))
-  const bootIds = parseStringArray(readFileSync(SURFACE_SIM, 'utf8'), 'KEEPALIVE_WARM_SURFACES')
+  const bootIds = parseStringArray(readFileSync(RAIL_SURFACES, 'utf8'), 'RAIL_SURFACE_ROUTE_IDS')
   const modules: Record<string, string> = {}
   for (const id of bootIds) {
     const specifier = loaders[id]
