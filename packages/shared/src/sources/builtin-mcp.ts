@@ -60,7 +60,7 @@ export const BUILTIN_MCP_CATALOG: readonly BuiltinMcpSpec[] = [
     usage: 'Read Telegram context when the task calls for it. Send or change messages only when the user authorizes those actions.',
     runtime: { runner: 'uvx', package: 'git+https://github.com/chigwell/telegram-mcp@81ad14bd076d17babd8be2425965235b0c6b9e26' },
     requiredEnvironment: ['TELEGRAM_API_ID', 'TELEGRAM_API_HASH'],
-    mcp: { transport: 'stdio', command: 'uvx', args: ['--from', 'git+https://github.com/chigwell/telegram-mcp@81ad14bd076d17babd8be2425965235b0c6b9e26', 'telegram-mcp'], authType: 'none', headerNames: ['TELEGRAM_API_ID', 'TELEGRAM_API_HASH', 'TELEGRAM_SESSION_STRING'] },
+    mcp: { transport: 'stdio', command: 'uvx', args: ['--from', 'git+https://github.com/chigwell/telegram-mcp@81ad14bd076d17babd8be2425965235b0c6b9e26', 'telegram-mcp'], authType: 'none', env: { UV_PYTHON: '3.12' }, headerNames: ['TELEGRAM_API_ID', 'TELEGRAM_API_HASH', 'TELEGRAM_SESSION_STRING'] },
     setup: 'Requires uv, Git, Python 3.10+, global TELEGRAM_API_ID and TELEGRAM_API_HASH, plus an authorized TELEGRAM_SESSION_STRING or existing TELEGRAM_SESSION_NAME file. Named accounts use TELEGRAM_SESSION_STRING_<LABEL> or TELEGRAM_SESSION_NAME_<LABEL>. For concurrent clients, TELEGRAM_SESSION_STRINGS accepts a whitespace/comma/semicolon-separated pool with one separately authorized session per client; the upstream server claims a free slot. Obtain API credentials at https://my.telegram.org and generate sessions using the upstream login helper. Never install the unrelated PyPI telegram-mcp package.',
   },
   {
@@ -70,7 +70,7 @@ export const BUILTIN_MCP_CATALOG: readonly BuiltinMcpSpec[] = [
     runtime: { runner: 'uvx', package: 'codegraphcontext==0.6.13' },
     mcp: {
       transport: 'stdio', command: 'uvx', args: ['--from', 'codegraphcontext==0.6.13', 'codegraphcontext', 'mcp', 'start'], authType: 'none',
-      env: { CGC_RUNTIME_DB_TYPE: 'ladybugdb', CGC_RUNTIME_DB_PATH: '${SOURCE_DIR}/graph-db', CGC_EMBEDDED_BUFFER_POOL_MB: '256' },
+      env: { UV_PYTHON: '3.12', CGC_RUNTIME_DB_TYPE: 'ladybugdb', CGC_RUNTIME_DB_PATH: '${SOURCE_DIR}/graph-db', CGC_EMBEDDED_BUFFER_POOL_MB: '256' },
     },
     setup: 'Requires uv and Python 3.10+. Uses a workspace-local embedded LadybugDB with a 256 MiB buffer pool; index the project through MCP before asking graph questions.',
   },
@@ -100,8 +100,12 @@ export const BUILTIN_MCP_CATALOG: readonly BuiltinMcpSpec[] = [
     runtime: { runner: 'uvx', package: 'mcp-server-qdrant==0.8.1' },
     mcp: {
       transport: 'stdio', command: 'uvx', args: ['--from', 'mcp-server-qdrant==0.8.1', 'mcp-server-qdrant', '--transport', 'stdio'], authType: 'none',
+      // uvx must not fall through to uv's default stable interpreter (3.14 on
+      // the pinned uv 0.12.2, where PyO3<0.25 builds such as pydantic-core
+      // fail): request the 3.12 the app already manages — resolved or fetched
+      // by uv itself, so it also works before the toolchain install completes.
       env: {
-        QDRANT_LOCAL_PATH: '${SOURCE_DIR}/storage', COLLECTION_NAME: 'rox-memory',
+        UV_PYTHON: '3.12', QDRANT_LOCAL_PATH: '${SOURCE_DIR}/storage', COLLECTION_NAME: 'rox-memory',
         EMBEDDING_MODEL: 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2', FASTEMBED_CACHE_PATH: '${SOURCE_DIR}/embedding-cache',
       },
     },
