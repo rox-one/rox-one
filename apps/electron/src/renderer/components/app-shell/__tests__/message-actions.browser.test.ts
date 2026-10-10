@@ -27,10 +27,16 @@ describe.skipIf(!existsSync(executablePath))('production message actions with pe
   api=Bun.spawn([process.execPath,resolve(fixture,'backend.ts')],{cwd:repository,env:{...process.env,ROX_CONFIG_DIR:root},stdout:'ignore',stderr:'ignore'})
   ui=Bun.spawn(['node',resolve(repository,'node_modules/vite/bin/vite.js'),'--config',resolve(fixture,'vite.config.ts'),'--port','5198'],{cwd:repository,stdout:'ignore',stderr:'ignore'})
   await Promise.all([wait(frontend,ui),wait(backend,api)])
+  // The suite runs against a fresh config dir, so the first branch creation
+  // builds the one-time OMP native-policy overlay and materializes workspace
+  // skills (~6-16s cold, <1s warm). Absorb that cost here so the branch
+  // assertions measure steady state under the shared 5s DOM budget.
+  const warmupRpc=await fetch(`${backend}/rpc`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({method:'warmup',args:{}})})
+  if(!warmupRpc.ok)throw new Error(`Message branch warmup failed: ${warmupRpc.status}`)
   browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox']})
   const warmup=await browser.newPage();await warmup.goto(frontend);await playwrightExpect(warmup.getByTestId('user').getByRole('toolbar')).toBeVisible({timeout:30000});await warmup.close()
   if(proofDirectory)mkdirSync(proofDirectory,{recursive:true})
- }catch(error){await stop();throw error}},60000)
+ }catch(error){await stop();throw error}},120000)
  beforeEach(async()=>{
   await fetch(`${backend}/rpc`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({method:'reset',args:{}})})
   errors.length=0;page=await browser.newPage({viewport:{width:1050,height:950},permissions:['clipboard-read','clipboard-write']});page.on('pageerror',error=>errors.push(error.message));await page.goto(frontend)
