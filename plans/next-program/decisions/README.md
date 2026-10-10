@@ -17,6 +17,8 @@ is recorded so the next agent does not “fix” it.
 | [004](./004-web-modes.md) | Web version modes (R16) | **Landing + honest states shipped**; cloud-VM backend out of repo | ACCEPTED (shipped slice) | product |
 | [005](./005-website-client-id.md) | Connect `clientId` flip | Blocked on private website repo | OPEN — access | product |
 | [006](./006-branch-deletion.md) | Remote branch deletion | **Do not execute** §5 | ACCEPTED (current ship) | product |
+| [007](./007-session-views-honesty.md) | Session view tabs honesty (T8) | **Real views only**; placeholder removed; SiYuan branches conditional-only | ACCEPTED (shipped slice) | product |
+| [010](./010-ui-agent-task-controls.md) | UI agent-task controls (T11 A6/A7) | **Honest chip stop** (shells only); dead ⌘J/⌘⇧J actions removed | ACCEPTED (shipped slice) | product |
 | [011](./011-screens.md) | Screens honest flag states (T12) | **Every flag has a decision**; dead sub-flags kept | ACCEPTED (shipped) — E4 OPEN | product / lane-UI-5 |
 
 Human owner for this program: **pzd** (`go@trysota.ru`). Legal review for 001 is still outstanding.
@@ -29,4 +31,5 @@ These records do **not**:
 - change `appId` / `productName`
 - flip the default Connect `clientId`
 - delete remote branches
+- add a fake per-task agent kill, or advertise the ⌘J agent panel before it is mounted
 - delete the dead Dev Space sub-flags (`devspace.ingest/tools/questions/tours/ask`)
