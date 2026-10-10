@@ -20,7 +20,18 @@ describe.skipIf(!existsSync(executablePath))('production message actions with pe
  let browser:Browser
  let page:Page
  const errors:string[]=[]
- const stop=async()=>{ui?.kill();api?.kill();await browser?.close();await Promise.all([ui?.exited,api?.exited]);if(root)rmSync(root,{recursive:true,force:true})}
+ const stop=async()=>{
+  // Chromium's graceful exit is environment-bound: measured 11-30s for a single
+  // browser.close() on a loaded machine, i.e. the entire 30s teardown budget for
+  // the browser alone. Awaiting it failed this suite as "(unnamed) hook timed out"
+  // while all eight tests passed. Close the browser without gating cleanup on its
+  // process exit; the runner reaps it through the debugging pipe when the test
+  // process ends, exactly as it does after a hook timeout today.
+  browser?.close().catch(()=>{})
+  ui?.kill();api?.kill()
+  await Promise.all([ui?.exited,api?.exited])
+  if(root)rmSync(root,{recursive:true,force:true})
+ }
  const wait=async(url:string, owner:ReturnType<typeof Bun.spawn>)=>{const deadline=Date.now()+30000;for(;;){if(owner.exitCode!==null)throw new Error('Owned message fixture exited during startup');try{const response=await fetch(url);if(response.ok){if(url===backend&&(await response.json() as any).fixtureId!=='rox-message-actions')throw new Error('Different process owns message fixture port');if(owner.exitCode!==null)throw new Error('Owned message fixture exited during startup');return}}catch(error){if(error instanceof Error&&error.message.includes('owns message'))throw error}if(Date.now()>deadline)throw new Error(`Message acceptance fixture did not start: ${url}`);await Bun.sleep(100)}}
  beforeAll(async()=>{try{
   root=mkdtempSync(join(tmpdir(),'rox-message-browser-'))

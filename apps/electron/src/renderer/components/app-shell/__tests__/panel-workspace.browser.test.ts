@@ -18,7 +18,15 @@ const mounts=(page:Page)=>page.evaluate(()=>(window as any).__panelFixture.mount
 
 describe.skipIf(!existsSync(executablePath))('production persistent panel container and resize',()=>{
  let server:ReturnType<typeof Bun.spawn>|undefined,browser:Browser
- const stop=async()=>{server?.kill('SIGKILL');await browser?.close();await server?.exited}
+ const stop=async()=>{
+  // Chromium's graceful exit is environment-bound (measured ~30s for a single
+  // browser.close() on a loaded host, i.e. this hook's whole budget, and 11-18s
+  // when quieter). Awaiting it failed the suite as "(unnamed) hook timed out"
+  // while its nine checks passed. Close without gating cleanup on the process
+  // exit; the runner reaps the browser through the debugging pipe.
+  browser?.close().catch(()=>{})
+  server?.kill('SIGKILL');await server?.exited
+ }
  beforeAll(async()=>{try{server=Bun.spawn(['node',resolve(repository,'node_modules/vite/bin/vite.js'),'--config',resolve(fixture,'vite.config.ts'),'--port','5238'],{cwd:repository,stdout:'ignore',stderr:'ignore'});const deadline=Date.now()+30000;for(;;){if(server.exitCode!==null)throw Error('Panel fixture exited');try{const response=await fetch(endpoint);if(response.ok){if(!(await response.text()).includes('rox-panel-workspace-fixture'))throw Error('Foreign owner occupies fixture port');break}}catch(error){if(error instanceof Error&&error.message.includes('Foreign owner'))throw error}if(Date.now()>deadline)throw Error('Panel fixture startup timeout');await Bun.sleep(100)}browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox']})}catch(error){await stop();throw error}},45000)
  afterAll(stop,caseTimeout)
  const withPage=async(run:(page:Page)=>Promise<void>)=>{const context=await browser.newContext({viewport:{width:1400,height:900},reducedMotion:'reduce'});const page=await context.newPage();const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));try{await page.goto(endpoint);await expectDOM(grid(page)).toHaveAttribute('data-panel-grid','2x2');await run(page);expect(errors).toEqual([])}catch(error){throw Error('Production panel fixture failed; pageErrors='+JSON.stringify(errors)+'; body='+await page.locator('body').innerText(),{cause:error})}finally{await context.close()}}
