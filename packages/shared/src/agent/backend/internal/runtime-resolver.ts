@@ -199,18 +199,32 @@ function resolveServerPath(hostRuntime: BackendHostRuntimeContext, serverName: s
  */
 function resolveRipgrepPath(hostRuntime: BackendHostRuntimeContext): string | undefined {
   const binaryName = process.platform === 'win32' ? 'rg.exe' : 'rg';
-  const ripgrepRelative = join('node_modules', '@vscode', 'ripgrep', 'bin', binaryName);
+  // @vscode/ripgrep ≥ 1.18 ships the binary in the per-platform optional
+  // package (ripgrep-<platform>-<arch>/bin/rg); the legacy in-package path is
+  // kept first for older installs. This mirrors copyRipgrep's own resolution
+  // order, so dev, headless-server and CI runs resolve the same vendored
+  // binary a packaged build ships, without depending on a system rg on PATH.
+  const ripgrepRelatives = [
+    join('node_modules', '@vscode', 'ripgrep', 'bin', binaryName),
+    join('node_modules', '@vscode', `ripgrep-${process.platform}-${process.arch}`, 'bin', binaryName),
+  ];
 
   if (hostRuntime.isPackaged) {
-    const packaged = join(hostRuntime.appRootPath, ripgrepRelative);
-    if (existsSync(packaged)) return packaged;
+    for (const relative of ripgrepRelatives) {
+      const packaged = join(hostRuntime.appRootPath, relative);
+      if (existsSync(packaged)) return packaged;
+    }
   }
 
-  const fromHostRoot = resolveUpwards(hostRuntime.appRootPath, ripgrepRelative, 10);
-  if (fromHostRoot) return fromHostRoot;
+  for (const relative of ripgrepRelatives) {
+    const fromHostRoot = resolveUpwards(hostRuntime.appRootPath, relative, 10);
+    if (fromHostRoot) return fromHostRoot;
+  }
 
-  const cwdFallback = join(process.cwd(), ripgrepRelative);
-  if (existsSync(cwdFallback)) return cwdFallback;
+  for (const relative of ripgrepRelatives) {
+    const cwdFallback = join(process.cwd(), relative);
+    if (existsSync(cwdFallback)) return cwdFallback;
+  }
 
   // Non-packaged (headless server, dev mode): fall back to system rg via PATH.
   // Packaged apps must use vendored binary only — never resolve from PATH

@@ -131,6 +131,49 @@ describe('resolveRipgrepPath', () => {
     expect(result.ripgrepPath).toBe(rgPath);
   });
 
+  it('finds the per-platform package binary when the legacy in-package path is absent (@vscode/ripgrep ≥ 1.18)', () => {
+    // The packaging change that moved bin/rg into ripgrep-<platform>-<arch> is
+    // exactly what the CI "Verify uncovered server-core suites" step hit: the
+    // search service fell through to `which rg`, which CI runners do not have.
+    const appRoot = join(tmpBase, 'platform-pkg');
+    const binaryName = process.platform === 'win32' ? 'rg.exe' : 'rg';
+    const binDir = join(appRoot, 'node_modules', '@vscode', `ripgrep-${process.platform}-${process.arch}`, 'bin');
+    mkdirSync(binDir, { recursive: true });
+    const rgPath = join(binDir, binaryName);
+    writeFileSync(rgPath, '#!/bin/sh\n');
+    chmodSync(rgPath, 0o755);
+
+    const hostRuntime: BackendHostRuntimeContext = {
+      appRootPath: appRoot,
+      resourcesPath: appRoot,
+      isPackaged: false,
+    };
+
+    const result = resolveBackendHostTooling({ hostRuntime });
+    expect(result.ripgrepPath).toBe(rgPath);
+  });
+
+  it('prefers the legacy in-package path when both layouts exist', () => {
+    const appRoot = join(tmpBase, 'both-layouts');
+    const binaryName = process.platform === 'win32' ? 'rg.exe' : 'rg';
+    const legacyPath = join(appRoot, 'node_modules', '@vscode', 'ripgrep', 'bin', binaryName);
+    const platformPath = join(appRoot, 'node_modules', '@vscode', `ripgrep-${process.platform}-${process.arch}`, 'bin', binaryName);
+    for (const candidate of [legacyPath, platformPath]) {
+      mkdirSync(join(candidate, '..'), { recursive: true });
+      writeFileSync(candidate, '#!/bin/sh\n');
+      chmodSync(candidate, 0o755);
+    }
+
+    const hostRuntime: BackendHostRuntimeContext = {
+      appRootPath: appRoot,
+      resourcesPath: appRoot,
+      isPackaged: false,
+    };
+
+    const result = resolveBackendHostTooling({ hostRuntime });
+    expect(result.ripgrepPath).toBe(legacyPath);
+  });
+
   it('falls back to system rg when vendored binary is missing (non-packaged)', () => {
     const appRoot = join(tmpBase, 'no-vendored');
     mkdirSync(appRoot, { recursive: true });
