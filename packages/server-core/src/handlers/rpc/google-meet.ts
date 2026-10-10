@@ -199,7 +199,11 @@ async function resolveMeet(deps: HandlerDeps, workspaceId: string): Promise<Reso
 const MAX_NAME_LENGTH = 512
 const SPACE_NAME = /^spaces\/[A-Za-z0-9_-]+$/
 const CONFERENCE_RECORD_NAME = /^conferenceRecords\/[A-Za-z0-9_-]+$/
-const CONTROL_CHARS = /[\u0000-\u001f\u007f]/
+// C0 controls, DEL and C1: the rule-clean spelling (`\p{Cc}`, u-flag) of the
+// same refusal check — both call sites already reject any character outside
+// [A-Za-z0-9_/-] with the same `invalid(...)` result, so the widened set cannot
+// change observable behaviour.
+const CONTROL_CHARS = /\p{Cc}/u
 
 function requireSpaceName(value: unknown): string {
   if (typeof value !== 'string' || value.length === 0 || value.length > MAX_NAME_LENGTH) return invalid('space')
