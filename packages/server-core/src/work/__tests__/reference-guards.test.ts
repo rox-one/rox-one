@@ -14,7 +14,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import type { Authorizer } from '@rox/core/commands'
 import { InMemoryCommandStore } from '../../commands/store'
-import { configureReferenceRuntime, referenceMemoryRecords, resetReferenceMemory, resetReferenceRuntime, storedAclRole } from '../reference'
+import { configureReferenceRuntime, MemoryRecordBackend, referenceMemoryRecords, resetReferenceMemory, resetReferenceRuntime, storedAclRole } from '../reference'
 import { createHarness, seedReferenceChat } from './reference-harness'
 import { ACTOR_ID, BOB, U, WORKSPACE_ID } from './reference-scenario'
 
@@ -75,11 +75,34 @@ describe('chat membership', () => {
   })
 
   // W1-11 (#1508) owns `im.join_chat` / `im.leave_chat`, whose handlers run on
-  // the agent-governance runtime this harness never backs. The left-member
-  // behaviour (state `left`, cannot post / mark read, rejoins with the default
-  // role) is asserted by the owner module's suite
-  // (`packages/server-core/src/agents/__tests__/identity-handlers.test.ts`).
-  // The reference specs for those two names stay shadowed in production.
+  // the agent-governance runtime this harness never backs, so a `left` row is
+  // seeded below instead of produced by a command (the transitions themselves —
+  // a second leave is idempotent and a rejoin restores the default role — are
+  // asserted in the owner module's suite,
+  // `packages/server-core/src/agents/__tests__/identity-handlers.test.ts`,
+  // "a rejoin restores the default role and a second leave is idempotent").
+  // The three handlers that need an *active* membership are this harness's own,
+  // so their refusal is asserted right here.
+
+  test('a member who left cannot post, mark read or add people', async () => {
+    const setup = await bobsChat()
+    // No command can put a membership into `left` here (W1-11 owns the two that
+    // can), so the row is written straight into the backend the W1-06 handlers
+    // read — the same shape `seedReferenceChatMember` writes, with `left`.
+    await new MemoryRecordBackend(WORKSPACE_ID).put({
+      collection: 'channel-member',
+      id: `${chat.id}:${ACTOR_ID}`,
+      expectedRevision: null,
+      data: { state: 'left', role: 'member', joinedAt: NOW.toISOString(), chatId: chat.id, principalId: ACTOR_ID },
+    })
+    expect(await setup.run({ type: 'im.send_message', target: chat, payload: { body: { doc: 'x' }, mentions: [] } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(await setup.run({ type: 'im.mark_read', target: chat, payload: { seq: 1 } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(await setup.run({ type: 'im.add_members', target: chat, payload: { memberIds: [CAROL] } })).toMatchObject({ error: { code: 'FORBIDDEN' } })
+    expect(memberRow(CAROL)).toBeUndefined()
+    expect(records('channel-message')).toEqual([])
+    // The owner's active row is unaffected: posting still works.
+    expect(await setup.run({ type: 'im.send_message', target: chat, payload: { body: { doc: 'x' }, mentions: [] }, actor: BOB })).toMatchObject({ status: 'applied' })
+  })
 
   test('add_members: a non-member cannot add people (invitePolicy members)', async () => {
     const setup = await bobsChat()
@@ -259,9 +282,16 @@ describe('spaces, drafts, subscriptions and drive', () => {
 
   // W1-11 (#1508) owns `agents.provision_personal_agent` and `identity.*`, whose
   // handlers run on the agent-governance runtime (`getAgentsRuntime`) this
-  // harness never backs; the "another owner's id is a create conflict" rule and
-  // the email dedupe are asserted by the owner module's suite
-  // (`packages/server-core/src/agents/__tests__/identity-handlers.test.ts`).
+  // harness never backs; the W1-06 guards for them are asserted by the owner
+  // module's suite
+  // (`packages/server-core/src/agents/__tests__/identity-handlers.test.ts`):
+  // "agents.provision_personal_agent is idempotent per (workspace, owner) and
+  // never leaks the other owner's agent" and "identity.ensure_placeholder reuses
+  // a pending invitation and never duplicates the placeholder".
+  // The wired contract is idempotent, not a create conflict: a repeat for the
+  // same (workspace, owner) answers `created: false` (this module's `existed`),
+  // the email key answers `reused: true`, and neither answer carries the other
+  // owner's agent id (nor the other placeholder's person id).
 })
 
 describe('authorize before load: a denied missing id is FORBIDDEN, not NOT_FOUND', () => {
@@ -278,8 +308,11 @@ describe('authorize before load: a denied missing id is FORBIDDEN, not NOT_FOUND
     { name: 'drive.move_items', step: { type: 'drive.move_items', payload: { items: [{ kind: 'note', id: U('n') }], toFolderId: missing } } },
     { name: 'im.create_space_chat', step: { type: 'im.create_space_chat', payload: { spaceId: missing, name: 'x' } } },
     // W1-11 (#1508) owns `identity.activate_placeholder`: its handler runs on the
-    // agent-governance runtime, not this reference harness (see
-    // `packages/server-core/src/agents/__tests__/identity-handlers.test.ts`).
+    // agent-governance runtime, not this reference harness, and the deny-before-load
+    // property is asserted by the owner suite
+    // (`packages/server-core/src/agents/__tests__/identity-handlers.test.ts`,
+    // "identity.activate_placeholder answers FORBIDDEN — never NOT_FOUND — when
+    // the target is denied").
     { name: 'contacts.merge_cards', setup: run => run.run({ type: 'contacts.create_card', payload: { id: U('card'), displayName: 'E' } }), step: { type: 'contacts.merge_cards', target: { kind: 'person', id: U('card') }, payload: { sourceIds: [missing] } } },
   ]
   for (const { name, step, setup } of cases) {
