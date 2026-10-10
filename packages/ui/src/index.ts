@@ -103,6 +103,25 @@ export {
   type ImageCardStackProps,
   type ImageCardStackItem,
 } from './components/markdown'
+// Rovers Slice A: the info-only ```rovers-card fence and its payload types.
+export {
+  MarkdownRoversCardBlock,
+  ROVERS_CATEGORIES,
+  parseRoversCardPayload,
+  pickLocalized,
+  roversCategoryColor,
+  roversLanguage,
+  roversMonogram,
+  isDirectIconUrl,
+  type MarkdownRoversCardBlockProps,
+  type RoversCardParseResult,
+  type RoversCardSummary,
+  type RoversCategory,
+  type RoversDeploy,
+  type RoversEntryFull,
+  type RoversLanguage,
+  type RoversLocalizedText,
+} from './components/markdown'
 // W1-08 (#1505): entity mention / embed nodes (opt-in via `entityNodes`).
 export {
   EntityMention,
