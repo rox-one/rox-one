@@ -11,8 +11,10 @@
  * `ROX_DRIVE_S3_*` in the process env first and then from the operator file
  * `<configDir>/drive-s3.env` (the packaged app never sees shell env). When
  * neither is present the import engine is left uncomposed so `drive:import*`
- * answers `UNSUPPORTED_OPERATION` honestly instead of failing per file at
- * runtime.
+* it answers `UNSUPPORTED_OPERATION` honestly instead of failing per file at
+ * runtime. The app-config mirror engine (`drive:mirror*`, R13) composes from the
+ * same `<configDir>/drive-s3.env` destination and is likewise left uncomposed
+ * without one.
  */
 import { homedir } from 'node:os'
 import { join } from 'node:path'
@@ -32,12 +34,15 @@ import {
   type ImportJobRunner,
 } from '@rox/shared/drive/importers'
 import { createLocalDrive } from './local-drive'
+import { composeDriveMirrorEngine } from './mirror'
 
 export interface CreateDriveServiceOptions {
   configDir?: string
   homeDir?: string
   /** Compose the import engine again even if an earlier call already did (tests). */
   forceImportComposition?: boolean
+  /** Compose the mirror engine again even if an earlier call already did (tests). */
+  forceMirrorComposition?: boolean
 }
 
 let importEngineComposed = false
@@ -86,6 +91,7 @@ export function composeDriveImportEngine(options: CreateDriveServiceOptions = {}
 export function createDriveService(options: CreateDriveServiceOptions = {}): DriveService {
   const configDir = options.configDir ?? CONFIG_DIR
   composeDriveImportEngine(options)
+  composeDriveMirrorEngine({ configDir, forceMirrorComposition: options.forceMirrorComposition })
   return createLocalDrive({
     rootDir: join(configDir, 'drive'),
     homeDir: options.homeDir ?? homedir(),

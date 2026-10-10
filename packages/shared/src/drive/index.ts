@@ -10,3 +10,5 @@ export * from './types'
 export * from './plan'
 export * from './app-data'
 export * from './importers/types'
+// R13 mirror engine — app-config slice of the catalog mirrored into Drive.
+export * from './mirror/index'

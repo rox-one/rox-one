@@ -38,12 +38,13 @@ describe('Drive app-data inventory (R13 «все данные приложени
     ])
   })
 
-  test('statuses tell the honest truth: only the app config directory is un-backed-up', () => {
+  test('statuses tell the honest truth: nothing is silently unbacked-up', () => {
     const byId = Object.fromEntries(DRIVE_APP_DATA_ENTRIES.map(entry => [entry.id, entry.status]))
     expect(byId.uploads).toBe('in-drive')
     expect(byId['cloud-imports']).toBe('in-drive')
     expect(byId['device-folders']).toBe('on-demand')
-    expect(byId['app-config']).toBe('not-backed-up')
+    // The app config directory is mirrored on demand (R13 mirror engine).
+    expect(byId['app-config']).toBe('on-demand')
   })
 
   test('every status has a locale key', () => {
