@@ -159,8 +159,32 @@ tar -C /opt/rox-drive -czf /var/backups/rox-drive-$(date +%F).tar.gz data
 systemctl start rox-drive-s3
 ```
 
-There is currently **no scheduled off-host backup** — this is a known gap and
-the main durability risk of the single-node setup.
+#### Nightly off-host backup (deployed 2026-10-10)
+
+A scheduled backup ships the encrypted store to `gs://rox-drive-backup/daily/`
+every night at 03:30 Europe/Moscow (systemd timer `rox-drive-backup.timer`):
+
+- Source: `/opt/rox-drive/data` + `/opt/rox-drive/s3.json` (stopped service,
+  consistent snapshot)
+- Encryption: `gpg --symmetric --cipher-algo AES256` with a passphrase file
+  (`/etc/rox-drive-backup/passphrase`, mode 0600)
+- Upload: `gs://rox-drive-backup/daily/` via `gcloud storage cp` (service-account
+  key or GCE metadata service account, whichever is available)
+- Retention: GCS lifecycle (90-day objects, 30-day noncurrent versions, versioning on)
+- Local rotation: keep 2 newest archives under `/var/backups/rox-drive`
+
+Restore:
+
+```sh
+gsutil cp gs://rox-drive-backup/daily/<archive>.tar.gz.gpg .
+gpg --batch --pinentry-mode loopback --passphrase-file /etc/rox-drive-backup/passphrase \
+  --output restore.tar.gz --decrypt <archive>.tar.gz.gpg
+tar -xzf restore.tar.gz
+sha256sum -c MANIFEST.sha256   # verifies the extraction
+```
+
+The store is still single-node; the backup closes the "no off-host backup" gap.
+Recovery time depends on `sw` availability plus GCS egress.
 
 ### Credential rotation
 
