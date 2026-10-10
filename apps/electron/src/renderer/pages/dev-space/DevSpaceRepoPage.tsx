@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAtomValue } from 'jotai'
 import { Loader2, Play, RefreshCw } from 'lucide-react'
+import { WORKBENCH_FLAG } from '@rox/core/platform'
 import type { DevSpaceArtifactSummary, DevSpaceQuestionBlockName, DevSpaceRepositoryRecord, DevSpaceRun, DevSpaceRunProgress } from '@rox/shared/dev-space'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs } from '@/components/ui/tabs'
 import { useActiveWorkspace } from '@/context/AppShellContext'
+import { workbenchFlagAtom } from '@/platform/unified-flags'
+import { RepoWatchControls } from './components/RepoWatchControls'
 import { ArtifactSurface } from './components/ArtifactSurface'
 import { AskQuestionComposer } from './components/AskQuestionComposer'
 import { QuestionsSurface } from './components/QuestionsSurface'
@@ -38,6 +42,7 @@ interface ArtifactListState { projectSlug: string | null; snapshotId?: string; s
 export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPageProps) {
   const { t } = useTranslation()
   const workspace = useActiveWorkspace()
+  const autoWatchEnabled = useAtomValue(workbenchFlagAtom(WORKBENCH_FLAG.devSpaceAutoWatchV1))
   const workspaceId = workspace?.id ?? null
   const [record, setRecord] = useState<DevSpaceRepositoryRecord | null>(null)
   const [loading, setLoading] = useState(true)
@@ -164,7 +169,12 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
       <PanelHeader
         title={record?.displayName ?? t('devSpace.repo.title')}
         badge={outdated ? <Badge variant="outline" data-testid="dev-space-outdated">{t('devSpace.repository.outdated')}</Badge> : undefined}
-        actions={record ? <Button type="button" size="sm" variant="outline" data-testid="dev-space-repo-refresh" onClick={() => void refresh()}><RefreshCw className="icon-caption" aria-hidden />{t('devSpace.repository.refresh')}</Button> : undefined}
+        actions={record ? (
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {autoWatchEnabled ? <RepoWatchControls record={record} onChanged={setRecord} /> : null}
+            <Button type="button" size="sm" variant="outline" data-testid="dev-space-repo-refresh" onClick={() => void refresh()}><RefreshCw className="icon-caption" aria-hidden />{t('devSpace.repository.refresh')}</Button>
+          </div>
+        ) : undefined}
       />
       <div className="min-h-0 flex-1 overflow-auto p-5">
         {loading ? (

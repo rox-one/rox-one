@@ -12,7 +12,7 @@ import { execFile } from 'node:child_process'
 import { appendFile, lstat, mkdir, readFile, realpath, rm } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path'
-import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { getWorkspaceByNameOrId, getWorkspaces } from '@rox/shared/config'
 import { loadEnvironmentPrefs, type EnvironmentPrefs } from '@rox/shared/environment'
 import { loadProjectById, loadProjectConfig, saveProjectConfig } from '@rox/shared/projects'
 import type { ProjectConfig } from '@rox/shared/projects'
@@ -26,6 +26,7 @@ import type { RepositoryBinding, RepositoryScope } from '@rox/shared/code-intell
 import { devSpacePlanHash, devSpaceQuestionsRunId, devSpaceRepositoryId, devSpaceRunId, DEV_SPACE_RUN_STAGES } from '@rox/shared/dev-space'
 import {
   DEV_SPACE_READ_ARTIFACT_MAX_BYTES, DEV_SPACE_TEXT_ARTIFACT_FORMATS,
+  DEV_SPACE_WATCH_DEFAULT_INTERVAL_MS, isValidDevSpaceWatchInterval,
 } from '@rox/shared/dev-space'
 import type {
   DevSpaceArtifactSummary, DevSpaceGenerateQuestionsResult, DevSpaceListArtifactsResult, DevSpaceManifestEntry,
@@ -37,6 +38,7 @@ import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import type { RequestContext } from '../../transport/types'
 import { CloneError, runGitClone, runGitPull, type CloneErrorCode } from '../../devspace/clone.ts'
+import { startDevSpaceWatch, type DevSpaceWatchWorkspace } from '../../devspace/watch.ts'
 import { readDevSpaceArtifactBytes, readDevSpaceConsent, readDevSpaceManifest, writeDevSpaceArtifact } from '../../devspace/artifacts.ts'
 import { listDevSpaceRuns, readDevSpaceRun, writeDevSpaceRun } from '../../devspace/runs.ts'
 import { createDevSpaceToolRuntime } from '../../devspace/tool-runtime.ts'
@@ -56,7 +58,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.devSpace.REMOVE_REPOSITORY, RPC_CHANNELS.devSpace.REFRESH_REPOSITORY, RPC_CHANNELS.devSpace.CANCEL,
   RPC_CHANNELS.devSpace.CAPABILITIES, RPC_CHANNELS.devSpace.LIST_RUNS, RPC_CHANNELS.devSpace.START_RUN,
   RPC_CHANNELS.devSpace.LIST_ARTIFACTS, RPC_CHANNELS.devSpace.READ_ARTIFACT,
-  RPC_CHANNELS.devSpace.GENERATE_QUESTIONS,
+  RPC_CHANNELS.devSpace.GENERATE_QUESTIONS, RPC_CHANNELS.devSpace.SET_WATCH,
 ] as const
 
 export interface HandlerEnvironment {
@@ -96,6 +98,12 @@ export interface HandlerEnvironment {
    * to the real `runSecurityScan` (syft + OSV under consent).
    */
   runSecurityScan?: typeof runSecurityScan
+  /**
+   * Workspace roots the background auto-watch sweep visits (v1.x O10). Absent
+   * (tests, non-Electron hosts) means no workspace is swept — the watch timer is
+   * then inert by construction.
+   */
+  listWorkspaces?: () => readonly DevSpaceWatchWorkspace[]
 }
 
 export interface DevSpaceReconcileInput {
@@ -113,6 +121,7 @@ export const DEFAULT_ENVIRONMENT: HandlerEnvironment = {
   saveProject: saveProjectConfig,
   loadProjectConfig,
   readEnvironmentPrefs: loadEnvironmentPrefs,
+  listWorkspaces: getWorkspaces,
 }
 
 interface DevSpaceCatalogFile { schemaVersion: 1; repositories: DevSpaceRepositoryRecord[] }
@@ -125,6 +134,8 @@ const DEV_REPO_ID = /^devrepo_[a-f0-9]{64}$/
 const ARTIFACT_ID = /^artifact_[a-f0-9]{64}$/
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/
 const PROVIDER = 'github' as const
+/** Default workspace source for the watch sweep when the host injected none (tests). */
+const NO_WORKSPACES = (): readonly DevSpaceWatchWorkspace[] => []
 
 function invalid(reason: string): never { throw new CodedError('INVALID_PAYLOAD', `devSpace.${reason}`) }
 function missing(reason: string): never { throw new CodedError('NOT_FOUND', `devSpace.${reason}`) }
@@ -424,6 +435,23 @@ export function registerDevSpaceHandlers(server: RpcServer, deps: HandlerDeps,
   registerDevSpacePublishStage(environment.publishPort)
 
   server.onShutdown?.(() => { abortAllDevSpaceRuns() })
+
+  // v1.x auto-watch (O10): the sweep lives in this process — no daemon. It only
+  // touches repositories whose record carries `watchEnabled: true` (explicit
+  // consent) and, on shutdown, aborts its in-flight git work and clears timers.
+  const watch = startDevSpaceWatch({
+    listWorkspaces: environment.listWorkspaces ?? NO_WORKSPACES,
+    readCatalog,
+    writeCatalog,
+    workingDirectoryFor: (root, record) => record.origin.kind === 'git-url'
+      ? gitUrlDestination(root, record.projectSlug, record.origin.url)
+      : record.origin.path,
+    pushChanged: (workspaceId, repositoryId, status) => {
+      pushTyped(server, RPC_CHANNELS.devSpace.CHANGED, { to: 'workspace', workspaceId }, { repositoryId, status })
+    },
+    ...(environment.resolveGithubToken ? { resolveToken: environment.resolveGithubToken } : {}),
+  })
+  server.onShutdown?.(() => { watch.stop() })
 
   // Publish the read/search surface the devspace.* session tools consume (spec 02 §9),
   // mirroring how registerKnowledgeHandlers publishes its KnowledgeToolRuntime.
@@ -746,6 +774,30 @@ export function registerDevSpaceHandlers(server: RpcServer, deps: HandlerDeps,
       reasons: securityScan.summary.reasons,
     }
   })
+
+  // v1.x auto-watch (O10) — per-repository consent for the background sweep.
+  // Only the flag itself is required; auto-pull/interval are refinements kept
+  // when omitted. Consent is a plain record field, so disable never clears the
+  // chosen cadence and re-enabling restores the previous settings.
+  operation(RPC_CHANNELS.devSpace.SET_WATCH, ['repositoryId', 'watchEnabled', 'watchAutoPull', 'watchIntervalMs'],
+    async (context, input, _signal, root) => {
+      const catalog = await readCatalog(root)
+      const found = findRecord(catalog, input.repositoryId)
+      if (typeof input.watchEnabled !== 'boolean') invalid('invalid-watch-enabled')
+      if (input.watchAutoPull !== undefined && typeof input.watchAutoPull !== 'boolean') invalid('invalid-watch-auto-pull')
+      if (input.watchIntervalMs !== undefined && !isValidDevSpaceWatchInterval(input.watchIntervalMs)) invalid('invalid-watch-interval')
+      const record: DevSpaceRepositoryRecord = {
+        ...withoutError(found),
+        watchEnabled: input.watchEnabled,
+        watchAutoPull: input.watchAutoPull ?? found.watchAutoPull ?? false,
+        watchIntervalMs: input.watchIntervalMs ?? found.watchIntervalMs ?? DEV_SPACE_WATCH_DEFAULT_INTERVAL_MS,
+        updatedAt: Date.now(),
+      }
+      replaceRecord(catalog, record)
+      await writeCatalog(root, catalog)
+      pushChanged(context.clientId, record.repositoryId, record.status)
+      return record
+    })
 
   // Like CANCEL, this handler owns its request entry past the RPC return so the
   // fire-and-forget pipeline keeps the same `requestId` cancellation handle.

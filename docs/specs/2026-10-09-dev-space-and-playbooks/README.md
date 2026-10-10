@@ -84,11 +84,16 @@
 `MAX_REPO_BYTES` (2 ГиБ), O10 — капы журналов 128/200 + последовательный LLM-слой, O11 — бюджет
 12 000 ключей с гейтом `lint:i18n:budget` в `validate:ci`.
 
+В8 (v1.x-рычаг из P6/D3, 2026-10-10) — **auto-watch репозиториев**: флаг `devspace.autoWatch.v1`
+(default OFF), явное пер-репо согласие (`watchEnabled`), таймер в процессе приложения (`.unref()`,
+стоп на shutdown), только `git fetch` + опциональный `pull --ff-only` — без авто-регенерации
+артефактов и без демонов (`packages/server-core/src/devspace/watch.ts`).
+
 Карта кода (где что лежит):
 
-- **Dev Space, серверное ядро** — `packages/server-core/src/devspace/` (`clone.ts`, `runner.ts`,
-  `artifacts.ts`, `runs.ts`, `publish-port.ts`, `tool-runtime.ts`, `questions/`, `security/`,
-  `stages/`, `adapters/`); RPC `packages/server-core/src/handlers/rpc/dev-space.ts`.
+- **Dev Space, серверное ядро** — `packages/server-core/src/devspace/` (`clone.ts`, `watch.ts`,
+  `runner.ts`, `artifacts.ts`, `runs.ts`, `publish-port.ts`, `tool-runtime.ts`, `questions/`,
+  `security/`, `stages/`, `adapters/`); RPC `packages/server-core/src/handlers/rpc/dev-space.ts`.
 - **Модель данных** — `packages/shared/src/dev-space/` (`types.ts`, `index.ts`).
 - **Агентские session-tools** — `packages/session-tools-core/src/handlers/dev-space-{read,search,propose}.ts`
   + `packages/session-tools-core/src/dev-space/{runtime,scope}.ts`.

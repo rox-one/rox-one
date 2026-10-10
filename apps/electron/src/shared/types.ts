@@ -631,6 +631,7 @@ import type {
   DevSpaceRepositoryStatus,
   DevSpaceRun,
   DevSpaceRunProgress,
+  DevSpaceSetWatchInput,
   DevSpaceStartRunInput,
 } from '@rox/shared/dev-space';
 
@@ -1385,6 +1386,7 @@ export interface ElectronAPI {
   listDevSpaceArtifacts(input: DevSpaceListArtifactsInput): Promise<DevSpaceListArtifactsResult>
   readDevSpaceArtifact(input: DevSpaceReadArtifactInput): Promise<DevSpaceReadArtifactResult>
   generateDevSpaceQuestions(input: DevSpaceGenerateQuestionsInput): Promise<DevSpaceGenerateQuestionsResult>
+  setDevSpaceWatch(input: DevSpaceSetWatchInput): Promise<DevSpaceRepositoryRecord>
   onDevSpaceCloneProgress(callback: (progress: DevSpaceCloneProgress) => void): () => void
   onDevSpaceChanged(callback: (change: { repositoryId: string; status: DevSpaceRepositoryStatus }) => void): () => void
   onDevSpaceRunProgress(callback: (progress: DevSpaceRunProgress) => void): () => void

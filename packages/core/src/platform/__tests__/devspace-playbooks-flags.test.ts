@@ -14,6 +14,7 @@ const CANONICAL = [
   ['devspace.questions.v1', ['devspace.v1']],
   ['devspace.tours.v1', ['devspace.v1']],
   ['devspace.ask.v1', ['devspace.v1']],
+  ['devspace.autoWatch.v1', ['devspace.v1']],
   ['playbooks.v1', []],
   ['playbooks.knowledge.v1', ['playbooks.v1']],
   ['playbooks.codebook.v1', ['playbooks.v1']],
@@ -27,12 +28,13 @@ describe('devspace + playbooks flags', () => {
     expect(WORKBENCH_FLAG.devSpaceQuestionsV1).toBe('devspace.questions.v1')
     expect(WORKBENCH_FLAG.devSpaceToursV1).toBe('devspace.tours.v1')
     expect(WORKBENCH_FLAG.devSpaceAskV1).toBe('devspace.ask.v1')
+    expect(WORKBENCH_FLAG.devSpaceAutoWatchV1).toBe('devspace.autoWatch.v1')
     expect(WORKBENCH_FLAG.playbooksV1).toBe('playbooks.v1')
     expect(WORKBENCH_FLAG.playbooksKnowledgeV1).toBe('playbooks.knowledge.v1')
     expect(WORKBENCH_FLAG.playbooksCodebookV1).toBe('playbooks.codebook.v1')
   })
 
-  it('registers exactly 9 canonical flags, default OFF, rollback-safe', () => {
+  it('registers exactly 10 canonical flags, default OFF, rollback-safe', () => {
     for (const [id] of CANONICAL) {
       expect(WORKBENCH_FEATURE_FLAGS.filter((flag) => flag.id === id)).toEqual([
         { id, defaultValue: false, dependencies: expect.any(Array), rollbackSafe: true },
@@ -55,6 +57,8 @@ describe('devspace + playbooks flags', () => {
     expect([...resolveEnabledFlags(new Set())].filter((id) => CANONICAL.some(([c]) => c === id))).toEqual([])
     expect(resolveEnabledFlags(new Set(['devspace.ingest.v1'])).has('devspace.ingest.v1')).toBe(false)
     expect(resolveEnabledFlags(new Set(['devspace.v1', 'devspace.ingest.v1'])).has('devspace.ingest.v1')).toBe(true)
+    expect(resolveEnabledFlags(new Set(['devspace.autoWatch.v1'])).has('devspace.autoWatch.v1')).toBe(false)
+    expect(resolveEnabledFlags(new Set(['devspace.v1', 'devspace.autoWatch.v1'])).has('devspace.autoWatch.v1')).toBe(true)
     expect(resolveEnabledFlags(new Set(['playbooks.knowledge.v1', 'playbooks.codebook.v1'])).has('playbooks.knowledge.v1')).toBe(false)
     expect(
       resolveEnabledFlags(new Set(['playbooks.v1', 'playbooks.knowledge.v1', 'playbooks.codebook.v1'])).has(

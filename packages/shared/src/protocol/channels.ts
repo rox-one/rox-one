@@ -225,6 +225,7 @@ export const RPC_CHANNELS = {
     LIST_ARTIFACTS: 'devSpace:listArtifacts',
     READ_ARTIFACT: 'devSpace:readArtifact',
     GENERATE_QUESTIONS: 'devSpace:generateQuestions',
+    SET_WATCH: 'devSpace:setWatch',
     CLONE_PROGRESS: 'devSpace:cloneProgress',
     CHANGED: 'devSpace:changed',
     RUN_PROGRESS: 'devSpace:runProgress',

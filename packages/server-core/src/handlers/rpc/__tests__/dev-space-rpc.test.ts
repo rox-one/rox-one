@@ -113,7 +113,7 @@ const DEV_SPACE_CHANNELS = [
   RPC_CHANNELS.devSpace.REMOVE_REPOSITORY, RPC_CHANNELS.devSpace.REFRESH_REPOSITORY, RPC_CHANNELS.devSpace.CANCEL,
   RPC_CHANNELS.devSpace.CAPABILITIES, RPC_CHANNELS.devSpace.LIST_RUNS, RPC_CHANNELS.devSpace.START_RUN,
   RPC_CHANNELS.devSpace.LIST_ARTIFACTS, RPC_CHANNELS.devSpace.READ_ARTIFACT,
-  RPC_CHANNELS.devSpace.GENERATE_QUESTIONS,
+  RPC_CHANNELS.devSpace.GENERATE_QUESTIONS, RPC_CHANNELS.devSpace.SET_WATCH,
 ]
 
 describe('devSpace:* handlers', () => {
@@ -312,6 +312,51 @@ describe('devSpace artifact read surface', () => {
       workspaceId: 'ws', projectSlug: 'demo', artifactId: 'nope',
     })).rejects.toThrow()
     await expect(f.call(RPC_CHANNELS.devSpace.LIST_ARTIFACTS)({ workspaceId: 'ws' })).rejects.toThrow()
+  })
+})
+
+describe('devSpace:setWatch (v1.x O10)', () => {
+  const addGitRepo = async (f: DevSpaceFixture) =>
+    f.call(RPC_CHANNELS.devSpace.ADD_REPOSITORY)({
+      workspaceId: 'ws', source: { kind: 'git-url', url: 'https://github.com/rox/one.git' },
+    })
+
+  it('stores consent, auto-pull and interval on the catalog record and on disk', async () => {
+    const f = fixture()
+    const added = await addGitRepo(f)
+    const updated = await f.call(RPC_CHANNELS.devSpace.SET_WATCH)({
+      workspaceId: 'ws', repositoryId: added.id, watchEnabled: true, watchAutoPull: true, watchIntervalMs: 3_600_000,
+    })
+    expect(updated).toMatchObject({ id: added.id, watchEnabled: true, watchAutoPull: true, watchIntervalMs: 3_600_000 })
+    const onDisk = JSON.parse(readFileSync(join(f.root, 'dev-space-repositories.json'), 'utf8'))
+    expect(onDisk.repositories[0]).toMatchObject({ watchEnabled: true, watchAutoPull: true, watchIntervalMs: 3_600_000 })
+    expect(f.pushes.at(-1)).toMatchObject({
+      channel: RPC_CHANNELS.devSpace.CHANGED,
+      args: [{ repositoryId: added.repositoryId, status: added.status }],
+    })
+  })
+
+  it('defaults auto-pull off and keeps the chosen interval across a disable', async () => {
+    const f = fixture()
+    const added = await addGitRepo(f)
+    const set = f.call(RPC_CHANNELS.devSpace.SET_WATCH)
+    const enabled = await set({ workspaceId: 'ws', repositoryId: added.id, watchEnabled: true, watchIntervalMs: 7_200_000 })
+    expect(enabled.watchAutoPull).toBe(false)
+    expect(enabled.watchIntervalMs).toBe(7_200_000)
+    const disabled = await set({ workspaceId: 'ws', repositoryId: added.id, watchEnabled: false })
+    expect(disabled.watchEnabled).toBe(false)
+    expect(disabled.watchIntervalMs).toBe(7_200_000)
+  })
+
+  it('rejects out-of-range intervals and non-boolean flags', async () => {
+    const f = fixture()
+    const added = await addGitRepo(f)
+    const set = f.call(RPC_CHANNELS.devSpace.SET_WATCH)
+    await expect(set({ workspaceId: 'ws', repositoryId: added.id, watchEnabled: true, watchIntervalMs: 60_000 })).rejects.toThrow()
+    await expect(set({ workspaceId: 'ws', repositoryId: added.id, watchEnabled: true, watchIntervalMs: 25 * 3_600_000 })).rejects.toThrow()
+    await expect(set({ workspaceId: 'ws', repositoryId: added.id, watchEnabled: 'yes' })).rejects.toThrow()
+    await expect(set({ workspaceId: 'ws', repositoryId: added.id, watchEnabled: true, watchAutoPull: 1 })).rejects.toThrow()
+    await expect(set({ workspaceId: 'ws', repositoryId: `devrepo_${'a'.repeat(64)}`, watchEnabled: true })).rejects.toThrow()
   })
 })
 
