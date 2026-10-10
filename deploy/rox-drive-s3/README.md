@@ -87,8 +87,14 @@ Never commit real values — these are secrets.
 ## Backup
 
 Copy `/opt/rox-drive/data` (the SeaweedFS volume directory) to another host to
-back up the store. There is currently **no off-host backup** — the data lives
-only on `sw`, so a host loss loses the objects.
+back up the store manually.
+
+A scheduled off-host backup is deployed alongside the store: systemd timer
+`rox-drive-backup.timer` runs `rox-drive-backup.service` nightly at 03:30
+Europe/Moscow and uploads a `gpg`-encrypted tarball of `data/` + `s3.json` to
+`gs://rox-drive-backup/daily/` (versioned bucket, 90-day lifecycle). The store
+itself is still single-node on `sw`; see `docs/drive-object-storage.md` for the
+runbook and restore procedure.
 
 ## Smoke test
 

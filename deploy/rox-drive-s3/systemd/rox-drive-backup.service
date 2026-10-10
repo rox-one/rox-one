@@ -1,0 +1,11 @@
+[Unit]
+Description=Nightly offsite backup of the ROX Drive object store (SeaweedFS)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/rox-drive-backup.sh
+TimeoutStartSec=1800
+Nice=10
+IOSchedulingPriority=7
