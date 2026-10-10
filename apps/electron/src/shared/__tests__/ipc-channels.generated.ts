@@ -454,6 +454,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'meetings:get',
   'meetings:importMedia',
   'meetings:list',
+  'meetings:listProposals',
   'meetings:mailPrepare',
   'meetings:mailSend',
   'meetings:mailThreads',
@@ -1066,4 +1067,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1062
+export const EXPECTED_CHANNEL_COUNT = 1063
