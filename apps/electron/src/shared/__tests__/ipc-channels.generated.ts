@@ -766,6 +766,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'remote:testConnection',
   'resources:export',
   'resources:import',
+  'rovers:list',
   'rtk:getEnabled',
   'rtk:getGain',
   'rtk:getStatus',
@@ -1069,4 +1070,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1065
+export const EXPECTED_CHANNEL_COUNT = 1066
