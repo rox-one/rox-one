@@ -173,18 +173,22 @@ describe('boot manifest derivation', () => {
 })
 
 describe.skipIf(!existsSync(DIST) || !existsSync(MANIFEST_PATH))('boot manifest against the built renderer', () => {
-  it('re-derives the committed manifest exactly', () => {
+  it("re-derives the committed manifest's source closure", () => {
     const committed = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as BootManifest
     const derived = deriveFromDist(DIST)
     const diff = diffBootManifest(committed, derived)
-    expect(diff).toEqual({
-      ok: true,
-      bootChunks: { missing: [], extra: [] },
-      bootSources: { missing: [], extra: [] },
-      routes: {},
-    })
-    // Chunk names (hashes) move with any renderer edit; the closure's source set
-    // is the identity the gate compares, so assert on that (and on the route ids).
+    // The gate's failure contract is the SOURCE closure, not byte equality:
+    // `ok` is derived solely from `bootSources` and each route's source set
+    // (see `diffBootManifest`). Hashed chunk names (`bootChunks`, `entry`,
+    // `renames`) move with any renderer edit and are informational, so they are
+    // deliberately NOT asserted here. Source drift still fails: a dropped or
+    // added boot source reds `bootSources`, and a changed route closure reds
+    // `routes` and flips `ok`.
+    expect(diff.ok).toBe(true)
+    expect(diff.bootSources).toEqual({ missing: [], extra: [] })
+    expect(diff.routes).toEqual({})
+    // Belt-and-braces: the derived source closure and route ids must match the
+    // committed manifest that `diff.ok` was computed against.
     expect(derived.bootSources).toEqual(committed.bootSources)
     expect(Object.keys(derived.routes).sort()).toEqual(Object.keys(committed.routes).sort())
     for (const id of Object.keys(derived.routes)) {
