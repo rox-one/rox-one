@@ -32,7 +32,6 @@ import {
   CalendarStore,
   appleCalendarLiveEnabled,
   createProductionAdapter,
-  getAppleCalendarHelper,
 } from '@rox/core/calendar'
 import type { AppleCalendarAuthStatus, CalendarBundle, CalendarEvent } from '@rox/core/calendar'
 import type { RpcServer } from '@rox/server-core/transport'
@@ -105,7 +104,7 @@ function writePersisted(rootPath: string, data: PersistedAppleCalendar): void {
 }
 
 /** Ensure the persisted bundle carries exactly one connected apple account. Idempotent. */
-function ensureAppleAccount(store: CalendarStore, persisted: PersistedAppleCalendar | null): { accountId: string } {
+function ensureAppleAccount(store: CalendarStore): { accountId: string } {
   const existing = store.accounts().find((account) => account.provider === 'appleCalendar' && account.status !== 'revoked')
   if (existing) {
     if (existing.status !== 'connected') store.markConnected(existing.id)
@@ -181,7 +180,7 @@ export function registerCalendarAppleHandlers(server: RpcServer, deps: HandlerDe
     const rootPath = workspaceRootFor(ctx.workspaceId)
     const persisted = readPersisted(rootPath)
     const store = new CalendarStore(persisted?.store)
-    const { accountId } = ensureAppleAccount(store, persisted)
+    const { accountId } = ensureAppleAccount(store)
     writePersisted(rootPath, { accountId, store: store.snapshot() })
 
     log.info('[Calendar:apple] connected')
