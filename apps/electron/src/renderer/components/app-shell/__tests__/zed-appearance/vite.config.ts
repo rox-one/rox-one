@@ -7,7 +7,12 @@ const repository = resolve(root, '../../../../../../../..')
 
 // Retain the renderer's production aliases, package resolver, Tailwind plugin
 // and browser-safe node stubs. No appearance styles or components are mocked.
-const production = rendererConfig as UserConfig
+// The production config is a `defineConfig(({ command }) => …)` function
+// (aliases, plugins and the package resolver live inside it), so it must be
+// invoked — spreading the function object strips every alias.
+const production = (typeof rendererConfig === 'function'
+  ? (rendererConfig as (env: { command: 'build'; mode: string }) => UserConfig)({ command: 'build', mode: 'production' })
+  : rendererConfig) as UserConfig
 export default defineConfig({
   ...production,
   root,
