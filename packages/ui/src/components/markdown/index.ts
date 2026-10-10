@@ -12,6 +12,23 @@ export { MarkdownDatatableBlock, type MarkdownDatatableBlockProps } from './Mark
 export { MarkdownSpreadsheetBlock, type MarkdownSpreadsheetBlockProps } from './MarkdownSpreadsheetBlock'
 export { MarkdownImageBlock, type MarkdownImageBlockProps } from './MarkdownImageBlock'
 export { MarkdownDocBlock, type MarkdownDocBlockProps } from './MarkdownDocBlock'
+export { MarkdownRoversCardBlock, type MarkdownRoversCardBlockProps } from './MarkdownRoversCardBlock'
+export {
+  ROVERS_CATEGORIES,
+  parseRoversCardPayload,
+  pickLocalized,
+  roversCategoryColor,
+  roversLanguage,
+  roversMonogram,
+  isDirectIconUrl,
+  type RoversCardParseResult,
+  type RoversCardSummary,
+  type RoversCategory,
+  type RoversDeploy,
+  type RoversEntryFull,
+  type RoversLanguage,
+  type RoversLocalizedText,
+} from './rovers-card'
 // The OpenUI block (`@openuidev/*` + recharts) is only reachable through the
 // lazy wrapper so importing this barrel never pulls the heavy chunk into the
 // caller's bundle; the eager component stays an internal module detail.
