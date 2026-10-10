@@ -186,30 +186,39 @@ export function useKeepAliveSurfaces(
   const [state, setState] = React.useState<RetentionState>(
     () => advanceRetention(EMPTY_RETENTION, null, activeKey, capacity),
   )
+  // Outgoing surface of the previous render; its node is snapshotted when the
+  // active key moves so its mounted tree survives.
   const lastRender = React.useRef<{ key: string; node: React.ReactNode } | null>(null)
-  const applied = React.useRef<{ key: string; capacity: number } | null>(null)
 
   const previous = lastRender.current
   lastRender.current = { key: activeKey, node: activeNode }
 
-  if (applied.current === null) applied.current = { key: activeKey, capacity }
-  if (applied.current.key !== activeKey || applied.current.capacity !== capacity) {
+  // Derive the adjustment from the COMMITTED state: the retention set is
+  // already correct exactly when it contains this render's active key. The
+  // previous `applied` ref guarded this with a value mutated during render;
+  // when React discards and re-invokes a render (StrictMode) it advanced ahead
+  // of the committed state, every later render skipped the correction and the
+  // active key's snapshot was evicted, leaving an empty entry list. Reading
+  // only committed state makes the derivation identical in every invocation,
+  // so a discarded render can never produce an empty entry list.
+  const stale = !state.keys.includes(activeKey)
+  const current = stale ? advanceRetention(state, previous, activeKey, capacity) : state
+  if (stale) {
     // Render-phase adjustment (React's "adjust state while rendering"): the
     // outgoing surface must be snapshotted before this render commits,
     // otherwise its tree would be unmounted for one commit and lose the state
     // keep-alive exists to preserve. React re-runs this component with the new
-    // state before committing, so the stale pass below is discarded.
-    applied.current = { key: activeKey, capacity }
-    setState(advanceRetention(state, previous, activeKey, capacity))
+    // state before committing, so the stale pass is discarded.
+    setState(current)
   }
 
   const entries: RetainedSurfaceEntry[] = []
-  for (const key of state.keys) {
+  for (const key of current.keys) {
     if (key === activeKey) {
       entries.push({ key, node: activeNode })
       continue
     }
-    const node = state.snapshots.get(key)
+    const node = current.snapshots.get(key)
     if (node === undefined) continue
     entries.push({ key, node })
   }
