@@ -171,12 +171,14 @@ coverage/budget ✓; `lint:ui-tokens` — **0 новых** (6479 заbaselined, 
 снапшотов (560)**, `run-unified-gates` 13 pass / 2 advisory-fail (config-paths — унаследовано,
 plan.md:161; axe — input-label/button-name), артефакты `.visual-artifacts/`.
 
-Полный serial-прогон (**2 660 сьютов**, bun 1.4.2, финальное дерево): **2 579 passed / 81
-failed = 22 новых + 59 known-red** (до починки фикстур было 31 новых). Все 22 файла новых падений
-байт-в-байт совпадают с `origin/main` (кроме `product-learning-results.browser.test.ts` — наша
-правка пути chromium, и `tests/visual/playground.spec.ts` — 15-минутный whole-suite дедлайн);
-каждый воспроизведён поодиночке. Это предсуществующее семейство, вскрытое скоупом полного
-прогона (прошлый прогон видел 762 сьюта), а не волна-3. Починены нашим фиксом и проверены
+Полный serial-прогон (**2 660 сьютов**, bun 1.4.2): **2 579 passed / 81 failed = 22 новых +
+59 known-red**; после слияния main (+73, дерево 2 670 сьютов) — **2 587 passed / 83 failed =
+25 новых + 58 known-red** (состав тот же: main-класс + флейки, единственный не встречавшийся
+ранее файл `startup-caller-boundary` тоже байт-в-байт с main). Все новые падения байт-в-байт
+совпадают с `origin/main` (кроме `product-learning-results.browser.test.ts` — наша правка пути
+chromium, и `tests/visual/playground.spec.ts` — 15-минутный whole-suite дедлайн); каждый
+воспроизведён поодиночке. Это предсуществующее семейство, вскрытое скоупом полного прогона
+(прошлый прогон видел 762 сьюта), а не волна-3. Починены нашим фиксом и проверены
 зелёными: `openui-block` 11/11, `kernel-availability` 5/5, `panel-workspace` 9/9 (в тишине;
 в полной нагрузке возможен флейк хука), `connections-lifecycle` 7/7, `radar-lifecycle` 1/1,
 `boot-manifest` 7/7 (регенерация после G7/G4: 48 boot-chunk, 15 маршрутов), `switch-contrast`,
