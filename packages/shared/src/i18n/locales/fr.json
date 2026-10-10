@@ -1768,6 +1768,8 @@
   "devSpace.watch.interval": "Intervalle de vérification",
   "devSpace.watch.intervalHours": "{{hours}} h",
   "devSpace.watch.networkError": "Impossible de mettre à jour les paramètres de surveillance.",
+  "devSpace.watch.regenerate": "Régénérer les artefacts après le pull",
+  "devSpace.watch.regenerateHint": "Nécessite le consentement des connecteurs de modèles pour la partie LLM ; sans lui, seuls les artefacts structurels sont actualisés.",
   "devSpace.watch.toggle": "Surveiller",
   "devSpace.watch.toggleHint": "Autoriser le git fetch en arrière-plan pour ce dépôt (accès réseau).",
   "devSpaceQuestions.answerLoading": "Chargement de la réponse…",

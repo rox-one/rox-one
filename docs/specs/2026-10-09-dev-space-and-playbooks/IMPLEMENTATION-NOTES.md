@@ -145,8 +145,23 @@ RPC-поверхность `packages/server-core/src/playbooks/codebook/index.ts
   - **без демонов**: таймер живёт в процессе приложения (`devspace/watch.ts`, старт рядом с
     регистрацией dev-space, стоп на `onShutdown`), оба таймера `.unref()`, повторный вход в тик
     заблокирован, тик никогда не бросает.
-  - **без авто-регенерации**: sweep делает только `git fetch --quiet --prune` и, при
-    `watchAutoPull`, `git pull --ff-only`; артефакты и LLM-стадии не запускаются.
+  - авто-регенерация вынесена в отдельный рычаг В11 (ниже) — сам sweep делает только `git fetch --quiet --prune`
+    и, при `watchAutoPull`, `git pull --ff-only`.
+- **P6/D3 → v1.x авто-регенерация после auto-pull (В11, закрыто 2026-10-10)** — надстройка над В8, отдельный
+  пер-репо флаг `watchRegenerate` (`DevSpaceRepositoryRecord`, default false; канал `devSpace:setWatch`).
+  Границы жёсткие:
+  - срабатывает **только после успешного** fast-forward (`pull` вернулся без ошибки) и только при тройном
+    согласии `watchEnabled && watchAutoPull && watchRegenerate`; при ошибке fetch/pull тик, как и раньше,
+    лишь пишет `lastError`/`stale` и никого не регенерирует;
+  - **без демонов**: регенерация идёт в том же процессе и в том же тике watch (после записи каталога), в
+    `try/catch`; ошибка регенерации не роняет тик, а журналируется (`watch-regenerate-started/succeeded/failed`
+    в `projects/<slug>/dev-space/audit.jsonl`);
+  - регенерация переиспользует боевые пути через вынесенные `refreshRepositoryInternal`/`startRunInternal`
+    (те же `git pull`→bind→snapshot→pipeline `reconcile→structural→llm→publish`), поэтому артефакты
+    структурной фазы обновляются **всегда**; LLM-фаза без согласия на модельные коннекты честно деградирует в
+    `partial` (никаких фейковых артефактов);
+  - прогресс/`changed` для этого пути уходят в воркспейс (`pushTyped … {to:'workspace'}`), отменяемость
+    конвейера и `abortAllDevSpaceRuns()` на shutdown сохраняются.
 - **O6 (srt)** — «да» и реализовано: сегментные тайминги TTS дают `.srt`; экспорт плеера — `srt` через
   `devSpace:readArtifact` + диалог текстового сохранения, `mp3` — конкатенацией фреймового чтения
   (`podcast:audio`) в Blob-загрузку (существующий паттерн экспорта рендера).

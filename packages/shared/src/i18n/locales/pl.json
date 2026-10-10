@@ -1774,6 +1774,8 @@
   "devSpace.watch.interval": "Interwał sprawdzania",
   "devSpace.watch.intervalHours": "{{hours}} godz.",
   "devSpace.watch.networkError": "Nie udało się zaktualizować ustawień obserwowania.",
+  "devSpace.watch.regenerate": "Regeneruj artefakty po pull",
+  "devSpace.watch.regenerateHint": "Wymaga zgody na konektory modeli dla części LLM; bez niej odświeżane są tylko artefakty strukturalne.",
   "devSpace.watch.toggle": "Obserwuj",
   "devSpace.watch.toggleHint": "Zezwól na git fetch w tle dla tego repozytorium (dostęp sieciowy).",
   "devSpaceQuestions.answerLoading": "Wczytywanie odpowiedzi…",
