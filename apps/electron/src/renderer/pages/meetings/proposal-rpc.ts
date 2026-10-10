@@ -49,6 +49,15 @@ export type MeetingOpenTargetApi = {
   ): Promise<{ target: NativePersistTarget | null; error?: { code: string } }>
 }
 
+export type MeetingProposalListApi = {
+  listMeetingProposals(
+    workspaceId: string,
+  ): Promise<{ proposals: MeetingProposal[]; error?: { code: string } }>
+}
+
+/** Desktop-local actor id used for every meetings grant built in the renderer. */
+export const MEETING_ACTOR_ID = 'desktop-user'
+
 export type MeetingProposalRow = {
   id: string
   title: string
@@ -119,6 +128,32 @@ export function resolveMeetingOpenTargetApi(
   const api = window.electronAPI
   if (!api?.openMeetingTarget) return null
   return api
+}
+
+export function resolveMeetingProposalListApi(
+  injected?: MeetingProposalListApi | null,
+): MeetingProposalListApi | null {
+  if (typeof injected?.listMeetingProposals === 'function') return injected
+  if (typeof window === 'undefined') return null
+  const api = window.electronAPI
+  if (!api?.listMeetingProposals) return null
+  return api as MeetingProposalListApi
+}
+
+/**
+ * Read the workspace's meeting → native proposals. A missing RPC, workspace, or
+ * server error fail-closes into a code so the inbox never shows a false "empty
+ * success" when the read did not actually happen.
+ */
+export async function listMeetingProposals(input: {
+  api: MeetingProposalListApi | null
+  workspaceId: string | null
+}): Promise<{ ok: true; rows: MeetingProposalRow[] } | { ok: false; code: string }> {
+  if (!input.api) return { ok: false, code: 'rpc-unavailable' }
+  if (!input.workspaceId) return { ok: false, code: 'workspace-required' }
+  const result = await input.api.listMeetingProposals(input.workspaceId)
+  if (result.error?.code) return { ok: false, code: result.error.code }
+  return { ok: true, rows: (result.proposals ?? []).map((proposal) => rowFromProposal(proposal)) }
 }
 
 export function routeForNativePersistTarget(kind: 'note' | 'task', id: string): Route {
