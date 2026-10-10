@@ -1688,6 +1688,7 @@
   "devSpace.error.accessDenied": "Kein Repository-Zugriff. Melden Sie sich bei GitHub an und versuchen Sie es erneut.",
   "devSpace.error.cancelled": "Vorgang abgebrochen.",
   "devSpace.error.cloneFailed": "Repository konnte nicht geklont werden.",
+  "devSpace.error.cloneTooLarge": "Repository ist zu groß für Dev Space (Limit 2 GiB).",
   "devSpace.error.failed": "Der Vorgang ist fehlgeschlagen.",
   "devSpace.error.invalidPath": "Ungültiger Ordnerpfad.",
   "devSpace.error.invalidUrl": "Ungültiger Repository-Link.",

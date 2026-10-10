@@ -1688,6 +1688,7 @@
   "devSpace.error.accessDenied": "无法访问仓库。请登录 GitHub 后重试。",
   "devSpace.error.cancelled": "操作已取消。",
   "devSpace.error.cloneFailed": "无法克隆仓库。",
+  "devSpace.error.cloneTooLarge": "仓库过大，超出 Dev Space 限制（上限 2 GiB）。",
   "devSpace.error.failed": "操作失败。",
   "devSpace.error.invalidPath": "无效的文件夹路径。",
   "devSpace.error.invalidUrl": "无效的仓库链接。",

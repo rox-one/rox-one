@@ -1690,6 +1690,7 @@
   "devSpace.error.accessDenied": "Aucun accès au dépôt. Connectez-vous à GitHub et réessayez.",
   "devSpace.error.cancelled": "Opération annulée.",
   "devSpace.error.cloneFailed": "Échec du clonage du dépôt.",
+  "devSpace.error.cloneTooLarge": "Dépôt trop volumineux pour Dev Space (limite 2 GiB).",
   "devSpace.error.failed": "L'opération a échoué.",
   "devSpace.error.invalidPath": "Chemin de dossier non valide.",
   "devSpace.error.invalidUrl": "Lien de dépôt non valide.",

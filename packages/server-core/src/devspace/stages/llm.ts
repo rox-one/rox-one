@@ -219,6 +219,11 @@ function artifactName(name: string, format: DevSpaceArtifactFormat): string {
  * Run the LLM adapters in sequence behind the consent gate, returning the manifest
  * entry ids produced and `partial: true` when consent is missing, a tool is
  * unavailable or a generation reported an error.
+ *
+ * O10 (closed 2026-10-10): the stage stays sequential — each adapter is a
+ * local agentic CLI whose own concurrency is unbounded already, so running
+ * them in parallel would multiply load for no wall-clock win. Bounded
+ * concurrency is a v1.x lever, not a v1 gap.
  */
 export async function runLlmStage(
   adapters: readonly LlmAdapter[], context: DevSpaceStageContext,

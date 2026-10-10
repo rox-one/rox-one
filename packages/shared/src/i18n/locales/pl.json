@@ -1696,6 +1696,7 @@
   "devSpace.error.accessDenied": "Brak dostępu do repozytorium. Zaloguj się w GitHub i spróbuj ponownie.",
   "devSpace.error.cancelled": "Operacja anulowana.",
   "devSpace.error.cloneFailed": "Nie udało się sklonować repozytorium.",
+  "devSpace.error.cloneTooLarge": "Repozytorium jest zbyt duże dla Dev Space (limit 2 GiB).",
   "devSpace.error.failed": "Operacja nie powiodła się.",
   "devSpace.error.invalidPath": "Nieprawidłowa ścieżka folderu.",
   "devSpace.error.invalidUrl": "Nieprawidłowy link repozytorium.",

@@ -1688,6 +1688,7 @@
   "devSpace.error.accessDenied": "리포지토리에 접근할 수 없습니다. GitHub에 로그인한 후 다시 시도하세요.",
   "devSpace.error.cancelled": "작업이 취소되었습니다.",
   "devSpace.error.cloneFailed": "리포지토리 복제에 실패했습니다.",
+  "devSpace.error.cloneTooLarge": "저장소가 Dev Space에 비해 너무 큽니다(최대 2 GiB).",
   "devSpace.error.failed": "작업에 실패했습니다.",
   "devSpace.error.invalidPath": "잘못된 폴더 경로입니다.",
   "devSpace.error.invalidUrl": "잘못된 리포지토리 링크입니다.",
