@@ -13,6 +13,15 @@
 
 export type WebEntryModeId = 'chat' | 'cloud-vm'
 
+/**
+ * Validate a raw `?mode=` deep-link value. Only the two known ids are accepted;
+ * anything else (missing, empty, a typo, an unknown future mode) is ignored so
+ * the caller keeps its default entry flow rather than guessing.
+ */
+export function parseWebEntryMode(value: string | null | undefined): WebEntryModeId | undefined {
+  return value === 'chat' || value === 'cloud-vm' ? value : undefined
+}
+
 export type CloudVmUnavailableReason =
   | 'runs-disabled'
   | 'local-provider'
@@ -108,4 +117,17 @@ export function isWebSession(payload: unknown): payload is { authMode: 'oidc' | 
   if (typeof payload !== 'object' || payload === null) return false
   if (!('authMode' in payload)) return false
   return payload.authMode === 'oidc' || payload.authMode === 'password'
+}
+
+/**
+ * Read the operator's landing switch from the `GET /api/config` payload
+ * (`modesLanding`, published by http-server from `ROX_WEBUI_MODES_LANDING`).
+ * The flag defaults to enabled: an unreadable or unrecognized config keeps the
+ * documented default (the landing is offered) rather than silently changing the
+ * entry flow, and only an explicit `false` disables it.
+ */
+export function isModesLandingEnabled(payload: unknown): boolean {
+  if (typeof payload !== 'object' || payload === null) return true
+  if (!('modesLanding' in payload)) return true
+  return payload.modesLanding !== false
 }

@@ -217,7 +217,7 @@ describe('headless server lifecycle smoke', () => {
     const cookie = setCookie!.split(';')[0]!
     const config = await request(server, '/api/config', { headers: { cookie } })
     expect(config.status).toBe(200)
-    expect(await config.json()).toEqual({ wsUrl: server.url })
+    expect(await config.json()).toEqual({ wsUrl: server.url, modesLanding: true })
     const html = await request(server, '/', { headers: { cookie } })
     expect(html.status).toBe(200)
     expect(await html.text()).toBe(readFileSync(join(profile.webuiDir, 'index.html'), 'utf8'))

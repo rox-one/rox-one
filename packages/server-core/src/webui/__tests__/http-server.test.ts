@@ -3,7 +3,7 @@ import { createHash, generateKeyPairSync, sign } from 'node:crypto'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { createWebuiHandler, resolveWebuiFile, startWebuiHttpServer } from '../http-server'
+import { createWebuiHandler, readModesLandingFromEnv, resolveWebuiFile, startWebuiHttpServer } from '../http-server'
 import type { OidcConfig } from '../auth'
 
 // Every test in this file starts a real HTTP server, writes a temp webui dir and performs real
@@ -40,6 +40,7 @@ async function createServer(overrides?: {
   publicWsUrl?: string
   wsProtocol?: 'ws' | 'wss'
   wsPort?: number
+  modesLanding?: boolean
 }) {
   const server = await startWebuiHttpServer({
     port: 0,
@@ -50,6 +51,7 @@ async function createServer(overrides?: {
     publicWsUrl: overrides?.publicWsUrl,
     wsProtocol: overrides?.wsProtocol ?? 'wss',
     wsPort: overrides?.wsPort ?? 9100,
+    modesLanding: overrides?.modesLanding,
     getHealthCheck: () => ({ status: 'ok' }),
     logger,
   })
@@ -103,6 +105,7 @@ describe('startWebuiHttpServer', () => {
     expect(configRes.status).toBe(200)
     expect(await configRes.json()).toEqual({
       wsUrl: 'wss://127.0.0.1:9100',
+      modesLanding: true,
     })
   })
 
@@ -172,6 +175,7 @@ describe('startWebuiHttpServer', () => {
     expect(configRes.status).toBe(200)
     expect(await configRes.json()).toEqual({
       wsUrl: 'wss://craft.example.com:9100',
+      modesLanding: true,
     })
   })
 
@@ -197,6 +201,7 @@ describe('startWebuiHttpServer', () => {
     expect(configRes.status).toBe(200)
     expect(await configRes.json()).toEqual({
       wsUrl: 'wss://craft.example.com/ws',
+      modesLanding: true,
     })
   })
 })
@@ -509,7 +514,7 @@ describe('WebUI OIDC (Rox ID) sessions', () => {
       headers: { cookie: cookieHeader },
     }))
     expect(config.status).toBe(200)
-    expect(await config.json()).toEqual({ wsUrl: 'ws://127.0.0.1:9100', authMode: 'oidc' })
+    expect(await config.json()).toEqual({ wsUrl: 'ws://127.0.0.1:9100', modesLanding: true, authMode: 'oidc' })
 
     const me = await handler.fetch(new Request('http://127.0.0.1/api/auth/me', {
       headers: { cookie: cookieHeader },
@@ -831,5 +836,46 @@ describe('WebUI security headers on every route', () => {
     expect(res.status).toBe(302)
     expect(res.headers.get('location')).toBe('/login')
     assertSecured(res, false)
+  })
+})
+
+describe('readModesLandingFromEnv (ROX_WEBUI_MODES_LANDING)', () => {
+  it('defaults to enabled when the variable is unset or blank', () => {
+    expect(readModesLandingFromEnv({})).toBe(true)
+    expect(readModesLandingFromEnv({ ROX_WEBUI_MODES_LANDING: '' })).toBe(true)
+    expect(readModesLandingFromEnv({ ROX_WEBUI_MODES_LANDING: '1' })).toBe(true)
+  })
+
+  it('disables only on an explicit 0/false (case-insensitive)', () => {
+    expect(readModesLandingFromEnv({ ROX_WEBUI_MODES_LANDING: '0' })).toBe(false)
+    expect(readModesLandingFromEnv({ ROX_WEBUI_MODES_LANDING: 'false' })).toBe(false)
+    expect(readModesLandingFromEnv({ ROX_WEBUI_MODES_LANDING: 'FALSE' })).toBe(false)
+    expect(readModesLandingFromEnv({ ROX_WEBUI_MODES_LANDING: ' 0 ' })).toBe(false)
+  })
+})
+
+describe('/api/config modesLanding', () => {
+  it('advertises the landing as enabled by default', async () => {
+    const { baseUrl } = await createServer()
+    const authRes = await fetch(`${baseUrl}/api/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: PASSWORD }),
+    })
+    const configRes = await fetch(`${baseUrl}/api/config`, { headers: { cookie: extractSessionCookie(authRes) } })
+    expect(configRes.status).toBe(200)
+    expect(await configRes.json()).toEqual({ wsUrl: 'wss://127.0.0.1:9100', modesLanding: true })
+  })
+
+  it('advertises the operator switch when disabled', async () => {
+    const { baseUrl } = await createServer({ modesLanding: false })
+    const authRes = await fetch(`${baseUrl}/api/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: PASSWORD }),
+    })
+    const configRes = await fetch(`${baseUrl}/api/config`, { headers: { cookie: extractSessionCookie(authRes) } })
+    expect(configRes.status).toBe(200)
+    expect(await configRes.json()).toEqual({ wsUrl: 'wss://127.0.0.1:9100', modesLanding: false })
   })
 })

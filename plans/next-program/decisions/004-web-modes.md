@@ -7,7 +7,9 @@ Ticket R16 (`docs/plans/2026-10-09-platform-program.md:50`): «Веб-верси
 **Status:** ACCEPTED — shipped slice. The web auth question is answered and this
 record fixes the shipped landing and its honest states. The remaining R16 work
 (the cloud-VM backend and the website buttons) lives outside this repository and
-is **not scheduled** by this record.
+is **not scheduled** by this record. A follow-up slice (see *Slice 2* below)
+fixed three honest gaps in the same files: the ignored mode choice, a `?mode=`
+deep link, and an operator switch for the landing.
 
 **Owner:** product (pzd). An agent must not invent a cloud-VM backend or website
 changes from this note.
@@ -83,6 +85,50 @@ resolution is:
 The button label and every state string are i18n keys added to all 12 locales
 (`webui.modes.*`, 15 keys); `scripts/check-i18n-parity.ts` passes.
 
+## Slice 2 (2026-10-10) — three honest fixes, no new backend
+
+The slice-1 landing carried three gaps, all fixed inside the same
+`apps/webui`/`server-core` files. No web-mode backend was added and the desktop
+renderer is still untouched.
+
+**W1 — the chosen mode is no longer discarded.** `WebModesLanding.onEnter(mode)`
+was called with the mode but `App.tsx` ignored the argument. The entry now keeps
+the selection in `entryMode` (`'chat' | 'cloud-vm' | null`) and uses it to pick
+the branch. A `cloud-vm` entry is only ever reached through the availability
+gate: the landing button is rendered solely in the `available` state, and the
+deep link (below) probes before entering. When the probe cannot confirm a usable
+provider the honest `web-modes.ts` state (the concrete reason) is what the user
+sees — never a fabricated success or a dead entry. A dedicated cloud-VM surface
+is still out of repository (see *Remaining R16*), so an entered `cloud-vm` mode
+mounts the same shared workspace, where the existing cloud-runs entry point
+lives; the record stays honest about that.
+
+**W2 — `?mode=` deep link.** `parseWebEntryMode` validates the raw value beside
+the rest of `web-modes.ts`; only `chat` and `cloud-vm` are accepted and anything
+else (missing, `CHAT`, `cloud`, a trailing space) is ignored, keeping the
+default entry flow. `?mode=chat` enters the chat surface synchronously.
+`?mode=cloud-vm` runs the same `probeCloudVmState` gate as the tile: it enters
+once the host reports an available provider and otherwise falls back to the
+landing (which shows the honest reason). A `?sessionId=` deep link still wins and
+mounts its session directly.
+
+**W3 — operator landing switch.** `ROX_WEBUI_MODES_LANDING` (default **on**;
+`0`/`false`, case-insensitive, turns it off) is read by `readModesLandingFromEnv`
+in `packages/server-core/src/webui/http-server.ts`, overridable by the
+`modesLanding` handler option, and published as `modesLanding` by
+`GET /api/config` in **both** auth modes (the `authMode` field stays OIDC-only).
+With the flag off the web entry skips the landing and enters the chat surface
+directly — the pre-R16 behaviour. The client reads it through
+`isModesLandingEnabled`, whose fallback is the documented default: an unreadable,
+non-object, or field-less `/api/config` response keeps the landing **enabled**,
+so a config hiccup cannot silently change the entry flow and only an explicit
+`false` disables it.
+
+Tests: `apps/webui/src/__tests__/web-modes.test.ts` (deep-link validation, the
+cloud gate, the flag reader, and the wiring guards) and
+`packages/server-core/src/webui/__tests__/http-server.test.ts` (env reader plus a
+`/api/config` integration check for both flag states).
+
 ## Remaining R16 work (not scheduled)
 
 1. **Cloud-VM backend / surface.** The actual cloud-VM web application source
@@ -92,7 +138,8 @@ The button label and every state string are i18n keys added to all 12 locales
    lives; a dedicated cloud-VM surface is not implemented.
 2. **Website buttons.** «Продолжить в веб» / «Перейти в приложение» live in the
    website repository (the `rox-one-website` programme), not in this monorepo.
-   This slice only supports the `?sessionId=` deep link on the web side.
+   Slice 2 still only supports the two web-side deep links: the `?sessionId=`
+   session link and (since slice 2) `?mode=chat|cloud-vm`.
 3. **Provider coverage.** `daytona` and `native` are treated as cloud providers;
    `local` is deliberately the chat mode. Extending the set is a code change in
    `apps/webui/src/web-modes.ts` plus its tests.
@@ -117,3 +164,8 @@ Until then, keep the landing honest: no fabricated success, no dead buttons.
 - This slice: `apps/webui/src/{web-modes.ts,web-modes-landing.tsx,App.tsx}`,
   `apps/webui/src/__tests__/web-modes.test.ts`, and the `webui.modes.*` keys in
   `packages/shared/src/i18n/locales/*.json`.
+- Slice 2: `apps/webui/src/{App.tsx,web-modes.ts}`,
+  `apps/webui/src/__tests__/web-modes.test.ts`,
+  `packages/server-core/src/webui/http-server.ts`
+  (`readModesLandingFromEnv`, `modesLanding`, `/api/config`),
+  `packages/server-core/src/webui/__tests__/http-server.test.ts`.
