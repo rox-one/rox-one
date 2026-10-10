@@ -130,6 +130,35 @@ describe('import job runner', () => {
     expect(record.map(entry => entry.bytes.length)).toEqual([3, 4, 5])
   })
 
+  test('runs the required eight workers in parallel by default (R15)', async () => {
+    const entries = Array.from({ length: 20 }, (_, index) => ({
+      id: `f${index}`, name: `f${index}.txt`, kind: 'file' as const, sizeBytes: 1,
+    }))
+    const provider = new FakeProvider({ [ROOT]: entries })
+    for (const entry of entries) provider.streams.set(entry.id, new Uint8Array([7]))
+
+    const uploadGate = Promise.withResolvers<void>()
+    const eightInFlight = Promise.withResolvers<void>()
+    const started: string[] = []
+    const target: DriveUploadTarget = {
+      async put(key) {
+        started.push(key)
+        if (started.length === 8) eightInFlight.resolve()
+        await uploadGate.promise
+      },
+    }
+
+    const runner = createImportJobRunner({ target, stateDir, providers: [provider] })
+    const job = await runner.plan('google-drive')
+    const run = runner.start(job.id)
+    await eightInFlight.promise
+    expect(started).toHaveLength(8)
+    uploadGate.resolve()
+    const done = await run
+    expect(done.status).toBe('done')
+    expect(started).toHaveLength(20)
+  })
+
   test('carries each listing entry mimeType into the plan and the put() options', async () => {
     const provider = new FakeProvider({
       [ROOT]: [
