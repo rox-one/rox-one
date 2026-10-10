@@ -43,7 +43,7 @@
  *   bun run scripts/boot-manifest.ts --no-build # never build; fail if dist is missing
  */
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
-import { join, posix, relative, resolve } from 'node:path'
+import { isAbsolute, join, posix, relative, resolve } from 'node:path'
 
 const ROOT = resolve(import.meta.dir, '..')
 const ELECTRON_DIR = join(ROOT, 'apps/electron')
@@ -377,10 +377,50 @@ function formatDiff(diff: ManifestDiff): string {
   return lines.join('\n')
 }
 
+/** Source roots whose edits invalidate a built renderer. */
+const STALENESS_ROOTS = [
+  'apps/electron/src',
+  'apps/electron/vite.config.ts',
+  'apps/electron/index.html',
+  'packages/shared/src',
+] as const
+
+/** Newest mtime (ms) under a file or directory tree, ignoring build output. */
+function newestMtimeMs(target: string): number {
+  const stat = statSync(target, { throwIfNoEntry: false })
+  if (!stat) return 0
+  if (!stat.isDirectory()) return stat.mtimeMs
+  let newest = stat.mtimeMs
+  for (const entry of readdirSync(target, { withFileTypes: true })) {
+    if (entry.name === 'node_modules' || entry.name === '.vite' || entry.name === 'dist') continue
+    newest = Math.max(newest, newestMtimeMs(join(target, entry.name)))
+  }
+  return newest
+}
+
+/**
+ * A built renderer is usable only when its entry is newer than every source it
+ * was built from. Checking existence alone let a stale `dist/` through, which
+ * surfaced as a confusing "no chunk for route …" deep inside the derivation.
+ */
+export function distNeedsBuild(distEntry: string, roots: readonly string[] = STALENESS_ROOTS): boolean {
+  const entry = statSync(distEntry, { throwIfNoEntry: false })
+  if (!entry) return true
+  return roots.some((root) => newestMtimeMs(isAbsolute(root) ? root : join(ROOT, root)) > entry.mtimeMs)
+}
+
 async function ensureDist(allowBuild: boolean): Promise<void> {
-  if (existsSync(DIST_DIR)) return
-  if (!allowBuild) throw new Error(`boot-manifest: ${DIST_DIR} is missing and --no-build was given`)
-  console.log('[boot-manifest] dist missing — building the renderer (vite build)…')
+  const distEntry = join(DIST_DIR, 'index.html')
+  const present = existsSync(DIST_DIR)
+  if (present && !distNeedsBuild(distEntry)) return
+  if (!allowBuild) {
+    throw new Error(
+      present
+        ? `boot-manifest: ${DIST_DIR} is older than the renderer sources and --no-build was given (rebuild with \`bun run vite build\` or drop --no-build)`
+        : `boot-manifest: ${DIST_DIR} is missing and --no-build was given`,
+    )
+  }
+  console.log(`[boot-manifest] dist ${present ? 'is older than the renderer sources' : 'missing'} — building the renderer (vite build)…`)
   const proc = Bun.spawn({
     cmd: ['bun', 'run', 'vite', 'build', '--config', 'apps/electron/vite.config.ts'],
     cwd: ROOT,

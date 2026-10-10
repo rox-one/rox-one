@@ -15,21 +15,10 @@
  *    `boot-manifest.json`, so the checked-in file cannot silently drift.
  */
 import { describe, expect, it } from 'bun:test'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import {
-  buildChunkGraph,
-  deriveBootManifest,
-  deriveFromDist,
-  diffBootManifest,
-  parseRoutePageLoaders,
-  parseStringArray,
-  readRouteModules,
-  serializeBootManifest,
-  staticClosure,
-  type BootManifest,
-  type RawChunk,
-} from '../boot-manifest'
+import { buildChunkGraph, deriveBootManifest, deriveFromDist, diffBootManifest, distNeedsBuild, parseRoutePageLoaders, parseStringArray, readRouteModules, serializeBootManifest, staticClosure, type BootManifest, type RawChunk } from '../boot-manifest'
 
 const ROOT = resolve(import.meta.dir, '..', '..')
 const RENDERER_SRC = join(ROOT, 'apps/electron/src/renderer')
@@ -184,5 +173,43 @@ describe.skipIf(!existsSync(DIST) || !existsSync(MANIFEST_PATH))('boot manifest 
       routes: {},
     })
     expect(serializeBootManifest(derived)).toBe(serializeBootManifest(committed))
+  })
+})
+
+describe('dist staleness guard', () => {
+  it('treats a missing entry, an older entry and ignored build dirs correctly', () => {
+    const root = mkdtempSync(join(tmpdir(), 'boot-manifest-stale-'))
+    try {
+      const distEntry = join(root, 'dist', 'index.html')
+      const src = join(root, 'src')
+      mkdirSync(src, { recursive: true })
+      const sourceFile = join(src, 'page.tsx')
+      writeFileSync(sourceFile, 'export const page = 1\n')
+
+      // 1) missing entry -> build
+      expect(distNeedsBuild(distEntry, [src])).toBe(true)
+
+      // 2) entry newer than every source -> reuse
+      mkdirSync(join(root, 'dist'), { recursive: true })
+      writeFileSync(distEntry, '<html></html>\n')
+      const future = new Date(Date.now() + 60_000)
+      utimesSync(distEntry, future, future)
+      expect(distNeedsBuild(distEntry, [src])).toBe(false)
+
+      // 3) a source edited after the build -> rebuild
+      const later = new Date(Date.now() + 120_000)
+      utimesSync(sourceFile, later, later)
+      expect(distNeedsBuild(distEntry, [src])).toBe(true)
+
+      // 4) build output inside the root must not count as a source edit
+      utimesSync(distEntry, new Date(Date.now() + 240_000), new Date(Date.now() + 240_000))
+      mkdirSync(join(src, 'dist'), { recursive: true })
+      const nested = join(src, 'dist', 'chunk.js')
+      writeFileSync(nested, 'x\n')
+      utimesSync(nested, new Date(Date.now() + 300_000), new Date(Date.now() + 300_000))
+      expect(distNeedsBuild(distEntry, [src])).toBe(false)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
   })
 })
