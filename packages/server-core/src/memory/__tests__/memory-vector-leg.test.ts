@@ -100,18 +100,22 @@ const REWRITE_PREFIXES = ['sqlite-vec ', 'loadExtension failed', 'vector leg ']
  *   "Error: …/node_modules/sqlite-vec/index.cjs.so: cannot open shared object
  *    file: No such file or directory"
  * — while a swallowed (`''`/non-string), re-prefixed, or summarised message is
- * rejected: the prefix checks pin that the loader's own `Error:` text comes
- * first, and the containment check pins that its message survives whole.
- * Byte-identity with a locally captured error is deliberately NOT required: the
- * error the loader throws differs per platform and per bun build, and the
- * recorded text is produced by `formatLoaderFailure` itself.
+ * rejected: the recorded text must equal `formatLoaderFailure(raw)` exactly,
+ * the single rendering path the probe records through — a `<name>: <message>`
+ * pair, a thrown string, or any future shape, byte-for-byte, with nothing of
+ * ours prefixed and nothing of the loader's lost. The check deliberately does
+ * NOT pin one platform's prefix (`Error: ` vs `SQLiteError: `): the loader's
+ * error differs per platform and per bun build, and the recorded text is
+ * produced by `formatLoaderFailure` itself.
  */
 export function isVerbatimLoaderFailure(recorded: unknown, raw: unknown): boolean {
   if (typeof recorded !== 'string' || recorded.length === 0) return false
-  if (!recorded.startsWith('Error: ')) return false
   if (REWRITE_PREFIXES.some(prefix => recorded.startsWith(prefix))) return false
-  const message = raw && typeof raw === 'object' && 'message' in raw ? String(raw.message) : ''
-  return message.length === 0 || recorded.includes(message)
+  // Verbatim = the one recording path's own rendering of the very value that
+  // was thrown — platform- and shape-independent (`Error`, `SQLiteError`, a
+  // thrown string), and false for 'OK': a loaded extension is a re-record
+  // signal, not a pass.
+  return recorded === formatLoaderFailure(raw)
 }
 
 describe('sqlite-vec loadability (c1.3 step a)', () => {
@@ -147,7 +151,7 @@ describe('sqlite-vec loadability (c1.3 step a)', () => {
     //   via sqlite-vec.
     //
     // What is pinned is the PROPERTY, not one platform's wording: every recorded
-    // failure is the loader's own `Error:` text, verbatim — never swallowed,
+    // failure is exactly the loader's own text, verbatim — never swallowed,
     // summarised, or wrapped in the code's own prefix.
     const requireBuiltin = createRequire(import.meta.url)
     let resolved: string
