@@ -35,7 +35,7 @@
 | **G4 Security** | Чувствительные пути | Субагент `security-reviewer` | Нет блокеров | Отчёт |
 | **G5 Smoke** | Изменённая поверхность | `electron:dev` / `webui:dev` / `server:dev` / `viewer:dev` / CLI | Работает; UI — визуально | Скриншот/лог с SHA |
 | **G6 Ship** | PR → CI → merge | `gh pr create`, `gh pr checks --watch`, `gh pr merge <N> --merge` | Merged; `freshness` пройден | PR#, merge SHA |
-| **G7 Deploy+Live** | Деплой + живой smoke | Канал по поверхности (`06-runbook.md` §6): desktop — release-flow; cloud-gateway — CircleCI; server/webui — CI `server-image` → GHCR → Coolify (секреты `COOLIFY_*`); viewer — OPS-чеклист | Канал есть: ожило и проверено; канала/секретов нет: `BLOCKED` + OPS-чеклист (локальный build/run = G5, не G7) | URL/лог/скриншот |
+| **G7 Deploy+Live** | Деплой + живой smoke | Канал по поверхности (`06-runbook.md` §6): desktop — release-flow; cloud-gateway — CircleCI; server/webui — CI `server-image` → GHCR → ssh + docker compose (секреты `DEPLOY_*`); viewer — OPS-чеклист | Канал есть: ожило и проверено; канала/секретов нет: `BLOCKED` + OPS-чеклист (локальный build/run = G5, не G7) | URL/лог/скриншот |
 
 ## 3. Детали гейтов
 
@@ -77,7 +77,7 @@
 - Merge: `gh pr merge <N> --merge`. Красные проверки — фиксить, не игнорировать.
 
 ### G7 — Deploy + Live
-- Каналы по поверхностям: desktop — `release/desktop-*` → `desktop-release.yml` → `publish-desktop-release.yml`; cloud-gateway — CircleCI `craft-gateway-deploy` (агент его не воспроизводит вручную); сервер/webui — CI `.github/workflows/server-image.yml` собирает образ `ghcr.io/rox-one/rox-server` и запускает Coolify-деплой при секретах `COOLIFY_*` (без секретов — `BLOCKED` с точным именем); viewer — OPS-чеклист человеку.
+- Каналы по поверхностям: desktop — `release/desktop-*` → `desktop-release.yml` → `publish-desktop-release.yml`; cloud-gateway — CircleCI `craft-gateway-deploy` (агент его не воспроизводит вручную); сервер/webui — CI `.github/workflows/server-image.yml` собирает образ `ghcr.io/rox-one/rox-server` и запускает деплой `deploy/server/deploy.sh` (ssh + docker compose) при секретах `DEPLOY_*` (без секретов — `BLOCKED` с точным именем); viewer — OPS-чеклист человеку.
 - **Локальная сборка/запуск — это G5 smoke, никогда не G7.** Живой smoke = фактическое упражнение **задеплоенной** поверхности; запись результата с SHA/URL.
 - Прод-доступы Cloudflare/R2/Pages — только человек.
 
