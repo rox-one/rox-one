@@ -1,0 +1,4 @@
+# В ops/main-health попадают сгенерированные отчёты и локальное состояние;
+# в git они не нужны (кроме .gitkeep в reports/).
+reports/*.md
+state/
