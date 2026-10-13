@@ -24,6 +24,8 @@ import { ChevronsLeft, ChevronsRight, LayoutGrid, MoreHorizontal, Settings } fro
 import { useTranslation } from 'react-i18next'
 import { activityRailCollapsedAtom, activityRailNarrowOverrideAtom, featureLayoutEngineAtom } from '@/atoms/unified-shell'
 import { modeScreenFlagsAtom } from '@/atoms/mode-flags'
+import { enabledExtraScreenIdsAtom } from '@/atoms/extra-screens'
+import { visibleExtraScreens } from '../pages/extra-screens/registry'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
 import { CHROME_DENSITY } from './chrome-density'
@@ -173,7 +175,11 @@ export function ActivityRail() {
   const more = entries.filter((entry) => entry.group === 'more')
   const [moreOpen, setMoreOpen] = useState(false)
   // An active «Ещё» destination keeps the group open so the selection is visible.
-  const moreExpanded = moreOpen || more.some((entry) => entry.id === activeId)
+  // Extra screens render inside «Ещё»; an active one forces it open too (as the sidebar does).
+  const extraScreens = visibleExtraScreens(useAtomValue(enabledExtraScreenIdsAtom))
+  const activeExtraScreen = navState.navigator === 'screen' && extraScreens.some((screen) => screen.id === navState.screen)
+  const moreForced = more.some((entry) => entry.id === activeId) || activeExtraScreen
+  const moreExpanded = moreOpen || moreForced
 
   return (
     <nav
@@ -204,6 +210,7 @@ export function ActivityRail() {
           expanded={moreExpanded}
           controls="rail-more-group"
           onClick={() => setMoreOpen(!moreExpanded)}
+          locked={moreForced}
           muted
           testId="rail-more"
         />

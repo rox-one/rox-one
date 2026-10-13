@@ -24,6 +24,8 @@ export interface RailRowProps {
   /** Disclosure rows: expanded state + the controlled group id. */
   expanded?: boolean
   controls?: string
+  /** Not actionable right now (aria-disabled, click ignored) while keeping the normal look. */
+  locked?: boolean
 }
 
 /**
@@ -31,16 +33,16 @@ export interface RailRowProps {
  * Collapsed: 28×28 icon button with a right-side tooltip carrying the label.
  * Active = selected-strong fill + a static accent marker (never motion alone).
  */
-export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disabled, onClick, muted, testId, expanded, controls }: RailRowProps) {
+export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disabled, onClick, muted, testId, expanded, controls, locked }: RailRowProps) {
   const button = (
     <button
       type="button"
       aria-label={label}
       aria-current={active ? 'page' : undefined}
-      aria-disabled={disabled || undefined}
+      aria-disabled={disabled || locked || undefined}
       aria-expanded={expanded}
       aria-controls={expanded ? controls : undefined}
-      onClick={disabled ? undefined : onClick}
+      onClick={disabled || locked ? undefined : onClick}
       data-testid={testId}
       data-rail-row=""
       className={cn(

@@ -79,8 +79,8 @@ describe('railModeEntries (pure)', () => {
   })
 })
 
-function renderRail(): string {
-  const value = { navigate: async () => {}, navigationState: { navigator: 'sessions' } } as never
+function renderRail(navigationState: Record<string, unknown> = { navigator: 'sessions' }): string {
+  const value = { navigate: async () => {}, navigationState } as never
   return renderToStaticMarkup(
     <I18nextProvider i18n={i18n}>
       <NavigationContext.Provider value={value}>
@@ -126,6 +126,30 @@ describe('ActivityRail render', () => {
     expect(html).not.toContain('workbench.mode.notes')
     expect(railIds(html)).toContain('rail-item-docs')
     expect(html).not.toContain('data-testid="rail-modes"')
+  })
+})
+
+describe('ActivityRail «Ещё» (WP5 review3)', () => {
+  const moreRow = (html: string) => html.match(/<button[^>]*data-testid="rail-more"[^>]*>/)?.[0] ?? ''
+
+  it('stays closed and actionable when nothing inside is active', () => {
+    const html = renderRail()
+    expect(html).not.toContain('data-testid="rail-more-group"')
+    expect(moreRow(html)).not.toContain('aria-disabled')
+  })
+
+  it('is forced open by an active extra screen, header locked (aria-disabled)', () => {
+    const html = renderRail({ navigator: 'screen', screen: 'radar' })
+    expect(html).toContain('data-testid="rail-more-group"')
+    expect(html).toContain('data-testid="rail-extra-screens"')
+    expect(moreRow(html)).toContain('aria-disabled="true"')
+    expect(moreRow(html)).toContain('aria-expanded="true"')
+  })
+
+  it('is forced open by an active registry «Ещё» destination', () => {
+    const html = renderRail({ navigator: 'memory' })
+    expect(html).toContain('data-testid="rail-more-group"')
+    expect(moreRow(html)).toContain('aria-disabled="true"')
   })
 })
 
