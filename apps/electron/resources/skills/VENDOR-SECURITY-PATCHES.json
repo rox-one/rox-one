@@ -1325,9 +1325,9 @@
     {
       "pack": "understand-anything",
       "path": "understand-anything/understand/plugin/package.json",
-      "alerts": [9],
-      "change": "Dependency advisory remediation: vitest ^3.1.0->^4.1.11 (dependabot #9, CVE-2026-84373 / CVE-2026-47429); pnpm overrides pin @babel/core 7.29.6, baseline-browser-mapping 2.11.0, browserslist 4.28.7, nanoid 3.3.12, postcss 8.5.23.",
-      "sha256": "81efd5cc28f9f3c122926dbba89069394484593ab25ed1e3c0fa48a4d6b0b2d0"
+      "alerts": [9, 50],
+      "change": "Dependency advisory remediation: vitest ^3.1.0->^4.1.11 (dependabot #9, CVE-2026-84373 / CVE-2026-47429); pnpm overrides pin @babel/core 7.29.6, baseline-browser-mapping 2.11.0, browserslist 4.28.7, nanoid 3.3.12, postcss 8.5.23, source-map-js 1.2.2 (#50, CVE-2026-93749).",
+      "sha256": "aac154f9df9923bfb4765a1ff28aa04daf3aa89a83d7183cc2b42963c6526835"
     },
     {
       "pack": "understand-anything",
@@ -1347,8 +1347,8 @@
       "pack": "understand-anything",
       "path": "understand-anything/understand/plugin/pnpm-lock.yaml",
       "alerts": [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 48, 49, 50],
-      "change": "Regenerated lockfile (pnpm 10 --lockfile-only, idempotent): vitest/@vitest/mocker/@vitest/coverage-v8 4.1.11, vite 6.4.3, postcss 8.5.23, browserslist 4.28.7, baseline-browser-mapping 2.11.0, nanoid 3.3.12, @babel/core 7.29.6; tinypool and brace-expansion dropped from the dependency tree entirely (vitest 4).",
-      "sha256": "abcdc4cb3f54c699cdfb28425a7c8ae2dca5d3e838591e24fde6c95ab61af920"
+      "change": "Regenerated lockfile (pnpm 10 --lockfile-only, idempotent): vitest/@vitest/mocker/@vitest/coverage-v8 4.1.11, vite 6.4.3, postcss 8.5.23, browserslist 4.28.7, baseline-browser-mapping 2.11.0, nanoid 3.3.12, @babel/core 7.29.6, source-map-js 1.2.2 (#50, CVE-2026-93749); tinypool and brace-expansion dropped from the dependency tree entirely (vitest 4).",
+      "sha256": "17ac483bf76245cf28f68213eeb915b63daee64c239a15cb990a53b6dbba961d"
     }
   ],
   "removedFiles": [
