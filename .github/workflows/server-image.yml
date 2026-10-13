@@ -1,0 +1,136 @@
+# Server + WebUI image pipeline: build → push to GHCR → container smoke → Coolify deploy.
+#
+# Почему так: webui не отдельный деплой — он собирается в Dockerfile.server
+# (CRAFT_WEBUI_DIR=/app/apps/webui/dist) и отдаётся сервером на :9100.
+# Job `deploy` исполняется только когда настроены секреты COOLIFY_* — иначе он
+# пропускается, и это «G7 = BLOCKED» по docs/agents/03-dod-gates.md.
+# Контракт и настройка — deploy/coolify/README.md; ранбук — docs/agents/06-runbook.md §6.
+name: Server image (build, push, deploy)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'plans/**'
+      - 'ops/**'
+      - '.github/ISSUE_TEMPLATE/**'
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: server-image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: Preflight (Coolify secrets)
+    runs-on: ubuntu-24.04
+    outputs:
+      coolify: ${{ steps.check.outputs.coolify }}
+    steps:
+      - id: check
+        env:
+          HAS_URL: ${{ secrets.COOLIFY_URL != '' }}
+          HAS_TOKEN: ${{ secrets.COOLIFY_API_TOKEN != '' }}
+          HAS_APP: ${{ secrets.COOLIFY_APP_UUID != '' }}
+        run: |
+          if [ "$HAS_URL" = "true" ] && [ "$HAS_TOKEN" = "true" ] && [ "$HAS_APP" = "true" ]; then
+            echo "coolify=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "coolify=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Deploy skipped::Coolify secrets are not configured (COOLIFY_URL / COOLIFY_API_TOKEN / COOLIFY_APP_UUID). See deploy/coolify/README.md — G7 stays BLOCKED until they are set."
+          fi
+
+  build-push:
+    name: Build + push (GHCR)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h / | tail -1
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve image tag
+        id: tag
+        run: echo "sha=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
+        with:
+          context: .
+          file: Dockerfile.server
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/rox-server:main
+            ghcr.io/${{ github.repository_owner }}/rox-server:${{ steps.tag.outputs.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  smoke:
+    name: Container smoke (/health)
+    needs: build-push
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run image and probe /health
+        run: |
+          set -euo pipefail
+          IMAGE="ghcr.io/${{ github.repository_owner }}/rox-server:sha-${GITHUB_SHA::7}"
+          docker run -d --name rox-smoke -p 9100:9100 \
+            -e ROX_SERVER_TOKEN="$(openssl rand -hex 32)" \
+            "$IMAGE"
+          for i in $(seq 1 60); do
+            code="$(curl -s -o /tmp/health.json -w '%{http_code}' http://127.0.0.1:9100/health || true)"
+            if [ "$code" = "200" ]; then
+              echo "health: $(cat /tmp/health.json)"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::/health did not return 200 in time"
+          docker logs rox-smoke --tail 100
+          exit 1
+
+      - name: Container logs
+        if: always()
+        run: docker logs rox-smoke --tail 80 2>&1 || true
+
+  deploy:
+    name: Deploy (Coolify)
+    needs: [preflight, smoke]
+    if: needs.preflight.outputs.coolify == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: Production
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Trigger deploy + smoke
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+          COOLIFY_SMOKE_URL: ${{ secrets.COOLIFY_SMOKE_URL }}
+        run: bash deploy/coolify/deploy.sh
