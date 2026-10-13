@@ -4919,7 +4919,13 @@ export class SessionManager implements ISessionManager {
       if (connection && (!managed.connectionLocked || managed.llmConnection !== connection.slug)) {
         const previousConnection = managed.llmConnection
         managed.llmConnection = connection.slug
-        if (previousConnection !== connection.slug && managed.model !== backendContext.resolvedModel) {
+        // Keep an explicit user model pick; only fill a blank session model
+        // when the resolved connection actually changed.
+        if (
+          previousConnection !== connection.slug
+          && !managed.model
+          && backendContext.resolvedModel
+        ) {
           managed.model = backendContext.resolvedModel
           this.sendEvent({ type: 'session_model_changed', sessionId: managed.id, model: managed.model }, managed.workspace.id)
         }

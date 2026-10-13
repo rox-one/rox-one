@@ -1006,10 +1006,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         }
         if (!workspaceProbe.ok) throw workspaceProbe.error
         if (!cloudProbe.ok) throw cloudProbe.error
-        if (cloudProbe.value.required && !cloudProbe.value.connected) {
+        if (cloudProbe.value.required && !cloudProbe.value.connected && !startupSetupNeeds?.isSetupDeferred) {
           startupSetupNeeds = { ...(startupSetupNeeds ?? { needsBillingConfig: false, needsCredentials: false, isFullyConfigured: false }), needsRoxCloud: true, shouldShowOnboardingOnLaunch: true, isFullyConfigured: false }
         }
-        const startupState = decideStartupAppState({ identityProbe, workspaceProbe, cloudProbe })
+        const startupState = decideStartupAppState({
+          identityProbe,
+          workspaceProbe,
+          cloudProbe,
+          setupDeferred: startupSetupNeeds?.isSetupDeferred,
+        })
         if (startupState === 'transport-unavailable') throw new Error('runtime-identity-unavailable')
         let startupConnections: LlmConnectionWithStatus[] | null = null
         let startupRuntimeSummary: StartupRuntimeSummary | null = null
@@ -2754,6 +2759,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
             <OnboardingWizard
               state={onboarding.state}
               onContinue={onboarding.handleContinue}
+              onContinueLocally={onboarding.handleContinueLocally}
               onBack={onboarding.handleBack}
               onSelectProvider={onboarding.handleSelectProvider}
               roxConnectCodes={onboarding.roxConnectCodes}

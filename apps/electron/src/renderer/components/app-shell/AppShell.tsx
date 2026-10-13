@@ -232,6 +232,7 @@ import { buildNewDocumentCreateArgs, pickOpenNotebook } from "../../knowledge/kn
 import { isMissionsNavigation, isScreenNavigation, isSurfaceNavigation } from '../../../shared/types'
 // W1-07 (#1504): unified mode roots + Docs relabel.
 import { enabledShellFlagsAtom } from '@/platform/unified-flags'
+import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { notesTitleKey, surfaceTitleKey } from '@/platform/surface-shell'
 import { MiniSessionSurface } from "./MiniSessionSurface"
 
@@ -2918,7 +2919,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
       variant: isClipboardHistoryNavigation(navState) ? "default" : "ghost",
       onClick: () => handleServiceClick('clipboardHistory'),
     },
-    {
+    ...(shellFlags.has(WORKBENCH_FLAG.modeCalendarV1) ? [{
       id: "nav:meetings",
       // W3.2 (Согласованность-20261009): Встречи merged into the calendar
       // surface — the entry keeps id/link/route and opens it, active while the
@@ -2927,7 +2928,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
       icon: APP_NAV_DESTINATIONS_BY_ID.meetings.icon,
       variant: isSurfaceNavigation(navState) && navState.surface === 'calendar' ? "default" : "ghost",
       onClick: handleMeetingsClick,
-    },
+    }] : []),
     // --- Sources ---
     {
       id: "nav:sources",

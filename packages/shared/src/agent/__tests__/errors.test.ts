@@ -42,6 +42,13 @@ describe('parseError proxy interception handling', () => {
 
     expect(parsed.code).toBe('invalid_api_key')
   })
+
+  it('maps the raw Rox Cloud gate to a typed auth-required error', () => {
+    const parsed = parseError(new Error('ROX_TRUSTED_ACCOUNT_REQUIRED'))
+    expect(parsed.code).toBe('OMP_AUTH_REQUIRED')
+    expect(parsed.title.toLowerCase()).toContain('auth')
+    expect(parsed.message.toLowerCase()).not.toContain('rox_trusted_account_required')
+  })
 })
 
 describe('parseError tool-support classification', () => {
