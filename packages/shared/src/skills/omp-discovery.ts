@@ -17,7 +17,7 @@ import { existsSync, readdirSync, statSync } from 'fs';
 import { homedir } from 'os';
 import { join, resolve, sep } from 'path';
 import matter from 'gray-matter';
-import { readSkillInstructions } from './read-instructions.ts';
+import { readSkillHead } from './skill-head.ts';
 
 /** Global OMP skills directory: ~/.omp/agent/skills/ */
 export const OMP_GLOBAL_SKILLS_DIR = join(homedir(), '.omp', 'agent', 'skills');
@@ -55,6 +55,22 @@ export function invalidateOmpSkillsCache(): void {
   dirCache.clear();
 }
 
+/** OMP listing rule for one SKILL.md head: frontmatter name (slug fallback) and description. */
+export function ompSkillFromHead(slug: string, path: string, text: string): OmpSkillInfo | null {
+  try {
+    const parsed = matter(text, {});
+    return {
+      slug,
+      name: typeof parsed.data.name === 'string' && parsed.data.name ? parsed.data.name : slug,
+      description: typeof parsed.data.description === 'string' ? parsed.data.description : '',
+      source: 'omp',
+      path,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function scanDir(skillsDir: string): OmpSkillInfo[] {
   if (!existsSync(skillsDir)) return [];
   const resolvedDir = resolve(skillsDir);
@@ -86,23 +102,13 @@ function scanDir(skillsDir: string): OmpSkillInfo[] {
         }
       }
       const skillDir = join(resolvedDir, entry.name);
-      const skillFile = join(skillDir, 'SKILL.md');
-      if (!existsSync(skillFile)) continue;
-
-      let name = entry.name;
-      let description = '';
       try {
-        const content = readSkillInstructions(skillDir);
-        if (content === null) continue;
-        const parsed = matter(content);
-        if (typeof parsed.data.name === 'string' && parsed.data.name) name = parsed.data.name;
-        if (typeof parsed.data.description === 'string') description = parsed.data.description;
+        const head = readSkillHead(skillDir);
+        const skill = head && ompSkillFromHead(entry.name, skillDir, head.text);
+        if (skill) skills.push(skill);
       } catch {
         // An unsafe or invalid entry cannot expose bytes or hide its neighbours.
-        continue;
       }
-
-      skills.push({ slug: entry.name, name, description, source: 'omp', path: skillDir });
     }
   } catch {
     // Ignore errors reading skills directory
@@ -123,11 +129,19 @@ function scanDir(skillsDir: string): OmpSkillInfo[] {
  * @param workspaceRootPath - Optional workspace root (enables workspace-level OMP skills)
  */
 export function listOmpSkills(workspaceRootPath?: string): OmpSkillInfo[] {
+  return listOmpSkillsWithShared(scanDir(OMP_SHARED_SKILLS_DIR), workspaceRootPath);
+}
+
+/**
+ * {@link listOmpSkills} for a caller that already scanned the shared root
+ * (`~/.agents/skills`) itself, so that root is read once per catalog walk.
+ */
+export function listOmpSkillsWithShared(shared: readonly OmpSkillInfo[], workspaceRootPath?: string): OmpSkillInfo[] {
   const bySlug = new Map<string, OmpSkillInfo>();
   for (const skill of scanDir(OMP_GLOBAL_SKILLS_DIR)) {
     bySlug.set(skill.slug, skill);
   }
-  for (const skill of scanDir(OMP_SHARED_SKILLS_DIR)) {
+  for (const skill of shared) {
     bySlug.set(skill.slug, skill);
   }
   if (workspaceRootPath) {
@@ -136,6 +150,27 @@ export function listOmpSkills(workspaceRootPath?: string): OmpSkillInfo[] {
     }
   }
   return Array.from(bySlug.values());
+}
+
+/**
+ * The entry {@link listOmpSkills} reports for one slug, reading only that
+ * slug's directory in each root (workspace > shared > global). An unreadable
+ * entry yields to the next root, exactly as it is skipped by a full scan.
+ */
+export function findOmpSkill(slug: string, workspaceRootPath?: string): OmpSkillInfo | null {
+  if (!slug || slug === '.' || slug === '..' || /[/\\\0]/.test(slug)) return null;
+  const roots = [...(workspaceRootPath ? [join(workspaceRootPath, OMP_WORKSPACE_SKILLS_DIR)] : []), OMP_SHARED_SKILLS_DIR, OMP_GLOBAL_SKILLS_DIR];
+  for (const root of roots) {
+    const skillDir = join(resolve(root), slug);
+    try {
+      const head = readSkillHead(skillDir);
+      const skill = head && ompSkillFromHead(slug, skillDir, head.text);
+      if (skill) return skill;
+    } catch {
+      // Same isolation as scanDir: the next root may still provide the slug.
+    }
+  }
+  return null;
 }
 
 /**

@@ -40,7 +40,8 @@ test('loadAllSkills scans the app-managed skills directory once', () => {
   const readdir = spyOn(fs, 'readdirSync')
   try {
     const loaded = skills.loadAllSkills(workspaceRoot)
-    expect(loaded.find(s => s.slug === slug)?.content).toBe('App body')
+    // Catalog entries carry the SKILL.md byte size, never the body.
+    expect(loaded.find(s => s.slug === slug)).toMatchObject({ content: '', contentLength: 50 })
     const appScans = readdir.mock.calls.filter(([dir]) => String(dir) === skills.APP_MANAGED_SKILLS_DIR)
     expect(appScans).toHaveLength(1)
   } finally {
