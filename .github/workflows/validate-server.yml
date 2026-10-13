@@ -82,7 +82,14 @@ jobs:
       - name: Build server bundle
         # xlsx stays external — its ESM build has no default export, so bundling fails;
         # markitdown-js requires() it at runtime from node_modules instead.
-        run: bun build packages/server/src/index.ts --target bun --outdir dist-server --external xlsx
+        # tmp (also pulled in by markitdown-js) stays external for the same reason:
+        # bun's CJS→ESM bundling of tmp rewrites the package's literal
+        # `Object.defineProperty(module.exports, 'tmpdir', ...)` into
+        # `Object.defineProperty(exports_tmp, ...)` without ever declaring
+        # `exports_tmp`, so the emitted bundle dies at startup with
+        # `ReferenceError: exports_tmp is not defined`. Requiring tmp from
+        # node_modules at runtime skips that broken codegen path.
+        run: bun build packages/server/src/index.ts --target bun --outdir dist-server --external xlsx --external tmp
 
       - name: Start server and run lifecycle smoke
         run: bun test packages/server/src/__tests__/smoke.test.ts
