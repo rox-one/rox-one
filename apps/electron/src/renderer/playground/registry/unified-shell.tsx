@@ -108,8 +108,10 @@ function UnifiedShellDemo({ enabled, inspectorVisible, inspectorSection, railCol
   const onCreateSession = React.useCallback(async () => ({
     id: 'playground-session',
     workspaceId: DEMO_WORKSPACE_ID,
-    createdAt: Date.now(),
-    lastUsedAt: Date.now(),
+    workspaceName: 'Playground',
+    messages: [],
+    isProcessing: false,
+    lastMessageAt: Date.now(),
   }), [])
 
   return (
