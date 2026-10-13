@@ -318,7 +318,7 @@ export function QuestionnaireStep({
   return (
     <div
       data-testid="onboarding-questionnaire-step"
-      className={cn('mx-auto w-full max-w-5xl px-6 py-8', className)}
+      className={cn('mx-auto w-full max-w-6xl px-6 py-8', className)}
     >
       <header className="text-center">
         <h1 className="text-lg font-semibold tracking-tight">{t('onboarding.questionnaire.title')}</h1>
