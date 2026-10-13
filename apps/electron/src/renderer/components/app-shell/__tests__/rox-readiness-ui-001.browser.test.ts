@@ -106,6 +106,7 @@ async function fixtureBundle() {
       }))}), getCloudRunStatus: async () => null,
     };
     const useNavigationState = () => nav;
+    const useNavigationStatus = () => ({ isSessionsReady: sessionsReady, unavailableWorkspaceSlug: undefined });
     const useNavigation = () => ({...useFixtureNavigation(),isSessionsReady:sessionsReady});
     const useAppShellContext = () => ({activeWorkspaceId:workspace,workspaces:[{id:workspace,remoteServer:remoteWorkspaceId?{remoteWorkspaceId}:undefined}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[],skills:[],localMcpEnabled:false});
     const useTranslation = () => ({ t: key => key });
@@ -194,7 +195,7 @@ async function fixtureBundle() {
         builder.onResolve({filter:/^(react-i18next|@\/contexts\/NavigationContext)$/}, args => ({path:args.path,namespace:'fixture'}));
         builder.onLoad({filter:/.*/,namespace:'fixture'}, args => ({contents:args.path==='react-i18next'
           ? "export const useTranslation=()=>({t:key=>key});"
-          : "export const useNavigation=()=>({navigate:route=>window.ui001.navigate(route)});",loader:'js'}));
+          : "export const useNavigation=()=>({navigate:route=>window.ui001.navigate(route)});export const useNavigationState=()=>({});export const useNavigationStatus=()=>({isSessionsReady:true});",loader:'js'}));
       },
     }] })
   return result.outputFiles![0]!.text
