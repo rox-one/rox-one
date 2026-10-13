@@ -40,11 +40,6 @@ const deferred = <T>() => {
   return { promise, resolve, reject }
 }
 const flush = async () => { await Promise.resolve(); await Promise.resolve() }
-// These lifecycle cases have no active learning runtime. Keep its explicit
-// capability/target ports inert while executing the actual PageView hooks.
-const inactiveKnowledgeSignals = {
-  capture: () => null, publish() {}, capability: () => () => {},
-}
 const page = (workspaceId = 'a', digest = 'digest-1') => ({
   workspaceId, workspaceRootPath: `/${workspaceId}`, config: { slug: 'shared', name: workspaceId, contentDigest: digest, updatedAt: 1 },
 })
@@ -99,12 +94,19 @@ function fixture(api: Record<string, unknown> = {}) {
     },
     useEffect(create: () => (() => void) | undefined, deps: unknown[]) { pending.push({ create, deps }) },
   }
-  const run = new Function('React', 'useAppShellContext', 'useTranslation', 'useNavigation', 'useAtomValue', 'pagesAtom', 'window', 'pageSlug', 'useKnowledgeSignals', 'useTourTarget', executable)
+  const run = new Function('ports', `const { React, useMemo, useCallback, useContext, useEffect, useRef,
+    TourRuntimeContext, TourScopeContext, deriveKnowledgeSignals, pageLeaseMatches,
+    useAppShellContext, useTranslation, useNavigation, useAtomValue, pagesAtom, window, pageSlug } = ports;
+    ${hookExecutable}\n${executable}`)
   const render = (workspaceId: string | null, pages: ReturnType<typeof page>[] = []) => {
     stateCursor = 0; pending = []
-    const value = run(React, () => ({ activeWorkspaceId: workspaceId, workspaces: workspaceId ? [{ id: workspaceId, rootPath: `/${workspaceId}` }] : [] }),
-      () => ({ t: (key: string) => key }), () => ({ navigate: () => {} }), () => pages, {}, { electronAPI: actualApi }, 'shared',
-      () => inactiveKnowledgeSignals, () => () => {})
+    if (workspaceId && !scopes.has(workspaceId)) scopes.set(workspaceId, { workspaceId, panelId: 'fixture-panel' })
+    inheritedScope = workspaceId ? scopes.get(workspaceId)! : null
+    const value = run({ React, useMemo: React.useMemo, useCallback: React.useCallback, useContext: React.useContext,
+      useEffect: React.useEffect, useRef: React.useRef, TourRuntimeContext, TourScopeContext, deriveKnowledgeSignals, pageLeaseMatches,
+      useAppShellContext: () => ({ activeWorkspaceId: workspaceId, workspaces: workspaceId ? [{ id: workspaceId, rootPath: `/${workspaceId}` }] : [] }),
+      useTranslation: () => ({ t: translate }), useNavigation: () => ({ navigate: () => {} }),
+      useAtomValue: () => pages, pagesAtom: {}, window: { electronAPI: actualApi }, pageSlug: 'shared' })
     const scheduled = pending
     return {
       ...value,

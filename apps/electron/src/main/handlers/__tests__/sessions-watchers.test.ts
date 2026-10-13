@@ -176,6 +176,11 @@ describe('sessions file watchers', () => {
         getSession: async (sessionId: string) => sessionId === 'valid'
           ? { id: 'valid', workspaceId: 'ws', isProcessing: false, labels: [] }
           : null,
+        // Bulk updates now gate every caller-owned target by session visibility;
+        // only `valid` is loaded for this caller, so `missing` stays ungated and
+        // is reported by `bulkUpdateSessions` itself.
+        getSessions: () => [{ id: 'valid', workspaceId: 'ws', isProcessing: false, labels: [] }],
+        assertSessionWriteAccess: () => {},
         setPriority: async (sessionId: string) => { priorityUpdates.push(sessionId) },
         bulkUpdateSessions: async (_workspaceId: string, input: { ids: string[] }) => {
           const missing = input.ids.filter((id) => id !== 'valid')

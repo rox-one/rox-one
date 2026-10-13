@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { parseRouteToNavigationStateOrUnavailable } from '../../shared/route-parser'
+import { buildRouteFromNavigationState, parseRouteToNavigationStateOrUnavailable } from '../../shared/route-parser'
 
 // Run this file in a separate Bun process. Only logging is stubbed; the actual
 // product parser, route boundary and identity protocol aliases execute below.
@@ -49,19 +49,32 @@ describe('UI-001 actual deep-link view query transport', () => {
     })
   })
 
-  for (const [url, route] of [
-    ['rox://allSessions/session//selected', 'allSessions/session//selected'],
-    ['rox://notes/note/selected/', 'notes/note/selected/'],
-    ['rox://workspace/ws-a/notes//note/selected', 'notes//note/selected'],
-    ['rox://workspace/ws-a/terminal/selected/', 'terminal/selected/'],
-    ['rox://terminal/selected#fragment', 'terminal/selected#fragment'],
+  // The transport retains the raw view bytes; the renderer boundary owns the
+  // legacy empty-separator aliases (rox-readiness-ui-001.external-route.test.ts)
+  // and keeps an opaque rest-of-path ID whole instead of folding it.
+  for (const [url, route, expected] of [
+    ['rox://allSessions/session//selected', 'allSessions/session//selected', { navigator: 'sessions', details: { type: 'session', sessionId: 'selected' } }],
+    ['rox://notes/note/selected/', 'notes/note/selected/', { navigator: 'notes', details: { type: 'note', noteId: 'selected' } }],
+    ['rox://workspace/ws-a/notes//note/selected', 'notes//note/selected', { navigator: 'notes', details: { type: 'note', noteId: 'selected' } }],
+    ['rox://workspace/ws-a/terminal/selected/', 'terminal/selected/', { navigator: 'terminal', details: { type: 'terminal', id: 'selected/' } }],
   ]) {
-    it(`retains malformed raw view shape ${url}`, () => {
+    it(`retains malformed raw view shape ${url} for the renderer alias boundary`, () => {
       const target = parseDeepLink(url)
       expect(target?.view).toBe(route)
-      expect(parseRouteToNavigationStateOrUnavailable(target!.view!)).toEqual({ navigator: 'unavailable', route, details: null })
+      const resolved = parseRouteToNavigationStateOrUnavailable(target!.view!)
+      expect(resolved).toMatchObject(expected)
+      // The retained address keeps a complete, stable identity: re-resolving its
+      // canonical form yields the same state, never another entity's prefix.
+      expect(parseRouteToNavigationStateOrUnavailable(buildRouteFromNavigationState(resolved))).toEqual(resolved)
     })
   }
+
+  it('retains a fragment-bearing raw view shape as an unavailable address', () => {
+    const route = 'terminal/selected#fragment'
+    const target = parseDeepLink(`rox://${route}`)
+    expect(target?.view).toBe(route)
+    expect(parseRouteToNavigationStateOrUnavailable(target!.view!)).toEqual({ navigator: 'unavailable', route, details: null })
+  })
 
   for (const url of [
     'rox://action/delete-session//selected', 'rox://action/delete-session/selected/',

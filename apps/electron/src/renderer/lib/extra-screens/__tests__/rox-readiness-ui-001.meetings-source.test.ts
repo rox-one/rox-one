@@ -117,6 +117,7 @@ describe('UI-001 actual meeting source effect completion and ownership', () => {
         return read.promise
       },
       setSyncState: (value: string) => states.push(value),
+      visible: true,
       window: { setInterval: () => 1, clearInterval: () => { cleared++ } },
     })!
     expect(currentOwner()).toBe(true)
@@ -135,6 +136,7 @@ describe('UI-001 actual meeting source effect completion and ownership', () => {
         return oldRead.promise
       },
       setSyncState: (value: string) => oldStates.push(value),
+      visible: true,
       window: { setInterval: () => 2, clearInterval: () => { cleared++ } },
     })!
     expect(oldOwner()).toBe(true)
