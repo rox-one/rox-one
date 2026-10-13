@@ -2,7 +2,7 @@ import { afterEach, beforeAll, describe, expect, test } from 'bun:test'
 import { SQL } from 'bun'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { chmod, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { decodeJwt, exportJWK, generateKeyPair } from 'jose'
 import { loadProtectedWorkspaceDatabaseUrl } from '../../apps/workspace-service/src/auth/postgres-identity.ts'
@@ -10,11 +10,12 @@ import { loadRuntimeConfiguration, MAX_CONFIGURATION_BYTES } from '../../apps/wo
 import { WorkspaceRequestDrain } from '../../apps/workspace-service/src/index.ts'
 import { WsRpcClient } from '../../packages/server-core/src/transport/client.ts'
 import { DOMAIN_PROJECT_RPC } from '../../packages/shared/src/workspace-domain/identity/contracts.ts'
+import { protectedWorkspaceConfigPath } from './protected-database'
 
 const CHECKOUT = resolve(import.meta.dir, '../..')
 const SOURCE = join(CHECKOUT, 'apps/workspace-service/src/index.ts')
 const BUILT = join(CHECKOUT, 'apps/workspace-service/dist/index.js')
-const PROTECTED_DATABASE = process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json')
+const PROTECTED_DATABASE = protectedWorkspaceConfigPath()
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) await cleanup() })
 beforeAll(async () => {

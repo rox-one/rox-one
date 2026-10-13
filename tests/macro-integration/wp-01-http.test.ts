@@ -4,7 +4,7 @@ import { randomBytes, randomUUID } from 'node:crypto'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { createServer, type Server } from 'node:http'
 import { createConnection } from 'node:net'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { decodeJwt, importJWK, SignJWT } from 'jose'
 import { createWorkspaceHttpHandler, type WorkspaceHttpOptions } from '../../apps/workspace-service/src/http'
@@ -15,6 +15,7 @@ import { applyWorkspaceMigrations, migrationFromSource } from '../../apps/worksp
 import { IdentityCommands } from '../../apps/workspace-service/src/modules/identity/commands'
 import { IdentityRepository } from '../../apps/workspace-service/src/modules/identity/repository'
 import type { AuthenticatedActor, SharedProjectAuthority } from '../../packages/shared/src/workspace-domain/identity/contracts'
+import { protectedWorkspaceConfigPath } from './protected-database'
 
 const schema = 'wp01_http_' + randomBytes(6).toString('hex')
 const issuerId = 'urn:rox:http-test:' + randomUUID()
@@ -48,7 +49,7 @@ async function serve(settings: WorkspaceHttpOptions, peerOverride?: string): Pro
 }
 
 beforeAll(async () => {
-  const url = await loadProtectedWorkspaceDatabaseUrl(process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json'))
+  const url = await loadProtectedWorkspaceDatabaseUrl(protectedWorkspaceConfigPath())
   database = new SQL(url)
   await database.unsafe(`CREATE SCHEMA "${schema}"`)
   const names = ['01-domain-contract.sql', '01-local-auth-bootstrap.sql']

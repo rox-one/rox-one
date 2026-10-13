@@ -11,6 +11,7 @@ import { loadProtectedWorkspaceDatabaseUrl } from '../../../apps/workspace-servi
 import { createProjectRequestHash } from '../../../apps/workspace-service/src/modules/identity/commands'
 import { requireSharedProjectPage, requireSharedProjectResult } from '../../../apps/electron/src/shared/project-authority'
 import type { CreateSharedProject, RoxCommand } from '../../../packages/shared/src/workspace-domain/identity/contracts'
+import { protectedWorkspaceConfigPath } from '../protected-database'
 
 // Separate opt-in lane: the existing native acceptance stays intact. Genuine
 // profile/environment setup is reused through its supported subprocess flags;
@@ -177,7 +178,7 @@ describe.skipIf(process.env.ROX_WP01_OFFLINE_PRODUCT_E2E !== '1')('WP01 actual n
     const stage = (value: string) => { observed.stage = value; console.log('WP01 offline native stage: ' + value) }
     let database: SQL | undefined, service: Awaited<ReturnType<typeof createWorkspaceServer>> | undefined
     let port = 0
-    const configuration = process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents/state/rox-compound-workspace/postgres-environment.json')
+    const configuration = protectedWorkspaceConfigPath()
     const databaseUrl = await loadProtectedWorkspaceDatabaseUrl(configuration)
     secrets.push(databaseUrl)
     const migrations = await loadWorkspaceBootstrapMigrations(join(root, 'apps/workspace-service/migrations'))

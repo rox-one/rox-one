@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, test } from 'bun:test
 import { SQL } from 'bun'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import WebSocket from 'ws'
 import { decodeJwt } from 'jose'
@@ -18,6 +18,7 @@ import { applyWorkspaceMigrations, migrationFromSource } from '../../apps/worksp
 import { IdentityRepository } from '../../apps/workspace-service/src/modules/identity/repository'
 import { IdentityCommands } from '../../apps/workspace-service/src/modules/identity/commands'
 import type { AuthenticatedActor } from '../../packages/shared/src/workspace-domain/identity/contracts'
+import { protectedWorkspaceConfigPath } from './protected-database'
 
 const schema = 'wp01_transport_' + randomBytes(6).toString('hex')
 const issuer = 'urn:rox:transport-test:' + randomUUID()
@@ -60,7 +61,7 @@ function scope(ctx: RequestContext): string {
 const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
 
 beforeAll(async () => {
-  database = new SQL(await loadProtectedWorkspaceDatabaseUrl(process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json')))
+  database = new SQL(await loadProtectedWorkspaceDatabaseUrl(protectedWorkspaceConfigPath()))
   await database.unsafe(`CREATE SCHEMA "${schema}"`)
   await applyWorkspaceMigrations(database, await Promise.all(['01-domain-contract.sql', '01-local-auth-bootstrap.sql'].map(async name =>
     migrationFromSource(name, await readFile(join(import.meta.dir, '../../apps/workspace-service/migrations', name), 'utf8')))), schema)
