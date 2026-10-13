@@ -124,6 +124,8 @@ function supportedApi(overrides: Partial<LearningReadApi> = {}): Partial<Learnin
   return {
     listLearningCandidates: async () => spreadStory.candidates as LearningCandidate[],
     listLearningEvidence: async () => [...spreadStory.evidence!],
+    listLearningCorrections: async () => [...spreadStory.corrections!],
+    listLearningMutations: async () => [...spreadStory.mutations!],
     getLearningOutcome: async (_workspaceId, id) => [outcome, memoryOutcome].find(item => item.id === id) ?? null,
     getLearningPolicy: async () => [policy],
     ...overrides,
@@ -201,14 +203,18 @@ describe('learning overlay data source', () => {
     expect(await loadLearningMapInput('ws-1', { listLearningCandidates: async () => { throw new Error('transport down') } })).toBeUndefined()
   })
 
-  it('degrades a failing evidence, policy or outcome read to the fields that did load, never throwing', async () => {
+  it('degrades a failing evidence, correction, mutation, policy or outcome read to the fields that did load, never throwing', async () => {
     const input = await loadLearningMapInput('ws-1', supportedApi({
       listLearningEvidence: async () => { throw new Error('evidence read failed') },
+      listLearningCorrections: async () => { throw new Error('corrections read failed') },
+      listLearningMutations: async () => { throw new Error('mutations read failed') },
       getLearningPolicy: async () => { throw new Error('policy read failed') },
       getLearningOutcome: async () => { throw new Error('outcome read failed') },
     }))
     expect(input?.candidates.length).toBe(3)
     expect(input?.evidence).toEqual([])
+    expect(input?.corrections).toEqual([])
+    expect(input?.mutations).toEqual([])
     expect(input?.policies).toEqual([])
     expect(input?.outcomes).toEqual([])
     expect(learningOverlay(input).nodes.length).toBeGreaterThan(0)
@@ -225,6 +231,8 @@ describe('learning overlay data source', () => {
     const graph = fixtureGraph()
     const input = await loadLearningMapInput('ws-1', supportedApi())
     expect(input?.evidence?.length).toBe(spreadStory.evidence!.length)
+    expect(input?.corrections).toEqual(spreadStory.corrections)
+    expect(input?.mutations).toEqual(spreadStory.mutations)
     expect(input?.policies).toEqual([policy])
     expect(input?.outcomes?.map(item => item.id)).toEqual(['out-1', 'out-2'])
     expect(visibleLearningNodes(graph, learningOverlay(input), { query: '', filter: 'all', context: false }).length).toBe(learningOverlay(input).nodes.length)

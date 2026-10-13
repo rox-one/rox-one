@@ -26,8 +26,10 @@ import type {
   LearningCandidate,
   LearningEvidence,
   LearningExperiment,
+  LearningMutation,
   LearningPolicy,
   TaskOutcome,
+  UserCorrection,
 } from '@rox/shared/memory/learning'
 import type {
   DriveBackupSourceKind,
@@ -78,7 +80,8 @@ export interface OpenClawSecurityService {
  * Extends the frozen `LearningServicePorts` facade
  * (`memory/learning/learning-types.ts`) with the read/action operations the
  * frozen interface does not declare yet: `learning:listEvidence`,
- * `learning:getOutcome`, `learning:getExperiment`,
+ * `learning:listCorrections`, `learning:listMutations`, `learning:getOutcome`,
+ * `learning:getExperiment`,
  * `learning:getSkillEffectiveness`, `learning:getPolicy`,
  * `learning:revalidate`, `learning:recordOutcome`. They are declared here —
  * never in the frozen file — so the composed host service can satisfy both
@@ -87,6 +90,10 @@ export interface OpenClawSecurityService {
 export interface LearningRpcService extends LearningServicePorts {
   /** Evidence rows for one candidate, or the recent workspace ledger when no candidate is addressed. */
   listEvidence: (workspaceId: string, candidateId?: string) => LearningEvidence[]
+  /** User corrections flattened from the observation ledger (PRD §30), newest first. */
+  listCorrections: (workspaceId: string) => UserCorrection[]
+  /** Every durable mutation recorded for the workspace (PRD §3.6/§40). */
+  listMutations: (workspaceId: string) => LearningMutation[]
   /** One recorded task outcome (PRD §19/§3.5), by id. */
   getOutcome: (workspaceId: string, id: string) => TaskOutcome | null
   /** One A/B experiment (PRD §3.4), by id. */
