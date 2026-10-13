@@ -9,7 +9,7 @@ const root = join(import.meta.dir, '..');
 const wrapper = join(root, 'apps/electron/resources/bin/craft-agent');
 
 test('active configuration guides describe working interfaces instead of missing CLI commands', () => {
-  for (const name of ['craft-cli', 'sources', 'permissions', 'labels', 'skills', 'automations']) {
+  for (const name of ['rox-cli', 'sources', 'permissions', 'labels', 'skills', 'automations']) {
     const guide = readFileSync(join(root, 'apps/electron/resources/docs', `${name}.md`), 'utf8');
     expect(guide).not.toMatch(/craft-agent\s+(?:label|source|skill|automation|permission|theme)\b/);
     expect(guide).not.toContain('CLI-first');

@@ -40,7 +40,7 @@ const adapter: NonNullable<SelectorOptions<Node, Element>['adapter']> = {
 const selectorOptions: SelectorOptions<Node, Element> = { adapter, xmlMode: false }
 const xmlSerializer = new XMLSerializer()
 const prototype: object = Object.getPrototypeOf(new XMLDOMParser().parseFromString('<body/>', 'text/html').documentElement)
-Object.defineProperties(prototype, {
+const domAccessors: Record<string, PropertyDescriptor> = {
   children: { get(this: Element) { return childNodes(this).filter(isElement) } },
   parentElement: { get(this: Element) { return this.parentNode?.nodeType === 1 ? this.parentNode : null } },
   firstElementChild: { get(this: Element) { return this.children[0] ?? null } },
@@ -60,7 +60,15 @@ Object.defineProperties(prototype, {
     }
   } },
   innerHTML: { get(this: Element) { return childNodes(this).map(node => xmlSerializer.serializeToString(node)).join('') } },
-})
+}
+// xmldom >=0.9 already exposes some of these as non-configurable accessors on
+// the Element prototype (for example `children`); patch only what is still
+// missing so module load never throws and the native implementations remain.
+for (const [name, descriptor] of Object.entries(domAccessors)) {
+  const existing = Object.getOwnPropertyDescriptor(prototype, name)
+  if (existing && !existing.configurable) continue
+  Object.defineProperty(prototype, name, { configurable: true, ...descriptor })
+}
 
 describe('recovered presentation blocks in the actual legacy Markdown libraries', () => {
   const portable = 'Intro\n\n:::rox-columns {widths="60% 40%"}\n\n:::rox-column\n\nLeft **bold**\n\n:::\n\n:::rox-column\n\n> [!spoiler]- Private\n> Body text\n\n:::\n\n:::\n\nOutro'
