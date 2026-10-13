@@ -350,8 +350,8 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
       } catch { /* Source status and canonical LIST remain available after refresh failure. */ }
       finally { if (current()) await load(); refreshing = false }
     }
-    const id = setInterval(() => void poll(), 60_000)
-    return () => clearInterval(id)
+    const offDue = api?.onFeedChanged?.(() => { void poll() })
+    return () => { offDue?.() }
   }, [load, current, caller, api, surfaceVisible])
 
   useEffect(() => {

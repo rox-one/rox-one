@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MailFolder, MailFolderRole, MailLocalApi, MailMessage, MailResult, MailStatus, MailSummary } from '../../../../shared/mail-local'
 import type { InboxActorContext } from '../../../hooks/useInboxActorContext'
 import { toErrorMessage } from '@/lib/errors'
+import { subscribeSlowRefresh } from '@/lib/slow-refresh-scheduler'
 
 function api(): MailLocalApi | null {
   return (typeof window !== 'undefined' ? (window.electronAPI as { mailLocal?: MailLocalApi } | undefined)?.mailLocal : undefined) ?? null
@@ -126,10 +127,10 @@ export function useMail(options: { active: boolean; workspaceId?: string | null;
       if (event.status) { statusRequest.current++; setStatus(event.status); setStatusLoading(false) }
       else void refresh()
     })
-    const timer = window.setInterval(() => void refreshStatus(), 30_000)
+    const offSlow = subscribeSlowRefresh(() => { void refreshStatus() })
     return () => {
       off?.()
-      window.clearInterval(timer)
+      offSlow()
     }
   }, [options.active, refreshStatus, refresh, sameActor])
 

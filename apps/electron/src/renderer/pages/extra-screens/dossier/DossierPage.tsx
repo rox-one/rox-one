@@ -424,10 +424,12 @@ function DossierDetail({
     if (!visible) return
     const load = () => readAgentRun(entity.briefSessionId!).then((snapshot) => { if (!cancelled) setBrief(snapshot) })
     void load()
-    const timer = window.setInterval(() => { void load() }, 4000)
+    const off = window.electronAPI.onSessionEvent?.((event: { sessionId?: string }) => {
+      if (event.sessionId === entity.briefSessionId) void load()
+    })
     return () => {
       cancelled = true
-      window.clearInterval(timer)
+      off?.()
     }
   }, [entity.briefSessionId, briefMeta?.lastMessageAt, visible])
 

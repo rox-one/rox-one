@@ -123,8 +123,8 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
     const current = () => !cancelled && context.current.generation === generation && context.current.workspaceId === workspaceId
     const tick = () => syncRadarSweep(workspaceId, sweep.id, { isCurrent: current }).then((state) => { if (current()) setSyncState(state) }, () => { if (current()) setSyncState('failed') })
     void tick()
-    const timer = window.setInterval(() => { void tick() }, 5000)
-    return () => { cancelled = true; window.clearInterval(timer) }
+    const off = window.electronAPI.onSessionEvent?.(() => { void tick() })
+    return () => { cancelled = true; off?.() }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the sweep's identity/state, not the object
   }, [workspaceId, sweep?.id, sweep?.parsedAt, sweep?.parseFailed, sweepMeta?.lastMessageAt, visible])
 
