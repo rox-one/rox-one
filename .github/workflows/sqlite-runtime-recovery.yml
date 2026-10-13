@@ -137,7 +137,10 @@ jobs:
         run: |
           bun run server:build:subprocess
           bun run webui:build
-          bun build packages/server/src/index.ts --target bun --outdir dist-server --external xlsx
+          # --external tmp: same reason as validate-server.yml — bun's CJS→ESM
+          # bundling of tmp emits an undeclared `exports_tmp` identifier, which
+          # crashes the bundle at startup (ReferenceError: exports_tmp is not defined).
+          bun build packages/server/src/index.ts --target bun --outdir dist-server --external xlsx --external tmp
       - name: Verify built HTTP, WebSocket auth, graceful stop and persistent restart
         run: bun test --timeout 30000 packages/server/src/__tests__/smoke.test.ts
         env:
