@@ -1,7 +1,7 @@
 /**
  * Shared ActivityRail row (main destinations, «Ещё» screens, collapse toggle).
  * Expanded: full-width 28px row, 16px icon + label, radius 6, gap 8 (4px grid).
- * Collapsed: 28×28 icon button with a right-side tooltip carrying the label.
+ * Collapsed: 28×28 icon button (16px icon) with a right-side tooltip carrying the label.
  * Active = --state-selected-strong fill + a static 2px accent marker in both
  * states; focus comes from the global :focus-visible system (no local ring).
  */
@@ -56,7 +56,7 @@ export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disable
               : 'text-[var(--chrome-label)] hover:bg-[var(--state-hover)] hover:text-[var(--text-primary)]',
       )}
     >
-      <Icon className={collapsed ? 'icon-rail' : 'icon-toolbar'} />
+      <Icon className="icon-toolbar" />
       {!collapsed && <span className="min-w-0 flex-1 truncate label-tracking" title={label}>{label}</span>}
     </button>
   )

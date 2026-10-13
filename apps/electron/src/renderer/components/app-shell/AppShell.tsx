@@ -7,7 +7,6 @@ import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai"
 import { motion, AnimatePresence } from "motion/react"
 import {
   Archive,
-  ChevronRight,
   ChevronDown,
   MoreHorizontal,
   RotateCw,
@@ -24,7 +23,6 @@ import {
   Calendar,
   Home,
   Rss,
-  Layers,
   Clock,
   Radio,
   Bot,
@@ -79,7 +77,8 @@ import { collectionViewRoute, isCollectionCanvasView, rememberCollectionView, re
 import type { CollectionViewMode } from "./kanban/BoardListToggle"
 import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
-import { LeftSidebar, type LinkItem, type SidebarItem as SidebarLinkItem } from "./LeftSidebar"
+import { type LinkItem, type SidebarItem as SidebarLinkItem } from "./LeftSidebar"
+import { PRIMARY_MODE_LINK_IDS, ShellSidebarNav } from "./ShellSidebarNav"
 import { ShellLayoutMode } from './ShellLayoutMode'
 import { SuperEngineeringShellExtras } from './SuperEngineeringShellExtras'
 import { WorkspaceNavigator } from '@/components/workspace/WorkspaceNavigator'
@@ -90,11 +89,7 @@ import { seChatPipOpenAtom } from '@/atoms/se-chat-pip'
 import { inspectorUserOpenedAtom } from '@/atoms/unified-shell'
 import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
-import { enabledExtraScreenIdsAtom } from "@/atoms/extra-screens"
-import { visibleExtraScreens } from "@/pages/extra-screens/registry"
-import { devSpaceEnabledAtom } from "@/atoms/dev-space"
 import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
-import { playbooksEnabledAtom } from "@/atoms/playbooks"
 import { type ProfileStripData } from "./ProfileStrip"
 import { accountProfileStrip } from "./profile-strip-account"
 import { SidebarChrome } from "./SidebarChrome"
@@ -188,12 +183,10 @@ import {
   isHomeNavigation,
   isDriveNavigation,
   isConnectionsNavigation,
-  isDevelopersNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
   isProjectsNavigation,
   isPagesNavigation,
-  isPlaybooksNavigation,
   type NavigationState,
 } from "@/contexts/NavigationContext"
 import type { SettingsSubpage } from "../../../shared/types"
@@ -236,20 +229,6 @@ import { enabledShellFlagsAtom } from '@/platform/unified-flags'
 import { notesTitleKey, surfaceTitleKey } from '@/platform/surface-shell'
 import { MiniSessionSurface } from "./MiniSessionSurface"
 
-/**
- * A1: the left rail's primary navigation is exactly the ModeBar mode set
- * (CORE_MODES: home, chat, meetings, tasks, notes, feed, inbox) in mode order.
- * Every other `sidebarLinks` entry moves into the collapsed «Разделы приложения».
- */
-const PRIMARY_MODE_LINK_IDS: readonly string[] = [
-  "nav:home",
-  "nav:allSessions",
-  "nav:meetings",
-  "nav:tasks",
-  "nav:notes",
-  "nav:feed",
-  "nav:inbox",
-]
 
 /**
  * #1675: the messaging dialog host pulls the WhatsApp/WeChat connect dialogs
@@ -403,9 +382,6 @@ function AppShellContent({
   const isSidebarCollapsed = !isSidebarVisible
   const isPrimarySidebarRendered = true
   const [shellSidebarSlot, setShellSidebarSlot] = useState<HTMLElement | null>(null)
-  const extraScreens = visibleExtraScreens(useAtomValue(enabledExtraScreenIdsAtom))
-  const devSpaceEnabled = useAtomValue(devSpaceEnabledAtom)
-  const playbooksEnabled = useAtomValue(playbooksEnabledAtom)
   const [storedSidebarWidth, setSidebarWidth] = React.useState(() => {
     return loadShellLayout(activeWorkspaceId).sidebarWidth
   })
@@ -2699,7 +2675,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             size="sm"
             hasChildren={hasChildren}
           />
-        ) : <Tag className="h-3.5 w-3.5" />,
+        ) : <Tag className="icon-toolbar" />,
         variant: isActive ? "default" : "ghost",
         compact: true, // Reduced height for label items (many labels expected)
         // All labels navigate on click — parent and leaf alike
@@ -2725,7 +2701,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
     })
   }, [sessionFilter, labelCounts, activeWorkspace?.id, handleLabelClick, isExpanded, toggleExpanded, openConfigureLabels, handleAddLabel, handleDeleteLabel])
 
-  const sidebarLinks: SidebarLinkItem[] = [
+  const sidebarLinks = useMemo<SidebarLinkItem[]>(() => [
     // --- Sessions Section ---
     // All Sessions: expandable with status children (sortable) + Flagged & Archived as trailing items
     {
@@ -2740,8 +2716,8 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
       onToggle: () => toggleSidebarSection('nav:allSessions', isSessionsNavigation(navState), handleAllSessionsClick),
       actions: (
         <div className="flex shrink-0 items-center gap-0.5">
-          <button type="button" onClick={() => window.dispatchEvent(new Event('craft:join-session'))} title={t('sessionMenu.join')} aria-label={t('sessionMenu.join')} className="grid size-7 place-items-center rounded-lg text-foreground/50 hover:bg-foreground/[0.08] focus-visible:ring-1 focus-visible:ring-ring"><Link2 className="size-3.5" aria-hidden /></button>
-          <button ref={tourNewSessionTarget} type="button" onClick={event => handleNewChat(event.metaKey || event.ctrlKey)} title={`${t('session.newSession')} ${newChatHotkey}`} aria-label={t('session.newSession')} data-tutorial="new-chat-button" className="grid size-7 place-items-center rounded-lg bg-accent/10 text-accent hover:bg-accent/20 focus-visible:ring-1 focus-visible:ring-ring"><Plus className="size-3.5" aria-hidden /></button>
+          <button type="button" onClick={() => window.dispatchEvent(new Event('craft:join-session'))} title={t('sessionMenu.join')} aria-label={t('sessionMenu.join')} className="grid size-7 place-items-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-[var(--state-hover)] focus-visible:ring-1 focus-visible:ring-ring"><Link2 className="icon-toolbar" aria-hidden /></button>
+          <button ref={tourNewSessionTarget} type="button" onClick={event => handleNewChat(event.metaKey || event.ctrlKey)} title={`${t('session.newSession')} ${newChatHotkey}`} aria-label={t('session.newSession')} data-tutorial="new-chat-button" className="grid size-7 place-items-center rounded-[var(--radius-control)] bg-accent/10 text-accent hover:bg-accent/20 focus-visible:ring-1 focus-visible:ring-ring"><Plus className="icon-toolbar" aria-hidden /></button>
         </div>
       ),
       contextMenu: {
@@ -2790,7 +2766,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
           id: "nav:flagged",
           title: t("knowledge.nav.favorites"),
           label: String(flaggedCount),
-          icon: <Flag className="h-3.5 w-3.5" />,
+          icon: <Flag className="icon-toolbar" />,
           variant: (sessionFilter?.kind === 'flagged' ? "default" : "ghost") as "default" | "ghost",
           onClick: handleFlaggedClick,
         },
@@ -2867,22 +2843,6 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
         onClick: () => navigate(routes.view.pages(p.config.slug)),
       })),
     },
-    // Developers / Playbooks (2026-10-09 pack) — additive, flag-gated entries.
-    // Presence, icon and label come from the single nav-destination registry.
-    ...(devSpaceEnabled ? [{
-      id: "nav:developers",
-      title: t(APP_NAV_DESTINATIONS_BY_ID.developers.labelKey),
-      icon: APP_NAV_DESTINATIONS_BY_ID.developers.icon,
-      variant: isDevelopersNavigation(navState) ? "default" as const : "ghost" as const,
-      onClick: () => navigate(routes.view.developers()),
-    }] : []),
-    ...(playbooksEnabled ? [{
-      id: "nav:playbooks",
-      title: t(APP_NAV_DESTINATIONS_BY_ID.playbooks.labelKey),
-      icon: APP_NAV_DESTINATIONS_BY_ID.playbooks.icon,
-      variant: isPlaybooksNavigation(navState) ? "default" as const : "ghost" as const,
-      onClick: () => navigate(routes.view.playbooks()),
-    }] : []),
     // --- Separator after projects ---
     { id: "separator:projects-memory", type: "separator" },
     {
@@ -2967,7 +2927,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
           id: "nav:sources:mcp",
           title: t("sidebar.mcps"),
           label: String(sourceTypeCounts.mcp),
-          icon: <McpIcon className="h-3.5 w-3.5" />,
+          icon: <McpIcon className="icon-toolbar" />,
           variant: (sourceFilter?.kind === 'type' && sourceFilter.sourceType === 'mcp') ? "default" : "ghost",
           onClick: handleSourcesMcpClick,
           contextMenu: {
@@ -3101,25 +3061,13 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
       variant: isInboxNavigation(navState) ? "default" : "ghost",
       onClick: () => navigate(routes.view.inbox()),
     },
-  ]
-const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
-    .map(id => sidebarLinks.find(link => link.id === id))
-    .filter((link): link is SidebarLinkItem => Boolean(link))
-  const applicationSectionLinks: SidebarLinkItem[] = sidebarLinks.filter(link => !PRIMARY_MODE_LINK_IDS.includes(link.id))
-  const experimentalLinks: SidebarLinkItem[] = extraScreens.map(screen => ({
-    id: `nav:screen:${screen.id}`,
-    title: t(screen.labelKey), icon: screen.icon,
-    variant: navState.navigator === 'screen' && navState.screen === screen.id ? 'default' : 'ghost',
-    onClick: () => navigate(routes.view.screen(screen.id)),
-    iconColor: screen.id === 'radar' ? '#38bdf8' : screen.id === 'focus' ? '#34d399' : '#c084fc',
-  }))
-
-  const experimentalSidebarNavigation = experimentalLinks.length > 0 && (
-    <section className="mx-1 mt-5 py-2" aria-label={t('sidebar.experimentalFeatures')}>
-      {!isSidebarCollapsed && <div className="px-3 pb-2 text-xs font-semibold uppercase caps-label text-foreground/40">{t('sidebar.experimentalFeatures')}</div>}
-      <LeftSidebar isCollapsed={isSidebarCollapsed} onExpand={handleExpandNavigation} links={experimentalLinks} />
-    </section>
-  )
+  ], [
+    activeWorkspaceId, archivedCount, automationFilter, automationTypeCounts, automations.length, buildLabelSidebarItems, collectionFilters.projectId, effectiveSessionStatuses, flaggedCount, handleAddLabel, handleAllSessionsClick, handleArchivedClick, handleAutomationsAgenticClick, handleAutomationsClick, handleAutomationsEventClick, handleAutomationsScheduledClick, handleFlaggedClick, handleJumpToProjectSessions, handleLabelClick, handleLearningClick, handleMeetingsClick, handleMemoryClick, handleMemoryRepoClick, handleNewChat, handleNotesClick, handlePagesClick, handleProjectsClick, handleServiceClick, handleSessionStatusClick, handleSettingsClick, handleSkillsClick, handleSourcesApiClick, handleSourcesClick, handleSourcesLocalClick, handleSourcesMcpClick, handleStatusReorder, handleTasksClick, isExpanded, labelTree, navState, newChatHotkey, openAddAutomation, openAddProject, openAddSkill, openAddSource, openConfigureLabels, openConfigureStatuses, pages, projects, sessionFilter, sessionStatusCounts, setSessionMetaMap, shellFlags, skills.length, sourceFilter, sourceTypeCounts, sources.length, t, toggleExpanded, toggleSidebarSection, tourNewSessionTarget, unseenStatuses, workspaceSessionMetas.length,
+  ])
+  const applicationSectionsOpen = applicationSectionsOpenFor === contextualSidebarKey
+  const handleApplicationSectionsOpenChange = useCallback((open: boolean) => {
+    setApplicationSectionsOpenFor(open ? contextualSidebarKey : null)
+  }, [contextualSidebarKey])
 
   return (
     <TourConnectionPolicyContext.Provider value={learningSourcePolicy?.workspaceId === activeWorkspaceId ? learningSourcePolicy : null}>
@@ -3231,40 +3179,13 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
                       {layoutMode === 'se-workspace' && !isSidebarCollapsed && (
                         <WorkspaceNavigator workspaceRootPath={activeWorkspace?.rootPath} />
                       )}
-                      {/* A1: primary rail = exactly the 7 mode destinations, one gray
-                            icon each (icons only when the rail is collapsed). */}
-                        <LeftSidebar
-                          isCollapsed={isSidebarCollapsed}
-                          onExpand={handleExpandNavigation}
-                          links={primaryModeLinks}
-                        />
-                        {/* A1/A7-reachability: every other navigation destination
-                            stays reachable here, collapsed by default on every surface. */}
-                        <details
-                          className="group/application-sections mx-1 mt-2 rounded-[var(--radius-card)] bg-foreground/[0.025]"
-                          data-application-sections
-                          open={applicationSectionsOpenFor === contextualSidebarKey}
-                          onToggle={event => setApplicationSectionsOpenFor(event.currentTarget.open ? contextualSidebarKey : null)}
-                        >
-                          <summary
-                            className={cn(
-                              'flex cursor-pointer list-none items-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden',
-                              isSidebarCollapsed
-                                ? 'mx-auto h-7 w-7 justify-center'
-                                : 'gap-2 px-3 py-2.5 text-xs font-semibold text-foreground/50',
-                            )}
-                          >
-                            <Layers className="size-3.5 text-accent" aria-hidden />
-                            {!isSidebarCollapsed && <span className="min-w-0 flex-1 truncate">{t('sidebar.applicationSections')}</span>}
-                            {!isSidebarCollapsed && <ChevronRight className="size-3.5 transition-transform group-open/application-sections:rotate-90 motion-reduce:transition-none" aria-hidden />}
-                          </summary>
-                          <LeftSidebar
-                            isCollapsed={isSidebarCollapsed}
-                            onExpand={handleExpandNavigation}
-                            links={applicationSectionLinks}
-                          />
-                          {experimentalSidebarNavigation}
-                        </details>
+                      <ShellSidebarNav
+                        baseLinks={sidebarLinks}
+                        isCollapsed={isSidebarCollapsed}
+                        onExpand={handleExpandNavigation}
+                        applicationSectionsOpen={applicationSectionsOpen}
+                        onApplicationSectionsOpenChange={handleApplicationSectionsOpenChange}
+                      />
                     </>
                   )}
                 </ShellLayoutMode>
