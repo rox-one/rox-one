@@ -300,6 +300,44 @@ export class SessionStateProjector {
     })
   }
 
+  /**
+   * Project sessions written outside the persistence queue (imports) in one index
+   * write. A cache that was fresh before they landed is extended in place; only a
+   * cache that is stale for other reasons falls back to the rescan.
+   */
+  recordSessions(workspaceRootPath: string, sessionIds: readonly string[]): Promise<SessionIndexEntry[]> {
+    return this.#store.run({
+      keys: [this.#indexKey(workspaceRootPath), ...sessionIds.map((sessionId) => sessionIndexKey(workspaceRootPath, sessionId))],
+      fn: (db) => {
+        const ids = new Set(sessionIds)
+        const recorded: ScannedSessionEntry[] = []
+        for (const sessionId of ids) {
+          const session = readSessionEntry(workspaceRootPath, sessionId)
+          if (session) recorded.push(session)
+        }
+        const path = sessionIndexFilePath(workspaceRootPath)
+        const merge = (entries: SessionIndexEntry[]) => {
+          const next = entries.filter((candidate) => !ids.has(candidate.id))
+          for (const session of recorded) next.push(session.entry)
+          return next
+        }
+        const cached = parseIndexFile(path)
+        let next = cached ? merge(cached.entries) : null
+        if (next) {
+          let maxHeaderMtimeMs = 0
+          for (const entry of next) if (entry.headerMtimeMs > maxHeaderMtimeMs) maxHeaderMtimeMs = entry.headerMtimeMs
+          const live = liveCookie(workspaceRootPath)
+          if (next.length !== live.count || maxHeaderMtimeMs !== live.maxHeaderMtimeMs) next = null
+        }
+        next ??= merge(this.#loadEntries(db, workspaceRootPath))
+        for (const session of recorded) upsertSessionIndexRow(db, workspaceRootPath, session.entry.id, session.headerJson, this.#now())
+        sortEntries(next)
+        writeIndexFile(path, next, this.#now())
+        return recorded.map((session) => session.entry)
+      },
+    })
+  }
+
   /** Drop a session from both stores after its JSONL directory is gone. */
   removeSession(workspaceRootPath: string, sessionId: string): Promise<void> {
     return this.#store.run({
