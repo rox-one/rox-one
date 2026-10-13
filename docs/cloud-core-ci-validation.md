@@ -42,6 +42,13 @@ bun build packages/server/src/index.ts --target bun --outdir dist-server --exter
 ROX_SERVER_SMOKE_ENTRY=dist-server/index.js ROX_SERVER_SMOKE_WEBUI_DIR=apps/webui/dist bun test packages/server/src/__tests__/smoke.test.ts
 ```
 
+> **Superseded bundle command (2026-10-13).** The `bun build` line above is kept as the receipt of that run. Under
+> bun 1.4.2, `tmp` (reached through `markitdown-js`) must also stay external: the bundler flattens its CJS body and
+> emits `Object.defineProperty(exports_tmp, …)` without declaring the identifier, so the bundle dies at startup with
+> `ReferenceError: exports_tmp is not defined`. Current line —
+> `bun build packages/server/src/index.ts --target bun --outdir dist-server --external xlsx --external tmp`
+> (fix: PR #1847; verification there: `grep -c exports_tmp` on the bundle = 0, lifecycle smoke 4 pass / 0 fail).
+
 ## Preserved failure and review history
 
 1. The first integrated comprehensive run stopped at16 actual shared TypeScript diagnostics; later packages exposed their own concrete baseline errors. These were repaired with narrow guards/types and existing data sources, with assertions retained.
