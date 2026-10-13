@@ -913,6 +913,8 @@ export const RPC_CHANNELS = {
     GET_SKILL_EFFECTIVENESS: 'learning:getSkillEffectiveness',
     GET_POLICY: 'learning:getPolicy',
     GET_TIMELINE: 'learning:getTimeline',
+    LIST_CORRECTIONS: 'learning:listCorrections',
+    LIST_MUTATIONS: 'learning:listMutations',
     // Actions
     APPROVE: 'learning:approve',
     REJECT: 'learning:reject',
