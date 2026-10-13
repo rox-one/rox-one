@@ -106,8 +106,8 @@ export default function DecisionsPage({ itemId }: { itemId: string | null }) {
     const ids = pendingKey.split(',')
     const tick = () => { for (const id of ids) void syncExtraction(workspaceId, id) }
     tick()
-    const timer = window.setInterval(tick, 5000)
-    return () => window.clearInterval(timer)
+    const off = window.electronAPI.onSessionEvent?.(() => tick())
+    return () => off?.()
   }, [workspaceId, pendingKey, visible])
 
   const save = useCallback((next: DecisionsData) => {

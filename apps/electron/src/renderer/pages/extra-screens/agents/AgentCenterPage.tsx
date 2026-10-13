@@ -26,6 +26,7 @@ import { useWorkspaceSessions, sessionTitle } from '@/lib/extra-screens/use-rox-
 import { getSessionTitle } from '@/utils/session'
 import { toErrorMessage } from '@/lib/errors'
 import { useEffectiveVisible } from '@/lib/surface-keepalive'
+import { subscribeSlowRefresh } from '@/lib/slow-refresh-scheduler'
 
 const NS = 'agent-center'
 
@@ -51,8 +52,13 @@ function useCloudRuns(): { enabled: boolean; runs: CenterCloudRun[]; refresh: ()
   useEffect(() => {
     if (!visible) return
     refresh()
-    const timer = window.setInterval(refresh, 15000)
-    return () => window.clearInterval(timer)
+    const offSlow = subscribeSlowRefresh(refresh)
+    const api = window.electronAPI as { onCloudRunsChanged?: (cb: () => void) => () => void }
+    const offRuns = api.onCloudRunsChanged?.(() => refresh())
+    return () => {
+      offSlow()
+      offRuns?.()
+    }
   }, [refresh, visible])
   return { ...state, refresh }
 }
