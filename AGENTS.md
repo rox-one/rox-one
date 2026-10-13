@@ -51,3 +51,11 @@ OMP запускается с `--session-dir <workspace>/sessions/<craftSessionI
 - Канонический контекст: `<config dir>/context` (по умолчанию legacy `~/.rox`, `~/rox` при флаге `storage.visible-root.v1`), либо явный `ROX_CONFIG_DIR`. Legacy-данные импортируются копированием, исходники сохраняются.
 - Каталог 330 скиллов: `apps/electron/resources/skills/REQUESTED-SKILLS.json`; доказательство нативного обнаружения: `ROX-CLI-DISCOVERY.json`. Внешние инструменты и авторизация описаны отдельно от наличия скилла.
 - Источники, лицензии и старые идентификаторы для безопасного импорта не переименовывать вслепую.
+
+## Автономные программы (`docs/agents/`)
+
+Для задач «выполни сквозным потоком до merge и деплоя» используй пак промптов `docs/agents/`:
+`00-orchestrator.md` — полный режим (фазы, стоп-лист, отчёт), `99-master.md` — компактная версия,
+`03-dod-gates.md` — definition of done и гейты G0–G7 (evidence-first), `04-subagents-skills.md` — роли/скиллы/диспатч,
+`06-runbook.md` — точные команды (worktree, гейты, PR/merge, откат, деплой), `01-prd.md`/`02-spec.md` — артефакты PRD/SPEC.
+Стопы — только на физических блокерах: нет креды/прав, security-вето, необратимое разрушение данных.
