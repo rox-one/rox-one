@@ -113,6 +113,12 @@ export class CredentialManager {
 
     // Sort by priority (highest first)
     availableBackends.sort((a, b) => b.priority - a.priority);
+
+    for (const backend of availableBackends) {
+      if (backend instanceof SecureStorageBackend) await backend.prepareEncryptionKey();
+    }
+    if (this.initialized) return;
+
     this.backends = availableBackends;
 
     // Use the first available backend for writing

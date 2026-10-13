@@ -33,6 +33,8 @@ import { configureVisitorAccess } from '../visitors/index.ts'
 import { projectNativeNotesChanged } from '../handlers/rpc/native-notes-events'
 import { projectNativeFeedChanged } from '../handlers/rpc/native-feed'
 import { projectNativeInboxChanged } from '../handlers/rpc/native-inbox-events'
+import { InitGate } from '../domain/init-gate.ts'
+import { gateRpcServerOnInitialization } from './init-gated-server.ts'
 
 /**
  * Channels an enrolled native principal may receive over the wire. A channel
@@ -66,6 +68,8 @@ export interface ServerBootstrapOptions<TSessionManager, THandlerDeps> {
   rpcHost?: string
   rpcPort?: number
   bundledAssetsRoot?: string
+  /** The background toolchain install starts once this settles (host PATH prepared). */
+  platformEnvironmentReady?: Promise<void>
   platformFactory?: () => PlatformServices
   /** Private isolated authority/journal storage override for host maintenance and tests. */
   nativeStateDir?: string
@@ -81,6 +85,14 @@ export interface ServerBootstrapOptions<TSessionManager, THandlerDeps> {
   }) => THandlerDeps
   registerAllRpcHandlers: (server: RpcServer, deps: THandlerDeps, serverCtx: ServerHandlerContext) => void
   initializeSessionManager: (sessionManager: TSessionManager) => Promise<void>
+  /**
+   * Return as soon as the server listens and handlers are registered, while
+   * `initializeSessionManager` continues in the background (see
+   * `ServerInstance.initialized`). Handlers outside `PRE_INIT_CHANNELS` wait
+   * for it either way. A background failure is logged and rejects those
+   * handlers instead of failing the bootstrap.
+   */
+  deferSessionManagerInitialization?: boolean
   setSessionEventSink: (sessionManager: TSessionManager, sink: EventSink) => void
   /**
    * Optional hook called right after the WS RPC server starts listening. Use
@@ -152,6 +164,8 @@ export interface ServerInstance<TSessionManager> {
    * is not installed at all.
    */
   hooksIngressSnapshot: () => HooksIngressSnapshot | null
+  /** Settles with `initializeSessionManager`; already resolved unless initialization was deferred. */
+  initialized: Promise<void>
   stop: () => Promise<void>
 }
 
@@ -432,7 +446,7 @@ export function releaseServerLock(): void {
 // Config artifacts
 // ---------------------------------------------------------------------------
 
-function bootstrapConfigArtifacts(platform: PlatformServices): void {
+function bootstrapConfigArtifacts(platform: PlatformServices, environmentReady: Promise<void> = Promise.resolve()): void {
   ensureConfigDir()
   platform.logger.info('[bootstrap] Config artifacts initialized')
 
@@ -453,7 +467,8 @@ function bootstrapConfigArtifacts(platform: PlatformServices): void {
   // Toolchain: fire-and-forget background install/update of missing/outdated
   // tools (omp et al.). ensureAll returns a status snapshot immediately and
   // continues downloading in the background; never blocks server startup.
-  void import('@rox/shared/toolchain-runtime')
+  void environmentReady
+    .then(() => import('@rox/shared/toolchain-runtime'))
     .then(({ getToolchainManager }) => getToolchainManager().ensureAll({ background: true }))
     .then(() => platform.logger.info('[bootstrap] Toolchain ensureAll scheduled'))
     .catch((err) => {
@@ -530,7 +545,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
 
   options.applyPlatformToSubsystems?.(platform)
 
-  bootstrapConfigArtifacts(platform)
+  bootstrapConfigArtifacts(platform, options.platformEnvironmentReady)
   ensureGlobalConfigExists(platform)
   acquireServerLock(platform.logger)
 
@@ -687,19 +702,36 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     startedAt,
   }
 
-  options.registerAllRpcHandlers(wsServer, deps, serverHandlerContext)
+  const readiness = new InitGate()
+  void readiness.wait().catch(() => undefined)
+  options.registerAllRpcHandlers(gateRpcServerOnInitialization(wsServer, () => readiness.wait()), deps, serverHandlerContext)
 
   options.setSessionEventSink(sessionManager, wsServer.push.bind(wsServer))
 
-  await options.initializeSessionManager(sessionManager)
-
-  modelRefreshService.startAll()
+  let stopped = false
+  const startPostInitServices = (): void => {
+    modelRefreshService.startAll()
+    scheduleBundledSkillsSync(platform, wsServer)
+  }
+  const initialized = Promise.resolve()
+    .then(() => options.initializeSessionManager(sessionManager))
+    .then(() => readiness.markReady(), (error: unknown) => {
+      readiness.markFailed(error)
+      throw error
+    })
+  if (options.deferSessionManagerInitialization) {
+    void initialized.then(() => {
+      if (!stopped) startPostInitServices()
+    }, (error: unknown) => {
+      platform.logger.error('[bootstrap] Session manager initialization failed:', error)
+    })
+  } else {
+    await initialized
+    startPostInitServices()
+  }
 
   platform.logger.info(`Rox server listening on ${wsServer.protocol}://${rpcHost}:${wsServer.port}`)
 
-  scheduleBundledSkillsSync(platform, wsServer)
-
-  let stopped = false
   const stop = async (): Promise<void> => {
     if (stopped) return
     stopped = true
@@ -803,6 +835,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     serverHandlerContext,
     scheduler,
     hooksIngressSnapshot: () => hooksIngress?.snapshot() ?? null,
+    initialized,
     stop,
   }
   } catch (error) {

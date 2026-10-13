@@ -860,7 +860,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   }, [])
 
   // Refresh LLM connections from config (called on workspace change and after connection updates)
-  const refreshLlmConnections = useCallback(async () => {
+  const refreshLlmConnections = useCallback(async (options?: { refresh?: boolean }) => {
     // Cookie-authenticated web transport conveys no desktop/native identity
     // and cannot read host provider credentials or seed a runtime default.
     if (webTransportBootstrap) return
@@ -878,7 +878,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       setWorkspaceDefaultLlmConnection(summary?.slug)
       return
     }
-    const connections = await window.electronAPI.listLlmConnectionsWithStatus()
+    const connections = await window.electronAPI.listLlmConnectionsWithStatus(options)
     if (generation !== runtimeRefreshGeneration.current) return
     setRuntimeSummary(null)
     setLlmConnections(connections)
@@ -1199,10 +1199,12 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     return () => { cleanup() }
   }, [refreshLlmConnections])
 
-  // Refresh LLM connections and workspace default when workspace changes
+  // Refresh LLM connections and workspace default when workspace changes.
+  // No OAuth refresh on this (boot) path: expiring tokens refresh in the
+  // background and llmConnections.CHANGED re-runs this with a refresh.
   useEffect(() => {
     if (windowWorkspaceId) {
-      void refreshLlmConnections().catch(error => console.error('Failed to refresh LLM connections:', error))
+      void refreshLlmConnections({ refresh: false }).catch(error => console.error('Failed to refresh LLM connections:', error))
     }
   }, [windowWorkspaceId, refreshLlmConnections])
 

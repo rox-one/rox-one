@@ -31,11 +31,13 @@ import {
   createCipheriv,
   createDecipheriv,
   randomBytes,
+  pbkdf2,
   pbkdf2Sync,
   createHash,
   randomUUID,
 } from 'crypto';
 import { execSync, spawnSync } from 'child_process';
+import { readFile } from 'fs/promises';
 import {
   chmodSync,
   closeSync,
@@ -123,6 +125,25 @@ const KEY_SIZE = 32;
 
 // PBKDF2 iterations (balance security vs startup time)
 const PBKDF2_ITERATIONS = 100000;
+
+/**
+ * Vault key derivation (PBKDF2-SHA256, 100k iterations, 32 bytes). `derive`
+ * runs on the libuv thread pool so boot never blocks the main process on it;
+ * both forms produce byte-identical keys.
+ */
+export const vaultKeyDerivation = {
+  deriveSync(secret: Buffer, salt: Buffer): Buffer {
+    return pbkdf2Sync(secret, salt, PBKDF2_ITERATIONS, KEY_SIZE, 'sha256');
+  },
+  derive(secret: Buffer, salt: Buffer): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      pbkdf2(secret, salt, PBKDF2_ITERATIONS, KEY_SIZE, 'sha256', (error, key) => {
+        if (error) reject(error);
+        else resolve(key);
+      });
+    });
+  },
+};
 
 /**
  * Мастер-ключ шифрования (RX-TSK-0300 / RX-SEC-0001).
@@ -637,16 +658,34 @@ export class SecureStorageBackend implements CredentialBackend, CredentialMigrat
     this.cachedStore = store;
   }
 
+  /**
+   * Derive the current (v3) key for the on-disk store asynchronously and cache
+   * it, so the first synchronous read does not run PBKDF2 on the caller's
+   * thread. No-op without a readable store; failures are left to the read path.
+   */
+  async prepareEncryptionKey(): Promise<void> {
+    if (this.encryptionKey) return;
+    let fileData: Buffer;
+    try {
+      fileData = await readFile(this.file);
+    } catch {
+      return;
+    }
+    if (fileData.length < HEADER_SIZE || !fileData.subarray(0, MAGIC_SIZE).equals(MAGIC_BYTES)) return;
+    const salt = Buffer.from(fileData.subarray(MAGIC_SIZE + FLAGS_SIZE, MAGIC_SIZE + FLAGS_SIZE + SALT_SIZE));
+    try {
+      const key = await vaultKeyDerivation.derive(getOrCreateMasterKey(this.directory), salt);
+      // A read/write that ran meanwhile owns the cache; only fill it for the same salt.
+      if (!this.encryptionKey && (!this.salt || this.salt.equals(salt))) this.encryptionKey = key;
+    } catch {
+      // The synchronous read path reports provider errors with its own codes.
+    }
+  }
+
   private getEncryptionKey(salt: Buffer, version: 'v1' | 'v2' | 'v3' = 'v3'): Buffer {
     if (version === 'v3') {
       if (!this.encryptionKey) {
-        this.encryptionKey = pbkdf2Sync(
-          getOrCreateMasterKey(this.directory),
-          salt,
-          PBKDF2_ITERATIONS,
-          KEY_SIZE,
-          'sha256',
-        );
+        this.encryptionKey = vaultKeyDerivation.deriveSync(getOrCreateMasterKey(this.directory), salt);
       }
       return this.encryptionKey;
     }
@@ -657,7 +696,7 @@ export class SecureStorageBackend implements CredentialBackend, CredentialMigrat
         .update(getStableMachineId())
         .update('craft-agent-v2')
         .digest();
-      return pbkdf2Sync(stableMachineId, salt, PBKDF2_ITERATIONS, KEY_SIZE, 'sha256');
+      return vaultKeyDerivation.deriveSync(stableMachineId, salt);
     }
 
     return this.getLegacyEncryptionKey(salt);
@@ -675,7 +714,7 @@ export class SecureStorageBackend implements CredentialBackend, CredentialMigrat
       .update('craft-agent-v1')
       .digest();
 
-    return pbkdf2Sync(legacyMachineId, salt, PBKDF2_ITERATIONS, KEY_SIZE, 'sha256');
+    return vaultKeyDerivation.deriveSync(legacyMachineId, salt);
   }
 
   async restoreFromBackup(): Promise<boolean | 'unavailable'> {
