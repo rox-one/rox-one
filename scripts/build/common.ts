@@ -153,12 +153,20 @@ export async function downloadBun(config: BuildConfig): Promise<void> {
     const zipPath = join(tempDir, `${bunDownload}.zip`);
     const checksumPath = join(tempDir, 'SHASUMS256.txt');
 
+    // `--continue-at -` resumes from the current size of the output file, so a
+    // leftover partial would be appended to (and silently corrupt the archive
+    // after a version bump). Start clean; the downloads below recreate both.
+    rmSync(zipPath, { force: true });
+    rmSync(checksumPath, { force: true });
+
     console.log(`  Downloading ${zipUrl}...`);
-    await $`curl -fsSL --retry 3 --retry-delay 2 -o ${zipPath} ${zipUrl}`;
+    // The release CDN resets mid-transfer (curl 56) often enough on congested
+    // networks that those resets must be retryable (`--retry` alone skips them).
+    await $`curl -fsSL --continue-at - --retry 10 --retry-all-errors --retry-delay 3 --connect-timeout 15 -o ${zipPath} ${zipUrl}`;
     console.log('  Download complete');
 
     console.log('  Downloading checksums...');
-    await $`curl -fsSL --retry 3 --retry-delay 2 -o ${checksumPath} ${checksumUrl}`;
+    await $`curl -fsSL --continue-at - --retry 10 --retry-all-errors --retry-delay 3 --connect-timeout 15 -o ${checksumPath} ${checksumUrl}`;
 
     // Verify checksum
     console.log('  Verifying checksum...');
@@ -408,8 +416,16 @@ export async function downloadLima(config: BuildConfig): Promise<void> {
     const assetPath = join(tempDir, asset);
     const extractDir = join(tempDir, 'extract');
 
+    // `--continue-at -` resumes from the current size of the output file; a
+    // leftover partial from another pin would be appended to and corrupt the
+    // archive, so start clean (the download below recreates the file).
+    rmSync(assetPath, { force: true });
+
     console.log(`  Downloading ${assetUrl}...`);
-    await $`curl -fsSL --retry 3 --retry-delay 2 -o ${assetPath} ${assetUrl}`;
+    // The release CDN resets mid-transfer (curl 56) often enough on congested
+    // networks that those resets must be retryable (`--retry` alone skips them),
+    // and resumable so a reset does not restart ~38 MB from scratch.
+    await $`curl -fsSL --continue-at - --retry 20 --retry-all-errors --retry-delay 3 --connect-timeout 15 -o ${assetPath} ${assetUrl}`;
 
     console.log('  Verifying pinned sha256...');
     if (!(await verifySha256(assetPath, expectedHash))) {
