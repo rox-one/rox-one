@@ -158,7 +158,8 @@ export type {
   ForeignSessionKind,
 } from './import-types.ts'
 export { FOREIGN_SESSION_KINDS, UNSUPPORTED_FOREIGN_SESSION_KINDS, isForeignSessionKindSupported } from './import-types.ts'
-export { discoverForeignSessions, discoverForeignSessionsAsync, filterForeignIndexEntries, MAX_SCAN_ENTRIES, MAX_SCAN_PER_KIND } from './import-discover.ts'
+export { discoverForeignSessions, discoverForeignSessionsAsync, filterForeignIndexEntries, pageForeignDiscover, FOREIGN_DISCOVER_PAGE, FOREIGN_DISCOVER_PAGE_CAP, MAX_SCAN_ENTRIES, MAX_SCAN_PER_KIND } from './import-discover.ts'
+export { createCoalescedProgress, type ForeignImportProgress } from './import-progress.ts'
 export { convertForeignSource, convertClaudeJsonl, convertGrokCatalog, inferForeignKind, inspectForeignSource, redactSecrets } from './import-convert.ts'
 export {
   defaultForeignPersistIo,

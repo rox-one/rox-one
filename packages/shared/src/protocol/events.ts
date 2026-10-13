@@ -69,6 +69,7 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.sessions.UNREAD_SUMMARY_CHANGED]: [summary: UnreadSummary]
   [RPC_CHANNELS.sessions.FILES_CHANGED]: [sessionId: string]
   [RPC_CHANNELS.sessions.BULK_CHANGED]: [event: SessionsBulkChangedEvent]
+  [RPC_CHANNELS.sessions.FOREIGN_PROGRESS]: [workspaceId: string, progress: { done: number; total: number; phase: 'persist' | 'ingest' }]
 
   // Domain change broadcasts (global via broadcastToAll)
   [RPC_CHANNELS.sources.CHANGED]: [workspaceId: string, sources: LoadedSource[]]

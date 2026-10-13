@@ -7,7 +7,8 @@
  * stays available under "Choose manually".
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ForeignImportPickerList } from './foreign-import-picker'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronRight, DownloadCloud, RefreshCw } from 'lucide-react'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
@@ -64,6 +65,8 @@ export default function ImportSettingsPage() {
   const [manualOpen, setManualOpen] = useState(false)
   const [auto, setAuto] = useState<ForeignAutoImportStatus | null>(null)
   const [autoError, setAutoError] = useState<string | null>(null)
+  const [persistProgress, setPersistProgress] = useState<{ done: number; total: number; phase: 'persist' | 'ingest' } | null>(null)
+  const pickerViewportRef = useRef<HTMLDivElement>(null)
 
   const refreshAuto = useCallback(async () => {
     try {
@@ -172,13 +175,29 @@ export default function ImportSettingsPage() {
     setLoading(true)
     setError(null)
     try {
-      const discovered = await window.electronAPI.foreignDiscoverSessions({ workspaceId: workspace.id })
-      setEntries(discovered.entries)
-      setTruncated(Boolean(discovered.truncated))
-      setScanUnavailable(discovered.unavailable === 'not-live')
-      setScanAborted(Boolean(discovered.aborted))
-      setSelected({})
-      setResults([])
+      let offset = 0
+      let first = true
+      for (;;) {
+        const discovered = await window.electronAPI.foreignDiscoverSessions({
+          workspaceId: workspace.id,
+          offset,
+          limit: 100,
+        })
+        if (first) {
+          setEntries(discovered.entries)
+          setTruncated(Boolean(discovered.truncated))
+          setScanUnavailable(discovered.unavailable === 'not-live')
+          setScanAborted(Boolean(discovered.aborted))
+          setSelected({})
+          setResults([])
+          first = false
+        } else {
+          setEntries((prev) => [...prev, ...discovered.entries])
+          if (discovered.truncated) setTruncated(true)
+        }
+        if (!discovered.hasMore || discovered.entries.length === 0) break
+        offset += discovered.entries.length
+      }
     } catch (err) {
       setError(toErrorMessage(err))
     } finally {
@@ -201,6 +220,10 @@ export default function ImportSettingsPage() {
     }
     setLoading(true)
     setError(null)
+    setPersistProgress({ done: 0, total: sourcePaths.length, phase: 'persist' })
+    const stopProgress = window.electronAPI.onForeignImportProgress((workspaceId, progress) => {
+      if (workspaceId === workspace.id) setPersistProgress(progress)
+    })
     try {
       const persisted = await window.electronAPI.foreignPersistSessions({
         workspaceId: workspace.id,
@@ -221,6 +244,8 @@ export default function ImportSettingsPage() {
     } catch (err) {
       setError(toErrorMessage(err))
     } finally {
+      stopProgress()
+      setPersistProgress(null)
       setLoading(false)
     }
   }, [entries, refreshAuto, selected, t, workspace?.id])
@@ -384,6 +409,7 @@ export default function ImportSettingsPage() {
           {loading ? (
             <div className="flex items-center gap-2 text-sm opacity-70">
               <Spinner className="w-4 h-4" />
+              {persistProgress ? <span data-testid="session-import-progress">{persistProgress.done}/{persistProgress.total}</span> : null}
             </div>
           ) : null}
           {error ? <div className="text-xs text-destructive">{error}</div> : null}
@@ -406,29 +432,14 @@ export default function ImportSettingsPage() {
               {t('settings.import.noneMatchFilter')}
             </p>
           ) : (
-            <ul className="space-y-2">
-              {visible.map((entry) => (
-                <li key={entry.sourcePath} className="border rounded-md px-3 py-2 text-sm">
-                  <label className="flex items-start gap-2">
-                    <input
-                      type="checkbox"
-                      disabled={Boolean(entry.skipReason)}
-                      checked={Boolean(selected[entry.sourcePath])}
-                      onChange={(ev) =>
-                        setSelected((prev) => ({ ...prev, [entry.sourcePath]: ev.target.checked }))
-                      }
-                    />
-                    <span>
-                      <span className="font-medium">{entry.title ?? entry.sourcePath}</span>
-                      <span className="block text-xs opacity-60">
-                        {entry.kind} · {entry.userTurns}
-                        {entry.skipReason ? ` · ${entry.skipReason}` : ''}
-                      </span>
-                    </span>
-                  </label>
-                </li>
-              ))}
-            </ul>
+            <div ref={pickerViewportRef} className="h-[320px] overflow-y-auto" data-testid="session-import-picker">
+              <ForeignImportPickerList
+                rows={visible}
+                selected={selected}
+                viewportRef={pickerViewportRef}
+                onToggle={(sourcePath, checked) => setSelected((prev) => ({ ...prev, [sourcePath]: checked }))}
+              />
+            </div>
           )}
           {results.length > 0 ? (
             <ul className="text-xs opacity-70 space-y-1">
