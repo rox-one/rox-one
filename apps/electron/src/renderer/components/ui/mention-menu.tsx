@@ -7,6 +7,7 @@ import { SkillAvatar } from '@/components/ui/skill-avatar'
 import { SourceAvatar } from '@/components/ui/source-avatar'
 import type { LoadedSkill, LoadedSource, FileSearchResult } from '../../../shared/types'
 import { AGENTS_PLUGIN_NAME } from '@rox/shared/skills/types'
+import { readSkillsPage, SKILLS_UI_QUERY_DEBOUNCE_MS } from '@/lib/skills-query'
 
 // ============================================================================
 // Types
@@ -553,6 +554,7 @@ export function useInlineMention({
   const [committedFilter, setCommittedFilter] = React.useState('')
   const [position, setPosition] = React.useState({ x: 0, y: 0 })
   const [atStart, setAtStart] = React.useState(-1)
+  const [queriedSkills, setQueriedSkills] = React.useState<LoadedSkill[] | null>(null)
   const [fileResults, setFileResults] = React.useState<MentionItem[]>([])
   const fileSearchTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   // Cache of raw IPC file search results for the current menu session.
@@ -571,16 +573,40 @@ export function useInlineMention({
     }
   }, [])
 
+  React.useEffect(() => {
+    if (!isOpen) {
+      setQueriedSkills(null)
+      return
+    }
+    if (!workspaceId || typeof window === 'undefined' || typeof window.electronAPI?.querySkills !== 'function') return
+    let cancelled = false
+    const timer = window.setTimeout(() => {
+      void readSkillsPage(window.electronAPI, {
+        workspaceId,
+        query: filter,
+        limit: MENTION_MENU_MAX_ITEMS,
+      }).then((page) => {
+        if (!cancelled) setQueriedSkills(page.items)
+      }).catch(() => {})
+    }, SKILLS_UI_QUERY_DEBOUNCE_MS)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [isOpen, filter, workspaceId])
+
+  const skillsForMenu = queriedSkills ?? skills.slice(0, MENTION_MENU_MAX_ITEMS)
+
   // Build sections from available data (skills, sources, and file search results)
   const sections = React.useMemo((): MentionSection[] => {
     const result: MentionSection[] = []
 
     // Skills section
-    if (skills.length > 0) {
+    if (skillsForMenu.length > 0) {
       result.push({
         id: 'skills',
         label: 'Skills',
-        items: skills.map(skill => ({
+        items: skillsForMenu.map(skill => ({
           id: skill.slug,
           type: 'skill' as const,
           label: skill.metadata.name,
@@ -627,7 +653,7 @@ export function useInlineMention({
     }
 
     return result
-  }, [skills, sources, fileResults, knowledge])
+  }, [skillsForMenu, sources, fileResults, knowledge])
 
   const handleInputChange = React.useCallback((value: string, cursorPosition: number) => {
     // Store current state for handleSelect

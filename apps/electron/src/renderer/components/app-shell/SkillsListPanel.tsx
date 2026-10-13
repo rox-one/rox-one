@@ -4,7 +4,7 @@ import { useTourTarget, useTourSignals } from '@/features/product-tour/runtime/h
 import { connectionCapabilities } from '@/features/product-tour/adapters/connections'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
-import { Zap, PackageOpen, Check, ChevronDown, ChevronRight, X, Network, FolderX, KeyRound, TriangleAlert, RefreshCw, Archive, FolderOutput, MoreHorizontal } from 'lucide-react'
+import { Zap, PackageOpen, Check, ChevronDown, ChevronRight, X, Network, FolderX, KeyRound, TriangleAlert, RefreshCw, Archive, FolderOutput, MoreHorizontal, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { SkillAvatar } from '@/components/ui/skill-avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -23,6 +23,8 @@ import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { projectsAtom } from '@/atoms/projects'
 import type { BundledSkillPackStatus, LoadedSkill } from '../../../shared/types'
 import { toErrorMessage } from '@/lib/errors'
+import { useSkillsQuery } from '@/hooks/use-skills-query'
+import { VirtualList } from '@/components/ui/virtual-list'
 
 const RISK_FLAG_ICON: Record<SkillRiskFlag, typeof Network> = {
   'network': Network,
@@ -47,6 +49,7 @@ export interface SkillsListPanelProps {
   onSkillClick: (skill: LoadedSkill) => void
   selectedSkillSlug?: string | null
   workspaceId?: string
+  workingDirectory?: string
   workspaceRootPath?: string
   className?: string
 }
@@ -58,11 +61,20 @@ export function SkillsListPanel({
   onSkillClick,
   selectedSkillSlug,
   workspaceId,
+  workingDirectory,
   workspaceRootPath,
   className,
 }: SkillsListPanelProps) {
   const { t } = useTranslation()
   const { reset: resetCraftSelection } = skillSelection.useSelection()
+  const [search, setSearch] = React.useState('')
+  const queried = useSkillsQuery({
+    workspaceId,
+    workingDirectory,
+    query: search,
+  })
+  const listedSkills = queried.enabled ? queried.items : skills
+  const listSyncing = queried.enabled ? queried.loading || !!syncing : !!syncing
   const activeWorkspace = useActiveWorkspace()
   const canRevealLocally = !activeWorkspace?.remoteServer
   const { workspaces, activeWorkspaceId } = useAppShellContext()
@@ -71,22 +83,22 @@ export function SkillsListPanel({
   const tourScope = { workspaceId: workspaceId ?? activeWorkspaceId ?? undefined, panelId: focusedPanelId ?? undefined }
   const skillsTarget = useTourTarget('skills.list', tourScope)
   const tour = useTourSignals(tourScope)
-  React.useEffect(() => tour.capability('skills.available', connectionCapabilities({ skills })['skills.available']!), [tour, skills])
+  React.useEffect(() => tour.capability('skills.available', connectionCapabilities({ skills: listedSkills })['skills.available']!), [tour, listedSkills])
 
   // Runtime skills (~/.omp/agent/skills, {workspace}/.omp/skills) render as a
   // separate read-only group with an "Export as Rox skill" action.
-  const craftSkills = skills.filter((s) => s.source !== 'omp')
+  const craftSkills = listedSkills.filter((s) => s.source !== 'omp')
   const repeatedSkillNames = React.useMemo(() => {
     const seen = new Set<string>()
     const repeated = new Set<string>()
-    for (const skill of skills) {
+    for (const skill of listedSkills) {
       if (skill.source === 'omp') continue
       if (seen.has(skill.metadata.name)) repeated.add(skill.metadata.name)
       seen.add(skill.metadata.name)
     }
     return repeated
-  }, [skills])
-  const ompSkills = skills.filter((s) => s.source === 'omp')
+  }, [listedSkills])
+  const ompSkills = listedSkills.filter((s) => s.source === 'omp')
   const [exportingSlug, setExportingSlug] = React.useState<string | null>(null)
 
   // Pending skill candidates from the self-learning distillation queue.
@@ -274,7 +286,7 @@ export function SkillsListPanel({
   // While a load is pending/retrying (e.g. a slow bundled-skills sync that
   // outlived the client timeout) show a syncing placeholder instead of
   // claiming the workspace has no skills.
-  const emptyState = syncing ? (
+  const emptyState = listSyncing ? (
     <div
       className="flex flex-col items-center justify-center gap-2 p-6 text-xs text-muted-foreground"
       role="status"
@@ -350,7 +362,7 @@ export function SkillsListPanel({
     )}
     {/* A pending reload stays visible even while the previous list is still
         rendered (e.g. a slow bundled-skills sync that outlived the timeout). */}
-    {syncing && craftSkills.length > 0 && (
+    {listSyncing && craftSkills.length > 0 && (
       <div
         className="mx-2 mb-1 flex items-center gap-1.5 text-caption text-muted-foreground"
         role="status"
@@ -369,6 +381,31 @@ export function SkillsListPanel({
       className={className}
       containerProps={{ 'data-list-role': 'skills' }}
       emptyState={emptyState}
+      header={(
+        <div className="px-2 pb-1.5 space-y-1">
+          <label className="relative block">
+            <Search className="absolute left-2 top-2 size-3.5 text-muted-foreground" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('skillsList.searchPlaceholder')}
+              aria-label={t('skillsList.searchPlaceholder')}
+              className="h-8 w-full rounded-md border border-border/60 bg-transparent pl-7 pr-2 text-xs"
+            />
+          </label>
+          {queried.enabled && queried.total > 0 && (
+            <div className="flex items-center justify-between gap-2 px-0.5 text-xs text-muted-foreground">
+              <span className="numeric">{listedSkills.length}/{queried.total}</span>
+              {queried.hasMore && (
+                <button type="button" className="hover:text-foreground" onClick={() => queried.loadMore()}>
+                  {t('common.more')}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       mapItem={(skill) => ({
         icon: <SkillAvatar skill={skill} size="sm" workspaceId={workspaceId} />,
         title: skill.metadata.name,
@@ -646,9 +683,13 @@ export function SkillsListPanel({
         <div className="px-2 pb-1 text-xs font-medium uppercase caps-label text-muted-foreground/70">
           {t('skillsList.roxCliSection')}
         </div>
-        <ul>
-          {ompSkills.map((skill) => (
-            <li
+        <VirtualList
+          items={ompSkills}
+          getKey={(skill) => skill.slug}
+          estimateRowHeight={56}
+          revealKey={selectedSkillSlug}
+          renderItem={(skill) => (
+            <div
               key={skill.slug}
               title={skill.shadowedByCraft ? t('skillsList.roxCliShadowed') : skill.metadata.description}
               className={`group flex min-w-0 items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)] ${!skill.shadowedByCraft && selectedSkillSlug === skill.slug ? 'bg-foreground/5' : 'hover:bg-foreground/[0.03]'} ${skill.shadowedByCraft ? 'opacity-50' : ''}`}
@@ -694,9 +735,9 @@ export function SkillsListPanel({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </li>
-          ))}
-        </ul>
+            </div>
+          )}
+        />
       </div>
     )}
 

@@ -11,6 +11,8 @@ import { buildCapabilityCatalog, CAPABILITY_CATEGORIES, filterCapabilityCatalog,
 import type { CapabilityRef } from '@rox/core/runtime-trace'
 import type { SkillUsageMap } from '@rox/shared/memory/types'
 import type { LoadedSkill, BundledSkillPackStatus } from '../../shared/types'
+import { useSkillsQuery } from '@/hooks/use-skills-query'
+import { readSkillsPage } from '@/lib/skills-query'
 
 export interface SkillsCatalogPageProps {
   workspaceId: string
@@ -20,7 +22,6 @@ export interface SkillsCatalogPageProps {
 }
 export default function SkillsCatalogPage({ workspaceId, workingDirectory, workspaceRootPath, usedCapabilities }: SkillsCatalogPageProps) {
   const { t, i18n } = useTranslation()
-  const [skills, setSkills] = React.useState<LoadedSkill[]>([])
   const [packs, setPacks] = React.useState<BundledSkillPackStatus[]>([])
   const [usage, setUsage] = React.useState<SkillUsageMap | null>(null)
   const [error, setError] = React.useState<string | null>(null)
@@ -29,6 +30,14 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
   const [query, setQuery] = React.useState('')
   const [category, setCategory] = React.useState<CapabilityCategory | 'all'>('all')
   const [scope, setScope] = React.useState<CapabilityRef['scope'] | 'all'>('all')
+  const queried = useSkillsQuery({
+    workspaceId,
+    workingDirectory,
+    query,
+    enabled: true,
+    sources: scope === 'all' ? undefined : [scope as 'omp' | 'global' | 'workspace' | 'project'],
+  })
+  const skills = queried.items
   const [sort, setSort] = React.useState<'name' | 'usage'>('name')
   const [expanded, setExpanded] = React.useState<string | null>(null)
   const selection = skillSelection.useSelection()
@@ -40,17 +49,16 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
   React.useEffect(() => {
     let stale = false
     let generation = 0
-    setSkills([]); setUsage(null); setPacks([]); setError(null); setLoading(true); setExpanded(null); setBusy(null)
+    setUsage(null); setPacks([]); setError(null); setLoading(true); setExpanded(null); setBusy(null)
     const load = async () => {
       const request = ++generation
       try {
-        const [loaded, packResult, usageResult] = await Promise.all([
-          window.electronAPI.getSkills(workspaceId, workingDirectory),
+        const [packResult, usageResult] = await Promise.all([
           window.electronAPI.listBundledSkillPacks().catch(() => null),
           window.electronAPI.getSkillUsage(workspaceId).catch(() => null),
         ])
         if (stale || request !== generation) return
-        setSkills(loaded); setUsage(usageResult)
+        setUsage(usageResult)
         if (packResult !== null) setPacks(packResult)
         setError(packResult === null ? t('capabilityCatalog.packLoadFailed') : null)
       } catch {
@@ -58,10 +66,9 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
       } finally { if (!stale && request === generation) setLoading(false) }
     }
     void load()
-    const off = window.electronAPI.onSkillsChanged(id => { if (id === workspaceId) void load() })
     const offPacks = window.electronAPI.onBundledSkillsChanged(() => void load())
     const offPending = window.electronAPI.onSkillsPendingChanged(id => { if (id === workspaceId) void load() })
-    return () => { stale = true; generation++; off(); offPacks(); offPending() }
+    return () => { stale = true; generation++; offPacks(); offPending() }
   }, [workspaceId, workingDirectory, t])
   const rows = React.useMemo(() => filterCapabilityCatalog(buildCapabilityCatalog({ skills, packs, usage, usedCapabilities }), { query, category, scope })
     .sort((a, b) => sort === 'usage' ? (b.promptHits ?? -1) - (a.promptHits ?? -1) || a.ref.label.localeCompare(b.ref.label) : a.ref.label.localeCompare(b.ref.label)), [skills, packs, usage, usedCapabilities, query, category, scope, sort])
@@ -75,8 +82,6 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
       if ((currentWorkspace.current !== capturedWorkspace || currentGuard.current !== capturedGuard)) return
       setPacks(result.packs)
       if (result.failures.length) toast.error(t('capabilityCatalog.packPartial'), { description: result.failures.join(', ') })
-      const readback = await window.electronAPI.getSkills(workspaceId, workingDirectory)
-      if ((currentWorkspace.current === capturedWorkspace && currentGuard.current === capturedGuard)) setSkills(readback)
     } catch (err) {
       if ((currentWorkspace.current === capturedWorkspace && currentGuard.current === capturedGuard)) toast.error(t('capabilityCatalog.packUpdateFailed'))
     } finally { if ((currentWorkspace.current === capturedWorkspace && currentGuard.current === capturedGuard)) setBusy(null) }
@@ -88,10 +93,9 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
     setBusy(skill.slug)
     try {
       const result = await window.electronAPI.importOmpSkill(workspaceId, skill.slug)
-      const readback = await window.electronAPI.getSkills(workspaceId, workingDirectory)
+      const readback = await readSkillsPage(window.electronAPI, { workspaceId, workingDirectory, slugs: [result.slug], limit: 1 })
       if ((currentWorkspace.current !== capturedWorkspace || currentGuard.current !== capturedGuard)) return
-      if (!readback.some(item => item.source === 'workspace' && item.slug === result.slug)) throw new Error(t('capabilityCatalog.readbackFailed'))
-      setSkills(readback)
+      if (!readback.items.some(item => item.source === 'workspace' && item.slug === result.slug)) throw new Error(t('capabilityCatalog.readbackFailed'))
       toast.success(t('skillsList.roxCliExported', { name: skill.metadata.name, slug: result.slug }))
     } catch (err) { if ((currentWorkspace.current === capturedWorkspace && currentGuard.current === capturedGuard)) toast.error(t('skillsList.roxCliExportFailed'), { description: err instanceof Error ? err.message : undefined }) }
     finally { if ((currentWorkspace.current === capturedWorkspace && currentGuard.current === capturedGuard)) setBusy(null) }
@@ -119,7 +123,7 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
           </div>
         </section>}
         <section aria-label={t('capabilityCatalog.individualSkills')}>
-          <div className="mb-3 flex flex-wrap items-center gap-2"><h2 className="mr-auto text-sm font-medium">{t('capabilityCatalog.individualSkills')} <span className="ml-1 rounded bg-foreground/5 px-1.5 py-0.5 text-xs text-muted-foreground">{rows.length}</span></h2>
+          <div className="mb-3 flex flex-wrap items-center gap-2"><h2 className="mr-auto text-sm font-medium">{t('capabilityCatalog.individualSkills')} <span className="ml-1 rounded bg-foreground/5 px-1.5 py-0.5 text-xs text-muted-foreground">{queried.total || rows.length}</span></h2>
             <label className="relative"><Search className="absolute left-2 top-2 size-3.5 text-muted-foreground" /><input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t('capabilityCatalog.searchSkills')} aria-label={t('capabilityCatalog.searchSkills')} className="h-8 w-52 max-w-full rounded-md border border-border/60 bg-transparent pl-7 pr-2 text-xs" /></label>
             <select aria-label={t('capabilityCatalog.category')} value={category} onChange={e => setCategory(e.target.value as typeof category)} className="h-8 max-w-full rounded-md border border-border/60 bg-background px-2 text-xs"><option value="all">{t('capabilityCatalog.allCategories')}</option>{CAPABILITY_CATEGORIES.map(item => <option key={item} value={item}>{t(`capabilityCatalog.categories.${item}`)}</option>)}</select>
             <select aria-label={t('capabilityCatalog.scope')} value={scope} onChange={e => setScope(e.target.value as typeof scope)} className="h-8 rounded-md border border-border/60 bg-background px-2 text-xs"><option value="all">{t('capabilityCatalog.allScopes')}</option>{(['workspace', 'project', 'global', 'omp'] as const).map(item => <option key={item} value={item}>{t(`capabilityCatalog.scopes.${item}`)}</option>)}</select>
@@ -134,8 +138,13 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
               <td className="px-3 py-3 text-muted-foreground">{row.author ?? '—'}</td><td className="px-3 py-3 whitespace-nowrap text-muted-foreground">{row.updatedAt ? new Date(row.updatedAt).toLocaleDateString(i18n.resolvedLanguage) : '—'}</td>
             </tr>{expanded === row.key && <tr className="border-b border-border/50 bg-foreground/[0.02]"><td colSpan={6} className="space-y-2 px-4 py-3"><p>{row.description}</p><p className="text-muted-foreground">{t('capabilityCatalog.dependencies')}: {row.requiredSources.join(', ') || '—'}</p><p className="text-muted-foreground">{t(`capabilityCatalog.status.${row.status}`)}{row.lastPromptHit ? ` · ${new Date(row.lastPromptHit).toLocaleDateString(i18n.resolvedLanguage)}` : ''}</p>{row.skill?.source === 'omp' && <Button variant="outline" size="sm" disabled={busy !== null} onClick={() => void exportOmp(row.skill!)}>{t('skillsList.roxCliExport')}</Button>}</td></tr>}</React.Fragment>)}</tbody>
           </table></div>
-          {loading && <p role="status" className="py-4 text-center text-xs text-muted-foreground">{t('common.loading')}</p>}
-          {!loading && rows.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">{t('capabilityCatalog.noResults')}</p>}
+          {(loading || queried.loading) && <p role="status" className="py-4 text-center text-xs text-muted-foreground">{t('common.loading')}</p>}
+          {queried.hasMore && (
+            <div className="py-3 text-center">
+              <Button variant="outline" size="sm" onClick={() => queried.loadMore()}>{t('common.more')}</Button>
+            </div>
+          )}
+          {!loading && !queried.loading && rows.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">{t('capabilityCatalog.noResults')}</p>}
         </section>
       </div>
     </div>

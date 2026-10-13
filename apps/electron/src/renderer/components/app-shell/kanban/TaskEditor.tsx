@@ -1117,7 +1117,7 @@ export function TaskEditor({
               </FieldRow>
             )}
 
-            {workspaceSkills.length > 0 && (
+            {(workspaceSkills.length > 0 || workspaceSkillsSyncing || (typeof window !== 'undefined' && typeof window.electronAPI?.querySkills === 'function')) && (
               <FieldRow label={t('tasks.skills')}>
                 <SkillsField
                   skills={workspaceSkills}
