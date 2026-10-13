@@ -9,7 +9,7 @@ on:
 jobs:
   authorize:
     if: github.event_name == 'pull_request_review_comment' || github.event.issue.pull_request
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 5
     permissions:
       contents: read
@@ -53,7 +53,7 @@ jobs:
   review:
     needs: authorize
     if: needs.authorize.outputs.should_review == 'true'
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 12
     # Only authorized review commands reach this job, so unrelated or untrusted
     # comments can never cancel an in-progress trusted review.

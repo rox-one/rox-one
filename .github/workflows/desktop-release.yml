@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   validate:
-    runs-on: macos-15
+    runs-on: blacksmith-6vcpu-macos-15
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -101,8 +101,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { runner: macos-15, platform: darwin, arch: arm64 }
-          - { runner: windows-2025, platform: win32, arch: x64 }
+          - { runner: blacksmith-6vcpu-macos-15, platform: darwin, arch: arm64 }
+          - { runner: blacksmith-4vcpu-windows-2025, platform: win32, arch: x64 }
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
