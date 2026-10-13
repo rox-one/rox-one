@@ -1,0 +1,24 @@
+# ROX server + WebUI (единый образ). TLS терминируется реверс-прокси (Caddy/nginx).
+# Обновление: docker compose pull && docker compose up -d
+services:
+  rox-server:
+    image: ghcr.io/rox-one/rox-server:main
+    container_name: rox-server
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9100:9100"   # наружу — только через реверс-прокси
+    environment:
+      ROX_SERVER_TOKEN: ${ROX_SERVER_TOKEN:?set ROX_SERVER_TOKEN in .env}
+    volumes:
+      - rox-config:/home/rox/.rox
+    # Сервер отказывается биндиться на 0.0.0.0 без TLS (packages/server/src/index.ts):
+    # в контейнере это норма — TLS терминирует прокси, поэтому флаг явный.
+    command: ["--allow-insecure-bind"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9100/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  rox-config:
