@@ -456,7 +456,7 @@ describe('runPreToolUseChecks', () => {
       }
     });
 
-    it('blocks direct label folder reads and suggests craft-agent label help when feature is enabled', () => {
+    it('blocks direct label folder reads and suggests rox label help when feature is enabled', () => {
       mockCraftAgentsCliFlag = true;
 
       const result = runPreToolUseChecks(createInput({
@@ -466,13 +466,13 @@ describe('runPreToolUseChecks', () => {
 
       expect(result.type).toBe('block');
       if (result.type === 'block') {
-        expect(result.reason).toContain('craft-agent label');
-        expect(result.reason).toContain('craft-agent label --help');
+        expect(result.reason).toContain('rox label');
+        expect(result.reason).toContain('rox label --help');
         expect(result.reason).toContain('labels/');
       }
     });
 
-    it('blocks direct label config writes and suggests craft-agent label help when feature is enabled', () => {
+    it('blocks direct label config writes and suggests rox label help when feature is enabled', () => {
       mockCraftAgentsCliFlag = true;
       mockDetectConfigFileType.mockImplementation(() => ({ type: 'labels', displayFile: 'labels/config.json' }));
 
@@ -483,8 +483,8 @@ describe('runPreToolUseChecks', () => {
 
       expect(result.type).toBe('block');
       if (result.type === 'block') {
-        expect(result.reason).toContain('craft-agent label');
-        expect(result.reason).toContain('craft-agent label --help');
+        expect(result.reason).toContain('rox label');
+        expect(result.reason).toContain('rox label --help');
       }
     });
 
@@ -524,7 +524,7 @@ describe('runPreToolUseChecks', () => {
       expect(result.type).toBe('allow');
     });
 
-    it('blocks direct automations config edits and suggests craft-agent automation commands when feature is enabled', () => {
+    it('blocks direct automations config edits and suggests rox automation commands when feature is enabled', () => {
       mockCraftAgentsCliFlag = true;
       mockDetectConfigFileType.mockImplementation(() => ({ type: 'automations', displayFile: 'automations.json' }));
 
@@ -539,12 +539,12 @@ describe('runPreToolUseChecks', () => {
 
       expect(result.type).toBe('block');
       if (result.type === 'block') {
-        expect(result.reason).toContain('craft-agent automation');
+        expect(result.reason).toContain('rox automation');
         expect(result.reason).toContain('automations.json');
       }
     });
 
-    it('blocks direct source config edits and suggests craft-agent source commands when feature is enabled', () => {
+    it('blocks direct source config edits and suggests rox source commands when feature is enabled', () => {
       mockCraftAgentsCliFlag = true;
       mockDetectConfigFileType.mockImplementation(() => ({
         type: 'source',
@@ -563,12 +563,12 @@ describe('runPreToolUseChecks', () => {
 
       expect(result.type).toBe('block');
       if (result.type === 'block') {
-        expect(result.reason).toContain('craft-agent source');
+        expect(result.reason).toContain('rox source');
         expect(result.reason).toContain('sources/linear/config.json');
       }
     });
 
-    it('blocks direct skill file edits and suggests craft-agent skill commands when feature is enabled', () => {
+    it('blocks direct skill file edits and suggests rox skill commands when feature is enabled', () => {
       mockCraftAgentsCliFlag = true;
       mockDetectConfigFileType.mockImplementation(() => ({
         type: 'skill',
@@ -587,12 +587,12 @@ describe('runPreToolUseChecks', () => {
 
       expect(result.type).toBe('block');
       if (result.type === 'block') {
-        expect(result.reason).toContain('craft-agent skill');
+        expect(result.reason).toContain('rox skill');
         expect(result.reason).toContain('skills/commit-helper/SKILL.md');
       }
     });
 
-    it('blocks bash commands touching labels paths and points to craft-agent label --help when feature is enabled', () => {
+    it('blocks bash commands touching labels paths and points to rox label --help when feature is enabled', () => {
       mockCraftAgentsCliFlag = true;
 
       const result = runPreToolUseChecks(createInput({
@@ -603,8 +603,8 @@ describe('runPreToolUseChecks', () => {
 
       expect(result.type).toBe('block');
       if (result.type === 'block') {
-        expect(result.reason).toContain('craft-agent label --help');
-        expect(result.reason).toContain('craft-agent label');
+        expect(result.reason).toContain('rox label --help');
+        expect(result.reason).toContain('rox label');
       }
     });
 
@@ -618,7 +618,7 @@ describe('runPreToolUseChecks', () => {
       expect(result.type).toBe('allow');
     });
 
-    it('blocks bash commands touching automations files and points to craft-agent automation --help when feature is enabled', () => {
+    it('blocks bash commands touching automations files and points to rox automation --help when feature is enabled', () => {
       mockCraftAgentsCliFlag = true;
 
       const result = runPreToolUseChecks(createInput({
@@ -629,8 +629,8 @@ describe('runPreToolUseChecks', () => {
 
       expect(result.type).toBe('block');
       if (result.type === 'block') {
-        expect(result.reason).toContain('craft-agent automation --help');
-        expect(result.reason).toContain('craft-agent automation');
+        expect(result.reason).toContain('rox automation --help');
+        expect(result.reason).toContain('rox automation');
       }
     });
 
