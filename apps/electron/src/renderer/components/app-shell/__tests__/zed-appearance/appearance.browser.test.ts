@@ -787,8 +787,21 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
       // The chat zone and popover sample are absent from the fixture DOM, so a
       // marked element is constructed inside #root; the composer is real.
       const chat = await materialSurface({ attribute: ['data-focus-zone', 'chat'] })
-      const composer = await materialSurface({ selector: '.input-container' })
       const popover = await materialSurface({ className: 'popover-styled' })
+      // The composer is a mounted production surface carrying Tailwind's
+      // `transition-colors` (apps/electron/src/renderer/components/app-shell/
+      // input/InputContainer.tsx), so the material flip cross-fades its
+      // background from the opaque base to the translucent tint instead of
+      // repainting instantly. Sample only once that fade has reached the shipped
+      // `--material-opacity-composer` step (mirrors expectChromeAlpha's plate
+      // poll); a read taken straight after `load()` can still catch the outgoing
+      // 255 on a loaded runner.
+      const composerTransparency = Number.parseFloat(await cssVar('--material-opacity-composer')) / 100
+      await playwrightExpect.poll(async () => {
+        const alpha = (await materialSurface({ selector: '.input-container' })).rgba[3]
+        return alpha < 255 && Math.abs(alpha / 255 - composerTransparency) <= 0.01
+      }, { timeout: 15_000 }).toBe(true)
+      const composer = await materialSurface({ selector: '.input-container' })
       expect(chat.constructed).toBe(true)
       expect(popover.constructed).toBe(true)
       expect(composer.constructed).toBe(false)
