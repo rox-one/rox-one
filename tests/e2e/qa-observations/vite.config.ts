@@ -1,6 +1,10 @@
 import { defineConfig, mergeConfig } from 'vite'
 import { resolve } from 'node:path'
-import appConfig from '../../../apps/electron/vite.config'
+import appConfigFactory from '../../../apps/electron/vite.config'
+
+// apps/electron/vite.config.ts is a defineConfig(({ command }) => …) factory.
+// Call it: merging a function drops every alias (including @config) and plugin.
+const appConfig = appConfigFactory({ command: 'build', mode: 'production' })
 
 const doubles = new Set([
   '@/context/AppShellContext', '@/actions', '@/components/ui/EditPopover',

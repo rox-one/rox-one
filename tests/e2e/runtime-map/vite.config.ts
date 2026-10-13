@@ -1,7 +1,11 @@
 import { defineConfig } from 'vite'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
-import rendererConfig from '../../../apps/electron/vite.config'
+import rendererConfigFactory from '../../../apps/electron/vite.config'
+
+// apps/electron/vite.config.ts is a defineConfig(({ command }) => …) factory.
+// Call it: spreading a function drops every alias (including @config) and plugin.
+const rendererConfig = rendererConfigFactory({ command: 'build', mode: 'production' })
 
 const root = resolve(__dirname, '../../..')
 const maps = ['core', 'shared', 'ui'].map(name => ({
