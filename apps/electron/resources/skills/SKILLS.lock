@@ -3312,7 +3312,24 @@
         "tgchats-local": "skills/tgchats-local",
         "telegram-chat-identity-challenge": "skills/telegram-chat-identity-challenge",
         "telegram-meeting-recap": "skills/telegram-meeting-recap"
-      }
+      },
+      "securityPatches": [
+        {
+          "pack": "telegram",
+          "path": "telegram/chiho-telegram/package.json",
+          "alerts": [45, 46, 47],
+          "change": "Dependency advisory remediation (dependabot #45 CVE-2026-90711, #46 CVE-2026-93749, #47 CVE-2026-104850): @modelcontextprotocol/sdk 1.29.0->1.31.0 plus exact overrides proxy-addr 2.0.8 and source-map-js 1.2.2; package-lock.json regenerated with npm 11 --package-lock-only.",
+          "sha256": "71affff35053534c813549b8e63b18583e04b378eb5d3a67bb0dac9be9235f8a"
+        },
+        {
+          "pack": "telegram",
+          "path": "telegram/chiho-telegram/package-lock.json",
+          "alerts": [45, 46, 47],
+          "change": "Regenerated lockfile for the advisory remediation; resolves proxy-addr 2.0.8, source-map-js 1.2.2, @modelcontextprotocol/sdk 1.31.0 (single instance each).",
+          "sha256": "a2ae3e41157464ceaba1804ea2ff5e06cea9498cd33fc39f57d96ecb3701b76b"
+        }
+      ],
+      "securityNotice": "VENDOR-SECURITY-PATCHES.json"
     },
     {
       "slug": "rox-integrations",
@@ -3409,7 +3426,38 @@
         "understand-figma",
         "understand-knowledge",
         "understand-onboard"
-      ]
+      ],
+      "securityPatches": [
+        {
+          "pack": "understand-anything",
+          "path": "understand-anything/understand/plugin/package.json",
+          "alerts": [9],
+          "change": "Dependency advisory remediation: vitest ^3.1.0->^4.1.11 (dependabot #9, CVE-2026-84373 / CVE-2026-47429); pnpm overrides pin @babel/core 7.29.6, baseline-browser-mapping 2.11.0, browserslist 4.28.7, nanoid 3.3.12, postcss 8.5.23.",
+          "sha256": "81efd5cc28f9f3c122926dbba89069394484593ab25ed1e3c0fa48a4d6b0b2d0"
+        },
+        {
+          "pack": "understand-anything",
+          "path": "understand-anything/understand/plugin/packages/core/package.json",
+          "alerts": [10],
+          "change": "vitest ^3.1.0->^4.1.11 and @vitest/coverage-v8 3.2.4->4.1.11 (dependabot #10).",
+          "sha256": "c825d1a0f53919a01ad30a6807c7f3cabd84c74e5049fec47d0c619e5435d4a0"
+        },
+        {
+          "pack": "understand-anything",
+          "path": "understand-anything/understand/plugin/packages/dashboard/package.json",
+          "alerts": [11],
+          "change": "vitest ^3.1.0->^4.1.11, @vitest/coverage-v8 ^3.2.4->^4.1.11, vite ^6.4.2->^6.4.3 (dependabot #11; WS arbitrary-file-read CVE-2026-39363).",
+          "sha256": "33dff8fc58f16a2eee2be8cbec9bec4bae6c9e44259654ef8220ecffb6ad1ce7"
+        },
+        {
+          "pack": "understand-anything",
+          "path": "understand-anything/understand/plugin/pnpm-lock.yaml",
+          "alerts": [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 48, 49, 50],
+          "change": "Regenerated lockfile (pnpm 10 --lockfile-only, idempotent): vitest/@vitest/mocker/@vitest/coverage-v8 4.1.11, vite 6.4.3, postcss 8.5.23, browserslist 4.28.7, baseline-browser-mapping 2.11.0, nanoid 3.3.12, @babel/core 7.29.6; tinypool and brace-expansion dropped from the dependency tree entirely (vitest 4).",
+          "sha256": "abcdc4cb3f54c699cdfb28425a7c8ae2dca5d3e838591e24fde6c95ab61af920"
+        }
+      ],
+      "securityNotice": "VENDOR-SECURITY-PATCHES.json"
     }
   ]
 }
