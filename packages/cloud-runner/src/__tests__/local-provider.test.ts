@@ -32,7 +32,15 @@ describe('LocalSubprocessProvider crash reconcile (local-only)', () => {
       const pid = Number.parseInt(pidRaw.trim(), 10);
       expect(Number.isFinite(pid)).toBe(true);
       process.kill(pid, 'SIGKILL');
-      const status = await provider.getStatus(spec.id);
+      // SIGKILL delivery and child reaping happen on kernel/event-loop turns,
+      // not synchronously with kill(): a single probe can still observe the
+      // process as live and return the stale 'queued' state. The reconcile
+      // probe is itself the awaited signal (each async read yields the loop),
+      // so no wall-clock timer is needed.
+      let status = await provider.getStatus(spec.id);
+      for (let i = 0; status.state !== 'failed' && i < 500; i += 1) {
+        status = await provider.getStatus(spec.id);
+      }
       expect(status.state).toBe('failed');
       expect(status.failureReason).toBe('runner_error');
     } finally {
