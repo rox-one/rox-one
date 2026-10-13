@@ -22,9 +22,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  // Shared-process catalog run: restore the cleared state too, or the pocket
-  // fixture authority stays installed for every later suite in this process.
-  setRoxAccountAuthority(restoreAuthority)
+  if (restoreAuthority) setRoxAccountAuthority(restoreAuthority)
 })
 
 function harness() {
@@ -46,6 +44,12 @@ function harness() {
       async refreshTitle(...args: unknown[]) { refreshed.push(args); return { title: 'fixture' } },
       getSessionWorkingDirectory() { return undefined },
       getSessions() { return [{ id: 'session', workspaceId: 'workspace' }] },
+      // a2.5: the send path gates writes through the required
+      // `assertSessionWriteAccess` seam (sessions.ts:489); a1.3 attributes the
+      // durable writer through `noteSessionParticipant` (sessions.ts:543). Both
+      // are required HandlerDeps members, so the double implements them.
+      assertSessionWriteAccess() {},
+      async noteSessionParticipant() { return false },
     },
     nativeData: { authority: { authorize: () => true } },
     platform: { logger: { error() {}, warn() {}, info() {}, debug() {} } },

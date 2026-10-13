@@ -58,6 +58,12 @@ const memoryService = new MemoryService({ workspaceRoot: roots[0]!.rootPath, wor
 })
 memoryService.attachSessionCompletion(callback => { completion = callback; return () => {} })
 const manager = {
+  // sessions:sendMessage (sessions.ts:489,543) enforces the SessionManager
+  // write-access and participant-attribution contract before and after the
+  // durable ack; this double stands in for the real SessionManager, so it must
+  // answer both calls.
+  assertSessionWriteAccess() {},
+  async noteSessionParticipant() {},
   getSessions: (workspaceId: string) => [{ id: workspaceId + '-session', workspaceId }],
   getSession: async (sessionId: string) => ({ id: sessionId, messages: canonicalMessages }),
   querySessionLlm: async () => { enteredLlm?.(); await heldLlm; return { text: 'invalid fixture result' } },
