@@ -16,7 +16,7 @@
 
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { useState, useEffect, useCallback, useRef, memo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react'
 import { AnimatePresence, motion, type Variants } from 'motion/react'
 import { File, Folder, FolderOpen, FileText, Image, FileCode, ChevronRight, ExternalLink } from 'lucide-react'
 import {
@@ -32,6 +32,28 @@ import { useAppShellContext } from '@/context/AppShellContext'
 import { getFileManagerName } from '@/lib/platform'
 import { NativeFileExtraMenuItems, nativeFileDragProps, revealInFinderVia, useQuickLookOnSpace } from '@/platform/native-file-actions'
 import { restoreSessionFileWatch } from './session-files-watch'
+import { WindowedTreeList } from '@/components/ui/entity-list'
+
+/** Above this many visible rows the session files tree windows (#1578 remainder). */
+export const SESSION_FILES_WINDOW_THRESHOLD = 200
+export const SESSION_FILES_ROW_ESTIMATE = 32
+
+export interface SessionFileRow {
+  file: SessionFile
+  depth: number
+}
+
+/** Flatten the expanded tree into render order (visible rows only). */
+export function flattenSessionFileRows(entries: SessionFile[], expandedPaths: ReadonlySet<string>, depth = 0): SessionFileRow[] {
+  const rows: SessionFileRow[] = []
+  for (const file of entries) {
+    rows.push({ file, depth })
+    if (file.type === 'directory' && expandedPaths.has(file.path) && file.children?.length) {
+      rows.push(...flattenSessionFileRows(file.children, expandedPaths, depth + 1))
+    }
+  }
+  return rows
+}
 
 /**
  * Stagger animation variants for child items - matches LeftSidebar pattern
@@ -158,7 +180,7 @@ const WEB_PREVIEWABLE_EXTENSIONS = new Set([
 ])
 
 /** True when running in web UI (browser) rather than Electron. */
-const isWebMode = window.electronAPI?.getRuntimeEnvironment?.() === 'web'
+const isWebMode = typeof window !== 'undefined' && window.electronAPI?.getRuntimeEnvironment?.() === 'web'
 
 /**
  * Constructs a thumbnail:// protocol URL for a given file path.
@@ -252,6 +274,8 @@ interface FileTreeItemProps {
   onRevealInFileManager: (path: string) => void
   /** Whether this item is inside an expanded folder (for stagger animation) */
   isNested?: boolean
+  /** When true, children are rendered by the windowed list instead of recursively. */
+  flat?: boolean
 }
 
 /**
@@ -270,6 +294,7 @@ function FileTreeItem({
   onFileDoubleClick,
   onRevealInFileManager,
   isNested,
+  flat,
 }: FileTreeItemProps) {
   const { t } = useTranslation()
   const isDirectory = file.type === 'directory'
@@ -379,7 +404,7 @@ function FileTreeItem({
         </StyledContextMenuContent>
       </ContextMenu>
       {/* Expandable children with framer-motion animation - matches LeftSidebar exactly */}
-      {hasChildren && (
+      {hasChildren && !flat && (
         <AnimatePresence initial={false}>
           {isExpanded && (
             <motion.div
@@ -443,6 +468,8 @@ export function SessionFilesSection({ sessionId, className, sessionFolderPath, h
   const files = snapshot.scope === scope ? snapshot.files : []
   const [isLoading, setIsLoading] = useState(false)
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
+  const filesViewportRef = useRef<HTMLDivElement>(null)
+  const fileRows = useMemo(() => flattenSessionFileRows(files, expandedPaths), [files, expandedPaths])
   const [hasSavedExpandedState, setHasSavedExpandedState] = useState(false)
   const mountedRef = useRef(true)
   const requestIdRef = useRef(0)
@@ -618,7 +645,7 @@ export function SessionFilesSection({ sessionId, className, sessionFolderPath, h
 
       {/* File tree - px-2 is on nav to match LeftSidebar exactly (constrains grid width) */}
       {/* overflow-x-hidden prevents horizontal scroll, forcing truncation */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden pb-2 min-h-0">
+      <div ref={filesViewportRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-2 min-h-0">
         {files.length === 0 ? (
           <div className="px-4 text-muted-foreground select-none">
             <p className="text-xs">
@@ -628,18 +655,40 @@ export function SessionFilesSection({ sessionId, className, sessionFolderPath, h
         ) : (
           /* Root nav has px-2 to match LeftSidebar exactly - this constrains grid width */
           <nav className="grid gap-0.5 px-2">
-            {files.map((file) => (
-              <FileTreeItem
-                key={file.path}
-                file={file}
-                depth={0}
-                expandedPaths={expandedPaths}
-                onToggleExpand={handleToggleExpand}
-                onFileClick={handleFileClick}
-                onFileDoubleClick={handleFileDoubleClick}
-                onRevealInFileManager={handleRevealInFileManager}
+            {fileRows.length > SESSION_FILES_WINDOW_THRESHOLD ? (
+              <WindowedTreeList<SessionFileRow>
+                rows={fileRows}
+                getKey={(row) => row.file.path}
+                renderRow={(row) => (
+                  <FileTreeItem
+                    file={row.file}
+                    depth={row.depth}
+                    expandedPaths={expandedPaths}
+                    onToggleExpand={handleToggleExpand}
+                    onFileClick={handleFileClick}
+                    onFileDoubleClick={handleFileDoubleClick}
+                    onRevealInFileManager={handleRevealInFileManager}
+                    flat
+                  />
+                )}
+                viewportRef={filesViewportRef}
+                windowThreshold={SESSION_FILES_WINDOW_THRESHOLD}
+                rowHeight={SESSION_FILES_ROW_ESTIMATE}
               />
-            ))}
+            ) : (
+              files.map((file) => (
+                <FileTreeItem
+                  key={file.path}
+                  file={file}
+                  depth={0}
+                  expandedPaths={expandedPaths}
+                  onToggleExpand={handleToggleExpand}
+                  onFileClick={handleFileClick}
+                  onFileDoubleClick={handleFileDoubleClick}
+                  onRevealInFileManager={handleRevealInFileManager}
+                />
+              ))
+            )}
           </nav>
         )}
       </div>

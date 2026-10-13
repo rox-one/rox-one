@@ -13,7 +13,13 @@ import { FileText, FolderClosed, TriangleAlert } from 'lucide-react'
 import { Markdown } from '@rox/ui/markdown'
 import type { MemoryRepoFile, MemoryRepoTreeNode } from '@rox/shared/memory/repo'
 import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboard'
+import { WindowedTreeList } from '@/components/ui/entity-list'
 import { cn } from '@/lib/utils'
+
+/** Above this many tree rows the files pane windows (remainder of #1578). */
+export const FILES_TREE_WINDOW_THRESHOLD = 200
+/** Measured file-row height until ResizeObserver reports the real one. */
+export const FILES_TREE_ROW_ESTIMATE = 28
 
 export interface MemoryRepoFilesPanelProps {
   bankId: string
@@ -124,6 +130,51 @@ function Badge({ label, tone }: { label: string; tone: 'edited' | 'dreamed' }) {
   )
 }
 
+function FileTreeRow({
+  node,
+  selectedPath,
+  onSelect,
+  t,
+}: {
+  node: MemoryRepoTreeNode
+  selectedPath: string | null
+  onSelect: (path: string) => void
+  t: (key: string) => string
+}) {
+  const isFile = node.type === 'file'
+  const selected = isFile && node.path === selectedPath
+  const indent = { paddingLeft: `${8 + node.depth * 12}px` }
+  if (!isFile) {
+    return (
+      <div
+        className="flex min-h-7 items-center gap-1.5 text-small font-medium text-text-secondary"
+        style={indent}
+      >
+        <FolderClosed aria-hidden="true" className="icon-caption shrink-0" />
+        <span className="truncate" title={node.name}>{node.name}</span>
+      </div>
+    )
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(node.path)}
+      aria-current={selected ? 'true' : undefined}
+      data-testid={`memory-repo-file-${node.path}`}
+      className={cn(
+        'flex min-h-7 w-full items-center gap-1.5 rounded-[var(--radius-control)] py-1 pr-1.5 text-left text-small outline-none focus-visible:ring-2 focus-visible:ring-accent',
+        selected ? 'bg-accent/10 font-medium text-accent' : 'text-foreground-90 hover:bg-surface-hover',
+      )}
+      style={indent}
+    >
+      <FileText aria-hidden="true" className="icon-caption shrink-0 text-text-muted" />
+      <span className="min-w-0 flex-1 truncate" title={node.name}>{node.name}</span>
+      {node.badges?.includes('edited') ? <Badge tone="edited" label={t('memory.repo.file.badgeEdited')} /> : null}
+      {node.badges?.includes('dreamed') ? <Badge tone="dreamed" label={t('memory.repo.file.badgeDreamed')} /> : null}
+    </button>
+  )
+}
+
 export function MemoryRepoFilesPanel({
   tree,
   selectedPath,
@@ -133,6 +184,7 @@ export function MemoryRepoFilesPanel({
   fileLoading = false,
 }: MemoryRepoFilesPanelProps) {
   const { t } = useTranslation()
+  const viewportRef = React.useRef<HTMLDivElement>(null)
 
   const handleBodyLink = React.useCallback(
     (target: string) => {
@@ -151,6 +203,7 @@ export function MemoryRepoFilesPanel({
 
   const treePane = (
     <div
+      ref={viewportRef}
       data-focus-zone="sidebar"
       data-testid="memory-repo-files-tree"
       onKeyDown={handleSidebarTreeKeyDown}
@@ -177,46 +230,21 @@ export function MemoryRepoFilesPanel({
           </p>
         </div>
       ) : (
-        <ul aria-label={t('memory.repo.tree.title')} className="flex flex-col gap-px px-1.5">
-          {tree.map((node) => {
-            const isFile = node.type === 'file'
-            const selected = isFile && node.path === selectedPath
-            const indent = { paddingLeft: `${8 + node.depth * 12}px` }
-            if (!isFile) {
-              return (
-                <li key={node.path}>
-                  <div
-                    className="flex min-h-7 items-center gap-1.5 text-small font-medium text-text-secondary"
-                    style={indent}
-                  >
-                    <FolderClosed aria-hidden="true" className="icon-caption shrink-0" />
-                    <span className="truncate" title={node.name}>{node.name}</span>
-                  </div>
-                </li>
-              )
-            }
-            return (
-              <li key={node.path}>
-                <button
-                  type="button"
-                  onClick={() => onSelect(node.path)}
-                  aria-current={selected ? 'true' : undefined}
-                  data-testid={`memory-repo-file-${node.path}`}
-                  className={cn(
-                    'flex min-h-7 w-full items-center gap-1.5 rounded-[var(--radius-control)] py-1 pr-1.5 text-left text-small outline-none focus-visible:ring-2 focus-visible:ring-accent',
-                    selected ? 'bg-accent/10 font-medium text-accent' : 'text-foreground-90 hover:bg-surface-hover',
-                  )}
-                  style={indent}
-                >
-                  <FileText aria-hidden="true" className="icon-caption shrink-0 text-text-muted" />
-                  <span className="min-w-0 flex-1 truncate" title={node.name}>{node.name}</span>
-                  {node.badges?.includes('edited') ? <Badge tone="edited" label={t('memory.repo.file.badgeEdited')} /> : null}
-                  {node.badges?.includes('dreamed') ? <Badge tone="dreamed" label={t('memory.repo.file.badgeDreamed')} /> : null}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+        <WindowedTreeList<MemoryRepoTreeNode>
+          rows={tree}
+          getKey={(node) => node.path}
+          renderRow={(node) => (
+            <FileTreeRow node={node} selectedPath={selectedPath} onSelect={onSelect} t={t} />
+          )}
+          viewportRef={viewportRef}
+          windowThreshold={FILES_TREE_WINDOW_THRESHOLD}
+          rowHeight={FILES_TREE_ROW_ESTIMATE}
+          className="flex flex-col gap-px px-1.5"
+          containerProps={{
+            role: 'list',
+            'aria-label': t('memory.repo.tree.title'),
+          }}
+        />
       )}
     </div>
   )
