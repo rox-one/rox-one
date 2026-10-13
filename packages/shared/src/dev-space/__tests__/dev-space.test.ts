@@ -58,6 +58,9 @@ describe('devSpace/podcast channel values', () => {
       'devSpace:listArtifacts',
       'devSpace:readArtifact',
       'devSpace:generateQuestions',
+      // Не во фризе 02-SPEC-foundations.md §5.1, но канона: v1.x auto-watch (В8/В11),
+      // задокументирован в IMPLEMENTATION-NOTES §1.1/§6 и в golden ipc-channels.generated.ts.
+      'devSpace:setWatch',
       'devSpace:cloneProgress',
       'devSpace:changed',
       'devSpace:runProgress',
