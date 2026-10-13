@@ -1056,8 +1056,8 @@ export function isLockFileLive(path: string, options: LockLivenessOptions): bool
   if (identity.pid === process.pid) return false
   if (!options.isPidAlive(identity.pid)) return false
   const writtenAt = identity.startedAt > 0 ? identity.startedAt : st.mtimeMs
-  // Last sign of life: a long merge touches its lock (mtime) while the lock's
-  // startedAt stays fixed at creation.
+  // Last sign of life: a *renewed* lock (one whose caller declares a TTL) is
+  // touched while it is held, while its startedAt stays fixed at creation.
   const lastSeen = Math.max(writtenAt, st.mtimeMs)
   let bootTime = 0
   try {
@@ -1066,10 +1066,18 @@ export function isLockFileLive(path: string, options: LockLivenessOptions): bool
   } catch {
     bootTime = 0
   }
-  // Last sign of life before the current boot (startedAt, else the file mtime
-  // — legacy plain-PID locks carry no timestamp): the PID was reused, not ours.
-  // A lock touched after boot still has a live holder, so the fresh mtime wins.
-  if (bootTime > 0 && lastSeen < bootTime) return false
+  // PID reuse across a boot is judged on the timestamp the holder wrote
+  // (`startedAt`, else the file mtime — legacy plain-PID locks carry none),
+  // which is the rule server-core's `isLockFromPreviousBoot` applies. A
+  // write-once writer lock (`config.json.lock` / `.server.lock` / `.app.lock`,
+  // no `ttlMs`) whose `startedAt` predates this boot belongs to a dead holder
+  // whatever its mtime says: nothing refreshes a writer lock's mtime, so the
+  // mtime only records when the dead holder wrote it. Only a caller that
+  // declares `ttlMs` declares a renewed lock (the migration process lock
+  // heartbeats with `touch()`), and there the newest of startedAt and mtime is
+  // the last sign of life.
+  const bootStamp = options.ttlMs === undefined ? writtenAt : lastSeen
+  if (bootTime > 0 && bootStamp < bootTime) return false
   // TTL from the last sign of life: a long merge touches its lock (mtime).
   if (options.ttlMs !== undefined && options.now - lastSeen > options.ttlMs) return false
   return true
