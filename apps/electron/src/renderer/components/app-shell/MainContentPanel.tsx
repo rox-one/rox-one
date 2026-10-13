@@ -21,7 +21,7 @@ import { StoplightProvider } from '@/context/StoplightContext'
 import { panelRouteKey } from './panel-route-key'
 import {
   useNavigationState,
-  useNavigation,
+  useNavigationStatus,
   isSessionsNavigation,
   isSourcesNavigation,
   isSettingsNavigation,
@@ -220,7 +220,7 @@ export function MainContentPanel({
   panelId,
 }: MainContentPanelProps) {
   const globalNavState = useNavigationState()
-  const { isSessionsReady = true, unavailableWorkspaceSlug } = useNavigation()
+  const { isSessionsReady = true, unavailableWorkspaceSlug } = useNavigationStatus()
   const requestedNavState = unavailableWorkspaceSlug ? globalNavState : navStateOverride ?? globalNavState
   const { activeWorkspaceId, workspaces, activeSessionWorkingDirectory } = useAppShellContext()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
@@ -327,7 +327,7 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
   } = useAppShellContext()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const remoteWorkspaceId = workspaces.find(workspace => workspace.id === activeWorkspaceId)?.remoteServer?.remoteWorkspaceId
-  const { isSessionsReady = true } = useNavigation()
+  const { isSessionsReady = true } = useNavigationStatus()
   const [sessionSelection] = useSession()
   const store = useStore()
   const catalogSessionId = sessionSelection.selected

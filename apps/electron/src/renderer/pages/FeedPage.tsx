@@ -47,7 +47,6 @@ import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspac
 import { workspaceProjectContextsAtom } from '@/atoms/workspace-context'
 import { cn } from '@/lib/utils'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
-import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useAutomations } from '@/hooks/useAutomations'
 import { useTeamState } from '@/components/team/team-store'
 import { useTeamRoster } from '@/components/team/use-team-roster'
@@ -357,16 +356,6 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   useEffect(() => {
     if (loaded && sourceDataWorkspaceId === workspaceId && sourceFilter && !data.sources.some((source) => source.id === sourceFilter)) setSourceFilter(null)
   }, [loaded, sourceDataWorkspaceId, workspaceId, sourceFilter, data.sources])
-  // Session activity changes → debounced re-aggregate.
-  const sessionMap = useAtomValue(sessionMetaMapAtom)
-  const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const first = useRef(true)
-  useEffect(() => {
-    if (first.current) { first.current = false; return }
-    if (debounce.current) clearTimeout(debounce.current)
-    debounce.current = setTimeout(() => void load(), 1500)
-    return () => { if (debounce.current) clearTimeout(debounce.current) }
-  }, [sessionMap, load])
 
   // Team («Команда») — renderer-side local-first store.
   const team = useTeamState()

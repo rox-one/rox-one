@@ -98,7 +98,7 @@ import type { RichTextInputHandle } from "@/components/ui/rich-text-input"
 import { useBackgroundTasks } from "@/hooks/useBackgroundTasks"
 import { useTurnCardExpansion } from "@/hooks/useTurnCardExpansion"
 import { useContextualSuggestions } from "@/hooks/useContextualSuggestions"
-import { useNavigation } from "@/contexts/NavigationContext"
+import { useNavigationActions } from "@/contexts/NavigationContext"
 import { useAppShellContext } from "@/context/AppShellContext"
 import { navigate, routes } from "@/lib/navigate"
 import { SideThreadPreviewDialog, type SideThreadPreview } from "@/components/chat/SideThreadPreviewDialog"
@@ -776,7 +776,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   const followUpOpenNonceRef = React.useRef(0)
 
   // Navigation for session branching
-  const { navigate } = useNavigation()
+  const { navigate } = useNavigationActions()
 
   // Get isDark from useTheme hook for overlay theme
   // This accounts for scenic themes (like Haze) that force dark mode

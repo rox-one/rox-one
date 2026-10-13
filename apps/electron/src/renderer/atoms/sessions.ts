@@ -9,6 +9,7 @@
  */
 
 import { atom } from 'jotai'
+import { selectAtom } from 'jotai/utils'
 import type { Getter, Setter } from 'jotai/vanilla'
 import { atomFamily } from 'jotai-family'
 import type { Session, Message, SessionPriority } from '../../shared/types'
@@ -181,6 +182,14 @@ export const sessionAtomFamily = atomFamily(
  * Only contains lightweight data needed for SessionList
  */
 export const sessionMetaMapAtom = atom<Map<string, SessionMeta>>(new Map())
+
+/** Per-session meta so a write to session B does not re-render a consumer of A. */
+export const sessionMetaByIdAtom = atomFamily((sessionId: string) =>
+  selectAtom(sessionMetaMapAtom, (map) => map.get(sessionId), (a, b) => a === b),
+)
+
+/** Derived counts that do not subscribe to the full meta map identity. */
+export const sessionMetaCountAtom = selectAtom(sessionMetaMapAtom, (map) => map.size)
 
 /**
  * Ephemeral per-session collaboration activity (a2.1/a2.4): live viewers and

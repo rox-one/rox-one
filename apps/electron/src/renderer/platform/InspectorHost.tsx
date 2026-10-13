@@ -26,7 +26,7 @@ import {
   getPanelTypeFromRoute,
   parseSessionIdFromRoute,
 } from '@/atoms/panel-stack'
-import { sessionMetaMapAtom } from '@/atoms/sessions'
+import { sessionMetaByIdAtom } from '@/atoms/sessions'
 import {
   bottomTerminalOpenAtom,
   featureLensMorphV1Atom,
@@ -39,7 +39,7 @@ import {
   inspectorVisibleAtom,
   type InspectorSectionId,
 } from '@/atoms/unified-shell'
-import { isConnectionsNavigation, useNavigation, useNavigationState } from '@/contexts/NavigationContext'
+import { isConnectionsNavigation, useNavigationActions, useNavigationState } from '@/contexts/NavigationContext'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { useOptionalDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
 import { cn } from '@/lib/utils'
@@ -108,15 +108,13 @@ function InfoSection() {
   const route = useAtomValue(focusedPanelRouteAtom)
   const panelId = useAtomValue(focusedPanelIdAtom)
   const navState = useNavigationState()
-  const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const shellFlags = useAtomValue(enabledShellFlagsAtom)
+  const sessionId = route ? parseSessionIdFromRoute(route) : null
+  const sessionMeta = useAtomValue(sessionMetaByIdAtom(sessionId ?? ''))
 
   if (isConnectionsNavigation(navState)) {
     return <ConnectionInfoSection />
   }
-
-  const sessionId = route ? parseSessionIdFromRoute(route) : null
-  const sessionMeta = sessionId ? sessionMetaMap.get(sessionId) : undefined
   const locale = getAppLocale()
   const formatDate = (ts?: number) =>
     ts ? new Date(ts).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' }) : null
@@ -198,15 +196,15 @@ export function InspectorHost() {
   const lensMorph = useAtomValue(featureLensMorphV1Atom)
   const [viewportWidth, setViewportWidth] = useState<number>(() => (typeof window !== 'undefined' ? window.innerWidth : INSPECTOR_MAX_WIDTH))
   const route = useAtomValue(focusedPanelRouteAtom)
-  const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
-  const { updateRightSidebar, navigationState } = useNavigation()
+  const { updateRightSidebar } = useNavigationActions()
+  const navigationState = useNavigationState()
   const panelType = route ? getPanelTypeFromRoute(route) : null
   const sessionMode = harnessInspector && panelType === 'session'
   const sectionIds = inspectorSectionsForMode(sessionMode ? 'session' : 'knowledge')
   const section = normalizeInspectorSection(sectionRaw)
   const activeSection = sectionIds.includes(section) ? section : sectionIds[0]!
   const sessionId = route ? parseSessionIdFromRoute(route) : null
-  const sessionMeta = sessionId ? sessionMetaMap.get(sessionId) : undefined
+  const sessionMeta = useAtomValue(sessionMetaByIdAtom(sessionId ?? ''))
   const shell = useOptionalAppShellContext()
   const workspace = shell?.workspaces.find((item) => item.id === (sessionMeta?.workspaceId ?? shell.activeWorkspaceId))
   const sessionFolderPath =
