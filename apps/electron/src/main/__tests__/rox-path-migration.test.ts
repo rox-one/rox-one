@@ -261,9 +261,15 @@ describe('W1-13 remote visible-home shell commands (flag ON only)', () => {
 
   it('mv -T refuses a ~/rox created between the re-check and mv', () => temporary(root => {
     plantManaged(root)
-    const env = fakeBin(root, {
-      mv: `if test "$2" = "$HOME/.rox" || test "$1" = "$HOME/.rox"; then mkdir -p "$HOME/rox" && echo late > "$HOME/rox/late.txt"; fi; exec ${realMv} "$@"`,
-    })
+    // A stock macOS mv is BSD (no -T): pin the GNU branch the command reaches
+    // where `mv -T` exists. BSD's mid-mv race has no guard to pin (see above).
+    const gnuMv = [
+      't=; case "$1" in -T) t=-T; shift;; esac',
+      'if test "$2" = "$HOME/.rox" || test "$1" = "$HOME/.rox"; then mkdir -p "$HOME/rox" && echo late > "$HOME/rox/late.txt"; fi',
+      'if test -n "$t" && test -d "$2"; then echo "mv: cannot overwrite directory $2" >&2; exit 1; fi',
+      `exec ${realMv} "$@"`,
+    ].join('\n')
+    const env = fakeBin(root, { mv: gnuMv })
     expect(moveIn(root, env).stdout.toString().trim()).toBe('KEPT')
     expect(readdirSync(join(root, 'rox'))).toEqual(['late.txt'])
     expect(lstatSync(join(root, '.rox')).isDirectory()).toBe(true)

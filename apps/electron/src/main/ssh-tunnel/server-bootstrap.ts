@@ -239,7 +239,12 @@ export const REMOTE_HOME_MOVE_COMMAND = String.raw`if test -d ~/.rox && ! test -
   String.raw`i=0; while alive && test "$i" -lt "$w"; do sleep 1; i=$((i+1)); done; ` +
   String.raw`live=; if alive; then live=1; fi; ` +
   String.raw`for lock in ~/.rox/.server.lock ~/.rox/config.json.lock ~/.rox/.app.lock ~/.rox/$d/config/.server.lock; do ` + // legacy home writer locks
-  String.raw`pid=$(sed -n -e 's/.*"pid"[^0-9]*\([0-9][0-9]*\).*/\1/p' -e 's/^\([0-9][0-9]*\)$/\1/p' "$lock" 2>/dev/null | head -n 1); ` +
+  // Bare-PID locks first, JSON `{pid}` second: every lock line then matches at
+  // most one expression. BSD sed emits both prints of a final newline-less line
+  // with no separator between them, so a JSON lock (the shape the app writes,
+  // `writeFileSync(LOCK_FILE, JSON.stringify(payload))`) doubled its own pid
+  // and `kill -0` never saw the live writer.
+  String.raw`pid=$(sed -n -e 's/^\([0-9][0-9]*\)$/\1/p' -e 's/.*"pid"[^0-9]*\([0-9][0-9]*\).*/\1/p' "$lock" 2>/dev/null | head -n 1); ` +
   String.raw`if test -n "$pid" && kill -0 "$pid" 2>/dev/null; then live=1; fi; done; ` +
   // `mv -T` (GNU/busybox) never moves into an existing directory; BSD mv has
   // no -T, so there the re-check right before mv is the guard.
