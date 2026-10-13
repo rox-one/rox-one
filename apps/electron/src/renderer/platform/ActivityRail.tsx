@@ -2,13 +2,13 @@
  * ActivityRail (W1 unified shell, spec S-03 §3.1/§3.2) — vertical navigation
  * rail for top-level destinations (design-compact density).
  *
- * The rail is the seven core modes (A1/TZ) — the same set AppShell's sidebar
- * renders: Дом, Сессии, Встречи, Задачи, Заметки, Лента, Входящие. The list and
- * the active-state predicates come from `CORE_MODES` + `resolveSeededModes`
- * (the seed the titlebar ModeBar consumes), so there is no divergent copy;
- * navigation goes through NavigationContext's `navigate()` (the URL stays the
- * source of truth). Mode-screen-flag-gated modes (`rootRoute: null`) render
- * disabled-with-tooltip. Extra screens continue the list below the modes.
+ * WP5 (#1580): the rail renders the single primary-nav registry
+ * (`components/app-shell/primary-nav.ts`) — the same ordered list, groups and
+ * flag gating as AppShell's sidebar: the primary group, then a «Ещё»
+ * disclosure (registry «Ещё» entries + extra screens). Navigation goes through
+ * NavigationContext's `navigate()` (the URL stays the source of truth). A
+ * built mode screen whose flag is off renders disabled-with-tooltip. The ⌘1…7
+ * mode-pill slots still follow `modes-seed.ts` and are not affected.
  *
  * Two states, persisted via `activityRailCollapsedAtom`
  * (KEYS.activityRailCollapsed):
@@ -20,25 +20,22 @@
  */
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { ChevronsLeft, ChevronsRight, Inbox, LayoutGrid, Settings } from 'lucide-react'
+import { ChevronsLeft, ChevronsRight, LayoutGrid, MoreHorizontal, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { isModeNavigable, type ModeContribution } from '@rox/core/platform'
 import { activityRailCollapsedAtom, activityRailNarrowOverrideAtom, featureLayoutEngineAtom } from '@/atoms/unified-shell'
 import { modeScreenFlagsAtom } from '@/atoms/mode-flags'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
 import { CHROME_DENSITY } from './chrome-density'
-import { MODE_ICONS } from './ModeBar'
-import { CORE_MODES, resolveSeededModes, type SeededMode } from './modes-seed'
+import { resolvePrimaryNav, type ResolvedPrimaryNavEntry } from '../components/app-shell/primary-nav'
 import { ExtraScreensRailGroup } from '../pages/extra-screens/ExtraScreensRailGroup'
 import { RailRow } from './RailRow'
 import { ModesRailGroup } from './ModesRailGroup'
 import { layoutDeckOpenAtom } from './LayoutDeck'
 import { MissionsRailGroup } from './MissionsRailGroup'
 import { useShellModes } from './useModes'
-import { routes, type Route } from '../../shared/routes'
+import { routes } from '../../shared/routes'
 import { preloadRoute } from '../components/app-shell/route-pages'
-import type { RoutePageName } from '../components/app-shell/route-pages'
 
 export { RailRow } from './RailRow'
 
@@ -119,55 +116,33 @@ export function useEffectiveRailCollapsed(): {
   return { collapsed, toggle, railRef }
 }
 
-const seedById: Record<string, SeededMode> = Object.fromEntries(
-  CORE_MODES.map((mode) => [mode.contribution.id, mode]),
-)
-
-/**
- * PERF-10 (#1577) — hover/focus prefetch table: rail mode id → the lazy route
- * chunk the dispatcher (`MainContentPanel`'s `SurfaceRoutePanel`) mounts for
- * that mode's `rootRoute`. Modes whose landing page is eager have no entry:
- * `home` (HomeFrontPage) and `chat` (the session list is rendered inline; the
- * board/table/heatmap chunks depend on a remembered view mode the route does
- * not carry), so nothing is claimed for them.
- */
-const RAIL_MODE_ROUTE_PRELOADS: Record<string, RoutePageName> = {
-  meetings: 'planWorkspace', // routes.view.meetings() → MeetingsPage (planWorkspace chunk)
-  tasks: 'tasks', // routes.view.tasks() → TasksPage
-  notes: 'notes', // routes.view.notes() → NotesPage
-  feed: 'feed', // routes.view.feed() → FeedPage
-  inbox: 'inbox', // routes.view.inbox() → InboxPage
-}
-
-function RailModeItem({ mode, active, collapsed }: { mode: ModeContribution; active: boolean; collapsed: boolean }) {
+function RailNavItem({ entry, active, collapsed }: { entry: ResolvedPrimaryNavEntry; active: boolean; collapsed: boolean }) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const Icon = MODE_ICONS[mode.icon] ?? Inbox
-  const label = t(mode.titleKey)
-  const disabled = !isModeNavigable(mode)
-  const preload = RAIL_MODE_ROUTE_PRELOADS[mode.id]
+  const label = t(entry.labelKey)
+  const disabled = entry.disabled
   // PERF-10 (#1577): preload the destination chunk once the pointer/focus
   // enters the row (disabled rows land nowhere). The preloader memoizes, so
   // repeat events are free and a failed chunk stays retryable; the route error
   // boundary owns the user-visible failure.
   const prefetchOnIntent = () => {
-    if (disabled || !preload) return
-    void preloadRoute(preload).catch(() => {})
+    if (disabled || !entry.preload) return
+    void preloadRoute(entry.preload).catch(() => {})
   }
   return (
     <div className="contents" onPointerEnter={prefetchOnIntent} onFocus={prefetchOnIntent}>
       <RailRow
-        icon={Icon}
+        icon={entry.icon}
         label={label}
         tooltip={disabled ? `${label} · ${t('workbench.mode.unavailable')}` : label}
         collapsed={collapsed}
         disabled={disabled}
         active={!disabled && active}
         onClick={() => {
-          if (mode.rootRoute) void navigate(mode.rootRoute as Route)
+          if (entry.route) void navigate(entry.route())
         }}
         muted
-        testId={`rail-item-${mode.id}`}
+        testId={`rail-item-${entry.id}`}
       />
     </div>
   )
@@ -189,12 +164,16 @@ export function ActivityRail() {
   const layoutEngineOn = useAtomValue(featureLayoutEngineAtom)
   const openLayoutDeck = useSetAtom(layoutDeckOpenAtom)
   const { shellFlags } = useShellModes()
-  const modes = resolveSeededModes(
-    CORE_MODES.map((mode) => mode.contribution),
-    modeFlags,
-    shellFlags,
-  )
-  const activeId = modes.find((mode) => seedById[mode.id]?.isActive(navState))?.id ?? null
+  // The rail has no browser opener (AppShell owns it): action-only entries
+  // stay in the sidebar. Settings lives in the rail footer.
+  const entries = resolvePrimaryNav({ shellFlags, modeFlags })
+    .filter((entry) => entry.route !== null && !entry.footer)
+  const activeId = entries.find((entry) => !entry.disabled && entry.isActive(navState))?.id ?? null
+  const primary = entries.filter((entry) => entry.group === 'primary')
+  const more = entries.filter((entry) => entry.group === 'more')
+  const [moreOpen, setMoreOpen] = useState(false)
+  // An active «Ещё» destination keeps the group open so the selection is visible.
+  const moreExpanded = moreOpen || more.some((entry) => entry.id === activeId)
 
   return (
     <nav
@@ -208,16 +187,35 @@ export function ActivityRail() {
       data-shell-role="activity-rail"
       data-rail-state={collapsed ? 'collapsed' : 'expanded'}
     >
-      {/* G3 «Миссии» pilot: flag-gated section above the seven core modes. */}
+      {/* G3 «Миссии» pilot: flag-gated section above the primary group. */}
       <MissionsRailGroup collapsed={collapsed} />
       <RailSection collapsed={collapsed}>
-        {modes.map((mode) => (
-          <RailModeItem key={mode.id} mode={mode} active={mode.id === activeId} collapsed={collapsed} />
+        {primary.map((entry) => (
+          <RailNavItem key={entry.id} entry={entry} active={entry.id === activeId} collapsed={collapsed} />
         ))}
       </RailSection>
-      {/* W1-07 (#1504): registered modes in pill order; renders nothing with every mode flag off. */}
+      {/* W1-07 (#1504): registered modes the registry does not list (wave-2); nothing by default. */}
       <ModesRailGroup collapsed={collapsed} />
-      <ExtraScreensRailGroup collapsed={collapsed} />
+      <div className={cn('mt-[12px] flex flex-col gap-[4px]', collapsed ? 'items-center' : 'items-stretch')}>
+        <RailRow
+          icon={MoreHorizontal}
+          label={t('workbench.mode.more')}
+          collapsed={collapsed}
+          expanded={moreExpanded}
+          controls="rail-more-group"
+          onClick={() => setMoreOpen(!moreExpanded)}
+          muted
+          testId="rail-more"
+        />
+        {moreExpanded && (
+          <div id="rail-more-group" role="group" aria-label={t('workbench.mode.more')} className={cn('flex flex-col gap-[4px]', collapsed ? 'items-center' : 'items-stretch')} data-testid="rail-more-group">
+            {more.map((entry) => (
+              <RailNavItem key={entry.id} entry={entry} active={entry.id === activeId} collapsed={collapsed} />
+            ))}
+            <ExtraScreensRailGroup collapsed={collapsed} />
+          </div>
+        )}
+      </div>
       {/* G4 «Студия»: the layout deck trigger, only while the engine flag is ON. */}
       {layoutEngineOn && (
         <RailSection collapsed={collapsed}>

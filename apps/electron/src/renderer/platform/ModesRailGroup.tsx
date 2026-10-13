@@ -19,6 +19,10 @@ import { resolveLucideIcon } from './lucide-icon'
 import { isModeActive } from './mode-registry-bootstrap'
 import { railModeEntries } from './surface-shell'
 import { useShellModes } from './useModes'
+import { PRIMARY_NAV } from '../components/app-shell/primary-nav'
+
+/** WP5: modes the primary-nav registry already renders (Messenger, Calendar, Goals). Entries without a root screen (Base, Wiki) do not shadow a registered mode. */
+const REGISTRY_IDS: ReadonlySet<string> = new Set(PRIMARY_NAV.filter((entry) => entry.route !== null).map((entry) => entry.id))
 
 /**
  * PERF-10 (#1577) — hover/focus prefetch table: every row here navigates to
@@ -37,7 +41,7 @@ export function ModesRailGroup({ collapsed = false }: { collapsed?: boolean }) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const navState = useNavigationState()
-  const entries = railModeEntries(useShellModes().modes)
+  const entries = railModeEntries(useShellModes().modes).filter((mode) => !REGISTRY_IDS.has(mode.id))
   if (entries.length === 0) return null
   return (
     <div

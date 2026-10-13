@@ -136,6 +136,8 @@ interface LeftSidebarProps {
   /** Limit the outer sidebar to its service; nested sections keep their children. */
   serviceId?: AppNavDestinationId | null
   onExpand?: (link: LinkItem) => void
+  /** Top-level lists reserve the chevron column on every row (default true). */
+  disclosureColumn?: boolean
 }
 
 // Stagger only small trees. A 500-row section must not pay sequential delays.
@@ -205,7 +207,8 @@ const itemVariants: Variants = {
 /** WP4: the one sidebar row hover/active fill (UI-A1 state token). */
 const ROW_FILL = 'bg-[var(--state-hover)]'
 
-export const LeftSidebar = React.memo(function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested, serviceId, onExpand }: LeftSidebarProps) {
+export const LeftSidebar = React.memo(function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested, serviceId, onExpand, disclosureColumn = true }: LeftSidebarProps) {
+  const slot = !isNested && disclosureColumn
   const { t } = useTranslation()
   const reduceMotion = usePrefersReducedMotion()
   const visibleLinks = !isNested && serviceId !== undefined
@@ -273,7 +276,10 @@ export const LeftSidebar = React.memo(function LeftSidebar({ links, isCollapsed,
             />
           ) : (
             <div className="group/section">
-              <div className="flex min-w-0 items-center gap-1">
+              <div className={cn("flex min-w-0 items-center", slot ? "gap-0.5" : "gap-1")}>
+                {/* One icon column: top-level rows without a chevron keep an
+                    empty 16px slot so their icons line up with expandable rows. */}
+                {slot && <span className="h-4 w-4 shrink-0" aria-hidden="true" data-disclosure-slot="" />}
                 <div className="min-w-0 flex-1">{wrapWithContextMenu(link, <SidebarButton link={link} itemProps={itemProps} />)}</div>
                 {link.actions}
               </div>
@@ -599,7 +605,7 @@ function SortableStatusList({ items, onReorder, getItemProps, focusedItemId, tra
             <div className="my-1 ml-2" aria-hidden="true">
               <div className="h-px bg-border-subtle" />
             </div>
-            <LeftSidebar links={trailingItems} isCollapsed={false} getItemProps={getItemProps} focusedItemId={focusedItemId} />
+            <LeftSidebar links={trailingItems} isCollapsed={false} getItemProps={getItemProps} focusedItemId={focusedItemId} disclosureColumn={false} />
           </>
         )}
       </div>

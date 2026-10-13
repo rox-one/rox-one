@@ -4,7 +4,7 @@
  * (inspectorVisibleAtom), memoises the links and renders ShellSidebarNav.
  * Render counts come from translation calls each component makes on every
  * render (LeftSidebar: `sidebar.contextNavigation`; ShellSidebarNav:
- * `sidebar.applicationSections`), counted by an i18next post-processor. (A
+ * `workbench.mode.more`), counted by an i18next post-processor. (A
  * React.Profiler is not usable here: it reports a commit whenever its parent
  * re-renders, even when every child bails out.) A control harness with the
  * pre-WP3 shape (links rebuilt inline every render) shows the old behaviour.
@@ -35,7 +35,7 @@ i18n.use({
   process(value: string, key: string | string[]) {
     const k = Array.isArray(key) ? key[0] : key
     if (k === 'sidebar.contextNavigation') counts.sidebar++
-    if (k === 'sidebar.applicationSections') counts.nav++
+    if (k === 'workbench.mode.more') counts.nav++
     return value
   },
 })
@@ -73,7 +73,7 @@ function MemoShell() {
   const links = React.useMemo(makeLinks, [])
   const onExpand = React.useCallback(noop, [])
   return (
-    <ShellSidebarNav baseLinks={links} isCollapsed={false} onExpand={onExpand} applicationSectionsOpen={false} onApplicationSectionsOpenChange={noop} />
+    <ShellSidebarNav baseLinks={links} isCollapsed={false} onExpand={onExpand} onOpenBrowser={noop} applicationSectionsOpen={false} onApplicationSectionsOpenChange={noop} />
   )
 }
 
@@ -145,8 +145,8 @@ describe('WP3: shell sidebar re-renders', () => {
     expect(counts.nav).toBeGreaterThan(navAfterMount)
     const links = Array.from(host!.querySelectorAll('[data-sidebar-link-id]'))
       .map(el => el.getAttribute('data-sidebar-link-id'))
-      .filter(id => !id?.startsWith('nav:screen:'))
-    // Developers follows Pages inside «Разделы приложения»; mode links stay in the primary rail.
-    expect(links).toEqual(['nav:home', 'nav:allSessions', 'nav:pages', 'nav:developers'])
+    // WP5: Developers sits in «Ещё» after the registry's connections row.
+    expect(links).toContain('nav:developers')
+    expect(links.indexOf('nav:developers')).toBeGreaterThan(links.indexOf('nav:connections'))
   })
 })
