@@ -18,6 +18,28 @@ interface HydrateProps {
 }
 
 /**
+ * P-10-33 / D-26: the mobile chat story mounts ChatDisplay → MemoryProvenanceStrip,
+ * which calls `window.electronAPI.getSessionProvenance`. The playground mock
+ * electronAPI omits that session method, so the story throws
+ * "getSessionProvenance is not a function" and never mounts (`root-timeout`).
+ * A null stub means "no provenance record" — the strip stays invisible, exactly
+ * as it does in production for a session with no record.
+ */
+export function ensureMobileSessionStubs(): void {
+  if (typeof window === 'undefined') return
+  const api = window.electronAPI
+  if (!api) return
+  if (typeof api.getSessionProvenance !== 'function') {
+    api.getSessionProvenance = async () => null
+  }
+}
+
+// Install on import so the stub exists before any descendant effect runs — a
+// child's effects fire before its provider's. Guarded and idempotent, mirroring
+// the mock-utils install pattern.
+ensureMobileSessionStubs()
+
+/**
  * Hydrates the isolated jotai store with mock data so atom-driven components
  * (SessionList, ChatDisplay) render against deterministic state.
  */
@@ -93,6 +115,9 @@ export function MobilePlaygroundProviders({
   llmConnections,
   children,
 }: MobilePlaygroundProvidersProps) {
+  // Re-assert before children render: a render function runs before its
+  // descendants mount, so the stub exists when MemoryProvenanceStrip's effect fires.
+  ensureMobileSessionStubs()
   // Fresh store per render — isolates demo state from the playground root.
   const store = React.useMemo(() => createStore(), [])
 

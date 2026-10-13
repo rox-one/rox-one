@@ -24,6 +24,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       toastOptions={{
         className: "!rounded-[var(--radius-card)] group",
+        // G9 P-09-31: the toast body reads the secondary text tier (not the
+        // muted/70% tier) and the action honours the 28px control floor.
+        classNames: {
+          content: "text-[var(--text-secondary)]",
+          actionButton: "min-h-[var(--control-hit-min)]",
+        },
       }}
       style={
         {

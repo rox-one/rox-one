@@ -372,7 +372,7 @@ function CloudRunsChipInner({
                   {t('cloudRuns.newRun')}
                 </Button>
               </div>
-              <p className="min-w-0 whitespace-normal break-words text-[11px] text-muted-foreground">{t('cloudRuns.topicHelp')}</p>
+              <p className="min-w-0 whitespace-normal break-words text-xs text-muted-foreground">{t('cloudRuns.topicHelp')}</p>
               {estimatedTokens !== null && (
                 <p className="min-w-0 whitespace-normal break-words text-xs text-muted-foreground">
                   {t('cloudRuns.estimate', { tokens: tokShort(estimatedTokens) })}
@@ -635,7 +635,7 @@ function CloudRunsChipInner({
                         +
                       </Button>
                     </div>
-                    <p className="min-w-0 whitespace-normal break-words px-0.5 text-[10px] text-muted-foreground">{t('cloudRuns.everyHoursHint')}</p>
+                    <p className="min-w-0 whitespace-normal break-words px-0.5 text-xs text-muted-foreground">{t('cloudRuns.everyHoursHint')}</p>
                   </div>
                 </div>
               )}

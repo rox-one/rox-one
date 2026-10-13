@@ -26,7 +26,7 @@ export function filterPeople(people: readonly PersonOption[], query: string): Pe
 }
 
 export function PersonAvatar({ person, size = 32 }: { person: Pick<PersonOption, 'name' | 'avatarUrl' | 'placeholder'>; size?: 20 | 24 | 32 }) {
-  const dims = size === 32 ? 'size-8 text-[12px]' : size === 24 ? 'size-6 text-[10px]' : 'size-5 text-[9px]'
+  const dims = size === 32 ? 'size-8 text-sm' : size === 24 ? 'size-6 text-xs' : 'size-5 text-xs'
   if (person.avatarUrl) {
     return <img src={person.avatarUrl} alt="" aria-hidden="true" className={cn('shrink-0 rounded-full object-cover', dims, person.placeholder && 'opacity-60')} />
   }
@@ -94,11 +94,11 @@ export function PeopleList({ people, selectedIds, multi = false, onPick, onEscap
         aria-label={t('entities.ui.person.search')}
         aria-controls={listId}
         aria-activedescendant={visible[clampedActive] ? `${listId}-${visible[clampedActive]!.id}` : undefined}
-        className={cn('h-8 rounded-[6px] bg-foreground/[0.05] px-2 text-[13px] placeholder:text-text-muted', FOCUS_RING)}
+        className={cn('h-8 rounded-[6px] bg-foreground/[0.05] px-2 text-base placeholder:text-text-muted', FOCUS_RING)}
       />
       <ul id={listId} role="listbox" aria-multiselectable={multi || undefined} aria-label={t('entities.ui.person.search')} className="max-h-[240px] overflow-y-auto">
         {visible.length === 0 ? (
-          <li role="presentation" className="px-2 py-2 text-[12px] text-text-muted">{t('entities.ui.person.noResults')}</li>
+          <li role="presentation" className="px-2 py-2 text-sm text-text-muted">{t('entities.ui.person.noResults')}</li>
         ) : visible.map((person, index) => {
           const selected = selectedIds?.has(person.id) ?? false
           return (
@@ -113,11 +113,11 @@ export function PeopleList({ people, selectedIds, multi = false, onPick, onEscap
             >
               <PersonAvatar person={person} size={24} />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-medium">{person.name}</span>
-                {person.title ? <span className="block truncate text-[11px] text-text-muted">{person.title}</span> : null}
+                <span className="block truncate text-base font-medium" title={person.name}>{person.name}</span>
+                {person.title ? <span className="block truncate text-xs text-text-muted" title={person.title}>{person.title}</span> : null}
               </span>
-              {person.placeholder ? <span className="shrink-0 text-[10px] text-text-muted">{t('entities.ui.person.invited')}</span> : null}
-              {multi ? <span aria-hidden="true" className={cn('shrink-0 text-[12px]', selected ? 'text-accent' : 'text-transparent')}>✓</span> : null}
+              {person.placeholder ? <span className="shrink-0 text-xs text-text-muted">{t('entities.ui.person.invited')}</span> : null}
+              {multi ? <span aria-hidden="true" className={cn('shrink-0 text-sm', selected ? 'text-accent' : 'text-transparent')}>✓</span> : null}
             </li>
           )
         })}

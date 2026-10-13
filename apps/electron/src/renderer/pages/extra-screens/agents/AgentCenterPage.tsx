@@ -259,7 +259,7 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
             <div className="flex flex-wrap items-center gap-2">
               <CardTitle>{t('extraScreens.agents.budgetTitle')}</CardTitle>
               <span className="flex-1" />
-              <span className="text-[12px] text-muted-foreground">{t('extraScreens.agents.budgetLabel')}</span>
+              <span className="text-sm text-muted-foreground">{t('extraScreens.agents.budgetLabel')}</span>
               <fieldset disabled={budgetLoading || busy.has('budget')}><TextField value={budgetDraft} onChange={setBudgetDraft} onEnter={commitBudget} onBlur={commitBudget} placeholder="$" className="h-7 w-[90px]" ariaLabel={t('extraScreens.agents.budgetLabel')} /></fieldset>
             </div>
             {center.budget?.limitUsd != null && (
@@ -267,7 +267,7 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
                 <div className={cn('h-full', center.budget.exhausted ? 'bg-destructive' : 'bg-accent')} style={{ width: `${Math.min(100, ((center.budget.spentUsd + center.budget.reservedUsd) / center.budget.limitUsd) * 100)}%` }} />
               </div>
             )}
-            <div className="mt-1.5 text-[12px] text-muted-foreground">
+            <div className="mt-1.5 text-sm text-muted-foreground">
               {budgetLoading
                 ? t('extraScreens.agents.budgetHint')
                 : center.budget?.limitUsd != null && center.budget.unresolvedUsd > 0
@@ -279,7 +279,7 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
                       : t('extraScreens.agents.budgetHint')}
             </div>
             {center.budget?.limitUsd != null && (
-              <div className="mt-1 text-[12px] text-muted-foreground">
+              <div className="mt-1 text-sm text-muted-foreground">
                 {t('extraScreens.agents.budgetRemaining')}: {center.budget.remainingUsd == null ? '—' : formatUsd(center.budget.remainingUsd)} · {t('extraScreens.agents.budgetReserved')}: {formatUsd(center.budget.reservedUsd)}
               </div>
             )}
@@ -371,9 +371,9 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
 function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'warn' | 'err' }) {
   return (
     <div className="rounded-[var(--radius-card)] bg-foreground/[0.04] px-3.5 py-3">
-      <div className="text-[12px] text-muted-foreground">{label}</div>
-      <div className={cn('mt-0.5 text-[22px] font-bold tabular-nums leading-tight', tone === 'warn' && 'text-status-warning', tone === 'err' && 'text-destructive')}>{value}</div>
-      {sub && <div className="text-[12px] text-muted-foreground">{sub}</div>}
+      <div className="text-sm text-muted-foreground">{label}</div>
+      <div className={cn('mt-0.5 text-stat font-bold numeric', tone === 'warn' && 'text-status-warning', tone === 'err' && 'text-destructive')}>{value}</div>
+      {sub && <div className="text-sm text-muted-foreground">{sub}</div>}
     </div>
   )
 }
@@ -382,11 +382,11 @@ function Section({ title, count, hint, actions, children }: { title: string; cou
   return (
     <section className="mt-5">
       <div className="flex items-center gap-2 pb-1">
-        <h2 className="text-[11px] uppercase tracking-[0.05em] text-muted-foreground">{title}{count ? ` · ${count}` : ''}</h2>
+        <h2 className="text-xs uppercase tracking-[0.05em] text-muted-foreground">{title}{count ? ` · ${count}` : ''}</h2>
         <span className="flex-1" />
         {actions}
       </div>
-      {hint && <div className="pb-1 text-[12px] text-muted-foreground">{hint}</div>}
+      {hint && <div className="pb-1 text-sm text-muted-foreground">{hint}</div>}
       <div className="flex flex-col gap-0.5">{children}</div>
     </section>
   )
@@ -396,8 +396,8 @@ function Row({ title, meta, dim, children }: { title: string; meta?: string; dim
   return (
     <div className="flex items-center gap-2 rounded-[var(--radius-control)] bg-foreground/[0.025] px-3 py-1.5">
       <div className="min-w-0 flex-1">
-        <div className={cn('truncate', dim && 'text-muted-foreground')}>{title}</div>
-        {meta && <div className="truncate text-[12px] text-muted-foreground">{meta}</div>}
+        <div className={cn('truncate', dim && 'text-muted-foreground')} title={title}>{title}</div>
+        {meta && <div className="truncate text-sm text-muted-foreground">{meta}</div>}
       </div>
       {children}
     </div>

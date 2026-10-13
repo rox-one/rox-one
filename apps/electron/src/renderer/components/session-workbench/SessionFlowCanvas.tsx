@@ -67,7 +67,7 @@ export function SessionFlowCanvas({
 
   return (
     <div className="relative h-full min-h-0 min-w-0 flex-1 bg-background">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center gap-2 px-3 py-1.5 text-[11px]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center gap-2 px-3 py-1.5 text-xs">
         <span className="text-muted-foreground">{t('entityView.flowLive')}</span>
         <span className="text-muted-foreground">· {graph.scenes.length}</span>
         <div className="pointer-events-auto ml-auto inline-flex rounded-md border border-border/60 bg-background/80 p-0.5 backdrop-blur">
@@ -131,7 +131,7 @@ export function SessionFlowCanvas({
                     onSelectMessage?.(scene.triggerMessageId)
                   }}
                 >
-                  <div className="truncate text-xs font-medium">
+                  <div className="truncate text-xs font-medium" title={scene.triggerPreview || scene.id}>
                     {scene.triggerPreview || scene.id}
                   </div>
                   {scene.tools.length > 0 && (
@@ -139,7 +139,7 @@ export function SessionFlowCanvas({
                       {scene.tools.slice(0, 4).map((tool) => (
                         <span
                           key={tool.toolCallId}
-                          className="rounded bg-foreground/5 px-1 font-mono text-[10px] text-muted-foreground"
+                          className="rounded bg-foreground/5 px-1 font-mono text-xs text-muted-foreground"
                         >
                           {tool.name}
                         </span>
@@ -147,7 +147,7 @@ export function SessionFlowCanvas({
                     </div>
                   )}
                   {scene.outcomePreview ? (
-                    <div className="mt-1 line-clamp-2 text-[10px] text-muted-foreground">
+                    <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                       {scene.outcomePreview}
                     </div>
                   ) : null}
@@ -160,7 +160,7 @@ export function SessionFlowCanvas({
       {selected && onFork ? (
         <button
           type="button"
-          className="absolute right-3 top-10 z-10 inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px]"
+          className="absolute right-3 top-10 z-10 inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs"
           onClick={() => onFork(selected.triggerMessageId)}
         >
           <GitBranch className="h-3 w-3" />

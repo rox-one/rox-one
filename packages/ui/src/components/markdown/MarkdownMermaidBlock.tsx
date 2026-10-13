@@ -193,11 +193,13 @@ export function MarkdownMermaidBlock({ code, className, showExpandButton = true,
             onClick={() => setIsFullscreen(true)}
             className={cn(
               "absolute top-2 right-2 p-1 rounded-[var(--radius-control)] transition-all z-10 select-none",
-              "opacity-0 group-hover:opacity-100",
+              "min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] inline-flex items-center justify-center",
+              "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
               "bg-background shadow-minimal",
               "text-muted-foreground/50 hover:text-foreground",
               "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100"
             )}
+            aria-label={t('common.viewFullscreen')}
             title={t('common.viewFullscreen')}
           >
             <Maximize2 className="w-3.5 h-3.5" />
@@ -229,7 +231,7 @@ export function MarkdownMermaidBlock({ code, className, showExpandButton = true,
             }}
             onClick={tapToOpen ? () => setIsFullscreen(true) : undefined}
             role={tapToOpen ? 'button' : undefined}
-            aria-label={tapToOpen ? 'Open Mermaid diagram fullscreen' : undefined}
+            aria-label={tapToOpen ? t('common.viewFullscreen') : undefined}
             tabIndex={tapToOpen ? 0 : undefined}
             onKeyDown={tapToOpen ? (e) => {
               if (e.key === 'Enter' || e.key === ' ') {

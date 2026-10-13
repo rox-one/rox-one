@@ -171,8 +171,8 @@ function NotesWikiPlayground() {
               index === 0 && 'bg-foreground/[0.08]',
             )}
           >
-            <div className="truncate text-xs font-medium">{note.title}</div>
-            <div className="truncate text-[11px] text-muted-foreground">{wikiMatchSubtitle(note, query)}</div>
+            <div className="truncate text-xs font-medium" title={note.title}>{note.title}</div>
+            <div className="truncate text-xs text-muted-foreground">{wikiMatchSubtitle(note, query)}</div>
           </button>
         ))}
         {showCreate ? (
@@ -185,7 +185,7 @@ function NotesWikiPlayground() {
             {t('notes.editor.wikiCreate', { title: query.trim() })}
           </button>
         ) : null}
-        <div className="border-t border-border/50 px-2 py-1 text-[10px] text-muted-foreground">
+        <div className="border-t border-border/50 px-2 py-1 text-xs text-muted-foreground">
           {t('notes.editor.wikiHint')}
         </div>
       </div>

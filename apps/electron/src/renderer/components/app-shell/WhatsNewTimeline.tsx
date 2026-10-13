@@ -184,14 +184,14 @@ export function WhatsNewTimeline({
                           {t('whatsNew.version', { version: note.version })}
                         </h2>
                         {index === 0 && (
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             {t('whatsNew.latest')}
                           </p>
                         )}
                       </div>
                       <span
                         className={cn(
-                          'inline-flex items-center gap-1 shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                          'inline-flex items-center gap-1 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
                           isSeen
                             ? 'bg-foreground/5 text-muted-foreground'
                             : 'bg-accent/15 text-accent',

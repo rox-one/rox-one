@@ -1,11 +1,13 @@
-import { Check, Columns2, Focus, Grid2X2, LayoutGrid, Maximize2, Minimize2, RotateCcw } from 'lucide-react'
+import { Check, Columns2, Columns3, Focus, Grid2X2, LayoutGrid, Maximize2, Minimize2, RotateCcw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
-import { usePanelWorkspaceLayout, type PanelWorkspaceLayoutMode } from '@/hooks/usePanelWorkspaceLayout'
+import { usePanelWorkspaceLayout, type PanelLayoutPreset, type PanelWorkspaceLayoutMode } from '@/hooks/usePanelWorkspaceLayout'
 import { useActionRegistry } from '@/actions'
 import { panelStackAtom, expandedPanelIdAtom } from '@/atoms/panel-stack'
+import { featureLayoutEngineAtom } from '@/atoms/unified-shell'
 import { reconcilePanelFullScreen } from '@/lib/panel-workspace-layout'
 import { TopBarButton } from '@/components/ui/TopBarButton'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@rox/ui'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -22,26 +24,52 @@ const MODES = [
   { mode: 'focus', key: 'focus', icon: Focus },
 ] as const satisfies ReadonlyArray<{ mode: PanelWorkspaceLayoutMode; key: string; icon: typeof LayoutGrid }>
 
+/** Named arrangements of «Студия» (featureLayoutEngine); hidden while OFF. */
+const PRESETS = [
+  { preset: 'focus', key: 'presetFocus', icon: Focus },
+  { preset: 'dialog', key: 'presetDialog', icon: Columns2 },
+  { preset: 'triptych', key: 'presetTriptych', icon: Columns3 },
+  { preset: 'wall', key: 'presetWall', icon: Grid2X2 },
+] as const satisfies ReadonlyArray<{ preset: PanelLayoutPreset; key: string; icon: typeof LayoutGrid }>
+
 /** One stable entry point for geometry; switching it never replaces panel routes. */
 export function PanelWorkspaceMenu() {
   const { t } = useTranslation()
-  const { mode, setMode, resetLayout } = usePanelWorkspaceLayout()
+  const { mode, setMode, preset, setPreset, resetLayout } = usePanelWorkspaceLayout()
+  const layoutEngineEnabled = useAtomValue(featureLayoutEngineAtom)
   const { execute } = useActionRegistry()
   const panelIds = useAtomValue(panelStackAtom).map((panel) => panel.id)
   const expanded = reconcilePanelFullScreen(useAtomValue(expandedPanelIdAtom), panelIds) !== null
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <TopBarButton aria-label={t('panelWorkspace.layout')} title={t('panelWorkspace.layout')}>
-          <LayoutGrid className="size-4" aria-hidden />
-        </TopBarButton>
-      </DropdownMenuTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <TopBarButton aria-label={t('panelWorkspace.layout')}>
+              <LayoutGrid className="icon-inline" aria-hidden />
+            </TopBarButton>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">{t('panelWorkspace.layout')}</TooltipContent>
+      </Tooltip>
       <StyledDropdownMenuContent align="end" minWidth="min-w-52">
+        {layoutEngineEnabled && (
+          <>
+            {PRESETS.map(({ preset: value, key, icon: Icon }) => (
+              <StyledDropdownMenuItem key={value} onClick={() => setPreset(value)}>
+                <Icon className="icon-inline" aria-hidden />
+                <span className="flex-1">{t(`panelWorkspace.${key}`)}</span>
+                {preset === value && <Check className="icon-caption" aria-label={t('panelWorkspace.selected')} />}
+              </StyledDropdownMenuItem>
+            ))}
+            <StyledDropdownMenuSeparator />
+          </>
+        )}
         {MODES.map(({ mode: value, key, icon: Icon }) => (
           <StyledDropdownMenuItem key={value} onClick={() => setMode(value)}>
-            <Icon className="size-4" aria-hidden />
+            <Icon className="icon-inline" aria-hidden />
             <span className="flex-1">{t(`panelWorkspace.${key}`)}</span>
-            {mode === value && <Check className="size-3.5" aria-label={t('panelWorkspace.selected')} />}
+            {mode === value && <Check className="icon-caption" aria-label={t('panelWorkspace.selected')} />}
           </StyledDropdownMenuItem>
         ))}
         <StyledDropdownMenuSeparator />
@@ -51,7 +79,7 @@ export function PanelWorkspaceMenu() {
         </StyledDropdownMenuItem>
         <StyledDropdownMenuSeparator />
         <StyledDropdownMenuItem onClick={resetLayout}>
-          <RotateCcw className="size-4" aria-hidden />
+          <RotateCcw className="icon-inline" aria-hidden />
           <span>{t('panelWorkspace.reset')}</span>
         </StyledDropdownMenuItem>
       </StyledDropdownMenuContent>

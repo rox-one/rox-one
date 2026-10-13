@@ -48,7 +48,7 @@ export function InspectorTerminal({ cwd, autoFocus = false }: { cwd?: string; au
         color: 'var(--terminal-foreground, #e8e8ea)',
       }}
     >
-      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-3 py-2 font-mono text-[11px] leading-5">
+      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-3 py-2 font-mono text-xs leading-5">
         {/* One prompt only: the hint lives in the input placeholder below. */}
         {log.map((line, i) => (
           <pre
@@ -70,7 +70,7 @@ export function InspectorTerminal({ cwd, autoFocus = false }: { cwd?: string; au
           void run()
         }}
       >
-        <span className="text-[11px] opacity-40">$</span>
+        <span className="text-xs opacity-40">$</span>
         <input
           value={cmd}
           onChange={(event) => setCmd(event.target.value)}
@@ -81,7 +81,7 @@ export function InspectorTerminal({ cwd, autoFocus = false }: { cwd?: string; au
           spellCheck={false}
           aria-label={t('inspector.terminalPlaceholder')}
           style={{ caretColor: 'var(--terminal-cursor, currentColor)' }}
-          className="rox-terminal-input h-7 min-w-0 flex-1 bg-transparent font-mono text-[12px] outline-none placeholder:opacity-30"
+          className="rox-terminal-input h-7 min-w-0 flex-1 bg-transparent font-mono text-sm outline-none placeholder:opacity-30"
           placeholder={busy ? t('common.loading') : t('inspector.terminalHint')}
         />
       </form>

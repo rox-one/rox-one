@@ -26,9 +26,9 @@ export function WorkspaceNavigator({ workspaceRootPath, className }: WorkspaceNa
       data-layout={layout}
       aria-label={t('se.workspace.navigator')}
     >
-      <header className="flex items-center gap-2 px-1 pb-2 text-[11px] font-semibold uppercase tracking-wide text-foreground/50">
+      <header className="flex items-center gap-2 px-1 pb-2 text-xs font-semibold uppercase caps-label text-foreground/50">
         <FolderGit2 className="size-3.5" aria-hidden />
-        <span className="truncate">{git.repoLabel}</span>
+        <span className="truncate" title={git.repoLabel}>{git.repoLabel}</span>
       </header>
       <div className="space-y-1">
         {git.branches.map((branch) => (
@@ -41,24 +41,24 @@ export function WorkspaceNavigator({ workspaceRootPath, className }: WorkspaceNa
             <button
               type="button"
               className={cn(
-                'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px]',
+                'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-base',
                 branch.isCurrent ? 'bg-white/6 text-foreground' : 'text-foreground/80 hover:bg-white/4',
               )}
               data-testid={`workspace-branch-${branch.id}`}
             >
               <GitBranch className="size-3.5 shrink-0 opacity-70" aria-hidden />
-              <span className="min-w-0 flex-1 truncate">{branch.name}</span>
+              <span className="min-w-0 flex-1 truncate" title={branch.name}>{branch.name}</span>
               {layout === 'detailed' && (
-                <span className="shrink-0 text-[11px] text-emerald-400/90">+{branch.additions}</span>
+                <span className="shrink-0 text-xs text-emerald-400/90">+{branch.additions}</span>
               )}
               {layout === 'detailed' && (
-                <span className="shrink-0 text-[11px] text-rose-400/90">-{branch.deletions}</span>
+                <span className="shrink-0 text-xs text-rose-400/90">-{branch.deletions}</span>
               )}
               {layout === 'detailed' && branch.ahead > 0 && (
-                <span className="shrink-0 text-[11px] text-sky-400/90">↑{branch.ahead}</span>
+                <span className="shrink-0 text-xs text-sky-400/90">↑{branch.ahead}</span>
               )}
               {layout === 'detailed' && branch.behind > 0 && (
-                <span className="shrink-0 text-[11px] text-amber-400/90">↓{branch.behind}</span>
+                <span className="shrink-0 text-xs text-amber-400/90">↓{branch.behind}</span>
               )}
             </button>
             {layout === 'compact' && hoverBranch?.id === branch.id && (
@@ -69,7 +69,7 @@ export function WorkspaceNavigator({ workspaceRootPath, className }: WorkspaceNa
           </div>
         ))}
       </div>
-      <footer className="mt-2 flex items-center gap-2 border-t border-white/5 px-1 pt-2 text-[11px] text-muted-foreground">
+      <footer className="mt-2 flex items-center gap-2 border-t border-white/5 px-1 pt-2 text-xs text-muted-foreground">
         <GitPullRequest className="size-3.5" aria-hidden />
         <span>{t('se.workspace.dirtyCount', { count: git.dirtyFileCount })}</span>
       </footer>

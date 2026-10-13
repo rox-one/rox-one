@@ -182,7 +182,7 @@ describe('scene node visuals', () => {
   test('no monospace chips; 2-line title with the kind chip on its own row', () => {
     expect(sceneNode).not.toContain('font-mono')
     expect(editor).not.toContain('font-mono')
-    expect(sceneNode).toContain('line-clamp-2 min-w-0 break-words text-[12px]')
+    expect(sceneNode).toContain('line-clamp-2 min-w-0 break-words text-sm')
     expect(sceneNode).toContain('ring-2 ring-accent')
   })
 })

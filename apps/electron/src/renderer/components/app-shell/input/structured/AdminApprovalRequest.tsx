@@ -58,7 +58,7 @@ export function AdminApprovalRequest({
             <ShieldAlert className="h-3.5 w-3.5 text-info" />
             <span>{t('chat.adminApprovalRequired')}</span>
           </div>
-          <div className="text-xs leading-[18px] text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             Installing <span className="font-medium text-foreground">{request.appName}</span> needs your Mac admin approval.
             {request.requiresSystemPrompt ? " You’ll see your regular macOS password/Touch ID prompt." : ''}
             <br />
@@ -106,7 +106,7 @@ export function AdminApprovalRequest({
             onCheckedChange={setRememberChoice}
             aria-label={`Remember this exact command for ${rememberForMinutes} minutes`}
           />
-          <Label className="text-[11px] text-muted-foreground cursor-pointer" onClick={() => setRememberChoice(!rememberChoice)}>
+          <Label className="text-xs text-muted-foreground cursor-pointer" onClick={() => setRememberChoice(!rememberChoice)}>
             Remember for {rememberForMinutes} min
           </Label>
         </div>

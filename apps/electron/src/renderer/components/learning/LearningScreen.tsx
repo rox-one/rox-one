@@ -74,7 +74,7 @@ export interface LearningScreenProps {
 }
 
 function FacetTitle({ children }: { children: React.ReactNode }) {
-  return <div className="px-2 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.04em] text-text-muted">{children}</div>
+  return <div className="px-2 pb-1 pt-3 text-xs font-semibold uppercase caps-label text-text-muted">{children}</div>
 }
 
 function FacetItem({ label, count, active, onClick, tone, testId }: {
@@ -92,19 +92,19 @@ function FacetItem({ label, count, active, onClick, tone, testId }: {
       data-testid={testId}
       onClick={onClick}
       className={cn(
-        'flex min-h-8 w-full min-w-0 items-center gap-2 rounded-[var(--radius-control)] px-2 text-left text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
+        'flex min-h-8 w-full min-w-0 items-center gap-2 rounded-[var(--radius-control)] px-2 text-left text-base outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
         active ? 'bg-foreground/[0.09] font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground',
       )}
     >
-      <span className={cn('min-w-0 flex-1 truncate', tone === 'danger' && 'text-destructive', tone === 'accent' && 'text-accent')}>{label}</span>
-      {count != null ? <span className="shrink-0 text-[11px] tabular-nums text-text-muted">{count}</span> : null}
+      <span className={cn('min-w-0 flex-1 truncate', tone === 'danger' && 'text-destructive', tone === 'accent' && 'text-accent')} title={typeof label === 'string' ? label : undefined}>{label}</span>
+      {count != null ? <span className="shrink-0 text-xs numeric text-text-muted">{count}</span> : null}
     </button>
   )
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[104px_minmax(0,1fr)] items-baseline gap-3 py-1.5 text-[12px]">
+    <div className="grid grid-cols-[104px_minmax(0,1fr)] items-baseline gap-3 py-1.5 text-sm">
       <span className="text-text-muted">{label}</span>
       <span className="min-w-0 break-words">{children}</span>
     </div>
@@ -114,7 +114,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 function Chip({ children, tone }: { children: React.ReactNode; tone?: 'danger' | 'accent' | 'muted' | 'warning' }) {
   return (
     <span className={cn(
-      'inline-flex h-[18px] max-w-[200px] shrink-0 items-center truncate rounded-[var(--radius-control)] px-1.5 text-[11px]',
+      'inline-flex h-[18px] max-w-[200px] shrink-0 items-center truncate rounded-[var(--radius-control)] px-1.5 text-xs',
       tone === 'danger' ? 'bg-destructive/12 text-destructive'
         : tone === 'warning' ? 'bg-[var(--warning,#d9a13b)]/15 text-[var(--warning,#a8761f)]'
         : tone === 'accent' ? 'bg-accent/15 text-accent'
@@ -133,7 +133,7 @@ function Meter({ value, label, testId }: { value: number; label: string; testId?
       <div className="relative h-1.5 min-w-[80px] flex-1 overflow-hidden rounded-full bg-foreground/[0.1]" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={label}>
         <div className="absolute inset-y-0 left-0 rounded-full bg-accent" style={{ width: `${pct}%` }} />
       </div>
-      <span className="shrink-0 text-[11px] tabular-nums text-text-secondary">{pct}%</span>
+      <span className="shrink-0 text-xs numeric text-text-secondary">{pct}%</span>
     </div>
   )
 }
@@ -155,7 +155,7 @@ function Btn({ children, onClick, danger, primary, disabled, testId, title }: {
       title={title}
       data-testid={testId}
       className={cn(
-        'inline-flex h-7 shrink-0 items-center gap-1 rounded-[var(--radius-control)] px-2.5 text-[12px] font-medium outline-none disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
+        'inline-flex h-7 shrink-0 items-center gap-1 rounded-[var(--radius-control)] px-2.5 text-sm font-medium outline-none disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
         primary ? 'bg-accent text-[var(--accent-foreground,white)] hover:brightness-110'
           : danger ? 'bg-destructive/12 text-destructive hover:bg-destructive/20'
           : 'bg-foreground/[0.07] text-foreground hover:bg-foreground/[0.11]',
@@ -184,12 +184,12 @@ function Confirm({ title, body, confirmLabel, onConfirm, onCancel, children }: {
       onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); onCancel() } }}
     >
       <div role="alertdialog" aria-modal="true" aria-label={title} className="w-[min(520px,92vw)] rounded-[var(--radius-overlay)] bg-background p-4 shadow-modal-small ring-1 ring-foreground/15">
-        <h3 className="text-[15px] font-semibold">{title}</h3>
-        {body ? <div className="mt-2 text-[13px] text-text-secondary">{body}</div> : null}
+        <h3 className="text-lg font-semibold">{title}</h3>
+        {body ? <div className="mt-2 text-base text-text-secondary">{body}</div> : null}
         {children}
         <div className="mt-4 flex justify-end gap-2">
           <Btn onClick={onCancel}>{t('learning.screen.cancel')}</Btn>
-          <button ref={ref} type="button" onClick={onConfirm} data-testid="learning-confirm" className="inline-flex h-7 items-center rounded-[var(--radius-control)] bg-destructive px-2.5 text-[12px] font-medium text-white hover:brightness-110 focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+          <button ref={ref} type="button" onClick={onConfirm} data-testid="learning-confirm" className="inline-flex h-7 items-center rounded-[var(--radius-control)] bg-destructive px-2.5 text-sm font-medium text-white hover:brightness-110 focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-background">
             {confirmLabel}
           </button>
         </div>
@@ -450,7 +450,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
           aria-label={t('learning.screen.actions.reasonPlaceholder')}
           placeholder={t('learning.screen.actions.reasonPlaceholder')}
           data-testid="learning-reject-reason"
-          className="mt-3 w-full resize-y rounded-[var(--radius-control)] bg-foreground/[0.05] px-2 py-1.5 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="mt-3 w-full resize-y rounded-[var(--radius-control)] bg-foreground/[0.05] px-2 py-1.5 text-base outline-none focus-visible:ring-2 focus-visible:ring-accent"
         />
       ) : null}
     </Confirm>
@@ -521,12 +521,12 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
         )}
       >
         <div className="min-w-0 flex-1">
-          <p className="break-words text-[13px] leading-5 text-foreground">{candidate.hypothesis}</p>
+          <p className="break-words text-base text-foreground">{candidate.hypothesis}</p>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             <Chip tone={STATUS_TONE[candidate.status]}>{statusLabel(candidate.status)}</Chip>
             <Chip>{typeLabel(candidate.type)}</Chip>
             <Chip tone="muted">{scopeLabel(candidate.scope)}</Chip>
-            <span className="text-[11px] text-text-muted">{fmt(candidate.updatedAt)}</span>
+            <span className="text-xs text-text-muted">{fmt(candidate.updatedAt)}</span>
           </div>
         </div>
         <div className="w-[96px] shrink-0 pt-1">
@@ -541,7 +541,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
     <section className="flex min-w-0 w-full flex-1 flex-col items-center justify-center gap-3 px-6 py-10 text-center" data-testid="learning-unavailable">
       <span className="grid size-10 place-items-center rounded-[var(--radius-control)] bg-foreground/[0.05] text-text-muted"><AlertTriangle aria-hidden="true" className="size-5" /></span>
       <h2 className="text-base font-semibold">{t('learning.screen.title')}</h2>
-      <p className="max-w-[440px] text-[13px] leading-6 text-text-secondary">{t('learning.screen.unavailable.body')}</p>
+      <p className="max-w-[440px] text-base leading-6 text-text-secondary">{t('learning.screen.unavailable.body')}</p>
       <Btn onClick={load} testId="learning-retry">{t('learning.screen.retry')}</Btn>
     </section>
   )
@@ -572,12 +572,12 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
             placeholder={t('learning.screen.searchPlaceholder')}
             aria-label={t('learning.screen.search')}
             data-testid="learning-search"
-            className="h-9 w-full rounded-[var(--radius-control)] border border-foreground/8 bg-background/75 pl-9 pr-3 text-[13px] outline-none placeholder:text-text-muted focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/20"
+            className="h-9 w-full rounded-[var(--radius-control)] border border-foreground/8 bg-background/75 pl-9 pr-3 text-base outline-none placeholder:text-text-muted focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/20"
           />
         </div>
         {!sidebarTarget ? (
           <button type="button" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((value) => !value)} className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-control)] bg-background px-2.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent @[760px]/learning:hidden" data-testid="learning-filters-toggle">
-            {t('learning.screen.facets')}{activeFacets ? <span className="font-semibold tabular-nums">{activeFacets}</span> : null}
+            {t('learning.screen.facets')}{activeFacets ? <span className="font-semibold numeric">{activeFacets}</span> : null}
           </button>
         ) : null}
         <select
@@ -611,7 +611,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
             <Btn onClick={load}>{t('learning.screen.retry')}</Btn>
           </div>
         ) : candidates === null ? (
-          <div className="px-4 py-6 text-[13px] text-text-muted" data-testid="learning-loading">{t('learning.screen.loading')}</div>
+          <div className="px-4 py-6 text-base text-text-muted" data-testid="learning-loading">{t('learning.screen.loading')}</div>
         ) : visible.length === 0 ? (
           <div className="mx-4 my-6 flex flex-col items-center rounded-[var(--radius-control)] border border-dashed border-foreground/12 bg-background/60 px-5 py-10 text-center" data-testid="learning-empty">
             <span className="mb-4 grid size-12 place-items-center rounded-[var(--radius-control)] bg-accent/10 text-accent"><GraduationCap aria-hidden="true" className="size-6" /></span>
@@ -640,16 +640,16 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
     if (result.kind === 'promotion') {
       const { promotion } = result
       return (
-        <div role="status" data-testid="learning-result" className={cn('rounded-[var(--radius-control)] border p-3 text-[12px]', promotion.promoted ? 'border-accent/25 bg-accent/8' : 'border-foreground/10 bg-foreground/[0.04]')}>
+        <div role="status" data-testid="learning-result" className={cn('rounded-[var(--radius-control)] border p-3 text-sm', promotion.promoted ? 'border-accent/25 bg-accent/8' : 'border-foreground/10 bg-foreground/[0.04]')}>
           <p className="flex items-center gap-1.5 font-medium"><Check aria-hidden="true" className="size-3.5" />{t(promotion.promoted ? 'learning.screen.result.promoted' : 'learning.screen.result.notPromoted')}</p>
           <p className="mt-1 text-text-muted">{t('learning.screen.result.status', { status: statusLabel(promotion.status) })}</p>
           {promotion.reason ? <p className="mt-1 text-text-secondary">{promotion.reason}</p> : null}
           {promotion.mutations.length ? (
             <ul className="mt-2 space-y-1" data-testid="learning-mutations">
               {promotion.mutations.map((mutation) => (
-                <li key={mutation.id} className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono">
+                <li key={mutation.id} className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
                   <Chip tone="muted">{mutationTargetLabel(mutation.targetType)}</Chip>
-                  <span className="min-w-0 flex-1 truncate">{mutation.targetId}</span>
+                  <span className="min-w-0 flex-1 truncate" title={mutation.targetId}>{mutation.targetId}</span>
                   <Chip>{mutationStatusLabel(mutation.status)}</Chip>
                 </li>
               ))}
@@ -659,7 +659,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
       )
     }
     return (
-      <div role="status" data-testid="learning-result" className="rounded-[var(--radius-control)] border border-foreground/10 bg-foreground/[0.04] p-3 text-[12px]">
+      <div role="status" data-testid="learning-result" className="rounded-[var(--radius-control)] border border-foreground/10 bg-foreground/[0.04] p-3 text-sm">
         <p className="font-medium">{t(result.rollback.reverted ? 'learning.screen.result.reverted' : 'learning.screen.result.notReverted')}</p>
         <p className="mt-1 text-text-muted">{t('learning.screen.result.mutationCount', { count: result.rollback.mutationIds.length })}</p>
         {result.rollback.reason ? <p className="mt-1 text-text-secondary">{result.rollback.reason}</p> : null}
@@ -675,7 +675,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
       <div className="flex flex-col" data-testid="learning-detail">
         <header className="flex shrink-0 items-start gap-2 border-b border-foreground/7 px-4 py-3">
           <div className="min-w-0 flex-1">
-            <h3 className="break-words text-[14px] font-semibold leading-5">{selected.hypothesis}</h3>
+            <h3 className="break-words text-base font-semibold">{selected.hypothesis}</h3>
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
               <Chip tone={STATUS_TONE[selected.status]}>{statusLabel(selected.status)}</Chip>
               <Chip>{typeLabel(selected.type)}</Chip>
@@ -689,26 +689,26 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
         <div className="px-4 py-3">
           {resultBanner(selected.id)}
           <section className="mt-4">
-            <p className="mb-1.5 flex items-center gap-1.5 text-[12px] font-semibold"><ShieldCheck aria-hidden="true" className="size-3.5 text-accent" />{t('learning.screen.detail.confidence')}</p>
+            <p className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold"><ShieldCheck aria-hidden="true" className="size-3.5 text-accent" />{t('learning.screen.detail.confidence')}</p>
             <Meter value={selected.confidence} label={t('learning.screen.detail.confidence')} testId="learning-confidence-meter" />
             <div className="mt-2 space-y-1.5">
               {confidenceRows(selected.confidenceComponents).map(({ key, value }) => (
                 <div key={key} className="flex items-center gap-2">
-                  <span className="w-[150px] shrink-0 truncate text-[11px] text-text-muted">{t(`learning.screen.confidence.${key}`)}</span>
+                  <span className="w-[150px] shrink-0 truncate text-xs text-text-muted">{t(`learning.screen.confidence.${key}`)}</span>
                   <div className="min-w-0 flex-1"><Meter value={value} label={t(`learning.screen.confidence.${key}`)} /></div>
                 </div>
               ))}
             </div>
           </section>
           <section className="mt-4">
-            <p className="mb-1.5 text-[12px] font-semibold">{t('learning.screen.detail.validation')}</p>
+            <p className="mb-1.5 text-sm font-semibold">{t('learning.screen.detail.validation')}</p>
             <Chip tone={selected.validation.promotable ? 'accent' : 'warning'}>{t(selected.validation.promotable ? 'learning.screen.detail.promotable' : 'learning.screen.detail.notPromotable')}</Chip>
-            {judged ? <p className="mt-1 text-[11px] text-text-muted">{t('learning.screen.detail.judged', { verdict: t(`learning.screen.verdict.${judged.verdict}`), rationale: judged.rationale ?? '' })}</p> : null}
+            {judged ? <p className="mt-1 text-xs text-text-muted">{t('learning.screen.detail.judged', { verdict: t(`learning.screen.verdict.${judged.verdict}`), rationale: judged.rationale ?? '' })}</p> : null}
             {failed.length ? (
               <div className="mt-2 space-y-1" data-testid="learning-failed-passes">
-                <p className="text-[11px] font-semibold text-text-muted">{t('learning.screen.detail.failedPasses')}</p>
+                <p className="text-xs font-semibold text-text-muted">{t('learning.screen.detail.failedPasses')}</p>
                 {failed.map((pass) => (
-                  <p key={pass.pass} className="flex flex-wrap items-baseline gap-1.5 text-[11px]">
+                  <p key={pass.pass} className="flex flex-wrap items-baseline gap-1.5 text-xs">
                     <Chip tone="danger">{passLabel(pass.pass)}</Chip>
                     {pass.detail ? <span className="text-text-secondary">{pass.detail}</span> : null}
                   </p>
@@ -717,28 +717,28 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
             ) : null}
           </section>
           <section className="mt-4">
-            <p className="mb-1.5 text-[12px] font-semibold">{t('learning.screen.detail.evidence')}</p>
-            {selected.evidence.length === 0 ? <p className="text-[11px] text-text-muted">{t('learning.screen.detail.noEvidence')}</p> : (
+            <p className="mb-1.5 text-sm font-semibold">{t('learning.screen.detail.evidence')}</p>
+            {selected.evidence.length === 0 ? <p className="text-xs text-text-muted">{t('learning.screen.detail.noEvidence')}</p> : (
               <ul className="space-y-1.5" data-testid="learning-evidence">
                 {[...selected.evidence].sort((a, b) => b.weight - a.weight).map((ref) => (
-                  <li key={ref.evidenceId} className="flex flex-wrap items-baseline gap-1.5 text-[11px]">
+                  <li key={ref.evidenceId} className="flex flex-wrap items-baseline gap-1.5 text-xs">
                     <Chip tone="muted">{evidenceLabel(ref.type)}</Chip>
                     <span className="min-w-0 flex-1 break-all font-mono">{ref.ref}</span>
-                    <span className="shrink-0 tabular-nums text-text-muted">{t('learning.screen.detail.evidenceWeight', { weight: Math.round(ref.weight * 100) })}</span>
+                    <span className="shrink-0 numeric text-text-muted">{t('learning.screen.detail.evidenceWeight', { weight: Math.round(ref.weight * 100) })}</span>
                   </li>
                 ))}
               </ul>
             )}
           </section>
           <section className="mt-4">
-            <Row label={t('learning.screen.detail.fingerprint')}><span className="break-all font-mono text-[11px]">{selected.fingerprint}</span></Row>
+            <Row label={t('learning.screen.detail.fingerprint')}><span className="break-all font-mono text-xs">{selected.fingerprint}</span></Row>
             <Row label={t('learning.screen.detail.created')}>{fmt(selected.createdAt)}</Row>
             <Row label={t('learning.screen.detail.updated')}>{fmt(selected.updatedAt)}</Row>
-            {selected.rollbackOf ? <Row label={t('learning.screen.detail.rollbackOf')}><span className="font-mono text-[11px]">{selected.rollbackOf}</span></Row> : null}
+            {selected.rollbackOf ? <Row label={t('learning.screen.detail.rollbackOf')}><span className="font-mono text-xs">{selected.rollbackOf}</span></Row> : null}
             {selected.rejectedReason ? <Row label={t('learning.screen.detail.rejectedReason')}>{selected.rejectedReason}</Row> : null}
-            <Row label={t('learning.screen.detail.payload')}><pre className="max-h-[160px] overflow-auto whitespace-pre-wrap break-all rounded-[var(--radius-control)] bg-foreground/[0.04] p-2 font-mono text-[11px]">{JSON.stringify(selected.payload, null, 2) ?? 'null'}</pre></Row>
+            <Row label={t('learning.screen.detail.payload')}><pre className="max-h-[160px] overflow-auto whitespace-pre-wrap break-all rounded-[var(--radius-control)] bg-foreground/[0.04] p-2 font-mono text-xs">{JSON.stringify(selected.payload, null, 2) ?? 'null'}</pre></Row>
           </section>
-          {writeDenied ? <p className="mt-3 text-[11px] text-destructive" role="alert">{t('learning.screen.writeDenied')}</p> : null}
+          {writeDenied ? <p className="mt-3 text-xs text-destructive" role="alert">{t('learning.screen.writeDenied')}</p> : null}
           <div className="mt-4 flex flex-wrap gap-2">
             <Btn primary disabled={busy || writeDenied || !writeAvailable} onClick={() => setConfirm({ action: 'approve', candidate: selected })} testId="learning-approve">{t('learning.screen.actions.approve')}</Btn>
             <Btn danger disabled={busy || writeDenied || !writeAvailable} onClick={() => setConfirm({ action: 'reject', candidate: selected })} testId="learning-reject">{t('learning.screen.actions.reject')}</Btn>
@@ -752,7 +752,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
       </div>
     )
   })() : (
-    <div className="flex flex-col gap-2 px-5 py-6 text-[12px] text-text-muted" data-testid="learning-detail-empty">
+    <div className="flex flex-col gap-2 px-5 py-6 text-sm text-text-muted" data-testid="learning-detail-empty">
       <span className="grid size-8 place-items-center rounded-[var(--radius-control)] bg-foreground/[0.04]"><HelpCircle aria-hidden="true" className="size-4" /></span>
       <p>{t('learning.screen.detail.empty')}</p>
       <p>{t('learning.screen.keysHint', { selectAll: formatHotkeyDisplay('mod+enter') })}</p>
@@ -760,10 +760,10 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
   )
 
   const renderTimelineEntry = (entry: LearningTimelineEntryDto) => (
-    <li key={entry.id} data-testid="learning-timeline-row" className="flex flex-wrap items-baseline gap-1.5 rounded-[var(--radius-control)] bg-foreground/[0.03] px-2.5 py-1.5 text-[11px]">
+    <li key={entry.id} data-testid="learning-timeline-row" className="flex flex-wrap items-baseline gap-1.5 rounded-[var(--radius-control)] bg-foreground/[0.03] px-2.5 py-1.5 text-xs">
       <Chip tone="muted">{kindLabel(entry.kind)}</Chip>
       <span className="min-w-0 flex-1 break-words text-text-secondary">{entry.summary}</span>
-      <span className="shrink-0 tabular-nums text-text-muted">{fmt(entry.ts)}</span>
+      <span className="shrink-0 numeric text-text-muted">{fmt(entry.ts)}</span>
       {entry.detail ? <span className="w-full break-words text-text-muted">{entry.detail}</span> : null}
       {entry.sessionId ? <span className="w-full truncate font-mono text-text-muted">{t('learning.screen.timeline.session', { id: entry.sessionId })}</span> : null}
     </li>
@@ -772,25 +772,25 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
   // ── Dashboard (§26) ──────────────────────────────────────────────────────
   const dashboard = (
     <section className="min-h-0 flex-1 overflow-y-auto px-5 py-5" data-testid="learning-dashboard">
-      <h2 className="text-[15px] font-semibold">{t('learning.screen.dashboard.title')}</h2>
-      <p className="mt-1 max-w-[620px] text-[12px] leading-5 text-text-secondary">{t('learning.screen.subtitle')}</p>
+      <h2 className="text-lg font-semibold">{t('learning.screen.dashboard.title')}</h2>
+      <p className="mt-1 max-w-[620px] text-sm leading-5 text-text-secondary">{t('learning.screen.subtitle')}</p>
       <section className="mt-4 max-w-[680px]">
-        <h3 className="text-[13px] font-semibold">{t('learning.screen.dashboard.stats')}</h3>
+        <h3 className="text-base font-semibold">{t('learning.screen.dashboard.stats')}</h3>
         {stats ? (
           <div className="mt-2 grid grid-cols-2 gap-2 @[760px]/learning:grid-cols-4">
             {STAT_KEYS.map((key) => (
               <div key={key} className="flex items-baseline justify-between gap-2 rounded-[var(--radius-control)] bg-foreground/[0.035] px-3 py-2">
-                <span className="min-w-0 truncate text-[11px] text-text-secondary">{t(`learning.screen.dashboard.stat.${key}`)}</span>
-                <span className="text-[14px] font-semibold tabular-nums">{stats[key]}</span>
+                <span className="min-w-0 truncate text-xs text-text-secondary">{t(`learning.screen.dashboard.stat.${key}`)}</span>
+                <span className="text-base font-semibold numeric">{stats[key]}</span>
               </div>
             ))}
           </div>
-        ) : <p className="mt-2 text-[12px] text-text-muted">{t('learning.screen.loading')}</p>}
+        ) : <p className="mt-2 text-sm text-text-muted">{t('learning.screen.loading')}</p>}
       </section>
       <section className="mt-5 max-w-[680px]">
-        <h3 className="text-[13px] font-semibold">{t('learning.screen.dashboard.effectiveness')}</h3>
+        <h3 className="text-base font-semibold">{t('learning.screen.dashboard.effectiveness')}</h3>
         <div className="mt-2 flex items-center gap-2">
-          <span className="w-[150px] shrink-0 truncate text-[11px] text-text-muted">{t('learning.screen.dashboard.avgConfidence')}</span>
+          <span className="w-[150px] shrink-0 truncate text-xs text-text-muted">{t('learning.screen.dashboard.avgConfidence')}</span>
           <div className="min-w-0 flex-1"><Meter value={avgConfidence} label={t('learning.screen.dashboard.avgConfidence')} testId="learning-avg-confidence" /></div>
         </div>
         <div className="mt-2 max-w-[420px] space-y-1">
@@ -799,17 +799,17 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
               key={status}
               type="button"
               onClick={() => { setView('candidates'); setFilter({ status }) }}
-              className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-1 py-1 text-[11px] text-text-secondary outline-none hover:bg-foreground/[0.04] focus-visible:ring-2 focus-visible:ring-accent"
+              className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-1 py-1 text-xs text-text-secondary outline-none hover:bg-foreground/[0.04] focus-visible:ring-2 focus-visible:ring-accent"
             >
               <Chip tone={STATUS_TONE[status]}>{statusLabel(status)}</Chip>
               <span className="flex-1" />
-              <span className="tabular-nums">{counts.status.get(status) ?? 0}</span>
+              <span className="numeric">{counts.status.get(status) ?? 0}</span>
             </button>
           ))}
         </div>
       </section>
       <section className="mt-5 max-w-[680px]">
-        <h3 className="text-[13px] font-semibold">{t('learning.screen.dashboard.ops')}</h3>
+        <h3 className="text-base font-semibold">{t('learning.screen.dashboard.ops')}</h3>
         <div className="mt-2 flex flex-wrap gap-2">
           <Btn disabled={busy || !writeAvailable} onClick={consolidate} testId="learning-dashboard-consolidate">{t('learning.screen.dashboard.consolidate')}</Btn>
           <Btn disabled={busy || !writeAvailable} onClick={curateSkills} testId="learning-dashboard-curate">{t('learning.screen.dashboard.curate')}</Btn>
@@ -817,8 +817,8 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
         </div>
       </section>
       <section className="mt-5 max-w-[680px]">
-        <h3 className="text-[13px] font-semibold">{t('learning.screen.dashboard.recent')}</h3>
-        {timeline.length === 0 ? <p className="mt-2 text-[12px] text-text-muted">{t('learning.screen.dashboard.timelineEmpty')}</p> : (
+        <h3 className="text-base font-semibold">{t('learning.screen.dashboard.recent')}</h3>
+        {timeline.length === 0 ? <p className="mt-2 text-sm text-text-muted">{t('learning.screen.dashboard.timelineEmpty')}</p> : (
           <ul className="mt-2 space-y-1.5">{timeline.slice(0, 8).map(renderTimelineEntry)}</ul>
         )}
       </section>
@@ -831,22 +831,22 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
     const band = effectivenessBand(report?.effectiveness ?? null)
     return (
       <li key={candidate.id} data-testid="learning-skill-row" className="rounded-[var(--radius-control)] border border-foreground/8 bg-background/70 p-3">
-        <p className="break-words text-[13px] leading-5">{candidate.hypothesis}</p>
+        <p className="break-words text-base">{candidate.hypothesis}</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
           <Chip tone={STATUS_TONE[candidate.status]}>{statusLabel(candidate.status)}</Chip>
           <Chip tone="muted">{scopeLabel(candidate.scope)}</Chip>
-          <span className="text-[11px] text-text-muted">{t('learning.screen.skills.samples', { count: report?.sampleSize ?? 0 })}</span>
+          <span className="text-xs text-text-muted">{t('learning.screen.skills.samples', { count: report?.sampleSize ?? 0 })}</span>
           <Chip tone={band === 'high' ? 'accent' : band === 'low' ? 'danger' : 'muted'}>{t(`learning.screen.band.${band}`)}</Chip>
         </div>
         <div className="mt-2 flex items-center gap-2">
-          <span className="w-[130px] shrink-0 truncate text-[11px] text-text-muted">{t('learning.screen.skills.effectiveness')}</span>
+          <span className="w-[130px] shrink-0 truncate text-xs text-text-muted">{t('learning.screen.skills.effectiveness')}</span>
           <div className="min-w-0 flex-1"><Meter value={report?.effectiveness ?? 0} label={t('learning.screen.skills.effectiveness')} testId={`learning-skill-effectiveness-${candidate.id}`} /></div>
         </div>
         {report ? (
           <div className="mt-1.5 space-y-1">
             {EFFECTIVENESS_COMPONENTS.map((key) => (
               <div key={key} className="flex items-center gap-2">
-                <span className="w-[130px] shrink-0 truncate text-[11px] text-text-muted">{t(`learning.screen.effectiveness.${key}`)}</span>
+                <span className="w-[130px] shrink-0 truncate text-xs text-text-muted">{t(`learning.screen.effectiveness.${key}`)}</span>
                 <div className="min-w-0 flex-1"><Meter value={report.components[key]} label={t(`learning.screen.effectiveness.${key}`)} /></div>
               </div>
             ))}
@@ -866,43 +866,43 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
   const skills = (
     <section className="min-h-0 flex-1 overflow-y-auto px-5 py-5" data-testid="learning-skills">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="flex items-center gap-1.5 text-[15px] font-semibold"><Layers aria-hidden="true" className="size-4 text-accent" />{t('learning.screen.skills.title')}</h2>
+        <h2 className="flex items-center gap-1.5 text-lg font-semibold"><Layers aria-hidden="true" className="size-4 text-accent" />{t('learning.screen.skills.title')}</h2>
         <span className="flex-1" />
         <Btn disabled={busy || !writeAvailable} onClick={curateSkills} testId="learning-curate">{t('learning.screen.skills.curate')}</Btn>
       </div>
       {curation ? (
         <div className="mt-3 max-w-[680px] rounded-[var(--radius-control)] bg-accent/8 px-3 py-2" data-testid="learning-curation">
-          <p className="text-[12px] font-medium">{t('learning.screen.skills.curated')}</p>
+          <p className="text-sm font-medium">{t('learning.screen.skills.curated')}</p>
           <ul className="mt-1 space-y-0.5">
             {curation.map((item) => (
-              <li key={item.slug} className="flex flex-wrap items-baseline gap-1.5 text-[11px]">
+              <li key={item.slug} className="flex flex-wrap items-baseline gap-1.5 text-xs">
                 <Chip tone="muted">{t(`learning.screen.skills.action.${item.action}`)}</Chip>
-                <span className="min-w-0 flex-1 truncate font-mono">{item.slug}</span>
+                <span className="min-w-0 flex-1 truncate font-mono" title={item.slug}>{item.slug}</span>
               </li>
             ))}
           </ul>
         </div>
       ) : null}
-      <h3 className="mt-4 text-[13px] font-semibold">{t('learning.screen.skills.pending')}</h3>
-      {queue.length === 0 ? <p className="mt-2 text-[12px] text-text-muted">{t('learning.screen.skills.empty')}</p> : (
+      <h3 className="mt-4 text-base font-semibold">{t('learning.screen.skills.pending')}</h3>
+      {queue.length === 0 ? <p className="mt-2 text-sm text-text-muted">{t('learning.screen.skills.empty')}</p> : (
         <ul className="mt-2 grid max-w-[900px] gap-2 @[900px]/learning:grid-cols-2">{queue.map((candidate) => skillCard(candidate, true))}</ul>
       )}
-      <h3 className="mt-5 text-[13px] font-semibold">{t('learning.screen.skills.approved')}</h3>
-      {approved.length === 0 ? <p className="mt-2 text-[12px] text-text-muted">{t('learning.screen.skills.empty')}</p> : (
+      <h3 className="mt-5 text-base font-semibold">{t('learning.screen.skills.approved')}</h3>
+      {approved.length === 0 ? <p className="mt-2 text-sm text-text-muted">{t('learning.screen.skills.empty')}</p> : (
         <ul className="mt-2 grid max-w-[900px] gap-2 @[900px]/learning:grid-cols-2">{approved.map((candidate) => skillCard(candidate, false))}</ul>
       )}
-      <h3 className="mt-5 text-[13px] font-semibold">{t('learning.screen.policies.title')}</h3>
-      {policies.length === 0 ? <p className="mt-2 text-[12px] text-text-muted">{t('learning.screen.policies.empty')}</p> : (
+      <h3 className="mt-5 text-base font-semibold">{t('learning.screen.policies.title')}</h3>
+      {policies.length === 0 ? <p className="mt-2 text-sm text-text-muted">{t('learning.screen.policies.empty')}</p> : (
         <ul className="mt-2 max-w-[900px] space-y-1.5" data-testid="learning-policies">
           {policies.map((policy) => (
-            <li key={policy.id} className="rounded-[var(--radius-control)] bg-foreground/[0.035] px-3 py-2 text-[12px]">
+            <li key={policy.id} className="rounded-[var(--radius-control)] bg-foreground/[0.035] px-3 py-2 text-sm">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="min-w-0 flex-1 truncate font-mono">{policy.taskClass}</span>
+                <span className="min-w-0 flex-1 truncate font-mono" title={policy.taskClass}>{policy.taskClass}</span>
                 <Chip tone={policy.status === 'active' ? 'accent' : 'muted'}>{policyStatusLabel(policy.status)}</Chip>
                 <Chip>{t(`learning.screen.policies.delegation.${policy.delegation}`)}</Chip>
               </div>
               <div className="mt-1.5 flex items-center gap-2">
-                <span className="w-[130px] shrink-0 truncate text-[11px] text-text-muted">{t('learning.screen.policies.confidence')}</span>
+                <span className="w-[130px] shrink-0 truncate text-xs text-text-muted">{t('learning.screen.policies.confidence')}</span>
                 <div className="min-w-0 flex-1"><Meter value={policy.confidence} label={t('learning.screen.policies.confidence')} /></div>
               </div>
             </li>
@@ -915,14 +915,14 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
   // ── Timeline (§29) ───────────────────────────────────────────────────────
   const timelineView = (
     <section className="min-h-0 flex-1 overflow-y-auto px-5 py-5" data-testid="learning-timeline">
-      <h2 className="flex items-center gap-1.5 text-[15px] font-semibold"><ListTree aria-hidden="true" className="size-4 text-accent" />{t('learning.screen.timeline.title')}</h2>
+      <h2 className="flex items-center gap-1.5 text-lg font-semibold"><ListTree aria-hidden="true" className="size-4 text-accent" />{t('learning.screen.timeline.title')}</h2>
       <div className="mt-2 flex flex-wrap gap-1.5">{TIMELINE_KINDS.map((kind) => <Chip key={kind} tone="muted">{kindLabel(kind)}</Chip>)}</div>
-      {timeline.length === 0 ? <p className="mt-4 text-[12px] text-text-muted">{t('learning.screen.timeline.empty')}</p> : (
+      {timeline.length === 0 ? <p className="mt-4 text-sm text-text-muted">{t('learning.screen.timeline.empty')}</p> : (
         <div className="mt-4 max-w-[760px] space-y-4">
           {groupTimeline(timeline).map((group) => (
             <section key={group.kind}>
-              <h3 className="mb-1.5 flex items-center gap-1.5 text-[12px] font-semibold">
-                {kindLabel(group.kind)}<span className="font-normal tabular-nums text-text-muted">{group.items.length}</span>
+              <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold">
+                {kindLabel(group.kind)}<span className="font-normal numeric text-text-muted">{group.items.length}</span>
               </h3>
               <ul className="space-y-1.5">{group.items.map(renderTimelineEntry)}</ul>
             </section>
@@ -935,32 +935,32 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
   // ── Help (§25) ───────────────────────────────────────────────────────────
   const help = (
     <section className="min-h-0 flex-1 overflow-y-auto px-5 py-5" data-testid="learning-help">
-      <h2 className="text-[15px] font-semibold">{t('learning.screen.help.title')}</h2>
-      <p className="mt-1 max-w-[680px] text-[12px] leading-5 text-text-secondary">{t('learning.screen.help.intro')}</p>
+      <h2 className="text-lg font-semibold">{t('learning.screen.help.title')}</h2>
+      <p className="mt-1 max-w-[680px] text-sm leading-5 text-text-secondary">{t('learning.screen.help.intro')}</p>
       <div className="mt-4 max-w-[680px] space-y-4">
         <section>
-          <h3 className="text-[13px] font-semibold">{t('learning.screen.help.definitionTitle')}</h3>
-          <p className="mt-1 text-[12px] leading-5 text-text-secondary">{t('learning.screen.help.definition')}</p>
+          <h3 className="text-base font-semibold">{t('learning.screen.help.definitionTitle')}</h3>
+          <p className="mt-1 text-sm leading-5 text-text-secondary">{t('learning.screen.help.definition')}</p>
         </section>
         <section>
-          <h3 className="text-[13px] font-semibold">{t('learning.screen.help.unitsTitle')}</h3>
-          <p className="mt-1 text-[12px] leading-5 text-text-secondary">{t('learning.screen.help.units')}</p>
+          <h3 className="text-base font-semibold">{t('learning.screen.help.unitsTitle')}</h3>
+          <p className="mt-1 text-sm leading-5 text-text-secondary">{t('learning.screen.help.units')}</p>
         </section>
         <section>
-          <h3 className="text-[13px] font-semibold">{t('learning.screen.help.formulaTitle')}</h3>
-          <p className="mt-1 font-mono text-[11px] leading-5 text-text-secondary">{t('learning.screen.help.confidenceFormula')}</p>
-          <p className="mt-1 font-mono text-[11px] leading-5 text-text-secondary">{t('learning.screen.help.effectivenessFormula')}</p>
+          <h3 className="text-base font-semibold">{t('learning.screen.help.formulaTitle')}</h3>
+          <p className="mt-1 font-mono text-xs leading-5 text-text-secondary">{t('learning.screen.help.confidenceFormula')}</p>
+          <p className="mt-1 font-mono text-xs leading-5 text-text-secondary">{t('learning.screen.help.effectivenessFormula')}</p>
         </section>
         <section>
-          <h3 className="text-[13px] font-semibold">{t('learning.screen.help.sourcesTitle')}</h3>
-          <p className="mt-1 text-[12px] leading-5 text-text-secondary">{t('learning.screen.help.sources')}</p>
+          <h3 className="text-base font-semibold">{t('learning.screen.help.sourcesTitle')}</h3>
+          <p className="mt-1 text-sm leading-5 text-text-secondary">{t('learning.screen.help.sources')}</p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {LEARNING_EVIDENCE_TYPES.map((type) => <Chip key={type} tone="muted">{evidenceLabel(type)}</Chip>)}
           </div>
         </section>
         <section>
-          <h3 className="text-[13px] font-semibold">{t('learning.screen.help.examplesTitle')}</h3>
-          <ul className="mt-1 list-disc space-y-1 pl-4 text-[12px] leading-5 text-text-secondary">
+          <h3 className="text-base font-semibold">{t('learning.screen.help.examplesTitle')}</h3>
+          <ul className="mt-1 list-disc space-y-1 pl-4 text-sm leading-5 text-text-secondary">
             <li>{t('learning.screen.help.exampleLesson')}</li>
             <li>{t('learning.screen.help.exampleSkill')}</li>
           </ul>
@@ -970,7 +970,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
   )
 
   return (
-    <div className="@container/learning relative flex h-full w-full min-h-0 min-w-0 bg-background font-sans text-[13px] text-foreground" data-testid="learning-screen">
+    <div className="@container/learning relative flex h-full w-full min-h-0 min-w-0 bg-background font-sans text-base text-foreground" data-testid="learning-screen">
       {facets}
       {unavailable ? unavailableSection : (
         <>

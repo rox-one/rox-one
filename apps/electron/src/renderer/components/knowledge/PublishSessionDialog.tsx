@@ -435,7 +435,7 @@ export function PublishSessionDialog({
             {t('knowledge.publish.title')}
           </DialogTitle>
           <DialogDescription className="sr-only">{t('knowledge.publish.title')}</DialogDescription>
-          <ol className="flex flex-wrap gap-2 pt-2 text-[11px] text-muted-foreground">
+          <ol className="flex flex-wrap gap-2 pt-2 text-xs text-muted-foreground">
             {STEPS.map((s, i) => (
               <li
                 key={s}
@@ -693,14 +693,14 @@ function DistillStep({
     <div className="space-y-3">
       <div>
         <h3 className="text-sm font-semibold">{draft.title}</h3>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{draft.summary}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{draft.summary}</p>
       </div>
       {draft.outline.length > 0 && (
         <ul className="space-y-0.5 text-xs text-muted-foreground">
           {draft.outline.map((item) => (
             <li key={item.heading}>
               {item.heading}
-              <span className="ml-1 tabular-nums opacity-60">({item.blockCount})</span>
+              <span className="ml-1 numeric opacity-60">({item.blockCount})</span>
             </li>
           ))}
         </ul>
@@ -709,7 +709,7 @@ function DistillStep({
         {t('knowledge.publish.excludedCount', { count: draft.excluded.length })}
       </p>
       {draft.excluded.length > 0 && (
-        <ul className="space-y-0.5 text-[11px] text-muted-foreground/80">
+        <ul className="space-y-0.5 text-xs text-muted-foreground/80">
           {draft.excluded.slice(0, 12).map((ex) => (
             <li key={`${ex.reason}-${ex.excerptHash}`}>
               {ex.reason} · {ex.origin} · {ex.excerptHash.slice(0, 8)}…

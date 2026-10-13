@@ -367,7 +367,7 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
             <ConnectionIcon connection={connection} size={14} />
             <span>{connection.name}</span>
             {connection.isDefault && (
-              <span className="inline-flex items-center h-5 px-2 text-[11px] font-medium rounded-[var(--radius-control)] bg-background shadow-minimal text-foreground/60">
+              <span className="inline-flex items-center h-5 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-background shadow-minimal text-foreground/60">
                 {t("common.default")}
               </span>
             )}
@@ -383,7 +383,7 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
             )}
           </div>
           {(oauthIdentityLine || oauthStatusLine) && (
-            <span className="text-xs text-muted-foreground truncate">
+            <span className="text-xs text-muted-foreground truncate" title={[oauthIdentityLine, oauthStatusLine].filter(Boolean).join(' · ')}>
               {oauthIdentityLine}
               {oauthIdentityLine && oauthStatusLine && ' · '}
               {oauthStatusLine && (

@@ -128,13 +128,13 @@ export function TagChip({ tag, onRemove, onClick, muted, active }: { tag: string
   const body = (
     <>
       <span aria-hidden className="text-text-muted">#</span>
-      <span className="truncate">{tag}</span>
+      <span className="truncate" title={tag}>{tag}</span>
     </>
   )
   return (
     <span
       className={cn(
-        'inline-flex h-5 max-w-[160px] shrink-0 items-center gap-0.5 rounded-[var(--radius-control)] px-1 text-[11px]',
+        'inline-flex h-5 max-w-[160px] shrink-0 items-center gap-0.5 rounded-[var(--radius-control)] px-1 text-xs',
         active ? 'bg-accent/15 font-semibold text-foreground' : muted ? 'bg-foreground/[0.04] text-text-muted' : 'bg-foreground/[0.07] text-text-secondary',
       )}
     >
@@ -184,14 +184,14 @@ export function TagEditor({ value, onChange, suggestions, testId, inherited }: {
           onBlur={() => { if (draft.trim()) add(draft) }}
           placeholder={full ? t('feed.tags.full') : t('feed.tags.placeholder')}
           aria-label={t('feed.tags.placeholder')}
-          className="h-6 min-w-[120px] flex-1 rounded-[var(--radius-control)] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
+          className="h-6 min-w-[120px] flex-1 rounded-[var(--radius-control)] bg-foreground/[0.05] px-2 text-sm outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
         />
       </div>
       {sugg.length && !full ? (
         <div className="flex flex-wrap items-center gap-1">
-          <span className="text-[11px] text-text-muted">{t('feed.tags.suggested')}</span>
+          <span className="text-xs text-text-muted">{t('feed.tags.suggested')}</span>
           {sugg.map((s) => (
-            <button key={s} type="button" onClick={() => add(s)} className="inline-flex h-5 items-center rounded-[var(--radius-control)] px-1 text-[11px] text-text-secondary outline-none hover:bg-foreground/[0.07] hover:text-foreground">
+            <button key={s} type="button" onClick={() => add(s)} className="inline-flex h-5 items-center rounded-[var(--radius-control)] px-1 text-xs text-text-secondary outline-none hover:bg-foreground/[0.07] hover:text-foreground">
               + {s}
             </button>
           ))}
@@ -277,7 +277,7 @@ const HEALTH_CLS: Record<SourceHealth, string> = {
 export function HealthDot({ health }: { health: SourceHealth }) {
   const { t } = useTranslation()
   return (
-    <span className="inline-flex items-center gap-1 text-[11px] text-text-secondary" data-health={health}>
+    <span className="inline-flex items-center gap-1 text-xs text-text-secondary" data-health={health}>
       <span aria-hidden className={cn('size-2 shrink-0 rounded-full', HEALTH_CLS[health])} />
       {t(`feed.health.${health}`)}
     </span>

@@ -57,8 +57,8 @@ function RestrictedBody({ entityRef, preview }: { entityRef: EntityRef; preview:
     <div className="flex items-start gap-2" data-entity-restricted={preview.status}>
       <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-text-muted" />
       <div className="min-w-0">
-        <p className="text-[13px] font-medium text-foreground">{t(titleKey, { kind })}</p>
-        <p className="text-[12px] text-text-secondary">{t(bodyKey)}</p>
+        <p className="text-base font-medium text-foreground">{t(titleKey, { kind })}</p>
+        <p className="text-sm text-text-secondary">{t(bodyKey)}</p>
       </div>
     </div>
   )
@@ -75,7 +75,7 @@ function ModelBody({ preview, variant }: { preview: PreviewModel; variant: Entit
   return (
     <>
       {preview.badges && preview.badges.length > 0 && (
-        <ul className="flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
+        <ul className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
           {preview.badges.map((badge) => (
             <li key={badge.id} className={cn('inline-flex items-center gap-1', BADGE_TONE[badge.tone ?? 'neutral'])}>
               <span aria-hidden="true">●</span>
@@ -85,7 +85,7 @@ function ModelBody({ preview, variant }: { preview: PreviewModel; variant: Entit
         </ul>
       )}
       {fields.length > 0 && (
-        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12px]">
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
           {fields.map((field) => (
             <React.Fragment key={field.id}>
               <dt className="text-text-muted">{field.label}</dt>
@@ -102,7 +102,7 @@ function ModelBody({ preview, variant }: { preview: PreviewModel; variant: Entit
         />
       )}
       {(people.length > 0 || updated) && (
-        <div className="flex items-center justify-between gap-2 text-[12px] text-text-muted">
+        <div className="flex items-center justify-between gap-2 text-sm text-text-muted">
           <div className="flex -space-x-1.5">
             {people.map((person) => (
               <span key={`${person.ref.kind}:${person.ref.id}`} title={person.name}>
@@ -122,7 +122,7 @@ export function EntityPreviewBody({ entityRef, preview, loading, variant, onOpen
   const { t } = useTranslation()
   if (loading || !preview) {
     return (
-      <div className="flex items-center gap-2 text-[12px] text-text-muted" aria-busy="true">
+      <div className="flex items-center gap-2 text-sm text-text-muted" aria-busy="true">
         <EntityKindIcon kind={entityRef.kind} className="size-4" />
         {t('entities.ui.chip.loading')}
       </div>
@@ -133,23 +133,23 @@ export function EntityPreviewBody({ entityRef, preview, loading, variant, onOpen
   const copy = onCopyLink ?? copyToClipboard
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-text-muted">
+      <div className="flex items-center gap-1.5 text-xs uppercase caps-label text-text-muted">
         <EntityKindIcon kind={entityRef.kind} icon={preview.icon} className="size-3.5" />
         <span>{kind}</span>
       </div>
-      <p className="line-clamp-2 text-[14px] font-medium text-foreground">{preview.title}</p>
+      <p className="line-clamp-2 text-lg font-medium text-foreground">{preview.title}</p>
       <ModelBody preview={preview} variant={variant} />
       <div className="flex items-center gap-1 pt-1" role="group" aria-label={t('entities.ui.card.actions')}>
         <button
           type="button"
-          className={cn('rounded-[6px] px-2 py-1 text-[12px] text-accent hover:bg-foreground/[0.05]', MOTION_FAST, FOCUS_RING)}
+          className={cn('rounded-[6px] px-2 py-1 text-sm text-accent hover:bg-foreground/[0.05]', MOTION_FAST, FOCUS_RING)}
           onClick={(event) => onOpen?.(entityRef, event)}
         >
           {t('entities.ui.card.open')}
         </button>
         <button
           type="button"
-          className={cn('inline-flex items-center gap-1 rounded-[6px] px-2 py-1 text-[12px] text-text-secondary hover:bg-foreground/[0.05]', MOTION_FAST, FOCUS_RING)}
+          className={cn('inline-flex items-center gap-1 rounded-[6px] px-2 py-1 text-sm text-text-secondary hover:bg-foreground/[0.05]', MOTION_FAST, FOCUS_RING)}
           onClick={() => copy(entityDeepLink(entityRef))}
         >
           <Link2 aria-hidden="true" className="size-3.5" />

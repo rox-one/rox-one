@@ -109,8 +109,8 @@ export function BrowserIntelOptIn({
         <ShieldCheck className="icon-status shrink-0 text-status-success" aria-hidden="true" />
         <span>{t('onboarding.browserIntel.enable')}</span>
       </label>
-      <p className="px-1 text-xs leading-relaxed text-muted-foreground">{t('onboarding.browserIntel.description')}</p>
-      <p className="px-1 text-xs leading-relaxed text-muted-foreground">{t('onboarding.browserIntel.storage')}</p>
+      <p className="px-1 text-xs text-muted-foreground">{t('onboarding.browserIntel.description')}</p>
+      <p className="px-1 text-xs text-muted-foreground">{t('onboarding.browserIntel.storage')}</p>
       {failed ? (
         <div className="flex items-center justify-between gap-2">
           <p role="alert" className="text-xs text-destructive">{t('onboarding.browserIntel.savingError')}</p>

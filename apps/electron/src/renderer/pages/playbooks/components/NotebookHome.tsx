@@ -115,7 +115,7 @@ export function NotebookHome({ notebooks, loading, error, recentPodcasts, offlin
                           ? t('playbooks.home.sourcesCount', { count: notebook.sourceSlugs.length })
                           : t('playbooks.codebook.cellsCount', { count: notebook.cells?.length ?? 0 })}
                       </span>
-                      <span className="mt-1 block text-caption text-muted-foreground tabular-nums">
+                      <span className="mt-1 block text-caption text-muted-foreground numeric">
                         {new Date(notebook.updatedAt).toLocaleDateString()}
                       </span>
                     </button>
@@ -134,7 +134,7 @@ export function NotebookHome({ notebooks, loading, error, recentPodcasts, offlin
         )}
 
         <section className="mt-6" data-testid="playbooks-home-recent-podcasts">
-          <h2 className="mb-2 text-caption font-medium uppercase tracking-wide text-muted-foreground">{t('playbooks.home.recentPodcasts')}</h2>
+          <h2 className="mb-2 text-caption font-medium uppercase caps-label text-muted-foreground">{t('playbooks.home.recentPodcasts')}</h2>
           {recentPodcasts.length === 0 ? (
             <p className="text-xs text-muted-foreground">{t('playbooks.home.noPodcasts')}</p>
           ) : (
@@ -143,7 +143,7 @@ export function NotebookHome({ notebooks, loading, error, recentPodcasts, offlin
                 <li key={podcast.id} className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Mic2 className="icon-caption" aria-hidden />
                   <span className="truncate">{podcast.topic}</span>
-                  <span className="ml-auto tabular-nums">{new Date(podcast.at).toLocaleDateString()}</span>
+                  <span className="ml-auto numeric">{new Date(podcast.at).toLocaleDateString()}</span>
                 </li>
               ))}
             </ul>
@@ -151,7 +151,7 @@ export function NotebookHome({ notebooks, loading, error, recentPodcasts, offlin
         </section>
 
         <section className="mt-6" data-testid="playbooks-home-presets">
-          <h2 className="mb-2 text-caption font-medium uppercase tracking-wide text-muted-foreground">{t('playbooks.notebook.presetsTitle')}</h2>
+          <h2 className="mb-2 text-caption font-medium uppercase caps-label text-muted-foreground">{t('playbooks.notebook.presetsTitle')}</h2>
           <ul className="list-none space-y-0.5 p-0">
             {PRESET_QUESTION_IDS.map((id) => (
               <li key={id}>

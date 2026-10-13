@@ -48,7 +48,7 @@ export function MentionBadge({
     <span
       className={cn(
         'inline-flex items-center gap-1.5 h-6 pl-1 pr-1.5 rounded-[var(--radius-control)]',
-        'bg-foreground/5 text-[12px] text-foreground',
+        'bg-foreground/5 text-sm text-foreground',
         'transition-colors hover:bg-foreground/8',
         className
       )}
@@ -62,7 +62,7 @@ export function MentionBadge({
       )}
 
       {/* Label */}
-      <span className="truncate max-w-[100px]">{label}</span>
+      <span className="truncate max-w-[100px]" title={label}>{label}</span>
 
       {/* Remove button */}
       {onRemove && (

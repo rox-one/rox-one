@@ -69,10 +69,10 @@ export function SessionContextPanel({ sessionId }: { sessionId: string | null })
   if (!enabled) {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
-        <span className="text-[13px] font-medium text-foreground/80">
+        <span className="text-base font-medium text-foreground/80">
           {t('inspector.empty.context.title')}
         </span>
-        <span className="text-[12px] leading-relaxed text-muted-foreground/60">
+        <span className="text-sm leading-relaxed text-muted-foreground/60">
           {t('inspector.empty.context.body')}
         </span>
       </div>
@@ -81,13 +81,13 @@ export function SessionContextPanel({ sessionId }: { sessionId: string | null })
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 py-3" data-testid="session-context-dashboard">
-      <p className="text-[11px] text-muted-foreground/70">{t('inspector.context.readOnly')}</p>
+      <p className="text-xs text-muted-foreground/70">{t('inspector.context.readOnly')}</p>
       <ul className="flex flex-col gap-2">
         {shares.map((share) => (
           <li key={share.kind} className="flex flex-col gap-1">
-            <div className="flex items-center justify-between text-[12px]">
+            <div className="flex items-center justify-between text-sm">
               <span>{t(SHARE_I18N[share.kind])}</span>
-              <span className="tabular-nums text-muted-foreground">{share.percent}%</span>
+              <span className="numeric text-muted-foreground">{share.percent}%</span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-foreground/5">
               <div
@@ -98,7 +98,7 @@ export function SessionContextPanel({ sessionId }: { sessionId: string | null })
           </li>
         ))}
       </ul>
-      <p className="text-[11px] text-muted-foreground" data-testid="session-mcp-lens">
+      <p className="text-xs text-muted-foreground" data-testid="session-mcp-lens">
         {t('inspector.context.hiddenTools', { count: lens.hidden.length })}
       </p>
     </div>

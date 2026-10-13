@@ -265,7 +265,7 @@ export default function CodebookNotebookPage({ notebook, onBack, onUpdate }: Cod
               <div className="mb-2 flex items-center gap-2 text-xs">
                 {running ? <Loader2 className="icon-caption animate-spin motion-reduce:animate-none" aria-hidden /> : <Play className="icon-caption" aria-hidden />}
                 <span className="font-medium">{t(`playbooks.codebook.jobState.${job.state}`)}</span>
-                <span className="tabular-nums text-muted-foreground" data-testid="playbooks-codebook-progress-count">
+                <span className="numeric text-muted-foreground" data-testid="playbooks-codebook-progress-count">
                   {t('playbooks.codebook.progress', { done: job.doneSteps, total: job.totalCells })}
                 </span>
               </div>
@@ -353,7 +353,7 @@ export default function CodebookNotebookPage({ notebook, onBack, onUpdate }: Cod
         </section>
 
         <aside className="min-h-0 overflow-auto p-4" data-testid="playbooks-codebook-context" tabIndex={-1}>
-          <h2 className="mb-2 text-caption font-medium uppercase tracking-wide text-muted-foreground">{t('playbooks.codebook.contextTitle')}</h2>
+          <h2 className="mb-2 text-caption font-medium uppercase caps-label text-muted-foreground">{t('playbooks.codebook.contextTitle')}</h2>
           <label className="mb-1 block text-xs text-muted-foreground" htmlFor="codebook-project">{t('playbooks.codebook.projectLabel')}</label>
           <Input
             id="codebook-project"
@@ -365,7 +365,7 @@ export default function CodebookNotebookPage({ notebook, onBack, onUpdate }: Cod
           />
           <p className="mt-1 text-caption text-muted-foreground">{t('playbooks.codebook.projectHint')}</p>
 
-          <h3 className="mt-4 text-caption font-medium uppercase tracking-wide text-muted-foreground">{t('playbooks.codebook.artifactsTitle')}</h3>
+          <h3 className="mt-4 text-caption font-medium uppercase caps-label text-muted-foreground">{t('playbooks.codebook.artifactsTitle')}</h3>
           {artifacts.length === 0 ? (
             <p className="mt-1 text-xs text-muted-foreground" data-testid="playbooks-codebook-no-artifacts">{t('playbooks.codebook.noArtifacts')}</p>
           ) : (
@@ -376,7 +376,7 @@ export default function CodebookNotebookPage({ notebook, onBack, onUpdate }: Cod
             </ul>
           )}
 
-          <h3 className="mt-4 text-caption font-medium uppercase tracking-wide text-muted-foreground">{t('playbooks.codebook.runsTitle')}</h3>
+          <h3 className="mt-4 text-caption font-medium uppercase caps-label text-muted-foreground">{t('playbooks.codebook.runsTitle')}</h3>
           {runs.length === 0 ? (
             <p className="mt-1 text-xs text-muted-foreground" data-testid="playbooks-codebook-no-runs">{t('playbooks.codebook.noRuns')}</p>
           ) : (
@@ -384,7 +384,7 @@ export default function CodebookNotebookPage({ notebook, onBack, onUpdate }: Cod
               {runs.slice(0, 5).map((run) => (
                 <li key={run.id} className="flex items-center justify-between gap-2 text-caption text-muted-foreground">
                   <span className="truncate">{run.title ?? run.id}</span>
-                  <span className="tabular-nums">{t(`playbooks.codebook.runStatus.${run.status}`)}</span>
+                  <span className="numeric">{t(`playbooks.codebook.runStatus.${run.status}`)}</span>
                 </li>
               ))}
             </ul>

@@ -13,6 +13,7 @@ import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import {
   SettingsCard,
+  SettingsCardFooter,
   SettingsRow,
   SettingsSection,
   SettingsSegmentedControl,
@@ -130,6 +131,7 @@ export default function AccountSettingsPage() {
   const [mailAddress, setMailAddress] = React.useState<string | null>(null)
   const [mailDomain, setMailDomain] = React.useState(MAIL_DEFAULT_DOMAIN)
   const [saving, setSaving] = React.useState(false)
+  const [profileSavedFlash, setProfileSavedFlash] = React.useState(false)
   const [changingAvatar, setChangingAvatar] = React.useState(false)
   const [gamification, setGamification] = React.useState<GamificationSnapshot | null>(null)
   const [savingAnalyticsConsent, setSavingAnalyticsConsent] = React.useState(false)
@@ -203,9 +205,11 @@ export default function AccountSettingsPage() {
     const trimmed = displayName.trim()
     if (!trimmed) return
     setSaving(true)
+    setProfileSavedFlash(false)
     try {
       await persist({ displayName: trimmed, email })
-      toast.success(t('settings.accounts.profileSaved'))
+      setProfileSavedFlash(true)
+      window.setTimeout(() => setProfileSavedFlash(false), 2400)
     } catch (error) {
       toast.error(t('settings.accounts.profileSaveFailed', { message: errorMessage(error) }))
     } finally {
@@ -390,11 +394,11 @@ export default function AccountSettingsPage() {
                 </span>
               )}
             </SettingsRow>
-            <SettingsRow label="">
+            <SettingsCardFooter saved={profileSavedFlash}>
               <Button size="sm" onClick={() => void handleSaveProfile()} disabled={saving || !profile || !displayName.trim()}>
                 {t('common.save')}
               </Button>
-            </SettingsRow>
+            </SettingsCardFooter>
           </SettingsCard>
         </SettingsSection>
 
@@ -417,7 +421,7 @@ export default function AccountSettingsPage() {
               </SettingsRow>
             ) : null}
             <SettingsRow label={t('profile.balanceLabel')} description={t('settings.account.cloud.title')}>
-              <span className="text-sm tabular-nums">{formatBalance(cloudAccount ? Number(cloudAccount.balance.availableRox) : null, t)}</span>
+              <span className="text-sm numeric">{formatBalance(cloudAccount ? Number(cloudAccount.balance.availableRox) : null, t)}</span>
             </SettingsRow>
             <SettingsToggle
               label={t('settings.account.analyticsConsent')}
@@ -439,7 +443,7 @@ export default function AccountSettingsPage() {
               description={t('settings.account.xpHint')}
             >
               <div className="min-w-[220px] space-y-1.5">
-                <div className="flex justify-between text-xs text-muted-foreground tabular-nums">
+                <div className="flex justify-between text-xs text-muted-foreground numeric">
                   <span>
                     {nextThreshold == null
                       ? t('profile.xpMax', { xp: lifetimeXp })
@@ -480,7 +484,7 @@ export default function AccountSettingsPage() {
                       className="flex items-center justify-between gap-3 border-b border-border/40 py-1.5 last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0"
                     >
                       <span>{t(XP_EVENT_KEYS[event.type] ?? event.type)}</span>
-                      <span className="tabular-nums text-muted-foreground">+{event.xp}</span>
+                      <span className="numeric text-muted-foreground">+{event.xp}</span>
                     </li>
                   ))}
                 </ul>

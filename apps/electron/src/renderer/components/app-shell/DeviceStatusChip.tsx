@@ -35,7 +35,7 @@ export function DeviceStatusChip({ className }: { className?: string }) {
           type="button"
           data-testid="device-status-chip"
           aria-label={t('deviceDiagnostics.open')}
-          className={cn('inline-flex h-7 min-h-[var(--control-hit-min)] min-w-[var(--control-hit-min)] shrink-0 items-center gap-1.5 rounded-md px-2 text-[11px] font-medium text-text-secondary transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-ring', className)}
+          className={cn('inline-flex h-7 min-h-[var(--control-hit-min)] min-w-[var(--control-hit-min)] shrink-0 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-text-secondary transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-ring', className)}
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
         >
           <Cpu className="size-4" aria-hidden="true" />

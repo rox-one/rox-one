@@ -83,12 +83,12 @@ export function MemoryProvenanceStrip({ sessionId, isLatestAssistant, messageTex
       {appliedFragments.map(fragment => (
         <span
           key={fragment}
-          className="rounded-md bg-accent/10 px-1.5 py-0.5 text-[11px] text-accent/70"
+          className="rounded-md bg-accent/10 px-1.5 py-0.5 text-xs text-accent/70"
         >
           {t('memory.fromLesson', { fragment: `${fragment}…` })}
         </span>
       ))}
-      <span className="text-[11px] text-muted-foreground/60" title={rulesTitle || undefined}>
+      <span className="text-xs text-muted-foreground/60" title={rulesTitle || undefined}>
         {t('memory.usedInTurn', { lessons: lessonCount, skills: skillCount })}
       </span>
     </div>

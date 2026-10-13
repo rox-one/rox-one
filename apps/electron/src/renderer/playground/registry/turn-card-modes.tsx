@@ -232,7 +232,7 @@ function TurnCardModesDemo({
         {/* Playback Button */}
         <button
           onClick={hasPlaybackStarted ? resetPlayback : startPlayback}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-background shadow-minimal text-foreground hover:bg-foreground/5 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-background shadow-minimal text-foreground hover:bg-foreground/5 transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)]"
         >
           {hasPlaybackStarted ? (
             <>
@@ -250,10 +250,10 @@ function TurnCardModesDemo({
         <div className="w-px h-5 bg-border mx-2" />
 
         {/* Mode Toggle */}
-        <span className="text-sm font-medium text-muted-foreground mr-2">Display Mode:</span>
+        <span className="text-sm font-medium text-text-secondary mr-2">Display Mode:</span>
         <button
           onClick={() => setMode('informative')}
-          className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+          className={`px-3 py-1.5 text-sm rounded-md transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)] ${
             mode === 'informative'
               ? 'bg-background shadow-minimal text-foreground'
               : 'text-muted-foreground hover:text-foreground'
@@ -263,7 +263,7 @@ function TurnCardModesDemo({
         </button>
         <button
           onClick={() => setMode('detailed')}
-          className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+          className={`px-3 py-1.5 text-sm rounded-md transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)] ${
             mode === 'detailed'
               ? 'bg-background shadow-minimal text-foreground'
               : 'text-muted-foreground hover:text-foreground'
@@ -271,7 +271,7 @@ function TurnCardModesDemo({
         >
           Detailed
         </button>
-        <span className="ml-4 text-xs text-muted-foreground">
+        <span className="ml-4 text-xs text-text-secondary">
           {mode === 'informative'
             ? 'Hides MCP/API tool names and params, shows only source + intent'
             : 'Shows full tool names, params, and all metadata'

@@ -63,7 +63,7 @@ export function KnowledgeMapTree({
               />
               <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ background: group.color }} aria-hidden />
               <span className="truncate">{t(group.labelKey)}</span>
-              <span className="ml-auto text-xs text-muted-foreground tabular-nums">{group.nodes.length}</span>
+              <span className="ml-auto text-xs text-muted-foreground numeric">{group.nodes.length}</span>
             </button>
             {open && (
               <ul className="divide-y divide-border border-t border-border">
@@ -78,7 +78,7 @@ export function KnowledgeMapTree({
                       onDoubleClick={() => onOpenNode(node.id)}
                     >
                       <span className="truncate">{node.label}</span>
-                      <span className="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums">
+                      <span className="ml-auto shrink-0 text-xs text-muted-foreground numeric">
                         {degreeOf(node.id, edges)}
                       </span>
                     </button>

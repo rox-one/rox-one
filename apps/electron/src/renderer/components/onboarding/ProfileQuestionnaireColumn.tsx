@@ -245,7 +245,7 @@ export function ProfileQuestionnaireColumn({
       <div data-testid="profile-preferences" className="space-y-3">
         <div className="space-y-2">
           <Label htmlFor={preferencesId}>{t('onboarding.profile.preferences')}</Label>
-          <p className="text-xs leading-relaxed text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {t('onboarding.profile.preferencesHint')}
           </p>
           <Textarea

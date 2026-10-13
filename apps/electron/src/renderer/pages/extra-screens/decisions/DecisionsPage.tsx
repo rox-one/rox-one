@@ -176,7 +176,7 @@ export default function DecisionsPage({ itemId }: { itemId: string | null }) {
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto pb-3">
           {pending.length > 0 && (
-            <div className="px-4 py-2 text-[12px] text-muted-foreground" role="status">{t('extraScreens.decisions.extracting', { n: pending.length })}</div>
+            <div className="px-4 py-2 text-sm text-muted-foreground" role="status">{t('extraScreens.decisions.extracting', { n: pending.length })}</div>
           )}
           {data.candidates.length > 0 && (
             <>
@@ -184,8 +184,8 @@ export default function DecisionsPage({ itemId }: { itemId: string | null }) {
               {data.candidates.map((candidate) => (
                 <ListRow key={candidate.id} active={itemId === `cand:${candidate.id}`} onClick={() => select(`cand:${candidate.id}`)}>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate">{candidate.title}</div>
-                    <div className="truncate text-[12px] text-muted-foreground">{candidate.source.label ?? t(`extraScreens.decisions.source.${candidate.source.kind}`)}</div>
+                    <div className="truncate" title={candidate.title}>{candidate.title}</div>
+                    <div className="truncate text-sm text-muted-foreground" title={candidate.source.label ?? t(`extraScreens.decisions.source.${candidate.source.kind}`)}>{candidate.source.label ?? t(`extraScreens.decisions.source.${candidate.source.kind}`)}</div>
                   </div>
                   <Chip tone="warn">{t('extraScreens.decisions.candidate')}</Chip>
                 </ListRow>
@@ -201,8 +201,8 @@ export default function DecisionsPage({ itemId }: { itemId: string | null }) {
                 {header}
                 <ListRow active={decision.id === itemId} onClick={() => select(decision.id)}>
                   <div className="min-w-0 flex-1">
-                    <div className={cn('truncate', decision.status !== 'accepted' && 'text-muted-foreground line-through')}>{decision.title}</div>
-                    <div className="truncate text-[12px] text-muted-foreground">
+                    <div className={cn('truncate', decision.status !== 'accepted' && 'text-muted-foreground line-through')} title={decision.title}>{decision.title}</div>
+                    <div className="truncate text-sm text-muted-foreground">
                       {[new Date(decision.decidedAt).toLocaleDateString(i18n.language, { day: '2-digit', month: '2-digit' }), decision.who.join(', '), decision.rejected.length ? t('extraScreens.decisions.rejectedCount', { n: decision.rejected.length }) : null]
                         .filter(Boolean).join(' · ')}
                     </div>
@@ -284,8 +284,8 @@ function CandidateView({ candidate, onAccept, onReject }: { candidate: DecisionC
   const { t } = useTranslation()
   return (
     <div className="max-w-[760px]">
-      <div className="text-[12px] text-muted-foreground">{t('extraScreens.decisions.candidateFrom', { source: candidate.source.label ?? '' })}</div>
-      <h2 className="mt-1 text-[19px] font-bold leading-tight">{candidate.title}</h2>
+      <div className="text-sm text-muted-foreground">{t('extraScreens.decisions.candidateFrom', { source: candidate.source.label ?? '' })}</div>
+      <h2 className="mt-1 text-xl font-bold">{candidate.title}</h2>
       {candidate.why && <p className="mt-2">{candidate.why}</p>}
       {candidate.who.length > 0 && <div className="mt-2 text-muted-foreground">{t('extraScreens.decisions.who')}: {candidate.who.join(', ')}</div>}
       {candidate.rejected.length > 0 && (
@@ -364,7 +364,7 @@ function DecisionEditor({
   return (
     <div className="max-w-[820px]">
       {decision && (
-        <div className="text-[12px] text-muted-foreground">
+        <div className="text-sm text-muted-foreground">
           {new Date(decision.decidedAt).toLocaleDateString(i18n.language, { day: 'numeric', month: 'long', year: 'numeric' })}
           {' · '}
           {decision.source.kind === 'manual'
@@ -408,7 +408,7 @@ function DecisionEditor({
           <div className="flex items-center gap-2">
             <CardTitle>{t('extraScreens.decisions.agentsTitle')}</CardTitle>
             <span className="flex-1" />
-            <label className="flex items-center gap-1.5 text-[12px]">
+            <label className="flex items-center gap-1.5 text-sm">
               <input
                 type="checkbox"
                 checked={decision.exposeToAgents}
@@ -418,7 +418,7 @@ function DecisionEditor({
               {t('extraScreens.decisions.expose')}
             </label>
           </div>
-          <div className="mt-1 text-[12px] text-muted-foreground">
+          <div className="mt-1 text-sm text-muted-foreground">
             {!memoryApiAvailable()
               ? t('extraScreens.decisions.memoryUnavailable')
               : wanted.length === 0
@@ -428,7 +428,7 @@ function DecisionEditor({
                   : t('extraScreens.decisions.inMemory', { n: inMemory, total: wanted.length })}
           </div>
           {wanted.map((rule) => (
-            <div key={rule.rule} className="mt-1 text-[12px]">
+            <div key={rule.rule} className="mt-1 text-sm">
               <span className={cn('font-bold', rule.negative ? 'text-destructive' : 'text-foreground')}>{rule.negative ? 'MUST NOT: ' : '• '}</span>
               {rule.rule}
             </div>
@@ -472,7 +472,7 @@ function ExtractPanel({ workspaceId, language, data }: { workspaceId: string | n
 
   return (
     <div className="max-w-[760px]">
-      <h2 className="text-[19px] font-bold">{t('extraScreens.decisions.extractTitle')}</h2>
+      <h2 className="text-xl font-bold">{t('extraScreens.decisions.extractTitle')}</h2>
       <p className="mt-1 text-muted-foreground">{t('extraScreens.decisions.extractBody')}</p>
       {error && <div className="mt-2 text-destructive">{error}</div>}
       <div className="mt-4"><SectionLabel>{t('extraScreens.decisions.source.session')}</SectionLabel></div>
@@ -481,8 +481,8 @@ function ExtractPanel({ workspaceId, language, data }: { workspaceId: string | n
         const source: DecisionSource = { kind: 'session', id: s.id, label: sessionTitle(s) }
         return (
           <div key={s.id} className="flex items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]">
-            <span className="min-w-0 flex-1 truncate">{source.label}</span>
-            <span className="text-[12px] text-muted-foreground">{when(s.lastMessageAt)}</span>
+            <span className="min-w-0 flex-1 truncate" title={source.label}>{source.label}</span>
+            <span className="text-sm text-muted-foreground">{when(s.lastMessageAt)}</span>
             <ScreenButton variant="ghost" disabled={busy != null} onClick={() => { void run(source) }}>
               {busy === `session:${s.id}` ? t('extraScreens.radar.starting') : t('extraScreens.decisions.extractOne')}
             </ScreenButton>
@@ -496,8 +496,8 @@ function ExtractPanel({ workspaceId, language, data }: { workspaceId: string | n
         const source: DecisionSource = { kind: 'meeting', id: m.id, label: m.title }
         return (
           <div key={m.id} className="flex items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]">
-            <span className="min-w-0 flex-1 truncate">{m.title}</span>
-            <span className="text-[12px] text-muted-foreground">{when(m.at)}</span>
+            <span className="min-w-0 flex-1 truncate" title={m.title}>{m.title}</span>
+            <span className="text-sm text-muted-foreground">{when(m.at)}</span>
             <ScreenButton variant="ghost" disabled={busy != null} onClick={() => { void run(source) }}>
               {busy === `meeting:${m.id}` ? t('extraScreens.radar.starting') : t('extraScreens.decisions.extractOne')}
             </ScreenButton>
@@ -508,8 +508,8 @@ function ExtractPanel({ workspaceId, language, data }: { workspaceId: string | n
         <>
           <div className="mt-4"><SectionLabel>{t('extraScreens.decisions.extractHistory')}</SectionLabel></div>
           {data.extractions.slice(0, 10).map((e) => (
-            <div key={e.id} className="flex items-center gap-2 py-0.5 text-[12px]">
-              <span className="min-w-0 flex-1 truncate">{e.source.label}</span>
+            <div key={e.id} className="flex items-center gap-2 py-0.5 text-sm">
+              <span className="min-w-0 flex-1 truncate" title={e.source.label}>{e.source.label}</span>
               <span className="text-muted-foreground">
                 {!e.parsedAt ? t('extraScreens.common.agentWorking') : e.failed ? t('extraScreens.decisions.extractFailed') : t('extraScreens.decisions.extractFound', { n: e.found ?? 0 })}
               </span>
@@ -518,7 +518,7 @@ function ExtractPanel({ workspaceId, language, data }: { workspaceId: string | n
           ))}
         </>
       )}
-      <div className="mt-4 text-[12px] text-muted-foreground">{t('extraScreens.common.agentReadOnly')}</div>
+      <div className="mt-4 text-sm text-muted-foreground">{t('extraScreens.common.agentReadOnly')}</div>
     </div>
   )
 }

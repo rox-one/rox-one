@@ -140,12 +140,12 @@ export function CompactWorkingDirectorySelector({
               <div className="flex items-center gap-3 px-3 py-3 rounded-[var(--radius-control)] bg-foreground/5">
                 <Icon_Folder className="h-5 w-5 shrink-0 text-foreground/60" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{displayFolderName}</div>
-                  <div className="text-xs text-foreground/50 truncate">
+                  <div className="text-sm font-medium truncate" title={displayFolderName}>{displayFolderName}</div>
+                  <div className="text-xs text-foreground/50 truncate" title={formatPath(workingDirectory, homeDir)}>
                     {formatPath(workingDirectory, homeDir)}
                   </div>
                   {gitBranch && (
-                    <div className="text-xs text-foreground/50 truncate">
+                    <div className="text-xs text-foreground/50 truncate" title={t('chat.onBranch', { branch: gitBranch })}>
                       {t('chat.onBranch', { branch: gitBranch })}
                     </div>
                   )}
@@ -173,8 +173,8 @@ export function CompactWorkingDirectorySelector({
                     >
                       <Icon_Folder className="h-5 w-5 shrink-0 text-foreground/60" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{recentFolderName}</div>
-                        <div className="text-xs text-foreground/50 truncate">
+                        <div className="text-sm font-medium truncate" title={recentFolderName}>{recentFolderName}</div>
+                        <div className="text-xs text-foreground/50 truncate" title={formatPath(path, homeDir)}>
                           {formatPath(path, homeDir)}
                         </div>
                       </div>

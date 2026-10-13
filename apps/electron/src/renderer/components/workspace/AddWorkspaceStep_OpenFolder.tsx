@@ -78,7 +78,7 @@ export function AddWorkspaceStep_OpenFolder({
         >
           <div className="flex-1 min-w-0">
             {selectedPath ? (
-              <p className="text-sm text-foreground truncate">{selectedPath}</p>
+              <p className="text-sm text-foreground truncate" title={selectedPath}>{selectedPath}</p>
             ) : (
               <p className="text-sm text-muted-foreground">{t("workspace.noFolderSelected")}</p>
             )}

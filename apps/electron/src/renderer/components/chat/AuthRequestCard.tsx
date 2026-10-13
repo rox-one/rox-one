@@ -50,7 +50,7 @@ function AuthCardHeader({
       {Icon && <Icon className={cn('h-4 w-4 shrink-0 mt-0.5', iconClassName)} />}
       <div className="flex-1 min-w-0">
         {/* Title inherits container text color */}
-        <div className="text-sm font-medium leading-5">
+        <div className="text-sm font-medium">
           {title}
           {titleSuffix && (
             <span className="text-xs text-muted-foreground ml-2">({titleSuffix})</span>
@@ -108,7 +108,7 @@ function AuthCardActions({ primary, secondary, hint }: AuthCardActionsProps) {
         data-tutorial={primary.dataTutorial}
       >
         {primary.loading ? (
-          <Spinner className="text-[10px]" />
+          <Spinner className="text-xs" />
         ) : PrimaryIcon ? (
           <PrimaryIcon className="h-3.5 w-3.5" />
         ) : null}
@@ -129,7 +129,7 @@ function AuthCardActions({ primary, secondary, hint }: AuthCardActionsProps) {
       {hint && (
         <>
           <div className="flex-1" />
-          <span className="text-[10px] text-muted-foreground">{hint}</span>
+          <span className="text-xs text-muted-foreground">{hint}</span>
         </>
       )}
     </div>
@@ -406,9 +406,9 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
     if (isOAuth && isSubmitting) {
       return (
         <div className="flex gap-3">
-          <Spinner className="text-[10px] shrink-0 mt-1" />
+          <Spinner className="text-xs shrink-0 mt-1" />
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium leading-5">
+            <div className="text-sm font-medium">
               {t('auth.authenticating', { source: authSourceName })}
             </div>
             <div className="text-xs mt-0.5 opacity-50">
@@ -578,7 +578,7 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
 
         {/* Hint */}
         {authHint && (
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {authHint}
           </p>
         )}

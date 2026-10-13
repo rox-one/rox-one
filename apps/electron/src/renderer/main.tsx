@@ -139,10 +139,10 @@ function CrashFallback() {
   return (
     <div className="flex flex-col items-center justify-center h-screen font-sans text-foreground/50 gap-3">
       <p className="text-base font-medium">{i18n.t('crash.somethingWentWrong')}</p>
-      <p className="text-[13px]">{i18n.t('crash.restartPrompt')}</p>
+      <p className="text-base">{i18n.t('crash.restartPrompt')}</p>
       <button
         onClick={() => window.location.reload()}
-        className="mt-2 px-4 py-1.5 rounded-md bg-background shadow-minimal text-[13px] text-foreground/70 cursor-pointer"
+        className="mt-2 px-4 py-1.5 rounded-md bg-background shadow-minimal text-base text-foreground/70 cursor-pointer"
       >
         {i18n.t('crash.reload')}
       </button>

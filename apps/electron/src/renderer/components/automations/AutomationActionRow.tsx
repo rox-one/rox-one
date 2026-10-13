@@ -75,7 +75,7 @@ function PromptActionBadges({ action, t }: { action: PromptAction; t: (key: stri
       {llmConnection && (
         <Badge
           variant="secondary"
-          className="font-mono text-[10px] px-1.5 py-0 font-normal"
+          className="font-mono text-xs px-1.5 py-0 font-normal"
           title={`${t('automations.labelConnection')}: ${llmConnection}`}
         >
           {llmConnection}
@@ -84,7 +84,7 @@ function PromptActionBadges({ action, t }: { action: PromptAction; t: (key: stri
       {model && (
         <Badge
           variant="secondary"
-          className="font-mono text-[10px] px-1.5 py-0 font-normal max-w-[14rem] truncate"
+          className="font-mono text-xs px-1.5 py-0 font-normal max-w-[14rem] truncate"
           title={`${t('automations.labelModel')}: ${model}`}
         >
           {model}
@@ -93,7 +93,7 @@ function PromptActionBadges({ action, t }: { action: PromptAction; t: (key: stri
       {thinkingLevel && (
         <Badge
           variant="secondary"
-          className="text-[10px] px-1.5 py-0 font-normal"
+          className="text-xs px-1.5 py-0 font-normal"
           title={`${t('automations.labelThinking')}: ${thinkingLabel}`}
         >
           {thinkingLabel}
@@ -111,7 +111,7 @@ export function AutomationActionRow({ action, index, className }: AutomationActi
     <div className={cn('flex items-start gap-3 px-4 py-3', className)}>
       {/* Index + icon — h-5 matches the first line height of text-sm content */}
       <div className="flex items-center gap-2 shrink-0 h-5 mt-[3px]">
-        <span className="text-xs text-muted-foreground tabular-nums w-4 text-right">
+        <span className="text-xs text-muted-foreground numeric w-4 text-right">
           {index + 1}.
         </span>
         <ActionTypeIcon type={action.type} className="h-3.5 w-3.5" />

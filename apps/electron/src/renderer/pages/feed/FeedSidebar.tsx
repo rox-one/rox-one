@@ -41,7 +41,7 @@ const SOURCE_TONES: Record<FeedSourceKind, IconTone> = {
 }
 
 function Count({ count }: { count?: number | null }) {
-  return count && count > 0 ? <span className="shrink-0 rounded-md bg-foreground/[0.05] px-1.5 py-0.5 text-[10px] tabular-nums text-text-muted">{count}</span> : null
+  return count && count > 0 ? <span className="shrink-0 rounded-md bg-foreground/[0.05] px-1.5 py-0.5 text-xs numeric text-text-muted">{count}</span> : null
 }
 
 function NavIcon({ icon: Icon, tone, dot }: { icon: LucideIcon; tone: IconTone; dot?: Tone }) {
@@ -59,11 +59,11 @@ function FeedNavButton({ label, secondary, icon, tone, count, active, dot, onCli
 }) {
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined} data-testid={testId}
-      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 py-1 text-left text-[12px] outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'border-l-accent bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
+      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 py-1 text-left text-sm outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'border-l-accent bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
       <NavIcon icon={icon} tone={tone} dot={dot} />
       <span className="min-w-0 flex-1">
         <span className="block truncate">{label}</span>
-        {secondary ? <span className="block break-words text-[11px] font-normal leading-4 text-text-muted">{secondary}</span> : null}
+        {secondary ? <span className="block break-words text-xs font-normal leading-4 text-text-muted">{secondary}</span> : null}
       </span>
       <Count count={count} />
     </button>
@@ -80,9 +80,9 @@ function FeedNavGroup({ id, label, icon, tone, count, active, revealKey, initial
   useEffect(() => { if (active) setOpen(true) }, [active, revealKey])
   return (
     <details ref={ref} open={open} onToggle={() => setOpen(ref.current?.open ?? false)} data-testid={`feed-group-${id}`} className="mt-1">
-      <summary className={cn('flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1 text-[12px] font-medium outline-none transition-colors hover:bg-foreground/[0.05] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden', active ? 'text-foreground' : 'text-text-secondary')}>
+      <summary className={cn('flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium outline-none transition-colors hover:bg-foreground/[0.05] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden', active ? 'text-foreground' : 'text-text-secondary')}>
         <NavIcon icon={icon} tone={tone} />
-        <span className="min-w-0 flex-1 truncate">{label}</span>
+        <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
         <Count count={count} />
         <ChevronRight aria-hidden className={cn('size-3 shrink-0 text-text-muted transition-transform duration-200 motion-reduce:transition-none', open && 'rotate-90')} />
       </summary>
@@ -112,7 +112,7 @@ export function FeedSidebar({ view, sourceFilter, tagFilter, sources, tags, coun
         <FeedNavButton testId="feed-nav-news" label={t('feed.nav.allNews')} icon={Newspaper} tone="orange" count={view === 'news' && !sourceFilter ? visibleCount : counts.news} active={view === 'news' && !sourceFilter} onClick={() => onViewSelect('news')} />
         <FeedNavGroup id="sources" label={t('feed.nav.sources')} icon={Rss} tone="orange" count={sources.length} active={view === 'sources' || view === 'news' && Boolean(sourceFilter)} revealKey={`${view}:${sourceFilter ?? ''}`} initialOpen>
           {sources.map(source => (
-            <FeedNavButton key={source.id} testId={`feed-nav-source-${source.id}`} label={<span className="flex min-w-0 items-center gap-1"><ColorDot color={source.color} size={6} /><span className="truncate">{sourceLabel(source)}</span></span>}
+            <FeedNavButton key={source.id} testId={`feed-nav-source-${source.id}`} label={<span className="flex min-w-0 items-center gap-1"><ColorDot color={source.color} size={6} /><span className="truncate" title={sourceLabel(source)}>{sourceLabel(source)}</span></span>}
               icon={SOURCE_ICONS[source.kind]} tone={SOURCE_TONES[source.kind]} count={source.itemCount}
               dot={sourceHealth(source) === 'checking' ? 'accent' : source.paused ? 'muted' : sourceTone(source)}
               active={view === 'news' && sourceFilter === source.id} onClick={() => onSourceSelect(source.id)} />

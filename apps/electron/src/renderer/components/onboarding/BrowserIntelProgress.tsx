@@ -81,7 +81,7 @@ export function BrowserIntelProgress({ className }: { className?: string } = {})
         <Spinner className="shrink-0" />
         <span>{t('onboarding.browserIntel.indexing')}</span>
         {percent !== null ? (
-          <span className="ml-auto tabular-nums">{t('onboarding.browserIntel.progress', { done: current, total })}</span>
+          <span className="ml-auto numeric">{t('onboarding.browserIntel.progress', { done: current, total })}</span>
         ) : null}
       </div>
       {percent !== null ? (

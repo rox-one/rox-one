@@ -59,7 +59,7 @@ export function MobileMenuPage({
             </button>
           )}
         </div>
-        <h2 className="flex-1 text-center text-[15px] font-medium text-foreground truncate px-2">
+        <h2 className="flex-1 text-center text-lg font-medium text-foreground truncate px-2">
           {title}
         </h2>
         <div className="w-10 shrink-0 flex justify-end">

@@ -46,8 +46,8 @@ export default function MeetingDetail(props: {
   const { meeting, knowledge, onOpenArtifact, onOpenTracker } = props
   return (
     <article data-testid="meeting-detail" data-entity-id={`call:${meeting.id}`} className="min-w-0">
-      <h2 data-catalog-detail-heading tabIndex={-1} className="break-words text-[16px] font-semibold leading-snug outline-none">{meeting.title}</h2>
-      <p className="mt-2 text-[12px] text-muted-foreground">{t('meetings.status')}: <span className="font-medium text-foreground">{t(meetingStatusKey(meeting.status))}</span></p>
+      <h2 data-catalog-detail-heading tabIndex={-1} className="break-words text-title-md font-semibold outline-none">{meeting.title}</h2>
+      <p className="mt-2 text-sm text-muted-foreground">{t('meetings.status')}: <span className="font-medium text-foreground">{t(meetingStatusKey(meeting.status))}</span></p>
       {meeting.artifacts?.length ? (
         <section data-testid="meeting-materials">
           <ul>

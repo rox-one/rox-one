@@ -107,7 +107,7 @@ export function PermissionsColumn({
         <ShieldCheck className="icon-toolbar shrink-0 text-success" aria-hidden="true" />
         <h3 className="text-sm font-semibold">{t('onboarding.permissions.title')}</h3>
       </div>
-      <p className="text-xs leading-relaxed text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         {t('onboarding.permissions.subtitle')}
       </p>
 
@@ -153,7 +153,7 @@ export function PermissionsColumn({
                     {t(`onboarding.permissions.status.${STATUS_KEY[status]}`)}
                   </Badge>
                 </div>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {t(`onboarding.permissions.items.${entry.id}.description`)}
                 </p>
                 {canGrant ? (

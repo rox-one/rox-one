@@ -146,9 +146,9 @@ type BtnVariant = 'primary' | 'secondary' | 'ghost'
 type BtnSize = 'sm' | 'md' | 'lg'
 
 const BTN_SIZE: Record<BtnSize, string> = {
-  sm: 'h-7 px-2.5 text-[12px]',
-  md: 'h-8 px-3 text-[12.5px]',
-  lg: 'h-11 px-4 text-[13.5px]',
+  sm: 'h-7 px-2.5 text-sm',
+  md: 'h-8 px-3 text-sm',
+  lg: 'h-11 px-4 text-base',
 }
 const BTN_VARIANT: Record<BtnVariant, string> = {
   // Solid indigo = the single commit action ("Prepare task").
@@ -196,7 +196,7 @@ function SelectButton({
       className={cn(
         'inline-flex items-center gap-1.5 rounded-lg border border-border bg-background font-medium text-foreground',
         'transition-colors hover:bg-foreground/[0.03] data-[state=open]:bg-foreground/[0.03]',
-        size === 'sm' ? 'h-7 px-2 text-[11.5px]' : 'h-8 px-2.5 text-[12.5px]',
+        size === 'sm' ? 'h-7 px-2 text-xs' : 'h-8 px-2.5 text-sm',
         className
       )}
       {...rest}
@@ -213,7 +213,7 @@ function SelectButton({
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-[12.5px] font-medium text-foreground/55">{label}</span>
+      <span className="text-sm font-medium text-foreground/55">{label}</span>
       <div className="shrink-0">{children}</div>
     </div>
   )
@@ -225,14 +225,14 @@ function ModelSelect({ value, onChange, width = 168, size = 'md' }: { value: str
       <DropdownMenuTrigger asChild>
         <SelectButton size={size} style={{ width }}>
           <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: modelDot(value) }} />
-          <span className="truncate">{modelName(value)}</span>
+          <span className="truncate" title={modelName(value)}>{modelName(value)}</span>
         </SelectButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[160px]">
         {MODELS.map(m => (
           <DropdownMenuItem key={m.id} className="text-xs" onSelect={() => onChange(m.id)}>
             <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: m.dot }} />
-            <span className="truncate">{m.name}</span>
+            <span className="truncate" title={m.name}>{m.name}</span>
             {m.id === value && <Check className="ml-auto h-3.5 w-3.5 shrink-0" strokeWidth={2} />}
           </DropdownMenuItem>
         ))}
@@ -267,7 +267,7 @@ function SubtaskCard({
           strokeWidth={2}
           aria-hidden
         />
-        <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-indigo-500/10 text-[12px] font-bold text-indigo-500 dark:text-indigo-300">
+        <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-indigo-500/10 text-sm font-bold text-indigo-500 dark:text-indigo-300">
           {index + 1}
         </div>
         <div className="min-w-0 flex-1">
@@ -275,7 +275,7 @@ function SubtaskCard({
             value={subtask.title}
             onChange={e => onChange({ title: e.target.value })}
             placeholder="Subtask title…"
-            className="w-full bg-transparent text-[13.5px] font-semibold text-foreground outline-none placeholder:text-foreground/30"
+            className="w-full bg-transparent text-base font-semibold text-foreground outline-none placeholder:text-foreground/30"
           />
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <ModelSelect value={subtask.model} onChange={id => onChange({ model: id })} width={128} size="sm" />
@@ -295,12 +295,12 @@ function SubtaskCard({
                 </DropdownMenuItem>
                 {earlier.map(e => (
                   <DropdownMenuItem key={e.id} className="text-xs" onSelect={() => onChange({ dependsOn: e.id })}>
-                    <span className="truncate">{e.title || 'Untitled subtask'}</span>
+                    <span className="truncate" title={e.title || 'Untitled subtask'}>{e.title || 'Untitled subtask'}</span>
                     {subtask.dependsOn === e.id && <Check className="ml-auto h-3.5 w-3.5 shrink-0" strokeWidth={2} />}
                   </DropdownMenuItem>
                 ))}
                 {earlier.length === 0 && (
-                  <div className="px-2 py-1.5 text-[11px] text-foreground/40">No earlier subtasks</div>
+                  <div className="px-2 py-1.5 text-xs text-foreground/40">No earlier subtasks</div>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -366,7 +366,7 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
         <span className="text-foreground/25">/</span>
         <span className="text-sm font-semibold">New Task</span>
         {/* Disclaimer demoted to a quiet inline note (was a loud amber pill). */}
-        <span className="inline-flex items-center gap-1 text-[11px] text-foreground/40">
+        <span className="inline-flex items-center gap-1 text-xs text-foreground/40">
           <Clock3 className="h-3 w-3" strokeWidth={2} /> prepares only — nothing runs yet
         </span>
         <div className="ml-auto flex items-center gap-2">
@@ -398,7 +398,7 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
       <div className="grid min-h-0 flex-1 grid-cols-[minmax(380px,2fr)_3fr] gap-3">
         {/* Left — task definition */}
         <div className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-xl border border-border bg-card p-4 shadow-minimal">
-          <div className="text-[15px] font-bold">Task definition</div>
+          <div className="text-lg font-bold">Task definition</div>
 
           {/* mode toggle */}
           <div className="inline-flex w-fit rounded-[9px] bg-foreground/[0.05] p-0.5">
@@ -407,7 +407,7 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
                 key={m}
                 onClick={() => setMode(m)}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
+                  'inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-sm font-semibold transition-colors',
                   mode === m ? 'bg-card text-foreground shadow-minimal' : 'text-foreground/55 hover:text-foreground/80'
                 )}
               >
@@ -419,27 +419,27 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
 
           {/* title */}
           <div>
-            <div className="mb-1.5 text-[12px] font-semibold text-foreground/55">Title</div>
+            <div className="mb-1.5 text-sm font-semibold text-foreground/55">Title</div>
             <input
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Name this task…"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[13.5px] font-semibold outline-none focus:border-foreground/25"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-base font-semibold outline-none focus:border-foreground/25"
             />
           </div>
 
           {/* goal */}
           <div>
             <div className="mb-1.5 flex items-baseline justify-between">
-              <span className="text-[12px] font-semibold text-foreground/55">Goal / prompt</span>
-              <span className="text-[10.5px] text-foreground/35">orchestrator's first message</span>
+              <span className="text-sm font-semibold text-foreground/55">Goal / prompt</span>
+              <span className="text-xs text-foreground/35">orchestrator's first message</span>
             </div>
             <textarea
               value={goal}
               onChange={e => setGoal(e.target.value)}
               rows={4}
               placeholder="Describe the goal…"
-              className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-[12.5px] leading-relaxed outline-none focus:border-foreground/25 field-sizing-content max-h-48"
+              className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/25 field-sizing-content max-h-48"
             />
           </div>
 
@@ -452,7 +452,7 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
                     {project ? (
                       <>
                         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: project.color }} />
-                        <span className="truncate">{project.name}</span>
+                        <span className="truncate" title={project.name}>{project.name}</span>
                       </>
                     ) : (
                       <span className="text-foreground/50">No project</span>
@@ -467,7 +467,7 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
                   {mockProjects.map(p => (
                     <DropdownMenuItem key={p.id} className="text-xs" onSelect={() => setProjectId(p.id)}>
                       <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: p.color }} />
-                      <span className="truncate">{p.name}</span>
+                      <span className="truncate" title={p.name}>{p.name}</span>
                       {projectId === p.id && <Check className="ml-auto h-3.5 w-3.5 shrink-0" strokeWidth={2} />}
                     </DropdownMenuItem>
                   ))}
@@ -486,7 +486,7 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
                     {status && (
                       <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: status.resolvedColor }} />
                     )}
-                    <span className="truncate">{status?.label ?? statusId}</span>
+                    <span className="truncate" title={status?.label ?? statusId}>{status?.label ?? statusId}</span>
                   </SelectButton>
                 </PopoverTrigger>
                 <PopoverContent align="end" sideOffset={4} className="w-auto border-0 bg-transparent p-0 shadow-none">
@@ -504,8 +504,8 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
           {mode === 'manual' ? (
             <>
               <div className="flex shrink-0 items-center gap-2 px-4 pt-4">
-                <span className="text-[15px] font-bold">Subtasks</span>
-                <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-foreground/[0.06] px-1.5 text-[11px] font-bold text-foreground/55">
+                <span className="text-lg font-bold">Subtasks</span>
+                <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-foreground/[0.06] px-1.5 text-xs font-bold text-foreground/55">
                   {subtasks.length}
                 </span>
                 <Btn variant="secondary" size="sm" className="ml-auto" onClick={addSubtask}>
@@ -528,26 +528,26 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
                   <div className="flex flex-col items-center gap-2 py-6">
                     <button
                       onClick={addSubtask}
-                      className="flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-dashed border-border py-2.5 text-[12.5px] font-semibold text-foreground/40 transition-colors hover:border-foreground/30 hover:text-foreground/60"
+                      className="flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-dashed border-border py-2.5 text-sm font-semibold text-foreground/40 transition-colors hover:border-foreground/30 hover:text-foreground/60"
                     >
                       <Plus className="h-3.5 w-3.5" strokeWidth={2.5} /> Add subtask
                     </button>
-                    <p className="px-1 text-center text-[12px] text-foreground/40">
+                    <p className="px-1 text-center text-sm text-foreground/40">
                       No subtasks yet — add the first one to define the breakdown.
                     </p>
                   </div>
                 )}
               </div>
 
-              <div className="shrink-0 border-t border-border/60 px-4 py-2.5 text-[10.5px] text-foreground/40">
+              <div className="shrink-0 border-t border-border/60 px-4 py-2.5 text-xs text-foreground/40">
                 Reorder by drag · each subtask spawns a child session (pending) · models route per-subtask
               </div>
             </>
           ) : (
             <>
               <div className="flex shrink-0 items-center gap-2 px-4 pt-4">
-                <span className="text-[15px] font-bold">Subtasks</span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2 py-0.5 text-[10.5px] font-semibold text-indigo-500 dark:text-indigo-300">
+                <span className="text-lg font-bold">Subtasks</span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs font-semibold text-indigo-500 dark:text-indigo-300">
                   <Sparkles className="h-2.5 w-2.5" strokeWidth={2.5} /> AI
                 </span>
               </div>
@@ -557,8 +557,8 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
                   <div className="grid h-12 w-12 place-items-center rounded-full bg-indigo-500/10 text-indigo-500 dark:text-indigo-300">
                     <Sparkles className="h-6 w-6" strokeWidth={2} />
                   </div>
-                  <div className="text-[14px] font-bold">AI generates the subtasks</div>
-                  <p className="max-w-[340px] text-[12.5px] leading-relaxed text-foreground/55">
+                  <div className="text-base font-bold">AI generates the subtasks</div>
+                  <p className="max-w-[340px] text-sm text-foreground/55">
                     When you prepare this task, the orchestrator ({modelName(orchModel)}) reads your goal and
                     breaks it into subtasks — picking a best-fit model and wiring dependencies for each. You
                     don't define them here.
@@ -569,7 +569,7 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
                 </div>
               </div>
 
-              <div className="shrink-0 border-t border-border/60 px-4 py-2.5 text-[10.5px] text-foreground/40">
+              <div className="shrink-0 border-t border-border/60 px-4 py-2.5 text-xs text-foreground/40">
                 Drafted on Prepare · each becomes a pending child session · models route per-subtask
               </div>
             </>
@@ -589,19 +589,19 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
             className={cn('h-4 w-4 shrink-0 text-foreground/45 transition-transform', yamlOpen ? 'rotate-0' : '-rotate-90')}
             strokeWidth={2}
           />
-          <span className="font-mono text-[13px] font-bold">task.yaml</span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-foreground/[0.05] px-2 py-0.5 text-[11px] font-medium text-foreground/55">
+          <span className="font-mono text-data font-bold">task.yaml</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-foreground/[0.05] px-2 py-0.5 text-xs font-medium text-foreground/55">
             <Hash className="h-3 w-3" strokeWidth={2} />
             workspace/tasks/{slug}.yaml
           </span>
-          <span className="ml-auto text-[11px] text-foreground/40">
+          <span className="ml-auto text-xs text-foreground/40">
             {yamlOpen ? 'generated · editable · written on Prepare' : 'click to preview'}
           </span>
         </button>
         {yamlOpen && (
           <div className="px-4 pb-4">
             <div className="max-h-[210px] overflow-auto rounded-lg border border-border/60 bg-foreground/[0.025] p-3">
-              <div className="font-mono text-[11.5px] leading-[1.55]">
+              <div className="font-mono text-xs">
                 {yaml.split('\n').map((ln, i) => (
                   <YamlLine key={i} line={ln} />
                 ))}

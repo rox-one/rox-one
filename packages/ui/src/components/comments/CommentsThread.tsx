@@ -65,17 +65,17 @@ function TextComposer({ value, onChange, onSubmit, placeholder, submitLabel, onC
           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); onSubmit() }
           if (e.key === 'Escape' && onCancel) { e.preventDefault(); onCancel() }
         }}
-        className={cn('min-h-12 resize-y rounded-[6px] bg-foreground/[0.04] px-2 py-1.5 text-[13px] placeholder:text-text-muted', FOCUS_RING)}
+        className={cn('min-h-12 resize-y rounded-[6px] bg-foreground/[0.04] px-2 py-1.5 text-base placeholder:text-text-muted', FOCUS_RING)}
       />
       <div className="flex justify-end gap-1">
         {onCancel ? (
-          <button type="button" onClick={onCancel} className={cn('h-7 rounded-[6px] px-2 text-[12px] text-text-secondary', HOVER_TINT, FOCUS_RING)}>{cancelLabel}</button>
+          <button type="button" onClick={onCancel} className={cn('h-7 rounded-[6px] px-2 text-sm text-text-secondary', HOVER_TINT, FOCUS_RING)}>{cancelLabel}</button>
         ) : null}
         <button
           type="button"
           disabled={!value.trim()}
           onClick={onSubmit}
-          className={cn('h-7 rounded-[6px] bg-accent px-3 text-[12px] font-medium text-[var(--accent-foreground,white)] disabled:opacity-50', MOTION_FAST, FOCUS_RING)}
+          className={cn('h-7 rounded-[6px] bg-accent px-3 text-sm font-medium text-[var(--accent-foreground,white)] disabled:opacity-50', MOTION_FAST, FOCUS_RING)}
         >
           {submitLabel}
         </button>
@@ -98,7 +98,7 @@ export function CommentsThread(props: CommentsThreadProps) {
 
   return (
     <section aria-label={t('entities.ui.comments.title')} className={cn('flex flex-col gap-3', className)}>
-      {comments.length === 0 ? <div className="text-[12px] text-text-muted">{t('entities.ui.comments.empty')}</div> : (
+      {comments.length === 0 ? <div className="text-sm text-text-muted">{t('entities.ui.comments.empty')}</div> : (
         <ul className="flex flex-col gap-3">
           {comments.map((c) => <CommentRow key={c.id} comment={c} depth={0} allowReplies={allowReplies} thread={props} />)}
         </ul>
@@ -116,13 +116,13 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
   const [replyDraft, setReplyDraft] = React.useState('')
   const timeFmt = new Intl.DateTimeFormat(i18n.language || 'ru', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: thread.timeZone })
   const replies = comment.replies ?? []
-  const actionClass = cn('h-6 rounded-[6px] px-1.5 text-[11px] text-text-muted hover:text-foreground', HOVER_TINT, FOCUS_RING)
+  const actionClass = cn('h-6 rounded-[6px] px-1.5 text-xs text-text-muted hover:text-foreground', HOVER_TINT, FOCUS_RING)
 
   return (
     <li className={cn('flex gap-2', depth > 0 && 'ml-8')} data-comment-id={comment.id}>
       <PersonAvatar person={comment.author} size={24} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex items-baseline gap-2 text-[12px]">
+        <div className="flex items-baseline gap-2 text-sm">
           <span className="font-semibold">{comment.author.name}</span>
           {formatInstant(timeFmt, comment.createdAt) ? (
             <time dateTime={comment.createdAt} className="text-text-muted">{formatInstant(timeFmt, comment.createdAt)}</time>
@@ -130,7 +130,7 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
           {comment.editedAt && !comment.deleted ? <span className="text-text-muted">· {t('entities.ui.comments.edited')}</span> : null}
         </div>
         {comment.deleted ? (
-          <div className="text-[13px] italic text-text-muted">{t('entities.ui.comments.deleted')}</div>
+          <div className="text-base italic text-text-muted">{t('entities.ui.comments.deleted')}</div>
         ) : editing ? (
           <TextComposer
             value={editDraft}
@@ -143,7 +143,7 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
             onSubmit={() => { const body = editDraft.trim(); if (body) { thread.onEdit?.(comment.id, body); setEditing(false) } }}
           />
         ) : (
-          <div className="whitespace-pre-wrap break-words text-[13px]">{thread.renderBody?.(comment) ?? comment.body}</div>
+          <div className="whitespace-pre-wrap break-words text-base">{thread.renderBody?.(comment) ?? comment.body}</div>
         )}
         {!comment.deleted && !editing ? (
           <div className="flex flex-wrap items-center gap-1">
@@ -159,7 +159,7 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
         ) : null}
         {replies.length > 0 ? (
           <>
-            <div className="text-[11px] text-text-muted">{t('entities.ui.comments.replies', { count: replies.length })}</div>
+            <div className="text-xs text-text-muted">{t('entities.ui.comments.replies', { count: replies.length })}</div>
             <ul className="flex flex-col gap-2">
               {replies.map((r) => <CommentRow key={r.id} comment={r} depth={depth + 1} allowReplies={false} thread={thread} />)}
             </ul>

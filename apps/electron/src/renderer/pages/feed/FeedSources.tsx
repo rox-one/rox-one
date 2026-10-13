@@ -55,7 +55,7 @@ function intervalOptions(value: number): readonly number[] {
 
 const SPARK_DAYS = 30
 
-const INPUT = 'h-7 min-w-0 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
+const INPUT = 'h-7 min-w-0 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-sm outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 
 function previewErrorText(code: string, t: T): string {
   if (code === 'invalid-url') return t('feed.sources.addError.invalid-url')
@@ -173,8 +173,8 @@ function AddSource({ api, sources, suggestions, xConnected, onAdded, fmt }: {
   return (
     <div className="mx-3 rounded-[var(--radius-card)] bg-foreground/[0.04] p-4" data-testid="feed-add">
       <div className="flex items-baseline gap-2">
-        <h3 className="shrink-0 whitespace-nowrap text-[14px] font-semibold">{t('feed.add.title')}</h3>
-        <span className="truncate text-[12px] text-text-muted">{t('feed.add.subtitle')}</span>
+        <h3 className="shrink-0 whitespace-nowrap text-lg font-semibold">{t('feed.add.title')}</h3>
+        <span className="truncate text-sm text-text-muted">{t('feed.add.subtitle')}</span>
       </div>
       <form className="flex gap-2 pt-3" onSubmit={(e) => { e.preventDefault(); void submit() }}>
         <input
@@ -184,17 +184,17 @@ function AddSource({ api, sources, suggestions, xConnected, onAdded, fmt }: {
           onChange={(e) => { setUrl(e.target.value); setNameTouched(false) }}
           placeholder={t('feed.sources.placeholder')}
           aria-label={t('feed.sources.placeholder')}
-          className={cn(INPUT, 'h-8 flex-1 text-[13px]')}
+          className={cn(INPUT, 'h-8 flex-1 text-base')}
         />
         <Button type="submit" variant="primary" className="h-8" disabled={!canAdd} data-testid="feed-add-submit">
           <Plus aria-hidden className="size-3.5" />{adding ? t('feed.add.adding') : t('feed.add.submit')}
         </Button>
       </form>
-      <p className="min-h-[20px] pt-1 text-[12px]" role="status" data-testid="feed-add-status">{status}</p>
+      <p className="min-h-[20px] pt-1 text-sm" role="status" data-testid="feed-add-status">{status}</p>
 
       {!url.trim() ? (
         <div className="flex flex-wrap items-center gap-1 pt-2" data-testid="feed-presets">
-          <span className="pr-1 text-[11px] uppercase tracking-wide text-text-muted">{t('feed.presets.title')}</span>
+          <span className="pr-1 text-xs uppercase caps-label text-text-muted">{t('feed.presets.title')}</span>
           {FEED_PRESETS.map((p) => (
             <button
               key={p.id}
@@ -202,7 +202,7 @@ function AddSource({ api, sources, suggestions, xConnected, onAdded, fmt }: {
               data-testid={`feed-preset-${p.id}`}
               onClick={() => applyPreset(p)}
               title={p.url}
-              className="inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] bg-foreground/[0.06] px-2 text-[12px] text-text-secondary outline-none hover:bg-foreground/[0.1] hover:text-foreground"
+              className="inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] bg-foreground/[0.06] px-2 text-sm text-text-secondary outline-none hover:bg-foreground/[0.1] hover:text-foreground"
             >
               <SourceIcon source={{ url: p.url, kind: detectFeedSource(p.url)?.kind ?? 'unknown' }} size={16} />
               {t(`feed.presets.${p.id}`)}
@@ -216,23 +216,23 @@ function AddSource({ api, sources, suggestions, xConnected, onAdded, fmt }: {
         <div className="mt-2 rounded-[var(--radius-card)] bg-background/60 p-2" data-testid="feed-add-preview">
           <div className="flex items-center gap-2 px-1 pb-1">
             <SourceIcon source={{ url: preview.url, kind: preview.kind }} size={20} />
-            <span className="min-w-0 flex-1 truncate font-semibold">{preview.title ?? preview.url}</span>
+            <span className="min-w-0 flex-1 truncate font-semibold" title={preview.title ?? preview.url}>{preview.title ?? preview.url}</span>
             <Badge tone="muted">{kindLabel(preview.kind)}</Badge>
           </div>
           <ol className="flex flex-col">
             {preview.items.map((it, i) => (
-              <li key={i} className="flex items-baseline gap-2 rounded-[var(--radius-control)] px-1 py-1 text-[12px]">
-                <span className="min-w-0 flex-1 truncate">{it.title}</span>
-                {it.at ? <span className="shrink-0 tabular-nums text-text-muted">{fmt(it.at)}</span> : null}
+              <li key={i} className="flex items-baseline gap-2 rounded-[var(--radius-control)] px-1 py-1 text-sm">
+                <span className="min-w-0 flex-1 truncate" title={it.title}>{it.title}</span>
+                {it.at ? <span className="shrink-0 numeric text-text-muted">{fmt(it.at)}</span> : null}
               </li>
             ))}
           </ol>
-          {preview.via === 'page' ? <p className="px-1 pt-1 text-[11px] text-text-muted">{t('feed.sources.pageDiffNote')}</p> : null}
+          {preview.via === 'page' ? <p className="px-1 pt-1 text-xs text-text-muted">{t('feed.sources.pageDiffNote')}</p> : null}
         </div>
       ) : null}
 
       {detected && !checking && preview && !duplicate ? (
-        <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2 pt-3 text-[12px]" data-testid="feed-add-options">
+        <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2 pt-3 text-sm" data-testid="feed-add-options">
           <span className="text-text-muted">{t('feed.add.name')}</span>
           <input value={name} onChange={(e) => { setName(e.target.value); setNameTouched(true) }} placeholder={detected.url} aria-label={t('feed.add.name')} className={cn(INPUT, 'w-full')} />
           <span className="text-text-muted">{t('feed.color.label')}</span>
@@ -244,10 +244,10 @@ function AddSource({ api, sources, suggestions, xConnected, onAdded, fmt }: {
             {FEED_INTERVALS_MIN.map((m) => <option key={m} value={m}>{intervalLabel(m, t)}</option>)}
           </select>
           {!preview.ok ? <span /> : null}
-          {!preview.ok ? <p className="text-[11px] text-text-muted">{t('feed.add.addAnyway')}</p> : null}
+          {!preview.ok ? <p className="text-xs text-text-muted">{t('feed.add.addAnyway')}</p> : null}
         </div>
       ) : null}
-      {error ? <p role="alert" className="pt-2 text-[12px] text-destructive">{error}</p> : null}
+      {error ? <p role="alert" className="pt-2 text-sm text-destructive">{error}</p> : null}
     </div>
   )
 }
@@ -289,13 +289,13 @@ function SourceCard({ source, items, now, selected, onSelect, onCheck, onToggleP
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1">
             <ColorDot color={source.color} />
-            <span className="truncate text-[13px] font-semibold">{sourceLabel(source)}</span>
+            <span className="truncate text-base font-semibold" title={sourceLabel(source)}>{sourceLabel(source)}</span>
           </div>
-          <div className="truncate text-[11px] text-text-muted">{sourceHost(source) ?? source.url}</div>
+          <div className="truncate text-xs text-text-muted" title={sourceHost(source) ?? source.url}>{sourceHost(source) ?? source.url}</div>
         </div>
         <HealthDot health={health} />
       </div>
-      <div className="flex min-w-0 flex-wrap items-center gap-1 text-[11px] text-text-secondary">
+      <div className="flex min-w-0 flex-wrap items-center gap-1 text-xs text-text-secondary">
         <Badge tone="muted">{t(`feed.sourceKind.${source.kind}`)}</Badge>
         <span>{t('feed.sources.items', { count: source.itemCount ?? 0 })}</span>
         <span aria-hidden className="text-text-muted">·</span>
@@ -303,16 +303,16 @@ function SourceCard({ source, items, now, selected, onSelect, onCheck, onToggleP
       </div>
       <div className="flex items-end justify-between gap-2">
         <Sparkline values={perDay} width={120} label={t('feed.sources.sparkline', { count: recent, days: SPARK_DAYS })} />
-        <span className="truncate text-right text-[11px] tabular-nums text-text-muted">
+        <span className="truncate text-right text-xs numeric text-text-muted">
           {source.lastFetchAt ? t('feed.sources.checkedAt', { time: fmt(source.lastFetchAt) }) : t('feed.sources.neverFetched')}
         </span>
       </div>
       {source.lastError && (health === 'error' || health === 'needs-x') ? (
-        <p role="alert" className="line-clamp-2 text-[11px] text-destructive">{sourceErrorText(source.lastError, t)}</p>
+        <p role="alert" className="line-clamp-2 text-xs text-destructive">{sourceErrorText(source.lastError, t)}</p>
       ) : null}
       {source.tags?.length ? (
         <div className="flex min-w-0 flex-wrap gap-1">
-          {source.tags.slice(0, 4).map((tag) => <span key={tag} className="rounded-[var(--radius-control)] bg-foreground/[0.06] px-1 text-[11px] text-text-secondary">#{tag}</span>)}
+          {source.tags.slice(0, 4).map((tag) => <span key={tag} className="rounded-[var(--radius-control)] bg-foreground/[0.06] px-1 text-xs text-text-secondary">#{tag}</span>)}
         </div>
       ) : null}
       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -364,7 +364,7 @@ export function SourcesView({ api, sources, items, now, x, suggestions, selected
           </Button>
         ) : null}
       />
-      {error ? <p role="alert" className="px-3 pt-2 text-[12px] text-destructive">{error}</p> : null}
+      {error ? <p role="alert" className="px-3 pt-2 text-sm text-destructive">{error}</p> : null}
       <div ref={sourcesTourRef} data-tour-id="feed.sources" className="min-h-0 flex-1 overflow-y-auto pb-4" data-testid="feed-sources">
         <AddSource api={api} sources={sources} suggestions={suggestions} xConnected={x.state === 'connected'} onAdded={(id) => { onSelect(id); void reload() }} fmt={fmt} />
         {sources.length ? (
@@ -387,11 +387,11 @@ export function SourcesView({ api, sources, items, now, x, suggestions, selected
         ) : (
           <div className="px-3 pt-4" data-testid="feed-sources-empty">
             <div className="rounded-[var(--radius-card)] bg-foreground/[0.025] p-4">
-              <h3 className="text-[14px] font-semibold">{t('feed.sources.emptyTitle')}</h3>
-              <ol className="flex flex-col gap-2 pt-3 text-[12px] text-text-secondary">
+              <h3 className="text-lg font-semibold">{t('feed.sources.emptyTitle')}</h3>
+              <ol className="flex flex-col gap-2 pt-3 text-sm text-text-secondary">
                 {[1, 2, 3].map((n) => (
                   <li key={n} className="flex gap-2">
-                    <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-semibold text-accent">{n}</span>
+                    <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-xs font-semibold text-accent">{n}</span>
                     <span className="pt-0.5">{t(`feed.sources.emptyStep${n}`)}</span>
                   </li>
                 ))}
@@ -432,8 +432,8 @@ export function SourceEditor({ api, source, suggestions, reload, onShowItems, on
   if (!source) {
     return (
       <div className="flex flex-col px-4 py-4" data-testid="feed-source-help">
-        <h2 className="text-[15px] font-semibold">{t('feed.help.title')}</h2>
-        <ul className="flex flex-col gap-2 pt-2 text-[12px] text-text-secondary">
+        <h2 className="text-lg font-semibold">{t('feed.help.title')}</h2>
+        <ul className="flex flex-col gap-2 pt-2 text-sm text-text-secondary">
           <li>{t('feed.help.detect')}</li>
           <li>{t('feed.help.health')}</li>
           <li>{t('feed.help.labels')}</li>
@@ -460,23 +460,23 @@ export function SourceEditor({ api, source, suggestions, reload, onShowItems, on
             aria-label={t('feed.sources.rename')}
             title={t('feed.sources.rename')}
             data-testid="feed-source-name"
-            className="h-7 w-full rounded-[var(--radius-control)] bg-transparent px-1 text-[15px] font-semibold outline-none hover:bg-foreground/[0.05] focus:bg-foreground/[0.08]"
+            className="h-7 w-full rounded-[var(--radius-control)] bg-transparent px-1 text-lg font-semibold outline-none hover:bg-foreground/[0.05] focus:bg-foreground/[0.08]"
           />
-          <p className="truncate px-1 text-[11px] text-text-muted" title={source.url}>{source.url}</p>
+          <p className="truncate px-1 text-xs text-text-muted" title={source.url}>{source.url}</p>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2 pt-3">
         <HealthDot health={health} />
         <Badge tone="muted">{t(`feed.sourceKind.${source.kind}`)}</Badge>
-        <span className="text-[11px] text-text-muted">{t('feed.sources.items', { count: source.itemCount ?? 0 })}</span>
+        <span className="text-xs text-text-muted">{t('feed.sources.items', { count: source.itemCount ?? 0 })}</span>
       </div>
-      <p className="pt-2 text-[12px] text-text-secondary">
+      <p className="pt-2 text-sm text-text-secondary">
         {source.lastFetchAt ? t('feed.sources.lastFetch', { time: fmt(source.lastFetchAt) }) : t('feed.sources.neverFetched')}
         {source.lastOkAt && source.lastStatus === 'error' ? ` · ${t('feed.sources.lastOk', { time: fmt(source.lastOkAt) })}` : ''}
       </p>
-      {source.lastError ? <p role="alert" className="pt-1 text-[12px] text-destructive">{sourceErrorText(source.lastError, t)}</p> : null}
-      {source.kind === 'page' ? <p className="pt-1 text-[11px] text-text-muted">{t('feed.sources.pageDiffNote')}</p> : null}
-      {source.feedUrl && source.feedUrl !== source.url ? <p className="break-all pt-1 text-[11px] text-text-muted">{t('feed.sources.feedUrl')}: {source.feedUrl}</p> : null}
+      {source.lastError ? <p role="alert" className="pt-1 text-sm text-destructive">{sourceErrorText(source.lastError, t)}</p> : null}
+      {source.kind === 'page' ? <p className="pt-1 text-xs text-text-muted">{t('feed.sources.pageDiffNote')}</p> : null}
+      {source.feedUrl && source.feedUrl !== source.url ? <p className="break-all pt-1 text-xs text-text-muted">{t('feed.sources.feedUrl')}: {source.feedUrl}</p> : null}
 
       <div className="flex flex-wrap gap-1 pt-3">
         <Button variant="primary" disabled={health === 'checking' || busy === 'check'} onClick={() => void run('check', () => api!.feedRefresh(source.id))} data-testid="feed-source-check-now">
@@ -493,7 +493,7 @@ export function SourceEditor({ api, source, suggestions, reload, onShowItems, on
 
       <SectionLabel>{t('feed.color.label')}</SectionLabel>
       <ColorPicker value={source.color} onChange={(c) => patch({ color: c })} testId="feed-source-color" />
-      <p className="pt-1 text-[11px] text-text-muted">{t('feed.color.sourceHint')}</p>
+      <p className="pt-1 text-xs text-text-muted">{t('feed.color.sourceHint')}</p>
 
       <SectionLabel>{t('feed.tags.default')}</SectionLabel>
       <TagEditor value={source.tags ?? []} onChange={(tags) => patch({ tags })} suggestions={suggestions} testId="feed-source-tags" />
@@ -507,12 +507,12 @@ export function SourceEditor({ api, source, suggestions, reload, onShowItems, on
       >
         {intervalOptions(source.intervalMin).map((m) => <option key={m} value={m}>{intervalLabel(m, t)}</option>)}
       </select>
-      {source.paused ? <p className="pt-1 text-[11px] text-text-muted">{t('feed.sources.pausedNote')}</p> : null}
+      {source.paused ? <p className="pt-1 text-xs text-text-muted">{t('feed.sources.pausedNote')}</p> : null}
 
       <div className="pt-6">
         {confirm ? (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[12px] text-text-secondary">{t('feed.sources.removeConfirm')}</span>
+            <span className="text-sm text-text-secondary">{t('feed.sources.removeConfirm')}</span>
             <Button variant="danger" data-testid="feed-source-remove-confirm" onClick={() => void run('rm', async () => { await api!.feedRemoveSource(source.id); onRemoved() })}>{t('feed.sources.remove')}</Button>
             <Button variant="ghost" onClick={() => setConfirm(false)}>{t('feed.cancel')}</Button>
           </div>
@@ -520,7 +520,7 @@ export function SourceEditor({ api, source, suggestions, reload, onShowItems, on
           <Button variant="danger" data-testid="feed-source-remove" onClick={() => setConfirm(true)}><Trash2 aria-hidden className="size-3" />{t('feed.sources.remove')}</Button>
         )}
       </div>
-      {err ? <p role="alert" className="pt-2 text-[12px] text-destructive">{err}</p> : null}
+      {err ? <p role="alert" className="pt-2 text-sm text-destructive">{err}</p> : null}
     </div>
   )
 }

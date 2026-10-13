@@ -205,7 +205,7 @@ export function AddWorkspaceStep_Ssh({ onBack, onCreate }: AddWorkspaceStep_SshP
           })}
         </div>
         {bootstrapping.detail && (
-          <pre className="mt-4 max-h-40 w-full overflow-auto whitespace-pre-wrap rounded-[var(--radius-card)] bg-foreground/5 p-3 text-[11px] opacity-70">
+          <pre className="mt-4 max-h-40 w-full overflow-auto whitespace-pre-wrap rounded-[var(--radius-card)] bg-foreground/5 p-3 text-xs opacity-70">
             {bootstrapping.detail}
           </pre>
         )}
@@ -297,7 +297,7 @@ export function AddWorkspaceStep_Ssh({ onBack, onCreate }: AddWorkspaceStep_SshP
             >
               <Server className="h-4 w-4 shrink-0 opacity-60" />
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium">{host.label}</div>
+                <div className="truncate text-sm font-medium" title={host.label}>{host.label}</div>
                 <div className="truncate text-xs opacity-70">
                   {host.user}@{host.host}
                   {host.port !== 22 ? `:${host.port}` : ""}

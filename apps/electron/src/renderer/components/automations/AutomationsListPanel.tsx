@@ -299,7 +299,7 @@ export function AutomationsListPanel({
                       >
                         <div className="rox-autom-row-main">
                           <span className="rox-autom-row-name">{automation.name}</span>
-                          {automation.contextPause && <span role="status" className="truncate text-[11px] text-amber-600" title={t(automation.contextPause.reason === 'target-deleted' ? 'automations.context.pausedDeleted' : 'automations.context.pausedOutOfScope')}>
+                          {automation.contextPause && <span role="status" className="truncate text-xs text-amber-600" title={t(automation.contextPause.reason === 'target-deleted' ? 'automations.context.pausedDeleted' : 'automations.context.pausedOutOfScope')}>
                             {t(automation.contextPause.reason === 'target-deleted' ? 'automations.context.pausedDeleted' : 'automations.context.pausedOutOfScope')}
                           </span>}
                           <span className="rox-autom-row-sub">{describeTrigger(automation, t, locale)}</span>

@@ -6,6 +6,7 @@ import {
   SettingsSection,
   SettingsToggle,
 } from '@/components/settings'
+import { useDictationSession } from '../../components/app-shell/input/voice-dictation-state'
 import {
   DEEPGRAM_TRANSCRIPTION_MODEL,
   DEEPGRAM_TRANSCRIPTION_NAME,
@@ -20,6 +21,64 @@ import {
 } from '@rox/shared/voice'
 import { createDesktopSettingsSession, readVoiceSettingsSnapshot, type VoiceSettingsSnapshot } from './desktop-settings-session'
 import { VoiceHistorySettings } from './VoiceHistorySettings'
+
+/** Capture cap used by the dictation-state preview; mirrors the deck strip default. */
+const DICTATION_PREVIEW_LIMIT_SECONDS = 300
+
+function formatDictationClock(totalSeconds: number): string {
+  const clamped = Math.max(0, Math.floor(totalSeconds))
+  const minutes = Math.floor(clamped / 60)
+  const seconds = clamped % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+/**
+ * Dictation state vocabulary as in the composer deck — «Слушаю» plus a tabular
+ * remaining readout. Presentation only: it subscribes to the shared dictation
+ * session store (no capture, no new state machine) and always renders the pair
+ * so the sandboxed voice page documents the state, counting down live while a
+ * dictation is running.
+ */
+function DictationStateRow() {
+  const { t } = useTranslation()
+  const session = useDictationSession()
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (!session.active) return
+    const timer = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(timer)
+  }, [session.active])
+
+  const remaining =
+    session.active && session.startedAt
+      ? Math.max(0, DICTATION_PREVIEW_LIMIT_SECONDS - (now - session.startedAt) / 1000)
+      : DICTATION_PREVIEW_LIMIT_SECONDS
+
+  return (
+    <div
+      data-layout="settings-row"
+      data-voice-dictation-state={session.active ? 'active' : 'idle'}
+      className="flex items-center gap-2.5 px-4 py-3.5"
+    >
+      <span aria-hidden className="size-2 shrink-0 rounded-full bg-status-danger" />
+      <span className="shrink-0 text-caption font-medium text-text-primary">
+        {t('composer.deck.dictation.listening', { defaultValue: 'Слушаю' })}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-caption text-text-secondary">
+        {t('settings.input.voiceDictationStateHint', {
+          defaultValue: 'Предпросмотр строки диктовки: состояние и остаток времени.',
+        })}
+      </span>
+      <span className="shrink-0 text-caption numeric text-text-secondary">
+        {t('composer.deck.dictation.remaining', {
+          defaultValue: 'осталось {{time}}',
+          time: formatDictationClock(remaining),
+        })}
+      </span>
+    </div>
+  )
+}
 
 export function VoiceSettingsSection() {
   const { t } = useTranslation()
@@ -184,6 +243,7 @@ export function VoiceSettingsSection() {
       <SettingsSection title={t('settings.input.voiceGroupModels')} description={healthLabel}>
         <SettingsCard>
           <p className="px-4 py-3 text-xs text-muted-foreground">{t(prefs.sttEngine === 'cloud-rox' ? 'meetings.local.deepgramConsent' : 'settings.input.voiceModelsHint')}</p>
+          <DictationStateRow />
         </SettingsCard>
       </SettingsSection>
 

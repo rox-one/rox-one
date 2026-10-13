@@ -73,7 +73,7 @@ export function PreviewHeaderBadge({
 }: PreviewHeaderBadgeProps) {
   const variantClasses = PREVIEW_BADGE_VARIANTS[variant]
   const baseClasses = cn(
-    'flex items-center gap-1.5 h-[26px] px-2.5 rounded-[var(--radius-control)] font-sans text-[13px] font-medium bg-background shadow-minimal',
+    'flex items-center gap-1.5 h-[26px] px-2.5 rounded-[var(--radius-control)] font-sans text-base font-medium bg-background shadow-minimal',
     variantClasses,
     className
   )
@@ -155,9 +155,11 @@ export function PreviewHeader({
             onClick={onClose}
             className={cn(
               'p-1.5 rounded-[var(--radius-control)] bg-background shadow-minimal cursor-pointer',
+              'min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)] inline-flex items-center justify-center',
               'opacity-70 hover:opacity-100 transition-opacity',
               'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring'
             )}
+            aria-label={t('common.close')}
             title={t('common.closeEsc')}
           >
             <X className="w-4 h-4" />

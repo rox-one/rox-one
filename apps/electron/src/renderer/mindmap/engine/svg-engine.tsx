@@ -724,7 +724,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
             </div>
 
             {structureNotice ? (
-              <p className="px-1 pt-1 text-[11px] text-muted-foreground" role="status">
+              <p className="px-1 pt-1 text-xs text-muted-foreground" role="status">
                 {structureNotice}
               </p>
             ) : null}
@@ -742,7 +742,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
                 onSubmit={submitStructureEdit}
               >
                 {structureEditor.mode !== 'rename' ? (
-                  <label className="block space-y-0.5 px-1 text-[11px] text-muted-foreground">
+                  <label className="block space-y-0.5 px-1 text-xs text-muted-foreground">
                     <span>{t('mindmap.parentNode')}</span>
                     <PremiumMenuSelect
                       aria-label={t('mindmap.parentNode')}
@@ -768,7 +768,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
                 ) : null}
 
                 {structureEditor.mode !== 'reparent' ? (
-                  <label className="block space-y-0.5 px-1 text-[11px] text-muted-foreground">
+                  <label className="block space-y-0.5 px-1 text-xs text-muted-foreground">
                     <span>{t('mindmap.nodeLabel')}</span>
                     <input
                       autoFocus
@@ -788,7 +788,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
                 ) : null}
 
                 {structureError ? (
-                  <p className="px-1 text-[11px] text-destructive" role="alert">
+                  <p className="px-1 text-xs text-destructive" role="alert">
                     {structureError}
                   </p>
                 ) : null}
@@ -835,7 +835,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
               type="button"
               role="menuitem"
               autoFocus
-              className="flex w-full px-3 py-1.5 text-left text-[12px] hover:bg-foreground/5"
+              className="flex w-full px-3 py-1.5 text-left text-sm hover:bg-foreground/5"
               onClick={() => beginAddNode(contextMenu.nodeId ?? graph.rootId)}
             >
               {contextMenu.nodeId ? t('mindmap.addChild') : t('mindmap.addNode')}
@@ -845,7 +845,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
                 <button
                   type="button"
                   role="menuitem"
-                  className="flex w-full px-3 py-1.5 text-left text-[12px] hover:bg-foreground/5"
+                  className="flex w-full px-3 py-1.5 text-left text-sm hover:bg-foreground/5"
                   onClick={() => {
                     setLinkFrom(contextMenu.nodeId)
                     setContextMenu(null)
@@ -859,7 +859,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
                   <button
                     type="button"
                     role="menuitem"
-                    className="flex w-full px-3 py-1.5 text-left text-[12px] hover:bg-foreground/5"
+                    className="flex w-full px-3 py-1.5 text-left text-sm hover:bg-foreground/5"
                     onClick={() => unlinkNode(contextMenu.nodeId!)}
                   >
                     {t('mindmap.unlinkNode')}
@@ -868,7 +868,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
                 <button
                   type="button"
                   role="menuitem"
-                  className="flex w-full px-3 py-1.5 text-left text-[12px] text-destructive hover:bg-foreground/5"
+                  className="flex w-full px-3 py-1.5 text-left text-sm text-destructive hover:bg-foreground/5"
                   onClick={() => {
                     const id = contextMenu.nodeId
                     setContextMenu(null)

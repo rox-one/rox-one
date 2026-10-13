@@ -170,11 +170,11 @@ function ExtensionCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-semibold truncate">{name}</h3>
+            <h3 className="font-semibold truncate" title={name}>{name}</h3>
             <span className="text-xs opacity-60">v{version}</span>
             {compatLevel != null ? (
               <span
-                className="text-[10px] uppercase tracking-wide border rounded px-1.5 py-0.5 font-mono opacity-80"
+                className="text-xs uppercase caps-label border rounded px-1.5 py-0.5 font-mono opacity-80"
                 title={t('extensions.card.compatLevelHint', {
                   level: compatLevel,
                 })}
@@ -185,7 +185,7 @@ function ExtensionCard({
               </span>
             ) : null}
             {status ? (
-              <span className="text-[10px] uppercase tracking-wide opacity-70 border rounded px-1.5 py-0.5">
+              <span className="text-xs uppercase caps-label opacity-70 border rounded px-1.5 py-0.5">
                 {t(`extensions.status.${status}`, { defaultValue: status })}
               </span>
             ) : null}
@@ -339,7 +339,7 @@ function RuntimeBadge({ runtime }: { runtime: ExtensionRuntime }) {
   const { t } = useTranslation()
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium opacity-90"
+      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium opacity-90"
       title={t(`extensions.runtime.${runtime}.hint`, {
         defaultValue: RUNTIME_PLACEMENT[runtime],
       })}
@@ -364,14 +364,14 @@ function PermissionsList({ permissions }: { permissions: ExtensionPermission[] }
     <div className="space-y-2" data-testid="extensions-permission-groups">
       {groups.map((group) => (
         <div key={group.group} className="space-y-1">
-          <div className="text-[10px] uppercase tracking-wide opacity-60 font-medium">
+          <div className="text-xs uppercase caps-label opacity-60 font-medium">
             {t(`extensions.permissionGroup.${group.group}`, { defaultValue: group.group })}
           </div>
           <div className="flex flex-wrap gap-1">
             {group.permissions.map((p) => (
               <span
                 key={p}
-                className={`rounded px-1.5 py-0.5 text-[10px] font-mono border ${
+                className={`rounded px-1.5 py-0.5 text-xs font-mono border ${
                   isHighRisk(p)
                     ? 'border-amber-500/60 text-amber-700 dark:text-amber-300 bg-amber-500/10'
                     : 'opacity-80'
@@ -1046,7 +1046,7 @@ export default function ExtensionsSettingsPage() {
                   <div key={row.id} className="border rounded-lg p-3 space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-medium text-sm">{row.name}</span>
-                      <span className="text-[10px] uppercase opacity-60">{row.status}</span>
+                      <span className="text-xs uppercase caps-label opacity-60">{row.status}</span>
                     </div>
                     <PermissionsList permissions={row.permissions} />
                   </div>
@@ -1347,7 +1347,7 @@ export default function ExtensionsSettingsPage() {
                       </button>
                     ) : null}
                   </div>
-                  <span className="text-[10px] uppercase opacity-60 shrink-0">
+                  <span className="text-xs uppercase caps-label opacity-60 shrink-0">
                     {p.community
                       ? t('extensions.registries.community')
                       : t('extensions.registries.active')}

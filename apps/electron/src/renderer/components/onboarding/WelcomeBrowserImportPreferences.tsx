@@ -82,7 +82,7 @@ export function WelcomeBrowserImportPreferences({ onSavingChange }: { onSavingCh
         <ChevronDown className="ml-auto size-4 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
       </summary>
       <div className="space-y-3 px-4 pb-4" aria-busy={loading || saving}>
-        <p className="text-xs leading-relaxed text-muted-foreground">{t('settings.browserImport.preferencesHint')}</p>
+        <p className="text-xs text-muted-foreground">{t('settings.browserImport.preferencesHint')}</p>
         {categories ? <BrowserImportPreferences selected={categories} onChange={(next) => void save(next)} disabled={loading || saving} /> : null}
         {loading ? <p role="status" className="text-xs text-muted-foreground">{t('common.loading')}</p> : null}
         {failed ? <div className="flex items-center justify-between gap-2">
@@ -94,7 +94,7 @@ export function WelcomeBrowserImportPreferences({ onSavingChange }: { onSavingCh
         </div> : null}
         <div className="flex items-start gap-2 rounded-[var(--radius-card)] bg-foreground/5 p-3">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-500" aria-hidden="true" />
-          <p className="text-xs leading-relaxed text-muted-foreground">{t('onboarding.welcome.browserImportPermissionHint')}</p>
+          <p className="text-xs text-muted-foreground">{t('onboarding.welcome.browserImportPermissionHint')}</p>
         </div>
       </div>
     </details>

@@ -7,8 +7,8 @@ import { useQuery } from '@tanstack/react-query'
 import { ROX_REVALIDATE_AFTER_MS, roxQueryClient } from '@/lib/query/client'
 import { roxKeys } from '@/lib/query/keys'
 
-const fieldClass = 'w-full rounded-lg border border-border/70 bg-background px-2.5 py-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
-const buttonClass = 'inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-border/70 px-2.5 py-1.5 text-[13px] transition-colors motion-reduce:transition-none hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none'
+const fieldClass = 'w-full rounded-lg border border-border/70 bg-background px-2.5 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
+const buttonClass = 'inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-border/70 px-2.5 py-1.5 text-base transition-colors motion-reduce:transition-none hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none'
 type CatalogItem = { slug: string; name: string }
 type ProfileDraft = AgentProfileInput & { id: string | null; expectedRevision: number }
 type Catalog = { sources: CatalogItem[]; skills: CatalogItem[] }
@@ -79,7 +79,7 @@ export function AgentProfilesView({ workspaceId }: { workspaceId: string; projec
       <legend className="font-medium">{t(`navigation.work.profiles.${kind}`)}</legend>
       <input type="search" className={fieldClass} value={query} onChange={event => onQuery(event.target.value)} aria-label={t(`navigation.work.profiles.search${kind === 'sources' ? 'Sources' : 'Skills'}`)} />
       <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-border/60 p-2">
-        {items.map(item => <label key={item.slug} className="flex min-h-8 items-start gap-2 text-[13px]">
+        {items.map(item => <label key={item.slug} className="flex min-h-8 items-start gap-2 text-base">
           <input type="checkbox" checked={selected.includes(item.slug)} disabled={!canManage || busy || !profileExists} className="mt-1 accent-[var(--accent)]" onChange={event => {
             const next = event.target.checked ? [...selected, item.slug] : selected.filter(slug => slug !== item.slug)
             setDraft({ ...draft, [kind === 'sources' ? 'sourceSlugs' : 'skillSlugs']: next })
@@ -91,9 +91,9 @@ export function AgentProfilesView({ workspaceId }: { workspaceId: string; projec
     </fieldset>
   }
 
-  return <section className="flex h-full min-h-0 flex-col bg-background font-sans text-[13px]" data-testid="agent-profiles-view">
+  return <section className="flex h-full min-h-0 flex-col bg-background font-sans text-base" data-testid="agent-profiles-view">
     <header className="flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3">
-      <Bot className="size-4 text-accent" aria-hidden /><h2 className="mr-auto text-[15px] font-semibold">{t('navigation.work.profiles.title')}</h2>
+      <Bot className="size-4 text-accent" aria-hidden /><h2 className="mr-auto text-lg font-semibold">{t('navigation.work.profiles.title')}</h2>
       <button type="button" className={buttonClass} disabled={work.loading} onClick={() => { void work.refresh(); void catalogQuery.refetch() }} aria-label={t('navigation.work.refresh')}><RefreshCw className="size-3.5" aria-hidden /></button>
       <button type="button" className={buttonClass} disabled={!canManage || busy} onClick={() => begin()}><Plus className="size-3.5" aria-hidden />{t('navigation.work.profiles.new')}</button>
     </header>
@@ -104,7 +104,7 @@ export function AgentProfilesView({ workspaceId }: { workspaceId: string; projec
       {snapshot && !canManage && <p role="status" className="text-muted-foreground">{t('navigation.work.readOnly')}</p>}
       {snapshot && <div className="space-y-1" role="list">
         {snapshot.profiles.map(profile => <div role="listitem" key={profile.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-border/60 p-3">
-          <button type="button" className="min-w-0 flex-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => begin(profile)}><span className="block font-medium">{profile.name}</span><span className="block truncate text-muted-foreground">{profile.role}</span></button>
+          <button type="button" className="min-w-0 flex-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => begin(profile)}><span className="block font-medium">{profile.name}</span><span className="block truncate text-muted-foreground" title={profile.role}>{profile.role}</span></button>
           {snapshot.defaultProfileId === profile.id && <span className="inline-flex items-center gap-1 text-accent"><Star className="size-3" aria-hidden />{t('navigation.work.profiles.default')}</span>}
           {snapshot.defaultProfileId !== profile.id && <button type="button" className={buttonClass} disabled={!canManage || busy} onClick={() => void work.write({ kind: 'setDefaultProfile', profileId: profile.id })}>{t('navigation.work.profiles.makeDefault')}</button>}
           <button type="button" className={buttonClass} disabled={!canManage || !snapshot.access.canDelete || busy} onClick={() => setDeleteTarget(profile.id)} aria-label={t('navigation.work.profiles.deleteNamed', { name: profile.name })}><Trash2 className="size-3.5" aria-hidden /></button>

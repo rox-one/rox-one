@@ -14,6 +14,9 @@
     "protobufjs",
     "sharp"
   ],
+  "overrides": {
+    "katex": "^0.18.2"
+  },
   "workspaces": [
     "packages/*",
     "apps/*",
@@ -215,7 +218,7 @@
     "gray-matter": "^4.0.3",
     "jotai": "^2.16.0",
     "js-yaml": "^4.1.1",
-    "katex": "^0.16.33",
+    "katex": "^0.18.2",
     "linkify-it": "^5.0.0",
     "lucide-react": "^0.561.0",
     "marked": "^17.0.1",

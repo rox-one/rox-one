@@ -685,7 +685,7 @@ export function SessionTableHost() {
         <div
           ref={tableHeaderRef}
           role="row"
-          className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground backdrop-blur"
+          className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-1.5 text-xs font-semibold text-muted-foreground backdrop-blur"
         >
           <span role="columnheader" className="w-6 shrink-0">
             <input

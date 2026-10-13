@@ -211,13 +211,13 @@ export function KanbanColumn({
           style={{ backgroundColor: color?.tint }}
         >
           <span
-            className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold tabular-nums text-white"
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold numeric text-white"
             style={{ backgroundColor: color?.solid ?? '#94a3b8' }}
           >
             {tasks.length}
           </span>
           <span
-            className="text-[10px] font-semibold uppercase tracking-wider text-foreground/70"
+            className="text-xs font-semibold uppercase caps-label text-foreground/70"
             style={{
               writingMode: 'vertical-rl',
               transform: 'rotate(180deg)',
@@ -458,10 +458,10 @@ function ProjectGroupSection({
             style={{ backgroundColor: group.color }}
           />
         )}
-        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-foreground/70">
+        <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground/70" title={group.name}>
           {group.name}
         </span>
-        <span className="tabular-nums text-[10px] text-muted-foreground">{group.tasks.length}</span>
+        <span className="numeric text-xs text-muted-foreground">{group.tasks.length}</span>
       </button>
       {!collapsed && (
         <div className="px-1.5 pb-1.5">
@@ -526,7 +526,7 @@ function ColumnHeader({
       )}
       {label}
       <span
-        className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums"
+        className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-xs font-semibold numeric"
         style={{ backgroundColor: 'rgba(255, 255, 255, 0.25)' }}
       >
         {count}
@@ -537,7 +537,7 @@ function ColumnHeader({
   if (!onSelectDropStatus && !editable) {
     return (
       <span
-        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider"
+        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold uppercase caps-label"
         style={pillStyle}
       >
         {inner}
@@ -552,7 +552,7 @@ function ColumnHeader({
         data-no-dnd="true"
         onPointerDown={e => e.stopPropagation()}
         title={editable ? t('kanban.column.edit') : t('kanban.column.setDropStatus')}
-        className="inline-flex min-w-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 data-[state=open]:ring-2 data-[state=open]:ring-foreground/20"
+        className="inline-flex min-w-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold uppercase caps-label transition-colors hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 data-[state=open]:ring-2 data-[state=open]:ring-foreground/20"
         style={pillStyle}
       >
         {inner}
@@ -601,7 +601,7 @@ function ColumnHeader({
       >
         {onRename && (
           <div className="space-y-1">
-            <label className="text-[11px] font-medium text-foreground/50">{t('kanban.column.name')}</label>
+            <label className="text-xs font-medium text-foreground/50">{t('kanban.column.name')}</label>
             <input
               type="text"
               defaultValue={label}
@@ -627,7 +627,7 @@ function ColumnHeader({
 
         {onSetColor && (
           <div className="space-y-1">
-            <label className="text-[11px] font-medium text-foreground/50">{t('kanban.column.color')}</label>
+            <label className="text-xs font-medium text-foreground/50">{t('kanban.column.color')}</label>
             <div className="flex flex-wrap gap-1.5">
               {PROJECT_COLOR_PALETTE.map(hex => (
                 <button
@@ -647,7 +647,7 @@ function ColumnHeader({
 
         {onSelectDropStatus && statuses && statuses.length > 0 && (
           <div className="space-y-1">
-            <label className="text-[11px] font-medium text-foreground/50">{t('kanban.column.setDropStatus')}</label>
+            <label className="text-xs font-medium text-foreground/50">{t('kanban.column.setDropStatus')}</label>
             <SessionStatusMenu
               states={statuses}
               activeState={dropStatus?.id ?? ''}
@@ -660,7 +660,7 @@ function ColumnHeader({
 
         {onSetPrompt && (
           <div className="space-y-1.5 border-t border-border/40 pt-2">
-            <label className="flex items-center gap-2 text-[11px] font-medium text-foreground/50">
+            <label className="flex items-center gap-2 text-xs font-medium text-foreground/50">
               <input
                 type="checkbox"
                 checked={!!promptEnabled}

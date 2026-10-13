@@ -503,7 +503,7 @@ function createComponents(
       },
       pre: ({ children }) => <>{children}</>,
       // Comfortable paragraph spacing
-      p: ({ children }) => <p className="my-2 leading-relaxed">{children}</p>,
+      p: ({ children }) => <p className="my-2 prose-body prose-measure">{children}</p>,
       // Styled lists - ul uses tighter spacing, ol uses standard for number alignment
       ul: ({ children, className }) => (
         <ul
@@ -537,7 +537,7 @@ function createComponents(
       // Clean tables
       table: ({ children }) => (
         <div className="my-3 overflow-x-auto rounded-md border border-border-subtle">
-          <table className="min-w-full text-sm">{children}</table>
+          <table className="min-w-full text-data">{children}</table>
         </div>
       ),
       thead: ({ children }) => <thead className="border-b border-border-subtle bg-surface-input">{children}</thead>,
@@ -548,12 +548,12 @@ function createComponents(
         <td className="py-2 px-3 border-b border-border-subtle">{children}</td>
       ),
       // Headings - H1/H2 same size, differentiated by weight
-      h1: ({ children }) => <h1 className="font-sans text-[16px] font-bold mt-5 mb-3">{children}</h1>,
-      h2: ({ children }) => <h2 className="font-sans text-[16px] font-semibold mt-4 mb-3">{children}</h2>,
-      h3: ({ children }) => <h3 className="font-sans text-[15px] font-semibold mt-4 mb-2">{children}</h3>,
+      h1: ({ children }) => <h1 className="font-sans text-title-md font-bold mt-5 mb-3">{children}</h1>,
+      h2: ({ children }) => <h2 className="font-sans text-title-md font-semibold mt-4 mb-3">{children}</h2>,
+      h3: ({ children }) => <h3 className="font-sans text-lg font-semibold mt-4 mb-2">{children}</h3>,
       // Blockquotes
       blockquote: ({ children }) => (
-        <blockquote className="border-l-2 border-border-strong pl-3 my-2 text-text-secondary">
+        <blockquote className="border-l-2 border-border-strong pl-3 my-2 prose-body text-text-secondary">
           {children}
         </blockquote>
       ),
@@ -661,7 +661,7 @@ function createComponents(
     },
     pre: ({ children }) => <>{children}</>,
     // Rich paragraph spacing
-    p: ({ children }) => <p className="my-3 leading-relaxed">{children}</p>,
+    p: ({ children }) => <p className="my-3 prose-body prose-measure">{children}</p>,
     // Styled lists - ul uses tighter spacing, ol uses standard for number alignment
     ul: ({ children, className }) => (
       <ul
@@ -677,41 +677,41 @@ function createComponents(
       <ol className={cn('my-3 space-y-1.5 pl-6 list-decimal', className)}>{children}</ol>
     ),
     li: ({ children, className }) => (
-      <li className={cn('leading-relaxed', className?.includes('task-list-item') && 'list-none')}>{children}</li>
+      <li className={cn('prose-body', className?.includes('task-list-item') && 'list-none')}>{children}</li>
     ),
     // Beautiful tables
     table: ({ children }) => (
       <div className="my-4 overflow-x-auto rounded-md border">
-        <table className="min-w-full divide-y divide-border">{children}</table>
+        <table className="min-w-full text-data divide-y divide-border">{children}</table>
       </div>
     ),
     thead: ({ children }) => <thead className="bg-muted/50">{children}</thead>,
     tbody: ({ children }) => <tbody className="divide-y divide-border">{children}</tbody>,
     th: ({ children }) => (
-      <th className="text-left py-3 px-4 font-semibold text-sm">{children}</th>
+      <th className="text-left py-3 px-4 font-semibold">{children}</th>
     ),
     td: ({ children }) => (
-      <td className="py-3 px-4 text-sm">{children}</td>
+      <td className="py-3 px-4">{children}</td>
     ),
     tr: ({ children }) => (
       <tr className="hover:bg-muted/30 transition-colors">{children}</tr>
     ),
     // Rich headings - H1/H2 same size, differentiated by weight
     h1: ({ children }) => (
-      <h1 className="font-sans text-[16px] font-bold mt-7 mb-4">{children}</h1>
+      <h1 className="font-sans text-title-md font-bold mt-7 mb-4">{children}</h1>
     ),
     h2: ({ children }) => (
-      <h2 className="font-sans text-[16px] font-semibold mt-6 mb-3">{children}</h2>
+      <h2 className="font-sans text-title-md font-semibold mt-6 mb-3">{children}</h2>
     ),
     h3: ({ children }) => (
-      <h3 className="font-sans text-[15px] font-semibold mt-5 mb-3">{children}</h3>
+      <h3 className="font-sans text-lg font-semibold mt-5 mb-3">{children}</h3>
     ),
     h4: ({ children }) => (
-      <h4 className="text-[14px] font-semibold mt-3 mb-1">{children}</h4>
+      <h4 className="text-base font-semibold mt-3 mb-1">{children}</h4>
     ),
     // Styled blockquotes
     blockquote: ({ children }) => (
-      <blockquote className="border-l-2 border-border-strong bg-surface-input pl-4 pr-3 py-2 my-3 rounded-r-md text-text-secondary">
+      <blockquote className="border-l-2 border-border-strong bg-surface-input pl-4 pr-3 py-2 my-3 rounded-r-md prose-body text-text-secondary">
         {children}
       </blockquote>
     ),

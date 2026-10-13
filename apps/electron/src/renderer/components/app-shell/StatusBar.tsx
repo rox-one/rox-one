@@ -58,7 +58,7 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
     <div
       data-slot="status"
       data-testid="compact-status-bar"
-      className="chrome-strip chrome-label-sm flex shrink-0 items-center justify-between gap-2 px-2.5 text-muted-foreground"
+      className="chrome-strip chrome-label-sm label-tracking flex shrink-0 items-center justify-between gap-2 px-2.5 text-muted-foreground"
       style={{ height: STATUS_BAR_HEIGHT }}
     >
       <div className="flex min-w-0 items-center gap-1.5">
@@ -68,11 +68,11 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
         <span>{model.syncOk ? t('workbench.status.syncOk') : t('workbench.status.offline')}</span>
       </div>
       <div className="flex min-w-0 items-center justify-end gap-1.5">
-        <span data-testid="status-bar-balance">
+        <span data-testid="status-bar-balance" className="numeric">
           {t('profile.balanceLabel')} {balanceKnown ? t('profile.balance', { amount: balance }) : t('profile.balanceUnknown')}
         </span>
         {version ? (
-          <span data-testid="status-bar-version" className="tabular-nums">
+          <span data-testid="status-bar-version" className="numeric">
             {t('statusBar.version', { version })}
           </span>
         ) : null}

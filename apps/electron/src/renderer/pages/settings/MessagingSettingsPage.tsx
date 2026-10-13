@@ -762,8 +762,8 @@ function DirectSessionRow({
     <div className="flex items-center gap-3 px-4 py-2.5">
       <SubRowIcon icon={MessageSquare} />
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm">{sessionLabel}</div>
-        <div className="mt-0.5 truncate text-xs text-foreground/50">{subtitle}</div>
+        <div className="truncate text-sm" title={sessionLabel}>{sessionLabel}</div>
+        <div className="mt-0.5 truncate text-xs text-foreground/50" title={subtitle}>{subtitle}</div>
       </div>
       <BindingAllowListPopover
         access={toBindingAccess(binding)}
@@ -784,7 +784,7 @@ function UnpairedSupergroupRow({ onPair }: { onPair: () => void }) {
         <div className="text-sm">
           {t('settings.messaging.telegram.supergroup.label')}
         </div>
-        <div className="mt-0.5 truncate text-xs text-foreground/50">
+        <div className="mt-0.5 truncate text-xs text-foreground/50" title={t('settings.messaging.telegram.supergroup.notConfigured')}>
           {t('settings.messaging.telegram.supergroup.notConfigured')}
         </div>
       </div>
@@ -838,10 +838,10 @@ function PairedSupergroupSection({
         <SubRowIcon icon={MessagesSquare} />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
-            <div className="truncate text-sm font-medium">{supergroup.title}</div>
-            <div className="truncate text-xs text-foreground/50">({supergroup.chatId})</div>
+            <div className="truncate text-sm font-medium" title={supergroup.title}>{supergroup.title}</div>
+            <div className="truncate text-xs text-foreground/50" title={supergroup.chatId}>({supergroup.chatId})</div>
           </div>
-          <div className="mt-0.5 truncate text-xs text-foreground/50">{subtitle}</div>
+          <div className="mt-0.5 truncate text-xs text-foreground/50" title={subtitle}>{subtitle}</div>
         </div>
         {isExpanded ? (
           <ChevronDown className="h-4 w-4 shrink-0 text-foreground/50" />
@@ -923,10 +923,10 @@ function TopicBindingRow({
     <div className="flex items-center gap-3 px-4 py-2.5">
       <IconSpacer />
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm">{sessionLabel}</div>
+        <div className="truncate text-sm" title={sessionLabel}>{sessionLabel}</div>
         <div className="mt-0.5 flex items-center gap-1.5 text-xs text-foreground/50">
           <Hash className="h-3 w-3" />
-          <span className="truncate">
+          <span className="truncate" title={`${topicName} · Topic #${binding.threadId}`}>
             {topicName} <span className="text-foreground/30">·</span> Topic #{binding.threadId}
           </span>
         </div>
@@ -962,7 +962,7 @@ function FlatBindingRow({
   const trigger = binding.discordGuildTrigger === 'all' ? 'all' : 'mention'
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-2.5 pl-[52px]">
-      <div className="min-w-0 truncate text-sm">{sessionLabel}</div>
+      <div className="min-w-0 truncate text-sm" title={sessionLabel}>{sessionLabel}</div>
       {binding.platform === 'discord' && onDiscordTriggerChange ? (
         <div className="flex shrink-0 items-center gap-1">
           <Button

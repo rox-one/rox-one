@@ -183,9 +183,9 @@ export function MemoryRepoSearchOverlay({
   }
 
   const groupHeader = (testId: string, label: string, shown: number, total: number) => (
-    <div data-testid={testId} className="flex items-center gap-2 px-3 pb-1 pt-3 text-caption font-semibold uppercase tracking-wide text-text-muted">
+    <div data-testid={testId} className="flex items-center gap-2 px-3 pb-1 pt-3 text-caption font-semibold uppercase caps-label text-text-muted">
       <span>{label}</span>
-      {total > 0 ? <span className="tabular-nums font-normal">({total > shown ? `${total}` : total})</span> : null}
+      {total > 0 ? <span className="numeric font-normal">({total > shown ? `${total}` : total})</span> : null}
     </div>
   )
 
@@ -206,7 +206,7 @@ export function MemoryRepoSearchOverlay({
           className={cn('flex w-full items-center gap-2 px-3 py-1.5 text-left text-small', isActive ? 'bg-surface-pressed' : 'hover:bg-surface-hover')}
         >
           <FileText aria-hidden="true" className="icon-caption shrink-0 text-text-muted" />
-          <span className="min-w-0 flex-1 truncate font-mono">{row.path}</span>
+          <span className="min-w-0 flex-1 truncate font-mono" title={row.path}>{row.path}</span>
           {row.node.badges?.map((badge) => (
             <span key={badge} className="shrink-0 rounded-[var(--radius-control)] border border-border-subtle px-1 text-caption text-text-muted">{t(`memory.repo.file.badge${badge === 'edited' ? 'Edited' : 'Dreamed'}`)}</span>
           ))}
@@ -216,8 +216,8 @@ export function MemoryRepoSearchOverlay({
     if (row.kind === 'note') {
       const label = (
         <>
-          <span className="min-w-0 flex-1 truncate">{row.note.title}</span>
-          <span className="shrink-0 truncate font-mono text-caption text-text-muted">{row.note.path}</span>
+          <span className="min-w-0 flex-1 truncate" title={row.note.title}>{row.note.title}</span>
+          <span className="shrink-0 truncate font-mono text-caption text-text-muted" title={row.note.path}>{row.note.path}</span>
         </>
       )
       return onOpenNote ? (
@@ -245,8 +245,8 @@ export function MemoryRepoSearchOverlay({
     const snippet = row.session.matches[0]?.snippet
     const sessionLabel = (
       <>
-        <span className="shrink-0 truncate font-mono">{row.session.sessionId}</span>
-        <span className="shrink-0 text-caption text-text-muted">×{row.session.matchCount}</span>
+        <span className="shrink-0 truncate font-mono" title={row.session.sessionId}>{row.session.sessionId}</span>
+        <span className="shrink-0 text-caption text-text-muted numeric">×{row.session.matchCount}</span>
         {snippet ? <span className="min-w-0 flex-1 truncate text-text-muted">{snippet}</span> : null}
       </>
     )

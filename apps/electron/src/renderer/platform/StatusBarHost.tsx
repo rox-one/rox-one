@@ -13,7 +13,8 @@
  */
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import { featureWorkbenchHarnessAgentIntelV1Atom, featureWorkbenchStatusBarV1Atom } from '@/atoms/unified-shell'
+import { featureWorkbenchHarnessAgentIntelV1Atom, featureWorkbenchStatusBarV1Atom, featureLayoutEngineAtom } from '@/atoms/unified-shell'
+import { panelLayoutGeometryAtom } from '@/atoms/panel-workspace'
 import { resolveModelFallbackStatus } from '@rox/shared/agent/model-fallback-status'
 import { focusedSessionIdAtom } from '@/atoms/panel-stack'
 import { backgroundTasksAtomFamily, sessionMetaMapAtom } from '@/atoms/sessions'
@@ -73,6 +74,11 @@ function StatusBarInner() {
   )
   const agentIntelEnabled = useAtomValue(featureWorkbenchHarnessAgentIntelV1Atom)
   const fallback = agentIntelEnabled ? resolveModelFallbackStatus(null) : null
+  // G4 «Студия» geometry readout: only when the layout-engine flag is on AND the
+  // container published a resolved layout. With the flag off the atom stays null
+  // and this cluster is byte-identical to the shipped status bar.
+  const layoutEngineEnabled = useAtomValue(featureLayoutEngineAtom)
+  const panelGeometry = useAtomValue(panelLayoutGeometryAtom)
 
   const model = buildStatusBarModel({
     transportMode: transport?.mode,
@@ -86,7 +92,7 @@ function StatusBarInner() {
   return (
     <div
       data-slot="status"
-      className="chrome-strip chrome-label-sm flex shrink-0 items-center justify-between gap-2 px-2.5 text-muted-foreground"
+      className="chrome-strip chrome-label-sm flex shrink-0 items-center justify-between gap-2 px-2.5 text-[var(--chrome-label)]"
       style={{ height: STATUS_BAR_HEIGHT }}
     >
       <div className="flex min-w-0 items-center gap-1.5">
@@ -100,6 +106,15 @@ function StatusBarInner() {
         <span>{t('workbench.status.approvals', { count: model.approvalCount })}</span>
       </div>
       <div className="flex min-w-0 items-center justify-end gap-1.5">
+        {layoutEngineEnabled && panelGeometry ? (
+          <span data-testid="status-bar-layout-geometry" className="numeric">
+            {t('shell.layout.status', {
+              preset: t(`layout.deck.preset.${panelGeometry.preset}`, { defaultValue: panelGeometry.preset }),
+              list: panelGeometry.listPx ?? 0,
+              surface: panelGeometry.surfacePx ?? 0,
+            })}
+          </span>
+        ) : null}
         {model.permissionMode ? <span>{permissionLabel(model.permissionMode, t)}</span> : null}
         {fallback?.kind === 'switched' && (
           <span data-testid="status-bar-fallback">

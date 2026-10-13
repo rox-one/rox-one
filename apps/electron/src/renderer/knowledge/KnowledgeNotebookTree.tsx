@@ -247,16 +247,16 @@ export function navigatorRowLabel(row: NavigatorEnvelopeRow): string {
 
 function SectionHeader({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-foreground/80">
+    <div className="flex items-center gap-2 px-3 py-1.5 text-base font-medium text-foreground/80">
       <Icon className="size-3.5 shrink-0 text-foreground/50" aria-hidden />
-      <span className="truncate">{label}</span>
+      <span className="truncate" title={label}>{label}</span>
     </div>
   )
 }
 
 function EmptyRow({ children }: { children: string }) {
   return (
-    <div className={cn('mx-3 mb-2 rounded-md px-2.5 py-2', 'bg-muted/40 text-[12px] leading-snug text-muted-foreground')}>
+    <div className={cn('mx-3 mb-2 rounded-md px-2.5 py-2', 'bg-muted/40 text-sm text-muted-foreground')}>
       {children}
     </div>
   )
@@ -286,12 +286,12 @@ function NavRow({
       className={cn(
         'flex items-center gap-2 rounded-md px-2.5 text-left',
         mobile ? 'mx-0 w-full py-2' : 'mx-3 w-[calc(100%-1.5rem)] py-1.5',
-        'text-[12px] font-medium text-foreground/80',
+        'text-sm font-medium text-foreground/80',
         'hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
       )}
     >
       <Icon className="size-3 shrink-0 text-muted-foreground" aria-hidden />
-      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
     </button>
   )
 }
@@ -583,7 +583,7 @@ function NotebookList({ notebooks, mobile, viewportRef }: { notebooks: Knowledge
 
   return (
     <div className="mb-2 flex flex-col gap-0.5">
-      <div className={cn('mb-1 flex gap-1 text-[11px] text-muted-foreground', mobile ? 'mx-0 w-full px-2' : 'mx-3')}>
+      <div className={cn('mb-1 flex gap-1 text-xs text-muted-foreground', mobile ? 'mx-0 w-full px-2' : 'mx-3')}>
         {(['all', 'notes', 'databases'] as NavFilter[]).map((id) => (
           <button
             key={id}

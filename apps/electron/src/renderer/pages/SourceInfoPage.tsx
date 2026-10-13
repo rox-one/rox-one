@@ -570,7 +570,7 @@ export default function SourceInfoPage({ sourceSlug, workspaceId, onDelete }: So
             <div className="px-4 py-3 text-sm space-y-1">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-muted-foreground">{t('sourceInfo.guideTokens')}</span>
-                <span className="tabular-nums font-medium">
+                <span className="numeric font-medium">
                   {t('sourceInfo.approxTokens', {
                     tokens: formatApproxTokens(estimateGuideTokens(editGuide || source.guide?.raw)),
                   })}
@@ -578,7 +578,7 @@ export default function SourceInfoPage({ sourceSlug, workspaceId, onDelete }: So
               </div>
               <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                 <span>{t('sourceInfo.guideChars')}</span>
-                <span className="tabular-nums">{(editGuide || source.guide?.raw || '').length}</span>
+                <span className="numeric">{(editGuide || source.guide?.raw || '').length}</span>
               </div>
             </div>
           </Info_Section>
