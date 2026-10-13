@@ -288,6 +288,130 @@ export async function downloadUv(config: BuildConfig): Promise<void> {
 }
 
 /**
+ * Lima version to bundle with the app (the VM host behind the Rovers local
+ * engine). Update this when upgrading Lima; check latest at:
+ * https://github.com/lima-vm/lima/releases
+ */
+export const LIMA_VERSION = '2.2.1';
+
+/**
+ * Lima VM host binaries installed by Lima's own `make native` on macOS.
+ *
+ * `limactl` is the only VM host the official release publishes: Lima compiles
+ * the vz driver into it (the release tarball holds no `lima-driver-vz` — see
+ * the Makefile's ADDITIONAL_DRIVERS, which is `krunkit` for darwin/arm64).
+ * `lima-driver-vz` exists only in a local `ADDITIONAL_DRIVERS=vz` build, so the
+ * extraction below stays wired for a future pin that publishes it, and logs when
+ * the pinned release does not.
+ */
+export const LIMA_BINARIES = ['limactl', 'lima-driver-vz'] as const;
+
+/**
+ * Pinned sha256 of the official Lima release asset (the release's own
+ * `SHA256SUMS`). Lima is macOS-only; other platforms skip it entirely.
+ */
+const LIMA_ASSET_SHA256: Partial<Record<`${Platform}-${Arch}`, string>> = {
+  'darwin-arm64': '9e9eacce88f37e185c346bad73aa6136f738d8cdf8c3bb23cd42b071824bc66e',
+};
+
+/**
+ * Get the pinned official Lima release asset name for a platform/arch
+ * combination, or null when Lima is not published for it.
+ */
+export function getLimaDownloadName(platform: Platform, arch: Arch): string | null {
+  if (platform !== 'darwin') return null;
+  if (arch === 'arm64') return `lima-${LIMA_VERSION}-Darwin-arm64.tar.gz`;
+  if (arch === 'x64') return `lima-${LIMA_VERSION}-Darwin-x86_64.tar.gz`;
+  return null;
+}
+
+/**
+ * Download the pinned official Lima release, verify its sha256, and install the
+ * VM host binaries into resources/bin/<platform-arch>/ — the same gitignored
+ * cache location as uv. Idempotent: a cached copy that reports the pinned
+ * version is reused.
+ */
+export async function downloadLima(config: BuildConfig): Promise<void> {
+  const { platform, arch, electronDir } = config;
+  const asset = getLimaDownloadName(platform, arch);
+  const expectedHash = LIMA_ASSET_SHA256[`${platform}-${arch}` as `${Platform}-${Arch}`];
+  if (!asset || !expectedHash) {
+    console.log(`Lima VM host: none published for ${platform}-${arch} — skipping`);
+    return;
+  }
+
+  const platformKey = getPlatformKey(platform, arch);
+  const targetDir = join(electronDir, 'resources', 'bin', platformKey);
+  const limactlPath = join(targetDir, 'limactl');
+
+  // Existence alone could ship a stale version after a pin bump. Cross-target
+  // executables cannot be probed on this host, so only probe the host target.
+  // `limactl --version` prints "limactl version <semver>".
+  if (existsSync(limactlPath) && platform === process.platform && arch === process.arch) {
+    try {
+      const reported = execFileSync(limactlPath, ['--version'], { encoding: 'utf8', timeout: 10_000, windowsHide: true }).trim();
+      if (reported.match(/\d+\.\d+\.\d+/)?.[0] === LIMA_VERSION) {
+        console.log(`limactl ${LIMA_VERSION} already present at ${limactlPath}`);
+        return;
+      }
+    } catch { /* repair stale/non-executable cached binary */ }
+  }
+
+  console.log(`Downloading Lima ${LIMA_VERSION} for ${platformKey}...`);
+
+  mkdirSync(targetDir, { recursive: true });
+  const tempDir = join(electronDir, '.lima-download-temp');
+  rmSync(tempDir, { recursive: true, force: true });
+  mkdirSync(tempDir, { recursive: true });
+
+  try {
+    const assetUrl = `https://github.com/lima-vm/lima/releases/download/v${LIMA_VERSION}/${asset}`;
+    const assetPath = join(tempDir, asset);
+    const extractDir = join(tempDir, 'extract');
+
+    console.log(`  Downloading ${assetUrl}...`);
+    await $`curl -fsSL --retry 3 --retry-delay 2 -o ${assetPath} ${assetUrl}`;
+
+    console.log('  Verifying pinned sha256...');
+    if (!(await verifySha256(assetPath, expectedHash))) {
+      throw new Error(`Lima checksum verification failed for ${asset}`);
+    }
+    console.log('  Checksum verified ✓');
+
+    // Extract ONLY the VM host binaries; the release also carries templates,
+    // manpages and guest agents that Rox does not bundle.
+    const listing = (await $`tar -tzf ${assetPath}`.text())
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+    mkdirSync(extractDir, { recursive: true });
+
+    for (const name of LIMA_BINARIES) {
+      const member = listing.find((entry) =>
+        entry === `./bin/${name}` || entry === `bin/${name}`
+        || entry === `./libexec/lima/${name}` || entry === `libexec/lima/${name}`);
+      if (!member) {
+        console.log(`  ${name}: not published in ${asset} — skipping`);
+        continue;
+      }
+      await $`tar -xzf ${assetPath} -C ${extractDir} ${member}`.quiet();
+      const extracted = findFileRecursive(extractDir, name);
+      if (!extracted) throw new Error(`Unable to locate ${name} in ${asset}`);
+      const targetPath = join(targetDir, name);
+      copyFileSync(extracted, targetPath);
+      await $`chmod +x ${targetPath}`.quiet();
+      console.log(`  ${name} installed to ${targetPath} ✓`);
+    }
+
+    if (!existsSync(limactlPath)) {
+      throw new Error(`Lima release ${asset} did not provide limactl`);
+    }
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
+/**
  * Clean previous build artifacts
  */
 export function cleanBuildArtifacts(config: BuildConfig): void {

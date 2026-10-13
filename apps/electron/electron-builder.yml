@@ -148,12 +148,32 @@ mac:
   gatekeeperAssess: false
   # Split entitlements: the app's own main executable keeps only its own needs
   # (audio-input etc.) and never the JIT keys, while every nested Mach-O binary
-  # (vendor/bun, the claude/ripgrep/calendar-helper executables, .node NAPI
-  # artifacts, the Electron Framework + Helper processes) inherits the runtime
-  # plist that carries allow-jit / allow-unsigned-executable-memory.
+  # (vendor/bun, the claude/ripgrep/calendar-helper/limactl executables, .node
+  # NAPI artifacts, the Electron Framework + Helper processes) inherits the
+  # runtime plist that carries allow-jit / allow-unsigned-executable-memory.
+  # The inherited plist is the runtime plist PLUS
+  # com.apple.security.virtualization: electron-builder re-signs nested binaries
+  # with this file, so without the key the grant Lima needs to create
+  # Virtualization.framework VMs would be stripped on re-sign (Lima publishes
+  # `limactl` ad-hoc signed with its own vz.entitlements).
   # Audited by scripts/audit-macos-signing.ts.
   entitlements: build/entitlements.mac.plist
-  entitlementsInherit: build/entitlements.runtime.plist
+  entitlementsInherit: build/entitlements.mac.inherit.plist
+  # Extra Mach-O binaries electron-builder must sign with the entitlements above.
+  # @electron/osx-sign resolves a relative path from the .app root (unless it
+  # exists relative to the CWD) — see app-builder-lib MacTargetHelper
+  # .buildSignOptions — and app-builder's expandArch() strips `${arch}` for
+  # non-universal builds, so these entries are literal and arch-specific.
+  # `limactl` is THE Lima VM host (Lima compiles the vz driver into it and
+  # publishes it ad-hoc signed with vz.entitlements); it is vendored by
+  # scripts/build/common.ts downloadLima(). Lima's `lima-driver-vz` is built only
+  # with `ADDITIONAL_DRIVERS=vz` and is NOT part of any official Lima release —
+  # downloadLima() installs it if a future pin ever publishes it, and anything
+  # under Resources/ is signed by osx-sign's walk regardless of this list.
+  # binaries:
+  #   - Contents/Resources/bin/darwin-arm64/lima-driver-vz
+  binaries:
+    - Contents/Resources/bin/darwin-arm64/limactl
   extraResources:
     # Thin core SDK (sdk.mjs + types). ~4 MB — present on every platform.
     - from: node_modules/@anthropic-ai/claude-agent-sdk
@@ -193,11 +213,30 @@ mac:
     # a foreign-architecture binary.
     - from: resources/bin/darwin-${arch}/rox-calendar-helper
       to: bin/darwin-${arch}/rox-calendar-helper
+    # Lima VM host binaries (Apache-2.0), vendored by
+    # scripts/build/common.ts downloadLima() from the pinned official Lima
+    # release into resources/bin/darwin-<arch>/. Same contract as the calendar
+    # helper: a build whose helper was not vendored logs "file source doesn't
+    # exist" and ships without it instead of bundling a foreign-arch binary.
+    # They must keep com.apple.security.virtualization — hence `mac.binaries`
+    # above and build/entitlements.mac.inherit.plist.
+    - from: resources/bin/darwin-${arch}/limactl
+      to: bin/darwin-${arch}/limactl
+    - from: resources/bin/darwin-${arch}/lima-driver-vz
+      to: bin/darwin-${arch}/lima-driver-vz
   # Positive patterns keep this platform matcher narrow (no implicit **/*).
   files:
     - resources/bin/darwin-${arch}/**/*
     - dist/resources/bin/darwin-${arch}/**/*
     - vendor/bun/**/*
+    # The Lima VM host binaries ship exactly once, through the arch-specific
+    # extraResources entries above (Resources/bin/darwin-<arch>/). Without these
+    # negatives the same ~32 MB Mach-O would also be copied into
+    # app/resources/bin/ and app/dist/resources/bin/.
+    - "!resources/bin/darwin-${arch}/limactl"
+    - "!resources/bin/darwin-${arch}/lima-driver-vz"
+    - "!dist/resources/bin/darwin-${arch}/limactl"
+    - "!dist/resources/bin/darwin-${arch}/lima-driver-vz"
   # Use predictable naming for macOS packages (applies to zip; dmg uses its own config below)
   artifactName: "Rox-${arch}.${ext}"
   # Code signing & notarization (disabled by default for local builds)
