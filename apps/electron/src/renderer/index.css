@@ -1312,7 +1312,7 @@ html[data-material="on"][data-material-deep*="lists"] [data-list-role] {
 }
 
 /* Browser CSS glass only. Electron keeps the native compositor, and the
-   OPAQUE OVERLAYS policy below still owns menu blur — but popovers are
+   opaque-overlays policy below still owns menu blur — but popovers are
    exempted there when the layer is on so the popover blur radius reaches them
    (PERF-07 exception, lens2-F3/F7). The chat root owns the single chat blur;
    the nested composer never adds a second backdrop filter over the same

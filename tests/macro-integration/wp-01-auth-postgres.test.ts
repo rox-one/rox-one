@@ -3,13 +3,14 @@ import { SQL } from 'bun'
 import { randomBytes } from 'node:crypto'
 import { mkdtemp, readFile, rm, writeFile, chmod } from 'node:fs/promises'
 import { join } from 'node:path'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { decodeJwt, importJWK, SignJWT, generateKeyPair } from 'jose'
 import { applyWorkspaceMigrations, migrationFromSource } from '../../apps/workspace-service/src/database/migrations'
 import { PostgresIdentityAuth, loadProtectedWorkspaceDatabaseUrl, lockPostgresActorSession } from '../../apps/workspace-service/src/auth/postgres-identity'
 import { createLocalIssuer } from '../../apps/workspace-service/src/auth/local-issuer'
 import { AuthenticationError, createVerifiedActorResolver } from '../../apps/workspace-service/src/auth/verified-actor'
 import type { AuthenticatedActor } from '../../packages/shared/src/workspace-domain/identity/contracts'
+import { protectedWorkspaceConfigPath } from './protected-database'
 
 const schema = `wp01_auth_${randomBytes(6).toString('hex')}`
 const prefix = `"${schema}".`
@@ -23,7 +24,7 @@ const password = () => `credential-${crypto.randomUUID()}`
 const required = <T>(value: T | undefined): T => { if (value === undefined) throw new Error('Missing test fixture'); return value }
 
 beforeAll(async () => {
-  url = await loadProtectedWorkspaceDatabaseUrl(process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json'))
+  url = await loadProtectedWorkspaceDatabaseUrl(protectedWorkspaceConfigPath())
   database = new SQL(url)
   directory = await mkdtemp(join(tmpdir(), 'rox-auth-pg-'))
   await database.unsafe(`CREATE SCHEMA "${schema}"`)

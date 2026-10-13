@@ -3,7 +3,7 @@ import { SQL } from 'bun'
 import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { PostgresIdentityAuth, loadProtectedWorkspaceDatabaseUrl } from '../../apps/workspace-service/src/auth/postgres-identity.ts'
 import { createLocalIssuer } from '../../apps/workspace-service/src/auth/local-issuer.ts'
@@ -11,8 +11,9 @@ import { createVerifiedActorResolver } from '../../apps/workspace-service/src/au
 import { IdentityCommands } from '../../apps/workspace-service/src/modules/identity/commands.ts'
 import { IdentityRepository } from '../../apps/workspace-service/src/modules/identity/repository.ts'
 import { IdentityDomainError, type AuthenticatedActor, type IdentityErrorCode, type SharedProjectResult } from '../../packages/shared/src/workspace-domain/identity/contracts.ts'
+import { protectedWorkspaceConfigPath } from './protected-database'
 
-const environmentPath = process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json')
+const environmentPath = protectedWorkspaceConfigPath()
 const schema = `wp01_${randomUUID().replaceAll('-', '')}`
 let database: SQL
 let repository: IdentityRepository

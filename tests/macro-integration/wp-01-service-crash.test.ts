@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from 'bun:test'
 import { SQL } from 'bun'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { mkdtemp, mkdir, rm, symlink } from 'node:fs/promises'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { decodeJwt } from 'jose'
 import { WsRpcClient } from '../../packages/server-core/src/transport/client'
@@ -10,8 +10,9 @@ import { DOMAIN_PROJECT_RPC } from '../../packages/shared/src/workspace-domain/i
 import { PostgresIdentityAuth, loadProtectedWorkspaceDatabaseUrl } from '../../apps/workspace-service/src/auth/postgres-identity'
 import { IdentityRepository } from '../../apps/workspace-service/src/modules/identity/repository'
 import { loadWorkspaceBootstrapMigrations } from '../../apps/workspace-service/src/server'
+import { protectedWorkspaceConfigPath } from './protected-database'
 
-const DATABASE_CONFIGURATION = process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json')
+const DATABASE_CONFIGURATION = protectedWorkspaceConfigPath()
 const CHILD_TIMEOUT_MS = 5000
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) await cleanup() })

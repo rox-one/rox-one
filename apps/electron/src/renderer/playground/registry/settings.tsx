@@ -122,12 +122,10 @@ function MessagingPlayground() {
   const onCreateSession = React.useCallback(async () => ({
     id: 'playground-session',
     workspaceId: 'playground-workspace',
-    workspaceName: 'Playground workspace',
-    createdAt: Date.now(),
-    lastUsedAt: Date.now(),
-    lastMessageAt: Date.now(),
+    workspaceName: 'Playground',
     messages: [],
     isProcessing: false,
+    lastMessageAt: Date.now(),
   }), [])
   return (
     <SettingsScreen>

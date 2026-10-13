@@ -18,13 +18,14 @@ import { TOOLCHAIN_MANIFEST, currentPlatform, toolchainPaths } from '../../../pa
 import { TOOLCHAIN_INSTALL_COMPLETE_MARKER, type ToolchainStateFile } from '../../../packages/shared/src/toolchain/types'
 import { createResolver } from '../../../packages/shared/src/toolchain/resolver'
 import { createManager } from '../../../packages/shared/src/toolchain/manager'
+import { protectedWorkspaceConfigPath } from '../protected-database'
 
 // Explicit opt-in. This lane never builds the product or configures the user's
 // profile. It exercises production Electron, credential encryption and the
 // composed PostgreSQL authority. Sign-in and CREATE use the shipped native
 // Connections/Projects forms. API/SQL reads verify their actual effects.
 const root = resolve(import.meta.dir, '../../..')
-const protectedDatabaseConfiguration = process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json')
+const protectedDatabaseConfiguration = protectedWorkspaceConfigPath()
 const digest = (value: string | Buffer) => createHash('sha256').update(value).digest('hex')
 
 interface Seed {

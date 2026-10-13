@@ -539,9 +539,9 @@ describe('a mention right after a literal `!` (#1505 fix3)', () => {
 
   for (const engine of ['legacy', 'official'] as const) {
     it(`${engine}: \`\\![[…]]\` parses as a literal \`!\` + mention; unescaped \`![[…]]\` mid-line stays text`, () => {
-      // Both engines keep marked's escape token as a literal `!` before the
-      // mention: `\!` never blocks it (db056c501), so `Done\![[task:1]]` loads
-      // as the text `Done!` plus a mention — never an embed.
+      // Marked renders the escape token `\!` as a literal `!` on both engines
+      // (@tiptap/markdown ≥ 3.21; 3.20 dropped it), so `Done\!` loads as
+      // `Done!`; the mention is still a mention, never an embed.
       const escaped = makeEditor(engine, 'Done\\![[task:1]]')
       expect(shape(escaped)).toEqual([['paragraph', ['Done!', 'mention']]])
       escaped.destroy()

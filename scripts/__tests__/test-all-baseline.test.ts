@@ -168,6 +168,29 @@ describe('known-red baseline', () => {
 })
 
 describe('CLI wiring', () => {
+  test('the CLI forwards the caller protected integration path and real home to every suite', async () => {
+    const root = fixture()
+    const callerHome = join(root, 'caller-home'), protectedConfiguration = join(root, 'caller-protected.json')
+    file(root, 'tests/environment.test.ts', `import {test,expect} from 'bun:test'
+      test('caller integration environment',()=>{
+        // A suite still gets its own HOME, but the caller's own home and the
+        // caller's protected configuration path stay reachable, so a suite that
+        // needs the protected workspace PostgreSQL configuration can find it
+        // instead of reporting it unavailable inside the throwaway HOME.
+        expect(process.env.ROX_TEST_HOST_HOME).toBe(${JSON.stringify(callerHome)});
+        expect(process.env.ROX_WORKSPACE_TEST_CONFIG).toBe(${JSON.stringify(protectedConfiguration)});
+        expect(process.env.HOME).not.toBe(process.env.ROX_TEST_HOST_HOME);
+      });`)
+    const api = await runner()
+    const result = await api.captureTestCommand([process.execPath, runnerPath, '--root', root, '--no-baseline', '--concurrency', '1'], {
+      cwd: import.meta.dir,
+      environment: { ...process.env, HOME: callerHome, USERPROFILE: callerHome,
+        ROX_WORKSPACE_TEST_CONFIG: protectedConfiguration, ROX_TEST_ARTIFACT_DIR: join(root, 'evidence') },
+    })
+    expect(result.exitCode).toBe(0)
+    expect(JSON.parse(result.stdout.trim()).summary).toMatchObject({ passed: 1, failed: 0, blocked: 0 })
+  }, 30_000)
+
   test('--list reports the sharded file count without executing tests', async () => {
     const root = fixture()
     file(root, 'tests/a.test.ts', "import {test} from 'bun:test'; test('never invoked',()=>{throw Error('listing executed')});")
