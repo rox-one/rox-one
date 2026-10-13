@@ -596,7 +596,7 @@ function titleFromContent(noteId: string, content: string): string {
   let properties: Record<string, unknown> = {}
   let body = content
   try {
-    const parsed = matter(content)
+    const parsed = matter(content, {})
     properties = (parsed.data ?? {}) as Record<string, unknown>
     body = parsed.content ?? ''
   } catch {
