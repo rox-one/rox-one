@@ -2748,6 +2748,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
           id: `nav:state:${state.id}`,
           title: t(`status.${state.id}`, state.label),
           label: String(sessionStatusCounts[state.id] || 0),
+          count: sessionStatusCounts[state.id] || 0,
           icon: state.icon,
           iconColor: state.resolvedColor,
           iconColorable: state.iconColorable,
@@ -3193,6 +3194,8 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                         isCollapsed={isSidebarCollapsed}
                         onExpand={handleExpandNavigation}
                         onOpenBrowser={openBrowserTab}
+                        isExpanded={isExpanded}
+                        toggleExpanded={toggleExpanded}
                         applicationSectionsOpen={applicationSectionsOpen}
                         onApplicationSectionsOpenChange={handleApplicationSectionsOpenChange}
                       />

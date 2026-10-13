@@ -39,6 +39,9 @@ export interface ShellSidebarNavProps {
   onExpand: (link: LinkItem, inMore: boolean) => void
   /** Opens the browser surface (registry `action: 'open-browser'`). */
   onOpenBrowser: () => void
+  /** Persisted expanded-sections store (AppShell `collapsedItems`). */
+  isExpanded: (id: string) => boolean
+  toggleExpanded: (id: string) => void
   applicationSectionsOpen: boolean
   onApplicationSectionsOpenChange: (open: boolean) => void
 }
@@ -48,6 +51,8 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   isCollapsed,
   onExpand,
   onOpenBrowser,
+  isExpanded,
+  toggleExpanded,
   applicationSectionsOpen,
   onApplicationSectionsOpenChange,
 }: ShellSidebarNavProps) {
@@ -80,9 +85,13 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   // Session filters (statuses, favourites, archive, labels) are contextual:
   // they leave the global nav and show as their own section under Sessions.
   const inSessions = isSessionsNavigation(navState)
-  const [showEmpty, setShowEmpty] = React.useState(false)
-  const [filtersOpen, setFiltersOpen] = React.useState(true)
-  const toggleFilters = React.useCallback(() => setFiltersOpen(open => !open), [])
+  // Persisted through the expanded-sections store, like every other section.
+  // The store records collapsed ids, so «empty buckets hidden» is the
+  // default (expanded) state of SESSION_FILTERS_EMPTY_HIDDEN_ID.
+  const filtersOpen = isExpanded(SESSION_FILTERS_ID)
+  const showEmpty = !isExpanded(SESSION_FILTERS_EMPTY_HIDDEN_ID)
+  const toggleFilters = React.useCallback(() => toggleExpanded(SESSION_FILTERS_ID), [toggleExpanded])
+  const toggleShowEmpty = React.useCallback(() => toggleExpanded(SESSION_FILTERS_EMPTY_HIDDEN_ID), [toggleExpanded])
   const sessionFilters = React.useMemo(() => {
     const sessions = baseLinks.find(link => link.id === 'nav:allSessions')
     if (!inSessions || !sessions || isSeparatorItem(sessions) || !sessions.items?.length) return null
@@ -101,6 +110,10 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
     iconColor: EXPERIMENTAL_ICON_COLOR[screen.id] ?? 'var(--info)',
   })), [enabledExtraScreenIds, activeScreen, t])
 
+  // Mirrors ActivityRail: an active destination inside «Ещё» (deep link, ⌘K,
+  // route change) keeps the disclosure open so the selection is visible.
+  const moreOpen = applicationSectionsOpen || hasActiveLink(moreLinks) || hasActiveLink(experimentalLinks)
+
   return (
     <>
       {sessionFilters && !isCollapsed && (
@@ -111,7 +124,7 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
               type="button"
               className="ml-8 rounded-[var(--radius-control)] px-2 py-1 text-xs text-muted-foreground hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
               aria-pressed={showEmpty}
-              onClick={() => setShowEmpty(value => !value)}
+              onClick={toggleShowEmpty}
             >
               {showEmpty ? t('sidebar.hideEmpty') : t('sidebar.showEmpty', { count: sessionFilters.emptyCount })}
             </button>
@@ -128,7 +141,7 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
       <details
         className="group/application-sections mx-1 mt-2 rounded-[var(--radius-card)] bg-[var(--state-hover)]"
         data-application-sections
-        open={applicationSectionsOpen}
+        open={moreOpen}
         onToggle={event => onApplicationSectionsOpenChange(event.currentTarget.open)}
       >
         <summary
@@ -172,7 +185,8 @@ function stripSessionFilters(link: LinkItem): LinkItem {
   }
 }
 
-const EMPTY_LABEL = '0'
+export const SESSION_FILTERS_ID = 'nav:sessionFilters'
+export const SESSION_FILTERS_EMPTY_HIDDEN_ID = 'nav:sessionFilters:emptyHidden'
 
 /**
  * Contextual session filters: the status buckets (sortable when nothing is
@@ -188,12 +202,12 @@ export function buildSessionFilters(
   const split = items.findIndex(isSeparatorItem)
   const statuses = (split >= 0 ? items.slice(0, split) : items).filter((item): item is LinkItem => !isSeparatorItem(item))
   const trailing = split >= 0 ? items.slice(split + 1) : []
-  const isEmpty = (item: LinkItem) => item.label === EMPTY_LABEL && item.variant !== 'default'
+  const isEmpty = (item: LinkItem) => item.count === 0 && item.variant !== 'default'
   const emptyCount = statuses.filter(isEmpty).length
   const visibleStatuses = state.showEmpty ? statuses : statuses.filter(item => !isEmpty(item))
   const hidden = visibleStatuses.length !== statuses.length
   const group: LinkItem = {
-    id: 'nav:sessionFilters',
+    id: SESSION_FILTERS_ID,
     title: t('sidebar.sessionFilters'),
     icon: ListFilter,
     variant: 'ghost',
@@ -205,4 +219,9 @@ export function buildSessionFilters(
     items: [...visibleStatuses, ...(trailing.length > 0 ? [{ id: 'separator:session-filters', type: 'separator' as const }, ...trailing] : [])],
   }
   return { links: [group], emptyCount }
+}
+
+/** True when a row, or any of its nested rows, is the active destination. */
+export function hasActiveLink(items: readonly SidebarItem[]): boolean {
+  return items.some(item => !isSeparatorItem(item) && (item.variant === 'default' || (item.items ? hasActiveLink(item.items) : false)))
 }

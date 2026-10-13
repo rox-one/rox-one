@@ -7,7 +7,7 @@ import { buildSessionFilters } from '../ShellSidebarNav'
 
 const noop = () => {}
 const status = (id: string, count: number, active = false): LinkItem => ({
-  id: `nav:state:${id}`, title: id, label: String(count), icon: Home, variant: active ? 'default' : 'ghost', onClick: noop,
+  id: `nav:state:${id}`, title: id, label: String(count), count, icon: Home, variant: active ? 'default' : 'ghost', onClick: noop,
 })
 const sessions: LinkItem = {
   id: 'nav:allSessions', title: 'Sessions', icon: Home, variant: 'default', onClick: noop, expandable: true, expanded: true,

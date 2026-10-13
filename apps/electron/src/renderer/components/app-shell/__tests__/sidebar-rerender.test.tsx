@@ -56,6 +56,7 @@ afterEach(() => {
 })
 
 const noop = () => {}
+const alwaysExpanded = () => true
 
 function makeLinks(): SidebarItem[] {
   return [
@@ -73,7 +74,7 @@ function MemoShell() {
   const links = React.useMemo(makeLinks, [])
   const onExpand = React.useCallback(noop, [])
   return (
-    <ShellSidebarNav baseLinks={links} isCollapsed={false} onExpand={onExpand} onOpenBrowser={noop} applicationSectionsOpen={false} onApplicationSectionsOpenChange={noop} />
+    <ShellSidebarNav baseLinks={links} isCollapsed={false} onExpand={onExpand} onOpenBrowser={noop} isExpanded={alwaysExpanded} toggleExpanded={noop} applicationSectionsOpen={false} onApplicationSectionsOpenChange={noop} />
   )
 }
 
