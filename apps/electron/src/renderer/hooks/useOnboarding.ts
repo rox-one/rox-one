@@ -472,7 +472,6 @@ export function useOnboarding({
         break
 
       case 'welcome':
-case 'welcome':
         // First run: the welcome screen itself collects the public identity
         // (nickname, organization, coins); the two-column questionnaire follows.
         setState(s => ({ ...s, step: 'questionnaire' }))

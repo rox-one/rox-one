@@ -135,7 +135,7 @@ function UnifiedShellDemo({ enabled, inspectorVisible, inspectorSection, railCol
                     isSessionsReady
                   >
                     <div
-                      className="flex h-[560px] w-full overflow-hidden rounded-[10px] border border-border bg-background"
+                      className="flex h-[560px] w-full overflow-hidden rounded-md border border-border bg-background"
                       data-demo="unified-shell"
                     >
                       <UnifiedShellLayout>

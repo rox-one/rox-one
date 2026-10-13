@@ -141,7 +141,6 @@ describe('UI-001 actual meeting source effect completion and ownership', () => {
       window: { setInterval: () => 2, clearInterval: () => { cleared++ } },
     })!
     expect(oldOwner()).toBe(true)
-    oldContext.current = { workspaceId: 'b', generation: 1 }
     oldContext.current = { workspaceId: 'a', generation: 2 }
     expect(oldOwner()).toBe(false)
     oldCleanup(); oldRead.resolve('done'); await settle()
