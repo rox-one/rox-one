@@ -16,8 +16,9 @@ push в main (или workflow_dispatch)
 ```
 
 - Образ: `linux/amd64`; теги `:main` (rolling) и `:sha-<7>` (иммутабельный — для откатов).
-- Реестр: GHCR, доступ по `GITHUB_TOKEN`; образ линкуется к репозиторию через
-  `org.opencontainers.image.source` в `Dockerfile.server`.
+- Реестр: GHCR; пакет `ghcr.io/rox-one/rox-server` — **private** → Coolify нужен registry credential
+  (GitHub PAT, scope `read:packages`), либо пакет переводится в public. Образ линкуется к репозиторию
+  через `org.opencontainers.image.source` в `Dockerfile.server`.
 - Деплой-канал считается «есть», когда настроены секреты ниже. Пока их нет — job
   `deploy` пропускается, и это `G7 = BLOCKED` по
   [`docs/agents/03-dod-gates.md`](../../docs/agents/03-dod-gates.md) (имена секретов — точные).
@@ -42,7 +43,7 @@ Control plane — `ops/fleet-infra` (панель Coolify + tailnet-only дос�
    роль `coolify-target` — для хостов-целей; регистрация целей —
    `ops/fleet-infra/scripts/register-coolify-targets.sh`, запускается НА control-плейне).
 2. **Приложение.** В Coolify создать Application:
-   - Source: **Docker image** → `ghcr.io/rox-one/rox-server:main`
+   - Source: **Docker image** → `ghcr.io/rox-one/rox-server:main` + registry credential (пакет private; PAT `read:packages`)
    - Port: `9100`; Healthcheck path: `/health`
    - Env: `ROX_SERVER_TOKEN` (**≥16 символов**, иначе сервер фатально не стартует),
      `CRAFT_ALLOWED_ORIGINS` (домен приложения); остальной контракт — `packages/server/src/index.ts`.
