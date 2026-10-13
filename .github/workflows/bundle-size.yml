@@ -48,7 +48,7 @@ concurrency:
 jobs:
   bundle-size:
     name: Renderer bundle-size budget
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
