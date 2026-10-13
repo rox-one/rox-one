@@ -248,11 +248,12 @@ part of the first iteration (PRD §6).
 
 The `learning:*` namespace is declared in
 `packages/shared/src/protocol/channels.ts` (`RPC_CHANNELS.learning`) and served
-by `packages/server-core/src/handlers/rpc/learning.ts` — **20 channels** in
+by `packages/server-core/src/handlers/rpc/learning.ts` — **22 channels** in
 three groups:
 
-*Read (9):*
+*Read (11):*
 `learning:listCandidates`, `learning:getCandidate`, `learning:listEvidence`,
+`learning:listCorrections`, `learning:listMutations`,
 `learning:getOutcome`, `learning:getExperiment`, `learning:getStats`,
 `learning:getSkillEffectiveness`, `learning:getPolicy`, `learning:getTimeline`.
 

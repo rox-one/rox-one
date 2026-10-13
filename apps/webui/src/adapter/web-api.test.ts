@@ -94,6 +94,14 @@ describe('web adapter notification stubs', () => {
 
     expect(client.getConnectionState().status).toBe('idle')
   })
+
+  it('resolves getRoxBalance to the honest disconnected state without an RPC connection', async () => {
+    const { api, client } = createWebApi({ serverUrl: 'ws://127.0.0.1:1' })
+    CLIENTS.push(client)
+
+    expect(await api.getRoxBalance()).toEqual({ status: 'disconnected' })
+    expect(client.getConnectionState().status).toBe('idle')
+  })
 })
 
 function wireErrorShape(error: unknown): { code?: string; message?: string } {

@@ -119,9 +119,12 @@ function OrganizationsPlayground() {
 }
 
 function MessagingPlayground() {
-  const onCreateSession = React.useCallback(async () => {
-    throw new Error('[Playground] onCreateSession is not available')
-  }, [])
+  const onCreateSession = React.useCallback(async () => ({
+    id: 'playground-session',
+    workspaceId: 'playground-workspace',
+    createdAt: Date.now(),
+    lastUsedAt: Date.now(),
+  }), [])
   return (
     <SettingsScreen>
       <NavigationProvider
