@@ -22,7 +22,13 @@ import { useShellModes } from './useModes'
 import { PRIMARY_NAV } from '../components/app-shell/primary-nav'
 
 /** WP5: modes the primary-nav registry already renders (Messenger, Calendar, Goals). Entries without a root screen (Base, Wiki) do not shadow a registered mode. */
-const REGISTRY_IDS: ReadonlySet<string> = new Set(PRIMARY_NAV.filter((entry) => entry.route !== null).map((entry) => entry.id))
+const REGISTRY_ROUTES: ReadonlySet<string> = new Set(
+  PRIMARY_NAV.flatMap((entry) => (entry.route ? [String(entry.route())] : [])),
+)
+/** Matches on the mode's root route (e.g. chat → allSessions, notes → notes), not on registry ids. */
+export function isRegistryMode(mode: { rootRoute: unknown }): boolean {
+  return mode.rootRoute != null && REGISTRY_ROUTES.has(String(mode.rootRoute))
+}
 
 /**
  * PERF-10 (#1577) — hover/focus prefetch table: every row here navigates to
@@ -41,7 +47,7 @@ export function ModesRailGroup({ collapsed = false }: { collapsed?: boolean }) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const navState = useNavigationState()
-  const entries = railModeEntries(useShellModes().modes).filter((mode) => !REGISTRY_IDS.has(mode.id))
+  const entries = railModeEntries(useShellModes().modes).filter((mode) => !isRegistryMode(mode))
   if (entries.length === 0) return null
   return (
     <div

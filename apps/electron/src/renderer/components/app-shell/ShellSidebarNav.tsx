@@ -112,7 +112,29 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
 
   // Mirrors ActivityRail: an active destination inside «Ещё» (deep link, ⌘K,
   // route change) keeps the disclosure open so the selection is visible.
-  const moreOpen = applicationSectionsOpen || hasActiveLink(moreLinks) || hasActiveLink(experimentalLinks)
+  const moreForced = hasActiveLink(moreLinks) || hasActiveLink(experimentalLinks)
+  const moreOpen = applicationSectionsOpen || moreForced
+  // Only a user click on the summary may persist the open state; the toggle
+  // event a programmatic open/close fires must not (review2 I1).
+  const userToggle = React.useRef(false)
+  const onMoreSummaryClick = React.useCallback((event: React.MouseEvent) => {
+    // While forced open the native disclosure must not close (review2 W).
+    if (moreForced) {
+      event.preventDefault()
+      return
+    }
+    userToggle.current = true
+  }, [moreForced])
+  const onMoreToggle = React.useCallback((event: React.SyntheticEvent<HTMLDetailsElement>) => {
+    const element = event.currentTarget
+    if (moreForced && !element.open) {
+      element.open = true
+      return
+    }
+    if (!userToggle.current) return
+    userToggle.current = false
+    onApplicationSectionsOpenChange(element.open)
+  }, [moreForced, onApplicationSectionsOpenChange])
 
   return (
     <>
@@ -142,9 +164,11 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
         className="group/application-sections mx-1 mt-2 rounded-[var(--radius-card)] bg-[var(--state-hover)]"
         data-application-sections
         open={moreOpen}
-        onToggle={event => onApplicationSectionsOpenChange(event.currentTarget.open)}
+        onToggle={onMoreToggle}
       >
         <summary
+          onClick={onMoreSummaryClick}
+          aria-disabled={moreForced || undefined}
           aria-label={isCollapsed ? t('workbench.mode.more') : undefined}
           title={isCollapsed ? t('workbench.mode.more') : undefined}
           className={cn(

@@ -34,7 +34,10 @@ export function useScrollEdgeAttribute(): React.RefCallback<HTMLElement> {
     // Direct children only: a section mounting/unmounting changes the height
     // the ResizeObserver above may not be watching yet.
     const mutations = typeof MutationObserver === 'undefined' ? null : new MutationObserver((records) => {
-      for (const record of records) record.addedNodes.forEach(node => { if (node instanceof Element) observer?.observe(node) })
+      for (const record of records) {
+        record.addedNodes.forEach(node => { if (node instanceof Element) observer?.observe(node) })
+        record.removedNodes.forEach(node => { if (node instanceof Element) observer?.unobserve(node) })
+      }
       schedule()
     })
     mutations?.observe(element, { childList: true })

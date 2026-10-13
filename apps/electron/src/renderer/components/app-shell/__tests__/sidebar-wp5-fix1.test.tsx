@@ -58,7 +58,7 @@ function makeStore() {
   }
 }
 
-function Harness({ store, navigator, memoryActive }: { store: ReturnType<typeof makeStore>; navigator: string; memoryActive: boolean }) {
+function Harness({ store, navigator, memoryActive, onOpenChange = noop }: { store: ReturnType<typeof makeStore>; navigator: string; memoryActive: boolean; onOpenChange?: (open: boolean) => void }) {
   // A new isExpanded identity per store change, as AppShell's collapsedItems-based callback.
   const [version, bump] = React.useReducer((n: number) => n + 1, 0)
   const baseLinks = React.useMemo(() => links(memoryActive), [memoryActive])
@@ -69,7 +69,7 @@ function Harness({ store, navigator, memoryActive }: { store: ReturnType<typeof 
   return (
     <NavigationStatusContext.Provider value={status}>
       <ShellSidebarNav baseLinks={baseLinks} isCollapsed={false} onExpand={noop} onOpenBrowser={noop}
-        isExpanded={isExpanded} toggleExpanded={toggleExpanded} applicationSectionsOpen={false} onApplicationSectionsOpenChange={noop} />
+        isExpanded={isExpanded} toggleExpanded={toggleExpanded} applicationSectionsOpen={false} onApplicationSectionsOpenChange={onOpenChange} />
     </NavigationStatusContext.Provider>
   )
 }
@@ -124,5 +124,46 @@ describe('WP5 fix1 (2): session filters persist through the expanded-sections st
     await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
     expect(host!.querySelector(`[data-sidebar-link-id="${SESSION_FILTERS_ID}"]`)?.getAttribute('aria-expanded')).toBe('false')
     expect(rowIds()).not.toContain('nav:state:todo')
+  })
+})
+
+const summary = () => details().querySelector('summary') as HTMLElement
+const fireToggle = async () => act(async () => { details().dispatchEvent(new Event('toggle')) })
+
+describe('WP5 fix2 (W): a forced-open «Ещё» cannot desync closed', () => {
+  it('prevents the summary click and re-opens the DOM details if it closes', async () => {
+    const calls: boolean[] = []
+    await mount(<Harness store={makeStore()} navigator="memory" memoryActive onOpenChange={open => calls.push(open)} />)
+    expect(details().open).toBe(true)
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true })
+    await act(async () => { summary().dispatchEvent(click) })
+    expect(click.defaultPrevented).toBe(true)
+    // Native close anyway (e.g. platform quirk): the toggle handler restores it.
+    details().open = false
+    await fireToggle()
+    expect(details().open).toBe(true)
+    expect(calls).toEqual([])
+  })
+})
+
+describe('WP5 fix2 (I1): only user toggles persist', () => {
+  it('a programmatic open (forced) does not report applicationSectionsOpen=true', async () => {
+    const calls: boolean[] = []
+    await mount(<Harness store={makeStore()} navigator="memory" memoryActive onOpenChange={open => calls.push(open)} />)
+    await fireToggle()
+    expect(calls).toEqual([])
+  })
+
+  it('a user summary click while not forced is reported', async () => {
+    const calls: boolean[] = []
+    await mount(<Harness store={makeStore()} navigator="sessions" memoryActive={false} onOpenChange={open => calls.push(open)} />)
+    await fireToggle() // programmatic: ignored
+    expect(calls).toEqual([])
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true })
+    await act(async () => { summary().dispatchEvent(click) })
+    expect(click.defaultPrevented).toBe(false)
+    details().open = true
+    await fireToggle()
+    expect(calls).toEqual([true])
   })
 })
