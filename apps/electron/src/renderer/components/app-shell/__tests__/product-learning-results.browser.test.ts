@@ -102,6 +102,11 @@ describe.skipIf(!existsSync(executablePath))('production Skills and completed ch
     await page.evaluate(() => { const cover = document.createElement('div'); cover.id = 'native-cover'; cover.style.cssText = 'position:fixed;inset:0;z-index:9999;background:black'; document.body.append(cover) })
     for (const id of ['session.final-result', 'session.tool-result']) expect((await resolveTarget(page, id)).reason).toBe('target-occluded')
     await action(page, "document.getElementById('native-cover').remove();document.getElementById('panel').style.transform='translateY(1000px)'")
+    // The reduced-motion shell style puts `transition-duration: 0.01ms` on `*` (packages/ui/src/styles/index.css),
+    // so this inline transform only reaches layout on the next frame: occlusion is decided by observed geometry,
+    // not by the style write. Await the panel's own offscreen rect before resolving its targets; if the transform
+    // never takes effect this poll times out and the test fails rather than silently reading a stale rect.
+    await check.poll(() => page.evaluate(() => Math.round(document.getElementById('panel')!.getBoundingClientRect().top - window.innerHeight))).toBeGreaterThanOrEqual(0)
     for (const id of ['session.final-result', 'session.tool-result']) expect((await resolveTarget(page, id)).reason).toBe('target-occluded')
     await action(page, "document.getElementById('panel').style.transform='';window.__learningResults.controls.unmount()")
     for (const id of ['session.final-result', 'session.tool-result']) expect(await resolveTarget(page, id)).toMatchObject({ count: 0, reason: 'target-missing' })

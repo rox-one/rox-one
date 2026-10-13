@@ -182,14 +182,68 @@ chromium, и `tests/visual/playground.spec.ts` — 15-минутный whole-sui
 зелёными: `openui-block` 11/11, `kernel-availability` 5/5, `panel-workspace` 9/9 (в тишине;
 в полной нагрузке возможен флейк хука), `connections-lifecycle` 7/7, `radar-lifecycle` 1/1,
 `boot-manifest` 7/7 (регенерация после G7/G4: 48 boot-chunk, 15 маршрутов), `switch-contrast`,
-`glyphs`/`menu-icons`/`design-token-classes`. Остаточный дрейф (appearance 4–5
-материал/клавиатура-ассертов, chat-scroll 2 скролл-тайминга под полной нагрузкой,
-product-learning 1 IO-ассерт) — наблюдаемый после починки сборки, не связан с содержимым
-волны-3. Main-класс (server/agent/e2e/lark + `configuration-guide` без `craft-cli.md` на main,
+`glyphs`/`menu-icons`/`design-token-classes`.
+
+### Ремонт остаточного дрейфа браузерного семейства (13.10.2026)
+
+После починки сборки был вскрыт остаточный дрейф — он оказался НЕ флейком, а дефектами
+харнесса, и закрыт четырьмя параллельными срезами + двумя адверсариальными ревью:
+
+- `product-learning-results`: не IO-гонка, а reduced-motion-правило `packages/ui/src/styles/index.css`
+  (`* { transition-duration: 0.01ms !important }` при `transition-property: all`) — после записи
+  стиля первый замер геометрии читает СТАРЫЙ кадр. Детерминировано 10/10. Фикс: полл наблюдаемой
+  геометрии панели перед резолвом цели; ассерты не тронуты. **6/6 ×3.**
+- `chat-scroll`: продакшен-клип тела ответа 540px (`TurnCard.tsx:1637`) насыщается за один
+  simulated grow и замораживает транскрипт → follow-фазы тестов 2/3/5 недостижимы. Фикс —
+  фикстура рендерит тело без клипа (комментарий + один `addStyleTag`); ревью подтвердило
+  измерениями, что ни один ассерт/таймаут не изменён. **9/9.**
+- `panel-workspace`: явный readiness-полл `[data-panel-grid]` + best-effort прогревочный маунт в
+  хуке (замеры под загрузкой: холодный первый маунт ~170 s, тёплый 22–29 s, старт vite ~9 s).
+  **9/9 ×2.**
+- `connections-lifecycle`: явный readiness-полл строк соединений + навигационный таймаут. **7/7.**
+- `appearance`: settle-поллер кросс-фейда `--chrome-plate-*` (значение выводится из самого токена,
+  `--chrome-plate-tint` = 82 % → 209), клавиатурная цель — `[role="separator"]`-хэндл
+  (`ResizeHandle.tsx:135,145,171`), а не обёртка `data-sash-pair`. **36/0.**
+
+Адверсариальные ревью (две линзы: фиделити фикстуры / ослабление контрактов) дали два вывода,
+внесённых в код: (1) в фикстуре appearance topbar не несёт `data-shell-role="chrome"`, поэтому его
+красит G8-лестница, а продовый TopBar по-прежнему резолвится через legacy-биндинг
+`--shell-glass-surface` (`apps/electron/src/renderer/index.css:997`) — паритет-гэп зафиксирован
+комментарием в тесте и передан владельцу; (2) бюджеты харнесса подняты решением, а не «по
+инерции»: CI-дефолт 90 s (было 30 s) с сохранённым env-оверрайдом, хук panel 300 s с прогревом
+200 s, хук connections 90 s — комментарии приведены в соответствие с цифрами.
+
+Окруженческая находка: порты фикстур захардкожены (5238–5247), поэтому параллельные worktree
+(напр. локальный CI-раннер или соседняя сессия) роняют прогон чужой ошибкой «Foreign owner
+occupies fixture port»; осиротевший vite от прерванной партии даёт `0 pass / 1 fail` (падение
+хука) — перед прогоном проверять `lsof -iTCP:5238-5247`.
+
+Main-класс (server/agent/e2e/lark + `configuration-guide` без `craft-cli.md` на main,
 `check-config-paths` — унаследован по plan.md:161) оставлен как есть и передан владельцу;
 checked-in `test-baseline.json` (130 записей) не трогали — по прецеденту репо наследованное
 документируется, а не абсорбируется. Единственный реальный gap волны, закрытый приёмкой:
 boot-manifest не был перегенерирован в коммите волны (`bun run scripts/boot-manifest.ts`).
+
+### CI-классификация (13.10.2026, голова `f87f03f02`)
+
+Сравнение «воркфлоу — последний завершённый прогон main vs наш прогон» (GitHub API):
+
+| Воркфлоу | main | у нас | вывод |
+|---|---|---|---|
+| UI Lint Ratchet | failure | был failure (+1 литерал) | наш +1 исправлен в `15cc66b78`; сам гейт красный и на main (`a8d4dd3d2`) |
+| ESLint Workspace Ratchet | failure | **success** | у нас зелёный |
+| Bundle Size | success | был failure | перезапись бюджетов в `15cc66b78` → ожидаем зелёный |
+| UI Route Recovery Fixtures | failure | failure | main-класс (`9dc923119`) |
+| product-tour-native | failure | failure | main-класс (`69500f138`) |
+| SQLite Runtime Recovery | failure | failure | main-класс (`829e2cbd8`) |
+| UI-001 Recovery | failure | failure | main-класс (`9dc923119`) |
+| CI Validate Alias | failure | failure | main-класс (`4314af83c`) |
+| Perf Budgets | cancelled | cancelled | очередь раннера, не вердикт |
+| Vercel | — | failure | «Account is blocked» — аккаунт Vercel, не код |
+| Validate Server (Integration) → lifecycle | failure | failure | main-класс: `ReferenceError: exports_tmp is not defined` в `dist-server/index.js` на одном шаге (`Start server and run lifecycle smoke`), воспроизведён на main тем же текстом |
+
+Отдельно: `typecheck:all` на CI-раннере падает `SIGABRT (core dumped)` (exit 134) при локально
+нулевом тайпчеке — memory-класс инфраструктуры раннера, не контент дерева.
 
 Живая проверка G4 ON-пути (флаг через `localStorage craft-feature-layout-engine=true` в
 zed-фикстуре): реальный драг шва → `data-snap="true"`, гайд, бейдж «530 px·snap 50 %», коммит в
