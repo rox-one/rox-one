@@ -17,6 +17,13 @@ bun test packages/server/src/__tests__/smoke.test.ts packages/server-core/src/we
 bun run validate:ci
 ```
 
+> **Superseded bundle command (2026-10-13).** The `bun build` line above is kept as the receipt of that run. Under
+> bun 1.4.2, `tmp` (reached through `markitdown-js`) must also stay external: the bundler flattens its CJS body and
+> emits `Object.defineProperty(exports_tmp, …)` without declaring the identifier, so the bundle dies at startup with
+> `ReferenceError: exports_tmp is not defined`. Current line —
+> `bun build packages/server/src/index.ts --target bun --outdir dist-server --external xlsx --external tmp`
+> (fix: PR #1847; verification there: `grep -c exports_tmp` on the bundle = 0, lifecycle smoke 4 pass / 0 fail).
+
 For a separately built integration checkout, set `ROX_SERVER_SMOKE_REPO_ROOT` to its absolute root along with absolute `ROX_SERVER_SMOKE_ENTRY` and `ROX_SERVER_SMOKE_WEBUI_DIR`. The helper then uses that checkout's config-defaults, bundled resources and working directory. The default remains the test's own checkout. This test-only option keeps runtime proof bound to the source revision that supplied all artifacts.
 
 ## Results
