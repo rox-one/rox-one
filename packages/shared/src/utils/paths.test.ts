@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { spawnSync } from 'node:child_process';
-import { homedir } from 'node:os';
+import { mkdirSync } from 'node:fs';
+import { homedir, tmpdir } from 'node:os';
 import { join, normalize, parse } from 'node:path';
 import {
   expandPath, expandVars, hasPathVariables, normalizePath,
@@ -87,9 +88,15 @@ describe('isolated cross-platform path dialects', () => {
         assert.equal(p.pathStartsWith(file, dialect.join(home.toLowerCase(), 'project')), platform === 'win32');
         console.log(platform + ': path dialect assertions passed');
       `;
+      // Bun's runtime transpiler cache keys off HOME; the win32 HOME below is not
+      // absolute on POSIX, so the default cache path would materialize a bogus
+      // C:/Users/Alice/... tree inside this directory. Point it at an absolute
+      // cache outside the repo instead.
+      const bunCache = join(tmpdir(), 'rox-paths-test-bun-cache');
+      mkdirSync(bunCache, { recursive: true });
       const result = spawnSync(process.execPath, ['--eval', script], {
         cwd: import.meta.dir,
-        env: { ...process.env, HOME: home, USERPROFILE: home },
+        env: { ...process.env, HOME: home, USERPROFILE: home, BUN_RUNTIME_TRANSPILER_CACHE_PATH: bunCache },
         encoding: 'utf8', timeout: 30_000,
       });
       expect({ status: result.status, error: result.error?.message, stderr: result.stderr }).toEqual({
