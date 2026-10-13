@@ -92,6 +92,23 @@ describe('omnibox providers', () => {
     ])
   })
 
+  it('skills: searchSkills pages the catalog instead of walking a 10k seed', async () => {
+    let seen = 0
+    const provider = createSkillsProvider(
+      () => { throw new Error('must not walk the in-memory catalog') },
+      (slug) => `skills/skill/${slug}`,
+      () => false,
+      async (query, limit) => {
+        seen = limit
+        expect(query).toBe('mem')
+        return [{ slug: 'memory-search', metadata: { name: 'Memory Search' } }]
+      },
+    )
+    const hits = await provider.search(ctx({ query: 'mem', prefix: '/', limit: 8 }))
+    expect(seen).toBe(8)
+    expect(hits.map((item) => item.data?.slug)).toEqual(['memory-search'])
+  })
+
   it('sources: skips builtins', async () => {
     const provider = createSourcesProvider(
       () => [

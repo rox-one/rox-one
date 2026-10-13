@@ -151,7 +151,7 @@ function useSelectedResourceAvailability(
     let active = true
     let revision = 0
     const api = typeof window !== 'undefined' ? window.electronAPI : undefined
-    if (!workspaceId || !api || (kind === 'source' ? !api.getSources : !api.getSkills)) {
+    if (!workspaceId || !api || (kind === 'source' ? !api.getSources : !(api.getSkillDetails || api.getSkills))) {
       setState({ identity, status: 'unavailable' })
       return
     }
@@ -161,16 +161,17 @@ function useSelectedResourceAvailability(
       // invalidation alone does not prove that its entity was deleted.
       if (!background) setState({ identity, status: 'loading' })
       try {
-        const rows = kind === 'source'
-          ? await api.getSources(workspaceId)
-          : await api.getSkills(workspaceId, workingDirectory)
-        if (!Array.isArray(rows)) throw new Error('Invalid resource snapshot')
-        if (!active || request !== revision) return
         if (kind === 'source') {
+          const rows = await api.getSources(workspaceId)
+          if (!Array.isArray(rows)) throw new Error('Invalid resource snapshot')
+          if (!active || request !== revision) return
           const exists = (rows as LoadedSource[]).some((source) => source.config.slug === slug)
           setState({ identity, status: exists ? 'ready' : 'missing' })
         } else {
-          const skill = (rows as LoadedSkill[]).find((skill) => skill.slug === slug)
+          const skill = api.getSkillDetails
+            ? await api.getSkillDetails(workspaceId, slug, workingDirectory)
+            : (await api.getSkills(workspaceId, workingDirectory)).find((row) => row.slug === slug) ?? null
+          if (!active || request !== revision) return
           setState({
             identity, status: skill ? 'ready' : 'missing',
             editableSkill: skill?.source === 'workspace',

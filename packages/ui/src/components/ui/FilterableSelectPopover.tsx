@@ -24,6 +24,9 @@ export interface FilterableSelectPopoverProps<T> {
   closeOnSelect?: boolean
   minWidth?: number
   maxWidth?: number
+  /** Server-driven lists: the filter string is forwarded, items are already matched. */
+  onFilterChange?: (query: string) => void
+  disableClientFilter?: boolean
 }
 
 /**
@@ -49,6 +52,8 @@ export function FilterableSelectPopover<T>({
   closeOnSelect = false,
   minWidth = 200,
   maxWidth = 320,
+  onFilterChange,
+  disableClientFilter = false,
 }: FilterableSelectPopoverProps<T>) {
   const { t } = useTranslation()
   const resolvedPlaceholder = filterPlaceholder ?? t('common.search')
@@ -59,10 +64,15 @@ export function FilterableSelectPopover<T>({
   const listRef = React.useRef<HTMLDivElement>(null)
 
   const filteredItems = React.useMemo(() => {
+    if (disableClientFilter) return items
     const query = filter.trim().toLowerCase()
     if (!query) return items
     return items.filter(item => getLabel(item).toLowerCase().includes(query))
-  }, [items, filter, getLabel])
+  }, [items, filter, getLabel, disableClientFilter])
+
+  React.useEffect(() => {
+    onFilterChange?.(filter)
+  }, [filter, onFilterChange])
 
   const updatePosition = React.useCallback(() => {
     const anchor = anchorRef.current
@@ -150,6 +160,7 @@ export function FilterableSelectPopover<T>({
 
   const hasItems = items.length > 0
   const hasResults = filteredItems.length > 0
+  const showFilter = hasItems || !!onFilterChange
 
   return ReactDOM.createPortal(
     <>
@@ -168,7 +179,7 @@ export function FilterableSelectPopover<T>({
           transform: 'translateY(-100%)',
         }}
       >
-        {!hasItems ? (
+        {!showFilter ? (
           <div className="p-3 text-xs text-muted-foreground select-none">
             {emptyState ?? 'No items configured.'}
           </div>
