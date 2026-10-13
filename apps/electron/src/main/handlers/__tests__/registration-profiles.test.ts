@@ -233,11 +233,13 @@ import('@rox/server-core/playbooks/jobs'),
     import('@rox/server-core/handlers/rpc/board'),
   ])
 
-  const [meetings, personalTasks, feed, runtimeTrace] = await Promise.all([
+  const [meetings, personalTasks, feed, runtimeTrace, rovers, googleMeet] = await Promise.all([
     import('@rox/server-core/handlers/rpc/meetings'),
     import('@rox/server-core/handlers/rpc/personal-tasks'),
     import('@rox/server-core/handlers/rpc/feed'),
     import('@rox/server-core/handlers/rpc/runtime-trace'),
+    import('@rox/server-core/handlers/rpc/rovers'),
+    import('@rox/server-core/handlers/rpc/google-meet'),
   ])
 
   return new Set([
@@ -318,6 +320,8 @@ import('@rox/server-core/playbooks/jobs'),
     ...codebook.HANDLED_CHANNELS,
     ...workboard.WORKBOARD_HANDLED_CHANNELS,
     ...board.BOARD_HANDLED_CHANNELS,
+    ...rovers.ROVERS_HANDLED_CHANNELS,
+    ...googleMeet.HANDLED_CHANNELS,
   ])
 }
 
