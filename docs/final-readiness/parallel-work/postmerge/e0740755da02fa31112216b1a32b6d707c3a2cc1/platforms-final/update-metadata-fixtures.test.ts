@@ -3,7 +3,7 @@ import {mkdtempSync,rmSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
-import {verifyUpdateMetadata} from '/Users/t/Projects/rox-one-recheck-candidate-20261003/scripts/verify-update-metadata.ts';
+import {verifyUpdateMetadata} from '../../../../../../scripts/verify-update-metadata.ts';
 const dirs:string[]=[];afterEach(()=>{for(const d of dirs.splice(0))rmSync(d,{recursive:true,force:true})});
 function fixture(platform:string,arch='arm64'){
  const dir=mkdtempSync(join(tmpdir(),'rox-update-metadata-fixture-'));dirs.push(dir);
