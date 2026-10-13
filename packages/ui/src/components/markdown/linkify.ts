@@ -52,12 +52,30 @@ function findCodeRanges(text: string): CodeRange[] {
   const ranges: CodeRange[] = []
 
   // Find fenced code blocks (```...```).
-  // The closing fence is optional: an unterminated opener (a fence still being
-  // streamed) extends to EOF so its body is never linkified.
-  const fencedRegex = /```[\s\S]*?(?:```|$)/g
+  // The opening fence must start its own line (CommonMark: up to 3 leading
+  // spaces), so a stray mid-line ``` in prose cannot swallow the real fence
+  // that follows — that used to merge the stray marker with the opening of the
+  // next real fence, leaving the fence body (and the JSON payload of a
+  // ```rovers-card block) outside every code range, so preprocessLinks
+  // rewrote its homepage URL. The closing fence is optional: an unterminated
+  // opener (a fence still being streamed) extends to EOF so its body is never
+  // linkified.
+  const fencedRegex = /^ {0,3}```[^\n]*\n(?:[\s\S]*?)(?:^ {0,3}```[ \t]*$|(?![\s\S]))/gm
   let match
   while ((match = fencedRegex.exec(text)) !== null) {
     ranges.push({ start: match.index, end: match.index + match[0].length })
+  }
+
+  // Same-line triple-backtick spans (inline code written with three backticks,
+  // e.g. ```code``` mid-sentence) are code spans as well; keep their bodies
+  // excluded too (the old greedy fence scan covered these by accident).
+  const inlineTripleRegex = /```[^\n]*?```/g
+  while ((match = inlineTripleRegex.exec(text)) !== null) {
+    const pos = match.index
+    const insideFenced = ranges.some(r => pos >= r.start && pos < r.end)
+    if (!insideFenced) {
+      ranges.push({ start: pos, end: pos + match[0].length })
+    }
   }
 
   // Find inline code (`...`)
