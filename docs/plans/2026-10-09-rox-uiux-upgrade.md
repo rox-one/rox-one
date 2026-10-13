@@ -245,6 +245,26 @@ boot-manifest не был перегенерирован в коммите во�
 Отдельно: `typecheck:all` на CI-раннере падает `SIGABRT (core dumped)` (exit 134) при локально
 нулевом тайпчеке — memory-класс инфраструктуры раннера, не контент дерева.
 
+### Слияние main №3 (13.10.2026, 81 коммит)
+
+- Конфликты: `panel-workspace.browser.test.ts` — объединены наш readiness/warmup-слой и
+  апстримный `stop()` (main независимо измерил, что `await browser.close()` под нагрузкой
+  съедает весь бюджет хука; их вариант закрытия без ожидания принят как база);
+  `MeetingsPage.tsx` — оставлен наш `numeric` (токен-слой волны), main писал `tabular-nums`;
+  `boot-manifest.json` и `perf-baselines/bundle-size.json` — перегенерированы из сборки
+  слитого дерева.
+- Артефакт слияния, ломавший renderer-билд: `app-menu/menu-icons.ts` — main добавил
+  `FolderGit2/NotebookPen` второй группой импорта, а волна уже держала их в первой → дубль
+  идентификатора; убран.
+- Унаследованные от main поломки, вскрытые прогоном `typecheck:all` на слитом дереве:
+  `playground/registry/settings.tsx` и `unified-shell.tsx` возвращали неполный `Session`
+  (без `workspaceName/lastMessageAt/messages/isProcessing`) — литералы дополнены.
+- Унаследованный warning (есть на обеих сторонах): дубль `case 'welcome'` в
+  `useOnboarding.ts` — esbuild-warning, в объём не входит.
+- Локальные гейты на слитом дереве: renderer-билд ✓ (2 m 5 s), boot-manifest ✓ (48 чанков,
+  15 маршрутов), бюджеты перезаписаны из сборки, `typecheck:all` — 0 ошибок (после фиксов),
+  ESLint по пяти тест-файлам — 0 ошибок.
+
 Живая проверка G4 ON-пути (флаг через `localStorage craft-feature-layout-engine=true` в
 zed-фикстуре): реальный драг шва → `data-snap="true"`, гайд, бейдж «530 px·snap 50 %», коммит в
 снап-цель, 0 ошибок страницы; скриншот `~/Pictures/Shots/Agents/rox-g4-snap/on-path-*.png`.

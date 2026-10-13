@@ -84,8 +84,17 @@ async function check(name: string, fn: () => Promise<void>) {
   try { await fn(); results.push({ name, pass: true }) }
   catch (error) { results.push({ name, pass: false, error: String(error) }) }
 }
+// PERF-10 keep-alive (shipped): a route switch retains the outgoing surface in
+// a hidden, inert pane next to the active one, so more than one
+// `[data-entity-page]` can be mounted at a time. Every check here is about what
+// the user currently sees, so entity-page reads are scoped to the active pane
+// (`data-surface-active="true"`, surface-keepalive.tsx) — the hidden pane is
+// retained state, not a second visible route.
+const ACTIVE_SURFACE = '[data-surface-active="true"]'
 async function waitText(text: string) {
-  await page.waitForFunction(expected => document.querySelector('[data-entity-page]')?.textContent?.includes(expected), text, { timeout: 1800 })
+  await page.waitForFunction(({ selector, expected }) =>
+    document.querySelector(`${selector} [data-entity-page]`)?.textContent?.includes(expected),
+  { selector: ACTIVE_SURFACE, expected: text }, { timeout: 1800 })
 }
 async function waitLayout(inspector: number) {
   await page.waitForFunction(expected => (window as any).ui001.layout.read() === expected, inspector, { timeout: 1800 })
@@ -157,7 +166,17 @@ try {
     await page.evaluate(() => (window as any).ui001.release())
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
     await waitText('Source current workspace')
-    assert.ok(!(await page.locator('[data-entity-page]').textContent())?.includes('Source old workspace'))
+    // The stale read resolves inside the retained previous-workspace pane (or
+    // after its unmount). Either way the user-visible route must stay the
+    // current workspace's source: exactly one entity page may be visible, and
+    // it must never show the previous workspace's snapshot.
+    const mounts = await page.evaluate(() => [...document.querySelectorAll('[data-entity-page]')]
+      .map(element => ({ text: element.textContent ?? '', visible: element.getClientRects().length > 0 })))
+    const visible = mounts.filter(mount => mount.visible)
+    assert.equal(visible.length, 1)
+    const [onlyVisible] = visible
+    assert.ok(onlyVisible && onlyVisible.text.includes('Source current workspace'))
+    assert.ok(!onlyVisible?.text.includes('Source old workspace'))
   })
   await check('A live source deletion wins over a pending initial existing-source snapshot', async () => {
     await page.evaluate(() => (window as any).ui001.configure({ route: 'sources/source/one', delayed: true }))
@@ -189,7 +208,7 @@ try {
   await check('Ordinary selected-source updates keep the mounted editor and focused input', async () => {
     await page.evaluate(() => (window as any).ui001.configure({ route: 'sources/source/one' }))
     await waitText('Source one')
-    const field = page.locator('[data-entity-page] input:not(:disabled)').first()
+    const field = page.locator(`${ACTIVE_SURFACE} [data-entity-page] input:not(:disabled)`).first()
     await field.focus()
     await page.evaluate(() => {
       const x = (window as any).ui001
@@ -225,7 +244,7 @@ try {
     })
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
     await waitText('Project wins')
-    assert.ok(!(await page.locator('[data-entity-page]').textContent())?.includes('Workspace shadow'))
+    assert.ok(!(await page.locator(`${ACTIVE_SURFACE} [data-entity-page]`).textContent())?.includes('Workspace shadow'))
   })
   await check('A workspace-only snapshot cannot remove an OMP skill from a selected route', async () => {
     await page.evaluate(() => {
@@ -241,7 +260,7 @@ try {
   await check('A failed background skill refresh retains the mounted workspace editor and its draft', async () => {
     await page.evaluate(() => (window as any).ui001.configure({ route: 'skills/skill/one' }))
     await waitText('Skill one')
-    const field = page.locator('[data-entity-page] input:not(:disabled)').first()
+    const field = page.locator(`${ACTIVE_SURFACE} [data-entity-page] input:not(:disabled)`).first()
     await field.fill('Local unsaved draft')
     await field.focus()
     await page.evaluate(() => {
@@ -259,7 +278,7 @@ try {
   await check('An ordinary skill watcher update preserves an edited field and its focus', async () => {
     await page.evaluate(() => (window as any).ui001.configure({ route: 'skills/skill/one' }))
     await waitText('Skill one')
-    const field = page.locator('[data-entity-page] input:not(:disabled)').first()
+    const field = page.locator(`${ACTIVE_SURFACE} [data-entity-page] input:not(:disabled)`).first()
     await field.fill('Unsaved local name')
     await field.focus()
     await page.evaluate(() => {
@@ -268,7 +287,7 @@ try {
       const updated = x.skill('one'); updated.metadata.name = 'Watcher name'
       x.skills('workspace-a', [updated])
     })
-    await page.waitForFunction(() => document.querySelector('[data-entity-page]')?.textContent?.includes('Watcher name'))
+    await page.waitForFunction(selector => document.querySelector(`${selector} [data-entity-page]`)?.textContent?.includes('Watcher name'), ACTIVE_SURFACE)
     assert.equal(await field.inputValue(), 'Unsaved local name')
     assert.equal(await page.evaluate(() => document.activeElement === (window as any).ui001DraftField), true)
   })

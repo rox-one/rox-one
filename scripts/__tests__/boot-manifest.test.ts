@@ -12,7 +12,9 @@
  *    gate exists for;
  *  - the live case (skipped when the renderer has not been built) re-derives
  *    from the real `apps/electron/dist/renderer` and diffs against
- *    `boot-manifest.json`, so the checked-in file cannot silently drift.
+ *    `boot-manifest.json` under the gate's own contract — the source closure,
+ *    never hash names, which move between builds of the same tree — so the
+ *    checked-in file cannot silently drift.
  */
 import { describe, expect, it } from 'bun:test'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
@@ -177,12 +179,16 @@ describe.skipIf(!existsSync(DIST) || !existsSync(MANIFEST_PATH))('boot manifest 
     const committed = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as BootManifest
     const derived = deriveFromDist(DIST)
     const diff = diffBootManifest(committed, derived)
-    expect(diff).toEqual({
-      ok: true,
-      bootChunks: { missing: [], extra: [] },
-      bootSources: { missing: [], extra: [] },
-      routes: {},
-    })
+    // The gate's contract is the closure's STABLE identity (source sets and
+    // route ids), never emitted bytes: chunk names are content hashes that
+    // move between builds of the same tree (a laptop build and the ubuntu CI
+    // build disagree even on a manifest regenerated the same day), and
+    // `diffBootManifest` treats renames as informational by design. Assert
+    // exactly what the blocking `--check` gate asserts — a whole-diff
+    // deep-equal here reds on a perfectly fresh manifest.
+    expect(diff.ok).toBe(true)
+    expect(diff.bootSources).toEqual({ missing: [], extra: [] })
+    expect(diff.routes).toEqual({})
     // Chunk names (hashes) move with any renderer edit; the closure's source set
     // is the identity the gate compares, so assert on that (and on the route ids).
     expect(derived.bootSources).toEqual(committed.bootSources)

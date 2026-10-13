@@ -20,17 +20,34 @@ describe.skipIf(!existsSync(executablePath))('production message actions with pe
  let browser:Browser
  let page:Page
  const errors:string[]=[]
- const stop=async()=>{ui?.kill();api?.kill();await browser?.close();await Promise.all([ui?.exited,api?.exited]);if(root)rmSync(root,{recursive:true,force:true})}
+ const stop=async()=>{
+  // Chromium's graceful exit is environment-bound: measured 11-30s for a single
+  // browser.close() on a loaded machine, i.e. the entire 30s teardown budget for
+  // the browser alone. Awaiting it failed this suite as "(unnamed) hook timed out"
+  // while all eight tests passed. Close the browser without gating cleanup on its
+  // process exit; the runner reaps it through the debugging pipe when the test
+  // process ends, exactly as it does after a hook timeout today.
+  browser?.close().catch(()=>{})
+  ui?.kill();api?.kill()
+  await Promise.all([ui?.exited,api?.exited])
+  if(root)rmSync(root,{recursive:true,force:true})
+ }
  const wait=async(url:string, owner:ReturnType<typeof Bun.spawn>)=>{const deadline=Date.now()+30000;for(;;){if(owner.exitCode!==null)throw new Error('Owned message fixture exited during startup');try{const response=await fetch(url);if(response.ok){if(url===backend&&(await response.json() as any).fixtureId!=='rox-message-actions')throw new Error('Different process owns message fixture port');if(owner.exitCode!==null)throw new Error('Owned message fixture exited during startup');return}}catch(error){if(error instanceof Error&&error.message.includes('owns message'))throw error}if(Date.now()>deadline)throw new Error(`Message acceptance fixture did not start: ${url}`);await Bun.sleep(100)}}
  beforeAll(async()=>{try{
   root=mkdtempSync(join(tmpdir(),'rox-message-browser-'))
   api=Bun.spawn([process.execPath,resolve(fixture,'backend.ts')],{cwd:repository,env:{...process.env,ROX_CONFIG_DIR:root},stdout:'ignore',stderr:'ignore'})
   ui=Bun.spawn(['node',resolve(repository,'node_modules/vite/bin/vite.js'),'--config',resolve(fixture,'vite.config.ts'),'--port','5198'],{cwd:repository,stdout:'ignore',stderr:'ignore'})
   await Promise.all([wait(frontend,ui),wait(backend,api)])
+  // The suite runs against a fresh config dir, so the first branch creation
+  // builds the one-time OMP native-policy overlay and materializes workspace
+  // skills (~6-16s cold, <1s warm). Absorb that cost here so the branch
+  // assertions measure steady state under the shared 5s DOM budget.
+  const warmupRpc=await fetch(`${backend}/rpc`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({method:'warmup',args:{}})})
+  if(!warmupRpc.ok)throw new Error(`Message branch warmup failed: ${warmupRpc.status}`)
   browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox']})
   const warmup=await browser.newPage();await warmup.goto(frontend);await playwrightExpect(warmup.getByTestId('user').getByRole('toolbar')).toBeVisible({timeout:30000});await warmup.close()
   if(proofDirectory)mkdirSync(proofDirectory,{recursive:true})
- }catch(error){await stop();throw error}},60000)
+ }catch(error){await stop();throw error}},120000)
  beforeEach(async()=>{
   await fetch(`${backend}/rpc`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({method:'reset',args:{}})})
   errors.length=0;page=await browser.newPage({viewport:{width:1050,height:950},permissions:['clipboard-read','clipboard-write']});page.on('pageerror',error=>errors.push(error.message));await page.goto(frontend)

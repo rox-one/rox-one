@@ -31,7 +31,14 @@ const mounts=(page:Page)=>page.evaluate(()=>(window as any).__panelFixture.mount
 
 describe.skipIf(!existsSync(executablePath))('production persistent panel container and resize',()=>{
  let server:ReturnType<typeof Bun.spawn>|undefined,browser:Browser
- const stop=async()=>{server?.kill('SIGKILL');await browser?.close();await server?.exited}
+ const stop=async()=>{
+  // Upstream (main) measurement: Chromium's graceful exit is environment-bound
+  // (~30s for a single browser.close() on a loaded host, 11-18s when quieter);
+  // awaiting it failed the suite as "(unnamed) hook timed out" while its nine
+  // checks passed. Close without gating cleanup on the process exit.
+  browser?.close().catch(()=>{})
+  server?.kill('SIGKILL');await server?.exited
+ }
  beforeAll(async()=>{try{server=Bun.spawn(['node',resolve(repository,'node_modules/vite/bin/vite.js'),'--config',resolve(fixture,'vite.config.ts'),'--port','5238'],{cwd:repository,stdout:'ignore',stderr:'ignore'});const deadline=Date.now()+viteTimeout;for(;;){if(server.exitCode!==null)throw Error('Panel fixture exited');try{const response=await fetch(endpoint);if(response.ok){if(!(await response.text()).includes('rox-panel-workspace-fixture'))throw Error('Foreign owner occupies fixture port');break}}catch(error){if(error instanceof Error&&error.message.includes('Foreign owner'))throw error}if(Date.now()>deadline)throw Error('Panel fixture startup timeout');await Bun.sleep(100)}browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox']});
  // Best-effort warm: drops the one-time esbuild pre-bundle cost off the first
  // case. The cases below still assert their own readiness, so a slow cold mount

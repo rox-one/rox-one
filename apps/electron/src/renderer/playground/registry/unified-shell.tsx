@@ -105,9 +105,16 @@ export interface UnifiedShellDemoProps {
  */
 function UnifiedShellDemo({ enabled, inspectorVisible, inspectorSection, railCollapsed }: UnifiedShellDemoProps) {
   const store = React.useMemo(() => createStore(), [])
-  const onCreateSession = React.useCallback(async () => {
-    throw new Error('playground demo: session creation is not wired')
-  }, [])
+  const onCreateSession = React.useCallback(async () => ({
+    id: 'playground-session',
+    workspaceId: DEMO_WORKSPACE_ID,
+    workspaceName: 'Playground workspace',
+    createdAt: Date.now(),
+    lastUsedAt: Date.now(),
+    lastMessageAt: Date.now(),
+    messages: [],
+    isProcessing: false,
+  }), [])
 
   return (
     <JotaiProvider store={store}>

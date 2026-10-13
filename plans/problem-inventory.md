@@ -28,6 +28,22 @@
 
 ---
 
+## Reconcile 2026-10-13 (improve-раунд 5, оркестратор + 16 скаутов)
+
+Полная сверка §1–13 с текущим кодом выполнена скаутами B1–B6 (read-only) и лично оркестратором (live `gh`, сборка рендера + гейты в изолированном worktree на `9dc923119`). Сводка дельт — `advisor-plans/README.md`, раздел «Раунд 5». Ничего не удалялось — только поправки.
+
+**Ключевое:** статусы в разделах ниже частично устарели (в шапке выше — реконсиляция 10-09, здесь — 10-13):
+
+- **Закрыто на main:** 3.2, 3.3, 4.9, 7.1, 7.3, 9.1, 9.2, 9.4, 12.2, 12.7; из «подтверждённо живых» 10-09 закрыты 5.5, 6.4, 6.5, 8.7.
+- **Исправлено раундом 5:** описания `messaging-*` (§9.8 — «Craft Agent» → Rox; PR #1821), утечка bun-кэша из `paths.test.ts` (PR #1823).
+- **Изменено/уточнено:** 1.7, 1.10, 1.12, 4.12, 10.1 (подробности — README, «Раунд 5»).
+- **Живое без изменений:** 1.9, 1.11, 2.3, 5.3, 5.4, 5.7, 5.8, 6.1, 6.3, 7.2, 8.4, 8.6, 9.6, 9.7, 10.2, 12.3, 12.6 (985 remote-веток), 13.1–13.5 (`SessionManager.ts` — 12 025 строк).
+- **By design / решения:** 3.6, 4.10, 4.11 (ADR 003), 4.13, 8.10, 9.3, 9.5-F18, root tsconfig (12.3 — правка ломает `packages/ui` TS6059, см. Раунд 2), vendored-skill dependabot-алерты (политика — plan 016).
+
+Открытые планы: `advisor-plans/015` (PR #1707), `016` (dependabot/sharp), `017` (guardrail-тулинг).
+
+---
+
 ## 1. Агентный рантайм / OMP / first-run
 
 ### 1.1 P0: зависание, если `omp` выходит до `ready` — `FIXED`
@@ -309,9 +325,12 @@
 | L3 | README/TRADEMARK/NOTICE | Legal review |
 | L5 | System prompt «You are Craft Agent» + `agents-noreply@craft.do` | Persona / prompt regression |
 
-### 7.3 Мёртвый ReauthScreen (U12) — `OPEN` (hygiene)
+### 7.3 Мёртвый ReauthScreen (U12) — `CLOSED` (hygiene, T13)
 
-- `handleReauthLogin` — placeholder. Строки про «Craft session expired».
+- Удалён целиком: `appState='reauth'`, обработчики `handleReauthLogin`/`handleReauthReset`,
+  компонент `ReauthScreen.tsx`, его тесты и playground-запись (см.
+  `plans/next-program/decisions/012-t13-misc-stubs.md`). `setAppState('reauth')`
+  никогда не вызывался.
 
 ### 7.4 Два account switcher'а — `OPEN`
 

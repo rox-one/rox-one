@@ -66,15 +66,17 @@ describe('Drive app-data section (R13 «все данные приложения
     expect(html).toContain('data-testid="drive-app-data-uploads"')
     expect(html).toContain('data-status="in-drive"')
     expect(html).toContain('data-testid="drive-app-data-device-folders"')
-    expect(html).toContain('data-status="on-demand"')
     expect(html).toContain('data-testid="drive-app-data-app-config"')
-    expect(html).toContain('data-status="not-backed-up"')
+    // Both on-demand slices: device folders and the app config mirror.
+    expect(html).toContain('data-status="on-demand"')
+    expect(html).not.toContain('data-status="not-backed-up"')
   })
 
-  it('states honestly that device folders are on demand and app config is not backed up (RU)', () => {
+  it('states honestly that device folders and app config are on demand (RU)', () => {
     const html = render(<DriveAppDataSection onOpenBackup={() => {}} />)
     expect(html).toContain('По требованию')
-    expect(html).toContain('Не бэкапится')
+    expect(html).not.toContain('Не бэкапится')
+    expect(html).toContain('Доступно по кнопке')
     expect(html).toContain('автоматически ничего не бэкапится')
     expect(html).toContain('Настроить бэкап устройства')
   })
@@ -82,7 +84,16 @@ describe('Drive app-data section (R13 «все данные приложения
   it('localizes the section for EN', () => {
     const html = render(<DriveAppDataSection onOpenBackup={() => {}} />, 'en')
     expect(html).toContain('App data')
-    expect(html).toContain('Not backed up')
+    expect(html).not.toContain('Not backed up')
     expect(html).toContain('On demand')
+    expect(html).toContain('Available on demand')
+  })
+
+  it('mounts the app-config mirror card next to that entry', () => {
+    const html = render(<DriveAppDataSection onOpenBackup={() => {}} />)
+    expect(html).toContain('data-testid="drive-mirror-status"')
+    // Before the first status arrives the card claims nothing but "checking".
+    expect(html).toContain('data-testid="drive-mirror-state"')
+    expect(html).toContain('Проверяем состояние…')
   })
 })

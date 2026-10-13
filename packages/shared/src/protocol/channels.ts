@@ -913,6 +913,8 @@ export const RPC_CHANNELS = {
     GET_SKILL_EFFECTIVENESS: 'learning:getSkillEffectiveness',
     GET_POLICY: 'learning:getPolicy',
     GET_TIMELINE: 'learning:getTimeline',
+    LIST_CORRECTIONS: 'learning:listCorrections',
+    LIST_MUTATIONS: 'learning:listMutations',
     // Actions
     APPROVE: 'learning:approve',
     REJECT: 'learning:reject',
@@ -1465,6 +1467,18 @@ export const RPC_CHANNELS = {
      * the providers read.
      */
     IMPORT_AUTH_COMPLETE: 'drive:importAuthComplete',
+    /**
+     * R13: the app-config mirror (`drive:mirror*`) — the host scans the config
+     * dir, diffs it against a durable journal and uploads the delta into the
+     * S3 target. LOCAL_ONLY: catalog, journal and bytes never leave the host.
+     */
+    MIRROR_STATUS: 'drive:mirrorStatus',
+    /** Start a mirror run; returns immediately, the caller polls MIRROR_STATUS. */
+    MIRROR_START: 'drive:mirrorStart',
+    /** Stop scheduling new files once in-flight work settles. */
+    MIRROR_PAUSE: 'drive:mirrorPause',
+    /** Abandon the current mirror run; in-flight files settle, no further files start. */
+    MIRROR_CANCEL: 'drive:mirrorCancel',
   },
   /**
    * Telegram account linking (owner spec R4) — the desktop dialog talks to the
