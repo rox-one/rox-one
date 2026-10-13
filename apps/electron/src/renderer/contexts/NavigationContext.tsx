@@ -165,7 +165,19 @@ interface NavigationContextValue {
   navigateToSession: (sessionId: string) => void
 }
 
+export type NavigationActions = Pick<
+  NavigationContextValue,
+  'navigate' | 'goBack' | 'goForward' | 'updateRightSidebar' | 'toggleRightSidebar' | 'navigateToSource' | 'navigateToSession'
+>
+
+export type NavigationStatus = Pick<
+  NavigationContextValue,
+  'isReady' | 'isSessionsReady' | 'unavailableWorkspaceSlug' | 'navigationState' | 'navigationRevision' | 'canGoBack' | 'canGoForward'
+>
+
 export const NavigationContext = createContext<NavigationContextValue | null>(null)
+export const NavigationActionsContext = createContext<NavigationActions | null>(null)
+export const NavigationStatusContext = createContext<NavigationStatus | null>(null)
 
 interface NavigationProviderProps {
   children: ReactNode
@@ -218,9 +230,8 @@ export function NavigationProvider({
   }, [workspaceId, remoteWorkspaceId])
   const [, setSession] = useSession()
 
-  // Read session metadata directly from atom (reactive to session changes)
-  const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
-  const sessionMetas = useMemo(() => Array.from(sessionMetaMap.values()), [sessionMetaMap])
+  // Session meta is read via store.get so unrelated session writes do not
+  // rebuild navigation actions. Focused-session mismatch still uses a selector.
   const updateSessionMeta = useSetAtom(updateSessionMetaAtom)
   // Label tree for filter matching (auto-select must agree with the visible list).
   const { labels: labelConfigs } = useLabels(workspaceId)
@@ -266,7 +277,7 @@ export function NavigationProvider({
       : DEFAULT_NAVIGATION_STATE
     let state = base
     if (isSessionsNavigation(base) && base.details) {
-      const meta = sessionMetaMap.get(base.details.sessionId)
+      const meta = store.get(sessionMetaMapAtom).get(base.details.sessionId)
       const matchesWorkspace = !workspaceId
         || meta?.workspaceId === workspaceId
         || (remoteWorkspaceId && meta?.workspaceId === remoteWorkspaceId)
@@ -275,7 +286,7 @@ export function NavigationProvider({
       }
     }
     return rightSidebar ? { ...state, rightSidebar } : state
-  }, [focusedRoute, rightSidebar, unavailableWorkspaceSlug, sessionMetaMap, workspaceId, remoteWorkspaceId, entitiesLinksEnabled])
+  }, [focusedRoute, rightSidebar, unavailableWorkspaceSlug, workspaceId, remoteWorkspaceId, entitiesLinksEnabled, store])
 
   // =========================================================================
   // BROWSER HISTORY TRACKING
@@ -722,7 +733,7 @@ export function NavigationProvider({
         storage.set(storage.KEYS.lastSelectedSessionId, navigationState.details.sessionId, workspaceId)
       }
     }
-  }, [navigationState, setSession, workspaceId, remoteWorkspaceId, isSessionsReady, sessionMetaMap, store])
+  }, [navigationState, setSession, workspaceId, remoteWorkspaceId, isSessionsReady, store])
 
   // =========================================================================
   // HELPERS
@@ -733,7 +744,7 @@ export function NavigationProvider({
   const filterSessionsByFilter = useCallback(
     (filter: SessionFilter): SessionMeta[] => {
       // First filter out hidden sessions - they should never appear in any view
-      const visibleSessions = sessionMetas.filter(
+      const visibleSessions = [...store.get(sessionMetaMapAtom).values()].filter(
         s => !s.hidden && !!workspaceId && (s.workspaceId === workspaceId || s.workspaceId === remoteWorkspaceId)
       )
 
@@ -761,7 +772,7 @@ export function NavigationProvider({
         }
       })
     },
-    [sessionMetas, workspaceId, remoteWorkspaceId, labelConfigs]
+    [store, workspaceId, remoteWorkspaceId, labelConfigs]
   )
 
   const getFirstSessionId = useCallback(
@@ -1562,27 +1573,36 @@ export function NavigationProvider({
   // CONTEXT VALUE
   // =========================================================================
 
+  const actions = useMemo<NavigationActions>(() => ({
+    navigate: navigateWithPerfMark,
+    goBack,
+    goForward,
+    updateRightSidebar,
+    toggleRightSidebar,
+    navigateToSource,
+    navigateToSession,
+  }), [navigateWithPerfMark, goBack, goForward, updateRightSidebar, toggleRightSidebar, navigateToSource, navigateToSession])
+
+  const status = useMemo<NavigationStatus>(() => ({
+    isReady,
+    isSessionsReady,
+    unavailableWorkspaceSlug,
+    navigationState,
+    navigationRevision,
+    canGoBack,
+    canGoForward,
+  }), [isReady, isSessionsReady, unavailableWorkspaceSlug, navigationState, navigationRevision, canGoBack, canGoForward])
+
+  const value = useMemo<NavigationContextValue>(() => ({ ...actions, ...status }), [actions, status])
+
   return (
-    <NavigationContext.Provider
-      value={{
-        navigate: navigateWithPerfMark,
-        isReady,
-        isSessionsReady,
-        unavailableWorkspaceSlug,
-        navigationState,
-        navigationRevision,
-        canGoBack,
-        canGoForward,
-        goBack,
-        goForward,
-        updateRightSidebar,
-        toggleRightSidebar,
-        navigateToSource,
-        navigateToSession,
-      }}
-    >
-      {children}
-    </NavigationContext.Provider>
+    <NavigationActionsContext.Provider value={actions}>
+      <NavigationStatusContext.Provider value={status}>
+        <NavigationContext.Provider value={value}>
+          {children}
+        </NavigationContext.Provider>
+      </NavigationStatusContext.Provider>
+    </NavigationActionsContext.Provider>
   )
 }
 
@@ -1597,10 +1617,31 @@ export function useNavigation() {
   return context
 }
 
+/** Stable actions: identity does not change when only session meta updates. */
+export function useNavigationActions(): NavigationActions {
+  const context = useContext(NavigationActionsContext)
+  if (!context) {
+    throw new Error('useNavigationActions must be used within NavigationProvider')
+  }
+  return context
+}
+
 /**
  * Hook to access just the navigation state
  */
 export function useNavigationState(): NavigationState {
-  const { navigationState } = useNavigation()
-  return navigationState
+  const status = useContext(NavigationStatusContext)
+  if (!status) {
+    const { navigationState } = useNavigation()
+    return navigationState
+  }
+  return status.navigationState
+}
+
+export function useNavigationStatus(): NavigationStatus {
+  const status = useContext(NavigationStatusContext)
+  if (!status) {
+    throw new Error('useNavigationStatus must be used within NavigationProvider')
+  }
+  return status
 }

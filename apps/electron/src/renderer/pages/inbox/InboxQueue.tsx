@@ -35,8 +35,7 @@ import {
   type Tone,
 } from '@/components/mode-screen/ModeScreen'
 import {
-  EVERY_KIND,
-  filterInbox,
+  collectInboxFilterStats,
   markDone,
   reopen,
   snooze,
@@ -172,26 +171,18 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
     const recipientText = item.kind === 'team-recipient' ? (item.data as TeamInboxItem).text ?? '' : ''
     return `${item.id}\n${item.title}\n${item.source}\n${sessionPreview}\n${recipientText}`.toLocaleLowerCase().includes(needle)
   }, [preferences.signalFilter, preferences.unreadOnly, query, sessionById, state.done, unreadMailIds])
-  const visible = useMemo(
-    () => (isMailFilter(filter) ? [] : filterInbox(allItems, state, filter, now).filter(matchesQuery)),
-    [allItems, state, filter, now, matchesQuery],
-  )
+  const { visible, counts: filteredCounts } = useMemo(() => {
+    if (isMailFilter(filter)) {
+      return { visible: [] as typeof allItems, counts: collectInboxFilterStats(allItems, state, now, 'all', matchesQuery).counts }
+    }
+    return collectInboxFilterStats(allItems, state, now, filter, matchesQuery)
+  }, [allItems, state, filter, now, matchesQuery])
   const selected = useMemo(() => (inMail || contextChanged ? null : visible.find((i) => i.id === currentId) ?? (pinnedMail?.id === currentId ? pinnedMail : null)), [visible, currentId, inMail, pinnedMail, contextChanged])
   const selectedEmailId = selected?.kind === 'mail' ? emailIdFromItem(selected.id) : null
   const decisions = visible.filter((i) => i.group === 'decision')
   const messages = visible.filter((i) => i.group === 'message')
   const ordered = useMemo(() => [...decisions, ...messages], [decisions, messages])
   const visibleBlockingCount = visible.reduce((count, item) => count + (item.blocking ? 1 : 0), 0)
-  const countFor = (view: InboxFilter) => filterInbox(allItems, state, view, now).filter(matchesQuery).length
-  const filteredCounts = {
-    all: countFor('all'),
-    decisions: countFor('decisions'),
-    messages: countFor('messages'),
-    snoozed: countFor('snoozed'),
-    done: countFor('done'),
-    blocking: filterInbox(allItems, state, 'all', now).filter(matchesQuery).filter((item) => item.blocking).length,
-    byKind: Object.fromEntries([...EVERY_KIND, ...activityKinds].map((kind) => [kind, countFor({ kind })])) as typeof counts.byKind,
-  }
 
   useEffect(() => {
     if (inMail) return

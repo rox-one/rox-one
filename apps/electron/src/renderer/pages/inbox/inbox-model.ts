@@ -360,7 +360,15 @@ export function isActive(state: InboxState, item: InboxItem, now: number): boole
   return state.done[item.id] === undefined && !isSnoozed(state, item.id, now)
 }
 
+let inboxScanSink: (() => void) | null = null
+
+/** Test hook: one call per items/filter identity pass (not per chip). */
+export function setInboxScanSinkForTests(sink: (() => void) | null): void {
+  inboxScanSink = sink
+}
+
 export function filterInbox(items: readonly InboxItem[], state: InboxState, filter: InboxFilter, now: number): InboxItem[] {
+  inboxScanSink?.()
   if (typeof filter === 'object') return items.filter((item) => item.kind === filter.kind && isActive(state, item, now))
   switch (filter) {
     case 'all': return items.filter((item) => isActive(state, item, now))
@@ -371,18 +379,61 @@ export function filterInbox(items: readonly InboxItem[], state: InboxState, filt
   }
 }
 
-export function inboxCounts(items: readonly InboxItem[], state: InboxState, now: number) {
-  const active = items.filter((item) => isActive(state, item, now))
-  const byKind = Object.fromEntries(EVERY_KIND.map((k) => [k, active.filter((i) => i.kind === k).length])) as Record<InboxKind, number>
-  return {
-    all: active.length,
-    decisions: active.filter((i) => i.group === 'decision').length,
-    messages: active.filter((i) => i.group === 'message').length,
-    snoozed: items.filter((i) => state.done[i.id] === undefined && isSnoozed(state, i.id, now)).length,
-    done: items.filter((i) => state.done[i.id] !== undefined).length,
-    blocking: active.filter((i) => i.blocking).length,
-    byKind,
+export interface InboxFilterStats {
+  all: number
+  decisions: number
+  messages: number
+  snoozed: number
+  done: number
+  blocking: number
+  byKind: Record<InboxKind, number>
+}
+
+function emptyByKind(): Record<InboxKind, number> {
+  return Object.fromEntries(EVERY_KIND.map((k) => [k, 0])) as Record<InboxKind, number>
+}
+
+/** Single pass over items: counts for every chip plus the rows matching `filter`. */
+export function collectInboxFilterStats(
+  items: readonly InboxItem[],
+  state: InboxState,
+  now: number,
+  filter: InboxFilter,
+  matchesQuery: (item: InboxItem) => boolean = () => true,
+): { visible: InboxItem[]; counts: InboxFilterStats } {
+  inboxScanSink?.()
+  const counts: InboxFilterStats = {
+    all: 0, decisions: 0, messages: 0, snoozed: 0, done: 0, blocking: 0, byKind: emptyByKind(),
   }
+  const visible: InboxItem[] = []
+  for (const item of items) {
+    if (!matchesQuery(item)) continue
+    const done = state.done[item.id] !== undefined
+    const snoozed = !done && isSnoozed(state, item.id, now)
+    const active = !done && !snoozed
+    if (done) counts.done++
+    else if (snoozed) counts.snoozed++
+    if (active) {
+      counts.all++
+      if (item.group === 'decision') counts.decisions++
+      else counts.messages++
+      if (item.blocking) counts.blocking++
+      counts.byKind[item.kind]++
+    }
+    const matches = typeof filter === 'object'
+      ? item.kind === filter.kind && active
+      : filter === 'all' ? active
+        : filter === 'decisions' ? item.group === 'decision' && active
+          : filter === 'messages' ? item.group === 'message' && active
+            : filter === 'snoozed' ? snoozed
+              : done
+    if (matches) visible.push(item)
+  }
+  return { visible, counts }
+}
+
+export function inboxCounts(items: readonly InboxItem[], state: InboxState, now: number): InboxFilterStats {
+  return collectInboxFilterStats(items, state, now, 'all').counts
 }
 
 export function markDone(state: InboxState, id: string, now: number): InboxState {

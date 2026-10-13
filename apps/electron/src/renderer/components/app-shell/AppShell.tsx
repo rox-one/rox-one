@@ -170,7 +170,8 @@ import { installShellWarmup } from "@/lib/shell-warmup"
 import { toast } from "sonner"
 import { navigate, routes } from "@/lib/navigate"
 import {
-  useNavigation,
+  useNavigationActions,
+  useNavigationStatus,
   useNavigationState,
   isSessionsNavigation,
   isKnowledgeNavigation,
@@ -588,7 +589,8 @@ function AppShellContent({
   })
   const [session, setSession] = useSession()
   const { resolvedMode, isDark, setMode } = useTheme()
-  const { canGoBack, canGoForward, goBack, goForward, navigateToSource, navigateToSession, isSessionsReady } = useNavigation()
+  const { goBack, goForward, navigateToSource, navigateToSession } = useNavigationActions()
+  const { canGoBack, canGoForward, isSessionsReady } = useNavigationStatus()
 
   // Double-Esc interrupt feature: first Esc shows warning, second Esc interrupts
   const { handleEscapePress } = useEscapeInterrupt()
