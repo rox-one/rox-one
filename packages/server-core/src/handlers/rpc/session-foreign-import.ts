@@ -7,7 +7,7 @@ import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import {
   discoverForeignSessionsAsync,
-  persistForeignSession,
+  persistForeignSessions,
   type ForeignImportMode,
   type ForeignPersistResult,
 } from '@rox/shared/sessions'
@@ -19,7 +19,7 @@ import {
   rpcSessionForeignImportListResult,
   rpcSessionForeignImportReadResult,
 } from '@rox/core/rox2'
-import { ForeignAutoImporter } from './session-foreign-auto-import'
+import { ForeignAutoImporter, ingestPersistedBatch } from './session-foreign-auto-import'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sessions.FOREIGN_DISCOVER,
@@ -98,31 +98,20 @@ export function registerSessionForeignImportHandlers(server: RpcServer, deps: Ha
       if (!workspace) throw new Error('sessions.foreignPersist: workspace not found')
       const submitted = args?.sourcePaths ?? []
       const sourcePaths = submitted.slice(0, MAX_FOREIGN_PERSIST)
-      const results: ForeignPersistResult[] = []
-      for (const sourcePath of sourcePaths) {
-        if (typeof sourcePath !== 'string' || sourcePath.length === 0) {
-          results.push({ sourcePath: '', action: 'skipped' as const, reason: 'invalid-source-path' })
-          continue
-        }
-        try {
-          results.push(await persistForeignSession({ workspaceRoot: workspace.rootPath, sourcePath, mode: args?.mode }))
-        } catch {
-          results.push({ sourcePath, action: 'skipped' as const, reason: 'import-failed' })
-        }
-      }
-      for (const result of results) {
-        if (
-          result.sessionId &&
-          (result.action === 'created' || result.action === 'appended' || result.action === 'replaced')
-        ) {
-          try {
-            deps.sessionManager.ingestImportedSession(workspaceId, result.sessionId)
-            deps.sessionManager.notifySessionCreated(workspaceId, result.sessionId)
-          } catch {
-            // Persisted session remains available; list refresh can happen on the next load.
-          }
-        }
-      }
+      const valid = sourcePaths.filter((sourcePath) => typeof sourcePath === 'string' && sourcePath.length > 0)
+      const persisted = await persistForeignSessions(
+        workspace.rootPath,
+        valid.map((sourcePath) => ({ sourcePath })),
+        args?.mode ?? 'skip',
+        undefined,
+        { onBatch: (batch) => ingestPersistedBatch(deps, workspaceId, batch) },
+      )
+      let next = 0
+      const results: ForeignPersistResult[] = sourcePaths.map((sourcePath) =>
+        typeof sourcePath === 'string' && sourcePath.length > 0
+          ? persisted[next++]!
+          : { sourcePath: '', action: 'skipped' as const, reason: 'invalid-source-path' },
+      )
       return {
         results,
         failed: results.filter((result) => result.reason === 'import-failed').length,

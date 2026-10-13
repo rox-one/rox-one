@@ -57,6 +57,20 @@ describe('session state projection', () => {
     expect(store.listSessionIndex(root).map((row) => row.sessionId).sort()).toEqual([one.id, two.id].sort())
   })
 
+  it('records a batch of sessions written outside the persistence queue in one pass', async () => {
+    const { root, projector } = fixture()
+    const one = await createSession(root, { name: 'One' })
+    await projector.recordSession(root, one.id)
+    const two = await createSession(root, { name: 'Two' })
+    const three = await createSession(root, { name: 'Three' })
+
+    const recorded = await projector.recordSessions(root, [two.id, three.id])
+
+    expect(recorded.map((entry) => entry.id)).toEqual([two.id, three.id])
+    expect(readIndexFile(root).entries).toEqual(scanWorkspaceEntries(root))
+    expect(projector.readFreshHeaders(root)?.map((header) => header.id).sort()).toEqual([one.id, two.id, three.id].sort())
+  })
+
   it('keeps the index file equal to a fresh scan', async () => {
     const { root, projector } = fixture()
     const one = await createSession(root, { name: 'One' })

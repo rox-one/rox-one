@@ -82,6 +82,8 @@ export interface ISessionManager {
   deleteSession(sessionId: string): Promise<void>
   /** Load one imported session from disk if missing. Must not replace a live session. */
   ingestImportedSession(workspaceId: string, sessionId: string): void
+  /** Load one batch of imported sessions, index them incrementally and emit one `sessions_imported`. */
+  ingestImportedSessions(workspaceId: string, sessionIds: readonly string[]): Session[]
   notifySessionCreated(workspaceId: string, sessionId: string): void
 
   // ---------------------------------------------------------------------------

@@ -497,6 +497,54 @@ export const addSessionAtom = atom(
 )
 
 /**
+ * Action atom: insert one batch of imported session summaries (no messages) with a
+ * single copy of the meta map and the ids list. New ids are merged
+ * into the list by lastMessageAt desc; known ids keep their position. Summaries stay
+ * unloaded so messages are fetched lazily on open. Returns ids of sessions whose
+ * loaded messages were kept and may be stale, for the caller to refresh.
+ */
+export const addImportedSessionsAtom = atom(
+  null,
+  (get, set, sessions: Session[]): string[] => {
+    if (sessions.length === 0) return []
+    const metaMap = new Map(get(sessionMetaMapAtom))
+    const loadedSessions = get(loadedSessionsAtom)
+    const added: SessionMeta[] = []
+    const staleLoadedIds: string[] = []
+    for (const session of sessions) {
+      const current = get(sessionAtomFamily(session.id))
+      const known = metaMap.has(session.id)
+      if (current && loadedSessions.has(session.id)) {
+        set(sessionAtomFamily(session.id), { ...session, messages: current.messages })
+        staleLoadedIds.push(session.id)
+      } else {
+        set(sessionAtomFamily(session.id), session)
+      }
+      const meta = extractSessionMeta(session)
+      metaMap.set(session.id, meta)
+      if (!known) added.push(meta)
+    }
+    set(sessionMetaMapAtom, metaMap)
+
+    if (added.length > 0) {
+      added.sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0))
+      const addedIds = new Set(added.map(meta => meta.id))
+      const ids = get(sessionIdsAtom).filter(id => !addedIds.has(id))
+      const nextIds: string[] = []
+      let next = 0
+      for (const id of ids) {
+        const at = metaMap.get(id)?.lastMessageAt || 0
+        while (next < added.length && (added[next]!.lastMessageAt || 0) >= at) nextIds.push(added[next++]!.id)
+        nextIds.push(id)
+      }
+      while (next < added.length) nextIds.push(added[next++]!.id)
+      set(sessionIdsAtom, nextIds)
+    }
+    return staleLoadedIds
+  }
+)
+
+/**
  * Action atom: remove a session
  */
 export const removeSessionAtom = atom(
