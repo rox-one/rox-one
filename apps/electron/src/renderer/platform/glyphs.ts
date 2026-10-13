@@ -12,6 +12,11 @@
  * set of concepts the shell itself renders. Adding an entity means adding ONE
  * concept here and pointing the consumer at it — never hand a raw Lucide name
  * to a glyph-bearing surface.
+ *
+ * The nav-only surfaces carry their own concepts too (`repository` for the
+ * memory repository, `clipboard` for clipboard history, `drive`, `developers`
+ * for Dev Space and `playbooks`) so `nav-destinations.ts` never imports a raw
+ * Lucide component.
  */
 import {
   Activity,
@@ -21,13 +26,17 @@ import {
   Cable,
   CalendarDays,
   ChartColumn,
+  ClipboardList,
   Contact,
   DatabaseZap,
   FilePlus2,
+  FolderGit2,
   FolderKanban,
   Gavel,
+  GitBranch,
   Globe,
   GraduationCap,
+  HardDrive,
   House,
   Inbox,
   KeyRound,
@@ -37,6 +46,7 @@ import {
   MessageSquare,
   MessagesSquare,
   NotebookPen,
+  NotebookText,
   PanelsTopLeft,
   Radar,
   Rss,
@@ -89,6 +99,11 @@ export const GLYPHS = {
   activity: ChartColumn,
   library: Library,
   health: Activity,
+  repository: GitBranch,
+  clipboard: ClipboardList,
+  drive: HardDrive,
+  developers: FolderGit2,
+  playbooks: NotebookText,
 } as const satisfies Record<string, LucideIcon>
 
 /** Every entity concept the shell renders a glyph for. */
@@ -132,6 +147,11 @@ export const GLYPH_NAMES = {
   activity: 'ChartColumn',
   library: 'Library',
   health: 'Activity',
+  repository: 'GitBranch',
+  clipboard: 'ClipboardList',
+  drive: 'HardDrive',
+  developers: 'FolderGit2',
+  playbooks: 'NotebookText',
 } as const satisfies Record<GlyphConcept, string>
 
 /**

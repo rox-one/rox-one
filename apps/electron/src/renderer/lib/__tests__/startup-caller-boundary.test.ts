@@ -47,6 +47,10 @@ function harness(overrides: Record<string, unknown> = {}, environmentOverrides: 
     probeWithRetry: (read: () => Promise<unknown>, options?: object) => probeWithRetry(read, { delaysMs: [0], deadlineMs: 3000, ...options }),
     waitForTransportConnected: async () => { calls.push('transport-wait'); return { status: 'connected' } },
     decideStartupAppState, isStartupAuthorityDenial, ensureRoxRuntimeDefault, toErrorMessage,
+    // App.tsx reaches `ensureRoxRuntimeDefault` through this lazy helper (#1675)
+    // instead of importing the onboarding barrel; the harness mirrors the module
+    // scope so the extracted initializer resolves it (overrides win, as below).
+    loadEnsureRoxRuntimeDefault: async () => (environmentOverrides.ensureRoxRuntimeDefault as typeof ensureRoxRuntimeDefault | undefined) ?? ensureRoxRuntimeDefault,
     setPersonalTaskScope: (value: unknown) => taskScopes.push(value),
     setCallerAuthority: (value: unknown) => authorities.push(value),
     setWindowWorkspaceId: (value: unknown) => workspaces.push(value),

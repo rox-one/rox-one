@@ -17,30 +17,7 @@
  * Action-backed entries (`action: 'open-browser'`) carry `route: null` too,
  * but open their existing native surface instead of a route.
  */
-import {
-  BookOpen,
-  Brain,
-  Cable,
-  Calendar,
-  ClipboardList,
-  DatabaseZap,
-  FolderGit2,
-  FolderKanban,
-  GitBranch,
-  Globe,
-  GraduationCap,
-  HardDrive,
-  House,
-  ListTodo,
-  MessageSquare,
-  NotebookPen,
-  NotebookText,
-  PanelsTopLeft,
-  Settings,
-  Workflow,
-  Zap,
-  type LucideIcon,
-} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { atom, type Atom } from 'jotai'
 import { GLYPHS } from '../../platform/glyphs'
 import { routes, type ViewRoute } from '../../../shared/routes'
@@ -167,7 +144,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'memoryRepo',
     linkId: 'nav:memoryRepo',
-    icon: GitBranch,
+    icon: GLYPHS.repository,
     labelKey: 'sidebar.memoryRepo',
     railGroup: 'more',
     contextLinkIds: ['nav:memoryRepo'],
@@ -238,7 +215,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'clipboardHistory',
     linkId: 'nav:clipboardHistory',
-    icon: ClipboardList,
+    icon: GLYPHS.clipboard,
     labelKey: 'clipboard.title',
     railGroup: 'more',
     contextLinkIds: ['nav:clipboardHistory'],
@@ -302,7 +279,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'drive',
     linkId: 'nav:drive',
-    icon: HardDrive,
+    icon: GLYPHS.drive,
     labelKey: 'sidebar.drive',
     railLabelKey: 'serviceRail.drive',
     railGroup: 'more',
@@ -323,7 +300,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'developers',
     linkId: 'nav:developers',
-    icon: FolderGit2,
+    icon: GLYPHS.developers,
     labelKey: 'sidebar.developers',
     railGroup: 'more',
     contextLinkIds: ['nav:developers'],
@@ -334,7 +311,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'playbooks',
     linkId: 'nav:playbooks',
-    icon: NotebookText,
+    icon: GLYPHS.playbooks,
     labelKey: 'sidebar.playbooks',
     railGroup: 'more',
     contextLinkIds: ['nav:playbooks'],
