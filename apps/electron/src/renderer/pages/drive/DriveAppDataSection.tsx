@@ -17,6 +17,7 @@ import {
   type DriveAppDataStatus,
 } from '@rox/shared/drive'
 import { Button } from '@/components/ui/button'
+import { DriveMirrorStatus, type DriveMirrorApi } from './DriveMirrorStatus'
 
 const CHIP_BY_STATUS: Record<DriveAppDataStatus, string> = {
   'in-drive': 'border-status-success/40 text-status-success',
@@ -27,9 +28,11 @@ const CHIP_BY_STATUS: Record<DriveAppDataStatus, string> = {
 export interface DriveAppDataSectionProps {
   /** Opens the existing device-backup chooser; never a second backup flow. */
   onOpenBackup: () => void
+  /** Explicit `drive:mirror*` client (tests); defaults to `window.electronAPI`. */
+  mirrorApi?: DriveMirrorApi
 }
 
-export function DriveAppDataSection({ onOpenBackup }: DriveAppDataSectionProps) {
+export function DriveAppDataSection({ onOpenBackup, mirrorApi }: DriveAppDataSectionProps) {
   const { t } = useTranslation()
   return (
     <section
@@ -63,6 +66,7 @@ export function DriveAppDataSection({ onOpenBackup }: DriveAppDataSectionProps) 
               </span>
             </div>
             <p className="mt-0.5 text-xs text-muted-foreground">{t(entry.detailKey)}</p>
+            {entry.id === 'app-config' && <DriveMirrorStatus api={mirrorApi} />}
           </li>
         ))}
       </ul>

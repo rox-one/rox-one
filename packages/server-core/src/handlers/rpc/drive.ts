@@ -18,6 +18,8 @@ import {
   DRIVE_PART_SIZE_BYTES,
   type DriveBackupSourceKind,
   type DriveFileSource,
+  type MirrorQueueStatus,
+  type MirrorRunResult,
 } from '@rox/shared/drive'
 import {
   createImportJobRunner,
@@ -60,6 +62,10 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.drive.IMPORT_STATUS,
   RPC_CHANNELS.drive.IMPORT_AUTH_START,
   RPC_CHANNELS.drive.IMPORT_AUTH_COMPLETE,
+  RPC_CHANNELS.drive.MIRROR_STATUS,
+  RPC_CHANNELS.drive.MIRROR_START,
+  RPC_CHANNELS.drive.MIRROR_PAUSE,
+  RPC_CHANNELS.drive.MIRROR_CANCEL,
 ] as const
 
 /** Provider ids accepted by `drive:importPlan`. */
@@ -211,6 +217,65 @@ export function resetDriveImport(): void {
 
 function requireImport(): ImportJobRunner {
   return importRunner ?? unavailable()
+}
+
+// ── App-config mirror (R13) ─────────────────────────────────────────────────
+// The mirror engine is composed by the host (`composeDriveMirrorEngine` in the
+// Electron main process) and injected here, exactly like the import runner. A
+// host that never configures it answers UNSUPPORTED_OPERATION.
+
+/** Result of `drive:mirrorStart`: the run was kicked, not awaited. */
+export interface DriveMirrorStartResult {
+  configured: boolean
+  /** `true` when this call kicked a run (an already-running engine is joined). */
+  started: boolean
+  status: MirrorQueueStatus
+}
+
+/** Result of `drive:mirrorStatus` / `drive:mirrorPause` / `drive:mirrorCancel`. */
+export interface DriveMirrorStatusResult {
+  configured: boolean
+  status: MirrorQueueStatus
+  /** Outcome of the last completed run; absent before the first one. */
+  lastResult?: MirrorRunResult
+}
+
+/**
+ * The host-composed app-config mirror. `run()` scans the config dir, diffs it
+ * against the journal and uploads the delta; `status()` is the render-safe
+ * progress snapshot the UI polls.
+ */
+export interface DriveMirrorEngine {
+  run(): Promise<MirrorRunResult>
+  pause(): void
+  cancel(): void
+  status(): MirrorQueueStatus
+  /** Result of the last completed `run()`, or null before the first one. */
+  lastResult(): MirrorRunResult | null
+}
+
+let mirrorEngine: DriveMirrorEngine | null = null
+
+/** Host composition for `drive:mirror*`; returns the engine for chaining. */
+export function configureDriveMirror(engine: DriveMirrorEngine): DriveMirrorEngine {
+  mirrorEngine = engine
+  return engine
+}
+
+/** Test seam: drops the composed mirror engine. */
+export function resetDriveMirror(): void {
+  mirrorEngine = null
+}
+
+function requireMirror(): DriveMirrorEngine {
+  return mirrorEngine ?? unavailable()
+}
+
+function mirrorStatus(engine: DriveMirrorEngine): DriveMirrorStatusResult {
+  const lastResult = engine.lastResult()
+  return lastResult
+    ? { configured: true, status: engine.status(), lastResult }
+    : { configured: true, status: engine.status() }
 }
 
 function normalizeImportProvider(value: unknown): ImportProviderId {
@@ -554,5 +619,36 @@ export function registerDriveHandlers(server: RpcServer, deps: HandlerDeps): voi
     }
     pendingImportAuthFlows.delete(flowId)
     return { ok: true }
+  })
+
+  // R13 — app-config mirror (LOCAL_ONLY: the catalog, journal and bytes are all
+  // on the host). `MIRROR_START` kicks the run and returns immediately; the
+  // renderer watches `drive:mirrorStatus` for progress.
+  server.handle(RPC_CHANNELS.drive.MIRROR_STATUS, async (): Promise<DriveMirrorStatusResult> => {
+    return mirrorStatus(requireMirror())
+  })
+
+  server.handle(RPC_CHANNELS.drive.MIRROR_START, async (): Promise<DriveMirrorStartResult> => {
+    const engine = requireMirror()
+    const status = engine.status()
+    // A run already in flight is joined by the engine, so `started` only means
+    // this call kicked work; it never blocks on the run itself.
+    const started = status.state !== 'running'
+    void engine.run().catch((error: unknown) => {
+      console.warn(`[drive] mirror run failed: ${error instanceof Error ? error.message : String(error)}`)
+    })
+    return { configured: true, started, status: engine.status() }
+  })
+
+  server.handle(RPC_CHANNELS.drive.MIRROR_PAUSE, async (): Promise<DriveMirrorStatusResult> => {
+    const engine = requireMirror()
+    engine.pause()
+    return mirrorStatus(engine)
+  })
+
+  server.handle(RPC_CHANNELS.drive.MIRROR_CANCEL, async (): Promise<DriveMirrorStatusResult> => {
+    const engine = requireMirror()
+    engine.cancel()
+    return mirrorStatus(engine)
   })
 }

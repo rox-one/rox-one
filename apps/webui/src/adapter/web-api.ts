@@ -264,6 +264,9 @@ export function createWebApi(options: WebApiOptions): {
       window.open(buildSessionWindowUrl(window.location.origin, sessionId), '_blank')
     },
 
+    // Rox cloud balance is a desktop-only broker surface; the web host has no
+    // connected account, so report the honest disconnected state.
+    getRoxBalance: () => Promise.resolve({ status: 'disconnected' as const }),
     // Auto-update — not applicable to web (but expose server version for About page)
     checkForUpdates: () => Promise.resolve({ available: false, currentVersion: client.getServerVersion() ?? '' } as any),
     getUpdateInfo: () => Promise.resolve({ available: false, currentVersion: client.getServerVersion() ?? '' } as any),

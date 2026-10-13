@@ -105,11 +105,14 @@ import type {
   LearningCandidateStatus,
   LearningEvidence,
   LearningExperiment,
+  LearningMutation,
   LearningPolicy,
   LearningStatsDto,
   LearningTimelineEntryDto,
   TaskOutcome,
+  UserCorrection,
 } from '@rox/shared/memory/learning'
+import type { DriveMirrorStartResult, DriveMirrorStatusResult } from '@rox/server-core/handlers/rpc/drive'
 import type { EffectivenessReport, PromotionResult, RollbackResult } from '@rox/server-core/memory/learning/learning-types'
 import type {
   DriveBackupSourceKind,
@@ -2649,6 +2652,8 @@ export interface ElectronAPI {
   listLearningCandidates(workspaceId: string, filter?: { status?: LearningCandidateStatus }): Promise<LearningCandidate[]>
   getLearningCandidate(workspaceId: string, id: string): Promise<LearningCandidate | null>
   listLearningEvidence(workspaceId: string, candidateId?: string): Promise<LearningEvidence[]>
+  listLearningCorrections(workspaceId: string): Promise<UserCorrection[]>
+  listLearningMutations(workspaceId: string): Promise<LearningMutation[]>
   getLearningOutcome(workspaceId: string, id: string): Promise<TaskOutcome | null>
   getLearningExperiment(workspaceId: string, id: string): Promise<LearningExperiment | null>
   getLearningStats(workspaceId: string): Promise<LearningStatsDto>
@@ -2702,6 +2707,12 @@ export interface ElectronAPI {
   driveImportOAuthAwait(handle: string): Promise<{ query: Record<string, string> }>
   /** Abort a pending Google import flow (closes the callback server). */
   driveImportOAuthCancel(handle: string): Promise<boolean>
+  // ROX Drive (R13) — app-config mirror. LOCAL_ONLY: the catalog, journal and
+  // bytes stay on the host; the renderer only starts/pauses/watches the run.
+  driveMirrorStatus(): Promise<DriveMirrorStatusResult>
+  driveMirrorStart(): Promise<DriveMirrorStartResult>
+  driveMirrorPause(): Promise<DriveMirrorStatusResult>
+  driveMirrorCancel(): Promise<DriveMirrorStatusResult>
   enrichMindMap(input: {
     workspaceId: string
     entity: import('@rox/core/mindmap').MindMapEntityRef

@@ -309,9 +309,12 @@
 | L3 | README/TRADEMARK/NOTICE | Legal review |
 | L5 | System prompt «You are Craft Agent» + `agents-noreply@craft.do` | Persona / prompt regression |
 
-### 7.3 Мёртвый ReauthScreen (U12) — `OPEN` (hygiene)
+### 7.3 Мёртвый ReauthScreen (U12) — `CLOSED` (hygiene, T13)
 
-- `handleReauthLogin` — placeholder. Строки про «Craft session expired».
+- Удалён целиком: `appState='reauth'`, обработчики `handleReauthLogin`/`handleReauthReset`,
+  компонент `ReauthScreen.tsx`, его тесты и playground-запись (см.
+  `plans/next-program/decisions/012-t13-misc-stubs.md`). `setAppState('reauth')`
+  никогда не вызывался.
 
 ### 7.4 Два account switcher'а — `OPEN`
 

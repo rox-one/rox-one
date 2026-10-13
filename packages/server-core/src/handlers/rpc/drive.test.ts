@@ -3,15 +3,18 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
-import type { DriveUploadTarget, ImportProvider, ImportSourceEntry } from '@rox/shared/drive'
+import type { DriveUploadTarget, ImportProvider, ImportSourceEntry, MirrorQueueStatus, MirrorRunResult } from '@rox/shared/drive'
 import type { HandlerDeps } from '../handler-deps'
 import type { HandlerFn, RequestContext, RpcServer } from '../../transport'
 import {
   configureDriveImport,
+  configureDriveMirror,
   resetDriveImport,
+  resetDriveMirror,
   registerDriveHandlers,
   registerImportProvider,
   HANDLED_CHANNELS,
+  type DriveMirrorEngine,
 } from './drive'
 
 class StubProvider implements ImportProvider {
@@ -76,6 +79,7 @@ describe('drive import RPC handlers', () => {
 
   afterEach(async () => {
     resetDriveImport()
+    resetDriveMirror()
     await rm(stateDir, { recursive: true, force: true })
   })
 
@@ -190,5 +194,87 @@ describe('drive import RPC handlers', () => {
     const job = await invoke(RPC_CHANNELS.drive.IMPORT_PLAN, 'google-drive') as { status: string; plan: unknown[] }
     expect(job.status).toBe('idle')
     expect(job.plan).toHaveLength(2)
+  })
+})
+
+describe('drive mirror RPC handlers', () => {
+  const MIRROR_CHANNELS = [
+    RPC_CHANNELS.drive.MIRROR_STATUS,
+    RPC_CHANNELS.drive.MIRROR_START,
+    RPC_CHANNELS.drive.MIRROR_PAUSE,
+    RPC_CHANNELS.drive.MIRROR_CANCEL,
+  ] as const
+
+  function invokeMirror(channel: string): Promise<unknown> {
+    return harness().invoke(channel)
+  }
+
+  /** Spy engine: records every call and reports a status it can be told to hold. */
+  function spyEngine() {
+    const calls: string[] = []
+    const result: MirrorRunResult = { added: 0, changed: 0, removed: 0, bytesUploaded: 0, paused: false, cancelled: false, errors: [] }
+    const runGate = Promise.withResolvers<MirrorRunResult>()
+    let status: MirrorQueueStatus = { state: 'idle', filesDone: 0, filesTotal: 0, bytesDone: 0, bytesTotal: 0 }
+    const engine: DriveMirrorEngine = {
+      run: () => { calls.push('run'); return runGate.promise },
+      pause: () => { calls.push('pause'); status = { ...status, state: 'paused' } },
+      cancel: () => { calls.push('cancel'); status = { ...status, state: 'cancelled' } },
+      status: () => status,
+      lastResult: () => null,
+    }
+    return {
+      engine,
+      calls,
+      resolveRun: () => runGate.resolve(result),
+      setStatus: (next: MirrorQueueStatus) => { status = next },
+    }
+  }
+
+  test('answers UNSUPPORTED_OPERATION on every mirror channel without a composed engine', async () => {
+    resetDriveMirror()
+    for (const channel of MIRROR_CHANNELS) {
+      await expect(invokeMirror(channel)).rejects.toMatchObject({ code: 'UNSUPPORTED_OPERATION' })
+    }
+  })
+
+  test('status returns the engine snapshot and the last run result once there is one', async () => {
+    const spy = spyEngine()
+    configureDriveMirror(spy.engine)
+    spy.setStatus({ state: 'running', filesDone: 2, filesTotal: 5, bytesDone: 10, bytesTotal: 40 })
+
+    const status = await invokeMirror(RPC_CHANNELS.drive.MIRROR_STATUS) as { configured: boolean; status: { state: string; filesDone: number }; lastResult?: unknown }
+    expect(status.configured).toBe(true)
+    expect(status.status.state).toBe('running')
+    expect(status.status.filesDone).toBe(2)
+    expect(status.lastResult).toBeUndefined()
+  })
+
+  test('start kicks the run without awaiting it and returns the current status', async () => {
+    const spy = spyEngine()
+    configureDriveMirror(spy.engine)
+
+    // The engine's run() never settles, so START may not block on it.
+    const started = await invokeMirror(RPC_CHANNELS.drive.MIRROR_START) as { configured: boolean; started: boolean; status: { state: string } }
+    expect(started.configured).toBe(true)
+    expect(started.started).toBe(true)
+    expect(spy.calls).toEqual(['run'])
+    expect(started.status.state).toBe('idle')
+    spy.resolveRun()
+  })
+
+  test('pause and cancel are idempotent and report the engine status', async () => {
+    const spy = spyEngine()
+    configureDriveMirror(spy.engine)
+
+    const firstPause = await invokeMirror(RPC_CHANNELS.drive.MIRROR_PAUSE) as { status: { state: string } }
+    const secondPause = await invokeMirror(RPC_CHANNELS.drive.MIRROR_PAUSE) as { status: { state: string } }
+    expect(firstPause.status.state).toBe('paused')
+    expect(secondPause.status.state).toBe('paused')
+
+    const firstCancel = await invokeMirror(RPC_CHANNELS.drive.MIRROR_CANCEL) as { status: { state: string } }
+    const secondCancel = await invokeMirror(RPC_CHANNELS.drive.MIRROR_CANCEL) as { status: { state: string } }
+    expect(firstCancel.status.state).toBe('cancelled')
+    expect(secondCancel.status.state).toBe('cancelled')
+    expect(spy.calls).toEqual(['pause', 'pause', 'cancel', 'cancel'])
   })
 })

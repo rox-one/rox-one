@@ -284,7 +284,6 @@
 - `apps/electron/src/renderer/components/onboarding/OmpCredentialStep.tsx` — `OmpCredentialStepProps`
 - `apps/electron/src/renderer/components/onboarding/OnboardingWizard.tsx` — `OnboardingWizardProps`
 - `apps/electron/src/renderer/components/onboarding/ProviderSelectStep.tsx` — `ProviderSelectStepProps`
-- `apps/electron/src/renderer/components/onboarding/ReauthScreen.tsx` — `ReauthScreenProps`
 - `apps/electron/src/renderer/components/onboarding/RoxConnectStep.tsx` — `RoxConnectStepProps`
 - `apps/electron/src/renderer/components/onboarding/WelcomeStep.tsx` — `WelcomeStepProps`
 - `apps/electron/src/renderer/components/onboarding/primitives.tsx` — `StepIconProps`, `StepHeaderProps`, `StepFormLayoutProps`, `StepActionsProps`, `BackButtonProps`, `ContinueButtonProps`
