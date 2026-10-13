@@ -26,15 +26,16 @@ describe('notification deep-link routing', () => {
   it('dispatches a structured shell:action to the focused window on click', async () => {
     const notifications = await import('../notifications')
 
-    const pushed: Array<{ channel: string; target: unknown; payload: unknown }> = []
+    const relayed: Array<{ window: unknown; channel: string; payload: unknown }> = []
     const focused = { isDestroyed: () => false, webContents: { id: 7, isDestroyed: () => false } }
+    // Delivery goes through the window-manager relay (`pushToWindow`); the sink
+    // and its raw pre-handshake fallback are covered by window-manager-relay.test.ts.
     const manager = {
       getFocusedWindow: () => focused,
       getLastActiveWindow: () => focused,
-      getRpcEventSink: () => (channel: string, target: unknown, ...args: unknown[]) => {
-        pushed.push({ channel, target, payload: args[0] })
+      pushToWindow: (window: unknown, channel: string, ...args: unknown[]) => {
+        relayed.push({ window, channel, payload: args[0] })
       },
-      getClientIdForWindow: () => 'client-7',
     } as unknown as WindowManager
 
     notifications.initNotificationService(manager)
@@ -42,9 +43,9 @@ describe('notification deep-link routing', () => {
     expect(clickHandler).toBeTruthy()
     clickHandler?.()
 
-    expect(pushed).toEqual([{
+    expect(relayed).toEqual([{
+      window: focused,
       channel: RPC_CHANNELS.shell.ACTION,
-      target: { to: 'client', clientId: 'client-7' },
       payload: { action: 'navigate', deepLink: { route: 'inbox' } },
     }])
   })

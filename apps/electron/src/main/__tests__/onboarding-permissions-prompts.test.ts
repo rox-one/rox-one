@@ -73,7 +73,15 @@ describe('interactive permission prompts', () => {
 
   it('accessibility prompts via isTrustedAccessibilityClient(true) exactly once', async () => {
     resetCalls()
-    const outcome = await promptPermission(darwinSurface(), 'accessibility')
+    // The real `electronPermissionSurface()` seam is platform-gated by
+    // `process.platform`, so the darwin surface is completed explicitly to keep
+    // this assertion independent of the host the suite runs on.
+    const outcome = await promptPermission(darwinSurface({
+      isTrustedAccessibilityClient: (prompt: boolean) => {
+        calls.isTrustedAccessibilityClient.push(prompt)
+        return true
+      },
+    }), 'accessibility')
     expect(calls.isTrustedAccessibilityClient).toEqual([true])
     expect(calls.askForMediaAccess).toEqual([])
     expect(calls.getSources).toBe(0)
