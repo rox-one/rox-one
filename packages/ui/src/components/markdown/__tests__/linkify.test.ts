@@ -102,6 +102,16 @@ describe('preprocessLinks', () => {
       const input = 'Run `curl https://example.com` to test'
       expect(preprocessLinks(input)).toBe(input)
     })
+
+    it('skips URLs in a fence when the surrounding prose has a stray mid-line triple-backtick', () => {
+      const input = 'Вот ```rovers-card блок:\n\n```rovers-card\n{"homepage":"https://qdrant.tech"}\n```\n'
+      expect(preprocessLinks(input)).toBe(input)
+    })
+
+    it('skips URLs in a same-line triple-backtick code span', () => {
+      const input = 'See ```curl https://example.com``` inline'
+      expect(preprocessLinks(input)).toBe(input)
+    })
   })
 })
 
