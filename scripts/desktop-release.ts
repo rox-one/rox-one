@@ -37,6 +37,9 @@ if (!process.argv.includes('--verify-only')) {
   await downloadUv(config);
   await downloadLima(config);
   await run(['bun', 'run', 'scripts/build/stage-servers.ts', platform, arch]);
+  // Swift EventKit bridge for the Apple Calendar seam. dist:mac builds it too;
+  // this runner previously skipped it, so packaged apps shipped without it.
+  if (platform === 'darwin') await run(['bun', 'run', 'build:native:calendar'], electronDir);
   // Explicit target names keep the base YAML from adding other architectures.
   const targets = platform === 'darwin'
     ? ['--mac', `dmg:${arch}`, `zip:${arch}`]
@@ -64,6 +67,14 @@ const vmHelper = join(resources, 'bin', `darwin-${arch}`, 'limactl');
 if (platform === 'darwin' && existsSync(vmHelper)) {
   await run([vmHelper, '--version']);
   console.log(`Verified packaged Lima VM host limactl at ${vmHelper}`);
+}
+// Apple Calendar helper (built above on macOS). `auth-status` is a passive
+// EventKit query — it never raises the TCC prompt (`request-access` does).
+const calendarHelper = join(resources, 'bin', `darwin-${arch}`, 'rox-calendar-helper');
+if (platform === 'darwin') {
+  if (!existsSync(calendarHelper)) throw new Error(`Packaged calendar helper missing: ${calendarHelper}`);
+  await run([calendarHelper, 'auth-status']);
+  console.log(`Verified packaged Apple Calendar helper at ${calendarHelper}`);
 }
 const extensions = platform === 'darwin' ? ['dmg', 'zip'] : ['exe'];
 const artifacts = extensions.map(ext => `Rox-${arch}.${ext}`).map(name => {
