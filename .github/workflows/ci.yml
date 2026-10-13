@@ -17,7 +17,12 @@ jobs:
   validate:
     strategy:
       matrix:
-        os: [ubuntu-24.04, macos-15]
+        include:
+          - os: blacksmith-4vcpu-ubuntu-2404
+            label: ubuntu-24.04
+          - os: blacksmith-6vcpu-macos-15
+            label: macos-15
+    name: validate (${{ matrix.label }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
@@ -98,7 +103,7 @@ jobs:
     # upgrade-path, startup and EXPLAIN runs against a throwaway Postgres container.
     # No secrets: the service password only exists inside this job's container.
     name: Workspace-service migrations (Postgres)
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 15
     permissions:
       contents: read
@@ -141,7 +146,7 @@ jobs:
   # apps/workspace-service/test) through ROX_TEST_PG_URL, so they run here
   # instead of skipping. Strict perf budgets run in bench-strict.yml.
   unified-gates:
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     services:
       postgres:
