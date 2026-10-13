@@ -57,7 +57,7 @@ describe('UI-001 actual deep-link view query transport', () => {
     ['rox://notes/note/selected/', 'notes/note/selected/', { navigator: 'notes', details: { type: 'note', noteId: 'selected' } }],
     ['rox://workspace/ws-a/notes//note/selected', 'notes//note/selected', { navigator: 'notes', details: { type: 'note', noteId: 'selected' } }],
     ['rox://workspace/ws-a/terminal/selected/', 'terminal/selected/', { navigator: 'terminal', details: { type: 'terminal', id: 'selected/' } }],
-  ]) {
+  ] as [string, string, Record<string, unknown>][]) {
     it(`retains malformed raw view shape ${url} for the renderer alias boundary`, () => {
       const target = parseDeepLink(url)
       expect(target?.view).toBe(route)
