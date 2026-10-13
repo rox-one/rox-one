@@ -1041,7 +1041,15 @@ export class LearningService implements LearningServicePorts, LearningRpcService
     }
   }
 
-  /** User corrections flattened from the observation ledger (PRD §30), newest first. */
+  /**
+   * User corrections flattened from the observation ledger (PRD §30), newest first.
+   *
+   * `workspaceId` stays in the signature because it is the RPC port's uniform first read
+   * parameter (`LearningRpcService.listCorrections`); `LearningHost.withService` resolved this
+   * workspace's own instance and passed the authorized id, and the stores are built per workspace
+   * root (`buildInstance`), so the value is intentionally unread here — as in `getStats`/`getPolicies`.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- workspaceId is the RPC port's uniform read parameter and the host already scoped this per-workspace instance, so the service has no use for it
   listCorrections(_workspaceId: string): UserCorrection[] {
     try {
       return this.stores.observations.listCorrections()
@@ -1051,7 +1059,14 @@ export class LearningService implements LearningServicePorts, LearningRpcService
     }
   }
 
-  /** Every durable mutation recorded for the workspace (PRD §3.6/§40). */
+  /**
+   * Every durable mutation recorded for the workspace (PRD §3.6/§40).
+   *
+   * `workspaceId` stays in the signature for the same reason as `listCorrections`: the RPC port
+   * declares it (`LearningRpcService.listMutations`) and `LearningHost.withService` already scoped
+   * the call to this workspace's instance, so the per-workspace store makes it unread here.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- same contract as listCorrections: the host scoped this instance via withService and the mutation store is per workspace, so workspaceId is unread
   listMutations(_workspaceId: string): LearningMutation[] {
     try {
       return this.stores.mutations.list()
