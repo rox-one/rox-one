@@ -98,9 +98,12 @@ jobs:
         run: |
           set -euo pipefail
           IMAGE="ghcr.io/${{ github.repository_owner }}/rox-server:sha-${GITHUB_SHA::7}"
+          # --allow-insecure-bind: сервер отказывается биндиться на сетевой адрес без TLS
+          # (packages/server/src/index.ts). Для CI-smoke это верно: TLS в проде
+          # терминируется прокси/Coolify, а не самим контейнером.
           docker run -d --name rox-smoke -p 9100:9100 \
             -e ROX_SERVER_TOKEN="$(openssl rand -hex 32)" \
-            "$IMAGE"
+            "$IMAGE" --allow-insecure-bind
           for i in $(seq 1 60); do
             code="$(curl -s -o /tmp/health.json -w '%{http_code}' http://127.0.0.1:9100/health || true)"
             if [ "$code" = "200" ]; then
