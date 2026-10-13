@@ -632,6 +632,25 @@ async function main(): Promise<void> {
   esbuildContexts.push(extensionHostWorkerContext);
   console.log("👀 Watching extension-host worker...");
 
+  // 2c. worker_threads entries resolved by main via join(__dirname, ...)
+  for (const worker of [
+    { name: "bundled-skills", entry: "packages/shared/src/skills/bundled-sync.worker.ts", outfile: "apps/electron/dist/bundled-skills-worker.cjs" },
+    { name: "pool", entry: "packages/shared/src/workers/pool.worker.ts", outfile: "apps/electron/dist/pool-worker.cjs" },
+  ]) {
+    const workerContext = await esbuild.context({
+      entryPoints: [join(ROOT_DIR, worker.entry)],
+      bundle: true,
+      platform: "node",
+      format: "cjs",
+      outfile: join(ROOT_DIR, worker.outfile),
+      external: ["electron"],
+      logLevel: "info",
+    });
+    await workerContext.watch();
+    esbuildContexts.push(workerContext);
+    console.log(`👀 Watching ${worker.name} worker...`);
+  }
+
   // 3. Preload watcher (using esbuild watch API)
   const preloadContext = await esbuild.context({
     entryPoints: [join(ROOT_DIR, "apps/electron/src/preload/bootstrap.ts")],

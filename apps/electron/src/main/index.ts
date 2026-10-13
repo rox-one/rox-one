@@ -125,6 +125,7 @@ import { createApplicationMenu } from './menu'
 import { dispatchShellAction } from './shell-actions'
 import { initQuickComposer, disposeQuickComposer } from './quick-composer'
 import { nativeAccessibilityPrefersSolid } from './shell-material'
+import { setupWorkerPool } from './worker-pool-setup'
 import { getQuickComposerShortcut, setQuickComposerShortcut } from '@rox/shared/config'
 import { WindowManager } from './window-manager'
 import { readBoundWindowWorkspace } from './bootstrap-window-workspace'
@@ -795,6 +796,8 @@ app.whenReady().then(async () => {
 
   // Initialize bundled docs
   initializeDocs()
+
+  setupWorkerPool()
 
   // Sync bundled skill packs into <config>/skills (never throws; hash-merge).
   // PERF-02: claimed now (so the server bootstrap does not run it again), but
