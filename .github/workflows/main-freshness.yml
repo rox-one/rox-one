@@ -9,7 +9,9 @@ permissions: {}
 jobs:
   freshness:
     name: freshness
-    runs-on: ubuntu-latest
+    # 2026-10-13: пилот — уводим гейт с GitHub-хостед очереди (затор ~75 мин);
+    # Blacksmith уже доказан в этом репо (cloud-runs-conformance, зелёный 13.10 11:38Z).
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 5
     steps:
       - run: echo "ok"
