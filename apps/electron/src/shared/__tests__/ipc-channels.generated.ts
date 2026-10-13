@@ -816,6 +816,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'sessions:foreignAutoStatus',
   'sessions:foreignDiscover',
   'sessions:foreignPersist',
+  'sessions:foreignProgress',
   'sessions:get',
   'sessions:getBudget',
   'sessions:getFiles',

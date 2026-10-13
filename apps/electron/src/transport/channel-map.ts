@@ -101,6 +101,7 @@ export const CHANNEL_MAP = {
   importSession: invoke(RPC_CHANNELS.sessions.IMPORT),
   foreignDiscoverSessions: invoke(RPC_CHANNELS.sessions.FOREIGN_DISCOVER),
   foreignPersistSessions: invoke(RPC_CHANNELS.sessions.FOREIGN_PERSIST),
+  onForeignImportProgress: listener(RPC_CHANNELS.sessions.FOREIGN_PROGRESS),
   foreignAutoImportStatus: invoke(RPC_CHANNELS.sessions.FOREIGN_AUTO_STATUS),
   foreignAutoImportRun: invoke(RPC_CHANNELS.sessions.FOREIGN_AUTO_RUN),
   foreignAutoImportSet: invoke(RPC_CHANNELS.sessions.FOREIGN_AUTO_SET),

@@ -102,6 +102,11 @@ export interface ForeignDiscoverResult {
    * "could not look" so the UI never shows a silent empty list.
    */
   unavailable?: 'not-live'
+  /** Page of `entries` when the RPC is called with offset/limit. */
+  total?: number
+  hasMore?: boolean
+  offset?: number
+  limit?: number
 }
 
 /** Background (automatic) foreign chat import status. */
