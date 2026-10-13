@@ -274,6 +274,10 @@ export class RoxAccountAuthority {
   }
 }
 let authority: RoxAccountAuthority | undefined
-export function setRoxAccountAuthority(value: RoxAccountAuthority): void { authority = value }
+// The setter mirrors peekRoxAccountAuthority(): `undefined` clears the
+// installation authority again. Narrowing it to a non-optional value made
+// callers guard with `if (previous) set(...)`, which silently left the test
+// authority installed for the rest of a shared-process test run.
+export function setRoxAccountAuthority(value: RoxAccountAuthority | undefined): void { authority = value }
 export function peekRoxAccountAuthority(): RoxAccountAuthority | undefined { return authority }
 export function getRoxAccountAuthority(): RoxAccountAuthority { if (!authority) throw new Error('ROX_OS_SECURE_STORAGE_UNAVAILABLE'); return authority }

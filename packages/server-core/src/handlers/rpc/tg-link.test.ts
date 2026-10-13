@@ -17,7 +17,11 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  if (restoreAuthority) setRoxAccountAuthority(restoreAuthority)
+  // `bun test <dir>` runs every discovered file in ONE process, so this
+  // module-level authority outlives the file. Skipping the restore when the
+  // process started without an authority left the partial stub installed for
+  // every later suite (peekRoxAccountAuthority()?.capture / getRoxAccountAuthority).
+  setRoxAccountAuthority(restoreAuthority)
 })
 
 function stubAccount(id: string | null): void {
