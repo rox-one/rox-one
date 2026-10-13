@@ -1056,6 +1056,9 @@ export function isLockFileLive(path: string, options: LockLivenessOptions): bool
   if (identity.pid === process.pid) return false
   if (!options.isPidAlive(identity.pid)) return false
   const writtenAt = identity.startedAt > 0 ? identity.startedAt : st.mtimeMs
+  // Last sign of life: a long merge touches its lock (mtime) while the lock's
+  // startedAt stays fixed at creation.
+  const lastSeen = Math.max(writtenAt, st.mtimeMs)
   let bootTime = 0
   try {
     // Real clock: boot time is a property of this machine, not of `now`.
@@ -1063,11 +1066,11 @@ export function isLockFileLive(path: string, options: LockLivenessOptions): bool
   } catch {
     bootTime = 0
   }
-  // Written before the current boot (startedAt, else the file mtime — legacy
-  // plain-PID locks carry no timestamp): the PID was reused, not ours.
-  if (bootTime > 0 && writtenAt < bootTime) return false
+  // Last sign of life before the current boot (startedAt, else the file mtime
+  // — legacy plain-PID locks carry no timestamp): the PID was reused, not ours.
+  // A lock touched after boot still has a live holder, so the fresh mtime wins.
+  if (bootTime > 0 && lastSeen < bootTime) return false
   // TTL from the last sign of life: a long merge touches its lock (mtime).
-  const lastSeen = Math.max(writtenAt, st.mtimeMs)
   if (options.ttlMs !== undefined && options.now - lastSeen > options.ttlMs) return false
   return true
 }
