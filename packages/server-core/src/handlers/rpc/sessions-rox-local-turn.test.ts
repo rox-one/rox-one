@@ -22,7 +22,9 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  if (restoreAuthority) setRoxAccountAuthority(restoreAuthority)
+  // Shared-process catalog run: restore the cleared state too, or the pocket
+  // fixture authority stays installed for every later suite in this process.
+  setRoxAccountAuthority(restoreAuthority)
 })
 
 function harness() {
