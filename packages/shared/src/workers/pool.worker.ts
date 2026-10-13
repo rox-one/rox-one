@@ -5,5 +5,6 @@
  */
 import { defaultWorkerHandlers } from './handlers.ts';
 import { runWorkerLoop } from './worker-runtime.ts';
+import '../browser/history-worker.ts';
 
 runWorkerLoop(defaultWorkerHandlers);

@@ -32,6 +32,7 @@ import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { deleteProtectedCookieKey } from './browser-protected-cookie-key'
 import { BrowserDataAutoImporter } from './browser-data-auto-import'
+import { readBrowserHistoryInPool } from '@rox/shared/browser/history-worker'
 import { prepareBrowserCredentialImport, exportBrowserCredentialsForKeeper } from './browser-credential-vault'
 import {
   isClaimableLive,
@@ -192,11 +193,23 @@ export function registerBrowserProfileImportHandlers(server: RpcServer, deps: Ha
       })
       return { history: result.counts.history, bookmarks: result.counts.bookmarks }
     },
+    async readViaPool(_workspace, profileId, categories, watermark) {
+      const profile = discoverBrowserProfileById({ home, platform, fs, profileId })
+      if (!profile || profile.state === 'locked' || profile.state === 'unsupported') throw new Error('browser-profile-unavailable')
+      const data = await readBrowserHistoryInPool({
+        family: profile.family, path: profile.path, history: categories.history, bookmarks: categories.bookmarks, sinceVisitTime: watermark,
+      })
+      return { history: data.history.length, bookmarks: data.bookmarks.length, watermark }
+    },
   })
   importers.set(server, autoImporter)
   server.onShutdown?.(() => autoImporter.stop())
   // Source reads resume only for previously authorized profiles in the desktop host.
-  if (process.versions.electron && process.env.NODE_ENV !== 'test') autoImporter.start(getWorkspaces().map((workspace) => workspace.id))
+  if (process.versions.electron && process.env.NODE_ENV !== 'test') {
+    void deps.sessionManager.waitForInit().then(() => {
+      autoImporter.start(getWorkspaces().map((workspace) => workspace.id))
+    })
+  }
 
   server.handle(RPC_CHANNELS.browserProfile.DATA_AUTO_IMPORT, (_ctx, args: { workspaceId: string; action: 'status' | 'set' | 'run'; enabled?: boolean; profileId?: string }) => {
     if (!args || typeof args.workspaceId !== 'string') throw new Error('browser-workspace-unavailable')
