@@ -281,14 +281,14 @@ export function KnowledgeDiff({ proposalId }: { proposalId: string }) {
     <div className="flex h-full flex-col">
       <header className="border-b border-border px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <h2 className="min-w-0 flex-1 truncate text-[14px] font-semibold text-foreground">
+          <h2 className="min-w-0 flex-1 truncate text-base font-semibold text-foreground">
             {proposal.status === 'conflict'
               ? t('knowledge.diff.conflictTitle')
               : t('knowledge.diff.review')}
           </h2>
           <span
             className={cn(
-              'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
+              'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
               proposal.status === 'conflict'
                 ? 'bg-destructive/15 text-destructive'
                 : 'bg-muted text-muted-foreground',
@@ -297,17 +297,17 @@ export function KnowledgeDiff({ proposalId }: { proposalId: string }) {
             {t(`knowledge.proposals.status.${proposal.status}`)}
           </span>
         </div>
-        <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
+        <p className="mt-0.5 truncate text-sm text-muted-foreground">
           {proposal.targetRef.kind} · {proposal.targetRef.id} ·{' '}
           {new Date(proposal.createdAt).toLocaleString(getAppLocale())}
         </p>
         {proposal.status === 'conflict' && (
-          <p className="mt-1 text-[12px] leading-snug text-destructive">
+          <p className="mt-1 text-sm text-destructive">
             {t('knowledge.diff.conflictBody')}
           </p>
         )}
         {approvalExpired && (
-          <p className="mt-1 text-[12px] leading-snug text-destructive">
+          <p className="mt-1 text-sm text-destructive">
             {t('knowledge.diff.approvalExpired')}
           </p>
         )}
@@ -365,8 +365,8 @@ function DiffColumn({
   return (
     <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-md border border-border">
       <div className="shrink-0 border-b border-border bg-muted/40 px-2.5 py-1.5">
-        <div className="truncate text-[12px] font-medium text-foreground/80">{title}</div>
-        {meta && <div className="truncate font-mono text-[10px] text-muted-foreground">{meta}</div>}
+        <div className="truncate text-sm font-medium text-foreground/80" title={title}>{title}</div>
+        {meta && <div className="truncate font-mono text-xs text-muted-foreground" title={meta}>{meta}</div>}
       </div>
       <div className="min-h-0 flex-1 overflow-auto">{children}</div>
     </div>
@@ -375,7 +375,7 @@ function DiffColumn({
 
 function PlainContentView({ content }: { content: string }) {
   return (
-    <pre className="whitespace-pre-wrap break-words px-2.5 py-2 font-mono text-[12px] leading-relaxed text-foreground/80">
+    <pre className="whitespace-pre-wrap break-words px-2.5 py-2 font-mono text-sm text-foreground/80">
       {content}
     </pre>
   )
@@ -385,7 +385,7 @@ function PlainContentView({ content }: { content: string }) {
 function UnifiedDiffView({ diff }: { diff: string }) {
   const lines = useMemo(() => diff.split('\n'), [diff])
   return (
-    <pre className="px-0 py-1.5 font-mono text-[12px] leading-relaxed">
+    <pre className="px-0 py-1.5 font-mono text-sm">
       {lines.map((line, index) => (
         <div
           // Diff lines have no stable id; index keys are correct for a static render.
@@ -413,16 +413,16 @@ function OpsList({ ops }: { ops: MutationOp[] }) {
     <div className="flex flex-col gap-2 px-2.5 py-2">
       {ops.map((op, index) => (
         <div key={index} className="rounded-md border border-border/60">
-          <div className="border-b border-border/60 bg-muted/30 px-2 py-1 font-mono text-[11px] text-foreground/70">
+          <div className="border-b border-border/60 bg-muted/30 px-2 py-1 font-mono text-xs text-foreground/70">
             {op.op}
           </div>
           <div className="px-2 py-1.5">
             {op.op === 'setAttribute' ? (
-              <code className="break-all font-mono text-[12px] text-foreground/80">
+              <code className="break-all font-mono text-sm text-foreground/80">
                 {op.name} = {op.value}
               </code>
             ) : (
-              <pre className="whitespace-pre-wrap break-words font-mono text-[12px] leading-relaxed text-foreground/80">
+              <pre className="whitespace-pre-wrap break-words font-mono text-sm text-foreground/80">
                 {'markdown' in op ? op.markdown : ''}
               </pre>
             )}

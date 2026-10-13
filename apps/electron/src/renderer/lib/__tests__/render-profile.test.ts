@@ -129,7 +129,7 @@ describe('CSS: low-power profile', () => {
 
 describe('CSS: overlays are opaque', () => {
   it('never blurs popovers, menus, tooltips, toasts or dialogs', () => {
-    const net = css.slice(css.indexOf('OPAQUE OVERLAYS'))
+    const net = css.slice(css.indexOf('OPAQUE OVERLAYS (PERF-07'))
     const block = net.slice(0, net.indexOf('}') + 1)
     for (const target of ['[data-sonner-toast]', '[data-slot="tooltip-content"]', '[data-slot="popover-content"]', '[data-slot="dropdown-menu-content"]', '[data-slot="context-menu-content"]', '[data-slot="select-content"]', '[data-slot="dialog-content"]', '[role="tooltip"]', '[role="menu"]', '[role="dialog"]']) {
       expect(block).toContain(target)

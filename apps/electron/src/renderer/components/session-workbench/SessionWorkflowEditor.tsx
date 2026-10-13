@@ -193,7 +193,7 @@ function BranchNode({ data }: NodeProps<Node<BranchNodeData, 'branch'>>) {
       title={data.name}
     >
       <Handle type="target" position={Position.Left} className="!h-2.5 !w-2.5 !border-border !bg-background/90" />
-      <div className="min-w-0 truncate text-xs font-medium leading-4">{data.name}</div>
+      <div className="min-w-0 truncate text-xs font-medium leading-4" title={data.name}>{data.name}</div>
     </div>
   )
 }
@@ -299,11 +299,11 @@ function DraftNode({ id, data, selected }: NodeProps<Node<DraftNodeData, 'draft'
       {!annotation ? <Handle type="target" position={Position.Left} className="rox-map-handle !h-2.5 !w-2.5 !border-0 !bg-foreground/40" /> : null}
       <div className="mb-1.5 flex min-w-0 items-center gap-1.5">
         <Icon className={cn('h-3.5 w-3.5 shrink-0 text-muted-foreground', DRAFT_KIND_TONES[data.draft.kind])} />
-        <span className="min-w-0 flex-1 truncate text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+        <span className="min-w-0 flex-1 truncate text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
           {data.kindLabel}
         </span>
         {data.runStatus ? (
-          <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 text-[10px]', draftRunStatusClassName(data.runStatus))}>
+          <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 text-xs', draftRunStatusClassName(data.runStatus))}>
             {draftRunStatusLabel(data.runStatus, t)}
           </span>
         ) : null}
@@ -320,7 +320,7 @@ function DraftNode({ id, data, selected }: NodeProps<Node<DraftNodeData, 'draft'
         </button>
       </div>
       {data.anchorLabel ? (
-        <div className="mb-1 min-w-0 truncate text-[10px] text-muted-foreground/80" title={data.anchorLabel}>
+        <div className="mb-1 min-w-0 truncate text-xs text-muted-foreground/80" title={data.anchorLabel}>
           ↳ {data.anchorLabel}
         </div>
       ) : null}
@@ -336,8 +336,8 @@ function DraftNode({ id, data, selected }: NodeProps<Node<DraftNodeData, 'draft'
           <>
             <Handle id={`${id}:true`} type="source" position={Position.Right} style={{ top: '40%' }} title={t('entityView.mapPortTrue')} className="rox-map-handle !h-2.5 !w-2.5 !border-0 !bg-emerald-400" />
             <Handle id={`${id}:false`} type="source" position={Position.Right} style={{ top: '75%' }} title={t('entityView.mapPortFalse')} className="rox-map-handle !h-2.5 !w-2.5 !border-0 !bg-rose-400" />
-            <span className="pointer-events-none absolute right-3 top-[33%] text-[9px] text-emerald-600 dark:text-emerald-300">{t('entityView.mapPortTrue')}</span>
-            <span className="pointer-events-none absolute right-3 top-[68%] text-[9px] text-rose-600 dark:text-rose-300">{t('entityView.mapPortFalse')}</span>
+            <span className="pointer-events-none absolute right-3 top-[33%] text-xs text-emerald-600 dark:text-emerald-300">{t('entityView.mapPortTrue')}</span>
+            <span className="pointer-events-none absolute right-3 top-[68%] text-xs text-rose-600 dark:text-rose-300">{t('entityView.mapPortFalse')}</span>
           </>
         ) : <Handle type="source" position={Position.Right} className="rox-map-handle !h-2.5 !w-2.5 !border-0 !bg-foreground/40" />
       ) : null}
@@ -1193,7 +1193,7 @@ function EditorInner({
     ? shortSceneTitle(graph.scenes.find((scene) => scene.id === selectedDraft.anchorSceneId))
     : null
 
-  const inspectorButton = 'h-7 justify-start rounded-md px-2 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground'
+  const inspectorButton = 'h-7 justify-start rounded-md px-2 text-xs text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground'
 
   const changeStickyColor = (id: string, color: StickyColor) => {
     persistDraftGraph({ nodes: draftNodes.map((node) => node.id === id ? { ...node, color } : node), edges: draftEdges })
@@ -1255,7 +1255,7 @@ function EditorInner({
             role="toolbar"
             aria-label={t('entityView.map')}
             data-testid="map-toolbar"
-            className="relative z-10 flex min-w-0 shrink-0 flex-nowrap items-center gap-2 overflow-x-auto px-3 py-1.5 text-[11px]"
+            className="relative z-10 flex min-w-0 shrink-0 flex-nowrap items-center gap-2 overflow-x-auto px-3 py-1.5 text-xs"
           >
             <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden whitespace-nowrap">
               {toolbarLayout.showLiveChip ? (
@@ -1291,7 +1291,7 @@ function EditorInner({
                   variant="ghost"
                   aria-pressed={camera === 'map'}
                   className={cn(
-                    'map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground',
+                    'map-toolbar-btn h-7 rounded-md px-2.5 text-xs text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground',
                     camera === 'map' && 'bg-foreground/10 text-foreground hover:bg-foreground/10',
                   )}
                   onClick={() => persistCamera('map')}
@@ -1304,7 +1304,7 @@ function EditorInner({
                   variant="ghost"
                   aria-pressed={camera === 'flow'}
                   className={cn(
-                    'map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground',
+                    'map-toolbar-btn h-7 rounded-md px-2.5 text-xs text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground',
                     camera === 'flow' && 'bg-foreground/10 text-foreground hover:bg-foreground/10',
                   )}
                   onClick={() => persistCamera('flow')}
@@ -1319,7 +1319,7 @@ function EditorInner({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
+                className="map-toolbar-btn h-7 rounded-md px-2.5 text-xs text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
                 onClick={() => {
                   flowRef.current?.fitView({ padding: 0.2 })
                 }}
@@ -1330,7 +1330,7 @@ function EditorInner({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
+                className="map-toolbar-btn h-7 rounded-md px-2.5 text-xs text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
                 onClick={resetLayout}
               >
                 {t('entityView.mapResetLayout')}
@@ -1346,7 +1346,7 @@ function EditorInner({
                       size="sm"
                       variant="ghost"
                       data-testid="map-toolbar-rewrite-node"
-                      className="map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
+                      className="map-toolbar-btn h-7 rounded-md px-2.5 text-xs text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
                       disabled={!selected}
                       onClick={() => rewriteSelected(draft.trim() || selected?.triggerPreview || '')}
                     >
@@ -1364,7 +1364,7 @@ function EditorInner({
                     type="button"
                     size="sm"
                     variant="ghost"
-                    className="map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
+                    className="map-toolbar-btn h-7 rounded-md px-2.5 text-xs text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
                     data-testid="map-toolbar-more"
                     aria-label={t('entityView.mapMoreActions')}
                   >
@@ -1621,7 +1621,7 @@ function EditorInner({
             data-testid="map-add-node"
             aria-label={t('entityView.mapAddNode')}
             title={t('entityView.mapAddNodeHint')}
-            className="absolute bottom-3 left-3 z-10 h-8 gap-1 rounded-md bg-foreground/[0.06] px-2.5 text-[11px] text-foreground hover:bg-foreground/10"
+            className="absolute bottom-3 left-3 z-10 h-8 gap-1 rounded-md bg-foreground/[0.06] px-2.5 text-xs text-foreground hover:bg-foreground/10"
             onClick={openPickerFromPlus}
           >
             <Plus className="h-3.5 w-3.5" />
@@ -1649,7 +1649,7 @@ function EditorInner({
                 items[next]?.focus()
               }}
             >
-              <div className="px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+              <div className="px-2 py-1 text-xs uppercase tracking-[0.12em] text-muted-foreground">
                 {t('entityView.mapAddNode')}
               </div>
               {[...MAP_PICKER_PRIMARY, ...(pickerMore ? MAP_PICKER_MORE : [])].map((item, index) => {
@@ -1689,11 +1689,11 @@ function EditorInner({
               className={cn('absolute z-10 flex max-w-[calc(100%-1.5rem)] flex-col gap-3 overflow-y-auto rounded-[var(--radius-overlay)] border border-border/40 bg-background/90 p-3 shadow-strong backdrop-blur-xl', toolbarWidth !== null && toolbarWidth < 640 ? 'bottom-3 left-3 right-3 max-h-[40%]' : 'bottom-3 right-3 top-3 w-72')}
             >
               <div className="flex min-w-0 items-center gap-1.5">
-                <span className="min-w-0 truncate rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                <span className="min-w-0 truncate rounded-full bg-foreground/[0.06] px-2 py-0.5 text-xs uppercase tracking-[0.12em] text-muted-foreground">
                   {selected ? selectedKindLabel : selectedDraft ? t(SESSION_NODE_KIND_I18N[selectedDraft.kind]) : ''}
                 </span>
                 {selectedStatus ? (
-                  <span className="shrink-0 rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                  <span className="shrink-0 rounded-full bg-foreground/[0.06] px-2 py-0.5 text-xs uppercase tracking-[0.12em] text-muted-foreground">
                     {t(`entityView.mapStatus.${selectedStatus}`)}
                   </span>
                 ) : null}
@@ -1713,7 +1713,7 @@ function EditorInner({
                   <div className="line-clamp-3 break-words text-xs font-medium leading-4 text-foreground">
                     {selected.triggerPreview || selected.id}
                   </div>
-                  <label className="text-[11px] text-muted-foreground" htmlFor="session-map-compose">
+                  <label className="text-xs text-muted-foreground" htmlFor="session-map-compose">
                     {t('entityView.mapComposeLabel')}
                   </label>
                   <textarea
@@ -1731,24 +1731,24 @@ function EditorInner({
                   />
                   {selectedContextNotes.length > 0 ? (
                     <div className="flex flex-col gap-1 rounded-md bg-amber-400/[0.06] px-2 py-1.5" data-testid="map-inspector-context-notes">
-                      <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                      <div className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
                         {t('entityView.mapContextNotesTitle', { n: selectedContextNotes.length })}
                       </div>
                       {selectedContextNotes.map((note, index) => (
-                        <div key={index} className="line-clamp-2 text-[11px] text-foreground/90">{note}</div>
+                        <div key={index} className="line-clamp-2 text-xs text-foreground/90">{note}</div>
                       ))}
                     </div>
                   ) : null}
                   <Button
                     type="button"
                     size="sm"
-                    className="h-8 rounded-md text-[11px]"
+                    className="h-8 rounded-md text-xs"
                     disabled={!draft.trim()}
                     onClick={() => rewriteScene(selected, draft)}
                   >
                     {t('entityView.workbenchRewriteBranch')}
                   </Button>
-                  <p className="text-[10px] leading-4 text-muted-foreground">{t('entityView.mapRewriteHint')}</p>
+                  <p className="text-xs leading-4 text-muted-foreground">{t('entityView.mapRewriteHint')}</p>
                   <div className="flex flex-col">
                     <Button type="button" size="sm" variant="ghost" className={inspectorButton} onClick={() => onFork?.(selected.triggerMessageId)}>
                       <GitBranch className="h-3.5 w-3.5" />
@@ -1773,7 +1773,7 @@ function EditorInner({
               {selectedDraft ? (
                 <>
                   {selectedDraftAnchor ? (
-                    <div className="min-w-0 truncate text-[11px] text-muted-foreground" title={selectedDraftAnchor}>
+                    <div className="min-w-0 truncate text-xs text-muted-foreground" title={selectedDraftAnchor}>
                       ↳ {selectedDraftAnchor}
                     </div>
                   ) : null}
@@ -1784,10 +1784,10 @@ function EditorInner({
                     value={selectedDraft.title}
                     onChange={(event) => updateDraftTitle(selectedDraft.id, event.target.value)}
                   />
-                  <p className="text-[10px] leading-4 text-muted-foreground">{t('entityView.mapEdgeLegend')}</p>
+                  <p className="text-xs leading-4 text-muted-foreground">{t('entityView.mapEdgeLegend')}</p>
                   {selectedDraft.role === 'sticky' ? (
                     <div className="flex flex-col gap-2">
-                      <span className="text-[11px] text-muted-foreground">{t('entityView.mapStickyColor')}</span>
+                      <span className="text-xs text-muted-foreground">{t('entityView.mapStickyColor')}</span>
                       <div role="group" aria-label={t('entityView.mapStickyColor')} className="flex gap-2">
                         {STICKY_COLORS.map((color) => (
                           <button key={color} type="button" aria-label={t(STICKY_COLOR_I18N[color])} title={t(STICKY_COLOR_I18N[color])} aria-pressed={(selectedDraft.color ?? 'amber') === color} className={cn('h-7 w-7 rounded-full border transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent', STICKY_COLOR_CLASSES[color], (selectedDraft.color ?? 'amber') === color && 'ring-2 ring-accent')} onClick={() => changeStickyColor(selectedDraft.id, color)} />

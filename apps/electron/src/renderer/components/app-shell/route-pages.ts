@@ -47,6 +47,7 @@ export const ROUTE_PAGE_LOADERS = {
   // MainContentPanel, so their subtrees (incl. the shiki diff stack behind
   // memory/ImportReviewDialog) rode index.html's preloaded startup closure.
   homeFront: () => import('@/platform/HomeFrontPage').then((m) => ({ default: m.HomeFrontPage })),
+  missionBoard: () => import('@/platform/MissionBoard').then((m) => ({ default: m.MissionBoard })),
   memory: () => import('../memory/MemoryScreen').then((m) => ({ default: m.MemoryScreen })),
   memoryRepo: () => import('../memory/MemoryRepoScreen').then((m) => ({ default: m.MemoryRepoScreen })),
   learning: () => import('../learning/LearningScreen').then((m) => ({ default: m.LearningScreen })),

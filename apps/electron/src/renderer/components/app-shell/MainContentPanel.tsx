@@ -49,7 +49,7 @@ import {
   isTerminalNavigation,
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
-import { isScreenNavigation, isSurfaceNavigation, type LoadedSource, type LoadedSkill, type NavigationState } from '../../../shared/types'
+import { isScreenNavigation, isSurfaceNavigation, isMissionsNavigation, type LoadedSource, type LoadedSkill, type NavigationState } from '../../../shared/types'
 import { buildRouteFromNavigationState } from '../../../shared/route-parser'
 import ChatPage from '@/pages/ChatPage'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
@@ -122,6 +122,7 @@ const MemoryRepoScreen = lazyRoutePage(ROUTE_PAGE_LOADERS.memoryRepo)
 const LearningScreen = lazyRoutePage(ROUTE_PAGE_LOADERS.learning)
 const ProjectsHomeInMain = lazyRoutePage(ROUTE_PAGE_LOADERS.projectsHome)
 const HomeFrontPage = lazyRoutePage(ROUTE_PAGE_LOADERS.homeFront)
+const MissionBoard = lazyRoutePage(ROUTE_PAGE_LOADERS.missionBoard)
 const SettingsOverviewPage = lazyRoutePage(ROUTE_PAGE_LOADERS.settingsOverview)
 const PageView = lazyRoutePage(ROUTE_PAGE_LOADERS.pageView)
 const SessionHeatmapHost = lazyRoutePage(ROUTE_PAGE_LOADERS.sessionHeatmap)
@@ -764,6 +765,16 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <HomeFrontPage />
+      </Panel>
+    )
+  }
+
+  if (isMissionsNavigation(navState)) {
+    // G3 «Миссии» board (pilot). The route only resolves while the feature
+    // flag is on; MissionBoard itself renders the off-state if it is not.
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <MissionBoard />
       </Panel>
     )
   }

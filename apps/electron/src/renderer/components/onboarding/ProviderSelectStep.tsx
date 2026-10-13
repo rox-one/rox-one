@@ -109,7 +109,7 @@ export function ProviderSelectStep({ onSelect }: ProviderSelectStepProps) {
       <div className="space-y-4">
         {PROVIDER_GROUPS.map((group) => (
           <div key={group.id} className="space-y-2">
-            <p className="px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="px-1 text-xs font-medium uppercase caps-label text-muted-foreground">
               {GROUP_LABEL[group.id]}
             </p>
             {group.ids.map((id) => {

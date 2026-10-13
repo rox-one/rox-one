@@ -91,7 +91,7 @@ export function NotesAIMenu({ activeNote, onAction, disabled, compact = false }:
                 <action.icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <div className="flex flex-col">
                   <span className="text-xs font-medium">{t(action.labelKey)}</span>
-                  <span className="text-[10px] text-muted-foreground">{t(action.descriptionKey)}</span>
+                  <span className="text-xs text-muted-foreground">{t(action.descriptionKey)}</span>
                 </div>
               </StyledDropdownMenuItem>
             </React.Fragment>

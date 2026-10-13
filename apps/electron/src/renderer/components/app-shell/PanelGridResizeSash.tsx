@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useAtomValue } from 'jotai'
 import {
   capturePanelResizeTracks,
   resizePanelTracks,
@@ -6,10 +7,11 @@ import {
   type PanelGridTracks,
   type PanelResizeAxis,
 } from '@/lib/panel-workspace-layout'
+import { featureLayoutEngineAtom } from '@/atoms/unified-shell'
 import { usePanelResize } from '@/hooks/usePanelResize'
 import { ResizeHandle } from './ResizeHandle'
 import { PANEL_GAP, PANEL_GRID_MIN_HEIGHT, PANEL_GRID_MIN_WIDTH } from './panel-constants'
-import { equalSplit } from './resize-math'
+import { equalSplit, SNAP_PERCENTS, type SplitSnap } from './resize-math'
 import type { ResizeBounds } from './resize-controller'
 
 interface PanelGridResizeSashProps {
@@ -29,6 +31,15 @@ export function PanelGridResizeSash({ axis, index, shape, tracks, panelIds, onTr
   const minimum = axis === 'x' ? PANEL_GRID_MIN_WIDTH : PANEL_GRID_MIN_HEIGHT
   const hitSize = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches ? 44 : 28
   const [values, setValues] = useState({ now: minimum, max: minimum })
+  // G4 «Студия»: same magnetic contract as PanelResizeSash — targets ride the
+  // bounds handed to the controller; flag OFF keeps bounds and DOM unchanged.
+  const layoutEngineOn = useAtomValue(featureLayoutEngineAtom)
+  // Stable identity: `snap` feeds `getMeasurement`'s deps, which drive the
+  // ResizeObserver effect — a fresh object per render would reconnect it.
+  const snap = useMemo<SplitSnap | undefined>(
+    () => layoutEngineOn ? { percents: SNAP_PERCENTS } : undefined,
+    [layoutEngineOn],
+  )
   const inTrack = (position: number, track: number) => axis === 'x'
     ? position % shape.columns === track
     : Math.floor(position / shape.columns) === track
@@ -57,8 +68,9 @@ export function PanelGridResizeSash({ axis, index, shape, tracks, panelIds, onTr
       minB: minimum,
       maxA: Math.max(minimum, total - minimum),
       maxB: Math.max(minimum, total - minimum),
+      snap,
     } }
-  }, [axis, index, minimum, firstId, secondId])
+  }, [axis, index, minimum, firstId, secondId, snap])
 
   const apply = useCallback((a: number, b: number, commit: boolean) => {
     const snapshot = resizeBaseRef.current
@@ -115,6 +127,7 @@ export function PanelGridResizeSash({ axis, index, shape, tracks, panelIds, onTr
         valueMin={minimum}
         valueMax={values.max}
         dragging={resize.dragging}
+        snap={layoutEngineOn ? resize.controller.current?.snapState : undefined}
         data-grid-sash={axis}
         data-grid-sash-index={index}
         className="relative z-20"

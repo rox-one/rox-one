@@ -96,7 +96,7 @@ export function SessionWorkbench({
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">
       <aside className="flex w-[240px] shrink-0 flex-col border-r border-border/50 bg-background/40">
-        <div className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="px-3 py-2 text-xs font-medium uppercase caps-label text-muted-foreground">
           {t('entityView.workbenchMemo')}
         </div>
         <div className="min-h-0 flex-1 overflow-auto px-2 pb-3">
@@ -113,7 +113,7 @@ export function SessionWorkbench({
               />
             )
           })}
-          <div className="mt-3 text-[11px] font-medium uppercase text-muted-foreground">
+          <div className="mt-3 text-xs font-medium uppercase text-muted-foreground">
             {t('entityView.workbenchScenes')}
           </div>
           <ul className="mt-1 space-y-0.5">
@@ -127,9 +127,9 @@ export function SessionWorkbench({
                     selected?.id === scene.id && 'bg-foreground/10',
                   )}
                 >
-                  <div className="truncate">{scene.triggerPreview || scene.id}</div>
+                  <div className="truncate" title={scene.triggerPreview || scene.id}>{scene.triggerPreview || scene.id}</div>
                   {scene.tools.length > 0 && (
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
                       {t('entityView.workbenchToolsCount', { count: scene.tools.length })}
                     </div>
                   )}
@@ -143,13 +143,13 @@ export function SessionWorkbench({
         <div className="min-h-0 flex-1">{stage === 'chat' ? chatStage : graphStage}</div>
       </div>
       <aside className="flex w-[260px] shrink-0 flex-col border-l border-border/50 bg-background/40 p-3 text-xs">
-        <div className="font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="font-medium uppercase caps-label text-muted-foreground">
           {t('entityView.workbenchInspector')}
         </div>
         {selected ? (
           <div className="mt-2 space-y-2">
             <div>
-              <div className="text-[11px] uppercase text-muted-foreground">{t('entityView.workbenchPrompt')}</div>
+              <div className="text-xs uppercase text-muted-foreground">{t('entityView.workbenchPrompt')}</div>
               <div className="text-sm text-foreground">{selected.triggerPreview}</div>
             </div>
             {selected.outcomePreview ? (
@@ -158,7 +158,7 @@ export function SessionWorkbench({
               <div className="text-muted-foreground">{t('entityView.workbenchNoData')}</div>
             )}
             <div>
-              <div className="text-[11px] uppercase text-muted-foreground">{t('entityView.workbenchTools')}</div>
+              <div className="text-xs uppercase text-muted-foreground">{t('entityView.workbenchTools')}</div>
               <ul className="mt-0.5 space-y-0.5">
                 {selected.tools.length === 0 ? (
                   <li>{t('entityView.workbenchNoData')}</li>
@@ -172,7 +172,7 @@ export function SessionWorkbench({
               </ul>
             </div>
             <div>
-              <div className="text-[11px] uppercase text-muted-foreground">{t('entityView.workbenchModel')}</div>
+              <div className="text-xs uppercase text-muted-foreground">{t('entityView.workbenchModel')}</div>
               <div>{model || t('entityView.workbenchNoData')}</div>
             </div>
             <button
@@ -206,7 +206,7 @@ export function SessionWorkbench({
                 {t('entityView.fanOutLaunch')}
               </button>
             </div>
-            <p className="text-[11px] text-muted-foreground">{t('entityView.workbenchForkHint')}</p>
+            <p className="text-xs text-muted-foreground">{t('entityView.workbenchForkHint')}</p>
           </div>
         ) : (
           <p className="mt-2 text-muted-foreground">{t('entityView.workbenchNoScenes')}</p>
@@ -236,7 +236,7 @@ function Shelf({
 }) {
   return (
     <div className="mb-2">
-      <div className="text-[11px] font-medium uppercase text-muted-foreground">{title}</div>
+      <div className="text-xs font-medium uppercase text-muted-foreground">{title}</div>
       <ul>
         {items.map((item) => {
           const scene = graph.scenes.find((s) => s.id === item.sceneId)
@@ -247,9 +247,10 @@ function Shelf({
                 type="button"
                 className="w-full truncate rounded px-2 py-0.5 text-left text-xs hover:bg-foreground/5"
                 onClick={() => onPick(scene)}
+                title={item.title}
               >
                 {item.title}
-                <span className="ml-1 text-[10px] text-muted-foreground">{item.reason}</span>
+                <span className="ml-1 text-xs text-muted-foreground">{item.reason}</span>
               </button>
             </li>
           )

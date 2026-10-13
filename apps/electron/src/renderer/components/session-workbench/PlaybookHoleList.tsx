@@ -14,11 +14,11 @@ export function PlaybookHoleList({
 }) {
   const { t } = useTranslation()
   if (!holes.length) {
-    return <p className="text-[11px] text-muted-foreground">{t('entityView.playbookHoleEmpty')}</p>
+    return <p className="text-xs text-muted-foreground">{t('entityView.playbookHoleEmpty')}</p>
   }
   return (
     <div>
-      <div className="mb-1 text-[11px] font-medium uppercase text-muted-foreground">
+      <div className="mb-1 text-xs font-medium uppercase text-muted-foreground">
         {t('entityView.playbookHoles')}
       </div>
       <ul className="space-y-0.5">

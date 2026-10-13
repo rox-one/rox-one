@@ -226,7 +226,7 @@ export function TaskActionMenu({ task, sessionId, onKillTask, onInsertMessage, o
           {/* Workflow fan-out progress: live count of completed sub-agents. */}
           {task.type === 'workflow' && (task.agentsCompleted ?? 0) > 0 && (
             <span
-              className="opacity-60 tabular-nums"
+              className="opacity-60 numeric"
               title={t('chat.workflowAgentsDone', { count: task.agentsCompleted ?? 0 })}
             >
               {t('chat.workflowAgentsDone', { count: task.agentsCompleted ?? 0 })}
@@ -235,7 +235,7 @@ export function TaskActionMenu({ task, sessionId, onKillTask, onInsertMessage, o
 
           {/* Elapsed time, or terminal status word */}
           {task.status === 'running' ? (
-            <span className="opacity-60 tabular-nums">
+            <span className="opacity-60 numeric">
               {formatElapsed(displayElapsed)}
             </span>
           ) : (

@@ -3,12 +3,13 @@ import { SQL } from 'bun'
 import { randomBytes, randomUUID, createHash } from 'node:crypto'
 import { mkdir, mkdtemp, readFile, rm, symlink } from 'node:fs/promises'
 import { createServer, request, type Server } from 'node:http'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import WebSocket, { WebSocketServer } from 'ws'
 import { createWorkspaceServer, loadWorkspaceBootstrapMigrations } from '../../apps/workspace-service/src/server'
 import { loadProtectedWorkspaceDatabaseUrl } from '../../apps/workspace-service/src/auth/postgres-identity'
 import { createSharedProjectIntent } from '../../apps/electron/src/shared/project-authority'
+import { protectedWorkspaceConfigPath } from './protected-database'
 
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) await cleanup() })
@@ -24,7 +25,7 @@ async function fixture() {
   const pathDirectory = join(directory, 'bin'); await mkdir(pathDirectory)
   await symlink(process.execPath, join(pathDirectory, 'bun'))
   // No security/secret-tool CLI is exposed. The actual existing v3 credentials.key fallback is isolated.
-  const database = new SQL(await loadProtectedWorkspaceDatabaseUrl(process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents/state/rox-compound-workspace/postgres-environment.json')), { max: 12 })
+  const database = new SQL(await loadProtectedWorkspaceDatabaseUrl(protectedWorkspaceConfigPath()), { max: 12 })
   const schema = 'wp01_offline_' + randomBytes(6).toString('hex')
   await database.unsafe(`CREATE SCHEMA "${schema}"`)
   const issuer = 'urn:rox:offline:' + randomUUID()

@@ -56,10 +56,10 @@ export interface InlineMentionMenuProps {
 
 const MENU_CONTAINER_STYLE = 'overflow-hidden rounded-md bg-background text-foreground shadow-modal-small'
 const MENU_LIST_STYLE = 'max-h-[240px] overflow-y-auto py-1'
-const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-3 rounded-[var(--radius-control)] mx-1 px-2 py-1.5 text-[13px]'
+const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-3 rounded-[var(--radius-control)] mx-1 px-2 py-1.5 text-base'
 const MENU_ITEM_SELECTED = 'bg-foreground/5'
 // Type badge shown to the right of each item label (e.g. "Skill", "Source")
-const MENU_TYPE_BADGE = 'rounded-[var(--radius-control)] shadow-minimal bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground shrink-0'
+const MENU_TYPE_BADGE = 'rounded-[var(--radius-control)] shadow-minimal bg-background px-1.5 py-0.5 text-xs text-muted-foreground shrink-0'
 
 // ============================================================================
 // Path utilities
@@ -322,13 +322,13 @@ export function InlineMentionMenu({
       }}
     >
       {/* Menu header — sticky above scroll area */}
-      <div className="px-3 py-1.5 text-[12px] font-medium text-muted-foreground border-b border-foreground/5">
+      <div className="px-3 py-1.5 text-sm font-medium text-muted-foreground border-b border-foreground/5">
         {t('chat.mentionFilesSkillsSources')}
       </div>
 
       <div ref={listRef} className={MENU_LIST_STYLE}>
         {flatItems.length === 0 && filter && (
-          <div className="px-3 py-2 text-[12px] text-muted-foreground/60">{t('chat.noResults')}</div>
+          <div className="px-3 py-2 text-sm text-muted-foreground/60">{t('chat.noResults')}</div>
         )}
         {flatItems.map((item, itemIndex) => {
           const isSelected = itemIndex === selectedIndex
@@ -374,7 +374,7 @@ export function InlineMentionMenu({
                   {/* File/folder: filename then parent path fading out on overflow */}
                   <span className="shrink-0">{item.label}</span>
                   {item.file?.relativePath && getParentDir(item.file.relativePath) && (
-                    <FadingText className="text-[11px] text-muted-foreground min-w-0 opacity-50" fadeWidth={20}>
+                    <FadingText className="text-xs text-muted-foreground min-w-0 opacity-50" fadeWidth={20}>
                       {getParentDir(item.file.relativePath)}
                     </FadingText>
                   )}
@@ -383,7 +383,7 @@ export function InlineMentionMenu({
                 <>
                   {/* Skill/source: label with type badge */}
                   <div className="flex-1 min-w-0">
-                    <span className="truncate block">{item.label}</span>
+                    <span className="truncate block" title={item.label}>{item.label}</span>
                   </div>
                   <span className={MENU_TYPE_BADGE}>
                     {item.type === 'skill' ? t('common.skill') : item.type === 'knowledge' ? (item.knowledge?.provider ?? 'knowledge') : t('common.source')}

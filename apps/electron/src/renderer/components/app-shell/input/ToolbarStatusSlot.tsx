@@ -209,7 +209,7 @@ function BrowserStatusBar({
     >
       <span className="shrink-0 flex h-3.5 w-3.5 items-center justify-center">
         {instance.isLoading ? (
-          <Spinner className="text-[10px] leading-none" />
+          <Spinner className="text-xs leading-none" />
         ) : instance.favicon && !faviconFailed ? (
             <img
               src={instance.favicon}
@@ -221,7 +221,7 @@ function BrowserStatusBar({
           <Globe className="h-3.5 w-3.5" />
         )}
       </span>
-      <span className="min-w-0 truncate text-xs">
+      <span className="min-w-0 truncate text-xs" title={t('chat.usingConnection', { name: hostname })}>
         {t('chat.usingConnection', { name: hostname })}
       </span>
     </motion.button>

@@ -1,0 +1,27 @@
+/**
+ * G6 «Пути и линзы» — prototype-only keyframes.
+ *
+ * Only two authored moments exist in the proposal and both belong to the lens:
+ * the right-edge sheet entering (180ms) and its backdrop fading in (120ms).
+ * Under `prefers-reduced-motion: reduce` both become instant, matching the
+ * `--motion-*` tokens that go to 0 in that mode.
+ */
+
+@keyframes g06FadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes g06SheetIn {
+  from { opacity: 0.6; transform: translateX(0.5rem); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-testid='g06-wb-backdrop'],
+  [data-testid='g06-wb-lens'],
+  [data-testid='lens-backdrop'] {
+    animation: none !important;
+    transform: none !important;
+  }
+}

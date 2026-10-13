@@ -156,7 +156,7 @@ export function MarkdownJsonBlock({ code, className }: MarkdownJsonBlockProps) {
       <div className={cn('relative group rounded-[var(--radius-card)] overflow-hidden border bg-muted/30', className)}>
         {/* Header — matches CodeBlock full mode (label + copy on hover) */}
         <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b text-xs">
-          <span className="text-muted-foreground font-medium uppercase tracking-wide">json</span>
+          <span className="text-muted-foreground font-medium uppercase caps-label">json</span>
           <button
             onClick={handleCopy}
             className="opacity-0 group-hover:opacity-50 hover:!opacity-100 transition-opacity text-muted-foreground hover:text-foreground"

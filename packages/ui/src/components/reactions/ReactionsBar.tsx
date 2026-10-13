@@ -52,7 +52,7 @@ export function ReactionsBar({ reactions, onToggle, palette = DEFAULT_REACTION_P
           aria-label={t('entities.ui.reactions.toggle', { emoji: r.emoji, count: r.count })}
           onClick={() => onToggle?.(r.emoji)}
           className={cn(
-            'inline-flex h-6 items-center gap-1 rounded-full border px-2 text-[12px] tabular-nums',
+            'inline-flex h-6 items-center gap-1 rounded-full border px-2 text-sm numeric',
             r.mine ? cn(SELECTED_TINT, 'border-accent/40') : 'border-border bg-foreground/[0.03]',
             interactive && HOVER_TINT, MOTION_FAST, FOCUS_RING,
           )}
@@ -69,7 +69,7 @@ export function ReactionsBar({ reactions, onToggle, palette = DEFAULT_REACTION_P
           aria-haspopup="true"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className={cn('inline-flex h-6 w-7 items-center justify-center rounded-full border border-border text-[12px] text-text-muted', HOVER_TINT, MOTION_FAST, FOCUS_RING)}
+          className={cn('inline-flex h-6 w-7 items-center justify-center rounded-full border border-border text-sm text-text-muted', HOVER_TINT, MOTION_FAST, FOCUS_RING)}
         >
           +
         </button>
@@ -87,7 +87,7 @@ export function ReactionsBar({ reactions, onToggle, palette = DEFAULT_REACTION_P
               type="button"
               aria-label={emoji}
               onClick={() => { onToggle?.(emoji); setOpen(false); addRef.current?.focus() }}
-              className={cn('size-8 rounded-[6px] text-[16px]', HOVER_TINT, FOCUS_RING)}
+              className={cn('size-8 rounded-[6px] text-title-md', HOVER_TINT, FOCUS_RING)}
             >
               {emoji}
             </button>

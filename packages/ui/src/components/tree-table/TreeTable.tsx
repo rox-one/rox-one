@@ -105,14 +105,14 @@ export function TreeTable({ rows, columns, label, defaultExpandedIds, expandedId
     }
   }
 
-  if (rows.length === 0) return <div className={cn('py-3 text-[12px] text-text-muted', className)}>{t('entities.ui.tree.empty')}</div>
+  if (rows.length === 0) return <div className={cn('py-3 text-sm text-text-muted', className)}>{t('entities.ui.tree.empty')}</div>
 
   return (
-    <table role="treegrid" aria-label={label} className={cn('w-full border-collapse text-[13px]', className)}>
+    <table role="treegrid" aria-label={label} className={cn('w-full border-collapse text-data', className)}>
       <thead>
         <tr>
           {columns.map((col) => (
-            <th key={col.id} scope="col" style={{ width: col.width }} className="h-8 border-b border-border px-2 text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+            <th key={col.id} scope="col" style={{ width: col.width }} className="h-8 border-b border-border px-2 text-left text-xs font-semibold uppercase caps-label text-text-muted">
               {col.header}
             </th>
           ))}

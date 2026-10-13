@@ -2,10 +2,11 @@ import { afterEach, expect, test } from 'bun:test'
 import { SQL } from 'bun'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { chmod, mkdtemp, rm, writeFile } from 'node:fs/promises'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { createWorkspaceServer, loadWorkspaceBootstrapMigrations } from '../../apps/workspace-service/src/server.ts'
 import { loadProtectedWorkspaceDatabaseUrl } from '../../apps/workspace-service/src/auth/postgres-identity.ts'
+import { protectedWorkspaceConfigPath } from './protected-database'
 
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) await cleanup() })
@@ -17,7 +18,7 @@ function string(value: unknown): string { if (typeof value !== 'string') throw n
 function required<T>(value: T | undefined): T { if (value === undefined) throw new Error('Missing persisted test row'); return value }
 
 async function fixture() {
-  const url = await loadProtectedWorkspaceDatabaseUrl(process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents/state/rox-compound-workspace/postgres-environment.json'))
+  const url = await loadProtectedWorkspaceDatabaseUrl(protectedWorkspaceConfigPath())
   const database = new SQL(url, { max: 12 })
   const schema = 'wp01_counters_' + randomBytes(6).toString('hex')
   const directory = await mkdtemp(join(tmpdir(), 'rox-counter-test-'))

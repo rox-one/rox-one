@@ -92,17 +92,17 @@ export function SceneNode({ id, data, selected }: NodeProps<SceneFlowNode>) {
         />
         <span
           className={cn(
-            'min-w-0 truncate rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em]',
+            'min-w-0 truncate rounded-full px-1.5 py-0.5 text-xs font-medium uppercase tracking-[0.12em]',
             kindTone(kind),
           )}
         >
           {kindLabel}
         </span>
         {scene.orphaned ? (
-          <span className="shrink-0 text-[9px] uppercase tracking-[0.12em] text-amber-300/80">orphaned</span>
+          <span className="shrink-0 text-xs uppercase tracking-[0.12em] text-amber-300/80">orphaned</span>
         ) : null}
       </div>
-      <div className="line-clamp-2 min-w-0 break-words text-[12px] font-medium leading-4 text-foreground">
+      <div className="line-clamp-2 min-w-0 break-words text-sm font-medium leading-4 text-foreground">
         {scene.triggerPreview || scene.id}
       </div>
       {toolGroups.length > 0 && (
@@ -111,7 +111,7 @@ export function SceneNode({ id, data, selected }: NodeProps<SceneFlowNode>) {
             <span
               key={group.name}
               className={cn(
-                'rounded-md bg-foreground/[0.06] px-1.5 py-0.5 text-[10px] text-muted-foreground',
+                'rounded-md bg-foreground/[0.06] px-1.5 py-0.5 text-xs text-muted-foreground',
                 group.status === 'error' && 'text-rose-300',
               )}
             >
@@ -119,12 +119,12 @@ export function SceneNode({ id, data, selected }: NodeProps<SceneFlowNode>) {
             </span>
           ))}
           {toolGroups.length > 4 ? (
-            <span className="px-1 py-0.5 text-[10px] text-muted-foreground/70">+{toolGroups.length - 4}</span>
+            <span className="px-1 py-0.5 text-xs text-muted-foreground/70">+{toolGroups.length - 4}</span>
           ) : null}
         </div>
       )}
       {scene.outcomePreview ? (
-        <div className="mt-1.5 line-clamp-2 text-[10px] leading-4 text-muted-foreground/85">
+        <div className="mt-1.5 line-clamp-2 text-xs leading-4 text-muted-foreground/85">
           {scene.outcomePreview}
         </div>
       ) : null}

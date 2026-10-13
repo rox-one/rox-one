@@ -61,7 +61,7 @@ export function SubtaskProgress({ subtasks, total: totalProp, accent = 'var(--pr
           />
         ))}
       </div>
-      <span className="shrink-0 text-[11px] font-medium tabular-nums text-foreground/50">
+      <span className="shrink-0 text-xs font-medium numeric text-foreground/50">
         {done}/{total}
       </span>
     </div>

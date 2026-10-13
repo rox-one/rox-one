@@ -56,7 +56,7 @@ export function SuperEngineeringAppearanceSettings() {
             aria-label={t('settings.appearance.seEditorZoom')}
             className="w-full max-w-[200px]"
           />
-          <span className="text-xs text-muted-foreground tabular-nums">{editorZoom}%</span>
+          <span className="text-xs text-muted-foreground numeric">{editorZoom}%</span>
         </SettingsRow>
       </SettingsCard>
     </SettingsSection>

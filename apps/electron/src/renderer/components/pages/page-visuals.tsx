@@ -31,7 +31,7 @@ export function PageKindBadge({ kind, className }: { kind: PageKind; className?:
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center gap-1 rounded-md border border-border/60 bg-foreground/[0.02] px-1.5 py-0.5 text-[10.5px] font-medium text-foreground/60',
+        'inline-flex shrink-0 items-center gap-1 rounded-md border border-border/60 bg-foreground/[0.02] px-1.5 py-0.5 text-xs font-medium text-foreground/60',
         kind === 'live' && 'text-emerald-600 dark:text-emerald-400',
         kind === 'interactive' && 'text-sky-600 dark:text-sky-400',
         className,
@@ -66,7 +66,7 @@ export function PageFreshness({ config, className }: { config: PageConfig; class
   }
 
   return (
-    <span className={cn('inline-flex min-w-0 items-center gap-1.5 text-[11px] text-foreground/50', className)}>
+    <span className={cn('inline-flex min-w-0 items-center gap-1.5 text-xs text-foreground/50', className)}>
       <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', dotClass)} aria-hidden />
       <span className="truncate">{text}</span>
     </span>

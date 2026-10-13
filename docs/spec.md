@@ -1,3 +1,15 @@
+## ROX UI/UX upgrade — пакет G8+G9+G10, пилот G1, трек G6→G3→G4 — 2026-10-09
+
+Спецификация одобренной программы UI/UX-апгрейда (реализация предложений, отобранных пользователем). Источник требований и доказательств: `~/Projects/2026-10-09-rox-uiux-proposals/` (PROPOSALS.md; AS-IS.md — дефекты D-01…D-31 с измерениями; report/gNN-*.md — постатейные спеки с селекторами и значениями; prototypes/ — измеренные оверрайд-слои; shots/ — до/после; RECEIPT.json).
+
+Область: волна 1 — пакет G8 (единая лестница материала/обрамления, фокус-система, состояния, motion; 23 токена), G9 (38 пунктов полировки A) и G10 (40 пунктов полировки B: настройки, онбординг, каталоги, терминал/браузер, мобильный WebUI) строго по спекам отчётов; далее пилот G1 за флагом; затем срезы G6→G3→G4 за флагами; G2 — только после перф-гейта; G5 отложен до следующего вложения в чат.
+
+Ограничения: только токены (без raw-значений), ru-first, i18n 12 локалей (паритет обязателен), WCAG 2.1 AA не хуже текущего, blur только на chrome и не анимируется, `data-render-profile="performance"` сохраняется, клавиатурная карта не меняется, новых зависимостей нет.
+
+Исполняемый план и критерии приёмки: [docs/plans/2026-10-09-rox-uiux-upgrade.md](plans/2026-10-09-rox-uiux-upgrade.md).
+
+---
+
 ## Current architecture and server-container recheck — resumed local scope
 
 Owner: architecture audit lead; source baseline `57871f492d1b21177ab767454d90395d72496b4e` (root 0.11.8). The user cancelled the 169-package / 445-leaf Cloud dispatch: no new Codex Cloud tasks or retries. Preserve historical plans as evidence, with this scope correction taking precedence.

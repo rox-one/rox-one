@@ -82,6 +82,8 @@ export default function ServerSettingsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [tokenVisible, setTokenVisible] = useState(false)
   const [error, setError] = useState<string>()
+  // Transient «Сохранено» chip (P-10-15): shown after a successful save.
+  const [savedPulse, setSavedPulse] = useState(false)
 
   const isDirty = JSON.stringify(form) !== JSON.stringify(savedForm)
 
@@ -119,6 +121,12 @@ export default function ServerSettingsPage() {
     void loadSettings(granted)
   }, [granted, loadSettings])
 
+  useEffect(() => {
+    if (!savedPulse) return
+    const id = window.setTimeout(() => setSavedPulse(false), 2400)
+    return () => window.clearTimeout(id)
+  }, [savedPulse])
+
   const handleSave = async () => {
     setError(undefined)
     const port = parseInt(form.port, 10)
@@ -148,6 +156,7 @@ export default function ServerSettingsPage() {
       }
       await window.electronAPI.setServerConfig(formToConfig(form))
       setSavedForm(form)
+      setSavedPulse(true)
       const newStatus = await window.electronAPI.getServerStatus()
       setStatus(newStatus)
       toast.success(t('settings.server.saved'))
@@ -270,7 +279,7 @@ export default function ServerSettingsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-6 text-[11px] px-2"
+                  className="h-6 text-xs px-2"
                   onClick={() => {
                     const allowed = settingsPageActionAllowed({
                       pageId: 'server',
@@ -332,7 +341,7 @@ export default function ServerSettingsPage() {
 
                     <SettingsRow label={t("settings.server.token")}>
                       <div className="flex items-center gap-1.5">
-                        <code className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded max-w-[180px] truncate">
+                        <code className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded max-w-[180px] truncate" title={tokenVisible ? status.token : undefined}>
                           {tokenVisible ? status.token : '••••••••••••••••'}
                         </code>
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setTokenVisible(v => !v)}>
@@ -348,10 +357,10 @@ export default function ServerSettingsPage() {
 
                 <SettingsRow label={t("settings.server.certificate")}>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                    <span className="text-xs text-muted-foreground truncate max-w-[200px]" title={form.tlsCertPath || t('settings.server.notConfigured')}>
                       {form.tlsCertPath || t('settings.server.notConfigured')}
                     </span>
-                    <Button variant="outline" size="sm" className="h-6 text-[11px] px-2 shrink-0" onClick={handleBrowseCert}>
+                    <Button variant="outline" size="sm" className="h-6 text-xs px-2 shrink-0" onClick={handleBrowseCert}>
                       {t('common.browse')}
                     </Button>
                   </div>
@@ -359,10 +368,10 @@ export default function ServerSettingsPage() {
 
                 <SettingsRow label={t("settings.server.privateKey")}>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                    <span className="text-xs text-muted-foreground truncate max-w-[200px]" title={form.tlsKeyPath || t('settings.server.notConfigured')}>
                       {form.tlsKeyPath || t('settings.server.notConfigured')}
                     </span>
-                    <Button variant="outline" size="sm" className="h-6 text-[11px] px-2 shrink-0" onClick={handleBrowseKey}>
+                    <Button variant="outline" size="sm" className="h-6 text-xs px-2 shrink-0" onClick={handleBrowseKey}>
                       {t('common.browse')}
                     </Button>
                   </div>
@@ -386,8 +395,8 @@ export default function ServerSettingsPage() {
           {error && (
             <p className="text-xs text-destructive px-1">{error}</p>
           )}
-          {(isDirty || error) && (
-            <SettingsCardFooter>
+          {(isDirty || error || savedPulse) && (
+            <SettingsCardFooter saved={savedPulse}>
               <Button variant="outline" size="sm" onClick={handleReset} disabled={isSaving}>
                 {t('common.reset')}
               </Button>

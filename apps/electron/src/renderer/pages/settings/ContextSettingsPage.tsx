@@ -522,7 +522,7 @@ export default function ContextSettingsPage() {
                       {showTemplateActions && showTemplateDiff && templatePreview != null ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div className="space-y-1 min-w-0">
-                            <div className="text-[11px] font-medium text-muted-foreground">
+                            <div className="text-xs font-medium text-muted-foreground">
                               {t('settings.context.templateColumn')}
                               {currentDoc.templateVersion != null
                                 ? ` · v${currentDoc.templateVersion}`
@@ -533,7 +533,7 @@ export default function ContextSettingsPage() {
                             </pre>
                           </div>
                           <div className="space-y-1 min-w-0">
-                            <div className="text-[11px] font-medium text-muted-foreground">
+                            <div className="text-xs font-medium text-muted-foreground">
                               {t('settings.context.yoursColumn')}
                               {currentDoc.version != null ? ` · v${currentDoc.version}` : ''}
                             </div>

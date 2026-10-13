@@ -55,9 +55,10 @@ export function SessionStatusIcon({ item }: SessionStatusIconProps) {
           role="button"
           tabIndex={0}
           className={cn(
-            "relative z-10 !h-5 !w-5 min-h-5 min-w-5 flex items-center justify-center rounded-full transition-colors cursor-pointer",
-            "hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-            "[&>svg]:w-full [&>svg]:h-full [&>img]:w-full [&>img]:h-full [&>span]:text-base",
+            "relative z-10 flex items-center justify-center rounded-full transition-colors duration-[var(--motion-fast)] cursor-pointer",
+            "min-w-[var(--control-hit-min)] min-h-[var(--control-hit-min)]",
+            "hover:bg-foreground/5",
+            "[&>svg]:w-4 [&>svg]:h-4 [&>img]:w-4 [&>img]:h-4 [&>span]:text-base",
           )}
           style={getStateIconStyle(status, ctx.sessionStatuses)}
           aria-haspopup="menu"

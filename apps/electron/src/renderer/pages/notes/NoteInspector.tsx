@@ -157,7 +157,7 @@ function ScalarPropertyField({ binding, writable, onSave }: {
   }
   return (
     <div className="space-y-1" data-note-property={binding.keyPath.join('.')}>
-      <label id={labelId} className="block truncate text-[11px] text-muted-foreground">{binding.keyPath.join('.')}</label>
+      <label id={labelId} className="block truncate text-xs text-muted-foreground">{binding.keyPath.join('.')}</label>
       <select
         value={type}
         disabled={readOnly || pending}
@@ -167,7 +167,7 @@ function ScalarPropertyField({ binding, writable, onSave }: {
           if (event.target.value === 'null') setDraft('null')
           setInvalid(false)
         }}
-        className="h-6 rounded-[var(--radius-control)] border border-border/50 bg-background px-1 text-[10px]"
+        className="h-6 rounded-[var(--radius-control)] border border-border/50 bg-background px-1 text-xs"
       >
         {['string', 'number', 'boolean', 'null'].map(kind => <option key={kind} value={kind}>{t(`notes.content.propertyTypes.${kind}`)}</option>)}
         {originalType === 'undefined' && <option value="undefined">{t('notes.content.propertyReadOnly.unsupportedValue')}</option>}
@@ -184,7 +184,7 @@ function ScalarPropertyField({ binding, writable, onSave }: {
         aria-busy={pending || undefined}
         className="h-7 w-full rounded-[var(--radius-card)] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30 read-only:text-muted-foreground"
       />
-      <p id={helpId} className={cn('text-[10px] leading-4 text-muted-foreground', invalid && 'text-destructive')}>
+      <p id={helpId} className={cn('text-xs text-muted-foreground', invalid && 'text-destructive')}>
         {invalid ? t('notes.content.propertyTypeInvalid', { type }) : binding.readOnly
           ? t(`notes.content.propertyReadOnly.${binding.readOnly}`)
           : t('notes.content.propertyTypeHelp', { type })}
@@ -323,7 +323,7 @@ export function NoteInspector({
             <button
               key={tag}
               className={cn(
-                'rounded-[var(--radius-control)] bg-foreground/[0.06] px-2 py-1 text-[11px] hover:bg-foreground/[0.1]',
+                'rounded-[var(--radius-control)] bg-foreground/[0.06] px-2 py-1 text-xs hover:bg-foreground/[0.1]',
                 selectedTag === tag && 'bg-accent/15 text-accent',
               )}
               onClick={() => onTagClick(tag)}
@@ -334,7 +334,7 @@ export function NoteInspector({
         </div>
         {suggestedPresets.length > 0 && (
           <div className="mt-2">
-            <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground/70">
+            <div className="mb-1 text-xs uppercase caps-label text-muted-foreground/70">
               {t('notes.inspector.suggestedTags')}
             </div>
             <div className="flex flex-wrap gap-1">
@@ -342,7 +342,7 @@ export function NoteInspector({
                 <button
                   key={tag}
                   type="button"
-                  className="rounded-[var(--radius-control)] border border-dashed border-border/70 px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-foreground/[0.06]"
+                  className="rounded-[var(--radius-control)] border border-dashed border-border/70 px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-foreground/[0.06]"
                   onClick={() => onAddTag?.(tag)}
                 >
                   #{tag}
@@ -360,7 +360,7 @@ export function NoteInspector({
             <CheckSquare2 className="h-3.5 w-3.5" />
             {t('notes.inspector.tasks')}
           </div>
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {t('notes.inspector.openCount', { count: openTasks.length })}
           </span>
         </div>
@@ -379,7 +379,7 @@ export function NoteInspector({
               </span>
               <span className="min-w-0 flex-1">
                 <span className={cn('block text-xs', task.checked && 'text-muted-foreground line-through')}>{task.text}</span>
-                {task.noteId !== activeNote.id && <span className="block truncate text-[11px] text-muted-foreground">{task.noteTitle}</span>}
+                {task.noteId !== activeNote.id && <span className="block truncate text-xs text-muted-foreground" title={task.noteTitle}>{task.noteTitle}</span>}
               </span>
             </button>
           ))}
@@ -393,7 +393,7 @@ export function NoteInspector({
       <section className="mb-5">
         <div className="mb-2 flex items-center justify-between">
           <div className="text-xs font-medium text-muted-foreground">{t('notes.inspector.properties')}</div>
-          <span className="text-[11px] text-muted-foreground">{t('notes.inspector.frontmatter')}</span>
+          <span className="text-xs text-muted-foreground">{t('notes.inspector.frontmatter')}</span>
         </div>
         <div className="space-y-1.5">
           {propertyProjection.status === 'readOnly' && <p role="status" className="text-xs text-muted-foreground">{t('notes.content.propertySourceReadOnly')}</p>}
@@ -402,7 +402,7 @@ export function NoteInspector({
               <ScalarPropertyField binding={binding} writable={propertiesWritable} onSave={onUpdateScalarProperty} />
               {binding.keyPath.length === 1 && !binding.readOnly && propertiesWritable && <button
                 type="button"
-                className="mt-1 text-[10px] text-muted-foreground hover:text-destructive"
+                className="mt-1 text-xs text-muted-foreground hover:text-destructive"
                 onClick={() => onUpdateProperty(binding.keyPath[0] ?? '', undefined)}
               >{t('notes.inspector.removeProperty', { key: binding.keyPath[0] })}</button>}
             </div>
@@ -410,7 +410,7 @@ export function NoteInspector({
           {propertyEntries.filter(([key]) => propertyProjection.status === 'ok' && !propertyProjection.properties.some(binding => binding.keyPath[0] === key)).map(([key, value]) => (
             <div key={key} className="rounded-[var(--radius-card)] bg-background/80 px-2 py-1.5 ring-1 ring-border/50">
               <div className="mb-1 flex items-center justify-between gap-2">
-                <div className="truncate text-[11px] text-muted-foreground">{key}</div>
+                <div className="truncate text-xs text-muted-foreground">{key}</div>
                 <button
                   className="grid h-5 w-5 place-items-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                   disabled={!propertiesWritable}
@@ -433,7 +433,7 @@ export function NoteInspector({
           {propertyEntries.length === 0 && propertyProjection.status === 'ok' && propertyProjection.properties.length === 0 && <span className="text-xs text-muted-foreground">{t('notes.inspector.none')}</span>}
         </div>
         <div className="mt-2 rounded-[var(--radius-card)] border border-dashed border-border/70 bg-background/50 p-2">
-          <div className="mb-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <div className="mb-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
             <Plus className="h-3 w-3" />
             {t('notes.inspector.addProperty')}
           </div>
@@ -470,7 +470,7 @@ export function NoteInspector({
             {t('notes.inspector.assets')}
           </div>
           <button
-            className="h-6 rounded-[var(--radius-control)] px-2 text-[11px] hover:bg-foreground/[0.06]"
+            className="h-6 rounded-[var(--radius-control)] px-2 text-xs hover:bg-foreground/[0.06]"
             onClick={onOpenAssetDialog}
           >
             {t('notes.inspector.manage')}
@@ -480,7 +480,7 @@ export function NoteInspector({
           {assetsUnavailable ? (
             <div data-testid="notes-inspector-assets-unavailable" data-error-code={assetsUnavailable} className="space-y-2">
               <p role="status" className="text-xs text-muted-foreground">{t('common.unavailable')}</p>
-              <button className="h-6 rounded-[6px] px-2 text-[11px] hover:bg-foreground/[0.06]" onClick={onRetryAssets}>{t('common.retry')}</button>
+              <button className="h-6 rounded-[6px] px-2 text-xs hover:bg-foreground/[0.06]" onClick={onRetryAssets}>{t('common.retry')}</button>
             </div>
           ) : currentNoteAssets.length ? currentNoteAssets.map(asset => (
             <ContextMenu key={asset.relativePath}>
@@ -490,8 +490,8 @@ export function NoteInspector({
                   onClick={() => onOpenFile(asset.path)}
                 >
                   <AssetThumbnail asset={asset} size="sm" />
-                  <span className="min-w-0 flex-1 truncate text-xs">{asset.name}</span>
-                  <span className="text-[10px] text-muted-foreground">{formatBytes(asset.size)}</span>
+                  <span className="min-w-0 flex-1 truncate text-xs" title={asset.name}>{asset.name}</span>
+                  <span className="text-xs text-muted-foreground numeric">{formatBytes(asset.size)}</span>
                 </button>
               </ContextMenuTrigger>
               <StyledContextMenuContent>
@@ -506,7 +506,7 @@ export function NoteInspector({
                   onClick={() => onOpenFile(resolveNoteAssetPath(activeNote, ref))}
                 >
                   <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 truncate text-xs">{ref}</span>
+                  <span className="min-w-0 flex-1 truncate text-xs" title={ref}>{ref}</span>
                 </button>
               </ContextMenuTrigger>
               <StyledContextMenuContent>
@@ -545,7 +545,7 @@ export function NoteInspector({
               className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
             >
               <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              <span className="min-w-0 flex-1 truncate text-xs">{target}</span>
+              <span className="min-w-0 flex-1 truncate text-xs" title={target}>{target}</span>
             </button>
           )) : <span className="text-xs text-muted-foreground">{t('notes.inspector.allLinksResolve')}</span>}
         </div>
@@ -564,8 +564,8 @@ export function NoteInspector({
               onClick={() => onOpenNote(backlink.noteId)}
               className="w-full rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
             >
-              <div className="truncate text-xs font-medium">{backlink.title}</div>
-              <div className="line-clamp-2 text-[11px] text-muted-foreground">{backlink.preview}</div>
+              <div className="truncate text-xs font-medium" title={backlink.title}>{backlink.title}</div>
+              <div className="line-clamp-2 text-xs text-muted-foreground">{backlink.preview}</div>
             </button>
           )) : <span className="text-xs text-muted-foreground">{t('notes.inspector.noBacklinks')}</span>}
         </div>

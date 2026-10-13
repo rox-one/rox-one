@@ -57,7 +57,7 @@ export function SurfaceEmptyState({ surface }: SurfacePageProps) {
   const { titleKey, bodyKey } = surfaceEmptyStateKeys(surface)
   return (
     <div
-      className="flex h-full min-h-0 flex-col items-center justify-center bg-background font-sans text-[13px] text-foreground"
+      className="flex h-full min-h-0 flex-col items-center justify-center bg-background font-sans text-base text-foreground"
       data-testid={`surface-empty-${surface}`}
       data-surface={surface}
     >

@@ -50,7 +50,7 @@ export function TaskChatPreview({
             aria-hidden
           />
         )}
-        <span className="truncate text-sm font-medium text-foreground">{title}</span>
+        <span className="truncate text-sm font-medium text-foreground" title={title}>{title}</span>
         {status && <StatusBadge status={status} className="ml-auto" />}
       </div>
 
@@ -65,19 +65,19 @@ export function TaskChatPreview({
           </div>
 
           {/* Task-mode orchestrator tag */}
-          <div className="flex items-center gap-2 text-[11px] text-foreground/55">
+          <div className="flex items-center gap-2 text-xs text-foreground/55">
             <Workflow className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
             <span className="font-medium">Task mode · orchestrator</span>
             <ModelChip model={model} />
           </div>
 
           {/* Orchestrator intro */}
-          <p className="text-sm leading-relaxed text-foreground/90">{assistantIntro}</p>
+          <p className="text-sm text-foreground/90">{assistantIntro}</p>
 
           {/* Spawned subtasks panel */}
           {subtasks.length > 0 && (
             <div className="rounded-lg border border-border/60 bg-card p-3">
-              <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              <div className="mb-1 text-xs font-medium uppercase caps-label text-muted-foreground">
                 Spawned subtasks
               </div>
               <div className="divide-y divide-border/40">
@@ -90,7 +90,7 @@ export function TaskChatPreview({
 
           {/* Follow-up */}
           {assistantFollowUp && (
-            <p className="text-sm leading-relaxed text-foreground/90">{assistantFollowUp}</p>
+            <p className="text-sm text-foreground/90">{assistantFollowUp}</p>
           )}
         </div>
       </div>

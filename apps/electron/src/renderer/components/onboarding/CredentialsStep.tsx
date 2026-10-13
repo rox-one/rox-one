@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next"
 import { Check, ExternalLink } from "lucide-react"
 import type { ApiSetupMethod } from "./APISetupStep"
 import { StepFormLayout, BackButton, ContinueButton } from "./primitives"
+import { OnboardingError } from "./OnboardingError"
 import {
   ApiKeyInput,
   type ApiKeyStatus,
@@ -34,6 +35,8 @@ interface CredentialsStepProps {
   isProviderOAuthPending?: boolean
   onSubmitAuthCode?: (code: string) => void
   onCancelOAuth?: () => void
+  /** Clears the wizard error so the shared error region can be dismissed. */
+  onClearError?: () => void
   // Device flow (Copilot)
   copilotDeviceCode?: { userCode: string; verificationUri: string }
   // Edit mode (pre-fill existing connection values)
@@ -58,6 +61,7 @@ export function CredentialsStep({
   isProviderOAuthPending,
   onSubmitAuthCode,
   onCancelOAuth,
+  onClearError,
   copilotDeviceCode,
   editInitialValues,
 }: CredentialsStepProps) {
@@ -123,9 +127,11 @@ export function CredentialsStep({
             <p>{t("onboarding.credentials.chatGPTInstructions")}</p>
           </div>
           {status === 'error' && errorMessage && (
-            <div className="rounded-lg bg-destructive/10 text-destructive text-sm p-3">
-              {errorMessage}
-            </div>
+            <OnboardingError
+              message={errorMessage}
+              onRetry={() => onStartOAuth?.()}
+              onDismiss={onClearError}
+            />
           )}
           {status === 'success' && (
             <div className="rounded-lg bg-success/10 text-success text-sm p-3">
@@ -191,9 +197,11 @@ export function CredentialsStep({
             </div>
           )}
           {status === 'error' && errorMessage && (
-            <div className="rounded-lg bg-destructive/10 text-destructive text-sm p-3 text-center">
-              {errorMessage}
-            </div>
+            <OnboardingError
+              message={errorMessage}
+              onRetry={() => onStartOAuth?.()}
+              onDismiss={onClearError}
+            />
           )}
           {status === 'success' && (
             <div className="rounded-lg bg-success/10 text-success text-sm p-3 text-center">

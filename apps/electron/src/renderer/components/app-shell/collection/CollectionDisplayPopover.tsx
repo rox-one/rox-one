@@ -171,7 +171,7 @@ export function CollectionDisplayPopover({
                   data-collection-dialog-item
                   onClick={() => patch({ orderDir: dir })}
                   className={cn(
-                    'h-6 flex-1 rounded-[var(--radius-control)] text-[11px] font-medium transition-colors',
+                    'h-6 flex-1 rounded-[var(--radius-control)] text-xs font-medium transition-colors',
                     active
                       ? 'bg-background text-foreground shadow-thin'
                       : 'text-foreground/55 hover:text-foreground',
@@ -229,7 +229,7 @@ export function CollectionDisplayPopover({
           ))}
         </CollectionMenuSection>
 
-        <p className="px-2 pb-1.5 pt-1 text-[11px] leading-snug text-muted-foreground">
+        <p className="px-2 pb-1.5 pt-1 text-xs text-muted-foreground">
           {t('collection.display.boardHint')}
         </p>
       </PopoverContent>
@@ -250,7 +250,7 @@ export function CollectionDisplayToggleRow({
   return (
     <label
       htmlFor={id}
-      className="flex cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-control)] px-2 py-1.5 text-[12.5px] text-foreground/90 transition-colors hover:bg-foreground/[0.04] hover:text-foreground has-[:focus-visible]:bg-foreground/[0.07] has-[:focus-visible]:text-foreground motion-reduce:transition-none"
+      className="flex cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-control)] px-2 py-1.5 text-base text-foreground/90 transition-colors hover:bg-foreground/[0.04] hover:text-foreground has-[:focus-visible]:bg-foreground/[0.07] has-[:focus-visible]:text-foreground motion-reduce:transition-none"
     >
       <span>{label}</span>
       <Switch id={id} data-collection-dialog-item checked={checked} onCheckedChange={onCheckedChange} />

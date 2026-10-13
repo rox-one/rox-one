@@ -144,7 +144,7 @@
   justify-content: space-between;
   padding: 12px 14px 4px;
   font-size: 11.5px;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--text-secondary);
 }

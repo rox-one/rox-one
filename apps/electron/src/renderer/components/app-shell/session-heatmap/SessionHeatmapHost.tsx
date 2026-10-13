@@ -308,7 +308,7 @@ export function SessionHeatmapHost() {
           >
             <ChevronLeft className="h-3.5 w-3.5" />
           </button>
-          <h2 className="min-w-16 text-center text-sm font-semibold tabular-nums">
+          <h2 className="min-w-16 text-center text-sm font-semibold numeric">
             {t('collection.heatmap.year', { year })}
           </h2>
           <button
@@ -326,7 +326,7 @@ export function SessionHeatmapHost() {
             {WEEKDAYS.map((day) => (
               <span
                 key={day}
-                className="h-3 text-[9px] leading-3 text-muted-foreground"
+                className="h-3 text-xs leading-3 text-muted-foreground"
                 aria-hidden={day % 2 === 1}
               >
                 {day % 2 === 0 ? t(`collection.heatmap.weekday.${day}`) : ''}
@@ -371,7 +371,7 @@ export function SessionHeatmapHost() {
                 return (
                   <span
                     key={weekIndex}
-                    className="w-[15px] shrink-0 text-[9px] text-muted-foreground"
+                    className="w-[15px] shrink-0 text-xs text-muted-foreground"
                   >
                     {label ? t(`collection.heatmap.month.${String(label.month).padStart(2, '0')}`) : ''}
                   </span>
@@ -441,7 +441,7 @@ export function SessionHeatmapHost() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <div className="flex items-center gap-2 border-b border-border/40 px-2 py-1.5 text-[11px] font-semibold text-muted-foreground">
+              <div className="flex items-center gap-2 border-b border-border/40 px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                 <span className="w-6 shrink-0" />
                 {DAY_COLUMNS.map((column) => (
                   <button
@@ -489,7 +489,7 @@ export function SessionHeatmapHost() {
                     {DAY_COLUMNS.filter((column) => column.id !== 'name').map((column) => (
                       <span
                         key={column.id}
-                        className="w-24 shrink-0 truncate text-xs tabular-nums text-muted-foreground"
+                        className="w-24 shrink-0 truncate text-xs numeric text-muted-foreground"
                       >
                         {dayMetricValue(session, column.id)}
                       </span>

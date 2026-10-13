@@ -26,7 +26,7 @@ function ownerInitials(name: string): string {
 
 export function SessionOwnerChip({ owner, size = 'md', className, onClick }: SessionOwnerChipProps) {
   const { t } = useTranslation()
-  const dimension = size === 'sm' ? 'h-4 w-4 text-[8px]' : 'h-5 w-5 text-[9px]'
+  const dimension = size === 'sm' ? 'h-4 w-4 text-mark leading-none' : 'h-5 w-5 text-mark leading-none'
 
   const body = owner ? (
     <span
@@ -43,7 +43,7 @@ export function SessionOwnerChip({ owner, size = 'md', className, onClick }: Ses
       >
         {ownerInitials(owner.displayName)}
       </span>
-      <span className="truncate">{owner.displayName}</span>
+      <span className="truncate" title={owner.displayName}>{owner.displayName}</span>
     </span>
   ) : (
     <span

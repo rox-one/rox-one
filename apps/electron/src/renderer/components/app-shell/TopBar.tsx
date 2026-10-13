@@ -142,10 +142,10 @@ export function TopBar({
           data-workspace-logo-menu
           aria-label={t('navigation.workspaceMenu', { workspace: workspaceName })}
           title={t('navigation.workspaceMenu', { workspace: workspaceName })}
-          className="titlebar-no-drag chrome-surface flex h-8 min-w-0 shrink-0 items-center gap-1.5 rounded-lg border px-1.5 font-sans text-[13px] text-foreground/80 outline-none transition-colors motion-reduce:transition-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:ring-1 data-[state=open]:ring-ring"
+          className="titlebar-no-drag chrome-surface flex h-8 min-w-0 shrink-0 items-center gap-1.5 rounded-lg border px-1.5 font-sans text-base text-foreground/80 outline-none transition-colors motion-reduce:transition-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:ring-1 data-[state=open]:ring-ring"
         >
           <CraftAgentsSymbol className="size-6 shrink-0 object-contain" />
-          {!isCompact && <span className="max-w-40 truncate">{workspaceName}</span>}
+          {!isCompact && <span className="max-w-40 truncate" title={workspaceName}>{workspaceName}</span>}
           <ChevronDown className="size-3 shrink-0 opacity-60" aria-hidden />
         </button>
       }

@@ -424,6 +424,10 @@ describe('UI-001 repository test runner', () => {
         }
         expect(process.env.ROX_CONFIG_DIR).toBe(process.env.CRAFT_CONFIG_DIR);
         expect(process.env.ROX_WORKSPACE_TEST_CONFIG).toBe(${JSON.stringify(environment.ROX_WORKSPACE_TEST_CONFIG)});
+        // The suite's HOME is private, but the caller's own home stays reachable
+        // for a caller-owned integration path (the protected workspace
+        // PostgreSQL configuration under $HOME/.agents/state).
+        expect(process.env.ROX_TEST_HOST_HOME).toBe(${JSON.stringify(hostHome)});
         expect(process.env.PATH).toBe(${JSON.stringify(environment.PATH)});
         expect(process.env.ROX_TEST_VITEST_NODE_EXECUTABLE).toBe(${JSON.stringify(environment.ROX_TEST_VITEST_NODE_EXECUTABLE)});
         expect(process.env.PLAYWRIGHT_BROWSERS_PATH).toBe(${JSON.stringify(environment.PLAYWRIGHT_BROWSERS_PATH)});

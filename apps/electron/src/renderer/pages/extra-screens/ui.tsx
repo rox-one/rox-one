@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 
 export function ScreenRoot({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('flex h-full min-h-0 w-full bg-background text-[13px] text-foreground', className)}>
+    <div className={cn('flex h-full min-h-0 w-full bg-background text-base text-foreground', className)}>
       {children}
     </div>
   )
@@ -43,7 +43,7 @@ export function ScreenHeader({
 }) {
   return (
     <div className="flex shrink-0 items-baseline gap-2 px-4 pb-2 pt-3">
-      <h1 className="text-[17px] font-bold leading-tight">{title}</h1>
+      <h1 className="text-xl font-bold">{title}</h1>
       {subtitle != null && <span className="text-muted-foreground">{subtitle}</span>}
       <span className="flex-1" />
       {actions && <div className="flex items-center gap-1.5">{actions}</div>}
@@ -75,7 +75,7 @@ export function ScreenButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-control)] px-2.5 text-[12px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-foreground disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-control)] px-2.5 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-foreground disabled:cursor-not-allowed disabled:opacity-50',
         variant === 'primary' && 'bg-accent font-semibold text-[var(--accent-foreground,white)] hover:brightness-110',
         variant === 'default' && 'bg-foreground/[0.07] text-foreground hover:bg-foreground/[0.11]',
         variant === 'danger' && 'bg-foreground/[0.07] text-destructive hover:bg-destructive/10',
@@ -90,14 +90,14 @@ export function ScreenButton({
 
 export function GroupLabel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('px-4 pb-1 pt-3 text-[11px] uppercase tracking-[0.05em] text-muted-foreground', className)}>
+    <div className={cn('px-4 pb-1 pt-3 text-xs uppercase tracking-[0.05em] text-muted-foreground', className)}>
       {children}
     </div>
   )
 }
 
 export function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <div className="mb-1.5 text-[11px] uppercase tracking-[0.05em] text-muted-foreground">{children}</div>
+  return <div className="mb-1.5 text-xs uppercase tracking-[0.05em] text-muted-foreground">{children}</div>
 }
 
 export function ListRow({
@@ -152,7 +152,7 @@ export function Chip({
   tone?: 'neutral' | 'ok' | 'warn' | 'err'
 }) {
   const cls = cn(
-    'inline-flex items-center gap-1 whitespace-nowrap rounded-[var(--radius-control)] px-2 py-0.5 text-[12px]',
+    'inline-flex items-center gap-1 whitespace-nowrap rounded-[var(--radius-control)] px-2 py-0.5 text-sm',
     active
       ? 'bg-accent/10 text-accent'
       : tone === 'ok'
@@ -172,13 +172,13 @@ export function Chip({
 }
 
 export function Counter({ children }: { children: React.ReactNode }) {
-  return <span className="text-[12px] text-muted-foreground">{children}</span>
+  return <span className="text-sm text-muted-foreground">{children}</span>
 }
 
 export function EmptyState({ title, body, action }: { title: string; body?: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="flex h-full min-h-[220px] w-full flex-col items-center justify-center gap-2 px-8 text-center">
-      <div className="text-[15px] font-bold text-foreground">{title}</div>
+      <div className="text-lg font-bold text-foreground">{title}</div>
       {body && <div className="max-w-[440px] text-muted-foreground">{body}</div>}
       {action && <div className="mt-2">{action}</div>}
     </div>
@@ -219,7 +219,7 @@ export function TextField({
         }
       }}
       className={cn(
-        'h-8 w-full rounded-[var(--radius-card)] bg-foreground/[0.06] px-2.5 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/60',
+        'h-8 w-full rounded-[var(--radius-card)] bg-foreground/[0.06] px-2.5 text-base text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/60',
         className,
       )}
     />
@@ -246,12 +246,12 @@ export function TextArea({
       aria-label={ariaLabel ?? placeholder}
       placeholder={placeholder}
       onChange={(event) => onChange(event.target.value)}
-      className="w-full resize-y rounded-[var(--radius-card)] bg-foreground/[0.06] px-2.5 py-2 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/60"
+      className="w-full resize-y rounded-[var(--radius-card)] bg-foreground/[0.06] px-2.5 py-2 text-base text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/60"
     />
   )
 }
 
 /** «Sample data» is never shown in the product — this marks agent output instead. */
 export function AgentOutput({ text }: { text: string }) {
-  return <div className="whitespace-pre-wrap text-[13px] leading-[1.5] text-foreground/90">{text}</div>
+  return <div className="whitespace-pre-wrap text-base text-foreground/90">{text}</div>
 }

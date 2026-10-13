@@ -135,7 +135,7 @@ export function MarkdownDocBlock({ code, className, onUrlClick, onFileClick }: M
       <div className={cn('relative group rounded-[var(--radius-card)] overflow-hidden border bg-muted/10', className)}>
         <div className="px-3 py-2 bg-muted/50 border-b flex items-center gap-2">
           <FileText className="w-3.5 h-3.5 text-muted-foreground/50" />
-          <span className="text-[12px] text-muted-foreground font-medium flex-1">{headerTitle}</span>
+          <span className="text-sm text-muted-foreground font-medium flex-1">{headerTitle}</span>
           <div className="flex items-center gap-1">
             <ItemNavigator items={items} activeIndex={activeIndex} onSelect={setActiveIndex} />
             <button
@@ -172,11 +172,11 @@ export function MarkdownDocBlock({ code, className, onUrlClick, onFileClick }: M
           )}
 
           {activeContent === undefined && loading && (
-            <div className="py-8 text-center text-muted-foreground text-[13px]">{t('common.loading')}</div>
+            <div className="py-8 text-center text-muted-foreground text-base">{t('common.loading')}</div>
           )}
 
           {activeContent === undefined && !loading && error && (
-            <div className="py-6 text-center text-destructive/70 text-[13px]">{error}</div>
+            <div className="py-6 text-center text-destructive/70 text-base">{error}</div>
           )}
 
           {!isFullscreen && activeContent !== undefined && (

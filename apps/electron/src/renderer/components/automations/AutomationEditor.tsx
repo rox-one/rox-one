@@ -460,7 +460,7 @@ function ConditionRow({
   return (
     <div className="rox-autom-cond">
       <span className="rox-autom-label">{t('automations.condComplex')}</span>
-      <span className="text-[13px]">{describeLogical(value, t)}</span>
+      <span className="text-base">{describeLogical(value, t)}</span>
       {remove}
     </div>
   )

@@ -83,12 +83,12 @@ export function StatusBadge({ status, size = 'sm', className }: StatusBadgeProps
       data-size={size}
       className={cn(
         'inline-flex shrink-0 items-center gap-1 whitespace-nowrap font-medium',
-        size === 'sm' ? cn('h-5 rounded-full px-2 text-[11px]', TONE_CHIP[spec.tone]) : 'h-4 text-[11px]',
+        size === 'sm' ? cn('h-5 rounded-full px-2 text-xs', TONE_CHIP[spec.tone]) : 'h-4 text-xs',
         TONE_TEXT[spec.tone],
         className,
       )}
     >
-      <span aria-hidden="true" className={size === 'xs' && spec.glyph === '●' ? 'text-[8px] leading-none' : 'text-[10px] leading-none'}>
+      <span aria-hidden="true" className="text-mark leading-none">
         {spec.glyph}
       </span>
       <span className={size === 'xs' ? 'text-text-secondary' : undefined}>{label}</span>

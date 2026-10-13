@@ -96,7 +96,7 @@ export function KnowledgeMapPanel({ workspaceId, compact = false, onOpenFull }: 
 
   const statsLine = (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-      <span className="tabular-nums">{formatStatItems(buildStatItems(dto.stats), t)}</span>
+      <span className="numeric">{formatStatItems(buildStatItems(dto.stats), t)}</span>
       <span>{t('knowledgeMap.generatedAt', { time: new Date(dto.generatedAt).toLocaleString(locale) })}</span>
       {truncatedNotice}
     </div>

@@ -42,10 +42,10 @@ export function MiniDashboardCards({ snapshot, className, variant = 'grid' }: Mi
       >
         {cards.map((card) => (
           <div key={card.key} className="flex min-w-0 flex-col whitespace-nowrap" data-dashboard-card={card.key}>
-            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="text-xs font-medium uppercase caps-label text-muted-foreground">
               {card.label}
             </span>
-            <span className="text-[13px] font-medium text-foreground">{card.value}</span>
+            <span className="text-base font-medium text-foreground">{card.value}</span>
           </div>
         ))}
       </div>
@@ -59,10 +59,10 @@ export function MiniDashboardCards({ snapshot, className, variant = 'grid' }: Mi
     >
       {cards.map((card) => (
         <div key={card.key} className="rox-card px-2 py-1.5" data-dashboard-card={card.key}>
-          <div className="truncate text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          <div className="truncate text-xs font-medium uppercase caps-label text-muted-foreground">
             {card.label}
           </div>
-          <div className="truncate text-[13px] font-medium text-foreground">{card.value}</div>
+          <div className="truncate text-base font-medium text-foreground">{card.value}</div>
         </div>
       ))}
     </div>

@@ -6,6 +6,7 @@
  */
 
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
 
@@ -65,15 +66,22 @@ export function SettingsCardContent({
 }
 
 /**
- * SettingsCardFooter - Footer section with actions
+ * SettingsCardFooter - Footer section with actions.
+ *
+ * `saved` shows a transient "Сохранено" chip. The owning page toggles it for
+ * `--motion-slow` (240 ms); the chip fades (no slide) and resolves to an
+ * instant state under reduced motion via `--motion-slow: 0ms`.
  */
 export function SettingsCardFooter({
   children,
   className,
+  saved,
 }: {
   children: React.ReactNode
   className?: string
+  saved?: boolean
 }) {
+  const { t } = useTranslation()
   return (
     <div
       className={cn(
@@ -82,6 +90,15 @@ export function SettingsCardFooter({
         className
       )}
     >
+      {saved && (
+        <span
+          data-state="saved"
+          role="status"
+          className="mr-auto inline-flex items-center rounded-full bg-surface-hover px-2 py-0.5 text-small text-text-secondary transition-opacity duration-[var(--motion-slow)]"
+        >
+          {t('settings.saved')}
+        </span>
+      )}
       {children}
     </div>
   )

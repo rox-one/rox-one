@@ -26,7 +26,7 @@ function NavIcon({ icon: Icon, tone }: { icon: LucideIcon; tone: IconTone }) {
 }
 
 function Count({ count }: { count?: number }) {
-  return count ? <span className="shrink-0 rounded-md bg-foreground/[0.05] px-1.5 py-0.5 text-[10px] tabular-nums text-text-muted">{count}</span> : null
+  return count ? <span className="shrink-0 rounded-md bg-foreground/[0.05] px-1.5 py-0.5 text-xs numeric text-text-muted">{count}</span> : null
 }
 
 function MeetingsNavButton({ label, count, active, icon, tone, onClick, testId }: {
@@ -35,9 +35,9 @@ function MeetingsNavButton({ label, count, active, icon, tone, onClick, testId }
 }) {
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined} data-testid={testId}
-      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 py-1 text-left text-[12px] outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'border-l-accent bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
+      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 py-1 text-left text-sm outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'border-l-accent bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
       <NavIcon icon={icon} tone={tone} />
-      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
       <Count count={count} />
     </button>
   )
@@ -54,9 +54,9 @@ function MeetingsNavGroup({ id, label, icon, tone, active, revealKey, initialOpe
     <details open={open} onToggle={(event) => {
       if (event.target === event.currentTarget) setOpen(event.currentTarget.open)
     }} data-testid={`meetings-group-${id}`} className="mt-1">
-      <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1 text-[12px] font-medium text-foreground outline-none transition-colors hover:bg-foreground/[0.05] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium text-foreground outline-none transition-colors hover:bg-foreground/[0.05] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
         <NavIcon icon={icon} tone={tone} />
-        <span className="min-w-0 flex-1 truncate">{label}</span>
+        <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
         <ChevronRight aria-hidden className={cn('size-3 shrink-0 text-text-muted transition-transform duration-200 motion-reduce:transition-none', open && 'rotate-90')} />
       </summary>
       <div className="ml-5 flex flex-col gap-0.5 border-l border-foreground/10 py-1 pl-2">{children}</div>
@@ -104,14 +104,14 @@ export function MeetingsSidebar({ bucket, counts, engine, onBucketSelect, onConn
       <div className="mt-3 border-t border-foreground/[0.06] pt-2">
         <MeetingsNavGroup id="transcription" label={t('meetings.local.transcription')} icon={AudioLines} tone="green">
           {engine ? (
-            <div className="flex items-start gap-2 px-2 py-1 text-[12px]" data-testid="meetings-engine">
+            <div className="flex items-start gap-2 px-2 py-1 text-sm" data-testid="meetings-engine">
               <NavIcon icon={Mic} tone={engine.ready ? 'green' : 'orange'} />
               <span className="min-w-0 flex-1">
                 <span className="block break-words text-text-secondary">{engine.ready ? `${engine.engine} · ${engine.model}` : t('meetings.local.engineMissing')}</span>
-                <span className="block break-words text-[11px] text-text-muted">{engine.ready ? t('meetings.nav.engineLocal') : t('meetings.local.engineHowTo', { missing: engine.missing.map((key) => t(`meetings.local.missing.${key}`)).join(', ') })}</span>
+                <span className="block break-words text-xs text-text-muted">{engine.ready ? t('meetings.nav.engineLocal') : t('meetings.local.engineHowTo', { missing: engine.missing.map((key) => t(`meetings.local.missing.${key}`)).join(', ') })}</span>
               </span>
             </div>
-          ) : <p className="px-2 py-1 text-[11px] text-text-muted">{t('meetings.local.engineMissing')}</p>}
+          ) : <p className="px-2 py-1 text-xs text-text-muted">{t('meetings.local.engineMissing')}</p>}
         </MeetingsNavGroup>
         <MeetingsNavGroup id="sources" label={t('meetings.screen.sources')} icon={PlugZap} tone="sky">
           <MeetingsNavButton label={t('meetings.screen.calendarsNone')} icon={CalendarClock} tone="muted" onClick={onConnectCalendar} testId="meetings-connect-calendar" />

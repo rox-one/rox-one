@@ -455,25 +455,25 @@ export function SessionTableRow({
         <span className="w-20 shrink-0 text-xs text-muted-foreground">{formatDate(meta.createdAt)}</span>
       )}
       {showMessages && (
-        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.messageCount ?? '—'}</span>
+        <span className="w-20 shrink-0 text-xs numeric text-muted-foreground">{meta.messageCount ?? '—'}</span>
       )}
       {showTokens && (
-        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.tokenUsage?.totalTokens ?? '—'}</span>
+        <span className="w-20 shrink-0 text-xs numeric text-muted-foreground">{meta.tokenUsage?.totalTokens ?? '—'}</span>
       )}
       {showDuration && (
-        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{formatDuration(sessionDuration(meta))}</span>
+        <span className="w-20 shrink-0 text-xs numeric text-muted-foreground">{formatDuration(sessionDuration(meta))}</span>
       )}
       {showSize && (
-        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{formatTranscriptSize(meta.transcriptBytes)}</span>
+        <span className="w-20 shrink-0 text-xs numeric text-muted-foreground">{formatTranscriptSize(meta.transcriptBytes)}</span>
       )}
       {showToolCalls && (
-        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.toolCallCount ?? '—'}</span>
+        <span className="w-20 shrink-0 text-xs numeric text-muted-foreground">{meta.toolCallCount ?? '—'}</span>
       )}
       {showCommits && (
-        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.commitCount ?? '—'}</span>
+        <span className="w-20 shrink-0 text-xs numeric text-muted-foreground">{meta.commitCount ?? '—'}</span>
       )}
       {showParallelAgents && (
-        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{parallelAgentCount}</span>
+        <span className="w-20 shrink-0 text-xs numeric text-muted-foreground">{parallelAgentCount}</span>
       )}
 
       {showFlag && (

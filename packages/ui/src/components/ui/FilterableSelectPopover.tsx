@@ -203,7 +203,7 @@ export function FilterableSelectPopover<T>({
                       onClick={() => handleToggle(item)}
                       className={cn(
                         'w-full text-left outline-none',
-                        !renderItem && 'flex cursor-pointer select-none items-center gap-3 rounded-[var(--radius-control)] px-3 py-2 text-[13px]',
+                        !renderItem && 'flex cursor-pointer select-none items-center gap-3 rounded-[var(--radius-control)] px-3 py-2 text-base',
                         highlighted && 'bg-foreground/5',
                         selected && 'bg-foreground/3',
                       )}

@@ -72,16 +72,16 @@ export function WidgetFrame({
           <button
             type="button"
             onClick={onOpen}
-            className="group flex min-w-0 items-center gap-0.5 rounded-[var(--radius-control)] text-[12px] font-bold uppercase tracking-wide text-muted-foreground hover:text-foreground"
+            className="group flex min-w-0 items-center gap-0.5 rounded-[var(--radius-control)] text-sm font-bold uppercase caps-label text-muted-foreground hover:text-foreground"
           >
-            <span className="truncate">{title}</span>
+            <span className="truncate" title={title}>{title}</span>
             <ChevronRight className="h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
           </button>
         ) : (
-          <h2 className="min-w-0 truncate text-[12px] font-bold uppercase tracking-wide text-muted-foreground">{title}</h2>
+          <h2 className="min-w-0 truncate text-sm font-bold uppercase caps-label text-muted-foreground" title={title}>{title}</h2>
         )}
         <span className="min-w-0 flex-1" />
-        {!edit && meta ? <span className="min-w-0 max-w-[40%] truncate text-[12px] text-muted-foreground">{meta}</span> : null}
+        {!edit && meta ? <span className="min-w-0 max-w-[40%] truncate text-sm text-muted-foreground" title={typeof meta === 'string' ? meta : undefined}>{meta}</span> : null}
         {!edit && action ? <span className="ml-1 flex shrink-0 items-center">{action}</span> : null}
         {edit ? (
           <div className="flex shrink-0 items-center gap-1">
@@ -96,7 +96,7 @@ export function WidgetFrame({
                   title={t(`workbench.home.edit.size${size}`)}
                   onClick={() => edit.onResize(size)}
                   className={cn(
-                    'h-5 min-w-5 rounded-[var(--radius-control)] px-1 text-[11px] font-bold',
+                    'h-5 min-w-5 rounded-[var(--radius-control)] px-1 text-xs font-bold',
                     edit.size === size ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
@@ -144,10 +144,10 @@ export function WidgetRow({
     <>
       {leading ? <span className="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground">{leading}</span> : null}
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-[13px] leading-5 text-foreground">{title}</span>
-        {sub ? <span className="truncate text-[12px] leading-4 text-muted-foreground">{sub}</span> : null}
+        <span className="truncate text-base text-foreground" title={typeof title === 'string' ? title : undefined}>{title}</span>
+        {sub ? <span className="truncate text-sm text-muted-foreground" title={typeof sub === 'string' ? sub : undefined}>{sub}</span> : null}
       </span>
-      {trailing != null ? <span className="shrink-0 text-[12px] tabular-nums text-muted-foreground">{trailing}</span> : null}
+      {trailing != null ? <span className="shrink-0 text-sm numeric text-muted-foreground">{trailing}</span> : null}
     </>
   )
   const cls = 'rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[var(--radius-control)] px-1.5 py-1 text-left'
@@ -170,11 +170,11 @@ export function WidgetList({ children, columns = 1 }: { children: React.ReactNod
 /** Honest empty state: what is missing and why, plus at most one action. */
 export function WidgetEmpty({ text, hint, action }: { text: string; hint?: string; action?: { label: string; onClick: () => void } }) {
   return (
-    <div className="flex h-full min-h-0 flex-col items-start justify-center gap-1 text-[13px]" data-home-empty="">
+    <div className="flex h-full min-h-0 flex-col items-start justify-center gap-1 text-base" data-home-empty="">
       <p className="text-foreground">{text}</p>
-      {hint ? <p className="text-[12px] leading-4 text-muted-foreground">{hint}</p> : null}
+      {hint ? <p className="text-sm text-muted-foreground">{hint}</p> : null}
       {action ? (
-        <button type="button" onClick={action.onClick} className="mt-1 rounded-[var(--radius-control)] bg-foreground/[0.08] px-2 py-1 text-[12px] font-bold text-foreground hover:bg-foreground/[0.14]">
+        <button type="button" onClick={action.onClick} className="mt-1 rounded-[var(--radius-control)] bg-foreground/[0.08] px-2 py-1 text-sm font-bold text-foreground hover:bg-foreground/[0.14]">
           {action.label}
         </button>
       ) : null}
@@ -186,10 +186,10 @@ export function WidgetStat({ label, value, sub, tone, onClick }: { label: string
   const inner = (
     <>
       <span className={cn(
-        'block truncate text-[20px] font-bold leading-7 tabular-nums',
+        'block truncate text-stat font-bold numeric',
         tone === 'danger' ? 'text-destructive' : tone === 'warning' ? 'text-[var(--warning,#d9a13b)]' : tone === 'accent' ? 'text-accent' : 'text-foreground',
-      )}>{value}{sub != null ? <span className="ml-1.5 text-[13px] font-normal text-muted-foreground">{sub}</span> : null}</span>
-      <span className="block truncate text-[11px] uppercase leading-4 tracking-wide text-muted-foreground">{label}</span>
+      )}>{value}{sub != null ? <span className="ml-1.5 text-base font-normal text-muted-foreground">{sub}</span> : null}</span>
+      <span className="block truncate text-xs uppercase caps-label text-muted-foreground" title={label}>{label}</span>
     </>
   )
   return onClick ? (
@@ -211,7 +211,7 @@ export function Dot({ tone }: { tone: 'accent' | 'success' | 'warning' | 'danger
 }
 
 export function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <div className="px-0 pb-0.5 pt-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">{children}</div>
+  return <div className="px-0 pb-0.5 pt-1.5 text-xs uppercase caps-label text-muted-foreground">{children}</div>
 }
 
 /** Flat on/off switch (tone steps, no outline; HC gets a stronger track). */
@@ -244,7 +244,7 @@ export function WidgetButton({ children, onClick, tone, disabled, title }: { chi
       disabled={disabled}
       title={title}
       className={cn(
-        'flex h-6 shrink-0 items-center gap-1 whitespace-nowrap rounded-[var(--radius-control)] px-2 text-[12px] font-bold disabled:opacity-60',
+        'flex h-6 shrink-0 items-center gap-1 whitespace-nowrap rounded-[var(--radius-control)] px-2 text-sm font-bold disabled:opacity-60',
         tone === 'danger' ? 'bg-destructive/15 text-destructive hover:bg-destructive/25' : 'bg-foreground/[0.08] text-foreground hover:bg-foreground/[0.14]',
       )}
     >
