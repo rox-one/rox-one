@@ -64,7 +64,7 @@ Each OMP process receives the ROX system context, session tools and connected so
 
 ## Development
 
-Use the pinned **Bun 1.3.14** toolchain.
+Use the pinned **Bun 1.4.2** toolchain.
 
 ```bash
 git clone https://github.com/rox-one/rox-one.git
