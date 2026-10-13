@@ -26,6 +26,26 @@ async function waitUntil(predicate: () => boolean): Promise<void> {
   throw new Error("Expected filesystem watcher event was not delivered within 8000ms")
 }
 
+/**
+ * fs.watch has no readiness handshake and no delivery guarantee: FSEvents can
+ * deliver late, and a single change can be missed while the native stream is
+ * re-armed (e.g. when the other client unwatches). Re-issue the real writes
+ * until the backend delivers — bounded by the same 8s deadline, never a
+ * synthesised notification.
+ */
+async function probeChanges(sessionDirA: string, sessionDirB: string, delivered: () => boolean): Promise<void> {
+  let nextWrite = 0
+  await waitUntil(() => {
+    if (delivered()) return true
+    if (Date.now() >= nextWrite) {
+      writeFileSync(join(sessionDirA, 'a.txt'), `a-${Date.now()}`)
+      writeFileSync(join(sessionDirB, 'b.txt'), `b-${Date.now()}`)
+      nextWrite = Date.now() + 250
+    }
+    return false
+  })
+}
+
 describe('sessions file watchers', () => {
   const handlers = new Map<string, HandlerFn>()
   const pushed: Array<{ channel: string; target: any; args: any[] }> = []
@@ -114,9 +134,12 @@ describe('sessions file watchers', () => {
     await watch!(ctx('client-b'), 'session-b')
     await wait(50)
 
-    writeFileSync(join(sessionDirA, 'a.txt'), `a-${Date.now()}`)
-    writeFileSync(join(sessionDirB, 'b.txt'), `b-${Date.now()}`)
-    await waitUntil(() => ['client-a', 'client-b'].every((clientId) => pushed.some((evt) => evt.target?.clientId === clientId && evt.channel === RPC_CHANNELS.sessions.FILES_CHANGED && evt.args[0] === (clientId === 'client-a' ? 'session-a' : 'session-b'))))
+    const matches = (evt: typeof pushed[number], clientId: string, sessionId: string) =>
+      evt.target?.clientId === clientId && evt.channel === RPC_CHANNELS.sessions.FILES_CHANGED && evt.args[0] === sessionId
+
+    await probeChanges(sessionDirA, sessionDirB, () =>
+      pushed.some((evt) => matches(evt, 'client-a', 'session-a'))
+      && pushed.some((evt) => matches(evt, 'client-b', 'session-b')))
 
     const aEvents = pushed.filter((evt) => evt.target?.to === 'client' && evt.target?.clientId === 'client-a')
     const bEvents = pushed.filter((evt) => evt.target?.to === 'client' && evt.target?.clientId === 'client-b')
@@ -127,9 +150,7 @@ describe('sessions file watchers', () => {
     pushed.length = 0
     await unwatch!(ctx('client-a'))
 
-    writeFileSync(join(sessionDirA, 'a.txt'), `a2-${Date.now()}`)
-    writeFileSync(join(sessionDirB, 'b.txt'), `b2-${Date.now()}`)
-    await waitUntil(() => pushed.some((evt) => evt.target?.clientId === 'client-b' && evt.channel === RPC_CHANNELS.sessions.FILES_CHANGED && evt.args[0] === 'session-b'))
+    await probeChanges(sessionDirA, sessionDirB, () => pushed.some((evt) => matches(evt, 'client-b', 'session-b')))
 
     const aEventsAfter = pushed.filter((evt) => evt.target?.clientId === 'client-a')
     const bEventsAfter = pushed.filter((evt) => evt.target?.clientId === 'client-b')
@@ -173,14 +194,13 @@ describe('sessions file watchers', () => {
     const deps: HandlerDeps = {
       sessionManager: {
         waitForInit: async () => {},
+        // The bulk gate resolves the caller's workspace sessions before writing,
+        // so the mock has to expose the same read surface as SessionManager.
+        getSessions: (_workspaceId: string) => [{ id: 'valid', workspaceId: 'ws', isProcessing: false, labels: [] }],
+        assertSessionWriteAccess: (_sessionId: string, _actorAccountId: string | null) => {},
         getSession: async (sessionId: string) => sessionId === 'valid'
           ? { id: 'valid', workspaceId: 'ws', isProcessing: false, labels: [] }
           : null,
-        // Bulk updates now gate every caller-owned target by session visibility;
-        // only `valid` is loaded for this caller, so `missing` stays ungated and
-        // is reported by `bulkUpdateSessions` itself.
-        getSessions: () => [{ id: 'valid', workspaceId: 'ws', isProcessing: false, labels: [] }],
-        assertSessionWriteAccess: () => {},
         setPriority: async (sessionId: string) => { priorityUpdates.push(sessionId) },
         bulkUpdateSessions: async (_workspaceId: string, input: { ids: string[] }) => {
           const missing = input.ids.filter((id) => id !== 'valid')

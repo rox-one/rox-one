@@ -18,7 +18,7 @@ const server = new WsRpcServer({host:'127.0.0.1',port:0,requireAuth:true,validat
 const welcome: string[] = []
 let messageContext: any, automationContext: any
 registerCoreRpcHandlers(server,{
- sessionManager:{ sendMessage: async (_sid: string,_text: string,_files: unknown,_stored: unknown,_options: unknown,_existing: unknown,_retry: unknown,onAck: (id:string)=>void,context: unknown) => { messageContext=context; onAck('accepted-fixture') }, executePromptAutomation: async (input:any) => { automationContext=input.roxExecutionContext;return { sessionId:'automation-fixture' } }, ensureFirstSessionWelcome:async (id:string) => { welcome.push(id); return {id:'welcome'} } },
+ sessionManager:{ assertSessionWriteAccess: () => {}, noteSessionParticipant: async () => false, sendMessage: async (_sid: string,_text: string,_files: unknown,_stored: unknown,_options: unknown,_existing: unknown,_retry: unknown,onAck: (id:string)=>void,context: unknown) => { messageContext=context; onAck('accepted-fixture') }, executePromptAutomation: async (input:any) => { automationContext=input.roxExecutionContext;return { sessionId:'automation-fixture' } }, ensureFirstSessionWelcome:async (id:string) => { welcome.push(id); return {id:'welcome'} } },
  platform:{appRootPath:'',resourcesPath:'',isPackaged:false,appVersion:'fixture',isDebugMode:false,logger:{info(){},error(){},warn(){},debug(){}},imageProcessor:{getMetadata:async()=>null,process:async()=>Buffer.alloc(0)}},
  oauthFlowStore:{ store(){},getByState(){return null},remove(){},cleanup(){},dispose(){},size:0 },
 } as unknown as HandlerDeps,{ } as never,{browserPane:false})

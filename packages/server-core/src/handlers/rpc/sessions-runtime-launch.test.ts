@@ -14,10 +14,17 @@ test('existing send RPC preserves observed producer metadata; malformed metadata
     findClientsWithCapability() { return [] },
   } as RpcServer
   registerSessionsHandlers(server, {
-    sessionManager: { async sendMessage(...args: unknown[]) {
-      calls.push(args)
-      ;(args[7] as (id: string) => void)('persisted-message')
-    } },
+    sessionManager: {
+      // The SEND_MESSAGE path (sessions.ts:489,543) enforces the SessionManager
+      // write-access and participant-attribution contract; the fake must
+      // implement both to satisfy the handler it is standing in for.
+      assertSessionWriteAccess() {},
+      async noteSessionParticipant() {},
+      async sendMessage(...args: unknown[]) {
+        calls.push(args)
+        ;(args[7] as (id: string) => void)('persisted-message')
+      },
+    },
     platform: { logger: { error() {}, warn() {}, info() {}, debug() {} } },
   } as unknown as HandlerDeps)
   const send = handlers.get(RPC_CHANNELS.sessions.SEND_MESSAGE)!
