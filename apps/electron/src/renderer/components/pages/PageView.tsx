@@ -138,8 +138,11 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
     }
   }, [activeWorkspaceId, pageSlug, contentDigest, hasContent, pageLoaded, leaseRetry, pagesAvailable, t])
 
+  // A lease that no longer matches the mounted host — different workspace, page,
+  // digest, or an expired native lease — is never the current host: the render
+  // gate, the learning evidence and the release path must all agree on that.
   const currentLease = leaseState?.workspaceId === activeWorkspaceId
-    && leaseState?.lease.pageSlug === pageSlug && leaseState?.lease.contentDigest === contentDigest
+    && pageLeaseMatches(leaseState.lease, pageSlug, contentDigest)
     ? leaseState : null
   const currentLeaseError = leaseError?.contentDigest === contentDigest ? leaseError?.message : null
 
