@@ -204,9 +204,6 @@ export function PremiumMenu({
     ? filtered.slice(windowSlice.start, windowSlice.end)
     : filtered
   const activeItem = filtered[highlighted]
-  const listMaxHeight = searchable
-    ? Math.max(96, placement.maxHeight - 44)
-    : placement.maxHeight
 
   return ReactDOM.createPortal(
     <>
@@ -242,7 +239,7 @@ export function PremiumMenu({
                   placeholder={searchPlaceholder ?? t('premiumMenu.search')}
                   aria-controls={LIST_ID}
                   aria-autocomplete="list"
-                  className="w-full bg-transparent outline-none placeholder:text-muted-foreground"
+                  className="w-full min-h-[var(--control-hit-min)] bg-transparent outline-none placeholder:text-muted-foreground"
                 />
               </div>
             )}
@@ -256,7 +253,11 @@ export function PremiumMenu({
                 tabIndex={searchable ? -1 : 0}
                 aria-activedescendant={activeItem ? `premium-menu-option-${activeItem.id}` : undefined}
                 className="overflow-y-auto outline-none"
-                style={{ maxHeight: listMaxHeight }}
+                style={{
+                  maxHeight: 'min(70vh, 520px)',
+                  overscrollBehavior: 'contain',
+                  scrollbarGutter: 'stable',
+                }}
                 onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
                 onKeyDown={(event) => {
                   applyKey(event)
@@ -288,6 +289,8 @@ export function PremiumMenu({
                           )}
                           style={{
                             height: tokens.rowHeight,
+                            minHeight: 'var(--row-h)',
+                            paddingBlock: 4,
                             paddingLeft: tokens.padX,
                             paddingRight: tokens.padX,
                           }}

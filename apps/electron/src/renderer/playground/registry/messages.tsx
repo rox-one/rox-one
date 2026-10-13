@@ -49,9 +49,9 @@ function AssistantMessage({ content }: { content: string }) {
 /** Status message - spinner with text, used during compaction etc (playground demo) */
 function StatusMessage({ content }: { content: string }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-1 text-[13px] text-muted-foreground">
+    <div className="flex items-center gap-2 px-3 py-1 text-base text-muted-foreground">
       <div className="w-3 h-3 flex items-center justify-center shrink-0">
-        <Spinner className="text-[10px]" />
+        <Spinner className="text-xs" />
       </div>
       <span>{content}</span>
     </div>
@@ -178,10 +178,10 @@ function ProcessingIndicator({ cycleMs = 10000, counting = true, elapsed: initia
   }, [currentMessage])
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1 text-[13px] text-muted-foreground">
+    <div className="flex items-center gap-2 px-3 py-1 text-base text-muted-foreground">
       {/* Spinner */}
       <div className="w-3 h-3 flex items-center justify-center shrink-0">
-        <Spinner className="text-[10px]" />
+        <Spinner className="text-xs" />
       </div>
       {/* Label container */}
       <span className="inline-flex items-center h-5">
@@ -208,7 +208,7 @@ function ProcessingIndicator({ cycleMs = 10000, counting = true, elapsed: initia
         </motion.span>
         {/* Counter - no animation, just updates instantly */}
         {elapsed >= 1 && (
-          <span className="text-muted-foreground/60 ml-1 tabular-nums">
+          <span className="text-muted-foreground/60 ml-1 numeric">
             {elapsed}s
           </span>
         )}

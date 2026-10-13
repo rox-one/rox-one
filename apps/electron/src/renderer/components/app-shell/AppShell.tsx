@@ -124,18 +124,20 @@ import {
   resolveWorkbenchAvailability,
 } from "../../platform"
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
+import { AuroraField } from "@/platform/AuroraField"
 import { GlobalVoiceDictation } from "@/voice/global-dictation"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
 import { WorkspaceBrowserRegistry } from "../browser/WorkspaceBrowserRegistry"
 import { featureWorkbenchBrowserSurfaceV2Atom } from "@/atoms/unified-shell"
-import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, featureLayoutEngineAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
 import { EscapeInterruptProvider, useEscapeInterrupt } from "@/context/EscapeInterruptContext"
 import { useTheme } from "@/context/ThemeContext"
 import { usePanelResize } from "@/hooks/usePanelResize"
+import { SNAP_PERCENTS, type SplitSnap } from "./resize-math"
 import { useAction, useActionLabel } from "@/actions"
 import { useFocusZone } from "@/hooks/keyboard"
 import { useFocusContext } from "@/context/FocusContext"
@@ -226,7 +228,7 @@ import { dispatchFocusInputEvent } from "./input/focus-input-events"
 import { WebBrowserPanel } from "../browser/WebBrowserPanel"
 import { KnowledgeNavigator } from "../../knowledge/KnowledgeNavigator"
 import { buildNewDocumentCreateArgs, pickOpenNotebook } from "../../knowledge/knowledge-new-note"
-import { isScreenNavigation, isSurfaceNavigation } from '../../../shared/types'
+import { isMissionsNavigation, isScreenNavigation, isSurfaceNavigation } from '../../../shared/types'
 // W1-07 (#1504): unified mode roots + Docs relabel.
 import { enabledShellFlagsAtom } from '@/platform/unified-flags'
 import { notesTitleKey, surfaceTitleKey } from '@/platform/surface-shell'
@@ -555,6 +557,11 @@ function AppShellContent({
 
   const [isResizing, setIsResizing] = React.useState<'sidebar' | 'session-list' | null>(null)
   const workspaceIdForLayout = activeWorkspaceId ?? '_default'
+  // G4 «Студия»: the magnetic targets travel with each seam's bounds (the same
+  // channel `PanelResizeSash` uses); the live snapped state surfaces through the
+  // controller for the handle's guide/badge. Flag OFF keeps both undefined.
+  const layoutEngineOn = useAtomValue(featureLayoutEngineAtom)
+  const seamSnap: SplitSnap | undefined = layoutEngineOn ? { percents: SNAP_PERCENTS } : undefined
   const sidebarResize = usePanelResize({
     onPreview: (sizeA) => setSidebarWidth(sizeA),
     onCommit: (sizeA) => {
@@ -699,7 +706,9 @@ function AppShellContent({
   // (ClipboardHistoryPanel) with its own header; keeping the middle navigator
   // mounted would leave an empty sidebar-wide column beside it.
   const hideModuleMiddleNav =
-    navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProjectsView || isPagesView || isLearningView || isDriveNavigation(navState) || isModeScreenView || isClipboardHistoryNavigation(navState) || (isSettingsNavigation(navState) && !isAutoCompact)
+navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProjectsView || isPagesView || isLearningView || isDriveNavigation(navState) || isModeScreenView || isClipboardHistoryNavigation(navState) || (isSettingsNavigation(navState) && !isAutoCompact)
+    // G3 «Миссии» board renders full-width in the content panel.
+    || isMissionsNavigation(navState)
   // A single session catalog is the workspace until an actual session is opened.
   const navigatorExpanded = sessionCatalogOwnsWorkspace(navState, {
     panelCount,
@@ -3100,7 +3109,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
 
   const experimentalSidebarNavigation = experimentalLinks.length > 0 && (
     <section className="mx-1 mt-5 py-2" aria-label={t('sidebar.experimentalFeatures')}>
-      {!isSidebarCollapsed && <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-foreground/40">{t('sidebar.experimentalFeatures')}</div>}
+      {!isSidebarCollapsed && <div className="px-3 pb-2 text-xs font-semibold uppercase caps-label text-foreground/40">{t('sidebar.experimentalFeatures')}</div>}
       <LeftSidebar isCollapsed={isSidebarCollapsed} onExpand={handleExpandNavigation} links={experimentalLinks} />
     </section>
   )
@@ -3108,6 +3117,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
   return (
     <TourConnectionPolicyContext.Provider value={learningSourcePolicy?.workspaceId === activeWorkspaceId ? learningSourcePolicy : null}>
     <AppShellProvider value={appShellContextValue}>
+      <AuroraField />
       <WorkspaceBrowserRegistry enabled={browserSurfaceEnabled} />
       <ShellSidebarContext.Provider value={isAutoCompact ? null : shellSidebarSlot}>
         {/* === TOP BAR === */}
@@ -3194,7 +3204,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
                 <div className={cn('flex-1 overflow-y-auto min-h-0 pb-8', !(isSettingsNavigation(navState) && !isAutoCompact) && 'mask-fade-bottom')}>
                 {activeWorkspaceId && !isSidebarCollapsed && (
                   <div className="flex h-[var(--chrome-panel-header-height)] shrink-0 items-center gap-1.5 border-b border-border-subtle px-3">
-                    <label className="shrink-0 text-[10px] text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
+                    <label className="shrink-0 text-xs text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
                     <select id="workspace-project-context" value={selectedProjectId ?? ''}
                       className="min-w-0 flex-1 rounded-md border border-border bg-background px-1.5 py-1 text-caption leading-tight"
                       onChange={event => setProjectContexts(previous => ({ ...previous, [activeWorkspaceId]: event.target.value || null }))}>
@@ -3234,7 +3244,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
                               'flex cursor-pointer list-none items-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden',
                               isSidebarCollapsed
                                 ? 'mx-auto h-7 w-7 justify-center'
-                                : 'gap-2 px-3 py-2.5 text-[11px] font-semibold text-foreground/50',
+                                : 'gap-2 px-3 py-2.5 text-xs font-semibold text-foreground/50',
                             )}
                           >
                             <Layers className="size-3.5 text-accent" aria-hidden />
@@ -3493,6 +3503,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           valueMin={SIDEBAR_WIDTH_MIN}
           valueMax={SIDEBAR_WIDTH_MAX}
           dragging={sidebarResize.dragging || isResizing === 'sidebar'}
+          snap={layoutEngineOn ? sidebarResize.controller.current?.snapState : undefined}
           className="absolute"
           style={{
             top: PANEL_STACK_TOP_INSET,
@@ -3511,6 +3522,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               maxA: SIDEBAR_WIDTH_MAX,
               minB: PANEL_MIN_WIDTH,
               maxB: Number.POSITIVE_INFINITY,
+              snap: seamSnap,
             })
           }}
           onPointerMove={sidebarResize.handlePointerMove}
@@ -3551,6 +3563,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
           valueMin={NAVIGATOR_WIDTH_MIN}
           valueMax={NAVIGATOR_WIDTH_MAX}
           dragging={navigatorResize.dragging || isResizing === 'session-list'}
+          snap={layoutEngineOn ? navigatorResize.controller.current?.snapState : undefined}
           className="absolute"
           style={{
             top: PANEL_STACK_TOP_INSET,
@@ -3575,6 +3588,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               maxA: NAVIGATOR_WIDTH_MAX,
               minB: PANEL_MIN_WIDTH,
               maxB: Number.POSITIVE_INFINITY,
+              snap: seamSnap,
             })
           }}
           onPointerMove={navigatorResize.handlePointerMove}
@@ -3592,6 +3606,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               maxA: NAVIGATOR_WIDTH_MAX,
               minB: PANEL_MIN_WIDTH,
               maxB: Number.POSITIVE_INFINITY,
+              snap: seamSnap,
             })
           }}
           onKeyCommit={navigatorResize.handleKeyCommit}
@@ -3607,6 +3622,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
               maxA: NAVIGATOR_WIDTH_MAX,
               minB: PANEL_MIN_WIDTH,
               maxB: Number.POSITIVE_INFINITY,
+              snap: seamSnap,
             }, NAVIGATOR_WIDTH_DEFAULT)
           }}
         />

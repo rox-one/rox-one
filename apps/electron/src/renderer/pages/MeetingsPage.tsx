@@ -569,7 +569,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
                 const live = isLiveMeeting(m)
                 return (
                   <ListRow key={m.id} testId={`meeting-row-${m.id}`} selected={m.id === selectedId} onClick={() => selectMeeting(m.id)}>
-                    <span className="w-10 shrink-0 pt-px text-sm tabular-nums text-text-muted">{timeFmt.format(meetingTime(m))}</span>
+                    <span className="w-10 shrink-0 pt-px text-sm numeric text-text-muted">{timeFmt.format(meetingTime(m))}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{m.title}</span>
                       <span className="block truncate text-xs text-text-muted">

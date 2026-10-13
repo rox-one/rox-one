@@ -43,21 +43,21 @@ export function ActivityTimeline({ events, renderers, now, timeZone, className }
   const timeFmt = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZone })
 
   if (events.length === 0) {
-    return <div className={cn('py-3 text-[12px] text-text-muted', className)}>{t('entities.ui.activity.empty')}</div>
+    return <div className={cn('py-3 text-sm text-text-muted', className)}>{t('entities.ui.activity.empty')}</div>
   }
 
   return (
     <section aria-label={t('entities.ui.activity.title')} className={cn('flex flex-col gap-3', className)}>
       {groups.map((group) => (
         <div key={group.day} className="flex flex-col gap-1">
-          <h4 className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+          <h4 className="text-xs font-semibold uppercase caps-label text-text-muted">
             {group.relative
               ? t(`entities.ui.activity.${group.relative}`)
               : formatInstant(dayFmt, group.items[0]!.at) || t('entities.ui.activity.unknownDate')}
           </h4>
           <ol className="flex flex-col gap-1">
             {group.items.map((event) => (
-              <li key={event.id} data-event-type={event.type} className="flex items-start gap-2 text-[12px]">
+              <li key={event.id} data-event-type={event.type} className="flex items-start gap-2 text-sm">
                 <PersonAvatar person={event.actor} size={20} />
                 <span className="min-w-0 flex-1 text-text-secondary">
                   {renderers?.[event.type]?.(event)
@@ -65,7 +65,7 @@ export function ActivityTimeline({ events, renderers, now, timeZone, className }
                     ?? t('entities.ui.activity.generic', { actor: event.actor.name, type: event.type })}
                 </span>
                 {formatInstant(timeFmt, event.at) ? (
-                  <time dateTime={event.at} className="shrink-0 tabular-nums text-text-muted">{formatInstant(timeFmt, event.at)}</time>
+                  <time dateTime={event.at} className="shrink-0 numeric text-text-muted">{formatInstant(timeFmt, event.at)}</time>
                 ) : null}
               </li>
             ))}

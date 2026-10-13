@@ -50,7 +50,7 @@ describe('ModeScreen Tabs renders through the shared tab primitive', () => {
     expect(html.match(/tabindex="0"/g)).toHaveLength(1)
     expect(html.match(/tabindex="-1"/g)).toHaveLength(1)
     expect(html).toContain('aria-selected="true"')
-    expect(html).toContain('tabular-nums text-text-muted')
+    expect(html).toContain('numeric text-text-muted')
     expect(html).toContain('>3<')
   })
 

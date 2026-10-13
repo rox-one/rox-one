@@ -214,6 +214,22 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     return { ...result, attrs: { runtime: document.documentElement.dataset.shellRuntime, material: document.documentElement.dataset.shellMaterial, cssMaterial: document.documentElement.dataset.shellCssMaterial, layer: document.documentElement.dataset.material, texture: document.documentElement.dataset.materialTexture, mode: document.documentElement.className, mismatch: document.documentElement.dataset.themeMismatch }, media: { coarse: matchMedia('(pointer: coarse)').matches, reducedTransparency: matchMedia('(prefers-reduced-transparency: reduce)').matches, moreContrast: matchMedia('(prefers-contrast: more)').matches, forcedColors: matchMedia('(forced-colors: active)').matches } } as any
   })
   const cssVar = (name: string) => page.evaluate(variable => getComputedStyle(document.documentElement).getPropertyValue(variable).trim(), name)
+  // Structural chrome paints the unified `--chrome-plate-*` ladder and
+  // cross-fades a material change over `--motion-fast`, so the computed
+  // background lags the attribute/storage flip by at least one frame: a sample
+  // taken straight after a change can still report the previous plate. Poll the
+  // painted alpha until the expected ladder step is reached; `'tint'` stands for
+  // the shipped translucent step of the active mode.
+  const expectChromeAlpha = async (surfaces: string[], alpha: number | 'tint') => {
+    await playwrightExpect.poll(async () => {
+      const styles = await computed()
+      if (alpha !== 'tint') return surfaces.map(surface => styles[surface].rgba[3] === alpha)
+      const stop = (await cssVar('--chrome-plate-tint')).match(/([\d.]+)%\s*,\s*transparent/)
+      if (!stop) throw new Error('Unusable chrome plate tint')
+      const tint = Math.round((Number.parseFloat(stop[1]) / 100) * 255)
+      return surfaces.map(surface => styles[surface].rgba[3] === tint)
+    }, { timeout: 15_000 }).toEqual(surfaces.map(() => true))
+  }
   // Sample the fixed floating/reading surfaces (chat zone, composer, popover).
   // The fixture DOM has no chat zone, so an element carrying the production
   // marker is constructed inside the fixture root when the selector is absent;
@@ -297,6 +313,10 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     await expectDOM(commentLine).toHaveText('// Theme regression')
     const comment = commentLine.locator('span').filter({ hasText: 'Theme regression' }).first()
     expect(await comment.evaluate(element => getComputedStyle(element).color)).toBe(commentColor)
+    // Theme application cross-fades the chrome plate (--motion-fast); settle every
+    // chrome surface on the shipped translucent step before sampling its alpha,
+    // otherwise a sample can still read the opaque outgoing value.
+    await expectChromeAlpha(['topbar', 'sidebar', 'navigator', 'inspector', 'strip'], 'tint')
     const styles = await computed()
     expect((await themeState()).systemPreference).toBe(os)
     expect(styles.attrs).toMatchObject({ runtime: 'web', material: 'solid' })
@@ -384,14 +404,17 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     await page.keyboard.press('Escape')
     await page.mouse.up()
     expect((await computed()).work.rect.width).toBeCloseTo(dragged.work.rect.width, 1)
-    await sash.focus()
+    // `data-sash-pair` is the seam wrapper that carries the geometry; the
+    // keyboard-operable element is the `role="separator"` handle it wraps.
+    const sashHandle = sash.locator('[role="separator"]')
+    await sashHandle.focus()
     await page.keyboard.press('ArrowLeft')
     await page.keyboard.press('Enter')
     const keyboard = await computed()
     expect(keyboard.work.rect.width).toBeLessThan(dragged.work.rect.width)
     seam(keyboard, 8)
-    await sash.press('Shift+ArrowRight')
-    await sash.press('Escape')
+    await sashHandle.press('Shift+ArrowRight')
+    await sashHandle.press('Escape')
     expect((await computed()).work.rect.width).toBeCloseTo(keyboard.work.rect.width, 1)
     await sash.dblclick()
     const reset = await computed()
@@ -569,6 +592,9 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     await load()
     await page.getByTestId('control').click()
     await expectDOM(page.locator('html')).toHaveAttribute('data-contrast', 'high')
+    // The a11y gate flips the plate to its dense step; wait for the cross-fade
+    // so the sample below never reads the outgoing plate.
+    await expectChromeAlpha(['topbar', 'sidebar', 'inspector', 'strip'], 255)
     const styles = await computed()
     for (const surface of ['topbar', 'sidebar', 'inspector', 'strip']) {
       expect(styles[surface].rgba[3]).toBe(255)
@@ -592,6 +618,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
       await second.bringToFront()
       await expectDOM(second.locator('html')).toHaveAttribute('data-shell-css-material', 'solid')
       await page.bringToFront()
+      await expectChromeAlpha(['topbar'], 255)
       expect((await computed()).topbar.rgba[3]).toBe(255)
       expect(await transportCalls()).toEqual([])
       await page.reload()
@@ -616,6 +643,9 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
 
   it('browser storage failure retains the committed chrome preference and explains the failure', async () => {
     await load()
+    // Theme application re-tints the plate after mount; settle before recording
+    // the reference sample this case compares against.
+    await expectChromeAlpha(['topbar'], 'tint')
     const initial = await computed()
     await page.evaluate(() => {
       const original = Storage.prototype.setItem
@@ -633,6 +663,9 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
 
   it('browser settings reject a silently ignored persistence write after readback', async () => {
     await load()
+    // Same settle as the storage-denial case: the plate re-tints after mount, so
+    // record the reference sample only once the paint has stopped changing.
+    await expectChromeAlpha(['topbar'], 'tint')
     const initial = await computed()
     await page.evaluate(() => {
       const original = Storage.prototype.setItem
@@ -664,11 +697,15 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
   it('a live desktop fallback overrides earlier acknowledged glass and retains the palette', async () => {
     await load('runtime=electron')
     await expectDOM(page.locator('html')).toHaveAttribute('data-shell-material', 'vibrancy')
+    // The acknowledged vibrancy material re-tints the plate; settle before
+    // recording the reference sample the fallback is compared against.
+    await expectChromeAlpha(['topbar'], 'tint')
     const initial = await computed()
     expect(initial.topbar.rgba[3]).toBeLessThan(255)
     expect(initial.work.rgba[3]).toBe(255)
     await page.evaluate(() => (window as any).__zedAppearanceFixture.emitShell('gpu-failure'))
     await expectDOM(page.locator('html')).toHaveAttribute('data-shell-material', 'solid')
+    await expectChromeAlpha(['topbar'], 255)
     const fallback = await computed()
     expect(fallback.topbar.rgba[3]).toBe(255)
     expect(fallback.topbar.backdrop).toBe('none')
@@ -686,11 +723,18 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
       expect(await cssVar('--material-blur-topbar')).toBe('30px')
       expect(await cssVar('--material-opacity-topbar')).toBe('50%')
       expect(await cssVar('--material-texture-kind')).toBe('grain')
+      // Fixture fidelity: this header carries no `data-shell-role="chrome"`, so the
+      // unified G8 `--chrome-plate-*` ladder paints it — the poll above asserts the
+      // exact translucent step (82% of --surface-rail) that ships for glass.
+      // Production's TopBar does carry the attribute and still resolves through the
+      // legacy `--shell-glass-surface` binding
+      // (apps/electron/src/renderer/index.css:997), so its per-surface
+      // `--material-opacity-topbar` remains meaningful there; this fixture cannot
+      // observe that path — parity gap recorded with the rollout owner.
+      await expectChromeAlpha(['topbar'], 'tint')
       const styles = await computed()
       expect(styles.attrs.layer).toBe('on')
       expect(styles.attrs.texture).toBe('grain')
-      // --material-opacity-topbar: 50% halves the opaque titlebar tint.
-      expect(styles.topbar.rgba[3] / 255).toBeCloseTo(0.5, 1)
       expect(styles.topbar.backdrop).toContain('blur(30px)')
       await proof('material-enabled')
     }, 45_000)

@@ -145,7 +145,7 @@ export function ImportReviewDialog({ bankId, open, onOpenChange, onApplied, onRe
                       data-testid="import-edit-select"
                       className="size-3.5 shrink-0 accent-[var(--accent)]"
                     />
-                    <span className="min-w-0 flex-1 truncate font-mono">{edit.path}</span>
+                    <span className="min-w-0 flex-1 truncate font-mono" title={edit.path}>{edit.path}</span>
                     <KindBadge kind={edit.kind} />
                     {edit.conflict ? (
                       <span data-testid="import-conflict" className="shrink-0 rounded-[var(--radius-control)] bg-status-warning/12 px-1.5 py-0.5 text-caption text-status-warning">

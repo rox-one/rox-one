@@ -237,7 +237,7 @@ export function TaskTile({
           // Right padding keeps the flag clear of the hover-revealed corner pencil.
           <div className={cn('mb-1.5 flex items-center justify-between gap-2', onEdit && task.isFlagged && 'pr-7')}>
             {project ? (
-              <span className="inline-flex min-w-0 items-center gap-1 text-[11px] font-medium text-foreground/55">
+              <span className="inline-flex min-w-0 items-center gap-1 text-xs font-medium text-foreground/55">
                 {project.icon ? (
                   <ProjectIcon
                     workspaceId={project.workspaceId}
@@ -254,7 +254,7 @@ export function TaskTile({
                     aria-hidden
                   />
                 )}
-                <span className="truncate">{project.name}</span>
+                <span className="truncate" title={project.name}>{project.name}</span>
               </span>
             ) : (
               <span />
@@ -267,7 +267,7 @@ export function TaskTile({
 
         <div
           className={cn(
-            'text-sm font-medium leading-snug line-clamp-2',
+            'text-sm font-medium line-clamp-2',
             // Strike done/cancelled by *status* (not column — placement ≠ status).
             status?.category === 'closed' ? 'text-foreground/55 line-through' : 'text-foreground'
           )}
@@ -360,15 +360,15 @@ export function TaskTile({
 
         <div className="mt-2 flex items-center gap-2 border-t border-border/40 pt-1.5">
           {(relativeTime || hasMessages) && (
-            <div className="flex min-w-0 flex-1 items-center gap-2 text-[11px] text-foreground/45">
+            <div className="flex min-w-0 flex-1 items-center gap-2 text-xs text-foreground/45">
               {relativeTime && (
-                <span className="inline-flex items-center gap-0.5 tabular-nums">
+                <span className="inline-flex items-center gap-0.5 numeric">
                   <Clock className="h-3 w-3" strokeWidth={2} />
                   {relativeTime}
                 </span>
               )}
               {hasMessages && (
-                <span className="inline-flex items-center gap-0.5 tabular-nums">
+                <span className="inline-flex items-center gap-0.5 numeric">
                   <MessageSquare className="h-3 w-3" strokeWidth={2} />
                   {task.messageCount}
                 </span>
@@ -510,7 +510,7 @@ function AddSubtask({
           e.stopPropagation()
           setComposing(true)
         }}
-        className="mt-1 flex w-full items-center gap-1 text-[11px] font-medium text-foreground/45 transition-colors hover:text-foreground/70"
+        className="mt-1 flex w-full items-center gap-1 text-xs font-medium text-foreground/45 transition-colors hover:text-foreground/70"
       >
         <Plus className="h-3 w-3" strokeWidth={2} />
         {t('kanban.addSubtask')}
@@ -549,14 +549,14 @@ function AddSubtask({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex min-w-0 items-center gap-1 rounded-md border border-border/60 bg-background px-1.5 py-1 text-[11px] font-medium text-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground"
+                className="inline-flex min-w-0 items-center gap-1 rounded-md border border-border/60 bg-background px-1.5 py-1 text-xs font-medium text-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground"
               >
                 {selectedIcon ? (
                   <img src={selectedIcon} alt="" className="h-3 w-3 shrink-0 rounded-[2px]" aria-hidden />
                 ) : (
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40" aria-hidden />
                 )}
-                <span className="truncate">{selectedName}</span>
+                <span className="truncate" title={selectedName}>{selectedName}</span>
                 <ChevronDown className="h-3 w-3 shrink-0 text-foreground/40" strokeWidth={2} />
               </button>
             </DropdownMenuTrigger>
@@ -564,7 +564,7 @@ function AddSubtask({
               {modelGroups.map((group, gi) => (
                 <React.Fragment key={group.provider}>
                   {gi > 0 && <DropdownMenuSeparator />}
-                  <DropdownMenuLabel className="flex items-center gap-1.5 text-[11px] text-foreground/50">
+                  <DropdownMenuLabel className="flex items-center gap-1.5 text-xs text-foreground/50">
                     {resolveProviderIcon(group.provider) && (
                       <img
                         src={resolveProviderIcon(group.provider)!}
@@ -577,7 +577,7 @@ function AddSubtask({
                   </DropdownMenuLabel>
                   {group.models.map(opt => (
                     <DropdownMenuItem key={opt.id} className="text-xs" onSelect={() => setModel(opt.id)}>
-                      <span className="truncate">{opt.name}</span>
+                      <span className="truncate" title={opt.name}>{opt.name}</span>
                       {opt.id === model && <Check className="ml-auto h-3.5 w-3.5 shrink-0" strokeWidth={2} />}
                     </DropdownMenuItem>
                   ))}
@@ -592,7 +592,7 @@ function AddSubtask({
           type="button"
           onClick={submit}
           disabled={!draft.trim()}
-          className="shrink-0 rounded-md bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground transition-opacity disabled:opacity-40"
+          className="shrink-0 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-opacity disabled:opacity-40"
         >
           {t('kanban.add')}
         </button>

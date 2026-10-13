@@ -100,8 +100,8 @@ export function AutomationGraphWorkspaceEditor({
   return (
     <div className={cn('flex min-h-0 flex-1 flex-col gap-3', className)} data-testid="automation-graph-workspace">
       <div className="shrink-0 space-y-1">
-        <p className="text-[11px] text-muted-foreground">{t('automations.graphNoCalendar')}</p>
-        <p className="text-[11px] text-muted-foreground">{t('automations.connectorsOptional')}</p>
+        <p className="text-xs text-muted-foreground">{t('automations.graphNoCalendar')}</p>
+        <p className="text-xs text-muted-foreground">{t('automations.connectorsOptional')}</p>
       </div>
       <AutomationGraphEditor
         graph={projection.graph}

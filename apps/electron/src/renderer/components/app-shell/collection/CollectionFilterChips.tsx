@@ -278,7 +278,7 @@ export function CollectionFilterChips({
           type="button"
           onClick={clearAll}
           className={cn(
-            'inline-flex items-center gap-1 rounded-[var(--radius-control)] text-[11px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground',
+            'inline-flex items-center gap-1 rounded-[var(--radius-control)] text-xs font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground',
             stacked ? 'mx-1 h-7 px-2' : 'h-6 px-1.5',
           )}
         >
@@ -299,7 +299,7 @@ function ChipGroup({
 }) {
   return (
     <div role="group" aria-label={label} className="flex min-w-0 flex-wrap items-center gap-1">
-      <span className="mr-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/80">
+      <span className="mr-0.5 text-xs font-medium uppercase caps-label text-muted-foreground/80">
         {label}
       </span>
       {children}
@@ -321,8 +321,9 @@ function FilterChip({
       type="button"
       onClick={onClick}
       aria-pressed={selected}
+      title={label}
       className={cn(
-        'inline-flex h-6 max-w-[10rem] items-center truncate rounded-full border px-2 text-[11px] transition-colors',
+        'inline-flex h-6 max-w-[10rem] items-center truncate rounded-full border px-2 text-xs transition-colors',
         selected
           ? 'border-foreground/20 bg-foreground/[0.08] font-medium text-foreground'
           : 'border-transparent bg-foreground/[0.03] text-foreground/55 hover:bg-foreground/[0.06] hover:text-foreground/80',

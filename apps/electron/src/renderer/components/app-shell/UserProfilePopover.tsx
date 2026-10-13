@@ -81,12 +81,12 @@ export function UserProfilePopoverContent({
       <div className="flex items-center gap-2.5 rounded-[var(--radius-control)] p-2">
         {avatar}
         <div className="min-w-0 flex-1">
-          <div className="truncate text-body font-medium text-text-primary">{displayName}</div>
+          <div className="truncate text-body font-medium text-text-primary" title={displayName}>{displayName}</div>
           <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-caption text-muted-foreground">
             <span className="truncate rounded-md bg-surface-hover px-1.5 font-medium text-text-secondary">
               {planLabel}
             </span>
-            <span className="shrink-0 tabular-nums text-text-secondary">
+            <span className="shrink-0 numeric text-text-secondary">
               {t('profile.level', { level: data.level })}
             </span>
           </div>
@@ -100,7 +100,7 @@ export function UserProfilePopoverContent({
           <dt className="text-muted-foreground">{t('profile.balanceLabel')}</dt>
           <dd
             data-testid="profile-popover-balance"
-            className={cn('tabular-nums', balanceKnown ? 'text-text-primary' : 'text-muted-foreground')}
+            className={cn('numeric', balanceKnown ? 'text-text-primary' : 'text-muted-foreground')}
           >
             {balanceLabel}
           </dd>
@@ -108,13 +108,13 @@ export function UserProfilePopoverContent({
         {spentLabel ? (
           <div className="flex items-center justify-between gap-3" title={t('profile.spentTooltip')}>
             <dt className="text-muted-foreground">{t('profile.spent', { amount: '' }).trim()}</dt>
-            <dd className="tabular-nums text-text-secondary">{spentLabel}</dd>
+            <dd className="numeric text-text-secondary">{spentLabel}</dd>
           </div>
         ) : null}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-3" title={t('settings.account.xpHint')}>
             <dt className="text-muted-foreground">{t('settings.account.xp')}</dt>
-            <dd className="tabular-nums text-text-primary">{xpLabel}</dd>
+            <dd className="numeric text-text-primary">{xpLabel}</dd>
           </div>
           <div
             role="progressbar"

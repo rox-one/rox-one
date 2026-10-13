@@ -230,8 +230,8 @@ export function AutomationGraphEditor({
                     >
                       <Icon className="size-4 shrink-0" />
                       <span className="min-w-0">
-                        <span className="block text-[10px] text-muted-foreground">{nodeKindLabels[node.kind]}</span>
-                        <span className="block text-[11px] font-medium leading-snug line-clamp-2">{label}</span>
+                        <span className="block text-xs text-muted-foreground">{nodeKindLabels[node.kind]}</span>
+                        <span className="block text-xs font-medium line-clamp-2">{label}</span>
                       </span>
                     </button>
                   )

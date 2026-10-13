@@ -301,6 +301,19 @@ export const routes = {
     home: () => 'home' as const,
 
     /**
+     * G3 «Миссии» board (pilot, `featureMissionsBoardV1Atom`) — `missions`.
+     * Additive prefix; inert (unresolvable) while the flag is off.
+     */
+    missions: () => 'missions' as const,
+
+    /**
+     * One mission screen — `missions/mission/{id}`. The board marks the row
+     * `data-active`; the lane/shelf views land with the entity stage.
+     */
+    mission: (missionId: string) =>
+      `missions/mission/${encodeURIComponent(missionId)}` as const,
+
+    /**
      * Connection Fabric surface (CF-6) — `connections`.
      * Native Workbench page: Services / Credentials / Imports / Policies / Audit.
      */

@@ -141,11 +141,11 @@ export default function PlanWorkspacePage({ selectedId }: { selectedId?: string 
       </Suspense>
     </div> : sideBySide ? <div className="grid min-h-0 min-w-0 flex-1 grid-cols-2">
       <section aria-label={t('navigation.planSections.calendar')} className="flex min-h-0 min-w-0 flex-col border-r border-border">
-        <h2 className="shrink-0 border-b border-border/60 px-3 py-2 text-caption font-medium uppercase tracking-wide text-text-muted">{t('navigation.planSections.calendar')}</h2>
+        <h2 className="shrink-0 border-b border-border/60 px-3 py-2 text-caption font-medium uppercase caps-label text-text-muted">{t('navigation.planSections.calendar')}</h2>
         <div className="min-h-0 flex-1">{calendar}</div>
       </section>
       <section aria-label={t('navigation.planSections.meetings')} className="flex min-h-0 min-w-0 flex-col">
-        <h2 className="shrink-0 border-b border-border/60 px-3 py-2 text-caption font-medium uppercase tracking-wide text-text-muted">{t('navigation.planSections.meetings')}</h2>
+        <h2 className="shrink-0 border-b border-border/60 px-3 py-2 text-caption font-medium uppercase caps-label text-text-muted">{t('navigation.planSections.meetings')}</h2>
         <div className="min-h-0 flex-1">{meetings}</div>
       </section>
     </div> : <div className="min-h-0 flex-1">

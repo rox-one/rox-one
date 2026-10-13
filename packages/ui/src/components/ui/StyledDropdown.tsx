@@ -248,7 +248,7 @@ export function DropdownMenuShortcut({
 }: React.ComponentProps<'span'>) {
   return (
     <span
-      className={cn('text-text-muted ml-auto pl-4 text-[11px] tracking-normal', className)}
+      className={cn('text-text-muted ml-auto pl-4 text-xs tracking-normal', className)}
       {...props}
     />
   )

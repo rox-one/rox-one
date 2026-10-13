@@ -24,7 +24,7 @@ export default function ProposalInbox(props: {
   return (
     <div data-testid="proposal-inbox" className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
-        <h3 className="text-[13px] font-semibold">{t('meetings.proposals')}</h3>
+        <h3 className="text-base font-semibold">{t('meetings.proposals')}</h3>
         <Button
           className="ml-auto"
           variant="primary"
@@ -59,8 +59,8 @@ export default function ProposalInbox(props: {
             />
           ) : <span className="w-[13px] shrink-0" />}
           <div className="min-w-0 flex-1">
-            <p className="text-[13px]">{proposal.title}</p>
-            <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-text-muted">
+            <p className="text-base">{proposal.title}</p>
+            <p className="flex flex-wrap items-center gap-1.5 text-xs text-text-muted">
               <span>{proposal.type === 'create_note' ? t('meetings.kindNote') : t('meetings.kindTask')}</span>
               <span>·</span>
               <span>{t('meetings.source')}: {proposal.source}</span>
@@ -74,7 +74,7 @@ export default function ProposalInbox(props: {
               ) : null}
             </p>
             {proposal.errorCode ? (
-              <p data-testid="proposal-error" className="text-[11px] text-destructive">{t(i18nKeyForProposalError(proposal.errorCode))}</p>
+              <p data-testid="proposal-error" className="text-xs text-destructive">{t(i18nKeyForProposalError(proposal.errorCode))}</p>
             ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-1">

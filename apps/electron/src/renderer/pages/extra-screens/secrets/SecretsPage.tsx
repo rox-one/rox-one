@@ -490,8 +490,8 @@ export default function SecretsPage(_props: { itemId: string | null }) {
             {refs && refs.map((ref) => (
               <div key={`${ref.name}:${ref.envVar}`} className="rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-surface-hover">
                 <div className="flex items-center gap-2">
-                  <span className="min-w-0 flex-1 truncate font-mono text-small">{ref.name}</span>
-                  <span className="shrink-0 truncate font-mono text-small text-muted-foreground">{ref.envVar}</span>
+                  <span className="min-w-0 flex-1 truncate font-mono text-small" title={ref.name}>{ref.name}</span>
+                  <span className="shrink-0 truncate font-mono text-small text-muted-foreground" title={ref.envVar}>{ref.envVar}</span>
                 </div>
                 <div className="mt-0.5 flex items-center gap-2 text-small text-muted-foreground">
                   <span>{t('extraScreens.secrets.refProvider')}: {ref.provider ?? t('extraScreens.secrets.refAny')}</span>

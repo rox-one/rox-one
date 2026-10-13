@@ -1,0 +1,28 @@
+/* Type-rhythm density layer (G7 «Типографика и плотность 2.0»).
+   Density swaps values, never class names. The app applies the density
+   attribute per container (`compact` | `comfortable` on lists/feeds/lanes),
+   so the condensed defaults are declared unconditionally on `:root` and the
+   comfortable values win wherever the attribute appears — at the root or on
+   any nested container.
+
+   Scope: the prose leading is the one rhythm role a shipped surface consumes
+   today (`.prose-body` in ../index.css). The wider gap vocabulary
+   (block/turn/card/section/heading) is deliberately NOT declared until a
+   surface reads it — dead tokens were pruned in review; add them here
+   together with their first consumer.
+
+   Specificity: `:root[data-density="…"]` (0,2,0) outranks the bare
+   `html[data-density="…"]` chrome blocks (0,1,1), and the later
+   `[data-density="comfortable"]` (0,1,0) beats the `:root` defaults (0,1,0)
+   on the root element itself. */
+:root,
+:root[data-density="condensed"],
+[data-density="condensed"],
+[data-density="compact"] {
+  --density-leading-prose: 24px;
+}
+
+:root[data-density="comfortable"],
+[data-density="comfortable"] {
+  --density-leading-prose: 24.75px;
+}

@@ -44,7 +44,7 @@ export function NewTaskComposer({ onCreate, className }: NewTaskComposerProps) {
         onClick={() => setComposing(true)}
         className={cn(
           'flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-border/70 py-2',
-          'text-[11px] font-medium text-foreground/50 transition-colors',
+          'text-xs font-medium text-foreground/50 transition-colors',
           'hover:border-border hover:text-foreground/80',
           className
         )}

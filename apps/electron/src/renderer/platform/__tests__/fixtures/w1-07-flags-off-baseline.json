@@ -583,6 +583,24 @@
       "when": "!inputFocus && !menuOpen"
     },
     {
+      "id": "panel.swap",
+      "hotkey": "mod+alt+s",
+      "category": "Navigation",
+      "when": "!inputFocus && !menuOpen"
+    },
+    {
+      "id": "missions.open",
+      "hotkey": null,
+      "category": "Navigation",
+      "when": "!inputFocus && !menuOpen"
+    },
+    {
+      "id": "layout.deck",
+      "hotkey": "mod+\\",
+      "category": "Navigation",
+      "when": "!inputFocus && !menuOpen"
+    },
+    {
       "id": "chat.stopProcessing",
       "hotkey": "escape",
       "category": "Chat",
@@ -678,7 +696,10 @@
       "panel.focusRight",
       "panel.focusUp",
       "panel.focusDown",
-      "panel.toggleFullScreen"
+      "panel.toggleFullScreen",
+      "panel.swap",
+      "missions.open",
+      "layout.deck"
     ],
     "View": [
       "view.toggleSidebar",
@@ -913,6 +934,21 @@
       "id": "panel.toggleFullScreen",
       "when": "!inputFocus && !menuOpen",
       "hotkey": null
+    },
+    {
+      "id": "panel.swap",
+      "when": "!inputFocus && !menuOpen",
+      "hotkey": "mod+alt+s"
+    },
+    {
+      "id": "missions.open",
+      "when": "!inputFocus && !menuOpen",
+      "hotkey": null
+    },
+    {
+      "id": "layout.deck",
+      "when": "!inputFocus && !menuOpen",
+      "hotkey": "mod+\\"
     },
     {
       "id": "chat.cyclePermissionMode",

@@ -87,8 +87,8 @@ export function WorkspacePicker({ onSelectWorkspace }: WorkspacePickerProps) {
                   {ws.name.charAt(0)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">{ws.name}</div>
-                  <div className="truncate text-xs text-muted-foreground">{ws.slug}</div>
+                  <div className="truncate font-medium" title={ws.name}>{ws.name}</div>
+                  <div className="truncate text-xs text-muted-foreground" title={ws.slug}>{ws.slug}</div>
                 </div>
               </button>
             ))}

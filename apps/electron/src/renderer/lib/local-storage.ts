@@ -163,6 +163,18 @@ export const KEYS = {
   // «Мои транскрипты» mirror: meeting transcript generations already filed as
   // notes (`<meetingId>:<generation>`), so an app restart never duplicates a note.
   meetingsTranscriptNotes: 'meetings-transcript-notes',
+  // Intelligent UI pilot flags — all default OFF
+  featureOrbitBoard: 'feature-orbit-board',
+  featureAuroraField: 'feature-aurora-field',
+  featureSessionLanesV1: 'feature-session-lanes-v1',
+  featureLensMorphV1: 'feature-lens-morph-v1',
+  featureMissionsBoardV1: 'feature-missions-board-v1',
+  featureLayoutEngine: 'feature-layout-engine',
+  // Wave 2 (G5 «Диалог» + G6 wave 2) — all default OFF
+  featureDialogContinuumV1: 'feature-dialog-continuum-v1',
+  featureDialogArtifactsV1: 'feature-dialog-artifacts-v1',
+  featureComposerDeckV1: 'feature-composer-deck-v1',
+  featurePanelSwapV1: 'feature-panel-swap-v1',
 } as const
 
 export const EVENTS = {

@@ -162,7 +162,7 @@ function ValidEntityChip({
         : restricted?.status === 'unavailable'
           ? <TriangleAlert aria-hidden="true" className="size-3 shrink-0" />
           : <EntityKindIcon kind={ref.kind} icon={model?.icon} className="size-3 shrink-0" />}
-      <span className={cn('truncate', restricted?.status === 'tombstone' && 'line-through')}>
+      <span className={cn('truncate', restricted?.status === 'tombstone' && 'line-through')} title={text}>
         {ChipLabel && model ? <ChipLabel preview={model} /> : text}
       </span>
     </button>

@@ -82,7 +82,7 @@ export function SessionPublishedChip({ sessionId, className }: SessionPublishedC
   const target = labelFor(latest)
 
   return (
-    <div className={cn('flex items-center gap-1.5 text-[11px] text-muted-foreground', className)}>
+    <div className={cn('flex items-center gap-1.5 text-xs text-muted-foreground', className)}>
       <BookOpen className="h-3 w-3 shrink-0" />
       <button
         type="button"

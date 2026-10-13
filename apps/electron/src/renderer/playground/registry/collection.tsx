@@ -166,7 +166,7 @@ function CollectionChromePlayground() {
         <CollectionDisplayPopover display={display} onDisplayChange={setDisplay} />
       </div>
       <div className="min-h-0 flex-1 overflow-auto">
-        <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground backdrop-blur">
+        <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-1.5 text-xs font-semibold text-muted-foreground backdrop-blur">
           <span className="w-6 shrink-0" />
           <span className="min-w-0 flex-1">{t('collection.table.column.title')}</span>
           <SessionTablePropertyHeader

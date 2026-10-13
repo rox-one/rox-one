@@ -187,7 +187,7 @@ export default function HealthPage(_props: { itemId: string | null }) {
           <HealthRowDetail row={selectedRow} onFix={onFix} extra={detailExtra} />
         ) : (
           <div className="min-w-0 max-w-[720px]">
-            <h2 className="text-title font-bold leading-tight">{t('extraScreens.health.title')}</h2>
+            <h2 className="text-title font-bold">{t('extraScreens.health.title')}</h2>
             <p className="mt-1 text-muted-foreground">{t('extraScreens.health.subtitle')}</p>
             {allClear ? (
               <p className="mt-4 text-text-secondary">{t('extraScreens.health.allOkBody')}</p>

@@ -146,7 +146,7 @@ export function BindingAllowListPopover({ access, workspaceOwners, onChange }: P
                       <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-border/70">
                         {checked && <Check className="h-3 w-3" />}
                       </div>
-                      <div className="min-w-0 flex-1 truncate text-xs">{primary}</div>
+                      <div className="min-w-0 flex-1 truncate text-xs" title={primary}>{primary}</div>
                       {owner.username && (
                         <div className="shrink-0 text-xs text-foreground/40">
                           @{owner.username}

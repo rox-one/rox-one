@@ -238,12 +238,12 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
       data-testid="cloud-run-surface-host"
     >
       <div className="flex h-7 shrink-0 items-center justify-between border-b border-border/40 px-3">
-        <span className="truncate text-[11px] font-medium text-foreground/80">
+        <span className="truncate text-xs font-medium text-foreground/80">
           {t('settings.cloudRuns.title')} · {run.name || run.id}
         </span>
         <button
           type="button"
-          className="text-[11px] text-muted-foreground hover:text-foreground"
+          className="text-xs text-muted-foreground hover:text-foreground"
           data-cloud-run-surface-open-settings="true"
           onClick={openSettings}
         >

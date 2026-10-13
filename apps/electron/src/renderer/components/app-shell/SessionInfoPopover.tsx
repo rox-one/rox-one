@@ -169,7 +169,7 @@ function SessionInfoPopoverContent({ sessionId, sessionFolderPath, onFileOpen }:
         </div>
         <SessionPublishedChip sessionId={sessionId} />
         {costLabel && (
-          <div className="text-xs text-muted-foreground tabular-nums" data-testid="session-cost-usd">
+          <div className="text-xs text-muted-foreground numeric" data-testid="session-cost-usd">
             {t('chat.sessionCost', { amount: costLabel })}
           </div>
         )}

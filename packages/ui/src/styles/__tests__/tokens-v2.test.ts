@@ -35,6 +35,24 @@ function blocks(css: string, selector: string): Record<string, string>[] {
   return out
 }
 
+/** Same as `blocks`, but matches any block whose selector LIST contains `selector`. */
+function blocksContaining(css: string, selector: string): Record<string, string>[] {
+  const clean = stripComments(css)
+  const out: Record<string, string>[] = []
+  const re = /([^{};]+)\{([^{}]*)\}/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(clean))) {
+    if (!m[1]!.split(',').some((s) => s.trim() === selector)) continue
+    const decls: Record<string, string> = {}
+    for (const part of m[2]!.split(';')) {
+      const d = part.match(/^\s*(--[\w-]+)\s*:\s*([\s\S]+?)\s*$/)
+      if (d) decls[d[1]!] = d[2]!
+    }
+    out.push(decls)
+  }
+  return out
+}
+
 const withoutMedia = (css: string) => stripComments(css).replace(/@media[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '')
 /** Unconditional `:root` declarations (blocks inside @media are ignored). */
 const merge = (bs: Record<string, string>[]): Record<string, string> => Object.assign({}, ...bs)
@@ -81,7 +99,7 @@ const LAYERS = [
 
 describe('token foundation v2: structure', () => {
   it('ships the token families as separate files imported by the shared theme', () => {
-    for (const f of ['grid', 'radius', 'type', 'icon', 'chrome', 'z', 'elevation', 'motion', 'state']) {
+    for (const f of ['grid', 'radius', 'type', 'icon', 'chrome', 'density', 'z', 'elevation', 'motion', 'state']) {
       expect(tokenFiles).toContain(`${f}.css`)
       expect(token('index.css')).toContain(`@import "./${f}.css";`)
     }
@@ -126,6 +144,27 @@ describe('token foundation v2: structure', () => {
       expect(compact[name], name).toBeDefined()
       expect(px(value)).toBeGreaterThanOrEqual(px(compact[name]!))
     }
+  })
+
+  it('rhythm density layer mirrors the chrome variant mechanism (condensed default, comfortable wins)', () => {
+    const condensed = merge(blocksContaining(token('density.css'), ':root[data-density="condensed"]'))
+    const comfortable = merge(blocksContaining(token('density.css'), ':root[data-density="comfortable"]'))
+    expect(Object.keys(condensed).length).toBeGreaterThan(0)
+    // The rhythm layer must define its condensed defaults unconditionally on
+    // :root — per-container density attributes only carry compact/comfortable.
+    expect(Object.keys(merge(blocksContaining(token('density.css'), ':root'))).sort()).toEqual(Object.keys(condensed).sort())
+    expect(stripComments(token('density.css'))).toContain('[data-density="compact"]')
+    expect(Object.keys(comfortable).sort()).toEqual(Object.keys(condensed).sort())
+    const values: Record<string, [string, string]> = {
+      '--density-leading-prose': ['24px', '24.75px'],
+    }
+    for (const [name, [cond, comfy]] of Object.entries(values)) {
+      expect(condensed[name], name).toBe(cond)
+      expect(comfortable[name], name).toBe(comfy)
+      expect(px(comfy), name).toBeGreaterThanOrEqual(px(cond))
+    }
+    // `:root[data-density="…"]` (0,2,0) outranks `html[data-density="…"]` (0,1,1).
+    expect(stripComments(token('density.css'))).toMatch(/:root\[data-density="comfortable"\]/)
   })
 
   it('coarse-pointer hit-target floors win over data-density', () => {
@@ -471,32 +510,76 @@ describe('token foundation v2: values (step 2)', () => {
     for (const step of ['xl', '2xl', '3xl', '4xl']) expect(root[`--radius-${step}`]).toBe('var(--radius-lg)')
   })
 
-  it('remaps text-xs…xl onto caption/small/body/reading/title', () => {
+  it('remaps text-xs…xl onto caption/small/body/reading/title with fixed px boxes', () => {
     const theme = merge(blocks(token('type.css'), '@theme'))
     const pairs: Record<string, [string, string]> = {
-      caption: ['11px', '14px'], small: ['12px', '16px'], body: ['13px', '20px'], reading: ['15px', '24px'],
+      caption: ['11px', '16px'], small: ['12px', '16px'], body: ['13px', '20px'], reading: ['15px', '24px'],
       'title-sm': ['15px', '20px'], title: ['18px', '24px'], display: ['24px', '32px'],
     }
-    // Line heights are unitless ratios that resolve to the listed px on the element.
-    const ratio = (v: string) => {
-      const m = v.match(/^calc\((\d+(?:\.\d+)?) \/ (\d+(?:\.\d+)?)\)$/)
-      if (!m) throw new Error(`not a unitless calc ratio: ${v}`)
-      return Number(m[1]) / Number(m[2])
-    }
+    // G7: line boxes are fixed px (no unitless ratios) so descendants inherit
+    // an absolute row height instead of re-scaling by ratio.
     for (const [step, [size, lh]] of Object.entries(pairs)) {
       expect(theme[`--text-${step}`], step).toBe(size)
-      expect(ratio(theme[`--text-${step}--line-height`]!) * px(size), step).toBeCloseTo(px(lh), 6)
+      expect(theme[`--text-${step}--line-height`], step).toBe(lh)
     }
     for (const [name, value] of Object.entries(theme)) {
-      if (name.endsWith('--line-height')) expect(value, name).not.toMatch(/px/)
+      if (name.endsWith('--line-height') && !value.startsWith('var(')) expect(value, name).toMatch(/px$/)
     }
     expect(stripComments(indexCss)).toMatch(/body\s*\{[^}]*line-height:\s*var\(--text-body--line-height\);/)
-    const remap = { xs: 'caption', sm: 'small', base: 'body', lg: 'reading', xl: 'title' }
-    for (const [tw, step] of Object.entries(remap)) {
-      expect(theme[`--text-${tw}`], tw).toBe(theme[`--text-${step}`])
-      expect(theme[`--text-${tw}--line-height`], tw).toBe(theme[`--text-${step}--line-height`])
+    const remap: Record<string, [string, string]> = {
+      xs: ['11px', '16px'], sm: ['12px', '16px'], base: ['13px', '20px'], lg: ['15px', '24px'], xl: ['18px', '24px'],
     }
-    for (const size of Object.values(theme).filter((x) => /px$/.test(x))) expect(px(size)).toBeGreaterThanOrEqual(11)
+    for (const [tw, [size, lh]] of Object.entries(remap)) {
+      expect(theme[`--text-${tw}`], tw).toBe(size)
+      expect(theme[`--text-${tw}--line-height`], tw).toBe(lh)
+    }
+    for (const [name, value] of Object.entries(theme)) {
+      if (!/px$/.test(value)) continue
+      // `--text-mark` is the documented sub-floor glyph exception.
+      if (name === '--text-mark') continue
+      expect(px(value), name).toBeGreaterThanOrEqual(11)
+    }
+  })
+
+  it('declares the G7 role steps and rhythm tokens', () => {
+    const theme = merge(blocks(token('type.css'), '@theme'))
+    const expected: Record<string, string> = {
+      '--text-data': '13px',
+      '--text-data--line-height': '18px',
+      '--text-prose': 'var(--text-reading)',
+      '--text-prose--line-height': 'var(--text-reading--line-height)',
+      '--text-title-md': '16px',
+      '--text-title-md--line-height': '22px',
+      '--text-stat': '20px',
+      '--text-stat--line-height': '28px',
+      '--text-hero': '44px',
+      '--text-hero--line-height': '48px',
+      '--text-mark': '9px',
+      '--text-mark--line-height': '12px',
+      '--text-floor': '11px',
+      '--leading-caps': '1.15',
+      '--prose-measure': '68ch',
+      '--tracking-caps': '0.06em',
+      '--tracking-label': '0.02em',
+      '--numeric-features': '"tnum" 1, "zero" 1, "case" 1',
+      '--hyphens-prose': 'auto',
+    }
+    for (const [name, value] of Object.entries(expected)) expect(theme[name], name).toBe(value)
+    // `--text-floor` is a contract, not a comment: no px token may sit below it.
+    const floor = px(theme['--text-floor']!)
+    for (const [name, value] of Object.entries(theme)) {
+      if (name === '--text-mark') continue // documented sub-floor glyph exception
+      if (/px$/.test(value)) expect(px(value), name).toBeGreaterThanOrEqual(floor)
+    }
+  })
+
+  it('declares the G7 role utilities with token-only values', () => {
+    const css = stripComments(indexCss)
+    expect(css).toMatch(/\.numeric\s*\{\s*font-variant-numeric:\s*tabular-nums;\s*font-feature-settings:\s*var\(--numeric-features\);\s*\}/)
+    expect(css).toMatch(/\.caps-label\s*\{\s*letter-spacing:\s*var\(--tracking-caps\);\s*line-height:\s*var\(--leading-caps\);\s*\}/)
+    expect(css).toMatch(/\.label-tracking\s*\{\s*letter-spacing:\s*var\(--tracking-label\);\s*\}/)
+    expect(css).toMatch(/\.prose-body\s*\{[^}]*font-size:\s*var\(--text-prose\);[^}]*hyphens:\s*var\(--hyphens-prose\);/)
+    expect(css).toMatch(/\.prose-measure\s*\{\s*max-width:\s*var\(--prose-measure\);\s*\}/)
   })
 
   it('sets the lucide stroke in CSS and sizes icons 20-in-36 / 16-in-28', () => {
@@ -507,7 +590,7 @@ describe('token foundation v2: values (step 2)', () => {
     expect(v('--icon-toolbar')).toBe('16px')
     expect(v('--control-md')).toBe('28px')
     expect(v('--chrome-rail-width')).toBe('48px')
-    expect(v('--chrome-panel-header-height')).toBe('36px')
+    expect(v('--chrome-panel-header-height')).toBe('32px')
     expect(v('--chrome-tab-strip-height')).toBe('32px')
   })
 
@@ -519,19 +602,22 @@ describe('token foundation v2: values (step 2)', () => {
     for (const [name, value] of Object.entries(theme)) expect(value, name).not.toContain(`var(${name})`)
     expect(stripComments(indexCss)).not.toMatch(/--shadow-(2xs|xs|sm|md|lg|xl|2xl)?:\s*var\(--shadow(-2xs|-xs|-sm|-md|-lg|-xl|-2xl)?\)/)
     for (const name of ['--shadow-popover', '--shadow-overlay']) {
-      expect(root[name]).toMatch(/^0 0 0 1px var\(--border-subtle\), 0 \d+px \d+px -\d+px rgb\(0 0 0 \/ 0\.\d+\)$/)
+      // G8: one ring colour for both modes (--elev-ring) + two-layer depth.
+      expect(root[name]).toMatch(
+        /^0 0 0 1px var\(--elev-ring\), 0 \d+px \d+px -\d+px rgb\(0 0 0 \/ 0\.\d+\), 0 \d+px \d+px -\d+px rgb\(0 0 0 \/ 0\.\d+\)$/,
+      )
     }
     const dark = merge(blocks(token('elevation.css'), '.dark'))
-    expect(dark['--shadow-popover']).toContain('0.45')
-    expect(dark['--shadow-overlay']).toContain('0.55')
+    expect(dark['--shadow-popover']).toContain('0.5')
+    expect(dark['--shadow-overlay']).toContain('0.6')
   })
 
   it('uses the adopted motion and state values', () => {
     expect([v('--motion-instant'), v('--motion-fast'), v('--motion-base'), v('--motion-slow')]).toEqual(['0ms', '120ms', '180ms', '240ms'])
     expect(v('--ease-standard')).toBe('cubic-bezier(0.2, 0.8, 0.2, 1)')
-    expect(root['--state-hover']).toContain('var(--foreground) 5%')
-    expect(root['--state-pressed']).toContain('var(--foreground) 9%')
-    expect(root['--state-selected']).toContain('var(--accent) 14%')
+    expect(root['--state-hover']).toContain('var(--foreground) 4%')
+    expect(root['--state-pressed']).toContain('var(--foreground) 8%')
+    expect(root['--state-selected']).toContain('var(--accent) 12%')
     // Hover is neutral: no accent in the hover state.
     expect(root['--state-hover']).not.toContain('--accent')
   })

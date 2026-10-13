@@ -56,7 +56,7 @@ export function RepositoryCard({ record, progress, busy, onOpen, onRefresh, onRe
         <div className="space-y-1" role="status" aria-live="polite">
           <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
             <span>{phase}</span>
-            {determinate ? <span className="tabular-nums">{t('devSpace.progress.bytes', { done: progress.receivedBytes ?? 0, total: progress.totalBytes })}</span> : null}
+            {determinate ? <span className="numeric">{t('devSpace.progress.bytes', { done: progress.receivedBytes ?? 0, total: progress.totalBytes })}</span> : null}
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-surface-pressed" role="progressbar"
             aria-valuemin={0} aria-valuemax={100} {...(determinate ? { 'aria-valuenow': percent } : {})}>

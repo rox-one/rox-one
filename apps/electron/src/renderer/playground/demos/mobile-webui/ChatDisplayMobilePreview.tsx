@@ -3,7 +3,7 @@ import { ChatDisplay } from '@/components/app-shell/ChatDisplay'
 import type { Message } from '@rox/core/types'
 import type { PermissionMode } from '../../../../shared/types'
 import { MobileWebUIFrame, type MobileDevice } from './MobileWebUIFrame'
-import { MobilePlaygroundProviders } from './MobilePlaygroundProviders'
+import { MobilePlaygroundProviders, ensureMobileSessionStubs } from './MobilePlaygroundProviders'
 import {
   MOCK_MESSAGES,
   MOCK_LABELS,
@@ -18,6 +18,9 @@ import {
 const log = (label: string) => (...args: unknown[]) => {
   console.log(`[Mobile ChatDisplay] ${label}`, args)
 }
+
+// P-10-33: install the session provenance stub before the story mounts.
+ensureMobileSessionStubs()
 
 type MessageCount = '1' | '5' | '20'
 
@@ -74,7 +77,7 @@ function buildMessages(count: MessageCount, streaming: boolean): Message[] {
 
 export function ChatDisplayMobilePreview({
   device = 'iphone-15',
-  showBezel = true,
+  showBezel = false,
   messageCount = '5',
   streaming = false,
   permissionMode = 'ask',

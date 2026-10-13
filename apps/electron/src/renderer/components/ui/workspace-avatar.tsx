@@ -32,7 +32,7 @@ interface WorkspaceAvatarProps {
   workspaceName?: string
   src?: string | null
   className?: string
-  /** Override font size for the initial letter (default `text-[10px]`). */
+  /** Override font size for the initial letter (default `text-xs`). */
   fallbackClassName?: string
 }
 
@@ -59,7 +59,7 @@ export function WorkspaceAvatar({
       src={src ?? undefined}
       alt={workspaceName}
       className={className}
-      fallbackClassName={cn('text-[10px]', !hasId && 'bg-muted', fallbackClassName)}
+      fallbackClassName={cn('text-xs', !hasId && 'bg-muted', fallbackClassName)}
       fallback={
         hasId ? (
           <div

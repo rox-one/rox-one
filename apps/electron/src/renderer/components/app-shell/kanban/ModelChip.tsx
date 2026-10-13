@@ -49,7 +49,7 @@ export function ModelChip({ model, llmConnection, connection, short = false, cla
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium',
+        'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium',
         'bg-foreground/[0.04] text-foreground/70 ring-1 ring-foreground/[0.06]',
         className
       )}
@@ -59,7 +59,7 @@ export function ModelChip({ model, llmConnection, connection, short = false, cla
       ) : (
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40" aria-hidden />
       )}
-      <span className="min-w-0 truncate">{label}</span>
+      <span className="min-w-0 truncate" title={label}>{label}</span>
     </span>
   )
 }

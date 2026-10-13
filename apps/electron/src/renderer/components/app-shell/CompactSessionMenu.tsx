@@ -266,9 +266,10 @@ export function CompactSessionMenu({
             >
               <h1
                 className={cn(
-                  'text-sm font-semibold truncate font-sans leading-tight',
+                  'text-sm font-semibold truncate font-sans',
                   isRegeneratingTitle && 'animate-shimmer-text',
                 )}
+                title={title}
               >
                 {title}
               </h1>
@@ -297,7 +298,7 @@ export function CompactSessionMenu({
               <ChevronLeft className="h-4 w-4" />
             </button>
           )}
-          <DrawerTitle className="flex-1 min-w-0 truncate">{headerTitle}</DrawerTitle>
+          <DrawerTitle className="flex-1 min-w-0 truncate" title={headerTitle}>{headerTitle}</DrawerTitle>
         </DrawerHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-2 pb-6">
@@ -702,7 +703,7 @@ function Row({
       <span className="shrink-0 inline-flex items-center justify-center h-5 w-5">
         {icon}
       </span>
-      <span className="flex-1 min-w-0 text-sm truncate">{label}</span>
+      <span className="flex-1 min-w-0 text-sm truncate" title={typeof label === 'string' ? label : undefined}>{label}</span>
       {trailing}
       {radioSelected && <Check className="h-4 w-4 shrink-0 text-foreground/70" />}
       {chevron && <ChevronRight className="h-4 w-4 shrink-0 text-foreground/70" />}
@@ -716,7 +717,7 @@ function Separator() {
 
 function CountBadge({ count }: { count: number }) {
   return (
-    <span className="text-[11px] tabular-nums text-foreground/50">
+    <span className="text-xs numeric text-foreground/50">
       {count}
     </span>
   )

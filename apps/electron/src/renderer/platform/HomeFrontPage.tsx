@@ -203,7 +203,7 @@ function SortableWidget({
     >
       <WidgetBoundary
         fallback={
-          <div data-home-widget={placement.id} className={cn('rox-home-widget flex flex-col justify-center rounded-[var(--radius-card)] px-3 text-[13px]', contentSized ? 'py-3' : 'h-full')}>
+          <div data-home-widget={placement.id} className={cn('rox-home-widget flex flex-col justify-center rounded-[var(--radius-card)] px-3 text-base', contentSized ? 'py-3' : 'h-full')}>
             <p className="font-bold">{t(def.titleKey)}</p>
             <p className="text-muted-foreground">{t('workbench.home.widgetFailed')}</p>
           </div>
@@ -221,7 +221,7 @@ function WidgetPreview({ id }: { id: HomeWidgetId }) {
   const Preview = HOME_WIDGETS[id].Component
   return (
     <div ref={ref} role="region" className="mt-2 h-[232px] min-w-0 rounded-[var(--radius-card)] border border-foreground/10" data-home-preview={id} aria-label={t('workbench.home.picker.preview')}>
-      <WidgetBoundary fallback={<p className="p-3 text-[12px] text-muted-foreground">{t('workbench.home.widgetFailed')}</p>}>
+      <WidgetBoundary fallback={<p className="p-3 text-sm text-muted-foreground">{t('workbench.home.widgetFailed')}</p>}>
         <Preview edit={null} width={width} size="S" />
       </WidgetBoundary>
     </div>
@@ -235,8 +235,8 @@ function WidgetPicker({ layout, onToggle, onClose }: { layout: HomeDashboardLayo
   return (
     <section className="rox-home-widget rounded-[var(--radius-card)] px-4 pb-4 pt-3" aria-label={t('workbench.home.picker.title')} data-home-picker="">
       <div className="flex items-center gap-2">
-        <h2 className="text-[15px] font-bold text-foreground">{t('workbench.home.picker.title')}</h2>
-        <span className="text-[12px] text-muted-foreground">{t('workbench.home.picker.count', { used: used.size, total: HOME_WIDGET_IDS.length })}</span>
+        <h2 className="text-lg font-bold text-foreground">{t('workbench.home.picker.title')}</h2>
+        <span className="text-sm text-muted-foreground">{t('workbench.home.picker.count', { used: used.size, total: HOME_WIDGET_IDS.length })}</span>
         <span className="flex-1" />
         <button
           type="button"
@@ -248,11 +248,11 @@ function WidgetPicker({ layout, onToggle, onClose }: { layout: HomeDashboardLayo
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
-      <p className="mt-0.5 text-[12px] text-muted-foreground">{t('workbench.home.picker.hint')}</p>
+      <p className="mt-0.5 text-sm text-muted-foreground">{t('workbench.home.picker.hint')}</p>
       <div className="mt-2 flex flex-col gap-3">
         {HOME_WIDGET_GROUPS.map((group) => (
           <div key={group.id} data-home-picker-group={group.id}>
-            <h3 className="pb-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{t(`workbench.home.picker.group.${group.id}`)}</h3>
+            <h3 className="pb-1 text-xs font-bold uppercase caps-label text-muted-foreground">{t(`workbench.home.picker.group.${group.id}`)}</h3>
             <ul className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(232px, 1fr))' }}>
               {group.widgets.map((id) => {
                 const def = HOME_WIDGETS[id]
@@ -282,12 +282,12 @@ function WidgetPicker({ layout, onToggle, onClose }: { layout: HomeDashboardLayo
                       </span>
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="flex min-w-0 items-center gap-1.5">
-                          <span className="truncate text-[13px] font-bold text-foreground">{t(def.titleKey)}</span>
-                          <span className="shrink-0 rounded-[var(--radius-control)] bg-foreground/[0.06] px-1 text-[10px] font-bold leading-4 text-muted-foreground">{HOME_WIDGET_DEFAULT_SIZE[id]}</span>
+                          <span className="truncate text-base font-bold text-foreground" title={t(def.titleKey)}>{t(def.titleKey)}</span>
+                          <span className="shrink-0 rounded-[var(--radius-control)] bg-foreground/[0.06] px-1 text-xs font-bold text-muted-foreground">{HOME_WIDGET_DEFAULT_SIZE[id]}</span>
                         </span>
-                        <span className="line-clamp-2 text-[12px] leading-4 text-muted-foreground">{t(def.descriptionKey)}</span>
+                        <span className="line-clamp-2 text-sm text-muted-foreground">{t(def.descriptionKey)}</span>
                       </span>
-                      <span className={cn('mt-0.5 flex h-5 shrink-0 items-center gap-0.5 rounded-[var(--radius-control)] px-1 text-[11px] font-bold', added ? 'text-accent' : 'text-muted-foreground group-hover:text-foreground')}>
+                      <span className={cn('mt-0.5 flex h-5 shrink-0 items-center gap-0.5 rounded-[var(--radius-control)] px-1 text-xs font-bold', added ? 'text-accent' : 'text-muted-foreground group-hover:text-foreground')}>
                         {added ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                         {added ? t('workbench.home.picker.added') : t('workbench.home.picker.add')}
                       </span>
@@ -312,7 +312,7 @@ function HeaderButton({ children, onClick, primary, pressed, testId }: { childre
       aria-pressed={pressed}
       data-home-button={testId}
       className={cn(
-        'flex h-7 items-center gap-1.5 rounded-[var(--radius-control)] px-2.5 text-[13px] font-bold',
+        'flex h-7 items-center gap-1.5 rounded-[var(--radius-control)] px-2.5 text-base font-bold',
         primary ? 'bg-foreground text-background hover:bg-foreground/85' : pressed ? 'bg-foreground/[0.14] text-foreground' : 'text-muted-foreground hover:bg-foreground/[0.08] hover:text-foreground',
       )}
     >
@@ -477,8 +477,8 @@ export function HomeFrontPage() {
       <div className="mx-auto flex w-full max-w-[1920px] flex-col gap-3 px-6 pb-8 pt-5">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-baseline gap-2">
-            <h1 className="text-[20px] font-bold leading-7 text-foreground">{t('workbench.home.title')}</h1>
-            {workspace?.name ? <p className="truncate text-[13px] text-muted-foreground">{workspace.name}</p> : null}
+            <h1 className="text-stat font-bold text-foreground">{t('workbench.home.title')}</h1>
+            {workspace?.name ? <p className="truncate text-base text-muted-foreground" title={workspace.name}>{workspace.name}</p> : null}
           </div>
           <div className="flex flex-wrap items-center gap-1" data-home-actions="">
             {editing ? (
@@ -516,7 +516,7 @@ export function HomeFrontPage() {
         </header>
 
         {editing ? (
-          <p className="text-[12px] text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {t('workbench.home.edit.hint')}
             {persistenceProblem === 'conflict' ? <span role="alert" className="ml-2 text-destructive">{t('workbench.home.edit.conflict')}</span> : null}
             {persistenceProblem === 'unavailable' ? <span role="alert" className="ml-2 text-destructive">{t('workbench.home.edit.storageUnavailable')}</span> : null}
@@ -536,7 +536,7 @@ export function HomeFrontPage() {
 
         <div ref={gridRef} className="min-w-0">
           {layout.widgets.length === 0 ? (
-            <div className="rox-home-widget flex flex-col items-start gap-2 rounded-[var(--radius-card)] px-4 py-6 text-[13px]" data-home-empty-layout="">
+            <div className="rox-home-widget flex flex-col items-start gap-2 rounded-[var(--radius-card)] px-4 py-6 text-base" data-home-empty-layout="">
               <p className="font-bold text-foreground">{t('workbench.home.emptyLayout')}</p>
               <p className="text-muted-foreground">{t('workbench.home.emptyLayoutHint')}</p>
               <div className="flex gap-1">
@@ -575,7 +575,7 @@ export function HomeFrontPage() {
                     <button
                       type="button"
                       onClick={() => setPickerOpen(true)}
-                      className="rox-home-add-cell flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] text-[13px] font-bold text-muted-foreground hover:text-foreground"
+                      className="rox-home-add-cell flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] text-base font-bold text-muted-foreground hover:text-foreground"
                       style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}`, gridRow: `span ${Math.ceil(widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) / trackPitch)}`, height: widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) - HOME_GRID_GAP, alignSelf: 'start' }}
                     >
                       <Plus className="h-5 w-5" />

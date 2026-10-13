@@ -69,7 +69,7 @@ interface CronFieldProps {
 function CronField({ label, value, onChange }: CronFieldProps) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+      <label className="text-xs font-medium text-muted-foreground uppercase caps-label">
         {label}
       </label>
       <input
@@ -140,7 +140,7 @@ export function CronBuilder({
   return (
     <div className={cn('space-y-5', className)}>
       <div className="space-y-2">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pl-1">
+        <h4 className="text-xs font-medium text-muted-foreground uppercase caps-label pl-1">
           {t('automations.cronCommonSchedules')}
         </h4>
         <div className="flex flex-wrap gap-1.5">
@@ -162,7 +162,7 @@ export function CronBuilder({
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pl-1">
+        <h4 className="text-xs font-medium text-muted-foreground uppercase caps-label pl-1">
           {t('automations.cronCustomSchedule')}
         </h4>
         <div className="grid grid-cols-5 gap-2">
@@ -178,7 +178,7 @@ export function CronBuilder({
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pl-1">
+        <h4 className="text-xs font-medium text-muted-foreground uppercase caps-label pl-1">
           {t('automations.cronAdvanced')}
         </h4>
         <input
@@ -216,7 +216,7 @@ export function CronBuilder({
                 const spansYears = nextRuns.length > 1 && nextRuns[0].getFullYear() !== nextRuns[nextRuns.length - 1].getFullYear()
                 const locale = i18n.language || 'ru'
                 return nextRuns.map((date, i) => (
-                  <span key={i} className="text-xs text-foreground/70 tabular-nums">
+                  <span key={i} className="text-xs text-foreground/70 numeric">
                     {date.toLocaleDateString(locale, {
                       weekday: 'short',
                       month: 'short',

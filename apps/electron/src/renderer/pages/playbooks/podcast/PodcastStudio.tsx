@@ -313,7 +313,7 @@ export function PodcastStudio({ open, onOpenChange, projectSlug, seed, onComplet
                 {running ? <Loader2 className="icon-caption animate-spin motion-reduce:animate-none" aria-hidden /> : <Mic2 className="icon-caption" aria-hidden />}
                 <span className="font-medium">{t(`playbooks.podcast.stage.${job.state}`)}</span>
                 {total > 0 ? (
-                  <span className="text-muted-foreground tabular-nums" data-testid="playbooks-podcast-segments-count">
+                  <span className="text-muted-foreground numeric" data-testid="playbooks-podcast-segments-count">
                     {t('playbooks.podcast.segmentsProgress', { done: job.doneSegments, total })}
                   </span>
                 ) : null}

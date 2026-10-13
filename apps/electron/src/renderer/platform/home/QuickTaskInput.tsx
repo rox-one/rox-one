@@ -113,12 +113,12 @@ export function QuickTaskInput({ onCreate, disabled = false }: {
           aria-label={t('workbench.home.taskTracker.quickAdd')}
           aria-invalid={failed || undefined}
           aria-describedby={`${messageId} ${helpId}`}
-          className="rox-home-quick-task-input h-7 min-w-0 flex-1 bg-transparent text-[13px] text-foreground placeholder:text-muted-foreground"
+          className="rox-home-quick-task-input h-7 min-w-0 flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground"
         />
         <button
           type="submit"
           disabled={disabled || pending || !hasTitle}
-          className="rox-home-quick-task-add flex h-6 shrink-0 items-center whitespace-nowrap rounded-[var(--radius-control)] px-2 text-[12px] font-bold text-foreground"
+          className="rox-home-quick-task-add flex h-6 shrink-0 items-center whitespace-nowrap rounded-[var(--radius-control)] px-2 text-sm font-bold text-foreground"
           data-empty={!hasTitle || undefined}
           onFocus={() => { if (!pointerFocus.current) setKeyboardFocus(true) }}
         >
@@ -128,7 +128,7 @@ export function QuickTaskInput({ onCreate, disabled = false }: {
           <button
             type="button"
             disabled={disabled}
-            className="rox-home-quick-task-help h-6 w-6 rounded-[var(--radius-card)] text-[12px] text-muted-foreground"
+            className="rox-home-quick-task-help h-6 w-6 rounded-[var(--radius-card)] text-sm text-muted-foreground"
             aria-label={t('workbench.home.taskTracker.quickAddHelpLabel')}
             aria-describedby={helpId}
             aria-expanded={helpOpen}
@@ -143,7 +143,7 @@ export function QuickTaskInput({ onCreate, disabled = false }: {
           </span>
         </span>
       </form>
-      <p id={messageId} className={`h-4 truncate text-[11px] leading-4 ${failed ? 'text-destructive' : 'text-muted-foreground'}`} aria-live="polite">
+      <p id={messageId} className={`h-4 truncate text-xs ${failed ? 'text-destructive' : 'text-muted-foreground'}`} aria-live="polite">
         {failed ? t('workbench.home.taskTracker.addFailed') : pending ? t('workbench.home.taskTracker.quickAddPending') : added ? t('workbench.home.taskTracker.added', { title: added }) : ''}
       </p>
     </>

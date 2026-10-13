@@ -44,7 +44,7 @@ export function SubscribersPicker({ people, subscriberIds, onChange, notifyEvery
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={cn('inline-flex h-8 items-center gap-2 rounded-[6px] px-2 text-[12px]', HOVER_TINT, MOTION_FAST, FOCUS_RING)}
+        className={cn('inline-flex h-8 items-center gap-2 rounded-[6px] px-2 text-sm', HOVER_TINT, MOTION_FAST, FOCUS_RING)}
       >
         <span className="flex -space-x-1.5" aria-hidden="true">
           {subscribers.slice(0, 3).map((p) => <PersonAvatar key={p.id} person={p} size={20} />)}
@@ -55,7 +55,7 @@ export function SubscribersPicker({ people, subscriberIds, onChange, notifyEvery
       </button>
       {open ? (
         <div role="dialog" aria-label={t('entities.ui.subscribers.title')} className={cn('absolute left-0 top-full z-20 mt-1 flex flex-col', POPOVER_SURFACE)}>
-          <div className="px-3 pt-2 text-[12px] font-semibold">{t('entities.ui.subscribers.title')}</div>
+          <div className="px-3 pt-2 text-sm font-semibold">{t('entities.ui.subscribers.title')}</div>
           <PeopleList
             people={people}
             selectedIds={selected}
@@ -64,7 +64,7 @@ export function SubscribersPicker({ people, subscriberIds, onChange, notifyEvery
             onEscape={() => { setOpen(false); triggerRef.current?.focus() }}
             onPick={(person) => onChange?.(toggleSubscriber(subscriberIds, person.id))}
           />
-          <label htmlFor={switchId} className="flex items-center gap-2 border-t border-border px-3 py-2 text-[12px]">
+          <label htmlFor={switchId} className="flex items-center gap-2 border-t border-border px-3 py-2 text-sm">
             <input
               id={switchId}
               type="checkbox"

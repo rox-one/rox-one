@@ -169,6 +169,12 @@ export interface EntityListProps<T> {
   /** Additional ScrollArea class */
   scrollAreaClassName?: string
   className?: string
+  /**
+   * Explicit empty/error/loading/ready contract for the list root. Defaults to
+   * `empty` when there is no content and `ready` otherwise, so the state shells
+   * stay distinguishable via `[data-state]`.
+   */
+  state?: 'empty' | 'loading' | 'error' | 'ready'
   /** Set of collapsed group keys (for collapsible groups) */
   collapsedGroups?: Set<string>
   /** Called when a collapsible group header is clicked */
@@ -216,9 +222,9 @@ function SectionHeader({
   return (
     <ContextMenu modal>
       <ContextMenuTrigger asChild>
-        <div ref={elementRef} style={style} className="sticky top-0 z-10 bg-background px-5 py-2">
-          <span className="text-caption font-medium text-muted-foreground uppercase tracking-wider">
-            {label} <> · <span className="text-muted-foreground/50">{itemCount}</span></>
+<div ref={elementRef} style={style} className="sticky top-0 z-10 bg-background px-5 py-2">
+          <span className="text-caption font-medium text-text-secondary uppercase caps-label">
+            {label} <> · <span className="text-muted-foreground/50 numeric">{itemCount}</span></>
           </span>
         </div>
       </ContextMenuTrigger>
@@ -267,15 +273,15 @@ function CollapsibleGroupHeader({
           onClick={onToggle}
           className="sticky top-0 z-10 flex w-full cursor-pointer items-center gap-1.5 bg-background px-5 py-2 group/header relative"
         >
-          <div className="absolute inset-y-0.5 left-2 right-2 rounded-[var(--radius-card)] group-hover/header:bg-surface-hover transition-colors pointer-events-none" />
+          <div className="absolute inset-y-0.5 left-2 right-2 rounded-[var(--radius-card)] group-hover/header:bg-surface-hover transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)] pointer-events-none" />
           <ChevronRight
             className={cn(
-              "h-3 w-3 text-muted-foreground/60 transition-transform relative",
+              "h-3 w-3 text-muted-foreground/60 transition-transform duration-[var(--motion-fast)] ease-[var(--ease-standard)] relative",
               !isCollapsed && "rotate-90"
             )}
           />
-          <span className="text-caption font-medium uppercase tracking-wider text-muted-foreground relative">
-            {label} <> · <span className="text-muted-foreground/50">{itemCount}</span></>
+          <span className="text-caption font-medium uppercase caps-label text-text-secondary relative">
+            {label} <> · <span className="text-muted-foreground/50 numeric">{itemCount}</span></>
           </span>
         </button>
       </ContextMenuTrigger>
@@ -625,6 +631,7 @@ export function EntityList<T>({
   viewportRef,
   scrollAreaClassName,
   className,
+  state,
   collapsedGroups,
   onToggleCollapse,
   onCollapseAll,
@@ -642,11 +649,12 @@ export function EntityList<T>({
   const hasGroups = groups && groups.length > 0
   const hasItems = items && items.length > 0
   const isEmpty = !hasGroups && !hasItems
+  const resolvedState = state ?? (isEmpty ? 'empty' : 'ready')
 
   // Empty state — rendered outside everything for proper centering
   if (isEmpty && emptyState) {
     return (
-      <div className={cn('flex flex-col flex-1', className)}>
+      <div className={cn('flex flex-col flex-1 min-h-0', className)} data-state={resolvedState}>
         {header}
         {emptyState}
       </div>
@@ -659,7 +667,7 @@ export function EntityList<T>({
   const windowed = !!virtualize && itemCount >= ENTITY_LIST_VIRTUALIZE_THRESHOLD
 
   return (
-    <div className={cn('flex flex-col flex-1 min-h-0', className)}>
+    <div className={cn('flex flex-col flex-1 min-h-0', className)} data-state={resolvedState}>
       {header}
       <ScrollArea className={cn('flex-1', scrollAreaClassName)} viewportRef={viewportRef}>
         <div

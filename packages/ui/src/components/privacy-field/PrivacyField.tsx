@@ -66,19 +66,19 @@ export function PrivacyField({ value, onChange, spaceName, includeLinkOptions, r
   if (readOnly || !onChange) {
     return (
       <div className={cn('flex flex-col gap-1', className)}>
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">{t('entities.ui.privacy.label')}</span>
-        <span className="text-[13px]">{labelFor(value)}</span>
+        <span className="text-xs font-semibold uppercase caps-label text-text-muted">{t('entities.ui.privacy.label')}</span>
+        <span className="text-base">{labelFor(value)}</span>
       </div>
     )
   }
 
   return (
     <fieldset className={cn('flex flex-col gap-0.5', className)}>
-      <legend className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-text-muted">{t('entities.ui.privacy.label')}</legend>
+      <legend className="mb-1 text-xs font-semibold uppercase caps-label text-text-muted">{t('entities.ui.privacy.label')}</legend>
       {levels.map((level) => {
         const checked = value === level
         return (
-          <label key={level} className={cn('flex h-8 cursor-default items-center gap-2 rounded-[6px] px-2 text-[13px]', HOVER_TINT, MOTION_FAST, checked && SELECTED_TINT)}>
+          <label key={level} className={cn('flex h-8 cursor-default items-center gap-2 rounded-[6px] px-2 text-base', HOVER_TINT, MOTION_FAST, checked && SELECTED_TINT)}>
             <input
               type="radio"
               name={name}

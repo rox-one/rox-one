@@ -175,11 +175,11 @@ export function NotesToc({
       style={{ width: width ?? 180 }}
       data-testid="notes-toc-rail"
     >
-      <div className="mb-2 px-1.5 text-[10px] font-semibold uppercase tracking-wider text-foreground/60">
+      <div className="mb-2 px-1.5 text-xs font-semibold uppercase caps-label text-foreground/60">
         {t('notes.toc.title')}
       </div>
       {headings.length === 0 ? (
-        <p className="text-[11px] leading-relaxed text-muted-foreground/50">
+        <p className="text-xs text-muted-foreground/50">
           {t('notes.toc.empty')}
         </p>
       ) : (
@@ -202,7 +202,7 @@ export function NotesToc({
                 <button
                   type="button"
                   onClick={() => onJump(heading.text)}
-                  className="min-w-0 flex-1 rounded-[var(--radius-control)] px-1.5 py-1 text-left text-[12px] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+                  className="min-w-0 flex-1 rounded-[var(--radius-control)] px-1.5 py-1 text-left text-sm text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
                 >
                   {heading.text}
                 </button>
@@ -257,7 +257,7 @@ export function NotesCommentComposer({
       }}
     >
       {quote ? (
-        <p className="mb-1 truncate px-1 text-[11px] italic text-foreground/80">“{quote}”</p>
+        <p className="mb-1 truncate px-1 text-xs italic text-foreground/80" title={quote}>“{quote}”</p>
       ) : null}
       <textarea
         ref={composeRef}
@@ -278,15 +278,15 @@ export function NotesCommentComposer({
         rows={3}
         placeholder={quote ? t('notes.comments.placeholderOnSelection') : t('notes.comments.placeholder')}
         className={cn(
-          'w-full resize-none rounded-[var(--radius-card)] border border-foreground/[0.08] bg-background px-2 py-1.5 text-[12px] outline-none',
+          'w-full resize-none rounded-[var(--radius-card)] border border-foreground/[0.08] bg-background px-2 py-1.5 text-sm outline-none',
           'focus-visible:border-foreground/40',
         )}
       />
-      <p className="mt-1 px-0.5 text-[10px] text-muted-foreground">{t('notes.comments.submitHint')}</p>
+      <p className="mt-1 px-0.5 text-xs text-muted-foreground">{t('notes.comments.submitHint')}</p>
       <button
         type="submit"
         disabled={!body.trim()}
-        className="mt-1.5 h-7 w-full rounded-[var(--radius-control)] bg-foreground/12 text-[11px] font-medium text-foreground hover:bg-foreground/18 disabled:opacity-40"
+        className="mt-1.5 h-7 w-full rounded-[var(--radius-control)] bg-foreground/12 text-xs font-medium text-foreground hover:bg-foreground/18 disabled:opacity-40"
       >
         {t('notes.comments.add')}
       </button>
@@ -305,13 +305,13 @@ export function NotesCommentTooltip({
 }) {
   return (
     <div
-      className="pointer-events-none absolute z-20 max-w-[240px] rounded-[var(--radius-card)] border border-foreground/[0.08] bg-background px-2.5 py-2 text-[12px] shadow-thin"
+      className="pointer-events-none absolute z-20 max-w-[240px] rounded-[var(--radius-card)] border border-foreground/[0.08] bg-background px-2.5 py-2 text-sm shadow-thin"
       data-testid="notes-comment-tooltip"
       style={{ top, left }}
       role="tooltip"
     >
-      {comment.quote ? <p className="mb-1 truncate italic text-foreground/80">“{comment.quote}”</p> : null}
-      <p className="leading-relaxed text-foreground">{comment.body}</p>
+      {comment.quote ? <p className="mb-1 truncate italic text-foreground/80" title={comment.quote}>“{comment.quote}”</p> : null}
+      <p className="text-foreground">{comment.body}</p>
     </div>
   )
 }
@@ -372,13 +372,13 @@ export function NotesComments({
 
   return (
     <aside className="notes-side-surface relative flex shrink-0 flex-col" style={{ width: width ?? 220 }} data-testid="notes-comments-rail">
-      <div className="flex h-9 shrink-0 items-center gap-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-foreground/60">
+      <div className="flex h-9 shrink-0 items-center gap-1.5 px-3 text-xs font-semibold uppercase caps-label text-foreground/60">
         <MessageSquarePlus className="h-3.5 w-3.5" />
         {t('notes.comments.title')}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
         {comments.length === 0 && !draftQuote ? (
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {t('notes.comments.empty')}
           </p>
         ) : null}
@@ -387,14 +387,15 @@ export function NotesComments({
             {comment.quote ? (
               <button
                 type="button"
-                className="mb-1 block w-full truncate text-left text-[11px] italic text-foreground/80 hover:text-foreground"
+                className="mb-1 block w-full truncate text-left text-xs italic text-foreground/80 hover:text-foreground"
                 onClick={() => onJumpToQuote?.(comment.quote)}
                 aria-label={t('notes.comments.jumpToQuote')}
+                title={comment.quote}
               >
                 “{comment.quote}”
               </button>
             ) : null}
-            <p className="text-[12px] leading-relaxed text-foreground">{comment.body}</p>
+            <p className="prose-body text-foreground">{comment.body}</p>
           </article>
         ))}
       </div>

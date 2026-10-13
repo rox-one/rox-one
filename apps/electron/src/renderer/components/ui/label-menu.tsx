@@ -38,7 +38,7 @@ export interface InlineLabelMenuProps {
 
 const MENU_CONTAINER_STYLE = 'overflow-hidden rounded-md bg-background text-foreground shadow-modal-small'
 const MENU_LIST_STYLE = 'max-h-[240px] overflow-y-auto py-1'
-const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-2.5 rounded-[var(--radius-control)] mx-1 px-2 py-1.5 text-[13px]'
+const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-2.5 rounded-[var(--radius-control)] mx-1 px-2 py-1.5 text-base'
 const MENU_ITEM_SELECTED = 'bg-foreground/5'
 
 // ============================================================================
@@ -215,7 +215,7 @@ export function InlineLabelMenu({
             <div className="shrink-0 text-muted-foreground">
               <Plus className="h-3.5 w-3.5" />
             </div>
-            <span className="text-[13px]">{t('sidebarMenu.addNewLabel')}</span>
+            <span className="text-base">{t('sidebarMenu.addNewLabel')}</span>
           </div>
         ) : (
           <>
@@ -223,7 +223,7 @@ export function InlineLabelMenu({
             {filteredStates_.length > 0 && (
               <>
                 {showSectionHeaders && (
-                  <div className="px-3 pt-1.5 pb-1 text-[11px] font-medium text-muted-foreground/60 uppercase tracking-wider">
+                  <div className="px-3 pt-1.5 pb-1 text-xs font-medium text-muted-foreground/60 uppercase caps-label">
                     States
                   </div>
                 )}
@@ -252,7 +252,7 @@ export function InlineLabelMenu({
                       >
                         {state.icon}
                       </span>
-                      <div className="flex-1 min-w-0 truncate">{resolveStatusDisplayLabel(state, t)}</div>
+                      <div className="flex-1 min-w-0 truncate" title={resolveStatusDisplayLabel(state, t)}>{resolveStatusDisplayLabel(state, t)}</div>
                       {/* Checkmark on active state */}
                       {isActive && (
                         <Check className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -272,7 +272,7 @@ export function InlineLabelMenu({
             {filteredItems.length > 0 && (
               <>
                 {showSectionHeaders && (
-                  <div className="px-3 pt-1.5 pb-1 text-[11px] font-medium text-muted-foreground/60 uppercase tracking-wider">
+                  <div className="px-3 pt-1.5 pb-1 text-xs font-medium text-muted-foreground/60 uppercase caps-label">
                     Labels
                   </div>
                 )}
@@ -297,7 +297,7 @@ export function InlineLabelMenu({
                       {/* Label icon */}
                       <LabelIcon label={item.config} size="lg" />
                       {/* Label name with optional parent path */}
-                      <div className="flex-1 min-w-0 truncate">
+                      <div className="flex-1 min-w-0 truncate" title={resolveLabelDisplayName(item.config, t)}>
                         {item.parentPath && (
                           <span className="text-muted-foreground">{item.parentPath}</span>
                         )}

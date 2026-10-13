@@ -80,7 +80,7 @@ export function MindMapOutline({
             )}
           >
             <span className="truncate">{node.label}</span>
-            <span className="ml-auto shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground/70">
+            <span className="ml-auto shrink-0 text-xs uppercase caps-label text-muted-foreground/70">
               {node.kind}
             </span>
           </button>

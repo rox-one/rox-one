@@ -132,7 +132,7 @@ export function AutomationEventTimeline({ entries, className, onReplay }: Automa
               <StatusIcon className={cn('h-3.5 w-3.5 shrink-0', config.classes)} />
 
               {/* Time */}
-              <span className="text-xs text-muted-foreground w-16 shrink-0 tabular-nums">
+              <span className="text-xs text-muted-foreground w-16 shrink-0 numeric">
                 {formatShortRelativeTime(entry.timestamp, t)}
               </span>
 
@@ -144,7 +144,7 @@ export function AutomationEventTimeline({ entries, className, onReplay }: Automa
               {/* Session deep link */}
               {entry.sessionId && (
                 <button
-                  className="shrink-0 text-[11px] text-accent hover:underline cursor-pointer"
+                  className="shrink-0 text-xs text-accent hover:underline cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); navigateToSession(entry.sessionId!) }}
                 >
                   {t('automations.openSession')}
@@ -154,7 +154,7 @@ export function AutomationEventTimeline({ entries, className, onReplay }: Automa
               {/* Retry button for failed webhook entries */}
               {entry.status === 'error' && isWebhook && onReplay && (
                 <button
-                  className="shrink-0 text-[11px] text-accent hover:underline cursor-pointer"
+                  className="shrink-0 text-xs text-accent hover:underline cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onReplay(entry.automationId, entry.event) }}
                 >
                   {t('automations.retry')}
@@ -214,7 +214,7 @@ export function AutomationEventTimeline({ entries, className, onReplay }: Automa
                 {entry.webhookDetails.responseBody && (
                   <div className="mt-2 pt-2 border-t border-border/30">
                     <span className="text-foreground/50">{t('automations.webhookResponse')}</span>
-                    <pre className="mt-1 max-h-24 overflow-auto rounded bg-foreground/[0.04] p-2 font-mono text-[11px] text-foreground/70 whitespace-pre-wrap break-all">
+                    <pre className="mt-1 max-h-24 overflow-auto rounded bg-foreground/[0.04] p-2 font-mono text-xs text-foreground/70 whitespace-pre-wrap break-all">
                       {entry.webhookDetails.responseBody}
                     </pre>
                   </div>

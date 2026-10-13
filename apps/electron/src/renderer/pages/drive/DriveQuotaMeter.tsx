@@ -37,10 +37,10 @@ export function DriveQuotaMeter({ quota }: { quota: DriveQuota | null }) {
     >
       <div className="flex items-baseline justify-between gap-3">
         <div className="flex items-baseline gap-2">
-          <span className="text-display font-semibold tabular-nums">{t('drive.quota.title')}</span>
+          <span className="text-display font-semibold numeric">{t('drive.quota.title')}</span>
           <span className="text-xs text-muted-foreground">{t('drive.quota.total', { total: formatBytes(totalBytes, 0) })}</span>
         </div>
-        <div className={`text-xs tabular-nums ${TEXT_BY_LEVEL[level]}`} data-testid="drive-quota-used">
+        <div className={`text-xs numeric ${TEXT_BY_LEVEL[level]}`} data-testid="drive-quota-used">
           {t('drive.quota.usedOf', { used: formatBytes(usedBytes), total: formatBytes(totalBytes, 0) })}
         </div>
       </div>

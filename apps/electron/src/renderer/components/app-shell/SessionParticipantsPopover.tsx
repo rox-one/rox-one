@@ -40,20 +40,20 @@ export function SessionParticipantsList({ creator, owner, participants = [] }: S
     <div className="flex flex-col gap-3 min-w-[220px]">
       {creator && (
         <section data-participant-role="creator">
-          <div className="text-caption font-medium uppercase tracking-wider text-muted-foreground/70">
+          <div className="text-caption font-medium uppercase caps-label text-muted-foreground/70">
             {t('sessionOwner.createdBy', { name: creator.displayName })}
           </div>
           <div className="mt-1 flex items-center gap-2 text-sm">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-surface-pressed text-caption font-medium">
               {personInitials(creator.displayName)}
             </span>
-            <span className="truncate">{creator.displayName}</span>
+            <span className="truncate" title={creator.displayName}>{creator.displayName}</span>
           </div>
         </section>
       )}
 
       <section data-participant-role="owner">
-        <div className="text-caption font-medium uppercase tracking-wider text-muted-foreground/70">
+        <div className="text-caption font-medium uppercase caps-label text-muted-foreground/70">
           {owner ? t('sessionOwner.ownedBy', { name: owner.displayName }) : t('sessionOwner.unassigned')}
         </div>
         <div className="mt-1 flex items-center gap-2 text-sm">
@@ -70,7 +70,7 @@ export function SessionParticipantsList({ creator, owner, participants = [] }: S
       </section>
 
       <section data-participant-role="participants">
-        <div className="text-caption font-medium uppercase tracking-wider text-muted-foreground/70">
+        <div className="text-caption font-medium uppercase caps-label text-muted-foreground/70">
           {t('participants.count', { count: participants.length })}
         </div>
         {participants.length === 0 ? (
@@ -82,7 +82,7 @@ export function SessionParticipantsList({ creator, owner, participants = [] }: S
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-surface-pressed text-caption font-medium">
                   {personInitials(participant.displayName)}
                 </span>
-                <span className="truncate flex-1">{participant.displayName}</span>
+                <span className="truncate flex-1" title={participant.displayName}>{participant.displayName}</span>
                 {participant.kind !== 'profile' && (
                   <span className="text-caption text-muted-foreground">{participant.kind}</span>
                 )}
