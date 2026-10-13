@@ -1,12 +1,12 @@
-import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { SQL } from 'bun'
 import { randomBytes } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { applyWorkspaceMigrations, migrationFromSource } from '../../apps/workspace-service/src/database/migrations'
+import { protectedWorkspaceConfigPath } from './protected-database'
 
-const CONNECTION_ENVIRONMENT = process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json')
+const CONNECTION_ENVIRONMENT = protectedWorkspaceConfigPath()
 const schema = `wp01_migrations_${randomBytes(6).toString('hex')}`
 let database: SQL
 

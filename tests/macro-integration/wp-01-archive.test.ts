@@ -10,6 +10,7 @@ import { archiveInventory } from '../../scripts/compliance/generate-sbom'
 import { loadProtectedWorkspaceDatabaseUrl } from '../../apps/workspace-service/src/auth/postgres-identity'
 import { WsRpcClient } from '../../packages/server-core/src/transport/client'
 import { DOMAIN_PROJECT_RPC } from '../../packages/shared/src/workspace-domain/identity/contracts'
+import { protectedWorkspaceConfigPath } from './protected-database'
 
 // Explicit cold gate: the root supplies the final archive. This test NEVER
 // builds or installs. Only the test driver imports checkout helpers; the child
@@ -18,7 +19,7 @@ import { DOMAIN_PROJECT_RPC } from '../../packages/shared/src/workspace-domain/i
 const CHECKOUT = resolve(import.meta.dir, '../..')
 const MEMBERS = ['dist/index.js', 'migrations/01-domain-contract.sql', 'migrations/01-local-auth-bootstrap.sql',
   'LICENSE', 'NOTICE', 'notices/THIRD-PARTY-NOTICES.txt'] as const
-const PROTECTED_DATABASE = process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents/state/rox-compound-workspace/postgres-environment.json')
+const PROTECTED_DATABASE = protectedWorkspaceConfigPath()
 const hash = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex')
 const enabled = process.env.ROX_WP01_ARCHIVE_E2E === '1'
 const archivePath = process.env.ROX_WP01_ARCHIVE_PATH
