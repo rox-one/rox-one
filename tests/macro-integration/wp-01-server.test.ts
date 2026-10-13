@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from 'bun:test'
 import { SQL } from 'bun'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { mkdtemp, rm } from 'node:fs/promises'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import WebSocket from 'ws'
 import { decodeJwt } from 'jose'
@@ -11,6 +11,7 @@ import { PROTOCOL_VERSION } from '../../packages/shared/src/protocol'
 import { DOMAIN_PROJECT_RPC } from '../../packages/shared/src/workspace-domain/identity/contracts'
 import { createWorkspaceServer, loadWorkspaceBootstrapMigrations } from '../../apps/workspace-service/src/server'
 import { loadProtectedWorkspaceDatabaseUrl } from '../../apps/workspace-service/src/auth/postgres-identity'
+import { protectedWorkspaceConfigPath } from './protected-database'
 
 const cleanups: Array<() => Promise<void>> = []
 afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) await cleanup() })
@@ -40,7 +41,7 @@ function barrier() {
 async function fixture() {
   // The protected loader validates ownership/permissions and the approved local
   // PG destination. Its URL is never emitted or copied into evidence/source.
-  const url = await loadProtectedWorkspaceDatabaseUrl(process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json'))
+  const url = await loadProtectedWorkspaceDatabaseUrl(protectedWorkspaceConfigPath())
   let database = new SQL(url, { max: 12 })
   const schema = 'wp01_server_' + randomBytes(6).toString('hex')
   const directory = await mkdtemp(join(tmpdir(), 'rox-composed-server-'))

@@ -2,7 +2,7 @@ import { afterEach, expect, test, setDefaultTimeout } from 'bun:test'
 import { SQL } from 'bun'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { create as createTar } from 'tar'
 import { createWorkspaceServer, loadWorkspaceBootstrapMigrations } from '../../apps/workspace-service/src/server'
@@ -10,6 +10,7 @@ import { loadProtectedWorkspaceDatabaseUrl } from '../../apps/workspace-service/
 import { TrustedLicenseRegistry, licenseCanonical, licenseHash } from '../../apps/workspace-service/src/modules/licenses/registry'
 import { WsRpcClient } from '../../packages/server-core/src/transport/client'
 import { DOMAIN_LICENSE_RPC, type LicenseComponent } from '../../packages/shared/src/workspace-domain/licenses/contracts'
+import { protectedWorkspaceConfigPath } from './protected-database'
 setDefaultTimeout(30000)
 const cleanups: (() => Promise<void>)[] = []
 afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) await cleanup() })
@@ -24,7 +25,7 @@ function component(value: unknown): LicenseComponent {
 }
 export async function fixture(delayChecker = false) {
   const root=realpathSync(mkdtempSync(join(tmpdir(),'wp48-domain-')));const schema='wp48_'+randomBytes(6).toString('hex')
-  const url=await loadProtectedWorkspaceDatabaseUrl(process.env.ROX_WORKSPACE_TEST_CONFIG??join(homedir(),'.agents/state/rox-compound-workspace/postgres-environment.json'))
+  const url=await loadProtectedWorkspaceDatabaseUrl(protectedWorkspaceConfigPath())
   let database=new SQL(url,{max:12});const workspaceId=randomUUID();const resourceId=randomUUID();const issuer='urn:rox:wp48:'+randomUUID();const password='synthetic-wp48-'+randomUUID()
   const authDirectory=join(root,'auth');mkdirSync(authDirectory,{mode:0o700});const stateDirectory=join(root,'audit-state');mkdirSync(stateDirectory,{mode:0o700})
   const migrations=await loadWorkspaceBootstrapMigrations(resolve(import.meta.dir,'../../apps/workspace-service/migrations'))

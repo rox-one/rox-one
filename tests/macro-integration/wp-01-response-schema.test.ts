@@ -2,7 +2,7 @@ import { afterAll, beforeAll, expect, test } from 'bun:test'
 import { SQL } from 'bun'
 import { createHash } from 'node:crypto'
 import { createRequire } from 'node:module'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { isDeepStrictEqual } from 'node:util'
@@ -11,6 +11,7 @@ import { loadProtectedWorkspaceDatabaseUrl } from '../../apps/workspace-service/
 import { WsRpcClient } from '../../packages/server-core/src/transport/client.ts'
 import { ProjectAuthorityError, requireSharedProjectResult } from '../../apps/electron/src/shared/project-authority.ts'
 import type { CreateSharedProject, RoxCommand, SharedProjectResult } from '../../packages/shared/src/workspace-domain/identity/contracts.ts'
+import { protectedWorkspaceConfigPath } from './protected-database'
 
 // Reuse the already installed architecture validator dependency. ajv-formats resolves its own
 // Ajv 8 dependency, rather than the unrelated Ajv 6 at the workspace node_modules root.
@@ -107,7 +108,7 @@ async function retained(value: unknown) {
 }
 
 beforeAll(async () => {
-  url = await loadProtectedWorkspaceDatabaseUrl(process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents/state/rox-compound-workspace/postgres-environment.json'))
+  url = await loadProtectedWorkspaceDatabaseUrl(protectedWorkspaceConfigPath())
   database = new SQL(url, { max: 1 }); await database.unsafe(`CREATE SCHEMA "${schema}"`); ownedSchema = true
   await database.close(); database = undefined
   issuerState = await mkdtemp(join(tmpdir(), 'rox-wp01-response-issuer-'))

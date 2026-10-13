@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.agisota.rox-main-health</string>
+
+	<!-- Запускаем bash-скрипт из чекаута репозитория. Если репозиторий лежит
+	     в другом месте — поправьте путь ниже (launchd не раскрывает ~ и $HOME). -->
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/bash</string>
+		<string>/Users/t/Projects/rox-one/ops/main-health/main-health.sh</string>
+	</array>
+
+	<key>WorkingDirectory</key>
+	<string>/Users/t/Projects/rox-one</string>
+
+	<!-- Раз в день в 09:20 по локальному времени. -->
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Hour</key>
+		<integer>9</integer>
+		<key>Minute</key>
+		<integer>20</integer>
+	</dict>
+
+	<key>StandardOutPath</key>
+	<string>/Users/t/Library/Logs/rox-main-health.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/t/Library/Logs/rox-main-health.log</string>
+
+	<key>ProcessType</key>
+	<string>Background</string>
+	<key>RunAtLoad</key>
+	<false/>
+</dict>
+</plist>

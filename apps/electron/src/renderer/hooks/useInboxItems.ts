@@ -10,6 +10,7 @@
  * ones this hook produced before.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { hashKey } from '@tanstack/react-query'
 import { useAtom, useAtomValue } from 'jotai'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
@@ -97,6 +98,17 @@ export function useInboxItems(options: {
   const [fresh, setFresh] = useState<Record<InboxRemoteSource, boolean>>({ memory: false, skills: false, senders: false })
   const [remoteContext, setRemoteContext] = useState(context)
   const requests = useRef<Record<InboxRemoteSource, number>>({ memory: 0, skills: 0, senders: 0 })
+  /**
+   * The shared keys this hook's own reads are still waiting on. A load that
+   * supersedes one of them (a workspace/identity epoch change, an explicit
+   * refresh, a focus after one) must not be answered by the shared cache or by
+   * joining that older read: `requests` only orders this hook's own `set()`
+   * calls, so a superseded read would win the render and drop the newer
+   * response (the refresh that never lands). Another surface's in-flight read
+   * is still shared — PERF-09 keeps one read per key for surfaces mounted
+   * together. Cleared by the newest read of the key, which owns the entry.
+   */
+  const outstanding = useRef(new Set<string>())
   const firstSeen = useRef(new Map<string, number>())
   const [now, setNow] = useState(() => Date.now())
   // PERF-10 (#1577): a retired keep-alive surface must not poll — the Inbox and
@@ -146,15 +158,21 @@ export function useInboxItems(options: {
       if (which && which !== key) return
       const requestId = ++requests.current[key]
       const current = () => contextRef.current === captured && requests.current[key] === requestId
+      const client = roxQueryClient()
+      const queryKey = roxKeys.inbox(workspaceId, captured.actorKey!, key)
+      const keyHash = hashKey(queryKey)
+      // A read this hook started for the key is exactly the read this request
+      // supersedes, so it can answer neither from the entry nor by joining:
+      // this request must read for itself and win (a focus right after a
+      // refresh, or a workspace revisit accepting the read it left behind).
+      const reuse = !which && mode === 'shared' && !outstanding.current.has(keyHash)
+      outstanding.current.add(keyHash)
       setLoading((previous) => ({ ...previous, [key]: true }))
       try {
         // Shared per (workspace, verified actor, source). Mount/focus/poll reads
         // reuse a result younger than INBOX_SHARED_FRESH_MS or join one in
         // flight; change events and explicit refreshes always read.
-        const client = roxQueryClient()
-        const queryKey = roxKeys.inbox(workspaceId, captured.actorKey!, key)
         const shared = client.getQueryState<T>(queryKey)
-        const reuse = !which && mode === 'shared'
         const value = reuse && shared?.status === 'success' && !shared.isInvalidated && shared.data !== undefined
           && Date.now() - shared.dataUpdatedAt < INBOX_SHARED_FRESH_MS
           ? shared.data
@@ -172,6 +190,8 @@ export function useInboxItems(options: {
         if (!current()) return
         setErrors((e) => ({ ...e, [key]: toErrorMessage(error) }))
       } finally {
+        // A superseded read leaves the entry to the newer one that owns it.
+        if (requests.current[key] === requestId) outstanding.current.delete(keyHash)
         if (current()) {
           setLoaded((l) => (l[key] ? l : { ...l, [key]: true }))
           setLoading((previous) => ({ ...previous, [key]: false }))

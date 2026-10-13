@@ -2,12 +2,13 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { SQL } from 'bun'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { mkdtemp, mkdir, readFile, writeFile, readdir, rm, symlink, stat } from 'node:fs/promises'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createWorkspaceServer, loadWorkspaceBootstrapMigrations } from '../../apps/workspace-service/src/server'
 import { loadProtectedWorkspaceDatabaseUrl } from '../../apps/workspace-service/src/auth/postgres-identity'
 import { authenticateProjectAuthority } from '../../apps/electron/src/main/project-authority'
 import type { AuthorityJournalCheckpoint } from '../../apps/electron/src/main/project-authority-journal'
+import { protectedWorkspaceConfigPath } from './protected-database'
 
 const schema = 'wp01_crash_' + randomBytes(6).toString('hex')
 const issuer = 'urn:rox:authority-crash:' + randomUUID()
@@ -109,7 +110,7 @@ beforeAll(async () => {
   childBin = join(directory, 'bin'); await mkdir(childBin, { mode: 0o700 })
   await symlink(process.execPath, join(childBin, 'bun'))
   // Actual backend subprocess cannot find OS keychain CLIs; no executable shim and no global keychain access.
-  database = new SQL(await loadProtectedWorkspaceDatabaseUrl(process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json')))
+  database = new SQL(await loadProtectedWorkspaceDatabaseUrl(protectedWorkspaceConfigPath()))
   await database.unsafe(`CREATE SCHEMA "${schema}"`)
   service = await createWorkspaceServer({ database, schema,
     migrations: await loadWorkspaceBootstrapMigrations(join(import.meta.dir, '../../apps/workspace-service/migrations')),

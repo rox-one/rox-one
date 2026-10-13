@@ -34,7 +34,7 @@ import { settingsPageActionResult } from './settings-rox2-surface'
 export const connectionStatusTone: Record<ServiceConnection['status'], string> = {
   connected: 'text-success',
   syncing: 'text-accent',
-  expired: 'text-warning',
+  expired: 'text-status-warning',
   error: 'text-destructive',
   disconnected: 'text-muted-foreground',
 }

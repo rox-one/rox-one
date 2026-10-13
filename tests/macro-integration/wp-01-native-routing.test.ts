@@ -5,7 +5,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { mkdtemp, mkdir, readFile, rm, stat } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { createConnection } from 'node:net'
-import { homedir, tmpdir } from 'node:os'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createWorkspaceServer, loadWorkspaceBootstrapMigrations } from '../../apps/workspace-service/src/server'
 import { loadProtectedWorkspaceDatabaseUrl } from '../../apps/workspace-service/src/auth/postgres-identity'
@@ -23,6 +23,7 @@ import { readJsonFileSync, atomicWriteFileSync } from '../../packages/shared/src
 import type { StoredConfig } from '../../packages/shared/src/config'
 import { DOMAIN_PROJECT_RPC, SHARED_PROJECT_TEXT_MAX_LENGTH } from '../../packages/shared/src/workspace-domain/identity/contracts'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { protectedWorkspaceConfigPath } from './protected-database'
 
 const schema = 'wp01_native_' + randomBytes(6).toString('hex')
 const issuer = 'urn:rox:native-routing:' + randomUUID()
@@ -104,7 +105,7 @@ async function waitForAuthority(connection: ProjectAuthorityConnection): Promise
 
 beforeAll(async () => {
   state = await mkdtemp(join(tmpdir(), 'rox-wp01-native-'))
-  database = new SQL(await loadProtectedWorkspaceDatabaseUrl(process.env.ROX_WORKSPACE_TEST_CONFIG ?? join(homedir(), '.agents', 'state', 'rox-compound-workspace', 'postgres-environment.json')))
+  database = new SQL(await loadProtectedWorkspaceDatabaseUrl(protectedWorkspaceConfigPath()))
   await database.unsafe(`CREATE SCHEMA "${schema}"`)
   service = await createWorkspaceServer({ database, schema,
     migrations: await loadWorkspaceBootstrapMigrations(join(import.meta.dir, '../../apps/workspace-service/migrations')),

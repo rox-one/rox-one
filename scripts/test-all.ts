@@ -11,6 +11,12 @@
  * ROX_TEST_ROOT and ROX_TEST_ARTIFACT_DIR support immutable baseline comparisons.
  * Every invocation retains its own manifest, logs and incremental result report.
  *
+ * Caller integration environment is forwarded to every suite, so a suite that
+ * needs a caller-owned path still works under the private HOME above:
+ * ROX_WORKSPACE_TEST_CONFIG arrives verbatim, and ROX_TEST_HOST_HOME carries
+ * the caller's own home (the protected workspace PostgreSQL configuration and
+ * the pinned toolchain live under it). HOME itself stays private to the suite.
+ *
  * Fixed-port fixtures: suites that bind a literal TCP port (Playwright
  * webServer with reuseExistingServer:false, `vite --strictPort`) are
  * serialized on a per-port host-global lease, so a shard or any --concurrency
@@ -821,6 +827,10 @@ export async function runSuites(options: {
   // suites through the same variables the CI workflows bind.
   const browserExecutable = resolveBrowserExecutable(environment)
   const browserCacheRoot = [environment.PLAYWRIGHT_BROWSERS_PATH, join(homedir(), 'Library', 'Caches', 'ms-playwright'), join(homedir(), '.cache', 'ms-playwright')].find((candidate): candidate is string => Boolean(candidate && existsSync(candidate)))
+  // The caller's own home, before this run replaces HOME per suite. Exported to
+  // every suite as ROX_TEST_HOST_HOME so a caller-owned integration path stays
+  // reachable while the suite's HOME, config and artifact roots remain private.
+  const hostHome = environment.HOME || environment.USERPROFILE || homedir()
 
   const executeSuite = async (suite: TestSuite, index: number) => {
     const directory = join(artifactDirectory, `${String(index + 1).padStart(5, '0')}-${hash(suite.path).slice(0, 12)}`)
@@ -855,7 +865,12 @@ export async function runSuites(options: {
       if (hash(source) !== suite.sha256) throw new Error('Test source changed since discovery; regenerate the manifest')
       if (suite.prerequisiteError) throw new Error(suite.prerequisiteError)
       result.command = commandFor(root, suite, directory, bunTimeoutMs, environment)
-      const childEnv: NodeJS.ProcessEnv = { ...environment, ...homeEnvironment, ROX_CONFIG_DIR: configRoot, CRAFT_CONFIG_DIR: configRoot }
+      // HOME below is private to this suite, so a suite that needs a
+      // caller-owned integration path — the protected workspace PostgreSQL
+      // configuration under $HOME/.agents/state — resolves it through the
+      // caller's own home instead of silently missing it inside the throwaway
+      // HOME. Additive: HOME itself is never the caller's.
+      const childEnv: NodeJS.ProcessEnv = { ...environment, ...homeEnvironment, ROX_TEST_HOST_HOME: hostHome, ROX_CONFIG_DIR: configRoot, CRAFT_CONFIG_DIR: configRoot }
       // The existing meeting script explicitly opts into U1 fixtures. Preserve
       // that evidence boundary, while respecting a product opt-in from the caller.
       if (suite.runner === 'playwright' && suite.config === 'tests/e2e/meeting-agents/playwright.config.ts'
