@@ -471,7 +471,7 @@ async function listTreeNodes(root: string, dir: string): Promise<SiyuanDocTreeNo
 
 function parseFrontmatter(content: string): { properties: Record<string, unknown>; body: string } {
   try {
-    const parsed = matter(content)
+    const parsed = matter(content, {})
     return { properties: (parsed.data ?? {}) as Record<string, unknown>, body: parsed.content ?? '' }
   } catch {
     return { properties: {}, body: content }
