@@ -15,6 +15,19 @@ describe('skills RPC workspace authorization', () => {
 
     const get = handlers.get(RPC_CHANNELS.skills.GET)
     expect(get).toBeDefined()
+    const query = handlers.get(RPC_CHANNELS.skills.QUERY)
+    expect(query).toBeDefined()
+    await expect(query!({
+      clientId: 'native-client',
+      workspaceId: 'workspace-a',
+      webContentsId: null,
+      principal: {
+        issuer: 'native-authority',
+        subject: 'user-a',
+        credentialId: 'credential-a',
+        credentialVersion: 1,
+      },
+    }, { workspaceId: 'workspace-b' })).rejects.toThrow('Workspace access denied')
     await expect(get!({
       clientId: 'native-client',
       workspaceId: 'workspace-a',

@@ -96,3 +96,17 @@ export {
   loadSkillsFromDir,
   type SkillRootPlanEntry,
 } from './storage.ts';
+export {
+  querySkills,
+  ensureSkillIndex,
+  markSkillIndexDirty,
+  setSkillIndexIoForTests,
+  resetSkillIndexForTests,
+  setSkillIndexCoalesceClockForTests,
+  subscribeSkillIndexChanged,
+  indexedSkillSummaries,
+  SKILLS_QUERY_LIMIT_CAP,
+  type SkillsQueryArgs,
+  type SkillsQueryResult,
+  type SkillsChangedPayload,
+} from './skill-index.ts';

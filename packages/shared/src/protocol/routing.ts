@@ -1130,6 +1130,7 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
 
   // skills — skill content per-workspace (not openEditor/openFinder which are local OS)
   RPC_CHANNELS.skills.GET,
+  RPC_CHANNELS.skills.QUERY,
   RPC_CHANNELS.skills.GET_DETAILS,
   RPC_CHANNELS.skills.GET_FILES,
   RPC_CHANNELS.skills.UPDATE,

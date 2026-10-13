@@ -64,7 +64,7 @@ describe('BroadcastEventMap payload shapes', () => {
     expect(_check).toBe(true)
   })
 
-  it('skills:changed carries (workspaceId, skills)', () => {
+  it('skills:changed carries (workspaceId, payload)', () => {
     type Payload = BroadcastEventMap[typeof RPC_CHANNELS.skills.CHANGED]
     const _check: AssertTuple<Payload, 2> = true
     expect(_check).toBe(true)

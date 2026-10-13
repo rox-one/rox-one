@@ -818,6 +818,7 @@ export const RPC_CHANNELS = {
   },
   skills: {
     GET: 'skills:get',
+    QUERY: 'skills:query',
     GET_DETAILS: 'skills:getDetails',
     GET_FILES: 'skills:getFiles',
     UPDATE: 'skills:update',

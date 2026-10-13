@@ -90,7 +90,7 @@ export interface BroadcastEventMap {
   // Toolchain install progress (global, local toolchain)
   [RPC_CHANNELS.toolchain.STATUS_CHANGED]: [status: ToolStatus]
   [RPC_CHANNELS.automations.CHANGED]: [workspaceId: string]
-  [RPC_CHANNELS.skills.CHANGED]: [workspaceId: string, skills: LoadedSkill[]]
+  [RPC_CHANNELS.skills.CHANGED]: [workspaceId: string, payload: { revision: number; changed: string[]; removed: string[] }]
   [RPC_CHANNELS.skillsPending.CHANGED]: [workspaceId: string]
   [RPC_CHANNELS.memory.CHANGED]: [workspaceId: string | null, scope: 'global' | 'workspace' | 'both']
   // Memory repository projection + dream (spec 2026-10-09 §7). Bank-scoped:
