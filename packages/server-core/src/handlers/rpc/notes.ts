@@ -2197,7 +2197,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   server.handle(RPC_CHANNELS.notes.GET_INSIGHTS, async (_ctx, workspaceId: string, noteId: string) => {
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     try {
-      ensureVaultIndex(notesRoot)
+      await ensureVaultIndexAsync(notesRoot)
       return getVaultInsights(notesRoot, noteId)
     } catch {
       return {
@@ -2224,7 +2224,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     if (!isClaimableLive(act)) throw new Error('note index rebuild is not live')
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     try {
-      rebuildVaultIndex(notesRoot)
+      await rebuildVaultIndexAsync(notesRoot)
       return indexHealthForWorkspace(workspaceId)
     } catch {
       return emptyIndexHealth()
@@ -2243,7 +2243,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     const sessions = sessionsFromDeps(deps, workspaceId)
     await ensureDailyNotes(notesRoot, sessions, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
     const id = await upsertDailyNote(notesRoot, date || formatDateId(new Date()), sessions, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
-    refreshVaultIndex(notesRoot)
+    await refreshVaultIndex(notesRoot)
     return readNote(notesRoot, id)
   }, { access: 'localElectron' })
 
@@ -2308,7 +2308,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     if (preview.requiresReview && preview.digest !== reviewedDigest) throw new CodedError('UNSUPPORTED_OPERATION', 'Property conversion requires a reviewed preview')
     const { note } = await nativeContent.commit(ctx, { workspaceId, noteId, content: preview.content, expectedRevision, sourceStoreId,
       authorityEpoch: 1, operationId: crypto.randomUUID() })
-    refreshVaultIndex(notesRoot)
+    await refreshVaultIndex(notesRoot)
     changed({ workspaceId, reason: 'properties', noteId: note.id })
     return note
   }, { nativeAction: 'write' })
@@ -2446,7 +2446,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
             external.push(name)
           }
           if (external.length === 0) return
-          const tick = applyVaultWatchTick(notesRoot, external)
+          const tick = await applyVaultWatchTickAsync(notesRoot, external)
           const at = Date.now()
           state.lastExternalChangeAt = at
           lastExternalChangeByWorkspace.set(workspaceId, at)
