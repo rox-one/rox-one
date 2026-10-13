@@ -7,7 +7,7 @@ Thank you for your interest in contributing to ROX! This document provides guide
 ### Prerequisites
 
 - [Bun](https://bun.sh/) runtime - use the version pinned in `package.json` (`packageManager`); CI runs the same one
-- Node.js 18+ (for some tooling)
+- Node.js 24+ (for some tooling)
 - macOS, Linux, or Windows
 
 ### Development Setup
@@ -103,8 +103,7 @@ How you tested these changes
 ```
 rox-one/
 ├── apps/
-│   ├── electron/    # Desktop GUI (primary interface)
-│   └── tui/         # Terminal CLI (deprecated)
+│   └── electron/    # Desktop GUI (primary interface)
 └── packages/
     ├── core/        # @rox/core - Shared types
     ├── shared/      # @rox/shared - Business logic
