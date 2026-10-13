@@ -120,6 +120,21 @@ export async function downloadBun(config: BuildConfig): Promise<void> {
   const { platform, arch, electronDir } = config;
   const bunDownload = getBunDownloadName(platform, arch);
   const vendorDir = join(electronDir, 'vendor', 'bun');
+  const bunBinary = platform === 'win32' ? 'bun.exe' : 'bun';
+  const vendoredBunPath = join(vendorDir, bunBinary);
+
+  // Idempotent: reuse a vendored copy that reports the pinned version on the
+  // host target (same contract as uv/Lima). The release CDN resets mid-transfer
+  // often enough that a full re-download should not decide a build's fate.
+  if (existsSync(vendoredBunPath) && platform === process.platform && arch === process.arch) {
+    try {
+      const reported = execFileSync(vendoredBunPath, ['--version'], { encoding: 'utf8', timeout: 10_000, windowsHide: true }).trim();
+      if (BUN_VERSION === `bun-v${reported}`) {
+        console.log(`bun ${reported} already present at ${vendoredBunPath}`);
+        return;
+      }
+    } catch { /* repair stale/non-executable cached binary */ }
+  }
 
   console.log(`Downloading Bun ${BUN_VERSION} for ${platform}-${arch}...`);
 
@@ -169,9 +184,8 @@ export async function downloadBun(config: BuildConfig): Promise<void> {
     await extractBuildZip(zipPath, tempDir);
 
     // Copy binary
-    const bunBinary = platform === 'win32' ? 'bun.exe' : 'bun';
     const sourcePath = join(tempDir, bunDownload, bunBinary);
-    const destPath = join(vendorDir, bunBinary);
+    const destPath = vendoredBunPath;
 
     copyFileSync(sourcePath, destPath);
 
