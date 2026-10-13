@@ -7,7 +7,6 @@ import type { TelemetryBootstrapConfig } from '../shared/types'
 import { Provider as JotaiProvider, useAtomValue } from 'jotai'
 import App from './App'
 import { ThemeProvider } from './context/ThemeContext'
-import { ROX_THEME_ID } from '@config/theme'
 import { windowWorkspaceIdAtom } from './atoms/sessions'
 import { Toaster } from '@/components/ui/sonner'
 import { StorageMigrationNotices } from './components/storage/StorageMigrationNotices'
@@ -185,7 +184,7 @@ function Root() {
   const app = <App />
 
   return (
-    <ThemeProvider activeWorkspaceId={workspaceId} fixedColorTheme={ROX_THEME_ID}>
+    <ThemeProvider activeWorkspaceId={workspaceId}>
       {/* PERF-07: low-power profile also stops motion/react springs. */}
       <RenderProfileMotionConfig>
         {/* W1-07 (#1504): W1-07 gates outside React read this Provider's store. */}
@@ -223,7 +222,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <RootErrorBoundary>
       <JotaiProvider>
         {rendererSurface === 'quick-composer' ? (
-          <ThemeProvider activeWorkspaceId={null} fixedColorTheme={ROX_THEME_ID}>
+          <ThemeProvider activeWorkspaceId={null}>
             <React.Suspense fallback={null}>
               <QuickComposerSurface />
             </React.Suspense>

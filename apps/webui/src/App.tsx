@@ -20,7 +20,6 @@ import { CloudVmSurface } from './cloud-vm-surface'
 import { isModesLandingEnabled, isWebSession, parseWebEntryMode, probeCloudVmState, type WebEntryModeId } from './web-modes'
 import { navigate, routes } from '@/lib/navigate'
 import { ThemeProvider } from '@/context/ThemeContext'
-import { ROX_THEME_ID } from '@config/theme'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import { Toaster } from '@/components/ui/sonner'
 
@@ -36,7 +35,7 @@ const ElectronApp = lazy(() => import('@/App'))
 function ReadyRenderer({ bootstrap }: { bootstrap: AuthenticatedWebTransportBootstrap }) {
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
   return (
-    <ThemeProvider activeWorkspaceId={workspaceId ?? bootstrap.workspaceId} fixedColorTheme={ROX_THEME_ID}>
+    <ThemeProvider activeWorkspaceId={workspaceId ?? bootstrap.workspaceId}>
       <Suspense fallback={<LoadingScreen />}>
         <ElectronApp webTransportBootstrap={bootstrap} />
       </Suspense>

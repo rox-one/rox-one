@@ -614,7 +614,7 @@ export function createInitialStoredConfig(): StoredConfig {
     workspaces: [],
     activeWorkspaceId: null,
     activeSessionId: null,
-    colorTheme: 'nordfox-opaque',
+    colorTheme: 'super-engineering',
   };
 }
 
@@ -749,7 +749,7 @@ const FALLBACK_CONFIG_DEFAULTS: ConfigDefaults = {
   description: 'Default configuration values for Rox',
   defaults: {
     notificationsEnabled: true,
-    colorTheme: 'haze',
+    colorTheme: 'super-engineering',
     autoCapitalisation: true,
     sendMessageKey: 'enter',
     spellCheck: false,
@@ -2488,6 +2488,7 @@ export function getAllSessionDrafts(): Record<string, SessionDraft> {
 // ============================================
 
 import type { ThemeOverrides, ThemeFile, PresetTheme } from './theme.ts';
+import { DEEP_GLASS_MATERIAL_DEFAULT } from './theme.ts';
 
 const APP_THEME_FILE = join(resolveConfigDir(), 'theme.json');
 const APP_THEMES_DIR = join(resolveConfigDir(), 'themes');
@@ -3599,6 +3600,36 @@ function migrateRoxKimiPublicModels(config: StoredConfig): boolean {
   return true;
 }
 
+const APPEARANCE_DEFAULTS_MIGRATION = 'appearance-defaults-v1';
+
+/**
+ * One-shot appearance defaults (2026-10-13): machines still on the legacy
+ * defaults (`nordfox-opaque` / `haze` / unset) switch to the Rox Engineering
+ * theme, and the app-level override gets the deep-glass material when it has
+ * none. A user's explicit non-legacy pick is never touched.
+ */
+function migrateAppearanceDefaults(config: StoredConfig): boolean {
+  if (config.migrationsApplied?.includes(APPEARANCE_DEFAULTS_MIGRATION)) {
+    return false;
+  }
+  if (config.colorTheme === undefined || config.colorTheme === 'nordfox-opaque' || config.colorTheme === 'haze') {
+    config.colorTheme = 'super-engineering';
+  }
+  try {
+    const appTheme = loadAppTheme();
+    if (appTheme?.material == null) {
+      saveAppTheme({
+        ...(appTheme ?? {}),
+        material: { ...DEEP_GLASS_MATERIAL_DEFAULT, deepGlass: { ...DEEP_GLASS_MATERIAL_DEFAULT.deepGlass } },
+      });
+    }
+  } catch {
+    // Non-fatal: the deep-glass default can be re-applied by the next launch.
+  }
+  config.migrationsApplied = [...(config.migrationsApplied ?? []), APPEARANCE_DEFAULTS_MIGRATION];
+  return true;
+}
+
 /**
  * Rename leftover `ROX · OMP` connection labels to `ROX`.
  */
@@ -3822,6 +3853,10 @@ export function migrateLegacyLlmConnectionsConfig(): void {
       needsSave = true;
     }
     if (migrateRoxR1MaxDefault(config)) {
+      needsSave = true;
+    }
+    // Phase 1n: Appearance defaults — Rox Engineering theme + deep glass.
+    if (migrateAppearanceDefaults(config)) {
       needsSave = true;
     }
 

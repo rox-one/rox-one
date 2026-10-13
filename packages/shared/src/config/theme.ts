@@ -778,13 +778,23 @@ export function shouldSetThemeOverride(
 }
 
 /**
- * The single fixed Rox theme.
+ * The default Rox theme: the Rox Engineering glass profile.
  *
- * Rox ships one theme: users cannot select or customize it. Any legacy or
- * persisted selection is coerced to this id (see ThemeProvider's
- * `fixedColorTheme`), and the app never offers a theme/mode picker.
+ * Ships as the out-of-the-box theme; users may switch to any other preset in
+ * Settings → Внешний вид. Legacy selections of the previous defaults
+ * (`nordfox-opaque`, `haze`, unset) are migrated once — see `storage.ts`,
+ * migration marker `appearance-defaults-v1`.
  */
-export const ROX_THEME_ID = 'nordfox-opaque';
+export const ROX_THEME_ID = 'super-engineering';
+
+/**
+ * App-level material default for fresh installs and the appearance migration:
+ * the deep-glass preset — content, editor and lists become translucent.
+ */
+export const DEEP_GLASS_MATERIAL_DEFAULT: MaterialSettings = {
+  enabled: true,
+  deepGlass: { content: true, editor: true, lists: true },
+};
 
 /**
  * Default theme values (matches current index.css)
