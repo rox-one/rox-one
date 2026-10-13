@@ -153,7 +153,7 @@ import {
 import { resolveBulkLabels } from '@rox/shared/sessions/collection'
 import { messageToStored, storedToMessage, type Message, type StoredAttachment, type ToolDisplayMeta, type TokenUsage, type SessionMemoryMode } from '@rox/core/types'
 import { formatPathsToRelative, formatToolInputPaths, perf, encodeIconToDataUrlAsync, getEmojiIcon, resetSummarizationClient, resolveToolIcon, readFileAttachment, selectSpreadMessages, normalizePath } from '@rox/shared/utils'
-import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache, toSkillSummaries, type LoadedSkill } from '@rox/shared/skills'
+import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache } from '@rox/shared/skills'
 import { assertProfileSources, assertProfileSkills, type AgentProfileSnapshot } from '@rox/shared/workspace-work'
 import { captureAgentProfileSnapshot } from '../workspace-work/profile.ts'
 import { sessionStateProjector, type SessionStateProjector } from '../state/sessions-projection.ts'
@@ -2288,14 +2288,14 @@ export class SessionManager implements ISessionManager {
       },
       onSkillsListChange: async (skills) => {
         sessionLog.info(`Skills list changed in ${workspaceRootPath} (${skills.length} skills)`)
-        this.broadcastSkillsChanged(workspaceId, skills)
+        this.broadcastSkillsChanged(workspaceId, skills.map((skill) => skill.slug), [])
       },
       onSkillChange: async (slug, skill) => {
         sessionLog.info(`Skill '${slug}' changed:`, skill ? 'updated' : 'deleted')
-        // Broadcast updated list to UI
-        const { loadAllSkills } = await import('@rox/shared/skills')
-        const skills = loadAllSkills(workspaceRootPath)
-        this.broadcastSkillsChanged(workspaceId, skills)
+        const { markSkillIndexDirty } = await import('@rox/shared/skills')
+        const { join } = await import('node:path')
+        await markSkillIndexDirty(join(workspaceRootPath, 'skills', slug))
+        this.broadcastSkillsChanged(workspaceId, skill ? [slug] : [], skill ? [] : [slug])
       },
 
       // Session metadata changes (edits to session.jsonl headers).
@@ -2883,11 +2883,10 @@ export class SessionManager implements ISessionManager {
     this.eventSink(RPC_CHANNELS.llmConnections.CHANGED, { to: 'all' })
   }
 
-  private broadcastSkillsChanged(workspaceId: string, skills: import('@rox/shared/skills').LoadedSkill[]): void {
+  private broadcastSkillsChanged(workspaceId: string, changed: string[], removed: string[]): void {
     if (!this.eventSink) return
-    sessionLog.info(`Broadcasting skills changed (${skills.length} skills)`)
-    // Metadata payload (PERF-06); listeners reload bodies through GET_DETAILS.
-    this.eventSink(RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId }, workspaceId, toSkillSummaries(skills))
+    sessionLog.info(`Broadcasting skills changed (changed=${changed.length} removed=${removed.length})`)
+    this.eventSink(RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId }, workspaceId, { revision: Date.now(), changed, removed })
   }
 
   private broadcastPagesChanged(workspaceId: string, pages: import('@rox/shared/pages').LoadedPage[]): void {

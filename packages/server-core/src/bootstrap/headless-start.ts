@@ -12,7 +12,7 @@ import { closeStateStore, openStateStore, stateWriterLockPath } from '../state/s
 import { OAuthFlowStore } from '@rox/shared/auth'
 import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig, getConfigPath, createInitialStoredConfig, getBundledSkillsDisabled, getWorkspaces } from '@rox/shared/config'
 import { ensureContextDocs } from '@rox/shared/context-docs'
-import { ensureBundledSkillsInBackground, loadAllSkills } from '@rox/shared/skills'
+import { ensureBundledSkillsInBackground } from '@rox/shared/skills'
 import { setBundledAssetsRoot } from '@rox/shared/utils'
 import {
   WsRpcServer,
@@ -494,12 +494,14 @@ export function localWorkspacesForSkillsBroadcast<T extends { rootPath: string; 
 function scheduleBundledSkillsSync(platform: PlatformServices, wsServer: WsRpcServer): void {
   void ensureBundledSkillsInBackground({
     log: (level, message, data) => platform.logger[level](message, data),
-  }).then((outcome) => {
+  }).then(async (outcome) => {
     if (outcome.status !== 'synced') return
     try {
       wsServer.push(RPC_CHANNELS.bundledSkills.CHANGED, { to: 'all' }, { disabled: getBundledSkillsDisabled() })
+      const { querySkills } = await import('@rox/shared/skills')
       for (const workspace of localWorkspacesForSkillsBroadcast(getWorkspaces())) {
-        wsServer.push(RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId: workspace.id }, workspace.id, loadAllSkills(workspace.rootPath))
+        const { revision } = await querySkills({ workspaceRoot: workspace.rootPath, offset: 0, limit: 1 })
+        wsServer.push(RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId: workspace.id }, workspace.id, { revision, changed: [], removed: [] })
       }
     } catch (error) {
       platform.logger.warn(`[bootstrap] Bundled skills change broadcast failed: ${error instanceof Error ? error.message : error}`)

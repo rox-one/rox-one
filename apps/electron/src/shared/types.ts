@@ -2527,6 +2527,15 @@ export interface ElectronAPI {
 
   // Skills
   getSkills(workspaceId: string, workingDirectory?: string): Promise<LoadedSkill[]>
+  querySkills(args: {
+    workspaceId: string
+    workingDirectory?: string
+    query?: string
+    offset?: number
+    limit?: number
+    sources?: Array<'omp' | 'global' | 'workspace' | 'project'>
+    slugs?: string[]
+  }): Promise<{ items: LoadedSkill[]; total: number; revision: number }>
   getSkillDetails(workspaceId: string, skillSlug: string, workingDirectory?: string): Promise<LoadedSkill | null>
   getSkillFiles?(workspaceId: string, skillSlug: string): Promise<SkillFile[]>
   updateSkill(
@@ -2556,7 +2565,7 @@ export interface ElectronAPI {
   getSkillEligibility(workspaceId: string, skillSlug: string): Promise<{ eligible: boolean; reason?: string }>
 
   // Skills change listener (live updates when skills are added/removed/modified)
-  onSkillsChanged(callback: (workspaceId: string, skills: LoadedSkill[]) => void): () => void
+  onSkillsChanged(callback: (workspaceId: string, payload: { revision: number; changed: string[]; removed: string[] }) => void): () => void
   // Pending skill candidates (self-learning distillation queue)
   listPendingSkills(workspaceId: string): Promise<PendingSkill[]>
   approvePendingSkill(workspaceId: string, slug: string, force?: boolean): Promise<boolean>

@@ -250,7 +250,7 @@ describe('event bridge', () => {
     client.setQueryData(roxKeys.workspaceWork('a'), { workspaceId: 'a', revision: 5 })
     const { api, emit } = fakeApi()
     const stop = startRoxQueryEventBridge(client, api)
-    emit('onSkillsChanged', 'a', [])
+    emit('onSkillsChanged', 'a', { revision: 1, changed: [], removed: [] })
     expect(client.getQueryState(roxKeys.agentsCatalog('a'))?.isInvalidated).toBe(true)
     expect(client.getQueryState(roxKeys.agentsCatalog('b'))?.isInvalidated).toBe(false)
     emit('onMemoryChanged', 'a', 'both')

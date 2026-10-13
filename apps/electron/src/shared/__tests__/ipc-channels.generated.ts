@@ -880,6 +880,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'skills:openEditor',
   'skills:openFinder',
   'skills:pruneUnused',
+  'skills:query',
   'skills:update',
   'skillsPending:approve',
   'skillsPending:changed',
@@ -1074,4 +1075,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1070
+export const EXPECTED_CHANNEL_COUNT = 1071
