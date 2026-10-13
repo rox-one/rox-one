@@ -548,20 +548,44 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
     const skillSlugs = React.useMemo(() => skills.map(s => s.slug), [skills])
     const sourceSlugs = React.useMemo(() => sources.map(s => s.config.slug), [sources])
 
-    // Preload icons for sources and skills
+    const mentions = React.useMemo(
+      () => parseMentions(safeValue, skillSlugs, sourceSlugs),
+      [safeValue, skillSlugs, sourceSlugs]
+    )
+
+    // Preload source icons
     React.useEffect(() => {
       if (!workspaceId) return
-
-      // Preload source icons
       for (const source of sources) {
         loadSourceIcon({ config: source.config, workspaceId })
       }
+    }, [sources, workspaceId])
 
-      // Preload skill icons (handles emoji, URL, file, and auto-discovery)
-      for (const skill of skills) {
-        loadSkillIcon(skill, workspaceId)
+    // Skill icons load only for skills rendered as mention badges: a catalog
+    // can hold thousands of skills and each icon is a file read over IPC.
+    const requestedSkillIconsRef = React.useRef(new Set<string>())
+    const [skillIconRevision, setSkillIconRevision] = React.useState(0)
+    React.useEffect(() => {
+      requestedSkillIconsRef.current = new Set()
+    }, [skills, workspaceId])
+    React.useEffect(() => {
+      if (!workspaceId || mentions.skills.length === 0) return
+      const pending: LoadedSkill[] = []
+      for (const slug of new Set(mentions.skills)) {
+        const cacheKey = `${workspaceId}:${slug}`
+        if (requestedSkillIconsRef.current.has(cacheKey) || getSkillIconSync(workspaceId, slug)) continue
+        const skill = skills.find(s => s.slug === slug)
+        if (!skill) continue
+        requestedSkillIconsRef.current.add(cacheKey)
+        pending.push(skill)
       }
-    }, [sources, skills, workspaceId])
+      if (pending.length === 0) return
+      Promise.all(pending.map(skill => loadSkillIcon(skill, workspaceId)))
+        .then(icons => {
+          if (icons.some(Boolean)) setSkillIconRevision(revision => revision + 1)
+        })
+        .catch(() => {})
+    }, [mentions.skills, skills, workspaceId])
 
     // Expose imperative handle
     React.useImperativeHandle(forwardedRef, () => ({
@@ -755,6 +779,15 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
       lastValueRef.current = safeValue
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Repaint badges once lazily loaded skill icons arrive in the cache
+    React.useEffect(() => {
+      if (skillIconRevision === 0 || !divRef.current || isComposing.current) return
+      const isFocused = document.activeElement === divRef.current
+      const cursorPos = isFocused ? getCursorPosition(divRef.current, cursorPositionRef.current) : null
+      divRef.current.innerHTML = textToHTML(lastValueRef.current, skills, sources, workspaceId) || '<br>'
+      if (cursorPos !== null) setCursorPosition(divRef.current, cursorPos)
+    }, [skillIconRevision]) // eslint-disable-line react-hooks/exhaustive-deps
+
     // Handle selection changes to highlight badges when selected
     React.useEffect(() => {
       // Get selection color from CSS variable (accent with transparency)
@@ -812,10 +845,7 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
     }, [placeholder])
 
     // Check if value contains any mentions (badges) to adjust line height
-    const hasMentions = React.useMemo(() => {
-      const mentions = parseMentions(safeValue, skillSlugs, sourceSlugs)
-      return mentions.skills.length > 0 || mentions.sources.length > 0 || mentions.files.length > 0 || mentions.folders.length > 0
-    }, [safeValue, skillSlugs, sourceSlugs])
+    const hasMentions = mentions.skills.length > 0 || mentions.sources.length > 0 || mentions.files.length > 0 || mentions.folders.length > 0
 
     return (
       <div className="relative">

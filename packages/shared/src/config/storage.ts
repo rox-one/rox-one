@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync, statSync, readdirSync, unlinkSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync, statSync, readdirSync, unlinkSync, type Stats } from 'fs';
 import { createHash } from 'crypto';
 import { join, dirname, basename } from 'path';
 import { getCredentialManager } from '../credentials/index.ts';
@@ -918,12 +918,12 @@ export function loadStoredConfig(): StoredConfig | null {
     // workspace on the next start.
     recoverPendingWorkspaceLifecycle();
 
-    if (!existsSync(CONFIG_FILE)) {
+    const snapshot = readStoredConfigSnapshot();
+    if (!snapshot) {
       return null;
     }
-    const contents = readFileSync(CONFIG_FILE, 'utf-8');
-    const config = safeJsonParse(contents) as StoredConfig;
-    rememberConfigRevision(config, hashConfigContents(contents));
+    const config = structuredClone(snapshot.parsed) as StoredConfig;
+    rememberConfigRevision(config, snapshot.revision);
 
     // Must have workspaces array
     if (!Array.isArray(config.workspaces)) {
@@ -1032,6 +1032,78 @@ type VersionedStoredConfig = StoredConfig & { [CONFIG_REVISION]?: string };
 
 function hashConfigContents(contents: string): string {
   return createHash('sha256').update(contents, 'utf8').digest('hex');
+}
+
+/** Test seam for counting or faking config.json reads and parses. */
+export interface StoredConfigFileIo {
+  read(path: string): string;
+  parse(contents: string): unknown;
+}
+
+const DEFAULT_STORED_CONFIG_FILE_IO: StoredConfigFileIo = {
+  read: (path) => readFileSync(path, 'utf-8'),
+  parse: safeJsonParse,
+};
+let storedConfigFileIo = DEFAULT_STORED_CONFIG_FILE_IO;
+
+export function setStoredConfigFileIoForTests(io: StoredConfigFileIo | null): void {
+  storedConfigFileIo = io ?? DEFAULT_STORED_CONFIG_FILE_IO;
+  storedConfigSnapshot = null;
+}
+
+interface StoredConfigSnapshot {
+  path: string;
+  mtimeMs: number;
+  size: number;
+  ino: number;
+  // Never handed out: readers get a structuredClone because callers mutate and save.
+  parsed: unknown;
+  revision: string;
+}
+
+let storedConfigSnapshot: StoredConfigSnapshot | null = null;
+
+function snapshotMatchesStat(snapshot: StoredConfigSnapshot | null, stat: Stats): snapshot is StoredConfigSnapshot {
+  return (
+    snapshot !== null &&
+    snapshot.path === CONFIG_FILE &&
+    snapshot.mtimeMs === stat.mtimeMs &&
+    snapshot.size === stat.size &&
+    snapshot.ino === stat.ino
+  );
+}
+
+function readStoredConfigSnapshot(): StoredConfigSnapshot | null {
+  const stat = statSync(CONFIG_FILE, { throwIfNoEntry: false });
+  if (!stat) {
+    storedConfigSnapshot = null;
+    return null;
+  }
+  if (snapshotMatchesStat(storedConfigSnapshot, stat)) return storedConfigSnapshot;
+
+  storedConfigSnapshot = null;
+  const contents = storedConfigFileIo.read(CONFIG_FILE);
+  const parsed = storedConfigFileIo.parse(contents);
+  const revision = hashConfigContents(contents);
+  // A write between stat and read leaves the snapshot uncached; the next call re-reads.
+  const after = statSync(CONFIG_FILE, { throwIfNoEntry: false });
+  const snapshot: StoredConfigSnapshot = {
+    path: CONFIG_FILE,
+    mtimeMs: stat.mtimeMs,
+    size: stat.size,
+    ino: stat.ino,
+    parsed,
+    revision,
+  };
+  if (after && snapshotMatchesStat(snapshot, after)) storedConfigSnapshot = snapshot;
+  return snapshot;
+}
+
+function rememberWrittenConfigSnapshot(parsed: unknown, revision: string): void {
+  const stat = statSync(CONFIG_FILE, { throwIfNoEntry: false });
+  storedConfigSnapshot = stat
+    ? { path: CONFIG_FILE, mtimeMs: stat.mtimeMs, size: stat.size, ino: stat.ino, parsed, revision }
+    : null;
 }
 
 function rememberConfigRevision(config: StoredConfig, revision: string): void {
@@ -1158,7 +1230,9 @@ export function saveConfig(config: StoredConfig, options?: { readonly durable?: 
       throw new Error('Config save conflict: stored config changed; reload and retry');
     }
     atomicWriteFileSync(CONFIG_FILE, serialized, options);
-    rememberConfigRevision(config, hashConfigContents(serialized));
+    const revision = hashConfigContents(serialized);
+    rememberWrittenConfigSnapshot(parsed, revision);
+    rememberConfigRevision(config, revision);
   });
 }
 

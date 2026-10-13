@@ -114,7 +114,16 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
   const [editDraft, setEditDraft] = React.useState(comment.body)
   const [replying, setReplying] = React.useState(false)
   const [replyDraft, setReplyDraft] = React.useState('')
-  const timeFmt = new Intl.DateTimeFormat(i18n.language || 'ru', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: thread.timeZone })
+  // Host-independent timestamp: format the date and the clock with two
+  // separate Intl formatters joined by a literal ', '. A single formatter
+  // emits locale glue ("at" on macOS ICU, a comma on Linux CLDR), which makes
+  // snapshots differ across hosts.
+  const locale = i18n.language || 'ru'
+  const dayFmt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', timeZone: thread.timeZone })
+  const timeFmt = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZone: thread.timeZone })
+  const dayLabel = formatInstant(dayFmt, comment.createdAt)
+  const timeLabel = formatInstant(timeFmt, comment.createdAt)
+  const stamp = dayLabel && timeLabel ? `${dayLabel}, ${timeLabel}` : ''
   const replies = comment.replies ?? []
   const actionClass = cn('h-6 rounded-[6px] px-1.5 text-xs text-text-muted hover:text-foreground', HOVER_TINT, FOCUS_RING)
 
@@ -124,8 +133,8 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-baseline gap-2 text-sm">
           <span className="font-semibold">{comment.author.name}</span>
-          {formatInstant(timeFmt, comment.createdAt) ? (
-            <time dateTime={comment.createdAt} className="text-text-muted">{formatInstant(timeFmt, comment.createdAt)}</time>
+          {stamp ? (
+            <time dateTime={comment.createdAt} className="text-text-muted">{stamp}</time>
           ) : null}
           {comment.editedAt && !comment.deleted ? <span className="text-text-muted">· {t('entities.ui.comments.edited')}</span> : null}
         </div>

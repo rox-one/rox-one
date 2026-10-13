@@ -11,6 +11,7 @@ import {
   refreshSessionsMetadataAtom,
   initializeSessionsAtom,
   replaceLoadedSessionAtom,
+  addImportedSessionsAtom,
 } from '../sessions'
 
 function msg(id: string, role: Message['role'] = 'user'): Message {
@@ -261,5 +262,53 @@ describe('refreshSessionsMetadataAtom', () => {
 
     // IDs are set
     expect(store.get(sessionIdsAtom)).toHaveLength(2)
+  })
+})
+
+describe('addImportedSessionsAtom', () => {
+  it('inserts a batch with one list update, merged by lastMessageAt desc and left unloaded', () => {
+    const store = createStore()
+    store.set(initializeSessionsAtom, [
+      makeSession({ id: 's1', lastMessageAt: 300 }),
+      makeSession({ id: 's2', lastMessageAt: 100 }),
+    ])
+    let idUpdates = 0
+    let metaUpdates = 0
+    const unsubIds = store.sub(sessionIdsAtom, () => { idUpdates += 1 })
+    const unsubMeta = store.sub(sessionMetaMapAtom, () => { metaUpdates += 1 })
+
+    const stale = store.set(addImportedSessionsAtom, [
+      makeSession({ id: 'a', name: 'A', lastMessageAt: 200 }),
+      makeSession({ id: 'b', name: 'B', lastMessageAt: 400 }),
+      makeSession({ id: 'c', name: 'C', lastMessageAt: 50 }),
+    ])
+    unsubIds()
+    unsubMeta()
+
+    expect(idUpdates).toBe(1)
+    expect(metaUpdates).toBe(1)
+    expect(stale).toEqual([])
+    expect(store.get(sessionIdsAtom)).toEqual(['b', 's1', 'a', 's2', 'c'])
+    expect(store.get(sessionMetaMapAtom).get('a')?.name).toBe('A')
+    expect(store.get(sessionAtomFamily('c'))?.name).toBe('C')
+    expect([...store.get(loadedSessionsAtom)]).toEqual([])
+  })
+
+  it('keeps loaded messages and list position of a known session and reports it as stale', () => {
+    const store = createStore()
+    store.set(initializeSessionsAtom, [
+      makeSession({ id: 's1', name: 'First', lastMessageAt: 300 }),
+      makeSession({ id: 's2', name: 'Second', lastMessageAt: 100 }),
+    ])
+    store.set(sessionAtomFamily('s2'), makeSession({ id: 's2', name: 'Second', lastMessageAt: 100, messages: [msg('m1')] }))
+    store.set(loadedSessionsAtom, new Set(['s2']))
+
+    const stale = store.set(addImportedSessionsAtom, [makeSession({ id: 's2', name: 'Second appended', lastMessageAt: 500 })])
+
+    expect(stale).toEqual(['s2'])
+    expect(store.get(sessionIdsAtom)).toEqual(['s1', 's2'])
+    expect(store.get(sessionMetaMapAtom).get('s2')?.name).toBe('Second appended')
+    expect(store.get(sessionAtomFamily('s2'))?.messages.map((message) => message.id)).toEqual(['m1'])
+    expect(store.get(loadedSessionsAtom).has('s2')).toBe(true)
   })
 })

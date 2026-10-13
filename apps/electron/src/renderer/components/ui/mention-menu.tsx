@@ -61,6 +61,9 @@ const MENU_ITEM_SELECTED = 'bg-foreground/5'
 // Type badge shown to the right of each item label (e.g. "Skill", "Source")
 const MENU_TYPE_BADGE = 'rounded-[var(--radius-control)] shadow-minimal bg-background px-1.5 py-0.5 text-xs text-muted-foreground shrink-0'
 
+/** Most items the menu shows at once (ADR-0023 §7); the rest are reachable by typing. */
+export const MENTION_MENU_MAX_ITEMS = 50
+
 // ============================================================================
 // Path utilities
 // ============================================================================
@@ -156,25 +159,55 @@ function filterSections(sections: MentionSection[], filter: string): MentionSect
     item.description?.toLowerCase().includes(lowerFilter)
   )
 
-  // Sort by match priority: first word > later word > contains
-  matchingItems.sort((a, b) => {
-    const aLabelScore = getMatchScore(a.label, lowerFilter)
-    const bLabelScore = getMatchScore(b.label, lowerFilter)
-    const aIdScore = getMatchScore(a.id, lowerFilter)
-    const bIdScore = getMatchScore(b.id, lowerFilter)
-
-    // Compare by best score (label or id)
-    const aScore = Math.max(aLabelScore, aIdScore)
-    const bScore = Math.max(bLabelScore, bIdScore)
-    if (aScore !== bScore) return bScore - aScore
-
-    // Same score tier: alphabetical by label
-    return a.label.localeCompare(b.label)
+  // Sort by match priority: first word > later word > contains (best of label or id),
+  // then alphabetically by label within a tier
+  const ranked = matchingItems.map(item => ({
+    item,
+    score: Math.max(getMatchScore(item.label, lowerFilter), getMatchScore(item.id, lowerFilter)),
+  }))
+  ranked.sort((a, b) => {
+    if (a.score !== b.score) return b.score - a.score
+    return a.item.label.localeCompare(b.item.label)
   })
 
   // Return as flat list in a single virtual section (headers hidden when filtering)
-  if (matchingItems.length === 0) return []
-  return [{ id: 'results', label: 'Results', items: matchingItems }]
+  if (ranked.length === 0) return []
+  return [{ id: 'results', label: 'Results', items: ranked.map(({ item }) => item) }]
+}
+
+/**
+ * Keep at most `limit` items in section order. Sections smaller than an even
+ * share keep every item and the rest split what is left, so a long section
+ * (thousands of skills) cannot push sources or files out of the menu.
+ */
+function capSections(sections: MentionSection[], limit: number): MentionSection[] {
+  const total = sections.reduce((sum, section) => sum + section.items.length, 0)
+  if (total <= limit) return sections
+
+  const quotas = sections.map(() => 0)
+  let remaining = limit
+  let open = sections.map((_, index) => index).filter(index => sections[index]!.items.length > 0)
+  while (open.length > 0) {
+    const share = Math.floor(remaining / open.length)
+    const small = open.filter(index => sections[index]!.items.length <= share)
+    if (small.length === 0) {
+      let extra = remaining - share * open.length
+      for (const index of open) {
+        quotas[index] = share + (extra > 0 ? 1 : 0)
+        if (extra > 0) extra--
+      }
+      break
+    }
+    for (const index of small) {
+      quotas[index] = sections[index]!.items.length
+      remaining -= quotas[index]!
+    }
+    open = open.filter(index => sections[index]!.items.length > share)
+  }
+
+  return sections
+    .map((section, index) => ({ ...section, items: section.items.slice(0, quotas[index]) }))
+    .filter(section => section.items.length > 0)
 }
 
 function flattenItems(sections: MentionSection[]): MentionItem[] {
@@ -237,8 +270,10 @@ export function InlineMentionMenu({
   const menuRef = React.useRef<HTMLDivElement>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
   const [selectedIndex, setSelectedIndex] = React.useState(0)
-  const filteredSections = filterSections(sections, filter)
-  const flatItems = flattenItems(filteredSections)
+  const flatItems = React.useMemo(
+    () => flattenItems(capSections(filterSections(sections, filter), MENTION_MENU_MAX_ITEMS)),
+    [sections, filter],
+  )
 
   // Reset selection when filter changes
   React.useEffect(() => {

@@ -36,6 +36,9 @@ const EXTENSION_HOST_WORKER_OUTPUT = join(
 // Main falls back to a deferred inline sync when this file is missing.
 const BUNDLED_SKILLS_WORKER_SOURCE = "packages/shared/src/skills/bundled-sync.worker.ts";
 const BUNDLED_SKILLS_WORKER_OUTPUT = join(DIST_DIR, "bundled-skills-worker.cjs");
+// ADR-0024: shared worker pool entry. Main falls back to inline tasks when missing.
+const POOL_WORKER_SOURCE = "packages/shared/src/workers/pool.worker.ts";
+const POOL_WORKER_OUTPUT = join(DIST_DIR, "pool-worker.cjs");
 
 // Load .env file if it exists
 function loadEnvFile(): void {
@@ -404,6 +407,35 @@ async function buildBundledSkillsWorker(): Promise<void> {
   console.log("✅ bundled-skills worker built");
 }
 
+async function buildPoolWorker(): Promise<void> {
+  console.log("🔨 Building pool worker...");
+  const proc = spawn({
+    cmd: [
+      "bun", "run", "esbuild",
+      POOL_WORKER_SOURCE,
+      "--bundle",
+      "--platform=node",
+      "--format=cjs",
+      `--outfile=${POOL_WORKER_OUTPUT}`,
+      "--external:electron",
+    ],
+    cwd: ROOT_DIR,
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+  const exitCode = await proc.exited;
+  if (exitCode !== 0) {
+    console.error("❌ pool worker build failed with exit code", exitCode);
+    process.exit(exitCode);
+  }
+  const verification = await verifyJsFile(POOL_WORKER_OUTPUT);
+  if (!verification.valid) {
+    console.error("❌ pool worker verification failed:", verification.error);
+    process.exit(1);
+  }
+  console.log("✅ pool worker built");
+}
+
 async function main(): Promise<void> {
   if (!process.argv.includes('--no-env')) loadEnvFile();
   if (process.env.ROX_WINDOWS_DEV_WITHOUT_OEM === '1') process.env.CRAFT_DEV_RUNTIME = '1';
@@ -434,6 +466,7 @@ async function main(): Promise<void> {
   }
 
   await buildBundledSkillsWorker();
+  await buildPoolWorker();
 
   const buildDefines = getBuildDefines();
 

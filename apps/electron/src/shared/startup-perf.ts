@@ -19,6 +19,10 @@ export const STARTUP_MARKS = {
   winBootstrapEnd: 'main:win-bootstrap:end',
   /** Embedded server listening and handlers registered. */
   serverReady: 'main:server-ready',
+  /** WS port released to renderers (their RPCs may start). */
+  serverPortPublished: 'server:port-published',
+  /** Session manager initialized; gated RPC handlers proceed. */
+  serverInitialized: 'server:initialized',
   /** First BrowserWindow constructed. */
   windowCreated: 'main:window-created',
   /** Preload received the WS port (first `__get-ws-port`). */

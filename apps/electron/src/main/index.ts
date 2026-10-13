@@ -11,6 +11,7 @@ import { resolveNumberedUserDataDir } from './numbered-user-data'
 // refreshes from the login shell in the background; agent spawns await it.
 import { shellEnvSpawnGate, startShellEnvLoad } from './shell-env'
 import { registerSpawnEnvGate, whenSpawnEnvReady } from '@rox/shared/toolchain/spawn-readiness'
+import { startSpawnEnvPreparation } from './spawn-env-preparation'
 startShellEnvLoad()
 // Builtin MCP / MCP validation / git / siyuan / agent spawns await this gate.
 registerSpawnEnvGate('shell-env', shellEnvSpawnGate)
@@ -125,6 +126,7 @@ import { createApplicationMenu } from './menu'
 import { dispatchShellAction } from './shell-actions'
 import { initQuickComposer, disposeQuickComposer } from './quick-composer'
 import { nativeAccessibilityPrefersSolid } from './shell-material'
+import { setupWorkerPool } from './worker-pool-setup'
 import { getQuickComposerShortcut, setQuickComposerShortcut } from '@rox/shared/config'
 import { WindowManager } from './window-manager'
 import { readBoundWindowWorkspace } from './bootstrap-window-workspace'
@@ -339,6 +341,7 @@ const wsPortReady = new Promise<number>((resolve) => { resolveWsPort = resolve }
 function publishWsPort(port: number): void {
   if (wsPortValue !== null) return
   wsPortValue = port
+  markStartup(STARTUP_MARKS.serverPortPublished)
   resolveWsPort?.(port)
 }
 
@@ -732,54 +735,65 @@ app.whenReady().then(async () => {
     mainLog.error('[startup] shell-first window creation failed:', error)
   }
 
+  let windowsBootstrapReady: Promise<void> = Promise.resolve()
   if (process.platform === 'win32' && !process.env.CRAFT_SERVER_URL) {
-    markStartup(STARTUP_MARKS.winBootstrapStart)
-    const { initializeWindowsBootstrap, scheduleWindowsBootstrapRepair, createWindowsRepairSpawnGate } = await import('./windows-bootstrap')
-    const { getToolchainDependencyMode, getGitBashPath } = await import('@rox/shared/config')
-    const bootstrapOptions = {
-      isPackaged: app.isPackaged,
-      resourcesPath: process.resourcesPath,
-      managedRoot: join(CONFIG_DIR, 'toolchain'),
-      preference: getToolchainDependencyMode(),
-      gitBashPreference: getGitBashPath(),
-      appVersion: app.getVersion(),
-    }
-    // PERF-03: parallel, cached `--version` probes; never runs bootstrap.ps1 here.
-    const result = await initializeWindowsBootstrap(bootstrapOptions)
-    markStartup(STARTUP_MARKS.winBootstrapEnd)
-    // Structured non-secret diagnostics; never log receipt errors or process output.
-    if (result?.missingTools.length) mainLog.warn('[windows-bootstrap]', result)
-    else if (result) mainLog.info('[windows-bootstrap]', result)
-    if (result?.repairNeeded) {
-      // Offline repair runs at most once per backoff window, after first paint —
-      // or immediately once a spawn needs the prerequisites (gate waiter expedites).
-      // Spawns wait up to 6 s from bootstrap.ps1 start, 12 s overall; latching.
-      const repairGate = createWindowsRepairSpawnGate()
-      registerSpawnEnvGate('windows-repair', repairGate.gate)
-      void scheduleWindowsBootstrapRepair({
-        ...bootstrapOptions,
-        missingTools: result.missingTools,
-        mode: result.mode,
-        after: whenStartupMark(STARTUP_MARKS.rendererFirstPaint),
-        signals: repairGate.signals,
-      }).then((repair) => {
-        if (repair.ran) mainLog.warn('[windows-bootstrap] background repair', repair)
-        else mainLog.info('[windows-bootstrap] background repair skipped', repair)
-      }).catch((err) => mainLog.warn('[windows-bootstrap] background repair failed:', err))
-        .finally(() => repairGate.settle())
-    }
+    // PERF-1572: runs alongside the server bootstrap; only agent spawns (and the
+    // background toolchain install, which resolves tools on PATH) wait for it.
+    windowsBootstrapReady = startSpawnEnvPreparation('windows-bootstrap', async () => {
+      markStartup(STARTUP_MARKS.winBootstrapStart)
+      const { initializeWindowsBootstrap, scheduleWindowsBootstrapRepair, createWindowsRepairSpawnGate } = await import('./windows-bootstrap')
+      const { getToolchainDependencyMode, getGitBashPath } = await import('@rox/shared/config')
+      const bootstrapOptions = {
+        isPackaged: app.isPackaged,
+        resourcesPath: process.resourcesPath,
+        managedRoot: join(CONFIG_DIR, 'toolchain'),
+        preference: getToolchainDependencyMode(),
+        gitBashPreference: getGitBashPath(),
+        appVersion: app.getVersion(),
+      }
+      // PERF-03: parallel, cached `--version` probes; never runs bootstrap.ps1 here.
+      const result = await initializeWindowsBootstrap(bootstrapOptions)
+      markStartup(STARTUP_MARKS.winBootstrapEnd)
+      // Structured non-secret diagnostics; never log receipt errors or process output.
+      if (result?.missingTools.length) mainLog.warn('[windows-bootstrap]', result)
+      else if (result) mainLog.info('[windows-bootstrap]', result)
+      if (result?.repairNeeded) {
+        // Offline repair runs at most once per backoff window, after first paint —
+        // or immediately once a spawn needs the prerequisites (gate waiter expedites).
+        // Spawns wait up to 6 s from bootstrap.ps1 start, 12 s overall; latching.
+        const repairGate = createWindowsRepairSpawnGate()
+        registerSpawnEnvGate('windows-repair', repairGate.gate)
+        void scheduleWindowsBootstrapRepair({
+          ...bootstrapOptions,
+          missingTools: result.missingTools,
+          mode: result.mode,
+          after: whenStartupMark(STARTUP_MARKS.rendererFirstPaint),
+          signals: repairGate.signals,
+        }).then((repair) => {
+          if (repair.ran) mainLog.warn('[windows-bootstrap] background repair', repair)
+          else mainLog.info('[windows-bootstrap] background repair skipped', repair)
+        }).catch((err) => mainLog.warn('[windows-bootstrap] background repair failed:', err))
+          .finally(() => repairGate.settle())
+      }
+    }, (err) => mainLog.warn('[windows-bootstrap] initialization failed:', err))
   }
 
-  try {
-    const vault = await getCredentialManager().tryRestoreVaultFromBackup()
+  // PERF-1572: the vault restore (and its async key derivation) runs alongside
+  // the server bootstrap. Its first users await `vaultReady`: session manager
+  // initialization, the local WS token resolve and the credential health check.
+  const vaultReady: Promise<void> = getCredentialManager().tryRestoreVaultFromBackup().then((vault) => {
     if (vault === 'restored') {
       mainLog.warn('[credentials] Recovered credentials.enc from backup after vault repair')
     } else if (vault === 'unavailable') {
       mainLog.error('[credentials] Encrypted credential vault needs repair; local WS auth may fail until restored')
     }
-  } catch (err) {
+  }, (err) => {
     mainLog.error('[credentials] Vault auto-restore failed:', err)
-  }
+  })
+  // sm.initialize() is released only once the WS port is published, so its
+  // synchronous bulk never interleaves with the awaits before publication.
+  let releaseSessionInitialization: () => void = () => {}
+  const sessionInitializationReleased = new Promise<void>((resolve) => { releaseSessionInitialization = resolve })
   // Initialize backend runtime bootstrapping (Codex vendor root, Claude SDK runtime paths).
   initializeBackendHostRuntime({
     hostRuntime: {
@@ -795,6 +809,8 @@ app.whenReady().then(async () => {
 
   // Initialize bundled docs
   initializeDocs()
+
+  setupWorkerPool()
 
   // Sync bundled skill packs into <config>/skills (never throws; hash-merge).
   // PERF-02: claimed now (so the server bootstrap does not run it again), but
@@ -1305,6 +1321,7 @@ app.whenReady().then(async () => {
         rpcPort,
         tls,
         bundledAssetsRoot: __dirname,
+        platformEnvironmentReady: windowsBootstrapReady,
         serverId: 'local',
         serverVersion: app.getVersion(),
         platformFactory: () => platform,
@@ -1473,7 +1490,11 @@ app.whenReady().then(async () => {
               startClipboardMonitor(deps)
             },
         setSessionEventSink: (sm, sink) => sm.setEventSink(sink),
-        initializeSessionManager: (sm) => sm.initialize(),
+        deferSessionManagerInitialization: true,
+        initializeSessionManager: async (sm) => {
+          await Promise.all([vaultReady, sessionInitializationReleased])
+          await sm.initialize()
+        },
         initModelRefreshService: () => initModelRefreshService(async (slug: string) => {
           const { getCredentialManager } = await import('@rox/shared/credentials')
           const manager = getCredentialManager()
@@ -1551,30 +1572,33 @@ app.whenReady().then(async () => {
       // Messaging Gateway — attach the WS publisher, init local workspaces,
       // install the fan-out event sink. The handle was created inside
       // createHandlerDeps so the registry could be wired into HandlerDeps.
+      // PERF-1572: runs after the port is published, once sessions are loaded.
       // -----------------------------------------------------------------------
-      try {
-        if (!messagingHandle) {
-          throw new Error('Messaging handle was not constructed in createHandlerDeps')
+      const initializeMessaging = async (): Promise<void> => {
+        try {
+          if (!messagingHandle) {
+            throw new Error('Messaging handle was not constructed in createHandlerDeps')
+          }
+
+          messagingHandle.setPublisher(instance.wsServer.push.bind(instance.wsServer))
+
+          // Skip remote-owned workspaces — messaging runs on the remote server.
+          const localWorkspaceIds = getWorkspaces()
+            .filter((ws) => !ws.remoteServer)
+            .map((ws) => ws.id)
+          await messagingHandle.initializeWorkspaces(localWorkspaceIds)
+
+          // Compose fan-out event sink: RPC push + messaging gateway dispatch.
+          // Always install — this lets workspaces enable messaging at runtime
+          // without a process restart.
+          const baseSink = instance.wsServer.push.bind(instance.wsServer)
+          instance.sessionManager.setEventSink(messagingHandle.wrapSink(baseSink))
+          if (messagingHandle.registry.size > 0) {
+            mainLog.info(`[messaging] Fan-out sink active for ${messagingHandle.registry.size} workspace(s)`)
+          }
+        } catch (err) {
+          mainLog.error('[messaging] Gateway initialization failed:', err)
         }
-
-        messagingHandle.setPublisher(instance.wsServer.push.bind(instance.wsServer))
-
-        // Skip remote-owned workspaces — messaging runs on the remote server.
-        const localWorkspaceIds = getWorkspaces()
-          .filter((ws) => !ws.remoteServer)
-          .map((ws) => ws.id)
-        await messagingHandle.initializeWorkspaces(localWorkspaceIds)
-
-        // Compose fan-out event sink: RPC push + messaging gateway dispatch.
-        // Always install — this lets workspaces enable messaging at runtime
-        // without a process restart.
-        const baseSink = instance.wsServer.push.bind(instance.wsServer)
-        instance.sessionManager.setEventSink(messagingHandle.wrapSink(baseSink))
-        if (messagingHandle.registry.size > 0) {
-          mainLog.info(`[messaging] Fan-out sink active for ${messagingHandle.registry.size} workspace(s)`)
-        }
-      } catch (err) {
-        mainLog.error('[messaging] Gateway initialization failed:', err)
       }
 
       // IPC handlers — preload uses sendSync to get WS connection details
@@ -1757,6 +1781,7 @@ app.whenReady().then(async () => {
         e.returnValue = wsPortValue
       })
       ipcMain.handle('__resolve-local-ws-token', async (event, expectedWorkspaceId: unknown) => {
+        await vaultReady
         try {
           if (typeof expectedWorkspaceId !== 'string' || !localNativeAuthority) throw new Error('Unavailable')
           return await resolveNativeTransportCredential({
@@ -2018,7 +2043,13 @@ app.whenReady().then(async () => {
 
 // Release the local transport to the shell window(s): every renderer RPC
       // (`__resolve-local-ws-token`, then the WS transport itself) is now wired.
+      // Handlers needing sessions wait on `instance.initialized` at dispatch.
       publishWsPort(instance.port)
+      releaseSessionInitialization()
+      void instance.initialized.then(() => {
+        markStartup(STARTUP_MARKS.serverInitialized)
+        return initializeMessaging()
+      }, () => { /* logged by bootstrapServer; gated handlers report it */ })
 
       // S7: host-local service lifecycle + doctor (e1.4/e1.5, e1.6). All
       // channels are LOCAL_ONLY; the launchd LaunchAgent relaunches the app
@@ -2165,6 +2196,7 @@ app.whenReady().then(async () => {
     // Skip in thin-client mode — credentials are managed by the remote server.
     if (!isClientOnly) {
       try {
+        await vaultReady
         const { getCredentialManager } = await import('@rox/shared/credentials')
         const credentialManager = getCredentialManager()
         const health = await credentialManager.checkHealth()
@@ -2247,6 +2279,7 @@ app.whenReady().then(async () => {
   } catch (error) {
     mainLog.error('Failed to initialize app:', error instanceof Error ? error.message : error, (error as any)?.stack)
     // Continue anyway - the app will show errors in the UI
+    releaseSessionInitialization()
   }
 
   // macOS: Re-create window when dock icon is clicked

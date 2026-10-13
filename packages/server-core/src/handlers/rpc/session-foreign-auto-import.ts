@@ -6,16 +6,20 @@
  * (Claude Code, Codex, Cursor, Grok, ChatGPT/DeepSeek exports, …) with an
  * mtime-based cache, imports new recent chats and appends new turns to chats
  * that were already imported. The scan yields to the event loop so the app
- * never freezes. Settings + last status live in `<workspace>/.rox/`.
+ * never freezes; persistence runs in batches (ADR-0025) that yield between
+ * each other and stop on abort. Settings + last status live in `<workspace>/.rox/`.
  */
 
 import { getActiveWorkspace, getWorkspaceByNameOrId } from '@rox/shared/config'
 import {
   discoverForeignSessionsAsync,
   loadForeignImportRegistry,
-  persistForeignSession,
+  persistForeignSessions,
   type ForeignAutoImportStatus,
+  type ForeignImportMode,
   type ForeignIndexEntry,
+  type ForeignPersistIo,
+  type ForeignPersistResult,
 } from '@rox/shared/sessions'
 import type { HandlerDeps } from '../handler-deps'
 import { readAutoImportFile, writeAutoImportFile } from './session-foreign-auto-import-storage'
@@ -25,6 +29,17 @@ export const AUTO_IMPORT_MAX_PER_RUN = 150
 const STARTUP_DELAY_MS = 20_000
 const INTERVAL_MS = 15 * 60_000
 
+interface AutoImportWorkspace {
+  id: string
+  rootPath: string
+}
+
+export interface ForeignAutoImporterOptions {
+  /** Home directory whose chat roots are scanned; defaults to the OS home. */
+  homeDir?: string
+  resolveWorkspace?: (workspaceId?: string) => AutoImportWorkspace | null | undefined
+  persistIo?: Partial<ForeignPersistIo>
+}
 
 function emptyStatus(workspaceId: string | null, enabled: boolean): ForeignAutoImportStatus {
   return {
@@ -44,16 +59,52 @@ function emptyStatus(workspaceId: string | null, enabled: boolean): ForeignAutoI
   }
 }
 
-const yieldToLoop = () => new Promise<void>((resolve) => setImmediate(resolve))
+/** Hand one persisted batch to the session list: one ingest and one `sessions_imported` event. */
+export function ingestPersistedBatch(deps: HandlerDeps, workspaceId: string, batch: readonly ForeignPersistResult[]): void {
+  const sessionIds = batch.flatMap((result) =>
+    result.sessionId && (result.action === 'created' || result.action === 'appended' || result.action === 'replaced')
+      ? [result.sessionId]
+      : [],
+  )
+  if (sessionIds.length === 0) return
+  try {
+    deps.sessionManager.ingestImportedSessions(workspaceId, sessionIds)
+  } catch {
+    // Persisted sessions remain available; list refresh can happen on the next load.
+  }
+}
+
+function countResult(status: ForeignAutoImportStatus, result: ForeignPersistResult): void {
+  if (result.sessionId && (result.action === 'created' || result.action === 'appended')) {
+    if (result.action === 'created') {
+      status.imported += 1
+      status.alreadyImported += 1
+    } else {
+      status.updated += 1
+    }
+  } else if (result.reason !== 'already-imported' && result.reason !== 'source-unchanged') {
+    const reason = result.reason ?? 'import-failed'
+    status.failed += 1
+    status.remaining += 1
+    status.failureReasons[reason] = (status.failureReasons[reason] ?? 0) + 1
+  }
+}
 
 export class ForeignAutoImporter {
   private running = new Map<string, Promise<ForeignAutoImportStatus>>()
+  /** One automatic run at a time across all workspaces. */
+  private lane: Promise<unknown> = Promise.resolve()
+  private controllers = new Map<string, AbortController>()
   private live = new Map<string, ForeignAutoImportStatus>()
   private timers: ReturnType<typeof setTimeout>[] = []
   private consentRevision = new Map<string, number>()
-  constructor(private readonly deps: HandlerDeps) {}
+  constructor(
+    private readonly deps: HandlerDeps,
+    private readonly options: ForeignAutoImporterOptions = {},
+  ) {}
 
-  private resolveWorkspace(workspaceId?: string) {
+  private resolveWorkspace(workspaceId?: string): AutoImportWorkspace | null | undefined {
+    if (this.options.resolveWorkspace) return this.options.resolveWorkspace(workspaceId)
     return workspaceId ? getWorkspaceByNameOrId(workspaceId) : getActiveWorkspace()
   }
 
@@ -93,7 +144,10 @@ export class ForeignAutoImporter {
     if (!workspace) throw new Error('sessions.foreignAutoSet: workspace not found')
     const file = readAutoImportFile(workspace.rootPath)
     writeAutoImportFile(workspace.rootPath, { ...file, enabled })
-    if (!enabled) this.consentRevision.set(workspace.id, (this.consentRevision.get(workspace.id) ?? 0) + 1)
+    if (!enabled) {
+      this.consentRevision.set(workspace.id, (this.consentRevision.get(workspace.id) ?? 0) + 1)
+      this.controllers.get(workspace.id)?.abort()
+    }
     const live = this.live.get(workspace.id)
     if (live && !enabled) {
       live.enabled = false
@@ -103,26 +157,38 @@ export class ForeignAutoImporter {
     return this.status(workspace.id)
   }
 
-  /** Run one incremental import pass; runs are de-duplicated per workspace. */
-  run(opts: { workspaceId?: string; all?: boolean; force?: boolean } = {}): Promise<ForeignAutoImportStatus> {
+  /**
+   * Run one incremental import pass. Runs are de-duplicated per workspace and
+   * never overlap across workspaces; `signal` stops the pass between batches.
+   */
+  run(opts: { workspaceId?: string; all?: boolean; force?: boolean; signal?: AbortSignal } = {}): Promise<ForeignAutoImportStatus> {
     const workspace = this.resolveWorkspace(opts.workspaceId)
     if (!workspace) return Promise.resolve(emptyStatus(null, false))
     const active = this.running.get(workspace.id)
     if (active) return active
-    const run = this.runOnce({ ...opts, workspaceId: workspace.id }).finally(() => {
-      if (this.running.get(workspace.id) === run) this.running.delete(workspace.id)
-    })
+    const run = this.lane
+      .then(() => this.runOnce({ ...opts, workspaceId: workspace.id }))
+      .finally(() => {
+        if (this.running.get(workspace.id) === run) this.running.delete(workspace.id)
+      })
+    this.lane = run.catch(() => {})
     this.running.set(workspace.id, run)
     return run
   }
 
-  private async runOnce(opts: { workspaceId?: string; all?: boolean; force?: boolean }): Promise<ForeignAutoImportStatus> {
+  private async runOnce(opts: { workspaceId?: string; all?: boolean; force?: boolean; signal?: AbortSignal }): Promise<ForeignAutoImportStatus> {
     const workspace = this.resolveWorkspace(opts.workspaceId)
     if (!workspace) return emptyStatus(null, false)
     const root = workspace.rootPath
     const enabled = this.isEnabled(root)
     if (!enabled && !opts.force) return this.status(workspace.id)
     const consentRevision = this.consentRevision.get(workspace.id) ?? 0
+    const consentHeld = () => (this.consentRevision.get(workspace.id) ?? 0) === consentRevision
+    const controller = new AbortController()
+    const abort = () => controller.abort()
+    if (opts.signal?.aborted) abort()
+    opts.signal?.addEventListener('abort', abort, { once: true })
+    this.controllers.set(workspace.id, controller)
 
     const status: ForeignAutoImportStatus = {
       ...this.status(workspace.id),
@@ -140,10 +206,9 @@ export class ForeignAutoImporter {
     try {
       const scan = await discoverForeignSessionsAsync({
         workspaceRoot: root,
+        homeDir: this.options.homeDir,
         reuseCache: true,
-        shouldContinue: () =>
-          (this.consentRevision.get(workspace.id) ?? 0) === consentRevision &&
-          (enabled || opts.force === true),
+        shouldContinue: () => !controller.signal.aborted && consentHeld() && (enabled || opts.force === true),
       })
       const importable = scan.entries.filter((entry) => entry.userTurns > 0 && !entry.skipReason)
       const registry = loadForeignImportRegistry(root)
@@ -156,7 +221,7 @@ export class ForeignAutoImporter {
           bySource,
           remaining: importable.length,
           truncated: scan.truncated ?? false,
-          partialReason: 'consent-revoked' as const,
+          partialReason: consentHeld() ? undefined : 'consent-revoked' as const,
           lastRunAt: Date.now(),
         })
         writeAutoImportFile(root, { ...readAutoImportFile(root), lastRunAt: status.lastRunAt, status: { ...status } })
@@ -195,57 +260,32 @@ export class ForeignAutoImporter {
         truncated: scan.truncated ?? false,
       })
 
-      const work: Array<{ entry: ForeignIndexEntry; mode: 'skip' | 'append' }> = [
-        ...changed.map((entry) => ({ entry, mode: 'append' as const })),
-        ...toCreate.map((entry) => ({ entry, mode: 'skip' as const })),
+      const work: Array<{ sourcePath: string; mode: ForeignImportMode }> = [
+        ...changed.map((entry) => ({ sourcePath: entry.sourcePath, mode: 'append' as const })),
+        ...toCreate.map((entry) => ({ sourcePath: entry.sourcePath, mode: 'skip' as const })),
       ]
-      let interrupted = false
-      let processed = 0
-      for (const { entry, mode } of work) {
-        if ((this.consentRevision.get(workspace.id) ?? 0) !== consentRevision) {
-          interrupted = true
-          status.remaining += work.length - processed
-          break
-        }
-        try {
-          const result = await persistForeignSession({ workspaceRoot: root, sourcePath: entry.sourcePath, mode })
-          if (result.sessionId && (result.action === 'created' || result.action === 'appended')) {
-            if (result.action === 'created') {
-              status.imported += 1
-              status.alreadyImported += 1
-            } else {
-              status.updated += 1
-            }
-            try {
-              this.deps.sessionManager.ingestImportedSession(workspace.id, result.sessionId)
-              this.deps.sessionManager.notifySessionCreated(workspace.id, result.sessionId)
-            } catch {
-              // The session file is durable; refresh notification may be retried separately.
-            }
-          } else if (result.reason !== 'already-imported' && result.reason !== 'source-unchanged') {
-            const reason = result.reason ?? 'import-failed'
-            status.failed += 1
-            status.remaining += 1
-            status.failureReasons[reason] = (status.failureReasons[reason] ?? 0) + 1
-          }
-        } catch {
-          status.failed += 1
-          status.remaining += 1
-          status.failureReasons['import-failed'] = (status.failureReasons['import-failed'] ?? 0) + 1
-        }
-        processed += 1
-        await yieldToLoop()
-      }
+      const results = await persistForeignSessions(root, work, 'skip', this.options.homeDir, {
+        signal: controller.signal,
+        registry,
+        scanEntries: scan.entries,
+        io: this.options.persistIo,
+        onBatch: (batch) => {
+          for (const result of batch) countResult(status, result)
+          ingestPersistedBatch(this.deps, workspace.id, batch)
+        },
+      })
+      const interrupted = results.length < work.length
+      if (interrupted) status.remaining += work.length - results.length
 
       const lastRunAt = Date.now()
-      const partialReason = interrupted
+      const partialReason = interrupted && !consentHeld()
         ? 'consent-revoked'
         : status.failed > 0
           ? 'source-failure'
           : scan.truncated
             ? 'scan-truncated'
             : undefined
-      const state = partialReason ? 'partial' : 'done'
+      const state = interrupted || partialReason ? 'partial' : 'done'
       Object.assign(status, { state, partialReason, lastRunAt })
       writeAutoImportFile(root, { ...readAutoImportFile(root), lastRunAt, status: { ...status } })
     } catch (error) {
@@ -253,6 +293,8 @@ export class ForeignAutoImporter {
       writeAutoImportFile(root, { ...readAutoImportFile(root), status: { ...status } })
     } finally {
       this.live.delete(workspace.id)
+      opts.signal?.removeEventListener('abort', abort)
+      if (this.controllers.get(workspace.id) === controller) this.controllers.delete(workspace.id)
     }
     return this.status(workspace.id)
   }
@@ -273,5 +315,6 @@ export class ForeignAutoImporter {
   stop(): void {
     for (const timer of this.timers) clearTimeout(timer)
     this.timers = []
+    for (const controller of this.controllers.values()) controller.abort()
   }
 }

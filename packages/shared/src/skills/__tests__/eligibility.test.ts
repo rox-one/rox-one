@@ -20,6 +20,7 @@ import {
   APP_MANAGED_SKILLS_DIR,
   invalidateSkillsCache,
   loadAllSkills,
+  loadSkillFromDir,
   loadSkillsFromDir,
 } from '../storage.ts';
 import type { LoadedSkill } from '../types.ts';
@@ -389,7 +390,7 @@ describe('rox-custodian gated bundled playbooks', () => {
     for (const skill of skills) {
       expect(skill.metadata.name).toBe(skill.slug);
       expect(skill.metadata.description.length).toBeGreaterThan(20);
-      expect(skill.content.trim().length).toBeGreaterThan(0);
+      expect(loadSkillFromDir(CUSTODIAN_DIR, skill.slug, 'global')!.content.trim().length).toBeGreaterThan(0);
       // Gated to the ROX-managed OpenClaw gateway: the runtime credential is the
       // machine prerequisite, resolved through the ROX credential fabric.
       expect(skill.metadata.requires?.env).toEqual(['OPENCLAW_GATEWAY_TOKEN']);
@@ -448,7 +449,7 @@ describe('rox-custodian gated bundled playbooks', () => {
       expect(skill.metadata.alwaysAllow).toBeUndefined();
       expect(skill.metadata.requiredSources).toBeUndefined();
       expect(skill.metadata.requires?.bins).toBeUndefined();
-      expect(skill.content).not.toMatch(/command-dispatch|command-tool|alwaysAllow/);
+      expect(loadSkillFromDir(CUSTODIAN_DIR, skill.slug, 'global')!.content).not.toMatch(/command-dispatch|command-tool|alwaysAllow/);
     }
     // Each skill is a directory holding only SKILL.md — no code that could
     // register a tool, channel, or privileged capability.

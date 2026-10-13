@@ -94,6 +94,7 @@ import {
   getSessionPath as getSessionStoragePath,
   ensureSessionDir,
   getSessionFilePath,
+  readSessionHeader,
   generateSessionId,
   sessionPersistenceQueue,
   getHeaderMetadataSignature,
@@ -3580,6 +3581,50 @@ export class SessionManager implements ISessionManager {
         workingDirectory: meta.workingDirectory ?? wsConfig?.defaults?.workingDirectory,
       }),
     )
+  }
+
+  /**
+   * Batch form of {@link ingestImportedSession} + {@link notifySessionCreated} for the
+   * import pipeline (ADR-0025): reads only the batch's own headers, projects them into
+   * the session index in one write and announces the batch with one `sessions_imported`.
+   * Sessions already in memory are announced as they are, never replaced.
+   */
+  ingestImportedSessions(workspaceId: string, sessionIds: readonly string[]): Session[] {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) return []
+    const ids = [...new Set(sessionIds)]
+    const headers: SessionHeader[] = []
+    for (const sessionId of ids) {
+      if (this.sessions.has(sessionId)) continue
+      const header = readSessionHeader(getSessionFilePath(workspace.rootPath, sessionId))
+      if (header?.id === sessionId) headers.push(header)
+    }
+    if (headers.length > 0) {
+      const wsConfig = loadWorkspaceConfig(workspace.rootPath)
+      for (const meta of listSessionsFromHeaders(workspace.rootPath, headers)) {
+        this.sessions.set(
+          meta.id,
+          createManagedSession(meta, workspace, {
+            enabledSourceSlugs: meta.enabledSourceSlugs,
+            workingDirectory: meta.workingDirectory ?? wsConfig?.defaults?.workingDirectory,
+          }),
+        )
+      }
+      void sessionStateProjector()
+        .recordSessions(workspace.rootPath, headers.map((header) => header.id))
+        .catch((error) => sessionLog.warn(`Failed to index imported sessions: ${error instanceof Error ? error.message : error}`))
+    }
+    const summaries: Session[] = []
+    for (const sessionId of ids) {
+      const managed = this.sessions.get(sessionId)
+      if (managed && managed.workspace.id === workspace.id) summaries.push(managedToSession(managed))
+    }
+    if (summaries.length === 0) return summaries
+    this.sendEvent({ type: 'sessions_imported', sessionId: summaries[0]!.id, sessions: summaries }, workspace.id)
+    for (const summary of summaries) {
+      this.emitSessionLifecycle('session.created', summary.id, workspace.id, (envelope) => ({ ...envelope, reason: 'import' as const }))
+    }
+    return summaries
   }
 
   getSessions(workspaceId?: string): Session[] {

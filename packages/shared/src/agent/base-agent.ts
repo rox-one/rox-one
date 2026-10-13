@@ -67,8 +67,16 @@ import { buildTitlePrompt, buildRegenerateTitlePrompt, validateTitle } from '../
 
 // Skill extraction for Codex/Copilot backends (Claude uses native SDK Skill tool)
 import { parseMentions, resolveSkillMentions, resolveSourceMentions, resolveFileMentions } from '../mentions/index.ts';
-import { loadAllSkills } from '../skills/storage.ts';
+import { resolveSkillsBySlugs } from '../skills/storage.ts';
 import type { LoadAllSkillsOptions } from '../skills/storage.ts';
+import type { LoadedSkill } from '../skills/types.ts';
+
+/** Skill lookup used by mention resolution; tests substitute it to count catalog access. */
+export interface SkillMentionCatalog {
+  resolveSkillsBySlugs: typeof resolveSkillsBySlugs;
+}
+
+const storageSkillMentionCatalog: SkillMentionCatalog = { resolveSkillsBySlugs };
 
 // ============================================================
 // Mini Agent Configuration
@@ -1007,18 +1015,23 @@ ${formattedMessages}
     return {};
   }
 
-  protected extractSkillPaths(message: string): {
+  protected extractSkillPaths(message: string, catalog: SkillMentionCatalog = storageSkillMentionCatalog): {
     skillPaths: Map<string, string>;
     cleanMessage: string;
     missingSkills: string[];
   } {
     const workspaceRoot = this.config.workspace?.rootPath ?? this.workingDirectory;
     const projectRoot = this.config.session?.workingDirectory;
-    const skills = loadAllSkills(workspaceRoot, projectRoot, this.getSkillLoadOptions())
-      .filter(skill => this.config.allowedSkillSlugs === undefined || this.config.allowedSkillSlugs.includes(skill.slug));
+    // With nothing available, parseMentions reports every mentioned slug as invalid.
+    const mentionedSlugs = message.includes('[skill:') ? parseMentions(message, [], []).invalidSkills : [];
+    const resolvedSkills = mentionedSlugs.length > 0
+      ? catalog.resolveSkillsBySlugs(workspaceRoot, mentionedSlugs, projectRoot, this.getSkillLoadOptions())
+      : new Map<string, LoadedSkill>();
+    const allowedSlugs = this.config.allowedSkillSlugs === undefined ? null : new Set(this.config.allowedSkillSlugs);
+    const skills = [...resolvedSkills.values()].filter(skill => allowedSlugs === null || allowedSlugs.has(skill.slug));
     const skillSlugs = skills.map(s => s.slug);
 
-    this.debug(`[extractSkillPaths] Available skills: ${skillSlugs.join(', ')}`);
+    this.debug(`[extractSkillPaths] Available mentioned skills: ${skillSlugs.length} of ${mentionedSlugs.length}`);
 
     const parsed = parseMentions(message, skillSlugs, []);
     this.debug(`[extractSkillPaths] Parsed skills: ${JSON.stringify(parsed.skills)}`);

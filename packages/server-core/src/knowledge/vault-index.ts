@@ -9,7 +9,21 @@
  * source-index / memory FTS).
  */
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, unlinkSync } from 'node:fs'
+import {
+  closeSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readdirSync,
+  readFileSync,
+  readSync,
+  rmSync,
+  statSync,
+  unlinkSync,
+  type Dirent,
+  type Stats,
+} from 'node:fs'
+import { readdir, readFile, stat } from 'node:fs/promises'
 import { dirname, join, relative, resolve } from 'node:path'
 import type { Database } from 'bun:sqlite'
 import { isImportProvenancedRelativePath } from '@rox/shared/config'
@@ -47,6 +61,12 @@ export const VAULT_INDEX_REL = join('.craft', 'vault-index.sqlite')
 const SKIP_DIRS = new Set(['assets', 'templates', '.craft', '.git'])
 const MAX_NOTES = 4_000
 const MAX_NOTE_BYTES = 2 * 1024 * 1024
+const REFRESH_BATCH = 200
+const RETAINED_CONTENT_BYTES = 64 * 1024 * 1024
+const CATALOG_NEEDLE_LIMIT = 16
+// Recursive fs.watch misses some atomic renames (notably on Linux), so a
+// trusted watcher still gets a periodic full stat diff.
+const WATCH_BACKSTOP_MS = 60_000
 
 export interface VaultWikiLink {
   target: string
@@ -139,6 +159,10 @@ export function closeAllVaultIndexes(): void {
     }
   }
   handles.clear()
+  for (const state of refreshStates.values()) {
+    state.trusted = false
+    state.fullScan = true
+  }
 }
 
 function hashText(text: string): string {
@@ -173,11 +197,16 @@ function parseStringList(raw: string): string[] {
 
 function isSqliteDatabaseFile(dbPath: string): boolean {
   if (!existsSync(dbPath)) return false
+  let fd: number | null = null
   try {
-    const header = readFileSync(dbPath).subarray(0, 16).toString('utf8')
-    return header.startsWith('SQLite format 3')
+    fd = openSync(dbPath, 'r')
+    const header = Buffer.alloc(16)
+    const bytes = readSync(fd, header, 0, header.length, 0)
+    return header.subarray(0, bytes).toString('utf8').startsWith('SQLite format 3')
   } catch {
     return false
+  } finally {
+    if (fd !== null) closeSync(fd)
   }
 }
 
@@ -407,20 +436,135 @@ function openDb(notesRoot: string, recover: boolean): { db: Database; fts: boole
   return { ...opened, recovered }
 }
 
-function walkMarkdownFiles(notesRoot: string): { files: string[]; truncated: boolean; skipped: number } {
-  const root = resolve(notesRoot)
+interface FileFingerprint {
+  mtimeMs: number
+  size: number
+  birthtimeMs: number
+  isFile: boolean
+}
+
+interface DirEntry {
+  name: string
+  isDirectory: boolean
+  isFile: boolean
+}
+
+type IoOp =
+  | { op: 'readdir'; path: string }
+  | { op: 'stat'; paths: string[] }
+  | { op: 'read'; paths: string[] }
+  | { op: 'yield' }
+
+/** Index work is written once as steps and driven by a sync or an async fs runner. */
+type IoSteps<T> = Generator<IoOp, T, unknown>
+
+export interface VaultIndexIoProbe {
+  stat?: (absPath: string) => void
+  read?: (absPath: string) => void
+}
+
+export interface VaultIndexIoForTests {
+  readFile?: (path: string, encoding: BufferEncoding) => Promise<string>
+  readFileSync?: (path: string, encoding: BufferEncoding) => string
+}
+
+let ioProbe: VaultIndexIoProbe | null = null
+let testIo: VaultIndexIoForTests | null = null
+
+/** Observe note stats and content reads made by index refreshes. Returns a disposer. */
+export function setVaultIndexIoProbe(probe: VaultIndexIoProbe | null): () => void {
+  ioProbe = probe
+  return () => { if (ioProbe === probe) ioProbe = null }
+}
+
+export function setVaultIndexIoForTests(io: VaultIndexIoForTests | null): void {
+  testIo = io
+}
+
+export function resetVaultIndexIoForTests(): void {
+  testIo = null
+}
+
+function toDirEntry(entry: Dirent): DirEntry {
+  return { name: entry.name, isDirectory: entry.isDirectory(), isFile: entry.isFile() }
+}
+
+function toFingerprint(st: Stats): FileFingerprint {
+  return { mtimeMs: st.mtimeMs, size: st.size, birthtimeMs: st.birthtimeMs, isFile: st.isFile() }
+}
+
+function performSync(op: IoOp): unknown {
+  switch (op.op) {
+    case 'readdir':
+      try {
+        return readdirSync(op.path, { withFileTypes: true }).map(toDirEntry)
+      } catch {
+        return null
+      }
+    case 'stat':
+      return op.paths.map((path) => {
+        ioProbe?.stat?.(path)
+        try {
+          return toFingerprint(statSync(path))
+        } catch {
+          return null
+        }
+      })
+    case 'read':
+      return op.paths.map((path) => {
+        ioProbe?.read?.(path)
+        try {
+          return (testIo?.readFileSync ?? readFileSync)(path, 'utf8')
+        } catch {
+          return null
+        }
+      })
+    case 'yield':
+      return undefined
+  }
+}
+
+async function performAsync(op: IoOp): Promise<unknown> {
+  switch (op.op) {
+    case 'readdir':
+      return readdir(op.path, { withFileTypes: true }).then(entries => entries.map(toDirEntry), () => null)
+    case 'stat':
+      return Promise.all(op.paths.map((path) => {
+        ioProbe?.stat?.(path)
+        return stat(path).then(toFingerprint, () => null)
+      }))
+    case 'read':
+      return Promise.all(op.paths.map((path) => {
+        ioProbe?.read?.(path)
+        return (testIo?.readFile ?? readFile)(path, 'utf8').catch(() => null)
+      }))
+    case 'yield':
+      return new Promise<void>(resolveYield => setImmediate(resolveYield))
+  }
+}
+
+function runSync<T>(steps: IoSteps<T>): T {
+  let step = steps.next()
+  while (!step.done) step = steps.next(performSync(step.value))
+  return step.value
+}
+
+async function runAsync<T>(steps: IoSteps<T>): Promise<T> {
+  let step = steps.next()
+  while (!step.done) step = steps.next(await performAsync(step.value))
+  return step.value
+}
+
+function* walkSteps(root: string): IoSteps<{ files: string[]; truncated: boolean; skipped: number }> {
   const files: string[] = []
-  let truncated = false
   let skipped = 0
-  if (!existsSync(root)) return { files, truncated, skipped }
+  if (!existsSync(root)) return { files, truncated: false, skipped }
 
   const stack = [root]
   while (stack.length > 0) {
     const dir = stack.pop()!
-    let entries
-    try {
-      entries = readdirSync(dir, { withFileTypes: true })
-    } catch {
+    const entries = (yield { op: 'readdir', path: dir }) as DirEntry[] | null
+    if (!entries) {
       skipped++
       continue
     }
@@ -429,21 +573,22 @@ function walkMarkdownFiles(notesRoot: string): { files: string[]; truncated: boo
       const abs = join(dir, entry.name)
       const rel = toSlashPath(relative(root, abs))
       if (isImportProvenancedRelativePath(rel)) continue
-      if (entry.isDirectory()) {
+      if (entry.isDirectory) {
         const top = rel.split('/')[0] ?? rel
         if (SKIP_DIRS.has(top)) continue
         stack.push(abs)
         continue
       }
-      if (!entry.isFile() || !entry.name.toLowerCase().endsWith('.md')) continue
-      if (files.length >= MAX_NOTES) {
-        truncated = true
-        return { files, truncated, skipped }
-      }
+      if (!entry.isFile || !entry.name.toLowerCase().endsWith('.md')) continue
+      if (files.length >= MAX_NOTES) return { files, truncated: true, skipped }
       files.push(abs)
     }
   }
-  return { files, truncated, skipped }
+  return { files, truncated: false, skipped }
+}
+
+function walkMarkdownFiles(notesRoot: string): { files: string[]; truncated: boolean; skipped: number } {
+  return runSync(walkSteps(resolve(notesRoot)))
 }
 
 function loadCatalog(db: Database): VaultCatalogEntry[] {
@@ -458,33 +603,75 @@ function loadCatalog(db: Database): VaultCatalogEntry[] {
   return docs.map((doc) => ({ id: doc.id, title: doc.title, aliases: aliases.get(doc.id) ?? [] }))
 }
 
-function reindexNamedEntities(db: Database, notesRoot: string): void {
-  db.exec('DELETE FROM entity_mentions')
-  db.exec('DELETE FROM entities')
-  const catalog = loadCatalog(db)
-  const rows = db
-    .query<{ id: string; relative_path: string; properties_json: string }, []>(
-      'SELECT id, relative_path, properties_json FROM documents',
-    )
-    .all()
-  const insertEntity = db.query('INSERT OR REPLACE INTO entities(id, name, kind) VALUES (?, ?, ?)')
+interface EntityTarget {
+  id: string
+  relative_path: string
+  properties_json: string
+}
+
+function replaceEntityMentions(db: Database, target: EntityTarget, content: string | null, catalog: VaultCatalogEntry[]): void {
+  db.query('DELETE FROM entity_mentions WHERE document_id = ?').run(target.id)
+  if (content === null) return
+  // Upsert rather than REPLACE: a REPLACE delete cascades to other documents' mentions.
+  const upsertEntity = db.query(
+    'INSERT INTO entities(id, name, kind) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name, kind = excluded.kind',
+  )
   const insertMention = db.query(
     'INSERT INTO entity_mentions(entity_id, document_id, line, evidence) VALUES (?, ?, ?, ?)',
   )
-  const root = resolve(notesRoot)
-  for (const row of rows) {
-    let content = ''
-    try {
-      content = readFileSync(join(root, row.relative_path), 'utf8')
-    } catch {
-      continue
-    }
-    const entities = extractNamedEntities(row.id, content, catalog, parseProperties(row.properties_json))
-    for (const entity of entities) {
-      insertEntity.run(entity.id, entity.name, entity.kind)
-      insertMention.run(entity.id, entity.documentId, entity.line, entity.evidence)
+  for (const entity of extractNamedEntities(target.id, content, catalog, parseProperties(target.properties_json))) {
+    upsertEntity.run(entity.id, entity.name, entity.kind)
+    insertMention.run(entity.id, entity.documentId, entity.line, entity.evidence)
+  }
+}
+
+function catalogKey(entry: VaultCatalogEntry): string {
+  return JSON.stringify([entry.title, [...entry.aliases].sort()])
+}
+
+/**
+ * Entity extraction for a document depends on every other note's id, title and aliases.
+ * When those change, re-extract only documents whose stored text mentions an affected name.
+ */
+function catalogDependents(
+  db: Database,
+  before: VaultCatalogEntry[],
+  after: VaultCatalogEntry[],
+  exclude: ReadonlySet<string>,
+): string[] {
+  const beforeById = new Map(before.map(entry => [entry.id, entry]))
+  const afterById = new Map(after.map(entry => [entry.id, entry]))
+  const differs = (entry: VaultCatalogEntry, other: VaultCatalogEntry | undefined) => !other || catalogKey(other) !== catalogKey(entry)
+  const changed = [
+    ...before.filter(entry => differs(entry, afterById.get(entry.id))),
+    ...after.filter(entry => differs(entry, beforeById.get(entry.id))),
+  ]
+  if (changed.length === 0 || after.every(entry => exclude.has(entry.id))) return []
+
+  const needles = new Set<string>()
+  for (const entry of changed) {
+    const leaf = entry.id.split('/').pop() ?? entry.id
+    for (const value of [entry.title, leaf, leaf.replace(/-/g, ' '), ...entry.aliases]) {
+      const needle = value.trim().toLowerCase()
+      if (needle.length >= 2) needles.add(needle)
     }
   }
+  const rows = db
+    .query<{ id: string; body_text: string; properties_json: string }, []>(
+      'SELECT id, body_text, properties_json FROM documents',
+    )
+    .all()
+    .filter(row => !exclude.has(row.id))
+  if (needles.size > CATALOG_NEEDLE_LIMIT) return rows.map(row => row.id)
+  return rows
+    .filter((row) => {
+      const haystack = `${row.body_text}\n${row.properties_json}`.toLowerCase()
+      for (const needle of needles) {
+        if (haystack.includes(needle)) return true
+      }
+      return false
+    })
+    .map(row => row.id)
 }
 
 function replaceChildren(db: Database, documentId: string, parsed: ParsedVaultNote, content: string): void {
@@ -540,34 +727,106 @@ function replaceChildren(db: Database, documentId: string, parsed: ParsedVaultNo
   for (const ref of parsed.calendarRefs) insertCalendar.run(documentId, ref.date, ref.line)
 }
 
-function upsertDocument(
-  db: Database,
-  notesRoot: string,
-  absPath: string,
-): 'indexed' | 'unchanged' | 'skipped' {
-  let st
-  try {
-    st = statSync(absPath)
-  } catch {
-    return 'skipped'
-  }
-  if (st.size > MAX_NOTE_BYTES) return 'skipped'
+interface StoredDocument {
+  relativePath: string
+  hash: string
+  mtime: number
+  size: number
+}
 
-  const relativePath = toSlashPath(relative(resolve(notesRoot), absPath))
-  const id = noteIdFromRelativePath(relativePath)
-  const existing = db
-    .query<{ hash: string; mtime: number; size: number }, [string]>('SELECT hash, mtime, size FROM documents WHERE id = ?')
-    .get(id)
-  if (existing && existing.mtime === st.mtimeMs && existing.size === st.size) return 'unchanged'
+interface StatHit {
+  abs: string
+  id: string
+  relativePath: string
+  st: FileFingerprint
+}
 
-  let content: string
-  try {
-    content = readFileSync(absPath, 'utf8')
-  } catch {
-    return 'skipped'
+interface RefreshPlan {
+  changed: StatHit[]
+  unchanged: number
+  skipped: number
+  truncated: boolean
+  /** Ids found on disk; null when only dirty paths were checked and nothing may be dropped. */
+  present: Set<string> | null
+}
+
+interface RefreshMode {
+  clear: boolean
+  dirty: string[] | null
+  epoch: number
+  truncated: boolean
+}
+
+interface RefreshOutcome {
+  counts: Pick<VaultRebuildResult, 'indexed' | 'unchanged' | 'skipped' | 'truncated'>
+  fullScan: boolean
+}
+
+function loadStoredDocuments(db: Database): Map<string, StoredDocument> {
+  const rows = db
+    .query<{ id: string; relative_path: string; hash: string; mtime: number; size: number }, []>(
+      'SELECT id, relative_path, hash, mtime, size FROM documents',
+    )
+    .all()
+  return new Map(rows.map(row => [row.id, { relativePath: row.relative_path, hash: row.hash, mtime: row.mtime, size: row.size }]))
+}
+
+function sameFingerprint(prior: StoredDocument | undefined, st: FileFingerprint): boolean {
+  return prior !== undefined && prior.mtime === st.mtimeMs && prior.size === st.size
+}
+
+function* fullPlanSteps(root: string, stored: Map<string, StoredDocument>): IoSteps<RefreshPlan> {
+  const walk = yield* walkSteps(root)
+  const present = new Set<string>()
+  const changed: StatHit[] = []
+  let unchanged = 0
+  let skipped = walk.skipped
+  for (let start = 0; start < walk.files.length; start += REFRESH_BATCH) {
+    const batch = walk.files.slice(start, start + REFRESH_BATCH)
+    const stats = (yield { op: 'stat', paths: batch }) as Array<FileFingerprint | null>
+    batch.forEach((abs, index) => {
+      const relativePath = toSlashPath(relative(root, abs))
+      const id = noteIdFromRelativePath(relativePath)
+      present.add(id)
+      const st = stats[index]
+      if (!st || st.size > MAX_NOTE_BYTES) skipped++
+      else if (sameFingerprint(stored.get(id), st)) unchanged++
+      else changed.push({ abs, id, relativePath, st })
+    })
   }
+  return { changed, unchanged, skipped, truncated: walk.truncated, present }
+}
+
+/** Checks only watcher-reported paths of known notes; anything else needs a full diff (null). */
+function* dirtyPlanSteps(
+  root: string,
+  stored: Map<string, StoredDocument>,
+  dirty: string[],
+  truncated: boolean,
+): IoSteps<RefreshPlan | null> {
+  const targets = dirty.map(relativePath => ({ abs: join(root, relativePath), id: noteIdFromRelativePath(relativePath), relativePath }))
+  if (targets.some(target => stored.get(target.id)?.relativePath !== target.relativePath)) return null
+  const stats = targets.length > 0
+    ? (yield { op: 'stat', paths: targets.map(target => target.abs) }) as Array<FileFingerprint | null>
+    : []
+  const changed: StatHit[] = []
+  let skipped = 0
+  for (const [index, target] of targets.entries()) {
+    const st = stats[index]
+    if (!st?.isFile) return null
+    if (st.size > MAX_NOTE_BYTES) skipped++
+    else if (!sameFingerprint(stored.get(target.id), st)) changed.push({ ...target, st })
+  }
+  return { changed, unchanged: stored.size - changed.length - skipped, skipped, truncated, present: null }
+}
+
+function applyDocument(db: Database, hit: StatHit, content: string, prior: StoredDocument | undefined): 'indexed' | 'unchanged' {
+  const { id, relativePath, st } = hit
   const hash = hashText(content)
-  if (existing?.hash === hash && existing.size === st.size) return 'unchanged'
+  if (prior?.hash === hash && prior.size === st.size) {
+    db.query('UPDATE documents SET mtime = ? WHERE id = ?').run(st.mtimeMs, id)
+    return 'unchanged'
+  }
 
   const parsed = parseVaultMarkdown(content, relativePath)
   db.query(`
@@ -602,41 +861,145 @@ function upsertDocument(
   return 'indexed'
 }
 
-function rebuildInto(db: Database, notesRoot: string, clear: boolean): Omit<VaultRebuildResult, 'ok' | 'dbPath' | 'recovered' | 'available'> {
-  const walk = walkMarkdownFiles(notesRoot)
-  if (clear) {
+/**
+ * Stat-diff the vault against stored fingerprints (or check only dirty paths), then
+ * re-read and re-extract just the new/changed notes and drop deleted ones.
+ */
+function* refreshSteps(db: Database, notesRoot: string, mode: RefreshMode): IoSteps<RefreshOutcome> {
+  const root = resolve(notesRoot)
+  if (mode.clear) {
     db.exec('DELETE FROM documents')
     db.exec('DELETE FROM entities')
   }
-  const seen = new Set<string>()
+  const stored = loadStoredDocuments(db)
+  const dirtyPlan = mode.dirty ? yield* dirtyPlanSteps(root, stored, mode.dirty, mode.truncated) : null
+  const plan = dirtyPlan ?? (yield* fullPlanSteps(root, stored))
+  const present = plan.present
+  const removedIds = present ? [...stored.keys()].filter(id => !present.has(id)) : []
+  if (plan.changed.length === 0 && removedIds.length === 0) {
+    return { counts: { indexed: 0, unchanged: plan.unchanged, skipped: plan.skipped, truncated: plan.truncated }, fullScan: dirtyPlan === null }
+  }
+
+  const catalogBefore = loadCatalog(db)
   let indexed = 0
-  let unchanged = 0
-  let skipped = walk.skipped
-  const tx = db.transaction(() => {
-    for (const abs of walk.files) {
-      const id = noteIdFromRelativePath(toSlashPath(relative(resolve(notesRoot), abs)))
-      seen.add(id)
-      const result = upsertDocument(db, notesRoot, abs)
-      if (result === 'indexed') indexed++
-      else if (result === 'unchanged') unchanged++
-      else skipped++
-    }
-    const rows = db.query<{ id: string }, []>('SELECT id FROM documents').all()
-    for (const row of rows) {
-      if (seen.has(row.id)) continue
-      db.query('DELETE FROM documents WHERE id = ?').run(row.id)
-    }
-    reindexNamedEntities(db, notesRoot)
-  })
-  tx()
-  return { indexed, unchanged, skipped, truncated: walk.truncated }
+  let unchanged = plan.unchanged
+  let skipped = plan.skipped
+  const reextract = new Set<string>()
+  const retained = new Map<string, string>()
+  let retainedBytes = 0
+  for (let start = 0; start < plan.changed.length; start += REFRESH_BATCH) {
+    const batch = plan.changed.slice(start, start + REFRESH_BATCH)
+    const contents = (yield { op: 'read', paths: batch.map(hit => hit.abs) }) as Array<string | null>
+    db.transaction(() => {
+      batch.forEach((hit, index) => {
+        const content = contents[index] ?? null
+        if (content === null) {
+          skipped++
+          return
+        }
+        if (applyDocument(db, hit, content, stored.get(hit.id)) === 'unchanged') {
+          unchanged++
+          return
+        }
+        indexed++
+        reextract.add(hit.id)
+        if (retainedBytes + content.length > RETAINED_CONTENT_BYTES) return
+        retained.set(hit.id, content)
+        retainedBytes += content.length
+      })
+    })()
+    yield { op: 'yield' }
+  }
+  if (removedIds.length > 0) {
+    db.transaction(() => {
+      for (const id of removedIds) db.query('DELETE FROM documents WHERE id = ?').run(id)
+    })()
+  }
+
+  const catalog = loadCatalog(db)
+  for (const id of catalogDependents(db, catalogBefore, catalog, reextract)) reextract.add(id)
+  const targets = db
+    .query<EntityTarget, []>('SELECT id, relative_path, properties_json FROM documents')
+    .all()
+    .filter(row => reextract.has(row.id))
+  for (let start = 0; start < targets.length; start += REFRESH_BATCH) {
+    const batch = targets.slice(start, start + REFRESH_BATCH)
+    const missing = batch.filter(row => !retained.has(row.id))
+    const read = missing.length > 0
+      ? (yield { op: 'read', paths: missing.map(row => join(root, row.relative_path)) }) as Array<string | null>
+      : []
+    const contents = new Map(missing.map((row, index) => [row.id, read[index] ?? null]))
+    db.transaction(() => {
+      for (const row of batch) replaceEntityMentions(db, row, retained.get(row.id) ?? contents.get(row.id) ?? null, catalog)
+    })()
+    yield { op: 'yield' }
+  }
+  db.exec('DELETE FROM entities WHERE id NOT IN (SELECT entity_id FROM entity_mentions)')
+  return { counts: { indexed, unchanged, skipped, truncated: plan.truncated }, fullScan: dirtyPlan === null }
 }
 
-export function rebuildVaultIndex(notesRoot: string): VaultRebuildResult {
-  const dbPath = vaultIndexPath(notesRoot)
-  const empty: VaultRebuildResult = {
+interface VaultRefreshState {
+  inFlight: Promise<VaultRebuildResult> | null
+  followUp: Promise<VaultRebuildResult> | null
+  markedDuringFlight: boolean
+  dirty: Set<string>
+  fullScan: boolean
+  watchers: number
+  watchEpoch: number
+  trusted: boolean
+  lastFullScanAt: number
+  truncated: boolean
+}
+
+const refreshStates = new Map<string, VaultRefreshState>()
+
+function refreshStateFor(notesRoot: string): VaultRefreshState {
+  const key = resolve(notesRoot)
+  let state = refreshStates.get(key)
+  if (!state) {
+    state = {
+      inFlight: null,
+      followUp: null,
+      markedDuringFlight: false,
+      dirty: new Set(),
+      fullScan: true,
+      watchers: 0,
+      watchEpoch: 0,
+      trusted: false,
+      lastFullScanAt: 0,
+      truncated: false,
+    }
+    refreshStates.set(key, state)
+  }
+  return state
+}
+
+function takeRefreshMode(state: VaultRefreshState, clear: boolean, forceFull: boolean): RefreshMode {
+  const dirtyOnly = !clear && !forceFull && state.trusted && !state.fullScan
+    && Date.now() - state.lastFullScanAt < WATCH_BACKSTOP_MS
+  const mode: RefreshMode = { clear, dirty: dirtyOnly ? [...state.dirty] : null, epoch: state.watchEpoch, truncated: state.truncated }
+  state.dirty = new Set()
+  state.fullScan = false
+  state.markedDuringFlight = false
+  return mode
+}
+
+function settleRefresh(state: VaultRefreshState, mode: RefreshMode, outcome: RefreshOutcome | null): void {
+  if (!outcome) {
+    state.fullScan = true
+    state.trusted = false
+    return
+  }
+  if (!outcome.fullScan) return
+  state.lastFullScanAt = Date.now()
+  state.truncated = outcome.counts.truncated
+  state.trusted = state.watchers > 0 && state.watchEpoch === mode.epoch
+}
+
+function emptyRebuildResult(notesRoot: string): VaultRebuildResult {
+  return {
     ok: false,
-    dbPath,
+    dbPath: vaultIndexPath(notesRoot),
     indexed: 0,
     unchanged: 0,
     skipped: 0,
@@ -644,31 +1007,12 @@ export function rebuildVaultIndex(notesRoot: string): VaultRebuildResult {
     recovered: false,
     available: isVaultIndexAvailable(),
   }
-  closeHandle(notesRoot)
-  unlinkIndexFiles(dbPath)
-  const opened = openDb(notesRoot, true)
-  if (!opened) return empty
-  try {
-    const stats = rebuildInto(opened.db, notesRoot, true)
-    return rememberRebuild(notesRoot, { ok: true, dbPath, recovered: true, available: true, ...stats })
-  } catch {
-    return rememberRebuild(notesRoot, { ...empty, recovered: opened.recovered, available: true })
-  }
 }
 
-export function ensureVaultIndex(notesRoot: string): VaultRebuildResult {
+function openForRefresh(notesRoot: string): { db: Database; recovered: boolean } | null {
   const dbPath = vaultIndexPath(notesRoot)
-  const empty: VaultRebuildResult = {
-    ok: false,
-    dbPath,
-    indexed: 0,
-    unchanged: 0,
-    skipped: 0,
-    truncated: false,
-    recovered: false,
-    available: isVaultIndexAvailable(),
-  }
-  const missingOrCorrupt = !existsSync(dbPath) || !isSqliteDatabaseFile(dbPath)
+  const cached = handles.has(resolve(notesRoot))
+  const missingOrCorrupt = !existsSync(dbPath) || (!cached && !isSqliteDatabaseFile(dbPath))
   let opened = missingOrCorrupt ? null : openDb(notesRoot, false)
   let recovered = missingOrCorrupt
   if (!opened) {
@@ -677,14 +1021,143 @@ export function ensureVaultIndex(notesRoot: string): VaultRebuildResult {
     opened = openDb(notesRoot, true)
     recovered = true
   }
+  return opened ? { db: opened.db, recovered: recovered || opened.recovered } : null
+}
+
+function openForRebuild(notesRoot: string): { db: Database; recovered: boolean } | null {
+  closeHandle(notesRoot)
+  unlinkIndexFiles(vaultIndexPath(notesRoot))
+  return openDb(notesRoot, true)
+}
+
+export function rebuildVaultIndex(notesRoot: string): VaultRebuildResult {
+  const empty = emptyRebuildResult(notesRoot)
+  const opened = openForRebuild(notesRoot)
   if (!opened) return empty
+  const state = refreshStateFor(notesRoot)
+  const mode = takeRefreshMode(state, true, true)
   try {
-    const stats = rebuildInto(opened.db, notesRoot, false)
-    return rememberRebuild(notesRoot, { ok: true, dbPath, recovered: recovered || opened.recovered, available: true, ...stats })
+    const outcome = runSync(refreshSteps(opened.db, notesRoot, mode))
+    settleRefresh(state, mode, outcome)
+    return rememberRebuild(notesRoot, { ok: true, dbPath: empty.dbPath, recovered: true, available: true, ...outcome.counts })
   } catch {
+    settleRefresh(state, mode, null)
+    return rememberRebuild(notesRoot, { ...empty, recovered: opened.recovered, available: true })
+  }
+}
+
+export function ensureVaultIndex(notesRoot: string): VaultRebuildResult {
+  const target = openForRefresh(notesRoot)
+  if (!target) return emptyRebuildResult(notesRoot)
+  const state = refreshStateFor(notesRoot)
+  const mode = takeRefreshMode(state, false, true)
+  try {
+    const outcome = runSync(refreshSteps(target.db, notesRoot, mode))
+    settleRefresh(state, mode, outcome)
+    return rememberRebuild(notesRoot, { ok: true, dbPath: vaultIndexPath(notesRoot), recovered: target.recovered, available: true, ...outcome.counts })
+  } catch {
+    settleRefresh(state, mode, null)
     closeHandle(notesRoot)
-    const rebuilt = rebuildVaultIndex(notesRoot)
-    return rememberRebuild(notesRoot, { ...rebuilt, recovered: true })
+    return rememberRebuild(notesRoot, { ...rebuildVaultIndex(notesRoot), recovered: true })
+  }
+}
+
+async function rebuildAsync(notesRoot: string, state: VaultRefreshState): Promise<VaultRebuildResult> {
+  const empty = emptyRebuildResult(notesRoot)
+  const opened = openForRebuild(notesRoot)
+  if (!opened) return empty
+  const mode = takeRefreshMode(state, true, true)
+  try {
+    const outcome = await runAsync(refreshSteps(opened.db, notesRoot, mode))
+    settleRefresh(state, mode, outcome)
+    return rememberRebuild(notesRoot, { ok: true, dbPath: empty.dbPath, recovered: true, available: true, ...outcome.counts })
+  } catch {
+    settleRefresh(state, mode, null)
+    return rememberRebuild(notesRoot, { ...empty, recovered: opened.recovered, available: true })
+  }
+}
+
+async function refreshAsync(notesRoot: string, state: VaultRefreshState): Promise<VaultRebuildResult> {
+  const target = openForRefresh(notesRoot)
+  if (!target) return emptyRebuildResult(notesRoot)
+  const mode = takeRefreshMode(state, false, target.recovered)
+  try {
+    const outcome = await runAsync(refreshSteps(target.db, notesRoot, mode))
+    settleRefresh(state, mode, outcome)
+    return rememberRebuild(notesRoot, { ok: true, dbPath: vaultIndexPath(notesRoot), recovered: target.recovered, available: true, ...outcome.counts })
+  } catch {
+    settleRefresh(state, mode, null)
+    closeHandle(notesRoot)
+    return rememberRebuild(notesRoot, { ...await rebuildAsync(notesRoot, state), recovered: true })
+  }
+}
+
+const ignoreOutcome = (): void => undefined
+
+function startFlight(state: VaultRefreshState, run: () => Promise<VaultRebuildResult>): Promise<VaultRebuildResult> {
+  const flight: Promise<VaultRebuildResult> = run().finally(() => {
+    if (state.inFlight === flight) state.inFlight = null
+  })
+  state.inFlight = flight
+  return flight
+}
+
+/**
+ * Async, coalesced refresh: concurrent callers share one in-flight pass; a caller that
+ * arrives after new dirty marks gets one shared follow-up pass.
+ */
+export function ensureVaultIndexAsync(notesRoot: string): Promise<VaultRebuildResult> {
+  const state = refreshStateFor(notesRoot)
+  if (!state.inFlight) return startFlight(state, () => refreshAsync(notesRoot, state))
+  if (!state.markedDuringFlight) return state.inFlight
+  state.followUp ??= state.inFlight.then(ignoreOutcome, ignoreOutcome).then(() => {
+    state.followUp = null
+    return ensureVaultIndexAsync(notesRoot)
+  })
+  return state.followUp
+}
+
+export async function rebuildVaultIndexAsync(notesRoot: string): Promise<VaultRebuildResult> {
+  const state = refreshStateFor(notesRoot)
+  while (state.inFlight) await state.inFlight.then(ignoreOutcome, ignoreOutcome)
+  return startFlight(state, () => rebuildAsync(notesRoot, state))
+}
+
+/** Record vault-relative paths reported by a watcher; the next refresh re-checks them. */
+export function markVaultPathsDirty(notesRoot: string, filenames: ReadonlyArray<string | Buffer | null | undefined>): void {
+  const state = refreshStateFor(notesRoot)
+  for (const filename of filenames) {
+    const rel = filename ? toSlashPath(filename.toString()) : ''
+    if (!rel) {
+      state.fullScan = true
+      continue
+    }
+    const top = rel.split('/')[0] ?? ''
+    if (SKIP_DIRS.has(top) || rel.startsWith('.') || rel.includes('/.') || isImportProvenancedRelativePath(rel)) continue
+    if (rel.toLowerCase().endsWith('.md')) state.dirty.add(rel)
+    else state.fullScan = true
+  }
+  if (state.inFlight) state.markedDuringFlight = true
+}
+
+/**
+ * Register a live recursive watcher on the vault. Once a full diff has completed with a
+ * watcher attached, refreshes check only paths given to `markVaultPathsDirty`.
+ * Call the returned function when the watcher closes or errors.
+ */
+export function attachVaultWatcher(notesRoot: string): () => void {
+  const state = refreshStateFor(notesRoot)
+  state.watchers++
+  state.watchEpoch++
+  state.trusted = false
+  let attached = true
+  return () => {
+    if (!attached) return
+    attached = false
+    state.watchers--
+    state.watchEpoch++
+    state.trusted = false
+    state.fullScan = true
   }
 }
 
@@ -979,11 +1452,27 @@ export function applyVaultWatchTick(
   notesRoot: string,
   filenames: Array<string | Buffer | null | undefined>,
 ): VaultWatchTickResult {
-  const noteIds = [...new Set(
+  const noteIds = watchedNoteIds(filenames)
+  markVaultPathsDirty(notesRoot, filenames)
+  if (noteIds.length === 0) return { noteIds, rebuilt: null }
+  return { noteIds, rebuilt: ensureVaultIndex(notesRoot) }
+}
+
+/** Async counterpart of `applyVaultWatchTick` that joins the coalesced refresh. */
+export async function applyVaultWatchTickAsync(
+  notesRoot: string,
+  filenames: Array<string | Buffer | null | undefined>,
+): Promise<VaultWatchTickResult> {
+  const noteIds = watchedNoteIds(filenames)
+  markVaultPathsDirty(notesRoot, filenames)
+  if (noteIds.length === 0) return { noteIds, rebuilt: null }
+  return { noteIds, rebuilt: await ensureVaultIndexAsync(notesRoot) }
+}
+
+function watchedNoteIds(filenames: Array<string | Buffer | null | undefined>): string[] {
+  return [...new Set(
     filenames
       .map(vaultWatchNoteIdFromFilename)
       .filter((id): id is string => Boolean(id)),
   )]
-  if (noteIds.length === 0) return { noteIds, rebuilt: null }
-  return { noteIds, rebuilt: ensureVaultIndex(notesRoot) }
 }

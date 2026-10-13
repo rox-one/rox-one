@@ -886,7 +886,7 @@ export function validateSkillContent(markdownContent: string, slug: string): Val
   let frontmatter: unknown;
   let body: string;
   try {
-    const parsed = matter(markdownContent);
+    const parsed = matter(markdownContent, {});
     frontmatter = parsed.data;
     body = parsed.content;
   } catch (e) {

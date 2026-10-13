@@ -52,6 +52,12 @@ WORKDIR /app
 # (transitive deps like i18next, @tiptap/*, pdfjs-dist resolve at top-level
 # node_modules). Without it Bun defaults to isolated installs and the Vite
 # build fails on the first transitive bare-package import.
+#
+# NOTE: every workspace package manifest (packages/*, apps/*) must be present
+# BEFORE `bun install`: the lockfile resolves `workspace:*` dependencies and
+# fails with "Workspace dependency ... not found" when a manifest is missing
+# (caught live by the server-image pipeline, run 38414093708). When a new
+# workspace package appears, extend this list.
 COPY package.json bun.lock bunfig.toml ./
 COPY packages/server/package.json packages/server/
 COPY packages/server-core/package.json packages/server-core/
@@ -65,6 +71,9 @@ COPY packages/messaging-gateway/package.json packages/messaging-gateway/
 COPY packages/messaging-whatsapp-worker/package.json packages/messaging-whatsapp-worker/
 COPY packages/messaging-discord-worker/package.json packages/messaging-discord-worker/
 COPY packages/cloud-runner/package.json packages/cloud-runner/
+COPY packages/browser-intel/package.json packages/browser-intel/
+COPY packages/rovers-core-lite/package.json packages/rovers-core-lite/
+COPY packages/test-harness/package.json packages/test-harness/
 COPY apps/electron/package.json apps/electron/
 COPY apps/cli/package.json apps/cli/
 COPY apps/viewer/package.json apps/viewer/
