@@ -116,7 +116,8 @@ export function parseVaultMarkdown(content: string, relativePath: string): Parse
   let properties: Record<string, unknown> = {}
   let body = content
   try {
-    const parsed = matter(content)
+    // Any options object opts out of gray-matter's unbounded per-input cache.
+    const parsed = matter(content, {})
     properties = parsed.data as Record<string, unknown>
     body = parsed.content
   } catch {

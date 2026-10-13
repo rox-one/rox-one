@@ -35,14 +35,16 @@ import {
   rpcNotesReadResult,
 } from '@rox/core/rox2'
 import {
-  applyVaultWatchTick,
-  ensureVaultIndex,
+  applyVaultWatchTickAsync,
+  attachVaultWatcher,
+  ensureVaultIndexAsync,
   getVaultBacklinks,
   getVaultInsights,
   isVaultIndexAvailable,
   listVaultDocuments,
+  markVaultPathsDirty,
   queryVaultDocuments,
-  rebuildVaultIndex,
+  rebuildVaultIndexAsync,
   VAULT_WATCH_DEBOUNCE_MS,
   vaultIndexHealth,
   vaultWatchNoteIdFromFilename,
@@ -618,7 +620,8 @@ async function listMarkdownFiles(dir: string, root = dir): Promise<string[]> {
 
 function parseFrontmatter(content: string): { properties: Record<string, unknown>; body: string } {
   try {
-    const parsed = matter(content)
+    // Any options object opts out of gray-matter's unbounded per-input cache.
+    const parsed = matter(content, {})
     return { properties: parsed.data as Record<string, unknown>, body: parsed.content }
   } catch {
     return { properties: {}, body: content }
@@ -723,10 +726,10 @@ function backlinkFromVault(notesRoot: string, item: VaultBacklink): NoteBacklink
   }
 }
 
-function tryListFromVaultIndex(notesRoot: string): NoteSummary[] | null {
+async function tryListFromVaultIndex(notesRoot: string): Promise<NoteSummary[] | null> {
   if (!isVaultIndexAvailable()) return null
   try {
-    const result = ensureVaultIndex(notesRoot)
+    const result = await ensureVaultIndexAsync(notesRoot)
     if (!result.ok) return null
     return listVaultDocuments(notesRoot).map(doc => summaryFromVaultDoc(notesRoot, doc))
   } catch {
@@ -734,10 +737,10 @@ function tryListFromVaultIndex(notesRoot: string): NoteSummary[] | null {
   }
 }
 
-function tryQueryFromVaultIndex(notesRoot: string, query: string): NoteSummary[] | null {
+async function tryQueryFromVaultIndex(notesRoot: string, query: string): Promise<NoteSummary[] | null> {
   if (!isVaultIndexAvailable()) return null
   try {
-    const result = ensureVaultIndex(notesRoot)
+    const result = await ensureVaultIndexAsync(notesRoot)
     if (!result.ok) return null
     return queryVaultDocuments(notesRoot, query).map(doc => summaryFromVaultDoc(notesRoot, doc))
   } catch {
@@ -745,10 +748,10 @@ function tryQueryFromVaultIndex(notesRoot: string, query: string): NoteSummary[]
   }
 }
 
-function tryBacklinksFromVaultIndex(notesRoot: string, noteId: string): NoteBacklink[] | null {
+async function tryBacklinksFromVaultIndex(notesRoot: string, noteId: string): Promise<NoteBacklink[] | null> {
   if (!isVaultIndexAvailable()) return null
   try {
-    const result = ensureVaultIndex(notesRoot)
+    const result = await ensureVaultIndexAsync(notesRoot)
     if (!result.ok) return null
     return getVaultBacklinks(notesRoot, noteId).map(item => backlinkFromVault(notesRoot, item))
   } catch {
@@ -784,10 +787,12 @@ function indexHealthForWorkspace(workspaceId: string): NoteIndexHealth {
   }
 }
 
-function refreshVaultIndex(notesRoot: string): void {
+/** Without note ids the whole vault is re-diffed, since the touched paths are unknown. */
+async function refreshVaultIndex(notesRoot: string, noteIds?: readonly string[]): Promise<void> {
   if (!isVaultIndexAvailable()) return
+  markVaultPathsDirty(notesRoot, noteIds?.length ? noteIds.map(id => `${id}.md`) : [null])
   try {
-    ensureVaultIndex(notesRoot)
+    await ensureVaultIndexAsync(notesRoot)
   } catch {
     /* projection only — Markdown remains canonical */
   }
@@ -823,7 +828,7 @@ async function summarizeNote(notesRoot: string, filePath: string): Promise<NoteS
 
 async function listNotes(notesRoot: string): Promise<NoteSummary[]> {
   await ensureNotesDirs(notesRoot)
-  const indexed = tryListFromVaultIndex(notesRoot)
+  const indexed = await tryListFromVaultIndex(notesRoot)
   if (indexed) return indexed
   const files = await listMarkdownFiles(notesRoot)
   const notes = await Promise.all(files.map(file => summarizeNote(notesRoot, file)))
@@ -865,7 +870,7 @@ function noteMatchesTarget(note: Pick<NoteSummary, 'id' | 'title'>, target: stri
 
 async function getBacklinks(notesRoot: string, noteId: string): Promise<NoteBacklink[]> {
   await ensureNotesDirs(notesRoot)
-  const indexed = tryBacklinksFromVaultIndex(notesRoot, noteId)
+  const indexed = await tryBacklinksFromVaultIndex(notesRoot, noteId)
   if (indexed) return indexed
   const notes = await listNotes(notesRoot)
   const target = notes.find(note => note.id === noteId)
@@ -1863,7 +1868,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       const filePath = notePathFromId(notesRoot, noteId)
       try { lastInternalMtime.set(filePath, (await stat(filePath)).mtimeMs) }
       catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error }
-      refreshVaultIndex(notesRoot)
+      await refreshVaultIndex(notesRoot, noteId ? [noteId] : undefined)
       // Every filesystem-vault write (notes:save, content:commitMarkdown,
       // create/rename/move/delete, folder ops, daily notes) lands here once
       // per affected note id.
@@ -1886,7 +1891,6 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     }
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     await ensureDailyNotes(notesRoot, sessionsFromDeps(deps, workspaceId), (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
-    refreshVaultIndex(notesRoot)
     return listNotes(notesRoot)
   }, { nativeAction: 'read' })
 
@@ -1961,7 +1965,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     try {
       autoCreated = await autoCreateLinkedNotes(notesRoot, parseNoteContent(content).links)
       for (const created of autoCreated) changed({ workspaceId, reason: 'create', noteId: created.id })
-      refreshVaultIndex(notesRoot)
+      await refreshVaultIndex(notesRoot)
       const nextLinkCount = note.links?.length ?? 0
       if (nextLinkCount > previousLinkCount) awardXpSafe('note_linked')
       changed({ workspaceId, reason: 'save', noteId: note.id })
@@ -2016,7 +2020,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       return note
     }
     const note = await createNote(getWorkspaceNotesRoot(workspaceId), title, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes), folder)
-    refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
+    await refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
     return note
   }, { nativeAction: 'write' })
 
@@ -2043,7 +2047,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       return { note, updatedNotes: [] }
     }
     const result = await renameNote(getWorkspaceNotesRoot(workspaceId), noteId, nextTitle, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
-    refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
+    await refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
     // Move events only name the target id; the new id was re-indexed there.
     if (result.note.id !== noteId) removeNoteLinks(workspaceId, noteId)
     return result
@@ -2071,7 +2075,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       return { note }
     }
     const note = await moveNoteInFilesystem(getWorkspaceNotesRoot(workspaceId), noteId, targetFolder)
-    refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
+    await refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
     // A plain filesystem rename emits no change events: move the links here.
     if (note.id !== noteId) removeNoteLinks(workspaceId, noteId)
     indexNoteLinks(workspaceId, note.id, note.content)
@@ -2101,7 +2105,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     const existing = await nativeContent.readNote(ctx, workspaceId, noteId)
     await nativeContent.writeNative(ctx, workspaceId, 'delete', [{ kind: 'delete', noteId, expectedRevision: markdownRevision(existing.content) }])
     await deleteNoteCommentsForRoot(notesRoot, noteId)
-    refreshVaultIndex(notesRoot)
+    await refreshVaultIndex(notesRoot)
     return true
   }, { nativeAction: 'delete' })
 
@@ -2130,7 +2134,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   server.handle(RPC_CHANNELS.notes.RENAME_FOLDER, async (ctx, workspaceId: string, folder: string, nextName: string) => {
     nativeContent.assertScope(ctx, workspaceId)
     const result = await renameFolder(getWorkspaceNotesRoot(workspaceId), folder, nextName, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes), target => nativeContent.folderSnapshot(ctx, workspaceId, target))
-    refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
+    await refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
     // moveFolder events name only the new ids (re-indexed there); drop the
     // old ids' links unless the folder did not actually move.
     if (result.movedNotes.some(id => !id.startsWith(`${folder.replace(/\/+$/, '')}/`))) removeFolderNoteLinks(workspaceId, folder)
@@ -2143,7 +2147,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     const act = rpcNotesActResult({ source: 'native', action: 'destroy', granted: true, nativeId: folder })
     if (!isClaimableLive(act)) throw new Error('note folder delete is not live')
     const result = await deleteFolder(getWorkspaceNotesRoot(workspaceId), folder, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes), target => nativeContent.folderSnapshot(ctx, workspaceId, target))
-    refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
+    await refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
     return result
   }, { access: 'localElectron' })
 
@@ -2160,7 +2164,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
         .map(({ content: _content, backlinks: _backlinks, nativeRevision: _revision, ...summary }) => summary)
     }
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
-    const indexed = tryQueryFromVaultIndex(notesRoot, query)
+    const indexed = await tryQueryFromVaultIndex(notesRoot, query)
     if (indexed) return indexed
     const notes = await listNotes(notesRoot)
     const q = query.trim().toLowerCase()
