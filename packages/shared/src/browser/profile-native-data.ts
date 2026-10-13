@@ -215,7 +215,7 @@ export function parseSafariBookmarks(raw: string): IndexedItem[] {
 export function readNativeBrowserData(
   profile: Pick<DiscoveredProfile, 'family' | 'path'>,
   categories: { history: boolean; bookmarks: boolean },
-  options: { temporaryRoot?: string } = {},
+  options: { temporaryRoot?: string; sinceVisitTime?: number } = {},
 ): NativeBrowserData {
   const result: NativeBrowserData = {}
   if (!categories.history && !categories.bookmarks) return result
@@ -223,8 +223,10 @@ export function readNativeBrowserData(
     const historyPath = join(profile.path, 'History')
     if (categories.history && existsSync(historyPath)) {
       result.history = withBrowserDatabaseSnapshot(historyPath, database => items(database.prepare(
-        `SELECT url, title FROM urls WHERE visit_count > 0 ORDER BY last_visit_time DESC LIMIT ${ITEM_LIMIT}`,
-      ).all(), 'history'), options.temporaryRoot)
+        options.sinceVisitTime
+          ? `SELECT url, title FROM urls WHERE visit_count > 0 AND last_visit_time > ? ORDER BY last_visit_time DESC LIMIT ${ITEM_LIMIT}`
+          : `SELECT url, title FROM urls WHERE visit_count > 0 ORDER BY last_visit_time DESC LIMIT ${ITEM_LIMIT}`,
+      ).all(...(options.sinceVisitTime ? [options.sinceVisitTime] : [])), 'history'), options.temporaryRoot)
     }
     const bookmarkPath = join(profile.path, 'Bookmarks')
     if (categories.bookmarks && existsSync(bookmarkPath)) {

@@ -11,6 +11,7 @@ interface StoredData {
   profileId?: string
   imported?: { history: number; bookmarks: number }
   lastRunAt?: number
+  historyWatermark?: number
   error?: string
 }
 interface AutoImportDependencies {
@@ -19,6 +20,13 @@ interface AutoImportDependencies {
   isBusy?: (workspaceId: string) => boolean
   preferences: () => readonly BrowserImportCategory[]
   importData: (workspace: Workspace, profileId: string, categories: { history: boolean; bookmarks: boolean }) => { history: number; bookmarks: number }
+  /** Off-thread History DB read (ADR-0024). When it returns 0 new rows, importData is not called. */
+  readViaPool?: (
+    workspace: Workspace,
+    profileId: string,
+    categories: { history: boolean; bookmarks: boolean },
+    watermark?: number,
+  ) => Promise<{ history: number; bookmarks: number; watermark?: number }>
 }
 
 interface AutoImportScheduler {
@@ -52,6 +60,7 @@ function readState(root: string): StoredData {
       profileId: validProfileId(raw.profileId) ? raw.profileId : undefined,
       lastRunAt: typeof raw.lastRunAt === 'number' && Number.isFinite(raw.lastRunAt) && raw.lastRunAt >= 0 ? raw.lastRunAt : undefined,
       imported: raw.imported && Number.isSafeInteger(raw.imported.history) && raw.imported.history >= 0 && Number.isSafeInteger(raw.imported.bookmarks) && raw.imported.bookmarks >= 0 ? raw.imported : undefined,
+      historyWatermark: typeof raw.historyWatermark === 'number' && Number.isFinite(raw.historyWatermark) ? raw.historyWatermark : undefined,
       error: typeof raw.error === 'string' && errorCodes.has(raw.error) ? raw.error : undefined,
     }
   } catch { return {} }
@@ -115,12 +124,44 @@ export class BrowserDataAutoImporter {
       const history = categories.includes('history'), bookmarks = categories.includes('bookmarks')
       if (!history && !bookmarks) return this.status(workspaceId)
       const imported = this.deps.importData(workspace, stored.profileId, { history, bookmarks })
-      writeState(workspace.rootPath, { ...stored, imported, lastRunAt: Date.now(), error: undefined })
+      writeState(workspace.rootPath, { ...stored, imported, lastRunAt: Date.now(), error: undefined, historyWatermark: stored.historyWatermark })
       this.failures.delete(workspaceId)
     } catch (error) {
       const code = safeError(error)
       this.failures.set(workspaceId, code)
       // A full or unwritable workspace must not prevent other workspaces from running.
+      try { writeState(workspace.rootPath, { ...stored, lastRunAt: Date.now(), error: code }) } catch {}
+    } finally {
+      this.running.delete(workspaceId)
+    }
+    return this.status(workspaceId)
+  }
+
+  async runAsync(workspaceId: string): Promise<BrowserDataAutoStatus> {
+    if (!this.deps.readViaPool) return this.run(workspaceId)
+    const workspace = this.deps.workspace(workspaceId)
+    if (!workspace) return this.status(workspaceId)
+    if (this.running.has(workspaceId) || this.deps.isBusy?.(workspaceId)) return this.status(workspaceId)
+    const stored = readState(workspace.rootPath)
+    if (!stored.enabled || !stored.profileId) return this.status(workspaceId)
+    this.running.add(workspaceId)
+    try {
+      const categories = this.deps.preferences()
+      const history = categories.includes('history'), bookmarks = categories.includes('bookmarks')
+      if (!history && !bookmarks) return this.status(workspaceId)
+      const scanned = await this.deps.readViaPool(workspace, stored.profileId, { history, bookmarks }, stored.historyWatermark)
+      if (scanned.history === 0 && scanned.bookmarks === 0) {
+        return this.status(workspaceId)
+      }
+      const imported = this.deps.importData(workspace, stored.profileId, { history, bookmarks })
+      writeState(workspace.rootPath, {
+        ...stored, imported, lastRunAt: Date.now(), error: undefined,
+        historyWatermark: scanned.watermark ?? stored.historyWatermark,
+      })
+      this.failures.delete(workspaceId)
+    } catch (error) {
+      const code = safeError(error)
+      this.failures.set(workspaceId, code)
       try { writeState(workspace.rootPath, { ...stored, lastRunAt: Date.now(), error: code }) } catch {}
     } finally {
       this.running.delete(workspaceId)
@@ -134,7 +175,7 @@ export class BrowserDataAutoImporter {
     const tick = () => {
       try { for (const id of this.deps.workspaceIds?.() ?? []) this.workspaces.add(id) } catch {}
       for (const id of this.workspaces) {
-        try { this.run(id) } catch (error) { this.failures.set(id, safeError(error)) }
+        try { void this.runAsync(id) } catch (error) { this.failures.set(id, safeError(error)) }
       }
     }
     this.firstTimer = this.clock.setTimeout(tick, 25_000)
