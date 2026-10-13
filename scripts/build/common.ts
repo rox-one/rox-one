@@ -307,6 +307,23 @@ export const LIMA_VERSION = '2.2.1';
 export const LIMA_BINARIES = ['limactl', 'lima-driver-vz'] as const;
 
 /**
+ * Lima runtime-asset layout: assets live under `<dirname(dir-of-limactl)>/share/lima`
+ * (`pkg/usrlocal.ShareLima()`; `pkg/templatestore` searches the same tree for
+ * templates), and the guest agent is named `lima-guestagent.Linux-<guest-arch>.gz`
+ * (host arm64 -> aarch64, x64 -> x86_64). For the shipped
+ * `Resources/bin/darwin-<arch>/limactl` the assets belong in the sibling dir
+ * `resources/bin/share/lima`; without them `limactl start` fails with
+ * "guest agent binary could not be found" or resolves `template:` refs over the network.
+ */
+export function limaRuntimeAssets(electronDir: string, arch: Arch): { dir: string; guestAgent: string } {
+  const guestArch = arch === 'arm64' ? 'aarch64' : 'x86_64';
+  return {
+    dir: join(electronDir, 'resources', 'bin', 'share', 'lima'),
+    guestAgent: `lima-guestagent.Linux-${guestArch}.gz`,
+  };
+}
+
+/**
  * Pinned sha256 of the official Lima release asset (the release's own
  * `SHA256SUMS`). Lima is macOS-only; other platforms skip it entirely.
  */
@@ -326,10 +343,11 @@ export function getLimaDownloadName(platform: Platform, arch: Arch): string | nu
 }
 
 /**
- * Download the pinned official Lima release, verify its sha256, and install the
- * VM host binaries into resources/bin/<platform-arch>/ — the same gitignored
- * cache location as uv. Idempotent: a cached copy that reports the pinned
- * version is reused.
+ * Download the pinned official Lima release, verify its sha256, and install
+ *   — the VM host binaries into resources/bin/<platform-arch>/, and
+ *   — Lima's runtime assets (guest agent + templates) into resources/bin/share/lima;
+ * same gitignored cache location as uv. Idempotent: a cached copy that reports
+ * the pinned version and carries the runtime assets is reused.
  */
 export async function downloadLima(config: BuildConfig): Promise<void> {
   const { platform, arch, electronDir } = config;
@@ -343,15 +361,22 @@ export async function downloadLima(config: BuildConfig): Promise<void> {
   const platformKey = getPlatformKey(platform, arch);
   const targetDir = join(electronDir, 'resources', 'bin', platformKey);
   const limactlPath = join(targetDir, 'limactl');
+  const share = limaRuntimeAssets(electronDir, arch);
+  const hasRuntimeAssets = (): boolean => {
+    const agentPresent = existsSync(join(share.dir, share.guestAgent))
+      || existsSync(join(share.dir, share.guestAgent.replace(/\.gz$/, '')));
+    const templatesDir = join(share.dir, 'templates');
+    return agentPresent && existsSync(templatesDir) && readdirSync(templatesDir).length > 0;
+  };
 
   // Existence alone could ship a stale version after a pin bump. Cross-target
   // executables cannot be probed on this host, so only probe the host target.
   // `limactl --version` prints "limactl version <semver>".
-  if (existsSync(limactlPath) && platform === process.platform && arch === process.arch) {
+  if (existsSync(limactlPath) && hasRuntimeAssets() && platform === process.platform && arch === process.arch) {
     try {
       const reported = execFileSync(limactlPath, ['--version'], { encoding: 'utf8', timeout: 10_000, windowsHide: true }).trim();
       if (reported.match(/\d+\.\d+\.\d+/)?.[0] === LIMA_VERSION) {
-        console.log(`limactl ${LIMA_VERSION} already present at ${limactlPath}`);
+        console.log(`limactl ${LIMA_VERSION} + runtime assets already present at ${join(electronDir, 'resources', 'bin')}`);
         return;
       }
     } catch { /* repair stale/non-executable cached binary */ }
@@ -378,8 +403,8 @@ export async function downloadLima(config: BuildConfig): Promise<void> {
     }
     console.log('  Checksum verified ✓');
 
-    // Extract ONLY the VM host binaries; the release also carries templates,
-    // manpages and guest agents that Rox does not bundle.
+    // The release carries the VM host binaries plus Lima's runtime assets
+    // (guest agent + templates) under share/lima; manpages etc. are not bundled.
     const listing = (await $`tar -tzf ${assetPath}`.text())
       .split('\n')
       .map((line) => line.trim())
@@ -402,6 +427,20 @@ export async function downloadLima(config: BuildConfig): Promise<void> {
       await $`chmod +x ${targetPath}`.quiet();
       console.log(`  ${name} installed to ${targetPath} ✓`);
     }
+
+    const shareDirEntry = listing.find((entry) => entry === './share/lima' || entry === 'share/lima');
+    const shareAnyEntry = shareDirEntry ?? listing.find((entry) =>
+      entry.startsWith('./share/lima/') || entry.startsWith('share/lima/'));
+    if (!shareAnyEntry) {
+      throw new Error(`Lima release ${asset} did not provide share/lima (guest agent + templates)`);
+    }
+    await $`tar -xzf ${assetPath} -C ${extractDir} ${shareAnyEntry}`.quiet();
+    rmSync(share.dir, { recursive: true, force: true });
+    cpSync(join(extractDir, 'share', 'lima'), share.dir, { recursive: true });
+    if (!hasRuntimeAssets()) {
+      throw new Error(`Lima runtime assets incomplete under ${share.dir} (need ${share.guestAgent} and a non-empty templates/)`);
+    }
+    console.log(`  share/lima staged at ${share.dir} ✓ (${share.guestAgent} + templates)`);
 
     if (!existsSync(limactlPath)) {
       throw new Error(`Lima release ${asset} did not provide limactl`);
