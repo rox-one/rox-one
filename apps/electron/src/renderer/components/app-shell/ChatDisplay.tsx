@@ -62,6 +62,7 @@ import {
   type DiffViewerSettings,
 } from "@rox/ui"
 import { useFocusZone } from "@/hooks/keyboard"
+import { computeLaterTurnFlags, isOffscreenEligible, OFFSCREEN_TURN_STYLE } from './chat-timeline-window'
 import { useTheme } from "@/hooks/useTheme"
 import type { Session, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, LoadedSource, LoadedSkill } from "../../../shared/types"
 import type { AnnotationV1 } from "@rox/core"
@@ -71,7 +72,7 @@ import {
   MessageReactionActorProvider,
   TurnCard,
   UserMessageBubble,
-  groupMessagesByTurn,
+  createIncrementalTurnGrouper,
   formatTurnAsMarkdown,
   formatActivityAsMarkdown,
   getAssistantTurnUiKey,
@@ -921,13 +922,25 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     return count
   }, [])
 
+  // Memoize turn grouping - avoids O(n) iteration on every render/keystroke.
+  // Incremental (#1589): turns up to the last unchanged user/auth boundary keep
+  // their identity, so long chats only regroup the open tail while streaming.
+  const turnGrouperRef = React.useRef<{ sessionId: string | undefined; grouper: ReturnType<typeof createIncrementalTurnGrouper> } | null>(null)
+  const allTurns = React.useMemo(() => {
+    if (!session) return []
+    if (!turnGrouperRef.current || turnGrouperRef.current.sessionId !== session.id) {
+      turnGrouperRef.current = { sessionId: session.id, grouper: createIncrementalTurnGrouper() }
+    }
+    return turnGrouperRef.current.grouper.group(session.messages, { isSessionProcessing: session.isProcessing })
+  }, [session?.id, session?.messages, session?.isProcessing])
+
   // Find ALL individual match occurrences (not just turns)
   // Returns array with unique matchId for each occurrence
   const matchingOccurrences = useMemo(() => {
     if (!searchQuery.trim() || !session?.messages) return []
     const startTime = performance.now()
     const query = searchQuery.toLowerCase()
-    const turns = groupMessagesByTurn(session.messages, { isSessionProcessing: session.isProcessing })
+    const turns = allTurns
     const matches: { matchId: string; turnId: string; turnIndex: number; matchIndexInTurn: number }[] = []
 
     for (let turnIndex = 0; turnIndex < turns.length; turnIndex++) {
@@ -968,7 +981,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       }
     }
     return matches
-  }, [searchQuery, session?.messages, session?.isProcessing, countOccurrences])
+  }, [searchQuery, session?.messages, allTurns, countOccurrences])
 
   // Auto-expand pagination when search is active to show all matching turns
   // This ensures match count is stable and all matches are highlightable from the start
@@ -980,7 +993,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       (min, m) => m.turnIndex < min ? m.turnIndex : min,
       matchingOccurrences[0]!.turnIndex
     )
-    const totalTurns = groupMessagesByTurn(session?.messages || [], { isSessionProcessing: session?.isProcessing }).length
+    const totalTurns = allTurns.length
 
     // Calculate how many turns we need to show to include all matches
     // totalTurns - visibleTurnCount = startIndex, so we need visibleTurnCount = totalTurns - earliestMatchTurnIndex + buffer
@@ -989,7 +1002,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     if (requiredVisibleCount > visibleTurnCount) {
       setVisibleTurnCount(requiredVisibleCount)
     }
-  }, [isSearchActive, matchingOccurrences, session?.messages, session?.isProcessing, visibleTurnCount])
+  }, [isSearchActive, matchingOccurrences, allTurns.length, visibleTurnCount])
 
   // Extract unique turn IDs that have matches (for highlighting)
   const matchingTurnIds = useMemo(() => {
@@ -1845,19 +1858,17 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     return () => { cleanups.forEach(cleanup => cleanup()) }
   }, [tourSignals, session?.id, session?.isProcessing, pendingPermission, messagesLoading, messagesLoadError, tourFinalMessageId])
 
-  // Memoize turn grouping - avoids O(n) iteration on every render/keystroke
-  const allTurns = React.useMemo(() => {
-    if (!session) return []
-    return groupMessagesByTurn(session.messages, { isSessionProcessing: session.isProcessing })
-  }, [session?.messages, session?.isProcessing])
-
   // Keep ref in sync for scroll handler
   totalTurnCountRef.current = allTurns.length
 
   // Reverse pagination: only render last N turns for fast initial render
   const startIndex = Math.max(0, allTurns.length - visibleTurnCount)
-  const turns = allTurns.slice(startIndex)
+  const turns = useMemo(() => allTurns.slice(startIndex), [allTurns, startIndex])
   const hasMoreAbove = startIndex > 0
+
+  // O(n) replacements for per-row `turns.slice(index + 1).some(...)` scans,
+  // which were O(n²) per render on long timelines.
+  const laterTurnFlags = useMemo(() => computeLaterTurnFlags(turns), [turns])
 
   const assistantTurnIndexByMessageId = useMemo(() => {
     const map = new Map<string, number>()
@@ -2165,6 +2176,10 @@ const handleFollowUpChipClick = useCallback((item: {
                     const turnKey = getTurnKey(turn)
                     const isCurrentMatch = isSearchActive && matchingTurnIds[currentMatchIndex] === turnKey
                     const isAnyMatch = isSearchActive && matchingTurnIds.includes(turnKey)
+                    // Virtualized paint (#1589): far-from-bottom, settled turns skip layout/paint
+                    // while off screen. DOM stays mounted, so markdown stays eager, search
+                    // highlights/scrollIntoView/jump-to-message keep working.
+                    const offscreenStyle = isOffscreenEligible(index, turns.length, turn, isAnyMatch) ? OFFSCREEN_TURN_STYLE : undefined
 
                     // User turns - render with MemoizedMessageBubble
                     // Extra padding creates visual separation from AI responses
@@ -2179,6 +2194,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         <div
                           key={turnKey}
                           ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
+                          style={offscreenStyle}
                           className={cn(
                             compactMode ? "pt-2 pb-1" : CHAT_LAYOUT.userMessagePadding,
                             "rounded-lg transition-all duration-[var(--motion-base)] ease-[var(--ease-standard)]",
@@ -2219,6 +2235,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         <div
                           key={turnKey}
                           ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
+                          style={offscreenStyle}
                           className={cn(
                             "rounded-lg transition-all duration-[var(--motion-base)] ease-[var(--ease-standard)]",
                             isCurrentMatch && "ring-2 ring-info ring-offset-2 ring-offset-background",
@@ -2249,7 +2266,7 @@ const handleFollowUpChipClick = useCallback((item: {
                     // mt-2 matches ResponseCard spacing for visual consistency
                     if (turn.type === 'auth-request') {
                       // Interactive only if no user message follows
-                      const isAuthInteractive = !turns.slice(index + 1).some(t => t.type === 'user')
+                      const isAuthInteractive = !laterTurnFlags.hasLaterUser[index]
                       return (
                       <TurnShell
                         key={turnKey}
@@ -2260,6 +2277,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         <div
                           key={turnKey}
                           ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
+                          style={offscreenStyle}
                           className={cn(
                             "mt-2 rounded-lg transition-all duration-[var(--motion-base)] ease-[var(--ease-standard)]",
                             isCurrentMatch && "ring-2 ring-info ring-offset-2 ring-offset-background",
@@ -2278,9 +2296,9 @@ const handleFollowUpChipClick = useCallback((item: {
                     }
 
                     // Check if this is the last response (for Accept Plan button visibility)
-                    const isLastResponse = index === turns.length - 1 || !turns.slice(index + 1).some(t => t.type === 'user')
+                    const isLastResponse = index === turns.length - 1 || !laterTurnFlags.hasLaterUser[index]
                     // Memory provenance strip (Y2/Y3) renders under the newest assistant turn only
-                    const isLatestAssistantTurn = !turns.slice(index + 1).some(t => t.type === 'assistant')
+                    const isLatestAssistantTurn = !laterTurnFlags.hasLaterAssistant[index]
 
                     // Assistant turns - render with TurnCard (buffered streaming)
                     const assistantUiKey = getAssistantTurnUiKey(turn, index)
@@ -2308,6 +2326,7 @@ const handleFollowUpChipClick = useCallback((item: {
                           if (isNativeFinal) finalTarget(response)
                           if (hasNativeSourceResult) toolResultTarget(response ?? el?.querySelector<HTMLElement>('[data-search-exclude="true"]') ?? null)
                         }}
+                        style={offscreenStyle}
                         className={cn(
                           "pt-2",
                           "rounded-lg transition-all duration-[var(--motion-base)] ease-[var(--ease-standard)]",
