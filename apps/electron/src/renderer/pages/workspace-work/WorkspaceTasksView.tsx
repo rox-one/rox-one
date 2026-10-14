@@ -6,12 +6,13 @@ import { useWorkspaceWork } from '@/lib/useWorkspaceWork'
 import { isOpenTask } from '@rox/core/tasks/personal'
 import { cn } from '@/lib/utils'
 import { TimelinePanel } from '../tasks/TimelinePanel'
-import { workspaceDuePatch, workspaceTaskToTimeline } from '../tasks/timeline-adapters'
+import { withOptimisticDue, workspaceDuePatch, workspaceTaskToTimeline } from '../tasks/timeline-adapters'
 import type { SchedulePatch, TimelineGroup } from '../tasks/timeline-model'
 import { localDateTimeInput, parseLocalDateTime, workspaceProjectOptions, type WorkspaceProjectOption } from '@/lib/workspace-work-client'
 
 const fieldClass = 'w-full rounded-lg border border-border/70 bg-background px-2.5 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
 const buttonClass = 'inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-border/70 px-2.5 py-1.5 text-base transition-colors motion-reduce:transition-none hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none'
+const WORKSPACE_GROUPINGS = ['none', 'project'] as const
 type TaskDraft = { id: string | null; title: string; description: string; status: WorkspaceTaskStatus; assigneeId: string; projectId: string; due: string; links: WorkspaceTaskLink[]; expectedRevision: number }
 
 export function WorkspaceTasksView({ workspaceId, projectId, selectedTaskId }: { workspaceId: string; projectId?: string; selectedTaskId?: string }) {
@@ -80,11 +81,19 @@ export function WorkspaceTasksView({ workspaceId, projectId, selectedTaskId }: {
     if (ok) setDraft(null)
   }
   // Timeline: open workspace tasks across projects, one-day bars on their deadlines.
-  const timelineTasks = useMemo(() => tasks.map(workspaceTaskToTimeline).filter(isOpenTask), [tasks])
+  // Optimistic deadlines shown until the next snapshot arrives (or the write is rejected).
+  const [overlay, setOverlay] = useState<ReadonlyMap<string, number>>(() => new Map())
+  useEffect(() => { setOverlay(new Map()) }, [snapshot])
+  const timelineTasks = useMemo(() => withOptimisticDue(tasks, overlay).map(workspaceTaskToTimeline).filter(isOpenTask), [tasks, overlay])
   const schedule = (id: string, patch: SchedulePatch) => {
-    const dueAt = workspaceDuePatch(patch)
-    if (!snapshot || !canWrite || dueAt == null) return
-    void work.write({ kind: 'updateTask', id, patch: { dueAt } }, snapshot.revision)
+    const task = snapshot?.tasks.find(item => item.id === id)
+    const dueAt = task ? workspaceDuePatch(patch, task.dueAt) : null
+    if (!snapshot || !canWrite || work.pending || dueAt == null) return
+    setOverlay(prev => new Map(prev).set(id, dueAt))
+    // A rejection clears the overlay; the hook's error surfaces in the banner above.
+    void work.write({ kind: 'updateTask', id, patch: { dueAt } }, snapshot.revision).then(ok => {
+      if (!ok) setOverlay(prev => { const next = new Map(prev); next.delete(id); return next })
+    })
   }
   const projectTitle = (group: TimelineGroup) => (group.id == null ? t('navigation.work.tasks.noProject') : projects.find(project => project.id === group.id)?.name ?? t('navigation.work.tasks.missingProject'))
   const members = new Map<string, string>(snapshot?.members.map(member => [member.id, member.name]))
@@ -107,7 +116,7 @@ export function WorkspaceTasksView({ workspaceId, projectId, selectedTaskId }: {
       {work.error && <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">{t(`navigation.work.errors.${work.error.code}`)}</div>}
       {snapshot && !canWrite && <p role="status" className="text-muted-foreground">{t('navigation.work.readOnly')}</p>}
       <div className="grid gap-2 sm:grid-cols-2"><input type="search" className={fieldClass} value={query} onChange={event => setQuery(event.target.value)} aria-label={t('navigation.work.tasks.search')} placeholder={t('navigation.work.tasks.search')} /><select className={fieldClass} value={filter} onChange={event => setFilter(event.target.value as WorkspaceTaskStatus | 'all')} aria-label={t('navigation.work.tasks.status')}><option value="all">{t('navigation.work.tasks.all')}</option>{WORKSPACE_TASK_STATUSES.map(status => <option key={status} value={status}>{t(`navigation.work.status.${status}`)}</option>)}</select></div>
-      {snapshot && layout === 'timeline' && <TimelinePanel testId="workspace-task-timeline" tasks={timelineTasks} defaultGroupBy="project" groupTitle={projectTitle} onSchedule={schedule}
+      {snapshot && layout === 'timeline' && <TimelinePanel testId="workspace-task-timeline" tasks={timelineTasks} defaultGroupBy="project" groupings={WORKSPACE_GROUPINGS} readOnly={!canWrite || work.pending} deadlineOnly groupTitle={projectTitle} onSchedule={schedule}
         selectedId={draft?.id ?? null} onSelect={id => { const task = snapshot.tasks.find(item => item.id === id); if (task) begin(task) }} />}
       {snapshot && layout === 'list' && <div className="max-h-80 space-y-1 overflow-y-auto" role="list">
         {tasks.map(task => <div role="listitem" key={task.id}><button type="button" data-testid={`workspace-task-${task.id}`} className={`${buttonClass} w-full justify-start text-left ${draft?.id === task.id ? 'border-accent bg-accent/10' : ''}`} onClick={() => begin(task)}>

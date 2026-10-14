@@ -25,7 +25,20 @@ export function workspaceTaskToTimeline(task: WorkspaceTask): PersonalTask {
   }
 }
 
-/** Workspace tasks only have a deadline: any timeline move/drop sets it. */
-export function workspaceDuePatch(patch: SchedulePatch): number | null {
-  return patch.dueAt ?? patch.startAt ?? null
+/**
+ * New workspace deadline for a timeline patch (deadline-only rows send dueAt as a
+ * local day). The original time of day is kept; a first deadline lands at midnight.
+ */
+export function workspaceDuePatch(patch: SchedulePatch, previous: number | null): number | null {
+  if (patch.dueAt == null) return null
+  if (previous == null) return patch.dueAt
+  const prev = new Date(previous)
+  const day = new Date(patch.dueAt)
+  return new Date(day.getFullYear(), day.getMonth(), day.getDate(), prev.getHours(), prev.getMinutes(), prev.getSeconds(), prev.getMilliseconds()).getTime()
+}
+
+/** Overlays pending (optimistic) deadlines onto workspace tasks. */
+export function withOptimisticDue<T extends { id: string; dueAt: number | null }>(tasks: readonly T[], overlay: ReadonlyMap<string, number>): T[] {
+  if (!overlay.size) return [...tasks]
+  return tasks.map((task) => (overlay.has(task.id) ? { ...task, dueAt: overlay.get(task.id)! } : task))
 }

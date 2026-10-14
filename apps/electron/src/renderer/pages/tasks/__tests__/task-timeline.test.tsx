@@ -112,3 +112,40 @@ describe('TaskTimeline dependencies and fixed week', () => {
     await act(async () => { root.unmount() })
   })
 })
+
+describe('TaskTimeline readOnly / deadlineOnly / groupings', () => {
+  const key = (el: Element, init: KeyboardEventInit) => el.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, ...init }))
+  it('readOnly: no handles, no keyboard or tray moves; bars still focus and select', async () => {
+    const selected: string[] = []
+    const { container, root, calls } = await mount({ readOnly: true, onSelect: (id) => selected.push(id) })
+    const bar = container.querySelector('[data-testid="timeline-bar-a"]') as HTMLElement
+    expect(bar.getAttribute('tabindex')).toBe('0')
+    expect(bar.getAttribute('aria-readonly')).toBe('true')
+    expect(bar.querySelectorAll('.cursor-ew-resize').length).toBe(0)
+    await act(async () => { key(bar, { key: 'ArrowRight' }); key(bar, { key: 'ArrowRight', altKey: true }) })
+    await act(async () => { key(container.querySelector('[data-testid="timeline-tray-c"]')!, { key: 'Enter' }) })
+    expect(calls).toEqual([])
+    expect((container.querySelector('[data-testid="timeline-tray-c"]') as HTMLElement).getAttribute('draggable')).toBe('false')
+    await act(async () => { bar.focus() })
+    expect(selected).toContain('a')
+    await act(async () => { root.unmount() })
+  })
+  it('deadlineOnly: no resize handles or edge keys; tray Enter sets the deadline', async () => {
+    const { container, root, calls } = await mount({ deadlineOnly: true })
+    const bar = container.querySelector('[data-testid="timeline-bar-b"]') as HTMLElement
+    expect(bar.querySelectorAll('.cursor-ew-resize').length).toBe(0)
+    await act(async () => { key(bar, { key: 'ArrowRight', shiftKey: true }); key(bar, { key: 'ArrowRight', altKey: true }) })
+    expect(calls).toEqual([])
+    await act(async () => { key(container.querySelector('[data-testid="timeline-tray-c"]')!, { key: 'Enter' }) })
+    expect(calls).toEqual([{ id: 'c', patch: { dueAt: epochOf(today) } }])
+    await act(async () => { key(bar, { key: 'ArrowRight' }) })
+    expect(calls[1]).toEqual({ id: 'b', patch: { dueAt: epochOf('2026-02-21') } })
+    await act(async () => { root.unmount() })
+  })
+  it('offers only the allowed groupings', async () => {
+    const { container, root } = await mount({ groupings: ['none', 'project'] })
+    expect(container.querySelector('[data-testid="timeline-group-area"]')).toBeNull()
+    expect(container.querySelector('[data-testid="timeline-group-project"]')).not.toBeNull()
+    await act(async () => { root.unmount() })
+  })
+})

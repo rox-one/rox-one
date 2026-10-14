@@ -212,3 +212,16 @@ export function weekTasks(tasks: readonly PersonalTask[], today: string): Person
     return span != null && span.start <= week.end && span.end >= week.start
   })
 }
+
+/** Group header text: list → its projection label; project/area → its name. */
+export function timelineGroupTitle(
+  group: TimelineGroup,
+  t: (key: string) => string,
+  projectName: (id: string) => string | undefined,
+  areaName: (id: string) => string | undefined,
+): string {
+  if (group.id == null) return t('tasks.move.noPlace')
+  if (group.kind === 'list') return t(`tasks.projection.${group.id}`)
+  if (group.kind === 'area') return areaName(group.id) ?? t('tasks.move.noPlace')
+  return projectName(group.id) ?? group.id
+}

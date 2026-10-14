@@ -49,7 +49,7 @@ import { observeTargetGeometry } from '@/features/product-tour/ui/geometry-obser
 import { deriveProjectSignals } from '@/features/product-tour/adapters/work/tasks-projects'
 import { toErrorMessage } from '@/lib/errors'
 import { TimelinePanel } from './tasks/TimelinePanel'
-import { applySchedule, type SchedulePatch } from './tasks/timeline-model'
+import { applySchedule, timelineGroupTitle as projectTimelineGroupTitle, type SchedulePatch } from './tasks/timeline-model'
 import { isOpenTask } from '@rox/core/tasks/personal'
 
 interface ProjectInfoPageProps {
@@ -645,7 +645,7 @@ const projectSummaryRef = useRef<HTMLDivElement | null>(null)
               testId="project-task-timeline"
               tasks={projectTasks.filter(isOpenTask)}
               onSchedule={handleScheduleProjectTask}
-              groupTitle={(group) => (group.id == null ? t('tasks.move.noPlace') : t(`tasks.projection.${group.id}`))}
+              groupTitle={(group) => projectTimelineGroupTitle(group, t, (id) => (id === project.config.id ? project.config.name : taskStore.projects().find((p) => p.id === id)?.name), (id) => taskStore.areas().find((a) => a.id === id)?.name)}
             />
           )}
 

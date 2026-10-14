@@ -17,9 +17,12 @@ export interface TimelinePanelProps {
   selectedId?: string | null
   defaultGroupBy?: TimelineGroupBy
   testId?: string
+  groupings?: readonly TimelineGroupBy[]
+  readOnly?: boolean
+  deadlineOnly?: boolean
 }
 
-export function TimelinePanel({ tasks, onSchedule, groupTitle, onSelect, selectedId = null, defaultGroupBy = 'none', testId }: TimelinePanelProps) {
+export function TimelinePanel({ tasks, onSchedule, groupTitle, onSelect, selectedId = null, defaultGroupBy = 'none', testId, groupings, readOnly, deadlineOnly }: TimelinePanelProps) {
   const { i18n } = useTranslation()
   const [zoom, setZoom] = React.useState<Exclude<GanttZoom, 'fit'>>('week')
   const [groupBy, setGroupBy] = React.useState<TimelineGroupBy>(defaultGroupBy)
@@ -39,6 +42,9 @@ export function TimelinePanel({ tasks, onSchedule, groupTitle, onSelect, selecte
         onSelect={(id) => { setSelected(id); onSelect?.(id) }}
         onSchedule={onSchedule}
         groupTitle={groupTitle}
+        groupings={groupings}
+        readOnly={readOnly}
+        deadlineOnly={deadlineOnly}
       />
     </div>
   )
