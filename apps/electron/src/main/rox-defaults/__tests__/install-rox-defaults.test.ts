@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'bun:test'
 import { mkdtempSync, readFileSync, writeFileSync, existsSync, statSync } from 'fs'
+import { spawnSync } from 'child_process'
 import { tmpdir } from 'os'
 import { join } from 'path'
+import { REDACTED_PLACEHOLDER, clearRegisteredSecretValues, redactRegisteredSecrets } from '@rox/shared/secrets'
 import { installRoxDefaults } from '../install-rox-defaults'
 import { parseDotenv, renderRoxDefaultsModule, writeRoxDefaultsModule } from '../../../../scripts/gen-rox-defaults'
 
@@ -27,6 +29,22 @@ describe('installRoxDefaults', () => {
     expect(installRoxDefaults(undefined, env)).toBe('none')
     expect('ROX_API_KEY' in env).toBe(false)
   })
+  it('registers the embedded value so a child that echoes it is masked', () => {
+    clearRegisteredSecretValues()
+    try {
+      const env: Record<string, string | undefined> = {}
+      expect(installRoxDefaults({ roxApiKey: 'sk-embedded-gateway-key' }, env)).toBe('embedded')
+      // A fixture child prints the inherited value; the redactor masks it.
+      const child = spawnSync(process.execPath, ['-e', 'process.stdout.write(String(process.env.ROX_API_KEY))'], {
+        env: { ...env } as NodeJS.ProcessEnv,
+        encoding: 'utf8',
+      })
+      expect(child.stdout).toBe('sk-embedded-gateway-key')
+      expect(redactRegisteredSecrets(child.stdout)).toBe(REDACTED_PLACEHOLDER)
+    } finally {
+      clearRegisteredSecretValues()
+    }
+  })
 })
 
 describe('gen-rox-defaults', () => {
@@ -38,7 +56,7 @@ describe('gen-rox-defaults', () => {
     expect(src).toContain('gitignored')
     expect(src).toContain(JSON.stringify({ roxApiKey: 'k"ey' }))
   })
-  it('writes from env, then from an env file, and never clobbers with empty', () => {
+  it('writes from env, then from an env file, and never lets a stale key survive', () => {
     const dir = mkdtempSync(join(tmpdir(), 'rox-defaults-'))
     const out = join(dir, 'gen.ts')
     expect(writeRoxDefaultsModule({}, out)).toBe('empty')
@@ -46,8 +64,10 @@ describe('gen-rox-defaults', () => {
     expect(writeRoxDefaultsModule({ ROX_API_KEY: 'from-env' }, out)).toBe('set')
     expect(readFileSync(out, 'utf8')).toContain('from-env')
     expect(statSync(out).mode & 0o777).toBe(0o600)
-    expect(writeRoxDefaultsModule({}, out)).toBe('kept')
-    expect(readFileSync(out, 'utf8')).toContain('from-env')
+    // An empty rebuild rewrites the module: the previous key must not linger.
+    expect(writeRoxDefaultsModule({}, out)).toBe('empty')
+    expect(readFileSync(out, 'utf8')).toContain('"roxApiKey":""')
+    expect(readFileSync(out, 'utf8')).not.toContain('from-env')
     const envFile = join(dir, 'k.env')
     writeFileSync(envFile, 'ROX_API_KEY=from-file\n')
     expect(writeRoxDefaultsModule({ ROX_DEFAULTS_ENV_FILE: envFile }, out)).toBe('set')

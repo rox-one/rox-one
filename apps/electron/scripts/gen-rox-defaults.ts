@@ -29,15 +29,14 @@ export function renderRoxDefaultsModule(apiKey: string): string {
 export const ROX_DEFAULTS_MODULE = join(import.meta.dir, '../src/main/rox-defaults/rox-defaults.generated.ts')
 
 /**
- * Write the generated module. An empty key never clobbers an existing
- * generated file (a dev rebuild without the env keeps the last baked key);
- * a missing file is always created so the import resolves.
+ * Write the generated module — always rewritten, so a stale key can never
+ * survive a later build (an empty key writes `roxApiKey: ""`; the import in
+ * src/main/index.ts stays resolvable, unlike a removed file).
  */
-export function writeRoxDefaultsModule(env: Record<string, string | undefined> = process.env, out = ROX_DEFAULTS_MODULE): 'set' | 'kept' | 'empty' {
+export function writeRoxDefaultsModule(env: Record<string, string | undefined> = process.env, out = ROX_DEFAULTS_MODULE): 'set' | 'empty' {
   const file = env.ROX_DEFAULTS_ENV_FILE
   const fromFile = file && existsSync(file) ? parseDotenv(readFileSync(file, 'utf8')) : {}
   const roxApiKey = env.ROX_API_KEY?.trim() || fromFile.ROX_API_KEY?.trim() || ''
-  if (!roxApiKey && existsSync(out)) return 'kept'
   writeFileSync(out, renderRoxDefaultsModule(roxApiKey), { mode: 0o600 })
   return roxApiKey ? 'set' : 'empty'
 }
