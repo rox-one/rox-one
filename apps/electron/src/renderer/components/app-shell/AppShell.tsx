@@ -3201,6 +3201,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                         applicationSectionsOpen={applicationSectionsOpen}
                         onApplicationSectionsOpenChange={handleApplicationSectionsOpenChange}
                         contextSlotRef={setShellSidebarSlot}
+                        pillsVisible={!isAutoCompact}
                       />
                     </>
                   )}

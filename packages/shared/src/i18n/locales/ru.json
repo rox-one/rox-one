@@ -11648,5 +11648,13 @@
   "xfn.x23.title": "Действия при отправке формы",
   "xfn.x24.title": "Начать встречу из любой сущности",
   "xfn.x25.title": "Открыть панель @rox",
-  "xfn.x26.title": "Закреплённое на всех экранах"
+  "xfn.x26.title": "Закреплённое на всех экранах",
+  "settings.navPlacement.title": "Навигация по разделам",
+  "settings.navPlacement.desc": "Где показывать каждый раздел: в пилюлях сверху, в боковой панели, в «Ещё» или нигде. Скрытый раздел не удаляется: данные и ссылки на него остаются.",
+  "settings.navPlacement.pills": "Пилюли сверху",
+  "settings.navPlacement.primary": "Боковая панель",
+  "settings.navPlacement.more": "Боковая панель · «Ещё»",
+  "settings.navPlacement.hidden": "Скрыт",
+  "settings.navPlacement.default": "По умолчанию",
+  "settings.navPlacement.reset": "Сбросить"
 }

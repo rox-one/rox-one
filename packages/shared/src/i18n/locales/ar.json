@@ -11630,5 +11630,13 @@
   "xfn.x23.title": "إجراءات عند إرسال النموذج",
   "xfn.x24.title": "بدء اجتماع من أي عنصر",
   "xfn.x25.title": "فتح لوحة الوكيل",
-  "xfn.x26.title": "التثبيت عبر الصفحات"
+  "xfn.x26.title": "التثبيت عبر الصفحات",
+  "settings.navPlacement.title": "Section navigation",
+  "settings.navPlacement.desc": "Where each section shows: the top pills, the sidebar, «More», or nowhere. Hiding a section keeps its data and links.",
+  "settings.navPlacement.pills": "Top pills",
+  "settings.navPlacement.primary": "Sidebar",
+  "settings.navPlacement.more": "Sidebar · More",
+  "settings.navPlacement.hidden": "Hidden",
+  "settings.navPlacement.default": "Default",
+  "settings.navPlacement.reset": "Reset"
 }

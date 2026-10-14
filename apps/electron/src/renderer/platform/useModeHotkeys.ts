@@ -8,6 +8,7 @@ import { useMemo } from 'react'
 import { useAction } from '@/actions'
 import { navigate } from '@/lib/navigate'
 import { useShellModes } from './useModes'
+import { usePillNav } from './usePillNav'
 import {
   activatePillSurface,
   pillSurfaceForSlot,
@@ -19,12 +20,13 @@ import { useOpenPillBrowser } from './pill-activate'
 import { activeScene, useScenes } from './scenes'
 
 export function useModeHotkeys(): void {
-  const { modes } = useShellModes()
+  const { modes, shellFlags } = useShellModes()
+  const pillNav = usePillNav(shellFlags)
   const prefs = usePillPreferences()
   const scenes = useScenes()
   const scene = useMemo(() => activeScene(scenes), [scenes])
   const openBrowser = useOpenPillBrowser()
-  const surfaces = useMemo(() => visiblePillSurfaces(modes, prefs, scene), [modes, prefs, scene])
+  const surfaces = useMemo(() => visiblePillSurfaces(modes, prefs, scene, pillNav), [modes, prefs, scene, pillNav])
   const go = (slot: number) => () => {
     const surface = pillSurfaceForSlot(surfaces, slot)
     if (!surface) return

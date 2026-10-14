@@ -71,6 +71,7 @@ import { PROJECT_COLOR_PALETTE, type ProjectColorTreatment } from '@/utils/proje
 import { Info_DataTable, SortableHeader } from '@/components/info/Info_DataTable'
 import { Info_Badge } from '@/components/info/Info_Badge'
 import { readDesktopAppearance, saveDesktopAppearance } from '@/lib/desktop-appearance'
+import { NavPlacementSettings } from './NavPlacementSettings'
 import { WorkbenchChromeSettings } from './WorkbenchChromeSettings'
 import { ConationShellSettings } from './ConationShellSettings'
 import { ZenShellSettings } from './ZenShellSettings'
@@ -1366,6 +1367,7 @@ export default function AppearanceSettingsPage() {
 
               <ZedThemesImportSection />
 
+              <NavPlacementSettings />
               <SuperEngineeringAppearanceSettings />
               <ZenShellSettings />
               <WorkbenchChromeSettings />

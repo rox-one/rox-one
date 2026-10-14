@@ -11599,5 +11599,13 @@
   "xfn.x23.title": "Actions à l'envoi du formulaire",
   "xfn.x24.title": "Démarrer une réunion depuis n'importe quel élément",
   "xfn.x25.title": "Ouvrir le panneau @rox",
-  "xfn.x26.title": "Épingles sur toutes les vues"
+  "xfn.x26.title": "Épingles sur toutes les vues",
+  "settings.navPlacement.title": "Section navigation",
+  "settings.navPlacement.desc": "Where each section shows: the top pills, the sidebar, «More», or nowhere. Hiding a section keeps its data and links.",
+  "settings.navPlacement.pills": "Top pills",
+  "settings.navPlacement.primary": "Sidebar",
+  "settings.navPlacement.more": "Sidebar · More",
+  "settings.navPlacement.hidden": "Hidden",
+  "settings.navPlacement.default": "Default",
+  "settings.navPlacement.reset": "Reset"
 }

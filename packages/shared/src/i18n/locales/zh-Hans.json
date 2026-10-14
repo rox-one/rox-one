@@ -11590,5 +11590,13 @@
   "xfn.x23.title": "表单提交动作",
   "xfn.x24.title": "从任意实体发起会议",
   "xfn.x25.title": "打开 @rox 面板",
-  "xfn.x26.title": "跨界面固定"
+  "xfn.x26.title": "跨界面固定",
+  "settings.navPlacement.title": "Section navigation",
+  "settings.navPlacement.desc": "Where each section shows: the top pills, the sidebar, «More», or nowhere. Hiding a section keeps its data and links.",
+  "settings.navPlacement.pills": "Top pills",
+  "settings.navPlacement.primary": "Sidebar",
+  "settings.navPlacement.more": "Sidebar · More",
+  "settings.navPlacement.hidden": "Hidden",
+  "settings.navPlacement.default": "Default",
+  "settings.navPlacement.reset": "Reset"
 }

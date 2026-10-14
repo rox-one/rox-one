@@ -23,7 +23,8 @@ import { visibleExtraScreens } from '@/pages/extra-screens/registry'
 import { enabledShellFlagsAtom } from '@/platform/unified-flags'
 import { isSessionsNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { isSeparatorItem, LeftSidebar, type LinkItem, type SidebarItem } from './LeftSidebar'
-import { PRIMARY_NAV_LINK_IDS, resolvePrimaryNav, type ResolvedPrimaryNavEntry } from './primary-nav'
+import { useNavPlacements } from './nav-placement'
+import { PRIMARY_NAV, PRIMARY_NAV_LINK_IDS, resolvePrimaryNav, type ResolvedPrimaryNavEntry } from './primary-nav'
 
 /** WP4: experimental screen icon tints from colour tokens (were literal hex). */
 const EXPERIMENTAL_ICON_COLOR: Readonly<Record<string, string>> = {
@@ -50,6 +51,8 @@ export interface ShellSidebarNavProps {
    * (`ShellSidebarPortal`); it sits right under the global primary nav.
    */
   contextSlotRef?: (element: HTMLDivElement | null) => void
+  /** The titlebar pill is on screen (false in compact windows): pill-placed surfaces fall back here. */
+  pillsVisible?: boolean
 }
 
 export const ShellSidebarNav = React.memo(function ShellSidebarNav({
@@ -62,13 +65,15 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   applicationSectionsOpen,
   onApplicationSectionsOpenChange,
   contextSlotRef,
+  pillsVisible = true,
 }: ShellSidebarNavProps) {
   const { t } = useTranslation()
   const navState = useNavigationState()
   const shellFlags = useAtomValue(enabledShellFlagsAtom)
   const enabledExtraScreenIds = useAtomValue(enabledExtraScreenIdsAtom)
 
-  const entries = React.useMemo(() => resolvePrimaryNav({ shellFlags }), [shellFlags])
+  const placements = useNavPlacements()
+  const entries = React.useMemo(() => resolvePrimaryNav({ shellFlags, placements, pillsVisible }), [shellFlags, placements, pillsVisible])
 
   const { primaryLinks, moreLinks } = React.useMemo(() => {
     const byId = new Map<string, LinkItem>()
@@ -95,8 +100,9 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   // WP6: the open surface's sub-navigation (Проекты, Страницы, Источники,
   // Автоматизации), taken from its rich AppShell row.
   const contextEntry = React.useMemo(
-    () => entries.find(entry => CONTEXT_SECTION_LINK_IDS.has(entry.linkId) && entry.isActive(navState)) ?? null,
-    [entries, navState],
+    // From the whole registry: a surface placed in the pills (no sidebar row) still gets its context.
+    () => PRIMARY_NAV.find(entry => CONTEXT_SECTION_LINK_IDS.has(entry.linkId) && entry.isActive(navState)) ?? null,
+    [navState],
   )
   const surfaceSection = React.useMemo(() => {
     if (!contextEntry) return null

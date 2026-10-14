@@ -11590,5 +11590,13 @@
   "xfn.x23.title": "Műveletek űrlapbeküldéskor",
   "xfn.x24.title": "Megbeszélés indítása bármely elemből",
   "xfn.x25.title": "@rox panel megnyitása",
-  "xfn.x26.title": "Rögzítés minden felületen"
+  "xfn.x26.title": "Rögzítés minden felületen",
+  "settings.navPlacement.title": "Section navigation",
+  "settings.navPlacement.desc": "Where each section shows: the top pills, the sidebar, «More», or nowhere. Hiding a section keeps its data and links.",
+  "settings.navPlacement.pills": "Top pills",
+  "settings.navPlacement.primary": "Sidebar",
+  "settings.navPlacement.more": "Sidebar · More",
+  "settings.navPlacement.hidden": "Hidden",
+  "settings.navPlacement.default": "Default",
+  "settings.navPlacement.reset": "Reset"
 }

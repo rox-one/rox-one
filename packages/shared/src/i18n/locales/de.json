@@ -11590,5 +11590,13 @@
   "xfn.x23.title": "Aktionen beim Formularabsenden",
   "xfn.x24.title": "Besprechung aus einem Element starten",
   "xfn.x25.title": "Agentenbereich öffnen",
-  "xfn.x26.title": "Bereichsübergreifendes Anheften"
+  "xfn.x26.title": "Bereichsübergreifendes Anheften",
+  "settings.navPlacement.title": "Section navigation",
+  "settings.navPlacement.desc": "Where each section shows: the top pills, the sidebar, «More», or nowhere. Hiding a section keeps its data and links.",
+  "settings.navPlacement.pills": "Top pills",
+  "settings.navPlacement.primary": "Sidebar",
+  "settings.navPlacement.more": "Sidebar · More",
+  "settings.navPlacement.hidden": "Hidden",
+  "settings.navPlacement.default": "Default",
+  "settings.navPlacement.reset": "Reset"
 }
