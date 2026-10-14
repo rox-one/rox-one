@@ -3676,7 +3676,7 @@ function migrateRoxKimiPublicModels(config: StoredConfig): boolean {
 
 const APPEARANCE_DEFAULTS_MIGRATION = 'appearance-defaults-v1';
 const APPEARANCE_INK_MIGRATION = 'appearance-defaults-v2-ink';
-const LEGACY_DEFAULT_THEMES = new Set(['super-engineering', 'nordfox-opaque', 'haze']);
+const LEGACY_DEFAULT_THEMES = new Set(['nordfox-opaque', 'haze']);
 
 function isSeededDeepGlass(material: MaterialSettings | undefined): boolean {
   if (!material) return false;
@@ -3689,14 +3689,20 @@ function isSeededDeepGlass(material: MaterialSettings | undefined): boolean {
 
 /**
  * One-shot (2026-10-14): Rox Ink becomes the default. Installs still on a
- * legacy default (the `appearance-defaults-v1` Rox Engineering seed, nordfox,
- * haze or unset) move to Rox Ink, and the deep-glass material that v1 seeded
+ * legacy default (nordfox, haze, unset, or Rox Engineering only where the
+ * `appearance-defaults-v1` marker shows v1 seeded it) move to Rox Ink, and the deep-glass material that v1 seeded
  * is removed when it is still the untouched seed. Any other explicit pick or
  * edited material is kept.
  */
-function migrateAppearanceInkDefault(config: StoredConfig): boolean {
+function migrateAppearanceInkDefault(config: StoredConfig, v1Seeded: boolean): boolean {
   if (config.migrationsApplied?.includes(APPEARANCE_INK_MIGRATION)) return false;
-  if (config.colorTheme === undefined || LEGACY_DEFAULT_THEMES.has(config.colorTheme)) {
+  // Rox Engineering is only a legacy default where an earlier launch ran v1
+  // (which seeded it); otherwise it was the user's own pick and stays.
+  if (
+    config.colorTheme === undefined
+    || LEGACY_DEFAULT_THEMES.has(config.colorTheme)
+    || (v1Seeded && config.colorTheme === 'super-engineering')
+  ) {
     config.colorTheme = ROX_THEME_ID;
   }
   try {
@@ -3705,9 +3711,11 @@ function migrateAppearanceInkDefault(config: StoredConfig): boolean {
       const { material: _seeded, ...rest } = appTheme;
       saveAppTheme(rest);
     }
-  } catch {
-    // Non-fatal: the next launch retries the material cleanup.
-    return false;
+  } catch (error) {
+    // The theme switch above is still saved by the caller; only the material
+    // cleanup retries on the next launch.
+    console.warn('[storage] appearance-defaults-v2-ink: deep-glass cleanup failed, will retry', error);
+    return true;
   }
   config.migrationsApplied = [...(config.migrationsApplied ?? []), APPEARANCE_INK_MIGRATION];
   return true;
@@ -3957,11 +3965,12 @@ export function migrateLegacyLlmConnectionsConfig(): void {
       needsSave = true;
     }
     // Phase 1n: Appearance defaults — legacy theme ids to the Rox default.
+    const v1RanBefore = config.migrationsApplied?.includes(APPEARANCE_DEFAULTS_MIGRATION) === true;
     if (migrateAppearanceDefaults(config)) {
       needsSave = true;
     }
     // Phase 1o: Rox Ink default; drops the v1 Rox Engineering + deep-glass seed.
-    if (migrateAppearanceInkDefault(config)) {
+    if (migrateAppearanceInkDefault(config, v1RanBefore)) {
       needsSave = true;
     }
 

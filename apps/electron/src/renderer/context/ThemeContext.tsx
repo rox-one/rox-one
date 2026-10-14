@@ -110,6 +110,9 @@ interface StoredTheme {
   contrast?: ContrastMode
   /** True when user explicitly changed theme in UI (not auto-saved on startup) */
   isUserOverride?: boolean
+  /** True once the user picked light/dark/system in the UI. Separate from
+   *  isUserOverride, which pins the colour theme. */
+  modeOverride?: boolean
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
@@ -217,7 +220,9 @@ function loadStoredTheme(): StoredTheme | null {
 }
 
 function saveTheme(theme: StoredTheme): void {
-  storage.set(storage.KEYS.theme, theme)
+  // Writers that do not touch the mode keep an earlier explicit mode pick.
+  const modeOverride = theme.modeOverride ?? loadStoredTheme()?.modeOverride
+  storage.set(storage.KEYS.theme, modeOverride ? { ...theme, modeOverride } : theme)
 }
 
 export function ThemeProvider({
@@ -238,9 +243,9 @@ export function ThemeProvider({
 
   // === Preference state (persisted at app level) ===
   const [mode, setModeState] = useState<ThemeMode>(() =>
-    // Only an explicit UI choice pins the mode; values auto-saved by older
-    // builds (which defaulted to dark) fall back to following the system.
-    themeLocked ? defaultMode : (stored?.isUserOverride && stored.mode ? stored.mode : defaultMode)
+    // A stored light/dark is the user's choice (older builds included);
+    // unset or 'system' follows the OS.
+    themeLocked ? defaultMode : (stored?.mode ?? defaultMode)
   )
   // Only use localStorage colorTheme if user explicitly set it via UI
   const [colorTheme, setColorThemeState] = useState<string>(() => {
@@ -771,7 +776,8 @@ export function ThemeProvider({
       chatFont,
       terminalFont,
       contrast,
-      isUserOverride: true,
+      isUserOverride: existing?.isUserOverride,
+      modeOverride: true,
     })
     if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
       window.electronAPI.broadcastThemePreferences({ mode: newMode, colorTheme, font, contrast })

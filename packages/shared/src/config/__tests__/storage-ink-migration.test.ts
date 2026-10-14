@@ -47,6 +47,11 @@ describe('appearance-defaults-v2-ink', () => {
     expect(r.appTheme).toEqual({ material: edited })
   }, 30_000)
 
+  it('keeps a Rox Engineering pick that v1 did not seed', () => {
+    const r = migrate({ colorTheme: 'super-engineering' })
+    expect(r.theme).toBe('super-engineering')
+  }, 30_000)
+
   it('does not seed deep glass on installs that never ran v1', () => {
     const r = migrate({ colorTheme: 'haze' })
     expect(r.theme).toBe('rox-ink')

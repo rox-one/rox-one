@@ -44,7 +44,7 @@ describe('appearance defaults', () => {
     expect(storageConfig).toContain("APPEARANCE_DEFAULTS_MIGRATION = 'appearance-defaults-v1'")
     expect(storageConfig).toContain("APPEARANCE_INK_MIGRATION = 'appearance-defaults-v2-ink'")
     expect(storageConfig).toContain('migrateAppearanceDefaults(config)')
-    expect(storageConfig).toContain('migrateAppearanceInkDefault(config)')
+    expect(storageConfig).toContain('migrateAppearanceInkDefault(config, v1RanBefore)')
     expect(storageConfig).not.toContain('DEEP_GLASS_MATERIAL_DEFAULT')
   })
 })
