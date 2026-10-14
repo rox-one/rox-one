@@ -46,9 +46,9 @@ const SPAN_COLOR: Record<TrajectoryCellKind, string> = {
 
 const KIND_TAG: Record<TrajectoryCellKind, string> = {
   user: 'text-accent border-accent/30 bg-accent/10',
-  system: 'text-muted-foreground border-border bg-foreground/5',
+  system: 'text-muted-foreground border-border bg-surface-hover',
   context: 'text-success border-success/30 bg-success/10',
-  compacted: 'text-muted-foreground border-border bg-foreground/5',
+  compacted: 'text-muted-foreground border-border bg-surface-hover',
   message: 'text-rose-500 border-rose-400/30 bg-rose-400/10',
   tool: 'text-amber-600 border-amber-500/30 bg-amber-500/10',
   subtool: 'text-amber-600 border-amber-500/30 bg-amber-500/5',
@@ -119,7 +119,7 @@ export function TrajectoryView({ messages, onOpenMessage, className }: Trajector
           title={mode === 'duration' ? t('trajectory.toolbar.useEqualWidth') : t('trajectory.toolbar.useActualDuration')}
           onClick={() => setMode(mode === 'duration' ? 'sequence' : 'duration')}
         >
-          <Clock className="h-3 w-3" aria-hidden />
+          <Clock className="icon-status" aria-hidden />
           {t('trajectory.toolbar.duration')}
         </ToolbarToggle>
         <ToolbarToggle
@@ -138,8 +138,8 @@ export function TrajectoryView({ messages, onOpenMessage, className }: Trajector
           <span aria-hidden>{collapseCalls ? '⊞' : '⊟'}</span>
           {t('trajectory.toolbar.calls')}
         </ToolbarToggle>
-        <div className="ml-auto flex h-6 w-44 items-center gap-1.5 rounded-full border border-border/60 bg-foreground/[0.03] px-2">
-          <Search className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden />
+        <div className="ml-auto flex h-6 w-44 items-center gap-1.5 rounded-full border border-border/60 bg-surface-hover px-2">
+          <Search className="icon-status shrink-0 text-muted-foreground" aria-hidden />
           <input
             type="search"
             aria-label={t('trajectory.toolbar.search')}
@@ -192,7 +192,7 @@ function ToolbarToggle({ pressed, title, onClick, children }: { pressed: boolean
       onClick={onClick}
       className={cn(
         'inline-flex h-6 items-center gap-1 rounded-full px-2.5 text-xs transition-colors',
-        pressed ? 'bg-foreground/10 text-foreground' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+        pressed ? 'bg-surface-pressed text-foreground' : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
       )}
     >
       {children}
@@ -279,8 +279,8 @@ const TrajectoryTimeline = React.memo(function TrajectoryTimeline({ model, mode,
 
   return (
     <section aria-label={t('trajectory.timeline.aria')} className="relative shrink-0 select-none border-b border-border/60">
-      <div className="grid h-[50px] grid-cols-[52px_minmax(0,1fr)] bg-foreground/[0.02]">
-        <div aria-hidden className="relative border-r border-border/50 text-[10px] leading-none text-muted-foreground">
+      <div className="grid h-[50px] grid-cols-[52px_minmax(0,1fr)] bg-surface-hover">
+        <div aria-hidden className="relative border-r border-border/50 text-caption leading-none text-muted-foreground">
           <span className="absolute right-1.5 top-[7px]">{t('trajectory.lane.input')}</span>
           <span className="absolute right-1.5 top-[21px]">{t('trajectory.lane.model')}</span>
           <span className="absolute right-1.5 top-[35px]">{t('trajectory.lane.tools')}</span>
@@ -351,10 +351,10 @@ const TrajectoryTimeline = React.memo(function TrajectoryTimeline({ model, mode,
                       data-error={span.isError || undefined}
                       title={span.count > 1 ? `${kindLabel(span.kind)} × ${span.count}` : `${kindLabel(span.kind)} · ${span.label}`}
                       className={cn(
-                        'absolute h-2 min-w-[2px] rounded-[1px]',
+                        'absolute h-2 min-w-[2px] rounded-xs',
                         span.isError ? 'bg-destructive' : SPAN_COLOR[span.kind],
                         dim ? 'opacity-20' : 'opacity-90',
-                        selectedIndex === span.index && 'z-[1] opacity-100 ring-2 ring-accent ring-offset-1 ring-offset-background',
+                        selectedIndex === span.index && 'z-raised opacity-100 ring-2 ring-accent ring-offset-1 ring-offset-background',
                       )}
                       style={{
                         top: span.lane * 14,
@@ -548,10 +548,10 @@ function TrajectoryLedger({ rows, selected, onSelect, onToggleTurn }: LedgerProp
                     aria-expanded={!row.collapsed}
                     onFocus={() => setActiveKey(row.key)}
                     onClick={() => onToggleTurn(row.key)}
-                    className="flex h-full w-full items-center gap-1.5 border-t-2 border-border/60 px-2 text-left font-mono text-[10px] text-muted-foreground outline-none hover:text-foreground focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent"
+                    className="flex h-full w-full items-center gap-1.5 border-t-2 border-border/60 px-2 text-left font-mono text-caption text-muted-foreground outline-none hover:text-foreground focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent"
                   >
-                    {row.collapsed ? <ChevronRight className="h-3 w-3" aria-hidden /> : <ChevronDown className="h-3 w-3" aria-hidden />}
-                    <span className="rounded-b-sm bg-foreground/5 px-1.5">
+                    {row.collapsed ? <ChevronRight className="icon-status" aria-hidden /> : <ChevronDown className="icon-status" aria-hidden />}
+                    <span className="rounded-b-sm bg-surface-hover px-1.5">
                       {row.turn === null ? t('trajectory.betweenTurns') : t('trajectory.turn', { turn: row.turn })}
                     </span>
                     {row.collapsed && <span className="min-w-0 truncate font-sans text-xs">… {row.preview}</span>}
@@ -582,17 +582,17 @@ function TrajectoryLedger({ rows, selected, onSelect, onToggleTurn }: LedgerProp
                 onFocus={() => setActiveKey(row.key)}
                 onClick={() => onSelect(cell.messageId)}
                 className={cn(
-                  'flex h-full cursor-pointer items-center gap-2 border-l-2 pl-2 pr-3 text-xs outline-none hover:bg-foreground/[0.04] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent',
+                  'flex h-full cursor-pointer items-center gap-2 border-l-2 pl-2 pr-3 text-xs outline-none hover:bg-surface-hover focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent',
                   cell.isError ? 'border-destructive/50' : 'border-accent/20',
                   isSelected && 'bg-accent/10',
                 )}
               >
                 <span className={cn('flex w-[76px] shrink-0 justify-end', cell.kind === 'subtool' && 'pl-3')}>
-                  <span className={cn('inline-flex h-[19px] items-center rounded border px-1.5 text-[10px] font-semibold uppercase tracking-wide', cell.isError ? 'border-destructive/30 bg-destructive/10 text-destructive' : KIND_TAG[cell.kind])}>
+                  <span className={cn('inline-flex h-[19px] items-center rounded border px-1.5 text-caption font-semibold uppercase tracking-wide', cell.isError ? 'border-destructive/30 bg-destructive/10 text-destructive' : KIND_TAG[cell.kind])}>
                     {kindLabel(cell.kind)}
                   </span>
                 </span>
-                <span className={cn('flex min-w-0 flex-1 items-center truncate', isTool && 'font-mono text-[12px]', cell.kind === 'subtool' && 'pl-6')}>
+                <span className={cn('flex min-w-0 flex-1 items-center truncate', isTool && 'font-mono text-small', cell.kind === 'subtool' && 'pl-6')}>
                   <span className="truncate text-foreground">{cell.text || <span className="text-muted-foreground">{t('trajectory.noContent')}</span>}</span>
                   {isTool && (
                     <>
@@ -603,7 +603,7 @@ function TrajectoryLedger({ rows, selected, onSelect, onToggleTurn }: LedgerProp
                     </>
                   )}
                 </span>
-                <span className="w-20 shrink-0 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
+                <span className="w-20 shrink-0 text-right font-mono text-caption tabular-nums text-muted-foreground">
                   {cell.timeSeconds === null ? '—' : `${cell.durationEstimated ? '≈' : ''}${t('trajectory.unit.ms', { value: formatDurationMillis(cell.timeSeconds * 1000) })}`}
                 </span>
               </div>
@@ -624,7 +624,7 @@ function TrajectoryInspector({ cell, message, onClose, onOpenMessage }: { cell: 
     [cell.kind, message],
   )
   return (
-    <section aria-label={t('trajectory.details')} className="flex max-h-[40%] min-h-[120px] shrink-0 flex-col border-t border-border/60 bg-foreground/[0.02]">
+    <section aria-label={t('trajectory.details')} className="flex max-h-[40%] min-h-[120px] shrink-0 flex-col border-t border-border/60 bg-surface-hover">
       <header className="flex h-8 shrink-0 items-center gap-2 px-3 text-xs">
         <span className="font-semibold uppercase">{kindLabel(cell.kind)}</span>
         {cell.toolName && <span className="font-mono">{cell.toolName}</span>}
@@ -638,8 +638,8 @@ function TrajectoryInspector({ cell, message, onClose, onOpenMessage }: { cell: 
             {t('trajectory.openInChat')}
           </button>
         )}
-        <button type="button" aria-label={t('trajectory.closeDetails')} className={cn('rounded-full p-1 hover:bg-foreground/10', !onOpenMessage && 'ml-auto')} onClick={onClose}>
-          <X className="h-3 w-3" />
+        <button type="button" aria-label={t('trajectory.closeDetails')} className={cn('rounded-full p-1 hover:bg-surface-pressed', !onOpenMessage && 'ml-auto')} onClick={onClose}>
+          <X className="icon-status" />
         </button>
       </header>
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-auto px-3 pb-3 md:grid-cols-2">
@@ -654,8 +654,8 @@ function DetailBlock({ label, text, error }: { label: string; text: string; erro
   const { t } = useTranslation()
   return (
     <div className="min-w-0">
-      <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
-      <pre className={cn('max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-foreground/[0.04] p-2 font-mono text-[11px]', error && 'text-destructive')}>
+      <div className="mb-1 text-caption font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <pre className={cn('max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-surface-hover p-2 font-mono text-caption', error && 'text-destructive')}>
         {text.length > 20000 ? `${text.slice(0, 20000)}…` : text || t('trajectory.noOutput')}
       </pre>
     </div>
