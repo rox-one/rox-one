@@ -363,6 +363,7 @@ class LabHost:
                                 "returncode",
                                 "error",
                                 "timed_out",
+                                "displays",
                             )
                             if k in result
                         }
@@ -476,6 +477,7 @@ class LabHost:
                                     "error",
                                     "timed_out",
                                     "duration_ms",
+                                    "displays",
                                 )
                             }
                             for cell in result.get("cells") or []
@@ -680,6 +682,10 @@ class LabHost:
                     "cell_type": cell.get("cell_type"),
                     "source": source_text(cell),
                     "outputs": cell.get("outputs") or [],
+                    # Wave 11: raw nbformat ``execution_count``, so Electron main
+                    # can seed the ``[N]`` run counter on open (``None`` for a
+                    # cell that never ran, or a malformed value).
+                    "execution_count": cell.get("execution_count"),
                 }
             )
         return {

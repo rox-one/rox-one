@@ -59,6 +59,8 @@ export interface UseSessionSearchOptions {
   groupingMode?: ListGroupingMode
   /** sessionId → family bucket representative; keeps session families in one collapse bucket */
   bucketRepresentatives?: Map<string, SessionMeta>
+  /** sessionId → chat folder id (see computeCollapsedPagination). */
+  folderAssignments?: Readonly<Record<string, string>>
 }
 
 export interface UseSessionSearchResult {
@@ -120,6 +122,9 @@ function groupSessionsByDate(sessions: SessionMeta[]): DateGroup[] {
     }))
 }
 
+/** Group-key prefix for chat-folder buckets in the session list. */
+export const FOLDER_GROUP_PREFIX = 'folder:'
+
 function getCollapseGroupKey(item: SessionMeta, groupingMode?: ListGroupingMode): string {
   return getListGroupKey(item, groupingMode ?? 'date')
 }
@@ -142,9 +147,20 @@ export function computeCollapsedPagination(
    * collapsed bucket hides/shows the family together — see session-families.ts.
    */
   bucketRepresentatives?: Map<string, SessionMeta>,
+  /**
+   * sessionId → chat folder id. Foldered chats (keyed by their family
+   * representative) bucket under `folder:<id>` regardless of grouping mode, so
+   * collapsing a folder hides exactly the chats rendered inside it.
+   */
+  folderAssignments?: Readonly<Record<string, string>>,
 ): CollapsedPaginationResult {
-  const bucketKeyOf = (item: SessionMeta): string =>
-    getCollapseGroupKey(bucketRepresentatives?.get(item.id) ?? item, groupingMode)
+  const bucketKeyOf = (item: SessionMeta): string => {
+    const rep = bucketRepresentatives?.get(item.id) ?? item
+    const folderId = folderAssignments && Object.prototype.hasOwnProperty.call(folderAssignments, rep.id)
+      ? folderAssignments[rep.id]
+      : undefined
+    return folderId ? `${FOLDER_GROUP_PREFIX}${folderId}` : getCollapseGroupKey(rep, groupingMode)
+  }
 
   // `date` grouping is inherently chronological, so a single global window
   // (newest-first, bounded by the caller-provided `displayLimit`) is correct.
@@ -332,6 +348,7 @@ export function useSessionSearch({
   collapsedGroups,
   groupingMode,
   bucketRepresentatives,
+  folderAssignments,
 }: UseSessionSearchOptions): UseSessionSearchResult {
 
   const [contentSearchResults, setContentSearchResults] = useState<Map<string, ContentSearchResult>>(new Map())
@@ -518,8 +535,9 @@ export function useSessionSearch({
       collapsedGroups,
       groupingMode,
       bucketRepresentatives,
+      folderAssignments,
     )
-  }, [searchFilteredItems, collapsedGroups, groupingMode, bucketRepresentatives])
+  }, [searchFilteredItems, collapsedGroups, groupingMode, bucketRepresentatives, folderAssignments])
 
   // --- Derived render data ---
 

@@ -7,20 +7,14 @@
 .onb-start,
 .onb-logo {
   --onb-background-1: radial-gradient(1100px 520px at 50% -12%, oklch(0.36 0.09 285 / 0.38), transparent 62%), radial-gradient(800px 480px at 105% 108%, oklch(0.40 0.09 215 / 0.18), transparent 60%), radial-gradient(700px 420px at -8% 100%, oklch(0.38 0.10 320 / 0.12), transparent 60%), var(--onb-bg);
+  --onb-primary-fg: oklch(0.16 0.01 270);
+  --onb-primary-fg-disabled: oklch(0.16 0.01 270 / 0.55);
   --onb-text-1: calc(0.75rem - 1pt);
   --onb-text-2: calc(0.875rem - 1pt);
-  --onb-shadow-1: inset 0 1px 0 oklch(1 0 0 / 0.04), 0 1px 2px oklch(0 0 0 / 0.35);
-  --onb-shadow-2: 0 0 0 3px color-mix(in oklab, var(--onb-glow-a) 22%, transparent), inset 0 1px 0 oklch(1 0 0 / 0.05);
   --onb-shadow-3: inset 0 1px 0 oklch(1 0 0 / 0.05), 0 6px 18px -10px oklch(0 0 0 / 0.6);
   --onb-radius-1: 14px;
   --onb-shadow-4: inset 0 1px 0 oklch(1 0 0 / 0.05), 0 10px 30px -18px oklch(0 0 0 / 0.7);
   --onb-color-1: oklch(0.99 0 0);
-  --onb-shadow-5: inset 0 1px 0 oklch(1 0 0 / 0.25), 0 8px 24px -8px oklch(0.55 0.19 280 / 0.65), 0 0 0 1px oklch(0 0 0 / 0.3);
-  --onb-shadow-6: inset 0 1px 0 oklch(1 0 0 / 0.3), 0 10px 30px -8px oklch(0.6 0.19 280 / 0.8), 0 0 0 1px oklch(0 0 0 / 0.3);
-  --onb-transform-1: translateY(1px) scale(0.995);
-  --onb-color-2: oklch(1 0 0 / 0.55);
-  --onb-shadow-7: inset 0 1px 0 oklch(1 0 0 / 0.08);
-  --onb-shadow-8: 0 0 0 1.5px oklch(1 0 0 / 0.55), 0 2px 8px oklch(0 0 0 / 0.45);
   --onb-color-3: color-mix(in oklab, var(--foreground) 82%, transparent);
   --onb-shadow-9: 0 0 18px -6px color-mix(in oklab, var(--onb-glow-a) 70%, transparent);
   --onb-width-1: 88px;
@@ -139,20 +133,20 @@
   color: var(--onb-helper);
 }
 
-/* Glass inputs */
+/* Flat Arc Glass inputs: no gradient, no inset/bevel shadow. */
 .onb-start .onb-input {
   height: 2.5rem;
   border-radius: var(--radius-full);
   border: 1px solid var(--onb-line);
-  background: linear-gradient(180deg, oklch(1 0 0 / 0.045), oklch(1 0 0 / 0.02));
-  box-shadow: var(--onb-shadow-1);
+  background: var(--onb-surface);
+  box-shadow: none;
   padding-inline: 1rem;
-  transition: border-color var(--motion-fast, 120ms) ease, box-shadow var(--motion-fast, 120ms) ease;
+  transition: border-color var(--motion-fast, 120ms) ease;
 }
 .onb-start .onb-input:focus-visible {
   outline: none;
-  border-color: color-mix(in oklab, var(--onb-glow-a) 60%, transparent);
-  box-shadow: var(--onb-shadow-2);
+  border-color: var(--onb-line-strong);
+  box-shadow: none;
 }
 .onb-start .onb-input[aria-invalid="true"] {
   border-color: color-mix(in oklab, var(--destructive) 55%, transparent);
@@ -177,45 +171,26 @@
   box-shadow: var(--onb-shadow-4);
 }
 
-/* Primary «Начать»: luminous gradient pill with the eye mark at the start */
+/* Primary «Начать»: solid white pill, dark text, flat. */
 .onb-start .onb-primary {
-  position: relative;
-  isolation: isolate;
-  height: 2.75rem;
+  height: 2.5rem;
   max-width: none;
   border-radius: var(--radius-full);
-  border: 1px solid oklch(1 0 0 / 0.18);
-  color: var(--onb-color-1);
+  border: 1px solid transparent;
+  color: var(--onb-primary-fg);
   font-weight: 600;
-  letter-spacing: 0.01em;
-  background:
-    linear-gradient(180deg, oklch(1 0 0 / 0.16), transparent 55%),
-    linear-gradient(100deg, oklch(0.50 0.18 290), oklch(0.53 0.16 268) 55%, oklch(0.56 0.13 240));
-  box-shadow:
-    var(--onb-shadow-5);
-  padding-inline: 0.375rem 1.25rem;
-  transition: transform var(--motion-fast, 120ms) ease, box-shadow var(--motion-base, 180ms) ease, filter var(--motion-base, 180ms) ease;
+  background: oklch(0.98 0 0);
+  box-shadow: none;
+  transition: background-color var(--motion-fast, 120ms) ease;
 }
-.onb-start .onb-primary:hover:not(:disabled) {
-  filter: brightness(1.08);
-  box-shadow:
-    var(--onb-shadow-6);
-}
-.onb-start .onb-primary:active:not(:disabled) { transform: var(--onb-transform-1); }
+.onb-start .onb-primary:hover:not(:disabled) { background: oklch(0.92 0 0); }
 .onb-start .onb-primary:disabled {
-  color: var(--onb-color-2);
-  background: linear-gradient(100deg, oklch(0.32 0.05 285), oklch(0.30 0.04 240));
-  box-shadow: var(--onb-shadow-7);
+  color: var(--onb-primary-fg-disabled);
+  background: oklch(0.98 0 0 / 0.45);
 }
-.onb-start .onb-primary .onb-eye {
-  width: 2rem;
-  height: 2rem;
-  box-shadow: var(--onb-shadow-8);
-}
-.onb-start .onb-primary:disabled .onb-eye { filter: grayscale(1) brightness(0.7); }
 
 .onb-start .onb-secondary {
-  height: 2.25rem;
+  height: 2.5rem;
   border-radius: var(--radius-full);
   border: 1px solid var(--onb-line);
   background: oklch(1 0 0 / 0.025);
@@ -516,7 +491,6 @@ html[data-render-profile="performance"] .onb-collapse { transition: none; }
   filter: var(--onb-filter-2);
   opacity: 0.55;
 }
-.onb-start .onb-tile[data-tone="sky"]::before { background: radial-gradient(closest-side, color-mix(in oklab, var(--onb-sel) 70%, transparent), transparent); }
 .onb-start .onb-tile[data-tone="violet"]::before { background: radial-gradient(closest-side, color-mix(in oklab, var(--onb-glow-a) 80%, transparent), transparent); }
 .onb-start .onb-tile { isolation: isolate; }
 

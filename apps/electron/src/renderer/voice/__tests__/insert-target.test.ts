@@ -64,8 +64,12 @@ describe('dictation insert target (#12)', () => {
 
 describe('status bar items (#7)', () => {
   it('keeps canonical order and drops unknown ids', () => {
-    expect(normalizeStatusBarItems(['version', 'bogus', 'sync'])).toEqual(['sync', 'version'])
-    expect(normalizeStatusBarItems(null).length).toBe(7)
+    // Legacy plain arrays predate sessions/tasks/model, which default on; notifications stays opt-in.
+    expect(normalizeStatusBarItems(['version', 'bogus', 'sync'])).toEqual(['sync', 'sessions', 'tasks', 'model', 'version'])
+    expect(normalizeStatusBarItems({ v: 2, items: ['version', 'bogus', 'sync'] })).toEqual(['sync', 'version'])
+    expect(normalizeStatusBarItems(null).length).toBe(10)
+    expect(normalizeStatusBarItems(null)).not.toContain('notifications')
+    // A user who turned every item off keeps an empty bar.
     expect(normalizeStatusBarItems([])).toEqual([])
   })
 })
