@@ -28,6 +28,7 @@ import { ClipboardQuickLook } from './ClipboardQuickLook'
 import { ClipboardHistorySettings } from './ClipboardHistorySettings'
 import { ClipboardTagBar, ClipboardTagEditor } from './ClipboardTagBar'
 import { useClipboardHistory } from './use-clipboard-history'
+import { useClipboardSidebar } from './use-clipboard-sidebar'
 
 const INPUT = 'h-7 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-sm outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 const KINDS = ['all', 'text', 'image'] as const
@@ -47,6 +48,9 @@ export function ClipboardHistoryPanel() {
   const [tagsEntry, setTagsEntry] = React.useState<ClipEntrySummary | null>(null)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
   const [clearOpen, setClearOpen] = React.useState(false)
+  const openSettings = React.useCallback(() => setSettingsOpen(true), [])
+  const openClear = React.useCallback(() => setClearOpen(true), [])
+  useClipboardSidebar(h, { openSettings, openClear })
   const [deleteTargetId, setDeleteTargetId] = React.useState<number | null>(null)
 
   const overlayOpen = h.quickLookId !== null || settingsOpen || clearOpen || tagsEntry !== null || deleteTargetId !== null
