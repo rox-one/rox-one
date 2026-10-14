@@ -187,7 +187,6 @@ export function ProfileStrip({
   )
 
   if (variant === 'rail') {
-    const initial = Array.from(displayName)[0]?.toUpperCase() ?? '?'
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -208,13 +207,13 @@ export function ProfileStrip({
             <span id={detailsId} className="sr-only">{accountDetails}</span>
             <Avatar className="size-7 shrink-0 rounded-full">
               {data.avatar ? <AvatarImage src={data.avatar} alt="" /> : null}
-              <AvatarFallback delayMs={0} className="bg-[var(--state-selected)] text-caption font-semibold text-text-primary">
-                {initial}
+              <AvatarFallback delayMs={0} className="bg-surface-pressed text-text-primary">
+                {defaultAvatarFallback ?? <RoxInkAvatarArt />}
               </AvatarFallback>
             </Avatar>
           </button>
         </PopoverTrigger>
-        <PopoverContent side="right" align="end" sideOffset={8} className="w-64 p-1" data-rail-profile-menu="">
+        <PopoverContent side="right" align="end" sideOffset={8} className="w-60 p-1" data-rail-profile-menu="">
           {popover}
         </PopoverContent>
       </Popover>
