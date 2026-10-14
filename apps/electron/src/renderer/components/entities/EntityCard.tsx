@@ -142,14 +142,14 @@ export function EntityPreviewBody({ entityRef, preview, loading, variant, onOpen
       <div className="flex items-center gap-1 pt-1" role="group" aria-label={t('entities.ui.card.actions')}>
         <button
           type="button"
-          className={cn('rounded-[6px] px-2 py-1 text-sm text-accent hover:bg-foreground/[0.05]', MOTION_FAST, FOCUS_RING)}
+          className={cn('rounded-sm px-2 py-1 text-sm text-accent hover:bg-foreground/[0.05]', MOTION_FAST, FOCUS_RING)}
           onClick={(event) => onOpen?.(entityRef, event)}
         >
           {t('entities.ui.card.open')}
         </button>
         <button
           type="button"
-          className={cn('inline-flex items-center gap-1 rounded-[6px] px-2 py-1 text-sm text-text-secondary hover:bg-foreground/[0.05]', MOTION_FAST, FOCUS_RING)}
+          className={cn('inline-flex items-center gap-1 rounded-sm px-2 py-1 text-sm text-text-secondary hover:bg-foreground/[0.05]', MOTION_FAST, FOCUS_RING)}
           onClick={() => copy(entityDeepLink(entityRef))}
         >
           <Link2 aria-hidden="true" className="size-3.5" />
@@ -172,7 +172,7 @@ export function EntityCard({ variant = 'card', className, ...props }: EntityCard
   const kind = entityKindLabel(t, props.entityRef.kind, props.preview?.kindLabel)
   return (
     <section
-      className={cn('max-w-[420px] rounded-[8px] border border-border bg-background p-3', className)}
+      className={cn('max-w-[420px] rounded-md border border-border bg-background p-3', className)}
       data-entity-card={variant}
       data-entity-restricted={restricted ? 'true' : undefined}
       aria-label={variant === 'embed' ? t('entities.ui.card.embedLabel', { kind }) : kind}

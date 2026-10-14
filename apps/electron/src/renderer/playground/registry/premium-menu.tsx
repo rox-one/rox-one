@@ -37,7 +37,7 @@ function PremiumMenuPlayground({
       <button
         ref={anchorRef}
         type="button"
-        className="rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm"
+        className="rounded-md border border-border bg-background px-3 py-1.5 text-sm"
         onClick={() => setOpen((value) => !value)}
       >
         {selectedId ?? 'open menu'}
