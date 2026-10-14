@@ -28,13 +28,27 @@ export interface NotificationPage {
   nextCursor?: string
 }
 
+/**
+ * Filter for a mark-all-read sweep. An absent field is "no constraint"; the
+ * two compose with AND. Mirrors the DDL (`506-notify.sql`): `kind` narrows on
+ * `notification.kind`, `before` on `created_at` (served by
+ * `notification_inbox (principal_id, created_at DESC)`).
+ */
+export interface NotificationMarkAllFilter {
+  /** Legacy chip filter: mark only that kind (the Notifications tab chips). */
+  kind?: NotificationKind | undefined
+  /** Canonical cut-off: mark only notifications created at or before this instant. */
+  before?: string | undefined
+}
+
 export interface NotificationStore {
   /** Insert records; an existing `notificationId` is left alone (idempotent fan-out). */
   insert(records: readonly NotificationRow[]): Promise<readonly NotificationRow[]>
   list(workspaceId: string, principalId: string, options: NotificationPageOptions): Promise<NotificationPage>
   /** Mark the named rows read; returns the ids that changed. */
   markRead(workspaceId: string, principalId: string, ids: readonly string[], readAt: string): Promise<string[]>
-  markAllRead(workspaceId: string, principalId: string, kind: NotificationKind | undefined, readAt: string): Promise<string[]>
+  /** Mark the unread rows matching `filter` read; returns the ids that changed. */
+  markAllRead(workspaceId: string, principalId: string, filter: NotificationMarkAllFilter, readAt: string): Promise<string[]>
   unreadCount(workspaceId: string, principalId: string): Promise<number>
   prefs(workspaceId: string, principalId: string): Promise<readonly NotificationPrefRow[]>
   savePrefs(rows: readonly NotificationPrefRow[]): Promise<void>
@@ -90,11 +104,15 @@ export class InMemoryNotificationStore implements NotificationStore {
     return changed
   }
 
-  async markAllRead(workspaceId: string, principalId: string, kind: NotificationKind | undefined, readAt: string): Promise<string[]> {
+  async markAllRead(workspaceId: string, principalId: string, filter: NotificationMarkAllFilter, readAt: string): Promise<string[]> {
+    const before = filter.before === undefined ? undefined : Date.parse(filter.before)
+    if (before !== undefined && Number.isNaN(before)) throw new Error('markAllRead: before must be an ISO-8601 instant')
     const changed: string[] = []
     for (const row of this.rows.values()) {
       if (row.workspaceId !== workspaceId || row.principalId !== principalId || row.readAt !== undefined) continue
-      if (kind !== undefined && row.kind !== kind) continue
+      if (filter.kind !== undefined && row.kind !== filter.kind) continue
+      // `read_at IS NULL AND created_at <= $before` — the 506-notify.sql predicate.
+      if (before !== undefined && Date.parse(row.createdAt) > before) continue
       this.rows.set(row.notificationId, { ...row, readAt })
       changed.push(row.notificationId)
     }

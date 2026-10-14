@@ -214,6 +214,13 @@ export const actions = {
     // A modifier chord types nothing, so it also works from the composer.
     when: '!menuOpen',
   },
+  'view.toggleTerminal': {
+    id: 'view.toggleTerminal',
+    labelKey: 'shortcuts.action.toggleTerminal',
+    description: 'Show or hide the bottom terminal dock',
+    defaultHotkey: 'mod+j',
+    category: 'View',
+  },
   'view.toggleFocusMode': {
     id: 'view.toggleFocusMode',
     labelKey: 'shortcuts.action.toggleFocusMode',

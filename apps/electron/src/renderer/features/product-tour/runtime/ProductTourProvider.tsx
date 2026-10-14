@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { focusedPanelIdAtom, focusedPanelRouteAtom } from '@/atoms/panel-stack'
@@ -9,9 +9,12 @@ import * as storage from '@/lib/local-storage'
 import type { CapabilityId, CapabilitySnapshot, EngineSnapshot, Phase, RuntimeState, SafeReason, TourBinding, TourDefinition, TourEffect, TourId, TourInput, TourProgress, TourScope, TourTargetRegistration, TransitionFunction, WindowLease } from '../contracts'
 import { DYNAMIC_TOUR_ID_PATTERN } from '../contracts'
 import { initialRuntimeState } from '../core/initial-state'
-import { createTargetRegistry, SpotlightOverlay, TourErrorBoundary, TourVignette } from '../ui'
-import { createProgressRepository, createLeaseRepository, createLearningProfileRepository, createLearningScopeKey, LearningLeaseLostError, type LearningPreferences } from '../persistence'
-import { createLearningDiagnosticsRepository, type LearningEventName } from '../analytics'
+import { TourErrorBoundary } from '../ui/TourErrorBoundary'
+import { createTargetRegistry } from '../ui/target-registry'
+import type { LearningPreferences } from '../persistence/profile'
+import type { LearningEventName } from '../analytics/events'
+import { createLearningScopeKey } from '../persistence/scope-key'
+import { LearningLeaseLostError } from '../persistence/errors'
 import { clearChatObservations } from '../adapters/chat'
 import { TourRuntimeContext, TourPanelScope, type TourRuntimePort } from './hooks'
 import { subscribeTourSignals } from './bridge'
@@ -24,10 +27,11 @@ const READY = { state: 'ready' } as const
 const UNAVAILABLE = { state: 'unavailable', reason: 'api-unavailable' } as const
 
 /**
- * Catalogue (96 KB) + engine + dynamic admission stay behind import(). The host
- * wraps the app and cannot itself be React.lazy — swapping the wrapper remounts
- * the shell. import() still puts those modules in an async chunk, so they leave
- * index.html's preloaded graph even when the feature flag is already on.
+ * Catalogue (96 KB) + engine + dynamic admission + overlay + IndexedDB
+ * persistence stay behind import(). The host wraps the app and cannot itself
+ * be React.lazy — swapping the wrapper remounts the shell. import() still puts
+ * those modules in an async chunk, so they leave index.html's preloaded graph
+ * even when the feature flag is already on.
  */
 type TourEngine = {
   readonly transition: TransitionFunction
@@ -37,6 +41,10 @@ type TourEngine = {
 }
 
 function loadTourEngine(): Promise<TourEngine> {
+  // Overlay + storage chunks start with the engine so the first presenting frame is not empty.
+  void import('../ui/presentation')
+  void import('../persistence')
+  void import('../analytics')
   return Promise.all([
     import('../core'),
     import('../catalogue/product-tour-catalogue'),
@@ -48,6 +56,24 @@ function loadTourEngine(): Promise<TourEngine> {
     subscribeDynamicTours: dyn.subscribeDynamicTours,
   }))
 }
+
+function loadTourStorage() {
+  return Promise.all([
+    import('../persistence'),
+    import('../analytics'),
+  ])
+}
+
+type TourStorage = {
+  progress: ReturnType<(typeof import('../persistence'))['createProgressRepository']>
+  lease: ReturnType<(typeof import('../persistence'))['createLeaseRepository']>
+  profile: ReturnType<(typeof import('../persistence'))['createLearningProfileRepository']>
+  diagnostics: ReturnType<(typeof import('../analytics'))['createLearningDiagnosticsRepository']>
+}
+
+const TourPresentation = lazy(() =>
+  import('../ui/presentation').then((module) => ({ default: module.TourPresentation })),
+)
 export interface LearningController {
   enabled: boolean
   ready: boolean
@@ -130,9 +156,24 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const [capRevision, setCapRevision] = useState(0)
   const [dynamicRevision, setDynamicRevision] = useState(0)
   const capabilityRecords = useRef(new Map<string, { token: object; value: CapabilitySnapshot[CapabilityId]; projects?: Map<object, NonNullable<CapabilitySnapshot[CapabilityId]>> }>())
-  const repositories = useMemo(() => enabled ? {
-    progress: createProgressRepository(), lease: createLeaseRepository({ allowMemoryOnlyLease: true }), profile: createLearningProfileRepository(), diagnostics: createLearningDiagnosticsRepository(),
-  } : null, [enabled])
+  const [repositories, setRepositories] = useState<TourStorage | null>(null)
+  useEffect(() => {
+    if (!enabled) {
+      setRepositories(null)
+      return
+    }
+    let cancelled = false
+    void loadTourStorage().then(([persistence, analytics]) => {
+      if (cancelled) return
+      setRepositories({
+        progress: persistence.createProgressRepository(),
+        lease: persistence.createLeaseRepository({ allowMemoryOnlyLease: true }),
+        profile: persistence.createLearningProfileRepository(),
+        diagnostics: analytics.createLearningDiagnosticsRepository(),
+      })
+    })
+    return () => { cancelled = true }
+  }, [enabled])
   const profileRef = useRef<string | null>(null); profileRef.current = profileId
   const leaseRef = useRef<WindowLease | null>(null)
   const progressWrites = useRef(new Set<Promise<unknown>>())
@@ -597,10 +638,11 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const presentation = <>
       {enabled && welcomeSessionId && preferences.invitationsEnabled && !active && !progress['OBT-01'] && context.sessionId === welcomeSessionId && modal.getSnapshot().length === 0 && <aside data-testid="learning-welcome-invitation" className="fixed bottom-4 right-4 z-40 rounded-lg border bg-background p-3 shadow-modal-small"><button type="button" onClick={() => void start('OBT-01')}>{t('productTour.welcomeInvitation')}</button></aside>}
       <TourErrorBoundary key={enabled ? state.attempt?.binding.runToken ?? 'enabled' : 'disabled'} onError={() => pause('operation-failed')}>
-        {active && target && step && state.attempt && (state.phase === 'presenting' || state.phase === 'waiting-action') && <>
-          {demo && <TourVignette />}
-          <SpotlightOverlay target={target} step={step} binding={state.attempt.binding} pulse={demo} progress={demo && stepCount > 0 ? { current: stepIndex, total: stepCount } : undefined} onPause={pause} onNext={() => input('ACK')} onBack={() => input('BACK')} onSkip={() => input('SKIP')} onDismiss={() => void dismiss()} canNext={canNext} />
-        </>}
+        {active && target && step && state.attempt && (state.phase === 'presenting' || state.phase === 'waiting-action') && (
+          <Suspense fallback={null}>
+            <TourPresentation target={target} step={step} binding={state.attempt.binding} demo={demo} pulse={demo} progress={demo && stepCount > 0 ? { current: stepIndex, total: stepCount } : undefined} onPause={pause} onNext={() => input('ACK')} onBack={() => input('BACK')} onSkip={() => input('SKIP')} onDismiss={() => void dismiss()} canNext={canNext} />
+          </Suspense>
+        )}
       </TourErrorBoundary>
       {enabled && (state.phase === 'paused' || state.phase === 'blocked' || pendingTour || launchReason) && <aside data-testid="product-tour-status" role="status" className="fixed bottom-4 right-4 z-40 max-w-xs rounded-lg border bg-background p-3 text-sm shadow-modal-small">
         <p>{t(pendingTour ? 'productTour.chooseEntity' : `productTour.reasons.${launchReason ?? state.attempt?.reason ?? 'user-paused'}`)}</p>

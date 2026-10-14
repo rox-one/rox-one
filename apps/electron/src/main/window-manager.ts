@@ -6,7 +6,8 @@ import { release } from 'os'
 import { fileURLToPath } from 'url'
 import { getWorkspaceByNameOrId, getZenShellMaterialPreference, isZenShellEnabled } from '@rox/shared/config'
 import { classifyExternalUrl, formatBlockedUrlError } from '@rox/shared/utils/url-safety'
-import { RPC_CHANNELS, type WindowCloseRequestSource } from '../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
+import type { WindowCloseRequestSource } from '../shared/types'
 import { getExtensionHostManager } from './extension-host-manager'
 import { applyStartupActivations } from './extension-host/startup'
 import type { SavedWindow } from './window-state'
@@ -677,6 +678,16 @@ export class WindowManager {
     } catch (error) {
       windowLog.warn(`Failed to ${mini ? 'enter' : 'exit'} mini session route:`, error)
     }
+  }
+
+  /** Tray «Rox Mini»: toggle the compact window for the last active window. */
+  toggleMiniWindow(): boolean {
+    const window = this.getLastActiveWindow()
+    if (!window || window.isDestroyed()) return false
+    const id = window.webContents.id
+    if (this.miniWindows.has(id)) this.exitMiniWindow(window, id)
+    else this.enterMiniWindow(window, id)
+    return true
   }
 
   private enterMiniWindow(window: BrowserWindow, webContentsId: number): void {

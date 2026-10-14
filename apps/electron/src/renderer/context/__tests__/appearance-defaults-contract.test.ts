@@ -3,9 +3,9 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 /**
- * Appearance defaults contract (2026-10-14): Rox Ink (`rox-ink`, grayscale
- * sumi-e, light + dark) is the out-of-the-box theme and follows the system
- * mode. Rox Engineering stays an opt-in preset. The app does not pin a theme,
+ * Appearance defaults contract (2026-10-14): Arc Glass (`arc-glass`) is the
+ * out-of-the-box theme for new installs; Rox Ink (`rox-ink`, grayscale sumi-e)
+ * stays the migration target for existing installs. Rox Engineering stays an opt-in preset. The app does not pin a theme,
  * Settings → Внешний вид offers the color-theme picker, and installs on the
  * old defaults (including the v1 Rox Engineering + deep-glass seed) migrate
  * once via `appearance-defaults-v2-ink`.
@@ -21,8 +21,12 @@ const appearancePage = readFileSync(
 )
 
 describe('appearance defaults', () => {
-  it('ships Rox Ink as the default theme id', () => {
-    expect(themeConfig).toContain("export const ROX_THEME_ID = 'rox-ink'")
+  it('ships Arc Glass as the default theme id for new installs', () => {
+    expect(themeConfig).toContain("export const ROX_THEME_ID = 'arc-glass'")
+    // Existing installs migrated to Rox Ink keep it: the one-shot migrations
+    // still target the previous default.
+    expect(themeConfig).toContain("export const ROX_INK_THEME_ID = 'rox-ink'")
+    expect(storageConfig).toContain('config.colorTheme = ROX_INK_THEME_ID;')
   })
 
   it('no longer pins a fixed theme in the app entry points', () => {
