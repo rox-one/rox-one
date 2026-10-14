@@ -358,6 +358,41 @@ describe('mark-read', () => {
     expect(rows.find(row => row.kind === 'check_in_submitted')?.readAt).toBeUndefined()
   })
 
+  // Defect A: the host used to ignore `before` and mark everything read, so a
+  // cut-off that should spare newer rows silently over-reached. The contract
+  // (`NotifyCommandHost.markAllRead`) forbids exactly that.
+  test('mark_all_read with a before cut-off leaves newer notifications unread', async () => {
+    const f = await setup()
+    await f.notifications.insert([
+      { notificationId: 'n-old', workspaceId: f.workspaceId, principalId: REVIEWER, kind: 'assignment', payload: {}, schemaVersion: 1, createdAt: '2026-10-01T00:00:00.000Z' },
+      { notificationId: 'n-new', workspaceId: f.workspaceId, principalId: REVIEWER, kind: 'assignment', payload: {}, schemaVersion: 1, createdAt: '2026-10-09T00:00:00.000Z' },
+    ])
+    f.state.actor = actor([f.workspaceId], REVIEWER)
+    expect(receipt(await f.post(envelope('notifications.mark_all_read', { before: '2026-10-05T00:00:00.000Z' }))))
+      .toMatchObject({ status: 'applied', result: { updated: 1 } })
+    const rows = received(f, REVIEWER)
+    expect(rows.find(row => row.notificationId === 'n-old')?.readAt).toBeDefined()
+    expect(rows.find(row => row.notificationId === 'n-new')?.readAt).toBeUndefined()
+    // The unread count keeps the newer row, so the Inbox badge is honest.
+    expect(notificationListResultSchema.parse((await f.get('')).body).unread).toBe(1)
+  })
+
+  test('mark_all_read composes a kind filter with a before cut-off', async () => {
+    const f = await setup()
+    await f.notifications.insert([
+      { notificationId: 'a-old', workspaceId: f.workspaceId, principalId: REVIEWER, kind: 'assignment', payload: {}, schemaVersion: 1, createdAt: '2026-10-01T00:00:00.000Z' },
+      { notificationId: 'a-new', workspaceId: f.workspaceId, principalId: REVIEWER, kind: 'assignment', payload: {}, schemaVersion: 1, createdAt: '2026-10-09T00:00:00.000Z' },
+      { notificationId: 'c-old', workspaceId: f.workspaceId, principalId: REVIEWER, kind: 'comment', payload: {}, schemaVersion: 1, createdAt: '2026-10-01T00:00:00.000Z' },
+    ])
+    f.state.actor = actor([f.workspaceId], REVIEWER)
+    expect(receipt(await f.post(envelope('notifications.mark_all_read', { kind: 'assignment', before: '2026-10-05T00:00:00.000Z' }))))
+      .toMatchObject({ status: 'applied', result: { updated: 1 } })
+    const rows = received(f, REVIEWER)
+    expect(rows.find(row => row.notificationId === 'a-old')?.readAt).toBeDefined()
+    expect(rows.find(row => row.notificationId === 'a-new')?.readAt).toBeUndefined()
+    expect(rows.find(row => row.notificationId === 'c-old')?.readAt).toBeUndefined()
+  })
+
   test('update_prefs stores a filter and rejects unknown kinds or channels', async () => {
     const f = await setup()
     expect(receipt(await f.post(envelope('notifications.update_prefs', { prefs: [{ kind: 'comment', enabled: false, channels: ['inbox'], batchMinutes: 30 }] }))))
@@ -370,6 +405,12 @@ describe('mark-read', () => {
       .toMatchObject({ status: 'rejected', error: { code: 'VALIDATION' } })
     expect(receipt(await f.post(envelope('notifications.update_prefs', { prefs: [{ kind: 'comment', batchMinutes: 5000 }] }))))
       .toMatchObject({ status: 'rejected', error: { code: 'VALIDATION' } })
+    // Defect E: a row carrying both axes is rejected, naming the mix — never
+    // routed by whichever key is tested first.
+    const ambiguous = receipt(await f.post(envelope('notifications.update_prefs', { prefs: [{ eventType: 'task.task_adding', channel: 'email', enabled: true, kind: 'comment' }] })))
+    expect(ambiguous).toMatchObject({ status: 'rejected', error: { code: 'VALIDATION' } })
+    expect(ambiguous.error?.message).toContain('eventType')
+    expect(ambiguous.error?.message).toContain('kind')
     // The service is defensive too, for callers that bypass the command schema.
     const dropped = await f.notify.service.updatePrefs(f.workspaceId, EDITOR, [{ kind: 'nope' as never, channels: ['email'] as never }])
     expect(dropped).toMatchObject({ updated: 0, prefs: [] })
