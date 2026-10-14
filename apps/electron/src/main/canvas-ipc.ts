@@ -121,6 +121,12 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
   const subscribers = new Map<string, Set<number>>()
   const forwarders = new Map<string, { doc: Y.Doc; handler: (u: Uint8Array, o: unknown) => void }>()
   const key = (ws: unknown, id: string) => `${registry.rootOf(ws)}|${id}`
+  /**
+   * "<key>|<renderer id>" → count of close calls seen. An open that is still
+   * awaiting the store when the same renderer closes the board must not
+   * subscribe afterwards (close/reopen race: the close was a no-op then).
+   */
+  const closeSeq = new Map<string, number>()
   /** Drop the forwarder and close the board once nobody has it open. */
   const releaseIfIdle = async (ws: unknown, id: string) => {
     const k = key(ws, id)
@@ -215,15 +221,27 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
     guard(event)
     const store = registry.get(ws)
     const bid = boardId(id)
+    const seqKey = `${key(ws, bid)}|${event.sender.id}`
+    const seq = closeSeq.get(seqKey) ?? 0
     await knownBoard(store, bid)
     const board = await store.openBoard(bid)
+    const state = Y.encodeStateAsUpdate(board.doc)
+    if ((closeSeq.get(seqKey) ?? 0) !== seq) {
+      // Closed by this renderer while opening: don't leak a subscription / keep the board open.
+      await releaseIfIdle(ws, bid)
+      return state
+    }
     ensureForwarding(ws, bid, board.doc)
     subscribe(ws, bid, event.sender)
-    return Y.encodeStateAsUpdate(board.doc)
+    return state
   })
   ipcMain.handle(CANVAS_IPC.close, async (event, ws: unknown, id: unknown) => {
     guard(event, { flag: false })
-    if (typeof ws === 'string' && typeof id === 'string' && isValidBoardId(id)) unsubscribe(ws, id, event.sender.id)
+    if (typeof ws === 'string' && typeof id === 'string' && isValidBoardId(id)) {
+      const seqKey = `${key(ws, id)}|${event.sender.id}`
+      closeSeq.set(seqKey, (closeSeq.get(seqKey) ?? 0) + 1)
+      unsubscribe(ws, id, event.sender.id)
+    }
     return { ok: true as const }
   })
   ipcMain.handle(CANVAS_IPC.apply, async (event, ws: unknown, id: unknown, update: unknown) => {

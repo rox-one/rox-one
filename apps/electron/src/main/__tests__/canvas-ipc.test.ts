@@ -71,4 +71,23 @@ describe('subscriber lifecycle (review 6 #8)', () => {
     // after release, no forwarding to stale renderers; apply needs a fresh open
     await expect(a.call(CANVAS_IPC.apply, s1, 'id-1', b.id, Y.encodeStateAsUpdate(d))).rejects.toThrow('CANVAS_NOT_OPEN')
   })
+  it('a close that lands while open is still pending does not leak a subscription (close/reopen race)', async () => {
+    const a = setup()
+    const s1 = fakeSender(1)
+    const b = await a.call(CANVAS_IPC.create, s1, 'ws', 'Board')
+    const store = a.registry.get('ws')
+    const closed: string[] = []
+    const orig = store.closeBoard.bind(store)
+    ;(store as any).closeBoard = (id: string) => { closed.push(id); return orig(id) }
+    const opening = a.call(CANVAS_IPC.open, s1, 'ws', b.id)
+    await a.call(CANVAS_IPC.close, s1, 'ws', b.id)
+    expect(await opening).toBeInstanceOf(Uint8Array)
+    expect(closed).toEqual([b.id])
+    const Y = await import('yjs')
+    const d = new Y.Doc(); d.getMap('x').set('k', 1)
+    await expect(a.call(CANVAS_IPC.apply, s1, 'ws', b.id, Y.encodeStateAsUpdate(d))).rejects.toThrow('CANVAS_NOT_OPEN')
+    // a reopen after the close subscribes normally
+    await a.call(CANVAS_IPC.open, s1, 'ws', b.id)
+    await expect(a.call(CANVAS_IPC.apply, s1, 'ws', b.id, Y.encodeStateAsUpdate(d))).resolves.toEqual({ ok: true })
+  })
 })
