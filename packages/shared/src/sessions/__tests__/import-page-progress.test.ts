@@ -4,7 +4,7 @@ import { createCoalescedProgress, type ForeignImportProgress } from '../import-p
 import type { ForeignDiscoverResult, ForeignIndexEntry } from '../import-types.ts'
 
 function entry(i: number): ForeignIndexEntry {
-  return { id: `e${i}`, kind: 'claude-code', sourcePath: `/tmp/${i}`, userTurns: 1 } as ForeignIndexEntry
+  return { id: `e${i}`, kind: 'claude', sourcePath: `/tmp/${i}`, userTurns: 1 } as ForeignIndexEntry
 }
 
 describe('pageForeignDiscover', () => {
