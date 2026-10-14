@@ -36,7 +36,11 @@ html[data-theme="arc-glass"] [data-glass-slot="composer"] {
 html[data-theme="arc-glass"] [data-glass-slot][data-glass-tone="accent"] {
   --glass-fill: var(--accent);
   --glass-fill-mix: 90%;
-  /* Cap the white sheen (hover included) so the --accent-foreground icon keeps AA. */
+  /* Opaque ink for the icon: the theme background with alpha forced to 1
+     (falls back to --canvas-opaque), so a translucent --canvas can't weaken it. */
+  --glass-accent-ink: rgb(from var(--background, var(--canvas-opaque)) r g b / 1);
+
+  /* Cap the white sheen (hover included) so the ink keeps AA. */
   --glass-specular-alpha: 4%;
 }
 

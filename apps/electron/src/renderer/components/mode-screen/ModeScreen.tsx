@@ -115,6 +115,7 @@ function FallbackModeScreenLayout({
   )
 }
 
+/** Screen-reader heading only: the shell's second-sidebar header already shows the screen title. */
 export function NavTitle({ children }: { children: React.ReactNode }) {
   const shown = useDedupedPanelTitle(children)
   if (shown == null) return null
