@@ -1,6 +1,6 @@
 import { useDomForFile } from '../../../primitives/__tests__/dom-env'
 import { describe, expect, it } from 'bun:test'
-import { Editor } from '@tiptap/core'
+import { Editor, Node } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
@@ -8,8 +8,14 @@ import { CodeFenceEnter, codeFenceLanguage } from '../CodeFenceEnter'
 
 useDomForFile()
 
+// A container that only accepts paragraphs, so the conversion must be refused.
+const ParagraphOnlyBox = Node.create({
+  name: 'paragraphOnlyBox', group: 'block', content: 'paragraph+',
+  parseHTML: () => [{ tag: 'div[data-box]' }], renderHTML: () => ['div', { 'data-box': '' }, 0],
+})
+
 function editorWith(content: object): Editor {
-  return new Editor({ extensions: [StarterKit, TaskList, TaskItem.configure({ nested: true }), CodeFenceEnter], content })
+  return new Editor({ extensions: [StarterKit, TaskList, TaskItem.configure({ nested: true }), ParagraphOnlyBox, CodeFenceEnter], content })
 }
 
 // A real keydown through ProseMirror's handlers. (commands.keyboardShortcut
@@ -69,5 +75,25 @@ describe('code fence on Enter', () => {
     pressEnterAtEnd(inCode)
     expect(inCode.getJSON().content![0]!.content![0]!.text).toBe('```\n')
     inCode.destroy()
+  })
+
+  it('is all-or-nothing: a refused conversion keeps the fence text and undoes as one step', () => {
+    const editor = editorWith(doc({ type: 'paragraphOnlyBox', content: [paragraph('```js')] }))
+    pressEnterAtEnd(editor)
+    const box = editor.getJSON().content![0]!
+    expect(box.type).toBe('paragraphOnlyBox')
+    expect(box.content![0]).toEqual(paragraph('```js'))
+    editor.destroy()
+
+    const converted = editorWith(doc({ type: 'taskList', content: [
+      { type: 'taskItem', attrs: { checked: false }, content: [paragraph('```ts')] },
+    ] }))
+    const before = converted.getJSON()
+    pressEnterAtEnd(converted)
+    expect(converted.getJSON().content![0]!.type).toBe('codeBlock')
+    converted.commands.undo()
+    // StarterKit's trailing-node paragraph is appended outside history; ignore it.
+    expect(converted.getJSON().content![0]).toEqual(before.content![0])
+    converted.destroy()
   })
 })
