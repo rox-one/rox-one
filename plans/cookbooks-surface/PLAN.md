@@ -67,3 +67,5 @@
 | 2026-10-14 | W10 merge PR #2050 | merge `2b18fe4f` | ✅ влито в main |
 | 2026-10-14 | W11 «Rich Output & Persistence» (PR #2073): display_data end-to-end (display/хвост/matplotlib), персист выводов + execution_count, CSP-iframe, транспорт-бюджеты; фиксы G3/G4 | `8321dc035` | ✅ |
 | 2026-10-14 | W11 merge PR #2073 | merge `cb707f2b` | ✅ влито в main |
+| 2026-10-15 | W12 «Rox R1 Max defaults» (PR #2093): общий ROX-ключ в клиенте (gen-rox-defaults + installRoxDefaults, CI-секрет), `api.rox.one/v1` в ядрах кукбуков (lab defaultEnv + credential-only redaction), вендор-ресинк; фикс G3 (P2 redaction, P3 доки) | `2d59d871f` | ✅ |
+| 2026-10-15 | W12 merge PR #2093 | merge `52d427a22` | ✅ влито в main |
