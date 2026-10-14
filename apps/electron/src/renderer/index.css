@@ -192,6 +192,16 @@ html[data-shell-style="zen"][data-scenic] [data-shell-role="content"] {
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 32px, black calc(100% - 32px), transparent 100%);
   }
 
+  /* WP5 sidebar: fade + footer divider only while more rows sit below the fold. */
+  .sidebar-scroll-fade[data-scroll-down="true"] {
+    mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 2rem), transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 2rem), transparent 100%);
+  }
+
+  [data-focus-zone="sidebar"]:has([data-sidebar-scroll][data-scroll-down="true"]) [data-sidebar-footer] {
+    border-top: 1px solid var(--border-subtle);
+  }
+
   .mask-fade-bottom {
     mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 32px), transparent 100%);
     -webkit-mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 32px), transparent 100%);

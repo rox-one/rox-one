@@ -78,7 +78,8 @@ import type { CollectionViewMode } from "./kanban/BoardListToggle"
 import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { type LinkItem, type SidebarItem as SidebarLinkItem } from "./LeftSidebar"
-import { PRIMARY_MODE_LINK_IDS, ShellSidebarNav } from "./ShellSidebarNav"
+import { ShellSidebarNav } from "./ShellSidebarNav"
+import { useScrollEdgeAttribute } from "@/hooks/useScrollEdgeAttribute"
 import { ShellLayoutMode } from './ShellLayoutMode'
 import { SuperEngineeringShellExtras } from './SuperEngineeringShellExtras'
 import { WorkspaceNavigator } from '@/components/workspace/WorkspaceNavigator'
@@ -586,15 +587,16 @@ function AppShellContent({
   const contextualSidebarKey = navState.navigator === 'screen' ? `screen:${navState.screen}` : navState.navigator
   const [applicationSectionsOpenFor, setApplicationSectionsOpenFor] = useState<string | null>(null)
   const pendingSidebarRevealId = React.useRef<string | null>(null)
-  const handleExpandNavigation = useCallback((link: LinkItem) => {
+  const handleExpandNavigation = useCallback((link: LinkItem, inMore: boolean) => {
     pendingSidebarRevealId.current = link.id
     setIsSidebarVisible(true)
-    // Only the «Разделы приложения» disclosure opens — and only for its own links —
-    // so the primary mode rail stays collapsed-by-default on expand.
-    setApplicationSectionsOpenFor(PRIMARY_MODE_LINK_IDS.includes(link.id) ? null : contextualSidebarKey)
+    // Only the «Ещё» disclosure opens — and only for its own links —
+    // so the primary group stays as is on expand (WP5 registry groups).
+    setApplicationSectionsOpenFor(inMore ? contextualSidebarKey : null)
   }, [contextualSidebarKey])
 
   const store = useStore()
+  const sidebarScrollRef = useScrollEdgeAttribute()
   useEffect(() => { store.set(activeWorkspaceContextAtom, activeWorkspaceId) }, [store, activeWorkspaceId])
   const toggleTool = async (tool: AuxiliaryTool) => {
     const generation = ++toolIntentGeneration.current
@@ -2747,6 +2749,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
           id: `nav:state:${state.id}`,
           title: t(`status.${state.id}`, state.label),
           label: String(sessionStatusCounts[state.id] || 0),
+          count: sessionStatusCounts[state.id] || 0,
           icon: state.icon,
           iconColor: state.resolvedColor,
           iconColorable: state.iconColorable,
@@ -3033,7 +3036,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
       onClick: () => handleSettingsClick(),
     },
     // --- A1: remaining primary mode entries (Главная / Лента / Входящие).
-    // Ordering of the primary rail is fixed by PRIMARY_MODE_LINK_IDS below.
+    // Ordering and grouping come from primary-nav.ts (WP5), not from this list.
     {
       id: "nav:home",
       title: t('workbench.mode.home'),
@@ -3156,8 +3159,15 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
               {/* Sidebar Top Section */}
               <div className="flex-1 flex flex-col min-h-0">
                 {/* Primary Nav: Sessions → Labels → Projects → Pages | Memory…Knowledge | Automations → Settings */}
-                {/* pb-8 = 32px clearance so content tail scrolls clear of the 32px gradient; mask is off during active settings navigation because settings list rows fall into the fade band */}
-                <div className={cn('flex-1 overflow-y-auto min-h-0 pb-8', !(isSettingsNavigation(navState) && !isAutoCompact) && 'mask-fade-bottom')}>
+                {/* WP5: the bottom fade shows only while rows remain below the fold
+                    (data-scroll-down, set without re-rendering); at the end the last
+                    row sits fully visible above the pinned account card. The fade is
+                    off during settings navigation (its rows would fall into the band). */}
+                <div
+                  ref={sidebarScrollRef}
+                  data-sidebar-scroll=""
+                  className={cn('flex-1 overflow-y-auto min-h-0 pb-2', !(isSettingsNavigation(navState) && !isAutoCompact) && 'sidebar-scroll-fade')}
+                >
                 {activeWorkspaceId && !isSidebarCollapsed && (
                   <div className="flex h-[var(--chrome-panel-header-height)] shrink-0 items-center gap-1.5 border-b border-border-subtle px-3">
                     <label className="shrink-0 text-xs text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
@@ -3184,6 +3194,9 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                         baseLinks={sidebarLinks}
                         isCollapsed={isSidebarCollapsed}
                         onExpand={handleExpandNavigation}
+                        onOpenBrowser={openBrowserTab}
+                        isExpanded={isExpanded}
+                        toggleExpanded={toggleExpanded}
                         applicationSectionsOpen={applicationSectionsOpen}
                         onApplicationSectionsOpenChange={handleApplicationSectionsOpenChange}
                       />
@@ -3191,7 +3204,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                   )}
                 </ShellLayoutMode>
                 </div>
-                <div className="shrink-0">
+                <div className="shrink-0" data-sidebar-footer="">
                   <SidebarChrome
                     workspaceId={activeWorkspaceId}
                     profile={profileStripWithSpend}
