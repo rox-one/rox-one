@@ -329,6 +329,11 @@ export interface OidcConfig {
   clientSecret?: string
   /** Public base URL of this web UI, without a trailing slash. */
   publicUrl: string
+  /**
+   * When set, only these OIDC subjects may sign in (cloud handoff pins the
+   * sandbox to its owner). Absent/empty keeps any verified issuer user.
+   */
+  allowedSubs?: readonly string[]
 }
 
 /** `iss`/`aud`/`exp`/`nonce`-verified OIDC user identity. */
@@ -378,11 +383,16 @@ export function readOidcConfigFromEnv(env: Record<string, string | undefined> = 
   const publicUrl = env.ROX_WEBUI_PUBLIC_URL?.trim()
   if (!issuer || !clientId || !publicUrl) return null
   const clientSecret = env.ROX_WEBUI_OIDC_CLIENT_SECRET?.trim()
+  const allowedSubs = (env.ROX_WEBUI_OIDC_ALLOWED_SUBS ?? '')
+    .split(',')
+    .map((sub) => sub.trim())
+    .filter((sub) => sub.length > 0)
   return {
     issuer: issuer.replace(/\/+$/, ''),
     clientId,
     publicUrl: publicUrl.replace(/\/+$/, ''),
     ...(clientSecret ? { clientSecret } : {}),
+    ...(allowedSubs.length > 0 ? { allowedSubs } : {}),
   }
 }
 
@@ -634,4 +644,17 @@ export class HandoffTokenStore {
   storedDigests(): string[] {
     return [...this.digests.keys()]
   }
+}
+
+/** Whether a verified OIDC subject may open this web UI (owner pinning). */
+export function isOidcSubjectAllowed(config: Pick<OidcConfig, 'allowedSubs'>, sub: string): boolean {
+  const allowed = config.allowedSubs
+  if (!allowed || allowed.length === 0) return true
+  return allowed.some((candidate) => constantTimeStringEqual(candidate, sub))
+}
+
+function constantTimeStringEqual(a: string, b: string): boolean {
+  const ha = createHash('sha256').update(a).digest()
+  const hb = createHash('sha256').update(b).digest()
+  return timingSafeEqual(ha, hb) && a.length === b.length
 }

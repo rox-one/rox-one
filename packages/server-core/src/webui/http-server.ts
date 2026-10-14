@@ -26,6 +26,7 @@ import {
   readOidcConfigFromEnv,
   discoverOidc,
   verifyOidcIdTokenWithJwks,
+  isOidcSubjectAllowed,
   createPkcePair,
   createRandomToken,
   type OidcConfig,
@@ -808,6 +809,11 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
           clientId: oidc.clientId,
           nonce: pending.nonce,
         })
+
+        if (!isOidcSubjectAllowed(oidc, user.sub)) {
+          logger.warn('[webui] OIDC login rejected: subject is not the owner of this session')
+          return loginErrorResponse('Эта облачная сессия принадлежит другому аккаунту Rox ID.', 403, clearStateCookie)
+        }
 
         const jwt = await createSessionToken(secret, {
           sub: user.sub,

@@ -439,7 +439,7 @@ describe('WebUI OIDC (Rox ID) sessions', () => {
     return handler
   }
 
-  function oidcHandler(overrides?: { allowPasswordLogin?: boolean; publicUrl?: string }) {
+  function oidcHandler(overrides?: { allowPasswordLogin?: boolean; publicUrl?: string; allowedSubs?: string[] }) {
     const issuer = createFakeIssuer()
     ISSUERS.push(issuer)
     const handler = createHandler({
@@ -447,6 +447,7 @@ describe('WebUI OIDC (Rox ID) sessions', () => {
         issuer: issuer.issuer,
         clientId: CLIENT_ID,
         publicUrl: overrides?.publicUrl ?? 'http://127.0.0.1:3100',
+        ...(overrides?.allowedSubs ? { allowedSubs: overrides.allowedSubs } : {}),
       },
       allowPasswordLogin: overrides?.allowPasswordLogin,
     })
@@ -525,6 +526,24 @@ describe('WebUI OIDC (Rox ID) sessions', () => {
       issuer: issuer.issuer,
       user: { sub: 'rox-user-1', email: 'user@rox.one', name: 'Rox User', username: 'roxuser' },
     })
+  })
+
+  it('admits the pinned owner subject (cloud handoff)', async () => {
+    const { handler, issuer } = oidcHandler({ allowedSubs: ['someone-else', 'rox-user-1'] })
+    const { state, nonce, stateCookie } = await startLogin(handler)
+    issuer.setNonce(nonce)
+    const callback = await handler.fetch(callbackRequest(state, stateCookie))
+    expect(callback.status).toBe(302)
+    expect(callback.headers.get('set-cookie')).toContain('craft_session=')
+  })
+
+  it('rejects a verified subject that is not the pinned owner', async () => {
+    const { handler, issuer } = oidcHandler({ allowedSubs: ['owner-sub'] })
+    const { state, nonce, stateCookie } = await startLogin(handler)
+    issuer.setNonce(nonce)
+    const callback = await handler.fetch(callbackRequest(state, stateCookie))
+    expect(callback.status).toBe(403)
+    expect(callback.headers.get('set-cookie') ?? '').not.toContain('craft_session=')
   })
 
   it('rejects a tampered state without setting a cookie', async () => {
@@ -877,5 +896,21 @@ describe('/api/config modesLanding', () => {
     const configRes = await fetch(`${baseUrl}/api/config`, { headers: { cookie: extractSessionCookie(authRes) } })
     expect(configRes.status).toBe(200)
     expect(await configRes.json()).toEqual({ wsUrl: 'wss://127.0.0.1:9100', modesLanding: false })
+  })
+})
+
+describe('OIDC owner pinning config', () => {
+  it('parses ROX_WEBUI_OIDC_ALLOWED_SUBS and gates subjects', async () => {
+    const { readOidcConfigFromEnv, isOidcSubjectAllowed } = await import('../auth')
+    const cfg = readOidcConfigFromEnv({
+      ROX_WEBUI_OIDC_ISSUER: 'https://id.rox.one/',
+      ROX_WEBUI_OIDC_CLIENT_ID: 'c',
+      ROX_WEBUI_PUBLIC_URL: 'https://x.example/',
+      ROX_WEBUI_OIDC_ALLOWED_SUBS: ' a , ,b ',
+    })!
+    expect(cfg.allowedSubs).toEqual(['a', 'b'])
+    expect(isOidcSubjectAllowed(cfg, 'b')).toBe(true)
+    expect(isOidcSubjectAllowed(cfg, 'bb')).toBe(false)
+    expect(isOidcSubjectAllowed({}, 'anyone')).toBe(true)
   })
 })
