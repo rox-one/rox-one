@@ -69,6 +69,7 @@ export type TrayAction =
   | { readonly kind: 'checkUpdates' }
   | { readonly kind: 'installUpdate' }
   | { readonly kind: 'showWindow' }
+  | { readonly kind: 'toggleMini' }
   | { readonly kind: 'quit' }
 
 export interface TrayMenuEntry {
@@ -142,6 +143,11 @@ export function buildTrayMenuModel(view: TrayView): readonly TrayMenuEntry[] {
     { id: 'newNote', type: 'normal', labelKey: 'menu.newNote', action: { kind: 'shell', action: 'new-note', show: true } },
     { id: 'newTask', type: 'normal', labelKey: 'menu.newTask', action: { kind: 'shell', action: 'new-task', show: true } },
     SEPARATOR('sep-notes'),
+    // Open a surface.
+    { id: 'openMessenger', type: 'normal', labelKey: 'tray.menu.openMessenger', action: { kind: 'shell', action: 'navigate', deepLink: { route: 'messenger' }, show: true } },
+    { id: 'openTasks', type: 'normal', labelKey: 'tray.menu.openTasks', action: { kind: 'shell', action: 'navigate', deepLink: { route: 'tasks' }, show: true } },
+    { id: 'roxMini', type: 'normal', labelKey: 'tray.menu.roxMini', action: { kind: 'toggleMini' } },
+    SEPARATOR('sep-open'),
   )
 
   // Where things are.
@@ -267,6 +273,8 @@ export interface TrayControllerDependencies {
   readonly installUpdate?: () => void
   /** Show + focus an existing window (or restore the last one). */
   readonly showWindow?: () => void
+  /** Enter / leave the compact Rox Mini window (macOS). */
+  readonly toggleMini?: () => void
   readonly quit: () => void
 }
 
@@ -307,6 +315,7 @@ export class TrayController {
     switch (action.kind) {
       case 'quit': deps.quit(); return
       case 'showWindow': deps.showWindow?.(); return
+      case 'toggleMini': deps.toggleMini?.(); return
       case 'channel':
         deps.showWindow?.()
         deps.dispatchChannel(action.channel)

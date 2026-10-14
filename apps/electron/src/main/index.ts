@@ -2246,6 +2246,7 @@ app.whenReady().then(async () => {
           checkForUpdates: () => { void autoUpdate.checkForUpdates({ autoDownload: true, manual: true }) },
           installUpdate: () => { void autoUpdate.installUpdate() },
           showWindow,
+          toggleMini: () => { if (!windowManager?.toggleMiniWindow()) showWindow() },
           quit: () => app.quit(),
         })
         const recordingTray = new RecordingTrayController({

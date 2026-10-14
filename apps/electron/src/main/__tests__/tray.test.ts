@@ -56,6 +56,7 @@ function createHarness() {
     checkForUpdates: () => { calls.push('check') },
     installUpdate: () => { calls.push('install') },
     showWindow: () => { calls.push('show') },
+    toggleMini: () => { calls.push('mini') },
     quit: () => { calls.push('quit') },
   })
   const find = (id: string, items: readonly TrayTemplateItem[] = menus.at(-1) ?? []): TrayTemplateItem | undefined => {
@@ -90,6 +91,7 @@ describe('tray menu model', () => {
     expect(ids(buildTrayMenuModel(view()))).toEqual([
       'newSession', 'askRox', 'voice', 'meetingRecording', 'search', 'sep-create',
       'newNote', 'newTask', 'sep-notes',
+      'openMessenger', 'openTasks', 'roxMini', 'sep-open',
       'notifications', 'doNotDisturb', 'sep-places',
       'runDoctor', 'updates', 'settings', 'showWindow', 'sep-quit',
       'quit',
@@ -184,6 +186,8 @@ describe('tray controller', () => {
     h.click('search')
     h.click('newNote')
     h.click('newTask')
+    h.click('openMessenger')
+    h.click('openTasks')
     h.click('notifications')
     h.click('session:s1')
     h.click('workspace:b')
@@ -193,6 +197,8 @@ describe('tray controller', () => {
       { action: 'search' },
       { action: 'new-note' },
       { action: 'new-task' },
+      { action: 'navigate', deepLink: { route: 'messenger' } },
+      { action: 'navigate', deepLink: { route: 'tasks' } },
       { action: 'open-inbox' },
       { action: 'open-session', deepLink: { id: 's1' } },
       { action: 'switch-workspace', deepLink: { workspaceId: 'b' } },
@@ -202,8 +208,9 @@ describe('tray controller', () => {
     h.click('updates')
     h.click('settings')
     h.click('showWindow')
+    h.click('roxMini')
     h.click('quit')
-    expect(h.calls).toEqual(['voice', 'check', 'show', 'show', 'quit'])
+    expect(h.calls).toEqual(['voice', 'check', 'show', 'show', 'mini', 'quit'])
     expect(h.channels.at(-1)).toBe(RPC_CHANNELS.menu.OPEN_SETTINGS)
   })
 
