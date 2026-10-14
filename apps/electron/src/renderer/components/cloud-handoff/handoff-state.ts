@@ -21,14 +21,26 @@ export function failureLabelKey(code: string | undefined): string {
   return `cloudHandoff.error.${code && KNOWN_FAILURES.has(code) ? code : 'provider_error'}`
 }
 
-/** A key is needed from the user only when neither theirs nor the shared default exists. */
+/** A personal key is needed when the user has none and no Rox broker is configured. */
 export function needsUserKey(config: CloudHandoffConfig | null): boolean {
-  return !!config && !config.userKeyConfigured && !config.serverDefaultKeyAvailable
+  return !!config && !config.userKeyConfigured && !config.brokerConfigured
+}
+
+/** A live cloud session exists for this chat (link can be (re)issued, can be ended). */
+export function hasLiveSession(status: CloudHandoffStatus | null | undefined): boolean {
+  return status?.phase === 'ready' && !status.ended
+}
+
+/** Links are bearer credentials: keep them out of component state. */
+export function withoutLink(status: CloudHandoffStatus | null): CloudHandoffStatus | null {
+  if (!status) return null
+  const { sessionUrl: _url, ...rest } = status
+  return rest
 }
 
 /** Only https session links are ever opened. */
 export function safeSessionUrl(status: CloudHandoffStatus | null | undefined): string | null {
-  const raw = status?.phase === 'ready' ? status.sessionUrl : undefined
+  const raw = hasLiveSession(status) ? status?.sessionUrl : undefined
   if (!raw) return null
   try {
     const url = new URL(raw)

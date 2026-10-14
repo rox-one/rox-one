@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Start the Rox session server for a cloud handoff («В облако»).
+# Called by the desktop/broker as: rox-handoff-start /home/daytona/rox-handoff
+# Security invariants enforced here (and re-checked by rox-handoff-health):
+#   - OIDC only: ROX_WEBUI_PASSWORD_LOGIN must be 0, owner subject must be pinned
+#   - the web UI JWT secret is generated here and never written to disk
+#   - server.env may only set an allow-listed set of keys
+set -euo pipefail
+ROOT="${1:-}"
+[ "$ROOT" = "/home/daytona/rox-handoff" ] || { echo "unexpected root" >&2; exit 2; }
+umask 077
+
+ALLOWED="ROX_WEBUI_OIDC_ISSUER ROX_WEBUI_OIDC_CLIENT_ID ROX_WEBUI_PUBLIC_URL ROX_WEBUI_OIDC_ALLOWED_SUBS ROX_WEBUI_PASSWORD_LOGIN ROX_WEBUI_PUBLIC_HOST_PATTERN ROX_HANDOFF_SESSION_ID ROX_HANDOFF_PORT"
+while IFS= read -r line || [ -n "$line" ]; do
+  [ -z "$line" ] && continue
+  key="${line%%=*}"; val="${line#*=}"
+  case " $ALLOWED " in *" $key "*) export "$key=$val" ;; *) echo "unexpected key: $key" >&2; exit 3 ;; esac
+done < "$ROOT/server.env"
+
+[ "${ROX_WEBUI_PASSWORD_LOGIN:-}" = "0" ] || { echo "password login must be off" >&2; exit 4; }
+[ -n "${ROX_WEBUI_OIDC_ALLOWED_SUBS:-}" ] || { echo "owner subject missing" >&2; exit 4; }
+[ -n "${ROX_WEBUI_OIDC_ISSUER:-}" ] && [ -n "${ROX_WEBUI_OIDC_CLIENT_ID:-}" ] && [ -n "${ROX_WEBUI_PUBLIC_URL:-}" ] || { echo "OIDC config missing" >&2; exit 4; }
+[[ "${ROX_HANDOFF_SESSION_ID:-}" =~ ^[A-Za-z0-9_.-]{1,128}$ ]] || { echo "bad session id" >&2; exit 4; }
+PORT="${ROX_HANDOFF_PORT:-9100}"
+
+if [ -f "$ROOT/server.pid" ] && kill -0 "$(cat "$ROOT/server.pid")" 2>/dev/null; then
+  exit 0 # already running (idempotent restart after auto-stop)
+fi
+
+# Lay the snapshot out as a workspace: session folder + referenced project files.
+WS=/home/daytona/rox-workspace
+mkdir -p "$WS/sessions/$ROX_HANDOFF_SESSION_ID" "$WS/project"
+[ -d "$ROOT/bundle/session" ] && cp -a "$ROOT/bundle/session/." "$WS/sessions/$ROX_HANDOFF_SESSION_ID/"
+[ -d "$ROOT/bundle/workspace" ] && cp -a "$ROOT/bundle/workspace/." "$WS/project/"
+
+ROX_SERVER_TOKEN="$(openssl rand -hex 32)"
+export ROX_SERVER_TOKEN
+unset CRAFT_WEBUI_PASSWORD CRAFT_SERVER_TOKEN
+export CRAFT_RPC_HOST=0.0.0.0 CRAFT_RPC_PORT="$PORT" CRAFT_WEBUI_SECURE_COOKIE=1
+export ROX_CONFIG_DIR=/home/daytona/.rox ROX_HANDOFF_WORKSPACE_DIR="$WS"
+
+cd /app
+nohup setsid bun run packages/server/src/index.ts >"$ROOT/server.log" 2>&1 < /dev/null &
+echo $! > "$ROOT/server.pid"

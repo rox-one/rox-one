@@ -14,10 +14,12 @@ import type { CloudHandoffConfig, CloudHandoffStatus } from '../../../shared/typ
 import {
   HANDOFF_POLL_MS,
   failureLabelKey,
+  hasLiveSession,
   isHandoffInFlight,
   needsUserKey,
   phaseLabelKey,
   safeSessionUrl,
+  withoutLink,
 } from './handoff-state'
 
 export function CloudHandoffButton({ sessionId }: { sessionId: string }) {
@@ -42,7 +44,7 @@ export function CloudHandoffButton({ sessionId }: { sessionId: string }) {
     void (async () => {
       await refreshConfig()
       const prior = await api?.getCloudHandoffStatus?.({ sessionId }).catch(() => null)
-      if (!cancelled) setStatus(prior ?? null)
+      if (!cancelled) setStatus(withoutLink(prior ?? null))
     })()
     return () => { cancelled = true }
   }, [api, refreshConfig, sessionId])
@@ -53,7 +55,7 @@ export function CloudHandoffButton({ sessionId }: { sessionId: string }) {
     const timer = window.setInterval(async () => {
       const next = await api?.getCloudHandoffStatus?.({ handoffId: status.handoffId }).catch(() => null)
       if (!next) return
-      setStatus(next)
+      setStatus(withoutLink(next))
       if (next.phase === 'failed') toast.error(t(failureLabelKey(next.failure?.code)))
       if (next.phase === 'ready') toast.success(t('cloudHandoff.readyToast'))
     }, HANDOFF_POLL_MS)
@@ -70,8 +72,13 @@ export function CloudHandoffButton({ sessionId }: { sessionId: string }) {
     setBusy(true)
     try {
       const next = await api.startCloudHandoff({ sessionId })
-      setStatus(next)
-      if (next.phase === 'failed') toast.error(t(failureLabelKey(next.failure?.code)))
+      if (next.phase === 'failed') {
+        // A rejected start must not replace the chat's live session in the UI.
+        toast.error(t(failureLabelKey(next.failure?.code)))
+        if (!hasLiveSession(status)) setStatus(withoutLink(next))
+      } else {
+        setStatus(withoutLink(next))
+      }
     } catch {
       toast.error(t('cloudHandoff.error.provider_error'))
     } finally {
@@ -99,22 +106,44 @@ export function CloudHandoffButton({ sessionId }: { sessionId: string }) {
     await refreshConfig()
   }
 
-  const url = safeSessionUrl(status)
+  // Signed links are short-lived: fetch a fresh one at click time, never cache it.
+  const openSession = async () => {
+    if (!status) return
+    const fresh = await api.getCloudHandoffStatus({ handoffId: status.handoffId }).catch(() => null)
+    const url = safeSessionUrl(fresh)
+    if (url) await api.openUrl(url)
+    else toast.error(t(failureLabelKey(fresh?.failure?.code)))
+  }
+
+  const endSession = async () => {
+    setBusy(true)
+    try {
+      await api.endCloudHandoff({ sessionId })
+      const next = await api.getCloudHandoffStatus({ sessionId }).catch(() => null)
+      setStatus(withoutLink(next))
+      toast.success(t('cloudHandoff.ended'))
+    } catch {
+      toast.error(t('cloudHandoff.error.provider_error'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const live = hasLiveSession(status)
+  const keyMissing = needsUserKey(config)
 
   return (
     <>
-      {url ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-7 gap-1.5 px-2 text-xs"
-          onClick={() => void api.openUrl(url)}
-          title={url}
-        >
-          <ExternalLink className="icon-toolbar" />
-          {t('cloudHandoff.openInBrowser')}
-        </Button>
+      {live ? (
+        <>
+          <Button type="button" variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-xs" onClick={() => void openSession()}>
+            <ExternalLink className="icon-toolbar" />
+            {t('cloudHandoff.openInBrowser')}
+          </Button>
+          <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" disabled={busy} onClick={() => void endSession()}>
+            {t('cloudHandoff.end')}
+          </Button>
+        </>
       ) : (
         <Button
           type="button"
@@ -124,12 +153,12 @@ export function CloudHandoffButton({ sessionId }: { sessionId: string }) {
           disabled={busy || inFlight}
           onClick={() => void start()}
           onContextMenu={(e) => { e.preventDefault(); setDialogOpen(true) }}
-          aria-label={t('cloudHandoff.button')}
+          aria-label={keyMissing ? t('cloudHandoff.addKey') : t('cloudHandoff.button')}
         >
           {inFlight ? <Loader2 className="icon-toolbar animate-spin" /> : <CloudUpload className="icon-toolbar" />}
           {inFlight && status
             ? t(phaseLabelKey(status.phase), { uploaded: status.uploaded ?? 0, total: status.total ?? 0 })
-            : t('cloudHandoff.button')}
+            : keyMissing ? t('cloudHandoff.addKey') : t('cloudHandoff.button')}
         </Button>
       )}
       {inFlight && status && (

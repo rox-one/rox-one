@@ -30,6 +30,7 @@ export const CHANNEL_MAP = {
   startCloudHandoff: invoke(RPC_CHANNELS.cloudHandoff.START),
   getCloudHandoffStatus: invoke(RPC_CHANNELS.cloudHandoff.STATUS),
   cancelCloudHandoff: invoke(RPC_CHANNELS.cloudHandoff.CANCEL),
+  endCloudHandoff: invoke(RPC_CHANNELS.cloudHandoff.END),
   setCloudHandoffKey: invoke(RPC_CHANNELS.cloudHandoff.SET_KEY),
   clearCloudHandoffKey: invoke(RPC_CHANNELS.cloudHandoff.CLEAR_KEY),
   // Cloud Runs (PRD docs/cloud-runs-prd.md, phase G3)

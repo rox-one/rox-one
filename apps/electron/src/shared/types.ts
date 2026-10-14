@@ -902,14 +902,16 @@ export interface CloudHandoffStatus {
   total?: number
   sessionUrl?: string
   sandboxId?: string
-  keySource?: 'user' | 'server_default'
+  keySource?: 'user' | 'broker'
+  linkMode?: 'signed' | 'web_host'
+  ended?: boolean
   failure?: { code: string; message: string }
   excludedCount?: number
 }
 export interface CloudHandoffConfig {
   enabled: boolean
   userKeyConfigured: boolean
-  serverDefaultKeyAvailable: boolean
+  brokerConfigured: boolean
   ssoConfigured: boolean
   webHostConfigured: boolean
 }
@@ -931,6 +933,7 @@ export interface ElectronAPI {
   startCloudHandoff(args: { sessionId: string }): Promise<CloudHandoffStatus>
   getCloudHandoffStatus(args: { handoffId?: string; sessionId?: string }): Promise<CloudHandoffStatus | null>
   cancelCloudHandoff(args: { handoffId: string }): Promise<{ ok: boolean }>
+  endCloudHandoff(args: { sessionId: string }): Promise<{ ok: boolean }>
   setCloudHandoffKey(args: { key: string }): Promise<{ ok: true }>
   clearCloudHandoffKey(): Promise<{ ok: true }>
 

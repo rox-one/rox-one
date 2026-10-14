@@ -201,3 +201,27 @@ describe('HttpDaytonaClient handoff extensions', () => {
     expect(calls[2]!.url).toBe('https://app.daytona.io/api/sandbox/x/ports/9100/signed-preview-url?expiresInSeconds=3600');
   });
 });
+
+describe('snapshot image scripts (cloud/handoff-image)', () => {
+  const { readFileSync } = require('node:fs') as typeof import('node:fs');
+  const { join } = require('node:path') as typeof import('node:path');
+  const dir = join(import.meta.dir, '../../../../cloud/handoff-image');
+  const start = readFileSync(join(dir, 'rox-handoff-start'), 'utf8');
+  const health = readFileSync(join(dir, 'rox-handoff-health'), 'utf8');
+
+  it('accepts every key the orchestrator writes to server.env, and enforces OIDC-only', async () => {
+    const client = new MemoryDaytonaClient();
+    const res = await runCloudHandoff(baseInput(client));
+    const env = new TextDecoder().decode(client.files.get(res.sandboxId)!.get(`${HANDOFF_ROOT}/server.env`)!);
+    const allowed = /ALLOWED="([^"]+)"/.exec(start)![1]!.split(' ');
+    for (const line of env.split('\n').filter(Boolean)) expect(allowed).toContain(line.split('=')[0]!);
+    expect(start).toContain('ROX_WEBUI_PASSWORD_LOGIN:-}" = "0"');
+    expect(start).toContain('openssl rand -hex 32');
+    expect(start).toContain(`"${HANDOFF_ROOT}"`);
+  });
+
+  it('health requires the password route to be 404 and OIDC login to redirect to the issuer', () => {
+    expect(health).toContain('[ "$code" = "404" ]');
+    expect(health).toContain('"302 $ISSUER"*');
+  });
+});
