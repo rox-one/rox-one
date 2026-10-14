@@ -19,6 +19,10 @@
     "./ui/drawer": "./src/components/ui/drawer.tsx",
     "./context": "./src/context/index.ts",
     "./tooltip": "./src/components/tooltip.tsx",
+    "./spinner": "./src/components/ui/LoadingIndicator.tsx",
+    "./premium-menu": "./src/components/ui/PremiumMenu.tsx",
+    "./dropdown-menu": "./src/components/ui/StyledDropdown.tsx",
+    "./ansi-parser": "./src/components/terminal/ansi-parser.ts",
     "./lib/file-classification": "./src/lib/file-classification.ts",
     "./styles": "./src/styles/index.css",
     "./primitives": "./src/components/primitives/index.ts"
