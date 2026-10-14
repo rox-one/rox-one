@@ -1622,3 +1622,31 @@ html[data-shell-material="solid"] {
   background: transparent;
   border-top-color: transparent;
 }
+
+@layer components {
+  /* Skeleton placeholder (shared primitive). Shimmer animates transform only. */
+  .rox-skeleton {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    height: 0.75em;
+    border-radius: var(--radius-xs);
+    background: color-mix(in oklab, currentColor 10%, transparent);
+  }
+  .rox-skeleton--circle { border-radius: var(--radius-full); aspect-ratio: 1; height: 2em; }
+  .rox-skeleton-stack { display: flex; flex-direction: column; gap: 0.5em; }
+  .rox-skeleton-stack > .rox-skeleton[data-last] { width: 60%; }
+  .rox-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, color-mix(in oklab, currentColor 8%, transparent), transparent);
+    animation: rox-skeleton-shimmer 1.4s var(--ease-standard) infinite;
+  }
+  @keyframes rox-skeleton-shimmer { to { transform: translateX(100%); } }
+  html[data-resizing] .rox-skeleton::after { animation: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .rox-skeleton::after { animation: none; }
+  }
+}
