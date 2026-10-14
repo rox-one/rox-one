@@ -59,7 +59,7 @@ function PlanPill({ plan, label }: { plan: string; label: string }) {
       data-testid="profile-strip-plan"
       data-plan={plan}
       className={cn(
-        'inline-flex h-4 max-w-full items-center truncate rounded-full bg-gradient-to-b px-1.5 text-mark font-semibold uppercase leading-none tracking-wide',
+        'inline-flex h-[10px] max-w-full items-center truncate rounded-full bg-gradient-to-b px-1 text-mark font-semibold uppercase leading-none tracking-wide',
         'ring-1 ring-inset shadow-[inset_0_1px_0_rgb(255_255_255/0.55),0_1px_2px_rgb(0_0_0/0.12)] dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(0_0_0/0.4)]',
         PLAN_PILL_TONES[plan] ?? PLAN_PILL_TONES.standard,
       )}
@@ -115,6 +115,20 @@ interface ProfileStripProps {
   defaultAvatarFallback?: React.ReactNode
   /** Avatar-only presentation for the collapsed navigation rail. */
   compact?: boolean
+  /**
+   * `rail`: the single profile entry point at the bottom of the 48px primary
+   * rail — a bare 24px avatar (real image, initial fallback) that opens the
+   * profile popover to the right. No card chrome, name or plan pill.
+   */
+  variant?: 'strip' | 'rail'
+  /**
+   * `status`: the rail avatar anchored at the left end of the bottom status
+   * bar (the bar extends out of the profile block). Smaller hit area that fits
+   * the status row; the popover opens upward.
+   */
+  placement?: 'rail' | 'status'
+  /** Replays the onboarding tour from the popover; row hidden when absent. */
+  onReplayTour?: () => void
 }
 
 export function ProfileStrip({
@@ -124,6 +138,9 @@ export function ProfileStrip({
   className,
   defaultAvatarFallback,
   compact = false,
+  variant = 'strip',
+  placement = 'rail',
+  onReplayTour,
 }: ProfileStripProps) {
   const { t } = useTranslation()
   const detailsId = React.useId()
@@ -132,15 +149,13 @@ export function ProfileStrip({
   const plan = data.plan ?? 'standard'
   const planLabel = t(`settings.account.plan.${plan}`)
   const balanceKnown = data.balance !== null && Number.isFinite(data.balance)
-  // Every surface — the visible row, the hover title and the screen-reader
-  // description — reports the same honest "no data" status instead of a dash,
-  // so an unknown cabinet balance can never look like a real zero.
-  const descriptionBalance = balanceKnown ? t('profile.balance', { amount: data.balance }) : t('profile.balanceUnknown')
-  const balanceLabel = balanceKnown ? t('profile.balance', { amount: data.balance }) : t('profile.balanceUnknown')
+  // Unknown balance is never shown as "no data": the popover hides the row and
+  // the hover/screen-reader description simply omits it.
+  const balanceLabel = balanceKnown ? t('profile.balance', { amount: data.balance }) : ''
   const spentLabel = data.spentUsd != null && data.spentUsd > 0 ? formatCostUsd(data.spentUsd) : null
   const accountDetails = [
     planLabel,
-    `${t('profile.balanceLabel')} ${descriptionBalance}`,
+    balanceKnown ? `${t('profile.balanceLabel')} ${balanceLabel}` : null,
     spentLabel ? t('profile.spent', { amount: spentLabel }) : null,
   ].filter(Boolean).join(' · ')
   const avatar = (
@@ -160,6 +175,58 @@ export function ProfileStrip({
     onClick()
   }, [onClick])
   const openSettings = React.useMemo(() => onOpenSettings ? () => { setOpen(false); onOpenSettings() } : undefined, [onOpenSettings])
+  const replayTour = React.useMemo(() => onReplayTour ? () => { setOpen(false); onReplayTour() } : undefined, [onReplayTour])
+  const popover = (
+    <UserProfilePopoverContent
+      data={data}
+      planLabel={planLabel}
+      balanceLabel={balanceLabel}
+      balanceKnown={balanceKnown}
+      spentLabel={spentLabel}
+      avatar={avatar}
+      onOpenAccountSettings={openAccountSettings}
+      onOpenSettings={openSettings}
+      onReplayTour={replayTour}
+      onClose={() => setOpen(false)}
+    />
+  )
+
+  if (variant === 'rail') {
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            data-rail-button=""
+            data-rail-avatar=""
+            data-profile-placement={placement}
+            data-tutorial="profile-strip"
+            className={cn(
+              'flex items-center',
+              placement === 'status' ? 'size-6' : 'size-8',
+              'justify-center rounded-[var(--radius-control)] outline-none',
+              'hover:bg-[var(--state-hover)] focus-visible:ring-1 focus-visible:ring-ring data-[state=open]:bg-[var(--state-selected)]',
+              className,
+            )}
+            aria-label={t('profile.openMenu', { name: displayName })}
+            aria-describedby={detailsId}
+            title={`${displayName} · ${accountDetails}`}
+          >
+            <span id={detailsId} className="sr-only">{accountDetails}</span>
+            <Avatar className={cn('shrink-0 rounded-full', placement === 'status' ? 'size-5' : 'size-6')}>
+              {data.avatar ? <AvatarImage src={data.avatar} alt="" /> : null}
+              <AvatarFallback delayMs={0} className="bg-surface-pressed text-text-primary">
+                {defaultAvatarFallback ?? <RoxInkAvatarArt />}
+              </AvatarFallback>
+            </Avatar>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent side={placement === 'status' ? 'top' : 'right'} align={placement === 'status' ? 'start' : 'end'} sideOffset={8} className="w-60 p-1" data-rail-profile-menu="">
+          {popover}
+        </PopoverContent>
+      </Popover>
+    )
+  }
 
   return (
 <Popover open={open} onOpenChange={setOpen}>
@@ -209,17 +276,7 @@ export function ProfileStrip({
         </button>
       </PopoverTrigger>
       <PopoverContent side="top" align="start" sideOffset={8} className="w-64 p-1">
-        <UserProfilePopoverContent
-          data={data}
-          planLabel={planLabel}
-          balanceLabel={balanceLabel}
-          balanceKnown={balanceKnown}
-          spentLabel={spentLabel}
-          avatar={avatar}
-          onOpenAccountSettings={openAccountSettings}
-          onOpenSettings={openSettings}
-          onClose={() => setOpen(false)}
-        />
+        {popover}
       </PopoverContent>
     </Popover>
   )

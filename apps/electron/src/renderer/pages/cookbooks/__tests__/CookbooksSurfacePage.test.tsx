@@ -18,6 +18,15 @@
  * the per-cell «⋯» menu (move/duplicate/delete), `Ctrl+M`, the flush-before-
  * mutate contract and the focus/scroll onto a mutation's landing cell — every
  * mutation goes through the one `cookbooks-lab:mutate` double.
+ * Wave 11 adds the rich-output half: the `display_data` records of a cell render
+ * after its text (image `data:`-URL, sandboxed HTML frame whose document leads
+ * with its own `default-src 'none'` policy, pretty JSON, markdown), one widget
+ * per display event (the emitter picks a single widget-mime per event), the block
+ * reads as the printed text plus every plain-text display, a reopened document
+ * seeds the surface from the outputs and the `execution_count` its copy already
+ * holds, a rich result with no text falls back to its `text/plain` record (or the
+ * frozen «graphical output» marker) and the session's records travel into the
+ * exported `.ipynb`.
  * Strings are compared through
  * the same i18n instance the page uses, so a missing translation or a wrong
  * interpolation parameter fails here rather than silently rendering the raw key.
@@ -35,7 +44,9 @@ import { setupI18n } from '@rox/shared/i18n'
 import {
   CookbooksApiError,
   type CookbooksCard,
+  type CookbooksDisplay,
   type CookbooksDocument,
+  type CookbooksOutput,
   type CookbooksRunCell,
   type CookbooksRunResult,
   type CookbooksStatus,
@@ -151,11 +162,13 @@ const NOTEBOOK: CookbooksDocument = {
   missing: [],
   // Cell 0 is markdown on purpose: every catalog notebook opens with one, and a
   // markdown entry must never reach `run-all` (the sidecar answers 400 for it).
+  // Wave 11: every cell carries its nbformat `execution_count` — null here, so
+  // the fixture opens with the same clean `[ ]` counters it always had.
   cells: [
-    { cellType: 'markdown', source: '# Заметка', outputs: [] },
-    { cellType: 'code', source: 'print(1)', outputs: [] },
-    { cellType: 'code', source: 'raise ValueError("boom")', outputs: [] },
-    { cellType: 'code', source: 'print(3)', outputs: [] },
+    { cellType: 'markdown', source: '# Заметка', outputs: [], executionCount: null },
+    { cellType: 'code', source: 'print(1)', outputs: [], executionCount: null },
+    { cellType: 'code', source: 'raise ValueError("boom")', outputs: [], executionCount: null },
+    { cellType: 'code', source: 'print(3)', outputs: [], executionCount: null },
   ],
   text: null,
 }
@@ -188,33 +201,44 @@ const FALLBACK_DOC: CookbooksDocument = {
 const OUTLINED: CookbooksDocument = {
   ...NOTEBOOK,
   cells: [
-    { cellType: 'markdown', source: '# Первая\n\nтекст\n## Вторая\n#### Слишком глубоко', outputs: [] },
-    { cellType: 'code', source: 'print(1)', outputs: [] },
-    { cellType: 'markdown', source: '### Третья ###', outputs: [] },
-    { cellType: 'code', source: 'print(2)', outputs: [] },
+    { cellType: 'markdown', source: '# Первая\n\nтекст\n## Вторая\n#### Слишком глубоко', outputs: [], executionCount: null },
+    { cellType: 'code', source: 'print(1)', outputs: [], executionCount: null },
+    { cellType: 'markdown', source: '### Третья ###', outputs: [], executionCount: null },
+    { cellType: 'code', source: 'print(2)', outputs: [], executionCount: null },
   ],
 }
 
 /** Wave 9: a notebook whose markdown carries no heading at all. */
 const HEADINGLESS: CookbooksDocument = {
   ...NOTEBOOK,
-  cells: [{ cellType: 'code', source: 'print(1)', outputs: [] }],
+  cells: [{ cellType: 'code', source: 'print(1)', outputs: [], executionCount: null }],
 }
 
-const RUN_OK: CookbooksRunResult = { ok: true, stdout: '42\n', error: null, timedOut: false, missing: [] }
+// Wave 11: a run answers its rich records alongside its text; `[]` when the
+// sidecar has none (the same default main applies to a wire response without
+// the field).
+const RUN_OK: CookbooksRunResult = {
+  ok: true,
+  stdout: '42\n',
+  error: null,
+  timedOut: false,
+  missing: [],
+  displays: [],
+}
 const RUN_ERROR: CookbooksRunResult = {
   ok: false,
   stdout: '',
   error: 'ValueError: boom',
   timedOut: false,
   missing: [],
+  displays: [],
 }
 
 /** `run-all` never sees the markdown cell; execution stops at the first failure. */
 const RUN_ALL: CookbooksRunCell[] = [
-  { index: 1, status: 'ok', stdout: 'ok-1', error: null },
-  { index: 2, status: 'error', stdout: '', error: 'ValueError: boom' },
-  { index: 3, status: 'skipped', stdout: '', error: null },
+  { index: 1, status: 'ok', stdout: 'ok-1', error: null, displays: [] },
+  { index: 2, status: 'error', stdout: '', error: 'ValueError: boom', displays: [] },
+  { index: 3, status: 'skipped', stdout: '', error: null, displays: [] },
 ]
 
 /** The exact payload `run-all` must send: code cells only, document indices kept. */
@@ -226,7 +250,14 @@ const RUN_ALL_PAYLOAD = [
 
 /** R-B: a chatty result, well past the 600-character collapse threshold. */
 const LONG_STDOUT = `${'строка вывода — заведомо длиннее порога\n'.repeat(20)}конец`
-const LONG_RUN: CookbooksRunResult = { ok: true, stdout: LONG_STDOUT, error: null, timedOut: false, missing: [] }
+const LONG_RUN: CookbooksRunResult = {
+  ok: true,
+  stdout: LONG_STDOUT,
+  error: null,
+  timedOut: false,
+  missing: [],
+  displays: [],
+}
 
 const RUNNING: CookbooksStatus = { state: 'running', reason: null, port: 51234 }
 
@@ -464,7 +495,13 @@ async function type(container: HTMLElement, id: string, value: string): Promise<
  */
 function answerRequestedCells(call: RunAllCall): Promise<{ cells: CookbooksRunCell[] }> {
   return Promise.resolve({
-    cells: call.cells.map((cell) => ({ index: cell.index, status: 'ok', stdout: `ok-${cell.index}`, error: null })),
+    cells: call.cells.map((cell) => ({
+      index: cell.index,
+      status: 'ok',
+      stdout: `ok-${cell.index}`,
+      error: null,
+      displays: [],
+    })),
   })
 }
 
@@ -718,7 +755,7 @@ describe('CookbooksSurfacePage execution', () => {
       status: RUNNING,
       cards: CARDS,
       documents: { 'rox-analytics': NOTEBOOK },
-      run: async () => ({ ok: true, stdout: '', error: null, timedOut: false, missing: [] }),
+      run: async () => ({ ok: true, stdout: '', error: null, timedOut: false, missing: [], displays: [] }),
     })
     const container = await render()
     await click(container, 'cookbooks-card-rox-analytics')
@@ -1443,9 +1480,9 @@ describe('CookbooksSurfacePage stop (wave 9)', () => {
     await act(async () => {
       gate.resolve({
         cells: [
-          { index: 1, status: 'ok', stdout: 'ok-1', error: null },
-          { index: 2, status: 'skipped', stdout: '', error: null },
-          { index: 3, status: 'skipped', stdout: '', error: null },
+          { index: 1, status: 'ok', stdout: 'ok-1', error: null, displays: [] },
+          { index: 2, status: 'skipped', stdout: '', error: null, displays: [] },
+          { index: 3, status: 'skipped', stdout: '', error: null, displays: [] },
         ],
         cancelled: true,
       })
@@ -1470,7 +1507,7 @@ describe('CookbooksSurfacePage stop (wave 9)', () => {
   it('marks a requested cell the stopped response never mentioned as cancelled too', async () => {
     const { container } = await renderNotebook({
       runAll: async () => ({
-        cells: [{ index: 1, status: 'ok', stdout: 'ok-1', error: null }],
+        cells: [{ index: 1, status: 'ok', stdout: 'ok-1', error: null, displays: [] }],
         cancelled: true,
       }),
     })
@@ -1633,7 +1670,14 @@ describe('CookbooksSurfacePage autoscroll (wave 9)', () => {
 
   it('renders a carriage-return progress bar as its final frame', async () => {
     const { container } = await renderNotebook({
-      run: async () => ({ ok: true, stdout: '10%|  | 1/2\r100%|##| 2/2\n', error: null, timedOut: false, missing: [] }),
+      run: async () => ({
+        ok: true,
+        stdout: '10%|  | 1/2\r100%|##| 2/2\n',
+        error: null,
+        timedOut: false,
+        missing: [],
+        displays: [],
+      }),
     })
     await click(container, 'cookbooks-run-1')
     expect(testId(container, 'cookbooks-output-1')!.textContent).toBe('100%|##| 2/2\n')
@@ -1642,7 +1686,16 @@ describe('CookbooksSurfacePage autoscroll (wave 9)', () => {
   it('copies the output exactly as shown, carriage returns normalized', async () => {
     const copied: string[] = []
     const { container } = await renderNotebook(
-      { run: async () => ({ ok: true, stdout: 'первый кадр\rпоследний кадр\n', error: null, timedOut: false, missing: [] }) },
+      {
+        run: async () => ({
+          ok: true,
+          stdout: 'первый кадр\rпоследний кадр\n',
+          error: null,
+          timedOut: false,
+          missing: [],
+          displays: [],
+        }),
+      },
       {
         writeClipboard: async (text) => {
           copied.push(text)
@@ -2051,7 +2104,7 @@ describe('CookbooksSurfacePage cell structure (wave 10)', () => {
   })
 
   it('focuses and scrolls to the code cell an insert lands on', async () => {
-    const inserted = withCellAt(NOTEBOOK, 0, { cellType: 'code', source: '', outputs: [] })
+    const inserted = withCellAt(NOTEBOOK, 0, { cellType: 'code', source: '', outputs: [], executionCount: null })
     const { container } = await renderNotebook({ mutate: mutationResult(inserted, 0) })
 
     await click(container, 'cookbooks-insert-code-0')
@@ -2064,15 +2117,15 @@ describe('CookbooksSurfacePage cell structure (wave 10)', () => {
     const twoCells: CookbooksDocument = {
       ...NOTEBOOK,
       cells: [
-        { cellType: 'code', source: 'print(1)', outputs: [] },
-        { cellType: 'markdown', source: '# Заметка', outputs: [] },
+        { cellType: 'code', source: 'print(1)', outputs: [], executionCount: null },
+        { cellType: 'markdown', source: '# Заметка', outputs: [], executionCount: null },
       ],
     }
     // Deleting the code cell leaves the markdown cell at index 0 — and it must
     // stay in read mode: only an insert opens the markdown editor.
     const afterDelete: CookbooksDocument = {
       ...NOTEBOOK,
-      cells: [{ cellType: 'markdown', source: '# Заметка', outputs: [] }],
+      cells: [{ cellType: 'markdown', source: '# Заметка', outputs: [], executionCount: null }],
     }
     stubConfirm(true)
     const { api, container } = await renderNotebook({
@@ -2089,7 +2142,7 @@ describe('CookbooksSurfacePage cell structure (wave 10)', () => {
   })
 
   it('opens an inserted markdown cell in edit mode so it can take focus', async () => {
-    const inserted = withCellAt(NOTEBOOK, 0, { cellType: 'markdown', source: '', outputs: [] })
+    const inserted = withCellAt(NOTEBOOK, 0, { cellType: 'markdown', source: '', outputs: [], executionCount: null })
     const { container } = await renderNotebook({ mutate: mutationResult(inserted, 0) })
 
     await click(container, 'cookbooks-insert-text-0')
@@ -2265,5 +2318,452 @@ describe('CookbooksSurfacePage Q2A copy', () => {
     expect(t('cookbooks.cell.expandOutput')).toBe('Показать полностью')
     expect(t('cookbooks.cell.collapseOutput')).toBe('Свернуть')
     expect(t('cookbooks.help.shortcutNav')).toContain('Alt+↑/↓')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Wave 11 — rich output (`display_data`) and persisted outputs
+// ---------------------------------------------------------------------------
+
+/** A 1×1 PNG, base64 — the payload the sidecar writes for an `image/png` record. */
+const PNG_DATA =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg=='
+/** `<svg xmlns="http://www.w3.org/2000/svg"/>` in base64 — the svg record's payload. */
+const SVG_DATA = 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4='
+/** A JPEG header's bytes in base64 — only the mime of the data-URL is under test. */
+const JPEG_DATA = '/9j/4AAQSkZJRg=='
+
+/**
+ * Wave 11: the three display events one smoke cell emits — the emitter picks a
+ * single widget-mime per event (canon order), so a cell with three events draws
+ * three widgets. The cell prints its own line alongside the first one.
+ */
+const SMOKE_EVENTS: CookbooksOutput[] = [
+  savedOutput('печатаю', [{ mime: 'image/png', data: PNG_DATA }]),
+  savedOutput('', [{ mime: 'text/html', data: '<b>итог</b>' }]),
+  savedOutput('', [{ mime: 'application/json', data: '{"ok":true,"n":2}' }]),
+]
+
+/**
+ * Wave 11: one saved output record as the sidecar writes it — its text, the
+ * rich records it carries and its traceback. Every rich fixture below goes
+ * through this shape, so the document and the surface cannot drift.
+ */
+function savedOutput(text: string, displays: CookbooksDisplay[] = [], traceback: string | null = null): CookbooksOutput {
+  return { text, traceback, displays }
+}
+
+/**
+ * Wave 11: a reopened copy — one code cell with the saved output records and the
+ * nbformat `execution_count` the file holds (the wave-11 DTO adds both).
+ */
+function savedNotebook(outputs: CookbooksOutput[], executionCount: number | null): CookbooksDocument {
+  return { ...NOTEBOOK, cells: [{ cellType: 'code', source: 'plot()', outputs, executionCount }] }
+}
+
+describe('CookbooksSurfacePage rich output (wave 11)', () => {
+  it('renders a saved image record as a data-URL img with its frozen alt text', async () => {
+    const { container } = await renderNotebook({
+      documents: { 'rox-analytics': savedNotebook([savedOutput('', [{ mime: 'image/png', data: PNG_DATA }])], 3) },
+    })
+
+    const output = testId(container, 'cookbooks-output-0')!
+    expect(output.getAttribute('data-status')).toBe('saved')
+    // The saved result and its counter are on screen before anything runs.
+    expect(testId(container, 'cookbooks-runs-0')!.textContent).toBe('[3]')
+
+    const img = output.querySelector('img')!
+    expect(img.getAttribute('src')).toBe(`data:image/png;base64,${PNG_DATA}`)
+    expect(img.getAttribute('alt')).toBe(t('cookbooks.output.imageAlt'))
+    expect(img.getAttribute('loading')).toBe('lazy')
+    expect(img.getAttribute('referrerpolicy') ?? img.getAttribute('referrerPolicy') ?? img.referrerPolicy).toBe(
+      'no-referrer',
+    )
+    expect(img.className).toContain('max-w-full')
+    expect(img.className).toContain('rounded-[var(--radius-control)]')
+    expect(img.className).toContain('border-border-subtle')
+    // Nothing printed, so the block shows the frozen «graphical output» marker.
+    expect(output.querySelector('pre')!.textContent).toBe(t('cookbooks.output.richPlaceholder'))
+  })
+
+  it('carries each event’s own mime in the data-URL of its image', async () => {
+    // One widget-mime per event: an svg event and a jpeg event, one record each.
+    const { container } = await renderNotebook({
+      documents: {
+        'rox-analytics': savedNotebook(
+          [
+            savedOutput('', [{ mime: 'image/svg+xml', data: SVG_DATA }]),
+            savedOutput('', [{ mime: 'image/jpeg', data: JPEG_DATA }]),
+          ],
+          1,
+        ),
+      },
+    })
+
+    const images = testId(container, 'cookbooks-output-0')!.querySelectorAll('img')
+    expect(images).toHaveLength(2)
+    expect(images[0].getAttribute('src')).toBe(`data:image/svg+xml;base64,${SVG_DATA}`)
+    expect(images[1].getAttribute('src')).toBe(`data:image/jpeg;base64,${JPEG_DATA}`)
+  })
+
+  it('renders a saved HTML record in a script-only sandboxed frame', async () => {
+    const { container } = await renderNotebook({
+      documents: {
+        'rox-analytics': savedNotebook([savedOutput('', [{ mime: 'text/html', data: '<b>итог</b>' }])], null),
+      },
+    })
+
+    const frame = testId(container, 'cookbooks-display-frame-0') as HTMLIFrameElement
+    expect(frame.getAttribute('sandbox')).toBe('allow-scripts')
+    // Scripts alone would be harmless; same-origin plus scripts would hand the
+    // record this window's origin and its preload bridge.
+    expect(frame.getAttribute('sandbox')).not.toContain('allow-same-origin')
+    // The record carries its OWN policy first, so the application's CSP never
+    // leaks into the frame and the record can neither fetch nor post anywhere.
+    const srcdoc = frame.getAttribute('srcdoc')!
+    expect(srcdoc.startsWith('<meta')).toBe(true)
+    expect(srcdoc).toContain('http-equiv="Content-Security-Policy"')
+    expect(srcdoc).toContain("default-src 'none'")
+    expect(srcdoc).toContain("form-action 'none'")
+    expect(srcdoc).toContain("base-uri 'none'")
+    // …and the record itself still travels verbatim, right after the policy.
+    expect(srcdoc.endsWith('<b>итог</b>')).toBe(true)
+    expect(frame.getAttribute('title')).toBe(t('cookbooks.output.frameTitle'))
+    expect(frame.getAttribute('referrerpolicy') ?? frame.getAttribute('referrerPolicy') ?? frame.referrerPolicy).toBe(
+      'no-referrer',
+    )
+    expect(frame.className).toContain('min-h-[120px]')
+    expect(frame.className).toContain('bg-white')
+    // No `execution_count` in the file: a saved result with an empty counter.
+    expect(testId(container, 'cookbooks-runs-0')!.textContent).toBe('[ ]')
+  })
+
+  it('pretty-prints a JSON record and shows a payload that is not JSON verbatim', async () => {
+    const document: CookbooksDocument = {
+      ...NOTEBOOK,
+      cells: [
+        {
+          cellType: 'code',
+          source: 'a',
+          outputs: [savedOutput('', [{ mime: 'application/json', data: '{"b":1,"a":[1,2]}' }])],
+          executionCount: 1,
+        },
+        {
+          cellType: 'code',
+          source: 'b',
+          outputs: [savedOutput('', [{ mime: 'application/json', data: 'not json' }])],
+          executionCount: 2,
+        },
+      ],
+    }
+    const { container } = await renderNotebook({ documents: { 'rox-analytics': document } })
+
+    expect(testId(container, 'cookbooks-display-json-0')!.textContent).toBe('{\n  "b": 1,\n  "a": [\n    1,\n    2\n  ]\n}')
+    expect(testId(container, 'cookbooks-display-json-1')!.textContent).toBe('not json')
+  })
+
+  it('renders a markdown record through the minimal markdown renderer', async () => {
+    const { container } = await renderNotebook({
+      documents: { 'rox-analytics': savedNotebook([savedOutput('', [{ mime: 'text/markdown', data: '# Итог' }])], 1) },
+    })
+
+    const rendered = testId(container, 'cookbooks-display-markdown-0')!
+    // The md-cell contract: the editor is never mounted for a rich record.
+    expect(rendered.getAttribute('data-mode')).toBe('minimal')
+    expect(rendered.querySelector('h1')?.textContent).toBe('Итог')
+  })
+
+  it('carries a mime it does not render without drawing a widget for it', async () => {
+    const { container } = await renderNotebook({
+      documents: {
+        'rox-analytics': savedNotebook(
+          [savedOutput('', [{ mime: 'text/latex', data: '$x^2$' }, { mime: 'text/plain', data: 'x**2' }])],
+          1,
+        ),
+      },
+    })
+
+    // Latex is out of scope for this wave (SPEC §Вне скоупа): the record is
+    // carried by the document and reaches the export, but draws no widget — and
+    // the plain-text record still gives the block its fallback text.
+    expect(allTestIds(container, 'cookbooks-display-')).toHaveLength(0)
+    expect(testId(container, 'cookbooks-output-0')!.querySelector('pre')!.textContent).toBe('x**2')
+  })
+
+  it('draws every rich record of a cell, in emission order, after the text', async () => {
+    const { container } = await renderNotebook({
+      documents: { 'rox-analytics': savedNotebook(SMOKE_EVENTS, 1) },
+    })
+
+    const output = testId(container, 'cookbooks-output-0')!
+    expect(allTestIds(container, 'cookbooks-display-').map((element) => element.getAttribute('data-testid'))).toEqual([
+      'cookbooks-display-image-0',
+      'cookbooks-display-frame-0',
+      'cookbooks-display-json-0',
+    ])
+    // The cell's own text stays the first thing the block shows.
+    expect(output.firstElementChild?.tagName.toLowerCase()).toBe('pre')
+    expect(output.firstElementChild?.textContent).toBe('печатаю')
+  })
+
+  it('seeds the surface from the outputs and counters the opened copy holds', async () => {
+    const document: CookbooksDocument = {
+      ...NOTEBOOK,
+      cells: [
+        {
+          cellType: 'code',
+          source: 'a',
+          outputs: [savedOutput('первая', [{ mime: 'image/png', data: PNG_DATA }]), savedOutput('вторая')],
+          executionCount: 4,
+        },
+        { cellType: 'code', source: 'b', outputs: [savedOutput('', [], 'ValueError: boom')], executionCount: 1 },
+        { cellType: 'code', source: 'c', outputs: [savedOutput('третья')], executionCount: null },
+      ],
+    }
+    const { container } = await renderNotebook({ documents: { 'rox-analytics': document } })
+
+    // Text, displays, status and counter all come from the copy — before any run.
+    const first = testId(container, 'cookbooks-output-0')!
+    expect(first.getAttribute('data-status')).toBe('saved')
+    expect(first.querySelector('pre')!.textContent).toBe('первая\nвторая')
+    expect(first.querySelector('img')).not.toBeNull()
+    expect(testId(container, 'cookbooks-runs-0')!.textContent).toBe('[4]')
+    expect(testId(container, 'cookbooks-runs-0')!.getAttribute('aria-label')).toBe(
+      t('cookbooks.cell.runs', { count: 4 }),
+    )
+
+    // A saved traceback is the cell's error text; the result is still `saved`.
+    const second = testId(container, 'cookbooks-output-1')!
+    expect(second.getAttribute('data-status')).toBe('saved')
+    expect(second.querySelector('pre')!.textContent).toBe('ValueError: boom')
+    expect(testId(container, 'cookbooks-runs-1')!.textContent).toBe('[1]')
+
+    // Saved output, no `execution_count` in the file: an empty counter.
+    expect(testId(container, 'cookbooks-output-2')!.getAttribute('data-status')).toBe('saved')
+    expect(testId(container, 'cookbooks-runs-2')!.textContent).toBe('[ ]')
+
+    // Saved results are results: «Очистить все выводы» is offered from the start.
+    expect(testId(container, 'cookbooks-clear-all-outputs')).not.toBeNull()
+  })
+
+  it('replaces a saved result, and counts up from its own counter, once the cell runs', async () => {
+    const { container } = await renderNotebook({
+      documents: { 'rox-analytics': savedNotebook([savedOutput('первая', [{ mime: 'image/png', data: PNG_DATA }])], 4) },
+      run: async () => RUN_OK,
+    })
+    await click(container, 'cookbooks-run-0')
+
+    const output = testId(container, 'cookbooks-output-0')!
+    expect(output.getAttribute('data-status')).toBe('ok')
+    expect(output.querySelector('pre')!.textContent).toBe('42\n')
+    // The run answered no displays, so the saved image is gone with its result.
+    expect(output.querySelector('img')).toBeNull()
+    expect(testId(container, 'cookbooks-runs-0')!.textContent).toBe('[5]')
+  })
+
+  it('falls back to the plain-text record of a rich result', async () => {
+    const { container } = await renderNotebook({
+      documents: {
+        'rox-analytics': savedNotebook(
+          [savedOutput('', [{ mime: 'image/png', data: PNG_DATA }, { mime: 'text/plain', data: '2' }])],
+          1,
+        ),
+      },
+    })
+
+    expect(testId(container, 'cookbooks-output-0')!.querySelector('pre')!.textContent).toBe('2')
+    // The plain-text record is the fallback text, never a widget of its own.
+    expect(allTestIds(container, 'cookbooks-display-')).toHaveLength(1)
+  })
+
+  it('reads the printed text and every plain-text display as one block', async () => {
+    // `print("x")`, a `display("Подпись")` and a trailing `40+2`: three events —
+    // the stream record and the two display records — read as one block, in order.
+    const { container } = await renderNotebook({
+      documents: {
+        'rox-analytics': savedNotebook(
+          [
+            savedOutput('x'),
+            savedOutput('', [{ mime: 'text/plain', data: 'Подпись' }]),
+            savedOutput('', [{ mime: 'text/plain', data: '42' }]),
+          ],
+          1,
+        ),
+      },
+    })
+
+    expect(testId(container, 'cookbooks-output-0')!.querySelector('pre')!.textContent).toBe('x\nПодпись\n42')
+  })
+
+  it('shows a lone trailing value once, never twice', async () => {
+    // `1+1` is a single `text/plain` record and no stream at all — it reads `2`.
+    const { container } = await renderNotebook({
+      documents: { 'rox-analytics': savedNotebook([savedOutput('', [{ mime: 'text/plain', data: '2' }])], 1) },
+    })
+    expect(testId(container, 'cookbooks-output-0')!.querySelector('pre')!.textContent).toBe('2')
+  })
+
+  it('merges a run’s stdout with the plain-text records it answered', async () => {
+    const { container } = await renderNotebook({
+      run: async () => ({ ...RUN_OK, stdout: 'x', displays: [{ mime: 'text/plain', data: 'Подпись' }] }),
+    })
+    await click(container, 'cookbooks-run-1')
+    expect(testId(container, 'cookbooks-output-1')!.querySelector('pre')!.textContent).toBe('x\nПодпись')
+  })
+
+  it('copies the printed text together with its plain-text displays', async () => {
+    const copied: string[] = []
+    const { container } = await renderNotebook(
+      {
+        documents: {
+          'rox-analytics': savedNotebook([savedOutput('x', [{ mime: 'text/plain', data: 'Подпись' }])], 1),
+        },
+      },
+      {
+        writeClipboard: async (text) => {
+          copied.push(text)
+        },
+      },
+    )
+    await click(container, 'cookbooks-copy-output-0')
+    expect(copied).toEqual(['x\nПодпись'])
+  })
+
+  it('copies the plain-text fallback of a rich result', async () => {
+    const copied: string[] = []
+    const { container } = await renderNotebook(
+      {
+        documents: {
+          'rox-analytics': savedNotebook(
+            [savedOutput('', [{ mime: 'image/png', data: PNG_DATA }, { mime: 'text/plain', data: '2' }])],
+            1,
+          ),
+        },
+      },
+      {
+        writeClipboard: async (text) => {
+          copied.push(text)
+        },
+      },
+    )
+    await click(container, 'cookbooks-copy-output-0')
+    expect(copied).toEqual(['2'])
+  })
+
+  it('copies the frozen rich placeholder when the result has no plain text', async () => {
+    const copied: string[] = []
+    const { container } = await renderNotebook(
+      { documents: { 'rox-analytics': savedNotebook([savedOutput('', [{ mime: 'image/svg+xml', data: SVG_DATA }])], 1) } },
+      {
+        writeClipboard: async (text) => {
+          copied.push(text)
+        },
+      },
+    )
+    await click(container, 'cookbooks-copy-output-0')
+    expect(copied).toEqual([t('cookbooks.output.richPlaceholder')])
+    expect(toasts).toContain(`success:${t('toast.copied')}`)
+  })
+
+  it('keeps the long-output collapse working for a saved result', async () => {
+    const { container } = await renderNotebook({
+      documents: {
+        'rox-analytics': savedNotebook([savedOutput(LONG_STDOUT, [{ mime: 'image/png', data: PNG_DATA }])], 2),
+      },
+    })
+
+    const output = testId(container, 'cookbooks-output-0')!
+    expect(output.getAttribute('data-collapsed')).toBe('true')
+    // The clamp is visual only: the collapsed block still carries every character.
+    expect(output.querySelector('pre')!.textContent).toBe(LONG_STDOUT)
+    // …and the rich record stays in the block while the text is clamped.
+    expect(output.querySelector('img')).not.toBeNull()
+
+    await click(container, 'cookbooks-output-toggle-0')
+    expect(testId(container, 'cookbooks-output-0')!.getAttribute('data-collapsed')).toBe('false')
+    expect((testId(container, 'cookbooks-output-toggle-0') as HTMLButtonElement).textContent).toBe(
+      t('cookbooks.cell.collapseOutput'),
+    )
+  })
+
+  it('clears a seeded result back to the pre-run hint', async () => {
+    const { container } = await renderNotebook({
+      documents: { 'rox-analytics': savedNotebook([savedOutput('сохранено', [{ mime: 'image/png', data: PNG_DATA }])], 2) },
+    })
+
+    await click(container, 'cookbooks-clear-output-0')
+    const output = testId(container, 'cookbooks-output-0')!
+    expect(output.getAttribute('data-status')).toBe('idle')
+    expect(output.textContent).toBe(t('cookbooks.output.hint'))
+    expect(output.querySelector('img')).toBeNull()
+    // Clearing a result never rewinds the counter it was seeded from.
+    expect(testId(container, 'cookbooks-runs-0')!.textContent).toBe('[2]')
+  })
+
+  it('renders the rich records a run answers with', async () => {
+    const { container } = await renderNotebook({
+      run: async () => ({ ...RUN_OK, stdout: '', displays: [{ mime: 'image/png', data: PNG_DATA }] }),
+    })
+    await click(container, 'cookbooks-run-1')
+
+    const output = testId(container, 'cookbooks-output-1')!
+    expect(output.getAttribute('data-status')).toBe('ok')
+    // A run that printed nothing but drew something shows the rich marker…
+    expect(output.querySelector('pre')!.textContent).toBe(t('cookbooks.output.richPlaceholder'))
+    // …and the record itself.
+    expect(output.querySelector('img')!.getAttribute('src')).toBe(`data:image/png;base64,${PNG_DATA}`)
+  })
+
+  it('renders the rich records a run-all answers with', async () => {
+    const { container } = await renderNotebook({
+      runAll: async () => ({
+        cells: [
+          {
+            index: 1,
+            status: 'ok',
+            stdout: 'ok-1',
+            error: null,
+            displays: [{ mime: 'text/html', data: '<b>итог</b>' }],
+          },
+          { index: 2, status: 'error', stdout: '', error: 'ValueError: boom', displays: [] },
+          { index: 3, status: 'skipped', stdout: '', error: null, displays: [] },
+        ],
+      }),
+    })
+    await click(container, 'cookbooks-run-all')
+
+    // The frame leads with its own policy; the record follows it verbatim.
+    const srcdoc = testId(container, 'cookbooks-display-frame-1')!.getAttribute('srcdoc')!
+    expect(srcdoc).toContain("default-src 'none'")
+    expect(srcdoc.endsWith('<b>итог</b>')).toBe(true)
+    // The batch drew nothing else: only cell 1 grew a widget.
+    expect(allTestIds(container, 'cookbooks-display-')).toHaveLength(1)
+  })
+
+  it('exports the session’s rich records as display_data outputs', async () => {
+    const { api, container } = await renderNotebook({
+      run: async () => ({ ...RUN_OK, displays: [{ mime: 'image/png', data: PNG_DATA }] }),
+    })
+    await click(container, 'cookbooks-run-1')
+    await click(container, 'cookbooks-export')
+
+    const notebook = JSON.parse(api.counts.export[0].content) as { cells: Record<string, unknown>[] }
+    // The stream record comes first, the rich record after it (SPEC §16).
+    expect(notebook.cells[1].outputs).toEqual([
+      { output_type: 'stream', name: 'stdout', text: ['42\n'] },
+      { output_type: 'display_data', metadata: {}, data: { 'image/png': PNG_DATA } },
+    ])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Wave-11 i18n contract — the frozen RU copy of the rich-output keys.
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage wave-11 copy', () => {
+  it('carries the three rich-output keys with their frozen RU values', () => {
+    expect(t('cookbooks.output.imageAlt')).toBe('График из ячейки')
+    expect(t('cookbooks.output.frameTitle')).toBe('HTML-вывод ячейки')
+    expect(t('cookbooks.output.richPlaceholder')).toBe('[графический вывод]')
   })
 })
