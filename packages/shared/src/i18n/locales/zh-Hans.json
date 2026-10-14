@@ -7258,6 +7258,7 @@
   "profile.defaultName": "用户",
   "profile.level": "等级 {{level}}",
   "profile.openMenu": "打开 {{name}} 的个人资料菜单",
+  "profile.replayTour": "重新播放导览",
   "profile.spent": "已花费 {{amount}}",
   "profile.spentTooltip": "此工作区所有会话的模型总花费",
   "profile.xpMax": "{{xp}} XP",

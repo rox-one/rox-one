@@ -7258,6 +7258,7 @@
   "profile.defaultName": "User",
   "profile.level": "Lv {{level}}",
   "profile.openMenu": "Open profile menu for {{name}}",
+  "profile.replayTour": "Replay tour",
   "profile.spent": "Spent {{amount}}",
   "profile.spentTooltip": "Total model spend across this workspace's sessions",
   "profile.xpMax": "{{xp}} XP",

@@ -7302,6 +7302,7 @@
   "profile.defaultName": "Пользователь",
   "profile.level": "Ур. {{level}}",
   "profile.openMenu": "Открыть меню профиля — {{name}}",
+  "profile.replayTour": "Повторить тур",
   "profile.spent": "Расход {{amount}}",
   "profile.spentTooltip": "Суммарные траты на модели по сессиям этого рабочего пространства",
   "profile.xpMax": "{{xp}} XP",

@@ -7294,6 +7294,7 @@
   "profile.defaultName": "المستخدم",
   "profile.level": "المستوى {{level}}",
   "profile.openMenu": "فتح قائمة الملف الشخصي لـ {{name}}",
+  "profile.replayTour": "إعادة الجولة",
   "profile.spent": "المُنفَق {{amount}}",
   "profile.spentTooltip": "إجمالي إنفاق النماذج عبر جلسات مساحة العمل هذه",
   "profile.xpMax": "{{xp}} XP",

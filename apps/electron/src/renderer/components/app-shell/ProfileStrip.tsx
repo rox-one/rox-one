@@ -115,6 +115,14 @@ interface ProfileStripProps {
   defaultAvatarFallback?: React.ReactNode
   /** Avatar-only presentation for the collapsed navigation rail. */
   compact?: boolean
+  /**
+   * `rail`: the single profile entry point at the bottom of the 56px primary
+   * rail — a bare 28px avatar (real image, initial fallback) that opens the
+   * profile popover to the right. No card chrome, name or plan pill.
+   */
+  variant?: 'strip' | 'rail'
+  /** Replays the onboarding tour from the popover; row hidden when absent. */
+  onReplayTour?: () => void
 }
 
 export function ProfileStrip({
@@ -124,6 +132,8 @@ export function ProfileStrip({
   className,
   defaultAvatarFallback,
   compact = false,
+  variant = 'strip',
+  onReplayTour,
 }: ProfileStripProps) {
   const { t } = useTranslation()
   const detailsId = React.useId()
@@ -160,6 +170,56 @@ export function ProfileStrip({
     onClick()
   }, [onClick])
   const openSettings = React.useMemo(() => onOpenSettings ? () => { setOpen(false); onOpenSettings() } : undefined, [onOpenSettings])
+  const replayTour = React.useMemo(() => onReplayTour ? () => { setOpen(false); onReplayTour() } : undefined, [onReplayTour])
+  const popover = (
+    <UserProfilePopoverContent
+      data={data}
+      planLabel={planLabel}
+      balanceLabel={balanceLabel}
+      balanceKnown={balanceKnown}
+      spentLabel={spentLabel}
+      avatar={avatar}
+      onOpenAccountSettings={openAccountSettings}
+      onOpenSettings={openSettings}
+      onReplayTour={replayTour}
+      onClose={() => setOpen(false)}
+    />
+  )
+
+  if (variant === 'rail') {
+    const initial = Array.from(displayName)[0]?.toUpperCase() ?? '?'
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            data-rail-button=""
+            data-rail-avatar=""
+            data-tutorial="profile-strip"
+            className={cn(
+              'flex size-10 items-center justify-center rounded-[var(--radius-control)] outline-none',
+              'hover:bg-[var(--state-hover)] focus-visible:ring-1 focus-visible:ring-ring data-[state=open]:bg-[var(--state-selected)]',
+              className,
+            )}
+            aria-label={t('profile.openMenu', { name: displayName })}
+            aria-describedby={detailsId}
+            title={`${displayName} · ${accountDetails}`}
+          >
+            <span id={detailsId} className="sr-only">{accountDetails}</span>
+            <Avatar className="size-7 shrink-0 rounded-full">
+              {data.avatar ? <AvatarImage src={data.avatar} alt="" /> : null}
+              <AvatarFallback delayMs={0} className="bg-[var(--state-selected)] text-caption font-semibold text-text-primary">
+                {initial}
+              </AvatarFallback>
+            </Avatar>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent side="right" align="end" sideOffset={8} className="w-64 p-1" data-rail-profile-menu="">
+          {popover}
+        </PopoverContent>
+      </Popover>
+    )
+  }
 
   return (
 <Popover open={open} onOpenChange={setOpen}>
@@ -208,17 +268,7 @@ export function ProfileStrip({
         </button>
       </PopoverTrigger>
       <PopoverContent side="top" align="start" sideOffset={8} className="w-64 p-1">
-        <UserProfilePopoverContent
-          data={data}
-          planLabel={planLabel}
-          balanceLabel={balanceLabel}
-          balanceKnown={balanceKnown}
-          spentLabel={spentLabel}
-          avatar={avatar}
-          onOpenAccountSettings={openAccountSettings}
-          onOpenSettings={openSettings}
-          onClose={() => setOpen(false)}
-        />
+        {popover}
       </PopoverContent>
     </Popover>
   )

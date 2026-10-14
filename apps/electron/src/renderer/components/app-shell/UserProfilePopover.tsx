@@ -12,7 +12,7 @@
 
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { LogOut, Settings, SlidersHorizontal } from 'lucide-react'
+import { LogOut, RotateCcw, Settings, SlidersHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
@@ -45,6 +45,8 @@ export interface UserProfilePopoverContentProps {
   onOpenAccountSettings: () => void
   /** Sidebar v2: app settings live here (no gear in the sidebar footer). */
   onOpenSettings?: () => void
+  /** Replays the onboarding product tour. */
+  onReplayTour?: () => void
   onClose: () => void
 }
 
@@ -57,6 +59,7 @@ export function UserProfilePopoverContent({
   avatar,
   onOpenAccountSettings,
   onOpenSettings,
+  onReplayTour,
   onClose,
 }: UserProfilePopoverContentProps) {
   const { t } = useTranslation()
@@ -144,6 +147,12 @@ export function UserProfilePopoverContent({
         <Settings className="icon-toolbar shrink-0 text-muted-foreground" aria-hidden />
         <span className="font-medium">{t('profile.accountSettings')}</span>
       </button>
+      {onReplayTour ? (
+        <button type="button" className={rowClass} onClick={onReplayTour} data-testid="profile-replay-tour">
+          <RotateCcw className="icon-toolbar shrink-0 text-muted-foreground" aria-hidden />
+          <span className="font-medium">{t('profile.replayTour')}</span>
+        </button>
+      ) : null}
       <button
         type="button"
         className={destructiveRowClass}

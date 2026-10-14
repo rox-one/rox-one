@@ -1,7 +1,8 @@
 /**
  * Primary rail (shell-layout): a static 56 px icon column. Pinned screens on
  * top, «⋯» popover with every other screen (icon + label + pin toggle),
- * Settings and the avatar at the bottom. Hover tooltips, active highlight,
+ * the sidebar toggle and the profile avatar at the bottom (Settings lives in the
+ * avatar popover, no gear). Hover tooltips, active highlight,
  * unread dot. Arrow keys move between rail buttons (roving tabindex).
  */
 import * as React from 'react'
@@ -230,9 +231,7 @@ export const PrimaryRail = React.memo(function PrimaryRail({ avatar, secondaryAv
             <TooltipContent side="right">{secondary === 'hidden' ? t('shell.rail.showSidebar') : t('shell.rail.hideSidebar')}</TooltipContent>
           </Tooltip>
         )}
-        {model.bottom.map((screen) => (
-          <RailButton key={screen.id} screen={screen} active={isRailScreenActive(screen, navState)} unread={unread[screen.id] ?? 0} onActivate={activate} />
-        ))}
+        {/* No gear: Settings opens only from the avatar's profile popover (Mark's decision). */}
         {avatar}
       </div>
     </nav>

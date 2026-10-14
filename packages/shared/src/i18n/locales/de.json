@@ -7258,6 +7258,7 @@
   "profile.defaultName": "Benutzer",
   "profile.level": "Lvl {{level}}",
   "profile.openMenu": "Profilmenü für {{name}} öffnen",
+  "profile.replayTour": "Tour wiederholen",
   "profile.spent": "Ausgaben {{amount}}",
   "profile.spentTooltip": "Gesamte Modellkosten aller Sitzungen in diesem Arbeitsbereich",
   "profile.xpMax": "{{xp}} XP",

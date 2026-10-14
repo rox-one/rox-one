@@ -7258,6 +7258,7 @@
   "profile.defaultName": "Felhasználó",
   "profile.level": "{{level}}. szint",
   "profile.openMenu": "Profilmenü megnyitása: {{name}}",
+  "profile.replayTour": "Bemutató újra",
   "profile.spent": "Költés {{amount}}",
   "profile.spentTooltip": "A munkaterület munkameneteinek teljes modellköltsége",
   "profile.xpMax": "{{xp}} XP",

@@ -94,7 +94,8 @@ import { inspectorUserOpenedAtom } from '@/atoms/unified-shell'
 import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
-import { type ProfileStripData } from "./ProfileStrip"
+import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
+import { useProductLearning } from "@/features/product-tour/runtime"
 import { accountProfileStrip } from "./profile-strip-account"
 import { SidebarChrome, SidebarHeaderControls } from "./SidebarChrome"
 import { StatusBar } from "./StatusBar"
@@ -474,6 +475,11 @@ function AppShellContent({
 
   // Profile strip (gamification footer)
   const promoInsights = usePromoInsights(activeWorkspaceId ?? undefined)
+  const productLearning = useProductLearning()
+  const replayOnboardingTour = React.useMemo(() => {
+    if (!productLearning?.enabled || !productLearning.ready) return undefined
+    return () => { void productLearning.start('OBT-01', productLearning.progress['OBT-01'] ? 'replay' : 'new') }
+  }, [productLearning])
   const [profileStrip, setProfileStrip] = React.useState<ProfileStripData>({
     displayName: '',
     plan: 'standard',
@@ -3171,18 +3177,13 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             <PrimaryRail
               secondaryAvailable={secondaryAvailable}
               avatar={
-                <button
-                  type="button"
-                  data-rail-button=""
-                  data-rail-avatar=""
-                  aria-label={t('shell.rail.account', { name: profileStripWithSpend.displayName })}
+                <ProfileStrip
+                  variant="rail"
+                  data={profileStripWithSpend}
                   onClick={() => handleSettingsClick('account')}
-                  className="flex size-10 items-center justify-center rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  {profileStripWithSpend.avatar
-                    ? <img src={profileStripWithSpend.avatar} alt="" className="size-7 rounded-full object-cover" />
-                    : <span className="flex size-7 items-center justify-center rounded-full bg-[var(--state-selected)] text-caption font-semibold" aria-hidden>{(profileStripWithSpend.displayName || '?').slice(0, 1).toUpperCase()}</span>}
-                </button>
+                  onOpenSettings={() => handleSettingsClick()}
+                  onReplayTour={replayOnboardingTour}
+                />
               }
             />
             <div className={cn("h-full min-w-0 flex-1 flex-col select-none", secondaryShown ? "flex" : "hidden")} data-secondary-sidebar="">
@@ -3234,12 +3235,9 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                 <div className="shrink-0" data-sidebar-footer="">
                   <SidebarChrome
                     workspaceId={activeWorkspaceId}
-                    profile={profileStripWithSpend}
-                    onProfileClick={() => handleSettingsClick('account')}
                     promoKind={promoKind}
                     onPromoCta={handleMemoryClick}
                     collapsed={isSidebarCollapsed}
-                    onOpenSettings={() => handleSettingsClick()}
                   />
                 </div>
               </div>

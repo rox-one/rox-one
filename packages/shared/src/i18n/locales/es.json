@@ -7267,6 +7267,7 @@
   "profile.defaultName": "Usuario",
   "profile.level": "Niv. {{level}}",
   "profile.openMenu": "Abrir el menú del perfil de {{name}}",
+  "profile.replayTour": "Repetir recorrido",
   "profile.spent": "Gastado {{amount}}",
   "profile.spentTooltip": "Gasto total en modelos de las sesiones de este espacio de trabajo",
   "profile.xpMax": "{{xp}} XP",

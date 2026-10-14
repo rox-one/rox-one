@@ -7258,6 +7258,7 @@
   "profile.defaultName": "ユーザー",
   "profile.level": "Lv {{level}}",
   "profile.openMenu": "{{name}} のプロフィールメニューを開く",
+  "profile.replayTour": "ツアーを再生",
   "profile.spent": "使用額 {{amount}}",
   "profile.spentTooltip": "このワークスペースのセッションでのモデル利用額の合計",
   "profile.xpMax": "{{xp}} XP",
