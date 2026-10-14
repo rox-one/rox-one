@@ -64,3 +64,17 @@ Canvas2D stage with a retained scene graph, dirty-rect redraws, an rbush spatial
 - App side (electron renderer): one adapter per `EntityKind` from `packages/shared/src/entities` / `@rox/core/entities` (`isEntityKind`, `entityRoute`), auto-registered by iterating the kind list; create via each module's existing RPC (notes, pages, tasks, sessions, dashboards…); links via `server-core/entities/link-store.ts` RPC with new kind `canvas` (fragment = objectId, `kindTakesFragment('canvas') = true`); `subscribe` via existing entity change events → `applyEntitySnapshot`; `open` → `entityRoute(ref)`.
 - Drag-and-drop: `application/x-rox-entity` payload `{kind,id}` from sidebar/omnibox/backlinks → `linkEntityCard`.
 - AI tools: `canvas_create_entity_card(boardId, kind, title, at)`, `canvas_link_entity(boardId, ref, at)`; deletion of entities is never done by agents without user confirmation (safeMode: ask).
+
+## Performance budgets (mandatory, enforced by tests/benchmarks)
+
+| Budget | Target | Enforced by |
+|---|---|---|
+| App startup / other screens | zero cost: «Доска» surface + editor are a separate lazy chunk | `React.lazy` in surface-pages; bundle check |
+| Board list interactive | ≤ 150 ms | surface perf measurement (Mac build) |
+| Open 1k-object board | ≤ 500 ms | `perf.test.ts` + editor measurement |
+| Pan/zoom with 5k objects | 60 fps (≤ 16 ms/frame) | viewport culling via `SpatialIndex` (rbush), query p95 ≤ 2 ms |
+| Yjs updates | applied off the render path, coalesced per animation frame (`Y.mergeUpdates`) | editor implementation |
+| Main-thread blocking | no single op > 50 ms | `perf.test.ts` |
+| z-order keys | bounded growth (integer-head fractional index) | `perf.test.ts` (5k appends → length < 6) |
+
+Numbers measured on the Mac build are included in every report.

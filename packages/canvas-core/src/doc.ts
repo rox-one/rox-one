@@ -37,12 +37,33 @@ export class CanvasDoc {
   readonly assets: Y.Map<unknown>
   readonly comments: Y.Map<Y.Map<unknown>>
 
+  /** Plain snapshots per object, invalidated per changed id (Yjs reads are costly). */
+  private plainCache = new Map<string, CanvasObject>()
+  private listCache: CanvasObject[] | null = null
+
   constructor(doc: Y.Doc = new Y.Doc()) {
     this.doc = doc
     this.meta = doc.getMap('meta')
     this.objects = doc.getMap('objects')
     this.assets = doc.getMap('assets')
     this.comments = doc.getMap('comments')
+    this.objects.observeDeep(events => {
+      this.listCache = null
+      for (const ev of events) {
+        if (ev.target === this.objects) { for (const k of ev.changes.keys.keys()) this.plainCache.delete(k); continue }
+        let t: Y.AbstractType<unknown> | null = ev.target
+        while (t && t.parent && t.parent !== this.objects) t = t.parent as Y.AbstractType<unknown>
+        const key = (t as unknown as { _item?: { parentSub?: string | null } } | null)?._item?.parentSub
+        if (key) this.plainCache.delete(key)
+        else this.plainCache.clear()
+      }
+    })
+  }
+
+  private plainOf(id: string, m: Y.Map<unknown>): CanvasObject {
+    let o = this.plainCache.get(id)
+    if (!o) { o = Object.freeze(fromYMap(m)) as CanvasObject; this.plainCache.set(id, o) }
+    return o
   }
 
   /** Initialise meta on a fresh board (no-op when already initialised). */
@@ -73,9 +94,10 @@ export class CanvasDoc {
   /** Top-most z key among siblings of `parentId`. */
   private lastIndex(parentId: string | null): string | null {
     let max: string | null = null
-    for (const m of this.objects.values()) {
-      if ((m.get('parentId') ?? null) !== parentId) continue
-      const idx = m.get('index')
+    for (const [id, m] of this.objects.entries()) {
+      const o = this.plainOf(id, m)
+      if ((o.parentId ?? null) !== parentId) continue
+      const idx: unknown = o.index
       // Keys from remote peers are not validated; ignore malformed ones.
       if (typeof idx !== 'string' || !isValidIndexKey(idx)) continue
       if (max === null || idx > max) max = idx
@@ -121,12 +143,13 @@ export class CanvasDoc {
 
   get(id: string): CanvasObject | undefined {
     const m = this.objects.get(id)
-    return m ? fromYMap(m) : undefined
+    return m ? this.plainOf(id, m) : undefined
   }
 
   /** All objects, parents before children, siblings by z-order. */
   list(): CanvasObject[] {
-    const all = [...this.objects.values()].map(fromYMap)
+    if (this.listCache) return this.listCache.slice()
+    const all = [...this.objects.entries()].map(([id, m]) => this.plainOf(id, m))
     const byParent = new Map<string | null, CanvasObject[]>()
     for (const o of all) {
       const p = o.parentId !== null && this.objects.has(o.parentId) ? o.parentId : null
@@ -148,7 +171,8 @@ export class CanvasDoc {
     walk(null)
     // Objects caught in a parent cycle (possible after concurrent re-parenting) surface at the root.
     for (const o of all) if (!seen.has(o.id)) { seen.add(o.id); out.push(o) }
-    return out
+    this.listCache = out
+    return out.slice()
   }
 
   /** Shallow patch; `style`/`props` merge key-wise. Result is re-validated. */

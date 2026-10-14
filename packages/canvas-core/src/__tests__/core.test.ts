@@ -23,10 +23,10 @@ describe('fractional index', () => {
   })
   test('rejects bad bounds', () => {
     expect(() => keyBetween('b', 'a')).toThrow()
-    expect(() => keyBetween('a0', null)).toThrow()
+    expect(() => keyBetween('a00', null)).toThrow()
   })
   test('keysBetween is increasing', () => {
-    const ks = keysBetween('A', 'B', 50)
+    const ks = keysBetween('a0', 'a1', 50)
     expect([...ks].sort()).toEqual(ks)
   })
 })
@@ -34,11 +34,11 @@ describe('fractional index', () => {
 describe('schema', () => {
   test('covers parity types and preserves unknown types', () => {
     expect(OBJECT_TYPES).toContain('connector')
-    const r = validateObject({ id: 'x', type: 'future-thing', parentId: null, index: 'V', x: 0, y: 0, w: 1, h: 1, props: { a: 1 } })
+    const r = validateObject({ id: 'x', type: 'future-thing', parentId: null, index: 'a0', x: 0, y: 0, w: 1, h: 1, props: { a: 1 } })
     expect(r.ok && r.unknownType).toBe(true)
   })
   test('validates type props', () => {
-    const r = validateObject({ id: 'x', type: 'ink', parentId: null, index: 'V', x: 0, y: 0, w: 1, h: 1, props: { points: [1, 2, 3] } })
+    const r = validateObject({ id: 'x', type: 'ink', parentId: null, index: 'a0', x: 0, y: 0, w: 1, h: 1, props: { points: [1, 2, 3] } })
     expect(r.ok).toBe(false)
   })
 })
@@ -108,7 +108,7 @@ describe('CanvasFileStore', () => {
 
 describe('review fixes', () => {
   test('schema rejects bad index keys; tolerant of bad remote keys', () => {
-    expect(validateObject({ id: 'x', type: 'shape', parentId: null, index: 'a0', x: 0, y: 0, w: 1, h: 1, props: { kind: 'rect' } }).ok).toBe(false)
+    expect(validateObject({ id: 'x', type: 'shape', parentId: null, index: 'a00', x: 0, y: 0, w: 1, h: 1, props: { kind: 'rect' } }).ok).toBe(false)
     const b = new CanvasDoc()
     const [a] = b.add([shape(1)], me)
     // Simulate a malformed key arriving from a remote peer.

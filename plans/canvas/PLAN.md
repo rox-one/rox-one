@@ -62,3 +62,6 @@ Parallel lanes extended: phases 6–10 run in parallel with each other after Pha
 7. Electron renderer perf for 5k objects with rich text; may need WebGL later.
 8. Box memory: no full tsc/build on the box; validation on the Mac.
 9. The subdomain DNS for canvas.rox.one (who controls DNS?).
+
+## Cross-cutting: performance budgets
+Every phase must keep the budgets in SPEC "Performance budgets" green (lazy chunk, list ≤150 ms, 1k open ≤500 ms, 60 fps on 5k via culling, rAF-batched Yjs, no >50 ms block). `bun run bench` in packages/canvas-core and the surface measurements run on the Mac; numbers go into each report.
