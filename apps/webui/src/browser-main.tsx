@@ -2,14 +2,31 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider as JotaiProvider } from 'jotai'
 import App from './App'
-import { setupI18n } from '@rox/shared/i18n'
+import { preloadRendererLocales, setupRendererI18n } from '@rox/shared/i18n/lazy'
 import { initReactI18next } from 'react-i18next'
 import { useTranslation } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import './index.css'
 
-// Initialize i18n before any React rendering
-setupI18n([LanguageDetector, initReactI18next])
+// Initialize i18n before any React rendering, loading only the active language
+// plus its fallback chain (Russian, then English) first. The eager `setupI18n()`
+// this replaces statically bundled all twelve locales (~9 MB) into the entry
+// chunk; the lazy loaders keep each language in its own on-demand chunk so first
+// paint does not wait on it.
+async function bootstrap(): Promise<void> {
+  await preloadRendererLocales()
+  setupRendererI18n([LanguageDetector, initReactI18next])
+
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        <JotaiProvider>
+          <App />
+        </JotaiProvider>
+      </ErrorBoundary>
+    </React.StrictMode>,
+  )
+}
 
 function CrashFallback() {
   const { t } = useTranslation()
@@ -35,12 +52,4 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
   )
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <JotaiProvider>
-        <App />
-      </JotaiProvider>
-    </ErrorBoundary>
-  </React.StrictMode>,
-)
+void bootstrap()
