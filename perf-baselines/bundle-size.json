@@ -3,20 +3,20 @@
   "comment": "Recorded by `bun scripts/check-bundle-size.ts --update` against a real renderer build.",
   "budgets": {
     "EntityPicker": {
-      "totalRawBytes": 817765,
-      "gzipTotalBytes": 266011
+      "totalRawBytes": 817770,
+      "gzipTotalBytes": 266016
     },
     "MarkdownMermaidBlock": {
       "totalRawBytes": 1547341,
-      "gzipTotalBytes": 469313
+      "gzipTotalBytes": 469314
     },
     "MarkdownOpenUIBlock": {
-      "totalRawBytes": 2346835,
+      "totalRawBytes": 2346845,
       "gzipTotalBytes": 618559
     },
     "PDFPreviewOverlay": {
       "totalRawBytes": 469633,
-      "gzipTotalBytes": 138922
+      "gzipTotalBytes": 138925
     },
     "ar": {
       "totalRawBytes": 811860,
@@ -67,8 +67,8 @@
       "gzipTotalBytes": 196984
     },
     "main": {
-      "totalRawBytes": 359752,
-      "gzipTotalBytes": 111762
+      "totalRawBytes": 361227,
+      "gzipTotalBytes": 112059
     },
     "pl": {
       "totalRawBytes": 723941,
@@ -114,7 +114,7 @@
     }
   },
   "totals": {
-    "jsRawBytes": 35306257,
+    "jsRawBytes": 35341517,
     "jsGzipBytes": 9730795,
     "cssRawBytes": 884960,
     "cssGzipBytes": 136195
@@ -131,8 +131,8 @@
       "fileCount": 15
     },
     "index.html": {
-      "jsRawBytes": 2525046,
-      "gzipTotalBytes": 789258,
+      "jsRawBytes": 2597536,
+      "gzipTotalBytes": 804794,
       "fileCount": 53
     },
     "playground.html": {

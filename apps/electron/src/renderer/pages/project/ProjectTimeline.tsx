@@ -120,7 +120,7 @@ export function RoadmapTimeline({
   const range = React.useMemo(() => roadmapTimelineRange(milestones, today), [milestones, today])
   const scale = ganttScale(range, trackWidth)
   const { totalDays, pxPerDay } = scale
-  const { drag, onPointerDown: startDrag, onPointerMove, onPointerUp, onPointerCancel } = useGanttDrag({
+  const { drag, onPointerDown: startDrag, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture } = useGanttDrag({
     pxPerDay,
     onCommit: (id, mode, deltaDays) => onChange(milestones.map((m) => (m.id === id ? applyDrag(m, mode, deltaDays) : m))),
     onClick: onFocusMilestone,
@@ -193,6 +193,7 @@ export function RoadmapTimeline({
                     aria-valuetext={`${start} — ${due}`}
                     data-testid="project-timeline-bar"
                     onPointerDown={(e) => onPointerDown(e, m, 'move')}
+                    onLostPointerCapture={onLostPointerCapture}
                     onKeyDown={(e) => {
                       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                         e.preventDefault()
