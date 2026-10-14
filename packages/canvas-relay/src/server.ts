@@ -33,7 +33,19 @@ import { timingSafeEqual } from 'node:crypto'
 const MSG_SYNC = 0
 const MSG_AWARENESS = 1
 export const MSG_AUTH = 2
-const ROOM_RE = /^[A-Za-z0-9_-]{1,64}:[A-Za-z0-9_-]{1,64}$/
+const ROOM_RE = /^[A-Za-z0-9_-]{1,64}:[A-Za-z0-9_-]{1,64}(~comments)?$/
+/** Comments of a board live in their own Yjs doc, room `<board room>~comments`. */
+export const COMMENTS_SUFFIX = '~comments'
+/** Board room a (possibly comments) room belongs to: tokens and revocations are per board room. */
+export const baseRoom = (room: string): string => (room.endsWith(COMMENTS_SUFFIX) ? room.slice(0, -COMMENTS_SUFFIX.length) : room)
+/**
+ * Scope mapping: edit writes both rooms; comment writes only the comments room
+ * and is read-only on the board; view is read-only everywhere.
+ */
+export function canWrite(scope: string, room: string): boolean {
+  if (scope === 'edit') return true
+  return scope === 'comment' && room.endsWith(COMMENTS_SUFFIX)
+}
 export const SUBPROTOCOL = 'rox-canvas.v1'
 export const MIN_SECRET_LENGTH = 32
 export const MAX_CLIENT_IDS = 4
@@ -147,6 +159,10 @@ class Room {
    * `growth` is the part of the update the doc did not already contain.
    */
   write(growth: Uint8Array, origin: WS): boolean {
+    // Validate first: a malformed update must never reach the log (it would break every later load).
+    Y.decodeUpdate(growth) // throws on malformed bytes → caller closes; nothing stored
+    const scratch = new Y.Doc()
+    try { Y.applyUpdate(scratch, growth) } finally { scratch.destroy() }
     // Only the part the doc lacks is stored and applied (duplicates cost nothing).
     this.store.append(this.name, growth) // throws → caller closes 1011; memory untouched
     Y.applyUpdate(this.doc, growth, origin)
@@ -207,11 +223,11 @@ export function sanitizeAwareness(update: Uint8Array, ws: { data: Pick<Conn, 'cl
       const user = s.user && typeof s.user === 'object' && !Array.isArray(s.user) ? (s.user as Record<string, unknown>) : {}
       s.user = { ...user, id: ws.data.claims.sub, name: ws.data.claims.name ?? (typeof user.name === 'string' ? user.name.slice(0, 80) : ws.data.claims.sub) }
       state = s
-      owners.set(id, ws)
-      mine.add(id)
     }
     const json = JSON.stringify(state)
     if (json.length > maxBytes) continue
+    // Claim the clientID only once the entry is actually accepted.
+    if (state !== null) { owners.set(id, ws); mine.add(id) }
     kept.push({ id, clock, json })
   }
   if (!kept.length) return null
@@ -244,7 +260,7 @@ export function startRelay(opts: RelayOptions) {
   const store = opts.store ?? new RoomStore(opts.dbPath)
   const rooms = new Map<string, Room>()
   let totalConns = 0
-  const verify = (token: string, room: string) => verifyRoomToken(token, room, {
+  const verify = (token: string, room: string) => verifyRoomToken(token, baseRoom(room), {
     secret: opts.secret, issuer: opts.issuer, audience: opts.audience,
     minEpoch: (r, sub) => store.minEpoch(r, sub),
   })
@@ -307,7 +323,7 @@ export function startRelay(opts: RelayOptions) {
   const revoke = (room: string, sub: string, epoch: number): number => {
     store.revoke(room, sub, epoch)
     let n = 0
-    for (const c of rooms.get(room)?.conns ?? []) {
+    for (const c of [...(rooms.get(room)?.conns ?? []), ...(rooms.get(room + COMMENTS_SUFFIX)?.conns ?? [])]) {
       if ((sub === '*' || c.data.claims.sub === sub) && (c.data.claims.epoch ?? 0) < epoch) { c.close(CLOSE.revoked, 'revoked'); n++ }
     }
     return n
@@ -323,7 +339,7 @@ export function startRelay(opts: RelayOptions) {
     },
     async fetch(req, srv) {
       const url = new URL(req.url)
-      if (url.pathname === '/healthz') return Response.json({ ok: true, rooms: rooms.size, conns: totalConns })
+      if (url.pathname === '/healthz') return Response.json({ ok: true }) // counts only on the admin listener
       const m = url.pathname.match(/^\/r\/([^/]+)$/)
       if (!m) return new Response('not found', { status: 404 })
       let room: string
@@ -351,7 +367,7 @@ export function startRelay(opts: RelayOptions) {
       maxPayloadLength: limits.maxMessageBytes,
       open(ws) {
         // A revocation may have landed between verify (fetch) and open.
-        if ((ws.data.claims.epoch ?? 0) < store.minEpoch(ws.data.room, ws.data.claims.sub)) { ws.close(CLOSE.revoked, 'revoked'); return }
+        if ((ws.data.claims.epoch ?? 0) < store.minEpoch(baseRoom(ws.data.room), ws.data.claims.sub)) { ws.close(CLOSE.revoked, 'revoked'); return }
         if (ws.data.claims.exp * 1000 <= Date.now()) { ws.close(CLOSE.expired, 'token expired'); return }
         // Re-check caps here too: several upgrades can pass fetch() concurrently.
         if (totalConns >= limits.maxConnsTotal) { ws.close(CLOSE.roomFull, 'server full'); return }
@@ -409,7 +425,7 @@ export function startRelay(opts: RelayOptions) {
               syncProtocol.readSyncStep1(dec, enc, room.doc)
               ws.sendBinary(encoding.toUint8Array(enc))
             } else if (sub === syncProtocol.messageYjsSyncStep2 || sub === syncProtocol.messageYjsUpdate) {
-              if (ws.data.claims.scope !== 'edit') return // read-only scope
+              if (!canWrite(ws.data.claims.scope, ws.data.room)) return // read-only in this room
               const update = decoding.readVarUint8Array(dec)
               // Only content the doc doesn't have yet counts (and is stored).
               const growth = Y.diffUpdate(update, Y.encodeStateVector(room.doc))
@@ -452,6 +468,10 @@ export function startRelay(opts: RelayOptions) {
     fetch(req) {
       const url = new URL(req.url)
       if (url.pathname === '/admin/revoke') return handleAdminRevoke(req)
+      if (url.pathname === '/admin/healthz') {
+        if (!adminOk(req)) return new Response('unauthorized', { status: 401 })
+        return Response.json({ ok: true, rooms: rooms.size, conns: totalConns })
+      }
       return new Response('not found', { status: 404 })
     },
   }) : null

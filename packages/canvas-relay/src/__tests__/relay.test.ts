@@ -7,7 +7,7 @@ import * as syncProtocol from 'y-protocols/sync'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
-import { armExpiry, CLOSE, MAX_CLIENT_IDS, MSG_AUTH, RoomStore, signRoomToken, startRelay, SUBPROTOCOL, verifyRoomToken, type RelayOptions } from '../index.ts'
+import { armExpiry, canWrite, CLOSE, sanitizeAwareness, MAX_CLIENT_IDS, MSG_AUTH, RoomStore, signRoomToken, startRelay, SUBPROTOCOL, verifyRoomToken, type RelayOptions } from '../index.ts'
 
 const SECRET = 'x'.repeat(40)
 const ROOM = 'ws1:b1'
@@ -24,7 +24,7 @@ function relay(over: Partial<RelayOptions> = {}, db = join(dir, `${Math.random()
 }
 const now = () => Math.floor(Date.now() / 1000)
 type TokOpts = { room?: string; exp?: number; iat?: number; sub?: string; name?: string; iss?: string; aud?: string; epoch?: number }
-const tok = (scope: 'edit' | 'view', o: TokOpts = {}) => {
+const tok = (scope: 'edit' | 'comment' | 'view', o: TokOpts = {}) => {
   const iat = o.iat ?? now()
   return signRoomToken({ sub: o.sub ?? 'u', name: o.name, room: o.room ?? ROOM, scope, iss: o.iss ?? ISS, aud: o.aud ?? AUD, iat, nbf: iat, exp: o.exp ?? now() + 60, epoch: o.epoch }, SECRET)
 }
@@ -38,10 +38,10 @@ function until(pred: () => boolean, subscribe: (cb: () => void) => () => void, m
   })
 }
 
-function client(port: number | undefined, token: string, opts: { via?: 'protocol' | 'query' } = {}) {
+function client(port: number | undefined, token: string, opts: { via?: 'protocol' | 'query'; room?: string } = {}) {
   const doc = new Y.Doc()
   const awareness = new awarenessProtocol.Awareness(doc)
-  const url = `ws://localhost:${port}/r/${ROOM}` + (opts.via === 'query' ? `?token=${token}` : '')
+  const url = `ws://localhost:${port}/r/${opts.room ?? ROOM}` + (opts.via === 'query' ? `?token=${token}` : '')
   const ws = opts.via === 'query' ? new WebSocket(url) : new WebSocket(url, [SUBPROTOCOL, token])
   ws.binaryType = 'arraybuffer'
   let synced = false
@@ -452,5 +452,96 @@ describe('review 4', () => {
     await new Promise(res => setTimeout(res, 150))
     expect(store.logSize(ROOM).bytes).toBeLessThan(2000)
     a.ws.close()
+  })
+})
+
+describe('review 4b', () => {
+  const ADMIN = 'a'.repeat(40)
+  const CROOM = `${ROOM}~comments`
+  const settle = () => new Promise(res => setTimeout(res, 150))
+
+  test('scope mapping', () => {
+    expect(canWrite('edit', ROOM)).toBe(true)
+    expect(canWrite('edit', CROOM)).toBe(true)
+    expect(canWrite('comment', ROOM)).toBe(false)
+    expect(canWrite('comment', CROOM)).toBe(true)
+    expect(canWrite('view', CROOM)).toBe(false)
+  })
+
+  test('comment token writes the comments room only; board stays read-only; view cannot write comments', async () => {
+    const r = relay()
+    const editor = client(r.port, await tok('edit'))
+    const commenter = client(r.port, await tok('comment', { sub: 'c' }), { room: CROOM })
+    const commenterBoard = client(r.port, await tok('comment', { sub: 'c' }))
+    const viewer = client(r.port, await tok('view', { sub: 'v' }), { room: CROOM })
+    await Promise.all([editor.isSynced(), commenter.isSynced(), commenterBoard.isSynced(), viewer.isSynced()])
+    commenter.doc.getMap('threads').set('t1', 'hello')
+    await until(() => viewer.doc.getMap('threads').get('t1') === 'hello', viewer.subscribe)
+    commenterBoard.doc.getText('t').insert(0, 'nope')
+    viewer.doc.getMap('threads').set('t2', 'nope')
+    await settle()
+    expect(editor.doc.getText('t').toString()).toBe('')
+    const fresh = client(r.port, await tok('view', { sub: 'z' }), { room: CROOM })
+    await fresh.isSynced(); await settle()
+    expect(fresh.doc.getMap('threads').get('t1')).toBe('hello')
+    expect(fresh.doc.getMap('threads').has('t2')).toBe(false)
+    for (const c of [editor, commenter, commenterBoard, viewer, fresh]) c.ws.close()
+  })
+
+  test('revoking the board room also closes its comments room', async () => {
+    const r = relay({ adminToken: ADMIN })
+    const c = client(r.port, await tok('comment', { sub: 'eve' }), { room: CROOM })
+    await c.isSynced()
+    const res = await fetch(`http://localhost:${r.adminPort}/admin/revoke`, { method: 'POST', headers: { authorization: `Bearer ${ADMIN}` }, body: JSON.stringify({ room: ROOM, sub: 'eve' }) })
+    expect(res.status).toBe(200)
+    expect(await c.closed).toBe(CLOSE.revoked)
+  })
+
+  test('public /healthz has no counts; admin /healthz does (auth required)', async () => {
+    const r = relay({ adminToken: ADMIN })
+    expect(await (await fetch(`http://localhost:${r.port}/healthz`)).json()).toEqual({ ok: true })
+    expect((await fetch(`http://localhost:${r.adminPort}/admin/healthz`)).status).toBe(401)
+    const j = await (await fetch(`http://localhost:${r.adminPort}/admin/healthz`, { headers: { authorization: `Bearer ${ADMIN}` } })).json() as Record<string, unknown>
+    expect(j).toEqual({ ok: true, rooms: 0, conns: 0 })
+  })
+
+  test('load quarantines bad rows (kept, not dropped) and continues', () => {
+    const p = join(dir, `${Math.random()}.sqlite`)
+    const s1 = new RoomStore(p)
+    const d = new Y.Doc(); d.getText('t').insert(0, 'a')
+    s1.append(ROOM, Y.encodeStateAsUpdate(d))
+    s1.append(ROOM, new Uint8Array([0xff, 0xff, 0xff, 0x01, 0x07]))
+    const d2 = new Y.Doc(); Y.applyUpdate(d2, Y.encodeStateAsUpdate(d)); d2.getText('t').insert(1, 'b')
+    s1.append(ROOM, Y.encodeStateAsUpdate(d2, Y.encodeStateVector(d)))
+    s1.close()
+    const s2 = new RoomStore(p)
+    expect(s2.load(ROOM).getText('t').toString()).toBe('ab')
+    const q = s2.quarantined(ROOM)
+    expect(q.length).toBe(1)
+    expect(q[0]!.source).toBe('update')
+    s2.close()
+  })
+
+  test('a malformed update is rejected before it is stored', async () => {
+    const store = new RoomStore(join(dir, `${Math.random()}.sqlite`))
+    const r = relay({ store })
+    const a = client(r.port, await tok('edit'))
+    await a.isSynced()
+    const enc = encoding.createEncoder()
+    encoding.writeVarUint(enc, 0); encoding.writeVarUint(enc, 2)
+    encoding.writeVarUint8Array(enc, new Uint8Array([0x01, 0x01, 0xaa, 0xbb, 0x01, 0xff, 0xff]))
+    a.ws.send(encoding.toUint8Array(enc))
+    await settle()
+    expect(store.logSize(ROOM).rows).toBe(0)
+  })
+
+  test('awareness: an oversized entry never claims the clientID', () => {
+    const owners = new Map<number, unknown>()
+    const ws = { data: { claims: { sub: 'u' } as never, controlled: new Set<number>() } }
+    const enc = encoding.createEncoder()
+    encoding.writeVarUint(enc, 1); encoding.writeVarUint(enc, 42); encoding.writeVarUint(enc, 1)
+    encoding.writeVarString(enc, JSON.stringify({ user: { name: 'x' }, pad: 'y'.repeat(100) }))
+    expect(sanitizeAwareness(encoding.toUint8Array(enc), ws, owners, 120)).toBeNull()
+    expect(owners.has(42)).toBe(false)
   })
 })

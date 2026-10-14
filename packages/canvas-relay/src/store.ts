@@ -18,15 +18,35 @@ export class RoomStore {
     this.db.exec(`CREATE TABLE IF NOT EXISTS snapshots (room TEXT PRIMARY KEY, state BLOB NOT NULL, updated_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS updates (seq INTEGER PRIMARY KEY AUTOINCREMENT, room TEXT NOT NULL, data BLOB NOT NULL, at INTEGER NOT NULL);
       CREATE INDEX IF NOT EXISTS updates_room ON updates(room, seq);
+      CREATE TABLE IF NOT EXISTS quarantine (id INTEGER PRIMARY KEY AUTOINCREMENT, room TEXT NOT NULL, source TEXT NOT NULL, seq INTEGER, data BLOB NOT NULL, error TEXT, at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS revocations (room TEXT NOT NULL, sub TEXT NOT NULL, epoch INTEGER NOT NULL, PRIMARY KEY (room, sub));`)
   }
 
+  /**
+   * Rows that fail to decode/apply are moved to `quarantine` (bytes kept, never
+   * dropped) and loading continues with the rest. Each row is fully
+   * decoded before it is applied, so malformed bytes never reach the room doc.
+   */
   load(room: string): Y.Doc {
     const doc = new Y.Doc()
+    const tryApply = (data: Uint8Array): string | null => {
+      // Full decode first (cheap, no side effects): malformed bytes never touch the doc.
+      try { Y.decodeUpdate(data) } catch (e) { return (e as Error).message || 'decode failed' }
+      try { Y.applyUpdate(doc, data) } catch (e) { return (e as Error).message || 'apply failed' }
+      return null
+    }
     const snap = this.db.query('SELECT state FROM snapshots WHERE room = ?').get(room) as { state: Uint8Array } | null
-    if (snap) Y.applyUpdate(doc, new Uint8Array(snap.state))
-    for (const row of this.db.query('SELECT data FROM updates WHERE room = ? ORDER BY seq').all(room) as { data: Uint8Array }[]) {
-      Y.applyUpdate(doc, new Uint8Array(row.data))
+    if (snap) {
+      const err = tryApply(new Uint8Array(snap.state))
+      if (err) this.db.query("INSERT INTO quarantine (room, source, seq, data, error, at) VALUES (?, 'snapshot', NULL, ?, ?, ?)").run(room, snap.state, err, Date.now())
+    }
+    for (const row of this.db.query('SELECT seq, data FROM updates WHERE room = ? ORDER BY seq').all(room) as { seq: number; data: Uint8Array }[]) {
+      const err = tryApply(new Uint8Array(row.data))
+      if (!err) continue
+      this.db.transaction(() => {
+        this.db.query("INSERT INTO quarantine (room, source, seq, data, error, at) VALUES (?, 'update', ?, ?, ?, ?)").run(room, row.seq, row.data, err, Date.now())
+        this.db.query('DELETE FROM updates WHERE seq = ?').run(row.seq)
+      })()
     }
     const agg = this.db.query('SELECT COUNT(*) AS n, COALESCE(SUM(LENGTH(data)), 0) AS b FROM updates WHERE room = ?').get(room) as { n: number; b: number }
     this.counts.set(room, agg.n)
@@ -71,6 +91,11 @@ export class RoomStore {
 
   /** Forget the in-memory counter when a room is unloaded. */
   forget(room: string): void { this.counts.delete(room); this.sizes.delete(room) }
+
+  /** Quarantined rows of a room (for operators / tests). */
+  quarantined(room: string): Array<{ source: string; seq: number | null; error: string | null }> {
+    return this.db.query('SELECT source, seq, error FROM quarantine WHERE room = ? ORDER BY id').all(room) as never
+  }
 
   close(): void { this.db.close() }
 }

@@ -48,3 +48,33 @@ SQLite with `journal_mode=WAL` and `synchronous=FULL`. Only the part of an
 update the room does not already have is stored; zero-growth updates are
 dropped. Each room's update log is capped (`maxLogRows` 2000 / `maxLogBytes`
 8 MiB); reaching a cap forces an immediate compaction even under steady load.
+
+## Epoch contract (for rox-id)
+
+- Every room token carries an integer `epoch` claim (default 0) scoped to the
+  **board room** `(room, sub)`; the relay keeps a minimum epoch per `(room, sub)`
+  and per `(room, '*')`.
+- To revoke a member or a share link, rox-id calls `POST /admin/revoke`
+  `{room, sub|'*'}` and stores the returned `epoch`. From then on it must mint
+  tokens for that subject with `epoch >= ` the returned value (for `'*'`, every
+  subject of the room). Tokens below it are refused at connect, at `open()` and
+  on refresh, and live sockets below it are closed with 4003.
+- Epochs only ever rise (a lower value in a revoke call is ignored). Tokens are
+  short-lived (≤ 15 min) and refreshed in-band; each refresh re-checks the epoch.
+- Revoking a board room also closes its comments room (`<room>~comments`).
+
+## Scopes and rooms
+
+Comments live in a separate Yjs doc per board, room `<workspace>:<board>~comments`.
+A token is issued for the board room and is valid for both rooms:
+
+| scope   | board room | `~comments` room |
+|---------|------------|------------------|
+| edit    | write      | write            |
+| comment | read       | write            |
+| view    | read       | read             |
+
+Malformed updates are rejected before they are stored. On load, a row that
+fails to decode or apply is moved to the `quarantine` table (bytes kept) and
+loading continues. `/healthz` on the public port returns only `{"ok":true}`;
+room/connection counts are on the admin listener at `/admin/healthz` (bearer).
