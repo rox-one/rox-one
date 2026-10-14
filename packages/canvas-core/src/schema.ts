@@ -96,17 +96,13 @@ export const PROP_SCHEMAS: Partial<Record<ObjectType, z.ZodTypeAny>> = {
   entity: z.object({
     kind: z.string().min(1),
     entityId: z.string().min(1),
-    /** Cached for offline render; refreshed from the live entity (never the source of truth). */
-    snapshot: z.object({
-      title: z.string(),
-      status: z.string().optional(),
-      preview: z.string().max(2000).optional(),
-      icon: z.string().optional(),
-      updatedAt: z.number().int().nonnegative().optional(),
-    }).optional(),
-    /** 'created' = minted on this board; 'linked' = dropped existing entity. */
-    provenance: z.enum(['created', 'linked']).default('linked'),
-  }).passthrough(),
+    /**
+     * 'created' = minted on this board; 'linked' = dropped existing entity.
+     * Nothing else is stored: titles/previews are resolved per viewer through
+     * the kind adapter after an access check (see EntitySnapshotResolver).
+     */
+    origin: z.enum(['created', 'linked']).default('linked'),
+  }).strip(),
 }
 
 export type ValidationIssue = { id: string; message: string }

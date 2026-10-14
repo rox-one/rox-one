@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-import { actorOrigin, applyEntitySnapshot, CanvasDoc, createEntityCard, EntityKindRegistry, entityCards, linkEntityCard, removeEntityCards, type EntityCardContext, type EntityRef } from '../index.ts'
+import { actorOrigin, CanvasDoc, EntitySnapshotResolver, createEntityCard, EntityKindRegistry, entityCards, linkEntityCard, removeEntityCards, type EntityCardContext, type EntityRef } from '../index.ts'
 
 function setup() {
   const store = new Map<string, { title: string; status?: string }>()
@@ -29,16 +29,16 @@ test('create mints a real entity, places a card and links it', async () => {
   const id = await createEntityCard(ctx, 'task', 'Ship it', { x: 0, y: 0 })
   expect(store.get('t1')?.title).toBe('Ship it')
   expect(links).toEqual([`+b1#${id}->task:t1`])
-  expect(ctx.board.get(id)!.props.provenance).toBe('created')
+  expect(ctx.board.get(id)!.props.origin).toBe('created')
   await expect(createEntityCard(ctx, 'session', 'x', { x: 0, y: 0 })).rejects.toThrow()
 })
 
 test('dropping an existing entity links it; snapshot updates show on the card', async () => {
   const { ctx } = setup()
   const id = await linkEntityCard(ctx, { kind: 'session', id: 's9' }, { x: 1, y: 1 })
-  expect((ctx.board.get(id)!.props.snapshot as { title: string }).title).toBe('S s9')
-  applyEntitySnapshot(ctx.board, id, { title: 'Renamed', status: 'done' }, ctx.origin)
-  expect(ctx.board.get(id)!.props.snapshot).toEqual({ title: 'Renamed', status: 'done' })
+  expect(ctx.board.get(id)!.props).toEqual({ kind: 'session', entityId: 's9', origin: 'linked' })
+  const r = new EntitySnapshotResolver(ctx.registry)
+  expect(await r.resolve({ kind: 'session', id: 's9' })).toEqual({ state: 'ok', snapshot: { title: 'S s9' } })
   expect(entityCards(ctx.board)).toEqual([{ objectId: id, ref: { kind: 'session', id: 's9' } }])
 })
 
