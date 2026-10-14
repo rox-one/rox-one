@@ -26,12 +26,12 @@ export const TopBarButton = React.forwardRef<HTMLButtonElement, TopBarButtonProp
         className={cn(
           "header-icon-btn h-6 w-6 flex items-center justify-center rounded-[var(--radius-control)] titlebar-no-drag",
           // Subtle glass so top buttons read as clickable (Mark, t78).
-          "border border-foreground/10 bg-foreground/[0.04] shadow-[inset_0_0_0_1px_color-mix(in_oklch,var(--foreground)_6%,transparent)]",
+          "border border-border-subtle bg-surface-hover shadow-[inset_0_0_0_1px_color-mix(in_oklch,var(--foreground)_6%,transparent)]",
           "[backdrop-filter:blur(var(--chrome-glass-blur))] [-webkit-backdrop-filter:blur(var(--chrome-glass-blur))]",
-          "hover:bg-foreground/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "hover:bg-surface-pressed focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           "disabled:[&_svg]:text-text-disabled disabled:pointer-events-none disabled:opacity-50",
           "transition-colors duration-100",
-          isActive && "bg-foreground/[0.1]",
+          isActive && "bg-surface-selected",
           className
         )}
         {...props}

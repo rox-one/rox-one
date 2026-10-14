@@ -99,7 +99,7 @@ const RailButton = React.memo(function RailButton({ screen, active, unread, onAc
             screen.disabled && 'opacity-50',
           )}
         >
-          <Icon className="size-4.5" aria-hidden />
+          <Icon className="icon-rail" aria-hidden />
           {unread > 0 && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-accent" data-rail-unread="" aria-hidden />}
         </button>
       </TooltipTrigger>
@@ -194,7 +194,7 @@ export const PrimaryRail = React.memo(function PrimaryRail({ avatar, secondaryAv
                     overflowActive ? 'bg-[var(--state-selected)] text-foreground' : 'text-muted-foreground hover:bg-[var(--state-hover)] hover:text-foreground',
                   )}
                 >
-                  <MoreHorizontal className="size-4.5" aria-hidden />
+                  <MoreHorizontal className="icon-rail" aria-hidden />
                   {overflowUnread && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-accent" aria-hidden />}
                 </button>
               </PopoverTrigger>
@@ -225,7 +225,7 @@ export const PrimaryRail = React.memo(function PrimaryRail({ avatar, secondaryAv
                 onClick={toggleSecondarySidebar}
                 className="flex size-8 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground outline-none hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
               >
-                <PanelLeft className="size-4.5" aria-hidden />
+                <PanelLeft className="icon-rail" aria-hidden />
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">{secondary === 'hidden' ? t('shell.rail.showSidebar') : t('shell.rail.hideSidebar')}</TooltipContent>

@@ -59,7 +59,7 @@ function PlanPill({ plan, label }: { plan: string; label: string }) {
       data-testid="profile-strip-plan"
       data-plan={plan}
       className={cn(
-        'inline-flex h-[10px] max-w-full items-center truncate rounded-full bg-gradient-to-b px-1 text-[8px] font-semibold uppercase leading-none tracking-wide',
+        'inline-flex h-[10px] max-w-full items-center truncate rounded-full bg-gradient-to-b px-1 text-mark font-semibold uppercase leading-none tracking-wide',
         'ring-1 ring-inset shadow-[inset_0_1px_0_rgb(255_255_255/0.55),0_1px_2px_rgb(0_0_0/0.12)] dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(0_0_0/0.4)]',
         PLAN_PILL_TONES[plan] ?? PLAN_PILL_TONES.standard,
       )}

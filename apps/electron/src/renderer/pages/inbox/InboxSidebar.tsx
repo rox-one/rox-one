@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils'
 import { MAIL_STANDARD_ROLES, type MailFolder, type MailFolderRole } from '../../../shared/mail-local'
 import { ACTIVITY_KINDS, DECISION_KINDS, type InboxActivityKind, type InboxFilter, type InboxKind } from './inbox-model'
 import { folderLabel } from './mail/MailPanels'
-import { MAIL_RECONNECT_CODES, mailErrorKey, statusKey } from './mail/mail-view'
+import { mailErrorKey, statusKey } from './mail/mail-view'
 import type { MailController } from './mail/useMail'
 
 export type InboxPageFilter = InboxFilter | { mail: string }
@@ -181,7 +181,7 @@ export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, o
           // Not connected yet: a clean call to action, never the raw server error.
           <div className="flex min-w-0 items-center gap-1.5 px-2 pb-1 text-xs" data-testid="mail-connect-row">
             <span className={cn('min-w-0 flex-1 truncate', status.state === 'error' ? 'text-destructive' : 'text-text-muted')} title={status.state === 'error' ? t(mailErrorKey(status.errorCode)) : undefined} data-code={status.state === 'error' ? status.errorCode ?? 'error' : undefined}>{status.state === 'error' ? t(mailErrorKey(status.errorCode)) : t('inbox.mail.status.error')}</span>
-            <button type="button" onClick={() => void mail.ensure()} className="shrink-0 rounded-md px-1.5 py-1 font-medium text-accent outline-none hover:bg-foreground/[0.05] focus-visible:ring-2 focus-visible:ring-ring" data-testid="mail-connect">{t(status.state === 'error' && status.errorCode && MAIL_RECONNECT_CODES.has(status.errorCode) ? 'inbox.mail.reconnect' : 'inbox.mail.connect')}</button>
+            <button type="button" onClick={() => void mail.ensure()} className="shrink-0 rounded-md px-1.5 py-1 font-medium text-accent outline-none hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-ring" data-testid="mail-connect">{t('inbox.mail.connect')}</button>
           </div>
         ) : <p className="px-2 pb-1 text-xs text-text-muted">{t(statusKey(status), { address: status?.address ?? '', url: status?.serverUrl ?? '', flag: status?.flag ?? '' })}</p>}
         {(status?.state === 'ready' ? mail.folders : standardFolders(t)).map((folder) => (

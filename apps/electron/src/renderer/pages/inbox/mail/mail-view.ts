@@ -158,7 +158,7 @@ export function meetingNoteLine(m: Pick<MailSummary, 'id' | 'subject' | 'from' |
 }
 
 /** Failure codes whose fix is reconnecting the mailbox (fresh device credential). */
-export const MAIL_RECONNECT_CODES: ReadonlySet<string> = new Set(['credential-revoked', 'keychain-locked'])
+export const MAIL_RECONNECT_CODES: ReadonlySet<string> = new Set(['credential-revoked', 'keychain-locked', 'no-mailbox'])
 
 const MAIL_ERROR_KEYS: Readonly<Record<string, string>> = {
   'external-blocked': 'inbox.mail.error.externalBlocked',
@@ -169,6 +169,7 @@ const MAIL_ERROR_KEYS: Readonly<Record<string, string>> = {
   'keychain-locked': 'inbox.mail.error.keychainLocked',
   'too-large': 'inbox.mail.error.tooLarge',
   network: 'inbox.mail.error.network',
+  'no-mailbox': 'inbox.mail.status.error',
 }
 
 /** The stable code carried by a mail failure (bridge result or thrown error), if any. */

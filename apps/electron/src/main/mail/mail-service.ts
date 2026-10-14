@@ -48,12 +48,13 @@ import {
 import { externalRecipients, replySubject, sortFolders, threadHeaders, toFolder, toMessage, toSummary } from './mail-model'
 
 /**
- * Server-side names for folders Rox creates (Russian, consistently); the UI
+ * Server-side names for folders Rox creates (IMAP-conventional English, so
+ * other clients recognise them); the UI
  * always labels by role in the user's locale.
  */
 const STANDARD_FOLDER_NAMES: Readonly<Record<MailFolderRole, string>> = {
-  inbox: 'Входящие', flagged: 'Избранные', sent: 'Отправленные', outbox: 'Исходящие',
-  drafts: 'Черновики', archive: 'Архив', junk: 'Спам', trash: 'Корзина',
+  inbox: 'Inbox', flagged: 'Starred', sent: 'Sent', outbox: 'Outbox',
+  drafts: 'Drafts', archive: 'Archive', junk: 'Spam', trash: 'Trash',
 }
 
 /** Names (lower-case) an existing role-less folder may carry for each role. */

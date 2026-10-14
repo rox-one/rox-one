@@ -59,12 +59,12 @@ describe('standard mail folders', () => {
     expect(calls).toHaveLength(0)
   })
 
-  it('creates a missing folder lazily, in Russian, once', async () => {
+  it('creates a missing folder lazily, with its English IMAP name, once', async () => {
     const { svc, calls, boxes } = service([{ id: 'i', name: 'Inbox', role: 'inbox' }])
     await svc.move(['m'], 'archive')
     await svc.move(['m'], 'archive')
     expect(calls).toHaveLength(1)
-    expect(boxes.find((b) => b.role === 'archive')?.name).toBe('Архив')
+    expect(boxes.find((b) => b.role === 'archive')?.name).toBe('Archive')
   })
 
   it('does not create folders on mailboxes Rox did not provision', async () => {

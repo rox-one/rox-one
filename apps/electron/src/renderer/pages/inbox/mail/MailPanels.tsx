@@ -165,7 +165,7 @@ export function MailListPanel({ mail, title, selectedId, onSelect, onCompose, on
         />
       </form>
       {s.local ? <LocalNotice domain={s.domain} compact /> : null}
-      {mail.error ? <div role="alert" className="mx-3 mt-1 flex items-center gap-2 rounded-[var(--radius-card)] bg-destructive/10 px-2.5 py-1.5 text-sm text-destructive" data-testid="mail-error" data-code={mail.errorCode ?? undefined}><span className="min-w-0 flex-1">{t(mailErrorKey(mail.errorCode))}</span>{mail.errorCode && MAIL_RECONNECT_CODES.has(mail.errorCode) ? <Button variant="ghost" onClick={() => void mail.ensure()} data-testid="mail-reconnect">{t('inbox.mail.reconnect')}</Button> : null}</div> : null}
+      {mail.error ? <div role="alert" className="mx-3 mt-1 flex items-center gap-2 rounded-[var(--radius-card)] bg-destructive/10 px-2.5 py-1.5 text-sm text-destructive" data-testid="mail-error" data-code={mail.errorCode ?? undefined}><span className="min-w-0 flex-1">{t(mailErrorKey(mail.errorCode))}</span>{mail.errorCode && MAIL_RECONNECT_CODES.has(mail.errorCode) ? <Button variant="ghost" onClick={() => void mail.ensure()} data-testid="mail-reconnect">{t('inbox.mail.connect')}</Button> : null}</div> : null}
       <div role="listbox" aria-label={title} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onKeys} data-testid="mail-list">
         {mail.items.length === 0 ? (
           <EmptyState
@@ -235,7 +235,7 @@ export function MailStatusBlock({ mail }: { mail: MailController }) {
         <EmptyState
           title={t(mailErrorKey(s.errorCode))}
           body={t('inbox.mail.noMailboxBody', { domain: s.domain })}
-          action={<Button variant="primary" onClick={() => void mail.ensure()} data-testid="mail-get-address">{t(s.errorCode && MAIL_RECONNECT_CODES.has(s.errorCode) ? 'inbox.mail.reconnect' : 'inbox.mail.connect')}</Button>}
+          action={<Button variant="primary" onClick={() => void mail.ensure()} data-testid="mail-get-address">{t('inbox.mail.connect')}</Button>}
         />
       ) : s.state === 'no-mailbox' ? (
         <EmptyState
