@@ -582,6 +582,24 @@ export const RPC_CHANNELS = {
     REMOVED: 'extensionSurface:removed',
   },
 
+  // cookbooksLab — the vendored Cookbooks Python sidecar: lifecycle + the
+  // native ROX surface's data plane (SPEC §Amendment 1). LOCAL_ONLY: the
+  // process, the bearer token and the loopback URL live only in the local
+  // Electron main process, which is the sidecar's only HTTP client.
+  cookbooksLab: {
+    ENSURE: 'cookbooks-lab:ensure',
+    STATUS: 'cookbooks-lab:status',
+    RESTART: 'cookbooks-lab:restart',
+    CATALOG: 'cookbooks-lab:catalog',
+    OPEN: 'cookbooks-lab:open',
+    DOCUMENT: 'cookbooks-lab:document',
+    RUN: 'cookbooks-lab:run',
+    RUN_ALL: 'cookbooks-lab:run-all',
+    SAVE: 'cookbooks-lab:save',
+    RESET: 'cookbooks-lab:reset',
+    STATUS_CHANGED: 'cookbooks-lab:status-changed',
+  },
+
   onboarding: {
     ENSURE_FIRST_SESSION: 'onboarding:ensureFirstSession',
     GET_AUTH_STATE: 'onboarding:getAuthState',

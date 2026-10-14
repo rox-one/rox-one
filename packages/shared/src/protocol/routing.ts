@@ -534,6 +534,21 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.extensionSurface.STATE_CHANGED,
   RPC_CHANNELS.extensionSurface.REMOVED,
 
+  // cookbooksLab — the vendored Python sidecar and its data plane are
+  // host-local: the process, the bearer token and the loopback URL never leave
+  // main, so no call can be proxied to a remote workspace host.
+  RPC_CHANNELS.cookbooksLab.ENSURE,
+  RPC_CHANNELS.cookbooksLab.STATUS,
+  RPC_CHANNELS.cookbooksLab.RESTART,
+  RPC_CHANNELS.cookbooksLab.CATALOG,
+  RPC_CHANNELS.cookbooksLab.OPEN,
+  RPC_CHANNELS.cookbooksLab.DOCUMENT,
+  RPC_CHANNELS.cookbooksLab.RUN,
+  RPC_CHANNELS.cookbooksLab.RUN_ALL,
+  RPC_CHANNELS.cookbooksLab.SAVE,
+  RPC_CHANNELS.cookbooksLab.RESET,
+  RPC_CHANNELS.cookbooksLab.STATUS_CHANGED,
+
 
   // knowledge — engine status/start + install detect reflect the answering host, never proxied
   RPC_CHANNELS.knowledge.ENGINE_STATUS,

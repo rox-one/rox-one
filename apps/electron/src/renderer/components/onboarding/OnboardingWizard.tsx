@@ -4,11 +4,14 @@ import { WelcomeStep } from "./WelcomeStep"
 import { RoleStep } from "./RoleStep"
 import { PillsStep } from "./PillsStep"
 import { LayoutStep } from "./LayoutStep"
-import { QuestionnaireStep, type QuestionnaireStepPayload } from "./QuestionnaireStep"
+import { QuestionnaireStep, parseBubbleSelections, type QuestionnaireStepPayload } from "./QuestionnaireStep"
 import {
+  loadFirstRunDraft,
   saveFirstRunDraft,
   type OnboardingDraftStorage,
 } from "./identity-model"
+import { parseProfileQuestionnaire } from "./profile-questionnaire-model"
+import { parsePermissionState } from "./permissions-model"
 import type { RewardLedger } from "./onboarding-rewards"
 import { OnboardingStepProgress, type OnboardingProgressStep } from './OnboardingStepProgress'
 import type { ApiSetupMethod } from "./APISetupStep"
@@ -73,6 +76,7 @@ interface OnboardingWizardProps {
 
   // Event handlers
   onContinue: () => void
+  onContinueLocally?: () => void
   onBack: () => void
   onSelectApiSetupMethod: (method: ApiSetupMethod) => void
   onSubmitCredential: (data: ApiKeySubmitData) => void
@@ -134,6 +138,7 @@ interface OnboardingWizardProps {
 export function OnboardingWizard({
   state,
   onContinue,
+  onContinueLocally,
   onBack,
   onSelectApiSetupMethod,
   onSubmitCredential,
@@ -206,14 +211,19 @@ export function OnboardingWizard({
           <WelcomeStep
             isExistingUser={state.isExistingUser}
             onContinue={onContinue}
+            onContinueLocally={onContinueLocally}
             isLoading={state.isCheckingGitBash}
             isFinishing={state.isFinishing}
           />
         )
 
-case 'questionnaire':
+      case 'questionnaire': {
+        const draft = loadFirstRunDraft(firstRunStorage)
         return (
           <QuestionnaireStep
+            questionnaire={draft?.questionnaire ? parseProfileQuestionnaire(draft.questionnaire) : undefined}
+            bubbles={parseBubbleSelections(draft?.bubbles)}
+            permissions={parsePermissionState(draft?.permissions)}
             onContinue={(payload) => {
               persistQuestionnaireDraft(payload)
               onContinue()
@@ -225,6 +235,7 @@ case 'questionnaire':
             {...(firstRun ? { rewards: firstRun.rewards } : {})}
           />
         )
+      }
 
       case 'role':
         return (
@@ -327,9 +338,9 @@ case 'questionnaire':
   const progressStep: OnboardingProgressStep =
     state.step === 'welcome' ? 'profile' : state.step === 'complete' ? 'done' : 'connect'
   const isWelcome = state.step === 'welcome'
-  // The questionnaire is a two-column surface (form + permissions): it gets the
-  // full working width instead of the narrow single-column flow cap.
-  const isWideStep = state.step === 'questionnaire'
+  // The questionnaire is a three-column one-page surface: it gets the full
+  // window width and height instead of the narrow single-column flow cap.
+  const isWideStep = state.step === 'questionnaire' || state.step === 'role'
 
   return (
     <div
@@ -344,16 +355,28 @@ case 'questionnaire':
 
       {/* Main content — min-h-full + flex center means: center when content fits,
           natural flow + scroll when content is taller than the viewport (mobile). */}
-      <main className="flex min-h-full items-center justify-center p-4 sm:p-8">
+      <main
+        className={cn(
+          'flex min-h-full items-center justify-center p-4 sm:p-8',
+          // The one-page questionnaire fills the window; its columns scroll
+          // internally, so the page itself does not scroll on desktop sizes.
+          isWideStep && 'lg:h-full lg:min-h-0 lg:items-stretch lg:px-8 lg:pb-6 lg:pt-[50px]',
+        )}
+      >
         {isWelcome ? (
           <div className="mx-auto max-w-lg px-6 py-8">
             <OnboardingStepProgress step={progressStep} className="mb-6" />
             <StepTransition key={state.step}>{renderStep()}</StepTransition>
           </div>
         ) : (
-          <div className={cn('flex w-full flex-col items-center', isWideStep ? 'max-w-6xl' : 'max-w-[28rem]')}>
-            <OnboardingStepProgress step={progressStep} className="mb-6 w-full" />
-            <StepTransition key={state.step} className="w-full">
+          <div
+            className={cn(
+              'flex w-full flex-col items-center',
+              isWideStep ? 'max-w-[1440px] lg:min-h-0' : 'max-w-[28rem]',
+            )}
+          >
+            <OnboardingStepProgress step={progressStep} className={cn('w-full', isWideStep ? 'mb-4' : 'mb-6')} />
+            <StepTransition key={state.step} className={cn('w-full', isWideStep && 'lg:min-h-0 lg:flex-1')}>
               {renderStep()}
             </StepTransition>
           </div>

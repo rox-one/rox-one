@@ -63,7 +63,7 @@
     },
     "@typescript-eslint/no-unused-vars": {
       "severity": "warn",
-      "total": 1
+      "total": 0
     },
     "@typescript-eslint/no-wrapper-object-types": {
       "severity": "warn",
@@ -273,9 +273,6 @@
     "apps/cli/src/index.ts": {
       "@typescript-eslint/no-explicit-any": 26,
       "prefer-const": 1
-    },
-    "apps/cli/src/server-spawner.ts": {
-      "@typescript-eslint/no-unused-vars": 1
     }
   }
 }

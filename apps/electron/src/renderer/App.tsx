@@ -30,12 +30,11 @@ import { openFirstSessionWelcome } from '@/components/onboarding/first-session-w
 import { installTrayNavigation } from '@/features/native-integrations/tray-navigation'
 import { ShellActionBridge } from '@/features/native-integrations/ShellActionBridge'
 import { SplashScreen } from '@/components/SplashScreen'
-import { TooltipProvider } from '@rox/ui'
+import { TooltipProvider } from '@rox/ui/tooltip'
 import { FocusProvider } from '@/context/FocusContext'
 import { ModalProvider } from '@/context/ModalContext'
 import { DismissibleLayerProvider } from '@/context/DismissibleLayerContext'
 import { useWindowCloseHandler } from '@/hooks/useWindowCloseHandler'
-import { useOnboarding } from '@/hooks/useOnboarding'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useSession } from '@/hooks/useSession'
 import { useUpdateChecker } from '@/hooks/useUpdateChecker'
@@ -89,18 +88,9 @@ import { useEntitiesLinksFlagSync } from '@/lib/entities-links-sync'
 import { getSessionTitle } from '@/utils/session'
 import { extractBadges } from '@/lib/mentions'
 import { getDefaultStore } from 'jotai'
-import {
-  ShikiThemeProvider,
-  PlatformProvider,
-  ImagePreviewOverlay,
-  PDFPreviewOverlay,
-  CodePreviewOverlay,
-  DocumentFormattedMarkdownOverlay,
-  JSONPreviewOverlay,
-  AudioTranscriptActionsProvider,
-  type AudioTranscriptRetry,
-} from '@rox/ui'
-import { useLinkInterceptor, type FilePreviewState } from '@/hooks/useLinkInterceptor'
+import { PlatformProvider, ShikiThemeProvider } from '@rox/ui/context'
+import { AudioTranscriptActionsProvider, type AudioTranscriptRetry } from '@rox/ui/chat/audio-transcript-actions'
+import { useLinkInterceptor } from '@/hooks/useLinkInterceptor'
 import { queueInternalBrowserUrl } from '@/components/browser/internal-browser-queue'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { useSshConnectionStatus } from '@/hooks/useSshConnectionStatus'
@@ -130,14 +120,14 @@ const KeyboardShortcutsDialog = React.lazy(() =>
   import('@/components/KeyboardShortcutsDialog').then((m) => ({ default: m.KeyboardShortcutsDialog })),
 )
 
-// #1675: the onboarding wizard / its step + APISetup subtree render only
-// outside the `ready` shell (first run, workspace picker, diagnostics). Loading
-// them through React.lazy keeps that subtree out of index.html's preloaded
-// startup closure; each render site gets its own `<Suspense fallback={null}>`,
-// matching the KeyboardShortcutsDialog pattern.
-const OnboardingWizard = React.lazy(() =>
-  import('@/components/onboarding').then((m) => ({ default: m.OnboardingWizard })),
-)
+// #1675 / OC-13: the first-run graph renders only outside the `ready` shell, and
+// `useOnboarding` used to keep it in the startup closure — its 2.02 MB
+// `useOnboarding-*.js` chunk sat in index.html's modulepreload list even though
+// onboarding runs at most once. Wizard AND hook now live in `OnboardingHost`,
+// behind this single lazy edge.
+const OnboardingHost = React.lazy(() => import('./OnboardingHost'))
+// File preview overlays (markdown/pdf/json viewers) render only after a click.
+const FilePreviewHost = React.lazy(() => import('./FilePreviewHost'))
 const WorkspacePicker = React.lazy(() =>
   import('@/components/workspace').then((m) => ({ default: m.WorkspacePicker })),
 )
@@ -925,16 +915,10 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     }
   }, [windowWorkspaceId, t])
 
-  // Onboarding hook — onConfigSaved fires immediately when billing is saved,
-  // ensuring connection state updates before the wizard closes.
-  const onboarding = useOnboarding({
-    onComplete: handleOnboardingComplete,
-    onConfigSaved: refreshLlmConnections,
-    initialSetupNeeds: setupNeeds || undefined,
-    existingSlugs: existingConnectionSlugs,
-    // Onboarding is the single name screen; provider setup lives in Settings → ИИ.
-    initialStep: 'welcome',
-  })
+  // OC-13: the onboarding state machine lives in the lazy <OnboardingHost />.
+  // Remounting it (below) is how a post-reset run starts clean, so App no
+  // longer needs the hook — and no longer pays for its 2 MB graph at startup.
+  const [onboardingEpoch, setOnboardingEpoch] = useState(0)
 
   // Set when startup published the LLM connection list for a ready local app.
   const startupLlmConnectionsPublishedRef = useRef(false)
@@ -1008,10 +992,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         }
         if (!workspaceProbe.ok) throw workspaceProbe.error
         if (!cloudProbe.ok) throw cloudProbe.error
-        if (cloudProbe.value.required && !cloudProbe.value.connected) {
+        if (cloudProbe.value.required && !cloudProbe.value.connected && !startupSetupNeeds?.isSetupDeferred) {
           startupSetupNeeds = { ...(startupSetupNeeds ?? { needsBillingConfig: false, needsCredentials: false, isFullyConfigured: false }), needsRoxCloud: true, shouldShowOnboardingOnLaunch: true, isFullyConfigured: false }
         }
-        const startupState = decideStartupAppState({ identityProbe, workspaceProbe, cloudProbe })
+        const startupState = decideStartupAppState({
+          identityProbe,
+          workspaceProbe,
+          cloudProbe,
+          setupDeferred: startupSetupNeeds?.isSetupDeferred,
+        })
         if (startupState === 'transport-unavailable') throw new Error('runtime-identity-unavailable')
         let startupConnections: LlmConnectionWithStatus[] | null = null
         let startupRuntimeSummary: StartupRuntimeSummary | null = null
@@ -2517,15 +2506,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         needsCredentials: true,
         isFullyConfigured: false,
       })
-      // Reset onboarding hook state
-      onboarding.reset()
+      // Remount the lazy onboarding host so the wizard starts from scratch.
+      setOnboardingEpoch((epoch) => epoch + 1)
       setAppState('onboarding')
     } catch (error) {
       console.error('Reset failed:', error)
     } finally {
       setShowResetDialog(false)
     }
-  }, [onboarding, initializeSessions])
+  }, [initializeSessions])
 
   // Handle workspace selection
   // - Default: switch workspace in same window (in-window switching)
@@ -2605,11 +2594,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   const handleRefreshWorkspaces = useCallback(() => {
     window.electronAPI.getWorkspaces().then(setWorkspaces)
   }, [])
-
-  // Handle cancel during onboarding
-  const handleOnboardingCancel = useCallback(() => {
-    onboarding.handleCancel()
-  }, [onboarding])
 
   // Build context value for AppShell component
   // This is memoized to prevent unnecessary re-renders
@@ -2757,40 +2741,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   // (without this, the close IPC message has no listener and window stays open)
   if (appState === 'onboarding') {
     return (
-      <DismissibleLayerProvider>
-        <ModalProvider>
-          <WindowCloseHandler />
-          <React.Suspense fallback={null}>
-            <OnboardingWizard
-              state={onboarding.state}
-              onContinue={onboarding.handleContinue}
-              onBack={onboarding.handleBack}
-              onSelectProvider={onboarding.handleSelectProvider}
-              roxConnectCodes={onboarding.roxConnectCodes}
-              roxConnectStatus={onboarding.roxConnectStatus}
-              roxConnectError={onboarding.roxConnectError}
-              roxAuthBaseUrl={onboarding.roxAuthBaseUrl}
-              onStartRoxConnect={onboarding.handleStartRoxConnect}
-              onOpenRoxConnectBrowser={onboarding.handleOpenRoxConnectBrowser}
-              onSelectApiSetupMethod={onboarding.handleSelectApiSetupMethod}
-              onSubmitCredential={onboarding.handleSubmitCredential}
-              onSubmitOmpCredential={onboarding.handleSubmitOmpCredential}
-              onSubmitLocalModel={onboarding.handleSubmitLocalModel}
-              onStartOAuth={onboarding.handleStartOAuth}
-              onFinish={onboarding.handleFinish}
-              isWaitingForCode={onboarding.isWaitingForCode}
-              isProviderOAuthPending={onboarding.isProviderOAuthPending}
-              onSubmitAuthCode={onboarding.handleSubmitAuthCode}
-              onCancelOAuth={onboarding.handleCancelOAuth}
-              copilotDeviceCode={onboarding.copilotDeviceCode}
-              onBrowseGitBash={onboarding.handleBrowseGitBash}
-              onUseGitBashPath={onboarding.handleUseGitBashPath}
-              onRecheckGitBash={onboarding.handleRecheckGitBash}
-              onClearError={onboarding.handleClearError}
-            />
-          </React.Suspense>
-        </ModalProvider>
-      </DismissibleLayerProvider>
+      <React.Suspense fallback={null}>
+        <OnboardingHost
+          key={onboardingEpoch}
+          onComplete={handleOnboardingComplete}
+          onConfigSaved={refreshLlmConnections}
+          initialSetupNeeds={setupNeeds || undefined}
+          existingSlugs={existingConnectionSlugs}
+        />
+      </React.Suspense>
     )
   }
 
@@ -2930,13 +2889,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
           {/* File preview overlay — rendered by the link interceptor when a previewable file is clicked */}
           {linkInterceptor.previewState && (
-            <FilePreviewRenderer
-              state={linkInterceptor.previewState}
-              onClose={linkInterceptor.closePreview}
-              loadDataUrl={linkInterceptor.readFileDataUrl}
-              loadPdfData={linkInterceptor.readFileBinary}
-              isDark={isDark}
-            />
+            <React.Suspense fallback={null}>
+              <FilePreviewHost
+                state={linkInterceptor.previewState}
+                onClose={linkInterceptor.closePreview}
+                loadDataUrl={linkInterceptor.readFileDataUrl}
+                loadPdfData={linkInterceptor.readFileBinary}
+                isDark={isDark}
+              />
+            </React.Suspense>
           )}
           </ProductTourProvider>
         </NavigationProvider>
@@ -2958,140 +2919,4 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 function WindowCloseHandler() {
   useWindowCloseHandler()
   return null
-}
-
-/**
- * FilePreviewRenderer - Routes file preview state to the correct overlay component.
- *
- * Handles all preview types from the link interceptor:
- * - image → ImagePreviewOverlay (binary, loaded via data URL)
- * - pdf → PDFPreviewOverlay (binary, embedded via Chromium viewer)
- * - code/text → CodePreviewOverlay (syntax highlighted)
- * - markdown → DocumentFormattedMarkdownOverlay
- * - json → JSONPreviewOverlay
- *
- * File path badges with "Open" / "Reveal in {file manager}" menus are provided
- * automatically by PlatformContext — no per-overlay callback props needed.
- */
-function FilePreviewRenderer({
-  state,
-  onClose,
-  loadDataUrl,
-  loadPdfData,
-  isDark,
-}: {
-  state: FilePreviewState
-  onClose: () => void
-  loadDataUrl: (path: string) => Promise<string>
-  loadPdfData: (path: string) => Promise<Uint8Array>
-  isDark: boolean
-}) {
-  const theme = isDark ? 'dark' : 'light' as const
-
-  switch (state.type) {
-    case 'image':
-      return (
-        <ImagePreviewOverlay
-          isOpen
-          onClose={onClose}
-          filePath={state.filePath}
-          loadDataUrl={loadDataUrl}
-          theme={theme}
-        />
-      )
-
-    case 'pdf':
-      return (
-        <PDFPreviewOverlay
-          isOpen
-          onClose={onClose}
-          filePath={state.filePath}
-          loadPdfData={loadPdfData}
-          theme={theme}
-        />
-      )
-
-    case 'code':
-    case 'text':
-      return (
-        <CodePreviewOverlay
-          isOpen
-          onClose={onClose}
-          filePath={state.filePath}
-          content={state.content ?? ''}
-          language={state.type === 'code' ? state.language : 'plaintext'}
-          mode="read"
-          theme={theme}
-          error={state.error}
-        />
-      )
-
-    case 'markdown': {
-      // Show PLAN header for .md files in plans folder (handles both absolute and relative paths)
-      const isPlanFile =
-        (state.filePath.includes('/plans/') || state.filePath.startsWith('plans/')) &&
-        state.filePath.endsWith('.md')
-      return (
-        <DocumentFormattedMarkdownOverlay
-          isOpen
-          onClose={onClose}
-          content={state.content ?? ''}
-          filePath={state.filePath}
-          variant={isPlanFile ? 'plan' : 'response'}
-        />
-      )
-    }
-
-    case 'json': {
-      // JSONPreviewOverlay expects parsed data, not a raw string.
-      // @uiw/react-json-view crashes on null value, so guard against it.
-      let parsedData: unknown = null
-      try {
-        if (state.content) parsedData = JSON.parse(state.content)
-      } catch {
-        // If parsing fails, fall back to showing as code
-        return (
-          <CodePreviewOverlay
-            isOpen
-            onClose={onClose}
-            filePath={state.filePath}
-            content={state.content ?? ''}
-            language="json"
-            mode="read"
-            theme={theme}
-            error={state.error}
-          />
-        )
-      }
-      // If read failed and content is empty, show raw code overlay with the read error.
-      if ((!state.content || !state.content.trim()) && state.error) {
-        return (
-          <CodePreviewOverlay
-            isOpen
-            onClose={onClose}
-            filePath={state.filePath}
-            content={state.content ?? ''}
-            language="json"
-            mode="read"
-            theme={theme}
-            error={state.error}
-          />
-        )
-      }
-      return (
-        <JSONPreviewOverlay
-          isOpen
-          onClose={onClose}
-          filePath={state.filePath}
-          title={state.filePath.split('/').pop() ?? 'JSON'}
-          data={parsedData}
-          theme={theme}
-          error={state.error}
-        />
-      )
-    }
-
-    default:
-      return null
-  }
 }

@@ -218,6 +218,15 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.extensionSurface.STATE_CHANGED]: [state: ExtensionSurfaceState]
   [RPC_CHANNELS.extensionSurface.REMOVED]: [id: string]
 
+  // Cookbooks Lab runtime status (global, local-only). Declared inline rather
+  // than imported: the canonical `CookbooksStatus` lives in apps/electron's
+  // shared contract, and @rox/shared must not depend on the app package.
+  [RPC_CHANNELS.cookbooksLab.STATUS_CHANGED]: [status: {
+    state: 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'failed'
+    reason: 'python-missing' | 'spawn-failed' | 'ready-timeout' | 'crashed' | null
+    port: number | null
+  }]
+
   // Navigation events (per-window)
   [RPC_CHANNELS.notification.NAVIGATE]: [data: { workspaceId: string; sessionId: string }]
   [RPC_CHANNELS.deeplink.NAVIGATE]: [navigation: DeepLinkNavigation]
