@@ -76,9 +76,9 @@ import {
   ModeScreenLayout,
   type Tone,
 } from '@/components/mode-screen/ModeScreen'
-import { tasksLayoutAtom, tasksTimelineGroupAtom, tasksTimelineZoomAtom, tasksViewAtom } from './tasks/atoms'
+import { tasksLayoutAtom, tasksTimelineGroupAtom, tasksTimelineWeekAtom, tasksTimelineZoomAtom, tasksViewAtom } from './tasks/atoms'
 import { TaskTimeline } from './tasks/TaskTimeline'
-import { applySchedule, isoOf, timelineRowOrder, type SchedulePatch, type TimelineGroup } from './tasks/timeline-model'
+import { applySchedule, dependencyConflicts, isoOf, timelineRowOrder, weekRange, weekTasks, type SchedulePatch, type TimelineGroup } from './tasks/timeline-model'
 import {
   agentChipFor,
   agentCounts,
@@ -633,6 +633,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
 
   const visible = useMemo(() => sections.flatMap((section) => section.tasks), [sections])
   const openTasks = useMemo(() => visible.filter(isOpenTask), [visible])
+  const [timelineWeek, setTimelineWeek] = useAtom(tasksTimelineWeekAtom)
+  const weekOpenTasks = useMemo(() => (timelineWeek ? weekTasks(topLevel.filter((task) => isOpenTask(task) && task.trashedAt == null), isoOf(now)) : []), [timelineWeek, topLevel, isoOf(now)]) // eslint-disable-line react-hooks/exhaustive-deps
   const visibleIds = useMemo(() => visible.map((task) => task.id), [visible])
   // Selection never outlives the rows it points at (view switch, search, completion).
   const clearMulti = useCallback(() => setMulti((prev) => (prev.size ? new Set() : prev)), [])
@@ -1275,12 +1277,25 @@ export default function TasksPage(props: TasksPageProps = {}) {
           ))}
         </div>
       ) : null}
+      {view.kind !== 'agents' && layout === 'timeline' ? (
+        // Моя неделя: this week's open tasks across every project/area, Mon–Sun.
+        <button type="button" aria-pressed={timelineWeek} data-testid="tasks-timeline-week" onClick={() => setTimelineWeek((v) => !v)}
+          className={cn('rounded-[var(--radius-control)] border border-border-subtle px-2 py-0.5 text-sm', timelineWeek ? 'bg-accent text-accent-foreground' : 'text-text-secondary hover:bg-surface-hover')}>
+          {t('tasks.week.title')}
+        </button>
+      ) : null}
     </>
   )
 
   const scheduleTask = (id: string, patch: SchedulePatch) => {
     if (patch.startAt == null && patch.dueAt == null) return
+    const today = isoOf(Date.now())
+    const key = (c: { blocker: PersonalTask; blocked: PersonalTask }) => `${c.blocker.id}>${c.blocked.id}`
+    const before = new Set(dependencyConflicts(storeRef.current.list().filter(isOpenTask), id, today).map(key))
     mutate((current) => applySchedule(current, id, patch))
+    // Finish-to-start: warn (don't auto-shift) only for conflicts this move created.
+    const conflict = dependencyConflicts(storeRef.current.list().filter(isOpenTask), id, today).find((c) => !before.has(key(c)))
+    if (conflict) toast.warning(t('tasks.deps.conflict', { title: conflict.blocked.title, blocker: conflict.blocker.title }))
   }
   const timelineGroupTitle = (group: TimelineGroup) => {
     if (group.id == null) return t('tasks.move.noPlace')
@@ -1450,7 +1465,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
           ))
         ) : showTimeline ? (
           <TaskTimeline
-            tasks={openTasks}
+            tasks={timelineWeek ? weekOpenTasks : openTasks}
+            fixedRange={timelineWeek ? weekRange(isoOf(now)) : undefined}
             today={isoOf(now)}
             locale={i18n.language}
             selectedId={selectedId}
