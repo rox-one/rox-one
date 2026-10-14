@@ -77,6 +77,12 @@ export interface CookbooksRuntimeOptions {
   shutdownGraceMs?: number
   killHardTimeoutMs?: number
   healthPollIntervalMs?: number
+  /** Client budget for one catalog/open/document/save/reset call. */
+  apiRequestTimeoutMs?: number
+  /** Client budget for one `POST /run` (the cell timeout plus slack). */
+  runApiTimeoutMs?: number
+  /** Run-all budget for a given number of submitted cells (override/tests). */
+  runAllTimeoutMs?: (cellCount: number) => number
 }
 
 /** Child-env allowlist — the ONLY parent keys the sidecar inherits. */
@@ -84,6 +90,13 @@ const COOKBOOKS_ENV_ALLOWLIST = ['PATH', 'HOME', 'TMPDIR', 'LANG', 'LC_ALL'] as 
 
 /** ≥8 KiB stderr ring, redacted before it is logged. */
 const STDERR_RING_MAX_BYTES = 8 * 1024
+
+/** Client budgets for the data plane (SPEC §Amendment 1 + review F1). */
+const API_REQUEST_TIMEOUT_MS = 20_000
+const RUN_API_TIMEOUT_MS = 90_000
+const RUN_ALL_CELL_TIMEOUT_MS = 60_000
+const RUN_ALL_OVERHEAD_MS = 30_000
+const RUN_ALL_MAX_TIMEOUT_MS = 15 * 60_000
 
 export function buildCookbooksChildEnv(parent: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const out: NodeJS.ProcessEnv = {}
@@ -97,6 +110,21 @@ export function buildCookbooksChildEnv(parent: NodeJS.ProcessEnv): NodeJS.Proces
 export function computeCookbooksBackoffMs(attempt: number, baseMs = 500, maxMs = 30_000): number {
   if (attempt <= 0) return 0
   return Math.min(maxMs, baseMs * 2 ** (attempt - 1))
+}
+
+/**
+ * Client budget for a "Run all": the sidecar's per-cell timeout for every
+ * submitted cell plus fixed overhead (venv/provisioning slack), capped so a
+ * huge notebook cannot hold an IPC call open indefinitely.
+ */
+export function computeCookbooksRunAllTimeoutMs(
+  cellCount: number,
+  perCellMs = RUN_ALL_CELL_TIMEOUT_MS,
+  overheadMs = RUN_ALL_OVERHEAD_MS,
+  maxMs = RUN_ALL_MAX_TIMEOUT_MS,
+): number {
+  const cells = Number.isFinite(cellCount) && cellCount > 0 ? Math.floor(cellCount) : 1
+  return Math.min(maxMs, perCellMs * cells + overheadMs)
 }
 
 /** Mask `token=<value>` in any text before it reaches a log sink. */
@@ -292,6 +320,9 @@ export class CookbooksRuntime {
       | 'shutdownGraceMs'
       | 'killHardTimeoutMs'
       | 'healthPollIntervalMs'
+      | 'apiRequestTimeoutMs'
+      | 'runApiTimeoutMs'
+      | 'runAllTimeoutMs'
     >
   > & {
     spawn: CookbooksSpawnFn
@@ -320,6 +351,9 @@ export class CookbooksRuntime {
       shutdownGraceMs: options.shutdownGraceMs ?? 5_000,
       killHardTimeoutMs: options.killHardTimeoutMs ?? 2_000,
       healthPollIntervalMs: options.healthPollIntervalMs ?? 300,
+      apiRequestTimeoutMs: options.apiRequestTimeoutMs ?? API_REQUEST_TIMEOUT_MS,
+      runApiTimeoutMs: options.runApiTimeoutMs ?? RUN_API_TIMEOUT_MS,
+      runAllTimeoutMs: options.runAllTimeoutMs ?? ((cellCount: number) => computeCookbooksRunAllTimeoutMs(cellCount)),
       spawn: options.spawn ?? ((command, args, opts) => nodeSpawn(command, args, opts) as CookbooksChild),
       resolvePython: options.resolvePython ?? defaultResolvePython,
       getCookbooksDir: options.getCookbooksDir ?? (() => getBundledAssetsDir('cookbooks')),
@@ -436,12 +470,15 @@ export class CookbooksRuntime {
 
   /**
    * One authenticated loopback request, mapped to `CookbooksApiError`:
-   * not running / unreachable / non-JSON → `status === 0`; a sidecar 4xx/5xx →
-   * its HTTP status with the sidecar's own `error` text (or the status text).
+   * not running / unreachable / timed out / non-JSON → `status === 0`; a
+   * sidecar 4xx/5xx → its HTTP status with the sidecar's own `error` text (or
+   * the status text). `timeoutMs` is a caller-side budget so a hung sidecar
+   * handler cannot hold the IPC call open for undici's own default.
    */
   private async request<T>(
     path: string,
     init: { method: 'GET' | 'POST'; body?: unknown } = { method: 'GET' },
+    timeoutMs = this.o.apiRequestTimeoutMs,
   ): Promise<T> {
     const startup = this.state === 'running' ? this.startup : null
     if (!startup) throw new CookbooksApiError(0, 'runtime not running')
@@ -453,8 +490,12 @@ export class CookbooksRuntime {
         method: init.method,
         headers,
         body: init.body === undefined ? undefined : JSON.stringify(init.body),
+        signal: AbortSignal.timeout(timeoutMs),
       })
     } catch (err) {
+      if (err instanceof Error && err.name === 'TimeoutError') {
+        throw new CookbooksApiError(0, 'timeout')
+      }
       throw new CookbooksApiError(0, err instanceof Error ? err.message : String(err))
     }
     if (!response.ok) {
@@ -498,7 +539,11 @@ export class CookbooksRuntime {
 
   /** `POST /run` → one cell's output. */
   async apiRun(itemId: string, code: string, index: number): Promise<CookbooksRunResult> {
-    const raw = await this.request<unknown>('/run', { method: 'POST', body: { itemId, code, index } })
+    const raw = await this.request<unknown>(
+      '/run',
+      { method: 'POST', body: { itemId, code, index } },
+      this.o.runApiTimeoutMs,
+    )
     return mapRunResult(raw)
   }
 
@@ -507,7 +552,11 @@ export class CookbooksRuntime {
     itemId: string,
     cells: { index: number; source: string }[],
   ): Promise<{ cells: CookbooksRunCell[] }> {
-    const raw = await this.request<unknown>('/run-all', { method: 'POST', body: { itemId, cells } })
+    const raw = await this.request<unknown>(
+      '/run-all',
+      { method: 'POST', body: { itemId, cells } },
+      this.o.runAllTimeoutMs(cells.length),
+    )
     const records = asRecord(raw).cells
     return { cells: Array.isArray(records) ? records.map(mapRunCell) : [] }
   }

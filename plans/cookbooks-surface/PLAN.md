@@ -13,6 +13,7 @@
 | Волна | Содержание | Роли | Ветка/воркдерево | Статус |
 |---|---|---|---|---|
 | W1 | Параллельные писатели: E-main (рантайм+IPC+вендор), E-ui (renderer+флаг), E-i18n (12 локалей) | 3 × `task` | `feature/cookbooks-surface` (одно дерево; владение файлами разведено — SPEC §File map) | ⏳ |
+| W1b (Amendment 1) | Нативный UI: удаление view-слоя (E-main2), нативная страница (E-ui2), 36×12 ключей (E-i18n2); фиксы ревью: run-all code-only, заголовок вкладки, клиентские таймауты, синхронизация docs | 3 × `task` | та же | ✅ / ⏳ фиксы ревью |
 | W2 | Интеграция: `sort-locales`, `typecheck:all`, фокусные тесты, вендоренный probe, `electron:dev` smoke + скриншот, коммит, PR | lead | та же | ⏳ |
 | W3 | Ревью: независимый `reviewer` (G3) + `security-reviewer` (G4; каналы/токен/запуск процессов) | reviewer, security-reviewer | PR | ⏳ |
 | W4 | Ship: `gh pr checks --watch` → `gh pr merge --merge` (G6); G7 — desktop-релиз, human-checklist | lead | main | ⏳ |
@@ -21,7 +22,7 @@
 
 | # | Исполнитель | objective | owned_paths | acceptance | verify | depends_on |
 |---|---|---|---|---|---|---|
-| 1 | E-main | Main-рантайм сайдкара + IPC + вендор-снапшот + stop-хук | `apps/electron/resources/cookbooks/**`, `apps/electron/src/shared/cookbooks.ts`, `apps/electron/src/main/{cookbooks-runtime.ts,cookbooks-view.ts,index.ts,handlers/{cookbooks.ts,index.ts}}`, `apps/electron/src/shared/types.ts`, `packages/shared/src/protocol/{channels.ts,routing.ts}`, `apps/electron/src/transport/channel-map.ts`, `apps/electron/resources/AGENTS.md`, `apps/electron/electron-builder.yml`, `apps/electron/src/main/__tests__/cookbooks-*.test.ts` | SPEC §Testing 1–2 зелёные (RED-сначала) | `bun test apps/electron/src/main/__tests__/cookbooks-runtime.test.ts`; `python3 .../electron_handshake_probe.py` | — |
+| 1 | E-main | Main-рантайм сайдкара + IPC + вендор-снапшот + stop-хук | `apps/electron/resources/cookbooks/**`, `apps/electron/src/shared/cookbooks.ts`, `apps/electron/src/main/{cookbooks-runtime.ts,index.ts,handlers/{cookbooks.ts,index.ts}}`, `apps/electron/src/shared/types.ts`, `packages/shared/src/protocol/{channels.ts,routing.ts}`, `apps/electron/src/transport/channel-map.ts`, `apps/electron/resources/AGENTS.md`, `apps/electron/electron-builder.yml`, `apps/electron/src/main/__tests__/cookbooks-*.test.ts` | SPEC §Testing 1–2 зелёные (RED-сначала) | `bun test apps/electron/src/main/__tests__/cookbooks-runtime.test.ts`; `python3 .../electron_handshake_probe.py` | — |
 | 2 | E-ui | Renderer-поверхность `cookbooks` + флаг + страница + тесты | `apps/electron/src/shared/{routes.ts,route-parser.ts}`, `apps/electron/src/renderer/{components/app-shell/{route-pages.ts,MainContentPanel.tsx,primary-nav.ts},atoms/panel-stack.ts,platform/{SurfaceTabs.tsx,glyphs.ts},pages/cookbooks/**}`, `packages/core/src/platform/workbench/flags.ts`, `apps/electron/resources/release-notes/next.md` | SPEC §Testing 3–4 зелёные (RED-сначала) | `bun test apps/electron/src/shared/__tests__/route-parser-cookbooks.test.ts apps/electron/src/renderer/pages/cookbooks/__tests__/CookbooksSurfacePage.test.tsx` | интерфейс из `@/shared/cookbooks` (создаёт E-main первым артефактом) |
 | 3 | E-i18n | 10 ключей × 12 локалей | `packages/shared/src/i18n/locales/*.json` | все 12 файлов валидный JSON, ключи ASCII-сортированы | `bun scripts/sort-locales.ts --check` | — |
 

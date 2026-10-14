@@ -103,10 +103,13 @@ const NOTEBOOK: CookbooksDocument = {
   title: 'ROX Analytics',
   supported: true,
   missing: [],
+  // Cell 0 is markdown on purpose: every catalog notebook opens with one, and a
+  // markdown entry must never reach `run-all` (the sidecar answers 400 for it).
   cells: [
+    { cellType: 'markdown', source: '# Заметка', outputs: [] },
     { cellType: 'code', source: 'print(1)', outputs: [] },
     { cellType: 'code', source: 'raise ValueError("boom")', outputs: [] },
-    { cellType: 'markdown', source: '# Заметка', outputs: [] },
+    { cellType: 'code', source: 'print(3)', outputs: [] },
   ],
   text: null,
 }
@@ -141,10 +144,18 @@ const RUN_ERROR: CookbooksRunResult = {
   missing: [],
 }
 
+/** `run-all` never sees the markdown cell; execution stops at the first failure. */
 const RUN_ALL: CookbooksRunCell[] = [
-  { index: 0, status: 'ok', stdout: 'ok-0', error: null },
-  { index: 1, status: 'error', stdout: '', error: 'ValueError: boom' },
-  { index: 2, status: 'skipped', stdout: '', error: null },
+  { index: 1, status: 'ok', stdout: 'ok-1', error: null },
+  { index: 2, status: 'error', stdout: '', error: 'ValueError: boom' },
+  { index: 3, status: 'skipped', stdout: '', error: null },
+]
+
+/** The exact payload `run-all` must send: code cells only, document indices kept. */
+const RUN_ALL_PAYLOAD = [
+  { index: 1, source: 'print(1)' },
+  { index: 2, source: 'raise ValueError("boom")' },
+  { index: 3, source: 'print(3)' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -469,11 +480,11 @@ describe('CookbooksSurfacePage catalog', () => {
     expect(testId(container, 'cookbooks-document-title')?.textContent).toBe('ROX Analytics')
     expect(testId(container, 'cookbooks-status')?.textContent).toContain(t('cookbooks.status.opened'))
 
-    expect(allTestIds(container, 'cookbooks-cell-')).toHaveLength(3)
-    const source = testId(container, 'cookbooks-source-0') as HTMLTextAreaElement
+    expect(allTestIds(container, 'cookbooks-cell-')).toHaveLength(4)
+    const source = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
     expect(source.value).toBe('print(1)')
-    expect(source.getAttribute('aria-label')).toBe(t('cookbooks.cell.sourceLabel', { index: 0 }))
-    expect(testId(container, 'cookbooks-output-0')?.textContent).toBe(t('cookbooks.output.hint'))
+    expect(source.getAttribute('aria-label')).toBe(t('cookbooks.cell.sourceLabel', { index: 1 }))
+    expect(testId(container, 'cookbooks-output-1')?.textContent).toBe(t('cookbooks.output.hint'))
   })
 })
 
@@ -491,16 +502,16 @@ describe('CookbooksSurfacePage execution', () => {
     })
     const container = await render()
     await click(container, 'cookbooks-card-rox-analytics')
-    await click(container, 'cookbooks-run-0')
+    await click(container, 'cookbooks-run-1')
 
     expect(api.counts.run).toHaveLength(1)
-    expect(api.counts.run[0]).toEqual({ itemId: 'rox-analytics', code: 'print(1)', index: 0 })
+    expect(api.counts.run[0]).toEqual({ itemId: 'rox-analytics', code: 'print(1)', index: 1 })
 
-    const output = testId(container, 'cookbooks-output-0')!
+    const output = testId(container, 'cookbooks-output-1')!
     expect(output.getAttribute('data-status')).toBe('ok')
-    expect(output.getAttribute('aria-label')).toBe(t('cookbooks.cell.outputLabel', { index: 0 }))
+    expect(output.getAttribute('aria-label')).toBe(t('cookbooks.cell.outputLabel', { index: 1 }))
     expect(output.textContent).toContain('42')
-    expect(testId(container, 'cookbooks-status')?.textContent).toContain(t('cookbooks.status.cellOk', { index: 0 }))
+    expect(testId(container, 'cookbooks-status')?.textContent).toContain(t('cookbooks.status.cellOk', { index: 1 }))
   })
 
   it('renders a failing cell with data-status="error" and the failure copy', async () => {
@@ -512,15 +523,15 @@ describe('CookbooksSurfacePage execution', () => {
     })
     const container = await render()
     await click(container, 'cookbooks-card-rox-analytics')
-    await click(container, 'cookbooks-run-1')
+    await click(container, 'cookbooks-run-2')
 
-    const output = testId(container, 'cookbooks-output-1')!
+    const output = testId(container, 'cookbooks-output-2')!
     expect(output.getAttribute('data-status')).toBe('error')
     expect(output.textContent).toContain('ValueError: boom')
-    expect(testId(container, 'cookbooks-status')?.textContent).toContain(t('cookbooks.status.cellError', { index: 1 }))
+    expect(testId(container, 'cookbooks-status')?.textContent).toContain(t('cookbooks.status.cellError', { index: 2 }))
   })
 
-  it('runs all cells: sends every source and renders skipped/error outputs and the summary', async () => {
+  it('runs all code cells: skips markdown in the payload and renders skipped/error outputs', async () => {
     const api = installApi({
       status: { state: 'running', reason: null, port: 51234 },
       cards: CARDS,
@@ -532,17 +543,19 @@ describe('CookbooksSurfacePage execution', () => {
 
     expect(api.counts.runAll).toHaveLength(1)
     expect(api.counts.runAll[0].itemId).toBe('rox-analytics')
-    expect(api.counts.runAll[0].cells).toEqual([
-      { index: 0, source: 'print(1)' },
-      { index: 1, source: 'raise ValueError("boom")' },
-      { index: 2, source: '# Заметка' },
-    ])
+    // Code cells only, with their own document indices: a markdown entry makes
+    // the sidecar answer 400 and would break «Запустить всё» for every notebook.
+    expect(api.counts.runAll[0].cells).toEqual(RUN_ALL_PAYLOAD)
+    expect(api.counts.runAll[0].cells.some((cell) => cell.index === 0)).toBe(false)
 
-    expect(testId(container, 'cookbooks-output-0')!.getAttribute('data-status')).toBe('ok')
-    expect(testId(container, 'cookbooks-output-0')!.textContent).toContain('ok-0')
-    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('error')
-    expect(testId(container, 'cookbooks-output-2')!.getAttribute('data-status')).toBe('skipped')
-    expect(testId(container, 'cookbooks-output-2')!.textContent).toBe(t('cookbooks.output.skipped'))
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('ok')
+    expect(testId(container, 'cookbooks-output-1')!.textContent).toContain('ok-1')
+    expect(testId(container, 'cookbooks-output-2')!.getAttribute('data-status')).toBe('error')
+    expect(testId(container, 'cookbooks-output-2')!.textContent).toContain('ValueError: boom')
+    expect(testId(container, 'cookbooks-output-3')!.getAttribute('data-status')).toBe('skipped')
+    expect(testId(container, 'cookbooks-output-3')!.textContent).toBe(t('cookbooks.output.skipped'))
+    // The markdown cell was never executed, so it keeps the pre-run hint.
+    expect(testId(container, 'cookbooks-output-0')!.getAttribute('data-status')).toBe('idle')
     expect(testId(container, 'cookbooks-status')?.textContent).toContain(
       t('cookbooks.status.runAll', { count: 3, ok: 1, failed: 1, skipped: 1 }),
     )
@@ -557,8 +570,8 @@ describe('CookbooksSurfacePage execution', () => {
     })
     const container = await render()
     await click(container, 'cookbooks-card-rox-analytics')
-    await click(container, 'cookbooks-run-0')
-    expect(testId(container, 'cookbooks-output-0')!.textContent).toBe(t('cookbooks.output.empty'))
+    await click(container, 'cookbooks-run-1')
+    expect(testId(container, 'cookbooks-output-1')!.textContent).toBe(t('cookbooks.output.empty'))
   })
 
   it('disables the acting control and shows the running status while a cell runs', async () => {
@@ -573,11 +586,11 @@ describe('CookbooksSurfacePage execution', () => {
     await click(container, 'cookbooks-card-rox-analytics')
 
     await act(async () => {
-      ;(testId(container, 'cookbooks-run-0') as HTMLButtonElement).click()
+      ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
     })
     await flush(1)
 
-    expect((testId(container, 'cookbooks-run-0') as HTMLButtonElement).disabled).toBe(true)
+    expect((testId(container, 'cookbooks-run-1') as HTMLButtonElement).disabled).toBe(true)
     expect(testId(container, 'cookbooks-status')?.textContent).toContain(t('cookbooks.status.running'))
 
     await act(async () => {
@@ -585,8 +598,8 @@ describe('CookbooksSurfacePage execution', () => {
       await gate.promise
     })
     await flush()
-    expect((testId(container, 'cookbooks-run-0') as HTMLButtonElement).disabled).toBe(false)
-    expect(testId(container, 'cookbooks-output-0')!.getAttribute('data-status')).toBe('ok')
+    expect((testId(container, 'cookbooks-run-1') as HTMLButtonElement).disabled).toBe(false)
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('ok')
   })
 })
 
@@ -597,13 +610,13 @@ describe('CookbooksSurfacePage execution', () => {
 describe('CookbooksSurfacePage mutations', () => {
   it('saves an edited cell and reports «Ячейка N сохранена»', async () => {
     const api = await renderNotebook()
-    await type(api.container, 'cookbooks-source-0', 'print(2)')
-    await click(api.container, 'cookbooks-save-0')
+    await type(api.container, 'cookbooks-source-1', 'print(2)')
+    await click(api.container, 'cookbooks-save-1')
 
     expect(api.api.counts.save).toHaveLength(1)
-    expect(api.api.counts.save[0]).toEqual({ itemId: 'rox-analytics', index: 0, source: 'print(2)' })
+    expect(api.api.counts.save[0]).toEqual({ itemId: 'rox-analytics', index: 1, source: 'print(2)' })
     expect(testId(api.container, 'cookbooks-status')?.textContent).toContain(
-      t('cookbooks.status.cellSaved', { index: 0 }),
+      t('cookbooks.status.cellSaved', { index: 1 }),
     )
   })
 
@@ -666,7 +679,7 @@ describe('CookbooksSurfacePage mutations', () => {
     await click(container, 'cookbooks-card-rox-analytics')
     expect(testId(container, 'cookbooks-run-all')).toBeNull()
     // The document is still rendered — only the run-all action is withheld.
-    expect(allTestIds(container, 'cookbooks-cell-')).toHaveLength(3)
+    expect(allTestIds(container, 'cookbooks-cell-')).toHaveLength(4)
   })
 })
 
@@ -711,7 +724,7 @@ describe('CookbooksSurfacePage chrome', () => {
 
   it('never exposes the sidecar token or a full URL in the DOM', async () => {
     const api = await renderNotebook()
-    await click(api.container, 'cookbooks-run-0')
+    await click(api.container, 'cookbooks-run-1')
     await click(api.container, 'cookbooks-run-all')
     const html = api.container.innerHTML
     expect(html).not.toContain('token=')

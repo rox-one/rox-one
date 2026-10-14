@@ -3,6 +3,7 @@ import {
   CookbooksRuntime,
   buildCookbooksChildEnv,
   computeCookbooksBackoffMs,
+  computeCookbooksRunAllTimeoutMs,
   redactCookbooksLogLine,
   type CookbooksChild,
 } from '../cookbooks-runtime'
@@ -138,6 +139,23 @@ describe('computeCookbooksBackoffMs', () => {
       .toEqual([500, 1000, 2000, 4000, 8000])
     expect(computeCookbooksBackoffMs(7, 500, 30_000)).toBe(30_000)
     expect(computeCookbooksBackoffMs(0, 500, 30_000)).toBe(0)
+  })
+})
+
+describe('computeCookbooksRunAllTimeoutMs', () => {
+  it('reserves one cell timeout per cell plus overhead', () => {
+    expect(computeCookbooksRunAllTimeoutMs(1)).toBe(90_000)
+    expect(computeCookbooksRunAllTimeoutMs(3)).toBe(210_000)
+    expect(computeCookbooksRunAllTimeoutMs(13)).toBe(810_000)
+  })
+
+  it('caps the total and never returns a sub-cell budget', () => {
+    expect(computeCookbooksRunAllTimeoutMs(200)).toBe(15 * 60_000)
+    expect(computeCookbooksRunAllTimeoutMs(0)).toBe(90_000)
+  })
+
+  it('gives a multi-cell run-all a larger budget than a single run', () => {
+    expect(computeCookbooksRunAllTimeoutMs(3)).toBeGreaterThan(90_000)
   })
 })
 
@@ -506,7 +524,10 @@ function startStub() {
 }
 
 /** Drive a runtime to `running` against `port` through the injected fake spawn. */
-async function runtimeOnPort(port: number): Promise<CookbooksRuntime> {
+async function runtimeOnPort(
+  port: number,
+  options: Partial<ConstructorParameters<typeof CookbooksRuntime>[0]> = {},
+): Promise<CookbooksRuntime> {
   const children: FakeChild[] = []
   const runtime = new CookbooksRuntime({
     spawn: () => { const child = new FakeChild(); children.push(child); return child },
@@ -515,12 +536,25 @@ async function runtimeOnPort(port: number): Promise<CookbooksRuntime> {
     getWorkspaceDir: () => '/ws',
     buildEnv: async () => ({ PATH: '/bin' }),
     checkHealth: async () => true,
+    ...options,
   })
   const ready = runtime.ensure()
   await tick()
   children[0].emit(line(port))
   await ready
   return runtime
+}
+
+/** A sidecar that accepts the connection and never answers. */
+function startHangingStub() {
+  const server = Bun.serve({
+    hostname: '127.0.0.1',
+    port: 0,
+    fetch: () => new Promise<Response>(() => {}),
+  })
+  const port = server.port
+  if (port === undefined) throw new Error('hanging stub did not bind a port')
+  return { port, stop: () => server.stop(true) }
 }
 
 describe('CookbooksRuntime data plane', () => {
@@ -708,6 +742,66 @@ describe('CookbooksRuntime data plane', () => {
       expect((err as CookbooksApiError).status).toBe(0)
     } finally {
       await runtime.stop()
+    }
+  })
+
+  it('aborts a hung request on the injected budget instead of waiting for the transport default', async () => {
+    const stub = startHangingStub()
+    const runtime = await runtimeOnPort(stub.port, { apiRequestTimeoutMs: 100 })
+    try {
+      const started = Date.now()
+      const err = await runtime.apiCatalog().catch((e: unknown) => e)
+      expect(err).toBeInstanceOf(CookbooksApiError)
+      expect((err as CookbooksApiError).status).toBe(0)
+      expect((err as CookbooksApiError).message).toBe('timeout')
+      // The budget is the caller's, not undici's ~300s default.
+      expect(Date.now() - started).toBeLessThan(5_000)
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('applies the run-all budget to the run-all request', async () => {
+    const stub = startHangingStub()
+    const runtime = await runtimeOnPort(stub.port, { runAllTimeoutMs: () => 60 })
+    try {
+      const err = await runtime
+        .apiRunAll('probe-item', [
+          { index: 0, source: 'a' },
+          { index: 1, source: 'b' },
+        ])
+        .catch((e: unknown) => e)
+      expect(err).toBeInstanceOf(CookbooksApiError)
+      expect((err as CookbooksApiError).status).toBe(0)
+      expect((err as CookbooksApiError).message).toBe('timeout')
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('derives the run-all budget from the submitted cell count', async () => {
+    const stub = startStub()
+    const budgets: number[] = []
+    const runtime = await runtimeOnPort(stub.port, {
+      runApiTimeoutMs: 90_000,
+      runAllTimeoutMs: (cellCount) => {
+        budgets.push(cellCount)
+        return computeCookbooksRunAllTimeoutMs(cellCount)
+      },
+    })
+    try {
+      await runtime.apiRunAll('probe-item', [
+        { index: 0, source: 'a' },
+        { index: 1, source: 'b' },
+        { index: 2, source: 'c' },
+      ])
+      expect(budgets).toEqual([3])
+      expect(computeCookbooksRunAllTimeoutMs(3)).toBeGreaterThan(90_000)
+    } finally {
+      await runtime.stop()
+      stub.stop()
     }
   })
 })

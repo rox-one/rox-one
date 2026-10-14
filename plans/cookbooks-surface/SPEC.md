@@ -4,7 +4,7 @@
 
 ## Solution
 
-Продукт получает нативную поверхность `cookbooks`: пункт в «Ещё» → честные состояния → встроенный top-level `WebContentsView` с локальным сайдкаром кукбуков. Main-процесс владеет жизненным циклом Python-процесса (резолв интерпретатора → спавн → разбор discovery-строки → health → рестарт/stop) и единственный знает URL с токеном; renderer получает только типизированный статус. Сайдкар вендорится в ресурсы приложения снапшотом с PROVENANCE. Секреты в v1 не передаются (Срез 2 — `POST /store`, отдельный PR). Никаких миграций, таблиц и серверного состояния.
+Продукт получает нативную поверхность `cookbooks`: пункт в «Ещё» → честные состояния → **нативный React-интерфейс** (SPEC §Amendment 1) поверх локального сайдкара кукбуков. Main-процесс владеет жизненным циклом Python-процесса (резолв интерпретатора → спавн → разбор discovery-строки → health → рестарт/stop) и единственный знает URL с токеном; renderer получает только типизированный статус. Сайдкар вендорится в ресурсы приложения снапшотом с PROVENANCE. Секреты в v1 не передаются (Срез 2 — `POST /store`, отдельный PR). Никаких миграций, таблиц и серверного состояния.
 
 **НЕ делаем:** iframe/`<webview>` (XFO: DENY), передачу токена в renderer, env-проброс секретов, изменения кода лаборатории, webui/CLI/облачные поверхности.
 
@@ -92,9 +92,9 @@ export interface CookbooksRunCell { index: number; status: 'ok' | 'error' | 'ski
 
 1. **IPC-неймспейс — существующий RPC-слой → `RPC_CHANNELS.cookbooksLab`** (`packages/shared/src/protocol/channels.ts`, рядом с `browserPane`/`extensionSurface`), классификация в `packages/shared/src/protocol/routing.ts` (`LOCAL_ONLY_CHANNEL_LIST` — все каналы локальные, привязка к 127.0.0.1-процессу), методы в `ElectronAPI` (`apps/electron/src/shared/types.ts`), записи в `apps/electron/src/transport/channel-map.ts` (точечные ключи `invoke(...)`), регистрация хендлеров — новый `apps/electron/src/main/handlers/cookbooks.ts` + строка в `apps/electron/src/main/handlers/index.ts`. Почему: это единственный существующий слой каналов; exhaustiveness-тест `routing.ts:4-8` сам поймает забытую классификацию.
 2. **Супервизор — адаптация `ServerSupervisor`** (`apps/electron/src/main/server-host.ts:47-136, 153-322`) в новый `apps/electron/src/main/cookbooks-runtime.ts`: те же состояния/бэкофф/парсинг stdout, но: свой парсер строки, без `app.relaunch` при give-up, graceful-stop = SIGINT (POSIX). Почему: паттерн уже проверен на носителе сервера; изобретать второй супервизор запрещено.
-3. **Вид — собственный минимальный менеджер `apps/electron/src/main/cookbooks-view.ts`** по образцу `extension-surface`/`browser-pane-manager` (`createEmbeddedInstance` семантика), но: единственный синглтон-вид на окно, партиция `persist:cookbooks-lab`, навигационный allowlist по origin текущей сессии, `setWindowOpenHandler → deny`, `setPermissionRequestHandler → deny`. Почему не переиспользовать `browser-pane-manager` целиком: у него браузерная семантика (история/cookies/попапы как панели), для лаборатории это лишний риск.
+3. **[ОТМЕНЕНО Amendment 1 — не реализуется]** **Вид — собственный минимальный менеджер `apps/electron/src/main/cookbooks-view.ts`** по образцу `extension-surface`/`browser-pane-manager` (`createEmbeddedInstance` семантика), но: единственный синглтон-вид на окно, партиция `persist:cookbooks-lab`, навигационный allowlist по origin текущей сессии, `setWindowOpenHandler → deny`, `setPermissionRequestHandler → deny`. Почему не переиспользовать `browser-pane-manager` целиком: у него браузерная семантика (история/cookies/попапы как панели), для лаборатории это лишний риск.
 4. **Рендерная поверхность — существующий pattern «нативная поверхность»** (routes → parser → types/guard → route-pages → MainContentPanel → panel-stack → SurfaceTabs → primary-nav → glyphs). Точные шаги — §Renderer registration. Почему: соответствие 9 существующим поверхностям; fallback «route-unavailable» (`MainContentPanel.tsx:937-956`) обязан не срабатывать.
-5. **Bounds — существующий хук** `apps/electron/src/renderer/hooks/useNativeSurfaceBounds.ts:11-77` (передаём наш `setBounds`; rect-тип — тот же, что принимает `browserPane.syncBounds`, не изобретать новый). Почему: аренда/скрытие/overlay-сброс уже решены там.
+5. **[ОТМЕНЕНО Amendment 1 — mount/bounds не используются]** **Bounds — существующий хук** `apps/electron/src/renderer/hooks/useNativeSurfaceBounds.ts:11-77` (передаём наш `setBounds`; rect-тип — тот же, что принимает `browserPane.syncBounds`, не изобретать новый). Почему: аренда/скрытие/overlay-сброс уже решены там.
 6. **Флаг — kill-switch в существующем реестре** `packages/core/src/platform/workbench/flags.ts`: `cookbooksV1: 'cookbooks.v1'` + `WORKBENCH_FEATURE_FLAGS` запись `{ defaultValue: true, dependencies: [], rollbackSafe: true }`. Гейт — `shellFlag` пункта навигации (как `developers`/`playbooks` `primary-nav.ts:129-130`). Почему: рубрика «каждый флаг — решение»; выключение = поверхность исчезает без правок кода.
 7. **i18n — только через `t()`**, ключи `cookbooks.*` + `sidebar.cookbooks` в 12 локалях (`packages/shared/src/i18n/locales/*.json`), ASCII-сортировка (`bun scripts/sort-locales.ts --check`). Почему: `validate:ci` гейты.
 8. **Вендоринг — снапшот в `apps/electron/resources/cookbooks/` + запись в упаковку**: `apps/electron/resources/AGENTS.md` (таблица «Other Files» — новый раздел) и убедиться, что `apps/electron/electron-builder.yml` включает `resources/cookbooks/**/*` (по образцу строки `resources/scripts/**/*`, yml:47) **и** `scripts/copy-assets.ts` копирует каталог в `dist/resources/` (проверить фактически; при исключающем списке — добавить). Почему: `getBundledAssetsDir()` — единственный runtime-контракт путей.
@@ -161,30 +161,26 @@ RPC_CHANNELS.cookbooksLab = {
   ENSURE:      'cookbooks-lab:ensure',       // () → CookbooksStatus   (идемпотентно; резолв+спавн при необходимости)
   STATUS:      'cookbooks-lab:status',       // () → CookbooksStatus
   RESTART:     'cookbooks-lab:restart',      // () → CookbooksStatus   (stop+ensure)
-  MOUNT:       'cookbooks-lab:mount',        // ({ rect: SurfaceRect | null }) → { instanceId: string } | null
-  SET_BOUNDS:  'cookbooks-lab:set-bounds',   // ({ instanceId: string; rect: SurfaceRect | null }) → void
-  UNMOUNT:     'cookbooks-lab:unmount',      // ({ instanceId: string }) → void
+  // MOUNT/SET_BOUNDS/UNMOUNT — отменены Amendment 1 (актуальный контракт — §Amendment 1).
   STATUS_CHANGED: 'cookbooks-lab:status-changed', // push: CookbooksStatus
 }
 export interface ElectronAPI { /* … */ cookbooksLab: {
   ensure(): Promise<CookbooksStatus>; status(): Promise<CookbooksStatus>; restart(): Promise<CookbooksStatus>
-  mount(args: { rect: SurfaceRect | null }): Promise<{ instanceId: string } | null>
-  setBounds(args: { instanceId: string; rect: SurfaceRect | null }): Promise<void>
-  unmount(args: { instanceId: string }): Promise<void>
+  // mount/setBounds/unmount — отменены (Amendment 1); data-plane каналы — в §Amendment 1.
   onStatusChanged(cb: (s: CookbooksStatus) => void): () => void
 } }
 ```
 
-`SurfaceRect` — существующий rect-тип `browserPane.syncBounds` (найти в `apps/electron/src/shared/types.ts` по `syncBounds`, переиспользовать; новый не вводить). Все каналы — `LOCAL_ONLY`. Инвариант: ни одно поле IPC-контракта не содержит токен или полный URL (тест).
+Все каналы — `LOCAL_ONLY`. Инвариант: ни одно поле IPC-контракта не содержит токен или полный URL (тест). *(SurfaceRect/mount-часть отменены Amendment 1.)*
 
-Поведение: `MOUNT` при `state !== 'running'` → `null` (renderer показывает состояние по статусу). При уходе состояния из `running` main **уничтожает все живые инстансы** вида и шлёт `STATUS_CHANGED`; renderer при следующем `running` монтирует заново.
+Поведение data-plane (реакция на уход из `running`, типы ошибок) — по §Amendment 1; mount-поведение отменено.
 
 ### Renderer-состояния страницы (заморожены)
 
 ```ts
 type CookbooksPageUi =
   | { kind: 'starting' }                                  // idle|starting; заголовок+хинт, спиннер
-  | { kind: 'ready' }                                     // running; вид смонтирован
+  | { kind: 'ready' }                                     // running; нативный UI (§Amendment 1)
   | { kind: 'unavailable'; reason: 'python-missing' }     // заголовок+хинт+«Повторить»
   | { kind: 'failed' }                                    // failed (кроме python-missing) + «Повторить»
   | { kind: 'stopped' }                                   // stopped; «Повторить»
@@ -228,7 +224,7 @@ RED-first (тест пишется до реализации, падение ф�
 | `apps/electron/resources/cookbooks/**` (src/rox_cookbooks/**, resources/cookbooks/**, scripts/serve_lab.py, scripts/electron_handshake_probe.py, PROVENANCE.md, ELECTRON-CONTRACT.md) | Create (вендор-снапшот) |
 | `apps/electron/src/shared/cookbooks.ts` | Create (типы/парсер/валидатор) |
 | `apps/electron/src/main/cookbooks-runtime.ts` | Create |
-| `apps/electron/src/main/cookbooks-view.ts` | Create |
+| `apps/electron/src/main/cookbooks-view.ts` | Не создаётся — отменено Amendment 1 |
 | `apps/electron/src/main/handlers/cookbooks.ts` | Create |
 | `apps/electron/src/main/handlers/index.ts` | Modify (+регистрация) |
 | `apps/electron/src/main/index.ts` | Modify (+init, +stop в performQuitCleanup) |
@@ -272,7 +268,7 @@ RED-first (тест пишется до реализации, падение ф�
 6. `panel-stack.ts`: `PanelType` + case в `getPanelTypeFromRoute`; `SurfaceTabs.tsx`: иконка в `tabIcon`.
 7. `primary-nav.ts`: `{ id: 'cookbooks', linkId: 'nav:cookbooks', group: 'more', labelKey: 'sidebar.cookbooks', icon: GLYPHS.cookbooks, route: () => routes.view.cookbooks(), isActive: isCookbooksNavigation, shellFlag: WORKBENCH_FLAG.cookbooksV1, preload: 'cookbooks' }` (позиция — рядом с `playbooks`, `:130`).
 8. `glyphs.ts`: концепт `cookbooks` (предложение: Lucide `BookOpen`), синхронно в `GLYPHS` и `GLYPH_NAMES`.
-9. Страница: `useNativeSurfaceBounds` → `cookbooksLab.setBounds`; `ensure()` на mount; подписка `onStatusChanged`; `mount({rect})` при `running`; `unmount` в cleanup; состояния — по §Renderer-состояния.
+9. **[ОТМЕНЕНО Amendment 1]** Страница — нативный UI (§Amendment 1): `ensure()` на mount, подписка `onStatusChanged`, data-plane вызовы при `running`; mount/bounds не используются.
 
 ## Rollback strategy
 

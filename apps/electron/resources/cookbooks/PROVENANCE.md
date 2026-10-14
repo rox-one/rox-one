@@ -11,8 +11,20 @@ the laboratory's own repository and a re-run of the sync command below.
 | Source tree | `/Users/t/Projects/2026-10-13-rox-cookbooks-notebooks` |
 | Upstream repo | `rox-one/rox-cookbooks-notebooks` |
 | Snapshot date | 2026-10-14 |
-| Source revision | source tree carries no `.git` (working copy, revision not recorded upstream here) |
+| Source revision | **none available.** The upstream laboratory is a plain working copy: it carries **no VCS metadata** (no `.git`, no tag, no archive), so there is no commit SHA to pin. Integrity is therefore asserted by the **sha256 manifest** at the bottom of this file (regenerate + diff), not by a revision. |
 | Interpreter used to validate | `/usr/bin/python3` 3.9.6 (lab runs on ≥ 3.9; cell execution needs ≥ 3.11 — an internal honest lab error, not a resolver gate) |
+
+Because no revision exists to diff against, **the manifest is the snapshot's only
+integrity record**: any drift in a vendored file — hand edit or re-sync — shows up
+as a manifest diff and must be re-recorded deliberately. Re-verify by regenerating
+the manifest and comparing it byte-for-byte with the block at the bottom of this
+file (identical output = intact):
+
+```sh
+cd apps/electron/resources/cookbooks
+find . -type f ! -name PROVENANCE.md | sort \
+  | while read -r f; do printf '%s  %s\n' "$(shasum -a 256 "$f" | awk '{print $1}')" "${f#./}"; done
+```
 
 ## Sync command
 
@@ -20,12 +32,19 @@ the laboratory's own repository and a re-run of the sync command below.
 SRC=/Users/t/Projects/2026-10-13-rox-cookbooks-notebooks
 DST=apps/electron/resources/cookbooks
 mkdir -p "$DST/src" "$DST/scripts" "$DST/resources"
-rsync -a --exclude '__pycache__' "$SRC/src/rox_cookbooks/" "$DST/src/rox_cookbooks/"
+# `static/lab-*.html` are dormant alternate surfaces the sidecar never serves:
+# `src/rox_cookbooks/host.py:26` renders `static/lab.html` ONLY. They are pruned
+# here (4 files, 154,300 bytes ≈ 151 KiB of dead bundle weight) so a re-sync
+# cannot reintroduce them.
+rsync -a --exclude '__pycache__' --exclude 'lab-*.html' "$SRC/src/rox_cookbooks/" "$DST/src/rox_cookbooks/"
 rsync -a "$SRC/resources/cookbooks/" "$DST/resources/cookbooks/"
 cp "$SRC/scripts/serve_lab.py" "$DST/scripts/serve_lab.py"
 cp "$SRC/scripts/electron_handshake_probe.py" "$DST/scripts/electron_handshake_probe.py"
 cp "$SRC/docs/electron-integration.md" "$DST/ELECTRON-CONTRACT.md"
 ```
+
+The snapshot is then exactly the file list in the manifest below — after a re-sync,
+regenerate the manifest and re-record it (there is no upstream revision to diff).
 
 The **relative layout is load-bearing** and must not be flattened:
 
@@ -69,11 +88,7 @@ cbc3b59c57e9006a6ccc9e93d456322da3098c998187c9a4d0aa12f69a232581  src/rox_cookbo
 eaba767d1f30e36aa3e1427799c4001c795744aca2e5f7f985f06e1069614d92  src/rox_cookbooks/notebooks.py
 77a378b23f58d67a0d02792114364a98ed8cdcd3f24d164e3cd5fe54c43526ae  src/rox_cookbooks/search.py
 9bf567a606f7ddd56088eed653276791be5b21fe962f683686a49d55ad635e95  src/rox_cookbooks/secrets.py
-48f9d939d16be7eafcf3833253d87d167238b3e1a6ffeb13a5fa079e3c9acc47  src/rox_cookbooks/static/lab-gaseta.html
 4a4d0b015ebe4498c6eea4c5dbc3d992408f37e4c6b1f25d3128f035912992ce  src/rox_cookbooks/static/lab.html
-6482f198091df337aa345b5b6dd991537ce3838c7f9a019b0e2cf49a28c8563a  src/rox_cookbooks/static/lab-premium.html
-4a4d0b015ebe4498c6eea4c5dbc3d992408f37e4c6b1f25d3128f035912992ce  src/rox_cookbooks/static/lab-pult.html
-d720803b3ad37b1f4eea137fc3fd1eb11da859937103a073e1ffe4e66df3f616  src/rox_cookbooks/static/lab-v5.html
 69507583cbf93269291578771a809942d38bc2f3f86c312b66bf070bd306f557  src/rox_cookbooks/ui.py
 ```
 

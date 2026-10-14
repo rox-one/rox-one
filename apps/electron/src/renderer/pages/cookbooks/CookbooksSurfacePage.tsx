@@ -228,7 +228,13 @@ export function CookbooksSurfacePage() {
 
   const runAllCells = useCallback(async () => {
     if (!doc || !openItemId) return
-    const cells = doc.cells.map((cell, index) => ({ index, source: sources[index] ?? cell.source }))
+    // The sidecar executes code cells only: a markdown entry makes `POST /run-all`
+    // answer 400 «cell is not runnable» and kills the whole run. Indices stay the
+    // document's own so per-cell outputs land under the right article.
+    const cells = doc.cells
+      .map((cell, index) => ({ index, source: sources[index] ?? cell.source, cellType: cell.cellType }))
+      .filter((cell) => cell.cellType === 'code')
+      .map(({ index, source }) => ({ index, source }))
     await runWithBusy('run-all', async () => {
       const result = await api.runAll({ itemId: openItemId, cells })
       const nextOutputs: Record<number, CookbooksRunCell> = {}

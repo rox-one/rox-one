@@ -15,7 +15,7 @@
 
 | Что | Где (файл:строки) |
 |---|---|
-| Нативная поверхность в `WebContentsView`: создание, sync bounds, destroy, навигационная политика | `apps/electron/src/main/browser-pane-manager.ts:2484-2627, 2634-2667, 4447-4495`; хук аренды rect — `apps/electron/src/renderer/hooks/useNativeSurfaceBounds.ts:11-77` |
+| Нативная поверхность в `WebContentsView`: создание, sync bounds, destroy, навигационная политика | `apps/electron/src/main/browser-pane-manager.ts:2484-2627, 2634-2667, 4447-4495`; хук аренды rect — `apps/electron/src/renderer/hooks/useNativeSurfaceBounds.ts:11-77` — **для кукбуков не используется (SPEC §Amendment 1: нативный UI)** |
 | Паттерн «main спавнит локальный сайдкар и открывает его URL» | `apps/electron/src/main/open-design-runtime.ts:392-1050`; окно-обёртка `apps/electron/src/main/open-design-window.ts:102-129` |
 | Валидатор loopback-URL (только `http://127.0.0.1|<[::1]>:<port>`, без creds) | `apps/electron/src/shared/open-design.ts:40-83` |
 | Супервизор с discovery-строкой из stdout, состояниями и backoff | `apps/electron/src/main/server-host.ts:47-136, 153-322` |
@@ -52,7 +52,7 @@
 
 ### 2. Запуск клеток работает в живом сайдкаре и корректно умирает
 Как пользователь, я открываю кукбук, запускаю клетку и вижу вывод — а когда закрываю приложение, процесс не остаётся висеть.
-- [ ] Вид загружает `http://127.0.0.1:<port>/lab.html?token=<t>` как top-level `WebContentsView` (XFO: DENY это не блокирует); навигация вне `127.0.0.1:<port>` блокируется, `window.open` запрещён.
+- [ ] Интерфейс — нативный (React в дизайн-системе ROX): каталог/документ/ячейки; в приложении не создаётся ни webview, ни iframe (`document.querySelectorAll('webview, iframe').length === 0`); исполнение идёт через IPC main→сайдкар.
 - [ ] Прогон клетки/«Запустить всё» в живом окне обновляет вывод/статусы (наблюдаемо: `pre.cellout` c `run-all ok`, статус «Запущено 1 ячеек…»).
 - [ ] При выходе приложения процесс сайдкара получает SIGINT (POSIX) и завершается в пределах 5 с; `performQuitCleanup` останавливает рантайм идемпотентно. Windows: `kill()` без graceful (записано как ограничение v1).
 - [ ] Убийство сайдкара извне (`kill -9`) приводит к рестарту с backoff 500 мс·2^n (кап 30 с), счётчик крашей сбрасывается после 60 с стабильной работы; состояние в UI обновляется push-событием без перезагрузки страницы.
@@ -74,7 +74,7 @@
 ## 4. Функциональные требования по поверхностям
 
 **Desktop UI (apps/electron, renderer):** пункт навигации, поверхность `cookbooks` с честными состояниями (`starting | ready | unavailable | failed`, плюс `stopped`), kill-switch флаг, i18n 12/12, вкладка в panel-stack, глубокая ссылка `cookbooks` (deep-link из main через `parseNavigationStateKey`).
-**IPC (main↔renderer):** неймспейс `cookbooks` — `ensure/status/restart/mount/setBounds/unmount` + push `statusChanged`; все каналы LOCAL_ONLY; renderer получает только `{state, detail?, reasonCode?}` — без URL/токена; исключение — сам вид создаётся в main.
+**IPC (main↔renderer):** неймспейс `cookbooks-lab` — `ensure/status/restart` + data-plane `catalog/open/document/run/run-all/save/reset` + push `status-changed`; все каналы LOCAL_ONLY; ни одно поле не содержит URL/токен — main единственный HTTP-клиент сайдкара.
 **Main (runtime):** вендоренный сайдкар (`apps/electron/resources/cookbooks/**`); резолвер Python (managed 3.12 → `UV_PYTHON` → `python3` из PATH); спавн `-u serve_lab.py --workspace <configDir>/cookbooks/workspace`; парсинг и валидация discovery-строки; health-poll `GET /lab.html`; рестарт-политика (backoff, кап крашей); stop в `performQuitCleanup`.
 **Вендоренный сайдкар:** snapshot лаборатории (package + serve_lab.py + resources + static + probe) с `PROVENANCE.md` (sha256-манифест) и `ELECTRON-CONTRACT.md`; изменения лаборатории — только через её репозиторий, здесь — синк-команда в PROVENANCE.
 **Не входит:** webui/viewer/CLI/server-поверхности; облачные запуски (`cloudRuns`); любые миграции workspace-service; изменения кода лаборатории.
