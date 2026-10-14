@@ -90,6 +90,29 @@ function worktreeCraftPackagePlugin() {
   }
 }
 
+/**
+ * Partition the renderer bundle so the monolith stops being a single chunk.
+ *
+ * Only the foundation runtime is grouped; everything else is left to Rollup's
+ * default code-splitting. A broader grouping is a trap here: the renderer loads
+ * Shiki grammars, Mermaid, PDF workers and whole feature pages through dynamic
+ * `import()`, and folding those modules into a named chunk makes it a *static*
+ * dependency of the entry — turning a lazy 10 MB into an eager one.
+ */
+function manualChunks(id: string): string | undefined {
+  const path = id.replace(/\\/g, '/')
+  // Eagerly-bundled translation data — pure JSON, the single largest block in
+  // the graph. Its own chunk keeps the app code beside it cache-friendly and
+  // out of the entry chunk.
+  if (path.includes('/i18n/locales/')) return 'locale-data'
+  if (!path.includes('node_modules')) return undefined
+  if (/node_modules\/(react|react-dom|scheduler)\//.test(path)) return 'vendor-react'
+  if (/node_modules\/(i18next|react-i18next|i18next-browser-languagedetector)\//.test(path)) {
+    return 'vendor-i18n'
+  }
+  return undefined
+}
+
 export default defineConfig({
   plugins: [
     react({
@@ -117,6 +140,9 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'src/index.html'),
         login: resolve(__dirname, 'src/login.html'),
+      },
+      output: {
+        manualChunks,
       },
       // Suppress warnings for Node.js externalized modules — these are
       // referenced by shared code but only used in server/Electron codepaths.
