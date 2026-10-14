@@ -29,7 +29,7 @@ let i18n: I18n
 async function testI18n(): Promise<I18n> {
   if (i18n) return i18n
   i18n = createInstance()
-  await i18n.init({ lng: 'en', fallbackLng: 'en', keySeparator: false, resources: { en: { translation: en } } })
+  await i18n.init({ lng: 'en', fallbackLng: 'en', keySeparator: false, interpolation: { escapeValue: false }, resources: { en: { translation: en } } })
   return i18n
 }
 
@@ -122,7 +122,7 @@ describe('UsageStatusLineView markup', () => {
             breakdown: { system: 100, tools: 14, messages: 5 },
             lastAttempt: { model: 'rox/r1-max', ttftMs: 320 },
           },
-        })),
+        }))),
     )
     expect(html).toContain('data-testid="usage-status-tooltip"')
     expect(html).toContain('Cache: read 800 · write 10')
@@ -141,7 +141,7 @@ describe('UsageStatusLineView markup', () => {
       await act(async () => {
         reactRoot.render(
           React.createElement(TooltipProvider, null, React.createElement(I18nextProvider, { i18n: await testI18n() },
-            React.createElement(UsageStatusLineView, { sessionId: 's-1', numbers: { turns: 0, steps: 0 } })),
+            React.createElement(UsageStatusLineView, { sessionId: 's-1', numbers: { turns: 0, steps: 0 } }))),
         )
       })
       const button = root.querySelector('[data-testid="usage-status-line"]') as HTMLButtonElement | null
