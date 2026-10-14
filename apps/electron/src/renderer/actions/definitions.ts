@@ -20,6 +20,13 @@ export const actions = {
     defaultHotkey: 'mod+t',
     category: 'General',
   },
+  'session.openSide': {
+    id: 'session.openSide',
+    labelKey: 'shortcuts.action.openSideSession',
+    description: 'Open the side session next to the current screen',
+    defaultHotkey: 'mod+shift+j',
+    category: 'General',
+  },
   'app.settings': {
     id: 'app.settings',
     labelKey: 'shortcuts.action.settings',

@@ -1,4 +1,5 @@
 import { TourConnectionPolicyContext } from '@/features/product-tour/runtime/hooks'
+import { useSideSession } from '@/hooks/useSideSession'
 import * as React from "react"
 import { createPortal } from "react-dom"
 import { useTranslation, Trans } from "react-i18next"
@@ -1431,6 +1432,9 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   // New chat
   useAction('app.newChat', () => handleNewChat())
   useAction('app.newChatInPanel', () => handleNewChat(true))
+  // top50 #20: side session next to any screen.
+  const openSideSession = useSideSession()
+  useAction('session.openSide', () => { void openSideSession() }, undefined, [openSideSession])
 
   // Settings
   useAction('app.settings', onOpenSettings)
