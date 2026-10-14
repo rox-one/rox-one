@@ -20,6 +20,7 @@ import type { WorkspaceWorkSnapshot } from '@rox/shared/workspace-work'
 import type { ElectronAPI, LoadedSkill, LoadedSource } from '../../shared/types'
 import { ensureSessionMessagesLoadedAtom, loadedSessionsAtom, refreshSessionsMetadataAtom, sessionMetaMapAtom, windowWorkspaceIdAtom } from '@/atoms/sessions'
 import { RAIL_SURFACE_ROUTES, preloadRoute } from '@/components/app-shell/route-pages'
+import { startIdlePreload } from '@/lib/idle-preload'
 import { getShellStore, type ShellStore } from '@/platform/shell-store'
 import { roxQueryClient } from '@/lib/query/client'
 import { roxKeys } from '@/lib/query/keys'
@@ -53,6 +54,9 @@ if (typeof window !== 'undefined') {
   probeWindow.__roxWarmup = warmupDiagnostics
 }
 
+/** Delay after warm-up start before the WP7 idle preload runs regardless of input. */
+export const IDLE_PRELOAD_DELAY_MS = 3000
+
 /**
  * Install the idle warm-up and return its stop. Called by the shell once
  * session metadata and the active workspace exist; `stop` cancels the queue
@@ -71,6 +75,7 @@ export function installShellWarmup(): () => void {
 
   const steps = buildWarmupSteps(createShellWarmupDeps(api, store, workspaceId))
   let stopped = false
+  let stopIdlePreloadTimer = () => {}
   void (async () => {
     const onBattery = await probeOnBattery()
     if (stopped) return
@@ -80,9 +85,17 @@ export function installShellWarmup(): () => void {
     if (stopped) return
     activeQueue = queue
     queue.start()
+    // WP7: the queue stops on the first input, which would leave the lazy
+    // surfaces cold. Off low power, start the gentle one-chunk-per-idle
+    // preload anyway once the shell has settled (no-op if already started).
+    if (stepCount === steps.length) {
+      const timer = setTimeout(() => { if (!stopped) void startIdlePreload() }, IDLE_PRELOAD_DELAY_MS)
+      stopIdlePreloadTimer = () => clearTimeout(timer)
+    }
   })()
   return () => {
     stopped = true
+    stopIdlePreloadTimer()
     activeQueue?.cancel()
   }
 }
@@ -152,6 +165,9 @@ function createShellWarmupDeps(api: ElectronAPI, store: ShellStore, workspaceId:
       for (const name of RAIL_SURFACE_ROUTES) {
         void preloadRoute(name).catch(error => { console.warn(`[warmup] route-chunks failed for ${name}`, error) })
       }
+      // WP7: then everything split out of the startup closure plus every other
+      // route chunk, one per idle callback, so all surfaces open instantly.
+      void startIdlePreload()
     },
     routeChunkNames: RAIL_SURFACE_ROUTES,
   }
