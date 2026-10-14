@@ -85,7 +85,7 @@ function FallbackModeScreenLayout({
       )}
       <div className="flex min-h-0 flex-1">
         {showNavigator ? (
-          <ShellSidebarPortal className={cn('shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3', narrow ? pane === 'navigation' ? 'w-full' : 'hidden' : 'w-[220px]')}>
+          <ShellSidebarPortal bareLabelKey="navigation.barePanel.folders" className={cn('shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3', narrow ? pane === 'navigation' ? 'w-full' : 'hidden' : 'w-[220px]')}>
             {navigator}
           </ShellSidebarPortal>
         ) : null}
@@ -116,7 +116,9 @@ function FallbackModeScreenLayout({
 }
 
 export function NavTitle({ children }: { children: React.ReactNode }) {
-  return <h1 className="px-2 pb-2 text-lg font-semibold">{children}</h1>
+  const shown = useDedupedPanelTitle(children)
+  if (shown == null) return null
+  return <h1 className="px-2 pb-2 text-lg font-semibold">{shown}</h1>
 }
 
 export function NavSection({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
