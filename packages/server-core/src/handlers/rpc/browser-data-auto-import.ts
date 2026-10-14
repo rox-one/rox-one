@@ -162,7 +162,10 @@ export class BrowserDataAutoImporter {
     } catch (error) {
       const code = safeError(error)
       this.failures.set(workspaceId, code)
-      try { writeState(workspace.rootPath, { ...stored, lastRunAt: Date.now(), error: code }) } catch {}
+      try { writeState(workspace.rootPath, { ...stored, lastRunAt: Date.now(), error: code }) } catch {
+        // Best-effort: an unwritable workspace must not fail the pass; the
+        // in-memory failure map above is the authoritative record.
+      }
     } finally {
       this.running.delete(workspaceId)
     }

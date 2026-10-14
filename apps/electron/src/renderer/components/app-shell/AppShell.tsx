@@ -200,7 +200,8 @@ import { useProjects } from "@/hooks/useProjects"
 import { usePages } from "@/hooks/usePages"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { PanelHeader } from "./PanelHeader"
-import { OnboardingDialog } from "./OnboardingDialog"
+// WP7: lazy; it presents itself after startup (warmed on idle).
+const OnboardingDialog = React.lazy(() => import("./OnboardingDialog").then((m) => ({ default: m.OnboardingDialog })))
 import { useProductLearning } from '@/features/product-tour/runtime'
 import { useTourTarget, useTourSignals } from '@/features/product-tour/runtime/hooks'
 import { beginChatSessionCreation } from '@/features/product-tour/adapters/chat'
@@ -3803,7 +3804,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
       <PublishSessionDialogHost />
 
       {/* Y4: first-run memory onboarding — shown once when no lessons exist */}
-      <OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} presentationAllowed={!productLearning?.enabled || (navState.navigator === 'memory' && ['idle', 'paused', 'blocked', 'finished'].includes(productLearning.state.phase))} />
+      <React.Suspense fallback={null}><OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} presentationAllowed={!productLearning?.enabled || (navState.navigator === 'memory' && ['idle', 'paused', 'blocked', 'finished'].includes(productLearning.state.phase))} /></React.Suspense>
 
       <SuperEngineeringShellExtras />
 
