@@ -58,7 +58,7 @@ describe('activity rail: expanded with labels by default', () => {
       'inbox',
     ])
     // Source contract (WP5, #1580): the rail renders the one registry the sidebar uses.
-    expect(rail).toContain('resolvePrimaryNav({ shellFlags, modeFlags })')
+    expect(rail).toContain('resolvePrimaryNav({ shellFlags, modeFlags, placements })')
     expect(rail).not.toContain('APP_NAV_DESTINATIONS')
     expect(rail).toContain('testId={`rail-item-${entry.id}`}')
   })

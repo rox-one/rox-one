@@ -504,7 +504,7 @@ describe('«Документы» relabel reaches every Notes label', () => {
     // render case in w1-07-rail-modes.test.tsx.
     const rail = read('platform/ActivityRail.tsx')
     expect(rail).toContain('const { shellFlags } = useShellModes()')
-    expect(rail).toContain('resolvePrimaryNav({ shellFlags, modeFlags })')
+    expect(rail).toContain('resolvePrimaryNav({ shellFlags, modeFlags, placements })')
     expect(read('platform/InspectorHost.tsx')).toContain('t(navDestinationLabelKey(destination, shellFlags))')
     const compact = read('components/app-shell/CompactWorkspaceMenu.tsx')
     expect(compact).toContain('t(navDestinationLabelKey(service, shellFlags))')

@@ -14,10 +14,10 @@ describe('WP5 primary-nav registry (#1580)', () => {
     for (const hidden of ['messenger', 'calendar', 'goals', 'base', 'wiki', 'developers', 'playbooks']) expect(all).not.toContain(hidden)
   })
 
-  it('flags off: «Ещё» keeps every other destination', () => {
+  it('flags off: «Ещё» keeps every other destination (WP6: + Знания, Миссии; Главная is the pill)', () => {
     expect(group([], 'more')).toEqual([
-      'memory', 'memoryRepo', 'learning', 'browser', 'automations', 'meetings', 'home', 'feed',
-      'pages', 'drive', 'clipboardHistory', 'sources', 'skills', 'connections', 'settings',
+      'memory', 'memoryRepo', 'learning', 'browser', 'automations', 'meetings', 'feed',
+      'pages', 'knowledge', 'missions', 'drive', 'clipboardHistory', 'sources', 'skills', 'connections', 'settings',
     ])
   })
 
