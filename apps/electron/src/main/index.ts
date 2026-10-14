@@ -196,6 +196,7 @@ import {
 import { registerServiceLifecycleIpc } from './service-lifecycle-ipc'
 import type { MenuBroadcastChannel } from './menu'
 import { TrayController } from './tray'
+import { installCallDefaults } from './team-calls/install-call-defaults'
 
 // Initialize electron-log for renderer process support
 log.initialize()
@@ -401,6 +402,9 @@ if (!(process.env.NODE_ENV === 'test' && process.env.ROX_SKIP_PROTOCOL_REGISTRAT
 
 // Apply network proxy settings early (Node-level only — Electron sessions require app.whenReady)
 import { applyConfiguredProxySettings } from './network-proxy'
+
+// Team calls: shared LiveKit/Exa defaults baked in at build time (gitignored module).
+installCallDefaults()
 void applyConfiguredProxySettings()
 
 // Register thumbnail:// custom protocol for file preview thumbnails in the sidebar.

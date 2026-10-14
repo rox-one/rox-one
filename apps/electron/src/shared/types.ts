@@ -2901,6 +2901,13 @@ export interface ElectronAPI {
   }>
   teamChatPost(channelId: string, text: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage>
   teamChatMarkRead(channelId: string): Promise<{ ok: true }>
+  teamChatCallJoin(channelId: string, displayName?: string): Promise<{ call: import('@rox/shared/team-chat').TeamChannelCall; url: string; token: string }>
+  teamChatCallLeave(channelId: string): Promise<{ call: import('@rox/shared/team-chat').TeamChannelCall | null; ended: boolean }>
+  teamChatCallSync(channelId: string, participantIds: string[]): Promise<import('@rox/shared/team-chat').TeamChannelCall | null>
+  teamChatCallTranscript(channelId: string, callId: string, segments: import('@rox/shared/team-chat').TeamCallTranscriptSegment[]): Promise<{ added: number }>
+  teamChatCallSummary(channelId: string, callId: string, summary: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage | null>
+  teamChatCallList(channelId: string): Promise<import('@rox/shared/team-chat').TeamChannelCall[]>
+  teamChatSearch(orgId: string, query: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage[]>
   onTeamChatChanged(callback: (change: { orgId: string; channelId?: string }) => void): () => void
 
   // Organizations (P3.1 team workspaces)

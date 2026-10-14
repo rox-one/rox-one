@@ -39,6 +39,9 @@ export interface TeamChannelSubscription {
   createdAt: number
 }
 
+/** `text` = user message; `system` = call started/ended; `transcript` / `summary` = call outputs. */
+export type TeamChannelMessageKind = 'text' | 'system' | 'transcript' | 'summary'
+
 export interface TeamChannelMessage {
   id: string
   channelId: string
@@ -48,6 +51,42 @@ export interface TeamChannelMessage {
   createdAt: number
   editedAt?: number
   deletedAt?: number
+  /** Absent on phase-1 messages (= `text`). */
+  kind?: TeamChannelMessageKind
+  /** Call this message belongs to (system / transcript / summary). */
+  callId?: string
+  /** `system` messages: machine-readable event; the UI localizes it. */
+  event?: 'call.started' | 'call.ended'
+  /** `transcript` messages: per-speaker segments. */
+  segments?: TeamCallTranscriptSegment[]
+}
+
+export interface TeamCallTranscriptSegment {
+  /** LiveKit participant identity (= Rox user id). */
+  speakerId: string
+  speakerName?: string
+  text: string
+  /** ms since call start. */
+  startMs: number
+  endMs: number
+}
+
+/** A LiveKit call bound to one channel or group chat (room = `rox-<channelId>`). */
+export interface TeamChannelCall {
+  id: string
+  channelId: string
+  roomName: string
+  startedBy: string
+  startedAt: number
+  endedAt?: number
+  /** Users currently in the call, as known to this host. */
+  participantIds: string[]
+  /** Every user who joined at any point. */
+  everParticipantIds: string[]
+  /** Live transcript accumulated during the call; folded into a message at the end. */
+  transcript: TeamCallTranscriptSegment[]
+  transcriptMessageId?: string
+  summaryMessageId?: string
 }
 
 export interface TeamChatStoreFile {
@@ -56,6 +95,8 @@ export interface TeamChatStoreFile {
   members: TeamChannelMember[]
   subscriptions: TeamChannelSubscription[]
   messages: TeamChannelMessage[]
+  /** Added with calls; absent in phase-1 files. */
+  calls?: TeamChannelCall[]
 }
 
 /** Viewer-shaped channel DTO. Private channels are listed only to members. */
@@ -65,6 +106,10 @@ export interface TeamChannelView extends TeamChannel {
   viewerRole?: TeamChannelRole
   viewerSubscribed: boolean
   unreadCount: number
+  /** The live call in this channel, if any. */
+  activeCall?: TeamChannelCall
+  /** Latest visible message, for the channel list preview (text clipped to 140 chars). */
+  lastMessage?: { senderId: string; text: string; kind?: TeamChannelMessageKind; event?: TeamChannelMessage['event']; createdAt: number }
 }
 
 export interface CreateTeamChannelInput {
