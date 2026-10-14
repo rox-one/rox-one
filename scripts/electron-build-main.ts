@@ -6,7 +6,8 @@
 import { spawn } from "bun";
 import { copyFileSync, existsSync, readFileSync, statSync, mkdirSync } from "fs";
 import { join } from "path";
-import { ELECTRON_MAIN_CJS_FLAGS, MAIN_VENDOR_BUNDLES, mainVendorAliasFlags } from "./electron-main-cjs";
+import { ELECTRON_MAIN_CJS_FLAGS, MAIN_VENDOR_BUNDLES, mainVendorAliasFlags, vendorExportProbe } from "./electron-main-cjs";
+import { pathToFileURL } from "url";
 
 const ROOT_DIR = join(import.meta.dir, "..");
 const outIndex = process.argv.indexOf('--outdir');
@@ -551,7 +552,7 @@ async function main(): Promise<void> {
 
 /** Bundle each MAIN_VENDOR_BUNDLES package into dist/vendor/<file> (CJS, lazily required by main.cjs). */
 async function buildMainVendorBundles(): Promise<void> {
-  for (const { pkg, file } of MAIN_VENDOR_BUNDLES) {
+  for (const { pkg, file, load, exports } of MAIN_VENDOR_BUNDLES) {
     const outfile = join(DIST_DIR, "vendor", file);
     const proc = spawn({
       cmd: [
@@ -573,6 +574,13 @@ async function buildMainVendorBundles(): Promise<void> {
     const verification = await verifyJsFile(outfile);
     if (!verification.valid) {
       console.error(`❌ vendor bundle ${pkg} verification failed:`, verification.error);
+      process.exit(1);
+    }
+    // Load each file the way main.cjs does (import() or require()) and check every named export the
+    // call sites use is visible (import() of CJS relies on cjs-module-lexer).
+    const probe = spawn({ cmd: ["node", "-e", vendorExportProbe(pathToFileURL(outfile).href, exports, load)], stdout: "pipe", stderr: "inherit" });
+    if ((await probe.exited) !== 0) {
+      console.error(`❌ vendor bundle ${pkg} is missing named exports:`, await new Response(probe.stdout).text());
       process.exit(1);
     }
   }

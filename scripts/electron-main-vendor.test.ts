@@ -1,7 +1,12 @@
 import { expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { MAIN_VENDOR_BUNDLES, mainVendorAliasFlags } from './electron-main-cjs'
+import { MAIN_VENDOR_BUNDLES, mainVendorAliasFlags, vendorExportProbe } from './electron-main-cjs'
+import { execFileSync } from 'node:child_process'
+import { mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 const repo = resolve(import.meta.dir, '..')
 
@@ -28,4 +33,24 @@ test('call sites import vendor packages lazily, never statically', () => {
   const registry = readFileSync(resolve(repo, 'packages/messaging-gateway/src/registry.ts'), 'utf8')
   expect(registry).not.toMatch(/^import \{[^}]*LarkAdapter[^}]*\} from '\.\/adapters\/lark\/index'/m)
   expect(registry).toContain("await import('./adapters/lark/index')")
+  const mermaid = readFileSync(resolve(repo, 'packages/session-tools-core/src/handlers/mermaid-validate.ts'), 'utf8')
+  expect(mermaid).not.toMatch(/^import [^\n]*from 'beautiful-mermaid'/m)
+  expect(mermaid).toContain("await import('beautiful-mermaid')")
+})
+
+test('export probe passes for esbuild-style CJS and fails on a missing name', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'vendor-probe-'))
+  const file = join(dir, 'v.cjs')
+  writeFileSync(file, 'var e={};Object.defineProperty(exports,"A",{get:()=>1});0&&(module.exports={A});')
+  const url = pathToFileURL(file).href
+  expect(execFileSync('node', ['-e', vendorExportProbe(url, ['A'])]).toString().trim()).toBe('[]')
+  expect(() => execFileSync('node', ['-e', vendorExportProbe(url, ['A', 'B'])], { stdio: 'pipe' })).toThrow()
+  expect(execFileSync('node', ['-e', vendorExportProbe(url, ['A'], 'require')]).toString().trim()).toBe('[]')
+})
+
+test('the Lark SDK is reached via require (static import inside the lazily imported adapter)', () => {
+  const lark = MAIN_VENDOR_BUNDLES.find((b) => b.pkg === '@larksuiteoapi/node-sdk')
+  expect(lark?.load).toBe('require')
+  const adapter = readFileSync(resolve(repo, 'packages/messaging-gateway/src/adapters/lark/index.ts'), 'utf8')
+  expect(adapter).toMatch(/^import \* as lark from '@larksuiteoapi\/node-sdk'/m)
 })
