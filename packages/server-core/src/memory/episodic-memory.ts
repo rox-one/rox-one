@@ -1,7 +1,7 @@
 /**
  * episodic-memory — M2 semantic (episodic) memory layer (spec §M2).
  *
- * Gated by config `memory.semantic` (default false, opt-in). Stores one line
+ * Gated by config `memory.semantic` (default true; opt out with memory.semantic=false). Stores one line
  * per distilled session in {memoryDir}/episodic.jsonl:
  *   { id, ts, kind: 'success'|'failure', sessionId, text, embedding? }
  *
