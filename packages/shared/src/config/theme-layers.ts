@@ -87,6 +87,60 @@ export interface ThemeLayers {
 
 export interface Rgba { r: number; g: number; b: number; a: number }
 
+/**
+ * Fallback palette the layer editor and the mini-shell preview fall back to when
+ * a layer is unset. Theme data, so it lives here next to the colour math rather
+ * than as literals in renderer components.
+ */
+export const LAYER_FALLBACK = {
+  dark: { content: '#17181b', frame: '#111215', fg: '#ededeb' },
+  light: { content: '#f7f7f5', frame: '#ececea', fg: '#262624' },
+  accent: '#38bdf8',
+  previewFrame: '#101418',
+  previewFg: '#eef1f4',
+  previewMuted: '#848c98',
+  previewBorder: 'rgba(255,255,255,.08)',
+  previewContent: '#15171b',
+  previewDivider: 'rgba(255,255,255,.09)',
+  gradientEnd: '#0c0e12',
+  wallpaper: '#1d3b4a',
+} as const;
+
+// ---------------------------------------------------------------------------
+// Safe colour allowlist. Layer colours come from untrusted `.rox-theme.json`
+// imports and are interpolated into CSS custom properties, so only these
+// shapes are accepted: hex, numeric rgb()/rgba(), hsl()/hsla(), oklch()/oklab()
+// and a few keywords. Anything else (url(), var(), expression(), ; { } \ quotes)
+// is rejected by the schema and dropped by the emitter.
+// ---------------------------------------------------------------------------
+
+const NUM = String.raw`[+-]?(?:\d+(?:\.\d+)?|\.\d+)`;
+const PCT_OR_NUM = String.raw`${NUM}%?`;
+const ANGLE = String.raw`${NUM}(?:deg|rad|grad|turn)?`;
+const SEP = String.raw`(?:\s*,\s*|\s+)`;
+const ALPHA = String.raw`(?:\s*[,/]\s*${PCT_OR_NUM})?`;
+const SAFE_COLOR_PATTERNS: RegExp[] = [
+  /^#(?:[\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i,
+  new RegExp(String.raw`^rgba?\(\s*${PCT_OR_NUM}${SEP}${PCT_OR_NUM}${SEP}${PCT_OR_NUM}${ALPHA}\s*\)$`, 'i'),
+  new RegExp(String.raw`^hsla?\(\s*${ANGLE}${SEP}${PCT_OR_NUM}${SEP}${PCT_OR_NUM}${ALPHA}\s*\)$`, 'i'),
+  new RegExp(String.raw`^oklch\(\s*${PCT_OR_NUM}\s+${PCT_OR_NUM}\s+${ANGLE}(?:\s*/\s*${PCT_OR_NUM})?\s*\)$`, 'i'),
+  new RegExp(String.raw`^oklab\(\s*${PCT_OR_NUM}\s+${NUM}\s+${NUM}(?:\s*/\s*${PCT_OR_NUM})?\s*\)$`, 'i'),
+  /^(?:transparent|currentcolor|black|white)$/i,
+];
+
+/** True when `value` is a colour from the strict allowlist (max 64 chars). */
+export function isSafeCssColor(value: unknown): value is string {
+  if (typeof value !== 'string' || value.length === 0 || value.length > 64) return false;
+  const trimmed = value.trim();
+  return SAFE_COLOR_PATTERNS.some(re => re.test(trimmed));
+}
+
+export const safeColor = (value: string | undefined | null): string | undefined =>
+  isSafeCssColor(value) ? value.trim() : undefined;
+
+const finiteOr = (value: unknown, fallback: number): number =>
+  typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 export function parseColor(input: string | undefined | null): Rgba | null {
@@ -175,19 +229,23 @@ function cssNumber(value: number, digits = 3): string {
 }
 
 export function gradientToCSS(gradient: ThemeGradient): string {
-  const stops = [...gradient.stops]
+  const safeStops = (Array.isArray(gradient.stops) ? gradient.stops : [])
+    .filter((stop): stop is [string, number] => Array.isArray(stop) && isSafeCssColor(stop[0]))
+    .map(([color, pos]) => [color.trim(), clamp(finiteOr(pos, 0), 0, 1)] as [string, number]);
+  if (safeStops.length < 2) return 'none';
+  const stops = safeStops
     .sort((a, b) => a[1] - b[1])
     .map(([color, pos]) => `${color} ${cssNumber(clamp(pos, 0, 1) * 100, 1)}%`)
     .join(', ');
   if (gradient.type === 'radial') {
-    const [x, y] = gradient.at ?? [0, 0];
+    const [x, y] = (gradient.at ?? [0, 0]).map(v => finiteOr(v, 0));
     return `radial-gradient(130% 100% at ${cssNumber(clamp(x, 0, 100), 1)}% ${cssNumber(clamp(y, 0, 100), 1)}%, ${stops})`;
   }
-  return `linear-gradient(${cssNumber(((gradient.angle ?? 135) % 360 + 360) % 360, 1)}deg, ${stops})`;
+  return `linear-gradient(${cssNumber((finiteOr(gradient.angle, 135) % 360 + 360) % 360, 1)}deg, ${stops})`;
 }
 
 export function wallpaperToCSS(wallpaper: WallpaperLayer): string {
-  if (wallpaper.type === 'solid') return wallpaper.color;
+  if (wallpaper.type === 'solid') return safeColor(wallpaper.color) ?? 'transparent';
   return gradientToCSS(wallpaper);
 }
 
@@ -238,30 +296,35 @@ export function layersToCSSVars(layers: ThemeLayers | undefined): string[] {
   if (!layers) return [];
   const vars: string[] = [];
   const { frame, content, elevation } = layers;
-  if (frame?.bg) vars.push(`--frame-bg: ${frame.bg};`);
-  const frameShades = frame?.bg ? deriveShades(frame.bg) : null;
-  const frameFg = frame?.fg ?? frameShades?.fg;
-  const frameMuted = frame?.muted ?? frameShades?.muted;
-  const frameBorder = frame?.border ?? frameShades?.border;
+  // Every colour is re-checked against the allowlist here too (defence in depth:
+  // persisted configs may predate the strict schema).
+  const frameBg = safeColor(frame?.bg);
+  const accent = safeColor(layers.accent);
+  const gridDivider = safeColor(layers.gridDivider);
+  if (frameBg) vars.push(`--frame-bg: ${frameBg};`);
+  const frameShades = frameBg ? deriveShades(frameBg) : null;
+  const frameFg = safeColor(frame?.fg) ?? frameShades?.fg;
+  const frameMuted = safeColor(frame?.muted) ?? frameShades?.muted;
+  const frameBorder = safeColor(frame?.border) ?? frameShades?.border;
   if (frameFg) vars.push(`--frame-fg: ${frameFg};`);
   if (frameMuted) vars.push(`--frame-muted: ${frameMuted};`, `--chrome-label: ${frameMuted};`);
   if (frameBorder) vars.push(`--frame-border: ${frameBorder};`, `--chrome-plate-border: ${frameBorder};`);
   if (frameShades) vars.push(`--frame-hover: ${frameShades.hover};`);
   if (frame?.gradient) vars.push(`--frame-bg-image: ${gradientToCSS(frame.gradient)};`);
-  if (content?.bg) vars.push(`--content-bg: ${content.bg};`);
-  if (content?.fg) vars.push(`--content-fg: ${content.fg};`);
-  if (content?.border) vars.push(`--content-border: ${content.border};`, `--content-seam: ${content.border};`);
-  if (content?.join) {
-    const radius = clamp(content.radius ?? CONTENT_RADIUS_DEFAULT, 0, 24);
+  if (safeColor(content?.bg)) vars.push(`--content-bg: ${safeColor(content!.bg)};`);
+  if (safeColor(content?.fg)) vars.push(`--content-fg: ${safeColor(content!.fg)};`);
+  if (safeColor(content?.border)) vars.push(`--content-border: ${safeColor(content!.border)};`, `--content-seam: ${safeColor(content!.border)};`);
+  if (content?.join === 'line' || content?.join === 'shadow' || content?.join === 'float') {
+    const radius = clamp(finiteOr(content.radius, CONTENT_RADIUS_DEFAULT), 0, 24);
     vars.push(`--content-radius: ${content.join === 'float' ? radius : 0}px;`);
   }
-  if (elevation?.[1]) vars.push(`--elev-1: ${elevation[1]};`);
-  if (elevation?.[2]) vars.push(`--elev-2: ${elevation[2]};`);
-  if (elevation?.[3]) vars.push(`--elev-3: ${elevation[3]};`);
-  if (layers.wallpaper) vars.push(`--wallpaper: ${wallpaperToCSS(layers.wallpaper)};`);
-  if (layers.glass !== undefined) vars.push(`--glass-intensity: ${cssNumber(clamp(layers.glass, 0, 1), 2)};`);
-  if (layers.accent) vars.push(`--accent-soft: color-mix(in oklch, ${layers.accent} 14%, transparent);`);
-  if (layers.gridDivider) vars.push(`--grid-divider: ${layers.gridDivider};`);
+  if (safeColor(elevation?.[1])) vars.push(`--elev-1: ${safeColor(elevation![1])};`);
+  if (safeColor(elevation?.[2])) vars.push(`--elev-2: ${safeColor(elevation![2])};`);
+  if (safeColor(elevation?.[3])) vars.push(`--elev-3: ${safeColor(elevation![3])};`);
+  if (layers.wallpaper && typeof layers.wallpaper === 'object') vars.push(`--wallpaper: ${wallpaperToCSS(layers.wallpaper)};`);
+  if (typeof layers.glass === 'number' && Number.isFinite(layers.glass)) vars.push(`--glass-intensity: ${cssNumber(clamp(layers.glass, 0, 1), 2)};`);
+  if (accent) vars.push(`--accent-soft: color-mix(in oklch, ${accent} 14%, transparent);`);
+  if (gridDivider) vars.push(`--grid-divider: ${gridDivider};`);
   return vars;
 }
 

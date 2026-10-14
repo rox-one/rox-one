@@ -17,6 +17,8 @@ import {
   checkLayerContrast,
   CONTENT_RADIUS_DEFAULT,
   deriveShades,
+  LAYER_FALLBACK,
+  safeColor,
   fixLayerContrast,
   frameAlphaForGlass,
   gradientToCSS,
@@ -38,6 +40,9 @@ import { ColorPicker } from '@/components/ui/color-picker'
 import { Button } from '@/components/ui/button'
 import { useTheme, useAppTheme } from '@/context/ThemeContext'
 
+/** Theme files are tiny; refuse anything bigger before reading untrusted bytes. */
+const MAX_THEME_IMPORT_BYTES = 64 * 1024
+
 const APPLY_DEBOUNCE_MS = 180
 const MAX_STOPS = 5
 
@@ -45,12 +50,12 @@ const MAX_STOPS = 5
 export function seedLayersFromPalette(theme: ThemeOverrides, isDark: boolean): ThemeLayers {
   const colors = isDark && theme.dark ? { ...theme, ...theme.dark } : theme
   const hex = (value: string | undefined, fallback: string) => (value && /^#[\da-f]{6}$/i.test(value) ? value : fallback)
-  const content = hex(colors.background, isDark ? '#17181b' : '#f7f7f5')
+  const content = hex(colors.background, isDark ? LAYER_FALLBACK.dark.content : LAYER_FALLBACK.light.content)
   return {
-    frame: { bg: hex(colors.navigator, isDark ? '#111215' : '#ececea') },
-    content: { bg: content, fg: hex(colors.foreground, isDark ? '#ededeb' : '#262624'), join: 'line' },
+    frame: { bg: hex(colors.navigator, isDark ? LAYER_FALLBACK.dark.frame : LAYER_FALLBACK.light.frame) },
+    content: { bg: content, fg: hex(colors.foreground, isDark ? LAYER_FALLBACK.dark.fg : LAYER_FALLBACK.light.fg), join: 'line' },
     elevation: { 1: hex(colors.paper, content), 2: hex(colors.popover, content) },
-    accent: hex(colors.accent, '#38bdf8'),
+    accent: hex(colors.accent, LAYER_FALLBACK.accent),
   }
 }
 
@@ -63,15 +68,15 @@ function hexOr(value: string | undefined, fallback: string): string {
 // ---------------------------------------------------------------------------
 
 export function ThemeMiniShellPreview({ layers, testId = 'theme-layers-preview' }: { layers: ThemeLayers; testId?: string }) {
-  const frameBg = layers.frame?.bg ?? '#101418'
+  const frameBg = safeColor(layers.frame?.bg) ?? LAYER_FALLBACK.previewFrame
   const shades = deriveShades(frameBg)
-  const frameFg = layers.frame?.fg ?? shades?.fg ?? '#eef1f4'
-  const frameMuted = layers.frame?.muted ?? shades?.muted ?? '#848c98'
-  const frameBorder = layers.frame?.border ?? shades?.border ?? 'rgba(255,255,255,.08)'
-  const contentBg = layers.content?.bg ?? '#15171b'
-  const contentFg = layers.content?.fg ?? '#eef1f4'
-  const card = layers.elevation?.[1] ?? contentBg
-  const accent = layers.accent ?? '#38bdf8'
+  const frameFg = safeColor(layers.frame?.fg) ?? shades?.fg ?? LAYER_FALLBACK.previewFg
+  const frameMuted = safeColor(layers.frame?.muted) ?? shades?.muted ?? LAYER_FALLBACK.previewMuted
+  const frameBorder = safeColor(layers.frame?.border) ?? shades?.border ?? LAYER_FALLBACK.previewBorder
+  const contentBg = safeColor(layers.content?.bg) ?? LAYER_FALLBACK.previewContent
+  const contentFg = safeColor(layers.content?.fg) ?? LAYER_FALLBACK.previewFg
+  const card = safeColor(layers.elevation?.[1]) ?? contentBg
+  const accent = safeColor(layers.accent) ?? LAYER_FALLBACK.accent
   const join: ContentJoinMode = layers.content?.join ?? 'line'
   const radius = join === 'float' ? (layers.content?.radius ?? CONTENT_RADIUS_DEFAULT) : 0
   const glass = layers.wallpaper ? (layers.glass ?? 0) : 0
@@ -90,7 +95,7 @@ export function ThemeMiniShellPreview({ layers, testId = 'theme-layers-preview' 
     '--pv-card': card,
     '--pv-accent': accent,
     '--pv-radius': `${radius}px`,
-    '--pv-divider': layers.gridDivider ?? 'rgba(255,255,255,.09)',
+    '--pv-divider': safeColor(layers.gridDivider) ?? LAYER_FALLBACK.previewDivider,
   } as CSSProperties
   return (
     <div className="theme-preview" data-join={join} style={style} data-testid={testId} aria-hidden="true">
@@ -136,7 +141,7 @@ interface GradientEditorProps {
 function GradientEditor({ label, allowSolid, value, fallbackColor, onChange, testId }: GradientEditorProps) {
   const { t } = useTranslation()
   const kind: FillKind = !value ? 'none' : value.type
-  const stops: GradientStop[] = value && value.type !== 'solid' ? value.stops : [[fallbackColor, 0], ['#0c0e12', 1]]
+  const stops: GradientStop[] = value && value.type !== 'solid' ? value.stops : [[fallbackColor, 0], [LAYER_FALLBACK.gradientEnd, 1]]
   const setKind = (next: FillKind) => {
     if (next === 'none') return onChange(undefined)
     if (next === 'solid') return onChange({ type: 'solid', color: value?.type === 'solid' ? value.color : stops[0]![0] })
@@ -188,7 +193,7 @@ function GradientEditor({ label, allowSolid, value, fallbackColor, onChange, tes
                 <button type="button" className="theme-icon-button" disabled={stops.length <= 2}
                   aria-label={t('settings.appearance.layers.removeStop')}
                   onClick={() => patch({ stops: stops.filter((_, i) => i !== index) })}>
-                  <Trash2 className="size-3.5" />
+                  <Trash2 className="icon-caption" />
                 </button>
               </div>
             </SettingsRow>
@@ -196,7 +201,7 @@ function GradientEditor({ label, allowSolid, value, fallbackColor, onChange, tes
           {stops.length < MAX_STOPS && (
             <div className="theme-row-actions">
               <Button variant="ghost" size="sm" onClick={() => patch({ stops: [...stops, [stops[stops.length - 1]![0], 1]] })}>
-                <Plus className="size-3.5" /> {t('settings.appearance.layers.addStop')}
+                <Plus className="icon-caption" /> {t('settings.appearance.layers.addStop')}
               </Button>
             </div>
           )}
@@ -297,8 +302,8 @@ export function ThemeLayersSection({ onPresetsChanged }: { onPresetsChanged?: ()
     })
   }, [persist])
 
-  const frameBg = hexOr(draft.frame?.bg, '#101418')
-  const contentBg = hexOr(draft.content?.bg, '#15171b')
+  const frameBg = hexOr(draft.frame?.bg, LAYER_FALLBACK.previewFrame)
+  const contentBg = hexOr(draft.content?.bg, LAYER_FALLBACK.previewContent)
   const frameShades = deriveShades(frameBg)
   const contentShades = deriveShades(contentBg)
   const join: ContentJoinMode = draft.content?.join ?? 'line'
@@ -323,6 +328,10 @@ export function ThemeLayersSection({ onPresetsChanged }: { onPresetsChanged?: ()
   }
 
   const handleImport = (file: File) => {
+    if (file.size > MAX_THEME_IMPORT_BYTES) {
+      setStatus({ kind: 'error', text: t('settings.appearance.layers.importError') })
+      return
+    }
     void file.text().then((text) => {
       let json: unknown
       try { json = JSON.parse(text) } catch { json = null }
@@ -416,7 +425,7 @@ export function ThemeLayersSection({ onPresetsChanged }: { onPresetsChanged?: ()
                 return { ...l, frame: { ...l.frame, bg, fg: shades?.fg, muted: shades?.muted, border: shades?.border } }
               })} />
             <LayerColorRow testId="theme-layer-frame-fg" label={t('settings.appearance.layers.frameText')}
-              value={hexOr(draft.frame?.fg, frameShades?.fg ?? '#eef1f4')}
+              value={hexOr(draft.frame?.fg, frameShades?.fg ?? LAYER_FALLBACK.previewFg)}
               onChange={(fg) => update((l) => ({ ...l, frame: { ...l.frame, fg } }))} />
             <GradientEditor testId="theme-frame-gradient" label={t('settings.appearance.layers.frameGradient')} allowSolid={false}
               value={draft.frame?.gradient} fallbackColor={frameBg}
@@ -427,7 +436,7 @@ export function ThemeLayersSection({ onPresetsChanged }: { onPresetsChanged?: ()
         {group(t('settings.appearance.layers.wallpaper'), (
           <>
             <GradientEditor testId="theme-wallpaper" label={t('settings.appearance.layers.wallpaperFill')} allowSolid
-              value={draft.wallpaper} fallbackColor="#1d3b4a"
+              value={draft.wallpaper} fallbackColor={LAYER_FALLBACK.wallpaper}
               onChange={(wallpaper) => update((l) => ({ ...l, wallpaper }))} />
             <RangeRow testId="theme-glass" label={t('settings.appearance.layers.glass')} min={0} max={100} step={5}
               value={glassPercent} display={`${glassPercent}%`}
@@ -445,7 +454,7 @@ export function ThemeLayersSection({ onPresetsChanged }: { onPresetsChanged?: ()
                 return { ...l, content: { ...l.content, bg, fg: shades?.fg, border: shades?.border } }
               })} />
             <LayerColorRow testId="theme-layer-content-fg" label={t('settings.appearance.layers.contentText')}
-              value={hexOr(draft.content?.fg, contentShades?.fg ?? '#eef1f4')}
+              value={hexOr(draft.content?.fg, contentShades?.fg ?? LAYER_FALLBACK.previewFg)}
               onChange={(fg) => update((l) => ({ ...l, content: { ...l.content, fg } }))} />
             <LayerColorRow testId="theme-layer-cards" label={t('settings.appearance.layers.cards')}
               value={hexOr(draft.elevation?.[1], contentShades?.hover ?? contentBg)}
@@ -472,7 +481,7 @@ export function ThemeLayersSection({ onPresetsChanged }: { onPresetsChanged?: ()
 
         {group(t('settings.appearance.layers.accent'), (
           <LayerColorRow testId="theme-layer-accent" label={t('settings.appearance.layers.accentColor')}
-            value={hexOr(draft.accent, '#38bdf8')}
+            value={hexOr(draft.accent, LAYER_FALLBACK.accent)}
             onChange={(accent) => update((l) => ({ ...l, accent }))} />
         ), 'theme-group-accent')}
 
@@ -480,7 +489,7 @@ export function ThemeLayersSection({ onPresetsChanged }: { onPresetsChanged?: ()
           <ul className="theme-contrast" data-testid="theme-contrast">
             {contrast.map((pair) => (
               <li key={pair.id} data-pass={pair.pass} data-testid={`theme-contrast-${pair.id}`}>
-                {pair.pass ? <Check className="size-3.5 theme-contrast-ok" /> : <AlertTriangle className="size-3.5 theme-contrast-bad" />}
+                {pair.pass ? <Check className="icon-caption theme-contrast-ok" /> : <AlertTriangle className="icon-caption theme-contrast-bad" />}
                 <span className="theme-contrast-label">{pairLabel[pair.id]}</span>
                 <span className="numeric theme-contrast-ratio">{pair.ratio.toFixed(2)}:1</span>
                 <span className="theme-contrast-required">{t('settings.appearance.layers.contrastRequired', { ratio: pair.required })}</span>

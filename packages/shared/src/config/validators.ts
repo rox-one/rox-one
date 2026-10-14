@@ -17,6 +17,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { safeJsonParse, readJsonFileSync } from '../utils/files.ts';
 import { EntityColorSchema } from '../colors/validate.ts';
+import { isSafeCssColor } from './theme-layers.ts';
 import { THINKING_LEVEL_IDS } from '../agent/thinking-levels.ts';
 import { isValidProviderAuthCombination } from './llm-connections.ts';
 import { roxHomeDocDisplay } from '../docs/home-display.ts';
@@ -1709,7 +1710,9 @@ export const MaterialSurfaceHintsSchema = z.object(Object.fromEntries(
  * Theme layer tokens (frame/content/elevation/wallpaper/accent/glass). Strict,
  * bounded: a malformed import is rejected instead of half-applied.
  */
-const LayerColorSchema = z.string().min(1).max(64);
+const LayerColorSchema = z.string().min(1).max(64).refine(isSafeCssColor, {
+  message: 'Colour must be hex, rgb(a), hsl(a), oklch/oklab or transparent/currentColor/black/white',
+});
 const GradientSchema = z.object({
   type: z.enum(['linear', 'radial']),
   angle: z.number().finite().min(0).max(360).optional(),
