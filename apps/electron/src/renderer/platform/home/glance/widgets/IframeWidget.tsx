@@ -7,7 +7,7 @@ export default function IframeWidget({ config, instance }: GlanceWidgetProps) {
   const { t } = useTranslation()
   const url = safeHttpUrl(config.url)
   const height = typeof config.height === 'number' ? config.height : 300
-  if (!url || !url.startsWith('https:')) return <p className="text-sm text-muted-foreground">{t('workbench.home.glance.iframe.needUrl')}</p>
+  if (!url || !url.startsWith('https:')) return <p className="text-sm text-muted-foreground">{t('glance.configureHint')}</p>
   return (
     <iframe
       src={url}

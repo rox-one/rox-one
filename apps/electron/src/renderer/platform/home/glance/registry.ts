@@ -38,7 +38,7 @@ export interface GlanceWidgetDef {
   type: string
   category: GlanceCategory
   titleKey: string
-  descriptionKey: string
+  descriptionKey?: string
   icon: string
   defaultConfig: GlanceConfig
   fields: readonly GlanceField[]

@@ -32,7 +32,7 @@ function useNow(stepMs: number): Date {
 }
 
 export default function ClockWidget({ config }: GlanceWidgetProps) {
-  const { t, i18n } = useTranslation()
+  const { i18n } = useTranslation()
   const seconds = config.showSeconds === true
   const hour12 = config.hourFormat === '12h'
   const now = useNow(seconds ? 1000 : 60_000)
@@ -52,7 +52,7 @@ export default function ClockWidget({ config }: GlanceWidgetProps) {
             return (
               <li key={zone} className="flex items-baseline justify-between gap-2 text-sm">
                 <span className="truncate text-muted-foreground" title={zone}>{zone.split('/').pop()?.replace(/_/g, ' ')}</span>
-                <span className="tabular-nums font-bold text-foreground">{time ?? t('workbench.home.glance.badZone')}</span>
+                <span className="tabular-nums font-bold text-foreground">{time ?? '—'}</span>
               </li>
             )
           })}

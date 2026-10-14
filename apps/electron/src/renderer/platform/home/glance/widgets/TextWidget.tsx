@@ -6,6 +6,6 @@ import type { GlanceWidgetProps } from '../registry'
 export default function TextWidget({ config }: GlanceWidgetProps) {
   const { t } = useTranslation()
   const text = typeof config.text === 'string' ? config.text : ''
-  if (!text.trim()) return <p className="text-sm text-muted-foreground">{t('workbench.home.glance.text.empty')}</p>
+  if (!text.trim()) return <p className="text-sm text-muted-foreground">{t('glance.configureHint')}</p>
   return <p className="whitespace-pre-wrap break-words text-sm text-foreground" data-glance-text="">{text}</p>
 }

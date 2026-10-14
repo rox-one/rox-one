@@ -45,7 +45,7 @@ export function HomeGlanceShell({ overview }: { overview: React.ReactNode }) {
       <div className="min-h-0 flex-1">
         {page ? (
           <div className="h-full overflow-y-auto overflow-x-hidden px-6 pb-8 pt-3" data-panel-density="grid">
-            <Suspense fallback={<div className="h-40" aria-busy="true" />}>
+            <Suspense fallback={<GlancePageSkeleton />}>
               <GlancePageView layout={layout} page={page} onChange={setLayout} editing={editing} onDeleted={() => setActiveId(null)} />
             </Suspense>
           </div>
@@ -53,6 +53,21 @@ export function HomeGlanceShell({ overview }: { overview: React.ReactNode }) {
           overview
         )}
       </div>
+    </div>
+  )
+}
+
+/** Shown while the page chunk loads: placeholder cards in a small/full/small layout. */
+function GlancePageSkeleton() {
+  return (
+    <div className="mx-auto grid w-full max-w-[1600px] gap-3" style={{ gridTemplateColumns: '300px minmax(0, 1fr) 300px' }} aria-busy="true" data-glance-skeleton="">
+      {[3, 4, 3].map((n, c) => (
+        <div key={c} className="flex flex-col gap-3">
+          {Array.from({ length: n }, (_, i) => (
+            <div key={i} className="h-28 animate-pulse rounded-[var(--radius-card)] bg-surface-hover" />
+          ))}
+        </div>
+      ))}
     </div>
   )
 }

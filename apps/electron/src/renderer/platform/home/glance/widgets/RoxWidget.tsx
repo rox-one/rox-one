@@ -9,7 +9,7 @@ export default function RoxWidget({ config, width }: GlanceWidgetProps) {
   const { t } = useTranslation()
   const id = typeof config.widget === 'string' && isHomeWidgetId(config.widget) ? config.widget : null
   const size: HomeWidgetSize = config.size === 'S' || config.size === 'L' ? config.size : 'M'
-  if (!id) return <p className="rox-home-widget rounded-[var(--radius-card)] p-3 text-sm text-muted-foreground">{t('workbench.home.glance.unknownWidget')}</p>
+  if (!id) return <p className="rox-home-widget rounded-[var(--radius-card)] p-3 text-sm text-muted-foreground">{t('glance.unknownWidget')}</p>
   const rows = widgetRowSpan(size)
   const height = rows * HOME_GRID_ROW_HEIGHT + (rows - 1) * HOME_GRID_GAP
   const Body = HOME_WIDGETS[id].Component

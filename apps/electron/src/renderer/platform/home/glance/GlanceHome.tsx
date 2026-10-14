@@ -145,21 +145,21 @@ export function GlancePageView({
           <input
             value={page.title}
             onChange={(e) => onChange(updatePage(layout, page.id, { title: e.target.value }))}
-            aria-label={t('workbench.home.glance.pageTitle')}
-            placeholder={t('workbench.home.glance.untitled')}
+            aria-label={t('glance.pageTitle')}
+            placeholder={t('glance.untitled')}
             className="h-7 w-48 rounded-[var(--radius-control)] bg-surface-hover px-2 text-sm font-bold outline-none focus:bg-surface-pressed"
           />
           <GlanceSelect
-            label={t('workbench.home.glance.pageWidth')}
+            label={t('glance.pageWidth')}
             value={page.width}
             onChange={(v) => onChange(updatePage(layout, page.id, { width: v as GlancePage['width'] }))}
-            options={(['slim', 'default', 'wide'] as const).map((w) => ({ value: w, label: t(`workbench.home.glance.width.${w}`) }))}
+            options={(['slim', 'default', 'wide'] as const).map((w) => ({ value: w, label: t(w === 'default' ? 'glance.width.default' : w === 'slim' ? 'glance.column.small' : 'glance.column.full') }))}
             className="w-32"
           />
-          <IconButton label={t('workbench.home.glance.addColumn')} onClick={() => onChange(addColumn(layout, page.id))} testId="add-column"><Columns3 className="icon-toolbar" /></IconButton>
+          <IconButton label={t('glance.addColumn')} onClick={() => onChange(addColumn(layout, page.id))} testId="add-column"><Columns3 className="icon-toolbar" /></IconButton>
           <span className="flex-1" />
           <IconButton
-            label={t('workbench.home.glance.deletePage')}
+            label={t('common.delete')}
             danger
             testId="delete-page"
             onClick={() => {
@@ -277,26 +277,26 @@ function GlanceColumnView({
     <section
       ref={setNodeRef}
       className={cn('rox-grid-tile relative flex min-w-0 flex-col', !last && 'pr-px', isOver && 'bg-surface-hover')}
-      aria-label={t('workbench.home.glance.columnN', { n: index + 1 })}
+      aria-label={t('glance.columnN', { n: index + 1 })}
       data-glance-column={column.size}
     >
       {editing ? (
         <div className="flex h-7 items-center gap-1 px-2 text-xs text-muted-foreground" data-glance-column-toolbar="">
           <GlanceSelect
-            label={t('workbench.home.glance.columnSize')}
+            label={t('glance.columnSize')}
             value={column.size}
             onChange={(v) => onChange(setColumnSize(layout, page.id, column.id, v as GlanceColumn['size']))}
             options={[
-              { value: 'small', label: t('workbench.home.glance.column.small'), disabled: column.size === 'full' && fulls <= 1 },
-              { value: 'full', label: t('workbench.home.glance.column.full'), disabled: column.size === 'small' && fulls >= 2 },
+              { value: 'small', label: t('glance.column.small'), disabled: column.size === 'full' && fulls <= 1 },
+              { value: 'full', label: t('glance.column.full'), disabled: column.size === 'small' && fulls >= 2 },
             ]}
             className="w-28"
           />
-          <IconButton label={t('workbench.home.glance.moveColumnLeft')} onClick={() => onChange(moveColumn(layout, page.id, column.id, -1))}><ChevronLeft className="icon-caption" /></IconButton>
-          <IconButton label={t('workbench.home.glance.moveColumnRight')} onClick={() => onChange(moveColumn(layout, page.id, column.id, 1))}><ChevronRight className="icon-caption" /></IconButton>
+          <IconButton label={t('glance.moveLeft')} onClick={() => onChange(moveColumn(layout, page.id, column.id, -1))}><ChevronLeft className="icon-caption" /></IconButton>
+          <IconButton label={t('glance.moveRight')} onClick={() => onChange(moveColumn(layout, page.id, column.id, 1))}><ChevronRight className="icon-caption" /></IconButton>
           <span className="flex-1" />
           {page.columns.length > 1 ? (
-            <IconButton label={t('workbench.home.glance.removeColumn')} danger onClick={() => onChange(removeColumn(layout, page.id, column.id))}><X className="icon-caption" /></IconButton>
+            <IconButton label={t('glance.removeColumn')} danger onClick={() => onChange(removeColumn(layout, page.id, column.id))}><X className="icon-caption" /></IconButton>
           ) : null}
         </div>
       ) : null}
@@ -307,7 +307,7 @@ function GlanceColumnView({
           ))}
         </div>
       </SortableContext>
-      {column.widgets.length === 0 && !editing ? <p className="px-3 py-6 text-sm text-muted-foreground">{t('workbench.home.glance.emptyColumn')}</p> : null}
+      {column.widgets.length === 0 && !editing ? <p className="px-3 py-6 text-sm text-muted-foreground">{t('glance.emptyColumn')}</p> : null}
       {editing ? (
         <button type="button" onClick={onAdd} className="rox-home-add-cell m-2 flex h-12 items-center justify-center gap-1 rounded-[var(--radius-control)] text-sm font-bold text-muted-foreground hover:text-foreground" data-glance-add-widget={column.id}>
           <Plus className="icon-toolbar" />
@@ -402,7 +402,7 @@ function GlanceCard({
   const [viewRef, near] = useNearViewport<HTMLDivElement>()
   const width = useWidth(viewRef)
   const def = widget.type === 'group' ? null : getGlanceWidget(widget.type)
-  const title = widget.title ?? (widget.type === 'group' ? t('workbench.home.glance.w.group') : def ? t(def.titleKey) : widget.type)
+  const title = widget.title ?? (widget.type === 'group' ? t('glance.w.group') : def ? t(def.titleKey) : widget.type)
   const frameless = !!def?.frameless && !editing
   const chrome = (
     <header className="flex h-7 shrink-0 items-center gap-1 px-3">
@@ -434,7 +434,7 @@ function GlanceCard({
       <span className="flex-1" />
       {editing ? (
         <>
-          <IconButton label={t('workbench.home.glance.settings', { name: title })} onClick={() => onSettings(widget.id)} testId="settings"><Settings2 className="icon-toolbar" /></IconButton>
+          <IconButton label={t('glance.settings', { name: title })} onClick={() => onSettings(widget.id)} testId="settings"><Settings2 className="icon-toolbar" /></IconButton>
           <IconButton label={t('workbench.home.edit.remove', { name: title })} danger onClick={() => onChange(removeWidgetInstance(layout, widget.id))} testId="remove"><X className="icon-toolbar" /></IconButton>
         </>
       ) : null}
@@ -457,10 +457,10 @@ function GlanceCard({
           ) : def ? (
             <WidgetBody def={def} widget={widget} column={column} width={width} layout={layout} onChange={onChange} />
           ) : (
-            <p className="text-sm text-muted-foreground">{t('workbench.home.glance.unknownWidget')}</p>
+            <p className="text-sm text-muted-foreground">{t('glance.unknownWidget')}</p>
           )
         ) : (
-          <div className="h-24" aria-hidden />
+          <div className="h-24 animate-pulse rounded-[var(--radius-control)] bg-surface-hover" aria-hidden />
         )}
       </div>
     </article>
@@ -484,7 +484,7 @@ function GroupBody({ group, column, width, layout, onChange }: { group: GlanceWi
   const { t } = useTranslation()
   const kids = group.children ?? []
   const [active, setActive] = useState(0)
-  if (kids.length === 0) return <p className="text-sm text-muted-foreground">{t('workbench.home.glance.emptyGroup')}</p>
+  if (kids.length === 0) return <p className="text-sm text-muted-foreground">{t('glance.emptyGroup')}</p>
   const current = kids[Math.min(active, kids.length - 1)]!
   const def = getGlanceWidget(current.type)
   return (
@@ -516,18 +516,18 @@ function GlanceWidgetPicker({ onPick, onPickGroup, onClose }: { onPick: (def: Gl
   const [query, setQuery] = useState('')
   const all = listGlanceWidgets()
   const q = query.trim().toLowerCase()
-  const match = (def: GlanceWidgetDef) => !q || t(def.titleKey).toLowerCase().includes(q) || t(def.descriptionKey).toLowerCase().includes(q) || def.type.includes(q)
+  const match = (def: GlanceWidgetDef) => !q || t(def.titleKey).toLowerCase().includes(q) || def.type.includes(q)
   return (
     <Modal title={t('workbench.home.picker.title')} onClose={onClose} testId="glance-picker">
-      <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('workbench.home.glance.searchWidgets')} aria-label={t('workbench.home.glance.searchWidgets')} className="h-8 w-full rounded-[var(--radius-control)] bg-surface-hover px-2 text-sm outline-none" />
+      <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('glance.searchWidgets')} aria-label={t('glance.searchWidgets')} className="h-8 w-full rounded-[var(--radius-control)] bg-surface-hover px-2 text-sm outline-none" />
       <div className="mt-2 flex max-h-[60vh] flex-col gap-3 overflow-y-auto">
         {GLANCE_CATEGORIES.map((cat) => {
           const defs = all.filter((d) => d.category === cat && match(d))
-          const showGroup = cat === 'advanced' && (!q || t('workbench.home.glance.w.group').toLowerCase().includes(q))
+          const showGroup = cat === 'advanced' && (!q || t('glance.w.group').toLowerCase().includes(q))
           if (defs.length === 0 && !showGroup) return null
           return (
             <div key={cat}>
-              <h3 className="pb-1 text-xs font-bold uppercase caps-label text-muted-foreground">{t(`workbench.home.glance.cat.${cat}`)}</h3>
+              <h3 className="pb-1 text-xs font-bold uppercase caps-label text-muted-foreground">{t(`glance.cat.${cat}`)}</h3>
               <ul className="grid gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
                 {defs.map((def) => {
                   const Icon = glanceIcon(def.icon)
@@ -537,7 +537,6 @@ function GlanceWidgetPicker({ onPick, onPickGroup, onClose }: { onPick: (def: Gl
                         <Icon className="mt-0.5 icon-toolbar shrink-0 text-muted-foreground" />
                         <span className="flex min-w-0 flex-col">
                           <span className="truncate text-sm font-bold text-foreground">{t(def.titleKey)}</span>
-                          <span className="line-clamp-2 text-xs text-muted-foreground">{t(def.descriptionKey)}</span>
                         </span>
                       </button>
                     </li>
@@ -548,8 +547,7 @@ function GlanceWidgetPicker({ onPick, onPickGroup, onClose }: { onPick: (def: Gl
                     <button type="button" onClick={onPickGroup} className="rox-home-tile flex w-full items-start gap-2 rounded-[var(--radius-card)] px-2.5 py-2 text-left" data-glance-pick="group">
                       <Layers className="mt-0.5 icon-toolbar shrink-0 text-muted-foreground" />
                       <span className="flex min-w-0 flex-col">
-                        <span className="truncate text-sm font-bold text-foreground">{t('workbench.home.glance.w.group')}</span>
-                        <span className="line-clamp-2 text-xs text-muted-foreground">{t('workbench.home.glance.d.group')}</span>
+                        <span className="truncate text-sm font-bold text-foreground">{t('glance.w.group')}</span>
                       </span>
                     </button>
                   </li>
@@ -595,9 +593,9 @@ function GlanceSettingsDialog({
   const def = widget.type === 'group' ? null : getGlanceWidget(widget.type)
   const [title, setTitle] = useState(widget.title ?? '')
   const [config, setConfig] = useState<GlanceConfig>(() => (def ? resolveConfig(def, widget.config) : widget.config))
-  const name = widget.title ?? (def ? t(def.titleKey) : t('workbench.home.glance.w.group'))
+  const name = widget.title ?? (def ? t(def.titleKey) : t('glance.w.group'))
   return (
-    <Modal title={t('workbench.home.glance.settings', { name })} onClose={onClose} testId="glance-settings">
+    <Modal title={t('glance.settings', { name })} onClose={onClose} testId="glance-settings">
       <form
         className="flex flex-col gap-3 overflow-y-auto"
         onSubmit={(e) => {
@@ -605,7 +603,7 @@ function GlanceSettingsDialog({
           onSave({ title: title.trim() || null, config: def ? resolveConfig(def, config) : config })
         }}
       >
-        <Labeled label={t('workbench.home.glance.f.title')}>
+        <Labeled label={t('glance.f.title')}>
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={def ? t(def.titleKey) : ''} className={INPUT} />
         </Labeled>
         {def?.fields.map((field) => (
@@ -662,14 +660,14 @@ export function FieldEditor({ field, value, onChange }: { field: GlanceField; va
       )
     case 'strings':
       return (
-        <Labeled label={label} hint={hint ?? t('workbench.home.glance.h.onePerLine')}>
+        <Labeled label={label} hint={hint ?? t('glance.h.onePerLine')}>
           <textarea value={Array.isArray(value) ? (value as string[]).join('\n') : ''} placeholder={field.placeholder} onChange={(e) => onChange(e.target.value.split('\n'))} rows={4} className={cn(INPUT, 'h-auto py-1 font-mono')} />
         </Labeled>
       )
     case 'links': {
       const links = Array.isArray(value) ? (value as { title: string; url: string }[]) : []
       return (
-        <Labeled label={label} hint={hint ?? t('workbench.home.glance.h.links')}>
+        <Labeled label={label} hint={hint ?? t('glance.h.links')}>
           <textarea
             value={links.map((l) => (l.title ? `${l.title} | ${l.url}` : l.url)).join('\n')}
             onChange={(e) => onChange(parseLinksText(e.target.value))}
@@ -696,7 +694,7 @@ function GroupEditor({ group, onAdd, onRemove }: { group: GlanceWidgetInstance; 
   const defs = listGlanceWidgets()
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-xs font-bold uppercase caps-label text-muted-foreground">{t('workbench.home.glance.groupTabs')}</span>
+      <span className="text-xs font-bold uppercase caps-label text-muted-foreground">{t('glance.groupTabs')}</span>
       <ul className="flex flex-col gap-0.5">
         {(group.children ?? []).map((kid) => {
           const def = getGlanceWidget(kid.type)
@@ -709,7 +707,7 @@ function GroupEditor({ group, onAdd, onRemove }: { group: GlanceWidgetInstance; 
         })}
       </ul>
       <div className="flex gap-1">
-        <GlanceSelect label={t('workbench.home.glance.groupAdd')} value={type} placeholder={t('workbench.home.glance.groupAdd')} onChange={setType} options={defs.map((d) => ({ value: d.type, label: t(d.titleKey) }))} className="flex-1" />
+        <GlanceSelect label={t('glance.groupAdd')} value={type} placeholder={t('glance.groupAdd')} onChange={setType} options={defs.map((d) => ({ value: d.type, label: t(d.titleKey) }))} className="flex-1" />
         <button type="button" disabled={!type} onClick={() => { const d = getGlanceWidget(type); if (d) onAdd(d); setType('') }} className="h-8 rounded-[var(--radius-control)] px-2 text-sm font-bold text-foreground hover:bg-surface-pressed disabled:opacity-40">
           <Plus className="icon-toolbar" />
         </button>

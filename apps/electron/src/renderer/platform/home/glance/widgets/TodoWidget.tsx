@@ -31,21 +31,21 @@ export default function TodoWidget({ config, onConfig }: GlanceWidgetProps) {
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder={t('workbench.home.glance.todo.placeholder')}
-          aria-label={t('workbench.home.glance.todo.placeholder')}
+          placeholder={t('glance.todo.placeholder')}
+          aria-label={t('glance.todo.placeholder')}
           className="min-w-0 flex-1 rounded-[var(--radius-control)] bg-surface-hover px-2 py-1 text-sm outline-none focus:bg-surface-pressed"
         />
-        <button type="submit" className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-pressed hover:text-foreground" aria-label={t('workbench.home.glance.todo.add')}>
+        <button type="submit" className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-pressed hover:text-foreground" aria-label={t('glance.todo.add')}>
           <Plus className="icon-toolbar" />
         </button>
       </form>
-      {items.length === 0 ? <p className="text-sm text-muted-foreground">{t('workbench.home.glance.todo.empty')}</p> : null}
+      {items.length === 0 ? <p className="text-sm text-muted-foreground">{t('glance.todo.empty')}</p> : null}
       <ul className="flex flex-col gap-0.5">
         {items.map((item) => (
           <li key={item.id} className="group flex items-center gap-2 rounded-[var(--radius-control)] px-1 py-0.5 hover:bg-surface-hover">
             <input type="checkbox" checked={item.done} onChange={() => save(items.map((i) => (i.id === item.id ? { ...i, done: !i.done } : i)))} aria-label={item.text} />
             <span className={cn('min-w-0 flex-1 truncate text-sm', item.done && 'text-muted-foreground line-through')} title={item.text}>{item.text}</span>
-            <button type="button" onClick={() => save(items.filter((i) => i.id !== item.id))} className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-muted-foreground hover:text-foreground" aria-label={t('workbench.home.glance.todo.remove', { name: item.text })}>
+            <button type="button" onClick={() => save(items.filter((i) => i.id !== item.id))} className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-muted-foreground hover:text-foreground" aria-label={t('glance.todo.remove', { name: item.text })}>
               <X className="icon-caption" />
             </button>
           </li>

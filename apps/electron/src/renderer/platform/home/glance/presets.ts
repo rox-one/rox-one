@@ -6,21 +6,18 @@ import type { GlancePage } from './model'
 export interface GlancePreset {
   id: string
   titleKey: string
-  descriptionKey: string
   build: (title: string) => Omit<GlancePage, 'id'>
 }
 
 export const GLANCE_PRESETS: readonly GlancePreset[] = [
   {
     id: 'blank',
-    titleKey: 'workbench.home.glance.preset.blank',
-    descriptionKey: 'workbench.home.glance.preset.blankHint',
+    titleKey: 'glance.preset.blank',
     build: (title) => ({ title, width: 'default', columns: [{ id: 'c1', size: 'small', widgets: [] }, { id: 'c2', size: 'full', widgets: [] }, { id: 'c3', size: 'small', widgets: [] }] }),
   },
   {
     id: 'workday',
-    titleKey: 'workbench.home.glance.preset.workday',
-    descriptionKey: 'workbench.home.glance.preset.workdayHint',
+    titleKey: 'glance.preset.workday',
     build: (title) => ({
       title,
       width: 'default',
@@ -63,8 +60,7 @@ export const GLANCE_PRESETS: readonly GlancePreset[] = [
   },
   {
     id: 'personal',
-    titleKey: 'workbench.home.glance.preset.personal',
-    descriptionKey: 'workbench.home.glance.preset.personalHint',
+    titleKey: 'glance.preset.personal',
     build: (title) => ({
       title,
       width: 'slim',

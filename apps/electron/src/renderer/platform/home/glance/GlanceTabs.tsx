@@ -53,33 +53,33 @@ export function HomePageTabs({
   const doImport = async (file: File) => {
     const parsed = parseGlanceImport(await file.text())
     if (!parsed.ok) {
-      toast.error(t(`workbench.home.glance.import.${parsed.reason}`))
+      toast.error(t('glance.import.invalid'))
       return
     }
     const next = mergeImportedPages(layout, parsed.pages, 'append')
     onChange(next)
-    toast.success(t('workbench.home.glance.import.done', { count: next.pages.length - layout.pages.length }))
+    toast.success(t('glance.import.done'))
   }
   return (
-    <div className="relative flex min-w-0 flex-wrap items-center gap-1" role="tablist" aria-label={t('workbench.home.glance.pages')} data-home-tabs="">
-      <TabButton active={activeId === null} onClick={() => onSelect(null)}>{t('workbench.home.glance.overview')}</TabButton>
+    <div className="relative flex min-w-0 flex-wrap items-center gap-1" role="tablist" aria-label={t('glance.pages')} data-home-tabs="">
+      <TabButton active={activeId === null} onClick={() => onSelect(null)}>{t('glance.overview')}</TabButton>
       {layout.pages.map((page, i) => (
         <span key={page.id} className="flex items-center">
           {editing && activeId === page.id && i > 0 ? (
-            <IconButton label={t('workbench.home.glance.movePageLeft')} onClick={() => onChange(movePage(layout, page.id, -1))}><ChevronLeft className="icon-caption" /></IconButton>
+            <IconButton label={t('glance.moveLeft')} onClick={() => onChange(movePage(layout, page.id, -1))}><ChevronLeft className="icon-caption" /></IconButton>
           ) : null}
-          <TabButton active={activeId === page.id} onClick={() => onSelect(page.id)} pageId={page.id}>{page.title || t('workbench.home.glance.untitled')}</TabButton>
+          <TabButton active={activeId === page.id} onClick={() => onSelect(page.id)} pageId={page.id}>{page.title || t('glance.untitled')}</TabButton>
           {editing && activeId === page.id && i < layout.pages.length - 1 ? (
-            <IconButton label={t('workbench.home.glance.movePageRight')} onClick={() => onChange(movePage(layout, page.id, 1))}><ChevronRight className="icon-caption" /></IconButton>
+            <IconButton label={t('glance.moveRight')} onClick={() => onChange(movePage(layout, page.id, 1))}><ChevronRight className="icon-caption" /></IconButton>
           ) : null}
         </span>
       ))}
-      <IconButton label={t('workbench.home.glance.addPage')} onClick={() => setPresetsOpen((v) => !v)} pressed={presetsOpen} testId="add-page"><Plus className="icon-toolbar" /></IconButton>
+      <IconButton label={t('glance.addPage')} onClick={() => setPresetsOpen((v) => !v)} pressed={presetsOpen} testId="add-page"><Plus className="icon-toolbar" /></IconButton>
       <span className="flex-1" />
       {layout.pages.length > 0 ? (
-        <IconButton label={t('workbench.home.glance.export')} onClick={doExport} testId="export"><Download className="icon-toolbar" /></IconButton>
+        <IconButton label={t('glance.export')} onClick={doExport} testId="export"><Download className="icon-toolbar" /></IconButton>
       ) : null}
-      <IconButton label={t('workbench.home.glance.importAction')} onClick={() => fileRef.current?.click()} testId="import"><Upload className="icon-toolbar" /></IconButton>
+      <IconButton label={t('glance.importAction')} onClick={() => fileRef.current?.click()} testId="import"><Upload className="icon-toolbar" /></IconButton>
       <input
         ref={fileRef}
         type="file"
@@ -96,7 +96,6 @@ export function HomePageTabs({
           {GLANCE_PRESETS.map((preset) => (
             <button key={preset.id} type="button" role="menuitem" onClick={() => addFromPreset(preset.id)} className="flex flex-col rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-surface-pressed" data-home-preset={preset.id}>
               <span className="text-sm font-bold text-foreground">{t(preset.titleKey)}</span>
-              <span className="text-xs text-muted-foreground">{t(preset.descriptionKey)}</span>
             </button>
           ))}
         </div>
