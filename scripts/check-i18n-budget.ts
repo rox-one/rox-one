@@ -35,8 +35,13 @@ const EN_LOCALE = resolve(
  * Raised again 12 300 → 12 500 (2026-10-14, deliberate O11 / 02-SPEC-foundations
  * §11): headroom for queued feature PRs #2003, #2007, #2043, #1988 and FX.
  * This supersedes the 12_300 ceiling from #2024.
+ * Raised 12 500 → 13 000 (2026-10-15, deliberate O11 raise for the second-sidebar
+ * wave): ~20 queued PRs of the sidebar/screens program (1966-1995, 2093-2097)
+ * each add 12-24 `screenSidebar.*` keys; the 12 500 ceiling had 8 keys of
+ * margin and blocked the whole family at validate. One centralized raise for
+ * the wave instead of ~20 drive-by bumps; supersedes the 2026-10-14 amounts.
  */
-export const I18N_KEY_BUDGET = 12_500
+export const I18N_KEY_BUDGET = 13_000
 
 const keys = Object.keys(JSON.parse(readFileSync(EN_LOCALE, 'utf8')) as Record<string, string>)
 
