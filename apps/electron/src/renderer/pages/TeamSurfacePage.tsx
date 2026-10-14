@@ -18,12 +18,14 @@ import { Button } from '@/components/ui/button'
 import { Tabs as TabsCore } from '@/components/ui/tabs'
 import { navigate, routes } from '@/lib/navigate'
 import type { SurfacePageProps } from '@/platform/SurfaceHost'
+import { useMessengerScreenSidebar } from '@/screens/messenger/useMessengerScreenSidebar'
 
 type MessengerTab = 'channels' | 'members'
 
 export function TeamSurfacePage(_props: SurfacePageProps) {
   const { t } = useTranslation()
   const roster = useTeamRoster()
+  useMessengerScreenSidebar()
   const [tab, setTab] = React.useState<MessengerTab>('channels')
   const viewerOrgRole = roster.members.find(m => m.userId === roster.selfUserId)?.role
 

@@ -128,6 +128,8 @@ jobs:
       - run: bun scripts/desktop-release.ts
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+          # Shared ROX gateway key baked into the main bundle (gen-rox-defaults.ts).
+          ROX_API_KEY: ${{ secrets.ROX_API_KEY }}
           CSC_LINK: ${{ secrets[matrix.platform == 'darwin' && 'MAC_CSC_LINK' || 'WIN_CSC_LINK'] }}
           CSC_KEY_PASSWORD: ${{ secrets[matrix.platform == 'darwin' && 'MAC_CSC_KEY_PASSWORD' || 'WIN_CSC_KEY_PASSWORD'] }}
           APPLE_ID: ${{ secrets.APPLE_ID }}

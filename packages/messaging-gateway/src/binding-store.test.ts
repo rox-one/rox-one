@@ -66,3 +66,33 @@ describe('BindingStore.save() failure semantics', () => {
     expect(fired).toBe(1)
   })
 })
+
+describe('BindingStore chatType', () => {
+  function freshDir(): string {
+    const root = join(tmpdir(), `bindstore-chat-${Date.now()}-${Math.random().toString(36).slice(2)}`)
+    mkdirSync(root, { recursive: true })
+    testRoots.push(root)
+    return root
+  }
+
+  it('records the observed chat type once and persists it', () => {
+    const dir = freshDir()
+    const store = new BindingStore(dir)
+    let changes = 0
+    store.onChange(() => { changes++ })
+    const b = store.bind('ws', 's1', 'lark', 'oc_1')
+    changes = 0
+    expect(store.recordChatType(b.id, 'group')).toBe(true)
+    expect(store.recordChatType(b.id, 'group')).toBe(false)
+    expect(changes).toBe(1)
+    expect(new BindingStore(dir).getAll()[0]!.chatType).toBe('group')
+  })
+
+  it('migrates legacy Telegram bindings from the chat id sign', () => {
+    const dir = freshDir()
+    const legacy = (id: string, channelId: string, threadId?: number) => ({ id, workspaceId: 'ws', sessionId: id, platform: 'telegram', channelId, ...(threadId ? { threadId } : {}), enabled: true, createdAt: 1, config: {} })
+    writeFileSync(join(dir, 'bindings.json'), JSON.stringify([legacy('a', '12345'), legacy('b', '-100777'), legacy('c', '-100777', 5), { ...legacy('d', 'oc_x'), platform: 'lark' }]))
+    const types = new BindingStore(dir).getAll().map((b) => [b.id, b.chatType])
+    expect(types).toEqual([['a', 'direct'], ['b', 'group'], ['c', 'group'], ['d', undefined]])
+  })
+})
