@@ -11989,5 +11989,6 @@
   "canvas.cardDelete.body": "فك الارتباط يزيل البطاقة من هذه اللوحة فقط. الحذف يحذف العنصر نفسه أيضًا.",
   "canvas.cardDelete.unlink": "فك الارتباط",
   "canvas.cardDelete.delete": "حذف العنصر",
-  "canvas.cardDelete.cancel": "إلغاء"
+  "canvas.cardDelete.cancel": "إلغاء",
+  "canvas.cardDelete.confirmDelete": "هل تريد حذف «{{title}}» من Rox بالكامل؟ لا يمكن التراجع عن ذلك من اللوحة."
 }

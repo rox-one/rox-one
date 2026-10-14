@@ -11933,5 +11933,6 @@
   "canvas.cardDelete.body": "Verknüpfung lösen entfernt nur die Karte von diesem Board. Löschen löscht auch das Objekt selbst.",
   "canvas.cardDelete.unlink": "Verknüpfung lösen",
   "canvas.cardDelete.delete": "Objekt löschen",
-  "canvas.cardDelete.cancel": "Abbrechen"
+  "canvas.cardDelete.cancel": "Abbrechen",
+  "canvas.cardDelete.confirmDelete": "„{{title}}“ überall in Rox löschen? Das lässt sich auf der Tafel nicht rückgängig machen."
 }

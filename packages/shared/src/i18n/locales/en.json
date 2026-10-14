@@ -11933,5 +11933,6 @@
   "canvas.cardDelete.body": "Unlink only removes the card from this board. Delete also deletes the entity itself.",
   "canvas.cardDelete.unlink": "Unlink",
   "canvas.cardDelete.delete": "Delete entity",
-  "canvas.cardDelete.cancel": "Cancel"
+  "canvas.cardDelete.cancel": "Cancel",
+  "canvas.cardDelete.confirmDelete": "Delete “{{title}}” everywhere in Rox? This cannot be undone from the board."
 }

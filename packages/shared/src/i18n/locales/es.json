@@ -11946,5 +11946,6 @@
   "canvas.cardDelete.body": "Desvincular solo quita la tarjeta de este tablero. Eliminar también borra la entidad.",
   "canvas.cardDelete.unlink": "Desvincular",
   "canvas.cardDelete.delete": "Eliminar entidad",
-  "canvas.cardDelete.cancel": "Cancelar"
+  "canvas.cardDelete.cancel": "Cancelar",
+  "canvas.cardDelete.confirmDelete": "¿Eliminar «{{title}}» en todo Rox? No se puede deshacer desde el tablero."
 }
