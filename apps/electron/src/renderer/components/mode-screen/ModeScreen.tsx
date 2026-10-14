@@ -115,8 +115,9 @@ function FallbackModeScreenLayout({
   )
 }
 
+/** Screen-reader heading only: the shell's second-sidebar header already shows the screen title. */
 export function NavTitle({ children }: { children: React.ReactNode }) {
-  return <h1 className="px-2 pb-2 text-lg font-semibold">{children}</h1>
+  return <h1 className="sr-only">{children}</h1>
 }
 
 export function NavSection({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
