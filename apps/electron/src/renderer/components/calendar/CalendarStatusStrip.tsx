@@ -28,6 +28,7 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
   const { t } = useTranslation()
   const [store, setStore] = useState(loadStore)
   const [reminderDraft, setReminderDraft] = useState('')
+  const [expanded, setExpanded] = useState(false)
   const tz = localTimeZone()
 
   const persist = useCallback((next: CalendarStore) => {
@@ -74,18 +75,40 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
     setReminderDraft('')
   }
 
+  // Unconnected and quiet: a single summary line; providers, the local hint
+  // and the reminder form open on demand so they never crowd a narrow panel.
+  const connected = store.accounts().some((account) => account.status === 'connected')
+  const needsAttention = status === 'conflict' || status === 'localChanges' || status === 'timezone'
+  const showDetails = expanded || connected || needsAttention || conflicts.length > 0 || proposals.length > 0
+
+  if (!showDetails) {
+    return (
+      <div className="flex min-w-0 items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground" data-testid="calendar-status-strip">
+        <span className="min-w-0 truncate">{t(`calendar.status.${status}`)}</span>
+        <button type="button" className="shrink-0 underline" aria-expanded={false} onClick={() => setExpanded(true)}>
+          {t('calendar.showOptions')}
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex flex-col gap-1 px-3 py-2 text-xs" data-testid="calendar-status-strip">
-      <div className={cn('flex flex-wrap items-center gap-2', (status === 'conflict' || status === 'localChanges' || status === 'timezone') && 'text-amber-600')}>
+    <div className="flex min-w-0 flex-col gap-1.5 px-3 py-2 text-xs" data-testid="calendar-status-strip">
+      <div className={cn('flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1', (status === 'conflict' || status === 'localChanges' || status === 'timezone') && 'text-amber-600')}>
         <span>{t(`calendar.status.${status}`)}</span>
         <CalendarConnectorChips onConnect={connect} />
+        {expanded && !connected && conflicts.length === 0 && proposals.length === 0 ? (
+          <button type="button" className="ml-auto underline" aria-expanded onClick={() => setExpanded(false)}>
+            {t('calendar.hideOptions')}
+          </button>
+        ) : null}
         {store.accounts().filter((account) => account.status === 'connected').map((account) => (
           <button key={account.id} type="button" className="underline" onClick={() => revoke(account.id)}>
             {t('calendar.revoke')} · {t(`calendar.provider.${account.provider}`)}
           </button>
         ))}
       </div>
-      <p className="text-muted-foreground">{t('calendar.connectorOptional')}</p>
+      <p className="min-w-0 text-muted-foreground">{t('calendar.connectorOptional')}</p>
       <form onSubmit={addLocalReminder} className="flex items-center gap-1">
         <input
           value={reminderDraft}

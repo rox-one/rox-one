@@ -306,6 +306,7 @@ export function InputContainer({
 
       {/* Visible animated container */}
       <motion.div
+        data-glass-slot="composer"
         ref={structuredInput?.type === 'admin_approval' ? node => { adminRequestTarget(node); adminActionsTarget(node) } : undefined}
         className={cn(
           "input-container relative rounded-[var(--radius-composer)] ring-1 ring-inset shadow-minimal overflow-hidden transition-colors motion-reduce:transition-none",

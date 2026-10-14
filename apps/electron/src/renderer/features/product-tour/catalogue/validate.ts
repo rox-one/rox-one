@@ -1,4 +1,3 @@
-import { productTourCatalogue } from './product-tour-catalogue'
 import { DYNAMIC_STEP_ID_PATTERN, DYNAMIC_TOUR_ID_PATTERN } from '../contracts'
 
 const TourIdValues: Record<string, true> = { "OBT-01": true, "OBT-02": true, "OBT-03": true, "OBT-04": true, "OBT-05": true, "OBT-06": true, "OBT-07": true, "OBT-08": true, "OBT-09": true, "OBT-10": true, "OBT-11": true, "OBT-12": true, "OBT-13": true, "OBT-14": true, "OBT-15": true, "OBT-16": true, "OBT-17": true, "OBT-18": true, "OBT-19": true, "OBT-20": true, "OBT-21": true, "OBT-22": true, "OBT-23": true, "OBT-24": true, "OBT-25": true }
@@ -149,8 +148,13 @@ function validateTour(tour: unknown, path: string, errors: string[], rules: Tour
   }
 }
 
-/** Returns authoring diagnostics for the static catalogue. It never executes supplied configuration. */
-export function validateProductTourCatalogue(catalogue: unknown = productTourCatalogue): readonly string[] {
+/**
+ * Returns authoring diagnostics for the static catalogue. It never executes supplied
+ * configuration. The caller passes the catalogue — this module must not import
+ * `product-tour-catalogue.ts`, or `catalogue/dynamic.ts` would pull 96 KB of tour
+ * copy into every importer (the boot host included).
+ */
+export function validateProductTourCatalogue(catalogue: unknown): readonly string[] {
   const errors: string[] = []
   const seen = new Set<object>()
   const declarative = (value: unknown, path: string): boolean => {

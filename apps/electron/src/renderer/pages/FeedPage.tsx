@@ -84,6 +84,7 @@ import {
   type FeedOrder,
   type FeedViewItem,
 } from './feed/feed-model'
+import { feedDayGroupStyle } from './feed/feed-list-render'
 import { ColorFilter, ColorPicker, FEED_COLOR_HEX, SourceIcon, TagChip, TagEditor } from './feed/FeedParts'
 import { SourceEditor, SourcesView } from './feed/FeedSources'
 import { FeedSidebar, type FeedView } from './feed/FeedSidebar'
@@ -92,7 +93,7 @@ import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inb
 import { useFeedReaderTour } from '@/features/product-tour/adapters/work/inbox-feed/use-feed-reader-tour'
 import { useFeedCaller, type FeedCaller } from './feed/feed-caller'
 import { toErrorMessage } from '@/lib/errors'
-import { FeedSectionTabs, type FeedSection } from './feed/FeedSectionTabs'
+import type { FeedSection } from './feed/FeedSectionTabs'
 import { InboxQueue } from './inbox/InboxQueue'
 import { roxQueryClient } from '@/lib/query/client'
 import { roxKeys } from '@/lib/query/keys'
@@ -204,7 +205,9 @@ export function FeedStream({ selectedId }: { selectedId?: string | null }) {
 export default function FeedPage({ selectedId, section = 'stream' }: { selectedId?: string | null; section?: FeedSection }) {
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="feed-screen" data-section={section}>
-      <FeedSectionTabs section={section} />
+      {/* No inner «Поток/Входящие» strip: Лента and Входящие are separate
+          surfaces in the rail and the open-tab strip already names the one in
+          view (Mark, t77). The section stays route-driven. */}
       <div className="flex min-h-0 flex-1 flex-col">
         {section === 'inbox' ? <InboxQueue selectedId={selectedId} /> : <FeedStream selectedId={selectedId} />}
       </div>
@@ -793,7 +796,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
       {loadError ? <div role="alert" className="mx-3 mb-1 rounded-[var(--radius-control)] bg-destructive/10 px-2 py-1 text-sm text-destructive">{t('feed.loadError')}</div> : null}
       <div ref={!selected ? readerTourRef : undefined} data-tour-id={!selected ? 'feed.reader' : undefined} role="listbox" aria-label={t(`feed.tab.${tab}`)} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="feed-list" data-density={prefs.density}>
         {visible.length === 0 ? emptyForTab() : groups.map((g) => (
-          <div key={g.key}>
+          <div key={g.key} style={feedDayGroupStyle(g.items.length, prefs.density)} data-testid="feed-day-group">
             <div className="flex items-center gap-2 px-3 pb-1 pt-3 text-xs uppercase caps-label text-text-muted" data-testid="feed-day">
               <span className="truncate">{g.label === 'earlier' ? dayFmt.format(g.day) : t(`feed.day.${g.label}`)}</span>
               <span className="numeric">{g.items.length}</span>

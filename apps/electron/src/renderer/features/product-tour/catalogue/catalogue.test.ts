@@ -12,7 +12,7 @@ describe('full product learning catalogue', () => {
     expect(new Set(steps.map(step => step.id)).size).toBe(57)
     expect(new Set(steps.map(step => step.testId)).size).toBe(57)
     expect(tourCatalogue).toBe(productTourCatalogue)
-    expect(validateProductTourCatalogue()).toEqual([])
+    expect(validateProductTourCatalogue(productTourCatalogue)).toEqual([])
   })
   test('preserves first result and source use evidence policies', () => {
     const first = productTourCatalogue[0]!

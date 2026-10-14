@@ -13,7 +13,7 @@
  * when the stack becomes empty.
  */
 
-import { useCallback, useContext, useLayoutEffect, useMemo, useRef } from 'react'
+import { useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSetAtom, useAtomValue } from 'jotai'
 import { cn } from '@/lib/utils'
@@ -22,13 +22,27 @@ import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-
 import { closePanelAtom, focusedPanelIdAtom, primaryPanelIdAtom, type PanelStackEntry } from '@/atoms/panel-stack'
 import { useAppShellContext, AppShellProvider } from '@/context/AppShellContext'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@rox/ui/tooltip'
 import { MainContentPanel } from './MainContentPanel'
 import { PANEL_MIN_WIDTH } from './panel-constants'
 import { NavigationContext } from '@/contexts/NavigationContext'
-import { ShellSidebarContext } from './ShellSidebarPortal'
+import { BarePanelContext, ShellSidebarContext } from './ShellSidebarPortal'
 import { destroyBrowserInstanceForRoute } from '@/platform/browser-panel-lifecycle'
 import { AuxiliaryToolPanel } from './AuxiliaryToolPanel'
 import { WorkspaceToolContext } from '@/atoms/workspace-context'
+import { PRIMARY_NAV } from './primary-nav'
+
+/** Header title for a grid tile: the surface the route belongs to. */
+export function gridTileTitleKey(navState: Parameters<(typeof PRIMARY_NAV)[number]['isActive']>[0]): string | null {
+  for (const entry of PRIMARY_NAV) {
+    try {
+      if (entry.isActive(navState)) return entry.labelKey
+    } catch {
+      // A predicate that cannot read this state simply does not match.
+    }
+  }
+  return null
+}
 
 interface PanelSlotProps {
   entry: PanelStackEntry
@@ -78,6 +92,14 @@ export function PanelSlot({
   const primaryId = useAtomValue(primaryPanelIdAtom)
   const navState = useMemo(() => parseRouteToNavigationStateOrUnavailable(entry.route), [entry.route])
   const panelRef = useRef<HTMLDivElement>(null)
+  // Multi-panel grid tile: framed, titled, compact type scale (index.css).
+  const gridTile = !isOnly && !isCompact && !entry.tool
+  const titleKey = useMemo(() => (gridTile ? gridTileTitleKey(navState) : null), [gridTile, navState])
+  const ownsSidebar = !entry.tool && (!primaryId || primaryId === entry.id)
+  const tileTitle = titleKey ? t(titleKey) : null
+  // A non-owner content panel in split view is a bare PANEL: no secondary sidebar.
+  const [controlsSlot, setControlsSlot] = useState<HTMLElement | null>(null)
+  const barePanel = useMemo(() => (gridTile && !ownsSidebar ? { title: tileTitle, titleKey, controlsSlot } : null), [gridTile, ownsSidebar, tileTitle, titleKey, controlsSlot])
   useLayoutEffect(() => {
     const panel = panelRef.current
     if (!panel) return
@@ -94,7 +116,7 @@ export function PanelSlot({
   const closeButton = useMemo(() => {
     return (
       <PanelHeaderCenterButton
-        icon={<X className="h-4 w-4" />}
+        icon={<X className="icon-toolbar" />}
         onClick={handleClose}
         tooltip={t("common.close")}
       />
@@ -107,7 +129,7 @@ export function PanelSlot({
     if (!isCompact) return undefined
     return (
       <PanelHeaderCenterButton
-        icon={<ChevronLeft className="h-4 w-4" />}
+        icon={<ChevronLeft className="icon-toolbar" />}
         onClick={handleClose}
         tooltip={t("common.backToList")}
       />
@@ -119,10 +141,11 @@ export function PanelSlot({
   const contextOverride = useMemo(() => ({
     ...parentContext,
     panelId: entry.id,
-    rightSidebarButton: closeButton,
+    // A grid tile owns its close button in the tile header.
+    rightSidebarButton: gridTile ? undefined : closeButton,
     leadingAction: backButton,
     isFocusedPanel,
-  }), [parentContext, closeButton, backButton, isFocusedPanel, entry.id])
+  }), [parentContext, closeButton, backButton, isFocusedPanel, entry.id, gridTile])
   // A workspace the shell cannot serve yet keeps every panel on the provider's
   // unavailable state: no panel may claim a route from a foreign workspace.
   const panelNavigation = navigation && navState && !navigation.unavailableWorkspaceSlug
@@ -152,6 +175,9 @@ export function PanelSlot({
         data-shell-role="content"
         data-compact={isCompact || undefined}
         data-auxiliary-tool={entry.tool}
+        data-panel-density={gridTile ? 'grid' : undefined}
+        data-panel-kind={barePanel ? 'panel' : 'screen'}
+        data-focused={gridTile ? String(isFocusedPanel) : undefined}
         tabIndex={-1}
         className={cn(
           'h-full overflow-hidden relative @container/panel',
@@ -159,6 +185,7 @@ export function PanelSlot({
           // One-surface shell: flush pane on the shared background. Split view
           // keeps a hairline between panels and a thin focus accent (no boxes).
           'rox-shell-pane',
+          gridTile && 'rox-grid-tile',
           sash && 'rox-shell-divider-l',
           !isOnly && isFocusedPanel ? 'shadow-panel-focused z-[1]' : 'z-0',
         )}
@@ -187,10 +214,33 @@ export function PanelSlot({
         }}
       >
         <div className="h-full flex flex-col">
+          {gridTile ? (
+            <div className="rox-grid-tile-header flex shrink-0 items-center gap-1" data-testid="grid-tile-header">
+              <span className="min-w-0 flex-1 truncate text-xs font-medium text-text-secondary">
+                {tileTitle ?? t('navigation.mainSurface')}
+              </span>
+              {/* Bare panel: the surface's navigation/filters in compact form (never a sidebar column). */}
+              <div ref={setControlsSlot} className="flex min-w-0 shrink items-center gap-1" data-testid="grid-tile-controls" />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    aria-label={t('common.close')}
+                    className="inline-flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-surface-hover hover:text-foreground"
+                  >
+                    <X className="icon-status" aria-hidden />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{t('common.close')}</TooltipContent>
+              </Tooltip>
+            </div>
+          ) : null}
           <div className="flex min-h-0 flex-1 flex-col">
             <AppShellProvider value={contextOverride}>
               <NavigationContext.Provider value={panelNavigation}>
-                <ShellSidebarContext.Provider value={entry.tool || (primaryId && primaryId !== entry.id) ? null : sidebarTarget}>
+                <ShellSidebarContext.Provider value={ownsSidebar ? sidebarTarget : null}>
+                 <BarePanelContext.Provider value={barePanel}>
                   <WorkspaceToolContext.Provider value={entry.toolContext ?? null}>
                     {hibernated ? (
                       <div className="flex h-full items-center justify-center text-caption text-muted-foreground" data-panel-hibernated="">{t('shell.strip.hibernated')}</div>
@@ -199,6 +249,7 @@ export function PanelSlot({
                         isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden} panelId={entry.id} />
                     )}
                   </WorkspaceToolContext.Provider>
+                 </BarePanelContext.Provider>
                 </ShellSidebarContext.Provider>
               </NavigationContext.Provider>
             </AppShellProvider>
