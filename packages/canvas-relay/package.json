@@ -1,0 +1,18 @@
+{
+  "name": "@rox/canvas-relay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "Rox «Доска» sync relay: y-websocket protocol over Bun WebSocket, SQLite persistence, signed room tokens.",
+  "bin": { "rox-canvas-relay": "./src/main.ts" },
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "start": "bun run src/main.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "build:binary": "bun build src/main.ts --compile --minify --outfile dist/rox-canvas-relay"
+  },
+  "dependencies": { "lib0": "^0.2.99", "y-protocols": "^1.0.6", "yjs": "^13.6.33" },
+  "devDependencies": { "@types/bun": "latest", "typescript": "^5.6.0" }
+}
