@@ -1837,3 +1837,13 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
     min-height: 44px;
   }
 }
+
+/* top-50 #49: lite / reduced-data mode drops decorative motion and blur. */
+:root[data-lite] *,
+:root[data-lite] *::before,
+:root[data-lite] *::after {
+  animation-duration: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0s !important;
+}
+:root[data-lite] { --material-blur-topbar: 0; --material-blur-rail: 0; --material-blur-strip: 0; --material-blur-inspector: 0; --material-blur-sidebar: 0; --material-blur-navigator: 0; --material-blur-chat: 0; --material-blur-composer: 0; --material-blur-popover: 0; }
