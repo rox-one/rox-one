@@ -90,6 +90,8 @@ import {
   parseAgentMention,
   parseSearch,
   subtasksOf,
+  navigateIndex,
+  deadlineTone,
   visibleNotes,
   type AgentChip,
   type AgentSessionLike,
@@ -743,11 +745,15 @@ export default function TasksPage(props: TasksPageProps = {}) {
       return
     }
     if (mod || event.altKey) return
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Home' || event.key === 'End' || event.key === 'PageDown' || event.key === 'PageUp') {
       event.preventDefault()
       const index = selected ? visible.findIndex((task) => task.id === selected.id) : -1
-      const next = event.key === 'ArrowDown' ? visible[Math.min(visible.length - 1, index + 1)] : visible[Math.max(0, index - 1)]
-      if (next) selectTask(next.id)
+      const to = navigateIndex(event.key, index, visible.length)
+      const next = to == null ? undefined : visible[to]
+      if (next) {
+        selectTask(next.id)
+        listRef.current?.querySelector(`[data-task-id="${CSS.escape(next.id)}"]`)?.scrollIntoView({ block: 'nearest' })
+      }
       return
     }
     if (event.key === ' ' && selected) {
@@ -1029,7 +1035,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
             <span key={tag} className="mt-[1px] inline-flex h-[18px] max-w-[96px] shrink-0 items-center truncate rounded-[var(--radius-control)] bg-foreground/[0.07] px-1.5 text-xs text-text-secondary">{tag}</span>
           ))}
           {task.dueAt != null && !done ? (
-            <span className={cn('mt-[1px] inline-flex h-[18px] shrink-0 items-center gap-1 text-xs numeric', daysUntil(task.dueAt, now) <= 0 ? 'font-semibold text-destructive' : 'text-text-secondary')} title={`${t('tasks.field.deadline')}: ${dateFmt.format(task.dueAt)}`}>
+            <span className={cn('mt-[1px] inline-flex h-[18px] shrink-0 items-center gap-1 text-xs numeric', { danger: 'font-semibold text-destructive', warning: 'text-status-warning', muted: 'text-text-secondary' }[deadlineTone(daysUntil(task.dueAt, now))])} title={`${t('tasks.field.deadline')}: ${dateFmt.format(task.dueAt)}`}>
               {Glyph.flag}{formatDeadline(task.dueAt)}
             </span>
           ) : null}
@@ -1340,7 +1346,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const shortcuts: Array<[string, string]> = [
     [formatHotkeyDisplay('mod+n'), 'quick'],
     [formatHotkeyDisplay('space'), 'complete'],
-    ['↑ ↓', 'navigate'],
+    ['↑ ↓ · Home End · PgUp PgDn', 'navigate'],
     [formatHotkeyDisplay('enter'), 'edit'],
     [formatHotkeyDisplay('mod+k'), 'move'],
     [formatHotkeyDisplay('mod+t'), 'today'],
