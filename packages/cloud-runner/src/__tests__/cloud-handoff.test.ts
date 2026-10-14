@@ -8,6 +8,7 @@ import {
   packSnapshot,
   resolveHandoffKey,
   runCloudHandoff,
+  type SnapshotManifest,
   type SnapshotSource,
 } from '../handoff/index.ts';
 
@@ -49,7 +50,7 @@ describe('snapshot packaging', () => {
   });
 
   it('drops secrets by path and content, keeps the rest', async () => {
-    const excluded: { path: string; reason: string }[] = [];
+    const excluded: SnapshotManifest['excluded'] = [];
     const out: string[] = [];
     for await (const f of packSnapshot(
       [src('a.txt', 'ok'), src('.git/config', 'x'), src('id_ed25519', 'k'), src('b.txt', `token ${KEY}`)],
@@ -68,7 +69,7 @@ describe('snapshot packaging', () => {
 
   it('re-checks real byte size, not the claimed stat', async () => {
     const lying: SnapshotSource = { path: 'big', size: 1, read: async () => new Uint8Array(50) };
-    const excluded: { path: string; reason: string }[] = [];
+    const excluded: SnapshotManifest['excluded'] = [];
     const out = [];
     for await (const f of packSnapshot([lying], { maxFileBytes: 10, maxTotalBytes: 100, maxFiles: 10 }, excluded)) out.push(f);
     expect(out).toHaveLength(0);
@@ -168,7 +169,7 @@ describe('runCloudHandoff', () => {
   it('never leaks the API key in errors', async () => {
     const client = new MemoryDaytonaClient();
     client.listSandboxes = async () => { throw new Error(`boom ${KEY}`); };
-    const err = await runCloudHandoff(baseInput(client)).catch((e) => e as HandoffError);
+    const err = (await runCloudHandoff(baseInput(client)).catch((e: unknown) => e)) as HandoffError;
     expect(err.code).toBe('provider_error');
     expect(err.message).not.toContain(KEY);
   });
