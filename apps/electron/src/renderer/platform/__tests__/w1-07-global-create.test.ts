@@ -1,6 +1,7 @@
 /**
  * W1-07 (#1504): global create menu (UI-SPEC §3.2) fed by `global.create`.
  */
+import { messengerCreateRoute, onMessengerCreateRequest, parseMessengerCreateRoute, takeMessengerCreateRequest } from '../messenger-create-request'
 import { afterEach, describe, expect, it } from 'bun:test'
 import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { createSlotRegistry } from '../slots'
@@ -89,7 +90,7 @@ describe('global create menu', () => {
     expect(doc?.children.map((child) => child.id)).toEqual([
       'docs.new-doc/doc', 'docs.new-doc/note', 'docs.new-doc/base', 'docs.new-doc/form', 'docs.new-doc/mind-map', 'docs.new-doc/folder',
     ])
-    expect(model.create.find((entry) => entry.id === 'messenger.new-message')?.children).toHaveLength(3)
+    expect(model.create.find((entry) => entry.id === 'messenger.new-message')?.children.map((child) => child.id)).toEqual(['messenger.new-message/group', 'messenger.new-message/channel'])
   })
 
   it('every entry and child title is a surfaces.create.* key', () => {
@@ -141,6 +142,26 @@ describe('intents', () => {
     expect(runGlobalCreateIntent({ type: 'command', name: 'im.create_chat', input: { type: 'group' } }, deps)).toBe(true)
     await Promise.resolve()
     expect(calls).toEqual(['nav:goals', 'cmd:im.create_chat:{"type":"group"}'])
+  })
+
+  it('messenger group/channel items open the Messenger create form preset to that kind', () => {
+    const calls: string[] = []
+    const deps = { navigate: (route: string) => calls.push(`nav:${route}`), host: {} }
+    const seen: string[] = []
+    const off = onMessengerCreateRequest((kind) => seen.push(kind))
+    expect(runGlobalCreateIntent({ type: 'route', route: messengerCreateRoute('channel') }, deps)).toBe(true)
+    off()
+    expect(calls).toEqual(['nav:messenger'])
+    expect(seen).toEqual(['channel'])
+    expect(takeMessengerCreateRequest()).toBe('channel')
+    expect(takeMessengerCreateRequest()).toBeNull()
+    expect(parseMessengerCreateRoute('messenger?create=dm')).toBeNull()
+    const item = CORE_GLOBAL_CREATE_ITEMS.find((entry) => entry.id === 'messenger.new-message')!
+    const intents = (item.payload?.children ?? []).map((child) => child.intent)
+    expect(intents).toEqual([
+      { type: 'route', route: 'messenger?create=group' },
+      { type: 'route', route: 'messenger?create=channel' },
+    ])
   })
 
   it('negative: a missing host handler or route-less command reports false', () => {
