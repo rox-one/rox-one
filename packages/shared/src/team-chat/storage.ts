@@ -457,7 +457,6 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       const ids = call.participantIds.filter(id => id === actor.userId || seen.has(id))
       if (!ids.includes(actor.userId)) ids.push(actor.userId)
       call.participantIds = ids
-      for (const id of ids) if (!call.everParticipantIds.includes(id)) call.everParticipantIds.push(id)
       save(store)
       return { orgId: channel.orgId, call }
     },

@@ -36,8 +36,11 @@ describe('team calls', () => {
     expect(s.listChannels(ORG, alice)[0]!.activeCall).toMatchObject({ transcript: [], transcriptSegments: 2 })
     // Members who never joined the call can't write into its transcript.
     expect(() => s.appendCallTranscript(general.id, a.call.id, [{ text: 'x', startMs: 0, endMs: 1 }], carol)).toThrow()
+    // …and a roster sync doesn't make them a participant either.
+    s.syncCallParticipants(general.id, ['alice', 'bob', 'carol'], carol)
+    expect(() => s.appendCallTranscript(general.id, a.call.id, [{ text: 'x', startMs: 0, endMs: 1 }], carol)).toThrow()
     // Non-members can't be injected into the participant list.
-    s.syncCallParticipants(general.id, ['alice', 'bob', 'mallory', 'carol'], alice)
+    s.syncCallParticipants(general.id, ['alice', 'bob', 'mallory'], alice)
     expect(s.listChannels(ORG, alice)[0]!.activeCall!.participantIds.sort()).toEqual(['alice', 'bob'])
     expect(s.leaveCall(general.id, alice).ended).toBe(false)
     expect(s.leaveCall(general.id, bob).ended).toBe(true)
@@ -74,7 +77,7 @@ describe('mintLiveKitToken', () => {
     const [h, p, sig] = t.split('.')
     expect(createHmac('sha256', 's').update(`${h}.${p}`).digest('base64url')).toBe(sig!)
     const claims = JSON.parse(Buffer.from(p!, 'base64url').toString())
-    expect(claims).toMatchObject({ iss: 'k', sub: 'alice', name: 'Марк', exp: 1600, video: { room: 'rox-c1', roomJoin: true, canPublish: true } })
+    expect(claims).toMatchObject({ iss: 'k', sub: 'alice', name: 'Марк', exp: 1000 + 4 * 3600, video: { room: 'rox-c1', roomJoin: true, canPublish: true } })
   })
   it('refuses to mint without credentials', () => {
     expect(() => mintLiveKitToken({ apiKey: '', apiSecret: '', identity: 'a', room: 'r' })).toThrow()

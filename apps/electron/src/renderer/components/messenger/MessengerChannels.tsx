@@ -258,7 +258,7 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
           members={members}
           presenceOf={presenceOf}
           nameOf={nameOf}
-          messageCount={messages.messages.filter(m => m.kind !== 'system').length}
+          messageCount={selected.lastSeq}
           inCall={inThisCall}
           joining={joining}
           onJoinCall={joinCall}
@@ -452,7 +452,7 @@ function MessageList({ loading, error, messages, nameOf, locale }: {
       <ul className="flex flex-col gap-2">
         {messages.map((m, i) => {
           const prev = messages[i - 1]
-          const grouped = prev && prev.senderId === m.senderId && m.senderId !== 'system' && m.createdAt - prev.createdAt < 5 * 60_000
+          const grouped = prev && prev.kind !== 'system' && prev.senderId === m.senderId && m.senderId !== 'system' && m.createdAt - prev.createdAt < 5 * 60_000
           return (
             <li key={m.id} className={cn(!grouped && 'pt-1')}>
               {!grouped && m.kind !== 'system' ? (
