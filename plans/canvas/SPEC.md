@@ -57,3 +57,10 @@ In-canvas: an @rox prompt bar on a selection; context menu "Спросить Rox
 
 ## 7. Rendering
 Canvas2D stage with a retained scene graph, dirty-rect redraws, an rbush spatial index, and an LOD for far zoom; DOM overlay for text editing (contenteditable bound to Y.Text) and embeds. perfect-freehand for ink. Export: SVG serializer → PNG via offscreen canvas, PDF via the existing Rox PDF path (verify) or pdf-lib (MIT).
+
+## 8. Live entity cards
+- Object type `entity`: `props = { kind, entityId, snapshot?: {title,status?,preview?,icon?,updatedAt?}, provenance: 'created'|'linked' }`; `links` carries the ref. Snapshot is a cache for offline render, never the source of truth.
+- `canvas-core/src/entities.ts` (implemented): `EntityKindRegistry` + `EntityKindAdapter { kind, labelKey, icon, creatable, create?, read, subscribe?, open, delete? }`, `EntityLinker { link, unlink }`, and board ops `createEntityCard`, `linkEntityCard`, `applyEntitySnapshot`, `removeEntityCards({deleteEntities?})`, `entityCards`. Failed link → card rolled back (no orphan).
+- App side (electron renderer): one adapter per `EntityKind` from `packages/shared/src/entities` / `@rox/core/entities` (`isEntityKind`, `entityRoute`), auto-registered by iterating the kind list; create via each module's existing RPC (notes, pages, tasks, sessions, dashboards…); links via `server-core/entities/link-store.ts` RPC with new kind `canvas` (fragment = objectId, `kindTakesFragment('canvas') = true`); `subscribe` via existing entity change events → `applyEntitySnapshot`; `open` → `entityRoute(ref)`.
+- Drag-and-drop: `application/x-rox-entity` payload `{kind,id}` from sidebar/omnibox/backlinks → `linkEntityCard`.
+- AI tools: `canvas_create_entity_card(boardId, kind, title, at)`, `canvas_link_entity(boardId, ref, at)`; deletion of entities is never done by agents without user confirmation (safeMode: ask).

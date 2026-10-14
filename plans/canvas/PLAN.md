@@ -13,28 +13,34 @@ PRD/SPEC/PLAN; license verdict (ELv2 → clean-room).
 - WP2.1 Stage renderer, pan/zoom, hit-test, selection/transform, snapping/guides.
 - WP2.2 Basic objects: shape, text (Y.Text), sticky, line, ink, image (assets), frame, group.
 - WP2.3 Panels: toolbar, inspector (style), layers, minimap, context menu, shortcuts, ⌘K.
-## Phase 3 — Collaboration & auth
-- WP3.1 rox-id token endpoint + JWKS verification in the relay; scopes; guest share links. (Server change → backup, reversible.)
-- WP3.2 Presence: cursors, avatars, selections, follow mode; offline merge tests (2-client e2e).
-- WP3.3 eu-swiss deploy: canvas.rox.one TLS, systemd/docker, backups, monitoring. Settings section with relay URL + test.
-## Phase 4 — Full object parity
-- WP4.1 Connectors + routing, mindmap, diagram-code (mermaid), auto-layout.
-- WP4.2 Table, chart, embed, video/audio, QR, icon/sticker/stamp, mask/boolean, effects/gradients/patterns.
-- WP4.3 Comments, version history, templates, present mode, export PNG/SVG/PDF/JSON, search.
-## Phase 5 — AI & entity links
-- WP5.1 Entity kind `canvas` (+fragment), link UI in the inspector, backlinks in notes/tasks.
-- WP5.2 Agent tools (§6 SPEC), @rox prompt bar, generate/organize/summarize, stickies→tasks.
-## Phase 6 — Sheets & formulas
-- WP6.1 formula engine (packages/canvas-formula): tokenizer, parser, evaluator, dependency graph, recalculation; ~150 functions. WP6.2 sheet object + standalone sheet UI; charts bound to ranges.
-## Phase 7 — Docs
-- WP7.1 doc object/page on Y.XmlFragment (editor reusing Rox's notes editor stack where possible). WP7.2 export (md/docx/pdf).
-## Phase 8 — Timeline (video/audio)
-- WP8.1 timeline model (tracks/clips/keyframes) in canvas-core. WP8.2 editor UI. WP8.3 render pipeline (ffmpeg in main, progress, cancel).
-## Phase 9 — Print & publishing
-- WP9.1 print export (bleed/crop marks/page sizes). WP9.2 publish as website (static bundle + hosting on the relay host, view links, unpublish).
-## Phase 10 — Stock library & AI studio
-- WP10.1 stock provider adapters + licensing metadata. WP10.2 AI studio: generate/edit/remove-bg/upscale via Rox providers; text-to-design.
-## Phase 11 — Hardening
+## Phase 3 — Live entity cards (right after the editor core)
+- WP3.1 canvas-core `entity` type + `EntityKindRegistry` + board ops (DONE on feat/canvas-core, tested).
+- WP3.2 entity-links: kind `canvas` with objectId fragment; link/unlink RPC; backlinks render «На доске …».
+- WP3.3 adapters for every EntityKind, auto-registered from the kind list (create via existing APIs, read, subscribe, open, explicit delete).
+- WP3.4 card UI (title/status/preview, open natively), «+ Сущность» picker of creatable kinds, drag-and-drop of existing entities, delete dialog (unlink vs. delete entity).
+- WP3.5 agent tools `canvas_create_entity_card`, `canvas_link_entity`.
+## Phase 4 — Collaboration & auth
+- WP4.1 rox-id token endpoint + JWKS verification in the relay; scopes; guest share links. (Server change → backup, reversible.)
+- WP4.2 Presence: cursors, avatars, selections, follow mode; offline merge tests (2-client e2e).
+- WP4.3 eu-swiss deploy: canvas.rox.one TLS, systemd/docker, backups, monitoring. Settings section with relay URL + test.
+## Phase 5 — Full object parity
+- WP5.1 Connectors + routing, mindmap, diagram-code (mermaid), auto-layout.
+- WP5.2 Table, chart, embed, video/audio, QR, icon/sticker/stamp, mask/boolean, effects/gradients/patterns.
+- WP5.3 Comments, version history, templates, present mode, export PNG/SVG/PDF/JSON, search.
+## Phase 6 — AI & entity links
+- WP6.1 Entity kind `canvas` (+fragment), link UI in the inspector, backlinks in notes/tasks.
+- WP6.2 Agent tools (§6 SPEC), @rox prompt bar, generate/organize/summarize, stickies→tasks.
+## Phase 7 — Sheets & formulas
+- WP7.1 formula engine (packages/canvas-formula): tokenizer, parser, evaluator, dependency graph, recalculation; ~150 functions. WP7.2 sheet object + standalone sheet UI; charts bound to ranges.
+## Phase 8 — Docs
+- WP8.1 doc object/page on Y.XmlFragment (editor reusing Rox's notes editor stack where possible). WP8.2 export (md/docx/pdf).
+## Phase 9 — Timeline (video/audio)
+- WP9.1 timeline model (tracks/clips/keyframes) in canvas-core. WP9.2 editor UI. WP9.3 render pipeline (ffmpeg in main, progress, cancel).
+## Phase 10 — Print & publishing
+- WP10.1 print export (bleed/crop marks/page sizes). WP10.2 publish as website (static bundle + hosting on the relay host, view links, unpublish).
+## Phase 11 — Stock library & AI studio
+- WP11.1 stock provider adapters + licensing metadata. WP11.2 AI studio: generate/edit/remove-bg/upscale via Rox providers; text-to-design.
+## Phase 12 — Hardening
 Perf (5k objects), a11y, RTL (ar), i18n coverage 100%, e2e Playwright, self-host docs, release.
 
 Parallel lanes: {1.1,1.2,1.3,1.4} → {2.x, 3.1, 3.3 prep} → {3.2, 4.x, 5.1} → {5.2} → 6.

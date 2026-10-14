@@ -13,6 +13,8 @@ export const OBJECT_TYPES = [
   'shape', 'path', 'ink', 'line', 'connector', 'text', 'sticky', 'sticker', 'stamp', 'icon',
   'image', 'video', 'audio', 'embed', 'qr', 'table', 'chart', 'group', 'frame', 'mask',
   'boolean', 'mindmap', 'diagramcode', 'boardview', 'slide', 'sheet', 'doc', 'timeline',
+  // A live card for a real Rox entity (note, page, dashboard, session, task, … — any EntityKind).
+  'entity',
 ] as const
 export type ObjectType = (typeof OBJECT_TYPES)[number]
 export const isObjectType = (v: unknown): v is ObjectType =>
@@ -91,6 +93,20 @@ export const PROP_SCHEMAS: Partial<Record<ObjectType, z.ZodTypeAny>> = {
   table: z.object({ rows: z.number().int().min(1), cols: z.number().int().min(1) }).passthrough(),
   diagramcode: z.object({ language: z.enum(['mermaid']) }).passthrough(),
   boardview: z.object({ boardId: z.string().min(1) }).passthrough(),
+  entity: z.object({
+    kind: z.string().min(1),
+    entityId: z.string().min(1),
+    /** Cached for offline render; refreshed from the live entity (never the source of truth). */
+    snapshot: z.object({
+      title: z.string(),
+      status: z.string().optional(),
+      preview: z.string().max(2000).optional(),
+      icon: z.string().optional(),
+      updatedAt: z.number().int().nonnegative().optional(),
+    }).optional(),
+    /** 'created' = minted on this board; 'linked' = dropped existing entity. */
+    provenance: z.enum(['created', 'linked']).default('linked'),
+  }).passthrough(),
 }
 
 export type ValidationIssue = { id: string; message: string }

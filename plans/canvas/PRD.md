@@ -31,6 +31,13 @@ Billing is not part of Rox and stays out.
 ## AI (Rox-native)
 @rox and agents: create/edit/delete/move objects; generate a diagram or board from a prompt (mermaid → nodes, mindmap, flow, kanban, retro); organize (cluster, auto-layout, tidy); summarize a selection or a board to a note/task; convert stickies → tasks; link objects ↔ notes/tasks/sessions/pages via entity-links; canvas as session context (export of selection as structured text plus a snapshot).
 
+## Live entity cards (Mark, 2026-10-14)
+- Users and agents create **real Rox entities** from the board — notes, pages, dashboards, sessions, tasks and every other EntityKind — each through that kind's existing creation API and stored in its own store.
+- Each appears as a live card (title, status, preview); renames/status changes show on the card (two-way sync); clicking opens the entity natively.
+- Every card is auto-linked via entity-links: `{kind:'canvas', id:boardId, fragment:objectId}` ⇄ entity. Dropping an existing entity (from sidebar, search, omnibox) onto the board links it the same way.
+- Deleting a card **unlinks only**; deleting the entity requires an explicit user choice («Удалить и саму сущность»).
+- Generic: a registry of entity kinds; a new kind plugs in by registering an adapter — no board changes.
+
 ## Non-functional
 - Native Rox UI (tokens, Arc Glass, panel strip, sidebar/pill), no WebView.
 - Offline-first: works without a relay, then syncs. Local doc in the workspace.
