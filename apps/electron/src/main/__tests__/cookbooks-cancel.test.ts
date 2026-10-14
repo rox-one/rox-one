@@ -191,6 +191,8 @@ describe('CookbooksRuntime cancelled DTO pass-through', () => {
         error: null,
         timedOut: false,
         missing: [],
+        // Wave 11: the runner wrote no results file for a cancelled run.
+        displays: [],
         cancelled: true,
       })
     } finally {
@@ -223,7 +225,7 @@ describe('CookbooksRuntime cancelled DTO pass-through', () => {
     const runtime = await runtimeOnPort(stub.port)
     try {
       expect(await runtime.apiRunAll('probe-item', [{ index: 0, source: 'x' }])).toEqual({
-        cells: [{ index: 0, status: 'ok', stdout: 'started\n', error: null }],
+        cells: [{ index: 0, status: 'ok', stdout: 'started\n', error: null, displays: [] }],
         cancelled: true,
       })
     } finally {

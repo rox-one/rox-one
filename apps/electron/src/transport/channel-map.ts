@@ -622,8 +622,11 @@ export const CHANNEL_MAP = {
   'cookbooksLab.catalog': invoke(RPC_CHANNELS.cookbooksLab.CATALOG),
   'cookbooksLab.open': invoke(RPC_CHANNELS.cookbooksLab.OPEN),
   'cookbooksLab.document': invoke(RPC_CHANNELS.cookbooksLab.DOCUMENT),
-  'cookbooksLab.run': invoke(RPC_CHANNELS.cookbooksLab.RUN),
-  'cookbooksLab.runAll': invoke(RPC_CHANNELS.cookbooksLab.RUN_ALL),
+  // Wave 11: 30-с дефолт транспорта рубил легитимные долгие прогоны (холодный
+  // импорт matplotlib) — бюджет > runtime runApiTimeoutMs
+  'cookbooksLab.run': invoke(RPC_CHANNELS.cookbooksLab.RUN, undefined, 120_000),
+  // Wave 11: тот же дефолт рубил run-all на холодном ядре — бюджет > runtime-капа
+  'cookbooksLab.runAll': invoke(RPC_CHANNELS.cookbooksLab.RUN_ALL, undefined, 16 * 60_000),
   'cookbooksLab.save': invoke(RPC_CHANNELS.cookbooksLab.SAVE),
   'cookbooksLab.reset': invoke(RPC_CHANNELS.cookbooksLab.RESET),
   'cookbooksLab.cancel': invoke(RPC_CHANNELS.cookbooksLab.CANCEL),
@@ -933,6 +936,9 @@ export const CHANNEL_MAP = {
   onLlmConnectionsChanged: listener(RPC_CHANNELS.llmConnections.CHANGED),
 
   // Views
+  getChatFolders: invoke(RPC_CHANNELS.chatFolders.GET),
+  mutateChatFolders: invoke(RPC_CHANNELS.chatFolders.MUTATE),
+  onChatFoldersChanged: listener(RPC_CHANNELS.chatFolders.CHANGED),
   listViews: invoke(RPC_CHANNELS.views.LIST),
   saveViews: invoke(RPC_CHANNELS.views.SAVE),
 
@@ -950,6 +956,8 @@ export const CHANNEL_MAP = {
   getColorTheme: invoke(RPC_CHANNELS.theme.GET_COLOR_THEME),
   setColorTheme: invoke(RPC_CHANNELS.theme.SET_COLOR_THEME),
   setAppMaterial: invoke(RPC_CHANNELS.theme.SET_APP_MATERIAL),
+  setAppLayers: invoke(RPC_CHANNELS.theme.SET_APP_LAYERS),
+  saveUserThemePreset: invoke(RPC_CHANNELS.theme.SAVE_USER_PRESET),
   getWorkspaceColorTheme: invoke(RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME),
   setWorkspaceColorTheme: invoke(RPC_CHANNELS.theme.SET_WORKSPACE_COLOR_THEME),
   getAllWorkspaceThemes: invoke(RPC_CHANNELS.theme.GET_ALL_WORKSPACE_THEMES),
