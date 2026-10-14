@@ -1,5 +1,6 @@
 import { TourConnectionPolicyContext } from '@/features/product-tour/runtime/hooks'
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { useTranslation, Trans } from "react-i18next"
 import { isInternalAgentSession } from "@rox/shared/sessions/internal-prompts"
 import { useRef, useState, useEffect, useCallback, useMemo } from "react"
@@ -3167,7 +3168,8 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                   data-sidebar-scroll=""
                   className={cn('flex-1 overflow-y-auto min-h-0 pb-2', !(isSettingsNavigation(navState) && !isAutoCompact) && 'sidebar-scroll-fade')}
                 >
-                {activeWorkspaceId && !isSidebarCollapsed && (
+                {/* WP6: the project scope shows where it filters (chats, projects) or whenever a project is picked, so an active scope is never hidden. */}
+                {activeWorkspaceId && !isSidebarCollapsed && (selectedProjectId !== null || isSessionsNavigation(navState) || isProjectsNavigation(navState)) && (
                   <div className="flex h-[var(--chrome-panel-header-height)] shrink-0 items-center gap-1.5 border-b border-border-subtle px-3">
                     <label className="shrink-0 text-xs text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
                     <select id="workspace-project-context" value={selectedProjectId ?? ''}
@@ -3178,11 +3180,11 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                     </select>
                   </div>
                 )}
-                <div ref={setShellSidebarSlot} hidden={isSidebarCollapsed} data-primary-sidebar-context className="mb-2 border-b border-border-subtle empty:hidden">
-                  {isSettingsNavigation(navState) && !isAutoCompact && (
-                    <SettingsNavigator selectedSubpage={navState.subpage ?? null} onSelectSubpage={subpage => handleSettingsClick(subpage)} />
-                  )}
-                </div>
+                {/* WP6: Settings uses the same contextual slot as every other surface (under the global nav). */}
+                {shellSidebarSlot && isSettingsNavigation(navState) && !isAutoCompact && createPortal(
+                  <SettingsNavigator selectedSubpage={navState.subpage ?? null} onSelectSubpage={subpage => handleSettingsClick(subpage)} />,
+                  shellSidebarSlot,
+                )}
 <ShellLayoutMode workspaceRootPath={activeWorkspace?.rootPath}>
                   {(layoutMode) => (
                     <>
@@ -3198,6 +3200,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                         toggleExpanded={toggleExpanded}
                         applicationSectionsOpen={applicationSectionsOpen}
                         onApplicationSectionsOpenChange={handleApplicationSectionsOpenChange}
+                        contextSlotRef={setShellSidebarSlot}
                       />
                     </>
                   )}
