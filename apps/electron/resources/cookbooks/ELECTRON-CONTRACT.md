@@ -251,13 +251,15 @@ The probe asserts exactly this (`scripts/electron_handshake_probe.py`, §8):
 | 400 | bad itemId/index/flag, unknown item, no kernel for item, corrupt notebook, `CatalogError`/`CopyError`/`NotebookError`/`KernelError` | `:220-357` |
 | 401 | missing/incorrect token on a JSON route | `:175-176`, `:211-212` |
 | 403 | Host header is not loopback | `:168-169`, `:209-210` |
-| 404 | unknown path | `:206`, `:357` |
+| 404 | unknown path; `POST /cancel` for an unknown `itemId` | `:206`, `:357` |
 | 413 | POST body over 2 MiB | `:30`, `:131-132` |
+| 503 | `/run` or `/run-all` arrives after `LabHost.stop` began (`{"error":"host is shutting down"}`) | `src/rox_cookbooks/host.py:92-102`, `:276-277` |
 
 All error bodies are `{"error": "<message>"}`, so a client can always show `data.error`
 (`src/rox_cookbooks/host.py:150-157`). `/document/<id>` adds `"reset": true` when the copy's
-notebook is corrupt, meaning "offer Reset" (`:201-202`). There is no 5xx: the host maps even
-kernel-start failures to 400 (`plans/011-host-input-safety.md:109-112`).
+notebook is corrupt, meaning "offer Reset" (`:201-202`). The only 5xx is `503` for a `/run` or
+`/run-all` that arrives after shutdown began (below); the host maps even kernel-start failures to
+400 (`plans/011-host-input-safety.md:109-112`).
 
 ### 3.5 API surface
 
@@ -287,12 +289,17 @@ Card and `missing` payloads carry **credential key names only** (`src/rox_cookbo
   running it answers `cancelled: 0`. An `itemId` that does not resolve in the catalog is `404`
   (like an unknown path); a missing `itemId` is `400`.
 - The host keeps a **thread-safe registry** of in-flight executions keyed by `itemId`
-  (`ActiveRuns`, `src/rox_cookbooks/kernel.py:1010-1050`), registered before a run starts and
-  released when it returns (`src/rox_cookbooks/host.py:286`, `:371`). Cancelling kills the child's
-  **process group** (`_kill_process_tree`, SIGKILL), the same path a cell timeout uses.
+  (`ActiveRuns`, `src/rox_cookbooks/kernel.py:1033-1080`). Each `/run`/`/run-all` registers its
+  handle **before** resolving the item or spawning, and releases it when the request returns
+  (`LabHost.begin_run`, `src/rox_cookbooks/host.py:92-102`, used at `:276` and `:384`). Cancelling
+  kills the child's **process group** (`_kill_process_tree`, SIGKILL), the same path a cell timeout
+  uses.
+- **Shutdown gate.** `begin_run` refuses (`503`) once `LabHost.stop` has begun: it takes the same
+  lifecycle lock that `stop` holds while it sets the flag and cancels, so a run can never start
+  after the stop-time sweep (`src/rox_cookbooks/host.py:565-573`).
 - `/run` and `/run-all` responses gain an **additive** `"cancelled": true|false` field: `true` when
-  this request's run was stopped by `/cancel`, `false` otherwise (`src/rox_cookbooks/host.py:308`,
-  `:389`). No existing field changes.
+  this request's run was stopped by `/cancel`, `false` otherwise (`src/rox_cookbooks/host.py:341`,
+  `:433`). No existing field changes.
 - For `/run-all`, the per-cell records already written to the temp `results.json` are kept, so a
   partially completed run reports the finished cells; the remaining cells come back `skipped`
   (`execute_all`, `src/rox_cookbooks/kernel.py:1328-1502`).
@@ -404,6 +411,13 @@ exactly the line `serve_lab.py` prints (`scripts/serve_lab.py:26`; `README.md:18
   document (`src/rox_cookbooks/notebooks.py:73`, `:296`, `:309`; `src/rox_cookbooks/host.py:322`),
   the venv install marker (`src/rox_cookbooks/kernel.py:708`) and the optional install log
   (`:691`, off by default — §2.6). None of these carries a store value.
+- **The run-all temp files carry no secret value.** A `/run-all` writes a driver script, a job JSON
+  and a `results.json` into a per-run temp dir (`execute_all`, `src/rox_cookbooks/kernel.py:1424-1444`).
+  The job JSON holds the secret env **names** only (`secret_env`; the values stay in the child's
+  environment), is created `0600` and is unlinked by the driver as soon as it has read it;
+  `results.json` is written with the secret values already masked (§5.4), so a kill mid-run leaves
+  neither file holding a raw secret. The whole temp dir is removed when the request returns
+  (`:1474`).
 - **Contract consequence:** the desktop layer that materialises the store file is responsible for
   creating it **mode `0600`** (POSIX) and for its directory being `0700`. The Lab performs no
   `chmod`/`umask` and never tightens permissions — verified: no `chmod`, `os.chmod`, `umask` or
@@ -428,12 +442,12 @@ exactly the line `serve_lab.py` prints (`scripts/serve_lab.py:26`; `README.md:18
   (`src/rox_cookbooks/secrets.py:65-75`; applied at `src/rox_cookbooks/kernel.py:979-989`). It
   replaces **known secret values** longest-first with `***`, using the values laid over this cell's
   final env — i.e. exactly what was injected.
-- **Run-all redacts before the temp write (G4-CBK-01).** The run-all driver receives the secret
-  values in its job JSON and masks them from each record **before** appending that record to the
-  temp `results.json` (`_RUN_ALL_DRIVER`, `src/rox_cookbooks/kernel.py:881-956`; job payload built
-  in `execute_all`, `:1385-1404`). A run killed mid-flight — `/cancel` or the overall timeout —
-  therefore cannot leave a raw secret on disk. The caller-side redaction (`:1465-1466`) stays as
-  defense in depth.
+- **Run-all redacts before the temp write (G4-CBK-01).** The run-all driver is handed the secret
+  env **names** in its job JSON (`secret_env`) and reads the values from its own environment; it
+  masks them from each record **before** appending that record to the temp `results.json`
+  (`_RUN_ALL_DRIVER`, `src/rox_cookbooks/kernel.py:881-956`; job payload built in `execute_all`,
+  `:1402-1432`). A run killed mid-flight — `/cancel` or the overall timeout — therefore cannot
+  leave a raw secret on disk. The caller-side redaction (`:1465-1466`) stays as defense in depth.
 - Redaction is **best-effort** and only sees the captured streams (`docs/spec.md:121`). It does not
   cover: files a cell writes, subprocesses that print to a tty, values a vendor SDK re-encodes, or
   network egress. Do not describe it as a guarantee.
@@ -476,9 +490,11 @@ Notes:
 - **Exit codes of the CLI mirror the same rules** and are useful for a headless smoke:
   `run` → 0 ok / 1 failure / 3 unsupported / 4 markdown / 5 no code cells;
   `reset` → 6 on refusal (`src/rox_cookbooks/ui.py:246-286`; `README.md:54-55`).
-- **No 5xx exists.** If Electron wants to distinguish "the sidecar is broken" from "your request
-  was wrong", it cannot do so from status alone today. **Proposal.** Add a 5xx mapping for internal
-  errors (`plans/011-host-input-safety.md:109-112` suggests doing it in one place).
+- **No unexpected 5xx.** The single 5xx is `503 {"error":"host is shutting down"}` for a
+  `/run`/`/run-all` that arrives after `LabHost.stop` began (`src/rox_cookbooks/host.py:92-102`);
+  every other failure is 4xx. If Electron wants to distinguish "the sidecar is broken" from "your
+  request was wrong", it cannot do so from status alone today. **Proposal.** Add a 5xx mapping for
+  internal errors (`plans/011-host-input-safety.md:109-112` suggests doing it in one place).
 - **Timeouts.** The HTTP host has no request timeout; the only timeout is the cell limit
   (`Kernel`, default 60 s, `src/rox_cookbooks/kernel.py:888`, `:943`). **Proposal.** Set an HTTP
   client timeout ≥ the cell timeout, and pass an explicit cell `timeout` from the UI.

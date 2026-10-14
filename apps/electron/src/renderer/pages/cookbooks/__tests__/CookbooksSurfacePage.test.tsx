@@ -1375,7 +1375,7 @@ describe('CookbooksSurfacePage stop (wave 9)', () => {
     expect(testId(container, 'cookbooks-stop-1')).toBeNull()
   })
 
-  it('stops a run-all from the header and marks the cells the response never reached', async () => {
+  it('stops a run-all from the header and marks the cells the stop cut short', async () => {
     const gate = Promise.withResolvers<{ cells: CookbooksRunCell[]; cancelled?: boolean }>()
     const { api, container } = await renderNotebook({ runAll: () => gate.promise })
 
@@ -1390,8 +1390,17 @@ describe('CookbooksSurfacePage stop (wave 9)', () => {
     await click(container, 'cookbooks-stop-all')
     expect(api.counts.cancel).toEqual([{ itemId: 'rox-analytics' }])
 
+    // What the sidecar really answers after a stop: one record per requested
+    // cell, the ones the stop cut short marked `skipped`, run-wide cancelled.
     await act(async () => {
-      gate.resolve({ cells: [{ index: 1, status: 'ok', stdout: 'ok-1', error: null }], cancelled: true })
+      gate.resolve({
+        cells: [
+          { index: 1, status: 'ok', stdout: 'ok-1', error: null },
+          { index: 2, status: 'skipped', stdout: '', error: null },
+          { index: 3, status: 'skipped', stdout: '', error: null },
+        ],
+        cancelled: true,
+      })
       await gate.promise
     })
     await flush()
@@ -1399,6 +1408,7 @@ describe('CookbooksSurfacePage stop (wave 9)', () => {
     expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('ok')
     for (const index of [2, 3]) {
       const output = testId(container, `cookbooks-output-${index}`)!
+      // Stopped, not skipped — a stopped batch has no skipped cells.
       expect(output.getAttribute('data-status')).toBe('cancelled')
       expect(output.textContent).toBe(t('cookbooks.cell.cancelled'))
     }
@@ -1407,6 +1417,23 @@ describe('CookbooksSurfacePage stop (wave 9)', () => {
     // Only the cell that answered ran — the stopped ones never moved a counter.
     expect(testId(container, 'cookbooks-runs-1')!.textContent).toBe('[1]')
     expect(testId(container, 'cookbooks-runs-2')!.textContent).toBe('[ ]')
+  })
+
+  it('marks a requested cell the stopped response never mentioned as cancelled too', async () => {
+    const { container } = await renderNotebook({
+      runAll: async () => ({
+        cells: [{ index: 1, status: 'ok', stdout: 'ok-1', error: null }],
+        cancelled: true,
+      }),
+    })
+
+    await click(container, 'cookbooks-run-all')
+
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('ok')
+    for (const index of [2, 3]) {
+      expect(testId(container, `cookbooks-output-${index}`)!.getAttribute('data-status')).toBe('cancelled')
+    }
+    expect(testId(container, 'cookbooks-status')!.textContent).toContain(t('cookbooks.notice.runCancelled'))
   })
 
   it('cancels the run in flight on Esc, and leaves the key alone while nothing runs', async () => {
@@ -1562,6 +1589,24 @@ describe('CookbooksSurfacePage autoscroll (wave 9)', () => {
     })
     await click(container, 'cookbooks-run-1')
     expect(testId(container, 'cookbooks-output-1')!.textContent).toBe('100%|##| 2/2\n')
+  })
+
+  it('copies the output exactly as shown, carriage returns normalized', async () => {
+    const copied: string[] = []
+    const { container } = await renderNotebook(
+      { run: async () => ({ ok: true, stdout: 'первый кадр\rпоследний кадр\n', error: null, timedOut: false, missing: [] }) },
+      {
+        writeClipboard: async (text) => {
+          copied.push(text)
+        },
+      },
+    )
+    await click(container, 'cookbooks-run-1')
+
+    const shown = testId(container, 'cookbooks-output-1')!.textContent
+    expect(shown).toBe('последний кадр\n')
+    await click(container, 'cookbooks-copy-output-1')
+    expect(copied).toEqual([shown])
   })
 })
 

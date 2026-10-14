@@ -903,9 +903,16 @@ def _write(path, payload):
 def main(job_path):
     with open(job_path, encoding="utf-8") as fh:
         job = json.load(fh)
+    # The job file has served its purpose; drop it so nothing lingers on disk.
+    try:
+        os.unlink(job_path)
+    except OSError:
+        pass
     results_path = job["results"]
     per_cell = float(job.get("timeout") or 0)
-    secrets = job.get("secrets") or []
+    # Values come from our own environment: the caller passes names only, so no
+    # secret value is ever written to the job file (G4-CBK-01).
+    secrets = [os.environ.get(name) for name in (job.get("secret_env") or [])]
     timer = hasattr(signal, "setitimer")
 
     class CellTimeout(Exception):
@@ -1376,12 +1383,15 @@ def execute_all(
     group is killed and jobs without a record are ``skipped``. ``env`` is the
     child environment overlay (the copy's declared secrets); its values are
     redacted from every stream (in the driver, before each temp write, and again
-    here), and failures are mapped to the ROX missing-credential message when
-    ``catalog``/``item`` are given. With ``persist`` the executed cells' outputs
-    are written into the copy's ipynb (``skipped`` cells keep whatever they had).
-    ``run`` is the host's cancellable handle for this request (see
-    ``RunHandle``); after a ``/cancel`` the records already in ``results.json``
-    are kept and the missing cells stay ``skipped``.
+    here), and the driver is given the secret *names* only — it reads the values
+    from its own environment, so no secret value reaches the temp job file. The
+    job file is written ``0600`` and unlinked by the driver once read. Failures
+    are mapped to the ROX missing-credential message when ``catalog``/``item``
+    are given. With ``persist`` the executed cells' outputs are written into the
+    copy's ipynb (``skipped`` cells keep whatever they had). ``run`` is the
+    host's cancellable handle for this request (see ``RunHandle``); after a
+    ``/cancel`` the records already in ``results.json`` are kept and the missing
+    cells stay ``skipped``.
 
     Capture caveat: the driver captures a cell by swapping ``sys.stdout``/
     ``sys.stderr`` for ``io.StringIO``, so a cell that writes through
@@ -1405,6 +1415,11 @@ def execute_all(
     # Same redaction policy as `Kernel.execute`: every value this copy declared.
     secret_values = [value for name, value in proc_env.items() if value and name in env_map]
     secret_values.extend(value for value in env_map.values() if value)
+    # G4-CBK-01: the driver redacts before every temp write, so a kill mid-run
+    # cannot leave a raw secret on disk. It is handed the env *names* only and
+    # reads the values from its own environment (they are already in `proc_env`),
+    # so no secret value ever reaches the job file either.
+    secret_names = sorted({str(name) for name, value in env_map.items() if value})
 
     work_dir = Path(tempfile.mkdtemp(prefix="rox-run-all-"))
     job_path = work_dir / "job.json"
@@ -1416,14 +1431,14 @@ def execute_all(
                 "cells": [[index, source] for index, source in pending],
                 "results": str(results_path),
                 "timeout": float(timeout),
-                # G4-CBK-01: the driver redacts these from every record before it
-                # writes the temp results file, so a kill mid-run cannot leave a
-                # raw secret on disk.
-                "secrets": secret_values,
+                "secret_env": secret_names,
             }
         ),
         encoding="utf-8",
     )
+    # Owner-only for defence in depth, even though the job holds no secret; the
+    # driver unlinks it as soon as it has read it.
+    os.chmod(job_path, 0o600)
     driver_path.write_text(_RUN_ALL_DRIVER, encoding="utf-8")
 
     limit = float(timeout) * max(len(pending), 1) + 30.0

@@ -502,8 +502,16 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
           const nextOutputs: Record<number, CookbooksCellResult> = {}
           for (const cell of result.cells) nextOutputs[cell.index] = cell
           if (result.cancelled === true) {
-            // The response is the whole truth about what ran: everything the
-            // batch was asked for and did not answer was stopped.
+            // The sidecar answers one record per requested cell; the cells a
+            // stop cut short come back as `skipped` (a natural error-stop keeps
+            // `cancelled:false`, so during a cancellation those are exactly the
+            // cells that never ran). They are stopped, not skipped.
+            for (const cell of result.cells) {
+              if (cell.status !== 'skipped') continue
+              nextOutputs[cell.index] = { ...cell, status: 'cancelled' }
+            }
+            // Defence in depth: a cell the response never mentioned was stopped
+            // just the same.
             for (const cell of cells) {
               if (nextOutputs[cell.index]) continue
               nextOutputs[cell.index] = { index: cell.index, status: 'cancelled', stdout: '', error: null }
@@ -662,13 +670,13 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
     [t],
   )
 
-  /** R6: copy the output the cell is showing right now. */
+  /** R6: copy the output the cell is showing right now — exactly as shown. */
   const copyOutput = useCallback(
     async (index: number) => {
       const cell = outputs[index]
       if (!cell) return
       try {
-        await writeClipboard(outputText(cell))
+        await writeClipboard(normalizeOutputText(outputText(cell)))
         toast.success(t('toast.copied'))
       } catch {
         toast.error(t('toast.copyFailed'))
