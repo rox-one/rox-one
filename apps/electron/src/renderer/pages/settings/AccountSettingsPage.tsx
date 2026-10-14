@@ -45,6 +45,7 @@ import {
 } from '../../../shared/types'
 import { MAIL_DEFAULT_DOMAIN } from '../../../shared/mail-local'
 import { settingsPageActionResult } from './settings-rox2-surface'
+import { RoxAccountManagement } from './RoxAccountManagement'
 
 /**
  * The Standard/Pro/Team/Max picker is only a local label with no billing
@@ -124,7 +125,7 @@ export default function AccountSettingsPage() {
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const connectionState = useTransportConnectionState()
   const taskCount = useWorkspaceTaskCount(workspace?.id)
-  const { account: cloudAccount, connectError: cloudError, updating: cloudUpdating, lastSyncedAt: cloudSyncedAt } = useRoxCloudAccount()
+  const { account: cloudAccount, connectError: cloudError, updating: cloudUpdating, lastSyncedAt: cloudSyncedAt, refresh: refreshCloudAccount } = useRoxCloudAccount()
   const [profile, setProfile] = React.useState<Profile | null>(null)
   const [displayName, setDisplayName] = React.useState('')
   const [email, setEmail] = React.useState('')
@@ -330,6 +331,7 @@ export default function AccountSettingsPage() {
             <SettingsRow label={t('settings.account.cloud.synced')}><span>{cloudUpdating ? t('settings.account.cloud.updating') : cloudSyncedAt ? accountSyncTime(cloudSyncedAt, i18n.language) : '—'}</span></SettingsRow>
           </SettingsCard>
         </SettingsSection>
+        {cloudAccount ? <RoxAccountManagement handle={cloudAccount.user.handle} keyPrefix={cloudAccount.key?.prefix ?? null} onAccountChanged={refreshCloudAccount} /> : null}
         <SettingsSection title={t('settings.account.usageSection')}>
           <MiniDashboardCards snapshot={dashboard} className="grid-cols-2 sm:grid-cols-3" />
         </SettingsSection>
