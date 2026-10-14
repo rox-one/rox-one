@@ -96,7 +96,9 @@ import { useAnnotationIslandEvents } from '../annotations/use-annotation-island-
 import { useAnnotationCancelRestore } from '../annotations/use-annotation-cancel-restore'
 import { DocumentFormattedMarkdownOverlay } from '../overlay'
 import { AcceptPlanDropdown } from './AcceptPlanDropdown'
-import { CompactAcceptPlanDrawer } from './CompactAcceptPlanDrawer'
+// Lazy: keeps vaul (~95 KB) out of the startup closure; compact mode + plan only.
+const CompactAcceptPlanDrawer = React.lazy(() =>
+  import('./CompactAcceptPlanDrawer').then(m => ({ default: m.CompactAcceptPlanDrawer })))
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -2773,12 +2775,14 @@ export function ResponseCard({
             >
               {hoverDock}
               {isPlan && showAcceptPlan && isLastResponse && onAccept && onAcceptWithCompact && (
-                <CompactAcceptPlanDrawer
-                  onAccept={onAccept}
-                  onAcceptWithCompact={onAcceptWithCompact}
-                  acceptLabel={hasActiveFollowUpAnnotations ? t('plan.acceptAndSendFollowups') : t('plan.acceptPlan')}
-                  acceptOptionLabel={hasActiveFollowUpAnnotations ? t('plan.acceptAndSendFollowups') : t('plan.accept')}
-                />
+                <React.Suspense fallback={null}>
+                  <CompactAcceptPlanDrawer
+                    onAccept={onAccept}
+                    onAcceptWithCompact={onAcceptWithCompact}
+                    acceptLabel={hasActiveFollowUpAnnotations ? t('plan.acceptAndSendFollowups') : t('plan.acceptPlan')}
+                    acceptOptionLabel={hasActiveFollowUpAnnotations ? t('plan.acceptAndSendFollowups') : t('plan.accept')}
+                  />
+                </React.Suspense>
               )}
             </div>
           )}
