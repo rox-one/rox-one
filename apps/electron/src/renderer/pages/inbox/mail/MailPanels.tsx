@@ -29,7 +29,7 @@ import { toErrorMessage } from '@/lib/errors'
 
 const FOLDER_KEYS: Record<MailFolderRole, string> = {
   inbox: 'inbox.mail.folder.inbox',
-  flagged: 'inbox.mail.folder.flagged',
+  flagged: 'feed.mark.starred',
   outbox: 'inbox.mail.folder.outbox',
   drafts: 'inbox.mail.folder.drafts',
   sent: 'inbox.mail.folder.sent',
@@ -239,7 +239,7 @@ export function MailStatusBlock({ mail }: { mail: MailController }) {
         />
       ) : s.state === 'no-mailbox' ? (
         <EmptyState
-          title={t('inbox.mail.connectTitle')}
+          title={t('inbox.mail.connect')}
           body={t('inbox.mail.autoProvisionBody', { domain: s.domain })}
           action={<Button variant="primary" onClick={() => void mail.ensure()} data-testid="mail-get-address">{t('inbox.mail.connect')}</Button>}
         />

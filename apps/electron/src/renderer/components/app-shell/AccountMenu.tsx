@@ -452,7 +452,7 @@ export function AccountMenu({
       data-workspace-rename=""
       value={renameDraft}
       maxLength={WORKSPACE_NAME_MAX}
-      aria-label={t('workspace.renameWorkspace')}
+      aria-label={t('settings.workspace.renameWorkspace')}
       placeholder={t('settings.workspace.enterWorkspaceName')}
       onChange={(e) => setRenameDraft(e.target.value)}
       onBlur={() => void commitRename()}
@@ -623,7 +623,7 @@ export function AccountMenu({
                     <div className="h-7 w-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0">
                       <Pencil className="h-4 w-4 text-foreground/60" />
                     </div>
-                    <span className="font-medium">{t('workspace.renameWorkspace')}</span>
+                    <span className="font-medium">{t('settings.workspace.renameWorkspace')}</span>
                   </button>
                 </DrawerClose>
               )}
@@ -770,7 +770,7 @@ export function AccountMenu({
           {selectedWorkspace && (
             <StyledDropdownMenuItem onSelect={() => startRename()} className="font-sans" data-workspace-rename-item="">
               <Pencil className="h-4 w-4" />
-              {t('workspace.renameWorkspace')}
+              {t('settings.workspace.renameWorkspace')}
             </StyledDropdownMenuItem>
           )}
           <StyledDropdownMenuItem onClick={handleNewWorkspace} className="font-sans">
