@@ -90,6 +90,8 @@ import {
   parseAgentMention,
   parseSearch,
   subtasksOf,
+  navigateIndex,
+  deadlineTone,
   visibleNotes,
   type AgentChip,
   type AgentSessionLike,
@@ -97,6 +99,9 @@ import {
 import { ConfirmDialog, Glyph, ProgressPie, TaskCheckbox, prefersReducedMotion } from './tasks/parts'
 import { QuickEntry, type QuickEntryResult } from './tasks/QuickEntry'
 import { MoveDialog, type MoveDestination } from './tasks/MoveDialog'
+import { BulkActionBar, type BulkAction } from './tasks/BulkActionBar'
+import { orderedSelection, pruneSelection, rangeSelection, toggleInSelection } from './tasks/multi-select'
+import { applyDestinationTo, clearSelection, plainClick, rangeFocus, runBulkOperation, selectAll, settlePrune, settleToggle, undoBulkOperation, type BulkSnapshot, type SelectionState } from './tasks/bulk-actions'
 import { TaskDetail } from './tasks/TaskDetail'
 import { useTaskDetailDrafts } from './tasks/use-task-detail-drafts'
 import { TaskSidebar } from './tasks/TaskSidebar'
@@ -194,6 +199,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
     if (consumePendingCompose('tasks')) setQuickEntry({ initial: '' })
   }, [])
   const [moveFor, setMoveFor] = useState<string | null>(null)
+  const [multi, setMulti] = useState<Set<string>>(() => new Set())
+  const [bulkMove, setBulkMove] = useState(false)
+  const anchorRef = useRef<string | null>(null)
   const [popover, setPopover] = useState<'when' | 'deadline' | null>(null)
   const [confirm, setConfirm] = useState<null | { kind: 'emptyTrash' } | { kind: 'removeArea'; id: string } | { kind: 'removeHeading'; id: string }>(null)
   const [inline, setInline] = useState<InlineDraft | null>(null)
@@ -591,6 +599,59 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }, [view, topLevel, search, tagFilter, sort, pendingDone, showDone, store, projects, i18n.language])
 
   const visible = useMemo(() => sections.flatMap((section) => section.tasks), [sections])
+  const visibleIds = useMemo(() => visible.map((task) => task.id), [visible])
+  // Selection never outlives the rows it points at (view switch, search, completion).
+  const clearMulti = useCallback(() => setMulti((prev) => (prev.size ? new Set() : prev)), [])
+  const bulkIds = multi.size > 1 ? orderedSelection(multi, visibleIds) : []
+
+  const applySelection = (next: SelectionState) => {
+    setMulti(next.multi)
+    if (next.focus !== selectedId) selectTask(next.focus)
+  }
+
+  useEffect(() => {
+    const pruned = pruneSelection(multi, visibleIds)
+    if (pruned !== multi) applySelection(settlePrune(pruned, selectedId))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleIds])
+
+  const onRowMouseDown = (event: React.MouseEvent) => {
+    // Keep ⇧-click from extending the native text selection.
+    if (event.shiftKey) event.preventDefault()
+  }
+
+  const onRowClick = (event: React.MouseEvent, id: string) => {
+    const mod = event.metaKey || event.ctrlKey
+    if (event.shiftKey) {
+      const range = rangeSelection(visibleIds, anchorRef.current ?? selectedId, id)
+      applySelection(range.size > 1 ? { multi: range, focus: rangeFocus(range, selectedId, id) } : plainClick(id))
+      return
+    }
+    anchorRef.current = id
+    if (mod) {
+      const next = toggleInSelection(multi, id, selectedId)
+      const focus = selectedId && next.has(selectedId) ? selectedId : next.has(id) ? id : [...next][0] ?? null
+      applySelection(settleToggle(next, focus))
+      return
+    }
+    applySelection(plainClick(id))
+  }
+
+  const runBulk = (action: BulkAction, dest?: string) => {
+    const ids = bulkIds
+    if (!ids.length) return
+    if (action === 'move' && !dest) { setBulkMove(true); return }
+    let snapshot: BulkSnapshot | null = null
+    mutate((current) => { snapshot = runBulkOperation(current, ids, action, { pending: pendingDone, dest }) })
+    const snap = snapshot as BulkSnapshot | null
+    if (snap && snap.affected.length) {
+      const key = action === 'complete' ? 'tasks.bulk.completed' : action === 'trash' ? 'tasks.bulk.trashed' : 'tasks.bulk.updated'
+      toast(t(key, { count: snap.affected.length }), {
+        action: { label: t('tasks.toast.undo'), onClick: () => mutate((current) => undoBulkOperation(current, snap)) },
+      })
+    }
+    clearMulti()
+  }
   const selected = selectedId ? store.get(selectedId) : undefined
   const nativeTasks = personalTasksNativeAvailable()
   const syncState = personalTasksSyncState()
@@ -646,25 +707,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }, [areas, personalProjects, projects, store, t])
 
   const applyDestination = useCallback((taskId: string, dest: string) => {
-    const tomorrow = startOfLocalDay(Date.now()) + DAY
-    mutate((current) => {
-      if (!current.get(taskId)) return
-      if (dest === 'list:inbox') current.moveTo(taskId, { list: 'inbox', projectId: null, areaId: null })
-      else if (dest === 'when:today') current.setWhen(taskId, { kind: 'today' })
-      else if (dest === 'when:evening') current.setWhen(taskId, { kind: 'evening' })
-      else if (dest === 'when:tomorrow' || dest === 'when:upcoming') current.setWhen(taskId, { kind: 'date', at: tomorrow })
-      else if (dest === 'when:anytime') current.setWhen(taskId, { kind: 'anytime' })
-      else if (dest === 'when:someday') current.setWhen(taskId, { kind: 'someday' })
-      else if (dest === 'noplace') current.moveTo(taskId, { projectId: null, areaId: null })
-      else if (dest.startsWith('project:')) current.moveTo(taskId, { projectId: dest.slice(8) })
-      else if (dest.startsWith('area:')) current.moveTo(taskId, { areaId: dest.slice(5) })
-      else if (dest.startsWith('heading:')) {
-        const [, pid, hid] = dest.split(':')
-        current.moveTo(taskId, { projectId: pid!, headingId: hid! })
-      } else if (dest === 'trash') current.trash(taskId)
-      else if (dest === 'logbook' && !current.get(taskId)!.completedAt) current.completeTask(taskId)
-      if (current.get(taskId)!.trashedAt != null && dest !== 'trash') current.restore(taskId)
-    })
+    mutate((current) => applyDestinationTo(current, taskId, dest))
   }, [mutate])
 
   // ── Keyboard ────────────────────────────────────────────────────────────
@@ -690,7 +733,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
 
   const onKeyDown = (event: React.KeyboardEvent) => {
     if (event.defaultPrevented || event.nativeEvent.isComposing || !canHandleKeyboard(event.target)) return
-    if (quickEntry || moveFor || confirm) return
+    if (quickEntry || moveFor || bulkMove || confirm) return
     const target = event.target as HTMLElement
     // Portalled navigation still bubbles through this page's React tree.
     // Sidebar buttons and disclosures retain their native Space/Enter behavior.
@@ -700,6 +743,12 @@ export default function TasksPage(props: TasksPageProps = {}) {
     if (mod && event.key === 'Enter' && selected) {
       event.preventDefault()
       void delegate(selected)
+      return
+    }
+    if (!typing && multi.size && event.key === 'Escape') { event.preventDefault(); applySelection(clearSelection(selectedId)); return }
+    if (!typing && mod && !event.shiftKey && event.code === 'KeyA' && visibleIds.length) {
+      event.preventDefault()
+      applySelection(selectAll(visibleIds, selectedId))
       return
     }
     if (typing) {
@@ -743,11 +792,20 @@ export default function TasksPage(props: TasksPageProps = {}) {
       return
     }
     if (mod || event.altKey) return
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    const jumpKey = event.key === 'Home' || event.key === 'End' || event.key === 'PageDown' || event.key === 'PageUp'
+    // Home/End/PgUp/PgDn drive the list only from the list itself (or the body);
+    // elsewhere (detail pane, other scroll containers) they keep native scrolling.
+    if (jumpKey && !(target === document.body || listRef.current?.contains(target))) return
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || jumpKey) {
       event.preventDefault()
       const index = selected ? visible.findIndex((task) => task.id === selected.id) : -1
-      const next = event.key === 'ArrowDown' ? visible[Math.min(visible.length - 1, index + 1)] : visible[Math.max(0, index - 1)]
-      if (next) selectTask(next.id)
+      const to = navigateIndex(event.key, index, visible.length)
+      const next = to == null ? undefined : visible[to]
+      if (next) {
+        selectTask(next.id)
+        // Jumps can land far outside the viewport; selection alone does not scroll the row in.
+        listRef.current?.querySelector(`[data-task-id="${CSS.escape(next.id)}"]`)?.scrollIntoView({ block: 'nearest' })
+      }
       return
     }
     if (event.key === ' ' && selected) {
@@ -959,7 +1017,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
     const isToday = isOpenTask(task) && matchesProjection(task, now, 'today')
     const place = !inProjectView && !section.onOpen && (task.projectId || task.areaId) ? (task.projectId ? projectName(task.projectId) : areaName(task.areaId)) : null
     const subs = subtasksOf(tasks, task.id)
-    const selectedRow = selectedId === task.id
+    const focusedRow = selectedId === task.id
+    const selectedRow = focusedRow || multi.has(task.id)
     const showStart = task.startAt != null && showToday && !isToday && !done
     const hasMeta = Boolean(place || progress.total || subs.length || source || showStart || (done && task.completedAt))
     return (
@@ -992,9 +1051,10 @@ export default function TasksPage(props: TasksPageProps = {}) {
         <div
           role="option"
           aria-selected={selectedRow}
-          tabIndex={selectedRow ? 0 : -1}
+          tabIndex={focusedRow ? 0 : -1}
           data-testid={`task-row-${task.id}`}
-          onClick={() => selectTask(task.id)}
+          onMouseDown={onRowMouseDown}
+          onClick={(event) => onRowClick(event, task.id)}
           onDoubleClick={() => { selectTask(task.id); window.setTimeout(() => titleRef.current?.focus(), 0) }}
           className={cn(
             'mx-1.5 flex cursor-default items-start gap-2 rounded-[var(--radius-card)] px-2 py-[5px] outline-none',
@@ -1029,7 +1089,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
             <span key={tag} className="mt-[1px] inline-flex h-[18px] max-w-[96px] shrink-0 items-center truncate rounded-[var(--radius-control)] bg-foreground/[0.07] px-1.5 text-xs text-text-secondary">{tag}</span>
           ))}
           {task.dueAt != null && !done ? (
-            <span className={cn('mt-[1px] inline-flex h-[18px] shrink-0 items-center gap-1 text-xs numeric', daysUntil(task.dueAt, now) <= 0 ? 'font-semibold text-destructive' : 'text-text-secondary')} title={`${t('tasks.field.deadline')}: ${dateFmt.format(task.dueAt)}`}>
+            <span className={cn('mt-[1px] inline-flex h-[18px] shrink-0 items-center gap-1 text-xs numeric', { danger: 'font-semibold text-destructive', warning: 'text-status-warning', muted: 'text-text-secondary' }[deadlineTone(daysUntil(task.dueAt, now))])} title={`${t('tasks.field.deadline')}: ${dateFmt.format(task.dueAt)}`}>
               {Glyph.flag}{formatDeadline(task.dueAt)}
             </span>
           ) : null}
@@ -1263,6 +1323,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       <div
         ref={listRef}
         role="listbox"
+        aria-multiselectable="true"
         aria-label={typeof listTitle === 'string' ? listTitle : undefined}
         tabIndex={0}
         data-testid="tasks-list"
@@ -1340,7 +1401,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const shortcuts: Array<[string, string]> = [
     [formatHotkeyDisplay('mod+n'), 'quick'],
     [formatHotkeyDisplay('space'), 'complete'],
-    ['↑ ↓', 'navigate'],
+    ['↑ ↓ · Home End · PgUp PgDn', 'navigate'],
     [formatHotkeyDisplay('enter'), 'edit'],
     [formatHotkeyDisplay('mod+k'), 'move'],
     [formatHotkeyDisplay('mod+t'), 'today'],
@@ -1490,6 +1551,15 @@ export default function TasksPage(props: TasksPageProps = {}) {
           onClose={() => { setMoveFor(null); listRef.current?.focus() }}
         />
       ) : null}
+      {bulkMove && bulkIds.length ? (
+        <MoveDialog
+          title={t('tasks.bulk.moveTitle', { count: bulkIds.length })}
+          destinations={moveDestinations}
+          onPick={(dest) => { runBulk('move', dest); setBulkMove(false); listRef.current?.focus() }}
+          onClose={() => { setBulkMove(false); listRef.current?.focus() }}
+        />
+      ) : null}
+      {bulkIds.length && !bulkMove ? <BulkActionBar count={bulkIds.length} onAction={runBulk} onClear={() => { clearMulti(); listRef.current?.focus() }} /> : null}
       {confirm?.kind === 'emptyTrash' ? (
         <ConfirmDialog
           title={t('tasks.trash.emptyTitle')}

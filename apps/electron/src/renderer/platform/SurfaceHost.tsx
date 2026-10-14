@@ -13,7 +13,7 @@
  */
 import type { ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CalendarDays, MessagesSquare, Target, type LucideIcon } from 'lucide-react'
+import { CalendarDays, MessagesSquare, PenTool, Target, type LucideIcon } from 'lucide-react'
 import { EmptyState } from '@/components/mode-screen/ModeScreen'
 import type { UnifiedSurfaceId } from '../../shared/surface-routes'
 import { useSlotContributions } from './useSlots'
@@ -44,6 +44,7 @@ const SURFACE_ICONS: Record<UnifiedSurfaceId, LucideIcon> = {
   messenger: MessagesSquare,
   calendar: CalendarDays,
   goals: Target,
+  canvas: PenTool,
 }
 
 /** i18n keys of a surface's empty state (all 12 locales; RU default). */

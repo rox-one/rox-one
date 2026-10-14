@@ -61,6 +61,8 @@ export const DEFAULT_PILL_SURFACES: readonly PillSurface[] = [
   // WP6: Home is an icon-only pill («Главная» in the tooltip/aria-label), always first.
   { id: 'agent', kind: 'mode', titleKey: 'workbench.mode.home', icon: 'Home', modeId: 'home', iconOnly: true },
   { id: 'notes', kind: 'mode', titleKey: 'workbench.pill.notes', icon: 'NotebookPen', modeId: 'notes' },
+  // «Доска»: shown when its mode is registered (workbench.mode.canvas.v1, default ON).
+  { id: 'canvas', kind: 'mode', titleKey: 'workbench.mode.canvas', icon: 'Presentation', modeId: 'canvas' },
   { id: PILL_BROWSER_SURFACE_ID, kind: 'panel', titleKey: 'workbench.pill.browser', icon: 'Globe' },
 ]
 

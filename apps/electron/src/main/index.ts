@@ -19,7 +19,7 @@ markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
 
-import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, net, Notification, safeStorage, session, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, net, Notification, safeStorage, session, shell, Tray, webContents, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { createHash, randomUUID } from 'crypto'
 
 
@@ -1100,6 +1100,16 @@ app.whenReady().then(async () => {
     const { registerSurfaceRoutesIpc } = await import('./surface-routes-ipc')
     registerSurfaceRoutesIpc(ipcMain, {
       isTrustedSender: (event) => isRegisteredRoxRendererWebContents(event.sender),
+    })
+
+    // «Доска» (Canvas): local board persistence in <workspace>/canvas (workspace resolved in main).
+    const { registerCanvasIpc } = await import('./canvas-ipc')
+    registerCanvasIpc(ipcMain, {
+      resolveWorkspaceRoot: (id) => getWorkspaceByNameOrId(id)?.rootPath ?? null,
+      isTrustedSender: (event) => isRegisteredRoxRendererWebContents(event.sender),
+      listRenderers: () => webContents.getAllWebContents().filter((wc) => isRegisteredRoxRendererWebContents(wc)),
+      rendererById: (id) => webContents.fromId(id) ?? undefined,
+      configDir: CONFIG_DIR,
     })
 
     // Transport diagnostics bridge — preload reports remote WS connection state changes
