@@ -5,27 +5,68 @@ Status: **experimental, off by default** (`ROX_SERVER_UTILITY_PROCESS=1`).
 ## What slice 1 does
 
 - `apps/electron/src/main/server-host.ts` forks the standalone server-core
-  bootstrap (`packages/server/src/index.ts`, bundled with
-  `bun run build:server-host-worker` → `apps/electron/dist/server-host-worker.cjs`)
-  into `electron.utilityProcess`.
-- Main waits for the `CRAFT_SERVER_URL=` readiness line, then sets
-  `CRAFT_SERVER_URL` / `CRAFT_SERVER_TOKEN`. Startup then follows the existing
-  **thin-client** path (`isClientOnly` in `main/index.ts`, `preload/bootstrap.ts`)
-  and its WS reconnect.
-- Supervision: crash → restart with exponential backoff (500 ms × 2ⁿ, cap 30 s);
-  a run ≥ 60 s resets the counter; give up after 5 consecutive crashes. Port and
-  token are pinned across restarts so renderer reconnects land.
-- Ready timeout 30 s (child killed → counted as a crash). If the first start
-  fails, main logs and falls back to the in-process server (env untouched).
-- Clean shutdown on quit: `{type:'shutdown'}` over `parentPort` → server's
-  existing `shutdown()` (messaging dispose, `instance.stop()`); `kill()` after 5 s.
-- Event-loop gate (PERF-01): with `ROX_PERF=1`, 30 s after start main logs
-  `[perf] server-host loop-delay gate pass|fail|no-data p99=… budget=…`
-  (budget `ROX_SERVER_UTILITY_PROCESS_LOOP_BUDGET_MS`, default 50). Report-only.
+  bootstrap (`packages/server/src/index.ts`) into `electron.utilityProcess`.
+- **Worker build**: `bun run build:server-host-worker`
+  (`scripts/build-server-host-worker.ts`, part of `build` / `build:win`) →
+  `apps/electron/dist/server-host-worker.mjs`.
+  - **ESM, not CJS**: the server entry uses top-level await (esbuild rejects it
+    for CJS). The banner provides `require` / `__filename` / `__dirname`
+    (needed by bundled CJS deps, e.g. `@larksuiteoapi/node-sdk`).
+  - Bun-only `import.meta.dir` is defined to `__dirname`; `bun:*` stays external
+    and is only reached behind runtime guards. The build fails on any static
+    `bun:` import. `Bun.*` references in the bundle are guarded at runtime.
+  - SQLite uses `node:sqlite` → needs Electron's Node (v24 in Electron 44).
+    Box smoke test: under `ELECTRON_RUN_AS_NODE=1` the bundle passes the
+    sqlite capability probe, binds `CRAFT_RPC_PORT=0`, and prints its ready
+    line in ~1.6 s. Plain Node 20 fails (no `node:sqlite`).
+  - Externals match `build:main` (claude-agent-sdk, onnxruntime-node,
+    transformers, sharp): resolved from the app's node_modules at runtime.
+  - The bundle is ~74 MB unminified and ships even with the flag off.
+  - `build:validate` points at a non-existent `scripts/validate-assets.ts`
+    (already broken on main), so validation lives inside the build script.
+- **Readiness and handoff**: main waits for the `CRAFT_SERVER_URL=` line.
+  Thin-client mode gets URL and token from `getServerHostConfig()` (main),
+  and the preload gets them over the sync IPC `__server-host:config`, which
+  answers only a Rox window's own webContents. They are **never** written to
+  `process.env`. The preload only asks when `ROX_SERVER_UTILITY_PROCESS` is in
+  its env, so with the flag off it makes no IPC call.
+- **Token and env hygiene**: a fresh random token per app session lives only
+  in the supervisor. The child gets an allowlisted env:
+  - OS basics, locale, proxy and CA vars;
+  - `CRAFT_*` and `ROX_*`, minus any URL, token or flag;
+  - `*_API_KEY` and `*_BASE_URL`;
+  - its token, host and port, and resources/version paths.
+- **Before the first readiness**: fail fast. At most 2 attempts with a 10 s
+  ready timeout each, then main falls back to the in-process server with the
+  same behaviour as with the flag off. A fork that throws counts as a failed
+  attempt.
+- **After the first readiness**:
+  - restarts with exponential backoff (500 ms × 2ⁿ, cap 30 s) and a 30 s ready
+    timeout;
+  - the port is pinned so the renderer's WS reconnect lands on the same URL;
+  - only a run that became ready **and** lasted ≥ 60 s resets the counter, so
+    fork throws and never-ready runs always count and give-up is guaranteed
+    (after 5 crashes).
+- **On give-up**: Rox shows an error box and calls `app.relaunch()` with
+  `--rox-no-server-utility-process` (and deletes the flag from env), then
+  `app.exit(0)`, so the next run uses the in-process server.
+  - Chosen over picking a new port because the renderer's thin-client URL is
+    fixed at preload eval.
+  - Busy-port risk is low: Node `listen` sets SO_REUSEADDR, so TIME_WAIT does
+    not block a rebind.
+- **Clean shutdown on quit**: `{type:'shutdown'}` over `parentPort` calls the
+  server's own `shutdown()`. If the child hasn't exited after 5 s, it is
+  killed. If no `exit` event arrives 2 s after the kill, it is treated as
+  exited so quit never hangs. A stop during startup logs "start aborted by
+  shutdown", not a fallback.
+- **Event-loop gate (PERF-01)**: with `ROX_PERF=1`, 30 s after start main logs
+  `[perf] server-host loop-delay gate pass|fail|no-data p99=… budget=…`.
+  The budget is `ROX_SERVER_UTILITY_PROCESS_LOOP_BUDGET_MS`, default 50.
+  The gate only reports; it never changes routing.
 
-Flag off: `server-host.ts` is never imported; the only change on the default
-path is two `if (process.env.ROX_SERVER_UTILITY_PROCESS)` checks. The
-`parentPort` listener added to `packages/server` is inert outside a utilityProcess.
+Flag off: `server-host.ts` is never imported. There is no IPC, the preload
+skips its config call, and the `isClientOnly` and win32 checks evaluate
+exactly as before.
 
 ## Handler inventory — what must stay in main
 
@@ -62,9 +103,15 @@ go child → main over `parentPort` with request ids and timeouts.
 
 ## Needs validation on macOS
 
-- `build:server-host-worker` bundles the bun-targeted server for Node (no
-  `bun:` APIs, native deps resolve inside the asar/unpacked layout).
-- `CRAFT_RPC_PORT=0` binds a free port and the readiness line reports it.
+- The packaged app: the worker forks from inside asar, externals and native
+  deps resolve, and `CRAFT_RESOURCES_PATH` / `CRAFT_BUNDLED_ASSETS_ROOT` are
+  correct. Messaging workers, uv and bun all depend on these.
+- The renderer env contains `ROX_SERVER_UTILITY_PROCESS`, so the preload asks
+  for the config.
+- The give-up relaunch comes back in-process: force it with a worker that
+  exits immediately.
+- Packaged size cost (~74 MB) is acceptable, or minify / ship it only on a
+  flag-enabled channel.
 - Window shell still paints first (the fork is awaited before windows exist
   when the flag is on — measure the cost with the startup bench).
 - Kill the child (`kill <pid>`) → renderer reconnects after restart.

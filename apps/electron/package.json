@@ -24,8 +24,8 @@
     "build:renderer": "vite build",
     "build:copy": "bun scripts/copy-assets.ts",
     "build:validate": "bun scripts/validate-assets.ts",
-    "build": "bun run lint && bun run build:main && bun run build:main-worker && bun run build:extension-host-worker && bun run build:preload && bun run build:preload-toolbar && bun run build:preload-desktop && bun run build:interceptor && bun run build:renderer && bun run build:copy && bun run build:validate",
-    "build:win": "bun run build:main:win && bun run build:main-worker && bun run build:extension-host-worker && bun run build:preload && bun run build:preload-toolbar && bun run build:preload-desktop && bun run build:interceptor && bun run build:renderer && bun run build:copy && bun run build:validate",
+    "build": "bun run lint && bun run build:main && bun run build:main-worker && bun run build:extension-host-worker && bun run build:server-host-worker && bun run build:preload && bun run build:preload-toolbar && bun run build:preload-desktop && bun run build:interceptor && bun run build:renderer && bun run build:copy && bun run build:validate",
+    "build:win": "bun run build:main:win && bun run build:main-worker && bun run build:extension-host-worker && bun run build:server-host-worker && bun run build:preload && bun run build:preload-toolbar && bun run build:preload-desktop && bun run build:interceptor && bun run build:renderer && bun run build:copy && bun run build:validate",
     "start": "bun run build && electron .",
     "start:win": "bun run build:win && electron .",
     "dev": "vite dev",
@@ -38,7 +38,7 @@
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "build:extension-host-worker": "esbuild src/main/extension-host/worker.ts --bundle --platform=node --format=cjs --outfile=dist/extension-host-worker.cjs --external:electron",
-    "build:server-host-worker": "esbuild ../../packages/server/src/index.ts --bundle --platform=node --format=cjs --outfile=dist/server-host-worker.cjs --external:electron"
+    "build:server-host-worker": "bun ../../scripts/build-server-host-worker.ts"
   },
   "dependencies": {
     "@rox/browser-intel": "workspace:*",

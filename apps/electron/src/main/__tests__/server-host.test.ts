@@ -5,6 +5,8 @@ import {
   evaluateLoopDelayGate,
   isServerHostEnabled,
   parseReadyLine,
+  buildChildEnv,
+  SERVER_HOST_DISABLE_ARG,
   type ServerHostChild,
 } from '../server-host'
 
@@ -28,7 +30,7 @@ function harness(opts: Partial<ConstructorParameters<typeof ServerSupervisor>[0]
   const timers: Array<{ at: number; fn: () => void; id: number }> = []
   let seq = 0
   const children: FakeChild[] = []
-  const env: NodeJS.ProcessEnv = {}
+  const env: NodeJS.ProcessEnv = { PATH: '/bin', ROX_SERVER_UTILITY_PROCESS: '1', CRAFT_SERVER_TOKEN: 'leak', SECRET_THING: 'x' }
   const sup = new ServerSupervisor({
     fork: (_p, _a, o) => { const c = new FakeChild(); (c as FakeChild & { env?: unknown }).env = o.env; children.push(c); return c },
     workerPath: '/w.cjs',
@@ -56,7 +58,8 @@ describe('server-host flag', () => {
     expect(isServerHostEnabled({ ROX_SERVER_UTILITY_PROCESS: '0' })).toBe(false)
     expect(isServerHostEnabled({ ROX_SERVER_UTILITY_PROCESS: '1', CRAFT_SERVER_URL: 'ws://x' })).toBe(false)
     expect(isServerHostEnabled({ ROX_SERVER_UTILITY_PROCESS: '1', CRAFT_HEADLESS: '1' })).toBe(false)
-    expect(isServerHostEnabled({ ROX_SERVER_UTILITY_PROCESS: '1' })).toBe(true)
+    expect(isServerHostEnabled({ ROX_SERVER_UTILITY_PROCESS: '1' }, [])).toBe(true)
+    expect(isServerHostEnabled({ ROX_SERVER_UTILITY_PROCESS: '1' }, ['x', SERVER_HOST_DISABLE_ARG])).toBe(false)
   })
 })
 
@@ -68,6 +71,14 @@ describe('helpers', () => {
   it('parses readiness lines', () => {
     expect(parseReadyLine('noise\nCRAFT_SERVER_URL=ws://127.0.0.1:5000\nROX_SERVER_TOKEN=ab…cd\n'))
       .toEqual({ url: 'ws://127.0.0.1:5000', token: 'ab…cd' })
+  })
+  it('child env is allowlisted and never carries tokens', () => {
+    const out = buildChildEnv({
+      PATH: '/bin', HOME: '/h', LC_ALL: 'C', CRAFT_CONFIG_DIR: '/c', ANTHROPIC_API_KEY: 'k',
+      CRAFT_SERVER_TOKEN: 't', ROX_SERVER_TOKEN: 't', CRAFT_SERVER_URL: 'u', ROX_SERVER_UTILITY_PROCESS: '1',
+      AWS_SECRET_ACCESS_KEY: 's', GITHUB_TOKEN: 'g',
+    })
+    expect(out).toEqual({ PATH: '/bin', HOME: '/h', LC_ALL: 'C', CRAFT_CONFIG_DIR: '/c', ANTHROPIC_API_KEY: 'k' })
   })
   it('loop-delay gate', () => {
     expect(evaluateLoopDelayGate(null, 50).status).toBe('no-data')
@@ -84,7 +95,13 @@ describe('ServerSupervisor', () => {
     const r = await p
     expect(r.url).toBe('ws://127.0.0.1:41234')
     expect(r.token.length).toBeGreaterThan(16)
-    expect(h.env.CRAFT_RPC_PORT).toBe('41234')
+    expect(h.env.CRAFT_RPC_PORT).toBeUndefined()
+    expect(h.env.CRAFT_SERVER_URL).toBeUndefined()
+    const childEnv = (h.children[0] as FakeChild & { env: NodeJS.ProcessEnv }).env
+    expect(childEnv.ROX_SERVER_TOKEN).toBe(r.token)
+    expect(childEnv.CRAFT_SERVER_TOKEN).toBeUndefined()
+    expect(childEnv.SECRET_THING).toBeUndefined()
+    expect(childEnv.CRAFT_RPC_PORT).toBe('0')
     expect(h.sup.getState()).toBe('running')
   })
 
@@ -100,6 +117,7 @@ describe('ServerSupervisor', () => {
     h.advance(1); expect(h.children.length).toBe(2)
     const env2 = (h.children[1] as FakeChild & { env: NodeJS.ProcessEnv }).env
     expect(env2.CRAFT_RPC_PORT).toBe('41234')
+    expect(h.env.CRAFT_RPC_PORT).toBeUndefined()
     expect(env2.ROX_SERVER_UTILITY_PROCESS).toBeUndefined()
     h.children[1].emit('CRAFT_SERVER_URL=ws://127.0.0.1:41234\n')
     expect(tokens.length).toBe(2)
@@ -120,24 +138,66 @@ describe('ServerSupervisor', () => {
     expect(h.sup.getCrashCount()).toBe(1)
   })
 
-  it('gives up after max consecutive crashes and rejects start', async () => {
+  it('after first ready: gives up after max consecutive crashes', async () => {
     let gaveUp = -2
     const h = harness({ backoffBaseMs: 10, maxConsecutiveCrashes: 2, onGiveUp: c => { gaveUp = c } })
-    const p = h.sup.start()
+    const p = h.sup.start(); h.children[0].emit('CRAFT_SERVER_URL=ws://127.0.0.1:1\n'); await p
     h.children[0].exit(1); h.advance(10)
     h.children[1].exit(1); h.advance(20)
     h.children[2].exit(3)
-    await expect(p).rejects.toThrow()
     expect(h.sup.getState()).toBe('failed')
     expect(gaveUp).toBe(3)
   })
 
-  it('kills a child that never becomes ready', () => {
-    const h = harness({ readyTimeoutMs: 1000, backoffBaseMs: 10 })
-    void h.sup.start().catch(() => {})
+  it('fork that always throws: fails fast before ready (1 retry)', async () => {
+    let forks = 0
+    const h = harness({ fork: () => { forks++; throw new Error('boom') }, backoffBaseMs: 10 })
+    const p = h.sup.start()
+    h.advance(10)
+    await expect(p).rejects.toThrow()
+    expect(forks).toBe(2)
+    expect(h.sup.getState()).toBe('failed')
+    h.advance(60_000)
+    expect(forks).toBe(2)
+  })
+
+  it('fork throws after first ready: counted, give-up guaranteed', async () => {
+    let n = 0
+    let gaveUp = false
+    const kids: FakeChild[] = []
+    const h = harness({
+      backoffBaseMs: 10, maxConsecutiveCrashes: 3, stableAfterMs: 1,
+      onGiveUp: () => { gaveUp = true },
+      fork: () => { n++; if (n > 1) throw new Error('boom'); const c = new FakeChild(); kids.push(c); return c },
+    })
+    const p = h.sup.start(); kids[0].emit('CRAFT_SERVER_URL=ws://127.0.0.1:1\n'); await p
     h.advance(1000)
+    kids[0].exit(1)
+    for (let i = 0; i < 10 && !gaveUp; i++) h.advance(1000)
+    expect(gaveUp).toBe(true)
+    expect(n).toBe(4)
+  })
+
+  it('never-ready child: 10s timeout, one retry, then rejects', async () => {
+    const h = harness({ backoffBaseMs: 10, killHardTimeoutMs: 100 })
+    const p = h.sup.start()
+    p.catch(() => {})
+    h.advance(10_000)
     expect(h.children[0].killed).toBe(true)
-    expect(h.sup.getState()).toBe('backoff')
+    h.advance(10)
+    expect(h.children.length).toBe(2)
+    h.advance(10_000)
+    await expect(p).rejects.toThrow()
+    expect(h.sup.getState()).toBe('failed')
+  })
+
+  it('kill without exit event: hard timeout synthesizes exit', async () => {
+    const h = harness({ backoffBaseMs: 10, killHardTimeoutMs: 100, preReadyMaxAttempts: 1 })
+    const p = h.sup.start(); p.catch(() => {})
+    h.children[0].kill = () => true // swallow: no exit event
+    h.advance(10_000)
+    h.advance(100)
+    await expect(p).rejects.toThrow()
   })
 
   it('clean shutdown: asks child, does not restart', async () => {
@@ -150,6 +210,26 @@ describe('ServerSupervisor', () => {
     expect(h.sup.getState()).toBe('stopped')
     h.advance(60_000)
     expect(h.children.length).toBe(1)
+  })
+
+  it('stop during start rejects with stopped error, no fallback', async () => {
+    const h = harness()
+    const p = h.sup.start()
+    const stopped = h.sup.stop()
+    await expect(p).rejects.toThrow('stopped')
+    h.children[0].exit(0)
+    await stopped
+    expect(h.sup.getState()).toBe('stopped')
+  })
+
+  it('shutdown kill with no exit event still resolves (hard timeout)', async () => {
+    const h = harness({ shutdownGraceMs: 500, killHardTimeoutMs: 200 })
+    const p = h.sup.start(); h.children[0].emit('CRAFT_SERVER_URL=ws://127.0.0.1:1\n'); await p
+    h.children[0].kill = () => true
+    const stopped = h.sup.stop()
+    h.advance(500); h.advance(200)
+    await stopped
+    expect(h.sup.getState()).toBe('stopped')
   })
 
   it('shutdown kills after grace if child ignores it', async () => {
