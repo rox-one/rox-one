@@ -247,7 +247,7 @@ function RecordButton({ rec }: { rec: ReturnType<typeof useRecordAction> }) {
   const { t } = useTranslation()
   return (
     <WidgetButton tone={rec.recording ? 'danger' : undefined} disabled={rec.busy} onClick={() => void rec.record()} title={rec.error ?? undefined}>
-      <Mic className="h-3 w-3" />
+      <Mic className="icon-status" />
       {rec.recording ? t('workbench.home.quick.recording') : t('workbench.home.meetings.record')}
     </WidgetButton>
   )
@@ -284,15 +284,15 @@ function QuickActionsWidget({ edit, width }: WidgetProps) {
   }
 
   const actions: { key: string; label: string; icon: React.ReactNode; onClick: () => void; hint?: string }[] = [
-    { key: 'session', label: t('workbench.home.quick.newSession'), icon: <SquarePen className="h-4 w-4" />, onClick: () => navigate(routes.action.newSession()) },
+    { key: 'session', label: t('workbench.home.quick.newSession'), icon: <SquarePen className="icon-toolbar" />, onClick: () => navigate(routes.action.newSession()) },
     {
       key: 'record',
       label: recording ? t('workbench.home.quick.recording') : t('workbench.home.quick.record'),
-      icon: <Mic className={cn('h-4 w-4', recording && 'text-destructive')} />,
+      icon: <Mic className={cn('icon-toolbar', recording && 'text-destructive')} />,
       onClick: () => void record(),
     },
-    { key: 'note', label: t('workbench.home.quick.newNote'), icon: <NotebookPen className="h-4 w-4" />, onClick: () => void newNote() },
-    { key: 'search', label: t('workbench.home.quick.search'), icon: <Search className="h-4 w-4" />, onClick: () => setOmniboxOpen(true), hint: formatHotkeyDisplay('mod+k') },
+    { key: 'note', label: t('workbench.home.quick.newNote'), icon: <NotebookPen className="icon-toolbar" />, onClick: () => void newNote() },
+    { key: 'search', label: t('workbench.home.quick.search'), icon: <Search className="icon-toolbar" />, onClick: () => setOmniboxOpen(true), hint: formatHotkeyDisplay('mod+k') },
   ]
   return (
     <WidgetFrame testId="quickActions" title={t('workbench.home.w.quickActions')} edit={edit} fitContent>
@@ -340,7 +340,7 @@ function RecentSessionsWidget({ edit, width, size = 'S' }: WidgetProps) {
               key={s.id}
               testId={s.id}
               onClick={() => navigate(routes.view.allSessions(s.id))}
-              leading={s.isProcessing ? <Dot tone="accent" /> : s.lastMessageRole === 'error' ? <Dot tone="danger" /> : <MessageSquare className="h-3.5 w-3.5" />}
+              leading={s.isProcessing ? <Dot tone="accent" /> : s.lastMessageRole === 'error' ? <Dot tone="danger" /> : <MessageSquare className="icon-caption" />}
               title={getSessionTitle(s)}
               trailing={s.lastMessageAt || s.createdAt ? fmt.ago(s.lastMessageAt ?? s.createdAt ?? now, now) : undefined}
             />
@@ -445,7 +445,7 @@ function InboxWidget({ edit, size = 'S' }: WidgetProps) {
               key={item.id}
               testId={item.id}
               onClick={() => navigate(routes.view.inbox(item.id))}
-              leading={item.blocking ? <Dot tone="warning" /> : <InboxIcon className="h-3.5 w-3.5" />}
+              leading={item.blocking ? <Dot tone="warning" /> : <InboxIcon className="icon-caption" />}
               title={item.title}
               sub={item.source}
               trailing={fmt.ago(item.at, now)}
@@ -533,7 +533,7 @@ function ModelsWidget({ edit, width, size = 'S' }: WidgetProps) {
           <WidgetList>
             <WidgetRow
               onClick={open}
-              leading={<Cpu className="h-3.5 w-3.5" />}
+              leading={<Cpu className="icon-caption" />}
               title={runtimeSummary.providerType === 'omp' ? ROX_VISIBLE_TERMS.product : runtimeSummary.providerType}
               sub={runtimeSummary.defaultModel
                 ? t('workbench.home.models.default', { model: runtimeSummary.models?.find(model => model.id === runtimeSummary.defaultModel)?.name ?? runtimeSummary.defaultModel })
@@ -698,7 +698,7 @@ function TasksWidget({ edit, width, size = 'S' }: WidgetProps) {
                 key={task.id}
                 testId={task.id}
                 onClick={() => navigate(routes.view.tasks(task.id))}
-                leading={focus.top3.includes(task.id) ? <Dot tone="accent" /> : task.priority === 'high' ? <Dot tone="danger" /> : <ListTodo className="h-3.5 w-3.5" />}
+                leading={focus.top3.includes(task.id) ? <Dot tone="accent" /> : task.priority === 'high' ? <Dot tone="danger" /> : <ListTodo className="icon-caption" />}
                 title={task.title || t('workbench.home.tasks.untitled')}
                 trailing={task.dueAt != null ? <span className={cn(task.dueAt < dayStart && 'text-destructive')}>{fmt.when(task.dueAt, now)}</span> : undefined}
               />
@@ -760,7 +760,7 @@ function MeetingsWidget({ edit, width, size = 'S' }: WidgetProps) {
           <div className="min-w-0">
             {overview.live ? (
               <WidgetList>
-                <WidgetRow onClick={() => open(overview.live!.id)} leading={<Mic className="h-3.5 w-3.5 text-destructive" />} title={overview.live.title} trailing={t('workbench.home.meetings.live')} />
+                <WidgetRow onClick={() => open(overview.live!.id)} leading={<Mic className="icon-caption text-destructive" />} title={overview.live.title} trailing={t('workbench.home.meetings.live')} />
               </WidgetList>
             ) : null}
             <SectionLabel>{t('workbench.home.meetings.upcoming')}</SectionLabel>
@@ -769,7 +769,7 @@ function MeetingsWidget({ edit, width, size = 'S' }: WidgetProps) {
             ) : (
               <WidgetList>
                 {overview.upcoming.map((m) => (
-                  <WidgetRow key={m.id} testId={m.id} onClick={() => open(m.id)} leading={<CalendarClock className="h-3.5 w-3.5" />} title={m.title} trailing={m.scheduledAt ? fmt.when(m.scheduledAt, now) : undefined} />
+                  <WidgetRow key={m.id} testId={m.id} onClick={() => open(m.id)} leading={<CalendarClock className="icon-caption" />} title={m.title} trailing={m.scheduledAt ? fmt.when(m.scheduledAt, now) : undefined} />
                 ))}
               </WidgetList>
             )}
@@ -834,7 +834,7 @@ function CallsWidget({ edit, width, size = 'S' }: WidgetProps) {
                 key={m.id}
                 testId={m.id}
                 onClick={() => open(m.id)}
-                leading={live ? <Mic className="h-3.5 w-3.5 text-destructive" /> : <Phone className="h-3.5 w-3.5" />}
+                leading={live ? <Mic className="icon-caption text-destructive" /> : <Phone className="icon-caption" />}
                 title={m.title}
                 sub={live
                   ? t('workbench.home.meetings.live')
@@ -996,7 +996,7 @@ function AutomationsWidget({ edit, size = 'S' }: WidgetProps) {
               <SectionLabel>{t('workbench.home.automations.failures')}</SectionLabel>
               <WidgetList>
                 {overview.failures.slice(0, 2).map((f) => (
-                  <WidgetRow key={f.id} testId={`fail-${f.id}`} onClick={() => open(f.id)} leading={<AlertTriangle className="h-3.5 w-3.5 text-destructive" />} title={f.name} trailing={fmt.ago(f.at, now)} />
+                  <WidgetRow key={f.id} testId={`fail-${f.id}`} onClick={() => open(f.id)} leading={<AlertTriangle className="icon-caption text-destructive" />} title={f.name} trailing={fmt.ago(f.at, now)} />
                 ))}
               </WidgetList>
             </>
@@ -1010,7 +1010,7 @@ function AutomationsWidget({ edit, size = 'S' }: WidgetProps) {
                   key={a.id}
                   testId={a.id}
                   onClick={() => open(a.id)}
-                  leading={<Workflow className={cn('h-3.5 w-3.5', !a.enabled && 'opacity-50')} />}
+                  leading={<Workflow className={cn('icon-caption', !a.enabled && 'opacity-50')} />}
                   title={<span className={cn(!a.enabled && 'text-muted-foreground')}>{a.name}</span>}
                   trailing={!a.enabled ? t('workbench.home.automations.paused') : at != null ? fmt.when(at, now) : a.cron ? '—' : t('workbench.home.automations.onEvent')}
                   aside={<Toggle checked={a.enabled} onChange={(next) => toggle(a, next)} label={t(a.enabled ? 'workbench.home.automations.pause' : 'workbench.home.automations.resume', { name: a.name })} />}
@@ -1058,7 +1058,7 @@ function FeedWidget({ edit, width, size = 'S' }: WidgetProps) {
             <div className="flex items-center justify-between gap-2 px-1.5 py-1 text-xs text-destructive" role="status">
               <span className="min-w-0">{t('workbench.home.feed.refreshFailed')}</span>
               <WidgetButton onClick={feed.retry} title={t('workbench.home.feed.retry')} disabled={feed.refreshing}>
-                <RotateCcw className="h-3 w-3" />
+                <RotateCcw className="icon-status" />
                 {t('workbench.home.feed.retry')}
               </WidgetButton>
             </div>
@@ -1069,7 +1069,7 @@ function FeedWidget({ edit, width, size = 'S' }: WidgetProps) {
                 key={item.id}
                 testId={item.id}
                 onClick={() => navigate(routes.view.feed(item.id))}
-                leading={item.status === 'error' ? <Dot tone="danger" /> : item.status === 'running' ? <Dot tone="accent" /> : item.tab === 'agents' ? <Bot className="h-3.5 w-3.5" /> : <Rss className="h-3.5 w-3.5" />}
+                leading={item.status === 'error' ? <Dot tone="danger" /> : item.status === 'running' ? <Dot tone="accent" /> : item.tab === 'agents' ? <Bot className="icon-caption" /> : <Rss className="icon-caption" />}
                 title={item.title || item.summary || item.id}
                 trailing={fmt.ago(item.at, now)}
               />
@@ -1132,7 +1132,7 @@ function NotesWidget({ edit, width, size = 'S' }: WidgetProps) {
       ) : (
         <WidgetList columns={widgetContentLayout(width).listColumns}>
           {shown.map((note) => (
-            <WidgetRow key={note.id} testId={note.id} onClick={() => navigate(routes.view.notes(note.id))} leading={<FileText className="h-3.5 w-3.5" />} title={note.title || t('notes.untitled')} trailing={fmt.ago(note.updatedAt, now)} />
+            <WidgetRow key={note.id} testId={note.id} onClick={() => navigate(routes.view.notes(note.id))} leading={<FileText className="icon-caption" />} title={note.title || t('notes.untitled')} trailing={fmt.ago(note.updatedAt, now)} />
           ))}
         </WidgetList>
       )}
@@ -1169,7 +1169,7 @@ function DecisionsWidget({ edit, size = 'S' }: WidgetProps) {
       ) : (
         <WidgetList>
           {recent.map((d) => (
-            <WidgetRow key={d.id} testId={d.id} onClick={() => open(d.id)} leading={<Gavel className="h-3.5 w-3.5" />} title={d.title} sub={d.why || undefined} trailing={fmt.ago(d.decidedAt, now)} />
+            <WidgetRow key={d.id} testId={d.id} onClick={() => open(d.id)} leading={<Gavel className="icon-caption" />} title={d.title} sub={d.why || undefined} trailing={fmt.ago(d.decidedAt, now)} />
           ))}
         </WidgetList>
       )}
@@ -1353,7 +1353,7 @@ function CalendarWidget({ edit, width, size = 'S' }: WidgetProps) {
               const isToday = day.start === today
               const shown = day.events.slice(0, perDay)
               return (
-                <div key={day.start} className={cn('flex min-h-0 min-w-0 flex-col rounded-[var(--radius-card)] px-1 py-1', isToday ? 'bg-foreground/[0.08]' : 'bg-foreground/[0.03]')} data-home-day={isToday ? 'today' : ''}>
+                <div key={day.start} className={cn('flex min-h-0 min-w-0 flex-col rounded-[var(--radius-card)] px-1 py-1', isToday ? 'bg-foreground/[0.08]' : 'bg-surface-hover')} data-home-day={isToday ? 'today' : ''}>
                   <div className="flex items-baseline gap-1 px-0.5">
                     <span className={cn('text-xs uppercase caps-label', isToday ? 'font-bold text-foreground' : 'text-muted-foreground')}>{fmt.weekday(day.start)}</span>
                     <span className={cn('truncate text-sm numeric', isToday ? 'font-bold text-accent' : 'text-muted-foreground')}>{fmt.dayMonth(day.start)}</span>
