@@ -51,7 +51,7 @@ import { HeaderIconButton } from "@/components/ui/HeaderIconButton"
 import { resolveInheritedFilterParams, type FilterMode } from "./inherited-filter-params"
 import { HeaderMenu } from "@/components/ui/HeaderMenu"
 import { Separator } from "@/components/ui/separator"
-import { Tooltip, TooltipTrigger, TooltipContent } from "@rox/ui"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@rox/ui/tooltip"
 import {
   DropdownMenu,
   DropdownMenuTrigger,

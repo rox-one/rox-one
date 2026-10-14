@@ -30,7 +30,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useOpenScreen } from '@/components/shell/panel-strip'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import { useNavigationState } from '@/contexts/NavigationContext'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
 import { primaryPanelRouteAtom } from '@/atoms/panel-stack'

@@ -7,7 +7,7 @@ import { panelStackAtom, expandedPanelIdAtom } from '@/atoms/panel-stack'
 import { featureLayoutEngineAtom } from '@/atoms/unified-shell'
 import { reconcilePanelFullScreen } from '@/lib/panel-workspace-layout'
 import { TopBarButton } from '@/components/ui/TopBarButton'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@rox/ui'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@rox/ui/tooltip'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
