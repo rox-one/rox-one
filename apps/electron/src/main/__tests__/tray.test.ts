@@ -161,7 +161,7 @@ describe('tray template', () => {
     const template = toTrayTemplate(buildTrayMenuModel(view({}, { recentSessions: [{ id: 's', title: 'tray.menu.quit' }] })), key => `T(${key})`, () => {})
     expect(template.find(item => item.id === 'search')).toMatchObject({ accelerator: 'CmdOrCtrl+K', registerAccelerator: false, label: 'T(tray.menu.search)' })
     expect(template.find(item => item.id === 'recentSessions')?.submenu?.[0]?.label).toBe('tray.menu.quit')
-    expect(template.filter(item => item.type === 'separator').length).toBe(4)
+    expect(template.filter(item => item.type === 'separator').length).toBe(5)
   })
 })
 
