@@ -10,7 +10,7 @@
  * Idempotent: re-running (sandbox restart after auto-stop) re-activates the same
  * workspace and never rewrites the transcript twice.
  */
-import { existsSync, lstatSync, readFileSync, realpathSync, renameSync, writeFileSync } from 'node:fs'
+import { closeSync, constants as fsConstants, existsSync, lstatSync, openSync, readFileSync, realpathSync, renameSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join, relative, sep } from 'node:path'
 
 export const HANDOFF_WORKSPACE_DIR_ENV = 'ROX_HANDOFF_WORKSPACE_DIR'
@@ -105,10 +105,27 @@ export async function importCloudHandoffWorkspace(
   if (existsSync(projectDir)) assertRealDir(projectDir, 'project dir')
 
   const marker = join(rootPath, IMPORT_MARKER)
-  const alreadyImported = existsSync(marker) && readFileSync(marker, 'utf8').trim() === sessionId
+  let markerContent = ''
+  try {
+    const markerFd = openSync(marker, fsConstants.O_RDONLY | fsConstants.O_NOFOLLOW)
+    try {
+      markerContent = readFileSync(markerFd, 'utf8')
+    } finally {
+      closeSync(markerFd)
+    }
+  } catch {
+    markerContent = ''
+  }
+  const alreadyImported = markerContent.trim() === sessionId
   if (!alreadyImported) {
     rewriteHandoffSessionHeader(sessionFile, projectDir, sessionDir)
-    writeFileSync(marker, `${sessionId}\n`, { mode: 0o600 })
+    // Write through a descriptor opened with O_NOFOLLOW (no check-then-write by name).
+    const fd = openSync(marker, fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_TRUNC | fsConstants.O_NOFOLLOW, 0o600)
+    try {
+      writeFileSync(fd, `${sessionId}\n`)
+    } finally {
+      closeSync(fd)
+    }
   }
 
   // Registers the root once (lookup by rootPath) and activates its latest

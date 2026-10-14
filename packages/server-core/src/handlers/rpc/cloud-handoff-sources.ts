@@ -3,7 +3,8 @@
  * attachments, plans, …) plus workspace files the conversation references.
  * Symlinks are never followed; references must stay inside the working dir.
  */
-import { lstat, readFile, readdir, realpath } from 'node:fs/promises';
+import { constants as fsConstants } from 'node:fs';
+import { lstat, open, readFile, readdir, realpath } from 'node:fs/promises';
 import { isAbsolute, join, relative, sep } from 'node:path';
 import type { SnapshotSource } from '@rox/cloud-runner';
 
@@ -27,10 +28,17 @@ function fileSource(abs: string, dest: string, size: number, root?: string): Sna
     read: async () => {
       // Re-validate at read time (TOCTOU): still a regular file, not a symlink,
       // and — for workspace files — still resolving inside the working dir.
-      const st = await lstat(abs);
-      if (!st.isFile()) throw new Error('file changed during handoff');
-      if (root && !isContained(root, await realpath(abs))) throw new Error('file escaped the working directory');
-      return new Uint8Array(await readFile(abs));
+      // Open once with O_NOFOLLOW and validate/read through the same handle so
+      // the checked file is the one that gets read.
+      const handle = await open(abs, fsConstants.O_RDONLY | fsConstants.O_NOFOLLOW);
+      try {
+        const st = await handle.stat();
+        if (!st.isFile()) throw new Error('file changed during handoff');
+        if (root && !isContained(root, await realpath(abs))) throw new Error('file escaped the working directory');
+        return new Uint8Array(await handle.readFile());
+      } finally {
+        await handle.close();
+      }
     },
   };
 }

@@ -5,6 +5,13 @@
  */
 import { HandoffError } from './types.ts';
 
+/** Linear-time trailing-slash trim (avoids a backtracking `/\/+$/` on untrusted input). */
+function stripTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 47) end--;
+  return value.slice(0, end);
+}
+
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
 export interface RoxIdSubjectInput {
@@ -15,7 +22,7 @@ export interface RoxIdSubjectInput {
 
 export async function fetchRoxIdSubject(input: RoxIdSubjectInput): Promise<string> {
   const http = input.fetchImpl ?? fetch;
-  const issuer = input.issuer.replace(/\/+$/, '');
+  const issuer = stripTrailingSlashes(input.issuer);
   if (!/^https:\/\//i.test(issuer) && !/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(issuer)) {
     throw new HandoffError('sso_not_configured', 'Rox ID issuer must be https');
   }
@@ -88,7 +95,7 @@ export async function verifyRoxIdTokenAudience(input: TokenAudienceInput, sub: s
   if (!claims) {
     if (!input.introspection) return false;
     const http = input.fetchImpl ?? fetch;
-    const issuer = input.issuer.replace(/\/+$/, '');
+    const issuer = stripTrailingSlashes(input.issuer);
     try {
       const disc = await http(`${issuer}/.well-known/openid-configuration`, { headers: { Accept: 'application/json' } });
       const endpoint = ((await disc.json()) as { introspection_endpoint?: unknown }).introspection_endpoint;
@@ -107,6 +114,6 @@ export async function verifyRoxIdTokenAudience(input: TokenAudienceInput, sub: s
     }
   }
   if (typeof claims.sub === 'string' && claims.sub !== sub) return false;
-  if (typeof claims.iss === 'string' && claims.iss.replace(/\/+$/, '') !== input.issuer.replace(/\/+$/, '')) return false;
+  if (typeof claims.iss === 'string' && stripTrailingSlashes(claims.iss) !== stripTrailingSlashes(input.issuer)) return false;
   return audiencesOf(claims).some((a) => allowed.has(a));
 }
