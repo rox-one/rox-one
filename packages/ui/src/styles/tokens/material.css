@@ -106,7 +106,7 @@
    `intensity`, theme layers) re-resolves them locally. */
 :root,
 .glass-surface,
-[data-glass-slot] {
+html[data-theme="arc-glass"] :is([data-glass-slot], .rox-mode-pill) {
   --glass-blur: calc(8px + 24px * var(--glass-intensity));
   --glass-saturate: calc(1 + 0.6 * var(--glass-intensity));
   --glass-tint: calc(4% + 10% * var(--glass-intensity));

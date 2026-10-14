@@ -128,6 +128,14 @@ describe('Arc Glass skin', () => {
       expect(r).not.toMatch(/composer|popover|menu/)
     }
   })
+  it('pop-in is scoped to the explicit popover slot, with a symmetric exit', () => {
+    expect(skin).not.toMatch(/role="menu"|\.popover-styled/)
+    expect(skin).toMatch(/\[data-glass-slot="popover"\]\[data-state="closed"\]\s*{[^}]*rox-glass-pop-out[^}]*--motion-spring-exit/)
+  })
+  it('accent buttons keep an accent tint and glass buttons get a hover state', () => {
+    expect(skin).toMatch(/\[data-glass-tone="accent"\]\s*{[^}]*--glass-fill:\s*var\(--primary\)/)
+    expect(skin).toMatch(/:hover[^{]*{[^}]*--glass-hover-boost/)
+  })
   it('never transitions or animates filters, and does not override the intensity slider', () => {
     expect(skin).not.toMatch(/transition[^;]*filter/)
     expect(skin).not.toMatch(/--glass-intensity:/)

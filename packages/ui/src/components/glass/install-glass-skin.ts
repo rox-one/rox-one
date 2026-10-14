@@ -12,7 +12,8 @@ let installed: (() => void) | null = null
  */
 export function installGlassSkin(doc: Document = document): () => void {
   if (installed) return installed
-  void import('./arc-glass-skin.css')
+  // Un-awaited: the skin only restyles; a failed CSS chunk leaves the plain look.
+  import('./arc-glass-skin.css').catch(() => {})
   const releaseTier = applyGlassTier(doc.documentElement)
   const svgNS = 'http://www.w3.org/2000/svg'
   const svg = doc.createElementNS(svgNS, 'svg')

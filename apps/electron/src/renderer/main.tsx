@@ -35,7 +35,11 @@ const rendererPerfHarness = installRendererPerfHarness()
 // renders with the active profile. The snapshot request starts right here.
 seedDensity()
 // Glass tier + Arc Glass skin: a lazy chunk, off the startup closure.
-void import('@rox/ui/glass/install').then((m) => m.installGlassSkin())
+// installGlassSkin() itself fires an un-awaited import() of the skin CSS; until
+// it lands (or if either chunk fails) the app keeps the plain, non-glass look.
+void import('@rox/ui/glass/install')
+  .then((m) => m.installGlassSkin())
+  .catch((error: unknown) => console.warn('[glass] skin unavailable, using the plain look', error))
 seedRenderProfile(document.documentElement, window.electronAPI, navigator.userAgent)
 const stopRenderProfileSync = startRenderProfileSync(window.electronAPI, document.documentElement)
 import.meta.hot?.dispose(stopRenderProfileSync)

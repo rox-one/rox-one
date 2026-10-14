@@ -1,29 +1,55 @@
 /* Arc Glass skin: applies the glass material to existing chrome without
    touching component layout. Loaded lazily (installGlassSkin) and active only
-   under html[data-theme="arc-glass"]. Slots: top mode pill, popovers/menus,
-   composer, Rox Mini buttons. Refraction: static slots only (pill, Rox Mini
-   buttons) on the full tier — never the composer, popovers or anything that
-   scrolls or animates. Blur is static; only transform/opacity transition. */
-html[data-theme="arc-glass"] :is(.rox-mode-pill, .popover-styled, [role="menu"], [data-glass-slot]) {
+   under html[data-theme="arc-glass"]. Slots: the top mode pill and explicit
+   data-glass-slot elements (popover, composer, mini-button). Refraction:
+   static slots only (pill, Rox Mini buttons) on the full tier, never the
+   composer or popovers. Blur is static; only transform/opacity animate. */
+html[data-theme="arc-glass"] :is(.rox-mode-pill, [data-glass-slot]) {
+  --glass-fill: var(--background);
+  --glass-fill-mix: var(--glass-tint);
+
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, white var(--glass-specular-alpha), transparent) 0%,
+      color-mix(in srgb, white calc(var(--glass-specular-alpha) + var(--glass-hover-boost, 0%)), transparent) 0%,
       transparent 42%
     ),
-    color-mix(in srgb, var(--background) var(--glass-tint), transparent);
+    color-mix(in srgb, var(--glass-fill) calc(var(--glass-fill-mix) + var(--glass-hover-boost, 0%)), transparent);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   box-shadow: var(--glass-shadow);
+}
+
+/* Accent buttons (Rox Mini send) stay accent: an accent tint over the glass. */
+html[data-theme="arc-glass"] [data-glass-slot][data-glass-tone="accent"] {
+  --glass-fill: var(--primary);
+  --glass-fill-mix: 72%;
+}
+
+/* Glass hover: a slightly stronger tint and highlight (paint only). */
+html[data-theme="arc-glass"] :is(.rox-mode-pill-item, [data-glass-slot="mini-button"]):hover:not(:disabled) {
+  --glass-hover-boost: 8%;
+}
+
+html[data-theme="arc-glass"] .rox-mode-pill-item:hover {
+  background: color-mix(in srgb, white var(--glass-edge-alpha), transparent);
 }
 
 html[data-theme="arc-glass"][data-glass="full"] :is(.rox-mode-pill, [data-glass-slot="mini-button"]) {
   backdrop-filter: url(#rox-glass-skin-refraction) blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
 
-/* Popovers/menus: springy entrance (transform/opacity only). */
-html[data-theme="arc-glass"] :is(.popover-styled, [role="menu"])[data-state="open"] {
+/* Popovers/menus: symmetric spring open / faster exit. Replaces the overlay
+   and tailwindcss-animate animations on these elements (single animation). */
+html[data-theme="arc-glass"] [data-glass-slot="popover"] {
   transform-origin: var(--radix-popover-content-transform-origin, var(--radix-dropdown-menu-content-transform-origin, top center));
-  animation: rox-glass-pop-in var(--motion-spring) var(--ease-spring);
+}
+
+html[data-theme="arc-glass"] [data-glass-slot="popover"]:is([data-state="open"], :not([data-state])) {
+  animation: rox-glass-pop-in var(--motion-spring) var(--ease-spring) both;
+}
+
+html[data-theme="arc-glass"] [data-glass-slot="popover"][data-state="closed"] {
+  animation: rox-glass-pop-out var(--motion-spring-exit) var(--ease-exit) both;
 }
 
 /* Press spring for pill items and Rox Mini buttons (pointer :active and the
@@ -46,5 +72,17 @@ html[data-theme="arc-glass"] :is(.rox-mode-pill-item, [data-glass-slot="mini-but
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes rox-glass-pop-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.96);
   }
 }
