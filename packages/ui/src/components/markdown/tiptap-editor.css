@@ -121,7 +121,7 @@
 /* Inline code */
 .tiptap-editor .tiptap-prose code {
   padding: 0 0.25rem;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   background: var(--surface-input);
   font-family: var(--font-mono);
   font-size: var(--text-code-size);
@@ -400,7 +400,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
   border: none;
   cursor: pointer;
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   box-shadow: var(--shadow-minimal);
   transition: background-color 0.1s, color 0.1s;
 }
@@ -457,7 +457,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
 /* Clickable inline math nodes in editable mode */
 .tiptap-mathematics-render--editable {
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   transition: background-color 0.1s;
 }
 
@@ -524,7 +524,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
 .tiptap-mathematics-render--editable.is-selected,
 .is-selected .tiptap-mathematics-render--editable {
   background: color-mix(in oklch, var(--accent) 15%, transparent);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 /* ── Wiki links ── */
@@ -534,7 +534,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   transition: background-color 0.1s;
 }
 
@@ -562,7 +562,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
 .tiptap-editor .tiptap-prose .tiptap-hash-tag {
   color: var(--accent);
   background: color-mix(in oklch, var(--accent) 12%, transparent);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   padding: 0 2px;
   cursor: pointer;
 }
@@ -608,7 +608,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
   gap: 8px;
   width: 100%;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   background: transparent;
   cursor: default;
   padding: 6px 8px;
@@ -669,7 +669,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
   height: 18px;
   margin-inline-end: 0.35rem;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   background: transparent;
   color: color-mix(in oklch, var(--foreground) 48%, transparent);
   cursor: pointer;
@@ -725,7 +725,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
   margin-inline-end: 0.3rem;
   padding: 0;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   background: transparent;
   color: color-mix(in oklch, var(--foreground) 56%, transparent);
   cursor: pointer;
@@ -820,7 +820,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
   inset: 50% auto auto 50%;
   width: 8px;
   height: 28px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   transform: translate(-50%, -50%);
   background:
     linear-gradient(
@@ -852,7 +852,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
   height: 20px;
   max-width: 240px;
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: color-mix(in oklch, var(--accent) 10%, transparent);
   color: var(--text-primary, var(--foreground));
   font-size: 0.92em;
@@ -866,7 +866,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
   margin: 8px 0;
   padding: 10px 12px;
   max-width: 420px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   font-size: 13px;

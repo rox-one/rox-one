@@ -275,7 +275,7 @@ function CollectionHeatmapPlayground({ emptyDay = false }: { emptyDay?: boolean 
           <div key={weekIndex} className="flex flex-col gap-px">
             {week.map((cell, row) => {
               if (!cell.inYear || !cell.key) {
-                return <span key={`${weekIndex}-${row}`} className="h-3 w-3 rounded-[3px]" />
+                return <span key={`${weekIndex}-${row}`} className="h-3 w-3 rounded-xs" />
               }
               return (
                 <button
@@ -283,7 +283,7 @@ function CollectionHeatmapPlayground({ emptyDay = false }: { emptyDay?: boolean 
                   type="button"
                   aria-label={t('collection.heatmap.cell', { date: cell.key, count: cell.count })}
                   className={cn(
-                    'h-3 w-3 rounded-[3px]',
+                    'h-3 w-3 rounded-xs',
                     heatmapLevelClass(cell.level),
                     cell.key === focusedKey && 'ring-1 ring-foreground',
                   )}

@@ -76,7 +76,7 @@ export function SettingsSegmentedControl<T extends string = string>({
             key={option.value}
             data-slot="button"
             className={cn(
-              'relative flex min-w-0 min-h-[var(--control-hit-min)] items-center gap-1.5 rounded-[5px] transition-colors duration-[var(--motion-fast)]',
+              'relative flex min-w-0 min-h-[var(--control-hit-min)] items-center gap-1.5 rounded-xs transition-colors duration-[var(--motion-fast)]',
               'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus has-[:focus-visible]:ring-offset-1',
               option.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
               size === 'sm' ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm',

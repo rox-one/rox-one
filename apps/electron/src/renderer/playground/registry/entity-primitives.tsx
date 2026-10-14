@@ -103,7 +103,7 @@ export function EntityPickerStory({ initialQuery = 'task:42' }: { initialQuery?:
     return null
   })
   return (
-    <div className="w-[560px] rounded-[8px] border border-border bg-background">
+    <div className="w-[560px] rounded-md border border-border bg-background">
       <EntityPickerPanel workspaceId="playground" initialQuery={initialQuery} onSelect={() => {}} />
     </div>
   )

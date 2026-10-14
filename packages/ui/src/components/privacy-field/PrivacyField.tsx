@@ -78,7 +78,7 @@ export function PrivacyField({ value, onChange, spaceName, includeLinkOptions, r
       {levels.map((level) => {
         const checked = value === level
         return (
-          <label key={level} className={cn('flex h-8 cursor-default items-center gap-2 rounded-[6px] px-2 text-base', HOVER_TINT, MOTION_FAST, checked && SELECTED_TINT)}>
+          <label key={level} className={cn('flex h-8 cursor-default items-center gap-2 rounded-sm px-2 text-base', HOVER_TINT, MOTION_FAST, checked && SELECTED_TINT)}>
             <input
               type="radio"
               name={name}
