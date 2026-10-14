@@ -2,7 +2,7 @@
 import { markStartup, markStartupOnce, recordRendererMark, reportStartupTimelineWhenSettled, whenStartupMark } from './startup-marks'
 import { STARTUP_MARKS, STARTUP_PERF_MARK_CHANNEL, isValidRendererMarkName } from '../shared/startup-perf'
 import { createPocketAccountStore } from './pocket-account-store'
-import { RoxAccountAuthority, setRoxAccountAuthority } from '@rox/shared/auth'
+import { RoxAccountAuthority, selectPocketClient, setRoxAccountAuthority } from '@rox/shared/auth'
 import { validateConfigurationCliEntries } from './configuration-cli-compat'
 import { resolveNumberedUserDataDir } from './numbered-user-data'
 // Load user's shell environment first (before other imports that may use env)
@@ -1427,7 +1427,7 @@ app.whenReady().then(async () => {
         },
         bindRpcServer: (sm, server) => sm.setRpcServer(server),
         createHandlerDeps: ({ sessionManager: sm, platform: p, oauthFlowStore: ofs, nativeAuthority, nativeJournal, collaborationSync }) => {
-          setRoxAccountAuthority(new RoxAccountAuthority(createPocketAccountStore({ directory: join(app.getPath('userData'), 'pocket-accounts'), safeStorage })))
+          setRoxAccountAuthority(new RoxAccountAuthority(createPocketAccountStore({ directory: join(app.getPath('userData'), 'pocket-accounts'), safeStorage }), selectPocketClient({ name: hostname(), platform: process.platform })))
           localNativeAuthority = nativeAuthority
           const browserCredentialPermissions = createBrowserCredentialPermissionAdapter({
             async confirm(request) {

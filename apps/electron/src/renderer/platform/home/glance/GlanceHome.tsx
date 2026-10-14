@@ -42,7 +42,10 @@ import { cn } from '@/lib/utils'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
+  GLANCE_MAX_HEIGHT,
+  GLANCE_MIN_HEIGHT,
   addColumn,
+  addGroupChild,
   addWidgetInstance,
   findWidget,
   moveColumn,
@@ -50,7 +53,9 @@ import {
   removeColumn,
   removePage,
   removeWidgetInstance,
+  resizeColumnByDrag,
   setColumnSize,
+  shiftGroupChild,
   shiftWidgetInstance,
   updatePage,
   updateWidgetInstance,
@@ -219,26 +224,14 @@ export function GlancePageView({
             onChange(updateWidgetInstance(layout, settingsTarget.widget.id, patch))
             setSettingsFor(null)
           }}
-          onAddChild={settingsTarget.widget.type === 'group' ? (def) => {
-            const group = settingsTarget.widget
-            const child: GlanceWidgetInstance = { id: `w-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, type: def.type, config: { ...def.defaultConfig } }
-            onChange(updateGroupChildren(layout, group.id, [...(group.children ?? []), child]))
-          } : undefined}
+          onAddChild={settingsTarget.widget.type === 'group' ? (def) => onChange(addGroupChild(layout, settingsTarget.widget.id, { type: def.type, config: { ...def.defaultConfig } })) : undefined}
+          onShiftChild={settingsTarget.widget.type === 'group' ? (childId, delta) => onChange(shiftGroupChild(layout, settingsTarget.widget.id, childId, delta)) : undefined}
+          onChildSettings={settingsTarget.widget.type === 'group' ? (childId) => setSettingsFor(childId) : undefined}
           onRemoveChild={settingsTarget.widget.type === 'group' ? (childId) => onChange(removeWidgetInstance(layout, childId)) : undefined}
         />
       ) : null}
     </div>
   )
-}
-
-function updateGroupChildren(layout: GlanceLayout, groupId: string, children: GlanceWidgetInstance[]): GlanceLayout {
-  return {
-    ...layout,
-    pages: layout.pages.map((p) => ({
-      ...p,
-      columns: p.columns.map((c) => ({ ...c, widgets: c.widgets.map((w) => (w.id === groupId ? { ...w, children: children.slice(0, 12) } : w)) })),
-    })),
-  }
 }
 
 function useNarrow(ref: React.RefObject<HTMLElement | null>, breakpoint: number): boolean {
@@ -318,6 +311,7 @@ function GlanceColumnView({
           {t('workbench.home.edit.addWidget')}
         </button>
       ) : null}
+      {editing && !last ? <ColumnResizeHandle onResize={(dx) => onChange(resizeColumnByDrag(layout, page.id, column.id, dx))} /> : null}
     </section>
   )
 }
@@ -404,6 +398,7 @@ function GlanceCard({
   const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: widget.id, disabled: !editing })
   const [viewRef, near] = useNearViewport<HTMLDivElement>()
+  const [previewHeight, setPreviewHeight] = useState<number | undefined>(undefined)
   const width = useWidth(viewRef)
   const def = widget.type === 'group' ? null : getGlanceWidget(widget.type)
   const title = widget.title ?? (widget.type === 'group' ? t('sidebar.group') : def ? t(def.titleKey) : widget.type)
@@ -454,7 +449,11 @@ function GlanceCard({
       aria-label={title}
     >
       {frameless ? null : chrome}
-      <div ref={viewRef} className={cn('min-w-0', !frameless && 'px-3 pb-3', widget.collapsed && 'hidden')}>
+      <div
+        ref={viewRef}
+        className={cn('min-w-0', !frameless && 'px-3 pb-3', widget.collapsed && 'hidden', (previewHeight ?? widget.height) !== undefined && 'overflow-y-auto')}
+        style={(previewHeight ?? widget.height) !== undefined ? { height: previewHeight ?? widget.height } : undefined}
+      >
         {widget.collapsed ? null : near ? (
           widget.type === 'group' ? (
             <GroupBody group={widget} column={column} width={width} layout={layout} onChange={onChange} />
@@ -467,7 +466,66 @@ function GlanceCard({
           <div className="h-24 animate-pulse rounded-[var(--radius-control)] bg-surface-hover" aria-hidden />
         )}
       </div>
+      {editing && !widget.collapsed ? (
+        <HeightResizeHandle
+          bodyRef={viewRef}
+          onPreview={setPreviewHeight}
+          onCommit={(h) => { setPreviewHeight(undefined); onChange(updateWidgetInstance(layout, widget.id, { height: h })) }}
+        />
+      ) : null}
     </article>
+  )
+}
+
+/** Drag the column's right edge: right → full, left → small (snap, column rules apply). */
+function ColumnResizeHandle({ onResize }: { onResize: (dx: number) => void }) {
+  const { t } = useTranslation()
+  const start = useRef<number | null>(null)
+  return (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={t('glance.resizeColumn')}
+      title={t('glance.resizeColumn')}
+      tabIndex={0}
+      data-glance-column-resize=""
+      className="absolute inset-y-0 -right-1 z-raised w-2 cursor-col-resize hover:bg-surface-pressed focus-visible:bg-surface-pressed"
+      onPointerDown={(e) => { start.current = e.clientX; e.currentTarget.setPointerCapture(e.pointerId) }}
+      onPointerUp={(e) => { if (start.current !== null) onResize(e.clientX - start.current); start.current = null }}
+      onPointerCancel={() => { start.current = null }}
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowRight') { e.preventDefault(); onResize(1000) }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); onResize(-1000) }
+      }}
+    />
+  )
+}
+
+/** Drag the bottom edge to set a fixed body height; double-click (or Delete) resets. */
+function HeightResizeHandle({ bodyRef, onPreview, onCommit }: { bodyRef: React.RefObject<HTMLDivElement | null>; onPreview: (h: number | undefined) => void; onCommit: (h: number | null) => void }) {
+  const { t } = useTranslation()
+  const drag = useRef<{ y: number; h: number; last: number } | null>(null)
+  const clampH = (h: number) => Math.round(Math.min(GLANCE_MAX_HEIGHT, Math.max(GLANCE_MIN_HEIGHT, h)))
+  const current = () => bodyRef.current?.getBoundingClientRect().height ?? GLANCE_MIN_HEIGHT
+  return (
+    <div
+      role="separator"
+      aria-orientation="horizontal"
+      aria-label={t('glance.resizeWidget')}
+      title={t('glance.resizeWidget')}
+      tabIndex={0}
+      data-glance-height-resize=""
+      className="h-2 w-full cursor-row-resize hover:bg-surface-pressed focus-visible:bg-surface-pressed"
+      onPointerDown={(e) => { const h = current(); drag.current = { y: e.clientY, h, last: h }; e.currentTarget.setPointerCapture(e.pointerId) }}
+      onPointerMove={(e) => { const d = drag.current; if (!d) return; d.last = clampH(d.h + e.clientY - d.y); onPreview(d.last) }}
+      onPointerUp={() => { const d = drag.current; drag.current = null; if (d && Math.abs(d.last - d.h) >= 4) onCommit(d.last); else onPreview(undefined) }}
+      onPointerCancel={() => { drag.current = null; onPreview(undefined) }}
+      onDoubleClick={() => onCommit(null)}
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); onCommit(clampH(current() + (e.key === 'ArrowDown' ? 40 : -40))) }
+        else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); onCommit(null) }
+      }}
+    />
   )
 }
 
@@ -586,12 +644,16 @@ function GlanceSettingsDialog({
   onSave,
   onAddChild,
   onRemoveChild,
+  onShiftChild,
+  onChildSettings,
 }: {
   widget: GlanceWidgetInstance
   onClose: () => void
   onSave: (patch: { title: string | null; config: GlanceConfig }) => void
   onAddChild?: (def: GlanceWidgetDef) => void
   onRemoveChild?: (childId: string) => void
+  onShiftChild?: (childId: string, delta: -1 | 1) => void
+  onChildSettings?: (childId: string) => void
 }) {
   const { t } = useTranslation()
   const def = widget.type === 'group' ? null : getGlanceWidget(widget.type)
@@ -614,7 +676,7 @@ function GlanceSettingsDialog({
           <FieldEditor key={field.key} field={field} value={config[field.key]} onChange={(v) => setConfig((c) => ({ ...c, [field.key]: v }))} />
         ))}
         {widget.type === 'group' && onAddChild && onRemoveChild ? (
-          <GroupEditor group={widget} onAdd={onAddChild} onRemove={onRemoveChild} />
+          <GroupEditor group={widget} onAdd={onAddChild} onRemove={onRemoveChild} onShift={onShiftChild} onSettings={onChildSettings} />
         ) : null}
         <div className="flex justify-end gap-1">
           <button type="button" onClick={onClose} className="h-7 rounded-[var(--radius-control)] px-3 text-sm text-muted-foreground hover:bg-surface-pressed">{t('common.cancel')}</button>
@@ -692,7 +754,7 @@ export function parseLinksText(text: string): { title: string; url: string }[] {
   }).filter((l) => l.url)
 }
 
-function GroupEditor({ group, onAdd, onRemove }: { group: GlanceWidgetInstance; onAdd: (def: GlanceWidgetDef) => void; onRemove: (id: string) => void }) {
+function GroupEditor({ group, onAdd, onRemove, onShift, onSettings }: { group: GlanceWidgetInstance; onAdd: (def: GlanceWidgetDef) => void; onRemove: (id: string) => void; onShift?: (id: string, delta: -1 | 1) => void; onSettings?: (id: string) => void }) {
   const { t } = useTranslation()
   const [type, setType] = useState('')
   const defs = listGlanceWidgets()
@@ -700,11 +762,15 @@ function GroupEditor({ group, onAdd, onRemove }: { group: GlanceWidgetInstance; 
     <div className="flex flex-col gap-1">
       <span className="text-xs font-bold uppercase caps-label text-muted-foreground">{t('glance.groupTabs')}</span>
       <ul className="flex flex-col gap-0.5">
-        {(group.children ?? []).map((kid) => {
+        {(group.children ?? []).map((kid, i, all) => {
           const def = getGlanceWidget(kid.type)
+          const name = kid.title ?? (def ? t(def.titleKey) : kid.type)
           return (
-            <li key={kid.id} className="flex items-center gap-2 text-sm">
-              <span className="flex-1 truncate">{kid.title ?? (def ? t(def.titleKey) : kid.type)}</span>
+            <li key={kid.id} className="flex items-center gap-1 text-sm" data-glance-group-child={kid.id}>
+              <span className="flex-1 truncate">{name}</span>
+              {onShift && i > 0 ? <IconButton label={t('glance.moveLeft')} onClick={() => onShift(kid.id, -1)} testId="child-left"><ChevronLeft className="icon-caption" /></IconButton> : null}
+              {onShift && i < all.length - 1 ? <IconButton label={t('glance.moveRight')} onClick={() => onShift(kid.id, 1)} testId="child-right"><ChevronRight className="icon-caption" /></IconButton> : null}
+              {onSettings ? <IconButton label={t('glance.settings', { name })} onClick={() => onSettings(kid.id)} testId="child-settings"><Settings2 className="icon-caption" /></IconButton> : null}
               <IconButton label={t('workbench.home.edit.remove', { name: kid.title ?? kid.type })} danger onClick={() => onRemove(kid.id)}><X className="icon-caption" /></IconButton>
             </li>
           )
