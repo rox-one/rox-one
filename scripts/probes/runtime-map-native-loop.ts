@@ -89,7 +89,7 @@ async function main(): Promise<void> {
       'task.batch': false, 'task.enableEffort': true, 'task.maxEffort': 'max', 'task.maxRecursionDepth': 3,
       'task.isolation.enabled': false, 'async.enabled': false, 'eval.js': true, 'eval.py': false, 'eval.tools.enabled': true,
       'magicKeywords.enabled': true, 'magicKeywords.ultrathink': true, 'magicKeywords.orchestrate': true,
-      'magicKeywords.workflow': true, 'providers.autoThinkingMaxEffort': 'max',
+      'magicKeywords.workflow': true,
       disabledProviders: ['claude-plugins', 'agent-plugins', 'omp-plugins'],
       'modelRoles.default': 'fixture/worker', 'modelRoles.task': 'fixture/worker', 'modelRoles.smol': 'fixture/worker',
     });
@@ -165,7 +165,8 @@ async function main(): Promise<void> {
         { id: 'restricted', name: 'fixture restricted', reasoning: true, input: ['text'], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 32768, maxTokens: 2048 },
       ],
     });
-    const supportedMaximum = getSupportedEfforts(registry.find('fixture', 'worker')).at(-1);
+    const supportedEfforts = getSupportedEfforts(registry.find('fixture', 'worker'));
+    const supportedMaximum = supportedEfforts.at(-1);
     // Preloaded ExtensionAPI instances retain their eventBus. The SDK must
     // receive that same native bus, as the CLI's early-loading path does.
     const eventBus = new EventBus();
@@ -203,7 +204,17 @@ async function main(): Promise<void> {
     if (!grandchildRequests.length || grandchildRequests.some(request => JSON.stringify(request.tools) !== JSON.stringify(['read', 'yield']))) throw new Error('Actual restricted worker tools changed');
     const evalRequests = requests.filter(request => request.kind === 'restricted-eval-child');
     if (!evalRequests.length || evalRequests.some(request => JSON.stringify(request.tools) !== JSON.stringify(['read', 'yield']))) throw new Error('Actual eval worker restrictions changed');
-    if (requests.filter(request => request.tools.length).some(request => request.reasoning !== supportedMaximum)) throw new Error('Actual native worker thinking policy changed');
+    // S3-13: the managed policy no longer forces a thinking level; the host owns
+    // session thinking via `set_thinking_level`. Every tool-bearing worker request
+    // must therefore carry the level resolved from its own session/dispatch
+    // configuration (auto ceiling, caller effort, agent thinkingLevel) — within the
+    // model-supported set, and never a blanket maximum.
+    const workerRequests = requests.filter(request => request.tools.length);
+    if (!workerRequests.length) throw new Error('No tool-bearing native worker request was captured');
+    const supportedLevels = supportedEfforts.map(String);
+    if (workerRequests.some(request => !supportedLevels.includes(String(request.reasoning)))) throw new Error('Actual native worker thinking level is outside the model-supported set');
+    if (!workerRequests.some(request => request.kind === 'parent' && request.reasoning === session.thinkingLevel)) throw new Error('Actual native session thinking level did not reach the worker provider');
+    if (workerRequests.every(request => request.reasoning === supportedMaximum)) throw new Error('Actual native worker thinking policy still forces the maximum level');
     if (!observations.some(event => event.kind === 'tool.started' && event.toolUseId === 'actual-grandchild-read' && event.agentId === grandchildAssignment.agentId)) throw new Error('Actual nested native read was not observed');
     if (!observations.some(event => event.kind === 'reasoning.output' && event.agentId === grandchildAssignment.agentId && event.payload.provenance === 'provider')) throw new Error('Provided native mock reasoning was not observed');
     if (!observations.some(event => event.kind === 'agent.completed' && event.agentId === grandchildAssignment.agentId && event.payload.status === 'succeeded')) throw new Error('Native grandchild completion was not observed');
@@ -277,7 +288,7 @@ async function main(): Promise<void> {
     if (transportErrors.length || networkAttempts) throw new Error('Observation transport/network error');
     writeWorkerEvidence(outputPath, {
       assertionsPassed: true, scope: 'Actual native SDK two-level task worker and eval-agent loops, fixture provider, private observer transport. No installed-app or remote provider claim.',
-      ompVersion: '18.4.12', networkAttempts, paidProviderRequests: 0, supportedMaximum,
+      ompVersion: '18.4.12', networkAttempts, paidProviderRequests: 0, supportedMaximum, supportedEfforts: supportedEfforts.map(String), sessionThinking: session.thinkingLevel,
       requests: requests.map(({ kind, tools, reasoning }) => ({ kind, tools, reasoning })),
       rawHooks: raw.map(event => ({ hook: event.hook, agent: event.agent, nativeSessionId: event.nativeSessionId, sourceSeq: event.sourceSeq,
         dispatch: ['before_subagent_spawn', 'subagent_identity'].includes(event.hook) ? event.payload : undefined })),

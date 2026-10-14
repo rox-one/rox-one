@@ -854,20 +854,470 @@ def ensure_venv(
     return result.python, result.log
 
 
+# Wave 11: rich output (plans/cookbooks-surface/SPEC-wave11-rich-output.md). A
+# cell may return ``display_data`` records — through the injected ``display()``
+# builtin, an object's ``_repr_*_`` methods, or the value of its last top-level
+# expression (Jupyter/Colab ``Out[]`` semantics) — plus every matplotlib figure
+# still open when the cell ends. Records travel back over a temp results file (a
+# "shadow" transport, like the run-all driver's): a killed child leaves no file
+# and the caller reports no displays (decisions 1-8).
+#
+# ``_DISPLAY_HELPERS`` is the single source of truth for the record format, the
+# caps, the redaction policy and the matplotlib flush. It is prepended to BOTH
+# children: ``_RUNNER`` (one cell per process) and ``_RUN_ALL_DRIVER`` (every
+# cell of a copy in one namespace). It must stay Python 3.9-compatible: the Lab
+# runs on 3.11+, but PROVENANCE.md validates the vendored snapshot with 3.9.6.
+_DISPLAY_RECORD_LIMIT = 512 * 1024  # 512 KiB of data per record
+_DISPLAY_CELL_LIMIT = 1536 * 1024  # 1.5 MiB of data per cell / per /run
+_DISPLAY_RECORDS_LIMIT = 12  # records per cell / per /run
+_DISPLAY_RUN_ALL_LIMIT = 8 * 1024 * 1024  # 8 MiB across one /run-all
+_DISPLAY_TRUNCATION_MARKER = "\u2026[display output truncated]"
+
+_DISPLAY_HELPERS = (
+    "import base64, io, json, os, re, sys\n"
+    "\n"
+    f"RECORD_LIMIT = {_DISPLAY_RECORD_LIMIT}\n"
+    f"CELL_LIMIT = {_DISPLAY_CELL_LIMIT}\n"
+    f"RECORDS_LIMIT = {_DISPLAY_RECORDS_LIMIT}\n"
+    f"RUN_ALL_LIMIT = {_DISPLAY_RUN_ALL_LIMIT}\n"
+    f"TRUNCATION = {_DISPLAY_TRUNCATION_MARKER!r}\n"
+    + """TEXT_MIMES = frozenset(["application/json", "application/xml", "application/x-yaml"])
+# One event = one widget representation (Jupyter/Colab). The order below is the
+# emission PRIORITY and the single source of truth for it (G3-2): an event picks
+# the first mime it has, and the other mimes stay out of the transport.
+REPR_MIMES = (
+    ("text/html", "_repr_html_"),
+    ("image/svg+xml", "_repr_svg_"),
+    ("image/png", "_repr_png_"),
+    ("image/jpeg", "_repr_jpeg_"),
+    ("text/markdown", "_repr_markdown_"),
+    ("application/json", "_repr_json_"),
+)
+WIDGET_MIMES = tuple(mime for mime, _repr in REPR_MIMES)
+# G3-3/G3-5: the transport carries these mimes only. A caller-supplied bundle can
+# smuggle mime-like text (or a secret inside the mime itself), so a record whose
+# mime does not match is dropped rather than stored under the raw key.
+MIME_RE = re.compile(
+    r"^(text/[a-z0-9][a-z0-9.+-]*|image/(png|jpeg|svg[+]xml)|application/(json|xml|x-yaml))$"
+)
+
+
+def _rox_widget_mime(mimes):
+    # The first mime of an event, by the single priority order above.
+    present = set(str(mime).strip().lower() for mime in mimes)
+    for mime in WIDGET_MIMES:
+        if mime in present:
+            return mime
+    return None
+
+
+def _rox_is_text_mime(mime):
+    value = (mime or "").strip().lower()
+    return value.startswith("text/") or value in TEXT_MIMES
+
+
+def _rox_new_sink(shared=None):
+    # `shared` is the run-all budget, a mutable {"left": <bytes>} shared by every
+    # cell of one run, or None for a single /run.
+    return {"records": [], "size": 0, "truncated": False, "secrets": [], "shared": shared}
+
+
+def _rox_configure_secrets(sink, names):
+    # Values come from this child's own environment: the caller sends names only,
+    # so no secret value is ever written to a job or results file (G4-CBK-01).
+    secrets = []
+    for name in names or []:
+        value = os.environ.get(str(name))
+        if value:
+            secrets.append(str(value))
+    sink["secrets"] = secrets
+    return sink
+
+
+def _rox_redact(value, secrets):
+    # Longest-first so a secret that starts with another stays masked whole.
+    if not value or not secrets:
+        return value
+    for secret in sorted({s for s in secrets if s}, key=lambda s: (-len(s), s)):
+        value = value.replace(secret, "***")
+    return value
+
+
+def _rox_clip(data, limit):
+    raw = data.encode("utf-8")
+    if len(raw) <= limit:
+        return data
+    # Never cut a multi-byte character in half.
+    return raw[:limit].decode("utf-8", "ignore")
+
+
+def _rox_mime_value(mime, value):
+    # The one normalisation every record goes through (Jupyter/nbformat
+    # conventions):
+    #   * bytes -> base64 for image/*, utf-8 text for every other mime
+    #     (``_repr_png_`` returns bytes);
+    #   * a str for image/svg+xml is markup -> base64 (utf-8);
+    #   * a str for any other image/* is already base64 -> passed through
+    #     unchanged, so ``display({"image/png": "<b64>"}, raw=True)`` — the
+    #     common path — is never encoded twice;
+    #   * anything else -> json.dumps (dict/list), str() otherwise.
+    kind = str(mime).lower()
+    if isinstance(value, (bytes, bytearray)):
+        raw = bytes(value)
+        if kind.startswith("image/"):
+            return base64.b64encode(raw).decode("ascii")
+        return raw.decode("utf-8", "replace")
+    if isinstance(value, str):
+        if kind == "image/svg+xml":
+            return base64.b64encode(value.encode("utf-8")).decode("ascii")
+        return value
+    if isinstance(value, (dict, list)):
+        try:
+            return json.dumps(value, ensure_ascii=False, default=str)
+        except (TypeError, ValueError):
+            return str(value)
+    return str(value)
+
+
+def _rox_repr(obj):
+    try:
+        return repr(obj)
+    except Exception:
+        return "<unrepresentable object>"
+
+
+def _rox_mime_bundle(obj):
+    # One display event = one widget representation, the first the object offers
+    # in WIDGET_MIMES order, plus text/plain from repr() as the text fallback.
+    # The remaining mimes stay out of the transport (Jupyter/Colab behaviour).
+    bundle = []
+    for mime, attr in REPR_MIMES:
+        method = getattr(obj, attr, None)
+        if not callable(method):
+            continue
+        try:
+            value = method()
+        except Exception:
+            continue
+        if value is None:
+            continue
+        bundle.append((mime, _rox_mime_value(mime, value)))
+        break
+    bundle.append(("text/plain", _rox_repr(obj)))
+    return bundle
+
+
+def _rox_add(sink, mime, data):
+    # The one entry point for every record: format, caps and the text-only
+    # redaction policy are decided here, so child and caller cannot drift.
+    if not isinstance(mime, str) or not isinstance(data, str):
+        return
+    # G3-3/G3-5: normalise, mask (a secret could ride in the mime itself) and
+    # whitelist; a record outside the set never reaches the notebook.
+    mime = _rox_redact(mime.strip().lower(), sink["secrets"])
+    if not MIME_RE.match(mime):
+        return
+    if sink["truncated"]:
+        return
+    if _rox_is_text_mime(mime):
+        data = _rox_redact(data, sink["secrets"])
+    size = len(data.encode("utf-8"))
+    if len(sink["records"]) >= RECORDS_LIMIT:
+        sink["truncated"] = True
+        return
+    if size > RECORD_LIMIT:
+        data = _rox_clip(data, RECORD_LIMIT)
+        size = len(data.encode("utf-8"))
+        sink["truncated"] = True
+    if sink["size"] + size > CELL_LIMIT:
+        sink["truncated"] = True
+        return
+    shared = sink["shared"]
+    if shared is not None:
+        if shared["left"] - size < 0:
+            sink["truncated"] = True
+            return
+        shared["left"] -= size
+    sink["records"].append({"mime": mime, "data": data})
+    sink["size"] += size
+
+
+def _rox_display(sink, objects, raw=False):
+    for obj in objects:
+        if raw:
+            # A ready mime bundle: one event, so the same rule as an object —
+            # exactly one widget mime (first present in WIDGET_MIMES order) and
+            # the caller's text/plain, if any. Extra mimes are ignored.
+            if not hasattr(obj, "items"):
+                continue
+            bundle = {}
+            for mime, value in obj.items():
+                bundle[str(mime).strip().lower()] = value
+            widget = _rox_widget_mime(bundle)
+            if widget is not None and bundle[widget] is not None:
+                _rox_add(sink, widget, _rox_mime_value(widget, bundle[widget]))
+            if bundle.get("text/plain") is not None:
+                _rox_add(sink, "text/plain", _rox_mime_value("text/plain", bundle["text/plain"]))
+        elif isinstance(obj, str):
+            # Value API: display("caption") shows the caption itself, no quotes.
+            # (The trailing-expression path is the one that keeps repr(), so a
+            # cell ending in 'x' still reads like Jupyter's Out[].)
+            _rox_add(sink, "text/plain", obj)
+        else:
+            for mime, data in _rox_mime_bundle(obj):
+                _rox_add(sink, mime, data)
+
+
+def _rox_show(sink, obj):
+    # The value of the cell's last top-level expression (Jupyter `Out[]`): None is
+    # not shown, and everything else takes the full mime bundle — so a trailing
+    # 'x' keeps its quotes, unlike display(), whose string shortcut is the value API.
+    if obj is None:
+        return
+    for mime, data in _rox_mime_bundle(obj):
+        _rox_add(sink, mime, data)
+
+
+def _rox_make_display(box):
+    # Bound to a mutable box, so a run-all namespace can be reused across cells
+    # while every cell still writes into its own sink.
+    def display(*objects, raw=False):
+        return _rox_display(box["sink"], objects, raw)
+
+    return display
+
+
+def _rox_make_show(box):
+    def __show__(obj):
+        return _rox_show(box["sink"], obj)
+
+    return __show__
+
+
+def _rox_flush_figures(sink):
+    # Only when the cell itself pulled in matplotlib.pyplot: the child never
+    # imports it, so a plain cell neither pays for matplotlib nor fails without it.
+    pyplot = sys.modules.get("matplotlib.pyplot")
+    if pyplot is None:
+        return
+    try:
+        numbers = list(pyplot.get_fignums())
+    except Exception:
+        numbers = []
+    for number in numbers:
+        try:
+            figure = pyplot.figure(number)
+            buffer = io.BytesIO()
+            figure.savefig(buffer, format="png", bbox_inches="tight")
+        except Exception:
+            continue
+        _rox_add(sink, "image/png", base64.b64encode(buffer.getvalue()).decode("ascii"))
+    try:
+        pyplot.close("all")
+    except Exception:
+        pass
+
+
+def _rox_wrap_last_expression(source, filename="<cell>"):
+    # displayhook semantics without compile(mode="single") (which would display
+    # every expression and add other surprises): only the LAST top-level
+    # expression statement is shown, by rewriting it into a call.
+    import ast
+
+    tree = ast.parse(source, filename=filename, mode="exec")
+    if tree.body and isinstance(tree.body[-1], ast.Expr):
+        last = tree.body[-1]
+        call = ast.Expr(
+            value=ast.Call(
+                func=ast.Name(id="__rox_show__", ctx=ast.Load()),
+                args=[last.value],
+                keywords=[],
+            )
+        )
+        ast.copy_location(call, last)
+        tree.body[-1] = call
+    ast.fix_missing_locations(tree)
+    return compile(tree, filename, "exec")
+
+
+def _rox_records(sink):
+    records = [dict(record) for record in sink["records"]]
+    if sink["truncated"]:
+        records.append({"mime": "text/plain", "data": TRUNCATION})
+    return records
+
+
+def _rox_write_results(path, sink):
+    # tmp + os.replace: the caller never reads a half-written results file.
+    payload = {"displays": _rox_records(sink)}
+    tmp = str(path) + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh)
+    os.replace(tmp, path)
+"""
+)
+
+
 # Cell runner: one isolated `python -c` per cell. T0 uses this instead of a
 # long-lived ZMQ kernel so the spike is testable without jupyter_client. The
 # Electron host can swap the transport for ipykernel over 127.0.0.1 + token;
 # the copy/venv/env contract below stays the same either way.
+#
+# Wave 11: stdin is a JSON object ``{"code": <str>, "results": <path|null>,
+# "secret_env": [names]}`` — a bare JSON string (the old wire format) is still
+# accepted. The child writes ``{"displays": [...]}`` to ``results`` in a
+# ``finally``, so a kill/timeout leaves no file and the caller reports no
+# displays. ``MPLBACKEND=Agg`` is set before the cell runs, so a cell that
+# imports matplotlib never needs a display.
 _RUNNER = (
-    "import json,sys,traceback\n"
-    "code=json.loads(sys.stdin.read())\n"
+    _DISPLAY_HELPERS
+    + "import json,sys,traceback\n"
+    "payload=json.loads(sys.stdin.read())\n"
+    "if isinstance(payload,dict):\n"
+    "    code=payload.get('code') or ''\n"
+    "    results=payload.get('results')\n"
+    "    secret_names=payload.get('secret_env') or []\n"
+    "else:\n"
+    "    code=payload if isinstance(payload,str) else ''\n"
+    "    results=None\n"
+    "    secret_names=[]\n"
+    "os.environ.setdefault('MPLBACKEND','Agg')\n"
+    "sink=_rox_new_sink()\n"
+    "_rox_configure_secrets(sink,secret_names)\n"
+    "box={'sink':sink}\n"
+    "ns={'display':_rox_make_display(box),'__rox_show__':_rox_make_show(box)}\n"
+    "failed=1\n"
     "try:\n"
-    "    ns={}\n"
-    "    exec(compile(code,'<cell>','exec'), ns, ns)\n"
+    "    exec(_rox_wrap_last_expression(code,'<cell>'),ns,ns)\n"
+    "    failed=0\n"
     "except Exception:\n"
     "    traceback.print_exc()\n"
+    "finally:\n"
+    "    _rox_flush_figures(sink)\n"
+    "    if results:\n"
+    "        _rox_write_results(results,sink)\n"
+    "if failed:\n"
     "    sys.exit(1)\n"
 )
+
+
+# Wave 11: the caller re-validates what a child wrote back. The results file
+# lives in a temp dir the cell itself could write to, so the host never trusts
+# it: every record is checked, the same numeric caps are re-applied and text
+# mimes are redacted again (defence in depth — decision 8). ``image/*`` is
+# deliberately left alone, matching the child (decision 7). G3: the mime itself
+# is normalised + whitelisted here too (see ``_MIME_ALLOWED``).
+_DISPLAY_TEXT_MIMES = frozenset({"application/json", "application/xml", "application/x-yaml"})
+
+# G3-3/G3-5, caller side: the same set the child enforces, so a tampered results
+# file cannot smuggle an arbitrary key into the notebook's ``display_data``.
+_MIME_ALLOWED = re.compile(
+    r"^(text/[a-z0-9][a-z0-9.+-]*|image/(png|jpeg|svg[+]xml)|application/(json|xml|x-yaml))$"
+)
+
+# G4-F2: a size gate before ANY read of a child-written temp file. Our child
+# writes under the caps above, so anything past that budget is sabotage (a cell
+# can reach the /run payload through ``sys.modules["__main__"].results``) and
+# reading it would let one cell OOM the sidecar. Slack covers JSON overhead.
+_DISPLAY_READ_SLACK = 64 * 1024
+_DISPLAY_READ_LIMIT = _DISPLAY_CELL_LIMIT + _DISPLAY_READ_SLACK
+
+
+def _run_all_read_limit(cells: int) -> int:
+    """The most our own run-all driver can legitimately write for ``cells`` cells.
+
+    The driver writes each cell's raw streams (it does not cap them itself; the
+    caller caps them afterwards, plan 016), so the ceiling is the shared display
+    budget plus two ``MAX_CAPTURE_CHARS`` streams per cell, worst-case
+    JSON-escaped (6 bytes per char).
+    """
+    return (
+        _DISPLAY_RUN_ALL_LIMIT
+        + 2 * max(int(cells), 0) * MAX_CAPTURE_CHARS * 6
+        + _DISPLAY_READ_SLACK
+    )
+
+
+def _is_text_mime(mime: str) -> bool:
+    value = (mime or "").lower()
+    return value.startswith("text/") or value in _DISPLAY_TEXT_MIMES
+
+
+def _clip_display_text(data: str, limit: int) -> str:
+    raw = data.encode("utf-8")
+    if len(raw) <= limit:
+        return data
+    return raw[:limit].decode("utf-8", "ignore")
+
+
+def _read_temp_json(path, limit: int):
+    """Parse a temp JSON file our own child wrote; ``None`` if absent, junk or
+    over ``limit`` bytes (the caller then reports no records at all)."""
+    try:
+        if os.path.getsize(path) > limit:
+            return None
+        text = Path(path).read_text(encoding="utf-8")
+    except OSError:
+        return None
+    try:
+        return json.loads(text)
+    except ValueError:
+        return None
+
+
+def _read_displays(path) -> list:
+    """The display records a child wrote; ``[]`` when it wrote none."""
+    data = _read_temp_json(path, _DISPLAY_READ_LIMIT)
+    records = data.get("displays") if isinstance(data, dict) else None
+    if not isinstance(records, list):
+        return []
+    return records
+
+
+def _cap_displays(records, secrets, *, shared: dict | None = None) -> list[dict]:
+    """Re-apply the child's caps and redaction to records read back from temp.
+
+    ``shared`` is the run-all budget ``{"left": <bytes>}`` shared by every cell
+    of one run; ``None`` for a single ``/run``. Anything over a cap — or
+    malformed — is dropped, and one ``text/plain`` truncation marker is appended
+    in its place, exactly as the child does.
+    """
+    out: list[dict] = []
+    size = 0
+    truncated = False
+    for record in records if isinstance(records, list) else []:
+        if not isinstance(record, dict):
+            continue
+        mime = record.get("mime")
+        data = record.get("data")
+        if not isinstance(mime, str) or not isinstance(data, str):
+            continue
+        mime = redact_output(mime.strip().lower(), secrets)
+        if not _MIME_ALLOWED.match(mime):
+            continue
+        if len(out) >= _DISPLAY_RECORDS_LIMIT:
+            truncated = True
+            break
+        if _is_text_mime(mime):
+            data = redact_output(data, secrets)
+        length = len(data.encode("utf-8"))
+        if length > _DISPLAY_RECORD_LIMIT:
+            data = _clip_display_text(data, _DISPLAY_RECORD_LIMIT)
+            length = len(data.encode("utf-8"))
+            truncated = True
+        if size + length > _DISPLAY_CELL_LIMIT:
+            truncated = True
+            break
+        if shared is not None:
+            if shared["left"] - length < 0:
+                truncated = True
+                break
+            shared["left"] -= length
+        out.append({"mime": mime, "data": data})
+        size += length
+    if truncated:
+        out.append({"mime": "text/plain", "data": _DISPLAY_TRUNCATION_MARKER})
+    return out
 
 
 # Plan 016 "Run all": one child process runs every code cell of a copy, in
@@ -878,8 +1328,21 @@ _RUNNER = (
 # cell — a kill mid-run (overall timeout, interrupt) still yields the records of
 # the cells that finished. Protocol: argv[1] is the job JSON path, holding
 # ``{"cells": [[index, source], ...], "results": <path>, "timeout": <per-cell>}``.
-_RUN_ALL_DRIVER = r'''
+# Wave 11: it also prepends ``_DISPLAY_HELPERS`` and records each cell's
+# ``display_data`` in ``rec["displays"]`` (a fresh sink per cell, one shared 8 MiB
+# budget for the whole run, figures flushed in the cell's ``finally``).
+_RUN_ALL_DRIVER = _DISPLAY_HELPERS + r'''
 import io, json, os, signal, sys, time, traceback
+
+
+def _redact(text, secrets):
+    # Host-injected secret values must never reach the temp results file: the
+    # caller can be killed (cancel/overall timeout) before it gets to redact the
+    # records itself, so masking happens here, before every write. Longest-first
+    # so a secret that starts with another stays masked whole (secrets policy).
+    for value in sorted({v for v in secrets if v}, key=lambda s: (-len(s), s)):
+        text = text.replace(value, "***")
+    return text
 
 
 def _write(path, payload):
@@ -893,8 +1356,18 @@ def _write(path, payload):
 def main(job_path):
     with open(job_path, encoding="utf-8") as fh:
         job = json.load(fh)
+    # The job file has served its purpose; drop it so nothing lingers on disk.
+    try:
+        os.unlink(job_path)
+    except OSError:
+        pass
     results_path = job["results"]
     per_cell = float(job.get("timeout") or 0)
+    # Values come from our own environment: the caller passes names only, so no
+    # secret value is ever written to the job file (G4-CBK-01).
+    secret_names = job.get("secret_env") or []
+    secrets = [os.environ.get(name) for name in secret_names]
+    os.environ.setdefault("MPLBACKEND", "Agg")
     timer = hasattr(signal, "setitimer")
 
     class CellTimeout(Exception):
@@ -907,17 +1380,27 @@ def main(job_path):
         signal.signal(signal.SIGALRM, _on_alarm)
 
     records, ns = [], {}
+    # One namespace for the whole run (cell 1 sees cell 0's names), but a fresh
+    # display sink per cell: the builtins read `box["sink"]` at call time, so a
+    # name a cell kept still writes into the current cell's sink.
+    shared = {"left": RUN_ALL_LIMIT}
+    box = {"sink": None}
+    ns["display"] = _rox_make_display(box)
+    ns["__rox_show__"] = _rox_make_show(box)
     for index, source in job["cells"]:
         start = time.monotonic()
+        sink = _rox_new_sink(shared)
+        _rox_configure_secrets(sink, secret_names)
+        box["sink"] = sink
         out, err = io.StringIO(), io.StringIO()
         rec = {"index": index, "ok": False, "stdout": "", "stderr": "",
-               "timed_out": False, "duration_ms": 0}
+               "timed_out": False, "duration_ms": 0, "displays": []}
         old = sys.stdout, sys.stderr
         sys.stdout, sys.stderr = out, err
         if timer:
             signal.setitimer(signal.ITIMER_REAL, per_cell)
         try:
-            exec(compile(source, "<cell %d>" % index, "exec"), ns, ns)
+            exec(_rox_wrap_last_expression(source, "<cell %d>" % index), ns, ns)
             rec["ok"] = True
         except CellTimeout:
             rec["timed_out"] = True
@@ -928,7 +1411,13 @@ def main(job_path):
             if timer:
                 signal.setitimer(signal.ITIMER_REAL, 0)
             sys.stdout, sys.stderr = old
-        rec["stdout"], rec["stderr"] = out.getvalue(), err.getvalue()
+            _rox_flush_figures(sink)
+        # Filled before the record is written, so a kill mid-run keeps the
+        # displays of every cell that already finished.
+        rec["displays"] = _rox_records(sink)
+        rec["stdout"], rec["stderr"] = _redact(out.getvalue(), secrets), _redact(
+            err.getvalue(), secrets
+        )
         rec["duration_ms"] = int((time.monotonic() - start) * 1000)
         records.append(rec)
         _write(results_path, {"cells": records})
@@ -941,6 +1430,133 @@ def main(job_path):
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1]))
 '''
+
+
+class RunHandle:
+    """A cancellable in-flight execution, shared between the host and the kernel.
+
+    The host creates one per ``/run``/``/run-all`` request and keys it by the
+    catalog ``itemId``; the kernel binds its child process, so ``POST /cancel``
+    can kill the process group from another request thread. Thread-safe by
+    construction: the HTTP server is threaded, so ``cancel`` runs concurrently
+    with the ``attach`` that happens a moment after ``Popen`` returns.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._proc: subprocess.Popen | None = None
+        self._pid: int | None = None
+        self._cancelled = False
+        self._finished = False
+
+    @property
+    def cancelled(self) -> bool:
+        with self._lock:
+            return self._cancelled
+
+    @property
+    def pid(self) -> int | None:
+        """The child's pid once attached, or ``None`` before ``Popen`` returned.
+
+        Kept after ``finish`` so a caller can still check whether the process is
+        gone (the stop-leak test does exactly that).
+        """
+        with self._lock:
+            return self._pid
+
+    def attach(self, proc: subprocess.Popen) -> None:
+        """Bind the child process; kill it at once if a cancel already landed.
+
+        A ``/cancel`` that arrived between ``Popen`` and this call saw no process
+        to kill, so the flag has to be honoured here or the cell would run on.
+        """
+        with self._lock:
+            self._proc = proc
+            self._pid = proc.pid
+            cancelled = self._cancelled
+        if cancelled:
+            _kill_process_tree(proc)
+
+    def finish(self) -> None:
+        """Mark the execution done so a later ``cancel`` reports nothing to kill."""
+        with self._lock:
+            self._proc = None
+            self._finished = True
+
+    def cancel(self) -> bool:
+        """Mark cancelled and kill the child's process group; False if it is gone.
+
+        Idempotent: a run that finished, or that a previous ``cancel`` already
+        stopped, reports nothing new to kill (so ``/cancel`` answers ``0``).
+        """
+        with self._lock:
+            if self._finished or self._cancelled:
+                return False
+            self._cancelled = True
+            proc = self._proc
+        if proc is not None:
+            _kill_process_tree(proc)
+        return True
+
+
+class ActiveRuns:
+    """Thread-safe registry of in-flight executions keyed by an opaque id.
+
+    One key (the catalog ``itemId``) maps to the runs currently executing for it,
+    so a ``/run`` and any number of ``/run-all`` requests may overlap. ``cancel``
+    kills them all and reports how many were still live, which makes it
+    idempotent: a key with nothing running cancels zero.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._runs: dict[str, set[RunHandle]] = {}
+
+    def register(self, key: str, run: RunHandle) -> RunHandle:
+        with self._lock:
+            self._runs.setdefault(str(key), set()).add(run)
+        return run
+
+    def release(self, key: str, run: RunHandle) -> None:
+        with self._lock:
+            runs = self._runs.get(str(key))
+            if runs is None:
+                return
+            runs.discard(run)
+            if not runs:
+                self._runs.pop(str(key), None)
+
+    def handles(self, key: str) -> list[RunHandle]:
+        """Snapshot of the runs currently registered for ``key``."""
+        with self._lock:
+            return list(self._runs.get(str(key), ()))
+
+    def active(self, key: str) -> int:
+        """How many runs are currently registered for ``key``.
+
+        Wave 10 run-guard: the host refuses a cell-structure mutation while this
+        is non-zero, because insert/delete/move shift cell indices under a run
+        that is about to persist its output back into the copy — the write would
+        land in the wrong cell (``tests/test_notebook_persist.py``).
+        """
+        with self._lock:
+            return len(self._runs.get(str(key), ()))
+
+    def cancel(self, key: str) -> int:
+        """Kill every live run for ``key``; how many were still in flight."""
+        with self._lock:
+            runs = list(self._runs.get(str(key), ()))
+        return sum(1 for run in runs if run.cancel())
+
+    def cancel_all(self) -> int:
+        """Kill every live run of every key (used by ``LabHost.stop``)."""
+        with self._lock:
+            keys = list(self._runs)
+        return sum(self.cancel(key) for key in keys)
+
+    def __len__(self) -> int:
+        with self._lock:
+            return sum(len(runs) for runs in self._runs.values())
 
 
 class Kernel:
@@ -1005,18 +1621,39 @@ class Kernel:
         """Stop the in-flight cell; the next `execute` starts a fresh process."""
         self.interrupt()
 
-    def execute(self, code: str, *, timeout: float | None = None) -> dict:
+    def execute(
+        self, code: str, *, timeout: float | None = None, run: RunHandle | None = None
+    ) -> dict:
         """Run one cell; never raises for cell failure, timeout or interrupt.
 
         Calling this while a cell is already running raises ``KernelError`` rather
-        than starting a second process (one cell per kernel; plan 010).
+        than starting a second process (one cell per kernel; plan 010). ``run``
+        binds this execution to a host-side ``RunHandle`` so ``POST /cancel`` can
+        kill the child process group from another thread; the result then carries
+        ``cancelled`` (and ``interrupted``) accordingly.
+
+        Wave 11: the child is handed a temp ``results`` path (stdin payload
+        ``{"code", "results", "secret_env"}``) and writes its ``display_data``
+        records there in a ``finally``; the caller re-validates and re-caps them
+        into ``result["displays"]``. A killed child writes nothing, so a
+        timeout/cancel yields ``displays == []``. The temp dir is removed before
+        this returns.
         """
         if not self._run_lock.acquire(blocking=False):
             raise KernelError("kernel busy: a cell is already running")
         try:
+            work_dir = None
             limit = self.default_timeout if timeout is None else float(timeout)
             py, install_log = self.ensure_python()
             proc_env = self._process_env()
+            # The child redacts from its own environment: send the secret *names*
+            # only, so no value is ever written to the temp payload.
+            secret_names = sorted({str(name) for name, value in self.env.items() if value})
+            work_dir = tempfile.mkdtemp(prefix="rox-run-")
+            results_path = os.path.join(work_dir, "results.json")
+            payload = json.dumps(
+                {"code": code, "results": results_path, "secret_env": secret_names}
+            )
             with self._lock:
                 self._interrupted = False
             proc = subprocess.Popen(
@@ -1030,6 +1667,10 @@ class Kernel:
                 env=proc_env,
                 start_new_session=(os.name != "nt"),
             )
+            # A `/cancel` may land before this Popen returned; the handle kills
+            # the child itself in that window (see RunHandle.attach).
+            if run is not None:
+                run.attach(proc)
             with self._lock:
                 self._proc = proc
             # An `interrupt()` that landed between `Popen` and the assignment above
@@ -1041,7 +1682,7 @@ class Kernel:
                 _kill_process_tree(proc)
             timed_out = False
             try:
-                out, err = proc.communicate(input=json.dumps(code), timeout=limit)
+                out, err = proc.communicate(input=payload, timeout=limit)
             except subprocess.TimeoutExpired:
                 timed_out = True
                 _kill_process_tree(proc)
@@ -1050,6 +1691,12 @@ class Kernel:
                 with self._lock:
                     self._proc = None
                     interrupted = self._interrupted
+                if run is not None:
+                    run.finish()
+                    cancelled = run.cancelled
+                else:
+                    cancelled = False
+                interrupted = interrupted or cancelled
             # Injected secrets never reach the notebook: redact both streams here and
             # build `error` from the redacted text so a traceback cannot leak a key.
             # Redact the store values as they land in this cell's final env (plan 010).
@@ -1057,6 +1704,10 @@ class Kernel:
                 value for name, value in proc_env.items() if value and name in self.env
             ]
             secret_values.extend(value for value in self.env.values() if value)
+            # Wave 11: displays come back over the temp results file. A missing
+            # file (kill, timeout, legacy payload) simply means none; either way
+            # the records are re-validated, re-capped and re-redacted here.
+            displays = _cap_displays(_read_displays(results_path), secret_values)
             result = {
                 "ok": proc.returncode == 0 and not timed_out and not interrupted,
                 "stdout": _cap_output(redact_output(out or "", secret_values)),
@@ -1067,12 +1718,16 @@ class Kernel:
                 "language": self.language,
                 "timed_out": timed_out,
                 "interrupted": interrupted,
+                "cancelled": cancelled,
                 "timeout": limit,
+                "displays": displays,
             }
             if not result["ok"]:
                 result["error"] = _error_text(result)
             return result
         finally:
+            if work_dir is not None:
+                shutil.rmtree(work_dir, ignore_errors=True)
             self._run_lock.release()
 
     def _process_env(self) -> dict[str, str]:
@@ -1178,15 +1833,19 @@ def execute_code(
     catalog=None,
     item=None,
     store: Mapping[str, str] | None = None,
+    run: RunHandle | None = None,
 ) -> dict:
     """Run one Python cell in the copy venv (one-shot Kernel per call).
 
     Adds the host concerns the Kernel itself does not own: map a missing-credential
     traceback to the ROX message, then write the outputs into the copy's ipynb.
     ``index`` names the executed cell, so its outputs replace that cell's rather
-    than the first cell whose source happens to match (plan 010).
+    than the first cell whose source happens to match (plan 010). ``run`` is the
+    host's cancellable handle for this request (see ``RunHandle``).
     """
-    result = Kernel(copy, env=env, python=python, default_timeout=timeout).execute(code)
+    result = Kernel(copy, env=env, python=python, default_timeout=timeout).execute(
+        code, run=run
+    )
     err = result.get("error")
     if err and catalog is not None and item is not None:
         rewritten = rewrite_missing_secret_error(catalog, item, err, store)
@@ -1208,6 +1867,7 @@ def execute_all(
     catalog=None,
     item=None,
     store: Mapping[str, str] | None = None,
+    run: RunHandle | None = None,
 ) -> dict:
     """Run every ``(index, source)`` job in document order in ONE namespace.
 
@@ -1215,20 +1875,28 @@ def execute_all(
     one child process and one namespace, so a later cell can use the names an
     earlier one defined. Execution stops at the first failure; the remaining
     jobs are reported ``skipped``. Returns ``{"ok", "cells", "returncode",
-    "timed_out", "python"}`` with exactly one cell record per job (input order),
-    each ``{"index", "status": "ok"|"error"|"skipped", "ok", "stdout", "stderr",
-    "error", "timed_out", "duration_ms"}``. ``ok`` is True only when every
-    requested cell ran ok.
+    "timed_out", "cancelled", "python"}`` with exactly one cell record per job
+    (input order), each ``{"index", "status": "ok"|"error"|"skipped", "ok",
+    "stdout", "stderr", "error", "timed_out", "duration_ms", "displays"}``.
+    ``ok`` is True only when every requested cell ran ok. Wave 11: ``displays``
+    is the cell's re-validated/re-capped ``display_data`` list (``[]`` for a
+    ``skipped`` cell), drawn from one 8 MiB budget for the whole run.
 
     ``timeout`` is the per-cell budget (driver-side ``signal.setitimer``, a
     no-op where unavailable); the whole run is additionally bounded by
     ``timeout * max(len(jobs), 1) + 30`` seconds, and on expiry the process
     group is killed and jobs without a record are ``skipped``. ``env`` is the
     child environment overlay (the copy's declared secrets); its values are
-    redacted from every stream, and failures are mapped to the ROX
-    missing-credential message when ``catalog``/``item`` are given. With
-    ``persist`` the executed cells' outputs are written into the copy's ipynb
-    (``skipped`` cells keep whatever they had).
+    redacted from every stream (in the driver, before each temp write, and again
+    here), and the driver is given the secret *names* only — it reads the values
+    from its own environment, so no secret value reaches the temp job file. The
+    job file is written ``0600`` and unlinked by the driver once read. Failures
+    are mapped to the ROX missing-credential message when ``catalog``/``item``
+    are given. With ``persist`` the executed cells' outputs are written into the
+    copy's ipynb (``skipped`` cells keep whatever they had). ``run`` is the
+    host's cancellable handle for this request (see ``RunHandle``); after a
+    ``/cancel`` the records already in ``results.json`` are kept and the missing
+    cells stay ``skipped``.
 
     Capture caveat: the driver captures a cell by swapping ``sys.stdout``/
     ``sys.stderr`` for ``io.StringIO``, so a cell that writes through
@@ -1239,12 +1907,24 @@ def execute_all(
     pending = [(int(index), str(source)) for index, source in jobs]
     py, _install_log = ensure_venv(copy, python=python)
     if not pending:
-        return {"ok": True, "cells": [], "returncode": None, "timed_out": False, "python": str(py)}
+        return {
+            "ok": True,
+            "cells": [],
+            "returncode": None,
+            "timed_out": False,
+            "cancelled": False,
+            "python": str(py),
+        }
     proc_env = _subprocess_env(env)
     env_map = dict(env or {})
     # Same redaction policy as `Kernel.execute`: every value this copy declared.
     secret_values = [value for name, value in proc_env.items() if value and name in env_map]
     secret_values.extend(value for value in env_map.values() if value)
+    # G4-CBK-01: the driver redacts before every temp write, so a kill mid-run
+    # cannot leave a raw secret on disk. It is handed the env *names* only and
+    # reads the values from its own environment (they are already in `proc_env`),
+    # so no secret value ever reaches the job file either.
+    secret_names = sorted({str(name) for name, value in env_map.items() if value})
 
     work_dir = Path(tempfile.mkdtemp(prefix="rox-run-all-"))
     job_path = work_dir / "job.json"
@@ -1256,10 +1936,14 @@ def execute_all(
                 "cells": [[index, source] for index, source in pending],
                 "results": str(results_path),
                 "timeout": float(timeout),
+                "secret_env": secret_names,
             }
         ),
         encoding="utf-8",
     )
+    # Owner-only for defence in depth, even though the job holds no secret; the
+    # driver unlinks it as soon as it has read it.
+    os.chmod(job_path, 0o600)
     driver_path.write_text(_RUN_ALL_DRIVER, encoding="utf-8")
 
     limit = float(timeout) * max(len(pending), 1) + 30.0
@@ -1279,6 +1963,8 @@ def execute_all(
             )
         except OSError as exc:
             raise KernelError(f"could not start the run-all driver: {exc}") from exc
+        if run is not None:
+            run.attach(proc)
         try:
             proc.communicate(timeout=limit)
         except subprocess.TimeoutExpired:
@@ -1286,9 +1972,12 @@ def execute_all(
             _kill_process_tree(proc)
             proc.communicate()
         returncode = proc.returncode
-        records = _read_run_all_records(results_path)
+        records = _read_run_all_records(results_path, _run_all_read_limit(len(pending)))
     finally:
+        if run is not None:
+            run.finish()
         shutil.rmtree(work_dir, ignore_errors=True)
+    cancelled = run.cancelled if run is not None else False
 
     by_index = {}
     for record in records:
@@ -1297,6 +1986,9 @@ def execute_all(
             by_index[index] = record
 
     cells: list[dict] = []
+    # Wave 11: one display budget for the whole run, consumed cell by cell in
+    # document order (the driver applies the same 8 MiB cap on its side).
+    shared = {"left": _DISPLAY_RUN_ALL_LIMIT}
     for index, source in pending:
         record = by_index.get(index)
         if record is None:
@@ -1310,12 +2002,14 @@ def execute_all(
                     "error": None,
                     "timed_out": False,
                     "duration_ms": 0,
+                    "displays": [],
                 }
             )
             continue
         ok = bool(record.get("ok"))
         stdout = _cap_output(redact_output(str(record.get("stdout") or ""), secret_values))
         stderr = _cap_output(redact_output(str(record.get("stderr") or ""), secret_values))
+        displays = _cap_displays(record.get("displays"), secret_values, shared=shared)
         cell = {
             "index": index,
             "status": "ok" if ok else "error",
@@ -1325,6 +2019,7 @@ def execute_all(
             "error": None,
             "timed_out": bool(record.get("timed_out")),
             "duration_ms": int(record.get("duration_ms") or 0),
+            "displays": displays,
         }
         if not ok:
             error = _run_all_error(cell, timeout)
@@ -1339,7 +2034,13 @@ def execute_all(
             persist_code_output(
                 copy.document,
                 source,
-                {"ok": ok, "stdout": stdout, "stderr": stderr, "error": cell["error"]},
+                {
+                    "ok": ok,
+                    "stdout": stdout,
+                    "stderr": stderr,
+                    "error": cell["error"],
+                    "displays": displays,
+                },
                 index=index,
             )
         cells.append(cell)
@@ -1349,16 +2050,19 @@ def execute_all(
         "cells": cells,
         "returncode": returncode,
         "timed_out": timed_out,
+        "cancelled": cancelled,
         "python": str(py),
     }
 
 
-def _read_run_all_records(path: Path) -> list[dict]:
-    """The per-cell records the driver wrote so far; ``[]`` when it wrote none."""
-    try:
-        data = json.loads(Path(path).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return []
+def _read_run_all_records(path: Path, limit: int) -> list[dict]:
+    """The per-cell records the driver wrote so far; ``[]`` when it wrote none.
+
+    G4-F2: the same size gate as ``_read_displays`` — ``limit`` is what our own
+    driver could legitimately have written for this run (``_run_all_read_limit``),
+    so anything bigger is not read at all.
+    """
+    data = _read_temp_json(path, limit)
     records = data.get("cells") if isinstance(data, dict) else None
     if not isinstance(records, list):
         return []
@@ -1420,5 +2124,6 @@ def _crash_result(exc: BaseException) -> dict:
         "timed_out": False,
         "interrupted": False,
         "timeout": None,
+        "displays": [],
         "error": f"{type(exc).__name__}: {exc}",
     }

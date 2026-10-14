@@ -26,12 +26,21 @@
   --motion-disclosure: var(--motion-base); /* 180ms — rail/panel disclosure */
   --motion-overlay: var(--motion-slow);    /* 240ms — dialogs/sheets/islands */
 
+  /* Spring (glass surfaces): a ~3% overshoot curve for presence/press/hover
+     transforms only — never for blur. Duration tokens ride the existing
+     scale, so they zero under reduced motion and html[data-resizing]. */
+  --ease-spring: linear(0, 0.157 7.4%, 0.538 17.6%, 0.832 27.3%, 0.961 34.9%, 1.023 43.3%, 1.032 51.4%, 1.012 67.6%, 0.998 82%, 1);
+  --motion-spring: calc(var(--motion-slow) + 110ms * var(--motion-spring-scale, 1));
+  --motion-spring-exit: var(--motion-base);
+  --motion-spring-scale: 1;
+
   /* Legacy names. */
   --motion-normal: var(--motion-base);
   --ease-out: var(--ease-standard);
 }
 
 html[data-resizing] {
+  --motion-spring-scale: 0;
   --motion-fast: 0ms;
   --motion-base: 0ms;
   --motion-slow: 0ms;
@@ -39,6 +48,8 @@ html[data-resizing] {
 
 @media (prefers-reduced-motion: reduce) {
   :root {
+    --motion-spring-scale: 0;
+    --ease-spring: linear;
     --motion-fast: 0ms;
     --motion-base: 0ms;
     --motion-slow: 0ms;

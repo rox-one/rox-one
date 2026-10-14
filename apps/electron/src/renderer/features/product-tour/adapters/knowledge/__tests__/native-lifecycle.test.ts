@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test'
 import { createNativeReplicaBridge } from '../../../../../../preload/native-replica'
 import { createNativeNotesSyncController } from '../../../../../lib/native-notes-sync'
 import { NATIVE_REPLICA_IPC } from '@rox/shared/protocol/native-replica'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 
 test('StrictMode start/stop/start waits for obsolete production bridge close before reopening', async () => {
   const opening = Promise.withResolvers<string>()

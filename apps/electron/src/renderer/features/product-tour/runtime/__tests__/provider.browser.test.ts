@@ -20,7 +20,7 @@ beforeAll(async () => {
       builder.onResolve({ filter: /.*/ }, args => {
         if (args.path === '@/contexts/NavigationContext') return { path: 'navigation', namespace: 'fixture' }
         if (args.path === 'react-i18next') return { path: 'i18n', namespace: 'fixture' }
-        if (args.path === '../ui' && args.importer.endsWith('/runtime/ProductTourProvider.tsx')) return { path: 'presentation', namespace: 'fixture' }
+        if (args.path === '../ui/presentation' && args.importer.endsWith('/runtime/ProductTourProvider.tsx')) return { path: 'presentation', namespace: 'fixture' }
         return null
       })
       builder.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ loader: 'tsx', resolveDir: root,
@@ -28,11 +28,9 @@ beforeAll(async () => {
           ? `import {useSyncExternalStore} from 'react'; export const useNavigation=()=>useSyncExternalStore(window.learningProviderTest.subscribe,()=>window.learningProviderTest.navSnapshot);`
           : args.path === 'i18n' ? `export const useTranslation=()=>({t:key=>key});`
             : `import * as React from 'react';
-              // Re-export the real presentation surface so this fixture cannot drift from ui/index.ts;
-              // only SpotlightOverlay is overridden below to inject the rendering fault.
-              export * from '${resolve(root, 'apps/electron/src/renderer/features/product-tour/ui/index.ts')}';
-              import {SpotlightOverlay as ActualOverlay} from '${resolve(root, 'apps/electron/src/renderer/features/product-tour/ui/SpotlightOverlay.tsx')}';
-              export function SpotlightOverlay(props){if(window.learningProviderTest.failPresentation)throw new Error('Intentional presentation fault');return <ActualOverlay {...props}/>;}`,
+              // Re-export the real overlay module; only TourPresentation throws the injected fault.
+              import {TourPresentation as ActualPresentation} from '${resolve(root, 'apps/electron/src/renderer/features/product-tour/ui/presentation.tsx')}';
+              export function TourPresentation(props){if(window.learningProviderTest.failPresentation)throw new Error('Intentional presentation fault');return <ActualPresentation {...props}/>;}`,
       }))
     } }],
   })
