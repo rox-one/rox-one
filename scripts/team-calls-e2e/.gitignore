@@ -1,0 +1,9 @@
+node_modules/
+venv/
+*.pcm
+*.mp3
+*.s16
+rec-meta.json
+transcript.json
+lktoken.mjs
+package*.json

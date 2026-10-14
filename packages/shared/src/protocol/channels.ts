@@ -1055,6 +1055,12 @@ export const RPC_CHANNELS = {
     LIST_MESSAGES: 'teamChat:listMessages',
     POST: 'teamChat:post',
     MARK_READ: 'teamChat:markRead',
+    CALL_JOIN: 'teamChat:callJoin',
+    CALL_LEAVE: 'teamChat:callLeave',
+    CALL_SYNC: 'teamChat:callSync',
+    CALL_TRANSCRIPT: 'teamChat:callTranscript',
+    CALL_LIST: 'teamChat:callList',
+    SEARCH: 'teamChat:search',
     CHANGED: 'teamChat:changed',
   },
   chatFolders: {
