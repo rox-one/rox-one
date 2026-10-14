@@ -6,10 +6,9 @@ import { useNavigation } from '@/contexts/NavigationContext'
 import { useModalRegistry } from '@/context/ModalContext'
 import { useDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
 import * as storage from '@/lib/local-storage'
-import type { CapabilityId, CapabilitySnapshot, EngineSnapshot, Phase, RuntimeState, SafeReason, TourBinding, TourDefinition, TourEffect, TourId, TourInput, TourProgress, TourScope, TourTargetRegistration, WindowLease } from '../contracts'
-import { initialRuntimeState, transition } from '../core'
-import { productTourCatalogue, DynamicTourIdPattern } from '../catalogue'
-import { listDynamicTours, subscribeDynamicTours } from '../catalogue/dynamic'
+import type { CapabilityId, CapabilitySnapshot, EngineSnapshot, Phase, RuntimeState, SafeReason, TourBinding, TourDefinition, TourEffect, TourId, TourInput, TourProgress, TourScope, TourTargetRegistration, TransitionFunction, WindowLease } from '../contracts'
+import { DYNAMIC_TOUR_ID_PATTERN } from '../contracts'
+import { initialRuntimeState } from '../core/initial-state'
 import { createTargetRegistry, SpotlightOverlay, TourErrorBoundary, TourVignette } from '../ui'
 import { createProgressRepository, createLeaseRepository, createLearningProfileRepository, createLearningScopeKey, LearningLeaseLostError, type LearningPreferences } from '../persistence'
 import { createLearningDiagnosticsRepository, type LearningEventName } from '../analytics'
@@ -23,6 +22,32 @@ import { parseRouteToNavigationState } from '../../../../shared/route-parser'
 const INACTIVE: readonly Phase[] = ['idle', 'paused', 'blocked', 'finished']
 const READY = { state: 'ready' } as const
 const UNAVAILABLE = { state: 'unavailable', reason: 'api-unavailable' } as const
+
+/**
+ * Catalogue (96 KB) + engine + dynamic admission stay behind import(). The host
+ * wraps the app and cannot itself be React.lazy — swapping the wrapper remounts
+ * the shell. import() still puts those modules in an async chunk, so they leave
+ * index.html's preloaded graph even when the feature flag is already on.
+ */
+type TourEngine = {
+  readonly transition: TransitionFunction
+  readonly catalogue: readonly TourDefinition[]
+  readonly listDynamicTours: () => readonly TourDefinition[]
+  readonly subscribeDynamicTours: (listener: () => void) => () => void
+}
+
+function loadTourEngine(): Promise<TourEngine> {
+  return Promise.all([
+    import('../core'),
+    import('../catalogue/product-tour-catalogue'),
+    import('../catalogue/dynamic'),
+  ]).then(([core, cat, dyn]) => ({
+    transition: core.transition,
+    catalogue: cat.productTourCatalogue,
+    listDynamicTours: dyn.listDynamicTours,
+    subscribeDynamicTours: dyn.subscribeDynamicTours,
+  }))
+}
 export interface LearningController {
   enabled: boolean
   ready: boolean
@@ -84,6 +109,8 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const modal = useModalRegistry()
   const layers = useDismissibleLayerRegistry()
   const [enabled, updateEnabled] = useState(() => storage.get<boolean>(storage.KEYS.featureProductTourV1, false) === true)
+  const [engine, setEngine] = useState<TourEngine | null>(null)
+  const engineRef = useRef<TourEngine | null>(null)
   const [state, updateState] = useState<RuntimeState>(initialRuntimeState)
   const stateRef = useRef(state)
   const observationOwner = useRef<object>({})
@@ -256,7 +283,9 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
       return
     }
     const previous = stateRef.current
-    const result = transition(previous, input)
+    const loaded = engineRef.current
+    if (!loaded) return
+    const result = loaded.transition(previous, input)
     if (INACTIVE.includes(result.state.phase) || previous.attempt?.binding.runToken !== result.state.attempt?.binding.runToken
       || previous.attempt?.stepId !== result.state.attempt?.stepId) clearCollectionViewChanges(observationOwner.current)
     stateRef.current = result.state
@@ -279,6 +308,20 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     }
   }, [runEffects, repositories, valid])
   sendRef.current = send
+  useEffect(() => {
+    if (!enabled) {
+      engineRef.current = null
+      setEngine(null)
+      return
+    }
+    let cancelled = false
+    void loadTourEngine().then(loaded => {
+      if (cancelled) return
+      engineRef.current = loaded
+      setEngine(loaded)
+    })
+    return () => { cancelled = true }
+  }, [enabled])
   const pause = useCallback((reason: SafeReason = 'user-paused') => {
     launchSequence.current += 1
     const attempt = stateRef.current.attempt
@@ -287,7 +330,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   }, [cancelTimeout, releaseLease])
 
   useEffect(() => {
-    if (!enabled || !repositories || !workspaceId) return
+    if (!enabled || !engine || !repositories || !workspaceId) return
     const generation = ++lifetime.current
     void (async () => {
       const profile = await repositories.profile.read()
@@ -296,7 +339,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
       if (profile.status === 'failed') return
       setProfileId(profile.value.clientProfileId); updatePreferences(profile.value.preferences)
       const key = createLearningScopeKey(profile.value.clientProfileId, workspaceId)
-      const loaded = await Promise.all(productTourCatalogue.map(async tour => [tour.id, await repositories.progress.read(key, tour.id)] as const))
+      const loaded = await Promise.all(engine.catalogue.map(async tour => [tour.id, await repositories.progress.read(key, tour.id)] as const))
       if (generation !== lifetime.current) return
       const values: Partial<Record<TourId, TourProgress>> = {}
       for (const [id, result] of loaded) {
@@ -306,17 +349,17 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
       setProgress(values)
     })().catch(() => setStorageStatus('failed'))
     return () => { lifetime.current += 1; launchSequence.current += 1; pause('scope-changed'); setPendingTour(null); setProgress({}); setProfileId(null) }
-  }, [enabled, repositories, workspaceId, pause])
+  }, [enabled, engine, repositories, workspaceId, pause])
 
   // Generated tours join the same engine and persistence as the static catalogue (D9).
   useEffect(() => {
-    if (!enabled) return
-    return subscribeDynamicTours(() => setDynamicRevision(value => value + 1))
-  }, [enabled])
+    if (!enabled || !engine) return
+    return engine.subscribeDynamicTours(() => setDynamicRevision(value => value + 1))
+  }, [enabled, engine])
 
   useEffect(() => {
-    if (!enabled || !repositories || !profileId || !workspaceId) return
-    const dynamic = listDynamicTours()
+    if (!enabled || !engine || !repositories || !profileId || !workspaceId) return
+    const dynamic = engine.listDynamicTours()
     if (!dynamic.length) return
     const generation = lifetime.current
     const key = createLearningScopeKey(profileId, workspaceId)
@@ -328,7 +371,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
         return next
       })
     }).catch(() => {})
-  }, [enabled, repositories, profileId, workspaceId, dynamicRevision])
+  }, [enabled, engine, repositories, profileId, workspaceId, dynamicRevision])
 
   useEffect(() => {
     if (!enabled) return
@@ -375,8 +418,8 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   useEffect(() => {
     const snapshot: EngineSnapshot = { enabled, shellReady, navigationReady: nav.isReady, navigationRevision: nav.navigationRevision, foreground, blockers: [], capabilities }
     snapshotRef.current = snapshot
-    sendRef.current({ type: 'SNAPSHOT', snapshot })
-  }, [enabled, shellReady, nav.isReady, nav.navigationRevision, foreground, capabilities])
+    if (engine) sendRef.current({ type: 'SNAPSHOT', snapshot })
+  }, [enabled, engine, shellReady, nav.isReady, nav.navigationRevision, foreground, capabilities])
 
   const active = enabled && !INACTIVE.includes(state.phase)
   useEffect(() => {
@@ -399,8 +442,11 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   }, [active, repositories, profileId, pause])
 
   const start = useCallback(async (id: TourId, mode: 'new' | 'resume' | 'replay' = 'new') => {
-    const tour = [...productTourCatalogue, ...listDynamicTours()].find(item => item.id === id)
-    if (!tour || !enabledRef.current || !repositories || !profileRef.current || !shellReady) return
+    if (!enabledRef.current || !repositories || !profileRef.current || !shellReady) return
+    const loaded = engineRef.current ?? await loadTourEngine()
+    engineRef.current = loaded
+    const tour = [...loaded.catalogue, ...loaded.listDynamicTours()].find(item => item.id === id)
+    if (!tour) return
     setLaunchReason(null)
     const prerequisite = prerequisiteRoute(tour, navRef.current.navigationState)
     if (prerequisite) {
@@ -436,11 +482,11 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     sendRef.current({ type: 'START', binding, tour, progress: previous.value, startMode: mode, at: Date.now() })
   }, [repositories, shellReady, pause, acquireLease])
   useEffect(() => {
-    if (pendingTour) {
-      const tour = [...productTourCatalogue, ...listDynamicTours()].find(item => item.id === pendingTour)
+    if (pendingTour && engine) {
+      const tour = [...engine.catalogue, ...engine.listDynamicTours()].find(item => item.id === pendingTour)
       if (tour && !prerequisiteRoute(tour, nav.navigationState)) void start(pendingTour, pendingMode.current)
     }
-  }, [pendingTour, nav.navigationRevision, nav.navigationState, start])
+  }, [pendingTour, engine, nav.navigationRevision, nav.navigationState, start])
 
   const port = useMemo<TourRuntimePort>(() => ({
     enabled,
@@ -542,7 +588,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   }, [pause, repositories, acquireLease, releaseLease])
   const controller: LearningController = { enabled, ready: !!profileId && !!workspaceId, setEnabled, state, progress, preferences, setPreferences, storageStatus, pendingTour, start, pause, reset, capabilities }
   const step = state.definition?.steps.find(item => item.id === state.attempt?.stepId)
-  const demo = state.definition !== null && DynamicTourIdPattern.test(state.definition.id)
+  const demo = state.definition !== null && DYNAMIC_TOUR_ID_PATTERN.test(state.definition.id)
   const stepCount = state.definition?.steps.length ?? 0
   const stepIndex = state.definition && state.attempt ? state.definition.steps.findIndex(item => item.id === state.attempt?.stepId) + 1 : 0
   const evidence = step ? state.attemptEvidence[step.id] : undefined
