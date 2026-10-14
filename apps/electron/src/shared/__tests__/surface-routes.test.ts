@@ -3,7 +3,7 @@
  * Gate off = baseline (covered byte-for-byte by the platform baseline test);
  * gate on = `messenger|calendar|goals|contacts` parse to a `surface` state.
  */
-import { afterEach, describe, expect, it } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { entityRoute } from '@rox/core/entities'
 import {
@@ -32,6 +32,24 @@ import {
 } from '../route-parser'
 import { routes } from '../routes'
 import { getNavigationStateKey, isSurfaceNavigation, parseNavigationStateKey } from '../types'
+
+/**
+ * Both gates below are process-global module state, not per-test state:
+ * - `enabledSurfaces` is pushed by production code (`renderer/platform/
+ *   unified-flags.ts` installs the shell-flag bridge on load, and
+ *   `workbench.mode.messenger.v1` defaults ON) and is never reset at runtime;
+ * - `entityRoutesOverride` is pushed the same way by `renderer/lib/
+ *   entities-links-sync.ts`.
+ * `bun test` runs every file of a run in ONE process, so without a reset here
+ * the FIRST case of this file would observe whatever a previously loaded file
+ * left behind. Each case therefore starts from the modules' documented
+ * defaults (gate closed / no override); `afterEach` keeps the reverse promise
+ * and leaves the process clean for the files that run after this one.
+ */
+beforeEach(() => {
+  resetUnifiedSurfaceRoutes()
+  resetEntityRoutesEnabled()
+})
 
 afterEach(() => {
   resetUnifiedSurfaceRoutes()
