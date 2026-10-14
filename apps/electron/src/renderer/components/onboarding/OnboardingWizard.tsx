@@ -23,6 +23,7 @@ import { GitBashWarning, type GitBashStatus } from "./GitBashWarning"
 import { RoxCliCredentialStep, type RoxCliCredentialSubmitData } from "./RoxCliCredentialStep"
 import type { ApiKeySubmitData, CustomEndpointModelInput } from "../apisetup"
 import type { CustomEndpointApi } from '@config/llm-connections'
+import { FitToViewport } from './start-visuals'
 
 export type OnboardingStep =
   | 'welcome'
@@ -341,11 +342,15 @@ export function OnboardingWizard({
   // The questionnaire is a three-column one-page surface: it gets the full
   // window width and height instead of the narrow single-column flow cap.
   const isWideStep = state.step === 'questionnaire' || state.step === 'role'
+  // First-run start screens: pure dark, never scroll, always one viewport.
+  // The API-setup wizard reused inside Settings keeps the app theme.
+  const isStartScreen = !state.isExistingUser
 
   return (
     <div
+      data-onboarding-start={isStartScreen ? 'true' : undefined}
       className={cn(
-        "bg-foreground-2 overflow-y-auto",
+        isStartScreen ? "onb-start dark flex flex-col overflow-y-auto text-foreground" : "bg-foreground-2 overflow-y-auto",
         !className?.includes('h-full') && "h-dvh",
         className
       )}
@@ -358,12 +363,21 @@ export function OnboardingWizard({
       <main
         className={cn(
           'flex min-h-full items-center justify-center p-4 sm:p-8',
-          // The one-page questionnaire fills the window; its columns scroll
-          // internally, so the page itself does not scroll on desktop sizes.
-          isWideStep && 'lg:h-full lg:min-h-0 lg:items-stretch lg:px-8 lg:pb-6 lg:pt-[50px]',
+          isStartScreen && 'h-full min-h-0 flex-1 flex-col pb-4 pt-[44px] sm:pb-6 sm:pt-[48px]',
+          // Wide one-page steps (questionnaire, «Кто вы?») use the full width;
+          // FitToViewport scales them to one page like every other start screen.
+          isStartScreen && isWideStep && 'lg:px-8',
+          !isStartScreen && isWideStep && 'lg:h-full lg:min-h-0 lg:items-stretch lg:px-8 lg:pb-6 lg:pt-[50px]',
         )}
       >
-        {isWelcome ? (
+        {isStartScreen ? (
+          <FitToViewport>
+            <div className={cn('mx-auto flex w-full flex-col items-center', isWideStep ? 'max-w-[1440px]' : 'px-6', isWelcome ? 'max-w-[36rem]' : state.step === 'pills' ? 'max-w-[46rem]' : isWideStep ? null : 'max-w-[28rem]')}>
+              <OnboardingStepProgress step={progressStep} className="mb-5 w-full" />
+              <StepTransition key={state.step} className="w-full">{renderStep()}</StepTransition>
+            </div>
+          </FitToViewport>
+        ) : isWelcome ? (
           <div className="mx-auto max-w-lg px-6 py-8">
             <OnboardingStepProgress step={progressStep} className="mb-6" />
             <StepTransition key={state.step}>{renderStep()}</StepTransition>
