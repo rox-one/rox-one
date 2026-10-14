@@ -11,8 +11,10 @@ import { DYNAMIC_TOUR_ID_PATTERN } from '../contracts'
 import { initialRuntimeState } from '../core/initial-state'
 import { TourErrorBoundary } from '../ui/TourErrorBoundary'
 import { createTargetRegistry } from '../ui/target-registry'
-import { createProgressRepository, createLeaseRepository, createLearningProfileRepository, createLearningScopeKey, LearningLeaseLostError, type LearningPreferences } from '../persistence'
-import { createLearningDiagnosticsRepository, type LearningEventName } from '../analytics'
+import type { LearningPreferences } from '../persistence/profile'
+import type { LearningEventName } from '../analytics/events'
+import { createLearningScopeKey } from '../persistence/scope-key'
+import { LearningLeaseLostError } from '../persistence/errors'
 import { clearChatObservations } from '../adapters/chat'
 import { TourRuntimeContext, TourPanelScope, type TourRuntimePort } from './hooks'
 import { subscribeTourSignals } from './bridge'
@@ -25,10 +27,11 @@ const READY = { state: 'ready' } as const
 const UNAVAILABLE = { state: 'unavailable', reason: 'api-unavailable' } as const
 
 /**
- * Catalogue (96 KB) + engine + dynamic admission + overlay stay behind import().
- * The host wraps the app and cannot itself be React.lazy — swapping the wrapper
- * remounts the shell. import() still puts those modules in an async chunk, so
- * they leave index.html's preloaded graph even when the feature flag is already on.
+ * Catalogue (96 KB) + engine + dynamic admission + overlay + IndexedDB
+ * persistence stay behind import(). The host wraps the app and cannot itself
+ * be React.lazy — swapping the wrapper remounts the shell. import() still puts
+ * those modules in an async chunk, so they leave index.html's preloaded graph
+ * even when the feature flag is already on.
  */
 type TourEngine = {
   readonly transition: TransitionFunction
@@ -38,8 +41,10 @@ type TourEngine = {
 }
 
 function loadTourEngine(): Promise<TourEngine> {
-  // Overlay chunk starts with the engine so the first presenting frame is not empty.
+  // Overlay + storage chunks start with the engine so the first presenting frame is not empty.
   void import('../ui/presentation')
+  void import('../persistence')
+  void import('../analytics')
   return Promise.all([
     import('../core'),
     import('../catalogue/product-tour-catalogue'),
@@ -50,6 +55,20 @@ function loadTourEngine(): Promise<TourEngine> {
     listDynamicTours: dyn.listDynamicTours,
     subscribeDynamicTours: dyn.subscribeDynamicTours,
   }))
+}
+
+function loadTourStorage() {
+  return Promise.all([
+    import('../persistence'),
+    import('../analytics'),
+  ])
+}
+
+type TourStorage = {
+  progress: ReturnType<(typeof import('../persistence'))['createProgressRepository']>
+  lease: ReturnType<(typeof import('../persistence'))['createLeaseRepository']>
+  profile: ReturnType<(typeof import('../persistence'))['createLearningProfileRepository']>
+  diagnostics: ReturnType<(typeof import('../analytics'))['createLearningDiagnosticsRepository']>
 }
 
 const TourPresentation = lazy(() =>
@@ -137,9 +156,24 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const [capRevision, setCapRevision] = useState(0)
   const [dynamicRevision, setDynamicRevision] = useState(0)
   const capabilityRecords = useRef(new Map<string, { token: object; value: CapabilitySnapshot[CapabilityId]; projects?: Map<object, NonNullable<CapabilitySnapshot[CapabilityId]>> }>())
-  const repositories = useMemo(() => enabled ? {
-    progress: createProgressRepository(), lease: createLeaseRepository({ allowMemoryOnlyLease: true }), profile: createLearningProfileRepository(), diagnostics: createLearningDiagnosticsRepository(),
-  } : null, [enabled])
+  const [repositories, setRepositories] = useState<TourStorage | null>(null)
+  useEffect(() => {
+    if (!enabled) {
+      setRepositories(null)
+      return
+    }
+    let cancelled = false
+    void loadTourStorage().then(([persistence, analytics]) => {
+      if (cancelled) return
+      setRepositories({
+        progress: persistence.createProgressRepository(),
+        lease: persistence.createLeaseRepository({ allowMemoryOnlyLease: true }),
+        profile: persistence.createLearningProfileRepository(),
+        diagnostics: analytics.createLearningDiagnosticsRepository(),
+      })
+    })
+    return () => { cancelled = true }
+  }, [enabled])
   const profileRef = useRef<string | null>(null); profileRef.current = profileId
   const leaseRef = useRef<WindowLease | null>(null)
   const progressWrites = useRef(new Set<Promise<unknown>>())
