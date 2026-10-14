@@ -215,8 +215,8 @@ export function AutomationsListPanel({
   // In-flight guard lives in a ref: state read from the closure is stale on a
   // fast double click and would create two automations.
   const creatingTemplateRef = React.useRef(false)
-  const latest = React.useRef({ handleCreate, onAutomationClick })
-  latest.current = { handleCreate, onAutomationClick }
+  const latest = React.useRef({ handleCreate, onAutomationClick, automations })
+  latest.current = { handleCreate, onAutomationClick, automations }
   const createFromTemplate = useCallback(async (tpl: ScheduleTemplate) => {
     if (!activeWorkspaceId || creatingTemplateRef.current) return
     creatingTemplateRef.current = true
@@ -241,9 +241,13 @@ export function AutomationsListPanel({
         action: {
           label: t('screenSidebar.automations.enable'),
           onClick: () => {
-            window.electronAPI.setAutomationEnabled(workspaceId, created.event, created.matcherIndex, true)
-              .then(() => toast.success(t('screenSidebar.automations.enabled', { name: t(tpl.nameKey) })))
-              .catch(() => toast.error(t('automations.createFailed')))
+            // Resolve by id at click time: (event, matcherIndex) can shift while
+            // the toast is up if other automations are created or deleted.
+            const current = latest.current.automations.find((a) => a.id === created.id)
+            if (!current) { toast.error(t('screenSidebar.automations.enableFailed')); return }
+            window.electronAPI.setAutomationEnabled(workspaceId, current.event, current.matcherIndex, true)
+              .then(() => toast.success(t('screenSidebar.automations.enabled', { name: current.name })))
+              .catch(() => toast.error(t('screenSidebar.automations.enableFailed')))
           },
         },
       })

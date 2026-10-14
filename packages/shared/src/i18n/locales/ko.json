@@ -7861,6 +7861,7 @@
   "screenSidebar.automations.empty": "아직 자동화가 없습니다",
   "screenSidebar.automations.enable": "켜기",
   "screenSidebar.automations.enabled": "“{{name}}” 켜짐",
+  "screenSidebar.automations.enableFailed": "자동화를 켜지 못했습니다",
   "screenSidebar.automations.event": "이벤트",
   "screenSidebar.automations.off": "끔",
   "screenSidebar.automations.recent": "최근 실행",

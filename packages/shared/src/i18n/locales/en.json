@@ -7861,6 +7861,7 @@
   "screenSidebar.automations.empty": "No automations yet",
   "screenSidebar.automations.enable": "Enable",
   "screenSidebar.automations.enabled": "“{{name}}” is on",
+  "screenSidebar.automations.enableFailed": "Couldn’t turn on the automation",
   "screenSidebar.automations.event": "On event",
   "screenSidebar.automations.off": "off",
   "screenSidebar.automations.recent": "Recent runs",

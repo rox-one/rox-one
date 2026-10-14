@@ -7870,6 +7870,7 @@
   "screenSidebar.automations.empty": "Aucune automatisation",
   "screenSidebar.automations.enable": "Activer",
   "screenSidebar.automations.enabled": "« {{name}} » activée",
+  "screenSidebar.automations.enableFailed": "Impossible d’activer l’automatisation",
   "screenSidebar.automations.event": "Sur événement",
   "screenSidebar.automations.off": "off",
   "screenSidebar.automations.recent": "Dernières exécutions",

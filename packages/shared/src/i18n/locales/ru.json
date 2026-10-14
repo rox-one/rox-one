@@ -7905,6 +7905,7 @@
   "screenSidebar.automations.empty": "Автоматизаций пока нет",
   "screenSidebar.automations.enable": "Включить",
   "screenSidebar.automations.enabled": "Включено: «{{name}}»",
+  "screenSidebar.automations.enableFailed": "Не удалось включить автоматизацию",
   "screenSidebar.automations.event": "По событию",
   "screenSidebar.automations.off": "выкл.",
   "screenSidebar.automations.recent": "Последние запуски",

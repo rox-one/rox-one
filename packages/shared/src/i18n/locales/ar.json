@@ -7901,6 +7901,7 @@
   "screenSidebar.automations.empty": "لا توجد أتمتة بعد",
   "screenSidebar.automations.enable": "تفعيل",
   "screenSidebar.automations.enabled": "تم تفعيل «{{name}}»",
+  "screenSidebar.automations.enableFailed": "تعذّر تفعيل الأتمتة",
   "screenSidebar.automations.event": "عند حدث",
   "screenSidebar.automations.off": "متوقفة",
   "screenSidebar.automations.recent": "آخر التشغيلات",

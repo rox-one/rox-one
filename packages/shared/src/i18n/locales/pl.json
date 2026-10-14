@@ -7887,6 +7887,7 @@
   "screenSidebar.automations.empty": "Brak automatyzacji",
   "screenSidebar.automations.enable": "Włącz",
   "screenSidebar.automations.enabled": "Włączono „{{name}}”",
+  "screenSidebar.automations.enableFailed": "Nie udało się włączyć automatyzacji",
   "screenSidebar.automations.event": "Na zdarzenie",
   "screenSidebar.automations.off": "wył.",
   "screenSidebar.automations.recent": "Ostatnie uruchomienia",

@@ -7861,6 +7861,7 @@
   "screenSidebar.automations.empty": "還沒有自動化",
   "screenSidebar.automations.enable": "啟用",
   "screenSidebar.automations.enabled": "已啟用「{{name}}」",
+  "screenSidebar.automations.enableFailed": "無法啟用自動化",
   "screenSidebar.automations.event": "事件觸發",
   "screenSidebar.automations.off": "關",
   "screenSidebar.automations.recent": "最近執行",

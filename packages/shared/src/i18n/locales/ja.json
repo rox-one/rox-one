@@ -7861,6 +7861,7 @@
   "screenSidebar.automations.empty": "オートメーションはまだありません",
   "screenSidebar.automations.enable": "有効にする",
   "screenSidebar.automations.enabled": "「{{name}}」を有効にしました",
+  "screenSidebar.automations.enableFailed": "オートメーションを有効にできませんでした",
   "screenSidebar.automations.event": "イベント",
   "screenSidebar.automations.off": "オフ",
   "screenSidebar.automations.recent": "最近の実行",

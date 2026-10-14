@@ -7861,6 +7861,7 @@
   "screenSidebar.automations.empty": "Még nincs automatizálás",
   "screenSidebar.automations.enable": "Bekapcsolás",
   "screenSidebar.automations.enabled": "„{{name}}” bekapcsolva",
+  "screenSidebar.automations.enableFailed": "Nem sikerült bekapcsolni az automatizálást",
   "screenSidebar.automations.event": "Eseményre",
   "screenSidebar.automations.off": "ki",
   "screenSidebar.automations.recent": "Legutóbbi futások",
