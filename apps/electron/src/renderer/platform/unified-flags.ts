@@ -40,6 +40,7 @@ export const W1_07_FLAG_IDS = [
   WORKBENCH_FLAG.modeMessengerV1,
   WORKBENCH_FLAG.modeCalendarV1,
   WORKBENCH_FLAG.modeGoalsV1,
+  WORKBENCH_FLAG.modeCanvasV1,
   WORKBENCH_FLAG.modeContactsV1,
   WORKBENCH_FLAG.docsSharedV1,
 ] as const

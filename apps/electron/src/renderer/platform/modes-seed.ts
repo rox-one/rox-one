@@ -127,6 +127,7 @@ const UNIFIED_MODE_OWNERS: Record<UnifiedSurfaceId, readonly ModuleId[]> = {
   messenger: ['messenger'],
   calendar: ['calendar', 'meetings'],
   goals: ['goals', 'spaces', 'kpis'],
+  canvas: [],
 }
 
 function isUnifiedModeActive(surface: UnifiedSurfaceId) {
@@ -162,6 +163,7 @@ export const UNIFIED_MODES: readonly SeededMode[] = [
   unifiedMode('messenger', 25, GLYPH_NAMES.team, WORKBENCH_FLAG.modeMessengerV1),
   unifiedMode('calendar', 35, GLYPH_NAMES.calendar, WORKBENCH_FLAG.modeCalendarV1),
   unifiedMode('goals', 45, GLYPH_NAMES.goals, WORKBENCH_FLAG.modeGoalsV1),
+  unifiedMode('canvas', 55, GLYPH_NAMES.canvas, WORKBENCH_FLAG.modeCanvasV1),
 ]
 
 /** Every seeded mode (registered once by `mode-registry-bootstrap.ts`). */

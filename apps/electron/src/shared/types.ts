@@ -3318,6 +3318,8 @@ export interface ElectronAPI {
   changeLanguage(lang: string): Promise<void>
   /** W1-07 (#1504): unified surfaces whose mode flag is on → main's deep-link gate. */
   setUnifiedSurfaceRoutesEnabled?(ids: string[]): Promise<{ ok: true }>
+  /** «Доска» (Canvas): local boards in <workspace>/canvas; state crosses IPC as Yjs updates. */
+  canvas?: CanvasBridge
 
   // Entity links (entities.links.v1): the renderer reports its persisted
   // toggle; main returns the EFFECTIVE state (env override > toggle) that
@@ -4512,4 +4514,17 @@ declare global {
   interface Window {
     electronAPI: ElectronAPI
   }
+}
+
+/** «Доска» board list entry (mirrors `@rox/canvas-core/node` BoardSummary). */
+export interface CanvasBoardSummary { id: string; title: string; createdAt: number; updatedAt: number }
+export interface CanvasBridge {
+  list(workspaceId: string): Promise<CanvasBoardSummary[]>
+  create(workspaceId: string, title: string): Promise<CanvasBoardSummary>
+  rename(workspaceId: string, boardId: string, title: string): Promise<{ ok: true }>
+  trash(workspaceId: string, boardId: string): Promise<{ ok: true }>
+  /** Full Yjs state of the board. */
+  open(workspaceId: string, boardId: string): Promise<Uint8Array>
+  apply(workspaceId: string, boardId: string, update: Uint8Array): Promise<{ ok: true }>
+  onUpdate(callback: (workspaceId: string, boardId: string, update: Uint8Array) => void): () => void
 }
