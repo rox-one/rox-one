@@ -1,0 +1,107 @@
+/* Arc Glass skin: applies the glass material to existing chrome without
+   touching component layout. Loaded lazily (installGlassSkin) and active only
+   under html[data-theme="arc-glass"]. Slots: the top mode pill and explicit
+   data-glass-slot elements (popover, composer, mini-button). Refraction:
+   static slots only (pill, Rox Mini buttons) on the full tier, never the
+   composer or popovers. Blur is static; only transform/opacity animate. */
+html[data-theme="arc-glass"] :is(.rox-mode-pill, [data-glass-slot]) {
+  --glass-fill: var(--background);
+  --glass-fill-mix: var(--glass-tint);
+
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white calc(var(--glass-specular-alpha) + var(--glass-hover-boost, 0%)), transparent) 0%,
+      transparent 42%
+    ),
+    color-mix(in srgb, var(--glass-fill) calc(var(--glass-fill-mix) + var(--glass-hover-boost, 0%)), transparent);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-shadow);
+}
+
+/* Readable surfaces: popovers/menus and the composer carry their own surface
+   colour at a high mix (lightly scaled by intensity, never below 70%); the
+   pill and Rox Mini buttons keep the lighter glass tint. */
+html[data-theme="arc-glass"] [data-glass-slot="popover"] {
+  --glass-fill: var(--popover);
+  --glass-fill-mix: max(70%, calc(86% - 10% * var(--glass-intensity)));
+}
+
+html[data-theme="arc-glass"] [data-glass-slot="composer"] {
+  --glass-fill: var(--background);
+  --glass-fill-mix: max(70%, calc(81% - 10% * var(--glass-intensity)));
+}
+
+/* Accent buttons (Rox Mini send) stay accent: an accent tint over the glass. */
+html[data-theme="arc-glass"] [data-glass-slot][data-glass-tone="accent"] {
+  --glass-fill: var(--accent);
+  --glass-fill-mix: 90%;
+  /* Cap the white sheen (hover included) so the --accent-foreground icon keeps AA. */
+  --glass-specular-alpha: 4%;
+}
+
+html[data-theme="arc-glass"] [data-glass-slot][data-glass-tone="accent"]:hover:not(:disabled) {
+  --glass-hover-boost: 4%;
+}
+
+/* Glass hover: a slightly stronger tint and highlight (paint only). */
+html[data-theme="arc-glass"] :is(.rox-mode-pill-item, [data-glass-slot="mini-button"]):hover:not(:disabled) {
+  --glass-hover-boost: 8%;
+}
+
+html[data-theme="arc-glass"] .rox-mode-pill-item:hover {
+  background: color-mix(in srgb, white var(--glass-edge-alpha), transparent);
+}
+
+html[data-theme="arc-glass"][data-glass="full"] :is(.rox-mode-pill, [data-glass-slot="mini-button"]) {
+  backdrop-filter: url(#rox-glass-skin-refraction) blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
+/* Popovers/menus: symmetric spring open / faster exit. Replaces the overlay
+   and tailwindcss-animate animations on these elements (single animation). */
+html[data-theme="arc-glass"] [data-glass-slot="popover"] {
+  transform-origin: var(--radix-popover-content-transform-origin, var(--radix-dropdown-menu-content-transform-origin, top center));
+}
+
+html[data-theme="arc-glass"] [data-glass-slot="popover"]:is([data-state="open"], :not([data-state])) {
+  animation: rox-glass-pop-in var(--motion-spring) var(--ease-spring) both;
+}
+
+html[data-theme="arc-glass"] [data-glass-slot="popover"][data-state="closed"] {
+  animation: rox-glass-pop-out var(--motion-spring-exit) var(--ease-exit) both;
+}
+
+/* Press spring for pill items and Rox Mini buttons (pointer :active and the
+   keyboard via useGlassPress's data-glass-pressed). */
+html[data-theme="arc-glass"] :is(.rox-mode-pill-item, [data-glass-slot="mini-button"]) {
+  transition: transform var(--motion-spring) var(--ease-spring);
+}
+
+html[data-theme="arc-glass"] :is(.rox-mode-pill-item, [data-glass-slot="mini-button"]):is(:active, [data-glass-pressed]) {
+  transform: scale(0.96);
+  transition-duration: var(--motion-fast);
+}
+
+@keyframes rox-glass-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rox-glass-pop-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}

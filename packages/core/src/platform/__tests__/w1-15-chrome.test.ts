@@ -282,10 +282,10 @@ describe('W1-15 counters (§19, §26.1)', () => {
 })
 
 describe('W1-15 adds no kinds, relations or tables (DATA-MODEL §5.18)', () => {
-  it('keeps the 54-kind registry and the frozen 21 ROX2 kinds', () => {
-    expect(ENTITY_KINDS.length).toBe(54)
+  it('keeps the 55-kind registry (54 + «Доска» canvas) and the frozen 21 ROX2 kinds', () => {
+    expect(ENTITY_KINDS.length).toBe(55)
     expect(ROX2_ENTITY_KINDS.length).toBe(21)
-    expect(NEW_ENTITY_KINDS.length).toBe(33)
+    expect(NEW_ENTITY_KINDS.length).toBe(34)
   })
 
   it('keeps the 12-relation vocabulary', () => {

@@ -5,13 +5,27 @@
 import * as React from 'react'
 import * as storage from '@/lib/local-storage'
 
-export const STATUS_BAR_ITEMS = ['workspace', 'sync', 'agents', 'inbox', 'dictation', 'balance', 'version'] as const
+export const STATUS_BAR_ITEMS = ['workspace', 'sync', 'sessions', 'agents', 'tasks', 'inbox', 'dictation', 'model', 'balance', 'notifications', 'version'] as const
 export type StatusBarItem = typeof STATUS_BAR_ITEMS[number]
-export const DEFAULT_STATUS_BAR_ITEMS: readonly StatusBarItem[] = STATUS_BAR_ITEMS
+/** Notifications is opt-in: the titlebar bell (#1982) already covers it, so it is hidden by default. */
+const HIDDEN_BY_DEFAULT: readonly StatusBarItem[] = ['notifications']
+export const DEFAULT_STATUS_BAR_ITEMS: readonly StatusBarItem[] = STATUS_BAR_ITEMS.filter((id) => !HIDDEN_BY_DEFAULT.includes(id))
+
+/**
+ * Items added after the first stored format (a plain array); they default on for lists saved before
+ * they existed. Notifications is not here: it is hidden by default. An empty legacy list means the
+ * user turned everything off, so it stays empty.
+ */
+const ITEMS_ADDED_V2: readonly StatusBarItem[] = ['sessions', 'tasks', 'model']
+
+type StoredItems = { v: 2; items: unknown }
 
 export function normalizeStatusBarItems(raw: unknown): StatusBarItem[] {
-  if (!Array.isArray(raw)) return [...DEFAULT_STATUS_BAR_ITEMS]
-  const chosen = new Set(raw.filter((id): id is StatusBarItem => (STATUS_BAR_ITEMS as readonly string[]).includes(id as string)))
+  const isV2 = typeof raw === 'object' && raw !== null && !Array.isArray(raw) && (raw as StoredItems).v === 2
+  const list = isV2 ? (raw as StoredItems).items : raw
+  if (!Array.isArray(list)) return [...DEFAULT_STATUS_BAR_ITEMS]
+  const chosen = new Set(list.filter((id): id is StatusBarItem => (STATUS_BAR_ITEMS as readonly string[]).includes(id as string)))
+  if (!isV2 && list.length > 0) for (const id of ITEMS_ADDED_V2) chosen.add(id)
   return STATUS_BAR_ITEMS.filter((id) => chosen.has(id))
 }
 
@@ -22,7 +36,7 @@ export function setStatusBarItem(id: StatusBarItem, on: boolean): void {
   const set = new Set(items)
   if (on) set.add(id); else set.delete(id)
   items = STATUS_BAR_ITEMS.filter((item) => set.has(item))
-  storage.set(storage.KEYS.statusBarItems, items)
+  storage.set<StoredItems>(storage.KEYS.statusBarItems, { v: 2, items })
   for (const l of listeners) l()
 }
 
