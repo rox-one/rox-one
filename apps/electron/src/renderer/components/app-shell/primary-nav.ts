@@ -1,0 +1,154 @@
+/**
+ * Primary navigation registry — WP5 (#1580).
+ *
+ * ONE ordered list drives both left-navigation renderers:
+ * - the legacy sidebar (`ShellSidebarNav` → `LeftSidebar`): expanded = labelled
+ *   rows, collapsed = the icon rail;
+ * - the workbench `ActivityRail` (two-key rollout): the same entries, same
+ *   order, same flag gating.
+ *
+ * Order (unified spec): Inbox, Messenger (chat/sessions), Docs (notes), Base,
+ * Calendar, Tasks, Wiki, Goals & Projects — then the «Ещё» group.
+ *
+ * Gating:
+ * - `shellFlag`: the entry exists only while that workbench flag is enabled
+ *   (`enabledShellFlagsAtom`); Messenger / Calendar / Goals and the
+ *   Developers / Playbooks masters keep their existing flags.
+ * - `route: null` without an `action`: the surface has no root screen yet
+ *   (Base, Wiki), so the entry never renders even with its flag on — nothing
+ *   dead shows up.
+ * - `hiddenWhenShellFlag`: an older alias that the flagged surface replaces
+ *   (Встречи → Календарь surface).
+ * - `demotedWhenShellFlag`: moves to «Ещё» while the flag is on (Projects
+ *   gives the primary slot to «Цели и проекты»).
+ * - `modeFlag`: a built mode screen whose flag is off stays visible but
+ *   disabled with a tooltip in the rail (prior rail behaviour); the legacy
+ *   sidebar keeps it navigable as before.
+ *
+ * Nothing here changes routes, deep links, the ⌘1…7 mode-pill slots
+ * (`modes-seed.ts` order) or persisted rail preferences.
+ */
+import type { LucideIcon } from 'lucide-react'
+import { WORKBENCH_FLAG } from '@rox/core/platform'
+import type { ModeScreenId, ModeScreenFlags } from '../../atoms/mode-flags'
+import { GLYPHS } from '../../platform/glyphs'
+import { SEEDED_MODES } from '../../platform/modes-seed'
+import { routes, type ViewRoute } from '../../../shared/routes'
+import {
+  isAutomationsNavigation,
+  isBrowserNavigation,
+  isClipboardHistoryNavigation,
+  isConnectionsNavigation,
+  isDevelopersNavigation,
+  isDriveNavigation,
+  isLearningNavigation,
+  isMemoryNavigation,
+  isPagesNavigation,
+  isPlaybooksNavigation,
+  isProjectsNavigation,
+  isSettingsNavigation,
+  isSkillsNavigation,
+  isSourcesNavigation,
+  type NavigationState,
+} from '../../../shared/types'
+import type { RoutePageName } from './route-pages'
+import { notesTitleKey } from '../../platform/surface-shell'
+
+export type PrimaryNavGroup = 'primary' | 'more'
+
+export interface PrimaryNavEntry {
+  id: string
+  /** Legacy sidebar link id (AppShell `sidebarLinks`); reused when present. */
+  linkId: string
+  group: PrimaryNavGroup
+  labelKey: string
+  icon: LucideIcon
+  /** Root route; null = no root screen (hidden unless `action`). */
+  route: (() => ViewRoute) | null
+  action?: 'open-browser'
+  isActive: (navState: NavigationState) => boolean
+  shellFlag?: string
+  hiddenWhenShellFlag?: string
+  demotedWhenShellFlag?: string
+  modeFlag?: ModeScreenId
+  /** Lazy route chunk to prefetch on hover/focus. */
+  preload?: RoutePageName
+  /** Footer entry (settings): the rail renders it in its footer, not in «Ещё». */
+  footer?: boolean
+}
+
+/** Not registered as workbench flags yet: always off until those surfaces ship. */
+export const BASE_SURFACE_FLAG = 'tables.base.v1'
+export const WIKI_SURFACE_FLAG = 'docs.wiki.v1'
+
+const seeded = (id: string) => {
+  const mode = SEEDED_MODES.find(entry => entry.contribution.id === id)
+  if (!mode) throw new Error(`primary-nav: unknown seeded mode ${id}`)
+  return mode.isActive
+}
+
+export const PRIMARY_NAV: readonly PrimaryNavEntry[] = [
+  // --- primary ---
+  { id: 'inbox', linkId: 'nav:inbox', group: 'primary', labelKey: 'workbench.mode.inbox', icon: GLYPHS.inbox, route: () => routes.view.inbox(), isActive: seeded('inbox'), modeFlag: 'inbox', preload: 'inbox' },
+  { id: 'sessions', linkId: 'nav:allSessions', group: 'primary', labelKey: 'workbench.mode.chat', icon: GLYPHS.sessions, route: () => routes.view.allSessions(), isActive: seeded('chat') },
+  { id: 'messenger', linkId: 'nav:messenger', group: 'primary', labelKey: 'workbench.mode.messenger', icon: GLYPHS.team, route: () => routes.view.surface('messenger'), isActive: seeded('messenger'), shellFlag: WORKBENCH_FLAG.modeMessengerV1, preload: 'surfaces' },
+  { id: 'docs', linkId: 'nav:notes', group: 'primary', labelKey: 'sidebar.notes', icon: GLYPHS.notes, route: () => routes.view.notes(), isActive: seeded('notes'), preload: 'notes' },
+  { id: 'base', linkId: 'nav:base', group: 'primary', labelKey: 'workbench.mode.base', icon: GLYPHS.pages, route: null, isActive: () => false, shellFlag: BASE_SURFACE_FLAG },
+  { id: 'calendar', linkId: 'nav:calendar', group: 'primary', labelKey: 'workbench.mode.calendar', icon: GLYPHS.calendar, route: () => routes.view.surface('calendar'), isActive: seeded('calendar'), shellFlag: WORKBENCH_FLAG.modeCalendarV1, preload: 'surfaces' },
+  { id: 'tasks', linkId: 'nav:tasks', group: 'primary', labelKey: 'workbench.mode.tasks', icon: GLYPHS.tasks, route: () => routes.view.tasks(), isActive: seeded('tasks'), modeFlag: 'tasks', preload: 'tasks' },
+  { id: 'wiki', linkId: 'nav:wiki', group: 'primary', labelKey: 'workbench.mode.wiki', icon: GLYPHS.knowledge, route: null, isActive: () => false, shellFlag: WIKI_SURFACE_FLAG },
+  { id: 'goals', linkId: 'nav:goals', group: 'primary', labelKey: 'workbench.mode.goals', icon: GLYPHS.goals, route: () => routes.view.surface('goals'), isActive: seeded('goals'), shellFlag: WORKBENCH_FLAG.modeGoalsV1, preload: 'surfaces' },
+  { id: 'projects', linkId: 'nav:projects', group: 'primary', labelKey: 'sidebar.projects', icon: GLYPHS.projects, route: () => routes.view.projects(), isActive: isProjectsNavigation, demotedWhenShellFlag: WORKBENCH_FLAG.modeGoalsV1 },
+  // --- «Ещё» ---
+  { id: 'memory', linkId: 'nav:memory', group: 'more', labelKey: 'sidebar.memory', icon: GLYPHS.memory, route: () => routes.view.memory(), isActive: navState => isMemoryNavigation(navState) && navState.tab !== 'repo' },
+  { id: 'memoryRepo', linkId: 'nav:memoryRepo', group: 'more', labelKey: 'sidebar.memoryRepo', icon: GLYPHS.repository, route: () => routes.view.memory('repo'), isActive: navState => isMemoryNavigation(navState) && navState.tab === 'repo' },
+  { id: 'learning', linkId: 'nav:learning', group: 'more', labelKey: 'sidebar.learning', icon: GLYPHS.learning, route: () => routes.view.learning(), isActive: isLearningNavigation },
+  { id: 'browser', linkId: 'nav:browser', group: 'more', labelKey: 'surfaceTabs.browser', icon: GLYPHS.browser, route: null, action: 'open-browser', isActive: isBrowserNavigation },
+  { id: 'automations', linkId: 'nav:automations', group: 'more', labelKey: 'sidebar.automations', icon: GLYPHS.automations, route: () => routes.view.automations(), isActive: isAutomationsNavigation },
+  // W3.2: Встречи = the calendar surface alias; hidden once the Calendar surface owns the primary slot.
+  { id: 'meetings', linkId: 'nav:meetings', group: 'more', labelKey: 'workbench.mode.calendar', icon: GLYPHS.calendar, route: () => routes.view.meetings(), isActive: navState => navState.navigator === 'surface' && navState.surface === 'calendar', hiddenWhenShellFlag: WORKBENCH_FLAG.modeCalendarV1, modeFlag: 'meetings', preload: 'planWorkspace' },
+  { id: 'home', linkId: 'nav:home', group: 'more', labelKey: 'workbench.mode.home', icon: GLYPHS.home, route: () => routes.view.home(), isActive: seeded('home') },
+  { id: 'feed', linkId: 'nav:feed', group: 'more', labelKey: 'workbench.mode.feed', icon: GLYPHS.feed, route: () => routes.view.feed(), isActive: seeded('feed'), modeFlag: 'feed', preload: 'feed' },
+  { id: 'pages', linkId: 'nav:pages', group: 'more', labelKey: 'sidebar.pages', icon: GLYPHS.pages, route: () => routes.view.pages(), isActive: isPagesNavigation, preload: 'pagesHome' },
+  { id: 'drive', linkId: 'nav:drive', group: 'more', labelKey: 'sidebar.drive', icon: GLYPHS.drive, route: () => routes.view.drive(), isActive: isDriveNavigation },
+  { id: 'clipboardHistory', linkId: 'nav:clipboardHistory', group: 'more', labelKey: 'clipboard.title', icon: GLYPHS.clipboard, route: () => routes.view.clipboardHistory(), isActive: isClipboardHistoryNavigation },
+  { id: 'sources', linkId: 'nav:sources', group: 'more', labelKey: 'sidebar.sources', icon: GLYPHS.sources, route: () => routes.view.sources(), isActive: isSourcesNavigation, preload: 'integrationsCatalog' },
+  { id: 'skills', linkId: 'nav:skills', group: 'more', labelKey: 'sidebar.skills', icon: GLYPHS.skills, route: () => routes.view.skills(), isActive: isSkillsNavigation, preload: 'skillsCatalog' },
+  { id: 'connections', linkId: 'nav:connections', group: 'more', labelKey: 'sidebar.connections', icon: GLYPHS.connections, route: () => routes.view.connections(), isActive: isConnectionsNavigation, preload: 'connections' },
+  { id: 'developers', linkId: 'nav:developers', group: 'more', labelKey: 'sidebar.developers', icon: GLYPHS.developers, route: () => routes.view.developers(), isActive: isDevelopersNavigation, shellFlag: WORKBENCH_FLAG.devSpaceV1 },
+  { id: 'playbooks', linkId: 'nav:playbooks', group: 'more', labelKey: 'sidebar.playbooks', icon: GLYPHS.playbooks, route: () => routes.view.playbooks(), isActive: isPlaybooksNavigation, shellFlag: WORKBENCH_FLAG.playbooksV1 },
+  { id: 'settings', linkId: 'nav:settings', group: 'more', labelKey: 'sidebar.settings', icon: GLYPHS.settings, route: () => routes.view.settings(), isActive: isSettingsNavigation, footer: true },
+]
+
+export interface ResolvedPrimaryNavEntry extends PrimaryNavEntry {
+  /** Docs relabel applied. */
+  labelKey: string
+  group: PrimaryNavGroup
+  /** Mode-screen flag off: the rail shows it disabled with a tooltip. */
+  disabled: boolean
+}
+
+export interface PrimaryNavContext {
+  shellFlags: ReadonlySet<string>
+  modeFlags?: Partial<ModeScreenFlags>
+}
+
+/** The visible, ordered entries for the current flags (primary first, then «Ещё»). */
+export function resolvePrimaryNav({ shellFlags, modeFlags = {} }: PrimaryNavContext): ResolvedPrimaryNavEntry[] {
+  const resolved: ResolvedPrimaryNavEntry[] = []
+  for (const entry of PRIMARY_NAV) {
+    if (entry.shellFlag && !shellFlags.has(entry.shellFlag)) continue
+    if (entry.hiddenWhenShellFlag && shellFlags.has(entry.hiddenWhenShellFlag)) continue
+    if (!entry.route && !entry.action) continue
+    resolved.push({
+      ...entry,
+      labelKey: entry.id === 'docs' ? notesTitleKey(shellFlags, entry.labelKey) : entry.labelKey,
+      group: entry.demotedWhenShellFlag && shellFlags.has(entry.demotedWhenShellFlag) ? 'more' : entry.group,
+      disabled: entry.modeFlag ? modeFlags[entry.modeFlag] === false : false,
+    })
+  }
+  return [...resolved.filter(e => e.group === 'primary'), ...resolved.filter(e => e.group === 'more')]
+}
+
+/** Link ids the registry owns (primary + «Ещё»), whatever the flags. */
+export const PRIMARY_NAV_LINK_IDS: ReadonlySet<string> = new Set(PRIMARY_NAV.map(entry => entry.linkId))

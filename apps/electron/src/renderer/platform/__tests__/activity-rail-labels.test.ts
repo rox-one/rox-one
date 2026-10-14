@@ -46,7 +46,7 @@ describe('activity rail: expanded with labels by default', () => {
     expect(group).toContain('collapsed={collapsed}')
   })
 
-  it('renders the six core modes in TZ order, not the flat destination list (A1)', () => {
+  it('mode pill seed keeps its order; the rail renders the shared primary-nav registry (WP5)', () => {
     // Behavioural pin: the rail's mode seed (icons, labels, order).
     // W3.2: Встречи moved into the calendar surface and is no longer a mode.
     expect(CORE_MODES.map((mode) => mode.contribution.id)).toEqual([
@@ -57,11 +57,10 @@ describe('activity rail: expanded with labels by default', () => {
       'feed',
       'inbox',
     ])
-    // Source contract: the rail consumes that seed, never the 12-entry list.
-    expect(rail).toContain('CORE_MODES')
-    expect(rail).toContain('resolveSeededModes')
+    // Source contract (WP5, #1580): the rail renders the one registry the sidebar uses.
+    expect(rail).toContain('resolvePrimaryNav({ shellFlags, modeFlags })')
     expect(rail).not.toContain('APP_NAV_DESTINATIONS')
-    expect(rail).toContain('testId={`rail-item-${mode.id}`}')
+    expect(rail).toContain('testId={`rail-item-${entry.id}`}')
   })
 
   it('keeps the collapse toggle at the bottom', () => {
