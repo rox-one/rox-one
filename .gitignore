@@ -107,6 +107,8 @@ test-results/
 # Visual-capture artifacts (bun run visual:capture; hashes live in visual-baselines.json)
 .visual-artifacts/
 
+# Team calls: build-time shared credentials (never commit)
+apps/electron/src/main/team-calls/call-defaults.generated.ts
 # Isolated dev run (bun run electron:dev:isolated) — config/userdata/tmp
 .dev-isolated/
 
