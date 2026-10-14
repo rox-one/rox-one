@@ -13,7 +13,7 @@
  * when the stack becomes empty.
  */
 
-import { useCallback, useContext, useLayoutEffect, useMemo, useRef } from 'react'
+import { useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSetAtom, useAtomValue } from 'jotai'
 import { cn } from '@/lib/utils'
@@ -98,7 +98,8 @@ export function PanelSlot({
   const ownsSidebar = !entry.tool && (!primaryId || primaryId === entry.id)
   const tileTitle = titleKey ? t(titleKey) : null
   // A non-owner content panel in split view is a bare PANEL: no secondary sidebar.
-  const barePanel = useMemo(() => (gridTile && !ownsSidebar ? { title: tileTitle } : null), [gridTile, ownsSidebar, tileTitle])
+  const [controlsSlot, setControlsSlot] = useState<HTMLElement | null>(null)
+  const barePanel = useMemo(() => (gridTile && !ownsSidebar ? { title: tileTitle, titleKey, controlsSlot } : null), [gridTile, ownsSidebar, tileTitle, titleKey, controlsSlot])
   useLayoutEffect(() => {
     const panel = panelRef.current
     if (!panel) return
@@ -218,6 +219,8 @@ export function PanelSlot({
               <span className="min-w-0 flex-1 truncate text-xs font-medium text-text-secondary">
                 {tileTitle ?? t('navigation.mainSurface')}
               </span>
+              {/* Bare panel: the surface's navigation/filters in compact form (never a sidebar column). */}
+              <div ref={setControlsSlot} className="flex min-w-0 shrink items-center gap-1" data-testid="grid-tile-controls" />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button

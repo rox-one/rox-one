@@ -458,7 +458,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
 
   // ── Facets ───────────────────────────────────────────────────────────────
   const facets = (
-    <ShellSidebarPortal className={cn(
+    <ShellSidebarPortal bareLabelKey="navigation.barePanel.filters" className={cn(
       'w-[208px] shrink-0 flex-col overflow-y-auto bg-surface-rail px-2 pb-3 pt-2',
       selected ? 'hidden @[920px]/learning:flex' : 'hidden @[760px]/learning:flex',
       filtersOpen && 'absolute inset-y-0 left-0 z-30 flex w-[min(280px,100%)] shadow-modal-small @[760px]/learning:static @[760px]/learning:w-[208px] @[760px]/learning:shadow-none',

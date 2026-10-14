@@ -4,10 +4,18 @@ import * as React from 'react'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { useDomForFile } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
-import { BarePanelContext, ShellSidebarContext, ShellSidebarPortal, useDedupedPanelTitle, useSidebarHandledOutside } from '../ShellSidebarPortal'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { BarePanelContext, PanelHeading, ShellSidebarContext, ShellSidebarPortal, isDuplicatePanelTitle, normalizeHeading, useDedupedPanelTitle, useSidebarHandledOutside } from '../ShellSidebarPortal'
+
+const renderer = join(import.meta.dir, '..', '..', '..')
+const source = (path: string) => readFileSync(join(renderer, path), 'utf8')
 
 // eslint-disable-next-line react-hooks/rules-of-hooks -- test DOM environment setup, not a React hook
 useDomForFile()
+// Radix FocusScope (popover) walks the tree with NodeFilter, which the test DOM may not expose globally.
+const scope = globalThis as { NodeFilter?: unknown; window?: { NodeFilter?: unknown } }
+scope.NodeFilter ??= scope.window?.NodeFilter ?? { SHOW_ELEMENT: 1, FILTER_ACCEPT: 1, FILTER_REJECT: 2, FILTER_SKIP: 3 }
 
 let root: Root | null = null
 afterEach(() => {
@@ -33,15 +41,16 @@ async function render(node: React.ReactNode) {
 }
 
 describe('split panels without a second sidebar', () => {
-  it('the owner screen portals its nav into the shared slot; a bare panel renders no nav at all', async () => {
+  it('the owner screen portals its nav into the shared slot; a bare panel gets no second sidebar column', async () => {
     const slot = document.createElement('div')
-    document.body.append(slot)
+    const controls = document.createElement('div')
+    document.body.append(slot, controls)
     const host = await render(
       <ShellSidebarContext.Provider value={slot}>
         <ShellSidebarPortal>sessions-tree</ShellSidebarPortal>
         <ShellSidebarContext.Provider value={null}>
-          <BarePanelContext.Provider value={{ title: 'Входящие' }}>
-            <ShellSidebarPortal data-testid="inbox-nav">inbox-tree</ShellSidebarPortal>
+          <BarePanelContext.Provider value={{ title: 'Входящие', controlsSlot: controls }}>
+            <ShellSidebarPortal data-testid="inbox-nav" bareLabelKey="navigation.barePanel.folders">inbox-tree</ShellSidebarPortal>
           </BarePanelContext.Provider>
         </ShellSidebarContext.Provider>
       </ShellSidebarContext.Provider>,
@@ -49,6 +58,53 @@ describe('split panels without a second sidebar', () => {
     expect(slot.textContent).toBe('sessions-tree')
     expect(host.textContent).not.toContain('inbox-tree')
     expect(host.querySelector('[data-panel-secondary]')).toBeNull()
+    // Restored as a compact folder/view dropdown in the tile header.
+    const trigger = controls.querySelector<HTMLButtonElement>('[data-bare-controls="popover"]')
+    expect(trigger?.getAttribute('data-testid')).toBe('inbox-nav-bare')
+    expect(trigger?.getAttribute('aria-label')).toBeTruthy()
+    await act(async () => { trigger!.click() })
+    expect(document.body.querySelector('[data-bare-controls-content]')?.textContent).toBe('inbox-tree')
+  })
+
+  it('strip mode (Connections) restores the tabs as a compact horizontal strip in the tile header', async () => {
+    const controls = document.createElement('div')
+    document.body.append(controls)
+    await render(
+      <BarePanelContext.Provider value={{ title: 'Подключения', controlsSlot: controls }}>
+        <ShellSidebarPortal bareMode="strip" bareLabelKey="sidebar.connections"><div role="tablist"><button role="tab">services</button><button role="tab">audit</button></div></ShellSidebarPortal>
+      </BarePanelContext.Provider>,
+    )
+    const strip = controls.querySelector('[data-bare-controls="strip"]')
+    expect(strip?.querySelectorAll('[role="tab"]').length).toBe(2)
+  })
+
+  it('every screen passes its compact control to the bare panel', () => {
+    expect(source('pages/ConnectionsPage.tsx')).toContain('bareMode="strip"')
+    expect(source('components/memory/MemoryScreen.tsx')).toContain('bareLabelKey="navigation.barePanel.filters"')
+    expect(source('components/learning/LearningScreen.tsx')).toContain('bareLabelKey="navigation.barePanel.filters"')
+    expect(source('pages/NotesPage.tsx')).toContain('bareLabelKey="navigation.barePanel.vault"')
+    expect(source('components/mode-screen/ModeScreen.tsx')).toContain('bareLabelKey="navigation.barePanel.folders"')
+    expect(source('components/mode-screen/ResponsiveModeScreen.tsx')).toContain('bareLabelKey="navigation.barePanel.folders"')
+    expect(source('components/app-shell/PanelSlot.tsx')).toContain('ref={setControlsSlot}')
+  })
+
+  it('dedupe ignores case, whitespace, counters and nested nodes; matches by key', () => {
+    const bare = { title: 'Входящие', titleKey: 'workbench.mode.inbox' }
+    expect(normalizeHeading('  ВХОДЯЩИЕ  (12) ')).toBe('входящие')
+    expect(isDuplicatePanelTitle(bare, 'входящие · 3')).toBe(true)
+    expect(isDuplicatePanelTitle(bare, <span><b>Входящие</b> 5</span>)).toBe(true)
+    expect(isDuplicatePanelTitle(bare, 'Inbox', 'workbench.mode.inbox')).toBe(true)
+    expect(isDuplicatePanelTitle(bare, 'Входящие письма')).toBe(false)
+    expect(isDuplicatePanelTitle(null, 'Входящие')).toBe(false)
+  })
+
+  it('PanelHeading hides a repeated page title only inside a bare panel', async () => {
+    const host = await render(<>
+      <PanelHeading>Команда</PanelHeading>
+      <BarePanelContext.Provider value={{ title: 'Команда' }}><PanelHeading data-testid="dup">КОМАНДА</PanelHeading></BarePanelContext.Provider>
+    </>)
+    expect(host.querySelectorAll('h1').length).toBe(1)
+    expect(host.querySelector('[data-testid="dup"]')).toBeNull()
   })
 
   it('without bare context the inline fallback still renders (single window, retained surfaces)', async () => {
