@@ -14,7 +14,7 @@
  */
 import { afterAll, expect, it } from 'bun:test'
 import { spawn as nodeSpawn } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -109,4 +109,68 @@ sidecarIt(
     expect(runtime.getStatus().state).toBe('stopped')
   },
   30_000,
+)
+
+sidecarIt(
+  pythonPath ? 'feeds a resolved vendor key to the kernel and never leaks the value' : 'python-not-found',
+  async () => {
+    const workspace = await mkdtemp(join(tmpdir(), 'rox-cookbooks-secrets-it-'))
+    tempDirs.push(workspace)
+    const secret = `test-secret-${Math.random().toString(36).slice(2)}`
+
+    const spawn: CookbooksSpawnFn = (command, args, options) =>
+      nodeSpawn(command, args, options) as unknown as CookbooksChild
+    const runtime = new CookbooksRuntime({
+      spawn,
+      resolvePython: async () => pythonPath,
+      getCookbooksDir: () => COOKBOOKS_DIR,
+      getWorkspaceDir: () => workspace,
+      resolveStore: async () => ({ 'openai.api_key': secret }),
+    })
+
+    expect((await runtime.ensure()).state).toBe('running')
+
+    // The seeded store reaches the catalog: the notebook sees its key.
+    const cards = await runtime.apiCatalog()
+    const notebook = cards.find(
+      (card) => card.kind === 'ipynb' && !card.disabled && card.secretsHave.includes('openai.api_key'),
+    )
+    expect(notebook).toBeDefined()
+
+    const opened = await runtime.apiOpen(notebook!.id)
+    const codeIndex = opened.document.cells.findIndex((cell) => cell.cellType === 'code')
+    expect(codeIndex).toBeGreaterThanOrEqual(0)
+
+    const code = [
+      'import os',
+      "value = os.environ.get('OPENAI_API_KEY')",
+      "print('KEY' if value else 'NONE')",
+      'print(value)',
+      '',
+    ].join('\n')
+    const result = await runtime.apiRun(notebook!.id, code, codeIndex)
+
+    expect(result.ok).toBe(true)
+    expect(result.stdout).toContain('KEY')
+    expect(result.stdout).not.toContain('NONE')
+    // The lab's redaction masks the value in every stream...
+    expect(result.stdout).toContain('***')
+    // ...and the value is absent from the response and from the saved ipynb.
+    expect(JSON.stringify(result)).not.toContain(secret)
+    // The supervisor derives the sidecar workspace as <configDir>/cookbooks/workspace,
+    // and copies live under its own `cookbooks/<copyId>/` slot.
+    const copyDir = join(workspace, 'cookbooks', 'workspace', 'cookbooks', opened.copyId)
+    const notebooks = readdirSync(copyDir).filter((name) => name.endsWith('.ipynb'))
+    expect(notebooks.length).toBeGreaterThan(0)
+    for (const name of notebooks) {
+      const text = readFileSync(join(copyDir, name), 'utf8')
+      // The persisted output is the redacted one — proof the assertion is not
+      // vacuous (the cell ran and its output landed in the notebook).
+      expect(text).toContain('***')
+      expect(text).not.toContain(secret)
+    }
+
+    await runtime.stop()
+  },
+  60_000,
 )

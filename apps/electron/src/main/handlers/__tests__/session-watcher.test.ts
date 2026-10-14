@@ -14,7 +14,7 @@ import { join } from 'path'
 import { tmpdir } from 'os'
 import type { RpcServer, RequestContext } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { RPC_CHANNELS } from '../../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 
 // ---------------------------------------------------------------------------
 // Electron mock (needed by transitive imports)

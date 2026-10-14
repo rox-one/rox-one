@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { MeetingCloudAsr, type MeetingVoiceClient } from '../cloud-asr'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import { emptyLocalMeeting } from '../local-model'
 import type { Workspace } from '@rox/core/types'
 

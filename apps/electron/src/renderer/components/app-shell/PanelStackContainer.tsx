@@ -90,6 +90,8 @@ const COMPACT_PANEL_TOP_GAP = 0
 interface PanelStackContainerProps {
   sidebarSlot: React.ReactNode
   sidebarWidth: number
+  /** top50 #3: the narrow-window second sidebar overlay spills over the content. */
+  sidebarOverflowVisible?: boolean
   navigatorSlot: React.ReactNode
   navigatorWidth: number
   /** Absolute separators share the panels' coordinate and scroll owner. */
@@ -105,6 +107,7 @@ interface PanelStackContainerProps {
 export function PanelStackContainer({
   sidebarSlot,
   sidebarWidth,
+  sidebarOverflowVisible = false,
   navigatorSlot,
   navigatorWidth,
   resizeHandles,
@@ -524,8 +527,8 @@ export function PanelStackContainer({
           transition={transition}
           aria-hidden={!hasSidebar || undefined}
           {...(!hasSidebar ? { inert: '' } : {})}
-          className={`h-full relative shrink-0 overflow-hidden rox-shell-pane ${hasSidebar ? 'rox-shell-divider-r' : ''}`}
-          style={{ overflowX: 'clip', overflowY: 'visible', display: isCompact ? 'none' : undefined }}
+          className={`h-full relative shrink-0 ${sidebarOverflowVisible ? 'overflow-visible z-sticky' : 'overflow-hidden'} rox-shell-pane ${hasSidebar ? 'rox-shell-divider-r' : ''}`}
+          style={{ overflowX: sidebarOverflowVisible ? 'visible' : 'clip', overflowY: 'visible', display: isCompact ? 'none' : undefined }}
         >
           <div className="h-full" style={{ width: sidebarWidth }}>{sidebarSlot}</div>
         </motion.div>

@@ -88,7 +88,7 @@ import { refreshLegacySeededWorkspaceIcons } from './brand-icon-migration'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, readdirSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { resolveOemManagedLayout } from '@rox/shared/knowledge/oem-pin'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 
 {
   const oemRoot = app.isPackaged ? process.resourcesPath : process.cwd()

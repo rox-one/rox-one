@@ -5,7 +5,7 @@
  */
 import { createHash } from 'node:crypto'
 import type { Workspace, RemoteServerConfig } from '@rox/core/types'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import { DEEPGRAM_TRANSCRIPTION_MODEL, type NormalizedTranscript, type TranscriptionRequest } from '@rox/shared/voice'
 import type { LocalAsrEngine, LocalMeeting } from '../../shared/meetings-local'
 import type { LocalTranscriptionContext } from './local-store'

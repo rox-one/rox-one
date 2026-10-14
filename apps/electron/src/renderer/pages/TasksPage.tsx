@@ -1183,7 +1183,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           title={t('tasks.magicPlusHint')}
           aria-label={t('tasks.magicPlus')}
           data-testid="tasks-magic-plus"
-          className="inline-flex size-8 shrink-0 items-center justify-center rounded-[6px] bg-accent text-stat leading-none text-accent-foreground outline-none transition-colors hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-sm bg-accent text-stat leading-none text-accent-foreground outline-none transition-colors hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring"
         >
           +
         </button>

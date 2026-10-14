@@ -5,7 +5,7 @@
  * the method→channel mapping used by buildClientApi().
  */
 
-import { RPC_CHANNELS } from '../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { ChannelMap } from './build-api'
 
 function invoke(channel: string, transform?: (result: any) => any, timeoutMs?: number) {

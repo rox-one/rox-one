@@ -552,7 +552,7 @@ function AddSubtask({
                 className="inline-flex min-w-0 items-center gap-1 rounded-md border border-border/60 bg-background px-1.5 py-1 text-xs font-medium text-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground"
               >
                 {selectedIcon ? (
-                  <img src={selectedIcon} alt="" className="h-3 w-3 shrink-0 rounded-[2px]" aria-hidden />
+                  <img src={selectedIcon} alt="" className="h-3 w-3 shrink-0 rounded-xs" aria-hidden />
                 ) : (
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40" aria-hidden />
                 )}
@@ -569,7 +569,7 @@ function AddSubtask({
                       <img
                         src={resolveProviderIcon(group.provider)!}
                         alt=""
-                        className="h-3 w-3 rounded-[2px]"
+                        className="h-3 w-3 rounded-xs"
                         aria-hidden
                       />
                     )}
