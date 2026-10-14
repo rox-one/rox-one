@@ -37,8 +37,9 @@ const status = (id: string, count: number): LinkItem => ({
   id: `nav:state:${id}`, title: id, label: String(count), count, icon: Home, variant: 'ghost', onClick: noop,
 })
 
-function links(memoryActive: boolean): SidebarItem[] {
+function links(memoryActive: boolean, inboxActive = false): SidebarItem[] {
   return [
+    { id: 'nav:inbox', title: 'Inbox', icon: Home, variant: inboxActive ? 'default' : 'ghost', onClick: noop },
     {
       id: 'nav:allSessions', title: 'Sessions', icon: Home, variant: 'ghost', onClick: noop, expandable: true, expanded: true,
       sortable: { onReorder: noop },
@@ -58,10 +59,10 @@ function makeStore() {
   }
 }
 
-function Harness({ store, navigator, memoryActive, onOpenChange = noop }: { store: ReturnType<typeof makeStore>; navigator: string; memoryActive: boolean; onOpenChange?: (open: boolean) => void }) {
+function Harness({ store, navigator, memoryActive, inboxActive = false }: { store: ReturnType<typeof makeStore>; navigator: string; memoryActive: boolean; inboxActive?: boolean }) {
   // A new isExpanded identity per store change, as AppShell's collapsedItems-based callback.
   const [version, bump] = React.useReducer((n: number) => n + 1, 0)
-  const baseLinks = React.useMemo(() => links(memoryActive), [memoryActive])
+  const baseLinks = React.useMemo(() => links(memoryActive, inboxActive), [memoryActive, inboxActive])
   // eslint-disable-next-line react-hooks/exhaustive-deps -- version invalidates on store change
   const isExpanded = React.useCallback((id: string) => store.isExpanded(id), [store, version])
   const toggleExpanded = React.useCallback((id: string) => { store.toggle(id); bump() }, [store])
@@ -69,7 +70,7 @@ function Harness({ store, navigator, memoryActive, onOpenChange = noop }: { stor
   return (
     <NavigationStatusContext.Provider value={status}>
       <ShellSidebarNav baseLinks={baseLinks} isCollapsed={false} onExpand={noop} onOpenBrowser={noop}
-        isExpanded={isExpanded} toggleExpanded={toggleExpanded} applicationSectionsOpen={false} onApplicationSectionsOpenChange={onOpenChange} />
+        isExpanded={isExpanded} toggleExpanded={toggleExpanded} />
     </NavigationStatusContext.Provider>
   )
 }
@@ -87,18 +88,48 @@ async function unmount() {
   root = null
   host?.remove()
 }
-const details = () => host!.querySelector('details[data-application-sections]') as HTMLDetailsElement
 const rowIds = () => Array.from(host!.querySelectorAll('[data-session-filters] [data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))
 
-describe('WP5 fix1 (1): «Ещё» reveals an active destination', () => {
-  it('is closed when nothing inside is active', async () => {
+const toolsSection = () => host!.querySelector('section[data-sidebar-tools]') as HTMLElement
+const toolsHeader = () => toolsSection().querySelector('[data-sidebar-section-header]') as HTMLButtonElement
+const toolsRows = () => Array.from(toolsSection().querySelectorAll('[data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))
+
+describe('sidebar v2 fix1: «Инструменты» replaces the «Ещё» disclosure', () => {
+  it('is expanded by default: former «Ещё» rows show directly', async () => {
     await mount(<Harness store={makeStore()} navigator="memory" memoryActive={false} />)
-    expect(details().open).toBe(false)
+    expect(host!.querySelector('details')).toBeNull()
+    expect(toolsHeader().getAttribute('aria-expanded')).toBe('true')
+    expect(toolsRows()).toContain('nav:memory')
   })
 
-  it('opens when the active destination lives in «Ещё» (deep link / route change)', async () => {
-    await mount(<Harness store={makeStore()} navigator="memory" memoryActive />)
-    expect(details().open).toBe(true)
+  it('the header collapses it and the state persists across a remount', async () => {
+    const store = makeStore()
+    await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
+    await act(async () => { toolsHeader().click() })
+    expect(toolsHeader().getAttribute('aria-expanded')).toBe('false')
+    expect(toolsRows()).toEqual([])
+    await unmount()
+    await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
+    expect(toolsHeader().getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('a collapsed section respects the saved state but keeps the active row visible', async () => {
+    const store = makeStore()
+    store.toggle('sidebar:section:tools')
+    await mount(<Harness store={store} navigator="memory" memoryActive />)
+    expect(toolsHeader().getAttribute('aria-expanded')).toBe('false')
+    expect(toolsHeader().hasAttribute('aria-disabled')).toBe(false)
+    expect(toolsRows()).toEqual(['nav:memory'])
+  })
+
+  it('«Навигация» collapses even while one of its rows is active, keeping only that row', async () => {
+    const store = makeStore()
+    await mount(<Harness store={store} navigator="inbox" memoryActive={false} inboxActive />)
+    const nav = () => host!.querySelector('[data-sidebar-primary-nav]') as HTMLElement
+    const header = () => nav().querySelector('[data-sidebar-section-header]') as HTMLButtonElement
+    await act(async () => { header().click() })
+    expect(header().getAttribute('aria-expanded')).toBe('false')
+    expect(Array.from(nav().querySelectorAll('[data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))).toEqual(['nav:inbox'])
   })
 })
 
@@ -127,43 +158,3 @@ describe('WP5 fix1 (2): session filters persist through the expanded-sections st
   })
 })
 
-const summary = () => details().querySelector('summary') as HTMLElement
-const fireToggle = async () => act(async () => { details().dispatchEvent(new Event('toggle')) })
-
-describe('WP5 fix2 (W): a forced-open «Ещё» cannot desync closed', () => {
-  it('prevents the summary click and re-opens the DOM details if it closes', async () => {
-    const calls: boolean[] = []
-    await mount(<Harness store={makeStore()} navigator="memory" memoryActive onOpenChange={open => calls.push(open)} />)
-    expect(details().open).toBe(true)
-    const click = new MouseEvent('click', { bubbles: true, cancelable: true })
-    await act(async () => { summary().dispatchEvent(click) })
-    expect(click.defaultPrevented).toBe(true)
-    // Native close anyway (e.g. platform quirk): the toggle handler restores it.
-    details().open = false
-    await fireToggle()
-    expect(details().open).toBe(true)
-    expect(calls).toEqual([])
-  })
-})
-
-describe('WP5 fix2 (I1): only user toggles persist', () => {
-  it('a programmatic open (forced) does not report applicationSectionsOpen=true', async () => {
-    const calls: boolean[] = []
-    await mount(<Harness store={makeStore()} navigator="memory" memoryActive onOpenChange={open => calls.push(open)} />)
-    await fireToggle()
-    expect(calls).toEqual([])
-  })
-
-  it('a user summary click while not forced is reported', async () => {
-    const calls: boolean[] = []
-    await mount(<Harness store={makeStore()} navigator="sessions" memoryActive={false} onOpenChange={open => calls.push(open)} />)
-    await fireToggle() // programmatic: ignored
-    expect(calls).toEqual([])
-    const click = new MouseEvent('click', { bubbles: true, cancelable: true })
-    await act(async () => { summary().dispatchEvent(click) })
-    expect(click.defaultPrevented).toBe(false)
-    details().open = true
-    await fireToggle()
-    expect(calls).toEqual([true])
-  })
-})
