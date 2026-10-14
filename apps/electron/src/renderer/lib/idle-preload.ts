@@ -12,12 +12,14 @@
  */
 import { ROUTE_PAGE_NAMES, RAIL_SURFACE_ROUTES, preloadRoute } from '@/components/app-shell/route-pages'
 import { loadLabelDateEditor } from '@/components/ui/label-date-editor-loader'
+import { loadCloudRunsChip } from '@/components/cloud-runs/cloud-runs-chip-loader'
 
 type Loader = () => Promise<unknown>
 
 /** Lazy shell pieces split out of the startup closure, hottest first. */
 export const STARTUP_SPLIT_LOADERS: ReadonlyArray<readonly [string, Loader]> = [
   ['label-date-editor', loadLabelDateEditor],
+  ['cloud-runs-chip', loadCloudRunsChip],
   ['onboarding-dialog', () => import('@/components/app-shell/OnboardingDialog')],
   ['rox-cli-credential-step', () => import('@/components/onboarding/RoxCliCredentialStep')],
   ['workspace-creation-screen', () => import('@/components/workspace/WorkspaceCreationScreen')],

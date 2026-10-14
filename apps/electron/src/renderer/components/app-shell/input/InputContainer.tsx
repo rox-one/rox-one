@@ -10,9 +10,12 @@ import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import type { StructuredInputState, StructuredResponse, InputMode } from './structured/types'
 import { getStructuredInputMaxHeight } from './structured-height'
 import { BackgroundFinishedChip } from '../BackgroundFinishedChip'
-import { CloudRunsChip } from '@/components/cloud-runs/CloudRunsChip'
 import { CloudHandoffButton } from '@/components/cloud-handoff/CloudHandoffButton'
 import { GitStatusBar } from '@/platform/GitStatusBar'
+import { loadCloudRunsChip } from '@/components/cloud-runs/cloud-runs-chip-loader'
+
+// Lazy: keeps the cloud-runs chip (~32 KB) out of the startup closure; idle-preloaded.
+const CloudRunsChip = React.lazy(() => loadCloudRunsChip().then(m => ({ default: m.CloudRunsChip })))
 
 interface InputContainerProps extends Omit<FreeFormInputProps, 'inputRef'> {
   /** Structured input state - when present, shows structured UI instead of freeform */
@@ -294,7 +297,9 @@ export function InputContainer({
         <div className="relative z-20 mb-1.5 flex justify-end">
           <div className="flex items-center gap-1 rounded-md bg-background p-0.5">
             <CloudHandoffButton sessionId={freeFormProps.sessionId} />
-            <CloudRunsChip sessionId={freeFormProps.sessionId} />
+            <React.Suspense fallback={null}>
+              <CloudRunsChip sessionId={freeFormProps.sessionId} />
+            </React.Suspense>
           </div>
         </div>
       )}
