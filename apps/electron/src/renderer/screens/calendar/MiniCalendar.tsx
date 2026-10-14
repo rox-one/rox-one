@@ -26,6 +26,7 @@ export const MiniCalendar = React.memo(function MiniCalendar({ now, selectedDay,
   const gridRef = React.useRef<HTMLDivElement>(null)
   const days = React.useMemo(() => monthGrid(month), [month])
   const monthIndex = new Date(month).getMonth()
+  const tabbableDay = days.includes(focusDay) ? focusDay : (days.find((d) => new Date(d).getMonth() === monthIndex) ?? days[0])
   const monthFmt = React.useMemo(() => new Intl.DateTimeFormat(i18n.language, { month: 'long', year: 'numeric' }), [i18n.language])
   const dayFmt = React.useMemo(() => new Intl.DateTimeFormat(i18n.language, { dateStyle: 'full' }), [i18n.language])
   const weekdayFmt = React.useMemo(() => new Intl.DateTimeFormat(i18n.language, { weekday: 'narrow' }), [i18n.language])
@@ -35,6 +36,8 @@ export const MiniCalendar = React.memo(function MiniCalendar({ now, selectedDay,
     d.setDate(1)
     d.setMonth(d.getMonth() + delta)
     setMonth(d.getTime())
+    // Keep a tabbable cell inside the visible month (keyboard reachability).
+    setFocusDay(startOfDay(d.getTime()))
   }
   const moveFocus = (next: number) => {
     const day = startOfDay(next)
@@ -44,7 +47,7 @@ export const MiniCalendar = React.memo(function MiniCalendar({ now, selectedDay,
   }
   const onKeyDown = (event: React.KeyboardEvent) => {
     const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[event.key]
-    if (step) { event.preventDefault(); moveFocus(focusDay + step * DAY + DAY / 2) }
+    if (step) { event.preventDefault(); moveFocus((tabbableDay ?? focusDay) + step * DAY + DAY / 2) }
   }
 
   return (
@@ -73,7 +76,7 @@ export const MiniCalendar = React.memo(function MiniCalendar({ now, selectedDay,
                   type="button"
                   role="gridcell"
                   data-day={d}
-                  tabIndex={d === focusDay ? 0 : -1}
+                  tabIndex={d === tabbableDay ? 0 : -1}
                   aria-selected={selected}
                   aria-current={d === today ? 'date' : undefined}
                   aria-label={dayFmt.format(d) + (meetingDays.has(d) ? `, ${t('screens.calendar.hasMeetings')}` : '')}

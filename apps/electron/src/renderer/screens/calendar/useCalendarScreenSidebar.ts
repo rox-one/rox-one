@@ -126,7 +126,7 @@ export function useCalendarScreenSidebar(input: CalendarScreenSidebarInput): voi
     return {
       screenId,
       title: t('workbench.mode.calendar'),
-      headerActions: [{ id: 'refresh', label: t('common.retry'), icon: RefreshCw, onSelect: onRetry }],
+      headerActions: [{ id: 'refresh', label: t('common.refresh'), icon: RefreshCw, onSelect: onRetry }],
       ...(canRecord ? { primaryAction: { id: 'record', label: recording ? t('screens.calendar.recording') : t('meetings.screen.startRecording'), icon: Mic, disabled: recording, onSelect: onRecord } } : {}),
       groups,
     }

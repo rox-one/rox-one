@@ -294,12 +294,6 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
       surface: 'meetings', apiAvailable: !!api, workspaceId, selectedId,
       meeting: loadedWorkspaceId === workspaceId ? selected : null,
       loadState: loadState === 'ready' && loadedWorkspaceId !== workspaceId ? 'loading' : loadState,
-    accounts: calendarVisibility.accounts,
-    hiddenAccounts: calendarVisibility.hidden,
-    onToggleAccount: calendarVisibility.toggle,
-    day,
-    onDay: (next) => { setDay(next); selectMeeting(null) },
-    meetingDays,
     })
     const cleanupAvailable = tourSignals.capability('meetings.available', capabilities['meetings.available']!)
     const cleanupArtifact = tourSignals.capability('meeting.artifact-present', capabilities['meeting.artifact-present']!)
@@ -511,6 +505,12 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     recording: rec.status !== 'idle',
     onRetry: () => setReload((n) => n + 1),
     loadState: loadState === 'ready' && loadedWorkspaceId !== workspaceId ? 'loading' : loadState,
+    accounts: calendarVisibility.accounts,
+    hiddenAccounts: calendarVisibility.hidden,
+    onToggleAccount: calendarVisibility.toggle,
+    day,
+    onDay: (next) => { setDay(next); selectMeeting(null) },
+    meetingDays,
   })
   const navigator = (
     <MeetingsSidebar bucket={bucket} counts={counts} engine={engine} onBucketSelect={setBucket} onConnectCalendar={() => navigate(routes.view.connections())} />
