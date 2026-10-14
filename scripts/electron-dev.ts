@@ -11,6 +11,7 @@ import { join } from "path";
 import * as esbuild from "esbuild";
 import { downloadUv, type Platform, type Arch } from "./build/common";
 import { detectInstanceNumber, resolveVitePort } from "./electron-dev-helpers";
+import { writeRoxDefaultsModule } from "../apps/electron/scripts/gen-rox-defaults";
 
 const ROOT_DIR = join(import.meta.dir, "..");
 const ELECTRON_DIR = join(ROOT_DIR, "apps/electron");
@@ -602,6 +603,8 @@ async function main(): Promise<void> {
   });
   processes.push(viteProc);
 
+  // Shared ROX gateway key → gitignored generated module (value never printed).
+  console.log(`ROX defaults: ${writeRoxDefaultsModule()}`);
   // 2. Main process watcher (using esbuild watch API)
   const mainContext = await esbuild.context({
     entryPoints: [join(ROOT_DIR, "apps/electron/src/main/index.ts")],

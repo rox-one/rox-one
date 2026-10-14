@@ -7,6 +7,7 @@ import { spawn } from "bun";
 import { copyFileSync, existsSync, readFileSync, statSync, mkdirSync } from "fs";
 import { join } from "path";
 import { ELECTRON_MAIN_CJS_FLAGS } from "./electron-main-cjs";
+import { writeRoxDefaultsModule } from "../apps/electron/scripts/gen-rox-defaults";
 
 const ROOT_DIR = join(import.meta.dir, "..");
 const outIndex = process.argv.indexOf('--outdir');
@@ -468,6 +469,8 @@ async function main(): Promise<void> {
   await buildBundledSkillsWorker();
   await buildPoolWorker();
 
+  // Shared ROX gateway key → gitignored generated module (value never printed).
+  console.log(`🔑 ROX defaults: ${writeRoxDefaultsModule()}`);
   const buildDefines = getBuildDefines();
 
   console.log("🔨 Building main process...");
