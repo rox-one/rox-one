@@ -27,6 +27,7 @@ import { PanelSlot } from './PanelSlot'
 import { TerminalPanel } from './TerminalPanel'
 import { PanelGridResizeSash } from './PanelGridResizeSash'
 import { PanelSwapGripButton } from './PanelSeam'
+import { OneTimeHint } from '@/components/shell/OneTimeHint'
 import { setStripWidthAtom, stripWidthFor, stripWidthsAtom, hibernatedPanelIdsAtom, useStripHibernation, useScrollFocusedIntoView, clampStripWidth } from '@/components/shell/panel-strip'
 import {
   PANEL_GAP,
@@ -676,6 +677,14 @@ export function PanelStackContainer({
               </div>
             ) : null}
           </motion.div>
+          {stripMode && (
+            <OneTimeHint
+              id="strip.intro"
+              title={t('shell.hint.stripTitle')}
+              body={t('shell.hint.stripBody')}
+              className="absolute bottom-3 right-3"
+            />
+          )}
         </div>
         {resizeHandles && !isExpanded && resizeHandles}
       </motion.div>
