@@ -567,8 +567,15 @@ export type PermissionRequestType = 'bash' | 'file_write' | 'mcp_mutation' | 'ap
  * preview. Texts are capped (see `truncated`); never used to make the decision.
  */
 export type PermissionPreview =
-  | { kind: 'edit'; filePath: string; hunks: Array<{ oldText: string; newText: string }>; truncated?: boolean }
-  | { kind: 'write'; filePath: string; newText: string; truncated?: boolean };
+  | {
+      kind: 'edit'; filePath: string; hunks: Array<{ oldText: string; newText: string }>; truncated?: boolean;
+      /** Set for Edit with replace_all: number of occurrences in the current file (0 if unknown). */
+      replaceAll?: number;
+    }
+  /** Write to a path that does not exist yet: all lines are additions. */
+  | { kind: 'write'; filePath: string; newText: string; truncated?: boolean }
+  /** Write over an existing file: line diff against its current content. */
+  | { kind: 'overwrite'; filePath: string; hunks: Array<{ oldText: string; newText: string }>; truncated?: boolean };
 
 export interface PermissionRequest {
   requestId: string;
