@@ -20,7 +20,7 @@ export interface NoteTasksEntry {
   tasks: NoteTaskLine[]
 }
 
-const TASK_LINE = /^\s*[-*]\s+\[([ xX])\]\s+(.+)$/
+const TASK_LINE = /^\s*[-*]\s+\[([ xX])\]\s+(\S.*)$/
 
 /** `- [ ] text` / `* [x] text` lines, the same grammar the Notes page has always used. */
 export function extractNoteTaskLines(content: string): NoteTaskLine[] {
