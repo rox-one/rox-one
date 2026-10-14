@@ -23,11 +23,14 @@ import { GLYPHS } from '../../platform/glyphs'
 import { routes, type ViewRoute } from '../../../shared/routes'
 import { devSpaceEnabledAtom } from '../../atoms/dev-space'
 import { playbooksEnabledAtom } from '../../atoms/playbooks'
+import { DEDICATED_FLAG_ATOMS } from '../../platform/unified-flags'
+import { WORKBENCH_FLAG } from '@rox/core/platform'
 import {
   isAutomationsNavigation,
   isBrowserNavigation,
   isClipboardHistoryNavigation,
   isConnectionsNavigation,
+  isCookbooksNavigation,
   isDevelopersNavigation,
   isDiffNavigation,
   isDriveNavigation,
@@ -68,6 +71,7 @@ export type AppNavDestinationId =
   | 'knowledge'
   | 'developers'
   | 'playbooks'
+  | 'cookbooks'
   | 'settings'
 
 export interface AppNavDestination {
@@ -318,6 +322,20 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     route: () => routes.view.playbooks(),
     isActive: isPlaybooksNavigation,
     flagAtom: playbooksEnabledAtom,
+  },
+  {
+    // Cookbooks surface (cookbooks-surface program). Its own PanelType gives
+    // the tab its glyph; being listed here is what lets the tab strip resolve
+    // the route to `sidebar.cookbooks` instead of the generic «Панель».
+    id: 'cookbooks',
+    linkId: 'nav:cookbooks',
+    icon: GLYPHS.cookbooks,
+    labelKey: 'sidebar.cookbooks',
+    railGroup: 'more',
+    contextLinkIds: ['nav:cookbooks'],
+    route: () => routes.view.cookbooks(),
+    isActive: isCookbooksNavigation,
+    flagAtom: DEDICATED_FLAG_ATOMS.get(WORKBENCH_FLAG.cookbooksV1),
   },
   {
     id: 'settings',

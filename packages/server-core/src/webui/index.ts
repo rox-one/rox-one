@@ -17,6 +17,7 @@ export {
   WEBUI_SECURITY_HEADERS,
 } from './csp'
 export { readWebDefaultWorkspace } from './theme-storage'
+export { maybeCreateCloudHandoffBroker, HANDOFF_BROKER_ENABLED_ENV } from './cloud-handoff-broker'
 export {
   MEDIA_PATH_PREFIX,
   MEDIA_TICKET_DEFAULT_TTL_MS,

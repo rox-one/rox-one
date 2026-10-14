@@ -81,6 +81,8 @@ export interface LinkItem {
   id: string            // Unique ID for navigation (e.g., 'nav:allSessions')
   title: string
   label?: string        // Optional badge (e.g., count)
+  /** Numeric count behind `label`, when the row is a counted bucket. */
+  count?: number
   icon: LucideIcon | React.ReactNode  // LucideIcon or custom React element
   iconColor?: string    // Optional color class for the icon
   /** Whether the icon responds to color (uses currentColor). Default true for Lucide icons. */
@@ -136,6 +138,8 @@ interface LeftSidebarProps {
   /** Limit the outer sidebar to its service; nested sections keep their children. */
   serviceId?: AppNavDestinationId | null
   onExpand?: (link: LinkItem) => void
+  /** Top-level lists reserve the chevron column on every row (default true). */
+  disclosureColumn?: boolean
 }
 
 // Stagger only small trees. A 500-row section must not pay sequential delays.
@@ -180,9 +184,13 @@ const itemVariants: Variants = {
  * Navigation is managed by the parent component (Chat.tsx) for unified
  * sidebar keyboard navigation. This component just renders the items.
  *
- * Styling matches agent items in the sidebar for consistency:
- * - py-[7px] px-2 text-base rounded-md
- * - Icon: h-4 w-4, muted idle tone lifting to foreground on row hover
+ * Styling (WP4 token pass, 4px grid):
+ * - 28px rows (min-h-7), py-1 px-2, gap-2, text-base, rounded-[var(--radius-control)]
+ * - Icon: 16px box (h-4 w-4), muted idle tone lifting to foreground on row hover
+ * - Hover / context-menu-open / active fill: the shared --state-hover token
+ *
+ * Memoised (WP3): AppShell passes memoised `links` and stable callbacks, so a
+ * shell re-render that does not change the links skips this tree entirely.
  *
  * Link variants:
  * - "default": Highlighted style (used for active/selected items)
@@ -198,7 +206,13 @@ const itemVariants: Variants = {
  * - Uses @dnd-kit with DragOverlay portaled to document.body (no clipping)
  * - Two-phase drop animation: overlay fades out, ghost fades in
  */
-export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested, serviceId, onExpand }: LeftSidebarProps) {
+/** WP4: the one sidebar row hover/active fill (UI-A1 state token). */
+// Sidebar v2: selected ≠ hover — the active row uses the selected token
+// (the main nav adds weight/colour on its own wrapper).
+const ROW_FILL = 'bg-[var(--state-selected)]'
+
+export const LeftSidebar = React.memo(function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested, serviceId, onExpand, disclosureColumn = true }: LeftSidebarProps) {
+  const slot = !isNested && disclosureColumn
   const { t } = useTranslation()
   const reduceMotion = usePrefersReducedMotion()
   const visibleLinks = !isNested && serviceId !== undefined
@@ -227,7 +241,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
         {/* Vertical line for nested items - 4px left of chevron center */}
         {isNested && (
           <div
-            className="absolute left-[13px] top-1 bottom-1 w-px bg-foreground/10"
+            className="absolute left-[13px] top-1 bottom-1 w-px bg-border-subtle"
             aria-hidden="true"
           />
         )}
@@ -236,7 +250,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
           if (isSeparatorItem(item)) {
             return (
               <div key={item.id} className="py-1 px-2" aria-hidden="true">
-                <div className="h-px bg-foreground/5" />
+                <div className="h-px bg-border-subtle" />
               </div>
             )
           }
@@ -250,7 +264,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
                 aria-current={link.variant === 'default' ? 'page' : undefined}
                 data-sidebar-link-id={link.id}
                 onClick={() => { if (onExpand) onExpand(link); else link.onClick?.() }}
-                className={cn('group mx-auto grid size-9 place-items-center rounded-[var(--radius-control)] outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring', link.variant === 'default' ? 'rox-nav-shimmer bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]' : 'hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]')}>
+                className={cn('group mx-auto grid size-9 place-items-center rounded-[var(--radius-control)] outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring', link.variant === 'default' ? cn('rox-nav-shimmer', ROW_FILL) : 'hover:bg-[var(--state-hover)]')}>
                 <span className="flex h-4 w-4 items-center justify-center">{renderIcon(link)}</span>
               </button>
             )
@@ -266,7 +280,10 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
             />
           ) : (
             <div className="group/section">
-              <div className="flex min-w-0 items-center gap-1">
+              <div className={cn("flex min-w-0 items-center", slot ? "gap-0.5" : "gap-1")}>
+                {/* One icon column: top-level rows without a chevron keep an
+                    empty 16px slot so their icons line up with expandable rows. */}
+                {slot && <span className="h-4 w-4 shrink-0" aria-hidden="true" data-disclosure-slot="" />}
                 <div className="min-w-0 flex-1">{wrapWithContextMenu(link, <SidebarButton link={link} itemProps={itemProps} />)}</div>
                 {link.actions}
               </div>
@@ -287,7 +304,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
       </NavWrapper>
     </div>
   )
-}
+})
 
 function wrapWithContextMenu(link: LinkItem, button: React.ReactElement) {
   if (!link.contextMenu) return button
@@ -322,7 +339,7 @@ function wrapWithContextMenu(link: LinkItem, button: React.ReactElement) {
   )
 }
 
-function ExpandableSection({
+const ExpandableSection = React.memo(function ExpandableSection({
   link,
   itemProps,
   getItemProps,
@@ -369,7 +386,7 @@ function ExpandableSection({
     <div className="group/section">
       {navParent ? (
         <div className="group/row flex min-w-0 items-center gap-0.5" role="none">
-          <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+          <span className="flex h-4 w-4 shrink-0 items-center justify-center">
             <SidebarDisclosureButton
               ref={toggleRef}
               expanded={!!link.expanded}
@@ -405,7 +422,7 @@ function ExpandableSection({
       )}
     </div>
   )
-}
+})
 
 // AnimatePresence keeps exiting content mounted for the closing animation.
 // Remove it from native focus traversal as soon as the disclosure closes.
@@ -558,7 +575,7 @@ function SortableStatusList({ items, onReorder, getItemProps, focusedItemId, tra
       <div className="pl-5 pr-0 relative">
         {/* Vertical line for nested items */}
         <div
-          className="absolute left-[13px] top-1 bottom-1 w-px bg-foreground/10"
+          className="absolute left-[13px] top-1 bottom-1 w-px bg-border-subtle"
           aria-hidden="true"
         />
         {/* PERF-11 (#1675): the DnD chunk loads lazily. Until it lands, render
@@ -590,9 +607,9 @@ function SortableStatusList({ items, onReorder, getItemProps, focusedItemId, tra
         {trailingItems && trailingItems.length > 0 && (
           <>
             <div className="my-1 ml-2" aria-hidden="true">
-              <div className="h-px bg-foreground/5" />
+              <div className="h-px bg-border-subtle" />
             </div>
-            <LeftSidebar links={trailingItems} isCollapsed={false} getItemProps={getItemProps} focusedItemId={focusedItemId} />
+            <LeftSidebar links={trailingItems} isCollapsed={false} getItemProps={getItemProps} focusedItemId={focusedItemId} disclosureColumn={false} />
           </>
         )}
       </div>
@@ -665,7 +682,7 @@ interface SidebarButtonProps {
 
 // forwardRef is required so Radix's ContextMenuTrigger (asChild) can attach its ref
 // and pass props like data-state="open" directly onto this button element.
-const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>>(
+const SidebarButton = React.memo(React.forwardRef<HTMLButtonElement, SidebarButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>>(
   ({ link, itemProps, isOverlay, groupDisclosure, sectionId, toggleRef, onGroupToggle, groupAriaLabel, className: extraClassName, ...radixProps }, forwardedRef) => {
     // Empty buckets remain navigable, without repeating a column of zeroes.
     const badge = link.label === '0' ? undefined : link.label
@@ -710,24 +727,24 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
         aria-controls={link.expandable ? sectionId : undefined}
         aria-label={groupAriaLabel}
         className={cn(
-          "group flex min-h-7 w-full min-w-0 items-center gap-2 rounded-lg text-base select-none outline-none transition-colors [@media(pointer:coarse)]:min-h-11",
+          "group flex min-h-7 w-full min-w-0 items-center gap-2 rounded-[var(--radius-control)] text-base select-none outline-none transition-colors [@media(pointer:coarse)]:min-h-11",
           "focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring",
-          // Compact mode: 4px less total height (py-[3px] vs py-[5px])
-          link.compact ? "py-[3px]" : "py-[5px]",
+          // 4px grid: rows hold 28px (min-h-7); compact rows trim the padding.
+          link.compact ? "py-0.5" : "py-1",
           "px-2",
           seRail
             ? link.variant === 'default'
               ? SE_RAIL_ACTIVE_BUTTON_CLASS
               : SE_RAIL_INACTIVE_BUTTON_CLASS
             : link.variant === "default"
-              ? "rox-nav-shimmer bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]"
-// Highlight on hover, context menu open (data-state), or EditPopover active (data-edit-active)
-              : "hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[state=open]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] data-[edit-active=true]:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]",
+              ? cn("rox-nav-shimmer", ROW_FILL)
+              // Highlight on hover, context menu open (data-state), or EditPopover active (data-edit-active)
+              : "hover:bg-[var(--state-hover)] data-[state=open]:bg-[var(--state-hover)] data-[edit-active=true]:bg-[var(--state-hover)]",
           extraClassName,
         )}
       >
         {groupDisclosure && !isOverlay && (
-          <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center" aria-hidden>
+          <span className="flex h-4 w-4 shrink-0 items-center justify-center" aria-hidden>
             <SidebarDisclosureChevron expanded={!!link.expanded} />
           </span>
         )}
@@ -760,7 +777,7 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
       </button>
     )
   }
-)
+))
 
 /**
  * Helper to render icon - either component (function/forwardRef) or React element.

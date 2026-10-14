@@ -92,8 +92,10 @@ jobs:
         run: bun test apps/electron/src/renderer/lib/__tests__/warmup.test.ts
       - run: bun run validate:ci
         env:
-          # The hosted Electron TypeScript graph exceeded Node's default ~2 GiB heap.
-          NODE_OPTIONS: --max-old-space-size=4096
+          # The hosted Electron TypeScript graph exceeded Node's default ~2 GiB
+          # heap, and its ~4.3 GB peak also exceeds a 4 GiB budget:
+          # validate:ci -> typecheck:all -> apps/electron typecheck.
+          NODE_OPTIONS: --max-old-space-size=8192
       - name: Verify bundled MCP provisioning and first-session onboarding
         # Uses local protocol fixtures and injected installers, without cloud keys or upstream downloads.
         # The script isolates RPC module mocks from the real transport and transcript suites.

@@ -3,6 +3,30 @@
 // =============================================================================
 export * from '@rox/shared/protocol'
 
+// Cookbooks Lab surface contract (SPEC §Data & API contracts + §Amendment 1):
+// runtime status vocabulary, discovery parser, data-plane DTOs and the typed
+// API error live in their own module.
+export { CookbooksApiError } from './cookbooks'
+export type {
+  CookbooksCard,
+  CookbooksCell,
+  CookbooksDocument,
+  CookbooksFailureReason,
+  CookbooksOutput,
+  CookbooksRunCell,
+  CookbooksRunResult,
+  CookbooksStartup,
+  CookbooksState,
+  CookbooksStatus,
+} from './cookbooks'
+import type {
+  CookbooksCard,
+  CookbooksDocument,
+  CookbooksRunCell,
+  CookbooksRunResult,
+  CookbooksStatus,
+} from './cookbooks'
+
 // =============================================================================
 // Package re-exports (convenience for renderer imports)
 // =============================================================================
@@ -702,6 +726,7 @@ import type {
   CreateNoteCommentInput,
   NoteCommentThread,
   NoteDocument,
+  NoteTasksEntry,
   NoteCreateOptions,
   NoteMutationOptions,
   NativeDataReadEntityInput,
@@ -888,6 +913,34 @@ export interface RoversListResult {
   entries: RoversEntryFull[]
 }
 
+/** Mirrors @rox/cloud-runner HandoffStatus (renderer must not import server packages). */
+export type CloudHandoffPhase =
+  | 'resolving_key' | 'packaging' | 'creating_sandbox' | 'uploading' | 'starting' | 'waiting_ready'
+  | 'ready' | 'failed' | 'cancelled'
+export interface CloudHandoffStatus {
+  handoffId: string
+  sessionId: string
+  phase: CloudHandoffPhase
+  startedAt: number
+  updatedAt: number
+  uploaded?: number
+  total?: number
+  sessionUrl?: string
+  sandboxId?: string
+  keySource?: 'user' | 'broker'
+  linkMode?: 'signed' | 'web_host'
+  ended?: boolean
+  failure?: { code: string; message: string }
+  excludedCount?: number
+}
+export interface CloudHandoffConfig {
+  enabled: boolean
+  userKeyConfigured: boolean
+  brokerConfigured: boolean
+  ssoConfigured: boolean
+  webHostConfigured: boolean
+}
+
 export interface ElectronAPI {
   openDesign: OpenDesignApi
 
@@ -899,6 +952,15 @@ export interface ElectronAPI {
   getRuntimeTraceSnapshot(query: import('@rox/core/runtime-trace').RuntimeTraceQuery): Promise<import('@rox/core/runtime-trace').RuntimeTraceSnapshot>
   readRuntimeTraceEvents(query: import('@rox/core/runtime-trace').RuntimeEventsQuery): Promise<import('@rox/core/runtime-trace').RuntimeEventsPage>
   readRuntimeTracePayload(query: import('@rox/core/runtime-trace').RuntimePayloadQuery): Promise<import('@rox/core/runtime-trace').RuntimePayloadPage>
+
+  // Cloud handoff «В облако» (docs/cloud-handoff-design.md). The Daytona key is write-only from here.
+  getCloudHandoffConfig(): Promise<CloudHandoffConfig>
+  startCloudHandoff(args: { sessionId: string }): Promise<CloudHandoffStatus>
+  getCloudHandoffStatus(args: { handoffId?: string; sessionId?: string; open?: boolean }): Promise<CloudHandoffStatus | null>
+  cancelCloudHandoff(args: { handoffId: string }): Promise<{ ok: boolean }>
+  endCloudHandoff(args: { sessionId: string }): Promise<{ ok: boolean }>
+  setCloudHandoffKey(args: { key: string }): Promise<{ ok: true }>
+  clearCloudHandoffKey(): Promise<{ ok: true }>
 
   // Cloud Runs (PRD docs/cloud-runs-prd.md)
   getCloudRunsConfig(): Promise<{
@@ -1383,6 +1445,8 @@ export interface ElectronAPI {
   // Notes
   listNotes(workspaceId: string): Promise<NoteSummary[]>
   readNote(workspaceId: string, noteId: string): Promise<NoteDocument>
+  /** #1574: checkbox tasks for `noteIds` (≤ NOTE_TASKS_MAX_IDS), one round trip, no note bodies. */
+  listNoteTasks(workspaceId: string, noteIds: string[]): Promise<NoteTasksEntry[]>
   resolveContent(ref: import('@rox/core/rox2').Rox2EntityRef): Promise<import('@rox/server-core/docs/descriptor-resolver').ContentResolution | import('@rox/server-core/docs/descriptor-resolver').ContentFailure>
   describeContent(ref: import('@rox/core/rox2').Rox2EntityRef): Promise<import('@rox/server-core/docs/descriptor-resolver').ContentResolution | import('@rox/server-core/docs/descriptor-resolver').ContentFailure>
   adoptContentDescriptor(command: import('@rox/server-core/docs/descriptor-resolver').AdoptDescriptorCommand): Promise<import('@rox/server-core/docs/descriptor-resolver').DescriptorReceipt | import('@rox/server-core/docs/descriptor-resolver').ContentFailure>
@@ -2129,6 +2193,39 @@ export interface ElectronAPI {
     focus(args: { instanceId: string }): Promise<void>
     onStateChanged(callback: (state: ExtensionSurfaceState) => void): () => void
     onRemoved(callback: (id: string) => void): () => void
+  }
+
+  /**
+   * Cookbooks surface (SPEC §Amendment 1). Main owns the vendored Python
+   * sidecar lifecycle and is its only HTTP client, so the renderer works
+   * entirely through these typed data calls. All channels are LOCAL_ONLY; the
+   * bearer token and the loopback URL never cross this boundary (every payload
+   * here is document data, never a URL).
+   */
+  cookbooksLab: {
+    /** Idempotent: resolves Python and spawns the sidecar when needed. */
+    ensure(): Promise<CookbooksStatus>
+    status(): Promise<CookbooksStatus>
+    /** stop + ensure (the surface's «Повторить»). */
+    restart(): Promise<CookbooksStatus>
+    /** The read-only catalog (13 cards today). */
+    catalog(): Promise<CookbooksCard[]>
+    /** Resume (or create with `newCopy`) the personal copy and read it back. */
+    open(args: { itemId: string; newCopy?: boolean }): Promise<{ copyId: string; document: CookbooksDocument }>
+    /** The stored document of an already-open copy. */
+    document(args: { itemId: string }): Promise<CookbooksDocument>
+    /** Run one cell's current source. */
+    run(args: { itemId: string; code: string; index: number }): Promise<CookbooksRunResult>
+    /** Run the given cells in order, one process; stops at the first failure. */
+    runAll(args: {
+      itemId: string
+      cells: { index: number; source: string }[]
+    }): Promise<{ cells: CookbooksRunCell[] }>
+    /** Persist a cell (`index` + `source`) or the playbook `text`. */
+    save(args: { itemId: string; index?: number; source?: string; text?: string }): Promise<void>
+    /** Restore the copy from the catalog original (edits are lost). */
+    reset(args: { itemId: string }): Promise<void>
+    onStatusChanged(callback: (status: CookbooksStatus) => void): () => void
   }
 
   // Onboarding
@@ -3616,6 +3713,13 @@ export interface PlaybooksNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+/** Cookbooks Lab surface navigation state (`cookbooks`, no parameters in v1). */
+export interface CookbooksNavigationState {
+  navigator: 'cookbooks'
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
 /**
  * Workbench Home Front Page (mode `home`). Dashboard with no navigator column.
  */
@@ -3783,6 +3887,7 @@ export type NavigationState =
   | ConnectionsNavigationState
   | DevelopersNavigationState
   | PlaybooksNavigationState
+  | CookbooksNavigationState
   | HomeNavigationState
   | MissionsNavigationState
   | DriveNavigationState
@@ -3868,6 +3973,10 @@ export const isDevelopersNavigation = (
 export const isPlaybooksNavigation = (
   state: NavigationState
 ): state is PlaybooksNavigationState => state.navigator === 'playbooks'
+
+export const isCookbooksNavigation = (
+  state: NavigationState
+): state is CookbooksNavigationState => state.navigator === 'cookbooks'
 
 export const isScreenNavigation = (
   state: NavigationState
@@ -4008,6 +4117,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'playbooks') {
     return 'playbooks'
+  }
+  if (state.navigator === 'cookbooks') {
+    return 'cookbooks'
   }
   if (state.navigator === 'home') {
     return 'home'
@@ -4258,6 +4370,7 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
   if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'home') return { navigator: 'home', details: null }
 if (key === 'playbooks') return { navigator: 'playbooks', details: null }
+  if (key === 'cookbooks') return { navigator: 'cookbooks', details: null }
   if (key === 'developers') return { navigator: 'developers', details: null }
   if (key.startsWith('developers?repo=')) {
     const devSpaceRepoId = decodeURIComponent(key.slice('developers?repo='.length))

@@ -23,6 +23,7 @@
     "!packages/craft-cli"
   ],
   "scripts": {
+    "postinstall": "node scripts/ensure-electron-binary.mjs",
     "test": "bun run scripts/test-all.ts",
     "typecheck": "bun run typecheck:all",
     "pages-worker:dev": "cd workers/pages && bun run dev",

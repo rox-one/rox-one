@@ -107,6 +107,13 @@ env: {
   return null;
 }
 
+/** Key-ordered entries so header/env comparison ignores object insertion order. */
+function sortedEntries(values?: Record<string, string>, lowerCaseKeys = false): Array<[string, string]> {
+  return Object.entries(values ?? {})
+    .map(([key, value]) => [lowerCaseKeys ? key.toLowerCase() : key, value] as [string, string])
+    .sort(([a], [b]) => a!.localeCompare(b!));
+}
+
 /**
  * Check if an MCP source's config has changed in a way that requires reconnection.
  * Compares endpoint/header changes, including API keys outside Authorization.
@@ -114,8 +121,6 @@ env: {
  */
 function mcpConfigChanged(oldConfig: SdkMcpServerConfig, newConfig: SdkMcpServerConfig): boolean {
   if (oldConfig.type !== newConfig.type) return true;
-  const sortedEntries = (values?: Record<string, string>, lowerCaseKeys = false) =>
-    Object.entries(values ?? {}).map(([key, value]) => [lowerCaseKeys ? key.toLowerCase() : key, value]).sort(([a], [b]) => a!.localeCompare(b!));
 
   if (
     (oldConfig.type === 'http' || oldConfig.type === 'sse') &&
@@ -136,6 +141,39 @@ function mcpConfigChanged(oldConfig: SdkMcpServerConfig, newConfig: SdkMcpServer
 
   return false;
 }
+
+/**
+ * Stable identity for a connection config. Two builds of the same source
+ * produce the same fingerprint, so a reconciliation can tell "this source is
+ * unchanged, it is still failing" from "this source was reconfigured".
+ */
+function configFingerprint(config: SdkMcpServerConfig): string {
+  if (config.type === 'http' || config.type === 'sse') {
+    return JSON.stringify([config.type, config.url, sortedEntries(config.headers, true), config.bearerTokenEnvVar ?? null]);
+  }
+  if (config.type === 'stdio') {
+    return JSON.stringify([
+      config.type,
+      config.command,
+      config.args ?? [],
+      sortedEntries(config.env),
+      [...(config.envVars ?? [])].sort(),
+      config.cwd ?? null,
+    ]);
+  }
+  return JSON.stringify(config);
+}
+
+/**
+ * A source that just failed to connect is not re-attempted on the next
+ * reconciliation pass until this window elapses. Every turn rebuilds the
+ * desired source set, and a single unreachable server can burn its full
+ * handshake timeout (30s, twice) before the turn is allowed to start;
+ * remembering the failure keeps the per-turn pre-flight off that path while
+ * still self-healing once the window expires.
+ */
+export const CONNECT_RETRY_BASE_MS = 60_000;
+export const CONNECT_RETRY_MAX_MS = 300_000;
 
 /** Retry connection setup only; a failed tool call may already have side effects. */
 function isConnectionFailure(error: unknown): boolean {
@@ -197,6 +235,13 @@ export class McpClientPool {
 
   /** Last known tool lists, retained during outages so later calls can reconnect. */
   private toolCache = new Map<string, Tool[]>();
+
+  /**
+   * Most recent failed connect attempt per source, keyed by config fingerprint.
+   * Suppresses the full handshake (30s timeout, retried) on every subsequent
+   * reconciliation of an unchanged, still-unreachable source.
+   */
+  private connectFailures = new Map<string, { fingerprint: string; failures: number; retryAt: number }>();
 
   /** Proxy tool name → { slug, originalName } (e.g., "mcp__linear__createIssue" → { slug: "linear", originalName: "createIssue" }) */
   private proxyTools = new Map<string, { slug: string; originalName: string }>();
@@ -365,6 +410,7 @@ export class McpClientPool {
           await this.registerClient(slug, pending.client, () => !pending.cancelled, discoveryOptions);
           if (pending.cancelled) throw new Error(`MCP connection cancelled for source "${slug}"`);
           this.activeConfigs.set(slug, connectionConfig);
+          this.connectFailures.delete(slug);
           return;
         } catch (error) {
           if (!registrationStarted && !currentClientClosed) await pending.client.close().catch(() => {});
@@ -379,6 +425,16 @@ export class McpClientPool {
           const message = primaryError
             ? `${this.connectionErrorContext(slug, clientConfig, primaryError)}; legacy SSE fallback failed: ${context}`
             : context;
+          // Remember the failure so the next reconciliation of this unchanged
+          // source does not pay the handshake timeout again (see ensureConnected).
+          const fingerprint = configFingerprint(connectionConfig);
+          const failed = this.connectFailures.get(slug);
+          const failures = failed?.fingerprint === fingerprint ? failed.failures + 1 : 1;
+          this.connectFailures.set(slug, {
+            fingerprint,
+            failures,
+            retryAt: Date.now() + Math.min(CONNECT_RETRY_MAX_MS, CONNECT_RETRY_BASE_MS * 2 ** Math.min(failures - 1, 20)),
+          });
           // Retain the public HTTP status for callers that inspect the typed
           // error, while avoiding a raw SDK cause containing private headers.
           throw error instanceof StreamableHTTPError
@@ -426,7 +482,9 @@ export class McpClientPool {
    * when local MCP is disabled for this workspace.
    *
    * @throws Error for stdio configs while local MCP is disabled, and on
-   *   connection failure (propagated from connect()).
+   *   connection failure (propagated from connect()). A source whose last
+   *   attempt for this exact config failed is reported as unavailable without
+   *   re-running the handshake until its backoff window elapses.
    */
   async ensureConnected(slug: string, config: SdkMcpServerConfig): Promise<void> {
     if (config.type === 'stdio' && this.workspaceRootPath && !isLocalMcpEnabled(this.workspaceRootPath)) {
@@ -442,6 +500,18 @@ export class McpClientPool {
         this.debug(`Reconnecting source ${slug} after a config change or transport disconnect`);
         await this.removeClient(slug, true);
       }
+      // A source that just failed keeps its place in the desired set, but the
+      // next reconciliation must not repeat an unchanged handshake: turns are
+      // rebuilt source-by-source, and one dead server would otherwise stall
+      // each of them for its full connection timeout.
+      const failed = this.connectFailures.get(slug);
+      if (failed && failed.fingerprint === configFingerprint(connectionConfig)) {
+        const remaining = failed.retryAt - Date.now();
+        if (remaining > 0) {
+          this.debug(`Skipping reconnect for MCP source ${slug}: retrying in ${Math.ceil(remaining / 1000)}s`);
+          throw new Error(`MCP source "${slug}" is unavailable after a failed connection attempt; retrying in ${Math.ceil(remaining / 1000)}s`);
+        }
+      }
       if (!canContinue()) throw new Error(`MCP connection cancelled for source "${slug}"`);
       await this.connectSource(slug, connectionConfig);
     });
@@ -453,6 +523,7 @@ export class McpClientPool {
   async disconnect(slug: string): Promise<void> {
     this.sourceGenerations.set(slug, (this.sourceGenerations.get(slug) ?? 0) + 1);
     this.desiredConfigs.delete(slug);
+    this.connectFailures.delete(slug);
     this.removeToolMappings(slug);
     const pending = this.connecting.get(slug);
     if (pending) pending.cancelled = true;

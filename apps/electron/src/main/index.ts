@@ -149,6 +149,7 @@ import { handleDeepLink } from './deep-link'
 import { loadPersistedEntitiesLinksFlag, registerEntitiesLinksIpc } from './entities-flags'
 import { BrowserPaneManager } from './browser-pane-manager'
 import { OpenDesignRuntimeManager, isTrustedOpenDesignIpcEvent, registerOpenDesignIpcHandlers } from './open-design-runtime'
+import { initializeCookbooksRuntime, stopCookbooksRuntime } from './cookbooks-runtime'
 import { OpenDesignWindowController } from './open-design-window'
 import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
@@ -682,7 +683,22 @@ app.whenReady().then(async () => {
   // main settles only once the server is listening and its sinks are wired —
   // so no renderer RPC is issued before the server, while the window is on
   // screen throughout.
-  const isClientOnly = !!process.env.CRAFT_SERVER_URL
+  // #1586: off by default. Only when ROX_SERVER_UTILITY_PROCESS=1 is the
+  // server forked into a utilityProcess; success makes this a thin client of
+  // it (URL/token via getServerHostConfig, never process.env). Flag off →
+  // no import, no IPC, no-op.
+  let serverHostActive = false
+  if (process.env.ROX_SERVER_UTILITY_PROCESS) {
+    const { maybeStartServerHost } = await import('./server-host')
+    serverHostActive = !!(await maybeStartServerHost({
+      log: (level, msg) => mainLog[level](msg),
+      isTrustedSender: (sender) => {
+        const owner = windowManager?.getWindowByWebContentsId(sender.id)
+        return !!owner && !owner.isDestroyed() && owner.webContents === sender
+      },
+    }))
+  }
+  const isClientOnly = !!process.env.CRAFT_SERVER_URL || serverHostActive
   const isHeadless = !!process.env.CRAFT_HEADLESS
   try {
     windowManager = new WindowManager()
@@ -736,7 +752,7 @@ app.whenReady().then(async () => {
   }
 
   let windowsBootstrapReady: Promise<void> = Promise.resolve()
-  if (process.platform === 'win32' && !process.env.CRAFT_SERVER_URL) {
+  if (process.platform === 'win32' && !isClientOnly) {
     // PERF-1572: runs alongside the server bootstrap; only agent spawns (and the
     // background toolchain install, which resolves tools on PATH) wait for it.
     windowsBootstrapReady = startSpawnEnvPreparation('windows-bootstrap', async () => {
@@ -895,11 +911,17 @@ app.whenReady().then(async () => {
       runtime: openDesignRuntime,
     })
 
+    // Cookbooks Lab sidecar — lazily spawned on the first cookbooksLab.ensure();
+    // stopped idempotently in performQuitCleanup().
+    initializeCookbooksRuntime({ log: (level, msg) => mainLog[level](msg) })
+
     // When CRAFT_SERVER_URL is set, this Electron instance is a thin client —
     // it only creates windows whose preload connects to the remote server.
     // Skip server-side initialization (SessionManager, model refresh, platform injection).
     if (isClientOnly) {
-      mainLog.info(`Client-only mode: CRAFT_SERVER_URL=${process.env.CRAFT_SERVER_URL} (server initialization skipped)`)
+      mainLog.info(serverHostActive
+        ? 'Client-only mode: server runs in utilityProcess (ROX_SERVER_UTILITY_PROCESS)'
+        : `Client-only mode: CRAFT_SERVER_URL=${process.env.CRAFT_SERVER_URL} (server initialization skipped)`)
     }
 
     // Initialize notification service (always — triggered by server push events)
@@ -2387,6 +2409,22 @@ async function performQuitCleanup(): Promise<void> {
       await openDesignRuntime.stop()
     } catch (err) {
       mainLog.warn('[open-design] shutdown failed:', err instanceof Error ? err.message : err)
+    }
+  }
+
+  // Cookbooks Lab sidecar: SIGINT → grace → kill; idempotent.
+  try {
+    await stopCookbooksRuntime()
+  } catch (err) {
+    mainLog.warn('[cookbooks] shutdown failed:', err instanceof Error ? err.message : err)
+  }
+
+  if (process.env.ROX_SERVER_UTILITY_PROCESS) {
+    try {
+      const { stopServerHost } = await import('./server-host')
+      await stopServerHost()
+    } catch (err) {
+      mainLog.warn('[server-host] stop on quit failed:', err)
     }
   }
 

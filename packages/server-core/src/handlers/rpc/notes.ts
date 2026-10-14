@@ -20,7 +20,7 @@ import { markdownRevision, type MarkdownChangedEvent, type NativeMarkdownChange,
 
 type NativeNoteWriter = (reason: MarkdownChangedEvent['reason'], changes: NativeMarkdownChange[]) => Promise<unknown>
 type NativeFolderReader = (folder: string) => Promise<NativeFolderSnapshot | null>
-import { CodedError } from '@rox/shared/protocol'
+import { CodedError, extractNoteTaskLines, NOTE_TASKS_MAX_IDS, type NoteTasksEntry } from '@rox/shared/protocol'
 import { previewPropertyDictionary } from '@rox/core/docs'
 import { parseRox2EntityId } from '@rox/core/rox2'
 import { createDescriptorResolver, FileDescriptorStore, type ContentOwner, type ContentPolicy } from '../../docs/descriptor-resolver.ts'
@@ -68,6 +68,7 @@ export const HANDLED_CHANNELS = [
   ...CONTENT_HANDLED_CHANNELS,
   RPC_CHANNELS.notes.LIST,
   RPC_CHANNELS.notes.READ,
+  RPC_CHANNELS.notes.LIST_TASKS,
   RPC_CHANNELS.notes.SAVE,
   RPC_CHANNELS.notes.CREATE,
   RPC_CHANNELS.notes.PREPARE_CREATE,
@@ -1578,10 +1579,12 @@ async function findNativeNote(
   deps: HandlerDeps,
   context: NativeNotesContext,
   noteId: string,
+  /** Snapshot already loaded for this request (#1574 batch reads); loaded here when absent. */
+  preloaded?: JournalEntitySnapshot[],
 ): Promise<{ entity: JournalEntitySnapshot; file: { path: string; content: string }; entities: JournalEntitySnapshot[] }> {
   const safeId = assertSafeNoteId(noteId)
   const relativePath = `${NOTES_DIR}/${safeId}.md`
-  const entities = await nativeNoteEntities(deps, context)
+  const entities = preloaded ?? await nativeNoteEntities(deps, context)
   for (const entity of entities) {
     const file = entity.files.find(item => item.path === relativePath)
     if (file) return { entity, file, entities }
@@ -1902,6 +1905,39 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       return nativeNoteDocument(deps, context, found.entity, found.file, found.entities)
     }
     return nativeContent.readNote(ctx, workspaceId, noteId)
+  }, { nativeAction: 'read' })
+
+  // #1574: tasks for many notes in one call. Same read path (and ACL) as
+  // notes:read per id; unreadable/missing notes are skipped, not fatal.
+  server.handle(RPC_CHANNELS.notes.LIST_TASKS, async (ctx, workspaceId: string, noteIds: unknown): Promise<NoteTasksEntry[]> => {
+    if (!Array.isArray(noteIds)) throw new CodedError('INVALID_PAYLOAD', 'notes:listTasks expects noteIds to be an array of strings')
+    if (noteIds.length > NOTE_TASKS_MAX_IDS) throw new CodedError('INVALID_PAYLOAD', `notes:listTasks accepts at most ${NOTE_TASKS_MAX_IDS} note ids (got ${noteIds.length})`)
+    if (!noteIds.every(id => typeof id === 'string')) throw new CodedError('INVALID_PAYLOAD', 'notes:listTasks expects every note id to be a string')
+    const ids = [...new Set(noteIds as string[])]
+    const context = ctx.principal ? nativeNotesContext(deps, ctx, workspaceId, 'read') : null
+    // Principal mode: enumerate the vault once per call and resolve every id
+    // against that snapshot (findNativeNote would otherwise rescan per id).
+    const entities = context && ids.length > 0 ? await nativeNoteEntities(deps, context) : undefined
+    const readOne = async (noteId: string): Promise<NoteDocument> => {
+      const read = rpcNotesReadResult({ source: 'native', nativeId: noteId })
+      if (!isClaimableLive(read.result)) throw new Error('note read is not live')
+      if (context) {
+        const found = await findNativeNote(deps, context, noteId, entities)
+        return nativeNoteDocument(deps, context, found.entity, found.file, found.entities)
+      }
+      return nativeContent.readNote(ctx, workspaceId, noteId)
+    }
+    const out: NoteTasksEntry[] = []
+    // Bounded concurrency: keeps the event loop responsive on large vaults.
+    for (let i = 0; i < ids.length; i += 8) {
+      const settled = await Promise.allSettled(ids.slice(i, i + 8).map(readOne))
+      for (const result of settled) {
+        if (result.status !== 'fulfilled') continue
+        const note = result.value
+        out.push({ id: note.id, title: note.title, updatedAt: note.updatedAt, tasks: extractNoteTaskLines(note.content) })
+      }
+    }
+    return out
   }, { nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.notes.SAVE, async (

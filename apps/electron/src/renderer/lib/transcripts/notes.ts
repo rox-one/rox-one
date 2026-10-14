@@ -1,5 +1,6 @@
 import i18n from 'i18next'
 import type { ElectronAPI } from '../../../shared/types'
+import { withClaimRetry } from '../document-writer-retry'
 import { createNativeNotesSyncController } from '../native-notes-sync'
 import { isNativeNoteDocument } from '../notes-write-authority'
 
@@ -89,50 +90,13 @@ export function transcriptMarkdown(input: TranscriptRecordInput): string {
 /**
  * Write coordination, carried over from the retired notebook writer (see
  * docs/plans/2026-10-08-rox-user-batch.md, «Волна 4»): the notes commit store
- * serialises writers behind a per-directory claim, so a lost claim is retried,
- * and our own concurrent transcripts (a startup re-mirror of several meetings,
- * a dictation filing while another one commits) queue behind each other.
+ * serialises writers behind a per-directory claim (`withClaimRetry`), and our
+ * own concurrent transcripts (a startup re-mirror of several meetings, a
+ * dictation filing while another one commits) queue behind each other.
+ *
+ * `TRANSCRIPT_WRITE_DEADLINE_MS` bounds one queued write so a store call stuck
+ * on the native journal cannot wedge every later note.
  */
-const CLAIM_RETRY_DELAYS_MS = [0, 400, 1000, 2000, 4000, 6000]
-
-/** `MarkdownCommitError` reaches the renderer either as an Error or as a plain RPC object. */
-function claimMessage(error: unknown): string {
-  if (typeof error === 'string') return error
-  if (error && typeof error === 'object') {
-    const message = 'message' in error && typeof error.message === 'string' ? error.message : ''
-    const code = 'code' in error && typeof error.code === 'string' ? error.code : ''
-    let serialized = ''
-    try {
-      const json = JSON.stringify(error)
-      if (typeof json === 'string') serialized = json
-    } catch {
-      /* Circular or unserialisable errors carry nothing extra. */
-    }
-    return [message, code, serialized].filter(Boolean).join(' ')
-  }
-  return error instanceof Error ? error.message : ''
-}
-
-function isClaimContention(error: unknown): boolean {
-  return /Document claim requires recovery|Document writer is busy|rateLimited/i.test(claimMessage(error))
-}
-
-/** Retry a store call whose claim was lost to another writer; other failures propagate. */
-async function withClaimRetry<T>(operation: () => Promise<T>): Promise<T> {
-  let lastError: unknown
-  for (const delay of CLAIM_RETRY_DELAYS_MS) {
-    if (delay) await new Promise((resolve) => setTimeout(resolve, delay))
-    try {
-      return await operation()
-    } catch (error) {
-      if (!isClaimContention(error)) throw error
-      lastError = error
-    }
-  }
-  throw lastError
-}
-
-/** Bound for one queued write: a store call stuck on the native journal must not wedge later notes. */
 const TRANSCRIPT_WRITE_DEADLINE_MS = 20_000
 let transcriptWriteTail: Promise<unknown> = Promise.resolve()
 

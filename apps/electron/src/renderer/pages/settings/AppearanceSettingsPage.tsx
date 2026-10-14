@@ -71,6 +71,7 @@ import { PROJECT_COLOR_PALETTE, type ProjectColorTreatment } from '@/utils/proje
 import { Info_DataTable, SortableHeader } from '@/components/info/Info_DataTable'
 import { Info_Badge } from '@/components/info/Info_Badge'
 import { readDesktopAppearance, saveDesktopAppearance } from '@/lib/desktop-appearance'
+import { NavPlacementSettings } from './NavPlacementSettings'
 import { WorkbenchChromeSettings } from './WorkbenchChromeSettings'
 import { ConationShellSettings } from './ConationShellSettings'
 import { ZenShellSettings } from './ZenShellSettings'
@@ -1076,7 +1077,7 @@ export default function AppearanceSettingsPage() {
             <div className="space-y-8">
 
               {/* Theme picker (restored 2026-10-13): the app no longer pins a
-                  single theme; Rox Engineering (super-engineering) is the default. */}
+                  single theme; Rox Ink (rox-ink) is the default, Rox Engineering is opt-in. */}
               <SettingsSection title={t("settings.appearance.colorTheme")}>
                 <SettingsCard>
                   {presetThemes.length === 0 ? (
@@ -1366,6 +1367,7 @@ export default function AppearanceSettingsPage() {
 
               <ZedThemesImportSection />
 
+              <NavPlacementSettings />
               <SuperEngineeringAppearanceSettings />
               <ZenShellSettings />
               <WorkbenchChromeSettings />
@@ -1439,7 +1441,7 @@ export default function AppearanceSettingsPage() {
                           />
                           <input
                             type="text"
-                            className="h-8 min-w-0 flex-1 rounded-[var(--radius-control)] border border-foreground/10 bg-transparent px-2 text-base outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                            className="h-8 min-w-0 flex-1 rounded-[var(--radius-control)] border border-border-subtle bg-transparent px-2 text-base outline-none focus-visible:ring-1 focus-visible:ring-accent"
                             placeholder={t('settings.appearance.kanbanColumnStatusCustom')}
                             value={dropStatusId}
                             onChange={(e) => setColumnStatus(column.id, e.target.value)}

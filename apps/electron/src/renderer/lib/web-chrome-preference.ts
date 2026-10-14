@@ -13,7 +13,7 @@ interface WebChromeHost extends Pick<EventTarget, 'addEventListener' | 'removeEv
   localStorage: WebChromeStorage
 }
 
-const DEFAULT_PREFERENCE: WebChromePreference = { enabled: true, preference: 'system' }
+const DEFAULT_PREFERENCE: WebChromePreference = { enabled: true, preference: 'opaque' }
 
 function parsePreference(raw: unknown): WebChromePreference {
   if (raw && typeof raw === 'object') {
