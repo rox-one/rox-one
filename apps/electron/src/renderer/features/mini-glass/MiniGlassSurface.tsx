@@ -30,8 +30,9 @@ function blobToBase64(blob: Blob): Promise<string> {
   })
 }
 
-/** Circular glass: translucent fill, hairline light border, soft inner highlight, backdrop blur. */
-const GLASS = 'border-[0.5px] border-white/25 bg-[rgba(36,36,40,0.52)] text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.22),inset_0_-1px_0_rgba(0,0,0,0.18),0_4px_14px_rgba(0,0,0,0.28)] backdrop-blur-2xl backdrop-saturate-150'
+/** Circular glass: translucent fill, hairline light border, soft lift, backdrop blur. */
+const GLASS = 'border-[0.5px] border-white/25 bg-popover/55 text-white/90 shadow-strong backdrop-blur-2xl backdrop-saturate-150'
+const GLASS_HOVER = 'hover:bg-popover/70'
 const NO_DRAG = { WebkitAppRegion: 'no-drag' } as React.CSSProperties
 const DRAG = { WebkitAppRegion: 'drag' } as React.CSSProperties
 
@@ -240,11 +241,11 @@ export function MiniGlassSurface() {
       onClick={() => void toggleVoice()}
       className={cn(
         'grid shrink-0 place-items-center rounded-full transition-[background-color,transform] duration-150 active:scale-95 disabled:opacity-60',
-        size === 'lg' ? cn('size-10', GLASS, 'hover:bg-[rgba(60,60,66,0.62)]') : 'size-7 text-white/80 hover:bg-white/10',
-        recording && 'bg-red-500/70 text-white hover:bg-red-500/80',
+        size === 'lg' ? cn('size-10', GLASS, GLASS_HOVER) : 'size-7 text-white/80 hover:bg-white/10',
+        recording && 'bg-status-danger/70 text-white hover:bg-status-danger/80',
       )}
     >
-      <VoiceIcon className={cn(size === 'lg' ? 'size-[18px]' : 'size-4', voiceBusy && 'animate-spin', recording && 'size-3.5 fill-current')} strokeWidth={1.8} />
+      <VoiceIcon className={cn(size === 'lg' ? 'icon-rail' : 'icon-toolbar', voiceBusy && 'animate-spin', recording && 'icon-caption fill-current')} />
     </button>
   )
 
@@ -256,7 +257,7 @@ export function MiniGlassSurface() {
         aria-hidden="true"
         className="grid h-7 w-3 shrink-0 cursor-grab grid-cols-2 content-center gap-[3px] opacity-60 hover:opacity-100"
       >
-        {Array.from({ length: 6 }, (_, index) => <span key={index} className="size-[3px] rounded-full bg-white/70 shadow-[0_0_2px_rgba(0,0,0,0.6)]" />)}
+        {Array.from({ length: 6 }, (_, index) => <span key={index} className="size-[3px] rounded-full bg-white/70" />)}
       </div>
       {expanded ? (
         <form
@@ -274,18 +275,19 @@ export function MiniGlassSurface() {
             aria-label={t('window.mini.newRequest')}
             aria-invalid={error ? true : undefined}
             data-testid="mini-glass-input"
-            className={cn('min-w-0 flex-1 bg-transparent text-[13px] text-white outline-none placeholder:text-white/50', error && 'placeholder:text-red-300')}
+            className={cn('min-w-0 flex-1 bg-transparent text-small text-white outline-none placeholder:text-white/50', error && 'placeholder:text-status-danger')}
           />
           {voiceButton('sm')}
           <button
             type="submit"
+            // eslint-disable-next-line rox/prefer-primitives -- the OS draws the native title outside the 124x60 frameless companion window; an in-window Tooltip would be clipped to it. The button carries aria-label.
             title={t('window.mini.send')}
             aria-label={t('window.mini.send')}
             disabled={!text.trim() || submitting}
             data-testid="mini-glass-send"
             className="grid size-7 shrink-0 place-items-center rounded-full bg-white text-black transition-opacity disabled:opacity-30"
           >
-            {submitting ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowUp className="size-4" strokeWidth={2.2} />}
+            {submitting ? <LoaderCircle className="icon-toolbar animate-spin" /> : <ArrowUp className="icon-toolbar" />}
           </button>
         </form>
       ) : (
@@ -293,13 +295,14 @@ export function MiniGlassSurface() {
           <button
             type="button"
             style={NO_DRAG}
+            // eslint-disable-next-line rox/prefer-primitives -- the OS draws the native title outside the 124x60 frameless companion window; an in-window Tooltip would be clipped to it. The button carries aria-label.
             title={t('window.mini.newRequest')}
             aria-label={t('window.mini.newRequest')}
             data-testid="mini-glass-new"
             onClick={() => changeExpanded(true)}
-            className={cn('grid size-10 shrink-0 place-items-center rounded-full transition-[background-color,transform] duration-150 hover:bg-[rgba(60,60,66,0.62)] active:scale-95', GLASS)}
+            className={cn('grid size-10 shrink-0 place-items-center rounded-full transition-[background-color,transform] duration-150 active:scale-95', GLASS, GLASS_HOVER)}
           >
-            <SquarePen className="size-[18px]" strokeWidth={1.8} />
+            <SquarePen className="icon-rail" />
           </button>
           {voiceButton('lg')}
         </>

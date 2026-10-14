@@ -17,6 +17,7 @@ import { join } from 'node:path'
 const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
 
 import { MINI_GLASS_COLLAPSED, MINI_GLASS_EXPANDED, resolveMiniGlassOrigin, type MiniGlassPosition } from './mini-glass-geometry'
+import { MINI_GLASS_RESET } from '../shared/mini-glass'
 
 export { MINI_GLASS_COLLAPSED, MINI_GLASS_EXPANDED, resolveMiniGlassOrigin, type MiniGlassPosition }
 export const MINI_GLASS_MAX_INPUT = 8000
@@ -29,6 +30,8 @@ export interface MiniGlassDeps {
   /** True when the sender is a managed main window (where Settings lives). */
   isMainWindowSender(webContentsId: number): boolean
   writeEnabled(enabled: boolean): void
+  /** Push an event to the companion renderer via the window-manager relay (typed sink first). */
+  pushToWindow(window: BrowserWindow, channel: string, ...args: unknown[]): void
   /** Restore the owner and run `new-session` (send when `text` is non-empty). */
   submitToOwner(owner: BrowserWindow, text: string | null): void
 }
@@ -64,8 +67,10 @@ export class MiniGlassController {
     const window = this.window
     if (!window || window.isDestroyed()) return
     if (this.expanded) this.setExpanded(false)
+    // Sanctioned main→renderer path (typed event sink first, raw send only before
+    // the WS handshake) — `scripts/check-raw-sends.sh` forbids new direct sends.
+    this.deps.pushToWindow(window, MINI_GLASS_RESET)
     window.hide()
-    window.webContents.send('mini-glass:reset')
   }
 
   ownerClosed(owner: BrowserWindow): void {
@@ -93,7 +98,7 @@ export class MiniGlassController {
       show: false,
       frame: false,
       transparent: true,
-      backgroundColor: '#00000000',
+      backgroundColor: 'transparent',
       hasShadow: false,
       resizable: false,
       maximizable: false,
