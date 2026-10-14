@@ -76,7 +76,9 @@ import {
   ModeScreenLayout,
   type Tone,
 } from '@/components/mode-screen/ModeScreen'
-import { tasksViewAtom } from './tasks/atoms'
+import { tasksLayoutAtom, tasksTimelineGroupAtom, tasksTimelineWeekAtom, tasksTimelineZoomAtom, tasksViewAtom } from './tasks/atoms'
+import { TaskTimeline } from './tasks/TaskTimeline'
+import { applySchedule, dependencyConflicts, isoOf, timelineRowOrder, weekRange, weekTasks, type SchedulePatch, type TimelineGroup } from './tasks/timeline-model'
 import {
   agentChipFor,
   agentCounts,
@@ -95,7 +97,12 @@ import {
   visibleNotes,
   type AgentChip,
   type AgentSessionLike,
+  type TasksView,
 } from './tasks/task-model'
+import { useTasksScreenSidebar } from '@/screens/tasks/useTasksScreenSidebar'
+import { useSecondarySidebarVisibility } from '@/components/shell/shell-prefs'
+import { useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { TaskSidebar } from './tasks/TaskSidebar'
 import { ConfirmDialog, Glyph, ProgressPie, TaskCheckbox, prefersReducedMotion } from './tasks/parts'
 import { QuickEntry, type QuickEntryResult } from './tasks/QuickEntry'
 import { MoveDialog, type MoveDestination } from './tasks/MoveDialog'
@@ -104,7 +111,6 @@ import { orderedSelection, pruneSelection, rangeSelection, toggleInSelection } f
 import { applyDestinationTo, clearSelection, plainClick, rangeFocus, runBulkOperation, selectAll, settlePrune, settleToggle, undoBulkOperation, type BulkSnapshot, type SelectionState } from './tasks/bulk-actions'
 import { TaskDetail } from './tasks/TaskDetail'
 import { useTaskDetailDrafts } from './tasks/use-task-detail-drafts'
-import { TaskSidebar } from './tasks/TaskSidebar'
 import { getSessionTitle } from '@/utils/session'
 import { taskDelegationErrorKey, type TaskDelegationErrorKey } from './tasks/delegation-errors'
 import { acceptsPlusDrop, destDefaults, insertHeading, isHeadingDrop, navDropKind } from './tasks/magic-plus'
@@ -180,6 +186,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const [store, setStore] = useState(loadPersonalTaskStore)
   const detailDrafts = useTaskDetailDrafts(workspace?.id)
   const [view, setView] = useAtom(tasksViewAtom)
+  const [layout, setLayout] = useAtom(tasksLayoutAtom)
+  const [timelineZoom, setTimelineZoom] = useAtom(tasksTimelineZoomAtom)
+  const [timelineGroup, setTimelineGroup] = useAtom(tasksTimelineGroupAtom)
   const [sort, setSort] = useState<TaskSortId>('order')
   const [localSelectedId, setLocalSelectedId] = useState<string | null>(null)
   const [delegating, setDelegating] = useState(false)
@@ -226,6 +235,22 @@ export default function TasksPage(props: TasksPageProps = {}) {
     else setLocalSelectedId(id)
   }, [routeBound])
   const now = Date.now()
+  // Re-render at local midnight so «today» (timeline line, Сегодня) rolls over.
+  const [, setMidnight] = useState(0)
+  useEffect(() => {
+    const next = new Date(now)
+    next.setHours(24, 0, 1, 0)
+    let timer = 0
+    const arm = (at: number) => {
+      timer = window.setTimeout(() => {
+        // Timers can fire early (sleep/clock drift): re-arm until the day really changed.
+        if (Date.now() < at) arm(at)
+        else setMidnight((n) => n + 1)
+      }, Math.max(1000, at - Date.now()))
+    }
+    arm(next.getTime())
+    return () => window.clearTimeout(timer)
+  }, [isoOf(now)]) // eslint-disable-line react-hooks/exhaustive-deps
   const tourRef = useRef(tour)
   tourRef.current = tour
 
@@ -611,6 +636,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }, [view, topLevel, search, tagFilter, sort, pendingDone, showDone, store, projects, i18n.language])
 
   const visible = useMemo(() => sections.flatMap((section) => section.tasks), [sections])
+  const openTasks = useMemo(() => visible.filter(isOpenTask), [visible])
+  const [timelineWeek, setTimelineWeek] = useAtom(tasksTimelineWeekAtom)
+  const weekOpenTasks = useMemo(() => (timelineWeek ? weekTasks(topLevel.filter((task) => isOpenTask(task) && task.trashedAt == null), isoOf(now)) : []), [timelineWeek, topLevel, isoOf(now)]) // eslint-disable-line react-hooks/exhaustive-deps
   const visibleIds = useMemo(() => visible.map((task) => task.id), [visible])
   // Selection never outlives the rows it points at (view switch, search, completion).
   const clearMulti = useCallback(() => setMulti((prev) => (prev.size ? new Set() : prev)), [])
@@ -800,10 +828,11 @@ export default function TasksPage(props: TasksPageProps = {}) {
     if ((mod && event.key === 'Backspace') || (!mod && event.key === 'Delete')) {
       if (selected && selected.trashedAt == null) {
         event.preventDefault()
-        const index = visible.findIndex((task) => task.id === selected.id)
+        // In the timeline, the next selection follows the timeline's row order.
+        const order = showTimeline ? timelineRowOrder(openTasks, timelineGroup, isoOf(now)) : visible.map((task) => task.id)
+        const index = order.indexOf(selected.id)
         trashTask(selected)
-        const next = visible[index + 1] ?? visible[index - 1]
-        selectTask(next ? next.id : null)
+        selectTask(index < 0 ? null : order[index + 1] ?? order[index - 1] ?? null)
       }
       return
     }
@@ -829,7 +858,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
       }
       return
     }
-    if (event.key === ' ' && selected) {
+    // Space activates focused buttons and radios (zoom/group toggles) natively.
+    if (event.key === ' ' && selected && !(target instanceof HTMLElement && target.closest('button, [role="radio"]'))) {
       event.preventDefault()
       toggleComplete(selected)
       return
@@ -968,25 +998,12 @@ export default function TasksPage(props: TasksPageProps = {}) {
     setNavCreate(null)
     setNavDraft('')
   }
-  const navigator = (
-    <TaskSidebar
-      view={view}
-      onSelect={setView}
-      listCount={listCount}
-      overdueCount={overdueCount}
-      trashCount={trashCount}
-      tasks={topLevel}
-      areas={areas}
-      personalProjects={personalProjects}
-      workspaceProjects={projects.map(project => ({ id: project.config.id, name: project.config.name }))}
-      tags={tags}
-      agents={agents}
-      dropProps={navDropProps}
-      onToggleArea={area => mutate(current => current.updateArea(area.id, { collapsed: !area.collapsed }))}
-      footer={(
+  const createNavRef = useRef(createNav)
+  createNavRef.current = createNav
+  const navFooter = useMemo(() => (
         <div className="mt-auto pt-3">
           {navCreate ? (
-            <form onSubmit={createNav} className="px-1">
+            <form onSubmit={(event) => createNavRef.current(event)} className="px-1">
               <input
                 autoFocus
                 value={navDraft}
@@ -1006,9 +1023,72 @@ export default function TasksPage(props: TasksPageProps = {}) {
             </div>
           )}
         </div>
-      )}
+  ), [navCreate, navDraft, t])
+  const viewKey = `${view.kind}:${view.id}`
+  // Memoised on the store snapshot so the sidebar's signature cache can hit.
+  const sidebarProjects = useMemo(() => {
+    const sidebarProject = (p: { id: string; name: string }) => ({ id: p.id, name: p.name, ...projectProgress(topLevel, p.id) })
+    const live = store.projects().filter((p) => p.trashedAt == null)
+    const liveAreas = store.areas().filter((a) => a.trashedAt == null)
+    const areaIds = new Set(liveAreas.map((a) => a.id))
+    return {
+      looseProjects: live.filter((p) => !p.areaId).map(sidebarProject),
+      // Projects whose area was deleted/trashed stay reachable under «Без области».
+      orphanProjects: live.filter((p) => p.areaId && !areaIds.has(p.areaId)).map(sidebarProject),
+      areas: liveAreas.map((a) => ({ id: a.id, name: a.name, collapsed: Boolean(a.collapsed), projects: live.filter((p) => p.areaId === a.id).map(sidebarProject) })),
+      workspaceProjects: projects.map((p) => sidebarProject({ id: p.config.id, name: p.config.name })),
+    }
+  }, [store, topLevel, projects])
+  const inboxCount = listCount('inbox')
+  const todayListCount = listCount('today')
+  const upcomingCount = listCount('upcoming')
+  const sidebarListCounts = useMemo(() => ({ inbox: inboxCount, today: todayListCount, upcoming: upcomingCount, trash: trashCount }), [inboxCount, todayListCount, upcomingCount, trashCount])
+  const sidebarHidden = useSecondarySidebarVisibility() === 'hidden'
+  const shellSidebarTarget = useShellSidebarTarget()
+  useTasksScreenSidebar({
+    listCounts: sidebarListCounts,
+    overdue: overdueCount,
+    ...sidebarProjects,
+    onToggleArea: (areaId) => toggleArea(areaId),
+    tags,
+    agents,
+    activeViewKey: viewKey,
+    onView: (next) => setView(next as TasksView),
+    onNewTask: () => setQuickEntry({ initial: '' }),
+    search,
+    onSearch: setSearch,
+    footer: navFooter,
+    dropTypes: [DRAG_TASK, 'text/task-id'],
+    onDropTask: (destination, data) => {
+      const sourceId = data.getData(DRAG_TASK) || data.getData('text/task-id')
+      if (sourceId) applyDestination(sourceId, destination)
+    },
+  })
+
+  // Inline navigator only when the shell second sidebar can't show (hidden
+  // mode, kept-alive or shell-less surface) so Tasks never loses navigation.
+  const toggleArea = (areaId: string) => mutate((current) => {
+    const area = current.areas().find((a) => a.id === areaId)
+    if (area) current.updateArea(area.id, { collapsed: !area.collapsed })
+  })
+  const navigator = sidebarHidden || !shellSidebarTarget ? (
+    <TaskSidebar
+      view={view}
+      onSelect={setView}
+      listCount={listCount}
+      overdueCount={overdueCount}
+      trashCount={trashCount}
+      tasks={topLevel}
+      areas={areas}
+      personalProjects={personalProjects}
+      workspaceProjects={projects.map(project => ({ id: project.config.id, name: project.config.name }))}
+      tags={tags}
+      agents={agents}
+      dropProps={navDropProps}
+      onToggleArea={area => toggleArea(area.id)}
+      footer={navFooter}
     />
-  )
+  ) : null
 
   // ── List rows ────────────────────────────────────────────────────────────
   const currentProject = view.kind === 'project' ? store.projects().find((p) => p.id === view.id) : undefined
@@ -1241,8 +1321,45 @@ export default function TasksPage(props: TasksPageProps = {}) {
         <Button variant="danger" onClick={() => setConfirm({ kind: 'emptyTrash' })} data-testid="tasks-empty-trash">{t('tasks.trash.empty')}</Button>
       ) : null}
       {sortControl}
+      {view.kind !== 'agents' ? (
+        <div role="radiogroup" aria-label={t('tasks.timeline.layout')} className="inline-flex rounded-[var(--radius-control)] border border-border-subtle p-0.5 text-sm">
+          {(['list', 'timeline'] as const).map((id) => (
+            <button key={id} type="button" role="radio" aria-checked={layout === id} data-testid={`tasks-layout-${id}`} onClick={() => setLayout(id)}
+              className={cn('rounded-[var(--radius-control)] px-2 py-0.5', layout === id ? 'bg-accent text-accent-foreground' : 'text-text-secondary hover:bg-surface-hover')}>
+              {t(id === 'list' ? 'collection.view.list' : 'tasks.timeline.layout')}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {view.kind !== 'agents' && layout === 'timeline' ? (
+        // Моя неделя: this week's open tasks across every project/area, Mon–Sun.
+        <button type="button" aria-pressed={timelineWeek} data-testid="tasks-timeline-week" onClick={() => setTimelineWeek((v) => !v)}
+          className={cn('rounded-[var(--radius-control)] border border-border-subtle px-2 py-0.5 text-sm', timelineWeek ? 'bg-accent text-accent-foreground' : 'text-text-secondary hover:bg-surface-hover')}>
+          {t('tasks.week.title')}
+        </button>
+      ) : null}
     </>
   )
+
+  const scheduleTask = (id: string, patch: SchedulePatch) => {
+    if (patch.startAt == null && patch.dueAt == null) return
+    const today = isoOf(Date.now())
+    const key = (c: { blocker: PersonalTask; blocked: PersonalTask }) => `${c.blocker.id}>${c.blocked.id}`
+    const before = new Set(dependencyConflicts(storeRef.current.list().filter(isOpenTask), id, today).map(key))
+    mutate((current) => applySchedule(current, id, patch))
+    // Finish-to-start: warn (don't auto-shift) only for conflicts this move created.
+    const conflict = dependencyConflicts(storeRef.current.list().filter(isOpenTask), id, today).find((c) => !before.has(key(c)))
+    if (conflict) toast.warning(t('tasks.deps.conflict', { title: conflict.blocked.title, blocker: conflict.blocker.title }))
+  }
+  const timelineGroupTitle = (group: TimelineGroup) => {
+    if (group.id == null) return t('tasks.move.noPlace')
+    if (group.kind === 'project') return projectName(group.id)
+    if (group.kind === 'area') return areaName(group.id)
+    return t(`tasks.projection.${group.id}`)
+  }
+  const showTimeline = layout === 'timeline' && view.kind !== 'agents'
+  // Leaving the list for the timeline drops any multi-selection.
+  useEffect(() => { if (layout === 'timeline') clearMulti() }, [layout, clearMulti])
 
   const projectToolbar = view.kind === 'project' && currentProject ? (
     <div className="flex flex-wrap items-center gap-1 px-3 pb-1.5">
@@ -1315,7 +1432,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           {magicPlusControl}
         </div>
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 py-1">
-          <span className="min-w-0 text-sm text-text-muted">{t('tasks.status.open', { count: view.kind === 'agents' ? agentList.length : visible.filter(isOpenTask).length })}</span>
+          <span className="min-w-0 text-sm text-text-muted">{t('tasks.status.open', { count: view.kind === 'agents' ? agentList.length : openTasks.length })}</span>
           <div className="flex min-w-0 flex-wrap items-center gap-1">{headerControls}</div>
         </div>
       </header>
@@ -1384,7 +1501,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
         aria-label={typeof listTitle === 'string' ? listTitle : undefined}
         tabIndex={0}
         data-testid="tasks-list"
-        className="relative min-h-0 flex-1 overflow-y-auto pb-3 outline-none"
+        className={cn('relative min-h-0 flex-1 outline-none', showTimeline ? 'overflow-hidden' : 'overflow-y-auto pb-3')}
       >
         {view.kind === 'agents' ? (
           agentList.length === 0 ? (
@@ -1400,6 +1517,21 @@ export default function TasksPage(props: TasksPageProps = {}) {
               {session.sessionStatus ? <Badge tone="muted">{String(session.sessionStatus)}</Badge> : null}
             </button>
           ))
+        ) : showTimeline ? (
+          <TaskTimeline
+            tasks={timelineWeek ? weekOpenTasks : openTasks}
+            fixedRange={timelineWeek ? weekRange(isoOf(now)) : undefined}
+            today={isoOf(now)}
+            locale={i18n.language}
+            selectedId={selectedId}
+            zoom={timelineZoom}
+            groupBy={timelineGroup}
+            onZoom={setTimelineZoom}
+            onGroupBy={setTimelineGroup}
+            onSelect={selectTask}
+            onSchedule={scheduleTask}
+            groupTitle={timelineGroupTitle}
+          />
         ) : nothing ? (
           <EmptyState title={searching ? t('tasks.search.none') : t(emptyKey)} />
         ) : sections.map(renderSection)}
@@ -1608,7 +1740,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           onClose={() => { setMoveFor(null); listRef.current?.focus() }}
         />
       ) : null}
-      {bulkMove && bulkIds.length ? (
+      {bulkMove && bulkIds.length && layout !== 'timeline' ? (
         <MoveDialog
           title={t('tasks.bulk.moveTitle', { count: bulkIds.length })}
           destinations={moveDestinations}
@@ -1616,7 +1748,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
           onClose={() => { setBulkMove(false); listRef.current?.focus() }}
         />
       ) : null}
-      {bulkIds.length && !bulkMove ? <BulkActionBar count={bulkIds.length} onAction={runBulk} onClear={() => { clearMulti(); listRef.current?.focus() }} /> : null}
+      {/* The bulk bar acts on list multi-select; the timeline has none. */}
+      {bulkIds.length && !bulkMove && layout !== 'timeline' ? <BulkActionBar count={bulkIds.length} onAction={runBulk} onClear={() => { clearMulti(); listRef.current?.focus() }} /> : null}
       {confirm?.kind === 'emptyTrash' ? (
         <ConfirmDialog
           title={t('tasks.trash.emptyTitle')}
