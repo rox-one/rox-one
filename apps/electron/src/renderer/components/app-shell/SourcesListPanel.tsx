@@ -14,13 +14,16 @@ import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import { sourceSelection } from '@/hooks/useEntitySelection'
 import { SourceMenu } from './SourceMenu'
 import { useAppShellContext } from '@/context/AppShellContext'
-import { EditPopover, getEditConfig, type EditContextKey } from '@/components/ui/EditPopover'
+import { getEditConfig, type EditContextKey } from '@/components/ui/edit-config'
 import { cn } from '@/lib/utils'
 import type { LoadedSource, SourceConnectionStatus, SourceFilter } from '../../../shared/types'
 import { toErrorMessage } from '@/lib/errors'
 
 const SendResourceToWorkspaceDialog = React.lazy(() =>
   import('./SendResourceToWorkspaceDialog').then((m) => ({ default: m.SendResourceToWorkspaceDialog })),
+)
+const EditPopover = React.lazy(() =>
+  import('@/components/ui/EditPopover').then((m) => ({ default: m.EditPopover })),
 )
 
 const SOURCE_TYPE_CONFIG: Record<string, { labelKey: string; colorClass: string }> = {
@@ -227,6 +230,7 @@ export function SourcesListPanel({
       docKey="sources"
     >
       {workspaceRootPath && (
+        <React.Suspense fallback={null}>
         <EditPopover
           align="center"
           trigger={
@@ -239,6 +243,7 @@ export function SourcesListPanel({
             workspaceRootPath
           )}
         />
+        </React.Suspense>
       )}
     </EntityListEmptyScreen>
   )
