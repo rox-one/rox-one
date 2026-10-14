@@ -186,9 +186,6 @@ function shiftDateString(value: string, deltaDays: number): string {
   return `${yyyy}-${mm}-${dd}`
 }
 
-/** Written into daily notes by the pre-overlay writer; its presence means cleanup is due. */
-const LEGACY_DAILY_SESSIONS_MARKER = '<!-- rox:daily-sessions -->'
-
 function parseDailyNoteDate(noteId?: string): string | null {
   const match = noteId?.match(/^daily\/(\d{4}-\d{2}-\d{2})$/)
   return match?.[1] ?? null
@@ -544,6 +541,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId, rightSessionContext])
   // PERF-09: a revisit paints the cached list at once; refreshNotes revalidates it.
   const [notes, setNotes] = React.useState<NoteSummary[]>(() => cachedNotesList(activeWorkspaceId) ?? [])
+  // Daily note handleDaily just cleaned up, so the route open that follows skips it.
+  const cleanedDailyNoteRef = React.useRef<string | null>(null)
   // Stable insertion order for sidebar — only updated on full refreshes, not optimistic saves
   const [sidebarOrder, setSidebarOrder] = React.useState<string[]>(() => (cachedNotesList(activeWorkspaceId) ?? []).map(n => n.id))
   const [searchResults, setSearchResults] = React.useState<NoteSummary[] | null>(null)
@@ -1331,17 +1330,17 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       const noteId = parseNoteBlockAddress(selectedNoteId).noteId
       const openedDailyDate = parseDailyNoteDate(noteId)
       const workspaceId = activeWorkspaceId
-      // Explicit opens (sidebar, search, wikilink, route) read first; only a daily
-      // note whose body still carries the legacy sessions marker asks the server
-      // for the one-time cleanup, which then announces an external change so every
-      // open copy re-reads. handleDaily cleans up before navigating, so its read
-      // no longer has the marker and nothing is called twice.
+      // Explicit opens (sidebar, search, wikilink, route) read first, then ask the
+      // server for the opt-in legacy cleanup; the server checks the file on disk
+      // and writes only if the old block is there, announcing an external change
+      // so every open copy re-reads. With unsaved edits nothing is sent: the next
+      // open retries. handleDaily already cleaned up, so it is not called twice.
       if (openedDailyDate && workspaceId) {
         let cancelled = false
         void openNote(noteId).then(() => {
           if (cancelled || activeNoteIdRef.current !== noteId || dirtyRef.current) return
-          if (!contentRef.current.includes(LEGACY_DAILY_SESSIONS_MARKER)) return
-          void window.electronAPI.getDailyNote(workspaceId, openedDailyDate).catch(() => undefined)
+          if (cleanedDailyNoteRef.current === noteId) { cleanedDailyNoteRef.current = null; return }
+          void window.electronAPI.getDailyNote(workspaceId, openedDailyDate, { cleanupLegacy: true }).catch(() => undefined)
         })
         return () => { cancelled = true }
       }
@@ -1690,7 +1689,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const handleDaily = async (date?: string) => {
     if (!activeWorkspaceId) return
     if (!await flushBeforeAction()) return
-    const note = await window.electronAPI.getDailyNote(activeWorkspaceId, date)
+    // Explicit open: flushBeforeAction left no unsaved edits, so the server may
+    // strip a legacy sessions block if the file on disk still has one.
+    const cleanupLegacy = !dirtyRef.current
+    const note = await window.electronAPI.getDailyNote(activeWorkspaceId, date, { cleanupLegacy })
+    if (cleanupLegacy) cleanedDailyNoteRef.current = note.id
     await refreshNotes()
     // Opening may strip a legacy sessions block; an already-open clean copy must
     // re-read it, or its next save would CAS against the pre-cleanup revision.
