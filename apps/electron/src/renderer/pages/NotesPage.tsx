@@ -2638,6 +2638,24 @@ h1,h2,h3{margin-top:1.5em}
     </div>
   ) : null
 
+  const notesSidebarSlots = useNotesScreenSidebar({
+    enabled: !!shellSidebarTarget && !!activeWorkspaceId && !readUnavailable,
+    title: t(notesHeaderTitleKey),
+    query,
+    onQuery: setQuery,
+    onDaily: () => { void handleDaily() },
+    onNewFolder: () => setCreateFolderDialogOpen(true),
+    onNewNote: () => openCreateNoteDialog(),
+    tags: allTags,
+    selectedTag,
+    onTag: setSelectedTag,
+    notes: quickNotes,
+    pinned: notePins.pinned,
+    onTogglePin: notePins.toggle,
+    onOpenNote: openNoteFromQuick,
+    activeNoteId: activeNote?.id,
+  })
+
   if (!activeWorkspaceId) {
     return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t('notes.empty.selectWorkspace')}</div>
   }
@@ -2712,23 +2730,6 @@ h1,h2,h3{margin-top:1.5em}
             : t('notes.vault.assetCount', { count: allAssets.length })}
         </div>
   )
-  const notesSidebarSlots = useNotesScreenSidebar({
-    enabled: !!shellSidebarTarget,
-    title: t(notesHeaderTitleKey),
-    query,
-    onQuery: setQuery,
-    onDaily: () => { void handleDaily() },
-    onNewFolder: () => setCreateFolderDialogOpen(true),
-    onNewNote: () => openCreateNoteDialog(),
-    tags: allTags,
-    selectedTag,
-    onTag: setSelectedTag,
-    notes: quickNotes,
-    pinned: notePins.pinned,
-    onTogglePin: notePins.toggle,
-    onOpenNote: openNoteFromQuick,
-    activeNoteId: activeNote?.id,
-  })
 
   handleOpenNoteRef.current = handleOpenNote
   return (
