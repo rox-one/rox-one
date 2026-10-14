@@ -7973,6 +7973,7 @@
   "screens.feed.groups.subscriptions": "订阅",
   "screens.feed.groups.tags": "标签",
   "screens.feed.groups.views": "视图",
+  "screens.feed.notConnected": "未连接",
   "screens.feed.search": "搜索动态",
   "screens.sessions.archived": "已归档",
   "screens.sessions.empty": "暂无会话",

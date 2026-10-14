@@ -7973,6 +7973,7 @@
   "screens.feed.groups.subscriptions": "Subscriptions",
   "screens.feed.groups.tags": "Tags",
   "screens.feed.groups.views": "Views",
+  "screens.feed.notConnected": "Not connected",
   "screens.feed.search": "Search feed",
   "screens.sessions.archived": "Archived",
   "screens.sessions.empty": "No sessions yet",

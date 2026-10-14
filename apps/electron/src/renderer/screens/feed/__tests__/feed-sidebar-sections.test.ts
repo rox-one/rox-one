@@ -30,3 +30,12 @@ describe('buildFeedSidebarSections', () => {
     expect(x(true)).toMatchObject({ secondary: '@me', target: { kind: 'view', viewId: 'subscriptions' } })
   })
 })
+
+describe('feed X connection row', () => {
+  it('says "not connected" instead of a status badge', () => {
+    const subs = buildFeedSidebarSections(base).find((s) => s.id === 'subscriptions')!
+    const x = subs.items.find((i) => i.id === 'conn:x')!
+    expect(x.badge).toBeUndefined()
+    expect(x.secondaryKey).toBe('screens.feed.notConnected')
+  })
+})

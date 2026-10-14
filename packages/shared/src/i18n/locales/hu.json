@@ -7973,6 +7973,7 @@
   "screens.feed.groups.subscriptions": "Feliratkozások",
   "screens.feed.groups.tags": "Címkék",
   "screens.feed.groups.views": "Nézetek",
+  "screens.feed.notConnected": "Nincs csatlakoztatva",
   "screens.feed.search": "Keresés a hírfolyamban",
   "screens.sessions.archived": "Archivált",
   "screens.sessions.empty": "Még nincs munkamenet",

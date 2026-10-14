@@ -7982,6 +7982,7 @@
   "screens.feed.groups.subscriptions": "Suscripciones",
   "screens.feed.groups.tags": "Etiquetas",
   "screens.feed.groups.views": "Vistas",
+  "screens.feed.notConnected": "No conectado",
   "screens.feed.search": "Buscar en el feed",
   "screens.sessions.archived": "Archivadas",
   "screens.sessions.empty": "Aún no hay sesiones",

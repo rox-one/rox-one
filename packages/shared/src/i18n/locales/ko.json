@@ -7973,6 +7973,7 @@
   "screens.feed.groups.subscriptions": "구독",
   "screens.feed.groups.tags": "태그",
   "screens.feed.groups.views": "보기",
+  "screens.feed.notConnected": "연결되지 않음",
   "screens.feed.search": "피드 검색",
   "screens.sessions.archived": "보관됨",
   "screens.sessions.empty": "아직 세션이 없습니다",

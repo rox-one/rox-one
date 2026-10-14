@@ -8013,6 +8013,7 @@
   "screens.feed.groups.subscriptions": "الاشتراكات",
   "screens.feed.groups.tags": "الوسوم",
   "screens.feed.groups.views": "طرق العرض",
+  "screens.feed.notConnected": "غير متصل",
   "screens.feed.search": "البحث في الخلاصة",
   "screens.sessions.archived": "المؤرشفة",
   "screens.sessions.empty": "لا توجد جلسات بعد",

@@ -7973,6 +7973,7 @@
   "screens.feed.groups.subscriptions": "購読",
   "screens.feed.groups.tags": "タグ",
   "screens.feed.groups.views": "ビュー",
+  "screens.feed.notConnected": "未接続",
   "screens.feed.search": "フィードを検索",
   "screens.sessions.archived": "アーカイブ",
   "screens.sessions.empty": "まだセッションはありません",

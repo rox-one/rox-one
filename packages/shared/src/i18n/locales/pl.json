@@ -7999,6 +7999,7 @@
   "screens.feed.groups.subscriptions": "Subskrypcje",
   "screens.feed.groups.tags": "Tagi",
   "screens.feed.groups.views": "Widoki",
+  "screens.feed.notConnected": "Nie połączono",
   "screens.feed.search": "Szukaj w kanale",
   "screens.sessions.archived": "Zarchiwizowane",
   "screens.sessions.empty": "Brak sesji",

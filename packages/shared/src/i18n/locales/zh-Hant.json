@@ -7973,6 +7973,7 @@
   "screens.feed.groups.subscriptions": "訂閱",
   "screens.feed.groups.tags": "標籤",
   "screens.feed.groups.views": "檢視",
+  "screens.feed.notConnected": "未連線",
   "screens.feed.search": "搜尋動態",
   "screens.sessions.archived": "已封存",
   "screens.sessions.empty": "尚無工作階段",

@@ -54,7 +54,7 @@ export function buildFeedSidebarSections(input: FeedSidebarInput): SidebarSectio
   ]
   const subscriptions: SidebarSectionItem[] = [
     // Not connected → the sources screen hosts the X connect flow.
-    { id: 'conn:x', label: 'X', icon: 'at-sign', ...(input.x.connected ? { secondary: `@${input.x.username ?? ''}` } : { badge: 'status' as const }), target: { kind: 'view', viewId: input.x.connected ? 'subscriptions' : 'sources' } },
+    { id: 'conn:x', label: 'X', icon: 'at-sign', ...(input.x.connected ? { secondary: `@${input.x.username ?? ''}` } : { secondaryKey: 'screens.feed.notConnected' }), target: { kind: 'view', viewId: input.x.connected ? 'subscriptions' : 'sources' } },
     { id: 'conn:team', labelKey: 'feed.tab.team', icon: 'network', secondary: input.team.name, target: { kind: 'view', viewId: 'team' } },
   ]
   const tags: SidebarSectionItem[] = input.tags.map(({ tag, count }) => ({ id: `tag:${tag}`, label: `#${tag}`, icon: 'hash', count, target: { kind: 'label', label: tag } }))

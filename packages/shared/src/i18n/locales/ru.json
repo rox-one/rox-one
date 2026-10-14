@@ -8017,6 +8017,7 @@
   "screens.feed.groups.subscriptions": "Подписки",
   "screens.feed.groups.tags": "Теги",
   "screens.feed.groups.views": "Виды",
+  "screens.feed.notConnected": "Не подключено",
   "screens.feed.search": "Поиск по ленте",
   "screens.sessions.archived": "Архив",
   "screens.sessions.empty": "Сессий пока нет",
