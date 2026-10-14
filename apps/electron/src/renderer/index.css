@@ -1977,3 +1977,34 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   from { opacity: 0; transform: translateX(calc(var(--spacing) * -3)); }
   to { opacity: 1; transform: none; }
 }
+
+/* Panel container queries (fluid panels). PanelSlot is the `panel` size
+   container (@container/panel), so these tiers follow the panel's own width,
+   not the window: a split view and a full-width surface get the same rhythm at
+   the same panel size. Tokens inherit from the container's direct child; the
+   opt-in primitives below read them. Static layout only (no transitions), so a
+   live resize reflows without animating. */
+.\@container\/panel > * {
+  --panel-gutter: calc(var(--spacing) * 3);
+  --panel-measure: 100%;
+}
+@container panel (min-width: 720px) {
+  .\@container\/panel > * {
+    --panel-gutter: calc(var(--spacing) * 5);
+    --panel-measure: 880px;
+  }
+}
+@container panel (min-width: 1200px) {
+  .\@container\/panel > * {
+    --panel-gutter: calc(var(--spacing) * 8);
+    --panel-measure: 1040px;
+  }
+}
+.rox-panel-gutter {
+  padding-inline: var(--panel-gutter, calc(var(--spacing) * 3));
+}
+.rox-panel-measure {
+  inline-size: 100%;
+  max-inline-size: var(--panel-measure, 100%);
+  margin-inline: auto;
+}
