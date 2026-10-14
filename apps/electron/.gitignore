@@ -10,6 +10,10 @@ resources/bin/darwin-x64/
 resources/bin/win32-x64/
 resources/bin/linux-x64/
 
+# Lima runtime assets (guest agent + templates, staged by downloadLima() during
+# build; derived from the pinned Lima release, never committed — 13 MB)
+resources/bin/share/
+
 # Apple Calendar EventKit helper build output (staged into the paths above)
 native/rox-calendar-helper/bin/
 

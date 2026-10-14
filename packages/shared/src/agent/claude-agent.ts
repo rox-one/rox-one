@@ -584,6 +584,7 @@ export class ClaudeAgent extends BaseAgent {
       // First turn: create the persistent query + consumer.
       this.persistentInput = createPushableInputStream<SDKUserMessage>();
       this.persistentAbortController = this.currentQueryAbortController;
+      this.eventAdapter.resetModelUsageBaseline();
       this.currentQuery = query({ prompt: this.persistentInput.stream, options });
       this.persistentIterator = this.currentQuery[Symbol.asyncIterator]();
       this.startPersistentConsumer();
@@ -755,6 +756,7 @@ export class ClaudeAgent extends BaseAgent {
     rememberForMinutes?: number;
     commandHash?: string;
     approvalTtlSeconds?: number;
+    preview?: import('@rox/core/types').PermissionPreview;
   }) => void) | null = null;
 
   // Debug callback for status messages
@@ -1508,6 +1510,7 @@ export class ClaudeAgent extends BaseAgent {
                       rememberForMinutes: checkResult.rememberForMinutes,
                       commandHash: checkResult.commandHash,
                       approvalTtlSeconds: checkResult.approvalTtlSeconds,
+                      preview: checkResult.preview,
                     });
                   } else {
                     this.pendingPermissions.delete(requestId);
@@ -1712,6 +1715,7 @@ This is a branched conversation. All prior messages in this conversation are par
         // Send slash commands directly to SDK without context wrapping.
         // The SDK processes these as internal commands (e.g., /compact triggers compaction).
         debug(`[chat] Detected SDK slash command: ${trimmedMessage}`);
+        this.eventAdapter.resetModelUsageBaseline();
         this.currentQuery = query({ prompt: trimmedMessage, options: optionsWithAbort });
         turnMessageSource = this.currentQuery;
       } else if (hasBinaryAttachments) {
@@ -1719,11 +1723,13 @@ This is a branched conversation. All prior messages in this conversation are par
         async function* singleMessage(): AsyncIterable<SDKUserMessage> {
           yield sdkMessage;
         }
+        this.eventAdapter.resetModelUsageBaseline();
         this.currentQuery = query({ prompt: singleMessage(), options: optionsWithAbort });
         turnMessageSource = this.currentQuery;
       } else {
         // Simple string prompt for text-only messages (may include text file contents)
         const prompt = this.buildTextPrompt(effectiveUserMessage, attachments);
+        this.eventAdapter.resetModelUsageBaseline();
         this.currentQuery = query({ prompt, options: optionsWithAbort });
         turnMessageSource = this.currentQuery;
       }

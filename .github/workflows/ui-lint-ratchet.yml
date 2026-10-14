@@ -7,28 +7,22 @@ name: UI Lint Ratchet
 # approve such growth with the `ui-baseline-override` label (see eslint-baselines/README.md).
 # The comparison uses the merge commit's own first parent (HEAD^1: the base commit this merge was
 # built on), not the moving base-branch tip, so re-runs and races compare like with like.
+#
+# WHY THERE IS NO `paths:` FILTER ON pull_request — do not add one back.
+# The line above has always claimed this job runs on every PR, and `main-protection` (24843533)
+# lists its context among `required_status_checks`. A path-filtered workflow does not skip work:
+# GitHub never creates the check at all, so the required context is missing forever and the PR
+# sits in `mergeStateStatus: BLOCKED` with nothing to fix. Observed on #1952, which touches only
+# another workflow file: `ESLint workspace ratchet`, `freshness` and `unified-gates` all reported
+# success and the merge was still refused. The `gated` step below keeps the cost proportional —
+# a PR that touched no UI source skips lint and reports success in seconds, which is provably
+# safe because an unchanged baseline cannot have grown.
 on:
   push:
     branches: [main]
   pull_request:
     # labeled/unlabeled: adding or removing `ui-baseline-override` re-runs the check.
     types: [opened, synchronize, reopened, labeled, unlabeled]
-    paths:
-      - 'apps/electron/src/**'
-      - 'apps/electron/eslint-rules/**'
-      - 'packages/ui/src/**'
-      - 'packages/ui/eslint-rules/**'
-      - 'apps/viewer/src/**'
-      - 'apps/webui/src/**'
-      - '.stylelintrc.cjs'
-      - 'eslint-baselines/ui-tokens.json'
-      - 'eslint-baselines/README.md'
-      - 'scripts/lint-baseline.ts'
-      - 'scripts/__tests__/lint-baseline.test.ts'
-      - 'scripts/__tests__/stylelint-rules.test.ts'
-      - 'bun.lock'
-      - 'package.json'
-      - '.github/workflows/ui-lint-ratchet.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -45,9 +39,37 @@ jobs:
         with:
           # pull_request checks out the merge commit; depth 2 brings its parents (HEAD^1 = base).
           fetch-depth: 2
+      # The paths whose tokens the ratchet actually guards; `scripts/lint-baseline.ts` owns the
+      # counting rules and eslint-baselines/README.md documents the override label.
+      - name: Which gated paths changed?
+        id: gated
+        env:
+          GATED_PATHS: >-
+            apps/electron/src apps/electron/eslint-rules packages/ui/src packages/ui/eslint-rules
+            apps/viewer/src apps/webui/src .stylelintrc.cjs eslint-baselines/ui-tokens.json
+            eslint-baselines/README.md scripts/lint-baseline.ts
+            scripts/__tests__/lint-baseline.test.ts scripts/__tests__/stylelint-rules.test.ts
+            bun.lock package.json .github/workflows/ui-lint-ratchet.yml
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "gated=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # HEAD is the PR merge commit; its first parent is the base commit.
+          base=$(git rev-parse --verify 'HEAD^1^{commit}')
+          changed=$(git diff --name-only "$base"...HEAD -- $GATED_PATHS)
+          if [ -n "$changed" ]; then
+            echo "gated=true" >> "$GITHUB_OUTPUT"
+            echo "Gated paths changed:"; printf '%s\n' "$changed"
+          else
+            echo "gated=false" >> "$GITHUB_OUTPUT"
+            echo "No UI source changed — the token baseline is identical to the base commit, nothing to ratchet."
+          fi
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        if: steps.gated.outputs.gated == 'true'
         with: { bun-version: '1.4.2' }
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        if: steps.gated.outputs.gated == 'true'
         continue-on-error: true
         with:
           path: ~/.bun/install/cache
@@ -55,22 +77,24 @@ jobs:
           restore-keys: |
             bun-${{ runner.os }}-
       # eslint/stylelint need no install scripts; skipping them keeps this job hermetic.
-      - run: bun install --frozen-lockfile --ignore-scripts
+      - if: steps.gated.outputs.gated == 'true'
+        run: bun install --frozen-lockfile --ignore-scripts
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
       - name: Check the merge commit's base is available
-        if: github.event_name == 'pull_request'
+        if: steps.gated.outputs.gated == 'true' && github.event_name == 'pull_request'
         run: |
           git rev-parse --verify --quiet 'HEAD^2^{commit}' >/dev/null || { echo "HEAD is not the PR merge commit"; exit 1; }
           git rev-parse --verify 'HEAD^1^{commit}'
       - name: Rule and ratchet unit tests
+        if: steps.gated.outputs.gated == 'true'
         run: bun test apps/electron/eslint-rules packages/ui/eslint-rules scripts/__tests__/lint-baseline.test.ts scripts/__tests__/stylelint-rules.test.ts
       - name: Ratchet (per-rule, per-file counts may only go down)
-        if: github.event_name != 'pull_request'
+        if: steps.gated.outputs.gated == 'true' && github.event_name != 'pull_request'
         # The gate runs the owned script directly, not the (unowned) package.json alias.
         run: bun scripts/lint-baseline.ts --check
       - name: Ratchet vs the base commit's baseline (merge commit's first parent)
-        if: github.event_name == 'pull_request'
+        if: steps.gated.outputs.gated == 'true' && github.event_name == 'pull_request'
         env:
           UI_BASELINE_OVERRIDE: ${{ contains(github.event.pull_request.labels.*.name, 'ui-baseline-override') && '1' || '0' }}
         run: bun scripts/lint-baseline.ts --check --base 'HEAD^1'

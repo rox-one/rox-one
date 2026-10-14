@@ -113,8 +113,8 @@ function nodeBuiltinStubPlugin() {
  *   js-yaml out of the startup chunks.
  */
 const SIDE_EFFECT_FREE_MODULES = [
-  /[\\/]packages[\\/]shared[\\/]src[\\/]i18n[\\/](?:registry\.ts|setupI18n\.ts|locales[\\/][^\\/]+\.json)$/,
-  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]markdown[\\/](?:TiptapMarkdownEditor|MarkdownDatatableBlock|MarkdownSpreadsheetBlock|MarkdownOpenUIBlock)\.tsx$/,
+  /[\\/]packages[\\/]shared[\\/]src[\\/]i18n[\\/](?:registry\.ts|setupI18n\.ts|date-locales\.ts|locales[\\/][^\\/]+\.json)$/,
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]markdown[\\/](?:TiptapMarkdownEditor|MarkdownDatatableBlock|MarkdownSpreadsheetBlock|MarkdownOpenUIBlock|Markdown|CodeBlock|MarkdownImageBlock|MarkdownHtmlBlock|MarkdownDocBlock|MarkdownRoversCardBlock|SourcedStatement|CollapsibleSection|ImageCardStack)\.tsx$/,
   // The diff viewers register a custom element and Shiki themes at module
   // load; marked here so the @rox/ui barrel re-export alone does not pull them
   // (and Shiki) into startup. Wherever they are used, that code still runs.
@@ -133,7 +133,12 @@ const SIDE_EFFECT_FREE_MODULES = [
   /[\\/]packages[\\/]session-tools-core[\\/]src[\\/]validation\.ts$/,
   // WP7: reached only through the `@rox/ui` overlay barrel; the renderer has no
   // eager consumer, yet the barrel alone kept @uiw/react-json-view in startup.
-  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]overlay[\\/](?:JSONPreviewOverlay|ActivityCardsOverlay)\.tsx$/,
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]overlay[\\/](?:JSONPreviewOverlay|ActivityCardsOverlay|ImagePreviewOverlay|PDFPreviewOverlay|LazyPDFPreviewOverlay|CodePreviewOverlay|DocumentFormattedMarkdownOverlay|GenericOverlay|TerminalPreviewOverlay|DataTableOverlay|MermaidPreviewOverlay|HTMLPreviewOverlay|FullscreenOverlayBase|FullscreenOverlayBaseHeader|PreviewOverlay|AnnotatableMarkdownDocument)\.tsx$/,
+  // ChatPage/EditPopover are lazy; boot still imports Spinner/Tooltip from the
+  // `@rox/ui` barrel (session list, AppShell). Without this mark, TurnCard +
+  // markdown (parse5, micromark, motion) ride that barrel into index.html.
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]chat[\\/](?:TurnCard|UserMessageBubble|SessionViewer|ThinkingCard|TurnCardActionsMenu|MessageHoverDock|AcceptPlanDropdown|CompactAcceptPlanDrawer|InlineExecution)\.tsx$/,
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]annotations[\\/].+\.tsx$/,
 ]
 
 /**
@@ -153,7 +158,24 @@ const VENDOR_CHUNKS: ReadonlyArray<readonly [RegExp, string]> = [
   [/^(?:date-fns|@date-fns\/.+)$/, 'vendor-dates'],
 ]
 
+/** date-fns locales the renderer actually loads. Anything else stays out of vendor-dates. */
+const DATE_FNS_LOCALE_CHUNKS = new Set([
+  'ar', 'de', 'es', 'fr', 'hu', 'ja', 'ko', 'pl', 'ru', 'zh-CN', 'zh-TW',
+])
+
 function vendorChunk(id: string): string | undefined {
+  const posix = id.replace(/\\/g, '/')
+  const dateFnsLocale = /\/node_modules\/date-fns\/locale\/([^/.]+)(?:\.js|\/|$)/.exec(posix)
+  if (dateFnsLocale) {
+    const loc = dateFnsLocale[1]
+    // Shared helpers + the English fallback stay in the eager vendor-dates
+    // chunk. Every other UI language is a dynamic `import()` from
+    // date-locale-loaders.ts; pinning those files here would merge them back
+    // into the startup closure (and collide with i18n JSON prefixes `ru`, `de`, …).
+    if (loc === '_lib' || loc === 'en-US') return 'vendor-dates'
+    if (DATE_FNS_LOCALE_CHUNKS.has(loc)) return `date-fns-locale-${loc}`
+    return 'date-fns-locale-other'
+  }
   const pkg = /[\\/]node_modules[\\/]((?:@[^\\/]+[\\/])?[^\\/]+)[\\/]/.exec(id)?.[1]?.replace('\\', '/')
   if (!pkg) return undefined
   return VENDOR_CHUNKS.find(([pattern]) => pattern.test(pkg))?.[1]
@@ -300,7 +322,10 @@ export default defineConfig(({ command }) => ({
     outDir: resolve(__dirname, 'dist/renderer'),
     emptyOutDir: true,
     // Production dist must not ship source maps (S9-11: 68 MB of *.map).
-    sourcemap: false,
+    // `scripts/boot-manifest.ts` still derives the boot closure from the sibling
+    // maps, so the CI bundle-size job and local manifest regeneration opt back in
+    // with ROX_RENDERER_SOURCEMAP=1 — the packaged app never sets it.
+    sourcemap: process.env.ROX_RENDERER_SOURCEMAP === '1',
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'src/renderer/index.html'),

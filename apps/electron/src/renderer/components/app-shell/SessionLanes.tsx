@@ -31,7 +31,7 @@ import {
   ShieldAlert,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Spinner } from '@rox/ui'
+import { Spinner } from '@rox/ui/spinner'
 import { atom, useAtomValue } from 'jotai'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { SessionMenu } from './SessionMenu'

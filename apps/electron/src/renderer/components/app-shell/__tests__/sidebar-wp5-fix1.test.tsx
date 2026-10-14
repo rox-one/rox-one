@@ -12,8 +12,10 @@ import { createInstance } from 'i18next'
 import { I18nextProvider } from 'react-i18next'
 import { Home } from 'lucide-react'
 import { MotionConfig } from 'motion/react'
+import { TooltipProvider } from '@rox/ui'
 import { useDomForFile } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
-import { NavigationStatusContext, type NavigationStatus } from '@/contexts/NavigationContext'
+import { NavigationContext, NavigationStatusContext, type NavigationStatus } from '@/contexts/NavigationContext'
+import { AppShellProvider, type AppShellContextType } from '@/context/AppShellContext'
 import type { LinkItem, SidebarItem } from '../LeftSidebar'
 import { SESSION_FILTERS_EMPTY_HIDDEN_ID, SESSION_FILTERS_ID, ShellSidebarNav } from '../ShellSidebarNav'
 
@@ -49,6 +51,9 @@ function links(memoryActive: boolean, inboxActive = false): SidebarItem[] {
   ]
 }
 
+const SHELL = { activeWorkspaceId: null, pendingPermissions: new Map(), labels: [] } as unknown as AppShellContextType
+const NAV = { navigate: () => {} } as unknown as React.ContextType<typeof NavigationContext>
+
 /** AppShell's store shape: a set of collapsed ids, persisted across mounts. */
 function makeStore() {
   const collapsed = new Set<string>()
@@ -67,11 +72,17 @@ function Harness({ store, navigator, memoryActive, inboxActive = false }: { stor
   const isExpanded = React.useCallback((id: string) => store.isExpanded(id), [store, version])
   const toggleExpanded = React.useCallback((id: string) => { store.toggle(id); bump() }, [store])
   const status = { isReady: true, isSessionsReady: true, unavailableWorkspaceSlug: null, navigationState: { navigator }, navigationRevision: 0, canGoBack: false, canGoForward: false } as unknown as NavigationStatus
+  // The Sessions screen publishes its second sidebar via ScreenSidebarHost, which
+  // reads the workspace from AppShell and navigation; the real shell always provides both.
   return (
+    <AppShellProvider value={SHELL}>
+    <NavigationContext.Provider value={NAV}>
     <NavigationStatusContext.Provider value={status}>
       <ShellSidebarNav baseLinks={baseLinks} isCollapsed={false} onExpand={noop} onOpenBrowser={noop}
         isExpanded={isExpanded} toggleExpanded={toggleExpanded} />
     </NavigationStatusContext.Provider>
+    </NavigationContext.Provider>
+    </AppShellProvider>
   )
 }
 
@@ -80,7 +91,7 @@ async function mount(node: React.ReactNode) {
   document.body.appendChild(host)
   await act(async () => {
     root = createRoot(host!)
-    root.render(<Provider store={createStore()}><I18nextProvider i18n={i18n}><MotionConfig reducedMotion="always">{node}</MotionConfig></I18nextProvider></Provider>)
+    root.render(<Provider store={createStore()}><I18nextProvider i18n={i18n}><MotionConfig reducedMotion="always"><TooltipProvider>{node}</TooltipProvider></MotionConfig></I18nextProvider></Provider>)
   })
 }
 async function unmount() {
@@ -88,73 +99,59 @@ async function unmount() {
   root = null
   host?.remove()
 }
-const rowIds = () => Array.from(host!.querySelectorAll('[data-session-filters] [data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))
+async function waitForConfig(timeoutMs = 3000) {
+  const deadline = Date.now() + timeoutMs
+  const ready = () => host!.querySelector('[data-sidebar-primary-nav]')?.getAttribute('data-sidebar-content') === 'config'
+  while (!ready() && Date.now() < deadline) {
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)) })
+  }
+  expect(ready()).toBe(true)
+}
 
-const toolsSection = () => host!.querySelector('section[data-sidebar-tools]') as HTMLElement
-const toolsHeader = () => toolsSection().querySelector('[data-sidebar-section-header]') as HTMLButtonElement
-const toolsRows = () => Array.from(toolsSection().querySelectorAll('[data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))
+const allRowIds = () => Array.from(host!.querySelectorAll('[data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))
 
-describe('sidebar v2 fix1: «Инструменты» replaces the «Ещё» disclosure', () => {
-  it('is expanded by default: former «Ещё» rows show directly', async () => {
-    await mount(<Harness store={makeStore()} navigator="memory" memoryActive={false} />)
-    expect(host!.querySelector('details')).toBeNull()
-    expect(toolsHeader().getAttribute('aria-expanded')).toBe('true')
-    expect(toolsRows()).toContain('nav:memory')
+describe('contextual sidebar replaces «Навигация» / «Инструменты»', () => {
+  it('no global sections on any screen: Сессии shows only its own filters', async () => {
+    await mount(<Harness store={makeStore()} navigator="sessions" memoryActive={false} />)
+    expect(host!.querySelector('section[data-sidebar-tools]')).toBeNull()
+    expect(host!.querySelector('[data-sidebar-section-header]')).toBeNull()
+    expect(allRowIds()).not.toContain('nav:memory')
+    expect(allRowIds()).not.toContain('nav:inbox')
+    // Сессии publishes its own second sidebar (ScreenSidebarConfig); once the lazy
+    // publisher resolves it replaces the legacy filter list, still with no globals.
+    await waitForConfig()
+    expect(host!.querySelector('section[data-sidebar-tools]')).toBeNull()
+    expect(allRowIds()).not.toContain('nav:memory')
   })
 
-  it('the header collapses it and the state persists across a remount', async () => {
-    const store = makeStore()
-    await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
-    await act(async () => { toolsHeader().click() })
-    expect(toolsHeader().getAttribute('aria-expanded')).toBe('false')
-    expect(toolsRows()).toEqual([])
-    await unmount()
-    await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
-    expect(toolsHeader().getAttribute('aria-expanded')).toBe('false')
-  })
-
-  it('a collapsed section respects the saved state but keeps the active row visible', async () => {
-    const store = makeStore()
-    store.toggle('sidebar:section:tools')
-    await mount(<Harness store={store} navigator="memory" memoryActive />)
-    expect(toolsHeader().getAttribute('aria-expanded')).toBe('false')
-    expect(toolsHeader().hasAttribute('aria-disabled')).toBe(false)
-    expect(toolsRows()).toEqual(['nav:memory'])
-  })
-
-  it('«Навигация» collapses even while one of its rows is active, keeping only that row', async () => {
-    const store = makeStore()
-    await mount(<Harness store={store} navigator="inbox" memoryActive={false} inboxActive />)
-    const nav = () => host!.querySelector('[data-sidebar-primary-nav]') as HTMLElement
-    const header = () => nav().querySelector('[data-sidebar-section-header]') as HTMLButtonElement
-    await act(async () => { header().click() })
-    expect(header().getAttribute('aria-expanded')).toBe('false')
-    expect(Array.from(nav().querySelectorAll('[data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))).toEqual(['nav:inbox'])
+  it('Память (no own nav) shows no other screens in the sidebar', async () => {
+    await mount(<Harness store={makeStore()} navigator="memory" memoryActive />)
+    expect(allRowIds().filter(id => id?.startsWith('nav:'))).toEqual([])
+    expect(host!.querySelector('[data-sidebar-primary-nav]')?.getAttribute('data-sidebar-surface')).toBe('memory')
   })
 })
 
 describe('WP5 fix1 (2): session filters persist through the expanded-sections store', () => {
-  it('«Показать пустые» and the section collapse survive a remount', async () => {
+  // Since #4dea56dff Сессии renders its published ScreenSidebarConfig; the legacy
+  // filter list (with «Показать пустые») is only the fallback until the lazy
+  // publisher resolves. The persisted ids must not leak into the published sidebar
+  // and must still be honoured by the fallback when it is shown.
+  it('the published Sessions sidebar replaces the legacy filters and keeps the stored state', async () => {
     const store = makeStore()
+    store.toggle(SESSION_FILTERS_EMPTY_HIDDEN_ID)
+    store.toggle(SESSION_FILTERS_ID)
     await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
-    expect(rowIds()).not.toContain('nav:state:backlog')
-    const toggle = host!.querySelector('[data-session-filters] button[aria-pressed]') as HTMLButtonElement
-    expect(toggle.getAttribute('aria-pressed')).toBe('false')
-    await act(async () => toggle.click())
+    const fallbackHeader = host!.querySelector(`[data-sidebar-link-id="${SESSION_FILTERS_ID}"]`)
+    if (fallbackHeader) expect(fallbackHeader.getAttribute('aria-expanded')).toBe('false')
+    await waitForConfig()
+    expect(host!.querySelector('[data-session-filters]')).toBeNull()
+    expect(host!.querySelector('[data-sidebar-primary-nav]')?.getAttribute('data-sidebar-surface')).toBe('sessions')
+
+    await unmount()
+    await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
+    await waitForConfig()
+    expect(host!.querySelector('[data-session-filters]')).toBeNull()
     expect(store.collapsed.has(SESSION_FILTERS_EMPTY_HIDDEN_ID)).toBe(true)
-    expect(rowIds()).toContain('nav:state:backlog')
-
-    await unmount()
-    await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
-    expect(rowIds()).toContain('nav:state:backlog')
-
-    const header = host!.querySelector(`[data-sidebar-link-id="${SESSION_FILTERS_ID}"]`) as HTMLButtonElement
-    await act(async () => header.click())
     expect(store.collapsed.has(SESSION_FILTERS_ID)).toBe(true)
-    await unmount()
-    await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
-    expect(host!.querySelector(`[data-sidebar-link-id="${SESSION_FILTERS_ID}"]`)?.getAttribute('aria-expanded')).toBe('false')
-    expect(rowIds()).not.toContain('nav:state:todo')
   })
 })
-

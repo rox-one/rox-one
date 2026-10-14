@@ -358,7 +358,19 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
       group: 'Blocks',
       aliases: ['table', 'grid'],
       run: (e) => {
-        e.chain().focus().insertContent('| A | B |\n| --- | --- |\n|  |  |\n').run()
+        // insertContent(string) is parsed as HTML, so pipe tables collapse to "AB".
+        // Until @tiptap/extension-table is a dependency, insert GFM as hard-broken text
+        // so the markdown round-trips. A real table node is a follow-up.
+        e.chain().focus().insertContent({
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: '| A | B |' },
+            { type: 'hardBreak' },
+            { type: 'text', text: '| --- | --- |' },
+            { type: 'hardBreak' },
+            { type: 'text', text: '|  |  |' },
+          ],
+        }).run()
       },
     },
     {

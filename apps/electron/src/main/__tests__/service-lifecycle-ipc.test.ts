@@ -3,7 +3,7 @@ import type { RpcServer } from '@rox/server-core/transport'
 import type { GatewayService } from '@rox/server-core/service'
 import type { DoctorReport, ServiceLifecycleResult, ServiceStatus } from '@rox/shared/service-lifecycle'
 import { registerServiceLifecycleIpc, SERVICE_LIFECYCLE_HANDLED_CHANNELS } from '../service-lifecycle-ipc'
-import { RPC_CHANNELS } from '../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 
 type Handler = (...args: unknown[]) => unknown
 

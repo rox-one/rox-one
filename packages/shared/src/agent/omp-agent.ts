@@ -1,5 +1,6 @@
 import { getRoxAccountAuthority } from '../auth/rox-account-authority.ts';
 import { redactRegisteredSecrets } from '../secrets/redact.ts';
+import { promptTokens, TurnRequestTotals } from './core/prompt-tokens.ts';
 /**
  * OmpAgent — craft-agents backend driving the OMP CLI (`omp --mode rpc`).
  *
@@ -93,7 +94,7 @@ import { BaseAgent } from './base-agent.ts';
 import { readOmpResumeFile, writeOmpIdentity, seedOmpHistory, withOmpRequiredModes, resetOmpHistory, isOmpHistoryReset } from './omp-history.ts';
 import { getLlmConnection, getRuntimeEnvOverrides, ROX_DEFAULT_CONNECTION_SLUG, type Workspace } from '../config/storage.ts';
 import { getCredentialManager } from '../credentials/index.ts';
-import { buildOmpSpawnCredentialEnv, ensureOmpRoxFirstRun, prepareOmpRoxRuntimeConfig } from './omp-first-run.ts';
+import { buildOmpSpawnCredentialEnv, ensureOmpRoxFirstRun, prepareOmpRoxRuntimeConfig, ROX_OMP_API_KEY_ENV } from './omp-first-run.ts';
 import {
   parseError,
   classifyOmpStartupExit,
@@ -125,7 +126,7 @@ import {
 import { executeBrowserToolCommand } from './browser-tool-runtime.ts';
 import { runGithubUserSessionTool } from '../connections/github-user-tool.ts';
 import { saveBinaryResponse } from '../utils/binary-detection.ts';
-import { isRoxPublicModelId, ROX_PUBLIC_MODEL_IDS, type OmpModelCandidate } from '../config/rox-public-models.ts';
+import { isRoxPublicModelId, ROX_GATEWAY_BASE_URL, ROX_PUBLIC_MODEL_IDS, type OmpModelCandidate } from '../config/rox-public-models.ts';
 import { ompStateHasModel, resolveVerifiedOmpModelTarget } from './omp-model-selection.ts';
 import { OmpRpcLineGuard, OmpRpcTransport, supportsOmpRpcV2 } from './omp-rpc-transport.ts';
 import type { OmpBranchEntry } from './omp-user-branch.ts';
@@ -351,7 +352,7 @@ const AUTO_ANSWER_METHODS: Record<string, true> = { setWidget: true, cancel: tru
 /** Detect OMP's rejection of a `--model <id>` one-shot (vs. a real failure). */
 function isOmpModelNotFoundError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
-  return /model not found|unknown model|no such model|invalid model/i.test(message);
+  return /model not found|model_not_found|unknown model|no such model|invalid model/i.test(message);
 }
 
 
@@ -370,10 +371,11 @@ interface OmpUsage {  input?: number;
   cost?: { total?: number };
 }
 
-function toAgentEventUsage(usage: OmpUsage | undefined): AgentEventUsage | undefined {
+export function toAgentEventUsage(usage: OmpUsage | undefined): AgentEventUsage | undefined {
   if (!usage) return undefined;
   return {
-    inputTokens: usage.input ?? 0,
+    // OMP reports `input` without cache reads/writes; normalize to prompt size.
+    inputTokens: promptTokens(usage.input, usage.cacheRead, usage.cacheWrite),
     outputTokens: usage.output ?? 0,
     cacheReadTokens: usage.cacheRead,
     cacheCreationTokens: usage.cacheWrite,
@@ -617,6 +619,8 @@ export class OmpAgent extends BaseAgent {
   /** Accumulated thinking text for the in-flight thinking block. */
   private thinkingText = '';
   private lastUsage: AgentEventUsage | undefined;
+  /** Per-request prompt/output sums for the current turn (message_end). */
+  private turnRequestTotals = new TurnRequestTotals();
 
   // OMP session identity (reported via get_state after ready)
   private ompSessionId: string | null = null;
@@ -2239,7 +2243,10 @@ export class OmpAgent extends BaseAgent {
     if (!message || message.role !== 'assistant') return;
 
     const usage = toAgentEventUsage(message.usage);
-    if (usage) this.lastUsage = usage;
+    if (usage) {
+      this.lastUsage = usage;
+      this.turnRequestTotals.add(usage.inputTokens, usage.outputTokens);
+    }
 
     const text = this.extractMessageText(message);
     if (text) {
@@ -2315,8 +2322,10 @@ export class OmpAgent extends BaseAgent {
       }
     }
 
-    const usage = this.lastUsage;
+    const lastUsage = this.lastUsage;
     this.lastUsage = undefined;
+    const requestTotals = this.turnRequestTotals.take();
+    const usage = lastUsage && requestTotals ? { ...lastUsage, requestTotals } : lastUsage;
     this._isProcessing = false;
 
     // Branch anchoring (G3): by agent_end OMP has flushed its transcript —
@@ -2390,6 +2399,7 @@ export class OmpAgent extends BaseAgent {
     this.abortReason = undefined;
     this.eventQueue.reset();
     this.lastUsage = undefined;
+    this.turnRequestTotals.reset();
     this.toolNames.clear();
     this.runtimeObservationRunId = this.currentRunId() ?? randomUUID();
     this.runtimeTraceBridge.beginRun(this.runtimeObservationRunId, runtimeUserPrompt, runtimeSkills);
@@ -2703,8 +2713,24 @@ export class OmpAgent extends BaseAgent {
   // ============================================================
 
   private async publicAccountCredential(paid: boolean) {
-    if (!this.config.roxExecutionContext) throw new Error('ROX_TRUSTED_ACCOUNT_REQUIRED');
-    return getRoxAccountAuthority().inference(this.config.roxExecutionContext, paid);
+    if (this.config.roxExecutionContext) {
+      return getRoxAccountAuthority().inference(this.config.roxExecutionContext, paid);
+    }
+    const slug = this.config.connectionSlug || ROX_DEFAULT_CONNECTION_SLUG;
+    let stored: string | null = null;
+    try { stored = await getCredentialManager().getLlmApiKey(slug); } catch { stored = null; }
+    const apiKey = stored?.trim() || process.env[ROX_OMP_API_KEY_ENV]?.trim() || '';
+    if (apiKey) {
+      const connection = getLlmConnection(slug);
+      return {
+        accountId: 'api-key',
+        keyId: 'stored',
+        generation: 0,
+        apiKey,
+        baseUrl: (connection?.baseUrl?.trim() || ROX_GATEWAY_BASE_URL).replace(/\/$/, ''),
+      };
+    }
+    throw new Error('ROX_TRUSTED_ACCOUNT_REQUIRED');
   }
 
   private async runOneShot(prompt: string, model?: string): Promise<string> {

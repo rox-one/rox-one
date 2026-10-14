@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { ChevronDown } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import { FadingText } from '@/components/ui/fading-text'
 import { cn } from '@/lib/utils'
 

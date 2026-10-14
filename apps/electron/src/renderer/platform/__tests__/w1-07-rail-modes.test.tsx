@@ -103,6 +103,7 @@ const BASELINE_RAIL_IDS = ['home', 'inbox', 'sessions', 'feed', 'docs', 'tasks',
 
 describe('ActivityRail render', () => {
   it('all mode flags off: exactly the registry primary group, no modes group, «Ещё» closed', () => {
+    getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
     const html = renderRail()
     expect(railIds(html)).toEqual(BASELINE_RAIL_IDS)
     expect(html).not.toContain('data-testid="rail-modes"')
@@ -128,7 +129,7 @@ describe('ActivityRail render', () => {
   it('docs.shared.v1 relabels the rail Notes mode («Документы») without touching the ids', () => {
     const store = getDefaultStore()
     store.set(workbenchFlagAtom(WIKI_FLAG), true)
-    setNavPlacement('docs', 'primary') // WP6: out of the pill, into the rail
+    setNavPlacement('docs', 'menu') // WP6: out of the pill, into the rail
     const html = renderRail()
     setNavPlacement('docs', null)
     expect(html).toContain('workbench.mode.docs')

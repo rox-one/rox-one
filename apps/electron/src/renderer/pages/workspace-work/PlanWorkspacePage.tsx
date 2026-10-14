@@ -1,6 +1,5 @@
 import { useState, lazy, Suspense, useEffect, useLayoutEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAtomValue } from 'jotai'
 import { useStore } from 'jotai'
 import { Calendar, CalendarDays, Contact, Gavel, Phone, type LucideIcon } from 'lucide-react'
 import { useAppShellContext } from '@/context/AppShellContext'
@@ -9,7 +8,6 @@ import { usePanelWorkspaceLayout } from '@/hooks/usePanelWorkspaceLayout'
 import { routes } from '@/lib/navigate'
 import { formatHotkeyDisplay } from '@/lib/platform'
 import { cn } from '@/lib/utils'
-import { workspaceProjectContextsAtom } from '@/atoms/workspace-context'
 import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspace-tool'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
 import { WorkspacePlanView } from './WorkspacePlanView'
@@ -45,7 +43,6 @@ export default function PlanWorkspacePage({ selectedId }: { selectedId?: string 
   const { activeWorkspaceId } = useAppShellContext()
   const { mode } = usePanelWorkspaceLayout()
   const store = useStore()
-  const projects = useAtomValue(workspaceProjectContextsAtom)
   const [section, setSection] = useState<PlanSection>(() => selectedId ? 'meetings' : readStoredSection('calendar'))
   const root = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
@@ -94,9 +91,8 @@ export default function PlanWorkspacePage({ selectedId }: { selectedId?: string 
   // auto keeps the tab switch; focus shows the active section alone; the grid modes place calendar and meetings side by side once the pane is wide enough (below 720px the two columns cannot hold their minimum widths, so they fall back to the single-section tabs).
   const extraScreen: ExtraScreenId | null = section === 'dossier' || section === 'decisions' ? section : null
   const sideBySide = !extraScreen && (mode === 'grid-2' || mode === 'columns' || mode === 'grid-3') && width >= 720
-  const calendar = <WorkspacePlanView workspaceId={activeWorkspaceId} projectId={projects[activeWorkspaceId] ?? undefined} onOpenTask={id => {
-    const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId,
-      projectId: projects[activeWorkspaceId] ?? undefined, tool: 'tasks' })
+  const calendar = <WorkspacePlanView workspaceId={activeWorkspaceId} onOpenTask={id => {
+    const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, tool: 'tasks' })
     if (intent) openWorkspaceTool(store, intent, routes.view.tasks(id))
   }} />
   const meetings = <Suspense fallback={<div role="status">{t('common.loading')}</div>}><Meetings selectedId={selectedId} /></Suspense>
