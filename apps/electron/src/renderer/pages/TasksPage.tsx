@@ -102,6 +102,7 @@ import { useTaskDetailDrafts } from './tasks/use-task-detail-drafts'
 import { TaskSidebar } from './tasks/TaskSidebar'
 import { getSessionTitle } from '@/utils/session'
 import { taskDelegationErrorKey, type TaskDelegationErrorKey } from './tasks/delegation-errors'
+import { insertHeading, isHeadingDrop } from './tasks/magic-plus'
 
 const SORTS: TaskSortId[] = ['order', 'due', 'priority', 'project', 'title']
 const CHIP_TONE: Record<AgentChip, Tone> = { running: 'success', review: 'warning', todo: 'accent', done: 'muted', linked: 'muted' }
@@ -187,7 +188,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState<string | null>(null)
   const [pendingDone, setPendingDone] = useState<ReadonlySet<string>>(new Set())
-  const [quickEntry, setQuickEntry] = useState<{ initial: string } | null>(null)
+  const [quickEntry, setQuickEntry] = useState<{ initial: string; dest?: string } | null>(null)
   useEffect(() => {
     // A2: «Создать новую задачу» in the inspector rail opens a fresh tasks
     // panel; that panel consumes the create request here on mount.
@@ -456,6 +457,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
 
   const onQuickEntry = (result: QuickEntryResult) => {
     const created = createFromEntry(result.parsed, { notes: result.notes, open: result.open, projectId: result.projectId, areaId: result.areaId, checklistItems: result.checklistItems })
+    // Magic Plus dropped on a sidebar entry: the new task lands there.
+    if (created && quickEntry?.dest) applyDestination(created.id, quickEntry.dest)
     setQuickEntry(null)
     if (created && result.open) window.setTimeout(() => titleRef.current?.focus(), 30)
   }
@@ -802,6 +805,14 @@ export default function TasksPage(props: TasksPageProps = {}) {
     const after = event.clientY > rect.top + rect.height / 2
     if (event.dataTransfer.types.includes(DRAG_PLUS)) {
       const index = section.tasks.findIndex((task) => task.id === target.id)
+      // Things: + dropped on a project row's left gutter inserts a heading there.
+      if (view.kind === 'project' && section.context?.projectId && isHeadingDrop(event.clientX, rect.left)) {
+        const from = after ? index + 1 : index
+        const moveIds = section.tasks.slice(from).map((task) => task.id)
+        const pid = section.context.projectId
+        mutate((current) => { insertHeading(current, pid, t('tasks.heading.new'), section.headingId ?? null, moveIds) })
+        return
+      }
       const anchor = after ? target : section.tasks[index - 1]
       setInline({ sectionKey: section.key, afterId: anchor?.id, context: section.context })
       setInlineText('')
@@ -833,15 +844,18 @@ export default function TasksPage(props: TasksPageProps = {}) {
 
   const navDropProps = (dest: string) => ({
     onDragOver: (event: React.DragEvent) => {
-      if (!event.dataTransfer.types.includes(DRAG_TASK)) return
+      const plus = event.dataTransfer.types.includes(DRAG_PLUS)
+      if (!plus && !event.dataTransfer.types.includes(DRAG_TASK)) return
       event.preventDefault()
-      event.dataTransfer.dropEffect = 'move'
+      event.dataTransfer.dropEffect = plus ? 'copy' : 'move'
       if (dropHint !== `nav:${dest}`) setDropHint(`nav:${dest}`)
     },
     onDragLeave: () => setDropHint((hint) => (hint === `nav:${dest}` ? null : hint)),
     onDrop: (event: React.DragEvent) => {
       event.preventDefault()
       setDropHint(null)
+      // Magic Plus on a sidebar entry: new task in that list/project/area.
+      if (event.dataTransfer.types.includes(DRAG_PLUS)) { setQuickEntry({ initial: '', dest }); return }
       const sourceId = draggedId(event)
       if (sourceId) applyDestination(sourceId, dest)
     },
