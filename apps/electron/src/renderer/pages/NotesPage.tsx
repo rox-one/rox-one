@@ -3,7 +3,9 @@ import * as React from 'react'
 import { NotesInspectorToggle, NotesRailTools, NotesResponsiveRail, NotesViewMenu, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
 import { notesAuxiliaryFits, type NotesRail } from './notes/notes-layout'
 import { usePanelWorkspaceLayout, type PanelWorkspaceLayoutMode } from '@/hooks/usePanelWorkspaceLayout'
-import { projectNoteScope, noteInProjectScope, noteCreationFolder, newProjectNoteFolder } from './notes/project-note-scope'
+import { type ProjectNoteScope, noteInProjectScope, noteCreationFolder, newProjectNoteFolder } from './notes/project-note-scope'
+
+const WORKSPACE_NOTE_SCOPE: ProjectNoteScope = { kind: 'workspace' }
 import { EMPTY_COMMENT_DRAFT, noteCommentDraftKey, updateCommentDraft, type NoteCommentDraft } from './notes/comment-drafts'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
@@ -15,7 +17,6 @@ import { useTranslation } from 'react-i18next'
 import { useAtomValue, useStore } from 'jotai'
 import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
-import { workspaceProjectContextsAtom } from '@/atoms/workspace-context'
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@rox/ui'
 import type { Node as PMNode } from 'prosemirror-model'
@@ -524,10 +525,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   } = useAppShellContext()
   const store = useStore()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
-  // The selected workspace project owns the note scope; the active chat does not.
-  const workspaceProjects = useAtomValue(workspaceProjectContextsAtom)
-  const activeProjectId = activeWorkspaceId ? workspaceProjects[activeWorkspaceId] ?? undefined : undefined
-  const noteScope = React.useMemo(() => projectNoteScope(activeProjectId, projects), [activeProjectId, projects])
+  // No hidden shared project scope: notes always cover the whole workspace.
+  const noteScope = WORKSPACE_NOTE_SCOPE
   const [rightSessionContext, setRightSessionContext] = React.useState<Rox2Context | null>(null)
   const [openingAgent, setOpeningAgent] = React.useState(false)
   const openingAgentRef = React.useRef(false)
@@ -1644,7 +1643,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
 // A2: the rail's «Создать заметку» opens a fresh notes panel, which
     // consumes the create request here on mount.
     if (consumePendingCompose('notes')) openCreateNoteDialog()
-  }, [activeProjectId])
+  }, [])
 
   const handleCreateFolder = async () => {
     if (!activeWorkspaceId || !createFolderName.trim()) return
@@ -2300,7 +2299,7 @@ h1,h2,h3{margin-top:1.5em}
   }) => {
     if (!activeWorkspaceId || !activeNote || openingAgentRef.current) return
     if (noteScope.kind === 'unavailable') { toast.error(t('navigation.notes.scopeUnavailable')); return }
-    const intent = opts.intent ?? captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: activeProjectId, tool: 'agent', originPanelId: panelId })
+    const intent = opts.intent ?? captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, tool: 'agent', originPanelId: panelId })
     if (!intent) return
     const entity = bindNativeNote({
       id: activeNote.id,
@@ -2317,7 +2316,7 @@ h1,h2,h3{margin-top:1.5em}
     }
     const reuseSessionId = rightSessionContext?.sessionId
     const reuseMeta = reuseSessionId ? sessionMetaMap.get(reuseSessionId) : undefined
-    if (opts.reuse !== false && reuseSessionId && reuseMeta && reuseMeta.projectId === activeProjectId && describeRightSessionOpen(rightSessionContext, surface) === 'reuse') {
+    if (opts.reuse !== false && reuseSessionId && reuseMeta && reuseMeta.projectId === undefined && describeRightSessionOpen(rightSessionContext, surface) === 'reuse') {
       openWorkspaceTool(store, intent, routes.view.allSessions(reuseSessionId))
       return
     }
@@ -2325,7 +2324,7 @@ h1,h2,h3{margin-top:1.5em}
     setOpeningAgent(true)
     try {
       // The canonical session service resolves this workspace's provider, model and default profile.
-      const session = await onCreateSession(activeWorkspaceId, { name: opts.sessionName, projectId: activeProjectId })
+      const session = await onCreateSession(activeWorkspaceId, { name: opts.sessionName })
       // Prefill the canonical draft only; opening the utility never sends the note automatically.
       onInputChange(session.id, opts.prompt)
       if (openWorkspaceTool(store, intent, routes.view.allSessions(session.id))) {
@@ -2337,11 +2336,11 @@ h1,h2,h3{margin-top:1.5em}
       openingAgentRef.current = false
       setOpeningAgent(false)
     }
-  }, [activeWorkspaceId, activeNote, activeProjectId, noteScope, rightSessionContext, sessionMetaMap, store, panelId, onCreateSession, onInputChange, t])
+  }, [activeWorkspaceId, activeNote, noteScope, rightSessionContext, sessionMetaMap, store, panelId, onCreateSession, onInputChange, t])
 
   const handleAskAgent = React.useCallback(async (mode: AIActionMode = 'extract-tasks') => {
     if (!activeWorkspaceId || !activeNote || openingAgentRef.current) return
-    const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: activeProjectId, tool: 'agent', originPanelId: panelId })
+    const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, tool: 'agent', originPanelId: panelId })
     if (!intent || !await flushBeforeAction()) return
     const { sessionNameKey } = AI_PROMPTS[mode]
     const attachPath = `notes/${activeNote.relativePath}`
@@ -2375,11 +2374,11 @@ h1,h2,h3{margin-top:1.5em}
       chip: { title: attachTitle, path: attachPath },
       intent,
     })
-  }, [activeWorkspaceId, activeNote, activeProjectId, store, panelId, flushBeforeAction, t, activeNoteTasks, content, openNotesRightSession])
+  }, [activeWorkspaceId, activeNote, store, panelId, flushBeforeAction, t, activeNoteTasks, content, openNotesRightSession])
 
   const handleBoundChat = async () => {
     if (!activeWorkspaceId || !activeNote || openingAgentRef.current) return
-    const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: activeProjectId, tool: 'agent', originPanelId: panelId })
+    const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, tool: 'agent', originPanelId: panelId })
     if (!intent || !await flushBeforeAction()) return
     const attachPath = `notes/${activeNote.relativePath}`
     const prompt = [
@@ -2576,10 +2575,10 @@ h1,h2,h3{margin-top:1.5em}
     setCommandQuery(null)
     if (item.subject === 'action' && item.id === 'bang:ask-agent') void handleAskAgent('summarize')
     if (item.subject === 'session' && activeWorkspaceId) {
-      const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: activeProjectId, tool: 'agent', originPanelId: panelId })
+      const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, tool: 'agent', originPanelId: panelId })
       if (intent) openWorkspaceTool(store, intent, routes.view.allSessions(item.insert.replace('@session:', '')))
     }
-  }, [commandQuery, activeWorkspaceId, activeProjectId, store, panelId, handleAskAgent])
+  }, [commandQuery, activeWorkspaceId, store, panelId, handleAskAgent])
 
   const wikiMenu = showWikiMenu ? (
     <div

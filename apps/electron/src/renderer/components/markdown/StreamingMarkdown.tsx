@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Markdown, type RenderMode } from '@rox/ui'
+import { Markdown, type RenderMode } from '@rox/ui/markdown'
 
 interface StreamingMarkdownProps {
   content: string

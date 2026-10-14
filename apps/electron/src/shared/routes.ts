@@ -210,6 +210,9 @@ export const routes = {
     /** Playbooks notebook surface (2026-10-09 pack, D12) — `playbooks`. */
     playbooks: () => 'playbooks' as const,
 
+    /** Cookbooks surface (cookbooks-surface program) — `cookbooks`. */
+    cookbooks: () => 'cookbooks' as const,
+
     /** ROX Drive (wave 1) — `drive[/folder/{folderId}]` local-first storage. */
     drive: (folderId?: string) =>
       folderId ? `drive/folder/${encodeURIComponent(folderId)}` as const : 'drive' as const,

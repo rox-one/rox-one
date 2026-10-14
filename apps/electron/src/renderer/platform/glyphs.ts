@@ -20,6 +20,7 @@
  */
 import {
   Activity,
+  BookMarked,
   BookOpen,
   Bot,
   Brain,
@@ -104,6 +105,7 @@ export const GLYPHS = {
   drive: HardDrive,
   developers: FolderGit2,
   playbooks: NotebookText,
+  cookbooks: BookMarked,
 } as const satisfies Record<string, LucideIcon>
 
 /** Every entity concept the shell renders a glyph for. */
@@ -152,6 +154,7 @@ export const GLYPH_NAMES = {
   drive: 'HardDrive',
   developers: 'FolderGit2',
   playbooks: 'NotebookText',
+  cookbooks: 'BookMarked',
 } as const satisfies Record<GlyphConcept, string>
 
 /**
