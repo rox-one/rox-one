@@ -59,8 +59,7 @@ function PlanPill({ plan, label }: { plan: string; label: string }) {
       data-testid="profile-strip-plan"
       data-plan={plan}
       className={cn(
-        'inline-flex h-4 max-w-full items-center truncate rounded-full bg-gradient-to-b px-1.5 text-mark font-semibold uppercase leading-none tracking-wide',
-        'ring-1 ring-inset shadow-[inset_0_1px_0_rgb(255_255_255/0.55),0_1px_2px_rgb(0_0_0/0.12)] dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(0_0_0/0.4)]',
+        'inline-flex h-4 max-w-full shrink-0 items-center truncate rounded-full bg-gradient-to-b px-1.5 text-mark font-semibold uppercase leading-none tracking-wide ring-1 ring-inset',
         PLAN_PILL_TONES[plan] ?? PLAN_PILL_TONES.standard,
       )}
     >
@@ -144,7 +143,7 @@ export function ProfileStrip({
     spentLabel ? t('profile.spent', { amount: spentLabel }) : null,
   ].filter(Boolean).join(' · ')
   const avatar = (
-    <Avatar className={cn('shrink-0 rounded-full shadow-minimal', compact ? 'size-8' : 'size-9')}>
+    <Avatar className={cn('shrink-0 rounded-full shadow-minimal', compact ? 'size-8' : 'size-6')}>
       {data.avatar ? <AvatarImage src={data.avatar} alt="" /> : null}
       <AvatarFallback
         delayMs={0}
@@ -171,7 +170,7 @@ export function ProfileStrip({
             // Flush with the sidebar edge: an inner card inside the rounded rail would leave corner voids.
             'bg-transparent text-left',
             'hover:bg-[var(--state-hover)] transition-[background-color,border-color,box-shadow] duration-200 motion-reduce:transition-none',
-            compact ? 'flex-col justify-center gap-1 px-1 py-1' : 'gap-2.5 p-2.5',
+            compact ? 'flex-col justify-center gap-1 px-1 py-1' : 'h-10 gap-2 px-3',
             'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             className,
           )}
@@ -183,28 +182,20 @@ export function ProfileStrip({
         >
           <span id={detailsId} className="sr-only">{accountDetails}</span>
           {avatar}
-          <span className={cn('min-w-0', compact ? 'w-full text-center' : 'flex-1')}>
+          {/* One compact row (Cursor-like): avatar · name · small plan badge · level. Balance
+              and spend live in the popover and the screen-reader description. */}
+          <span className={cn('min-w-0', compact ? 'w-full text-center' : 'flex flex-1 items-center gap-2')}>
             <span
               className={cn(
-                'block truncate font-medium',
+                'block min-w-0 truncate font-medium',
                 compact ? 'text-caption text-text-secondary' : 'text-body text-text-primary',
               )}
               title={displayName}
             >
               {displayName}
             </span>
-            {!compact ? <span className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-caption leading-4">
-              <PlanPill plan={plan} label={planLabel} />
-              <LevelBadge level={data.level} progress={data.progress} label={t('profile.level', { level: data.level })} />
-              {balanceKnown ? <span
-                className="min-w-0 truncate text-muted-foreground numeric"
-                data-testid="profile-strip-balance"
-                title={spentLabel ? t('profile.spentTooltip') : undefined}
-              >
-                {t('profile.balanceLabel')} {balanceLabel}
-              </span> : null}
-            </span> : null}
-            {!compact && spentLabel ? <span className="mt-0.5 block truncate text-caption text-muted-foreground/70" title={t('profile.spentTooltip')}>{t('profile.spent', { amount: spentLabel })}</span> : null}
+            {!compact ? <PlanPill plan={plan} label={planLabel} /> : null}
+            {!compact ? <LevelBadge level={data.level} progress={data.progress} label={t('profile.level', { level: data.level })} /> : null}
           </span>
         </button>
       </PopoverTrigger>

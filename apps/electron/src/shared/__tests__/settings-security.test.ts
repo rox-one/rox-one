@@ -31,7 +31,7 @@ describe('security settings page registry', () => {
     expect(buildCompoundRoute(parsed!)).toBe('settings/security')
     expect(settingsPagesSource).toContain('security: SecuritySettingsPage')
     expect(settingsIconsSource).toContain('security: SecuritySettingsIcon')
-    expect(settingsIconsSource).toContain('SecuritySettingsIcon = ({ className }: IconProps) => <ShieldAlert')
+    expect(settingsIconsSource).toContain('SecuritySettingsIcon = ({ className }: IconProps) => <ShieldWarning')
     expect(SETTINGS_ITEMS.filter((item) => item.id === 'security')).toEqual([
       expect.objectContaining({
         id: 'security',

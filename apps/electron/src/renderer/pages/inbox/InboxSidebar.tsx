@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Archive, AtSign, Bell, BrainCircuit, CalendarDays, CheckCheck, ChevronRight,
-  ClipboardCheck, Clock3, FileCheck2, FilePenLine, Inbox, KeyRound, Mail, MessageCircle,
-  Send, ShieldCheck, Sparkles, TriangleAlert, Trash2, UserPlus, UserRoundCheck, Users,
-  type LucideIcon,
-} from 'lucide-react'
+  Archive, At, Bell, Brain, CalendarBlank, CaretRight, ChatCircle, Checks, ClipboardText, Clock,
+  Envelope, FileText, Key, NotePencil, PaperPlaneTilt, ShieldCheck, Sparkle, Trash, Tray,
+  UserCheck, UserPlus, Users, Warning,
+} from '@phosphor-icons/react'
+import type { PhosphorIcon } from '@/platform/phosphor-glyphs'
 import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboard'
-import { NavTitle, type Tone } from '@/components/mode-screen/ModeScreen'
+import { NAV_CHILDREN_CLASS, NAV_ROW_ACTIVE_CLASS, NAV_ROW_CLASS, NAV_ROW_IDLE_CLASS, NavTitle, type Tone } from '@/components/mode-screen/ModeScreen'
 import { cn } from '@/lib/utils'
 import type { MailFolder, MailFolderRole } from '../../../shared/mail-local'
 import { ACTIVITY_KINDS, DECISION_KINDS, type InboxActivityKind, type InboxFilter, type InboxKind } from './inbox-model'
@@ -27,21 +27,21 @@ export function sameInboxFilter(a: InboxPageFilter, b: InboxPageFilter): boolean
   return a.kind === b.kind
 }
 
-const KIND_ICONS: Record<InboxKind, LucideIcon> = {
+const KIND_ICONS: Record<InboxKind, PhosphorIcon> = {
   permission: ShieldCheck,
-  credential: KeyRound,
-  plan: FileCheck2,
-  memory: BrainCircuit,
-  skill: Sparkles,
+  credential: Key,
+  plan: FileText,
+  memory: Brain,
+  skill: Sparkle,
   sender: UserPlus,
-  reply: MessageCircle,
-  error: TriangleAlert,
-  mail: Mail,
+  reply: ChatCircle,
+  error: Warning,
+  mail: Envelope,
   'team-recipient': Users,
   // W1-09 (#1506) — activity surfaces (UI-SPEC §12).
-  review: ClipboardCheck,
-  mention: AtSign,
-  assignment: UserRoundCheck,
+  review: ClipboardText,
+  mention: At,
+  assignment: UserCheck,
   notification: Bell,
 }
 
@@ -68,27 +68,27 @@ const NAV_ICON_TONE: Record<Tone, string> = {
   warning: 'text-text-muted', muted: 'text-text-muted', danger: 'text-destructive/70',
 }
 
-const FOLDER_ICONS: Record<MailFolderRole, LucideIcon> = {
-  inbox: Inbox, drafts: FilePenLine, sent: Send,
-  archive: Archive, junk: ShieldCheck, trash: Trash2,
+const FOLDER_ICONS: Record<MailFolderRole, PhosphorIcon> = {
+  inbox: Tray, drafts: NotePencil, sent: PaperPlaneTilt,
+  archive: Archive, junk: ShieldCheck, trash: Trash,
 }
 
 export function InboxKindIcon({ kind }: { kind: InboxKind }) {
   const Icon = KIND_ICONS[kind]
-  return <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-lg', ICON_TONE[KIND_TONES[kind]])}><Icon className="size-3.5" strokeWidth={1.75} /></span>
+  return <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-lg', ICON_TONE[KIND_TONES[kind]])}><Icon className="icon-caption" /></span>
 }
 
 function Count({ count, urgent }: { count?: number; urgent?: boolean }) {
-  return count ? <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 text-xs numeric', urgent ? 'bg-[var(--warning,#d9a13b)]/15 text-[var(--warning,#d9a13b)]' : 'bg-foreground/[0.05] text-text-muted')}>{count}</span> : null
+  return count ? <span className={cn('shrink-0 text-caption numeric', urgent ? 'font-medium text-[var(--warning,#d9a13b)]' : 'text-text-muted')}>{count}</span> : null
 }
 
 function InboxNavButton({ label, count, active, disabled, icon: Icon, tone = 'muted', onClick, testId }: {
-  label: string; count?: number; active?: boolean; disabled?: boolean; icon: LucideIcon; tone?: Tone
+  label: string; count?: number; active?: boolean; disabled?: boolean; icon: PhosphorIcon; tone?: Tone
   onClick: () => void; testId: string
 }) {
   return (
 <button type="button" onClick={onClick} disabled={disabled} aria-current={active ? 'page' : undefined} data-testid={testId}
-      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-sm outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'rox-nav-shimmer bg-[var(--state-selected)] text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground', disabled && 'cursor-default opacity-50 hover:bg-transparent hover:text-text-secondary')}>
+      className={cn(NAV_ROW_CLASS, active ? NAV_ROW_ACTIVE_CLASS : NAV_ROW_IDLE_CLASS, disabled && 'cursor-default opacity-50 hover:bg-transparent hover:text-text-secondary')}>
       <Icon aria-hidden className={cn('icon-inline', active ? 'text-foreground' : NAV_ICON_TONE[tone])} />
       <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
       <Count count={count} />
@@ -97,21 +97,21 @@ function InboxNavButton({ label, count, active, disabled, icon: Icon, tone = 'mu
 }
 
 function InboxNavGroup({ id, label, icon: Icon, tone, count, urgent, active, initialOpen = false, children }: {
-  id: string; label: string; icon: LucideIcon; tone: Tone; count?: number
+  id: string; label: string; icon: PhosphorIcon; tone: Tone; count?: number
   urgent?: boolean; active?: boolean; initialOpen?: boolean; children: ReactNode
 }) {
   const ref = useRef<HTMLDetailsElement>(null)
   // A newly selected descendant must be revealed, while manual folding survives data refreshes.
   useEffect(() => { if (active && ref.current) ref.current.open = true }, [active])
   return (
-    <details ref={ref} open={initialOpen || active} data-testid={`inbox-group-${id}`} className="group/inbox-nav mt-1">
-      <summary className="flex min-h-8 cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium text-foreground outline-none transition-colors hover:bg-foreground/[0.05] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+    <details ref={ref} open={initialOpen || active} data-testid={`inbox-group-${id}`} className="group/inbox-nav">
+      <summary className={cn(NAV_ROW_CLASS, 'cursor-pointer list-none text-text-secondary hover:bg-[var(--state-hover)] hover:text-foreground [&::-webkit-details-marker]:hidden')}>
         <Icon aria-hidden className={cn('icon-inline', NAV_ICON_TONE[tone])} />
         <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
         <Count count={count} urgent={urgent} />
-        <ChevronRight aria-hidden className="size-3 shrink-0 text-text-muted transition-transform duration-200 group-open/inbox-nav:rotate-90 motion-reduce:transition-none" />
+        <CaretRight aria-hidden className="icon-status shrink-0 text-text-muted transition-transform duration-200 group-open/inbox-nav:rotate-90 motion-reduce:transition-none" />
       </summary>
-      <div className="ml-5 flex flex-col gap-0.5 border-l border-foreground/10 py-1 pl-2">{children}</div>
+      <div className={cn(NAV_CHILDREN_CLASS, 'pt-px')}>{children}</div>
     </details>
   )
 }
@@ -146,18 +146,18 @@ export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, o
   }
   const kindButton = (kind: InboxKind) => <InboxNavButton key={kind} label={t(`inbox.kind.${kind}`)} count={counts.byKind[kind]} active={sameInboxFilter(filter, { kind })} icon={KIND_ICONS[kind]} tone={KIND_TONES[kind]} onClick={() => onSelect({ kind })} testId={`inbox-nav-${kind}`} />
   return (
-    <div data-inbox-sidebar data-focus-zone="sidebar" onKeyDown={handleSidebarTreeKeyDown}>
+    <div data-inbox-sidebar data-focus-zone="sidebar" className="flex flex-col gap-px" onKeyDown={handleSidebarTreeKeyDown}>
       <NavTitle>{t('inbox.title')}</NavTitle>
-      <InboxNavButton label={t('inbox.view.all')} count={counts.all} active={filter === 'all'} icon={Inbox} tone="accent" onClick={() => onSelect('all')} testId="inbox-nav-all" />
+      <InboxNavButton label={t('inbox.view.all')} count={counts.all} active={filter === 'all'} icon={Tray} tone="accent" onClick={() => onSelect('all')} testId="inbox-nav-all" />
       <InboxNavGroup id="decisions" label={t('inbox.view.decisions')} icon={ShieldCheck} tone="warning" count={counts.decisions} urgent={counts.blocking > 0} initialOpen active={filter === 'decisions' || !!selectedKind && DECISION_KINDS.includes(selectedKind)}>
-        <InboxNavButton label={t('inbox.nav.allDecisions')} count={counts.decisions} active={filter === 'decisions'} icon={FileCheck2} tone="warning" onClick={() => onSelect('decisions')} testId="inbox-nav-decisions" />
+        <InboxNavButton label={t('inbox.nav.allDecisions')} count={counts.decisions} active={filter === 'decisions'} icon={FileText} tone="warning" onClick={() => onSelect('decisions')} testId="inbox-nav-decisions" />
         {DECISION_KINDS.map(kindButton)}
       </InboxNavGroup>
       {activityKinds.length > 0 ? (
         <InboxNavGroup
           id="activity"
           label={t('inbox.nav.activity')}
-          icon={ClipboardCheck}
+          icon={ClipboardText}
           tone="accent"
           count={activityKinds.reduce((sum, kind) => sum + counts.byKind[kind], 0)}
           active={selectedKind !== null && (ACTIVITY_KINDS as readonly string[]).includes(selectedKind)}
@@ -169,26 +169,26 @@ export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, o
         <InboxNavButton label={t('inbox.nav.allNotifications')} count={counts.messages} active={filter === 'messages'} icon={Bell} tone="info" onClick={() => onSelect('messages')} testId="inbox-nav-messages" />
         {kindButton('reply')}{kindButton('error')}
       </InboxNavGroup>
-      <InboxNavGroup id="mail" label={t('inbox.mail.section')} icon={Mail} tone="info" count={counts.byKind.mail} active={inMail}>
+      <InboxNavGroup id="mail" label={t('inbox.mail.section')} icon={Envelope} tone="info" count={counts.byKind.mail} active={inMail}>
         {status?.state === 'ready' && status.address ? (
           <div className="flex min-w-0 items-center gap-1 px-2 pb-1 text-xs" data-testid="mail-address">
             <span className="shrink-0 font-medium text-success" data-testid="mail-connected">{t('inbox.mail.status.connected')}</span>
             <span className="min-w-0 flex-1 select-text truncate text-text-secondary" title={status.address}>{status.address}</span>
-            <button type="button" onClick={() => void copyAddress()} className="shrink-0 rounded-md px-1.5 py-1 text-text-muted outline-none hover:bg-foreground/[0.05] focus-visible:ring-2 focus-visible:ring-ring" data-testid="mail-copy">{t(copied ? 'inbox.mail.copied' : 'inbox.mail.copy')}</button>
+            <button type="button" onClick={() => void copyAddress()} className="shrink-0 rounded-md px-1.5 py-1 text-text-muted outline-none hover:bg-[var(--state-hover)] focus-visible:ring-2 focus-visible:ring-ring" data-testid="mail-copy">{t(copied ? 'inbox.mail.copied' : 'inbox.mail.copy')}</button>
           </div>
         ) : <p className="truncate px-2 pb-1 text-xs text-text-muted" title={status?.error ?? undefined}>{t(statusKey(status), { address: status?.address ?? '', url: status?.serverUrl ?? '', error: status?.error ?? '', flag: status?.flag ?? '' })}</p>}
         {status?.state === 'ready' ? mail.folders.map((folder) => (
-          <InboxNavButton key={folder.id} label={folderLabel(t, folder)} count={folder.role === 'drafts' || folder.role === 'sent' ? folder.total : folder.unread} active={inMail && filter.mail === folder.id} icon={folder.role ? FOLDER_ICONS[folder.role] : Mail} tone={folder.role === 'junk' || folder.role === 'trash' ? 'muted' : 'info'} onClick={() => onSelectFolder(folder)} testId={`mail-folder-${folder.role ?? folder.id}`} />
+          <InboxNavButton key={folder.id} label={folderLabel(t, folder)} count={folder.role === 'drafts' || folder.role === 'sent' ? folder.total : folder.unread} active={inMail && filter.mail === folder.id} icon={folder.role ? FOLDER_ICONS[folder.role] : Envelope} tone={folder.role === 'junk' || folder.role === 'trash' ? 'muted' : 'info'} onClick={() => onSelectFolder(folder)} testId={`mail-folder-${folder.role ?? folder.id}`} />
         )) : status?.enabled === false ? (
-          <InboxNavButton label={t('inbox.kind.mail')} disabled icon={Inbox} tone="muted" onClick={() => onSelectFolder({ id: 'inbox', name: t('inbox.mail.folder.inbox'), role: 'inbox', total: 0, unread: 0 })} testId="mail-folder-inbox" />
-        ) : <InboxNavButton label={t('inbox.kind.mail')} active={inMail && filter.mail === 'inbox'} icon={Inbox} tone="muted" onClick={() => onSelectFolder({ id: 'inbox', name: t('inbox.mail.folder.inbox'), role: 'inbox', total: 0, unread: 0 })} testId="mail-folder-inbox" />}
+          <InboxNavButton label={t('inbox.kind.mail')} disabled icon={Tray} tone="muted" onClick={() => onSelectFolder({ id: 'inbox', name: t('inbox.mail.folder.inbox'), role: 'inbox', total: 0, unread: 0 })} testId="mail-folder-inbox" />
+        ) : <InboxNavButton label={t('inbox.kind.mail')} active={inMail && filter.mail === 'inbox'} icon={Tray} tone="muted" onClick={() => onSelectFolder({ id: 'inbox', name: t('inbox.mail.folder.inbox'), role: 'inbox', total: 0, unread: 0 })} testId="mail-folder-inbox" />}
       </InboxNavGroup>
-      <div className="mt-3 space-y-0.5 border-t border-foreground/[0.06] pt-2">
-        <InboxNavButton label={t('inbox.view.snoozed')} count={counts.snoozed} active={filter === 'snoozed'} icon={Clock3} tone="warning" onClick={() => onSelect('snoozed')} testId="inbox-nav-snoozed" />
-        <InboxNavButton label={t('inbox.view.done')} count={counts.done} active={filter === 'done'} icon={CheckCheck} tone="success" onClick={() => onSelect('done')} testId="inbox-nav-done" />
+      <div className="mt-2 flex flex-col gap-px border-t border-border-subtle pt-2">
+        <InboxNavButton label={t('inbox.view.snoozed')} count={counts.snoozed} active={filter === 'snoozed'} icon={Clock} tone="warning" onClick={() => onSelect('snoozed')} testId="inbox-nav-snoozed" />
+        <InboxNavButton label={t('inbox.view.done')} count={counts.done} active={filter === 'done'} icon={Checks} tone="success" onClick={() => onSelect('done')} testId="inbox-nav-done" />
       </div>
       <InboxNavGroup id="connections" label={t('inbox.notConnected')} icon={Users} tone="muted">
-        <InboxNavButton label={t('inbox.kind.meetingProposals')} icon={CalendarDays} tone="muted" onClick={onOpenMeetings} testId="inbox-nav-meetings" />
+        <InboxNavButton label={t('inbox.kind.meetingProposals')} icon={CalendarBlank} tone="muted" onClick={onOpenMeetings} testId="inbox-nav-meetings" />
         {teamNeedsConnection ? <InboxNavButton label={t('teamCollab.inboxNav')} icon={Users} tone="muted" onClick={onConnectTeam} testId="inbox-nav-team" /> : null}
       </InboxNavGroup>
     </div>

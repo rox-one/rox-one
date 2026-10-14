@@ -2,12 +2,12 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { FeedSource, FeedSourceKind, FeedTab, XConnectionStatus } from '@rox/shared/feed'
 import {
-  AtSign, Bot, Cable, ChevronRight, Github, Globe, Hash, Network,
-  Newspaper, PlusCircle, Radio, Rss, SlidersHorizontal, Tags, Users, Youtube,
-  type LucideIcon,
-} from 'lucide-react'
+  At, CaretRight, GithubLogo, Globe, Hash, Newspaper, Plugs, PlusCircle, Radio, Robot, Rss,
+  SlidersHorizontal, Tag, TreeStructure, Users, YoutubeLogo,
+} from '@phosphor-icons/react'
+import type { PhosphorIcon } from '@/platform/phosphor-glyphs'
 import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboard'
-import { NavTitle, type Tone } from '@/components/mode-screen/ModeScreen'
+import { NAV_CHILDREN_CLASS, NAV_ROW_ACTIVE_CLASS, NAV_ROW_CLASS, NAV_ROW_IDLE_CLASS, NavTitle, type Tone } from '@/components/mode-screen/ModeScreen'
 import { cn } from '@/lib/utils'
 import { ColorDot } from './FeedParts'
 import { sourceHealth, sourceLabel, sourceTone } from './feed-model'
@@ -21,9 +21,9 @@ const DOT: Record<Tone, string> = {
   warning: 'bg-[var(--warning,#d9a13b)]', info: 'bg-info', muted: 'bg-text-muted',
 }
 
-const SOURCE_ICONS: Record<FeedSourceKind, LucideIcon> = {
-  rss: Rss, atom: Rss, youtube: Youtube, github: Github,
-  x: AtSign, page: Globe, unknown: Globe,
+const SOURCE_ICONS: Record<FeedSourceKind, PhosphorIcon> = {
+  rss: Rss, atom: Rss, youtube: YoutubeLogo, github: GithubLogo,
+  x: At, page: Globe, unknown: Globe,
 }
 
 const SOURCE_TONES: Record<FeedSourceKind, IconTone> = {
@@ -32,10 +32,10 @@ const SOURCE_TONES: Record<FeedSourceKind, IconTone> = {
 }
 
 function Count({ count }: { count?: number | null }) {
-  return count && count > 0 ? <span className="shrink-0 rounded-md bg-foreground/[0.05] px-1.5 py-0.5 text-xs numeric text-text-muted">{count}</span> : null
+  return count && count > 0 ? <span className="shrink-0 text-caption numeric text-text-muted">{count}</span> : null
 }
 
-function NavIcon({ icon: Icon, tone, dot }: { icon: LucideIcon; tone: IconTone; dot?: Tone }) {
+function NavIcon({ icon: Icon, tone, dot }: { icon: PhosphorIcon; tone: IconTone; dot?: Tone }) {
   return (
     // Bare 16px glyph (icon-inline) in muted grey: no tinted box (Mark 2026-10-14).
     <span aria-hidden data-tone={tone} className="relative inline-flex shrink-0 text-text-muted">
@@ -46,16 +46,16 @@ function NavIcon({ icon: Icon, tone, dot }: { icon: LucideIcon; tone: IconTone; 
 }
 
 function FeedNavButton({ label, secondary, icon, tone, count, active, dot, onClick, testId }: {
-  label: ReactNode; secondary?: string; icon: LucideIcon; tone: IconTone
+  label: ReactNode; secondary?: string; icon: PhosphorIcon; tone: IconTone
   count?: number | null; active?: boolean; dot?: Tone; onClick: () => void; testId: string
 }) {
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined} data-testid={testId}
-      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-sm outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'bg-[var(--state-selected)] text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
+      className={cn(NAV_ROW_CLASS, secondary && 'h-auto min-h-7 py-1', active ? NAV_ROW_ACTIVE_CLASS : NAV_ROW_IDLE_CLASS)}>
       <NavIcon icon={icon} tone={tone} dot={dot} />
       <span className="min-w-0 flex-1">
         <span className="block truncate">{label}</span>
-        {secondary ? <span className="block break-words text-xs font-normal leading-4 text-text-muted">{secondary}</span> : null}
+        {secondary ? <span className="block truncate text-caption font-normal text-text-muted">{secondary}</span> : null}
       </span>
       <Count count={count} />
     </button>
@@ -63,7 +63,7 @@ function FeedNavButton({ label, secondary, icon, tone, count, active, dot, onCli
 }
 
 function FeedNavGroup({ id, label, icon, tone, count, active, revealKey, initialOpen, children }: {
-  id: string; label: string; icon: LucideIcon; tone: IconTone; count?: number
+  id: string; label: string; icon: PhosphorIcon; tone: IconTone; count?: number
   active?: boolean; revealKey?: string | null; initialOpen?: boolean; children: ReactNode
 }) {
   const [open, setOpen] = useState(Boolean(initialOpen || active))
@@ -71,14 +71,14 @@ function FeedNavGroup({ id, label, icon, tone, count, active, revealKey, initial
   // Reveal a newly selected descendant, but preserve manual folding across data refreshes.
   useEffect(() => { if (active) setOpen(true) }, [active, revealKey])
   return (
-    <details ref={ref} open={open} onToggle={() => setOpen(ref.current?.open ?? false)} data-testid={`feed-group-${id}`} className="mt-1">
-      <summary className={cn('flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium outline-none transition-colors hover:bg-foreground/[0.05] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden', active ? 'text-foreground' : 'text-text-secondary')}>
+    <details ref={ref} open={open} onToggle={() => setOpen(ref.current?.open ?? false)} data-testid={`feed-group-${id}`} className="group/feed-nav">
+      <summary className={cn(NAV_ROW_CLASS, 'cursor-pointer list-none hover:bg-[var(--state-hover)] [&::-webkit-details-marker]:hidden', active ? 'text-foreground' : 'text-text-secondary')}>
         <NavIcon icon={icon} tone={tone} />
         <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
         <Count count={count} />
-        <ChevronRight aria-hidden className={cn('size-3 shrink-0 text-text-muted transition-transform duration-200 motion-reduce:transition-none', open && 'rotate-90')} />
+        <CaretRight aria-hidden className={cn('icon-status shrink-0 text-text-muted transition-transform duration-200 motion-reduce:transition-none', open && 'rotate-90')} />
       </summary>
-      <div className="ml-5 flex flex-col gap-0.5 border-l border-foreground/10 py-1 pl-2">{children}</div>
+      <div className={cn(NAV_CHILDREN_CLASS, 'pt-px')}>{children}</div>
     </details>
   )
 }
@@ -96,9 +96,9 @@ export function FeedSidebar({ view, sourceFilter, tagFilter, sources, tags, coun
   const countFor = (tab: FeedTab) => view === tab ? visibleCount : counts[tab]
   const inNews = view === 'news' || view === 'sources'
   return (
-    <div data-feed-sidebar data-focus-zone="sidebar" onKeyDown={handleSidebarTreeKeyDown}>
+    <div data-feed-sidebar data-focus-zone="sidebar" className="flex flex-col gap-px" onKeyDown={handleSidebarTreeKeyDown}>
       <NavTitle>{t('feed.title')}</NavTitle>
-      <FeedNavButton testId="feed-nav-agents" label={t('feed.tab.agents')} icon={Bot} tone="violet" count={countFor('agents')} dot={attention ? 'warning' : undefined} active={view === 'agents'} onClick={() => onViewSelect('agents')} />
+      <FeedNavButton testId="feed-nav-agents" label={t('feed.tab.agents')} icon={Robot} tone="violet" count={countFor('agents')} dot={attention ? 'warning' : undefined} active={view === 'agents'} onClick={() => onViewSelect('agents')} />
       <FeedNavButton testId="feed-nav-team" label={t('feed.tab.team')} icon={Users} tone="sky" count={countFor('team')} active={view === 'team'} onClick={() => onViewSelect('team')} />
       <FeedNavGroup id="news" label={t('feed.tab.news')} icon={Newspaper} tone="orange" count={counts.news} active={inNews} revealKey={`${view}:${sourceFilter ?? ''}`}>
         <FeedNavButton testId="feed-nav-news" label={t('feed.nav.allNews')} icon={Newspaper} tone="orange" count={view === 'news' && !sourceFilter ? visibleCount : counts.news} active={view === 'news' && !sourceFilter} onClick={() => onViewSelect('news')} />
@@ -114,16 +114,16 @@ export function FeedSidebar({ view, sourceFilter, tagFilter, sources, tags, coun
       </FeedNavGroup>
       <FeedNavButton testId="feed-nav-subscriptions" label={t('feed.tab.subscriptions')} icon={Radio} tone="pink" count={countFor('subscriptions')} dot={!xConnected ? 'muted' : undefined} active={view === 'subscriptions'} onClick={() => onViewSelect('subscriptions')} />
       {tags.length > 0 && view !== 'sources' ? (
-        <FeedNavGroup id="tags" label={t('feed.nav.tags')} icon={Tags} tone="violet" active={Boolean(tagFilter)} revealKey={tagFilter} initialOpen>
+        <FeedNavGroup id="tags" label={t('feed.nav.tags')} icon={Tag} tone="violet" active={Boolean(tagFilter)} revealKey={tagFilter} initialOpen>
           {tags.slice(0, 8).map(({ tag, count }) => {
             const active = tagFilter?.toLowerCase() === tag.toLowerCase()
             return <FeedNavButton key={tag} testId={`feed-nav-tag-${tag}`} label={`#${tag}`} icon={Hash} tone="violet" count={count} active={active} onClick={() => onTagSelect(active ? null : tag)} />
           })}
         </FeedNavGroup>
       ) : null}
-      <FeedNavGroup id="connections" label={t('feed.nav.connections')} icon={Cable} tone="sky">
-        <FeedNavButton testId="feed-conn-x" label="X" secondary={xConnected ? `@${x.username ?? ''}` : t('feed.x.notConnected')} icon={AtSign} tone="muted" dot={xConnected ? 'success' : x.state === 'error' ? 'danger' : 'muted'} onClick={() => onViewSelect('sources')} />
-        <FeedNavButton testId="feed-conn-team" label={t('feed.tab.team')} secondary={teamName} icon={Network} tone="green" dot={hasTeam ? 'warning' : 'muted'} onClick={() => onViewSelect('team')} />
+      <FeedNavGroup id="connections" label={t('feed.nav.connections')} icon={Plugs} tone="sky">
+        <FeedNavButton testId="feed-conn-x" label="X" secondary={xConnected ? `@${x.username ?? ''}` : t('feed.x.notConnected')} icon={At} tone="muted" dot={xConnected ? 'success' : x.state === 'error' ? 'danger' : 'muted'} onClick={() => onViewSelect('sources')} />
+        <FeedNavButton testId="feed-conn-team" label={t('feed.tab.team')} secondary={teamName} icon={TreeStructure} tone="green" dot={hasTeam ? 'warning' : 'muted'} onClick={() => onViewSelect('team')} />
       </FeedNavGroup>
     </div>
   )

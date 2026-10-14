@@ -13,7 +13,8 @@ import { cn } from '@/lib/utils'
 import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
 import { Tabs as TabsCore, type TabItem } from '@/components/ui/tabs'
 import { useTranslation } from 'react-i18next'
-import { Archive, Bell, CalendarDays, CheckCheck, ChevronRight, Clock3, Folder, Inbox, ListFilter, Mail, MessageCircle, Newspaper, Radio, ShieldCheck, Sparkles, Tag, Users, type LucideIcon } from 'lucide-react'
+import { Archive, Bell, CalendarBlank, CaretRight, Checks, Clock, Envelope, Folder, Funnel, Tray, ChatCircle, Newspaper, Radio, ShieldCheck, Sparkle, Tag, Users } from '@phosphor-icons/react'
+import { navGlyph, type PhosphorIcon } from '@/platform/phosphor-glyphs'
 
 export function ModeScreenLayout(props: {
   navigator: React.ReactNode; list: React.ReactNode; detail: React.ReactNode; status?: React.ReactNode
@@ -122,14 +123,25 @@ export function NavTitle({ children }: { children: React.ReactNode }) {
 
 export function NavSection({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
   return (
-    <details open className="group mt-3">
-      <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium uppercase caps-label text-text-muted outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-        <ChevronRight className="size-3 shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none" aria-hidden />{title}
+    <details open className="group mt-3 first:mt-0">
+      <summary className="flex h-6 cursor-pointer list-none items-center gap-1 rounded-md px-2 text-caption font-medium text-text-muted outline-none hover:text-text-secondary focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 flex-1 truncate">{title}</span>
+        <CaretRight className="icon-status shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none" aria-hidden />
       </summary>
-      <div className="ml-2 flex flex-col gap-0.5 border-l border-foreground/10 pl-2 py-1">{children}</div>
+      <div className="flex flex-col gap-px pt-0.5">{children}</div>
     </details>
   )
 }
+
+/**
+ * Compact secondary-sidebar row (Cursor-like): 28px tall, 13px text, bare 16px muted
+ * Phosphor glyph and text on one grid, subtle rounded fill when active, no bar/underline.
+ */
+export const NAV_ROW_CLASS = 'flex h-7 w-full min-w-0 items-center gap-2 rounded-md px-2 text-left text-body outline-none transition-colors motion-reduce:transition-none focus-visible:ring-1 focus-visible:ring-ring'
+export const NAV_ROW_ACTIVE_CLASS = 'bg-[var(--state-selected)] text-foreground'
+export const NAV_ROW_IDLE_CLASS = 'text-text-secondary hover:bg-[var(--state-hover)] hover:text-foreground'
+/** Children of a nav group: indented so their glyphs line up with the parent's label. */
+export const NAV_CHILDREN_CLASS = 'flex flex-col gap-px pl-6'
 
 export type Tone = 'accent' | 'success' | 'warning' | 'danger' | 'info' | 'muted'
 
@@ -142,13 +154,13 @@ const DOT: Record<Tone, string> = {
   muted: 'bg-text-muted',
 }
 
-const NAV_ICONS: Record<string, LucideIcon> = {
-  all: Inbox, decisions: ShieldCheck, messages: MessageCircle, snoozed: Clock3, done: CheckCheck,
-  permission: ShieldCheck, credential: ShieldCheck, plan: ListFilter, memory: Sparkles,
-  skill: Sparkles, sender: Users, reply: MessageCircle, error: Bell, mail: Mail,
-  news: Newspaper, subscriptions: Radio, team: Users, agents: Sparkles, sources: Folder,
-  today: CalendarDays, upcoming: CalendarDays, past: Archive, live: Radio,
-  needsAction: Bell, logbook: CheckCheck, trash: Archive, inbox: Inbox,
+const NAV_ICONS: Record<string, PhosphorIcon> = {
+  all: Tray, decisions: ShieldCheck, messages: ChatCircle, snoozed: Clock, done: Checks,
+  permission: ShieldCheck, credential: ShieldCheck, plan: Funnel, memory: Sparkle,
+  skill: Sparkle, sender: Users, reply: ChatCircle, error: Bell, mail: Envelope,
+  news: Newspaper, subscriptions: Radio, team: Users, agents: Sparkle, sources: Folder,
+  today: CalendarBlank, upcoming: CalendarBlank, past: Archive, live: Radio,
+  needsAction: Bell, logbook: Checks, trash: Archive, inbox: Tray,
 }
 
 export function NavItem({
@@ -164,15 +176,15 @@ export function NavItem({
   label: React.ReactNode
   count?: number | null
   active?: boolean
+  /** Status hint: a tiny dot on the glyph (danger/warning stay findable); the glyph itself stays grey. */
   dot?: Tone
   onClick?: () => void
   testId?: string
   disabled?: boolean
-  icon?: LucideIcon
+  icon?: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>
 }) {
   const key = testId?.replace(/^(inbox|feed|tasks|meetings)-nav-/, '') ?? ''
-  const Icon = icon ?? (testId?.startsWith('mail-folder-') ? Mail : NAV_ICONS[key]) ?? (typeof label === 'string' && label.startsWith('#') ? Tag : ListFilter)
-  const iconTone = dot ?? (key.includes('mail') ? 'info' : key.includes('today') ? 'warning' : 'accent')
+  const Icon = (icon ? navGlyph(icon) : null) ?? (testId?.startsWith('mail-folder-') ? Envelope : NAV_ICONS[key]) ?? (typeof label === 'string' && label.startsWith('#') ? Tag : Funnel)
   return (
     <button
       type="button"
@@ -180,25 +192,15 @@ export function NavItem({
       disabled={disabled}
       aria-current={active ? 'page' : undefined}
       data-testid={testId}
-      className={cn(
-        'flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 text-left text-base outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring',
-        active
-          ? 'border-l-accent bg-accent/15 font-semibold text-foreground'
-          : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground',
-        disabled && 'opacity-50',
-      )}
+      className={cn(NAV_ROW_CLASS, active ? NAV_ROW_ACTIVE_CLASS : NAV_ROW_IDLE_CLASS, disabled && 'opacity-50')}
     >
-      <span className={cn('relative grid size-5 shrink-0 place-items-center rounded-md bg-foreground/[0.05]', {
-        'text-accent': iconTone === 'accent', 'text-info': iconTone === 'info',
-        'text-success': iconTone === 'success', 'text-destructive': iconTone === 'danger',
-        'text-[var(--warning,#d9a13b)]': iconTone === 'warning', 'text-text-muted': iconTone === 'muted',
-      })}>
-        <Icon className="size-3.5" strokeWidth={1.75} aria-hidden />
-        {dot ? <span aria-hidden className={cn('absolute -right-0.5 -top-0.5 size-1.5 rounded-full', DOT[dot])} /> : null}
+      <span className="relative inline-flex shrink-0">
+        <Icon className={cn('icon-inline', active ? 'text-foreground' : 'text-text-muted')} aria-hidden />
+        {dot && dot !== 'muted' && dot !== 'accent' ? <span aria-hidden className={cn('absolute -right-0.5 -top-0.5 size-1.5 rounded-full', DOT[dot])} /> : null}
       </span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {count != null && count > 0 ? (
-        <span className={cn('shrink-0 numeric text-xs', active ? 'text-accent' : 'text-text-muted')}>{count}</span>
+        <span className="shrink-0 numeric text-caption text-text-muted">{count}</span>
       ) : null}
     </button>
   )
@@ -301,13 +303,13 @@ export function Tabs<T extends string>({
   onChange,
   label,
 }: {
-  tabs: ReadonlyArray<{ id: T; label: string; count?: number; icon?: LucideIcon }>
+  tabs: ReadonlyArray<{ id: T; label: string; count?: number; icon?: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }> }>
   value: T
   onChange: (id: T) => void
   label: string
 }) {
   const items: TabItem[] = tabs.map((tab) => {
-    const Icon = tab.icon ?? NAV_ICONS[tab.id] ?? ListFilter
+    const Icon = (tab.icon ? navGlyph(tab.icon) : null) ?? NAV_ICONS[tab.id] ?? Funnel
     return {
       id: tab.id,
       label: tab.label,

@@ -49,7 +49,8 @@ describe('ProfileStrip accessible account details', () => {
   test('describes the same account in the expanded presentation', () => {
     const html = render()
     expect(description(html)).toBe('Pro · Balance 42')
-    expect(html).toContain('data-testid="profile-strip-balance"')
+    // Compact single row: balance lives in the description and popover, not the row.
+    expect(html).not.toContain('data-testid="profile-strip-balance"')
   })
 
   test('unknown and non-finite balances stay unknown rather than presenting invalid amounts', () => {

@@ -7,7 +7,9 @@
 import * as React from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import { MoreHorizontal, Pin, PinOff, PanelLeft } from 'lucide-react'
+import { Pin, PinOff } from 'lucide-react'
+import { DotsThree, SidebarSimple } from '@phosphor-icons/react'
+import { navGlyph } from '../../platform/phosphor-glyphs'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
@@ -79,7 +81,7 @@ interface RailButtonProps {
 
 const RailButton = React.memo(function RailButton({ screen, active, unread, onActivate }: RailButtonProps) {
   const { t } = useTranslation()
-  const Icon = screen.icon
+  const Icon = navGlyph(screen.icon)
   const label = unread > 0 ? t('shell.rail.labelUnread', { name: screen.title, count: unread }) : screen.title
   return (
     <Tooltip>
@@ -93,13 +95,13 @@ const RailButton = React.memo(function RailButton({ screen, active, unread, onAc
           aria-disabled={screen.disabled || undefined}
           onClick={() => onActivate(screen)}
           className={cn(
-            'relative flex size-10 items-center justify-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring',
+            'relative flex size-8 items-center justify-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring',
             active ? 'bg-[var(--state-selected)] text-foreground' : 'text-muted-foreground hover:bg-[var(--state-hover)] hover:text-foreground',
             screen.disabled && 'opacity-50',
           )}
         >
-          <Icon className="icon-rail" aria-hidden />
-          {unread > 0 && <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-accent" data-rail-unread="" aria-hidden />}
+          <Icon className="icon-toolbar" aria-hidden />
+          {unread > 0 && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-accent" data-rail-unread="" aria-hidden />}
         </button>
       </TooltipTrigger>
       <TooltipContent side="right">{screen.title}</TooltipContent>
@@ -189,12 +191,12 @@ export const PrimaryRail = React.memo(function PrimaryRail({ avatar, secondaryAv
                   aria-label={t('shell.rail.more')}
                   aria-haspopup="dialog"
                   className={cn(
-                    'relative flex size-10 items-center justify-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                    'relative flex size-8 items-center justify-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring',
                     overflowActive ? 'bg-[var(--state-selected)] text-foreground' : 'text-muted-foreground hover:bg-[var(--state-hover)] hover:text-foreground',
                   )}
                 >
-                  <MoreHorizontal className="icon-rail" aria-hidden />
-                  {overflowUnread && <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-accent" aria-hidden />}
+                  <DotsThree className="icon-toolbar" aria-hidden />
+                  {overflowUnread && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-accent" aria-hidden />}
                 </button>
               </PopoverTrigger>
             </TooltipTrigger>
@@ -222,9 +224,9 @@ export const PrimaryRail = React.memo(function PrimaryRail({ avatar, secondaryAv
                 aria-label={secondary === 'hidden' ? t('shell.rail.showSidebar') : t('shell.rail.hideSidebar')}
                 aria-pressed={secondary !== 'hidden'}
                 onClick={toggleSecondarySidebar}
-                className="flex size-10 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground outline-none hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+                className="flex size-8 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground outline-none hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
               >
-                <PanelLeft className="icon-rail" aria-hidden />
+                <SidebarSimple className="icon-toolbar" aria-hidden />
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">{secondary === 'hidden' ? t('shell.rail.showSidebar') : t('shell.rail.hideSidebar')}</TooltipContent>
@@ -251,7 +253,7 @@ export function RailMoreList({ screens, pinnedIds, navState, unread, onActivate 
   return (
     <ul className="flex max-h-[70vh] flex-col overflow-y-auto" aria-label={t('shell.rail.allScreens')}>
       {screens.map((screen) => {
-        const Icon = screen.icon
+        const Icon = navGlyph(screen.icon)
         const pinned = pinnedIds.has(screen.id)
         const active = isRailScreenActive(screen, navState)
         return (

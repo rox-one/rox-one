@@ -1,10 +1,11 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  BookCheck, Bot, CalendarDays, ChevronRight, ClipboardList, Eye, FolderKanban,
-  FolderOpen, Hourglass, Inbox, Layers, LayoutDashboard, ListChecks, Network,
-  Play, Sun, Tag, Tags, Trash2, type LucideIcon,
-} from 'lucide-react'
+  Archive, CalendarBlank, CaretRight, Clipboard, Eye, Folder, Hourglass, Kanban, ListChecks,
+  Play, Robot, SquaresFour, Stack, Sun, Tag, Trash, Tray, TreeStructure,
+} from '@phosphor-icons/react'
+import type { PhosphorIcon } from '@/platform/phosphor-glyphs'
+import { NAV_CHILDREN_CLASS, NAV_ROW_ACTIVE_CLASS, NAV_ROW_CLASS, NAV_ROW_IDLE_CLASS } from '@/components/mode-screen/ModeScreen'
 import { projectProgress, type PersonalTask, type TaskArea, type TaskFilterId, type TaskProject } from '@rox/core/tasks/personal'
 import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboard'
 import { restoreFocusToToggle, SidebarDisclosureButton } from '@/components/app-shell/SidebarDisclosure'
@@ -13,33 +14,34 @@ import { ProgressPie } from './parts'
 import type { AgentViewId, TasksView } from './task-model'
 
 type IconTone = 'accent' | 'info' | 'warning' | 'success' | 'danger' | 'muted' | 'violet'
+/** Cursor-like chrome: every glyph is muted grey; the tone only survives as data-tone. */
 const ICON_TONE: Record<IconTone, string> = {
-  accent: 'text-accent', info: 'text-info', warning: 'text-[var(--warning,#d9a13b)]',
-  success: 'text-success', danger: 'text-destructive', muted: 'text-text-muted', violet: 'text-violet-500',
+  accent: 'text-text-muted', info: 'text-text-muted', warning: 'text-text-muted',
+  success: 'text-text-muted', danger: 'text-text-muted', muted: 'text-text-muted', violet: 'text-text-muted',
 }
 
 const LISTS = [
-  { id: 'inbox', icon: Inbox, tone: 'info', destination: 'list:inbox' },
+  { id: 'inbox', icon: Tray, tone: 'info', destination: 'list:inbox' },
   { id: 'today', icon: Sun, tone: 'warning', destination: 'when:today' },
-  { id: 'upcoming', icon: CalendarDays, tone: 'accent', destination: 'when:upcoming' },
+  { id: 'upcoming', icon: CalendarBlank, tone: 'accent', destination: 'when:upcoming' },
   { id: 'anytime', icon: ListChecks, tone: 'success', destination: 'when:anytime' },
   { id: 'someday', icon: Hourglass, tone: 'violet', destination: 'when:someday' },
-  { id: 'logbook', icon: BookCheck, tone: 'muted', destination: 'logbook' },
-  { id: 'trash', icon: Trash2, tone: 'danger', destination: 'trash' },
+  { id: 'logbook', icon: Archive, tone: 'muted', destination: 'logbook' },
+  { id: 'trash', icon: Trash, tone: 'danger', destination: 'trash' },
 ] as const
 
 const AGENTS = [
-  { id: 'board', icon: LayoutDashboard, tone: 'accent' },
+  { id: 'board', icon: SquaresFour, tone: 'accent' },
   { id: 'running', icon: Play, tone: 'success' },
   { id: 'review', icon: Eye, tone: 'warning' },
-  { id: 'conductor', icon: Network, tone: 'violet' },
+  { id: 'conductor', icon: TreeStructure, tone: 'violet' },
 ] as const
 
 function TaskSidebarItem({
   label, icon: Icon, tone, count, active, onClick, testId, progress,
 }: {
   label: React.ReactNode
-  icon: LucideIcon
+  icon: PhosphorIcon
   tone: IconTone
   count?: number | null
   active?: boolean
@@ -54,16 +56,14 @@ function TaskSidebarItem({
       aria-current={active ? 'page' : undefined}
       data-testid={testId}
       className={cn(
-        'flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 text-left text-base outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring',
-        active ? 'border-l-accent bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground',
+        NAV_ROW_CLASS,
+        active ? NAV_ROW_ACTIVE_CLASS : NAV_ROW_IDLE_CLASS,
       )}
     >
-      <span className={cn('grid size-5 shrink-0 place-items-center rounded-md bg-foreground/[0.05]', ICON_TONE[tone])}>
-        <Icon className="size-3.5" strokeWidth={1.75} aria-hidden />
-      </span>
+      <Icon data-tone={tone} className={cn('icon-inline', active ? 'text-foreground' : ICON_TONE[tone])} aria-hidden />
       <span className="min-w-0 flex-1 truncate" title={typeof label === 'string' ? label : undefined}>{label}</span>
       {progress}
-      {count != null && count > 0 ? <span className={cn('shrink-0 text-xs numeric', active ? 'text-accent' : 'text-text-muted')}>{count}</span> : null}
+      {count != null && count > 0 ? <span className="shrink-0 text-caption numeric text-text-muted">{count}</span> : null}
     </button>
   )
 }
@@ -73,7 +73,7 @@ function TaskSidebarGroup({
   title, icon: Icon, tone, children, navigation, expanded: controlledExpanded, onToggle,
 }: {
   title: string
-  icon: LucideIcon
+  icon: PhosphorIcon
   tone: IconTone
   children: React.ReactNode
   navigation?: React.ReactNode
@@ -93,7 +93,7 @@ function TaskSidebarGroup({
   }
 
   return (
-    <div className="mt-2" data-task-sidebar-group={title}>
+    <div className="mt-2 first:mt-0" data-task-sidebar-group={title}>
       {navigation ? (
         <div className="group/row flex items-center gap-1 pr-2">
           <div className="min-w-0 flex-1">{navigation}</div>
@@ -107,15 +107,15 @@ function TaskSidebarGroup({
           aria-controls={sectionId}
           aria-label={t(expanded ? 'sidebar.disclosure.collapse' : 'sidebar.disclosure.expand', { section: title })}
           onClick={toggle}
-          className="flex min-h-8 w-full items-center gap-2 rounded-lg px-2 text-left text-sm font-medium text-text-secondary outline-none hover:bg-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-ring"
+          className={cn(NAV_ROW_CLASS, 'text-text-secondary hover:bg-[var(--state-hover)] hover:text-foreground')}
         >
-          <Icon className={cn('size-4 shrink-0', ICON_TONE[tone])} aria-hidden />
+          <Icon className={cn('icon-inline', ICON_TONE[tone])} aria-hidden />
           <span className="min-w-0 flex-1 truncate" title={title}>{title}</span>
-          <ChevronRight className={cn('size-3.5 shrink-0 transition-transform motion-reduce:transition-none', expanded && 'rotate-90')} aria-hidden />
+          <CaretRight className={cn('icon-status shrink-0 transition-transform motion-reduce:transition-none', expanded && 'rotate-90')} aria-hidden />
         </button>
       )}
       <div ref={bodyRef} id={sectionId} hidden={!expanded}>
-        <div className="ml-2 flex flex-col gap-0.5 border-l border-foreground/10 py-1 pl-2">{children}</div>
+        <div className={cn(NAV_CHILDREN_CLASS, 'pt-px')}>{children}</div>
       </div>
     </div>
   )
@@ -148,7 +148,7 @@ export function TaskSidebar({
     return (
       <div key={project.id} {...dropProps(`project:${project.id}`)}>
         <TaskSidebarItem
-          label={project.name} icon={FolderKanban} tone="info" count={progress.open}
+          label={project.name} icon={Kanban} tone="info" count={progress.open}
           active={view.kind === 'project' && view.id === project.id}
           onClick={() => onSelect({ kind: 'project', id: project.id })}
           testId={`tasks-nav-project-${project.id}`}
@@ -160,14 +160,14 @@ export function TaskSidebar({
 
   return (
     <div data-task-sidebar="true" onKeyDown={handleSidebarTreeKeyDown} className="flex min-h-0 flex-1 flex-col">
-      <h1 className="px-2 pb-2 text-lg font-semibold">{t('workbench.mode.tasks')}</h1>
-      <TaskSidebarGroup title={t('tasks.nav.statuses')} icon={ClipboardList} tone="accent">
+      <h1 className="sr-only">{t('workbench.mode.tasks')}</h1>
+      <TaskSidebarGroup title={t('tasks.nav.statuses')} icon={Clipboard} tone="accent">
         {LISTS.map(({ id, icon, tone, destination }) => (
           <div key={id} {...dropProps(destination)}>
             <TaskSidebarItem
               label={<span className="inline-flex items-center gap-1.5">
                 {t(`tasks.projection.${id}`)}
-                {id === 'today' && overdueCount ? <span className="text-xs font-semibold text-destructive">{t('tasks.nav.overdue', { count: overdueCount })}</span> : null}
+                {id === 'today' && overdueCount ? <span className="text-caption font-medium text-destructive">{t('tasks.nav.overdue', { count: overdueCount })}</span> : null}
               </span>}
               icon={icon} tone={tone}
               count={id === 'trash' ? trashCount : id === 'inbox' || id === 'today' || id === 'upcoming' ? listCount(id) : null}
@@ -180,20 +180,20 @@ export function TaskSidebar({
       </TaskSidebarGroup>
 
       {areas.length || personalProjects.length ? (
-        <TaskSidebarGroup title={t('tasks.nav.projects')} icon={FolderKanban} tone="info">
+        <TaskSidebarGroup title={t('tasks.nav.projects')} icon={Kanban} tone="info">
           {personalProjects.filter(project => !project.areaId).map(projectItem)}
           {areas.map(area => {
             const projects = personalProjects.filter(project => project.areaId === area.id)
             const navigation = (
               <div {...dropProps(`area:${area.id}`)}>
-                <TaskSidebarItem label={area.name} icon={Layers} tone="warning"
+                <TaskSidebarItem label={area.name} icon={Stack} tone="warning"
                   active={view.kind === 'area' && view.id === area.id}
                   onClick={() => onSelect({ kind: 'area', id: area.id })}
                   testId={`tasks-nav-area-${area.id}`} />
               </div>
             )
             return projects.length ? (
-              <TaskSidebarGroup key={area.id} title={area.name} icon={Layers} tone="warning"
+              <TaskSidebarGroup key={area.id} title={area.name} icon={Stack} tone="warning"
                 navigation={navigation} expanded={!area.collapsed} onToggle={() => onToggleArea(area)}>
                 {projects.map(projectItem)}
               </TaskSidebarGroup>
@@ -202,13 +202,13 @@ export function TaskSidebar({
         </TaskSidebarGroup>
       ) : null}
 
-      <TaskSidebarGroup title={t('tasks.nav.workspaceProjects')} icon={FolderOpen} tone="success">
+      <TaskSidebarGroup title={t('tasks.nav.workspaceProjects')} icon={Folder} tone="success">
         <span className="sr-only">{t('tasks.filterProject')}</span>
-        {workspaceProjects.length ? workspaceProjects.map(projectItem) : <div className="px-2 text-sm text-text-muted">{t('tasks.nav.noProjects')}</div>}
+        {workspaceProjects.length ? workspaceProjects.map(projectItem) : <div className="px-2 text-body text-text-muted">{t('tasks.nav.noProjects')}</div>}
       </TaskSidebarGroup>
 
       {tags.length ? (
-        <TaskSidebarGroup title={t('tasks.tags')} icon={Tags} tone="violet">
+        <TaskSidebarGroup title={t('tasks.tags')} icon={Tag} tone="violet">
           {tags.slice(0, 12).map(({ tag, count }) => (
             <TaskSidebarItem key={tag} label={`#${tag}`} icon={Tag} tone="violet" count={count}
               active={view.kind === 'tag' && view.id === tag} onClick={() => onSelect({ kind: 'tag', id: tag })}
@@ -217,7 +217,7 @@ export function TaskSidebar({
         </TaskSidebarGroup>
       ) : null}
 
-      <TaskSidebarGroup title={t('tasks.nav.agents')} icon={Bot} tone="accent">
+      <TaskSidebarGroup title={t('tasks.nav.agents')} icon={Robot} tone="accent">
         {AGENTS.map(({ id, icon, tone }) => (
           <TaskSidebarItem key={id} label={t(`tasks.agents.${id}`)} icon={icon} tone={tone} count={agents[id]}
             active={view.kind === 'agents' && view.id === id} onClick={() => onSelect({ kind: 'agents', id })}

@@ -1,4 +1,4 @@
-/* Icon sizes (UI-AUDIT §3.4). lucide only.
+/* Icon sizes (UI-AUDIT §3.4). lucide + Phosphor (navigation chrome, regular weight).
    rail 20 in a 36 box · toolbar 16 in a 28 box · inline 16 · caption 14
    status 12 · empty-state 32 */
 :root {

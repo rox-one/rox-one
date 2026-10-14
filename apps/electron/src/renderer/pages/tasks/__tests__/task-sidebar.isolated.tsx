@@ -55,21 +55,22 @@ describe('Tasks contextual sidebar', () => {
     expect(button(html, 'tasks-nav-trash')).toContain('>3</span>')
   })
 
-  it('gives each projection a distinct icon and an explicit color', () => {
+  it('gives each projection a distinct muted Phosphor glyph, keeping its tone as data', () => {
     const html = render()
-    const icons = [
-      ['inbox', 'inbox', 'text-info'], ['today', 'sun', 'warning'],
-      ['upcoming', 'calendar-days', 'text-accent'], ['anytime', 'list-checks', 'text-success'],
-      ['someday', 'hourglass', 'text-violet-500'], ['logbook', 'book-check', 'text-text-muted'],
-      ['trash', 'trash-2', 'text-destructive'],
+    const tones = [
+      ['inbox', 'info'], ['today', 'warning'], ['upcoming', 'accent'], ['anytime', 'success'],
+      ['someday', 'violet'], ['logbook', 'muted'], ['trash', 'danger'],
     ]
-    for (const [id, icon, color] of icons) {
+    const glyphs = new Set<string>()
+    for (const [id, tone] of tones) {
       const item = button(html, `tasks-nav-${id}`)
-      expect(item).toContain(`lucide-${icon}`)
-      expect(item).toContain(color!)
+      expect(item).toContain(`data-tone="${tone}"`)
+      expect(item).toMatch(/icon-inline (text-text-muted|text-foreground)/)
+      glyphs.add(item.match(/<svg[\s\S]*?<\/svg>/)?.[0].replace(/class="[^"]*"|data-tone="[^"]*"/g, '') ?? '')
     }
-    expect(button(html, 'tasks-nav-project-project-a')).toContain('lucide-folder-kanban')
-    expect(button(html, 'tasks-nav-agents-running')).toContain('lucide-play')
+    expect(glyphs.size).toBe(tones.length)
+    expect(button(html, 'tasks-nav-project-project-a')).toContain('<svg')
+    expect(button(html, 'tasks-nav-agents-running')).toContain('<svg')
   })
 
   it('honors saved area folding while retaining project selection and progress', () => {

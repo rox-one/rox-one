@@ -19,7 +19,6 @@ import {
 import { DropdownMenuProvider } from '@/components/ui/menu-context'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-import { Separator } from '@/components/ui/separator'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { SettingsSubpage } from '../../../shared/types'
 import { SETTINGS_ITEMS } from '../../../shared/menu-schema'
@@ -72,58 +71,29 @@ function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRo
 
   return (
     <div className="settings-item [contain:layout_paint]" data-selected={isSelected || undefined}>
-      {/* Separator - only show if not first; 44px aligns with the label column */}
-      {!isFirst && (
-        <div className="settings-separator pl-[44px] pr-4">
-          <Separator />
-        </div>
-      )}
-      {/* Wrapper for button with proper margins */}
-      <div className="settings-content relative group select-none pl-2 mr-2">
-        {/* Icon - positioned absolutely for consistent alignment */}
-        <div className="absolute left-[20px] top-[14px] z-10">
-          <Icon
-            className={cn(
-              'w-4 h-4 shrink-0',
-              isSelected ? 'text-foreground' : 'text-muted-foreground'
-            )}
-          />
-        </div>
-        {/* Main content button */}
+      {/* Compact Cursor-like row: 16px muted glyph + 13px label on one 28px line; the
+          description stays available as the tooltip. */}
+      <div className="settings-content relative group select-none px-2">
         <button
           type="button"
           onClick={onSelect}
+          title={item.description}
           className={cn(
-            'flex w-full items-start gap-2 pl-2 pr-4 py-3 text-left text-sm rounded-[var(--radius-card)]',
-            // Fast hover transition (75ms vs default 150ms)
-            'transition-[background-color] duration-75',
+            'flex h-7 w-full items-center gap-2 rounded-md px-2 pr-8 text-left text-body outline-none',
+            'transition-[background-color] duration-75 focus-visible:ring-1 focus-visible:ring-ring',
             isSelected
-              ? 'bg-foreground/5 hover:bg-foreground/7'
-              : 'hover:bg-foreground/2'
+              ? 'bg-[var(--state-selected)] text-foreground'
+              : 'text-text-secondary hover:bg-[var(--state-hover)] hover:text-foreground'
           )}
         >
-          {/* Spacer for icon */}
-          <div className="w-6 h-5 shrink-0" />
-          {/* Content column */}
-          <div className="flex flex-col min-w-0 flex-1">
-            <span
-              className={cn(
-                'font-medium',
-                isSelected ? 'text-foreground' : 'text-foreground/80'
-              )}
-            >
-              {item.label}
-            </span>
-            <span className="text-xs text-text-secondary line-clamp-1" title={item.description}>
-              {item.description}
-            </span>
-          </div>
+          <Icon className={cn('icon-inline', isSelected ? 'text-foreground' : 'text-text-muted')} />
+          <span className="min-w-0 flex-1 truncate">{item.label}</span>
         </button>
         {/* Action buttons - visible on hover or when menu is open */}
         <div
           data-touch-reveal="true"
           className={cn(
-            'absolute right-2 top-2 transition-opacity z-10',
+            'absolute right-3 top-1/2 -translate-y-1/2 transition-opacity z-10',
             menuOpen
               ? 'opacity-100'
               : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 group-focus-within:pointer-events-auto'
@@ -135,7 +105,7 @@ function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRo
                 <button
                   type="button"
                   aria-label={t('sessionMenu.openInNewWindow')}
-                  className="p-1.5 hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
+                  className="p-1 hover:bg-[var(--state-hover)] data-[state=open]:bg-[var(--state-hover)] cursor-pointer"
                 >
                   <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                 </button>
@@ -216,8 +186,8 @@ export default function SettingsNavigator({
         {groupedSettingsItems.length > 0 ? (
           <div className="pb-6">
             {groupedSettingsItems.map(({ group, pages }) => (
-              <section key={group.id} className="pt-3 first:pt-1">
-                <h2 className="px-5 pb-1.5 text-xs font-semibold uppercase caps-label text-text-secondary">
+              <section key={group.id} className="flex flex-col gap-px pt-3 first:pt-1">
+                <h2 className="px-4 pb-1 text-caption font-medium text-text-muted">
                   {t(group.labelKey)}
                 </h2>
                 {pages.map((item, index) => (

@@ -222,6 +222,7 @@
     "js-yaml": "^4.1.1",
     "katex": "^0.18.2",
     "linkify-it": "^5.0.0",
+    "@phosphor-icons/react": "^2.1.10",
     "lucide-react": "^0.561.0",
     "marked": "^17.0.1",
     "markitdown-js": "^0.0.14",

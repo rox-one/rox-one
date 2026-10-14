@@ -30,4 +30,14 @@ describe('rox/icon-size-tokens', () => {
     `)
     expect(messages).toHaveLength(0)
   })
+
+  it('applies the same token rules to Phosphor icons and keeps them regular weight', () => {
+    const messages = run(`
+      import { Tray, CaretRight as Caret, type Icon } from '@phosphor-icons/react'
+      const a = <Tray size={14} />
+      const b = <Caret className="size-3" weight="bold" />
+      const c = <Tray className="icon-inline text-text-muted" weight="regular" />
+    `)
+    expect(ids(messages)).toEqual(['sizeProp', 'sizeClass', 'phosphorWeight'])
+  })
 })
