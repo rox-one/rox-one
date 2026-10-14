@@ -57,9 +57,11 @@ describe('compact status bar', () => {
 
   it('renders every visible item as a button', () => {
     const html = render(<StatusBar account={account} />)
-    for (const id of ['status-bar-workspace', 'status-bar-sync', 'status-bar-sessions', 'status-bar-agents', 'status-bar-inbox', 'status-bar-balance', 'status-bar-notifications']) {
+    for (const id of ['status-bar-workspace', 'status-bar-sync', 'status-bar-sessions', 'status-bar-agents', 'status-bar-inbox', 'status-bar-balance']) {
       expect(html).toMatch(new RegExp(`<button[^>]*data-testid="${id}"`))
     }
+    // Hidden by default: the titlebar bell covers notifications.
+    expect(html).not.toContain('status-bar-notifications')
   })
 })
 
