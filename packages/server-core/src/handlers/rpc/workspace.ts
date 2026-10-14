@@ -24,7 +24,7 @@ import {
 import { perf } from '@rox/shared/utils'
 import { pushTyped, type RequestContext, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { assertNativeMetadataRead, readNativeViews } from './native-sidebar-metadata'
+import { assertNativeMetadataRead, readNativeChatFolders, readNativeViews } from './native-sidebar-metadata'
 import { readNativeWorkspaceMetadata } from './native-workspace-registry'
 import { isValidWorkingDirectory, isValidWorkspaceRootPath, resolveContainedRelativePath } from '../../utils/path-validation'
 import { isSensitiveAgentCwd } from '@rox/shared/sessions'
@@ -59,6 +59,8 @@ export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.theme.SET_WORKSPACE_COLOR_THEME,
   RPC_CHANNELS.theme.GET_ALL_WORKSPACE_THEMES,
   RPC_CHANNELS.theme.BROADCAST_WORKSPACE_THEME,
+  RPC_CHANNELS.chatFolders.GET,
+  RPC_CHANNELS.chatFolders.MUTATE,
   RPC_CHANNELS.views.LIST,
   RPC_CHANNELS.views.SAVE,
   RPC_CHANNELS.toolIcons.GET_MAPPINGS,
@@ -613,6 +615,30 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     saveViews(workspace.rootPath, views)
     // Broadcast labels changed since views are used alongside labels in sidebar
     pushTyped(server, RPC_CHANNELS.labels.CHANGED, { to: 'workspace', workspaceId }, workspaceId)
+  })
+
+  // ============================================================
+  // Chat folders (chat-folders.json)
+  // ============================================================
+
+  server.handle(RPC_CHANNELS.chatFolders.GET, async (ctx, workspaceId: string) => {
+    const nativeWorkspace = assertNativeMetadataRead(ctx, deps, server, workspaceId)
+    if (nativeWorkspace) return readNativeChatFolders(nativeWorkspace.rootPath)
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error('Workspace not found')
+    const { loadChatFolders } = await import('@rox/shared/chat-folders/storage')
+    assertNativeMetadataRead(ctx, deps, server, workspaceId, workspace.rootPath)
+    return loadChatFolders(workspace.rootPath)
+  }, { nativeAction: 'read' })
+
+  // Apply one validated op (create/rename/delete/move/reorder) and broadcast the new state
+  server.handle(RPC_CHANNELS.chatFolders.MUTATE, async (_ctx, workspaceId: string, op: import('@rox/shared/chat-folders').ChatFoldersOp) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error('Workspace not found')
+    const { mutateChatFolders } = await import('@rox/shared/chat-folders/storage')
+    const next = mutateChatFolders(workspace.rootPath, op)
+    pushTyped(server, RPC_CHANNELS.chatFolders.CHANGED, { to: 'workspace', workspaceId }, workspaceId, next)
+    return next
   })
 
   // ============================================================

@@ -913,6 +913,9 @@ export const CHANNEL_MAP = {
   onLlmConnectionsChanged: listener(RPC_CHANNELS.llmConnections.CHANGED),
 
   // Views
+  getChatFolders: invoke(RPC_CHANNELS.chatFolders.GET),
+  mutateChatFolders: invoke(RPC_CHANNELS.chatFolders.MUTATE),
+  onChatFoldersChanged: listener(RPC_CHANNELS.chatFolders.CHANGED),
   listViews: invoke(RPC_CHANNELS.views.LIST),
   saveViews: invoke(RPC_CHANNELS.views.SAVE),
 
