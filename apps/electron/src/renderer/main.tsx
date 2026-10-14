@@ -22,6 +22,7 @@ import { syncMainProcessLanguage } from './lib/main-language-sync'
 import { ShellStoreBridge } from './platform/ShellStoreBridge'
 import { RenderProfileMotionConfig } from './lib/render-profile-motion'
 import { seedRenderProfile, startRenderProfileSync } from './lib/render-profile-dom'
+import { seedDensity } from './lib/density-preference'
 import { seedEntitiesLinksGate } from './lib/entities-links-sync'
 import { subscribeNavigateEvents } from './lib/navigate'
 import { drainLearningEventsToTelemetry } from './components/onboarding/learning-curve'
@@ -31,6 +32,7 @@ const rendererPerfHarness = installRendererPerfHarness()
 // PERF-07: own `data-render-profile` at the root, before React and AppShell,
 // so every startup screen (loading, onboarding, reauth, workspace picker)
 // renders with the active profile. The snapshot request starts right here.
+seedDensity()
 seedRenderProfile(document.documentElement, window.electronAPI, navigator.userAgent)
 const stopRenderProfileSync = startRenderProfileSync(window.electronAPI, document.documentElement)
 import.meta.hot?.dispose(stopRenderProfileSync)

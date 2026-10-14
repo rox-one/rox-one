@@ -6,6 +6,7 @@
  * and has no user-selectable mode or color theme.
  */
 
+import { setDensity, useDensity, type UiDensity } from '@/lib/density-preference'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
 import './AppearanceSettingsPage.css'
@@ -717,6 +718,7 @@ export default function AppearanceSettingsPage() {
   const { t, i18n } = useTranslation()
   const toolIconColumns = useMemo(() => getToolIconColumns(t), [t])
   const mounted = useRef(true)
+  const density = useDensity()
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
 
   const {
@@ -1116,6 +1118,19 @@ export default function AppearanceSettingsPage() {
               {/* Display & accessibility. */}
               <SettingsSection title={t("settings.appearance.display")}>
                 <SettingsCard>
+                  <SettingsRow
+                    label={t("settings.appearance.density")}
+                    description={t("settings.appearance.densityDesc")}
+                  >
+                    <SettingsSegmentedControl
+                      value={density}
+                      onValueChange={(value) => setDensity(value as UiDensity)}
+                      options={[
+                        { value: 'compact', label: t("settings.appearance.densityCompact") },
+                        { value: 'comfortable', label: t("settings.appearance.densityComfortable") },
+                      ]}
+                    />
+                  </SettingsRow>
                   <SettingsRow
                     label={t("settings.appearance.contrast")}
                     description={t("settings.appearance.contrastDesc")}
