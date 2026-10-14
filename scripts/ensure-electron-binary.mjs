@@ -9,6 +9,10 @@ import { dirname, join } from 'node:path'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 
+// CI and the headless container images set ELECTRON_SKIP_BINARY_DOWNLOAD=1 to
+// opt out of the Electron runtime download; precedent: .cursor/install.sh:19.
+if (process.env.ELECTRON_SKIP_BINARY_DOWNLOAD === '1') process.exit(0)
+
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(join(root, 'package.json'))
 let electronDir
