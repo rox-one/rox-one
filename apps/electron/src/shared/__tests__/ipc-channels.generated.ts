@@ -197,6 +197,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'cookbooks-lab:document',
   'cookbooks-lab:ensure',
   'cookbooks-lab:export',
+  'cookbooks-lab:mutate',
   'cookbooks-lab:open',
   'cookbooks-lab:reset',
   'cookbooks-lab:restart',
