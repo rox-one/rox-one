@@ -23,6 +23,8 @@ interface DeltaLike {
 }
 
 export interface StreamDeltaCoalescerOptions {
+  /** Called when delivering one event throws; the remaining events still deliver. */
+  onError?: (error: unknown, event: unknown) => void
   /** Defaults to requestAnimationFrame plus a timer fallback (rAF stalls in hidden windows). */
   schedule?: (flush: () => void) => () => void
 }
@@ -49,10 +51,20 @@ function defaultSchedule(flush: () => void): () => void {
 
 export function createStreamDeltaCoalescer<E>(
   deliver: (event: E) => void,
-  { schedule = defaultSchedule }: StreamDeltaCoalescerOptions = {},
+  {
+    schedule = defaultSchedule,
+    onError = (error, event) => console.error('[stream-coalescer] session event handler failed', (event as DeltaLike)?.type, error),
+  }: StreamDeltaCoalescerOptions = {},
 ) {
   let queue: DeltaLike[] = []
   let cancelScheduled: (() => void) | null = null
+  let disposed = false
+
+  // A throw while applying one event must not take the rest of the batch (or
+  // the turn-end/abort event that triggered the flush) down with it.
+  const safeDeliver = (event: E) => {
+    try { deliver(event) } catch (error) { onError(error, event) }
+  }
 
   const flush = () => {
     cancelScheduled?.()
@@ -60,14 +72,15 @@ export function createStreamDeltaCoalescer<E>(
     if (queue.length === 0) return
     const pending = queue
     queue = []
-    for (const event of pending) deliver(event as unknown as E)
+    for (const event of pending) safeDeliver(event as unknown as E)
   }
 
   const push = (incoming: E) => {
+    if (disposed) return
     const event = incoming as unknown as DeltaLike
     if (!isDelta(event)) {
       flush()
-      deliver(incoming)
+      safeDeliver(incoming)
       return
     }
     const last = queue[queue.length - 1]
@@ -84,7 +97,10 @@ export function createStreamDeltaCoalescer<E>(
   return {
     push,
     flush,
-    /** Deliver anything still queued and stop scheduling. */
-    dispose: flush,
+    /** Deliver anything still queued, stop scheduling, and ignore later pushes. */
+    dispose: () => {
+      flush()
+      disposed = true
+    },
   }
 }

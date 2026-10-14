@@ -62,4 +62,30 @@ describe('#1589 stream delta coalescer', () => {
     h.frame()
     expect(first.delta).toBe('a')
   })
+
+  it('a throwing handler loses only its own event; the rest and the trigger still deliver', () => {
+    const out: string[] = []
+    const errors: string[] = []
+    let flushNow: (() => void) | null = null
+    const c = createStreamDeltaCoalescer<Ev>(e => {
+      if (e.sessionId === 'bad') throw new Error('boom')
+      out.push(`${e.type}:${e.sessionId}`)
+    }, { schedule: f => { flushNow = f; return () => {} }, onError: (_e, ev) => errors.push((ev as Ev).sessionId!) })
+    c.push({ type: 'text_delta', sessionId: 'bad', delta: 'x' })
+    c.push({ type: 'text_delta', sessionId: 'ok', delta: 'y' })
+    c.push({ type: 'complete', sessionId: 'ok' })
+    expect(out).toEqual(['text_delta:ok', 'complete:ok'])
+    expect(errors).toEqual(['bad'])
+    expect(flushNow).not.toBeNull()
+  })
+
+  it('ignores events after dispose', () => {
+    const h = harness()
+    h.c.dispose()
+    h.c.push({ type: 'text_delta', sessionId: 's', delta: 'late' })
+    h.c.push({ type: 'complete', sessionId: 's' })
+    h.frame()
+    expect(h.out).toEqual([])
+    expect(h.schedules()).toBe(0)
+  })
 })

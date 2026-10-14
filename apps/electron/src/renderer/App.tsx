@@ -1569,6 +1569,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
     return () => {
       unsubscribe()
+      // Flushes through this effect's closure. On a scope switch (authority or
+      // workspace) its guard drops up to one frame of queued deltas; that is
+      // fine because the new scope reloads its sessions from the server.
       coalescer.dispose()
     }
   }, [
