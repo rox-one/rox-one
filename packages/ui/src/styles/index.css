@@ -632,9 +632,13 @@ html[data-ui-profile="graphite"] [data-screen-subtitle] {
   font-size: 13px;
   line-height: 20px;
 }
+/* A padded page wrapper owns the inset; its header then adds none, so the
+   title lines up with the sections below (no double inset). */
 html[data-ui-profile="graphite"] [data-screen-body] {
-  padding-left: 40px;
-  padding-right: 40px;
+  padding: 40px;
+}
+html[data-ui-profile="graphite"] [data-screen-body] [data-screen-header] {
+  padding: 0;
 }
 html[data-ui-profile="graphite"] [data-screen-section-title] {
   font-size: 15px;
@@ -650,17 +654,20 @@ html[data-ui-profile="graphite"] [data-screen-count] {
 /* --- Concentric radii (all profiles) --------------------------------------
    An inner surface inset by --nest-pad inside a rounded container uses the
    outer radius minus that padding, so no corner voids show. Flush children
-   (no padding) take 0 via .radius-flush. */
+   (no padding) take 0 via .radius-flush. Opt-in utilities; menu items are
+   handled per profile below. */
 .radius-nested {
   border-radius: max(0px, calc(var(--radius-outer, var(--radius-md)) - var(--nest-pad, 4px)));
 }
 .radius-flush {
   border-radius: 0;
 }
-:is([role="menu"], [role="listbox"], [data-premium-menu]) {
+html[data-ui-profile="graphite"] :is([role="menu"], [role="listbox"], [data-premium-menu]) {
   --radius-outer: var(--popover-radius, var(--radius-md));
 }
-:is([role="menu"], [role="listbox"], [data-premium-menu]) :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"]) {
+/* Graphite only: the larger overlay radius needs concentric items; other
+   themes keep their per-component rounded-* utilities. */
+html[data-ui-profile="graphite"] :is([role="menu"], [role="listbox"], [data-premium-menu]) :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"]) {
   border-radius: max(var(--radius-xs), calc(var(--radius-outer) - var(--nest-pad, 4px)));
 }
 

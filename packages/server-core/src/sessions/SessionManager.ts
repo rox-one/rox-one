@@ -1,4 +1,5 @@
 import { getRoxAccountAuthority, peekRoxAccountAuthority, type RoxExecutionContext } from '@rox/shared/auth'
+import { accumulateSessionTokens } from '@rox/shared/sessions'
 import type { EventSink, RpcServer } from '@rox/server-core/transport'
 import { annotationPayloadRejection } from './annotation-payload'
 import { planSteeringSubmit, QueueSteering, type SteeringVerb } from './queue-steering'
@@ -935,6 +936,8 @@ interface ManagedSession {
     cacheCreationTokens?: number
     /** Model's context window size in tokens (from SDK modelUsage) */
     contextWindow?: number
+    sessionTokens?: number
+    sessionTokensIncomplete?: boolean
   }
   /** Runtime-only budget reservation; unresolved reservations survive in AgentBudgetLedger. */
   budgetRunId?: string
@@ -11288,6 +11291,13 @@ export class SessionManager implements ISessionManager {
           // inputTokens = current context size (full conversation sent this turn), NOT accumulated
           // Each API call sends the full conversation history, so we use the latest value
           managed.tokenUsage.inputTokens = event.usage.inputTokens
+          {
+            // Real session total, counted per request (before outputTokens grows).
+            const next = accumulateSessionTokens(managed.tokenUsage, event.usage.requestTotals)
+            delete managed.tokenUsage.sessionTokens
+            delete managed.tokenUsage.sessionTokensIncomplete
+            Object.assign(managed.tokenUsage, next)
+          }
           // outputTokens and costUsd are accumulated across all turns (total session usage)
           managed.tokenUsage.outputTokens += event.usage.outputTokens
           managed.tokenUsage.totalTokens = managed.tokenUsage.inputTokens + managed.tokenUsage.outputTokens

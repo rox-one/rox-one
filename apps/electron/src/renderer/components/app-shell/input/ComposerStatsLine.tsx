@@ -25,28 +25,30 @@ export function ComposerStatsLine({ stats, className }: { stats: ComposerStats; 
   return (
     <div
       data-testid="composer-stats"
+      role="group"
+      aria-label={t('chat.stats.label')}
       className={cn('flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-1.5 text-xs numeric text-muted-foreground', className)}
     >
       <span className="inline-flex items-center gap-1.5" data-stat="turns">
         <Activity className="size-3.5" aria-hidden />
-        {t('chat.stats.turnsSteps', { turns: stats.turns, steps: stats.steps })}
+        {t('chat.stats.turns', { count: stats.turns })} {t('chat.stats.steps', { count: stats.steps })}
       </span>
-      {stats.totalTokens != null && (
+      {stats.sessionTokens != null && (
         <span className="inline-flex items-center gap-1.5" data-stat="tokens">
           <Database className="size-3.5" aria-hidden />
-          {t('chat.stats.tokens', { tokens: formatCompactTokens(stats.totalTokens) })}
+          {t('chat.stats.sessionTokens', { tokens: formatCompactTokens(stats.sessionTokens) })}
           {stats.cacheHitPercent != null && (
             <span data-stat="cache">{t('chat.stats.cacheHit', { percent: stats.cacheHitPercent })}</span>
           )}
         </span>
       )}
-      {stats.totalTokens == null && stats.cacheHitPercent != null && (
+      {stats.sessionTokens == null && stats.cacheHitPercent != null && (
         <span data-stat="cache">{t('chat.stats.cacheHit', { percent: stats.cacheHitPercent })}</span>
       )}
       {stats.contextPercent != null && (
-        <span className="inline-flex items-center gap-1.5" data-stat="context" title={t('chat.stats.contextTitle')}>
+        <span className="inline-flex items-center gap-1.5" data-stat="context" title={t('chat.stats.contextTitle')} aria-label={t('chat.stats.contextAria', { percent: stats.contextPercent })}>
           <ContextRing percent={stats.contextPercent} />
-          {stats.contextPercent}%
+          <span aria-hidden>{stats.contextPercent}%</span>
         </span>
       )}
     </div>

@@ -13,6 +13,7 @@
  */
 
 import type { SDKMessage, SDKAssistantMessageError } from '@anthropic-ai/claude-agent-sdk';
+import { promptTokens } from '../../core/prompt-tokens.ts';
 import type { AgentEvent } from '@rox/core/types';
 import type { AgentError } from '../../errors.ts';
 import { BaseEventAdapter } from '../base-event-adapter.ts';
@@ -64,6 +65,32 @@ export function buildWindowsSkillsDirError(errorText: string): { type: 'typed_er
  * Per-message usage snapshot for accurate context window display.
  * result.modelUsage is cumulative; we need per-message granularity.
  */
+/**
+ * Turn totals from result.modelUsage. modelUsage is a running total for the
+ * query() call (cumulative across turns in streaming-input sessions), so the
+ * turn's share is the delta from the previous result. A drop means the SDK
+ * started fresh (resume, /clear); a zero snapshot (crash/startup error) gives
+ * no totals so the session total is marked incomplete rather than guessed.
+ */
+export function claudeTurnTotals(
+  modelUsage: Record<string, { inputTokens?: number; outputTokens?: number; cacheReadInputTokens?: number; cacheCreationInputTokens?: number }> | null | undefined,
+  previous: { promptTokens: number; outputTokens: number } | null,
+): { totals?: { promptTokens: number; outputTokens: number; requests: number }; snapshot: { promptTokens: number; outputTokens: number } | null } {
+  const entries = Object.values(modelUsage ?? {});
+  let prompt = 0;
+  let output = 0;
+  for (const u of entries) {
+    prompt += promptTokens(u?.inputTokens, u?.cacheReadInputTokens, u?.cacheCreationInputTokens);
+    output += Math.max(0, u?.outputTokens ?? 0);
+  }
+  if (entries.length === 0 || prompt + output === 0) return { snapshot: previous };
+  const base = previous && prompt >= previous.promptTokens && output >= previous.outputTokens ? previous : { promptTokens: 0, outputTokens: 0 };
+  return {
+    totals: { promptTokens: prompt - base.promptTokens, outputTokens: output - base.outputTokens, requests: entries.length },
+    snapshot: { promptTokens: prompt, outputTokens: output },
+  };
+}
+
 interface AssistantUsage {
   input_tokens: number;
   cache_read_input_tokens: number;
@@ -79,6 +106,8 @@ export class ClaudeEventAdapter extends BaseEventAdapter {
 
   // Session-persistent state (survives across turns)
   private lastAssistantUsage: AssistantUsage | null = null;
+  /** Last cumulative modelUsage snapshot (prompt incl. cache, output). */
+  private lastModelUsageSnapshot: { promptTokens: number; outputTokens: number } | null = null;
   private cachedContextWindow?: number;
   private _sdkTools: string[] = [];
 
@@ -92,6 +121,11 @@ export class ClaudeEventAdapter extends BaseEventAdapter {
   // ============================================================
   // Turn Lifecycle
   // ============================================================
+
+  /** A new SDK query() starts its modelUsage running total from zero. */
+  resetModelUsageBaseline(): void {
+    this.lastModelUsageSnapshot = null;
+  }
 
   protected onTurnStart(): void {
     this.toolIndex = new ToolIndex();
@@ -457,21 +491,26 @@ export class ClaudeEventAdapter extends BaseEventAdapter {
       this.cachedContextWindow = primaryModelUsage.contextWindow;
     }
 
+    const turnTotals = claudeTurnTotals(msg.modelUsage, this.lastModelUsageSnapshot);
+    this.lastModelUsageSnapshot = turnTotals.snapshot;
+
     // Use lastAssistantUsage for per-message context display (not cumulative)
     let inputTokens: number;
     let cacheRead: number;
     let cacheCreation: number;
 
     if (this.lastAssistantUsage) {
-      inputTokens = this.lastAssistantUsage.input_tokens +
-                    this.lastAssistantUsage.cache_read_input_tokens +
-                    this.lastAssistantUsage.cache_creation_input_tokens;
+      inputTokens = promptTokens(
+        this.lastAssistantUsage.input_tokens,
+        this.lastAssistantUsage.cache_read_input_tokens,
+        this.lastAssistantUsage.cache_creation_input_tokens,
+      );
       cacheRead = this.lastAssistantUsage.cache_read_input_tokens;
       cacheCreation = this.lastAssistantUsage.cache_creation_input_tokens;
     } else {
       cacheRead = msg.usage.cache_read_input_tokens ?? 0;
       cacheCreation = msg.usage.cache_creation_input_tokens ?? 0;
-      inputTokens = msg.usage.input_tokens + cacheRead + cacheCreation;
+      inputTokens = promptTokens(msg.usage.input_tokens, cacheRead, cacheCreation);
     }
 
     const usage = {
@@ -481,6 +520,7 @@ export class ClaudeEventAdapter extends BaseEventAdapter {
       cacheCreationTokens: cacheCreation,
       costUsd: msg.total_cost_usd,
       contextWindow: primaryModelUsage?.contextWindow,
+      ...(turnTotals.totals && { requestTotals: turnTotals.totals }),
     };
 
     if (msg.subtype === 'success') {

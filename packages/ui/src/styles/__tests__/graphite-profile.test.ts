@@ -29,7 +29,16 @@ describe('Rox Graphite profile', () => {
     expect(css).toMatch(/html\[data-ui-profile="graphite"\] \[data-sidebar-new-session\]\s*\{\s*display:\s*flex;/)
   })
 
-  it('menu items use concentric radii', () => {
+  it('menu items use concentric radii in graphite only', () => {
     expect(css).toContain('calc(var(--radius-outer) - var(--nest-pad, 4px))')
+    for (const m of css.matchAll(/([^{}]*)\{[^{}]*--radius-outer\) - var\(--nest-pad/g)) {
+      if (m[1]!.includes('menuitem')) expect(m[1]!.trim().startsWith('html[data-ui-profile="graphite"]')).toBe(true)
+    }
+  })
+
+  it('a padded screen body owns the inset (no double inset)', () => {
+    expect(css).toMatch(/html\[data-ui-profile="graphite"\] \[data-screen-body\] \[data-screen-header\]\s*\{\s*padding:\s*0;/)
+    const skills = readFileSync(join(repoRoot, 'apps/electron/src/renderer/pages/SkillsCatalogPage.tsx'), 'utf8')
+    expect(skills).toContain('data-screen-body=""')
   })
 })

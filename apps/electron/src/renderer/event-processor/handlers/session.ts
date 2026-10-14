@@ -1032,6 +1032,8 @@ export function handleUsageUpdate(
     costUsd: session.tokenUsage?.costUsd ?? 0,
     ...(session.tokenUsage?.cacheReadTokens !== undefined && { cacheReadTokens: session.tokenUsage.cacheReadTokens }),
     ...(session.tokenUsage?.cacheCreationTokens !== undefined && { cacheCreationTokens: session.tokenUsage.cacheCreationTokens }),
+    ...(session.tokenUsage?.sessionTokens !== undefined && { sessionTokens: session.tokenUsage.sessionTokens }),
+    ...(session.tokenUsage?.sessionTokensIncomplete && { sessionTokensIncomplete: true }),
     ...(event.tokenUsage.contextWindow && { contextWindow: event.tokenUsage.contextWindow }),
   }
 

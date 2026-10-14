@@ -1,5 +1,5 @@
 /**
- * Composer stats line (DeepSeek Harness style): turns + steps, total tokens,
+ * Composer stats line (DeepSeek Harness style): turns + steps, session tokens,
  * cache hit %, context usage %. Every metric is derived from data the session
  * already carries; a metric without a source is `null` and is not rendered.
  */
@@ -8,7 +8,9 @@ export interface ComposerStatsInput {
   messages: ReadonlyArray<{ role: string }>
   tokenUsage?: {
     inputTokens?: number
-    totalTokens?: number
+    /** Real session sum (prompt incl. cache + output over every request). */
+    sessionTokens?: number
+    sessionTokensIncomplete?: boolean
     cacheReadTokens?: number
     contextWindow?: number
   } | null
@@ -19,7 +21,8 @@ export interface ComposerStatsInput {
 export interface ComposerStats {
   turns: number
   steps: number
-  totalTokens: number | null
+  /** Session total; null for sessions without complete per-request data. */
+  sessionTokens: number | null
   /** 0–100, last request: cache-read share of the prompt. */
   cacheHitPercent: number | null
   /** 0–100, last request prompt size vs. the model context window. */
@@ -42,8 +45,8 @@ export function computeComposerStats({ messages, tokenUsage, fallbackContextWind
   return {
     turns,
     steps,
-    totalTokens: positive(tokenUsage?.totalTokens) ? tokenUsage!.totalTokens! : null,
-    // inputTokens already includes cache reads (SessionManager / event adapters).
+    sessionTokens: !tokenUsage?.sessionTokensIncomplete && positive(tokenUsage?.sessionTokens) ? tokenUsage!.sessionTokens! : null,
+    // inputTokens is the prompt size incl. cache reads/writes on every backend (core/prompt-tokens.ts).
     cacheHitPercent: positive(input) && typeof cacheRead === 'number' && Number.isFinite(cacheRead) && cacheRead >= 0
       ? Math.min(100, Math.round((cacheRead / input) * 100))
       : null,
