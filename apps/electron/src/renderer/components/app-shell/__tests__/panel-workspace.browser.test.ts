@@ -49,7 +49,11 @@ describe.skipIf(!existsSync(executablePath))('production persistent panel contai
  it('keeps drafts and panel identities mounted across grid, focus and compact arrangements',async()=>withPage(async page=>{
   await page.getByRole('textbox',{name:'Draft p1'}).fill('Retained first draft');await page.getByRole('textbox',{name:'Draft p2'}).fill('Retained sibling draft');await page.locator('#p1').focus();
   const initial=await mounts(page);await mode(page,'Focus');await expectDOM(page.getByRole('textbox',{name:'Draft p2'})).toHaveCount(0);expect(await page.locator('input').count()).toBe(4);
-  await mode(page,'Columns');await expectDOM(grid(page)).toHaveAttribute('data-panel-grid','4x1');await expectDOM(page.getByRole('textbox',{name:'Draft p2'})).toHaveValue('Retained sibling draft');
+  // Columns keeps four panels in one row. The shell strip (single-row multi-panel
+  // scrolls horizontally with per-screen px widths) publishes that arrangement as
+  // data-panel-grid="strip" instead of the old fr-track "4x1" key; the four panels
+  // still share grid row 1, which is what "4x1" recorded.
+  await mode(page,'Columns');await expectDOM(grid(page)).toHaveAttribute('data-panel-grid','strip');await expectDOM(page.locator('[data-panel-role="content"]')).toHaveCount(4);expect(await page.locator('[data-panel-role="content"]').evaluateAll(elements=>elements.every(element=>getComputedStyle(element).gridRowStart==='1'))).toBe(true);await expectDOM(page.getByRole('textbox',{name:'Draft p2'})).toHaveValue('Retained sibling draft');
   await mode(page,'2');await expectDOM(grid(page)).toHaveAttribute('data-panel-grid','2x2');await page.getByRole('button',{name:'Toggle compact'}).click();await expectDOM(page.locator('[data-panel-layout]')).toHaveAttribute('data-panel-layout','compact');await expectDOM(page.getByRole('textbox',{name:'Draft p1'})).toHaveValue('Retained first draft');
   await page.getByRole('button',{name:'Toggle compact'}).click();await expectDOM(page.getByRole('textbox',{name:'Draft p2'})).toHaveValue('Retained sibling draft');expect(await mounts(page)).toEqual(initial);
  }),caseTimeout)

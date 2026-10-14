@@ -29,7 +29,8 @@ import { ConfigStore } from './config-store'
 import { PairingCodeManager } from './pairing'
 import { TelegramAdapter } from './adapters/telegram/index'
 import { WhatsAppAdapter, type WhatsAppEvent } from './adapters/whatsapp/index'
-import { LarkAdapter, parseLarkCredentials, type LarkCredentials } from './adapters/lark/index'
+// Lazy: the Lark adapter pulls @larksuiteoapi/node-sdk (~5 MB); load it only when Lark is configured.
+import type { LarkCredentials } from './adapters/lark/index'
 import { DiscordAdapter, parseDiscordCredentials, type DiscordCredentials, type DiscordEvent } from './adapters/discord/index'
 import {
   WeChatAdapter,
@@ -1150,6 +1151,19 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
       return
     }
 
+    let larkModule: typeof import('./adapters/lark/index')
+    try {
+      larkModule = await import('./adapters/lark/index')
+    } catch (err) {
+      this.setPlatformRuntime(workspaceId, state, 'lark', {
+        configured: true,
+        connected: false,
+        state: 'error',
+        lastError: err instanceof Error ? `Lark SDK failed to load: ${err.message}` : 'Lark SDK failed to load',
+      })
+      return
+    }
+    const { LarkAdapter, parseLarkCredentials } = larkModule
     let creds: LarkCredentials
     try {
       creds = parseLarkCredentials(cred.value)

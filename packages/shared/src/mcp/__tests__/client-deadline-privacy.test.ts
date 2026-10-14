@@ -220,9 +220,9 @@ describe('CraftMcpClient lifecycle — real transports', () => {
       clock.advance(100);
       await server.release(healthCheck);
       const discovery = await server.held('tools/list', 2);
-      // The SDK receives exactly the remaining 50ms, not a fresh 350ms.
-      expect(clock.remaining().length).toBeGreaterThan(0);
-      expect(clock.remaining().every(ms => ms === 50)).toBe(true);
+      // Client budget: the remaining 50 ms. SDK request timer: backstop only,
+      // armed one millisecond later so it can never settle the request first.
+      expect(clock.remaining().sort((a, b) => a - b)).toEqual([50, 51]);
       clock.advance(49);
       expect(settled).toBe(false);
       clock.advance(1);
@@ -303,13 +303,27 @@ describe('CraftMcpClient lifecycle — real transports', () => {
   test('bounds a later tools/list request after a successful connection', async () => {
     const server = await httpFixture();
     const client = new CraftMcpClient({ transport: 'http', url: server.url });
+    // The client's operation budget and the MCP SDK's per-request timeout share one
+    // deadline. On a loaded runner either timer can win, so the surfaced message must
+    // not depend on wall-clock ordering: drive the caller's deadline on a controlled
+    // clock and let the client's own reason be the single observable outcome.
+    const clock = deadlineClock(100);
     try {
       await client.connect();
       await server.update({ stall: 'tools/list' });
-      await expect(client.listTools({ timeoutMs: 100 })).rejects.toThrow('MCP tools/list timed out after 100ms');
+      let settled = false;
+      const pending = client.listTools({ timeoutMs: 100 }).catch(error => error).finally(() => { settled = true; });
+      // Reach the real network phase before advancing, so the deadline bounds the
+      // stalled request rather than pre-empting it.
+      await waitFor(() => server.state.pending > 0);
+      clock.advance(99);
+      expect(settled).toBe(false);
+      clock.advance(1);
+      await waitFor(() => settled);
+      expect((await pending).message).toBe('MCP tools/list timed out after 100ms');
       await client.close();
       await waitFor(() => server.state.closed === server.state.pending && server.state.pending > 0);
-    } finally { await client.close(); await server.stop(); }
+    } finally { await client.close(); clock.restore(); await server.stop(); }
   });
 });
 

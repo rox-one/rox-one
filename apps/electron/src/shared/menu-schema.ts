@@ -12,7 +12,7 @@
  * This avoids stale translations from module-level i18n.t() calls.
  */
 
-import { RPC_CHANNELS } from './types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import { FEATURE_FLAGS } from '@rox/shared/feature-flags'
 
 // ─────────────────────────────────────────────────────────────────────────────

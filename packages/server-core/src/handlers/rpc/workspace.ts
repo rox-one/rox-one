@@ -11,6 +11,8 @@ import {
   getActiveWorkspace,
   getWorkspaceByNameOrId,
   MaterialSettingsSchema,
+  PresetThemeSchema,
+  ThemeLayersSchema,
   setActiveWorkspace,
   updateWorkspaceRemoteServer,
 } from '@rox/shared/config'
@@ -29,7 +31,7 @@ import { readNativeWorkspaceMetadata } from './native-workspace-registry'
 import { isValidWorkingDirectory, isValidWorkspaceRootPath, resolveContainedRelativePath } from '../../utils/path-validation'
 import { isSensitiveAgentCwd } from '@rox/shared/sessions'
 import type { RemoteServerConfig, Workspace } from '@rox/core/types'
-import type { MaterialSettings, ThemeOverrides } from '@rox/shared/config'
+import type { MaterialSettings, ThemeLayers, ThemeOverrides } from '@rox/shared/config'
 import {
   isClaimableLive,
   rpcWorkspaceActResult,
@@ -54,6 +56,8 @@ export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.theme.GET_COLOR_THEME,
   RPC_CHANNELS.theme.SET_COLOR_THEME,
   RPC_CHANNELS.theme.SET_APP_MATERIAL,
+  RPC_CHANNELS.theme.SET_APP_LAYERS,
+  RPC_CHANNELS.theme.SAVE_USER_PRESET,
   RPC_CHANNELS.theme.BROADCAST_PREFERENCES,
   RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME,
   RPC_CHANNELS.theme.SET_WORKSPACE_COLOR_THEME,
@@ -531,6 +535,43 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     else next.material = parsed
     saveAppTheme(next)
     return next
+  })
+
+  // Persist the layer tokens (frame/content/elevation/wallpaper/accent/glass)
+  // into theme.json. Same contract as SET_APP_MATERIAL: LOCAL_ONLY, `null`
+  // clears, an object replaces the field wholesale, the watcher broadcasts.
+  server.handle(RPC_CHANNELS.theme.SET_APP_LAYERS, async (ctx, layers: unknown) => {
+    if (ctx.webUiAuthenticated) throw new CodedError('AUTH_FAILED', 'App theme layers are local-only')
+    let parsed: ThemeLayers | null
+    if (layers === null) {
+      parsed = null
+    } else {
+      const result = ThemeLayersSchema.safeParse(layers)
+      if (!result.success) throw new CodedError('INVALID_PAYLOAD', 'Invalid theme layers')
+      parsed = result.data as ThemeLayers
+    }
+    const { loadAppTheme, saveAppTheme } = await import('@rox/shared/config/storage')
+    const next: ThemeOverrides = loadAppTheme() ?? {}
+    if (parsed === null || Object.keys(parsed).length === 0) delete next.layers
+    else next.layers = parsed
+    saveAppTheme(next)
+    return next
+  })
+
+  // Save the current look as a user preset (Settings → Внешний вид →
+  // «Сохранить как пресет» / import). Never overwrites: the id gets a numeric
+  // suffix until it is free. Returns the new preset id.
+  server.handle(RPC_CHANNELS.theme.SAVE_USER_PRESET, async (ctx, baseId: unknown, theme: unknown) => {
+    if (ctx.webUiAuthenticated) throw new CodedError('AUTH_FAILED', 'User presets are local-only')
+    if (typeof baseId !== 'string' || !/^[a-z0-9][a-z0-9-]{0,47}$/.test(baseId)) throw new CodedError('INVALID_PAYLOAD', 'Invalid preset id')
+    const result = PresetThemeSchema.safeParse(theme)
+    if (!result.success) throw new CodedError('INVALID_PAYLOAD', 'Invalid preset theme')
+    const { writePresetThemeFile } = await import('@rox/shared/config/storage')
+    for (let n = 1; n <= 50; n += 1) {
+      const id = n === 1 ? `user-${baseId}` : `user-${baseId}-${n}`
+      if (writePresetThemeFile(id, result.data)) return id
+    }
+    throw new CodedError('INVALID_PAYLOAD', 'Too many presets with this name')
   })
 
   // Broadcast theme preferences to all other windows (for cross-window sync)

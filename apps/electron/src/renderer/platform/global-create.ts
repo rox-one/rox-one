@@ -14,6 +14,7 @@
  * baseline.
  */
 import type { Disposable } from '@rox/core/platform'
+import { messengerCreateRoute, parseMessengerCreateRoute, requestMessengerCreate } from './messenger-create-request'
 import { UNIFIED_SURFACE_FLAGS, isUnifiedSurfaceId } from '../../shared/surface-routes'
 import { WORKBENCH_FLAG } from '@rox/core/platform'
 import {
@@ -83,9 +84,9 @@ export const CORE_GLOBAL_CREATE_ITEMS: ReadonlyArray<SlotContribution<GlobalCrea
     payload: {
       group: 'create',
       children: [
-        { id: 'chat', titleKey: 'surfaces.create.newChat', icon: 'MessageCircle', intent: { type: 'command', name: 'im.create_chat', input: { type: 'dm' }, fallbackRoute: 'messenger' } },
-        { id: 'group', titleKey: 'surfaces.create.newGroup', icon: 'Users', intent: { type: 'command', name: 'im.create_chat', input: { type: 'group' }, fallbackRoute: 'messenger' } },
-        { id: 'channel', titleKey: 'surfaces.create.newChannel', icon: 'Hash', intent: { type: 'command', name: 'im.create_chat', input: { type: 'channel' }, fallbackRoute: 'messenger' } },
+        // Direct messages have no backing kind in team-chat yet (phase 1): hidden until DMs exist.
+        { id: 'group', titleKey: 'surfaces.create.newGroup', icon: 'Users', intent: { type: 'route', route: messengerCreateRoute('group') } },
+        { id: 'channel', titleKey: 'surfaces.create.newChannel', icon: 'Hash', intent: { type: 'route', route: messengerCreateRoute('channel') } },
       ],
     },
   },
@@ -297,6 +298,12 @@ export function runGlobalCreateIntent(intent: GlobalCreateIntent, deps: GlobalCr
     return true
   }
   if (intent.type === 'route') {
+    const createKind = parseMessengerCreateRoute(intent.route)
+    if (createKind) {
+      requestMessengerCreate(createKind)
+      deps.navigate('messenger')
+      return true
+    }
     deps.navigate(intent.route)
     return true
   }

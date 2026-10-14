@@ -21,7 +21,7 @@ import {
   CloudOff,
   ExternalLink,
   FolderPlus,
-  Shield,
+  Pencil,
   Trash2,
 } from 'lucide-react'
 import { AnimatePresence } from '@/lib/deferred-motion'
@@ -58,37 +58,7 @@ import { waitForTransportConnected } from '@/lib/transport-wait'
 import { useWorkspaceIcons } from '@/hooks/useWorkspaceIcon'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { isSshBackedWorkspace } from '../../../shared/ssh'
-import blackInkAvatar from '@/assets/rox-avatar-ink-black.png'
-import whiteInkAvatar from '@/assets/rox-avatar-ink-white.png'
-import { useOptionalAppShellContext } from '@/context/AppShellContext'
-import { resolveDisplayName } from './profile-strip-account'
 import type { CredentialHealthStatus, IdentityState, Workspace } from '../../../shared/types'
-
-/**
- * Round identity avatar for the Identity Center profile header: the user's own
- * image when present, otherwise the Rox ink mark (black on light surfaces,
- * white on dark ones — a theme-aware pair, never `dark:invert`).
- */
-function ProfileAvatar({ src, className }: { src?: string; className?: string }) {
-  return (
-    <span className={cn('relative block shrink-0 overflow-hidden rounded-full bg-surface-pressed', className)}>
-      {src ? (
-        <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
-      ) : (
-        <>
-          <img src={blackInkAvatar} alt="" draggable={false} className="h-full w-full object-cover dark:hidden" />
-          <img
-            src={whiteInkAvatar}
-            alt=""
-            aria-hidden="true"
-            draggable={false}
-            className="hidden h-full w-full object-cover dark:block"
-          />
-        </>
-      )}
-    </span>
-  )
-}
 
 export interface AccountMenuProps {
   /**
@@ -104,6 +74,8 @@ export interface AccountMenuProps {
   onSelectWorkspace: (workspaceId: string, openInNewWindow?: boolean) => void | Promise<void>
   onWorkspaceCreated?: (workspace: Workspace) => void
   onWorkspaceRemoved?: () => void
+  /** Called after the active workspace was renamed (inline or from the menu). */
+  onWorkspaceRenamed?: () => void
   workspaceUnreadMap?: Record<string, boolean>
   /**
    * Creation flow owned by a host that outlives this menu. The compact
@@ -220,6 +192,8 @@ function drawerSectionLabel(text: string) {
 const drawerRowClass =
   'flex w-full items-center gap-3 px-3 py-3 rounded-[var(--radius-control)] text-left text-sm transition-colors hover:bg-foreground/5 outline-none disabled:opacity-50 disabled:pointer-events-none'
 
+const WORKSPACE_NAME_MAX = 64
+
 export function AccountMenu({
   compact = false,
   trigger,
@@ -228,14 +202,12 @@ export function AccountMenu({
   onSelectWorkspace,
   onWorkspaceCreated,
   onWorkspaceRemoved,
+  onWorkspaceRenamed,
   workspaceUnreadMap,
   creationFlow: hostedCreationFlow,
   onOpenCreationScreen,
 }: AccountMenuProps) {
   const { t } = useTranslation()
-  // The shell already tracks the signed-in Rox cloud account; reuse it so the
-  // menu shows the same merged name as the profile strip.
-  const roxAccount = useOptionalAppShellContext()?.roxAccount ?? null
   const tourWorkspaceTarget = useTourTarget('workspace.switcher', { scope: 'shell', workspaceId: activeWorkspaceId ?? undefined, variant: compact ? 'compact' : 'regular' })
   const [open, setOpen] = React.useState(false)
   const ownCreationFlow = useWorkspaceCreationFlow({ activeWorkspaceId, onSelectWorkspace, onWorkspaceCreated })
@@ -354,10 +326,42 @@ export function AccountMenu({
 
   const closeMenu = React.useCallback(() => setOpen(false), [])
 
-  const openAccountPage = React.useCallback(() => {
-    closeMenu()
-    navigate(routes.view.settings('account'))
-  }, [closeMenu])
+  // Workspace rename: inline in the trigger (double-click or the menu item).
+  // Persists through the workspace settings RPC, which writes the workspace
+  // config and the registry record the switcher reads.
+  const [renaming, setRenaming] = React.useState(false)
+  const [renameDraft, setRenameDraft] = React.useState('')
+  const renameInputRef = React.useRef<HTMLInputElement | null>(null)
+  const startRename = React.useCallback(() => {
+    if (!selectedWorkspace) return
+    setOpen(false)
+    setRenameDraft(selectedWorkspace.name)
+    renameCommitted.current = false
+    setRenaming(true)
+  }, [selectedWorkspace])
+  React.useEffect(() => {
+    if (!renaming) return
+    const id = window.setTimeout(() => { renameInputRef.current?.focus(); renameInputRef.current?.select() }, 0)
+    return () => window.clearTimeout(id)
+  }, [renaming])
+  // Enter commits and unmounts the field, which also fires blur: the ref keeps
+  // that second commit from saving twice.
+  const renameCommitted = React.useRef(false)
+  const commitRename = React.useCallback(async () => {
+    if (!renaming || renameCommitted.current) return
+    renameCommitted.current = true
+    setRenaming(false)
+    const workspace = selectedWorkspace
+    const name = renameDraft.trim().slice(0, WORKSPACE_NAME_MAX)
+    if (!workspace || !name || name === workspace.name) return
+    try {
+      await window.electronAPI.updateWorkspaceSetting(workspace.id, 'name', name)
+      onWorkspaceRenamed?.()
+      toast.success(t('workspace.renamed', { name }))
+    } catch {
+      toast.error(t('workspace.renameFailed'))
+    }
+  }, [onWorkspaceRenamed, renameDraft, renaming, selectedWorkspace, t])
 
   const openAccountsSettings = React.useCallback(() => {
     closeMenu()
@@ -376,18 +380,12 @@ export function AccountMenu({
     }
   }, [closeMenu, t])
 
-  const profile = identity?.profile
-  // Same merge as the profile strip: the name the user signed in with wins.
-  const displayName = resolveDisplayName(roxAccount, profile?.displayName, t('profile.defaultName'))
   const connections = identity?.connections ?? []
   const connectedCount = connections.filter(
     (connection) => connection.status === 'connected' || connection.status === 'syncing',
   ).length
   const expiredCount = connections.filter((connection) => connection.status === 'expired').length
   const errorCount = connections.filter((connection) => connection.status === 'error').length
-  const profileModeLabel = t('accountMenu.profileMode', {
-    mode: profile?.mode ?? 'local',
-  })
   const connectionsSummary = t('accountMenu.connectionsSummary', {
     connected: connectedCount,
     expired: expiredCount,
@@ -444,7 +442,42 @@ export function AccountMenu({
   }
 
 
-  const triggerLabel = selectedWorkspace?.name || t('workspace.selectWorkspace')
+  const triggerFullLabel = selectedWorkspace?.name || t('workspace.selectWorkspace')
+  // Hostname-style names (ts-macbook-pro.blenny-gar.ts.net) show their first label; full name in the tooltip.
+  const triggerLabel = /^[^\s.]+(\.[^\s.]+)+$/.test(triggerFullLabel) ? triggerFullLabel.split('.')[0]! : triggerFullLabel
+
+  const renameField = (
+    <input
+      ref={renameInputRef}
+      data-workspace-rename=""
+      value={renameDraft}
+      maxLength={WORKSPACE_NAME_MAX}
+      aria-label={t('settings.workspace.renameWorkspace')}
+      placeholder={t('settings.workspace.enterWorkspaceName')}
+      onChange={(e) => setRenameDraft(e.target.value)}
+      onBlur={() => void commitRename()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') { e.preventDefault(); void commitRename() }
+        else if (e.key === 'Escape') { e.preventDefault(); renameCommitted.current = true; setRenaming(false) }
+      }}
+      className={cn(
+        'titlebar-no-drag ml-1 h-7 min-w-0 max-w-56 flex-1 rounded-[var(--radius-control)] border border-ring/60 bg-[var(--surface-elevated)] px-2 text-caption text-foreground outline-none',
+      )}
+    />
+  )
+
+  // A custom trigger (the titlebar logo switcher) gets the same double-click
+  // rename as the default button; its own handler runs first and can opt out.
+  const customTrigger = trigger
+    ? React.cloneElement(trigger as React.ReactElement<React.HTMLAttributes<HTMLElement>>, {
+        onDoubleClick: (e: React.MouseEvent<HTMLElement>) => {
+          ;(trigger.props as React.HTMLAttributes<HTMLElement>).onDoubleClick?.(e)
+          if (e.defaultPrevented) return
+          e.preventDefault()
+          startRename()
+        },
+      })
+    : null
 
   const triggerButton = (
     <button
@@ -452,19 +485,20 @@ export function AccountMenu({
       ref={tourWorkspaceTarget}
       data-account-menu={compact ? 'compact' : 'topbar'}
       className={cn(
-        'header-icon-btn titlebar-no-drag ml-1 flex min-w-0 items-center justify-start gap-0.5 h-[30px] rounded-[var(--radius-control)] border border-border/50 bg-[var(--surface-elevated)] text-base text-foreground/70 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground',
-        compact ? 'flex-1 px-2' : 'flex-1 px-3',
+        'header-icon-btn titlebar-no-drag ml-1 flex min-w-0 items-center justify-start gap-0.5 h-7 max-w-56 rounded-[var(--radius-control)] border border-border/40 bg-[var(--surface-elevated)] text-caption text-foreground/70 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground',
+        compact ? 'flex-1 px-2' : 'flex-1 px-2',
       )}
       aria-label={t('workspace.selectWorkspace')}
+      onDoubleClick={(e) => { e.preventDefault(); startRename() }}
     >
       <WorkspaceAvatar
         workspaceId={selectedWorkspace?.id}
         workspaceName={selectedWorkspace?.name || triggerLabel}
         src={selectedWorkspace ? workspaceIconMap.get(selectedWorkspace.id) : undefined}
-        className="h-4 w-4 mr-1.5 rounded-full ring-1 ring-border/50"
+        className="h-3.5 w-3.5 mr-1 rounded-full ring-1 ring-border/50"
         fallbackClassName="rounded-full"
       />
-      <span className="truncate min-w-0 flex-1 text-left" title={triggerLabel}>{triggerLabel}</span>
+      <span className="truncate min-w-0 flex-1 text-left" title={triggerFullLabel}>{triggerLabel}</span>
       {selectedWorkspace?.remoteServer &&
         (isRemoteDisconnected(selectedWorkspace.id) ? (
           <CloudOff
@@ -494,7 +528,7 @@ export function AccountMenu({
         {creationScreen}
 
         <Drawer nested open={open} onOpenChange={handleOpenChange}>
-          <DrawerTrigger asChild>{trigger ?? triggerButton}</DrawerTrigger>
+          {renaming ? renameField : <DrawerTrigger asChild>{customTrigger ?? triggerButton}</DrawerTrigger>}
 
           <DrawerContent className="max-h-[85vh]">
             <DrawerHeader>
@@ -502,24 +536,6 @@ export function AccountMenu({
             </DrawerHeader>
 
             <div className="flex-1 min-h-0 overflow-y-auto px-2 pb-6 flex flex-col gap-0.5">
-              {drawerSectionLabel(t('accountMenu.section.profile'))}
-              <div className="flex items-center gap-3 px-3 py-3">
-                <ProfileAvatar src={profile?.avatar} className="h-7 w-7 shadow-minimal" />
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-medium" title={displayName}>
-                    {displayName}
-                  </div>
-                  <div className="text-xs text-foreground/50">
-                    {profileModeLabel}
-                  </div>
-                </div>
-              </div>
-              <DrawerClose asChild>
-                <button type="button" className={drawerRowClass} onClick={openAccountPage}>
-                  <span className="font-medium">{t('accountMenu.editProfile')}</span>
-                </button>
-              </DrawerClose>
-
               {drawerSectionLabel(t('accountMenu.section.workspaces'))}
               {workspaces.map((workspace) => {
                 const disconnected = isRemoteDisconnected(workspace.id)
@@ -601,6 +617,16 @@ export function AccountMenu({
                   </div>
                 )
               })}
+              {selectedWorkspace && (
+                <DrawerClose asChild>
+                  <button type="button" className={drawerRowClass} onClick={startRename}>
+                    <div className="h-7 w-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0">
+                      <Pencil className="h-4 w-4 text-foreground/60" />
+                    </div>
+                    <span className="font-medium">{t('settings.workspace.renameWorkspace')}</span>
+                  </button>
+                </DrawerClose>
+              )}
               <DrawerClose asChild>
                 <button type="button" className={drawerRowClass} onClick={handleNewWorkspace}>
                   <div className="h-7 w-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0">
@@ -637,12 +663,6 @@ export function AccountMenu({
               </DrawerClose>
 
               {drawerSectionLabel(t('accountMenu.section.security'))}
-              <DrawerClose asChild>
-                <button type="button" className={drawerRowClass} onClick={openAccountsSettings}>
-                  <Shield className="h-4 w-4 text-foreground/60 shrink-0" />
-                  <span className="font-medium">{t('accountMenu.openAccountsSettings')}</span>
-                </button>
-              </DrawerClose>
               <div className="px-3 py-2 text-sm text-foreground/70">
                 {t('accountMenu.credentialHealth', { status: healthLabel })}
               </div>
@@ -670,23 +690,9 @@ export function AccountMenu({
       {creationScreen}
 
       <DropdownMenu open={open} onOpenChange={handleOpenChange}>
-        <DropdownMenuTrigger asChild>{trigger ?? triggerButton}</DropdownMenuTrigger>
+        {renaming ? renameField : <DropdownMenuTrigger asChild>{customTrigger ?? triggerButton}</DropdownMenuTrigger>}
 
         <StyledDropdownMenuContent align="start" sideOffset={6} minWidth="min-w-72">
-          {sectionLabel(t('accountMenu.section.profile'))}
-          <div className="flex items-center gap-3 px-2 py-1.5">
-            <ProfileAvatar src={profile?.avatar} className="h-8 w-8 shadow-minimal" />
-            <div className="min-w-0">
-              <div className="truncate text-sm font-medium" title={displayName}>
-                {displayName}
-              </div>
-              <div className="text-xs text-muted-foreground">{profileModeLabel}</div>
-            </div>
-          </div>
-          <StyledDropdownMenuItem onClick={openAccountPage} className="font-sans">
-            {t('accountMenu.editProfile')}
-          </StyledDropdownMenuItem>
-          <StyledDropdownMenuSeparator />
           {sectionLabel(t('accountMenu.section.workspaces'))}
           {workspaces.map((workspace) => {
             const disconnected = isRemoteDisconnected(workspace.id)
@@ -761,6 +767,12 @@ export function AccountMenu({
               </StyledDropdownMenuItem>
             )
           })}
+          {selectedWorkspace && (
+            <StyledDropdownMenuItem onSelect={() => startRename()} className="font-sans" data-workspace-rename-item="">
+              <Pencil className="h-4 w-4" />
+              {t('settings.workspace.renameWorkspace')}
+            </StyledDropdownMenuItem>
+          )}
           <StyledDropdownMenuItem onClick={handleNewWorkspace} className="font-sans">
             <FolderPlus className="h-4 w-4" />
             {t('workspace.addWorkspace')}
@@ -791,10 +803,6 @@ export function AccountMenu({
           </StyledDropdownMenuItem>
           <StyledDropdownMenuSeparator />
           {sectionLabel(t('accountMenu.section.security'))}
-          <StyledDropdownMenuItem onClick={openAccountsSettings} className="font-sans">
-            <Shield className="h-4 w-4" />
-            {t('accountMenu.openAccountsSettings')}
-          </StyledDropdownMenuItem>
           <div className="px-2 py-1.5 text-xs text-muted-foreground">
             {t('accountMenu.credentialHealth', { status: healthLabel })}
           </div>

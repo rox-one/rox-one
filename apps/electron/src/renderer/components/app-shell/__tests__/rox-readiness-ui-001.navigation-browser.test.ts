@@ -15,14 +15,117 @@ const evidence = join(root, 'docs/final-readiness/execution/cloud/OWNER-UI-001/m
 let server: ReturnType<typeof Bun.serve>, browser: Browser, context: BrowserContext, page: Page, base: string
 let closeBrowser: (() => Promise<void>) | undefined
 
+// Identifiers the extracted production text may reference without the fixture
+// bundle binding them: plain JS/TS/Chromium globals. This is deliberately an
+// explicit allowlist rather than scope inference, because a false positive here
+// would red the route-fixtures job for no reason. Anything project-specific must
+// be imported or declared by the fixture bundle instead.
+const FIXTURE_GLOBALS: Record<string, true> = {
+  AbortController: true, AbortSignal: true, AggregateError: true, Array: true, ArrayBuffer: true, Atomics: true, BigInt: true,
+  BigInt64Array: true, BigUint64Array: true, Blob: true, Boolean: true, BroadcastChannel: true, CustomEvent: true, DOMException: true,
+  DOMParser: true, DataView: true, Date: true, DocumentFragment: true, Error: true, Event: true, EventTarget: true, FileList: true,
+  FileReader: true, Float32Array: true, Float64Array: true, FormData: true, Function: true, HTMLElement: true, Headers: true,
+  Image: true, Infinity: true, Int16Array: true, Int32Array: true, Int8Array: true, IntersectionObserver: true, Intl: true,
+  JSON: true, Map: true, Math: true, MessageChannel: true, MessageEvent: true, MessagePort: true, MutationObserver: true, NaN: true,
+  Node: true, NodeList: true, Number: true, Object: true, PerformanceObserver: true, PointerEvent: true, Promise: true, Proxy: true,
+  RangeError: true, ReferenceError: true, Reflect: true, RegExp: true, Request: true, ResizeObserver: true, Response: true, Set: true,
+  SharedArrayBuffer: true, String: true, Symbol: true, SyntaxError: true, TextDecoder: true, TextEncoder: true, TypeError: true,
+  URIError: true, URL: true, URLSearchParams: true, Uint16Array: true, Uint32Array: true, Uint8Array: true, Uint8ClampedArray: true,
+  WeakMap: true, WeakRef: true, WeakSet: true, WebSocket: true, Worker: true, XMLHttpRequest: true,
+  alert: true, atob: true, btoa: true, caches: true, cancelAnimationFrame: true, cancelIdleCallback: true, clearInterval: true,
+  clearTimeout: true, confirm: true, console: true, crypto: true, decodeURI: true, decodeURIComponent: true, dispatchEvent: true,
+  document: true, encodeURI: true, encodeURIComponent: true, escape: true, eval: true, fetch: true, globalThis: true, history: true,
+  indexedDB: true, isFinite: true, isNaN: true, localStorage: true, location: true, matchMedia: true, navigator: true,
+  parseFloat: true, parseInt: true, performance: true, postMessage: true, prompt: true, queueMicrotask: true,
+  requestAnimationFrame: true, requestIdleCallback: true, screen: true, self: true, sessionStorage: true, setInterval: true,
+  setTimeout: true, structuredClone: true, undefined: true, window: true,
+}
+
+// Every identifier a source text declares: imports, `function`/`class`
+// declarations, and `const`/`let`/parameter/binding names including the ones
+// nested inside binding patterns. Deliberately an over-approximation (names from
+// any scope count) so the guard stays conservative.
+function declaredIdentifiers(source: string, fileName: string): Set<string> {
+  const file = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+  const declared = new Set<string>()
+  function addBindingName(name: ts.BindingName) {
+    if (ts.isIdentifier(name)) declared.add(name.text)
+    else for (const element of name.elements) if (ts.isBindingElement(element)) addBindingName(element.name)
+  }
+  function visit(node: ts.Node) {
+    if (ts.isVariableDeclaration(node) || ts.isParameter(node) || ts.isBindingElement(node)) addBindingName(node.name)
+    else if ((ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node)) && node.name) declared.add(node.name.text)
+    else if (ts.isImportDeclaration(node) && node.importClause) {
+      if (node.importClause.name) declared.add(node.importClause.name.text)
+      const bindings = node.importClause.namedBindings
+      if (bindings && ts.isNamespaceImport(bindings)) declared.add(bindings.name.text)
+      else if (bindings) for (const specifier of bindings.elements) declared.add(specifier.name.text)
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(file)
+  return declared
+}
+
+// Identifier references that survive compilation of the extracted production
+// text. Type-only positions are skipped because esbuild erases type syntax, so
+// an unbound type name cannot throw at runtime; member/property names, binding
+// property keys, JSX attribute names, labels and intrinsic (lowercase) JSX tags
+// are not value references either. Covers value positions only.
+function valueReferences(source: string): Set<string> {
+  const file = ts.createSourceFile('ui-001-extracted-production.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+  const referenced = new Set<string>()
+  function visit(node: ts.Node) {
+    if (ts.isTypeNode(node) || ts.isTypeAliasDeclaration(node) || ts.isInterfaceDeclaration(node) || ts.isTypeParameterDeclaration(node)) return
+    if (ts.isIdentifier(node)) {
+      const parent = node.parent
+      const isNamePosition = (ts.isPropertyAccessExpression(parent) && parent.name === node)
+        || (ts.isQualifiedName(parent) && parent.right === node)
+        || (ts.isPropertyAssignment(parent) && parent.name === node)
+        || (ts.isBindingElement(parent) && parent.propertyName === node)
+        || (ts.isPropertyDeclaration(parent) && parent.name === node)
+        || (ts.isMethodDeclaration(parent) && parent.name === node)
+        || (ts.isGetAccessorDeclaration(parent) && parent.name === node)
+        || (ts.isSetAccessorDeclaration(parent) && parent.name === node)
+        || ts.isPropertySignature(parent) || ts.isMethodSignature(parent) || ts.isEnumMember(parent)
+        || (ts.isJsxAttribute(parent) && parent.name === node)
+        || (ts.isLabeledStatement(parent) && parent.label === node)
+        || ts.isBreakStatement(parent) || ts.isContinueStatement(parent) || ts.isMetaProperty(parent)
+      const isIntrinsicTag = (ts.isJsxOpeningElement(parent) || ts.isJsxClosingElement(parent) || ts.isJsxSelfClosingElement(parent))
+        && /^[a-z]/.test(node.text)
+      if (!isNamePosition && !isIntrinsicTag) referenced.add(node.text)
+      return
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(file)
+  return referenced
+}
+
+// The extracted declarations are re-executed inside the fixture bundle, so an
+// identifier production gained but the fixture never bound only shows up as a
+// render-time ReferenceError: the panel subtree unmounts and the suite fails on
+// an unrelated 5s waitFor timeout (this broke route-fixtures in #1918, #1954,
+// #1962, #1915 and #1974). Fail loudly here instead, naming the identifier.
+function assertExtractedProductionIsBound(extracted: string): void {
+  const bound = new Set([
+    ...declaredIdentifiers(fixtureBundleSource('', '', ''), 'ui-001-navigation-fixture.tsx'),
+    ...declaredIdentifiers(extracted, 'ui-001-extracted-production.tsx'),
+  ])
+  const unbound = [...valueReferences(extracted)].filter(identifier => !bound.has(identifier) && !FIXTURE_GLOBALS[identifier]).sort()
+  if (unbound.length) throw new Error(`Extracted MainContentPanel.tsx production references ${unbound.join(', ')} that the UI-001 fixture bundle does not bind. Add the missing import or declaration to the fixture bundle string built by fixtureBundleSource(): an unbound identifier throws ReferenceError while every panel renders and the suite then fails on an unrelated waitFor timeout.`)
+}
+
 function mainFunctions() {
   const source = readFileSync(join(import.meta.dir, '../MainContentPanel.tsx'), 'utf8')
   const file = ts.createSourceFile('MainContentPanel.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
   const names = new Set(['useSelectedResourceAvailability', 'MainContentPanel', 'SurfaceRoutePanel', 'lazyRoutePage', 'RouteErrorBoundary', 'RouteRecoveryContext'])
-  return file.statements.filter(node => (ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node))
+  const extracted = file.statements.filter(node => (ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node))
     ? names.has(node.name?.text ?? '')
     : ts.isVariableStatement(node) && node.declarationList.declarations.some(decl => names.has(decl.name.getText(file))))
     .map(node => node.getText(file).replace(/^export /, '')).join('\n')
+  assertExtractedProductionIsBound(extracted)
+  return extracted
 }
 
 
@@ -84,8 +187,11 @@ function desktopTabTitleExpressions() {
   }`
 }
 
-async function bundle() {
-  const contents = `
+// The fixture bundle the extracted production text is re-executed inside. Every
+// identifier that text uses must be bound here (imports, declarations) or be a
+// genuine global — see assertExtractedProductionIsBound, which parses this text.
+function fixtureBundleSource(main: string, shell: string, tabs: string) {
+  return `
     import * as React from 'react';
     import {lazyRoutePage,RouteErrorBoundary} from './apps/electron/src/renderer/lib/route-recovery';
     import {useCallback,useEffect,useMemo,useState} from 'react';
@@ -166,9 +272,9 @@ async function bundle() {
       MissionBoard=leaf('mission-board'),DrivePage=leaf('drive');
     const getSettingsPageComponent=()=>leaf('settings'),recordRecentSetting=()=>{};
     const AgentsWorkspacePage=leaf('agents'),SurfaceHost=leaf('surface');
-    ${mainFunctions()}
-    ${shellNavigatorExpressions()}
-    ${desktopTabTitleExpressions()}
+    ${main}
+    ${shell}
+    ${tabs}
     let setReady,setWorkspace;
     const requestWorkspaceBySlug=slug=>{setWorkspace(slug);return true};
     const createSession=async(ws,options)=>{calls.push(['createSession',ws,options]);return {id:'created',workspaceId:ws}};
@@ -190,6 +296,10 @@ async function bundle() {
     }
     createRoot(document.getElementById('app')).render(<App/>);
   `
+}
+
+async function bundle() {
+  const contents = fixtureBundleSource(mainFunctions(), shellNavigatorExpressions(), desktopTabTitleExpressions())
   const result = await build({
     stdin: { contents, sourcefile: 'ui-001-navigation-fixture.tsx', resolveDir: root, loader: 'tsx' },
     bundle: true, write: false, platform: 'browser', format: 'iife', jsx: 'automatic',
