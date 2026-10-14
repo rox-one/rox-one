@@ -23,7 +23,8 @@ import { visibleExtraScreens } from '@/pages/extra-screens/registry'
 import { enabledShellFlagsAtom } from '@/platform/unified-flags'
 import { isSessionsNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { isSeparatorItem, LeftSidebar, type LinkItem, type SidebarItem } from './LeftSidebar'
-import { PRIMARY_NAV_LINK_IDS, resolvePrimaryNav, type ResolvedPrimaryNavEntry } from './primary-nav'
+import { usePillModel } from '@/platform/usePillNav'
+import { PRIMARY_NAV, PRIMARY_NAV_LINK_IDS, resolvePrimaryNav, type ResolvedPrimaryNavEntry } from './primary-nav'
 
 /** WP4: experimental screen icon tints from colour tokens (were literal hex). */
 const EXPERIMENTAL_ICON_COLOR: Readonly<Record<string, string>> = {
@@ -44,6 +45,14 @@ export interface ShellSidebarNavProps {
   toggleExpanded: (id: string) => void
   applicationSectionsOpen: boolean
   onApplicationSectionsOpenChange: (open: boolean) => void
+  /**
+   * WP6: stable ref setter for the per-surface contextual slot. Mode screens,
+   * Notes, Memory, Learning and Settings portal their own navigation into it
+   * (`ShellSidebarPortal`); it sits right under the global primary nav.
+   */
+  contextSlotRef?: (element: HTMLDivElement | null) => void
+  /** The TopBar renders the pill (`modePillShown`); pill-placed surfaces it does not render fall back here. */
+  pillShown?: boolean
 }
 
 export const ShellSidebarNav = React.memo(function ShellSidebarNav({
@@ -55,13 +64,16 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   toggleExpanded,
   applicationSectionsOpen,
   onApplicationSectionsOpenChange,
+  contextSlotRef,
+  pillShown = true,
 }: ShellSidebarNavProps) {
   const { t } = useTranslation()
   const navState = useNavigationState()
   const shellFlags = useAtomValue(enabledShellFlagsAtom)
   const enabledExtraScreenIds = useAtomValue(enabledExtraScreenIdsAtom)
 
-  const entries = React.useMemo(() => resolvePrimaryNav({ shellFlags }), [shellFlags])
+  const { nav: { placements }, navIds: pillNavIds } = usePillModel(pillShown)
+  const entries = React.useMemo(() => resolvePrimaryNav({ shellFlags, placements, pillNavIds }), [shellFlags, placements, pillNavIds])
 
   const { primaryLinks, moreLinks } = React.useMemo(() => {
     const byId = new Map<string, LinkItem>()
@@ -73,14 +85,31 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
       variant: entry.isActive(navState) ? 'default' : 'ghost',
       onClick: entry.route ? () => navigate(entry.route!()) : onOpenBrowser,
     }
-    const primary = entries.filter(entry => entry.group === 'primary').map(linkFor).map(stripSessionFilters)
-    const more: SidebarItem[] = entries.filter(entry => entry.group === 'more').map(linkFor)
+    // WP6: rows never carry their surface's sub-navigation; it moves to the
+    // contextual section under the primary nav while that surface is open.
+    const navRow = (entry: ResolvedPrimaryNavEntry) => stripContextItems(linkFor(entry), entry, navState)
+    const primary = entries.filter(entry => entry.group === 'primary').map(navRow)
+    const more: SidebarItem[] = entries.filter(entry => entry.group === 'more').map(navRow)
     // Rows the registry does not own keep their AppShell order after the registry's «Ещё».
     for (const link of baseLinks) {
       if (!isSeparatorItem(link) && !PRIMARY_NAV_LINK_IDS.has(link.id)) more.push(link)
     }
     return { primaryLinks: primary, moreLinks: more }
   }, [baseLinks, entries, navState, onOpenBrowser, t])
+
+  // WP6: the open surface's sub-navigation (Проекты, Страницы, Источники,
+  // Автоматизации), taken from its rich AppShell row.
+  const contextEntry = React.useMemo(
+    // From the whole registry: a surface placed in the pills (no sidebar row) still gets its context.
+    () => PRIMARY_NAV.find(entry => CONTEXT_SECTION_LINK_IDS.has(entry.linkId) && entry.isActive(navState)) ?? null,
+    [navState],
+  )
+  const surfaceSection = React.useMemo(() => {
+    if (!contextEntry) return null
+    const row = baseLinks.find(link => link.id === contextEntry.linkId)
+    if (!row || isSeparatorItem(row) || !row.items?.length) return null
+    return buildContextSection(row, { open: isExpanded(row.id), onToggle: () => toggleExpanded(row.id) })
+  }, [contextEntry, baseLinks, isExpanded, toggleExpanded])
 
   // Session filters (statuses, favourites, archive, labels) are contextual:
   // they leave the global nav and show as their own section under Sessions.
@@ -113,6 +142,7 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   // Mirrors ActivityRail: an active destination inside «Ещё» (deep link, ⌘K,
   // route change) keeps the disclosure open so the selection is visible.
   const moreForced = hasActiveLink(moreLinks) || hasActiveLink(experimentalLinks)
+  const showContext = !isCollapsed && (sessionFilters !== null || surfaceSection !== null)
   const moreOpen = applicationSectionsOpen || moreForced
   // Only a user click on the summary may persist the open state; the toggle
   // event a programmatic open/close fires must not (review2 I1).
@@ -138,26 +168,44 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
 
   return (
     <>
-      {sessionFilters && !isCollapsed && (
-        <section className="mb-2 border-b border-border-subtle pb-2" aria-label={t('sidebar.sessionFilters')} data-session-filters="">
-          <LeftSidebar isCollapsed={false} onExpand={onExpandPrimary} links={sessionFilters.links} />
-          {filtersOpen && sessionFilters.emptyCount > 0 && (
-            <button
-              type="button"
-              className="ml-8 rounded-[var(--radius-control)] px-2 py-1 text-xs text-muted-foreground hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
-              aria-pressed={showEmpty}
-              onClick={toggleShowEmpty}
-            >
-              {showEmpty ? t('sidebar.hideEmpty') : t('sidebar.showEmpty', { count: sessionFilters.emptyCount })}
-            </button>
-          )}
-        </section>
-      )}
-      {/* WP5: primary group of the shared registry (icons only when collapsed). */}
+      {/* WP6 slot 1: the global primary nav — same rows, same order on every screen. */}
       <LeftSidebar
         isCollapsed={isCollapsed}
         onExpand={onExpandPrimary}
         links={primaryLinks}
+      />
+      {/* WP6 slot 2: the open surface's contextual navigation, right under the global nav. */}
+      {showContext && (
+        <section
+          className="mx-1 mt-2 border-t border-border-subtle pt-2"
+          aria-label={sessionFilters ? t('sidebar.sessionFilters') : surfaceSection!.title}
+          data-sidebar-context=""
+          {...(sessionFilters ? { 'data-session-filters': '' } : {})}
+        >
+          {sessionFilters && (
+            <>
+              <LeftSidebar isCollapsed={false} onExpand={onExpandPrimary} links={sessionFilters.links} />
+              {filtersOpen && sessionFilters.emptyCount > 0 && (
+                <button
+                  type="button"
+                  className="ml-8 rounded-[var(--radius-control)] px-2 py-1 text-xs text-muted-foreground hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+                  aria-pressed={showEmpty}
+                  onClick={toggleShowEmpty}
+                >
+                  {showEmpty ? t('sidebar.hideEmpty') : t('sidebar.showEmpty', { count: sessionFilters.emptyCount })}
+                </button>
+              )}
+            </>
+          )}
+          {surfaceSection && <LeftSidebar isCollapsed={false} onExpand={onExpandPrimary} links={surfaceSection.links} />}
+        </section>
+      )}
+      {/* Portal target for screens that own their navigation (mode screens, Notes, Memory, Settings…). */}
+      <div
+        ref={contextSlotRef}
+        hidden={isCollapsed}
+        data-primary-sidebar-context=""
+        className="mx-1 mt-2 border-t border-border-subtle empty:hidden"
       />
       {/* «Ещё»: every other destination stays reachable, collapsed by default. */}
       <details
@@ -198,15 +246,49 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   )
 })
 
-/** The global Sessions row: navigation only, its filter tree moves to the contextual section. */
-function stripSessionFilters(link: LinkItem): LinkItem {
-  if (link.id !== 'nav:allSessions' || !link.items) return link
+/** Rows whose children become the contextual section while their surface is open. */
+export const CONTEXT_SECTION_LINK_IDS: ReadonlySet<string> = new Set(['nav:projects', 'nav:pages', 'nav:sources', 'nav:automations'])
+
+/**
+ * A global nav row is navigation only: its filter tree (sessions) or
+ * sub-items (projects, pages, sources, automations) move to the contextual
+ * section. Clicking the row of the open surface returns to its root (clears
+ * a sub-filter) instead of toggling a section that is no longer there.
+ */
+export function stripContextItems(link: LinkItem, entry: Pick<ResolvedPrimaryNavEntry, 'route' | 'isActive'>, navState: Parameters<ResolvedPrimaryNavEntry['isActive']>[0]): LinkItem {
+  const owned = link.id === 'nav:allSessions' || CONTEXT_SECTION_LINK_IDS.has(link.id)
+  if (!owned || !link.items) return link
+  const route = entry.route
+  const active = entry.isActive(navState)
+  const onClick = link.id === 'nav:allSessions'
+    ? () => navigate(routes.view.allSessions())
+    : route && active ? () => navigate(route()) : link.onClick
   return {
     ...link,
-    // Plain navigation: the section toggle no longer applies to this row.
-    onClick: () => navigate(routes.view.allSessions()),
+    onClick,
+    // On a filtered sub-view (status, source type, a page…) the surface row
+    // stays highlighted — and keeps «Ещё» open — while the child is selected
+    // in the context section.
+    variant: active ? 'default' : link.variant,
+    // Children (and the jump-to-filter highlights they carry) live in the context section only.
     expandable: false, expanded: false, onToggle: undefined, items: undefined, sortable: undefined,
   }
+}
+
+/** The contextual section for a surface row: its sub-items under a collapsible header (state persisted per row id). */
+export function buildContextSection(row: LinkItem, state: { open: boolean; onToggle: () => void }): { title: string; links: SidebarItem[] } {
+  const group: LinkItem = {
+    id: `${row.id}:context`,
+    title: row.title,
+    icon: row.icon,
+    variant: 'ghost',
+    expandable: true,
+    expanded: state.open,
+    onToggle: state.onToggle,
+    contextMenu: row.contextMenu,
+    items: row.items,
+  }
+  return { title: row.title, links: [group] }
 }
 
 export const SESSION_FILTERS_ID = 'nav:sessionFilters'
