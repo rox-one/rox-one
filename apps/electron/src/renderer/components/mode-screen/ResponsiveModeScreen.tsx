@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { ChevronLeft, Menu } from 'lucide-react'
 import type { PanelWorkspaceLayoutMode } from '@/lib/panel-workspace-layout'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
 export interface ResponsiveModeScreen {
@@ -26,7 +26,7 @@ export function ResponsiveModeScreenLayout({ navigator, list, detail, status, te
   const lastSelection = React.useRef<string | null>(responsive.selectedId)
   const [panelWidth, setPanelWidth] = React.useState(0)
   const [navigationOpen, setNavigationOpen] = React.useState(false)
-  const sidebarTarget = useShellSidebarTarget()
+  const sidebarTarget = useSidebarHandledOutside()
   React.useLayoutEffect(() => {
     const element = root.current
     if (!element) return

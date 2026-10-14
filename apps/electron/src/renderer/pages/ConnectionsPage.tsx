@@ -34,7 +34,7 @@ import { ConnectionLifecyclePanel } from './ConnectionLifecyclePanel'
 import { GithubDeviceLoginPanel } from './GithubDeviceLoginPanel'
 import { ConnectionsOverview, OverviewGroup, OverviewRow, type OverviewStatus } from './connections-overview'
 import { ProjectAuthorityConnectionPanel } from '@/components/projects/ProjectAuthorityConnectionPanel'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 
 const TABS = ['services', 'credentials', 'imports', 'policies', 'audit'] as const
 const CONNECT_SOURCES = ['github-env', 'git-helper', 'docker', 'aws', 'keychain', 'adc', 'ssh-agent', 'github-oauth'] as const
@@ -83,7 +83,7 @@ export default function ConnectionsPage() {
   const auditViewReady = useRef(false)
   const [auditSurface, setAuditSurface] = useState<SurfaceState | 'loading'>('loading')
   const [tab, setTab] = useState<ConnectionsTab>('services')
-  const sidebarTarget = useShellSidebarTarget()
+  const sidebarTarget = useSidebarHandledOutside()
   const servicesViewport = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     servicesTarget(tab === 'services' ? servicesViewport.current : null)

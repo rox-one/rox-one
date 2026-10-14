@@ -10,7 +10,7 @@ import * as React from 'react'
 import { ResponsiveModeScreenLayout, type ResponsiveModeScreen } from './ResponsiveModeScreen'
 import type { PanelWorkspaceLayoutMode } from '@/lib/panel-workspace-layout'
 import { cn } from '@/lib/utils'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useDedupedPanelTitle, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import { Tabs as TabsCore, type TabItem } from '@/components/ui/tabs'
 import { useTranslation } from 'react-i18next'
 import { Archive, Bell, CalendarDays, CheckCheck, ChevronRight, Clock3, Folder, Inbox, ListFilter, Mail, MessageCircle, Newspaper, Radio, ShieldCheck, Sparkles, Tag, Users, type LucideIcon } from 'lucide-react'
@@ -47,7 +47,7 @@ function FallbackModeScreenLayout({
   layout?: PanelWorkspaceLayoutMode
 }) {
   const { t } = useTranslation()
-  const target = useShellSidebarTarget()
+  const target = useSidebarHandledOutside()
   const root = React.useRef<HTMLDivElement | null>(null)
   const [width, setWidth] = React.useState(0)
   const [pane, setPane] = React.useState<'navigation' | 'list' | 'detail'>('list')
@@ -212,9 +212,10 @@ export function ListHeader({
   subtitle?: React.ReactNode
   actions?: React.ReactNode
 }) {
+  const shownTitle = useDedupedPanelTitle(title)
   return (
     <header className="flex min-h-[44px] shrink-0 flex-wrap items-center gap-2 px-3 pt-2">
-      <h2 className="text-lg font-semibold">{title}</h2>
+      {shownTitle != null ? <h2 className="text-lg font-semibold">{shownTitle}</h2> : null}
       {subtitle ? <span className="truncate text-sm text-text-muted">{subtitle}</span> : null}
       {/* Wrap instead of overflowing: in a narrow list column the action row drops to its own
           line (and wraps internally) so a later button is never clipped by Panel's overflow-hidden. */}

@@ -43,7 +43,7 @@ import {
   type StatusFacet,
   type UsageBucket,
 } from '@/lib/memory-model'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import { MemoryListPanel } from '@/components/app-shell/MemoryListPanel'
 import { ImportReviewDialog } from './ImportReviewDialog'
 import { toErrorMessage } from '@/lib/errors'
@@ -177,7 +177,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const { t, i18n } = useTranslation()
   const { navigate } = useNavigation()
   const sessionMap = useAtomValue(sessionMetaMapAtom)
-  const sidebarTarget = useShellSidebarTarget()
+  const sidebarTarget = useSidebarHandledOutside()
   const knowledgeSignals = useKnowledgeSignals({ workspaceId })
   const memoryListTarget = useTourTarget('memory.list', { workspaceId })
   const memoryScopeTarget = useTourTarget('memory.scope', { workspaceId })

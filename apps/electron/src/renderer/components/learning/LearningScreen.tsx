@@ -28,7 +28,7 @@ import type {
 } from '@rox/shared/memory/learning'
 import { cn } from '@/lib/utils'
 import { formatHotkeyDisplay } from '@/lib/platform'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import {
   LEARNING_EVIDENCE_TYPES,
   LEARNING_SCOPES,
@@ -214,7 +214,7 @@ const STATUS_TONE: Record<LearningCandidateStatus, 'muted' | 'accent' | 'warning
 
 export function LearningScreen({ workspaceId }: LearningScreenProps) {
   const { t, i18n } = useTranslation()
-  const sidebarTarget = useShellSidebarTarget()
+  const sidebarTarget = useSidebarHandledOutside()
 
   const [view, setView] = React.useState<LearningView>('dashboard')
   const [candidates, setCandidates] = React.useState<LearningCandidate[] | null>(null)

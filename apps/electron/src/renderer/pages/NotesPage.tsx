@@ -42,7 +42,7 @@ import { navigate, routes } from '@/lib/navigate'
 import { consumePendingCompose } from '@/platform/inspector-compose-events'
 import { captureWorkspaceToolOpen, openWorkspaceTool, type WorkspaceToolOpenIntent } from '@/lib/open-workspace-tool'
 import { cn } from '@/lib/utils'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import {
   contentHash,
   isClaimableLive,
@@ -507,7 +507,7 @@ function SelectedNoteRecovery({ failure, address, onRetry }: {
 }
 
 function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
-  const shellSidebarTarget = useShellSidebarTarget()
+  const shellSidebarTarget = useSidebarHandledOutside()
   const { t } = useTranslation()
   // Panel-layout mode drives which side rails this surface may render.
   const { mode: panelLayoutMode } = usePanelWorkspaceLayout()

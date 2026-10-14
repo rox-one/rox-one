@@ -26,7 +26,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@rox/ui/tooltip'
 import { MainContentPanel } from './MainContentPanel'
 import { PANEL_MIN_WIDTH } from './panel-constants'
 import { NavigationContext } from '@/contexts/NavigationContext'
-import { ShellSidebarContext } from './ShellSidebarPortal'
+import { BarePanelContext, ShellSidebarContext } from './ShellSidebarPortal'
 import { destroyBrowserInstanceForRoute } from '@/platform/browser-panel-lifecycle'
 import { AuxiliaryToolPanel } from './AuxiliaryToolPanel'
 import { WorkspaceToolContext } from '@/atoms/workspace-context'
@@ -95,6 +95,10 @@ export function PanelSlot({
   // Multi-panel grid tile: framed, titled, compact type scale (index.css).
   const gridTile = !isOnly && !isCompact && !entry.tool
   const titleKey = useMemo(() => (gridTile ? gridTileTitleKey(navState) : null), [gridTile, navState])
+  const ownsSidebar = !entry.tool && (!primaryId || primaryId === entry.id)
+  const tileTitle = titleKey ? t(titleKey) : null
+  // A non-owner content panel in split view is a bare PANEL: no secondary sidebar.
+  const barePanel = useMemo(() => (gridTile && !ownsSidebar ? { title: tileTitle } : null), [gridTile, ownsSidebar, tileTitle])
   useLayoutEffect(() => {
     const panel = panelRef.current
     if (!panel) return
@@ -171,6 +175,7 @@ export function PanelSlot({
         data-compact={isCompact || undefined}
         data-auxiliary-tool={entry.tool}
         data-panel-density={gridTile ? 'grid' : undefined}
+        data-panel-kind={barePanel ? 'panel' : 'screen'}
         data-focused={gridTile ? String(isFocusedPanel) : undefined}
         tabIndex={-1}
         className={cn(
@@ -211,7 +216,7 @@ export function PanelSlot({
           {gridTile ? (
             <div className="rox-grid-tile-header flex shrink-0 items-center gap-1" data-testid="grid-tile-header">
               <span className="min-w-0 flex-1 truncate text-xs font-medium text-text-secondary">
-                {titleKey ? t(titleKey) : t('navigation.mainSurface')}
+                {tileTitle ?? t('navigation.mainSurface')}
               </span>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -231,7 +236,8 @@ export function PanelSlot({
           <div className="flex min-h-0 flex-1 flex-col">
             <AppShellProvider value={contextOverride}>
               <NavigationContext.Provider value={panelNavigation}>
-                <ShellSidebarContext.Provider value={entry.tool || (primaryId && primaryId !== entry.id) ? null : sidebarTarget}>
+                <ShellSidebarContext.Provider value={ownsSidebar ? sidebarTarget : null}>
+                 <BarePanelContext.Provider value={barePanel}>
                   <WorkspaceToolContext.Provider value={entry.toolContext ?? null}>
                     {hibernated ? (
                       <div className="flex h-full items-center justify-center text-caption text-muted-foreground" data-panel-hibernated="">{t('shell.strip.hibernated')}</div>
@@ -240,6 +246,7 @@ export function PanelSlot({
                         isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden} panelId={entry.id} />
                     )}
                   </WorkspaceToolContext.Provider>
+                 </BarePanelContext.Provider>
                 </ShellSidebarContext.Provider>
               </NavigationContext.Provider>
             </AppShellProvider>
