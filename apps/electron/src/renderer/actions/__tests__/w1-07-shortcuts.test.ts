@@ -16,6 +16,7 @@ import { findHotkeyCollisions, isActionFlagEnabled, physicalChord, resolveDefaul
 import { matchesHotkey } from '../registry'
 import { MODE_AWARE_TAKEOVERS, isTakeoverActive } from '../shell-shortcuts'
 import { formatHotkeyDisplay } from '@/lib/platform'
+import { evaluateWhen } from '../keybinding-context'
 
 const ALL = Object.values(actions) as ActionDefinition[]
 const W107_IDS = [
@@ -104,6 +105,15 @@ describe('flag gating', () => {
       expect(listed.has(id)).toBe(false)
       expect(categorized.has(id)).toBe(false)
     }
+  })
+
+  it('⌘B toggles the sidebar only outside editors so notes can bold', () => {
+    expect(actions['view.toggleSidebar'].when).toBe('!inputFocus')
+    const idle = {
+      inputFocus: false, hasSelection: false, chatFocus: false, navigatorFocus: false, sidebarFocus: false, menuOpen: false,
+    }
+    expect(evaluateWhen(actions['view.toggleSidebar'].when, idle)).toBe(true)
+    expect(evaluateWhen(actions['view.toggleSidebar'].when, { ...idle, inputFocus: true })).toBe(false)
   })
 
   it('⌘F takeover: declared once over app.search, active only with docs.shared.v1', () => {

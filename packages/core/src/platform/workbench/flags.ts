@@ -85,6 +85,8 @@ export const WORKBENCH_FLAG = {
   playbooksV1: 'playbooks.v1',
   playbooksKnowledgeV1: 'playbooks.knowledge.v1',
   playbooksCodebookV1: 'playbooks.codebook.v1',
+  // Cookbooks surface (cookbooks-surface program) — kill-switch, default ON.
+  cookbooksV1: 'cookbooks.v1',
   /** Goals module (W1-06, #1503): gates the MIG-04/05 OKR / roadmap import into the work store. Default OFF. */
   goalsV1: 'goals.v1',
 // W1-12 (#1509)
@@ -296,6 +298,9 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   { id: WORKBENCH_FLAG.playbooksV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.playbooksKnowledgeV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.playbooksV1], rollbackSafe: true },
   { id: WORKBENCH_FLAG.playbooksCodebookV1, defaultValue: false, dependencies: [WORKBENCH_FLAG.playbooksV1], rollbackSafe: true },
+  // Cookbooks (cookbooks-surface program): kill-switch, default ON — turning it
+  // off hides the sidebar entry and the surface without code edits.
+  { id: WORKBENCH_FLAG.cookbooksV1, defaultValue: true, dependencies: [], rollbackSafe: true },
   // W1-12 (#1509): domain rules R1–R5 — default OFF, consumers inert (no subscription).
   { id: WORKBENCH_FLAG.automationRulesV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   // W1-09 (#1506): Inbox Review / Mentions / Assignments are gated by their

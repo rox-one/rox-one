@@ -48,6 +48,7 @@ import {
   isMemoryNavigation,
   isPagesNavigation,
   isPlaybooksNavigation,
+  isCookbooksNavigation,
   isProjectsNavigation,
   isSettingsNavigation,
   isSkillsNavigation,
@@ -128,6 +129,7 @@ export const PRIMARY_NAV: readonly PrimaryNavEntry[] = [
   { id: 'connections', linkId: 'nav:connections', group: 'more', labelKey: 'sidebar.connections', icon: GLYPHS.connections, route: () => routes.view.connections(), isActive: isConnectionsNavigation, preload: 'connections' },
   { id: 'developers', linkId: 'nav:developers', group: 'more', labelKey: 'sidebar.developers', icon: GLYPHS.developers, route: () => routes.view.developers(), isActive: isDevelopersNavigation, shellFlag: WORKBENCH_FLAG.devSpaceV1 },
   { id: 'playbooks', linkId: 'nav:playbooks', group: 'more', labelKey: 'sidebar.playbooks', icon: GLYPHS.playbooks, route: () => routes.view.playbooks(), isActive: isPlaybooksNavigation, shellFlag: WORKBENCH_FLAG.playbooksV1 },
+  { id: 'cookbooks', linkId: 'nav:cookbooks', group: 'more', labelKey: 'sidebar.cookbooks', icon: GLYPHS.cookbooks, route: () => routes.view.cookbooks(), isActive: isCookbooksNavigation, shellFlag: WORKBENCH_FLAG.cookbooksV1, preload: 'cookbooks' },
   { id: 'settings', linkId: 'nav:settings', group: 'more', labelKey: 'sidebar.settings', icon: GLYPHS.settings, route: () => routes.view.settings(), isActive: isSettingsNavigation, footer: true },
 ]
 
