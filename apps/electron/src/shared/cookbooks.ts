@@ -78,6 +78,34 @@ export interface CookbooksDocument {
   text: string | null
 }
 
+// ---------------------------------------------------------------------------
+// Structural cell mutations (SPEC wave 10 §Контракт shared/main/IPC)
+// ---------------------------------------------------------------------------
+
+/**
+ * The four structural notebook operations, addressed by position (the vendored
+ * `.ipynb` carries no stable per-cell id). One discriminated union keeps the
+ * protocol surface at a single `cookbooks-lab:mutate` channel.
+ */
+export type CookbooksCellMutation =
+  | { op: 'add'; cellType: 'code' | 'markdown'; index: number; source?: string }
+  | { op: 'delete'; index: number }
+  | { op: 'move'; from: number; to: number }
+  | { op: 'duplicate'; index: number }
+
+/** Input of `cookbooks-lab:mutate`: the target copy plus the operation. */
+export type CookbooksMutateInput = { itemId: string } & CookbooksCellMutation
+
+/**
+ * Result of a structural mutation: the document re-read after the sidecar
+ * applied it, plus the cell index the renderer should focus (`-1` when a
+ * delete emptied the notebook).
+ */
+export interface CookbooksMutateResult {
+  document: CookbooksDocument
+  index: number
+}
+
 /** Result of running one cell (`POST /run`). */
 export interface CookbooksRunResult {
   ok: boolean
@@ -85,12 +113,36 @@ export interface CookbooksRunResult {
   error: string | null
   timedOut: boolean
   missing: string[]
+  /**
+   * `true` when the run was interrupted by a `/cancel` (additive sidecar field,
+   * SPEC wave 9 §1). Absent on a sidecar that predates the field.
+   */
+  cancelled?: boolean
+}
+
+/** Result of a "Run all" (`POST /run-all`): per-cell records + the run-wide flag. */
+export interface CookbooksRunAllResult {
+  cells: CookbooksRunCell[]
+  /** `true` when the whole run was interrupted; cells without a record were cancelled. */
+  cancelled?: boolean
+}
+
+/** Result of `POST /cancel` — how many active executions it stopped. */
+export interface CookbooksCancelResult {
+  ok: boolean
+  cancelled: number
+}
+
+/** Result of the main-side `.ipynb` export (`cookbooks-lab:export`). */
+export interface CookbooksExportResult {
+  saved: boolean
+  path?: string
 }
 
 /** Per-cell record of a "Run all" (`POST /run-all`). */
 export interface CookbooksRunCell {
   index: number
-  status: 'ok' | 'error' | 'skipped'
+  status: 'ok' | 'error' | 'skipped' | 'cancelled'
   stdout: string
   error: string | null
 }
@@ -148,4 +200,73 @@ export function parseCookbooksStartupLine(line: string): CookbooksStartup | null
     return { port, token, url: `http://127.0.0.1:${port}/lab.html?token=${token}` }
   }
   return null
+}
+
+// ---------------------------------------------------------------------------
+// Notebook export (SPEC wave 9 §4)
+// ---------------------------------------------------------------------------
+
+/** One cell of the export builder input — a run result flattened for the file. */
+export interface CookbooksExportCell {
+  cellType: 'code' | 'markdown'
+  source: string
+  executionCount?: number | null
+  stdout?: string
+  error?: string
+}
+
+/**
+ * nbformat 4.5 line split: every line keeps its trailing `\n` except the last,
+ * and an empty string yields no lines at all (nbformat's `[]`, never `['']`).
+ */
+function toNotebookLines(text: string): string[] {
+  if (text.length === 0) return []
+  const lines = text.split('\n').map((line, index, all) => (index < all.length - 1 ? `${line}\n` : line))
+  // A final newline produced an empty trailing element — it belongs to the line
+  // before it, not to a line of its own.
+  if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop()
+  return lines
+}
+
+/**
+ * Build a deterministic nbformat 4.5 `.ipynb` document as pretty-printed JSON.
+ *
+ * Pure: no `Date`, no randomness, so the same input always renders byte-equal.
+ * A code cell's `stdout`/`error` become stream outputs (`stdout`/`stderr`) only
+ * when non-empty; markdown cells carry just their source.
+ */
+export function buildNotebookExport(input: {
+  title: string
+  cells: Array<{
+    cellType: 'code' | 'markdown'
+    source: string
+    executionCount?: number | null
+    stdout?: string
+    error?: string
+  }>
+}): string {
+  const cells = input.cells.map((cell) => {
+    if (cell.cellType === 'markdown') {
+      return {
+        cell_type: 'markdown' as const,
+        metadata: {},
+        source: toNotebookLines(cell.source),
+      }
+    }
+    const outputs: Array<Record<string, unknown>> = []
+    if (typeof cell.stdout === 'string' && cell.stdout.length > 0) {
+      outputs.push({ output_type: 'stream', name: 'stdout', text: toNotebookLines(cell.stdout) })
+    }
+    if (typeof cell.error === 'string' && cell.error.length > 0) {
+      outputs.push({ output_type: 'stream', name: 'stderr', text: toNotebookLines(cell.error) })
+    }
+    return {
+      cell_type: 'code' as const,
+      source: toNotebookLines(cell.source),
+      execution_count: cell.executionCount ?? null,
+      metadata: {},
+      outputs,
+    }
+  })
+  return JSON.stringify({ cells, metadata: { title: input.title }, nbformat: 4, nbformat_minor: 5 }, null, 2)
 }

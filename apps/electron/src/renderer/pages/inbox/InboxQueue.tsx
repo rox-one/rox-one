@@ -778,7 +778,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   const status = (
     <>
       {counts.blocking > 0 ? <span>{t('inbox.status.blocking', { count: counts.blocking })}</span> : null}
-      {mail.available && (mailReady || inMail || mailFailure) ? <span className="truncate" data-testid="mail-status">{t(statusKey(mail.status), { address: mail.status?.address ?? '', url: mail.status?.serverUrl ?? '', error: mail.status?.error ?? '', flag: mail.status?.flag ?? '' })}</span> : null}
+      {mail.available && (mailReady || inMail || mailFailure) ? <span className="truncate" data-testid="mail-status" title={mail.status?.error ?? undefined}>{t(statusKey(mail.status), { address: mail.status?.address ?? '', url: mail.status?.serverUrl ?? '', error: mail.status?.error ?? '', flag: mail.status?.flag ?? '' })}</span> : null}
     </>
   )
   const hasDetail = !!(selected || currentId || mailSelected || composeState.compose)

@@ -575,6 +575,103 @@ html[data-ui-profile="super-engineering"] .input-container {
   border: 1px solid color-mix(in oklch, var(--foreground) 8%, transparent);
 }
 
+/* --- Rox Graphite profile (rox-graphite.json, uiProfile "graphite") -------
+   Geometry and chrome adapted from the MIT DeepSeek Harness theme: neutral
+   grey layers, large radii, soft alpha borders, monochrome primary buttons.
+   Colours come from the preset; this block only reshapes. Scoped to the
+   profile, so every other theme keeps the default 6/8/12 scale. */
+html[data-ui-profile="graphite"] {
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-3xl: 28px;
+  --radius-4xl: 28px;
+  --radius-control: var(--radius-md);
+  --radius-card: var(--radius-lg);
+  --radius-composer: var(--radius-xl);
+  --radius-overlay: var(--radius-xl);
+  --rox-radius-sm: var(--radius-sm);
+  --rox-radius-md: var(--radius-md);
+  --graphite-border: color-mix(in oklch, var(--foreground) 6%, transparent);
+  --graphite-border-strong: color-mix(in oklch, var(--foreground) 12%, transparent);
+  --graphite-fill: color-mix(in oklch, var(--foreground) 9%, transparent);
+  --graphite-fill-hover: color-mix(in oklch, var(--foreground) 14%, transparent);
+  --border-subtle: var(--graphite-border);
+  --border-strong: var(--graphite-border-strong);
+  --chrome-plate-border: var(--graphite-border);
+  --graphite-input-shadow: inset 0 0 0 1px var(--graphite-border-strong), 0 6px 24px -12px rgb(0 0 0 / 0.35);
+}
+html[data-ui-profile="graphite"] [data-slot="button"] {
+  border-radius: var(--radius-control);
+}
+html[data-ui-profile="graphite"] .input-container {
+  box-shadow: var(--graphite-input-shadow);
+}
+html[data-ui-profile="graphite"] .send-btn {
+  width: 2rem;
+  height: 2rem;
+}
+/* DSH-style filled "New Session" row (rendered hidden in other profiles). */
+html[data-ui-profile="graphite"] [data-sidebar-new-session] {
+  display: flex;
+}
+/* Screen and catalog headers: generous inset, larger title, muted counts. */
+html[data-ui-profile="graphite"] [data-screen-header] {
+  padding: calc(var(--spacing) * 10) calc(var(--spacing) * 10) calc(var(--spacing) * 3);
+}
+html[data-ui-profile="graphite"] [data-screen-title] {
+  font-size: var(--text-stat);
+  line-height: var(--text-stat--line-height);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+html[data-ui-profile="graphite"] [data-screen-subtitle] {
+  margin-top: calc(var(--spacing) * 1.5);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+/* A padded page wrapper owns the inset; its header then adds none, so the
+   title lines up with the sections below (no double inset). */
+html[data-ui-profile="graphite"] [data-screen-body] {
+  padding: calc(var(--spacing) * 10);
+}
+html[data-ui-profile="graphite"] [data-screen-body] [data-screen-header] {
+  padding: 0;
+}
+html[data-ui-profile="graphite"] [data-screen-section-title] {
+  font-size: var(--text-title-sm);
+  font-weight: 500;
+}
+html[data-ui-profile="graphite"] [data-screen-count] {
+  background: transparent;
+  padding: 0;
+  margin-left: calc(var(--spacing) * 1.5);
+  font-size: var(--text-title-sm);
+}
+
+/* --- Concentric radii (all profiles) --------------------------------------
+   An inner surface inset by --nest-pad inside a rounded container uses the
+   outer radius minus that padding, so no corner voids show. Flush children
+   (no padding) take 0 via .radius-flush. Opt-in utilities; menu items are
+   handled per profile below. */
+.radius-nested {
+  border-radius: max(0px, calc(var(--radius-outer, var(--radius-md)) - var(--nest-pad, 4px)));
+}
+.radius-flush {
+  border-radius: 0;
+}
+html[data-ui-profile="graphite"] :is([role="menu"], [role="listbox"], [data-premium-menu]) {
+  --radius-outer: var(--popover-radius, var(--radius-md));
+}
+/* Graphite only: the larger overlay radius needs concentric items; other
+   themes keep their per-component rounded-* utilities. */
+html[data-ui-profile="graphite"] :is([role="menu"], [role="listbox"], [data-premium-menu]) :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"]) {
+  border-radius: max(var(--radius-xs), calc(var(--radius-outer) - var(--nest-pad, 4px)));
+}
+
 /* =============================================================================
    TAILWIND V4 THEME INTEGRATION
 ============================================================================= */
@@ -1524,4 +1621,32 @@ html[data-shell-material="solid"] {
 [data-g05-continuum="true"] [data-g05-card-chrome] > div > div.border-t {
   background: transparent;
   border-top-color: transparent;
+}
+
+@layer components {
+  /* Skeleton placeholder (shared primitive). Shimmer animates transform only. */
+  .rox-skeleton {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    height: 0.75em;
+    border-radius: var(--radius-xs);
+    background: color-mix(in oklab, currentColor 10%, transparent);
+  }
+  .rox-skeleton--circle { border-radius: var(--radius-full); aspect-ratio: 1; height: 2em; }
+  .rox-skeleton-stack { display: flex; flex-direction: column; gap: 0.5em; }
+  .rox-skeleton-stack > .rox-skeleton[data-last] { width: 60%; }
+  .rox-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, color-mix(in oklab, currentColor 8%, transparent), transparent);
+    animation: rox-skeleton-shimmer 1.4s var(--ease-standard) infinite;
+  }
+  @keyframes rox-skeleton-shimmer { to { transform: translateX(100%); } }
+  html[data-resizing] .rox-skeleton::after { animation: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .rox-skeleton::after { animation: none; }
+  }
 }

@@ -1,4 +1,4 @@
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { RpcServer } from '@rox/server-core/transport'
 import type { RemoteTlsTrust } from '@rox/core/types'
 import type { HandlerDeps } from './handler-deps'

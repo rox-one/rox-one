@@ -124,16 +124,16 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
   return (
     <div className="h-full overflow-auto min-w-0" data-testid="skills-catalog"
       style={{ '--muted-foreground': 'color-mix(in oklch, var(--foreground) 78%, var(--background))' } as React.CSSProperties}>
-      <div className="mx-auto w-full max-w-[1440px] space-y-6 p-4 md:p-6">
-        <header className="flex flex-wrap items-start justify-between gap-3">
-          <div><h1 className="flex items-center gap-2 text-base font-semibold"><Zap className="icon-inline" />{t('capabilityCatalog.skillsTitle')}</h1><p className="mt-1 text-xs text-muted-foreground">{t('capabilityCatalog.skillsDescription')}</p></div>
+      <div data-screen-body="" className="mx-auto w-full max-w-[1440px] space-y-6 p-4 md:p-6">
+        <header data-screen-header="" className="flex flex-wrap items-start justify-between gap-3">
+          <div><h1 data-screen-title="" className="flex items-center gap-2 text-base font-semibold"><Zap className="icon-inline" />{t('capabilityCatalog.skillsTitle')}</h1><p data-screen-subtitle="" className="mt-1 text-xs text-muted-foreground">{t('capabilityCatalog.skillsDescription')}</p></div>
           {workspaceRootPath && <EditPopover trigger={<Button variant="outline" size="sm">{t('skillsList.addSkill')}</Button>} {...getEditConfig('add-skill', workspaceRootPath)} />}
         </header>
         {error && <p role="alert" className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive">{error}</p>}
         {packs.length > 0 && <section aria-label={t('settings.context.bundledTitle')}>
           <h2 className="mb-3 text-sm font-medium">{t('settings.context.bundledTitle')}</h2>
           <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))]">
-            {packs.map(pack => <article key={pack.slug} className="rounded-xl border border-border/60 p-3.5" data-testid="catalog-skill-pack">
+            {packs.map(pack => <article key={pack.slug} className="rounded-lg border border-border/60 p-3.5" data-testid="catalog-skill-pack">
               <div className="mb-3 flex items-center justify-between gap-2"><PackageOpen className="icon-toolbar text-muted-foreground" /><Button variant="outline" size="sm" disabled={busy !== null} onClick={() => void togglePack(pack)} aria-label={t(pack.disabled ? 'capabilityCatalog.enablePack' : 'capabilityCatalog.disablePack', { name: pack.slug })}>{t(pack.disabled ? 'capabilityCatalog.enable' : 'capabilityCatalog.disable')}</Button></div>
               <h3 className="text-sm font-medium break-words">{pack.slug}</h3>
               <p className="mt-1.5 line-clamp-2 text-xs text-muted-foreground" title={pack.skills.join(', ')}>{pack.skills.slice(0, 5).map(slug => skills.find(skill => skill.slug === slug)?.metadata.name ?? slug).join(', ')}</p>
@@ -144,12 +144,12 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
           </div>
         </section>}
         <section aria-label={t('capabilityCatalog.individualSkills')}>
-          <div className="mb-3 flex flex-wrap items-center gap-2"><h2 className="mr-auto text-sm font-medium">{t('capabilityCatalog.individualSkills')} <span className="ml-1 rounded bg-foreground/5 px-1.5 py-0.5 text-xs text-muted-foreground">{queried.total || rows.length}</span></h2>
+          <div className="mb-3 flex flex-wrap items-center gap-2"><h2 data-screen-section-title="" className="mr-auto text-sm font-medium">{t('capabilityCatalog.individualSkills')} <span data-screen-count="" className="ml-1 rounded bg-foreground/5 px-1.5 py-0.5 text-xs text-muted-foreground">{queried.total || rows.length}</span></h2>
             <label className="relative"><Search className="absolute left-2 top-2 icon-caption text-muted-foreground" /><input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t('capabilityCatalog.searchSkills')} aria-label={t('capabilityCatalog.searchSkills')} className="h-8 w-52 max-w-full rounded-md border border-border/60 bg-transparent pl-7 pr-2 text-xs" /></label>
             <select aria-label={t('capabilityCatalog.category')} value={category} onChange={e => setCategory(e.target.value as typeof category)} className="h-8 max-w-full rounded-md border border-border/60 bg-background px-2 text-xs"><option value="all">{t('capabilityCatalog.allCategories')}</option>{CAPABILITY_CATEGORIES.map(item => <option key={item} value={item}>{t(`capabilityCatalog.categories.${item}`)}</option>)}</select>
             <select aria-label={t('capabilityCatalog.scope')} value={scope} onChange={e => setScope(e.target.value as typeof scope)} className="h-8 rounded-md border border-border/60 bg-background px-2 text-xs"><option value="all">{t('capabilityCatalog.allScopes')}</option>{(['workspace', 'project', 'global', 'omp'] as const).map(item => <option key={item} value={item}>{t(`capabilityCatalog.scopes.${item}`)}</option>)}</select>
           </div>
-          <div ref={tableViewportRef} className="max-h-[min(32rem,100%)] overflow-auto rounded-xl border border-border/60"><table className="w-full min-w-[680px] border-collapse text-left text-xs" aria-label={t('capabilityCatalog.individualSkills')}>
+          <div ref={tableViewportRef} className="max-h-[min(32rem,100%)] overflow-auto rounded-lg border border-border/60"><table className="w-full min-w-[680px] border-collapse text-left text-xs" aria-label={t('capabilityCatalog.individualSkills')}>
             <thead className="sticky top-0 z-sticky bg-background text-muted-foreground"><tr>{['name', 'description', 'category', 'usage', 'author', 'updated'].map(key => <th key={key} scope="col" className="border-b border-border/60 px-3 py-2.5 font-medium" aria-sort={key === 'name' && sort === 'name' ? 'ascending' : key === 'usage' && sort === 'usage' ? 'descending' : undefined}>{key === 'name' || key === 'usage' ? <button type="button" className="flex items-center gap-1" onClick={() => setSort(key === 'name' ? 'name' : 'usage')}>{t(`capabilityCatalog.columns.${key}`)}<ArrowDownUp className="icon-status" /></button> : t(`capabilityCatalog.columns.${key}`)}</th>)}</tr></thead>
             <tbody>
             {catalogWindow.padTop > 0 && <tr aria-hidden="true" data-catalog-spacer="top"><td colSpan={6} style={{ height: catalogWindow.padTop, padding: 0, border: 0 }} /></tr>}

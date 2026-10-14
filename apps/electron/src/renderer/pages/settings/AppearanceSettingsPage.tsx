@@ -6,6 +6,8 @@
  * and has no user-selectable mode or color theme.
  */
 
+import { STATUS_BAR_ITEMS, setStatusBarItem, useStatusBarItems } from '@/lib/status-bar-items'
+import { setDensity, useDensity, type UiDensity } from '@/lib/density-preference'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
 import './AppearanceSettingsPage.css'
@@ -717,6 +719,7 @@ export default function AppearanceSettingsPage() {
   const { t, i18n } = useTranslation()
   const toolIconColumns = useMemo(() => getToolIconColumns(t), [t])
   const mounted = useRef(true)
+  const density = useDensity()
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
 
   const {
@@ -737,6 +740,7 @@ export default function AppearanceSettingsPage() {
   const { workspaces, sessionStatuses } = useAppShellContext()
   // A6/B10 — «Интерфейс»: compact status bar + accent source (main-owned).
   const { statusBarVisible, accentSource } = useUiAppearance()
+  const statusBarItems = useStatusBarItems()
   const handleStatusBarChange = useCallback((checked: boolean) => {
     if (!appearancePrefLive()) return
     void saveUiAppearancePatch({ statusBarVisible: checked })
@@ -1117,6 +1121,19 @@ export default function AppearanceSettingsPage() {
               <SettingsSection title={t("settings.appearance.display")}>
                 <SettingsCard>
                   <SettingsRow
+                    label={t("settings.appearance.density")}
+                    description={t("settings.appearance.densityDesc")}
+                  >
+                    <SettingsSegmentedControl
+                      value={density}
+                      onValueChange={(value) => setDensity(value as UiDensity)}
+                      options={[
+                        { value: 'compact', label: t("settings.appearance.densityCompact") },
+                        { value: 'comfortable', label: t("settings.appearance.densityComfortable") },
+                      ]}
+                    />
+                  </SettingsRow>
+                  <SettingsRow
                     label={t("settings.appearance.contrast")}
                     description={t("settings.appearance.contrastDesc")}
                   >
@@ -1314,6 +1331,15 @@ export default function AppearanceSettingsPage() {
                     checked={statusBarVisible}
                     onCheckedChange={handleStatusBarChange}
                   />
+                  {statusBarVisible && STATUS_BAR_ITEMS.map((item) => (
+                    <SettingsToggle
+                      key={item}
+                      label={t(`settings.appearance.statusBarItem.${item}`)}
+                      checked={statusBarItems.includes(item)}
+                      onCheckedChange={(checked) => setStatusBarItem(item, checked)}
+                      className="pl-6"
+                    />
+                  ))}
                   <SettingsRow
                     label={t("settings.appearance.accent")}
                     description={t("settings.appearance.accentDesc")}

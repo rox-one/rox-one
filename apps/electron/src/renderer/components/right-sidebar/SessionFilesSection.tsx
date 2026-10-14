@@ -17,7 +17,8 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react'
-import { AnimatePresence, motion, type Variants } from 'motion/react'
+import { AnimatePresence, motion } from '@/lib/deferred-motion'
+import type { Variants } from 'motion/react'
 import { File, Folder, FolderOpen, FileText, Image, FileCode, ChevronRight, ExternalLink } from 'lucide-react'
 import {
   ContextMenu,
@@ -255,7 +256,7 @@ const FileThumbnail = memo(function FileThumbnail({ file }: { file: SessionFile 
           onLoad={() => setLoaded(true)}
           onError={() => setFailed(true)}
           className={cn(
-            'absolute inset-0 h-full w-full rounded-[2px] object-cover transition-opacity duration-200',
+            'absolute inset-0 h-full w-full rounded-xs object-cover transition-opacity duration-200',
             loaded ? 'opacity-100' : 'opacity-0'
           )}
         />

@@ -78,7 +78,7 @@ export function PersonField({ role, person, candidates = [], onChange, readOnly,
             aria-expanded={open}
             aria-label={person ? t('entities.ui.person.change', { role: roleLabel }) : t('entities.ui.person.set', { role: roleLabel })}
             onClick={() => setOpen((v) => !v)}
-            className={cn('flex min-h-10 min-w-0 flex-1 items-center rounded-[6px] px-1.5 py-1', HOVER_TINT, MOTION_FAST, FOCUS_RING)}
+            className={cn('flex min-h-10 min-w-0 flex-1 items-center rounded-sm px-1.5 py-1', HOVER_TINT, MOTION_FAST, FOCUS_RING)}
           >
             {body}
           </button>
@@ -87,7 +87,7 @@ export function PersonField({ role, person, candidates = [], onChange, readOnly,
               type="button"
               aria-label={t('entities.ui.person.clear')}
               onClick={() => onChange?.(null)}
-              className={cn('size-6 shrink-0 rounded-[6px] text-text-muted hover:text-foreground', FOCUS_RING)}
+              className={cn('size-6 shrink-0 rounded-sm text-text-muted hover:text-foreground', FOCUS_RING)}
             >
               ×
             </button>

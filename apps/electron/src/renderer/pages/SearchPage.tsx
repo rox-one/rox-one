@@ -11,6 +11,7 @@ import { windowWorkspaceIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { Input } from '@/components/ui/input'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { routes } from '@/lib/navigate'
+import { announce } from '@/lib/a11y/announcer'
 import { resolveKnowledgeApi, resolveSearchHitNoteId, searchHitRoute, searchKnowledge } from '../knowledge/KnowledgeHome'
 
 type NoteResult = Awaited<ReturnType<Window['electronAPI']['searchNotes']>>[number]
@@ -162,6 +163,18 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
 
   const hasResults = notes.items.length + sessions.items.length + knowledge.items.length > 0
   const allDone = [notes, sessions, knowledge].every((source) => source.status === 'done' || source.status === 'unavailable')
+  const resultCount = notes.items.length + sessions.items.length + knowledge.items.length
+  const hasQuery = query.trim().length > 0
+  // #42: announce a one-line summary when a search settles, instead of a live
+  // region over the whole result list. Only the not-done → done edge counts,
+  // so typing never re-announces stale counts.
+  const wasDone = useRef(allDone)
+  useEffect(() => {
+    const settled = allDone && !wasDone.current
+    wasDone.current = allDone
+    if (!settled || !hasQuery) return
+    announce(resultCount > 0 ? t('searchPage.resultsAnnounce', { count: resultCount }) : t('searchPage.noResults'))
+  }, [allDone, hasQuery, resultCount, t])
 
   return (
     <main className="flex h-full min-h-0 flex-col overflow-hidden">
@@ -184,7 +197,7 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
           </button>
         </form>
       </div>
-      <div ref={searchResultsTarget} aria-live="polite" className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+      <div ref={searchResultsTarget} className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
         {!query.trim() ? (
           <p className="text-sm text-muted-foreground">{t('searchPage.empty')}</p>
         ) : (

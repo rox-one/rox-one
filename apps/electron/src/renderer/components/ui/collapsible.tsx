@@ -1,5 +1,5 @@
 import * as CollapsiblePrimitive from "@radix-ui/react-collapsible"
-import { motion, AnimatePresence } from "motion/react"
+import { motion, AnimatePresence } from '@/lib/deferred-motion'
 import * as React from "react"
 
 // Radix primitives (unchanged)
