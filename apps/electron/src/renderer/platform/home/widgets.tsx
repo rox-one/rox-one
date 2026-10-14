@@ -1727,7 +1727,6 @@ function HeroWidget({ edit }: WidgetProps) {
   ]
   return (
     <WidgetFrame testId="hero" title={t('workbench.home.w.hero')} edit={edit} meta={`${date} · ${fmt.time(now)}`}>
-      <div className="rox-home-hero-glow pointer-events-none absolute inset-0 rounded-[var(--radius-card)]" aria-hidden="true" />
       <div className="relative flex h-full min-h-0 flex-col gap-3">
         <div className="min-w-0">
           <p className="truncate text-display font-bold text-foreground" data-home-greeting={greetingPart(now)}>{t(`workbench.home.hero.greeting.${greetingPart(now)}`)}</p>
