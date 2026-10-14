@@ -6071,6 +6071,7 @@
   "notes.content.sourceTitle": "Document source and access",
   "notes.content.unconfirmedSave": "The save could not be confirmed. Your draft is retained. Retry to check the same operation before saving more changes.",
   "notes.content.unknownSource": "Unknown format",
+  "notes.daily.sessions": "A nap munkamenetei",
   "notes.dialog.assetFilenamePlaceholder": "Melléklet fájlneve",
   "notes.dialog.assetUnused": "nem használt",
   "notes.dialog.assetUsedBy": "használja: {{label}}",

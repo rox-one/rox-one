@@ -6107,6 +6107,7 @@
   "notes.content.sourceTitle": "Document source and access",
   "notes.content.unconfirmedSave": "The save could not be confirmed. Your draft is retained. Retry to check the same operation before saving more changes.",
   "notes.content.unknownSource": "Unknown format",
+  "notes.daily.sessions": "جلسات اليوم",
   "notes.dialog.assetFilenamePlaceholder": "اسم ملف المرفق",
   "notes.dialog.assetUnused": "غير مستخدم",
   "notes.dialog.assetUsedBy": "مستخدم بواسطة {{label}}",

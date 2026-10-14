@@ -6071,6 +6071,7 @@
   "notes.content.sourceTitle": "Document source and access",
   "notes.content.unconfirmedSave": "The save could not be confirmed. Your draft is retained. Retry to check the same operation before saving more changes.",
   "notes.content.unknownSource": "Unknown format",
+  "notes.daily.sessions": "この日のセッション",
   "notes.dialog.assetFilenamePlaceholder": "アセットのファイル名",
   "notes.dialog.assetUnused": "未使用",
   "notes.dialog.assetUsedBy": "{{label}} が使用",

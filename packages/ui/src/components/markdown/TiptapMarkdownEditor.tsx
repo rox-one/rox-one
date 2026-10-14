@@ -14,6 +14,7 @@ import { Markdown as LegacyMarkdown } from 'tiptap-markdown'
 import { LegacyMixedTaskLists } from './legacy-mixed-task-lists'
 import { RetainedTrailingNode } from './retained-trailing-node'
 import { tiptapCodeBlock } from './TiptapCodeBlockView'
+import { CodeFenceEnter } from './extensions/CodeFenceEnter'
 import { TiptapBubbleMenus, INLINE_MATH_EDIT_EVENT } from './TiptapBubbleMenus'
 import { TiptapSlashMenu } from './TiptapSlashMenu'
 import { MermaidBlock } from './extensions/MermaidBlock'
@@ -316,6 +317,7 @@ export function TiptapMarkdownEditor({
       tiptapCodeBlock.configure({
         themes: shikiModes.current,
       }),
+      CodeFenceEnter,
       MermaidBlock,
       LatexBlock,
       Placeholder.configure({ placeholder: placeholder ?? i18n.t('editor.placeholder') }),

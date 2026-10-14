@@ -6071,6 +6071,7 @@
   "notes.content.sourceTitle": "Document source and access",
   "notes.content.unconfirmedSave": "The save could not be confirmed. Your draft is retained. Retry to check the same operation before saving more changes.",
   "notes.content.unknownSource": "Unknown format",
+  "notes.daily.sessions": "이날의 세션",
   "notes.dialog.assetFilenamePlaceholder": "에셋 파일 이름",
   "notes.dialog.assetUnused": "미사용",
   "notes.dialog.assetUsedBy": "사용 중: {{label}}",

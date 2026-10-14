@@ -82,6 +82,7 @@ import {
 } from './notes/NotesDocumentChrome'
 import { NotesViewHost } from './notes/NotesViewHost'
 import { convertNote, dailyNoteDestination, parseNotePropertyValue } from './notes/note-views'
+import { dailySessionsFor } from './notes/daily-sessions'
 import {
   loadPersonalTaskStore,
   persistPersonalTaskStore,
@@ -543,6 +544,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId, rightSessionContext])
   // PERF-09: a revisit paints the cached list at once; refreshNotes revalidates it.
   const [notes, setNotes] = React.useState<NoteSummary[]>(() => cachedNotesList(activeWorkspaceId) ?? [])
+  // Daily note handleDaily just cleaned up, so the route open that follows skips it.
+  const cleanedDailyNoteRef = React.useRef<string | null>(null)
   // Stable insertion order for sidebar — only updated on full refreshes, not optimistic saves
   const [sidebarOrder, setSidebarOrder] = React.useState<string[]>(() => (cachedNotesList(activeWorkspaceId) ?? []).map(n => n.id))
   const [searchResults, setSearchResults] = React.useState<NoteSummary[] | null>(null)
@@ -1327,7 +1330,24 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
 
   React.useEffect(() => {
     if (selectedNoteId) {
-      void openNote(parseNoteBlockAddress(selectedNoteId).noteId)
+      const noteId = parseNoteBlockAddress(selectedNoteId).noteId
+      const openedDailyDate = parseDailyNoteDate(noteId)
+      const workspaceId = activeWorkspaceId
+      // Explicit opens (sidebar, search, wikilink, route) read first, then ask the
+      // server for the opt-in legacy cleanup; the server checks the file on disk
+      // and writes only if the old block is there, announcing an external change
+      // so every open copy re-reads. With unsaved edits nothing is sent: the next
+      // open retries. handleDaily already cleaned up, so it is not called twice.
+      if (openedDailyDate && workspaceId) {
+        let cancelled = false
+        void openNote(noteId).then(() => {
+          if (cancelled || activeNoteIdRef.current !== noteId || dirtyRef.current) return
+          if (cleanedDailyNoteRef.current === noteId) { cleanedDailyNoteRef.current = null; return }
+          void window.electronAPI.getDailyNote(workspaceId, openedDailyDate, { cleanupLegacy: true }).catch(() => undefined)
+        })
+        return () => { cancelled = true }
+      }
+      void openNote(noteId)
       return
     }
     setActiveNote(null)
@@ -1339,7 +1359,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     setSaveError(null)
     setContentResolution(null)
     ++openNoteRequestRef.current
-  }, [selectedNoteId, openNote])
+  }, [selectedNoteId, openNote, activeWorkspaceId])
 
   const noteIds = React.useMemo(
     () => `${activeWorkspaceId ?? ''}:${notes.map(n => `${n.id}:${n.updatedAt}`).join(',')}`,
@@ -1553,6 +1573,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const propertyProjection = React.useMemo(() => projectFrontmatter(retainSource(content)), [content])
   const richParts = React.useMemo(() => splitFrontmatter(content), [content])
   const dailyDate = parseDailyNoteDate(activeNote?.id)
+  // Live overlay: the day's sessions are rendered, never written into the note body.
+  const dailySessions = React.useMemo(() => dailyDate ? dailySessionsFor(sessionMetaMap.values(), dailyDate, activeWorkspaceId) : [], [dailyDate, sessionMetaMap, activeWorkspaceId])
   const currentNoteAssets = React.useMemo(() => {
     const refs = new Set(activeNote?.assetRefs.map(ref => ref.replace(/^\.\//, '')) ?? [])
     return allAssets.filter(asset => refs.has(asset.relativePath))
@@ -1670,8 +1692,15 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const handleDaily = async (date?: string) => {
     if (!activeWorkspaceId) return
     if (!await flushBeforeAction()) return
-    const note = await window.electronAPI.getDailyNote(activeWorkspaceId, date)
+    // Explicit open: flushBeforeAction left no unsaved edits, so the server may
+    // strip a legacy sessions block if the file on disk still has one.
+    const cleanupLegacy = !dirtyRef.current
+    const note = await window.electronAPI.getDailyNote(activeWorkspaceId, date, { cleanupLegacy })
+    if (cleanupLegacy) cleanedDailyNoteRef.current = note.id
     await refreshNotes()
+    // Opening may strip a legacy sessions block; an already-open clean copy must
+    // re-read it, or its next save would CAS against the pre-cleanup revision.
+    if (activeNoteIdRef.current === note.id && !dirtyRef.current) await openNote(note.id)
     navigate(routes.view.notes(note.id))
   }
 
@@ -3064,8 +3093,9 @@ h1,h2,h3{margin-top:1.5em}
             />
             </div></div>
           ) : null}
-            <div className="flex h-full min-h-0" style={noteView === 'standard' ? undefined : { display: 'none' }} aria-hidden={noteView !== 'standard' || undefined} ref={(element) => element?.toggleAttribute('inert', noteView !== 'standard')} data-testid="notes-retained-editor">
-            <div ref={setDocRowEl} className="flex h-full min-h-0">
+            <div className="flex h-full min-h-0 w-full min-w-0 flex-1" style={noteView === 'standard' ? undefined : { display: 'none' }} aria-hidden={noteView !== 'standard' || undefined} ref={(element) => element?.toggleAttribute('inert', noteView !== 'standard')} data-testid="notes-retained-editor">
+            {/* Fills the panel: a shrink-to-fit row left the editor scrollbar as a dark stripe mid-panel in narrow tiles. */}
+            <div ref={setDocRowEl} className="flex h-full min-h-0 w-full min-w-0 flex-1" data-testid="notes-doc-row">
             <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView])} inline={tocShown} open={railSheet === 'toc'} title={t('notes.toc.title')} onClose={() => setRailSheet(null)}>
             <NotesToc
               markdown={content}
@@ -3247,6 +3277,20 @@ h1,h2,h3{margin-top:1.5em}
                 entityNodes={noteEntityMentions.entityNodes}
                 className="notes-editor-prose mx-auto w-full max-w-[70ch] min-h-full"
               />
+              {dailySessions.length > 0 ? (
+                <section data-testid="notes-daily-sessions" aria-label={t('notes.daily.sessions')} className="mx-auto mt-8 w-full max-w-[70ch] border-t border-border/50 pt-4">
+                  <h2 className="mb-2 text-xs font-medium text-muted-foreground">{t('notes.daily.sessions')}</h2>
+                  <ul className="space-y-1">
+                    {dailySessions.map((session) => (
+                      <li key={session.id}>
+                        <button type="button" className="max-w-full truncate text-left text-sm text-muted-foreground hover:text-foreground hover:underline" onClick={() => navigate(routes.view.allSessions(session.id))}>
+                          {session.name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
               {noteEntityMentions.picker}
               <NotesCommentHighlights
                 comments={markdownComments}
