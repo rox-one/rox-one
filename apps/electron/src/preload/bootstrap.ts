@@ -744,6 +744,26 @@ const telemetryBootstrapConfig = (() => {
 // W1-07 (#1504): push the unified surface route gate to main (deep links).
 ;(api as ElectronAPI).setUnifiedSurfaceRoutesEnabled = (ids: string[]) =>
   ipcRenderer.invoke('shell:setSurfaceRoutesEnabled', ids)
+// «Доска» (Canvas): board persistence bridge (workspace resolved in main).
+;(api as ElectronAPI).canvas = {
+  list: (workspaceId) => ipcRenderer.invoke('canvas:list', workspaceId),
+  create: (workspaceId, title) => ipcRenderer.invoke('canvas:create', workspaceId, title),
+  rename: (workspaceId, boardId, title) => ipcRenderer.invoke('canvas:rename', workspaceId, boardId, title),
+  trash: (workspaceId, boardId) => ipcRenderer.invoke('canvas:trash', workspaceId, boardId),
+  open: (workspaceId, boardId) => ipcRenderer.invoke('canvas:open', workspaceId, boardId),
+  apply: (workspaceId, boardId, update) => ipcRenderer.invoke('canvas:apply', workspaceId, boardId, update),
+  close: (workspaceId, boardId) => ipcRenderer.invoke('canvas:close', workspaceId, boardId),
+  setEnabled: (enabled) => ipcRenderer.invoke('canvas:setEnabled', enabled),
+  listTrash: (workspaceId) => ipcRenderer.invoke('canvas:listTrash', workspaceId),
+  restore: (workspaceId, boardId, stamp) => ipcRenderer.invoke('canvas:restore', workspaceId, boardId, stamp),
+  onUpdate: (callback) => {
+    const handler = (_event: unknown, workspaceId: unknown, boardId: unknown, update: unknown) => {
+      if (typeof workspaceId === 'string' && typeof boardId === 'string' && update instanceof Uint8Array) callback(workspaceId, boardId, update)
+    }
+    ipcRenderer.on('canvas:update', handler)
+    return () => ipcRenderer.removeListener('canvas:update', handler)
+  },
+}
 
 // entities.links.v1: the renderer owns the persisted toggle; main owns the
 // EFFECTIVE state (env override > toggle) and returns it, so the renderer
