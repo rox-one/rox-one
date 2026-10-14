@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { readFileSync } from 'fs'
@@ -90,6 +90,49 @@ function worktreeCraftPackagePlugin() {
   }
 }
 
+/**
+ * Partition the renderer bundle so the monolith stops being a single chunk.
+ *
+ * Only the foundation runtime is grouped; everything else is left to Rollup's
+ * default code-splitting. A broader grouping is a trap here: the renderer loads
+ * Shiki grammars, Mermaid, PDF workers and whole feature pages through dynamic
+ * `import()`, and folding those modules into a named chunk makes it a *static*
+ * dependency of the entry — turning a lazy 10 MB into an eager one.
+ *
+ * Locale JSON is intentionally not grouped: it is pulled through dynamic
+ * `import()` by `@rox/shared/i18n/lazy`, so each language must stay its own
+ * on-demand chunk rather than being merged back into one eager bundle.
+ */
+function manualChunks(id: string): string | undefined {
+  const path = id.replace(/\\/g, '/')
+  if (!path.includes('node_modules')) return undefined
+  if (/node_modules\/(react|react-dom|scheduler)\//.test(path)) return 'vendor-react'
+  if (/node_modules\/(i18next|react-i18next|i18next-browser-languagedetector)\//.test(path)) {
+    return 'vendor-i18n'
+  }
+  return undefined
+}
+
+/**
+ * Attach the app chunk split, but only to real application builds.
+ *
+ * Vite's `build.lib` (used by the WebUI bundle tests to compile the bootstrap
+ * for a cold realm) forces Rollup's `inlineDynamicImports`, which is
+ * incompatible with `manualChunks`. Skipping library shapes keeps those tests
+ * working while the production app build still gets the vendor split.
+ */
+function appChunkSplitPlugin(): Plugin {
+  return {
+    name: 'webui-app-chunk-split',
+    config(config) {
+      if (config.build?.lib) return undefined
+      const output = config.build?.rollupOptions?.output
+      if (output && !Array.isArray(output) && output.inlineDynamicImports) return undefined
+      return { build: { rollupOptions: { output: { manualChunks } } } }
+    },
+  }
+}
+
 export default defineConfig({
   plugins: [
     react({
@@ -106,6 +149,7 @@ export default defineConfig({
     worktreeCraftPackagePlugin(),
     stubNpmLocksPlugin(),
     nodeBuiltinShimPlugin(),
+    appChunkSplitPlugin(),
   ],
   root: resolve(__dirname, 'src'),
   base: './',
