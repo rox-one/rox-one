@@ -116,8 +116,8 @@ interface ProfileStripProps {
   /** Avatar-only presentation for the collapsed navigation rail. */
   compact?: boolean
   /**
-   * `rail`: the single profile entry point at the bottom of the 56px primary
-   * rail — a bare 28px avatar (real image, initial fallback) that opens the
+   * `rail`: the single profile entry point at the bottom of the 48px primary
+   * rail — a bare 24px avatar (real image, initial fallback) that opens the
    * profile popover to the right. No card chrome, name or plan pill.
    */
   variant?: 'strip' | 'rail'
@@ -196,7 +196,7 @@ export function ProfileStrip({
             data-rail-avatar=""
             data-tutorial="profile-strip"
             className={cn(
-              'flex size-10 items-center justify-center rounded-[var(--radius-control)] outline-none',
+              'flex size-8 items-center justify-center rounded-[var(--radius-control)] outline-none',
               'hover:bg-[var(--state-hover)] focus-visible:ring-1 focus-visible:ring-ring data-[state=open]:bg-[var(--state-selected)]',
               className,
             )}
@@ -205,7 +205,7 @@ export function ProfileStrip({
             title={`${displayName} · ${accountDetails}`}
           >
             <span id={detailsId} className="sr-only">{accountDetails}</span>
-            <Avatar className="size-7 shrink-0 rounded-full">
+            <Avatar className="size-6 shrink-0 rounded-full">
               {data.avatar ? <AvatarImage src={data.avatar} alt="" /> : null}
               <AvatarFallback delayMs={0} className="bg-surface-pressed text-text-primary">
                 {defaultAvatarFallback ?? <RoxInkAvatarArt />}
