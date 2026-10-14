@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
 import { useTranslation } from 'react-i18next'
 import { CheckCircle2, CircleHelp, DatabaseZap, KeyRound, Search, Settings2, TriangleAlert } from 'lucide-react'
 import { toast } from 'sonner'
@@ -95,7 +96,7 @@ export default function IntegrationsCatalogPage({ workspaceId, workspaceRootPath
     <div className="flex h-full min-w-0 flex-col overflow-hidden" data-testid="integrations-catalog"
       style={{ '--muted-foreground': 'color-mix(in oklch, var(--foreground) 78%, var(--background))' } as React.CSSProperties}>
       <header data-screen-header="" className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border/50 p-4">
-        <div className="mr-auto"><h1 data-screen-title="" className="flex items-center gap-2 text-base font-semibold"><DatabaseZap className="size-4" />{t('capabilityCatalog.integrationsTitle')}</h1><p data-screen-subtitle="" className="mt-1 text-xs text-muted-foreground">{t('capabilityCatalog.integrationsDescription')}</p></div>
+        <div className="mr-auto"><PanelHeading data-screen-title="" className="flex items-center gap-2 text-base font-semibold" titleKey="capabilityCatalog.integrationsTitle"><DatabaseZap className="size-4" />{t('capabilityCatalog.integrationsTitle')}</PanelHeading><p data-screen-subtitle="" className="mt-1 text-xs text-muted-foreground">{t('capabilityCatalog.integrationsDescription')}</p></div>
         <label className="relative"><Search className="absolute left-2 top-2 size-3.5 text-muted-foreground" /><input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t('capabilityCatalog.searchIntegrations')} aria-label={t('capabilityCatalog.searchIntegrations')} className="h-8 w-52 max-w-full rounded-md border border-border/60 bg-transparent pl-7 pr-2 text-xs" /></label>
         <Button variant="outline" size="sm" onClick={() => navigate(routes.view.connections())}><Settings2 className="mr-1 size-3.5" />{t('capabilityCatalog.credentialsAndPolicies')}</Button>
         {workspaceRootPath && <EditPopover trigger={<Button variant="outline" size="sm">{t('sourcesList.addSource')}</Button>} {...getEditConfig('add-source', workspaceRootPath)} />}
