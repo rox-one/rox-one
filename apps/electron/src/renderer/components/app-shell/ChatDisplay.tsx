@@ -106,6 +106,7 @@ import { useTurnCardExpansion } from "@/hooks/useTurnCardExpansion"
 import { useContextualSuggestions } from "@/hooks/useContextualSuggestions"
 import { useNavigationActions } from "@/contexts/NavigationContext"
 import { useAppShellContext } from "@/context/AppShellContext"
+import { useObjectActions } from "./object-actions/useObjectActions"
 import { navigate, routes } from "@/lib/navigate"
 import { SideThreadPreviewDialog, type SideThreadPreview } from "@/components/chat/SideThreadPreviewDialog"
 import { buildSideThreadPrompt, type SideThreadAction } from "@rox/shared/side-threads"
@@ -383,8 +384,11 @@ export interface ChatDisplayHandle {
   matchCount: number
   currentMatchIndex: number
   isHighlighting: boolean
-  /** Scroll chat to a message/turn by message id (mindmap click-through). */
-  scrollToMessage: (messageId: string) => void
+  /**
+   * Scroll chat to a message/turn by message id (mindmap click-through).
+   * Returns false when the message is not (yet) part of the rendered transcript.
+   */
+  scrollToMessage: (messageId: string) => boolean
 }
 
 /**
@@ -677,6 +681,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
 
   // Panel focus state (for multi-panel auto-scroll behavior)
   const appShellContext = useAppShellContext()
+  const objectActions = useObjectActions(session)
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
   const runtimePanelId = (appShellContext as typeof appShellContext & { panelId?: string })?.panelId
   const prefersReducedMotion = usePrefersReducedMotion()
@@ -1989,8 +1994,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     }
   }, [assistantTurnIndexByMessageId, allTurns, visibleTurnCount, interruptOutputFollow, startJump, finishJump])
 
-  const scrollToMessage = useCallback((messageId: string) => {
-    if (!messageId) return
+  const scrollToMessage = useCallback((messageId: string): boolean => {
+    if (!messageId) return false
 
     // Prefer exact turn keyed by user/system message id.
     let targetTurnIndex = allTurns.findIndex((turn) => {
@@ -2009,7 +2014,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       const mapped = assistantTurnIndexByMessageId.get(messageId)
       if (mapped != null) targetTurnIndex = mapped
     }
-    if (targetTurnIndex < 0) return
+    if (targetTurnIndex < 0) return false
     interruptOutputFollow()
 
     const ensureVisibleCount = allTurns.length - targetTurnIndex
@@ -2042,11 +2047,12 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
           if (!scrollToTurn()) setTimeout(() => { void scrollToTurn() }, 80)
         })
       })
-      return
+      return true
     }
     if (!scrollToTurn()) {
       requestAnimationFrame(() => { void scrollToTurn() })
     }
+    return true
   }, [allTurns, assistantTurnIndexByMessageId, visibleTurnCount, startJump, finishJump])
 
     // Expose navigation via imperative handle (for session list + mindmap click-through)
@@ -2425,6 +2431,8 @@ const handleFollowUpChipClick = useCallback((item: {
                         onOpenUrl={onOpenUrl}
                         onSendPrompt={(text) => handleSubmit(text)}
                         onListen={(text) => { void handleListen(text, turn.turnId) }}
+                        responseActions={objectActions.responseActions}
+                        renderResponseFooter={objectActions.renderResponseFooter}
                         isListening={listeningTurnId === turn.turnId}
                         isLastResponse={isLastResponse}
                         compactMode={compactMode}

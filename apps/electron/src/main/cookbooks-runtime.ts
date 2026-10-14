@@ -174,14 +174,26 @@ export function redactCookbooksLogLine(line: string): string {
 /** Lab-key → secret-value snapshot (`openai.api_key` → `sk-…`). */
 export type CookbooksStore = Record<string, string>
 
+/** The lab catalog key the shared ROX gateway key stands in for. */
+const OPENAI_LAB_KEY = 'openai.api_key'
+
 /**
  * Default store source: the vendored catalog's `secretMap` (read through
  * `getBundledAssetsDir`) resolved through the canonical chain — environment
- * (`ROX_SECRET_<ENV>`) → local-encrypted → infisical. A key that no provider
- * holds is simply absent; an unreadable catalog or a resolver failure yields an
- * empty store. Never throws.
+ * (`ROX_SECRET_<ENV>`) → local-encrypted → infisical.
+ *
+ * Precedence: a key the credential chain resolves always wins. When the catalog
+ * maps `openai.api_key` and the chain resolved nothing for it, the shared ROX
+ * gateway key (`ROX_API_KEY`) is used instead — `installRoxDefaults` (branch
+ * feat/default-rox-r1-max) embeds it in the client, so notebooks work out of
+ * the box against api.rox.one. A key the catalog does not map is never
+ * invented, an absent/blank `ROX_API_KEY` fills nothing, and an unreadable
+ * catalog or a resolver failure yields an empty store. Never throws.
  */
-export async function defaultCookbooksStore(dir?: string): Promise<CookbooksStore> {
+export async function defaultCookbooksStore(
+  dir?: string,
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<CookbooksStore> {
   try {
     const root = dir ?? getBundledAssetsDir('cookbooks')
     if (!root) return {}
@@ -200,6 +212,15 @@ export async function defaultCookbooksStore(dir?: string): Promise<CookbooksStor
     for (const [labKey, envName] of Object.entries(secretMap)) {
       const value = resolved.env[envName]
       if (typeof value === 'string' && value.length > 0) store[labKey] = value
+    }
+    // Embedded ROX gateway fallback: the shared key is baked into the client by
+    // `installRoxDefaults` (branch feat/default-rox-r1-max), so a notebook mapped
+    // to `openai.api_key` works out of the box against api.rox.one. The
+    // credential-chain result always wins — this only fills a gap the chain left
+    // open for a key the catalog actually maps, and a blank value fills nothing.
+    if (OPENAI_LAB_KEY in secretMap && !(OPENAI_LAB_KEY in store)) {
+      const embedded = env.ROX_API_KEY?.trim()
+      if (embedded) store[OPENAI_LAB_KEY] = embedded
     }
     return store
   } catch {

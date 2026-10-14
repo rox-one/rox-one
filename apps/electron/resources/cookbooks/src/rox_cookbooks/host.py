@@ -341,11 +341,19 @@ class LabHost:
                         if raw_store:
                             store.update(raw_store)
                         env = env_for_item(lab.catalog, item, store)
+                        # Mask credentials only: catalog `defaultEnv` values (the
+                        # ROX gateway base URLs) are public and must stay readable.
+                        redact_values = [
+                            v
+                            for name, v in env.items()
+                            if v and name not in lab.catalog.default_env
+                        ]
                         try:
                             result = execute_code(
                                 copy,
                                 code,
                                 env=env,
+                                redact_values=redact_values,
                                 catalog=lab.catalog,
                                 item=item,
                                 store=store,
@@ -447,11 +455,19 @@ class LabHost:
                         if raw_store:
                             store.update(raw_store)
                         env = env_for_item(lab.catalog, item, store)
+                        # Mask credentials only: catalog `defaultEnv` values (the
+                        # ROX gateway base URLs) are public and must stay readable.
+                        redact_values = [
+                            v
+                            for name, v in env.items()
+                            if v and name not in lab.catalog.default_env
+                        ]
                         try:
                             result = execute_all(
                                 copy,
                                 entries,
                                 env=env,
+                                redact_values=redact_values,
                                 catalog=lab.catalog,
                                 item=item,
                                 store=store,

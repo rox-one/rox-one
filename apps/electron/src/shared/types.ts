@@ -3140,6 +3140,15 @@ export interface ElectronAPI {
   menuMinimize(): Promise<void>
   menuMaximize(): Promise<void>
   exitMiniWindow(): Promise<boolean>
+  /** Mini glass companion shown while a main window is minimized (macOS). */
+  miniGlass: {
+    setExpanded(expanded: boolean): Promise<boolean>
+    /** Restore the owner window and start a new session (sends when text is non-empty). */
+    submit(text: string | null): Promise<boolean>
+    getEnabled(): Promise<boolean>
+    setEnabled(enabled: boolean): Promise<boolean>
+    onReset(callback: () => void): () => void
+  }
   onPanelFocusDirection(callback: (direction: 'left' | 'right' | 'up' | 'down') => void): () => void
   menuZoomIn(): Promise<void>
   menuZoomOut(): Promise<void>
@@ -3415,7 +3424,7 @@ export interface ElectronAPI {
   saveDiscordCredentials(creds: { token: string }): Promise<void>
   disconnectMessagingPlatform(platform: string): Promise<void>
   forgetMessagingPlatform(platform: string): Promise<void>
-  getMessagingBindings(): Promise<Array<{ id: string; workspaceId: string; sessionId: string; platform: string; channelId: string; threadId?: number; channelName?: string; enabled: boolean; createdAt: number; accessMode?: MessagingBindingAccessMode; allowedSenderIds?: string[]; discordGuildTrigger?: 'mention' | 'all' }>>
+  getMessagingBindings(): Promise<Array<{ id: string; workspaceId: string; sessionId: string; platform: string; channelId: string; threadId?: number; channelName?: string; chatType?: 'direct' | 'group' | 'channel'; enabled: boolean; createdAt: number; accessMode?: MessagingBindingAccessMode; allowedSenderIds?: string[]; discordGuildTrigger?: 'mention' | 'all' }>>
   generateMessagingPairingCode(sessionId: string, platform: string): Promise<{ code: string; expiresAt: number; botUsername?: string }>
   /** Telegram supergroup pairing — returns a code typed in the supergroup to capture its chatId. */
   generateMessagingSupergroupCode(platform: string): Promise<{ code: string; expiresAt: number; botUsername?: string }>
