@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Layers } from 'lucide-react'
-import { PremiumMenu } from '@rox/ui'
+import { PremiumMenu } from '@rox/ui/premium-menu'
 import {
   COLLECTION_GROUP_BY_VALUES,
   type CollectionDisplay,

@@ -5,15 +5,12 @@ import { randomUUID } from 'node:crypto';
 import type { Message } from '@rox/core/types';
 
 export const OMP_REQUIRED_KEYWORDS = ['orchestrate', 'workflowz', 'ultrathink'] as const;
-/** Native matcher only accepts standalone lowercase prose. A separate directive avoids code/quotation exclusions. */
+/**
+ * Host no longer prefixes every turn with the native magic keywords (S3-13).
+ * Users can still type them; magicKeywords stay enabled in the OMP profile.
+ */
 export function withOmpRequiredModes(message: string): string {
-  // A bare initial directive is the only form we trust as already activated.
-  const rawFirstLine = message.split('\n', 1)[0]!;
-  const firstLine = /^(?: {4}|\t)/.test(rawFirstLine) ? '' : rawFirstLine.trim();
-  const tokens = firstLine.split(/\s+/);
-  const active = tokens.length && tokens.every(token => (OMP_REQUIRED_KEYWORDS as readonly string[]).includes(token)) ? tokens : [];
-  const missing = OMP_REQUIRED_KEYWORDS.filter(word => !active.includes(word));
-  return missing.length ? `${missing.join(' ')}\n\n${message}` : message;
+  return message;
 }
 export interface OmpIdentity { version: 1; sessionId: string; file: string }
 function confined(dir: string, file: string): boolean {

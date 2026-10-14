@@ -83,6 +83,9 @@ export interface BroadcastEventMap {
     },
   ]
   [RPC_CHANNELS.labels.CHANGED]: [workspaceId: string]
+  /** Team messenger changed for an org (channel list, membership or messages). */
+  [RPC_CHANNELS.teamChat.CHANGED]: [change: { orgId: string; channelId?: string }]
+  [RPC_CHANNELS.chatFolders.CHANGED]: [workspaceId: string, state: import('../chat-folders/types.ts').ChatFoldersState]
   [RPC_CHANNELS.statuses.CHANGED]: [workspaceId: string]
   // Entities (W1-02) — local link store changed for a workspace.
   [RPC_CHANNELS.entities.LINKS_CHANGED]: [workspaceId: string]
@@ -217,6 +220,15 @@ export interface BroadcastEventMap {
   // Extension UI surface events (global; workspace isolation renderer-side)
   [RPC_CHANNELS.extensionSurface.STATE_CHANGED]: [state: ExtensionSurfaceState]
   [RPC_CHANNELS.extensionSurface.REMOVED]: [id: string]
+
+  // Cookbooks Lab runtime status (global, local-only). Declared inline rather
+  // than imported: the canonical `CookbooksStatus` lives in apps/electron's
+  // shared contract, and @rox/shared must not depend on the app package.
+  [RPC_CHANNELS.cookbooksLab.STATUS_CHANGED]: [status: {
+    state: 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'failed'
+    reason: 'python-missing' | 'spawn-failed' | 'ready-timeout' | 'crashed' | null
+    port: number | null
+  }]
 
   // Navigation events (per-window)
   [RPC_CHANNELS.notification.NAVIGATE]: [data: { workspaceId: string; sessionId: string }]

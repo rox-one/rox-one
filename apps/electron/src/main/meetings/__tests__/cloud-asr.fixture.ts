@@ -5,7 +5,7 @@ import { NativeAuthority } from '../../../../../../packages/server-core/src/auth
 import { WsRpcServer, WsRpcClient } from '@rox/server-core/transport'
 import { registerVoiceHandlers } from '../../../../../../packages/server-core/src/handlers/rpc/voice'
 import type { HandlerDeps } from '../../../../../../packages/server-core/src/handlers/handler-deps'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import { DeepgramTranscriptionAdapter, type TranscribeAdapter } from '@rox/shared/voice'
 import { getServerServiceKey } from '@rox/shared/config/server-services'
 import type { Workspace } from '@rox/core/types'

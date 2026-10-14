@@ -183,7 +183,7 @@ export function EntityPickerPanel({ workspaceId, onSelect, onCancel, initialQuer
                 data-entity-ref={formatEntityRef(item.ref)}
                 onMouseEnter={() => setActive(index)}
                 onMouseDown={(event) => { event.preventDefault(); choose(item) }}
-                className={cn('flex h-9 cursor-pointer items-center gap-2 rounded-[6px] px-3 text-base', index === active && SELECTED_TINT)}
+                className={cn('flex h-9 cursor-pointer items-center gap-2 rounded-sm px-3 text-base', index === active && SELECTED_TINT)}
               >
                 <EntityKindIcon kind={item.ref.kind} className="size-4 shrink-0 text-text-muted" />
                 <span className="truncate text-foreground" title={item.title}>

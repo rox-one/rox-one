@@ -68,7 +68,7 @@ export function ContextualDatePicker({ value, onChange, today, defaultOpen = fal
     }
   }
 
-  const cellClass = (selected: boolean) => cn('h-8 rounded-[6px] text-sm numeric', HOVER_TINT, MOTION_FAST, FOCUS_RING, selected && cn(SELECTED_TINT, 'font-semibold'))
+  const cellClass = (selected: boolean) => cn('h-8 rounded-sm text-sm numeric', HOVER_TINT, MOTION_FAST, FOCUS_RING, selected && cn(SELECTED_TINT, 'font-semibold'))
   const selectedNorm = value ? normalizeContextualDate(value) : null
   const isSelected = (p: DatePrecision, iso: string) => selectedNorm?.precision === p && selectedNorm.date === iso
 
@@ -85,7 +85,7 @@ export function ContextualDatePicker({ value, onChange, today, defaultOpen = fal
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={cn('inline-flex h-7 items-center rounded-[6px] px-2 text-base', display ? 'text-foreground' : 'text-text-muted', interactive && HOVER_TINT, MOTION_FAST, FOCUS_RING)}
+        className={cn('inline-flex h-7 items-center rounded-sm px-2 text-base', display ? 'text-foreground' : 'text-text-muted', interactive && HOVER_TINT, MOTION_FAST, FOCUS_RING)}
       >
         {display ?? t('entities.ui.date.setDate')}
       </button>
@@ -106,7 +106,7 @@ export function ContextualDatePicker({ value, onChange, today, defaultOpen = fal
                 aria-selected={precision === p}
                 aria-controls={`${tabsId}-panel`}
                 onClick={() => setPrecision(p)}
-                className={cn('h-7 rounded-[6px] text-sm', HOVER_TINT, FOCUS_RING, precision === p && cn(SELECTED_TINT, 'font-semibold'))}
+                className={cn('h-7 rounded-sm text-sm', HOVER_TINT, FOCUS_RING, precision === p && cn(SELECTED_TINT, 'font-semibold'))}
               >
                 {t(`entities.ui.date.tab.${p}`)}
               </button>
@@ -114,9 +114,9 @@ export function ContextualDatePicker({ value, onChange, today, defaultOpen = fal
           </div>
           <div id={`${tabsId}-panel`} role="tabpanel" aria-labelledby={`${tabsId}-${precision}`} className="flex flex-col gap-1">
             <div className="flex items-center justify-between">
-              <button type="button" aria-label={t('entities.ui.date.prev')} onClick={() => step(-1)} className={cn('size-7 rounded-[6px]', HOVER_TINT, FOCUS_RING)}>‹</button>
+              <button type="button" aria-label={t('entities.ui.date.prev')} onClick={() => step(-1)} className={cn('size-7 rounded-sm', HOVER_TINT, FOCUS_RING)}>‹</button>
               <span className="text-sm font-semibold capitalize">{header}</span>
-              <button type="button" aria-label={t('entities.ui.date.next')} onClick={() => step(1)} className={cn('size-7 rounded-[6px]', HOVER_TINT, FOCUS_RING)}>›</button>
+              <button type="button" aria-label={t('entities.ui.date.next')} onClick={() => step(1)} className={cn('size-7 rounded-sm', HOVER_TINT, FOCUS_RING)}>›</button>
             </div>
             {precision === 'day' ? (
               <div className="grid grid-cols-7 gap-0.5">
@@ -173,7 +173,7 @@ export function ContextualDatePicker({ value, onChange, today, defaultOpen = fal
             ) : null}
           </div>
           {value ? (
-            <button type="button" onClick={() => emit(null)} className={cn('h-7 self-start rounded-[6px] px-2 text-sm text-text-secondary', HOVER_TINT, FOCUS_RING)}>
+            <button type="button" onClick={() => emit(null)} className={cn('h-7 self-start rounded-sm px-2 text-sm text-text-secondary', HOVER_TINT, FOCUS_RING)}>
               {t('entities.ui.date.clear')}
             </button>
           ) : null}

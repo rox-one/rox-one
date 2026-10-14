@@ -195,12 +195,21 @@ export const actions = {
     labelKey: 'shortcuts.action.toggleSidebar',
     defaultHotkey: 'mod+b',
     category: 'View',
+    // ⌘B / Ctrl+B is Bold inside notes and other contenteditable surfaces.
+    when: '!inputFocus',
   },
   'view.toggleSecondarySidebar': {
     id: 'view.toggleSecondarySidebar',
     labelKey: 'shortcuts.action.toggleSecondarySidebar',
     description: 'Show or hide the screen sidebar next to the rail',
     defaultHotkey: 'mod+shift+b',
+    category: 'View',
+  },
+  'view.toggleTerminal': {
+    id: 'view.toggleTerminal',
+    labelKey: 'shortcuts.action.toggleTerminal',
+    description: 'Show or hide the bottom terminal dock',
+    defaultHotkey: 'mod+j',
     category: 'View',
   },
   'view.toggleFocusMode': {

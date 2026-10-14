@@ -10,6 +10,8 @@ import {
 // Native names only: avoid registry.ts, which statically imports every locale bundle.
 import { LOCALE_META, type LanguageCode } from '../i18n/locale-meta.ts';
 import { resolveConfigDir } from "./paths.ts"
+import { loadEnvironmentPrefs } from '../environment/storage.ts';
+import { formatWorkStyleForPrompt } from '../environment/work-style-prompt.ts';
 import {
   persistAgentIdentity,
   resolveAgentIdentity,
@@ -244,8 +246,16 @@ export function formatPreferencesForPrompt(): string {
   const langCode = getPersistedUiLanguage();
   const langName = LOCALE_META[langCode].nativeName;
 
-  if (Object.keys(prefs).length === 0 ||
-      (!prefs.name && !prefs.timezone && !prefs.location && !prefs.notes && langCode === 'en')) {
+  // Onboarding «Who are you?» answers (environment.json). Never fatal.
+  let workStyle = '';
+  try {
+    workStyle = formatWorkStyleForPrompt(loadEnvironmentPrefs().role);
+  } catch {
+    workStyle = '';
+  }
+
+  if (!workStyle && (Object.keys(prefs).length === 0 ||
+      (!prefs.name && !prefs.timezone && !prefs.location && !prefs.notes && langCode === 'en'))) {
     return '';
   }
 
@@ -272,6 +282,10 @@ export function formatPreferencesForPrompt(): string {
 
   if (prefs.notes) {
     lines.push('', '### Notes about this user', prefs.notes);
+  }
+
+  if (workStyle) {
+    lines.push('', workStyle);
   }
 
   lines.push('');

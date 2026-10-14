@@ -10,6 +10,7 @@
  */
 import {
   Activity,
+  BookMarked,
   BookOpen,
   Bot,
   Brain,
@@ -87,6 +88,7 @@ import {
  */
 const ICON_COMPONENTS: Record<string, LucideIcon> = {
   Activity,
+  BookMarked,
   BookOpen,
   Bot,
   Brain,

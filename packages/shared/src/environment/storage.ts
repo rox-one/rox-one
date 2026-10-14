@@ -13,6 +13,7 @@ import {
   isBrowserImportCategory,
   isModelPlacement,
   isOnboardingRoleProfile,
+  normalizeOnboardingRoleProfile,
   isSttChoice,
   isSyncPurpose,
   isTtsChoice,
@@ -80,6 +81,11 @@ function readAgentRules(raw: unknown): AgentRule[] {
   return rules
 }
 
+function readRoleChoice(raw: unknown): Choice<OnboardingRoleProfile> {
+  const choice = readChoice<OnboardingRoleProfile>(raw, isOnboardingRoleProfile)
+  return choice.value ? { status: choice.status, value: normalizeOnboardingRoleProfile(choice.value) } : choice
+}
+
 export function normalizeEnvironmentPrefs(raw: unknown, now: number = Date.now()): EnvironmentPrefs {
   const base = getDefaultEnvironmentPrefs(now)
   if (!raw || typeof raw !== 'object') return base
@@ -108,7 +114,7 @@ export function normalizeEnvironmentPrefs(raw: unknown, now: number = Date.now()
       (value): value is boolean => typeof value === 'boolean',
     ),
     agentRules: readAgentRules(obj.agentRules),
-    role: readChoice<OnboardingRoleProfile>(obj.role, isOnboardingRoleProfile),
+    role: readRoleChoice(obj.role),
     updatedAt,
   }
 }
@@ -139,7 +145,7 @@ export function saveEnvironmentPrefs(
     ...('syncPurposes' in patch && patch.syncPurposes ? { syncPurposes: patch.syncPurposes } : {}),
     ...('notifications' in patch && patch.notifications ? { notifications: patch.notifications } : {}),
     ...('agentRules' in patch && patch.agentRules ? { agentRules: patch.agentRules } : {}),
-    ...('role' in patch && patch.role ? { role: patch.role } : {}),
+    ...('role' in patch && patch.role ? { role: readRoleChoice(patch.role) } : {}),
     updatedAt: now,
   }
   const next = patch.completeQuestionnaire ? finishQuestionnaire(merged, undefined, now) : merged

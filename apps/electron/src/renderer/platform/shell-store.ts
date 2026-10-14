@@ -10,8 +10,9 @@
  *
  * `<ShellStoreBridge />` (rendered once inside the Provider) connects it.
  * Until then — and in tests / the playground — readers fall back to
- * `getDefaultStore()`. Pre-existing baseline readers (Omnibox sessions /
- * skills / conation) deliberately keep using `getDefaultStore()`.
+ * `getDefaultStore()`. Omnibox resource providers (sessions / skills /
+ * sources / automations / knowledge) and conation context keys also read
+ * this store (#1553); a disconnected fallback still uses `getDefaultStore()`.
  */
 import { getDefaultStore } from 'jotai'
 

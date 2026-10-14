@@ -130,7 +130,7 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
     >
       <button
         type="button"
-        className={cn(buttonClass, 'w-7 rounded-l-[4px]')}
+        className={cn(buttonClass, 'w-7 rounded-l-xs')}
         aria-label={nextLabel}
         aria-keyshortcuts="Alt+V Alt+Shift+V"
         title={title}
@@ -143,7 +143,7 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
       <button
         ref={triggerRef}
         type="button"
-        className={cn(buttonClass, 'w-4 rounded-r-[4px]')}
+        className={cn(buttonClass, 'w-4 rounded-r-xs')}
         aria-label={`${t('collection.view.list')} / ${t('collection.view.board')} / ${t('collection.view.table')} / ${t('collection.view.heatmap')}`}
         aria-haspopup="listbox"
         aria-expanded={menuOpen}

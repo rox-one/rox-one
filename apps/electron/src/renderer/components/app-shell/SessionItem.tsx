@@ -6,7 +6,8 @@ import { useTranslation } from "react-i18next"
 import { useActionLabel } from "@/actions"
 import { cn } from "@/lib/utils"
 import { rendererPerf } from "@/lib/perf"
-import { Spinner } from "@rox/ui"
+import { Spinner } from "@rox/ui/spinner"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@rox/ui/tooltip"
 import { EntityRow } from "@/components/ui/entity-row"
 import { EntityListBadge } from "@/components/ui/entity-list-badge"
 import { SessionMenu } from "./SessionMenu"
@@ -216,6 +217,10 @@ export function SessionItem({
           onDelete={() => ctx.onDelete(item.id)}
           projects={ctx.projects}
           onSetProjectId={ctx.onSetProjectId ? (pid) => ctx.onSetProjectId!(item.id, pid) : undefined}
+          folders={ctx.chatFolders}
+          folderId={ctx.chatFolderOf?.(item.id)}
+          onMoveToFolder={ctx.onMoveToFolder ? (fid) => ctx.onMoveToFolder!(item.id, fid) : undefined}
+          onNewFolder={ctx.onNewFolderFor ? () => ctx.onNewFolderFor!(item.id) : undefined}
         />
       }
       contextMenuContent={ctx.isMultiSelectActive && isInMultiSelect ? <BatchSessionMenu /> : undefined}
@@ -359,20 +364,25 @@ export function SessionItem({
               <Mail className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
           )}
-          <button
-            type="button"
-            aria-pressed={item.isFlagged}
-            aria-label={item.isFlagged ? t("sessionMenu.unflag") : t("sessionMenu.flag")}
-            className="p-1 rounded-[var(--radius-control)] hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]"
-            onClick={(e) => {
-              e.stopPropagation()
-              if (item.isFlagged) ctx.onUnflag?.(item.id)
-              else ctx.onFlag?.(item.id)
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <Flag className={cn("h-3.5 w-3.5", item.isFlagged ? "text-info" : "text-muted-foreground")} />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-pressed={item.isFlagged}
+              aria-label={item.isFlagged ? t("sessionMenu.unpin") : t("sessionMenu.pin")}
+              className="p-1 rounded-[var(--radius-control)] hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (item.isFlagged) ctx.onUnflag?.(item.id)
+                else ctx.onFlag?.(item.id)
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <Flag className={cn("h-3.5 w-3.5", item.isFlagged ? "text-info" : "text-muted-foreground")} />
+            </button>
+            </TooltipTrigger>
+            <TooltipContent>{item.isFlagged ? t("sessionMenu.unpin") : t("sessionMenu.pin")}</TooltipContent>
+          </Tooltip>
           <button
             type="button"
             aria-label={item.isArchived ? t("sessionMenu.unarchive") : t("sessionMenu.archive")}

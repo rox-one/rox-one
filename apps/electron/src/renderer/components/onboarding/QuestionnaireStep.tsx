@@ -1,8 +1,11 @@
 /**
  * QuestionnaireStep — the second screen of the redesigned first run.
  *
- * Two columns: the profile questionnaire plus the six adaptive interest-bubble
- * clouds on the left, the permissions & modes column on the right. The footer
+ * One page, three columns at desktop widths: the basic profile fields on the
+ * left, the six adaptive interest-bubble groups as an accordion stepper in the
+ * middle, and the compact permissions & modes list on the right. The page
+ * fills the window and never scrolls itself; on short windows each column
+ * scrolls internally, and below `lg` the columns stack. The footer
  * holds «Продолжить» (filled, gated on both columns) and «Заполнить позже».
  *
  * The step is standalone: questionnaire/bubble/permission values arrive
@@ -20,7 +23,7 @@ import { cn } from '@/lib/utils'
 import { isMac, isWindows } from '@/lib/platform'
 import { Button } from '@/components/ui/button'
 import { CoinsBurst } from './CoinsBurst'
-import { InterestBubbles } from './InterestBubbles'
+import { InterestAccordion } from './InterestAccordion'
 import { PermissionsColumn, isPermissionsColumnComplete } from './PermissionsColumn'
 import { ProfileQuestionnaireColumn } from './ProfileQuestionnaireColumn'
 import { trackLearningEvent } from './learning-curve'
@@ -64,6 +67,26 @@ export const EMPTY_BUBBLE_SELECTIONS: BubbleSelections = BUBBLE_GROUP_IDS.reduce
   },
   {} as BubbleSelections,
 )
+
+/**
+ * S1-06: rehydrate persisted bubble selections. Unknown group ids and
+ * non-string entries drop, so a draft written by an older catalogue can never
+ * widen the type at the call site. Returns undefined when the draft carries
+ * nothing usable (the step then falls back to its empty defaults).
+ */
+export function parseBubbleSelections(raw: unknown): BubbleSelections | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  const record = raw as Record<string, unknown>
+  let seen = false
+  const next: BubbleSelections = { ...EMPTY_BUBBLE_SELECTIONS }
+  for (const id of BUBBLE_GROUP_IDS) {
+    const value = record[id]
+    if (!Array.isArray(value)) continue
+    next[id] = value.filter((entry): entry is string => typeof entry === 'string')
+    seen = true
+  }
+  return seen ? next : undefined
+}
 
 /** Steps the identity/link screens can have earned before the questionnaire. */
 export const DEFAULT_QUESTIONNAIRE_REWARD_STEPS: readonly string[] = ['username', 'org']
@@ -315,52 +338,60 @@ export function QuestionnaireStep({
     onSkip(buildPayload(withDefaults))
   }
 
+  const locale = i18n?.language?.toLowerCase().startsWith('ru') ? 'ru' : 'en'
+  // Section cards at natural height: the wizard's FitToViewport scales the
+  // whole page to one viewport (min 0.75, then a visible thin scroll).
+  const columnClass =
+    'onb-card min-h-0 p-3'
+
   return (
     <div
       data-testid="onboarding-questionnaire-step"
-      className={cn('mx-auto w-full max-w-6xl px-6 py-8', className)}
+      className={cn('mx-auto flex w-full flex-col', className)}
     >
-      <header className="text-center">
+      <header className="shrink-0 text-center">
         <h1 className="text-lg font-semibold tracking-tight">{t('onboarding.questionnaire.title')}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{t('onboarding.questionnaire.description')}</p>
+        <p className="onb-subtitle mt-1 text-sm text-muted-foreground">{t('onboarding.questionnaire.description')}</p>
       </header>
 
-      <div className="mt-6 grid gap-8 md:grid-cols-2">
-        <div className="space-y-6">
+      <div
+        data-testid="questionnaire-columns"
+        className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)] lg:items-start lg:gap-3"
+      >
+        <div className={columnClass} data-testid="questionnaire-column-profile">
           <ProfileQuestionnaireColumn
             value={value}
             onChange={setQuestionnaire}
             onSuggest={() => suggest(value)}
           />
-
-          <div className="space-y-5">
-            {BUBBLE_GROUP_IDS.map((groupId) => (
-              <InterestBubbles
-                key={groupId}
-                groupId={groupId}
-                selected={selection[groupId] ?? []}
-                onChange={(next) => setBubbles({ ...selection, [groupId]: next })}
-                {...(groupId === 'deepInterests' ? { rankedIds: deepRanked } : {})}
-                locale={i18n?.language?.toLowerCase().startsWith('ru') ? 'ru' : 'en'}
-              />
-            ))}
-          </div>
         </div>
 
-        <PermissionsColumn
-          platform={resolvedPlatform}
-          state={permissionState}
-          onStateChange={setPermissions}
-          onRequestGrant={handleRequestGrant}
-        />
+        <div className={columnClass} data-testid="questionnaire-column-interests">
+          <InterestAccordion
+            groupIds={BUBBLE_GROUP_IDS}
+            selection={selection}
+            onChange={(groupId, next) => setBubbles({ ...selection, [groupId]: next })}
+            rankedIds={{ deepInterests: deepRanked }}
+            locale={locale}
+          />
+        </div>
+
+        <div className={columnClass} data-testid="questionnaire-column-permissions">
+          <PermissionsColumn
+            platform={resolvedPlatform}
+            state={permissionState}
+            onStateChange={setPermissions}
+            onRequestGrant={handleRequestGrant}
+          />
+        </div>
       </div>
 
-      <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
+      <div className="mt-4 flex shrink-0 flex-wrap items-center justify-end gap-3">
         <Button
           type="button"
           variant="outline"
           data-testid="questionnaire-skip"
-          className="gap-2"
+          className="onb-secondary gap-2 px-5"
           onClick={handleSkip}
         >
           <ChevronsRight className="icon-toolbar" aria-hidden="true" />
@@ -370,7 +401,7 @@ export function QuestionnaireStep({
           type="button"
           data-testid="questionnaire-continue"
           data-state={complete ? 'ready' : 'incomplete'}
-          className={cn('gap-2', complete ? 'opacity-100' : 'opacity-60')}
+          className={cn('onb-primary gap-2 px-6', complete ? 'opacity-100' : 'opacity-60')}
           disabled={!complete}
           onClick={handleContinue}
         >

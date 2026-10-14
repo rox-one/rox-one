@@ -12,6 +12,10 @@ import { RAIL_SURFACE_ROUTE_IDS } from '../../../shared/rail-surfaces'
 import { createRoutePreloader } from '@/lib/route-preload'
 
 export const ROUTE_PAGE_LOADERS = {
+  // #1675 leftover: ChatPage was the last static import in MainContentPanel, so
+  // TurnCard + markdown + overlays rode index.html's preloaded startup closure
+  // even when no session was open. Idle warm-up loads this chunk after first paint.
+  chat: () => import('@/pages/ChatPage'),
   search: () => import('@/pages/SearchPage'),
   notes: () => import('@/pages/NotesPage'),
   connections: () => import('@/pages/ConnectionsPage'),
@@ -43,6 +47,7 @@ export const ROUTE_PAGE_LOADERS = {
   devSpaceHome: () => import('@/pages/dev-space/DevSpaceHomePage'),
   devSpaceRepo: () => import('@/pages/dev-space/DevSpaceRepoPage'),
   playbooksHome: () => import('@/pages/playbooks/PlaybooksHomePage'),
+  cookbooks: () => import('@/pages/cookbooks/CookbooksSurfacePage'),
   // #1675: these eight route screens used to be static imports in
   // MainContentPanel, so their subtrees (incl. the shiki diff stack behind
   // memory/ImportReviewDialog) rode index.html's preloaded startup closure.

@@ -16,7 +16,7 @@ describe('sidebar dashboard source contracts', () => {
   it('mounts usage cards on the account page, not the sidebar', () => {
     expect(appShell).toContain('<SidebarChrome')
     expect(sidebarChrome).not.toContain('<MiniDashboardCards')
-    expect(sidebarChrome).toContain('<ProfileStrip')
+    expect(sidebarChrome).not.toContain('<ProfileStrip')
     expect(miniCards).toContain('dashboard.unknown')
     expect(miniCards).toContain('snapshot.tokens == null')
   })

@@ -35,7 +35,7 @@ import {
 import { isSurfaceActive } from './surface-activity'
 import { getShellStore, isShellStoreConnected, setShellStore, type ShellStore } from './shell-store'
 
-/** Flags owned by W1-07; all default OFF. */
+/** Flags owned by W1-07; default OFF except Мессенджер (default ON, see DEFAULT_ON_GENERIC_FLAG_IDS). */
 export const W1_07_FLAG_IDS = [
   WORKBENCH_FLAG.modeMessengerV1,
   WORKBENCH_FLAG.modeCalendarV1,
@@ -45,11 +45,28 @@ export const W1_07_FLAG_IDS = [
 ] as const
 
 /**
+ * Cookbooks surface (`cookbooks.v1`) kill-switch atom — default ON.
+ *
+ * A dedicated atom is required even though the flag carries no sub-flags:
+ * `genericFlagIds()` only serves `defaultValue === false` flags, so a
+ * default-ON flag never reaches `enabledShellFlagsAtom` from the generic store
+ * and the `shellFlag` nav gate would hide the surface unconditionally. The
+ * storage key matches `workbenchFlagAtom`, so a manual
+ * `craft-workbench-flag:cookbooks.v1 = false` still turns it off.
+ */
+const cookbooksEnabledAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.workbenchFlag, WORKBENCH_FLAG.cookbooksV1),
+  true,
+  undefined,
+  { getOnInit: true },
+)
+
+/**
  * Flags with a dedicated renderer atom (their own Settings toggle and storage
  * key) whose REAL value the shell reports in `enabledShellFlagsAtom` and the
  * Omnibox context keys. Never served by the generic store.
  */
-export const DEDICATED_FLAG_ATOMS: ReadonlyMap<string, Atom<boolean>> = new Map<string, Atom<boolean>>([
+export const DEDICATED_FLAG_ATOMS: ReadonlyMap<string, WritableAtom<boolean, [boolean | typeof RESET], void>> = new Map<string, WritableAtom<boolean, [boolean | typeof RESET], void>>([
   // Appearance → Agent Teams (storage default true).
   [WORKBENCH_FLAG.harnessAgentTeams, featureWorkbenchHarnessAgentTeamsAtom],
   // W1-02 (#1499) owns entities.links.v1: its Settings toggle / storage key.
@@ -58,6 +75,8 @@ export const DEDICATED_FLAG_ATOMS: ReadonlyMap<string, Atom<boolean>> = new Map<
   // (playbooks.v1) own dedicated atoms; their sub-flags stay in the generic store.
   [WORKBENCH_FLAG.devSpaceV1, devSpaceEnabledAtom],
   [WORKBENCH_FLAG.playbooksV1, playbooksEnabledAtom],
+  // Cookbooks (cookbooks-surface program): default-ON kill-switch.
+  [WORKBENCH_FLAG.cookbooksV1, cookbooksEnabledAtom],
   // W1-09 (#1506) owns notify.inbox.v1: the Inbox notification surface.
   [WORKBENCH_FLAG.notifyInboxV1, featureNotifyInboxV1Atom],
 ])
@@ -82,10 +101,18 @@ const DEDICATED_ATOM_FLAG_IDS: ReadonlySet<string> = new Set([
   WORKBENCH_FLAG.conationSessionApply,
 ])
 
-/** Flag ids served by the generic store (default-OFF, no dedicated atom). */
+/**
+ * Default-ON flags still served by the generic store: their storage key and
+ * `workbenchFlagAtom` stay the same, the atom just starts from the registry
+ * default (true), so `craft-workbench-flag:<id> = false` still turns them off.
+ * Мессенджер (team channels) is live on real data and a default top pill.
+ */
+const DEFAULT_ON_GENERIC_FLAG_IDS: ReadonlySet<string> = new Set([WORKBENCH_FLAG.modeMessengerV1])
+
+/** Flag ids served by the generic store (default-OFF or DEFAULT_ON_GENERIC_FLAG_IDS, no dedicated atom). */
 export function genericFlagIds(): string[] {
   return WORKBENCH_FEATURE_FLAGS
-    .filter((definition) => definition.defaultValue === false && !DEDICATED_ATOM_FLAG_IDS.has(definition.id))
+    .filter((definition) => (definition.defaultValue === false || DEFAULT_ON_GENERIC_FLAG_IDS.has(definition.id)) && !DEDICATED_ATOM_FLAG_IDS.has(definition.id))
     .map((definition) => definition.id)
 }
 

@@ -58,7 +58,7 @@ export function GanttView({ items, zoom: zoomProp, onZoomChange, today, onResche
     <section aria-label={t('entities.ui.gantt.label')} className={cn('flex min-w-0 flex-col gap-2', className)}>
       <div className="flex items-center gap-2">
         <span className="text-base font-semibold">{t('entities.ui.gantt.label')}</span>
-        <div role="radiogroup" aria-label={t('entities.ui.gantt.zoom')} className="ml-auto inline-flex rounded-[6px] bg-foreground/[0.05] p-0.5">
+        <div role="radiogroup" aria-label={t('entities.ui.gantt.zoom')} className="ml-auto inline-flex rounded-sm bg-foreground/[0.05] p-0.5">
           {GANTT_ZOOMS.map((z) => (
             <button
               key={z}
@@ -66,7 +66,7 @@ export function GanttView({ items, zoom: zoomProp, onZoomChange, today, onResche
               role="radio"
               aria-checked={zoom === z}
               onClick={() => setZoom(z)}
-              className={cn('h-6 rounded-[5px] px-2 text-sm', HOVER_TINT, FOCUS_RING, zoom === z && cn(SELECTED_TINT, 'font-semibold'))}
+              className={cn('h-6 rounded-xs px-2 text-sm', HOVER_TINT, FOCUS_RING, zoom === z && cn(SELECTED_TINT, 'font-semibold'))}
             >
               {t(`entities.ui.gantt.zoom.${z}`)}
             </button>
@@ -76,7 +76,7 @@ export function GanttView({ items, zoom: zoomProp, onZoomChange, today, onResche
       {!layout ? (
         <div className="py-6 text-center text-sm text-text-muted">{t('entities.ui.gantt.empty')}</div>
       ) : (
-        <div className="relative overflow-x-auto rounded-[8px] border border-border">
+        <div className="relative overflow-x-auto rounded-md border border-border">
           <div className="relative" style={{ width: layout.totalWidth, height: 28 + valid.length * 32 + 8 }}>
             {layout.columns.map((col) => (
               <div
@@ -127,7 +127,7 @@ export function GanttView({ items, zoom: zoomProp, onZoomChange, today, onResche
                     if (d && d.id === bar.id) reschedule(item, d.days)
                   }}
                   className={cn(
-                    'absolute flex h-6 items-center overflow-hidden rounded-[6px] px-2 text-left text-xs font-medium',
+                    'absolute flex h-6 items-center overflow-hidden rounded-sm px-2 text-left text-xs font-medium',
                     'bg-[color-mix(in_oklch,currentColor_18%,transparent)] transition-[left] duration-200 ease-out motion-reduce:transition-none',
                     statusToneTextClass(item.tone ?? 'info'),
                     onReschedule ? 'cursor-grab active:cursor-grabbing' : 'cursor-default',

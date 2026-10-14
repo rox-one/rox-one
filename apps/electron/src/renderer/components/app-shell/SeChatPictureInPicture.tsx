@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useAtom, useAtomValue } from 'jotai'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence } from '@/lib/deferred-motion'
 import { MessageSquare, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { seChatPipOpenAtom } from '@/atoms/se-chat-pip'
@@ -32,7 +32,7 @@ export function SeChatPictureInPicture() {
           transition={SE_SPRING_PANEL}
           className={cn(
             'pointer-events-auto fixed bottom-6 right-6 z-[9999] w-[min(360px,calc(100vw-2rem))]',
-            'rounded-xl border border-white/10 bg-[rgb(from_var(--paper)_r_g_b_/_1)] shadow-strong',
+            'rounded-lg border border-white/10 bg-[rgb(from_var(--paper)_r_g_b_/_1)] shadow-strong',
           )}
         >
           <header className="flex items-center gap-2 border-b border-white/8 px-3 py-2">

@@ -14,7 +14,7 @@ import {
   StyledDropdownMenuSeparator,
   StyledDropdownMenuSubContent,
   StyledDropdownMenuSubTrigger,
-} from '@rox/ui'
+} from '@rox/ui/dropdown-menu'
 import { useSlotContributions } from './useSlots'
 import { useAtomValue } from 'jotai'
 import { enabledShellFlagsAtom, flagContextKeys } from './unified-flags'
