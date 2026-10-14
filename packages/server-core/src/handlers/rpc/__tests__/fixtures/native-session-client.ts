@@ -497,7 +497,7 @@ try {
     try { await denied(() => b.invoke(RPC_CHANNELS.labels.LIST, 'workspace-a')) }
     finally { rmSync(labelDirectory); renameSync(`${labelDirectory}.original`, labelDirectory) }
     await denied(() => a.invoke(RPC_CHANNELS.statuses.REORDER, 'workspace-a', [])); await denied(() => a.invoke(RPC_CHANNELS.labels.CREATE, 'workspace-a', { name: 'No native mutation' }))
-    await denied(() => a.invoke(RPC_CHANNELS.views.SAVE, 'workspace-a', [])); await denied(() => a.invoke(RPC_CHANNELS.projects.CREATE, 'workspace-a', { name: 'No host repository creation' }))
+    await denied(() => a.invoke(RPC_CHANNELS.views.SAVE, 'workspace-a', [])); await denied(() => a.invoke(RPC_CHANNELS.chatFolders.MUTATE, 'workspace-a', { kind: 'create', name: 'No native mutation' })); await denied(() => a.invoke(RPC_CHANNELS.projects.CREATE, 'workspace-a', { name: 'No host repository creation' }))
     authority.revokeWorkspaceGrant(admin.credential, reader.principal.subject, 'workspace-a')
     for (const channel of channels) await denied(() => b.invoke(channel, 'workspace-a'))
     roots[0]!.rootPath += '-moved'; saveRegistry()

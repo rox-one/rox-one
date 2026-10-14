@@ -10,6 +10,7 @@
  */
 import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type {CookbooksStatus} from '../../shared/types'
+import type { CookbooksMutateInput } from '../../shared/cookbooks'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
 import { getCookbooksRuntime, initializeCookbooksRuntime } from '../cookbooks-runtime'
@@ -27,6 +28,8 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.cookbooksLab.RESET,
   RPC_CHANNELS.cookbooksLab.CANCEL,
   RPC_CHANNELS.cookbooksLab.EXPORT,
+  // Wave 10: structural cell mutations (add/delete/move/duplicate).
+  RPC_CHANNELS.cookbooksLab.MUTATE,
 ] as const
 
 function statusKey(status: CookbooksStatus): string {
@@ -84,5 +87,10 @@ export function registerCookbooksHandlers(server: RpcServer, _deps: HandlerDeps)
   server.handle(
     RPC_CHANNELS.cookbooksLab.EXPORT,
     (_ctx, input: { itemId: string; filename: string; content: string }) => runtime.exportNotebook(input),
+  )
+  // Wave 10: one handler for the four structural cell ops.
+  server.handle(
+    RPC_CHANNELS.cookbooksLab.MUTATE,
+    (_ctx, input: CookbooksMutateInput) => runtime.apiMutate(input),
   )
 }

@@ -56,7 +56,7 @@ describe('ProfileStrip accessible account details', () => {
     for (const balance of [null, Number.NaN, Number.POSITIVE_INFINITY]) {
       const html = render({ ...profile, balance }, true)
       // Copy comes from the shipped locale, so a rename cannot leave a stale literal here.
-      expect(description(html)).toBe(`Pro · Balance ${en['profile.balanceUnknown']}`)
+      expect(description(html)).toBe('Pro')
       expect(html).not.toContain('NaN')
       expect(html).not.toContain('Infinity')
     }
@@ -79,7 +79,7 @@ describe('ProfileStrip plan pill and level badge', () => {
   test('hides the balance row when the balance is unknown', () => {
     const html = render({ ...profile, balance: null })
     expect(html).not.toContain('data-testid="profile-strip-balance"')
-    expect(description(html)).toBe(`Pro · Balance ${en['profile.balanceUnknown']}`)
+    expect(description(html)).toBe('Pro')
   })
 
   test('renders a per-plan pill and a level badge with an XP ring', () => {

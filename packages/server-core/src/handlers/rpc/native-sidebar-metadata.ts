@@ -4,6 +4,7 @@ import { isEmoji } from '@rox/shared/utils/icon-constants'
 import { getDefaultStatusConfig } from '@rox/shared/statuses'
 import { getDefaultLabelConfig } from '@rox/shared/labels/storage'
 import { getDefaultViews, getDefaultKnowledgeViews } from '@rox/shared/views'
+import { normalizeChatFoldersState } from '@rox/shared/chat-folders'
 import { closeSync, constants, fstatSync, lstatSync, openSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import type { StatusConfig } from '@rox/shared/statuses'
@@ -163,4 +164,8 @@ export function nativeProjects(projects: readonly LoadedProject[], workspaceId: 
       archivedAt: Number.isFinite(project.config.archivedAt) ? project.config.archivedAt : undefined,
     } }]
   })
+}
+
+export function readNativeChatFolders(root: string): import('@rox/shared/chat-folders').ChatFoldersState {
+  return normalizeChatFoldersState(metadataConfig(root, [], 'chat-folders.json'))
 }

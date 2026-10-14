@@ -8,6 +8,10 @@
  *   new-note       → create a note and open it
  *   new-task       → create a personal task and open it
  *   navigate       → deep-link navigation (route + optional id/workspace)
+ *   search         → open the unified command palette
+ *   toggle-meeting-recording → start a meeting recording / stop the running one
+ *   open-session   → open one session (deepLink.id)
+ *   switch-workspace → switch this window to deepLink.workspaceId
  *
  * Rendered once inside the ready app tree; context-free so it can live next to
  * the other window-level bridges.
@@ -18,6 +22,8 @@ import { toast } from 'sonner'
 import { navigate, routes, type Route } from '@/lib/navigate'
 import { createPersonalTaskConfirmed } from '@/lib/extra-screens/personal-task-bridge'
 import { nativeIntegrations, type ShellActionPayload } from '@/platform/native-integrations'
+import { useActionRegistry } from '@/actions'
+import { isRecorderBusy, startRecording, stopRecording } from '@/lib/meetings/recorder'
 
 /** Map a route family + optional id onto a typed route. */
 function routeWithId(route: string, id?: string): Route {
@@ -29,7 +35,8 @@ function routeWithId(route: string, id?: string): Route {
 }
 
 export function ShellActionBridge() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const { execute } = useActionRegistry()
 
   React.useEffect(() => {
     const api = nativeIntegrations()
@@ -80,6 +87,31 @@ export function ShellActionBridge() {
       }
     }
 
+    const toggleMeetingRecording = async () => {
+      try {
+        if (isRecorderBusy()) {
+          const stopped = await stopRecording()
+          if (!stopped.ok) toast.error(t('nativeIntegrations.actionFailed'))
+          return
+        }
+        const date = new Intl.DateTimeFormat(i18n.resolvedLanguage || 'ru', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(Date.now())
+        const started = await startRecording({ title: t('meetings.local.defaultTitle', { date }), workspaceId: await currentWorkspace() })
+        if (!started.ok) toast.error(t('nativeIntegrations.actionFailed'))
+      } catch {
+        toast.error(t('nativeIntegrations.actionFailed'))
+      }
+    }
+
+    const switchWorkspace = async (workspaceId: string | undefined) => {
+      if (!workspaceId) return
+      if (workspaceId === await currentWorkspace()) return
+      try {
+        await window.electronAPI.switchWorkspace(workspaceId)
+      } catch {
+        toast.error(t('nativeIntegrations.actionFailed'))
+      }
+    }
+
     const handle = (event: ShellActionPayload) => {
       switch (event.action) {
         case 'quick-composer':
@@ -97,13 +129,25 @@ export function ShellActionBridge() {
         case 'navigate':
           void navigateDeepLink(event.deepLink)
           return
+        case 'search':
+          execute('app.omnibox')
+          return
+        case 'toggle-meeting-recording':
+          void toggleMeetingRecording()
+          return
+        case 'open-session':
+          if (event.deepLink?.id) navigate(routes.view.allSessions(event.deepLink.id))
+          return
+        case 'switch-workspace':
+          void switchWorkspace(event.deepLink?.workspaceId)
+          return
         default:
           return
       }
     }
 
     return api.onShellAction(handle)
-  }, [t])
+  }, [t, i18n, execute])
 
   return null
 }

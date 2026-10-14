@@ -1,3 +1,6 @@
+import { applyLayerAliases, layersToCSSVars, mergeThemeLayers, type ThemeLayers } from './theme-layers.ts';
+export * from './theme-layers.ts';
+
 /**
  * Theme Configuration
  *
@@ -18,6 +21,7 @@
  * - Named: purple, rebeccapurple
  */
 export type CSSColor = string;
+
 
 /** Optional ANSI colors. Missing entries retain the terminal renderer's defaults. */
 export const TERMINAL_ANSI_COLOR_NAMES = [
@@ -392,6 +396,13 @@ export interface ThemeOverrides extends ThemeColors, SurfaceColors {
    * auto-glass resolver for `mode:'blurred'`; explicit `material` wins.
    */
   surfaces?: MaterialSurfaceHints;
+
+  /**
+   * Layer tokens (frame / content / elevation / wallpaper / accent / glass).
+   * Additive: absent keeps every legacy variable at its preset value; present
+   * aliases the legacy variables to the layer (see `theme-layers.ts`).
+   */
+  layers?: ThemeLayers;
 }
 
 /**
@@ -481,6 +492,10 @@ export function mergeThemeOverrides(
 
   // Per-surface Zed role hints (override wins per key)
   if (override.surfaces) result.surfaces = { ...base.surfaces, ...override.surfaces };
+
+  // Layer tokens: per-layer deep merge (override wins per field).
+  const layers = mergeThemeLayers(base.layers, override.layers);
+  if (layers !== undefined) result.layers = layers;
 
   return result;
 }
@@ -612,10 +627,14 @@ export function themeToCSS(theme: ThemeOverrides, isDark: boolean = false): stri
   const vars: string[] = [];
 
   // Get effective colors (merge dark overrides if in dark mode)
-  const colors: ThemeColors & SurfaceColors =
+  // Layers win over the palette in both modes: legacy variables are aliased
+  // to the layer values before emission so old consumers follow them.
+  const colors: ThemeColors & SurfaceColors = applyLayerAliases(
     isDark && theme.dark
       ? { ...theme, ...theme.dark, terminalAnsi: { ...theme.terminalAnsi, ...theme.dark.terminalAnsi } }
-      : theme;
+      : theme,
+    theme.layers,
+  );
 
   // Semantic color variables
   if (colors.background) vars.push(`--background: ${colors.background};`);
@@ -700,6 +719,9 @@ export function themeToCSS(theme: ThemeOverrides, isDark: boolean = false): stri
   const mode = theme.mode || 'solid';
   vars.push(`--theme-mode: ${mode};`);
 
+  // Layer tokens (frame/content/elevation/wallpaper/glass/grid divider).
+  vars.push(...layersToCSSVars(theme.layers));
+
   // Material (glass) layer variables. A blurred theme with no explicit
   // `enabled` decision activates the Zed-parity profile (single source of
   // truth shared with `resolveMaterial`); otherwise the layer emits only when
@@ -778,14 +800,18 @@ export function shouldSetThemeOverride(
 }
 
 /**
- * The default Rox theme: the Rox Engineering glass profile.
+ * The default Rox theme for new installs: Arc Glass (2026-10-14) — a glass
+ * frame over a radial wallpaper with the content as one floating card.
  *
  * Ships as the out-of-the-box theme; users may switch to any other preset in
  * Settings → Внешний вид. Legacy selections of the previous defaults
  * (`nordfox-opaque`, `haze`, unset) are migrated once — see `storage.ts`,
  * migration marker `appearance-defaults-v1`.
  */
-export const ROX_THEME_ID = 'rox-ink';
+export const ROX_THEME_ID = 'arc-glass';
+
+/** The previous default (grayscale sumi-e); still a bundled preset. */
+export const ROX_INK_THEME_ID = 'rox-ink';
 
 /**
  * App-level material default for fresh installs and the appearance migration:
