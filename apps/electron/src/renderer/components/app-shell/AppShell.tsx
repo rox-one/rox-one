@@ -3292,7 +3292,10 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             >
             <PrimaryRail
               secondaryAvailable={secondaryAvailable}
-              avatar={statusRowVisible ? undefined : renderProfileEntry('rail')}
+              // One account entry: the status row's left end owns it while that
+              // row is shown, and the secondary sidebar footer card owns it while
+              // the sidebar is visible; the rail avatar only stands in otherwise.
+              avatar={statusRowVisible || secondaryShown ? undefined : renderProfileEntry('rail')}
             />
             <div
               ref={secondaryOverlayRef}
