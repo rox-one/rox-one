@@ -10743,8 +10743,6 @@
   "tasks.bulk.move": "Mover…",
   "tasks.bulk.moveTitle": "Mover tareas ({{count}})",
   "tasks.bulk.selected": "{{count}} seleccionadas",
-  "tasks.bulk.someday": "Algún día",
-  "tasks.bulk.toolbar": "Acciones para las tareas seleccionadas ({{count}})",
   "tasks.bulk.trash": "Mover a la papelera",
   "tasks.bulk.trashed": "Tareas movidas a la papelera: {{count}}",
   "tasks.bulk.updated": "Tareas actualizadas: {{count}}",

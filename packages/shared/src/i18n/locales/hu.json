@@ -10728,8 +10728,6 @@
   "tasks.bulk.move": "Áthelyezés…",
   "tasks.bulk.moveTitle": "Feladatok áthelyezése ({{count}})",
   "tasks.bulk.selected": "{{count}} kijelölve",
-  "tasks.bulk.someday": "Valamikor",
-  "tasks.bulk.toolbar": "Műveletek a kijelölt feladatokkal ({{count}})",
   "tasks.bulk.trash": "Lomtárba",
   "tasks.bulk.trashed": "Lomtárba helyezett feladatok: {{count}}",
   "tasks.bulk.updated": "Módosított feladatok: {{count}}",

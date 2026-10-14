@@ -10792,8 +10792,6 @@
   "tasks.bulk.move": "نقل…",
   "tasks.bulk.moveTitle": "نقل المهام ({{count}})",
   "tasks.bulk.selected": "تم تحديد {{count}}",
-  "tasks.bulk.someday": "يومًا ما",
-  "tasks.bulk.toolbar": "إجراءات للمهام المحددة ({{count}})",
   "tasks.bulk.trash": "نقل إلى المهملات",
   "tasks.bulk.trashed": "المهام المنقولة إلى المهملات: {{count}}",
   "tasks.bulk.updated": "المهام المحدَّثة: {{count}}",

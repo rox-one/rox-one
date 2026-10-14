@@ -10728,8 +10728,6 @@
   "tasks.bulk.move": "Move…",
   "tasks.bulk.moveTitle": "Move tasks ({{count}})",
   "tasks.bulk.selected": "{{count}} selected",
-  "tasks.bulk.someday": "Someday",
-  "tasks.bulk.toolbar": "Actions for selected tasks ({{count}})",
   "tasks.bulk.trash": "Move to Trash",
   "tasks.bulk.trashed": "Tasks moved to Trash: {{count}}",
   "tasks.bulk.updated": "Tasks updated: {{count}}",

@@ -10728,8 +10728,6 @@
   "tasks.bulk.move": "이동…",
   "tasks.bulk.moveTitle": "작업 이동 ({{count}})",
   "tasks.bulk.selected": "{{count}}개 선택됨",
-  "tasks.bulk.someday": "언젠가",
-  "tasks.bulk.toolbar": "선택한 작업에 대한 동작 ({{count}})",
   "tasks.bulk.trash": "휴지통으로 이동",
   "tasks.bulk.trashed": "휴지통으로 이동한 작업: {{count}}",
   "tasks.bulk.updated": "변경한 작업: {{count}}",

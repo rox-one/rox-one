@@ -10743,8 +10743,6 @@
   "tasks.bulk.move": "Déplacer…",
   "tasks.bulk.moveTitle": "Déplacer les tâches ({{count}})",
   "tasks.bulk.selected": "{{count}} sélectionnée(s)",
-  "tasks.bulk.someday": "Un jour",
-  "tasks.bulk.toolbar": "Actions pour les tâches sélectionnées ({{count}})",
   "tasks.bulk.trash": "Mettre à la corbeille",
   "tasks.bulk.trashed": "Tâches mises à la corbeille : {{count}}",
   "tasks.bulk.updated": "Tâches modifiées : {{count}}",

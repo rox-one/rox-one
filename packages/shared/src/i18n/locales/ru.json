@@ -10784,8 +10784,6 @@
   "tasks.bulk.move": "Переместить…",
   "tasks.bulk.moveTitle": "Переместить задачи ({{count}})",
   "tasks.bulk.selected": "Выбрано: {{count}}",
-  "tasks.bulk.someday": "Когда-нибудь",
-  "tasks.bulk.toolbar": "Действия с выбранными задачами ({{count}})",
   "tasks.bulk.trash": "В корзину",
   "tasks.bulk.trashed": "В корзине задач: {{count}}",
   "tasks.bulk.updated": "Изменено задач: {{count}}",

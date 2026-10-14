@@ -10728,8 +10728,6 @@
   "tasks.bulk.move": "移動…",
   "tasks.bulk.moveTitle": "タスクを移動 ({{count}})",
   "tasks.bulk.selected": "{{count}} 件選択",
-  "tasks.bulk.someday": "いつか",
-  "tasks.bulk.toolbar": "選択したタスクの操作 ({{count}})",
   "tasks.bulk.trash": "ゴミ箱に移動",
   "tasks.bulk.trashed": "ゴミ箱に移動したタスク: {{count}}",
   "tasks.bulk.updated": "更新したタスク: {{count}}",

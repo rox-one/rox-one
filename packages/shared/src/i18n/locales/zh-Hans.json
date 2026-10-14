@@ -10728,8 +10728,6 @@
   "tasks.bulk.move": "移动…",
   "tasks.bulk.moveTitle": "移动任务 ({{count}})",
   "tasks.bulk.selected": "已选择 {{count}} 项",
-  "tasks.bulk.someday": "某天",
-  "tasks.bulk.toolbar": "所选任务的操作 ({{count}})",
   "tasks.bulk.trash": "移到废纸篓",
   "tasks.bulk.trashed": "已移到废纸篓的任务：{{count}}",
   "tasks.bulk.updated": "已更新的任务：{{count}}",

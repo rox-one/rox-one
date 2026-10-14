@@ -10728,8 +10728,6 @@
   "tasks.bulk.move": "Verschieben…",
   "tasks.bulk.moveTitle": "Aufgaben verschieben ({{count}})",
   "tasks.bulk.selected": "{{count}} ausgewählt",
-  "tasks.bulk.someday": "Irgendwann",
-  "tasks.bulk.toolbar": "Aktionen für ausgewählte Aufgaben ({{count}})",
   "tasks.bulk.trash": "In den Papierkorb",
   "tasks.bulk.trashed": "In den Papierkorb verschoben: {{count}}",
   "tasks.bulk.updated": "Geänderte Aufgaben: {{count}}",

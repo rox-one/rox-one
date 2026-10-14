@@ -13,7 +13,7 @@ const ACTIONS: { id: BulkAction; label: string; danger?: boolean }[] = [
   { id: 'complete', label: 'tasks.bulk.complete' },
   { id: 'today', label: 'tasks.when.today' },
   { id: 'evening', label: 'tasks.when.evening' },
-  { id: 'someday', label: 'tasks.bulk.someday' },
+  { id: 'someday', label: 'tasks.when.someday' },
   { id: 'move', label: 'tasks.bulk.move' },
   { id: 'trash', label: 'tasks.bulk.trash', danger: true },
 ]
@@ -24,7 +24,7 @@ export function BulkActionBar({ count, onAction, onClear }: BulkActionBarProps) 
   return (
     <div
       role="toolbar"
-      aria-label={t('tasks.bulk.toolbar', { count })}
+      aria-label={t('tasks.bulk.selected', { count })}
       data-testid="tasks-bulk-bar"
       onKeyDown={(event) => {
         if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home' && event.key !== 'End') return
