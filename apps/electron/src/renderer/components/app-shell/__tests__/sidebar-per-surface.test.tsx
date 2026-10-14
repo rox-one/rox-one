@@ -130,6 +130,7 @@ describe('WP6 helpers', () => {
     expect(stripped.items).toBeUndefined()
     expect(stripped.expandable).toBe(false)
     expect(stripped.onClick).not.toBe(row.onClick)
+    expect(stripped.variant).toBe('default')
     const inactive = stripContextItems(row, { ...entry, isActive: () => false }, { navigator: 'notes' } as never)
     expect(inactive.onClick).toBe(row.onClick)
     expect(routed).toBe(0)

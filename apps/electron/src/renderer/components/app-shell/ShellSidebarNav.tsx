@@ -259,12 +259,17 @@ export function stripContextItems(link: LinkItem, entry: Pick<ResolvedPrimaryNav
   const owned = link.id === 'nav:allSessions' || CONTEXT_SECTION_LINK_IDS.has(link.id)
   if (!owned || !link.items) return link
   const route = entry.route
+  const active = entry.isActive(navState)
   const onClick = link.id === 'nav:allSessions'
     ? () => navigate(routes.view.allSessions())
-    : route && entry.isActive(navState) ? () => navigate(route()) : link.onClick
+    : route && active ? () => navigate(route()) : link.onClick
   return {
     ...link,
     onClick,
+    // On a filtered sub-view (status, source type, a page…) the surface row
+    // stays highlighted — and keeps «Ещё» open — while the child is selected
+    // in the context section.
+    variant: active ? 'default' : link.variant,
     // Children (and the jump-to-filter highlights they carry) live in the context section only.
     expandable: false, expanded: false, onToggle: undefined, items: undefined, sortable: undefined,
   }

@@ -194,10 +194,13 @@ function PillItems({
 
         const menuContent = (
           <StyledContextMenuContent>
-            <StyledContextMenuItem onSelect={() => onTogglePin?.(surface.id)}>
-              {pinned ? <PinOff /> : <Pin />}
-              {t(pinned ? 'workbench.pill.unpin' : 'workbench.pill.pin')}
-            </StyledContextMenuItem>
+            {/* Placement-added screens (not registry modes) are managed in Settings, not by pin. */}
+            {!surface.isActive && (
+              <StyledContextMenuItem onSelect={() => onTogglePin?.(surface.id)}>
+                {pinned ? <PinOff /> : <Pin />}
+                {t(pinned ? 'workbench.pill.unpin' : 'workbench.pill.pin')}
+              </StyledContextMenuItem>
+            )}
             {!surface.iconOnly && (
               <StyledContextMenuItem onSelect={() => onExclude?.(surface.id)}>
                 <EyeOff />
