@@ -281,7 +281,8 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   // Extra screens («Ещё»): workbench.mode.<id>.v1, default ON
   ...EXTRA_SCREEN_FEATURE_FLAGS,
   // W1-07 (#1504): unified mode screens + Docs relabel — default OFF, inert when off.
-  { id: WORKBENCH_FLAG.modeMessengerV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  // Team messenger (channels, group chats) is live on real host data — default ON.
+  { id: WORKBENCH_FLAG.modeMessengerV1, defaultValue: true, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.modeCalendarV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.modeGoalsV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.modeCanvasV1, defaultValue: true, dependencies: [], rollbackSafe: true },

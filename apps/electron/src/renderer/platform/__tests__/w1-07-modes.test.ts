@@ -29,11 +29,11 @@ function pill(shellFlags: ReadonlySet<string>) {
 }
 
 describe('W1-07 flags', () => {
-  it('registers every W1-07 flag default OFF and rollback-safe', () => {
+  it('registers every W1-07 flag default OFF (Мессенджер default ON) and rollback-safe', () => {
     for (const id of W1_07_FLAG_IDS) {
       const definition = WORKBENCH_FEATURE_FLAGS.find((flag) => flag.id === id)
       expect(definition).toBeDefined()
-      expect(definition?.defaultValue).toBe(false)
+      expect(definition?.defaultValue).toBe(id === WORKBENCH_FLAG.modeMessengerV1)
       expect(definition?.rollbackSafe).toBe(true)
     }
   })
@@ -45,10 +45,16 @@ describe('W1-07 flags', () => {
     expect(ids).not.toContain(WORKBENCH_FLAG.conationShell)
   })
 
-  it('a fresh store has no W1-07 flag enabled', () => {
+  it('a fresh store enables only Мессенджер among the W1-07 flags', () => {
     const flags = createStore().get(enabledShellFlagsAtom)
-    for (const id of W1_07_FLAG_IDS) expect(flags.has(id)).toBe(false)
-    expect(enabledUnifiedSurfaces(flags)).toEqual([])
+    for (const id of W1_07_FLAG_IDS) expect(flags.has(id)).toBe(id === WORKBENCH_FLAG.modeMessengerV1)
+    expect(enabledUnifiedSurfaces(flags)).toEqual(['messenger'])
+  })
+
+  it('Мессенджер can still be switched off through its storage-backed atom', () => {
+    const store = createStore()
+    store.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
+    expect(store.get(enabledShellFlagsAtom).has(WORKBENCH_FLAG.modeMessengerV1)).toBe(false)
   })
 
   it('negative: unregistered flag ids never resolve as enabled', () => {
