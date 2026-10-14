@@ -69,14 +69,15 @@ def validate_docs(raw: Any) -> list[dict[str, Any]]:
 class Server:
     def __init__(self, backend: Backend, out=None):
         self.backend = backend
-        self.out = out or sys.stdout
+        # Binary UTF-8 with explicit \n: no locale code page, no \r\n on Windows.
+        self.out = out or sys.stdout.buffer
         self._lock = asyncio.Lock()
         self._tasks: set[asyncio.Task[None]] = set()
         self.stopping = False
 
     async def _send(self, frame: dict[str, Any]) -> None:
         async with self._lock:
-            self.out.write(json.dumps(frame, ensure_ascii=False) + "\n")
+            self.out.write((json.dumps(frame, ensure_ascii=False) + "\n").encode("utf-8"))
             self.out.flush()
 
     async def dispatch(self, method: str, params: dict[str, Any]) -> Any:

@@ -5,8 +5,8 @@ import os
 from dataclasses import dataclass, field
 
 DEFAULT_ENDPOINT = "https://api.rox.one/v1"
-DEFAULT_MODEL = "rox-r1-max"
-DEFAULT_FALLBACK_MODEL = "deepseek-v4.1-flash"
+DEFAULT_MODEL = "rox/r1-max"  # Rox R1 Max on the api.rox.one gateway
+DEFAULT_FALLBACK_MODEL = "rox/fast"  # gateway cheap tier (DeepSeek V4.1 Flash class); override via env
 DEFAULT_EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 DEFAULT_EMBEDDING_DIMS = 384
 

@@ -46,6 +46,8 @@ class CogneeBackend:
         self._ids: dict[str, dict[str, str]] = self._load_map()
         self._model = cfg.llm_model
         self._cognify_lock = asyncio.Lock()
+        # Serialises writes (add/delete) to cognee's embedded stores and the id map.
+        self._write_lock = asyncio.Lock()
         self.last_error: str | None = None
 
     def _load_map(self) -> dict[str, dict[str, str]]:
@@ -79,7 +81,9 @@ class CogneeBackend:
         concurrent requests never observe another request's fallback.
         """
         try:
-            return await fn(self._llm_config(self.cfg.llm_model))
+            result = await fn(self._llm_config(self.cfg.llm_model))
+            self._model = self.cfg.llm_model
+            return result
         except Exception as err:  # noqa: BLE001
             if self.cfg.llm_fallback_model == self.cfg.llm_model or not _is_llm_error(err):
                 raise
@@ -88,6 +92,10 @@ class CogneeBackend:
             return await fn(self._llm_config(self.cfg.llm_fallback_model))
 
     async def add(self, docs: list[dict[str, Any]]) -> dict[str, Any]:
+        async with self._write_lock:
+            return await self._add(docs)
+
+    async def _add(self, docs: list[dict[str, Any]]) -> dict[str, Any]:
         by_source: dict[str, list[str]] = {}
         for d in docs:
             name = doc_file_name(d["id"])
@@ -166,6 +174,10 @@ class CogneeBackend:
         return hits
 
     async def delete(self, ids: list[str]) -> dict[str, Any]:
+        async with self._write_lock:
+            return await self._delete(ids)
+
+    async def _delete(self, ids: list[str]) -> dict[str, Any]:
         from cognee.api.v1.datasets.datasets import datasets as ds_api
 
         wanted = {doc_file_name(i) for i in ids}
