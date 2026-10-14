@@ -68,6 +68,7 @@ export const ENTITY_ONLY_ROUTE_PREFIXES: ReadonlySet<string> = new Set([
   'messenger',
   'calendar',
   'goals',
+  'canvas',
   'contacts',
   'workflows',
   'base',

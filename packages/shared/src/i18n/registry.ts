@@ -4,7 +4,8 @@
  * To add a new locale:
  * 1. Create the locale JSON file in ./locales/
  * 2. Add its code + native name to LOCALE_META (./locale-meta.ts)
- * 3. Add its date-fns locale to DATE_LOCALES (./date-locales.ts)
+ * 3. Add its date-fns locale to DATE_LOCALES (./date-locales.ts) and
+ *    DATE_LOCALE_LOADERS (./date-locale-loaders.ts)
  * 4. Import the messages below and add one entry to LOCALE_REGISTRY
  * 5. Add its loader to LOCALE_MESSAGE_LOADERS (./locale-loaders.ts)
  *

@@ -34,7 +34,7 @@ import { WelcomeBrowserImportPreferences } from './WelcomeBrowserImportPreferenc
 import { BrowserIntelOptIn } from './BrowserIntelOptIn'
 import { BrowserIntelProgress } from './BrowserIntelProgress'
 import { GithubLogo, TelegramLogo } from './brand-icons'
-import { AnimatedRoxLogo, RoxEyeMark } from './start-visuals'
+import { AnimatedRoxLogo } from './start-visuals'
 
 interface WelcomeStepProps {
   onContinue: () => void
@@ -290,29 +290,22 @@ export function WelcomeStep({
           : t("onboarding.welcome.description")
       }
       actions={
-        <div className="flex w-full flex-col gap-2">
+        <div className="flex w-full flex-row gap-2">
           <ContinueButton
             onClick={() => void handleContinue()}
-            className={cn("w-full", !isExistingUser && "onb-primary")}
+            className={cn("min-w-0 flex-1", !isExistingUser && "onb-primary")}
             disabled={continueDisabled}
             loading={continueBusy}
             aria-busy={continueBusy || undefined}
             loadingText={isFinishing ? t("onboarding.completion.settingUp") : (preferenceSaving || intelSaving) ? t('common.saving') : t("common.checking")}
           >
-            {isExistingUser ? t("onboarding.welcome.continue") : (
-              <span className="flex w-full items-center gap-3">
-                <RoxEyeMark />
-                <span className="flex-1 text-center">{t("onboarding.welcome.getStarted")}</span>
-                {/* Mirrors the eye's width so the label stays optically centred. */}
-                <span aria-hidden="true" className="w-8 shrink-0" />
-              </span>
-            )}
+            {isExistingUser ? t("onboarding.welcome.continue") : t("onboarding.welcome.getStarted")}
           </ContinueButton>
           {onContinueLocally && !isExistingUser && (
             <Button
               type="button"
               variant="ghost"
-              className="onb-secondary w-full rounded-full"
+              className="onb-secondary min-w-0 flex-1 rounded-full"
               disabled={continueBusy}
               onClick={() => void onContinueLocally()}
             >
