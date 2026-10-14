@@ -58,7 +58,7 @@ export function MessageBody({ message, nameOf }: { message: TeamChannelMessage; 
   if (message.kind === 'summary') {
     return (
       <div className="max-w-2xl rounded-md border border-accent/30 bg-accent/5 px-3 py-2" data-testid="messenger-call-summary">
-        <p className="mb-1 flex items-center gap-1.5 text-caption font-medium text-accent"><Sparkles className="size-3.5" aria-hidden />{t('messenger.calls.summary')}</p>
+        <p className="mb-1 flex items-center gap-1.5 text-caption font-medium text-accent"><Sparkles className="icon-caption" aria-hidden />{t('messenger.calls.summary')}</p>
         <p className="whitespace-pre-wrap break-words text-body">{message.text}</p>
       </div>
     )
@@ -79,8 +79,8 @@ function TranscriptCard({ message }: { message: TeamChannelMessage }) {
   return (
     <div className="max-w-2xl rounded-md border border-border/60 bg-surface-raised px-3 py-2" data-testid="messenger-call-transcript">
       <button type="button" className="flex w-full items-center gap-1.5 text-caption font-medium text-text-secondary" onClick={() => setOpen(v => !v)} aria-expanded={open}>
-        {open ? <ChevronDown className="size-3.5" aria-hidden /> : <ChevronRight className="size-3.5" aria-hidden />}
-        <ScrollText className="size-3.5" aria-hidden />
+        {open ? <ChevronDown className="icon-caption" aria-hidden /> : <ChevronRight className="icon-caption" aria-hidden />}
+        <ScrollText className="icon-caption" aria-hidden />
         {t('messenger.calls.transcript')} · {lines.length}
       </button>
       <pre className={cn('mt-1 whitespace-pre-wrap break-words font-sans text-small', !open && 'line-clamp-3')}>{message.text}</pre>

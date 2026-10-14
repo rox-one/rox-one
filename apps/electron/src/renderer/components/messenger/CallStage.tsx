@@ -4,9 +4,14 @@ import { useTranslation } from 'react-i18next'
 import { Mic, MicOff, MonitorUp, PhoneOff, ScrollText, Video, VideoOff } from 'lucide-react'
 import { Track } from 'livekit-client'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { cn } from '@/lib/utils'
 import { Avatar } from './ChannelInfoPanel'
 import { useCallTimer, type useTeamCall } from './use-team-call'
+
+function Tip({ label, children }: { label: string; children: React.ReactElement }) {
+  return <Tooltip><TooltipTrigger asChild>{children}</TooltipTrigger><TooltipContent>{label}</TooltipContent></Tooltip>
+}
 
 function VideoTile({ track, name, screen }: { track: Track; name: string; screen: boolean }) {
   const ref = React.useRef<HTMLVideoElement>(null)
@@ -44,16 +49,16 @@ export function CallStage({ call }: { call: ReturnType<typeof useTeamCall> }) {
             </li>
           ))}
         </ul>
-        {call.transcribing ? <span className="flex items-center gap-1 text-caption text-text-muted" title={t('messenger.calls.transcribingHint')}><ScrollText className="size-3.5" aria-hidden />{t('messenger.calls.transcribing')}</span> : null}
-        <Button size="icon" variant={call.micOn ? 'secondary' : 'destructive'} onClick={() => void call.toggle('mic')} aria-pressed={!call.micOn} aria-label={call.micOn ? t('messenger.calls.mute') : t('messenger.calls.unmute')} title={call.micOn ? t('messenger.calls.mute') : t('messenger.calls.unmute')}>
+        {call.transcribing ? <span className="flex items-center gap-1 text-caption text-text-muted"><ScrollText className="icon-caption" aria-hidden />{t('messenger.calls.transcribing')}</span> : null}
+        <Tip label={call.micOn ? t('messenger.calls.mute') : t('messenger.calls.unmute')}><Button size="icon" variant={call.micOn ? 'secondary' : 'destructive'} onClick={() => void call.toggle('mic')} aria-pressed={!call.micOn} aria-label={call.micOn ? t('messenger.calls.mute') : t('messenger.calls.unmute')}>
           {call.micOn ? <Mic aria-hidden /> : <MicOff aria-hidden />}
-        </Button>
-        <Button size="icon" variant="secondary" onClick={() => void call.toggle('camera')} aria-pressed={call.cameraOn} aria-label={t('messenger.calls.camera')} title={t('messenger.calls.camera')}>
+        </Button></Tip>
+        <Tip label={t('messenger.calls.camera')}><Button size="icon" variant="secondary" onClick={() => void call.toggle('camera')} aria-pressed={call.cameraOn} aria-label={t('messenger.calls.camera')}>
           {call.cameraOn ? <Video aria-hidden /> : <VideoOff aria-hidden />}
-        </Button>
-        <Button size="icon" variant={call.screenOn ? 'default' : 'secondary'} onClick={() => void call.toggle('screen')} aria-pressed={call.screenOn} aria-label={t('messenger.calls.screen')} title={t('messenger.calls.screen')}>
+        </Button></Tip>
+        <Tip label={t('messenger.calls.screen')}><Button size="icon" variant={call.screenOn ? 'default' : 'secondary'} onClick={() => void call.toggle('screen')} aria-pressed={call.screenOn} aria-label={t('messenger.calls.screen')}>
           <MonitorUp aria-hidden />
-        </Button>
+        </Button></Tip>
         <Button size="sm" variant="destructive" onClick={() => void call.leave()}><PhoneOff aria-hidden />{t('messenger.calls.leave')}</Button>
       </div>
       {call.error ? <p className="pt-1 text-caption text-destructive" role="alert">{call.error}</p> : null}

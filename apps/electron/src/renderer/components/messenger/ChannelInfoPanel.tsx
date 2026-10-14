@@ -16,7 +16,7 @@ export function initials(name: string): string {
 }
 
 export function Avatar({ name, className }: { name: string; className?: string }) {
-  return <span className={cn('inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-hover text-[10px] font-semibold text-text-secondary', className)} aria-hidden>{initials(name)}</span>
+  return <span className={cn('inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-hover text-caption font-semibold text-text-secondary', className)} aria-hidden>{initials(name)}</span>
 }
 
 export type Presence = 'call' | 'online' | 'offline'
@@ -46,7 +46,7 @@ export function ChannelInfoPanel({ channel, label, members, presenceOf, nameOf, 
     <aside className="flex w-72 shrink-0 flex-col overflow-y-auto border-s border-border/60" aria-label={t('messenger.info.title')} data-testid="messenger-channel-info">
       <div className="flex items-center justify-between px-4 py-2.5">
         <h2 className="text-body font-semibold">{t('messenger.info.title')}</h2>
-        <button type="button" className="rounded p-1 text-text-muted hover:bg-surface-hover" onClick={onClose} aria-label={t('common.close')}><X className="size-4" aria-hidden /></button>
+        <button type="button" className="rounded p-1 text-text-muted hover:bg-surface-hover" onClick={onClose} aria-label={t('common.close')}><X className="icon-toolbar" aria-hidden /></button>
       </div>
       <div className="px-4 pb-3">
         <p className="text-body font-semibold">{label}</p>

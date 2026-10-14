@@ -113,7 +113,7 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
       <aside className="flex w-64 shrink-0 flex-col border-e border-border/60" aria-label={t('messenger.channels.listLabel')}>
         <div className="px-2 pt-2">
           <label className="flex h-8 items-center gap-2 rounded-md bg-surface-input px-2 text-small text-text-muted">
-            <Search className="size-3.5 shrink-0" aria-hidden />
+            <Search className="icon-caption shrink-0" aria-hidden />
             <input value={query} onChange={e => setQuery(e.target.value)} placeholder={t('messenger.channels.searchPlaceholder')} aria-label={t('messenger.channels.searchPlaceholder')} className="min-w-0 flex-1 bg-transparent text-text-primary outline-none" data-testid="messenger-search" />
           </label>
         </div>
@@ -203,9 +203,9 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
                 </Button>
               ) : null}
               {selected.viewerRole && !selected.isDefault ? (
-                <Button variant="ghost" size="icon" title={t('messenger.channels.leave')} aria-label={t('messenger.channels.leave')} onClick={() => void run(async () => { if (call.channelId === selected.id) await call.leave(); await window.electronAPI.teamChatLeave(selected.id, orgId); setSelectedId(null) })}>
+                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label={t('messenger.channels.leave')} onClick={() => void run(async () => { if (call.channelId === selected.id) await call.leave(); await window.electronAPI.teamChatLeave(selected.id, orgId); setSelectedId(null) })}>
                   <LogOut aria-hidden />
-                </Button>
+                </Button></TooltipTrigger><TooltipContent>{t('messenger.channels.leave')}</TooltipContent></Tooltip>
               ) : null}
               {!selected.isDefault && (selected.viewerRole === 'owner' || selected.viewerRole === 'admin' || viewerOrgRole === 'owner' || viewerOrgRole === 'admin') ? (
                 <Tooltip>
@@ -222,9 +222,9 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
                   <TooltipContent>{t('messenger.channels.archive')}</TooltipContent>
                 </Tooltip>
               ) : null}
-              <Button variant="ghost" size="icon" aria-pressed={infoOpen} onClick={() => setInfoOpen(v => !v)} title={t('messenger.info.title')} aria-label={t('messenger.info.title')}>
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-pressed={infoOpen} onClick={() => setInfoOpen(v => !v)} aria-label={t('messenger.info.title')}>
                 <PanelRight aria-hidden />
-              </Button>
+              </Button></TooltipTrigger><TooltipContent>{t('messenger.info.title')}</TooltipContent></Tooltip>
             </header>
             {inThisCall || (joining && call.channelId === selected.id) ? <CallStage call={call} /> : null}
             {call.status === 'error' && call.channelId === selected.id ? <p className="border-b border-border/60 px-4 py-1.5 text-caption text-destructive" role="alert">{call.error}</p> : null}
@@ -299,7 +299,7 @@ function SearchResults({ search, channels, nameOf, onOpen, label }: {
           <li key={m.id}>
             <button type="button" className="flex w-full flex-col rounded-md px-2 py-1.5 text-start hover:bg-surface-hover" onClick={() => onOpen(m.channelId)}>
               <span className="flex items-center gap-1 text-caption text-text-muted">
-                {m.kind === 'transcript' ? <ScrollText className="size-3" aria-hidden /> : m.kind === 'summary' ? <Sparkles className="size-3" aria-hidden /> : null}
+                {m.kind === 'transcript' ? <ScrollText className="icon-caption" aria-hidden /> : m.kind === 'summary' ? <Sparkles className="icon-caption" aria-hidden /> : null}
                 {channel ? label(channel) : ''} · {m.kind === 'transcript' ? t('messenger.calls.transcriptPreview') : m.kind === 'summary' ? t('messenger.calls.summaryPreview') : nameOf(m.senderId)}
               </span>
               <span className="line-clamp-2 text-small">{m.text}</span>
