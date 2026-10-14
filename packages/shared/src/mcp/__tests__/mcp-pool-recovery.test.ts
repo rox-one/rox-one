@@ -1,8 +1,12 @@
-import { describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, setSystemTime, test } from 'bun:test';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { StreamableHTTPError } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { McpClientPool } from '../mcp-pool.ts';
+import { CONNECT_RETRY_BASE_MS, McpClientPool } from '../mcp-pool.ts';
 import type { McpClientConfig, PoolCallToolOptions, PoolClient } from '../client.ts';
+
+afterEach(() => {
+  setSystemTime();
+});
 
 const config = { type: 'http' as const, url: 'https://mcp.example.test/mcp' };
 const tool = (name: string): Tool => ({ name, inputSchema: { type: 'object', properties: {} } });
@@ -68,7 +72,7 @@ describe('McpClientPool transport recovery', () => {
     expect(healthy.closes).toBe(1);
   });
 
-  test('bounds failed attempts and retries the configured source on the next sync', async () => {
+  test('bounds failed attempts and retries the configured source once the connection backoff elapses', async () => {
     const failed = [new FakeClient(), new FakeClient()];
     for (const client of failed) client.listFailure = new Error('Server unavailable');
     const healthy = new FakeClient();
@@ -78,6 +82,12 @@ describe('McpClientPool transport recovery', () => {
     expect(failed.map(client => client.closes)).toEqual([1, 1]);
     expect(pool.getProxyToolDefs()).toEqual([]);
     expect(pool.isConnected('source')).toBe(false);
+    // A turn rebuilds the same desired set; the unchanged, just-failed source
+    // is reported unavailable without repeating the handshake.
+    expect(await pool.sync({ source: config })).toEqual(['source']);
+    expect(pool.created).toBe(2);
+    // After the backoff window the source is retried and recovers.
+    setSystemTime(new Date(Date.now() + CONNECT_RETRY_BASE_MS + 1));
     expect(await pool.sync({ source: config })).toEqual([]);
     expect(pool.created).toBe(3);
     expect(pool.isConnected('source')).toBe(true);
@@ -158,7 +168,7 @@ describe('McpClientPool transport recovery', () => {
     await pool.disconnectAll();
   });
 
-  test('a failed recovery remains retryable on the next sync', async () => {
+  test('a failed recovery remains retryable once the connection backoff elapses', async () => {
     const original = new FakeClient();
     original.callFailure = new Error('Connection closed');
     const failures = [new FakeClient(), new FakeClient()];
@@ -169,6 +179,10 @@ describe('McpClientPool transport recovery', () => {
     expect((await pool.callTool('mcp__source__write', {})).isError).toBe(true);
     expect(pool.created).toBe(3);
     expect(pool.isConnected('source')).toBe(false);
+    // An immediate reconciliation would repeat the failed handshake; it waits.
+    expect(await pool.sync({ source: config })).toEqual(['source']);
+    expect(pool.created).toBe(3);
+    setSystemTime(new Date(Date.now() + CONNECT_RETRY_BASE_MS + 1));
     expect(await pool.sync({ source: config })).toEqual([]);
     expect(pool.created).toBe(4);
     expect(pool.isConnected('source')).toBe(true);
