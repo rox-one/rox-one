@@ -47,4 +47,10 @@ describe('compact status bar', () => {
     // raw {{amount}} template instead.
     expect(html).toContain('Balance 12.5')
   })
+
+  it('hides the balance row instead of a "No data" placeholder', () => {
+    const html = render(<StatusBar account={null} />)
+    expect(html).not.toContain('status-bar-balance')
+    expect(html).not.toContain('No data')
+  })
 })
