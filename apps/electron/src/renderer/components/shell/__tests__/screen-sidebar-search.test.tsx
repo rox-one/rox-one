@@ -90,7 +90,7 @@ describe('registerScreenSidebarSearch', () => {
     function P() { current = useScreenSidebarSearchInput('x'); return null }
     const h = document.createElement('div'); const r = createRoot(h)
     act(() => r.render(<P />))
-    expect(current).toBe(a)
+    expect<HTMLInputElement | null>(current).toBe(a)
     act(() => registerScreenSidebarSearch('x', null, a))
     expect(current).toBeNull()
     act(() => r.unmount())
