@@ -19,6 +19,8 @@ import {
   setDictationIntent,
 } from './dictation-ownership'
 import { activeComposerPresent } from './composer-presence'
+import { captureInsertTarget, insertDictation, type InsertTarget } from './insert-target'
+import { setDictationSession } from '@/components/app-shell/input/voice-dictation-state'
 import type { DictationOwner } from './dictation-ownership'
 
 function blobToBase64(blob: Blob): Promise<string> {
@@ -91,6 +93,8 @@ export function GlobalVoiceDictation(): React.ReactElement | null {
   const startRecordingRef = useRef<(selectedPrefs?: VoicePrefs | null) => Promise<void>>(async () => {})
   const cancelRecordingRef = useRef<() => void>(() => {})
   const commandRef = useRef<(command: HotkeyCommand) => Promise<void>>(async () => {})
+  /** #12: field that had focus when capture started (null → new session draft). */
+  const insertTargetRef = useRef<InsertTarget | null>(null)
 
   prefsRef.current = prefs
   workspaceIdRef.current = workspaceId
@@ -111,6 +115,7 @@ export function GlobalVoiceDictation(): React.ReactElement | null {
     const recorder = recorderRef.current
     recorderRef.current = null
     const captureId = captureIdRef.current
+    setDictationSession(false)
     stopTracks()
     if (!recorder) return
     const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' })
@@ -135,11 +140,15 @@ export function GlobalVoiceDictation(): React.ReactElement | null {
       }
       const text = result.text.trim()
       if (text) {
-        setDictationIntent(owner, { source: 'global', delivery: 'draft' })
-        navigate(
-          routes.action.newSession({ input: text, send: false }),
-          { newPanel: true, targetLaneId: 'main' },
-        )
+        const target = insertTargetRef.current
+        insertTargetRef.current = null
+        if (!insertDictation(target, text)) {
+          setDictationIntent(owner, { source: 'global', delivery: 'draft' })
+          navigate(
+            routes.action.newSession({ input: text, send: false }),
+            { newPanel: true, targetLaneId: 'main' },
+          )
+        }
         const activeWorkspaceId = workspaceIdRef.current
         if (activeWorkspaceId) {
           void recordTranscript({
@@ -172,6 +181,8 @@ export function GlobalVoiceDictation(): React.ReactElement | null {
   }, [isCurrentCapture, owner, stopTracks, t])
 
   const cancelRecording = useCallback(() => {
+    setDictationSession(false)
+    insertTargetRef.current = null
     if (currentOwner() === owner) releaseDictation(owner)
     nativeRecordingIdRef.current = null
     captureIdRef.current += 1
@@ -201,6 +212,7 @@ export function GlobalVoiceDictation(): React.ReactElement | null {
     }
     if (!claimDictation(owner)) return
     setDictationIntent(owner, { source: 'global', delivery: 'draft' })
+    insertTargetRef.current = captureInsertTarget()
     startingRef.current = true
     const captureId = ++captureIdRef.current
     nativeRecordingIdRef.current = null
@@ -245,9 +257,11 @@ export function GlobalVoiceDictation(): React.ReactElement | null {
       }
       recorderRef.current = recorder
       recorder.start()
+      setDictationSession(true, Date.now())
       levelMeterRef.current = createVoiceLevelMeter(stream, (level) => window.electronAPI.publishVoiceLevel?.(level), { driver: 'frame' })
     } catch (error) {
       pendingStream?.getTracks().forEach((track) => track.stop())
+      setDictationSession(false)
       if (isCurrentCapture(captureId)) {
         stopTracks()
         nativeRecordingIdRef.current = null
