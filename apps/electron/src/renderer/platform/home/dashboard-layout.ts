@@ -352,11 +352,12 @@ export interface PackedCell {
 }
 
 /**
- * Explicit bento packing. Each widget, in data order, takes the first free slot
- * (top-to-bottom, left-to-right) on a 12-column grid; the result is then
- * re-ordered by position. Callers render and edit that order, so DOM order,
- * keyboard order, drag targets and the saved list all equal the visual order —
- * no CSS `dense` reflow.
+ * Explicit bento packing with a forward-only cursor (like CSS sparse auto-flow,
+ * computed here so React can place cells explicitly). Each widget takes the
+ * first free slot at or after the previous widget's slot, row-major, so packed
+ * order always equals data order: DOM order, keyboard order, drag targets and
+ * the saved list are all the visual order, and a ±1 move is always one visible
+ * step. The bento default is arranged to pack without holes.
  */
 export function packHomeLayout(layout: HomeDashboardLayout, containerWidth: number): { layout: HomeDashboardLayout; cells: Map<HomeWidgetId, PackedCell> } {
   const occupied: boolean[][] = []
@@ -365,12 +366,13 @@ export function packHomeLayout(layout: HomeDashboardLayout, containerWidth: numb
     return true
   }
   const cells = new Map<HomeWidgetId, PackedCell>()
+  let cursor = { row: 0, col: 0 }
   for (const widget of layout.widgets) {
     const span = Math.min(HOME_GRID_COLUMNS, widgetSpan(widget.size, containerWidth))
     const rows = widgetRowSpan(widget.size)
     let placed: PackedCell | null = null
-    for (let row = 0; !placed; row += 1) {
-      for (let col = 0; col + span <= HOME_GRID_COLUMNS && !placed; col += 1) {
+    for (let row = cursor.row; !placed; row += 1) {
+      for (let col = row === cursor.row ? cursor.col : 0; col + span <= HOME_GRID_COLUMNS && !placed; col += 1) {
         if (fits(row, col, span, rows)) placed = { col, row, span, rows }
       }
     }
@@ -380,12 +382,9 @@ export function packHomeLayout(layout: HomeDashboardLayout, containerWidth: numb
       for (let x = cell.col; x < cell.col + span; x += 1) occupied[y]![x] = true
     }
     cells.set(widget.id, cell)
+    cursor = { row: cell.row, col: cell.col + span }
   }
-  const widgets = layout.widgets.slice().sort((a, b) => {
-    const ca = cells.get(a.id)!
-    const cb = cells.get(b.id)!
-    return ca.row - cb.row || ca.col - cb.col
-  })
+  const widgets = layout.widgets.slice()
   return { layout: { version: 2, widgets }, cells }
 }
 
@@ -406,4 +405,19 @@ export function normalizeHomeMeta(raw: unknown): HomeDashboardMeta {
 export function upgradeFlatDefault(raw: unknown, layout: HomeDashboardLayout, meta: HomeDashboardMeta): { layout: HomeDashboardLayout; upgraded: boolean } {
   if (meta.keepFlat || !isFlatV2Default(raw)) return { layout, upgraded: false }
   return { layout: cloneLayout(DEFAULT_HOME_LAYOUT), upgraded: true }
+}
+
+/**
+ * Drag on screen: packed order equals data order (see `packHomeLayout`), so
+ * the on-screen move is the data move; the result is saved as canonical.
+ */
+export function moveWidgetVisual(layout: HomeDashboardLayout, activeId: HomeWidgetId, overId: HomeWidgetId, containerWidth: number): HomeDashboardLayout {
+  const moved = moveWidget(layout, activeId, overId)
+  return moved === layout ? layout : packHomeLayout(moved, containerWidth).layout
+}
+
+/** Move ±1 on screen: always exactly one visible position (forward-only packing). */
+export function shiftWidgetVisual(layout: HomeDashboardLayout, id: HomeWidgetId, delta: -1 | 1, containerWidth: number): HomeDashboardLayout {
+  const moved = shiftWidget(layout, id, delta)
+  return moved === layout ? layout : packHomeLayout(moved, containerWidth).layout
 }

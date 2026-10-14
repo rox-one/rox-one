@@ -40,7 +40,8 @@ import {
   availableWidgets,
   cloneLayout,
   isHomeWidgetId,
-  moveWidget,
+  moveWidgetVisual,
+  shiftWidgetVisual,
   isSupportedHomeLayout,
   canReadHomeLayout,
   normalizeHomeLayout,
@@ -48,7 +49,6 @@ import {
   removeWidget,
   resizeWidget,
   setWidgetAppearance,
-  shiftWidget,
   widgetSpan,
   widgetRowSpan,
   HOME_META_NS,
@@ -148,6 +148,7 @@ class WidgetBoundary extends React.Component<{ fallback: React.ReactNode; childr
 
 function SortableWidget({
   placement,
+  containerWidth,
   cell,
   span,
   trackPitch,
@@ -157,6 +158,8 @@ function SortableWidget({
   layout,
 }: {
   placement: HomeWidgetPlacement
+  /** Grid width: moves act on the packed order at this width. */
+  containerWidth: number
   /** Explicit packed position; DOM order equals this visual order. */
   cell: PackedCell
   span: number
@@ -177,7 +180,7 @@ function SortableWidget({
         onAppearance: (appearance) => onChange(setWidgetAppearance(layout, placement.id, appearance)),
         onResize: (size) => onChange(resizeWidget(layout, placement.id, size)),
         onRemove: () => onChange(removeWidget(layout, placement.id)),
-        onShift: (delta) => onChange(shiftWidget(layout, placement.id, delta)),
+        onShift: (delta) => onChange(shiftWidgetVisual(layout, placement.id, delta, containerWidth)),
         dragHandle: { ...attributes, ...listeners, ref: setActivatorNodeRef },
       }
     : null
@@ -327,9 +330,11 @@ export function HomeFrontPage() {
   const editingRef = useRef(false)
   const editing = draft !== null
   editingRef.current = editing
-  const sourceLayout = stored.workspaceId === workspaceId ? (draft ?? stored.snapshot.layout) : readLayout(workspaceId).layout
-  // Render in packed (visual) order so DOM = screen order; edit and save the
-  // canonical data order, which is width-independent.
+  // A workspace switch renders once before the effect swaps `stored`: read that layout once, not per render.
+  const switchedLayout = useMemo(() => (stored.workspaceId === workspaceId ? null : readLayout(workspaceId).layout), [stored.workspaceId, workspaceId])
+  const sourceLayout = switchedLayout ?? draft ?? stored.snapshot.layout
+  // Render in packed (visual) order so DOM = screen order. Moves act on that
+  // on-screen order and save it back as the canonical order.
   const packed = useMemo(() => packHomeLayout(sourceLayout, width), [sourceLayout, width])
   const layout = sourceLayout
   const visual = packed.layout
@@ -493,7 +498,7 @@ export function HomeFrontPage() {
     const active = String(event.active.id)
     const over = event.over ? String(event.over.id) : null
     if (!over || active === over || !isHomeWidgetId(active) || !isHomeWidgetId(over)) return
-    updateDraft(moveWidget(layout, active, over))
+    updateDraft(moveWidgetVisual(layout, active, over, width))
   }
 
   const ids = useMemo(() => visual.widgets.map((w) => w.id), [visual])
@@ -590,6 +595,7 @@ export function HomeFrontPage() {
                     <SortableWidget
                       key={placement.id}
                       placement={placement}
+                      containerWidth={width}
                       cell={packed.cells.get(placement.id)!}
                       span={widgetSpan(placement.size, width)}
                       trackPitch={trackPitch}

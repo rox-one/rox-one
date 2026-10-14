@@ -27,6 +27,8 @@ import {
   packHomeLayout,
   upgradeFlatDefault,
   coercedSizes,
+  moveWidgetVisual,
+  shiftWidgetVisual,
 } from '../home/dashboard-layout'
 
 describe('home dashboard layout', () => {
@@ -226,6 +228,15 @@ describe('home dashboard layout', () => {
     expect(cells.get('hero')).toEqual({ col: 0, row: 0, span: 9, rows: 4 })
     expect(cells.get('balance')).toEqual({ col: 9, row: 0, span: 3, rows: 2 })
     expect(cells.get('agents')).toEqual({ col: 9, row: 2, span: 3, rows: 2 })
+    // No holes before the final band at desktop width.
+    const filled: boolean[][] = []
+    let bottom = 0
+    for (const c of cells.values()) {
+      bottom = Math.max(bottom, c.row + c.rows)
+      for (let y = c.row; y < c.row + c.rows; y += 1) for (let x = c.col; x < c.col + c.span; x += 1) (filled[y] ??= [])[x] = true
+    }
+    const lastBand = bottom - widgetRowSpan(DEFAULT_HOME_LAYOUT.widgets.at(-1)!.size)
+    for (let y = 0; y < lastBand; y += 1) for (let x = 0; x < 12; x += 1) expect(filled[y]?.[x] ?? false).toBe(true)
     // Re-packing the packed order is stable (what the user sees is what is saved).
     expect(packHomeLayout(layout, 1400).layout).toEqual(layout)
     const narrow = packHomeLayout(DEFAULT_HOME_LAYOUT, 500)
@@ -254,5 +265,33 @@ describe('home dashboard layout', () => {
     expect(coercedSizes({ version: 2, widgets: [{ id: 'usage', size: 'S' }, { id: 'tasks', size: 'XL' }, { id: 'feed', size: 'M' }, { id: 'hero', size: 'XXL' }] })).toEqual(['usage', 'tasks'])
     expect(coercedSizes(DEFAULT_HOME_LAYOUT)).toEqual([])
     expect(coercedSizes(null)).toEqual([])
+  })
+
+  it('move ±1 always moves the card one visible position at 760/1100/1440', () => {
+    const misses: string[] = []
+    for (const width of [760, 1100, 1440]) {
+      const visual = packHomeLayout(DEFAULT_HOME_LAYOUT, width).layout.widgets.map((w) => w.id)
+      for (let i = 0; i < visual.length; i += 1) {
+        for (const delta of [-1, 1] as const) {
+          if (i + delta < 0 || i + delta >= visual.length) continue
+          const next = shiftWidgetVisual(DEFAULT_HOME_LAYOUT, visual[i]!, delta, width)
+          // Saved canonical order is the resulting visual order (stable on repack).
+          expect(packHomeLayout(next, width).layout.widgets.map((w) => w.id)).toEqual(next.widgets.map((w) => w.id))
+          const at = next.widgets.findIndex((w) => w.id === visual[i])
+          if (at !== i + delta) misses.push(`${width}:${visual[i]}:${delta}->${at}`)
+        }
+      }
+    }
+    expect(misses).toEqual([])
+  })
+
+  it('drag moves to the drop target’s on-screen place and saves the visual order', () => {
+    const width = 1440
+    const visual = packHomeLayout(DEFAULT_HOME_LAYOUT, width).layout.widgets.map((w) => w.id)
+    const last = visual.at(-1)!
+    const next = moveWidgetVisual(DEFAULT_HOME_LAYOUT, last, visual[1]!, width)
+    expect(packHomeLayout(next, width).layout).toEqual(next)
+    expect(next.widgets.findIndex((w) => w.id === last)).toBeLessThan(visual.length - 1)
+    expect(moveWidgetVisual(DEFAULT_HOME_LAYOUT, last, last, width)).toBe(DEFAULT_HOME_LAYOUT)
   })
 })
