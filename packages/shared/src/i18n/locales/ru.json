@@ -3744,6 +3744,7 @@
   "glance.h.timezones": "IANA-зоны, например Europe/Moscow.",
   "glance.import.append": "Добавить как новые страницы",
   "glance.import.done": "Страницы импортированы",
+  "glance.import.firstPageOnly": "В файле {{count}} стр. — будет использована только первая",
   "glance.import.invalid": "Это не файл страниц Rox.",
   "glance.import.replaceAll": "Заменить все страницы",
   "glance.import.replacePage": "Заменить эту страницу",

@@ -3742,6 +3742,7 @@
   "glance.h.timezones": "IANA zones, e.g. Europe/Moscow.",
   "glance.import.append": "Add as new pages",
   "glance.import.done": "Pages imported",
+  "glance.import.firstPageOnly": "The file has {{count}} pages — only the first one is used",
   "glance.import.invalid": "Not a Rox pages file.",
   "glance.import.replaceAll": "Replace all pages",
   "glance.import.replacePage": "Replace this page",

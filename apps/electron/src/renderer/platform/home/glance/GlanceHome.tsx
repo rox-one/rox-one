@@ -301,7 +301,7 @@ function GlanceColumnView({
           {t('workbench.home.edit.addWidget')}
         </button>
       ) : null}
-      {editing && !last ? <ColumnResizeHandle onResize={(dx) => onChange(resizeColumnByDrag(layout, page.id, column.id, dx))} /> : null}
+      {editing && !last ? <ColumnResizeHandle size={column.size} onResize={(dx) => onChange(resizeColumnByDrag(layout, page.id, column.id, dx))} /> : null}
     </section>
   )
 }
@@ -468,7 +468,7 @@ function GlanceCard({
 }
 
 /** Drag the column's right edge: right → full, left → small (snap, column rules apply). */
-function ColumnResizeHandle({ onResize }: { onResize: (dx: number) => void }) {
+function ColumnResizeHandle({ size, onResize }: { size: 'small' | 'full'; onResize: (dx: number) => void }) {
   const { t } = useTranslation()
   const start = useRef<number | null>(null)
   return (
@@ -476,9 +476,10 @@ function ColumnResizeHandle({ onResize }: { onResize: (dx: number) => void }) {
       role="separator"
       aria-orientation="vertical"
       aria-label={t('glance.resizeColumn')}
-      title={t('glance.resizeColumn')}
+      aria-valuetext={t(size === 'small' ? 'glance.column.small' : 'glance.column.full')}
+      title={`${t('glance.resizeColumn')}: ${t(size === 'small' ? 'glance.column.small' : 'glance.column.full')}`}
       tabIndex={0}
-      data-glance-column-resize=""
+      data-glance-column-resize={size}
       className="absolute inset-y-0 -right-1 z-raised w-2 cursor-col-resize hover:bg-surface-pressed focus-visible:bg-surface-pressed"
       onPointerDown={(e) => { start.current = e.clientX; e.currentTarget.setPointerCapture(e.pointerId) }}
       onPointerUp={(e) => { if (start.current !== null) onResize(e.clientX - start.current); start.current = null }}
