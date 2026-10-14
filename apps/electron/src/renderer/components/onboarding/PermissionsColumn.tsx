@@ -112,11 +112,11 @@ export function PermissionsColumn({
         <ShieldCheck className="icon-toolbar shrink-0 text-success" aria-hidden="true" />
         <h3 className="text-sm font-semibold">{t('onboarding.permissions.title')}</h3>
       </div>
-      <p className="text-xs text-muted-foreground">
+      <p className="onb-helper text-xs text-muted-foreground">
         {t('onboarding.permissions.subtitle')}
       </p>
 
-      <div className="divide-y divide-border/60 overflow-hidden rounded-[var(--radius-card)] border border-border/60 bg-background/30">
+      <div className="onb-perm-list divide-y divide-border/60 overflow-hidden rounded-[var(--radius-card)] border border-border/60 bg-background/30">
         {entriesForPlatform(current.platform).map((entry) => {
           const decision = canToggle(entry, current)
           const checked = isEnabled(entry, current)
@@ -137,7 +137,7 @@ export function PermissionsColumn({
               title={decision.blocked && decision.reasonKey ? t(decision.reasonKey) : undefined}
               onClick={decision.blocked ? () => notifyBlocked(entry.id) : undefined}
               className={cn(
-                'flex items-center gap-2.5 px-3 py-2 transition-colors motion-reduce:transition-none',
+                'onb-perm-row flex items-center gap-2.5 px-3 py-2 transition-colors motion-reduce:transition-none',
                 decision.blocked && 'cursor-not-allowed bg-foreground-2 opacity-60',
               )}
             >
@@ -156,14 +156,14 @@ export function PermissionsColumn({
                   <Badge
                     variant="outline"
                     data-testid={`permission-status-${entry.id}`}
-                    className={cn('shrink-0 rounded-full px-1.5 py-0 text-caption font-medium', STATUS_CHIP[status])}
+                    className={cn('onb-chip shrink-0 rounded-full px-1.5 py-0 text-caption font-medium', STATUS_CHIP[status])}
                   >
                     {t(`onboarding.permissions.status.${STATUS_KEY[status]}`)}
                   </Badge>
                 </div>
                 <p
                   id={descriptionId}
-                  className="truncate text-xs text-muted-foreground"
+                  className="onb-helper truncate text-xs text-muted-foreground"
                   title={description}
                 >
                   {description}
@@ -174,7 +174,7 @@ export function PermissionsColumn({
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-6 shrink-0 rounded-full px-2.5 text-caption"
+                  className="onb-grant h-6 shrink-0 rounded-full px-2.5 text-caption"
                   data-testid={`permission-grant-${entry.id}`}
                   onClick={() => onRequestGrant?.(entry.id)}
                 >

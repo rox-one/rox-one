@@ -235,6 +235,9 @@ export const CHANNEL_MAP = {
   serviceLifecycleUninstall: invoke(RPC_CHANNELS.serviceLifecycle.UNINSTALL),
   onServiceLifecycleStatusChanged: listener(RPC_CHANNELS.serviceLifecycle.STATUS_CHANGED),
 
+  // Menu-bar tray snapshot (local host)
+  reportTrayState: invoke(RPC_CHANNELS.tray.REPORT_STATE),
+
   // Diagnostics (local host doctor checks)
   runDiagnostics: invoke(RPC_CHANNELS.diagnostics.RUN),
   getDiagnosticsLast: invoke(RPC_CHANNELS.diagnostics.GET_LAST),

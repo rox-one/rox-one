@@ -679,6 +679,9 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.serviceLifecycle.UNINSTALL,
   RPC_CHANNELS.serviceLifecycle.STATUS_CHANGED,
 
+  // tray — the menu-bar item lives in the local Electron main process.
+  RPC_CHANNELS.tray.REPORT_STATE,
+
   // diagnostics — host doctor checks read local service/port/config/log state.
   RPC_CHANNELS.diagnostics.RUN,
   RPC_CHANNELS.diagnostics.GET_LAST,
