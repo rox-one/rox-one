@@ -17,6 +17,8 @@ import type {
   ListTeamMessagesInput,
   TeamChannel,
   TeamChannelMember,
+  TeamCallTranscriptSegment,
+  TeamChannelCall,
   TeamChannelMessage,
   TeamChannelView,
   TeamChatActor,
@@ -29,6 +31,31 @@ export const TEAM_MESSAGE_MAX = 4000
 export const TEAM_MESSAGES_PER_CHANNEL_MAX = 5000
 export const TEAM_MESSAGES_PAGE_MAX = 200
 export const TEAM_DEFAULT_CHANNEL_NAME = 'general'
+export const TEAM_TRANSCRIPT_SEGMENTS_MAX = 20_000
+export const TEAM_TRANSCRIPT_SEGMENT_TEXT_MAX = 4000
+export const TEAM_TRANSCRIPT_TEXT_MAX = 400_000
+export const TEAM_SUMMARY_MAX = 20_000
+
+/** LiveKit room for a channel / DM / group (messenger contract v1: `rox-ch-<channelId>`). */
+export function teamCallRoomName(channelId: string): string {
+  return `rox-ch-${channelId}`
+}
+
+/**
+ * Messenger contract v1 call event (`content` of a kind-9 message tagged ["rox","call"]),
+ * for the relay bridge. Returns null for non-call messages.
+ */
+export function toMessengerCallEvent(message: TeamChannelMessage, call: TeamChannelCall, opts: { transcriptUrl?: string; summary?: string } = {}):
+  | { type: 'call.started'; roomName: string; startedBy: string; ts: number }
+  | { type: 'call.ended'; roomName: string; durationSec: number; participants: string[] }
+  | { type: 'call.transcript'; roomName: string; transcriptUrl?: string; summary?: string }
+  | null {
+  if (message.callId !== call.id) return null
+  if (message.kind === 'system' && message.event === 'call.started') return { type: 'call.started', roomName: call.roomName, startedBy: call.startedBy, ts: Math.floor(call.startedAt / 1000) }
+  if (message.kind === 'system' && message.event === 'call.ended') return { type: 'call.ended', roomName: call.roomName, durationSec: Math.max(0, Math.round(((call.endedAt ?? message.createdAt) - call.startedAt) / 1000)), participants: [...call.everParticipantIds] }
+  if (message.kind === 'transcript' || message.kind === 'summary') return { type: 'call.transcript', roomName: call.roomName, ...(opts.transcriptUrl ? { transcriptUrl: opts.transcriptUrl } : {}), ...(opts.summary ? { summary: opts.summary } : {}) }
+  return null
+}
 
 export class TeamChatError extends Error {
   constructor(readonly code: 'INVALID' | 'FORBIDDEN' | 'NOT_FOUND', message: string) {
@@ -78,6 +105,7 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       members: Array.isArray(raw.members) ? raw.members : [],
       subscriptions: Array.isArray(raw.subscriptions) ? raw.subscriptions : [],
       messages: Array.isArray(raw.messages) ? raw.messages : [],
+      calls: Array.isArray(raw.calls) ? raw.calls : [],
     }
   }
 
@@ -135,6 +163,76 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     return changed
   }
 
+  function activeCallOf(store: TeamChatStoreFile, channelId: string): TeamChannelCall | undefined {
+    return (store.calls ?? []).find(c => c.channelId === channelId && !c.endedAt)
+  }
+
+  /** Append a message of any kind; trims the channel to the retention cap. */
+  function appendMessage(store: TeamChatStoreFile, channel: TeamChannel, message: Omit<TeamChannelMessage, 'id' | 'seq' | 'channelId' | 'createdAt'>): TeamChannelMessage {
+    channel.lastSeq += 1
+    channel.lastMessageAt = now()
+    const full: TeamChannelMessage = { id: randomUUID(), channelId: channel.id, seq: channel.lastSeq, createdAt: channel.lastMessageAt, ...message }
+    store.messages.push(full)
+    const inChannel = store.messages.filter(m => m.channelId === channel.id)
+    if (inChannel.length > TEAM_MESSAGES_PER_CHANNEL_MAX) {
+      const drop = new Set(inChannel.slice(0, inChannel.length - TEAM_MESSAGES_PER_CHANNEL_MAX).map(m => m.id))
+      store.messages = store.messages.filter(m => !drop.has(m.id))
+    }
+    return full
+  }
+
+  /** Call actions need channel membership (room authz = channel membership). */
+  function callChannel(store: TeamChatStoreFile, channelIdInput: unknown, actor: TeamChatActor): TeamChannel {
+    const channel = visibleChannel(store, requireId(channelIdInput, 'channelId'), actor)
+    if (channel.archivedAt) throw new TeamChatError('INVALID', 'Channel is archived')
+    if (!memberOf(store, channel.id, actor.userId)) throw new TeamChatError('FORBIDDEN', 'Join the channel to call')
+    return channel
+  }
+
+  function cleanSegment(value: unknown, fallbackSpeaker: string): TeamCallTranscriptSegment | null {
+    if (!value || typeof value !== 'object') return null
+    const v = value as Record<string, unknown>
+    const text = typeof v.text === 'string' ? v.text.replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, TEAM_TRANSCRIPT_SEGMENT_TEXT_MAX) : ''
+    if (!text) return null
+    const startMs = Number(v.startMs), endMs = Number(v.endMs)
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs < 0 || endMs < startMs) return null
+    const speakerId = typeof v.speakerId === 'string' && /^[A-Za-z0-9._:@-]{1,128}$/.test(v.speakerId) ? v.speakerId : fallbackSpeaker
+    const speakerName = typeof v.speakerName === 'string' ? v.speakerName.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) : ''
+    return { speakerId, ...(speakerName ? { speakerName } : {}), text, startMs: Math.round(startMs), endMs: Math.round(endMs) }
+  }
+
+  function formatTranscript(segments: TeamCallTranscriptSegment[]): string {
+    const mmss = (ms: number) => `${String(Math.floor(ms / 60000)).padStart(2, '0')}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`
+    return segments.map(s => `[${mmss(s.startMs)}] ${s.speakerName || s.speakerId}: ${s.text}`).join('\n').slice(0, TEAM_TRANSCRIPT_TEXT_MAX)
+  }
+
+  /** Ends a call: system message + transcript message (if any). Caller saves. */
+  function endCall(store: TeamChatStoreFile, channel: TeamChannel, call: TeamChannelCall): void {
+    call.endedAt = now()
+    call.participantIds = []
+    appendMessage(store, channel, { senderId: 'system', kind: 'system', event: 'call.ended', callId: call.id, text: 'call.ended' })
+    if (call.transcript.length) {
+      const sorted = [...call.transcript].sort((a, b) => a.startMs - b.startMs)
+      const msg = appendMessage(store, channel, { senderId: 'system', kind: 'transcript', callId: call.id, text: formatTranscript(sorted) })
+      call.transcriptMessageId = msg.id
+    }
+  }
+
+  /** Client DTO: the live transcript stays on the host (only its size is shared). */
+  function callDto(call: TeamChannelCall): TeamChannelCall {
+    return { ...call, participantIds: [...call.participantIds], everParticipantIds: [...call.everParticipantIds], transcript: [], transcriptSegments: call.transcript.length }
+  }
+
+  function lastMessageOf(store: TeamChatStoreFile, channelId: string, canSee: boolean): Pick<TeamChannelView, 'lastMessage'> {
+    if (!canSee) return {}
+    for (let i = store.messages.length - 1; i >= 0; i--) {
+      const m = store.messages[i]!
+      if (m.channelId !== channelId || m.deletedAt) continue
+      return { lastMessage: { senderId: m.senderId, text: m.text.slice(0, 140), ...(m.kind ? { kind: m.kind } : {}), ...(m.event ? { event: m.event } : {}), createdAt: m.createdAt } }
+    }
+    return {}
+  }
+
   function toView(store: TeamChatStoreFile, channel: TeamChannel, userId: string): TeamChannelView {
     const members = store.members.filter(m => m.channelId === channel.id)
     const viewer = members.find(m => m.userId === userId)
@@ -145,6 +243,8 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       ...(viewer ? { viewerRole: viewer.role } : {}),
       viewerSubscribed: store.subscriptions.some(s => s.channelId === channel.id && s.userId === userId),
       unreadCount: viewer ? Math.max(0, channel.lastSeq - viewer.lastReadSeq) : 0,
+      ...(activeCallOf(store, channel.id) ? { activeCall: callDto(activeCallOf(store, channel.id)!) } : {}),
+      ...(lastMessageOf(store, channel.id, viewer !== undefined || channel.visibility === 'public')),
     }
   }
 
@@ -239,6 +339,12 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       if (channel.visibility === 'private') {
         store.subscriptions = store.subscriptions.filter(s => !(s.channelId === channel.id && s.userId === actor.userId))
       }
+      // Leaving the channel revokes call access: drop out of the live call.
+      const call = activeCallOf(store, channel.id)
+      if (call?.participantIds.includes(actor.userId)) {
+        call.participantIds = call.participantIds.filter(id => id !== actor.userId)
+        if (!call.participantIds.length) endCall(store, channel, call)
+      }
       save(store)
       return { orgId: channel.orgId }
     },
@@ -272,6 +378,8 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       if (channel.isDefault) throw new TeamChatError('INVALID', 'The default channel cannot be archived')
       if (!canManage(store, channel, actor)) throw new TeamChatError('FORBIDDEN', 'Only channel or org admins can archive')
       channel.archivedAt = now()
+      const liveCall = activeCallOf(store, channel.id)
+      if (liveCall) endCall(store, channel, liveCall)
       save(store)
       return { orgId: channel.orgId }
     },
@@ -293,6 +401,138 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     },
 
     postMessageWithOrg,
+
+    /**
+     * Join (or start) the channel's call. Returns the room to connect to; the
+     * token is minted by the caller only after this membership check passes.
+     */
+    joinCall(channelIdInput: unknown, actor: TeamChatActor): { call: TeamChannelCall; orgId: string; started: boolean } {
+      const store = load()
+      const channel = callChannel(store, channelIdInput, actor)
+      store.calls ??= []
+      let call = activeCallOf(store, channel.id)
+      let started = false
+      if (!call) {
+        call = { id: randomUUID(), channelId: channel.id, roomName: teamCallRoomName(channel.id), startedBy: actor.userId,
+          startedAt: now(), participantIds: [], everParticipantIds: [], transcript: [] }
+        store.calls.push(call)
+        appendMessage(store, channel, { senderId: actor.userId, kind: 'system', event: 'call.started', callId: call.id, text: 'call.started' })
+        started = true
+      }
+      if (!call.participantIds.includes(actor.userId)) call.participantIds.push(actor.userId)
+      if (!call.everParticipantIds.includes(actor.userId)) call.everParticipantIds.push(actor.userId)
+      // Keep at most 50 ended calls of history per channel.
+      const ended = store.calls.filter(c => c.channelId === channel.id && c.endedAt)
+      if (ended.length > 50) {
+        const drop = new Set(ended.slice(0, ended.length - 50).map(c => c.id))
+        store.calls = store.calls.filter(c => !drop.has(c.id))
+      }
+      save(store)
+      return { call, orgId: channel.orgId, started }
+    },
+
+    /** Leave the call; the last participant out ends it and posts the transcript. */
+    leaveCall(channelIdInput: unknown, actor: TeamChatActor): { orgId: string; call: TeamChannelCall | null; ended: boolean } {
+      const store = load()
+      const channel = visibleChannel(store, requireId(channelIdInput, 'channelId'), actor)
+      const call = activeCallOf(store, channel.id)
+      if (!call) return { orgId: channel.orgId, call: null, ended: false }
+      call.participantIds = call.participantIds.filter(id => id !== actor.userId)
+      const ended = call.participantIds.length === 0
+      if (ended) endCall(store, channel, call)
+      save(store)
+      return { orgId: channel.orgId, call, ended }
+    },
+
+    /** Replace the live participant list from the LiveKit room roster (members only). */
+    syncCallParticipants(channelIdInput: unknown, participantIds: unknown, actor: TeamChatActor): { orgId: string; call: TeamChannelCall | null } {
+      const store = load()
+      const channel = callChannel(store, channelIdInput, actor)
+      const call = activeCallOf(store, channel.id)
+      if (!call || !Array.isArray(participantIds)) return { orgId: channel.orgId, call: call ?? null }
+      // Only channel members can be in the call (room access = channel membership).
+      const ids = [...new Set(participantIds.filter((id): id is string => typeof id === 'string' && !!memberOf(store, channel.id, id)))].slice(0, 200)
+      if (!ids.includes(actor.userId)) ids.push(actor.userId)
+      call.participantIds = ids
+      for (const id of ids) if (!call.everParticipantIds.includes(id)) call.everParticipantIds.push(id)
+      save(store)
+      return { orgId: channel.orgId, call }
+    },
+
+    /** Add final transcript segments (from the LiveKit transcriber) to the active call. */
+    appendCallTranscript(channelIdInput: unknown, callIdInput: unknown, segmentsInput: unknown, actor: TeamChatActor): { orgId: string; added: number } {
+      const store = load()
+      const channel = callChannel(store, channelIdInput, actor)
+      const callId = requireId(callIdInput, 'callId')
+      const call = (store.calls ?? []).find(c => c.id === callId && c.channelId === channel.id)
+      if (!call) throw new TeamChatError('NOT_FOUND', 'Call not found')
+      if (call.endedAt) throw new TeamChatError('INVALID', 'Call has ended')
+      const segments = (Array.isArray(segmentsInput) ? segmentsInput : []).slice(0, 500)
+        .map(v => cleanSegment(v, actor.userId)).filter((v): v is TeamCallTranscriptSegment => !!v)
+        // Each participant transcribes only their own microphone: no speaking for others.
+        .map(v => ({ ...v, speakerId: actor.userId }))
+      // Idempotent: the same segment can arrive from several windows.
+      const key = (s: TeamCallTranscriptSegment) => `${s.speakerId}|${s.startMs}|${s.text}`
+      const seen = new Set(call.transcript.map(key))
+      let added = 0
+      for (const seg of segments) {
+        if (call.transcript.length >= TEAM_TRANSCRIPT_SEGMENTS_MAX) break
+        if (seen.has(key(seg))) continue
+        seen.add(key(seg)); call.transcript.push(seg); added++
+      }
+      if (added) save(store)
+      return { orgId: channel.orgId, added }
+    },
+
+    /** Post the AI summary of an ended call (once). */
+    postCallSummary(channelIdInput: unknown, callIdInput: unknown, summaryInput: unknown, actor: TeamChatActor): { orgId: string; message: TeamChannelMessage | null } {
+      const store = load()
+      const channel = callChannel(store, channelIdInput, actor)
+      const call = (store.calls ?? []).find(c => c.id === requireId(callIdInput, 'callId') && c.channelId === channel.id)
+      if (!call) throw new TeamChatError('NOT_FOUND', 'Call not found')
+      if (!call.endedAt || call.summaryMessageId) return { orgId: channel.orgId, message: null }
+      const text = cleanText(summaryInput, TEAM_SUMMARY_MAX, 'summary')
+      const message = appendMessage(store, channel, { senderId: 'system', kind: 'summary', callId: call.id, text })
+      call.summaryMessageId = message.id
+      save(store)
+      return { orgId: channel.orgId, message }
+    },
+
+    /** Host-internal: post the AI summary for an ended call (no actor; once). Returns false if already posted. */
+    postCallSummaryAsSystem(channelIdInput: unknown, callIdInput: unknown, summaryInput: unknown): boolean {
+      const store = load()
+      const channelId = requireId(channelIdInput, 'channelId')
+      const channel = store.channels.find(c => c.id === channelId)
+      if (!channel || channel.archivedAt) return false
+      const call = (store.calls ?? []).find(c => c.id === requireId(callIdInput, 'callId') && c.channelId === channel.id)
+      if (!call || !call.endedAt || call.summaryMessageId) return false
+      const text = cleanText(summaryInput, TEAM_SUMMARY_MAX, 'summary')
+      call.summaryMessageId = appendMessage(store, channel, { senderId: 'system', kind: 'summary', callId: call.id, text }).id
+      save(store)
+      return true
+    },
+
+    /** Calls of a channel, newest first (visible channels only). */
+    listCalls(channelIdInput: unknown, actor: TeamChatActor): TeamChannelCall[] {
+      const store = load()
+      const channel = visibleChannel(store, requireId(channelIdInput, 'channelId'), actor)
+      return (store.calls ?? []).filter(c => c.channelId === channel.id).sort((a, b) => b.startedAt - a.startedAt).map(callDto)
+    },
+
+    /** Case-insensitive search over messages, transcripts and summaries in the actor's visible channels. */
+    searchMessages(orgIdInput: unknown, queryInput: unknown, actor: TeamChatActor): TeamChannelMessage[] {
+      const orgId = requireId(orgIdInput, 'orgId')
+      requireOrgMember(orgId, actor)
+      const q = cleanText(queryInput, 200, 'query').toLowerCase()
+      const store = load()
+      const visible = new Set(store.channels
+        .filter(c => c.orgId === orgId && (c.visibility === 'public' || memberOf(store, c.id, actor.userId)))
+        .map(c => c.id))
+      return store.messages
+        .filter(m => visible.has(m.channelId) && !m.deletedAt && m.kind !== 'system' && m.text.toLowerCase().includes(q))
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .slice(0, 100)
+    },
 
     markRead(channelIdInput: unknown, actor: TeamChatActor): void {
       const store = load()

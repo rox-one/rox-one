@@ -109,6 +109,7 @@ import { useTaskDetailDrafts } from './tasks/use-task-detail-drafts'
 import { TaskSidebar } from './tasks/TaskSidebar'
 import { getSessionTitle } from '@/utils/session'
 import { taskDelegationErrorKey, type TaskDelegationErrorKey } from './tasks/delegation-errors'
+import { acceptsPlusDrop, destDefaults, insertHeading, isHeadingDrop, navDropKind } from './tasks/magic-plus'
 
 const SORTS: TaskSortId[] = ['order', 'due', 'priority', 'project', 'title']
 const CHIP_TONE: Record<AgentChip, Tone> = { running: 'success', review: 'warning', todo: 'accent', done: 'muted', linked: 'muted' }
@@ -197,7 +198,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState<string | null>(null)
   const [pendingDone, setPendingDone] = useState<ReadonlySet<string>>(new Set())
-  const [quickEntry, setQuickEntry] = useState<{ initial: string } | null>(null)
+  const [quickEntry, setQuickEntry] = useState<{ initial: string; dest?: string } | null>(null)
   useEffect(() => {
     // A2: «Создать новую задачу» in the inspector rail opens a fresh tasks
     // panel; that panel consumes the create request here on mount.
@@ -439,21 +440,32 @@ export default function TasksPage(props: TasksPageProps = {}) {
     return t(`tasks.projection.${d.list}`)
   })()
 
-  const createFromEntry = useCallback((parsed: ParsedTaskEntry, opts: { notes?: string; context?: SectionContext; afterId?: string; open?: boolean; projectId?: string | null; areaId?: string | null; checklistItems?: string[] } = {}) => {
+  /** Quick Entry presets: the Magic Plus drop target when there is one, else the view. */
+  const entryDefaults = (() => {
+    const dest = quickEntry?.dest ? destDefaults(quickEntry.dest, startOfLocalDay(now) + DAY) : null
+    if (!dest) return { label: destinationLabel, projectId: viewDefaults().projectId, areaId: viewDefaults().areaId }
+    const label = dest.projectId ? projectName(dest.projectId) : dest.areaId ? areaName(dest.areaId) : dest.when?.kind === 'evening' ? t('tasks.when.evening') : t(`tasks.projection.${dest.list}`)
+    return { label, projectId: dest.projectId, areaId: dest.areaId }
+  })()
+
+  const createFromEntry = useCallback((parsed: ParsedTaskEntry, opts: { notes?: string; context?: SectionContext; afterId?: string; open?: boolean; projectId?: string | null; areaId?: string | null; checklistItems?: string[]; dest?: string } = {}) => {
     const mention = parseAgentMention(parsed.title)
     if (!mention.title) return null
     const observation = tour.capture()
-    const d = viewDefaults()
+    const fromDest = opts.dest ? destDefaults(opts.dest, startOfLocalDay(Date.now()) + DAY) : null
+    const d: ReturnType<typeof viewDefaults> & { headingId?: string } = fromDest ?? viewDefaults()
     let createdId: string | null = null
     mutate((current) => {
       const ctx = opts.context ?? {}
+      const projectId = opts.projectId !== undefined ? opts.projectId ?? undefined : ctx.projectId ?? d.projectId
       const task = current.create({
         title: mention.title,
         notes: opts.notes ?? '',
         list: d.list,
-        projectId: opts.projectId !== undefined ? opts.projectId ?? undefined : ctx.projectId ?? d.projectId,
+        projectId,
         areaId: opts.areaId !== undefined ? opts.areaId ?? undefined : ctx.areaId ?? d.areaId,
-        headingId: ctx.headingId ?? undefined,
+        // The dropped heading applies only while the picker still points at its project.
+        headingId: ctx.headingId ?? (d.headingId && projectId === d.projectId ? d.headingId : undefined),
         tags: [...new Set([...(d.tag ? [d.tag] : []), ...parsed.tags])],
         recurrence: parsed.recurrence ? { ...parsed.recurrence, timeZone: parsed.recurrence.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone } : undefined,
         reminderAt: parsed.reminderAt,
@@ -484,7 +496,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }, [delegate, mutate, selectTask, viewDefaults, tour])
 
   const onQuickEntry = (result: QuickEntryResult) => {
-    const created = createFromEntry(result.parsed, { notes: result.notes, open: result.open, projectId: result.projectId, areaId: result.areaId, checklistItems: result.checklistItems })
+    const created = createFromEntry(result.parsed, { notes: result.notes, open: result.open, projectId: result.projectId, areaId: result.areaId, checklistItems: result.checklistItems, dest: quickEntry?.dest })
     setQuickEntry(null)
     if (created && result.open) window.setTimeout(() => titleRef.current?.focus(), 30)
   }
@@ -798,6 +810,15 @@ export default function TasksPage(props: TasksPageProps = {}) {
       if (copyId) selectTask(copyId)
       return
     }
+    // ⌥⌘N: new heading at the selection (project, manual order).
+    if (mod && event.altKey && (event.code === 'KeyN' || event.key.toLowerCase() === 'n')) {
+      const section = selected ? sections.find((s) => s.tasks.some((task) => task.id === selected.id)) : undefined
+      if (section && selected && canInsertHeading(section)) {
+        event.preventDefault()
+        insertHeadingBefore(section, selected.id)
+      }
+      return
+    }
     if ((mod && event.key === 'Backspace') || (!mod && event.key === 'Delete')) {
       if (selected && selected.trashedAt == null) {
         event.preventDefault()
@@ -876,6 +897,16 @@ export default function TasksPage(props: TasksPageProps = {}) {
     if (current.get(id)?.trashedAt != null) current.restore(id)
   }
 
+  /** Heading insertion only makes sense in a project shown in manual order. */
+  const canInsertHeading = (section: Section) => view.kind === 'project' && sort === 'order' && Boolean(section.context?.projectId) && section.key !== 'done'
+  const insertHeadingBefore = (section: Section, taskId: string) => {
+    const from = section.tasks.findIndex((task) => task.id === taskId)
+    if (from < 0 || !canInsertHeading(section)) return
+    const moveIds = section.tasks.slice(from).map((task) => task.id)
+    const pid = section.context!.projectId!
+    mutate((current) => { insertHeading(current, pid, t('tasks.heading.new'), section.headingId ?? null, moveIds) })
+  }
+
   const dropOnRow = (event: React.DragEvent, section: Section, target: PersonalTask) => {
     event.preventDefault()
     event.stopPropagation()
@@ -884,6 +915,14 @@ export default function TasksPage(props: TasksPageProps = {}) {
     const after = event.clientY > rect.top + rect.height / 2
     if (event.dataTransfer.types.includes(DRAG_PLUS)) {
       const index = section.tasks.findIndex((task) => task.id === target.id)
+      // Things: + dropped on a project row's left gutter inserts a heading there.
+      if (canInsertHeading(section) && isHeadingDrop(event.clientX, rect.left)) {
+        const from = after ? index + 1 : index
+        const moveIds = section.tasks.slice(from).map((task) => task.id)
+        const pid = section.context!.projectId!
+        mutate((current) => { insertHeading(current, pid, t('tasks.heading.new'), section.headingId ?? null, moveIds) })
+        return
+      }
       const anchor = after ? target : section.tasks[index - 1]
       setInline({ sectionKey: section.key, afterId: anchor?.id, context: section.context })
       setInlineText('')
@@ -915,15 +954,21 @@ export default function TasksPage(props: TasksPageProps = {}) {
 
   const navDropProps = (dest: string) => ({
     onDragOver: (event: React.DragEvent) => {
-      if (!event.dataTransfer.types.includes(DRAG_TASK)) return
+      // A + over Корзина/Журнал is ignored: no preventDefault, no hint.
+      const kind = navDropKind([...event.dataTransfer.types], dest, DRAG_PLUS, DRAG_TASK)
+      if (!kind) return
       event.preventDefault()
-      event.dataTransfer.dropEffect = 'move'
+      event.dataTransfer.dropEffect = kind === 'plus' ? 'copy' : 'move'
       if (dropHint !== `nav:${dest}`) setDropHint(`nav:${dest}`)
     },
     onDragLeave: () => setDropHint((hint) => (hint === `nav:${dest}` ? null : hint)),
     onDrop: (event: React.DragEvent) => {
+      const plus = event.dataTransfer.types.includes(DRAG_PLUS)
+      if (plus && !acceptsPlusDrop(dest)) return
       event.preventDefault()
       setDropHint(null)
+      // Magic Plus on a sidebar entry: Quick Entry preset to that list/project/area.
+      if (plus) { setQuickEntry({ initial: '', dest }); return }
       const sourceId = draggedId(event)
       if (sourceId) applyDestination(sourceId, dest)
     },
@@ -1060,7 +1105,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
           event.preventDefault()
           event.stopPropagation()
           const rect = event.currentTarget.getBoundingClientRect()
-          const hint = `${task.id}:${event.clientY > rect.top + rect.height / 2 ? 'after' : 'before'}`
+          const side = event.clientY > rect.top + rect.height / 2 ? 'after' : 'before'
+          const gutter = event.dataTransfer.types.includes(DRAG_PLUS) && canInsertHeading(section) && isHeadingDrop(event.clientX, rect.left)
+          const hint = `${task.id}:${gutter ? 'heading-' : ''}${side}`
           if (dropHint !== hint) setDropHint(hint)
         }}
         onDragLeave={() => setDropHint((hint) => (hint?.startsWith(`${task.id}:`) ? null : hint))}
@@ -1072,6 +1119,16 @@ export default function TasksPage(props: TasksPageProps = {}) {
           dropHint === `${task.id}:after` && 'after:absolute after:inset-x-3 after:bottom-0 after:h-[2px] after:rounded-full after:bg-accent',
         )}
       >
+        {dropHint === `${task.id}:heading-before` || dropHint === `${task.id}:heading-after` ? (
+          // Heading-gutter drop: a heading-style rule with its label, distinct from the row insert line.
+          <span
+            data-testid="tasks-heading-drop-hint"
+            className={cn('pointer-events-none absolute inset-x-3 z-sticky flex items-center gap-2 text-xs font-semibold text-accent', dropHint.endsWith('before') ? '-top-2' : '-bottom-2')}
+          >
+            {t('tasks.heading.new')}
+            <span className="h-px flex-1 bg-accent" />
+          </span>
+        ) : null}
         <div
           role="option"
           aria-selected={selectedRow}
@@ -1596,11 +1653,11 @@ export default function TasksPage(props: TasksPageProps = {}) {
         <QuickEntry
           now={now}
           initialText={quickEntry.initial}
-          destinationLabel={destinationLabel}
+          destinationLabel={entryDefaults.label}
           projects={personalProjects}
           areas={areas}
-          initialProjectId={viewDefaults().projectId}
-          initialAreaId={viewDefaults().areaId}
+          initialProjectId={entryDefaults.projectId}
+          initialAreaId={entryDefaults.areaId}
           onClose={() => { setQuickEntry(null); listRef.current?.focus() }}
           onSubmit={onQuickEntry}
         />

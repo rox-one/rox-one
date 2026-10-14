@@ -541,8 +541,10 @@ export class PersonalTaskStore {
   }
 
   /** ⌘K / drag target: list, project, area, heading. */
-  moveTo(id: string, target: TaskMoveTarget): PersonalTask {
+  /** `opts.keepOrder`: keep the task's order when its list does not change. */
+  moveTo(id: string, target: TaskMoveTarget, opts: { keepOrder?: boolean } = {}): PersonalTask {
     const task = this.require(id)
+    const prevList = task.list
     if (target.list) {
       task.list = target.list
       if (target.list !== 'upcoming') task.startAt = undefined
@@ -565,7 +567,7 @@ export class PersonalTaskStore {
       }
     }
     if (target.headingId !== undefined) task.headingId = target.headingId ?? undefined
-    task.order = this.nextOrder(task.list)
+    if (!(opts.keepOrder && task.list === prevList)) task.order = this.nextOrder(task.list)
     for (const child of this.bundle.tasks) {
       if (child.parentId !== id) continue
       child.projectId = task.projectId
