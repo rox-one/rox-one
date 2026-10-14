@@ -597,6 +597,11 @@ export const RPC_CHANNELS = {
     RUN_ALL: 'cookbooks-lab:run-all',
     SAVE: 'cookbooks-lab:save',
     RESET: 'cookbooks-lab:reset',
+    CANCEL: 'cookbooks-lab:cancel',
+    EXPORT: 'cookbooks-lab:export',
+    // Wave 10: one composer for the four structural cell operations
+    // (add/delete/move/duplicate) — a discriminated union input.
+    MUTATE: 'cookbooks-lab:mutate',
     STATUS_CHANGED: 'cookbooks-lab:status-changed',
   },
 
@@ -988,6 +993,10 @@ export const RPC_CHANNELS = {
     RESTART: 'serviceLifecycle:restart',
     UNINSTALL: 'serviceLifecycle:uninstall',
     STATUS_CHANGED: 'serviceLifecycle:statusChanged',
+  },
+  // tray — renderer → main snapshot for the macOS menu-bar item (badge, recents, recording).
+  tray: {
+    REPORT_STATE: 'tray:reportState',
   },
   // diagnostics — local host doctor checks (service/port/runtime/config/logs).
   diagnostics: {

@@ -17,7 +17,7 @@
  */
 import { spawn as nodeSpawn } from 'node:child_process'
 import { accessSync, constants, existsSync } from 'node:fs'
-import { readFile } from 'node:fs/promises'
+import { readFile, writeFile as fsWriteFile } from 'node:fs/promises'
 import { get as httpGet } from 'node:http'
 import { delimiter, join } from 'node:path'
 import { redactRegisteredSecrets, resolveSecretsForSpawn, type SecretRefEntry } from '@rox/shared/secrets'
@@ -26,11 +26,16 @@ import { resolveConfigDir } from '@rox/shared/config/paths'
 import { getToolchain, withToolchainPathPrefix } from '@rox/shared/toolchain-runtime'
 import { CookbooksApiError, parseCookbooksStartupLine } from '../shared/cookbooks'
 import type {
+  CookbooksCancelResult,
   CookbooksCard,
   CookbooksCell,
   CookbooksDocument,
+  CookbooksExportResult,
   CookbooksFailureReason,
+  CookbooksMutateInput,
+  CookbooksMutateResult,
   CookbooksOutput,
+  CookbooksRunAllResult,
   CookbooksRunCell,
   CookbooksRunResult,
   CookbooksStartup,
@@ -246,6 +251,39 @@ function defaultCheckHealth(port: number): Promise<boolean> {
   return promise
 }
 
+// ---------------------------------------------------------------------------
+// Notebook export dependencies (SPEC wave 9 §3)
+//
+// Injected so the save flow can be exercised without Electron. The default
+// dialog uses `await import('electron')` rather than a static import: this
+// module is loaded by unit tests under plain `bun` (no Electron runtime), so
+// an eager `import ... from 'electron'` would make the whole supervisor
+// unloadable there. The default writer is `fs/promises.writeFile`.
+// ---------------------------------------------------------------------------
+
+export interface CookbooksSaveDialogOptions {
+  defaultPath: string
+  filters: { name: string; extensions: string[] }[]
+}
+
+export interface CookbooksSaveDialogResult {
+  canceled: boolean
+  filePath?: string
+}
+
+export interface CookbooksExportDeps {
+  showSaveDialog?: (options: CookbooksSaveDialogOptions) => Promise<CookbooksSaveDialogResult>
+  writeFile?: (path: string, data: string, encoding: 'utf8') => Promise<void>
+}
+
+async function defaultShowSaveDialog(options: CookbooksSaveDialogOptions): Promise<CookbooksSaveDialogResult> {
+  const { dialog } = await import('electron')
+  return dialog.showSaveDialog(options)
+}
+
+const defaultWriteFile: NonNullable<CookbooksExportDeps['writeFile']> = (path, data, encoding) =>
+  fsWriteFile(path, data, encoding)
+
 type TimerHandle = unknown
 
 // ---------------------------------------------------------------------------
@@ -320,12 +358,16 @@ function mapDocument(itemId: string, raw: unknown): CookbooksDocument {
 
 function mapRunResult(raw: unknown): CookbooksRunResult {
   const result = asRecord(raw)
+  const cancelled = result.cancelled
   return {
     ok: result.ok === true,
     stdout: asText(result.stdout),
     error: typeof result.error === 'string' ? result.error : null,
     timedOut: result.timed_out === true,
     missing: asStringArray(result.missing),
+    // Additive wave-9 field: only present when the sidecar actually sent it, so
+    // a pre-wave-9 payload maps to exactly the same object as before.
+    ...(typeof cancelled === 'boolean' ? { cancelled } : {}),
   }
 }
 
@@ -686,15 +728,58 @@ export class CookbooksRuntime {
   async apiRunAll(
     itemId: string,
     cells: { index: number; source: string }[],
-  ): Promise<{ cells: CookbooksRunCell[] }> {
+  ): Promise<CookbooksRunAllResult> {
     const store = await this.resolveStoreSnapshot()
     const raw = await this.request<unknown>(
       '/run-all',
       { method: 'POST', body: { itemId, cells, store } },
       this.o.runAllTimeoutMs(cells.length),
     )
-    const records = asRecord(raw).cells
-    return { cells: Array.isArray(records) ? records.map(mapRunCell) : [] }
+    const payload = asRecord(raw)
+    const records = payload.cells
+    const cancelled = payload.cancelled
+    return {
+      cells: Array.isArray(records) ? records.map(mapRunCell) : [],
+      // Top-level, additive wave-9 flag: cells left without a record were cancelled.
+      ...(typeof cancelled === 'boolean' ? { cancelled } : {}),
+    }
+  }
+
+  /**
+   * `POST /cancel` → interrupts every active execution of `itemId` (both `/run`
+   * and `/run-all`). Idempotent: `cancelled: 0` when nothing was running.
+   */
+  async apiCancel(itemId: string): Promise<CookbooksCancelResult> {
+    const raw = await this.request<unknown>('/cancel', { method: 'POST', body: { itemId } })
+    const payload = asRecord(raw)
+    const cancelled = typeof payload.cancelled === 'number' ? payload.cancelled : Number(payload.cancelled)
+    return { ok: payload.ok === true, cancelled: Number.isInteger(cancelled) ? cancelled : 0 }
+  }
+
+  /**
+   * Main-side `.ipynb` export: ask the user where to save `content`, then write
+   * it. `dialog`/`fs` are injected so the flow is unit-testable without
+   * Electron; the defaults are the real `dialog.showSaveDialog` and
+   * `fsPromises.writeFile` (imported lazily — this module must not pull in
+   * Electron at load time). A dismissed dialog resolves `{saved:false}`; a
+   * failed write rejects, and the renderer turns that into a notice.
+   */
+  async exportNotebook(
+    input: { itemId: string; filename: string; content: string },
+    deps: CookbooksExportDeps = {},
+  ): Promise<CookbooksExportResult> {
+    const showSaveDialog = deps.showSaveDialog ?? defaultShowSaveDialog
+    const writeFile = deps.writeFile ?? defaultWriteFile
+    const result = await showSaveDialog({
+      defaultPath: input.filename,
+      filters: [{ name: 'Jupyter Notebook', extensions: ['ipynb'] }],
+    })
+    const filePath = result.filePath
+    if (result.canceled || typeof filePath !== 'string' || filePath.length === 0) {
+      return { saved: false }
+    }
+    await writeFile(filePath, input.content, 'utf8')
+    return { saved: true, path: filePath }
   }
 
   /** `POST /save` → persists a cell source (`index`+`source`) or a playbook `text`. */
@@ -707,6 +792,55 @@ export class CookbooksRuntime {
     // The confirmation dialog belongs to the surface; by the time it calls in,
     // the user has already agreed (`/reset` refuses a dirty copy without it).
     await this.request<unknown>('/reset', { method: 'POST', body: { itemId, confirm: true } })
+  }
+
+  /**
+   * Wave 10: `POST /cells/<op>` → the sidecar's `{ok, index}`, then a fresh
+   * `GET /document/<itemId>` (SPEC wave 10 §Контракт shared/main/IPC). The
+   * request body carries exactly the fields of the chosen op — never `op`
+   * itself and never an `undefined` field (an absent `source` stays absent, so
+   * the sidecar applies its own default). A sidecar 400/409 surfaces as the
+   * existing `CookbooksApiError` with the sidecar's own `error` text.
+   */
+  async apiMutate(input: CookbooksMutateInput): Promise<CookbooksMutateResult> {
+    // Defense-in-depth: the compile-time union does not protect a caller that
+    // casts, so an op outside the four routes is rejected before any URL/body
+    // is built (never interpolated into the path).
+    if (input.op !== 'add' && input.op !== 'delete' && input.op !== 'move' && input.op !== 'duplicate') {
+      throw new CookbooksApiError(400, 'unknown op')
+    }
+    const { itemId } = input
+    // switch (not `body: input`) so `op` never reaches the sidecar body.
+    const body: Record<string, unknown> = { itemId }
+    switch (input.op) {
+      case 'add':
+        body.cellType = input.cellType
+        body.index = input.index
+        if (input.source !== undefined) body.source = input.source
+        break
+      case 'delete':
+        body.index = input.index
+        break
+      case 'move':
+        body.from = input.from
+        body.to = input.to
+        break
+      case 'duplicate':
+        body.index = input.index
+        break
+    }
+    const raw = await this.request<unknown>(`/cells/${input.op}`, { method: 'POST', body })
+    // Wave 10: контракт {ok:true, index:int} — битый ответ это протокольная
+    // ошибка, не тихий фолбэк (иначе фокус молча встал бы на ячейку 0).
+    const record = asRecord(raw)
+    const index = record.index
+    if (record.ok !== true || typeof index !== 'number' || !Number.isInteger(index)) {
+      throw new CookbooksApiError(0, 'malformed /cells response')
+    }
+    // Re-read through the document route: the sidecar answers a mutation with
+    // just the focus index, never the whole document.
+    const document = await this.apiDocument(itemId)
+    return { document, index }
   }
 
   // -------------------------------------------------------------------------

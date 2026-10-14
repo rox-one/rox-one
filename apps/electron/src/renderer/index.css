@@ -1914,28 +1914,35 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
    --grid-divider. Each tile draws its right and bottom edge. */
 :root {
   --grid-divider: color-mix(in oklch, var(--foreground) 9%, transparent);
+  /* Focus underline for a grid tile header: an accent hairline inset at the
+     bottom edge. A token so the box-shadow value stays on the scale. */
+  --grid-tile-focus-underline: inset 0 -1px 0 color-mix(in oklch, var(--accent) 45%, transparent);
 }
 .rox-grid-tile::before,
 .rox-grid-tile::after {
   content: "";
   position: absolute;
   pointer-events: none;
-  z-index: 2;
+  /* Decorative dividers sit one step above the tile's own content. The literal
+     `2` used to be here, which sits between --z-raised (1) and --z-sticky (10)
+     and is not a layer — `tokens-v2.test.ts` requires every non-negative literal
+     z-index in this file to resolve to the layer set. */
+  z-index: var(--z-raised);
 }
 .rox-grid-tile::before {
-  top: 0; bottom: 0; right: 0; width: 1px;
+  top: 0; bottom: 0; right: 0; width: 0.0625rem;
   background: linear-gradient(to bottom, transparent, var(--grid-divider) 15%, var(--grid-divider) 85%, transparent);
 }
 .rox-grid-tile::after {
-  left: 0; right: 0; bottom: 0; height: 1px;
+  left: 0; right: 0; bottom: 0; height: 0.0625rem;
   background: linear-gradient(to right, transparent, var(--grid-divider) 15%, var(--grid-divider) 85%, transparent);
 }
 .rox-grid-tile[data-focused="true"] .rox-grid-tile-header {
-  box-shadow: inset 0 -1px 0 color-mix(in oklch, var(--accent) 45%, transparent);
+  box-shadow: var(--grid-tile-focus-underline);
 }
 .rox-grid-tile-header {
-  height: 26px;
-  padding: 0 4px 0 10px;
+  height: 1.625rem;
+  padding: 0 0.25rem 0 0.625rem;
 }
 
 /* Compact responsive layout: below the threshold a tile drops secondary
@@ -1945,4 +1952,17 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   [data-panel-density="grid"] [data-secondary-toolbar] {
     display: none !important;
   }
+}
+
+/* Fluid shell: below NARROW_SHELL_THRESHOLD the secondary sidebar floats over
+   the content (data-secondary-overlay). Enter with a transform/opacity slide so
+   the breakpoint reads as a reflow, not a pop. Durations come from the motion
+   tokens, which are 0ms under reduced motion and while the shell is resizing
+   (html[data-resizing]), so a live window drag never animates. */
+[data-secondary-overlay="true"] {
+  animation: rox-shell-overlay-in var(--motion-disclosure) var(--ease-emphasis) both;
+}
+@keyframes rox-shell-overlay-in {
+  from { opacity: 0; transform: translateX(calc(var(--spacing) * -3)); }
+  to { opacity: 1; transform: none; }
 }
