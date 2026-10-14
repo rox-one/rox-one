@@ -1920,7 +1920,11 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   content: "";
   position: absolute;
   pointer-events: none;
-  z-index: 2;
+  /* Decorative dividers sit one step above the tile's own content. The literal
+     `2` used to be here, which sits between --z-raised (1) and --z-sticky (10)
+     and is not a layer — `tokens-v2.test.ts` requires every non-negative literal
+     z-index in this file to resolve to the layer set. */
+  z-index: var(--z-raised);
 }
 .rox-grid-tile::before {
   top: 0; bottom: 0; right: 0; width: 1px;
