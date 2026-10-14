@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import * as Y from 'yjs'
 import {
-  actorOrigin, applyEntitySnapshot, applyTextDiff, CanvasDoc, clip, EntityKindRegistry, isValidIndexKey, linkEntityCard,
+  actorOrigin, applyTextDiff, CanvasDoc, clip, EntityKindRegistry, isValidIndexKey, linkEntityCard,
   migrateLegacy, persistableSnapshot, reconcileEntityLinks, removeEntityCards, wellFormed, type EntityCardContext, type EntityRef,
 } from '../index.ts'
 import { CanvasFileStore } from '../node/index.ts'
@@ -29,18 +29,13 @@ function linkCtx() {
 }
 
 describe('entity snapshot leak', () => {
-  test('only display metadata is persisted in the shared doc', async () => {
+  test('nothing but the reference is persisted in the shared doc', async () => {
     const { ctx } = linkCtx()
     const id = await linkEntityCard(ctx, { kind: 'note', id: 'n1' }, { x: 0, y: 0 })
-    const snap = ctx.board.get(id)!.props.snapshot as Record<string, unknown>
-    expect(snap).toEqual({ title: 'T n1' })
+    expect(ctx.board.get(id)!.props).toEqual({ kind: 'note', entityId: 'n1', origin: 'linked' })
     const wire = new TextDecoder().decode(Y.encodeStateAsUpdate(ctx.board.doc))
     expect(wire.includes('SECRET')).toBe(false)
-    expect(wire.includes('a@b')).toBe(false)
-    applyEntitySnapshot(ctx.board, id, { title: 'x'.repeat(500), preview: 'SECRET', status: 'done' }, me)
-    const s2 = ctx.board.get(id)!.props.snapshot as Record<string, unknown>
-    expect(Object.keys(s2).sort()).toEqual(['status', 'title'])
-    expect((s2.title as string).length).toBe(200)
+    expect(wire.includes('T n1')).toBe(false)
   })
   test('persistableSnapshot clips without splitting surrogates', () => {
     expect(persistableSnapshot({ title: 'a'.repeat(199) + '😀' }).title).toBe('a'.repeat(199))

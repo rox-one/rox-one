@@ -299,7 +299,8 @@ function ensureYMap(m: Y.Map<unknown>, key: string): Y.Map<unknown> {
   if (cur instanceof Y.Map) return cur
   const next = new Y.Map<unknown>()
   m.set(key, next)
-  if (cur && typeof cur === 'object') for (const [k, v] of Object.entries(cur as Record<string, unknown>)) next.set(k, v)
+  // Sorted keys: the upgrade must produce identical content on every peer.
+  if (cur && typeof cur === 'object') for (const k of Object.keys(cur as Record<string, unknown>).sort()) next.set(k, (cur as Record<string, unknown>)[k])
   return next
 }
 
@@ -339,25 +340,28 @@ function deepEqual(a: unknown, b: unknown): boolean {
   return ka.every(k => deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]))
 }
 
-/** Minimal edit: keep the common prefix/suffix so concurrent edits elsewhere survive. */
+/**
+ * Minimal edit: keep the common prefix/suffix so concurrent edits elsewhere
+ * survive. Diffed by code point, so the edit boundaries never split a
+ * surrogate pair.
+ */
 export function applyTextDiff(t: Y.Text, nextRaw: string): void {
   const next = wellFormed(nextRaw)
   const prev = t.toString()
   if (prev === next) return
-  let start = 0
-  const max = Math.min(prev.length, next.length)
-  while (start < max && prev.charCodeAt(start) === next.charCodeAt(start)) start++
-  // Never cut inside a surrogate pair (the edit would leave lone halves).
-  if (start > 0 && isHigh(prev.charCodeAt(start - 1))) start--
-  let endPrev = prev.length, endNext = next.length
-  while (endPrev > start && endNext > start && prev.charCodeAt(endPrev - 1) === next.charCodeAt(endNext - 1)) { endPrev--; endNext-- }
-  if (endPrev < prev.length && isLow(prev.charCodeAt(endPrev))) { endPrev++; endNext++ }
-  if (endPrev > start) t.delete(start, endPrev - start)
-  if (endNext > start) t.insert(start, next.slice(start, endNext))
+  const a = Array.from(prev), b = Array.from(next)
+  let p = 0
+  const max = Math.min(a.length, b.length)
+  while (p < max && a[p] === b[p]) p++
+  let sfx = 0
+  while (sfx < max - p && a[a.length - 1 - sfx] === b[b.length - 1 - sfx]) sfx++
+  const start = a.slice(0, p).join('').length
+  const delLen = a.slice(p, a.length - sfx).join('').length
+  const ins = b.slice(p, b.length - sfx).join('')
+  if (delLen > 0) t.delete(start, delLen)
+  if (ins) t.insert(start, ins)
 }
 
-const isHigh = (c: number) => c >= 0xd800 && c <= 0xdbff
-const isLow = (c: number) => c >= 0xdc00 && c <= 0xdfff
 
 /**
  * Legacy boards (pre integer-head keys, or keys from unvalidated peers): give
@@ -366,16 +370,53 @@ const isLow = (c: number) => c >= 0xdc00 && c <= 0xdfff
  * plain-string text to the current nested layout. Returns the ids touched.
  */
 export function migrateLegacy(board: CanvasDoc, origin: Origin = { kind: 'migration' }): string[] {
+  if (!needsMigration(board)) return []
+  // Deterministic upgrade: run it in a fork whose clientID is derived from the
+  // exact doc state. Peers migrating the same state independently produce
+  // byte-identical structs (same ids, same content), which Yjs dedupes instead
+  // of letting one peer's upgraded map win and drop the other's later edits.
+  const base = Y.encodeStateAsUpdate(board.doc)
+  const fork = new Y.Doc()
+  fork.clientID = migrationClientId(base)
+  Y.applyUpdate(fork, base)
+  const touched = migrateInPlace(new CanvasDoc(fork))
+  Y.applyUpdate(board.doc, Y.encodeStateAsUpdate(fork, Y.encodeStateVector(board.doc)), origin)
+  fork.destroy()
+  return touched
+}
+
+function needsMigration(board: CanvasDoc): boolean {
+  for (const m of board.objects.values()) {
+    const k = m.get('index')
+    if (typeof k !== 'string' || !isValidIndexKey(k)) return true
+    for (const f of ['style', 'props'] as const) { const v = m.get(f); if (v !== undefined && !(v instanceof Y.Map)) return true }
+    const props = m.get('props')
+    if (props instanceof Y.Map && typeof props.get(TEXT_PROP) === 'string') return true
+  }
+  return false
+}
+
+/** FNV-1a of the state, mapped into a uint32 clientID range. */
+function migrationClientId(state: Uint8Array): number {
+  let h = 0x811c9dc5
+  for (let i = 0; i < state.length; i++) { h ^= state[i]!; h = Math.imul(h, 0x01000193) >>> 0 }
+  return (h & 0x3fffffff) + 1
+}
+
+function migrateInPlace(board: CanvasDoc): string[] {
   const byParent = new Map<string | null, Array<[string, Y.Map<unknown>]>>()
-  for (const [id, m] of board.objects.entries()) {
+  for (const id of [...board.objects.keys()].sort()) {
+    const m = board.objects.get(id)!
     const p = (m.get('parentId') ?? null) as string | null
     const list = byParent.get(p) ?? []
     list.push([id, m])
     byParent.set(p, list)
   }
   const touched = new Set<string>()
+  const parents = [...byParent.keys()].sort((x, y) => (x ?? '') < (y ?? '') ? -1 : (x ?? '') > (y ?? '') ? 1 : 0)
   board.doc.transact(() => {
-    for (const list of byParent.values()) {
+    for (const parent of parents) {
+      const list = byParent.get(parent)!
       const bad = list.filter(([, m]) => { const k = m.get('index'); return typeof k !== 'string' || !isValidIndexKey(k) })
       if (bad.length) {
         const top = list.map(([, m]) => m.get('index')).filter((k): k is string => typeof k === 'string' && isValidIndexKey(k)).sort().at(-1) ?? null
@@ -395,6 +436,6 @@ export function migrateLegacy(board: CanvasDoc, origin: Origin = { kind: 'migrat
         }
       }
     }
-  }, origin)
-  return [...touched]
+  })
+  return [...touched].sort()
 }

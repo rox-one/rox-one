@@ -17,6 +17,7 @@ import * as Y from 'yjs'
 import { CanvasDoc, migrateLegacy } from '../doc.ts'
 import { wellFormed } from '../text.ts'
 import { unlinkSync, readFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 
 export interface BoardSummary { id: string; title: string; createdAt: number; updatedAt: number }
 export type StoreErrorHandler = (error: unknown, context: { boardId?: string; op: string }) => void
@@ -71,6 +72,28 @@ function replayFrames(buf: Uint8Array, doc: Y.Doc): number | null {
 
 const LOG_FSYNC_DEBOUNCE_MS = 200
 
+/**
+ * Process start time as an opaque string (pid reuse guard). Linux: field 22 of
+ * /proc/<pid>/stat; elsewhere `ps -o lstart=`. Empty if unknown.
+ */
+export function processStartTime(pid: number): string {
+  try {
+    const stat = readFileSync(`/proc/${pid}/stat`, 'utf8')
+    return stat.slice(stat.lastIndexOf(')') + 2).split(' ')[19] ?? ''
+  } catch { /* not linux */ }
+  try { return execFileSync('ps', ['-o', 'lstart=', '-p', String(pid)], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 2000 }).trim().replace(/[\s:]+/g, '_') } catch { return '' }
+}
+
+/** Lock file content: `<pid>:<startTime>:<random>`. */
+function lockOwnerAlive(content: string): { alive: boolean; pid: number } {
+  const [pidS, start] = content.split(':')
+  const pid = Number(pidS)
+  if (!Number.isInteger(pid) || pid <= 0 || !pidAlive(pid)) return { alive: false, pid }
+  // Same pid but a different process (pid reused after a crash) → stale.
+  if (start && start !== '?' ) { const now = processStartTime(pid); if (now && now !== start) return { alive: false, pid } }
+  return { alive: true, pid }
+}
+
 /** True while `pid` is a live process (signal 0 probes without killing). */
 function pidAlive(pid: number): boolean {
   try { process.kill(pid, 0); return true } catch (e) { return (e as NodeJS.ErrnoException).code === 'EPERM' }
@@ -85,6 +108,8 @@ interface OpenEntry {
   fsyncTimer: ReturnType<typeof setTimeout> | null
   needsFsync: boolean
   indexStale: boolean
+  /** Last index write failed (data itself is saved; retried separately, never marks dirty). */
+  indexFailed: boolean
   indexTimer: ReturnType<typeof setTimeout> | null
   detach: () => void
   chain: Promise<void>
@@ -99,7 +124,7 @@ export class CanvasFileStore {
   /** Per-board chain for updates from docs that were already closed (see `adoptStale`). */
   private staleChain = new Map<string, Promise<void>>()
   private lockHeld = false
-  private lockToken = `${process.pid}:${crypto.getRandomValues(new Uint32Array(2)).join('-')}`
+  private lockToken = `${process.pid}:${processStartTime(process.pid) || '?'}:${crypto.getRandomValues(new Uint32Array(2)).join('-')}`
   private exitHook: (() => void) | null = null
   /** Boards trashed by this store: late stale edits go to the trash copy, never resurrect the board. */
   private trashed = new Map<string, string>()
@@ -141,9 +166,9 @@ export class CanvasFileStore {
       } finally { await fs.rm(tmp, { force: true }) }
       const content = (await fs.readFile(path, 'utf8').catch(() => '')).trim()
       if (content === this.lockToken) { this.lockHeld = true; return }
-      const owner = Number(content.split(':')[0])
-      if (Number.isInteger(owner) && owner > 0 && owner !== process.pid && pidAlive(owner)) throw new Error(`CANVAS_LOCKED: workspace canvas is in use by process ${owner}`)
-      if (owner === process.pid) throw new Error('CANVAS_LOCKED: workspace canvas is open in another store of this process')
+      const { alive, pid: owner } = lockOwnerAlive(content)
+      if (alive && owner === process.pid) throw new Error('CANVAS_LOCKED: workspace canvas is open in another store of this process')
+      if (alive) throw new Error(`CANVAS_LOCKED: workspace canvas is in use by process ${owner}`)
       // Stale: take it over atomically. rename succeeds for exactly one contender;
       // re-check that what we moved is still the stale lock (not a fresh one).
       const aside = `${path}.stale-${this.lockToken.replace(/[^0-9a-z-]/gi, '_')}`
@@ -299,7 +324,7 @@ export class CanvasFileStore {
     // Legacy layouts (old z-keys, plain style/props/text) are upgraded before the
     // listener attaches; a migration that changed anything is folded into a snapshot.
     const migrated = migrateLegacy(board).length > 0
-    const entry: OpenEntry = { board, pending: 0, dirty: false, retries: 0, retryTimer: null, fsyncTimer: null, needsFsync: false, indexStale: false, indexTimer: null, detach: () => {}, chain: Promise.resolve() }
+    const entry: OpenEntry = { board, pending: 0, dirty: false, retries: 0, retryTimer: null, fsyncTimer: null, needsFsync: false, indexStale: false, indexFailed: false, indexTimer: null, detach: () => {}, chain: Promise.resolve() }
     if (logBytes && badAt !== null) {
       // Keep the unreadable tail aside, then fold the good prefix into a snapshot.
       const aside = join(this.dir, `${id}.log.corrupt-${Date.now()}`)
@@ -372,10 +397,21 @@ export class CanvasFileStore {
     ;(entry.indexTimer as { unref?: () => void }).unref?.()
   }
 
+  /** Index writes never mark the board dirty: a failure is tracked and retried on its own. */
   private async touchEntry(id: string, entry: OpenEntry): Promise<void> {
     entry.indexStale = false
-    await this.touch(id, entry.board)
+    try {
+      await this.touch(id, entry.board)
+      entry.indexFailed = false
+    } catch {
+      // updateIndex already reported it (op 'write-index').
+      entry.indexFailed = true
+      if (this.open.get(id) === entry) this.markIndexStale(id, entry)
+    }
   }
+
+  /** Boards whose data is saved but whose index entry is stale after a failed write. */
+  indexFailures(): string[] { return [...this.open].filter(([, e]) => e.indexFailed).map(([id]) => id) }
 
   private async touch(id: string, board: CanvasDoc): Promise<void> {
     const title = board.getMeta().title
@@ -401,6 +437,8 @@ export class CanvasFileStore {
   /** Wait for queued writes of a board (or all). Rejects if a board is still unsaved. */
   async flush(id?: string): Promise<void> {
     const entries = id ? [this.open.get(id)].filter((e): e is OpenEntry => !!e) : [...this.open.values()]
+    // Let queued appends run first: they are what marks the index stale / log unsynced.
+    await Promise.all(entries.map(e => e.chain))
     for (const e of entries) {
       if (!e.indexStale) continue
       if (e.indexTimer) { clearTimeout(e.indexTimer); e.indexTimer = null }
@@ -467,17 +505,26 @@ export class CanvasFileStore {
   /** Soft delete: files move to canvas/.trash/<id>-<ts>.*; index entry removed. Opens wait meanwhile. */
   trashBoard(id: string): Promise<void> {
     assertId(id)
+    const { snap, log } = this.paths(id)
+    const trash = join(this.dir, '.trash')
+    const stamp = Date.now()
+    // Set synchronously, before the close starts: edits on the closed doc go to
+    // a separate trash file and never touch the live log (about to move; must not be re-created).
+    const hadTrashTarget = this.trashed.get(id)
+    this.trashed.set(id, join(trash, `${id}-${stamp}.late.log`))
+    const closing = this.closeBoard(id)
     const p = (async () => {
-      await this.closeBoard(id)
-      await this.staleChain.get(id)
-      const { snap, log } = this.paths(id)
-      const trash = join(this.dir, '.trash')
+      try {
+        await closing
+        await fs.stat(snap)
+      } catch (e) {
+        if (hadTrashTarget) this.trashed.set(id, hadTrashTarget); else this.trashed.delete(id)
+        if ((e as NodeJS.ErrnoException).code === 'ENOENT') throw new Error('canvas: board not found')
+        throw e
+      }
       await fs.mkdir(trash, { recursive: true })
-      const stamp = Date.now()
-      try { await fs.stat(snap) } catch (e) { if ((e as NodeJS.ErrnoException).code === 'ENOENT') throw new Error('canvas: board not found'); throw e }
-      // Order: log first, snapshot last, so a crash mid-trash never leaves a
-      // snapshot-less log behind; set the stale-edit target before moving.
-      this.trashed.set(id, join(trash, `${id}-${stamp}.log`))
+      await this.staleChain.get(id)
+      // Order: log first, snapshot last, so a crash mid-trash never leaves a snapshot-less log behind.
       const corrupt = (await fs.readdir(this.dir)).filter(n => n.startsWith(`${id}.log.corrupt-`))
       for (const [src, dst] of [[log, `${id}-${stamp}.log`], ...corrupt.map(n => [join(this.dir, n), `${id}-${stamp}.${n.slice(id.length + 1)}`]), [snap, `${id}-${stamp}.ydoc`]] as const) {
         await fs.rename(src, join(trash, dst)).catch(e => { if (e.code !== 'ENOENT') throw e })
