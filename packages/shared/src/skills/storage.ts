@@ -20,7 +20,16 @@ import { isAbsolute, join, relative, resolve, sep } from 'path';
 import matter from 'gray-matter';
 import type { LoadedSkill, SkillMetadata, SkillRequires, SkillSource } from './types.ts';
 import { readSkillInstructions } from './read-instructions.ts';
-import { listOmpSkills, OMP_GLOBAL_SKILLS_DIR, OMP_SHARED_SKILLS_DIR, OMP_WORKSPACE_SKILLS_DIR } from './omp-discovery.ts';
+import { readSkillHead } from './skill-head.ts';
+import {
+  findOmpSkill,
+  listOmpSkillsWithShared,
+  ompSkillFromHead,
+  OMP_GLOBAL_SKILLS_DIR,
+  OMP_SHARED_SKILLS_DIR,
+  OMP_WORKSPACE_SKILLS_DIR,
+  type OmpSkillInfo,
+} from './omp-discovery.ts';
 import { getWorkspaceSkillsPath } from '../workspaces/storage.ts';
 import { resolveConfigDir } from '../config/paths.ts';
 import { getBundledSkillsDisabled } from '../config/storage.ts';
@@ -168,7 +177,7 @@ function parseSkillMachineMetadata(data: Record<string, unknown>): Pick<
  */
 function parseSkillFile(content: string): { metadata: SkillMetadata; body: string } | null {
   try {
-    const parsed = matter(content);
+    const parsed = matter(content, {});
 
     // Validate required fields
     if (!parsed.data.name || !parsed.data.description) {
@@ -194,6 +203,31 @@ function parseSkillFile(content: string): { metadata: SkillMetadata; body: strin
   } catch {
     return null;
   }
+}
+
+/** Catalog form of a skill: metadata from the SKILL.md head, body omitted. */
+function skillFromHead(text: string, size: number, skillDir: string, slug: string, source: SkillSource): LoadedSkill | null {
+  const parsed = parseSkillFile(text);
+  if (!parsed) return null;
+  return {
+    slug,
+    metadata: parsed.metadata,
+    content: '',
+    contentLength: size,
+    iconPath: findIconFile(skillDir),
+    path: skillDir,
+    source,
+  };
+}
+
+function loadSkillHeadAtPath(skillDir: string, slug: string, source: SkillSource): LoadedSkill | null {
+  const head = readSkillHead(skillDir);
+  return head && skillFromHead(head.text, head.size, skillDir, slug, source);
+}
+
+function loadSkillHeadFromDir(skillsDir: string, slug: string, source: SkillSource): LoadedSkill | null {
+  if (!isSafeSkillName(slug)) return null;
+  return loadSkillHeadAtPath(join(skillsDir, slug), slug, source);
 }
 
 function isDirectoryOrSymlinkToDirectory(parentDir: string, entry: Dirent): boolean {
@@ -249,6 +283,15 @@ function loadSkillAtPath(skillDir: string, slug: string, source: SkillSource): L
  * @param source - Where these skills are loaded from
  */
 export function loadSkillsFromDir(skillsDir: string, source: SkillSource): LoadedSkill[] {
+  return scanSkillsDir(skillsDir, source);
+}
+
+/**
+ * Head-only scan behind {@link loadSkillsFromDir}. When `ompView` is given, the
+ * same pass also collects the OMP listing of this root (OMP rules: any entry
+ * name, slug as fallback name) so a root shared with OMP is read once.
+ */
+function scanSkillsDir(skillsDir: string, source: SkillSource, ompView?: OmpSkillInfo[]): LoadedSkill[] {
   if (!existsSync(skillsDir)) {
     return [];
   }
@@ -261,10 +304,19 @@ export function loadSkillsFromDir(skillsDir: string, source: SkillSource): Loade
       if (!isDirectoryOrSymlinkToDirectory(skillsDir, entry)) continue;
       // Skip dot-dirs (.pending/, .versions/ inside skills, etc.) — internal
       // state, never real skills.
-      if (entry.name.startsWith('.')) continue;
+      const hidden = entry.name.startsWith('.');
+      if (hidden && !ompView) continue;
 
       try {
-        const skill = loadSkillFromDir(skillsDir, entry.name, source);
+        const skillDir = join(skillsDir, entry.name);
+        const craft = !hidden && isSafeSkillName(entry.name);
+        const head = craft || ompView ? readSkillHead(skillDir) : null;
+        if (head && ompView) {
+          const omp = ompSkillFromHead(entry.name, skillDir, head.text);
+          if (omp) ompView.push(omp);
+        }
+        if (hidden) continue;
+        const skill = craft && head ? skillFromHead(head.text, head.size, skillDir, entry.name, source) : null;
         if (skill) {
           skills.push(skill);
         } else if (skillsDir === APP_MANAGED_SKILLS_DIR) {
@@ -281,7 +333,7 @@ export function loadSkillsFromDir(skillsDir: string, source: SkillSource): Loade
               const path = resolve(packDir, rel);
               if (!isInsideSkillStore(path, packDir)) continue;
               try {
-                const nested = loadSkillAtPath(path, slug, source);
+                const nested = loadSkillHeadAtPath(path, slug, source);
                 if (nested) skills.push(nested);
               } catch {
                 // A denied view must not hide later healthy views from this pack.
@@ -453,6 +505,31 @@ export function getSkillRootPlan(workspaceRoot: string, projectRoot?: string): S
   return plan;
 }
 
+function skillsCacheKey(workspaceRoot: string, projectRoot: string | undefined, options: LoadAllSkillsOptions | undefined): string {
+  // Disabled bundled packs stay on disk but must not appear in discovery.
+  const disabledKey = getBundledSkillsDisabled().slice().sort().join(',');
+  return `${workspaceRoot}::${projectRoot ?? ''}::${options?.includeOmp ?? false}:${options?.includeShadowedOmp ?? false}::d:${disabledKey}`;
+}
+
+function ompToLoadedSkill(omp: OmpSkillInfo): LoadedSkill {
+  return {
+    slug: omp.slug,
+    metadata: { name: omp.name, description: omp.description },
+    content: '',
+    path: omp.path,
+    source: 'omp',
+  };
+}
+
+function isSameDirectory(a: string, b: string): boolean {
+  if (a === b) return true;
+  try {
+    return realpathSync.native(a) === realpathSync.native(b);
+  } catch {
+    return false;
+  }
+}
+
 export function loadAllSkills(workspaceRoot: string, projectRoot?: string, options?: LoadAllSkillsOptions): LoadedSkill[] {
   return loadAllSkillsWithTierScans(workspaceRoot, projectRoot, options).skills;
 }
@@ -473,9 +550,7 @@ export function loadAllSkillsWithTierScans(
   // passes includeOmp: true explicitly.
   const includeOmp = options?.includeOmp ?? false;
   const includeShadowedOmp = options?.includeShadowedOmp ?? false;
-  // Disabled bundled packs stay on disk but must not appear in discovery.
-  const disabledKey = getBundledSkillsDisabled().slice().sort().join(',');
-  const cacheKey = `${workspaceRoot}::${projectRoot ?? ''}::${includeOmp}:${includeShadowedOmp}::d:${disabledKey}`;
+  const cacheKey = skillsCacheKey(workspaceRoot, projectRoot, options);
   const now = Date.now();
   const cached = skillsCache.get(cacheKey);
   if (cached && now - cached.ts < SKILLS_CACHE_TTL) {
@@ -485,38 +560,36 @@ export function loadAllSkillsWithTierScans(
   const skillsBySlug = new Map<string, LoadedSkill>();
   const shadowedOmp: LoadedSkill[] = [];
 
+  const workspaceSkills = loadWorkspaceSkills(workspaceRoot);
+  const projectSkills = projectRoot ? loadSkillsFromDir(join(projectRoot, PROJECT_AGENT_SKILLS_DIR), 'project') : [];
+  // GLOBAL_AGENT_SKILLS_DIR is also OMP_SHARED_SKILLS_DIR: one scan yields both views.
+  const sharedOmp: OmpSkillInfo[] = [];
+  const globalSkills = scanSkillsDir(GLOBAL_AGENT_SKILLS_DIR, 'global', includeOmp ? sharedOmp : undefined);
+
   // 0. OMP skills (LOWEST priority — craft always wins on slug conflict):
-  //    ~/.omp/agent/skills/ and {workspaceRoot}/.omp/skills/
+  //    ~/.omp/agent/skills/, ~/.agents/skills/ and {workspaceRoot}/.omp/skills/
   if (includeOmp) {
-    for (const omp of listOmpSkills(workspaceRoot)) {
+    for (const omp of listOmpSkillsWithShared(sharedOmp, workspaceRoot)) {
       // The canonical application tier handles these links, including disabled packs.
       if (isInsideSkillStore(omp.path, APP_MANAGED_SKILLS_DIR)) continue;
-      skillsBySlug.set(omp.slug, {
-        slug: omp.slug,
-        metadata: { name: omp.name, description: omp.description },
-        content: '',
-        path: omp.path,
-        source: 'omp',
-      });
+      skillsBySlug.set(omp.slug, ompToLoadedSkill(omp));
     }
   }
 
   const mergeCraftSkill = (skill: LoadedSkill) => {
     const existing = skillsBySlug.get(skill.slug);
     if (existing?.source === 'omp') {
-      // Craft wins; remember the shadowed OMP variant for UI display.
+      // Craft wins; remember the shadowed OMP variant for UI display. The
+      // shared root lists the winning directory itself, which is no shadow.
       skillsBySlug.delete(skill.slug);
-      if (includeShadowedOmp) shadowedOmp.push({ ...existing, shadowedByCraft: true });
+      if (includeShadowedOmp && !isSameDirectory(existing.path, skill.path)) shadowedOmp.push({ ...existing, shadowedByCraft: true });
     }
     skillsBySlug.set(skill.slug, skill);
   };
 
   const disabledBundled = getDisabledBundledSkillSlugsFromDisk();
 
-  const workspaceSkills = loadWorkspaceSkills(workspaceRoot);
-  const projectSkills = projectRoot ? loadSkillsFromDir(join(projectRoot, PROJECT_AGENT_SKILLS_DIR), 'project') : [];
   // 1. Foreign global skills (lowest craft priority): ~/.agents/skills/.
-  const globalSkills = loadSkillsFromDir(GLOBAL_AGENT_SKILLS_DIR, 'global');
   for (const skill of globalSkills) {
     // Application links are discovered through their canonical directory below.
     // This also keeps disabled bundles hidden when a foreign skill required a link alias.
@@ -527,11 +600,13 @@ export function loadAllSkillsWithTierScans(
   // Keep app skills selectable when a user/workspace/project skill has the same name.
   // The original user skill keeps its existing mention; the app gets a stable explicit alias.
   const applicationSkills = loadSkillsFromDir(APP_MANAGED_SKILLS_DIR, 'global');
-  const reserved = new Set([...skillsBySlug.keys(), ...workspaceSkills.map(s => s.slug), ...projectSkills.map(s => s.slug), ...applicationSkills.map(s => s.slug)]);
+  const workspaceSlugs = new Set(workspaceSkills.map(s => s.slug));
+  const projectSlugs = new Set(projectSkills.map(s => s.slug));
+  const reserved = new Set([...skillsBySlug.keys(), ...workspaceSlugs, ...projectSlugs, ...applicationSkills.map(s => s.slug)]);
   // Reuse the scan above (previously the app-managed dir was read twice).
   for (const skill of applicationSkills) {
     if (disabledBundled.has(skill.slug)) continue;
-    const collision = skillsBySlug.has(skill.slug) || workspaceSkills.some(s => s.slug === skill.slug) || projectSkills.some(s => s.slug === skill.slug);
+    const collision = skillsBySlug.has(skill.slug) || workspaceSlugs.has(skill.slug) || projectSlugs.has(skill.slug);
     if (collision) {
       const alias = chooseManagedSkillName('rox', skill.slug, name => !reserved.has(name));
       reserved.add(alias);
@@ -580,7 +655,7 @@ export async function loadSkillDetails(workspaceRoot: string, slug: string, proj
     const content = readSkillInstructions(skillDir, APP_MANAGED_SKILLS_DIR);
     if (content === null) continue;
     try {
-      const parsed = matter(content);
+      const parsed = matter(content, {});
       return {
         slug, source: 'omp', path: skillDir, content: parsed.content,
         metadata: {
@@ -619,7 +694,65 @@ export function loadSkillBySlug(workspaceRoot: string, slug: string, projectRoot
   const applicationSkill = getDisabledBundledSkillSlugsFromDisk().has(slug) ? null : loadSkillFromDir(APP_MANAGED_SKILLS_DIR, slug, 'global');
   if (applicationSkill) return applicationSkill;
   // Explicit collision aliases are rare; ordinary reads retain the O(1) path.
-  return slug.includes('--') ? loadAllSkills(workspaceRoot, projectRoot).find(skill => skill.slug === slug) ?? null : null;
+  if (!slug.includes('--')) return null;
+  const listed = loadAllSkills(workspaceRoot, projectRoot).find(skill => skill.slug === slug);
+  return listed ? loadSkillAtPath(listed.path, slug, listed.source) : null;
+}
+
+/**
+ * Resolve only the given slugs, with exactly the winners `loadAllSkills` would
+ * report: project > workspace > foreign global (application links excluded) >
+ * OMP (with `includeOmp`) > application store (disabled packs excluded). An OMP
+ * skill outranks a same-name application skill because the catalog aliases the
+ * application copy. Collision aliases (`--`) resolve from the catalog, as does
+ * everything while that catalog is cached. Entries are catalog-shaped (no body).
+ */
+export function resolveSkillsBySlugs(
+  workspaceRoot: string,
+  slugs: readonly string[],
+  projectRoot?: string,
+  options?: LoadAllSkillsOptions,
+): Map<string, LoadedSkill> {
+  const resolved = new Map<string, LoadedSkill>();
+  const wanted = [...new Set(slugs)];
+  if (wanted.length === 0) return resolved;
+
+  const cached = skillsCache.get(skillsCacheKey(workspaceRoot, projectRoot, options));
+  if ((cached && Date.now() - cached.ts < SKILLS_CACHE_TTL) || wanted.some(slug => slug.includes('--'))) {
+    const wantedSet = new Set(wanted);
+    for (const skill of loadAllSkills(workspaceRoot, projectRoot, options)) {
+      if (!skill.shadowedByCraft && wantedSet.has(skill.slug) && !resolved.has(skill.slug)) resolved.set(skill.slug, skill);
+    }
+    return resolved;
+  }
+
+  // A failing entry is skipped by a catalog scan, so the next tier is consulted.
+  const tryLoad = (skillsDir: string, slug: string, source: SkillSource): LoadedSkill | null => {
+    try { return loadSkillHeadFromDir(skillsDir, slug, source); } catch { return null; }
+  };
+  let disabledBundled: Set<string> | undefined;
+  for (const slug of wanted) {
+    const foreignGlobal = (): LoadedSkill | null => {
+      const skill = tryLoad(GLOBAL_AGENT_SKILLS_DIR, slug, 'global');
+      return skill && !isInsideSkillStore(skill.path, APP_MANAGED_SKILLS_DIR) ? skill : null;
+    };
+    const omp = (): LoadedSkill | null => {
+      if (!options?.includeOmp) return null;
+      const found = findOmpSkill(slug, workspaceRoot);
+      return found && !isInsideSkillStore(found.path, APP_MANAGED_SKILLS_DIR) ? ompToLoadedSkill(found) : null;
+    };
+    const application = (): LoadedSkill | null => {
+      disabledBundled ??= getDisabledBundledSkillSlugsFromDisk();
+      return disabledBundled.has(slug) ? null : tryLoad(APP_MANAGED_SKILLS_DIR, slug, 'global');
+    };
+    const skill = (projectRoot ? tryLoad(join(projectRoot, PROJECT_AGENT_SKILLS_DIR), slug, 'project') : null)
+      ?? tryLoad(getWorkspaceSkillsPath(workspaceRoot), slug, 'workspace')
+      ?? foreignGlobal()
+      ?? omp()
+      ?? application();
+    if (skill) resolved.set(slug, skill);
+  }
+  return resolved;
 }
 
 /**
@@ -710,7 +843,7 @@ export function updateSkillContent(
   if (!parsed) {
     // Fall back to gray-matter parse even if required fields were missing so we can repair
     try {
-      const loose = matter(raw);
+      const loose = matter(raw, {});
       const name = (updates.name ?? loose.data.name ?? slug) as string;
       const description = (updates.description ?? loose.data.description ?? '') as string;
       if (!name || !description) {

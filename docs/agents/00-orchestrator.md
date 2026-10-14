@@ -91,7 +91,7 @@ git rev-parse origin/main   # база для отчёта
 
 ## 10. Фаза 7 — Деплой и живой smoke
 
-- Каналы по поверхностям (детали — `docs/agents/06-runbook.md` §6): desktop — `release/desktop-*` → `desktop-release.yml` → `publish-desktop-release.yml`; cloud-gateway — CircleCI `craft-gateway-deploy`; сервер/webui/viewer — канала деплоя в репозитории нет (сборка + OPS-чеклист человеку).
+- Каналы по поверхностям (детали — `docs/agents/06-runbook.md` §6): desktop — `release/desktop-*` → `desktop-release.yml` → `publish-desktop-release.yml`; cloud-gateway — CircleCI `craft-gateway-deploy`; сервер + webui — CI `server-image`: образ в GHCR + контейнерный smoke, авто-деплой `deploy/server/deploy.sh` (ssh + docker compose) при секретах `DEPLOY_*` (без них — `BLOCKED` с точным именем); viewer — OPS-чеклист человеку.
 - Деплой — только существующими пайплайнами. Там, где канала нет, — честный статус `BLOCKED` с OPS-чеклистом. **Локальная сборка/запуск — это G5 smoke, не G7.** OPS-шаги с прод-доступом (Cloudflare/R2/Pages) выполняет человек — оформляй точным чек-листом, обходы не выдумывай.
 - Живой smoke задеплоенной поверхности: команда/скриншот/лог с SHA. Нет креды — `BLOCKED` с именем секрета. Никогда не «зелени» непрогнанное.
 

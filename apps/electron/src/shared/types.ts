@@ -1203,7 +1203,7 @@ export interface ElectronAPI {
   // Session export/import (cross-workspace transfer)
   exportSession(sessionId: string): Promise<unknown>
   importSession(targetWorkspaceId: string, bundle: unknown, mode: 'move' | 'fork'): Promise<{ sessionId: string; warnings?: string[] }>
-  foreignDiscoverSessions(args: { workspaceId: string }): Promise<{
+  foreignDiscoverSessions(args: { workspaceId: string; offset?: number; limit?: number }): Promise<{
     entries: Array<{
       id: string
       kind: string
@@ -1218,7 +1218,12 @@ export interface ElectronAPI {
     truncated?: boolean
     aborted?: boolean
     unavailable?: 'not-live'
+    total?: number
+    hasMore?: boolean
+    offset?: number
+    limit?: number
   }>
+  onForeignImportProgress(callback: (workspaceId: string, progress: { done: number; total: number; phase: 'persist' | 'ingest' }) => void): () => void
   foreignPersistSessions(args: {
     workspaceId: string
     sourcePaths: string[]
@@ -2527,6 +2532,15 @@ export interface ElectronAPI {
 
   // Skills
   getSkills(workspaceId: string, workingDirectory?: string): Promise<LoadedSkill[]>
+  querySkills(args: {
+    workspaceId: string
+    workingDirectory?: string
+    query?: string
+    offset?: number
+    limit?: number
+    sources?: Array<'omp' | 'global' | 'workspace' | 'project'>
+    slugs?: string[]
+  }): Promise<{ items: LoadedSkill[]; total: number; revision: number }>
   getSkillDetails(workspaceId: string, skillSlug: string, workingDirectory?: string): Promise<LoadedSkill | null>
   getSkillFiles?(workspaceId: string, skillSlug: string): Promise<SkillFile[]>
   updateSkill(
@@ -2556,7 +2570,7 @@ export interface ElectronAPI {
   getSkillEligibility(workspaceId: string, skillSlug: string): Promise<{ eligible: boolean; reason?: string }>
 
   // Skills change listener (live updates when skills are added/removed/modified)
-  onSkillsChanged(callback: (workspaceId: string, skills: LoadedSkill[]) => void): () => void
+  onSkillsChanged(callback: (workspaceId: string, payload: { revision: number; changed: string[]; removed: string[] }) => void): () => void
   // Pending skill candidates (self-learning distillation queue)
   listPendingSkills(workspaceId: string): Promise<PendingSkill[]>
   approvePendingSkill(workspaceId: string, slug: string, force?: boolean): Promise<boolean>

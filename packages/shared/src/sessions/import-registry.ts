@@ -90,16 +90,26 @@ export function loadForeignImportScanCacheFile(workspaceRoot: string): {
   }
 }
 
+/** Index scan-cache entries once; exact sourcePath hits are O(1), realpath matching is the fallback. */
+export function createScannedForeignSourceLookup(
+  entries: readonly ForeignIndexEntry[],
+): (sourcePath: string) => ForeignIndexEntry | undefined {
+  const bySourcePath = new Map<string, ForeignIndexEntry>()
+  for (const entry of entries) if (!bySourcePath.has(entry.sourcePath)) bySourcePath.set(entry.sourcePath, entry)
+  return (sourcePath) => {
+    const exact = bySourcePath.get(sourcePath)
+    if (exact) return exact
+    const want = splitForeignSourceRef(sourcePath)
+    return entries.find((entry) => {
+      const have = splitForeignSourceRef(entry.sourcePath)
+      return have.fragment === want.fragment && sameRealPath(have.path, want.path)
+    })
+  }
+}
+
 export function findScannedForeignSource(
   workspaceRoot: string,
   sourcePath: string,
 ): ForeignIndexEntry | undefined {
-  const entries = loadForeignImportScanCache(workspaceRoot)
-  const exact = entries.find((entry) => entry.sourcePath === sourcePath)
-  if (exact) return exact
-  const want = splitForeignSourceRef(sourcePath)
-  return entries.find((entry) => {
-    const have = splitForeignSourceRef(entry.sourcePath)
-    return have.fragment === want.fragment && sameRealPath(have.path, want.path)
-  })
+  return createScannedForeignSourceLookup(loadForeignImportScanCache(workspaceRoot))(sourcePath)
 }

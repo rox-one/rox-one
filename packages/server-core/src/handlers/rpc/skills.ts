@@ -34,6 +34,7 @@ function assertSkillWorkspace(ctx: RequestContext, workspaceId: string, deps: Ha
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.skills.GET,
+  RPC_CHANNELS.skills.QUERY,
   RPC_CHANNELS.skills.GET_DETAILS,
   RPC_CHANNELS.skills.GET_FILES,
   RPC_CHANNELS.skills.UPDATE,
@@ -53,10 +54,10 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
   registerSkillsToolRuntime(createNativeSkillsToolRuntime())
   // Panel refresh after mutations: same payload shape as SessionManager's
   // fs-watcher broadcast (workspaceId, skills) that AppShell subscribes to.
-  const broadcastSkillsChanged = async (workspaceId: string, workspaceRoot: string): Promise<void> => {
-    const { loadAllSkills, toSkillSummaries } = await import('@rox/shared/skills')
-    // Metadata payload; listeners reload bodies through GET_DETAILS.
-    pushTyped(server, RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId }, workspaceId, toSkillSummaries(loadAllSkills(workspaceRoot)))
+  const broadcastSkillsChanged = async (workspaceId: string, workspaceRoot: string, changed: string[] = [], removed: string[] = []): Promise<void> => {
+    const { querySkills } = await import('@rox/shared/skills')
+    const { revision } = await querySkills({ workspaceRoot, offset: 0, limit: 1 })
+    pushTyped(server, RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId }, workspaceId, { revision, changed, removed })
   }
 
   // Get all skills for a workspace (and optionally project-level skills from workingDirectory)
@@ -75,13 +76,40 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     const effectiveWorkingDir = workingDirectory && existsSync(workingDirectory)
       ? workingDirectory
       : undefined
-    const { loadAllSkills, toSkillSummaries } = await import('@rox/shared/skills')
-    // includeShadowedOmp: the skills panel shows OMP variants shadowed by a
-    // craft skill of the same slug as inactive (craft-wins) with an explanation.
-    const skills = loadAllSkills(workspace.rootPath, effectiveWorkingDir, { includeOmp: true, includeShadowedOmp: true })
-    deps.platform.logger?.info(`SKILLS_GET: Loaded ${skills.length} skills from ${workspace.rootPath}`)
-    // Summaries only (PERF-06): bodies are served by GET_DETAILS on open.
-    return toSkillSummaries(skills)
+    const { querySkills, SKILLS_QUERY_LIMIT_CAP } = await import('@rox/shared/skills')
+    const base = { workspaceRoot: workspace.rootPath, projectRoot: effectiveWorkingDir }
+    const first = await querySkills({ ...base, offset: 0, limit: SKILLS_QUERY_LIMIT_CAP })
+    const items = first.items.slice()
+    for (let offset = items.length; offset < first.total; offset += SKILLS_QUERY_LIMIT_CAP) {
+      const page = await querySkills({ ...base, offset, limit: SKILLS_QUERY_LIMIT_CAP })
+      items.push(...page.items)
+    }
+    deps.platform.logger?.info(`SKILLS_GET: Loaded ${items.length} skills from ${workspace.rootPath}`)
+    return items
+  }, { nativeAction: 'read' })
+
+  server.handle(RPC_CHANNELS.skills.QUERY, async (ctx, args: {
+    workspaceId: string
+    workingDirectory?: string
+    query?: string
+    offset?: number
+    limit?: number
+    sources?: Array<'omp' | 'global' | 'workspace' | 'project'>
+    slugs?: string[]
+  }) => {
+    assertSkillWorkspace(ctx, args.workspaceId, deps)
+    const workspace = getWorkspaceByNameOrId(args.workspaceId)
+    if (!workspace) return { items: [], total: 0, revision: 0 }
+    const { querySkills } = await import('@rox/shared/skills')
+    return querySkills({
+      workspaceRoot: workspace.rootPath,
+      projectRoot: args.workingDirectory && existsSync(args.workingDirectory) ? args.workingDirectory : undefined,
+      query: args.query,
+      offset: args.offset,
+      limit: args.limit,
+      sources: args.sources,
+      slugs: args.slugs,
+    })
   }, { nativeAction: 'read' })
 
   // Selected-only read: workspace and project authority are resolved on the server.

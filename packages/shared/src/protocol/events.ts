@@ -69,6 +69,7 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.sessions.UNREAD_SUMMARY_CHANGED]: [summary: UnreadSummary]
   [RPC_CHANNELS.sessions.FILES_CHANGED]: [sessionId: string]
   [RPC_CHANNELS.sessions.BULK_CHANGED]: [event: SessionsBulkChangedEvent]
+  [RPC_CHANNELS.sessions.FOREIGN_PROGRESS]: [workspaceId: string, progress: { done: number; total: number; phase: 'persist' | 'ingest' }]
 
   // Domain change broadcasts (global via broadcastToAll)
   [RPC_CHANNELS.sources.CHANGED]: [workspaceId: string, sources: LoadedSource[]]
@@ -90,7 +91,7 @@ export interface BroadcastEventMap {
   // Toolchain install progress (global, local toolchain)
   [RPC_CHANNELS.toolchain.STATUS_CHANGED]: [status: ToolStatus]
   [RPC_CHANNELS.automations.CHANGED]: [workspaceId: string]
-  [RPC_CHANNELS.skills.CHANGED]: [workspaceId: string, skills: LoadedSkill[]]
+  [RPC_CHANNELS.skills.CHANGED]: [workspaceId: string, payload: { revision: number; changed: string[]; removed: string[] }]
   [RPC_CHANNELS.skillsPending.CHANGED]: [workspaceId: string]
   [RPC_CHANNELS.memory.CHANGED]: [workspaceId: string | null, scope: 'global' | 'workspace' | 'both']
   // Memory repository projection + dream (spec 2026-10-09 §7). Bank-scoped:

@@ -9,8 +9,7 @@
  */
 import * as React from 'react'
 import type { RoxAccountSnapshot } from '@rox/shared/auth'
-
-const ROX_ACCOUNT_POLL_MS = 30_000
+import { subscribeSlowRefresh } from '@/lib/slow-refresh-scheduler'
 
 export interface RoxCloudAccount {
   account: RoxAccountSnapshot | null
@@ -50,13 +49,13 @@ export function useRoxCloudAccount(): RoxCloudAccount {
       } finally { reading = false }
     }
     void read()
-    const timer = window.setInterval(() => { void read() }, ROX_ACCOUNT_POLL_MS)
+    const offSlow = subscribeSlowRefresh(() => { void read() })
     const refreshWhenVisible = () => { if (document.visibilityState === 'visible') void read() }
     window.addEventListener('focus', refreshWhenVisible)
     document.addEventListener('visibilitychange', refreshWhenVisible)
     return () => {
       cancelled = true
-      window.clearInterval(timer)
+      offSlow()
       window.removeEventListener('focus', refreshWhenVisible)
       document.removeEventListener('visibilitychange', refreshWhenVisible)
     }

@@ -342,6 +342,28 @@ export function discoverForeignSessions(options: DiscoverForeignOptions): Foreig
  * Same scan, but yields to the event loop every `sliceMs` of work so the
  * Electron main process stays responsive while thousands of chats are parsed.
  */
+export const FOREIGN_DISCOVER_PAGE = 100
+export const FOREIGN_DISCOVER_PAGE_CAP = 500
+
+export function pageForeignDiscover(
+  result: ForeignDiscoverResult,
+  offset = 0,
+  limit = FOREIGN_DISCOVER_PAGE,
+): ForeignDiscoverResult {
+  const cap = Math.min(FOREIGN_DISCOVER_PAGE_CAP, Math.max(1, Math.floor(limit)))
+  const off = Math.max(0, Math.floor(offset))
+  const total = result.entries.length
+  const entries = result.entries.slice(off, off + cap)
+  return {
+    ...result,
+    entries,
+    total,
+    hasMore: off + entries.length < total,
+    offset: off,
+    limit: cap,
+  }
+}
+
 export async function discoverForeignSessionsAsync(
   options: DiscoverForeignOptions & { sliceMs?: number },
 ): Promise<ForeignDiscoverResult> {

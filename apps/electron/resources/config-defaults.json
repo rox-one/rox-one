@@ -3,7 +3,7 @@
   "description": "Default configuration values for Rox",
   "defaults": {
     "notificationsEnabled": true,
-    "colorTheme": "haze",
+    "colorTheme": "super-engineering",
     "autoCapitalisation": true,
     "sendMessageKey": "enter",
     "spellCheck": false,

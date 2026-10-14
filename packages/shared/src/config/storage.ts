@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync, statSync, readdirSync, unlinkSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync, statSync, readdirSync, unlinkSync, type Stats } from 'fs';
 import { createHash } from 'crypto';
 import { join, dirname, basename } from 'path';
 import { getCredentialManager } from '../credentials/index.ts';
@@ -614,7 +614,7 @@ export function createInitialStoredConfig(): StoredConfig {
     workspaces: [],
     activeWorkspaceId: null,
     activeSessionId: null,
-    colorTheme: 'nordfox-opaque',
+    colorTheme: 'super-engineering',
   };
 }
 
@@ -749,7 +749,7 @@ const FALLBACK_CONFIG_DEFAULTS: ConfigDefaults = {
   description: 'Default configuration values for Rox',
   defaults: {
     notificationsEnabled: true,
-    colorTheme: 'haze',
+    colorTheme: 'super-engineering',
     autoCapitalisation: true,
     sendMessageKey: 'enter',
     spellCheck: false,
@@ -918,12 +918,12 @@ export function loadStoredConfig(): StoredConfig | null {
     // workspace on the next start.
     recoverPendingWorkspaceLifecycle();
 
-    if (!existsSync(CONFIG_FILE)) {
+    const snapshot = readStoredConfigSnapshot();
+    if (!snapshot) {
       return null;
     }
-    const contents = readFileSync(CONFIG_FILE, 'utf-8');
-    const config = safeJsonParse(contents) as StoredConfig;
-    rememberConfigRevision(config, hashConfigContents(contents));
+    const config = structuredClone(snapshot.parsed) as StoredConfig;
+    rememberConfigRevision(config, snapshot.revision);
 
     // Must have workspaces array
     if (!Array.isArray(config.workspaces)) {
@@ -1032,6 +1032,78 @@ type VersionedStoredConfig = StoredConfig & { [CONFIG_REVISION]?: string };
 
 function hashConfigContents(contents: string): string {
   return createHash('sha256').update(contents, 'utf8').digest('hex');
+}
+
+/** Test seam for counting or faking config.json reads and parses. */
+export interface StoredConfigFileIo {
+  read(path: string): string;
+  parse(contents: string): unknown;
+}
+
+const DEFAULT_STORED_CONFIG_FILE_IO: StoredConfigFileIo = {
+  read: (path) => readFileSync(path, 'utf-8'),
+  parse: safeJsonParse,
+};
+let storedConfigFileIo = DEFAULT_STORED_CONFIG_FILE_IO;
+
+export function setStoredConfigFileIoForTests(io: StoredConfigFileIo | null): void {
+  storedConfigFileIo = io ?? DEFAULT_STORED_CONFIG_FILE_IO;
+  storedConfigSnapshot = null;
+}
+
+interface StoredConfigSnapshot {
+  path: string;
+  mtimeMs: number;
+  size: number;
+  ino: number;
+  // Never handed out: readers get a structuredClone because callers mutate and save.
+  parsed: unknown;
+  revision: string;
+}
+
+let storedConfigSnapshot: StoredConfigSnapshot | null = null;
+
+function snapshotMatchesStat(snapshot: StoredConfigSnapshot | null, stat: Stats): snapshot is StoredConfigSnapshot {
+  return (
+    snapshot !== null &&
+    snapshot.path === CONFIG_FILE &&
+    snapshot.mtimeMs === stat.mtimeMs &&
+    snapshot.size === stat.size &&
+    snapshot.ino === stat.ino
+  );
+}
+
+function readStoredConfigSnapshot(): StoredConfigSnapshot | null {
+  const stat = statSync(CONFIG_FILE, { throwIfNoEntry: false });
+  if (!stat) {
+    storedConfigSnapshot = null;
+    return null;
+  }
+  if (snapshotMatchesStat(storedConfigSnapshot, stat)) return storedConfigSnapshot;
+
+  storedConfigSnapshot = null;
+  const contents = storedConfigFileIo.read(CONFIG_FILE);
+  const parsed = storedConfigFileIo.parse(contents);
+  const revision = hashConfigContents(contents);
+  // A write between stat and read leaves the snapshot uncached; the next call re-reads.
+  const after = statSync(CONFIG_FILE, { throwIfNoEntry: false });
+  const snapshot: StoredConfigSnapshot = {
+    path: CONFIG_FILE,
+    mtimeMs: stat.mtimeMs,
+    size: stat.size,
+    ino: stat.ino,
+    parsed,
+    revision,
+  };
+  if (after && snapshotMatchesStat(snapshot, after)) storedConfigSnapshot = snapshot;
+  return snapshot;
+}
+
+function rememberWrittenConfigSnapshot(parsed: unknown, revision: string): void {
+  const stat = statSync(CONFIG_FILE, { throwIfNoEntry: false });
+  storedConfigSnapshot = stat
+    ? { path: CONFIG_FILE, mtimeMs: stat.mtimeMs, size: stat.size, ino: stat.ino, parsed, revision }
+    : null;
 }
 
 function rememberConfigRevision(config: StoredConfig, revision: string): void {
@@ -1158,7 +1230,9 @@ export function saveConfig(config: StoredConfig, options?: { readonly durable?: 
       throw new Error('Config save conflict: stored config changed; reload and retry');
     }
     atomicWriteFileSync(CONFIG_FILE, serialized, options);
-    rememberConfigRevision(config, hashConfigContents(serialized));
+    const revision = hashConfigContents(serialized);
+    rememberWrittenConfigSnapshot(parsed, revision);
+    rememberConfigRevision(config, revision);
   });
 }
 
@@ -2488,6 +2562,7 @@ export function getAllSessionDrafts(): Record<string, SessionDraft> {
 // ============================================
 
 import type { ThemeOverrides, ThemeFile, PresetTheme } from './theme.ts';
+import { DEEP_GLASS_MATERIAL_DEFAULT } from './theme.ts';
 
 const APP_THEME_FILE = join(resolveConfigDir(), 'theme.json');
 const APP_THEMES_DIR = join(resolveConfigDir(), 'themes');
@@ -3599,6 +3674,36 @@ function migrateRoxKimiPublicModels(config: StoredConfig): boolean {
   return true;
 }
 
+const APPEARANCE_DEFAULTS_MIGRATION = 'appearance-defaults-v1';
+
+/**
+ * One-shot appearance defaults (2026-10-13): machines still on the legacy
+ * defaults (`nordfox-opaque` / `haze` / unset) switch to the Rox Engineering
+ * theme, and the app-level override gets the deep-glass material when it has
+ * none. A user's explicit non-legacy pick is never touched.
+ */
+function migrateAppearanceDefaults(config: StoredConfig): boolean {
+  if (config.migrationsApplied?.includes(APPEARANCE_DEFAULTS_MIGRATION)) {
+    return false;
+  }
+  if (config.colorTheme === undefined || config.colorTheme === 'nordfox-opaque' || config.colorTheme === 'haze') {
+    config.colorTheme = 'super-engineering';
+  }
+  try {
+    const appTheme = loadAppTheme();
+    if (appTheme?.material == null) {
+      saveAppTheme({
+        ...(appTheme ?? {}),
+        material: { ...DEEP_GLASS_MATERIAL_DEFAULT, deepGlass: { ...DEEP_GLASS_MATERIAL_DEFAULT.deepGlass } },
+      });
+    }
+  } catch {
+    // Non-fatal: the deep-glass default can be re-applied by the next launch.
+  }
+  config.migrationsApplied = [...(config.migrationsApplied ?? []), APPEARANCE_DEFAULTS_MIGRATION];
+  return true;
+}
+
 /**
  * Rename leftover `ROX · OMP` connection labels to `ROX`.
  */
@@ -3822,6 +3927,10 @@ export function migrateLegacyLlmConnectionsConfig(): void {
       needsSave = true;
     }
     if (migrateRoxR1MaxDefault(config)) {
+      needsSave = true;
+    }
+    // Phase 1n: Appearance defaults — Rox Engineering theme + deep glass.
+    if (migrateAppearanceDefaults(config)) {
       needsSave = true;
     }
 

@@ -9,6 +9,7 @@
  */
 
 import { atom } from 'jotai'
+import { selectAtom } from 'jotai/utils'
 import type { Getter, Setter } from 'jotai/vanilla'
 import { atomFamily } from 'jotai-family'
 import type { Session, Message, SessionPriority } from '../../shared/types'
@@ -181,6 +182,14 @@ export const sessionAtomFamily = atomFamily(
  * Only contains lightweight data needed for SessionList
  */
 export const sessionMetaMapAtom = atom<Map<string, SessionMeta>>(new Map())
+
+/** Per-session meta so a write to session B does not re-render a consumer of A. */
+export const sessionMetaByIdAtom = atomFamily((sessionId: string) =>
+  selectAtom(sessionMetaMapAtom, (map) => map.get(sessionId), (a, b) => a === b),
+)
+
+/** Derived counts that do not subscribe to the full meta map identity. */
+export const sessionMetaCountAtom = selectAtom(sessionMetaMapAtom, (map) => map.size)
 
 /**
  * Ephemeral per-session collaboration activity (a2.1/a2.4): live viewers and
@@ -493,6 +502,54 @@ export const addSessionAtom = atom(
     const newLoadedSessions = new Set(loadedSessions)
     newLoadedSessions.add(session.id)
     set(loadedSessionsAtom, newLoadedSessions)
+  }
+)
+
+/**
+ * Action atom: insert one batch of imported session summaries (no messages) with a
+ * single copy of the meta map and the ids list. New ids are merged
+ * into the list by lastMessageAt desc; known ids keep their position. Summaries stay
+ * unloaded so messages are fetched lazily on open. Returns ids of sessions whose
+ * loaded messages were kept and may be stale, for the caller to refresh.
+ */
+export const addImportedSessionsAtom = atom(
+  null,
+  (get, set, sessions: Session[]): string[] => {
+    if (sessions.length === 0) return []
+    const metaMap = new Map(get(sessionMetaMapAtom))
+    const loadedSessions = get(loadedSessionsAtom)
+    const added: SessionMeta[] = []
+    const staleLoadedIds: string[] = []
+    for (const session of sessions) {
+      const current = get(sessionAtomFamily(session.id))
+      const known = metaMap.has(session.id)
+      if (current && loadedSessions.has(session.id)) {
+        set(sessionAtomFamily(session.id), { ...session, messages: current.messages })
+        staleLoadedIds.push(session.id)
+      } else {
+        set(sessionAtomFamily(session.id), session)
+      }
+      const meta = extractSessionMeta(session)
+      metaMap.set(session.id, meta)
+      if (!known) added.push(meta)
+    }
+    set(sessionMetaMapAtom, metaMap)
+
+    if (added.length > 0) {
+      added.sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0))
+      const addedIds = new Set(added.map(meta => meta.id))
+      const ids = get(sessionIdsAtom).filter(id => !addedIds.has(id))
+      const nextIds: string[] = []
+      let next = 0
+      for (const id of ids) {
+        const at = metaMap.get(id)?.lastMessageAt || 0
+        while (next < added.length && (added[next]!.lastMessageAt || 0) >= at) nextIds.push(added[next++]!.id)
+        nextIds.push(id)
+      }
+      while (next < added.length) nextIds.push(added[next++]!.id)
+      set(sessionIdsAtom, nextIds)
+    }
+    return staleLoadedIds
   }
 )
 

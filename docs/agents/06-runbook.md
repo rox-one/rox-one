@@ -134,8 +134,7 @@ git revert <old-sha>..<new-sha>             # диапазон (волна)
 |---|---|---|
 | Desktop | `release/desktop-*` → `desktop-release.yml` (`bun scripts/desktop-release.ts`; матрица `macos-15` + `windows-2025`; артефакты `apps/electron/release/Rox-*`) → `publish-desktop-release.yml` (`workflow_dispatch` с `run-id` + `tag` → `scripts/publish-desktop-release.ts`) | собирает пайплайн; публикация — по пайплайну |
 | Cloud-gateway | CircleCI job `craft-gateway-deploy` (`.circleci/config.yml`: подмена Dockerfile на `Dockerfile.omp` → `npx wrangler deploy`; env `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUD_RUNS_TOKEN`) | канал CI; вручную не воспроизводить |
-| Сервер | `Dockerfile.server`: `bun run server:build:subprocess`, порт `9100`, `ROX_SERVER_TOKEN` ≥16 символов — иначе фатальный отказ на старте | локальная сборка/запуск = **G5 smoke**; канала деплоя в репо нет → **G7 = BLOCKED + OPS-чеклист** |
-| WebUI | `bun run webui:build` → `apps/webui/dist` | то же: канала деплоя в репо нет → **G7 = BLOCKED + OPS-чеклист** |
+| Сервер + WebUI | CI: `.github/workflows/server-image.yml` — сборка `Dockerfile.server` → `ghcr.io/rox-one/rox-server:{main,sha-*}` → контейнерный smoke `/health` → деплой `deploy/server/deploy.sh` (ssh + docker compose) | канал есть: деплой авто при секретах `DEPLOY_HOST`/`DEPLOY_SSH_KEY` (+опц. `DEPLOY_USER`/`DEPLOY_PATH`/`DEPLOY_SMOKE_URL`); без них deploy-job skipped = **G7 = BLOCKED** |
 | Viewer (Cloudflare Pages) | проект `craft-agents-viewer` (`apps/viewer/wrangler.toml`); деплой: `wrangler pages deploy apps/viewer/dist --project-name craft-agents-viewer` (нужен `CLOUDFLARE_API_TOKEN`) | OPS-человек; без токена **G7 = BLOCKED**. (`pages-worker:deploy` — это воркер `workers/pages`, не viewer.) |
 
 Пример локального запуска сервера (для G5 smoke):
@@ -145,7 +144,7 @@ docker buildx build -f Dockerfile.server -t rox-server .
 docker run --rm -p 9100:9100 --user $(id -u):$(id -g) -e HOME=/home/rox -e ROX_SERVER_TOKEN=$(openssl rand -hex 32) rox-server
 ```
 
-> **Правило:** локальная сборка/запуск — это G5 smoke, **никогда не G7**.
+> **Правило:** локальная сборка/запуск — это G5 smoke, **никогда не G7**. Контракт канала «сервер + webui» — [`deploy/server/README.md`](../../deploy/server/README.md).
 > **HUMAN-ONLY:** production Cloudflare/R2/Pages, правила CF, очистка R2, релизные теги и подпись — агент их не выполняет, только перечисляет как чеклист (`plans/next-program-prompt.md`, «Запреты»).
 
 ---

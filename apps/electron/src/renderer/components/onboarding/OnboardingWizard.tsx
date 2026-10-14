@@ -321,6 +321,9 @@ case 'questionnaire':
   const progressStep: OnboardingProgressStep =
     state.step === 'welcome' ? 'profile' : state.step === 'complete' ? 'done' : 'connect'
   const isWelcome = state.step === 'welcome'
+  // The questionnaire is a two-column surface (form + permissions): it gets the
+  // full working width instead of the narrow single-column flow cap.
+  const isWideStep = state.step === 'questionnaire'
 
   return (
     <div
@@ -342,7 +345,7 @@ case 'questionnaire':
             <StepTransition key={state.step}>{renderStep()}</StepTransition>
           </div>
         ) : (
-          <div className="flex w-full max-w-[28rem] flex-col items-center">
+          <div className={cn('flex w-full flex-col items-center', isWideStep ? 'max-w-6xl' : 'max-w-[28rem]')}>
             <OnboardingStepProgress step={progressStep} className="mb-6 w-full" />
             <StepTransition key={state.step} className="w-full">
               {renderStep()}

@@ -182,6 +182,7 @@
     "./version": "./src/version/index.ts",
     "./views": "./src/views/index.ts",
     "./views/storage": "./src/views/storage.ts",
+    "./workers": "./src/workers/index.ts",
     "./workflows": "./src/workflows/index.ts",
     "./workspace/open-in-editor": "./src/workspace/open-in-editor.ts",
     "./workspaces": "./src/workspaces/index.ts",

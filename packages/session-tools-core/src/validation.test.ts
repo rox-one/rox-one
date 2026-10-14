@@ -1,5 +1,20 @@
 import { describe, expect, it } from 'bun:test';
-import { normalizeMermaidSource, validateMermaidSyntax } from './validation.ts';
+import matter from 'gray-matter';
+import { normalizeMermaidSource, validateMermaidSyntax, validateSkillContent } from './validation.ts';
+
+describe('validateSkillContent gray-matter cache', () => {
+  it('parses frontmatter without retaining the content in matter.cache', () => {
+    const matterCache = (matter as unknown as { cache: Record<string, unknown> }).cache;
+    const content = '---\nname: Cache Probe Tools\ndescription: Skill parsed by session tools\n---\n\nTools validator body.\n';
+    const keysBefore = Object.keys(matterCache).length;
+
+    const result = validateSkillContent(content, 'cache-probe-tools');
+
+    expect(result.errors).toEqual([]);
+    expect(Object.keys(matterCache).length).toBe(keysBefore);
+    expect(content in matterCache).toBe(false);
+  });
+});
 
 describe('Mermaid validation helpers', () => {
   it('normalizes YAML frontmatter before diagram syntax', () => {

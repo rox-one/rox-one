@@ -7,11 +7,16 @@ import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import {
   discoverForeignSessionsAsync,
-  persistForeignSession,
+  persistForeignSessions,
+  pageForeignDiscover,
+  FOREIGN_DISCOVER_PAGE,
+  FOREIGN_DISCOVER_PAGE_CAP,
+  createCoalescedProgress,
+  loadForeignImportScanCacheFile,
   type ForeignImportMode,
   type ForeignPersistResult,
 } from '@rox/shared/sessions'
-import type { RpcServer } from '@rox/server-core/transport'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
@@ -19,7 +24,7 @@ import {
   rpcSessionForeignImportListResult,
   rpcSessionForeignImportReadResult,
 } from '@rox/core/rox2'
-import { ForeignAutoImporter } from './session-foreign-auto-import'
+import { ForeignAutoImporter, ingestPersistedBatch } from './session-foreign-auto-import'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sessions.FOREIGN_DISCOVER,
@@ -64,7 +69,7 @@ export function registerSessionForeignImportHandlers(server: RpcServer, deps: Ha
 
   server.handle(
     RPC_CHANNELS.sessions.FOREIGN_DISCOVER,
-    async (_ctx, args: { workspaceId?: string } | undefined) => {
+    async (_ctx, args: { workspaceId?: string; offset?: number; limit?: number } | undefined) => {
       const workspaceId = args?.workspaceId
       if (!workspaceId) throw new Error('sessions.foreignDiscover: workspaceId is required')
       const listed = rpcSessionForeignImportListResult({ source: 'native' })
@@ -79,8 +84,18 @@ export function registerSessionForeignImportHandlers(server: RpcServer, deps: Ha
       }
       const workspace = getWorkspaceByNameOrId(workspaceId)
       if (!workspace) throw new Error('sessions.foreignDiscover: workspace not found')
-      // Async + incremental: never block the main process on a big scan.
-      return discoverForeignSessionsAsync({ workspaceRoot: workspace.rootPath, reuseCache: true })
+      const offset = args?.offset ?? 0
+      const limit = args?.limit ?? FOREIGN_DISCOVER_PAGE
+      if (offset > 0) {
+        const cached = loadForeignImportScanCacheFile(workspace.rootPath)
+        return pageForeignDiscover(
+          { entries: cached.entries, scannedAt: cached.scannedAt ?? Date.now(), cachePath: '' },
+          offset,
+          Math.min(limit, FOREIGN_DISCOVER_PAGE_CAP),
+        )
+      }
+      const discovered = await discoverForeignSessionsAsync({ workspaceRoot: workspace.rootPath, reuseCache: true })
+      return pageForeignDiscover(discovered, 0, Math.min(limit, FOREIGN_DISCOVER_PAGE_CAP))
     },
   )
 
@@ -98,31 +113,33 @@ export function registerSessionForeignImportHandlers(server: RpcServer, deps: Ha
       if (!workspace) throw new Error('sessions.foreignPersist: workspace not found')
       const submitted = args?.sourcePaths ?? []
       const sourcePaths = submitted.slice(0, MAX_FOREIGN_PERSIST)
-      const results: ForeignPersistResult[] = []
-      for (const sourcePath of sourcePaths) {
-        if (typeof sourcePath !== 'string' || sourcePath.length === 0) {
-          results.push({ sourcePath: '', action: 'skipped' as const, reason: 'invalid-source-path' })
-          continue
-        }
-        try {
-          results.push(await persistForeignSession({ workspaceRoot: workspace.rootPath, sourcePath, mode: args?.mode }))
-        } catch {
-          results.push({ sourcePath, action: 'skipped' as const, reason: 'import-failed' })
-        }
-      }
-      for (const result of results) {
-        if (
-          result.sessionId &&
-          (result.action === 'created' || result.action === 'appended' || result.action === 'replaced')
-        ) {
-          try {
-            deps.sessionManager.ingestImportedSession(workspaceId, result.sessionId)
-            deps.sessionManager.notifySessionCreated(workspaceId, result.sessionId)
-          } catch {
-            // Persisted session remains available; list refresh can happen on the next load.
-          }
-        }
-      }
+      const valid = sourcePaths.filter((sourcePath) => typeof sourcePath === 'string' && sourcePath.length > 0)
+      const total = valid.length
+      const progress = createCoalescedProgress((payload) => {
+        pushTyped(server, RPC_CHANNELS.sessions.FOREIGN_PROGRESS, { to: 'workspace', workspaceId }, workspaceId, payload)
+      })
+      let done = 0
+      const persisted = await persistForeignSessions(
+        workspace.rootPath,
+        valid.map((sourcePath) => ({ sourcePath })),
+        args?.mode ?? 'skip',
+        undefined,
+        {
+          onBatch: async (batch) => {
+            done += batch.length
+            progress.report({ done, total, phase: 'persist' })
+            await ingestPersistedBatch(deps, workspaceId, batch)
+            progress.report({ done, total, phase: 'ingest' })
+          },
+        },
+      )
+      progress.flush()
+      let next = 0
+      const results: ForeignPersistResult[] = sourcePaths.map((sourcePath) =>
+        typeof sourcePath === 'string' && sourcePath.length > 0
+          ? persisted[next++]!
+          : { sourcePath: '', action: 'skipped' as const, reason: 'invalid-source-path' },
+      )
       return {
         results,
         failed: results.filter((result) => result.reason === 'import-failed').length,

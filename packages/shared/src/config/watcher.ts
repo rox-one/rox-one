@@ -811,10 +811,11 @@ export class ConfigWatcher {
         }
       }
 
-      // Invalidate cache before reloading so we get fresh results
       invalidateSkillsCache();
-      const allSkills = loadAllSkills(this.workspaceDir);
-      this.callbacks.onSkillsListChange?.(allSkills);
+      void import('../skills/skill-index.ts').then(async ({ ensureSkillIndex, indexedSkillSummaries }) => {
+        await ensureSkillIndex(this.workspaceDir);
+        this.callbacks.onSkillsListChange?.(indexedSkillSummaries());
+      });
     } catch (error) {
       debug('[ConfigWatcher] Error handling skills dir change:', error);
       this.callbacks.onError?.('skills/', error as Error);

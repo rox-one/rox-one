@@ -161,3 +161,44 @@ describe('ingestImportedSession index fast path', () => {
     expect(ids).toContain(second.id)
   })
 })
+
+describe('ingestImportedSessions batch path', () => {
+  let store: StateStore
+  beforeEach(() => {
+    store = fixture().store
+    bindSessionStateProjector(store)
+  })
+
+  it('loads a batch without a workspace scan, emits one sessions_imported and extends the index', async () => {
+    const workspace = addWorkspace({ name: 'Ingest batch', rootPath: mkdtempSync(join(tmpdir(), 'rox-ingest-ws-')) })
+    roots.push(workspace.rootPath)
+    const existing = await createSession(workspace.rootPath, { name: 'Existing' })
+    await sessionStateProjector().recordSession(workspace.rootPath, existing.id)
+    const imported = [
+      await createSession(workspace.rootPath, { name: 'Imported A' }),
+      await createSession(workspace.rootPath, { name: 'Imported B' }),
+      await createSession(workspace.rootPath, { name: 'Imported C' }),
+    ]
+    const importedIds = imported.map((session) => session.id)
+
+    const manager = new SessionManager()
+    const events: unknown[] = []
+    manager.setEventSink((_channel: string, _target: unknown, ...payload: unknown[]) => { events.push(payload[0]) })
+    const scanSpy = spyOn(sessions, 'listSessions')
+    const summaries = manager.ingestImportedSessions(workspace.id, importedIds)
+    const scans = scanSpy.mock.calls.length
+    scanSpy.mockRestore()
+    const emitted = [...events]
+    await store.queue.whenIdle(store.dbPath)
+    const indexed = sessionStateProjector().readFreshHeaders(workspace.rootPath)?.map((header) => header.id).sort()
+    manager.cleanup()
+
+    expect(scans).toBe(0)
+    expect(summaries.map((session) => session.id)).toEqual(importedIds)
+    expect(emitted).toHaveLength(1)
+    expect(emitted[0]).toMatchObject({ type: 'sessions_imported', sessionId: importedIds[0] })
+    expect((emitted[0] as { sessions: Array<{ id: string; name?: string }> }).sessions.map((session) => session.name))
+      .toEqual(['Imported A', 'Imported B', 'Imported C'])
+    expect(indexed).toEqual([existing.id, ...importedIds].sort())
+  })
+})

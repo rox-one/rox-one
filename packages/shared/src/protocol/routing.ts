@@ -160,6 +160,7 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.workspace.OPEN_IN_EDITOR,
   RPC_CHANNELS.sessions.FOREIGN_DISCOVER,
   RPC_CHANNELS.sessions.FOREIGN_PERSIST,
+  RPC_CHANNELS.sessions.FOREIGN_PROGRESS,
   RPC_CHANNELS.sessions.FOREIGN_AUTO_STATUS,
   RPC_CHANNELS.sessions.FOREIGN_AUTO_RUN,
   RPC_CHANNELS.sessions.FOREIGN_AUTO_SET,
@@ -1130,6 +1131,7 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
 
   // skills — skill content per-workspace (not openEditor/openFinder which are local OS)
   RPC_CHANNELS.skills.GET,
+  RPC_CHANNELS.skills.QUERY,
   RPC_CHANNELS.skills.GET_DETAILS,
   RPC_CHANNELS.skills.GET_FILES,
   RPC_CHANNELS.skills.UPDATE,

@@ -27,6 +27,7 @@ import { fetchNotesList } from '@/lib/query/notes-cache'
 import { cacheWriteEpoch, fencedSetQueryData, sharedRead } from '@/lib/query/shared-read'
 import { meetsAnnouncedRevision } from '@/lib/query/workspace-work-revision'
 import { getWorkspaceWorkClient } from '@/lib/workspace-work-client'
+import { readSkillsPage, SKILLS_UI_PAGE_SIZE } from '@/lib/skills-query'
 import {
   WarmupScheduler,
   buildWarmupSteps,
@@ -105,8 +106,10 @@ function createShellWarmupDeps(api: ElectronAPI, store: ShellStore, workspaceId:
   // Steps 4 and 5 both read the catalogs; one read serves the raw warm-up and
   // the agents-catalog projection, so the skills scan does not run twice.
   let catalogs: Promise<{ sources: LoadedSource[]; skills: LoadedSkill[] }> | null = null
-  const readCatalogs = () => (catalogs ??= Promise.all([api.getSources(workspaceId), api.getSkills(workspaceId)])
-    .then(([sources, skills]) => ({ sources, skills })))
+  const readCatalogs = () => (catalogs ??= Promise.all([
+    api.getSources(workspaceId),
+    readSkillsPage(api, { workspaceId, limit: SKILLS_UI_PAGE_SIZE }).then((page) => page.items),
+  ]).then(([sources, skills]) => ({ sources, skills })))
   return {
     // The same path that fills `sessionMetaMapAtom` (SessionList's rank refresh).
     warmSessionMeta: bestEffort('sessions-meta', async () => {

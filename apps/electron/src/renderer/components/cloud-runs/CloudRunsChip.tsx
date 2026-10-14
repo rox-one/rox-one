@@ -29,6 +29,7 @@ import { useRegisterModal } from '@/context/ModalContext'
 import { navigate, routes } from '@/lib/navigate'
 import { getAppLocale } from '@rox/shared/i18n'
 import { toErrorMessage } from '@/lib/errors'
+import { subscribeSlowRefresh } from '@/lib/slow-refresh-scheduler'
 
 type RunState = 'queued' | 'start' | 'ready' | 'running' | 'done' | 'failed' | 'cancelled' | 'expired'
 interface ListedRun {
@@ -167,8 +168,8 @@ function CloudRunsChipInner({
     if (!open || !isAvailable) return
     void refresh()
     window.electronAPI.listCloudRunSchedules?.().then(setSchedules).catch(() => null)
-    const timer = setInterval(() => void refresh(), POLL_MS)
-    return () => clearInterval(timer)
+    const off = subscribeSlowRefresh(() => { void refresh() })
+    return () => off()
   }, [isAvailable, open, refresh])
 
   // F14: pull event tails for rows currently running (cheap, follows the 5s dialog poll).
@@ -189,21 +190,23 @@ function CloudRunsChipInner({
   const lastStates = React.useRef<Map<string, RunState>>(new Map())
   React.useEffect(() => {
     if (!isAvailable) return
-    const timer = setInterval(async () => {
-      try {
-        const result = await window.electronAPI.listCloudRuns()
-        setRuns(result.runs)
-        for (const run of result.runs) {
-          const prev = lastStates.current.get(run.id)
-          const next = run.status?.state
-          if (prev && next && prev !== next && next === 'done' && !open) {
-            toast.success(t('cloudRuns.finished', { name: run.name }))
+    const offBg = subscribeSlowRefresh(() => {
+      void (async () => {
+        try {
+          const result = await window.electronAPI.listCloudRuns()
+          setRuns(result.runs)
+          for (const run of result.runs) {
+            const prev = lastStates.current.get(run.id)
+            const next = run.status?.state
+            if (prev && next && prev !== next && next === 'done' && !open) {
+              toast.success(t('cloudRuns.finished', { name: run.name }))
+            }
+            if (next) lastStates.current.set(run.id, next)
           }
-          if (next) lastStates.current.set(run.id, next)
-        }
-      } catch { /* background status failures do not erase a visible refresh error */ }
-    }, 30_000)
-    return () => clearInterval(timer)
+        } catch { /* background status failures do not erase a visible refresh error */ }
+      })()
+    })
+    return () => offBg()
   }, [isAvailable, open, t])
 
   const activeCount = runs.filter((r) => r.status && (r.status.state === 'running' || r.status.state === 'queued')).length

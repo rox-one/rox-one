@@ -214,13 +214,11 @@ export function useInboxItems(options: {
     const offMemory = api?.onMemoryChanged?.((changedWorkspace) => { if (!changedWorkspace || changedWorkspace === workspaceId) void load('memory') })
     const onFocus = () => void load(undefined, 'shared')
     window.addEventListener('focus', onFocus)
-    const timer = window.setInterval(() => void load(undefined, 'shared'), 60_000)
     return () => {
       offSenders?.()
       offSkills?.()
       offMemory?.()
       window.removeEventListener('focus', onFocus)
-      window.clearInterval(timer)
     }
   }, [withRemote, load, workspaceId, context, visible])
 

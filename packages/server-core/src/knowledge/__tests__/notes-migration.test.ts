@@ -4,6 +4,7 @@ import { existsSync } from 'fs'
 import { mkdir, mkdtemp, readFile, readdir, realpath, rm, symlink, writeFile } from 'fs/promises'
 import { tmpdir } from 'os'
 import { dirname, join, relative, sep } from 'path'
+import matter from 'gray-matter'
 import {
   CRAFT_MARKDOWN_IMPORT_FORMAT,
   importCraftMarkdownNotes,
@@ -189,5 +190,25 @@ describe('local Craft Markdown Notes import', () => {
       limits: { maxAssetBytes: 1 },
     })).rejects.toThrow('asset exceeds')
     expect(existsSync(notesMigrationMapPath(workspaceRoot))).toBe(false)
+  })
+
+  it('reads note titles from frontmatter without retaining the content in matter.cache', async () => {
+    const matterCache = (matter as unknown as { cache: Record<string, unknown> }).cache
+    const content = '---\ntitle: Cache Probe Import\n---\n\nImported body.\n'
+    await writeSourceFile(sourceRoot, 'probe.md', content)
+    const keysBefore = Object.keys(matterCache).length
+
+    const result = await importNotes({
+      workspaceRoot,
+      sourceRoot,
+      destinationRoot,
+      format: CRAFT_MARKDOWN_IMPORT_FORMAT,
+    })
+
+    expect(result.migrated).toBe(1)
+    const map = await readNotesMigrationMap(workspaceRoot)
+    expect(map.entries.find((entry) => entry.sourcePath === 'probe.md')?.title).toBe('Cache Probe Import')
+    expect(Object.keys(matterCache).length).toBe(keysBefore)
+    expect(content in matterCache).toBe(false)
   })
 })

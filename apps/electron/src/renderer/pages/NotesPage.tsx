@@ -1,4 +1,4 @@
-import { useNavigation } from '@/contexts/NavigationContext'
+import { useNavigationActions } from '@/contexts/NavigationContext'
 import * as React from 'react'
 import { NotesInspectorToggle, NotesRailTools, NotesResponsiveRail, NotesViewMenu, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
 import { notesAuxiliaryFits, type NotesRail } from './notes/notes-layout'
@@ -460,7 +460,7 @@ function SelectedNoteRecovery({ failure, address, onRetry }: {
   onRetry: () => void
 }) {
   const { t } = useTranslation()
-  const { navigate } = useNavigation()
+  const { navigate } = useNavigationActions()
   return (
     <div
       role="status"

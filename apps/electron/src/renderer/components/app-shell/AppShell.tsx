@@ -167,10 +167,12 @@ import * as storage from "@/lib/local-storage"
 import { commitShellLayout, loadShellLayout, NAVIGATOR_WIDTH_DEFAULT, NAVIGATOR_WIDTH_MAX, NAVIGATOR_WIDTH_MIN, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from "@/lib/shell-layout-preferences"
 import { sessionCatalogOwnsWorkspace } from "@/lib/nav-helpers"
 import { installShellWarmup } from "@/lib/shell-warmup"
+import { readSkillsPage, SKILLS_UI_PAGE_SIZE } from "@/lib/skills-query"
 import { toast } from "sonner"
 import { navigate, routes } from "@/lib/navigate"
 import {
-  useNavigation,
+  useNavigationActions,
+  useNavigationStatus,
   useNavigationState,
   isSessionsNavigation,
   isKnowledgeNavigation,
@@ -588,7 +590,8 @@ function AppShellContent({
   })
   const [session, setSession] = useSession()
   const { resolvedMode, isDark, setMode } = useTheme()
-  const { canGoBack, canGoForward, goBack, goForward, navigateToSource, navigateToSession, isSessionsReady } = useNavigation()
+  const { goBack, goForward, navigateToSource, navigateToSession } = useNavigationActions()
+  const { canGoBack, canGoForward, isSessionsReady } = useNavigationStatus()
 
   // Double-Esc interrupt feature: first Esc shows warning, second Esc interrupts
   const { handleEscapePress } = useEscapeInterrupt()
@@ -1652,9 +1655,13 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
     const load = () => {
       const request = ++revision
       setSkillsSyncing(true)
-      window.electronAPI.getSkills(activeWorkspaceId, activeSessionWorkingDirectory).then((loaded) => {
+      readSkillsPage(window.electronAPI, {
+        workspaceId: activeWorkspaceId,
+        workingDirectory: activeSessionWorkingDirectory,
+        limit: SKILLS_UI_PAGE_SIZE,
+      }).then((page) => {
         if (!disposed && request === revision) {
-          setSkills(loaded || [])
+          setSkills(page.items)
           setSkillsSyncing(false)
         }
       }).catch(err => {
@@ -1665,10 +1672,10 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
         if (!disposed && request === revision) console.error('[Chat] Failed to load skills:', err)
       })
     }
+    // Seed only: the panel/catalog/omnibox search through `skills:query`.
+    // A 10k catalog never lands in this atom.
     const cleanup = window.electronAPI.onSkillsChanged((workspaceId) => {
       if (disposed || workspaceId !== activeWorkspaceId) return
-      // Watcher payloads omit project skills and shadowed OMP variants.
-      // Refresh with the same directory/options as the canonical initial list.
       load()
     })
     load()
@@ -3392,6 +3399,7 @@ const primaryModeLinks: SidebarLinkItem[] = PRIMARY_MODE_LINK_IDS
                 skills={skills}
                 syncing={skillsSyncing}
                 workspaceId={activeWorkspaceId}
+                workingDirectory={activeSessionWorkingDirectory}
                 workspaceRootPath={activeWorkspace?.rootPath}
                 onSkillClick={handleSkillSelect}
                 onDeleteSkill={handleDeleteSkill}

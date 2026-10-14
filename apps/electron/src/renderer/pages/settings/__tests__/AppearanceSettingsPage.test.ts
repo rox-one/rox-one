@@ -51,12 +51,13 @@ describe('AppearanceSettingsPage zoom default', () => {
     expect(source).toContain('window.electronAPI.getToolIconMappings?.()')
   })
 
-  it('renders no theme or mode picker: the Rox theme is fixed', () => {
-    expect(source).not.toContain('settings.appearance.colorTheme')
-    expect(source).not.toContain('settings.appearance.mode')
-    expect(source).not.toContain('setColorTheme')
+  it('offers the restored color-theme picker', () => {
+    expect(source).toContain('settings.appearance.colorTheme')
+    expect(source).toContain('loadPresetThemes')
+    expect(source).toContain('setColorTheme')
+    expect(source).toContain('color-theme-picker')
+    // The section intentionally has no mode or per-workspace theme picker.
     expect(source).not.toContain('settings.appearance.workspaceThemes')
-    expect(source).not.toContain('loadPresetThemes')
   })
 
   it('keeps accessibility and scale controls after removing theme choice', () => {

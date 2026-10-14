@@ -90,6 +90,7 @@ import {
   type MaterialChatEffectKind,
   type MaterialSettings,
   type MaterialTextureKind,
+  type PresetTheme,
 } from '@config/theme'
 import {
   MATERIAL_CHAT_EFFECT_LABELS,
@@ -725,6 +726,8 @@ export default function AppearanceSettingsPage() {
     setTerminalFont,
     contrast,
     setContrast,
+    colorTheme,
+    setColorTheme,
     activeWorkspaceId,
     themeLoadError,
     themeResolvedFrom,
@@ -773,6 +776,19 @@ export default function AppearanceSettingsPage() {
 
   // Fetch workspace icons as data URLs (file:// URLs don't work in renderer)
   const workspaceIconMap = useWorkspaceIcons(workspaces)
+
+  // Color-theme presets for the restored theme picker (Settings → Внешний вид).
+  const [presetThemes, setPresetThemes] = useState<PresetTheme[]>([])
+  useEffect(() => {
+    let cancelled = false
+    const pending = window.electronAPI?.loadPresetThemes?.()
+    if (pending) {
+      pending
+        .then((themes) => { if (!cancelled) setPresetThemes(themes ?? []) })
+        .catch(() => { if (!cancelled) setPresetThemes([]) })
+    }
+    return () => { cancelled = true }
+  }, [])
 
   // Tool icon mappings loaded from main process
   const [toolIcons, setToolIcons] = useState<ToolIconMapping[]>([])
@@ -1059,8 +1075,43 @@ export default function AppearanceSettingsPage() {
           <div className="appearance-settings-content px-5 py-7 max-w-3xl mx-auto">
             <div className="space-y-8">
 
-              {/* Display & accessibility. The Rox theme is fixed, so there is
-                  no light/dark or color theme picker. */}
+              {/* Theme picker (restored 2026-10-13): the app no longer pins a
+                  single theme; Rox Engineering (super-engineering) is the default. */}
+              <SettingsSection title={t("settings.appearance.colorTheme")}>
+                <SettingsCard>
+                  {presetThemes.length === 0 ? (
+                    <p role="status" className="px-4 py-3 text-sm text-muted-foreground">{t("common.loading")}</p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 px-4 py-3 sm:grid-cols-3" data-testid="color-theme-picker">
+                      {presetThemes.map((preset) => {
+                        const active = preset.id === colorTheme
+                        return (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            data-testid={`color-theme-${preset.id}`}
+                            aria-pressed={active}
+                            onClick={() => {
+                              if (!appearancePrefLive() || preset.id === colorTheme) return
+                              setColorTheme(preset.id)
+                            }}
+                            className={cn(
+                              'flex items-center rounded-lg border px-3 py-2 text-left text-sm transition-colors',
+                              active
+                                ? 'border-accent/50 bg-accent/10 text-foreground'
+                                : 'border-border/60 text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground',
+                            )}
+                          >
+                            <span className="truncate">{preset.theme?.name || preset.id}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </SettingsCard>
+              </SettingsSection>
+
+              {/* Display & accessibility. */}
               <SettingsSection title={t("settings.appearance.display")}>
                 <SettingsCard>
                   <SettingsRow

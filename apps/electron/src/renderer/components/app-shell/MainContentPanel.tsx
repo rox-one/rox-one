@@ -21,7 +21,7 @@ import { StoplightProvider } from '@/context/StoplightContext'
 import { panelRouteKey } from './panel-route-key'
 import {
   useNavigationState,
-  useNavigation,
+  useNavigationStatus,
   isSessionsNavigation,
   isSourcesNavigation,
   isSettingsNavigation,
@@ -151,7 +151,7 @@ function useSelectedResourceAvailability(
     let active = true
     let revision = 0
     const api = typeof window !== 'undefined' ? window.electronAPI : undefined
-    if (!workspaceId || !api || (kind === 'source' ? !api.getSources : !api.getSkills)) {
+    if (!workspaceId || !api || (kind === 'source' ? !api.getSources : !(api.getSkillDetails || api.getSkills))) {
       setState({ identity, status: 'unavailable' })
       return
     }
@@ -161,16 +161,17 @@ function useSelectedResourceAvailability(
       // invalidation alone does not prove that its entity was deleted.
       if (!background) setState({ identity, status: 'loading' })
       try {
-        const rows = kind === 'source'
-          ? await api.getSources(workspaceId)
-          : await api.getSkills(workspaceId, workingDirectory)
-        if (!Array.isArray(rows)) throw new Error('Invalid resource snapshot')
-        if (!active || request !== revision) return
         if (kind === 'source') {
+          const rows = await api.getSources(workspaceId)
+          if (!Array.isArray(rows)) throw new Error('Invalid resource snapshot')
+          if (!active || request !== revision) return
           const exists = (rows as LoadedSource[]).some((source) => source.config.slug === slug)
           setState({ identity, status: exists ? 'ready' : 'missing' })
         } else {
-          const skill = (rows as LoadedSkill[]).find((skill) => skill.slug === slug)
+          const skill = api.getSkillDetails
+            ? await api.getSkillDetails(workspaceId, slug, workingDirectory)
+            : (await api.getSkills(workspaceId, workingDirectory)).find((row) => row.slug === slug) ?? null
+          if (!active || request !== revision) return
           setState({
             identity, status: skill ? 'ready' : 'missing',
             editableSkill: skill?.source === 'workspace',
@@ -220,7 +221,7 @@ export function MainContentPanel({
   panelId,
 }: MainContentPanelProps) {
   const globalNavState = useNavigationState()
-  const { isSessionsReady = true, unavailableWorkspaceSlug } = useNavigation()
+  const { isSessionsReady = true, unavailableWorkspaceSlug } = useNavigationStatus()
   const requestedNavState = unavailableWorkspaceSlug ? globalNavState : navStateOverride ?? globalNavState
   const { activeWorkspaceId, workspaces, activeSessionWorkingDirectory } = useAppShellContext()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
@@ -327,7 +328,7 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
   } = useAppShellContext()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const remoteWorkspaceId = workspaces.find(workspace => workspace.id === activeWorkspaceId)?.remoteServer?.remoteWorkspaceId
-  const { isSessionsReady = true } = useNavigation()
+  const { isSessionsReady = true } = useNavigationStatus()
   const [sessionSelection] = useSession()
   const store = useStore()
   const catalogSessionId = sessionSelection.selected

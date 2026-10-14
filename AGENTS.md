@@ -59,3 +59,17 @@ OMP запускается с `--session-dir <workspace>/sessions/<craftSessionI
 `03-dod-gates.md` — definition of done и гейты G0–G7 (evidence-first), `04-subagents-skills.md` — роли/скиллы/диспатч,
 `06-runbook.md` — точные команды (worktree, гейты, PR/merge, откат, деплой), `01-prd.md`/`02-spec.md` — артефакты PRD/SPEC.
 Стопы — только: нет креды/прав, security-вето, необратимое разрушение данных, решение владельца (юр./продуктовое).
+
+## Agent skills
+
+### Issue tracker
+
+Задачи и спеки живут в GitHub Issues репозитория `rox-one/rox-one` (CLI `gh`); perf-работа — под эпиком #1596. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Пять канонических меток триажа с дефолтными именами: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: глоссарий — `CONTEXT.md` в корне, ADR — `docs/architecture/adr/`. See `docs/agents/domain.md`.

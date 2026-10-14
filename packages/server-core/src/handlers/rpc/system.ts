@@ -5,9 +5,9 @@ import { execFile, execSync } from 'child_process'
 import { promisify } from 'util'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { emptyGitWorkingTreeStatus } from '@rox/shared/git/status'
-import { readGitBranchName, readGitWorkingTreeStatus } from '@rox/shared/git/exec'
+import { readGitBranchNameAsync, readGitWorkingTreeStatusAsync } from '@rox/shared/git/exec'
 import { isSpawnEnvReady, whenSpawnEnvReady } from '@rox/shared/toolchain/spawn-readiness'
-import { readGitWorkspaceSnapshot } from '@rox/shared/git/workspace'
+import { readGitWorkspaceSnapshotAsync } from '@rox/shared/git/workspace'
 import { getWorkspaceByNameOrId, getGitBashPath, setGitBashPath, clearGitBashPath, resolveConfigDir } from '@rox/shared/config'
 import { classifyExternalUrl, formatBlockedUrlError } from '@rox/shared/utils/url-safety'
 import { isRoxDeeplinkProtocol } from '@rox/shared/identity'
@@ -212,7 +212,7 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
     if (!isValidWorkingDirectory(dirPath).valid || isSensitiveAgentCwd(dirPath)) return null
     // git children need the login-shell PATH / repaired prerequisites (bounded wait).
     if (!isSpawnEnvReady()) await whenSpawnEnvReady()
-    return readGitBranchName(dirPath)
+    return readGitBranchNameAsync(dirPath)
   })
 
   server.handle(RPC_CHANNELS.git.GET_STATUS, async (_ctx, dirPath: string) => {
@@ -222,17 +222,17 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
     }
     // git children need the login-shell PATH / repaired prerequisites (bounded wait).
     if (!isSpawnEnvReady()) await whenSpawnEnvReady()
-    return readGitWorkingTreeStatus(dirPath)
+    return readGitWorkingTreeStatusAsync(dirPath)
   })
 
   server.handle(RPC_CHANNELS.git.GET_WORKSPACE_SNAPSHOT, async (_ctx, dirPath: string) => {
-    if (typeof dirPath !== 'string' || dirPath.length === 0) return readGitWorkspaceSnapshot('')
+    if (typeof dirPath !== 'string' || dirPath.length === 0) return readGitWorkspaceSnapshotAsync('')
     if (!isValidWorkingDirectory(dirPath).valid || isSensitiveAgentCwd(dirPath)) {
-      return readGitWorkspaceSnapshot('')
+      return readGitWorkspaceSnapshotAsync('')
     }
     // git children need the login-shell PATH / repaired prerequisites (bounded wait).
     if (!isSpawnEnvReady()) await whenSpawnEnvReady()
-    return readGitWorkspaceSnapshot(dirPath)
+    return readGitWorkspaceSnapshotAsync(dirPath)
   })
 
   // Git Bash detection and configuration (Windows only)

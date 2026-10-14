@@ -7,6 +7,7 @@ import { SkillAvatar } from '@/components/ui/skill-avatar'
 import { SourceAvatar } from '@/components/ui/source-avatar'
 import type { LoadedSkill, LoadedSource, FileSearchResult } from '../../../shared/types'
 import { AGENTS_PLUGIN_NAME } from '@rox/shared/skills/types'
+import { readSkillsPage, SKILLS_UI_QUERY_DEBOUNCE_MS } from '@/lib/skills-query'
 
 // ============================================================================
 // Types
@@ -60,6 +61,9 @@ const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-3 roun
 const MENU_ITEM_SELECTED = 'bg-foreground/5'
 // Type badge shown to the right of each item label (e.g. "Skill", "Source")
 const MENU_TYPE_BADGE = 'rounded-[var(--radius-control)] shadow-minimal bg-background px-1.5 py-0.5 text-xs text-muted-foreground shrink-0'
+
+/** Most items the menu shows at once (ADR-0023 §7); the rest are reachable by typing. */
+export const MENTION_MENU_MAX_ITEMS = 50
 
 // ============================================================================
 // Path utilities
@@ -156,25 +160,55 @@ function filterSections(sections: MentionSection[], filter: string): MentionSect
     item.description?.toLowerCase().includes(lowerFilter)
   )
 
-  // Sort by match priority: first word > later word > contains
-  matchingItems.sort((a, b) => {
-    const aLabelScore = getMatchScore(a.label, lowerFilter)
-    const bLabelScore = getMatchScore(b.label, lowerFilter)
-    const aIdScore = getMatchScore(a.id, lowerFilter)
-    const bIdScore = getMatchScore(b.id, lowerFilter)
-
-    // Compare by best score (label or id)
-    const aScore = Math.max(aLabelScore, aIdScore)
-    const bScore = Math.max(bLabelScore, bIdScore)
-    if (aScore !== bScore) return bScore - aScore
-
-    // Same score tier: alphabetical by label
-    return a.label.localeCompare(b.label)
+  // Sort by match priority: first word > later word > contains (best of label or id),
+  // then alphabetically by label within a tier
+  const ranked = matchingItems.map(item => ({
+    item,
+    score: Math.max(getMatchScore(item.label, lowerFilter), getMatchScore(item.id, lowerFilter)),
+  }))
+  ranked.sort((a, b) => {
+    if (a.score !== b.score) return b.score - a.score
+    return a.item.label.localeCompare(b.item.label)
   })
 
   // Return as flat list in a single virtual section (headers hidden when filtering)
-  if (matchingItems.length === 0) return []
-  return [{ id: 'results', label: 'Results', items: matchingItems }]
+  if (ranked.length === 0) return []
+  return [{ id: 'results', label: 'Results', items: ranked.map(({ item }) => item) }]
+}
+
+/**
+ * Keep at most `limit` items in section order. Sections smaller than an even
+ * share keep every item and the rest split what is left, so a long section
+ * (thousands of skills) cannot push sources or files out of the menu.
+ */
+function capSections(sections: MentionSection[], limit: number): MentionSection[] {
+  const total = sections.reduce((sum, section) => sum + section.items.length, 0)
+  if (total <= limit) return sections
+
+  const quotas = sections.map(() => 0)
+  let remaining = limit
+  let open = sections.map((_, index) => index).filter(index => sections[index]!.items.length > 0)
+  while (open.length > 0) {
+    const share = Math.floor(remaining / open.length)
+    const small = open.filter(index => sections[index]!.items.length <= share)
+    if (small.length === 0) {
+      let extra = remaining - share * open.length
+      for (const index of open) {
+        quotas[index] = share + (extra > 0 ? 1 : 0)
+        if (extra > 0) extra--
+      }
+      break
+    }
+    for (const index of small) {
+      quotas[index] = sections[index]!.items.length
+      remaining -= quotas[index]!
+    }
+    open = open.filter(index => sections[index]!.items.length > share)
+  }
+
+  return sections
+    .map((section, index) => ({ ...section, items: section.items.slice(0, quotas[index]) }))
+    .filter(section => section.items.length > 0)
 }
 
 function flattenItems(sections: MentionSection[]): MentionItem[] {
@@ -237,8 +271,10 @@ export function InlineMentionMenu({
   const menuRef = React.useRef<HTMLDivElement>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
   const [selectedIndex, setSelectedIndex] = React.useState(0)
-  const filteredSections = filterSections(sections, filter)
-  const flatItems = flattenItems(filteredSections)
+  const flatItems = React.useMemo(
+    () => flattenItems(capSections(filterSections(sections, filter), MENTION_MENU_MAX_ITEMS)),
+    [sections, filter],
+  )
 
   // Reset selection when filter changes
   React.useEffect(() => {
@@ -518,6 +554,7 @@ export function useInlineMention({
   const [committedFilter, setCommittedFilter] = React.useState('')
   const [position, setPosition] = React.useState({ x: 0, y: 0 })
   const [atStart, setAtStart] = React.useState(-1)
+  const [queriedSkills, setQueriedSkills] = React.useState<LoadedSkill[] | null>(null)
   const [fileResults, setFileResults] = React.useState<MentionItem[]>([])
   const fileSearchTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   // Cache of raw IPC file search results for the current menu session.
@@ -536,16 +573,40 @@ export function useInlineMention({
     }
   }, [])
 
+  React.useEffect(() => {
+    if (!isOpen) {
+      setQueriedSkills(null)
+      return
+    }
+    if (!workspaceId || typeof window === 'undefined' || typeof window.electronAPI?.querySkills !== 'function') return
+    let cancelled = false
+    const timer = window.setTimeout(() => {
+      void readSkillsPage(window.electronAPI, {
+        workspaceId,
+        query: filter,
+        limit: MENTION_MENU_MAX_ITEMS,
+      }).then((page) => {
+        if (!cancelled) setQueriedSkills(page.items)
+      }).catch(() => {})
+    }, SKILLS_UI_QUERY_DEBOUNCE_MS)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [isOpen, filter, workspaceId])
+
+  const skillsForMenu = queriedSkills ?? skills.slice(0, MENTION_MENU_MAX_ITEMS)
+
   // Build sections from available data (skills, sources, and file search results)
   const sections = React.useMemo((): MentionSection[] => {
     const result: MentionSection[] = []
 
     // Skills section
-    if (skills.length > 0) {
+    if (skillsForMenu.length > 0) {
       result.push({
         id: 'skills',
         label: 'Skills',
-        items: skills.map(skill => ({
+        items: skillsForMenu.map(skill => ({
           id: skill.slug,
           type: 'skill' as const,
           label: skill.metadata.name,
@@ -592,7 +653,7 @@ export function useInlineMention({
     }
 
     return result
-  }, [skills, sources, fileResults, knowledge])
+  }, [skillsForMenu, sources, fileResults, knowledge])
 
   const handleInputChange = React.useCallback((value: string, cursorPosition: number) => {
     // Store current state for handleSelect

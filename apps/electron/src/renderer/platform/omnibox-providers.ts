@@ -148,6 +148,7 @@ export function createSkillsProvider(
    * already honour.
    */
   isSyncing: () => boolean = () => false,
+  searchSkills?: (query: string, limit: number) => Promise<SkillLike[]>,
 ): ResourceProvider {
   return {
     id: 'craft-skills',
@@ -157,7 +158,8 @@ export function createSkillsProvider(
       const q = ctx.query.trim()
       const limit = ctx.limit ?? TOP_EMPTY
       const items: ResourceItem[] = []
-      for (const skill of getSkills()) {
+      const catalog = searchSkills ? await searchSkills(q, limit) : getSkills()
+      for (const skill of catalog) {
         if (skill.shadowedByCraft) continue
         const name = skill.metadata.name ?? skill.slug
         const score = q.length === 0

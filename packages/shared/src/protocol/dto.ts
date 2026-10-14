@@ -494,6 +494,8 @@ export type SessionEvent =
   | { type: 'session_metadata_changed'; sessionId: string; changes: Partial<Pick<Session, 'taskNodeCount' | 'kanbanColumn' | 'taskDraft' | 'taskSlug' | 'projectId' | 'projectIds' | 'memoryMode' | 'rank' | 'priority' | 'dueDate'>> }
   | { type: 'session_deleted'; sessionId: string }
   | { type: 'session_created'; sessionId: string }
+  /** One batch of imported sessions as list summaries (no messages). `sessionId` is the batch's first session, kept for event routing. */
+  | { type: 'sessions_imported'; sessionId: string; sessions: Session[] }
   | { type: 'session_shared'; sessionId: string; sharedUrl: string }
   | { type: 'session_unshared'; sessionId: string }
   | { type: 'auth_request'; sessionId: string; message: Message; request: SharedAuthRequest }

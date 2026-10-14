@@ -94,6 +94,7 @@ import {
   getSessionPath as getSessionStoragePath,
   ensureSessionDir,
   getSessionFilePath,
+  readSessionHeader,
   generateSessionId,
   sessionPersistenceQueue,
   getHeaderMetadataSignature,
@@ -152,7 +153,7 @@ import {
 import { resolveBulkLabels } from '@rox/shared/sessions/collection'
 import { messageToStored, storedToMessage, type Message, type StoredAttachment, type ToolDisplayMeta, type TokenUsage, type SessionMemoryMode } from '@rox/core/types'
 import { formatPathsToRelative, formatToolInputPaths, perf, encodeIconToDataUrlAsync, getEmojiIcon, resetSummarizationClient, resolveToolIcon, readFileAttachment, selectSpreadMessages, normalizePath } from '@rox/shared/utils'
-import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache, toSkillSummaries, type LoadedSkill } from '@rox/shared/skills'
+import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache } from '@rox/shared/skills'
 import { assertProfileSources, assertProfileSkills, type AgentProfileSnapshot } from '@rox/shared/workspace-work'
 import { captureAgentProfileSnapshot } from '../workspace-work/profile.ts'
 import { sessionStateProjector, type SessionStateProjector } from '../state/sessions-projection.ts'
@@ -2287,14 +2288,14 @@ export class SessionManager implements ISessionManager {
       },
       onSkillsListChange: async (skills) => {
         sessionLog.info(`Skills list changed in ${workspaceRootPath} (${skills.length} skills)`)
-        this.broadcastSkillsChanged(workspaceId, skills)
+        this.broadcastSkillsChanged(workspaceId, skills.map((skill) => skill.slug), [])
       },
       onSkillChange: async (slug, skill) => {
         sessionLog.info(`Skill '${slug}' changed:`, skill ? 'updated' : 'deleted')
-        // Broadcast updated list to UI
-        const { loadAllSkills } = await import('@rox/shared/skills')
-        const skills = loadAllSkills(workspaceRootPath)
-        this.broadcastSkillsChanged(workspaceId, skills)
+        const { markSkillIndexDirty } = await import('@rox/shared/skills')
+        const { join } = await import('node:path')
+        await markSkillIndexDirty(join(workspaceRootPath, 'skills', slug))
+        this.broadcastSkillsChanged(workspaceId, skill ? [slug] : [], skill ? [] : [slug])
       },
 
       // Session metadata changes (edits to session.jsonl headers).
@@ -2882,11 +2883,10 @@ export class SessionManager implements ISessionManager {
     this.eventSink(RPC_CHANNELS.llmConnections.CHANGED, { to: 'all' })
   }
 
-  private broadcastSkillsChanged(workspaceId: string, skills: import('@rox/shared/skills').LoadedSkill[]): void {
+  private broadcastSkillsChanged(workspaceId: string, changed: string[], removed: string[]): void {
     if (!this.eventSink) return
-    sessionLog.info(`Broadcasting skills changed (${skills.length} skills)`)
-    // Metadata payload (PERF-06); listeners reload bodies through GET_DETAILS.
-    this.eventSink(RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId }, workspaceId, toSkillSummaries(skills))
+    sessionLog.info(`Broadcasting skills changed (changed=${changed.length} removed=${removed.length})`)
+    this.eventSink(RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId }, workspaceId, { revision: Date.now(), changed, removed })
   }
 
   private broadcastPagesChanged(workspaceId: string, pages: import('@rox/shared/pages').LoadedPage[]): void {
@@ -3580,6 +3580,50 @@ export class SessionManager implements ISessionManager {
         workingDirectory: meta.workingDirectory ?? wsConfig?.defaults?.workingDirectory,
       }),
     )
+  }
+
+  /**
+   * Batch form of {@link ingestImportedSession} + {@link notifySessionCreated} for the
+   * import pipeline (ADR-0025): reads only the batch's own headers, projects them into
+   * the session index in one write and announces the batch with one `sessions_imported`.
+   * Sessions already in memory are announced as they are, never replaced.
+   */
+  ingestImportedSessions(workspaceId: string, sessionIds: readonly string[]): Session[] {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) return []
+    const ids = [...new Set(sessionIds)]
+    const headers: SessionHeader[] = []
+    for (const sessionId of ids) {
+      if (this.sessions.has(sessionId)) continue
+      const header = readSessionHeader(getSessionFilePath(workspace.rootPath, sessionId))
+      if (header?.id === sessionId) headers.push(header)
+    }
+    if (headers.length > 0) {
+      const wsConfig = loadWorkspaceConfig(workspace.rootPath)
+      for (const meta of listSessionsFromHeaders(workspace.rootPath, headers)) {
+        this.sessions.set(
+          meta.id,
+          createManagedSession(meta, workspace, {
+            enabledSourceSlugs: meta.enabledSourceSlugs,
+            workingDirectory: meta.workingDirectory ?? wsConfig?.defaults?.workingDirectory,
+          }),
+        )
+      }
+      void sessionStateProjector()
+        .recordSessions(workspace.rootPath, headers.map((header) => header.id))
+        .catch((error) => sessionLog.warn(`Failed to index imported sessions: ${error instanceof Error ? error.message : error}`))
+    }
+    const summaries: Session[] = []
+    for (const sessionId of ids) {
+      const managed = this.sessions.get(sessionId)
+      if (managed && managed.workspace.id === workspace.id) summaries.push(managedToSession(managed))
+    }
+    if (summaries.length === 0) return summaries
+    this.sendEvent({ type: 'sessions_imported', sessionId: summaries[0]!.id, sessions: summaries }, workspace.id)
+    for (const summary of summaries) {
+      this.emitSessionLifecycle('session.created', summary.id, workspace.id, (envelope) => ({ ...envelope, reason: 'import' as const }))
+    }
+    return summaries
   }
 
   getSessions(workspaceId?: string): Session[] {

@@ -696,6 +696,7 @@ export const mockElectronAPI = {
     truncated: false,
   }),
   foreignPersistSessions: async () => ({ results: [], failed: 0, truncated: false, omitted: 0 }),
+  onForeignImportProgress: () => () => {},
   foreignAutoImportStatus: async () => ({
     workspaceId: 'playground',
     enabled: true,

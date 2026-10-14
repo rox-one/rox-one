@@ -9,6 +9,9 @@
  * - Header (e.g. search bar) and footer (e.g. infinite scroll sentinel) slots
  * - Opt-in windowing (`virtualize`) so large collections mount only the rows
  *   near the scrollport while keeping the active/selected row available.
+ * - Automatic windowing through the shared `VirtualList` once a list exceeds
+ *   {@link ENTITY_LIST_AUTO_VIRTUALIZE_THRESHOLD} rows; smaller lists render
+ *   every row exactly as before.
  *
  * Domain-specific logic (filtering, keyboard nav, multi-select) lives in the consumer.
  */
@@ -44,11 +47,14 @@ import {
   type FlattenedTableGroups,
   type VirtualTableEntry,
 } from '@/components/app-shell/session-table/table-virtualization'
+import { VirtualList } from '@/components/ui/virtual-list'
 
 export { ENTITY_LIST_OVERSCAN }
 
 /** Below this many rows, rendering every row is cheaper than measuring a window. */
 const ENTITY_LIST_VIRTUALIZE_THRESHOLD = 40
+/** Lists with more rows than this window even without `virtualize` (ADR-0023 §7). */
+export const ENTITY_LIST_AUTO_VIRTUALIZE_THRESHOLD = 200
 /** Reserved measured-height keys for the shared header / empty-lane shells. */
 const MEASURE_HEADER_KEY = '$header'
 const MEASURE_EMPTY_LANE_KEY = '$emptyLane'
@@ -197,6 +203,8 @@ export interface EntityListProps<T> {
   ensureVisibleKeys?: ReadonlySet<string>
   /** Item key to reveal when it changes (external selection). */
   revealKey?: string | null
+  /** Auto-windowed lists: Home/End/Arrows move focus across all rows. */
+  keyboardNavigation?: boolean
 }
 
 // ============================================================================
@@ -326,6 +334,7 @@ interface VirtualEntityListBodyProps<T> {
   ensureVisibleKeys?: ReadonlySet<string>
   revealKey?: string | null
   viewportRef?: React.RefObject<HTMLDivElement>
+  keyboardNavigation?: boolean
 }
 
 /**
@@ -614,6 +623,95 @@ function VirtualEntityListBody<T>({
   )
 }
 
+/**
+ * Body for lists above {@link ENTITY_LIST_AUTO_VIRTUALIZE_THRESHOLD} rows: the
+ * same headers, drop lanes and rows as the plain layout, rendered through the
+ * shared `VirtualList` so the DOM stays proportional to the viewport.
+ */
+function LargeEntityListBody<T>({
+  groups,
+  items,
+  getKey,
+  renderItem,
+  collapsedGroups,
+  onToggleCollapse,
+  onCollapseAll,
+  onExpandAll,
+  onSelectGroup,
+  dropGroupKey,
+  onEmptyGroupDragOver,
+  estimateRowHeight,
+  ensureVisibleKeys,
+  revealKey,
+  viewportRef,
+  keyboardNavigation,
+}: VirtualEntityListBodyProps<T>) {
+  const { t } = useTranslation()
+  // Only collapsible groups on this list may collapse, so unrelated keys never hide a row.
+  const collapsedSet = React.useMemo(() => {
+    const keys = new Set<string>()
+    for (const group of groups ?? []) {
+      if (group.collapsible && collapsedGroups?.has(group.key)) keys.add(group.key)
+    }
+    return keys
+  }, [groups, collapsedGroups])
+
+  return (
+    <VirtualList<T, EntityListGroup<T>>
+      items={items}
+      groups={groups}
+      collapsedGroups={collapsedSet}
+      getKey={getKey}
+      renderItem={renderItem}
+      estimateRowHeight={estimateRowHeight}
+      estimateHeaderHeight={ENTITY_LIST_GROUP_HEADER_HEIGHT}
+      estimateEmptyGroupHeight={ENTITY_LIST_EMPTY_LANE_HEIGHT}
+      viewportRef={viewportRef}
+      pinnedKeys={ensureVisibleKeys}
+      revealKey={revealKey}
+      keyboardNavigation={keyboardNavigation}
+      renderGroupHeader={(group, headerProps) => {
+        const isCollapsed = !!group.collapsible && collapsedSet.has(group.key)
+        return group.collapsible && onToggleCollapse ? (
+          <CollapsibleGroupHeader
+            label={group.label}
+            isCollapsed={isCollapsed}
+            itemCount={groupHeaderCount(isCollapsed, group.items.length, group.collapsedCount)}
+            onToggle={() => onToggleCollapse(group.key)}
+            onCollapseAll={onCollapseAll}
+            onExpandAll={onExpandAll}
+            onSelectGroup={onSelectGroup ? () => onSelectGroup(group.key) : undefined}
+            elementRef={headerProps.ref}
+            style={headerProps.style}
+          />
+        ) : (
+          <SectionHeader
+            label={group.label}
+            itemCount={group.items.length}
+            onSelectGroup={onSelectGroup ? () => onSelectGroup(group.key) : undefined}
+            elementRef={headerProps.ref}
+            style={headerProps.style}
+          />
+        )
+      }}
+      renderEmptyGroup={(group) => (
+        <div
+          data-empty-group={group.key}
+          className={cn(
+            'mx-3 rounded-[var(--radius-card)] border border-dashed px-3 py-2 text-caption text-muted-foreground/70',
+            dropGroupKey === group.key
+              ? 'border-border-strong bg-surface-hover text-foreground'
+              : 'border-border-subtle',
+          )}
+          onDragOver={(event) => onEmptyGroupDragOver?.(group.key, event)}
+        >
+          {t('entityList.emptyGroupDrop')}
+        </div>
+      )}
+    />
+  )
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -643,6 +741,7 @@ export function EntityList<T>({
   estimateRowHeight,
   ensureVisibleKeys,
   revealKey,
+  keyboardNavigation,
 }: EntityListProps<T>) {
   const { t } = useTranslation()
   // Determine if we have content
@@ -665,6 +764,7 @@ export function EntityList<T>({
     ? groups!.reduce((sum, group) => sum + group.items.length, 0)
     : (items?.length ?? 0)
   const windowed = !!virtualize && itemCount >= ENTITY_LIST_VIRTUALIZE_THRESHOLD
+  const autoWindowed = !windowed && itemCount > ENTITY_LIST_AUTO_VIRTUALIZE_THRESHOLD
 
   return (
     <div className={cn('flex flex-col flex-1 min-h-0', className)} data-state={resolvedState}>
@@ -693,6 +793,25 @@ export function EntityList<T>({
                 ensureVisibleKeys={ensureVisibleKeys}
                 revealKey={revealKey}
                 viewportRef={viewportRef}
+              />
+            ) : autoWindowed ? (
+              <LargeEntityListBody
+                groups={groups}
+                items={items}
+                getKey={getKey}
+                renderItem={renderItem}
+                collapsedGroups={collapsedGroups}
+                onToggleCollapse={onToggleCollapse}
+                onCollapseAll={onCollapseAll}
+                onExpandAll={onExpandAll}
+                onSelectGroup={onSelectGroup}
+                dropGroupKey={dropGroupKey}
+                onEmptyGroupDragOver={onEmptyGroupDragOver}
+                estimateRowHeight={estimateRowHeight ?? ENTITY_LIST_DEFAULT_ROW_HEIGHT}
+                ensureVisibleKeys={ensureVisibleKeys}
+                revealKey={revealKey}
+                viewportRef={viewportRef}
+                keyboardNavigation={keyboardNavigation}
               />
             ) : hasGroups
               ? groups!.map((group) => {

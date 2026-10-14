@@ -57,6 +57,7 @@ import { initRendererPerf } from './lib/perf'
 import {
   initializeSessionsAtom,
   addSessionAtom,
+  addImportedSessionsAtom,
   removeSessionAtom,
   updateSessionAtom,
   replaceLoadedSessionAtom,
@@ -381,6 +382,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   // - sessionAtomFamily(id) for individual session data
   const initializeSessions = useSetAtom(initializeSessionsAtom)
   const addSession = useSetAtom(addSessionAtom)
+  const addImportedSessions = useSetAtom(addImportedSessionsAtom)
   const removeSession = useSetAtom(removeSessionAtom)
   const updateSessionDirect = useSetAtom(updateSessionAtom)
   const replaceLoadedSession = useSetAtom(replaceLoadedSessionAtom)
@@ -617,30 +619,36 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   // Event processor hook - handles all agent events through pure functions
   const { processAgentEvent, clearStreamingState } = useEventProcessor()
 
-  const syncSessionOptionsFromSession = useCallback((session: Session) => {
+  const syncSessionOptionsFromSessions = useCallback((sessions: readonly Session[]) => {
     setSessionOptions(prev => {
       const next = new Map(prev)
-      const current = next.get(session.id)
-      const merged = {
-        ...defaultSessionOptions,
-        ...current,
-        permissionMode: session.permissionMode ?? defaultSessionOptions.permissionMode,
-        permissionModeVersion: session.permissionModeVersion ?? current?.permissionModeVersion,
-        thinkingLevel: session.thinkingLevel ?? DEFAULT_THINKING_LEVEL,
-      }
+      for (const session of sessions) {
+        const current = next.get(session.id)
+        const merged = {
+          ...defaultSessionOptions,
+          ...current,
+          permissionMode: session.permissionMode ?? defaultSessionOptions.permissionMode,
+          permissionModeVersion: session.permissionModeVersion ?? current?.permissionModeVersion,
+          thinkingLevel: session.thinkingLevel ?? DEFAULT_THINKING_LEVEL,
+        }
 
-      const hasNonDefaultMode = merged.permissionMode !== defaultSessionOptions.permissionMode
-      const hasNonDefaultThinking = merged.thinkingLevel !== DEFAULT_THINKING_LEVEL
+        const hasNonDefaultMode = merged.permissionMode !== defaultSessionOptions.permissionMode
+        const hasNonDefaultThinking = merged.thinkingLevel !== DEFAULT_THINKING_LEVEL
 
-      if (!hasNonDefaultMode && !hasNonDefaultThinking && merged.permissionModeVersion == null) {
-        next.delete(session.id)
-      } else {
-        next.set(session.id, merged)
+        if (!hasNonDefaultMode && !hasNonDefaultThinking && merged.permissionModeVersion == null) {
+          next.delete(session.id)
+        } else {
+          next.set(session.id, merged)
+        }
       }
 
       return next
     })
   }, [])
+  const syncSessionOptionsFromSession = useCallback(
+    (session: Session) => syncSessionOptionsFromSessions([session]),
+    [syncSessionOptionsFromSessions],
+  )
 
   const refreshSessionFromServer = useCallback(async (sessionId: string): Promise<'refreshed' | 'preserved_stale_messages' | 'failed'> => {
     const scope = sessionScopeRef.current
@@ -852,7 +860,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   }, [])
 
   // Refresh LLM connections from config (called on workspace change and after connection updates)
-  const refreshLlmConnections = useCallback(async () => {
+  const refreshLlmConnections = useCallback(async (options?: { refresh?: boolean }) => {
     // Cookie-authenticated web transport conveys no desktop/native identity
     // and cannot read host provider credentials or seed a runtime default.
     if (webTransportBootstrap) return
@@ -870,7 +878,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       setWorkspaceDefaultLlmConnection(summary?.slug)
       return
     }
-    const connections = await window.electronAPI.listLlmConnectionsWithStatus()
+    const connections = await window.electronAPI.listLlmConnectionsWithStatus(options)
     if (generation !== runtimeRefreshGeneration.current) return
     setRuntimeSummary(null)
     setLlmConnections(connections)
@@ -1191,10 +1199,12 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     return () => { cleanup() }
   }, [refreshLlmConnections])
 
-  // Refresh LLM connections and workspace default when workspace changes
+  // Refresh LLM connections and workspace default when workspace changes.
+  // No OAuth refresh on this (boot) path: expiring tokens refresh in the
+  // background and llmConnections.CHANGED re-runs this with a refresh.
   useEffect(() => {
     if (windowWorkspaceId) {
-      void refreshLlmConnections().catch(error => console.error('Failed to refresh LLM connections:', error))
+      void refreshLlmConnections({ refresh: false }).catch(error => console.error('Failed to refresh LLM connections:', error))
     }
   }, [windowWorkspaceId, refreshLlmConnections])
 
@@ -1350,6 +1360,22 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
             })
           })
           .catch((error: unknown) => console.error('Failed to handle session_created event:', error))
+        return
+      }
+
+      if (event.type === 'sessions_imported') {
+        const imported = scope.authority === 'native'
+          ? event.sessions.filter(session => session.workspaceId === scope.workspaceId)
+          : event.sessions
+        const staleLoadedIds = addImportedSessions(imported)
+        syncSessionOptionsFromSessions(imported)
+        for (const staleId of staleLoadedIds) {
+          window.electronAPI.getSessionMessages(staleId)
+            .then((updatedSession: Session | null) => {
+              if (sessionScopeRef.current === scope && updatedSession) replaceLoadedSession(updatedSession)
+            })
+            .catch((error: unknown) => console.error('Failed to refresh imported session:', error))
+        }
         return
       }
 
@@ -1550,8 +1576,10 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     showSessionNotification,
     initializeSessions,
     addSession,
+    addImportedSessions,
     removeSession,
     syncSessionOptionsFromSession,
+    syncSessionOptionsFromSessions,
     applyPermissionModeState,
     reconcilePermissionModeState,
     readCallerSessionInventory,

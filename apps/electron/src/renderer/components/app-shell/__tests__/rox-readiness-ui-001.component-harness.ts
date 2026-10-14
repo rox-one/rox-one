@@ -53,6 +53,7 @@ export const NavigationStatusContext=React.createContext({isSessionsReady:true,u
 export const AppShellProvider=ShellContext.Provider;
 export const useAppShellContext=()=>React.useContext(ShellContext);
 export const useNavigationState=()=>React.useContext(NavContext);
+export const useNavigationStatus=()=>React.useContext(NavigationStatusContext);
 export const NavigationContext=NavContext; // PanelSlot reads/provides the same fixture context.
 export const useNavigation=()=>({...React.useContext(NavigationStatusContext),navigateToSource:()=>{}});
 export const useActiveWorkspace=()=>({id:React.useContext(ShellContext)?.activeWorkspaceId});
