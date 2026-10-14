@@ -133,6 +133,7 @@
     "./openclaw": "./src/openclaw/index.ts",
     "./openclaw/types": "./src/openclaw/types.ts",
     "./orgs": "./src/orgs/index.ts",
+    "./team-chat": "./src/team-chat/index.ts",
     "./orgs/types": "./src/orgs/types.ts",
     "./os/user-display-name": "./src/os/user-display-name.ts",
     "./pages": "./src/pages/index.ts",

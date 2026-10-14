@@ -35,7 +35,7 @@ import {
 import { isSurfaceActive } from './surface-activity'
 import { getShellStore, isShellStoreConnected, setShellStore, type ShellStore } from './shell-store'
 
-/** Flags owned by W1-07; all default OFF. */
+/** Flags owned by W1-07; default OFF except Мессенджер (default ON, see DEFAULT_ON_GENERIC_FLAG_IDS). */
 export const W1_07_FLAG_IDS = [
   WORKBENCH_FLAG.modeMessengerV1,
   WORKBENCH_FLAG.modeCalendarV1,
@@ -101,10 +101,18 @@ const DEDICATED_ATOM_FLAG_IDS: ReadonlySet<string> = new Set([
   WORKBENCH_FLAG.conationSessionApply,
 ])
 
-/** Flag ids served by the generic store (default-OFF, no dedicated atom). */
+/**
+ * Default-ON flags still served by the generic store: their storage key and
+ * `workbenchFlagAtom` stay the same, the atom just starts from the registry
+ * default (true), so `craft-workbench-flag:<id> = false` still turns them off.
+ * Мессенджер (team channels) is live on real data and a default top pill.
+ */
+const DEFAULT_ON_GENERIC_FLAG_IDS: ReadonlySet<string> = new Set([WORKBENCH_FLAG.modeMessengerV1])
+
+/** Flag ids served by the generic store (default-OFF or DEFAULT_ON_GENERIC_FLAG_IDS, no dedicated atom). */
 export function genericFlagIds(): string[] {
   return WORKBENCH_FEATURE_FLAGS
-    .filter((definition) => definition.defaultValue === false && !DEDICATED_ATOM_FLAG_IDS.has(definition.id))
+    .filter((definition) => (definition.defaultValue === false || DEFAULT_ON_GENERIC_FLAG_IDS.has(definition.id)) && !DEDICATED_ATOM_FLAG_IDS.has(definition.id))
     .map((definition) => definition.id)
 }
 
