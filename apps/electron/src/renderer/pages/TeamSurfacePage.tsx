@@ -8,6 +8,7 @@
  * which itself gates activity/inbox on their flags).
  */
 import * as React from 'react'
+import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
 import { useTranslation } from 'react-i18next'
 import { MessagesSquare } from 'lucide-react'
 import { EmptyState } from '@/components/mode-screen/ModeScreen'
@@ -34,7 +35,7 @@ export function TeamSurfacePage(_props: SurfacePageProps) {
     >
       <header className="flex shrink-0 items-center gap-3 border-b border-border/60 px-4 py-2">
         <MessagesSquare className="icon-inline text-text-muted" aria-hidden />
-        <h1 className="text-title font-semibold">{t('messenger.channels.title')}</h1>
+        <PanelHeading className="text-title font-semibold" titleKey="messenger.channels.title">{t('messenger.channels.title')}</PanelHeading>
         <TabsCore
           items={[
             { id: 'channels', label: t('messenger.channels.channelsTab') },
