@@ -578,7 +578,7 @@ async function buildMainVendorBundles(): Promise<void> {
     }
     // Load each file the way main.cjs does (import() or require()) and check every named export the
     // call sites use is visible (import() of CJS relies on cjs-module-lexer).
-    const probe = spawn({ cmd: ["node", "-e", vendorExportProbe(pathToFileURL(outfile).href, exports, load)], stdout: "pipe", stderr: "inherit" });
+    const probe = spawn({ cmd: ["node", ...vendorExportProbe(pathToFileURL(outfile).href, exports, load)], stdout: "pipe", stderr: "inherit" });
     if ((await probe.exited) !== 0) {
       console.error(`❌ vendor bundle ${pkg} is missing named exports:`, await new Response(probe.stdout).text());
       process.exit(1);

@@ -43,9 +43,9 @@ test('export probe passes for esbuild-style CJS and fails on a missing name', ()
   const file = join(dir, 'v.cjs')
   writeFileSync(file, 'var e={};Object.defineProperty(exports,"A",{get:()=>1});0&&(module.exports={A});')
   const url = pathToFileURL(file).href
-  expect(execFileSync('node', ['-e', vendorExportProbe(url, ['A'])]).toString().trim()).toBe('[]')
-  expect(() => execFileSync('node', ['-e', vendorExportProbe(url, ['A', 'B'])], { stdio: 'pipe' })).toThrow()
-  expect(execFileSync('node', ['-e', vendorExportProbe(url, ['A'], 'require')]).toString().trim()).toBe('[]')
+  expect(execFileSync('node', vendorExportProbe(url, ['A'])).toString().trim()).toBe('[]')
+  expect(() => execFileSync('node', vendorExportProbe(url, ['A', 'B']), { stdio: 'pipe' })).toThrow()
+  expect(execFileSync('node', vendorExportProbe(url, ['A'], 'require')).toString().trim()).toBe('[]')
 })
 
 test('the Lark SDK is reached via require (static import inside the lazily imported adapter)', () => {

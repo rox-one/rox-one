@@ -23,10 +23,18 @@ export function mainVendorAliasFlags(): string[] {
   return MAIN_VENDOR_BUNDLES.flatMap(({ pkg, file }) => [`--alias:${pkg}=./vendor/${file}`, `--external:./vendor/${file}`])
 }
 
-/** Node script that loads a vendor file the way main.cjs does and prints missing named exports as JSON. */
-export function vendorExportProbe(fileUrl: string, names: readonly string[], load: 'import' | 'require' = 'import'): string {
-  const loader = load === 'require'
-    ? `Promise.resolve().then(() => require(require('node:url').fileURLToPath(${JSON.stringify(fileUrl)})))`
-    : `import(${JSON.stringify(fileUrl)})`
-  return `${loader}.then(m => { const missing = ${JSON.stringify(names)}.filter(n => typeof m[n] === 'undefined'); console.log(JSON.stringify(missing)); process.exit(missing.length ? 1 : 0) }, e => { console.error(e); process.exit(2) })`
+/**
+ * Node script that loads a vendor file the way main.cjs does and prints missing named exports as
+ * JSON. The file URL, load style and export names arrive as argv (`node -e <script> <fileUrl>
+ * <load> <name...>`), never as generated source, so no caller value is ever spliced into code.
+ */
+export const VENDOR_EXPORT_PROBE_SCRIPT = `const [fileUrl, load, ...names] = process.argv.slice(1)
+const loaded = load === 'require'
+  ? Promise.resolve().then(() => require(require('node:url').fileURLToPath(fileUrl)))
+  : import(fileUrl)
+loaded.then(m => { const missing = names.filter(n => typeof m[n] === 'undefined'); console.log(JSON.stringify(missing)); process.exit(missing.length ? 1 : 0) }, e => { console.error(e); process.exit(2) })`
+
+/** Full `node` argv for the export probe: `-e` script first, then its data arguments. */
+export function vendorExportProbe(fileUrl: string, names: readonly string[], load: 'import' | 'require' = 'import'): string[] {
+  return ['-e', VENDOR_EXPORT_PROBE_SCRIPT, fileUrl, load, ...names]
 }
