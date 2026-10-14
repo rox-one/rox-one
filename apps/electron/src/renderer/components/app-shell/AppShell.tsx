@@ -124,7 +124,6 @@ import {
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
 import { AuroraField } from "@/platform/AuroraField"
 import { GlobalVoiceDictation } from "@/voice/global-dictation"
-import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { useInspectorSuppressed } from "@/platform/inspector-suppression"
 import { WorkspaceBrowserRegistry } from "../browser/WorkspaceBrowserRegistry"
 import { featureWorkbenchBrowserSurfaceV2Atom } from "@/atoms/unified-shell"
@@ -245,6 +244,11 @@ const MessagingDialogHost = React.lazy(() =>
     default: m.MessagingDialogHost,
   })),
 )
+
+// The extra-screens background work is timer-driven (first check 30 s after mount) and renders
+// nothing, so it has no business in the boot module graph. Verified alone-reachable: AppShell was
+// the only static importer of `@/pages/extra-screens/background`.
+const ExtraScreensBackground = React.lazy(() => import("@/platform/ExtraScreensBackground"))
 
 /**
  * AppShellProps - Minimal props interface for AppShell component
@@ -1315,7 +1319,8 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   useAction('nav.focusChat', () => focusZone('chat', { intent: 'keyboard' }))
   // ⌘/Ctrl 1…7 → titlebar surfaces (flag-aware)
   useModeHotkeys()
-  useExtraScreensBackground(activeWorkspaceId ?? null)
+  // Extra-screens background work (radar/focus/meetings) is mounted lazily — see
+  // <ExtraScreensBackground /> in the tree below.
 
   // Tab navigation between zones
   useAction('nav.nextZone', () => {
@@ -3804,6 +3809,9 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
 
       {/* Y4: first-run memory onboarding — shown once when no lessons exist */}
       <React.Suspense fallback={null}><OnboardingDialog workspaceId={activeWorkspaceId ?? undefined} presentationAllowed={!productLearning?.enabled || (navState.navigator === 'memory' && ['idle', 'paused', 'blocked', 'finished'].includes(productLearning.state.phase))} /></React.Suspense>
+      {/* Extra-screens background work (radar daily sweep, focus day-summary, meeting extraction,
+          calendar autostart). Lazy on purpose: it is timer-driven and renders nothing. */}
+      <React.Suspense fallback={null}><ExtraScreensBackground workspaceId={activeWorkspaceId ?? null} /></React.Suspense>
 
       <SuperEngineeringShellExtras />
 
