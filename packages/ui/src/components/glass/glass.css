@@ -1,0 +1,62 @@
+/* GlassSurface. Values come from --glass-* tokens (material.css); motion from
+   --motion-spring/--ease-spring (motion.css). Only transform and opacity
+   transition; backdrop-filter is static. */
+.glass-surface {
+  /* Re-derived here so a per-surface --glass-intensity (the `intensity` prop)
+     takes effect; on :root they would resolve once against the root value. */
+  --glass-blur: calc(8px + 24px * var(--glass-intensity));
+  --glass-saturate: calc(1 + 0.6 * var(--glass-intensity));
+  --glass-tint: calc(4% + 10% * var(--glass-intensity));
+  --glass-edge-alpha: calc(8% + 22% * var(--glass-intensity));
+  --glass-specular-alpha: calc(4% + 16% * var(--glass-intensity));
+
+  position: relative;
+  border-radius: var(--glass-radius);
+  /* Specular highlight: a static top sheen layered over the tint. */
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white var(--glass-specular-alpha), transparent) 0%,
+      transparent 42%
+    ),
+    color-mix(in srgb, var(--background) var(--glass-tint), transparent);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-shadow);
+  isolation: isolate;
+  transition:
+    transform var(--motion-spring) var(--ease-spring),
+    opacity var(--motion-base) var(--ease-standard),
+    visibility 0s linear 0s;
+}
+
+html[data-glass="full"] .glass-surface[data-glass-refraction] {
+  backdrop-filter: var(--glass-filter) blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
+.glass-surface[data-glass-presence="closed"] {
+  opacity: 0;
+  transform: scale(0.94) translateY(-0.25rem);
+  visibility: hidden;
+  pointer-events: none;
+  /* Visibility flips only after the exit finishes, so the fade is seen. */
+  transition-duration: var(--motion-spring-exit), var(--motion-spring-exit), 0s;
+  transition-timing-function: var(--ease-exit), var(--ease-exit), linear;
+  transition-delay: 0s, 0s, var(--motion-spring-exit);
+}
+
+.glass-surface[data-glass-presence="open"] {
+  opacity: 1;
+  transform: none;
+}
+
+.glass-surface[data-glass-pressed]:not([data-glass-presence="closed"]) {
+  transform: scale(0.97);
+  transition-duration: var(--motion-fast), var(--motion-base), 0s;
+}
+
+.glass-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}

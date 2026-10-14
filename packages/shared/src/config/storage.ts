@@ -768,7 +768,7 @@ const FALLBACK_CONFIG_DEFAULTS: ConfigDefaults = {
   description: 'Default configuration values for Rox',
   defaults: {
     notificationsEnabled: true,
-    colorTheme: 'rox-ink', // ROX_THEME_ID (literal: config-defaults-parity evaluates this object)
+    colorTheme: 'arc-glass', // ROX_THEME_ID (literal: config-defaults-parity evaluates this object)
     autoCapitalisation: true,
     sendMessageKey: 'enter',
     spellCheck: false,
@@ -2581,7 +2581,7 @@ export function getAllSessionDrafts(): Record<string, SessionDraft> {
 // ============================================
 
 import type { ThemeOverrides, ThemeFile, PresetTheme } from './theme.ts';
-import { ROX_THEME_ID, type MaterialSettings } from './theme.ts';
+import { ROX_INK_THEME_ID, ROX_THEME_ID, type MaterialSettings } from './theme.ts';
 
 const APP_THEME_FILE = join(resolveConfigDir(), 'theme.json');
 const APP_THEMES_DIR = join(resolveConfigDir(), 'themes');
@@ -3722,7 +3722,7 @@ function migrateAppearanceInkDefault(config: StoredConfig, v1Seeded: boolean): b
     || LEGACY_DEFAULT_THEMES.has(config.colorTheme)
     || (v1Seeded && config.colorTheme === 'super-engineering')
   ) {
-    config.colorTheme = ROX_THEME_ID;
+    config.colorTheme = ROX_INK_THEME_ID;
   }
   try {
     const appTheme = loadAppTheme();
@@ -3752,7 +3752,7 @@ function migrateAppearanceDefaults(config: StoredConfig): boolean {
     return false;
   }
   if (config.colorTheme === undefined || config.colorTheme === 'nordfox-opaque' || config.colorTheme === 'haze') {
-    config.colorTheme = ROX_THEME_ID;
+    config.colorTheme = ROX_INK_THEME_ID;
   }
   config.migrationsApplied = [...(config.migrationsApplied ?? []), APPEARANCE_DEFAULTS_MIGRATION];
   return true;
