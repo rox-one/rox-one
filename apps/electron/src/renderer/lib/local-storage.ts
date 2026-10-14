@@ -26,6 +26,7 @@ export const KEYS = {
   shellPanels: 'shell-panels-v1',
   errorJournal: 'error-journal-v1',
   liteMode: 'lite-mode-v1',
+  statusBarItems: 'status-bar-items-v1',
   uiDensity: 'ui-density-v1',
   screenHintsSeen: 'screen-hints-seen-v1',
   listFilter: 'list-filter',

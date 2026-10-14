@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useRef } from 'react'
 import { Plus } from 'lucide-react'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@rox/ui/tooltip'
 import { toast } from 'sonner'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
@@ -1179,16 +1180,20 @@ function KanbanBoardContainerInner() {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setEditorTarget({ mode: 'create', initialProjectId: projectFilter[0] })}
-            disabled={!activeWorkspaceId}
-            aria-label={t('kanban.newTask')}
-            title={t('kanban.newTask')}
-            className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-control)] bg-foreground/[0.06] px-2.5 text-base font-semibold text-foreground transition-colors hover:bg-foreground/[0.1] disabled:opacity-50"
-          >
-            <Plus className="h-3.5 w-3.5" strokeWidth={2.5} /> <span className="@max-[520px]/panel:sr-only">{t('kanban.newTask')}</span>
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setEditorTarget({ mode: 'create', initialProjectId: projectFilter[0] })}
+                disabled={!activeWorkspaceId}
+                aria-label={t('kanban.newTask')}
+                className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-control)] bg-foreground/[0.06] px-2.5 text-base font-semibold text-foreground transition-colors hover:bg-foreground/[0.1] disabled:opacity-50"
+              >
+                <Plus className="h-3.5 w-3.5" strokeWidth={2.5} /> <span className="@max-[520px]/panel:sr-only">{t('kanban.newTask')}</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{t('kanban.newTask')}</TooltipContent>
+          </Tooltip>
           <CollectionViewChrome
             workspaceId={activeWorkspaceId}
             viewMode="board"
