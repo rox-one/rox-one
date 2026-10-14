@@ -336,6 +336,7 @@ export function AccountMenu({
     if (!selectedWorkspace) return
     setOpen(false)
     setRenameDraft(selectedWorkspace.name)
+    renameCommitted.current = false
     setRenaming(true)
   }, [selectedWorkspace])
   React.useEffect(() => {
@@ -343,8 +344,12 @@ export function AccountMenu({
     const id = window.setTimeout(() => { renameInputRef.current?.focus(); renameInputRef.current?.select() }, 0)
     return () => window.clearTimeout(id)
   }, [renaming])
+  // Enter commits and unmounts the field, which also fires blur: the ref keeps
+  // that second commit from saving twice.
+  const renameCommitted = React.useRef(false)
   const commitRename = React.useCallback(async () => {
-    if (!renaming) return
+    if (!renaming || renameCommitted.current) return
+    renameCommitted.current = true
     setRenaming(false)
     const workspace = selectedWorkspace
     const name = renameDraft.trim().slice(0, WORKSPACE_NAME_MAX)
@@ -453,7 +458,7 @@ export function AccountMenu({
       onBlur={() => void commitRename()}
       onKeyDown={(e) => {
         if (e.key === 'Enter') { e.preventDefault(); void commitRename() }
-        else if (e.key === 'Escape') { e.preventDefault(); setRenaming(false) }
+        else if (e.key === 'Escape') { e.preventDefault(); renameCommitted.current = true; setRenaming(false) }
       }}
       className={cn(
         'titlebar-no-drag ml-1 h-7 min-w-0 max-w-56 flex-1 rounded-[var(--radius-control)] border border-ring/60 bg-[var(--surface-elevated)] px-2 text-caption text-foreground outline-none',
