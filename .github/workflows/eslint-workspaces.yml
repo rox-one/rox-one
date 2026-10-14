@@ -8,29 +8,13 @@ name: ESLint Workspace Ratchet
 # catches a rename that carries counts out of the counted set (or a config `ignores` that drops a
 # counted file). Owners approve such growth with the `eslint-workspace-override` label.
 # Separate job: it does not touch the timing-sensitive validate lane.
+# The trigger has no paths filter so this required check always reports on every PR; a changed-files
+# step below skips the heavy steps (job still succeeds) when no relevant path changed.
 on:
   push:
     branches: [main]
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
-    paths:
-      - 'packages/server-core/**'
-      - 'packages/core/**'
-      - 'apps/webui/**'
-      - 'apps/viewer/**'
-      - 'apps/cli/**'
-      - 'packages/messaging-gateway/**'
-      - 'packages/messaging-discord-worker/**'
-      - 'packages/messaging-whatsapp-worker/**'
-      - 'packages/browser-intel/**'
-      - 'packages/test-harness/**'
-      - 'eslint-baselines/workspaces/**'
-      - 'scripts/eslint/**'
-      - 'scripts/eslint-workspace-ratchet.ts'
-      - 'scripts/__tests__/eslint-workspace-ratchet.test.ts'
-      - 'bun.lock'
-      - 'package.json'
-      - '.github/workflows/eslint-workspaces.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -47,9 +31,28 @@ jobs:
         with:
           # pull_request checks out the merge commit; depth 2 brings its parents (HEAD^1 = base).
           fetch-depth: 2
+      - name: Detect relevant changes
+        id: changes
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if ! git rev-parse --verify --quiet 'HEAD^2^{commit}' >/dev/null; then
+            echo "HEAD is not the PR merge commit; running the full ratchet"
+            echo "relevant=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if git diff --name-only 'HEAD^1' HEAD | grep -Eq '^(packages/server-core/.*|packages/core/.*|apps/webui/.*|apps/viewer/.*|apps/cli/.*|packages/messaging-gateway/.*|packages/messaging-discord-worker/.*|packages/messaging-whatsapp-worker/.*|packages/browser-intel/.*|packages/test-harness/.*|eslint-baselines/workspaces/.*|scripts/eslint/.*|scripts/eslint-workspace-ratchet\.ts|scripts/__tests__/eslint-workspace-ratchet\.test\.ts|bun\.lock|package\.json|\.github/workflows/eslint-workspaces\.yml)$'; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No ESLint-workspace-relevant paths changed; skipping the ratchet."
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        if: steps.changes.outputs.relevant == 'true'
         with: { bun-version: '1.4.2' }
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        if: steps.changes.outputs.relevant == 'true'
         with:
           path: ~/.bun/install/cache
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
@@ -57,20 +60,22 @@ jobs:
             bun-${{ runner.os }}-
       # eslint needs no install scripts; skipping them keeps this job hermetic.
       - run: bun install --frozen-lockfile --ignore-scripts
+        if: steps.changes.outputs.relevant == 'true'
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
       - name: Check the merge commit's base is available
-        if: github.event_name == 'pull_request'
+        if: steps.changes.outputs.relevant == 'true' && github.event_name == 'pull_request'
         run: |
           git rev-parse --verify --quiet 'HEAD^2^{commit}' >/dev/null || { echo "HEAD is not the PR merge commit"; exit 1; }
           git rev-parse --verify 'HEAD^1^{commit}'
       - name: Ratchet unit tests
+        if: steps.changes.outputs.relevant == 'true'
         run: bun test scripts/__tests__/eslint-workspace-ratchet.test.ts
       - name: Ratchet (per-rule, per-file counts may only go down)
-        if: github.event_name != 'pull_request'
+        if: steps.changes.outputs.relevant == 'true' && github.event_name != 'pull_request'
         run: bun scripts/eslint-workspace-ratchet.ts --check
       - name: Ratchet vs the base commit's baselines (merge commit's first parent)
-        if: github.event_name == 'pull_request'
+        if: steps.changes.outputs.relevant == 'true' && github.event_name == 'pull_request'
         env:
           RATCHET_OVERRIDE: ${{ contains(github.event.pull_request.labels.*.name, 'eslint-workspace-override') && '1' || '0' }}
         run: bun scripts/eslint-workspace-ratchet.ts --check --base 'HEAD^1'
