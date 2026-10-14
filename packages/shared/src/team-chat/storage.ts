@@ -36,9 +36,25 @@ export const TEAM_TRANSCRIPT_SEGMENT_TEXT_MAX = 4000
 export const TEAM_TRANSCRIPT_TEXT_MAX = 400_000
 export const TEAM_SUMMARY_MAX = 20_000
 
-/** LiveKit room for a channel / group chat. One room per channel; each call is a session in it. */
+/** LiveKit room for a channel / DM / group (messenger contract v1: `rox-ch-<channelId>`). */
 export function teamCallRoomName(channelId: string): string {
-  return `rox-${channelId}`
+  return `rox-ch-${channelId}`
+}
+
+/**
+ * Messenger contract v1 call event (`content` of a kind-9 message tagged ["rox","call"]),
+ * for the relay bridge. Returns null for non-call messages.
+ */
+export function toMessengerCallEvent(message: TeamChannelMessage, call: TeamChannelCall, opts: { transcriptUrl?: string; summary?: string } = {}):
+  | { type: 'call.started'; roomName: string; startedBy: string; ts: number }
+  | { type: 'call.ended'; roomName: string; durationSec: number; participants: string[] }
+  | { type: 'call.transcript'; roomName: string; transcriptUrl?: string; summary?: string }
+  | null {
+  if (message.callId !== call.id) return null
+  if (message.kind === 'system' && message.event === 'call.started') return { type: 'call.started', roomName: call.roomName, startedBy: call.startedBy, ts: Math.floor(call.startedAt / 1000) }
+  if (message.kind === 'system' && message.event === 'call.ended') return { type: 'call.ended', roomName: call.roomName, durationSec: Math.max(0, Math.round(((call.endedAt ?? message.createdAt) - call.startedAt) / 1000)), participants: [...call.everParticipantIds] }
+  if (message.kind === 'transcript' || message.kind === 'summary') return { type: 'call.transcript', roomName: call.roomName, ...(opts.transcriptUrl ? { transcriptUrl: opts.transcriptUrl } : {}), ...(opts.summary ? { summary: opts.summary } : {}) }
+  return null
 }
 
 export class TeamChatError extends Error {
@@ -427,7 +443,8 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       const channel = callChannel(store, channelIdInput, actor)
       const call = activeCallOf(store, channel.id)
       if (!call || !Array.isArray(participantIds)) return { orgId: channel.orgId, call: call ?? null }
-      const ids = [...new Set(participantIds.filter((id): id is string => typeof id === 'string' && /^[A-Za-z0-9._:@-]{1,128}$/.test(id)))].slice(0, 200)
+      // Only channel members can be in the call (room access = channel membership).
+      const ids = [...new Set(participantIds.filter((id): id is string => typeof id === 'string' && !!memberOf(store, channel.id, id)))].slice(0, 200)
       if (!ids.includes(actor.userId)) ids.push(actor.userId)
       call.participantIds = ids
       for (const id of ids) if (!call.everParticipantIds.includes(id)) call.everParticipantIds.push(id)
@@ -445,6 +462,8 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       if (call.endedAt) throw new TeamChatError('INVALID', 'Call has ended')
       const segments = (Array.isArray(segmentsInput) ? segmentsInput : []).slice(0, 500)
         .map(v => cleanSegment(v, actor.userId)).filter((v): v is TeamCallTranscriptSegment => !!v)
+        // Each participant transcribes only their own microphone: no speaking for others.
+        .map(v => ({ ...v, speakerId: actor.userId }))
       // Idempotent: the same segment can arrive from several windows.
       const key = (s: TeamCallTranscriptSegment) => `${s.speakerId}|${s.startMs}|${s.text}`
       const seen = new Set(call.transcript.map(key))

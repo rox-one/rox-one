@@ -3,7 +3,7 @@ import { createHmac } from 'crypto'
 import { mkdtempSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { createTeamChatStore, mintLiveKitToken, teamCallRoomName, type TeamChatOrgDirectory } from '../index.ts'
+import { createTeamChatStore, mintLiveKitToken, teamCallRoomName, toMessengerCallEvent, type TeamChatOrgDirectory } from '../index.ts'
 
 const dirs: string[] = []
 afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }) })
@@ -28,10 +28,15 @@ describe('team calls', () => {
     expect(b.call.id).toBe(a.call.id)
     expect(s.listChannels(ORG, carol)[0]!.activeCall?.participantIds.sort()).toEqual(['alice', 'bob'])
     s.appendCallTranscript(general.id, a.call.id, [
-      { speakerId: 'bob', speakerName: 'Анна', text: 'Тесты закончим к пятнице', startMs: 9000, endMs: 12000 },
       { speakerId: 'alice', speakerName: 'Марк', text: 'Обсудим релиз звонков', startMs: 1000, endMs: 4000 },
       { speakerId: 'alice', text: '', startMs: 0, endMs: 1 },
     ], alice)
+    s.appendCallTranscript(general.id, a.call.id, [{ speakerId: 'alice', speakerName: 'Анна', text: 'Тесты закончим к пятнице', startMs: 9000, endMs: 12000 }], bob)
+    // A segment can't be attributed to someone else.
+    expect(s.listChannels(ORG, alice)[0]!.activeCall!.transcript.map(x => x.speakerId)).toEqual(['alice', 'bob'])
+    // Non-members can't be injected into the participant list.
+    s.syncCallParticipants(general.id, ['alice', 'bob', 'mallory'], alice)
+    expect(s.listChannels(ORG, alice)[0]!.activeCall!.participantIds.sort()).toEqual(['alice', 'bob'])
     expect(s.leaveCall(general.id, alice).ended).toBe(false)
     expect(s.leaveCall(general.id, bob).ended).toBe(true)
     expect(s.listChannels(ORG, alice)[0]!.activeCall).toBeUndefined()
@@ -39,6 +44,11 @@ describe('team calls', () => {
     const transcript = messages.find(m => m.kind === 'transcript')!
     expect(transcript.text).toBe('[00:01] Марк: Обсудим релиз звонков\n[00:09] Анна: Тесты закончим к пятнице')
     expect(messages.filter(m => m.kind === 'system').map(m => m.event)).toEqual(['call.started', 'call.ended'])
+    expect(a.call.roomName).toBe(`rox-ch-${general.id}`)
+    const ended = s.listCalls(general.id, alice)[0]!
+    const events = messages.map(m => toMessengerCallEvent(m, ended)?.type)
+    expect(events).toEqual(['call.started', 'call.ended', 'call.transcript'])
+    expect(toMessengerCallEvent(messages.find(m => m.event === 'call.ended')!, ended)).toMatchObject({ participants: ['alice', 'bob'] })
     expect(s.postCallSummary(general.id, a.call.id, '- Релиз на этой неделе', alice).message?.kind).toBe('summary')
     expect(s.postCallSummary(general.id, a.call.id, 'again', alice).message).toBeNull()
     expect(s.searchMessages(ORG, 'пятниц', carol).map(m => m.kind)).toEqual(['transcript'])

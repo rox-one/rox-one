@@ -24,6 +24,7 @@ export {
   TEAM_DEFAULT_CHANNEL_NAME,
   TEAM_MESSAGE_MAX,
   teamCallRoomName,
+  toMessengerCallEvent,
   TEAM_TRANSCRIPT_SEGMENTS_MAX,
   type TeamChatOrgDirectory,
   type TeamChatStore,

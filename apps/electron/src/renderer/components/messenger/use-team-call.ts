@@ -67,7 +67,8 @@ function startOwnMicTranscription(opts: {
   speakerName: string
   push: (segments: TeamCallTranscriptSegment[]) => Promise<unknown>
   isMuted: () => boolean
-}): () => void {
+}): () => Promise<void> {
+  const pending = new Set<Promise<void>>()
   let stopped = false
   let recorder: MediaRecorder | null = null
   const stream = new MediaStream([opts.track])
@@ -83,7 +84,7 @@ function startOwnMicTranscription(opts: {
       const endedAt = Date.now()
       if (!stopped) cycle()
       if (muted || !chunks.length) return
-      void (async () => {
+      const job = (async () => {
         try {
           const blob = new Blob(chunks, { type: recorder?.mimeType || mime || 'audio/webm' })
           const result = await window.electronAPI.transcribeVoice({ audioBase64: await blobToBase64(blob), mimeType: blob.type })
@@ -95,18 +96,28 @@ function startOwnMicTranscription(opts: {
           // ASR unavailable / consent declined: the call goes on without this chunk.
         }
       })()
+      pending.add(job)
+      void job.finally(() => pending.delete(job))
     }
     recorder.start()
     setTimeout(() => { if (recorder?.state === 'recording') recorder.stop() }, TRANSCRIBE_CHUNK_MS)
   }
   cycle()
-  return () => { stopped = true; if (recorder?.state === 'recording') recorder.stop() }
+  /** Stops recording, flushes the last chunk and waits (≤ 30 s) for in-flight ASR to land. */
+  return async () => {
+    stopped = true
+    if (recorder?.state === 'recording') {
+      const r = recorder
+      await new Promise<void>(resolve => { r.addEventListener('stop', () => setTimeout(resolve, 0), { once: true }); r.stop() })
+    }
+    await Promise.race([Promise.allSettled([...pending]), new Promise(resolve => setTimeout(resolve, 30_000))])
+  }
 }
 
 export function useTeamCall(opts: { selfName: string; autoTranscribe?: boolean }) {
   const [state, setState] = React.useState<TeamCallState>(IDLE)
   const roomRef = React.useRef<Room | null>(null)
-  const stopAsr = React.useRef<(() => void) | null>(null)
+  const stopAsr = React.useRef<(() => Promise<void>) | null>(null)
   const channelRef = React.useRef<string | null>(null)
 
   const refresh = React.useCallback(() => {
@@ -119,14 +130,16 @@ export function useTeamCall(opts: { selfName: string; autoTranscribe?: boolean }
 
   const leave = React.useCallback(async () => {
     const channelId = channelRef.current
-    stopAsr.current?.(); stopAsr.current = null
+    const flush = stopAsr.current
+    stopAsr.current = null
     const room = roomRef.current
     roomRef.current = null
     channelRef.current = null
     setState(IDLE)
     if (room) await room.disconnect().catch(() => {})
-    // Give the last ASR chunk a moment to land before the host closes the call.
-    if (channelId) setTimeout(() => { void window.electronAPI.teamChatCallLeave(channelId).catch(() => {}) }, 1500)
+    // The last ASR chunk must land before the host closes the call and posts the transcript.
+    await flush?.().catch(() => {})
+    if (channelId) await window.electronAPI.teamChatCallLeave(channelId).catch(() => {})
   }, [])
 
   const join = React.useCallback(async (channelId: string) => {
