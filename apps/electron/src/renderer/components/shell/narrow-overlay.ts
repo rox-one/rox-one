@@ -8,6 +8,13 @@ import { setNarrowSidebarOverlayOpen } from './shell-prefs'
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 const TOGGLE = '[data-rail-toggle-sidebar]'
+/** Menus/popovers/dialogs render in portals outside the overlay; they own their own keys. */
+const PORTAL_LAYER = '[data-radix-popper-content-wrapper], [role="menu"], [role="listbox"], [role="dialog"], [role="alertdialog"]'
+
+function inForeignLayer(root: HTMLElement, target: EventTarget | null): boolean {
+  const el = target instanceof Element ? target : null
+  return !!el && !root.contains(el) && !!el.closest(PORTAL_LAYER)
+}
 
 function focusables(root: HTMLElement): HTMLElement[] {
   return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.offsetParent !== null || el === document.activeElement)
@@ -27,6 +34,8 @@ export function useNarrowOverlayFocus(ref: React.RefObject<HTMLElement | null>, 
     })
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return
+      // A menu opened from the overlay handles its own Escape/Tab first.
+      if (inForeignLayer(root, event.target) || inForeignLayer(root, document.activeElement)) return
       if (event.key === 'Escape') {
         event.preventDefault()
         event.stopPropagation()
@@ -54,7 +63,7 @@ export function useNarrowOverlayFocus(ref: React.RefObject<HTMLElement | null>, 
       const target = event.target as Element | null
       if (!target || root.contains(target) || target.closest(TOGGLE)) return
       // Menus/popovers opened from the overlay render in portals; keep it open.
-      if (target.closest('[data-radix-popper-content-wrapper], [role="menu"], [role="dialog"]')) return
+      if (target.closest(PORTAL_LAYER)) return
       close(false)
     }
     document.addEventListener('keydown', onKeyDown, true)
