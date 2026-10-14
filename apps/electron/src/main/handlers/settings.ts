@@ -79,8 +79,9 @@ export function registerSettingsGuiHandlers(server: RpcServer, deps: HandlerDeps
   server.handle(RPC_CHANNELS.appearance.SET_UI_PREFERENCES, async (_ctx, patch: unknown): Promise<UiAppearanceSnapshot> => {
     const next = patch && typeof patch === 'object' ? patch as Record<string, unknown> : {}
     const statusBarVisible = typeof next.statusBarVisible === 'boolean' ? next.statusBarVisible : undefined
+    const modePillVisible = typeof next.modePillVisible === 'boolean' ? next.modePillVisible : undefined
     const accentSource = next.accentSource === 'brand' || next.accentSource === 'system' ? next.accentSource : undefined
-    setUiPreferences({ statusBarVisible, accentSource })
+    setUiPreferences({ statusBarVisible, modePillVisible, accentSource })
     // A switched accent source must repaint every window immediately.
     if (accentSource !== undefined) broadcastSystemAccent()
     return { ...getUiPreferences(), accent: readSystemAccent() }

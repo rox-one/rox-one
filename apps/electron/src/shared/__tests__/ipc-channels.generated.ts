@@ -113,6 +113,9 @@ export const EXPECTED_CHANNELS: string[] = [
   'calendar:googleDisconnect',
   'calendar:googleStatus',
   'calendar:googleSync',
+  'chatFolders:changed',
+  'chatFolders:get',
+  'chatFolders:mutate',
   'chatgpt:cancelOAuth',
   'chatgpt:completeOAuth',
   'chatgpt:getAuthStatus',
@@ -942,6 +945,17 @@ export const EXPECTED_CHANNELS: string[] = [
   'tasks:run',
   'tasks:stop',
   'tasks:validate',
+  'teamChat:addMembers',
+  'teamChat:archive',
+  'teamChat:changed',
+  'teamChat:createChannel',
+  'teamChat:join',
+  'teamChat:leave',
+  'teamChat:listChannels',
+  'teamChat:listMessages',
+  'teamChat:markRead',
+  'teamChat:post',
+  'teamChat:setSubscribed',
   'tg-link:start',
   'tg-link:status',
   'tg-link:verify',
@@ -1101,4 +1115,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1097
+export const EXPECTED_CHANNEL_COUNT = 1111

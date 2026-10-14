@@ -11,6 +11,7 @@ import type { MailFolder, MailFolderRole, MailLocalApi, MailMessage, MailResult,
 import type { InboxActorContext } from '../../../hooks/useInboxActorContext'
 import { toErrorMessage } from '@/lib/errors'
 import { subscribeSlowRefresh } from '@/lib/slow-refresh-scheduler'
+import { mailErrorCodeOf } from './mail-view'
 
 function api(): MailLocalApi | null {
   return (typeof window !== 'undefined' ? (window.electronAPI as { mailLocal?: MailLocalApi } | undefined)?.mailLocal : undefined) ?? null
@@ -36,7 +37,14 @@ export function useMail(options: { active: boolean; workspaceId?: string | null;
   const [unread, setUnread] = useState<MailSummary[]>([])
   const [loading, setLoading] = useState(false)
   const [statusLoading, setStatusLoading] = useState(() => !!api())
-  const [error, setError] = useState<string | null>(null)
+  const [error, setErrorText] = useState<string | null>(null)
+  const [errorCode, setErrorCode] = useState<string | null>(null)
+  /** Record a failure: message for logs/tests, code for the localized text the UI shows. */
+  const setError = useCallback((failure: unknown) => {
+    if (failure == null) { setErrorText(null); setErrorCode(null); return }
+    setErrorText(typeof failure === 'string' ? failure : toErrorMessage(failure))
+    setErrorCode(mailErrorCodeOf(failure) ?? 'error')
+  }, [])
   const [message, setMessage] = useState<MailMessage | null>(null)
   const openId = useRef<string | null>(null)
   const contextRef = useRef({ workspaceId: options.workspaceId, actorContext: options.actorContext })
@@ -70,7 +78,7 @@ export function useMail(options: { active: boolean; workspaceId?: string | null;
       setStatus(s); setError(null)
       return s
     } catch (failure) {
-      if (current()) setError(toErrorMessage(failure))
+      if (current()) setError(failure)
       return null
     } finally { if (current()) setStatusLoading(false) }
   }, [options.workspaceId, sameActor])
@@ -100,7 +108,7 @@ export function useMail(options: { active: boolean; workspaceId?: string | null;
         if (current() && openId.current === m?.id) setMessage(m)
       }
     } catch (e) {
-      if (current()) setError(toErrorMessage(e))
+      if (current()) setError(e)
     } finally {
       if (current()) setLoading(false)
     }
@@ -114,8 +122,8 @@ export function useMail(options: { active: boolean; workspaceId?: string | null;
     const request = ++statusRequest.current
     const current = () => contextRef.current === context && sameActor() && statusRequest.current === request
     setStatus((s) => (s ? { ...s, state: 'provisioning' } : s))
-    try { const r = await a.ensureMailbox(); if (!current()) return; if (r.ok) { setStatus(r.value); setError(null) } else setError(r.message) }
-    catch (failure) { if (current()) setError(toErrorMessage(failure)) }
+    try { const r = await a.ensureMailbox(); if (!current()) return; if (r.ok) { setStatus(r.value); setError(null) } else setError(r) }
+    catch (failure) { if (current()) setError(failure) }
   }, [options.workspaceId, sameActor])
 
   useEffect(() => {
@@ -173,7 +181,7 @@ export function useMail(options: { active: boolean; workspaceId?: string | null;
         setUnread((list) => list.filter((item) => item.id !== id))
       }
     } catch (e) {
-      if (current()) setError(toErrorMessage(e))
+      if (current()) setError(e)
     }
   }, [options.workspaceId, sameActor])
 
@@ -201,7 +209,7 @@ export function useMail(options: { active: boolean; workspaceId?: string | null;
     available: !!api(),
     status: visibleSnapshot ? status : null, statusLoading: visibleSnapshot ? statusLoading : !!api(), folders: visibleSnapshot ? folders : [], folder, setFolder, search, setSearch,
     items: visibleSnapshot ? items : [], total: visibleSnapshot ? total : 0, unread: visibleSnapshot ? unread : [], loading,
-    error: visibleSnapshot ? error : null, setError: (value: string | null) => { if (sameActor()) setError(value) },
+    error: visibleSnapshot ? error : null, errorCode: visibleSnapshot && error ? errorCode : null, setError: (value: unknown) => { if (sameActor()) setError(value) },
     message: visibleSnapshot ? message : null, open, refresh, refreshStatus, ensure, act, getThread,
   }
 }

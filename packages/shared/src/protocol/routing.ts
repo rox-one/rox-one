@@ -608,6 +608,20 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.orgs.REMOVE_MEMBER,
   RPC_CHANNELS.orgs.REVOKE_INVITE,
 
+  // teamChat — the team messenger store is org-scoped and authorized against the
+  // host org store (orgs.json), so it is classified with orgs:*.
+  RPC_CHANNELS.teamChat.LIST_CHANNELS,
+  RPC_CHANNELS.teamChat.CREATE_CHANNEL,
+  RPC_CHANNELS.teamChat.JOIN,
+  RPC_CHANNELS.teamChat.LEAVE,
+  RPC_CHANNELS.teamChat.ADD_MEMBERS,
+  RPC_CHANNELS.teamChat.SET_SUBSCRIBED,
+  RPC_CHANNELS.teamChat.ARCHIVE,
+  RPC_CHANNELS.teamChat.LIST_MESSAGES,
+  RPC_CHANNELS.teamChat.POST,
+  RPC_CHANNELS.teamChat.MARK_READ,
+  RPC_CHANNELS.teamChat.CHANGED,
+
   // identity — profile + service connections (Identity Center, S-07)
   RPC_CHANNELS.identity.CONNECT,
   RPC_CHANNELS.identity.DISCONNECT,
@@ -1205,6 +1219,11 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.labels.UPDATE,
   RPC_CHANNELS.labels.DELETE,
   RPC_CHANNELS.labels.CHANGED,
+
+  // chatFolders — workspace chat-folder grouping (chat-folders.json)
+  RPC_CHANNELS.chatFolders.GET,
+  RPC_CHANNELS.chatFolders.MUTATE,
+  RPC_CHANNELS.chatFolders.CHANGED,
 
   // views — workspace UI views
   RPC_CHANNELS.views.LIST,
