@@ -3,6 +3,7 @@ import type { HandlerDeps } from '../handler-deps'
 
 import { registerAuthHandlers } from './auth'
 import { registerCloudRunsHandlers } from './cloud-runs'
+import { registerCloudHandoffHandlers } from './cloud-handoff'
 import { registerOpenClawHandlers } from './openclaw'
 import { registerCommandGatewayHandlers } from './command-gateway'
 import { registerNotesImportHandlers } from './notes-import'
@@ -145,6 +146,7 @@ export function registerCoreRpcHandlers(
 ): void {
   registerAuthHandlers(server, deps)
   registerCloudRunsHandlers(server, deps)
+  registerCloudHandoffHandlers(server, deps)
   registerIdentityHandlers(server, deps)
   registerOpenClawHandlers(server, deps)
   registerCommandGatewayHandlers(server, deps)
