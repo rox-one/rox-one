@@ -92,6 +92,11 @@ describe('stripLegacySessionsBlock', () => {
     expect(stripLegacySessionsBlock(cleaned)).toBeNull()
   })
 
+  test('keeps user lines written inside the block, and the heading above them', () => {
+    const note = `# 2026-10-14\n\n## Sessions\n\n${DAILY_SESSIONS_START}\n- Давайте познакомимся\n- [ ] позвонить\nсвоя мысль\n- [[Проект]]\n- [док](https://example.com)\n${DAILY_SESSIONS_END}\n\nниже\n`
+    expect(stripLegacySessionsBlock(note)).toBe('# 2026-10-14\n\n## Sessions\n\n- [ ] позвонить\nсвоя мысль\n- [[Проект]]\n- [док](https://example.com)\n\nниже\n')
+  })
+
   test('is a no-op for notes without a complete block', () => {
     expect(stripLegacySessionsBlock('# 2026-10-14\n')).toBeNull()
     expect(stripLegacySessionsBlock(`x\n${DAILY_SESSIONS_START}\nno end`)).toBeNull()
