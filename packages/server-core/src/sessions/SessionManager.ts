@@ -11387,6 +11387,14 @@ export class SessionManager implements ISessionManager {
           }
           // inputTokens = current context size (full conversation sent this turn), NOT accumulated
           // Each API call sends the full conversation history, so we use the latest value
+          managed.tokenUsage.inputTokens = event.usage.inputTokens
+          {
+            // Real session total, counted per request (before outputTokens grows).
+            const next = accumulateSessionTokens(managed.tokenUsage, event.usage.requestTotals)
+            delete managed.tokenUsage.sessionTokens
+            delete managed.tokenUsage.sessionTokensIncomplete
+            Object.assign(managed.tokenUsage, next)
+          }
           Object.assign(managed.tokenUsage, accumulateAttemptSessionUsage(managed.tokenUsage, {
             inputTokens: event.usage.inputTokens,
             outputTokens: event.usage.outputTokens,
@@ -11398,13 +11406,6 @@ export class SessionManager implements ISessionManager {
           }))
           if (managed.budgetRunId && typeof event.usage.costUsd === 'number') {
             managed.budgetUsageReported = true
-          }
-          {
-            // Real session total, counted per request (before outputTokens grows).
-            const next = accumulateSessionTokens(managed.tokenUsage, event.usage.requestTotals)
-            delete managed.tokenUsage.sessionTokens
-            delete managed.tokenUsage.sessionTokensIncomplete
-            Object.assign(managed.tokenUsage, next)
           }
         }
         break

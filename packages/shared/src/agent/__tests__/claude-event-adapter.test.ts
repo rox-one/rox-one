@@ -344,12 +344,14 @@ describe('ClaudeEventAdapter', () => {
         session_id: 'sess-1',
       } as any);
 
-      expect(events).toHaveLength(2);
-      expect(events[0]).toMatchObject({
+      // The failed request was still billed: one journal attempt precedes error + complete.
+      expect(events).toHaveLength(3);
+      expect(events[0]).toMatchObject({ type: 'attempt', usage: { inputTokens: 100, outputTokens: 0 } });
+      expect(events[1]).toMatchObject({
         type: 'error',
         message: 'Something went wrong, Another error',
       });
-      expect(events[1]).toMatchObject({
+      expect(events[2]).toMatchObject({
         type: 'complete',
       });
     });

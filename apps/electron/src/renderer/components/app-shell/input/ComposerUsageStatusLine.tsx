@@ -109,10 +109,10 @@ export function computeUsageStatusNumbers(
     turns: Math.max(outline.turnCount, stats?.turns ?? 0),
     steps: Math.max(outline.stepCount, stats?.steps ?? 0),
     ...(input !== undefined ? { input } : {}),
-    ...(usage.totals.output ?? tokenUsage?.outputTokens !== undefined
+    ...((usage.totals.output ?? tokenUsage?.outputTokens) !== undefined
       ? { output: usage.totals.output ?? tokenUsage?.outputTokens }
       : {}),
-    ...(usage.totals.costUsd ?? tokenUsage?.costUsd !== undefined
+    ...((usage.totals.costUsd ?? tokenUsage?.costUsd) !== undefined
       ? { costUsd: usage.totals.costUsd ?? tokenUsage?.costUsd }
       : {}),
     ...(contextPercent !== undefined ? { contextPercent } : {}),
