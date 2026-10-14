@@ -7,6 +7,8 @@
 .onb-start,
 .onb-logo {
   --onb-background-1: radial-gradient(1100px 520px at 50% -12%, oklch(0.36 0.09 285 / 0.38), transparent 62%), radial-gradient(800px 480px at 105% 108%, oklch(0.40 0.09 215 / 0.18), transparent 60%), radial-gradient(700px 420px at -8% 100%, oklch(0.38 0.10 320 / 0.12), transparent 60%), var(--onb-bg);
+  --onb-primary-fg: oklch(0.16 0.01 270);
+  --onb-primary-fg-disabled: oklch(0.16 0.01 270 / 0.55);
   --onb-text-1: calc(0.75rem - 1pt);
   --onb-text-2: calc(0.875rem - 1pt);
   --onb-shadow-3: inset 0 1px 0 oklch(1 0 0 / 0.05), 0 6px 18px -10px oklch(0 0 0 / 0.6);
@@ -175,7 +177,7 @@
   max-width: none;
   border-radius: var(--radius-full);
   border: 1px solid transparent;
-  color: oklch(0.16 0.01 270);
+  color: var(--onb-primary-fg);
   font-weight: 600;
   background: oklch(0.98 0 0);
   box-shadow: none;
@@ -183,7 +185,7 @@
 }
 .onb-start .onb-primary:hover:not(:disabled) { background: oklch(0.92 0 0); }
 .onb-start .onb-primary:disabled {
-  color: oklch(0.16 0.01 270 / 0.55);
+  color: var(--onb-primary-fg-disabled);
   background: oklch(0.98 0 0 / 0.45);
 }
 
