@@ -16,6 +16,15 @@ export const RPC_CHANNELS = {
     READ_EVENTS: 'runtimeTrace:readEvents',
     READ_PAYLOAD: 'runtimeTrace:readPayload',
   },
+  cloudHandoff: {
+    GET_CONFIG: 'cloudHandoff:getConfig',
+    START: 'cloudHandoff:start',
+    STATUS: 'cloudHandoff:status',
+    CANCEL: 'cloudHandoff:cancel',
+    END: 'cloudHandoff:end',
+    SET_KEY: 'cloudHandoff:setKey',
+    CLEAR_KEY: 'cloudHandoff:clearKey',
+  },
   cloudRuns: {
     GET_CONFIG: 'cloudRuns:getConfig',
     SET_CONFIG: 'cloudRuns:setConfig',
@@ -235,6 +244,7 @@ export const RPC_CHANNELS = {
   notes: {
     LIST: 'notes:list',
     READ: 'notes:read',
+    LIST_TASKS: 'notes:listTasks',
     SAVE: 'notes:save',
     CREATE: 'notes:create',
     LIST_COMMENTS: 'notes:listComments',
