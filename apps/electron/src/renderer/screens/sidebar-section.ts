@@ -20,6 +20,12 @@ export type SidebarTarget =
   | { kind: 'url'; url: string }
   | { kind: 'date'; isoDate: string }
 
+export interface SidebarItemMenuAction {
+  id: string
+  labelKey: string
+  destructive?: boolean
+}
+
 export interface SidebarSectionItem {
   id: string
   /** User data (session title, label name) — rendered as-is. */
@@ -31,6 +37,8 @@ export interface SidebarSectionItem {
   count?: number
   /** Attention dot (unread, needs approval). */
   badge?: 'unread' | 'attention' | 'running' | 'status'
+  /** Context-menu / hover "⋯" actions; dispatched to the screen with the item target. */
+  menu?: SidebarItemMenuAction[]
   /** Secondary muted text (time, due date). Already formatted by the caller. */
   secondary?: string
   target: SidebarTarget

@@ -27,3 +27,14 @@ describe('toScreenSidebarGroups', () => {
     expect(groups[0]!.initialVisible).toBe(7)
   })
 })
+
+describe('item menus', () => {
+  it('maps menu actions with translated labels and the item target', () => {
+    const onMenu = mock(() => {})
+    const [g] = toScreenSidebarGroups([{ id: 'g', titleKey: 'g', collapsible: true, items: [{ id: 'a', label: 'A', menu: [{ id: 'pin', labelKey: 'k.pin' }], target: { kind: 'filter', filterId: 'x' } }] }], { t, icons: {}, onTarget: () => {}, onMenu })
+    const menu = g!.items[0]!.menu!
+    expect(menu[0]!.label).toBe('t(k.pin)')
+    menu[0]!.onSelect()
+    expect(onMenu).toHaveBeenCalledWith({ kind: 'filter', filterId: 'x' }, 'pin')
+  })
+})

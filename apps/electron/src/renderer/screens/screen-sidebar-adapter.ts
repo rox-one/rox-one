@@ -16,6 +16,8 @@ export interface AdapterOptions {
   t: T
   icons: Readonly<Record<string, LucideIcon>>
   onTarget(target: SidebarTarget): void
+  /** Item menu action (see SidebarSectionItem.menu). */
+  onMenu?(target: SidebarTarget, actionId: string): void
   /** targetKey of the row to mark active. */
   activeKey?: string | null
 }
@@ -31,6 +33,9 @@ export function toSidebarItem(item: SidebarSectionItem, o: AdapterOptions): Side
     secondary: item.secondary,
     active: o.activeKey != null && targetKey(item.target) === o.activeKey,
     onSelect: () => o.onTarget(item.target),
+    ...(item.menu?.length && o.onMenu
+      ? { menu: item.menu.map((m) => ({ id: m.id, label: o.t(m.labelKey), destructive: m.destructive, onSelect: () => o.onMenu?.(item.target, m.id) })) }
+      : {}),
   }
 }
 
