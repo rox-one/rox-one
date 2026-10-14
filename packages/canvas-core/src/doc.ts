@@ -9,7 +9,7 @@
  */
 import * as Y from 'yjs'
 import { SCHEMA_VERSION, validateObject, type CanvasObject, type CanvasObjectInput } from './schema.ts'
-import { keyBetween } from './fractional-index.ts'
+import { isValidIndexKey, keyBetween } from './fractional-index.ts'
 
 export type Origin = { kind: 'user'; userId: string } | { kind: 'agent'; sessionId: string } | { kind: 'remote' } | { kind: 'migration' }
 
@@ -75,7 +75,9 @@ export class CanvasDoc {
     let max: string | null = null
     for (const m of this.objects.values()) {
       if ((m.get('parentId') ?? null) !== parentId) continue
-      const idx = m.get('index') as string
+      const idx = m.get('index')
+      // Keys from remote peers are not validated; ignore malformed ones.
+      if (typeof idx !== 'string' || !isValidIndexKey(idx)) continue
       if (max === null || idx > max) max = idx
     }
     return max
@@ -137,12 +139,14 @@ export class CanvasDoc {
     const m = this.objects.get(id)
     if (!m) throw new CanvasValidationError(id, ['not found'])
     const current = fromYMap(m)
+    const repairedIndex = isValidIndexKey(current.index) ? current.index : keyBetween(this.lastIndex((patch.parentId !== undefined ? patch.parentId : current.parentId) ?? null), null)
     const next = {
-      ...current, ...patch,
+      ...current, index: repairedIndex, ...patch,
       style: patch.style ? { ...current.style, ...patch.style } : current.style,
       props: patch.props ? { ...current.props, ...patch.props } : current.props,
       id, updatedAt: Date.now(),
     }
+    if (next.parentId !== null && !this.objects.has(next.parentId)) throw new CanvasValidationError(id, [`unknown parent ${next.parentId}`])
     if (next.parentId !== null && (next.parentId === id || this.isDescendant(next.parentId, id))) throw new CanvasValidationError(id, ['parent cycle'])
     const res = validateObject(next)
     if (!res.ok) throw new CanvasValidationError(id, res.issues)
@@ -155,7 +159,7 @@ export class CanvasDoc {
           for (const [pk, pv] of Object.entries(val)) {
             if (pk === TEXT_PROP && typeof pv === 'string') {
               const t = props.get(pk)
-              if (t instanceof Y.Text) { if (t.toString() !== pv) { t.delete(0, t.length); t.insert(0, pv) } }
+              if (t instanceof Y.Text) applyTextDiff(t, pv)
               else props.set(pk, new Y.Text(pv))
             } else if (!deepEqual(plain(props.get(pk)), pv)) props.set(pk, pv)
           }
@@ -179,7 +183,23 @@ export class CanvasDoc {
       doomed.add(id)
       stack.push(...(childrenOf.get(id) ?? []))
     }
-    this.doc.transact(() => { for (const id of doomed) this.objects.delete(id) }, origin)
+    this.doc.transact(() => {
+      // Connectors that survive keep their last endpoint position instead of dangling.
+      for (const [cid, m] of this.objects.entries()) {
+        if (doomed.has(cid) || m.get('type') !== 'connector') continue
+        const props = m.get('props') as Y.Map<unknown> | undefined
+        if (!props) continue
+        for (const end of ['from', 'to'] as const) {
+          const ep = props.get(end) as { objectId?: string } | undefined
+          if (!ep || typeof ep.objectId !== 'string' || !doomed.has(ep.objectId)) continue
+          const target = this.objects.get(ep.objectId)!
+          const x = Number(target.get('x')) + Number(target.get('w')) / 2
+          const y = Number(target.get('y')) + Number(target.get('h')) / 2
+          props.set(end, { x: Number.isFinite(x) ? x : 0, y: Number.isFinite(y) ? y : 0 })
+        }
+      }
+      for (const id of doomed) this.objects.delete(id)
+    }, origin)
     return [...doomed]
   }
 
@@ -190,7 +210,8 @@ export class CanvasDoc {
     const parent = (m.get('parentId') ?? null) as string | null
     const siblings = [...this.objects.entries()]
       .filter(([sid, s]) => sid !== id && (s.get('parentId') ?? null) === parent)
-      .map(([, s]) => s.get('index') as string)
+      .map(([, s]) => s.get('index'))
+      .filter((k): k is string => typeof k === 'string' && isValidIndexKey(k))
       .sort()
     let key: string
     if (placement === 'front') key = keyBetween(siblings.at(-1) ?? null, null)
@@ -198,7 +219,8 @@ export class CanvasDoc {
     else {
       const ref = this.objects.get(placement.after)
       if (!ref || (ref.get('parentId') ?? null) !== parent) throw new CanvasValidationError(id, ['reorder target is not a sibling'])
-      const refIdx = ref.get('index') as string
+      const refIdx = ref.get('index')
+      if (typeof refIdx !== 'string' || !isValidIndexKey(refIdx)) throw new CanvasValidationError(id, ['reorder target has an invalid index'])
       const next = siblings.find(s => s > refIdx) ?? null
       key = keyBetween(refIdx, next)
     }
@@ -253,4 +275,17 @@ function deepEqual(a: unknown, b: unknown): boolean {
   const ka = Object.keys(a as object), kb = Object.keys(b as object)
   if (ka.length !== kb.length) return false
   return ka.every(k => deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]))
+}
+
+/** Minimal edit: keep the common prefix/suffix so concurrent edits elsewhere survive. */
+export function applyTextDiff(t: Y.Text, next: string): void {
+  const prev = t.toString()
+  if (prev === next) return
+  let start = 0
+  const max = Math.min(prev.length, next.length)
+  while (start < max && prev.charCodeAt(start) === next.charCodeAt(start)) start++
+  let endPrev = prev.length, endNext = next.length
+  while (endPrev > start && endNext > start && prev.charCodeAt(endPrev - 1) === next.charCodeAt(endNext - 1)) { endPrev--; endNext-- }
+  if (endPrev > start) t.delete(start, endPrev - start)
+  if (endNext > start) t.insert(start, next.slice(start, endNext))
 }

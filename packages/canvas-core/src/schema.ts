@@ -5,6 +5,7 @@
  * it never drops them.
  */
 import { z } from 'zod'
+import { isValidIndexKey } from './fractional-index.ts'
 
 export const SCHEMA_VERSION = 1
 
@@ -53,7 +54,7 @@ export const baseObjectSchema = z.object({
   id: z.string().min(1),
   type: z.string().min(1),
   parentId: z.string().nullable(),
-  index: z.string().min(1),
+  index: z.string().refine(isValidIndexKey, 'invalid fractional index key'),
   x: finite, y: finite,
   w: z.number().finite().min(0), h: z.number().finite().min(0),
   rotation: finite.default(0),
