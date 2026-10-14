@@ -15,10 +15,10 @@ import { useTranslation } from 'react-i18next'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { cn } from '@/lib/utils'
 import { buildStatusBarModel, type WorkspaceRuntimeMode } from '@/platform/status-model'
-import { CHROME_DENSITY } from '@/platform/chrome-density'
 import type { RoxAccountSnapshot } from '@rox/shared/auth'
 
-const STATUS_BAR_HEIGHT = CHROME_DENSITY.statusBarHeight
+/** CSS var so the bar follows `data-density`. */
+const STATUS_BAR_HEIGHT = 'var(--chrome-status-height)'
 
 function workspaceModeLabel(mode: WorkspaceRuntimeMode, t: (key: string) => string): string {
   switch (mode) {
