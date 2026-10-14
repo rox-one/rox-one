@@ -28,7 +28,7 @@ export function BulkActionBar({ count, onAction, onClear }: BulkActionBarProps) 
       data-testid="tasks-bulk-bar"
       onKeyDown={(event) => {
         if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home' && event.key !== 'End') return
-        const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('button')]
+        const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button'))
         const index = buttons.indexOf(document.activeElement as HTMLButtonElement)
         const last = buttons.length - 1
         const next = event.key === 'Home' ? 0 : event.key === 'End' ? last : event.key === 'ArrowRight' ? (index + 1) % buttons.length : (index - 1 + buttons.length) % buttons.length
