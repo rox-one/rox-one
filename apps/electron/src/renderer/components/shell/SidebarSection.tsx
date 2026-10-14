@@ -251,7 +251,7 @@ export const SidebarSection = React.memo(function SidebarSection({ screenId, gro
             <ul className="flex flex-col gap-0.5">
               {visible.map((item) => <SidebarRow key={item.id} item={item} mode="expanded" />)}
             </ul>
-            {(hiddenCount > 0 || showAll) && group.items.length > (group.initialVisible ?? 5) && (
+            {(hiddenCount > 0 || (showAll && splitVisible(group.items, group.initialVisible, false).hiddenCount > 0)) && (
               <button
                 type="button"
                 onClick={() => setShowAll((value) => !value)}

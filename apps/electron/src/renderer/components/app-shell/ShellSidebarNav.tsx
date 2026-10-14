@@ -96,8 +96,7 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   const navState = useNavigationState()
   const current = React.useMemo(() => resolveCurrentSurface(navState), [navState])
   // shell-layout: a screen that published a config owns the whole sidebar.
-  const published = useCurrentScreenSidebar()
-  const screenConfig = published && published.screenId === current.id ? published : null
+  const screenConfig = useCurrentScreenSidebar(current.id)
 
   const rowById = React.useCallback((id: string | null): LinkItem | null => {
     if (!id) return null
@@ -226,7 +225,7 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
       )}
       {/* Portal target for screens that own their navigation (mode screens, Notes, Memory, Settings…). */}
       <div ref={slotRef} hidden={isCollapsed} data-primary-sidebar-context="" className="empty:hidden" />
-      {(showFallback || isCollapsed) && !railLinks?.length && (
+      {(showFallback || (isCollapsed && !slotFilled)) && !railLinks?.length && (
         <React.Suspense fallback={null}>
           <RecentPinnedSidebar workspaceIds={workspaceIds} isCollapsed={isCollapsed} onExpand={onExpandRow} />
         </React.Suspense>

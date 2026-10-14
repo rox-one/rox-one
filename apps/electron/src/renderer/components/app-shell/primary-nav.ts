@@ -167,13 +167,13 @@ function defaultGroup(entry: PrimaryNavEntry, shellFlags: ReadonlySet<string>): 
  * Браузер — live in the pills; everything else keeps its registry group.
  */
 export function defaultPlacement(entry: PrimaryNavEntry, shellFlags: ReadonlySet<string>): NavPlacement {
-  if (DEFAULT_PILL_NAV_IDS.has(entry.id)) return 'pills'
-  if (entry.id === 'sessions' && !shellFlags.has(WORKBENCH_FLAG.modeMessengerV1)) return 'pills'
-  return 'menu'
+  void shellFlags
+  return DEFAULT_PILL_NAV_IDS.has(entry.id) ? 'pills' : 'menu'
 }
 
 /** Registry ids of the starter pill composition (`DEFAULT_PILL_SURFACES`); Чат joins while Мессенджер is off. */
-export const DEFAULT_PILL_NAV_IDS: ReadonlySet<string> = new Set([HOME_NAV_ID, 'feed', 'messenger', 'docs', 'browser'])
+/** Mark (shell-layout): Главная (icon) · Лента · Сессии · Заметки · Браузер. */
+export const DEFAULT_PILL_NAV_IDS: ReadonlySet<string> = new Set([HOME_NAV_ID, 'feed', 'sessions', 'docs', 'browser'])
 
 /** Every surface available under the current flags, with its effective placement (Settings list). */
 export function resolveNavSurfaces({ shellFlags, modeFlags = {}, placements = {} }: PrimaryNavContext): ResolvedPrimaryNavEntry[] {

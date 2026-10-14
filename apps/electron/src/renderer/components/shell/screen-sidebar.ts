@@ -62,26 +62,41 @@ export interface ScreenSidebarConfig {
 export const DEFAULT_INITIAL_VISIBLE = 5
 
 type Listener = () => void
-let current: ScreenSidebarConfig | null = null
-let owner: symbol | null = null
+/** Registrations in publish order (latest last); several screens may be mounted at once (panel strip). */
+let registrations: ReadonlyArray<{ token: symbol; config: ScreenSidebarConfig }> = []
 const listeners = new Set<Listener>()
 
 function emit() { for (const listener of listeners) listener() }
 
-/** Publish a config for `token`. Last publisher wins; clearing is owner-checked. */
+/** Publish (or replace) the config for `token`; null removes only that token's registration. */
 export function publishScreenSidebar(token: symbol, config: ScreenSidebarConfig | null): void {
+  const index = registrations.findIndex((entry) => entry.token === token)
   if (config === null) {
-    if (owner !== token) return
-    owner = null
-    current = null
+    if (index < 0) return
+    registrations = registrations.filter((entry) => entry.token !== token)
+  } else if (index >= 0) {
+    if (registrations[index].config === config) return
+    const next = registrations.slice()
+    next[index] = { token, config }
+    registrations = next
   } else {
-    owner = token
-    current = config
+    registrations = [...registrations, { token, config }]
   }
   emit()
 }
 
-export function getScreenSidebar(): ScreenSidebarConfig | null { return current }
+/** The latest registration for `screenId` (null when that screen published nothing). */
+export function getScreenSidebar(screenId?: string | null): ScreenSidebarConfig | null {
+  for (let i = registrations.length - 1; i >= 0; i--) {
+    const { config } = registrations[i]
+    if (screenId === undefined || config.screenId === screenId) return config
+  }
+  return null
+}
+
+export function listScreenSidebarIds(): string[] {
+  return registrations.map((entry) => entry.config.screenId)
+}
 
 export function subscribeScreenSidebar(listener: Listener): () => void {
   listeners.add(listener)
@@ -89,30 +104,44 @@ export function subscribeScreenSidebar(listener: Listener): () => void {
 }
 
 /** Test helper. */
-export function resetScreenSidebar(): void { current = null; owner = null; emit() }
+export function resetScreenSidebar(): void { registrations = []; emit() }
 
-/** Shell side: the currently published config. */
-export function useCurrentScreenSidebar(): ScreenSidebarConfig | null {
-  return React.useSyncExternalStore(subscribeScreenSidebar, getScreenSidebar, getScreenSidebar)
+/**
+ * Shell side: the config published for the focused screen. Configs for other
+ * screen ids stay registered (their panels may be open) but are not shown.
+ */
+export function useCurrentScreenSidebar(screenId: string | null): ScreenSidebarConfig | null {
+  const get = React.useCallback(() => (screenId ? getScreenSidebar(screenId) : null), [screenId])
+  return React.useSyncExternalStore(subscribeScreenSidebar, get, get)
 }
 
 /**
  * Screen side: publish `config` while mounted. Pass a memoized value; it is
- * re-published whenever its identity changes and cleared on unmount.
+ * re-published whenever its identity changes and removed on unmount.
+ * `knownScreenIds` (dev) warns when the id matches no registered screen.
  */
 export function useScreenSidebar(config: ScreenSidebarConfig | null): void {
   const tokenRef = React.useRef<symbol | null>(null)
   if (!tokenRef.current) tokenRef.current = Symbol('screen-sidebar')
   const token = tokenRef.current
   React.useLayoutEffect(() => {
+    if (config && import.meta.env?.DEV && knownScreenIds && !knownScreenIds.has(config.screenId)) {
+      console.warn(`[screen-sidebar] "${config.screenId}" is not a registered screen id; the sidebar will never show it.`)
+    }
     publishScreenSidebar(token, config)
   }, [token, config])
   React.useLayoutEffect(() => () => publishScreenSidebar(token, null), [token])
 }
 
+let knownScreenIds: ReadonlySet<string> | null = null
+/** Shell registers the valid screen ids (primary-nav + experimental) for the dev mismatch warning. */
+export function setKnownScreenIds(ids: Iterable<string>): void { knownScreenIds = new Set(ids) }
+
 /** Split a group's items into the visible head and the "Show more" tail. */
 export function splitVisible<T>(items: readonly T[], initialVisible: number | undefined, expanded: boolean): { visible: readonly T[]; hiddenCount: number } {
-  const limit = Math.max(1, initialVisible ?? DEFAULT_INITIAL_VISIBLE)
+  // 0 / negative = no limit.
+  const limit = initialVisible === undefined ? DEFAULT_INITIAL_VISIBLE : initialVisible
+  if (limit <= 0) return { visible: items, hiddenCount: 0 }
   if (expanded || items.length <= limit) return { visible: items, hiddenCount: 0 }
   // Never hide the active row behind "Show more".
   const head = items.slice(0, limit)
