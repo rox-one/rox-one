@@ -37,9 +37,11 @@ export function useRoxSessions(enabled: boolean) {
   return { state, reload }
 }
 
-export function RoxAccountManagement({ handle, keyPrefix }: { handle: string | null; keyPrefix: string | null }) {
+export function RoxAccountManagement({ handle, keyPrefix, onAccountChanged }: { handle: string | null; keyPrefix: string | null; onAccountChanged?: () => void }) {
   const { t, i18n } = useTranslation()
   const { state: sessions, reload } = useRoxSessions(true)
+  const sessionsSeen = React.useRef(false)
+  if (sessions.kind !== 'loading') sessionsSeen.current = true
   const [handleDraft, setHandleDraft] = React.useState(handle ?? '')
   const [busy, setBusy] = React.useState<string | null>(null)
   const [prefix, setPrefix] = React.useState(keyPrefix)
@@ -63,7 +65,7 @@ export function RoxAccountManagement({ handle, keyPrefix }: { handle: string | n
 
   const claimHandle = () => void run('handle', async () => {
     const res = await window.electronAPI.setRoxHandle(draft)
-    if (res.ok) setHandleDraft(res.handle)
+    if (res.ok) { setHandleDraft(res.handle); onAccountChanged?.() }
     return res
   }, t('settings.account.rox.handleSaved', { address: `${draft}@rox.one` }))
 
@@ -71,7 +73,7 @@ export function RoxAccountManagement({ handle, keyPrefix }: { handle: string | n
     if (!window.confirm(t('settings.account.rox.rotateConfirm'))) return
     void run('rotate', async () => {
       const res = await window.electronAPI.rotateRoxKey()
-      if (res.ok) setPrefix(res.prefix)
+      if (res.ok) { setPrefix(res.prefix); onAccountChanged?.() }
       return res
     }, t('settings.account.rox.rotated'))
   }
@@ -79,6 +81,10 @@ export function RoxAccountManagement({ handle, keyPrefix }: { handle: string | n
   const revoke = (s: RoxIdSession) => void run(`revoke-${s.id}`, () => window.electronAPI.revokeRoxSession(s.id), t('settings.account.rox.revoked')).then((ok) => { if (ok) void reload() })
   const revokeOthers = () => void run('revoke-others', () => window.electronAPI.revokeOtherRoxSessions(), t('settings.account.rox.revokedOthers')).then((ok) => { if (ok) void reload() })
 
+  // Account management only exists on the rox-id backend (opt-in); on legacy
+  // every call would 401, so hide the whole surface instead of broken buttons.
+  if (sessions.kind === 'error' && sessions.code === 'ROX_ID_DISABLED') return null
+  if (sessions.kind === 'loading' && !sessionsSeen.current) return null
   const others = sessions.kind === 'ready' ? sessions.value.filter((s) => !s.current).length : 0
 
   return (

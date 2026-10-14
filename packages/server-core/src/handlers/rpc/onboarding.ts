@@ -5,7 +5,7 @@
  */
 import { getRoxAccountAuthority, peekRoxAccountAuthority, LOCAL_ROX_CALLER, isRoxCloudRequired, getOnboardingAuthPayload, saveOmpRoxCredential } from '@rox/shared/auth'
 import { getRoxAuthBaseUrl } from '@rox/shared/auth/rox-cloud'
-import { createRoxIdClient, ROX_HANDLE_RE, type RoxIdClient } from '@rox/shared/auth'
+import { createRoxIdClient, isRoxIdBackendEnabled, ROX_HANDLE_RE, type RoxIdClient } from '@rox/shared/auth'
 import { getCredentialManager } from '@rox/shared/credentials'
 import { isSetupDeferred, setSetupDeferred } from '@rox/shared/config'
 import { prepareClaudeOAuth, exchangeClaudeCode, hasValidOAuthState, clearOAuthState, prepareMcpOAuth } from '@rox/shared/auth'
@@ -251,6 +251,8 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
   // rox-id account surface (devices, handle, key rotation). The session token
   // stays in this process; renderer gets closed error codes and prefixes only.
   const accountCall = async <T extends object>(ctx: import('@rox/server-core/transport').RequestContext, run: (client: RoxIdClient, token: string) => Promise<T>) => {
+    // Opt-in only: on the legacy backend the stored token is not a rox-id token.
+    if (!isRoxIdBackendEnabled()) return { ok: false as const, error: 'ROX_ID_DISABLED' }
     try {
       const token = await getRoxAccountAuthority().accessToken(caller(ctx))
       return { ok: true as const, ...(await run(createRoxIdClient(), token)) }
@@ -264,20 +266,20 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
     if (typeof sessionId !== 'string' || !sessionId) throw new Error('ROX_INVALID_ARGUMENT')
     await c.revokeSession(token, sessionId)
     return {}
-  }), { access: 'localElectron', nativeAction: 'read' })
-  server.handle(RPC_CHANNELS.onboarding.REVOKE_OTHER_ROX_SESSIONS, ctx => accountCall(ctx, async (c, token) => ({ revoked: await c.revokeOtherSessions(token) })), { access: 'localElectron', nativeAction: 'read' })
+  }), { access: 'localElectron', nativeAction: 'write' })
+  server.handle(RPC_CHANNELS.onboarding.REVOKE_OTHER_ROX_SESSIONS, ctx => accountCall(ctx, async (c, token) => ({ revoked: await c.revokeOtherSessions(token) })), { access: 'localElectron', nativeAction: 'write' })
   server.handle(RPC_CHANNELS.onboarding.ROTATE_ROX_KEY, ctx => accountCall(ctx, async (c, token) => {
     const rotated = await c.rotateKey(token)
     // Re-sync so the authority swaps the stored per-user credential (keyId changed).
     await getRoxAccountAuthority().state(caller(ctx))
     return { prefix: rotated.prefix }
-  }), { access: 'localElectron', nativeAction: 'read' })
+  }), { access: 'localElectron', nativeAction: 'write' })
   server.handle(RPC_CHANNELS.onboarding.SET_ROX_HANDLE, (ctx, handle: unknown) => accountCall(ctx, async (c, token) => {
     const value = typeof handle === 'string' ? handle.trim().toLowerCase() : ''
     if (!ROX_HANDLE_RE.test(value)) throw new Error('ROX_HANDLE_INVALID')
     const account = await c.setHandle(token, value)
     return { handle: account?.handle ?? value, handleAddress: account?.handleAddress ?? null }
-  }), { access: 'localElectron', nativeAction: 'read' })
+  }), { access: 'localElectron', nativeAction: 'write' })
   server.handle(RPC_CHANNELS.onboarding.GET_ROX_BALANCE, async ctx => {
     const state = await getRoxAccountAuthority().state(caller(ctx))
     // The snapshot is the single source of truth for the balance. A cached

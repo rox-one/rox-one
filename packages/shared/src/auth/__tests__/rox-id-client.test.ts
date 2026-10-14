@@ -90,3 +90,12 @@ describe('rox-id client', () => {
     expect(await c.handleAvailable('x')).toBe('invalid')
   })
 })
+
+describe('identity backend opt-in', () => {
+  it('keeps legacy as the default and needs ROX_IDENTITY_BACKEND=rox-id to opt in', async () => {
+    const { isRoxIdBackendEnabled } = await import('../rox-account-authority.ts')
+    expect(isRoxIdBackendEnabled({})).toBe(false)
+    expect(isRoxIdBackendEnabled({ ROX_IDENTITY_BACKEND: 'legacy' })).toBe(false)
+    expect(isRoxIdBackendEnabled({ ROX_IDENTITY_BACKEND: 'rox-id' })).toBe(true)
+  })
+})

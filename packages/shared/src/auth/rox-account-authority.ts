@@ -31,14 +31,19 @@ export interface PocketClient {
   start: typeof startPocketDeviceFlow; wait: typeof waitForPocketApproval; refresh: typeof refreshPocketSession
   logout: typeof logoutPocketSession; account: typeof fetchPocketAccount; credential: typeof fetchPocketCredential
 }
-/** Legacy rox.one website device flow; kept behind ROX_IDENTITY_BACKEND=legacy. */
+/** Legacy rox.one website device flow — the default identity backend. */
 export const legacyPocketClient: PocketClient = { start: startPocketDeviceFlow, wait: waitForPocketApproval, refresh: refreshPocketSession, logout: logoutPocketSession, account: fetchPocketAccount, credential: fetchPocketCredential }
 /**
- * Identity backend: rox-id (passkeys-only id.rox.one, contract v1) by default.
- * The rox-id client is created lazily so tests that inject a client never touch it.
+ * Identity backend. Legacy stays the default; rox-id (passkeys-only id.rox.one,
+ * contract v1) is an explicit opt-in via ROX_IDENTITY_BACKEND=rox-id until the
+ * server is live and verified.
  */
+export function isRoxIdBackendEnabled(env: Record<string, string | undefined> = process.env): boolean {
+  return env.ROX_IDENTITY_BACKEND === 'rox-id'
+}
+/** The rox-id client is created lazily so tests that inject a client never touch it. */
 export function selectPocketClient(device: { name?: string; platform?: string } = {}): PocketClient {
-  if (process.env.ROX_IDENTITY_BACKEND === 'legacy') return legacyPocketClient
+  if (!isRoxIdBackendEnabled()) return legacyPocketClient
   const c = createRoxIdClient(undefined, device)
   return { start: c.start, wait: c.wait, refresh: c.refresh, logout: c.logout, account: c.account, credential: c.credential }
 }
