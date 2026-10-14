@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, forwardRef, type ReactNode } from 'react'
 import { ChevronLeft, ChevronRight, RotateCw, X, Globe } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion } from '../../lib/lazy-motion'
 import { cn } from '../../lib/utils'
 import { useTranslation } from 'react-i18next'
 import { Spinner } from './LoadingIndicator'

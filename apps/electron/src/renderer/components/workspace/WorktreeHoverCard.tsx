@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { motion } from 'motion/react'
+import { motion } from '@/lib/deferred-motion'
 import { cn } from '@/lib/utils'
 import type { WorkspaceGitBranch } from '@/hooks/useWorkspaceGitModel'
 import { SE_SPRING_PANEL } from '@/lib/motion/super-engineering-springs'
