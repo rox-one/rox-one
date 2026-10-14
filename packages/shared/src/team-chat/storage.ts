@@ -454,8 +454,9 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       // The client roster can only confirm who is still there (drop peers that left the room)
       // and mark the actor present; it can never add other people to the call.
       const seen = new Set(participantIds.filter((id): id is string => typeof id === 'string'))
+      // Only current participants (joined via joinCall) can be confirmed; sync never adds anyone.
+      if (!call.participantIds.includes(actor.userId)) return { orgId: channel.orgId, call }
       const ids = call.participantIds.filter(id => id === actor.userId || seen.has(id))
-      if (!ids.includes(actor.userId)) ids.push(actor.userId)
       call.participantIds = ids
       save(store)
       return { orgId: channel.orgId, call }

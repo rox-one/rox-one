@@ -69,7 +69,7 @@ export interface TeamCallTranscriptSegment {
   endMs: number
 }
 
-/** A LiveKit call bound to one channel or group chat (room = `rox-<channelId>`). */
+/** A LiveKit call bound to one channel or group chat (room = `rox-ch-<channelId>`, see teamCallRoomName). */
 export interface TeamChannelCall {
   id: string
   channelId: string
