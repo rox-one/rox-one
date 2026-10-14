@@ -268,7 +268,7 @@ export function reapplyZenShellOnWindow(window: BrowserWindow): void {
  */
 export function applyLegacyMaterial(window: BrowserWindow): void {
   if (window.isDestroyed()) return
-  if (nativeAccessibilityPrefersSolid()) {
+  if (nativeAccessibilityPrefersSolid() || getZenShellMaterialPreference() === 'opaque') {
     clearNativeMaterial(window)
     return
   }

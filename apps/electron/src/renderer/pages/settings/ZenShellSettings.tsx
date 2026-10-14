@@ -17,7 +17,7 @@ import { readWebChromePreference, saveWebChromePreference, subscribeWebChromePre
 const DEFAULT_SNAPSHOT: ZenShellSnapshot = {
   flag: 'shell.zen.v1',
   enabled: false,
-  preference: 'system',
+  preference: 'opaque',
   material: 'solid',
   materialDepth: 'standard',
   platform: 'web',
