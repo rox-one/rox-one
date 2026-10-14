@@ -80,7 +80,6 @@ export function AllScreensMenu({ collapsed = false, onOpenBrowser }: { collapsed
           <PopoverTrigger asChild>
             <button
               type="button"
-              tabIndex={-1}
               data-mode={ALL_SCREENS_TRIGGER_ID}
               data-tour="guide.sidebar-tools"
               data-all-screens-trigger=""

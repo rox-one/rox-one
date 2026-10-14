@@ -29,8 +29,9 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
+import { useOpenScreen } from '@/components/shell/panel-strip'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
-import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
+import { useNavigationState } from '@/contexts/NavigationContext'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
 import { primaryPanelRouteAtom } from '@/atoms/panel-stack'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
@@ -284,7 +285,7 @@ function PillItems({
 export function ModeBar({ collapsed = false, onMeasure, onOpenPalette, onOpenBrowser }: ModeBarProps = {}) {
   const { t, i18n } = useTranslation()
   const navState = useNavigationState()
-  const { navigate } = useNavigation()
+  const openScreen = useOpenScreen()
   const prefs = usePillPreferences()
   // WP6: the shared selector (same list the sidebar/rail fall back from).
   const { rendered: available, nav: pillNav } = usePillModel(true)
@@ -327,9 +328,9 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette, onOpenBro
   const handleActivate = useCallback(
     (surface: ResolvedPillSurface) => {
       recordPillActivation(surface.id)
-      activatePillSurface(surface, { navigate, openBrowser })
+      activatePillSurface(surface, { navigate: openScreen, openBrowser })
     },
-    [navigate, openBrowser],
+    [openScreen, openBrowser],
   )
   const handleTogglePin = useCallback(
     (id: string) => setPillPinned(id, !pinnedIds.has(id)),

@@ -5,22 +5,23 @@
  * a slot may map to nothing. WP6: the icon-only Главная is not numbered.
  */
 import { useAction } from '@/actions'
-import { navigate } from '@/lib/navigate'
+import { useOpenScreen } from '@/components/shell/panel-strip'
 import { usePillModel } from './usePillNav'
 import { activatePillSurface, pillSurfaceForSlot, recordPillActivation } from './pill-composition'
 import { useOpenPillBrowser } from './pill-activate'
 
 export function useModeHotkeys(): void {
   const openBrowser = useOpenPillBrowser()
+  const openScreen = useOpenScreen()
   // WP6: Главная leads the pill but is not numbered — ⌘1…7 keep their slots.
   const { slots: surfaces } = usePillModel(true)
   const go = (slot: number) => () => {
     const surface = pillSurfaceForSlot(surfaces, slot)
     if (!surface) return
     recordPillActivation(surface.id)
-    activatePillSurface(surface, { navigate, openBrowser })
+    activatePillSurface(surface, { navigate: openScreen, openBrowser })
   }
-  const deps = [surfaces, openBrowser]
+  const deps = [surfaces, openBrowser, openScreen]
   useAction('mode.slot1', go(1), undefined, deps)
   useAction('mode.slot2', go(2), undefined, deps)
   useAction('mode.slot3', go(3), undefined, deps)

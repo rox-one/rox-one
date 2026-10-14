@@ -109,16 +109,30 @@ export function selectRecentPinned<T extends RecentPinnedSession>(
   workspaceIds: ReadonlySet<string> | null,
   options: { recentLimit?: number; pinnedLimit?: number } = {},
 ): { recent: T[]; pinned: T[] } {
-  const inScope: T[] = []
+  // Bounded top-k selection (O(n·k), k ≤ 16) instead of sorting every
+  // session: this runs on each session-meta update, including streaming ticks.
+  const pinnedLimit = options.pinnedLimit ?? PINNED_LIMIT
+  const recentLimit = options.recentLimit ?? RECENT_LIMIT
+  const at = (session: T) => session.lastMessageAt ?? session.createdAt ?? 0
+  const before = (a: T, b: T) => at(b) - at(a) || a.id.localeCompare(b.id)
+  const insertTop = (list: T[], session: T, limit: number) => {
+    if (limit <= 0) return
+    if (list.length >= limit && before(session, list[list.length - 1]!) >= 0) return
+    let i = list.length
+    while (i > 0 && before(session, list[i - 1]!) < 0) i--
+    list.splice(i, 0, session)
+    if (list.length > limit) list.pop()
+  }
+  const pinned: T[] = []
+  // Keep pinnedLimit extra candidates so flagged rows past the pinned cap can still be excluded correctly.
+  const recentCandidates: T[] = []
   for (const session of sessions) {
     if (session.hidden || session.isArchived) continue
     if (workspaceIds && !workspaceIds.has(session.workspaceId)) continue
-    inScope.push(session)
+    if (session.isFlagged) insertTop(pinned, session, pinnedLimit)
+    insertTop(recentCandidates, session, recentLimit + pinnedLimit)
   }
-  const at = (session: T) => session.lastMessageAt ?? session.createdAt ?? 0
-  inScope.sort((a, b) => at(b) - at(a) || a.id.localeCompare(b.id))
-  const pinned = inScope.filter(session => session.isFlagged).slice(0, options.pinnedLimit ?? PINNED_LIMIT)
   const pinnedIds = new Set(pinned.map(session => session.id))
-  const recent = inScope.filter(session => !pinnedIds.has(session.id)).slice(0, options.recentLimit ?? RECENT_LIMIT)
+  const recent = recentCandidates.filter(session => !pinnedIds.has(session.id)).slice(0, recentLimit)
   return { recent, pinned }
 }

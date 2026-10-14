@@ -198,6 +198,13 @@ export const actions = {
     // ⌘B / Ctrl+B is Bold inside notes and other contenteditable surfaces.
     when: '!inputFocus',
   },
+  'view.toggleSecondarySidebar': {
+    id: 'view.toggleSecondarySidebar',
+    labelKey: 'shortcuts.action.toggleSecondarySidebar',
+    description: 'Show or hide the screen sidebar next to the rail',
+    defaultHotkey: 'mod+shift+b',
+    category: 'View',
+  },
   'view.toggleFocusMode': {
     id: 'view.toggleFocusMode',
     labelKey: 'shortcuts.action.toggleFocusMode',
