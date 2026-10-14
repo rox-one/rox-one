@@ -101,6 +101,16 @@ describe('split panels without a second sidebar', () => {
     // under a loaded full-suite run that can land after the first act flush,
     // so wait for it — and re-open if a neighbouring suite's layer dismissed it.
     const content = await waitForElement('[data-bare-controls-content]', 8000, reopenWhenClosed(trigger!))
+    if (!content) {
+      // TEMPORARY DIAGNOSTIC (removed in the next commit)
+      const wrappers = document.querySelectorAll('[data-radix-popper-content-wrapper]').length
+      console.log('[diag] document===window.document', document === (window as unknown as { document: unknown }).document)
+      console.log('[diag] trigger data-state', trigger?.getAttribute('data-state'), 'connected', trigger?.isConnected)
+      console.log('[diag] body children', document.body.children.length, 'html len', document.body.innerHTML.length)
+      console.log('[diag] radix wrappers', wrappers, 'has bare content', document.body.innerHTML.includes('data-bare-controls-content'))
+      console.log('[diag] controls slot children', controls.children.length, 'controls connected', controls.isConnected)
+      console.log('[diag] slot textContent', JSON.stringify(slot.textContent))
+    }
     expect(content?.textContent).toBe('inbox-tree')
   })
 
