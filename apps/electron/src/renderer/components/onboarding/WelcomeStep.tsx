@@ -78,14 +78,15 @@ function CoinBadge({ gold, label }: { gold: boolean; label: string }) {
 }
 
 /** Identical size for every identity link button (equal-width grid cells). */
-const LINK_BUTTON_CLASS = "onb-glass h-11 w-full min-w-0 justify-start gap-2 rounded-full pl-3.5 pr-1.5 text-[13px] font-medium"
+const LINK_BUTTON_CLASS = "onb-glass h-11 w-full min-w-0 justify-start gap-2 rounded-full pl-3.5 pr-1.5 text-[length:var(--text-body)] font-medium"
 
 /** `rox.one/@name` with a green check — no label, the address speaks for itself. */
 function AddressLine({ address, label, testId }: { address: string; label?: string; testId: string }) {
   return (
-    <p data-testid={testId} className="flex items-center gap-1.5 pl-4 text-xs font-medium text-foreground/80">
+    <p data-testid={testId} className="flex items-center gap-1.5 pl-4 text-xs font-medium onb-fg-80">
       <span className="truncate font-mono tracking-tight">{address}</span>
-      <Check className="size-3.5 shrink-0 text-success" strokeWidth={3} aria-hidden={label ? undefined : true} aria-label={label} role={label ? "img" : undefined} />
+      {/* eslint-disable-next-line rox/icon-size-tokens -- bold confirm tick: heavier stroke is the design, not a size */}
+      <Check className="icon-caption text-success" strokeWidth={3} aria-hidden={label ? undefined : true} aria-label={label} role={label ? "img" : undefined} />
     </p>
   )
 }

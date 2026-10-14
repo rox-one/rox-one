@@ -15,8 +15,10 @@ interface BrandIconProps {
 export function TelegramLogo({ className }: BrandIconProps) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className={cn('shrink-0', className)}>
+      {/* eslint-disable-next-line rox/no-raw-color -- official brand mark colour */}
       <circle cx="12" cy="12" r="12" fill="#26A5E4" />
       <path
+        // eslint-disable-next-line rox/no-raw-color -- official brand mark colour
         fill="#fff"
         d="M16.906 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"
       />
@@ -38,10 +40,15 @@ export function GithubLogo({ className }: BrandIconProps) {
 export function ChromeLogo({ className }: BrandIconProps) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className={cn('shrink-0', className)}>
+      {/* eslint-disable-next-line rox/no-raw-color -- official brand mark colour */}
       <path fill="#EA4335" d="M12 12 1.608 6A12 12 0 0 1 22.392 6Z" />
+      {/* eslint-disable-next-line rox/no-raw-color -- official brand mark colour */}
       <path fill="#FBBC04" d="M12 12 22.392 6A12 12 0 0 1 12 24Z" />
+      {/* eslint-disable-next-line rox/no-raw-color -- official brand mark colour */}
       <path fill="#34A853" d="M12 12 12 24A12 12 0 0 1 1.608 6Z" />
+      {/* eslint-disable-next-line rox/no-raw-color -- official brand mark colour */}
       <circle cx="12" cy="12" r="5.6" fill="#fff" />
+      {/* eslint-disable-next-line rox/no-raw-color -- official brand mark colour */}
       <circle cx="12" cy="12" r="4.4" fill="#1A73E8" />
     </svg>
   )
@@ -65,17 +72,25 @@ export function PersonalizationArt({ className }: BrandIconProps) {
     <svg viewBox="0 0 32 32" aria-hidden="true" className={cn('shrink-0', className)}>
       <defs>
         <linearGradient id="onb-pa-a" x1="0" y1="0" x2="1" y2="1">
+          {/* eslint-disable-next-line rox/no-raw-color -- decorative illustration palette (SVG paint attribute, no CSS var support in stops) */}
           <stop offset="0" stopColor="#7dd3fc" />
+          {/* eslint-disable-next-line rox/no-raw-color -- decorative illustration palette (SVG paint attribute, no CSS var support in stops) */}
           <stop offset="1" stopColor="#a78bfa" />
         </linearGradient>
         <linearGradient id="onb-pa-b" x1="0" y1="0" x2="0" y2="1">
+          {/* eslint-disable-next-line rox/no-raw-color -- decorative illustration palette (SVG paint attribute, no CSS var support in stops) */}
           <stop offset="0" stopColor="#fff" stopOpacity="0.28" />
+          {/* eslint-disable-next-line rox/no-raw-color -- decorative illustration palette (SVG paint attribute, no CSS var support in stops) */}
           <stop offset="1" stopColor="#fff" stopOpacity="0.06" />
         </linearGradient>
       </defs>
+      {/* eslint-disable-next-line rox/no-raw-color -- decorative illustration palette (SVG paint attribute, no CSS var support in stops) */}
       <rect x="4" y="9" width="17" height="13" rx="3" fill="url(#onb-pa-b)" stroke="#fff" strokeOpacity="0.18" transform="rotate(-8 12 15)" />
+      {/* eslint-disable-next-line rox/no-raw-color -- decorative illustration palette (SVG paint attribute, no CSS var support in stops) */}
       <rect x="9" y="7" width="17" height="13" rx="3" fill="url(#onb-pa-b)" stroke="#fff" strokeOpacity="0.24" transform="rotate(6 17 13)" />
+      {/* eslint-disable-next-line rox/no-raw-color -- decorative illustration palette (SVG paint attribute, no CSS var support in stops) */}
       <rect x="7" y="12" width="18" height="13" rx="3" fill="#0b1020" fillOpacity="0.55" stroke="url(#onb-pa-a)" strokeWidth="1.2" />
+      {/* eslint-disable-next-line rox/no-raw-color -- decorative illustration palette (SVG paint attribute, no CSS var support in stops) */}
       <path d="M10.5 17h7M10.5 20h4.5" stroke="#fff" strokeOpacity="0.55" strokeWidth="1.2" strokeLinecap="round" />
       <path d="M22 15.2l.9 2 2 .9-2 .9-.9 2-.9-2-2-.9 2-.9z" fill="url(#onb-pa-a)" />
     </svg>

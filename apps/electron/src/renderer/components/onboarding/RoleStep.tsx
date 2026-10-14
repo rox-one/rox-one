@@ -164,7 +164,7 @@ function Scale({
     <div className="space-y-1" data-testid={`role-scale-${scaleKey}`} data-set={set ? 'true' : 'false'}>
       <div className="flex items-baseline justify-between gap-2 text-xs">
         <label htmlFor={id} className={cn('transition-colors', set && shown < 5 ? 'font-medium text-foreground' : 'text-muted-foreground')}>{leftLabel}</label>
-        <span aria-hidden="true" className={cn('numeric text-caption tabular-nums', set ? 'text-foreground/80' : 'text-muted-foreground/50')}>{set ? shown : '–'}</span>
+        <span aria-hidden="true" className={cn('numeric text-caption tabular-nums', set ? 'onb-fg-80' : 'text-muted-foreground/50')}>{set ? shown : '–'}</span>
         <span className={cn('text-right transition-colors', set && shown > 5 ? 'font-medium text-foreground' : 'text-muted-foreground')}>{rightLabel}</span>
       </div>
       <input
@@ -177,6 +177,8 @@ function Scale({
         disabled={disabled}
         aria-valuetext={set ? `${shown} / ${WORK_STYLE_SCALE_MAX}: ${leftLabel} – ${rightLabel}` : t('onboarding.role.scaleUnset')}
         onChange={(event) => onChange(Number(event.target.value))}
+        // Clicking the thumb of an unanswered slider at the midpoint fires no change event; record it.
+        onClick={(event) => { if (!set) onChange(Number(event.currentTarget.value)) }}
         onDoubleClick={() => onChange(undefined)}
         className="onb-range w-full"
         data-set={set ? 'true' : 'false'}
@@ -378,10 +380,10 @@ export function RoleStep({ onContinue, onBack, isLoading = false, isFinishing = 
                         onClick={() => makePrimary(format)}
                         className={cn(
                           'grid size-6 place-items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/55',
-                          isPrimary ? 'text-amber-300' : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
+                          isPrimary ? 'onb-star-on' : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
                         )}
                       >
-                        <Star className="size-3.5" fill={isPrimary ? 'currentColor' : 'none'} aria-hidden="true" />
+                        <Star className="icon-caption" fill={isPrimary ? 'currentColor' : 'none'} aria-hidden="true" />
                       </button>
                     ) : null}
                   </span>

@@ -196,7 +196,7 @@ export function PillsTopBarConfigurator({ options, value, onChange, className }:
                   aria-label={t('shell.pills.add', { name: option.title })}
                   className="onb-glass flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
-                  <Plus className="size-3 opacity-60" aria-hidden />
+                  <Plus className="icon-status opacity-60 [stroke-width:var(--icon-stroke)]" aria-hidden />
                   <Icon className="size-3.5" aria-hidden />
                   {option.iconOnly ? <span className="sr-only">{option.title}</span> : option.title}
                 </button>
