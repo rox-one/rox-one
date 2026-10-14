@@ -11,12 +11,14 @@ import {
   NOTIFICATIONS_UPDATE_PREFS_SCHEMA,
   NOTIFY_COMMAND_TYPES,
   bindNotifyCommands,
+  classifyPrefRow,
   groupReviewItems,
   isReviewOverdue,
   mergeReviewItems,
   reviewCounts,
   reviewGroupForKind,
   setNotifyCommandHost,
+  type PrefRowKind,
   type ReviewItem,
 } from '../index.ts'
 
@@ -38,6 +40,18 @@ function registry(): CommandRegistry {
   const instance = new CommandRegistry()
   registerCommandCatalogue(instance)
   return instance
+}
+
+/** Minimal `CommandHandlerContext` for calling a bound handler directly. */
+function handlerContext(payload: unknown) {
+  return {
+    envelope: {},
+    payload,
+    actor: { principalId: 'principal-1', kind: 'user' },
+    workspaceId: 'workspace-1',
+    authority: 'workspace',
+    conflict: (() => { throw new Error('no conflict') }) as never,
+  }
 }
 
 describe('review model', () => {
@@ -133,14 +147,7 @@ describe('notifications.* command bindings', () => {
       expect(instance.capability(type)).toMatchObject({ available: true, module: 'notify', authority: 'workspace' })
     }
 
-    const ctx = (payload: unknown) => ({
-      envelope: {},
-      payload,
-      actor: { principalId: 'principal-1', kind: 'user' },
-      workspaceId: 'workspace-1',
-      authority: 'workspace',
-      conflict: (() => { throw new Error('no conflict') }) as never,
-    })
+    const ctx = handlerContext
     expect(await instance.handler('notifications.mark_read')!(ctx({ ids: ['n1', 'n2'] }) as never))
       .toEqual({ result: { updated: 2, readAt: '2026-10-08T12:00:00.000Z' } })
     expect(marked).toEqual([['n1', 'n2']])
@@ -169,5 +176,53 @@ describe('notifications.* command bindings', () => {
     const catalogue = registry()
     for (const type of NOTIFY_COMMAND_TYPES) expect(catalogue.get(type)).toMatchObject({ module: 'notify', authority: 'workspace', verb: 'write' })
     expect(NOTIFY_COMMAND_TYPES.every(type => catalogue.has(type))).toBe(true)
+  })
+})
+
+describe('notifications.update_prefs row discriminator', () => {
+  it('names both axes when a row mixes the canonical and legacy spellings', () => {
+    const mixed = NOTIFICATIONS_UPDATE_PREFS_SCHEMA.safeParse({
+      prefs: [{ eventType: 'task.task_adding', channel: 'email', enabled: true, kind: 'comment' }],
+    })
+    expect(mixed.success).toBe(false)
+    // `SchemaLike.safeParse` types `error` as `unknown` deliberately
+    // (packages/core/src/commands/registry.ts:27): the registry cannot know whether a
+    // given schema reports a ZodError or a plain Error. Narrow before reading it.
+    const message = mixed.success ? '' : mixed.error instanceof Error ? mixed.error.message : String(mixed.error)
+    expect(message).toContain('eventType')
+    expect(message).toContain('kind')
+    // The mix is blamed, never an unrelated field.
+    expect(message).not.toContain('Unknown notification pref field')
+    // Every other legacy field on the row is named too, so the report is complete.
+    expect(NOTIFICATIONS_UPDATE_PREFS_SCHEMA.safeParse({ prefs: [{ channel: 'push', batchMinutes: 5 }] }).success).toBe(false)
+  })
+
+  it('derives routing and filtering from the one discriminator for every row shape', async () => {
+    const forwarded: string[] = []
+    setNotifyCommandHost({
+      async markRead() { throw new Error('not used') },
+      async markAllRead() { throw new Error('not used') },
+      async updatePrefs({ updates }) { forwarded.push(...updates.map(update => update.kind)); return { updated: updates.length, prefs: [] } },
+    })
+    const instance = registry()
+    bindNotifyCommands(instance)
+
+    const rows: Array<[Record<string, unknown>, PrefRowKind]> = [
+      [{ kind: 'comment', enabled: false }, 'legacy'],
+      [{ eventType: 'task.task_adding', channel: 'email', enabled: false }, 'domain'],
+      [{ eventType: 'task.task_adding', kind: 'comment' }, 'ambiguous'],
+    ]
+    for (const [row, kind] of rows) {
+      expect(classifyPrefRow(row)).toBe(kind)
+      // Routing: the schema accepts every non-ambiguous row and rejects the mix.
+      const parsed = NOTIFICATIONS_UPDATE_PREFS_SCHEMA.safeParse({ prefs: [row] })
+      expect(parsed.success).toBe(kind !== 'ambiguous')
+      if (!parsed.success) continue
+      // Filtering: the host is handed the row iff the discriminator says legacy.
+      forwarded.length = 0
+      await instance.handler('notifications.update_prefs')!(handlerContext(parsed.data) as never)
+      expect(forwarded).toEqual(kind === 'legacy' ? ['comment'] : [])
+    }
+    setNotifyCommandHost(null)
   })
 })

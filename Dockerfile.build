@@ -7,8 +7,10 @@
 # Локально: `bash scripts/rx-build.sh`
 # CI: job `rx-build-image` в `.circleci/config.yml` (workflow `rx-main`).
 
-# Базовый образ совпадает с CircleCI (oven/bun:1.3.14-debian).
-FROM oven/bun:1.3.14-debian AS deps
+# Должен совпадать с `packageManager` в package.json и с `bun-version` в
+# workflows (1.4.2): bun 1.3.x не читает lockfile формата 1.4.x и падает с
+# "lockfile had changes, but lockfile is frozen".
+FROM oven/bun:1.4.2-debian@sha256:4f6e31d1a54d6a3dd312daef655fc998101b5043d52e12592ac293ef04b9bc73 AS deps
 
 LABEL org.opencontainers.image.source="https://github.com/rox-one/rox-one"
 LABEL org.opencontainers.image.description="ROX One — сборочный образ сервера (BuildKit)"
@@ -38,11 +40,18 @@ COPY packages/messaging-gateway/package.json packages/messaging-gateway/
 COPY packages/messaging-whatsapp-worker/package.json packages/messaging-whatsapp-worker/
 COPY packages/messaging-discord-worker/package.json packages/messaging-discord-worker/
 COPY packages/cloud-runner/package.json packages/cloud-runner/
+# Манифест-слой должен покрывать ВСЕ воркспейсы из bun.lock, иначе frozen-install
+# видит неполный набор. Ниже — те, которых здесь не хватало.
+COPY packages/browser-intel/package.json packages/browser-intel/
+COPY packages/rovers-core/package.json packages/rovers-core/
+COPY packages/rovers-core-lite/package.json packages/rovers-core-lite/
+COPY packages/test-harness/package.json packages/test-harness/
 COPY apps/electron/package.json apps/electron/
 COPY apps/cli/package.json apps/cli/
 COPY apps/viewer/package.json apps/viewer/
 COPY apps/webui/package.json apps/webui/
 COPY apps/cloud-gateway/package.json apps/cloud-gateway/
+COPY apps/workspace-service/package.json apps/workspace-service/
 
 # The repo postinstall (package.json) invokes this script, so it must exist before
 # install. This image is headless and never needs the Electron runtime.
@@ -107,7 +116,7 @@ RUN --mount=type=cache,id=rox-bun-install,target=/root/.bun/install/cache \
       cp -a apps/webui/dist dist/server/apps/webui/dist'
 
 # ---------- минимальный runtime ----------
-FROM oven/bun:1.3.14-debian AS runtime
+FROM oven/bun:1.4.2-debian@sha256:4f6e31d1a54d6a3dd312daef655fc998101b5043d52e12592ac293ef04b9bc73 AS runtime
 
 # Node нужен WhatsApp-воркеру (Baileys): Bun его не исполняет.
 # ARG NODE_MAJOR — не секрет, только номер мажора пакета.

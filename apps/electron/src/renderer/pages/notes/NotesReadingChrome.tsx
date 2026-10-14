@@ -104,7 +104,7 @@ export function NotesEditorHeadlineStyles() {
       button.notes-comment-hl {
         background: hsl(48 96% 56% / 0.35);
         border-bottom: 1.5px solid hsl(38 92% 50% / 0.9);
-        border-radius: 2px;
+        border-radius: var(--radius-xs);
         cursor: pointer;
         color: inherit;
       }

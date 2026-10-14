@@ -152,14 +152,14 @@ function NotesWikiPlayground() {
       <label className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
         [[
         <input
-          className="h-8 w-56 rounded-[5px] border border-border/60 bg-background px-2 text-sm text-foreground"
+          className="h-8 w-56 rounded-xs border border-border/60 bg-background px-2 text-sm text-foreground"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           aria-label={t('notes.editor.wikiHint')}
         />
       </label>
       <div
-        className="absolute z-20 w-80 rounded-[8px] border border-border/70 bg-popover p-1 shadow-strong"
+        className="absolute z-20 w-80 rounded-md border border-border/70 bg-popover p-1 shadow-strong"
         data-testid="notes-wiki-menu"
       >
         {matches.map((note, index) => (
@@ -167,7 +167,7 @@ function NotesWikiPlayground() {
             key={note.id}
             type="button"
             className={cn(
-              'w-full rounded-[5px] px-2 py-1.5 text-left hover:bg-foreground/[0.06]',
+              'w-full rounded-xs px-2 py-1.5 text-left hover:bg-foreground/[0.06]',
               index === 0 && 'bg-foreground/[0.08]',
             )}
           >
@@ -179,7 +179,7 @@ function NotesWikiPlayground() {
           <button
             type="button"
             data-testid="notes-wiki-create"
-            className="mt-1 flex w-full items-center gap-2 rounded-[5px] border-t border-border/60 px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]"
+            className="mt-1 flex w-full items-center gap-2 rounded-xs border-t border-border/60 px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]"
           >
             <Plus className="h-3.5 w-3.5" />
             {t('notes.editor.wikiCreate', { title: query.trim() })}
