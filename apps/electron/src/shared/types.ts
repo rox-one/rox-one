@@ -15,6 +15,7 @@ export type {
   CookbooksCard,
   CookbooksCell,
   CookbooksCellMutation,
+  CookbooksDisplay,
   CookbooksDocument,
   CookbooksFailureReason,
   CookbooksMutateInput,
@@ -31,7 +32,7 @@ import type {
   CookbooksDocument,
   CookbooksMutateInput,
   CookbooksMutateResult,
-  CookbooksRunCell,
+  CookbooksRunAllResult,
   CookbooksRunResult,
   CookbooksStatus,
 } from './cookbooks'
@@ -2231,7 +2232,7 @@ export interface ElectronAPI {
     runAll(args: {
       itemId: string
       cells: { index: number; source: string }[]
-    }): Promise<{ cells: CookbooksRunCell[]; cancelled?: boolean }>
+    }): Promise<CookbooksRunAllResult>
     /** Persist a cell (`index` + `source`) or the playbook `text`. */
     save(args: { itemId: string; index?: number; source?: string; text?: string }): Promise<void>
     /** Restore the copy from the catalog original (edits are lost). */

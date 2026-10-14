@@ -31,6 +31,17 @@
  * one `cookbooks-lab:mutate` channel: unsaved edits are flushed first, and the
  * fresh document the sidecar answers with replaces the surface wholesale.
  *
+ * Wave 11 («Rich Output & Persistence») renders the cell's `display_data`: every
+ * rich record the copy or the sidecar carries is drawn after the cell's own text
+ * — an image as a `data:`-URL, HTML in a sandboxed frame (`allow-scripts`, never
+ * `allow-same-origin`, and always led by the record's own `default-src 'none'`
+ * policy), JSON pretty-printed, markdown through the product renderer — while an
+ * unrendered mime falls back to its plain text. The block reads as one text: what
+ * the cell printed plus the plain-text record of every display it emitted.
+ * Opening a document seeds the surface from the outputs the copy already persists
+ * (`status: 'saved'`) and from nbformat `execution_count`, so a reopened notebook
+ * shows its saved results and its `[N]` counters before anything runs.
+ *
  * Every string comes from `cookbooks.*` through `t()` and every colour, radius,
  * type size and control height is a ROX token, so the surface follows the app
  * theme in all twelve locales and never drifts into ad-hoc styling.
@@ -49,6 +60,7 @@ import {
   buildNotebookExport,
   type CookbooksCard,
   type CookbooksCellMutation,
+  type CookbooksDisplay,
   type CookbooksDocument,
   type CookbooksRunCell,
   type CookbooksStatus,
@@ -139,8 +151,11 @@ type CookbooksPageUi = 'starting' | 'ready' | 'unavailable' | 'failed' | 'stoppe
  * values plus the local `cancelled` a stopped execution lands on. A stopping
  * batch omits the cells it never reached, so their status can only be decided
  * here.
+ *
+ * Wave 11: `saved` is the fourth local value — a result that came from the copy
+ * when the document was opened, not from a run of this session.
  */
-type CookbooksCellStatus = CookbooksRunCell['status'] | 'cancelled'
+type CookbooksCellStatus = CookbooksRunCell['status'] | 'cancelled' | 'saved'
 
 /** One rendered cell result: the run-all DTO widened with the local status. */
 type CookbooksCellResult = Omit<CookbooksRunCell, 'status'> & { status: CookbooksCellStatus }
@@ -222,6 +237,103 @@ const CellMarkdown = memo(function CellMarkdown({
 })
 
 /**
+ * Wave 11: the chrome a text-shaped block wears — the cell's own text and a
+ * JSON display — so the two are scrollable, wrapped and clamped the same way.
+ */
+const OUTPUT_PRE_CLASS =
+  'overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere] rounded-[var(--radius-control)] bg-surface-hover px-2.5 py-1.5 font-mono text-small'
+
+/**
+ * Wave 11: the mimes this surface draws. The emitter picks exactly ONE
+ * widget-mime per display event in this same order (the canon `REPR_MIMES`), so
+ * one event can never carry two of them; the renderer draws every record it
+ * receives, in emission order. `text/plain` is deliberately absent — it is not a
+ * widget: it is the plain-text fallback the block itself shows (`outputText`) —
+ * and a mime outside this list (latex, yaml, …) is carried by the document and
+ * the export but not rendered.
+ */
+const RENDERABLE_MIMES: readonly string[] = [
+  'text/html',
+  'image/svg+xml',
+  'image/png',
+  'image/jpeg',
+  'text/markdown',
+  'application/json',
+]
+
+/** Wave 11: JSON displays are pretty-printed; a payload that is not JSON shows verbatim. */
+function prettyJson(data: string): string {
+  try {
+    return JSON.stringify(JSON.parse(data), null, 2)
+  } catch {
+    return data
+  }
+}
+
+/**
+ * Wave 11: the policy a rich HTML record is framed with — its OWN
+ * `default-src 'none'` document policy, the `WidgetFrame.tsx` / `mail-sanitize`
+ * precedent, so the embedding application's CSP (`script-src 'unsafe-inline'`,
+ * `connect-src https:` and loopback) never reaches the record and a record can
+ * never phone home or post a form. Inline scripts and styles keep working; this
+ * is a phishing/exfil fence, not a renderer restriction.
+ *
+ * It travels FIRST in the document, where the HTML parser hoists a `<meta>` into
+ * the frame's `<head>` whatever the record itself starts with.
+ */
+const FRAME_POLICY_META =
+  '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'; img-src data: blob:; font-src data:; form-action \'none\'; base-uri \'none\'">'
+
+/**
+ * Wave 11: one rich display record, drawn after the cell's own text. The mime
+ * picks the widget. The HTML frame follows the `WidgetFrame.tsx` precedent:
+ * scripts are allowed, but NEVER `allow-same-origin` — same-origin plus scripts
+ * would hand the record this application's origin and its preload bridge.
+ */
+function DisplayRecord({ index, display }: { index: number; display: CookbooksDisplay }) {
+  const { t } = useTranslation()
+  if (display.mime === 'text/html') {
+    return (
+      <iframe
+        data-testid={`cookbooks-display-frame-${index}`}
+        title={t('cookbooks.output.frameTitle')}
+        sandbox="allow-scripts"
+        referrerPolicy="no-referrer"
+        // The record's own policy leads its document, so the frame is fenced
+        // against network, forms and a base URI no matter what it contains.
+        srcDoc={`${FRAME_POLICY_META}${display.data}`}
+        className="w-full min-h-[120px] rounded-[var(--radius-control)] border border-border-subtle bg-white"
+      />
+    )
+  }
+  if (display.mime === 'image/svg+xml' || display.mime === 'image/png' || display.mime === 'image/jpeg') {
+    return (
+      // The record's own mime rides in the URL, so svg/png/jpeg all decode.
+      <img
+        data-testid={`cookbooks-display-image-${index}`}
+        src={`data:${display.mime};base64,${display.data}`}
+        alt={t('cookbooks.output.imageAlt')}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        className="max-w-full rounded-[var(--radius-control)] border border-border-subtle"
+      />
+    )
+  }
+  if (display.mime === 'application/json') {
+    return (
+      <pre
+        data-testid={`cookbooks-display-json-${index}`}
+        className={cn(OUTPUT_PRE_CLASS, 'max-h-[320px] text-muted-foreground')}
+      >
+        {prettyJson(display.data)}
+      </pre>
+    )
+  }
+  // `text/markdown` — the only remaining mime of the priority list.
+  return <CellMarkdown mode="minimal" source={display.data} testId={`cookbooks-display-markdown-${index}`} />
+}
+
+/**
  * The per-cell output block: pill-free, `data-status`-tagged, honest about
  * emptiness. R-B: `long` marks an output past the collapse threshold and
  * `expanded` its per-cell toggle — a collapsed block is height-clamped with a
@@ -229,6 +341,10 @@ const CellMarkdown = memo(function CellMarkdown({
  *
  * Wave 9: the text goes through `normalizeOutputText`, so a progress bar that
  * rewrites one line with `\r` shows its final frame instead of every frame.
+ *
+ * Wave 11: the block is a column — the text `<pre>` first, then one widget per
+ * rich display record the cell carries. The wrapper keeps the test id, status,
+ * collapse flag and label the surface has always published.
  */
 function CellOutput({
   index,
@@ -245,23 +361,34 @@ function CellOutput({
 }) {
   const { t } = useTranslation()
   const collapsed = long && !expanded
+  // Wave 11: the rich records the cell carries, in emission order — one widget
+  // per event, text/plain excluded (it is the block's own fallback text) and so
+  // is every mime this surface does not draw.
+  const displays = (cell?.displays ?? []).filter((display) => RENDERABLE_MIMES.includes(display.mime))
 
   return (
-    <pre
+    <div
       data-testid={`cookbooks-output-${index}`}
       data-status={cell?.status ?? 'idle'}
       data-collapsed={collapsed ? 'true' : 'false'}
       aria-label={t('cookbooks.cell.outputLabel', { index })}
-      className={cn(
-        'overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere] rounded-[var(--radius-control)] bg-surface-hover px-2.5 py-1.5 font-mono text-small',
-        // A short block keeps the wave-7 cap; a long one is clamped while
-        // collapsed and shown in full once expanded.
-        long ? (expanded ? '' : 'max-h-[120px]') : 'max-h-[320px]',
-        cell?.status === 'error' ? 'text-destructive-text' : 'text-muted-foreground',
-      )}
+      className="flex flex-col gap-1.5"
     >
-      {normalizeOutputText(outputText(cell))}
-    </pre>
+      <pre
+        className={cn(
+          OUTPUT_PRE_CLASS,
+          // A short block keeps the wave-7 cap; a long one is clamped while
+          // collapsed and shown in full once expanded.
+          long ? (expanded ? '' : 'max-h-[120px]') : 'max-h-[320px]',
+          cell?.status === 'error' ? 'text-destructive-text' : 'text-muted-foreground',
+        )}
+      >
+        {normalizeOutputText(outputText(cell))}
+      </pre>
+      {displays.map((display, position) => (
+        <DisplayRecord key={`${position}:${display.mime}`} index={index} display={display} />
+      ))}
+    </div>
   )
 }
 
@@ -419,17 +546,39 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   const applyDocument = useCallback((next: CookbooksDocument) => {
     setDoc(next)
     const nextSources: Record<number, string> = {}
+    // Wave 11: a copy that already holds outputs opens with them on screen
+    // (SPEC §15) — the text the cell printed, its first traceback as the cell's
+    // error, every rich record it kept, and the `[N]` counter its own
+    // `execution_count` stands for.
+    const nextOutputs: Record<number, CookbooksCellResult> = {}
+    const nextRuns: Record<number, number> = {}
     next.cells.forEach((cell, index) => {
       nextSources[index] = cell.source
+      if (cell.outputs.length > 0) {
+        nextOutputs[index] = {
+          index,
+          status: 'saved',
+          stdout: cell.outputs
+            .map((output) => output.text)
+            .filter((text) => text.trim().length > 0)
+            .join('\n'),
+          error: cell.outputs.find((output) => output.traceback !== null)?.traceback ?? null,
+          displays: cell.outputs.flatMap((output) => output.displays),
+        }
+      }
+      if (typeof cell.executionCount === 'number' && cell.executionCount >= 1) {
+        nextRuns[index] = cell.executionCount
+      }
     })
     setSources(nextSources)
-    setOutputs({})
+    setOutputs(nextOutputs)
     setExpandedOutputs({})
     // Wave 10: a re-read document invalidates the cell the menu pointed at.
     setMenuOpen(null)
-    // Counters and edit modes belong to the document that was open, not to the
-    // surface: a freshly opened copy starts from a clean slate.
-    setRuns({})
+    // Counters and edit modes belong to the document that was opened, not to the
+    // surface: a freshly opened copy starts from the `execution_count`s its own
+    // file holds.
+    setRuns(nextRuns)
     setEditingCells({})
     setPlaybookEditing(false)
     setPlaybookText(next.text ?? '')
@@ -541,6 +690,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
               status: cancelled ? 'cancelled' : result.ok ? 'ok' : 'error',
               stdout: result.stdout,
               error: result.error,
+              // Wave 11: the rich records this run emitted travel with its text.
+              displays: result.displays,
             },
           }))
           setRuns((previous) => ({ ...previous, [index]: (previous[index] ?? 0) + 1 }))
@@ -606,7 +757,13 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
             // just the same.
             for (const cell of cells) {
               if (nextOutputs[cell.index]) continue
-              nextOutputs[cell.index] = { index: cell.index, status: 'cancelled', stdout: '', error: null }
+              nextOutputs[cell.index] = {
+                index: cell.index,
+                status: 'cancelled',
+                stdout: '',
+                error: null,
+                displays: [],
+              }
             }
           }
           // A subset run owns only its own cells: the rest of the document
@@ -811,10 +968,23 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       // Wave 9: a stopped cell says so — it has no stdout to fall back on.
       if (cell.status === 'cancelled') return t('cookbooks.cell.cancelled')
       if (cell.status === 'skipped') return t('cookbooks.output.skipped')
-      const printed = [cell.stdout, cell.error].filter(
-        (part): part is string => part !== null && part.trim().length > 0,
-      )
-      return printed.length > 0 ? printed.join('\n') : t('cookbooks.output.empty')
+      // Wave 11: the block reads as one text — what the cell printed plus the
+      // plain-text record of every display it emitted, in that order, so a
+      // `display("Подпись")` next to a `print("x")` and a trailing value all
+      // show up, while a lone `1+1` still reads as the single line `2`.
+      const parts = [cell.stdout, cell.error]
+        .filter((part): part is string => part !== null && part.trim().length > 0)
+        .concat(
+          cell.displays
+            .filter((display) => display.mime === 'text/plain')
+            .map((display) => display.data)
+            .filter((text) => text.trim().length > 0),
+        )
+      if (parts.length > 0) return parts.join('\n')
+      // A rich result with no text at all shows the frozen «graphical output»
+      // marker (SPEC §14); a cell with no displays keeps the wave-7 copy.
+      if (cell.displays.length > 0) return t('cookbooks.output.richPlaceholder')
+      return t('cookbooks.output.empty')
     },
     [t],
   )
@@ -924,6 +1094,9 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         executionCount: runs[index] ?? null,
         stdout: outputs[index]?.stdout,
         error: outputs[index]?.error ?? undefined,
+        // Wave 11: the rich records of this session travel into the file as
+        // `display_data` outputs, after the cell's stream records (SPEC §16).
+        displays: outputs[index]?.displays,
       })),
     })
     const filename = `${doc.title.replace(/[^\w\d\-.]+/g, '-')}.ipynb`
