@@ -34,7 +34,7 @@ import { ConnectionLifecyclePanel } from './ConnectionLifecyclePanel'
 import { GithubDeviceLoginPanel } from './GithubDeviceLoginPanel'
 import { ConnectionsOverview, OverviewGroup, OverviewRow, type OverviewStatus } from './connections-overview'
 import { ProjectAuthorityConnectionPanel } from '@/components/projects/ProjectAuthorityConnectionPanel'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { useConnectionsSidebar } from './use-connections-sidebar'
 
 const TABS = ['services', 'credentials', 'imports', 'policies', 'audit'] as const
 const CONNECT_SOURCES = ['github-env', 'git-helper', 'docker', 'aws', 'keychain', 'adc', 'ssh-agent', 'github-oauth'] as const
@@ -83,7 +83,6 @@ export default function ConnectionsPage() {
   const auditViewReady = useRef(false)
   const [auditSurface, setAuditSurface] = useState<SurfaceState | 'loading'>('loading')
   const [tab, setTab] = useState<ConnectionsTab>('services')
-  const sidebarTarget = useShellSidebarTarget()
   const servicesViewport = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     servicesTarget(tab === 'services' ? servicesViewport.current : null)
@@ -529,6 +528,25 @@ export default function ConnectionsPage() {
     if (workspace?.id) void refreshRows(workspace.id)
   }
 
+  useConnectionsSidebar({
+    workspaceId: workspace?.id ?? null,
+    rows,
+    surface,
+    sources: CONNECT_SOURCES,
+    activeSource,
+    selectedId: selected?.id ?? null,
+    reloadKey,
+    onSelectConnection: (row) => { setTab('services'); setSelected(row) },
+    onSelectSource: (source) => { setTab('imports'); setActiveSource((current) => current === source ? null : source) },
+    onOpenAudit: (connectionId) => {
+      const row = rows?.find((r) => r.id === connectionId)
+      if (row) setSelected(row)
+      setTab('audit')
+    },
+    onConnect: () => setTab('imports'),
+    onRefresh: refreshAll,
+  })
+
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="connections-page">
       <div className="mx-auto flex w-full max-w-4xl items-center gap-3 px-6 pt-5 pb-3">
@@ -544,9 +562,9 @@ export default function ConnectionsPage() {
           {t('connections.connect')}
         </Button>
       </div>
-      {/* Contextual sidebar: the tabs are this screen's navigation (inline when no shell slot). */}
-      <ShellSidebarPortal aria-label={t('sidebar.connections')} className="mx-auto w-full max-w-4xl px-3 pb-2">
-        <div role="tablist" aria-label={t('sidebar.connections')} aria-orientation={sidebarTarget ? 'vertical' : 'horizontal'} className={sidebarTarget ? 'flex flex-col gap-0.5' : 'flex gap-1'}>
+      {/* Section tabs stay in the panel; the shell's second sidebar carries the screen groups. */}
+      <div className="mx-auto w-full max-w-4xl px-3 pb-2">
+        <div role="tablist" aria-label={t('sidebar.connections')} aria-orientation="horizontal" className="flex gap-1">
           {TABS.map((id) => (
             <button
               key={id}
@@ -562,7 +580,7 @@ export default function ConnectionsPage() {
             </button>
           ))}
         </div>
-      </ShellSidebarPortal>
+      </div>
       <ScrollArea viewportRef={servicesViewport} data-product-tour-target={tab === 'services' ? 'connections.services' : undefined} className="flex-1 min-h-0">
       <div className="mx-auto flex w-full max-w-4xl flex-col px-6 pt-2 pb-16 text-muted-foreground">
         {tab === 'services' && <ProjectAuthorityConnectionPanel />}
