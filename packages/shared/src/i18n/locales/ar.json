@@ -9973,6 +9973,8 @@
   "shell.sidebar.showMore_other": "عرض {{count}} إضافي",
   "shell.sidebar.showMore_two": "عرض {{count}} إضافيين",
   "shell.sidebar.showMore_zero": "عرض {{count}} إضافية",
+  "shell.strip.hibernated": "متوقفة مؤقتًا لتوفير الذاكرة. مرّر للعودة والاستئناف.",
+  "shell.strip.resize": "تغيير عرض اللوحة",
   "shortcuts.action.advisorReview": "مراجعة المستشار",
   "shortcuts.action.clearSelection": "مسح التحديد",
   "shortcuts.action.collectionViewBoard": "Sessions board",

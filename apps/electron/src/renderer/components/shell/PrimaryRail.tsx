@@ -5,13 +5,13 @@
  * unread dot. Arrow keys move between rail buttons (roving tabindex).
  */
 import * as React from 'react'
-import { useAtomValue } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { MoreHorizontal, Pin, PinOff, PanelLeft } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import { navigate, routes } from '@/lib/navigate'
+import { routes } from '@/lib/navigate'
 import { useNavigationState } from '@/contexts/NavigationContext'
 import { enabledExtraScreenIdsAtom } from '@/atoms/extra-screens'
 import { visibleExtraScreens } from '@/pages/extra-screens/registry'
@@ -21,6 +21,7 @@ import { useShellModes } from '@/platform/useModes'
 import type { NavigationState } from '../../../shared/types'
 import { buildRailModel, type RailScreen } from './rail-model'
 import { toggleRailPin, toggleSecondarySidebar, useRailPins, useSecondarySidebarVisibility, useUnreadCounts } from './shell-prefs'
+import { openScreenPanelAtom } from './panel-strip'
 
 export const SHELL_RAIL_WIDTH = 56
 
@@ -35,14 +36,17 @@ export function isRailScreenActive(screen: RailScreen, navState: NavigationState
 
 export function useActivateScreen(): (screen: RailScreen) => void {
   const openBrowser = useOpenPillBrowser()
+  const openScreen = useSetAtom(openScreenPanelAtom)
   return React.useCallback((screen: RailScreen) => {
     if (screen.disabled) return
-    if (screen.extra) { navigate(routes.view.screen(screen.extra.id)); return }
+    // Panel strip: a screen opens as its own panel on the left (or focuses the
+    // panel already showing it); in-screen navigation stays on navigate().
+    if (screen.extra) { openScreen({ route: routes.view.screen(screen.extra.id) }); return }
     const entry = screen.entry
     if (!entry) return
     if (entry.action === 'open-browser') { openBrowser(); return }
-    if (entry.route) navigate(entry.route())
-  }, [openBrowser])
+    if (entry.route) openScreen({ route: entry.route() })
+  }, [openBrowser, openScreen])
 }
 
 /** Rail screens for the current flags/placements/pins (shared with the pills configurator). */

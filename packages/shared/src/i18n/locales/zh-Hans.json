@@ -9921,6 +9921,8 @@
   "shell.sidebar.showLess": "收起",
   "shell.sidebar.showMore_one": "再显示 {{count}} 项",
   "shell.sidebar.showMore_other": "再显示 {{count}} 项",
+  "shell.strip.hibernated": "为节省内存已暂停。滚动回来即可继续。",
+  "shell.strip.resize": "调整面板宽度",
   "shortcuts.action.advisorReview": "顾问审阅",
   "shortcuts.action.clearSelection": "清除选择",
   "shortcuts.action.collectionViewBoard": "会话看板",

@@ -9921,6 +9921,8 @@
   "shell.sidebar.showLess": "表示を減らす",
   "shell.sidebar.showMore_one": "さらに {{count}} 件表示",
   "shell.sidebar.showMore_other": "さらに {{count}} 件表示",
+  "shell.strip.hibernated": "メモリ節約のため一時停止中です。スクロールして戻ると再開します。",
+  "shell.strip.resize": "パネルの幅を変更",
   "shortcuts.action.advisorReview": "アドバイザーレビュー",
   "shortcuts.action.clearSelection": "選択を解除",
   "shortcuts.action.collectionViewBoard": "セッションボード",

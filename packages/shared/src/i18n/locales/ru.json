@@ -9971,6 +9971,8 @@
   "shell.sidebar.showMore_many": "Показать ещё {{count}}",
   "shell.sidebar.showMore_one": "Показать ещё {{count}}",
   "shell.sidebar.showMore_other": "Показать ещё {{count}}",
+  "shell.strip.hibernated": "Приостановлено для экономии памяти. Прокрутите обратно, чтобы продолжить.",
+  "shell.strip.resize": "Изменить ширину панели",
   "shortcuts.action.advisorReview": "Проверка советника",
   "shortcuts.action.clearSelection": "Снять выделение",
   "shortcuts.action.collectionViewBoard": "Доска сессий",

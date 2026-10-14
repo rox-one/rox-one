@@ -9921,6 +9921,8 @@
   "shell.sidebar.showLess": "收合",
   "shell.sidebar.showMore_one": "再顯示 {{count}} 項",
   "shell.sidebar.showMore_other": "再顯示 {{count}} 項",
+  "shell.strip.hibernated": "為節省記憶體已暫停。捲動回來即可繼續。",
+  "shell.strip.resize": "調整面板寬度",
   "shortcuts.action.advisorReview": "顧問審閱",
   "shortcuts.action.clearSelection": "清除選擇",
   "shortcuts.action.collectionViewBoard": "工作階段看板",

@@ -9921,6 +9921,8 @@
   "shell.sidebar.showLess": "Show less",
   "shell.sidebar.showMore_one": "Show {{count}} more",
   "shell.sidebar.showMore_other": "Show {{count}} more",
+  "shell.strip.hibernated": "Paused to save memory. Scroll back to resume.",
+  "shell.strip.resize": "Resize panel",
   "shortcuts.action.advisorReview": "Advisor review",
   "shortcuts.action.clearSelection": "Clear Selection",
   "shortcuts.action.collectionViewBoard": "Sessions board",

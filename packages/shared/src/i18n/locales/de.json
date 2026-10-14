@@ -9921,6 +9921,8 @@
   "shell.sidebar.showLess": "Weniger anzeigen",
   "shell.sidebar.showMore_one": "{{count}} weiteren anzeigen",
   "shell.sidebar.showMore_other": "{{count}} weitere anzeigen",
+  "shell.strip.hibernated": "Pausiert, um Speicher zu sparen. Zurückscrollen zum Fortsetzen.",
+  "shell.strip.resize": "Panelbreite ändern",
   "shortcuts.action.advisorReview": "Advisor-Prüfung",
   "shortcuts.action.clearSelection": "Auswahl aufheben",
   "shortcuts.action.collectionViewBoard": "Sitzungsboard",

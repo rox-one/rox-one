@@ -31,6 +31,22 @@ export interface SidebarItem {
   onSelect(): void
   menu?: SidebarAction[]
   dataTour?: string
+  /**
+   * How `active` is exposed to assistive tech: 'current' (navigation, default →
+   * aria-current="page"), 'pressed' (toggle/filter → aria-pressed) or
+   * 'selected' (single choice among peers → aria-current="true").
+   */
+  ariaKind?: 'current' | 'pressed' | 'selected'
+  /** Drop target (e.g. Tasks: drag a task onto a list). Keyboard users need an equivalent `menu` action. */
+  drop?: SidebarItemDrop
+}
+
+export interface SidebarItemDrop {
+  /** MIME-ish types from DataTransfer.types this row accepts (e.g. 'application/x-rox-task'). */
+  accepts: readonly string[]
+  onDrop(data: DataTransfer): void
+  /** Announced on a successful drop (polite live region). */
+  announce?: string
 }
 
 export type SidebarGroupState =
@@ -47,6 +63,12 @@ export interface SidebarGroup {
   initialVisible?: number
   collapsible?: boolean
   actions?: SidebarAction[]
+  /**
+   * Custom content rendered under the title (e.g. Calendar mini-calendar), above
+   * the items. Shown in expanded mode only; hidden while the group is collapsed.
+   * A group with content but no items still renders.
+   */
+  content?: React.ReactNode
 }
 
 export interface ScreenSidebarConfig {
@@ -149,3 +171,6 @@ export function splitVisible<T>(items: readonly T[], initialVisible: number | un
   if (activeIndex >= limit) head[limit - 1] = items[activeIndex]
   return { visible: head, hiddenCount: items.length - limit }
 }
+
+/** Re-exported so screens import the whole sidebar API from one module. */
+export { useScreenUnread, useUnreadCounts } from './shell-prefs'

@@ -9953,6 +9953,8 @@
   "shell.sidebar.showMore_many": "Pokaż jeszcze {{count}}",
   "shell.sidebar.showMore_one": "Pokaż jeszcze {{count}}",
   "shell.sidebar.showMore_other": "Pokaż jeszcze {{count}}",
+  "shell.strip.hibernated": "Wstrzymano, aby oszczędzać pamięć. Przewiń z powrotem, aby wznowić.",
+  "shell.strip.resize": "Zmień szerokość panelu",
   "shortcuts.action.advisorReview": "Przegląd doradcy",
   "shortcuts.action.clearSelection": "Wyczyść zaznaczenie",
   "shortcuts.action.collectionViewBoard": "Tablica sesji",

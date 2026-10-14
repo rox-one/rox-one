@@ -9921,6 +9921,8 @@
   "shell.sidebar.showLess": "Kevesebb",
   "shell.sidebar.showMore_one": "Még {{count}} megjelenítése",
   "shell.sidebar.showMore_other": "Még {{count}} megjelenítése",
+  "shell.strip.hibernated": "Szüneteltetve a memória kímélése érdekében. Görgessen vissza a folytatáshoz.",
+  "shell.strip.resize": "Panel szélességének módosítása",
   "shortcuts.action.advisorReview": "Tanácsadói áttekintés",
   "shortcuts.action.clearSelection": "Kijelölés törlése",
   "shortcuts.action.collectionViewBoard": "Munkamenet-tábla",

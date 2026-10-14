@@ -10,6 +10,7 @@ import { ChevronRight, Loader2, MoreHorizontal, Circle } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { cn } from '@/lib/utils'
 import * as storage from '@/lib/local-storage'
+import { announce } from '@/lib/a11y/announcer'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -113,11 +114,47 @@ function ItemGlyph({ item }: { item: SidebarItem }) {
   return Icon ? <Icon className="icon-caption shrink-0" aria-hidden /> : <span className="icon-caption shrink-0" aria-hidden />
 }
 
+/** aria for the active row, per item.ariaKind. */
+export function rowAria(item: SidebarItem): { 'aria-current'?: 'page' | 'true'; 'aria-pressed'?: boolean } {
+  const kind = item.ariaKind ?? 'current'
+  if (kind === 'pressed') return { 'aria-pressed': Boolean(item.active) }
+  if (!item.active) return {}
+  return { 'aria-current': kind === 'selected' ? 'true' : 'page' }
+}
+
+function useRowDrop(item: SidebarItem) {
+  const [over, setOver] = React.useState(false)
+  const drop = item.drop
+  const accepts = React.useCallback((event: React.DragEvent) => {
+    if (!drop) return false
+    const types = Array.from(event.dataTransfer?.types ?? [])
+    return drop.accepts.some((type) => types.includes(type))
+  }, [drop])
+  if (!drop) return { over: false, handlers: {} }
+  return {
+    over,
+    handlers: {
+      onDragOver: (event: React.DragEvent) => { if (!accepts(event)) return; event.preventDefault(); event.dataTransfer.dropEffect = 'move'; if (!over) setOver(true) },
+      onDragLeave: () => setOver(false),
+      onDrop: (event: React.DragEvent) => {
+        setOver(false)
+        if (!accepts(event)) return
+        event.preventDefault()
+        drop.onDrop(event.dataTransfer)
+        if (drop.announce) announce(drop.announce)
+      },
+    },
+  }
+}
+
 function SidebarRow({ item, mode }: { item: SidebarItem; mode: Exclude<SidebarMode, 'hidden'> }) {
   const { t } = useTranslation()
+  const { over, handlers } = useRowDrop(item)
+  const aria = rowAria(item)
   const base = cn(
     'relative flex w-full items-center gap-2 rounded-[var(--radius-control)] text-left text-body outline-none focus-visible:ring-1 focus-visible:ring-ring',
     item.active ? 'bg-[var(--state-selected)] text-foreground font-medium' : 'text-text-secondary hover:bg-[var(--state-hover)] hover:text-foreground',
+    over && 'ring-1 ring-accent',
   )
   if (mode === 'icons') {
     return (
@@ -127,7 +164,8 @@ function SidebarRow({ item, mode }: { item: SidebarItem; mode: Exclude<SidebarMo
             <button
               type="button"
               aria-label={item.label}
-              aria-current={item.active ? 'page' : undefined}
+              {...aria}
+              {...handlers}
               data-tour={item.dataTour}
               data-sidebar-item={item.id}
               onClick={item.onSelect}
@@ -146,7 +184,9 @@ function SidebarRow({ item, mode }: { item: SidebarItem; mode: Exclude<SidebarMo
     <li className="group/row relative">
       <button
         type="button"
-        aria-current={item.active ? 'page' : undefined}
+        {...aria}
+        {...handlers}
+        data-drop-over={over || undefined}
         data-tour={item.dataTour}
         data-sidebar-item={item.id}
         onClick={item.onSelect}
@@ -188,7 +228,7 @@ export const SidebarSection = React.memo(function SidebarSection({ screenId, gro
   const headingId = `shell-group-${screenId}-${group.id}`
 
   // A ready group with no items renders nothing (no empty chrome).
-  if (state.kind === 'ready' && group.items.length === 0) return null
+  if (state.kind === 'ready' && group.items.length === 0 && !(group.content && mode === 'expanded')) return null
 
   if (mode === 'icons') {
     if (state.kind !== 'ready') return null
@@ -248,6 +288,7 @@ export const SidebarSection = React.memo(function SidebarSection({ screenId, gro
           </div>
         ) : (
           <>
+            {group.content && <div data-sidebar-group-content="" className="px-1 py-1">{group.content}</div>}
             <ul className="flex flex-col gap-0.5">
               {visible.map((item) => <SidebarRow key={item.id} item={item} mode="expanded" />)}
             </ul>

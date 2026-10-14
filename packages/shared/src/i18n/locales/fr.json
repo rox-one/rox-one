@@ -9933,6 +9933,8 @@
   "shell.sidebar.showMore_many": "Afficher {{count}} de plus",
   "shell.sidebar.showMore_one": "Afficher {{count}} de plus",
   "shell.sidebar.showMore_other": "Afficher {{count}} de plus",
+  "shell.strip.hibernated": "En pause pour économiser la mémoire. Revenez pour reprendre.",
+  "shell.strip.resize": "Redimensionner le panneau",
   "shortcuts.action.advisorReview": "Revue du conseiller",
   "shortcuts.action.clearSelection": "Effacer la sélection",
   "shortcuts.action.collectionViewBoard": "Tableau des sessions",
