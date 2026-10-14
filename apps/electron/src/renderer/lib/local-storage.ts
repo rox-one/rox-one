@@ -186,6 +186,8 @@ export const KEYS = {
   featureDialogArtifactsV1: 'feature-dialog-artifacts-v1',
   featureComposerDeckV1: 'feature-composer-deck-v1',
   featurePanelSwapV1: 'feature-panel-swap-v1',
+  shellNotifications: 'shell-notifications-v1',
+  shellNotificationBaselines: 'shell-notification-baselines-v1',
   shellInspector: 'shell-inspector-v1',
 } as const
 
