@@ -13,7 +13,7 @@ const SESSION_ID_RE = /^[A-Za-z0-9_.:-]{1,200}$/
 const RESERVED_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
 
 export function isValidChatSessionId(id: unknown): id is string {
-  return typeof id === 'string' && SESSION_ID_RE.test(id) && !RESERVED_KEYS.has(id)
+  return typeof id === 'string' && SESSION_ID_RE.test(id) && !RESERVED_KEYS.has(id) && !/^\.+$/.test(id)
 }
 
 /** Null-prototype copy so session ids can never collide with Object.prototype. */
@@ -117,6 +117,19 @@ export function applyChatFoldersOp(
       folders.splice(0, folders.length, ...ordered)
       break
     }
+    case 'restore': {
+      if (folders.length >= CHAT_FOLDERS_MAX) throw new Error('chatFolders: too many folders')
+      if (!ID_RE.test(op.folderId) || has(op.folderId)) throw new Error('chatFolders: invalid folder id')
+      if (!Array.isArray(op.sessionIds) || op.sessionIds.length > 5000) throw new Error('chatFolders: invalid sessionIds')
+      const index = Number.isInteger(op.index) ? Math.min(Math.max(op.index, 0), folders.length) : folders.length
+      folders.splice(index, 0, { id: op.folderId, name: normalizeFolderName(op.name), createdAt: now })
+      for (const sid of op.sessionIds) {
+        if (!isValidChatSessionId(sid)) throw new Error('chatFolders: invalid session id')
+        // Do not steal chats the user re-filed elsewhere after the delete.
+        if (!Object.prototype.hasOwnProperty.call(assignments, sid)) assignments[sid] = op.folderId
+      }
+      break
+    }
     default:
       throw new Error('chatFolders: unknown op')
   }
@@ -151,4 +164,14 @@ export function groupSessionsByFolder<T extends { id: string; lastMessageAt?: nu
   const out: ChatFolderGroup<T>[] = state.folders.map(f => ({ folder: f, items: groups.get(f.id)!.sort(byRecent) }))
   if (ungrouped.length > 0 || out.length === 0) out.push({ folder: null, items: ungrouped.sort(byRecent) })
   return out
+}
+
+/** Keep only assignments whose session id passes `keep`; returns the same object when unchanged. */
+export function pruneAssignments(state: ChatFoldersState, keep: (sessionId: string) => boolean): ChatFoldersState {
+  let changed = false
+  const assignments = cloneAssignments(state.assignments)
+  for (const sid of Object.keys(assignments)) {
+    if (!keep(sid)) { delete assignments[sid]; changed = true }
+  }
+  return changed ? { version: 1, folders: state.folders.slice(), assignments } : state
 }

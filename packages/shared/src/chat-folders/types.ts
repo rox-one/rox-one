@@ -26,6 +26,8 @@ export type ChatFoldersOp =
   | { kind: 'delete'; folderId: string }
   | { kind: 'move'; sessionIds: string[]; folderId: string | null }
   | { kind: 'reorder'; folderIds: string[] }
+  /** Undo of a delete: re-create the folder at `index` and re-assign its chats. */
+  | { kind: 'restore'; folderId: string; name: string; index: number; sessionIds: string[] }
 
 export const EMPTY_CHAT_FOLDERS: ChatFoldersState = { version: 1, folders: [], assignments: {} }
 

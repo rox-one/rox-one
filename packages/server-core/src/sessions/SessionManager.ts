@@ -7717,6 +7717,13 @@ export class SessionManager implements ISessionManager {
     // resurrecting the still-present file.
     if (deleteStoredSession(workspaceRootPath, sessionId)) {
       sessionPersistenceQueue.unseal(sessionId)
+      // Drop the chat-folder assignment so chat-folders.json does not accumulate orphans.
+      try {
+        const { removeSessionsFromChatFolders } = await import('@rox/shared/chat-folders/storage')
+        removeSessionsFromChatFolders(workspaceRootPath, [sessionId])
+      } catch (error) {
+        sessionLog.warn(`Failed to clear chat-folder assignment for ${sessionId}:`, error)
+      }
     } else {
       sessionLog.warn(`Failed to delete session ${sessionId} from disk; persistence seal retained`)
     }
