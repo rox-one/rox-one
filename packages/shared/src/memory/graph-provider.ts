@@ -13,6 +13,7 @@
  *  - Every hit carries provenance; only injectable origins are fused.
  */
 import type { MemoryChunkProvenance, MemorySearchHit } from './types.ts'
+import { isMemoryOriginInjectable } from './document-provenance.ts'
 
 /** Default retrieval budget for one graph search inside a recall. */
 export const GRAPH_SEARCH_BUDGET_MS = 300
@@ -74,9 +75,16 @@ export class NoopGraphMemoryProvider implements GraphMemoryProvider {
   }
 }
 
-/** Origins that may be fused into recall (mirrors the injection gate: never `untrusted`). */
-export function isFusableGraphHit(hit: GraphMemoryHit): boolean {
-  return hit.provenance?.originClass !== 'untrusted' && typeof hit.text === 'string' && hit.text.trim().length > 0
+/** Hits that may be fused into recall: same gate as prompt injection (owner/agent only), well-formed. */
+export function isFusableGraphHit(hit: GraphMemoryHit | null | undefined): boolean {
+  return (
+    hit != null &&
+    typeof hit.id === 'string' &&
+    hit.provenance != null &&
+    isMemoryOriginInjectable(hit.provenance.originClass) &&
+    typeof hit.text === 'string' &&
+    hit.text.trim().length > 0
+  )
 }
 
 /** Chunk-id namespace for graph hits so they never collide with native chunk ids. */
@@ -98,7 +106,9 @@ export function graphHitToSearchHit(hit: GraphMemoryHit, snippetChars = 240): Me
 }
 
 /**
- * Reciprocal Rank Fusion of ranked lists. Items are keyed by `chunkId`; the
+ * Reciprocal Rank Fusion of ranked lists. NOTE: the returned `score` is the
+ * RRF score (~1/61 scale), not BM25; `textScore`/`vectorScore` are preserved.
+ * Items are keyed by `chunkId`; the
  * fused score is Σ 1/(k + rank). Ties keep first-list order (stable), so with
  * an empty graph list the native order is preserved exactly.
  */

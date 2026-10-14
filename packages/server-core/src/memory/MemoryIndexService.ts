@@ -459,9 +459,14 @@ export class MemoryIndexService {
       this.searchNative(trimmed, limit),
       withBudget(graphP, this.deps.graphBudgetMs ?? GRAPH_SEARCH_BUDGET_MS, [] as GraphMemoryHit[], () => controller.abort()),
     ])
-    const graphHits = (Array.isArray(graph) ? graph : []).filter(isFusableGraphHit).map(h => graphHitToSearchHit(h))
-    if (graphHits.length === 0) return native
-    return { hits: rrfFuse([native.hits, graphHits], limit), capability: native.capability }
+    try {
+      const graphHits = (Array.isArray(graph) ? graph : []).filter(isFusableGraphHit).map(h => graphHitToSearchHit(h))
+      if (graphHits.length === 0) return native
+      return { hits: rrfFuse([native.hits, graphHits], limit), capability: native.capability }
+    } catch (err) {
+      this.logger.warn('MemoryIndexService: graph fusion failed', err)
+      return native
+    }
   }
 
   private graphProvider(): GraphMemoryProvider | null {

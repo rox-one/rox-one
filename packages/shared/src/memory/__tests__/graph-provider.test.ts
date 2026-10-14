@@ -40,6 +40,9 @@ describe('graph hits', () => {
     expect(isFusableGraphHit(g('1'))).toBe(true)
     expect(isFusableGraphHit(g('2', 'untrusted'))).toBe(false)
     expect(isFusableGraphHit({ ...g('3'), text: '  ' })).toBe(false)
+    expect(isFusableGraphHit({ ...g('4'), provenance: undefined as never })).toBe(false)
+    expect(isFusableGraphHit({ ...g('5'), provenance: { ...prov('system') } })).toBe(false)
+    expect(isFusableGraphHit(null)).toBe(false)
   })
   test('namespaced chunk id and path', () => {
     const h = graphHitToSearchHit({ ...g('n1'), ref: 'note.md' })
