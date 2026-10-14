@@ -702,6 +702,7 @@ import type {
   CreateNoteCommentInput,
   NoteCommentThread,
   NoteDocument,
+  NoteTasksEntry,
   NoteCreateOptions,
   NoteMutationOptions,
   NativeDataReadEntityInput,
@@ -1383,6 +1384,8 @@ export interface ElectronAPI {
   // Notes
   listNotes(workspaceId: string): Promise<NoteSummary[]>
   readNote(workspaceId: string, noteId: string): Promise<NoteDocument>
+  /** #1574: checkbox tasks for `noteIds` (≤ NOTE_TASKS_MAX_IDS), one round trip, no note bodies. */
+  listNoteTasks(workspaceId: string, noteIds: string[]): Promise<NoteTasksEntry[]>
   resolveContent(ref: import('@rox/core/rox2').Rox2EntityRef): Promise<import('@rox/server-core/docs/descriptor-resolver').ContentResolution | import('@rox/server-core/docs/descriptor-resolver').ContentFailure>
   describeContent(ref: import('@rox/core/rox2').Rox2EntityRef): Promise<import('@rox/server-core/docs/descriptor-resolver').ContentResolution | import('@rox/server-core/docs/descriptor-resolver').ContentFailure>
   adoptContentDescriptor(command: import('@rox/server-core/docs/descriptor-resolver').AdoptDescriptorCommand): Promise<import('@rox/server-core/docs/descriptor-resolver').DescriptorReceipt | import('@rox/server-core/docs/descriptor-resolver').ContentFailure>

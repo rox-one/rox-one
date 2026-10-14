@@ -235,6 +235,7 @@ export const RPC_CHANNELS = {
   notes: {
     LIST: 'notes:list',
     READ: 'notes:read',
+    LIST_TASKS: 'notes:listTasks',
     SAVE: 'notes:save',
     CREATE: 'notes:create',
     LIST_COMMENTS: 'notes:listComments',
