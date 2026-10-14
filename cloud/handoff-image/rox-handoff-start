@@ -23,8 +23,15 @@ done < "$ROOT/server.env"
 [[ "${ROX_HANDOFF_SESSION_ID:-}" =~ ^[A-Za-z0-9_.-]{1,128}$ ]] || { echo "bad session id" >&2; exit 4; }
 PORT="${ROX_HANDOFF_PORT:-9100}"
 
-if [ -f "$ROOT/server.pid" ] && kill -0 "$(cat "$ROOT/server.pid")" 2>/dev/null; then
-  exit 0 # already running (idempotent restart after auto-stop)
+# Already running? Only if server.pid names a live process that is *our* Rox
+# server (PIDs are recycled after a sandbox restart); otherwise drop the stale file.
+if [ -f "$ROOT/server.pid" ]; then
+  pid="$(cat "$ROOT/server.pid" 2>/dev/null || true)"
+  if [[ "$pid" =~ ^[0-9]+$ ]] && [ -r "/proc/$pid/cmdline" ] \
+     && tr '\0' ' ' < "/proc/$pid/cmdline" | grep -q 'packages/server/src/index.ts'; then
+    exit 0 # idempotent: server already up
+  fi
+  rm -f "$ROOT/server.pid"
 fi
 
 # Lay the snapshot out as a workspace: session folder + referenced project files.

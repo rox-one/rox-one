@@ -931,7 +931,7 @@ export interface ElectronAPI {
   // Cloud handoff «В облако» (docs/cloud-handoff-design.md). The Daytona key is write-only from here.
   getCloudHandoffConfig(): Promise<CloudHandoffConfig>
   startCloudHandoff(args: { sessionId: string }): Promise<CloudHandoffStatus>
-  getCloudHandoffStatus(args: { handoffId?: string; sessionId?: string }): Promise<CloudHandoffStatus | null>
+  getCloudHandoffStatus(args: { handoffId?: string; sessionId?: string; open?: boolean }): Promise<CloudHandoffStatus | null>
   cancelCloudHandoff(args: { handoffId: string }): Promise<{ ok: boolean }>
   endCloudHandoff(args: { sessionId: string }): Promise<{ ok: boolean }>
   setCloudHandoffKey(args: { key: string }): Promise<{ ok: true }>

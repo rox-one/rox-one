@@ -67,11 +67,16 @@ Rejected starts (flag off, another handoff running) are reported but never repla
   the sandbox gets `ROX_WEBUI_PUBLIC_HOST_PATTERN=9100-[a-z0-9-]+\.<proxy-domain>`: the web UI uses the request host as
   OIDC redirect base only if it matches (else 400), and the token exchange reuses the exact redirect_uri from login.
 - Only https URLs are opened.
-- **Waking a stopped sandbox:** every `status`/open of a ready session checks the sandbox state; if it auto-stopped it is
-  started, `rox-handoff-start` is re-run and health is polled before any link is returned (concurrent polls share one
-  wake-up). If this fails, no link is returned.
+- **Waking a stopped sandbox — only on explicit open.** Passive `cloudHandoff:status` reads (button mount, polling)
+  only report state: they never start a sandbox and carry no link. «Открыть в браузере» calls status with
+  `open: true`; only then `ensureSessionRunning` runs: wait out transitional states (creating/stopping/…, bounded by
+  the ready timeout, nothing exec'd meanwhile) → start a stopped sandbox → for an already-started one, health-check
+  first (healthy ⇒ done; crashed server ⇒ continue) → `rox-handoff-start` → poll health. Then the link is returned
+  (fresh signed link in dev, stable web-host URL in prod). Concurrent opens share one wake-up; on failure no link.
 - **Restart safety:** `rox-handoff-start` unpacks `bundle/` into the workspace only once (marker
   `rox-workspace/.rox-handoff-unpacked`), so a restart never overwrites cloud-side messages with the desktop snapshot.
+  `server.pid` is trusted only if that PID is alive **and** its `/proc/<pid>/cmdline` is the Rox server
+  (`packages/server/src/index.ts`); otherwise (stale/recycled PID after a restart) it is removed and the server started.
 
 ## 6. SSO / ownership
 - Issuer `https://id.rox.one`, public PKCE client (`cloudHandoff.ssoClientId` / `ROX_CLOUD_HANDOFF_OIDC_CLIENT_ID`).
@@ -93,7 +98,10 @@ Rejected starts (flag off, another handoff running) are reported but never repla
   write only `bundle/**`, `manifest.json`, `server.env` (paths with empty/`.`/`..` segments or backslashes rejected;
   bodies capped by Content-Length and while streaming before JSON parse), exec exactly `rox-handoff-start|health <root>`, signed link for port
   9100 only (≤ 1 h, dev flag only). Create is serialised per owner (quota check + create under a lock) and capped
-  globally (`maxLiveTotal`, default 200 live sandboxes on the shared key). It forces snapshot, `public:false`, TTLs and labels, and rejects a `server.env` whose
+  globally (`maxLiveTotal`, default 200 live sandboxes on the shared key).
+  **Deployment constraint: run exactly one broker instance.** The owner lock and the global in-flight/live counters
+  are in-process; with several replicas the per-owner quota race and the global cap overshoot come back. Scaling out
+  needs a shared lock/counter (e.g. Redis/DB advisory lock) — not implemented. It forces snapshot, `public:false`, TTLs and labels, and rejects a `server.env` whose
   `ROX_WEBUI_OIDC_ALLOWED_SUBS` isn't the caller or whose `ROX_WEBUI_PASSWORD_LOGIN` isn't `0`. Provider errors are not echoed.
 
 ## 8. Errors (ru/en)

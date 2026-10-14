@@ -167,21 +167,22 @@ export class CloudHandoffService {
   }
 
   /**
-   * Status for a handoff. A ready signed-link session gets a freshly issued
-   * short-TTL link in the response only; it is never stored.
+   * Status for a handoff. Passive reads (mount, polling) only report state:
+   * they never wake a stopped sandbox and carry no link. `open: true` is the
+   * explicit «Открыть в браузере» request: it wakes an auto-stopped sandbox
+   * (start + idempotent start script + health) and then returns a link — a
+   * freshly issued short-TTL signed link, or the stable web-host URL.
    */
-  async status(handoffId: unknown): Promise<HandoffStatus | null> {
+  async status(handoffId: unknown, options: { open?: boolean } = {}): Promise<HandoffStatus | null> {
     this.prune();
     if (typeof handoffId !== 'string') return null;
     const r = this.records.get(handoffId);
     if (!r) return null;
     const view = this.publicView(r);
-    if (r.phase === 'ready' && !r.ended && r.sandboxId) {
+    if (options.open === true && r.phase === 'ready' && !r.ended && r.sandboxId) {
       try {
         const cfg = this.deps.readConfig();
         const { client } = await this.resolveClient(cfg, r.mode);
-        // An auto-stopped sandbox is woken (start + idempotent start script +
-        // health) before any link is handed out, so the link never opens a dead session.
         await this.resume(r, client);
         view.sessionUrl = r.linkMode === 'web_host' ? r.stableUrl : await issueSignedSessionLink(client, r.sandboxId);
       } catch (error) {
@@ -195,6 +196,13 @@ export class CloudHandoffService {
     return view;
   }
 
+  /** Latest accepted handoff for a chat (passive), so the UI can restore its state after reload. */
+  async statusForSession(sessionId: unknown, options: { open?: boolean } = {}): Promise<HandoffStatus | null> {
+    if (typeof sessionId !== 'string') return null;
+    const id = this.bySession.get(sessionId);
+    return id ? this.status(id, options) : null;
+  }
+
   private resume(r: HandoffRecord, client: DaytonaClient): Promise<void> {
     const key = r.handoffId;
     let p = this.resuming.get(key);
@@ -205,13 +213,6 @@ export class CloudHandoffService {
       this.resuming.set(key, p);
     }
     return p;
-  }
-
-  /** Latest accepted handoff for a chat, so the UI can restore the link after reload. */
-  async statusForSession(sessionId: unknown): Promise<HandoffStatus | null> {
-    if (typeof sessionId !== 'string') return null;
-    const id = this.bySession.get(sessionId);
-    return id ? this.status(id) : null;
   }
 
   cancel(handoffId: unknown): { ok: boolean } {
@@ -387,8 +388,10 @@ export function registerCloudHandoffHandlers(server: RpcServer, deps: HandlerDep
   server.handle(RPC_CHANNELS.cloudHandoff.START, (_ctx, args: { sessionId?: unknown }) => service.start(args?.sessionId), opts);
   server.handle(
     RPC_CHANNELS.cloudHandoff.STATUS,
-    (_ctx, args: { handoffId?: unknown; sessionId?: unknown }) =>
-      args?.handoffId !== undefined ? service.status(args.handoffId) : service.statusForSession(args?.sessionId),
+    (_ctx, args: { handoffId?: unknown; sessionId?: unknown; open?: unknown }) => {
+      const options = { open: args?.open === true };
+      return args?.handoffId !== undefined ? service.status(args.handoffId, options) : service.statusForSession(args?.sessionId, options);
+    },
     opts,
   );
   server.handle(RPC_CHANNELS.cloudHandoff.END, (_ctx, args: { sessionId?: unknown }) => service.end(args?.sessionId), opts);

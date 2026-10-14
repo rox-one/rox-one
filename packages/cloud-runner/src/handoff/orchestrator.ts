@@ -98,8 +98,9 @@ export interface ResumeSessionOptions {
 }
 
 /**
- * Make sure a handoff sandbox is serving before a link is issued. A sandbox
- * that auto-stopped is started again and `rox-handoff-start` re-run (it unpacks
+ * Make sure a handoff sandbox is serving before a link is issued. Waits out
+ * transitional states; a started sandbox is health-checked (a crashed server is
+ * restarted). A sandbox that auto-stopped is started again and `rox-handoff-start` re-run (it unpacks
  * the snapshot only once, so cloud-side messages survive), then health-polled.
  * Returns true if a restart was needed.
  */
@@ -111,19 +112,37 @@ export async function ensureSessionRunning(
   const limits: HandoffLimits = { ...DEFAULT_HANDOFF_LIMITS, ...options.limits };
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   const now = options.now ?? Date.now;
-  const sandbox = await client.getSandbox(sandboxId);
-  if (sandbox.state === 'started') return false;
-  if (sandbox.state === 'destroyed' || sandbox.state === 'error') {
-    throw new HandoffError('provider_error', `cloud session is ${sandbox.state}`);
+  const deadline = now() + limits.readyTimeoutMs;
+  const checkAbort = () => {
+    if (options.signal?.aborted) throw new HandoffError('cancelled', 'cancelled');
+  };
+  const health = async () => (await client.exec(sandboxId, `rox-handoff-health ${HANDOFF_ROOT}`, options.signal)).exitCode === 0;
+
+  // Wait out transitional states (creating/stopping/starting/…) before running
+  // anything in the sandbox; start a stopped one and wait until it is up.
+  let startedSandbox = false;
+  for (;;) {
+    checkAbort();
+    const { state } = await client.getSandbox(sandboxId);
+    if (state === 'destroyed' || state === 'error') throw new HandoffError('provider_error', `cloud session is ${state}`);
+    if (state === 'started') break;
+    if (state === 'stopped' && !startedSandbox) {
+      await client.startSandbox(sandboxId);
+      startedSandbox = true;
+      continue;
+    }
+    if (now() >= deadline) throw new HandoffError('start_timeout', 'cloud session did not become ready in time');
+    await sleep(limits.readyPollMs);
   }
-  if (sandbox.state === 'stopped' || sandbox.state === 'stopping') await client.startSandbox(sandboxId);
+
+  // Already running and healthy: nothing to do. A running sandbox whose server
+  // crashed falls through to the (idempotent) start script.
+  if (!startedSandbox && (await health())) return false;
   const started = await client.exec(sandboxId, `rox-handoff-start ${HANDOFF_ROOT}`, options.signal);
   if (started.exitCode !== 0) throw new HandoffError('provider_error', `session server failed to start (exit ${started.exitCode})`);
-  const deadline = now() + limits.readyTimeoutMs;
   for (;;) {
-    if (options.signal?.aborted) throw new HandoffError('cancelled', 'cancelled');
-    const health = await client.exec(sandboxId, `rox-handoff-health ${HANDOFF_ROOT}`, options.signal);
-    if (health.exitCode === 0) return true;
+    checkAbort();
+    if (await health()) return true;
     if (now() >= deadline) throw new HandoffError('start_timeout', 'cloud session did not become ready in time');
     await sleep(limits.readyPollMs);
   }

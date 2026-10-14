@@ -104,8 +104,9 @@ describe('CloudHandoffService', () => {
   it('issues a fresh short-lived link on every status read and never stores it', async () => {
     const { service, daytona } = makeService();
     const s = await service.start('sess-1');
-    const first = await settle(service, s.handoffId);
-    const second = (await service.status(s.handoffId))!;
+    await settle(service, s.handoffId);
+    const first = (await service.status(s.handoffId, { open: true }))!;
+    const second = (await service.status(s.handoffId, { open: true }))!;
     expect(first.sessionUrl).toMatch(/^https:\/\/9100-signed/);
     expect(second.sessionUrl).not.toBe(first.sessionUrl);
     expect(daytona.signedPreviewCalls.every((c) => c.expiresInSeconds <= 3600)).toBe(true);
@@ -120,7 +121,8 @@ describe('CloudHandoffService', () => {
     const hosted = makeService({ env: { ...env, [HANDOFF_WEB_HOST_ENV]: 'https://cloud.rox.one' } });
     const ok = await settle(hosted.service, (await hosted.service.start('sess-1')).handoffId);
     expect(ok.linkMode).toBe('web_host');
-    expect(ok.sessionUrl).toBe(`https://cloud.rox.one/s/${ok.handoffId}/`);
+    expect(ok.sessionUrl).toBeUndefined(); // passive read carries no link
+    expect((await hosted.service.status(ok.handoffId, { open: true }))!.sessionUrl).toBe(`https://cloud.rox.one/s/${ok.handoffId}/`);
     expect(hosted.daytona.signedPreviewCalls).toHaveLength(0);
   });
 
@@ -130,7 +132,7 @@ describe('CloudHandoffService', () => {
     await daytona.stopSandbox(ready.sandboxId!);
     const commands: string[] = [];
     daytona.execOverride = (c) => { commands.push(c); return undefined; };
-    const [a, b] = await Promise.all([service.status(ready.handoffId), service.status(ready.handoffId)]);
+    const [a, b] = await Promise.all([service.status(ready.handoffId, { open: true }), service.status(ready.handoffId, { open: true })]);
     expect(daytona.sandboxes.get(ready.sandboxId!)!.state).toBe('started');
     expect(commands.filter((c) => c.startsWith('rox-handoff-start'))).toHaveLength(1); // concurrent polls share one wake-up
     expect(commands.at(-1)).toMatch(/^rox-handoff-health/);
@@ -138,12 +140,29 @@ describe('CloudHandoffService', () => {
     expect(b!.sessionUrl).toMatch(/^https:\/\/9100-signed/);
   });
 
+  it('passive status (mount/poll) never wakes a stopped sandbox and carries no link', async () => {
+    const { service, daytona } = makeService();
+    const ready = await settle(service, (await service.start('sess-1')).handoffId);
+    await daytona.stopSandbox(ready.sandboxId!);
+    const commands: string[] = [];
+    daytona.execOverride = (c) => { commands.push(c); return undefined; };
+    const signedBefore = daytona.signedPreviewCalls.length;
+    const byId = (await service.status(ready.handoffId))!;
+    const bySession = (await service.statusForSession('sess-1'))!;
+    expect(byId.phase).toBe('ready');
+    expect(byId.sessionUrl).toBeUndefined();
+    expect(bySession.sessionUrl).toBeUndefined();
+    expect(daytona.sandboxes.get(ready.sandboxId!)!.state).toBe('stopped');
+    expect(commands).toHaveLength(0);
+    expect(daytona.signedPreviewCalls.length).toBe(signedBefore);
+  });
+
   it('no link when the sandbox cannot be woken', async () => {
     const { service, daytona } = makeService();
     const ready = await settle(service, (await service.start('sess-1')).handoffId);
     await daytona.stopSandbox(ready.sandboxId!);
     daytona.execOverride = (c) => (c.startsWith('rox-handoff-start') ? { exitCode: 1, stdout: '', stderr: 'boom' } as never : undefined);
-    const s = (await service.status(ready.handoffId))!;
+    const s = (await service.status(ready.handoffId, { open: true }))!;
     expect(s.sessionUrl).toBeUndefined();
     expect(s.failure?.code).toBe('provider_error');
   });

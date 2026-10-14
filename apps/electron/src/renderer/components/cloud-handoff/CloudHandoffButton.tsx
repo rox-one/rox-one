@@ -109,7 +109,7 @@ export function CloudHandoffButton({ sessionId }: { sessionId: string }) {
   // Signed links are short-lived: fetch a fresh one at click time, never cache it.
   const openSession = async () => {
     if (!status) return
-    const fresh = await api.getCloudHandoffStatus({ handoffId: status.handoffId }).catch(() => null)
+    const fresh = await api.getCloudHandoffStatus({ handoffId: status.handoffId, open: true }).catch(() => null)
     const url = safeSessionUrl(fresh)
     if (url) await api.openUrl(url)
     else toast.error(t(failureLabelKey(fresh?.failure?.code)))
