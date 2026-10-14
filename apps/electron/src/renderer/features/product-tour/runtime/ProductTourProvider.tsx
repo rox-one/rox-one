@@ -6,6 +6,8 @@ import { useNavigation } from '@/contexts/NavigationContext'
 import { useModalRegistry } from '@/context/ModalContext'
 import { useDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
 import * as storage from '@/lib/local-storage'
+import { legacyTourInvitationAllowed } from '@/features/guided-tour/model'
+import { useGuidedTourStatus } from '@/features/guided-tour/state'
 import type { CapabilityId, CapabilitySnapshot, EngineSnapshot, Phase, RuntimeState, SafeReason, TourBinding, TourDefinition, TourEffect, TourId, TourInput, TourProgress, TourScope, TourTargetRegistration, TransitionFunction, WindowLease } from '../contracts'
 import { DYNAMIC_TOUR_ID_PATTERN } from '../contracts'
 import { initialRuntimeState } from '../core/initial-state'
@@ -577,6 +579,11 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
     if (result.status !== 'failed') updatePreferences(result.value.preferences)
     if (value.diagnosticsEnabled === false) await repositories.diagnostics.clear()
   }, [repositories])
+  // The guided tour supersedes the legacy invitation: hidden while it is pending
+  // or running, and dismissed for good once it is completed (the completed
+  // guided-tour record is the persisted dismissal; user preferences are untouched).
+  const guidedTourStatus = useGuidedTourStatus()
+  const legacyInvitationAllowed = guidedTourStatus === 'idle' && legacyTourInvitationAllowed(storage.get<unknown>(storage.KEYS.guidedTour, null))
   const dismiss = useCallback(async () => {
     const current = stateRef.current
     const binding = current.attempt?.binding
@@ -636,7 +643,7 @@ export function ProductTourProvider({ children, workspaceId, shellReady, welcome
   const canNext = step?.completion.kind === 'ack' || !!(evidence?.level && (step?.completion.evidence === 'observed' || evidence.level === 'verified'))
   const input = (type: 'ACK' | 'BACK' | 'SKIP' | 'RETRY') => { if (state.attempt) sendRef.current({ type, runToken: state.attempt.binding.runToken, stepId: state.attempt.stepId, at: Date.now() }) }
   const presentation = <>
-      {enabled && welcomeSessionId && preferences.invitationsEnabled && !active && !progress['OBT-01'] && context.sessionId === welcomeSessionId && modal.getSnapshot().length === 0 && <aside data-testid="learning-welcome-invitation" className="fixed bottom-4 right-4 z-40 rounded-lg border bg-background p-3 shadow-modal-small"><button type="button" onClick={() => void start('OBT-01')}>{t('productTour.welcomeInvitation')}</button></aside>}
+      {enabled && legacyInvitationAllowed && welcomeSessionId && preferences.invitationsEnabled && !active && !progress['OBT-01'] && context.sessionId === welcomeSessionId && modal.getSnapshot().length === 0 && <aside data-testid="learning-welcome-invitation" className="fixed bottom-4 right-4 z-40 rounded-lg border bg-background p-3 shadow-modal-small"><button type="button" onClick={() => void start('OBT-01')}>{t('productTour.welcomeInvitation')}</button></aside>}
       <TourErrorBoundary key={enabled ? state.attempt?.binding.runToken ?? 'enabled' : 'disabled'} onError={() => pause('operation-failed')}>
         {active && target && step && state.attempt && (state.phase === 'presenting' || state.phase === 'waiting-action') && (
           <Suspense fallback={null}>

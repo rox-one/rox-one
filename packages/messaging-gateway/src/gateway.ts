@@ -340,20 +340,16 @@ export class MessagingGateway {
 
   private wireAdapter(adapter: PlatformAdapter): void {
     adapter.onMessage(async (msg: IncomingMessage) => {
-      const binding = this.bindingStore.findByChannel(msg.platform, msg.channelId, msg.threadId)
-      if (binding?.nativeOwner) {
-        const cmd = parseCommand(msg.text).cmd
-        // Only fresh pairing may recover a quarantined receipt. Its new
-        // context must prove the original private owner before replacement.
-        if (cmd !== '/pair') try { this.nativeBindingContext(binding) } catch { return }
-        if (cmd === '/new' || cmd === '/bind') return
+      try {
+        await this.handleIncoming(adapter, msg)
+      } finally {
+        // Persist the chat type on the (possibly just created) binding so the
+        // Мессенджер sidebar can group Каналы / Личные from real data.
+        if (msg.chatType) {
+          const bound = this.bindingStore.findByChannel(msg.platform, msg.channelId, msg.threadId)
+          if (bound) this.bindingStore.recordChatType(bound.id, msg.chatType)
+        }
       }
-      const isCommand = msg.text.trim().startsWith('/')
-      if (isCommand) {
-        const handled = await this.commands.handleCommand(adapter, msg)
-        if (handled) return
-      }
-      await this.router.route(adapter, msg)
     })
 
     adapter.onButtonPress(async (press: ButtonPress) => {
@@ -365,6 +361,23 @@ export class MessagingGateway {
       platform: adapter.platform,
       capabilities: adapter.capabilities,
     })
+  }
+
+  private async handleIncoming(adapter: PlatformAdapter, msg: IncomingMessage): Promise<void> {
+    const binding = this.bindingStore.findByChannel(msg.platform, msg.channelId, msg.threadId)
+    if (binding?.nativeOwner) {
+      const cmd = parseCommand(msg.text).cmd
+      // Only fresh pairing may recover a quarantined receipt. Its new
+      // context must prove the original private owner before replacement.
+      if (cmd !== '/pair') try { this.nativeBindingContext(binding) } catch { return }
+      if (cmd === '/new' || cmd === '/bind') return
+    }
+    const isCommand = msg.text.trim().startsWith('/')
+    if (isCommand) {
+      const handled = await this.commands.handleCommand(adapter, msg)
+      if (handled) return
+    }
+    await this.router.route(adapter, msg)
   }
 
   private nativeBindingContext(binding: ChannelBinding): NativeMessagingContext | undefined {
