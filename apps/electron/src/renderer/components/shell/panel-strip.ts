@@ -182,7 +182,7 @@ export function useStripHibernation(viewport: React.RefObject<HTMLElement | null
         timers.set(id, setTimeout(() => setHibernated((prev) => { const next = new Set(prev); next.add(id); return next }), HIBERNATE_AFTER_MS))
       }
     }, { root, threshold: 0 })
-    for (const element of root.querySelectorAll<HTMLElement>('[data-panel-id]')) if (ids.has(element.dataset.panelId ?? '')) observer.observe(element)
+    for (const element of Array.from(root.querySelectorAll<HTMLElement>('[data-panel-id]'))) if (ids.has(element.dataset.panelId ?? '')) observer.observe(element)
     // Drop ids of panels that left the stack or stopped being heavy.
     setHibernated((prev) => { const next = new Set([...prev].filter((id) => ids.has(id) && id !== focusedId)); return next.size === prev.size ? prev : next })
     return () => { observer.disconnect(); for (const timer of timers.values()) clearTimeout(timer) }
