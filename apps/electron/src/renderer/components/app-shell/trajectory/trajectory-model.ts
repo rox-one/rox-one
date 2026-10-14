@@ -23,8 +23,7 @@ export interface TrajectoryCell {
   /** Tool result one-line preview (tools only). */
   resultPreview?: string
   toolName?: string
-  /** Full recorded payloads for the inspector. */
-  inputDetail?: string
+  /** Full recorded output for the inspector (input is formatted lazily, see trajectoryInputDetail). */
   outputDetail?: string
   startedAt: number | null
   /** Seconds; null while running or when unrecorded. */
@@ -87,13 +86,53 @@ function kindFor(message: Message): TrajectoryCellKind | null {
   }
 }
 
+/** Pretty-printed tool input, computed lazily by the inspector only. */
+export function trajectoryInputDetail(message: Message | undefined): string | undefined {
+  if (!message?.toolInput) return undefined
+  try {
+    return JSON.stringify(message.toolInput, null, 2) ?? undefined
+  } catch {
+    return String(message.toolInput)
+  }
+}
+
+type CellContent = Pick<TrajectoryCell, 'text' | 'resultPreview' | 'toolName' | 'outputDetail'>
+
+/**
+ * Per-message content cache. Messages are immutable snapshots: a streaming
+ * delta replaces only the tail message object, so unchanged messages reuse
+ * their previews and only the changed tail is recomputed.
+ */
+const contentCache = new WeakMap<Message, CellContent>()
+
+function contentFor(message: Message, kind: TrajectoryCellKind): CellContent {
+  const cached = contentCache.get(message)
+  if (cached) return cached
+  let content: CellContent
+  if (kind === 'tool' || kind === 'subtool') {
+    const name = message.toolName ?? message.toolDisplayName ?? 'tool'
+    const args = message.toolInput ? compactJson(message.toolInput) : ''
+    content = { toolName: name, text: trajectoryPreviewText(args ? `${name} ${args}` : name) }
+    const result = message.toolResult || message.content || undefined
+    if (result !== undefined) {
+      content.outputDetail = result
+      content.resultPreview = trajectoryPreviewText(result)
+    }
+  } else {
+    content = { text: trajectoryPreviewText(message.content || message.errorTitle || ''), outputDetail: message.content || message.errorTitle || undefined }
+  }
+  contentCache.set(message, content)
+  return content
+}
+
 /** Upper bound for inferred durations so an idle gap never becomes a giant span. */
 const MAX_INFERRED_MS = 10 * 60 * 1000
 
 /**
  * Project the Rox message list into turn-grouped trajectory records.
  * - user message → USER (opens a turn)
- * - assistant/thinking → ASSISTANT (lane Model); duration = gap to next record (estimated)
+ * - assistant/thinking → ASSISTANT (lane Model); duration = gap to the next record of the same turn (estimated;
+ *   never inferred across a turn boundary, so user think/idle time is not attributed to the model)
  * - tool → TOOL / SUBTOOL (lane Tools); duration = toolDuration (ms) or estimated gap; error status → red
  * - error → SYSTEM, compaction status → COMPACTED, plan/info/warning → CONTEXT
  */
@@ -122,7 +161,15 @@ export function buildTrajectory(messages: readonly Message[]): TrajectoryTurnMod
         timeSeconds = Math.max(0, message.toolDuration) / 1000
       }
     }
-    if (timeSeconds === null && !running && kind !== 'user' && startedAt !== null && next && Number.isFinite(next.timestamp)) {
+    if (
+      timeSeconds === null &&
+      !running &&
+      kind !== 'user' &&
+      startedAt !== null &&
+      next !== undefined &&
+      kindFor(next) !== 'user' &&
+      Number.isFinite(next.timestamp)
+    ) {
       const gap = next.timestamp - startedAt
       if (gap >= 0 && gap <= MAX_INFERRED_MS) {
         timeSeconds = gap / 1000
@@ -135,27 +182,12 @@ export function buildTrajectory(messages: readonly Message[]): TrajectoryTurnMod
       kind,
       messageId: message.id,
       turn: current!.turn,
-      text: '',
+      ...contentFor(message, kind),
       startedAt,
       timeSeconds,
       durationEstimated,
       isError,
       running,
-    }
-    if (kind === 'tool' || kind === 'subtool') {
-      const name = message.toolName ?? message.toolDisplayName ?? 'tool'
-      const args = message.toolInput ? compactJson(message.toolInput) : ''
-      cell.toolName = name
-      cell.text = trajectoryPreviewText(args ? `${name} ${args}` : name)
-      cell.inputDetail = message.toolInput ? JSON.stringify(message.toolInput, null, 2) : undefined
-      const result = message.toolResult ?? (message.content || undefined)
-      if (result !== undefined) {
-        cell.outputDetail = result
-        cell.resultPreview = trajectoryPreviewText(result)
-      }
-    } else {
-      cell.text = trajectoryPreviewText(message.content ?? message.errorTitle ?? '')
-      cell.outputDetail = message.content
     }
     current!.cells.push(cell)
   })
@@ -260,6 +292,60 @@ function deriveTimedTimeline(turns: readonly TrajectoryTurnModel[]): TrajectoryT
     if (s.end > end) end = s.end
   }
   return { start, end, spans, turnBoundaries }
+}
+
+export interface TrajectoryRenderedSpan extends TrajectoryTimelineSpan {
+  /** Number of records merged into this span (1 = a single record). */
+  count: number
+}
+
+/** Spans of each lane sorted by start, computed once per model. */
+export function sortTimelineLanes(model: TrajectoryTimelineModel | null): TrajectoryTimelineSpan[][] {
+  const lanes: TrajectoryTimelineSpan[][] = [[], [], []]
+  if (!model) return lanes
+  for (const span of model.spans) lanes[span.lane]!.push(span)
+  for (const lane of lanes) lane.sort((l, r) => l.start - r.start || l.end - r.end)
+  return lanes
+}
+
+/**
+ * Cull spans outside the visible domain and merge spans that would occupy the
+ * pixels (each span is at least minSpanPx wide), so DOM cost is bounded by track width (≈ 3 lanes × width
+ * px) rather than by record count. A merged span keeps the first record's
+ * index (click target), is an error if any member is, and reports `count`.
+ */
+export function cullTimelineSpans(
+  lanes: readonly (readonly TrajectoryTimelineSpan[])[],
+  domain: TrajectoryTimeRange,
+  trackWidthPx: number,
+  minSpanPx = 2,
+): TrajectoryRenderedSpan[] {
+  const duration = Math.max(1e-9, domain.end - domain.start)
+  const pxPerUnit = Math.max(1, trackWidthPx) / duration
+  const out: TrajectoryRenderedSpan[] = []
+  for (const lane of lanes) {
+    let open: TrajectoryRenderedSpan | null = null
+    let openEndPx = -Infinity
+    for (const span of lane) {
+      if (span.end < domain.start) continue
+      if (span.start > domain.end) break
+      const startPx = (span.start - domain.start) * pxPerUnit
+      const endPx = Math.max(startPx + minSpanPx, (span.end - domain.start) * pxPerUnit)
+      // Pixel overlap with the previous rendered span → merge. Rendered spans in a
+      // lane never overlap, so each lane renders at most width / minSpanPx spans.
+      if (open && startPx < openEndPx) {
+        open.end = Math.max(open.end, span.end)
+        open.isError = open.isError || span.isError
+        open.count += 1
+        openEndPx = Math.max(openEndPx, endPx)
+        continue
+      }
+      open = { ...span, count: 1 }
+      openEndPx = endPx
+      out.push(open)
+    }
+  }
+  return out
 }
 
 /** Records active at any point inside an inclusive selected interval. */

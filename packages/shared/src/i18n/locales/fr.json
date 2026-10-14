@@ -11050,6 +11050,7 @@
   "trajectory.lane.input": "Entrée",
   "trajectory.lane.model": "Modèle",
   "trajectory.lane.tools": "Outils",
+  "trajectory.ledgerAria": "Événements de la trajectoire",
   "trajectory.noContent": "Aucun contenu",
   "trajectory.noOutput": "Aucune sortie",
   "trajectory.openInChat": "Ouvrir dans le chat",

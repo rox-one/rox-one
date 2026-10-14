@@ -56,7 +56,7 @@ describe('TrajectoryView', () => {
   it('opens the inspector on row click and jumps to chat', async () => {
     const opened: string[] = []
     const c = await mount({ messages, onOpenMessage: (id) => opened.push(id) })
-    await act(async () => { (c.querySelector('[role="row"][data-kind="tool"]') as HTMLElement).click() })
+    await act(async () => { (c.querySelector('[role="row"][data-kind="tool"] [role="gridcell"]') as HTMLElement).click() })
     const details = c.querySelector('section[aria-label="Event details"]')!
     expect(details.textContent).toContain('Failed')
     expect(details.textContent).toContain('"command": "ls"')
@@ -90,5 +90,42 @@ describe('TrajectoryView', () => {
     const c = await mount({ messages: [] })
     expect(c.textContent).toContain('No events in this session yet')
     expect(c.textContent).toContain('No timing data')
+  })
+
+  it('ledger is a keyboard-navigable grid with roving focus', async () => {
+    const c = await mount({ messages })
+    const grid = c.querySelector('[role="grid"]') as HTMLElement
+    expect(grid.querySelectorAll('[role="row"] [role="gridcell"]').length).toBe(4)
+    const turnButton = grid.querySelector('[role="row"] [role="gridcell"] button') as HTMLButtonElement
+    expect(turnButton.getAttribute('aria-expanded')).toBe('true')
+    expect(grid.querySelectorAll('[tabindex="0"]').length).toBe(1)
+    await act(async () => { turnButton.focus() })
+    const key = async (k: string) => {
+      await act(async () => { (document.activeElement as HTMLElement).dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true })) })
+    }
+    await key('End')
+    expect((document.activeElement as HTMLElement).closest('[role="row"]')?.getAttribute('data-kind')).toBe('tool')
+    await key('ArrowUp')
+    expect((document.activeElement as HTMLElement).closest('[role="row"]')?.getAttribute('data-kind')).toBe('message')
+    await key('Enter')
+    expect(c.querySelector('section[aria-label="Event details"]')?.textContent).toContain('checking')
+    expect(c.querySelector('[role="row"][data-kind="message"]')?.getAttribute('aria-selected')).toBe('true')
+  })
+
+  it('keeps the selection on the same message when earlier records change', async () => {
+    const c = await mount({ messages })
+    await act(async () => { (c.querySelector('[role="row"][data-kind="tool"] [role="gridcell"]') as HTMLElement).click() })
+    // Re-render with an extra earlier record: selection must still be the Bash tool.
+    const container = c
+    const root = roots[roots.length - 1]
+    const more = [{ id: 'i0', role: 'info', content: 'note', timestamp: 900 } as Message, ...messages]
+    await act(async () => { root.render(<I18nextProvider i18n={i18n}><TrajectoryView messages={more} /></I18nextProvider>) })
+    expect(container.querySelector('section[aria-label="Event details"]')?.textContent).toContain('Bash')
+  })
+
+  it('timeline overview is a labelled group, not a broken slider', async () => {
+    const c = await mount({ messages })
+    expect(c.querySelector('[role="slider"]')).toBeNull()
+    expect(c.querySelector('[role="group"][aria-label]')).not.toBeNull()
   })
 })

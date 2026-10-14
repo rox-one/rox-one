@@ -11041,6 +11041,7 @@
   "trajectory.lane.input": "입력",
   "trajectory.lane.model": "모델",
   "trajectory.lane.tools": "도구",
+  "trajectory.ledgerAria": "궤적 이벤트",
   "trajectory.noContent": "내용 없음",
   "trajectory.noOutput": "출력 없음",
   "trajectory.openInChat": "채팅에서 열기",

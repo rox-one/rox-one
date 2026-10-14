@@ -14,9 +14,12 @@ import { cn } from '@/lib/utils'
 import type { Message } from '../../../../shared/types'
 import {
   buildTrajectory,
+  cullTimelineSpans,
   deriveTrajectoryTimeline,
   formatDurationMillis,
   projectTrajectoryRows,
+  sortTimelineLanes,
+  trajectoryInputDetail,
   trajectoryTimelineFocusIndexes,
   type TrajectoryCell,
   type TrajectoryCellKind,
@@ -73,7 +76,8 @@ export function TrajectoryView({ messages, onOpenMessage, className }: Trajector
   const [collapseCalls, setCollapseCalls] = React.useState(false)
   const [query, setQuery] = React.useState('')
   const [range, setRange] = React.useState<TrajectoryTimeRange | null>(null)
-  const [selected, setSelected] = React.useState<number | null>(null)
+  /** Selection is keyed by message id so it survives visibility changes of earlier records. */
+  const [selected, setSelected] = React.useState<string | null>(null)
 
   const model = React.useMemo(() => deriveTrajectoryTimeline(turns, mode), [turns, mode])
   const focus = React.useMemo(() => (range ? trajectoryTimelineFocusIndexes(model, range) : null), [model, range])
@@ -90,11 +94,22 @@ export function TrajectoryView({ messages, onOpenMessage, className }: Trajector
 
   const allTurnKeys = React.useMemo(() => turns.map((turn) => `turn:${turn.turn ?? 'pre'}`), [turns])
   const allTurnsCollapsed = allTurnKeys.length > 0 && allTurnKeys.every((k) => collapsedTurns.has(k))
-  const selectedCell = React.useMemo(() => {
-    if (selected === null) return null
-    for (const turn of turns) for (const cell of turn.cells) if (cell.index === selected) return cell
-    return null
-  }, [turns, selected])
+  const cellsByIndex = React.useMemo(() => turns.flatMap((turn) => turn.cells), [turns])
+  const selectedCell = React.useMemo(
+    () => (selected === null ? null : (cellsByIndex.find((cell) => cell.messageId === selected) ?? null)),
+    [cellsByIndex, selected],
+  )
+  const selectedMessage = React.useMemo(
+    () => (selected === null ? undefined : messages.find((m) => m.id === selected)),
+    [messages, selected],
+  )
+  const selectByIndex = React.useCallback(
+    (index: number) => {
+      const cell = cellsByIndex[index]
+      if (cell) setSelected(cell.messageId)
+    },
+    [cellsByIndex],
+  )
 
   return (
     <div className={cn('flex h-full min-h-0 flex-col bg-background', className)} data-testid="trajectory-view">
@@ -139,10 +154,10 @@ export function TrajectoryView({ messages, onOpenMessage, className }: Trajector
         model={model}
         mode={mode}
         range={range}
-        selectedIndex={selected}
+        selectedIndex={selectedCell?.index ?? null}
         searchMatches={searchMatches}
         onRangeChange={setRange}
-        onRecordSelect={setSelected}
+        onRecordSelect={selectByIndex}
       />
       {turns.length === 0 ? (
         <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">{t('trajectory.empty')}</div>
@@ -162,7 +177,7 @@ export function TrajectoryView({ messages, onOpenMessage, className }: Trajector
         />
       )}
       {selectedCell && (
-        <TrajectoryInspector cell={selectedCell} onClose={() => setSelected(null)} onOpenMessage={onOpenMessage} />
+        <TrajectoryInspector cell={selectedCell} message={selectedMessage} onClose={() => setSelected(null)} onOpenMessage={onOpenMessage} />
       )}
     </div>
   )
@@ -206,11 +221,29 @@ const TrajectoryTimeline = React.memo(function TrajectoryTimeline({ model, mode,
   const dragRef = React.useRef<{ pointerId: number; anchor: number; clientX: number; record: number | null } | null>(null)
   const [draft, setDraft] = React.useState<TrajectoryTimeRange | null>(null)
   const [viewport, setViewport] = React.useState<TrajectoryTimeRange | null>(null)
+  const [trackWidth, setTrackWidth] = React.useState(800)
   React.useEffect(() => setViewport(null), [mode])
+  React.useLayoutEffect(() => {
+    const track = trackRef.current
+    if (!track) return
+    if (track.clientWidth > 0) setTrackWidth(track.clientWidth)
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => {
+      if (track.clientWidth > 0) setTrackWidth(track.clientWidth)
+    })
+    ro.observe(track)
+    return () => ro.disconnect()
+  }, [])
+  const lanes = React.useMemo(() => sortTimelineLanes(model), [model])
 
   const full = Math.max(1, (model?.end ?? 0) - (model?.start ?? 0))
   const domainStart = viewport?.start ?? model?.start ?? 0
   const domainDuration = viewport ? Math.max(1, viewport.end - viewport.start) : full
+  // Only spans inside the visible domain are rendered, sub-pixel neighbours merged.
+  const renderedSpans = React.useMemo(
+    () => cullTimelineSpans(lanes, { start: domainStart, end: domainStart + domainDuration }, trackWidth),
+    [lanes, domainStart, domainDuration, trackWidth],
+  )
 
   React.useEffect(() => {
     const track = trackRef.current
@@ -254,12 +287,9 @@ const TrajectoryTimeline = React.memo(function TrajectoryTimeline({ model, mode,
         </div>
         <div
           ref={trackRef}
-          role="slider"
+          role="group"
           tabIndex={0}
           aria-label={t('trajectory.timeline.overviewAria')}
-          aria-valuemin={model?.start ?? 0}
-          aria-valuemax={model?.end ?? 0}
-          aria-valuenow={range?.start ?? model?.start ?? 0}
           className="relative cursor-crosshair overflow-hidden outline-none focus-visible:ring-1 focus-visible:ring-accent"
           onContextMenu={(e) => {
             e.preventDefault()
@@ -306,20 +336,20 @@ const TrajectoryTimeline = React.memo(function TrajectoryTimeline({ model, mode,
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs text-muted-foreground">{t('trajectory.timeline.noTimingData')}</span>
           ) : (
             <>
-              {model.turnBoundaries.map((b) => (
+              {model.turnBoundaries.filter((b) => b.time >= domainStart && b.time <= domainStart + domainDuration).map((b) => (
                 <span key={b.turn} aria-hidden className="pointer-events-none absolute inset-y-0 w-px bg-border" style={{ left: pct(b.time) }} />
               ))}
               <div className="absolute inset-x-0 bottom-[7px] top-[7px]">
-                {model.spans.map((span) => {
+                {renderedSpans.map((span) => {
                   const width = ((span.end - span.start) / domainDuration) * 100
-                  const dim = (shown && !(span.start <= shown.end && span.end >= shown.start)) || (searchMatches && !searchMatches.has(span.index))
+                  const dim = (shown && !(span.start <= shown.end && span.end >= shown.start)) || (searchMatches && span.count === 1 && !searchMatches.has(span.index))
                   return (
                     <span
                       key={span.index}
                       data-timeline-record-index={span.index}
                       data-timeline-span={span.kind}
                       data-error={span.isError || undefined}
-                      title={`${kindLabel(span.kind)} · ${span.label}`}
+                      title={span.count > 1 ? `${kindLabel(span.kind)} × ${span.count}` : `${kindLabel(span.kind)} · ${span.label}`}
                       className={cn(
                         'absolute h-2 min-w-[2px] rounded-[1px]',
                         span.isError ? 'bg-destructive' : SPAN_COLOR[span.kind],
@@ -356,11 +386,17 @@ const TrajectoryTimeline = React.memo(function TrajectoryTimeline({ model, mode,
 
 interface LedgerProps {
   rows: ReturnType<typeof projectTrajectoryRows>
-  selected: number | null
-  onSelect: (index: number) => void
+  selected: string | null
+  onSelect: (messageId: string) => void
   onToggleTurn: (key: string) => void
 }
 
+/**
+ * Event ledger as an ARIA grid (row > gridcell) with a roving tabindex:
+ * ArrowUp/Down/Home/End/PageUp/PageDown move focus (scrolling the virtual
+ * window), Enter/Space select a record or toggle a turn. Turn headers keep a
+ * real <button> (inside their gridcell) for expand/collapse semantics.
+ */
 function TrajectoryLedger({ rows, selected, onSelect, onToggleTurn }: LedgerProps) {
   const { t } = useTranslation()
   const kindLabel = useKindLabel()
@@ -368,6 +404,8 @@ function TrajectoryLedger({ rows, selected, onSelect, onToggleTurn }: LedgerProp
   const [scrollTop, setScrollTop] = React.useState(0)
   const [height, setHeight] = React.useState(600)
   const followRef = React.useRef(true)
+  const [activeKey, setActiveKey] = React.useState<string | null>(null)
+  const focusPendingRef = React.useRef(false)
 
   // Offsets: turn rows are shorter than content rows.
   const offsets = React.useMemo(() => {
@@ -377,6 +415,18 @@ function TrajectoryLedger({ rows, selected, onSelect, onToggleTurn }: LedgerProp
     return out
   }, [rows])
   const total = offsets[rows.length]
+  const rowIndexByKey = React.useMemo(() => new Map(rows.map((row, i) => [row.key, i] as const)), [rows])
+  // Roving tab stop: the active row if it still exists, else the selected record, else the first row.
+  const activeIndex = React.useMemo(() => {
+    if (rows.length === 0) return -1
+    const byActive = activeKey === null ? undefined : rowIndexByKey.get(activeKey)
+    if (byActive !== undefined) return byActive
+    if (selected !== null) {
+      const bySelected = rows.findIndex((row) => row.type === 'cell' && row.cell.messageId === selected)
+      if (bySelected >= 0) return bySelected
+    }
+    return 0
+  }, [rows, rowIndexByKey, activeKey, selected])
 
   React.useLayoutEffect(() => {
     const el = scrollRef.current
@@ -394,6 +444,55 @@ function TrajectoryLedger({ rows, selected, onSelect, onToggleTurn }: LedgerProp
     if (el && followRef.current) el.scrollTop = el.scrollHeight
   }, [total])
 
+  // After keyboard navigation, focus the newly active row once it is rendered.
+  React.useLayoutEffect(() => {
+    if (!focusPendingRef.current) return
+    focusPendingRef.current = false
+    const target = scrollRef.current?.querySelector<HTMLElement>(`[data-row-index="${activeIndex}"] [data-roving]`)
+    target?.focus({ preventScroll: true })
+  })
+
+  const moveTo = (index: number) => {
+    if (rows.length === 0) return
+    const next = Math.min(rows.length - 1, Math.max(0, index))
+    const el = scrollRef.current
+    if (el) {
+      const top = offsets[next]
+      const bottom = offsets[next + 1]
+      if (top < el.scrollTop) el.scrollTop = top
+      else if (bottom > el.scrollTop + el.clientHeight) el.scrollTop = bottom - el.clientHeight
+      setScrollTop(el.scrollTop)
+      followRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 4
+    }
+    focusPendingRef.current = true
+    setActiveKey(rows[next].key)
+  }
+
+  const onGridKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const page = Math.max(1, Math.floor(height / ROW_HEIGHT))
+    const handled: Record<string, number> = {
+      ArrowDown: activeIndex + 1,
+      ArrowUp: activeIndex - 1,
+      Home: 0,
+      End: rows.length - 1,
+      PageDown: activeIndex + page,
+      PageUp: activeIndex - page,
+    }
+    if (e.key in handled) {
+      e.preventDefault()
+      moveTo(handled[e.key])
+      return
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
+      const row = rows[activeIndex]
+      if (row?.type === 'cell') {
+        e.preventDefault()
+        onSelect(row.cell.messageId)
+      }
+      // Turn rows: the focused <button> handles Enter/Space natively.
+    }
+  }
+
   // Binary-search the first row under scrollTop, then window with overscan.
   let lo = 0
   let hi = rows.length
@@ -405,84 +504,109 @@ function TrajectoryLedger({ rows, selected, onSelect, onToggleTurn }: LedgerProp
   // Window sized by the shortest row so the viewport is always covered.
   const start = Math.max(0, lo - OVERSCAN)
   const end = Math.min(rows.length, lo + Math.ceil(height / TURN_ROW_HEIGHT) + 1 + OVERSCAN)
+  // Always render the roving tab stop so the grid stays reachable with Tab.
+  const indexes: number[] = []
+  if (activeIndex >= 0 && activeIndex < start) indexes.push(activeIndex)
+  for (let i = start; i < end; i++) indexes.push(i)
+  if (activeIndex >= end) indexes.push(activeIndex)
 
   return (
     <div
       ref={scrollRef}
       className="relative min-h-0 flex-1 overflow-auto"
       role="grid"
+      aria-label={t('trajectory.ledgerAria')}
       aria-rowcount={rows.length}
+      aria-colcount={1}
+      onKeyDown={onGridKeyDown}
       onScroll={(e) => {
         const el = e.currentTarget
         setScrollTop(el.scrollTop)
         followRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 4
       }}
     >
-      <div style={{ height: total, position: 'relative' }}>
-        {rows.slice(start, end).map((row, i) => {
-          const rowIndex = start + i
+      <div role="rowgroup" style={{ height: total, position: 'relative' }}>
+        {indexes.map((rowIndex) => {
+          const row = rows[rowIndex]
           const top = offsets[rowIndex]
+          const tabIndex = rowIndex === activeIndex ? 0 : -1
           if (row.type === 'turn') {
             return (
-              <button
+              <div
                 key={row.key}
-                type="button"
                 role="row"
                 aria-rowindex={rowIndex + 1}
-                aria-expanded={!row.collapsed}
-                onClick={() => onToggleTurn(row.key)}
-                className="absolute inset-x-0 flex items-center gap-1.5 border-t-2 border-border/60 px-2 text-left font-mono text-[10px] text-muted-foreground hover:text-foreground"
+                data-row-index={rowIndex}
+                className="absolute inset-x-0"
                 style={{ top, height: TURN_ROW_HEIGHT }}
               >
-                {row.collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                <span className="rounded-b-sm bg-foreground/5 px-1.5">
-                  {row.turn === null ? t('trajectory.betweenTurns') : t('trajectory.turn', { turn: row.turn })}
-                </span>
-                {row.collapsed && <span className="min-w-0 truncate font-sans text-xs">… {row.preview}</span>}
-              </button>
+                <div role="gridcell" className="h-full">
+                  <button
+                    type="button"
+                    data-roving
+                    tabIndex={tabIndex}
+                    aria-expanded={!row.collapsed}
+                    onFocus={() => setActiveKey(row.key)}
+                    onClick={() => onToggleTurn(row.key)}
+                    className="flex h-full w-full items-center gap-1.5 border-t-2 border-border/60 px-2 text-left font-mono text-[10px] text-muted-foreground outline-none hover:text-foreground focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent"
+                  >
+                    {row.collapsed ? <ChevronRight className="h-3 w-3" aria-hidden /> : <ChevronDown className="h-3 w-3" aria-hidden />}
+                    <span className="rounded-b-sm bg-foreground/5 px-1.5">
+                      {row.turn === null ? t('trajectory.betweenTurns') : t('trajectory.turn', { turn: row.turn })}
+                    </span>
+                    {row.collapsed && <span className="min-w-0 truncate font-sans text-xs">… {row.preview}</span>}
+                  </button>
+                </div>
+              </div>
             )
           }
           const cell = row.cell
           const isTool = cell.kind === 'tool' || cell.kind === 'subtool'
+          const isSelected = selected === cell.messageId
           return (
             <div
               key={row.key}
               role="row"
               aria-rowindex={rowIndex + 1}
-              aria-selected={selected === cell.index}
+              aria-selected={isSelected}
+              data-row-index={rowIndex}
               data-kind={cell.kind}
               data-error={cell.isError || undefined}
-              tabIndex={-1}
-              onClick={() => onSelect(cell.index)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') onSelect(cell.index)
-              }}
-              className={cn(
-                'absolute inset-x-0 flex cursor-pointer items-center gap-2 border-l-2 pl-2 pr-3 text-xs hover:bg-foreground/[0.04]',
-                cell.isError ? 'border-destructive/50' : 'border-accent/20',
-                selected === cell.index && 'bg-accent/10',
-              )}
+              className="absolute inset-x-0"
               style={{ top, height: ROW_HEIGHT }}
             >
-              <span className={cn('flex w-[76px] shrink-0 justify-end', cell.kind === 'subtool' && 'pl-3')}>
-                <span className={cn('inline-flex h-[19px] items-center rounded border px-1.5 text-[10px] font-semibold uppercase tracking-wide', cell.isError ? 'border-destructive/30 bg-destructive/10 text-destructive' : KIND_TAG[cell.kind])}>
-                  {kindLabel(cell.kind)}
-                </span>
-              </span>
-              <span className={cn('flex min-w-0 flex-1 items-center truncate', isTool && 'font-mono text-[12px]', cell.kind === 'subtool' && 'pl-6')}>
-                <span className="truncate text-foreground">{cell.text || <span className="text-muted-foreground">{t('trajectory.noContent')}</span>}</span>
-                {isTool && (
-                  <>
-                    <span className="mx-2 shrink-0 text-muted-foreground">→</span>
-                    <span className={cn('min-w-0 truncate', cell.isError ? 'text-destructive' : 'text-muted-foreground')}>
-                      {cell.running ? t('trajectory.running') : cell.resultPreview || t('trajectory.noOutput')}
-                    </span>
-                  </>
+              <div
+                role="gridcell"
+                data-roving
+                tabIndex={tabIndex}
+                onFocus={() => setActiveKey(row.key)}
+                onClick={() => onSelect(cell.messageId)}
+                className={cn(
+                  'flex h-full cursor-pointer items-center gap-2 border-l-2 pl-2 pr-3 text-xs outline-none hover:bg-foreground/[0.04] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent',
+                  cell.isError ? 'border-destructive/50' : 'border-accent/20',
+                  isSelected && 'bg-accent/10',
                 )}
-              </span>
-              <span className="w-20 shrink-0 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
-                {cell.timeSeconds === null ? '—' : `${cell.durationEstimated ? '≈' : ''}${t('trajectory.unit.ms', { value: formatDurationMillis(cell.timeSeconds * 1000) })}`}
-              </span>
+              >
+                <span className={cn('flex w-[76px] shrink-0 justify-end', cell.kind === 'subtool' && 'pl-3')}>
+                  <span className={cn('inline-flex h-[19px] items-center rounded border px-1.5 text-[10px] font-semibold uppercase tracking-wide', cell.isError ? 'border-destructive/30 bg-destructive/10 text-destructive' : KIND_TAG[cell.kind])}>
+                    {kindLabel(cell.kind)}
+                  </span>
+                </span>
+                <span className={cn('flex min-w-0 flex-1 items-center truncate', isTool && 'font-mono text-[12px]', cell.kind === 'subtool' && 'pl-6')}>
+                  <span className="truncate text-foreground">{cell.text || <span className="text-muted-foreground">{t('trajectory.noContent')}</span>}</span>
+                  {isTool && (
+                    <>
+                      <span className="mx-2 shrink-0 text-muted-foreground" aria-hidden>→</span>
+                      <span className={cn('min-w-0 truncate', cell.isError ? 'text-destructive' : 'text-muted-foreground')}>
+                        {cell.running ? t('trajectory.running') : cell.resultPreview || t('trajectory.noOutput')}
+                      </span>
+                    </>
+                  )}
+                </span>
+                <span className="w-20 shrink-0 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
+                  {cell.timeSeconds === null ? '—' : `${cell.durationEstimated ? '≈' : ''}${t('trajectory.unit.ms', { value: formatDurationMillis(cell.timeSeconds * 1000) })}`}
+                </span>
+              </div>
             </div>
           )
         })}
@@ -491,9 +615,14 @@ function TrajectoryLedger({ rows, selected, onSelect, onToggleTurn }: LedgerProp
   )
 }
 
-function TrajectoryInspector({ cell, onClose, onOpenMessage }: { cell: TrajectoryCell; onClose: () => void; onOpenMessage?: (id: string) => void }) {
+function TrajectoryInspector({ cell, message, onClose, onOpenMessage }: { cell: TrajectoryCell; message: Message | undefined; onClose: () => void; onOpenMessage?: (id: string) => void }) {
   const { t } = useTranslation()
   const kindLabel = useKindLabel()
+  // Pretty JSON is formatted only for the inspected record, never per message on rebuild.
+  const inputDetail = React.useMemo(
+    () => (cell.kind === 'tool' || cell.kind === 'subtool' ? trajectoryInputDetail(message) : undefined),
+    [cell.kind, message],
+  )
   return (
     <section aria-label={t('trajectory.details')} className="flex max-h-[40%] min-h-[120px] shrink-0 flex-col border-t border-border/60 bg-foreground/[0.02]">
       <header className="flex h-8 shrink-0 items-center gap-2 px-3 text-xs">
@@ -514,7 +643,7 @@ function TrajectoryInspector({ cell, onClose, onOpenMessage }: { cell: Trajector
         </button>
       </header>
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-auto px-3 pb-3 md:grid-cols-2">
-        {cell.inputDetail !== undefined && <DetailBlock label={t('trajectory.input')} text={cell.inputDetail} />}
+        {inputDetail !== undefined && <DetailBlock label={t('trajectory.input')} text={inputDetail} />}
         <DetailBlock label={t('trajectory.output')} text={cell.outputDetail ?? ''} error={cell.isError} />
       </div>
     </section>

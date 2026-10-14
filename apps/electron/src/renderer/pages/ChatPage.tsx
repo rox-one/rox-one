@@ -696,6 +696,31 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   )
 
 
+  // "Open in chat" from the Trajectory tab: the standard ChatDisplay mounts
+  // after the view switch (and may still be building its turns), so retry
+  // by message id until the transcript resolves it or ~1s elapses.
+  const pendingChatJumpRef = React.useRef<string | null>(null)
+  React.useEffect(() => {
+    if (sessionView !== 'standard' || pendingChatJumpRef.current === null) return
+    const id = pendingChatJumpRef.current
+    let frame = 0
+    let handle = 0
+    const attempt = () => {
+      if (pendingChatJumpRef.current !== id) return
+      if (ownChatDisplayRef.current?.scrollToMessage(id)) {
+        pendingChatJumpRef.current = null
+        return
+      }
+      if (++frame >= 60) {
+        pendingChatJumpRef.current = null
+        return
+      }
+      handle = requestAnimationFrame(attempt)
+    }
+    handle = requestAnimationFrame(attempt)
+    return () => cancelAnimationFrame(handle)
+  }, [sessionView])
+
   const handleWorkbenchFork = React.useCallback(
     async (messageId: string) => {
       if (!session) return
@@ -890,8 +915,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
               <TrajectoryView
                 messages={session?.messages ?? []}
                 onOpenMessage={(id) => {
+                  pendingChatJumpRef.current = id
                   setSessionView('standard')
-                  handleMindMapNavigate({ kind: 'message', id })
                 }}
               />
             </React.Suspense>

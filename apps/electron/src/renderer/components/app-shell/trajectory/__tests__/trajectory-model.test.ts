@@ -2,6 +2,9 @@ import { describe, expect, it } from 'bun:test'
 import type { Message } from '../../../../../shared/types'
 import {
   buildTrajectory,
+  cullTimelineSpans,
+  sortTimelineLanes,
+  trajectoryInputDetail,
   deriveTrajectoryTimeline,
   formatDurationMillis,
   laneFor,
@@ -113,5 +116,48 @@ describe('ledger rows', () => {
     projectTrajectoryRows(tt, { collapsedTurns: new Set(), collapseCalls: false, query: 'bash' })
     expect(tt.length).toBe(500)
     expect(performance.now() - t0).toBeLessThan(1500)
+  })
+
+  it('never infers a duration across a turn boundary', () => {
+    const msgs = [
+      { id: 'u1', role: 'user', content: 'q', timestamp: 0 },
+      { id: 'a1', role: 'assistant', content: 'a', timestamp: 1000 },
+      { id: 'u2', role: 'user', content: 'q2', timestamp: 500_000 },
+      { id: 'a2', role: 'assistant', content: 'b', timestamp: 501_000 },
+    ] as Message[]
+    const turns = buildTrajectory(msgs)
+    expect(turns[0].cells[1].timeSeconds).toBeNull()
+    expect(turns[0].cells[1].durationEstimated).toBe(false)
+    expect(turns[1].cells[1].timeSeconds).toBeNull()
+  })
+
+  it('reuses per-message content for unchanged message objects and formats input lazily', () => {
+    const tool = { id: 't', role: 'tool', content: '', toolName: 'Bash', toolInput: { a: 1 }, toolResult: 'ok', timestamp: 1 } as Message
+    const first = buildTrajectory([tool])[0].cells[0]
+    const second = buildTrajectory([tool])[0].cells[0]
+    expect(second.text).toBe(first.text)
+    expect('inputDetail' in first).toBe(false)
+    expect(trajectoryInputDetail(tool)).toBe('{\n  "a": 1\n}')
+    expect(trajectoryInputDetail(undefined)).toBeUndefined()
+  })
+
+  it('falls back to errorTitle when error content is empty', () => {
+    const cell = buildTrajectory([{ id: 'e', role: 'error', content: '', errorTitle: 'Rate limited', timestamp: 1 } as Message])[0].cells[0]
+    expect(cell.text).toBe('Rate limited')
+  })
+
+  it('culls off-domain spans and merges sub-pixel neighbours', () => {
+    const many = Array.from({ length: 5000 }, (_, i) => ({ id: `t${i}`, role: 'tool', content: '', toolName: 'X', timestamp: i } as Message))
+    const model = deriveTrajectoryTimeline(buildTrajectory(many), 'sequence')!
+    const lanes = sortTimelineLanes(model)
+    const all = cullTimelineSpans(lanes, { start: model.start, end: model.end }, 500)
+    expect(all.length).toBeLessThanOrEqual(250)
+    expect(all.reduce((n, s) => n + s.count, 0)).toBe(5000)
+    const zoomed = cullTimelineSpans(lanes, { start: 100, end: 110 }, 500)
+    expect(zoomed.every((s) => s.count === 1)).toBe(true)
+    expect(zoomed.length).toBeLessThanOrEqual(12)
+    const err = cullTimelineSpans([[{ start: 0, end: 1, index: 0, isError: false, kind: 'tool', label: '', lane: 2 }, { start: 1, end: 2, index: 1, isError: true, kind: 'tool', label: '', lane: 2 }], [], []], { start: 0, end: 1000 }, 100)
+    expect(err.length).toBe(1)
+    expect(err[0].isError).toBe(true)
   })
 })

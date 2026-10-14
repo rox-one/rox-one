@@ -11041,6 +11041,7 @@
   "trajectory.lane.input": "Input",
   "trajectory.lane.model": "Model",
   "trajectory.lane.tools": "Tools",
+  "trajectory.ledgerAria": "Trajectory events",
   "trajectory.noContent": "No content",
   "trajectory.noOutput": "No output",
   "trajectory.openInChat": "Open in chat",
