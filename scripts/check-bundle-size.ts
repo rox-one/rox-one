@@ -6,7 +6,7 @@
  * chunks — and fails when a known chunk-name *prefix* grows past its recorded raw-byte budget, when an
  * unbudgeted prefix grows past MAX_NEW_CHUNK_BYTES, or when a whole-extension total grows past its
  * recorded total. Raw `Buffer.byteLength` of the emitted files is the gated number; gzip (level 9) is
- * recorded and reported alongside. Source maps (vite.config.ts `sourcemap: true`) and the pdf worker
+ * recorded and reported alongside. Source maps are not emitted in production and the pdf worker
  * are never measured.
  *
  * A budget is the TOTAL of every measured chunk sharing a prefix, not the largest one: real `index-*`
@@ -223,7 +223,7 @@ export function chunkPrefix(baseName: string): string {
 
 /**
  * The measured-asset kind of a file name, or `undefined` when it is not measured: only emitted
- * `*.js` / `*.css` chunks are. `.js.map` / `.css.map` (sourcemap: true) and the pdf worker are
+ * `*.js` / `*.css` chunks are. `.js.map` / `.css.map` (not emitted in production) and the pdf worker are
  * excluded explicitly as well as by extension.
  */
 export function assetKind(baseName: string): AssetKind | undefined {

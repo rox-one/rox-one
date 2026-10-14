@@ -256,11 +256,12 @@ export default defineConfig(({ command }) => ({
   build: {
     outDir: resolve(__dirname, 'dist/renderer'),
     emptyOutDir: true,
-    sourcemap: true,  // Source maps generated for debugging.
+    // Production dist must not ship source maps (S9-11: 68 MB of *.map).
+    // `vite dev` / playground-dev.ts still serve playground.html from disk.
+    sourcemap: false,
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'src/renderer/index.html'),
-        playground: resolve(__dirname, 'src/renderer/playground.html'),
         'browser-toolbar': resolve(__dirname, 'src/renderer/browser-toolbar.html'),
         'browser-empty-state': resolve(__dirname, 'src/renderer/browser-empty-state.html'),
         'voice-overlay': resolve(__dirname, 'src/renderer/voice-overlay.html'),

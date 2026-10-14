@@ -2435,7 +2435,7 @@ export class OmpAgent extends BaseAgent {
       this.runtimeObserver?.beginRun(this.runtimeObservationRunId);
 
 
-      await this.sendCommand('set_thinking_level', { level: 'max' });
+      await this.sendCommand('set_thinking_level', { level: this._thinkingLevel });
       assertAccountDomain();
       // Refresh source state on every turn, just as Claude/Pi do. The static
       // system briefing routes tasks, while this block reports which sources
@@ -2649,10 +2649,9 @@ export class OmpAgent extends BaseAgent {
   override setThinkingLevel(level: ThinkingLevel): void {
     super.setThinkingLevel(level);
     if (!this.subprocess) return;
-    const ompLevel = 'max'; // Every ROX user turn requires the strongest native effort.
-    this.sendCommand('set_thinking_level', { level: ompLevel })
-      .then(() => this.debug(`OMP thinking level set to ${ompLevel}`))
-      .catch((error) => this.debug(`set_thinking_level(${ompLevel}) failed: ${error}`));
+    this.sendCommand('set_thinking_level', { level })
+      .then(() => this.debug(`OMP thinking level set to ${level}`))
+      .catch((error) => this.debug(`set_thinking_level(${level}) failed: ${error}`));
   }
 
   override setPermissionMode(mode: PermissionMode): void {
@@ -2764,7 +2763,8 @@ export class OmpAgent extends BaseAgent {
     // internal — never persist them as OMP sessions, or the foreign auto
     // importer brings them back as Rox sessions (Лента noise).
     const effectivePrompt = withOmpRequiredModes(prompt);
-    const args = ['--no-session', '--thinking', 'max', ...(invocationModel ? ['--model', invocationModel] : []), '-p', effectivePrompt];
+    const thinkingArg = this._thinkingLevel === 'off' ? 'low' : this._thinkingLevel;
+    const args = ['--no-session', '--thinking', thinkingArg, ...(invocationModel ? ['--model', invocationModel] : []), '-p', effectivePrompt];
     let nativeInvocation: Awaited<ReturnType<OmpAgent['prepareNativeInvocation']>>;
     try { nativeInvocation = await this.prepareNativeInvocation(bin, env, cwd); }
     catch (error) {
