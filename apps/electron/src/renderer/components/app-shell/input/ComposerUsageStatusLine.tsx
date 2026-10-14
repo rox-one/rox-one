@@ -1,9 +1,10 @@
 import * as React from 'react'
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@rox/ui/tooltip'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@rox/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { runtimeTraceScopeKey, runtimeTraceSessionAtomFamily } from '@/atoms/runtime-trace'
+import type { RuntimeEvent } from '@rox/core/runtime-trace/types'
 import {
   projectContextBreakdown,
   projectContextPressure,
@@ -44,6 +45,13 @@ export interface UsageStatusNumbers {
   lastAttempt?: { model?: string; ttftMs?: number; output?: number; decodeMs?: number }
 }
 
+export interface UsageStatusSessionFallback {
+  inputTokens?: number
+  outputTokens?: number
+  contextWindow?: number
+  costUsd?: number
+}
+
 export function formatUsageCostBody(cost: number): string {
   return cost < 0.01 ? cost.toPrecision(1) : cost.toFixed(2)
 }
@@ -58,6 +66,72 @@ function formatRate(output: number, decodeMs: number): string | undefined {
   return `${perSecond >= 100 ? Math.round(perSecond) : perSecond.toFixed(1)} tok/s`
 }
 
+/**
+ * Pure fold: journal attempts first, message stats and session tokenUsage as
+ * fallback. Turns/steps merge with max (the journal only sees loaded runs).
+ * Session inputTokens is the current prompt (shown via context%), so `input`
+ * stays journal-only; output and cost fall back to the session totals.
+ */
+export function computeUsageStatusNumbers(
+  events: readonly RuntimeEvent[],
+  stats?: ComposerStats | null,
+  tokenUsage?: UsageStatusSessionFallback | null,
+): UsageStatusNumbers {
+  const outline = projectTurnOutline(events)
+  const usage = projectTokenUsage(events)
+  const breakdown = projectContextBreakdown(events)
+
+  const inputParts = [usage.totals.uncachedInput, usage.totals.cacheRead, usage.totals.cacheWrite]
+  const input = inputParts.some(part => part !== undefined)
+    ? inputParts.reduce<number>((sum, part) => sum + (part ?? 0), 0)
+    : undefined
+
+  const window = projectContextPressure(events).contextWindow
+    ?? (typeof tokenUsage?.contextWindow === 'number' ? tokenUsage.contextWindow : undefined)
+  // Pressure answers for the newest prompt: the last attempt that reported one.
+  let lastPrompt: number | undefined
+  for (let i = usage.attempts.length - 1; i >= 0; i--) {
+    const attemptUsage = usage.attempts[i]!.usage
+    const parts = [attemptUsage.uncachedInput, attemptUsage.cacheRead, attemptUsage.cacheWrite]
+    if (parts.some(part => part !== undefined)) {
+      lastPrompt = parts.reduce<number>((sum, part) => sum + (part ?? 0), 0)
+      break
+    }
+  }
+  const fallbackPrompt = typeof tokenUsage?.inputTokens === 'number' ? tokenUsage.inputTokens : undefined
+  const promptForPressure = lastPrompt ?? (usage.attempts.length ? undefined : fallbackPrompt)
+  const contextPercent = promptForPressure !== undefined && window
+    ? Math.min(100, Math.round((promptForPressure / window) * 100))
+    : undefined
+
+  const last = usage.attempts.at(-1)
+  return {
+    turns: Math.max(outline.turnCount, stats?.turns ?? 0),
+    steps: Math.max(outline.stepCount, stats?.steps ?? 0),
+    ...(input !== undefined ? { input } : {}),
+    ...(usage.totals.output ?? tokenUsage?.outputTokens !== undefined
+      ? { output: usage.totals.output ?? tokenUsage?.outputTokens }
+      : {}),
+    ...(usage.totals.costUsd ?? tokenUsage?.costUsd !== undefined
+      ? { costUsd: usage.totals.costUsd ?? tokenUsage?.costUsd }
+      : {}),
+    ...(contextPercent !== undefined ? { contextPercent } : {}),
+    ...(usage.totals.cacheRead !== undefined ? { cacheRead: usage.totals.cacheRead } : {}),
+    ...(usage.totals.cacheWrite !== undefined ? { cacheWrite: usage.totals.cacheWrite } : {}),
+    ...(breakdown ? { breakdown: { system: breakdown.system, tools: breakdown.tools, messages: breakdown.messages } } : {}),
+    ...(last
+      ? {
+          lastAttempt: {
+            ...(last.route?.model ?? last.route?.provider ? { model: last.route?.model ?? last.route?.provider } : {}),
+            ...(last.ttftMs !== undefined ? { ttftMs: last.ttftMs } : {}),
+            ...(last.usage.output !== undefined ? { output: last.usage.output } : {}),
+            ...(last.decodeMs !== undefined ? { decodeMs: last.decodeMs } : {}),
+          },
+        }
+      : {}),
+  }
+}
+
 /** Pure row + tooltip content (no store access): unit-tested via static markup. */
 export function UsageStatusLineView({ numbers, sessionId }: { numbers: UsageStatusNumbers; sessionId: string }) {
   const { t } = useTranslation()
@@ -68,19 +142,12 @@ export function UsageStatusLineView({ numbers, sessionId }: { numbers: UsageStat
   const context = numbers.contextPercent !== undefined
     ? t('composer.usageStatus.context', { percent: numbers.contextPercent })
     : t('composer.usageStatus.contextUnknown')
-  const read = numbers.cacheRead !== undefined ? formatCompactTokens(numbers.cacheRead) : DASH
-  const write = numbers.cacheWrite !== undefined ? formatCompactTokens(numbers.cacheWrite) : DASH
-  const breakdown = numbers.breakdown
-  const last = numbers.lastAttempt
-  const rate = last && last.output !== undefined && last.decodeMs !== undefined
-    ? formatRate(last.output, last.decodeMs)
-    : undefined
-
   const openTrajectory = React.useCallback(() => {
     window.dispatchEvent(new CustomEvent('trajectory.open', { detail: { sessionId } }))
   }, [sessionId])
 
   return (
+    <TooltipProvider>
     <Tooltip>
       <TooltipTrigger asChild>
         <button
@@ -103,6 +170,7 @@ export function UsageStatusLineView({ numbers, sessionId }: { numbers: UsageStat
         <UsageStatusTooltipContent numbers={numbers} />
       </TooltipContent>
     </Tooltip>
+    </TooltipProvider>
   )
 }
 
@@ -140,61 +208,7 @@ export interface ComposerUsageStatusLineProps {
   workspaceId?: string
   /** Message-derived fallback (turns/steps) while the journal has no step events yet. */
   stats?: ComposerStats | null
-  tokenUsage?: { inputTokens?: number; outputTokens?: number; contextWindow?: number; costUsd?: number } | null
-}
-
-function positive(n: number | null | undefined): n is number {
-  return typeof n === 'number' && Number.isFinite(n) && n > 0
-}
-
-/** Pure numbers fold (journal first, session fallbacks): unit-tested, no store access. */
-export function computeUsageStatusNumbers(
-  events: Parameters<typeof projectTurnOutline>[0],
-  stats?: ComposerStats | null,
-  tokenUsage?: ComposerUsageStatusLineProps['tokenUsage'],
-): UsageStatusNumbers {
-  const outline = projectTurnOutline(events)
-  const usage = projectTokenUsage(events)
-  const pressure = projectContextPressure(events)
-  const breakdown = projectContextBreakdown(events)
-
-  const inputParts = [usage.totals.uncachedInput, usage.totals.cacheRead, usage.totals.cacheWrite]
-  const input = inputParts.some(part => part !== undefined)
-    ? inputParts.reduce<number>((sum, part) => sum + (part ?? 0), 0)
-    : undefined
-  const window = pressure.contextWindow ?? (positive(tokenUsage?.contextWindow) ? tokenUsage!.contextWindow! : undefined)
-  const fallbackInput = positive(tokenUsage?.inputTokens) ? tokenUsage!.inputTokens! : undefined
-  const fallbackOutput = positive(tokenUsage?.outputTokens) ? tokenUsage!.outputTokens! : undefined
-  const fallbackCost = typeof tokenUsage?.costUsd === 'number' && Number.isFinite(tokenUsage.costUsd) && tokenUsage.costUsd > 0
-    ? tokenUsage.costUsd : undefined
-  const contextPercent = pressure.percent
-    ?? (fallbackInput !== undefined && window ? Math.min(100, Math.round((fallbackInput / window) * 100)) : undefined)
-
-  return {
-    // Journal runs and transcript messages overlap on new turns; the max
-    // covers legacy sessions (journal empty) and mixed sessions honestly.
-    turns: Math.max(outline.turnCount, stats?.turns ?? 0),
-    steps: Math.max(outline.stepCount, stats?.steps ?? 0),
-    ...(input !== undefined ? { input } : {}),
-    ...(usage.totals.output ?? fallbackOutput !== undefined ? { output: usage.totals.output ?? fallbackOutput! } : {}),
-    ...(usage.totals.costUsd ?? fallbackCost !== undefined ? { costUsd: usage.totals.costUsd ?? fallbackCost! } : {}),
-    ...(contextPercent !== undefined ? { contextPercent } : {}),
-    ...(usage.totals.cacheRead !== undefined ? { cacheRead: usage.totals.cacheRead } : {}),
-    ...(usage.totals.cacheWrite !== undefined ? { cacheWrite: usage.totals.cacheWrite } : {}),
-    ...(breakdown ? { breakdown: { system: breakdown.system, tools: breakdown.tools, messages: breakdown.messages } } : {}),
-    ...(usage.attempts.length
-      ? {
-          lastAttempt: {
-            ...(usage.attempts.at(-1)?.route?.model ?? usage.attempts.at(-1)?.route?.provider
-              ? { model: usage.attempts.at(-1)?.route?.model ?? usage.attempts.at(-1)?.route?.provider }
-              : {}),
-            ...(usage.attempts.at(-1)?.ttftMs !== undefined ? { ttftMs: usage.attempts.at(-1)?.ttftMs } : {}),
-            ...(usage.attempts.at(-1)?.usage.output !== undefined ? { output: usage.attempts.at(-1)?.usage.output } : {}),
-            ...(usage.attempts.at(-1)?.decodeMs !== undefined ? { decodeMs: usage.attempts.at(-1)?.decodeMs } : {}),
-          },
-        }
-      : {}),
-  }
+  tokenUsage?: UsageStatusSessionFallback | null
 }
 
 /** Live container: folds journal events from the shared runtime-trace atoms (no new IPC). */
@@ -205,10 +219,10 @@ export function ComposerUsageStatusLine({ sessionId, workspaceId, stats, tokenUs
   )
   const trace = useAtomValue(runtimeTraceSessionAtomFamily(scopeKey))
 
-  const numbers = React.useMemo<UsageStatusNumbers>(
-    () => computeUsageStatusNumbers(Object.values(trace.projections).flatMap(runtimeProjectionEvents), stats, tokenUsage),
-    [trace.projections, stats, tokenUsage],
-  )
+  const numbers = React.useMemo<UsageStatusNumbers>(() => {
+    const events = Object.values(trace.projections).flatMap(runtimeProjectionEvents)
+    return computeUsageStatusNumbers(events, stats, tokenUsage)
+  }, [trace.projections, stats, tokenUsage])
 
   return <UsageStatusLineView numbers={numbers} sessionId={sessionId} />
 }

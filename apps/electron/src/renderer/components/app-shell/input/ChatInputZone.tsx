@@ -141,9 +141,7 @@ export function ChatInputZone({
         />
       </InputErrorBoundary>
       {!compactMode && stats && <ComposerStatsLine stats={stats} />}
-      {!compactMode && (
-        <ComposerUsageStatusLine sessionId={sessionId} workspaceId={workspaceId} stats={stats} tokenUsage={tokenUsage} />
-      )}
+      {!compactMode && <ComposerUsageStatusLine sessionId={sessionId} workspaceId={workspaceId} stats={stats} tokenUsage={tokenUsage} />}
     </div>
   )
 }

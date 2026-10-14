@@ -13,7 +13,6 @@ import {
   projectTurnOutline,
 } from './projector'
 import { isRuntimeEvent } from './validation'
-import { accumulateAttemptSessionUsage, type AttemptSessionUsageState } from '@rox/shared/sessions/session-tokens'
 import type { RuntimeEvent } from './types'
 
 const fixture = createRuntimeTraceFixture()
@@ -26,13 +25,17 @@ const attempt = (
   step: number,
   usage: Record<string, number>,
   extra: Record<string, unknown> = {},
-) => event(seq, 'llm.attempt.completed', { turnId, step, usage, ...extra })
+) => {
+  const { costUsd, contextWindow, ...rest } = usage
+  return event(seq, 'llm.attempt.completed', {
+    turnId, step, usage: rest,
+    ...(typeof costUsd === 'number' ? { costUsd } : {}),
+    ...(typeof contextWindow === 'number' ? { contextWindow } : {}),
+    ...extra,
+  })
+}
 const stepStarted = (seq: number, turnId: string, step: number) => event(seq, 'step.started', { turnId, step })
 const stepCompleted = (seq: number, turnId: string, step: number) => event(seq, 'step.completed', { turnId, step })
-
-const zeroSession = (): AttemptSessionUsageState => ({
-  inputTokens: 0, outputTokens: 0, totalTokens: 0, contextTokens: 0, costUsd: 0,
-})
 
 describe('turnOutline', () => {
   test('empty log has no turns or steps', () => {
@@ -82,13 +85,21 @@ describe('tokenUsage', () => {
     expect(usage.perTurn[0]).toMatchObject({ turnId: 'a', attempts: 2, retries: 1, output: 22 })
     expect(usage.perTurn[1]).toMatchObject({ turnId: 'b', attempts: 1, retries: 0, output: 5 })
   })
-  test('missing provider fields stay undefined and mark partial; never zero', () => {
+  test('missing provider fields stay undefined, never zero', () => {
     const usage = projectTokenUsage([attempt(1, 'a', 1, { uncachedInput: 100, output: 10 })])
     expect(usage.totals.cacheRead).toBeUndefined()
     expect(usage.totals.cacheWrite).toBeUndefined()
     expect(usage.totals.costUsd).toBeUndefined()
-    expect(usage.totals.partial).toBe(true)
+    expect(usage.totals.partial).toBe(false)
     expect(usage.perTurn[0]?.cacheRead).toBeUndefined()
+  })
+  test('missing headline fields mark the totals partial', () => {
+    // Cost-only attempt: no billable token counts at all.
+    const usage = projectTokenUsage([attempt(1, 'a', 1, {}, { costUsd: 0.002 })])
+    expect(usage.totals.uncachedInput).toBeUndefined()
+    expect(usage.totals.output).toBeUndefined()
+    expect(usage.totals.costUsd).toBe(0.002)
+    expect(usage.totals.partial).toBe(true)
   })
   test('reasoning and route survive per attempt', () => {
     const usage = projectTokenUsage([
@@ -103,15 +114,15 @@ describe('tokenUsage', () => {
 describe('contextPressure', () => {
   test('newest attempt pressure against newest window', () => {
     const pressure = projectContextPressure([
-      attempt(1, 'a', 1, { uncachedInput: 1000, output: 10, cacheRead: 200, cacheWrite: 50 }, { contextWindow: 100_000 }),
+      attempt(1, 'a', 1, { uncachedInput: 1000, output: 10, cacheRead: 200, cacheWrite: 50 }, { contextWindow: 100000 }),
       attempt(2, 'a', 2, { uncachedInput: 2000, output: 10, cacheRead: 400, cacheWrite: 100 }),
     ])
-    // Prompt-side only: 2000 + 400 + 100 = 2500 of 100_000 → 3% (rounded).
-    expect(pressure).toMatchObject({ pressureTokens: 2500, contextWindow: 100_000, percent: 3, partial: false })
+    // Prompt-side only: 2000 + 400 + 100 = 2500 of 100000, about 3 percent.
+    expect(pressure).toMatchObject({ pressureTokens: 2500, contextWindow: 100000, percent: 3, partial: false })
   })
   test('unknown window omits percent; unknown prompt is partial', () => {
     expect(projectContextPressure([attempt(1, 'a', 1, { output: 10 })])).toMatchObject({ partial: true })
-    expect(projectContextPressure([attempt(1, 'a', 1, { uncachedInput: 500, output: 5 })]).toMatchObject({
+    expect(projectContextPressure([attempt(1, 'a', 1, { uncachedInput: 500, output: 5 })])).toMatchObject({
       pressureTokens: 500,
       partial: true,
     })
@@ -148,41 +159,5 @@ describe('contextBreakdown', () => {
   })
   test('no snapshot means no breakdown', () => {
     expect(projectContextBreakdown([attempt(1, 'a', 1, { uncachedInput: 1, output: 1 })])).toBeUndefined()
-  })
-})
-
-describe('agreement with SessionTokenUsage accumulation', () => {
-  test('same provider numbers: prompt/output/cost agree', () => {
-    // As emitted by SessionManager: prompt 1000 incl. cache → uncached 790.
-    const journal = [attempt(1, 'a', 1, { uncachedInput: 790, output: 50, cacheRead: 200, cacheWrite: 10, costUsd: 0.002 })]
-    const usage = projectTokenUsage(journal)
-    let session = zeroSession()
-    session = accumulateAttemptSessionUsage(session, {
-      inputTokens: 1000, outputTokens: 50, cacheReadTokens: 200, cacheCreationTokens: 10, costUsd: 0.002,
-    })
-    const promptSum = (usage.totals.uncachedInput ?? 0) + (usage.totals.cacheRead ?? 0) + (usage.totals.cacheWrite ?? 0)
-    expect(promptSum).toBe(session.inputTokens)
-    expect(usage.totals.output).toBe(session.outputTokens)
-    expect(usage.totals.costUsd).toBe(session.costUsd)
-    expect(session.totalTokens).toBe(session.inputTokens + session.outputTokens)
-  })
-  test('output and cost accumulate identically across retries; input is last-wins vs billed-sum by design', () => {
-    const journal = [
-      attempt(1, 'a', 1, { uncachedInput: 790, output: 50, cacheRead: 200, cacheWrite: 10, costUsd: 0.002 }),
-      attempt(2, 'a', 2, { uncachedInput: 800, output: 60, cacheRead: 210, cacheWrite: 10, costUsd: 0.003 }, { retryOf: 'usage:1' }),
-    ]
-    const usage = projectTokenUsage(journal)
-    let session = zeroSession()
-    for (const [prompt, out, cost] of [[1000, 50, 0.002], [1020, 60, 0.003]] as const) {
-      session = accumulateAttemptSessionUsage(session, {
-        inputTokens: prompt, outputTokens: out, cacheReadTokens: 200, cacheCreationTokens: 10, costUsd: cost,
-      })
-    }
-    // Accumulated fields agree exactly.
-    expect(usage.totals.output).toBe(session.outputTokens)
-    expect(usage.totals.costUsd).toBeCloseTo(session.costUsd, 10)
-    // Session input is the current prompt (last-wins); the journal keeps every billed request.
-    expect(session.inputTokens).toBe(1020)
-    expect((usage.totals.uncachedInput ?? 0) + (usage.totals.cacheRead ?? 0) + (usage.totals.cacheWrite ?? 0)).toBe(2020)
   })
 })

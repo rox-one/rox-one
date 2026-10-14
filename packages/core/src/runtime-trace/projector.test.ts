@@ -85,7 +85,8 @@ describe('dsh-p1 usage projections', () => {
     event(seq, kind, { turnId, step: stepNo }, extra)
   const attempt = (seq: number, turnId: string, stepNo: number, usage: Record<string, number | undefined>, extraPayload: Record<string, unknown> = {}, extra: Partial<RuntimeEvent> = {}) =>
     event(seq, 'llm.attempt.completed', { turnId, step: stepNo, usage, ...extraPayload }, extra)
-  const fullUsage = { uncachedInput: 100, output: 20, cacheRead: 800, cacheWrite: 10, costUsd: 0.01 }
+  const fullUsage = { uncachedInput: 100, output: 20, cacheRead: 800, cacheWrite: 10 }
+  const fullCost = { costUsd: 0.01 }
 
   test('turnOutline counts turns and steps; in-flight steps count; runs do not merge', () => {
     expect(projectTurnOutline([])).toEqual({ turns: [], turnCount: 0, stepCount: 0 })
@@ -105,8 +106,8 @@ describe('dsh-p1 usage projections', () => {
 
   test('tokenUsage bills every attempt; retries link but never replace', () => {
     const events = [
-      attempt(1, 'turn-a', 1, fullUsage, { route: { provider: 'pi', model: 'rox/r1-max' } }),
-      attempt(2, 'turn-a', 2, { ...fullUsage, output: 5 }, { retryOf: 'first' }),
+      attempt(1, 'turn-a', 1, fullUsage, { route: { provider: 'pi', model: 'rox/r1-max' }, ...fullCost }),
+      attempt(2, 'turn-a', 2, { ...fullUsage, output: 5 }, { retryOf: 'first', ...fullCost }),
       attempt(3, 'turn-b', 1, { uncachedInput: 50 }),
     ]
     const usage = projectTokenUsage(events)
@@ -123,12 +124,22 @@ describe('dsh-p1 usage projections', () => {
 
   test('missing usage fields stay undefined, never zero-filled', () => {
     const usage = projectTokenUsage([attempt(1, 'turn-a', 1, {})])
-    expect(usage.totals).toMatchObject({ attempts: 1, retries: 0, uncachedInput: undefined, output: undefined, costUsd: undefined, partial: true })
-    expect(projectTokenUsage([]).totals).toMatchObject({ attempts: 0, output: undefined, costUsd: undefined, partial: false })
+    expect(usage.totals.attempts).toBe(1)
+    expect(usage.totals.uncachedInput).toBeUndefined()
+    expect(usage.totals.output).toBeUndefined()
+    expect(usage.totals.costUsd).toBeUndefined()
+    expect(usage.totals.partial).toBe(true)
+    const empty = projectTokenUsage([]).totals
+    expect(empty.attempts).toBe(0)
+    expect(empty.output).toBeUndefined()
+    expect(empty.costUsd).toBeUndefined()
+    expect(empty.partial).toBe(false)
   })
 
   test('contextPressure pairs newest prompt with newest window', () => {
-    expect(projectContextPressure([])).toMatchObject({ pressureTokens: undefined, percent: undefined })
+    const none = projectContextPressure([])
+    expect(none.pressureTokens).toBeUndefined()
+    expect(none.percent).toBeUndefined()
     const captured = event(1, 'context.captured', { snapshot: {
       id: 'ctx', version: 1, capturedAt: known(1, 'test'), originalPrompt: { text: 'hi' }, effectivePrompt: { text: 'hi' },
       model: { confirmed: known('m', 'test'), contextWindow: known(1000, 'test') }, blocks: [], inputTokens: unknown(),
