@@ -81,6 +81,11 @@ COPY apps/webui/package.json apps/webui/
 COPY apps/cloud-gateway/package.json apps/cloud-gateway/
 COPY apps/workspace-service/package.json apps/workspace-service/
 
+# The repo postinstall (package.json) invokes this script, so it must exist before
+# install. This image is headless and never needs the Electron runtime.
+COPY scripts/ensure-electron-binary.mjs scripts/
+ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
+
 RUN bun install --frozen-lockfile
 
 # Copy source
