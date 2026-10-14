@@ -56,7 +56,7 @@ for (const file of localeFiles.sort()) {
 
   const missing: string[] = []
   for (const key of enKeys) {
-    if (!otherKeys.has(key) && !key.startsWith('glance.')) missing.push(key) // glance.* is English-fallback only
+    if (!otherKeys.has(key)) missing.push(key)
   }
 
   const extra: string[] = []
