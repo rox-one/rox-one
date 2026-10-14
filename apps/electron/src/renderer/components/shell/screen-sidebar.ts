@@ -53,7 +53,7 @@ export type SidebarGroupState =
   | { kind: 'ready' }
   | { kind: 'loading' }
   | { kind: 'empty'; label: string; action?: SidebarAction }
-  | { kind: 'error'; label: string; onRetry(): void }
+  | { kind: 'error'; label: string; onRetry(): void; /** false when the panel already raises the alert (one role=alert per error). */ announce?: boolean }
 
 export interface SidebarGroup {
   id: string
@@ -127,6 +127,56 @@ export function subscribeScreenSidebar(listener: Listener): () => void {
 
 /** Test helper. */
 export function resetScreenSidebar(): void { registrations = []; emit() }
+
+// ── Rendered sidebar search input ─────────────────────────────────────────
+// The shell renders a screen's search box only in the expanded mode, and the
+// sidebar slot can still be mounted at width 0 / inert when hidden. Screens
+// read this to keep their own in-panel search unless the shell box is really
+// usable, and to focus it through a ref instead of a DOM query.
+const searchInputs = new Map<string, HTMLInputElement>()
+const searchListeners = new Set<() => void>()
+
+/**
+ * Shell side: register the usable search input for `screenId`, or pass null
+ * with the detaching element to clear it (owner-checked, so a second renderer
+ * unmounting cannot wipe another one's entry).
+ */
+export function registerScreenSidebarSearch(screenId: string, input: HTMLInputElement | null, detaching?: HTMLInputElement): void {
+  const prev = searchInputs.get(screenId) ?? null
+  if (input) {
+    if (prev === input) return
+    searchInputs.set(screenId, input)
+  } else {
+    if (!prev || (detaching && prev !== detaching)) return
+    searchInputs.delete(screenId)
+  }
+  for (const listener of searchListeners) listener()
+}
+
+function subscribeSearchInputs(listener: () => void): () => void {
+  searchListeners.add(listener)
+  return () => { searchListeners.delete(listener) }
+}
+
+/** Screen side: the shell search input usable right now for `screenId`, if any. */
+export function useScreenSidebarSearchInput(screenId: string): HTMLInputElement | null {
+  const get = React.useCallback(() => searchInputs.get(screenId) ?? null, [screenId])
+  return React.useSyncExternalStore(subscribeSearchInputs, get, get)
+}
+
+/**
+ * Whether a rendered sidebar search box is actually usable: not inside an
+ * inert/aria-hidden subtree, and both it and the sidebar slot have width.
+ */
+export function isSidebarSearchUsable(input: HTMLElement): boolean {
+  if (!input.isConnected || input.closest('[inert], [aria-hidden="true"]')) return false
+  if (input.getBoundingClientRect().width <= 0) return false
+  const slot = input.closest<HTMLElement>('[data-panel-role="sidebar"]')
+  return !slot || slot.getBoundingClientRect().width > 0
+}
+
+/** Test helper. */
+export function resetScreenSidebarSearch(): void { searchInputs.clear(); for (const listener of searchListeners) listener() }
 
 /**
  * Shell side: the config published for the focused screen. Configs for other

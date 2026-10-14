@@ -97,7 +97,12 @@ import {
   visibleNotes,
   type AgentChip,
   type AgentSessionLike,
+  type TasksView,
 } from './tasks/task-model'
+import { useTasksScreenSidebar } from '@/screens/tasks/useTasksScreenSidebar'
+import { useSecondarySidebarVisibility } from '@/components/shell/shell-prefs'
+import { useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { TaskSidebar } from './tasks/TaskSidebar'
 import { ConfirmDialog, Glyph, ProgressPie, TaskCheckbox, prefersReducedMotion } from './tasks/parts'
 import { QuickEntry, type QuickEntryResult } from './tasks/QuickEntry'
 import { MoveDialog, type MoveDestination } from './tasks/MoveDialog'
@@ -106,7 +111,6 @@ import { orderedSelection, pruneSelection, rangeSelection, toggleInSelection } f
 import { applyDestinationTo, clearSelection, plainClick, rangeFocus, runBulkOperation, selectAll, settlePrune, settleToggle, undoBulkOperation, type BulkSnapshot, type SelectionState } from './tasks/bulk-actions'
 import { TaskDetail } from './tasks/TaskDetail'
 import { useTaskDetailDrafts } from './tasks/use-task-detail-drafts'
-import { TaskSidebar } from './tasks/TaskSidebar'
 import { getSessionTitle } from '@/utils/session'
 import { taskDelegationErrorKey, type TaskDelegationErrorKey } from './tasks/delegation-errors'
 import { acceptsPlusDrop, destDefaults, insertHeading, isHeadingDrop, navDropKind } from './tasks/magic-plus'
@@ -994,25 +998,12 @@ export default function TasksPage(props: TasksPageProps = {}) {
     setNavCreate(null)
     setNavDraft('')
   }
-  const navigator = (
-    <TaskSidebar
-      view={view}
-      onSelect={setView}
-      listCount={listCount}
-      overdueCount={overdueCount}
-      trashCount={trashCount}
-      tasks={topLevel}
-      areas={areas}
-      personalProjects={personalProjects}
-      workspaceProjects={projects.map(project => ({ id: project.config.id, name: project.config.name }))}
-      tags={tags}
-      agents={agents}
-      dropProps={navDropProps}
-      onToggleArea={area => mutate(current => current.updateArea(area.id, { collapsed: !area.collapsed }))}
-      footer={(
+  const createNavRef = useRef(createNav)
+  createNavRef.current = createNav
+  const navFooter = useMemo(() => (
         <div className="mt-auto pt-3">
           {navCreate ? (
-            <form onSubmit={createNav} className="px-1">
+            <form onSubmit={(event) => createNavRef.current(event)} className="px-1">
               <input
                 autoFocus
                 value={navDraft}
@@ -1032,9 +1023,72 @@ export default function TasksPage(props: TasksPageProps = {}) {
             </div>
           )}
         </div>
-      )}
+  ), [navCreate, navDraft, t])
+  const viewKey = `${view.kind}:${view.id}`
+  // Memoised on the store snapshot so the sidebar's signature cache can hit.
+  const sidebarProjects = useMemo(() => {
+    const sidebarProject = (p: { id: string; name: string }) => ({ id: p.id, name: p.name, ...projectProgress(topLevel, p.id) })
+    const live = store.projects().filter((p) => p.trashedAt == null)
+    const liveAreas = store.areas().filter((a) => a.trashedAt == null)
+    const areaIds = new Set(liveAreas.map((a) => a.id))
+    return {
+      looseProjects: live.filter((p) => !p.areaId).map(sidebarProject),
+      // Projects whose area was deleted/trashed stay reachable under «Без области».
+      orphanProjects: live.filter((p) => p.areaId && !areaIds.has(p.areaId)).map(sidebarProject),
+      areas: liveAreas.map((a) => ({ id: a.id, name: a.name, collapsed: Boolean(a.collapsed), projects: live.filter((p) => p.areaId === a.id).map(sidebarProject) })),
+      workspaceProjects: projects.map((p) => sidebarProject({ id: p.config.id, name: p.config.name })),
+    }
+  }, [store, topLevel, projects])
+  const inboxCount = listCount('inbox')
+  const todayListCount = listCount('today')
+  const upcomingCount = listCount('upcoming')
+  const sidebarListCounts = useMemo(() => ({ inbox: inboxCount, today: todayListCount, upcoming: upcomingCount, trash: trashCount }), [inboxCount, todayListCount, upcomingCount, trashCount])
+  const sidebarHidden = useSecondarySidebarVisibility() === 'hidden'
+  const shellSidebarTarget = useShellSidebarTarget()
+  useTasksScreenSidebar({
+    listCounts: sidebarListCounts,
+    overdue: overdueCount,
+    ...sidebarProjects,
+    onToggleArea: (areaId) => toggleArea(areaId),
+    tags,
+    agents,
+    activeViewKey: viewKey,
+    onView: (next) => setView(next as TasksView),
+    onNewTask: () => setQuickEntry({ initial: '' }),
+    search,
+    onSearch: setSearch,
+    footer: navFooter,
+    dropTypes: [DRAG_TASK, 'text/task-id'],
+    onDropTask: (destination, data) => {
+      const sourceId = data.getData(DRAG_TASK) || data.getData('text/task-id')
+      if (sourceId) applyDestination(sourceId, destination)
+    },
+  })
+
+  // Inline navigator only when the shell second sidebar can't show (hidden
+  // mode, kept-alive or shell-less surface) so Tasks never loses navigation.
+  const toggleArea = (areaId: string) => mutate((current) => {
+    const area = current.areas().find((a) => a.id === areaId)
+    if (area) current.updateArea(area.id, { collapsed: !area.collapsed })
+  })
+  const navigator = sidebarHidden || !shellSidebarTarget ? (
+    <TaskSidebar
+      view={view}
+      onSelect={setView}
+      listCount={listCount}
+      overdueCount={overdueCount}
+      trashCount={trashCount}
+      tasks={topLevel}
+      areas={areas}
+      personalProjects={personalProjects}
+      workspaceProjects={projects.map(project => ({ id: project.config.id, name: project.config.name }))}
+      tags={tags}
+      agents={agents}
+      dropProps={navDropProps}
+      onToggleArea={area => toggleArea(area.id)}
+      footer={navFooter}
     />
-  )
+  ) : null
 
   // ── List rows ────────────────────────────────────────────────────────────
   const currentProject = view.kind === 'project' ? store.projects().find((p) => p.id === view.id) : undefined

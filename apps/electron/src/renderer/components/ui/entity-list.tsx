@@ -37,6 +37,7 @@ import {
   entityListWindow,
   flattenEntityListRows,
   groupEndByHeaderKey,
+  observedBlockSize,
   revealEntryScrollTop,
   rowEntryIndexByItemKey,
   virtualEntryIndices,
@@ -294,7 +295,7 @@ function CollapsibleGroupHeader({
           ref={elementRef}
           style={style}
           onClick={onToggle}
-          className="sticky top-0 z-10 flex w-full cursor-pointer items-center gap-1.5 bg-background px-5 py-2 group/header relative"
+          className="sticky top-0 z-10 flex w-full cursor-pointer items-center gap-1.5 bg-background px-5 py-2 group/header relative outline-none focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_1px_var(--accent)]"
         >
           <div className="absolute inset-y-0.5 left-2 right-2 rounded-[var(--radius-card)] group-hover/header:bg-surface-hover transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)] pointer-events-none" />
           <ChevronRight
@@ -447,7 +448,7 @@ function VirtualEntityListBody<T>({
           const registration = observedRef.current.get(entry.target)
           if (!registration) continue
           const key = logicalKeyRef.current.get(registration) ?? registration
-          const height = Math.ceil(entry.contentRect.height)
+          const height = observedBlockSize(entry)
           if (height <= 0 || previous.get(key) === height) continue
           next ??= new Map(previous)
           next.set(key, height)

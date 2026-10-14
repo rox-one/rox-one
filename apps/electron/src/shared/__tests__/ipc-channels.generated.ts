@@ -687,9 +687,14 @@ export const EXPECTED_CHANNELS: string[] = [
   'onboarding:getRoxBalance',
   'onboarding:getRoxCloudState',
   'onboarding:hasClaudeOAuthState',
+  'onboarding:listRoxSessions',
   'onboarding:openPermissionSettings',
   'onboarding:permissionsStatus',
+  'onboarding:revokeOtherRoxSessions',
+  'onboarding:revokeRoxSession',
+  'onboarding:rotateRoxKey',
   'onboarding:saveOmpCredential',
+  'onboarding:setRoxHandle',
   'onboarding:startClaudeOAuth',
   'onboarding:startMcpOAuth',
   'onboarding:startRoxConnect',
@@ -1121,4 +1126,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1117
+export const EXPECTED_CHANNEL_COUNT = 1122
