@@ -1689,6 +1689,48 @@ html[data-shell-material="solid"] :is([data-home-cell], .rox-home-widget) {
 .rox-home-tile {
   background-color: color-mix(in oklch, var(--foreground) 5%, transparent);
 }
+/* Bento motion: a subtle lift on hover; never under reduced motion or HC. */
+.rox-home-widget {
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+[data-home-cell]:hover > .rox-home-widget {
+  transform: translateY(-0.0625rem);
+  box-shadow: var(--widget-border, none), var(--shadow-minimal);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rox-home-widget { transition: none; }
+  [data-home-cell]:hover > .rox-home-widget { transform: none; }
+}
+html[data-contrast="high"] [data-home-cell]:hover > .rox-home-widget {
+  transform: none;
+}
+/* «Сегодня» hero: accent glow inside the card, input and chips on tone steps. */
+.rox-home-hero-glow {
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in oklch, var(--accent) 26%, transparent), transparent 60%),
+    radial-gradient(90% 120% at 100% 100%, color-mix(in oklch, var(--success) 14%, transparent), transparent 60%);
+}
+html[data-contrast="high"] .rox-home-hero-glow {
+  display: none;
+}
+.rox-home-ask {
+  background-color: color-mix(in oklch, var(--widget-base) 70%, transparent);
+}
+.rox-home-ask:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.rox-home-chip {
+  background-color: color-mix(in oklch, var(--foreground) 7%, transparent);
+}
+.rox-home-chip:hover {
+  background-color: color-mix(in oklch, var(--foreground) 12%, transparent);
+}
+html[data-contrast="high"] .rox-home-ask,
+html[data-contrast="high"] .rox-home-chip {
+  outline: 1px solid var(--foreground);
+  outline-offset: -1px;
+}
 .rox-home-add-cell {
   background-color: color-mix(in oklch, var(--foreground) 2.5%, transparent);
 }

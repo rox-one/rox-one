@@ -556,7 +556,7 @@ export function HomeFrontPage() {
                 <div
                   ref={packedGridRef}
                   className="grid"
-                  style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: '1px', columnGap: HOME_GRID_GAP }}
+                  style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: '1px', gridAutoFlow: 'row dense', columnGap: HOME_GRID_GAP }}
                   data-home-grid=""
                 >
                   {layout.widgets.map((placement) => (

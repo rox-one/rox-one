@@ -11,6 +11,8 @@ import { useTranslation } from 'react-i18next'
 import { Cron } from 'croner'
 import {
   AlertTriangle,
+  Activity as ActivityIcon,
+  ArrowUp,
   Bot,
   CalendarClock,
   BellDot,
@@ -32,6 +34,7 @@ import {
   Rss,
   RotateCcw,
   Search,
+  Sparkles,
   SquarePen,
   Timer,
   Wallet,
@@ -75,6 +78,9 @@ import {
   taskTrackerStats,
   type CalendarEventKind,
   buildMeetingsOverview,
+  buildActivityHeatmap,
+  greetingPart,
+  heatLevel,
   buildUsageOverview,
   connectionUsage,
   formatTokens,
@@ -85,7 +91,7 @@ import {
   topOpenTasks,
   usageByModel,
 } from './home-data'
-import { Dot, SectionLabel, Toggle, WidgetButton, WidgetEmpty, WidgetFrame, WidgetList, WidgetRow, WidgetStat, type WidgetEditProps } from './widget-kit'
+import { Dot, Ring, SectionLabel, Sparkline, Toggle, WidgetButton, WidgetEmpty, WidgetFrame, WidgetList, WidgetRow, WidgetStat, type WidgetEditProps } from './widget-kit'
 import { QuickTaskInput } from './QuickTaskInput'
 import { toErrorMessage } from '@/lib/errors'
 import { cachedNotesList, fetchNotesList, subscribeCachedNotesList } from '@/lib/query/notes-cache'
@@ -657,11 +663,17 @@ function BalanceWidget({ edit }: WidgetProps) {
         ) : null}
         <span className="flex-1" />
         {usage.hasData ? (
-          <div className="grid grid-cols-2 gap-1">
-            <WidgetStat label={t('workbench.home.usage.todayCost')} value={<span className="text-lg">{formatUsd(usage.today.costUsd)}</span>} />
-            <WidgetStat label={t('workbench.home.usage.weekCost')} value={<span className="text-lg">{formatUsd(usage.totalCostUsd)}</span>} />
+          <div className="flex min-w-0 items-center gap-2" data-home-balance-spend="">
+            <div className="h-10 shrink-0">
+              <Ring value={usage.totalCostUsd > 0 ? usage.today.costUsd / usage.totalCostUsd : 0} label={t('workbench.home.balance.todayShare')} />
+            </div>
+            <div className="grid min-w-0 flex-1 grid-cols-2 gap-1">
+              <WidgetStat label={t('workbench.home.usage.todayCost')} value={<span className="text-lg">{formatUsd(usage.today.costUsd)}</span>} />
+              <WidgetStat label={t('workbench.home.usage.weekCost')} value={<span className="text-lg">{formatUsd(usage.totalCostUsd)}</span>} />
+            </div>
           </div>
         ) : null}
+        {usage.hasData ? <Sparkline values={usage.days.map((d) => d.costUsd)} label={t('workbench.home.balance.trend')} /> : null}
       </div>
     </WidgetFrame>
   )
@@ -869,7 +881,12 @@ function FocusWidget({ edit }: WidgetProps) {
     <WidgetFrame testId="focus" title={t('workbench.home.w.focus')} onOpen={open} edit={edit}>
       <div className="flex h-full min-h-0 flex-col">
         <div className="grid grid-cols-2 gap-1">
-          <WidgetStat label={running ? t('workbench.home.focus.left') : t('workbench.home.focus.timer')} value={running ? `${mm}:${ss}` : t('workbench.home.focus.off')} tone={running ? 'accent' : undefined} onClick={open} />
+          <button type="button" onClick={open} className="flex h-16 min-w-0 items-center gap-2 rounded-[var(--radius-control)] px-1.5 text-left" aria-label={running ? `${t('workbench.home.focus.left')} ${mm}:${ss}` : t('workbench.home.focus.off')}>
+            <Ring value={running && focus.active ? left / Math.max(1, focus.active.endsAt - focus.active.startedAt) : 0} label={t('workbench.home.focus.timer')} className="text-success">
+              <span className="text-xs font-bold numeric text-foreground" data-home-focus-left="">{running ? `${mm}:${ss}` : '—'}</span>
+            </Ring>
+            <span className="min-w-0 truncate text-xs uppercase caps-label text-muted-foreground">{running ? t('workbench.home.focus.left') : t('workbench.home.focus.off')}</span>
+          </button>
           <WidgetStat label={t('workbench.home.focus.today')} value={t('workbench.home.focus.minutes', { count: today.minutes })} />
         </div>
         <SectionLabel>{t('workbench.home.focus.top3')}</SectionLabel>
@@ -1428,6 +1445,144 @@ function CalendarWidget({ edit, width, size = 'S' }: WidgetProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Сегодня (hero)
+// ---------------------------------------------------------------------------
+
+const HERO_CHIP = 'rox-home-chip flex h-7 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-bold text-foreground disabled:opacity-60'
+
+function HeroWidget({ edit }: WidgetProps) {
+  const { t, i18n } = useTranslation()
+  const fmt = useFormat()
+  const now = useNow(60_000)
+  const workspace = useActiveWorkspace()
+  const { active } = useHomeSessions()
+  const connection = useTransportConnectionState()
+  const taskCount = useWorkspaceTaskCount(workspace?.id)
+  const { counts } = useInboxItems({ withRemote: false })
+  const setOmniboxOpen = useSetAtom(omniboxOpenAtom)
+  const rec = useRecordAction()
+  const snap = useMemo(() => buildMiniDashboard({ sessions: active, tasks: taskCount, connection }), [active, taskCount, connection])
+  const [prompt, setPrompt] = useState('')
+  const locale = i18n.resolvedLanguage || i18n.language || 'ru'
+  const date = useMemo(() => new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long' }).format(now), [locale, now])
+  const waiting = counts.decisions + counts.blocking
+  const ask = () => {
+    const input = prompt.trim()
+    if (!input) return
+    navigate(routes.action.newSession({ input, send: true }))
+    setPrompt('')
+  }
+  const stats: { key: string; label: string; onClick: () => void; tone?: 'accent' | 'warning' }[] = [
+    { key: 'agents', label: t('workbench.home.hero.agents', { count: snap.activeAgents }), onClick: () => navigate(routes.view.screen('agents')), tone: snap.activeAgents > 0 ? 'accent' : undefined },
+    ...(snap.tasks == null ? [] : [{ key: 'tasks', label: t('workbench.home.hero.tasks', { count: snap.tasks }), onClick: () => navigate(routes.view.tasks()) }]),
+    { key: 'inbox', label: t('workbench.home.hero.inbox', { count: waiting }), onClick: () => navigate(routes.view.inbox()), tone: waiting > 0 ? 'warning' as const : undefined },
+  ]
+  return (
+    <WidgetFrame testId="hero" title={t('workbench.home.w.hero')} edit={edit} meta={`${date} · ${fmt.time(now)}`}>
+      <div className="rox-home-hero-glow pointer-events-none absolute inset-0 rounded-[var(--radius-card)]" aria-hidden="true" />
+      <div className="relative flex h-full min-h-0 flex-col gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-display font-bold text-foreground" data-home-greeting={greetingPart(now)}>{t(`workbench.home.hero.greeting.${greetingPart(now)}`)}</p>
+          <ul className="mt-1 flex min-w-0 flex-wrap gap-x-3 gap-y-1">
+            {stats.map((s) => (
+              <li key={s.key}>
+                <button type="button" onClick={s.onClick} data-home-hero-stat={s.key} className="flex items-center gap-1.5 rounded-[var(--radius-control)] text-base text-muted-foreground hover:text-foreground">
+                  <Dot tone={s.tone ?? 'muted'} />
+                  {s.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <form
+          className="rox-home-ask flex min-w-0 items-center gap-2 rounded-[var(--radius-card)] py-1.5 pl-3 pr-1.5"
+          onSubmit={(event) => { event.preventDefault(); ask() }}
+        >
+          <Sparkles className="icon-toolbar shrink-0 text-accent" aria-hidden="true" />
+          <input
+            value={prompt}
+            onChange={(event) => setPrompt(event.target.value)}
+            placeholder={t('workbench.home.hero.placeholder')}
+            aria-label={t('workbench.home.hero.ask')}
+            data-home-hero-input=""
+            className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
+          />
+          <button
+            type="submit"
+            disabled={!prompt.trim()}
+            aria-label={t('workbench.home.hero.send')}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground disabled:opacity-40"
+          >
+            <ArrowUp className="icon-status" />
+          </button>
+        </form>
+        <span className="flex-1" />
+        <div className="flex min-w-0 flex-wrap gap-2">
+          <button type="button" className={HERO_CHIP} onClick={() => navigate(routes.action.newSession())}><SquarePen className="icon-status" />{t('workbench.home.quick.newSession')}</button>
+          <button type="button" className={HERO_CHIP} disabled={rec.busy} onClick={() => void rec.record()}>
+            <Mic className={cn('icon-status', rec.recording && 'text-destructive')} />
+            {rec.recording ? t('workbench.home.quick.recording') : t('workbench.home.quick.record')}
+          </button>
+          <button type="button" className={HERO_CHIP} onClick={() => setOmniboxOpen(true)}><Search className="icon-status" />{t('workbench.home.quick.search')}<span className="text-xs text-muted-foreground">{formatHotkeyDisplay('mod+k')}</span></button>
+        </div>
+        {rec.error ? <p className="truncate text-sm text-destructive" role="alert">{rec.error}</p> : null}
+      </div>
+    </WidgetFrame>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Активность (heatmap)
+// ---------------------------------------------------------------------------
+
+const HEAT_CLASS = ['bg-surface-hover', 'bg-accent/25', 'bg-accent/50', 'bg-accent/75', 'bg-accent'] as const
+
+function ActivityWidget({ edit, width, size = 'M' }: WidgetProps) {
+  const { t } = useTranslation()
+  const fmt = useFormat()
+  const now = useNow(5 * 60_000)
+  const { all } = useHomeSessions()
+  // ~14 px per week column, capped so tall/wide cards show more history.
+  const weeks = Math.max(6, Math.min(size === 'S' ? 8 : 26, Math.floor((width - 24) / 18)))
+  const heat = useMemo(() => buildActivityHeatmap(all, now, weeks), [all, now, weeks])
+  const open = () => navigate(routes.view.allSessions())
+  const weekdayName = (index: number) => fmt.weekday(heat.weeks[heat.weeks.length - 1]![0]!.start + index * 86_400_000 + 3_600_000)
+  return (
+    <WidgetFrame testId="activity" title={t('workbench.home.w.activity')} onOpen={open} edit={edit} meta={t('workbench.home.activity.window', { count: weeks })}>
+      {heat.total === 0 ? (
+        <WidgetEmpty text={t('workbench.home.activity.empty')} hint={t('workbench.home.activity.emptyHint')} />
+      ) : (
+        <div className="flex h-full min-h-0 flex-col gap-2">
+          <div className="grid min-h-0 flex-1 grid-flow-col grid-rows-7 gap-0.5" role="group" aria-label={t('workbench.home.activity.chart')} data-home-heatmap={weeks}>
+            {heat.weeks.flatMap((column, w) =>
+              column.map((day, d) =>
+                day ? (
+                  <span
+                    key={day.start}
+                    role="img"
+                    title={t('workbench.home.activity.cell', { date: fmt.dayMonth(day.start), count: day.sessions, tokens: formatTokens(day.tokens) })}
+                    aria-label={t('workbench.home.activity.cell', { date: fmt.dayMonth(day.start), count: day.sessions, tokens: formatTokens(day.tokens) })}
+                    data-home-heat={heatLevel(day.sessions, heat.max)}
+                    className={cn('min-h-1 rounded-[var(--radius-control)] transition-transform hover:scale-125 motion-reduce:transition-none', HEAT_CLASS[heatLevel(day.sessions, heat.max)])}
+                  />
+                ) : (
+                  <span key={`f-${w}-${d}`} aria-hidden="true" />
+                ),
+              ),
+            )}
+          </div>
+          <div className="flex min-w-0 flex-wrap gap-x-4 gap-y-0.5 text-sm text-muted-foreground">
+            <span><b className="numeric text-foreground">{heat.total}</b> {t('workbench.home.activity.total')}</span>
+            <span data-home-streak={heat.streak}><b className="numeric text-foreground">{heat.streak}</b> {t('workbench.home.activity.streak')}</span>
+            {heat.bestWeekday !== null ? <span>{t('workbench.home.activity.best', { day: weekdayName(heat.bestWeekday) })}</span> : null}
+          </div>
+        </div>
+      )}
+    </WidgetFrame>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -1459,5 +1614,7 @@ export const HOME_WIDGETS: Record<HomeWidgetId, HomeWidgetDef> = {
   taskTracker: { id: 'taskTracker', titleKey: 'workbench.home.w.taskTracker', descriptionKey: 'workbench.home.d.taskTracker', icon: ListChecks, Component: TaskTrackerWidget },
   inboxTracker: { id: 'inboxTracker', titleKey: 'workbench.home.w.inboxTracker', descriptionKey: 'workbench.home.d.inboxTracker', icon: BellDot, Component: InboxTrackerWidget },
   calls: { id: 'calls', titleKey: 'workbench.home.w.calls', descriptionKey: 'workbench.home.d.calls', icon: Phone, Component: CallsWidget },
+  hero: { id: 'hero', titleKey: 'workbench.home.w.hero', descriptionKey: 'workbench.home.d.hero', icon: Sparkles, Component: HeroWidget },
+  activity: { id: 'activity', titleKey: 'workbench.home.w.activity', descriptionKey: 'workbench.home.d.activity', icon: ActivityIcon, Component: ActivityWidget },
   calendar: { id: 'calendar', titleKey: 'workbench.home.w.calendar', descriptionKey: 'workbench.home.d.calendar', icon: CalendarDays, Component: CalendarWidget },
 }

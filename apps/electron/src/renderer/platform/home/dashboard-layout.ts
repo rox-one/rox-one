@@ -31,11 +31,13 @@ export const HOME_WIDGET_IDS = [
   'inboxTracker',
   'calls',
   'calendar',
+  'hero',
+  'activity',
 ] as const
 
 export type HomeWidgetId = (typeof HOME_WIDGET_IDS)[number]
-export type HomeWidgetSize = 'S' | 'M' | 'L'
-export const HOME_WIDGET_SIZES: readonly HomeWidgetSize[] = ['S', 'M', 'L']
+export type HomeWidgetSize = 'S' | 'M' | 'L' | 'XL'
+export const HOME_WIDGET_SIZES: readonly HomeWidgetSize[] = ['S', 'M', 'L', 'XL']
 
 export interface HomeWidgetPlacement {
   id: HomeWidgetId
@@ -53,10 +55,10 @@ export interface PersistedHomeLayout extends HomeDashboardLayout {
 }
 /** Picker groups (order = picker order). */
 export const HOME_WIDGET_GROUPS: readonly { id: string; widgets: readonly HomeWidgetId[] }[] = [
-  { id: 'overview', widgets: ['summary', 'quickActions', 'calendar', 'focus'] },
+  { id: 'overview', widgets: ['hero', 'summary', 'quickActions', 'calendar', 'focus'] },
   { id: 'work', widgets: ['taskTracker', 'tasks', 'inboxTracker', 'inbox', 'decisions', 'notes'] },
   { id: 'meetings', widgets: ['meetings', 'calls'] },
-  { id: 'agents', widgets: ['recentSessions', 'agents', 'automations', 'feed', 'radar'] },
+  { id: 'agents', widgets: ['recentSessions', 'activity', 'agents', 'automations', 'feed', 'radar'] },
   { id: 'spend', widgets: ['usage', 'models', 'balance'] },
 ]
 
@@ -84,36 +86,42 @@ export const HOME_WIDGET_DEFAULT_SIZE: Record<HomeWidgetId, HomeWidgetSize> = {
   inboxTracker: 'S',
   calls: 'S',
   calendar: 'L',
+  hero: 'XL',
+  activity: 'M',
 }
 
 /**
- * Default: even 12-column rows at desktop widths (S=3, M=6, L=12). Радар stays
- * in the picker — it needs topics set up on its own screen first.
+ * Default (v3 bento): an XL «Сегодня» hero with two small cards stacked beside
+ * it, then mixed M/S/L shapes. Dense grid flow packs them without holes.
+ * Радар stays in the picker — it needs topics set up on its own screen first.
  */
 export const DEFAULT_HOME_LAYOUT: HomeDashboardLayout = {
   version: 2,
   widgets: [
-    { id: 'summary', size: 'M' },
-    { id: 'quickActions', size: 'M' },
-    { id: 'calendar', size: 'L' },
-    { id: 'taskTracker', size: 'M' },
-    { id: 'inboxTracker', size: 'S' },
-    { id: 'agents', size: 'S' },
-    { id: 'recentSessions', size: 'M' },
-    { id: 'meetings', size: 'S' },
-    { id: 'calls', size: 'S' },
-    { id: 'usage', size: 'M' },
-    { id: 'models', size: 'S' },
+    { id: 'hero', size: 'XL' },
     { id: 'balance', size: 'S' },
+    { id: 'agents', size: 'S' },
+    { id: 'taskTracker', size: 'M' },
+    { id: 'activity', size: 'M' },
+    { id: 'focus', size: 'S' },
+    { id: 'meetings', size: 'S' },
+    { id: 'inboxTracker', size: 'S' },
+    { id: 'calls', size: 'S' },
+    { id: 'calendar', size: 'L' },
+    { id: 'recentSessions', size: 'M' },
+    { id: 'usage', size: 'M' },
     { id: 'automations', size: 'S' },
     { id: 'tasks', size: 'S' },
     { id: 'inbox', size: 'S' },
-    { id: 'focus', size: 'S' },
+    { id: 'models', size: 'S' },
     { id: 'feed', size: 'M' },
     { id: 'notes', size: 'S' },
     { id: 'decisions', size: 'S' },
   ],
 }
+
+/** The previous (pre-bento) v2 default, ids and sizes — untouched copies upgrade. */
+const V2_FLAT_DEFAULT = 'summary:M,quickActions:M,calendar:L,taskTracker:M,inboxTracker:S,agents:S,recentSessions:M,meetings:S,calls:S,usage:M,models:S,balance:S,automations:S,tasks:S,inbox:S,focus:S,feed:M,notes:S,decisions:S'
 
 /** The v1 default (first release of the dashboard) — used to upgrade untouched layouts. */
 const V1_DEFAULT_IDS = 'summary,quickActions,recentSessions,agents,inbox,usage,models,balance,tasks,meetings,focus,automations,feed,notes,decisions'
@@ -125,7 +133,7 @@ export function isHomeWidgetId(value: unknown): value is HomeWidgetId {
 }
 
 function isSize(value: unknown): value is HomeWidgetSize {
-  return value === 'S' || value === 'M' || value === 'L'
+  return value === 'S' || value === 'M' || value === 'L' || value === 'XL'
 }
 
 /** Future or structurally corrupt layouts stay read-only until explicitly recovered. */
@@ -186,6 +194,8 @@ export function normalizeHomeLayout(raw: unknown): HomeDashboardLayout {
       if (!seen.has(id)) widgets.push({ id, size: HOME_WIDGET_DEFAULT_SIZE[id] })
     }
   }
+  // Untouched flat v2 default (no custom designs) → the bento default.
+  if (widgets.every((w) => !w.appearance) && widgets.map((w) => `${w.id}:${w.size}`).join(',') === V2_FLAT_DEFAULT) return cloneLayout(DEFAULT_HOME_LAYOUT)
   // An explicitly emptied dashboard stays empty (the user removed everything).
   return { version: 2, widgets }
 }
@@ -283,11 +293,12 @@ export function widgetItemLimit(size: HomeWidgetSize, smallLimit: number, column
 
 /**
  * Column span for a widget size at a container width. Wide (≥1100): S=3,
- * M=6, L=12 (four small widgets per row). Medium (≥760): S=4 is too narrow
+ * M=6, L=12, XL=9 (four small widgets per row; an XL hero is as tall as
+ * L and leaves a 3-column lane that dense flow fills with two stacked S cards). Medium (≥760): S=4 is too narrow
  * against M=6, so S=6/M=6/L=12. Narrow: everything full width.
  */
 export function widgetSpan(size: HomeWidgetSize, containerWidth: number): number {
-  if (containerWidth >= 1100) return size === 'S' ? 3 : size === 'M' ? 6 : 12
-  if (containerWidth >= 760) return size === 'L' ? 12 : 6
+  if (containerWidth >= 1100) return size === 'S' ? 3 : size === 'M' ? 6 : size === 'XL' ? 9 : 12
+  if (containerWidth >= 760) return size === 'L' || size === 'XL' ? 12 : 6
   return 12
 }

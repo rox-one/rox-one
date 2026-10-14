@@ -1,3 +1,4 @@
+import { buildActivityHeatmap, greetingPart, heatLevel } from '../home/home-data'
 import { describe, expect, it } from 'bun:test'
 import {
   buildAutomationsOverview,
@@ -192,5 +193,48 @@ describe('Home feed freshness', () => {
       if (previousWindow) Object.defineProperty(globalThis, 'window', previousWindow)
       else Reflect.deleteProperty(globalThis, 'window')
     }
+  })
+})
+
+describe('activity heatmap', () => {
+  const day = 86_400_000
+  // Wednesday 14 Oct 2026, 14:00 local.
+  const now = new Date(2026, 9, 14, 14, 0).getTime()
+  it('places real sessions on local days, Monday-first, with future days blank', () => {
+    const heat = buildActivityHeatmap([
+      { createdAt: now - 2 * day, lastMessageAt: now - 1000, tokenUsage: { totalTokens: 500 } },
+      { createdAt: now - day },
+      { lastMessageAt: now - 400 * day },
+    ], now, 4)
+    expect(heat.weeks).toHaveLength(4)
+    const current = heat.weeks[3]!
+    expect(new Date(current[0]!.start).getDay()).toBe(1)
+    expect(current[2]!.sessions).toBe(1)
+    expect(current[2]!.tokens).toBe(500)
+    expect(current[1]!.sessions).toBe(1)
+    expect(current[0]!.sessions).toBe(1)
+    expect(current[3]).toBeNull()
+    expect(heat.total).toBe(3)
+    expect(heat.streak).toBe(3)
+    expect(heat.max).toBe(1)
+  })
+  it('is honestly empty without sessions', () => {
+    const heat = buildActivityHeatmap([], now, 8)
+    expect(heat.total).toBe(0)
+    expect(heat.bestWeekday).toBeNull()
+    expect(heat.streak).toBe(0)
+  })
+  it('keeps a streak that ends yesterday and finds the busiest weekday', () => {
+    const heat = buildActivityHeatmap([{ createdAt: now - day }, { createdAt: now - 2 * day }, { createdAt: now - 2 * day - 3600_000 }], now, 2)
+    expect(heat.streak).toBe(2)
+    expect(heat.bestWeekday).toBe(0)
+  })
+  it('maps counts to 5 heat levels and greets by local hour', () => {
+    expect([0, 1, 5, 9, 10].map((n) => heatLevel(n, 10))).toEqual([0, 1, 2, 4, 4])
+    expect(heatLevel(3, 0)).toBe(0)
+    expect(greetingPart(new Date(2026, 0, 1, 3).getTime())).toBe('night')
+    expect(greetingPart(new Date(2026, 0, 1, 9).getTime())).toBe('morning')
+    expect(greetingPart(new Date(2026, 0, 1, 13).getTime())).toBe('day')
+    expect(greetingPart(new Date(2026, 0, 1, 20).getTime())).toBe('evening')
   })
 })

@@ -508,3 +508,95 @@ export function buildWeekCalendar(input: WeekCalendarInput, now: number, days = 
   for (const day of out) day.events.sort((a, b) => a.at - b.at)
   return out
 }
+
+// ---------------------------------------------------------------------------
+// Активность (heatmap)
+// ---------------------------------------------------------------------------
+
+export interface ActivityDay {
+  /** Local midnight. */
+  start: number
+  /** Sessions created or last active that day. */
+  sessions: number
+  tokens: number
+}
+
+export interface ActivityHeatmap {
+  /** Columns are weeks (oldest → newest), rows Monday → Sunday; future days are null. */
+  weeks: (ActivityDay | null)[][]
+  max: number
+  total: number
+  /** Consecutive active days ending today (or yesterday when today is still empty). */
+  streak: number
+  /** 0 = Monday … 6 = Sunday; null without any activity. */
+  bestWeekday: number | null
+}
+
+/** Monday-based weekday of a timestamp (0 = Monday). */
+function mondayIndex(ts: number): number {
+  return (new Date(ts).getDay() + 6) % 7
+}
+
+/**
+ * Real session activity over `weeks` calendar weeks. A session counts once on
+ * its creation day and once on its last-activity day (if different); its token
+ * total is attributed to the last-activity day, as in `buildUsageOverview`.
+ */
+export function buildActivityHeatmap(sessions: readonly UsageSessionLike[], now: number, weeks = 16): ActivityHeatmap {
+  const todayStart = startOfLocalDay(now)
+  const firstDay = startOfLocalDay(todayStart - (mondayIndex(todayStart) + (weeks - 1) * 7) * DAY_MS + DAY_MS / 2)
+  const byDay = new Map<number, ActivityDay>()
+  const bump = (ts: number, tokens: number) => {
+    if (!Number.isFinite(ts) || ts <= 0 || ts < firstDay || ts > now) return
+    const start = startOfLocalDay(ts)
+    const day = byDay.get(start) ?? { start, sessions: 0, tokens: 0 }
+    day.sessions += 1
+    day.tokens += tokens
+    byDay.set(start, day)
+  }
+  for (const session of sessions) {
+    const created = session.createdAt ?? 0
+    const last = activityAt(session)
+    const tokens = usageOf(session)?.tokens ?? 0
+    if (created && startOfLocalDay(created) !== startOfLocalDay(last)) bump(created, 0)
+    bump(last, tokens)
+  }
+  const grid: (ActivityDay | null)[][] = []
+  let cursor = firstDay
+  for (let w = 0; w < weeks; w += 1) {
+    const column: (ActivityDay | null)[] = []
+    for (let d = 0; d < 7; d += 1) {
+      column.push(cursor > todayStart ? null : byDay.get(cursor) ?? { start: cursor, sessions: 0, tokens: 0 })
+      cursor = startOfLocalDay(cursor + DAY_MS + DAY_MS / 2)
+    }
+    grid.push(column)
+  }
+  let max = 0
+  let total = 0
+  const perWeekday = [0, 0, 0, 0, 0, 0, 0]
+  for (const day of byDay.values()) {
+    max = Math.max(max, day.sessions)
+    total += day.sessions
+    perWeekday[mondayIndex(day.start)]! += day.sessions
+  }
+  let streak = 0
+  let probe = byDay.has(todayStart) ? todayStart : startOfLocalDay(todayStart - DAY_MS / 2)
+  while (byDay.has(probe)) {
+    streak += 1
+    probe = startOfLocalDay(probe - DAY_MS / 2)
+  }
+  const best = Math.max(...perWeekday)
+  return { weeks: grid, max, total, streak, bestWeekday: best > 0 ? perWeekday.indexOf(best) : null }
+}
+
+/** Heat level 0…4 for a day relative to the busiest day in the window. */
+export function heatLevel(sessions: number, max: number): 0 | 1 | 2 | 3 | 4 {
+  if (sessions <= 0 || max <= 0) return 0
+  return Math.min(4, Math.max(1, Math.ceil((sessions / max) * 4))) as 1 | 2 | 3 | 4
+}
+
+/** Time-of-day greeting bucket. */
+export function greetingPart(ts: number): 'night' | 'morning' | 'day' | 'evening' {
+  const h = new Date(ts).getHours()
+  return h < 5 ? 'night' : h < 12 ? 'morning' : h < 18 ? 'day' : 'evening'
+}
