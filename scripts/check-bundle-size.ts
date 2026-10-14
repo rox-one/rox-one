@@ -62,11 +62,36 @@ export const MAX_NEW_CHUNK_BYTES = 2_500_000
 export const MIN_BUDGET_BYTES = 250_000
 
 /**
- * Cross-platform slack on every budget AND every whole-extension total: the same source builds to
- * slightly different byte counts on macOS and Linux (observed <= 91 B on the 900 KB `main` chunk), so
- * the gate compares against `recorded + BUDGET_SLACK_BYTES` and reports the raw recorded number.
+ * Proportional slack on every budget AND every whole-extension total, as a fraction of that budget.
+ * A constant allowance does not scale with the bundle: the previous 4,096 B is 0.012% of the ~35 MB
+ * js total, far tighter than the build reproduces — the same source differs across platforms by
+ * ~91 B on the 900 KB `main` chunk. One fraction prices the tolerance in the unit being budgeted,
+ * instead of at a precision the bundle never had.
+ *
+ * The fraction is deliberately ~5x that measured platform noise (91 / 900,000 = 0.01%) and no more.
+ * Slack exists to absorb build non-determinism, not ordinary code growth: the totals were observed
+ * drifting 6,158 B up to 79,135 B between adjacent commits on the ~35 MB total, and a slack wide
+ * enough to pass those would be a gate that never fires. At 0.05% the js total is allowed 17,504 B
+ * and playground.html 8,558 B, so real growth of that size still fails.
  */
-export const BUDGET_SLACK_BYTES = 4096
+export const BUDGET_SLACK_RATIO = 0.0005
+
+/**
+ * Absolute floor of that slack, so a small css chunk or a test fixture is not gated at a byte
+ * precision its build cannot reproduce. Kept at the historical 4 KiB: a larger floor does not
+ * merely protect small chunks, it *dominates* them — 64 KiB is 7% of a 900 KB chunk and 0.18% of
+ * the ~35 MB js total, which is wide enough to swallow the 6-79 KB drift the gate exists to catch.
+ */
+export const BUDGET_SLACK_MIN_BYTES = 4 * 1024
+
+/**
+ * Slack allowed on a recorded budget: `max(BUDGET_SLACK_MIN_BYTES, BUDGET_SLACK_RATIO * budget)`,
+ * rounded up so the gate is never more permissive than the stated fraction. The gate compares against
+ * `recorded + budgetSlackBytes(recorded)` and still reports the raw recorded number.
+ */
+export function budgetSlackBytes(budget: number): number {
+  return Math.ceil(Math.max(BUDGET_SLACK_MIN_BYTES, budget * BUDGET_SLACK_RATIO))
+}
 
 /**
  * An entry page (html file) that exists in the build but has no recorded `startup` entry may not pull
@@ -428,8 +453,8 @@ export function buildStartupEntries(measurements: StartupMeasurement[]): Record<
 
 /**
  * Pure startup gate. Fails an entry page when its measured static JS closure exceeds its recorded total
- * (or MAX_NEW_STARTUP_BYTES when unbudgeted), each with BUDGET_SLACK_BYTES of platform noise allowed,
- * and fails any entry page referencing a file that is missing from the build.
+ * (or MAX_NEW_STARTUP_BYTES when unbudgeted) plus that budget's `budgetSlackBytes`, and fails any
+ * entry page referencing a file that is missing from the build.
  */
 export function evaluateStartup(
   measurements: StartupMeasurement[],
@@ -440,7 +465,7 @@ export function evaluateStartup(
     const entry = recorded[measurement.html]
     const budget = entry?.jsRawBytes ?? MAX_NEW_STARTUP_BYTES
     const unbudgeted = entry?.jsRawBytes === undefined
-    const overBudget = measurement.jsRawBytes > budget + BUDGET_SLACK_BYTES
+    const overBudget = measurement.jsRawBytes > budget + budgetSlackBytes(budget)
     if (!overBudget && measurement.missing.length === 0) continue
     failures.push({
       html: measurement.html,
@@ -538,8 +563,8 @@ export function buildBudgets(chunks: MeasuredChunk[], kind: AssetKind): Record<s
 /**
  * Pure gate. Fails when (1) a budgeted prefix's TOTAL exceeds its recorded total, (2) an unbudgeted
  * prefix's TOTAL exceeds MAX_NEW_CHUNK_BYTES, or (3) either gated extension total exceeds its recorded
- * total — each with BUDGET_SLACK_BYTES of platform noise allowed. Kept free of filesystem access so it
- * is unit-testable without a build.
+ * total — each compared against `budget + budgetSlackBytes(budget)`. Kept free of filesystem access so
+ * it is unit-testable without a build.
  */
 export function evaluateAssets(chunks: MeasuredChunk[], recorded: RecordedBudgets): BudgetFailure[] {
   const failures: BudgetFailure[] = []
@@ -551,7 +576,7 @@ export function evaluateAssets(chunks: MeasuredChunk[], recorded: RecordedBudget
       // `?? MAX_NEW_CHUNK_BYTES` also guards a baseline recorded in an older shape (a missing
       // `totalRawBytes` would otherwise compare as NaN and pass silently).
       const budget = recordedPrefixes[group.prefix]?.totalRawBytes ?? MAX_NEW_CHUNK_BYTES
-      if (group.rawBytes > budget + BUDGET_SLACK_BYTES) {
+      if (group.rawBytes > budget + budgetSlackBytes(budget)) {
         failures.push({
           kind,
           prefix: group.prefix,
@@ -565,7 +590,7 @@ export function evaluateAssets(chunks: MeasuredChunk[], recorded: RecordedBudget
     const recordedTotal = kind === 'js' ? recorded.totals?.jsRawBytes : recorded.totals?.cssRawBytes
     if (recordedTotal === undefined) continue
     const total = kindChunks.reduce((sum, chunk) => sum + chunk.rawBytes, 0)
-    if (total <= recordedTotal + BUDGET_SLACK_BYTES) continue
+    if (total <= recordedTotal + budgetSlackBytes(recordedTotal)) continue
     const largest = kindChunks.reduce((max, chunk) => (chunk.rawBytes > max.rawBytes ? chunk : max), kindChunks[0]!)
     failures.push({
       kind,
