@@ -127,10 +127,18 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
    * subscribe afterwards (close/reopen race: the close was a no-op then).
    */
   const closeSeq = new Map<string, number>()
+  /** "<key>|<renderer id>" → opens in flight; "<key>" → opens in flight from any renderer. */
+  const pendingOpens = new Map<string, number>()
+  const bump = (k: string, d: number) => {
+    const n = (pendingOpens.get(k) ?? 0) + d
+    if (n > 0) pendingOpens.set(k, n); else pendingOpens.delete(k)
+    return n
+  }
   /** Drop the forwarder and close the board once nobody has it open. */
   const releaseIfIdle = async (ws: unknown, id: string) => {
     const k = key(ws, id)
-    if (subscribers.get(k)?.size) return
+    // A pending open (any renderer) shares the store's doc: closing it now would hand that open a closed doc.
+    if (subscribers.get(k)?.size || pendingOpens.get(k)) return
     subscribers.delete(k)
     const f = forwarders.get(k)
     if (f) { f.doc.off('update', f.handler); forwarders.delete(k) }
@@ -221,12 +229,23 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
     guard(event)
     const store = registry.get(ws)
     const bid = boardId(id)
-    const seqKey = `${key(ws, bid)}|${event.sender.id}`
+    const k = key(ws, bid)
+    const seqKey = `${k}|${event.sender.id}`
     const seq = closeSeq.get(seqKey) ?? 0
-    await knownBoard(store, bid)
-    const board = await store.openBoard(bid)
+    bump(k, 1); bump(seqKey, 1)
+    let board: Awaited<ReturnType<typeof store.openBoard>>
+    try {
+      await knownBoard(store, bid)
+      board = await store.openBoard(bid)
+    } catch (e) {
+      bump(k, -1); if (!bump(seqKey, -1)) closeSeq.delete(seqKey)
+      await releaseIfIdle(ws, bid)
+      throw e
+    }
     const state = Y.encodeStateAsUpdate(board.doc)
-    if ((closeSeq.get(seqKey) ?? 0) !== seq) {
+    const closed = (closeSeq.get(seqKey) ?? 0) !== seq
+    bump(k, -1); if (!bump(seqKey, -1)) closeSeq.delete(seqKey)
+    if (closed) {
       // Closed by this renderer while opening: don't leak a subscription / keep the board open.
       await releaseIfIdle(ws, bid)
       return state
@@ -239,7 +258,7 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
     guard(event, { flag: false })
     if (typeof ws === 'string' && typeof id === 'string' && isValidBoardId(id)) {
       const seqKey = `${key(ws, id)}|${event.sender.id}`
-      closeSeq.set(seqKey, (closeSeq.get(seqKey) ?? 0) + 1)
+      if (pendingOpens.get(seqKey)) closeSeq.set(seqKey, (closeSeq.get(seqKey) ?? 0) + 1)
       unsubscribe(ws, id, event.sender.id)
     }
     return { ok: true as const }
