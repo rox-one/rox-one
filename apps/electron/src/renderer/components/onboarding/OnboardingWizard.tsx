@@ -5,9 +5,11 @@ import { RoleStep } from "./RoleStep"
 import { LayoutStep } from "./LayoutStep"
 import { QuestionnaireStep, type QuestionnaireStepPayload } from "./QuestionnaireStep"
 import {
+  loadFirstRunDraft,
   saveFirstRunDraft,
   type OnboardingDraftStorage,
 } from "./identity-model"
+import { parseProfileQuestionnaire } from "./profile-questionnaire-model"
 import type { RewardLedger } from "./onboarding-rewards"
 import { OnboardingStepProgress, type OnboardingProgressStep } from './OnboardingStepProgress'
 import type { ApiSetupMethod } from "./APISetupStep"
@@ -70,6 +72,7 @@ interface OnboardingWizardProps {
 
   // Event handlers
   onContinue: () => void
+  onContinueLocally?: () => void
   onBack: () => void
   onSelectApiSetupMethod: (method: ApiSetupMethod) => void
   onSubmitCredential: (data: ApiKeySubmitData) => void
@@ -131,6 +134,7 @@ interface OnboardingWizardProps {
 export function OnboardingWizard({
   state,
   onContinue,
+  onContinueLocally,
   onBack,
   onSelectApiSetupMethod,
   onSubmitCredential,
@@ -203,14 +207,18 @@ export function OnboardingWizard({
           <WelcomeStep
             isExistingUser={state.isExistingUser}
             onContinue={onContinue}
+            onContinueLocally={onContinueLocally}
             isLoading={state.isCheckingGitBash}
             isFinishing={state.isFinishing}
           />
         )
 
-case 'questionnaire':
+      case 'questionnaire': {
+        const draft = loadFirstRunDraft(firstRunStorage)
         return (
           <QuestionnaireStep
+            questionnaire={draft?.questionnaire ? parseProfileQuestionnaire(draft.questionnaire) : undefined}
+            bubbles={draft?.bubbles}
             onContinue={(payload) => {
               persistQuestionnaireDraft(payload)
               onContinue()
@@ -222,6 +230,7 @@ case 'questionnaire':
             {...(firstRun ? { rewards: firstRun.rewards } : {})}
           />
         )
+      }
 
       case 'role':
         return (

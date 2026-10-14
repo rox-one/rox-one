@@ -5,6 +5,7 @@ import * as React from 'react'
 import { LazyMarkdownLatexBlock as MarkdownLatexBlock } from '../lazy-blocks'
 import { RichBlockShell } from '../RichBlockShell'
 import { RICH_BLOCK_EDIT_EVENT } from '../rich-block-events'
+import { fenceCodeAttribute, promoteFencedBlocks, serializeLegacyFence } from './legacy-fence'
 
 const LATEX_LANGUAGES = new Set(['latex', 'math', 'tex', 'katex'])
 
@@ -18,8 +19,18 @@ export const LatexBlock = Node.create({
 
   addAttributes() {
     return {
-      code: {
-        default: '',
+      code: fenceCodeAttribute,
+    }
+  },
+
+  addStorage() {
+    return {
+      markdown: {
+        serialize: (state: Parameters<typeof serializeLegacyFence>[0], node: { attrs?: { code?: string } }) =>
+          serializeLegacyFence(state, node, 'latex'),
+        parse: {
+          updateDOM: (element: HTMLElement) => promoteFencedBlocks(element, LATEX_LANGUAGES, 'latex-block'),
+        },
       },
     }
   },

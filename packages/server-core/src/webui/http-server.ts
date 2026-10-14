@@ -49,6 +49,19 @@ import type { PlatformServices } from '../runtime/platform'
 // Re-exported for the existing WebUI callers/tests that import it from here.
 export { resolveWebuiFile } from './static-file'
 
+/**
+ * Files the login page may load without a session. The SPA bundle under
+ * `/assets/*` stays gated (S8-04). Vite names the login MPA entry
+ * `login-<hash>.css` / `login-<hash>.js`; fonts referenced from that CSS
+ * are not secrets.
+ */
+export function isUnauthenticatedLoginAssetPath(path: string): boolean {
+  if (path === '/favicon.ico' || path.startsWith('/login-assets/')) return true
+  if (/^\/assets\/login-[A-Za-z0-9_-]+\.(css|js)$/.test(path)) return true
+  if (/^\/assets\/[^/]+\.(woff2?|ttf|otf)$/.test(path)) return true
+  return false
+}
+
 // ---------------------------------------------------------------------------
 // MIME types for static file serving
 // ---------------------------------------------------------------------------
@@ -694,7 +707,7 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     }
 
     // ── Static assets that login page needs (no auth) ──
-    if (path === '/favicon.ico' || path.startsWith('/login-assets/')) {
+    if (isUnauthenticatedLoginAssetPath(path)) {
       const safePath = resolveWebuiFile(webuiDir, path)
       if (!safePath) return new Response('Not Found', { status: 404 })
       const file = Bun.file(safePath)

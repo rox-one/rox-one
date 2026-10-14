@@ -40,13 +40,13 @@ beforeEach(clean)
 afterEach(clean)
 
 describe('exclusive placement — one surface, one place', () => {
-  it('defaults: the starter pill surfaces show «Пилюли сверху» and are not duplicated in the sidebar', () => {
+  it('defaults: the starter pill surfaces show «Пилюли сверху» and (sidebar v2) also keep their sidebar row', () => {
     const surfaces = resolveNavSurfaces({ shellFlags: none })
     const placement = (id: string) => surfaces.find(e => e.id === id)?.placement
     for (const id of ['home', 'feed', 'sessions', 'docs', 'browser']) expect(placement(id)).toBe('pills')
     const { pill, sidebar } = model()
     expect(ids(pill.rendered)).toEqual(['agent', 'feed', 'team', 'notes', 'browser'])
-    for (const id of ['home', 'feed', 'sessions', 'docs', 'browser']) expect(sidebar).not.toContain(id)
+    for (const id of ['home', 'feed', 'sessions', 'docs', 'browser']) expect(sidebar).toContain(id)
     for (const id of ['inbox', 'tasks', 'projects', 'memory', 'knowledge', 'missions', 'settings']) expect(sidebar).toContain(id)
   })
 
@@ -71,7 +71,7 @@ describe('exclusive placement — one surface, one place', () => {
     expect(ids(pill.rendered)).toContain('memory')
     expect(sidebarEntries.find(e => e.id === 'feed')?.group).toBe('more')
     expect(sidebarEntries.find(e => e.id === 'docs')?.group).toBe('primary')
-    expect(sidebar).not.toContain('tasks')
+    expect(sidebar).toContain('tasks')
     expect(sidebar).not.toContain('inbox')
     expect(ids(pill.rendered)).not.toContain('inbox')
   })
@@ -91,7 +91,7 @@ describe('sidebar fallback follows what the pill actually renders', () => {
     const { pill, sidebar } = model({ tasks: 'pills' }, { scene: { surfaceIds: ['feed'] } })
     expect(ids(pill.rendered)).toEqual(['feed'])
     for (const id of ['home', 'tasks', 'docs', 'sessions']) expect(sidebar).toContain(id)
-    expect(sidebar).not.toContain('feed')
+    expect(sidebar).toContain('feed')
   })
 
   it('a non-navigable mode or an unavailable browser falls back', () => {
@@ -147,9 +147,9 @@ describe('«Убрать из пилюль»', () => {
     const { pill } = model()
     const nav = resolveNavSurfaces({ shellFlags: none })
     const target = (id: string) => removeFromPillsTarget(pill.rendered.find(s => s.id === id)!, nav)
-    expect(target('feed')).toEqual({ id: 'feed', placement: 'more' })
+    expect(target('feed')).toEqual({ id: 'feed', placement: 'primary' })
     expect(target('team')).toEqual({ id: 'sessions', placement: 'primary' })
     expect(target('notes')).toEqual({ id: 'docs', placement: 'primary' })
-    expect(target('browser')).toEqual({ id: 'browser', placement: 'more' })
+    expect(target('browser')).toEqual({ id: 'browser', placement: 'primary' })
   })
 })

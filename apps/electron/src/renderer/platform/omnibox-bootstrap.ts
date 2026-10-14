@@ -20,7 +20,7 @@ import {
   type ContextKeyService,
   type ResourceProviderRegistry,
 } from '@rox/core/platform'
-import { getDefaultStore } from 'jotai'
+import { getShellStore } from './shell-store'
 import i18n from 'i18next'
 import { actions, type ActionId } from '@/actions/definitions'
 import {
@@ -449,14 +449,15 @@ function registerResourceProviders(
   resources: ResourceProviderRegistry,
   t?: LabelResolver,
 ): void {
-  const store = getDefaultStore()
+  const store = getShellStore()
 
   // W1-07 (#1504): unified entity search; returns [] while no flagged source is on.
   track(
     resources.register(
       createEntityOmniboxProvider({
-        // W1-07 gates read the Provider store; baseline providers below keep
-        // getDefaultStore() exactly as before.
+        // Same Provider store as sessions/skills/sources/automations (#1553).
+        // getShellStore() is connected by <ShellStoreBridge />; until then it
+        // falls back to the default store (tests / playground).
         getFlags: () => currentShellFlags(),
         label: t ? t('surfaces.omnibox.providerLabel', 'Entities') : 'Entities',
       }),

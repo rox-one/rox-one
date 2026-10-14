@@ -43,6 +43,12 @@ const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
 const TOOLBAR_LOAD_MAX_RETRIES = 4
 const TOOLBAR_LOAD_RETRY_DELAY_MS = 500
 const TOOLBAR_HEIGHT = 48
+/**
+ * Grace period before a cold (detached) embedded panel gives up its toolbar
+ * renderer. Keeps rapid panel switching cheap while guaranteeing that a panel
+ * parked in the stack eventually drops back to a single renderer process.
+ */
+const EMBEDDED_TOOLBAR_IDLE_TEARDOWN_MS = 30_000
 const MAX_CONSOLE_LOG_ENTRIES = 500
 const MAX_NETWORK_LOG_ENTRIES = 500
 const MAX_DOWNLOAD_LOG_ENTRIES = 200
@@ -155,14 +161,38 @@ export interface EmbeddedBoundsRect {
   height: number
 }
 
+/**
+ * A native overlay renderer shared by every pane composited onto one host
+ * window that uses the same session partition. Materialised on first activation
+ * (agent control or a toolbar menu) rather than per panel, so idle panels never
+ * pay for an overlay process.
+ */
+interface NativeOverlayEntry {
+  view: WebContentsView
+  partition: string
+  ready: boolean
+  /** Instance currently driving the overlay's bounds/visuals, or null when idle. */
+  ownerId: string | null
+}
+
 interface BrowserInstance {
   id: string
   partition: string
   /** Null for embedded instances composited onto the main window. */
   window: BrowserWindow | null
-  toolbarView: WebContentsView
+  /**
+   * Toolbar chrome view. Embedded panels create it lazily on first attach (and
+   * drop it again once cold) so a panel that is never shown costs a single
+   * renderer process. `null` until materialised.
+   */
+  toolbarView: WebContentsView | null
   pageView: WebContentsView
-  nativeOverlayView: WebContentsView
+  /**
+   * Shared native overlay backing this instance's agent-control / toolbar-menu
+   * overlay (see {@link BrowserPaneManager.resolveNativeOverlayEntry}). `null`
+   * until the overlay is first needed.
+   */
+  nativeOverlayView: WebContentsView | null
   cdp: BrowserCDP
   /** True for embedded (in-app panel) instances — no OS window is created. */
   embedded: boolean
@@ -203,9 +233,10 @@ interface BrowserInstance {
   lastAction: LastBrowserAction | null
   agentControl: AgentControlState | null
   lockState: AgentControlLockState
-  nativeOverlayReady: boolean
   themeColor: string | null
   inPageThemeTimer: ReturnType<typeof setTimeout> | null
+  /** Pending idle teardown of a cold embedded panel's toolbar renderer. */
+  toolbarIdleTimer: ReturnType<typeof setTimeout> | null
   themeObserverToken: string | null
   consoleLogs: BrowserConsoleEntry[]
   networkLogs: BrowserNetworkEntry[]
@@ -378,6 +409,12 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   private popupParentByWebContentsId = new Map<number, string>()
   private windowManager: WindowManager | null = null
   private sessionPathResolver: ((sessionId: string) => string | null) | null = null
+  /**
+   * Native overlay renderers, keyed first by host window and then by session
+   * partition. One overlay process per window instead of one per embedded
+   * panel; entries are created on first activation and never eagerly.
+   */
+  private nativeOverlaysByHostWindow = new WeakMap<BrowserWindow, Map<string, NativeOverlayEntry>>()
 
   setWindowManager(windowManager: WindowManager): void {
     this.windowManager = windowManager
@@ -457,17 +494,6 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       },
     })
 
-    const toolbarView = new WebContentsView({
-      webPreferences: {
-        preload: join(__dirname, 'browser-toolbar-preload.cjs'),
-        partition,
-        session: ses,
-        contextIsolation: true,
-        nodeIntegration: false,
-        sandbox: false,
-      },
-    })
-
     const pageView = new WebContentsView({
       webPreferences: {
         partition,
@@ -482,23 +508,9 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       throw new Error('[browser-pane] Native overlay requires BrowserWindow.contentView.addChildView')
     }
 
-    const nativeOverlayView = new WebContentsView({
-      webPreferences: {
-        partition,
-        session: ses,
-        contextIsolation: true,
-        nodeIntegration: false,
-        sandbox: true,
-      },
-    })
-
-    // Set WebContentsView backgrounds to match theme so about:blank doesn't flash white
-    const toolbarWcWithBg = toolbarView.webContents as typeof toolbarView.webContents & { setBackgroundColor?: (color: string) => void }
-    toolbarWcWithBg.setBackgroundColor?.('#00000000')
+    // Set the page background to match theme so about:blank doesn't flash white
     const pageWcWithBg = pageView.webContents as typeof pageView.webContents & { setBackgroundColor?: (color: string) => void }
     pageWcWithBg.setBackgroundColor?.(bgColor)
-    const overlayWcWithBg = nativeOverlayView.webContents as typeof nativeOverlayView.webContents & { setBackgroundColor?: (color: string) => void }
-    overlayWcWithBg.setBackgroundColor?.('#00000000')
 
     const cdp = new BrowserPaneManager.CdpImpl(pageView.webContents)
 
@@ -506,9 +518,13 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       id: instanceId,
       partition,
       window,
-      toolbarView,
+      // Windowed instances own an OS window whose ready-to-show gate depends on
+      // the toolbar, so their chrome is materialised right below. The native
+      // overlay is shared per host window and only appears once agent control /
+      // a toolbar menu actually needs it.
+      toolbarView: null,
       pageView,
-      nativeOverlayView,
+      nativeOverlayView: null,
       cdp,
       currentUrl: 'about:blank',
       title: i18n.t('browser.newTab'),
@@ -536,9 +552,9 @@ export class BrowserPaneManager implements IBrowserPaneManager {
         active: false,
         previousResizable: this.getWindowResizable(window),
       },
-      nativeOverlayReady: false,
       themeColor: null,
       inPageThemeTimer: null,
+      toolbarIdleTimer: null,
       themeObserverToken: null,
       consoleLogs: [],
       networkLogs: [],
@@ -558,10 +574,10 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     }
 
     this.addPaneView(window, pageView)
-    this.addPaneView(window, nativeOverlayView)
-    this.addPaneView(window, toolbarView)
-    this.setTopPaneView(window, toolbarView)
-    void this.loadNativeOverlayPage(instance)
+    const toolbarView = this.ensureToolbarView(instance)
+    if (toolbarView) {
+      this.setTopPaneView(window, toolbarView)
+    }
 
     this.layoutAllViews(instance)
 
@@ -571,13 +587,6 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     mainLog.info(`[browser-pane] toolbar version: v4-react-chromeless`)
     mainLog.info(`[browser-pane] Created instance: ${instanceId} (show=${shouldShow}, ownerType=${ownerType}, ownerSessionId=${ownerSessionId ?? 'none'})`)
 
-    void this.loadToolbarPage(instance)
-      .finally(() => {
-        // Safety net: if Electron never fires ready-to-show, still unblock focus/show behavior.
-        if (!instance.toolbarReady) {
-          this.markToolbarReady(instance, 'toolbar-load-finalized')
-        }
-      })
     void this.loadEmptyStatePage(instance).catch((error) => {
       mainLog.warn(`[browser-pane] empty-state load failed id=${instance.id}: ${error instanceof Error ? error.message : String(error)}`)
       void pageView.webContents.loadURL('about:blank')
@@ -612,6 +621,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       clearTimeout(instance.inPageThemeTimer)
       instance.inPageThemeTimer = null
     }
+    this.cancelEmbeddedToolbarTeardown(instance)
     instance.themeObserverToken = null
     instance.pendingShowOnReady = false
     instance.pendingShowToken += 1
@@ -899,6 +909,9 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     // If toolbar hasn't painted yet, defer showing until markToolbarReady runs.
     // Token guard prevents stale deferred focus from showing after hide/destroy.
     if (!instance.toolbarReady) {
+      // Materialise chrome that was never created (or was released while cold)
+      // so its load can release the deferred show.
+      if (!instance.toolbarView) this.ensureToolbarView(instance)
       if (instance.pendingShowOnReady) return
       instance.pendingShowOnReady = true
       const token = ++instance.pendingShowToken
@@ -1146,12 +1159,14 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   }
 
   private suspendOverlayForCapture(instance: BrowserInstance): boolean {
+    const entry = this.resolveNativeOverlayEntry(instance)
     const shouldSuspend = !!instance.agentControl?.active
-      && instance.nativeOverlayReady
+      && !!entry
+      && entry.ownerId === instance.id
 
-    if (!shouldSuspend) return false
+    if (!shouldSuspend || !entry) return false
 
-    instance.nativeOverlayView.setBounds({ x: 0, y: 0, width: 0, height: 0 })
+    entry.view.setBounds({ x: 0, y: 0, width: 0, height: 0 })
     return true
   }
 
@@ -2031,7 +2046,11 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     return accent
   }
 
-  private async loadNativeOverlayPage(instance: BrowserInstance): Promise<void> {
+  /**
+   * Load the overlay document into a shared overlay renderer. Identical markup
+   * for every instance, so a single load serves all panes on that host window.
+   */
+  private async loadNativeOverlayPage(entry: NativeOverlayEntry, instanceId: string): Promise<void> {
     const liveFxPlatform: Parameters<typeof getBrowserLiveFxCornerRadii>[0] =
       process.platform === 'darwin' || process.platform === 'win32' || process.platform === 'linux'
         ? process.platform
@@ -2096,13 +2115,21 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 </html>`
 
     try {
-      await instance.nativeOverlayView.webContents.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(html)}`)
-      instance.nativeOverlayReady = true
-      mainLog.info(`[browser-pane] native overlay ready id=${instance.id} platform=${liveFxPlatform} corners=${cornerRadii.bottomLeft}/${cornerRadii.bottomRight}`)
-      this.updateNativeOverlayState(instance)
+      await entry.view.webContents.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(html)}`)
+      entry.ready = true
+      mainLog.info(`[browser-pane] native overlay ready id=${instanceId} partition=${entry.partition} platform=${liveFxPlatform} corners=${cornerRadii.bottomLeft}/${cornerRadii.bottomRight}`)
+      this.refreshOverlayReadiness(entry)
     } catch (error) {
-      instance.nativeOverlayReady = false
-      mainLog.warn(`[browser-pane] native overlay load failed id=${instance.id}: ${error instanceof Error ? error.message : String(error)}`)
+      entry.ready = false
+      mainLog.warn(`[browser-pane] native overlay load failed id=${instanceId} partition=${entry.partition}: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+
+  /** Push a shared overlay's readiness onto every instance it currently backs. */
+  private refreshOverlayReadiness(entry: NativeOverlayEntry): void {
+    for (const instance of this.instances.values()) {
+      if (instance.nativeOverlayView !== entry.view) continue
+      this.updateNativeOverlayState(instance)
     }
   }
 
@@ -2118,11 +2145,12 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   }
 
   private layoutToolbarView(instance: BrowserInstance): void {
-    if (!instance.window || instance.window.isDestroyed()) return
+    const toolbarView = instance.toolbarView
+    if (!toolbarView || !instance.window || instance.window.isDestroyed()) return
     const [width] = instance.window.getContentSize()
     const toolbarHeight = this.getToolbarEffectiveHeight(instance)
 
-    instance.toolbarView.setBounds({ x: 0, y: 0, width, height: toolbarHeight })
+    toolbarView.setBounds({ x: 0, y: 0, width, height: toolbarHeight })
   }
 
   /**
@@ -2136,37 +2164,245 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     return (instance.window ? instance.window.getContentSize() : [0, 0]) as [number, number]
   }
 
+  /**
+   * Window whose contentView composites this instance's views: the instance's
+   * own OS window, or the main app window an embedded panel is attached to.
+   * Returns null when there is no live host window.
+   */
+  private resolvePaneHostWindow(instance: BrowserInstance): BrowserWindow | null {
+    const host = instance.embedded ? instance.embeddedHostWindow : instance.window
+    return host && !host.isDestroyed() ? host : null
+  }
+
+  /**
+   * Create (once) the toolbar chrome view for an instance.
+   *
+   * Embedded panels call this on first attach so a panel that is created but
+   * never shown costs no toolbar renderer; the same helper re-materialises the
+   * toolbar after {@link releaseEmbeddedToolbar} drops it while cold.
+   */
+  private ensureToolbarView(instance: BrowserInstance): WebContentsView | null {
+    const existing = instance.toolbarView
+    if (existing) {
+      if (!existing.webContents.isDestroyed()) return existing
+      instance.toolbarView = null
+    }
+
+    let view: WebContentsView
+    try {
+      view = new WebContentsView({
+        webPreferences: {
+          preload: join(__dirname, 'browser-toolbar-preload.cjs'),
+          partition: instance.partition,
+          session: session.fromPartition(instance.partition),
+          contextIsolation: true,
+          nodeIntegration: false,
+          sandbox: false,
+        },
+      })
+    } catch (error) {
+      mainLog.warn(`[browser-pane] toolbar view creation failed id=${instance.id}: ${error instanceof Error ? error.message : String(error)}`)
+      return null
+    }
+
+    // Transparent so the panel background shows through while the toolbar paints.
+    const wcWithBg = view.webContents as typeof view.webContents & { setBackgroundColor?: (color: string) => void }
+    wcWithBg.setBackgroundColor?.('#00000000')
+
+    instance.toolbarView = view
+    instance.toolbarReady = false
+    this.bindToolbarViewListeners(instance, view)
+
+    void this.loadToolbarPage(instance, view)
+      .finally(() => {
+        // Safety net: if Electron never fires did-finish-load, still unblock focus/show behavior.
+        if (instance.toolbarView !== view) return
+        if (!instance.toolbarReady) {
+          this.markToolbarReady(instance, 'toolbar-load-finalized')
+        }
+      })
+
+    mainLog.info(`[browser-pane] toolbar view materialised id=${instance.id}`)
+    return view
+  }
+
+  /**
+   * Bind toolbar renderer listeners. Bound per toolbar view (never once per
+   * instance) so a released-then-recreated toolbar behaves like the original.
+   */
+  private bindToolbarViewListeners(instance: BrowserInstance, view: WebContentsView): void {
+    const toolbarWc = view.webContents
+
+    toolbarWc.on('did-finish-load', () => {
+      if (instance.toolbarView !== view) return
+      const loadedUrl = typeof toolbarWc.getURL === 'function' ? toolbarWc.getURL() : ''
+      if (!this.isToolbarUiDocumentUrl(loadedUrl)) {
+        mainLog.info(`[browser-pane] toolbar did-finish-load ignored id=${instance.id} url=${loadedUrl || 'unknown'}`)
+        this.pushToolbarState(instance)
+        return
+      }
+
+      this.markToolbarReady(instance, 'did-finish-load')
+      this.pushToolbarState(instance)
+    })
+
+    toolbarWc.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+      if (!isMainFrame) return
+      mainLog.warn(`[browser-pane] toolbar did-fail-load id=${instance.id} code=${errorCode} url=${validatedURL} error=${errorDescription}`)
+    })
+
+    toolbarWc.on('before-input-event', (event) => {
+      if (instance.lockState.active) {
+        event.preventDefault()
+      }
+    })
+  }
+
+  /**
+   * Resolve the shared overlay backing this instance's host window, without
+   * creating one. Null until {@link ensureNativeOverlayEntry} has been called.
+   */
+  private resolveNativeOverlayEntry(instance: BrowserInstance): NativeOverlayEntry | null {
+    const host = this.resolvePaneHostWindow(instance)
+    if (!host) return null
+    return this.nativeOverlaysByHostWindow.get(host)?.get(instance.partition) ?? null
+  }
+
+  /**
+   * Resolve — creating on first need — the native overlay shared by every pane
+   * composited onto this instance's host window with the same partition.
+   *
+   * One overlay renderer per window instead of one per panel, and it is only
+   * materialised once agent control or a toolbar menu actually needs it.
+   */
+  private ensureNativeOverlayEntry(instance: BrowserInstance): NativeOverlayEntry | null {
+    const host = this.resolvePaneHostWindow(instance)
+    if (!host) return null
+
+    let byPartition = this.nativeOverlaysByHostWindow.get(host)
+    if (!byPartition) {
+      byPartition = new Map<string, NativeOverlayEntry>()
+      this.nativeOverlaysByHostWindow.set(host, byPartition)
+    }
+
+    let entry = byPartition.get(instance.partition)
+    if (entry && entry.view.webContents.isDestroyed()) {
+      byPartition.delete(instance.partition)
+      entry = undefined
+    }
+
+    if (!entry) {
+      const view = new WebContentsView({
+        webPreferences: {
+          partition: instance.partition,
+          session: session.fromPartition(instance.partition),
+          contextIsolation: true,
+          nodeIntegration: false,
+          sandbox: true,
+        },
+      })
+      const wcWithBg = view.webContents as typeof view.webContents & { setBackgroundColor?: (color: string) => void }
+      wcWithBg.setBackgroundColor?.('#00000000')
+
+      const created: NativeOverlayEntry = {
+        view,
+        partition: instance.partition,
+        ready: false,
+        ownerId: null,
+      }
+      byPartition.set(instance.partition, created)
+      this.bindNativeOverlayListeners(created)
+      // Attach once, at creation: the overlay is shared, so panel detach must
+      // not yank it away from whichever pane is currently driving it.
+      try {
+        this.addPaneView(host, view)
+      } catch (error) {
+        mainLog.warn(`[browser-pane] native overlay attach failed id=${instance.id}: ${error instanceof Error ? error.message : String(error)}`)
+      }
+      void this.loadNativeOverlayPage(created, instance.id)
+      mainLog.info(`[browser-pane] native overlay materialised partition=${instance.partition} id=${instance.id}`)
+      entry = created
+    }
+
+    instance.nativeOverlayView = entry.view
+    return entry
+  }
+
+  /** Tap-to-dismiss wiring for a shared overlay renderer (bound once per view). */
+  private bindNativeOverlayListeners(entry: NativeOverlayEntry): void {
+    entry.view.webContents.on('before-input-event', (event, input) => {
+      const ownerId = entry.ownerId
+      if (!ownerId) return
+      const owner = this.instances.get(ownerId)
+      if (!owner || !owner.toolbarMenuOverlayActive) return
+
+      const inputType = input.type || ''
+      if (inputType === 'mouseDown' || inputType === 'touchStart' || inputType === 'pointerDown') {
+        event.preventDefault()
+        this.forceCloseToolbarMenu(owner, 'overlay-tap')
+      }
+    })
+  }
+
+  /**
+   * Drop this instance's claim on its host window's shared overlay, if it holds
+   * one. The overlay view itself survives (another pane may still need it).
+   */
+  private releaseNativeOverlayClaim(instance: BrowserInstance): void {
+    const entry = this.resolveNativeOverlayEntry(instance)
+    if (!entry || entry.ownerId !== instance.id) return
+    entry.view.setBounds({ x: 0, y: 0, width: 0, height: 0 })
+    entry.ownerId = null
+  }
+
   private updateNativeOverlayState(instance: BrowserInstance): void {
     const control = instance.agentControl
     const agentActive = !!control?.active
     const menuActive = !!instance.toolbarMenuOverlayActive
-    const shouldShow = agentActive || menuActive
+    // An embedded panel that is not composited onto a host window must never
+    // drive the shared overlay: unlike the old per-panel overlay it is not
+    // detached with the panel, so a hidden pane would leave a stale
+    // tap-catcher floating over the app window.
+    const attached = !instance.embedded || instance.embeddedAttached
+    const shouldShow = (agentActive || menuActive) && attached
 
     // For embedded instances the "host" is the main app window the views are
     // currently attached to; for windowed instances it's the instance window.
-    const hostWindow = instance.window ?? instance.embeddedHostWindow
-    const [width, height] = this.getInstanceContentSize(instance)
+    const hostWindow = this.resolvePaneHostWindow(instance)
 
-    if (!shouldShow || !instance.nativeOverlayReady || !hostWindow || hostWindow.isDestroyed()) {
-      instance.nativeOverlayView.setBounds({ x: 0, y: 0, width: 0, height: 0 })
-      if (hostWindow && !hostWindow.isDestroyed()) {
+    if (!shouldShow) {
+      // Release this instance's claim — but never clobber the shared overlay
+      // while another pane in the same window is still driving it.
+      this.releaseNativeOverlayClaim(instance)
+      if (hostWindow && instance.toolbarView) {
         this.setTopPaneView(hostWindow, instance.toolbarView)
       }
       return
     }
 
+    const activeEntry = this.ensureNativeOverlayEntry(instance)
+    if (!activeEntry || !hostWindow) return
+
+    // Claim ownership before the readiness gate so the matching release path
+    // (this pane simply not needing the overlay any more) can hide it again.
+    activeEntry.ownerId = instance.id
+    if (!activeEntry.ready) return
+
+    const [width, height] = this.getInstanceContentSize(instance)
     const originX = instance.embedded ? (instance.embeddedRect?.x ?? 0) : 0
     const originY = instance.embedded ? (instance.embeddedRect?.y ?? 0) : 0
     const overlayHeight = Math.max(100, height - TOOLBAR_HEIGHT)
-    instance.nativeOverlayView.setBounds({ x: originX, y: originY + TOOLBAR_HEIGHT, width, height: overlayHeight })
+    activeEntry.view.setBounds({ x: originX, y: originY + TOOLBAR_HEIGHT, width, height: overlayHeight })
     // Windowed instances re-layout on host resize; embedded views re-layout via layoutEmbeddedViews.
-    this.setTopPaneView(hostWindow, instance.toolbarView)
+    if (instance.toolbarView) {
+      this.setTopPaneView(hostWindow, instance.toolbarView)
+    }
 
     if (agentActive) {
       const label = this.getAgentControlLabel(control)
       const accent = this.getResolvedAccentColor()
 
-      void instance.nativeOverlayView.webContents.executeJavaScript(`(() => {
+      void activeEntry.view.webContents.executeJavaScript(`(() => {
         const overlay = document.getElementById('overlay');
         const chip = document.getElementById('chip');
         const shield = document.getElementById('shield');
@@ -2184,7 +2420,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     }
 
     // Menu mode: transparent full-page tap-catcher, no visuals
-    void instance.nativeOverlayView.webContents.executeJavaScript(`(() => {
+    void activeEntry.view.webContents.executeJavaScript(`(() => {
       const overlay = document.getElementById('overlay');
       const chip = document.getElementById('chip');
       const shield = document.getElementById('shield');
@@ -2231,10 +2467,16 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   // ---------------------------------------------------------------------------
 
   /**
-   * Create an embedded browser instance: same views/session/CDP machinery as a
+   * Create an embedded browser instance: same page/session/CDP machinery as a
    * windowed instance but with `window: null`. Views stay detached from any host
    * window (i.e. invisible) until the renderer reports a rect via
    * `syncEmbeddedBounds`.
+   *
+   * Process budget: only the page renderer is created here. The toolbar chrome
+   * is materialised on first attach and released again once the panel goes cold
+   * (`releaseEmbeddedToolbar`); the native overlay is shared per host window and
+   * only appears when agent control / a toolbar menu needs it. A panel that is
+   * created but never shown therefore costs one renderer process, not three.
    *
    * Optional `partition` isolates the session (e.g. `persist:ext-${extensionId}`
    * for sandboxed extension UI). Defaults to SESSION_PARTITION.
@@ -2290,17 +2532,6 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
     const bgColor = nativeTheme.shouldUseDarkColors ? '#2b292e' : '#fafafb'
 
-    const toolbarView = new WebContentsView({
-      webPreferences: {
-        preload: join(__dirname, 'browser-toolbar-preload.cjs'),
-        partition,
-        session: ses,
-        contextIsolation: true,
-        nodeIntegration: false,
-        sandbox: false,
-      },
-    })
-
     const pageView = new WebContentsView({
       webPreferences: {
         partition,
@@ -2311,22 +2542,8 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       },
     })
 
-    const nativeOverlayView = new WebContentsView({
-      webPreferences: {
-        partition,
-        session: ses,
-        contextIsolation: true,
-        nodeIntegration: false,
-        sandbox: true,
-      },
-    })
-
-    const toolbarWcWithBg = toolbarView.webContents as typeof toolbarView.webContents & { setBackgroundColor?: (color: string) => void }
-    toolbarWcWithBg.setBackgroundColor?.('#00000000')
     const pageWcWithBg = pageView.webContents as typeof pageView.webContents & { setBackgroundColor?: (color: string) => void }
     pageWcWithBg.setBackgroundColor?.(bgColor)
-    const overlayWcWithBg = nativeOverlayView.webContents as typeof nativeOverlayView.webContents & { setBackgroundColor?: (color: string) => void }
-    overlayWcWithBg.setBackgroundColor?.('#00000000')
 
     const cdp = new BrowserPaneManager.CdpImpl(pageView.webContents)
 
@@ -2334,9 +2551,13 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       id: instanceId,
       partition,
       window: null,
-      toolbarView,
+      // Toolbar + native overlay are materialised lazily: the toolbar on first
+      // attach (see ensureToolbarView) and the overlay only when agent control
+      // or a toolbar menu needs it (shared per host window). A panel that is
+      // created but never shown therefore costs a single renderer process.
+      toolbarView: null,
       pageView,
-      nativeOverlayView,
+      nativeOverlayView: null,
       cdp,
       currentUrl: 'about:blank',
       title: i18n.t('browser.newTab'),
@@ -2364,9 +2585,9 @@ export class BrowserPaneManager implements IBrowserPaneManager {
         active: false,
         previousResizable: true,
       },
-      nativeOverlayReady: false,
       themeColor: null,
       inPageThemeTimer: null,
+      toolbarIdleTimer: null,
       themeObserverToken: null,
       consoleLogs: [],
       networkLogs: [],
@@ -2385,19 +2606,11 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       pageView.webContents.setUserAgent(sanitizedUa)
     }
 
-    void this.loadNativeOverlayPage(instance)
-
     this.setupWindowListeners(instance)
     this.instances.set(instanceId, instance)
     this.emitStateChange(instance)
     mainLog.info(`[browser-pane] Created embedded instance: ${instanceId}`)
 
-    void this.loadToolbarPage(instance)
-      .finally(() => {
-        if (!instance.toolbarReady) {
-          this.markToolbarReady(instance, 'toolbar-load-finalized')
-        }
-      })
     void this.loadEmptyStatePage(instance).catch((error) => {
       mainLog.warn(`[browser-pane] empty-state load failed id=${instance.id}: ${error instanceof Error ? error.message : String(error)}`)
       void pageView.webContents.loadURL('about:blank')
@@ -2535,8 +2748,10 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     }
   }
 
-  /** Attach the three views to a host window and subscribe to its resize/closed events. */
+  /** Attach the panel's views to a host window and subscribe to its resize/closed events. */
   private attachEmbeddedViews(instance: BrowserInstance, hostWindow: BrowserWindow): void {
+    this.cancelEmbeddedToolbarTeardown(instance)
+
     if (instance.embeddedAttached && instance.embeddedHostWindow === hostWindow) {
       this.layoutEmbeddedViews(instance)
       return
@@ -2552,10 +2767,14 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     // already parented, so a partial attach cannot leave the pane composited.
     instance.embeddedHostWindow = hostWindow
     try {
+      // Materialise the panel's toolbar on first attach — a panel that is never
+      // shown never pays for the extra renderer process.
+      const toolbarView = this.ensureToolbarView(instance)
       this.addPaneView(hostWindow, instance.pageView)
-      this.addPaneView(hostWindow, instance.nativeOverlayView)
-      this.addPaneView(hostWindow, instance.toolbarView)
-      this.setTopPaneView(hostWindow, instance.toolbarView)
+      if (toolbarView) {
+        this.addPaneView(hostWindow, toolbarView)
+        this.setTopPaneView(hostWindow, toolbarView)
+      }
     } catch (error) {
       mainLog.warn(`[browser-pane] failed to attach embedded views id=${instance.id}: ${error instanceof Error ? error.message : String(error)}`)
       this.detachEmbeddedViews(instance)
@@ -2582,9 +2801,19 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     this.layoutEmbeddedViews(instance)
   }
 
-  /** Detach the three views from the current host window (guarded for teardown). */
+  /**
+   * Detach this panel's own views from the current host window (guarded for
+   * teardown). The shared native overlay is deliberately left attached — it is
+   * owned per host window, not per panel, and may still be driving another pane.
+   */
   private detachEmbeddedViews(instance: BrowserInstance): void {
     const hostWindow = instance.embeddedHostWindow
+
+    // Release the shared overlay claim while the host window is still known: the
+    // overlay is not detached with the panel, so a panel that stops being
+    // composited must drop its claim rather than leave a stale tap-catcher
+    // floating over the app window.
+    this.releaseNativeOverlayClaim(instance)
 
     if (instance.embeddedHostHandlers && hostWindow && !hostWindow.isDestroyed()) {
       hostWindow.removeListener('resize', instance.embeddedHostHandlers.resize)
@@ -2595,7 +2824,8 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     instance.embeddedHostWindow = null
 
     if (hostWindow && !hostWindow.isDestroyed()) {
-      for (const view of [instance.toolbarView, instance.pageView, instance.nativeOverlayView]) {
+      const views = [instance.pageView, instance.toolbarView].filter((view): view is WebContentsView => !!view)
+      for (const view of views) {
         try {
           this.removePaneView(hostWindow, view)
         } catch (error) {
@@ -2610,10 +2840,56 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     this.closePopupsForParent(instance.id, 'parent_hide')
     instance.embeddedRect = null
     this.detachEmbeddedViews(instance)
+    this.scheduleEmbeddedToolbarTeardown(instance)
     if (instance.isVisible) {
       instance.isVisible = false
       this.emitStateChange(instance)
     }
+  }
+
+  /**
+   * Schedule the idle release of a cold panel's toolbar renderer. Cancelled by
+   * the next attach, so rapid panel switching never pays a reload.
+   */
+  private scheduleEmbeddedToolbarTeardown(instance: BrowserInstance): void {
+    if (!instance.embedded || !instance.toolbarView) return
+    this.cancelEmbeddedToolbarTeardown(instance)
+    const timer = setTimeout(() => {
+      instance.toolbarIdleTimer = null
+      this.releaseEmbeddedToolbar(instance)
+    }, EMBEDDED_TOOLBAR_IDLE_TEARDOWN_MS)
+    // Idle housekeeping must never hold the main process (or a test run) open.
+    if (typeof timer === 'object' && 'unref' in timer) timer.unref()
+    instance.toolbarIdleTimer = timer
+  }
+
+  private cancelEmbeddedToolbarTeardown(instance: BrowserInstance): void {
+    if (!instance.toolbarIdleTimer) return
+    clearTimeout(instance.toolbarIdleTimer)
+    instance.toolbarIdleTimer = null
+  }
+
+  /**
+   * Drop the toolbar renderer of a detached embedded panel.
+   *
+   * Together with lazy creation this bounds a cold panel to a single renderer
+   * process (its page). The toolbar is re-materialised by `ensureToolbarView`
+   * on the next attach, which re-runs the normal load/ready handshake.
+   */
+  private releaseEmbeddedToolbar(instance: BrowserInstance): void {
+    if (!instance.embedded || instance.embeddedAttached) return
+    const view = instance.toolbarView
+    if (!view) return
+
+    instance.toolbarView = null
+    instance.toolbarReady = false
+    try {
+      const wc = view.webContents as typeof view.webContents & { close?: () => void }
+      if (typeof wc.close === 'function') wc.close()
+    } catch (error) {
+      mainLog.warn(`[browser-pane] embedded toolbar release failed id=${instance.id}: ${error instanceof Error ? error.message : String(error)}`)
+    }
+    mainLog.info(`[browser-pane] released idle embedded toolbar id=${instance.id}`)
   }
 
   /** Lay out the embedded views within the last reported rect, clamped to the host. */
@@ -2641,10 +2917,15 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       return
     }
 
-    const toolbarHeight = this.getToolbarEffectiveHeight(instance)
-    instance.toolbarView.setBounds({ x, y, width, height: Math.min(toolbarHeight, height) })
+    const toolbarView = instance.toolbarView
+    const toolbarHeight = toolbarView ? this.getToolbarEffectiveHeight(instance) : 0
+    if (toolbarView) {
+      toolbarView.setBounds({ x, y, width, height: Math.min(toolbarHeight, height) })
+    }
     instance.pageView.setBounds({ x, y: y + toolbarHeight, width, height: Math.max(0, height - toolbarHeight) })
-    this.setTopPaneView(hostWindow, instance.toolbarView)
+    if (toolbarView) {
+      this.setTopPaneView(hostWindow, toolbarView)
+    }
     this.updateNativeOverlayState(instance)
   }
 
@@ -2684,6 +2965,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     }
 
     this.destroyingIds.delete(instance.id)
+    this.cancelEmbeddedToolbarTeardown(instance)
     // Finalization must be best-effort: a failing cleanup step must never
     // escape destroyInstance or leave the instance stuck in the map.
     const runCleanup = (label: string, action: () => void): void => {
@@ -2723,7 +3005,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     }
     this.layoutToolbarView(instance)
     this.layoutPageView(instance)
-    if (instance.window && !instance.window.isDestroyed()) {
+    if (instance.window && !instance.window.isDestroyed() && instance.toolbarView) {
       this.setTopPaneView(instance.window, instance.toolbarView)
     }
   }
@@ -2738,8 +3020,9 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     instance.toolbarMenuOverlayActive = false
     this.layoutAllViews(instance)
 
-    if (!instance.window?.isDestroyed() && !instance.toolbarView.webContents.isDestroyed()) {
-      instance.toolbarView.webContents.send(TOOLBAR_CHANNELS.FORCE_CLOSE_MENU, { reason })
+    const toolbarView = instance.toolbarView
+    if (toolbarView && !instance.window?.isDestroyed() && !toolbarView.webContents.isDestroyed()) {
+      toolbarView.webContents.send(TOOLBAR_CHANNELS.FORCE_CLOSE_MENU, { reason })
     }
   }
 
@@ -2839,16 +3122,17 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     return handled
   }
 
-  private async loadToolbarPage(instance: BrowserInstance): Promise<void> {
+  private async loadToolbarPage(instance: BrowserInstance, view: WebContentsView): Promise<void> {
     const query = `instanceId=${encodeURIComponent(instance.id)}`
     let lastError: unknown = null
 
     for (let attempt = 0; attempt <= TOOLBAR_LOAD_MAX_RETRIES; attempt++) {
+      if (view.webContents.isDestroyed()) return
       try {
         if (VITE_DEV_SERVER_URL) {
-          await instance.toolbarView.webContents.loadURL(`${VITE_DEV_SERVER_URL}/browser-toolbar.html?${query}`)
+          await view.webContents.loadURL(`${VITE_DEV_SERVER_URL}/browser-toolbar.html?${query}`)
         } else {
-          await instance.toolbarView.webContents.loadFile(
+          await view.webContents.loadFile(
             join(__dirname, 'renderer/browser-toolbar.html'),
             { query: { instanceId: instance.id } },
           )
@@ -2872,10 +3156,10 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     }
 
     const errorText = lastError instanceof Error ? lastError.message : String(lastError ?? 'unknown error')
-    await this.loadToolbarFallback(instance, errorText)
+    await this.loadToolbarFallback(instance, view, errorText)
   }
 
-  private async loadToolbarFallback(instance: BrowserInstance, reason: string): Promise<void> {
+  private async loadToolbarFallback(instance: BrowserInstance, view: WebContentsView, reason: string): Promise<void> {
     const safeReason = reason.replace(/[<>&]/g, (ch) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[ch] || ch))
     const html = `<!doctype html>
 <html>
@@ -2904,7 +3188,8 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 </html>`
 
     try {
-      await instance.toolbarView.webContents.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(html)}`)
+      if (view.webContents.isDestroyed()) return
+      await view.webContents.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(html)}`)
       mainLog.warn(`[browser-pane] Loaded toolbar fallback id=${instance.id}`)
     } catch (error) {
       mainLog.error(`[browser-pane] Failed to load toolbar fallback id=${instance.id}: ${error instanceof Error ? error.message : String(error)}`)
@@ -2916,7 +3201,8 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   }
 
   private pushToolbarState(instance: BrowserInstance): void {
-    if (instance.window?.isDestroyed() || instance.toolbarView.webContents.isDestroyed()) return
+    const toolbarView = instance.toolbarView
+    if (!toolbarView || instance.window?.isDestroyed() || toolbarView.webContents.isDestroyed()) return
     const state = {
       url: instance.currentUrl,
       title: instance.title,
@@ -2927,7 +3213,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       downloadCount: instance.downloads.length,
       profileLabel: 'Rox',
     }
-    instance.toolbarView.webContents.send(TOOLBAR_CHANNELS.STATE_UPDATE, state)
+    toolbarView.webContents.send(TOOLBAR_CHANNELS.STATE_UPDATE, state)
   }
 
   /** Register IPC handlers for toolbar actions. Call once at app startup. */
@@ -2937,7 +3223,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     // ignored, so another renderer cannot drive a pane it does not own.
     const requireToolbarInstance = (event: { sender: unknown }, instanceId: string): BrowserInstance => {
       const inst = this.instances.get(instanceId)
-      if (!inst || inst.toolbarView.webContents !== event.sender) throw new Error('IPC_SENDER_DENIED')
+      if (!inst?.toolbarView || inst.toolbarView.webContents !== event.sender) throw new Error('IPC_SENDER_DENIED')
       return inst
     }
 
@@ -3511,8 +3797,9 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   private applyThemeColor(instance: BrowserInstance, color: string | null): void {
     if (instance.themeColor === color) return
     instance.themeColor = color
-    if (!instance.toolbarView.webContents.isDestroyed()) {
-      instance.toolbarView.webContents.send(TOOLBAR_CHANNELS.THEME_COLOR, color)
+    const toolbarView = instance.toolbarView
+    if (toolbarView && !toolbarView.webContents.isDestroyed()) {
+      toolbarView.webContents.send(TOOLBAR_CHANNELS.THEME_COLOR, color)
     }
     this.emitStateChange(instance)
   }
@@ -3985,8 +4272,9 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
   private setupWindowListeners(instance: BrowserInstance): void {
     const pageWc = instance.pageView.webContents
-    const toolbarWc = instance.toolbarView.webContents
-    const overlayWc = instance.nativeOverlayView.webContents
+    // Toolbar + native-overlay listeners are bound when those views are
+    // materialised (`bindToolbarViewListeners` / `bindNativeOverlayListeners`),
+    // because both are created lazily.
 
     const window = instance.window
     window?.on('close', (event) => {
@@ -4007,23 +4295,6 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
     window?.on('resize', () => {
       this.layoutAllViews(instance)
-    })
-
-    toolbarWc.on('did-finish-load', () => {
-      const loadedUrl = typeof toolbarWc.getURL === 'function' ? toolbarWc.getURL() : ''
-      if (!this.isToolbarUiDocumentUrl(loadedUrl)) {
-        mainLog.info(`[browser-pane] toolbar did-finish-load ignored id=${instance.id} url=${loadedUrl || 'unknown'}`)
-        this.pushToolbarState(instance)
-        return
-      }
-
-      this.markToolbarReady(instance, 'did-finish-load')
-      this.pushToolbarState(instance)
-    })
-
-    toolbarWc.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
-      if (!isMainFrame) return
-      mainLog.warn(`[browser-pane] toolbar did-fail-load id=${instance.id} code=${errorCode} url=${validatedURL} error=${errorDescription}`)
     })
 
     pageWc.on('did-start-loading', () => {
@@ -4059,22 +4330,6 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       if (isOmniboxChord(input)) {
         event.preventDefault()
         this.requestOmniboxOpen(instance)
-      }
-    })
-
-    toolbarWc.on('before-input-event', (event) => {
-      if (instance.lockState.active) {
-        event.preventDefault()
-      }
-    })
-
-    overlayWc.on('before-input-event', (event, input) => {
-      if (!instance.toolbarMenuOverlayActive) return
-
-      const inputType = input.type || ''
-      if (inputType === 'mouseDown' || inputType === 'touchStart' || inputType === 'pointerDown') {
-        event.preventDefault()
-        this.forceCloseToolbarMenu(instance, 'overlay-tap')
       }
     })
 
