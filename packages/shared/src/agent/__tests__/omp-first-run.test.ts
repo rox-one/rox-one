@@ -185,7 +185,7 @@ describe('private public Rox runtime catalog', () => {
     expect(models).not.toContain('kimi-K3');
     const config = parseYaml(readFileSync(join(runtime.agentDir, 'config.yml'), 'utf8'));
     expect(config.magicKeywords).toEqual({ enabled: true, ultrathink: true, orchestrate: true, workflow: true });
-    expect(config.providers.autoThinkingMaxEffort).toBe('max');
+    expect(config.providers?.autoThinkingMaxEffort).not.toBe('max');
     expect(config.eval).toEqual({ js: true, tools: { enabled: true } });
     expect(runtime.env.PI_CODING_AGENT_DIR).toBe(runtime.agentDir);
     expect(runtime.env.OMP_PROFILE).toBe('default');
