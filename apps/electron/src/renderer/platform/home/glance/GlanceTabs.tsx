@@ -5,10 +5,10 @@
 import * as React from 'react'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronLeft, ChevronRight, Download, Plus, Upload } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, FileDown, Plus, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { addPage, exportGlance, mergeImportedPages, movePage, parseGlanceImport, type GlanceLayout } from './model'
+import { addPage, exportGlance, mergeImportedPages, movePage, parseGlanceImport, replacePage, type GlanceLayout, type GlancePage } from './model'
 import { GLANCE_PRESETS } from './presets'
 
 // ---------------------------------------------------------------------------
@@ -32,6 +32,8 @@ export function HomePageTabs({
   const { t } = useTranslation()
   const [presetsOpen, setPresetsOpen] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [pendingImport, setPendingImport] = useState<GlancePage[] | null>(null)
+  const activePage = activeId ? layout.pages.find((p) => p.id === activeId) ?? null : null
   const addFromPreset = (presetId: string) => {
     const preset = GLANCE_PRESETS.find((p) => p.id === presetId)
     if (!preset) return
@@ -41,12 +43,12 @@ export function HomePageTabs({
     if (created && next.pages.length > layout.pages.length) onSelect(created.id)
     setPresetsOpen(false)
   }
-  const doExport = () => {
-    const data = JSON.stringify(exportGlance(layout), null, 2)
+  const doExport = (pageIds?: readonly string[], name = 'rox-home-pages.json') => {
+    const data = JSON.stringify(exportGlance(layout, pageIds), null, 2)
     const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }))
     const a = document.createElement('a')
     a.href = url
-    a.download = 'rox-home-pages.json'
+    a.download = name
     a.click()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
@@ -56,8 +58,24 @@ export function HomePageTabs({
       toast.error(t('glance.import.invalid'))
       return
     }
-    const next = mergeImportedPages(layout, parsed.pages, 'append')
-    onChange(next)
+    setPresetsOpen(false)
+    setPendingImport(parsed.pages)
+  }
+  const applyImport = (mode: 'append' | 'replace' | 'page') => {
+    const pages = pendingImport
+    setPendingImport(null)
+    if (!pages) return
+    if (mode === 'page' && activePage && pages[0]) {
+      const next = replacePage(layout, activePage.id, pages[0])
+      onChange(next)
+      const index = layout.pages.findIndex((p) => p.id === activePage.id)
+      const created = next.pages[index]
+      if (created) onSelect(created.id)
+    } else {
+      const next = mergeImportedPages(layout, pages, mode === 'replace' ? 'replace' : 'append')
+      onChange(next)
+      if (mode === 'replace') onSelect(next.pages[0]?.id ?? null)
+    }
     toast.success(t('glance.import.done'))
   }
   return (
@@ -76,8 +94,11 @@ export function HomePageTabs({
       ))}
       <IconButton label={t('glance.addPage')} onClick={() => setPresetsOpen((v) => !v)} pressed={presetsOpen} testId="add-page"><Plus className="icon-toolbar" /></IconButton>
       <span className="flex-1" />
+      {activePage ? (
+        <IconButton label={t('glance.exportPage')} onClick={() => doExport([activePage.id], 'rox-home-page.json')} testId="export-page"><FileDown className="icon-toolbar" /></IconButton>
+      ) : null}
       {layout.pages.length > 0 ? (
-        <IconButton label={t('glance.export')} onClick={doExport} testId="export"><Download className="icon-toolbar" /></IconButton>
+        <IconButton label={t('glance.export')} onClick={() => doExport()} testId="export"><Download className="icon-toolbar" /></IconButton>
       ) : null}
       <IconButton label={t('glance.importAction')} onClick={() => fileRef.current?.click()} testId="import"><Upload className="icon-toolbar" /></IconButton>
       <input
@@ -91,6 +112,14 @@ export function HomePageTabs({
           if (file) void doImport(file)
         }}
       />
+      {pendingImport ? (
+        <div className="rox-home-widget absolute right-0 top-full z-popover mt-1 flex w-[280px] flex-col gap-1 rounded-[var(--radius-card)] p-2 shadow-middle" role="menu" aria-label={t('glance.importAction')} data-home-import-mode="">
+          <ImportChoice onClick={() => applyImport('append')} mode="append">{t('glance.import.append')}</ImportChoice>
+          {activePage ? <ImportChoice onClick={() => applyImport('page')} mode="page">{t('glance.import.replacePage')}</ImportChoice> : null}
+          <ImportChoice onClick={() => applyImport('replace')} mode="replace">{t('glance.import.replaceAll')}</ImportChoice>
+          <ImportChoice onClick={() => setPendingImport(null)} mode="cancel">{t('common.cancel')}</ImportChoice>
+        </div>
+      ) : null}
       {presetsOpen ? (
         <div className="rox-home-widget absolute left-0 top-full z-popover mt-1 flex w-[320px] flex-col gap-1 rounded-[var(--radius-card)] p-2 shadow-middle" role="menu" data-home-presets="">
           {GLANCE_PRESETS.map((preset) => (
@@ -101,6 +130,14 @@ export function HomePageTabs({
         </div>
       ) : null}
     </div>
+  )
+}
+
+function ImportChoice({ onClick, mode, children }: { onClick: () => void; mode: string; children: React.ReactNode }) {
+  return (
+    <button type="button" role="menuitem" onClick={onClick} data-home-import={mode} className="rounded-[var(--radius-control)] px-2 py-1.5 text-left text-sm font-bold text-foreground hover:bg-surface-pressed">
+      {children}
+    </button>
   )
 }
 
