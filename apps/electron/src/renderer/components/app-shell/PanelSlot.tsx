@@ -28,6 +28,8 @@ import { NavigationContext } from '@/contexts/NavigationContext'
 import { ShellSidebarContext } from './ShellSidebarPortal'
 import { destroyBrowserInstanceForRoute } from '@/platform/browser-panel-lifecycle'
 import { AuxiliaryToolPanel } from './AuxiliaryToolPanel'
+import { useRouteScrollRestore } from '@/lib/shell-motion/scroll-restore'
+import { navDirection, screenKeyOf, type NavDirection } from '@/lib/shell-motion/screen-transition'
 import { WorkspaceToolContext } from '@/atoms/workspace-context'
 
 interface PanelSlotProps {
@@ -78,6 +80,17 @@ export function PanelSlot({
   const primaryId = useAtomValue(primaryPanelIdAtom)
   const navState = useMemo(() => parseRouteToNavigationStateOrUnavailable(entry.route), [entry.route])
   const panelRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+  useRouteScrollRestore(contentRef, entry.route)
+  // #4: direction is decided when the screen key changes (render-time, no timers).
+  const screenKey = screenKeyOf(entry.route)
+  const transitionRef = useRef<{ key: string; route: string; direction: NavDirection }>({ key: screenKey, route: entry.route, direction: 'none' })
+  if (transitionRef.current.key !== screenKey) {
+    transitionRef.current = { key: screenKey, route: entry.route, direction: navDirection(transitionRef.current.route, entry.route) }
+  } else {
+    transitionRef.current.route = entry.route
+  }
+  const enterDirection = transitionRef.current.direction
   useLayoutEffect(() => {
     const panel = panelRef.current
     if (!panel) return
@@ -187,7 +200,7 @@ export function PanelSlot({
         }}
       >
         <div className="h-full flex flex-col">
-          <div className="flex min-h-0 flex-1 flex-col">
+          <div ref={contentRef} className="flex min-h-0 flex-1 flex-col">
             <AppShellProvider value={contextOverride}>
               <NavigationContext.Provider value={panelNavigation}>
                 <ShellSidebarContext.Provider value={entry.tool || (primaryId && primaryId !== entry.id) ? null : sidebarTarget}>
@@ -195,8 +208,10 @@ export function PanelSlot({
                     {hibernated ? (
                       <div className="flex h-full items-center justify-center text-caption text-muted-foreground" data-panel-hibernated="">{t('shell.strip.hibernated')}</div>
                     ) : entry.tool ? <AuxiliaryToolPanel entry={entry} onClose={handleClose} /> : (
-                      <MainContentPanel navStateOverride={navState}
-                        isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden} panelId={entry.id} />
+                      <div key={screenKey} className="rox-screen-enter flex min-h-0 flex-1 flex-col" data-nav-direction={enterDirection}>
+                        <MainContentPanel navStateOverride={navState}
+                          isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden} panelId={entry.id} />
+                      </div>
                     )}
                   </WorkspaceToolContext.Provider>
                 </ShellSidebarContext.Provider>
