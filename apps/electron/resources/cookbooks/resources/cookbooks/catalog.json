@@ -9,6 +9,10 @@
     "langfuse.public_key": "LANGFUSE_PUBLIC_KEY",
     "langfuse.secret_key": "LANGFUSE_SECRET_KEY"
   },
+  "defaultEnv": {
+    "OPENAI_BASE_URL": "https://api.rox.one/v1",
+    "OPENAI_API_BASE": "https://api.rox.one/v1"
+  },
   "topics": [
     "embeddings",
     "rag",

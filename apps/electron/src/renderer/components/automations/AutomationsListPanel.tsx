@@ -31,6 +31,8 @@ import {
   type AutomationTrigger,
 } from './types'
 import { formatShortRelativeTime } from './utils'
+import { buildAutomationsSidebarGroups, type ScheduleTemplate } from './automations-sidebar'
+import { useScreenSidebar } from '@/components/shell/screen-sidebar'
 import './automations.css'
 
 const { useSelection: useAutomationSelection } = automationSelection
@@ -207,6 +209,73 @@ export function AutomationsListPanel({
       setCreating(false)
     }
   }, [activeWorkspaceId, creating, onlyGroup, t, onAutomationClick])
+
+  // Second sidebar (shell API): groups + schedule templates (top-50 #34).
+  const [creatingTemplate, setCreatingTemplate] = useState<string | null>(null)
+  // In-flight guard lives in a ref: state read from the closure is stale on a
+  // fast double click and would create two automations.
+  const creatingTemplateRef = React.useRef(false)
+  const latest = React.useRef({ handleCreate, onAutomationClick, automations })
+  latest.current = { handleCreate, onAutomationClick, automations }
+  const createFromTemplate = useCallback(async (tpl: ScheduleTemplate) => {
+    if (!activeWorkspaceId || creatingTemplateRef.current) return
+    creatingTemplateRef.current = true
+    setCreatingTemplate(tpl.id)
+    try {
+      const created = await window.electronAPI.createAutomation(activeWorkspaceId, {
+        event: 'SchedulerTick',
+        matcher: {
+          name: t(tpl.nameKey),
+          enabled: false,
+          cron: tpl.cron,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          permissionMode: 'safe',
+          actions: [{ type: 'prompt', prompt: t(tpl.promptKey) }],
+        },
+      })
+      latest.current.onAutomationClick(created.id)
+      // Templates are created disabled on purpose; say so and offer to enable.
+      const workspaceId = activeWorkspaceId
+      toast.success(t('screenSidebar.automations.templateCreated', { name: t(tpl.nameKey) }), {
+        description: t('screenSidebar.automations.templateCreatedHint'),
+        action: {
+          label: t('screenSidebar.automations.enable'),
+          onClick: () => {
+            // Resolve by id at click time: (event, matcherIndex) can shift while
+            // the toast is up if other automations are created or deleted.
+            const current = latest.current.automations.find((a) => a.id === created.id)
+            if (!current) { toast.error(t('screenSidebar.automations.enableFailed')); return }
+            window.electronAPI.setAutomationEnabled(workspaceId, current.event, current.matcherIndex, true)
+              .then(() => toast.success(t('screenSidebar.automations.enabled', { name: current.name })))
+              .catch(() => toast.error(t('screenSidebar.automations.enableFailed')))
+          },
+        },
+      })
+    } catch {
+      toast.error(t('automations.createFailed'))
+    } finally {
+      creatingTemplateRef.current = false
+      setCreatingTemplate(null)
+    }
+  }, [activeWorkspaceId, t])
+  const sidebarConfig = React.useMemo(() => ({
+    screenId: 'automations',
+    title: t('screenSidebar.automations.title'),
+    primaryAction: { id: 'new', label: t('automations.newAutomation'), icon: Plus, disabled: creating, onSelect: () => void latest.current.handleCreate() },
+    search: { placeholder: t('screenSidebar.automations.search'), value: query, onChange: setQuery },
+    groups: buildAutomationsSidebarGroups({
+      automations,
+      selectedId: selectedAutomationId ?? null,
+      creatingTemplate,
+      t,
+      relative: (at) => formatShortRelativeTime(at, t),
+      locale,
+      onOpen: (id) => latest.current.onAutomationClick(id),
+      onCreateFromTemplate: (tpl) => void createFromTemplate(tpl),
+      onCreate: () => void latest.current.handleCreate(),
+    }),
+  }), [automations, selectedAutomationId, creatingTemplate, creating, query, t, locale, createFromTemplate])
+  useScreenSidebar(sidebarConfig)
 
   return (
     <div className={cn('rox-autom-list', className)} data-testid="automations-list">

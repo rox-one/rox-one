@@ -7,7 +7,8 @@
  * run through `runRendererUpload` (8 parallel 16 MiB parts) and device backups
  * reuse the same pipeline with `source: 'device-backup'`.
  */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import type { DriveListing, DriveQuota } from '@rox/shared/drive'
 import type { ImportProviderId } from '@rox/shared/drive/importers/types'
@@ -21,6 +22,7 @@ import { BackupChooser } from './drive/BackupChooser'
 import { ImportFlowDialog } from './drive/ImportFlowDialog'
 import { DriveFileList, type DriveFileUploadProgress } from './drive/DriveFileList'
 import { isRetryableUploadError, runRendererUpload } from './drive/upload-client'
+import { useDriveSidebar } from './drive/use-drive-sidebar'
 
 export interface DrivePageProps {
   workspaceId: string
@@ -32,7 +34,10 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
   const [quota, setQuota] = useState<DriveQuota | null>(null)
   const [listing, setListing] = useState<DriveListing | null>(null)
   const [loading, setLoading] = useState(true)
+  /** Listing/quota load failure only; action failures are toasts. */
   const [errorText, setErrorText] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const quotaRef = useRef<HTMLDivElement>(null)
   const [importOpen, setImportOpen] = useState(false)
   const [importProvider, setImportProvider] = useState<ImportProviderId | undefined>(undefined)
   const [backupOpen, setBackupOpen] = useState(false)
@@ -78,7 +83,7 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
       await window.electronAPI.driveDelete(workspaceId, fileId)
       await refresh()
     } catch (cause) {
-      setErrorText(toErrorMessage(cause))
+      toast.error(toErrorMessage(cause))
     }
   }
 
@@ -91,7 +96,7 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
       setFolderName('')
       await refresh()
     } catch (cause) {
-      setErrorText(toErrorMessage(cause))
+      toast.error(toErrorMessage(cause))
     }
   }
 
@@ -115,15 +120,38 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
         setUploads(previous => previous.filter(entry => entry.name !== file.name))
       } catch (cause) {
         setUploads(previous => previous.filter(entry => entry.name !== file.name))
-        setErrorText(`${file.name}: ${toErrorMessage(cause)}${isRetryableUploadError(cause) ? ` (${t('drive.errors.retryable')})` : ''}`)
+        toast.error(`${file.name}: ${toErrorMessage(cause)}${isRetryableUploadError(cause) ? ` (${t('drive.errors.retryable')})` : ''}`)
       }
     }
     await refresh()
   }
 
+  const openBackup = useCallback(() => setBackupOpen(true), [])
+  const openImport = useCallback((provider: ImportProviderId | undefined) => {
+    setImportProvider(provider)
+    setImportOpen(true)
+  }, [])
+  const createFolder = useCallback(() => setFolderDialogOpen(true), [])
+  const pickFiles = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+  const openStorage = useCallback(() => {
+    const el = quotaRef.current
+    if (!el) return
+    el.scrollIntoView({ block: 'start', behavior: 'smooth' })
+    el.focus({ preventScroll: true })
+  }, [])
+  const retry = useCallback(() => { void refresh() }, [refresh])
+  useDriveSidebar({
+    listing, quota, currentFolderId, loading, error: errorText,
+    openFolder, openBackup, openImport, createFolder, pickFiles, refresh: retry, openStorage,
+  })
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto p-4" data-testid="drive-page">
-      <DriveQuotaMeter quota={quota} />
+      <div ref={quotaRef} tabIndex={-1} className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-accent" data-testid="drive-storage-details">
+        <DriveQuotaMeter quota={quota} />
+      </div>
 
       <DriveActionTiles
         onOpenBackup={() => setBackupOpen(true)}
@@ -173,6 +201,7 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
         onDeleteFile={fileId => void deleteFile(fileId)}
         onCreateFolder={() => setFolderDialogOpen(true)}
         onPickFiles={files => void uploadBrowserFiles(files)}
+        fileInputRef={fileInputRef}
       />
 
       <RenameDialog

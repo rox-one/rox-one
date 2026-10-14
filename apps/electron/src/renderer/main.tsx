@@ -231,6 +231,7 @@ import.meta.hot?.dispose(stopRoxQueryRuntime)
 const QuickComposerSurface = React.lazy(
   () => import('./features/native-integrations/QuickComposerSurface'),
 )
+const MiniGlassSurface = React.lazy(() => import('./features/mini-glass/MiniGlassSurface'))
 const rendererSurface = new URLSearchParams(window.location.search).get('surface')
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -241,6 +242,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <ThemeProvider activeWorkspaceId={null}>
             <React.Suspense fallback={null}>
               <QuickComposerSurface />
+            </React.Suspense>
+          </ThemeProvider>
+        ) : rendererSurface === 'mini-glass' ? (
+          <ThemeProvider activeWorkspaceId={null}>
+            <React.Suspense fallback={null}>
+              <MiniGlassSurface />
             </React.Suspense>
           </ThemeProvider>
         ) : (

@@ -27,6 +27,16 @@ describe('blocked-subprocess-env', () => {
     expect(BLOCKED_ENV_VAR_PREFIXES).toContain('ROX_SECRET_')
   })
 
+  it('blocks the shared ROX gateway key written into the main-process env', () => {
+    // installRoxDefaults (feat/default-rox-r1-max) puts the org-wide key into
+    // process.env on every install; a bare ROX_* prefix rule would also hide
+    // benign ROX_* settings, so the key is listed (and only the key).
+    expect(isBlockedEnvVar('ROX_API_KEY')).toBe(true)
+    expect(BLOCKED_ENV_VARS).toContain('ROX_API_KEY')
+    expect(isBlockedEnvVar('ROX_BASE_URL')).toBe(false)
+    expect(isBlockedEnvVar('ROX_CONFIG_DIR')).toBe(false)
+  })
+
   it('MCP client and sandbox-env do not keep a local BLOCKED_ENV_VARS copy', () => {
     const client = readFileSync(
       join(REPO_ROOT, 'packages/shared/src/mcp/client.ts'),
