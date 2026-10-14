@@ -6,6 +6,8 @@ import { branchErrorDescription } from '../branch-error'
 const copy = {
   fallback: 'Failed to create branch',
   sameProvider: 'same-provider-copy',
+  sdkNotReady: 'sdk-not-ready-copy',
+  historyUnavailable: 'history-unavailable-copy',
 }
 
 const chatPage = readFileSync(join(import.meta.dir, '../../pages/ChatPage.tsx'), 'utf8')
@@ -37,6 +39,21 @@ describe('branchErrorDescription', () => {
     ).toBe(copy.sameProvider)
   })
 
+  it('maps missing SDK context and empty stored history to dedicated copy', () => {
+    expect(
+      branchErrorDescription(
+        new Error('Cannot create branch yet: parent session SDK context is not initialized. Send one message in the parent session and try again.'),
+        copy,
+      ),
+    ).toBe(copy.sdkNotReady)
+    expect(
+      branchErrorDescription(
+        new Error('OMP branch preflight failed: no native anchor (missing) or stored ROX history available'),
+        copy,
+      ),
+    ).toBe(copy.historyUnavailable)
+  })
+
   it('keeps non-leaking backend messages', () => {
     expect(branchErrorDescription(new Error('timeout after 5s'), copy)).toBe('timeout after 5s')
   })
@@ -48,6 +65,8 @@ describe('session branch copy is i18n', () => {
       expect(source).toContain("t('toast.couldNotCreateBranch')")
       expect(source).toContain("t('toast.createBranchFailed')")
       expect(source).toContain("t('toast.branchSameProvider')")
+      expect(source).toContain("t('toast.branchSdkNotReady')")
+      expect(source).toContain("t('toast.branchHistoryUnavailable')")
       expect(source).toContain("t('chat.branchOf'")
       expect(source).not.toContain("'Failed to create branch'")
       expect(source).not.toContain('`Branch of ${')

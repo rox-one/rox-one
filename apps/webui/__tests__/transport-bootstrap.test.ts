@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { resolveDefaultWorkspace, waitForWorkspaceAck, initializeAuthenticatedWebTransport } from '../src/adapter/transport-bootstrap'
+import { WebBootstrapError, resolveDefaultWorkspace, waitForWorkspaceAck, initializeAuthenticatedWebTransport } from '../src/adapter/transport-bootstrap'
 import { validateAuthenticatedWebBootstrap, initializeAuthenticatedWebRenderer } from '../../electron/src/renderer/lib/authenticated-web-bootstrap'
 
 function connection() {
@@ -40,6 +40,26 @@ describe('authenticated WebUI workspace bootstrap', () => {
   it('refuses mismatched and empty URL workspace rather than replacing the default', () => {
     expect(() => resolveDefaultWorkspace({ defaultWorkspaceId: 'private-workspace' }, 'other')).toThrow('does not match')
     expect(() => resolveDefaultWorkspace({ defaultWorkspaceId: 'private-workspace' }, '')).toThrow('does not match')
+  })
+
+  // The shell renders `code` through i18n and keeps `message` for diagnostics,
+  // so both halves are contract: a missing code would silently fall back to the
+  // raw English string on the error screen.
+  it('carries a stable code alongside the developer-facing message', () => {
+    for (const [config, requested, code] of [
+      [{}, null, 'unconfigured_workspace'],
+      [{ defaultWorkspaceId: 'private-workspace' }, 'other', 'workspace_mismatch'],
+    ] as const) {
+      let thrown: unknown
+      try {
+        resolveDefaultWorkspace(config, requested)
+      } catch (error) {
+        thrown = error
+      }
+      expect(thrown).toBeInstanceOf(WebBootstrapError)
+      expect((thrown as WebBootstrapError).code).toBe(code)
+      expect((thrown as Error).message.length).toBeGreaterThan(0)
+    }
   })
 
   it('requires a real connected ACK with the exact workspace', async () => {

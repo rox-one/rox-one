@@ -83,14 +83,39 @@ function defaultReplaceUrl(): ((url: string) => void) | undefined {
   return (url: string) => globalThis.history.replaceState(null, '', url)
 }
 
+/** Known bootstrap failures the shell can explain in the user's language. */
+export type WebBootstrapErrorCode = 'unconfigured_workspace' | 'workspace_mismatch'
+
+/**
+ * A bootstrap failure with a stable code alongside the developer-facing
+ * message. The web shell renders `code` through i18n and falls back to
+ * `message` for anything it does not recognise, so a diagnostic string never
+ * has to double as user-facing copy.
+ */
+export class WebBootstrapError extends Error {
+  readonly code: WebBootstrapErrorCode
+
+  constructor(code: WebBootstrapErrorCode, message: string) {
+    super(message)
+    this.name = 'WebBootstrapError'
+    this.code = code
+  }
+}
+
 export function resolveDefaultWorkspace(config: unknown, requestedWorkspace: string | null): string {
   const workspaceId = config && typeof config === 'object'
     ? (config as { defaultWorkspaceId?: unknown }).defaultWorkspaceId : undefined
   if (typeof workspaceId !== 'string' || !workspaceId || workspaceId.trim() !== workspaceId) {
-    throw new Error('Server has no configured default workspace; configure it using the desktop or host tools')
+    throw new WebBootstrapError(
+      'unconfigured_workspace',
+      'Server has no configured default workspace; configure it using the desktop or host tools',
+    )
   }
   if (requestedWorkspace !== null && requestedWorkspace !== workspaceId) {
-    throw new Error('Requested workspace does not match the server default workspace')
+    throw new WebBootstrapError(
+      'workspace_mismatch',
+      'Requested workspace does not match the server default workspace',
+    )
   }
   return workspaceId
 }

@@ -13,8 +13,10 @@ import {
   RetainedSurfacePane,
   SURFACE_KEEPALIVE_CAPACITY,
   SURFACE_KEEPALIVE_LOW_MEMORY_CAPACITY,
+  SURFACE_KEEPALIVE_NODE_BUDGET,
   advanceRetention,
   detectKeepAliveCapacity,
+  surfaceNodeWeight,
   useEffectiveVisible,
   useKeepAliveSurfaces,
   useSurfaceActive,
@@ -81,6 +83,52 @@ describe('advanceRetention', () => {
     // Capacity 1 retains nothing else; the retired surface was pushed out.
     expect(state.snapshots.size).toBe(0)
   })
+
+  // 2026-10-13 audit (S6-03/S9-02): the count cap alone is not a bound — five
+  // catalog surfaces fit inside it and the renderer still reached 227 318 nodes.
+  it('evicts by node weight while the count cap still has room', () => {
+    const weights: Record<string, number> = { a: 40_000, b: 30_000, c: 1_200, d: 1_500 }
+    const budget = {
+      nodeBudget: SURFACE_KEEPALIVE_NODE_BUDGET,
+      weightOf: (key: string) => weights[key] ?? 0,
+    }
+    let state = EMPTY_RETENTION
+    let previous: { key: string; node: React.ReactNode } | null = null
+    for (const key of ['a', 'b', 'c', 'd']) {
+      state = advanceRetention(state, previous, key, SURFACE_KEEPALIVE_CAPACITY, budget)
+      previous = { key, node: node(key) }
+    }
+    // Four surfaces is under the count cap, so only weight can have trimmed it.
+    expect(state.keys.length).toBeLessThan(SURFACE_KEEPALIVE_CAPACITY)
+    expect(state.keys[state.keys.length - 1]).toBe('d')
+    expect(state.keys.filter(key => key !== 'd')).toEqual(['c'])
+  })
+
+  it('never evicts the active surface, however heavy it is', () => {
+    const budget = { nodeBudget: 10, weightOf: (key: string) => (key === 'heavy' ? 500_000 : 1) }
+    const state = advanceRetention(EMPTY_RETENTION, null, 'heavy', SURFACE_KEEPALIVE_CAPACITY, budget)
+    expect(state.keys).toEqual(['heavy'])
+  })
+
+  it('treats a not-yet-measured surface as weightless and still honours the count cap', () => {
+    const budget = { nodeBudget: SURFACE_KEEPALIVE_NODE_BUDGET, weightOf: () => 0 }
+    let state = EMPTY_RETENTION
+    let previous: { key: string; node: React.ReactNode } | null = null
+    for (const key of ['a', 'b', 'c', 'd', 'e', 'f']) {
+      state = advanceRetention(state, previous, key, SURFACE_KEEPALIVE_CAPACITY, budget)
+      previous = { key, node: node(key) }
+    }
+    expect(state.keys).toEqual(['b', 'c', 'd', 'e', 'f'])
+  })
+})
+
+describe('surfaceNodeWeight', () => {
+  it('counts descendants of a pane and tolerates a missing one', () => {
+    const root = document.createElement('div')
+    root.innerHTML = '<section><span>a</span><span>b</span></section>'
+    expect(surfaceNodeWeight(root)).toBe(3)
+    expect(surfaceNodeWeight(null)).toBe(0)
+  })
 })
 
 describe('detectKeepAliveCapacity', () => {
@@ -108,22 +156,28 @@ function HarnessSurface({ label, ticks }: { label: string; ticks: (label: string
   )
 }
 
-function Host({ surfaces, activeKey, capacity = SURFACE_KEEPALIVE_CAPACITY, ticks }: {
+function Host({ surfaces, activeKey, capacity = SURFACE_KEEPALIVE_CAPACITY, ticks, nodeBudget }: {
   surfaces: Map<string, string>
   activeKey: string
   capacity?: number
   ticks: (label: string) => void
+  nodeBudget?: number
 }) {
   const label = surfaces.get(activeKey)
   const entries = useKeepAliveSurfaces(
     activeKey,
     React.createElement(HarnessSurface, { label: label ?? activeKey, ticks }),
     capacity,
+    { nodeBudget },
   )
   return (
     <>
       {entries.map(entry => (
-        <RetainedSurfacePane key={entry.key} active={entry.key === activeKey}>
+        <RetainedSurfacePane
+          key={entry.key}
+          active={entry.key === activeKey}
+          onWeight={entry.reportWeight}
+        >
           {entry.node}
         </RetainedSurfacePane>
       ))}
@@ -131,21 +185,43 @@ function Host({ surfaces, activeKey, capacity = SURFACE_KEEPALIVE_CAPACITY, tick
   )
 }
 
-function mount(surfaces: Map<string, string>, activeKey: string, capacity = SURFACE_KEEPALIVE_CAPACITY) {
+function mount(
+  surfaces: Map<string, string>,
+  activeKey: string,
+  capacity = SURFACE_KEEPALIVE_CAPACITY,
+  nodeBudget?: number,
+) {
   const container = document.createElement('div')
   document.body.appendChild(container)
   const root = createRoot(container)
   const ticks: string[] = []
   const ticksFn = (label: string) => { ticks.push(label) }
-  act(() => { root.render(<Host surfaces={surfaces} activeKey={activeKey} capacity={capacity} ticks={ticksFn} />) })
+  act(() => { root.render(<Host surfaces={surfaces} activeKey={activeKey} capacity={capacity} ticks={ticksFn} nodeBudget={nodeBudget} />) })
   return {
     container,
     root,
     ticks,
-    render: (key: string) => act(() => { root.render(<Host surfaces={surfaces} activeKey={key} capacity={capacity} ticks={ticksFn} />) }),
+    render: (key: string) => act(() => { root.render(<Host surfaces={surfaces} activeKey={key} capacity={capacity} ticks={ticksFn} nodeBudget={nodeBudget} />) }),
     unmount: () => act(() => root.unmount()),
   }
 }
+
+describe('weight-aware retention through the real pane', () => {
+  it('drops the oldest panes once measured weight exceeds the budget', () => {
+    const surfaces = new Map([['a', 'A'], ['b', 'B'], ['c', 'C'], ['d', 'D'], ['e', 'E'], ['f', 'F']])
+    // Two nodes of headroom: every retired pane measures one node, so the count
+    // cap can never be reached.
+    const harness = mount(surfaces, 'a', SURFACE_KEEPALIVE_CAPACITY, 2)
+    try {
+      for (const key of ['b', 'c', 'd', 'e', 'f']) harness.render(key)
+      const panes = harness.container.querySelectorAll('[data-surface-retained]')
+      expect(panes.length).toBeLessThan(SURFACE_KEEPALIVE_CAPACITY)
+      expect(harness.container.querySelector('[data-surface="A"]')).toBeNull()
+    } finally {
+      harness.unmount()
+    }
+  })
+})
 
 describe('useKeepAliveSurfaces', () => {
   it('preserves a retired surface’s state and DOM across a revisit', () => {
