@@ -3888,7 +3888,7 @@
   "inspector.terminalHint": "コマンドを入力して Enter を押します。",
   "inspector.terminalNoBridge": "シェルブリッジを利用できません。",
   "inspector.terminalPlaceholder": "コマンド",
-  "inspector.unpin": "Unpin inspector",
+  "inspector.unpin": "インスペクターのピン留めを解除",
   "kanban.a11y.columnRegion": "Column “{{column}}”",
   "kanban.a11y.dragCancel": "「{{title}}」の移動をキャンセルしました",
   "kanban.a11y.dragEnd": "「{{title}}」を{{column}}に移動しました",

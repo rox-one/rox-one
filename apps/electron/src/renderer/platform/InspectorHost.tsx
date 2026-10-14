@@ -641,11 +641,11 @@ export function InspectorHost() {
                   data-inspector-pin={pinned ? 'on' : 'off'}
                   onClick={togglePinned}
                   className={cn(
-                    'flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] transition-colors hover:bg-foreground/5 hover:text-foreground',
+                    'flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] transition-colors hover:bg-surface-hover hover:text-foreground',
                     pinned ? 'text-accent' : 'text-muted-foreground/60',
                   )}
                 >
-                  {pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                  {pinned ? <PinOff className="icon-caption" /> : <Pin className="icon-caption" />}
                 </button>
               </TooltipTrigger>
               <TooltipContent side="left">{t(pinned ? 'inspector.unpin' : 'inspector.pin')}</TooltipContent>
