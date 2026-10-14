@@ -78,7 +78,7 @@ import {
 } from '@/components/mode-screen/ModeScreen'
 import { tasksLayoutAtom, tasksTimelineGroupAtom, tasksTimelineZoomAtom, tasksViewAtom } from './tasks/atoms'
 import { TaskTimeline } from './tasks/TaskTimeline'
-import { isoOf, type SchedulePatch, type TimelineGroup } from './tasks/timeline-model'
+import { applySchedule, isoOf, type SchedulePatch, type TimelineGroup } from './tasks/timeline-model'
 import {
   agentChipFor,
   agentCounts,
@@ -1144,11 +1144,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
 
   const scheduleTask = (id: string, patch: SchedulePatch) => {
     if (patch.startAt == null && patch.dueAt == null) return
-    mutate((current) => {
-      if (!current.get(id)) return
-      if (patch.startAt != null) current.setWhen(id, { kind: 'date', at: patch.startAt })
-      if (patch.dueAt != null) current.setDeadline(id, patch.dueAt)
-    })
+    mutate((current) => applySchedule(current, id, patch))
   }
   const timelineGroupTitle = (group: TimelineGroup) => {
     if (group.id == null) return t('tasks.move.noPlace')

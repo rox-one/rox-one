@@ -499,8 +499,10 @@ export class PersonalTaskStore {
   }
 
   /** Set «Когда». */
-  setWhen(id: string, when: TaskWhen, now = Date.now()): PersonalTask {
+  /** `opts.keepOrder`: keep the task's order when its list does not change (timeline rescheduling). */
+  setWhen(id: string, when: TaskWhen, now = Date.now(), opts: { keepOrder?: boolean } = {}): PersonalTask {
     const task = this.require(id)
+    const prevList = task.list
     switch (when.kind) {
       case 'inbox':
         Object.assign(task, { list: 'inbox', startAt: undefined, evening: false })
@@ -526,7 +528,7 @@ export class PersonalTaskStore {
         break
       }
     }
-    task.order = this.nextOrder(task.list)
+    if (!(opts.keepOrder && task.list === prevList)) task.order = this.nextOrder(task.list)
     this.audit('when', id, when.kind)
     return task
   }

@@ -119,3 +119,31 @@ export function dragPatch(task: PersonalTask, mode: GanttDragMode, days: number,
 export function dropPatch(date: string): SchedulePatch {
   return { startAt: epochOf(date) }
 }
+
+/** Minimal store surface used to apply a schedule patch. */
+export interface ScheduleStore {
+  get(id: string): PersonalTask | undefined
+  setWhen(id: string, when: import('@rox/core/tasks/personal').TaskWhen, now?: number, opts?: { keepOrder?: boolean }): unknown
+  setDeadline(id: string, at: number | undefined): unknown
+}
+
+/**
+ * Applies a timeline patch. A start of today or earlier becomes Сегодня (never a
+ * past Upcoming date); the evening flag is preserved; an unchanged start day is
+ * left alone; the task keeps its order while its list stays the same.
+ */
+export function applySchedule(store: ScheduleStore, id: string, patch: SchedulePatch, now = Date.now()): void {
+  const task = store.get(id)
+  if (!task) return
+  if (patch.startAt != null) {
+    const todayStart = epochOf(isoOf(now))
+    const day = epochOf(isoOf(patch.startAt))
+    const current = task.startAt != null ? epochOf(isoOf(task.startAt)) : task.list === 'today' ? todayStart : null
+    const effective = day <= todayStart ? todayStart : day
+    if (effective !== current) {
+      if (effective === todayStart) store.setWhen(id, { kind: task.evening ? 'evening' : 'today' }, now, { keepOrder: true })
+      else store.setWhen(id, { kind: 'date', at: effective, evening: task.evening }, now, { keepOrder: true })
+    }
+  }
+  if (patch.dueAt != null) store.setDeadline(id, patch.dueAt)
+}

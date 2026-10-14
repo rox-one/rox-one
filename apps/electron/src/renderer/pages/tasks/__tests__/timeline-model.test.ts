@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import type { PersonalTask } from '@rox/core/tasks/personal'
-import { dragPatch, dropPatch, epochOf, groupTasks, isoOf, partitionTasks, taskSpan, timelineRange } from '../timeline-model'
+import { applySchedule, dragPatch, dropPatch, epochOf, groupTasks, isoOf, partitionTasks, taskSpan, timelineRange } from '../timeline-model'
 
 const today = '2026-02-10'
 let n = 0
@@ -72,5 +72,47 @@ describe('drag and drop patches', () => {
 
   it('dropping schedules the start', () => {
     expect(dropPatch('2026-02-18')).toEqual({ startAt: epochOf('2026-02-18') })
+  })
+})
+
+describe('applySchedule', () => {
+  const NOW = epochOf('2026-02-10') + 12 * 3600_000
+  const fresh = () => {
+    const { PersonalTaskStore } = require('@rox/core/tasks/personal') as typeof import('@rox/core/tasks/personal')
+    return new PersonalTaskStore()
+  }
+
+  it('preserves evening and keeps order within the same list', () => {
+    const store = fresh()
+    const a = store.create({ title: 'a' })
+    store.setWhen(a.id, { kind: 'date', at: epochOf('2026-02-12'), evening: true }, NOW)
+    const b = store.create({ title: 'b' })
+    store.setWhen(b.id, { kind: 'date', at: epochOf('2026-02-13') }, NOW)
+    const order = store.get(a.id)!.order
+    applySchedule(store, a.id, { startAt: epochOf('2026-02-15') }, NOW)
+    expect(store.get(a.id)!.evening).toBe(true)
+    expect(store.get(a.id)!.order).toBe(order)
+    expect(isoOf(store.get(a.id)!.startAt!)).toBe('2026-02-15')
+  })
+
+  it('clamps today or earlier to Сегодня (evening kept) and skips unchanged days', () => {
+    const store = fresh()
+    const a = store.create({ title: 'a' })
+    store.setWhen(a.id, { kind: 'date', at: epochOf('2026-02-12'), evening: true }, NOW)
+    applySchedule(store, a.id, { startAt: epochOf('2026-02-01') }, NOW)
+    expect(store.get(a.id)!.list).toBe('today')
+    expect(store.get(a.id)!.startAt).toBeUndefined()
+    expect(store.get(a.id)!.evening).toBe(true)
+    const audit = store.auditLog().length
+    applySchedule(store, a.id, { startAt: epochOf('2026-02-10') }, NOW)
+    expect(store.auditLog().length).toBe(audit)
+  })
+
+  it('sets the deadline without touching the start', () => {
+    const store = fresh()
+    const a = store.create({ title: 'a' })
+    applySchedule(store, a.id, { dueAt: epochOf('2026-02-20') }, NOW)
+    expect(isoOf(store.get(a.id)!.dueAt!)).toBe('2026-02-20')
+    expect(store.get(a.id)!.startAt).toBeUndefined()
   })
 })
