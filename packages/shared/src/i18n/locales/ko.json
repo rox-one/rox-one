@@ -7971,6 +7971,7 @@
   "screens.messenger.connect": "메신저 연결",
   "screens.messenger.empty": "연결된 채팅이 없습니다",
   "screens.messenger.groups.channels": "채널",
+  "screens.messenger.groups.chats": "채팅",
   "screens.messenger.groups.direct": "다이렉트 메시지",
   "screens.messenger.groups.pinned": "고정됨",
   "screens.messenger.groups.threads": "스레드",

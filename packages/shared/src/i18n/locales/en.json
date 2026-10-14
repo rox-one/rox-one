@@ -7971,6 +7971,7 @@
   "screens.messenger.connect": "Connect a messenger",
   "screens.messenger.empty": "No chats connected yet",
   "screens.messenger.groups.channels": "Channels",
+  "screens.messenger.groups.chats": "Chats",
   "screens.messenger.groups.direct": "Direct messages",
   "screens.messenger.groups.pinned": "Pinned",
   "screens.messenger.groups.threads": "Threads",

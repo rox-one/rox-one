@@ -7980,6 +7980,7 @@
   "screens.messenger.connect": "Conectar mensajería",
   "screens.messenger.empty": "Aún no hay chats conectados",
   "screens.messenger.groups.channels": "Canales",
+  "screens.messenger.groups.chats": "Chats",
   "screens.messenger.groups.direct": "Mensajes directos",
   "screens.messenger.groups.pinned": "Fijados",
   "screens.messenger.groups.threads": "Hilos",

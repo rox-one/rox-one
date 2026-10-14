@@ -7971,6 +7971,7 @@
   "screens.messenger.connect": "Üzenetküldő csatlakoztatása",
   "screens.messenger.empty": "Még nincs csatlakoztatott csevegés",
   "screens.messenger.groups.channels": "Csatornák",
+  "screens.messenger.groups.chats": "Csevegések",
   "screens.messenger.groups.direct": "Közvetlen üzenetek",
   "screens.messenger.groups.pinned": "Kitűzött",
   "screens.messenger.groups.threads": "Szálak",

@@ -7997,6 +7997,7 @@
   "screens.messenger.connect": "Połącz komunikator",
   "screens.messenger.empty": "Brak połączonych czatów",
   "screens.messenger.groups.channels": "Kanały",
+  "screens.messenger.groups.chats": "Czaty",
   "screens.messenger.groups.direct": "Wiadomości prywatne",
   "screens.messenger.groups.pinned": "Przypięte",
   "screens.messenger.groups.threads": "Wątki",

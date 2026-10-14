@@ -7971,6 +7971,7 @@
   "screens.messenger.connect": "连接即时通讯",
   "screens.messenger.empty": "尚未连接聊天",
   "screens.messenger.groups.channels": "频道",
+  "screens.messenger.groups.chats": "聊天",
   "screens.messenger.groups.direct": "私信",
   "screens.messenger.groups.pinned": "已置顶",
   "screens.messenger.groups.threads": "话题",

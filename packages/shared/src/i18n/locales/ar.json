@@ -8011,6 +8011,7 @@
   "screens.messenger.connect": "ربط تطبيق مراسلة",
   "screens.messenger.empty": "لا توجد محادثات مرتبطة بعد",
   "screens.messenger.groups.channels": "القنوات",
+  "screens.messenger.groups.chats": "الدردشات",
   "screens.messenger.groups.direct": "الرسائل المباشرة",
   "screens.messenger.groups.pinned": "المثبتة",
   "screens.messenger.groups.threads": "سلاسل المحادثات",

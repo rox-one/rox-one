@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtomValue } from 'jotai'
+import { selectAtom } from 'jotai/utils'
 import { useTranslation } from 'react-i18next'
 import { Hash, MessageCircle, MessagesSquare, Plug, Settings } from 'lucide-react'
 import { useScreenSidebar, type ScreenSidebarConfig, type SidebarGroup } from '@/components/shell/screen-sidebar'
@@ -8,7 +9,9 @@ import { useAppShellContext } from '@/context/AppShellContext'
 import { routes, useNavigation } from '@/contexts/NavigationContext'
 import { toScreenSidebarGroups } from '../screen-sidebar-adapter'
 import type { SidebarTarget } from '../sidebar-section'
-import { buildMessengerSidebarSections, type MessengerBindingInput } from './messenger-sidebar-sections'
+import { buildMessengerSidebarSections, projectMessengerSessions, sameMessengerSessions, type MessengerBindingInput } from './messenger-sidebar-sections'
+
+const messengerSessionsAtom = selectAtom(sessionMetaMapAtom, (map) => projectMessengerSessions(map.values()), sameMessengerSessions)
 
 const PLATFORMS = ['telegram', 'whatsapp', 'lark', 'discord', 'wechat'] as const
 const ICONS = Object.fromEntries([...PLATFORMS.map((p) => [`platform:${p}`, MessageCircle]), ['hash', Hash]])
@@ -43,12 +46,13 @@ export function useMessengerScreenSidebar(): void {
   const { t } = useTranslation()
   const { activeWorkspaceId } = useAppShellContext()
   const { navigate } = useNavigation()
-  const metaMap = useAtomValue(sessionMetaMapAtom)
+  const projected = useAtomValue(messengerSessionsAtom)
+  const sessionsById = useMemo(() => new Map(projected.map((s) => [s.id, s])), [projected])
   const [load, retry] = useMessagingBindings(activeWorkspaceId)
 
   const sections = useMemo(
-    () => (load.kind === 'ready' ? buildMessengerSidebarSections(load.bindings, metaMap) : []),
-    [load, metaMap],
+    () => (load.kind === 'ready' ? buildMessengerSidebarSections(load.bindings, sessionsById) : []),
+    [load, sessionsById],
   )
   const onTarget = useCallback((target: SidebarTarget) => {
     if (target.kind === 'session') navigate(routes.view.allSessions(target.sessionId))
@@ -57,8 +61,8 @@ export function useMessengerScreenSidebar(): void {
   const config = useMemo<ScreenSidebarConfig>(() => {
     const connect = { id: 'connect', label: t('screens.messenger.connect'), icon: Plug, onSelect: () => navigate(routes.view.settings('messaging')) }
     let groups: SidebarGroup[] = toScreenSidebarGroups(sections, { t, icons: ICONS, onTarget })
-    if (load.kind === 'loading') groups = [{ id: 'chats', title: t('screens.messenger.groups.channels'), items: [], state: { kind: 'loading' } }]
-    else if (load.kind === 'error') groups = [{ id: 'chats', title: t('screens.messenger.groups.channels'), items: [], state: { kind: 'error', label: t('screens.messenger.loadError'), onRetry: retry } }]
+    if (load.kind === 'loading') groups = [{ id: 'chats', title: t('screens.messenger.groups.chats'), items: [], state: { kind: 'loading' } }]
+    else if (load.kind === 'error') groups = [{ id: 'chats', title: t('screens.messenger.groups.chats'), items: [], state: { kind: 'error', label: t('screens.messenger.loadError'), onRetry: retry } }]
     else if (groups.length === 0) groups = [{ id: 'empty', items: [], state: { kind: 'empty', label: t('screens.messenger.empty'), action: connect } }]
     return {
       screenId: 'messenger',

@@ -7971,6 +7971,7 @@
   "screens.messenger.connect": "メッセンジャーを接続",
   "screens.messenger.empty": "接続されたチャットはまだありません",
   "screens.messenger.groups.channels": "チャンネル",
+  "screens.messenger.groups.chats": "チャット",
   "screens.messenger.groups.direct": "ダイレクトメッセージ",
   "screens.messenger.groups.pinned": "ピン留め",
   "screens.messenger.groups.threads": "スレッド",

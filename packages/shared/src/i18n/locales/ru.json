@@ -8015,6 +8015,7 @@
   "screens.messenger.connect": "Подключить мессенджер",
   "screens.messenger.empty": "Чаты ещё не подключены",
   "screens.messenger.groups.channels": "Каналы",
+  "screens.messenger.groups.chats": "Чаты",
   "screens.messenger.groups.direct": "Личные",
   "screens.messenger.groups.pinned": "Закреплённое",
   "screens.messenger.groups.threads": "Треды",
