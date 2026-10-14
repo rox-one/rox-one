@@ -145,9 +145,19 @@ window.ui001.render({});` : ''}
     entryPoints: [entry], outdir, entryNames: '[name].bundle', target: 'es2022',
     platform: browser ? 'browser' : 'node', format: 'esm', bundle: true, jsx: 'automatic',
     external: browser ? [] : ['react', 'react/jsx-runtime', 'jotai'],
+    // The fixture pulls real markdown/katex CSS through the panel's page graph.
+    // esbuild has no default loader for font binaries, and the fixture never
+    // needs them: resolve to empty modules instead of failing the bundle
+    // (60 "No loader is configured for .woff2/.woff/.ttf" errors).
+    loader: { '.woff2': 'empty', '.woff': 'empty', '.ttf': 'empty', '.eot': 'empty' },
     metafile: !!process.env.ROX_UI001_COMPONENT_MANIFEST,
     plugins: [...(browser ? [rendererNodeBoundaryPlugin()] : []), { name: 'UI-001 component boundaries', setup(build) {
       build.onResolve({ filter: /^rox-ui001-bindings$/ }, () => ({ path: 'bindings', namespace: 'ui001' }))
+      // Vite's `?url` imports (pdf.worker for MarkdownPdfBlock / PDFPreviewOverlay)
+      // are URL strings, not modules. Same treatment as the navigation fixture:
+      // resolve to an inert asset module so the bundle carries a string.
+      build.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'ui001-asset' }))
+      build.onLoad({ filter: /.*/, namespace: 'ui001-asset' }, () => ({ contents: 'export default "about:blank"', loader: 'js' }))
       build.onResolve({ filter: /.*/ }, args => {
         // Resolve the same public tooltip exports directly, avoiding unrelated KaTeX barrel assets.
         if (/\/components\/ui\/source-status-indicator\.tsx$/.test(args.importer)) {
