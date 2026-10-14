@@ -4,7 +4,8 @@ import { resolve } from 'node:path'
 import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { PRIMARY_NAV, resolvePrimaryNav, BASE_SURFACE_FLAG, WIKI_SURFACE_FLAG } from '../primary-nav'
 
-const ids = (flags: string[], modeFlags = {}) => resolvePrimaryNav({ shellFlags: new Set(flags), modeFlags })
+// Registry order with no pill on screen (WP6: pill-placed surfaces then fall back to the sidebar).
+const ids = (flags: string[], modeFlags = {}) => resolvePrimaryNav({ shellFlags: new Set(flags), modeFlags, pillNavIds: new Set() })
 const group = (flags: string[], g: 'primary' | 'more') => ids(flags).filter(e => e.group === g).map(e => e.id)
 
 describe('WP5 primary-nav registry (#1580)', () => {
@@ -14,10 +15,10 @@ describe('WP5 primary-nav registry (#1580)', () => {
     for (const hidden of ['messenger', 'calendar', 'goals', 'base', 'wiki', 'developers', 'playbooks']) expect(all).not.toContain(hidden)
   })
 
-  it('flags off: «Ещё» keeps every other destination', () => {
+  it('flags off: «Ещё» keeps every other destination (WP6: + Знания, Миссии)', () => {
     expect(group([], 'more')).toEqual([
       'memory', 'memoryRepo', 'learning', 'browser', 'automations', 'meetings', 'home', 'feed',
-      'pages', 'drive', 'clipboardHistory', 'sources', 'skills', 'connections', 'settings',
+      'pages', 'knowledge', 'missions', 'drive', 'clipboardHistory', 'sources', 'skills', 'connections', 'settings',
     ])
   })
 
