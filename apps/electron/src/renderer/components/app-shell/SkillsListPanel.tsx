@@ -4,7 +4,7 @@ import { useTourTarget, useTourSignals } from '@/features/product-tour/runtime/h
 import { connectionCapabilities } from '@/features/product-tour/adapters/connections'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
-import { Zap, PackageOpen, Check, ChevronDown, ChevronRight, X, Network, FolderX, KeyRound, TriangleAlert, RefreshCw, Archive, FolderOutput, MoreHorizontal } from 'lucide-react'
+import { Zap, PackageOpen, Check, ChevronDown, ChevronRight, X, Network, FolderX, KeyRound, TriangleAlert, RefreshCw, Archive, FolderOutput, MoreHorizontal, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { SkillAvatar } from '@/components/ui/skill-avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -23,6 +23,8 @@ import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { projectsAtom } from '@/atoms/projects'
 import type { BundledSkillPackStatus, LoadedSkill } from '../../../shared/types'
 import { toErrorMessage } from '@/lib/errors'
+import { useSkillsQuery } from '@/hooks/use-skills-query'
+import { VirtualList } from '@/components/ui/virtual-list'
 
 const RISK_FLAG_ICON: Record<SkillRiskFlag, typeof Network> = {
   'network': Network,
@@ -47,6 +49,7 @@ export interface SkillsListPanelProps {
   onSkillClick: (skill: LoadedSkill) => void
   selectedSkillSlug?: string | null
   workspaceId?: string
+  workingDirectory?: string
   workspaceRootPath?: string
   className?: string
 }
@@ -58,11 +61,20 @@ export function SkillsListPanel({
   onSkillClick,
   selectedSkillSlug,
   workspaceId,
+  workingDirectory,
   workspaceRootPath,
   className,
 }: SkillsListPanelProps) {
   const { t } = useTranslation()
   const { reset: resetCraftSelection } = skillSelection.useSelection()
+  const [search, setSearch] = React.useState('')
+  const queried = useSkillsQuery({
+    workspaceId,
+    workingDirectory,
+    query: search,
+  })
+  const listedSkills = queried.enabled ? queried.items : skills
+  const listSyncing = queried.enabled ? queried.loading || !!syncing : !!syncing
   const activeWorkspace = useActiveWorkspace()
   const canRevealLocally = !activeWorkspace?.remoteServer
   const { workspaces, activeWorkspaceId } = useAppShellContext()
@@ -71,22 +83,22 @@ export function SkillsListPanel({
   const tourScope = { workspaceId: workspaceId ?? activeWorkspaceId ?? undefined, panelId: focusedPanelId ?? undefined }
   const skillsTarget = useTourTarget('skills.list', tourScope)
   const tour = useTourSignals(tourScope)
-  React.useEffect(() => tour.capability('skills.available', connectionCapabilities({ skills })['skills.available']!), [tour, skills])
+  React.useEffect(() => tour.capability('skills.available', connectionCapabilities({ skills: listedSkills })['skills.available']!), [tour, listedSkills])
 
   // Runtime skills (~/.omp/agent/skills, {workspace}/.omp/skills) render as a
   // separate read-only group with an "Export as Rox skill" action.
-  const craftSkills = skills.filter((s) => s.source !== 'omp')
+  const craftSkills = listedSkills.filter((s) => s.source !== 'omp')
   const repeatedSkillNames = React.useMemo(() => {
     const seen = new Set<string>()
     const repeated = new Set<string>()
-    for (const skill of skills) {
+    for (const skill of listedSkills) {
       if (skill.source === 'omp') continue
       if (seen.has(skill.metadata.name)) repeated.add(skill.metadata.name)
       seen.add(skill.metadata.name)
     }
     return repeated
-  }, [skills])
-  const ompSkills = skills.filter((s) => s.source === 'omp')
+  }, [listedSkills])
+  const ompSkills = listedSkills.filter((s) => s.source === 'omp')
   const [exportingSlug, setExportingSlug] = React.useState<string | null>(null)
 
   // Pending skill candidates from the self-learning distillation queue.
@@ -274,7 +286,7 @@ export function SkillsListPanel({
   // While a load is pending/retrying (e.g. a slow bundled-skills sync that
   // outlived the client timeout) show a syncing placeholder instead of
   // claiming the workspace has no skills.
-  const emptyState = syncing ? (
+  const emptyState = listSyncing ? (
     <div
       className="flex flex-col items-center justify-center gap-2 p-6 text-xs text-muted-foreground"
       role="status"
@@ -294,7 +306,7 @@ export function SkillsListPanel({
         <EditPopover
           align="center"
           trigger={
-            <button className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors">
+            <button className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover hover:bg-surface-pressed transition-colors">
               {t('skillsList.addSkill')}
             </button>
           }
@@ -333,14 +345,14 @@ export function SkillsListPanel({
               type="button"
               disabled={pruneBusy}
               onClick={() => setPruneConfirmOpen(false)}
-              className="inline-flex items-center h-5 px-1.5 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 transition-colors disabled:opacity-50"
+              className="inline-flex items-center h-5 px-1.5 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-pressed transition-colors disabled:opacity-50"
             >
               {t('common.cancel')}
             </button>
           </>
         ) : (
           <HeaderIconButton
-            icon={<Archive className="h-4 w-4" />}
+            icon={<Archive className="icon-toolbar" />}
             tooltip={t('skills.pruneButton')}
             aria-label={t('skills.pruneButton')}
             onClick={() => setPruneConfirmOpen(true)}
@@ -350,7 +362,7 @@ export function SkillsListPanel({
     )}
     {/* A pending reload stays visible even while the previous list is still
         rendered (e.g. a slow bundled-skills sync that outlived the timeout). */}
-    {syncing && craftSkills.length > 0 && (
+    {listSyncing && craftSkills.length > 0 && (
       <div
         className="mx-2 mb-1 flex items-center gap-1.5 text-caption text-muted-foreground"
         role="status"
@@ -369,18 +381,43 @@ export function SkillsListPanel({
       className={className}
       containerProps={{ 'data-list-role': 'skills' }}
       emptyState={emptyState}
+      header={(
+        <div className="px-2 pb-1.5 space-y-1">
+          <label className="relative block">
+            <Search className="absolute left-2 top-2 icon-caption text-muted-foreground" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('skillsList.searchPlaceholder')}
+              aria-label={t('skillsList.searchPlaceholder')}
+              className="h-8 w-full rounded-md border border-border/60 bg-transparent pl-7 pr-2 text-xs"
+            />
+          </label>
+          {queried.enabled && queried.total > 0 && (
+            <div className="flex items-center justify-between gap-2 px-0.5 text-xs text-muted-foreground">
+              <span className="numeric">{listedSkills.length}/{queried.total}</span>
+              {queried.hasMore && (
+                <button type="button" className="hover:text-foreground" onClick={() => queried.loadMore()}>
+                  {t('common.more')}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       mapItem={(skill) => ({
         icon: <SkillAvatar skill={skill} size="sm" workspaceId={workspaceId} />,
         title: skill.metadata.name,
         badges: (
           <span className="flex items-center gap-1.5 min-w-0">
             {repeatedSkillNames.has(skill.metadata.name) && (
-              <span className="shrink-0 max-w-48 truncate rounded-full bg-foreground/5 px-1.5 py-0.5 font-mono text-xs text-muted-foreground" title={skill.slug}>
+              <span className="shrink-0 max-w-48 truncate rounded-full bg-surface-hover px-1.5 py-0.5 font-mono text-xs text-muted-foreground" title={skill.slug}>
                 @{skill.slug}
               </span>
             )}
             {skill.source === 'project' && (
-              <span className="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
+              <span className="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-surface-hover text-muted-foreground">
                 {t('skillsList.projectBadge')}
               </span>
             )}
@@ -403,7 +440,7 @@ export function SkillsListPanel({
                     count: used,
                     date: lastUsedAt ? new Date(lastUsedAt).toLocaleDateString() : '—',
                   })}
-                  className="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground numeric"
+                  className="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-surface-hover text-muted-foreground numeric"
                 >
                   {used}×
                 </span>
@@ -415,9 +452,9 @@ export function SkillsListPanel({
                   aria-label={t('skills.exportToProject')}
                   onMouseDown={(e) => e.stopPropagation()}
                   onClick={(e) => { e.stopPropagation(); void handleExportToProject(skill) }}
-                  className="inline-flex items-center justify-center size-5 rounded-[var(--radius-control)] text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors"
+                  className="inline-flex items-center justify-center size-5 rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors"
                 >
-                  <FolderOutput className="size-3" />
+                  <FolderOutput className="icon-status" />
                 </button>
               )}
             </>
@@ -456,7 +493,7 @@ export function SkillsListPanel({
 
     {/* Pending skill candidates awaiting approval */}
     {pendingSkills.length > 0 && (
-      <div className="mb-2 pb-1.5 border-b border-foreground/5" data-list-role="pending-skills">
+      <div className="mb-2 pb-1.5 border-b border-border-subtle" data-list-role="pending-skills">
         <div className="px-2 pb-1 flex items-center gap-1.5 text-xs font-medium uppercase caps-label text-muted-foreground/70">
           {t('pendingSkills.section')}
           <span className="inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-accent/15 text-accent text-xs font-semibold numeric">
@@ -467,14 +504,14 @@ export function SkillsListPanel({
           {pendingSkills.map((candidate) => {
             const expanded = expandedPendingSlug === candidate.slug
             return (
-              <li key={candidate.slug} style={SKILL_ROW_STYLE} className="mx-0 px-2 py-1.5 rounded-[var(--radius-control)] hover:bg-foreground/[0.03]">
+              <li key={candidate.slug} style={SKILL_ROW_STYLE} className="mx-0 px-2 py-1.5 rounded-[var(--radius-control)] hover:bg-surface-hover">
                 <button
                   type="button"
                   className="w-full text-left"
                   onClick={() => setExpandedPendingSlug(expanded ? null : candidate.slug)}
                 >
                   <span className="flex items-center gap-1.5 min-w-0">
-                    {expanded ? <ChevronDown className="size-3 shrink-0 text-muted-foreground" /> : <ChevronRight className="size-3 shrink-0 text-muted-foreground" />}
+                    {expanded ? <ChevronDown className="icon-status shrink-0 text-muted-foreground" /> : <ChevronRight className="icon-status shrink-0 text-muted-foreground" />}
                     <span className="truncate text-sm font-medium">{candidate.slug}</span>
                   </span>
                   <span className="block truncate text-xs text-muted-foreground pl-4">
@@ -490,7 +527,7 @@ export function SkillsListPanel({
                   <div className="mt-1.5 pl-4 space-y-1.5">
                     {isUpdate && (
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <RefreshCw className="size-3 shrink-0" />
+                        <RefreshCw className="icon-status shrink-0" />
                         {t('pendingSkills.updatesNote', { slug: candidate.updates, version: candidate.nextVersion ?? 2 })}
                       </div>
                     )}
@@ -517,7 +554,7 @@ export function SkillsListPanel({
                     {/* S2: script-validation block reason */}
                     {violations.length > 0 && (
                       <div className="flex items-start gap-1.5 rounded-[var(--radius-card)] bg-destructive/10 px-2 py-1.5 text-xs text-destructive-foreground">
-                        <TriangleAlert className="size-3 mt-0.5 shrink-0 text-destructive" />
+                        <TriangleAlert className="icon-status mt-0.5 shrink-0 text-destructive" />
                         <span>
                           <span className="font-medium">{t('pendingSkills.violationsBlock')}</span>{' '}
                           {violationReasons.join(', ')}
@@ -532,7 +569,7 @@ export function SkillsListPanel({
                             {t('pendingSkills.diffCurrent')} → {t('pendingSkills.diffProposed')}
                           </span>
                         </div>
-                        <pre className="max-h-56 overflow-auto rounded-[var(--radius-card)] bg-foreground/[0.03] p-2 text-xs text-foreground/80">
+                        <pre className="max-h-56 overflow-auto rounded-[var(--radius-card)] bg-surface-hover p-2 text-xs text-text-secondary">
                           {lineDiff(diff.base, diff.candidate).map((line, idx) => (
                             <span
                               key={idx}
@@ -551,7 +588,7 @@ export function SkillsListPanel({
                         </pre>
                       </div>
                     ) : (
-                      <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-[var(--radius-card)] bg-foreground/[0.03] p-2 text-xs text-foreground/80">
+                      <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-[var(--radius-card)] bg-surface-hover p-2 text-xs text-text-secondary">
                         {candidate.content}
                       </pre>
                     )}
@@ -565,7 +602,7 @@ export function SkillsListPanel({
                         onClick={() => void handlePendingAction(candidate.slug, 'approve')}
                         className="inline-flex items-center gap-1 h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-accent/15 text-accent hover:bg-accent/25 transition-colors disabled:opacity-50 disabled:hover:bg-accent/15 disabled:cursor-not-allowed"
                       >
-                        <Check className="size-3" />
+                        <Check className="icon-status" />
                         {t('pendingSkills.approve')}
                       </button>
                       {violations.length > 0 && (
@@ -580,9 +617,9 @@ export function SkillsListPanel({
                       <button
                         type="button"
                         onClick={() => void handlePendingAction(candidate.slug, 'dismiss', candidate.description)}
-                        className="inline-flex items-center gap-1 h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors"
+                        className="inline-flex items-center gap-1 h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-pressed hover:text-foreground transition-colors"
                       >
-                        <X className="size-3" />
+                        <X className="icon-status" />
                         {t('pendingSkills.dismiss')}
                       </button>
                     </div>
@@ -598,7 +635,7 @@ export function SkillsListPanel({
 
     {/* Bundled skill packs — enable/disable presets shipped with the app */}
     {bundledPacks !== null && bundledPacks.length > 0 && (
-      <div className="mb-2 pb-1.5 border-b border-foreground/5" data-list-role="bundled-skill-packs">
+      <div className="mb-2 pb-1.5 border-b border-border-subtle" data-list-role="bundled-skill-packs">
         <div className="px-2 pb-1 text-xs font-medium uppercase caps-label text-muted-foreground/70">
           {t('settings.context.bundledTitle')}
         </div>
@@ -607,7 +644,7 @@ export function SkillsListPanel({
         </p>
         <ul>
           {bundledPacks.map((pack) => (
-            <li key={pack.slug} style={SKILL_ROW_STYLE} className="flex items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)] hover:bg-foreground/[0.03]">
+            <li key={pack.slug} style={SKILL_ROW_STYLE} className="flex items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)] hover:bg-surface-hover">
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm">{pack.slug}</span>
                 <span className="block truncate text-xs text-muted-foreground">
@@ -622,10 +659,11 @@ export function SkillsListPanel({
                 type="button"
                 role="switch"
                 aria-checked={!pack.disabled}
+                aria-label={t(pack.disabled ? 'capabilityCatalog.enablePack' : 'capabilityCatalog.disablePack', { name: pack.slug })}
                 disabled={packsBusy}
                 onClick={() => void toggleBundledPack(pack.slug, pack.disabled)}
                 className={`shrink-0 relative h-5 w-9 rounded-full transition-colors disabled:opacity-50 ${
-                  pack.disabled ? 'bg-foreground/10' : 'bg-primary'
+                  pack.disabled ? 'bg-surface-pressed' : 'bg-primary'
                 }`}
               >
                 <span
@@ -646,12 +684,16 @@ export function SkillsListPanel({
         <div className="px-2 pb-1 text-xs font-medium uppercase caps-label text-muted-foreground/70">
           {t('skillsList.roxCliSection')}
         </div>
-        <ul>
-          {ompSkills.map((skill) => (
-            <li
+        <VirtualList
+          items={ompSkills}
+          getKey={(skill) => skill.slug}
+          estimateRowHeight={56}
+          revealKey={selectedSkillSlug}
+          renderItem={(skill) => (
+            <div
               key={skill.slug}
               title={skill.shadowedByCraft ? t('skillsList.roxCliShadowed') : skill.metadata.description}
-              className={`group flex min-w-0 items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)] ${!skill.shadowedByCraft && selectedSkillSlug === skill.slug ? 'bg-foreground/5' : 'hover:bg-foreground/[0.03]'} ${skill.shadowedByCraft ? 'opacity-50' : ''}`}
+              className={`group flex min-w-0 items-center gap-2 px-2 py-1.5 rounded-[var(--radius-control)] ${!skill.shadowedByCraft && selectedSkillSlug === skill.slug ? 'bg-surface-selected' : 'hover:bg-surface-hover'} ${skill.shadowedByCraft ? 'opacity-50' : ''}`}
               style={SKILL_ROW_STYLE}
             >
               <button
@@ -665,7 +707,7 @@ export function SkillsListPanel({
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5 min-w-0">
                     <span className="truncate text-sm">{skill.metadata.name}</span>
-                    <span className="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
+                    <span className="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-surface-hover text-muted-foreground">
                       {t('skillsList.roxCliBadge')}
                     </span>
                   </span>
@@ -682,21 +724,21 @@ export function SkillsListPanel({
                     aria-label={t('common.more')}
                     title={t('common.more')}
                     disabled={exportingSlug !== null}
-                    className="shrink-0 inline-flex size-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground opacity-0 transition-opacity hover:bg-foreground/10 hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 disabled:opacity-50"
+                    className="shrink-0 inline-flex size-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground opacity-0 transition-opacity hover:bg-surface-hover hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 disabled:opacity-50"
                   >
-                    <MoreHorizontal className="size-3.5" />
+                    <MoreHorizontal className="icon-caption" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onSelect={() => void handleExportOmpSkill(skill)}>
-                    <PackageOpen className="size-3.5" />
+                    <PackageOpen className="icon-caption" />
                     {t('skillsList.roxCliExport')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </li>
-          ))}
-        </ul>
+            </div>
+          )}
+        />
       </div>
     )}
 

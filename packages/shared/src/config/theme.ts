@@ -785,7 +785,7 @@ export function shouldSetThemeOverride(
  * (`nordfox-opaque`, `haze`, unset) are migrated once — see `storage.ts`,
  * migration marker `appearance-defaults-v1`.
  */
-export const ROX_THEME_ID = 'super-engineering';
+export const ROX_THEME_ID = 'rox-ink';
 
 /**
  * App-level material default for fresh installs and the appearance migration:

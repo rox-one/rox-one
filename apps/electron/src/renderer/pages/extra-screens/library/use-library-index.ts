@@ -14,6 +14,7 @@ import {
   sourceEntries,
   type LibraryEntry,
 } from './library-model'
+import { readSkillsPage, SKILLS_UI_PAGE_SIZE } from '@/lib/skills-query'
 
 export interface LibraryIndex {
   entries: LibraryEntry[]
@@ -30,7 +31,7 @@ export function useLibraryIndex(workspaceId: string, enabled: boolean): LibraryI
     const load = async () => {
       try {
         const [skills, sources, models, packs] = await Promise.all([
-          window.electronAPI.getSkills(workspaceId).catch((): LoadedSkill[] => []),
+          readSkillsPage(window.electronAPI, { workspaceId, limit: SKILLS_UI_PAGE_SIZE }).then((page) => page.items).catch((): LoadedSkill[] => []),
           window.electronAPI.getSources(workspaceId).catch((): LoadedSource[] => []),
           window.electronAPI.listLlmConnectionsWithStatus().catch((): LlmConnectionWithStatus[] => []),
           window.electronAPI.listBundledSkillPacks().catch((): BundledSkillPackStatus[] => []),

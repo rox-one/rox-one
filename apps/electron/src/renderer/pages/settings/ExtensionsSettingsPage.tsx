@@ -7,7 +7,7 @@
  * (kernel-only; Craft never downloads the plugin zip).
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Blocks,
@@ -27,6 +27,7 @@ import {
 
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { VirtualList } from '@/components/ui/virtual-list'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Spinner } from '@rox/ui'
 import { navigate, routes } from '@/lib/navigate'
@@ -90,6 +91,39 @@ const SECTIONS: SectionId[] = [
 function isHighRisk(perm: ExtensionPermission): boolean {
   if (perm.startsWith('secrets.use:')) return true
   return (HIGH_RISK_PERMISSIONS as readonly string[]).includes(perm)
+}
+
+/** Mount at most a viewport of cards (S6-01/S6-04); small lists stay plain. */
+const EXTENSION_CARD_VIRTUALIZE_AFTER = 24
+const EXTENSION_CARD_HEIGHT = 148
+
+function WindowedCards<T>({
+  items,
+  getKey,
+  renderItem,
+}: {
+  items: readonly T[]
+  getKey: (item: T) => string
+  renderItem: (item: T) => ReactNode
+}) {
+  if (items.length <= EXTENSION_CARD_VIRTUALIZE_AFTER) {
+    return (
+      <>
+        {items.map((item) => (
+          <Fragment key={getKey(item)}>{renderItem(item)}</Fragment>
+        ))}
+      </>
+    )
+  }
+  return (
+    <VirtualList
+      items={items}
+      getKey={getKey}
+      estimateRowHeight={EXTENSION_CARD_HEIGHT}
+      overscan={3}
+      renderItem={renderItem}
+    />
+  )
 }
 
 /** Parse compat level from extension tags (`compat-lN` or `level:N`). */
@@ -229,6 +263,11 @@ function ExtensionCard({
               type="button"
               role="switch"
               aria-checked={enabled}
+              aria-label={`${name}: ${
+                enabled
+                  ? t('extensions.action.disable')
+                  : t('extensions.action.enable')
+              }`}
               disabled={busy}
               onClick={() => onToggle(!enabled)}
               className={`inline-flex items-center gap-1.5 text-xs border rounded-md px-2 py-1 disabled:opacity-50 ${
@@ -969,11 +1008,11 @@ export default function ExtensionsSettingsPage() {
                       </p>
                     ) : groupId === 'marketplace' ? (
                       <>
-                        {marketplace.map(renderCatalogCard)}
-                        {extraInstalled.map(renderRecordCard)}
+                        <WindowedCards items={marketplace} getKey={(entry) => entry.id} renderItem={renderCatalogCard} />
+                        <WindowedCards items={extraInstalled} getKey={(record) => record.id} renderItem={renderRecordCard} />
                       </>
                     ) : (
-                      records.map(renderRecordCard)
+                      <WindowedCards items={records} getKey={(record) => record.id} renderItem={renderRecordCard} />
                     )}
                   </section>
                 )
@@ -995,7 +1034,7 @@ export default function ExtensionsSettingsPage() {
                   {t('extensions.catalog.empty')}
                 </p>
               ) : (
-                catalogEntries.map(renderCatalogCard)
+                <WindowedCards items={catalogEntries} getKey={(entry) => entry.id} renderItem={renderCatalogCard} />
               )}
             </div>
           ) : null}
@@ -1014,7 +1053,7 @@ export default function ExtensionsSettingsPage() {
                   {t('extensions.installed.empty')}
                 </p>
               ) : (
-                filteredInstalled.map(renderRecordCard)
+                <WindowedCards items={filteredInstalled} getKey={(record) => record.id} renderItem={renderRecordCard} />
               )}
             </div>
           ) : null}
@@ -1026,7 +1065,7 @@ export default function ExtensionsSettingsPage() {
                   {t('extensions.updates.empty')}
                 </p>
               ) : (
-                updates.map(renderRecordCard)
+                <WindowedCards items={updates} getKey={(record) => record.id} renderItem={renderRecordCard} />
               )}
             </div>
           ) : null}
@@ -1067,7 +1106,7 @@ export default function ExtensionsSettingsPage() {
                   {t('extensions.disabled.empty')}
                 </p>
               ) : (
-                disabled.map(renderRecordCard)
+                <WindowedCards items={disabled} getKey={(record) => record.id} renderItem={renderRecordCard} />
               )}
             </div>
           ) : null}

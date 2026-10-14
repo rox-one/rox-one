@@ -6,6 +6,26 @@ import { appShellEffect, deferred, settle } from './rox-readiness-ui-001.effect-
 import * as realStorage from '../../../lib/local-storage'
 import { loadShellLayout as realLoadShellLayout } from '../../../lib/shell-layout-preferences'
 
+function skillPageBindings(
+  api: {
+    getSkills: (...args: unknown[]) => Promise<unknown>
+    onSkillsChanged: (callback: (workspace: string, data: string[]) => void) => () => void
+  },
+  extra: Record<string, unknown> = {},
+) {
+  return {
+    window: { electronAPI: api },
+    readSkillsPage: async (_ignored: unknown, args: { workspaceId: string; workingDirectory?: string }) => {
+      const items = await api.getSkills(args.workspaceId, args.workingDirectory)
+      return { items, total: Array.isArray(items) ? items.length : 0, revision: 0 }
+    },
+    SKILLS_UI_PAGE_SIZE: 80,
+    ...extra,
+  }
+}
+
+const SKILLS_LOAD_NEEDLE = 'readSkillsPage(window.electronAPI'
+
 describe('ROX UI-001 actual AppShell workspace callbacks', () => {
   for (const kind of ['Sources', 'Skills'] as const) {
     it(`ignores late ${kind.toLowerCase()} responses after workspace/directory change`, async () => {
@@ -17,14 +37,20 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
         [`get${kind}`]: (...args: unknown[]) => { requests.push(args); return args[0] === 'old' ? old.promise : current.promise },
         [`on${kind}Changed`]: () => () => {},
       }
-      const bindings = (workspace: string) => ({
-        window: { electronAPI: api }, activeWorkspaceId: workspace, activeSessionWorkingDirectory: `/work/${workspace}`,
-        [`set${kind}`]: (next: string[]) => { data = next }, setSkillsSyncing: () => {},
-        clearSourceIconCaches: () => {}, console,
-      })
-      const cleanup = appShellEffect(`electronAPI.get${kind}(`, bindings('old'))
+      const bindings = (workspace: string) => kind === 'Skills'
+        ? skillPageBindings(api as never, {
+          activeWorkspaceId: workspace, activeSessionWorkingDirectory: `/work/${workspace}`,
+          setSkills: (next: string[]) => { data = next }, setSkillsSyncing: () => {}, console,
+        })
+        : {
+          window: { electronAPI: api }, activeWorkspaceId: workspace, activeSessionWorkingDirectory: `/work/${workspace}`,
+          setSources: (next: string[]) => { data = next }, setSkillsSyncing: () => {},
+          clearSourceIconCaches: () => {}, console,
+        }
+      const needle = kind === 'Skills' ? SKILLS_LOAD_NEEDLE : 'electronAPI.getSources('
+      const cleanup = appShellEffect(needle, bindings('old'))
       cleanup?.()
-      const cleanupCurrent = appShellEffect(`electronAPI.get${kind}(`, bindings('current'))
+      const cleanupCurrent = appShellEffect(needle, bindings('current'))
       current.resolve(['current-entity']); await settle()
       expect(data).toEqual(['current-entity'])
       old.resolve(['old-entity']); await settle()
@@ -44,12 +70,18 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
         [`get${kind}`]: () => ++reads === 1 ? initial.promise : refreshed.promise,
         [`on${kind}Changed`]: (callback: NonNullable<typeof event>) => { event = callback; return () => { unsubscribed = true } },
       }
-      const bindings = {
-        window: { electronAPI: api }, activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/current',
-        [`set${kind}`]: (next: string[]) => { data = next }, setSkillsSyncing: () => {},
-        clearSourceIconCaches: () => {}, console,
-      }
-      const offLoad = appShellEffect(`electronAPI.get${kind}(`, bindings)
+      const bindings = kind === 'Skills'
+        ? skillPageBindings(api as never, {
+          activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/current',
+          setSkills: (next: string[]) => { data = next }, setSkillsSyncing: () => {}, console,
+        })
+        : {
+          window: { electronAPI: api }, activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/current',
+          setSources: (next: string[]) => { data = next }, setSkillsSyncing: () => {},
+          clearSourceIconCaches: () => {}, console,
+        }
+      const needle = kind === 'Skills' ? SKILLS_LOAD_NEEDLE : 'electronAPI.getSources('
+      const offLoad = appShellEffect(needle, bindings)
       const offEvent = event ? undefined : appShellEffect(`electronAPI.on${kind}Changed(`, bindings)
       event!('other-workspace', ['wrong-entity'])
       expect(data).toEqual([])
@@ -71,14 +103,14 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
     let event!: (workspace: string, data: string[]) => void
     let data: string[] = []
     const requests: unknown[][] = []
-    const cleanup = appShellEffect('electronAPI.getSkills(', {
-      window: { electronAPI: {
-        getSkills: (...args: unknown[]) => { requests.push(args); return ++reads === 1 ? initial.promise : refreshed.promise },
-        onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
-      } },
+    const api = {
+      getSkills: (...args: unknown[]) => { requests.push(args); return ++reads === 1 ? initial.promise : refreshed.promise },
+      onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+    }
+    const cleanup = appShellEffect(SKILLS_LOAD_NEEDLE, skillPageBindings(api, {
       activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
       setSkills: (next: string[]) => { data = next }, setSkillsSyncing: () => {}, console,
-    })
+    }))
     initial.resolve(['workspace-skill', 'project-skill', 'omp-skill']); await settle()
     event('current', ['workspace-skill'])
     expect(data).toEqual(['workspace-skill', 'project-skill', 'omp-skill'])
@@ -93,14 +125,13 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
     let reads = 0
     let event!: (workspace: string, data: string[]) => void
     let data: string[] = []
-    const cleanup = appShellEffect('electronAPI.getSkills(', {
-      window: { electronAPI: {
-        getSkills: () => responses[reads++]!.promise,
-        onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
-      } },
+    const cleanup = appShellEffect(SKILLS_LOAD_NEEDLE, skillPageBindings({
+      getSkills: () => responses[reads++]!.promise,
+      onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+    }, {
       activeWorkspaceId: 'current', activeSessionWorkingDirectory: undefined,
       setSkills: (next: string[]) => { data = next }, setSkillsSyncing: () => {}, console,
-    })
+    }))
     responses[0]!.resolve(['initial']); await settle()
     event('foreign', ['wrong']); expect(reads).toBe(1)
     event('current', ['partial-older']); event('current', ['partial-newer'])
@@ -117,15 +148,14 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
     let reads = 0, errors = 0
     let event!: (workspace: string, data: string[]) => void
     let data: string[] = []
-    const cleanup = appShellEffect('electronAPI.getSkills(', {
-      window: { electronAPI: {
-        getSkills: () => responses[reads++]!.promise,
-        onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
-      } },
+    const cleanup = appShellEffect(SKILLS_LOAD_NEEDLE, skillPageBindings({
+      getSkills: () => responses[reads++]!.promise,
+      onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+    }, {
       activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
       setSkills: (next: string[]) => { data = next }, setSkillsSyncing: () => {},
       console: { error: () => { errors++ } },
-    })
+    }))
     responses[0]!.resolve(['workspace', 'project', 'omp']); await settle()
     event('current', [])
     responses[1]!.reject(new Error('transport offline')); await settle()
@@ -146,15 +176,14 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
     let event!: (workspace: string, data: string[]) => void
     let data: string[] = []
     let syncing = false
-    const cleanup = appShellEffect('electronAPI.getSkills(', {
-      window: { electronAPI: {
-        getSkills: () => ++reads === 1 ? initial.promise : refresh.promise,
-        onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
-      } },
+    const cleanup = appShellEffect(SKILLS_LOAD_NEEDLE, skillPageBindings({
+      getSkills: () => ++reads === 1 ? initial.promise : refresh.promise,
+      onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+    }, {
       activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
       setSkills: (next: string[]) => { data = next }, setSkillsSyncing: (next: boolean) => { syncing = next },
       console: { error: () => { errors++ } },
-    })
+    }))
     expect(syncing).toBe(true)
     initial.resolve(['workspace', 'project', 'omp']); await settle()
     expect(data).toEqual(['workspace', 'project', 'omp'])
@@ -272,7 +301,7 @@ function popoverEmptyStateBranches() {
 describe('ROX UI-001 skills pending-sync consumer contract', () => {
   it('shows a syncing marker instead of the no-skills empty state while a load is pending', () => {
     const { condition, pending } = popoverEmptyStateBranches()
-    expect(condition).toBe('loading')
+    expect(condition).toBe('loading || querying')
     expect(pending).toContain('data-list-role="skills-syncing"')
     expect(pending).toContain('role="status"')
     expect(pending).toContain("t('common.loading')")

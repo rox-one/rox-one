@@ -3,7 +3,7 @@
   "description": "Default configuration values for Rox",
   "defaults": {
     "notificationsEnabled": true,
-    "colorTheme": "super-engineering",
+    "colorTheme": "rox-ink",
     "autoCapitalisation": true,
     "sendMessageKey": "enter",
     "spellCheck": false,
@@ -16,9 +16,10 @@
   },
   "workspaceDefaults": {
     "thinkingLevel": "medium",
-    "permissionMode": "allow-all",
+    "permissionMode": "ask",
     "cyclablePermissionModes": [
       "safe",
+      "ask",
       "allow-all"
     ],
     "localMcpServers": {

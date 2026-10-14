@@ -29,6 +29,8 @@ export interface EntityPanelProps<T> {
   onItemClick: (item: T) => void
   selectedId?: string | null
   emptyState?: React.ReactNode
+  header?: React.ReactNode
+  footer?: React.ReactNode
   className?: string
   /** Extra data/aria attributes merged onto the inner list container.
    *  Use to set `data-list-role` so compact-mode CSS can target the right list. */
@@ -43,6 +45,8 @@ export function EntityPanel<T>({
   onItemClick,
   selectedId,
   emptyState,
+  header,
+  footer,
   className,
   containerProps,
 }: EntityPanelProps<T>) {
@@ -87,6 +91,8 @@ export function EntityPanel<T>({
       containerProps={mergedContainerProps}
       className={className}
       emptyState={emptyState}
+      header={header}
+      footer={footer}
       ensureVisibleKeys={ensureVisibleKeys}
       revealKey={activeId ?? selectedId ?? null}
       keyboardNavigation

@@ -338,14 +338,14 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
     const isConfirming = confirmDeleteRule === key
     const tokenEstimate = formatTokenEstimate(lesson.rule)
     return (
-      <li key={key} className="rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-foreground/[0.03]">
+      <li key={key} className="rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-surface-hover">
         {isEditing ? (
           <div className="space-y-1.5">
             <textarea
               value={editDraft}
               onChange={(e) => setEditDraft(e.target.value)}
               rows={3}
-              className="w-full resize-y rounded-[var(--radius-card)] bg-foreground/[0.03] p-2 text-sm outline-none focus:bg-foreground/[0.05]"
+              className="w-full resize-y rounded-[var(--radius-card)] bg-surface-hover p-2 text-sm outline-none focus:bg-foreground/[0.05]"
             />
             <div className="flex items-center gap-1.5">
               <button
@@ -353,13 +353,13 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                 onClick={() => void handleSaveEdit(lesson)}
                 className="inline-flex items-center gap-1 h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-accent/15 text-accent hover:bg-accent/25 transition-colors"
               >
-                <Check className="size-3" />
+                <Check className="icon-status" />
                 {t('memory.save')}
               </button>
               <button
                 type="button"
                 onClick={() => setEditingRule(null)}
-                className="inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 transition-colors"
+                className="inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-pressed transition-colors"
               >
                 {t('memory.cancel')}
               </button>
@@ -389,7 +389,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
         )}
         {!isEditing && (
           <span className="mt-1 flex items-center gap-1.5 flex-wrap">
-            <span className="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
+            <span className="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-surface-hover text-muted-foreground">
               {BUILTIN_CATEGORIES.includes(lesson.category)
                 ? t(`memory.category.${lesson.category}`)
                 : lesson.category}
@@ -412,7 +412,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                 <button
                   type="button"
                   onClick={() => setConfirmDeleteRule(null)}
-                  className="inline-flex items-center h-5 px-1.5 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 transition-colors"
+                  className="inline-flex items-center h-5 px-1.5 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-pressed transition-colors"
                 >
                   {t('memory.cancel')}
                 </button>
@@ -423,9 +423,9 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                   type="button"
                   aria-label={t('memory.editLesson')}
                   onClick={() => { setEditingRule(key); setEditDraft(lesson.rule) }}
-                  className="inline-flex items-center justify-center size-5 rounded-[var(--radius-control)] text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors"
+                  className="inline-flex items-center justify-center size-5 rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors"
                 >
-                  <Pencil className="size-3" />
+                  <Pencil className="icon-status" />
                 </button>
                 <button
                   type="button"
@@ -433,7 +433,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                   onClick={() => setConfirmDeleteRule(key)}
                   className="inline-flex items-center justify-center size-5 rounded-[var(--radius-control)] text-muted-foreground hover:bg-destructive/15 hover:text-destructive transition-colors"
                 >
-                  <Trash2 className="size-3" />
+                  <Trash2 className="icon-status" />
                 </button>
                 {lesson.source.sessionId && (
                   <button
@@ -441,9 +441,9 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                     aria-label={t('memory.viewSource')}
                     title={t('memory.viewSource')}
                     onClick={() => handleViewSource(lesson)}
-                    className="inline-flex items-center justify-center size-5 rounded-[var(--radius-control)] text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors"
+                    className="inline-flex items-center justify-center size-5 rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors"
                   >
-                    <Link2 className="size-3" />
+                    <Link2 className="icon-status" />
                   </button>
                 )}
               </>
@@ -532,7 +532,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
       onClick={() => toggleSection(key)}
       className={`${sectionTitleClass()} flex w-full items-center gap-1.5 text-left hover:text-foreground`}
     >
-      {collapsedSections[key] ? <ChevronRight className="size-3" /> : <ChevronDown className="size-3" />}
+      {collapsedSections[key] ? <ChevronRight className="icon-status" /> : <ChevronDown className="icon-status" />}
       <span className="flex-1">{title}</span>
       {extra}
     </button>
@@ -552,7 +552,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
             onClick={() => setFormOpen(true)}
             className="shrink-0 inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-[var(--radius-control)] bg-accent/15 text-accent hover:bg-accent/25 transition-colors"
           >
-            <Plus className="size-3.5" />
+            <Plus className="icon-caption" />
             {t('memory.remember')}
           </button>
         )}
@@ -581,7 +581,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
           className={`h-6 rounded-full px-2 text-xs font-medium transition-colors ${
             categoryTab === 'all'
               ? 'bg-foreground/10 text-foreground'
-              : 'text-muted-foreground hover:bg-foreground/5'
+              : 'text-muted-foreground hover:bg-surface-hover'
           }`}
         >
           {t('memory.tabAll', { count: sortedLessons.length })}
@@ -599,7 +599,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
               className={`h-6 rounded-full px-2 text-xs font-medium transition-colors ${
                 categoryTab === cat
                   ? 'bg-foreground/10 text-foreground'
-                  : 'text-muted-foreground hover:bg-foreground/5'
+                  : 'text-muted-foreground hover:bg-surface-hover'
               }`}
             >
               {label} ({count})
@@ -639,7 +639,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
 
       {/* Remember form */}
       {lessonsUi && formOpen && (
-        <div className="mx-1 space-y-1.5 rounded-[var(--radius-card)] bg-foreground/[0.03] p-2">
+        <div className="mx-1 space-y-1.5 rounded-[var(--radius-card)] bg-surface-hover p-2">
           <textarea
             value={formRule}
             onChange={(e) => setFormRule(e.target.value)}
@@ -695,13 +695,13 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
               onClick={() => void handleAdd()}
               className="inline-flex items-center gap-1 h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-accent/15 text-accent hover:bg-accent/25 transition-colors disabled:opacity-50"
             >
-              <Check className="size-3" />
+              <Check className="icon-status" />
               {t('memory.addLessonSubmit')}
             </button>
             <button
               type="button"
               onClick={() => { setFormOpen(false); setAddConflicts(null); setCustomCategory('') }}
-              className="inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 transition-colors"
+              className="inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-pressed transition-colors"
             >
               {t('memory.cancel')}
             </button>
@@ -726,7 +726,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                 <button
                   type="button"
                   onClick={() => handleResolveAddConflicts(false)}
-                  className="inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 transition-colors"
+                  className="inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-pressed transition-colors"
                 >
                   {t('memory.keepBoth')}
                 </button>
@@ -741,7 +741,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
       {lessonsUi && renderScopeGroup(t('memory.workspaceLessons'), filteredWorkspace)}
 
       {/* Context — collapsible */}
-      <div className="border-t border-foreground/5 pt-1.5">
+      <div className="border-t border-border-subtle pt-1.5">
         {sectionHeader('context', t('memory.contextSection'))}
         {!collapsedSections.context && (
           <div className="mx-1 space-y-2">
@@ -754,12 +754,12 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                 value={preferences}
                 onChange={(e) => setPreferences(e.target.value)}
                 rows={3}
-                className="w-full resize-y rounded-[var(--radius-card)] bg-foreground/[0.03] p-2 text-xs outline-none focus:bg-foreground/[0.05]"
+                className="w-full resize-y rounded-[var(--radius-card)] bg-surface-hover p-2 text-xs outline-none focus:bg-foreground/[0.05]"
               />
               <button
                 type="button"
                 onClick={() => void handleSaveContext('global')}
-                className="mt-0.5 inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors"
+                className="mt-0.5 inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-pressed hover:text-foreground transition-colors"
               >
                 {t('memory.saveContext')}
               </button>
@@ -774,12 +774,12 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                   value={context}
                   onChange={(e) => setContext(e.target.value)}
                   rows={3}
-                  className="w-full resize-y rounded-[var(--radius-card)] bg-foreground/[0.03] p-2 text-xs outline-none focus:bg-foreground/[0.05]"
+                  className="w-full resize-y rounded-[var(--radius-card)] bg-surface-hover p-2 text-xs outline-none focus:bg-foreground/[0.05]"
                 />
                 <button
                   type="button"
                   onClick={() => void handleSaveContext('workspace')}
-                  className="mt-0.5 inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors"
+                  className="mt-0.5 inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-pressed hover:text-foreground transition-colors"
                 >
                   {t('memory.saveContext')}
                 </button>
@@ -791,7 +791,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
 
       {/* Project */}
       {workspaceId && activeProjectId && projectMemory && (
-        <div className="border-t border-foreground/5 pt-1.5">
+        <div className="border-t border-border-subtle pt-1.5">
           {sectionHeader('project', t('memory.projectSection'))}
           {!collapsedSections.project && (
             <>
@@ -802,12 +802,12 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                   title={t('memory.projectOpen')}
                   className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
                 >
-                  <Link2 className="size-3" />
+                  <Link2 className="icon-status" />
                   {projectMemory.name}
                 </button>
               </div>
               {projectMemory.memoryContent ? (
-                <pre className="mx-1 max-h-72 overflow-auto whitespace-pre-wrap rounded-[var(--radius-card)] bg-foreground/[0.03] p-2 text-xs text-foreground/80">
+                <pre className="mx-1 max-h-72 overflow-auto whitespace-pre-wrap rounded-[var(--radius-card)] bg-surface-hover p-2 text-xs text-foreground/80">
                   {projectMemory.memoryContent}
                 </pre>
               ) : (
@@ -820,7 +820,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
 
       {/* History — collapsible */}
       {workspaceId && (
-        <div className="border-t border-foreground/5 pt-1.5">
+        <div className="border-t border-border-subtle pt-1.5">
           {sectionHeader('history', t('memory.historySection'))}
           {!collapsedSections.history && (
             <>
@@ -834,7 +834,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                         type="button"
                         onClick={() => openDate(date)}
                         className={`w-full rounded-[var(--radius-card)] px-2 py-1 text-left text-sm transition-colors ${
-                          historyDate === date ? 'bg-foreground/[0.06] text-foreground' : 'text-muted-foreground hover:bg-foreground/[0.03] hover:text-foreground'
+                          historyDate === date ? 'bg-surface-selected text-foreground' : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground'
                         }`}
                       >
                         {date}
@@ -844,7 +844,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                 </ul>
               )}
               {historyDate && (
-                <pre className="mx-1 mt-1.5 max-h-72 overflow-auto whitespace-pre-wrap rounded-[var(--radius-card)] bg-foreground/[0.03] p-2 text-xs text-foreground/80">
+                <pre className="mx-1 mt-1.5 max-h-72 overflow-auto whitespace-pre-wrap rounded-[var(--radius-card)] bg-surface-hover p-2 text-xs text-foreground/80">
                   {historyContent || t('memory.historyEmptyEntry')}
                 </pre>
               )}
@@ -862,7 +862,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
 
       {/* Insights / stats at bottom */}
       {!insightsQuiet && insights && (
-        <div className="mx-1 mt-2 space-y-1 rounded-[var(--radius-card)] border border-foreground/10 bg-foreground/[0.03] p-2" data-list-role="memory-insights">
+        <div className="mx-1 mt-2 space-y-1 rounded-[var(--radius-card)] border border-border-subtle bg-surface-hover p-2" data-list-role="memory-insights">
           <div className="px-0.5 text-xs text-muted-foreground">
             {t('memory.insightsLine', {
               lessonsAdded7d: insights.lessonsAdded7d,
@@ -876,7 +876,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
               {insightCategories.map(([category, count]) => (
                 <span
                   key={category}
-                  className="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground"
+                  className="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-surface-hover text-muted-foreground"
                 >
                   {t('memory.insightsChip', {
                     label: BUILTIN_CATEGORIES.includes(category as LessonCategory)

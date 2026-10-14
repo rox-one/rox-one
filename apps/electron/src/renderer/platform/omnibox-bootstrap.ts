@@ -20,7 +20,7 @@ import {
   type ContextKeyService,
   type ResourceProviderRegistry,
 } from '@rox/core/platform'
-import { getDefaultStore } from 'jotai'
+import { getShellStore } from './shell-store'
 import i18n from 'i18next'
 import { actions, type ActionId } from '@/actions/definitions'
 import {
@@ -37,7 +37,7 @@ import {
   searchKnowledge,
   searchHitRoute,
   resolveKnowledgeApi,
-} from '@/knowledge/KnowledgeHome'
+} from '@/knowledge/knowledge-home-model'
 import {
   createAutomationsProvider,
   createKnowledgeProvider,
@@ -48,6 +48,7 @@ import {
 } from './omnibox-providers'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
 import { registerConationOmniboxCommands } from './omnibox-conation'
+import { readSkillsPage } from '@/lib/skills-query'
 import { registerClipboardHistoryOmniboxCommands } from './omnibox-clipboard-history'
 // W1-07 (#1504): entity provider (inert until a flagged source registers).
 import { createEntityOmniboxProvider } from './omnibox-entities'
@@ -448,14 +449,15 @@ function registerResourceProviders(
   resources: ResourceProviderRegistry,
   t?: LabelResolver,
 ): void {
-  const store = getDefaultStore()
+  const store = getShellStore()
 
   // W1-07 (#1504): unified entity search; returns [] while no flagged source is on.
   track(
     resources.register(
       createEntityOmniboxProvider({
-        // W1-07 gates read the Provider store; baseline providers below keep
-        // getDefaultStore() exactly as before.
+        // Same Provider store as sessions/skills/sources/automations (#1553).
+        // getShellStore() is connected by <ShellStoreBridge />; until then it
+        // falls back to the default store (tests / playground).
         getFlags: () => currentShellFlags(),
         label: t ? t('surfaces.omnibox.providerLabel', 'Entities') : 'Entities',
       }),
@@ -490,6 +492,12 @@ function registerResourceProviders(
         // Pending-sync probe: a still-syncing catalog is not authoritative, so
         // the omnibox must not present an empty skills list as "no skills".
         () => store.get(skillsSyncingAtom),
+        async (query, limit) => {
+          const workspaceId = store.get(windowWorkspaceIdAtom)
+          if (!workspaceId) return store.get(skillsAtom)
+          const page = await readSkillsPage(window.electronAPI, { workspaceId, query, limit })
+          return page.items
+        },
       ),
     ),
   )

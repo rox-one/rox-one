@@ -116,14 +116,14 @@ const SelectButton = React.forwardRef<
       type="button"
       className={cn(
         'inline-flex items-center gap-1.5 rounded-lg border border-border bg-background font-medium text-foreground',
-        'transition-colors hover:bg-foreground/[0.03] data-[state=open]:bg-foreground/[0.03]',
+        'transition-colors hover:bg-surface-hover data-[state=open]:bg-foreground/[0.03]',
         size === 'sm' ? 'h-7 px-2 text-sm' : 'h-8 px-2.5 text-base',
         className,
       )}
       {...rest}
     >
       {children}
-      <ChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-foreground/40" strokeWidth={2} />
+      <ChevronDown className="ml-auto icon-caption shrink-0 text-foreground/40" strokeWidth={2} />
     </button>
   )
 })
@@ -156,7 +156,7 @@ function ModelSelect({
             {g.models.map((m) => (
               <DropdownMenuItem key={m.id} className="text-xs" onSelect={() => onChange(m.id)}>
                 <span className="truncate" title={m.name}>{m.name}</span>
-                {m.id === value && <Check className="ml-auto h-3.5 w-3.5 shrink-0" strokeWidth={2} />}
+                {m.id === value && <Check className="ml-auto icon-caption shrink-0" strokeWidth={2} />}
               </DropdownMenuItem>
             ))}
           </React.Fragment>
@@ -245,7 +245,7 @@ function SourcesField({
         onClick={() => setOpen((prev) => !prev)}
       >
         {selected.length === 0 ? (
-          <DatabaseZap className="h-4 w-4 shrink-0 text-foreground/40" strokeWidth={2} />
+          <DatabaseZap className="icon-toolbar shrink-0 text-foreground/40" strokeWidth={2} />
         ) : (
           <AvatarStack avatars={selected.map((s) => <SourceAvatar key={s.config.slug} source={s} size="xs" />)} />
         )}
@@ -304,7 +304,7 @@ function SkillsField({
         onClick={() => setOpen((prev) => !prev)}
       >
         {selected.length === 0 ? (
-          <Zap className="h-4 w-4 shrink-0 text-foreground/40" strokeWidth={2} />
+          <Zap className="icon-toolbar shrink-0 text-foreground/40" strokeWidth={2} />
         ) : (
           <AvatarStack avatars={selected.map((s) => <SkillAvatar key={s.slug} skill={s} size="xs" workspaceId={workspaceId} />)} />
         )}
@@ -348,7 +348,7 @@ function FolderField({
       align="start"
       renderTrigger={({ hasFolder, folderName }) => (
         <SelectButton style={{ width: 168 }} title={t('tasks.workingDirectoryHint')}>
-          <Folder className="h-3.5 w-3.5 shrink-0 text-foreground/40" strokeWidth={2} />
+          <Folder className="icon-caption shrink-0 text-foreground/40" strokeWidth={2} />
           <span className={cn('min-w-0 flex-1 truncate text-left', !hasFolder && 'text-foreground/50')} title={folderName ?? t('chat.workInFolder')}>
             {folderName ?? t('chat.workInFolder')}
           </span>
@@ -423,16 +423,16 @@ function SubtaskCard({
             {subtask.dependsOn.map((depUid) => (
               <span
                 key={depUid}
-                className="inline-flex h-7 max-w-[168px] items-center gap-1 rounded-lg border border-border bg-foreground/[0.03] pl-2 pr-1 text-sm font-medium text-foreground/70"
+                className="inline-flex h-7 max-w-[168px] items-center gap-1 rounded-lg border border-border bg-surface-hover pl-2 pr-1 text-sm font-medium text-foreground/70"
               >
                 <span className="truncate" title={t('tasks.dependsOnLabel', { title: depTitle(depUid) })}>{t('tasks.dependsOnLabel', { title: depTitle(depUid) })}</span>
                 <button
                   type="button"
                   onClick={() => removeDep(depUid)}
                   aria-label={t('tasks.removeDependency')}
-                  className="grid h-4 w-4 shrink-0 place-items-center rounded text-foreground/40 hover:bg-foreground/10 hover:text-red-500"
+                  className="grid h-4 w-4 shrink-0 place-items-center rounded text-foreground/40 hover:bg-surface-hover hover:text-red-500"
                 >
-                  <X className="h-3 w-3" strokeWidth={2.5} />
+                  <X className="icon-status" strokeWidth={2.5} />
                 </button>
               </span>
             ))}
@@ -461,9 +461,9 @@ function SubtaskCard({
           type="button"
           onClick={onRemove}
           aria-label={t('tasks.removeSubtask')}
-          className="grid h-6 w-6 shrink-0 place-items-center rounded text-foreground/40 opacity-0 transition-all hover:bg-foreground/10 hover:text-red-500 group-hover:opacity-100"
+          className="grid h-6 w-6 shrink-0 place-items-center rounded text-foreground/40 opacity-0 transition-all hover:bg-surface-hover hover:text-red-500 group-hover:opacity-100"
         >
-          <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+          <Trash2 className="icon-caption" strokeWidth={2} />
         </button>
       </div>
     </div>
@@ -916,14 +916,14 @@ export function TaskEditor({
       {/* Header */}
       <div className="flex items-center gap-2.5 rounded-[var(--radius-control)] border border-border bg-card px-3 py-2.5 shadow-minimal">
         <Btn variant="ghost" className="px-2" onClick={onClose}>
-          <ChevronLeft className="h-4 w-4" strokeWidth={2} /> {t('kanban.board')}
+          <ChevronLeft className="icon-toolbar" strokeWidth={2} /> {t('kanban.board')}
         </Btn>
         <span className="text-foreground/25">/</span>
         <span className="text-sm font-semibold">{isEdit ? t('tasks.editTask') : t('kanban.newTask')}</span>
 
         {/* Definition / Results tabs — edit mode only (results need a backing task to read). */}
         {isEdit && (
-          <div className="ml-3 inline-flex rounded-[var(--radius-card)] bg-foreground/[0.05] p-0.5">
+          <div className="ml-3 inline-flex rounded-[var(--radius-card)] bg-surface-hover p-0.5">
             {(['definition', 'results'] as Tab[]).map((tb) => (
               <button
                 key={tb}
@@ -942,7 +942,7 @@ export function TaskEditor({
         <div className="ml-auto flex items-center gap-2">
           {isEdit && onOpenSession && (
             <Btn variant="secondary" onClick={onOpenSession} disabled={busy}>
-              <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} /> {t('tasks.openSession')}
+              <ExternalLink className="icon-caption" strokeWidth={2} /> {t('tasks.openSession')}
             </Btn>
           )}
           {tab === 'definition' && (
@@ -954,14 +954,14 @@ export function TaskEditor({
                 {isEdit ? t('common.save') : t('common.create')}
               </Btn>
               <Btn variant="primary" onClick={() => submit(true)} disabled={busy}>
-                {busy ? <Spinner /> : <Sparkles className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                {busy ? <Spinner /> : <Sparkles className="icon-caption" strokeWidth={2.5} />}
                 {busy ? t('tasks.starting') : isEdit ? t('tasks.saveAndRun') : t('tasks.createAndRun')}
               </Btn>
             </>
           )}
           {tab === 'results' && (
             <Btn variant="secondary" onClick={loadResults} disabled={resultsLoading}>
-              {resultsLoading ? <Spinner /> : <RefreshCw className="h-3.5 w-3.5" strokeWidth={2} />} {t('common.refresh')}
+              {resultsLoading ? <Spinner /> : <RefreshCw className="icon-caption" strokeWidth={2} />} {t('common.refresh')}
             </Btn>
           )}
         </div>
@@ -981,7 +981,7 @@ export function TaskEditor({
         <div className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-minimal">
           <div className="text-lg font-bold">{t('tasks.definition')}</div>
 
-          <div className="inline-flex w-fit rounded-[var(--radius-card)] bg-foreground/[0.05] p-0.5">
+          <div className="inline-flex w-fit rounded-[var(--radius-card)] bg-surface-hover p-0.5">
             {(['manual', 'generate'] as Mode[]).map((m) => (
               <button
                 key={m}
@@ -991,7 +991,7 @@ export function TaskEditor({
                   mode === m ? 'bg-card text-foreground shadow-minimal' : 'text-foreground/55 hover:text-foreground/80',
                 )}
               >
-                {m === 'generate' && <Sparkles className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                {m === 'generate' && <Sparkles className="icon-caption" strokeWidth={2.5} />}
                 {m === 'generate' ? t('tasks.modeGenerate') : t('tasks.modeManual')}
               </button>
             ))}
@@ -1062,13 +1062,13 @@ export function TaskEditor({
                   {!boundProjectId && (
                     <DropdownMenuItem className="text-xs" onSelect={() => setProjectId('')}>
                       {t('tasks.noProject')}
-                      {!projectId && <Check className="ml-auto h-3.5 w-3.5" strokeWidth={2} />}
+                      {!projectId && <Check className="ml-auto icon-caption" strokeWidth={2} />}
                     </DropdownMenuItem>
                   )}
                   {projects.map((p) => (
                     <DropdownMenuItem key={p.config.id} className="text-xs" onSelect={() => setProjectId(p.config.id)}>
                       <span className="truncate" title={p.config.name}>{p.config.name}</span>
-                      {projectId === p.config.id && <Check className="ml-auto h-3.5 w-3.5 shrink-0" strokeWidth={2} />}
+                      {projectId === p.config.id && <Check className="ml-auto icon-caption shrink-0" strokeWidth={2} />}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -1099,7 +1099,7 @@ export function TaskEditor({
                   {(['allow-all', 'ask', 'safe'] as const).map((m) => (
                     <DropdownMenuItem key={m} className="text-xs" onSelect={() => setPermissionMode(m)}>
                       <span className="truncate" title={t(`mode.${m}`)}>{t(`mode.${m}`)}</span>
-                      {permissionMode === m && <Check className="ml-auto h-3.5 w-3.5 shrink-0" strokeWidth={2} />}
+                      {permissionMode === m && <Check className="ml-auto icon-caption shrink-0" strokeWidth={2} />}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -1117,7 +1117,7 @@ export function TaskEditor({
               </FieldRow>
             )}
 
-            {workspaceSkills.length > 0 && (
+            {(workspaceSkills.length > 0 || workspaceSkillsSyncing || (typeof window !== 'undefined' && typeof window.electronAPI?.querySkills === 'function')) && (
               <FieldRow label={t('tasks.skills')}>
                 <SkillsField
                   skills={workspaceSkills}
@@ -1156,11 +1156,11 @@ export function TaskEditor({
             <>
               <div className="flex shrink-0 items-center gap-2 px-4 pt-4">
                 <span className="text-lg font-bold">{t('kanban.subtasks')}</span>
-                <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-foreground/[0.06] px-1.5 text-xs font-bold numeric text-foreground/55">
+                <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-surface-hover px-1.5 text-xs font-bold numeric text-foreground/55">
                   {subtasks.length}
                 </span>
                 <Btn variant="secondary" className="ml-auto h-7 px-2.5 text-sm" onClick={addSubtask}>
-                  <Plus className="h-3.5 w-3.5" strokeWidth={2.5} /> {t('kanban.addSubtask')}
+                  <Plus className="icon-caption" strokeWidth={2.5} /> {t('kanban.addSubtask')}
                 </Btn>
               </div>
 
@@ -1183,7 +1183,7 @@ export function TaskEditor({
                     onClick={addSubtask}
                     className="flex w-full items-center justify-center gap-1.5 rounded-[var(--radius-control)] border border-dashed border-border py-2.5 text-base font-semibold text-foreground/40 transition-colors hover:border-foreground/30 hover:text-foreground/60"
                   >
-                    <Plus className="h-3.5 w-3.5" strokeWidth={2.5} /> {t('tasks.addFirstSubtask')}
+                    <Plus className="icon-caption" strokeWidth={2.5} /> {t('tasks.addFirstSubtask')}
                   </button>
                 )}
               </div>
@@ -1202,13 +1202,13 @@ export function TaskEditor({
               {[0, 1, 2].map((i) => (
                 <div key={i} className="animate-pulse rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] p-3">
                   <div className="flex items-start gap-2">
-                    <div className="mt-0.5 h-6 w-6 shrink-0 rounded-full bg-foreground/[0.06]" />
+                    <div className="mt-0.5 h-6 w-6 shrink-0 rounded-full bg-surface-hover" />
                     <div className="min-w-0 flex-1 space-y-2">
-                      <div className="h-3.5 w-1/2 rounded bg-foreground/[0.06]" />
-                      <div className="h-8 w-full rounded bg-foreground/[0.04]" />
+                      <div className="h-3.5 w-1/2 rounded bg-surface-hover" />
+                      <div className="h-8 w-full rounded bg-surface-hover" />
                       <div className="flex gap-1.5">
-                        <div className="h-7 w-[128px] rounded-lg bg-foreground/[0.05]" />
-                        <div className="h-7 w-[144px] rounded-lg bg-foreground/[0.05]" />
+                        <div className="h-7 w-[128px] rounded-lg bg-surface-hover" />
+                        <div className="h-7 w-[144px] rounded-lg bg-surface-hover" />
                       </div>
                     </div>
                   </div>
@@ -1223,7 +1223,7 @@ export function TaskEditor({
               <div className="text-lg font-bold">{t('tasks.generatePlan')}</div>
               <p className="max-w-[360px] text-base text-foreground/55">{t('tasks.generateBody')}</p>
               <Btn variant="primary" onClick={generatePlan} disabled={busy}>
-                <Sparkles className="h-3.5 w-3.5" strokeWidth={2.5} /> {t('tasks.generatePlan')}
+                <Sparkles className="icon-caption" strokeWidth={2.5} /> {t('tasks.generatePlan')}
               </Btn>
               <span className="text-xs text-foreground/40">{t('tasks.generateHint')}</span>
             </div>
@@ -1305,15 +1305,15 @@ function ResultsPanel({
               ? 'border-emerald-500/30 bg-emerald-500/[0.06]'
               : verdict.result === 'fail'
                 ? 'border-red-500/30 bg-red-500/[0.06]'
-                : 'border-border bg-foreground/[0.03]',
+                : 'border-border bg-surface-hover',
           )}
         >
           {verdict.result === 'pass' ? (
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" strokeWidth={2.5} />
+            <CheckCircle2 className="mt-0.5 icon-toolbar shrink-0 text-emerald-500" strokeWidth={2.5} />
           ) : verdict.result === 'fail' ? (
-            <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" strokeWidth={2.5} />
+            <XCircle className="mt-0.5 icon-toolbar shrink-0 text-red-500" strokeWidth={2.5} />
           ) : (
-            <CircleSlash className="mt-0.5 h-4 w-4 shrink-0 text-foreground/40" strokeWidth={2.5} />
+            <CircleSlash className="mt-0.5 icon-toolbar shrink-0 text-foreground/40" strokeWidth={2.5} />
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -1321,7 +1321,7 @@ function ResultsPanel({
                 {verdict.result === 'pass' ? t('tasks.verdictPass') : verdict.result === 'fail' ? t('tasks.verdictFail') : t('tasks.verdictUnparsed')}
               </span>
               {repair && (
-                <span className="ml-auto shrink-0 rounded-full bg-foreground/[0.06] px-2 py-0.5 text-xs font-bold numeric text-foreground/55">
+                <span className="ml-auto shrink-0 rounded-full bg-surface-hover px-2 py-0.5 text-xs font-bold numeric text-foreground/55">
                   {t('tasks.repairAttempt', { used: repair.used, max: repair.max })}
                 </span>
               )}
@@ -1341,11 +1341,11 @@ function ResultsPanel({
             {verdicts.map((v, i) => (
               <div key={i} className="flex items-start gap-2 text-sm">
                 {v.result === 'pass' ? (
-                  <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" strokeWidth={2.5} />
+                  <CheckCircle2 className="mt-0.5 icon-caption shrink-0 text-emerald-500" strokeWidth={2.5} />
                 ) : v.result === 'fail' ? (
-                  <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500" strokeWidth={2.5} />
+                  <XCircle className="mt-0.5 icon-caption shrink-0 text-red-500" strokeWidth={2.5} />
                 ) : (
-                  <CircleSlash className="mt-0.5 h-3.5 w-3.5 shrink-0 text-foreground/40" strokeWidth={2.5} />
+                  <CircleSlash className="mt-0.5 icon-caption shrink-0 text-foreground/40" strokeWidth={2.5} />
                 )}
                 <span className="min-w-0 flex-1 text-foreground/60">
                   {v.reason || (v.result === 'pass' ? t('tasks.verdictPass') : v.result === 'fail' ? t('tasks.verdictFail') : t('tasks.verdictUnparsed'))}
@@ -1371,7 +1371,7 @@ function ResultsPanel({
                 onClick={() => onOpenChildSession(node.sessionId!)}
                 className="inline-flex shrink-0 items-center gap-1 rounded text-sm font-semibold text-indigo-500 hover:underline dark:text-indigo-300"
               >
-                <ExternalLink className="h-3 w-3" strokeWidth={2.5} /> {t('tasks.openSession')}
+                <ExternalLink className="icon-status" strokeWidth={2.5} /> {t('tasks.openSession')}
               </button>
             )}
           </div>

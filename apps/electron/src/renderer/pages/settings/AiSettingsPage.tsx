@@ -170,7 +170,7 @@ function CredentialHealthBanner({ issues, onReauthenticate }: CredentialHealthBa
   return (
     <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 mb-6">
       <div className="flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+        <AlertTriangle className="icon-rail text-amber-500 flex-shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
           <h4 className="text-sm font-medium text-amber-700 dark:text-amber-400">
             {t("settings.ai.credentialIssue")}
@@ -375,7 +375,7 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="inline-flex items-center" aria-label={t("settings.ai.duplicateAccount")}>
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                    <AlertTriangle className="icon-caption text-amber-500" />
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>{t("settings.ai.duplicateAccount")}</TooltipContent>
@@ -404,39 +404,39 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
       <DropdownMenu modal={false} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
           <button
-            className="p-1.5 rounded-md hover:bg-foreground/[0.05] data-[state=open]:bg-foreground/[0.05] transition-colors"
+            className="p-1.5 rounded-md hover:bg-surface-hover data-[state=open]:bg-foreground/[0.05] transition-colors"
             data-state={menuOpen ? 'open' : 'closed'}
           >
-            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+            <MoreHorizontal className="icon-toolbar text-muted-foreground" />
           </button>
         </DropdownMenuTrigger>
         <StyledDropdownMenuContent align="end">
           <StyledDropdownMenuItem onClick={() => runAfterMenuClose(onRenameClick)}>
-            <Pencil className="h-3.5 w-3.5" />
+            <Pencil className="icon-caption" />
             <span>{t("common.rename")}</span>
           </StyledDropdownMenuItem>
           {!connection.isDefault && (
             <StyledDropdownMenuItem onClick={onSetDefault}>
-              <Star className="h-3.5 w-3.5" />
+              <Star className="icon-caption" />
               <span>{t("settings.ai.setAsDefault")}</span>
             </StyledDropdownMenuItem>
           )}
           {connection.authType === 'oauth' ? (
             <>
               <StyledDropdownMenuItem onClick={() => runAfterMenuClose(onReauthenticate)}>
-                <RefreshCcw className="h-3.5 w-3.5" />
+                <RefreshCcw className="icon-caption" />
                 <span>{t("settings.ai.reAuthenticate")}</span>
               </StyledDropdownMenuItem>
               {onAddAnother && (
                 <StyledDropdownMenuItem onClick={() => runAfterMenuClose(onAddAnother)}>
-                  <Plus className="h-3.5 w-3.5" />
+                  <Plus className="icon-caption" />
                   <span>{t("settings.ai.addAnotherSubscription")}</span>
                 </StyledDropdownMenuItem>
               )}
             </>
           ) : (
             <StyledDropdownMenuItem onClick={() => runAfterMenuClose(onEdit)}>
-              <Settings2 className="h-3.5 w-3.5" />
+              <Settings2 className="icon-caption" />
               <span>{t("common.edit")}</span>
             </StyledDropdownMenuItem>
           )}
@@ -444,7 +444,7 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
             onClick={onValidate}
             disabled={validationState === 'validating'}
           >
-            <CheckCircle2 className="h-3.5 w-3.5" />
+            <CheckCircle2 className="icon-caption" />
             <span>{t("settings.ai.validateConnection")}</span>
           </StyledDropdownMenuItem>
           {(() => {
@@ -452,19 +452,19 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
             return (
               <DropdownMenuSub>
                 <StyledDropdownMenuSubTrigger>
-                  <MessageSquareMore className="h-3.5 w-3.5" />
+                  <MessageSquareMore className="icon-caption" />
                   <span>{t("settings.ai.midStream.title")}</span>
                 </StyledDropdownMenuSubTrigger>
                 <StyledDropdownMenuSubContent>
                   <StyledDropdownMenuItem onClick={() => onSetMidStreamBehavior('steer')}>
-                    <Zap className="h-3.5 w-3.5" />
+                    <Zap className="icon-caption" />
                     <span className="flex-1">{t("settings.ai.midStream.steer")}</span>
-                    {currentBehavior === 'steer' && <Check className="h-3.5 w-3.5" />}
+                    {currentBehavior === 'steer' && <Check className="icon-caption" />}
                   </StyledDropdownMenuItem>
                   <StyledDropdownMenuItem onClick={() => onSetMidStreamBehavior('queue')}>
-                    <Clock className="h-3.5 w-3.5" />
+                    <Clock className="icon-caption" />
                     <span className="flex-1">{t("settings.ai.midStream.queue")}</span>
-                    {currentBehavior === 'queue' && <Check className="h-3.5 w-3.5" />}
+                    {currentBehavior === 'queue' && <Check className="icon-caption" />}
                   </StyledDropdownMenuItem>
                 </StyledDropdownMenuSubContent>
               </DropdownMenuSub>
@@ -476,7 +476,7 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
             variant="destructive"
             disabled={isLastConnection}
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="icon-caption" />
             <span>{t("common.delete")}</span>
           </StyledDropdownMenuItem>
         </StyledDropdownMenuContent>
@@ -610,12 +610,12 @@ function WorkspaceOverrideCard({ workspace, llmConnections, onSettingsChange }: 
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between py-3 px-4 hover:bg-foreground/[0.02] transition-colors"
+        className="w-full flex items-center justify-between py-3 px-4 hover:bg-surface-hover transition-colors"
       >
         <div className="flex items-center gap-3">
           <div
             className={cn(
-              'w-6 h-6 rounded-full overflow-hidden bg-foreground/5 flex items-center justify-center',
+              'w-6 h-6 rounded-full overflow-hidden bg-surface-hover flex items-center justify-center',
               'ring-1 ring-border/50'
             )}
           >
@@ -635,9 +635,9 @@ function WorkspaceOverrideCard({ workspace, llmConnections, onSettingsChange }: 
           </div>
         </div>
         {isExpanded ? (
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          <ChevronDown className="icon-toolbar text-muted-foreground" />
         ) : (
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <ChevronRight className="icon-toolbar text-muted-foreground" />
         )}
       </button>
 
@@ -1294,7 +1294,7 @@ export default function AiSettingsPage() {
                 <div className="flex flex-wrap gap-2 pt-0">
                   <button
                     onClick={() => openApiSetup()}
-                    className="inline-flex items-center h-8 px-3 text-sm rounded-lg bg-background shadow-minimal hover:bg-foreground/[0.02] transition-colors"
+                    className="inline-flex items-center h-8 px-3 text-sm rounded-lg bg-background shadow-minimal hover:bg-surface-hover transition-colors"
                   >
                     {t("settings.ai.addConnection")}
                   </button>
@@ -1346,7 +1346,7 @@ export default function AiSettingsPage() {
                               className="text-foreground/60 hover:text-foreground transition-colors"
                               aria-label={t("settings.ai.rtk.gainRefresh")}
                             >
-                              <RefreshCcw className="size-3" />
+                              <RefreshCcw className="icon-status" />
                             </button>
                           </div>
                           <div className="mt-2 h-1.5 rounded-full bg-foreground/10 overflow-hidden">
@@ -1366,7 +1366,7 @@ export default function AiSettingsPage() {
                       <Button
                         size="sm"
                         onClick={handleGetRtk}
-                        className="bg-background shadow-minimal text-foreground hover:bg-foreground/5 rounded-lg"
+                        className="bg-background shadow-minimal text-foreground hover:bg-surface-hover rounded-lg"
                       >
                         {t("settings.ai.rtk.getRtk")}
                       </Button>
@@ -1374,7 +1374,7 @@ export default function AiSettingsPage() {
                         size="sm"
                         onClick={handleRecheckRtk}
                         disabled={rtkRechecking || rtkStatus === null}
-                        className="bg-background shadow-minimal text-foreground hover:bg-foreground/5 rounded-lg"
+                        className="bg-background shadow-minimal text-foreground hover:bg-surface-hover rounded-lg"
                       >
                         {rtkRechecking ? t("common.checking") : t("settings.ai.rtk.recheck")}
                       </Button>
@@ -1419,7 +1419,7 @@ export default function AiSettingsPage() {
                     className="p-1.5 rounded-[var(--radius-control)] transition-all bg-background shadow-minimal text-muted-foreground/50 hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     title={t("common.closeEsc")}
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X className="icon-caption" />
                   </button>
                 </div>
               </FullscreenOverlayBase>

@@ -139,6 +139,7 @@ export const fork = (..._args: unknown[]) => obj()
 export const format = fn
 export const fstatSync = binaryOrEmpty
 export const fsyncSync = binaryOrEmpty
+export const ftruncateSync = binaryOrEmpty
 export const freemem = fn
 export const generateKeyPairSync = binaryOrEmpty
 export const get = (..._args: unknown[]) => obj()
@@ -164,6 +165,19 @@ export const open = fn
 export const openSync = binaryOrEmpty
 export const parse = fn
 export const pathToFileURL = fn
+// Callback-style PBKDF2 (the sync form below already exists). Secure-storage
+// imports both; the renderer must derive keys through the host API, so this
+// resolves inertly instead of hanging the module graph.
+export const pbkdf2 = (
+  _password: unknown,
+  _salt: unknown,
+  _iterations: unknown,
+  _keyLength: unknown,
+  _digest: unknown,
+  callback?: (error: Error | null, derivedKey: unknown) => void,
+) => {
+  callback?.(null, BrowserBuffer.alloc(0))
+}
 export const pbkdf2Sync = binaryOrEmpty
 export const pid = fn as never
 export const pipeline = fn

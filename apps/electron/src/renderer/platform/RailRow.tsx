@@ -1,7 +1,7 @@
 /**
  * Shared ActivityRail row (main destinations, «Ещё» screens, collapse toggle).
  * Expanded: full-width 28px row, 16px icon + label, radius 6, gap 8 (4px grid).
- * Collapsed: 28×28 icon button with a right-side tooltip carrying the label.
+ * Collapsed: 28×28 icon button (16px icon) with a right-side tooltip carrying the label.
  * Active = --state-selected-strong fill + a static 2px accent marker in both
  * states; focus comes from the global :focus-visible system (no local ring).
  */
@@ -21,6 +21,11 @@ export interface RailRowProps {
   /** Dimmed default text (secondary rail groups, e.g. the mode list). */
   muted?: boolean
   testId?: string
+  /** Disclosure rows: expanded state + the controlled group id. */
+  expanded?: boolean
+  controls?: string
+  /** Not actionable right now (aria-disabled, click ignored) while keeping the normal look. */
+  locked?: boolean
 }
 
 /**
@@ -28,14 +33,16 @@ export interface RailRowProps {
  * Collapsed: 28×28 icon button with a right-side tooltip carrying the label.
  * Active = selected-strong fill + a static accent marker (never motion alone).
  */
-export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disabled, onClick, muted, testId }: RailRowProps) {
+export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disabled, onClick, muted, testId, expanded, controls, locked }: RailRowProps) {
   const button = (
     <button
       type="button"
       aria-label={label}
       aria-current={active ? 'page' : undefined}
-      aria-disabled={disabled || undefined}
-      onClick={disabled ? undefined : onClick}
+      aria-disabled={disabled || locked || undefined}
+      aria-expanded={expanded}
+      aria-controls={expanded ? controls : undefined}
+      onClick={disabled || locked ? undefined : onClick}
       data-testid={testId}
       data-rail-row=""
       className={cn(
@@ -56,7 +63,7 @@ export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disable
               : 'text-[var(--chrome-label)] hover:bg-[var(--state-hover)] hover:text-[var(--text-primary)]',
       )}
     >
-      <Icon className={collapsed ? 'icon-rail' : 'icon-toolbar'} />
+      <Icon className="icon-toolbar" />
       {!collapsed && <span className="min-w-0 flex-1 truncate label-tracking" title={label}>{label}</span>}
     </button>
   )

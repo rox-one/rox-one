@@ -63,7 +63,7 @@
     },
     "@typescript-eslint/no-unused-vars": {
       "severity": "warn",
-      "total": 206
+      "total": 52
     },
     "@typescript-eslint/no-wrapper-object-types": {
       "severity": "warn",
@@ -111,7 +111,7 @@
     },
     "no-control-regex": {
       "severity": "warn",
-      "total": 18
+      "total": 14
     },
     "no-debugger": {
       "severity": "warn",
@@ -267,9 +267,6 @@
     }
   },
   "files": {
-    "packages/server-core/src/authority/native-authority.ts": {
-      "no-control-regex": 4
-    },
     "packages/server-core/src/authority/native-journal.ts": {
       "no-control-regex": 2
     },
@@ -279,34 +276,9 @@
     "packages/server-core/src/collaboration/bro-invite-service.ts": {
       "@typescript-eslint/no-unused-vars": 1
     },
-    "packages/server-core/src/contacts/dossier-import.ts": {
-      "@typescript-eslint/no-unused-vars": 3
-    },
-    "packages/server-core/src/docs/block-tree-service.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
-    "packages/server-core/src/docs/descriptor-resolver.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
     "packages/server-core/src/entities/extract.ts": {
-      "@typescript-eslint/no-unused-vars": 1,
       "no-useless-escape": 1,
       "prefer-const": 1
-    },
-    "packages/server-core/src/execution/coordinator.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
-    "packages/server-core/src/execution/terminal/pty.ts": {
-      "@typescript-eslint/no-unused-vars": 2
-    },
-    "packages/server-core/src/execution/terminal/transport.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
-    "packages/server-core/src/feed/feed-service.ts": {
-      "@typescript-eslint/no-unused-vars": 5
-    },
-    "packages/server-core/src/handlers/rpc/automations.ts": {
-      "@typescript-eslint/no-unused-vars": 2
     },
     "packages/server-core/src/handlers/rpc/browser-data-auto-import.ts": {
       "no-empty": 2
@@ -314,25 +286,10 @@
     "packages/server-core/src/handlers/rpc/browser-pane.ts": {
       "@typescript-eslint/no-explicit-any": 1
     },
-    "packages/server-core/src/handlers/rpc/bundled-skills.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
     "packages/server-core/src/handlers/rpc/cloud-runs.ts": {
       "@typescript-eslint/no-unused-vars": 2
     },
     "packages/server-core/src/handlers/rpc/context-docs.ts": {
-      "@typescript-eslint/no-unused-vars": 2
-    },
-    "packages/server-core/src/handlers/rpc/environment.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
-    "packages/server-core/src/handlers/rpc/extensions.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
-    "packages/server-core/src/handlers/rpc/fabric.ts": {
-      "@typescript-eslint/no-unused-vars": 3
-    },
-    "packages/server-core/src/handlers/rpc/files.ts": {
       "@typescript-eslint/no-unused-vars": 1
     },
     "packages/server-core/src/handlers/rpc/gamification.ts": {
@@ -341,13 +298,7 @@
     "packages/server-core/src/handlers/rpc/learning.ts": {
       "no-control-regex": 2
     },
-    "packages/server-core/src/handlers/rpc/llm-connections.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
     "packages/server-core/src/handlers/rpc/marketplace.ts": {
-      "@typescript-eslint/no-unused-vars": 2
-    },
-    "packages/server-core/src/handlers/rpc/meetings.ts": {
       "@typescript-eslint/no-unused-vars": 1
     },
     "packages/server-core/src/handlers/rpc/native-model-catalog.ts": {
@@ -366,23 +317,11 @@
       "no-control-regex": 1
     },
     "packages/server-core/src/handlers/rpc/notes.ts": {
-      "@typescript-eslint/no-unused-vars": 5,
+      "@typescript-eslint/no-unused-vars": 2,
       "no-control-regex": 1
     },
     "packages/server-core/src/handlers/rpc/oauth.ts": {
       "@typescript-eslint/no-explicit-any": 4
-    },
-    "packages/server-core/src/handlers/rpc/plugin-bridge.ts": {
-      "@typescript-eslint/no-unused-vars": 3
-    },
-    "packages/server-core/src/handlers/rpc/privacy.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
-    "packages/server-core/src/handlers/rpc/server.ts": {
-      "@typescript-eslint/no-unused-vars": 2
-    },
-    "packages/server-core/src/handlers/rpc/sessions.ts": {
-      "@typescript-eslint/no-unused-vars": 2
     },
     "packages/server-core/src/handlers/rpc/sources.ts": {
       "@typescript-eslint/no-unused-vars": 1
@@ -394,9 +333,6 @@
     "packages/server-core/src/handlers/rpc/tasks.ts": {
       "@typescript-eslint/no-unused-vars": 1,
       "prefer-const": 2
-    },
-    "packages/server-core/src/handlers/rpc/toolchain.ts": {
-      "@typescript-eslint/no-unused-vars": 1
     },
     "packages/server-core/src/handlers/rpc/transfer.ts": {
       "@typescript-eslint/no-explicit-any": 3
@@ -416,12 +352,6 @@
     "packages/server-core/src/knowledge/bridge-service.ts": {
       "@typescript-eslint/no-unused-vars": 1
     },
-    "packages/server-core/src/knowledge/links-store.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
-    "packages/server-core/src/knowledge/local-markdown-provider.ts": {
-      "@typescript-eslint/no-unused-vars": 2
-    },
     "packages/server-core/src/knowledge/native-notes-provider.ts": {
       "no-control-regex": 1
     },
@@ -434,41 +364,20 @@
     "packages/server-core/src/knowledge/vault-index.ts": {
       "@typescript-eslint/no-require-imports": 1
     },
-    "packages/server-core/src/meetings/conation/board-fund.ts": {
-      "@typescript-eslint/no-unused-vars": 2
-    },
-    "packages/server-core/src/meetings/conation/crm.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
     "packages/server-core/src/meetings/conation/files.ts": {
       "@typescript-eslint/no-unused-vars": 1
     },
     "packages/server-core/src/meetings/conation/mail-channels.ts": {
-      "@typescript-eslint/no-unused-vars": 2
+      "@typescript-eslint/no-unused-vars": 1
     },
     "packages/server-core/src/meetings/conation/native-shells.ts": {
       "@typescript-eslint/no-unused-vars": 1
     },
-    "packages/server-core/src/meetings/packaging.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
-    "packages/server-core/src/meetings/sharing.ts": {
-      "@typescript-eslint/no-unused-vars": 2
-    },
-    "packages/server-core/src/memory/LessonStore.ts": {
-      "@typescript-eslint/no-unused-vars": 2
-    },
     "packages/server-core/src/memory/MemoryFileStore.ts": {
       "no-empty": 3
     },
-    "packages/server-core/src/memory/MemoryService.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
     "packages/server-core/src/memory/fts-index.ts": {
       "@typescript-eslint/no-require-imports": 1
-    },
-    "packages/server-core/src/memory/learning/LearningService.ts": {
-      "@typescript-eslint/no-unused-vars": 2
     },
     "packages/server-core/src/memory/learning/RollbackManager.ts": {
       "@typescript-eslint/no-unused-vars": 1
@@ -480,16 +389,10 @@
     "packages/server-core/src/pages/tool-callbacks.ts": {
       "@typescript-eslint/no-unused-vars": 1
     },
-    "packages/server-core/src/runtime/null-browser-pane-manager.ts": {
-      "@typescript-eslint/no-unused-vars": 83
-    },
-    "packages/server-core/src/sessions/RemoteBrowserPaneManager.ts": {
-      "@typescript-eslint/no-unused-vars": 11
-    },
     "packages/server-core/src/sessions/SessionManager.ts": {
       "@typescript-eslint/no-explicit-any": 7,
       "@typescript-eslint/no-non-null-asserted-optional-chain": 1,
-      "@typescript-eslint/no-unused-vars": 21,
+      "@typescript-eslint/no-unused-vars": 16,
       "no-case-declarations": 3,
       "no-empty": 2
     },
