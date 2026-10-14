@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { ChevronRight } from 'lucide-react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence } from '../../lib/lazy-motion'
 import { cn } from '../../lib/utils'
 
 /**

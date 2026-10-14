@@ -151,7 +151,7 @@ export const CHROME_TOKENS_COMFORTABLE: Readonly<Record<ChromeTokenName, number>
   /** --chrome-topbar-height */
   chromeTopbarHeight: 44,
   /** --chrome-rail-width */
-  chromeRailWidth: 52,
+  chromeRailWidth: 48,
   /** --chrome-rail-expanded-width */
   chromeRailExpandedWidth: 188,
   /** --chrome-control */

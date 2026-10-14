@@ -12,7 +12,7 @@
 
 import { useEffect, useState } from 'react'
 import { Globe } from 'lucide-react'
-import { Spinner } from '@rox/ui'
+import { Spinner } from '@rox/ui/spinner'
 import type { BrowserInstanceInfo } from '../../../shared/types'
 
 export function BrowserTabGlyph({ instance }: { instance: BrowserInstanceInfo }) {

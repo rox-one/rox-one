@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next"
 import { useActionLabel } from "@/actions"
 import { cn } from "@/lib/utils"
 import { rendererPerf } from "@/lib/perf"
-import { Spinner } from "@rox/ui"
+import { Spinner } from "@rox/ui/spinner"
 import { EntityRow } from "@/components/ui/entity-row"
 import { EntityListBadge } from "@/components/ui/entity-list-badge"
 import { SessionMenu } from "./SessionMenu"
@@ -276,6 +276,10 @@ export function SessionItem({
           onDelete={() => ctx.onDelete(item.id)}
           projects={ctx.projects}
           onSetProjectId={ctx.onSetProjectId ? (pid) => ctx.onSetProjectId!(item.id, pid) : undefined}
+          folders={ctx.chatFolders}
+          folderId={ctx.chatFolderOf?.(item.id)}
+          onMoveToFolder={ctx.onMoveToFolder ? (fid) => ctx.onMoveToFolder!(item.id, fid) : undefined}
+          onNewFolder={ctx.onNewFolderFor ? () => ctx.onNewFolderFor!(item.id) : undefined}
         />
       }
       contextMenuContent={ctx.isMultiSelectActive && isInMultiSelect ? <BatchSessionMenu /> : undefined}
@@ -368,10 +372,10 @@ export function SessionItem({
       title={ctx.searchQuery ? highlightMatch(title, ctx.searchQuery) : title}
       titleTooltip={title}
       titleClassName={cn(
-        "text-[13px] leading-[18px]",
+        "text-data",
         (item.isAsyncOperationOngoing || (seProfile && item.isProcessing)) && "animate-shimmer-text",
       )}
-      subtitle={previewText ? <span className="text-[11px] leading-4 text-text-secondary">{previewText}</span> : undefined}
+      subtitle={previewText ? <span className="text-caption leading-4 text-text-secondary">{previewText}</span> : undefined}
       titleSuffix={
         (projectName || hasMessagingBinding || item.owner || (item.participants?.length ?? 0) > 0) ? (
           <div className="flex items-center gap-1">
@@ -419,7 +423,7 @@ export function SessionItem({
             {item.isArchived ? <ArchiveRestore /> : <Archive />}
           </SessionRowAction>
           <SessionRowAction
-            label={item.isFlagged ? t("sessionMenu.unflag") : t("sessionMenu.flag")}
+            label={item.isFlagged ? t("sessionMenu.unpin") : t("sessionMenu.pin")}
             pressed={!!item.isFlagged}
             onActivate={() => (item.isFlagged ? ctx.onUnflag?.(item.id) : ctx.onFlag?.(item.id))}
           >
@@ -444,7 +448,7 @@ export function SessionItem({
           <Flag className="h-3.5 w-3.5 fill-current text-info" />
         </div>
       ) : showLastActivityInTrailing ? (
-        <span className="text-[11px] leading-4 text-text-secondary numeric whitespace-nowrap" title={lastActivityText}>
+        <span className="text-caption leading-4 text-text-secondary numeric whitespace-nowrap" title={lastActivityText}>
           {lastActivityText}
         </span>
       ) : undefined}

@@ -1,16 +1,20 @@
 /**
- * Feature-flag gating of the Developers / Playbooks destinations
- * (2026-10-09 pack, D1/D12): the entries exist once in the registry and are
- * visible only while their master atom is on.
+ * Feature-flag gating of the Developers / Playbooks / Cookbooks destinations
+ * (2026-10-09 pack D1/D12; cookbooks-surface program): the entries exist once in
+ * the registry and are visible only while their master atom is on.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { createStore } from 'jotai'
+import { WORKBENCH_FLAG } from '@rox/core/platform'
 import {
   APP_NAV_DESTINATIONS_BY_ID,
   visibleNavDestinationsAtom,
 } from '../nav-destinations'
 import { devSpaceEnabledAtom } from '../../../atoms/dev-space'
 import { playbooksEnabledAtom } from '../../../atoms/playbooks'
+import { DEDICATED_FLAG_ATOMS } from '../../../platform/unified-flags'
+import { parseRouteToNavigationState } from '../../../../shared/route-parser'
+import { routes } from '../../../../shared/routes'
 
 const originalWindow: unknown = globalThis.window
 
@@ -76,5 +80,32 @@ describe('developers / playbooks destination gating', () => {
     store.set(playbooksEnabledAtom, true)
     const withPlaybooks = store.get(visibleNavDestinationsAtom).map((destination) => destination.id)
     expect(withPlaybooks).toContain('playbooks')
+  })
+})
+
+describe('cookbooks destination', () => {
+  const flag = DEDICATED_FLAG_ATOMS.get(WORKBENCH_FLAG.cookbooksV1)
+
+  it('registers the entry once with the frozen identity', () => {
+    const destination = APP_NAV_DESTINATIONS_BY_ID.cookbooks
+    expect(destination.linkId).toBe('nav:cookbooks')
+    expect(destination.labelKey).toBe('sidebar.cookbooks')
+    expect(destination.railGroup).toBe('more')
+    // The route is what the tab strip reads to name the surface.
+    expect(destination.route?.()).toBe(routes.view.cookbooks())
+    expect(destination.isActive(parseRouteToNavigationState(routes.view.cookbooks())!)).toBe(true)
+  })
+
+  it('shares the shell kill-switch atom rather than a second storage key', () => {
+    expect(flag).toBeDefined()
+    expect(APP_NAV_DESTINATIONS_BY_ID.cookbooks.flagAtom).toBe(flag)
+  })
+
+  it('is visible by default (cookbooks.v1 defaults ON) and hides with the flag off', () => {
+    const store = createStore()
+    expect(store.get(visibleNavDestinationsAtom).map((destination) => destination.id)).toContain('cookbooks')
+
+    store.set(flag!, false)
+    expect(store.get(visibleNavDestinationsAtom).map((destination) => destination.id)).not.toContain('cookbooks')
   })
 })

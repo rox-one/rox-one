@@ -48,6 +48,7 @@ import {
   isMemoryNavigation,
   isPagesNavigation,
   isPlaybooksNavigation,
+  isCookbooksNavigation,
   isProjectsNavigation,
   isSettingsNavigation,
   isSkillsNavigation,
@@ -103,6 +104,7 @@ export const PRIMARY_NAV: readonly PrimaryNavEntry[] = [
   { id: 'docs', linkId: 'nav:notes', group: 'primary', labelKey: 'sidebar.notes', icon: GLYPHS.notes, route: () => routes.view.notes(), isActive: seeded('notes'), modeId: 'notes', preload: 'notes' },
   { id: 'base', linkId: 'nav:base', group: 'primary', labelKey: 'workbench.mode.base', icon: GLYPHS.pages, route: null, isActive: () => false, shellFlag: BASE_SURFACE_FLAG },
   { id: 'calendar', linkId: 'nav:calendar', group: 'primary', labelKey: 'workbench.mode.calendar', icon: GLYPHS.calendar, route: () => routes.view.surface('calendar'), isActive: seeded('calendar'), modeId: 'calendar', shellFlag: WORKBENCH_FLAG.modeCalendarV1, preload: 'surfaces' },
+  { id: 'canvas', linkId: 'nav:canvas', group: 'primary', labelKey: 'workbench.mode.canvas', icon: GLYPHS.canvas, route: () => routes.view.surface('canvas'), isActive: seeded('canvas'), modeId: 'canvas', shellFlag: WORKBENCH_FLAG.modeCanvasV1, preload: 'surfaces' },
   { id: 'tasks', linkId: 'nav:tasks', group: 'primary', labelKey: 'workbench.mode.tasks', icon: GLYPHS.tasks, route: () => routes.view.tasks(), isActive: seeded('tasks'), modeId: 'tasks', modeFlag: 'tasks', preload: 'tasks' },
   { id: 'wiki', linkId: 'nav:wiki', group: 'primary', labelKey: 'workbench.mode.wiki', icon: GLYPHS.knowledge, route: null, isActive: () => false, shellFlag: WIKI_SURFACE_FLAG },
   { id: 'goals', linkId: 'nav:goals', group: 'primary', labelKey: 'workbench.mode.goals', icon: GLYPHS.goals, route: () => routes.view.surface('goals'), isActive: seeded('goals'), modeId: 'goals', shellFlag: WORKBENCH_FLAG.modeGoalsV1, preload: 'surfaces' },
@@ -128,6 +130,7 @@ export const PRIMARY_NAV: readonly PrimaryNavEntry[] = [
   { id: 'connections', linkId: 'nav:connections', group: 'more', labelKey: 'sidebar.connections', icon: GLYPHS.connections, route: () => routes.view.connections(), isActive: isConnectionsNavigation, preload: 'connections' },
   { id: 'developers', linkId: 'nav:developers', group: 'more', labelKey: 'sidebar.developers', icon: GLYPHS.developers, route: () => routes.view.developers(), isActive: isDevelopersNavigation, shellFlag: WORKBENCH_FLAG.devSpaceV1 },
   { id: 'playbooks', linkId: 'nav:playbooks', group: 'more', labelKey: 'sidebar.playbooks', icon: GLYPHS.playbooks, route: () => routes.view.playbooks(), isActive: isPlaybooksNavigation, shellFlag: WORKBENCH_FLAG.playbooksV1 },
+  { id: 'cookbooks', linkId: 'nav:cookbooks', group: 'more', labelKey: 'sidebar.cookbooks', icon: GLYPHS.cookbooks, route: () => routes.view.cookbooks(), isActive: isCookbooksNavigation, shellFlag: WORKBENCH_FLAG.cookbooksV1, preload: 'cookbooks' },
   { id: 'settings', linkId: 'nav:settings', group: 'more', labelKey: 'sidebar.settings', icon: GLYPHS.settings, route: () => routes.view.settings(), isActive: isSettingsNavigation, footer: true },
 ]
 
@@ -167,13 +170,17 @@ function defaultGroup(entry: PrimaryNavEntry, shellFlags: ReadonlySet<string>): 
  * Браузер — live in the pills; everything else keeps its registry group.
  */
 export function defaultPlacement(entry: PrimaryNavEntry, shellFlags: ReadonlySet<string>): NavPlacement {
-  if (DEFAULT_PILL_NAV_IDS.has(entry.id)) return 'pills'
-  if (entry.id === 'sessions' && !shellFlags.has(WORKBENCH_FLAG.modeMessengerV1)) return 'pills'
-  return defaultGroup(entry, shellFlags)
+  void shellFlags
+  return DEFAULT_PILL_NAV_IDS.has(entry.id) ? 'pills' : 'menu'
 }
 
 /** Registry ids of the starter pill composition (`DEFAULT_PILL_SURFACES`); Чат joins while Мессенджер is off. */
-export const DEFAULT_PILL_NAV_IDS: ReadonlySet<string> = new Set([HOME_NAV_ID, 'feed', 'messenger', 'docs', 'browser'])
+/**
+ * Mark (shell-layout + onboarding polish): Главная (icon) · Лента · Сессии ·
+ * Заметки · Браузер · Мессенджер · Задачи. Мессенджер only resolves while its
+ * surface flag (`workbench.mode.messenger.v1`) is on; otherwise it is skipped.
+ */
+export const DEFAULT_PILL_NAV_IDS: ReadonlySet<string> = new Set([HOME_NAV_ID, 'feed', 'sessions', 'docs', 'browser', 'messenger', 'tasks'])
 
 /** Every surface available under the current flags, with its effective placement (Settings list). */
 export function resolveNavSurfaces({ shellFlags, modeFlags = {}, placements = {} }: PrimaryNavContext): ResolvedPrimaryNavEntry[] {
@@ -186,8 +193,8 @@ export function resolveNavSurfaces({ shellFlags, modeFlags = {}, placements = {}
     resolved.push({
       ...entry,
       labelKey: entry.id === 'docs' ? notesTitleKey(shellFlags, entry.labelKey) : entry.labelKey,
-      // Pill / hidden surfaces keep their registry group for the sidebar fallback.
-      group: placement === 'primary' || placement === 'more' ? placement : defaultGroup(entry, shellFlags),
+      // The registry group only sorts the «Все экраны» menu (Навигация / Инструменты).
+      group: defaultGroup(entry, shellFlags),
       disabled: entry.modeFlag ? modeFlags[entry.modeFlag] === false : false,
       placement,
     })

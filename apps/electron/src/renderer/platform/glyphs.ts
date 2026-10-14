@@ -19,7 +19,9 @@
  * Lucide component.
  */
 import {
+  PenTool,
   Activity,
+  BookMarked,
   BookOpen,
   Bot,
   Brain,
@@ -76,6 +78,7 @@ export const GLYPHS = {
   team: MessagesSquare,
   calendar: CalendarDays,
   goals: Target,
+  canvas: PenTool,
   memory: Brain,
   skills: Zap,
   learning: GraduationCap,
@@ -104,6 +107,7 @@ export const GLYPHS = {
   drive: HardDrive,
   developers: FolderGit2,
   playbooks: NotebookText,
+  cookbooks: BookMarked,
 } as const satisfies Record<string, LucideIcon>
 
 /** Every entity concept the shell renders a glyph for. */
@@ -124,6 +128,7 @@ export const GLYPH_NAMES = {
   team: 'MessagesSquare',
   calendar: 'CalendarDays',
   goals: 'Target',
+  canvas: 'PenTool',
   memory: 'Brain',
   skills: 'Zap',
   learning: 'GraduationCap',
@@ -152,6 +157,7 @@ export const GLYPH_NAMES = {
   drive: 'HardDrive',
   developers: 'FolderGit2',
   playbooks: 'NotebookText',
+  cookbooks: 'BookMarked',
 } as const satisfies Record<GlyphConcept, string>
 
 /**

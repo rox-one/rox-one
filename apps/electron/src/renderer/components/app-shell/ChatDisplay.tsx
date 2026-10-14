@@ -32,6 +32,11 @@ import { usePrefersReducedMotion } from "@/lib/render-profile-motion"
 import { toast } from "sonner"
 import { SessionMemoryProposalLane } from "./MemoryProposalCard"
 import { SessionTypingIndicator } from "./SessionTypingIndicator"
+import { TurnPhaseBar } from "./agent-flow/TurnPhaseBar"
+import { SessionBranchTree } from "./agent-flow/SessionBranchTree"
+import { deriveTurnPhase } from "./agent-flow/turn-phase"
+import { queueModeFor, type MidStreamMode } from "./agent-flow/mid-stream-mode"
+import type { SteeringVerb } from "@rox/shared/protocol"
 import { useSessionActivityState, useSessionTypingBeacon, useViewerIdentity } from "@/hooks/useSessionPresence"
 import { filterLocalTypingActors } from "@/lib/session-presence"
 
@@ -118,6 +123,8 @@ function isRoxCliCredentialChatError(code?: string): boolean {
   return code === 'OMP_NO_MODELS' || code === 'OMP_AUTH_REQUIRED' || code === 'OMP_NOT_CONFIGURED'
 }
 import * as storage from "@/lib/local-storage"
+import { computeComposerStats } from "./input/composer-stats"
+import { getModelContextWindow } from "@config/models"
 
 // ============================================================================
 // G5 Dialog Continuum
@@ -245,7 +252,9 @@ function getTurnKey(turn: Turn): string {
 
 interface ChatDisplayProps {
   session: Session | null
-  onSendMessage: (message: string, attachments?: FileAttachment[], skillSlugs?: string[]) => void
+  onSendMessage: (message: string, attachments?: FileAttachment[], skillSlugs?: string[], queueMode?: SteeringVerb) => void
+  /** Host forwards onSendMessage's 4th `queueMode` argument; only then is the queue/steer selector shown. */
+  supportsQueueMode?: boolean
   onOpenFile: (path: string) => void
   onOpenUrl: (url: string) => void
   // Model selection
@@ -558,6 +567,7 @@ const EMPTY_SKILLS: LoadedSkill[] = []
 export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>(function ChatDisplay({
   session,
   onSendMessage,
+  supportsQueueMode = false,
   onOpenFile,
   onOpenUrl,
   currentModel,
@@ -1393,6 +1403,13 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     return pending.sort((a, b) => a.createdAt - b.createdAt)
   }, [session?.messages])
 
+  // DSH-style stats line under the composer; only real session data, no fakes.
+  const composerStats = useMemo(() => session ? computeComposerStats({
+    messages: session.messages,
+    tokenUsage: session.tokenUsage,
+    fallbackContextWindow: getModelContextWindow(currentModel),
+  }) : null, [session?.messages, session?.tokenUsage, currentModel])
+
   const followUpInputItems = useMemo(() => {
     return pendingFollowUpAnnotations.map((followUp, idx) => ({
       id: `${followUp.messageId}:${followUp.annotationId}`,
@@ -1571,6 +1588,14 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   )
   const typingBeacon = useSessionTypingBeacon(session?.id)
 
+  // #14/#17: live turn phase + queue-or-steer choice for mid-turn messages.
+  const [midStreamMode, setMidStreamMode] = React.useState<MidStreamMode>('auto')
+  React.useEffect(() => { setMidStreamMode('auto') }, [session?.id])
+  const turnPhase = React.useMemo(
+    () => deriveTurnPhase(session?.messages, { isProcessing: session?.isProcessing === true, hasPendingRequest: Boolean(pendingPermission || pendingCredential) }),
+    [session?.messages, session?.isProcessing, pendingPermission, pendingCredential],
+  )
+
   // Handle message submission from InputContainer
   // Backend handles interruption and queueing if currently processing
   const handleSubmit = (message: string, attachments?: FileAttachment[], skillSlugs?: string[]) => {
@@ -1589,7 +1614,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     // Force stick-to-bottom when user sends a message
     isStickToBottomRef.current = true
     beginOutputMotion()
-    onSendMessage(normalizedMessage, attachments, skillSlugs)
+    onSendMessage(normalizedMessage, attachments, skillSlugs, supportsQueueMode ? queueModeFor(midStreamMode, session?.isProcessing === true) : undefined)
 
     // Persist sent marker on follow-up annotations so TurnCard can distinguish
     // sent vs pending follow-ups. If user edits a follow-up later, TurnCard
@@ -2092,6 +2117,7 @@ const handleFollowUpChipClick = useCallback((item: {
               </button>
             </div>
           ) : null}
+          <SessionBranchTree sessionId={session.id} />
           {/* Content layer */}
           <div className="flex flex-1 flex-col min-h-0 min-w-0 relative z-10">
           {/* === MESSAGES AREA: Scrollable list of message bubbles === */}
@@ -2596,9 +2622,11 @@ const handleFollowUpChipClick = useCallback((item: {
           />
           {/* a2.4: who is typing, directly above the composer. */}
           <SessionTypingIndicator actors={typingActors} />
+          <TurnPhaseBar state={turnPhase} mode={midStreamMode} onModeChange={supportsQueueMode ? setMidStreamMode : undefined} />
           {/* === INPUT CONTAINER: FreeForm or Structured Input === */}
           <ChatInputZone
             compactMode={compactMode}
+            stats={composerStats}
             permissionMode={permissionMode}
             onPermissionModeChange={onPermissionModeChange}
             tasks={backgroundTasks}

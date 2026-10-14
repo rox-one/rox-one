@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import ts from 'typescript'
 import { createStore } from 'jotai'
 import { focusedPanelIdAtom, panelStackAtom, primaryPanelIdAtom, type PanelStackEntry } from '../../../atoms/panel-stack'
-import { activeWorkspaceContextAtom, workspaceProjectContextsAtom } from '../../../atoms/workspace-context'
+import { activeWorkspaceContextAtom } from '../../../atoms/workspace-context'
 import { captureWorkspaceToolOpen, openWorkspaceTool } from '../../../lib/open-workspace-tool'
 import { routes } from '../../../../shared/routes'
 
@@ -38,7 +38,7 @@ function find(element: Element, type: string): Element | undefined {
 }
 
 describe('calendar task links keep the canonical task context', () => {
-  test('retargets the retained Tasks panel from project A to B without changing the calendar', () => {
+  test('retargets the retained Tasks panel to an unscoped (all-projects) task without changing the calendar', () => {
     const store = createStore()
     const main: PanelStackEntry = { id: 'calendar', route: routes.view.meetings(), proportion: .5, panelType: 'other', laneId: 'main' }
     const tasks: PanelStackEntry = { id: 'tasks', route: routes.view.tasks('task_old'), proportion: .5, panelType: 'other', laneId: 'main', tool: 'tasks',
@@ -47,7 +47,6 @@ describe('calendar task links keep the canonical task context', () => {
     store.set(primaryPanelIdAtom, main.id)
     store.set(focusedPanelIdAtom, main.id)
     store.set(activeWorkspaceContextAtom, 'workspace')
-    store.set(workspaceProjectContextsAtom, { workspace: 'project-b' })
     const render = component('PlanWorkspacePage.tsx', 'PlanWorkspacePage', {
       React, Suspense: 'Suspense', Meetings: 'Meetings', WorkspacePlanView: 'WorkspacePlanView', ShellSidebarPortal: 'Sidebar',
       CalendarDays: 'CalendarDays', Calendar: 'Calendar', Contact: 'Contact', Gavel: 'Gavel', Phone: 'Phone',
@@ -58,7 +57,6 @@ describe('calendar task links keep the canonical task context', () => {
       usePanelWorkspaceLayout: () => ({ mode: 'auto' }),
       useTranslation: () => ({ t: (key: string) => key }), useNavigation: () => ({ navigate: () => {} }),
       useAppShellContext: () => ({ activeWorkspaceId: 'workspace' }), useStore: () => store,
-      useAtomValue: () => store.get(workspaceProjectContextsAtom), workspaceProjectContextsAtom,
       captureWorkspaceToolOpen, openWorkspaceTool, routes,
     })
     const openTask = find(render({}), 'WorkspacePlanView')!.props.onOpenTask as (id: string) => void
@@ -68,10 +66,10 @@ describe('calendar task links keep the canonical task context', () => {
     expect(store.get(primaryPanelIdAtom)).toBe(main.id)
     expect(store.get(focusedPanelIdAtom)).toBe(tasks.id)
     expect(store.get(panelStackAtom)[1]).toMatchObject({ id: tasks.id, route: routes.view.tasks('task_project_b'),
-      toolContext: { workspaceId: 'workspace', projectId: 'project-b', route: main.route } })
+      toolContext: { workspaceId: 'workspace', route: main.route } })
+    expect(store.get(panelStackAtom)[1].toolContext?.projectId).toBeUndefined()
 
     store.set(focusedPanelIdAtom, main.id)
-    store.set(workspaceProjectContextsAtom, { workspace: null })
     const openUnfilteredTask = find(render({}), 'WorkspacePlanView')!.props.onOpenTask as (id: string) => void
     openUnfilteredTask('task_workspace')
     expect(store.get(panelStackAtom)[1].toolContext?.projectId).toBeUndefined()
@@ -88,7 +86,7 @@ describe('Tasks routes select either canonical scope in a retained panel', () =>
     let previousId: unknown = Symbol('initial')
     const render = component('WorkspaceTasksPage.tsx', 'WorkspaceTasksPage', {
       React, Suspense: 'Suspense', PersonalTasks: 'PersonalTasks', WorkspaceTasksView: 'WorkspaceTasksView',
-      ShellSidebarContext: { Provider: 'SidebarContext' },
+      ShellSidebarContext: { Provider: 'SidebarContext' }, useShellSidebarTarget: () => null,
       useTranslation: () => ({ t: (key: string) => key }), useAppShellContext: () => ({ activeWorkspaceId: 'workspace' }),
       useWorkspaceProjectContext: () => 'project-b',
       useState: (initial: unknown) => {

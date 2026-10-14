@@ -3,6 +3,7 @@
  */
 
 export { Spinner, type SpinnerProps, LoadingIndicator, type LoadingIndicatorProps } from './LoadingIndicator'
+export { Skeleton, type SkeletonProps } from './Skeleton'
 export {
   SimpleDropdown,
   SimpleDropdownItem,

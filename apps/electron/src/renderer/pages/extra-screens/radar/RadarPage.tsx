@@ -220,16 +220,16 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
   return (
     <ScreenRoot className="flex-col overflow-y-auto p-3 sm:p-5" >
       <header className="flex flex-wrap items-center gap-3 pb-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-500"><Radar className="h-6 w-6" /></div>
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-violet-500"><Radar className="h-6 w-6" /></div>
         <div className="min-w-0 flex-1"><h1 className="text-xl font-semibold">{t('extraScreens.radar.title')}</h1><p className="text-xs text-muted-foreground">{t('extraScreens.radar.digestHint')}</p></div>
         <ScreenButton variant="primary" disabled={busy || !data.topics.length || !workspaceId} onClick={() => { void runNow() }}>
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}{t(busy ? 'extraScreens.radar.starting' : 'extraScreens.radar.runNow')}
         </ScreenButton>
       </header>
-      <section data-testid="radar-setup" className="mb-4 rounded-2xl bg-foreground/[0.035] p-4">
+      <section data-testid="radar-setup" className="mb-4 rounded-lg bg-foreground/[0.035] p-4">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><h2 className="font-semibold">{t('extraScreens.radar.setupTitle')}</h2><p className="mt-1 text-xs text-muted-foreground">{t('extraScreens.radar.setupHint')}</p></div><ScreenButton onClick={addTopic}><Plus className="h-4 w-4" />{t('extraScreens.radar.addTopic')}</ScreenButton></div>
         <div className="my-3 flex flex-wrap gap-2">
-          {data.topics.map(topic => <button key={topic.id} type="button" aria-pressed={topic.id === selectedTopicId} onClick={() => select('topic:' + topic.id)} className="flex max-w-full items-center gap-2 rounded-xl bg-foreground/[0.06] px-3 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+          {data.topics.map(topic => <button key={topic.id} type="button" aria-pressed={topic.id === selectedTopicId} onClick={() => select('topic:' + topic.id)} className="flex max-w-full items-center gap-2 rounded-lg bg-foreground/[0.06] px-3 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
             <Search className="h-4 w-4 shrink-0 text-violet-500" /><span className="break-words">{topic.label}</span><ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
           </button>)}
         </div>
@@ -244,11 +244,11 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
           <span>{t('extraScreens.radar.timezone', { zone: Intl.DateTimeFormat().resolvedOptions().timeZone })}</span>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">{t('extraScreens.radar.scheduleHint')}</p>
-        {selectedTopic && <div className="mt-4 rounded-xl bg-background/70 p-3"><TopicEditor key={selectedTopic.id} topic={selectedTopic} sources={sources} onUpdate={patch => updateTopic(selectedTopic.id, patch)} onDelete={() => { save({ ...data, topics: data.topics.filter(topic => topic.id !== selectedTopic.id) }); select(null) }} /></div>}
+        {selectedTopic && <div className="mt-4 rounded-lg bg-background/70 p-3"><TopicEditor key={selectedTopic.id} topic={selectedTopic} sources={sources} onUpdate={patch => updateTopic(selectedTopic.id, patch)} onDelete={() => { save({ ...data, topics: data.topics.filter(topic => topic.id !== selectedTopic.id) }); select(null) }} /></div>}
       </section>
-      {error && <div role="alert" className="mb-3 rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{t('extraScreens.radar.error.' + error, { defaultValue: t('extraScreens.radar.error.start-failed') })}</div>}
+      {error && <div role="alert" className="mb-3 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{t('extraScreens.radar.error.' + error, { defaultValue: t('extraScreens.radar.error.start-failed') })}</div>}
       <div className={'grid min-w-0 gap-4 ' + (selectedItem ? 'lg:grid-cols-[minmax(0,1fr)_minmax(280px,380px)]' : '')}>
-        <section data-testid="radar-digest" className="min-w-0 rounded-2xl bg-foreground/[0.025] pb-3">
+        <section data-testid="radar-digest" className="min-w-0 rounded-lg bg-foreground/[0.025] pb-3">
           <div className="flex flex-wrap items-center gap-2 p-4"><h2 className="min-w-0 flex-1 font-semibold">{t('extraScreens.radar.digest')}</h2>
             {!!data.sweeps.length && <select aria-label={t('extraScreens.radar.history')} value={viewSweepId ?? ''} onChange={event => { setViewSweepId(event.target.value || null); select(null) }} className="max-w-full rounded-lg bg-background px-2 py-1 text-xs">
               <option value="">{t('extraScreens.radar.latest')}</option>{data.sweeps.slice(0, 10).map(history => <option key={history.id} value={history.id}>{relTime(history.startedAt)}</option>)}
@@ -257,15 +257,15 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
           {!data.topics.length ? <EmptyState title={t('extraScreens.radar.noTopicsTitle')} body={t('extraScreens.radar.noTopicsBody')} action={<ScreenButton onClick={addTopic}><Plus className="h-4 w-4" />{t('extraScreens.radar.addTopic')}</ScreenButton>} /> : <>
             {!sweep && <p className="px-4 pb-3 text-sm text-muted-foreground">{t('extraScreens.radar.noSweepYet', { hour: String(data.dailyHour).padStart(2, '0') })}</p>}
             {sweep && <p className="px-4 pb-3 text-xs text-muted-foreground">{t('extraScreens.radar.checkedAt', { when: relTime(sweep.startedAt) })}</p>}
-            {sweep && (syncState === 'running' || sweep.status === 'starting') && <div role="status" className="mx-4 mb-3 flex items-center gap-2 rounded-xl bg-accent/10 p-3"><Loader2 className="h-4 w-4 animate-spin" />{t('extraScreens.radar.sweepRunning')}</div>}
-            {sweep && (syncState === 'failed' || syncState === 'missing') && <div role="alert" className="mx-4 mb-3 rounded-xl bg-amber-500/10 p-3"><p className="flex items-start gap-2"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />{t('extraScreens.radar.error.' + (sweep.error ?? 'invalid-output'))}</p><div className="mt-2 flex flex-wrap gap-2"><ScreenButton disabled={busy} onClick={() => { void runNow() }}><RefreshCw className="h-3.5 w-3.5" />{t('extraScreens.radar.retry')}</ScreenButton>{sweep.sessionId && <ScreenButton variant="ghost" onClick={() => navigate(routes.view.allSessions(sweep.sessionId))}>{t('extraScreens.common.openSession')}</ScreenButton>}</div></div>}
-            {sweep?.notes && <p className="mx-4 mb-3 rounded-xl bg-foreground/[0.04] p-3 text-xs text-muted-foreground">{t('extraScreens.radar.agentNotes')}: {sweep.notes}</p>}
+            {sweep && (syncState === 'running' || sweep.status === 'starting') && <div role="status" className="mx-4 mb-3 flex items-center gap-2 rounded-lg bg-accent/10 p-3"><Loader2 className="h-4 w-4 animate-spin" />{t('extraScreens.radar.sweepRunning')}</div>}
+            {sweep && (syncState === 'failed' || syncState === 'missing') && <div role="alert" className="mx-4 mb-3 rounded-lg bg-amber-500/10 p-3"><p className="flex items-start gap-2"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />{t('extraScreens.radar.error.' + (sweep.error ?? 'invalid-output'))}</p><div className="mt-2 flex flex-wrap gap-2"><ScreenButton disabled={busy} onClick={() => { void runNow() }}><RefreshCw className="h-3.5 w-3.5" />{t('extraScreens.radar.retry')}</ScreenButton>{sweep.sessionId && <ScreenButton variant="ghost" onClick={() => navigate(routes.view.allSessions(sweep.sessionId))}>{t('extraScreens.common.openSession')}</ScreenButton>}</div></div>}
+            {sweep?.notes && <p className="mx-4 mb-3 rounded-lg bg-foreground/[0.04] p-3 text-xs text-muted-foreground">{t('extraScreens.radar.agentNotes')}: {sweep.notes}</p>}
             {sweep?.error === 'unsupported-items' && <p className="px-4 pb-3 text-xs text-muted-foreground">{t('extraScreens.radar.error.unsupported-items')}</p>}
             {BUCKETS.map(bucket => groups[bucket].length > 0 && <div key={bucket} data-radar-bucket={bucket}><GroupLabel><span className="inline-flex items-center gap-2"><Sparkles className={'h-3.5 w-3.5 ' + (bucket === 'reaction' ? 'text-amber-500' : bucket === 'important' ? 'text-violet-500' : 'text-sky-500')} />{t('extraScreens.radar.bucket.' + bucket)} · {groups[bucket].length}</span></GroupLabel>{groups[bucket].map(item => <ListRow key={item.id} active={item.id === itemId} onClick={() => select(item.id)} className="py-3"><div className="min-w-0 flex-1"><div className="break-words font-medium">{item.title}</div>{item.summary && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.summary}</p>}<div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground"><span>{item.origin === 'local' ? t('extraScreens.radar.local.' + (item.ref?.kind ?? 'session')) : item.source}</span>{item.topic && <span>· {item.topic}</span>}{item.at && <span>· {relTime(item.at)}</span>}</div></div><ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" /></ListRow>)}</div>)}
             {visibleCount === 0 && (syncState === 'done' || !sweep) && <EmptyState title={t('extraScreens.radar.nothingNew', { n: data.topics.length })} body={t('extraScreens.radar.emptyHint')} />}
           </>}
         </section>
-        {selectedItem && <section className="min-w-0 rounded-2xl bg-foreground/[0.035] p-4"><ItemDetail key={`${workspaceId}:${selectedItem.id}`} workspaceId={workspaceId} item={selectedItem} language={language} onDismiss={() => dismiss(selectedItem.id)} /></section>}
+        {selectedItem && <section className="min-w-0 rounded-lg bg-foreground/[0.035] p-4"><ItemDetail key={`${workspaceId}:${selectedItem.id}`} workspaceId={workspaceId} item={selectedItem} language={language} onDismiss={() => dismiss(selectedItem.id)} /></section>}
       </div>
     </ScreenRoot>
   )
@@ -368,7 +368,7 @@ function TopicEditor({ topic, sources, onUpdate, onDelete }: { topic: RadarTopic
       <div className="mt-4"><SectionLabel>{t('extraScreens.radar.sourceHeading')}</SectionLabel></div>
       <label className="mb-2 flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1 accent-[var(--accent)]" checked={topic.sourceSlugs === undefined} onChange={event => onUpdate({ sourceSlugs: event.target.checked ? undefined : [] })} />{t('extraScreens.radar.sourceAll')}</label>
       <div className="grid gap-2 sm:grid-cols-2">
-        {sources.map(source => <label key={source.slug} className={'flex min-w-0 items-start gap-2 rounded-xl bg-foreground/[0.04] p-3 text-sm ' + (!source.available ? 'opacity-50' : '')}>
+        {sources.map(source => <label key={source.slug} className={'flex min-w-0 items-start gap-2 rounded-lg bg-foreground/[0.04] p-3 text-sm ' + (!source.available ? 'opacity-50' : '')}>
           <input type="checkbox" aria-label={source.name} className="mt-1 accent-[var(--accent)]" disabled={!source.available} checked={(topic.sourceSlugs ?? sources.filter(item => item.available).map(item => item.slug)).includes(source.slug)} onChange={event => {
             const selected = topic.sourceSlugs ?? sources.filter(item => item.available).map(item => item.slug)
             onUpdate({ sourceSlugs: event.target.checked ? [...new Set([...selected, source.slug])] : selected.filter(slug => slug !== source.slug) })

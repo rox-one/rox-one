@@ -64,10 +64,157 @@ export interface AgentRule {
   label: AgentRuleLabel
 }
 
+/** Agents / CLIs the user already works with (onboarding «Who are you?»). */
+export const WORK_STYLE_AGENTS = [
+  'claudeCode',
+  'codex',
+  'opencode',
+  'omp',
+  'hermes',
+  'openclaw',
+  'cursor',
+  'geminiCli',
+  'antigravity',
+  'chatgpt',
+  'perplexity',
+  'grok',
+  'qwen',
+  'deepseek',
+  'gigachat',
+  'zai',
+  'kimi',
+  'mistral',
+  'copilot',
+  'windsurf',
+  'kiloCode',
+  'cline',
+  'rooCode',
+  'aider',
+  'other',
+] as const
+export type WorkStyleAgent = (typeof WORK_STYLE_AGENTS)[number]
+
+/** Output formats the user prefers to receive. */
+export const WORK_STYLE_FORMATS = ['chat', 'markdown', 'docx', 'pdf', 'pptx', 'xlsx', 'office', 'htmlDashboard', 'json', 'docs'] as const
+export type WorkStyleFormat = (typeof WORK_STYLE_FORMATS)[number]
+
+export type WorkStyleDetail = 'detailed' | 'concise'
+export type WorkStyleLayout = 'prose' | 'bullets'
+export type WorkStyleClarify = 'askFirst' | 'autonomous'
+export type WorkStyleCollaboration = 'reasonTogether' | 'justDeliver'
+
+/**
+ * 0–10 sliders of «Как агенту работать». 0 is the left label, 10 the right:
+ * detail Кратко↔Подробно, layout Текстом↔Списками, tone Сдержанно↔Дружелюбно,
+ * formality Формально↔Неформально, clarify Сначала уточнить↔Действовать сам,
+ * collaboration Рассуждать вместе↔Просто результат. An untouched slider is
+ * absent («no preference»).
+ */
+export const WORK_STYLE_SCALES = ['detail', 'layout', 'tone', 'formality', 'clarify', 'collaboration'] as const
+export type WorkStyleScaleKey = (typeof WORK_STYLE_SCALES)[number]
+export const WORK_STYLE_SCALE_MAX = 10
+
+/** Free-text «Другое» role: trimmed, at most this many characters. */
+export const ONBOARDING_OTHER_ROLE_MAX = 32
+
+/**
+ * How the user wants the agent to work. Every field is optional: an absent
+ * field means «no preference» and is left out of the agent prompt.
+ */
+export interface OnboardingWorkStyle {
+  agents?: WorkStyleAgent[]
+  formats?: WorkStyleFormat[]
+  /** The one format to default to; always also listed in `formats`. */
+  primaryFormat?: WorkStyleFormat
+  /** Slider answers (0–10); supersede the legacy binary fields below. */
+  scales?: Partial<Record<WorkStyleScaleKey, number>>
+  /** Legacy binary answers (pre-slider profiles). */
+  detail?: WorkStyleDetail
+  layout?: WorkStyleLayout
+  clarify?: WorkStyleClarify
+  collaboration?: WorkStyleCollaboration
+}
+
 /** Onboarding «Who are you?» profile: the developer flag plus adjacent roles. */
 export interface OnboardingRoleProfile {
   isDeveloper: boolean
   relatedRoles: string[]
+  /**
+   * True only when the user explicitly picked developer / not a developer.
+   * `isDeveloper` is false by default, so prompts must not treat it as an
+   * answer unless this is set. Absent on older profiles.
+   */
+  isDeveloperExplicit?: boolean
+  /** Free text typed for «Другое» (≤ ONBOARDING_OTHER_ROLE_MAX chars). */
+  otherRole?: string
+  /** Answer/collaboration preferences that feed the agent's system prompt. */
+  workStyle?: OnboardingWorkStyle
+}
+
+function pickList<T extends string>(raw: unknown, allowed: readonly T[]): T[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const seen = new Set<T>()
+  for (const entry of raw) {
+    if ((allowed as readonly unknown[]).includes(entry)) seen.add(entry as T)
+  }
+  return seen.size > 0 ? allowed.filter((value) => seen.has(value)) : undefined
+}
+
+function pickOne<T extends string>(raw: unknown, allowed: readonly T[]): T | undefined {
+  return (allowed as readonly unknown[]).includes(raw) ? (raw as T) : undefined
+}
+
+/** Keep only known values; returns undefined when nothing meaningful is left. */
+export function normalizeWorkStyle(raw: unknown): OnboardingWorkStyle | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const obj = raw as Record<string, unknown>
+  const out: OnboardingWorkStyle = {}
+  const agents = pickList(obj.agents, WORK_STYLE_AGENTS)
+  const formats = pickList(obj.formats, WORK_STYLE_FORMATS)
+  const detail = pickOne(obj.detail, ['detailed', 'concise'] as const)
+  const layout = pickOne(obj.layout, ['prose', 'bullets'] as const)
+  const clarify = pickOne(obj.clarify, ['askFirst', 'autonomous'] as const)
+  const collaboration = pickOne(obj.collaboration, ['reasonTogether', 'justDeliver'] as const)
+  if (agents) out.agents = agents
+  if (formats) out.formats = formats
+  const primaryFormat = pickOne(obj.primaryFormat, WORK_STYLE_FORMATS)
+  if (primaryFormat && formats?.includes(primaryFormat)) out.primaryFormat = primaryFormat
+  if (obj.scales && typeof obj.scales === 'object') {
+    const rawScales = obj.scales as Record<string, unknown>
+    const scales: Partial<Record<WorkStyleScaleKey, number>> = {}
+    for (const key of WORK_STYLE_SCALES) {
+      const value = rawScales[key]
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        scales[key] = Math.max(0, Math.min(WORK_STYLE_SCALE_MAX, Math.round(value)))
+      }
+    }
+    if (Object.keys(scales).length > 0) out.scales = scales
+  }
+  if (detail) out.detail = detail
+  if (layout) out.layout = layout
+  if (clarify) out.clarify = clarify
+  if (collaboration) out.collaboration = collaboration
+  return Object.keys(out).length > 0 ? out : undefined
+}
+
+/** Trim and cap the «Другое» text; empty → undefined. */
+export function normalizeOtherRole(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined
+  const text = raw.replace(/\s+/g, ' ').trim().slice(0, ONBOARDING_OTHER_ROLE_MAX).trim()
+  return text.length > 0 ? text : undefined
+}
+
+/** Role profile with only known fields (drops unknown keys and bad values). */
+export function normalizeOnboardingRoleProfile(value: OnboardingRoleProfile): OnboardingRoleProfile {
+  const workStyle = normalizeWorkStyle(value.workStyle)
+  const otherRole = normalizeOtherRole(value.otherRole)
+  return {
+    isDeveloper: value.isDeveloper,
+    relatedRoles: [...value.relatedRoles],
+    ...(value.isDeveloperExplicit === true ? { isDeveloperExplicit: true } : {}),
+    ...(otherRole ? { otherRole } : {}),
+    ...(workStyle ? { workStyle } : {}),
+  }
 }
 
 export interface EnvironmentPrefs {

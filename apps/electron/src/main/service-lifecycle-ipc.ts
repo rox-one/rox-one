@@ -11,7 +11,7 @@
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { GatewayService } from '@rox/server-core/service'
 import type { DoctorReport, ServiceLifecycleResult, ServiceStatus } from '@rox/shared/service-lifecycle'
-import { RPC_CHANNELS } from '../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 
 export interface ServiceLifecycleIpcDependencies {
   readonly server: RpcServer

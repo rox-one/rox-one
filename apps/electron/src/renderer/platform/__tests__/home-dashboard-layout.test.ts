@@ -20,6 +20,15 @@ import {
   widgetContentLayout,
   HOME_GRID_GAP,
   HOME_GRID_ROW_HEIGHT,
+  HOME_WIDGET_ALLOWED_SIZES,
+  flatV2DefaultLayout,
+  isFlatV2Default,
+  normalizeHomeMeta,
+  packHomeLayout,
+  upgradeFlatDefault,
+  coercedSizes,
+  moveWidgetVisual,
+  shiftWidgetVisual,
 } from '../home/dashboard-layout'
 
 describe('home dashboard layout', () => {
@@ -68,19 +77,42 @@ describe('home dashboard layout', () => {
     const ids = DEFAULT_HOME_LAYOUT.widgets.map((w) => w.id)
     expect(new Set(ids).size).toBe(ids.length)
     for (const id of ids) expect(HOME_WIDGET_IDS).toContain(id)
-    const total = DEFAULT_HOME_LAYOUT.widgets.reduce((sum, w) => sum + widgetSpan(w.size, 1400), 0)
-    expect(total % 12).toBe(0)
+    // Dense auto-flow on a 12-column grid (row units = widgetRowSpan): the
+    // bento default packs without holes except in the final band.
+    const cells: boolean[][] = []
+    const free = (r: number, c: number, w: number, h: number) => {
+      for (let y = r; y < r + h; y += 1) for (let x = c; x < c + w; x += 1) if (cells[y]?.[x]) return false
+      return true
+    }
+    let bottom = 0
+    for (const w of DEFAULT_HOME_LAYOUT.widgets) {
+      const span = widgetSpan(w.size, 1400)
+      const h = widgetRowSpan(w.size)
+      let placed = false
+      for (let r = 0; !placed; r += 1) {
+        for (let c = 0; c + span <= 12 && !placed; c += 1) {
+          if (!free(r, c, span, h)) continue
+          for (let y = r; y < r + h; y += 1) { cells[y] ??= []; for (let x = c; x < c + span; x += 1) cells[y]![x] = true }
+          bottom = Math.max(bottom, r + h)
+          placed = true
+        }
+      }
+    }
+    const lastBand = bottom - widgetRowSpan(DEFAULT_HOME_LAYOUT.widgets.at(-1)!.size)
+    for (let y = 0; y < lastBand; y += 1) for (let x = 0; x < 12; x += 1) expect(cells[y]?.[x] ?? false).toBe(true)
+    expect(ids[0]).toBe('hero')
+    expect(DEFAULT_HOME_LAYOUT.widgets[0]!.size).toBe('XL')
     expect(ids).toContain('recentSessions')
-    expect(ids).toContain('quickActions')
+    expect(ids).toContain('activity')
     for (const id of ['taskTracker', 'inboxTracker', 'automations', 'meetings', 'calls', 'calendar'] as const) expect(ids).toContain(id)
   })
 
   it('normalizes corrupt payloads to the default and drops unknown / duplicate widgets', () => {
     expect(normalizeHomeLayout(null)).toEqual(DEFAULT_HOME_LAYOUT)
     expect(normalizeHomeLayout({ widgets: 'x' })).toEqual(DEFAULT_HOME_LAYOUT)
-    expect(normalizeHomeLayout({ version: 2, widgets: [{ id: 'tasks', size: 'L' }, { id: 'tasks', size: 'S' }, { id: 'nope', size: 'S' }, { id: 'feed', size: 'XL' }] })).toEqual({
+    expect(normalizeHomeLayout({ version: 2, widgets: [{ id: 'tasks', size: 'L' }, { id: 'tasks', size: 'S' }, { id: 'nope', size: 'S' }, { id: 'feed', size: 'XXL' }, { id: 'hero', size: 'XL' }] })).toEqual({
       version: 2,
-      widgets: [{ id: 'tasks', size: 'L' }, { id: 'feed', size: 'M' }],
+      widgets: [{ id: 'tasks', size: 'L' }, { id: 'feed', size: 'M' }, { id: 'hero', size: 'XL' }],
     })
     // an emptied dashboard stays empty
     expect(normalizeHomeLayout({ version: 2, widgets: [] }).widgets).toEqual([])
@@ -171,5 +203,95 @@ describe('home dashboard layout', () => {
     expect(widgetSpan('S', 1400)).toBe(3)
     expect(widgetSpan('S', 900)).toBe(6)
     expect(widgetSpan('M', 500)).toBe(12)
+  })
+
+  it('upgrades the untouched flat v2 default unless the user kept it, and keeps customised layouts', () => {
+    const flat = flatV2DefaultLayout()
+    expect(isFlatV2Default(flat)).toBe(true)
+    expect(upgradeFlatDefault(flat, normalizeHomeLayout(flat), {})).toEqual({ layout: DEFAULT_HOME_LAYOUT, upgraded: true })
+    expect(upgradeFlatDefault(flat, normalizeHomeLayout(flat), { keepFlat: true }).upgraded).toBe(false)
+    const moved = { version: 2, widgets: [flat.widgets[1]!, flat.widgets[0]!, ...flat.widgets.slice(2)] }
+    expect(isFlatV2Default(moved)).toBe(false)
+    const tinted = { version: 2, widgets: flat.widgets.map((w, i) => (i === 0 ? { ...w, appearance: { tint: 'accent' } } : w)) }
+    expect(isFlatV2Default(tinted)).toBe(false)
+    expect(normalizeHomeMeta({ keepFlat: true, bentoNoticeSeen: 'x', other: 1 })).toEqual({ keepFlat: true })
+  })
+
+  it('packs explicitly so data order equals visual order, without holes for the bento default', () => {
+    const { layout, cells } = packHomeLayout(DEFAULT_HOME_LAYOUT, 1400)
+    const positions = layout.widgets.map((w) => cells.get(w.id)!)
+    for (let i = 1; i < positions.length; i += 1) {
+      const a = positions[i - 1]!
+      const b = positions[i]!
+      expect(a.row < b.row || (a.row === b.row && a.col < b.col)).toBe(true)
+    }
+    expect(cells.get('hero')).toEqual({ col: 0, row: 0, span: 9, rows: 4 })
+    expect(cells.get('balance')).toEqual({ col: 9, row: 0, span: 3, rows: 2 })
+    expect(cells.get('agents')).toEqual({ col: 9, row: 2, span: 3, rows: 2 })
+    // No holes before the final band at desktop width.
+    const filled: boolean[][] = []
+    let bottom = 0
+    for (const c of cells.values()) {
+      bottom = Math.max(bottom, c.row + c.rows)
+      for (let y = c.row; y < c.row + c.rows; y += 1) for (let x = c.col; x < c.col + c.span; x += 1) (filled[y] ??= [])[x] = true
+    }
+    const lastBand = bottom - widgetRowSpan(DEFAULT_HOME_LAYOUT.widgets.at(-1)!.size)
+    for (let y = 0; y < lastBand; y += 1) for (let x = 0; x < 12; x += 1) expect(filled[y]?.[x] ?? false).toBe(true)
+    // Re-packing the packed order is stable (what the user sees is what is saved).
+    expect(packHomeLayout(layout, 1400).layout).toEqual(layout)
+    const narrow = packHomeLayout(DEFAULT_HOME_LAYOUT, 500)
+    expect(narrow.layout.widgets.map((w) => w.id)).toEqual(DEFAULT_HOME_LAYOUT.widgets.map((w) => w.id))
+  })
+
+  it('restricts XL to the hero and wide charts and keeps the hero at least L', () => {
+    expect(HOME_WIDGET_ALLOWED_SIZES.hero).toEqual(['L', 'XL'])
+    expect(HOME_WIDGET_ALLOWED_SIZES.tasks).not.toContain('XL')
+    expect(HOME_WIDGET_ALLOWED_SIZES.activity).toContain('XL')
+    expect(resizeWidget(DEFAULT_HOME_LAYOUT, 'hero', 'S')).toBe(DEFAULT_HOME_LAYOUT)
+    expect(normalizeHomeLayout({ version: 2, widgets: [{ id: 'tasks', size: 'XL' }, { id: 'hero', size: 'S' }] }).widgets).toEqual([{ id: 'tasks', size: 'S' }, { id: 'hero', size: 'XL' }])
+    for (const id of HOME_WIDGET_IDS) expect(HOME_WIDGET_ALLOWED_SIZES[id]).toContain(DEFAULT_HOME_LAYOUT.widgets.find((w) => w.id === id)?.size ?? HOME_WIDGET_ALLOWED_SIZES[id][0]!)
+  })
+
+  it('sizes XL as a 9-column hero on wide screens and full width below', () => {
+    expect(widgetSpan('XL', 1400)).toBe(9)
+    expect(widgetSpan('XL', 900)).toBe(12)
+    expect(widgetSpan('XL', 500)).toBe(12)
+    expect(widgetRowSpan('XL')).toBe(widgetRowSpan('L'))
+    expect(isSupportedHomeLayout({ version: 2, widgets: [{ id: 'hero', size: 'XL' }, { id: 'activity', size: 'M' }] })).toBe(true)
+    expect(resizeWidget(DEFAULT_HOME_LAYOUT, 'activity', 'XL').widgets.find((w) => w.id === 'activity')!.size).toBe('XL')
+  })
+
+  it('reports saved sizes that were coerced by the size rules', () => {
+    expect(coercedSizes({ version: 2, widgets: [{ id: 'usage', size: 'S' }, { id: 'tasks', size: 'XL' }, { id: 'feed', size: 'M' }, { id: 'hero', size: 'XXL' }] })).toEqual(['usage', 'tasks'])
+    expect(coercedSizes(DEFAULT_HOME_LAYOUT)).toEqual([])
+    expect(coercedSizes(null)).toEqual([])
+  })
+
+  it('move ±1 always moves the card one visible position at 760/1100/1440', () => {
+    const misses: string[] = []
+    for (const width of [760, 1100, 1440]) {
+      const visual = packHomeLayout(DEFAULT_HOME_LAYOUT, width).layout.widgets.map((w) => w.id)
+      for (let i = 0; i < visual.length; i += 1) {
+        for (const delta of [-1, 1] as const) {
+          if (i + delta < 0 || i + delta >= visual.length) continue
+          const next = shiftWidgetVisual(DEFAULT_HOME_LAYOUT, visual[i]!, delta, width)
+          // Saved canonical order is the resulting visual order (stable on repack).
+          expect(packHomeLayout(next, width).layout.widgets.map((w) => w.id)).toEqual(next.widgets.map((w) => w.id))
+          const at = next.widgets.findIndex((w) => w.id === visual[i])
+          if (at !== i + delta) misses.push(`${width}:${visual[i]}:${delta}->${at}`)
+        }
+      }
+    }
+    expect(misses).toEqual([])
+  })
+
+  it('drag moves to the drop target’s on-screen place and saves the visual order', () => {
+    const width = 1440
+    const visual = packHomeLayout(DEFAULT_HOME_LAYOUT, width).layout.widgets.map((w) => w.id)
+    const last = visual.at(-1)!
+    const next = moveWidgetVisual(DEFAULT_HOME_LAYOUT, last, visual[1]!, width)
+    expect(packHomeLayout(next, width).layout).toEqual(next)
+    expect(next.widgets.findIndex((w) => w.id === last)).toBeLessThan(visual.length - 1)
+    expect(moveWidgetVisual(DEFAULT_HOME_LAYOUT, last, last, width)).toBe(DEFAULT_HOME_LAYOUT)
   })
 })

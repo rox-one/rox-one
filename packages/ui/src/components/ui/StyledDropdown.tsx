@@ -122,6 +122,7 @@ export const StyledDropdownMenuContent = React.forwardRef<
     <DropdownMenuPrimitive.Content
       ref={ref}
       data-slot="dropdown-menu-content"
+      data-glass-slot="popover"
       data-overlay-motion="true"
       sideOffset={sideOffset}
       className={cn(
@@ -226,6 +227,7 @@ export const StyledDropdownMenuSubContent = React.forwardRef<
     <DropdownMenuPrimitive.SubContent
       ref={ref}
       data-slot="dropdown-menu-sub-content"
+      data-glass-slot="popover"
       data-overlay-motion="true"
       sideOffset={sideOffset}
       className={cn(

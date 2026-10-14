@@ -2,14 +2,16 @@ import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { WelcomeStep } from "./WelcomeStep"
 import { RoleStep } from "./RoleStep"
+import { PillsStep } from "./PillsStep"
 import { LayoutStep } from "./LayoutStep"
-import { QuestionnaireStep, type QuestionnaireStepPayload } from "./QuestionnaireStep"
+import { QuestionnaireStep, parseBubbleSelections, type QuestionnaireStepPayload } from "./QuestionnaireStep"
 import {
   loadFirstRunDraft,
   saveFirstRunDraft,
   type OnboardingDraftStorage,
 } from "./identity-model"
 import { parseProfileQuestionnaire } from "./profile-questionnaire-model"
+import { parsePermissionState } from "./permissions-model"
 import type { RewardLedger } from "./onboarding-rewards"
 import { OnboardingStepProgress, type OnboardingProgressStep } from './OnboardingStepProgress'
 import type { ApiSetupMethod } from "./APISetupStep"
@@ -21,6 +23,7 @@ import { GitBashWarning, type GitBashStatus } from "./GitBashWarning"
 import { RoxCliCredentialStep, type RoxCliCredentialSubmitData } from "./RoxCliCredentialStep"
 import type { ApiKeySubmitData, CustomEndpointModelInput } from "../apisetup"
 import type { CustomEndpointApi } from '@config/llm-connections'
+import { FitToViewport } from './start-visuals'
 
 export type OnboardingStep =
   | 'welcome'
@@ -28,6 +31,8 @@ export type OnboardingStep =
   | 'role'
   /** «Choose your starting layout» (G4, flag-gated: layout engine). */
   | 'layout'
+  /** shell-layout: last first-run step — drag-n-drop the top pills (zero allowed). */
+  | 'pills'
   | 'rox-connect'
   | 'git-bash'
   | 'provider-select'
@@ -218,7 +223,8 @@ export function OnboardingWizard({
         return (
           <QuestionnaireStep
             questionnaire={draft?.questionnaire ? parseProfileQuestionnaire(draft.questionnaire) : undefined}
-            bubbles={draft?.bubbles}
+            bubbles={parseBubbleSelections(draft?.bubbles)}
+            permissions={parsePermissionState(draft?.permissions)}
             onContinue={(payload) => {
               persistQuestionnaireDraft(payload)
               onContinue()
@@ -244,6 +250,9 @@ export function OnboardingWizard({
 
       case 'layout':
         return <LayoutStep onContinue={onContinue} onBack={onBack} />
+
+      case 'pills':
+        return <PillsStep onContinue={onContinue} onBack={onBack} isFinishing={state.isFinishing} />
 
       case 'rox-connect':
         return (
@@ -330,14 +339,18 @@ export function OnboardingWizard({
   const progressStep: OnboardingProgressStep =
     state.step === 'welcome' ? 'profile' : state.step === 'complete' ? 'done' : 'connect'
   const isWelcome = state.step === 'welcome'
-  // The questionnaire is a two-column surface (form + permissions): it gets the
-  // full working width instead of the narrow single-column flow cap.
-  const isWideStep = state.step === 'questionnaire'
+  // The questionnaire is a three-column one-page surface: it gets the full
+  // window width and height instead of the narrow single-column flow cap.
+  const isWideStep = state.step === 'questionnaire' || state.step === 'role'
+  // First-run start screens: pure dark, never scroll, always one viewport.
+  // The API-setup wizard reused inside Settings keeps the app theme.
+  const isStartScreen = !state.isExistingUser
 
   return (
     <div
+      data-onboarding-start={isStartScreen ? 'true' : undefined}
       className={cn(
-        "bg-foreground-2 overflow-y-auto",
+        isStartScreen ? "onb-start dark flex flex-col overflow-y-auto text-foreground" : "bg-foreground-2 overflow-y-auto",
         !className?.includes('h-full') && "h-dvh",
         className
       )}
@@ -347,16 +360,37 @@ export function OnboardingWizard({
 
       {/* Main content — min-h-full + flex center means: center when content fits,
           natural flow + scroll when content is taller than the viewport (mobile). */}
-      <main className="flex min-h-full items-center justify-center p-4 sm:p-8">
-        {isWelcome ? (
+      <main
+        className={cn(
+          'flex min-h-full items-center justify-center p-4 sm:p-8',
+          isStartScreen && 'h-full min-h-0 flex-1 flex-col pb-4 pt-[44px] sm:pb-6 sm:pt-[48px]',
+          // Wide one-page steps (questionnaire, «Кто вы?») use the full width;
+          // FitToViewport scales them to one page like every other start screen.
+          isStartScreen && isWideStep && 'lg:px-8',
+          !isStartScreen && isWideStep && 'lg:h-full lg:min-h-0 lg:items-stretch lg:px-8 lg:pb-6 lg:pt-[50px]',
+        )}
+      >
+        {isStartScreen ? (
+          <FitToViewport>
+            <div className={cn('mx-auto flex w-full flex-col items-center', isWideStep ? 'max-w-[1440px]' : 'px-6', isWelcome ? 'max-w-[36rem]' : state.step === 'pills' ? 'max-w-[46rem]' : isWideStep ? null : 'max-w-[28rem]')}>
+              <OnboardingStepProgress step={progressStep} className="mb-5 w-full" />
+              <StepTransition key={state.step} className="w-full">{renderStep()}</StepTransition>
+            </div>
+          </FitToViewport>
+        ) : isWelcome ? (
           <div className="mx-auto max-w-lg px-6 py-8">
             <OnboardingStepProgress step={progressStep} className="mb-6" />
             <StepTransition key={state.step}>{renderStep()}</StepTransition>
           </div>
         ) : (
-          <div className={cn('flex w-full flex-col items-center', isWideStep ? 'max-w-6xl' : 'max-w-[28rem]')}>
-            <OnboardingStepProgress step={progressStep} className="mb-6 w-full" />
-            <StepTransition key={state.step} className="w-full">
+          <div
+            className={cn(
+              'flex w-full flex-col items-center',
+              isWideStep ? 'max-w-[1440px] lg:min-h-0' : 'max-w-[28rem]',
+            )}
+          >
+            <OnboardingStepProgress step={progressStep} className={cn('w-full', isWideStep ? 'mb-4' : 'mb-6')} />
+            <StepTransition key={state.step} className={cn('w-full', isWideStep && 'lg:min-h-0 lg:flex-1')}>
               {renderStep()}
             </StepTransition>
           </div>

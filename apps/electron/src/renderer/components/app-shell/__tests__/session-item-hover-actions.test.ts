@@ -8,8 +8,8 @@ const ROW = readFileSync(join(import.meta.dir, '..', '..', 'ui', 'entity-row.tsx
 const hover = ITEM.slice(ITEM.indexOf('hoverActions={'), ITEM.indexOf('titleTrailing='))
 
 describe('session row hover actions', () => {
-  test('fork, copy transcript, archive, flag — in that order, compact', () => {
-    const order = ['sessionMenu.fork', 'sessionMenu.copyTranscript', 'sessionMenu.archive', 'sessionMenu.flag'].map((key) => hover.indexOf(key))
+  test('fork, copy transcript, archive, pin — in that order, compact', () => {
+    const order = ['sessionMenu.fork', 'sessionMenu.copyTranscript', 'sessionMenu.archive', 'sessionMenu.pin'].map((key) => hover.indexOf(key))
     expect(order.every((index) => index >= 0)).toBe(true)
     expect([...order].sort((a, b) => a - b)).toEqual(order)
     expect(ITEM).toContain('hoverActionSize="compact"')
@@ -29,8 +29,8 @@ describe('session row hover actions', () => {
     expect(ROW).toContain('[&_button]:size-[22px]!')
   })
   test('compact density: 13px title, 11px meta, time on the title line', () => {
-    expect(ITEM).toContain('text-[13px]')
-    expect(ITEM).toContain('text-[11px]')
+    expect(ITEM).toContain('text-data')
+    expect(ITEM).toContain('text-caption')
     expect(ITEM).toContain('const showLastActivityInTrailing = Boolean(lastActivityText)')
   })
 })

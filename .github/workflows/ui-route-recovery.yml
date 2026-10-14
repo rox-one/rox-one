@@ -95,9 +95,14 @@ jobs:
           apps/electron/src/main/__tests__/deep-link-parse.test.ts
           apps/electron/src/main/__tests__/deep-link-routing.test.ts
       - name: Actual navigation callbacks in Chromium
-        run: >-
-          bun test apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts
-          apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts
+        run: |
+          # This step switches the fixture suites on, so it also has to hand them the
+          # browser that "Install isolated Chromium" put on the runner. Without the
+          # export the suites enable themselves and then have no browser to launch —
+          # the sibling workflow ui-001-recovery.yml exports the same variable.
+          export ROX_UI001_CHROMIUM_EXECUTABLE="$(bun -e 'import {chromium} from "@playwright/test"; process.stdout.write(chromium.executablePath())')"
+          bun test --timeout 60000 apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts \
+            apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts
         env:
           ROX_UI001_BROWSER_TEST: '1'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
