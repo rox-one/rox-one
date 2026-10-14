@@ -48,6 +48,7 @@ describe('unified surface gate', () => {
       messenger: WORKBENCH_FLAG.modeMessengerV1,
       calendar: WORKBENCH_FLAG.modeCalendarV1,
       goals: WORKBENCH_FLAG.modeGoalsV1,
+      canvas: WORKBENCH_FLAG.modeCanvasV1,
     })
   })
 

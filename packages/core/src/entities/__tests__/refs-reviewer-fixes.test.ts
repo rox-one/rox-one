@@ -45,13 +45,14 @@ describe('reviewer fix #7 — percent-encoding round-trip', () => {
 })
 
 describe('reviewer fix #8 — fragment allow-list and normalisation', () => {
-  test('fragment kinds are the nine container-relative kinds', () => {
+  test('fragment kinds are the ten container-relative kinds (incl. canvas)', () => {
     const actual: string[] = [...ENTITY_FRAGMENT_KINDS].sort()
     expect(actual).toEqual(
       [
         'base-record',
         'base-table',
         'base-view',
+        'canvas',
         'channel-message',
         'goal-check',
         'goal-target',
