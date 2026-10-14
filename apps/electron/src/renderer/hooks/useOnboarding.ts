@@ -96,6 +96,7 @@ interface UseOnboardingReturn {
 
   // Wizard actions
   handleContinue: () => void
+  handleContinueLocally: () => void
   handleBack: () => void
 
   // Provider select (new flow)
@@ -533,7 +534,7 @@ export function useOnboarding({
     }
     switch (state.step) {
       case 'role':
-        setState(s => ({ ...s, step: 'welcome' }))
+        setState(s => ({ ...s, step: 'questionnaire' }))
         break
       case 'layout':
         // Back from «starting layout» returns to the last profile step.
@@ -1327,9 +1328,20 @@ export function useOnboarding({
     })
   }, [activeProviderOAuthMethod, initialStep, initialApiSetupMethod, isWaitingForCode])
 
+  const handleContinueLocally = useCallback(async () => {
+    try {
+      await window.electronAPI.deferSetup()
+    } catch {
+      // Persistence failure still must not trap the user on the wizard.
+    }
+    saveFirstRunDraft(FIRST_RUN_DRAFT_STORAGE, { completed: true })
+    await finishFirstRun()
+  }, [finishFirstRun])
+
   return {
     state: { ...state, firstRun: firstRunState },
     handleContinue,
+    handleContinueLocally,
     handleBack,
     handleSelectProvider,
     handleSelectApiSetupMethod,

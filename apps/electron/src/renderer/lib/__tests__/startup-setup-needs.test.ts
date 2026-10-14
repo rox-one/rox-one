@@ -95,6 +95,14 @@ describe('mandatory Pocket startup gate', () => {
   it('gates an upgraded installation with a persisted local name but no central account', () => {
     expect(decideStartupAppState({ identityProbe, workspaceProbe, cloudProbe: { ok: true, value: { required: true, connected: false }, attempts: 1 } })).toBe('onboarding')
   })
+  it('enters the app when the user chose continue-locally without a central account', () => {
+    expect(decideStartupAppState({
+      identityProbe,
+      workspaceProbe,
+      cloudProbe: { ok: true, value: { required: true, connected: false }, attempts: 1 },
+      setupDeferred: true,
+    })).toBe('ready')
+  })
   it('accepts a ready central account without a local display name', () => {
     expect(decideStartupAppState({ identityProbe: { ok: true, value: { authority: 'local', name: '' }, attempts: 1 }, workspaceProbe, cloudProbe: { ok: true, value: { required: true, connected: true }, attempts: 1 } })).toBe('ready')
   })

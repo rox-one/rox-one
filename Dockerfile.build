@@ -44,6 +44,11 @@ COPY apps/viewer/package.json apps/viewer/
 COPY apps/webui/package.json apps/webui/
 COPY apps/cloud-gateway/package.json apps/cloud-gateway/
 
+# The repo postinstall (package.json) invokes this script, so it must exist before
+# install. This image is headless and never needs the Electron runtime.
+COPY scripts/ensure-electron-binary.mjs scripts/
+ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
+
 # github_token / gh_token живут в tmpfs BuildKit и не попадают в слой.
 # Пустые файлы допустимы (required=false): публичные npm-пакеты ставятся без токена.
 RUN --mount=type=cache,id=rox-bun-install,target=/root/.bun/install/cache \

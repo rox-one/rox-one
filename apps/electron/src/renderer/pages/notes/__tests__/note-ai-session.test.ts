@@ -109,11 +109,11 @@ describe('Notes AI uses the selected workspace model and invariant Agent utility
     expect(f.store.get(focusedPanelIdAtom)).toBe(f.store.get(panelStackAtom)[1].id)
   })
 
-  test('binds the explicit workspace project to both the new session and utility context', async () => {
-    const f = fixture('private/local-model', 'selected-project')
+  test('Notes has no hidden project scope: the new session and utility context stay all-projects', async () => {
+    const f = fixture('private/local-model', 'stale-hidden-project')
     await f.render()(action)
-    expect(f.events[0][1]).toMatchObject({ projectId: 'selected-project' })
-    expect(f.store.get(panelStackAtom)[1].toolContext?.projectId).toBe('selected-project')
+    expect((f.events[0][1] as { projectId?: string }).projectId).toBeUndefined()
+    expect(f.store.get(panelStackAtom)[1].toolContext?.projectId).toBeUndefined()
   })
 
   test('creates a fresh conversion draft when reuse is explicitly disabled', async () => {

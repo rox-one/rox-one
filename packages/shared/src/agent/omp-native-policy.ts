@@ -7,13 +7,8 @@ export const OMP_NATIVE_AGENT_SOURCE_SHA256='a51e06caf5e5f382c7f80c86030ae13a70e
 const seam='const expandedText = options?.synthetic ? templated : this.#modelMentions.expandMentions(templated);';
 const replacement=`const expandedText = options?.synthetic ? templated : this.#roxRequiredModes(this.#modelMentions.expandMentions(templated));`;
 const requiredModesMethod=`#roxRequiredModes(roxExpandedText: string): string {
-        // ROX mandatory modes: after native slash/template expansion, before native notices.
-        const roxFirstLine = roxExpandedText.split(/\\r?\\n/, 1)[0];
-        const roxWords = roxFirstLine.trim().split(/\\s+/);
-        const roxRequired = ["orchestrate", "workflowz", "ultrathink"];
-        const roxBare = !/^(?: {4}|\\t)/.test(roxFirstLine) && roxWords.every(word => roxRequired.includes(word));
-        const roxMissing = roxBare ? roxRequired.filter(word => !roxWords.includes(word)) : roxRequired;
-        return roxMissing.length === 0 ? roxExpandedText : roxMissing.join(" ") + "\\n\\n" + roxExpandedText;
+        // Session thinking and extra keywords are host-owned (S3-13).
+        return roxExpandedText;
     }
     `;
 const sha=(data:string)=>createHash('sha256').update(data).digest('hex');

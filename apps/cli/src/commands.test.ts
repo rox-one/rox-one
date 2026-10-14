@@ -3,7 +3,7 @@ import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, rmSync, wri
 import { spawnSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { formatCliSessionError, parseArgs, resolveApiKey, runMigrateConfig, shouldSetupLlmConnection } from './index.ts'
+import { formatCliSessionError, formatSendTimeoutMessage, parseArgs, resolveApiKey, runMigrateConfig, shouldSetupLlmConnection } from './index.ts'
 
 // ---------------------------------------------------------------------------
 // Arg parsing tests
@@ -479,6 +479,16 @@ describe('formatCliSessionError', () => {
 
   it('prints a generic error event as a string', () => {
     expect(formatCliSessionError({ type: 'error', error: 'boom' })).toBe('boom')
+  })
+})
+
+describe('formatSendTimeoutMessage (S8-03)', () => {
+  it('prints the session error when one arrived without completing', () => {
+    expect(formatSendTimeoutMessage('ROX_TRUSTED_ACCOUNT_REQUIRED')).toBe('ROX_TRUSTED_ACCOUNT_REQUIRED')
+  })
+
+  it('prints the generic timeout when no error event arrived', () => {
+    expect(formatSendTimeoutMessage(null)).toBe('Send timeout — no completion event received')
   })
 })
 

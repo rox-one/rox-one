@@ -48,6 +48,7 @@ import {
   isMemoryNavigation,
   isPagesNavigation,
   isPlaybooksNavigation,
+  isCookbooksNavigation,
   isProjectsNavigation,
   isSettingsNavigation,
   isSkillsNavigation,
@@ -111,12 +112,12 @@ export const PRIMARY_NAV: readonly PrimaryNavEntry[] = [
   { id: 'memory', linkId: 'nav:memory', group: 'more', labelKey: 'sidebar.memory', icon: GLYPHS.memory, route: () => routes.view.memory(), isActive: navState => isMemoryNavigation(navState) && navState.tab !== 'repo' },
   { id: 'memoryRepo', linkId: 'nav:memoryRepo', group: 'more', labelKey: 'sidebar.memoryRepo', icon: GLYPHS.repository, route: () => routes.view.memory('repo'), isActive: navState => isMemoryNavigation(navState) && navState.tab === 'repo' },
   { id: 'learning', linkId: 'nav:learning', group: 'more', labelKey: 'sidebar.learning', icon: GLYPHS.learning, route: () => routes.view.learning(), isActive: isLearningNavigation },
-  { id: 'browser', linkId: 'nav:browser', group: 'more', labelKey: 'surfaceTabs.browser', icon: GLYPHS.browser, route: null, action: 'open-browser', isActive: isBrowserNavigation },
+  { id: 'browser', linkId: 'nav:browser', group: 'primary', labelKey: 'surfaceTabs.browser', icon: GLYPHS.browser, route: null, action: 'open-browser', isActive: isBrowserNavigation },
   { id: 'automations', linkId: 'nav:automations', group: 'more', labelKey: 'sidebar.automations', icon: GLYPHS.automations, route: () => routes.view.automations(), isActive: isAutomationsNavigation },
   // W3.2: Встречи = the calendar surface alias; hidden once the Calendar surface owns the primary slot.
-  { id: 'meetings', linkId: 'nav:meetings', group: 'more', labelKey: 'workbench.mode.calendar', icon: GLYPHS.calendar, route: () => routes.view.meetings(), isActive: navState => navState.navigator === 'surface' && navState.surface === 'calendar', hiddenWhenShellFlag: WORKBENCH_FLAG.modeCalendarV1, modeFlag: 'meetings', preload: 'planWorkspace' },
-  { id: 'home', linkId: 'nav:home', group: 'more', labelKey: 'workbench.mode.home', icon: GLYPHS.home, route: () => routes.view.home(), isActive: seeded('home'), modeId: 'home' },
-  { id: 'feed', linkId: 'nav:feed', group: 'more', labelKey: 'workbench.mode.feed', icon: GLYPHS.feed, route: () => routes.view.feed(), isActive: seeded('feed'), modeId: 'feed', modeFlag: 'feed', preload: 'feed' },
+  { id: 'meetings', linkId: 'nav:meetings', group: 'primary', labelKey: 'workbench.mode.calendar', icon: GLYPHS.calendar, route: () => routes.view.meetings(), isActive: navState => navState.navigator === 'surface' && navState.surface === 'calendar', hiddenWhenShellFlag: WORKBENCH_FLAG.modeCalendarV1, modeFlag: 'meetings', preload: 'planWorkspace' },
+  { id: 'home', linkId: 'nav:home', group: 'primary', labelKey: 'workbench.mode.home', icon: GLYPHS.home, route: () => routes.view.home(), isActive: seeded('home'), modeId: 'home' },
+  { id: 'feed', linkId: 'nav:feed', group: 'primary', labelKey: 'workbench.mode.feed', icon: GLYPHS.feed, route: () => routes.view.feed(), isActive: seeded('feed'), modeId: 'feed', modeFlag: 'feed', preload: 'feed' },
   { id: 'pages', linkId: 'nav:pages', group: 'more', labelKey: 'sidebar.pages', icon: GLYPHS.pages, route: () => routes.view.pages(), isActive: isPagesNavigation, preload: 'pagesHome' },
   // WP6: surfaces that had no sidebar entry at all (reachable only by deep link / rail).
   { id: 'knowledge', linkId: 'nav:knowledge', group: 'more', labelKey: 'sidebar.knowledge', icon: GLYPHS.knowledge, route: () => routes.view.knowledge(), isActive: isKnowledgeNavigation },
@@ -128,6 +129,7 @@ export const PRIMARY_NAV: readonly PrimaryNavEntry[] = [
   { id: 'connections', linkId: 'nav:connections', group: 'more', labelKey: 'sidebar.connections', icon: GLYPHS.connections, route: () => routes.view.connections(), isActive: isConnectionsNavigation, preload: 'connections' },
   { id: 'developers', linkId: 'nav:developers', group: 'more', labelKey: 'sidebar.developers', icon: GLYPHS.developers, route: () => routes.view.developers(), isActive: isDevelopersNavigation, shellFlag: WORKBENCH_FLAG.devSpaceV1 },
   { id: 'playbooks', linkId: 'nav:playbooks', group: 'more', labelKey: 'sidebar.playbooks', icon: GLYPHS.playbooks, route: () => routes.view.playbooks(), isActive: isPlaybooksNavigation, shellFlag: WORKBENCH_FLAG.playbooksV1 },
+  { id: 'cookbooks', linkId: 'nav:cookbooks', group: 'more', labelKey: 'sidebar.cookbooks', icon: GLYPHS.cookbooks, route: () => routes.view.cookbooks(), isActive: isCookbooksNavigation, shellFlag: WORKBENCH_FLAG.cookbooksV1, preload: 'cookbooks' },
   { id: 'settings', linkId: 'nav:settings', group: 'more', labelKey: 'sidebar.settings', icon: GLYPHS.settings, route: () => routes.view.settings(), isActive: isSettingsNavigation, footer: true },
 ]
 
@@ -196,15 +198,38 @@ export function resolveNavSurfaces({ shellFlags, modeFlags = {}, placements = {}
 }
 
 /**
- * The sidebar's visible, ordered entries (primary first, then «Ещё»): flags,
- * then the user's placement — hidden and pill-placed surfaces drop out (pill
- * ones return to the primary list while the pill is off screen).
+ * Sidebar v2: the fixed order of the core surfaces in the primary list —
+ * Главная, Входящие, Команда/Чат, Лента, Заметки, Задачи, Проекты, Календарь,
+ * Браузер. Same order on every page and in the collapsed rail; primary
+ * surfaces not listed here follow in registry order.
+ */
+export const CORE_NAV_ORDER: readonly string[] = [
+  HOME_NAV_ID, 'inbox', 'messenger', 'sessions', 'feed', 'docs', 'tasks', 'goals', 'projects', 'calendar', 'meetings', 'browser',
+]
+
+function coreRank(id: string): number {
+  const index = CORE_NAV_ORDER.indexOf(id)
+  return index === -1 ? CORE_NAV_ORDER.length : index
+}
+
+/**
+ * The sidebar's visible, ordered entries (primary first, then «Ещё»).
+ *
+ * Sidebar v2: the sidebar is the complete navigation — a surface placed in
+ * the top pills ALSO keeps its sidebar row (the pills are a shortcut, not a
+ * second home). Before v2 placement was exclusive, so the default pill set
+ * (Главная, Лента, Команда, Заметки, Браузер) vanished from the sidebar and
+ * the expanded list shrank to Входящие / Задачи / Проекты. Only «Скрыт»
+ * removes a surface. `pillNavIds` is accepted for API compatibility.
  */
 export function resolvePrimaryNav(context: PrimaryNavContext): ResolvedPrimaryNavEntry[] {
-  const inPill = (id: string) => context.pillNavIds ? context.pillNavIds.has(id) : true
-  const visible = resolveNavSurfaces(context).filter(entry =>
-    entry.placement === 'primary' || entry.placement === 'more' || (entry.placement === 'pills' && !inPill(entry.id)))
-  return [...visible.filter(e => e.group === 'primary'), ...visible.filter(e => e.group === 'more')]
+  const visible = resolveNavSurfaces(context).filter(entry => entry.placement !== 'hidden')
+  const primary = visible
+    .map((entry, index) => ({ entry, index }))
+    .filter(({ entry }) => entry.group === 'primary')
+    .sort((a, b) => coreRank(a.entry.id) - coreRank(b.entry.id) || a.index - b.index)
+    .map(({ entry }) => entry)
+  return [...primary, ...visible.filter(e => e.group === 'more')]
 }
 
 /** Link ids the registry owns (primary + «Ещё»), whatever the flags. */
