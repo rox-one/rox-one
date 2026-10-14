@@ -62,4 +62,14 @@ describe('protocol values stay out of the shared/types boot barrel', () => {
     expect(hook).toContain("from '@rox/shared/protocol/channels'")
     expect(staticImportLines(hook)).not.toMatch(/from ['"]@rox\/shared\/protocol['"]/)
   })
+
+  it('CollectionBulkBar value-imports the bulk limit, not dto.ts', () => {
+    const bar = read('renderer/components/app-shell/collection/CollectionBulkBar.tsx')
+    const staticImports = staticImportLines(bar)
+    expect(staticImports).toContain("from '@rox/shared/protocol/bulk-limit'")
+    expect(staticImports).not.toMatch(/BULK_UPDATE_MAX_IDS[\s\S]*from ['"]@rox\/shared\/protocol\/dto['"]/)
+    const dto = readFileSync(join(import.meta.dir, '../../../../../packages/shared/src/protocol/dto.ts'), 'utf8')
+    expect(dto).toContain("export { BULK_UPDATE_MAX_IDS } from './bulk-limit'")
+    expect(dto).not.toMatch(/export const BULK_UPDATE_MAX_IDS/)
+  })
 })
