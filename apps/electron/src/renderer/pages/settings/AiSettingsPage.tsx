@@ -1300,7 +1300,7 @@ export default function AiSettingsPage() {
                   </button>
                   <button
                     onClick={() => handleAddProviderAccount('local')}
-                    className="inline-flex items-center h-8 px-3 text-sm rounded-lg bg-background shadow-minimal hover:bg-foreground/[0.02] transition-colors"
+                    className="inline-flex items-center h-8 px-3 text-sm rounded-lg bg-background shadow-minimal hover:bg-surface-hover transition-colors"
                   >
                     {t("settings.ai.addOllama")}
                   </button>

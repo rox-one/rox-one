@@ -204,7 +204,7 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
               {toolRows.length > 0 && <LeftSidebar isCollapsed={isCollapsed} onExpand={onExpandMore} links={toolRows} />}
               {experimentalRows.length > 0 && (
                 <section className={toolsOpen ? 'mt-2' : undefined} aria-label={t('sidebar.experimentalFeatures')}>
-                  {!isCollapsed && toolsOpen && <div className="px-3 pb-0.5 pt-1 text-[11px] font-semibold uppercase caps-label text-text-muted">{t('sidebar.experimentalFeatures')}</div>}
+                  {!isCollapsed && toolsOpen && <div className="px-3 pb-0.5 pt-1 text-caption font-semibold uppercase caps-label text-text-muted">{t('sidebar.experimentalFeatures')}</div>}
                   <LeftSidebar isCollapsed={isCollapsed} onExpand={onExpandMore} links={experimentalRows} />
                 </section>
               )}
@@ -273,10 +273,10 @@ export function SidebarSectionHeader({ id, label, open, onToggle }: { id: string
       aria-controls={id}
       onClick={onToggle}
       data-sidebar-section-header=""
-      className="group/section-header flex h-7 w-full items-center gap-1 rounded-[var(--radius-control)] px-3 text-left text-[11px] font-semibold uppercase caps-label text-text-muted outline-none transition-colors hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+      className="group/section-header flex h-7 w-full items-center gap-1 rounded-[var(--radius-control)] px-3 text-left text-caption font-semibold uppercase caps-label text-text-muted outline-none transition-colors hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
     >
       <span className="min-w-0 flex-1 truncate">{label}</span>
-      <ChevronRight className={cn('h-3 w-3 shrink-0 opacity-0 transition-transform group-hover/section-header:opacity-100 group-focus-visible/section-header:opacity-100 motion-reduce:transition-none', open && 'rotate-90')} aria-hidden />
+      <ChevronRight className={cn('icon-status shrink-0 opacity-0 transition-transform group-hover/section-header:opacity-100 group-focus-visible/section-header:opacity-100 motion-reduce:transition-none', open && 'rotate-90')} aria-hidden />
     </button>
   )
 }
