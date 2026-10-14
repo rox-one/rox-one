@@ -480,7 +480,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
     onCompose: mailReady ? () => composeState.start('new', null) : null,
     onRefresh: () => { void refreshInbox() },
     loading: initialLoading,
-    error: inboxFailed ? errorEntries.map(([, e]) => String(e)).join(' · ') : null,
+    error: inboxFailed ? t('inbox.sourceError', { sources: errorEntries.map(([key]) => t(key === 'mail' ? 'inbox.kind.mail' : `inbox.source.${key}`)).join(', ') }) : null,
   })
   const resetFilters = () => { setQuery(''); setFilter('all'); setPreferences((previous) => ({ ...previous, signalFilter: 'all', unreadOnly: false })) }
   const narrowed = !!query.trim() || preferences.unreadOnly || preferences.signalFilter !== 'all' || filter !== 'all'
