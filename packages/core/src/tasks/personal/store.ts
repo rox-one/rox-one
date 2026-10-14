@@ -541,8 +541,10 @@ export class PersonalTaskStore {
   }
 
   /** ⌘K / drag target: list, project, area, heading. */
-  moveTo(id: string, target: TaskMoveTarget): PersonalTask {
+  /** `opts.keepOrder`: keep the task's order when its list does not change. */
+  moveTo(id: string, target: TaskMoveTarget, opts: { keepOrder?: boolean } = {}): PersonalTask {
     const task = this.require(id)
+    const prevList = task.list
     if (target.list) {
       task.list = target.list
       if (target.list !== 'upcoming') task.startAt = undefined
@@ -565,7 +567,7 @@ export class PersonalTaskStore {
       }
     }
     if (target.headingId !== undefined) task.headingId = target.headingId ?? undefined
-    task.order = this.nextOrder(task.list)
+    if (!(opts.keepOrder && task.list === prevList)) task.order = this.nextOrder(task.list)
     for (const child of this.bundle.tasks) {
       if (child.parentId !== id) continue
       child.projectId = task.projectId
@@ -690,6 +692,47 @@ export class PersonalTaskStore {
     return id
   }
 
+  // ── Dependencies ──
+
+  /** True when `id` transitively depends on `target` (follows blockedBy). */
+  dependsOn(id: string, target: string): boolean {
+    const seen = new Set<string>()
+    const stack = [id]
+    while (stack.length) {
+      const current = stack.pop()!
+      if (current === target) return true
+      if (seen.has(current)) continue
+      seen.add(current)
+      stack.push(...(this.get(current)?.blockedBy ?? []))
+    }
+    return false
+  }
+
+  /** Can `id` be blocked by `blocker` without self-links, duplicates or cycles? */
+  canAddDependency(id: string, blocker: string): boolean {
+    if (id === blocker || !this.get(id) || !this.get(blocker)) return false
+    if (this.get(id)!.blockedBy?.includes(blocker)) return false
+    return !this.dependsOn(blocker, id)
+  }
+
+  /** Marks `id` as blocked by `blocker`. Returns false (no change) if it would form a cycle. */
+  addDependency(id: string, blocker: string): boolean {
+    if (!this.canAddDependency(id, blocker)) return false
+    const task = this.require(id)
+    task.blockedBy = [...(task.blockedBy ?? []), blocker]
+    this.audit('dependency.add', id, blocker)
+    return true
+  }
+
+  removeDependency(id: string, blocker: string): boolean {
+    const task = this.get(id)
+    if (!task?.blockedBy?.includes(blocker)) return false
+    const next = task.blockedBy.filter((other) => other !== blocker)
+    task.blockedBy = next.length ? next : undefined
+    this.audit('dependency.remove', id, blocker)
+    return true
+  }
+
   /** Remove tasks (and their subtasks) from the bundle. */
   remove(id: string): string[] {
     const ids = new Set([id])
@@ -704,6 +747,12 @@ export class PersonalTaskStore {
       }
     }
     this.bundle.tasks = this.bundle.tasks.filter((task) => !ids.has(task.id))
+    // Drop dangling dependency links to removed tasks.
+    for (const task of this.bundle.tasks) {
+      if (!task.blockedBy?.some((other) => ids.has(other))) continue
+      const next = task.blockedBy.filter((other) => !ids.has(other))
+      task.blockedBy = next.length ? next : undefined
+    }
     this.audit('delete', id)
     return [...ids]
   }
