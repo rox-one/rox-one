@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
-import { RPC_CHANNELS } from '../../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 

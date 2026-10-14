@@ -13,7 +13,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import type { ToolchainToolStatus, ToolchainToolName } from '../../shared/types'
-import { RPC_CHANNELS } from '../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 
 interface UseToolchainStatusResult {
   /** True when the connected server registered the toolchain manager handler. */

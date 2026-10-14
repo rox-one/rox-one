@@ -16,7 +16,6 @@ import {
 import { cn } from '@/lib/utils'
 import {
   addDays,
-  daysBetween,
   MILESTONE_STATUSES,
   milestoneProgress,
   parseIsoDate,
@@ -28,6 +27,8 @@ import {
   type RoadmapMilestone,
   type RoadmapStage,
 } from '@rox/shared/projects/roadmap'
+import { applySpanDrag, barGeometry, ganttScale, ganttTicks, spanFromDates, todayOffset, type GanttDragMode } from '@/components/gantt/gantt-engine'
+import { useGanttDrag, useTrackWidth } from '@/components/gantt/use-gantt'
 import { AddRow, AutoTextarea, CheckBox, EmptyLine, IconButton, InlineInput } from './roadmap-ui'
 
 export const STATUS_DOT: Record<MilestoneStatus, string> = {
@@ -54,28 +55,13 @@ const STATUS_FILL: Record<MilestoneStatus, string> = {
 const LABEL_COL = 168
 const LANE_H = 28
 
-type DragMode = 'move' | 'start' | 'end'
-
-interface DragState {
-  id: string
-  mode: DragMode
-  startX: number
-  pxPerDay: number
-  deltaDays: number
-}
-
-function applyDrag(m: RoadmapMilestone, mode: DragMode, days: number): RoadmapMilestone {
+function applyDrag(m: RoadmapMilestone, mode: GanttDragMode, days: number): RoadmapMilestone {
   if (!days) return m
   if (mode === 'move') return shiftMilestone(m, days)
-  const start = m.startDate ?? m.dueDate
-  const due = m.dueDate ?? m.startDate
-  if (!start || !due) return m
-  if (mode === 'start') {
-    const next = addDays(start, days)
-    return { ...m, startDate: next > due ? due : next, dueDate: due }
-  }
-  const next = addDays(due, days)
-  return { ...m, startDate: start, dueDate: next < start ? start : next }
+  const span = spanFromDates(m.startDate, m.dueDate)
+  if (!span) return m
+  const next = applySpanDrag(span, mode, days)
+  return { ...m, startDate: next.start, dueDate: next.end }
 }
 
 export function StatusMenu({
@@ -127,69 +113,30 @@ export function RoadmapTimeline({
 }) {
   const { t } = useTranslation()
   const trackRef = React.useRef<HTMLDivElement>(null)
-  const [trackWidth, setTrackWidth] = React.useState(0)
-  const [drag, setDrag] = React.useState<DragState | null>(null)
+  const trackWidth = useTrackWidth(trackRef)
   const today = toIsoDate(new Date())
 
-  React.useLayoutEffect(() => {
-    const el = trackRef.current
-    if (!el) return
-    const measure = () => setTrackWidth(el.getBoundingClientRect().width)
-    measure()
-    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
-    ro?.observe(el)
-    return () => ro?.disconnect()
-  }, [])
+  // Keep the window stable while dragging so the bar follows the pointer.
+  const range = React.useMemo(() => roadmapTimelineRange(milestones, today), [milestones, today])
+  const scale = ganttScale(range, trackWidth)
+  const { totalDays, pxPerDay } = scale
+  const { drag, onPointerDown: startDrag, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture } = useGanttDrag({
+    pxPerDay,
+    onCommit: (id, mode, deltaDays) => onChange(milestones.map((m) => (m.id === id ? applyDrag(m, mode, deltaDays) : m))),
+    onClick: onFocusMilestone,
+  })
+  const onPointerDown = (e: React.PointerEvent, m: RoadmapMilestone, mode: GanttDragMode) => startDrag(e, m.id, mode)
 
   const preview = React.useMemo(
     () => (drag ? milestones.map((m) => (m.id === drag.id ? applyDrag(m, drag.mode, drag.deltaDays) : m)) : milestones),
     [milestones, drag],
   )
-  // Keep the window stable while dragging so the bar follows the pointer.
-  const baseRange = React.useMemo(() => roadmapTimelineRange(milestones, today), [milestones, today])
-  const range = baseRange
+  const todayLeft = range ? todayOffset(range, today, pxPerDay) : null
   const dated = preview.filter((m) => m.startDate || m.dueDate)
   const undated = preview.filter((m) => !m.startDate && !m.dueDate)
 
-  const totalDays = range ? Math.max(1, daysBetween(range.start, range.end) + 1) : 1
-  const pxPerDay = trackWidth > 0 ? trackWidth / totalDays : 0
-
-  const ticks = React.useMemo(() => {
-    if (!range || pxPerDay <= 0) return [] as { left: number; label: string; major: boolean }[]
-    const out: { left: number; label: string; major: boolean }[] = []
-    const monthFmt = new Intl.DateTimeFormat(locale, { month: 'short' })
-    const dayFmt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' })
-    const step = pxPerDay * 7 >= 56 ? 7 : pxPerDay * 14 >= 56 ? 14 : 0
-    for (let i = 0; i < totalDays; i++) {
-      const d = parseIsoDate(addDays(range.start, i))
-      const left = i * pxPerDay
-      if (d.getDate() === 1) out.push({ left, label: monthFmt.format(d), major: true })
-      else if (step && d.getDay() === 1 && (step === 7 || Math.floor(i / 7) % 2 === 0) && d.getDate() > 3 && d.getDate() < 29) {
-        out.push({ left, label: dayFmt.format(d), major: false })
-      }
-    }
-    return out
-  }, [range, pxPerDay, totalDays, locale])
-
-  const onPointerDown = (e: React.PointerEvent, m: RoadmapMilestone, mode: DragMode) => {
-    if (pxPerDay <= 0) return
-    e.preventDefault()
-    e.stopPropagation()
-    ;(e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId)
-    setDrag({ id: m.id, mode, startX: e.clientX, pxPerDay, deltaDays: 0 })
-  }
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!drag) return
-    const deltaDays = Math.round((e.clientX - drag.startX) / drag.pxPerDay)
-    if (deltaDays !== drag.deltaDays) setDrag({ ...drag, deltaDays })
-  }
-  const onPointerUp = () => {
-    if (!drag) return
-    const { id, mode, deltaDays } = drag
-    setDrag(null)
-    if (deltaDays) onChange(milestones.map((m) => (m.id === id ? applyDrag(m, mode, deltaDays) : m)))
-    else onFocusMilestone(id)
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const ticks = React.useMemo(() => ganttTicks(range, scale, locale), [range, pxPerDay, totalDays, locale])
 
   const dateFmt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' })
 
@@ -214,13 +161,13 @@ export function RoadmapTimeline({
           className="relative min-w-0"
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          onPointerCancel={() => setDrag(null)}
+          onPointerCancel={onPointerCancel}
         >
           {dated.map((m) => {
-            const start = m.startDate ?? m.dueDate!
-            const due = m.dueDate ?? m.startDate!
-            const left = daysBetween(range.start, start) * pxPerDay
-            const width = Math.max(pxPerDay, (daysBetween(start, due) + 1) * pxPerDay)
+            const span = spanFromDates(m.startDate, m.dueDate)!
+            const start = span.start
+            const due = span.end
+            const { left, width } = barGeometry(range, span, pxPerDay)
             const progress = milestoneProgress(m)
             const pct = progress.total ? progress.done / progress.total : m.status === 'done' ? 1 : 0
             const dragging = drag?.id === m.id
@@ -246,6 +193,7 @@ export function RoadmapTimeline({
                     aria-valuetext={`${start} — ${due}`}
                     data-testid="project-timeline-bar"
                     onPointerDown={(e) => onPointerDown(e, m, 'move')}
+                    onLostPointerCapture={onLostPointerCapture}
                     onKeyDown={(e) => {
                       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                         e.preventDefault()
@@ -281,10 +229,10 @@ export function RoadmapTimeline({
             )
           })}
           {/* today marker */}
-          {daysBetween(range.start, today) >= 0 && daysBetween(today, range.end) >= 0 ? (
+          {todayLeft != null ? (
             <div
               className="pointer-events-none absolute inset-y-0 w-px bg-accent/70"
-              style={{ left: LABEL_COL + (daysBetween(range.start, today) + 0.5) * pxPerDay }}
+              style={{ left: LABEL_COL + todayLeft }}
               title={t('projectRoadmap.today')}
             />
           ) : null}

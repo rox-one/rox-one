@@ -89,7 +89,11 @@ describe('SiyuanProcessManager', () => {
         expect(cmd).toBe('/fake/kernel')
         expect(args.some((a) => a.startsWith('--wd=') && a.includes('/fake'))).toBe(true)
         expect(args.some((a) => a.includes('19201'))).toBe(true)
-        expect(args.some((a) => a.includes('6806'))).toBe(false)
+        // `--accessAuthCode` is a random 32-hex string, so scanning it for the
+        // literal port makes this assertion flaky (~1 run in 2 000). Only the
+        // non-secret args can legitimately carry a port.
+        const nonSecretArgs = args.filter((a) => !a.startsWith('--accessAuthCode='))
+        expect(nonSecretArgs.some((a) => a.includes('6806'))).toBe(false)
         expect(opts.cwd).toBe('/fake')
         expect(opts.cwd).not.toContain('knowledge-workspaces')
         return {

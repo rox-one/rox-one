@@ -8,7 +8,7 @@
  * arbitrary webContents.
  */
 
-import { RPC_CHANNELS } from '../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { ShellActionPayload } from '../shared/types'
 import type { WindowManager } from './window-manager'
 

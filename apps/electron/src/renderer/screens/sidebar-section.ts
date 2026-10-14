@@ -41,6 +41,8 @@ export interface SidebarSectionItem {
   menu?: SidebarItemMenuAction[]
   /** Secondary muted text (time, due date). Already formatted by the caller. */
   secondary?: string
+  /** i18n key for the secondary text (wins over `secondary`). */
+  secondaryKey?: string
   target: SidebarTarget
 }
 

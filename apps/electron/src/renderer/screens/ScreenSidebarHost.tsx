@@ -5,7 +5,7 @@ import { lazy, Suspense } from 'react'
  * useScreenSidebar(config) and renders nothing; the shell renders the config.
  * Screens are lazy so only the active one's data hooks run.
  */
-const PUBLISHERS: Record<string, React.LazyExoticComponent<() => null>> = {
+const PUBLISHERS: Record<string, React.LazyExoticComponent<() => React.ReactElement | null>> = {
   sessions: lazy(() => import('./sessions/SessionsScreenSidebar').then((m) => ({ default: m.SessionsScreenSidebar }))),
   browser: lazy(() => import('./browser/BrowserScreenSidebar').then((m) => ({ default: m.BrowserScreenSidebar }))),
 }
