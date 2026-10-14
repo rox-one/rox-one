@@ -120,6 +120,23 @@ export function planDailyNoteWrite(input: { date: string; existing: string | nul
   return renderDailyTemplate(input.date, input.template)
 }
 
+/**
+ * One-time cleanup for notes created before the live overlay: drops the stored
+ * sessions block (and the `## Sessions` heading the old writer added right
+ * before it). Returns `null` when there is nothing to strip.
+ */
+export function stripLegacySessionsBlock(markdown: string): string | null {
+  const start = markdown.indexOf(DAILY_SESSIONS_START)
+  const end = start < 0 ? -1 : markdown.indexOf(DAILY_SESSIONS_END, start)
+  if (start < 0 || end < 0) return null
+  let from = start
+  const heading = /(?:^|\n)## Sessions[ \t]*\n+$/.exec(markdown.slice(0, start))
+  if (heading) from = heading.index + (heading[0].startsWith('\n') ? 1 : 0)
+  const before = markdown.slice(0, from).replace(/\n+$/, '')
+  const after = markdown.slice(end + DAILY_SESSIONS_END.length).replace(/^\n+/, '')
+  return before && after ? `${before}\n\n${after}` : `${before || after}${(before || after).endsWith('\n') ? '' : '\n'}`
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

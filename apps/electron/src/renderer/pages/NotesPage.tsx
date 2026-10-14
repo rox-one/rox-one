@@ -1672,6 +1672,9 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     if (!await flushBeforeAction()) return
     const note = await window.electronAPI.getDailyNote(activeWorkspaceId, date)
     await refreshNotes()
+    // Opening may strip a legacy sessions block; an already-open clean copy must
+    // re-read it, or its next save would CAS against the pre-cleanup revision.
+    if (activeNoteIdRef.current === note.id && !dirtyRef.current) await openNote(note.id)
     navigate(routes.view.notes(note.id))
   }
 

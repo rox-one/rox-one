@@ -59,6 +59,7 @@ import {
   formatDateId,
   INSTALL_DAY_FILE,
   planDailyNoteWrite,
+  stripLegacySessionsBlock,
 } from '../../knowledge/daily-notes.ts'
 
 export const HANDLED_CHANNELS = [
@@ -1137,12 +1138,22 @@ async function readInstallDay(notesRoot: string, now = new Date()): Promise<stri
   return today
 }
 
-async function upsertDailyNote(notesRoot: string, date: string, writeNative: NativeNoteWriter): Promise<string> {
+/**
+ * `explicitOpen` is only set by GET_DAILY_NOTE (the user opening the note, which
+ * re-reads it afterwards); background passes never rewrite an existing note.
+ */
+async function upsertDailyNote(notesRoot: string, date: string, writeNative: NativeNoteWriter, explicitOpen = false): Promise<string> {
   const dailyDate = assertDailyDate(date)
   const id = dailyNoteId(dailyDate)
   const filePath = notePathFromId(notesRoot, id)
   await mkdir(dirname(filePath), { recursive: true })
-  if (existsSync(filePath)) return id
+  if (existsSync(filePath)) {
+    if (!explicitOpen) return id
+    const existing = await readFile(filePath, 'utf-8')
+    const cleaned = stripLegacySessionsBlock(existing)
+    if (cleaned !== null) await writeNative('save', [{ kind: 'write', noteId: id, expectedRevision: markdownRevision(existing), content: cleaned }])
+    return id
+  }
   const template = await readFile(join(notesRoot, TEMPLATES_DIR, DAILY_TEMPLATE_FILE), 'utf-8').catch(() => '')
   const content = planDailyNoteWrite({ date: dailyDate, existing: null, template })
   if (content !== null) await writeNative('create', [{ kind: 'write', noteId: id, expectedRevision: null, content }])
@@ -2250,7 +2261,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     if (!isClaimableLive(act)) throw new Error('daily note upsert is not live')
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     await ensureDailyNotes(notesRoot, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
-    const id = await upsertDailyNote(notesRoot, date || formatDateId(new Date()), (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
+    const id = await upsertDailyNote(notesRoot, date || formatDateId(new Date()), (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes), true)
     await refreshVaultIndex(notesRoot)
     return readNote(notesRoot, id)
   }, { access: 'localElectron' })

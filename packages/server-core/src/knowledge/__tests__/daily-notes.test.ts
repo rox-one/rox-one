@@ -13,6 +13,7 @@ import {
   formatDateId,
   mergeSessionsBlock,
   planDailyNoteWrite,
+  stripLegacySessionsBlock,
   sessionFallsOnDate,
   sessionsForDate,
 } from '../daily-notes'
@@ -75,5 +76,31 @@ describe('planDailyNoteWrite', () => {
     const existing = buildDailyNoteMarkdown({ date: '2026-10-14' })
     expect(planDailyNoteWrite({ date: '2026-10-14', existing })).toBeNull()
     expect(planDailyNoteWrite({ date: '2026-10-14', existing: `${existing}\nmy edits` })).toBeNull()
+  })
+})
+
+describe('stripLegacySessionsBlock', () => {
+  test('drops the stored block and its heading, keeping user text around it', () => {
+    const legacy = buildDailyNoteMarkdown({ date: '2026-10-14', sessions: [{ id: 's', name: 'Старая', createdAt: new Date(2026, 9, 14, 9).getTime() }] })
+    const withEdits = `${legacy}\nмои заметки\n`
+    const cleaned = stripLegacySessionsBlock(withEdits)!
+    expect(cleaned).not.toContain(DAILY_SESSIONS_START)
+    expect(cleaned).not.toContain('## Sessions')
+    expect(cleaned).not.toContain('Старая')
+    expect(cleaned).toContain('# 2026-10-14')
+    expect(cleaned).toContain('мои заметки')
+    expect(stripLegacySessionsBlock(cleaned)).toBeNull()
+  })
+
+  test('is a no-op for notes without a complete block', () => {
+    expect(stripLegacySessionsBlock('# 2026-10-14\n')).toBeNull()
+    expect(stripLegacySessionsBlock(`x\n${DAILY_SESSIONS_START}\nno end`)).toBeNull()
+  })
+
+  test('only the explicit open path cleans up, with the current revision', () => {
+    const source = readFileSync(join(import.meta.dir, '../../handlers/rpc/notes.ts'), 'utf8')
+    expect(source).toContain("expectedRevision: markdownRevision(existing), content: cleaned")
+    expect(source).toMatch(/upsertDailyNote\(notesRoot, date \|\| formatDateId\(new Date\(\)\), [^\n]*, true\)/)
+    expect(source).toContain('await upsertDailyNote(notesRoot, date, writeNative)\n')
   })
 })

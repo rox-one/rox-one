@@ -31,4 +31,11 @@ describe('daily note sessions overlay', () => {
     expect(page).toContain('dailySessionsFor(sessionMetaMap.values(), dailyDate)')
     expect(page).toContain('data-testid="notes-daily-sessions"')
   })
+
+  test('opening the daily note re-reads an already-open clean copy after cleanup', () => {
+    const page = readFileSync(join(import.meta.dir, '../NotesPage.tsx'), 'utf8')
+    const handler = page.slice(page.indexOf('const handleDaily = async'), page.indexOf('const handleDailyShift'))
+    expect(handler.indexOf('getDailyNote')).toBeLessThan(handler.indexOf('await openNote(note.id)'))
+    expect(handler).toContain('activeNoteIdRef.current === note.id && !dirtyRef.current')
+  })
 })
