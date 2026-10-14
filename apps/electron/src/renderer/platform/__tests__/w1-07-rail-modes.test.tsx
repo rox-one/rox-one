@@ -15,7 +15,6 @@ import { getDefaultStore } from 'jotai'
 import { RESET } from 'jotai/utils'
 import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { NavigationContext } from '@/contexts/NavigationContext'
-import { CORE_MODES } from '../modes-seed'
 import { resolveCompactWorkspaceSelection } from '@/components/app-shell/compact-workspace-navigation'
 import type { PanelStackEntry } from '@/atoms/panel-stack'
 import { ActivityRail } from '../ActivityRail'
@@ -80,8 +79,8 @@ describe('railModeEntries (pure)', () => {
   })
 })
 
-function renderRail(): string {
-  const value = { navigate: async () => {}, navigationState: { navigator: 'sessions' } } as never
+function renderRail(navigationState: Record<string, unknown> = { navigator: 'sessions' }): string {
+  const value = { navigate: async () => {}, navigationState } as never
   return renderToStaticMarkup(
     <I18nextProvider i18n={i18n}>
       <NavigationContext.Provider value={value}>
@@ -93,25 +92,30 @@ function renderRail(): string {
 
 const railIds = (html: string) => [...html.matchAll(/data-testid="(rail-(?:item|mode)-[^"]+)"/g)].map((match) => match[1])
 
-/** Baseline rail on main: the seven core modes (A1/TZ), pinned with ⌘1…7. */
-const BASELINE_RAIL_IDS = CORE_MODES.map((mode) => `rail-item-${mode.contribution.id}`)
+/** WP5 (#1580): flags off, the rail shows the registry's primary group; «Ещё» is closed. */
+const BASELINE_RAIL_IDS = ['inbox', 'sessions', 'docs', 'tasks', 'projects'].map((id) => `rail-item-${id}`)
 
 describe('ActivityRail render', () => {
-  it('all mode flags off: exactly the baseline seven modes, no modes group', () => {
+  it('all mode flags off: exactly the registry primary group, no modes group, «Ещё» closed', () => {
     const html = renderRail()
     expect(railIds(html)).toEqual(BASELINE_RAIL_IDS)
     expect(html).not.toContain('data-testid="rail-modes"')
+    expect(html).toContain('data-testid="rail-more"')
+    expect(html).not.toContain('data-testid="rail-more-group"')
   })
 
-  it('mode flags on: baseline modes, then registered modes in pill order (incl. a wave-2 mode)', () => {
+  it('mode flags on: unified modes join the primary group in spec order; a wave-2 mode follows', () => {
     registerSeededMode(fakeMode)
     const store = getDefaultStore()
     for (const flag of [...UNIFIED_FLAGS, WIKI_FLAG]) store.set(workbenchFlagAtom(flag), true)
     const html = renderRail()
     expect(html).toContain('data-testid="rail-modes"')
-    const extras = railModeEntries(pill([...UNIFIED_FLAGS, WIKI_FLAG])).map((mode) => `rail-mode-${mode.id}`)
-    expect(extras).toEqual(['rail-mode-messenger', 'rail-mode-calendar', 'rail-mode-goals', 'rail-mode-wiki'])
-    expect(railIds(html)).toEqual([...BASELINE_RAIL_IDS, ...extras])
+    expect(railModeEntries(pill([...UNIFIED_FLAGS, WIKI_FLAG])).map((mode) => mode.id)).toEqual(['messenger', 'calendar', 'goals', 'wiki'])
+    // Projects gives its primary slot to «Цели и проекты» (goals) and moves to «Ещё».
+    expect(railIds(html)).toEqual([
+      ...['inbox', 'sessions', 'messenger', 'docs', 'calendar', 'tasks', 'goals'].map((id) => `rail-item-${id}`),
+      'rail-mode-wiki',
+    ])
   })
 
   it('docs.shared.v1 relabels the rail Notes mode («Документы») without touching the ids', () => {
@@ -120,8 +124,32 @@ describe('ActivityRail render', () => {
     const html = renderRail()
     expect(html).toContain('workbench.mode.docs')
     expect(html).not.toContain('workbench.mode.notes')
-    expect(railIds(html)).toContain('rail-item-notes')
+    expect(railIds(html)).toContain('rail-item-docs')
     expect(html).not.toContain('data-testid="rail-modes"')
+  })
+})
+
+describe('ActivityRail «Ещё» (WP5 review3)', () => {
+  const moreRow = (html: string) => html.match(/<button[^>]*data-testid="rail-more"[^>]*>/)?.[0] ?? ''
+
+  it('stays closed and actionable when nothing inside is active', () => {
+    const html = renderRail()
+    expect(html).not.toContain('data-testid="rail-more-group"')
+    expect(moreRow(html)).not.toContain('aria-disabled')
+  })
+
+  it('is forced open by an active extra screen, header locked (aria-disabled)', () => {
+    const html = renderRail({ navigator: 'screen', screen: 'radar' })
+    expect(html).toContain('data-testid="rail-more-group"')
+    expect(html).toContain('data-testid="rail-extra-screens"')
+    expect(moreRow(html)).toContain('aria-disabled="true"')
+    expect(moreRow(html)).toContain('aria-expanded="true"')
+  })
+
+  it('is forced open by an active registry «Ещё» destination', () => {
+    const html = renderRail({ navigator: 'memory' })
+    expect(html).toContain('data-testid="rail-more-group"')
+    expect(moreRow(html)).toContain('aria-disabled="true"')
   })
 })
 
