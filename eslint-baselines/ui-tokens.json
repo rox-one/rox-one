@@ -119,9 +119,7 @@
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/app-shell/AppShell.tsx": {
-      "rox/icon-size-tokens": 12,
-      "rox/no-foreground-opacity": 5,
-      "rox/no-raw-color": 3,
+      "rox/icon-size-tokens": 4,
       "rox/prefer-primitives": 2
     },
     "apps/electron/src/renderer/components/app-shell/AttachmentPreview.tsx": {
@@ -175,9 +173,6 @@
     "apps/electron/src/renderer/components/app-shell/HeaderStatusLane.tsx": {
       "rox/icon-size-tokens": 2,
       "rox/no-foreground-opacity": 3
-    },
-    "apps/electron/src/renderer/components/app-shell/LeftSidebar.tsx": {
-      "rox/no-foreground-opacity": 4
     },
     "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": {
       "rox/no-foreground-opacity": 1
