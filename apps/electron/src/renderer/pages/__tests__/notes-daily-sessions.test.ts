@@ -44,11 +44,17 @@ describe('daily note sessions overlay', () => {
     expect(handler).toContain('activeNoteIdRef.current === note.id && !dirtyRef.current')
   })
 
-  test('every explicit route open of an existing daily note runs the cleanup before reading', () => {
+  test('explicit route opens ask for the cleanup only when the read body has the legacy marker', () => {
     const page = readFileSync(join(import.meta.dir, '../NotesPage.tsx'), 'utf8')
+    expect(page).toContain("const LEGACY_DAILY_SESSIONS_MARKER = '<!-- rox:daily-sessions -->'")
     const effect = page.slice(page.indexOf('    if (selectedNoteId) {\n      const noteId'), page.indexOf('}, [selectedNoteId, openNote, activeWorkspaceId])'))
-    expect(effect).toContain('notesRef.current.some((note) => note.id === noteId)')
-    expect(effect.indexOf('getDailyNote(workspaceId, openedDailyDate)')).toBeLessThan(effect.indexOf('if (!cancelled) void openNote(noteId)'))
+    const read = effect.indexOf('void openNote(noteId).then(')
+    const gate = effect.indexOf('if (!contentRef.current.includes(LEGACY_DAILY_SESSIONS_MARKER)) return')
+    const cleanup = effect.indexOf('getDailyNote(workspaceId, openedDailyDate)')
+    expect(read).toBeGreaterThan(-1)
+    expect(read).toBeLessThan(gate)
+    expect(gate).toBeLessThan(cleanup)
+    expect(effect.match(/getDailyNote/g)).toHaveLength(1)
     // Background re-reads (external change) call openNote directly and never clean up.
     const external = page.slice(page.indexOf("if (payload.reason !== 'external') return"), page.indexOf('return () => {\n      subscribed = false'))
     expect(external).not.toContain('getDailyNote')

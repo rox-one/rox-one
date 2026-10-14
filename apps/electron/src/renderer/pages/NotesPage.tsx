@@ -186,6 +186,9 @@ function shiftDateString(value: string, deltaDays: number): string {
   return `${yyyy}-${mm}-${dd}`
 }
 
+/** Written into daily notes by the pre-overlay writer; its presence means cleanup is due. */
+const LEGACY_DAILY_SESSIONS_MARKER = '<!-- rox:daily-sessions -->'
+
 function parseDailyNoteDate(noteId?: string): string | null {
   const match = noteId?.match(/^daily\/(\d{4}-\d{2}-\d{2})$/)
   return match?.[1] ?? null
@@ -541,8 +544,6 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId, rightSessionContext])
   // PERF-09: a revisit paints the cached list at once; refreshNotes revalidates it.
   const [notes, setNotes] = React.useState<NoteSummary[]>(() => cachedNotesList(activeWorkspaceId) ?? [])
-  const notesRef = React.useRef(notes)
-  notesRef.current = notes
   // Stable insertion order for sidebar — only updated on full refreshes, not optimistic saves
   const [sidebarOrder, setSidebarOrder] = React.useState<string[]>(() => (cachedNotesList(activeWorkspaceId) ?? []).map(n => n.id))
   const [searchResults, setSearchResults] = React.useState<NoteSummary[] | null>(null)
@@ -1330,14 +1331,18 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       const noteId = parseNoteBlockAddress(selectedNoteId).noteId
       const openedDailyDate = parseDailyNoteDate(noteId)
       const workspaceId = activeWorkspaceId
-      // Every explicit open (sidebar, search, wikilink, route) of an existing daily
-      // note runs the one-time legacy Sessions cleanup first, server-side and
-      // CAS'd; background re-reads go straight to openNote and never write.
-      if (openedDailyDate && workspaceId && notesRef.current.some((note) => note.id === noteId)) {
+      // Explicit opens (sidebar, search, wikilink, route) read first; only a daily
+      // note whose body still carries the legacy sessions marker asks the server
+      // for the one-time cleanup, which then announces an external change so every
+      // open copy re-reads. handleDaily cleans up before navigating, so its read
+      // no longer has the marker and nothing is called twice.
+      if (openedDailyDate && workspaceId) {
         let cancelled = false
-        void window.electronAPI.getDailyNote(workspaceId, openedDailyDate)
-          .catch(() => undefined)
-          .then(() => { if (!cancelled) void openNote(noteId) })
+        void openNote(noteId).then(() => {
+          if (cancelled || activeNoteIdRef.current !== noteId || dirtyRef.current) return
+          if (!contentRef.current.includes(LEGACY_DAILY_SESSIONS_MARKER)) return
+          void window.electronAPI.getDailyNote(workspaceId, openedDailyDate).catch(() => undefined)
+        })
         return () => { cancelled = true }
       }
       void openNote(noteId)
