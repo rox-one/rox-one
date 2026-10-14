@@ -616,6 +616,10 @@ export class CookbooksRuntime {
       const wasSeeded = this.storeSeeded
       this.storeSeeded = false
       if (wasSeeded) {
+        // resolveStoreSnapshot() awaits file I/O and the provider chain; the
+        // runtime may have stopped meanwhile (app quit, racing stop()). A
+        // restart then would spawn a sidecar that nothing ever stops.
+        if (this.state !== 'running') return
         this.o.log('info', 'cookbooks-runtime: store is empty; restarting the sidecar to clear it')
         try {
           // The restart is asynchronous; a failed one leaves the caller with a
