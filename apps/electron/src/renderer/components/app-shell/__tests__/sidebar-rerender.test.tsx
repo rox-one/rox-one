@@ -35,7 +35,7 @@ i18n.use({
   process(value: string, key: string | string[]) {
     const k = Array.isArray(key) ? key[0] : key
     if (k === 'sidebar.contextNavigation') counts.sidebar++
-    if (k === 'workbench.mode.more') counts.nav++
+    if (k === 'sidebar.tools') counts.nav++
     return value
   },
 })
@@ -74,7 +74,7 @@ function MemoShell() {
   const links = React.useMemo(makeLinks, [])
   const onExpand = React.useCallback(noop, [])
   return (
-    <ShellSidebarNav baseLinks={links} isCollapsed={false} onExpand={onExpand} onOpenBrowser={noop} isExpanded={alwaysExpanded} toggleExpanded={noop} applicationSectionsOpen={false} onApplicationSectionsOpenChange={noop} />
+    <ShellSidebarNav baseLinks={links} isCollapsed={false} onExpand={onExpand} onOpenBrowser={noop} isExpanded={alwaysExpanded} toggleExpanded={noop} />
   )
 }
 
