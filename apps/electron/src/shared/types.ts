@@ -889,6 +889,34 @@ export interface RoversListResult {
   entries: RoversEntryFull[]
 }
 
+/** Mirrors @rox/cloud-runner HandoffStatus (renderer must not import server packages). */
+export type CloudHandoffPhase =
+  | 'resolving_key' | 'packaging' | 'creating_sandbox' | 'uploading' | 'starting' | 'waiting_ready'
+  | 'ready' | 'failed' | 'cancelled'
+export interface CloudHandoffStatus {
+  handoffId: string
+  sessionId: string
+  phase: CloudHandoffPhase
+  startedAt: number
+  updatedAt: number
+  uploaded?: number
+  total?: number
+  sessionUrl?: string
+  sandboxId?: string
+  keySource?: 'user' | 'broker'
+  linkMode?: 'signed' | 'web_host'
+  ended?: boolean
+  failure?: { code: string; message: string }
+  excludedCount?: number
+}
+export interface CloudHandoffConfig {
+  enabled: boolean
+  userKeyConfigured: boolean
+  brokerConfigured: boolean
+  ssoConfigured: boolean
+  webHostConfigured: boolean
+}
+
 export interface ElectronAPI {
   openDesign: OpenDesignApi
 
@@ -900,6 +928,15 @@ export interface ElectronAPI {
   getRuntimeTraceSnapshot(query: import('@rox/core/runtime-trace').RuntimeTraceQuery): Promise<import('@rox/core/runtime-trace').RuntimeTraceSnapshot>
   readRuntimeTraceEvents(query: import('@rox/core/runtime-trace').RuntimeEventsQuery): Promise<import('@rox/core/runtime-trace').RuntimeEventsPage>
   readRuntimeTracePayload(query: import('@rox/core/runtime-trace').RuntimePayloadQuery): Promise<import('@rox/core/runtime-trace').RuntimePayloadPage>
+
+  // Cloud handoff «В облако» (docs/cloud-handoff-design.md). The Daytona key is write-only from here.
+  getCloudHandoffConfig(): Promise<CloudHandoffConfig>
+  startCloudHandoff(args: { sessionId: string }): Promise<CloudHandoffStatus>
+  getCloudHandoffStatus(args: { handoffId?: string; sessionId?: string; open?: boolean }): Promise<CloudHandoffStatus | null>
+  cancelCloudHandoff(args: { handoffId: string }): Promise<{ ok: boolean }>
+  endCloudHandoff(args: { sessionId: string }): Promise<{ ok: boolean }>
+  setCloudHandoffKey(args: { key: string }): Promise<{ ok: true }>
+  clearCloudHandoffKey(): Promise<{ ok: true }>
 
   // Cloud Runs (PRD docs/cloud-runs-prd.md)
   getCloudRunsConfig(): Promise<{

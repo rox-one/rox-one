@@ -117,6 +117,25 @@ export interface StoredConfig {
     daytonaApiUrl?: string;
     daytonaSecretRef?: string;
   };
+  // Cloud handoff («В облако»): move a chat into a Daytona sandbox. Off by default.
+  // The user's Daytona key lives in the encrypted credential store, never here.
+  cloudHandoff?: {
+    enabled?: boolean;
+    /** id.rox.one issuer (default https://id.rox.one). */
+    ssoIssuer?: string;
+    /** Public PKCE client registered at id.rox.one for cloud sessions. */
+    ssoClientId?: string;
+    /** Stable https host fronting sessions, e.g. https://cloud.rox.one. */
+    webHost?: string;
+    daytonaSnapshot?: string;
+    daytonaApiUrl?: string;
+    daytonaRegion?: string;
+    /**
+     * Rox-hosted broker for default-key handoffs (env ROX_CLOUD_HANDOFF_BROKER_URL).
+     * The shared Daytona key lives only there, never on the desktop.
+     */
+    brokerUrl?: string;
+  };
   // Visitor access (port-matrix row a1.6). Present + not disabled registers the
   // `visitor-access` access-policy plugin at boot; absent registers nothing.
   visitors?: {

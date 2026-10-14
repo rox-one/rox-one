@@ -15,6 +15,15 @@ import { RPC_CHANNELS } from './channels'
 // ---------------------------------------------------------------------------
 
 export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
+  // cloudHandoff «В облако» — reads local session files + the local encrypted Daytona key
+  RPC_CHANNELS.cloudHandoff.GET_CONFIG,
+  RPC_CHANNELS.cloudHandoff.START,
+  RPC_CHANNELS.cloudHandoff.STATUS,
+  RPC_CHANNELS.cloudHandoff.CANCEL,
+  RPC_CHANNELS.cloudHandoff.END,
+  RPC_CHANNELS.cloudHandoff.SET_KEY,
+  RPC_CHANNELS.cloudHandoff.CLEAR_KEY,
+
   RPC_CHANNELS.voice.COPY_TEXT,
   // Repository capture uses the verified local Electron source owner.
   RPC_CHANNELS.codeIntelligence.PREVIEW,

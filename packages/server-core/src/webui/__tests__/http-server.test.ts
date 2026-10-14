@@ -439,7 +439,7 @@ describe('WebUI OIDC (Rox ID) sessions', () => {
     return handler
   }
 
-  function oidcHandler(overrides?: { allowPasswordLogin?: boolean; publicUrl?: string }) {
+  function oidcHandler(overrides?: { allowPasswordLogin?: boolean; publicUrl?: string; allowedSubs?: string[] }) {
     const issuer = createFakeIssuer()
     ISSUERS.push(issuer)
     const handler = createHandler({
@@ -447,6 +447,7 @@ describe('WebUI OIDC (Rox ID) sessions', () => {
         issuer: issuer.issuer,
         clientId: CLIENT_ID,
         publicUrl: overrides?.publicUrl ?? 'http://127.0.0.1:3100',
+        ...(overrides?.allowedSubs ? { allowedSubs: overrides.allowedSubs } : {}),
       },
       allowPasswordLogin: overrides?.allowPasswordLogin,
     })
@@ -525,6 +526,24 @@ describe('WebUI OIDC (Rox ID) sessions', () => {
       issuer: issuer.issuer,
       user: { sub: 'rox-user-1', email: 'user@rox.one', name: 'Rox User', username: 'roxuser' },
     })
+  })
+
+  it('admits the pinned owner subject (cloud handoff)', async () => {
+    const { handler, issuer } = oidcHandler({ allowedSubs: ['someone-else', 'rox-user-1'] })
+    const { state, nonce, stateCookie } = await startLogin(handler)
+    issuer.setNonce(nonce)
+    const callback = await handler.fetch(callbackRequest(state, stateCookie))
+    expect(callback.status).toBe(302)
+    expect(callback.headers.get('set-cookie')).toContain('craft_session=')
+  })
+
+  it('rejects a verified subject that is not the pinned owner', async () => {
+    const { handler, issuer } = oidcHandler({ allowedSubs: ['owner-sub'] })
+    const { state, nonce, stateCookie } = await startLogin(handler)
+    issuer.setNonce(nonce)
+    const callback = await handler.fetch(callbackRequest(state, stateCookie))
+    expect(callback.status).toBe(403)
+    expect(callback.headers.get('set-cookie') ?? '').not.toContain('craft_session=')
   })
 
   it('rejects a tampered state without setting a cookie', async () => {
@@ -877,5 +896,81 @@ describe('/api/config modesLanding', () => {
     const configRes = await fetch(`${baseUrl}/api/config`, { headers: { cookie: extractSessionCookie(authRes) } })
     expect(configRes.status).toBe(200)
     expect(await configRes.json()).toEqual({ wsUrl: 'wss://127.0.0.1:9100', modesLanding: false })
+  })
+})
+
+describe('OIDC owner pinning config', () => {
+  it('parses ROX_WEBUI_OIDC_ALLOWED_SUBS and gates subjects', async () => {
+    const { readOidcConfigFromEnv, isOidcSubjectAllowed } = await import('../auth')
+    const cfg = readOidcConfigFromEnv({
+      ROX_WEBUI_OIDC_ISSUER: 'https://id.rox.one/',
+      ROX_WEBUI_OIDC_CLIENT_ID: 'c',
+      ROX_WEBUI_PUBLIC_URL: 'https://x.example/',
+      ROX_WEBUI_OIDC_ALLOWED_SUBS: ' a , ,b ',
+    })!
+    expect(cfg.allowedSubs).toEqual(['a', 'b'])
+    expect(isOidcSubjectAllowed(cfg, 'b')).toBe(true)
+    expect(isOidcSubjectAllowed(cfg, 'bb')).toBe(false)
+    expect(isOidcSubjectAllowed({}, 'anyone')).toBe(true)
+  })
+})
+
+describe('OIDC redirect host pattern (rotating signed links)', () => {
+  it('uses the request host only when it matches the pattern', async () => {
+    const { readOidcConfigFromEnv, resolveOidcRedirectUri } = await import('../auth')
+    const cfg = readOidcConfigFromEnv({
+      ROX_WEBUI_OIDC_ISSUER: 'https://id.rox.one',
+      ROX_WEBUI_OIDC_CLIENT_ID: 'c',
+      ROX_WEBUI_PUBLIC_URL: 'https://9100-tok1.proxy.daytona.works',
+      ROX_WEBUI_PUBLIC_HOST_PATTERN: '9100-[a-z0-9-]+\\.proxy\\.daytona\\.works',
+    })!
+    expect(resolveOidcRedirectUri(cfg, '9100-tok2.proxy.daytona.works')).toBe('https://9100-tok2.proxy.daytona.works/api/auth/callback')
+    expect(resolveOidcRedirectUri(cfg, 'evil.example')).toBeNull()
+    expect(resolveOidcRedirectUri(cfg, '9100-x.proxy.daytona.works.evil.example')).toBeNull()
+    expect(resolveOidcRedirectUri({ publicUrl: 'https://a.example' }, 'whatever')).toBe('https://a.example/api/auth/callback')
+  })
+})
+
+describe('cloud handoff broker mount', () => {
+  it('never activates inside Electron or without explicit enablement + shared key', async () => {
+    const { maybeCreateCloudHandoffBroker } = await import('../cloud-handoff-broker')
+    const env = { ROX_CLOUD_HANDOFF_BROKER_ENABLED: '1', ROX_CLOUD_HANDOFF_DAYTONA_API_KEY: 'k'.repeat(20), ROX_CLOUD_HANDOFF_BROKER_ALLOWED_CLIENT_IDS: 'rox-desktop' }
+    expect(maybeCreateCloudHandoffBroker({ env, isElectron: true })).toBeUndefined()
+    // No audience allow-list ⇒ fail closed (not mounted).
+    expect(maybeCreateCloudHandoffBroker({ env: { ...env, ROX_CLOUD_HANDOFF_BROKER_ALLOWED_CLIENT_IDS: ' ' }, isElectron: false })).toBeUndefined()
+    expect(maybeCreateCloudHandoffBroker({ env: { ...env, ROX_CLOUD_HANDOFF_BROKER_ENABLED: '0' }, isElectron: false })).toBeUndefined()
+    expect(maybeCreateCloudHandoffBroker({ env: { ROX_CLOUD_HANDOFF_BROKER_ENABLED: '1' }, isElectron: false })).toBeUndefined()
+    const handler = maybeCreateCloudHandoffBroker({ env, isElectron: false, fetchImpl: async () => new Response('', { status: 401 }) })!
+    expect(await handler(new Request('https://h/other'))).toBeNull()
+    const res = await handler(new Request('https://h/api/cloud-handoff/v1/sandboxes', { headers: { Authorization: 'Bearer t' } }))
+    expect(res!.status).toBe(401)
+  })
+})
+
+describe('cloud handoff broker token audience', () => {
+  const jwt = (claims: Record<string, unknown>) =>
+    `h.${Buffer.from(JSON.stringify(claims)).toString('base64url')}.sig`
+  const idp = (sub: string) => async (url: string) => {
+    if (url.endsWith('/.well-known/openid-configuration')) return Response.json({ userinfo_endpoint: 'https://id.rox.one/userinfo' })
+    return Response.json({ sub })
+  }
+  const env = { ROX_CLOUD_HANDOFF_BROKER_ENABLED: '1', ROX_CLOUD_HANDOFF_DAYTONA_API_KEY: 'k'.repeat(20), ROX_CLOUD_HANDOFF_BROKER_ALLOWED_CLIENT_IDS: 'rox-desktop' }
+  const call = async (token: string) => {
+    const { maybeCreateCloudHandoffBroker } = await import('../cloud-handoff-broker')
+    const handler = maybeCreateCloudHandoffBroker({ env, isElectron: false, fetchImpl: idp('user-1') as never })!
+    return (await handler(new Request('https://h/api/cloud-handoff/v1/nope', { headers: { Authorization: `Bearer ${token}` } })))!.status
+  }
+
+  it('rejects tokens issued to another id.rox.one client, opaque tokens without introspection and sub mismatch', async () => {
+    expect(await call(jwt({ sub: 'user-1', aud: 'other-app', azp: 'other-app' }))).toBe(401)
+    expect(await call('opaque-token-value')).toBe(401)
+    expect(await call(jwt({ sub: 'someone-else', azp: 'rox-desktop' }))).toBe(401)
+    expect(await call(jwt({ sub: 'user-1', iss: 'https://evil.example', azp: 'rox-desktop' }))).toBe(401)
+  })
+
+  it('accepts a token whose aud/azp/client_id is an allowed client', async () => {
+    // Authenticated: reaches the router (unknown route ⇒ 404, not 401) — no Daytona call is made.
+    expect(await call(jwt({ sub: 'user-1', iss: 'https://id.rox.one', aud: ['api', 'rox-desktop'] }))).toBe(404)
+    expect(await call(jwt({ sub: 'user-1', client_id: 'rox-desktop' }))).toBe(404)
   })
 })
