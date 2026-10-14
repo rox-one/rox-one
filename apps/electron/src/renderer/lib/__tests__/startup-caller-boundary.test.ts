@@ -252,6 +252,12 @@ describe('actual App startup caller boundary', () => {
     expect(h.authorities).toEqual([null])
     expect(h.workspaces).toEqual(['web-workspace'])
   })
+
+  it('does not paint host-inventory "sessions unavailable" as a WebUI load error', () => {
+    const app = readFileSync(file, 'utf8')
+    expect(app).not.toContain('data-host-session-capability="unavailable"')
+    expect(app).toContain('markHostSessionsUnavailable')
+  })
   it('an upgraded named local profile cannot bypass the mandatory cloud gate', async () => {
     const h = harness({ getOrgIdentity: async () => ({ ...nativeIdentity, authority: 'local' }), getRoxCloudState: async () => ({ required: true, connected: false, account: null }) })
     await h.run()

@@ -274,3 +274,11 @@ for (const kind of ['desktop', 'compact'] as const) {
     })
   })
 }
+
+describe('compact permission indicator (S3-12)', () => {
+  it('always renders icon plus the localized short label, including WebUI', () => {
+    const source = readFileSync(resolve(renderer, 'components/app-shell/input/CompactPermissionModeSelector.tsx'), 'utf8')
+    expect(source).toContain('t(MODE_LABEL_KEYS[permissionMode].short)')
+    expect(source).not.toContain('!isWebUI && <span>')
+  })
+})
