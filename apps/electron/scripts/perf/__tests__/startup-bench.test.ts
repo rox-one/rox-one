@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { startupBudgetFor } from '../../../src/shared/startup-perf'
-import { COLD_FMP_BUDGET_MS, isolatedEnv, median, metricsFromTimeline, missingMetrics } from '../startup-bench'
+import { COLD_FMP_BUDGET_MS, isolatedEnv, median, metricsFromTimeline, missingMetrics, defaultMainEntry } from '../startup-bench'
 
 describe('startup bench metrics', () => {
   it('extracts window/FMP marks and falls back to the first settled screen', () => {
@@ -60,5 +60,27 @@ describe('startup bench NO DATA detection', () => {
   it('reports only metrics with an undefined median', () => {
     expect(missingMetrics([{ metric: 'a', median: 1 }, { metric: 'b', median: undefined }])).toEqual(['b'])
     expect(missingMetrics([{ metric: 'a', median: 0 }])).toEqual([])
+  })
+})
+
+describe('#1573 boot entry metrics', () => {
+  it('prefers dist/boot.cjs and falls back to main.cjs', () => {
+    expect(defaultMainEntry('/d', () => true)).toBe('/d/boot.cjs')
+    expect(defaultMainEntry('/d', () => false)).toBe('/d/main.cjs')
+  })
+
+  it('derives main bundle load from main:boot → main:entry and reports cache state', () => {
+    const m = metricsFromTimeline({
+      timeOriginEpochMs: 0,
+      platform: 'darwin',
+      compileCache: 'enabled',
+      marks: [
+        { name: 'main:boot', atMs: 40, source: 'main' },
+        { name: 'main:entry', atMs: 790.4, source: 'main' },
+      ],
+    })
+    expect(m.mainLoadMs).toBe(750)
+    expect(m.compileCache).toBe('enabled')
+    expect(metricsFromTimeline({ timeOriginEpochMs: 0, platform: 'linux', marks: [] }).mainLoadMs).toBeUndefined()
   })
 })

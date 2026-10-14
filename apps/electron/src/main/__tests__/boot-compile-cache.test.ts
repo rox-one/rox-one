@@ -71,3 +71,37 @@ describe('#1573 compile-cache dir (per-user, 0700)', () => {
     rmSync(home, { recursive: true, force: true })
   })
 })
+
+describe('#1560 boot.cjs compileCache state mapping', () => {
+  const { mkdtempSync, writeFileSync, copyFileSync, rmSync } = require('node:fs') as typeof import('node:fs')
+  const { tmpdir } = require('node:os') as typeof import('node:os')
+  const { spawnSync } = require('node:child_process') as typeof import('node:child_process')
+
+  // statusExpr: JS expression for enableCompileCache's return (S = stub status constants).
+  function state(statusExpr: string, env: Record<string, string> = {}) {
+    const dir = mkdtempSync(join(tmpdir(), 'rox-boot-'))
+    const home = mkdtempSync(join(tmpdir(), 'rox-home-'))
+    copyFileSync(join(root, 'src/main/boot.cjs'), join(dir, 'boot.cjs'))
+    writeFileSync(join(dir, 'stub.cjs'), `const m = require('node:module'); const S = { FAILED: 0, ENABLED: 1, ALREADY_ENABLED: 2, DISABLED: 3 };
+      Object.defineProperty(m, 'constants', { value: { ...(m.constants || {}), compileCacheStatus: S }, configurable: true });
+      m.enableCompileCache = () => (${statusExpr})`)
+    writeFileSync(join(dir, 'main.cjs'), 'process.stdout.write(String(globalThis.__roxBoot.compileCache))')
+    const r = spawnSync('node', ['-r', join(dir, 'stub.cjs'), join(dir, 'boot.cjs')], {
+      env: { PATH: process.env.PATH ?? '', HOME: home, XDG_CACHE_HOME: join(home, 'c'), LOCALAPPDATA: join(home, 'l'), ...env }, encoding: 'utf8' })
+    rmSync(dir, { recursive: true, force: true }); rmSync(home, { recursive: true, force: true })
+    return r.stdout
+  }
+
+  it('maps every compileCacheStatus', () => {
+    expect(state('{ status: S.ENABLED }')).toBe('enabled')
+    expect(state('{ status: S.ALREADY_ENABLED }')).toBe('enabled')
+    expect(state('{ status: S.DISABLED }')).toBe('disabled')
+    expect(state('{ status: S.FAILED }')).toBe('failed')
+    expect(state('{ status: 99 }')).toBe('failed')
+    expect(state('undefined')).toBe('failed')
+  })
+
+  it('reports disabled for ROX_DISABLE_COMPILE_CACHE=1', () => {
+    expect(state('{ status: S.ENABLED }', { ROX_DISABLE_COMPILE_CACHE: '1' })).toBe('disabled')
+  })
+})

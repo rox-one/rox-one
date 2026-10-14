@@ -46,10 +46,19 @@ function parseArgs(argv: string[]): Args {
     strict: argv.includes('--strict'),
     out: value('--out'),
     md: value('--md'),
-    main: resolve(value('--main') ?? join(repo, 'apps/electron/dist/main.cjs')),
+    main: resolve(value('--main') ?? defaultMainEntry(join(repo, 'apps/electron/dist'))),
     timeoutMs: Number(value('--timeout') ?? 60_000),
     profile: value('--profile'),
   }
+}
+
+/**
+ * The packaged entry is `dist/boot.cjs` (#1573 compile-cache shim, then main.cjs);
+ * fall back to main.cjs for builds that predate it.
+ */
+export function defaultMainEntry(distDir: string, exists: (path: string) => boolean = existsSync): string {
+  const boot = join(distDir, 'boot.cjs')
+  return exists(boot) ? boot : join(distDir, 'main.cjs')
 }
 
 export interface RunMetrics {
@@ -66,6 +75,9 @@ export interface RunMetrics {
   fmpSource?: string
   /** ms of `main:skills-sync:inline` when the merge fell back to the main thread. */
   skillsInlineMs?: number
+  /** `main:entry − main:boot`: reading + compiling + evaluating the main bundle's prelude (#1573). */
+  mainLoadMs?: number
+  compileCache?: string | null
 }
 
 export function metricsFromTimeline(timeline: StartupTimeline): Omit<RunMetrics, 'run' | 'kind' | 'ok'> {
@@ -80,6 +92,10 @@ export function metricsFromTimeline(timeline: StartupTimeline): Omit<RunMetrics,
     fmpMs: fmpSource ? marks[fmpSource] : undefined,
     fmpSource,
     skillsInlineMs: marks[STARTUP_MARKS.skillsSyncInline],
+    mainLoadMs: marks[STARTUP_MARKS.mainBoot] !== undefined && marks[STARTUP_MARKS.mainEntry] !== undefined
+      ? marks[STARTUP_MARKS.mainEntry]! - marks[STARTUP_MARKS.mainBoot]!
+      : undefined,
+    compileCache: timeline.compileCache ?? null,
   }
 }
 
@@ -158,7 +174,7 @@ async function runOnce(args: Args, profile: string, run: number): Promise<RunMet
       if (interactive && interactive.name !== 'renderer:interactive:ready' && (performance.now() - started) > interactive.atMs + 2_000) break
       await new Promise(r => setTimeout(r, 100))
     }
-    if (!timeline) throw new Error('app exposed no startup timeline (is dist/main.cjs from this branch?)')
+    if (!timeline) throw new Error('app exposed no startup timeline (is the built entry from this branch?)')
     const metrics = metricsFromTimeline(timeline)
     return { run, kind, ok: metrics.fmpMs !== undefined, launchWallMs, ...metrics, ...(metrics.fmpMs === undefined ? { error: 'no FMP/interactive mark before timeout' } : {}) }
   } catch (error) {
@@ -177,6 +193,8 @@ function report(args: Args, runs: RunMetrics[]) {
   const fmpMedian = median(warm.flatMap(r => r.fmpMs ?? []))
   const cold = runs.filter(r => r.kind === 'cold' && r.ok)
   const coldFmpMedian = median(cold.flatMap(r => r.fmpMs ?? []))
+  const warmMainLoad = median(warm.flatMap(r => r.mainLoadMs ?? []))
+  const coldMainLoad = median(cold.flatMap(r => r.mainLoadMs ?? []))
   const checks = [
     { metric: 'window-created', median: windowMedian, budget: windowBudget },
     { metric: 'first-meaningful-paint', median: fmpMedian, budget: fmpBudget },
@@ -191,9 +209,11 @@ function report(args: Args, runs: RunMetrics[]) {
     '|---|---:|---:|---|',
     ...checks.map(c => `| ${c.metric} | ${c.median ?? 'n/a'} | ${c.budget} | ${c.pass ? 'PASS' : c.median === undefined ? 'NO DATA' : 'OVER'} |`),
     '',
-    '| run | kind | launch wall | window-created | first-paint | fmp | fmp source | skills inline | error |',
-    '|---:|---|---:|---:|---:|---:|---|---:|---|',
-    ...runs.map(r => `| ${r.run} | ${r.kind} | ${r.launchWallMs ?? ''} | ${r.windowCreatedMs ?? ''} | ${r.firstPaintMs ?? ''} | ${r.fmpMs ?? ''} | ${r.fmpSource ?? ''} | ${r.skillsInlineMs ?? ''} | ${r.error ?? ''} |`),
+    `Main bundle load (main:boot → main:entry, report-only): cold ${coldMainLoad ?? 'n/a'} ms, warm ${warmMainLoad ?? 'n/a'} ms; compile cache: ${runs.find(r => r.compileCache)?.compileCache ?? 'n/a (launched without boot.cjs)'}`,
+    '',
+    '| run | kind | launch wall | main load | window-created | first-paint | fmp | fmp source | skills inline | error |',
+    '|---:|---|---:|---:|---:|---:|---:|---|---:|---|',
+    ...runs.map(r => `| ${r.run} | ${r.kind} | ${r.launchWallMs ?? ''} | ${r.mainLoadMs ?? ''} | ${r.windowCreatedMs ?? ''} | ${r.firstPaintMs ?? ''} | ${r.fmpMs ?? ''} | ${r.fmpSource ?? ''} | ${r.skillsInlineMs ?? ''} | ${r.error ?? ''} |`),
   ]
   return { checks, markdown: lines.join('\n') }
 }

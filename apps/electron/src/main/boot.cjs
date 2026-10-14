@@ -42,14 +42,34 @@ function prepareCacheDir(dir) {
   return dir
 }
 
+// Startup timeline hand-off (read by main/startup-marks.ts as `main:boot` + compileCache).
+const boot = { atMs: require('node:perf_hooks').performance.now(), compileCache: 'unsupported' }
+globalThis.__roxBoot = boot
+
+/** Maps `enableCompileCache()`'s result onto the timeline's compileCache state. */
+function cacheState(mod, result) {
+  const s = mod.constants && mod.constants.compileCacheStatus
+  if (!s || !result) return 'failed'
+  switch (result.status) {
+    case s.ENABLED:
+    case s.ALREADY_ENABLED: return 'enabled'
+    case s.DISABLED: return 'disabled' // NODE_DISABLE_COMPILE_CACHE
+    case s.FAILED: return 'failed'
+    default: return 'failed'
+  }
+}
+
 try {
   const mod = require('node:module')
-  if (typeof mod.enableCompileCache === 'function' && process.env.ROX_DISABLE_COMPILE_CACHE !== '1') {
+  if (process.env.ROX_DISABLE_COMPILE_CACHE === '1') {
+    boot.compileCache = 'disabled'
+  } else if (typeof mod.enableCompileCache === 'function') {
     const raw = compileCacheDir()
     const dir = raw && prepareCacheDir(raw)
-    if (dir) mod.enableCompileCache(dir)
+    boot.compileCache = dir ? cacheState(mod, mod.enableCompileCache(dir)) : 'unsafe-dir'
   }
 } catch {
   // Never block startup on the cache.
+  boot.compileCache = 'failed'
 }
 require('./main.cjs')
