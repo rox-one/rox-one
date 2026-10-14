@@ -972,11 +972,95 @@ function capText(text: unknown, budget: { left: number; truncated: boolean }): s
 }
 
 /** Diff preview for Edit / MultiEdit / Write inputs; undefined for anything else. */
-export function buildPermissionPreview(toolName: string, input: Record<string, unknown>, filePath: string): PermissionPreview | undefined {
+const PERMISSION_PREVIEW_MAX_READ_BYTES = 1_000_000;
+const PERMISSION_PREVIEW_MAX_LCS_CELLS = 4_000_000;
+
+/** Current content of the target file, or null when it does not exist / is unreadable / too large. */
+function readExistingForPreview(filePath: string): string | null {
+  try {
+    const abs = expandPath(filePath);
+    if (!existsSync(abs)) return null;
+    const buf = readFileSync(abs);
+    if (buf.length > PERMISSION_PREVIEW_MAX_READ_BYTES) return null;
+    return buf.toString('utf8');
+  } catch {
+    return null;
+  }
+}
+
+function countOccurrences(haystack: string, needle: string): number {
+  if (!needle) return 0;
+  let count = 0;
+  for (let at = haystack.indexOf(needle); at !== -1; at = haystack.indexOf(needle, at + needle.length)) count++;
+  return count;
+}
+
+/**
+ * Line diff of old → new as change blocks (no context lines). Common prefix and
+ * suffix are trimmed, the middle is diffed with LCS when small enough, otherwise
+ * shown as a single replaced block.
+ */
+export function lineDiffHunks(oldText: string, newText: string): Array<{ oldText: string; newText: string }> {
+  const split = (t: string) => (t === '' ? [] : t.replace(/\n$/, '').split('\n'));
+  const a = split(oldText);
+  const b = split(newText);
+  let start = 0;
+  while (start < a.length && start < b.length && a[start] === b[start]) start++;
+  let endA = a.length;
+  let endB = b.length;
+  while (endA > start && endB > start && a[endA - 1] === b[endB - 1]) { endA--; endB--; }
+  const midA = a.slice(start, endA);
+  const midB = b.slice(start, endB);
+  if (midA.length === 0 && midB.length === 0) return [];
+  if (midA.length * midB.length > PERMISSION_PREVIEW_MAX_LCS_CELLS || midA.length === 0 || midB.length === 0) {
+    return [{ oldText: midA.join('\n'), newText: midB.join('\n') }];
+  }
+  const n = midA.length;
+  const m = midB.length;
+  const lcs: Uint32Array[] = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      lcs[i]![j] = midA[i] === midB[j] ? lcs[i + 1]![j + 1]! + 1 : Math.max(lcs[i + 1]![j]!, lcs[i]![j + 1]!);
+    }
+  }
+  const hunks: Array<{ oldText: string; newText: string }> = [];
+  let removed: string[] = [];
+  let added: string[] = [];
+  const flush = () => {
+    if (removed.length || added.length) hunks.push({ oldText: removed.join('\n'), newText: added.join('\n') });
+    removed = [];
+    added = [];
+  };
+  let i = 0;
+  let j = 0;
+  while (i < n || j < m) {
+    if (i < n && j < m && midA[i] === midB[j]) { flush(); i++; j++; }
+    else if (j < m && (i >= n || lcs[i]![j + 1]! >= lcs[i + 1]![j]!)) { added.push(midB[j]!); j++; }
+    else { removed.push(midA[i]!); i++; }
+  }
+  flush();
+  return hunks;
+}
+
+export function buildPermissionPreview(
+  toolName: string,
+  input: Record<string, unknown>,
+  filePath: string,
+  readExisting: (filePath: string) => string | null = readExistingForPreview,
+): PermissionPreview | undefined {
   const budget = { left: PERMISSION_PREVIEW_MAX_CHARS, truncated: false };
   if (toolName === 'Edit' && (typeof input.old_string === 'string' || typeof input.new_string === 'string')) {
     const hunk = { oldText: capText(input.old_string, budget), newText: capText(input.new_string, budget) };
-    return { kind: 'edit', filePath, hunks: [hunk], ...(budget.truncated ? { truncated: true } : {}) };
+    let replaceAll: number | undefined;
+    if (input.replace_all === true) {
+      const existing = readExisting(filePath);
+      replaceAll = existing !== null && typeof input.old_string === 'string' ? countOccurrences(existing, input.old_string) : 0;
+    }
+    return {
+      kind: 'edit', filePath, hunks: [hunk],
+      ...(replaceAll !== undefined ? { replaceAll } : {}),
+      ...(budget.truncated ? { truncated: true } : {}),
+    };
   }
   if (toolName === 'MultiEdit' && Array.isArray(input.edits)) {
     const hunks: Array<{ oldText: string; newText: string }> = [];
@@ -989,6 +1073,13 @@ export function buildPermissionPreview(toolName: string, input: Record<string, u
     return { kind: 'edit', filePath, hunks, ...(truncated ? { truncated: true } : {}) };
   }
   if (toolName === 'Write' && typeof input.content === 'string') {
+    const existing = readExisting(filePath);
+    if (existing !== null) {
+      const all = lineDiffHunks(existing, input.content);
+      const hunks = all.slice(0, PERMISSION_PREVIEW_MAX_HUNKS).map((h) => ({ oldText: capText(h.oldText, budget), newText: capText(h.newText, budget) }));
+      const truncated = budget.truncated || all.length > PERMISSION_PREVIEW_MAX_HUNKS;
+      return { kind: 'overwrite', filePath, hunks, ...(truncated ? { truncated: true } : {}) };
+    }
     const newText = capText(input.content, budget);
     return { kind: 'write', filePath, newText, ...(budget.truncated ? { truncated: true } : {}) };
   }

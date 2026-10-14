@@ -1391,7 +1391,7 @@ export class PiAgent extends BaseAgent {
           rememberForMinutes: checkResult.rememberForMinutes,
           commandHash: checkResult.commandHash,
           approvalTtlSeconds: checkResult.approvalTtlSeconds,
-                      preview: checkResult.preview,
+          preview: checkResult.preview,
         });
 
         const allowed = await permissionPromise;

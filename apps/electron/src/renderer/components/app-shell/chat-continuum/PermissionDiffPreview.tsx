@@ -16,12 +16,24 @@ export function hunkLines(oldText: string, newText: string): DiffLine[] {
 
 export function PermissionDiffPreview({ preview }: { preview: PermissionPreview }) {
   const { t } = useTranslation()
-  const hunks = preview.kind === 'edit' ? preview.hunks : [{ oldText: '', newText: preview.newText }]
+  const hunks = preview.kind === 'write' ? [{ oldText: '', newText: preview.newText }] : preview.hunks
+  const caption =
+    preview.kind === 'write' ? t('chat.approval.previewWrite', { path: preview.filePath })
+    : preview.kind === 'overwrite' ? t('chat.approval.previewOverwrite', { path: preview.filePath })
+    : preview.filePath
   return (
     <figure className="m-0" data-permission-preview={preview.kind}>
       <figcaption className="truncate pb-1 font-mono text-caption text-text-secondary" title={preview.filePath}>
-        {preview.kind === 'write' ? t('chat.approval.previewWrite', { path: preview.filePath }) : preview.filePath}
+        {caption}
       </figcaption>
+      {preview.kind === 'edit' && preview.replaceAll !== undefined && (
+        <p className="pb-1 text-caption text-text-secondary" data-permission-replace-all>
+          {t('chat.approval.previewReplaceAll', { count: preview.replaceAll })}
+        </p>
+      )}
+      {preview.kind === 'overwrite' && hunks.length === 0 && (
+        <p className="pb-1 text-caption text-text-muted">{t('chat.approval.previewNoChanges')}</p>
+      )}
       <div
         role="region"
         aria-label={t('chat.approval.previewLabel')}
