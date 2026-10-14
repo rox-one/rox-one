@@ -22,6 +22,7 @@ import { onCanvasTarget, takeCanvasTarget, type CanvasTarget } from './canvas-ta
 import { resizeRotated } from './geometry'
 import { bindTextArea } from './live-text'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import type { SurfacePageProps } from '@/platform/SurfaceHost'
@@ -146,22 +147,22 @@ function CanvasSidebar({ boards, trashed, favs, recent, openId, onOpen, onRestor
   return (
     <ShellSidebarPortal className="hidden" data-testid="canvas-sidebar">
       <div className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1">
-        <Search className="size-3.5 text-text-muted" />
+        <Search className="icon-caption text-text-muted" />
         <input value={q} onChange={e => setQ(e.target.value)} placeholder={t('canvas.sidebar.search')} aria-label={t('canvas.sidebar.search')}
           className="min-w-0 flex-1 bg-transparent text-sm outline-none" data-testid="canvas-sidebar-search" />
       </div>
-      {section(<LayoutGrid className="size-3" />, t('canvas.sidebar.all'), <>
+      {section(<LayoutGrid className="icon-caption" />, t('canvas.sidebar.all'), <>
         <button className={`w-full rounded-md px-2 py-1 text-left text-sm ${openId === null ? 'bg-accent/15 text-accent' : 'hover:bg-surface-hover'}`} onClick={() => onOpen(null)}>{t('canvas.boards.title')}</button>
         {boards.filter(b => match(b.title)).map(b => row(b, 'canvas-sidebar-board'))}
       </>, 'canvas-sidebar-all')}
-      {section(<Star className="size-3" />, t('canvas.sidebar.favorites'), favBoards.length ? favBoards.map(b => row(b, 'canvas-sidebar-fav')) : empty(t('canvas.sidebar.favoritesEmpty')), 'canvas-sidebar-favorites')}
-      {section(<Clock className="size-3" />, t('canvas.sidebar.recent'), recentBoards.length ? recentBoards.map(b => row(b, 'canvas-sidebar-recent')) : empty(t('canvas.sidebar.recentEmpty')), 'canvas-sidebar-recent')}
-      {section(<Share2 className="size-3" />, t('canvas.sidebar.shared'), empty(t('canvas.sidebar.sharedEmpty')), 'canvas-sidebar-shared')}
-      {section(<Trash2 className="size-3" />, t('canvas.sidebar.trash'), trashed.filter(b => match(b.title)).length
+      {section(<Star className="icon-caption" />, t('canvas.sidebar.favorites'), favBoards.length ? favBoards.map(b => row(b, 'canvas-sidebar-fav')) : empty(t('canvas.sidebar.favoritesEmpty')), 'canvas-sidebar-favorites')}
+      {section(<Clock className="icon-caption" />, t('canvas.sidebar.recent'), recentBoards.length ? recentBoards.map(b => row(b, 'canvas-sidebar-recent')) : empty(t('canvas.sidebar.recentEmpty')), 'canvas-sidebar-recent')}
+      {section(<Share2 className="icon-caption" />, t('canvas.sidebar.shared'), empty(t('canvas.sidebar.sharedEmpty')), 'canvas-sidebar-shared')}
+      {section(<Trash2 className="icon-caption" />, t('canvas.sidebar.trash'), trashed.filter(b => match(b.title)).length
         ? trashed.filter(b => match(b.title)).map(b => (
           <div key={`${b.id}-${b.stamp}`} className="group flex items-center gap-1 px-2 py-1 text-sm text-text-muted" data-testid="canvas-sidebar-trashed">
             <span className="min-w-0 flex-1 truncate">{b.title}</span>
-            <button className="rounded p-0.5 hover:bg-foreground/10" title={t('canvas.sidebar.restore')} aria-label={t('canvas.sidebar.restore')} onClick={() => onRestore(b)}><RotateCcw className="size-3.5" /></button>
+            <Tip label={t('canvas.sidebar.restore')}><button className="rounded p-0.5 hover:bg-surface-hover" aria-label={t('canvas.sidebar.restore')} onClick={() => onRestore(b)}><RotateCcw className="icon-caption" /></button></Tip>
           </div>))
         : empty(t('canvas.sidebar.trashEmpty')), 'canvas-sidebar-trash')}
     </ShellSidebarPortal>
@@ -183,7 +184,7 @@ function BoardList({ workspaceId, boards, error, setError, favs, onToggleFav, on
     try { await bridge()!.rename(workspaceId, id, title); await refresh() } catch { setError(t('canvas.error.save')) }
   }
   const fmt = useMemo(() => new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }), [i18n.language])
-  const iconBtn = 'rounded p-1 text-text-muted opacity-0 hover:bg-foreground/10 group-hover:opacity-100 focus-visible:opacity-100'
+  const iconBtn = 'rounded p-1 text-text-muted opacity-0 hover:bg-surface-hover group-hover:opacity-100 focus-visible:opacity-100'
   return (
     <div className="flex h-full min-h-0 flex-col bg-background text-foreground" data-testid="canvas-board-list">
       <div className="flex items-center justify-between px-6 py-4">
@@ -194,8 +195,8 @@ function BoardList({ workspaceId, boards, error, setError, favs, onToggleFav, on
       {boards && boards.length === 0 && <div className="flex flex-1 items-center justify-center text-text-muted">{t('canvas.boards.empty')}</div>}
       <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 overflow-auto px-6 pb-6">
         {boards?.map(b => (
-          <div key={b.id} className="group flex flex-col rounded-lg border border-border bg-foreground/[0.02] hover:bg-surface-hover" data-testid="canvas-board-card">
-            <button className="h-28 rounded-t-lg bg-foreground/5 text-left" onClick={() => onOpen(b.id)} aria-label={b.title} />
+          <div key={b.id} className="group flex flex-col rounded-lg border border-border bg-surface-hover/40 hover:bg-surface-hover" data-testid="canvas-board-card">
+            <button className="h-28 rounded-t-lg bg-surface-selected text-left" onClick={() => onOpen(b.id)} aria-label={b.title} />
             <div className="flex items-center gap-1 px-3 py-2">
               {renaming === b.id ? (
                 <input autoFocus defaultValue={b.title} className="min-w-0 flex-1 rounded border border-border bg-background px-1 text-sm"
@@ -204,12 +205,12 @@ function BoardList({ workspaceId, boards, error, setError, favs, onToggleFav, on
               ) : (
                 <button className="min-w-0 flex-1 truncate text-left text-sm font-medium" onClick={() => onOpen(b.id)}>{b.title}</button>
               )}
-              <button className={favs.includes(b.id) ? 'rounded p-1 text-accent' : iconBtn} title={t(favs.includes(b.id) ? 'canvas.sidebar.unfavorite' : 'canvas.sidebar.favorite')}
+              <Tip label={t(favs.includes(b.id) ? 'canvas.sidebar.unfavorite' : 'canvas.sidebar.favorite')}><button className={favs.includes(b.id) ? 'rounded p-1 text-accent' : iconBtn}
                 aria-label={t(favs.includes(b.id) ? 'canvas.sidebar.unfavorite' : 'canvas.sidebar.favorite')} aria-pressed={favs.includes(b.id)} onClick={() => onToggleFav(b.id)} data-testid="canvas-board-fav">
-                <Star className={`size-3.5 ${favs.includes(b.id) ? 'fill-current' : ''}`} />
-              </button>
-              <button className={iconBtn} title={t('canvas.boards.rename')} aria-label={t('canvas.boards.rename')} onClick={() => setRenaming(b.id)}><Pencil className="size-3.5" /></button>
-              <button className={iconBtn} title={t('canvas.boards.trash')} aria-label={t('canvas.boards.trash')} onClick={() => onTrash(b)}><Trash2 className="size-3.5" /></button>
+                <Star className={`icon-caption ${favs.includes(b.id) ? 'fill-current' : ''}`} />
+              </button></Tip>
+              <Tip label={t('canvas.boards.rename')}><button className={iconBtn} aria-label={t('canvas.boards.rename')} onClick={() => setRenaming(b.id)}><Pencil className="icon-caption" /></button></Tip>
+              <Tip label={t('canvas.boards.trash')}><button className={iconBtn} aria-label={t('canvas.boards.trash')} onClick={() => onTrash(b)}><Trash2 className="icon-caption" /></button></Tip>
             </div>
             <div className="px-3 pb-2 text-xs text-text-muted">{fmt.format(b.updatedAt)}</div>
           </div>
@@ -517,33 +518,33 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
         <Button variant="ghost" size="sm" onClick={onBack} data-testid="canvas-back"><ArrowLeft />{t('canvas.action.back')}</Button>
         <div className="truncate text-sm font-medium">{title}</div>
         <div className="ml-auto text-xs text-text-muted">{t('canvas.objects', { count: all.length })}</div>
-        <Button variant="ghost" size="sm" onClick={() => setView({ x: 0, y: 0, zoom: 1 })} title={t('canvas.action.resetZoom')}><ZoomIn />{Math.round(view.zoom * 100)}%</Button>
+        <Tip label={t('canvas.action.resetZoom')}><Button variant="ghost" size="sm" onClick={() => setView({ x: 0, y: 0, zoom: 1 })}><ZoomIn />{Math.round(view.zoom * 100)}%</Button></Tip>
       </div>
       {/* Stage container: overlays (text editor, picker) are positioned relative to it, so no header offset is assumed. */}
       <div className="relative min-h-0 flex-1" data-testid="canvas-stage-wrap">
-        {(error || notice) && <div className="absolute left-1/2 top-3 z-20 -translate-x-1/2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert" onClick={() => setNotice(null)}>{notice ?? t(error === 'load' ? 'canvas.error.load' : 'canvas.error.save')}</div>}
-        <div className="absolute left-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1 rounded-lg border border-border bg-background p-1 shadow-sm" role="toolbar">
+        {(error || notice) && <div className="absolute left-1/2 top-3 z-chrome -translate-x-1/2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert" onClick={() => setNotice(null)}>{notice ?? t(error === 'load' ? 'canvas.error.load' : 'canvas.error.save')}</div>}
+        <div className="absolute left-3 top-1/2 z-sticky flex -translate-y-1/2 flex-col gap-1 rounded-lg border border-border bg-background p-1 shadow-sm" role="toolbar">
           {tools.map(({ id, icon: Icon, label }) => (
             <button key={id} title={label} aria-label={label} aria-pressed={tool === id} data-testid={`canvas-tool-${id}`}
               className={`rounded-md p-2 ${tool === id ? 'bg-accent/15 text-accent' : 'text-text-muted hover:bg-surface-hover'}`} onClick={() => setTool(id)}>
-              <Icon className="size-4" />
+              <Icon className="icon-toolbar" />
             </button>
           ))}
-          <button title={t('canvas.tool.entity')} aria-label={t('canvas.tool.entity')} aria-pressed={picker} data-testid="canvas-tool-entity"
+          <Tip label={t('canvas.tool.entity')}><button aria-label={t('canvas.tool.entity')} aria-pressed={picker} data-testid="canvas-tool-entity"
             className={`rounded-md p-2 ${picker ? 'bg-accent/15 text-accent' : 'text-text-muted hover:bg-surface-hover'}`} onClick={() => setPicker(p => !p)}>
-            <Link2 className="size-4" />
-          </button>
-          <button title={t('canvas.action.delete')} aria-label={t('canvas.action.delete')} disabled={!selected}
+            <Link2 className="icon-toolbar" />
+          </button></Tip>
+          <Tip label={t('canvas.action.delete')}><button aria-label={t('canvas.action.delete')} disabled={!selected}
             className="rounded-md p-2 text-text-muted hover:bg-surface-hover disabled:opacity-40" onClick={() => selected && requestDelete(selected)}>
-            <Trash2 className="size-4" />
-          </button>
+            <Trash2 className="icon-toolbar" />
+          </button></Tip>
         </div>
         <svg ref={svgRef} className={`h-full w-full touch-none select-none ${tool === 'select' ? 'cursor-default' : 'cursor-crosshair'}`}
           onPointerDown={onCanvasDown} onPointerMove={onMove} onPointerUp={onUp} onWheel={onWheel}
           onDragOver={e => { if ([...e.dataTransfer.types].some(x => x === ENTITY_DRAG_MIME || x === 'text/plain')) e.preventDefault() }} onDrop={onDrop} data-testid="canvas-stage">
           <defs>
             <pattern id="canvas-grid" width={24 * view.zoom} height={24 * view.zoom} patternUnits="userSpaceOnUse" x={view.x} y={view.y}>
-              <circle cx={1} cy={1} r={1} className="fill-foreground/15" />
+              <circle cx={1} cy={1} r={1} className="fill-border-strong" />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#canvas-grid)" />
@@ -559,7 +560,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
         {editingObj && board && <LiveTextEditor board={board} o={editingObj} view={view} placeholder={t('canvas.text.placeholder')} onDone={() => { undo?.stopCapturing(); setEditing(null) }} />}
         {picker && <EntityPicker workspaceId={workspaceId} onCreate={(k, n) => void createAndPlace(k, n)} onPick={ref => void placeRef(ref)} onClose={() => setPicker(false)} />}
         {cardDelete && (
-          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/30" role="dialog" aria-modal="true" aria-labelledby="canvas-card-delete-title" data-testid="canvas-card-delete">
+          <div className="absolute inset-0 z-sash flex items-center justify-center bg-black/30" role="dialog" aria-modal="true" aria-labelledby="canvas-card-delete-title" data-testid="canvas-card-delete">
             <div className="w-[360px] rounded-lg border border-border bg-background p-4 shadow-lg">
               <h2 id="canvas-card-delete-title" className="text-sm font-semibold">{t('canvas.cardDelete.title')}</h2>
               <p className="mt-1 text-sm text-text-muted">{t('canvas.cardDelete.body')}</p>
@@ -595,7 +596,7 @@ function LiveTextEditor({ board, o, view, placeholder, onDone }: { board: Canvas
   }, [board, o.id, yt])
   return (
     <textarea ref={ref} autoFocus defaultValue={yt ? yt.toString() : String(o.props.text ?? '')} placeholder={placeholder} data-testid="canvas-text-editor"
-      className="absolute z-10 resize-none rounded border border-accent bg-background p-2 text-sm text-foreground outline-none"
+      className="absolute z-sticky resize-none rounded border border-accent bg-background p-2 text-sm text-foreground outline-none"
       style={{ left: view.x + o.x * view.zoom, top: view.y + o.y * view.zoom, width: o.w * view.zoom, height: o.h * view.zoom, transform: o.rotation ? `rotate(${o.rotation}deg)` : undefined }}
       onBlur={onDone}
       onKeyDown={e => { if (e.key === 'Escape') e.currentTarget.blur() }} />
@@ -634,13 +635,13 @@ function EntityPicker({ workspaceId, onCreate, onPick, onClose }: { workspaceId:
     return () => { alive = false; clearTimeout(h) }
   }, [tab, q, workspaceId])
   const tabBtn = (id: 'create' | 'existing') => (
-    <button role="tab" aria-selected={tab === id} onClick={() => setTab(id)} data-testid={`canvas-picker-tab-${id}`}
+    <button aria-pressed={tab === id} onClick={() => setTab(id)} data-testid={`canvas-picker-tab-${id}`}
       className={`flex-1 rounded-md px-2 py-1 text-sm ${tab === id ? 'bg-accent/15 text-accent' : 'text-text-muted hover:bg-surface-hover'}`}>{t(`canvas.picker.${id}`)}</button>
   )
   return (
-    <div className="absolute left-16 top-3 z-20 flex max-h-[70%] w-[320px] flex-col rounded-lg border border-border bg-background p-2 shadow-lg" data-testid="canvas-picker"
+    <div className="absolute left-16 top-3 z-chrome flex max-h-[70%] w-[320px] flex-col rounded-lg border border-border bg-background p-2 shadow-lg" data-testid="canvas-picker"
       onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); onClose() } }}>
-      <div className="flex gap-1" role="tablist">{tabBtn('create')}{tabBtn('existing')}</div>
+      <div className="flex gap-1" role="group">{tabBtn('create')}{tabBtn('existing')}</div>
       {tab === 'create' ? (
         <form className="mt-2 flex flex-col gap-2" onSubmit={e => { e.preventDefault(); onCreate(kind, name) }}>
           <div className="grid grid-cols-5 gap-1" role="radiogroup" aria-label={t('canvas.picker.kind')}>
@@ -724,18 +725,28 @@ function ObjectView({ o, selected, editing, placeholder, onDown, onEdit }: { o: 
     return (
       <g {...common} transform={transform}>
         {ellipse
-          ? <ellipse cx={o.x + o.w / 2} cy={o.y + o.h / 2} rx={o.w / 2} ry={o.h / 2} className={`fill-accent/5 ${selected ? 'stroke-accent' : 'stroke-foreground/40'}`} strokeWidth={1.5} />
-          : <rect x={o.x} y={o.y} width={o.w} height={o.h} rx={6} className={`fill-accent/5 ${selected ? 'stroke-accent' : 'stroke-foreground/40'}`} strokeWidth={1.5} />}
+          ? <ellipse cx={o.x + o.w / 2} cy={o.y + o.h / 2} rx={o.w / 2} ry={o.h / 2} className={`fill-accent/5 ${selected ? 'stroke-accent' : 'stroke-border-strong'}`} strokeWidth={1.5} />
+          : <rect x={o.x} y={o.y} width={o.w} height={o.h} rx={6} className={`fill-accent/5 ${selected ? 'stroke-accent' : 'stroke-border-strong'}`} strokeWidth={1.5} />}
       </g>
     )
   }
   // Types without a renderer yet (later phases) still show and stay movable.
   return (
     <g {...common} transform={transform}>
-      <rect x={o.x} y={o.y} width={Math.max(o.w, 40)} height={Math.max(o.h, 24)} rx={4} className={`fill-foreground/5 ${sel}`} strokeDasharray="4 3" strokeWidth={1} />
+      <rect x={o.x} y={o.y} width={Math.max(o.w, 40)} height={Math.max(o.h, 24)} rx={4} className={`fill-surface-hover ${sel}`} strokeDasharray="4 3" strokeWidth={1} />
       <text x={o.x + 6} y={o.y + 16} className="fill-text-muted text-xs">{o.type}</text>
     </g>
   )
 }
 
 export default CanvasSurfacePage
+
+/** Tooltip primitive around an icon button (native titles are slow and invisible to keyboard users). */
+function Tip({ label, children }: { label: string; children: React.ReactElement }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  )
+}
