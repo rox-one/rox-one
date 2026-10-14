@@ -8,7 +8,6 @@ import type { BackgroundTask } from '../ActiveTasksBar'
 import { ActiveOptionBadges } from '../ActiveOptionBadges'
 import { InputContainer } from './InputContainer'
 import { InputErrorBoundary } from './InputErrorBoundary'
-import { ComposerStatsLine } from './ComposerStatsLine'
 import { ComposerUsageStatusLine } from './ComposerUsageStatusLine'
 import type { ComposerStats } from './composer-stats'
 
@@ -140,7 +139,6 @@ export function ChatInputZone({
           currentSessionStatus={currentSessionStatus}
         />
       </InputErrorBoundary>
-      {!compactMode && stats && <ComposerStatsLine stats={stats} />}
       {!compactMode && <ComposerUsageStatusLine sessionId={sessionId} workspaceId={workspaceId} stats={stats} tokenUsage={tokenUsage} />}
     </div>
   )

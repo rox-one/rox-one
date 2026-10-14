@@ -598,7 +598,7 @@ export class PiEventAdapter extends BaseEventAdapter {
               inputTokens,
               ...(typeof msg.usage.output === 'number' ? { outputTokens: msg.usage.output } : {}),
               ...(typeof msg.usage.cacheRead === 'number' ? { cacheReadTokens: msg.usage.cacheRead } : {}),
-              ...(typeof msg.usage.cacheWrite === 'number' ? { cacheWriteTokens: msg.usage.cacheWrite } : {}),
+              ...(typeof msg.usage.cacheWrite === 'number' ? { cacheCreationTokens: msg.usage.cacheWrite } : {}),
               ...(typeof msg.usage.cost?.total === 'number' ? { costUsd: msg.usage.cost.total } : {}),
               ...(this.contextWindow !== undefined ? { contextWindow: this.contextWindow } : {}),
             },

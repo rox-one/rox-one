@@ -84,9 +84,10 @@ describe('formatCompactTokens', () => {
 
 describe('composer stats wiring', () => {
   const dir = join(__dirname, '..')
-  it('renders under the composer only outside compact mode', () => {
+  it('is superseded by the journal-backed usage status line outside compact mode', () => {
     const zone = readFileSync(join(dir, 'ChatInputZone.tsx'), 'utf8')
-    expect(zone).toContain('{!compactMode && stats && <ComposerStatsLine stats={stats} />}')
+    expect(zone).not.toContain('<ComposerStatsLine')
+    expect(zone).toContain('{!compactMode && <ComposerUsageStatusLine')
   })
   it('ChatDisplay feeds session messages and tokenUsage', () => {
     const display = readFileSync(join(dir, '..', 'ChatDisplay.tsx'), 'utf8')
