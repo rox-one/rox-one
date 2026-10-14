@@ -1839,11 +1839,13 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
 }
 
 /* top-50 #49: lite / reduced-data mode drops decorative motion and blur. */
-:root[data-lite] *,
-:root[data-lite] *::before,
-:root[data-lite] *::after {
-  animation-duration: 0s !important;
+/* Near-zero (not 0s) so transitionend / animationend still fire for code that
+   waits on them. Spinners and loaders keep running at their own speed. */
+:root[data-lite] *:not(.animate-spin, .animate-ping, [role="progressbar"], [data-spinner], .spinner, .loader),
+:root[data-lite] *:not(.animate-spin, .animate-ping, [role="progressbar"], [data-spinner], .spinner, .loader)::before,
+:root[data-lite] *:not(.animate-spin, .animate-ping, [role="progressbar"], [data-spinner], .spinner, .loader)::after {
+  animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
-  transition-duration: 0s !important;
+  transition-duration: 0.01ms !important;
 }
 :root[data-lite] { --material-blur-topbar: 0; --material-blur-rail: 0; --material-blur-strip: 0; --material-blur-inspector: 0; --material-blur-sidebar: 0; --material-blur-navigator: 0; --material-blur-chat: 0; --material-blur-composer: 0; --material-blur-popover: 0; }

@@ -36,7 +36,17 @@ function apply(): void {
   for (const l of listeners) l()
 }
 
-export function seedLiteMode(): void { apply() }
+let watching = false
+/** In 'auto', follow OS reduced-data / Save-Data changes after boot. */
+function watchSystem(): void {
+  if (watching || typeof window === 'undefined') return
+  watching = true
+  try { window.matchMedia?.('(prefers-reduced-data: reduce)').addEventListener?.('change', apply) } catch { /* unsupported query */ }
+  const connection = (navigator as Navigator & { connection?: EventTarget }).connection
+  connection?.addEventListener?.('change', apply)
+}
+
+export function seedLiteMode(): void { apply(); watchSystem() }
 export function setLitePreference(next: LitePreference): void {
   pref = normalizeLite(next)
   storage.set(storage.KEYS.liteMode, pref)

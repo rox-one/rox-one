@@ -27,6 +27,16 @@ describe('error journal', () => {
   })
 })
 
+describe('journal route redaction', () => {
+  it('keeps the path only', async () => {
+    const { routeForJournal, toEntry } = await import('../error-journal')
+    expect(routeForJournal('action/new-session?input=secret%20draft&send=false')).toBe('action/new-session')
+    expect(routeForJournal('settings#token=abc')).toBe('settings')
+    expect(routeForJournal(undefined)).toBeUndefined()
+    expect(toEntry('error', new Error('x'), 'search?q=private', 1).route).toBe('search')
+  })
+})
+
 describe('lite mode', () => {
   it('resolves preference against the system', () => {
     expect(normalizeLite('x')).toBe('auto')
