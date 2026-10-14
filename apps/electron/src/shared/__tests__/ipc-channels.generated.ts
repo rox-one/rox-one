@@ -131,6 +131,13 @@ export const EXPECTED_CHANNELS: string[] = [
   'clipboard:tagCounts',
   'clipboard:tags',
   'clipboard:writeConcealed',
+  'cloudHandoff:cancel',
+  'cloudHandoff:clearKey',
+  'cloudHandoff:end',
+  'cloudHandoff:getConfig',
+  'cloudHandoff:setKey',
+  'cloudHandoff:start',
+  'cloudHandoff:status',
   'cloudRuns:aggregate',
   'cloudRuns:cancel',
   'cloudRuns:deleteSchedule',
@@ -629,6 +636,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'notes:list',
   'notes:listAssets',
   'notes:listComments',
+  'notes:listTasks',
   'notes:move',
   'notes:prepareCreate',
   'notes:read',
@@ -1076,4 +1084,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1072
+export const EXPECTED_CHANNEL_COUNT = 1080
