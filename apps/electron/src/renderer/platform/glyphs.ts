@@ -19,6 +19,7 @@
  * Lucide component.
  */
 import {
+  PenTool,
   Activity,
   BookMarked,
   BookOpen,
@@ -77,6 +78,7 @@ export const GLYPHS = {
   team: MessagesSquare,
   calendar: CalendarDays,
   goals: Target,
+  canvas: PenTool,
   memory: Brain,
   skills: Zap,
   learning: GraduationCap,
@@ -126,6 +128,7 @@ export const GLYPH_NAMES = {
   team: 'MessagesSquare',
   calendar: 'CalendarDays',
   goals: 'Target',
+  canvas: 'PenTool',
   memory: 'Brain',
   skills: 'Zap',
   learning: 'GraduationCap',

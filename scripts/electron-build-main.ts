@@ -449,6 +449,10 @@ async function main(): Promise<void> {
   // Verify session tools core exists (shared utilities for session-scoped tools)
   verifySessionToolsCore();
 
+  // Team calls: write the gitignored build-time defaults module (empty values without creds).
+  const callDefaults = spawn({ cmd: ["bun", "run", join(ROOT_DIR, "apps/electron/scripts/gen-call-defaults.ts")], stdout: "inherit", stderr: "inherit" });
+  if ((await callDefaults.exited) !== 0) { console.error("❌ gen-call-defaults failed"); process.exit(1); }
+
   // Build Pi agent server (subprocess for Pi SDK sessions)
   if (!process.argv.includes('--main-only')) {
     await buildPiAgentServer();
