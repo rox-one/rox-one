@@ -477,7 +477,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   ) : (
     <>
       <ListHeader
-        title={filter === 'all' ? t('inbox.title') : typeof filter === 'object' ? kindLabel(filter.kind) : t(`inbox.view.${filter}`)}
+        title={filter === 'all' ? t('inbox.view.all') : typeof filter === 'object' ? kindLabel(filter.kind) : t(`inbox.view.${filter}`)}
         subtitle={visibleBlockingCount ? t('inbox.blockingCount', { count: visibleBlockingCount }) : undefined}
         actions={<Button variant="ghost" disabled={refreshing} onClick={() => void refreshInbox()}>{refreshing ? <LoaderCircle aria-hidden className="icon-caption animate-spin motion-reduce:animate-none" /> : null}{t('inbox.refresh')}</Button>}
       />

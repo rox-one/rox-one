@@ -3196,7 +3196,9 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             >
             <PrimaryRail
               secondaryAvailable={secondaryAvailable}
-              avatar={
+              // One account entry: the sidebar footer card owns it while the
+              // secondary sidebar is visible; the rail avatar only stands in when it is hidden.
+              avatar={secondaryShown ? undefined :
                 <button
                   type="button"
                   data-rail-button=""

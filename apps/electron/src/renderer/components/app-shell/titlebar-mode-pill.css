@@ -132,7 +132,7 @@ html[data-contrast="high"] .rox-mode-pill-badge {
   height: var(--control-sm);
   border-radius: var(--radius-full);
   /* Soft glass highlight for the active segment — neutral, not accent. */
-  background: color-mix(in oklch, var(--foreground) 7%, transparent);
+  background: color-mix(in oklch, var(--foreground) 13%, transparent);
   box-shadow: var(--rox-mode-pill-item-ring);
   opacity: 0;
   pointer-events: none;
