@@ -4,6 +4,9 @@ import { HomeFetchService } from './service'
 
 const publicDns = async () => ['93.184.216.34']
 
+/** Stub responses dispatch on the parsed host, never on a URL prefix (CodeQL js/incomplete-url-substring-sanitization). */
+const host = (url: string) => new URL(url).hostname
+
 describe('isBlockedAddress', () => {
   const blocked = [
     '127.0.0.1', '127.8.8.8', '10.1.2.3', '172.16.0.1', '172.31.255.255', '192.168.1.1', '169.254.169.254', '169.254.1.1',
@@ -68,7 +71,7 @@ describe('HomeFetchService SSRF guard', () => {
     expect(calls).toHaveLength(0)
   })
   it('uses manual redirects and re-checks every hop', async () => {
-    const { svc, calls } = service((url) => url.startsWith('https://a.example')
+    const { svc, calls } = service((url) => host(url) === 'a.example'
       ? new Response(null, { status: 302, headers: { location: 'https://169.254.169.254/latest/meta-data' } })
       : new Response('{}'))
     expect(await svc.fetch({ url: 'https://a.example/', as: 'json' })).toMatchObject({ status: 'error', reason: 'blocked' })
@@ -77,19 +80,19 @@ describe('HomeFetchService SSRF guard', () => {
   })
   it('blocks a redirect to http and to a non-standard port', async () => {
     for (const location of ['http://b.example/', 'https://b.example:8080/']) {
-      const { svc } = service((url) => url.startsWith('https://a.example') ? new Response(null, { status: 301, headers: { location } }) : new Response('{}'))
+      const { svc } = service((url) => host(url) === 'a.example' ? new Response(null, { status: 301, headers: { location } }) : new Response('{}'))
       expect(await svc.fetch({ url: 'https://a.example/', as: 'json' })).toMatchObject({ status: 'error', reason: 'blocked' })
     }
   })
   it('follows a safe redirect chain', async () => {
-    const { svc, calls } = service((url) => url.startsWith('https://a.example')
+    const { svc, calls } = service((url) => host(url) === 'a.example'
       ? new Response(null, { status: 307, headers: { location: 'https://b.example/final' } })
       : new Response('{"ok":true}'))
     expect(await svc.fetch({ url: 'https://a.example/', as: 'json' })).toMatchObject({ status: 'ok', data: { ok: true } })
     expect(calls.map((c) => c.url)).toEqual(['https://a.example/', 'https://b.example/final'])
   })
   it('never forwards the API key to another origin on redirect', async () => {
-    const { svc, calls } = service((url) => url.startsWith('https://api.exa.ai')
+    const { svc, calls } = service((url) => host(url) === 'api.exa.ai'
       ? new Response(null, { status: 308, headers: { location: 'https://other.example/search' } })
       : new Response('{"results":[]}'))
     expect(await svc.search({ query: 'q' })).toMatchObject({ status: 'ok' })
@@ -103,7 +106,7 @@ describe('HomeFetchService SSRF guard', () => {
     expect(n).toBe(6)
   })
   it('applies the per-host rate limit to each redirect hop', async () => {
-    const { svc } = service((url) => url.startsWith('https://a.example')
+    const { svc } = service((url) => host(url) === 'a.example'
       ? new Response(null, { status: 302, headers: { location: 'https://b.example/' } })
       : new Response('{}'), publicDns, 1)
     // Exhaust b.example's single token first.
