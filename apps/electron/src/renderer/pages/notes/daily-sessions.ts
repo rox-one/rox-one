@@ -5,6 +5,7 @@
  */
 export type DailySessionSource = {
   id: string
+  workspaceId?: string
   name?: string
   preview?: string
   createdAt?: number
@@ -20,9 +21,12 @@ function localDateId(timestamp: number): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
-export function dailySessionsFor(sessions: Iterable<DailySessionSource>, date: string): DailySessionItem[] {
+/** Only sessions of `workspaceId`: the session map holds every workspace's sessions. */
+export function dailySessionsFor(sessions: Iterable<DailySessionSource>, date: string, workspaceId: string | null | undefined): DailySessionItem[] {
+  if (!workspaceId) return []
   const items: Array<DailySessionItem & { at: number }> = []
   for (const session of sessions) {
+    if (session.workspaceId !== workspaceId) continue
     if (session.hidden || session.isArchived) continue
     const at = session.createdAt ?? session.lastMessageAt
     if (typeof at !== 'number' || !Number.isFinite(at) || localDateId(at) !== date) continue

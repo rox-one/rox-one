@@ -1552,7 +1552,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const richParts = React.useMemo(() => splitFrontmatter(content), [content])
   const dailyDate = parseDailyNoteDate(activeNote?.id)
   // Live overlay: the day's sessions are rendered, never written into the note body.
-  const dailySessions = React.useMemo(() => dailyDate ? dailySessionsFor(sessionMetaMap.values(), dailyDate) : [], [dailyDate, sessionMetaMap])
+  const dailySessions = React.useMemo(() => dailyDate ? dailySessionsFor(sessionMetaMap.values(), dailyDate, activeWorkspaceId) : [], [dailyDate, sessionMetaMap, activeWorkspaceId])
   const currentNoteAssets = React.useMemo(() => {
     const refs = new Set(activeNote?.assetRefs.map(ref => ref.replace(/^\.\//, '')) ?? [])
     return allAssets.filter(asset => refs.has(asset.relativePath))
