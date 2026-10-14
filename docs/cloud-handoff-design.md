@@ -17,82 +17,86 @@ Status: implemented behind `cloudHandoff.enabled` (default **off**). Branch `fea
 - Desktop Rox ID account: `RoxAccountAuthority.state(LOCAL_ROX_CALLER).account.user.id`.
 
 ## 2. Flow
-1. User clicks «В облако» (visible only if flag on).
-2. Renderer → `cloudHandoff:start {sessionId}` (LOCAL_ONLY channel, `access: localElectron`).
-3. Server (desktop server-core): requires signed-in Rox ID (`sign_in_required`), resolves key, collects files,
-   runs `runCloudHandoff` in background; renderer polls `cloudHandoff:status` every 1.5 s.
-4. Orchestrator: per-owner quota → create sandbox (labels, auto-stop/delete) → start → resolve public URL →
-   stream files → manifest + `server.env` → `rox-handoff-start` → poll `rox-handoff-health` → **ready**.
-5. UI swaps the button for «Открыть в браузере» (https only) → browser hits sandbox web UI → id.rox.one OIDC →
-   only the owner `sub` is admitted → user continues the chat.
+1. User clicks «В облако» (visible only if flag on). With no personal key and no broker the button reads
+   «Добавить ключ Daytona» and opens the key dialog.
+2. Renderer → `cloudHandoff:start {sessionId}` (LOCAL_ONLY, `access: localElectron`).
+3. Desktop: Rox ID access token → `GET id.rox.one/userinfo` → OIDC `sub` (owner). Then client selection:
+   personal key → Daytona directly; otherwise → Rox broker with the id.rox.one token; neither → `no_key`.
+4. If the chat already has a live cloud session it is deleted first (one cloud session per chat).
+5. Orchestrator: live-only quota → create private sandbox → start → link base → stream files → manifest +
+   `server.env` → `rox-handoff-start` → poll `rox-handoff-health` → **ready**.
+6. UI shows «Открыть в браузере» + «Завершить». Opening fetches a **fresh** link via `cloudHandoff:status`;
+   the link is never kept in renderer state or stored on the server. «Завершить» → `cloudHandoff:end` deletes the sandbox.
+7. Browser → session web UI → id.rox.one OIDC → only the pinned `sub` is admitted (403 otherwise).
 Phases: `resolving_key → packaging → creating_sandbox → uploading (n/N) → starting → waiting_ready → ready | failed | cancelled`.
-Cancel button aborts and deletes the sandbox.
+Rejected starts (flag off, another handoff running) are reported but never replace the chat's live session.
 
 ## 3. Data packaging
-- Session folder (`getSessionPath(workspace.rootPath, id)`) recursively → `bundle/session/**`
-  (session.jsonl messages, attachments, plans, …).
-- Workspace files the transcript references (absolute paths under the session `workingDirectory`, max 500),
-  realpath-contained → `bundle/workspace/**`. Whole repos are **not** copied (decision: cost + secret risk).
-- Symlinks never followed; `..`/absolute/backslash paths rejected.
-- Secrets excluded by path (`.env*`, `*.pem|key|p12…`, `id_*`, `.npmrc/.netrc/.git-credentials`,
-  `credentials*/secrets*/service-account*.json|yaml`, `cloud-runs.env`, `credentials.enc`, `.git/ node_modules/ .ssh/ .aws/ .kube/ .gnupg/ .docker/`)
-  and by content (private keys, AKIA, sk-/sk-ant-, gh*_ , github_pat_, xox*, dtn_, AIza, plus the active Daytona key).
-  Exclusions are listed in `manifest.json` (path + reason) and counted in the UI status.
-- Limits: 25 MiB/file (skipped), 200 MiB total and 2 000 files (refuse whole handoff: `too_large`), sizes re-checked on real bytes.
-- Format: plain files under `/home/daytona/rox-handoff/bundle/`, `manifest.json` (`version:1`, sha256 per file), streamed one file at a time.
+- Session folder recursively → `bundle/session/**`; workspace files the transcript references (absolute paths under the
+  session `workingDirectory`, max 500) → `bundle/workspace/**`. Whole repos are not copied.
+- Symlinks never followed; containment uses `relative()` with `isAbsolute(rel) || rel === '..' || rel.startsWith('..'+sep)`;
+  each file is re-`lstat`ed (and workspace files re-`realpath`ed) at read time (TOCTOU).
+- Secrets excluded by path (`.env*`, key/cert files, `id_*`, `.npmrc/.netrc/.git-credentials`, `credentials*/secrets*/service-account*`,
+  `cloud-runs.env`, `credentials.enc`, `.git/ node_modules/ .ssh/ .aws/ .kube/ .gnupg/ .docker/`) and by content
+  (private keys, AKIA, sk-/sk-ant-, gh*_ , github_pat_, xox*, dtn_, AIza, plus the active personal Daytona key).
+- **Scan limits (best effort):** content scanning reads only the first 2 MiB of a file and skips files with a NUL byte
+  in the first 8 KiB (treated as binary). A secret placed after 2 MiB or inside a binary file is not detected; path
+  rules still apply.
+- Limits: 25 MiB/file (skipped), 200 MiB total and 2 000 files (refuse whole handoff), sizes re-checked on real bytes.
+- Format: plain files under `/home/daytona/rox-handoff/bundle/`, `manifest.json` (`version:1`, sha256, exclusions).
 
 ## 4. Daytona usage
-- Existing REST `HttpDaytonaClient` (no new dependency; the official `@daytonaio/sdk` maps 1:1 —
-  `create({snapshot, env, public, autoStopInterval, autoDeleteInterval, labels})`, `fs.uploadFile`,
-  `process.executeCommand`, `getPreviewLink(port)`; switch is possible later, tests use the mock either way).
-- Snapshot/image: `rox-session-server-v1` (config `cloudHandoff.daytonaSnapshot`). **Must be built**: headless Rox
-  server + web UI listening on 9100, plus two scripts:
-  - `rox-handoff-start <root>`: read `server.env`, generate the web-UI JWT secret locally (`openssl rand`), import
-    `bundle/` as a workspace + session, start the server with OIDC env, password login disabled, detach.
-  - `rox-handoff-health <root>`: exit 0 when `http://127.0.0.1:9100/api/health` is OK.
-- Labels: `rox.cloud-handoff=1`, `rox.cloud-handoff.owner=<sha256(sub) prefix>` (no raw identity), `rox.cloud-handoff.id`.
+- REST via `HttpDaytonaClient` (personal key) or `BrokerDaytonaClient` (default key via broker); same `DaytonaClient`
+  interface, so the orchestrator is identical and fully mock-tested.
+- Snapshot `rox-session-server-v1`, built from `cloud/handoff-image/Dockerfile` on top of `Dockerfile.server`, with
+  `rox-handoff-start` and `rox-handoff-health` in `/usr/local/bin`.
+  - start: strict allow-listed `server.env` parse, refuses unless `ROX_WEBUI_PASSWORD_LOGIN=0` and an owner sub is set,
+    generates the JWT secret in-sandbox (`openssl rand`, never on disk), lays out the workspace, starts the server.
+  - health: `/health` 200 **and** `POST /api/auth` → 404 (no password route) **and** `/api/auth/login` → 302 to the issuer.
+- Labels: `rox.cloud-handoff=1`, `rox.cloud-handoff.owner=<sha256(sub) prefix>`, `rox.cloud-handoff.id`.
 
-## 5. URL scheme
-- Sandbox is **always private** (`public:false`): a public Daytona sandbox exposes every port, including the
-  web terminal on 22222.
-- With web host (`cloudHandoff.webHost` / `ROX_CLOUD_HANDOFF_WEB_HOST`, e.g. `https://cloud.rox.one`):
-  `https://cloud.rox.one/s/<handoffId>/`; our proxy forwards to the sandbox with Daytona auth.
-- Without: a **signed, port-scoped** Daytona preview URL for port 9100
-  (`/ports/9100/signed-preview-url?expiresInSeconds=(autoStop+autoDelete)`), `https://9100-<token>.<proxy-domain>/`.
-- Behind either, the in-app id.rox.one OIDC owner gate is mandatory (`sso_not_configured` otherwise).
-- Only https URLs are accepted/opened.
+## 5. Links
+- Sandbox is **always private** (`public:false`; a public sandbox exposes every port incl. the web terminal 22222).
+- Web host mode (`cloudHandoff.webHost` / `ROX_CLOUD_HANDOFF_WEB_HOST`): stable `https://<host>/s/<handoffId>/`.
+- Signed mode: Daytona signed preview URL for port 9100 with **1 h TTL** (`linkTtlSec`), clamped to Daytona's documented
+  max 86 400 s; re-issued on every `cloudHandoff:status` read, never stored. Because each signed link has a different host,
+  the sandbox gets `ROX_WEBUI_PUBLIC_HOST_PATTERN=9100-[a-z0-9-]+\.<proxy-domain>`: the web UI uses the request host as
+  OIDC redirect base only if it matches (else 400), and the token exchange reuses the exact redirect_uri from login.
+- Only https URLs are opened.
 
 ## 6. SSO / ownership
-- OIDC issuer `https://id.rox.one` (override `cloudHandoff.ssoIssuer`), public PKCE client
-  (`cloudHandoff.ssoClientId` / `ROX_CLOUD_HANDOFF_OIDC_CLIENT_ID`), redirect `<publicUrl>/api/auth/callback`.
-- Owner = desktop Rox ID account `user.id` (assumed equal to id.rox.one `sub`) → `ROX_WEBUI_OIDC_ALLOWED_SUBS`.
-- No tokens leave the desktop. The sandbox mints its own session cookie after OIDC. Billing owner of the sandbox
-  = owner of the Daytona key (user's org or Rox's org for the default key).
+- Issuer `https://id.rox.one`, public PKCE client (`cloudHandoff.ssoClientId` / `ROX_CLOUD_HANDOFF_OIDC_CLIENT_ID`).
+- Owner = OIDC `sub` from id.rox.one **userinfo** for the user's Rox token — the same claim the sandbox gets in the
+  browser id_token — pinned via `ROX_WEBUI_OIDC_ALLOWED_SUBS`. (Previously the Rox account `user.id`; replaced.)
+- `ROX_WEBUI_PASSWORD_LOGIN=0` is always written to `server.env`.
 
-## 7. Key resolution
-1. User key — encrypted credential store (`service_oauth::global::daytona-cloud-handoff`, AES-GCM file / OS-backed);
-   set/clear only, never readable from renderer; validation is shape-only.
-2. Server default — `ROX_CLOUD_HANDOFF_DAYTONA_API_KEY` in the **server process env** only; never returned by any RPC
-   (`getConfig` exposes booleans). Can be forbidden with `cloudHandoff.allowServerDefaultKey=false`.
-3. Unreadable store ⇒ `no_key` (never silently bill the shared key). Neither ⇒ `no_key` → key dialog.
-Keys are scrubbed from every error string.
+## 7. Keys and the broker
+- Desktop: only the **personal** key (encrypted credential store `service_oauth::global::daytona-cloud-handoff`; set/clear,
+  never readable from the renderer). The desktop never reads `ROX_CLOUD_HANDOFF_DAYTONA_API_KEY`.
+- Default key: `ROX_CLOUD_HANDOFF_BROKER_URL` (or `cloudHandoff.brokerUrl`) → Rox-hosted broker
+  `/api/cloud-handoff/v1/*`, `Authorization: Bearer <id.rox.one token>`.
+- Broker (server-core `maybeCreateCloudHandoffBroker`, mounted in `packages/server` via `extraRoutes`): active only when
+  `ROX_CLOUD_HANDOFF_BROKER_ENABLED=1`, `ROX_CLOUD_HANDOFF_DAYTONA_API_KEY` is set and **not Electron**. It verifies the
+  token via userinfo (60 s cache), then only: list/create/get/start/stop/delete **own** sandboxes (owner label),
+  write files under the handoff root (size-capped), exec exactly `rox-handoff-start|health <root>`, signed link for port
+  9100 only (≤ 1 h). It forces snapshot, `public:false`, TTLs and labels, and rejects a `server.env` whose
+  `ROX_WEBUI_OIDC_ALLOWED_SUBS` isn't the caller or whose `ROX_WEBUI_PASSWORD_LOGIN` isn't `0`. Provider errors are not echoed.
 
-## 8. Errors (UI copy in ru/en)
-`disabled, no_key, sign_in_required, sso_not_configured, too_large, quota_exceeded, provider_error, start_timeout, cancelled`.
+## 8. Errors (ru/en)
+`disabled, no_key («Добавь свой ключ Daytona»), sign_in_required, sso_not_configured, too_large, quota_exceeded, provider_error, start_timeout, cancelled`.
 
-## 9. Cleanup / TTL / cost safety
-- `autoStopInterval` 30 min idle, `autoDeleteInterval` 24 h after stop.
-- Any failure/cancel after creation deletes the sandbox.
-- Quota: max 2 live handoff sandboxes per owner (label query) before creating.
-- One in-flight handoff per app (non-atomic quota), dedupe per chat. Status kept in memory 1 h.
-- Flag default off.
+## 9. Cleanup / TTL / cost
+- auto-stop 30 min idle, auto-delete 24 h after stop; failure/cancel deletes the sandbox.
+- Quota: 2 **live** (started/creating) sandboxes per owner; stopped ones don't count. Enforced on desktop (personal key)
+  and in the broker (shared key).
+- «Завершить» deletes now; a new handoff for the same chat replaces the previous sandbox.
+- One in-flight handoff per app. Flag default off.
 
-## 10. Open items needing Mark
-- Default key env name `ROX_CLOUD_HANDOFF_DAYTONA_API_KEY` + where it lives: in a desktop build server-core runs on
-  the user's machine, so a “server default” there would be on the client. Production needs a Rox-hosted broker
-  (`cloud.rox.one`) that creates sandboxes with our key on behalf of an id.rox.one-authenticated user.
-- id.rox.one OIDC client registration (public PKCE client id, allowed redirect `https://cloud.rox.one/s/*/api/auth/callback`
-  or wildcard preview domain).
-- Web host for sessions (`cloud.rox.one`?) + the proxy.
-- Building/publishing the `rox-session-server-v1` Daytona snapshot with the two scripts.
-- Confirm Rox account `user.id` == id.rox.one `sub`.
+## 10. Open items for Mark
+- Deploy the broker on a Rox host (`ROX_CLOUD_HANDOFF_BROKER_ENABLED=1` + shared key) and give its URL.
+- id.rox.one: public PKCE client for cloud sessions; redirect URIs `https://<webhost>/s/*/api/auth/callback` and/or the
+  Daytona proxy wildcard `https://9100-*.<proxy-domain>/api/auth/callback`; confirm the desktop Rox token is accepted by
+  id.rox.one `userinfo` (if not, the desktop needs its own id.rox.one OIDC login).
+- Web host / proxy (`cloud.rox.one`?) — optional with signed links, but avoids the Daytona preview warning page.
+- Build/publish `rox-session-server-v1`; E2E-verify that the headless server picks up the laid-out workspace
+  (`ROX_HANDOFF_WORKSPACE_DIR`), which is not wired into server bootstrap yet.
