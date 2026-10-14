@@ -19,6 +19,7 @@ import {
 import { DropdownMenuProvider } from '@/components/ui/menu-context'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { SettingsSubpage } from '../../../shared/types'
 import { SETTINGS_ITEMS } from '../../../shared/menu-schema'
@@ -51,7 +52,6 @@ interface SettingsItem {
 interface SettingsItemRowProps {
   item: SettingsItem
   isSelected: boolean
-  isFirst: boolean
   onSelect: () => void
 }
 
@@ -59,10 +59,11 @@ interface SettingsItemRowProps {
  * SettingsItemRow - Individual settings item with dropdown menu
  * Tracks menu open state to keep "..." button visible when menu is open
  */
-function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRowProps) {
+function SettingsItemRow({ item, isSelected, onSelect }: SettingsItemRowProps) {
   const { t } = useTranslation()
   const [menuOpen, setMenuOpen] = useState(false)
   const Icon = item.icon
+  const descriptionId = `settings-nav-desc-${item.id}`
 
   // Open settings page in a new window via deep link
   const handleOpenInNewWindow = () => {
@@ -72,12 +73,15 @@ function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRo
   return (
     <div className="settings-item [contain:layout_paint]" data-selected={isSelected || undefined}>
       {/* Compact Cursor-like row: 16px muted glyph + 13px label on one 28px line; the
-          description stays available as the tooltip. */}
+          description is a focus/hover tooltip and the row's accessible description. */}
       <div className="settings-content relative group select-none px-2">
+        <span id={descriptionId} className="sr-only">{item.description}</span>
+        <Tooltip>
+        <TooltipTrigger asChild>
         <button
           type="button"
           onClick={onSelect}
-          title={item.description}
+          aria-describedby={descriptionId}
           className={cn(
             'flex h-7 w-full items-center gap-2 rounded-md px-2 pr-8 text-left text-body outline-none',
             'transition-[background-color] duration-75 focus-visible:ring-1 focus-visible:ring-ring',
@@ -89,6 +93,9 @@ function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRo
           <Icon className={cn('icon-inline', isSelected ? 'text-foreground' : 'text-text-muted')} />
           <span className="min-w-0 flex-1 truncate">{item.label}</span>
         </button>
+        </TooltipTrigger>
+        <TooltipContent side="right">{item.description}</TooltipContent>
+        </Tooltip>
         {/* Action buttons - visible on hover or when menu is open */}
         <div
           data-touch-reveal="true"
@@ -195,7 +202,6 @@ export default function SettingsNavigator({
                     key={item.id}
                     item={item}
                     isSelected={selectedSubpage === item.id}
-                    isFirst={index === 0}
                     onSelect={() => onSelectSubpage(item.id)}
                   />
                 ))}

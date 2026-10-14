@@ -176,7 +176,7 @@ export function NavItem({
   label: React.ReactNode
   count?: number | null
   active?: boolean
-  /** Status hint: a tiny dot on the glyph (danger/warning stay findable); the glyph itself stays grey. */
+  /** Status hint: a small 6px dot on the glyph (any tone, incl. muted/accent); the glyph itself stays grey, no tile. */
   dot?: Tone
   onClick?: () => void
   testId?: string
@@ -196,7 +196,7 @@ export function NavItem({
     >
       <span className="relative inline-flex shrink-0">
         <Icon className={cn('icon-inline', active ? 'text-foreground' : 'text-text-muted')} aria-hidden />
-        {dot && dot !== 'muted' && dot !== 'accent' ? <span aria-hidden className={cn('absolute -right-0.5 -top-0.5 size-1.5 rounded-full', DOT[dot])} /> : null}
+        {dot ? <span aria-hidden data-nav-dot={dot} className={cn('absolute -right-0.5 -top-0.5 size-1.5 rounded-full', DOT[dot])} /> : null}
       </span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {count != null && count > 0 ? (

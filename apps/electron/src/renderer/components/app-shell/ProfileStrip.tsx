@@ -3,10 +3,10 @@
  *
  * Opens the user profile popover (name, plan, level, balance and account
  * actions). Account switching stays in AccountMenu. Level and XP details also
- * live on the account page. This strip shows name, plan, level, and balance.
- * Balance is shown only when known; unknown stays in the screen-reader description.
- * It is the only place the balance and the workspace spend are shown (the
- * titlebar and status bar no longer carry cost/usage chips).
+ * live on the account page. The strip itself is one compact row: avatar, name,
+ * plan pill and level. Balance and workspace spend are shown in the popover
+ * (and carried in the strip's title and screen-reader description); the
+ * titlebar and status bar carry no cost/usage chips.
  */
 
 import * as React from 'react'
@@ -142,8 +142,8 @@ export function ProfileStrip({
     `${t('profile.balanceLabel')} ${descriptionBalance}`,
     spentLabel ? t('profile.spent', { amount: spentLabel }) : null,
   ].filter(Boolean).join(' · ')
-  const avatar = (
-    <Avatar className={cn('shrink-0 rounded-full shadow-minimal', compact ? 'size-8' : 'size-6')}>
+  const renderAvatar = (sizeClass: string) => (
+    <Avatar className={cn('shrink-0 rounded-full shadow-minimal', sizeClass)}>
       {data.avatar ? <AvatarImage src={data.avatar} alt="" /> : null}
       <AvatarFallback
         delayMs={0}
@@ -153,6 +153,9 @@ export function ProfileStrip({
       </AvatarFallback>
     </Avatar>
   )
+  const avatar = renderAvatar(compact ? 'size-8' : 'size-6')
+  // The popover header keeps its own 36px avatar, independent of the compact row.
+  const popoverAvatar = renderAvatar('size-9')
 
   const openAccountSettings = React.useCallback(() => {
     setOpen(false)
@@ -206,7 +209,7 @@ export function ProfileStrip({
           balanceLabel={balanceLabel}
           balanceKnown={balanceKnown}
           spentLabel={spentLabel}
-          avatar={avatar}
+          avatar={popoverAvatar}
           onOpenAccountSettings={openAccountSettings}
           onOpenSettings={openSettings}
           onClose={() => setOpen(false)}

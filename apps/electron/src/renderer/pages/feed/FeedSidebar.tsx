@@ -55,7 +55,7 @@ function FeedNavButton({ label, secondary, icon, tone, count, active, dot, onCli
       <NavIcon icon={icon} tone={tone} dot={dot} />
       <span className="min-w-0 flex-1">
         <span className="block truncate">{label}</span>
-        {secondary ? <span className="block truncate text-caption font-normal text-text-muted">{secondary}</span> : null}
+        {secondary ? <span className="block truncate text-caption font-normal text-text-muted" title={secondary}>{secondary}</span> : null}
       </span>
       <Count count={count} />
     </button>
