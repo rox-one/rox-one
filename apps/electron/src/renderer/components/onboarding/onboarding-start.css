@@ -9,18 +9,10 @@
   --onb-background-1: radial-gradient(1100px 520px at 50% -12%, oklch(0.36 0.09 285 / 0.38), transparent 62%), radial-gradient(800px 480px at 105% 108%, oklch(0.40 0.09 215 / 0.18), transparent 60%), radial-gradient(700px 420px at -8% 100%, oklch(0.38 0.10 320 / 0.12), transparent 60%), var(--onb-bg);
   --onb-text-1: calc(0.75rem - 1pt);
   --onb-text-2: calc(0.875rem - 1pt);
-  --onb-shadow-1: inset 0 1px 0 oklch(1 0 0 / 0.04), 0 1px 2px oklch(0 0 0 / 0.35);
-  --onb-shadow-2: 0 0 0 3px color-mix(in oklab, var(--onb-glow-a) 22%, transparent), inset 0 1px 0 oklch(1 0 0 / 0.05);
   --onb-shadow-3: inset 0 1px 0 oklch(1 0 0 / 0.05), 0 6px 18px -10px oklch(0 0 0 / 0.6);
   --onb-radius-1: 14px;
   --onb-shadow-4: inset 0 1px 0 oklch(1 0 0 / 0.05), 0 10px 30px -18px oklch(0 0 0 / 0.7);
   --onb-color-1: oklch(0.99 0 0);
-  --onb-shadow-5: inset 0 1px 0 oklch(1 0 0 / 0.25), 0 8px 24px -8px oklch(0.55 0.19 280 / 0.65), 0 0 0 1px oklch(0 0 0 / 0.3);
-  --onb-shadow-6: inset 0 1px 0 oklch(1 0 0 / 0.3), 0 10px 30px -8px oklch(0.6 0.19 280 / 0.8), 0 0 0 1px oklch(0 0 0 / 0.3);
-  --onb-transform-1: translateY(1px) scale(0.995);
-  --onb-color-2: oklch(1 0 0 / 0.55);
-  --onb-shadow-7: inset 0 1px 0 oklch(1 0 0 / 0.08);
-  --onb-shadow-8: 0 0 0 1.5px oklch(1 0 0 / 0.55), 0 2px 8px oklch(0 0 0 / 0.45);
   --onb-color-3: color-mix(in oklab, var(--foreground) 82%, transparent);
   --onb-shadow-9: 0 0 18px -6px color-mix(in oklab, var(--onb-glow-a) 70%, transparent);
   --onb-width-1: 88px;
@@ -497,7 +489,6 @@ html[data-render-profile="performance"] .onb-collapse { transition: none; }
   filter: var(--onb-filter-2);
   opacity: 0.55;
 }
-.onb-start .onb-tile[data-tone="sky"]::before { background: radial-gradient(closest-side, color-mix(in oklab, var(--onb-sel) 70%, transparent), transparent); }
 .onb-start .onb-tile[data-tone="violet"]::before { background: radial-gradient(closest-side, color-mix(in oklab, var(--onb-glow-a) 80%, transparent), transparent); }
 .onb-start .onb-tile { isolation: isolate; }
 
