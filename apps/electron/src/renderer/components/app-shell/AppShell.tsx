@@ -171,6 +171,7 @@ import { installShellWarmup } from "@/lib/shell-warmup"
 import { readSkillsPage, SKILLS_UI_PAGE_SIZE } from "@/lib/skills-query"
 import { toast } from "sonner"
 import { navigate, routes } from "@/lib/navigate"
+import { buildRouteFromNavigationState } from "../../../shared/route-parser"
 import {
   useNavigationActions,
   useNavigationStatus,
@@ -613,7 +614,10 @@ function AppShellContent({
   const secondaryOverlayWidth = isSidebarCollapsed ? 52 : Math.max(SIDEBAR_WIDTH_MIN, Math.min(storedSidebarWidth, shellWidth - SHELL_RAIL_WIDTH - 48))
   useNarrowOverlayFocus(secondaryOverlayRef, secondaryOverlayOpen)
   // Picking a row in the overlay navigates; the overlay then gets out of the way.
-  const overlayNavKey = JSON.stringify(navState)
+  // Keyed on the route string (memoized), not a JSON dump of navState per render.
+  const overlayNavKey = React.useMemo(() => {
+    try { return buildRouteFromNavigationState(navState) } catch { return JSON.stringify(navState) }
+  }, [navState])
   const overlayNavKeyRef = React.useRef(overlayNavKey)
   React.useEffect(() => {
     if (overlayNavKeyRef.current === overlayNavKey) return
