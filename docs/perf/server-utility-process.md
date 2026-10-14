@@ -7,8 +7,12 @@ Status: **experimental, off by default** (`ROX_SERVER_UTILITY_PROCESS=1`).
 - `apps/electron/src/main/server-host.ts` forks the standalone server-core
   bootstrap (`packages/server/src/index.ts`) into `electron.utilityProcess`.
 - **Worker build**: `bun run build:server-host-worker`
-  (`scripts/build-server-host-worker.ts`, part of `build` / `build:win`) →
-  `apps/electron/dist/server-host-worker.mjs`.
+  (`scripts/build-server-host-worker.ts`, called by `build` / `build:win` but
+  **opt-in**: it only builds when `ROX_BUILD_SERVER_HOST_WORKER=1`, otherwise it
+  is a no-op) → minified `apps/electron/dist/server-host-worker.mjs` (~45 MB).
+  If the flag is set at runtime but the worker file is missing, main logs
+  `server-host: worker not found … using in-process server` and makes no fork
+  attempts.
   - **ESM, not CJS**: the server entry uses top-level await (esbuild rejects it
     for CJS). The banner provides `require` / `__filename` / `__dirname`
     (needed by bundled CJS deps, e.g. `@larksuiteoapi/node-sdk`).
@@ -21,7 +25,8 @@ Status: **experimental, off by default** (`ROX_SERVER_UTILITY_PROCESS=1`).
     line in ~1.6 s. Plain Node 20 fails (no `node:sqlite`).
   - Externals match `build:main` (claude-agent-sdk, onnxruntime-node,
     transformers, sharp): resolved from the app's node_modules at runtime.
-  - The bundle is ~74 MB unminified and ships even with the flag off.
+  - Default builds don't contain the worker, so there is no size cost unless
+    you opt in.
   - `build:validate` points at a non-existent `scripts/validate-assets.ts`
     (already broken on main), so validation lives inside the build script.
 - **Readiness and handoff**: main waits for the `CRAFT_SERVER_URL=` line.
@@ -110,8 +115,9 @@ go child → main over `parentPort` with request ids and timeouts.
   for the config.
 - The give-up relaunch comes back in-process: force it with a worker that
   exits immediately.
-- Packaged size cost (~74 MB) is acceptable, or minify / ship it only on a
-  flag-enabled channel.
+- An opt-in build (`ROX_BUILD_SERVER_HOST_WORKER=1 bun run build`) packages
+  the worker, and a default build runs with the flag set but logs the missing
+  worker and stays in-process.
 - Window shell still paints first (the fork is awaited before windows exist
   when the flag is on — measure the cost with the startup bench).
 - Kill the child (`kill <pid>`) → renderer reconnects after restart.

@@ -383,6 +383,10 @@ export async function maybeStartServerHost(deps: ServerHostStartDeps): Promise<S
     const fork: ServerHostForkFn = (modulePath, args, options) =>
       utilityProcess.fork(modulePath, args, options) as unknown as ServerHostChild
     const workerPath = env.ROX_SERVER_HOST_WORKER || defaultWorkerPath()
+    if (!existsSync(workerPath)) {
+      log('warn', `server-host: worker not found at ${workerPath} (build with ROX_BUILD_SERVER_HOST_WORKER=1); using in-process server`)
+      return null
+    }
     // CRAFT_APP_ROOT / CRAFT_IS_PACKAGED / PATH prepends are already set on
     // process.env by main's early boot and pass the CRAFT_* allowlist. These
     // mirror what the in-process bootstrap receives explicitly.

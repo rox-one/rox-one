@@ -11,6 +11,14 @@ import * as esbuild from "esbuild";
 import { existsSync, readFileSync, statSync } from "fs";
 import { join } from "path";
 
+// Opt-in: the bundle is large, so `build` / `build:win` only produce it when
+// ROX_BUILD_SERVER_HOST_WORKER=1 (or with --force). Without it the app falls
+// back to the in-process server even if ROX_SERVER_UTILITY_PROCESS is set.
+if (process.env.ROX_BUILD_SERVER_HOST_WORKER !== "1" && !process.argv.includes("--force")) {
+  console.log("[server-host-worker] skipped (set ROX_BUILD_SERVER_HOST_WORKER=1 to build)");
+  process.exit(0);
+}
+
 const ROOT = join(import.meta.dir, "..");
 const OUT = join(ROOT, "apps/electron/dist/server-host-worker.mjs");
 
@@ -21,6 +29,7 @@ await esbuild.build({
   format: "esm",
   outfile: OUT,
   logLevel: "warning",
+  minify: true,
   // Bun-only `import.meta.dir` (packages/server bundledAssetsRoot fallback).
   define: { "import.meta.dir": "__dirname" },
   external: [
@@ -52,7 +61,7 @@ if (!existsSync(OUT) || statSync(OUT).size < 1024) {
 const src = readFileSync(OUT, "utf-8");
 // esbuild emits external imports with double quotes; single-quoted matches are
 // generated-script template strings (e.g. pages/data-write), not real imports.
-const staticBun = src.match(/^import[^\n]*from\s*"bun:[a-z]+"/m);
+const staticBun = src.match(/\bfrom\s*"bun:[a-z]+"/);
 if (staticBun) {
   console.error(`[server-host-worker] static bun import in bundle: ${staticBun[0]}`);
   process.exit(1);
