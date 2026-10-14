@@ -19,7 +19,7 @@ import {
   setDictationIntent,
 } from './dictation-ownership'
 import { activeComposerPresent } from './composer-presence'
-import { captureInsertTarget, insertDictation, type InsertTarget } from './insert-target'
+import { captureInsertTarget, insertDictation, type InsertCapture } from './insert-target'
 import { setDictationSession } from '@/components/app-shell/input/voice-dictation-state'
 import type { DictationOwner } from './dictation-ownership'
 
@@ -94,7 +94,7 @@ export function GlobalVoiceDictation(): React.ReactElement | null {
   const cancelRecordingRef = useRef<() => void>(() => {})
   const commandRef = useRef<(command: HotkeyCommand) => Promise<void>>(async () => {})
   /** #12: field that had focus when capture started (null → new session draft). */
-  const insertTargetRef = useRef<InsertTarget | null>(null)
+  const insertTargetRef = useRef<InsertCapture | null>(null)
 
   prefsRef.current = prefs
   workspaceIdRef.current = workspaceId

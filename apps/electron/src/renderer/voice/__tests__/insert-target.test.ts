@@ -12,11 +12,12 @@ describe('dictation insert target (#12)', () => {
     ta.value = 'Hello'
     ta.focus()
     ta.setSelectionRange(5, 5)
-    const target = captureInsertTarget()
-    expect(target).toBe(ta)
+    const target = captureInsertTarget(document, true)
+    expect(target?.target).toBe(ta)
     let inputs = 0
     ta.addEventListener('input', () => inputs++)
-    expect(insertDictation(target, 'world')).toBe(true)
+    ta.setSelectionRange(0, 0) // focus moved / caret reset while recording
+    expect(insertDictation(target, 'world', true)).toBe(true)
     expect(ta.value).toBe('Hello world')
     expect(inputs).toBe(1)
     ta.remove()
@@ -31,7 +32,33 @@ describe('dictation insert target (#12)', () => {
     expect(isInsertableElement(inner)).toBe(false)
     wrap.remove()
     const detached = document.createElement('textarea')
-    expect(insertDictation(detached, 'x')).toBe(false)
+    expect(insertDictation({ target: detached }, 'x', true)).toBe(false)
+  })
+  it('restores the saved caret in a contenteditable before inserting', () => {
+    const ed = document.createElement('div')
+    ed.contentEditable = 'true'
+    ed.textContent = 'abcd'
+    document.body.appendChild(ed)
+    ed.focus()
+    const r = document.createRange(); r.setStart(ed.firstChild!, 2); r.collapse(true)
+    document.getSelection()!.removeAllRanges(); document.getSelection()!.addRange(r)
+    const capture = captureInsertTarget(document, true)
+    expect(capture?.range).toBeDefined()
+    document.getSelection()!.removeAllRanges()
+    expect(insertDictation(capture, 'X', true)).toBe(true)
+    expect(ed.textContent).toBe('abXcd')
+    ed.remove()
+  })
+  it('falls back when the Rox window is not focused or the field is hidden', () => {
+    const ta = document.createElement('textarea')
+    document.body.appendChild(ta)
+    ta.focus()
+    expect(captureInsertTarget(document, false)).toBeNull()
+    const capture = captureInsertTarget(document, true)
+    expect(insertDictation(capture, 'x', false)).toBe(false)
+    ta.hidden = true
+    expect(insertDictation(capture, 'x', true)).toBe(false)
+    ta.remove()
   })
 })
 
