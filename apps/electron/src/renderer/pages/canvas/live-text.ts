@@ -43,7 +43,18 @@ export function bindTextArea(el: TextAreaLike, yt: Y.Text, origin: unknown): () 
 
   const applyLocal = () => {
     const d = diffRange(shadow, el.value)
-    if (!d.remove && !d.insert) return
+    if (!d.remove && !d.insert) {
+      // No local change (e.g. a cancelled composition): still consume buffered remote
+      // deltas, or the next local edit would be mapped through them twice.
+      if (pending.length) {
+        let c = el.selectionEnd ?? 0
+        for (const delta of pending) c = mapPoint(delta, c)
+        pending = []
+        if (el.value !== yt.toString()) { el.value = yt.toString(); el.setSelectionRange(c, c) }
+        shadow = el.value
+      }
+      return
+    }
     let index = d.index, remove = d.remove
     // Map the change (made against `shadow`) through remote deltas buffered during IME.
     for (const delta of pending) {
@@ -61,7 +72,7 @@ export function bindTextArea(el: TextAreaLike, yt: Y.Text, origin: unknown): () 
   }
   const onInput = () => { if (!composing) applyLocal() }
   const onStart = () => { composing = true }
-  const onEnd = () => { composing = false; applyLocal(); if (el.value !== yt.toString()) { el.value = yt.toString(); shadow = el.value } }
+  const onEnd = () => { composing = false; applyLocal() }
 
   const observer = (ev: Y.YTextEvent, tr: Y.Transaction) => {
     if (tr.origin === origin) return

@@ -100,4 +100,18 @@ describe('live text binding (S1)', () => {
     el.type('y')
     expect(el.selectionStart).toBe(2)
   })
+  it('IME cancelled with remote edits buffered: caret mapped, next edit not double-mapped', () => {
+    const { a, b } = peers('ab')
+    const el = new FakeTextArea()
+    bindTextArea(el, a, LOCAL)
+    el.setSelectionRange(2, 2)
+    el.fire('compositionstart')
+    b.insert(0, 'XY')
+    el.fire('compositionend') // nothing composed
+    expect(el.value).toBe('XYab')
+    expect(el.selectionStart).toBe(4)
+    el.type('!')
+    expect(a.toString()).toBe('XYab!')
+    expect(b.toString()).toBe('XYab!')
+  })
 })

@@ -254,11 +254,16 @@ function useBoard(workspaceId: string, boardId: string) {
       if (origin !== MAIN_ORIGIN) outbox.push(update)
       schedule()
     }
+    // Listen before opening: updates main forwards between subscribing us and the
+    // open reply resolving would otherwise be lost (Yjs dedupes overlap with `state`).
+    let loaded = false
+    offRemote = api.onUpdate((ws, id, u) => { if (ws === workspaceId && id === boardId) { inbox.push(u); if (loaded) schedule() } })
     api.open(workspaceId, boardId).then(state => {
       if (!alive) return
       Y.applyUpdate(doc, state, MAIN_ORIGIN)
       doc.on('update', onUpdate)
-      offRemote = api.onUpdate((ws, id, u) => { if (ws === workspaceId && id === boardId) { inbox.push(u); schedule() } })
+      loaded = true
+      if (inbox.length) schedule()
       setBoard(new CanvasDoc(doc))
     }).catch(() => alive && setError('load'))
     return () => {
