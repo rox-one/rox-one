@@ -745,13 +745,18 @@ export default function TasksPage(props: TasksPageProps = {}) {
       return
     }
     if (mod || event.altKey) return
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Home' || event.key === 'End' || event.key === 'PageDown' || event.key === 'PageUp') {
+    const jumpKey = event.key === 'Home' || event.key === 'End' || event.key === 'PageDown' || event.key === 'PageUp'
+    // Home/End/PgUp/PgDn drive the list only from the list itself (or the body);
+    // elsewhere (detail pane, other scroll containers) they keep native scrolling.
+    if (jumpKey && !(target === document.body || listRef.current?.contains(target))) return
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || jumpKey) {
       event.preventDefault()
       const index = selected ? visible.findIndex((task) => task.id === selected.id) : -1
       const to = navigateIndex(event.key, index, visible.length)
       const next = to == null ? undefined : visible[to]
       if (next) {
         selectTask(next.id)
+        // Jumps can land far outside the viewport; selection alone does not scroll the row in.
         listRef.current?.querySelector(`[data-task-id="${CSS.escape(next.id)}"]`)?.scrollIntoView({ block: 'nearest' })
       }
       return
