@@ -17,8 +17,8 @@ function fixture() {
 }
 
 describe('automatic local chat import defaults', () => {
-  it('enables a new installation without reading any chat sources', () => {
-    expect(readAutoImportFile(fixture().root).enabled).toBe(true)
+  it('does not import local chats on a new installation until the user consents', () => {
+    expect(readAutoImportFile(fixture().root).enabled).toBe(false)
   })
 
   it('keeps an explicit opt-out disabled on every subsequent startup', () => {
