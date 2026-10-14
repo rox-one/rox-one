@@ -4,6 +4,7 @@
  * is reserved for the active row, counters and the primary button. Colours
  * come from theme tokens so high-contrast themes keep working.
  */
+import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
@@ -43,7 +44,7 @@ export function ScreenHeader({
 }) {
   return (
     <div data-screen-header="" className="flex shrink-0 items-baseline gap-2 px-4 pb-2 pt-3">
-      <h1 data-screen-title="" className="text-xl font-bold">{title}</h1>
+      <PanelHeading data-screen-title="" className="text-xl font-bold">{title}</PanelHeading>
       {subtitle != null && <span data-screen-count="" className="text-muted-foreground">{subtitle}</span>}
       <span className="flex-1" />
       {actions && <div className="flex items-center gap-1.5">{actions}</div>}
