@@ -8,7 +8,7 @@ import { useTheme } from '@/hooks/useTheme'
 import type { ThemeOverrides } from '@config/theme'
 import { useSetAtom, useStore, useAtomValue, useAtom } from 'jotai'
 import type { Session, Workspace, SessionEvent, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, SetupNeeds, SessionStatus, NewChatActionParams, ContentBadge, LlmConnectionWithStatus, PermissionModeState } from '../shared/types'
-import type { StartupRuntimeSummary } from '@rox/shared/protocol'
+import type { StartupRuntimeSummary, SteeringVerb } from '@rox/shared/protocol'
 import type { DoctorReport } from '@rox/shared/service-lifecycle'
 import type { SessionDraft, DraftAttachmentRef } from '@rox/shared/config'
 import type { SessionOptions, SessionOptionUpdates } from './hooks/useSessionOptions'
@@ -1930,7 +1930,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     window.electronAPI.sessionCommand(sessionId, { type: 'rename', name })
   }, [updateSessionById])
 
-  const handleSendMessage = useCallback(async (sessionId: string, message: string, attachments?: FileAttachment[], skillSlugs?: string[], externalBadges?: ContentBadge[]) => {
+  const handleSendMessage = useCallback(async (sessionId: string, message: string, attachments?: FileAttachment[], skillSlugs?: string[], externalBadges?: ContentBadge[], queueMode?: SteeringVerb) => {
     const scope = sessionScopeRef.current
     try {
       if (!scope.authority || scope.authority === 'native' && (!scope.workspaceId
@@ -2090,6 +2090,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         skillSlugs,
         badges: persistedBadges,
         optimisticMessageId: userMessage.id,
+        ...(queueMode && sendingMidStream ? { queueMode } : {}),
       })
     } catch (error) {
       console.error('Failed to send message:', error)
