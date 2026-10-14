@@ -100,6 +100,26 @@ describe('persistOnboardingRole', () => {
     expect(store.get(devSpaceEnabledAtom)).toBe(true)
   })
 
+  it('persists the normalized work style with an explicit answer', async () => {
+    const { api, patches } = fakeApi()
+    await persistOnboardingRole(api, {
+      isDeveloper: false,
+      relatedRoles: [],
+      skipped: false,
+      workStyle: { agents: ['codex'], detail: 'concise', formats: [] },
+    })
+    expect(patches[0]!.role).toEqual({
+      status: 'answered',
+      value: { isDeveloper: false, relatedRoles: [], workStyle: { agents: ['codex'], detail: 'concise' } },
+    })
+  })
+
+  it('drops the work style on skip', async () => {
+    const { api, patches } = fakeApi()
+    await persistOnboardingRole(api, { isDeveloper: false, relatedRoles: [], skipped: true, workStyle: { detail: 'concise' } })
+    expect(patches[0]!.role).toEqual({ status: 'skipped', value: { isDeveloper: false, relatedRoles: [] } })
+  })
+
   it('records a skip as skipped and never enables the flag', async () => {
     const { api, patches } = fakeApi()
     await persistOnboardingRole(api, { isDeveloper: false, relatedRoles: [], skipped: true })
