@@ -21,10 +21,11 @@ describe('W1-07 workbench flags', () => {
     ])
   })
 
-  it('registers each flag once, default OFF, no dependencies, rollback-safe', () => {
+  it('registers each flag once, default OFF (Мессенджер default ON), no dependencies, rollback-safe', () => {
     for (const id of W1_07) {
       const definitions = WORKBENCH_FEATURE_FLAGS.filter((flag) => flag.id === id)
-      expect(definitions).toEqual([{ id, defaultValue: false, dependencies: [], rollbackSafe: true }])
+      const defaultValue = id === WORKBENCH_FLAG.modeMessengerV1
+      expect(definitions).toEqual([{ id, defaultValue, dependencies: [], rollbackSafe: true }])
     }
   })
 
