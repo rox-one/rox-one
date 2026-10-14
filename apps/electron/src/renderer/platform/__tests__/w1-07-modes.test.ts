@@ -80,12 +80,12 @@ describe('W1-07 flags', () => {
 })
 
 describe('unified modes', () => {
-  it('flags ON: all nine modes in §3.1 order', () => {
+  it('flags ON: all ten modes in §3.1 order', () => {
     const flags = resolveShellFlags(Object.fromEntries(W1_07_FLAG_IDS.map((id) => [id, true])))
     const modes = pill(flags)
     expect(modes.map((mode) => [mode.id, mode.order])).toEqual([
       ['home', 10], ['chat', 20], ['messenger', 25], ['calendar', 35], ['tasks', 40],
-      ['goals', 45], ['notes', 50], ['feed', 60], ['inbox', 70],
+      ['goals', 45], ['notes', 50], ['canvas', 55], ['feed', 60], ['inbox', 70],
     ])
     expect(modes.find((mode) => mode.id === 'messenger')?.rootRoute).toBe('messenger')
     expect(modes.find((mode) => mode.id === 'notes')?.titleKey).toBe(DOCS_RELABEL_TITLE_KEY)
@@ -100,7 +100,7 @@ describe('unified modes', () => {
 
   it('mode titles are workbench.mode.<id> keys', () => {
     expect(UNIFIED_MODES.map((mode) => mode.contribution.titleKey)).toEqual([
-      'workbench.mode.messenger', 'workbench.mode.calendar', 'workbench.mode.goals',
+      'workbench.mode.messenger', 'workbench.mode.calendar', 'workbench.mode.goals', 'workbench.mode.canvas',
     ])
   })
 

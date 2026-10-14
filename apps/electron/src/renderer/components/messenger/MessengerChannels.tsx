@@ -9,13 +9,19 @@
 import { onMessengerCreateRequest, takeMessengerCreateRequest } from '@/platform/messenger-create-request'
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Archive, Bell, BellOff, Hash, Lock, LogIn, LogOut, MessagesSquare, Plus, Send, Users } from 'lucide-react'
-import type { TeamChannelKind, TeamChannelView, TeamChannelVisibility } from '@rox/shared/team-chat'
+import { useSetAtom } from 'jotai'
+import { Archive, Bell, BellOff, Hash, Lock, LogIn, LogOut, MessagesSquare, PanelRight, Phone, Plus, ScrollText, Search, Send, Sparkles, Users } from 'lucide-react'
+import type { TeamChannelKind, TeamChannelMessage, TeamChannelView, TeamChannelVisibility } from '@rox/shared/team-chat'
 import type { TeamMemberRef } from '@rox/shared/team'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { teamChatErrorText, useTeamChannels, useTeamMessages } from './use-team-chat'
+import { messengerStatusAtom } from '@/atoms/messenger-status'
+import { teamChatErrorText, useTeamChannels, useTeamMessages, useTeamSearch } from './use-team-chat'
+import { useTeamCall } from './use-team-call'
+import { Avatar, ChannelInfoPanel, type Presence } from './ChannelInfoPanel'
+import { CallStage } from './CallStage'
+import { MessageBody } from './message-cards'
 
 const NAME_MAX = 80
 const MESSAGE_MAX = 4000
@@ -43,6 +49,11 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
   const [creating, setCreating] = React.useState<TeamChannelKind | null>(null)
   const [actionError, setActionError] = React.useState<string | null>(null)
+  const [infoOpen, setInfoOpen] = React.useState(true)
+  const [query, setQuery] = React.useState('')
+  const search = useTeamSearch(orgId, query)
+  const selfName = React.useMemo(() => members.find(m => m.userId === selfUserId)?.displayName ?? t('teamCollab.you'), [members, selfUserId, t])
+  const call = useTeamCall({ selfName })
 
   // Global «+» → group/channel: open the create form preset to that kind.
   React.useEffect(() => {
@@ -61,31 +72,67 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
     return (userId: string) => (userId === selfUserId ? t('teamCollab.you') : map.get(userId) ?? userId.slice(0, 8))
   }, [members, selfUserId, t])
 
+  // Presence: in a live call (any channel) → «call»; this device → online; else offline.
+  const inCallIds = React.useMemo(() => new Set(channels.channels.flatMap(c => c.activeCall?.participantIds ?? [])), [channels.channels])
+  const presenceOf = React.useCallback((userId: string): Presence => inCallIds.has(userId) ? 'call' : userId === selfUserId ? 'online' : 'offline', [inCallIds, selfUserId])
+  const onlineCount = selected ? selected.memberIds.filter(id => presenceOf(id) !== 'offline').length : 0
+  const inThisCall = call.status === 'connected' && call.channelId === selected?.id
+  const joining = call.status === 'connecting'
+
+  // Status bar: open channel + unread total + live call.
+  const setStatus = useSetAtom(messengerStatusAtom)
+  const unreadTotal = channels.channels.reduce((n, c) => n + c.unreadCount, 0)
+  React.useEffect(() => {
+    setStatus(selected ? { channelLabel: channelLabel(selected, t), unreadTotal, callLive: !!selected.activeCall } : null)
+  }, [selected, unreadTotal, setStatus, t])
+  React.useEffect(() => () => setStatus(null), [setStatus])
+
   const run = React.useCallback(async (action: () => Promise<unknown>) => {
     setActionError(null)
     try { await action(); await channels.reload() } catch (error) { setActionError(teamChatErrorText(error)) }
   }, [channels])
 
+  const joinCall = React.useCallback(() => {
+    if (!selected) return
+    void (async () => {
+      if (!selected.viewerRole && selected.visibility === 'public') await window.electronAPI.teamChatJoin(selected.id)
+      await call.join(selected.id)
+      await channels.reload()
+    })().catch(error => setActionError(teamChatErrorText(error)))
+  }, [call, channels, selected])
+
   const rooms = channels.channels.filter(c => c.kind === 'channel')
   const groups = channels.channels.filter(c => c.kind === 'group')
+  const rowProps = (channel: TeamChannelView) => ({
+    channel, active: channel.id === selected?.id, label: channelLabel(channel, t), onSelect: () => setSelectedId(channel.id),
+    preview: previewOf(channel, nameOf, t), locale: i18n.language,
+  })
 
   return (
     <div className="flex min-h-0 flex-1" data-testid="messenger-channels">
-      <aside className="flex w-60 shrink-0 flex-col border-e border-border/60" aria-label={t('messenger.channels.listLabel')}>
+      <aside className="flex w-64 shrink-0 flex-col border-e border-border/60" aria-label={t('messenger.channels.listLabel')}>
+        <div className="px-2 pt-2">
+          <label className="flex h-8 items-center gap-2 rounded-md bg-surface-input px-2 text-small text-text-muted">
+            <Search className="icon-caption shrink-0" aria-hidden />
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder={t('messenger.channels.searchPlaceholder')} aria-label={t('messenger.channels.searchPlaceholder')} className="min-w-0 flex-1 bg-transparent text-text-primary outline-none" data-testid="messenger-search" />
+          </label>
+        </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
-          <SectionHeader title={t('messenger.channels.channels')} onAdd={() => setCreating('channel')} addLabel={t('messenger.channels.newChannel')} />
-          <ul className="mb-3 flex flex-col">
-            {rooms.map(channel => (
-              <ChannelRow key={channel.id} channel={channel} active={channel.id === selected?.id} label={channelLabel(channel, t)} onSelect={() => setSelectedId(channel.id)} />
-            ))}
-          </ul>
-          <SectionHeader title={t('messenger.channels.groups')} onAdd={() => setCreating('group')} addLabel={t('messenger.channels.newGroup')} />
-          <ul className="flex flex-col">
-            {groups.length === 0 ? <li className="px-2 py-1 text-caption text-text-muted">{t('messenger.channels.noGroups')}</li> : null}
-            {groups.map(channel => (
-              <ChannelRow key={channel.id} channel={channel} active={channel.id === selected?.id} label={channel.name} onSelect={() => setSelectedId(channel.id)} />
-            ))}
-          </ul>
+          {query.trim().length >= 2 ? (
+            <SearchResults search={search} channels={channels.channels} nameOf={nameOf} onOpen={(id) => { setSelectedId(id); setQuery('') }} label={c => channelLabel(c, t)} />
+          ) : (
+            <>
+              <SectionHeader title={t('messenger.channels.channels')} onAdd={() => setCreating('channel')} addLabel={t('messenger.channels.newChannel')} />
+              <ul className="mb-3 flex flex-col">
+                {rooms.map(channel => <ChannelRow key={channel.id} {...rowProps(channel)} />)}
+              </ul>
+              <SectionHeader title={t('messenger.channels.groups')} onAdd={() => setCreating('group')} addLabel={t('messenger.channels.newGroup')} />
+              <ul className="flex flex-col">
+                {groups.length === 0 ? <li className="px-2 py-1 text-caption text-text-muted">{t('messenger.channels.noGroups')}</li> : null}
+                {groups.map(channel => <ChannelRow key={channel.id} {...rowProps(channel)} label={channel.name} />)}
+              </ul>
+            </>
+          )}
         </div>
         {creating ? (
           <CreateChannelForm
@@ -118,45 +165,55 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
           <>
             <header className="flex shrink-0 items-center gap-2 border-b border-border/60 px-4 py-2">
               <ChannelIcon channel={selected} className="text-text-muted" />
-              <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 flex-1 items-baseline gap-2">
                 <h2 className="truncate text-body font-semibold">{channelLabel(selected, t)}</h2>
-                <p className="truncate text-caption text-text-muted">
-                  {t('messenger.channels.memberCount', { count: selected.memberCount })}
+                <p className="truncate text-caption text-text-muted" data-testid="messenger-header-meta">
+                  {t('messenger.channels.memberCount', { count: selected.memberCount })} · {t('messenger.channels.onlineCount', { count: onlineCount })}
                   {selected.topic ? ` · ${selected.topic}` : ''}
                 </p>
               </div>
+              <ul className="flex -space-x-1.5" aria-label={t('messenger.info.memberList')}>
+                {selected.memberIds.slice(0, 5).map(id => <li key={id} title={nameOf(id)}><Avatar name={nameOf(id)} className="size-6 ring-2 ring-background" /></li>)}
+                {selected.memberIds.length > 5 ? <li className="ps-2.5 text-caption text-text-muted">+{selected.memberIds.length - 5}</li> : null}
+              </ul>
+              {!inThisCall ? (
+                <Button size="sm" variant={selected.activeCall ? 'default' : 'secondary'} onClick={joinCall} disabled={joining || (!selected.viewerRole && selected.visibility !== 'public')} data-testid="messenger-join-call"
+                  className={cn(selected.activeCall && 'bg-success text-white hover:bg-success/90')}>
+                  <Phone aria-hidden />{selected.activeCall ? t('messenger.calls.join') : t('messenger.calls.start')}
+                </Button>
+              ) : null}
               {selected.visibility === 'public' ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost" size="sm"
+                      variant="ghost" size="icon"
                       aria-pressed={selected.viewerSubscribed}
+                      aria-label={selected.viewerSubscribed ? t('messenger.channels.unfollow') : t('messenger.channels.follow')}
                       onClick={() => void run(() => window.electronAPI.teamChatSetSubscribed(selected.id, !selected.viewerSubscribed))}
                     >
                       {selected.viewerSubscribed ? <BellOff aria-hidden /> : <Bell aria-hidden />}
-                      {selected.viewerSubscribed ? t('messenger.channels.unfollow') : t('messenger.channels.follow')}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>{t('messenger.channels.followHint')}</TooltipContent>
+                  <TooltipContent>{selected.viewerSubscribed ? t('messenger.channels.unfollow') : t('messenger.channels.follow')} — {t('messenger.channels.followHint')}</TooltipContent>
                 </Tooltip>
               ) : null}
               {!selected.viewerRole && selected.visibility === 'public' ? (
-                <Button size="sm" onClick={() => void run(() => window.electronAPI.teamChatJoin(selected.id))}>
+                <Button size="sm" variant="secondary" onClick={() => void run(() => window.electronAPI.teamChatJoin(selected.id))}>
                   <LogIn aria-hidden />{t('messenger.channels.join')}
                 </Button>
               ) : null}
               {selected.viewerRole && !selected.isDefault ? (
-                <Button variant="ghost" size="sm" onClick={() => void run(async () => { await window.electronAPI.teamChatLeave(selected.id, orgId); setSelectedId(null) })}>
-                  <LogOut aria-hidden />{t('messenger.channels.leave')}
-                </Button>
+                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label={t('messenger.channels.leave')} onClick={() => void run(async () => { if (call.channelId === selected.id) await call.leave(); await window.electronAPI.teamChatLeave(selected.id, orgId); setSelectedId(null) })}>
+                  <LogOut aria-hidden />
+                </Button></TooltipTrigger><TooltipContent>{t('messenger.channels.leave')}</TooltipContent></Tooltip>
               ) : null}
               {!selected.isDefault && (selected.viewerRole === 'owner' || selected.viewerRole === 'admin' || viewerOrgRole === 'owner' || viewerOrgRole === 'admin') ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="sm" aria-label={t('messenger.channels.archive')}
+                    <Button variant="ghost" size="icon" aria-label={t('messenger.channels.archive')}
                       onClick={() => {
                         if (!window.confirm(t('messenger.channels.archiveConfirm', { name: selected.name }))) return
-                        void run(async () => { await window.electronAPI.teamChatArchive(selected.id, orgId); setSelectedId(null) })
+                        void run(async () => { if (call.channelId === selected.id) await call.leave(); await window.electronAPI.teamChatArchive(selected.id, orgId); setSelectedId(null) })
                       }}
                     >
                       <Archive aria-hidden />
@@ -165,7 +222,12 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
                   <TooltipContent>{t('messenger.channels.archive')}</TooltipContent>
                 </Tooltip>
               ) : null}
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-pressed={infoOpen} onClick={() => setInfoOpen(v => !v)} aria-label={t('messenger.info.title')}>
+                <PanelRight aria-hidden />
+              </Button></TooltipTrigger><TooltipContent>{t('messenger.info.title')}</TooltipContent></Tooltip>
             </header>
+            {inThisCall || (joining && call.channelId === selected.id) ? <CallStage call={call} /> : null}
+            {call.status === 'error' && call.channelId === selected.id ? <p className="border-b border-border/60 px-4 py-1.5 text-caption text-destructive" role="alert">{call.error}</p> : null}
             {actionError ? <p className="border-b border-border/60 px-4 py-1.5 text-caption text-destructive" role="alert">{actionError}</p> : null}
             <MessageList
               loading={messages.loading}
@@ -189,7 +251,63 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
           </>
         )}
       </section>
+      {selected && infoOpen ? (
+        <ChannelInfoPanel
+          channel={selected}
+          label={channelLabel(selected, t)}
+          members={members}
+          presenceOf={presenceOf}
+          nameOf={nameOf}
+          messageCount={messages.messages.filter(m => m.kind !== 'system').length}
+          inCall={inThisCall}
+          joining={joining}
+          onJoinCall={joinCall}
+          onClose={() => setInfoOpen(false)}
+          locale={i18n.language}
+        />
+      ) : null}
     </div>
+  )
+}
+
+function previewOf(channel: TeamChannelView, nameOf: (id: string) => string, t: (k: string, o?: Record<string, unknown>) => string): string {
+  const m = channel.lastMessage
+  if (!m) return ''
+  if (m.kind === 'system') return m.event === 'call.started' ? t('messenger.calls.startedBy', { name: nameOf(m.senderId) }) : t('messenger.calls.ended')
+  if (m.kind === 'transcript') return t('messenger.calls.transcriptPreview')
+  if (m.kind === 'summary') return t('messenger.calls.summaryPreview')
+  return `${nameOf(m.senderId)}: ${m.text.replace(/\s+/g, ' ')}`
+}
+
+function SearchResults({ search, channels, nameOf, onOpen, label }: {
+  search: ReturnType<typeof useTeamSearch>
+  channels: TeamChannelView[]
+  nameOf: (id: string) => string
+  onOpen: (channelId: string) => void
+  label: (c: TeamChannelView) => string
+}) {
+  const { t } = useTranslation()
+  const byId = new Map(channels.map(c => [c.id, c]))
+  if (search.loading) return <p className="px-2 text-caption text-text-muted" role="status">{t('teamCollab.loading')}</p>
+  if (search.error) return <p className="px-2 text-caption text-destructive" role="alert">{search.error}</p>
+  if (!search.results.length) return <p className="px-2 text-caption text-text-muted">{t('messenger.channels.searchEmpty')}</p>
+  return (
+    <ul className="flex flex-col gap-1" data-testid="messenger-search-results">
+      {search.results.map(m => {
+        const channel = byId.get(m.channelId)
+        return (
+          <li key={m.id}>
+            <button type="button" className="flex w-full flex-col rounded-md px-2 py-1.5 text-start hover:bg-surface-hover" onClick={() => onOpen(m.channelId)}>
+              <span className="flex items-center gap-1 text-caption text-text-muted">
+                {m.kind === 'transcript' ? <ScrollText className="icon-caption" aria-hidden /> : m.kind === 'summary' ? <Sparkles className="icon-caption" aria-hidden /> : null}
+                {channel ? label(channel) : ''} · {m.kind === 'transcript' ? t('messenger.calls.transcriptPreview') : m.kind === 'summary' ? t('messenger.calls.summaryPreview') : nameOf(m.senderId)}
+              </span>
+              <span className="line-clamp-2 text-small">{m.text}</span>
+            </button>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
@@ -204,7 +322,9 @@ function SectionHeader({ title, onAdd, addLabel }: { title: string; onAdd: () =>
   )
 }
 
-function ChannelRow({ channel, active, label, onSelect }: { channel: TeamChannelView; active: boolean; label: string; onSelect: () => void }) {
+function ChannelRow({ channel, active, label, onSelect, preview, locale }: { channel: TeamChannelView; active: boolean; label: string; onSelect: () => void; preview: string; locale: string }) {
+  const when = channel.lastMessage?.createdAt
+  const time = when ? new Intl.DateTimeFormat(locale, Date.now() - when < 86_400_000 ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short' }).format(when) : ''
   return (
     <li>
       <button
@@ -213,17 +333,30 @@ function ChannelRow({ channel, active, label, onSelect }: { channel: TeamChannel
         aria-current={active ? 'true' : undefined}
         data-channel-id={channel.id}
         className={cn(
-          'flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 text-start text-body hover:bg-surface-hover',
-          active && 'bg-surface-hover font-medium',
+          'flex w-full items-start gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-start hover:bg-surface-hover',
+          active && 'bg-surface-hover',
           !channel.viewerRole && 'text-text-secondary',
         )}
       >
-        <ChannelIcon channel={channel} className="text-text-muted" />
-        <span className="min-w-0 flex-1 truncate">{label}</span>
-        {channel.viewerSubscribed ? <Bell className="icon-status text-text-muted" aria-hidden /> : null}
-        {channel.unreadCount > 0 ? (
-          <span className="rounded-full bg-accent px-1.5 text-caption font-medium text-accent-foreground">{channel.unreadCount > 99 ? '99+' : channel.unreadCount}</span>
-        ) : null}
+        <ChannelIcon channel={channel} className="mt-1 text-text-muted" />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5">
+            <span className={cn('min-w-0 flex-1 truncate text-body', (active || channel.unreadCount > 0) && 'font-medium')}>{label}</span>
+            {channel.activeCall ? <Phone className="icon-status shrink-0 text-success" aria-hidden /> : null}
+            {channel.viewerSubscribed ? <Bell className="icon-status shrink-0 text-text-muted" aria-hidden /> : null}
+            {time ? <span className="shrink-0 text-caption text-text-muted">{time}</span> : null}
+          </span>
+          {preview ? (
+            <span className="flex items-center gap-1.5">
+              <span className="min-w-0 flex-1 truncate text-caption text-text-muted">{preview}</span>
+              {channel.unreadCount > 0 ? (
+                <span className="rounded-full bg-accent px-1.5 text-caption font-medium text-accent-foreground" data-testid="messenger-unread">{channel.unreadCount > 99 ? '99+' : channel.unreadCount}</span>
+              ) : null}
+            </span>
+          ) : channel.unreadCount > 0 ? (
+            <span className="rounded-full bg-accent px-1.5 text-caption font-medium text-accent-foreground" data-testid="messenger-unread">{channel.unreadCount > 99 ? '99+' : channel.unreadCount}</span>
+          ) : null}
+        </span>
       </button>
     </li>
   )
@@ -298,7 +431,7 @@ function CreateChannelForm({ kind, members, onCancel, onCreate }: {
 function MessageList({ loading, error, messages, nameOf, locale }: {
   loading: boolean
   error: string | null
-  messages: { id: string; senderId: string; text: string; createdAt: number }[]
+  messages: TeamChannelMessage[]
   nameOf: (userId: string) => string
   locale: string
 }) {
@@ -319,16 +452,16 @@ function MessageList({ loading, error, messages, nameOf, locale }: {
       <ul className="flex flex-col gap-2">
         {messages.map((m, i) => {
           const prev = messages[i - 1]
-          const grouped = prev && prev.senderId === m.senderId && m.createdAt - prev.createdAt < 5 * 60_000
+          const grouped = prev && prev.senderId === m.senderId && m.senderId !== 'system' && m.createdAt - prev.createdAt < 5 * 60_000
           return (
             <li key={m.id} className={cn(!grouped && 'pt-1')}>
-              {!grouped ? (
+              {!grouped && m.kind !== 'system' ? (
                 <div className="flex items-baseline gap-2">
-                  <span className="text-small font-semibold">{nameOf(m.senderId)}</span>
+                  <span className="text-small font-semibold">{m.senderId === 'system' ? t('messenger.calls.botName') : nameOf(m.senderId)}</span>
                   <time className="text-caption text-text-muted" dateTime={new Date(m.createdAt).toISOString()}>{time.format(m.createdAt)}</time>
                 </div>
               ) : null}
-              <p className="whitespace-pre-wrap break-words text-body">{m.text}</p>
+              <MessageBody message={m} nameOf={nameOf} />
             </li>
           )
         })}
