@@ -1700,14 +1700,7 @@ html[data-contrast="high"] [data-home-cell]:hover > .rox-home-widget {
   transform: none;
 }
 /* «Сегодня» hero: accent glow inside the card, input and chips on tone steps. */
-.rox-home-hero-glow {
-  background:
-    radial-gradient(120% 140% at 0% 0%, color-mix(in oklch, var(--accent) 26%, transparent), transparent 60%),
-    radial-gradient(90% 120% at 100% 100%, color-mix(in oklch, var(--success) 14%, transparent), transparent 60%);
-}
-html[data-contrast="high"] .rox-home-hero-glow {
-  display: none;
-}
+/* Hero is a flat glass panel (Mark 2026-10-14): no radial glow layer. */
 .rox-home-ask {
   background-color: color-mix(in oklch, var(--widget-base) 70%, transparent);
 }
