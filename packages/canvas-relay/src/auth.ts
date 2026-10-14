@@ -1,18 +1,43 @@
 /**
- * Room tokens: compact JWS (HS256) with claims
- *   { sub, room, scope: 'edit'|'comment'|'view', exp, iat?, name? }.
- * MVP verifies with a shared secret (self-host mode). Phase 3 adds EdDSA/JWKS
- * issued by id.rox.one; `verifyRoomToken` is the single seam for that.
+ * Room tokens: compact JWS (HS256). Required claims:
+ *   sub, room, scope ('edit'|'comment'|'view'), iss, aud, iat, nbf, exp
+ * optional: name, epoch (revocation epoch, default 0).
+ * Lifetime (exp - iat) is capped at MAX_TOKEN_TTL_SEC (15 min): clients refresh
+ * through the token endpoint and send the new token in-band (MSG_AUTH);
+ * long-lived share links therefore only ever mint short tokens.
+ * Phase 3 adds EdDSA/JWKS issued by id.rox.one; `verifyRoomToken` is the seam.
  */
 export type Scope = 'edit' | 'comment' | 'view'
-export interface RoomClaims { sub: string; room: string; scope: Scope; exp: number; iat?: number; name?: string }
+export interface RoomClaims {
+  sub: string; room: string; scope: Scope
+  iss: string; aud: string; iat: number; nbf: number; exp: number
+  name?: string; epoch?: number
+}
+
+export const MAX_TOKEN_TTL_SEC = 15 * 60
+const CLOCK_SKEW_SEC = 30
+
+export interface VerifyOptions {
+  secret: string
+  issuer: string
+  audience: string
+  now?: number
+  /** Minimum accepted epoch for (room, sub); tokens below it are revoked. */
+  minEpoch?: (room: string, sub: string) => number
+}
 
 const enc = new TextEncoder()
 const b64url = (b: Uint8Array) => Buffer.from(b).toString('base64url')
 const fromB64url = (s: string) => new Uint8Array(Buffer.from(s, 'base64url'))
 
-async function hmacKey(secret: string): Promise<CryptoKey> {
-  return crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify'])
+const keyCache = new Map<string, Promise<CryptoKey>>()
+function hmacKey(secret: string): Promise<CryptoKey> {
+  let k = keyCache.get(secret)
+  if (!k) {
+    k = crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify'])
+    keyCache.set(secret, k)
+  }
+  return k
 }
 
 export async function signRoomToken(claims: RoomClaims, secret: string): Promise<string> {
@@ -24,22 +49,34 @@ export async function signRoomToken(claims: RoomClaims, secret: string): Promise
 
 export type VerifyResult = { ok: true; claims: RoomClaims } | { ok: false; reason: string }
 
-export async function verifyRoomToken(token: string, room: string, secret: string, nowSec = Math.floor(Date.now() / 1000)): Promise<VerifyResult> {
+const isInt = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v)
+
+export async function verifyRoomToken(token: string, room: string, opts: VerifyOptions): Promise<VerifyResult> {
+  const now = opts.now ?? Math.floor(Date.now() / 1000)
   const parts = token.split('.')
   if (parts.length !== 3) return { ok: false, reason: 'malformed' }
   const [h, b, s] = parts as [string, string, string]
   let header: { alg?: string }
-  let claims: RoomClaims
+  let c: Partial<RoomClaims>
   try {
     header = JSON.parse(Buffer.from(h, 'base64url').toString('utf8'))
-    claims = JSON.parse(Buffer.from(b, 'base64url').toString('utf8'))
+    c = JSON.parse(Buffer.from(b, 'base64url').toString('utf8'))
   } catch { return { ok: false, reason: 'malformed' } }
-  if (header.alg !== 'HS256') return { ok: false, reason: 'alg' }
-  const valid = await crypto.subtle.verify('HMAC', await hmacKey(secret), fromB64url(s), enc.encode(`${h}.${b}`))
+  if (!header || header.alg !== 'HS256') return { ok: false, reason: 'alg' }
+  const valid = await crypto.subtle.verify('HMAC', await hmacKey(opts.secret), fromB64url(s), enc.encode(`${h}.${b}`))
   if (!valid) return { ok: false, reason: 'signature' }
-  if (typeof claims.exp !== 'number' || claims.exp <= nowSec) return { ok: false, reason: 'expired' }
-  if (claims.room !== room) return { ok: false, reason: 'room' }
-  if (!['edit', 'comment', 'view'].includes(claims.scope)) return { ok: false, reason: 'scope' }
-  if (typeof claims.sub !== 'string' || !claims.sub) return { ok: false, reason: 'sub' }
-  return { ok: true, claims }
+  if (!c || typeof c !== 'object') return { ok: false, reason: 'malformed' }
+  if (c.iss !== opts.issuer) return { ok: false, reason: 'iss' }
+  if (c.aud !== opts.audience) return { ok: false, reason: 'aud' }
+  if (!isInt(c.iat) || !isInt(c.nbf) || !isInt(c.exp)) return { ok: false, reason: 'times' }
+  if (c.iat > now + CLOCK_SKEW_SEC || c.nbf > now + CLOCK_SKEW_SEC) return { ok: false, reason: 'nbf' }
+  if (c.exp <= now) return { ok: false, reason: 'expired' }
+  if (c.exp - c.iat > MAX_TOKEN_TTL_SEC || c.exp <= c.iat) return { ok: false, reason: 'ttl' }
+  if (c.room !== room) return { ok: false, reason: 'room' }
+  if (c.scope !== 'edit' && c.scope !== 'comment' && c.scope !== 'view') return { ok: false, reason: 'scope' }
+  if (typeof c.sub !== 'string' || !c.sub || c.sub.length > 200) return { ok: false, reason: 'sub' }
+  if (c.name !== undefined && (typeof c.name !== 'string' || c.name.length > 200)) return { ok: false, reason: 'name' }
+  if (c.epoch !== undefined && !isInt(c.epoch)) return { ok: false, reason: 'epoch' }
+  if (opts.minEpoch && (c.epoch ?? 0) < opts.minEpoch(room, c.sub)) return { ok: false, reason: 'revoked' }
+  return { ok: true, claims: c as RoomClaims }
 }

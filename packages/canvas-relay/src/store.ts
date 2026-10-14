@@ -15,7 +15,8 @@ export class RoomStore {
     this.db.exec('PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;')
     this.db.exec(`CREATE TABLE IF NOT EXISTS snapshots (room TEXT PRIMARY KEY, state BLOB NOT NULL, updated_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS updates (seq INTEGER PRIMARY KEY AUTOINCREMENT, room TEXT NOT NULL, data BLOB NOT NULL, at INTEGER NOT NULL);
-      CREATE INDEX IF NOT EXISTS updates_room ON updates(room, seq);`)
+      CREATE INDEX IF NOT EXISTS updates_room ON updates(room, seq);
+      CREATE TABLE IF NOT EXISTS revocations (room TEXT NOT NULL, sub TEXT NOT NULL, epoch INTEGER NOT NULL, PRIMARY KEY (room, sub));`)
   }
 
   load(room: string): Y.Doc {
@@ -44,6 +45,17 @@ export class RoomStore {
       if (max !== null) this.db.query('DELETE FROM updates WHERE room = ? AND seq <= ?').run(room, max)
     })()
     this.counts.set(room, 0)
+  }
+
+  /** Minimum token epoch for (room, sub); '*' revokes everyone in the room. */
+  minEpoch(room: string, sub: string): number {
+    const rows = this.db.query("SELECT epoch FROM revocations WHERE room = ? AND sub IN (?, '*')").all(room, sub) as { epoch: number }[]
+    return rows.reduce((m, r) => Math.max(m, r.epoch), 0)
+  }
+
+  /** Raise the minimum epoch (never lowers it). */
+  revoke(room: string, sub: string, epoch: number): void {
+    this.db.query('INSERT INTO revocations (room, sub, epoch) VALUES (?, ?, ?) ON CONFLICT(room, sub) DO UPDATE SET epoch = MAX(epoch, excluded.epoch)').run(room, sub, epoch)
   }
 
   /** Forget the in-memory counter when a room is unloaded. */

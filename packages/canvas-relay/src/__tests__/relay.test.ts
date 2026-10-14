@@ -7,21 +7,27 @@ import * as syncProtocol from 'y-protocols/sync'
 import * as awarenessProtocol from 'y-protocols/awareness'
 import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
-import { CLOSE, signRoomToken, startRelay, SUBPROTOCOL, verifyRoomToken, type RelayOptions } from '../index.ts'
+import { armExpiry, CLOSE, MAX_CLIENT_IDS, MSG_AUTH, RoomStore, signRoomToken, startRelay, SUBPROTOCOL, verifyRoomToken, type RelayOptions } from '../index.ts'
 
 const SECRET = 'x'.repeat(40)
 const ROOM = 'ws1:b1'
+const ISS = 'https://id.test'
+const AUD = 'rox-canvas'
+const V = { secret: SECRET, issuer: ISS, audience: AUD }
 const dir = mkdtempSync(join(tmpdir(), 'relay-'))
 const relays: { stop(): void }[] = []
 afterAll(() => { for (const r of relays) try { r.stop() } catch {} })
 function relay(over: Partial<RelayOptions> = {}, db = join(dir, `${Math.random()}.sqlite`)) {
-  const r = startRelay({ port: 0, dbPath: db, secret: SECRET, log: () => {}, ...over })
+  const r = startRelay({ port: 0, dbPath: db, secret: SECRET, issuer: ISS, audience: AUD, log: () => {}, ...over })
   relays.push(r)
   return r
 }
 const now = () => Math.floor(Date.now() / 1000)
-const tok = (scope: 'edit' | 'view', o: { room?: string; exp?: number; sub?: string; name?: string } = {}) =>
-  signRoomToken({ sub: o.sub ?? 'u', name: o.name, room: o.room ?? ROOM, scope, exp: o.exp ?? now() + 60 }, SECRET)
+type TokOpts = { room?: string; exp?: number; iat?: number; sub?: string; name?: string; iss?: string; aud?: string; epoch?: number }
+const tok = (scope: 'edit' | 'view', o: TokOpts = {}) => {
+  const iat = o.iat ?? now()
+  return signRoomToken({ sub: o.sub ?? 'u', name: o.name, room: o.room ?? ROOM, scope, iss: o.iss ?? ISS, aud: o.aud ?? AUD, iat, nbf: iat, exp: o.exp ?? now() + 60, epoch: o.epoch }, SECRET)
+}
 
 /** Promise that resolves when `pred` becomes true, checked on every doc/awareness change. */
 function until(pred: () => boolean, subscribe: (cb: () => void) => () => void, ms = 5000): Promise<void> {
@@ -69,13 +75,21 @@ function client(port: number | undefined, token: string, opts: { via?: 'protocol
 
 describe('auth', () => {
   test('token verification', async () => {
-    expect((await verifyRoomToken(await tok('edit'), ROOM, SECRET)).ok).toBe(true)
-    expect((await verifyRoomToken(await tok('edit', { room: 'ws1:other' }), ROOM, SECRET)).ok).toBe(false)
-    expect((await verifyRoomToken(await tok('edit', { exp: 1 }), ROOM, SECRET)).ok).toBe(false)
-    expect((await verifyRoomToken(await tok('edit'), ROOM, 'y'.repeat(40))).ok).toBe(false)
+    const reason = async (t: Promise<string>, o: Parameters<typeof verifyRoomToken>[2] = V) => { const r = await verifyRoomToken(await t, ROOM, o); return r.ok ? 'ok' : r.reason }
+    expect(await reason(tok('edit'))).toBe('ok')
+    expect(await reason(tok('edit', { room: 'ws1:other' }))).toBe('room')
+    expect(await reason(tok('edit', { iat: 1, exp: 2 }))).toBe('expired')
+    expect(await reason(tok('edit'), { ...V, secret: 'y'.repeat(40) })).toBe('signature')
+    expect(await reason(tok('edit', { exp: now() + 16 * 60 }))).toBe('ttl')
+    expect(await reason(tok('edit', { iss: 'https://evil' }))).toBe('iss')
+    expect(await reason(tok('edit', { aud: 'other' }))).toBe('aud')
+    expect(await reason(tok('edit', { iat: now() + 3600, exp: now() + 3700 }))).toBe('nbf')
+    expect(await reason(tok('edit', { epoch: 1 }), { ...V, minEpoch: () => 2 })).toBe('revoked')
+    const noIat = await signRoomToken({ sub: 'u', room: ROOM, scope: 'edit', iss: ISS, aud: AUD, exp: now() + 60 } as never, SECRET)
+    expect((await verifyRoomToken(noIat, ROOM, V)).ok).toBe(false)
   })
   test('short secret is refused', () => {
-    expect(() => startRelay({ port: 0, dbPath: join(dir, 'short.sqlite'), secret: 'short' })).toThrow()
+    expect(() => startRelay({ port: 0, dbPath: join(dir, 'short.sqlite'), secret: 'short', issuer: ISS, audience: AUD })).toThrow()
   })
   test('HTTP errors: bad token 401, bad URI 400, bad origin 403', async () => {
     const r = relay({ allowedOrigins: ['https://ok.example'] })
@@ -181,5 +195,108 @@ describe('awareness', () => {
     await until(() => cursorOf(aliceId) === 12, watcher.subscribe)
     expect(userOf(aliceId)).toEqual({ id: 'alice', name: 'Alice' })
     for (const c of [alice, mallory, watcher]) c.ws.close()
+  })
+})
+
+describe('re-review fixes', () => {
+  test('expiry timer never overflows setTimeout', async () => {
+    let closed = false
+    const fake = { data: {} as { expTimer?: ReturnType<typeof setTimeout> }, close: () => { closed = true } }
+    armExpiry(fake as never, now() + 60 * 24 * 3600) // 60 days > 2^31-1 ms
+    await Bun.sleep(30) // an overflowed timer fires after ~1 ms
+    expect(closed).toBe(false)
+    clearTimeout(fake.data.expTimer)
+  })
+  test('in-band refresh extends the session; a refresh for another sub closes it', async () => {
+    const r = relay()
+    const c = client(r.port, await tok('edit', { exp: now() + 2 }))
+    await c.isSynced()
+    const auth = async (t: string) => { const e = encoding.createEncoder(); encoding.writeVarUint(e, MSG_AUTH); encoding.writeVarString(e, t); c.send(encoding.toUint8Array(e)) }
+    await auth(await tok('edit', { exp: now() + 600 }))
+    const early = await Promise.race([c.closed.then(() => 'closed'), Bun.sleep(2600).then(() => 'open')])
+    expect(early).toBe('open')
+    await auth(await tok('edit', { sub: 'someone-else' }))
+    expect(await c.closed).toBe(CLOSE.expired)
+  })
+  test('revocation closes live sockets and rejects new ones', async () => {
+    const r = relay()
+    const c = client(r.port, await tok('edit', { sub: 'bob' }))
+    await c.isSynced()
+    r.revoke(ROOM, 'bob', 1)
+    expect(await c.closed).toBe(CLOSE.revoked)
+    expect((await fetch(`http://localhost:${r.port}/r/${ROOM}?token=${await tok('edit', { sub: 'bob' })}`)).status).toBe(401)
+    const ok = client(r.port, await tok('edit', { sub: 'bob', epoch: 1 }))
+    await ok.isSynced()
+    ok.ws.close()
+  })
+  test(`awareness: at most ${MAX_CLIENT_IDS} clientIDs per connection and a size cap per state`, async () => {
+    const r = relay({ limits: { maxAwarenessBytes: 512 } })
+    const a = client(r.port, await tok('edit', { sub: 'a' }))
+    const w = client(r.port, await tok('view', { sub: 'w' }))
+    await Promise.all([a.isSynced(), w.isSynced()])
+    const enc = encoding.createEncoder(); encoding.writeVarUint(enc, 1)
+    const inner = encoding.createEncoder()
+    encoding.writeVarUint(inner, 7)
+    for (let id = 1; id <= 6; id++) { encoding.writeVarUint(inner, 1000 + id); encoding.writeVarUint(inner, 1); encoding.writeVarString(inner, JSON.stringify({ n: id })) }
+    encoding.writeVarUint(inner, 2000); encoding.writeVarUint(inner, 1); encoding.writeVarString(inner, JSON.stringify({ big: 'x'.repeat(1000) }))
+    encoding.writeVarUint8Array(enc, encoding.toUint8Array(inner))
+    a.send(encoding.toUint8Array(enc))
+    await until(() => w.awareness.getStates().size >= MAX_CLIENT_IDS, w.subscribe)
+    const ids = [...w.awareness.getStates().keys()].filter(id => id >= 1000 && id <= 2000)
+    expect(ids.length).toBe(MAX_CLIENT_IDS)
+    expect(ids).not.toContain(2000)
+    a.ws.close(); w.ws.close()
+  })
+  test('only real growth counts toward the size cap', async () => {
+    const r = relay({ limits: { maxDocBytes: 1500 } })
+    const src = new Y.Doc(); src.getText('t').insert(0, 'y'.repeat(1000))
+    const update = Y.encodeStateAsUpdate(src)
+    const a = client(r.port, await tok('edit')), b = client(r.port, await tok('edit'))
+    await Promise.all([a.isSynced(), b.isSynced()])
+    Y.applyUpdate(a.doc, update)
+    await until(() => b.doc.getText('t').length === 1000, b.subscribe)
+    // b re-sends the same content: no growth, so no cap violation.
+    const enc = encoding.createEncoder(); encoding.writeVarUint(enc, 0); syncProtocol.writeUpdate(enc, update); b.send(encoding.toUint8Array(enc))
+    b.doc.getMap('m').set('k', 1)
+    await until(() => a.doc.getMap('m').get('k') === 1, a.subscribe)
+    a.ws.close(); b.ws.close()
+  })
+  test('append failure closes 1011 and nothing is applied', async () => {
+    const store = new RoomStore(join(dir, 'fail.sqlite'))
+    store.append = () => { throw new Error('disk full') }
+    const r = relay({ store })
+    const a = client(r.port, await tok('edit')), w = client(r.port, await tok('view'))
+    await Promise.all([a.isSynced(), w.isSynced()])
+    a.doc.getMap('m').set('k', 1)
+    expect(await a.closed).toBe(CLOSE.serverError)
+    const v = client(r.port, await tok('view'))
+    await v.isSynced()
+    expect(v.doc.getMap('m').has('k')).toBe(false)
+    expect(w.doc.getMap('m').has('k')).toBe(false)
+    v.ws.close(); w.ws.close()
+  })
+  test('compaction runs on idle, not inline', async () => {
+    const store = new RoomStore(join(dir, 'idle.sqlite'))
+    let compacts = 0
+    const orig = store.compact.bind(store)
+    let onCompact = () => {}
+    store.compact = (room, doc) => { compacts++; orig(room, doc); onCompact() }
+    const r = relay({ store, compactEvery: 2, compactIdleMs: 100 })
+    const a = client(r.port, await tok('edit'))
+    await a.isSynced()
+    a.doc.getMap('m').set('a', 1); a.doc.getMap('m').set('b', 2); a.doc.getMap('m').set('c', 3)
+    await until(() => a.doc.getMap('m').size === 3, a.subscribe)
+    expect(compacts).toBe(0)
+    await new Promise<void>(res => { onCompact = res })
+    expect(compacts).toBe(1)
+    a.ws.close()
+  })
+  test('global connection cap holds under concurrent upgrades', async () => {
+    const r = relay({ limits: { maxConnsTotal: 1 } })
+    const t = await tok('edit')
+    const cs = [client(r.port, t), client(r.port, t), client(r.port, t)]
+    const results = await Promise.all(cs.map(c => c.opened.then(() => Promise.race([c.closed.then(() => 'closed'), c.isSynced().then(() => 'ok')])).catch(() => 'refused')))
+    expect(results.filter(x => x === 'ok').length).toBe(1)
+    for (const c of cs) c.ws.close()
   })
 })
