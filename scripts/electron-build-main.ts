@@ -446,6 +446,13 @@ async function main(): Promise<void> {
     mkdirSync(DIST_DIR, { recursive: true });
   }
 
+  // Embed shared keys (gitignored module; absent keys produce an empty module, never fail).
+  const keys = spawn({ cmd: ["bun", "apps/electron/scripts/gen-shared-keys.ts"], cwd: ROOT_DIR, stdout: "inherit", stderr: "inherit" });
+  if ((await keys.exited) !== 0) {
+    console.error("❌ gen-shared-keys failed");
+    process.exit(1);
+  }
+
   // Verify session tools core exists (shared utilities for session-scoped tools)
   verifySessionToolsCore();
 
