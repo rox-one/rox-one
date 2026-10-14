@@ -1025,6 +1025,20 @@ export const RPC_CHANNELS = {
     REMOVE_MEMBER: 'orgs:removeMember',
     REVOKE_INVITE: 'orgs:revokeInvite',
   },
+  // teamChat — Slack-like team messenger (channels, group chats, subscriptions); host store, org-scoped.
+  teamChat: {
+    LIST_CHANNELS: 'teamChat:listChannels',
+    CREATE_CHANNEL: 'teamChat:createChannel',
+    JOIN: 'teamChat:join',
+    LEAVE: 'teamChat:leave',
+    ADD_MEMBERS: 'teamChat:addMembers',
+    SET_SUBSCRIBED: 'teamChat:setSubscribed',
+    ARCHIVE: 'teamChat:archive',
+    LIST_MESSAGES: 'teamChat:listMessages',
+    POST: 'teamChat:post',
+    MARK_READ: 'teamChat:markRead',
+    CHANGED: 'teamChat:changed',
+  },
   views: {
     LIST: 'views:list',
     SAVE: 'views:save',

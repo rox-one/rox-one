@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { createStore, getDefaultStore } from 'jotai'
 import { WORKBENCH_FLAG } from '@rox/core/platform'
+import { RESET } from 'jotai/utils'
 import { actions, actionsByCategory } from '@/actions/definitions'
 import { actionsByCategoryFor, resolveActionHotkey } from '@/actions/hotkeys'
 import { evaluateWhen, snapshotKeybindingContext, type KeybindingContext } from '@/actions/keybinding-context'
@@ -387,6 +388,8 @@ describe('W1-07 gates read the <JotaiProvider> store (main.tsx unchanged)', () =
     const quick = actions['messenger.quickPanelDocs'] as ActionDefinition
     installShellFlagBridges(getDefaultStore())
     const disconnect = connectShellStore(provider)
+    // Мессенджер is default ON; start from OFF to observe the flip.
+    provider.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
     expect(getShellStore()).toBe(provider)
     expect(shellFlagBridgeStore()).toBe(provider)
     expect(isUnifiedSurfaceRouteEnabled('messenger')).toBe(false)
@@ -395,8 +398,10 @@ describe('W1-07 gates read the <JotaiProvider> store (main.tsx unchanged)', () =
     provider.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), true)
     expect(isUnifiedSurfaceRouteEnabled('messenger')).toBe(true)
     expect(isActionFlagEnabled(quick, currentShellFlags())).toBe(true)
-    // The default store did not change and no longer drives the gate.
-    expect(getDefaultStore().get(enabledShellFlagsAtom).has(WORKBENCH_FLAG.modeMessengerV1)).toBe(false)
+    // The default store no longer drives the gate: flipping it changes nothing.
+    getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
+    expect(isUnifiedSurfaceRouteEnabled('messenger')).toBe(true)
+    getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), RESET)
     getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeCalendarV1), true)
     expect(isUnifiedSurfaceRouteEnabled('calendar')).toBe(false)
     getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeCalendarV1), false)
@@ -438,6 +443,7 @@ describe('W1-07 gates read the <JotaiProvider> store (main.tsx unchanged)', () =
     const omnibox = createShellFlagContextKeyProvider()
     const provider = createStore()
     const disconnect = connectShellStore(provider)
+    provider.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
     expect(omnibox.pull()[WORKBENCH_FLAG.modeMessengerV1]).toBe(false)
     provider.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), true)
     expect(omnibox.pull()[WORKBENCH_FLAG.modeMessengerV1]).toBe(true)

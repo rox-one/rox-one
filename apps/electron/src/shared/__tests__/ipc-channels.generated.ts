@@ -939,6 +939,17 @@ export const EXPECTED_CHANNELS: string[] = [
   'tasks:run',
   'tasks:stop',
   'tasks:validate',
+  'teamChat:addMembers',
+  'teamChat:archive',
+  'teamChat:changed',
+  'teamChat:createChannel',
+  'teamChat:join',
+  'teamChat:leave',
+  'teamChat:listChannels',
+  'teamChat:listMessages',
+  'teamChat:markRead',
+  'teamChat:post',
+  'teamChat:setSubscribed',
   'tg-link:start',
   'tg-link:status',
   'tg-link:verify',
@@ -1095,4 +1106,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1091
+export const EXPECTED_CHANNEL_COUNT = 1102

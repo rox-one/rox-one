@@ -7,27 +7,62 @@
  * (`useTeamRoster`) plus the team collaboration block (`TeamOrgSettingsSection`,
  * which itself gates activity/inbox on their flags).
  */
+import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Users } from 'lucide-react'
+import { MessagesSquare } from 'lucide-react'
 import { EmptyState } from '@/components/mode-screen/ModeScreen'
 import { TeamOrgSettingsSection, useTeamRoster } from '@/components/team'
+import { MessengerChannels } from '@/components/messenger/MessengerChannels'
+import { Button } from '@/components/ui/button'
+import { navigate, routes } from '@/lib/navigate'
+import { cn } from '@/lib/utils'
 import type { SurfacePageProps } from '@/platform/SurfaceHost'
+
+type MessengerTab = 'channels' | 'members'
 
 export function TeamSurfacePage(_props: SurfacePageProps) {
   const { t } = useTranslation()
   const roster = useTeamRoster()
+  const [tab, setTab] = React.useState<MessengerTab>('channels')
+  const viewerOrgRole = roster.members.find(m => m.userId === roster.selfUserId)?.role
 
   return (
     <div
-      className="flex h-full min-h-0 flex-col overflow-y-auto bg-background"
+      className="flex h-full min-h-0 flex-col bg-background"
       data-testid="team-surface-page"
       data-surface="messenger"
     >
-      <header className="flex shrink-0 items-center gap-2 border-b border-border/60 px-4 py-3">
-        <Users className="icon-inline text-text-muted" aria-hidden />
-        <h1 className="text-title font-semibold">{t('teamCollab.title')}</h1>
+      <header className="flex shrink-0 items-center gap-3 border-b border-border/60 px-4 py-2">
+        <MessagesSquare className="icon-inline text-text-muted" aria-hidden />
+        <h1 className="text-title font-semibold">{t('messenger.channels.title')}</h1>
+        <div className="ms-2 flex gap-1" role="tablist" aria-label={t('messenger.channels.title')}>
+          {(['channels', 'members'] as const).map(id => (
+            <button
+              key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
+              className={cn('rounded-md px-2 py-1 text-small', tab === id ? 'bg-surface-hover font-medium text-text-primary' : 'text-text-secondary hover:bg-surface-hover')}
+            >
+              {id === 'channels' ? t('messenger.channels.channelsTab') : t('teamCollab.members')}
+            </button>
+          ))}
+        </div>
       </header>
 
+      {tab === 'channels' ? (
+        roster.loading ? (
+          <p className="p-4 text-small text-text-secondary" role="status">{t('teamCollab.loading')}</p>
+        ) : roster.org ? (
+          <MessengerChannels key={roster.org.id} orgId={roster.org.id} selfUserId={roster.selfUserId} members={roster.members} viewerOrgRole={viewerOrgRole} />
+        ) : (
+          <div className="p-6">
+            <EmptyState
+              title={t('messenger.channels.noOrgTitle')}
+              body={t('messenger.channels.noOrgBody')}
+              action={<Button size="sm" onClick={() => navigate(routes.view.settings('organizations'))}>{t('messenger.channels.createOrg')}</Button>}
+            />
+          </div>
+        )
+      ) : (
+      <div className="min-h-0 flex-1 overflow-y-auto">
       <section aria-label={t('teamCollab.members')} className="shrink-0 px-4 py-3">
         <h2 className="mb-1 text-caption font-medium uppercase caps-label text-text-muted">
           {t('teamCollab.members')}
@@ -61,6 +96,8 @@ export function TeamSurfacePage(_props: SurfacePageProps) {
       <section className="px-4 pb-6" aria-label={t('teamCollab.settings.title')}>
         <TeamOrgSettingsSection />
       </section>
+      </div>
+      )}
     </div>
   )
 }
