@@ -10,7 +10,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import { useTranslation } from 'react-i18next'
 import * as Y from 'yjs'
 import { ArrowLeft, Circle, MousePointer2, Pencil, Plus, Square, StickyNote, Trash2, Type, ZoomIn } from 'lucide-react'
-import { actorOrigin, CanvasDoc, createUndoManager, SpatialIndex, type CanvasObject } from '@rox/canvas-core'
+import { actorOrigin, CanvasDoc, createUndoManager, guardEntityCards, SpatialIndex, watchEntityLinks, type CanvasObject, type ResolvedEntity } from '@rox/canvas-core'
+import { createEntityLinker, createEntityRegistry, EntitySnapshotResolver } from './entity-wiring'
 import { Button } from '@/components/ui/button'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import type { SurfacePageProps } from '@/platform/SurfaceHost'
@@ -159,6 +160,21 @@ function BoardEditor({ workspaceId, boardId, onBack }: { workspaceId: string; bo
   const undo = useMemo(() => (board ? createUndoManager(board, LOCAL) : null), [board])
   const index = useMemo(() => (board ? new SpatialIndex(board) : null), [board])
   useEffect(() => () => index?.dispose(), [index])
+  // Entity cards: doc holds only {kind, entityId, origin}; links follow doc state.
+  const registry = useMemo(() => createEntityRegistry(workspaceId), [workspaceId])
+  const resolver = useMemo(() => new EntitySnapshotResolver(registry), [registry])
+  const [resolved, setResolved] = useState<Record<string, ResolvedEntity>>({})
+  useEffect(() => {
+    const off = resolver.onChange((k, r) => setResolved(prev => ({ ...prev, [k]: r })))
+    return () => { off(); resolver.dispose() }
+  }, [resolver])
+  useEffect(() => {
+    if (!board) return
+    const unguard = guardEntityCards(board)
+    const watch = watchEntityLinks({ board, boardId, workspaceId, registry, linker: createEntityLinker(workspaceId), origin: LOCAL },
+      { debounceMs: 250, onError: e => console.warn('[canvas] entity links', e) })
+    return () => { watch.stop(); unguard() }
+  }, [board, boardId, workspaceId, registry])
   const [size, setSize] = useState({ w: 1600, h: 1000 })
   useEffect(() => {
     const el = svgRef.current
@@ -176,6 +192,12 @@ function BoardEditor({ workspaceId, boardId, onBack }: { workspaceId: string; bo
     return all.filter(o => !o.hidden && (visible.has(o.id) || o.id === selected || o.id === editing))
   }, [all, index, view, size, selected, editing])
   const title = board?.getMeta().title ?? ''
+  useEffect(() => {
+    for (const o of objects) if (o.type === 'entity') {
+      const ref = { kind: String(o.props.kind), id: String(o.props.entityId) }
+      if (!resolver.get(ref)) void resolver.resolve(ref)
+    }
+  }, [objects, resolver])
 
   const toWorld = (clientX: number, clientY: number) => {
     const r = svgRef.current!.getBoundingClientRect()
@@ -277,7 +299,10 @@ function BoardEditor({ workspaceId, boardId, onBack }: { workspaceId: string; bo
         </defs>
         <rect width="100%" height="100%" fill="url(#canvas-grid)" />
         <g transform={`translate(${view.x} ${view.y}) scale(${view.zoom})`}>
-          {objects.map(o => <ObjectView key={o.id} o={o} selected={o.id === selected} onDown={e => onObjectDown(e, o)} onEdit={() => (o.type === 'sticky' || o.type === 'text') && setEditing(o.id)} />)}
+          {objects.map(o => o.type === 'entity'
+            ? <EntityCardView key={o.id} o={o} selected={o.id === selected} r={resolved[`${String(o.props.kind)}:${String(o.props.entityId)}`]}
+                onDown={e => onObjectDown(e, o)} onOpen={() => registry.get(String(o.props.kind))?.open({ kind: String(o.props.kind), id: String(o.props.entityId) })} />
+            : <ObjectView key={o.id} o={o} selected={o.id === selected} onDown={e => onObjectDown(e, o)} onEdit={() => (o.type === 'sticky' || o.type === 'text') && setEditing(o.id)} />)}
         </g>
       </svg>
       {editingObj && board && (
@@ -288,6 +313,26 @@ function BoardEditor({ workspaceId, boardId, onBack }: { workspaceId: string; bo
           onKeyDown={e => { if (e.key === 'Escape') e.currentTarget.blur() }} />
       )}
     </div>
+  )
+}
+
+function EntityCardView({ o, selected, r, onDown, onOpen }: { o: CanvasObject; selected: boolean; r: ResolvedEntity | undefined; onDown: (e: ReactPointerEvent) => void; onOpen: () => void }) {
+  const { t } = useTranslation()
+  const label = !r ? t('canvas.entity.loading')
+    : r.state === 'ok' ? r.snapshot.title
+    : r.state === 'forbidden' ? t('canvas.entity.noAccess')
+    : r.state === 'deleted' ? t('canvas.entity.deleted') : t('canvas.entity.unknown')
+  return (
+    <g onPointerDown={onDown} onDoubleClick={onOpen} data-object-id={o.id} data-object-type="entity">
+      <rect x={o.x} y={o.y} width={o.w} height={o.h} rx={8} className={`fill-background ${selected ? 'stroke-accent' : 'stroke-border'}`} strokeWidth={selected ? 2 : 1} />
+      <foreignObject x={o.x} y={o.y} width={o.w} height={o.h} pointerEvents="none">
+        <div className="flex h-full w-full flex-col gap-1 p-3 text-foreground">
+          <div className="text-xs uppercase tracking-wide text-text-muted">{String(o.props.kind)}</div>
+          <div className="line-clamp-3 text-sm font-medium">{label}</div>
+          {r?.state === 'ok' && r.snapshot.status && <div className="text-xs text-text-muted">{r.snapshot.status}</div>}
+        </div>
+      </foreignObject>
+    </g>
   )
 }
 

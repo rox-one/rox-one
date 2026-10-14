@@ -44,9 +44,9 @@ describe('W1-01 kind registry', () => {
     ])
   })
 
-  test('registers 54 distinct kinds, Rox2 first', () => {
-    expect(ENTITY_KINDS).toHaveLength(54)
-    expect(new Set(ENTITY_KINDS).size).toBe(54)
+  test('registers 55 distinct kinds, Rox2 first', () => {
+    expect(ENTITY_KINDS).toHaveLength(55)
+    expect(new Set(ENTITY_KINDS).size).toBe(55)
     expect(ENTITY_KINDS.slice(0, ROX2_ENTITY_KINDS.length)).toEqual([...ROX2_ENTITY_KINDS])
   })
 
