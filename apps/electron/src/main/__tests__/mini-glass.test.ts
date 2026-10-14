@@ -1,7 +1,5 @@
-import { describe, expect, it, mock } from 'bun:test'
-
-mock.module('electron', () => ({ BrowserWindow: class {}, ipcMain: {}, screen: {} }))
-const { resolveMiniGlassOrigin, MINI_GLASS_COLLAPSED } = await import('../mini-glass')
+import { describe, expect, it } from 'bun:test'
+import { resolveMiniGlassOrigin, MINI_GLASS_COLLAPSED } from '../mini-glass-geometry'
 
 const primary = { x: 0, y: 0, width: 1440, height: 875 }
 

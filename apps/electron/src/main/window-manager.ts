@@ -79,6 +79,7 @@ export class WindowManager {
     readPosition: getMiniGlassPosition,
     writePosition: setMiniGlassPosition,
     isEnabled: getMiniGlassEnabled,
+    isMainWindowSender: (webContentsId) => this.windows.has(webContentsId),
     writeEnabled: setMiniGlassEnabled,
     submitToOwner: (owner, text) => this.submitFromMiniGlass(owner, text),
   })

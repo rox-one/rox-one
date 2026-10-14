@@ -177,10 +177,23 @@ export function MiniGlassSurface() {
       streamRef.current = stream
       const recorder = new MediaRecorder(stream)
       const started = await api.startVoiceCapture({ mimeType: recorder.mimeType || 'audio/webm' })
+      if (generation !== generationRef.current) {
+        // Cancelled (reset/collapse) while the host was starting: release it.
+        if (started?.recordingId) void api.cancelVoiceCapture?.().catch(() => undefined)
+        stream.getTracks().forEach((track) => track.stop())
+        return
+      }
       if (!started?.recordingId) throw new Error('voice offline')
       hostStartedRef.current = true
       await api.grantVoicePermission()
-      if (generation !== generationRef.current) return
+      if (generation !== generationRef.current) {
+        if (hostStartedRef.current) {
+          hostStartedRef.current = false
+          void api.cancelVoiceCapture?.().catch(() => undefined)
+        }
+        stream.getTracks().forEach((track) => track.stop())
+        return
+      }
       chunksRef.current = []
       recorder.ondataavailable = (event) => { if (event.data.size > 0) chunksRef.current.push(event.data) }
       recorder.onstop = () => {

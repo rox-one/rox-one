@@ -16,43 +16,21 @@ import { join } from 'node:path'
 
 const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
 
-/** Collapsed: grip + two 40 px circles + padding for the soft shadow. */
-export const MINI_GLASS_COLLAPSED = { width: 124, height: 60 } as const
-/** Expanded: a compact pill input (with mic + send inside). */
-export const MINI_GLASS_EXPANDED = { width: 400, height: 60 } as const
-const SCREEN_MARGIN = 24
-export const MINI_GLASS_MAX_INPUT = 8000
+import { MINI_GLASS_COLLAPSED, MINI_GLASS_EXPANDED, resolveMiniGlassOrigin, type MiniGlassPosition } from './mini-glass-geometry'
 
-export interface MiniGlassPosition { x: number; y: number }
+export { MINI_GLASS_COLLAPSED, MINI_GLASS_EXPANDED, resolveMiniGlassOrigin, type MiniGlassPosition }
+export const MINI_GLASS_MAX_INPUT = 8000
 
 export interface MiniGlassDeps {
   registerAuxiliaryWindow(window: BrowserWindow, workspaceId: string): void
   readPosition(): MiniGlassPosition | null
   writePosition(position: MiniGlassPosition): void
   isEnabled(): boolean
+  /** True when the sender is a managed main window (where Settings lives). */
+  isMainWindowSender(webContentsId: number): boolean
   writeEnabled(enabled: boolean): void
   /** Restore the owner and run `new-session` (send when `text` is non-empty). */
   submitToOwner(owner: BrowserWindow, text: string | null): void
-}
-
-/** Keep a remembered position on a visible display; otherwise bottom-right of the primary work area. */
-export function resolveMiniGlassOrigin(
-  remembered: MiniGlassPosition | null,
-  size: { width: number; height: number },
-  workAreas: Electron.Rectangle[],
-  primary: Electron.Rectangle,
-): MiniGlassPosition {
-  if (remembered && Number.isFinite(remembered.x) && Number.isFinite(remembered.y)) {
-    const fits = workAreas.some(area =>
-      remembered.x >= area.x && remembered.y >= area.y
-      && remembered.x + size.width <= area.x + area.width
-      && remembered.y + size.height <= area.y + area.height)
-    if (fits) return { x: Math.round(remembered.x), y: Math.round(remembered.y) }
-  }
-  return {
-    x: Math.round(primary.x + primary.width - size.width - SCREEN_MARGIN),
-    y: Math.round(primary.y + primary.height - size.height - SCREEN_MARGIN),
-  }
 }
 
 export class MiniGlassController {
@@ -208,6 +186,10 @@ export class MiniGlassController {
 
   isEnabled(): boolean { return this.deps.isEnabled() }
 
+  isMainWindowSender(event: Electron.IpcMainInvokeEvent): boolean {
+    return this.deps.isMainWindowSender(event.sender.id)
+  }
+
   setEnabled(enabled: boolean): void {
     this.deps.writeEnabled(enabled)
     if (!enabled) this.dispose()
@@ -235,10 +217,15 @@ function registerMiniGlassHandlers(): void {
     controller.handleSetExpanded(expanded)
     return true
   })
-  ipcMain.handle('mini-glass:get-enabled', () => activeController?.isEnabled() ?? true)
-  ipcMain.handle('mini-glass:set-enabled', (_event, enabled: unknown) => {
+  ipcMain.handle('mini-glass:get-enabled', (event) => {
     const controller = activeController
-    if (!controller || typeof enabled !== 'boolean') return controller?.isEnabled() ?? true
+    if (!controller?.isMainWindowSender(event)) return false
+    return controller.isEnabled()
+  })
+  ipcMain.handle('mini-glass:set-enabled', (event, enabled: unknown) => {
+    const controller = activeController
+    if (!controller?.isMainWindowSender(event)) return false
+    if (typeof enabled !== 'boolean') return controller.isEnabled()
     controller.setEnabled(enabled)
     return enabled
   })
