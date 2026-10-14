@@ -78,6 +78,8 @@ export interface RunMetrics {
   /** `main:entry − main:boot`: reading + compiling + evaluating the main bundle's prelude (#1573). */
   mainLoadMs?: number
   compileCache?: string | null
+  /** How the bench prepared ROX_COMPILE_CACHE_DIR for this run. */
+  compileCacheMode?: CompileCacheMode
 }
 
 export function metricsFromTimeline(timeline: StartupTimeline): Omit<RunMetrics, 'run' | 'kind' | 'ok'> {
@@ -111,6 +113,26 @@ export function missingMetrics(checks: Array<{ metric: string; median?: number }
   return checks.filter(c => c.median === undefined).map(c => c.metric)
 }
 
+/** Bench-owned V8 compile-cache dir (boot.cjs `ROX_COMPILE_CACHE_DIR`), shared by the runs of one profile. */
+export function benchCompileCacheDir(profile: string): string {
+  return join(profile, 'compile-cache')
+}
+
+/**
+ * Cold runs start from an empty compile cache (so `main load` really is cold);
+ * warm runs reuse what earlier runs wrote. Returns the mode for the report.
+ */
+export function prepareBenchCompileCache(profile: string, kind: 'cold' | 'warm'): CompileCacheMode {
+  const dir = benchCompileCacheDir(profile)
+  if (kind === 'cold') {
+    rmSync(dir, { recursive: true, force: true })
+    return 'isolated-emptied'
+  }
+  return existsSync(dir) ? 'isolated-reused' : 'isolated-new'
+}
+
+export type CompileCacheMode = 'isolated-emptied' | 'isolated-reused' | 'isolated-new'
+
 export function isolatedEnv(profile: string, outFile: string): Record<string, string> {
   for (const child of ['home', 'config', 'userData', 'tmp', 'appData', 'localAppData']) mkdirSync(join(profile, child), { recursive: true })
   const env: Record<string, string> = {}
@@ -133,6 +155,8 @@ export function isolatedEnv(profile: string, outFile: string): Record<string, st
     ROX_DEV_DISABLE_PROTOCOL_REGISTRATION: '1',
     ROX_SKIP_PROTOCOL_REGISTRATION: '1',
     ROX_PERF: '1',
+    // Never touch the user's real ~/Library/Caches/Rox|~/.cache/rox|%LOCALAPPDATA% compile cache.
+    ROX_COMPILE_CACHE_DIR: benchCompileCacheDir(profile),
     ROX_PERF_OUT: outFile,
     NODE_ENV: 'production',
   })
@@ -143,6 +167,7 @@ async function runOnce(args: Args, profile: string, run: number): Promise<RunMet
   const require = createRequire(import.meta.url)
   const executablePath: string = require('electron')
   const outFile = join(profile, `perf-run-${run}.json`)
+  const compileCacheMode = prepareBenchCompileCache(profile, kind)
   const launchArgs = process.platform === 'linux' ? ['--no-sandbox', '--disable-gpu', args.main] : [args.main]
   const started = performance.now()
   let app: Awaited<ReturnType<typeof _electron.launch>> | null = null
@@ -176,9 +201,9 @@ async function runOnce(args: Args, profile: string, run: number): Promise<RunMet
     }
     if (!timeline) throw new Error('app exposed no startup timeline (is the built entry from this branch?)')
     const metrics = metricsFromTimeline(timeline)
-    return { run, kind, ok: metrics.fmpMs !== undefined, launchWallMs, ...metrics, ...(metrics.fmpMs === undefined ? { error: 'no FMP/interactive mark before timeout' } : {}) }
+    return { run, kind, ok: metrics.fmpMs !== undefined, launchWallMs, compileCacheMode, ...metrics, ...(metrics.fmpMs === undefined ? { error: 'no FMP/interactive mark before timeout' } : {}) }
   } catch (error) {
-    return { run, kind, ok: false, error: error instanceof Error ? error.message : String(error), marks: {} }
+    return { run, kind, ok: false, compileCacheMode, error: error instanceof Error ? error.message : String(error), marks: {} }
   } finally {
     await app?.close().catch(() => undefined)
   }
@@ -209,11 +234,11 @@ function report(args: Args, runs: RunMetrics[]) {
     '|---|---:|---:|---|',
     ...checks.map(c => `| ${c.metric} | ${c.median ?? 'n/a'} | ${c.budget} | ${c.pass ? 'PASS' : c.median === undefined ? 'NO DATA' : 'OVER'} |`),
     '',
-    `Main bundle load (main:boot → main:entry, report-only): cold ${coldMainLoad ?? 'n/a'} ms, warm ${warmMainLoad ?? 'n/a'} ms; compile cache: ${runs.find(r => r.compileCache)?.compileCache ?? 'n/a (launched without boot.cjs)'}`,
+    `Main bundle load (main:boot → main:entry, report-only): cold ${coldMainLoad ?? 'n/a'} ms, warm ${warmMainLoad ?? 'n/a'} ms; compile cache: ${runs.find(r => r.compileCache)?.compileCache ?? 'n/a (launched without boot.cjs)'} (bench-isolated dir; cold runs start empty, warm runs reuse it)`,
     '',
-    '| run | kind | launch wall | main load | window-created | first-paint | fmp | fmp source | skills inline | error |',
-    '|---:|---|---:|---:|---:|---:|---:|---|---:|---|',
-    ...runs.map(r => `| ${r.run} | ${r.kind} | ${r.launchWallMs ?? ''} | ${r.mainLoadMs ?? ''} | ${r.windowCreatedMs ?? ''} | ${r.firstPaintMs ?? ''} | ${r.fmpMs ?? ''} | ${r.fmpSource ?? ''} | ${r.skillsInlineMs ?? ''} | ${r.error ?? ''} |`),
+    '| run | kind | cache | launch wall | main load | window-created | first-paint | fmp | fmp source | skills inline | error |',
+    '|---:|---|---|---:|---:|---:|---:|---:|---|---:|---|',
+    ...runs.map(r => `| ${r.run} | ${r.kind} | ${r.compileCacheMode ?? ''} | ${r.launchWallMs ?? ''} | ${r.mainLoadMs ?? ''} | ${r.windowCreatedMs ?? ''} | ${r.firstPaintMs ?? ''} | ${r.fmpMs ?? ''} | ${r.fmpSource ?? ''} | ${r.skillsInlineMs ?? ''} | ${r.error ?? ''} |`),
   ]
   return { checks, markdown: lines.join('\n') }
 }

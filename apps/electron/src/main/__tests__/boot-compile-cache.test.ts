@@ -105,3 +105,43 @@ describe('#1560 boot.cjs compileCache state mapping', () => {
     expect(state('{ status: S.ENABLED }', { ROX_DISABLE_COMPILE_CACHE: '1' })).toBe('disabled')
   })
 })
+
+describe('#1560 ROX_COMPILE_CACHE_DIR override', () => {
+  const { mkdtempSync, writeFileSync, copyFileSync, statSync, mkdirSync, chmodSync, rmSync } = require('node:fs') as typeof import('node:fs')
+  const { tmpdir } = require('node:os') as typeof import('node:os')
+  const { spawnSync } = require('node:child_process') as typeof import('node:child_process')
+
+  function dirFor(env: Record<string, string>) {
+    const dir = mkdtempSync(join(tmpdir(), 'rox-boot-'))
+    copyFileSync(join(root, 'src/main/boot.cjs'), join(dir, 'boot.cjs'))
+    writeFileSync(join(dir, 'stub.cjs'), "require('node:module').enableCompileCache = d => { globalThis.__dir = d; return { status: 0 } }")
+    writeFileSync(join(dir, 'main.cjs'), "process.stdout.write(String(globalThis.__dir ?? ''))")
+    const r = spawnSync('node', ['-r', join(dir, 'stub.cjs'), join(dir, 'boot.cjs')], { env: { PATH: process.env.PATH ?? '', ...env }, encoding: 'utf8' })
+    rmSync(dir, { recursive: true, force: true })
+    return r.stdout
+  }
+
+  it('uses an absolute override with 0700 (POSIX)', () => {
+    const home = mkdtempSync(join(tmpdir(), 'rox-home-'))
+    const target = join(home, 'bench', 'compile-cache')
+    expect(dirFor({ HOME: home, XDG_CACHE_HOME: join(home, 'x'), LOCALAPPDATA: join(home, 'l'), ROX_COMPILE_CACHE_DIR: target })).toBe(target)
+    if (process.platform !== 'win32') expect(statSync(target).mode & 0o777).toBe(0o700)
+    rmSync(home, { recursive: true, force: true })
+  })
+
+  it('skips the cache for a relative override instead of falling back', () => {
+    const home = mkdtempSync(join(tmpdir(), 'rox-home-'))
+    expect(dirFor({ HOME: home, XDG_CACHE_HOME: join(home, 'x'), ROX_COMPILE_CACHE_DIR: 'rel/cache' })).toBe('')
+    rmSync(home, { recursive: true, force: true })
+  })
+
+  it.skipIf(process.platform === 'win32')('applies the same safety checks (non-directory skipped, loose perms tightened)', () => {
+    const home = mkdtempSync(join(tmpdir(), 'rox-home-'))
+    const file = join(home, 'not-a-dir'); writeFileSync(file, '')
+    expect(dirFor({ HOME: home, ROX_COMPILE_CACHE_DIR: file })).toBe('')
+    const loose = join(home, 'loose'); mkdirSync(loose); chmodSync(loose, 0o777)
+    expect(dirFor({ HOME: home, ROX_COMPILE_CACHE_DIR: loose })).toBe(loose)
+    expect(statSync(loose).mode & 0o777).toBe(0o700)
+    rmSync(home, { recursive: true, force: true })
+  })
+})

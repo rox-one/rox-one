@@ -84,3 +84,26 @@ describe('#1573 boot entry metrics', () => {
     expect(metricsFromTimeline({ timeOriginEpochMs: 0, platform: 'linux', marks: [] }).mainLoadMs).toBeUndefined()
   })
 })
+
+describe('#1560 bench-isolated compile cache', () => {
+  const { benchCompileCacheDir, prepareBenchCompileCache } = require('../startup-bench') as typeof import('../startup-bench')
+  const { mkdirSync, writeFileSync, existsSync } = require('node:fs') as typeof import('node:fs')
+
+  it('points ROX_COMPILE_CACHE_DIR inside the profile', () => {
+    const profile = mkdtempSync(join(tmpdir(), 'rox-bench-'))
+    expect(isolatedEnv(profile, join(profile, 'o.json')).ROX_COMPILE_CACHE_DIR).toBe(join(profile, 'compile-cache'))
+    rmSync(profile, { recursive: true, force: true })
+  })
+
+  it('empties the cache for cold runs and reuses it for warm runs', () => {
+    const profile = mkdtempSync(join(tmpdir(), 'rox-bench-'))
+    const dir = benchCompileCacheDir(profile)
+    expect(prepareBenchCompileCache(profile, 'warm')).toBe('isolated-new')
+    mkdirSync(dir, { recursive: true }); writeFileSync(join(dir, 'entry'), 'x')
+    expect(prepareBenchCompileCache(profile, 'warm')).toBe('isolated-reused')
+    expect(existsSync(join(dir, 'entry'))).toBe(true)
+    expect(prepareBenchCompileCache(profile, 'cold')).toBe('isolated-emptied')
+    expect(existsSync(dir)).toBe(false)
+    rmSync(profile, { recursive: true, force: true })
+  })
+})

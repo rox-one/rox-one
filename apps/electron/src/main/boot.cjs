@@ -12,11 +12,16 @@
  * Created with mode 0700; on POSIX the cache is skipped unless the dir is owned
  * by the current user and not group/world-writable. Node keys entries by file
  * path + content hash + V8 version, so app updates invalidate naturally.
+ * ROX_COMPILE_CACHE_DIR=<absolute path> overrides the location (same safety checks).
  * Opt out with ROX_DISABLE_COMPILE_CACHE=1 (Node also honours NODE_DISABLE_COMPILE_CACHE).
  */
 function compileCacheDir() {
   const { join, isAbsolute } = require('node:path')
   const os = require('node:os')
+  // Explicit override (used by the startup bench to isolate cold runs). Must be
+  // absolute; a relative/empty-looking value skips the cache rather than guessing.
+  const override = process.env.ROX_COMPILE_CACHE_DIR
+  if (override !== undefined && override !== '') return isAbsolute(override) ? override : null
   const home = os.homedir()
   if (process.platform === 'darwin') return home ? join(home, 'Library', 'Caches', 'Rox', 'compile-cache') : null
   if (process.platform === 'win32') {
