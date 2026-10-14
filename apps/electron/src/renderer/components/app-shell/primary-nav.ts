@@ -174,8 +174,12 @@ export function defaultPlacement(entry: PrimaryNavEntry, shellFlags: ReadonlySet
 }
 
 /** Registry ids of the starter pill composition (`DEFAULT_PILL_SURFACES`); Чат joins while Мессенджер is off. */
-/** Mark (shell-layout): Главная (icon) · Лента · Сессии · Заметки · Браузер. */
-export const DEFAULT_PILL_NAV_IDS: ReadonlySet<string> = new Set([HOME_NAV_ID, 'feed', 'sessions', 'docs', 'browser'])
+/**
+ * Mark (shell-layout + onboarding polish): Главная (icon) · Лента · Сессии ·
+ * Заметки · Браузер · Мессенджер · Задачи. Мессенджер only resolves while its
+ * surface flag (`workbench.mode.messenger.v1`) is on; otherwise it is skipped.
+ */
+export const DEFAULT_PILL_NAV_IDS: ReadonlySet<string> = new Set([HOME_NAV_ID, 'feed', 'sessions', 'docs', 'browser', 'messenger', 'tasks'])
 
 /** Every surface available under the current flags, with its effective placement (Settings list). */
 export function resolveNavSurfaces({ shellFlags, modeFlags = {}, placements = {} }: PrimaryNavContext): ResolvedPrimaryNavEntry[] {
