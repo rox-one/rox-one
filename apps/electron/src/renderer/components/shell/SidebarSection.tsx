@@ -117,7 +117,7 @@ function SidebarRow({ item, mode }: { item: SidebarItem; mode: Exclude<SidebarMo
   const { t } = useTranslation()
   const base = cn(
     'relative flex w-full items-center gap-2 rounded-[var(--radius-control)] text-left text-body outline-none focus-visible:ring-1 focus-visible:ring-ring',
-    item.active ? 'bg-[var(--state-selected)] text-foreground font-medium' : 'text-foreground/80 hover:bg-[var(--state-hover)] hover:text-foreground',
+    item.active ? 'bg-[var(--state-selected)] text-foreground font-medium' : 'text-text-secondary hover:bg-[var(--state-hover)] hover:text-foreground',
   )
   if (mode === 'icons') {
     return (
