@@ -30,7 +30,7 @@ import { openFirstSessionWelcome } from '@/components/onboarding/first-session-w
 import { installTrayNavigation } from '@/features/native-integrations/tray-navigation'
 import { ShellActionBridge } from '@/features/native-integrations/ShellActionBridge'
 import { SplashScreen } from '@/components/SplashScreen'
-import { TooltipProvider } from '@rox/ui'
+import { TooltipProvider } from '@rox/ui/tooltip'
 import { FocusProvider } from '@/context/FocusContext'
 import { ModalProvider } from '@/context/ModalContext'
 import { DismissibleLayerProvider } from '@/context/DismissibleLayerContext'
@@ -88,18 +88,9 @@ import { useEntitiesLinksFlagSync } from '@/lib/entities-links-sync'
 import { getSessionTitle } from '@/utils/session'
 import { extractBadges } from '@/lib/mentions'
 import { getDefaultStore } from 'jotai'
-import {
-  ShikiThemeProvider,
-  PlatformProvider,
-  ImagePreviewOverlay,
-  PDFPreviewOverlay,
-  CodePreviewOverlay,
-  DocumentFormattedMarkdownOverlay,
-  JSONPreviewOverlay,
-  AudioTranscriptActionsProvider,
-  type AudioTranscriptRetry,
-} from '@rox/ui'
-import { useLinkInterceptor, type FilePreviewState } from '@/hooks/useLinkInterceptor'
+import { PlatformProvider, ShikiThemeProvider } from '@rox/ui/context'
+import { AudioTranscriptActionsProvider, type AudioTranscriptRetry } from '@rox/ui/chat/audio-transcript-actions'
+import { useLinkInterceptor } from '@/hooks/useLinkInterceptor'
 import { queueInternalBrowserUrl } from '@/components/browser/internal-browser-queue'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { useSshConnectionStatus } from '@/hooks/useSshConnectionStatus'
@@ -134,6 +125,8 @@ const KeyboardShortcutsDialog = React.lazy(() =>
 // onboarding runs at most once. Wizard AND hook now live in `OnboardingHost`,
 // behind this single lazy edge.
 const OnboardingHost = React.lazy(() => import('./OnboardingHost'))
+// File preview overlays (markdown/pdf/json viewers) render only after a click.
+const FilePreviewHost = React.lazy(() => import('./FilePreviewHost'))
 const WorkspacePicker = React.lazy(() =>
   import('@/components/workspace').then((m) => ({ default: m.WorkspacePicker })),
 )
@@ -2894,13 +2887,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
           {/* File preview overlay — rendered by the link interceptor when a previewable file is clicked */}
           {linkInterceptor.previewState && (
-            <FilePreviewRenderer
-              state={linkInterceptor.previewState}
-              onClose={linkInterceptor.closePreview}
-              loadDataUrl={linkInterceptor.readFileDataUrl}
-              loadPdfData={linkInterceptor.readFileBinary}
-              isDark={isDark}
-            />
+            <React.Suspense fallback={null}>
+              <FilePreviewHost
+                state={linkInterceptor.previewState}
+                onClose={linkInterceptor.closePreview}
+                loadDataUrl={linkInterceptor.readFileDataUrl}
+                loadPdfData={linkInterceptor.readFileBinary}
+                isDark={isDark}
+              />
+            </React.Suspense>
           )}
           </ProductTourProvider>
         </NavigationProvider>
@@ -2922,140 +2917,4 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 function WindowCloseHandler() {
   useWindowCloseHandler()
   return null
-}
-
-/**
- * FilePreviewRenderer - Routes file preview state to the correct overlay component.
- *
- * Handles all preview types from the link interceptor:
- * - image → ImagePreviewOverlay (binary, loaded via data URL)
- * - pdf → PDFPreviewOverlay (binary, embedded via Chromium viewer)
- * - code/text → CodePreviewOverlay (syntax highlighted)
- * - markdown → DocumentFormattedMarkdownOverlay
- * - json → JSONPreviewOverlay
- *
- * File path badges with "Open" / "Reveal in {file manager}" menus are provided
- * automatically by PlatformContext — no per-overlay callback props needed.
- */
-function FilePreviewRenderer({
-  state,
-  onClose,
-  loadDataUrl,
-  loadPdfData,
-  isDark,
-}: {
-  state: FilePreviewState
-  onClose: () => void
-  loadDataUrl: (path: string) => Promise<string>
-  loadPdfData: (path: string) => Promise<Uint8Array>
-  isDark: boolean
-}) {
-  const theme = isDark ? 'dark' : 'light' as const
-
-  switch (state.type) {
-    case 'image':
-      return (
-        <ImagePreviewOverlay
-          isOpen
-          onClose={onClose}
-          filePath={state.filePath}
-          loadDataUrl={loadDataUrl}
-          theme={theme}
-        />
-      )
-
-    case 'pdf':
-      return (
-        <PDFPreviewOverlay
-          isOpen
-          onClose={onClose}
-          filePath={state.filePath}
-          loadPdfData={loadPdfData}
-          theme={theme}
-        />
-      )
-
-    case 'code':
-    case 'text':
-      return (
-        <CodePreviewOverlay
-          isOpen
-          onClose={onClose}
-          filePath={state.filePath}
-          content={state.content ?? ''}
-          language={state.type === 'code' ? state.language : 'plaintext'}
-          mode="read"
-          theme={theme}
-          error={state.error}
-        />
-      )
-
-    case 'markdown': {
-      // Show PLAN header for .md files in plans folder (handles both absolute and relative paths)
-      const isPlanFile =
-        (state.filePath.includes('/plans/') || state.filePath.startsWith('plans/')) &&
-        state.filePath.endsWith('.md')
-      return (
-        <DocumentFormattedMarkdownOverlay
-          isOpen
-          onClose={onClose}
-          content={state.content ?? ''}
-          filePath={state.filePath}
-          variant={isPlanFile ? 'plan' : 'response'}
-        />
-      )
-    }
-
-    case 'json': {
-      // JSONPreviewOverlay expects parsed data, not a raw string.
-      // @uiw/react-json-view crashes on null value, so guard against it.
-      let parsedData: unknown = null
-      try {
-        if (state.content) parsedData = JSON.parse(state.content)
-      } catch {
-        // If parsing fails, fall back to showing as code
-        return (
-          <CodePreviewOverlay
-            isOpen
-            onClose={onClose}
-            filePath={state.filePath}
-            content={state.content ?? ''}
-            language="json"
-            mode="read"
-            theme={theme}
-            error={state.error}
-          />
-        )
-      }
-      // If read failed and content is empty, show raw code overlay with the read error.
-      if ((!state.content || !state.content.trim()) && state.error) {
-        return (
-          <CodePreviewOverlay
-            isOpen
-            onClose={onClose}
-            filePath={state.filePath}
-            content={state.content ?? ''}
-            language="json"
-            mode="read"
-            theme={theme}
-            error={state.error}
-          />
-        )
-      }
-      return (
-        <JSONPreviewOverlay
-          isOpen
-          onClose={onClose}
-          filePath={state.filePath}
-          title={state.filePath.split('/').pop() ?? 'JSON'}
-          data={parsedData}
-          theme={theme}
-          error={state.error}
-        />
-      )
-    }
-
-    default:
-      return null
-  }
 }
