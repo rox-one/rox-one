@@ -8,8 +8,7 @@ import { useAppShellContext } from '@/context/AppShellContext'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { routes } from '@/lib/navigate'
 import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspace-tool'
-import { workspaceProjectContextsAtom } from '@/atoms/workspace-context'
-import { pagesContextFilter, pagesCreationProject, pagesFilterContextKeyAtom, pagesProjectContext } from '@/lib/pages-project-context'
+import { pagesCreationProject } from '@/lib/pages-project-context'
 import { pagesAtom, pagesProjectFilterAtom, PAGES_UNASSIGNED_PROJECT } from '@/atoms/pages'
 import { projectsAtom } from '@/atoms/projects'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
@@ -39,27 +38,10 @@ export function PagesHome() {
   React.useEffect(() => knowledgeSignals.capability('pages.entity-present', { state: 'pending', reason: 'missing-entity' }), [knowledgeSignals])
   const projects = useAtomValue(projectsAtom)
   const [projectFilter, setProjectFilter] = useAtom(pagesProjectFilterAtom)
-  const [workspaceProjects, setWorkspaceProjects] = useAtom(workspaceProjectContextsAtom)
-  const [syncedContextKey, setSyncedContextKey] = useAtom(pagesFilterContextKeyAtom)
-  const selectedProjectId = activeWorkspaceId ? workspaceProjects[activeWorkspaceId] ?? null : null
   const [pendingDelete, setPendingDelete] = React.useState<LoadedPage | null>(null)
 
-  // External workspace/project choices update this library without navigating
-  // an open page. Keep advanced multi/unassigned filters when echoing our own change.
-  const projectContextKey = JSON.stringify([activeWorkspaceId, selectedProjectId])
-  React.useEffect(() => {
-    if (syncedContextKey === projectContextKey) return
-    setSyncedContextKey(projectContextKey)
-    setProjectFilter(pagesContextFilter(selectedProjectId))
-  }, [projectContextKey, selectedProjectId, syncedContextKey, setSyncedContextKey, setProjectFilter])
-
-  const changeProjectFilter = React.useCallback((ids: string[]) => {
-    setProjectFilter(ids)
-    if (!activeWorkspaceId) return
-    const projectId = pagesProjectContext(ids, PAGES_UNASSIGNED_PROJECT)
-    setSyncedContextKey(JSON.stringify([activeWorkspaceId, projectId]))
-    setWorkspaceProjects(current => ({ ...current, [activeWorkspaceId]: projectId }))
-  }, [activeWorkspaceId, setProjectFilter, setSyncedContextKey, setWorkspaceProjects])
+  // The Pages project picker is local to Pages: it never sets a shared, cross-screen scope.
+  const changeProjectFilter = React.useCallback((ids: string[]) => setProjectFilter(ids), [setProjectFilter])
 
   const projectOptions = React.useMemo<ProjectFilterOption[]>(
     () => projects.map(p => ({ id: p.config.id, name: p.config.name, color: p.config.color })),
@@ -118,7 +100,7 @@ export function PagesHome() {
   const [askingAgent, setAskingAgent] = React.useState(false)
   const handleAskAgent = React.useCallback(async () => {
     if (!activeWorkspaceId || askingAgent) return
-    const projectId = pagesCreationProject(projectFilter, projects.map(project => project.config.id)) ?? selectedProjectId ?? undefined
+    const projectId = pagesCreationProject(projectFilter, projects.map(project => project.config.id))
     if (projectId && !projects.some(project => project.config.id === projectId)) {
       toast.error(t('navigation.notes.scopeCreateUnavailable'))
       return
@@ -133,7 +115,7 @@ export function PagesHome() {
     } catch (error) {
       toast.error(t('common.error'), { description: error instanceof Error ? error.message : String(error) })
     } finally { setAskingAgent(false) }
-  }, [activeWorkspaceId, askingAgent, projectFilter, projects, selectedProjectId, store, panelId, onCreateSession, onInputChange, t])
+  }, [activeWorkspaceId, askingAgent, projectFilter, projects, store, panelId, onCreateSession, onInputChange, t])
 
   const handleConfirmDelete = React.useCallback(async () => {
     if (!activeWorkspaceId || !pendingDelete) return

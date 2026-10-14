@@ -579,10 +579,8 @@ function AppShellContent({
   // UNIFIED NAVIGATION STATE - single source of truth from NavigationContext
   // Derived from focused panel's route — all panels are peers
   const navState = useNavigationState()
-  // The sidebar «Контекст проекта» selector was removed, so the shell has no global project
-  // scope: chats, new chats and tools always cover all projects. Pages/Notes keep their own
-  // session-local project filter (atoms/workspace-context), which never reaches the shell.
-  const selectedProjectId: string | null = null
+  // No global project scope (the sidebar «Контекст проекта» selector was removed):
+  // chats, new chats and tools always cover all projects.
   const liveWorkspace = useRef(activeWorkspaceId)
   liveWorkspace.current = activeWorkspaceId
   const [openingAgent, setOpeningAgent] = useState(false)
@@ -607,20 +605,19 @@ function AppShellContent({
     const existing = store.get(panelStackAtom).find(entry => entry.tool === tool)
     if (existing) { store.set(closePanelAtom, existing.id); return }
     if (!activeWorkspaceId) return
-    const context = { workspaceId: activeWorkspaceId, projectId: selectedProjectId ?? undefined,
-      route: (store.get(primaryPanelRouteAtom) ?? routes.view.inbox()) as import('../../../shared/routes').ViewRoute }
+    const context = { workspaceId: activeWorkspaceId, route: (store.get(primaryPanelRouteAtom) ?? routes.view.inbox()) as import('../../../shared/routes').ViewRoute }
     let route: import('../../../shared/routes').ViewRoute = tool === 'tasks' ? routes.view.tasks() : tool === 'memory' ? routes.view.memory() : routes.view.automations()
     if (tool === 'agent') {
       if (openingAgent) return
-      const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: selectedProjectId ?? undefined, tool })
+      const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, tool })
       if (!intent) return
       setOpeningAgent(true)
       try {
         const sessions = Array.from(store.get(sessionMetaMapAtom).values())
-          .filter(meta => meta.workspaceId === activeWorkspaceId && (meta.projectId ?? null) === selectedProjectId && !meta.isArchived && !isInternalAgentSession(meta))
+          .filter(meta => meta.workspaceId === activeWorkspaceId && (meta.projectId ?? null) === null && !meta.isArchived && !isInternalAgentSession(meta))
           .sort((a, b) => (b.lastMessageAt ?? b.createdAt ?? 0) - (a.lastMessageAt ?? a.createdAt ?? 0))
         const previous = sessions[0]
-        const created = previous ?? await contextValue.onCreateSession(activeWorkspaceId, { projectId: selectedProjectId ?? undefined })
+        const created = previous ?? await contextValue.onCreateSession(activeWorkspaceId)
         if (generation !== toolIntentGeneration.current || liveWorkspace.current !== context.workspaceId || store.get(primaryPanelRouteAtom) !== context.route) return
         route = routes.view.allSessions(created.id)
         openWorkspaceTool(store, intent, route)

@@ -15,7 +15,6 @@ import { useTranslation } from 'react-i18next'
 import { useAtomValue, useStore } from 'jotai'
 import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
-import { workspaceProjectContextsAtom } from '@/atoms/workspace-context'
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@rox/ui'
 import type { Node as PMNode } from 'prosemirror-model'
@@ -523,9 +522,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   } = useAppShellContext()
   const store = useStore()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
-  // The selected workspace project owns the note scope; the active chat does not.
-  const workspaceProjects = useAtomValue(workspaceProjectContextsAtom)
-  const activeProjectId = activeWorkspaceId ? workspaceProjects[activeWorkspaceId] ?? undefined : undefined
+  // No hidden shared project scope: notes cover all projects (the active chat does not scope them either).
+  const activeProjectId: string | undefined = undefined
   const noteScope = React.useMemo(() => projectNoteScope(activeProjectId, projects), [activeProjectId, projects])
   const [rightSessionContext, setRightSessionContext] = React.useState<Rox2Context | null>(null)
   const [openingAgent, setOpeningAgent] = React.useState(false)

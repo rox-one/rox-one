@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { createStore } from 'jotai'
-import { LEGACY_PROJECT_CONTEXT_KEY, clearLegacyProjectContext, workspaceProjectContextsAtom } from '../workspace-context'
+import * as ctx from '../workspace-context'
+const { LEGACY_PROJECT_CONTEXT_KEY, clearLegacyProjectContext } = ctx
 
 const shell = readFileSync(join(__dirname, '../../components/app-shell/AppShell.tsx'), 'utf8')
 const ctxSrc = readFileSync(join(__dirname, '../workspace-context.ts'), 'utf8')
@@ -17,12 +17,20 @@ describe('removed sidebar project context', () => {
     expect(ctxSrc).not.toContain('atomWithStorage')
   })
 
-  it('ignores any saved value: the Pages filter starts empty and is session-local', () => {
-    expect(createStore().get(workspaceProjectContextsAtom)).toEqual({})
+  it('retires the shared project atom; no screen reads a hidden shared scope', () => {
+    expect('workspaceProjectContextsAtom' in ctx).toBe(false)
+    expect('selectedProjectForWorkspaceAtom' in ctx).toBe(false)
+    const root = join(__dirname, '../..')
+    for (const f of ['components/pages/PagesHome.tsx', 'pages/NotesPage.tsx', 'pages/FeedPage.tsx', 'pages/workspace-work/PlanWorkspacePage.tsx',
+      'pages/workspace-work/WorkspaceTasksPage.tsx', 'components/app-shell/AuxiliaryToolPanel.tsx']) {
+      expect(readFileSync(join(root, f), 'utf8')).not.toContain('workspaceProjectContextsAtom')
+    }
+    // Pages keeps its picker local: changing it does not write any cross-screen scope.
+    expect(readFileSync(join(root, 'components/pages/PagesHome.tsx'), 'utf8')).toContain('const changeProjectFilter = React.useCallback((ids: string[]) => setProjectFilter(ids), [setProjectFilter])')
   })
 
   it('shell never derives a global scope, so chats and new chats/tools stay unfiltered', () => {
-    expect(shell).toContain('const selectedProjectId: string | null = null')
+    expect(shell).not.toContain('selectedProjectId')
     expect(shell).not.toContain('workspaceProjectContextsAtom')
     expect(shell).not.toContain("const projectId = selectedProjectId ? [selectedProjectId] : undefined")
     expect(shell).not.toContain('workspace-project-context')
