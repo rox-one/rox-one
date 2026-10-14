@@ -832,7 +832,7 @@
   "chat.objects.delegate": "Confier {{name}} à un agent",
   "chat.objects.delegateFailed": "Impossible de lancer la session d’agent",
   "chat.objects.delegateShort": "Confier à un agent",
-  "chat.objects.delegated": "Session d’agent lancée",
+  "chat.objects.delegateDraftReady": "Brouillon prêt — vérifiez la demande et envoyez-la",
   "chat.objects.label": "Objets dans cette réponse",
   "chat.objects.open": "Ouvrir",
   "chat.objects.promptHeading": "Prends ceci en charge :",

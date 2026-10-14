@@ -832,7 +832,7 @@
   "chat.objects.delegate": "Asignar {{name}} a un agente",
   "chat.objects.delegateFailed": "No se pudo iniciar la sesión del agente",
   "chat.objects.delegateShort": "Asignar a un agente",
-  "chat.objects.delegated": "Sesión del agente iniciada",
+  "chat.objects.delegateDraftReady": "Borrador listo: revisa el mensaje y envíalo",
   "chat.objects.label": "Objetos en esta respuesta",
   "chat.objects.open": "Abrir",
   "chat.objects.promptHeading": "Encárgate de esto:",

@@ -832,7 +832,7 @@
   "chat.objects.delegate": "Assign {{name}} to an agent",
   "chat.objects.delegateFailed": "Couldn’t start the agent session",
   "chat.objects.delegateShort": "Assign to agent",
-  "chat.objects.delegated": "Agent session started",
+  "chat.objects.delegateDraftReady": "Draft ready — review the prompt and send it",
   "chat.objects.label": "Objects in this answer",
   "chat.objects.open": "Open",
   "chat.objects.promptHeading": "Please take this on:",

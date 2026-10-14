@@ -832,7 +832,7 @@
   "chat.objects.delegate": "{{name}} átadása ügynöknek",
   "chat.objects.delegateFailed": "Nem sikerült elindítani az ügynök-munkamenetet",
   "chat.objects.delegateShort": "Átadás ügynöknek",
-  "chat.objects.delegated": "Ügynök-munkamenet elindítva",
+  "chat.objects.delegateDraftReady": "A piszkozat kész — ellenőrizd és küldd el",
   "chat.objects.label": "Objektumok ebben a válaszban",
   "chat.objects.open": "Megnyitás",
   "chat.objects.promptHeading": "Kérlek, vállald ezt:",

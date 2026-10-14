@@ -832,7 +832,7 @@
   "chat.objects.delegate": "إسناد {{name}} إلى وكيل",
   "chat.objects.delegateFailed": "تعذر بدء جلسة الوكيل",
   "chat.objects.delegateShort": "إسناد إلى وكيل",
-  "chat.objects.delegated": "بدأت جلسة الوكيل",
+  "chat.objects.delegateDraftReady": "المسودة جاهزة — راجع الطلب ثم أرسله",
   "chat.objects.label": "الكائنات في هذه الإجابة",
   "chat.objects.open": "فتح",
   "chat.objects.promptHeading": "يرجى تولي ما يلي:",

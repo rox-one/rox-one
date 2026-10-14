@@ -13,7 +13,8 @@ interface SessionLike { id: string; name?: string | null; workspaceId?: string |
 
 /**
  * Chat wiring for #21 (object chips + «Создать задачу» from an answer) and
- * #22 («Поручить агенту»: a new todo session seeded with the object/answer).
+ * #22 («Поручить агенту»: a new todo session whose composer is prefilled with
+ * the object/answer; the user confirms and sends).
  */
 export function useObjectActions(session: SessionLike | null | undefined) {
   const { t } = useTranslation()
@@ -22,16 +23,23 @@ export function useObjectActions(session: SessionLike | null | undefined) {
   const sessionRef = React.useRef(session)
   sessionRef.current = session
 
+  // «Поручить агенту» never starts a run by itself: it opens a new todo session
+  // with the prompt prefilled in the composer so the user reviews and sends it.
   const delegate = React.useCallback(async (title: string, prompt: string) => {
     const workspaceId = sessionRef.current?.workspaceId ?? shell.activeWorkspaceId
     if (!workspaceId || busy.current) return
     busy.current = true
+    let createdId: string | null = null
     try {
       const created = await shell.onCreateSession(workspaceId, { sessionStatus: 'todo' })
+      createdId = created.id
       await window.electronAPI.sessionCommand(created.id, { type: 'rename', name: title })
-      await window.electronAPI.sendMessage(created.id, prompt)
-      toast.success(t('chat.objects.delegated'), { action: { label: t('chat.objects.open'), onClick: () => navigate(routes.view.allSessions(created.id)) } })
+      shell.onInputChange(created.id, prompt)
+      navigate(routes.view.allSessions(created.id))
+      toast.success(t('chat.objects.delegateDraftReady'))
     } catch {
+      // Don't leave an empty orphan session behind on a partial failure.
+      if (createdId) await shell.onDeleteSession(createdId, true).catch(() => false)
       toast.error(t('chat.objects.delegateFailed'))
     } finally {
       busy.current = false

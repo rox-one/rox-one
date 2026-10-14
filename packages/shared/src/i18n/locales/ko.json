@@ -832,7 +832,7 @@
   "chat.objects.delegate": "{{name}}을(를) 에이전트에게 맡기기",
   "chat.objects.delegateFailed": "에이전트 세션을 시작할 수 없습니다",
   "chat.objects.delegateShort": "에이전트에게 맡기기",
-  "chat.objects.delegated": "에이전트 세션이 시작되었습니다",
+  "chat.objects.delegateDraftReady": "초안이 준비되었습니다. 확인 후 보내세요",
   "chat.objects.label": "이 답변의 개체",
   "chat.objects.open": "열기",
   "chat.objects.promptHeading": "이 작업을 맡아 주세요:",

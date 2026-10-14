@@ -832,7 +832,7 @@
   "chat.objects.delegate": "{{name}} をエージェントに任せる",
   "chat.objects.delegateFailed": "エージェントのセッションを開始できませんでした",
   "chat.objects.delegateShort": "エージェントに任せる",
-  "chat.objects.delegated": "エージェントのセッションを開始しました",
+  "chat.objects.delegateDraftReady": "下書きの準備ができました。確認して送信してください",
   "chat.objects.label": "この回答のオブジェクト",
   "chat.objects.open": "開く",
   "chat.objects.promptHeading": "これを担当してください:",
