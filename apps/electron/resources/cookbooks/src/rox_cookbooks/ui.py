@@ -259,10 +259,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 5
         idx = code_indexes[0] if args.cell is None else code_indexes[args.cell]
         env = env_for_item(catalog, item, store)
+        # Mask credential values only: the catalog defaultEnv (ROX gateway base
+        # URL) is public and must stay readable in CLI output.
+        redact_values = [
+            value for name, value in env.items() if value and name not in catalog.default_env
+        ]
         result = execute_code(
             copy,
             nb.source(idx),
             env=env,
+            redact_values=redact_values,
             timeout=args.timeout,
             catalog=catalog,
             item=item,

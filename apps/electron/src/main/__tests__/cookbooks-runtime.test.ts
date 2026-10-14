@@ -1351,6 +1351,12 @@ describe('CookbooksRuntime data plane', () => {
 // logged, never returned in a status/IPC payload and never written to disk.
 // ---------------------------------------------------------------------------
 
+/** Stage a minimal catalog at `<dir>/resources/cookbooks/catalog.json`. */
+async function writeCatalog(dir: string, secretMap: Record<string, string>): Promise<void> {
+  await mkdir(join(dir, 'resources', 'cookbooks'), { recursive: true })
+  await writeFile(join(dir, 'resources', 'cookbooks', 'catalog.json'), JSON.stringify({ secretMap }))
+}
+
 describe('defaultCookbooksStore', () => {
   it('reads the catalog secretMap through the bundled dir and resolves ROX_SECRET_* refs', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'rox-cookbooks-catalog-'))
@@ -1378,6 +1384,57 @@ describe('defaultCookbooksStore', () => {
 
   it('returns an empty store when the catalog cannot be read', async () => {
     expect(await defaultCookbooksStore('/nonexistent-cookbooks-root')).toEqual({})
+  })
+
+  it('falls back to the embedded ROX gateway key when the chain resolves nothing', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'rox-cookbooks-catalog-'))
+    try {
+      // No provider holds this ref, so the credential chain resolves nothing.
+      await writeCatalog(dir, { 'openai.api_key': 'ROX_LAB_TEST_MISSING_OPENAI_KEY' })
+      const store = await defaultCookbooksStore(dir, { ROX_API_KEY: '  sk-rox-embedded  ' })
+      expect(store).toEqual({ 'openai.api_key': 'sk-rox-embedded' })
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('keeps the credential-chain value when the chain resolved a user key', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'rox-cookbooks-catalog-'))
+    const ref = 'ROX_SECRET_ROX_LAB_TEST_USER_OPENAI_KEY'
+    const previous = process.env[ref]
+    try {
+      await writeCatalog(dir, { 'openai.api_key': 'ROX_LAB_TEST_USER_OPENAI_KEY' })
+      process.env[ref] = 'sk-user'
+      const store = await defaultCookbooksStore(dir, { ROX_API_KEY: 'sk-rox-embedded' })
+      expect(store).toEqual({ 'openai.api_key': 'sk-user' })
+    } finally {
+      if (previous === undefined) delete process.env[ref]
+      else process.env[ref] = previous
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('leaves openai.api_key absent when ROX_API_KEY is missing or blank', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'rox-cookbooks-catalog-'))
+    try {
+      await writeCatalog(dir, { 'openai.api_key': 'ROX_LAB_TEST_MISSING_OPENAI_KEY' })
+      expect(await defaultCookbooksStore(dir, {})).toEqual({})
+      // Whitespace is not a key: a blank embedded value must not show a
+      // "present" key the lab cannot use.
+      expect(await defaultCookbooksStore(dir, { ROX_API_KEY: '   ' })).toEqual({})
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('never invents openai.api_key for a catalog that does not map it', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'rox-cookbooks-catalog-'))
+    try {
+      await writeCatalog(dir, { 'other.api_key': 'ROX_LAB_TEST_MISSING_OTHER_KEY' })
+      expect(await defaultCookbooksStore(dir, { ROX_API_KEY: 'sk-rox-embedded' })).toEqual({})
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
   })
 })
 

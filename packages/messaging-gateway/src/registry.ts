@@ -2024,6 +2024,7 @@ function toBindingInfo(b: ChannelBinding): MessagingBindingInfo {
     channelId: b.channelId,
     ...(b.threadId !== undefined ? { threadId: b.threadId } : {}),
     channelName: b.channelName,
+    ...(b.chatType ? { chatType: b.chatType } : {}),
     enabled: b.enabled,
     createdAt: b.createdAt,
     accessMode: b.config.accessMode,

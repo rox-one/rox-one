@@ -55,7 +55,7 @@ and asserts the handshake below. Its expected output is in §8.
   declared secrets (`_CHILD_ENV_ALLOWLIST`, `src/rox_cookbooks/kernel.py:75-90`, `:1004-1009`).
   Do not claim stronger isolation than a local Jupyter process (`docs/spec.md:72`).
 - **Canonical catalog is read-only.** Bundled resources at `resources/cookbooks/`
-  (`src/rox_cookbooks/catalog.py:99-100`); the copies layer refuses to write into it
+  (`src/rox_cookbooks/catalog.py:108-109`); the copies layer refuses to write into it
   (`src/rox_cookbooks/copies.py:204-206`).
 
 ## 2. Process lifecycle
@@ -284,7 +284,7 @@ notebook is corrupt, meaning "offer Reset" (`:201-202`). The only 5xx is `503` f
 | POST | `/store` | `{store:{key:value}}` | `{keys:[…]}` (`:347-356`) |
 
 Card and `missing` payloads carry **credential key names only** (`src/rox_cookbooks/ui.py:65-87`;
-`src/rox_cookbooks/secrets.py:25-36`) — never values.
+`src/rox_cookbooks/secrets.py:32-43`) — never values.
 
 On the ipynb branch of `/document/<itemId>`, each `cells[]` entry carries `execution_count` verbatim
 from the ipynb: an `int` once that cell has run, `null` until then (`document_payload`,
@@ -442,9 +442,10 @@ per run-all) and must not assume it holds everything the cell tried to show.
 
 **Redaction.** Text mimes (`text/*`, `application/json`, `application/xml`, `application/x-yaml`)
 are masked `***` **in the child, before the temp write**, and masked again by the caller — with the
-same secret values as stdout/stderr (§5.4). `image/*` is **not** redacted: the value is opaque image
-data (base64, passed through as-is) and substituting inside it would corrupt the payload. Treat a
-display as no more trustworthy than a printed string — this is best-effort, not a guarantee (§5.4).
+same mask set as stdout/stderr, i.e. credential values only, never a catalog `defaultEnv` value
+(§5.4). `image/*` is **not** redacted: the value is opaque image data (base64, passed through as-is)
+and substituting inside it would corrupt the payload. Treat a display as no more trustworthy than a
+printed string — this is best-effort, not a guarantee (§5.4).
 
 **matplotlib.** The child sets `MPLBACKEND=Agg` before running the cell, so
 `import matplotlib.pyplot` never needs a display. After the cell — on success **and** on exception —
@@ -562,10 +563,14 @@ exactly the line `serve_lab.py` prints (`scripts/serve_lab.py:26`; `README.md:18
   - `POST /run` may also carry a one-shot `store` object, merged over the host store for that run
     only (`src/rox_cookbooks/host.py:238-240`, `:273-276`).
 - Key → env mapping is the catalog's `secretMap` (`resources/cookbooks/catalog.json:4-11`). Only the
-  item's declared `requiredSecrets` are resolved (`env_for_item`, `src/rox_cookbooks/secrets.py:10-22`;
-  `missing_secrets`, `:25-36`).
+  item's declared `requiredSecrets` are resolved (`env_for_item`, `src/rox_cookbooks/secrets.py:10-29`;
+  `missing_secrets`, `:32-43`).
+- **Catalog defaults are not secrets.** Independently of the store, `env_for_item` layers the
+  catalog's `defaultEnv` over the resolved secrets with `setdefault`
+  (`src/rox_cookbooks/secrets.py:22-28`; data `resources/cookbooks/catalog.json:12-15`), so every
+  item's kernel env carries the ROX gateway base URLs — see §5.6.
 - **Environment fallback.** If no store is passed (`store is None`), the Lab probes the **process
-  environment** instead (`src/rox_cookbooks/secrets.py:15`, `:30`; `README.md:26`). The host always
+  environment** instead (`src/rox_cookbooks/secrets.py:15`, `:37`; `README.md:26`). The host always
   passes a dict (`src/rox_cookbooks/host.py:273`, `:368`), so a host-side Run never reads ambient
   env — but a CLI run without `--store` does. **Proposal.** Decide the store precedence explicitly
   and pass an empty dict (not `None`) from Electron-facing code paths; see §7.11.
@@ -603,7 +608,7 @@ exactly the line `serve_lab.py` prints (`scripts/serve_lab.py:26`; `README.md:18
 ### 5.3 Injected into the kernel process only
 
 - Secrets reach a cell as **process environment for the one-shot kernel only**
-  (`docs/spec.md:29`): `env_for_item` builds the dict (`src/rox_cookbooks/secrets.py:10-22`),
+  (`docs/spec.md:29`): `env_for_item` builds the dict (`src/rox_cookbooks/secrets.py:10-29`),
   `_subprocess_env` layers it over the allowlist (`src/rox_cookbooks/kernel.py:99-108`), and
   `Kernel._process_env` is what `Popen(env=…)` gets (`:1004-1009`, `:948-958`).
 - Nothing writes secrets into notebook JSON: persistence writes only redacted `stdout`/`stderr`
@@ -612,16 +617,22 @@ exactly the line `serve_lab.py` prints (`scripts/serve_lab.py:26`; `README.md:18
 
 ### 5.4 Redaction (best-effort)
 
-- Both captured streams and the derived `error` are passed through `redact_output`
-  (`src/rox_cookbooks/secrets.py:65-75`; applied at `src/rox_cookbooks/kernel.py:979-989`). It
-  replaces **known secret values** longest-first with `***`, using the values laid over this cell's
-  final env — i.e. exactly what was injected.
+- **Policy: only credential values are masked; catalog `defaultEnv` values are not.** The mask set is
+  an argument, not a heuristic. With none (`redact_values=None`, the library default) **every** value
+  of the cell's final env is masked — exactly what was injected. Both Lab json routes (`/run`,
+  `/run-all`) pass the **credential subset** instead: `host.py` builds it from `env_for_item`'s result
+  minus every name in `Catalog.default_env`, so the public ROX gateway base URLs (§5.6) stay readable
+  in `stdout`/`stderr`, in the derived `error`, and in Wave 11 displays.
+- Masking is `redact_output` (`src/rox_cookbooks/secrets.py:72-82`, applied by `Kernel.execute` /
+  `execute_all`): longest-first replacement of each masked value with `***`.
 - **Run-all redacts before the temp write (G4-CBK-01).** The run-all driver is handed the secret
   env **names** in its job JSON (`secret_env`) and reads the values from its own environment; it
   masks them from each record **before** appending that record to the temp `results.json`
   (`_RUN_ALL_DRIVER`, `src/rox_cookbooks/kernel.py:881-956`; job payload built in `execute_all`,
-  `:1402-1432`). A run killed mid-flight — `/cancel` or the overall timeout — therefore cannot
-  leave a raw secret on disk. The caller-side redaction (`:1465-1466`) stays as defense in depth.
+  `:1402-1432`). The name list is derived from the same mask set, so a name whose value is not masked
+  (a base URL) is not in it and the driver leaves that value alone. A run killed mid-flight —
+  `/cancel` or the overall timeout — therefore cannot leave a raw secret on disk. The caller-side
+  redaction (`:1465-1466`) stays as defense in depth.
 - Redaction is **best-effort** and only sees the captured streams (`docs/spec.md:121`). It does not
   cover: files a cell writes, subprocesses that print to a tty, values a vendor SDK re-encodes, or
   network egress. Do not describe it as a guarantee.
@@ -629,33 +640,63 @@ exactly the line `serve_lab.py` prints (`scripts/serve_lab.py:26`; `README.md:18
   text (`src/rox_cookbooks/kernel.py:988-989` → `persist_code_output`,
   `src/rox_cookbooks/notebooks.py:119-147`).
 - **Wave 11 displays follow the same policy** (§3.8): text mimes are masked in the child before the
-  temp write and masked again by the caller with these same values; `image/*` is not redacted at all
-  (opaque image data, passed through as-is — substituting inside it would corrupt the payload).
+  temp write and masked again by the caller, both times with the mask set above — so a record carries
+  `***` only where a credential value was, and a public default (the base URL) comes back verbatim;
+  `image/*` is not redacted at all (opaque image data, passed through as-is — substituting inside it
+  would corrupt the payload).
 
 ### 5.5 Missing credentials
 
-- Presence is decided by `missing_secrets` (`src/rox_cookbooks/secrets.py:25-36`). The banner data
+- Presence is decided by `missing_secrets` (`src/rox_cookbooks/secrets.py:32-43`). The banner data
   is `GET /banner/<itemId>` → `{"missing": [...]}` (`src/rox_cookbooks/host.py:189-196`) and is also
   inlined as `missing` on `/document/*` and `/run` (`:368`, `:294`).
 - A cell whose traceback looks like a missing-env or 401 error is rewritten into an actionable
-  message naming the keys (`rewrite_missing_secret_error`, `src/rox_cookbooks/secrets.py:46-62`;
+  message naming the keys (`rewrite_missing_secret_error`, `src/rox_cookbooks/secrets.py:53-69`;
   applied at `src/rox_cookbooks/kernel.py:1117-1120`), e.g. "Missing ROX credential(s): openai.api_key.
   Add them in ROX credentials, then rerun this cell."
 - The banner stays until the store changes: after the user adds a credential, `POST /store` and
   re-render the chips/cards (`src/rox_cookbooks/host.py:347-356`; `README.md:35`).
 
+### 5.6 Default env: the ROX gateway base URL
+
+- **Product policy.** The ROX gateway (`https://api.rox.one/v1`) is the always-default
+  OpenAI-compatible provider for notebook code, so the catalog ships its base URL under a top-level
+  `defaultEnv` map (`resources/cookbooks/catalog.json:12-15`):
+
+  ```json
+  "defaultEnv": { "OPENAI_BASE_URL": "https://api.rox.one/v1",
+                  "OPENAI_API_BASE": "https://api.rox.one/v1" }
+  ```
+
+- **Merge semantics.** `load_catalog` reads it into `Catalog.default_env`
+  (`src/rox_cookbooks/catalog.py:112-127`) and `env_for_item` layers it over the resolved secrets
+  with `env.setdefault(name, value)` (`src/rox_cookbooks/secrets.py:22-28`). So **every** item's
+  kernel env gets both base-URL vars unless a same-named key is already present — an explicit
+  credential value (or any colliding key `env_for_item` already wrote) always wins. Items with no
+  `requiredSecrets` still receive the defaults.
+- **Not a secret, and not masked.** The base URL carries no credential: it is not a `secretMap` entry,
+  never comes from the store/`credentials.enc`/process env, and does not appear in the banner. It is
+  also outside the redaction set the Lab routes pass (they skip every name in `Catalog.default_env`,
+  §5.4), so it reads back verbatim in cell output — a `***` there is only ever a credential value.
+- **Validation.** `validate_catalog` rejects a `defaultEnv` whose names are not
+  `[A-Za-z_][A-Za-z0-9_]*` or whose values are not non-empty strings, with `CatalogError`
+  (`src/rox_cookbooks/catalog.py:143-150`). A catalog without `defaultEnv` yields no extra keys.
+- **Banner semantics unchanged.** `missing_secrets` still reads only `requiredSecrets`, so
+  "Missing ROX credential(s): …" behaviour is exactly as in §5.5 — the defaults never satisfy or
+  suppress a missing-key banner.
+
 ## 6. Failure modes & UX
 
 | Failure | Host behavior | Electron UX |
 |---|---|---|
-| Missing credential | `/run` returns 200 with `missing:[…]` and a rewritten `error` (`src/rox_cookbooks/host.py:289-295`; `src/rox_cookbooks/secrets.py:46-62`) | Warn banner naming the keys + "add in ROX credentials", keep Run enabled (`docs/spec.md:18`) |
+| Missing credential | `/run` returns 200 with `missing:[…]` and a rewritten `error` (`src/rox_cookbooks/host.py:289-295`; `src/rox_cookbooks/secrets.py:53-69`) | Warn banner naming the keys + "add in ROX credentials", keep Run enabled (`docs/spec.md:18`) |
 | No Python >= 3.11 | `/run` 400 `{"error": "<no-python message + install link>"}` (`KernelError` → 400, `src/rox_cookbooks/host.py:287-288`; message `src/rox_cookbooks/kernel.py:288-293`) | Blocking banner with the python.org link (`docs/spec.md:112`) |
 | pip install fails | 400 with the command + pip log inline in `error` (`src/rox_cookbooks/kernel.py:606-612`) | Progress/install panel with the log and a retry (`docs/spec.md:113`) |
 | Port in use | `start()` calls `ThreadingHTTPServer(...)` on port `0`, so the OS picks a free port; a bind failure raises out of `start()` and `serve_lab.py` dies with a traceback (`src/rox_cookbooks/host.py:360`; `scripts/serve_lab.py:25`) | Treat "no startup line within N s" as a failed launch; surface stderr and retry (§2.5) |
 | Kernel/cell crash | One-shot process; `execute` never raises — returns `ok:false` with `stderr`/`error` (`src/rox_cookbooks/kernel.py:934-1002`, `:1145-1157`) | Cell shows the error; rerun the cell (no restart action in v1, `docs/spec.md:49`) |
 | Cell timeout | Killed as a process tree, `timed_out:true`, timeout message (`src/rox_cookbooks/kernel.py:971-974`, `:1146-1150`) | Show "timed out after Ns"; suggest raising the timeout |
 | Corrupt ipynb | `/document` 400 `{error, reset:true}` (`src/rox_cookbooks/host.py:201-202`) | Offer Reset (`docs/spec.md:116`) |
-| Catalog file missing | Item stays, flagged `disabled` + `disabledReason:"file missing"` (`src/rox_cookbooks/catalog.py:122-130`; cards `src/rox_cookbooks/ui.py:80-84`) | Render the card disabled with the reason; other items unaffected |
+| Catalog file missing | Item stays, flagged `disabled` + `disabledReason:"file missing"` (`src/rox_cookbooks/catalog.py:132-140`; cards `src/rox_cookbooks/ui.py:80-84`) | Render the card disabled with the reason; other items unaffected |
 | Unsupported item (GPU/Docker) | `/run` 400 `{"error":"no kernel for this item"}` (`src/rox_cookbooks/host.py:245-246`) | No Run button (`docs/spec.md:135`); CLI exits 3 (`src/rox_cookbooks/ui.py:248-250`) |
 | Markdown item | `/run` 400 (`:245-246`); `/save` takes `{text}` (`:316-325`) | Render as a document, no Run-all; CLI exits 4 (`src/rox_cookbooks/ui.py:251-253`) |
 | Bad `--store` JSON | `ValueError` at startup (`src/rox_cookbooks/ui.py:141-144`) → traceback, non-zero exit | Fail the launch with the message; a missing file is fine (§5.1) |
