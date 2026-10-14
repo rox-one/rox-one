@@ -46,6 +46,9 @@ export const KnowledgeDiff=leaf('KnowledgeDiff'); export const KnowledgeProposal
 export const KnowledgeHome=leaf('KnowledgeHome'); export const CollectionBulkBar=()=>null;
 export const SendResourceToWorkspaceDialog=()=>null;
 export const getSettingsPageComponent=(subpage)=>leaf('Settings:'+subpage);
+// MainContentPanel (#1991 screen sidebars) imports this named export from the
+// stubbed @/pages tree; the leaf stub must expose every name the panel imports.
+export const SettingsScreenSidebar=leaf('SettingsScreenSidebar');
 `
 const bindings = `import * as React from 'react'; import {atom} from 'jotai';
 export const ShellContext=React.createContext(null); export const NavContext=React.createContext(null);
