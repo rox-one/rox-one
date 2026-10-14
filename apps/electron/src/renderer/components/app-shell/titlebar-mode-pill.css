@@ -43,7 +43,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 28px;
+  height: var(--control-md);
   padding: 0 10px;
   border: 0;
   border-radius: var(--radius-full);
@@ -121,7 +121,7 @@ html[data-contrast="high"] .rox-mode-pill-badge {
 }
 
 .rox-mode-pill[data-collapsed] .rox-mode-pill-item {
-  width: 28px;
+  width: var(--control-md);
   padding: 0;
 }
 
@@ -130,7 +130,7 @@ html[data-contrast="high"] .rox-mode-pill-badge {
   z-index: 0;
   top: 3px;
   left: 0;
-  height: 28px;
+  height: var(--control-md);
   border-radius: var(--radius-full);
   /* Soft glass highlight for the active segment — neutral, not accent. */
   background: color-mix(in oklch, var(--foreground) 13%, transparent);

@@ -27,11 +27,11 @@ export function WorkspaceNavigator({ workspaceRootPath, className }: WorkspaceNa
       aria-label={t('se.workspace.navigator')}
     >
       {/* One compact 32px row: repo name + muted inline dirty-count badge. */}
-      <header className="flex h-8 items-center gap-2 rounded-[var(--radius-control)] px-2 text-[11px] leading-4 text-foreground/70">
+      <header className="flex h-8 items-center gap-2 rounded-[var(--radius-control)] px-2 text-caption text-text-secondary">
         <FolderGit2 className="size-3.5 shrink-0 opacity-60" aria-hidden />
         <span className="min-w-0 flex-1 truncate font-medium" title={git.repoLabel}>{git.repoLabel}</span>
         <span
-          className="inline-flex shrink-0 items-center gap-0.5 rounded bg-foreground/[0.06] px-1 text-[10px] leading-4 text-muted-foreground numeric"
+          className="inline-flex shrink-0 items-center gap-0.5 rounded bg-surface-hover px-1 text-caption text-muted-foreground numeric"
           title={t('se.workspace.dirtyCount', { count: git.dirtyFileCount })}
           aria-label={t('se.workspace.dirtyCount', { count: git.dirtyFileCount })}
           data-testid="workspace-dirty-count"

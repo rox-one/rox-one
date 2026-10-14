@@ -90,7 +90,7 @@ export function UserProfilePopoverContent({
         <span className="flex size-8 shrink-0 [&>*]:!size-8">{avatar}</span>
         <div className="min-w-0 flex-1">
           <div className="truncate text-caption font-medium leading-4 text-text-primary" title={displayName}>{displayName}</div>
-          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] leading-3 text-muted-foreground">
+          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-caption text-muted-foreground">
             <span className="shrink-0 rounded bg-surface-hover px-1 font-medium text-text-secondary">{planLabel}</span>
             <span className="shrink-0 numeric">{t('profile.level', { level: data.level })}</span>
             <span
@@ -127,17 +127,17 @@ export function UserProfilePopoverContent({
 
       <div className="border-t border-border-subtle pt-1">
         <button type="button" className={rowClass} onClick={openSettings} data-testid="profile-open-settings">
-          <SlidersHorizontal className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+          <SlidersHorizontal className="icon-caption shrink-0 text-muted-foreground" aria-hidden />
           <span>{t('sidebar.settings')}</span>
         </button>
         {onReplayTour ? (
           <button type="button" className={rowClass} onClick={onReplayTour} data-testid="profile-replay-tour">
-            <RotateCcw className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+            <RotateCcw className="icon-caption shrink-0 text-muted-foreground" aria-hidden />
             <span>{t('profile.replayTour')}</span>
           </button>
         ) : null}
         <button type="button" className={destructiveRowClass} onClick={() => void handleSignOut()}>
-          <LogOut className="size-3.5 shrink-0" aria-hidden />
+          <LogOut className="icon-caption shrink-0" aria-hidden />
           <span>{t('settings.accounts.signOut')}</span>
         </button>
       </div>
