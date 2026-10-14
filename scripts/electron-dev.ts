@@ -603,6 +603,10 @@ async function main(): Promise<void> {
   });
   processes.push(viteProc);
 
+  // Team calls: the main bundle imports a gitignored build-time module; write it first.
+  const callDefaults = spawn({ cmd: ["bun", "run", join(ROOT_DIR, "apps/electron/scripts/gen-call-defaults.ts")], cwd: ROOT_DIR, stdout: "inherit", stderr: "inherit" });
+  if ((await callDefaults.exited) !== 0) { console.error("gen-call-defaults failed"); process.exit(1); }
+
   // Shared ROX gateway key → gitignored generated module (value never printed).
   console.log(`ROX defaults: ${writeRoxDefaultsModule()}`);
   // 2. Main process watcher (using esbuild watch API)
