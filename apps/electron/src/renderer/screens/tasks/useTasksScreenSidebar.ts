@@ -19,6 +19,8 @@ export interface TasksScreenSidebarInput extends TasksSidebarInput {
   /** Current view as a key: `list:today`, `project:<id>`, … */
   activeViewKey: string
   onView(view: { kind: 'list' | 'project' | 'area' | 'tag' | 'agents'; id: string }): void
+  /** Collapse / expand an area's projects (persisted on the area). */
+  onToggleArea(areaId: string): void
   onNewTask(): void
   search: string
   onSearch(value: string): void
@@ -35,15 +37,14 @@ export function useTasksScreenSidebar(input: TasksScreenSidebarInput): void {
   const { t } = useTranslation()
   const latest = useRef(input)
   latest.current = input
-  const { listCounts, overdue, looseProjects, areas, workspaceProjects, tags, agents, activeViewKey, search, footer } = input
+  const { listCounts, overdue, looseProjects, orphanProjects, areas, workspaceProjects, tags, agents, activeViewKey, search, footer } = input
 
-  // The page derives these arrays fresh every render (store snapshots); key the
-  // build on their content so the published config only changes on real edits.
-  // Serialising only when an input reference actually changed keeps typing in
-  // unrelated fields from paying O(n) per render.
-  const data = { listCounts, overdue, looseProjects, areas, workspaceProjects, tags, agents }
+  // TasksPage memoises these on the store snapshot; serialise only when an
+  // input reference changed so unrelated re-renders don't pay O(n), and key
+  // the build on content so the published config only changes on real edits.
+  const data = { listCounts, overdue, looseProjects, orphanProjects, areas, workspaceProjects, tags, agents }
   const sigCache = useRef<{ refs: unknown[]; sig: string } | null>(null)
-  const refs = [listCounts, overdue, looseProjects, areas, workspaceProjects, tags, agents]
+  const refs = [listCounts, overdue, looseProjects, orphanProjects, areas, workspaceProjects, tags, agents]
   if (!sigCache.current || refs.some((r, i) => r !== sigCache.current!.refs[i])) {
     const sig = JSON.stringify(data)
     sigCache.current = { refs, sig }
@@ -57,6 +58,11 @@ export function useTasksScreenSidebar(input: TasksScreenSidebarInput): void {
     const view = parseTasksViewKey(target.viewId)
     if (view) latest.current.onView(view)
   }, [])
+  const onMenu = useCallback((target: SidebarTarget, actionId: string) => {
+    if (actionId !== 'toggle-area' || target.kind !== 'view') return
+    const view = parseTasksViewKey(target.viewId)
+    if (view?.kind === 'area') latest.current.onToggleArea(view.id)
+  }, [])
   const onSearch = useCallback((v: string) => latest.current.onSearch(v), [])
   const onNewTask = useCallback(() => latest.current.onNewTask(), [])
 
@@ -65,7 +71,7 @@ export function useTasksScreenSidebar(input: TasksScreenSidebarInput): void {
     title: t('workbench.mode.tasks'),
     primaryAction: { id: 'new-task', label: t('tasks.quickEntry.title'), icon: Plus, shortcut: '⌘N', onSelect: onNewTask },
     search: { placeholder: t('screens.tasks.search'), value: search, onChange: onSearch },
-    groups: toScreenSidebarGroups(sections, { t, icons: ICONS, onTarget, activeKey: `view:${activeViewKey}` }).map((g) => ({
+    groups: toScreenSidebarGroups(sections, { t, icons: ICONS, onTarget, onMenu, activeKey: `view:${activeViewKey}` }).map((g) => ({
       ...g,
       items: g.items.map((item) => {
         const destination = taskDropDestination(item.id)
@@ -75,7 +81,7 @@ export function useTasksScreenSidebar(input: TasksScreenSidebarInput): void {
       }),
     })),
     footer,
-  }), [t, sections, onTarget, activeViewKey, search, onSearch, onNewTask, footer, dropTypesKey])
+  }), [t, sections, onTarget, onMenu, activeViewKey, search, onSearch, onNewTask, footer, dropTypesKey])
 
   useScreenSidebar(config)
 }

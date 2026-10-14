@@ -1554,6 +1554,10 @@
       "rox/no-foreground-opacity": 26,
       "rox/no-hardcoded-z-index": 1
     },
+    "apps/electron/src/renderer/pages/tasks/TaskSidebar.tsx": {
+      "rox/icon-size-tokens": 1,
+      "rox/no-foreground-opacity": 4
+    },
     "apps/electron/src/renderer/pages/tasks/catalog-panel.css": {
       "stylelint/declaration-property-unit-disallowed-list": 26,
       "stylelint/scale-unlimited/declaration-strict-value": 3

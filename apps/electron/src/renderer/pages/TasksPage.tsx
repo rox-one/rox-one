@@ -96,6 +96,9 @@ import {
   type TasksView,
 } from './tasks/task-model'
 import { useTasksScreenSidebar } from '@/screens/tasks/useTasksScreenSidebar'
+import { useSecondarySidebarVisibility } from '@/components/shell/shell-prefs'
+import { useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { TaskSidebar } from './tasks/TaskSidebar'
 import { ConfirmDialog, Glyph, ProgressPie, TaskCheckbox, prefersReducedMotion } from './tasks/parts'
 import { QuickEntry, type QuickEntryResult } from './tasks/QuickEntry'
 import { MoveDialog, type MoveDestination } from './tasks/MoveDialog'
@@ -832,6 +835,22 @@ export default function TasksPage(props: TasksPageProps = {}) {
     if (sourceId) mutate((current) => applySectionContext(current, sourceId, section.context))
   }
 
+  const navDropProps = (dest: string) => ({
+    onDragOver: (event: React.DragEvent) => {
+      if (!event.dataTransfer.types.includes(DRAG_TASK)) return
+      event.preventDefault()
+      event.dataTransfer.dropEffect = 'move'
+      if (dropHint !== `nav:${dest}`) setDropHint(`nav:${dest}`)
+    },
+    onDragLeave: () => setDropHint((hint) => (hint === `nav:${dest}` ? null : hint)),
+    onDrop: (event: React.DragEvent) => {
+      event.preventDefault()
+      setDropHint(null)
+      const sourceId = draggedId(event)
+      if (sourceId) applyDestination(sourceId, dest)
+    },
+    className: cn('rounded-[var(--radius-card)]', dropHint === `nav:${dest}` && 'bg-accent/20 ring-[1.5px] ring-inset ring-accent'),
+  })
 
   // ── Navigator ────────────────────────────────────────────────────────────
   const listCount = (id: TaskFilterId) => countFilter(tasks, now, id)
@@ -877,13 +896,31 @@ export default function TasksPage(props: TasksPageProps = {}) {
         </div>
   ), [navCreate, navDraft, t])
   const viewKey = `${view.kind}:${view.id}`
-  const sidebarProject = (p: { id: string; name: string }) => ({ id: p.id, name: p.name, ...projectProgress(topLevel, p.id) })
+  // Memoised on the store snapshot so the sidebar's signature cache can hit.
+  const sidebarProjects = useMemo(() => {
+    const sidebarProject = (p: { id: string; name: string }) => ({ id: p.id, name: p.name, ...projectProgress(topLevel, p.id) })
+    const live = store.projects().filter((p) => p.trashedAt == null)
+    const liveAreas = store.areas().filter((a) => a.trashedAt == null)
+    const areaIds = new Set(liveAreas.map((a) => a.id))
+    return {
+      looseProjects: live.filter((p) => !p.areaId).map(sidebarProject),
+      // Projects whose area was deleted/trashed stay reachable under «Без области».
+      orphanProjects: live.filter((p) => p.areaId && !areaIds.has(p.areaId)).map(sidebarProject),
+      areas: liveAreas.map((a) => ({ id: a.id, name: a.name, collapsed: Boolean(a.collapsed), projects: live.filter((p) => p.areaId === a.id).map(sidebarProject) })),
+      workspaceProjects: projects.map((p) => sidebarProject({ id: p.config.id, name: p.config.name })),
+    }
+  }, [store, topLevel, projects])
+  const inboxCount = listCount('inbox')
+  const todayCount = listCount('today')
+  const upcomingCount = listCount('upcoming')
+  const sidebarListCounts = useMemo(() => ({ inbox: inboxCount, today: todayCount, upcoming: upcomingCount, trash: trashCount }), [inboxCount, todayCount, upcomingCount, trashCount])
+  const sidebarHidden = useSecondarySidebarVisibility() === 'hidden'
+  const shellSidebarTarget = useShellSidebarTarget()
   useTasksScreenSidebar({
-    listCounts: { inbox: listCount('inbox'), today: listCount('today'), upcoming: listCount('upcoming'), trash: trashCount },
+    listCounts: sidebarListCounts,
     overdue: overdueCount,
-    looseProjects: personalProjects.filter((p) => !p.areaId).map(sidebarProject),
-    areas: areas.map((a) => ({ id: a.id, name: a.name, projects: personalProjects.filter((p) => p.areaId === a.id).map(sidebarProject) })),
-    workspaceProjects: projects.map((p) => sidebarProject({ id: p.config.id, name: p.config.name })),
+    ...sidebarProjects,
+    onToggleArea: (areaId) => toggleArea(areaId),
     tags,
     agents,
     activeViewKey: viewKey,
@@ -898,6 +935,31 @@ export default function TasksPage(props: TasksPageProps = {}) {
       if (sourceId) applyDestination(sourceId, destination)
     },
   })
+
+  // Inline navigator only when the shell second sidebar can't show (hidden
+  // mode, kept-alive or shell-less surface) so Tasks never loses navigation.
+  const toggleArea = (areaId: string) => mutate((current) => {
+    const area = current.areas().find((a) => a.id === areaId)
+    if (area) current.updateArea(area.id, { collapsed: !area.collapsed })
+  })
+  const navigator = sidebarHidden || !shellSidebarTarget ? (
+    <TaskSidebar
+      view={view}
+      onSelect={setView}
+      listCount={listCount}
+      overdueCount={overdueCount}
+      trashCount={trashCount}
+      tasks={topLevel}
+      areas={areas}
+      personalProjects={personalProjects}
+      workspaceProjects={projects.map(project => ({ id: project.config.id, name: project.config.name }))}
+      tags={tags}
+      agents={agents}
+      dropProps={navDropProps}
+      onToggleArea={area => toggleArea(area.id)}
+      footer={navFooter}
+    />
+  ) : null
 
   // ── List rows ────────────────────────────────────────────────────────────
   const currentProject = view.kind === 'project' ? store.projects().find((p) => p.id === view.id) : undefined
@@ -1432,7 +1494,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
         layout={layoutMode}
         detailKey={selected?.id}
         responsive={{ selectedId, onBack: () => selectTask(null), backLabel: t('common.backToList'), navigationLabel: t('tasks.navigation'), detailLabel: t('tasks.details') }}
-        navigator={null}
+        navigator={navigator}
         list={list}
         detail={detail}
         status={(

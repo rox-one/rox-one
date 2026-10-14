@@ -51,3 +51,14 @@ describe('tasks sidebar drop targets + area progress', () => {
     expect(taskDropDestination('agents:board')).toBeNull()
   })
 })
+
+describe('tasks areas', () => {
+  it('collapsed area hides its projects and offers expand; orphans go to «Без области»', () => {
+    const s = buildTasksSidebarSections({ ...base, areas: [{ ...base.areas[0]!, collapsed: true }], orphanProjects: [{ id: 'o1', name: 'Lost', open: 1, done: 0, total: 1 }] })
+    const projects = s.find((x) => x.id === 'projects')!
+    expect(projects.items.map((i) => i.id)).not.toContain('project:p2')
+    const area = projects.items.find((i) => i.id === 'area:a1')!
+    expect(area.menu?.[0]).toMatchObject({ id: 'toggle-area', labelKey: 'screens.tasks.expandArea' })
+    expect(s.find((x) => x.id === 'no-area')!.items.map((i) => i.id)).toEqual(['project:o1'])
+  })
+})

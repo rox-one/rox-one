@@ -20,7 +20,10 @@ export interface TasksSidebarInput {
   overdue: number
   /** Personal projects without an area, then areas each with their projects. */
   looseProjects: readonly TasksSidebarProject[]
-  areas: readonly { id: string; name: string; projects: readonly TasksSidebarProject[] }[]
+  /** Projects whose area no longer exists — listed under «Без области». */
+  orphanProjects?: readonly TasksSidebarProject[]
+  /** `collapsed` hides the area's projects (persisted on the area). */
+  areas: readonly { id: string; name: string; collapsed?: boolean; projects: readonly TasksSidebarProject[] }[]
   workspaceProjects: readonly TasksSidebarProject[]
   tags: readonly { tag: string; count: number }[]
   agents: Readonly<Record<TaskAgentViewId, number>>
@@ -62,8 +65,15 @@ export function buildTasksSidebarSections(input: TasksSidebarInput): SidebarSect
 
   const projects: SidebarSectionItem[] = [...input.looseProjects.map((p) => projectItem(p))]
   for (const area of input.areas) {
-    projects.push({ id: `area:${area.id}`, label: area.name, icon: 'layers', target: { kind: 'view', viewId: `area:${area.id}` } })
-    for (const p of area.projects) projects.push(projectItem(p, area.name))
+    projects.push({
+      id: `area:${area.id}`,
+      label: area.name,
+      icon: 'layers',
+      ...(area.collapsed && area.projects.length ? { secondary: `▸ ${area.projects.length}` } : {}),
+      ...(area.projects.length ? { menu: [{ id: 'toggle-area', labelKey: area.collapsed ? 'screens.tasks.expandArea' : 'screens.tasks.collapseArea' }] } : {}),
+      target: { kind: 'view', viewId: `area:${area.id}` },
+    })
+    if (!area.collapsed) for (const p of area.projects) projects.push(projectItem(p, area.name))
   }
   const seen = new Set(projects.map((p) => p.id))
   for (const p of input.workspaceProjects) if (!seen.has(`project:${p.id}`)) projects.push({ ...projectItem(p), icon: 'folder-open' })
@@ -79,6 +89,7 @@ export function buildTasksSidebarSections(input: TasksSidebarInput): SidebarSect
   return nonEmptySections([
     { id: 'focus', titleKey: 'screens.tasks.groups.focus', items: focus, collapsible: false },
     { id: 'projects', titleKey: 'screens.tasks.groups.projects', items: projects, limit: 8, collapsible: true },
+    { id: 'no-area', titleKey: 'screens.tasks.groups.noArea', items: (input.orphanProjects ?? []).map((p) => projectItem(p)), limit: 8, collapsible: true },
     { id: 'tags', titleKey: 'screens.tasks.groups.tags', items: tags, limit: 8, collapsible: true },
     { id: 'agents', titleKey: 'screens.tasks.groups.agents', items: agents, collapsible: true },
   ])
