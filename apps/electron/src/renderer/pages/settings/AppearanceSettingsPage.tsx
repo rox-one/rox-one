@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { LANGUAGES, type LanguageCode } from '@rox/shared/i18n'
 import type { ColumnDef } from '@tanstack/react-table'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
+import { PillsSettings } from '@/components/shell/PillsSettings'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
@@ -1256,6 +1257,12 @@ export default function AppearanceSettingsPage() {
               )}
 
               {/* Interface */}
+              <SettingsSection title={t("shell.pills.settingsTitle")} description={t("shell.pills.settingsDescription")}>
+                <div className="px-4 py-3" data-settings-pills="">
+                  <PillsSettings />
+                </div>
+              </SettingsSection>
+
               <SettingsSection title={t("settings.appearance.interface")}>
                 <SettingsCard>
                   <SettingsRow
