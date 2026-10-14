@@ -52,15 +52,26 @@ const HELP_KEYS: readonly string[] = [
   'cookbooks.help.timeout',
 ]
 
-/** R7: the shortcut block appended to the help disclosure, in R5 order. */
+/**
+ * R7: the shortcut block appended to the help disclosure, in R5 order, plus
+ * Q2A's R-A navigation line — the cheatsheet mirrors exactly what is bound.
+ */
 const SHORTCUT_KEYS: readonly string[] = [
   'cookbooks.help.shortcutRun',
   'cookbooks.help.shortcutRunStay',
   'cookbooks.help.shortcutRunAll',
+  'cookbooks.help.shortcutNav',
 ]
 
 /** The only `disabledReason` the contract names; anything else is shown raw. */
 const FILE_MISSING_REASON = 'file missing'
+
+/**
+ * R-B: an output longer than this starts collapsed, so a chatty cell («print
+ * everything») cannot push the rest of the document off screen. One named
+ * constant — the copy block and «Копировать вывод» always keep the full text.
+ */
+const OUTPUT_COLLAPSE_THRESHOLD = 600
 
 /** Shared control chrome: ROX hit target, radius, hover and focus tokens. */
 const ACTION_CLASS =
@@ -153,25 +164,39 @@ const CellMarkdown = memo(function CellMarkdown({
   )
 })
 
-/** The per-cell output block: pill-free, `data-status`-tagged, honest about emptiness. */
+/**
+ * The per-cell output block: pill-free, `data-status`-tagged, honest about
+ * emptiness. R-B: `long` marks an output past the collapse threshold and
+ * `expanded` its per-cell toggle — a collapsed block is height-clamped with a
+ * scrollbar while its full text stays in the DOM for «Копировать вывод».
+ */
 function CellOutput({
   index,
   cell,
   outputText,
+  long,
+  expanded,
 }: {
   index: number
   cell: CookbooksRunCell | undefined
   outputText: OutputTextReader
+  long: boolean
+  expanded: boolean
 }) {
   const { t } = useTranslation()
+  const collapsed = long && !expanded
 
   return (
     <pre
       data-testid={`cookbooks-output-${index}`}
       data-status={cell?.status ?? 'idle'}
+      data-collapsed={collapsed ? 'true' : 'false'}
       aria-label={t('cookbooks.cell.outputLabel', { index })}
       className={cn(
-        'max-h-[320px] overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere] rounded-[var(--radius-control)] bg-surface-hover px-2.5 py-1.5 font-mono text-small',
+        'overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere] rounded-[var(--radius-control)] bg-surface-hover px-2.5 py-1.5 font-mono text-small',
+        // A short block keeps the wave-7 cap; a long one is clamped while
+        // collapsed and shown in full once expanded.
+        long ? (expanded ? '' : 'max-h-[120px]') : 'max-h-[320px]',
         cell?.status === 'error' ? 'text-destructive-text' : 'text-muted-foreground',
       )}
     >
@@ -196,6 +221,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   const [runs, setRuns] = useState<Record<number, number>>({})
   /** R1: per-cell «Изменить» state; absent means read mode (markdown rendered). */
   const [editingCells, setEditingCells] = useState<Record<number, boolean>>({})
+  /** R-B: per-cell «показан полностью» state; absent means collapsed for long output. */
+  const [expandedOutputs, setExpandedOutputs] = useState<Record<number, boolean>>({})
   const [playbookText, setPlaybookText] = useState('')
   const [playbookEditing, setPlaybookEditing] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
@@ -279,6 +306,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
     })
     setSources(nextSources)
     setOutputs({})
+    setExpandedOutputs({})
     // Counters and edit modes belong to the document that was open, not to the
     // surface: a freshly opened copy starts from a clean slate.
     setRuns({})
@@ -315,6 +343,25 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
     (from: number) => {
       if (!doc) return
       for (let index = from; index < doc.cells.length; index += 1) {
+        if (doc.cells[index].cellType !== 'code') continue
+        const field = documentRef.current?.querySelector<HTMLTextAreaElement>(
+          `[data-testid="cookbooks-source-${index}"]`,
+        )
+        field?.focus()
+        return
+      }
+    },
+    [doc],
+  )
+
+  /**
+   * R-A: move focus to the code cell just before/after `from`, skipping every
+   * non-code cell — a markdown entry is never a navigation target.
+   */
+  const focusAdjacentCodeCell = useCallback(
+    (from: number, direction: -1 | 1) => {
+      if (!doc) return
+      for (let index = from + direction; index >= 0 && index < doc.cells.length; index += direction) {
         if (doc.cells[index].cellType !== 'code') continue
         const field = documentRef.current?.querySelector<HTMLTextAreaElement>(
           `[data-testid="cookbooks-source-${index}"]`,
@@ -411,9 +458,25 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
    * R5: Colab-parity keys, scoped to the document container. Every combination
    * that starts work is a no-op while another action is in flight, and nothing
    * is bound globally.
+   *
+   * R-A: `Alt+ArrowUp/Down` is pure navigation — it is deliberately not gated on
+   * `busy`, and `preventDefault` keeps the platform from treating the chord as a
+   * caret/scroll gesture.
    */
   const handleDocumentKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLElement>) => {
+      if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+        if (!doc || doc.cells.length === 0) return
+        event.preventDefault()
+        const direction: -1 | 1 = event.key === 'ArrowDown' ? 1 : -1
+        const target = event.target as HTMLElement | null
+        const rawIndex = target?.tagName === 'TEXTAREA' ? target.getAttribute('data-cell-index') : null
+        const current = rawIndex === null ? Number.NaN : Number(rawIndex)
+        // With no cell focused the chord enters the document from its nearest
+        // end: ↓ lands on the first code cell, ↑ on the last one.
+        focusAdjacentCodeCell(Number.isInteger(current) ? current : direction === 1 ? -1 : doc.cells.length, direction)
+        return
+      }
       if (event.key !== 'Enter') return
       const mod = event.metaKey || event.ctrlKey
       if (mod && event.shiftKey) {
@@ -440,7 +503,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         void runCell(index)
       }
     },
-    [busy, doc, runAllCells, runCell],
+    [busy, doc, focusAdjacentCodeCell, runAllCells, runCell],
   )
 
   const saveCell = useCallback(
@@ -498,6 +561,25 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       delete next[index]
       return next
     })
+    setExpandedOutputs((previous) => {
+      const next = { ...previous }
+      delete next[index]
+      return next
+    })
+  }, [])
+
+  /** R-B: flip one cell's long output between collapsed and full. */
+  const toggleOutputExpanded = useCallback((index: number) => {
+    setExpandedOutputs((previous) => ({ ...previous, [index]: !(previous[index] ?? false) }))
+  }, [])
+
+  /**
+   * R-C: «Очистить все выводы» — the whole-document twin of `clearOutput`:
+   * every cell returns to its pre-run hint and every collapse state is dropped.
+   */
+  const clearAllOutputs = useCallback(() => {
+    setOutputs({})
+    setExpandedOutputs({})
   }, [])
 
   const toggleCellMode = useCallback((index: number) => {
@@ -527,6 +609,9 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       [card.title, card.vendor, card.id].some((field) => field.toLowerCase().includes(query)),
     )
   }, [cards, filter])
+
+  /** R-C: «Очистить все выводы» is offered exactly while one cell has a result. */
+  const hasAnyOutput = Object.keys(outputs).length > 0
 
   const ui = toPageUi(status)
 
@@ -601,6 +686,17 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
               className={ACTION_CLASS}
             >
               {t('cookbooks.actions.runAll')}
+            </button>
+          ) : null}
+          {/* R-C: the whole-document clear appears only while something ran. */}
+          {hasAnyOutput ? (
+            <button
+              type="button"
+              data-testid="cookbooks-clear-all-outputs"
+              onClick={clearAllOutputs}
+              className={ACTION_CLASS}
+            >
+              {t('cookbooks.actions.clearAllOutputs')}
             </button>
           ) : null}
           <button
@@ -679,6 +775,9 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
               const source = sources[index] ?? cell.source
               const output = outputs[index]
               const runCount = runs[index] ?? 0
+              // R-B: only a real result can be long; the pre-run hint never is.
+              const outputLong = output !== undefined && outputText(output).length > OUTPUT_COLLAPSE_THRESHOLD
+              const outputExpanded = outputLong && (expandedOutputs[index] ?? false)
               // R4: a single-run cell spins for itself; a batch spins every
               // executable cell. Both reserve the gutter slot, so nothing jumps.
               const cellBusy = busy === `cell:${index}:run` || (busy === 'run-all' && cell.cellType === 'code')
@@ -769,9 +868,27 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                         className={cn(SOURCE_CLASS, 'min-h-[var(--control-lg)]')}
                       />
                     )}
-                    <CellOutput index={index} cell={output} outputText={outputText} />
+                    <CellOutput
+                      index={index}
+                      cell={output}
+                      outputText={outputText}
+                      long={outputLong}
+                      expanded={outputExpanded}
+                    />
                     {output ? (
                       <div className="flex flex-wrap items-center justify-end gap-1.5">
+                        {/* R-B: the toggle exists only where the block is long. */}
+                        {outputLong ? (
+                          <button
+                            type="button"
+                            data-testid={`cookbooks-output-toggle-${index}`}
+                            aria-expanded={outputExpanded}
+                            onClick={() => toggleOutputExpanded(index)}
+                            className={ACTION_CLASS}
+                          >
+                            {outputExpanded ? t('cookbooks.cell.collapseOutput') : t('cookbooks.cell.expandOutput')}
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           data-testid={`cookbooks-copy-output-${index}`}

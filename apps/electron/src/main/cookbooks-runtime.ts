@@ -9,13 +9,18 @@
  *
  * SECURITY: the bearer token and the full loopback URL live ONLY in this module
  * and are exposed to main through `getStartup()`; the renderer contract
- * (`CookbooksStatus`) never carries either. Nothing here imports Electron, so
- * the supervisor is unit-testable with an injected spawn/timers.
+ * (`CookbooksStatus`) never carries either. Vendor secret VALUES likewise never
+ * leave main: they are pushed to the sidecar over loopback and are neither
+ * logged, returned in a status/IPC payload, nor written to disk. Nothing here
+ * imports Electron, so the supervisor is unit-testable with an injected
+ * spawn/timers.
  */
 import { spawn as nodeSpawn } from 'node:child_process'
 import { accessSync, constants, existsSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 import { get as httpGet } from 'node:http'
 import { delimiter, join } from 'node:path'
+import { resolveSecretsForSpawn, type SecretRefEntry } from '@rox/shared/secrets'
 import { getBundledAssetsDir } from '@rox/shared/utils'
 import { resolveConfigDir } from '@rox/shared/config/paths'
 import { getToolchain, withToolchainPathPrefix } from '@rox/shared/toolchain-runtime'
@@ -58,6 +63,12 @@ export interface CookbooksRuntimeOptions {
   getWorkspaceDir?: () => string
   /** Allowlisted child env (default: PATH via toolchain prefix + HOME/TMPDIR/LANG/LC_ALL). */
   buildEnv?: () => Promise<NodeJS.ProcessEnv>
+  /**
+   * Fresh lab-key → secret-value snapshot for the sidecar (default:
+   * `defaultCookbooksStore`). Values resolved here never leave this process
+   * except in loopback requests to the sidecar.
+   */
+  resolveStore?: () => Promise<CookbooksStore>
   /** Liveness probe for the parsed port (default: HTTP `GET /lab.html` → 200). */
   checkHealth?: (port: number) => Promise<boolean>
   log?: (level: 'info' | 'warn' | 'error', msg: string) => void
@@ -130,6 +141,52 @@ export function computeCookbooksRunAllTimeoutMs(
 /** Mask `token=<value>` in any text before it reaches a log sink. */
 export function redactCookbooksLogLine(line: string): string {
   return line.replace(/token=[^\s&]+/gi, 'token=***')
+}
+
+// ---------------------------------------------------------------------------
+// Secret bridge (SPEC-slice2 §Транспорт)
+//
+// Vendor API keys reach the lab's kernel through the sidecar's own store map
+// (`openai.api_key` → value). Values live ONLY in this process and in loopback
+// requests to 127.0.0.1: they are never logged (only the key NAMES are), never
+// returned through a status/IPC payload and never written to disk — the sidecar
+// keeps them in memory and `/store` does not persist.
+// ---------------------------------------------------------------------------
+
+/** Lab-key → secret-value snapshot (`openai.api_key` → `sk-…`). */
+export type CookbooksStore = Record<string, string>
+
+/**
+ * Default store source: the vendored catalog's `secretMap` (read through
+ * `getBundledAssetsDir`) resolved through the canonical chain — environment
+ * (`ROX_SECRET_<ENV>`) → local-encrypted → infisical. A key that no provider
+ * holds is simply absent; an unreadable catalog or a resolver failure yields an
+ * empty store. Never throws.
+ */
+export async function defaultCookbooksStore(dir?: string): Promise<CookbooksStore> {
+  try {
+    const root = dir ?? getBundledAssetsDir('cookbooks')
+    if (!root) return {}
+    const catalog: unknown = JSON.parse(
+      await readFile(join(root, 'resources', 'cookbooks', 'catalog.json'), 'utf8'),
+    )
+    const rawMap = asRecord(asRecord(catalog).secretMap)
+    const secretMap: Record<string, string> = {}
+    for (const [labKey, envName] of Object.entries(rawMap)) {
+      if (typeof envName === 'string' && envName.length > 0) secretMap[labKey] = envName
+    }
+    const entries: SecretRefEntry[] = Object.values(secretMap).map((envVar) => ({ name: envVar, envVar }))
+    if (entries.length === 0) return {}
+    const resolved = await resolveSecretsForSpawn(entries)
+    const store: CookbooksStore = {}
+    for (const [labKey, envName] of Object.entries(secretMap)) {
+      const value = resolved.env[envName]
+      if (typeof value === 'string' && value.length > 0) store[labKey] = value
+    }
+    return store
+  } catch {
+    return {}
+  }
 }
 
 function isExecutableFile(path: string | null | undefined): path is string {
@@ -330,6 +387,7 @@ export class CookbooksRuntime {
     getCookbooksDir: () => string | undefined
     getWorkspaceDir: () => string
     buildEnv: () => Promise<NodeJS.ProcessEnv>
+    resolveStore: () => Promise<CookbooksStore>
     checkHealth: (port: number) => Promise<boolean>
     log: (level: 'info' | 'warn' | 'error', msg: string) => void
     onStatusChanged?: (status: CookbooksStatus) => void
@@ -359,6 +417,7 @@ export class CookbooksRuntime {
       getCookbooksDir: options.getCookbooksDir ?? (() => getBundledAssetsDir('cookbooks')),
       getWorkspaceDir: options.getWorkspaceDir ?? (() => resolveConfigDir()),
       buildEnv: options.buildEnv ?? defaultBuildEnv,
+      resolveStore: options.resolveStore ?? (() => defaultCookbooksStore()),
       checkHealth: options.checkHealth ?? defaultCheckHealth,
       log: options.log ?? (() => {}),
       onStatusChanged: options.onStatusChanged,
@@ -513,8 +572,45 @@ export class CookbooksRuntime {
     }
   }
 
+  /**
+   * A fresh store snapshot. A failing resolver is an empty store: the lab then
+   * reports the affected keys as missing instead of the surface erroring out.
+   * The error text is never logged — it could echo a value.
+   */
+  private async resolveStoreSnapshot(): Promise<CookbooksStore> {
+    try {
+      return await this.o.resolveStore()
+    } catch {
+      this.o.log('warn', 'cookbooks-runtime: store resolve failed; using an empty store')
+      return {}
+    }
+  }
+
+  /**
+   * Best-effort refresh of the sidecar's in-memory store (`POST /store`). A
+   * no-op unless the runtime is `running`, and silent on any failure — the
+   * lab's key chips and the next one-shot run payload are conveniences, never a
+   * reason to fail an IPC call. Only the key NAMES are ever logged.
+   */
+  async pushStore(): Promise<void> {
+    if (this.state !== 'running') return
+    const store = await this.resolveStoreSnapshot()
+    const keys = Object.keys(store)
+    // An empty store is not pushed: the sidecar rejects an empty object, and
+    // "nothing configured" is already its initial state.
+    if (keys.length === 0) return
+    try {
+      await this.request<unknown>('/store', { method: 'POST', body: { store } })
+      this.o.log('info', `cookbooks-runtime: store pushed (${keys.length} key(s): ${keys.join(', ')})`)
+    } catch {
+      /* best-effort: the store is re-pushed before the next catalog read */
+    }
+  }
+
   /** `GET /catalog` → the read-only catalog cards (13 items today). */
   async apiCatalog(): Promise<CookbooksCard[]> {
+    // Refresh the store first so the chips/banner reflect the current keys.
+    await this.pushStore()
     const raw = await this.request<unknown[]>('/catalog')
     return Array.isArray(raw) ? raw.map(mapCard) : []
   }
@@ -539,9 +635,12 @@ export class CookbooksRuntime {
 
   /** `POST /run` → one cell's output. */
   async apiRun(itemId: string, code: string, index: number): Promise<CookbooksRunResult> {
+    // One-shot store: the freshest snapshot at launch, merged by the sidecar
+    // into its in-memory store for this run only.
+    const store = await this.resolveStoreSnapshot()
     const raw = await this.request<unknown>(
       '/run',
-      { method: 'POST', body: { itemId, code, index } },
+      { method: 'POST', body: { itemId, code, index, store } },
       this.o.runApiTimeoutMs,
     )
     return mapRunResult(raw)
@@ -552,9 +651,10 @@ export class CookbooksRuntime {
     itemId: string,
     cells: { index: number; source: string }[],
   ): Promise<{ cells: CookbooksRunCell[] }> {
+    const store = await this.resolveStoreSnapshot()
     const raw = await this.request<unknown>(
       '/run-all',
-      { method: 'POST', body: { itemId, cells } },
+      { method: 'POST', body: { itemId, cells, store } },
       this.o.runAllTimeoutMs(cells.length),
     )
     const records = asRecord(raw).cells
@@ -700,6 +800,9 @@ export class CookbooksRuntime {
     this.setState('running')
     this.resolveStartWaiters(this.getStatus())
     this.startInFlight = null
+    // Fresh sidecar has an empty in-memory store; seed it so the very first
+    // catalog read (chips/banner) reflects the configured keys. Best-effort.
+    void this.pushStore()
   }
 
   private killChild(child: CookbooksChild): void {

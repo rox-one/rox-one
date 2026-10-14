@@ -7,7 +7,9 @@
  * cells and playbooks behind the «Изменить»/«Просмотр» toggle (R1), session run
  * counters (R2), measured durations and the ticking elapsed status (R3), busy
  * spinners (R4), the Colab-parity keys (R5), the sticky header, output actions
- * and autoscroll (R6) and the shortcut help (R7). Strings are compared through
+ * and autoscroll (R6) and the shortcut help (R7). Q2A «Colab-микро» adds the
+ * Alt+↑/↓ cell navigation (R-A), collapsing of long outputs (R-B) and
+ * «Очистить все выводы» (R-C). Strings are compared through
  * the same i18n instance the page uses, so a missing translation or a wrong
  * interpolation parameter fails here rather than silently rendering the raw key.
  *
@@ -191,6 +193,10 @@ const RUN_ALL_PAYLOAD = [
   { index: 2, source: 'raise ValueError("boom")' },
   { index: 3, source: 'print(3)' },
 ]
+
+/** R-B: a chatty result, well past the 600-character collapse threshold. */
+const LONG_STDOUT = `${'строка вывода — заведомо длиннее порога\n'.repeat(20)}конец`
+const LONG_RUN: CookbooksRunResult = { ok: true, stdout: LONG_STDOUT, error: null, timedOut: false, missing: [] }
 
 const RUNNING: CookbooksStatus = { state: 'running', reason: null, port: 51234 }
 
@@ -980,6 +986,79 @@ describe('CookbooksSurfacePage keyboard (R5)', () => {
 })
 
 // ---------------------------------------------------------------------------
+// R-A — Alt+Arrow cell navigation
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage cell navigation (R-A)', () => {
+  it('enters the notebook from its nearest end and swallows the chord', async () => {
+    const { container } = await renderNotebook()
+    const pane = testId(container, 'cookbooks-document')!
+
+    const down = new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true, cancelable: true })
+    await act(async () => {
+      pane.dispatchEvent(down)
+    })
+    // Cell 0 is markdown: the first code cell is the target, never the md cell.
+    expect(document.activeElement).toBe(testId(container, 'cookbooks-source-1'))
+    expect(down.defaultPrevented).toBe(true)
+
+    const up = new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true, cancelable: true })
+    await act(async () => {
+      pane.dispatchEvent(up)
+    })
+    expect(document.activeElement).toBe(testId(container, 'cookbooks-source-3'))
+    expect(up.defaultPrevented).toBe(true)
+  })
+
+  it('moves between code cells and skips markdown entries', async () => {
+    const { container } = await renderNotebook()
+    const first = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    first.focus()
+
+    await act(async () => {
+      first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true, cancelable: true }))
+    })
+    expect(document.activeElement).toBe(testId(container, 'cookbooks-source-2'))
+
+    await act(async () => {
+      ;(document.activeElement as HTMLElement).dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true, cancelable: true }),
+      )
+    })
+    expect(document.activeElement).toBe(testId(container, 'cookbooks-source-1'))
+
+    // Nothing runnable above cell 1: focus stays put rather than landing on md.
+    await act(async () => {
+      first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true, cancelable: true }))
+    })
+    expect(document.activeElement).toBe(first)
+  })
+
+  it('navigates while another action is in flight', async () => {
+    const gate = Promise.withResolvers<CookbooksRunResult>()
+    const { container } = await renderNotebook({ run: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
+    })
+    await flush(1)
+
+    const first = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    await act(async () => {
+      first.focus()
+      first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true, cancelable: true }))
+    })
+    expect(document.activeElement).toBe(testId(container, 'cookbooks-source-2'))
+
+    await act(async () => {
+      gate.resolve(RUN_OK)
+      await gate.promise
+    })
+    await flush()
+  })
+})
+
+// ---------------------------------------------------------------------------
 // R6 — output actions, header, autoscroll
 // ---------------------------------------------------------------------------
 
@@ -1055,20 +1134,122 @@ describe('CookbooksSurfacePage output actions and header (R6)', () => {
 })
 
 // ---------------------------------------------------------------------------
+// R-B — collapsing a long output
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage output collapsing (R-B)', () => {
+  it('collapses a long output and toggles it between «Показать полностью» and «Свернуть»', async () => {
+    const { container } = await renderNotebook({ run: async () => LONG_RUN })
+    await click(container, 'cookbooks-run-1')
+
+    const output = testId(container, 'cookbooks-output-1')!
+    expect(output.getAttribute('data-collapsed')).toBe('true')
+    // The collapsed block still carries the whole text: the clamp is visual only.
+    expect(output.textContent).toBe(LONG_STDOUT)
+
+    const toggle = testId(container, 'cookbooks-output-toggle-1') as HTMLButtonElement
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(toggle.textContent).toBe(t('cookbooks.cell.expandOutput'))
+
+    await click(container, 'cookbooks-output-toggle-1')
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-collapsed')).toBe('false')
+    const expanded = testId(container, 'cookbooks-output-toggle-1') as HTMLButtonElement
+    expect(expanded.getAttribute('aria-expanded')).toBe('true')
+    expect(expanded.textContent).toBe(t('cookbooks.cell.collapseOutput'))
+
+    await click(container, 'cookbooks-output-toggle-1')
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-collapsed')).toBe('true')
+    expect(
+      (testId(container, 'cookbooks-output-toggle-1') as HTMLButtonElement).getAttribute('aria-expanded'),
+    ).toBe('false')
+  })
+
+  it('offers no toggle for a short output', async () => {
+    const { container } = await renderNotebook({ run: async () => RUN_OK })
+    await click(container, 'cookbooks-run-1')
+    expect(testId(container, 'cookbooks-output-toggle-1')).toBeNull()
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-collapsed')).toBe('false')
+  })
+
+  it('copies the full text even while the output is collapsed', async () => {
+    const copied: string[] = []
+    const { container } = await renderNotebook(
+      { run: async () => LONG_RUN },
+      {
+        writeClipboard: async (text) => {
+          copied.push(text)
+        },
+      },
+    )
+    await click(container, 'cookbooks-run-1')
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-collapsed')).toBe('true')
+
+    await click(container, 'cookbooks-copy-output-1')
+    expect(copied).toEqual([LONG_STDOUT])
+  })
+
+  it('keeps the expansion state per cell', async () => {
+    const { container } = await renderNotebook({ run: async () => LONG_RUN })
+    await click(container, 'cookbooks-run-1')
+    await click(container, 'cookbooks-run-3')
+    await click(container, 'cookbooks-output-toggle-1')
+
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-collapsed')).toBe('false')
+    expect(testId(container, 'cookbooks-output-3')!.getAttribute('data-collapsed')).toBe('true')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// R-C — clearing every output
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage clear-all (R-C)', () => {
+  it('offers «Очистить все выводы» exactly while an output exists and resets it to the hint', async () => {
+    const { container } = await renderNotebook({ run: async () => RUN_OK })
+    expect(testId(container, 'cookbooks-clear-all-outputs')).toBeNull()
+
+    await click(container, 'cookbooks-run-1')
+    expect(testId(container, 'cookbooks-clear-all-outputs')).not.toBeNull()
+
+    await click(container, 'cookbooks-clear-all-outputs')
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('idle')
+    expect(testId(container, 'cookbooks-output-1')!.textContent).toBe(t('cookbooks.output.hint'))
+    expect(testId(container, 'cookbooks-copy-output-1')).toBeNull()
+    expect(testId(container, 'cookbooks-clear-all-outputs')).toBeNull()
+  })
+
+  it('clears a whole run-all result set at once, keeping the run counters', async () => {
+    const { container } = await renderNotebook()
+    await click(container, 'cookbooks-run-all')
+    expect(testId(container, 'cookbooks-output-2')!.getAttribute('data-status')).toBe('error')
+
+    await click(container, 'cookbooks-clear-all-outputs')
+    for (const index of [1, 2, 3]) {
+      expect(testId(container, `cookbooks-output-${index}`)!.getAttribute('data-status')).toBe('idle')
+      expect(testId(container, `cookbooks-output-${index}`)!.textContent).toBe(t('cookbooks.output.hint'))
+    }
+    expect(testId(container, 'cookbooks-clear-all-outputs')).toBeNull()
+    // Clearing results never rewinds the session counters — same as a single clear.
+    expect(testId(container, 'cookbooks-runs-1')!.textContent).toBe('[1]')
+  })
+})
+
+// ---------------------------------------------------------------------------
 // R7 — help
 // ---------------------------------------------------------------------------
 
 describe('CookbooksSurfacePage help (R7)', () => {
-  it('lists the three shortcut lines under their own title', async () => {
+  it('lists the shortcut lines under their own title, including R-A navigation', async () => {
     installApi({ status: RUNNING, cards: CARDS })
     const container = await render()
 
     const block = testId(container, 'cookbooks-help-shortcuts')!
-    expect(block.querySelectorAll('li')).toHaveLength(3)
+    expect(block.querySelectorAll('li')).toHaveLength(4)
     for (const key of [
       'cookbooks.help.shortcutRun',
       'cookbooks.help.shortcutRunStay',
       'cookbooks.help.shortcutRunAll',
+      'cookbooks.help.shortcutNav',
     ]) {
       expect(block.textContent).toContain(t(key))
     }
@@ -1199,5 +1380,18 @@ describe('CookbooksSurfacePage wave-7 copy', () => {
     expect(t('cookbooks.status.runAll', { count: 3, ok: 1, failed: 1, skipped: 1, duration: '1.2s' })).toBe(
       'Запущено 3 ячеек: 1 успешно · 1 с ошибкой · 1 пропущено · 1.2s',
     )
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Q2A i18n contract — the frozen RU copy of the Colab-микро wave (R-A/R-B/R-C).
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage Q2A copy', () => {
+  it('carries the four new keys with their frozen RU values', () => {
+    expect(t('cookbooks.actions.clearAllOutputs')).toBe('Очистить все выводы')
+    expect(t('cookbooks.cell.expandOutput')).toBe('Показать полностью')
+    expect(t('cookbooks.cell.collapseOutput')).toBe('Свернуть')
+    expect(t('cookbooks.help.shortcutNav')).toContain('Alt+↑/↓')
   })
 })
