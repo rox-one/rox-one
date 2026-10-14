@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Archive, Folder, MessageSquare, Search, SquarePen, Tag } from 'lucide-react'
 import { useScreenSidebar, type ScreenSidebarConfig, type SidebarAction } from '@/components/shell/screen-sidebar'
-import { REVEAL_CHAT_FOLDER_EVENT } from '@/components/app-shell/chat-folders/chat-folders-model'
+import { requestRevealChatFolder } from '@/components/app-shell/chat-folders/chat-folders-model'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { isSessionsNavigation, routes, useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { useChatFolders } from '@/hooks/useChatFolders'
@@ -18,7 +18,7 @@ export function SessionsScreenSidebar() {
   const { activeWorkspaceId } = useAppShellContext()
   const { navigate } = useNavigation()
   const navState = useNavigationState()
-  const { state: chatFolders } = useChatFolders(activeWorkspaceId ?? undefined)
+  const { state: chatFolders, error: chatFoldersError, retry: retryChatFolders } = useChatFolders(activeWorkspaceId ?? undefined)
   const sections = useSessionsSidebarSections(chatFolders)
 
   const onTarget = useCallback((target: SidebarTarget) => {
@@ -26,8 +26,8 @@ export function SessionsScreenSidebar() {
       case 'session': navigate(routes.view.allSessions(target.sessionId)); break
       case 'label': navigate(routes.view.label(target.label)); break
       case 'folder':
+        requestRevealChatFolder(target.folderId)
         navigate(routes.view.allSessions())
-        window.dispatchEvent(new CustomEvent(REVEAL_CHAT_FOLDER_EVENT, { detail: { folderId: target.folderId } }))
         break
       default: break
     }
@@ -44,6 +44,15 @@ export function SessionsScreenSidebar() {
       onSelect: () => navigate(routes.action.newSession()),
     }
     const groups = toScreenSidebarGroups(sections, { t, icons: ICONS, onTarget, activeKey })
+    if (chatFoldersError && !groups.some((g) => g.id === 'folders')) {
+      const at = groups.findIndex((g) => g.id === 'recent' || g.id === 'labels')
+      groups.splice(at < 0 ? groups.length : at, 0, {
+        id: 'folders',
+        title: t('screens.sessions.groups.folders'),
+        items: [],
+        state: { kind: 'error', label: t('screens.sessions.foldersError'), onRetry: retryChatFolders },
+      })
+    }
     return {
       screenId: 'sessions',
       title: t('screens.sessions.title'),
@@ -56,7 +65,7 @@ export function SessionsScreenSidebar() {
         ? groups
         : [{ id: 'empty', items: [], state: { kind: 'empty', label: t('screens.sessions.empty'), action: newSession } }],
     }
-  }, [t, sections, onTarget, activeKey, navigate])
+  }, [t, sections, onTarget, activeKey, navigate, chatFoldersError, retryChatFolders])
 
   useScreenSidebar(config)
   return null

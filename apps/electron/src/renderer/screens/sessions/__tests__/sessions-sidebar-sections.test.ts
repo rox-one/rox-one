@@ -80,3 +80,14 @@ describe('targetKey', () => {
     expect(targetKey({ kind: 'label', label: 'x' })).toBe('label:x')
   })
 })
+
+describe('sessions sidebar projection', () => {
+  it('ignores fields the sidebar does not read', async () => {
+    const { projectSessionsSidebarInput, sameSessionsProjection } = await import('../sessions-projection')
+    const a = projectSessionsSidebarInput([{ id: 's', name: 'A', labels: ['x'], tokenUsage: 1 } as never])
+    const b = projectSessionsSidebarInput([{ id: 's', name: 'A', labels: ['x'], tokenUsage: 2 } as never])
+    expect(sameSessionsProjection(a, b)).toBe(true)
+    const c = projectSessionsSidebarInput([{ id: 's', name: 'B', labels: ['x'] }])
+    expect(sameSessionsProjection(a, c)).toBe(false)
+  })
+})

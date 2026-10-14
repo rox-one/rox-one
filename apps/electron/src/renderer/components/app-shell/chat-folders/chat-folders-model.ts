@@ -16,6 +16,23 @@ export const UNGROUPED_FOLDER_KEY = `${FOLDER_GROUP_PREFIX}__none__`
 /** Window event asking SessionList to expand a folder: detail `{ folderId }`. */
 export const REVEAL_CHAT_FOLDER_EVENT = 'rox:sessions:reveal-folder'
 
+/**
+ * A reveal requested before SessionList is mounted (e.g. a folder row clicked
+ * from another view) is kept here and consumed on mount.
+ */
+let pendingChatFolderReveal: string | null = null
+
+export function requestRevealChatFolder(folderId: string): void {
+  pendingChatFolderReveal = folderId
+  window.dispatchEvent(new CustomEvent(REVEAL_CHAT_FOLDER_EVENT, { detail: { folderId } }))
+}
+
+export function takePendingChatFolderReveal(): string | null {
+  const id = pendingChatFolderReveal
+  pendingChatFolderReveal = null
+  return id
+}
+
 export function folderGroupKey(folderId: string): string {
   return `${FOLDER_GROUP_PREFIX}${folderId}`
 }

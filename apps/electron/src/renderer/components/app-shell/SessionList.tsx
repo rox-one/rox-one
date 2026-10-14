@@ -24,6 +24,7 @@ import { useChatFolders } from "@/hooks/useChatFolders"
 import { FolderGroupHeader } from "./chat-folders/FolderGroupHeader"
 import {
   REVEAL_CHAT_FOLDER_EVENT,
+  takePendingChatFolderReveal,
   UNGROUPED_FOLDER_KEY,
   composeFolderGroups,
   effectiveFolderAssignments,
@@ -343,9 +344,7 @@ export function SessionList({
 
   // Second-sidebar «Папки» row → expand that folder in the list.
   useEffect(() => {
-    const onReveal = (event: Event) => {
-      const folderId = (event as CustomEvent<{ folderId?: string }>).detail?.folderId
-      if (!folderId) return
+    const reveal = (folderId: string) => {
       const key = folderGroupKey(folderId)
       setCollapsedGroups(prev => {
         if (!prev.has(key)) return prev
@@ -354,6 +353,13 @@ export function SessionList({
         return next
       })
     }
+    const onReveal = (event: Event) => {
+      const folderId = (event as CustomEvent<{ folderId?: string }>).detail?.folderId
+      takePendingChatFolderReveal()
+      if (folderId) reveal(folderId)
+    }
+    const pending = takePendingChatFolderReveal()
+    if (pending) reveal(pending)
     window.addEventListener(REVEAL_CHAT_FOLDER_EVENT, onReveal)
     return () => window.removeEventListener(REVEAL_CHAT_FOLDER_EVENT, onReveal)
   }, [])
