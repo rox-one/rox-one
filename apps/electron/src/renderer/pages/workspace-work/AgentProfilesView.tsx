@@ -6,6 +6,7 @@ import { useWorkspaceWork } from '@/lib/useWorkspaceWork'
 import { useQuery } from '@tanstack/react-query'
 import { ROX_REVALIDATE_AFTER_MS, roxQueryClient } from '@/lib/query/client'
 import { roxKeys } from '@/lib/query/keys'
+import { readSkillsPage, SKILLS_UI_SEARCH_LIMIT } from '@/lib/skills-query'
 
 const fieldClass = 'w-full rounded-lg border border-border/70 bg-background px-2.5 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
 const buttonClass = 'inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-border/70 px-2.5 py-1.5 text-base transition-colors motion-reduce:transition-none hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none'
@@ -14,8 +15,12 @@ type ProfileDraft = AgentProfileInput & { id: string | null; expectedRevision: n
 type Catalog = { sources: CatalogItem[]; skills: CatalogItem[] }
 
 /** Slugs and names only (persistable): sources and skills of one workspace. */
-async function readCatalog(workspaceId: string): Promise<Catalog> {
-  const [sources, skills] = await Promise.all([window.electronAPI.getSources(workspaceId), window.electronAPI.getSkills(workspaceId)])
+async function readCatalog(workspaceId: string, skillQuery = ''): Promise<Catalog> {
+  const [sources, skillsPage] = await Promise.all([
+    window.electronAPI.getSources(workspaceId),
+    readSkillsPage(window.electronAPI, { workspaceId, query: skillQuery, limit: SKILLS_UI_SEARCH_LIMIT }),
+  ])
+  const skills = skillsPage.items
   return {
     sources: sources.filter(source => source.workspaceId === workspaceId).map(source => ({ slug: source.config.slug, name: source.config.name })),
     skills: [...new Map<string, CatalogItem>(skills.filter(skill => !skill.shadowedByCraft).map(skill => [skill.slug, { slug: skill.slug, name: skill.metadata.name }])).values()],
@@ -46,9 +51,23 @@ export function AgentProfilesView({ workspaceId }: { workspaceId: string; projec
   }), [catalogData, catalogFailed])
   const [sourceQuery, setSourceQuery] = useState('')
   const [skillQuery, setSkillQuery] = useState('')
+  const [skillHits, setSkillHits] = useState<CatalogItem[] | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
-  useEffect(() => { setDraft(null); setDeleteTarget(null); setSourceQuery(''); setSkillQuery('') }, [workspaceId])
+  useEffect(() => { setDraft(null); setDeleteTarget(null); setSourceQuery(''); setSkillQuery(''); setSkillHits(null) }, [workspaceId])
+  useEffect(() => {
+    if (!workspaceId) return
+    let stale = false
+    const timer = window.setTimeout(() => {
+      void readSkillsPage(window.electronAPI, { workspaceId, query: skillQuery, limit: SKILLS_UI_SEARCH_LIMIT })
+        .then((page) => {
+          if (stale) return
+          setSkillHits(page.items.filter((skill) => !skill.shadowedByCraft).map((skill) => ({ slug: skill.slug, name: skill.metadata.name })))
+        })
+        .catch(() => { if (!stale) setSkillHits(null) })
+    }, 120)
+    return () => { stale = true; window.clearTimeout(timer) }
+  }, [workspaceId, skillQuery])
 
   const canManage = snapshot?.access.canManage === true
   const busy = work.pending || !snapshot
@@ -60,10 +79,9 @@ export function AgentProfilesView({ workspaceId }: { workspaceId: string; projec
       id: null, expectedRevision: snapshot.revision, name: '', role: '', sourceSlugs: [], skillSlugs: [], memoryScope: 'workspace', automationEnabled: false,
     })
   }
-  const missing = useMemo(() => draft ? [...new Set([
-    ...draft.sourceSlugs.filter(slug => !catalog.sources.some(item => item.slug === slug)),
-    ...draft.skillSlugs.filter(slug => !catalog.skills.some(item => item.slug === slug)),
-  ])] : [], [draft, catalog])
+  const missing = useMemo(() => draft
+    ? draft.sourceSlugs.filter(slug => !catalog.sources.some(item => item.slug === slug))
+    : [], [draft, catalog])
   const save = async () => {
     if (!draft || !draft.name.trim() || !draft.role.trim()) return
     const input: AgentProfileInput = { name: draft.name.trim(), role: draft.role.trim(), sourceSlugs: draft.sourceSlugs, skillSlugs: draft.skillSlugs, memoryScope: draft.memoryScope, automationEnabled: draft.automationEnabled }
@@ -74,7 +92,14 @@ export function AgentProfilesView({ workspaceId }: { workspaceId: string; projec
   const catalogPicker = (kind: 'sources' | 'skills', query: string, onQuery: (value: string) => void) => {
     if (!draft) return null
     const selected = kind === 'sources' ? draft.sourceSlugs : draft.skillSlugs
-    const items = catalog[kind].filter(item => `${item.name} ${item.slug}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()))
+    const pool = kind === 'skills' ? (skillHits ?? catalog.skills) : catalog.sources
+    const bySlug = new Map(pool.map(item => [item.slug, item]))
+    for (const slug of selected) {
+      if (bySlug.has(slug)) continue
+      const seed = catalog[kind].find(item => item.slug === slug)
+      bySlug.set(slug, seed ?? { slug, name: slug })
+    }
+    const items = [...bySlug.values()].filter(item => `${item.name} ${item.slug}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()))
     return <fieldset className="min-w-0 space-y-2">
       <legend className="font-medium">{t(`navigation.work.profiles.${kind}`)}</legend>
       <input type="search" className={fieldClass} value={query} onChange={event => onQuery(event.target.value)} aria-label={t(`navigation.work.profiles.search${kind === 'sources' ? 'Sources' : 'Skills'}`)} />
