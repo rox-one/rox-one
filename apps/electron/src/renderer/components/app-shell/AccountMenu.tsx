@@ -47,7 +47,13 @@ import {
   DrawerClose,
 } from '@/components/ui/drawer'
 import { WorkspaceAvatar } from '@/components/ui/workspace-avatar'
-import { WorkspaceCreationScreen, type WorkspaceCreationSuccess } from '@/components/workspace'
+import type { WorkspaceCreationSuccess } from '@/components/workspace/workspace-creation-contract'
+
+// WP7: the creation screen (shader background, forms) opens only on demand;
+// lazy keeps @paper-design/shaders out of the startup closure.
+const WorkspaceCreationScreen = React.lazy(() =>
+  import('@/components/workspace/WorkspaceCreationScreen').then((m) => ({ default: m.WorkspaceCreationScreen })),
+)
 import { waitForTransportConnected } from '@/lib/transport-wait'
 import { useWorkspaceIcons } from '@/hooks/useWorkspaceIcon'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
@@ -180,12 +186,14 @@ export function useWorkspaceCreationFlow({
   const screen = (
     <AnimatePresence>
       {showCreationScreen && (
+        <React.Suspense key="workspace-creation" fallback={null}>
         <WorkspaceCreationScreen
           onWorkspaceCreated={handleWorkspaceCreated}
           onClose={handleCloseCreationScreen}
           reconnectWorkspace={reconnectTarget ?? undefined}
           onReconnectWorkspace={handleReconnectWorkspace}
         />
+        </React.Suspense>
       )}
     </AnimatePresence>
   )

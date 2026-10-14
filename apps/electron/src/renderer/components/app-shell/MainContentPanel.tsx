@@ -59,7 +59,7 @@ import { SendResourceToWorkspaceDialog, type SendResourceType } from './SendReso
 import {
   knowledgeActiveViewIdAtom,
   knowledgeHomeViewAtom,
-} from '../../knowledge/KnowledgeHome'
+} from '../../knowledge/knowledge-home-model'
 
 import { lazyRoutePage, RouteErrorBoundary } from '@/lib/route-recovery'
 import { endRouteSwitch } from '@/lib/startup-perf'
