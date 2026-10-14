@@ -37,8 +37,9 @@ const status = (id: string, count: number): LinkItem => ({
   id: `nav:state:${id}`, title: id, label: String(count), count, icon: Home, variant: 'ghost', onClick: noop,
 })
 
-function links(memoryActive: boolean): SidebarItem[] {
+function links(memoryActive: boolean, inboxActive = false): SidebarItem[] {
   return [
+    { id: 'nav:inbox', title: 'Inbox', icon: Home, variant: inboxActive ? 'default' : 'ghost', onClick: noop },
     {
       id: 'nav:allSessions', title: 'Sessions', icon: Home, variant: 'ghost', onClick: noop, expandable: true, expanded: true,
       sortable: { onReorder: noop },
@@ -58,10 +59,10 @@ function makeStore() {
   }
 }
 
-function Harness({ store, navigator, memoryActive, onOpenChange = noop }: { store: ReturnType<typeof makeStore>; navigator: string; memoryActive: boolean; onOpenChange?: (open: boolean) => void }) {
+function Harness({ store, navigator, memoryActive, inboxActive = false }: { store: ReturnType<typeof makeStore>; navigator: string; memoryActive: boolean; inboxActive?: boolean }) {
   // A new isExpanded identity per store change, as AppShell's collapsedItems-based callback.
   const [version, bump] = React.useReducer((n: number) => n + 1, 0)
-  const baseLinks = React.useMemo(() => links(memoryActive), [memoryActive])
+  const baseLinks = React.useMemo(() => links(memoryActive, inboxActive), [memoryActive, inboxActive])
   // eslint-disable-next-line react-hooks/exhaustive-deps -- version invalidates on store change
   const isExpanded = React.useCallback((id: string) => store.isExpanded(id), [store, version])
   const toggleExpanded = React.useCallback((id: string) => { store.toggle(id); bump() }, [store])
@@ -69,7 +70,7 @@ function Harness({ store, navigator, memoryActive, onOpenChange = noop }: { stor
   return (
     <NavigationStatusContext.Provider value={status}>
       <ShellSidebarNav baseLinks={baseLinks} isCollapsed={false} onExpand={noop} onOpenBrowser={noop}
-        isExpanded={isExpanded} toggleExpanded={toggleExpanded} applicationSectionsOpen={false} onApplicationSectionsOpenChange={onOpenChange} />
+        isExpanded={isExpanded} toggleExpanded={toggleExpanded} />
     </NavigationStatusContext.Provider>
   )
 }
@@ -112,13 +113,23 @@ describe('sidebar v2 fix1: «Инструменты» replaces the «Ещё» di
     expect(toolsHeader().getAttribute('aria-expanded')).toBe('false')
   })
 
-  it('an active destination inside keeps it open (header locked)', async () => {
+  it('a collapsed section respects the saved state but keeps the active row visible', async () => {
     const store = makeStore()
     store.toggle('sidebar:section:tools')
     await mount(<Harness store={store} navigator="memory" memoryActive />)
-    expect(toolsHeader().getAttribute('aria-expanded')).toBe('true')
-    expect(toolsHeader().getAttribute('aria-disabled')).toBe('true')
-    expect(toolsRows()).toContain('nav:memory')
+    expect(toolsHeader().getAttribute('aria-expanded')).toBe('false')
+    expect(toolsHeader().hasAttribute('aria-disabled')).toBe(false)
+    expect(toolsRows()).toEqual(['nav:memory'])
+  })
+
+  it('«Навигация» collapses even while one of its rows is active, keeping only that row', async () => {
+    const store = makeStore()
+    await mount(<Harness store={store} navigator="inbox" memoryActive={false} inboxActive />)
+    const nav = () => host!.querySelector('[data-sidebar-primary-nav]') as HTMLElement
+    const header = () => nav().querySelector('[data-sidebar-section-header]') as HTMLButtonElement
+    await act(async () => { header().click() })
+    expect(header().getAttribute('aria-expanded')).toBe('false')
+    expect(Array.from(nav().querySelectorAll('[data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))).toEqual(['nav:inbox'])
   })
 })
 

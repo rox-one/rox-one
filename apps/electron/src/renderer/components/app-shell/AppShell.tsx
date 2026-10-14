@@ -586,16 +586,12 @@ function AppShellContent({
   const [openingAgent, setOpeningAgent] = useState(false)
   const toolIntentGeneration = React.useRef(0)
   const shellFlags = useAtomValue(enabledShellFlagsAtom)
-  const contextualSidebarKey = navState.navigator === 'screen' ? `screen:${navState.screen}` : navState.navigator
-  const [applicationSectionsOpenFor, setApplicationSectionsOpenFor] = useState<string | null>(null)
   const pendingSidebarRevealId = React.useRef<string | null>(null)
-  const handleExpandNavigation = useCallback((link: LinkItem, inMore: boolean) => {
+  // Sidebar v2: both sections always render (a collapsed one keeps its active row), so expanding only reveals + focuses the link.
+  const handleExpandNavigation = useCallback((link: LinkItem) => {
     pendingSidebarRevealId.current = link.id
     setIsSidebarVisible(true)
-    // Only the «Ещё» disclosure opens — and only for its own links —
-    // so the primary group stays as is on expand (WP5 registry groups).
-    setApplicationSectionsOpenFor(inMore ? contextualSidebarKey : null)
-  }, [contextualSidebarKey])
+  }, [])
 
   const store = useStore()
   const sidebarScrollRef = useScrollEdgeAttribute()
@@ -1307,7 +1303,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
     if (!button) return
     button.focus()
     pendingSidebarRevealId.current = null
-  }, [isSidebarCollapsed, applicationSectionsOpenFor, sidebarRef])
+  }, [isSidebarCollapsed, sidebarRef])
 
   // Global keyboard shortcuts using centralized action registry
   // Actions are defined in @/actions/definitions.ts
@@ -3070,10 +3066,6 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   ], [
     activeWorkspaceId, archivedCount, automationFilter, automationTypeCounts, automations.length, buildLabelSidebarItems, collectionFilters.projectId, effectiveSessionStatuses, flaggedCount, handleAddLabel, handleAllSessionsClick, handleArchivedClick, handleAutomationsAgenticClick, handleAutomationsClick, handleAutomationsEventClick, handleAutomationsScheduledClick, handleFlaggedClick, handleJumpToProjectSessions, handleLabelClick, handleLearningClick, handleMeetingsClick, handleMemoryClick, handleMemoryRepoClick, handleNewChat, handleNotesClick, handlePagesClick, handleProjectsClick, handleServiceClick, handleSessionStatusClick, handleSettingsClick, handleSkillsClick, handleSourcesApiClick, handleSourcesClick, handleSourcesLocalClick, handleSourcesMcpClick, handleStatusReorder, handleTasksClick, isExpanded, labelTree, navState, newChatHotkey, openAddAutomation, openAddProject, openAddSkill, openAddSource, openConfigureLabels, openConfigureStatuses, pages, projects, sessionFilter, sessionStatusCounts, setSessionMetaMap, shellFlags, skills.length, sourceFilter, sourceTypeCounts, sources.length, t, toggleExpanded, toggleSidebarSection, tourNewSessionTarget, unseenStatuses, workspaceSessionMetas.length,
   ])
-  const applicationSectionsOpen = applicationSectionsOpenFor === contextualSidebarKey
-  const handleApplicationSectionsOpenChange = useCallback((open: boolean) => {
-    setApplicationSectionsOpenFor(open ? contextualSidebarKey : null)
-  }, [contextualSidebarKey])
 
   return (
     <TourConnectionPolicyContext.Provider value={learningSourcePolicy?.workspaceId === activeWorkspaceId ? learningSourcePolicy : null}>
@@ -3207,8 +3199,6 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                         onOpenBrowser={openBrowserTab}
                         isExpanded={isExpanded}
                         toggleExpanded={toggleExpanded}
-                        applicationSectionsOpen={applicationSectionsOpen}
-                        onApplicationSectionsOpenChange={handleApplicationSectionsOpenChange}
                         contextSlotRef={setShellSidebarSlot}
                         pillShown={modePillShown(isAutoCompact)}
                       />

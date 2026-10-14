@@ -66,8 +66,7 @@ function Shell({ slotRef }: { slotRef: (el: HTMLDivElement | null) => void }) {
   const links = React.useMemo(makeLinks, [])
   return (
     <ShellSidebarNav baseLinks={links} isCollapsed={false} onExpand={noop} onOpenBrowser={noop}
-      isExpanded={alwaysOpen} toggleExpanded={noop} applicationSectionsOpen={false}
-      onApplicationSectionsOpenChange={noop} contextSlotRef={slotRef} />
+      isExpanded={alwaysOpen} toggleExpanded={noop} contextSlotRef={slotRef} />
   )
 }
 

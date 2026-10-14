@@ -43,8 +43,6 @@ export interface ShellSidebarNavProps {
   /** Persisted expanded-sections store (AppShell `collapsedItems`). */
   isExpanded: (id: string) => boolean
   toggleExpanded: (id: string) => void
-  applicationSectionsOpen: boolean
-  onApplicationSectionsOpenChange: (open: boolean) => void
   /**
    * WP6: stable ref setter for the per-surface contextual slot. Mode screens,
    * Notes, Memory, Learning and Settings portal their own navigation into it
@@ -62,8 +60,6 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   onOpenBrowser,
   isExpanded,
   toggleExpanded,
-  applicationSectionsOpen,
-  onApplicationSectionsOpenChange,
   contextSlotRef,
   pillShown = true,
 }: ShellSidebarNavProps) {
@@ -140,26 +136,27 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
     iconColor: EXPERIMENTAL_ICON_COLOR[screen.id] ?? 'var(--info)',
   })), [enabledExtraScreenIds, activeScreen, t])
 
-  // Sidebar v2 fix1: no «Ещё» disclosure — two labelled, collapsible
-  // sections, both expanded by default (the expanded-sections store records
-  // collapsed ids). An active destination keeps its section open.
+  // Sidebar v2: no «Ещё» disclosure — two labelled, collapsible sections,
+  // expanded by default (the expanded-sections store records collapsed ids).
+  // The saved state always wins; a collapsed section still shows its active
+  // row under the header so the user never loses their place.
   const showContext = !isCollapsed && (sessionFilters !== null || surfaceSection !== null)
-  const navOpen = isExpanded(SIDEBAR_NAV_SECTION_ID) || hasActiveLink(primaryLinks)
-  const toolsForced = hasActiveLink(moreLinks) || hasActiveLink(experimentalLinks)
-  const toolsOpen = isExpanded(SIDEBAR_TOOLS_SECTION_ID) || toolsForced
+  const navOpen = isCollapsed || isExpanded(SIDEBAR_NAV_SECTION_ID)
+  const toolsOpen = isCollapsed || isExpanded(SIDEBAR_TOOLS_SECTION_ID)
+  const navRows = React.useMemo(() => navOpen ? primaryLinks : activeRowsOnly(primaryLinks), [navOpen, primaryLinks])
+  const toolRows = React.useMemo(() => toolsOpen ? moreLinks : activeRowsOnly(moreLinks), [toolsOpen, moreLinks])
+  const experimentalRows = React.useMemo(() => toolsOpen ? experimentalLinks : activeRowsOnly(experimentalLinks), [toolsOpen, experimentalLinks])
   const toggleNav = React.useCallback(() => toggleExpanded(SIDEBAR_NAV_SECTION_ID), [toggleExpanded])
   const toggleTools = React.useCallback(() => toggleExpanded(SIDEBAR_TOOLS_SECTION_ID), [toggleExpanded])
-  void applicationSectionsOpen
-  void onApplicationSectionsOpenChange
 
   return (
     <>
       {/* WP6 slot 1: the global primary nav — same rows, same order on every screen. */}
       <nav aria-label={t('sidebar.navigation')} data-sidebar-primary-nav="" className="px-1">
-        {!isCollapsed && <SidebarSectionHeader id="sidebar-section-nav" label={t('sidebar.navigation')} open={navOpen} locked={hasActiveLink(primaryLinks)} onToggle={toggleNav} />}
-        {(isCollapsed || navOpen) && (
-          <div id="sidebar-section-nav">
-            <LeftSidebar isCollapsed={isCollapsed} onExpand={onExpandPrimary} links={primaryLinks} />
+        {!isCollapsed && <SidebarSectionHeader id="sidebar-section-nav" label={t('sidebar.navigation')} open={navOpen} onToggle={toggleNav} />}
+        {navRows.length > 0 && (
+          <div id="sidebar-section-nav" data-section-open={navOpen ? '' : undefined}>
+            <LeftSidebar isCollapsed={isCollapsed} onExpand={onExpandPrimary} links={navRows} />
           </div>
         )}
       </nav>
@@ -201,14 +198,14 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
         <section aria-label={t('sidebar.tools')} data-sidebar-tools="" data-application-sections="" className="mt-1 px-1">
           {isCollapsed
             ? <div className="mx-auto my-1.5 h-px w-6 bg-border-subtle" role="separator" aria-hidden data-sidebar-section-divider="" />
-            : <SidebarSectionHeader id="sidebar-section-tools" label={t('sidebar.tools')} open={toolsOpen} locked={toolsForced} onToggle={toggleTools} />}
-          {(isCollapsed || toolsOpen) && (
-            <div id="sidebar-section-tools">
-              <LeftSidebar isCollapsed={isCollapsed} onExpand={onExpandMore} links={moreLinks} />
-              {experimentalLinks.length > 0 && (
-                <section className="mt-2" aria-label={t('sidebar.experimentalFeatures')}>
-                  {!isCollapsed && <div className="px-3 pb-0.5 pt-1 text-[11px] font-semibold uppercase caps-label text-text-muted">{t('sidebar.experimentalFeatures')}</div>}
-                  <LeftSidebar isCollapsed={isCollapsed} onExpand={onExpandMore} links={experimentalLinks} />
+            : <SidebarSectionHeader id="sidebar-section-tools" label={t('sidebar.tools')} open={toolsOpen} onToggle={toggleTools} />}
+          {(toolRows.length > 0 || experimentalRows.length > 0) && (
+            <div id="sidebar-section-tools" data-section-open={toolsOpen ? '' : undefined}>
+              {toolRows.length > 0 && <LeftSidebar isCollapsed={isCollapsed} onExpand={onExpandMore} links={toolRows} />}
+              {experimentalRows.length > 0 && (
+                <section className={toolsOpen ? 'mt-2' : undefined} aria-label={t('sidebar.experimentalFeatures')}>
+                  {!isCollapsed && toolsOpen && <div className="px-3 pb-0.5 pt-1 text-[11px] font-semibold uppercase caps-label text-text-muted">{t('sidebar.experimentalFeatures')}</div>}
+                  <LeftSidebar isCollapsed={isCollapsed} onExpand={onExpandMore} links={experimentalRows} />
                 </section>
               )}
             </div>
@@ -268,14 +265,13 @@ export const SIDEBAR_NAV_SECTION_ID = 'sidebar:section:navigation'
 export const SIDEBAR_TOOLS_SECTION_ID = 'sidebar:section:tools'
 
 /** Collapsible section label (persisted via the expanded-sections store). */
-export function SidebarSectionHeader({ id, label, open, locked, onToggle }: { id: string; label: string; open: boolean; locked?: boolean; onToggle: () => void }) {
+export function SidebarSectionHeader({ id, label, open, onToggle }: { id: string; label: string; open: boolean; onToggle: () => void }) {
   return (
     <button
       type="button"
       aria-expanded={open}
       aria-controls={id}
-      aria-disabled={locked || undefined}
-      onClick={locked ? undefined : onToggle}
+      onClick={onToggle}
       data-sidebar-section-header=""
       className="group/section-header flex h-7 w-full items-center gap-1 rounded-[var(--radius-control)] px-3 text-left text-[11px] font-semibold uppercase caps-label text-text-muted outline-none transition-colors hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
     >
@@ -319,6 +315,11 @@ export function buildSessionFilters(
     items: [...visibleStatuses, ...(trailing.length > 0 ? [{ id: 'separator:session-filters', type: 'separator' as const }, ...trailing] : [])],
   }
   return { links: [group], emptyCount }
+}
+
+/** A collapsed section keeps only its active row(s) (a row is active itself or through a nested row). */
+export function activeRowsOnly(items: readonly SidebarItem[]): SidebarItem[] {
+  return items.filter(item => !isSeparatorItem(item) && hasActiveLink([item]))
 }
 
 /** True when a row, or any of its nested rows, is the active destination. */
