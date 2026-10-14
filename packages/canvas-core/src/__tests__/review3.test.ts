@@ -12,7 +12,7 @@ import { CanvasFileStore } from '../node/index.ts'
 const me = actorOrigin('user', 'u1')
 
 function linkCtx() {
-  const links = new Map<string, { objectId: string; ref: EntityRef }>()
+  const links = new Map<string, { objectId: string; ref: EntityRef; mine?: boolean }>()
   const registry = new EntityKindRegistry()
   registry.register({ kind: 'note', labelKey: 'k', icon: 'N', creatable: false,
     async read(r) { return { title: `T ${r.id}`, preview: 'SECRET BODY', body: 'x', participants: ['a@b'] } as never }, open() {} })
@@ -20,7 +20,7 @@ function linkCtx() {
   const ctx: EntityCardContext = {
     board: new CanvasDoc(), boardId: 'b1', workspaceId: 'w', registry, origin: me,
     linker: {
-      async link(f, ref) { links.set(`${f.objectId}|${ref.kind}|${ref.id}`, { objectId: f.objectId, ref }) },
+      async link(f, ref) { links.set(`${f.objectId}|${ref.kind}|${ref.id}`, { objectId: f.objectId, ref, mine: true }) },
       async unlink(f, ref) { if (failUnlink.has(f.objectId)) throw new Error('boom'); links.delete(`${f.objectId}|${ref.kind}|${ref.id}`) },
       async list() { return [...links.values()] },
     },

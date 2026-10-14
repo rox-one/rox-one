@@ -304,6 +304,8 @@ export class CanvasFileStore {
     if (inflight) return inflight
     const p = (async () => {
       if (busy) await busy.catch(() => {})
+      // Edits made on a previously closed doc must land before we read the files.
+      await this.staleChain.get(id)
       const again = this.open.get(id)
       if (again) return again.board
       await this.acquireLock()
@@ -328,7 +330,7 @@ export class CanvasFileStore {
     if (logBytes && badAt !== null) {
       // Keep the unreadable tail aside, then fold the good prefix into a snapshot.
       const aside = join(this.dir, `${id}.log.corrupt-${Date.now()}`)
-      await fs.writeFile(aside, logBytes.subarray(badAt))
+      await atomicWrite(aside, logBytes.subarray(badAt), this.dir)
       this.onError(new Error(`corrupt log frame at byte ${badAt}; tail saved to ${aside}`), { boardId: id, op: 'replay-log' })
       await this.compactEntry(id, entry)
     } else if (migrated) await this.compactEntry(id, entry)

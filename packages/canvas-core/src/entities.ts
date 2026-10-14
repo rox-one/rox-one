@@ -9,6 +9,7 @@
  *   { kind: 'canvas', id: <boardId>, fragment: <objectId> }  ⇄  { kind, id }
  * so backlinks on the entity point at the exact card.
  */
+import type * as Y from 'yjs'
 import type { CanvasDoc, Origin } from './doc.ts'
 import type { CanvasObject } from './schema.ts'
 import { clip, wellFormed } from './text.ts'
@@ -39,8 +40,11 @@ export interface EntityKindAdapter {
 export interface EntityLinker {
   link(from: { boardId: string; objectId: string }, to: EntityRef): Promise<void>
   unlink(from: { boardId: string; objectId: string }, to: EntityRef): Promise<void>
-  /** Current canvas links of this board (for reconcile). */
-  list?(boardId: string): Promise<Array<{ objectId: string; ref: EntityRef }>>
+  /**
+   * Current canvas links of this board (for reconcile). `mine` = created by the
+   * current user; reconcile only ever removes links where `mine` is true.
+   */
+  list?(boardId: string): Promise<Array<{ objectId: string; ref: EntityRef; mine?: boolean }>>
 }
 
 /** Fields an entity card may hold in the shared doc. Everything else is stripped. */
@@ -154,6 +158,15 @@ export class EntitySnapshotResolver {
     this.set(key, r)
     return r
   }
+  /** Drop the cached result and the change subscription for one ref (card removed / unmounted). */
+  release(ref: EntityRef): void {
+    const key = EntitySnapshotResolver.key(ref)
+    this.subs.get(key)?.()
+    this.subs.delete(key)
+    this.cache.delete(key)
+  }
+  /** Forget the cached result (e.g. permissions changed); the next resolve() re-checks access. */
+  invalidate(ref: EntityRef): void { this.cache.delete(EntitySnapshotResolver.key(ref)) }
   dispose(): void { for (const off of this.subs.values()) off(); this.subs.clear(); this.cache.clear(); this.listeners.clear() }
   private toOk(s: EntitySnapshot): ResolvedEntity {
     const snapshot: PersistedSnapshot & { preview?: string } = persistableSnapshot(s)
@@ -204,6 +217,14 @@ export function guardEntityCards(board: CanvasDoc): () => void {
  * covers remote deletes, plain `board.delete`, undo/redo. Debounced; returns a detach.
  */
 export function watchEntityLinks(ctx: EntityCardContext, opts: { debounceMs?: number; onError?: (e: unknown) => void } = {}): { stop(): void; idle(): Promise<void> } {
+  // Cards inserted by this client (local actor or its undo/redo), never by remote peers.
+  const localCards = new Set<string>()
+  const linkable = async (c: { objectId: string; ref: EntityRef }) => {
+    if (!localCards.has(c.objectId)) return false
+    const a = ctx.registry.get(c.ref.kind)
+    if (!a) return false
+    return a.canView ? a.canView(c.ref).catch(() => false) : (await a.read(c.ref).catch(() => null)) !== null
+  }
   let sig = cardSignature(ctx.board)
   let timer: ReturnType<typeof setTimeout> | null = null
   let running: Promise<void> = Promise.resolve()
@@ -213,12 +234,18 @@ export function watchEntityLinks(ctx: EntityCardContext, opts: { debounceMs?: nu
     running = running.then(async () => {
       do {
         again = false
-        const r = await reconcileEntityLinks(ctx).catch(e => { opts.onError?.(e); return null })
+        const r = await reconcileEntityLinks(ctx, { linkable }).catch(e => { opts.onError?.(e); return null })
         if (r && r.failed) opts.onError?.(new Error(`entity links: ${r.failed} reconcile step(s) failed`))
       } while (again)
     })
   }
-  const onAfter = () => {
+  const onAfter = (tr: Y.Transaction) => {
+    const o = tr.origin as Origin | null | undefined
+    if (tr.local && o !== SYSTEM_ORIGIN && !(o && typeof o === 'object' && 'kind' in o && (o.kind === 'remote' || o.kind === 'migration'))) {
+      for (const k of tr.changed.get(ctx.board.objects as never) ?? []) {
+        if (k && ctx.board.objects.get(k)?.get('type') === 'entity') localCards.add(k)
+      }
+    }
     const next = cardSignature(ctx.board)
     if (next === sig) return
     sig = next
@@ -256,17 +283,27 @@ export async function removeEntityCards(ctx: EntityCardContext, objectIds: strin
 }
 
 /**
- * Make the link store match the board: every card linked, no link without a
- * card. Covers deletions by key/undo/remote peers that bypass removeEntityCards,
- * undo-restored cards, and failed link/unlink calls. Never deletes entities.
+ * Make the link store match the board. Links are only ADDED for cards that
+ * `linkable` accepts (default: all) and only REMOVED for links whose card is
+ * gone and which this user created (`mine === true`). Never deletes entities.
  */
-export async function reconcileEntityLinks(ctx: EntityCardContext): Promise<{ linked: number; unlinked: number; failed: number }> {
+export async function reconcileEntityLinks(ctx: EntityCardContext, opts: { linkable?: (card: { objectId: string; ref: EntityRef }) => boolean | Promise<boolean> } = {}): Promise<{ linked: number; unlinked: number; failed: number }> {
   if (!ctx.linker.list) return { linked: 0, unlinked: 0, failed: 0 }
-  const want = new Map(entityCards(ctx.board).map(c => [`${c.objectId}|${c.ref.kind}|${c.ref.id}`, c]))
-  const have = new Map((await ctx.linker.list(ctx.boardId)).map(c => [`${c.objectId}|${c.ref.kind}|${c.ref.id}`, c]))
+  const key = (c: { objectId: string; ref: EntityRef }) => `${c.objectId}|${c.ref.kind}|${c.ref.id}`
+  const cards = new Map(entityCards(ctx.board).map(c => [key(c), c]))
+  const have = new Map((await ctx.linker.list(ctx.boardId)).map(c => [key(c), c]))
   let linked = 0, unlinked = 0, failed = 0
-  for (const [k, c] of want) if (!have.has(k)) { try { await ctx.linker.link({ boardId: ctx.boardId, objectId: c.objectId }, c.ref); linked++ } catch { failed++ } }
-  for (const [k, c] of have) if (!want.has(k)) { try { await ctx.linker.unlink({ boardId: ctx.boardId, objectId: c.objectId }, c.ref); unlinked++ } catch { failed++ } }
+  for (const [k, c] of cards) {
+    if (have.has(k)) continue
+    try {
+      if (opts.linkable && !(await opts.linkable(c))) continue
+      await ctx.linker.link({ boardId: ctx.boardId, objectId: c.objectId }, c.ref); linked++
+    } catch { failed++ }
+  }
+  for (const [k, c] of have) {
+    if (cards.has(k) || c.mine !== true) continue
+    try { await ctx.linker.unlink({ boardId: ctx.boardId, objectId: c.objectId }, c.ref); unlinked++ } catch { failed++ }
+  }
   return { linked, unlinked, failed }
 }
 

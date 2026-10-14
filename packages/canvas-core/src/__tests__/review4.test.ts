@@ -13,7 +13,7 @@ const me = actorOrigin('user', 'r4')
 const shape = (x = 0) => ({ type: 'shape' as const, x, y: 0, w: 10, h: 10, props: { kind: 'rect' } })
 
 function ctxWith(opts: { failLink?: boolean; canView?: (r: EntityRef) => boolean } = {}) {
-  const links = new Map<string, { objectId: string; ref: EntityRef }>()
+  const links = new Map<string, { objectId: string; ref: EntityRef; mine?: boolean }>()
   const entities = new Map<string, string>()
   const registry = new EntityKindRegistry()
   registry.register({
@@ -27,7 +27,7 @@ function ctxWith(opts: { failLink?: boolean; canView?: (r: EntityRef) => boolean
   const ctx: EntityCardContext = {
     board: new CanvasDoc(), boardId: 'b', workspaceId: 'w', registry, origin: me,
     linker: {
-      async link(f, ref) { if (opts.failLink) throw new Error('link down'); links.set(`${f.objectId}|${ref.kind}|${ref.id}`, { objectId: f.objectId, ref }) },
+      async link(f, ref) { if (opts.failLink) throw new Error('link down'); links.set(`${f.objectId}|${ref.kind}|${ref.id}`, { objectId: f.objectId, ref, mine: true }) },
       async unlink(f, ref) { links.delete(`${f.objectId}|${ref.kind}|${ref.id}`) },
       async list() { return [...links.values()] },
     },
@@ -174,6 +174,68 @@ describe('file store', () => {
     const doc = new Y.Doc()
     Y.applyUpdate(doc, new Uint8Array(require('node:fs').readFileSync(join(r, 'canvas', `${id}.ydoc`))))
     expect(new CanvasDoc(doc).list().length).toBe(1)
+    await s.dispose()
+  })
+})
+
+describe('review 4b: link policy, resolver release', () => {
+  test('remote-inserted cards never cause a local link; local ones link only after canView', async () => {
+    const { ctx, links, entities } = ctxWith({ canView: r => r.id !== 'secret' })
+    entities.set('ok', 'Ok'); entities.set('secret', 'S')
+    const w = watchEntityLinks(ctx, { debounceMs: 1 })
+    const peer = new Y.Doc()
+    Y.applyUpdate(peer, Y.encodeStateAsUpdate(ctx.board.doc))
+    const pb = new CanvasDoc(peer)
+    pb.add([{ type: 'entity', x: 0, y: 0, w: 10, h: 10, props: { kind: 'note', entityId: 'ok', origin: 'linked' } }], { kind: 'remote' })
+    Y.applyUpdate(ctx.board.doc, Y.encodeStateAsUpdate(peer, Y.encodeStateVector(ctx.board.doc)), { kind: 'remote' })
+    await w.idle()
+    expect(links.size).toBe(0)
+    ctx.board.add([{ type: 'entity', x: 0, y: 0, w: 10, h: 10, props: { kind: 'note', entityId: 'secret', origin: 'linked' } }], me)
+    await w.idle()
+    expect(links.size).toBe(0) // canView false
+    const [mineId] = ctx.board.add([{ type: 'entity', x: 0, y: 0, w: 10, h: 10, props: { kind: 'note', entityId: 'ok', origin: 'linked' } }], me)
+    await w.idle()
+    expect([...links.values()].map(l => l.objectId)).toEqual([mineId!])
+    w.stop()
+  })
+
+  test('only links this user created are removed', async () => {
+    const { ctx, links } = ctxWith()
+    links.set('gone|note|a', { objectId: 'gone', ref: { kind: 'note', id: 'a' }, mine: false } as never)
+    links.set('gone2|note|b', { objectId: 'gone2', ref: { kind: 'note', id: 'b' }, mine: true } as never)
+    const { reconcileEntityLinks } = await import('../index.ts')
+    const r = await reconcileEntityLinks(ctx)
+    expect(r.unlinked).toBe(1)
+    expect([...links.keys()]).toEqual(['gone|note|a'])
+  })
+
+  test('resolver release/invalidate per ref', async () => {
+    const { ctx, entities } = ctxWith()
+    entities.set('n1', 'A')
+    let unsubs = 0
+    const a = ctx.registry.get('note')!
+    ;(a as { subscribe?: unknown }).subscribe = () => () => { unsubs++ }
+    const r = new EntitySnapshotResolver(ctx.registry)
+    await r.resolve({ kind: 'note', id: 'n1' })
+    r.invalidate({ kind: 'note', id: 'n1' })
+    expect(r.get({ kind: 'note', id: 'n1' })).toBeUndefined()
+    await r.resolve({ kind: 'note', id: 'n1' })
+    r.release({ kind: 'note', id: 'n1' })
+    expect(unsubs).toBe(1)
+    expect(r.get({ kind: 'note', id: 'n1' })).toBeUndefined()
+  })
+})
+
+describe('review 4b: file store', () => {
+  test('openBoard waits for stale edits before reading', async () => {
+    const r = mkdtempSync(join(tmpdir(), 'r4c-'))
+    const s = new CanvasFileStore(r, { onError: () => {} })
+    const { id } = await s.createBoard('T')
+    const b = await s.openBoard(id)
+    await s.closeBoard(id)
+    b.add([shape(5)], me) // stale edit, queued to the log
+    const again = await s.openBoard(id)
+    expect(again.list().length).toBe(1)
     await s.dispose()
   })
 })
