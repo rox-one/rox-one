@@ -625,6 +625,8 @@ export const CHANNEL_MAP = {
   'cookbooksLab.reset': invoke(RPC_CHANNELS.cookbooksLab.RESET),
   'cookbooksLab.cancel': invoke(RPC_CHANNELS.cookbooksLab.CANCEL),
   'cookbooksLab.export': invoke(RPC_CHANNELS.cookbooksLab.EXPORT),
+  // Wave 10: structural cell operations (add/delete/move/duplicate)
+  'cookbooksLab.mutate': invoke(RPC_CHANNELS.cookbooksLab.MUTATE),
   'cookbooksLab.onStatusChanged': listener(RPC_CHANNELS.cookbooksLab.STATUS_CHANGED),
 
   // Debug logging
