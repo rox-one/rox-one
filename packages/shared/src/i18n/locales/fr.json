@@ -11946,5 +11946,6 @@
   "canvas.cardDelete.body": "Dissocier retire seulement la carte de ce tableau. Supprimer supprime aussi l'entité.",
   "canvas.cardDelete.unlink": "Dissocier",
   "canvas.cardDelete.delete": "Supprimer l'entité",
-  "canvas.cardDelete.cancel": "Annuler"
+  "canvas.cardDelete.cancel": "Annuler",
+  "canvas.cardDelete.confirmDelete": "Supprimer « {{title}} » partout dans Rox ? Impossible d’annuler depuis le tableau."
 }

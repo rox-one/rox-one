@@ -11933,5 +11933,6 @@
   "canvas.cardDelete.body": "A leválasztás csak erről a tábláról veszi le a kártyát. A törlés magát az elemet is törli.",
   "canvas.cardDelete.unlink": "Leválasztás",
   "canvas.cardDelete.delete": "Elem törlése",
-  "canvas.cardDelete.cancel": "Mégse"
+  "canvas.cardDelete.cancel": "Mégse",
+  "canvas.cardDelete.confirmDelete": "Törlöd a(z) „{{title}}” elemet az egész Roxban? A tábláról ez nem vonható vissza."
 }

@@ -11933,5 +11933,6 @@
   "canvas.cardDelete.body": "リンク解除はこのボードからカードを外すだけです。削除はエンティティ自体も削除します。",
   "canvas.cardDelete.unlink": "リンク解除",
   "canvas.cardDelete.delete": "エンティティを削除",
-  "canvas.cardDelete.cancel": "キャンセル"
+  "canvas.cardDelete.cancel": "キャンセル",
+  "canvas.cardDelete.confirmDelete": "Rox 全体から「{{title}}」を削除しますか？ボードからは元に戻せません。"
 }
