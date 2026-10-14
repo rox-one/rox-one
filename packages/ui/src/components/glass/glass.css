@@ -22,7 +22,7 @@
 }
 
 html[data-glass="full"] .glass-surface[data-glass-refraction] {
-  backdrop-filter: var(--glass-filter) blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: var(--glass-filter,) blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
 
 .glass-surface[data-glass-presence="closed"] {

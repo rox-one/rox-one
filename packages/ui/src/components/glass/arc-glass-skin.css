@@ -36,7 +36,7 @@ html[data-theme="arc-glass"] [data-glass-slot="composer"] {
 html[data-theme="arc-glass"] [data-glass-slot][data-glass-tone="accent"] {
   --glass-fill: var(--accent);
   --glass-fill-mix: 90%;
-  /* Cap the white sheen (hover included) so text-primary-foreground keeps AA. */
+  /* Cap the white sheen (hover included) so the --accent-foreground icon keeps AA. */
   --glass-specular-alpha: 4%;
 }
 

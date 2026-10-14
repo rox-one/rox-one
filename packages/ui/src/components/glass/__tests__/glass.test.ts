@@ -173,6 +173,11 @@ describe('glass fills resolve to real colours', () => {
     expect(fills.sort()).toEqual(['--accent', '--background', '--background', '--popover'].sort())
     for (const v of new Set(fills)) expect(uiStyles).toMatch(new RegExp(`\\s${v}:\\s*[^;]+;`))
   })
+  it('send icon colour cannot fall back to white', () => {
+    expect(uiStyles).toMatch(/--accent-foreground:\s*var\(--canvas\)/)
+    expect(mini).toContain('text-[var(--accent-foreground,var(--canvas,#15171b))]')
+    expect(mini).not.toMatch(/accent-foreground,white/)
+  })
   it('no --primary anywhere in the glass work', () => {
     expect(skin).not.toMatch(/--primary/)
     expect(mini).not.toMatch(/bg-primary|primary-foreground/)

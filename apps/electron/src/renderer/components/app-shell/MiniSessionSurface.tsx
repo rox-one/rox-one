@@ -115,7 +115,7 @@ export function MiniSessionSurface() {
         <button data-glass-slot="mini-button" className="rounded-md border border-border p-2 hover:bg-muted disabled:opacity-50" aria-label={t('window.mini.createNote')} {...notePress} title={t('window.mini.createNote')} disabled={creatingNote || (!session?.workspaceId && !context.activeWorkspaceId)} onClick={() => void createNote()}>
           <FileText size={15} />
         </button>
-        <button data-glass-slot="mini-button" data-glass-tone="accent" className="rounded-md bg-accent p-2 text-[var(--accent-foreground,white)] disabled:opacity-50" aria-label={t('window.mini.send')} {...sendPress} disabled={!sessionId || !draft.trim() || sending} onClick={() => void send()}>
+        <button data-glass-slot="mini-button" data-glass-tone="accent" className="rounded-md bg-accent p-2 text-[var(--accent-foreground,var(--canvas,#15171b))] disabled:opacity-50" aria-label={t('window.mini.send')} {...sendPress} disabled={!sessionId || !draft.trim() || sending} onClick={() => void send()}>
           <Send size={15} />
         </button>
       </div>
