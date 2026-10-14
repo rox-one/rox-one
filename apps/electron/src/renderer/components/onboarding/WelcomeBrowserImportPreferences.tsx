@@ -4,7 +4,7 @@ import { ChevronDown, ShieldCheck } from 'lucide-react'
 import { answerChoice, type BrowserImportCategory } from '@rox/shared/environment'
 import { Button } from '@/components/ui/button'
 import { BrowserImportPreferences } from './BrowserImportPreferences'
-import { ChromeLogo, GlowTile } from './brand-icons'
+import { ChromeLogo } from './brand-icons'
 
 /** First launch records preferences without discovering profiles or requesting a native grant. */
 export function WelcomeBrowserImportPreferences({ onSavingChange }: { onSavingChange: (saving: boolean) => void }) {
@@ -78,7 +78,7 @@ export function WelcomeBrowserImportPreferences({ onSavingChange }: { onSavingCh
   return (
     <details className="onb-glass group mt-3 rounded-full border border-border-strong bg-surface-input text-left open:rounded-lg" data-testid="welcome-browser-import-preferences">
       <summary className="flex cursor-pointer list-none items-center gap-3 rounded-full py-1.5 pl-1.5 pr-4 text-sm font-medium outline-none focus-visible:ring-1 focus-visible:ring-foreground/20 [&::-webkit-details-marker]:hidden">
-        <GlowTile tone="sky"><ChromeLogo className="size-[22px]" /></GlowTile>
+        <ChromeLogo className="size-5 shrink-0" />
         {t('onboarding.environment.browserImport')}
         <ChevronDown className="ml-auto size-4 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
       </summary>
