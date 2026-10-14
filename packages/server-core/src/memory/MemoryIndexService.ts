@@ -449,8 +449,10 @@ export class MemoryIndexService {
     const provider = trimmed ? this.graphProvider() : null
     if (!provider) return this.searchNative(query, limit)
     const controller = new AbortController()
-    const graphP = provider
-      .search(trimmed, { limit, signal: controller.signal })
+    // Promise.resolve().then(): a provider that throws synchronously or returns
+    // a non-promise still degrades to native results.
+    const graphP = Promise.resolve()
+      .then(() => provider.search(trimmed, { limit, signal: controller.signal }))
       .catch((err: unknown) => {
         this.logger.warn('MemoryIndexService: graph search failed', err)
         return [] as GraphMemoryHit[]

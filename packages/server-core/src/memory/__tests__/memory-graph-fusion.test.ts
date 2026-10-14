@@ -85,6 +85,15 @@ describe('graph-memory fusion in searchSemantic', () => {
     expect((await svc(d.p).searchSemantic('buildkite')).hits.map(h => h.chunkId)).not.toContain('graph:x')
     expect(d.calls.search).toBe(0)
   })
+  test('synchronously throwing provider falls back to FTS', async () => {
+    const native = svc(null).search('buildkite').hits.map(h => h.path)
+    const bad: GraphMemoryProvider = {
+      id: 'bad', async ingest() {}, async forget() {},
+      status: () => ({ state: 'ready', provider: 'bad' }),
+      search() { throw new Error('sync boom') },
+    }
+    expect((await svc(bad).searchSemantic('buildkite')).hits.map(h => h.path)).toEqual(native)
+  })
   test('registered resolver is used when no DI provider', async () => {
     const { p, calls } = provider([fact('r')])
     setGraphMemoryProviderResolver(() => p)
