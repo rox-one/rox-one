@@ -59,7 +59,7 @@ function PlanPill({ plan, label }: { plan: string; label: string }) {
       data-testid="profile-strip-plan"
       data-plan={plan}
       className={cn(
-        'inline-flex h-4 max-w-full items-center truncate rounded-full bg-gradient-to-b px-1.5 text-[10px] font-semibold uppercase leading-none tracking-wide',
+        'inline-flex h-4 max-w-full items-center truncate rounded-full bg-gradient-to-b px-1.5 text-mark font-semibold uppercase leading-none tracking-wide',
         'ring-1 ring-inset shadow-[inset_0_1px_0_rgb(255_255_255/0.55),0_1px_2px_rgb(0_0_0/0.12)] dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(0_0_0/0.4)]',
         PLAN_PILL_TONES[plan] ?? PLAN_PILL_TONES.standard,
       )}
@@ -82,10 +82,10 @@ function LevelBadge({ level, progress, label }: { level: number; progress: numbe
         <svg viewBox="0 0 20 20" className="absolute inset-0 size-full -rotate-90">
           <circle cx="10" cy="10" r={r} fill="none" strokeWidth="1.75" className="stroke-border-subtle" />
           {ratio > 0 ? <circle cx="10" cy="10" r={r} fill="none" strokeWidth="1.75" strokeLinecap="round"
-            className="stroke-amber-500 dark:stroke-amber-400"
+            className="stroke-status-warning"
             strokeDasharray={circumference} strokeDashoffset={circumference * (1 - ratio)} /> : null}
         </svg>
-        <span className="relative text-[10px] font-bold leading-none text-text-primary numeric">{level}</span>
+        <span className="relative text-mark font-bold leading-none text-text-primary numeric">{level}</span>
       </span>
     </span>
   )
