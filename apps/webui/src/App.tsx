@@ -86,8 +86,8 @@ function ErrorScreen({ message, code, onRetry }: {
     <div className="flex flex-col items-center justify-center h-screen font-sans text-foreground/50 gap-3">
       <p className="text-base font-medium text-destructive">{t("webui.connectionFailed")}</p>
       {keys ? <p className="text-base max-w-md text-center">{t(keys.text)}</p> : null}
-      {keys ? <p className="text-base max-w-md text-center text-foreground/40">{t(keys.hint)}</p> : null}
-      <p className="text-sm max-w-md text-center font-mono break-words text-foreground/40">{message}</p>
+      {keys ? <p className="text-base max-w-md text-center text-muted-foreground">{t(keys.hint)}</p> : null}
+      <p className="text-sm max-w-md text-center font-mono break-words text-muted-foreground">{message}</p>
       <div className="flex gap-2 mt-2">
         <button
           onClick={onRetry}
