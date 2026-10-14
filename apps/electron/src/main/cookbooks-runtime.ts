@@ -32,6 +32,8 @@ import type {
   CookbooksDocument,
   CookbooksExportResult,
   CookbooksFailureReason,
+  CookbooksMutateInput,
+  CookbooksMutateResult,
   CookbooksOutput,
   CookbooksRunAllResult,
   CookbooksRunCell,
@@ -790,6 +792,55 @@ export class CookbooksRuntime {
     // The confirmation dialog belongs to the surface; by the time it calls in,
     // the user has already agreed (`/reset` refuses a dirty copy without it).
     await this.request<unknown>('/reset', { method: 'POST', body: { itemId, confirm: true } })
+  }
+
+  /**
+   * Wave 10: `POST /cells/<op>` → the sidecar's `{ok, index}`, then a fresh
+   * `GET /document/<itemId>` (SPEC wave 10 §Контракт shared/main/IPC). The
+   * request body carries exactly the fields of the chosen op — never `op`
+   * itself and never an `undefined` field (an absent `source` stays absent, so
+   * the sidecar applies its own default). A sidecar 400/409 surfaces as the
+   * existing `CookbooksApiError` with the sidecar's own `error` text.
+   */
+  async apiMutate(input: CookbooksMutateInput): Promise<CookbooksMutateResult> {
+    // Defense-in-depth: the compile-time union does not protect a caller that
+    // casts, so an op outside the four routes is rejected before any URL/body
+    // is built (never interpolated into the path).
+    if (input.op !== 'add' && input.op !== 'delete' && input.op !== 'move' && input.op !== 'duplicate') {
+      throw new CookbooksApiError(400, 'unknown op')
+    }
+    const { itemId } = input
+    // switch (not `body: input`) so `op` never reaches the sidecar body.
+    const body: Record<string, unknown> = { itemId }
+    switch (input.op) {
+      case 'add':
+        body.cellType = input.cellType
+        body.index = input.index
+        if (input.source !== undefined) body.source = input.source
+        break
+      case 'delete':
+        body.index = input.index
+        break
+      case 'move':
+        body.from = input.from
+        body.to = input.to
+        break
+      case 'duplicate':
+        body.index = input.index
+        break
+    }
+    const raw = await this.request<unknown>(`/cells/${input.op}`, { method: 'POST', body })
+    // Wave 10: контракт {ok:true, index:int} — битый ответ это протокольная
+    // ошибка, не тихий фолбэк (иначе фокус молча встал бы на ячейку 0).
+    const record = asRecord(raw)
+    const index = record.index
+    if (record.ok !== true || typeof index !== 'number' || !Number.isInteger(index)) {
+      throw new CookbooksApiError(0, 'malformed /cells response')
+    }
+    // Re-read through the document route: the sidecar answers a mutation with
+    // just the focus index, never the whole document.
+    const document = await this.apiDocument(itemId)
+    return { document, index }
   }
 
   // -------------------------------------------------------------------------
