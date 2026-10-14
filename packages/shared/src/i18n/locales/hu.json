@@ -11226,6 +11226,7 @@
   "workbench.home.balance.unavailable": "Balance is unavailable in this build",
   "workbench.home.balance.updated": "Frissítve {{time}}",
   "workbench.home.balance.updating": "Frissítés…",
+  "workbench.home.bento.resized": "Méret az új szabályokhoz igazítva: {{names}}",
   "workbench.home.bento.restore": "Korábbi elrendezés visszaállítása",
   "workbench.home.bento.updated": "A Kezdőlap frissült",
   "workbench.home.calendar.events": "Events: {{count}}",

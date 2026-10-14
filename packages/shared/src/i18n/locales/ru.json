@@ -11284,6 +11284,7 @@
   "workbench.home.balance.unavailable": "Баланс недоступен в этой сборке",
   "workbench.home.balance.updated": "Обновлено {{time}}",
   "workbench.home.balance.updating": "Обновляется…",
+  "workbench.home.bento.resized": "Размер изменён под новые правила: {{names}}",
   "workbench.home.bento.restore": "Вернуть прежнюю раскладку",
   "workbench.home.bento.updated": "Главная обновлена",
   "workbench.home.calendar.events": "Событий: {{count}}",

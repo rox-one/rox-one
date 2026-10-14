@@ -11226,6 +11226,7 @@
   "workbench.home.balance.unavailable": "Balance is unavailable in this build",
   "workbench.home.balance.updated": "{{time}} に更新",
   "workbench.home.balance.updating": "更新中…",
+  "workbench.home.bento.resized": "新しいサイズルールに合わせて変更: {{names}}",
   "workbench.home.bento.restore": "以前のレイアウトに戻す",
   "workbench.home.bento.updated": "ホームが更新されました",
   "workbench.home.calendar.events": "Events: {{count}}",

@@ -11226,6 +11226,7 @@
   "workbench.home.balance.unavailable": "Balance is unavailable in this build",
   "workbench.home.balance.updated": "已更新於 {{time}}",
   "workbench.home.balance.updating": "更新中…",
+  "workbench.home.bento.resized": "已依新尺寸規則調整：{{names}}",
   "workbench.home.bento.restore": "還原先前的版面",
   "workbench.home.bento.updated": "首頁已更新",
   "workbench.home.calendar.events": "Events: {{count}}",

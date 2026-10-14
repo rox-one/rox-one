@@ -194,6 +194,19 @@ export function isFlatV2Default(raw: unknown): boolean {
   return value.widgets.map((w: { id?: unknown; size?: unknown; appearance?: unknown }) => (w && !w.appearance ? `${String(w.id)}:${String(w.size)}` : '!')).join(',') === V2_FLAT_DEFAULT
 }
 
+/** Widgets whose stored size is no longer allowed and is shown at the default size. */
+export function coercedSizes(raw: unknown): HomeWidgetId[] {
+  if (!raw || typeof raw !== 'object') return []
+  const list = (raw as { widgets?: unknown }).widgets
+  if (!Array.isArray(list)) return []
+  const out: HomeWidgetId[] = []
+  for (const item of list) {
+    const { id, size } = (item ?? {}) as { id?: unknown; size?: unknown }
+    if (isHomeWidgetId(id) && isSize(size) && !isAllowedSize(id, size) && !out.includes(id)) out.push(id)
+  }
+  return out
+}
+
 /** The pre-bento default, for the one-time «вернуть прежнюю раскладку» action. */
 export function flatV2DefaultLayout(): HomeDashboardLayout {
   return { version: 2, widgets: V2_FLAT_DEFAULT.split(',').map((pair) => { const [id, size] = pair.split(':'); return { id: id as HomeWidgetId, size: size as HomeWidgetSize } }) }

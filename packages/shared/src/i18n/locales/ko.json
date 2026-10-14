@@ -11226,6 +11226,7 @@
   "workbench.home.balance.unavailable": "Balance is unavailable in this build",
   "workbench.home.balance.updated": "{{time}} 업데이트",
   "workbench.home.balance.updating": "업데이트 중…",
+  "workbench.home.bento.resized": "새 크기 규칙에 맞게 변경됨: {{names}}",
   "workbench.home.bento.restore": "이전 레이아웃 복원",
   "workbench.home.bento.updated": "홈이 업데이트되었습니다",
   "workbench.home.calendar.events": "Events: {{count}}",

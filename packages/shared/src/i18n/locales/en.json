@@ -11226,6 +11226,7 @@
   "workbench.home.balance.unavailable": "Balance is unavailable in this build",
   "workbench.home.balance.updated": "Updated {{time}}",
   "workbench.home.balance.updating": "Updating…",
+  "workbench.home.bento.resized": "Resized to fit the new size rules: {{names}}",
   "workbench.home.bento.restore": "Restore previous layout",
   "workbench.home.bento.updated": "Home was updated",
   "workbench.home.calendar.events": "Events: {{count}}",

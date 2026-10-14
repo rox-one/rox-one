@@ -26,6 +26,7 @@ import {
   normalizeHomeMeta,
   packHomeLayout,
   upgradeFlatDefault,
+  coercedSizes,
 } from '../home/dashboard-layout'
 
 describe('home dashboard layout', () => {
@@ -247,5 +248,11 @@ describe('home dashboard layout', () => {
     expect(widgetRowSpan('XL')).toBe(widgetRowSpan('L'))
     expect(isSupportedHomeLayout({ version: 2, widgets: [{ id: 'hero', size: 'XL' }, { id: 'activity', size: 'M' }] })).toBe(true)
     expect(resizeWidget(DEFAULT_HOME_LAYOUT, 'activity', 'XL').widgets.find((w) => w.id === 'activity')!.size).toBe('XL')
+  })
+
+  it('reports saved sizes that were coerced by the size rules', () => {
+    expect(coercedSizes({ version: 2, widgets: [{ id: 'usage', size: 'S' }, { id: 'tasks', size: 'XL' }, { id: 'feed', size: 'M' }, { id: 'hero', size: 'XXL' }] })).toEqual(['usage', 'tasks'])
+    expect(coercedSizes(DEFAULT_HOME_LAYOUT)).toEqual([])
+    expect(coercedSizes(null)).toEqual([])
   })
 })
