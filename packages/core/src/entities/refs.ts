@@ -53,6 +53,7 @@ const refError = (code: RefErrorCode, input: string, message: string): Result<En
  * one encoding.
  */
 export const ENTITY_FRAGMENT_KINDS: ReadonlySet<EntityKind> = new Set([
+  'canvas',
   'channel-message',
   'goal-target',
   'goal-check',
