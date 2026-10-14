@@ -30,6 +30,8 @@ export const KEYS = {
   expandedFolders: 'expanded-folders',
   collapsedSidebarItems: 'collapsed-sidebar-items',
   chatGroupingMode: 'chat-grouping-mode', // How to group chats: 'date' | 'status'
+  chatFoldersCollapsed: 'chat-folders-collapsed', // Collapsed folder ids in the chat folders list (per workspace)
+  chatFoldersMode: 'chat-folders-mode', // Chat list shown as folders (per workspace)
   collapsedSessionGroups: 'collapsed-session-groups', // Collapsed group keys in session list
 
   // Focus mode

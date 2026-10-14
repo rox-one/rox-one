@@ -2903,6 +2903,9 @@ export interface ElectronAPI {
   onLlmConnectionsChanged(callback: () => void): () => void
 
   // Views (workspace-scoped, stored in views.json)
+  getChatFolders(workspaceId: string): Promise<import('@rox/shared/chat-folders').ChatFoldersState>
+  mutateChatFolders(workspaceId: string, op: import('@rox/shared/chat-folders').ChatFoldersOp): Promise<import('@rox/shared/chat-folders').ChatFoldersState>
+  onChatFoldersChanged(callback: (workspaceId: string, state: import('@rox/shared/chat-folders').ChatFoldersState) => void): () => void
   listViews(workspaceId: string): Promise<import('@rox/shared/views').ViewConfig[]>
   saveViews(workspaceId: string, views: import('@rox/shared/views').ViewConfig[]): Promise<void>
 

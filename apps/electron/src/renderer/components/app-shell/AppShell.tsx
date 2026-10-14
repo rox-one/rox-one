@@ -29,6 +29,7 @@ import {
   Info,
   MailOpen,
   FolderKanban,
+  FolderTree,
   PanelsTopLeft,
   Eye,
   Link2,
@@ -70,6 +71,7 @@ import {
   springTransition as collapsibleSpring,
 } from "@/components/ui/collapsible"
 import { SessionList, type ChatGroupingMode } from "./SessionList"
+const ChatFoldersList = React.lazy(() => import("./chat-folders/ChatFoldersList").then(m => ({ default: m.ChatFoldersList })))
 import { MainContentPanel } from "./MainContentPanel"
 import { CollectionViewChrome } from "./collection/CollectionViewChrome"
 import { getDefaultViews } from "@rox/shared/views"
@@ -861,6 +863,18 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
 
   // Search state for session list
   const [searchActive, setSearchActive] = React.useState(false)
+  // Chat folders mode (DSH-style folder tree) — persisted per workspace.
+  const [chatFoldersMode, setChatFoldersModeState] = React.useState(false)
+  React.useEffect(() => {
+    setChatFoldersModeState(activeWorkspaceId ? storage.get<boolean>(storage.KEYS.chatFoldersMode, false, activeWorkspaceId) === true : false)
+  }, [activeWorkspaceId])
+  const toggleChatFoldersMode = React.useCallback(() => {
+    setChatFoldersModeState(prev => {
+      const next = !prev
+      if (activeWorkspaceId) storage.set(storage.KEYS.chatFoldersMode, next, activeWorkspaceId)
+      return next
+    })
+  }, [activeWorkspaceId])
   const [searchQuery, setSearchQuery] = React.useState('')
 
   // CollectionDisplay is the workspace-persisted grouping owner. A legacy
@@ -3303,6 +3317,13 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                           viewerHasIdentity={viewerHasIdentity}
                         />
                       )}
+                      <HeaderIconButton
+                        icon={<FolderTree className="h-4 w-4" />}
+                        tooltip={chatFoldersMode ? t("chatFolders.hideFolders") : t("chatFolders.showFolders")}
+                        aria-pressed={chatFoldersMode}
+                        data-testid="chat-folders-toggle"
+                        onClick={toggleChatFoldersMode}
+                      />
                       <CollectionViewChrome
                         workspaceId={activeWorkspaceId}
                         viewMode="list"
@@ -3388,7 +3409,17 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                 onSelectSubpage={(subpage) => handleSettingsClick(subpage)}
               />
             )}
-            {isSessionsNavigation(navState) && (
+            {isSessionsNavigation(navState) && chatFoldersMode && (
+              <React.Suspense fallback={null}>
+                <ChatFoldersList
+                  workspaceId={activeWorkspaceId ?? undefined}
+                  items={filteredSessionMetas}
+                  selectedSessionId={navState.details?.type === 'session' ? navState.details.sessionId : null}
+                  onSessionSelect={(selectedMeta) => navigateToSession(selectedMeta.id)}
+                />
+              </React.Suspense>
+            )}
+            {isSessionsNavigation(navState) && !chatFoldersMode && (
               /* Sessions List */
               <>
                 {/* SessionList: Scrollable list of session cards */}

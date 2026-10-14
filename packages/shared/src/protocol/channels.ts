@@ -1025,6 +1025,11 @@ export const RPC_CHANNELS = {
     REMOVE_MEMBER: 'orgs:removeMember',
     REVOKE_INVITE: 'orgs:revokeInvite',
   },
+  chatFolders: {
+    GET: 'chatFolders:get',
+    MUTATE: 'chatFolders:mutate',
+    CHANGED: 'chatFolders:changed',
+  },
   views: {
     LIST: 'views:list',
     SAVE: 'views:save',
