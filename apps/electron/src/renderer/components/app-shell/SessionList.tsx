@@ -1707,9 +1707,9 @@ export function SessionList({
                 <button
                   type="button"
                   onClick={() => openNewFolderDialog()}
-                  className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-caption text-muted-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+                  className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-caption text-muted-foreground/70 hover:bg-surface-hover hover:text-foreground"
                 >
-                  <FolderPlus className="h-3.5 w-3.5" aria-hidden />
+                  <FolderPlus className="icon-caption" aria-hidden />
                   {t('chatFolders.newFolder')}
                 </button>
               </div>
