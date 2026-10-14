@@ -991,6 +991,10 @@ export const RPC_CHANNELS = {
     UNINSTALL: 'serviceLifecycle:uninstall',
     STATUS_CHANGED: 'serviceLifecycle:statusChanged',
   },
+  // tray — renderer → main snapshot for the macOS menu-bar item (badge, recents, recording).
+  tray: {
+    REPORT_STATE: 'tray:reportState',
+  },
   // diagnostics — local host doctor checks (service/port/runtime/config/logs).
   diagnostics: {
     RUN: 'diagnostics:run',
