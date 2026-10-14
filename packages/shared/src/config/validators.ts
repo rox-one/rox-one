@@ -1706,6 +1706,55 @@ export const MaterialSurfaceHintsSchema = z.object(Object.fromEntries(
 )).strict();
 
 /**
+ * Theme layer tokens (frame/content/elevation/wallpaper/accent/glass). Strict,
+ * bounded: a malformed import is rejected instead of half-applied.
+ */
+const LayerColorSchema = z.string().min(1).max(64);
+const GradientSchema = z.object({
+  type: z.enum(['linear', 'radial']),
+  angle: z.number().finite().min(0).max(360).optional(),
+  at: z.tuple([z.number().finite().min(0).max(100), z.number().finite().min(0).max(100)]).optional(),
+  stops: z.array(z.tuple([LayerColorSchema, z.number().finite().min(0).max(1)])).min(2).max(5),
+}).strict();
+export const ThemeLayersSchema = z.object({
+  frame: z.object({
+    bg: LayerColorSchema.optional(),
+    fg: LayerColorSchema.optional(),
+    muted: LayerColorSchema.optional(),
+    border: LayerColorSchema.optional(),
+    gradient: GradientSchema.optional(),
+  }).strict().optional(),
+  content: z.object({
+    bg: LayerColorSchema.optional(),
+    fg: LayerColorSchema.optional(),
+    border: LayerColorSchema.optional(),
+    join: z.enum(['line', 'shadow', 'float']).optional(),
+    radius: z.number().finite().min(0).max(24).optional(),
+  }).strict().optional(),
+  elevation: z.object({
+    1: LayerColorSchema.optional(),
+    2: LayerColorSchema.optional(),
+    3: LayerColorSchema.optional(),
+  }).strict().optional(),
+  wallpaper: z.union([
+    z.object({ type: z.literal('solid'), color: LayerColorSchema }).strict(),
+    GradientSchema,
+  ]).optional(),
+  accent: LayerColorSchema.optional(),
+  glass: z.number().finite().min(0).max(1).optional(),
+  gridDivider: LayerColorSchema.optional(),
+}).strict();
+
+/** Portable `.rox-theme.json` export/import format. */
+export const RoxThemeFileSchema = z.object({
+  $schema: z.string().optional(),
+  version: z.literal(1),
+  name: z.string().min(1).max(80),
+  base: z.string().max(80).optional(),
+  layers: ThemeLayersSchema,
+}).strict();
+
+/**
  * Zod schema for app-level theme override files (~/.craft-agent/theme.json).
  * Allows partial overrides but rejects unknown keys.
  */
@@ -1720,6 +1769,8 @@ export const ThemeOverrideSchema = z.object({
   material: MaterialSettingsSchema.optional(),
   // Zed role alpha hints consumed by the blurred auto-glass resolver
   surfaces: MaterialSurfaceHintsSchema.optional(),
+  // Layer tokens (frame/content/elevation/wallpaper/accent/glass)
+  layers: ThemeLayersSchema.optional(),
 }).strict()
   .refine(
     (data) => {
@@ -1754,6 +1805,8 @@ export const PresetThemeSchema = z.object({
   material: MaterialSettingsSchema.optional(),
   // Zed role alpha hints consumed by the blurred auto-glass resolver
   surfaces: MaterialSurfaceHintsSchema.optional(),
+  // Layer tokens (frame/content/elevation/wallpaper/accent/glass)
+  layers: ThemeLayersSchema.optional(),
   // Shiki theme for syntax highlighting
   shikiTheme: z.object({
     light: z.string().optional(),

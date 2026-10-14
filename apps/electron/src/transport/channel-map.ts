@@ -943,6 +943,8 @@ export const CHANNEL_MAP = {
   getColorTheme: invoke(RPC_CHANNELS.theme.GET_COLOR_THEME),
   setColorTheme: invoke(RPC_CHANNELS.theme.SET_COLOR_THEME),
   setAppMaterial: invoke(RPC_CHANNELS.theme.SET_APP_MATERIAL),
+  setAppLayers: invoke(RPC_CHANNELS.theme.SET_APP_LAYERS),
+  saveUserThemePreset: invoke(RPC_CHANNELS.theme.SAVE_USER_PRESET),
   getWorkspaceColorTheme: invoke(RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME),
   setWorkspaceColorTheme: invoke(RPC_CHANNELS.theme.SET_WORKSPACE_COLOR_THEME),
   getAllWorkspaceThemes: invoke(RPC_CHANNELS.theme.GET_ALL_WORKSPACE_THEMES),
