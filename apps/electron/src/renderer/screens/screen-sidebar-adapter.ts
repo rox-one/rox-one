@@ -30,7 +30,7 @@ export function toSidebarItem(item: SidebarSectionItem, o: AdapterOptions): Side
     icon: item.icon ? o.icons[item.icon] : undefined,
     // A count wins; otherwise a short translated status word (visible + read by AT).
     badge: item.count ?? (item.badge ? o.t(BADGE_TEXT[item.badge]) : undefined),
-    secondary: item.secondary,
+    secondary: item.secondaryKey ? o.t(item.secondaryKey) : item.secondary,
     active: o.activeKey != null && targetKey(item.target) === o.activeKey,
     onSelect: () => o.onTarget(item.target),
     ...(item.menu?.length && o.onMenu
