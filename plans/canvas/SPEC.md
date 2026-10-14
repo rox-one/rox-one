@@ -13,7 +13,7 @@
 - Entity links: `packages/shared/src/entities/schemas.ts` (`EntityKind`, `kindTakesFragment`), `packages/server-core/src/entities/link-store.ts` (`getEntityLinkStore(workspaceRoot)`), RPC `packages/server-core/src/handlers/rpc/entities.ts`. Add kind `canvas` with fragment = objectId, so a link can point at a board or at a single object.
 - Agent tools: `packages/session-tools-core/src/tool-defs.ts` (`{name, description, inputSchema, executionMode:'registry', safeMode, readOnly, handler}`), `tool-defs-filtering.ts`; capability catalog `apps/electron/src/renderer/lib/capability-catalog.ts`.
 - Settings: `apps/electron/src/renderer/components/settings/*` (SettingsSection/Row/Input/Toggle) → section «Доска»: relay URL, self-host test-connection, default share scope, cursor name/color.
-- Workspace storage: `~/.rox/workspaces/<ws>/` (storage-paths tests). The brief says "~/rox": confirm. Boards at `<ws>/canvas/<boardId>.ydoc` + `index.json`.
+- Workspace storage: the workspace dir from getConfigPaths() (storage-paths tests). The brief says "~/rox": confirm. Boards at `<ws>/canvas/<boardId>.ydoc` + `index.json`.
 - Theme: Arc Glass is on branch `feat/theme-arc-glass` (not on main in my shallow clone). The canvas surface renders as a floating card content; panels flush inside. Consume tokens only (no hex), with a lint rule similar to HyCanvas's theme-token check (written independently).
 
 ## 3. Data model (Yjs doc per board)
