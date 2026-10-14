@@ -101,6 +101,8 @@ export interface EntityRowProps {
   contextMenuContent?: React.ReactNode
   /** Extra controls in the title-row hover cluster, immediately before the MoreHorizontal button. */
   hoverActions?: React.ReactNode
+  /** 'compact' shrinks hover buttons (incl. the more button) to 22px targets for dense rows. */
+  hoverActionSize?: 'default' | 'compact'
   /** Whether to hide the more button (e.g. when overlay is showing) */
   hideMoreButton?: boolean
   /** Whether to render the menu surface in compact (drawer) mode. Pass-through
@@ -150,6 +152,7 @@ export function EntityRow({
   menuContent,
   contextMenuContent,
   hoverActions,
+  hoverActionSize = 'default',
   hideMoreButton = false,
   isCompactMode = false,
   compactMenu,
@@ -327,8 +330,11 @@ export function EntityRow({
       data-entity-row-hover-slot=""
       data-touch-reveal="true"
       className={cn(
-        "flex items-center justify-end gap-0",
-        "[&_button]:inline-flex [&_button]:items-center [&_button]:justify-center [&_button]:min-w-[var(--control-hit-min)] [&_button]:min-h-[var(--control-hit-min)]",
+        "flex items-center justify-end",
+        "[&_button]:inline-flex [&_button]:items-center [&_button]:justify-center",
+        hoverActionSize === 'compact'
+          ? "gap-px [&_button]:size-[22px]! [&_button]:min-w-[22px]! [&_button]:min-h-[22px]! [&_button]:p-0! [&_svg]:size-3.5"
+          : "gap-0 [&_button]:min-w-[var(--control-hit-min)] [&_button]:min-h-[var(--control-hit-min)]",
         hoverRevealed
           ? "opacity-100"
           : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100",

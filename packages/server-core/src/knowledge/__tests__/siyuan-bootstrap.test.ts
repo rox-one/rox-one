@@ -310,7 +310,10 @@ describe('ensureLocalKernel', () => {
       spawnFn: ((cmd: string, args: string[]) => {
         expect(cmd).toBe(kernelPath)
         expect(args.some((a) => a.startsWith('--accessAuthCode='))).toBe(true)
-        expect(args.some((a) => a.includes('6806'))).toBe(false)
+        // The auth code is random 32-hex; scanning it for the literal port is
+        // flaky (~1 run in 2 000). Only non-secret args can carry a port.
+        const nonSecretArgs = args.filter((a) => !a.startsWith('--accessAuthCode='))
+        expect(nonSecretArgs.some((a) => a.includes('6806'))).toBe(false)
         return { unref() {}, pid: 77, on() {}, kill() {} }
       }) as unknown as typeof import('node:child_process').spawn,
     })
