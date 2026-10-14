@@ -1573,6 +1573,7 @@ class Kernel:
         copy: CookbookCopy,
         *,
         env: Mapping[str, str] | None = None,
+        redact_values: Sequence[str] | None = None,
         python: str | None = None,
         language: str = "python",
         default_timeout: float = 60.0,
@@ -1585,6 +1586,12 @@ class Kernel:
         self.copy = copy
         self.language = language
         self.env = dict(env or {})
+        # The mask set for this kernel's output. ``None`` = today's behaviour
+        # exactly (every ``env`` value); an explicit sequence is used verbatim
+        # (order kept, blanks dropped) — hosts pass just the credential values so
+        # a non-secret default such as the catalog gateway base URL stays
+        # readable (see ``execute``).
+        self.redact_values = tuple(redact_values) if redact_values is not None else None
         self.python = python
         self.default_timeout = float(default_timeout)
         self._lock = threading.Lock()
@@ -1647,8 +1654,17 @@ class Kernel:
             py, install_log = self.ensure_python()
             proc_env = self._process_env()
             # The child redacts from its own environment: send the secret *names*
-            # only, so no value is ever written to the temp payload.
-            secret_names = sorted({str(name) for name, value in self.env.items() if value})
+            # only, so no value is ever written to the temp payload. With an
+            # explicit `redact_values` the names are exactly the env keys whose
+            # value is in that mask set, so a non-secret default (the catalog
+            # gateway base URL) stays readable in displays too.
+            if self.redact_values is None:
+                secret_names = sorted({str(name) for name, value in self.env.items() if value})
+            else:
+                redacted = set(self.redact_values)
+                secret_names = sorted(
+                    {str(name) for name, value in self.env.items() if value and value in redacted}
+                )
             work_dir = tempfile.mkdtemp(prefix="rox-run-")
             results_path = os.path.join(work_dir, "results.json")
             payload = json.dumps(
@@ -1700,10 +1716,17 @@ class Kernel:
             # Injected secrets never reach the notebook: redact both streams here and
             # build `error` from the redacted text so a traceback cannot leak a key.
             # Redact the store values as they land in this cell's final env (plan 010).
-            secret_values = [
-                value for name, value in proc_env.items() if value and name in self.env
-            ]
-            secret_values.extend(value for value in self.env.values() if value)
+            # Policy: `redact_values is None` masks *every* env value (the historical
+            # behaviour, unchanged); hosts pass just the credential values, so a
+            # non-secret default — the catalog `defaultEnv` gateway base URL — stays
+            # readable in stdout/stderr/errors/displays.
+            if self.redact_values is None:
+                secret_values = [
+                    value for name, value in proc_env.items() if value and name in self.env
+                ]
+                secret_values.extend(value for value in self.env.values() if value)
+            else:
+                secret_values = [value for value in self.redact_values if value]
             # Wave 11: displays come back over the temp results file. A missing
             # file (kill, timeout, legacy payload) simply means none; either way
             # the records are re-validated, re-capped and re-redacted here.
@@ -1826,6 +1849,7 @@ def execute_code(
     code: str,
     *,
     env: Mapping[str, str] | None = None,
+    redact_values: Sequence[str] | None = None,
     persist: bool = True,
     python: str | None = None,
     index: int | None = None,
@@ -1842,10 +1866,14 @@ def execute_code(
     ``index`` names the executed cell, so its outputs replace that cell's rather
     than the first cell whose source happens to match (plan 010). ``run`` is the
     host's cancellable handle for this request (see ``RunHandle``).
+    ``redact_values`` is the mask set for the cell's output: ``None`` (default)
+    masks every ``env`` value; hosts pass just the credential values, so a
+    non-secret default — the catalog ``defaultEnv`` gateway base URL — stays
+    readable (see ``Kernel.execute``).
     """
-    result = Kernel(copy, env=env, python=python, default_timeout=timeout).execute(
-        code, run=run
-    )
+    result = Kernel(
+        copy, env=env, redact_values=redact_values, python=python, default_timeout=timeout
+    ).execute(code, run=run)
     err = result.get("error")
     if err and catalog is not None and item is not None:
         rewritten = rewrite_missing_secret_error(catalog, item, err, store)
@@ -1861,6 +1889,7 @@ def execute_all(
     jobs: Sequence[tuple[int, str]],
     *,
     env: Mapping[str, str] | None = None,
+    redact_values: Sequence[str] | None = None,
     python: str | None = None,
     timeout: float = 60.0,
     persist: bool = True,
@@ -1889,7 +1918,11 @@ def execute_all(
     child environment overlay (the copy's declared secrets); its values are
     redacted from every stream (in the driver, before each temp write, and again
     here), and the driver is given the secret *names* only — it reads the values
-    from its own environment, so no secret value reaches the temp job file. The
+    from its own environment, so no secret value reaches the temp job file.
+    ``redact_values`` narrows *which* values are masked: ``None`` (default)
+    masks every ``env`` value, while hosts pass just the credential values, so a
+    non-secret default — the catalog ``defaultEnv`` gateway base URL — stays
+    readable in the streams, the displays and the temp records. The
     job file is written ``0600`` and unlinked by the driver once read. Failures
     are mapped to the ROX missing-credential message when ``catalog``/``item``
     are given. With ``persist`` the executed cells' outputs are written into the
@@ -1917,14 +1950,29 @@ def execute_all(
         }
     proc_env = _subprocess_env(env)
     env_map = dict(env or {})
-    # Same redaction policy as `Kernel.execute`: every value this copy declared.
-    secret_values = [value for name, value in proc_env.items() if value and name in env_map]
-    secret_values.extend(value for value in env_map.values() if value)
-    # G4-CBK-01: the driver redacts before every temp write, so a kill mid-run
-    # cannot leave a raw secret on disk. It is handed the env *names* only and
-    # reads the values from its own environment (they are already in `proc_env`),
-    # so no secret value ever reaches the job file either.
-    secret_names = sorted({str(name) for name, value in env_map.items() if value})
+    # Same redaction policy as `Kernel.execute`: `redact_values is None` masks
+    # every value this copy declared (the historical behaviour, unchanged); an
+    # explicit sequence is the mask set verbatim (order kept, blanks dropped), so
+    # a non-secret default — the catalog `defaultEnv` gateway base URL — stays
+    # readable in the streams, the displays and the temp records.
+    if redact_values is None:
+        secret_values = [
+            value for name, value in proc_env.items() if value and name in env_map
+        ]
+        secret_values.extend(value for value in env_map.values() if value)
+        secret_names = sorted({str(name) for name, value in env_map.items() if value})
+    else:
+        secret_values = [value for value in redact_values if value]
+        # G4-CBK-01: the driver redacts before every temp write, so a kill mid-run
+        # cannot leave a raw secret on disk. It is handed the env *names* only and
+        # reads the values from its own environment (they are already in `proc_env`),
+        # so no secret value ever reaches the job file either — and, with an
+        # explicit mask set, a name whose value is NOT masked (the public base URL)
+        # is left out entirely, so the driver does not mask it.
+        redacted = set(redact_values)
+        secret_names = sorted(
+            {str(name) for name, value in env_map.items() if value and value in redacted}
+        )
 
     work_dir = Path(tempfile.mkdtemp(prefix="rox-run-all-"))
     job_path = work_dir / "job.json"

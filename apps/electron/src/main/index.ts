@@ -18,6 +18,10 @@ registerSpawnEnvGate('shell-env', shellEnvSpawnGate)
 markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
+// Shared ROX gateway key, baked in at build time (gitignored generated module).
+import { ROX_DEFAULTS } from './rox-defaults/rox-defaults.generated'
+import { installRoxDefaults } from './rox-defaults/install-rox-defaults'
+installRoxDefaults(ROX_DEFAULTS)
 
 import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, net, Notification, safeStorage, session, shell, Tray, webContents, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { createHash, randomUUID } from 'crypto'
@@ -2085,6 +2089,7 @@ app.whenReady().then(async () => {
           prefersSolid: nativeAccessibilityPrefersSolid,
         })
         app.once('will-quit', () => disposeQuickComposer())
+        app.once('will-quit', () => windowManager?.disposeMiniGlass())
       }
 
       // Dock menu (macOS): the native integration actions, dispatched as one
