@@ -50,11 +50,12 @@ describe('exclusive placement — one surface, one place', () => {
     for (const id of ['inbox', 'tasks', 'projects', 'memory', 'knowledge', 'missions', 'settings']) expect(sidebar).toContain(id)
   })
 
-  it('Messenger on: Команда = Мессенджер in the pill, Чат goes back to the sidebar', () => {
-    const flags = new Set([WORKBENCH_FLAG.modeMessengerV1])
-    const surfaces = resolveNavSurfaces({ shellFlags: flags })
-    expect(surfaces.find(e => e.id === 'messenger')?.placement).toBe('pills')
-    expect(surfaces.find(e => e.id === 'sessions')?.placement).toBe('menu')
+  it('shell-layout defaults: Главная · Лента · Сессии · Заметки · Браузер, whatever the Messenger flag', () => {
+    for (const flags of [new Set<string>(), new Set([WORKBENCH_FLAG.modeMessengerV1])]) {
+      const surfaces = resolveNavSurfaces({ shellFlags: flags })
+      const pills = surfaces.filter(e => e.placement === 'pills').map(e => e.id).sort()
+      expect(pills).toEqual(['browser', 'docs', 'feed', 'home', 'sessions'])
+    }
   })
 
   it('every routed surface is reachable (pill or sidebar) by default', () => {
@@ -177,5 +178,12 @@ describe('contextual sidebar: legacy sidebar placements migrate to «menu»', ()
 
   it('every default placement is pills or menu', () => {
     for (const entry of resolveNavSurfaces({ shellFlags: none })) expect(['pills', 'menu']).toContain(entry.placement)
+  })
+
+  it('migrates saved legacy placements (primary/more → menu) and writes them back', () => {
+    localStorage.setItem(NAV_PLACEMENT_KEY, JSON.stringify({ docs: 'primary', tasks: 'more', feed: 'pills', settings: 'menu', x: 'bogus' }))
+    __resetNavPlacementsForTests()
+    setNavPlacement('memory', 'pills')
+    expect(JSON.parse(localStorage.getItem(NAV_PLACEMENT_KEY)!)).toEqual({ docs: 'menu', tasks: 'menu', feed: 'pills', memory: 'pills' })
   })
 })

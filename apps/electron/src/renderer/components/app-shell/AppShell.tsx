@@ -79,6 +79,8 @@ import type { CollectionViewMode } from "./kanban/BoardListToggle"
 import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { type LinkItem, type SeparatorItem, type SidebarItem as SidebarLinkItem } from "./LeftSidebar"
+import { PrimaryRail, SHELL_RAIL_WIDTH } from '../shell/PrimaryRail'
+import { toggleSecondarySidebar, useSecondarySidebarVisibility } from '../shell/shell-prefs'
 import { ShellSidebarNav } from "./ShellSidebarNav"
 import { modePillShown } from "./mode-pill-layout"
 import { useScrollEdgeAttribute } from "@/hooks/useScrollEdgeAttribute"
@@ -449,7 +451,7 @@ function AppShellContent({
   // yields first (InspectorHost), then the list, then the sidebar.
   const { sidebar: expandedSidebarWidth, navigator: sessionListWidth } = clampShellColumns({
     shellWidth: isAutoCompact ? 0 : shellWidth,
-    reserved: unifiedRailOffset + CHROME_DENSITY.railWidth,
+    reserved: unifiedRailOffset + CHROME_DENSITY.railWidth + SHELL_RAIL_WIDTH,
     sidebar: isSidebarCollapsed ? 52 : storedSidebarWidth,
     navigator: storedSessionListWidth,
     sidebarVisible: isPrimarySidebarRendered && !isSidebarAndNavigatorHidden,
@@ -592,6 +594,11 @@ function AppShellContent({
   // UNIFIED NAVIGATION STATE - single source of truth from NavigationContext
   // Derived from focused panel's route — all panels are peers
   const navState = useNavigationState()
+  // shell-layout: static icon rail + optional second sidebar (none on Главная, user can hide it).
+  const secondaryVisibility = useSecondarySidebarVisibility()
+  const secondaryAvailable = !isHomeNavigation(navState)
+  const secondaryShown = secondaryAvailable && secondaryVisibility !== 'hidden'
+  const shellLeftWidth = SHELL_RAIL_WIDTH + (secondaryShown ? sidebarWidth : 0)
   // No global project scope (the sidebar «Контекст проекта» selector was removed):
   // chats, new chats and tools always cover all projects.
   const liveWorkspace = useRef(activeWorkspaceId)
@@ -1427,6 +1434,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
 
   // Settings
   useAction('app.settings', onOpenSettings)
+  useAction('view.toggleSecondarySidebar', toggleSecondarySidebar)
 
   // Keyboard shortcuts
   useAction('app.keyboardShortcuts', onOpenKeyboardShortcuts)
@@ -3144,8 +3152,8 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
           sidebarSlot={
             <div
               ref={sidebarRef}
-              style={{ width: sidebarWidth }}
-              className="h-full font-sans relative chrome-rail"
+              style={{ width: shellLeftWidth }}
+              className="h-full font-sans relative chrome-rail flex"
               data-shell-role="chrome"
               data-focus-zone="sidebar"
               onPointerEnter={handleSidebarHoverEnter}
@@ -3161,7 +3169,24 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                 if (main) store.set(focusedPanelIdAtom, main.id)
               }}
             >
-            <div className="flex h-full flex-col select-none">
+            <PrimaryRail
+              secondaryAvailable={secondaryAvailable}
+              avatar={
+                <button
+                  type="button"
+                  data-rail-button=""
+                  data-rail-avatar=""
+                  aria-label={t('shell.rail.account', { name: profileStripWithSpend.displayName })}
+                  onClick={() => handleSettingsClick('account')}
+                  className="flex size-10 items-center justify-center rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  {profileStripWithSpend.avatar
+                    ? <img src={profileStripWithSpend.avatar} alt="" className="size-7 rounded-full object-cover" />
+                    : <span className="flex size-7 items-center justify-center rounded-full bg-[var(--state-selected)] text-caption font-semibold" aria-hidden>{(profileStripWithSpend.displayName || '?').slice(0, 1).toUpperCase()}</span>}
+                </button>
+              }
+            />
+            <div className={cn("h-full min-w-0 flex-1 flex-col select-none", secondaryShown ? "flex" : "hidden")} data-secondary-sidebar="">
               {/* Sidebar v2 header: collapse + pin side by side at the top. */}
               <SidebarHeaderControls
                 collapsed={isSidebarCollapsed}
@@ -3223,7 +3248,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             </div>
           </div>
           }
-          sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : sidebarWidth}
+          sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : shellLeftWidth}
           navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav) ? null : (
             <div
               style={{ width: isAutoCompact || navigatorExpanded ? '100%' : sessionListWidth }}
@@ -3437,7 +3462,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
           isResizing={!!isResizing}
           resizeHandles={<>
         {/* A collapsed sidebar has no resize boundary; its sash would intercept main-panel controls. */}
-        {isSidebarVisible && !isSidebarCollapsed && !effectiveSidebarAndNavigatorHidden && (
+        {secondaryShown && isSidebarVisible && !isSidebarCollapsed && !effectiveSidebarAndNavigatorHidden && (
         <ResizeHandle
           labelKey="shell.resize.sidebar"
           controlsId="shell-sidebar"
@@ -3451,7 +3476,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,
             height: 'auto',
-            left: sidebarWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2,
+            left: shellLeftWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2,
           }}
           onPointerDown={(event) => {
             setIsResizing('sidebar')
@@ -3512,7 +3537,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             bottom: terminalClearance,
             height: 'auto',
             left:
-              (isPrimarySidebarRendered ? sidebarWidth + PANEL_GAP : PANEL_EDGE_INSET) +
+              (isPrimarySidebarRendered ? shellLeftWidth + PANEL_GAP : PANEL_EDGE_INSET) +
               sessionListWidth +
               (PANEL_GAP / 2) -
               sashHitWidthPx() / 2,
@@ -3520,7 +3545,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
           }}
           onPointerDown={(event) => {
             setIsResizing('session-list')
-            const offset = isPrimarySidebarRendered ? sidebarWidth : 0
+            const offset = isPrimarySidebarRendered ? shellLeftWidth : 0
             navigatorResize.handlePointerDown(event, {
               leftId: 'shell-navigator',
               rightId: 'shell-content',
@@ -3538,7 +3563,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
           onPointerCancel={navigatorResize.handlePointerCancel}
           onLostPointerCapture={navigatorResize.handleLostPointerCapture}
           onKeyAdjust={(delta) => {
-            const offset = isPrimarySidebarRendered ? sidebarWidth : 0
+            const offset = isPrimarySidebarRendered ? shellLeftWidth : 0
             navigatorResize.handleKeyAdjust(delta, {
               leftId: 'shell-navigator',
               rightId: 'shell-content',
@@ -3554,7 +3579,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
           onKeyCommit={navigatorResize.handleKeyCommit}
           onKeyCancel={navigatorResize.handleKeyCancel}
           onReset={() => {
-            const offset = isPrimarySidebarRendered ? sidebarWidth : 0
+            const offset = isPrimarySidebarRendered ? shellLeftWidth : 0
             navigatorResize.handleReset({
               leftId: 'shell-navigator',
               rightId: 'shell-content',
@@ -3597,7 +3622,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             trigger={
               <div
                 className="fixed w-0 h-0 pointer-events-none"
-                style={{ left: sidebarWidth + 20, top: editPopoverAnchorY.current }}
+                style={{ left: shellLeftWidth + 20, top: editPopoverAnchorY.current }}
                 aria-hidden="true"
               />
             }
@@ -3617,7 +3642,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             trigger={
               <div
                 className="fixed w-0 h-0 pointer-events-none"
-                style={{ left: sidebarWidth + 20, top: editPopoverAnchorY.current }}
+                style={{ left: shellLeftWidth + 20, top: editPopoverAnchorY.current }}
                 aria-hidden="true"
               />
             }
@@ -3653,7 +3678,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             trigger={
               <div
                 className="fixed w-0 h-0 pointer-events-none"
-                style={{ left: sidebarWidth + 20, top: editPopoverAnchorY.current }}
+                style={{ left: shellLeftWidth + 20, top: editPopoverAnchorY.current }}
                 aria-hidden="true"
               />
             }
@@ -3677,7 +3702,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
               trigger={
                 <div
                   className="fixed w-0 h-0 pointer-events-none"
-                  style={{ left: sidebarWidth + 20, top: editPopoverAnchorY.current }}
+                  style={{ left: shellLeftWidth + 20, top: editPopoverAnchorY.current }}
                   aria-hidden="true"
                 />
               }
@@ -3694,7 +3719,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             trigger={
               <div
                 className="fixed w-0 h-0 pointer-events-none"
-                style={{ left: sidebarWidth + 20, top: editPopoverAnchorY.current }}
+                style={{ left: shellLeftWidth + 20, top: editPopoverAnchorY.current }}
                 aria-hidden="true"
               />
             }
@@ -3710,7 +3735,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             trigger={
               <div
                 className="fixed w-0 h-0 pointer-events-none"
-                style={{ left: sidebarWidth + 20, top: editPopoverAnchorY.current }}
+                style={{ left: shellLeftWidth + 20, top: editPopoverAnchorY.current }}
                 aria-hidden="true"
               />
             }
@@ -3726,7 +3751,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             trigger={
               <div
                 className="fixed w-0 h-0 pointer-events-none"
-                style={{ left: sidebarWidth + 20, top: editPopoverAnchorY.current }}
+                style={{ left: shellLeftWidth + 20, top: editPopoverAnchorY.current }}
                 aria-hidden="true"
               />
             }

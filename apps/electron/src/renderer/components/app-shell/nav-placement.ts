@@ -121,6 +121,14 @@ function get(): NavPlacements {
     return current
   }
   current = readNavPlacements()
+  // Rewrite legacy values ('primary'/'more' → 'menu', dropped unknowns) once so
+  // older builds' data never round-trips through the old vocabulary again.
+  try {
+    const raw = store?.getItem(NAV_PLACEMENT_KEY)
+    if (raw && raw !== JSON.stringify(current)) store?.setItem(NAV_PLACEMENT_KEY, JSON.stringify(current))
+  } catch {
+    /* ignore */
+  }
   return current
 }
 

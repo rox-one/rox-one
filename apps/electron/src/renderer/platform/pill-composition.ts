@@ -17,6 +17,7 @@ import { isModeNavigable, listPinnedModes } from '@rox/core/platform'
 import type { Route } from '../../shared/routes'
 import type { Scene } from './scenes'
 import type { LucideIcon } from 'lucide-react'
+import { pillsStore } from '../components/shell/shell-prefs'
 import type { NavigationState } from '../../shared/types'
 import type { ResolvedPrimaryNavEntry } from '../components/app-shell/primary-nav'
 import type { NavPlacements } from '../components/app-shell/nav-placement'
@@ -315,6 +316,8 @@ export function orderPillSurfaces(
 export interface PillNavPlacement {
   surfaces: readonly ResolvedPrimaryNavEntry[]
   placements: NavPlacements
+  /** User pill order (pillsStore), passed in reactively by usePillNav; falls back to a store read. */
+  pillOrder?: readonly string[]
 }
 
 /** Registry id a resolved pill surface stands for (its mode, or the browser panel). */
@@ -381,7 +384,17 @@ function placedPillSurfaces(
       mode: { id: entry.id, titleKey: entry.labelKey, icon: '', rootRoute: entry.route(), order: 1000 } as ModeContribution,
     })
   }
-  return orderPillSurfaces(resolved, { ...prefs, excluded: [] }, sessionUsage(prefs.usage))
+  const ordered = orderPillSurfaces(resolved, { ...prefs, excluded: [] }, sessionUsage(prefs.usage))
+  // shell-layout: the user's configured pill order (PillsConfigurator) wins; unknown ids keep their relative order.
+  const order = nav.pillOrder ?? pillsStore.get()
+  const rank = (surface: ResolvedPillSurface) => {
+    const navId = navIdForPill(surface, nav.surfaces)
+    const index = navId ? order.indexOf(navId) : -1
+    return index === -1 ? order.length : index
+  }
+  return ordered.map((surface, index) => ({ surface, index, rank: rank(surface) }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map(({ surface }) => surface)
 }
 
 /** Home (icon-only) leads the rendered pill. */
@@ -403,7 +416,8 @@ export function visiblePillSurfaces(
   nav: PillNavPlacement | null = null,
 ): ResolvedPillSurface[] {
   if (scene && scene.surfaceIds.length > 0) return homeFirst(scenePillSurfaces(DEFAULT_PILL_SURFACES, modes, scene))
-  if (nav) return homeFirst(placedPillSurfaces(modes, prefs, nav))
+  // shell-layout: the configured order is authoritative (Главная leads only by default).
+  if (nav) return placedPillSurfaces(modes, prefs, nav)
   const surfaces = resolvePillSurfaces(DEFAULT_PILL_SURFACES, modes, prefs.pinned)
   return orderPillSurfaces(surfaces, prefs, sessionUsage(prefs.usage))
 }
