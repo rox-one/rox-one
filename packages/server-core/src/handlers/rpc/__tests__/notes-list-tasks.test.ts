@@ -77,8 +77,34 @@ test('#1574 notes:listTasks returns tasks per readable note in one call', async 
 
 test('#1574 notes:listTasks validates input and enforces read access', async () => {
   const f = await fixture()
-  await expect(f.invoke(RPC_CHANNELS.notes.LIST_TASKS, 'not-an-array')).rejects.toThrow()
-  await expect(f.invoke(RPC_CHANNELS.notes.LIST_TASKS, Array.from({ length: 201 }, (_, i) => `n${i}`))).rejects.toThrow()
+  await expect(f.invoke(RPC_CHANNELS.notes.LIST_TASKS, 'not-an-array')).rejects.toThrow('array of strings')
+  await expect(f.invoke(RPC_CHANNELS.notes.LIST_TASKS, Array.from({ length: 201 }, (_, i) => `n${i}`))).rejects.toThrow('at most 200 note ids (got 201)')
+  await expect(f.invoke(RPC_CHANNELS.notes.LIST_TASKS, ['ok', 7])).rejects.toThrow('every note id to be a string')
   f.deny()
   await expect(f.invoke(RPC_CHANNELS.notes.LIST_TASKS, ['x'])).rejects.toThrow()
+})
+
+test('#1574 principal mode enumerates the vault once per listTasks call', async () => {
+  const f = await fixture()
+  const ids: string[] = []
+  for (const name of ['P1', 'P2', 'P3']) {
+    const note: NoteDocument = await f.invoke(RPC_CHANNELS.notes.CREATE, name, undefined, op(`c${name}`, null))
+    ids.push(note.id)
+  }
+  const sync = (f.deps as unknown as { nativeData: { sync: { pull: (...a: unknown[]) => unknown } } }).nativeData.sync
+  const original = sync.pull
+  let pulls = 0
+  sync.pull = (...args: unknown[]) => { pulls++; return original(...args) }
+  try {
+    const entries = await f.invoke(RPC_CHANNELS.notes.LIST_TASKS, ids)
+    expect(entries).toHaveLength(3)
+    const batched = pulls
+    pulls = 0
+    await f.invoke(RPC_CHANNELS.notes.LIST_TASKS, [ids[0]])
+    // One enumeration regardless of batch size.
+    expect(pulls).toBeGreaterThan(0)
+    expect(batched).toBe(pulls)
+  } finally {
+    sync.pull = original
+  }
 })

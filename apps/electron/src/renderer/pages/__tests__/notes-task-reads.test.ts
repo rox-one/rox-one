@@ -58,7 +58,7 @@ const effectCallback = (name: string, kind: 'useEffect' | 'useLayoutEffect', dep
   return `const ${name} = ${callback.getText(ast)};`
 }
 const executable = ts.transpileModule(
-  moduleHelper('listedNoteContent') + '\n' + moduleHelper('extractTasks') + '\n' + moduleHelper('tasksFromRead') + '\nconst NOTE_TASKS_BATCH = 200;\n'
+  moduleHelper('listedNoteContent') + '\n' + moduleHelper('extractTasks') + '\n' + moduleHelper('isUnsupportedRpcError') + '\n' + moduleHelper('tasksFromRead') + '\nconst NOTE_TASKS_BATCH = 200;\n'
   + callback('refreshNotes') + callback('refreshTasks') + '\n'
   + effectCallback('resetEffect', 'useLayoutEffect', '[activeWorkspaceId]', 'cachedNotesList(activeWorkspaceId)') + '\n'
   + effectCallback('syncClaimEffect', 'useEffect', '[notes]') + '\n'
@@ -455,7 +455,7 @@ describe('#1574 notes:listTasks replaces the per-note read loop', () => {
   })
 
   test('a server without notes:listTasks falls back to per-note reads', async () => {
-    const legacy = fixture({ listNoteTasks: async () => { throw new Error('no handler') } })
+    const legacy = fixture({ listNoteTasks: async () => { throw Object.assign(new Error('No handler for: notes:listTasks'), { code: 'CHANNEL_NOT_FOUND' }) } })
     try {
       const mounted = legacy.refreshNotes({ mount: true })
       legacy.listing.resolve([summary('n1', 100), summary('n2', 200)])
@@ -467,6 +467,19 @@ describe('#1574 notes:listTasks replaces the per-note read loop', () => {
       expect(legacy.state.allTasks.at(-1)?.map(task => task.text).sort()).toEqual(['alpha', 'beta', 'gamma'])
     } finally {
       legacy.stop()
+    }
+  })
+
+  test('a denial does not fan out into per-note reads', async () => {
+    const denied = fixture({ listNoteTasks: async () => { throw Object.assign(new Error('forbidden'), { code: 'PERMISSION_DENIED' }) } })
+    try {
+      const mounted = denied.refreshNotes({ mount: true })
+      denied.listing.resolve([summary('n1', 100), summary('n2', 200)])
+      await mounted
+      await settle()
+      expect([...denied.readCount]).toEqual([])
+    } finally {
+      denied.stop()
     }
   })
 })

@@ -1580,10 +1580,12 @@ async function findNativeNote(
   deps: HandlerDeps,
   context: NativeNotesContext,
   noteId: string,
+  /** Snapshot already loaded for this request (#1574 batch reads); loaded here when absent. */
+  preloaded?: JournalEntitySnapshot[],
 ): Promise<{ entity: JournalEntitySnapshot; file: { path: string; content: string }; entities: JournalEntitySnapshot[] }> {
   const safeId = assertSafeNoteId(noteId)
   const relativePath = `${NOTES_DIR}/${safeId}.md`
-  const entities = await nativeNoteEntities(deps, context)
+  const entities = preloaded ?? await nativeNoteEntities(deps, context)
   for (const entity of entities) {
     const file = entity.files.find(item => item.path === relativePath)
     if (file) return { entity, file, entities }
@@ -1909,16 +1911,19 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   // #1574: tasks for many notes in one call. Same read path (and ACL) as
   // notes:read per id; unreadable/missing notes are skipped, not fatal.
   server.handle(RPC_CHANNELS.notes.LIST_TASKS, async (ctx, workspaceId: string, noteIds: unknown): Promise<NoteTasksEntry[]> => {
-    if (!Array.isArray(noteIds) || noteIds.length > NOTE_TASKS_MAX_IDS || !noteIds.every(id => typeof id === 'string')) {
-      throw new Error(`notes:listTasks expects at most ${NOTE_TASKS_MAX_IDS} note ids`)
-    }
+    if (!Array.isArray(noteIds)) throw new CodedError('INVALID_PAYLOAD', 'notes:listTasks expects noteIds to be an array of strings')
+    if (noteIds.length > NOTE_TASKS_MAX_IDS) throw new CodedError('INVALID_PAYLOAD', `notes:listTasks accepts at most ${NOTE_TASKS_MAX_IDS} note ids (got ${noteIds.length})`)
+    if (!noteIds.every(id => typeof id === 'string')) throw new CodedError('INVALID_PAYLOAD', 'notes:listTasks expects every note id to be a string')
     const ids = [...new Set(noteIds as string[])]
     const context = ctx.principal ? nativeNotesContext(deps, ctx, workspaceId, 'read') : null
+    // Principal mode: enumerate the vault once per call and resolve every id
+    // against that snapshot (findNativeNote would otherwise rescan per id).
+    const entities = context && ids.length > 0 ? await nativeNoteEntities(deps, context) : undefined
     const readOne = async (noteId: string): Promise<NoteDocument> => {
       const read = rpcNotesReadResult({ source: 'native', nativeId: noteId })
       if (!isClaimableLive(read.result)) throw new Error('note read is not live')
       if (context) {
-        const found = await findNativeNote(deps, context, noteId)
+        const found = await findNativeNote(deps, context, noteId, entities)
         return nativeNoteDocument(deps, context, found.entity, found.file, found.entities)
       }
       return nativeContent.readNote(ctx, workspaceId, noteId)

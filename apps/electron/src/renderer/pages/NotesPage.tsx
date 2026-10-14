@@ -408,6 +408,17 @@ function extractTasks(note: NoteDocument | NoteSummary, content: string): NoteTa
 /** #1574: max ids per `notes:listTasks` call (mirrors NOTE_TASKS_MAX_IDS). */
 const NOTE_TASKS_BATCH = 200
 
+/**
+ * #1574: only a server that does not know `notes:listTasks` (older remote/SSH
+ * host) triggers the per-note fallback; permission or validation failures do not.
+ */
+function isUnsupportedRpcError(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code
+  if (code === 'CHANNEL_NOT_FOUND' || code === 'UNSUPPORTED_OPERATION') return true
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : ''
+  return /no handler for|unknown channel|not supported|unsupported channel/i.test(message)
+}
+
 /** Task rows from either a full document (readNote) or a server task entry (listNoteTasks). */
 function tasksFromRead(value: NoteDocument | NoteTasksEntry): NoteTask[] {
   if ('tasks' in value && Array.isArray(value.tasks)) {
@@ -1097,9 +1108,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     for (let start = 0; listTasks && start < batchIds.length; start += NOTE_TASKS_BATCH) {
       const chunk = batchIds.slice(start, start + NOTE_TASKS_BATCH)
       // A server without `notes:listTasks` (older remote/SSH host) rejects the
-      // batch: fall back to the per-note reads for that chunk.
+      // batch as unsupported: fall back to per-note reads for that chunk. Any
+      // other failure (e.g. a denial) fails the chunk's notes like a read would.
       const workspaceId = activeWorkspaceId
-      const batch: Promise<NoteTasksEntry[] | null> = listTasks(workspaceId, chunk.map(item => item.id)).then(entries => entries, () => null)
+      const batch: Promise<NoteTasksEntry[] | null> = listTasks(workspaceId, chunk.map(item => item.id))
+        .then(entries => entries, (error: unknown) => { if (isUnsupportedRpcError(error)) return null; throw error })
       for (const { id, key } of chunk) {
         const read: Promise<NoteDocument | NoteTasksEntry | undefined> = batch.then<NoteDocument | NoteTasksEntry | undefined>(entries => entries
           ? entries.find(entry => entry.id === id)
