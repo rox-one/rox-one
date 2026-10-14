@@ -625,6 +625,15 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.teamChat.LIST_MESSAGES,
   RPC_CHANNELS.teamChat.POST,
   RPC_CHANNELS.teamChat.MARK_READ,
+  // Team calls (LiveKit join/leave/sync, transcripts, call list) and org-wide
+  // message search read/write the same org-scoped local messenger store and go
+  // through the same org authorization path as the messenger channels above.
+  RPC_CHANNELS.teamChat.CALL_JOIN,
+  RPC_CHANNELS.teamChat.CALL_LEAVE,
+  RPC_CHANNELS.teamChat.CALL_SYNC,
+  RPC_CHANNELS.teamChat.CALL_TRANSCRIPT,
+  RPC_CHANNELS.teamChat.CALL_LIST,
+  RPC_CHANNELS.teamChat.SEARCH,
   RPC_CHANNELS.teamChat.CHANGED,
 
   // identity — profile + service connections (Identity Center, S-07)

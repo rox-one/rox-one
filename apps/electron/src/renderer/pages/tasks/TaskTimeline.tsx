@@ -14,12 +14,13 @@ import {
 } from '@/components/gantt/gantt-engine'
 import { useGanttDrag, useTrackWidth } from '@/components/gantt/use-gantt'
 import {
-  dragPatch, dropPatch, groupTasks, partitionTasks, timelineRange, type SchedulePatch, type TimelineGroup, type TimelineGroupBy,
+  dependencyEdges, dragPatch, dropPatch, groupTasks, type DependencyEdge, partitionTasks, timelineRange, type SchedulePatch, type TimelineGroup, type TimelineGroupBy,
 } from './timeline-model'
 
 export const TIMELINE_DRAG_TYPE = 'application/x-rox-timeline-task'
 const LABEL_COL = 220
 const ROW_H = 28
+const GROUP_H = 24
 const ZOOMS: { id: Exclude<GanttZoom, 'fit'>; label: string }[] = [
   { id: 'day', label: 'entities.ui.date.tab.day' },
   { id: 'week', label: 'entities.ui.gantt.zoom.week' },
@@ -45,17 +46,20 @@ export interface TaskTimelineProps {
   onSelect: (id: string) => void
   onSchedule: (id: string, patch: SchedulePatch) => void
   groupTitle: (group: TimelineGroup) => string
+  /** Fixed window (e.g. Моя неделя, Mon–Sun) fitted to the width; hides the zoom control. */
+  fixedRange?: GanttRange
 }
 
-export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, onZoom, onGroupBy, onSelect, onSchedule, groupTitle }: TaskTimelineProps) {
+export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, onZoom, onGroupBy, onSelect, onSchedule, groupTitle, fixedRange }: TaskTimelineProps) {
   const { t } = useTranslation()
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const trackRef = React.useRef<HTMLDivElement>(null)
   const viewport = useTrackWidth(scrollRef)
   const { scheduled, unscheduled } = React.useMemo(() => partitionTasks(tasks, today), [tasks, today])
   const spanById = React.useMemo(() => new Map(scheduled.map((s) => [s.task.id, s.span])), [scheduled])
-  const range = React.useMemo(() => timelineRange(scheduled.map((s) => s.span), today), [scheduled, today])
-  const scale = zoomScale(range, zoom, Math.max(0, viewport - LABEL_COL))
+  const autoRange = React.useMemo(() => timelineRange(scheduled.map((s) => s.span), today), [scheduled, today])
+  const range = fixedRange ?? autoRange
+  const scale = zoomScale(range, fixedRange ? 'fit' : zoom, Math.max(0, viewport - LABEL_COL))
   const { pxPerDay, trackWidth } = scale
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const ticks = React.useMemo(() => ganttTicks(range, scale, locale), [range, pxPerDay, locale])
@@ -115,18 +119,31 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
   }
 
   rowOrderRef.current = groups.flatMap((g) => g.tasks.map((task) => task.id))
+  // Row centre y per task, for dependency arrows (group headers are GROUP_H tall).
+  const rowY = new Map<string, number>()
+  {
+    let y = 0
+    for (const group of groups) {
+      if (groupBy !== 'none') y += GROUP_H
+      for (const task of group.tasks) { rowY.set(task.id, y + ROW_H / 2); y += ROW_H }
+    }
+  }
+  const liveSpans = drag && spanById.has(drag.id)
+    ? new Map(spanById).set(drag.id, applySpanDrag(spanById.get(drag.id)!, drag.mode, drag.deltaDays))
+    : spanById
+  const edges = dependencyEdges(scheduled.map((s) => s.task), liveSpans)
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="tasks-timeline">
       <div className="flex shrink-0 flex-wrap items-center gap-2 px-3.5 pb-1.5 text-sm">
-        <div role="radiogroup" aria-label={t('entities.ui.gantt.zoom')} className="inline-flex rounded-[var(--radius-control)] border border-border-subtle p-0.5">
+        {fixedRange ? null : <div role="radiogroup" aria-label={t('entities.ui.gantt.zoom')} className="inline-flex rounded-[var(--radius-control)] border border-border-subtle p-0.5">
           {ZOOMS.map((z) => (
             <button key={z.id} type="button" role="radio" aria-checked={zoom === z.id} data-testid={`timeline-zoom-${z.id}`} onClick={() => onZoom(z.id)}
               className={cn('rounded-[var(--radius-control)] px-2 py-0.5', zoom === z.id ? 'bg-accent text-accent-foreground' : 'text-text-secondary hover:bg-surface-hover')}>
               {t(z.label)}
             </button>
           ))}
-        </div>
+        </div>}
         <div role="radiogroup" aria-label={t('collection.display.groupByLabel')} data-testid="timeline-group" className="inline-flex rounded-[var(--radius-control)] border border-border-subtle p-0.5">
           {GROUPS.map((g) => (
             <button key={g.id} type="button" role="radio" aria-checked={groupBy === g.id} data-testid={`timeline-group-${g.id}`} onClick={() => onGroupBy(g.id)}
@@ -150,6 +167,7 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
             <div ref={trackRef} className="pointer-events-none absolute inset-y-0" style={{ left: LABEL_COL, width: trackWidth }}>
               {ticks.filter((tk) => tk.major).map((tick) => <span key={tick.left} style={{ left: tick.left }} className="absolute inset-y-0 w-px bg-border-subtle" />)}
               {todayLeft != null ? <span data-testid="timeline-today" title={t('entities.ui.gantt.today')} style={{ left: todayLeft }} className="absolute inset-y-0 w-px bg-accent" /> : null}
+              <DependencyArrows edges={edges} rows={rowY} spans={liveSpans} range={range} pxPerDay={pxPerDay} trackWidth={trackWidth} />
               {dropDay ? <span style={barGeometry(range, { start: dropDay, end: dropDay }, pxPerDay)} className="absolute inset-y-0 bg-accent/15" /> : null}
             </div>
             {scheduled.length === 0 ? (
@@ -157,7 +175,7 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
             ) : groups.map((group) => (
               <React.Fragment key={group.key}>
                 {groupBy !== 'none' ? (
-                  <div className="sticky left-0 px-3 pt-2 text-xs font-medium uppercase text-text-muted" style={{ width: LABEL_COL }}>{groupTitle(group)}</div>
+                  <div className="sticky left-0 flex items-end px-3 text-xs font-medium uppercase text-text-muted" style={{ width: LABEL_COL, height: GROUP_H }}>{groupTitle(group)}</div>
                 ) : null}
                 {group.tasks.map((task) => {
                   const base = spanById.get(task.id)!
@@ -277,3 +295,41 @@ const TimelineRow = React.memo(function TimelineRow({ task, span, range, totalDa
     </div>
   )
 })
+
+/** Finish-to-start arrows (blocker end → blocked start); red when violated. */
+function DependencyArrows({ edges, rows, spans, range, pxPerDay, trackWidth }: {
+  edges: DependencyEdge[]
+  rows: ReadonlyMap<string, number>
+  spans: ReadonlyMap<string, GanttSpan>
+  range: GanttRange
+  pxPerDay: number
+  trackWidth: number
+}) {
+  if (!edges.length || pxPerDay <= 0) return null
+  const height = Math.max(0, ...rows.values()) + ROW_H
+  return (
+    <svg data-testid="timeline-deps" className="absolute left-0 top-0 overflow-visible" width={trackWidth} height={height} aria-hidden>
+      {edges.map((edge) => {
+        const a = barGeometry(range, spans.get(edge.from)!, pxPerDay)
+        const b = barGeometry(range, spans.get(edge.to)!, pxPerDay)
+        const y1 = rows.get(edge.from), y2 = rows.get(edge.to)
+        if (y1 == null || y2 == null) return null
+        const x1 = a.left + a.width, x2 = b.left
+        const elbow = Math.max(x1 + 6, Math.min(x2 - 6, x1 + 12))
+        return (
+          <path key={`${edge.from}>${edge.to}`} data-testid={`timeline-dep-${edge.from}-${edge.to}`} data-violated={edge.violated || undefined}
+            d={`M${x1},${y1} H${elbow} V${y2} H${x2}`} fill="none" strokeWidth={1.25}
+            className={edge.violated ? 'stroke-destructive' : 'stroke-text-muted'} markerEnd={edge.violated ? 'url(#timeline-dep-head-bad)' : 'url(#timeline-dep-head)'} />
+        )
+      })}
+      <defs>
+        <marker id="timeline-dep-head" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L6,3 L0,6 z" className="fill-text-muted" />
+        </marker>
+        <marker id="timeline-dep-head-bad" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L6,3 L0,6 z" className="fill-destructive" />
+        </marker>
+      </defs>
+    </svg>
+  )
+}
