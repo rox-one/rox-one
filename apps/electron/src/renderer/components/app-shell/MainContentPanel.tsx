@@ -49,7 +49,7 @@ import {
   isTerminalNavigation,
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
-import { isScreenNavigation, isSurfaceNavigation, isMissionsNavigation, type LoadedSource, type LoadedSkill, type NavigationState } from '../../../shared/types'
+import { isScreenNavigation, isSurfaceNavigation, isMissionsNavigation, isCookbooksNavigation, type LoadedSource, type LoadedSkill, type NavigationState } from '../../../shared/types'
 import { buildRouteFromNavigationState } from '../../../shared/route-parser'
 import ChatPage from '@/pages/ChatPage'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
@@ -114,6 +114,7 @@ const KnowledgeProposals = lazyRoutePage(ROUTE_PAGE_LOADERS.knowledgeProposals)
 const DevSpaceHomePage = lazyRoutePage(ROUTE_PAGE_LOADERS.devSpaceHome)
 const DevSpaceRepoPage = lazyRoutePage(ROUTE_PAGE_LOADERS.devSpaceRepo)
 const PlaybooksHomePage = lazyRoutePage(ROUTE_PAGE_LOADERS.playbooksHome)
+const CookbooksSurfacePage = lazyRoutePage(ROUTE_PAGE_LOADERS.cookbooks)
 // #1675: these eight screens were static imports, so their subtrees (including
 // the shiki diff stack behind memory/ImportReviewDialog) rode main.tsx's eager
 // startup closure, which index.html preloads whole. Same lazy idiom as above.
@@ -716,6 +717,14 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <PlaybooksHomePage />
+      </Panel>
+    )
+  }
+
+  if (isCookbooksNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <CookbooksSurfacePage />
       </Panel>
     )
   }

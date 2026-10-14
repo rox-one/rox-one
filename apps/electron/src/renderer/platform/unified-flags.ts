@@ -45,6 +45,23 @@ export const W1_07_FLAG_IDS = [
 ] as const
 
 /**
+ * Cookbooks surface (`cookbooks.v1`) kill-switch atom — default ON.
+ *
+ * A dedicated atom is required even though the flag carries no sub-flags:
+ * `genericFlagIds()` only serves `defaultValue === false` flags, so a
+ * default-ON flag never reaches `enabledShellFlagsAtom` from the generic store
+ * and the `shellFlag` nav gate would hide the surface unconditionally. The
+ * storage key matches `workbenchFlagAtom`, so a manual
+ * `craft-workbench-flag:cookbooks.v1 = false` still turns it off.
+ */
+const cookbooksEnabledAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.workbenchFlag, WORKBENCH_FLAG.cookbooksV1),
+  true,
+  undefined,
+  { getOnInit: true },
+)
+
+/**
  * Flags with a dedicated renderer atom (their own Settings toggle and storage
  * key) whose REAL value the shell reports in `enabledShellFlagsAtom` and the
  * Omnibox context keys. Never served by the generic store.
@@ -58,6 +75,8 @@ export const DEDICATED_FLAG_ATOMS: ReadonlyMap<string, Atom<boolean>> = new Map<
   // (playbooks.v1) own dedicated atoms; their sub-flags stay in the generic store.
   [WORKBENCH_FLAG.devSpaceV1, devSpaceEnabledAtom],
   [WORKBENCH_FLAG.playbooksV1, playbooksEnabledAtom],
+  // Cookbooks (cookbooks-surface program): default-ON kill-switch.
+  [WORKBENCH_FLAG.cookbooksV1, cookbooksEnabledAtom],
   // W1-09 (#1506) owns notify.inbox.v1: the Inbox notification surface.
   [WORKBENCH_FLAG.notifyInboxV1, featureNotifyInboxV1Atom],
 ])

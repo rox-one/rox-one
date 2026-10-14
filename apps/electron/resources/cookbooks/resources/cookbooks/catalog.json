@@ -1,0 +1,183 @@
+{
+  "version": 1,
+  "revision": "2026-10-13-fixtures",
+  "secretMap": {
+    "openai.api_key": "OPENAI_API_KEY",
+    "anthropic.api_key": "ANTHROPIC_API_KEY",
+    "pinecone.api_key": "PINECONE_API_KEY",
+    "weaviate.api_key": "WEAVIATE_API_KEY",
+    "langfuse.public_key": "LANGFUSE_PUBLIC_KEY",
+    "langfuse.secret_key": "LANGFUSE_SECRET_KEY"
+  },
+  "topics": [
+    "embeddings",
+    "rag",
+    "agents",
+    "observability",
+    "getting-started",
+    "tools",
+    "search",
+    "evaluation",
+    "vision"
+  ],
+  "tags": [
+    "beginner",
+    "intermediate",
+    "advanced",
+    "api",
+    "tools",
+    "search",
+    "chunking",
+    "evaluation",
+    "tracing",
+    "vision",
+    "gpu",
+    "docker",
+    "unsupported"
+  ],
+  "items": [
+    {
+      "id": "openai-embeddings-intro",
+      "title": "OpenAI embeddings intro",
+      "vendor": "openai",
+      "topics": ["embeddings", "getting-started"],
+      "tags": ["beginner", "api"],
+      "kind": "ipynb",
+      "path": "vendors/openai/embeddings-intro.ipynb",
+      "requiredSecrets": ["openai.api_key"],
+      "python": { "dependencies": [] }
+    },
+    {
+      "id": "openai-function-calling",
+      "title": "OpenAI function calling",
+      "vendor": "openai",
+      "topics": ["agents", "tools"],
+      "tags": ["api", "tools"],
+      "kind": "ipynb",
+      "path": "vendors/openai/function-calling.ipynb",
+      "requiredSecrets": ["openai.api_key"],
+      "python": { "dependencies": [] }
+    },
+    {
+      "id": "openai-vision-gpu-docker",
+      "title": "OpenAI vision fine-tune (GPU, Docker)",
+      "vendor": "openai",
+      "topics": ["vision"],
+      "tags": ["unsupported", "gpu", "docker", "vision", "advanced"],
+      "kind": "ipynb",
+      "path": "vendors/openai/vision-gpu-docker.ipynb",
+      "requiredSecrets": ["openai.api_key"],
+      "python": { "dependencies": ["torch", "transformers"] }
+    },
+    {
+      "id": "anthropic-prompt-playbook",
+      "title": "Anthropic prompting playbook",
+      "vendor": "anthropic",
+      "topics": ["getting-started", "agents"],
+      "tags": ["beginner"],
+      "kind": "md",
+      "path": "vendors/anthropic/prompt-playbook.md",
+      "requiredSecrets": ["anthropic.api_key"],
+      "python": { "dependencies": [] }
+    },
+    {
+      "id": "anthropic-tool-use",
+      "title": "Anthropic tool use",
+      "vendor": "anthropic",
+      "topics": ["agents", "tools"],
+      "tags": ["api", "tools"],
+      "kind": "ipynb",
+      "path": "vendors/anthropic/tool-use.ipynb",
+      "requiredSecrets": ["anthropic.api_key"],
+      "python": { "dependencies": [] }
+    },
+    {
+      "id": "pinecone-rag-quickstart",
+      "title": "Pinecone RAG quickstart",
+      "vendor": "pinecone",
+      "topics": ["rag", "embeddings"],
+      "tags": ["beginner", "api"],
+      "kind": "ipynb",
+      "path": "vendors/pinecone/rag-quickstart.ipynb",
+      "requiredSecrets": ["pinecone.api_key"],
+      "python": { "dependencies": [] }
+    },
+    {
+      "id": "pinecone-hybrid-search",
+      "title": "Pinecone hybrid search",
+      "vendor": "pinecone",
+      "topics": ["rag", "search"],
+      "tags": ["search", "intermediate", "api"],
+      "kind": "ipynb",
+      "path": "vendors/pinecone/hybrid-search.ipynb",
+      "requiredSecrets": ["pinecone.api_key"],
+      "python": { "dependencies": [] }
+    },
+    {
+      "id": "weaviate-rag-quickstart",
+      "title": "Weaviate RAG quickstart",
+      "vendor": "weaviate",
+      "topics": ["rag", "embeddings"],
+      "tags": ["beginner", "api"],
+      "kind": "ipynb",
+      "path": "vendors/weaviate/rag-quickstart.ipynb",
+      "requiredSecrets": ["weaviate.api_key"],
+      "python": { "dependencies": [] }
+    },
+    {
+      "id": "weaviate-multi-tenancy",
+      "title": "Weaviate multi-tenancy",
+      "vendor": "weaviate",
+      "topics": ["rag", "search"],
+      "tags": ["intermediate", "api"],
+      "kind": "ipynb",
+      "path": "vendors/weaviate/multi-tenancy.ipynb",
+      "requiredSecrets": ["weaviate.api_key"],
+      "python": { "dependencies": [] }
+    },
+    {
+      "id": "langfuse-observe-llm",
+      "title": "Langfuse observe an LLM call",
+      "vendor": "langfuse",
+      "topics": ["observability", "getting-started"],
+      "tags": ["tracing", "beginner"],
+      "kind": "ipynb",
+      "path": "vendors/langfuse/observe-llm.ipynb",
+      "requiredSecrets": ["langfuse.public_key", "langfuse.secret_key"],
+      "python": { "dependencies": [] }
+    },
+    {
+      "id": "langfuse-evaluation",
+      "title": "Langfuse evaluation scores",
+      "vendor": "langfuse",
+      "topics": ["observability", "evaluation"],
+      "tags": ["evaluation", "tracing"],
+      "kind": "ipynb",
+      "path": "vendors/langfuse/evaluation.ipynb",
+      "requiredSecrets": ["langfuse.public_key", "langfuse.secret_key"],
+      "python": { "dependencies": [] }
+    },
+    {
+      "id": "langchain-rag-chain",
+      "title": "LangChain RAG chain",
+      "vendor": "langchain",
+      "topics": ["rag", "agents"],
+      "tags": ["beginner", "api"],
+      "kind": "ipynb",
+      "path": "vendors/langchain/rag-chain.ipynb",
+      "requiredSecrets": ["openai.api_key"],
+      "python": { "dependencies": [] }
+    },
+    {
+      "id": "langchain-agents",
+      "title": "LangChain agent loop",
+      "vendor": "langchain",
+      "topics": ["agents", "tools"],
+      "tags": ["tools", "api"],
+      "kind": "ipynb",
+      "path": "vendors/langchain/agents.ipynb",
+      "requiredSecrets": ["openai.api_key"],
+      "python": { "dependencies": [] }
+    }
+  ]
+}

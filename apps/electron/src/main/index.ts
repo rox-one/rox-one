@@ -149,6 +149,7 @@ import { handleDeepLink } from './deep-link'
 import { loadPersistedEntitiesLinksFlag, registerEntitiesLinksIpc } from './entities-flags'
 import { BrowserPaneManager } from './browser-pane-manager'
 import { OpenDesignRuntimeManager, isTrustedOpenDesignIpcEvent, registerOpenDesignIpcHandlers } from './open-design-runtime'
+import { initializeCookbooksRuntime, stopCookbooksRuntime } from './cookbooks-runtime'
 import { OpenDesignWindowController } from './open-design-window'
 import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
@@ -909,6 +910,10 @@ app.whenReady().then(async () => {
       isTrustedSender: isTrustedRoxRendererIpcEvent,
       runtime: openDesignRuntime,
     })
+
+    // Cookbooks Lab sidecar — lazily spawned on the first cookbooksLab.ensure();
+    // stopped idempotently in performQuitCleanup().
+    initializeCookbooksRuntime({ log: (level, msg) => mainLog[level](msg) })
 
     // When CRAFT_SERVER_URL is set, this Electron instance is a thin client —
     // it only creates windows whose preload connects to the remote server.
@@ -2405,6 +2410,13 @@ async function performQuitCleanup(): Promise<void> {
     } catch (err) {
       mainLog.warn('[open-design] shutdown failed:', err instanceof Error ? err.message : err)
     }
+  }
+
+  // Cookbooks Lab sidecar: SIGINT → grace → kill; idempotent.
+  try {
+    await stopCookbooksRuntime()
+  } catch (err) {
+    mainLog.warn('[cookbooks] shutdown failed:', err instanceof Error ? err.message : err)
   }
 
   if (process.env.ROX_SERVER_UTILITY_PROCESS) {

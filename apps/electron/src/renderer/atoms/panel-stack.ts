@@ -13,7 +13,7 @@ function generatePanelId(): string {
   return `panel-${++nextPanelId}-${Date.now()}`
 }
 
-export type PanelType = 'session' | 'source' | 'settings' | 'skills' | 'browser' | 'knowledge' | 'clipboard-history' | 'other'
+export type PanelType = 'session' | 'source' | 'settings' | 'skills' | 'browser' | 'knowledge' | 'clipboard-history' | 'cookbooks' | 'other'
 export type PanelLaneId = 'main'
 export type OpenIntent = 'implicit' | 'explicit'
 
@@ -39,7 +39,7 @@ export const PANEL_LANE_POLICIES: Record<PanelLaneId, PanelLanePolicy> = {
   main: {
     id: 'main',
     order: 0,
-    allowedTypes: ['session', 'source', 'settings', 'skills', 'browser', 'knowledge', 'clipboard-history', 'other'],
+    allowedTypes: ['session', 'source', 'settings', 'skills', 'browser', 'knowledge', 'clipboard-history', 'cookbooks', 'other'],
     locked: false,
     singleton: false,
   },
@@ -163,6 +163,10 @@ export function getPanelTypeFromRoute(route: ViewRoute): PanelType {
       return 'knowledge'
     case 'clipboard-history':
       return 'clipboard-history'
+    // Cookbooks surface (cookbooks-surface program) — its own panel type so
+    // the tab strip can label/icon it apart from the generic «Панель».
+    case 'cookbooks':
+      return 'cookbooks'
     case 'home':
       return 'other'
     default:

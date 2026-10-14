@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="color-scheme" content="light"/>
+<title>ROX Cookbooks Lab</title>
+<style>
+  :root{
+    --bg:#F6F4F0; --panel:#FFFFFF; --panel-2:#FBFAF8;
+    --ink:#1B1A18; --ink-2:#5C5850; --ink-3:#716C63;
+    --line:#E7E3DB; --line-2:#D8D3C8;
+    --accent:#2D3FCF; --accent-hover:#2434AC; --accent-tint:#EDF0FE;
+    --ok:#136F35; --ok-tint:#E8F5EC;
+    --err:#B42318; --err-tint:#FCEDEB;
+    --warn:#8A5B00; --warn-tint:#FFF3D6;
+    --radius-lg:12px; --radius:10px; --radius-sm:8px; --radius-xs:6px;
+    --shadow-1:0 1px 2px rgb(27 26 24 / .06);
+    --shadow-2:0 6px 16px rgb(27 26 24 / .10);
+    --dur-fast:120ms; --dur:180ms; --dur-slow:240ms;
+    --ease:cubic-bezier(.2,.7,.2,1);
+    --font:"Rox Mono Typeface",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --font-strong:"Rox Mono Typeface Semibold","Rox Mono Typeface",ui-monospace,Menlo,monospace;
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  html,body{height:100%}
+  body{
+    margin:0;
+    display:grid;
+    grid-template-columns:300px minmax(0,1fr);
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font);
+    font-size:12.5px;
+    line-height:1.5;
+  }
+  ::selection{background:var(--accent-tint)}
+  [hidden]{display:none!important}
+  h1{margin:0}
+  button{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+  /* Скроллбары */
+  *::-webkit-scrollbar{width:10px;height:10px}
+  *::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:999px}
+  *::-webkit-scrollbar-track{background:transparent}
+
+  /* Сайдбар */
+  .sidebar{
+    height:100vh;
+    overflow-y:auto;
+    background:var(--panel);
+    border-right:1px solid var(--line);
+    padding-bottom:12px;
+  }
+  .sidebar-head{
+    position:sticky;
+    top:0;
+    z-index:1;
+    padding:12px 0 10px;
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{
+    display:block;
+    padding:0 16px 10px;
+    font-size:20px;
+    line-height:1.2;
+    letter-spacing:-.01em;
+  }
+  .brand strong{font-family:var(--font-strong);font-weight:600}
+  .search{position:relative;padding:0 12px}
+  .search svg{
+    position:absolute;
+    left:22px;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--ink-3);
+    pointer-events:none;
+  }
+  .search input{
+    width:100%;
+    min-height:32px;
+    padding:6px 10px 6px 32px;
+    font:inherit;
+    font-size:12px;
+    color:var(--ink);
+    background:var(--panel-2);
+    border:1px solid var(--line-2);
+    border-radius:var(--radius-sm);
+    transition:border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .search input::placeholder{color:var(--ink-3)}
+  .search input:focus-visible{border-color:var(--accent)}
+  .count{
+    padding:8px 16px 0;
+    font-size:11px;
+    color:var(--ink-3);
+    font-variant-numeric:tabular-nums;
+  }
+  .list{display:flex;flex-direction:column;gap:8px;padding:10px 12px 8px}
+  .card{
+    display:block;
+    width:100%;
+    text-align:left;
+    padding:10px 12px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+               box-shadow var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
+  }
+  .card:hover{background:var(--panel-2);box-shadow:var(--shadow-1);transform:translateY(-1px)}
+  .card:active{transform:scale(.995)}
+  .card.disabled{opacity:.55;cursor:not-allowed}
+  .card.disabled:hover{background:var(--panel);box-shadow:none;transform:none}
+  .card-title{
+    display:block;
+    font-family:var(--font-strong);
+    font-size:13px;
+    font-weight:600;
+    overflow-wrap:anywhere;
+  }
+  .card-meta{display:block;margin-top:2px;font-size:11px;color:var(--ink-3);overflow-wrap:anywhere}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:1px 6px;
+    font-size:11px;
+    color:var(--ink-2);
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius-xs);
+    overflow-wrap:anywhere;
+  }
+  .chip .dot{width:6px;height:6px;flex:none;border-radius:50%}
+  .chip.have .dot{background:var(--ok)}
+  .chip.missing .dot{background:var(--warn)}
+  .chip.missing{color:var(--warn)}
+  .empty-search{padding:28px 16px;text-align:center;font-size:12px;color:var(--ink-3)}
+  .help{margin:6px 12px 0;border-top:1px solid var(--line);padding-top:8px}
+  .help summary{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    min-height:30px;
+    font-size:12px;
+    color:var(--ink-2);
+    cursor:pointer;
+    list-style:none;
+    border-radius:var(--radius-xs);
+  }
+  .help summary::-webkit-details-marker{display:none}
+  .help summary svg{color:var(--ink-3);transition:transform var(--dur-fast) var(--ease)}
+  .help[open] summary svg{transform:rotate(180deg)}
+  .help-list{margin:8px 0 4px;font-size:11px;color:var(--ink-2)}
+  .help-list dt{font-family:var(--font-strong);color:var(--ink);margin-top:8px}
+  .help-list dt:first-child{margin-top:0}
+  .help-list dd{margin:2px 0 0}
+
+  /* Документ */
+  main{height:100vh;overflow-y:auto}
+  .topbar{position:sticky;top:0;z-index:2;padding:12px 20px 0;background:var(--bg)}
+  #banner:empty{display:none}
+  .banner{
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    margin-bottom:10px;
+    padding:8px 10px;
+    font-size:12px;
+    border:1px solid var(--line-2);
+    border-radius:var(--radius-sm);
+    background:var(--panel-2);
+  }
+  .banner svg{flex:none;margin-top:1px}
+  .banner.warn{background:var(--warn-tint);border-color:rgb(138 91 0 / .28);color:var(--warn)}
+  .banner.error{background:var(--err-tint);border-color:rgb(180 35 24 / .28);color:var(--err)}
+  #banner.banner-in .banner{animation:banner-in var(--dur-slow) var(--ease)}
+  @keyframes banner-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+  .doc-head{display:flex;flex-direction:column;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+  .doc-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  #title{font-family:var(--font-strong);font-size:17px;font-weight:600;text-wrap:balance;overflow-wrap:anywhere;min-width:0}
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:1px 7px;
+    font-size:11px;
+    color:var(--ink-2);
+    background:var(--panel-2);
+    border:1px solid var(--line-2);
+    border-radius:var(--radius-xs);
+    white-space:nowrap;
+  }
+  #copy-id{font-size:11px;color:var(--ink-3);overflow-wrap:anywhere}
+  .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .status{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-left:auto;
+    font-size:11px;
+    color:var(--ink-2);
+    font-variant-numeric:tabular-nums;
+  }
+  .spinner{
+    width:14px;
+    height:14px;
+    flex:none;
+    color:var(--ink-3);
+    border:2px solid currentColor;
+    border-top-color:transparent;
+    border-radius:50%;
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-height:32px;
+    padding:6px 10px;
+    font-size:12px;
+    line-height:1;
+    background:var(--panel);
+    color:var(--ink);
+    border:1px solid var(--line-2);
+    border-radius:var(--radius-sm);
+    transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+               color var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
+  }
+  .btn svg{flex:none}
+  .btn:hover{background:var(--panel-2)}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .btn.primary{background:var(--ink);border-color:var(--ink);color:#FFFFFF}
+  .btn.primary:hover{background:#33302B;border-color:#33302B}
+  .btn.primary:active{transform:scale(.97)}
+  .btn.ghost{background:transparent}
+  .btn.ghost:hover{background:var(--panel-2);border-color:var(--line-2)}
+  .btn.ghost:active{background:var(--panel-2);border-color:var(--ink-3)}
+  .btn.soft{background:var(--accent-tint);border-color:transparent;color:var(--accent)}
+  .btn.soft:hover{background:var(--accent-tint);border-color:var(--accent);color:var(--accent-hover)}
+  .btn.quiet{background:transparent;border-color:transparent;color:var(--ink-2)}
+  .btn.quiet:hover{background:transparent;border-color:var(--line-2);color:var(--ink)}
+
+  #cells{display:flex;flex-direction:column;gap:12px;padding:14px 20px 28px}
+  .cell{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px}
+  .cell-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .cell-no{font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .cell-actions{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  textarea{
+    display:block;
+    width:100%;
+    min-height:84px;
+    padding:8px 10px;
+    font-family:var(--font);
+    font-size:13px;
+    line-height:1.5;
+    color:var(--ink);
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius-sm);
+    resize:vertical;
+    transition:border-color var(--dur) var(--ease);
+  }
+  textarea:focus-visible{border-color:var(--accent)}
+
+  .cellout-wrap{position:relative;margin-top:8px}
+  .out-pill{position:absolute;top:5px;right:8px}
+  .out-pill.ok{color:var(--ok);border-color:rgb(19 111 53 / .35)}
+  .out-pill.error{color:var(--err);border-color:rgb(180 35 24 / .35)}
+  .out-pill.skipped{color:var(--ink-3);border-style:dashed}
+  pre.cellout{
+    margin:0;
+    padding:24px 10px 8px 12px;
+    font-family:var(--font);
+    font-size:12px;
+    line-height:1.5;
+    color:var(--ink);
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-left:3px solid var(--line-2);
+    border-radius:var(--radius-xs);
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+    overflow:auto;
+    max-height:340px;
+  }
+  pre.cellout.hint{color:var(--ink-3);font-size:11px}
+  .cellout-wrap[data-status="ok"] pre.cellout{border-left-color:var(--ok);--flash-tint:var(--ok-tint)}
+  .cellout-wrap[data-status="error"] pre.cellout{border-left-color:var(--err);--flash-tint:var(--err-tint)}
+  .cellout-wrap[data-status="skipped"] pre.cellout{border-left-color:var(--ink-3);--flash-tint:var(--line)}
+  pre.cellout.flash{animation:out-flash 600ms var(--ease)}
+  @keyframes out-flash{from{background:var(--flash-tint,var(--panel-2))}to{background:var(--panel-2)}}
+
+  .welcome{display:flex;flex-direction:column;align-items:center;gap:6px;padding:96px 24px;text-align:center}
+  .welcome-title{margin:0;font-family:var(--font-strong);font-size:15px;font-weight:600;text-wrap:balance}
+  .welcome-sub{margin:0;max-width:44ch;font-size:12px;color:var(--ink-3)}
+
+  @media (max-width:860px){
+    body{grid-template-columns:1fr}
+    .sidebar{height:auto;max-height:50vh;border-right:0;border-bottom:1px solid var(--line)}
+    main{height:auto;overflow:visible}
+    .topbar{position:static}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{transition:none!important;animation:none!important}
+  }
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-head">
+    <div class="brand"><strong>ROX</strong> Кукбуки</div>
+    <div class="search">
+      <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="7.2" cy="7.2" r="4.3"/><path d="m10.5 10.5 3 3"/></svg>
+      <input id="q" type="search" autocomplete="off" aria-label="Поиск кукбуков" placeholder="Поиск: тема, вендор, название"/>
+    </div>
+    <div class="count" id="count">Кукбуков: 0</div>
+  </div>
+  <div id="list" class="list"></div>
+  <div id="empty-search" class="empty-search" hidden>Ничего не найдено</div>
+  <details class="help">
+    <summary>
+      <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4.5 6.5 3.5 3.5 3.5-3.5"/></svg>
+      Справка
+    </summary>
+    <dl class="help-list">
+      <dt>Кукбук</dt>
+      <dd>вендорский ноутбук или плейбук из каталога; каталог read-only.</dd>
+      <dt>Личная копия</dt>
+      <dd>ваша рабочая копия; правки сохраняются в неё, оригинал не меняется.</dd>
+      <dt>Ядро и venv</dt>
+      <dd>у каждой копии своё изолированное окружение Python; создаётся при первом запуске.</dd>
+      <dt>«Запустить всё»</dt>
+      <dd>все ячейки кода выполняются по порядку в одном процессе (общее состояние); при ошибке выполнение останавливается, оставшиеся помечаются «пропущено».</dd>
+      <dt>Секреты</dt>
+      <dd>ключи ROX подставляются в окружение ядра и маскируются в выводе; в ноутбук ничего не записывается.</dd>
+      <dt>Сброс</dt>
+      <dd>возвращает копию к оригиналу каталога; правки теряются.</dd>
+      <dt>Тайм-аут ячейки</dt>
+      <dd>60 секунд на ячейку.</dd>
+    </dl>
+  </details>
+</aside>
+<main>
+  <div class="topbar">
+    <div id="banner" role="status" aria-live="polite"></div>
+    <header class="doc-head" id="doc-head" hidden>
+      <div class="doc-row">
+        <h1 id="title"></h1>
+        <span class="pill" id="kind-pill" hidden></span>
+        <span id="copy-id"></span>
+      </div>
+      <div class="toolbar">
+        <button type="button" id="run-all" class="btn primary" hidden>
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5.2 3.6 12.6 8l-7.4 4.4z" fill="currentColor" stroke="none"/></svg>
+          Запустить всё
+        </button>
+        <button type="button" id="reset" class="btn ghost">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M13 8a5 5 0 1 1-1.46-3.54"/><path d="M13.2 2.8v3.2h-3.2"/></svg>
+          Сбросить к оригиналу
+        </button>
+        <button type="button" id="new-copy" class="btn ghost">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="7.6" height="7.6" rx="1.6"/><path d="M3.2 10.4V4.8A1.6 1.6 0 0 1 4.8 3.2h5.6"/></svg>
+          Новая копия
+        </button>
+        <span id="status" class="status" role="status"><span id="spinner" class="spinner" hidden></span></span>
+      </div>
+    </header>
+  </div>
+  <div id="welcome" class="welcome">
+    <p class="welcome-title">Выберите кукбук слева</p>
+    <p class="welcome-sub">Каталог вендорских ноутбуков: выберите пункт, чтобы открыть личную копию.</p>
+  </div>
+  <div id="cells"></div>
+</main>
+<script>
+// Bearer-токен берётся только из URL; его значение никогда не попадает в разметку.
+const TOKEN = new URLSearchParams(location.search).get("token") || "";
+const auth = { "Authorization": "Bearer " + TOKEN, "Content-Type": "application/json" };
+let current = null;
+let currentCopyId = "";
+// Ссылки на DOM ячеек открытого документа: «Запустить всё» пишет вывод в каждую.
+let currentCells = [];
+
+// Сборка узлов из DOM: дети — текстовые узлы или элементы, разметка не применяется.
+function el(tag, props, ...children) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(props || {})) {
+    if (value === undefined || value === null) continue;
+    if (key.startsWith("on")) node.addEventListener(key.slice(2).toLowerCase(), value);
+    else if (key === "className" || key === "value" || key === "textContent") node[key] = value;
+    else node.setAttribute(key, String(value));
+  }
+  for (const child of children.flat()) {
+    if (child === undefined || child === null || child === false) continue;
+    node.append(child instanceof Node ? child : document.createTextNode(String(child)));
+  }
+  return node;
+}
+
+function message(err) {
+  return err && err.message ? String(err.message) : String(err);
+}
+
+// Инлайн-иконки: 16×16, stroke currentColor, ширина 1.5, круглые окончания.
+const SVG_NS = "http://www.w3.org/2000/svg";
+function icon(shapes) {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", "0 0 16 16");
+  svg.setAttribute("width", "16");
+  svg.setAttribute("height", "16");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "1.5");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  for (const [tag, attrs] of shapes) {
+    const node = document.createElementNS(SVG_NS, tag);
+    for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+    svg.append(node);
+  }
+  return svg;
+}
+const ICON_PLAY = () => icon([["path", { d: "M5.2 3.6 12.6 8l-7.4 4.4z", fill: "currentColor", stroke: "none" }]]);
+const ICON_CHECK = () => icon([["path", { d: "m3.4 8.6 3 3 6.2-7.4" }]]);
+const ICON_ALERT = () => icon([
+  ["path", { d: "M8 2.6 14.4 13H1.6z" }],
+  ["path", { d: "M8 6.2v3.2" }],
+  ["path", { d: "M8 11.4h.01" }]
+]);
+
+const bannerNode = document.getElementById("banner");
+const statusNode = document.getElementById("status");
+const spinnerNode = document.getElementById("spinner");
+const titleNode = document.getElementById("title");
+const kindNode = document.getElementById("kind-pill");
+const copyNode = document.getElementById("copy-id");
+const docHead = document.getElementById("doc-head");
+const welcomeNode = document.getElementById("welcome");
+const cellsNode = document.getElementById("cells");
+const listNode = document.getElementById("list");
+const countNode = document.getElementById("count");
+const emptyNode = document.getElementById("empty-search");
+const qInput = document.getElementById("q");
+const runAllBtn = document.getElementById("run-all");
+const resetBtn = document.getElementById("reset");
+const newCopyBtn = document.getElementById("new-copy");
+
+// Баннер — единственное место для предупреждений о ключах и любых сбоев запросов.
+function showBanner(text, kind) {
+  bannerNode.replaceChildren();
+  bannerNode.classList.remove("banner-in");
+  if (!text) return;
+  bannerNode.append(el("div", { className: kind === "error" ? "banner error" : "banner warn" },
+    ICON_ALERT(),
+    el("span", {}, text)));
+  // Перезапуск анимации появления (240 мс).
+  void bannerNode.offsetWidth;
+  bannerNode.classList.add("banner-in");
+}
+
+function setStatus(text) {
+  statusNode.replaceChildren(spinnerNode, document.createTextNode(text || ""));
+}
+
+// Оборачивает все асинхронные входы: ни один отказ не остаётся молчаливым.
+function action(fn) {
+  return async (...args) => {
+    try {
+      return await fn(...args);
+    } catch (err) {
+      showBanner(message(err), "error");
+      return undefined;
+    }
+  };
+}
+
+// Блокирует нажатую кнопку на время запроса (защита от двойного запуска),
+// показывает спиннер и снимает блокировку в любом случае.
+async function runBusy(button, fn) {
+  if (button) button.disabled = true;
+  const prev = statusNode.textContent;
+  spinnerNode.hidden = false;
+  setStatus("выполняется…");
+  try {
+    return await fn();
+  } catch (err) {
+    setStatus(prev);
+    throw err;
+  } finally {
+    spinnerNode.hidden = true;
+    if (button) button.disabled = false;
+  }
+}
+
+async function api(method, path, body) {
+  let res;
+  try {
+    res = await fetch(path, { method, headers: auth, body: body ? JSON.stringify(body) : undefined });
+  } catch (err) {
+    throw new Error(method + " " + path + " failed: " + message(err));
+  }
+  let data = null;
+  try {
+    data = await res.json();
+  } catch (err) {
+    data = null;
+  }
+  if (!res.ok) {
+    throw new Error((data && data.error) || method + " " + path + " returned HTTP " + res.status);
+  }
+  return data;
+}
+
+function kindLabel(kind) {
+  return kind === "md" ? "плейбук" : "ноутбук";
+}
+
+function chipNode(key, present) {
+  return el("span", { className: "chip " + (present ? "have" : "missing") },
+    el("span", { className: "dot", "aria-hidden": "true" }),
+    key + " · " + (present ? "ключ есть" : "нет ключа"));
+}
+
+function cardNode(card) {
+  const id = card.id;
+  // Уважаем поле disabled только при строгом true.
+  const isDisabled = card.disabled === true;
+  const props = isDisabled
+    ? { type: "button", className: "card disabled", "data-id": id, "aria-disabled": "true" }
+    : { type: "button", className: "card", "data-id": id, onclick: action(ev => runBusy(ev.currentTarget, () => openItem(id))) };
+  if (isDisabled) props.title = card.disabledReason === "file missing" ? "файл не найден" : (card.disabledReason || "файл не найден");
+  const meta = [card.vendor, kindLabel(card.kind)].filter(Boolean).join(" · ");
+  const node = el("button", props,
+    el("span", { className: "card-title" }, card.title || id),
+    el("span", { className: "card-meta" }, meta));
+  const chips = el("span", { className: "chips" });
+  for (const key of card.secretsHave || []) chips.append(chipNode(key, true));
+  for (const key of card.secretsMissing || []) chips.append(chipNode(key, false));
+  if (chips.childElementCount) node.append(chips);
+  return node;
+}
+
+async function refreshList() {
+  const q = qInput.value;
+  const cards = q ? await api("GET", "/search?q=" + encodeURIComponent(q)) : await api("GET", "/catalog");
+  const items = cards || [];
+  listNode.replaceChildren(...items.map(cardNode));
+  countNode.textContent = "Кукбуков: " + items.length;
+  listNode.hidden = items.length === 0;
+  emptyNode.hidden = items.length !== 0;
+}
+
+// nbformat допускает строку или список строк в text/traceback — приводим к строке.
+function outputText(outputs) {
+  const asText = value => (Array.isArray(value) ? value.join("") : (value == null ? "" : String(value)));
+  return (outputs || [])
+    .map(out => {
+      const text = out && out.text && out.text.length ? out.text : (out && out.traceback);
+      return asText(text);
+    })
+    .join("");
+}
+
+// Одноразовая вспышка свежего вывода: класс снимается по animationend.
+function setOutput(ref, text, status) {
+  ref.output.textContent = text;
+  ref.output.classList.remove("hint", "out-ok", "out-error", "out-skipped", "flash");
+  ref.output.classList.add("out-" + status);
+  ref.wrap.dataset.status = status;
+  ref.pill.hidden = false;
+  ref.pill.className = "pill out-pill " + status;
+  ref.pill.textContent = status === "ok" ? "успешно" : (status === "error" ? "ошибка" : "пропущено");
+  void ref.output.offsetWidth;
+  ref.output.classList.add("flash");
+}
+
+async function saveCell(area, index) {
+  await api("POST", "/save", { itemId: current, index: index, source: area.value });
+  setStatus("Ячейка " + index + " сохранена");
+}
+
+async function runCell(ref) {
+  const result = await api("POST", "/run", { itemId: current, code: ref.area.value, index: ref.index });
+  const text = result.ok
+    ? (result.stdout && result.stdout.trim() ? result.stdout : "(пусто)")
+    : (result.error || result.stderr || "");
+  setOutput(ref, text, result.ok ? "ok" : "error");
+  setStatus("Ячейка " + ref.index + ": " + (result.ok ? "успешно" : "ошибка"));
+}
+
+// Шапка блока: пилюля типа, номер ячейки (у плейбука его нет) и правый блок действий.
+function cellSection(label, index) {
+  const head = el("header", { className: "cell-head" },
+    el("span", { className: "pill" }, label),
+    index === null ? null : el("span", { className: "cell-no" }, "Ячейка " + index),
+    el("div", { className: "cell-actions" }));
+  return { head: head, actions: head.querySelector(".cell-actions") };
+}
+
+function renderMarkdown(doc, container) {
+  const area = el("textarea", { className: "src", "aria-label": "Текст плейбука", value: doc.text || "" });
+  const save = el("button", {
+    type: "button",
+    className: "btn quiet",
+    onclick: action(ev => runBusy(ev.currentTarget, async () => {
+      await api("POST", "/save", { itemId: current, text: area.value });
+      setStatus("Сохранено");
+    }))
+  }, ICON_CHECK(), "Сохранить");
+  const parts = cellSection("текст", null);
+  parts.actions.append(save);
+  container.append(el("section", { className: "cell" }, parts.head, area));
+}
+
+function renderNotebook(doc, container) {
+  (doc.cells || []).forEach((cell, index) => {
+    const isCode = cell.cell_type === "code";
+    const runnable = isCode && doc.supported === true;
+    const area = el("textarea", { className: "src", "aria-label": "Исходник ячейки " + index, value: cell.source || "" });
+    const stored = outputText(cell.outputs);
+    const output = el("pre", {
+      className: stored ? "cellout" : "cellout hint",
+      "aria-label": "Вывод ячейки " + index,
+      textContent: stored || "Вывод появится после запуска ячеек"
+    });
+    const pill = el("span", { className: "pill out-pill", hidden: true });
+    const wrap = el("div", { className: "cellout-wrap" }, pill, output);
+    output.addEventListener("animationend", () => output.classList.remove("flash"));
+    const ref = { index: index, cell_type: cell.cell_type, area: area, output: output, wrap: wrap, pill: pill };
+    currentCells.push(ref);
+    const parts = cellSection(isCode ? "код" : "текст", index);
+    if (runnable) {
+      parts.actions.append(el("button", {
+        type: "button",
+        className: "btn soft",
+        onclick: action(ev => runBusy(ev.currentTarget, () => runCell(ref)))
+      }, ICON_PLAY(), "Запустить"));
+    }
+    parts.actions.append(el("button", {
+      type: "button",
+      className: "btn quiet",
+      onclick: action(ev => runBusy(ev.currentTarget, () => saveCell(area, index)))
+    }, ICON_CHECK(), "Сохранить"));
+    container.append(el("section", { className: "cell" }, parts.head, area, wrap));
+  });
+}
+
+// Прогон всех ячеек кода открытого ноутбука в одном процессе (порядок документа, общее состояние).
+// Один POST /run-all несёт текущие исходники; по каждой вернувшейся ячейке пишем её статус.
+async function runAll() {
+  const docId = current;
+  const jobs = currentCells.filter(cell => cell.cell_type === "code");
+  const result = await api("POST", "/run-all", {
+    itemId: current,
+    cells: jobs.map(cell => ({ index: cell.index, source: cell.area.value }))
+  });
+  // Пока шёл прогон, документ мог переключиться: результат в DOM не пишем
+  // (сервер уже сохранил выводы; при возврате документ перечитается).
+  if (current !== docId) return;
+  const refs = new Map(jobs.map(cell => [cell.index, cell]));
+  const cells = result && Array.isArray(result.cells) ? result.cells : [];
+  let ok = 0, failed = 0, skipped = 0;
+  for (const cell of cells) {
+    const ref = refs.get(cell.index);
+    if (cell.status === "ok") {
+      if (ref) setOutput(ref, cell.stdout && cell.stdout.trim() ? cell.stdout : "(пусто)", "ok");
+      ok += 1;
+    } else if (cell.status === "error") {
+      if (ref) setOutput(ref, cell.error || cell.stderr || "", "error");
+      failed += 1;
+    } else {
+      if (ref) setOutput(ref, "(пропущено)", "skipped");
+      skipped += 1;
+    }
+  }
+  setStatus("Запущено " + cells.length + " ячеек: " + ok + " успешно · " + failed + " с ошибкой · " + skipped + " пропущено");
+}
+
+function renderDocument(doc) {
+  showBanner("");
+  titleNode.textContent = doc.title || current;
+  kindNode.textContent = kindLabel(doc.kind);
+  kindNode.hidden = false;
+  copyNode.textContent = currentCopyId;
+  docHead.hidden = false;
+  welcomeNode.hidden = true;
+  runAllBtn.hidden = !(doc.kind === "ipynb" && doc.supported === true);
+  const missing = doc.missing || [];
+  if (missing.length) {
+    showBanner(
+      "Не хватает ключей ROX: " + missing.join(", ") +
+      ". Добавьте их в ROX и запустите ячейку заново. Не вставляйте ключи в ноутбук."
+    );
+  }
+  cellsNode.replaceChildren();
+  currentCells = [];
+  if (doc.kind === "md") renderMarkdown(doc, cellsNode);
+  else renderNotebook(doc, cellsNode);
+}
+
+async function openItem(id, newCopy) {
+  current = id;
+  const opened = await api("POST", "/open", newCopy ? { itemId: id, newCopy: true } : { itemId: id });
+  currentCopyId = opened && opened.copyId ? String(opened.copyId) : "";
+  const doc = await api("GET", "/document/" + encodeURIComponent(id));
+  renderDocument(doc);
+  setStatus(newCopy ? "Новая копия" : "Открыто");
+}
+
+async function resetItem() {
+  if (!confirm("Сбросить копию к оригиналу? Правки будут потеряны.")) {
+    setStatus("");
+    return;
+  }
+  await api("POST", "/reset", { itemId: current, confirm: true });
+  await openItem(current);
+  setStatus("Сброшено к оригиналу");
+}
+
+async function newCopyItem() {
+  await openItem(current, true);
+}
+
+runAllBtn.addEventListener("click", action(ev => runBusy(ev.currentTarget, runAll)));
+resetBtn.addEventListener("click", action(ev => runBusy(ev.currentTarget, resetItem)));
+newCopyBtn.addEventListener("click", action(ev => runBusy(ev.currentTarget, newCopyItem)));
+
+const runSearch = action(refreshList);
+let searchTimer = null;
+qInput.addEventListener("input", () => {
+  // Дебаунс 200 мс, последний выигрывает: каждый ввод сбрасывает отложенный запрос.
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    searchTimer = null;
+    runSearch();
+  }, 200);
+});
+runSearch();
+</script>
+</body>
+</html>

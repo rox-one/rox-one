@@ -32,6 +32,9 @@ type NativeDataKeys = `nativeData.${FunctionKeys<NativeDataApi>}`
 type WorkgraphKeys = `workgraph.${FunctionKeys<WorkgraphApi>}`
 type SiyuanEngineKeys = `siyuanEngine.${FunctionKeys<SiyuanEngineApi>}`
 type ExtensionSurfaceKeys = `extensionSurface.${FunctionKeys<ExtensionSurfaceApi>}`
+// Cookbooks Lab sidecar surfaces (cookbooks-surface program) nest the same way.
+type CookbooksLabApi = ElectronAPI['cookbooksLab']
+type CookbooksLabKeys = `cookbooksLab.${FunctionKeys<CookbooksLabApi>}`
 // OpenClaw data APIs nest through dotted CHANNEL_MAP keys like other routed namespaces.
 type OpenClawRuntimeApi = ElectronAPI['openclawRuntime']
 type SecurityAuditApi = ElectronAPI['securityAudit']
@@ -172,6 +175,7 @@ type ApiToChannelMapKeys = Exclude<
   | SecurityAuditKeys
   | QuickComposerKeys
   | AppIntegrationKeys
+  | CookbooksLabKeys
 type ChannelMapKeys = keyof typeof CHANNEL_MAP & string
 
 type AssertNever<T extends never> = true
