@@ -12,7 +12,7 @@ import {
   redactCookbooksLogLine,
   type CookbooksChild,
 } from '../cookbooks-runtime'
-import { CookbooksApiError, parseCookbooksStartupLine } from '../../shared/cookbooks'
+import { CookbooksApiError, parseCookbooksStartupLine, type CookbooksMutateInput } from '../../shared/cookbooks'
 
 const TOKEN = 'A'.repeat(32)
 const line = (port: number, token = TOKEN) => `http://127.0.0.1:${port}/lab.html?token=${token}\n`
@@ -491,6 +491,8 @@ function startStub(options: { storeRejects?: boolean } = {}) {
   const firstStore = Promise.withResolvers<Record<string, string>>()
   const runBodies: Array<Record<string, unknown>> = []
   const runAllBodies: Array<Record<string, unknown>> = []
+  // Wave 10: structural cell mutations — the method, path and JSON body each op sent.
+  const cellsBodies: Array<{ path: string; method: string; body: Record<string, unknown> }> = []
   const server = Bun.serve({
     hostname: '127.0.0.1',
     port: 0,
@@ -540,6 +542,29 @@ function startStub(options: { storeRejects?: boolean } = {}) {
         case '/save':
         case '/reset':
           return Response.json({ ok: true })
+        // Wave 10: the four structural cell ops (SPEC wave 10 §Контракт HTTP).
+        case '/cells/add':
+        case '/cells/delete':
+        case '/cells/move':
+        case '/cells/duplicate': {
+          const body = (await request.json()) as Record<string, unknown>
+          cellsBodies.push({ path: url.pathname, method: request.method, body })
+          // Run-guard: an active run makes every mutation conflict.
+          if (body.itemId === 'busy-item') {
+            return Response.json({ error: 'notebook is running' }, { status: 409 })
+          }
+          // Bounds/validation failure with the sidecar's own text.
+          if (body.itemId === 'reject-item') {
+            return Response.json({ error: 'index out of range' }, { status: 400 })
+          }
+          // G3 F1: a 200 that violates the `{ok:true, index:int}` contract.
+          if (body.itemId === 'no-ok') return Response.json({ index: 0 })
+          if (body.itemId === 'string-index') return Response.json({ ok: true, index: '0' })
+          if (body.itemId === 'not-ok') return Response.json({ ok: false, index: 0 })
+          // The focus index is per-op; duplicate lands right after its source.
+          const index = typeof body.index === 'number' ? body.index : 0
+          return Response.json({ ok: true, index: url.pathname === '/cells/duplicate' ? index + 1 : index })
+        }
         default:
           return Response.json({ error: 'not found' }, { status: 404 })
       }
@@ -547,7 +572,7 @@ function startStub(options: { storeRejects?: boolean } = {}) {
   })
   const port = server.port
   if (port === undefined) throw new Error('stub sidecar did not bind a port')
-  return { port, requests, storeBodies, firstStore: firstStore.promise, runBodies, runAllBodies, stop: () => server.stop(true) }
+  return { port, requests, storeBodies, firstStore: firstStore.promise, runBodies, runAllBodies, cellsBodies, stop: () => server.stop(true) }
 }
 
 /** Build a runtime on the injected fake spawn and drive it to `running`. */
@@ -711,6 +736,106 @@ describe('CookbooksRuntime data plane', () => {
       await runtime.apiSave({ itemId: 'probe-item', index: 0, source: 'print(1)' })
       await runtime.apiReset('probe-item')
       expect(stub.requests.map((r) => r.path)).toEqual(['/save', '/reset'])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiMutate posts each op to /cells/<op> with its op-specific body only', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      await runtime.apiMutate({ itemId: 'probe-item', op: 'add', cellType: 'code', index: 1 })
+      await runtime.apiMutate({ itemId: 'probe-item', op: 'add', cellType: 'markdown', index: 0, source: '# Hi' })
+      await runtime.apiMutate({ itemId: 'probe-item', op: 'delete', index: 1 })
+      await runtime.apiMutate({ itemId: 'probe-item', op: 'move', from: 0, to: 1 })
+      await runtime.apiMutate({ itemId: 'probe-item', op: 'duplicate', index: 0 })
+      expect(stub.cellsBodies).toEqual([
+        // No `op` field, and an absent `source` stays absent.
+        { path: '/cells/add', method: 'POST', body: { itemId: 'probe-item', cellType: 'code', index: 1 } },
+        { path: '/cells/add', method: 'POST', body: { itemId: 'probe-item', cellType: 'markdown', index: 0, source: '# Hi' } },
+        { path: '/cells/delete', method: 'POST', body: { itemId: 'probe-item', index: 1 } },
+        { path: '/cells/move', method: 'POST', body: { itemId: 'probe-item', from: 0, to: 1 } },
+        { path: '/cells/duplicate', method: 'POST', body: { itemId: 'probe-item', index: 0 } },
+      ])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiMutate re-reads the document after the op and returns {document, index}', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const result = await runtime.apiMutate({ itemId: 'probe-item', op: 'duplicate', index: 0 })
+      expect(result.index).toBe(1)
+      expect(result.document.itemId).toBe('probe-item')
+      expect(result.document.cells).toHaveLength(2)
+      // Exactly two calls: the mutation, then a fresh document read.
+      expect(stub.requests.map((r) => r.path)).toEqual(['/cells/duplicate', '/document/probe-item'])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiMutate rejects an op outside the four routes before any request', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const err = await runtime
+        .apiMutate({ itemId: 'probe-item', op: 'rename' } as unknown as CookbooksMutateInput)
+        .catch((e: unknown) => e)
+      expect(err).toBeInstanceOf(CookbooksApiError)
+      expect((err as CookbooksApiError).status).toBe(400)
+      expect((err as CookbooksApiError).message).toBe('unknown op')
+      // No URL is built from an unknown op — nothing reaches the sidecar.
+      expect(stub.requests).toEqual([])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiMutate rejects a malformed /cells response before re-reading the document', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      for (const itemId of ['no-ok', 'string-index', 'not-ok']) {
+        const err = await runtime
+          .apiMutate({ itemId, op: 'add', cellType: 'code', index: 0 })
+          .catch((e: unknown) => e)
+        expect(err).toBeInstanceOf(CookbooksApiError)
+        expect((err as CookbooksApiError).status).toBe(0)
+        expect((err as CookbooksApiError).message).toBe('malformed /cells response')
+      }
+      // The malformed answer aborts the call — the document is never re-read.
+      expect(stub.requests.map((r) => r.path)).toEqual(['/cells/add', '/cells/add', '/cells/add'])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiMutate surfaces a sidecar 400/409 as CookbooksApiError with its own message', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const conflict = await runtime
+        .apiMutate({ itemId: 'busy-item', op: 'delete', index: 0 })
+        .catch((err: unknown) => err)
+      expect(conflict).toBeInstanceOf(CookbooksApiError)
+      expect((conflict as CookbooksApiError).status).toBe(409)
+      expect((conflict as CookbooksApiError).message).toBe('notebook is running')
+
+      const badRequest = await runtime
+        .apiMutate({ itemId: 'reject-item', op: 'move', from: 0, to: 9 })
+        .catch((err: unknown) => err)
+      expect(badRequest).toBeInstanceOf(CookbooksApiError)
+      expect((badRequest as CookbooksApiError).status).toBe(400)
+      expect((badRequest as CookbooksApiError).message).toBe('index out of range')
     } finally {
       await runtime.stop()
       stub.stop()

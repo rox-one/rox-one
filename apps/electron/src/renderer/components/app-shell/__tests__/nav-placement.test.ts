@@ -45,16 +45,17 @@ describe('exclusive placement — one surface, one place', () => {
     const placement = (id: string) => surfaces.find(e => e.id === id)?.placement
     for (const id of ['home', 'feed', 'sessions', 'docs', 'browser']) expect(placement(id)).toBe('pills')
     const { pill, sidebar } = model()
-    expect(ids(pill.rendered)).toEqual(['agent', 'feed', 'team', 'notes', 'browser'])
+    expect(ids(pill.rendered)).toEqual(['agent', 'feed', 'team', 'notes', 'browser', 'tasks'])
     for (const id of ['home', 'feed', 'sessions', 'docs', 'browser']) expect(sidebar).toContain(id)
     for (const id of ['inbox', 'tasks', 'projects', 'memory', 'knowledge', 'missions', 'settings']) expect(sidebar).toContain(id)
   })
 
-  it('shell-layout defaults: Главная · Лента · Сессии · Заметки · Браузер, whatever the Messenger flag', () => {
+  it('defaults: Главная · Лента · Сессии · Заметки · Браузер · Задачи, plus Мессенджер while its flag is on', () => {
     for (const flags of [new Set<string>(), new Set([WORKBENCH_FLAG.modeMessengerV1])]) {
       const surfaces = resolveNavSurfaces({ shellFlags: flags })
       const pills = surfaces.filter(e => e.placement === 'pills').map(e => e.id).sort()
-      expect(pills).toEqual(['browser', 'docs', 'feed', 'home', 'sessions'])
+      const expected = ['browser', 'docs', 'feed', 'home', 'sessions', 'tasks']
+      expect(pills).toEqual(flags.has(WORKBENCH_FLAG.modeMessengerV1) ? [...expected, 'messenger'].sort() : expected)
     }
   })
 
@@ -113,7 +114,7 @@ describe('Home pill and ⌘-slots', () => {
     expect(pill.rendered[0]?.id).toBe('agent')
     expect(pill.rendered[0]?.iconOnly).toBe(true)
     expect(pill.rendered[0]?.titleKey).toBe('workbench.mode.home')
-    expect(ids(pill.slots)).toEqual(['feed', 'team', 'notes', 'browser'])
+    expect(ids(pill.slots)).toEqual(['feed', 'team', 'notes', 'browser', 'tasks'])
     expect(ids(pillSlotSurfaces(pill.rendered))).toEqual(ids(pill.slots))
   })
 })

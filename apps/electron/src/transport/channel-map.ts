@@ -235,6 +235,9 @@ export const CHANNEL_MAP = {
   serviceLifecycleUninstall: invoke(RPC_CHANNELS.serviceLifecycle.UNINSTALL),
   onServiceLifecycleStatusChanged: listener(RPC_CHANNELS.serviceLifecycle.STATUS_CHANGED),
 
+  // Menu-bar tray snapshot (local host)
+  reportTrayState: invoke(RPC_CHANNELS.tray.REPORT_STATE),
+
   // Diagnostics (local host doctor checks)
   runDiagnostics: invoke(RPC_CHANNELS.diagnostics.RUN),
   getDiagnosticsLast: invoke(RPC_CHANNELS.diagnostics.GET_LAST),
@@ -625,6 +628,8 @@ export const CHANNEL_MAP = {
   'cookbooksLab.reset': invoke(RPC_CHANNELS.cookbooksLab.RESET),
   'cookbooksLab.cancel': invoke(RPC_CHANNELS.cookbooksLab.CANCEL),
   'cookbooksLab.export': invoke(RPC_CHANNELS.cookbooksLab.EXPORT),
+  // Wave 10: structural cell operations (add/delete/move/duplicate)
+  'cookbooksLab.mutate': invoke(RPC_CHANNELS.cookbooksLab.MUTATE),
   'cookbooksLab.onStatusChanged': listener(RPC_CHANNELS.cookbooksLab.STATUS_CHANGED),
 
   // Debug logging

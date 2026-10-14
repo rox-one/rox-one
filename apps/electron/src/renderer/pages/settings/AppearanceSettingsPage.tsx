@@ -6,6 +6,7 @@
  * and has no user-selectable mode or color theme.
  */
 
+import { STATUS_BAR_ITEMS, setStatusBarItem, useStatusBarItems } from '@/lib/status-bar-items'
 import { setDensity, useDensity, type UiDensity } from '@/lib/density-preference'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
@@ -69,6 +70,7 @@ import {
   type KanbanBoardConfig,
 } from '@rox/shared/kanban/browser'
 import { setProjectColorTreatment, useProjectColorTreatment } from '@/hooks/useProjectColorTreatment'
+import { isFxLevel, setFxLevel, useFxLevel } from '@rox/ui/fx'
 import { PROJECT_COLOR_PALETTE, type ProjectColorTreatment } from '@/utils/project-colors'
 import { Info_DataTable, SortableHeader } from '@/components/info/Info_DataTable'
 import { Info_Badge } from '@/components/info/Info_Badge'
@@ -739,6 +741,7 @@ export default function AppearanceSettingsPage() {
   const { workspaces, sessionStatuses } = useAppShellContext()
   // A6/B10 — «Интерфейс»: compact status bar + accent source (main-owned).
   const { statusBarVisible, accentSource } = useUiAppearance()
+  const statusBarItems = useStatusBarItems()
   const handleStatusBarChange = useCallback((checked: boolean) => {
     if (!appearancePrefLive()) return
     void saveUiAppearancePatch({ statusBarVisible: checked })
@@ -827,6 +830,7 @@ export default function AppearanceSettingsPage() {
 
   // Project color treatment in the SessionList
   const projectColorTreatment = useProjectColorTreatment()
+  const fxLevel = useFxLevel()
   const handleProjectColorTreatmentChange = useCallback((value: string) => {
     if (!appearancePrefLive()) return
     setProjectColorTreatment(value as ProjectColorTreatment)
@@ -1329,6 +1333,15 @@ export default function AppearanceSettingsPage() {
                     checked={statusBarVisible}
                     onCheckedChange={handleStatusBarChange}
                   />
+                  {statusBarVisible && STATUS_BAR_ITEMS.map((item) => (
+                    <SettingsToggle
+                      key={item}
+                      label={t(`settings.appearance.statusBarItem.${item}`)}
+                      checked={statusBarItems.includes(item)}
+                      onCheckedChange={(checked) => setStatusBarItem(item, checked)}
+                      className="pl-6"
+                    />
+                  ))}
                   <SettingsRow
                     label={t("settings.appearance.accent")}
                     description={t("settings.appearance.accentDesc")}
@@ -1339,6 +1352,20 @@ export default function AppearanceSettingsPage() {
                       options={[
                         { value: 'brand', label: t("settings.appearance.accentBrand") },
                         { value: 'system', label: t("settings.appearance.accentSystem") },
+                      ]}
+                    />
+                  </SettingsRow>
+                  <SettingsRow
+                    label={t("settings.appearance.fxLevel")}
+                    description={t("settings.appearance.fxLevelDesc")}
+                  >
+                    <SettingsSegmentedControl
+                      value={fxLevel}
+                      onValueChange={(value) => { if (isFxLevel(value)) setFxLevel(value) }}
+                      options={[
+                        { value: 'full', label: t("settings.appearance.fxLevelFull") },
+                        { value: 'reduced', label: t("settings.appearance.fxLevelReduced") },
+                        { value: 'off', label: t("settings.appearance.lowPowerModeOff") },
                       ]}
                     />
                   </SettingsRow>

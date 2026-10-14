@@ -24,6 +24,7 @@ export const KEYS = {
   shellRailPins: 'shell-rail-pins-v1',
   shellPills: 'shell-pills-v1',
   shellPanels: 'shell-panels-v1',
+  statusBarItems: 'status-bar-items-v1',
   uiDensity: 'ui-density-v1',
   screenHintsSeen: 'screen-hints-seen-v1',
   listFilter: 'list-filter',
@@ -183,6 +184,7 @@ export const KEYS = {
   featureDialogArtifactsV1: 'feature-dialog-artifacts-v1',
   featureComposerDeckV1: 'feature-composer-deck-v1',
   featurePanelSwapV1: 'feature-panel-swap-v1',
+  shellInspector: 'shell-inspector-v1',
 } as const
 
 export const EVENTS = {

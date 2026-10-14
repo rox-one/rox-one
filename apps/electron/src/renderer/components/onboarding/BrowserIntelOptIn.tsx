@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ShieldCheck } from 'lucide-react'
 import type { BrowserIntelState } from '@rox/browser-intel'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { GlowTile, PersonalizationArt } from './brand-icons'
 
 /**
  * Renderer surface of the Browser Intelligence bridge.
@@ -97,20 +97,25 @@ export function BrowserIntelOptIn({
 
   return (
     <div className={cn('space-y-2 text-left', className)} data-testid="browser-intel-opt-in">
-      <label className={cn('flex cursor-pointer items-center gap-2.5 rounded-[var(--radius-control)] border px-3 py-2.5 text-sm transition-colors motion-reduce:transition-none',
-        checked ? 'border-accent/60 bg-accent/5' : 'border-border-strong bg-surface-input hover:bg-surface-hover')}>
+      <label
+        data-selected={checked ? 'true' : 'false'}
+        className={cn('onb-glass onb-select flex cursor-pointer items-center gap-3 rounded-[var(--radius-control)] border py-1.5 pl-1.5 pr-3 text-sm transition-colors motion-reduce:transition-none',
+          checked ? 'border-accent/60 bg-accent/5' : 'border-border-strong bg-surface-input hover:bg-surface-hover')}>
+        <GlowTile tone="violet"><PersonalizationArt className="size-[26px]" /></GlowTile>
+        <span className="min-w-0 flex-1">{t('onboarding.browserIntel.enable')}</span>
         <input
           type="checkbox"
-          className="accent-accent"
+          className="onb-check-input peer sr-only"
           checked={checked}
           disabled={saving}
           onChange={() => void apply(!checked)}
         />
-        <ShieldCheck className="icon-status shrink-0 text-status-success" aria-hidden="true" />
-        <span>{t('onboarding.browserIntel.enable')}</span>
+        <span aria-hidden="true" className="onb-check" data-checked={checked ? 'true' : 'false'}>
+          <svg viewBox="0 0 16 16"><path d="M3.5 8.4l3 3 6-6.6" /></svg>
+        </span>
       </label>
-      <p className="px-1 text-xs text-muted-foreground">{t('onboarding.browserIntel.description')}</p>
-      <p className="px-1 text-xs text-muted-foreground">{t('onboarding.browserIntel.storage')}</p>
+      <p className="onb-helper px-1 text-xs text-muted-foreground">{t('onboarding.browserIntel.description')}</p>
+      <p className="onb-helper px-1 text-xs text-muted-foreground">{t('onboarding.browserIntel.storage')}</p>
       {failed ? (
         <div className="flex items-center justify-between gap-2">
           <p role="alert" className="text-xs text-destructive">{t('onboarding.browserIntel.savingError')}</p>
