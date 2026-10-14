@@ -74,6 +74,36 @@ describe('panel strip', () => {
     expect(Math.abs(sum - 1)).toBeLessThan(1e-9)
   })
 
+  it('rail click on an open screen only focuses it and keeps its deep route', () => {
+    const store = createStore()
+    const a = store.set(strip.openScreenPanelAtom, { route: 'feed/post-1' as never })
+    store.set(strip.openScreenPanelAtom, { route: 'docs' as never })
+    expect(store.set(strip.openScreenPanelAtom, { route: 'feed' as never })).toBe(a)
+    expect(store.get(panelStackAtom).find((p) => p.id === a)?.route).toBe('feed/post-1')
+    expect(store.get(focusedPanelIdAtom)).toBe(a)
+  })
+
+  it('caps open panels and closes the least recently focused non-pinned one', () => {
+    const store = createStore()
+    const ids = Array.from({ length: strip.MAX_OPEN_PANELS }, (_, i) => `s${i + 1}`).map((r) => store.set(strip.openScreenPanelAtom, { route: r as never }))
+    // Refocus s1 so s2 becomes the LRU; pin s2 so s3 is evicted instead.
+    store.set(strip.openScreenPanelAtom, { route: 's1' as never })
+    store.set(strip.pinnedPanelIdsAtom, new Set([ids[1]!]))
+    const fresh = store.set(strip.openScreenPanelAtom, { route: 's-new' as never })
+    const stack = store.get(panelStackAtom).map((p) => p.id)
+    expect(stack).toHaveLength(strip.MAX_OPEN_PANELS)
+    expect(stack[0]).toBe(fresh)
+    expect(stack).not.toContain(ids[2])
+    expect(stack).toContain(ids[1])
+    expect(stack).toContain(ids[0])
+    const sum = store.get(panelStackAtom).reduce((s, p) => s + p.proportion, 0)
+    expect(Math.abs(sum - 1)).toBeLessThan(1e-9)
+  })
+
+  it('only the browser hibernates', () => {
+    expect([...strip.HEAVY_PANEL_TYPES]).toEqual(['browser'])
+  })
+
   it('persists clamped widths per screen key', () => {
     const store = createStore()
     store.set(strip.setStripWidthAtom, { route: 'docs/abc', width: 99999 })

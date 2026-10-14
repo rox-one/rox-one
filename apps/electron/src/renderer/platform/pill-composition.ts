@@ -316,6 +316,8 @@ export function orderPillSurfaces(
 export interface PillNavPlacement {
   surfaces: readonly ResolvedPrimaryNavEntry[]
   placements: NavPlacements
+  /** User pill order (pillsStore), passed in reactively by usePillNav; falls back to a store read. */
+  pillOrder?: readonly string[]
 }
 
 /** Registry id a resolved pill surface stands for (its mode, or the browser panel). */
@@ -384,7 +386,7 @@ function placedPillSurfaces(
   }
   const ordered = orderPillSurfaces(resolved, { ...prefs, excluded: [] }, sessionUsage(prefs.usage))
   // shell-layout: the user's configured pill order (PillsConfigurator) wins; unknown ids keep their relative order.
-  const order = pillsStore.get()
+  const order = nav.pillOrder ?? pillsStore.get()
   const rank = (surface: ResolvedPillSurface) => {
     const navId = navIdForPill(surface, nav.surfaces)
     const index = navId ? order.indexOf(navId) : -1

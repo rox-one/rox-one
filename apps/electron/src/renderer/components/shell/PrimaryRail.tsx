@@ -22,6 +22,7 @@ import type { NavigationState } from '../../../shared/types'
 import { buildRailModel, type RailScreen } from './rail-model'
 import { toggleRailPin, toggleSecondarySidebar, useRailPins, useSecondarySidebarVisibility, useUnreadCounts } from './shell-prefs'
 import { openScreenPanelAtom } from './panel-strip'
+import { setKnownScreenIds } from './screen-sidebar'
 
 export const SHELL_RAIL_WIDTH = 56
 
@@ -56,12 +57,17 @@ export function useRailModel() {
   const nav = usePillNav(shellFlags)
   const enabledExtra = useAtomValue(enabledExtraScreenIdsAtom)
   const pins = useRailPins()
+  const extraScreens = React.useMemo(() => visibleExtraScreens(enabledExtra), [enabledExtra])
+  // Register valid screen ids so useScreenSidebar can warn (dev) on a mismatched screenId.
+  React.useEffect(() => {
+    setKnownScreenIds([...nav.surfaces.map((entry) => entry.id), ...extraScreens.map((screen) => screen.id)])
+  }, [nav.surfaces, extraScreens])
   return React.useMemo(() => buildRailModel({
     surfaces: nav.surfaces,
-    extraScreens: visibleExtraScreens(enabledExtra),
+    extraScreens,
     pins,
     t,
-  }), [nav.surfaces, enabledExtra, pins, t])
+  }), [nav.surfaces, extraScreens, pins, t])
 }
 
 interface RailButtonProps {
@@ -101,6 +107,23 @@ const RailButton = React.memo(function RailButton({ screen, active, unread, onAc
   )
 })
 
+const railButtonKey = (button: HTMLElement): string =>
+  button.dataset.railItem ?? (button.hasAttribute('data-rail-more') ? '__more' : button.hasAttribute('data-rail-toggle-sidebar') ? '__sidebar' : '')
+
+/**
+ * Roving tabindex: exactly one rail button is in the Tab order (the last
+ * focused one, else the active screen, else the first); arrows move within.
+ */
+function applyRovingTabIndex(root: HTMLElement | null, rovingKey: string | null): void {
+  if (!root) return
+  const buttons = Array.from(root.querySelectorAll<HTMLElement>('[data-rail-button]'))
+  if (!buttons.length) return
+  const current = (rovingKey !== null ? buttons.find((button) => railButtonKey(button) === rovingKey) : undefined)
+    ?? buttons.find((button) => button.getAttribute('aria-current') === 'page')
+    ?? buttons[0]
+  for (const button of buttons) button.tabIndex = button === current ? 0 : -1
+}
+
 function onRovingKeyDown(event: React.KeyboardEvent<HTMLElement>) {
   if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp' && event.key !== 'Home' && event.key !== 'End') return
   const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[data-rail-button]'))
@@ -129,13 +152,25 @@ export const PrimaryRail = React.memo(function PrimaryRail({ avatar, secondaryAv
   const [moreOpen, setMoreOpen] = React.useState(false)
   const overflowActive = model.overflow.some((screen) => isRailScreenActive(screen, navState))
   const overflowUnread = model.overflow.some((screen) => (unread[screen.id] ?? 0) > 0)
+  const navRef = React.useRef<HTMLElement>(null)
+  const rovingKeyRef = React.useRef<string | null>(null)
+  // Re-apply after every render: buttons come and go with pins/flags.
+  React.useLayoutEffect(() => { applyRovingTabIndex(navRef.current, rovingKeyRef.current) })
+  const onRailFocus = React.useCallback((event: React.FocusEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement
+    if (!target.hasAttribute('data-rail-button')) return
+    rovingKeyRef.current = railButtonKey(target)
+    applyRovingTabIndex(navRef.current, rovingKeyRef.current)
+  }, [])
 
   return (
     <nav
       aria-label={t('shell.rail.label')}
       data-primary-rail=""
       data-tour="guide.primary-rail"
+      ref={navRef}
       onKeyDown={onRovingKeyDown}
+      onFocus={onRailFocus}
       style={{ width: SHELL_RAIL_WIDTH }}
       className="flex h-full shrink-0 flex-col items-center gap-1 py-2"
     >

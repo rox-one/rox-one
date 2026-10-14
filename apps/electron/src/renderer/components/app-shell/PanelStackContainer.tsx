@@ -27,7 +27,7 @@ import { PanelSlot } from './PanelSlot'
 import { TerminalPanel } from './TerminalPanel'
 import { PanelGridResizeSash } from './PanelGridResizeSash'
 import { PanelSwapGripButton } from './PanelSeam'
-import { setStripWidthAtom, stripWidthFor, stripWidthsAtom, hibernatedPanelIdsAtom, useStripHibernation, useScrollFocusedIntoView, clampStripWidth } from '@/components/shell/panel-strip'
+import { setStripWidthAtom, persistStripWidthsAtom, panelFocusTimesAtom, nextFocusTick, stripWidthFor, stripWidthsAtom, hibernatedPanelIdsAtom, useStripHibernation, useScrollFocusedIntoView, clampStripWidth } from '@/components/shell/panel-strip'
 import {
   PANEL_GAP,
   PANEL_EDGE_INSET,
@@ -203,6 +203,13 @@ export function PanelStackContainer({
   const stripMode = !isCompact && !hasTools && !isExpanded && !singlePanel && shape.rows === 1 && !engineLayout
   const stripWidths = useAtomValue(stripWidthsAtom)
   const setStripWidth = useSetAtom(setStripWidthAtom)
+  const persistStripWidths = useSetAtom(persistStripWidthsAtom)
+  const setPanelFocusTimes = useSetAtom(panelFocusTimesAtom)
+  // LRU for the open-panel cap: record every focus change, whatever its source.
+  useEffect(() => {
+    if (!focusedPanelId) return
+    setPanelFocusTimes((prev) => ({ ...prev, [focusedPanelId]: nextFocusTick() }))
+  }, [focusedPanelId, setPanelFocusTimes])
   const hibernatedIds = useAtomValue(hibernatedPanelIdsAtom)
   useStripHibernation(scrollRef, stripMode)
   useScrollFocusedIntoView(scrollRef, stripMode)
@@ -627,7 +634,7 @@ export function PanelStackContainer({
               )
             })}
             {stripMode && panels.map((entry) => (
-              <StripResizeSash key={`strip-sash:${entry.id}`} panelId={entry.id} width={stripWidthFor(stripWidths, entry.route)} onResize={(width) => setStripWidth({ route: entry.route, width })} />
+              <StripResizeSash key={`strip-sash:${entry.id}`} panelId={entry.id} width={stripWidthFor(stripWidths, entry.route)} onResize={(width, persist) => setStripWidth({ route: entry.route, width, persist })} onResizeEnd={persistStripWidths} />
             ))}
             {!stripMode && !hasTools && !singlePanel && Array.from({ length: shape.columns - 1 }, (_, index) => (
               <PanelGridResizeSash key={`${gridKey}:x:${index}:${panelIdentity}`} axis="x" index={index} shape={shape} tracks={tracks} panelIds={panelIds} onTracksChange={setTracks} />
@@ -698,7 +705,7 @@ export function PanelStackContainer({
  * Right-edge resize handle for one strip panel. Pointer drag or keyboard
  * (←/→ 16px, Shift ×4); width is clamped and persisted per screen.
  */
-function StripResizeSash({ panelId, width, onResize }: { panelId: string; width: number; onResize(width: number): void }) {
+function StripResizeSash({ panelId, width, onResize, onResizeEnd }: { panelId: string; width: number; onResize(width: number, persist?: boolean): void; onResizeEnd(): void }) {
   const { t } = useTranslation()
   const ref = useRef<HTMLDivElement>(null)
   const [left, setLeft] = useState<number | null>(null)
@@ -718,10 +725,27 @@ function StripResizeSash({ panelId, width, onResize }: { panelId: string; width:
     const start = width
     const target = event.currentTarget
     target.setPointerCapture?.(event.pointerId)
-    const move = (e: PointerEvent) => onResize(clampStripWidth(start + e.clientX - startX))
-    const up = () => { target.removeEventListener('pointermove', move); target.removeEventListener('pointerup', up) }
+    // rAF-throttled live updates (no storage writes); persist once on release.
+    let frame = 0
+    let pending: number | null = null
+    const flush = () => { frame = 0; if (pending !== null) { onResize(pending, false); pending = null } }
+    const move = (e: PointerEvent) => {
+      pending = clampStripWidth(start + e.clientX - startX)
+      if (!frame) frame = requestAnimationFrame(flush)
+    }
+    const end = () => {
+      target.removeEventListener('pointermove', move)
+      target.removeEventListener('pointerup', end)
+      target.removeEventListener('pointercancel', end)
+      target.removeEventListener('lostpointercapture', end)
+      if (frame) { cancelAnimationFrame(frame); frame = 0 }
+      if (pending !== null) { onResize(pending, false); pending = null }
+      onResizeEnd()
+    }
     target.addEventListener('pointermove', move)
-    target.addEventListener('pointerup', up)
+    target.addEventListener('pointerup', end)
+    target.addEventListener('pointercancel', end)
+    target.addEventListener('lostpointercapture', end)
   }
   return (
     <div

@@ -24,8 +24,15 @@ export const STRIP_MIN_WIDTH = 320
 export const STRIP_MAX_WIDTH = 1400
 export const STRIP_DEFAULT_WIDTH = 640
 export const HIBERNATE_AFTER_MS = 30_000
-/** Panel types whose host keeps instance state outside React (unmount is safe). */
-export const HEAVY_PANEL_TYPES: ReadonlySet<PanelType> = new Set(['browser', 'knowledge'])
+/**
+ * Panel types whose host keeps instance state outside React (unmount is safe).
+ * Only the browser qualifies: BrowserPanelPage persists and unmount just
+ * detaches the native view. Knowledge keeps query/hits/scroll/diff review
+ * state in React, so it is never hibernated.
+ */
+export const HEAVY_PANEL_TYPES: ReadonlySet<PanelType> = new Set(['browser'])
+/** Maximum open screen panels; past this the least recently focused non-pinned one closes. */
+export const MAX_OPEN_PANELS = 12
 
 export const clampStripWidth = (width: number): number =>
   Math.round(Math.min(STRIP_MAX_WIDTH, Math.max(STRIP_MIN_WIDTH, Number.isFinite(width) ? width : STRIP_DEFAULT_WIDTH)))
@@ -53,10 +60,26 @@ function readWidths(): Widths {
 
 /** Persisted per-screen widths (px). */
 export const stripWidthsAtom = atom<Widths>(readWidths())
-export const setStripWidthAtom = atom(null, (get, set, { route, width }: { route: string; width: number }) => {
+export const setStripWidthAtom = atom(null, (get, set, { route, width, persist = true }: { route: string; width: number; persist?: boolean }) => {
   const next = { ...get(stripWidthsAtom), [stripScreenKey(route)]: clampStripWidth(width) }
   set(stripWidthsAtom, next)
-  storage.set(storage.KEYS.shellPanels, { widths: next })
+  if (persist) storage.set(storage.KEYS.shellPanels, { widths: next })
+})
+/** Write the current widths to storage (used on resize pointerup). */
+export const persistStripWidthsAtom = atom(null, (get) => {
+  storage.set(storage.KEYS.shellPanels, { widths: get(stripWidthsAtom) })
+})
+
+/** Panel ids the user pinned in the strip; never auto-closed by the cap. */
+export const pinnedPanelIdsAtom = atom<ReadonlySet<string>>(new Set<string>())
+/** Last focus time per panel id (LRU for the open-panel cap). */
+export const panelFocusTimesAtom = atom<Record<string, number>>({})
+let focusClock = 0
+export const nextFocusTick = (): number => (focusClock = Math.max(Date.now(), focusClock + 1))
+/** Focus a panel and record it for LRU. */
+export const focusStripPanelAtom = atom(null, (get, set, id: string) => {
+  set(panelFocusTimesAtom, { ...get(panelFocusTimesAtom), [id]: nextFocusTick() })
+  set(focusedPanelIdAtom, id)
 })
 
 export function stripWidthFor(widths: Widths, route: string): number {
@@ -64,17 +87,18 @@ export function stripWidthFor(widths: Widths, route: string): number {
 }
 
 /**
- * Open a screen: focus the panel already showing that screen, otherwise insert
- * a new panel at index 0 (previous panels shift right). `replace` swaps the
- * focused panel's route instead (sidebar-style navigation).
+ * Open a screen: focus the panel already showing that screen (its current,
+ * possibly deep, route and state are kept), otherwise insert a new panel at
+ * index 0 (previous panels shift right). At most MAX_OPEN_PANELS screen panels
+ * stay open; past that the least recently focused non-pinned one closes.
+ * `replace` swaps the focused panel's route instead (sidebar-style navigation).
  */
 export const openScreenPanelAtom = atom(null, (get, set, { route, replace }: { route: ViewRoute; replace?: boolean }): string => {
   const stack = get(panelStackAtom)
   const key = stripScreenKey(route)
   const existing = stack.find((entry) => !entry.tool && (entry.route === route || stripScreenKey(entry.route) === key))
   if (existing) {
-    if (existing.route !== route) set(panelStackAtom, stack.map((entry) => entry.id === existing.id ? { ...entry, route, panelType: getPanelTypeFromRoute(route) } : entry))
-    set(focusedPanelIdAtom, existing.id)
+    set(focusStripPanelAtom, existing.id)
     return existing.id
   }
   const focusedId = get(focusedPanelIdAtom)
@@ -90,9 +114,29 @@ export const openScreenPanelAtom = atom(null, (get, set, { route, replace }: { r
     panelType: getPanelTypeFromRoute(route),
     laneId: 'main',
   } as PanelStackEntry
-  const scaled = stack.map((panel) => ({ ...panel, proportion: panel.proportion * (1 - share) }))
-  set(panelStackAtom, [entry, ...scaled])
-  set(focusedPanelIdAtom, entry.id)
+  let next = [entry, ...stack.map((panel) => ({ ...panel, proportion: panel.proportion * (1 - share) }))]
+  const pinned = get(pinnedPanelIdsAtom)
+  const times = get(panelFocusTimesAtom)
+  const evicted: string[] = []
+  for (;;) {
+    const screens = next.filter((panel) => !panel.tool)
+    if (screens.length <= MAX_OPEN_PANELS) break
+    const victim = screens
+      .filter((panel) => panel.id !== entry.id && !pinned.has(panel.id))
+      .sort((a, b) => (times[a.id] ?? 0) - (times[b.id] ?? 0))[0]
+    if (!victim) break
+    evicted.push(victim.id)
+    next = next.filter((panel) => panel.id !== victim.id)
+  }
+  if (evicted.length) {
+    const total = next.reduce((sum, panel) => sum + panel.proportion, 0) || 1
+    next = next.map((panel) => ({ ...panel, proportion: panel.proportion / total }))
+    const restTimes = { ...times }
+    for (const id of evicted) delete restTimes[id]
+    set(panelFocusTimesAtom, restTimes)
+  }
+  set(panelStackAtom, next)
+  set(focusStripPanelAtom, entry.id)
   return entry.id
 })
 
@@ -106,8 +150,9 @@ export function usePanelStrip() {
   const hibernated = useAtomValue(hibernatedPanelIdsAtom)
   const openScreen = useSetAtom(openScreenPanelAtom)
   const closePanel = useSetAtom(closePanelAtom)
-  const setFocused = useSetAtom(focusedPanelIdAtom)
+  const setFocused = useSetAtom(focusStripPanelAtom)
   const setWidth = useSetAtom(setStripWidthAtom)
+  const persistWidths = useSetAtom(persistStripWidthsAtom)
   const store = useStore()
   const panels = React.useMemo<StripPanel[]>(() => stack.map((entry) => ({
     id: entry.id, route: entry.route, width: stripWidthFor(widths, entry.route), hibernated: hibernated.has(entry.id),
@@ -118,10 +163,11 @@ export function usePanelStrip() {
     open: React.useCallback((route: string, opts?: { replace?: boolean }) => { openScreen({ route: route as ViewRoute, replace: opts?.replace }) }, [openScreen]),
     close: closePanel,
     focus: setFocused,
-    resize: React.useCallback((id: string, width: number) => {
+    resize: React.useCallback((id: string, width: number, opts?: { persist?: boolean }) => {
       const entry = store.get(panelStackAtom).find((panel) => panel.id === id)
-      if (entry) setWidth({ route: entry.route, width })
+      if (entry) setWidth({ route: entry.route, width, persist: opts?.persist })
     }, [store, setWidth]),
+    persistWidths,
   }
 }
 
