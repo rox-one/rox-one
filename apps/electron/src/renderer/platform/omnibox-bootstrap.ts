@@ -37,7 +37,7 @@ import {
   searchKnowledge,
   searchHitRoute,
   resolveKnowledgeApi,
-} from '@/knowledge/KnowledgeHome'
+} from '@/knowledge/knowledge-home-model'
 import {
   createAutomationsProvider,
   createKnowledgeProvider,
