@@ -12,6 +12,8 @@ import {
   ensureDailyTag,
   formatDateId,
   mergeSessionsBlock,
+  planDailyNoteWrite,
+  stripLegacySessionsBlock,
   sessionFallsOnDate,
   sessionsForDate,
 } from '../daily-notes'
@@ -51,10 +53,71 @@ describe('daily notes', () => {
     expect(second.match(/## Sessions/g)?.length).toBe(1)
   })
 
-  test('notes RPC seeds daily notes from install day, today, and sessions', () => {
+  test('notes RPC seeds daily notes from install day and today without storing sessions', () => {
+    // Sessions are a live overlay in the Notes view (pages/notes/daily-sessions.ts);
+    // writing them into the body moved the revision under an open editor.
     const source = readFileSync(join(import.meta.dir, '../../handlers/rpc/notes.ts'), 'utf8')
     expect(source).toContain('ensureDailyNotes')
-    expect(source).toContain('sessionsFromDeps')
     expect(source).toContain('INSTALL_DAY_FILE')
+    expect(source).toContain('planDailyNoteWrite')
+    expect(source).not.toContain('sessionsFromDeps')
+    expect(source).not.toContain('mergeSessionsBlock')
+  })
+})
+
+describe('planDailyNoteWrite', () => {
+  test('creates a missing note from the template without a stored sessions block', () => {
+    const created = planDailyNoteWrite({ date: '2026-10-14', existing: null, template: '' })
+    expect(created).toContain('# 2026-10-14')
+    expect(created).not.toContain(DAILY_SESSIONS_START)
+  })
+
+  test('never rewrites an existing (possibly open) note, so its revision stays put', () => {
+    const existing = buildDailyNoteMarkdown({ date: '2026-10-14' })
+    expect(planDailyNoteWrite({ date: '2026-10-14', existing })).toBeNull()
+    expect(planDailyNoteWrite({ date: '2026-10-14', existing: `${existing}\nmy edits` })).toBeNull()
+  })
+})
+
+describe('stripLegacySessionsBlock', () => {
+  test('drops the stored block and its heading when only known session lines are inside', () => {
+    const sessions = [{ id: 's', name: 'Старая', createdAt: new Date(2026, 9, 14, 9).getTime() }]
+    const legacy = buildDailyNoteMarkdown({ date: '2026-10-14', sessions })
+    const cleaned = stripLegacySessionsBlock(`${legacy}\nмои заметки\n`, sessions)!
+    expect(cleaned).not.toContain(DAILY_SESSIONS_START)
+    expect(cleaned).not.toContain('## Sessions')
+    expect(cleaned).not.toContain('Старая')
+    expect(cleaned).toContain('# 2026-10-14')
+    expect(cleaned).toContain('мои заметки')
+    expect(stripLegacySessionsBlock(cleaned, sessions)).toBeNull()
+  })
+
+  test('removes only exact `- name` lines of known sessions; every other bullet stays', () => {
+    const sessions = [{ id: 'a', name: 'Давайте  познакомимся' }, { id: 'b', name: ' ' }]
+    const note = `# 2026-10-14\n\n## Sessions\n\n${DAILY_SESSIONS_START}\n- Давайте познакомимся\n- b\n- Чужой пункт\n- [ ] позвонить\nсвоя мысль\n- [[Проект]]\n- Давайте познакомимся ещё\n${DAILY_SESSIONS_END}\n\nниже\n`
+    expect(stripLegacySessionsBlock(note, sessions)).toBe('# 2026-10-14\n\n## Sessions\n\n- Чужой пункт\n- [ ] позвонить\nсвоя мысль\n- [[Проект]]\n- Давайте познакомимся ещё\n\nниже\n')
+  })
+
+  test('is a no-op for notes without a complete block', () => {
+    expect(stripLegacySessionsBlock('# 2026-10-14\n', [])).toBeNull()
+    expect(stripLegacySessionsBlock(`x\n${DAILY_SESSIONS_START}\nno end`, [])).toBeNull()
+  })
+
+  test('only the explicit open path cleans up, with the current revision', () => {
+    const source = readFileSync(join(import.meta.dir, '../../handlers/rpc/notes.ts'), 'utf8')
+    expect(source).toContain("expectedRevision: markdownRevision(existing), content: cleaned")
+    // Opt-in: background readers (Focus day summary) call GET_DAILY_NOTE without the flag.
+    expect(source).toContain('options?: { cleanupLegacy?: boolean }')
+    expect(source).toMatch(/upsertDailyNote\(notesRoot, date \|\| formatDateId\(new Date\(\)\), [^\n]*, options\?\.cleanupLegacy === true, /)
+    const focus = readFileSync(join(import.meta.dir, '../../../../../apps/electron/src/renderer/pages/extra-screens/focus/focus-summary.ts'), 'utf8')
+    expect(focus).toContain('api.getDailyNote(workspaceId)')
+    expect(focus).not.toContain('cleanupLegacy')
+    expect(source).toContain('await upsertDailyNote(notesRoot, date, writeNative)\n')
+    // Open copies everywhere are told to re-read (editors ignore 'save' events).
+    const start = source.indexOf('RPC_CHANNELS.notes.GET_DAILY_NOTE, async')
+    const handler = source.slice(start, source.indexOf('RPC_CHANNELS.notes.IMPORT_ASSET', start))
+    expect(handler).toContain("if (cleaned) changed({ workspaceId, reason: 'external', noteId: id })")
+    expect(handler).toContain('legacySessionRefs(deps, workspaceId)')
+    expect(handler.indexOf("reason: 'external'")).toBeLessThan(handler.indexOf('return readNote(notesRoot, id)'))
   })
 })
