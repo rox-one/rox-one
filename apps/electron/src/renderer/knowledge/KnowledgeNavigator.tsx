@@ -19,7 +19,7 @@ import { useNavigation } from '@/contexts/NavigationContext'
 import { useContainerWidth } from '@/hooks/useContainerWidth'
 import { routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
-import { knowledgeHomeViewAtom } from './KnowledgeHome'
+import { knowledgeHomeViewAtom } from './knowledge-home-model'
 import { KnowledgeNotebookTree } from './KnowledgeNotebookTree'
 import { shouldUseKnowledgeMobileChrome } from './knowledge-mobile'
 

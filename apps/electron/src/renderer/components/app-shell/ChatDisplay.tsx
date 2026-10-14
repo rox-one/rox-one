@@ -107,7 +107,11 @@ import { CHAT_LAYOUT } from "@/config/layout"
 import { collectFileChangesFromActivities, getFirstFileChangeIdForActivity } from "@/lib/file-changes"
 import { resolveBranchNewPanelOption } from "./branching"
 import { handleErrorMessageAction } from "./error-message-actions"
-import { RoxCliCredentialStep } from "@/components/onboarding/RoxCliCredentialStep"
+// WP7: rendered only for a credential error turn; lazy keeps the onboarding
+// step out of the eager chat graph (warmed on idle by lib/idle-preload.ts).
+const RoxCliCredentialStep = React.lazy(() =>
+  import("@/components/onboarding/RoxCliCredentialStep").then((m) => ({ default: m.RoxCliCredentialStep })),
+)
 
 function isRoxCliCredentialChatError(code?: string): boolean {
   return code === 'OMP_NO_MODELS' || code === 'OMP_AUTH_REQUIRED' || code === 'OMP_NOT_CONFIGURED'
@@ -2988,6 +2992,7 @@ function MessageBubble({
     if (isRoxCliCredentialChatError(message.errorCode)) {
       return (
         <div className="mt-4 max-w-[80%]">
+          <React.Suspense fallback={null}>
           <RoxCliCredentialStep
             compact
             typedCode={message.errorCode}
@@ -2999,6 +3004,7 @@ function MessageBubble({
               }
             }}
           />
+          </React.Suspense>
         </div>
       )
     }
