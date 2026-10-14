@@ -24,6 +24,8 @@ export const KEYS = {
   shellRailPins: 'shell-rail-pins-v1',
   shellPills: 'shell-pills-v1',
   shellPanels: 'shell-panels-v1',
+  shellNotifications: 'shell-notifications-v1',
+  shellNotificationBaselines: 'shell-notification-baselines-v1',
   listFilter: 'list-filter',
   labelFilter: 'label-filter',
   viewFilters: 'view-filters', // Per-view filter map: { [viewKey]: { statuses, labels } }

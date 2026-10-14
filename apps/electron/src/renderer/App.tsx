@@ -3,6 +3,7 @@ import { DraftPersistence } from '@/lib/draft-persistence'
 import { createBoundedReconnectRepair, DEFAULT_TIMEOUT_MS, waitForTransportConnected } from './lib/transport-wait'
 import { decideStartupAppState, isStartupAuthorityDenial, probeWithRetry } from './lib/startup-setup-needs'
 import { useTranslation } from 'react-i18next'
+import i18n from 'i18next'
 import { useTheme } from '@/hooks/useTheme'
 import type { ThemeOverrides } from '@config/theme'
 import { useSetAtom, useStore, useAtomValue, useAtom } from 'jotai'
@@ -86,6 +87,7 @@ import { featureUnifiedShellAtom, featureWorkbenchAtom } from '@/atoms/unified-s
 import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
 import { useEntitiesLinksFlagSync } from '@/lib/entities-links-sync'
 import { getSessionTitle } from '@/utils/session'
+import { pushNotification } from '@/components/shell/notifications'
 import { extractBadges } from '@/lib/mentions'
 import { getDefaultStore } from 'jotai'
 import { PlatformProvider, ShikiThemeProvider } from '@rox/ui/context'
@@ -1236,6 +1238,14 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
                 ? `Admin approval required: ${effect.request.appName || effect.request.toolName}`
                 : `Permission required: ${effect.request.toolName}`
               showSessionNotification(notifySession, promptBody)
+              pushNotification({
+                kind: 'approval',
+                title: getSessionTitle(notifySession),
+                body: promptBody,
+                workspaceId: notifySession.workspaceId,
+                route: routes.view.allSessions(sessionId),
+                dedupeKey: `approval:${sessionId}`,
+              })
             }
             break
           }
@@ -1485,6 +1495,17 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           // events don't fire success-style notifications previewing stale or
           // never-persisted content (#664). Both fields are optional — when
           // absent (older backends) treat as success to preserve prior behavior.
+          if ((event.type === 'error' || event.type === 'typed_error') && !updatedSession.hidden) {
+            pushNotification({
+              kind: 'error',
+              title: getSessionTitle(updatedSession),
+              body: i18n.t('shell.notifications.agentFailed'),
+              workspaceId: updatedSession.workspaceId,
+              route: routes.view.allSessions(sessionId),
+              dedupeKey: `agent:${sessionId}`,
+              read: store.get(visibleSessionIdsAtom).has(sessionId),
+            })
+          }
           if (event.type === 'complete' && !updatedSession.hidden) {
             const completeEvent = event as { reason?: string; didReceiveNewFinalMessage?: boolean }
             const isSuccessfulCompletion =
@@ -1507,6 +1528,16 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
             const rawPreview = lastMessage?.content?.substring(0, 200) || undefined
             const preview = rawPreview ? stripMarkdown(rawPreview).substring(0, 100) || undefined : undefined
             showSessionNotification(updatedSession, preview)
+            // top50 #9: the in-app center keeps it even when the window is focused.
+            pushNotification({
+              kind: 'agent',
+              title: getSessionTitle(updatedSession),
+              body: preview,
+              workspaceId: updatedSession.workspaceId,
+              route: routes.view.allSessions(sessionId),
+              dedupeKey: `agent:${sessionId}`,
+              read: store.get(visibleSessionIdsAtom).has(sessionId),
+            })
 
             // In-app complement to the OS notification: when a *background*
             // session (one not shown in any open panel) finishes, queue a chip
