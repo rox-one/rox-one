@@ -872,7 +872,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
           <ChatRuntimeSplit
             chat={chatDisplay}
             open={sessionView === 'map'}
-            onCloseMap={() => setSessionView('standard')}
+            onCloseMap={() => setSessionView('trajectory')}
             scopeKey={`${activeWorkspaceId ?? session?.workspaceId ?? ''}:${sessionId}:${panelId ?? 'primary'}`}
             map={sessionView === 'map' ? (
               <React.Suspense fallback={<SessionSecondaryFallback />}>
@@ -929,6 +929,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
                   pendingChatJumpRef.current = id
                   setSessionView('standard')
                 }}
+                onShowMap={() => setSessionView('map')}
               />
             </React.Suspense>
           </div>
@@ -1327,7 +1328,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   const sessionViewSwitch = (
     <EntityViewTabs
       variant="segmented"
-      value={sessionView}
+      value={sessionView === 'map' ? 'trajectory' : sessionView}
       onChange={setSessionView}
       capabilities={sessionEntityCapabilities}
     />

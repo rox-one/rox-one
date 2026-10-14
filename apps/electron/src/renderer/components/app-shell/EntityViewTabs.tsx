@@ -75,8 +75,8 @@ export function defaultSessionEntityCapabilities(opts?: {
   const siyuan = opts?.siyuanConnected ?? false
   return [
     { id: 'standard', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.standard, icon: DEFAULT_ICONS.standard },
+    // The Runtime Map is a mode inside Траектория (Лента | Карта), not its own tab.
     { id: 'trajectory', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.trajectory, icon: DEFAULT_ICONS.trajectory },
-    { id: 'map', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.map, icon: DEFAULT_ICONS.map },
     { id: 'outline', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.outline, icon: DEFAULT_ICONS.outline },
     { id: 'graph', available: siyuan, labelKey: ENTITY_VIEW_LABEL_KEYS.graph, icon: DEFAULT_ICONS.graph },
     {

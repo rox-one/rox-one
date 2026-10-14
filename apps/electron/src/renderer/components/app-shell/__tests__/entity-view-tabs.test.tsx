@@ -56,14 +56,14 @@ describe('EntityViewTabs renders through the shared tab primitive', () => {
     const html = renderTabs({ value: 'standard', capabilities: defaultSessionEntityCapabilities(), onChange() {} })
     expect(html).toContain('role="tablist"')
     expect(html).toContain('aria-label="Views"')
-    expect(html.match(/role="tab"/g)).toHaveLength(4)
+    expect(html.match(/role="tab"/g)).toHaveLength(3)
     expect(html).toContain('aria-selected="true"')
-    expect(html.match(/tabindex="-1"/g)).toHaveLength(3)
+    expect(html.match(/tabindex="-1"/g)).toHaveLength(2)
     expect(html).toContain('aria-label="Standard"')
   })
 
   it('renders the segmented profile with the collapse label class', () => {
-    const html = renderTabs({ value: 'map', capabilities: defaultSessionEntityCapabilities(), variant: 'segmented', onChange() {} })
+    const html = renderTabs({ value: 'trajectory', capabilities: defaultSessionEntityCapabilities(), variant: 'segmented', onChange() {} })
     expect(html).toContain('role="tablist"')
     expect(html).toContain('rox-view-switch-item')
     expect(html).toContain('rox-view-switch-label')
@@ -102,7 +102,7 @@ describe('EntityViewTabs delegates behaviour to the shared primitive', () => {
     const container = await mount({ value: 'standard', capabilities: defaultSessionEntityCapabilities(), onChange() {} })
     const strip = container.querySelector('[data-tabs="surface"]')
     expect(strip?.getAttribute('role')).toBe('tablist')
-    expect(container.querySelectorAll('[role="tab"]')).toHaveLength(4)
+    expect(container.querySelectorAll('[role="tab"]')).toHaveLength(3)
   })
 
   it('moves the view with arrow keys through the mounted strip', async () => {

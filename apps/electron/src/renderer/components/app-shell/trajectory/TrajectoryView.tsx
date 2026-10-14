@@ -65,10 +65,12 @@ function useKindLabel() {
 export interface TrajectoryViewProps {
   messages: readonly Message[]
   onOpenMessage?: (messageId: string) => void
+  /** Switch to the Runtime Map mode of Траектория (Лента | Карта). */
+  onShowMap?: () => void
   className?: string
 }
 
-export function TrajectoryView({ messages, onOpenMessage, className }: TrajectoryViewProps) {
+export function TrajectoryView({ messages, onOpenMessage, onShowMap, className }: TrajectoryViewProps) {
   const { t } = useTranslation()
   const turns = React.useMemo(() => buildTrajectory(messages), [messages])
   const [mode, setMode] = React.useState<TrajectoryTimelineMode>('sequence')
@@ -114,6 +116,16 @@ export function TrajectoryView({ messages, onOpenMessage, className }: Trajector
   return (
     <div className={cn('flex h-full min-h-0 flex-col bg-background', className)} data-testid="trajectory-view">
       <div role="toolbar" aria-label={t('trajectory.toolbar.aria')} className="flex h-9 shrink-0 items-center gap-1 border-b border-border/60 px-3">
+        {onShowMap && (
+          <div role="group" aria-label={t('trajectory.mode.aria')} className="mr-2 flex items-center gap-0.5" data-testid="trajectory-mode">
+            <ToolbarToggle pressed title={t('trajectory.mode.ledger')} onClick={() => {}}>
+              {t('trajectory.mode.ledger')}
+            </ToolbarToggle>
+            <ToolbarToggle pressed={false} title={t('trajectory.mode.map')} onClick={onShowMap}>
+              {t('trajectory.mode.map')}
+            </ToolbarToggle>
+          </div>
+        )}
         <ToolbarToggle
           pressed={mode === 'duration'}
           title={mode === 'duration' ? t('trajectory.toolbar.useEqualWidth') : t('trajectory.toolbar.useActualDuration')}
