@@ -959,6 +959,8 @@ export const EXPECTED_CHANNELS: string[] = [
   'theme:getWorkspaceColorTheme',
   'theme:loadPreset',
   'theme:preferencesChanged',
+  'theme:saveUserPreset',
+  'theme:setAppLayers',
   'theme:setAppMaterial',
   'theme:setColorTheme',
   'theme:setWorkspaceColorTheme',
@@ -1102,4 +1104,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1098
+export const EXPECTED_CHANNEL_COUNT = 1100
