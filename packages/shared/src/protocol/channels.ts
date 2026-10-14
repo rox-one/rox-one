@@ -404,6 +404,10 @@ export const RPC_CHANNELS = {
     SET_COLOR_THEME: 'theme:setColorTheme',
     /** Persist the app theme's material (glass) field to theme.json (LOCAL_ONLY). */
     SET_APP_MATERIAL: 'theme:setAppMaterial',
+    /** Persist the app theme's layer tokens (frame/content/wallpaper/…) to theme.json (LOCAL_ONLY). */
+    SET_APP_LAYERS: 'theme:setAppLayers',
+    /** Save a user theme preset into ~/.craft-agent/themes (LOCAL_ONLY). */
+    SAVE_USER_PRESET: 'theme:saveUserPreset',
     BROADCAST_PREFERENCES: 'theme:broadcastPreferences',
     PREFERENCES_CHANGED: 'theme:preferencesChanged',
     GET_WORKSPACE_COLOR_THEME: 'theme:getWorkspaceColorTheme',
@@ -599,6 +603,9 @@ export const RPC_CHANNELS = {
     RESET: 'cookbooks-lab:reset',
     CANCEL: 'cookbooks-lab:cancel',
     EXPORT: 'cookbooks-lab:export',
+    // Wave 10: one composer for the four structural cell operations
+    // (add/delete/move/duplicate) — a discriminated union input.
+    MUTATE: 'cookbooks-lab:mutate',
     STATUS_CHANGED: 'cookbooks-lab:status-changed',
   },
 
@@ -991,6 +998,10 @@ export const RPC_CHANNELS = {
     UNINSTALL: 'serviceLifecycle:uninstall',
     STATUS_CHANGED: 'serviceLifecycle:statusChanged',
   },
+  // tray — renderer → main snapshot for the macOS menu-bar item (badge, recents, recording).
+  tray: {
+    REPORT_STATE: 'tray:reportState',
+  },
   // diagnostics — local host doctor checks (service/port/runtime/config/logs).
   diagnostics: {
     RUN: 'diagnostics:run',
@@ -1026,6 +1037,31 @@ export const RPC_CHANNELS = {
     UPDATE_MEMBER_ROLE: 'orgs:updateMemberRole',
     REMOVE_MEMBER: 'orgs:removeMember',
     REVOKE_INVITE: 'orgs:revokeInvite',
+  },
+  // teamChat — Slack-like team messenger (channels, group chats, subscriptions); host store, org-scoped.
+  teamChat: {
+    LIST_CHANNELS: 'teamChat:listChannels',
+    CREATE_CHANNEL: 'teamChat:createChannel',
+    JOIN: 'teamChat:join',
+    LEAVE: 'teamChat:leave',
+    ADD_MEMBERS: 'teamChat:addMembers',
+    SET_SUBSCRIBED: 'teamChat:setSubscribed',
+    ARCHIVE: 'teamChat:archive',
+    LIST_MESSAGES: 'teamChat:listMessages',
+    POST: 'teamChat:post',
+    MARK_READ: 'teamChat:markRead',
+    CALL_JOIN: 'teamChat:callJoin',
+    CALL_LEAVE: 'teamChat:callLeave',
+    CALL_SYNC: 'teamChat:callSync',
+    CALL_TRANSCRIPT: 'teamChat:callTranscript',
+    CALL_LIST: 'teamChat:callList',
+    SEARCH: 'teamChat:search',
+    CHANGED: 'teamChat:changed',
+  },
+  chatFolders: {
+    GET: 'chatFolders:get',
+    MUTATE: 'chatFolders:mutate',
+    CHANGED: 'chatFolders:changed',
   },
   views: {
     LIST: 'views:list',

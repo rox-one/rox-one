@@ -83,6 +83,9 @@ export interface BroadcastEventMap {
     },
   ]
   [RPC_CHANNELS.labels.CHANGED]: [workspaceId: string]
+  /** Team messenger changed for an org (channel list, membership or messages). */
+  [RPC_CHANNELS.teamChat.CHANGED]: [change: { orgId: string; channelId?: string }]
+  [RPC_CHANNELS.chatFolders.CHANGED]: [workspaceId: string, state: import('../chat-folders/types.ts').ChatFoldersState]
   [RPC_CHANNELS.statuses.CHANGED]: [workspaceId: string]
   // Entities (W1-02) — local link store changed for a workspace.
   [RPC_CHANNELS.entities.LINKS_CHANGED]: [workspaceId: string]

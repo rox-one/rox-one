@@ -51,12 +51,19 @@ def parse_index(value: Any) -> int | None:
 
     Returns ``None`` for anything else (float, ``True``/``False``, ``"x"``, ...)
     so handlers answer 400 instead of raising inside the request thread.
+
+    The string branch guards two ``int()`` traps ``str.isdigit`` alone does not
+    cover: it is true for non-ASCII digits (``'²'``, ``'①'``) that ``int()``
+    rejects with ``ValueError``, and CPython ≥3.11 raises on decimal strings
+    longer than ``sys.int_max_str_digits``. A cell index is never longer than a
+    few digits, so the length cap also keeps an oversized body from becoming a
+    CPU sink; both cases must return ``None`` (→ 400), not raise.
     """
     if isinstance(value, bool):
         return None
     if isinstance(value, int):
         return value
-    if isinstance(value, str) and value.isdigit():
+    if isinstance(value, str) and value.isascii() and value.isdigit() and len(value) <= 12:
         return int(value)
     return None
 
@@ -88,18 +95,34 @@ class LabHost:
         # in which one can start after the sweep (no orphan).
         self._lifecycle = threading.Lock()
         self._stopping = False
+        # Wave 10: one document writer at a time. ThreadingHTTPServer runs every
+        # request in its own thread and a mutation's read-modify-write of the
+        # ipynb is not atomic, so two overlapping /save or /cells/* calls would
+        # clobber each other's index shifts. It also covers the short
+        # read-modify-save that pre-persists /run and /run-all sources, and run
+        # registration (`begin_run`), so the /cells/* run-guard cannot interleave
+        # with "register then read". Cell *execution* stays outside the lock (a
+        # 60s run must not block Save) (spec wave 10, decision 3).
+        self._document_lock = threading.Lock()
 
     def begin_run(self, item_id: str, run: RunHandle) -> bool:
         """Register ``run`` for ``item_id`` unless shutdown has already begun.
 
         False means ``stop`` started, so the caller answers 503 instead of
         spawning a process the shutdown sweep would miss.
+
+        Wave 10: registration (and the document read that follows it) is
+        serialized with structural mutations on ``_document_lock``, so a
+        /cells/* run-guard ("``active()`` is zero, so mutate") cannot interleave
+        with a run that is about to read the document. Both paths take the locks
+        in the same document-then-lifecycle order — no deadlock.
         """
-        with self._lifecycle:
-            if self._stopping:
-                return False
-            self.runs.register(item_id, run)
-            return True
+        with self._document_lock:
+            with self._lifecycle:
+                if self._stopping:
+                    return False
+                self.runs.register(item_id, run)
+                return True
 
     @property
     def url(self) -> str:
@@ -292,22 +315,28 @@ class LabHost:
                             idx = parse_index(raw_index)
                             if idx is None:
                                 return self._send(400, {"error": "index must be an integer"})
-                            try:
-                                nb = Notebook.open(copy)
-                            except NotebookError as exc:
-                                return self._send(400, {"error": str(exc)})
-                            if not 0 <= idx < len(nb.cells):
-                                return self._send(400, {"error": "cell index out of range"})
-                            if nb.cell_type(idx) != "code":
-                                return self._send(400, {"error": "cell is not runnable"})
-                            # Persist the edited source BEFORE executing so
-                            # persist_code_output updates this cell in place instead
-                            # of appending a duplicate.
-                            try:
-                                nb.set_code(idx, code)
-                                nb.save()
-                            except NotebookError as exc:
-                                return self._send(400, {"error": str(exc)})
+                            # Wave 10: this read-modify-save is serialized with
+                            # /save and /cells/* on _document_lock, so the
+                            # pre-persist cannot clobber a concurrent edit (the
+                            # run is already registered, so no /cells/* mutation
+                            # can be in this section).
+                            with lab._document_lock:
+                                try:
+                                    nb = Notebook.open(copy)
+                                except NotebookError as exc:
+                                    return self._send(400, {"error": str(exc)})
+                                if not 0 <= idx < len(nb.cells):
+                                    return self._send(400, {"error": "cell index out of range"})
+                                if nb.cell_type(idx) != "code":
+                                    return self._send(400, {"error": "cell is not runnable"})
+                                # Persist the edited source BEFORE executing so
+                                # persist_code_output updates this cell in place
+                                # instead of appending a duplicate.
+                                try:
+                                    nb.set_code(idx, code)
+                                    nb.save()
+                                except NotebookError as exc:
+                                    return self._send(400, {"error": str(exc)})
                         store = dict(lab.store)
                         if raw_store:
                             store.update(raw_store)
@@ -334,6 +363,7 @@ class LabHost:
                                 "returncode",
                                 "error",
                                 "timed_out",
+                                "displays",
                             )
                             if k in result
                         }
@@ -394,21 +424,25 @@ class LabHost:
                             copy = lab.copies.open(item_id)
                         except (CopyError, CatalogError) as exc:
                             return self._send(400, {"error": str(exc)})
-                        try:
-                            nb = Notebook.open(copy)
-                            for idx, _src in entries:
-                                if not 0 <= idx < len(nb.cells):
-                                    return self._send(400, {"error": "cell index out of range"})
-                                if nb.cell_type(idx) != "code":
-                                    return self._send(400, {"error": "cell is not runnable"})
-                            # Persist the edited sources with ONE save BEFORE
-                            # executing, so persist_code_output updates these cells in
-                            # place instead of appending duplicates (/run parity).
-                            for idx, src in entries:
-                                nb.set_code(idx, src)
-                            nb.save()
-                        except NotebookError as exc:
-                            return self._send(400, {"error": str(exc)})
+                        # Wave 10: the whole read-modify-save is serialized with
+                        # /save and /cells/* on _document_lock (/run parity); the
+                        # run is already registered, so no mutation can be here.
+                        with lab._document_lock:
+                            try:
+                                nb = Notebook.open(copy)
+                                for idx, _src in entries:
+                                    if not 0 <= idx < len(nb.cells):
+                                        return self._send(400, {"error": "cell index out of range"})
+                                    if nb.cell_type(idx) != "code":
+                                        return self._send(400, {"error": "cell is not runnable"})
+                                # Persist the edited sources with ONE save BEFORE
+                                # executing, so persist_code_output updates these
+                                # cells in place instead of appending duplicates.
+                                for idx, src in entries:
+                                    nb.set_code(idx, src)
+                                nb.save()
+                            except NotebookError as exc:
+                                return self._send(400, {"error": str(exc)})
                         store = dict(lab.store)
                         if raw_store:
                             store.update(raw_store)
@@ -443,6 +477,7 @@ class LabHost:
                                     "error",
                                     "timed_out",
                                     "duration_ms",
+                                    "displays",
                                 )
                             }
                             for cell in result.get("cells") or []
@@ -479,41 +514,136 @@ class LabHost:
                     item_id = self._item_id(body)
                     if item_id is None:
                         return self._send(400, {"error": "missing itemId"})
-                    try:
-                        copy = lab.copies.open(item_id)
-                    except (CopyError, CatalogError) as exc:
-                        return self._send(400, {"error": str(exc)})
-                    if copy.document.suffix == ".md":
-                        text = body.get("text")
-                        if not isinstance(text, str):
-                            return self._send(400, {"error": "missing text"})
+                    # Wave 10: /save and every /cells/* mutation serialize on
+                    # _document_lock, so an edit cannot interleave with the index
+                    # shifts a structural op performs on the same document.
+                    with lab._document_lock:
                         try:
-                            Playbook.open(copy)
-                            copy.document.write_text(text, encoding="utf-8")
+                            copy = lab.copies.open(item_id)
+                        except (CopyError, CatalogError) as exc:
+                            return self._send(400, {"error": str(exc)})
+                        if copy.document.suffix == ".md":
+                            text = body.get("text")
+                            if not isinstance(text, str):
+                                return self._send(400, {"error": "missing text"})
+                            try:
+                                Playbook.open(copy)
+                                copy.document.write_text(text, encoding="utf-8")
+                            except NotebookError as exc:
+                                return self._send(400, {"error": str(exc)})
+                            return self._send(200, {"ok": True})
+                        idx = parse_index(body.get("index"))
+                        if idx is None:
+                            return self._send(400, {"error": "index must be an integer"})
+                        src = body.get("source")
+                        if not isinstance(src, str):
+                            return self._send(400, {"error": "missing source"})
+                        try:
+                            nb = Notebook.open(copy)
+                        except NotebookError as exc:
+                            return self._send(400, {"error": str(exc)})
+                        if not 0 <= idx < len(nb.cells):
+                            return self._send(400, {"error": "cell index out of range"})
+                        try:
+                            if nb.cell_type(idx) == "markdown":
+                                nb.set_markdown(idx, src)
+                            else:
+                                nb.set_code(idx, src)
+                            nb.save()
                         except NotebookError as exc:
                             return self._send(400, {"error": str(exc)})
                         return self._send(200, {"ok": True})
-                    idx = parse_index(body.get("index"))
-                    if idx is None:
-                        return self._send(400, {"error": "index must be an integer"})
-                    src = body.get("source")
-                    if not isinstance(src, str):
-                        return self._send(400, {"error": "missing source"})
+                if parsed.path.startswith("/cells/"):
+                    # Wave 10: structural cell mutations. The sidecar is the only
+                    # writer (decision 1), so each op is a read-modify-write of
+                    # the copy's ipynb under _document_lock. Validation order is
+                    # fixed by the contract (docs/electron-integration.md §3.7):
+                    # itemId -> catalog item -> ipynb -> fields -> bounds ->
+                    # run-guard -> mutate, so a client can rely on which failure
+                    # it sees first.
+                    if parsed.path not in (
+                        "/cells/add",
+                        "/cells/delete",
+                        "/cells/move",
+                        "/cells/duplicate",
+                    ):
+                        return self._send(404, {"error": "not found"})
+                    op = parsed.path.rsplit("/", 1)[-1]
+                    item_id = self._item_id(body)
+                    if item_id is None:
+                        return self._send(400, {"error": "missing itemId"})
                     try:
-                        nb = Notebook.open(copy)
-                    except NotebookError as exc:
+                        item = lab.catalog.item(item_id)
+                    except CatalogError as exc:
                         return self._send(400, {"error": str(exc)})
-                    if not 0 <= idx < len(nb.cells):
-                        return self._send(400, {"error": "cell index out of range"})
-                    try:
-                        if nb.cell_type(idx) == "markdown":
-                            nb.set_markdown(idx, src)
-                        else:
-                            nb.set_code(idx, src)
-                        nb.save()
-                    except NotebookError as exc:
-                        return self._send(400, {"error": str(exc)})
-                    return self._send(200, {"ok": True})
+                    if item.kind != "ipynb":
+                        return self._send(400, {"error": "not a notebook"})
+                    # Field types are checked before anything touches the
+                    # workspace, so a malformed request never creates a copy.
+                    if op == "add":
+                        cell_type = body.get("cellType")
+                        if cell_type not in ("code", "markdown"):
+                            return self._send(
+                                400, {"error": "cellType must be 'code' or 'markdown'"}
+                            )
+                        source = body.get("source", "")
+                        if not isinstance(source, str):
+                            return self._send(400, {"error": "source must be a string"})
+                        index = parse_index(body.get("index"))
+                        if index is None:
+                            return self._send(400, {"error": "index must be an integer"})
+                    elif op == "move":
+                        from_index = parse_index(body.get("from"))
+                        if from_index is None:
+                            return self._send(400, {"error": "from must be an integer"})
+                        to_index = parse_index(body.get("to"))
+                        if to_index is None:
+                            return self._send(400, {"error": "to must be an integer"})
+                    else:
+                        index = parse_index(body.get("index"))
+                        if index is None:
+                            return self._send(400, {"error": "index must be an integer"})
+                    with lab._document_lock:
+                        try:
+                            copy = lab.copies.open(item_id)
+                        except (CopyError, CatalogError) as exc:
+                            return self._send(400, {"error": str(exc)})
+                        try:
+                            nb = Notebook.open(copy)
+                        except NotebookError as exc:
+                            return self._send(400, {"error": str(exc)})
+                        count = len(nb.cells)
+                        # `add` may target one past the last cell (append);
+                        # every other op must address an existing cell.
+                        if op == "add":
+                            if not 0 <= index <= count:
+                                return self._send(400, {"error": "cell index out of range"})
+                        elif op == "move":
+                            if not 0 <= from_index < count or not 0 <= to_index < count:
+                                return self._send(400, {"error": "cell index out of range"})
+                        elif not 0 <= index < count:
+                            return self._send(400, {"error": "cell index out of range"})
+                        # Run-guard (decision 2): refuse while any run is live
+                        # for this item — a mutation would shift the indices the
+                        # finishing run is about to persist its output into.
+                        if lab.runs.active(item_id):
+                            return self._send(409, {"error": "notebook is running"})
+                        try:
+                            if op == "add":
+                                if cell_type == "code":
+                                    focused = nb.add_code_cell(source, index=index)
+                                else:
+                                    focused = nb.add_markdown_cell(source, index=index)
+                            elif op == "delete":
+                                focused = nb.delete_cell(index)
+                            elif op == "move":
+                                focused = nb.move_cell(from_index, to_index)
+                            else:
+                                focused = nb.duplicate_cell(index)
+                            nb.save()
+                        except NotebookError as exc:
+                            return self._send(400, {"error": str(exc)})
+                    return self._send(200, {"ok": True, "index": focused})
                 if parsed.path == "/store":
                     incoming = body.get("store")
                     if not isinstance(incoming, dict):
@@ -552,6 +682,10 @@ class LabHost:
                     "cell_type": cell.get("cell_type"),
                     "source": source_text(cell),
                     "outputs": cell.get("outputs") or [],
+                    # Wave 11: raw nbformat ``execution_count``, so Electron main
+                    # can seed the ``[N]`` run counter on open (``None`` for a
+                    # cell that never ran, or a malformed value).
+                    "execution_count": cell.get("execution_count"),
                 }
             )
         return {

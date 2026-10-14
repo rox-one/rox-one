@@ -20,6 +20,7 @@ import { registerMeetingHandlers } from './meetings.ts'
 import { registerFilesHandlers } from './files'
 import { registerLabelsHandlers } from './labels'
 import { registerOrgsHandlers } from './orgs'
+import { registerTeamChatHandlers } from './team-chat'
 import { registerLlmConnectionsHandlers } from './llm-connections'
 import { registerOAuthHandlers } from './oauth'
 import { registerCalendarGoogleHandlers } from './calendar-google'
@@ -163,6 +164,7 @@ export function registerCoreRpcHandlers(
   registerFilesHandlers(server, deps)
   registerLabelsHandlers(server, deps)
   registerOrgsHandlers(server, deps)
+  registerTeamChatHandlers(server, deps)
   registerLlmConnectionsHandlers(server, deps)
   registerOAuthHandlers(server, deps)
   registerCalendarGoogleHandlers(server, deps)

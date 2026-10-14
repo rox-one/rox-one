@@ -54,10 +54,22 @@ export interface CookbooksCard {
   disabledReason: string | null
 }
 
-/** One persisted notebook output: stream/execute text, or an error traceback. */
+/**
+ * Wave 11: one rich display record — a single mime-bundle entry of a
+ * `display_data` output. `data` is a string on every hop (base64 for `image/*`,
+ * the payload itself for text mimes; `application/json` is a JSON document).
+ */
+export interface CookbooksDisplay {
+  mime: string
+  data: string
+}
+
+/** One persisted notebook output: stream/execute text, an error traceback, rich displays. */
 export interface CookbooksOutput {
   text: string
   traceback: string | null
+  /** Wave 11: rich records persisted after the text (`[]` on a pre-wave-11 copy). */
+  displays: CookbooksDisplay[]
 }
 
 /** One notebook cell as stored in the copy (source is already a single string). */
@@ -65,6 +77,8 @@ export interface CookbooksCell {
   cellType: 'code' | 'markdown'
   source: string
   outputs: CookbooksOutput[]
+  /** Wave 11: nbformat `execution_count` — `null` when the cell never ran. */
+  executionCount: number | null
 }
 
 /** An opened document. `text` is set for playbooks (`.md`), `cells` for notebooks. */
@@ -78,6 +92,34 @@ export interface CookbooksDocument {
   text: string | null
 }
 
+// ---------------------------------------------------------------------------
+// Structural cell mutations (SPEC wave 10 §Контракт shared/main/IPC)
+// ---------------------------------------------------------------------------
+
+/**
+ * The four structural notebook operations, addressed by position (the vendored
+ * `.ipynb` carries no stable per-cell id). One discriminated union keeps the
+ * protocol surface at a single `cookbooks-lab:mutate` channel.
+ */
+export type CookbooksCellMutation =
+  | { op: 'add'; cellType: 'code' | 'markdown'; index: number; source?: string }
+  | { op: 'delete'; index: number }
+  | { op: 'move'; from: number; to: number }
+  | { op: 'duplicate'; index: number }
+
+/** Input of `cookbooks-lab:mutate`: the target copy plus the operation. */
+export type CookbooksMutateInput = { itemId: string } & CookbooksCellMutation
+
+/**
+ * Result of a structural mutation: the document re-read after the sidecar
+ * applied it, plus the cell index the renderer should focus (`-1` when a
+ * delete emptied the notebook).
+ */
+export interface CookbooksMutateResult {
+  document: CookbooksDocument
+  index: number
+}
+
 /** Result of running one cell (`POST /run`). */
 export interface CookbooksRunResult {
   ok: boolean
@@ -85,6 +127,11 @@ export interface CookbooksRunResult {
   error: string | null
   timedOut: boolean
   missing: string[]
+  /**
+   * Wave 11: rich records the runner wrote to its results file — `[]` when the
+   * cell produced none, and also when a kill/timeout left no file behind.
+   */
+  displays: CookbooksDisplay[]
   /**
    * `true` when the run was interrupted by a `/cancel` (additive sidecar field,
    * SPEC wave 9 §1). Absent on a sidecar that predates the field.
@@ -117,6 +164,8 @@ export interface CookbooksRunCell {
   status: 'ok' | 'error' | 'skipped' | 'cancelled'
   stdout: string
   error: string | null
+  /** Wave 11: rich records this cell produced (`[]` when it produced none). */
+  displays: CookbooksDisplay[]
 }
 
 // ---------------------------------------------------------------------------
@@ -185,6 +234,11 @@ export interface CookbooksExportCell {
   executionCount?: number | null
   stdout?: string
   error?: string
+  /**
+   * Wave 11: rich records to persist as `display_data` outputs — written after
+   * the stream outputs, in emission order.
+   */
+  displays?: CookbooksDisplay[]
 }
 
 /**
@@ -205,17 +259,12 @@ function toNotebookLines(text: string): string[] {
  *
  * Pure: no `Date`, no randomness, so the same input always renders byte-equal.
  * A code cell's `stdout`/`error` become stream outputs (`stdout`/`stderr`) only
- * when non-empty; markdown cells carry just their source.
+ * when non-empty; its `displays` follow them as `display_data` outputs (wave 11);
+ * markdown cells carry just their source.
  */
 export function buildNotebookExport(input: {
   title: string
-  cells: Array<{
-    cellType: 'code' | 'markdown'
-    source: string
-    executionCount?: number | null
-    stdout?: string
-    error?: string
-  }>
+  cells: CookbooksExportCell[]
 }): string {
   const cells = input.cells.map((cell) => {
     if (cell.cellType === 'markdown') {
@@ -231,6 +280,22 @@ export function buildNotebookExport(input: {
     }
     if (typeof cell.error === 'string' && cell.error.length > 0) {
       outputs.push({ output_type: 'stream', name: 'stderr', text: toNotebookLines(cell.error) })
+    }
+    // Wave 11: one `display_data` output per rich record, after the streams.
+    // nbformat keeps an `application/json` bundle parsed (a nested value), so a
+    // JSON payload that parses is written as-is; one that does not is kept
+    // verbatim. Every other mime — base64 images included — is already a string.
+    const displays: CookbooksDisplay[] = Array.isArray(cell.displays) ? cell.displays : []
+    for (const display of displays) {
+      let value: unknown = display.data
+      if (display.mime === 'application/json') {
+        try {
+          value = JSON.parse(display.data) as unknown
+        } catch {
+          value = display.data
+        }
+      }
+      outputs.push({ output_type: 'display_data', metadata: {}, data: { [display.mime]: value } })
     }
     return {
       cell_type: 'code' as const,

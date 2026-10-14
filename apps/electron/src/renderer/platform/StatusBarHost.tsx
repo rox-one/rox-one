@@ -22,6 +22,7 @@ import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { cn } from '@/lib/utils'
 import { buildStatusBarModel, countActiveRuns, countPendingApprovals, statusBarPermissionMode } from './status-model'
+import { messengerStatusAtom } from '@/atoms/messenger-status'
 
 /** CSS var so the bar follows `data-density`. */
 const STATUS_BAR_HEIGHT = 'var(--chrome-status-height)'
@@ -62,6 +63,7 @@ function workspaceModeLabel(
 
 function StatusBarInner() {
   const { t } = useTranslation()
+  const messenger = useAtomValue(messengerStatusAtom)
   const transport = useTransportConnectionState()
   const focusedSessionId = useAtomValue(focusedSessionIdAtom)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
@@ -92,7 +94,7 @@ function StatusBarInner() {
   return (
     <div
       data-slot="status"
-      className="chrome-strip chrome-label-sm flex shrink-0 items-center justify-between gap-2 px-2.5 text-[var(--chrome-label)]"
+      className="chrome-strip chrome-label-sm leading-none flex shrink-0 items-center justify-between gap-2 px-2.5 text-[var(--chrome-label)]"
       style={{ height: STATUS_BAR_HEIGHT }}
     >
       <div className="flex min-w-0 items-center gap-1.5">
@@ -100,6 +102,13 @@ function StatusBarInner() {
           {workspaceModeLabel(model.workspaceMode, t)}
         </span>
         {model.syncOk && <span>{t('workbench.status.syncOk')}</span>}
+        {messenger ? (
+          <span data-testid="status-bar-messenger" className="flex items-center gap-1.5">
+            {messenger.callLive ? <span className="size-1.5 rounded-full bg-success" aria-label={t('messenger.calls.live')} /> : null}
+            <span className="truncate">{messenger.channelLabel}</span>
+            <span>{t('messenger.status.unread', { count: messenger.unreadTotal })}</span>
+          </span>
+        ) : null}
       </div>
       <div className="flex min-w-0 items-center gap-1.5">
         <span>{t('workbench.status.runs', { count: model.runCount })}</span>

@@ -24,10 +24,29 @@
  * `cookbooks-lab:cancel` and reports whatever the in-flight run answers, so a
  * stopped cell is a result, not a guess.
  *
+ * Wave 10 («Cell Structure») adds Colab's structural editing: a hover insert row
+ * before every cell (and after the last one), a per-cell «⋯» disclosure with
+ * move/duplicate/delete, `Ctrl+M` to insert a code cell below, and focus +
+ * autoscroll onto the cell a mutation lands on. Everything routes through the
+ * one `cookbooks-lab:mutate` channel: unsaved edits are flushed first, and the
+ * fresh document the sidecar answers with replaces the surface wholesale.
+ *
+ * Wave 11 («Rich Output & Persistence») renders the cell's `display_data`: every
+ * rich record the copy or the sidecar carries is drawn after the cell's own text
+ * — an image as a `data:`-URL, HTML in a sandboxed frame (`allow-scripts`, never
+ * `allow-same-origin`, and always led by the record's own `default-src 'none'`
+ * policy), JSON pretty-printed, markdown through the product renderer — while an
+ * unrendered mime falls back to its plain text. The block reads as one text: what
+ * the cell printed plus the plain-text record of every display it emitted.
+ * Opening a document seeds the surface from the outputs the copy already persists
+ * (`status: 'saved'`) and from nbformat `execution_count`, so a reopened notebook
+ * shows its saved results and its `[N]` counters before anything runs.
+ *
  * Every string comes from `cookbooks.*` through `t()` and every colour, radius,
  * type size and control height is a ROX token, so the surface follows the app
  * theme in all twelve locales and never drifts into ad-hoc styling.
  */
+import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2 } from 'lucide-react'
@@ -41,6 +60,8 @@ import { cn } from '@/lib/utils'
 import {
   buildNotebookExport,
   type CookbooksCard,
+  type CookbooksCellMutation,
+  type CookbooksDisplay,
   type CookbooksDocument,
   type CookbooksRunCell,
   type CookbooksStatus,
@@ -66,7 +87,7 @@ const HELP_KEYS: readonly string[] = [
 /**
  * R7: the shortcut block appended to the help disclosure, in R5 order, plus
  * Q2A's R-A navigation line and wave 9's stop key — the cheatsheet mirrors
- * exactly what is bound.
+ * exactly what is bound. Wave 10 adds the `Ctrl+M` insert key.
  */
 const SHORTCUT_KEYS: readonly string[] = [
   'cookbooks.help.shortcutRun',
@@ -74,6 +95,7 @@ const SHORTCUT_KEYS: readonly string[] = [
   'cookbooks.help.shortcutRunAll',
   'cookbooks.help.shortcutNav',
   'cookbooks.help.shortcutStop',
+  'cookbooks.help.shortcutInsert',
 ]
 
 /**
@@ -130,8 +152,11 @@ type CookbooksPageUi = 'starting' | 'ready' | 'unavailable' | 'failed' | 'stoppe
  * values plus the local `cancelled` a stopped execution lands on. A stopping
  * batch omits the cells it never reached, so their status can only be decided
  * here.
+ *
+ * Wave 11: `saved` is the fourth local value — a result that came from the copy
+ * when the document was opened, not from a run of this session.
  */
-type CookbooksCellStatus = CookbooksRunCell['status'] | 'cancelled'
+type CookbooksCellStatus = CookbooksRunCell['status'] | 'cancelled' | 'saved'
 
 /** One rendered cell result: the run-all DTO widened with the local status. */
 type CookbooksCellResult = Omit<CookbooksRunCell, 'status'> & { status: CookbooksCellStatus }
@@ -213,6 +238,103 @@ const CellMarkdown = memo(function CellMarkdown({
 })
 
 /**
+ * Wave 11: the chrome a text-shaped block wears — the cell's own text and a
+ * JSON display — so the two are scrollable, wrapped and clamped the same way.
+ */
+const OUTPUT_PRE_CLASS =
+  'overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere] rounded-[var(--radius-control)] bg-surface-hover px-2.5 py-1.5 font-mono text-small'
+
+/**
+ * Wave 11: the mimes this surface draws. The emitter picks exactly ONE
+ * widget-mime per display event in this same order (the canon `REPR_MIMES`), so
+ * one event can never carry two of them; the renderer draws every record it
+ * receives, in emission order. `text/plain` is deliberately absent — it is not a
+ * widget: it is the plain-text fallback the block itself shows (`outputText`) —
+ * and a mime outside this list (latex, yaml, …) is carried by the document and
+ * the export but not rendered.
+ */
+const RENDERABLE_MIMES: readonly string[] = [
+  'text/html',
+  'image/svg+xml',
+  'image/png',
+  'image/jpeg',
+  'text/markdown',
+  'application/json',
+]
+
+/** Wave 11: JSON displays are pretty-printed; a payload that is not JSON shows verbatim. */
+function prettyJson(data: string): string {
+  try {
+    return JSON.stringify(JSON.parse(data), null, 2)
+  } catch {
+    return data
+  }
+}
+
+/**
+ * Wave 11: the policy a rich HTML record is framed with — its OWN
+ * `default-src 'none'` document policy, the `WidgetFrame.tsx` / `mail-sanitize`
+ * precedent, so the embedding application's CSP (`script-src 'unsafe-inline'`,
+ * `connect-src https:` and loopback) never reaches the record and a record can
+ * never phone home or post a form. Inline scripts and styles keep working; this
+ * is a phishing/exfil fence, not a renderer restriction.
+ *
+ * It travels FIRST in the document, where the HTML parser hoists a `<meta>` into
+ * the frame's `<head>` whatever the record itself starts with.
+ */
+const FRAME_POLICY_META =
+  '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'; img-src data: blob:; font-src data:; form-action \'none\'; base-uri \'none\'">'
+
+/**
+ * Wave 11: one rich display record, drawn after the cell's own text. The mime
+ * picks the widget. The HTML frame follows the `WidgetFrame.tsx` precedent:
+ * scripts are allowed, but NEVER `allow-same-origin` — same-origin plus scripts
+ * would hand the record this application's origin and its preload bridge.
+ */
+function DisplayRecord({ index, display }: { index: number; display: CookbooksDisplay }) {
+  const { t } = useTranslation()
+  if (display.mime === 'text/html') {
+    return (
+      <iframe
+        data-testid={`cookbooks-display-frame-${index}`}
+        title={t('cookbooks.output.frameTitle')}
+        sandbox="allow-scripts"
+        referrerPolicy="no-referrer"
+        // The record's own policy leads its document, so the frame is fenced
+        // against network, forms and a base URI no matter what it contains.
+        srcDoc={`${FRAME_POLICY_META}${display.data}`}
+        className="w-full min-h-[120px] rounded-[var(--radius-control)] border border-border-subtle bg-white"
+      />
+    )
+  }
+  if (display.mime === 'image/svg+xml' || display.mime === 'image/png' || display.mime === 'image/jpeg') {
+    return (
+      // The record's own mime rides in the URL, so svg/png/jpeg all decode.
+      <img
+        data-testid={`cookbooks-display-image-${index}`}
+        src={`data:${display.mime};base64,${display.data}`}
+        alt={t('cookbooks.output.imageAlt')}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        className="max-w-full rounded-[var(--radius-control)] border border-border-subtle"
+      />
+    )
+  }
+  if (display.mime === 'application/json') {
+    return (
+      <pre
+        data-testid={`cookbooks-display-json-${index}`}
+        className={cn(OUTPUT_PRE_CLASS, 'max-h-[320px] text-muted-foreground')}
+      >
+        {prettyJson(display.data)}
+      </pre>
+    )
+  }
+  // `text/markdown` — the only remaining mime of the priority list.
+  return <CellMarkdown mode="minimal" source={display.data} testId={`cookbooks-display-markdown-${index}`} />
+}
+
+/**
  * The per-cell output block: pill-free, `data-status`-tagged, honest about
  * emptiness. R-B: `long` marks an output past the collapse threshold and
  * `expanded` its per-cell toggle — a collapsed block is height-clamped with a
@@ -220,6 +342,10 @@ const CellMarkdown = memo(function CellMarkdown({
  *
  * Wave 9: the text goes through `normalizeOutputText`, so a progress bar that
  * rewrites one line with `\r` shows its final frame instead of every frame.
+ *
+ * Wave 11: the block is a column — the text `<pre>` first, then one widget per
+ * rich display record the cell carries. The wrapper keeps the test id, status,
+ * collapse flag and label the surface has always published.
  */
 function CellOutput({
   index,
@@ -236,23 +362,88 @@ function CellOutput({
 }) {
   const { t } = useTranslation()
   const collapsed = long && !expanded
+  // Wave 11: the rich records the cell carries, in emission order — one widget
+  // per event, text/plain excluded (it is the block's own fallback text) and so
+  // is every mime this surface does not draw.
+  const displays = (cell?.displays ?? []).filter((display) => RENDERABLE_MIMES.includes(display.mime))
 
   return (
-    <pre
+    <div
       data-testid={`cookbooks-output-${index}`}
       data-status={cell?.status ?? 'idle'}
       data-collapsed={collapsed ? 'true' : 'false'}
       aria-label={t('cookbooks.cell.outputLabel', { index })}
+      className="flex flex-col gap-1.5"
+    >
+      <pre
+        className={cn(
+          OUTPUT_PRE_CLASS,
+          // A short block keeps the wave-7 cap; a long one is clamped while
+          // collapsed and shown in full once expanded.
+          long ? (expanded ? '' : 'max-h-[120px]') : 'max-h-[320px]',
+          cell?.status === 'error' ? 'text-destructive-text' : 'text-muted-foreground',
+        )}
+      >
+        {normalizeOutputText(outputText(cell))}
+      </pre>
+      {displays.map((display, position) => (
+        <DisplayRecord key={`${position}:${display.mime}`} index={index} display={display} />
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Wave 10: the Colab hover-insert row — «+ Код» / «+ Текст» drawn before every
+ * cell and once after the last one, so `index` is the document position the new
+ * cell lands at. The row reveals itself on hover/focus, except in an empty
+ * notebook where it is the only thing on screen and stays visible.
+ */
+function InsertRow({
+  index,
+  alwaysVisible,
+  disabled,
+  busyHint,
+  onInsert,
+}: {
+  index: number
+  /** `true` in an empty notebook: the lone row never hides. */
+  alwaysVisible: boolean
+  disabled: boolean
+  /** Hint shown while an action is in flight; omitted when the row is idle. */
+  busyHint?: string
+  onInsert: (cellType: 'code' | 'markdown') => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <div
+      data-testid={`cookbooks-insert-${index}`}
       className={cn(
-        'overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere] rounded-[var(--radius-control)] bg-surface-hover px-2.5 py-1.5 font-mono text-small',
-        // A short block keeps the wave-7 cap; a long one is clamped while
-        // collapsed and shown in full once expanded.
-        long ? (expanded ? '' : 'max-h-[120px]') : 'max-h-[320px]',
-        cell?.status === 'error' ? 'text-destructive-text' : 'text-muted-foreground',
+        'group/insert flex h-6 items-center justify-center gap-2 opacity-0 transition-opacity hover:opacity-100 focus-within:opacity-100 motion-reduce:transition-none',
+        alwaysVisible && 'opacity-100',
       )}
     >
-      {normalizeOutputText(outputText(cell))}
-    </pre>
+      <button
+        type="button"
+        data-testid={`cookbooks-insert-code-${index}`}
+        title={busyHint}
+        disabled={disabled}
+        onClick={() => onInsert('code')}
+        className={ACTION_CLASS}
+      >
+        {t('cookbooks.insert.code')}
+      </button>
+      <button
+        type="button"
+        data-testid={`cookbooks-insert-text-${index}`}
+        title={busyHint}
+        disabled={disabled}
+        onClick={() => onInsert('markdown')}
+        className={ACTION_CLASS}
+      >
+        {t('cookbooks.insert.text')}
+      </button>
+    </div>
   )
 }
 
@@ -274,6 +465,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   const [editingCells, setEditingCells] = useState<Record<number, boolean>>({})
   /** R-B: per-cell «показан полностью» state; absent means collapsed for long output. */
   const [expandedOutputs, setExpandedOutputs] = useState<Record<number, boolean>>({})
+  /** Wave 10: the one cell whose «⋯» actions row is disclosed, or null. */
+  const [menuOpen, setMenuOpen] = useState<number | null>(null)
   const [playbookText, setPlaybookText] = useState('')
   const [playbookEditing, setPlaybookEditing] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
@@ -282,6 +475,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   const [runStartedAt, setRunStartedAt] = useState<number | null>(null)
   const [elapsedMs, setElapsedMs] = useState(0)
   const documentRef = useRef<HTMLElement | null>(null)
+  /** Wave 10: the document index a structural mutation lands on, focused next pass. */
+  const pendingFocusRef = useRef<number | null>(null)
 
   // ensure() on mount + push subscription: main is the only source of truth.
   useEffect(() => {
@@ -352,15 +547,39 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   const applyDocument = useCallback((next: CookbooksDocument) => {
     setDoc(next)
     const nextSources: Record<number, string> = {}
+    // Wave 11: a copy that already holds outputs opens with them on screen
+    // (SPEC §15) — the text the cell printed, its first traceback as the cell's
+    // error, every rich record it kept, and the `[N]` counter its own
+    // `execution_count` stands for.
+    const nextOutputs: Record<number, CookbooksCellResult> = {}
+    const nextRuns: Record<number, number> = {}
     next.cells.forEach((cell, index) => {
       nextSources[index] = cell.source
+      if (cell.outputs.length > 0) {
+        nextOutputs[index] = {
+          index,
+          status: 'saved',
+          stdout: cell.outputs
+            .map((output) => output.text)
+            .filter((text) => text.trim().length > 0)
+            .join('\n'),
+          error: cell.outputs.find((output) => output.traceback !== null)?.traceback ?? null,
+          displays: cell.outputs.flatMap((output) => output.displays),
+        }
+      }
+      if (typeof cell.executionCount === 'number' && cell.executionCount >= 1) {
+        nextRuns[index] = cell.executionCount
+      }
     })
     setSources(nextSources)
-    setOutputs({})
+    setOutputs(nextOutputs)
     setExpandedOutputs({})
-    // Counters and edit modes belong to the document that was open, not to the
-    // surface: a freshly opened copy starts from a clean slate.
-    setRuns({})
+    // Wave 10: a re-read document invalidates the cell the menu pointed at.
+    setMenuOpen(null)
+    // Counters and edit modes belong to the document that was opened, not to the
+    // surface: a freshly opened copy starts from the `execution_count`s its own
+    // file holds.
+    setRuns(nextRuns)
     setEditingCells({})
     setPlaybookEditing(false)
     setPlaybookText(next.text ?? '')
@@ -391,6 +610,29 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
 
   /** R6: the autoscroll target of a run — the cell itself. */
   const scrollToCell = useCallback((index: number) => scrollToBlock(`cookbooks-cell-${index}`), [scrollToBlock])
+
+  /**
+   * Wave 10: land focus on the cell a structural mutation points at. The effect
+   * keys off `doc` and `editingCells`, so a markdown cell — which only grows a
+   * `<textarea>` once its edit mode is on — is focused on the second pass;
+   * `-1` (a delete that emptied the notebook) clears the request without focus.
+   */
+  useEffect(() => {
+    const target = pendingFocusRef.current
+    if (target === null) return
+    if (target === -1) {
+      pendingFocusRef.current = null
+      return
+    }
+    const field = documentRef.current?.querySelector<HTMLTextAreaElement>(
+      `[data-testid="cookbooks-source-${target}"]`,
+    )
+    // Markdown in read mode has no field yet: wait for the edit-mode pass.
+    if (!field) return
+    pendingFocusRef.current = null
+    scrollToCell(target)
+    field.focus()
+  }, [doc, editingCells, scrollToCell])
 
   /** R5: move focus to the next runnable cell at or after `from`. */
   const focusCellSource = useCallback(
@@ -449,6 +691,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
               status: cancelled ? 'cancelled' : result.ok ? 'ok' : 'error',
               stdout: result.stdout,
               error: result.error,
+              // Wave 11: the rich records this run emitted travel with its text.
+              displays: result.displays,
             },
           }))
           setRuns((previous) => ({ ...previous, [index]: (previous[index] ?? 0) + 1 }))
@@ -514,7 +758,13 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
             // just the same.
             for (const cell of cells) {
               if (nextOutputs[cell.index]) continue
-              nextOutputs[cell.index] = { index: cell.index, status: 'cancelled', stdout: '', error: null }
+              nextOutputs[cell.index] = {
+                index: cell.index,
+                status: 'cancelled',
+                stdout: '',
+                error: null,
+                displays: [],
+              }
             }
           }
           // A subset run owns only its own cells: the rest of the document
@@ -573,6 +823,37 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   }, [api, openItemId])
 
   /**
+   * Wave 10: the one structural-mutation path (add/delete/move/duplicate).
+   * Anything unsaved is flushed first, in ascending document order, so the
+   * sidecar shifts a document that already holds the edits on screen; a failed
+   * save aborts the mutation before the sidecar is ever asked. The fresh
+   * document the sidecar answers with replaces the surface wholesale and the
+   * returned `index` becomes the next focus target.
+   */
+  const mutateCell = useCallback(
+    async (mutation: CookbooksCellMutation) => {
+      if (!openItemId || !doc || busy !== null) return
+      await runWithBusy('mutate', async () => {
+        for (let index = 0; index < doc.cells.length; index += 1) {
+          const edited = sources[index] ?? doc.cells[index].source
+          if (edited === doc.cells[index].source) continue
+          await api.save({ itemId: openItemId, index, source: sources[index] ?? '' })
+        }
+        const result = await api.mutate({ itemId: openItemId, ...mutation })
+        applyDocument(result.document)
+        pendingFocusRef.current = result.index
+        // Wave 10: only an insert opens the markdown editor — delete/move/
+        // duplicate must not steal into edit.
+        const target = result.document.cells[result.index]
+        if (mutation.op === 'add' && target?.cellType === 'markdown') {
+          setEditingCells((previous) => ({ ...previous, [result.index]: true }))
+        }
+      })
+    },
+    [api, applyDocument, busy, doc, openItemId, runWithBusy, sources],
+  )
+
+  /**
    * R5: Colab-parity keys, scoped to the document container. Every combination
    * that starts work is a no-op while another action is in flight, and nothing
    * is bound globally.
@@ -585,10 +866,19 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
    * in flight it asks the sidecar to kill the executions of this item and
    * swallows the key (a browser would otherwise leave fullscreen / close a
    * dialog on it).
+   *
+   * Wave 10: `Esc` first closes the open cell menu (that takes priority); `Ctrl+M`
+   * inserts a code cell below the focused one, or appends it to the notebook.
    */
   const handleDocumentKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLElement>) => {
       if (event.key === 'Escape') {
+        // Wave 10: an open disclosure is the innermost thing Esc dismisses.
+        if (menuOpen !== null) {
+          event.preventDefault()
+          setMenuOpen(null)
+          return
+        }
         if (busy === null) return
         event.preventDefault()
         void cancelRun()
@@ -604,6 +894,23 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         // With no cell focused the chord enters the document from its nearest
         // end: ↓ lands on the first code cell, ↑ on the last one.
         focusAdjacentCodeCell(Number.isInteger(current) ? current : direction === 1 ? -1 : doc.cells.length, direction)
+        return
+      }
+      // Wave 10: Ctrl+M inserts a code cell below the focused one (Colab's own
+      // binding); with nothing focused it appends to the end of the notebook.
+      // A structural edit is not a run, so it needs no kernel support — same
+      // gate as the insert/menu controls.
+      if (event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'm') {
+        if (doc?.kind !== 'ipynb' || busy !== null) return
+        event.preventDefault()
+        const target = event.target as HTMLElement | null
+        const rawIndex = target?.tagName === 'TEXTAREA' ? target.getAttribute('data-cell-index') : null
+        const current = rawIndex === null ? Number.NaN : Number(rawIndex)
+        void mutateCell({
+          op: 'add',
+          cellType: 'code',
+          index: Number.isInteger(current) ? current + 1 : doc.cells.length,
+        })
         return
       }
       if (event.key !== 'Enter') return
@@ -632,7 +939,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         void runCell(index)
       }
     },
-    [busy, cancelRun, doc, focusAdjacentCodeCell, runAllCells, runCell],
+    [busy, cancelRun, doc, focusAdjacentCodeCell, menuOpen, mutateCell, runAllCells, runCell],
   )
 
   const saveCell = useCallback(
@@ -662,10 +969,23 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       // Wave 9: a stopped cell says so — it has no stdout to fall back on.
       if (cell.status === 'cancelled') return t('cookbooks.cell.cancelled')
       if (cell.status === 'skipped') return t('cookbooks.output.skipped')
-      const printed = [cell.stdout, cell.error].filter(
-        (part): part is string => part !== null && part.trim().length > 0,
-      )
-      return printed.length > 0 ? printed.join('\n') : t('cookbooks.output.empty')
+      // Wave 11: the block reads as one text — what the cell printed plus the
+      // plain-text record of every display it emitted, in that order, so a
+      // `display("Подпись")` next to a `print("x")` and a trailing value all
+      // show up, while a lone `1+1` still reads as the single line `2`.
+      const parts = [cell.stdout, cell.error]
+        .filter((part): part is string => part !== null && part.trim().length > 0)
+        .concat(
+          cell.displays
+            .filter((display) => display.mime === 'text/plain')
+            .map((display) => display.data)
+            .filter((text) => text.trim().length > 0),
+        )
+      if (parts.length > 0) return parts.join('\n')
+      // A rich result with no text at all shows the frozen «graphical output»
+      // marker (SPEC §14); a cell with no displays keeps the wave-7 copy.
+      if (cell.displays.length > 0) return t('cookbooks.output.richPlaceholder')
+      return t('cookbooks.output.empty')
     },
     [t],
   )
@@ -775,6 +1095,9 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         executionCount: runs[index] ?? null,
         stdout: outputs[index]?.stdout,
         error: outputs[index]?.error ?? undefined,
+        // Wave 11: the rich records of this session travel into the file as
+        // `display_data` outputs, after the cell's stream records (SPEC §16).
+        displays: outputs[index]?.displays,
       })),
     })
     const filename = `${doc.title.replace(/[^\w\d\-.]+/g, '-')}.ipynb`
@@ -1013,7 +1336,16 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
               // of this one — empty means there is nothing to run over there.
               const above = codeIndices.filter((codeIndex) => codeIndex < index)
               const below = codeIndices.filter((codeIndex) => codeIndex > index)
-              return (
+              return [
+                // Wave 10: the insert row sits above each cell, at its index.
+                <InsertRow
+                  key={`insert-${index}`}
+                  index={index}
+                  alwaysVisible={false}
+                  disabled={busy !== null}
+                  busyHint={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                  onInsert={(cellType) => void mutateCell({ op: 'add', cellType, index })}
+                />,
                 <article
                   key={index}
                   data-testid={`cookbooks-cell-${index}`}
@@ -1049,6 +1381,20 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                         {cell.cellType}
                       </span>
                       <span className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+                        {/* Wave 10: the per-cell «⋯» disclosure — up/down/
+                            duplicate/delete, revealed inside the cell. */}
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-menu-${index}`}
+                          aria-label={t('cookbooks.actions.menu')}
+                          aria-expanded={menuOpen === index}
+                          title={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                          disabled={busy !== null}
+                          onClick={() => setMenuOpen((current) => (current === index ? null : index))}
+                          className={ACTION_CLASS}
+                        >
+                          ⋯
+                        </button>
                         {isMarkdown ? (
                           <button
                             type="button"
@@ -1130,6 +1476,65 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                         )}
                       </span>
                     </div>
+                    {/* Wave 10: the disclosed actions row — up/down at the
+                        document edges, duplicate, and a confirmed delete. */}
+                    {menuOpen === index ? (
+                      <div data-testid={`cookbooks-menu-row-${index}`} className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-move-up-${index}`}
+                          title={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                          disabled={busy !== null || index === 0}
+                          onClick={() => {
+                            setMenuOpen(null)
+                            void mutateCell({ op: 'move', from: index, to: index - 1 })
+                          }}
+                          className={ACTION_CLASS}
+                        >
+                          {t('cookbooks.actions.moveUp')}
+                        </button>
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-move-down-${index}`}
+                          title={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                          disabled={busy !== null || index === doc.cells.length - 1}
+                          onClick={() => {
+                            setMenuOpen(null)
+                            void mutateCell({ op: 'move', from: index, to: index + 1 })
+                          }}
+                          className={ACTION_CLASS}
+                        >
+                          {t('cookbooks.actions.moveDown')}
+                        </button>
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-duplicate-${index}`}
+                          title={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                          disabled={busy !== null}
+                          onClick={() => {
+                            setMenuOpen(null)
+                            void mutateCell({ op: 'duplicate', index })
+                          }}
+                          className={ACTION_CLASS}
+                        >
+                          {t('cookbooks.actions.duplicate')}
+                        </button>
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-delete-${index}`}
+                          title={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                          disabled={busy !== null}
+                          onClick={() => {
+                            setMenuOpen(null)
+                            if (!window.confirm(t('cookbooks.cell.deleteConfirm'))) return
+                            void mutateCell({ op: 'delete', index })
+                          }}
+                          className={ACTION_CLASS}
+                        >
+                          {t('cookbooks.actions.delete')}
+                        </button>
+                      </div>
+                    ) : null}
                     {isMarkdown && !editing ? (
                       <CellMarkdown mode="minimal" source={source} testId={`cookbooks-markdown-${index}`} />
                     ) : (
@@ -1183,9 +1588,18 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                       </div>
                     ) : null}
                   </div>
-                </article>
-              )
+                </article>,
+              ]
             })}
+            {/* Wave 10: the tail insert row — appends to the end of the
+                notebook, and is the lone row of an empty one. */}
+            <InsertRow
+              index={doc.cells.length}
+              alwaysVisible={doc.cells.length === 0}
+              disabled={busy !== null}
+              busyHint={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+              onInsert={(cellType) => void mutateCell({ op: 'add', cellType, index: doc.cells.length })}
+            />
           </div>
         )}
       </>
@@ -1199,7 +1613,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       data-state="ready"
     >
       <header className="flex items-center gap-2 border-b border-border-subtle px-3 py-2">
-        <h1 className="text-title-sm font-semibold text-foreground">{t('cookbooks.title')}</h1>
+        <PanelHeading className="text-title-sm font-semibold text-foreground" titleKey="cookbooks.title">{t('cookbooks.title')}</PanelHeading>
         <span
           data-testid="cookbooks-status"
           role="status"

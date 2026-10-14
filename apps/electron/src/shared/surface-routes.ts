@@ -31,7 +31,7 @@ import { entityRoute, type EntityKind, type EntityRef } from '@rox/core/entities
  * contacts shell is merged into «Команда». Its bare route and persisted keys
  * now alias to the `messenger` surface (see `LEGACY_SURFACE_ALIASES`).
  */
-export const UNIFIED_SURFACE_IDS = ['messenger', 'calendar', 'goals'] as const
+export const UNIFIED_SURFACE_IDS = ['messenger', 'calendar', 'goals', 'canvas'] as const
 
 export type UnifiedSurfaceId = (typeof UNIFIED_SURFACE_IDS)[number]
 
@@ -45,6 +45,7 @@ export const UNIFIED_SURFACE_FLAGS: Readonly<Record<UnifiedSurfaceId, string>> =
   messenger: 'workbench.mode.messenger.v1',
   calendar: 'workbench.mode.calendar.v1',
   goals: 'workbench.mode.goals.v1',
+  canvas: 'workbench.mode.canvas.v1',
 }
 
 /**
