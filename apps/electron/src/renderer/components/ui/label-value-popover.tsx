@@ -16,7 +16,7 @@ import { Popover, PopoverTrigger, PopoverContent } from './popover'
 import { cn } from '@/lib/utils'
 import { openLabelLink } from '@/lib/open-label-link'
 import { format, parse } from 'date-fns'
-import { getDateLocale } from '@rox/shared/i18n'
+import { getDateLocale } from '@rox/shared/i18n/date-locale'
 import type { LabelConfig } from '@rox/shared/labels'
 import { loadLabelDateEditor } from './label-date-editor-loader'
 

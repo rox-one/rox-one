@@ -161,6 +161,12 @@ jobs:
       - name: Other shell browser fixtures in separate processes
         run: |
           export CHROMIUM_EXECUTABLE="$(bun -e 'import {chromium} from "@playwright/test"; process.stdout.write(chromium.executablePath())')"
+          # Every fixture must run even when an earlier one fails. The default `bash -e`
+          # aborts this loop at the FIRST failure, which kept five of these six fixtures
+          # from executing in CI at all: panel-workspace had been red since 9a150e2b5, so
+          # the breakage behind it went unnoticed for days (issue #2080). Collect the
+          # results, report them together, then fail.
+          failed=()
           for test_path in \
             apps/electron/src/renderer/components/app-shell/__tests__/panel-workspace.browser.test.ts \
             apps/electron/src/renderer/components/app-shell/__tests__/device-status-chip.browser.test.ts \
@@ -169,8 +175,15 @@ jobs:
             apps/electron/src/renderer/components/app-shell/__tests__/voice-dictation.browser.test.ts \
             apps/electron/src/renderer/components/app-shell/__tests__/zed-appearance/appearance.browser.test.ts
           do
-            bun test --timeout 60000 "$test_path"
+            echo "::group::$test_path"
+            bun test --timeout 60000 "$test_path" || failed+=("$test_path")
+            echo "::endgroup::"
           done
+          if [ ${#failed[@]} -gt 0 ]; then
+            echo "::error::${#failed[@]} of 6 fixture files failed — reproduce each with: bun test --timeout 60000 <path>"
+            printf '::error::  %s\n' "${failed[@]}"
+            exit 1
+          fi
       - name: Confirm the tested source hashes stayed unchanged
         if: always()
         run: |
