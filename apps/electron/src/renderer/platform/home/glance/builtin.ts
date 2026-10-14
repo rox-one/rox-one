@@ -258,4 +258,66 @@ export function registerBuiltinGlanceWidgets(): void {
     network: true,
     load: () => import('./widgets/GithubReposWidget'),
   })
+
+  registerGlanceWidget({
+    type: 'weather',
+    category: 'essentials',
+    titleKey: 'glance.w.weather',
+    icon: 'cloud-sun',
+    defaultConfig: { location: '', units: 'metric' },
+    fields: [
+      { key: 'location', kind: 'text', labelKey: 'common.location', placeholder: 'Москва / 55.75, 37.62' },
+      {
+        key: 'units',
+        kind: 'select',
+        labelKey: 'glance.f.units',
+        options: [
+          { value: 'metric', labelKey: 'glance.o.metric' },
+          { value: 'imperial', labelKey: 'glance.o.imperial' },
+        ],
+      },
+    ],
+    network: true,
+    load: () => import('./widgets/WeatherWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'markets',
+    category: 'finance',
+    titleKey: 'glance.w.markets',
+    icon: 'trending-up',
+    defaultConfig: { symbols: ['^GSPC', 'BTC-USD', 'EURUSD=X'] },
+    fields: [{ key: 'symbols', kind: 'strings', labelKey: 'glance.f.symbols', placeholder: 'AAPL' }],
+    network: true,
+    load: () => import('./widgets/MarketsWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'search',
+    category: 'news',
+    titleKey: 'feed.search',
+    icon: 'search',
+    defaultConfig: { query: '', limit: 8 },
+    fields: [
+      { key: 'query', kind: 'text', labelKey: 'feed.search' },
+      { ...limitField, max: 20 },
+    ],
+    network: true,
+    load: () => import('./widgets/SearchWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'calendar',
+    category: 'essentials',
+    titleKey: 'entities.kind.calendar',
+    icon: 'calendar',
+    defaultConfig: { url: '', days: 14, limit: 10 },
+    fields: [
+      { key: 'url', kind: 'url', labelKey: 'common.url', placeholder: 'webcal://… .ics' },
+      { key: 'days', kind: 'number', labelKey: 'glance.f.days', min: 1, max: 60 },
+      limitField,
+    ],
+    network: true,
+    load: () => import('./widgets/CalendarWidget'),
+  })
 }
