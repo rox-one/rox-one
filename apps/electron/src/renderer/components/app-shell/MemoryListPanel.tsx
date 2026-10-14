@@ -359,7 +359,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
               <button
                 type="button"
                 onClick={() => setEditingRule(null)}
-                className="inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-hover transition-colors"
+                className="inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-pressed transition-colors"
               >
                 {t('memory.cancel')}
               </button>
@@ -412,7 +412,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                 <button
                   type="button"
                   onClick={() => setConfirmDeleteRule(null)}
-                  className="inline-flex items-center h-5 px-1.5 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-hover transition-colors"
+                  className="inline-flex items-center h-5 px-1.5 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-pressed transition-colors"
                 >
                   {t('memory.cancel')}
                 </button>
@@ -701,7 +701,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
             <button
               type="button"
               onClick={() => { setFormOpen(false); setAddConflicts(null); setCustomCategory('') }}
-              className="inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-hover transition-colors"
+              className="inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-pressed transition-colors"
             >
               {t('memory.cancel')}
             </button>
@@ -726,7 +726,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                 <button
                   type="button"
                   onClick={() => handleResolveAddConflicts(false)}
-                  className="inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-hover transition-colors"
+                  className="inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-pressed transition-colors"
                 >
                   {t('memory.keepBoth')}
                 </button>
@@ -759,7 +759,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
               <button
                 type="button"
                 onClick={() => void handleSaveContext('global')}
-                className="mt-0.5 inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors"
+                className="mt-0.5 inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-pressed hover:text-foreground transition-colors"
               >
                 {t('memory.saveContext')}
               </button>
@@ -779,7 +779,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                 <button
                   type="button"
                   onClick={() => void handleSaveContext('workspace')}
-                  className="mt-0.5 inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors"
+                  className="mt-0.5 inline-flex items-center h-6 px-2 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground hover:bg-surface-pressed hover:text-foreground transition-colors"
                 >
                   {t('memory.saveContext')}
                 </button>
@@ -834,7 +834,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
                         type="button"
                         onClick={() => openDate(date)}
                         className={`w-full rounded-[var(--radius-card)] px-2 py-1 text-left text-sm transition-colors ${
-                          historyDate === date ? 'bg-surface-hover text-foreground' : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground'
+                          historyDate === date ? 'bg-surface-selected text-foreground' : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground'
                         }`}
                       >
                         {date}

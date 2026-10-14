@@ -712,7 +712,7 @@ function Row({
 }
 
 function Separator() {
-  return <div className="my-1 mx-3 h-px bg-surface-hover" />
+  return <div className="my-1 mx-3 h-px bg-border-subtle" />
 }
 
 function CountBadge({ count }: { count: number }) {

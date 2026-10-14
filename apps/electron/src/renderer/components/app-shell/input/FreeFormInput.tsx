@@ -2852,7 +2852,7 @@ export function FreeFormInput({
                     aria-label={`${t('common.model')}: ${connectionUnavailable ? t('common.unavailable') : currentModelDisplayName}`}
                     className={cn(
                       "input-toolbar-btn inline-flex items-center h-6 px-1.5 gap-0.5 text-xs shrink-0 rounded-[var(--radius-control)] hover:bg-surface-hover transition-colors select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                      modelDropdownOpen && "bg-surface-hover",
+                      modelDropdownOpen && "bg-surface-selected",
                       connectionUnavailable && "text-destructive",
                     )}
                   >
@@ -2902,7 +2902,7 @@ export function FreeFormInput({
                             disabled={!isAuthenticated}
                             className={cn(
                               "flex items-center justify-between px-2 py-2 rounded-lg",
-                              isCurrentConnection && "bg-surface-hover"
+                              isCurrentConnection && "bg-surface-selected"
                             )}
                           >
                             <div className="text-left flex-1">

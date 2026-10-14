@@ -585,7 +585,7 @@ export default function ConnectionsPage() {
               {pathField('connections.import.envPath', envPath, setEnvPath, IMPORT_PLACEHOLDERS.env)}
               <button
                 type="button"
-                className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover"
+                className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-pressed"
                 onClick={async () => {
                   const previewGithubEnv = window.electronAPI?.workgraph?.previewGithubEnv
                   if (typeof previewGithubEnv !== 'function' || !envPath) {
@@ -606,7 +606,7 @@ export default function ConnectionsPage() {
               {pathField('connections.import.gitConfigPath', gitConfigPath, setGitConfigPath, IMPORT_PLACEHOLDERS.gitConfig)}
               <button
                 type="button"
-                className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover"
+                className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-pressed"
                 onClick={async () => {
                   const previewGitHelper = window.electronAPI?.workgraph?.previewGitHelper
                   if (typeof previewGitHelper !== 'function' || !gitConfigPath) {
@@ -627,7 +627,7 @@ export default function ConnectionsPage() {
               {pathField('connections.import.dockerConfigPath', dockerConfigPath, setDockerConfigPath, IMPORT_PLACEHOLDERS.dockerConfig)}
               <button
                 type="button"
-                className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover"
+                className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-pressed"
                 onClick={async () => {
                   const previewDockerHelper = window.electronAPI?.workgraph?.previewDockerHelper
                   if (typeof previewDockerHelper !== 'function' || !dockerConfigPath) {
@@ -649,7 +649,7 @@ export default function ConnectionsPage() {
               {pathField('connections.import.awsConfigPath', awsConfigPath, setAwsConfigPath, IMPORT_PLACEHOLDERS.awsConfig)}
               <button
                 type="button"
-                className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover"
+                className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-pressed"
                 onClick={async () => {
                   const previewAwsProfiles = window.electronAPI?.workgraph?.previewAwsProfiles
                   if (typeof previewAwsProfiles !== 'function') {
@@ -669,7 +669,7 @@ export default function ConnectionsPage() {
             <ImportPanel source="keychain" active={activeSource}>
               <button
                 type="button"
-                className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover"
+                className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-pressed"
                 onClick={async () => {
                   const previewKeychain = window.electronAPI?.workgraph?.previewKeychain
                   if (typeof previewKeychain !== 'function') {
@@ -690,7 +690,7 @@ export default function ConnectionsPage() {
               {pathField('connections.import.adcPath', adcPath, setAdcPath, IMPORT_PLACEHOLDERS.adc)}
               <button
                 type="button"
-                className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover"
+                className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-pressed"
                 onClick={async () => {
                   const previewAdc = window.electronAPI?.workgraph?.previewAdc
                   if (typeof previewAdc !== 'function' || !adcPath) {
@@ -710,7 +710,7 @@ export default function ConnectionsPage() {
             <ImportPanel source="ssh-agent" active={activeSource}>
               <button
                 type="button"
-                className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover"
+                className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-pressed"
                 onClick={async () => {
                   const previewSshAgent = window.electronAPI?.workgraph?.previewSshAgent
                   if (typeof previewSshAgent !== 'function') {
@@ -944,7 +944,7 @@ export default function ConnectionsPage() {
                   ))}
                 </select>
               </label>
-              <button type="button" className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover" onClick={() => void confirmGrant()}>
+              <button type="button" className="rounded-md bg-surface-hover px-3 py-1.5 text-xs text-foreground hover:bg-surface-pressed" onClick={() => void confirmGrant()}>
                 {t('connections.grant')}
               </button>
             </div>
