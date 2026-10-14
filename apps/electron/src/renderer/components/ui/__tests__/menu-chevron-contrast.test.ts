@@ -18,7 +18,7 @@ describe('menu chevron contrast', () => {
 
     expect(dropdown).toContain('ChevronRightIcon className="ml-auto size-4 text-foreground/70"')
     expect(context).toContain('ChevronRightIcon className="ml-auto text-foreground/70"')
-    expect(compact).toContain('ChevronRight className="h-4 w-4 shrink-0 text-foreground/70"')
+    expect(compact).toContain('ChevronRight className="icon-toolbar shrink-0 text-foreground/70"')
     expect(mobile).toContain('ChevronRight className="h-4 w-4 shrink-0 text-foreground/70"')
     expect(collection).toContain('text-foreground/70 transition-transform duration-150')
 

@@ -1,0 +1,35 @@
+{
+  "name": "Rox Ink",
+  "description": "Grayscale sumi-e: washi paper and ink, follows the system light/dark mode",
+  "author": "Rox One",
+  "license": "MIT",
+  "supportedModes": ["light", "dark"],
+  "shikiTheme": {
+    "light": "github-light",
+    "dark": "github-dark"
+  },
+  "background": "#f6f5f2",
+  "foreground": "#1b1b1a",
+  "accent": "#262625",
+  "info": "#6b6a66",
+  "success": "#3f6b4e",
+  "destructive": "#b03a2e",
+  "paper": "#fbfaf8",
+  "navigator": "#efeeea",
+  "input": "#ffffff",
+  "popover": "#ffffff",
+  "popoverSolid": "#ffffff",
+  "dark": {
+    "background": "#121212",
+    "foreground": "#e9e7e2",
+    "accent": "#e4e2dc",
+    "info": "#a3a19b",
+    "success": "#7fae8c",
+    "destructive": "#e0705f",
+    "paper": "#181818",
+    "navigator": "#151515",
+    "input": "#1d1d1d",
+    "popover": "#1f1f1f",
+    "popoverSolid": "#1f1f1f"
+  }
+}

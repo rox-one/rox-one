@@ -85,7 +85,7 @@ files:
 # SDK as `vendor/ripgrep/<platform>/rg`; removed in 0.2.113).
 
 extraMetadata:
-  main: dist/main.cjs
+  main: dist/boot.cjs
 
 # ROX release feed; electron-builder embeds this provider in app-update.yml.
 publish:
