@@ -34,6 +34,7 @@ function task(value: unknown): boolean {
     && optionalFields(value, ['dueAt', 'startAt', 'completedAt', 'cancelledAt', 'reminderAt', 'reminderDeliveredFor', 'reminderRetryAt', 'trashedAt', 'repeatOccurrenceAt', 'updatedAt'], number)
     && optionalFields(value, ['projectId', 'areaId', 'headingId', 'parentId', 'repeatOf', 'repeatNextId', 'reminderTimeZone'], text)
     && optional(value.recurrence, recurrence) && optional(value.checklist, checklist) && optional(value.source, link)
+    && optional(value.blockedBy, strings)
     && optional(value.reminderError, error => oneOf(error, ['permission-denied', 'permission-required', 'presentation-failed']))
 }
 function project(value: unknown): boolean {
