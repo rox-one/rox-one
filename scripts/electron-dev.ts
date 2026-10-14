@@ -5,7 +5,7 @@
 
 import { spawn, type Subprocess } from "bun";
 import { PRELOAD_BUNDLE_ALIAS, PRELOAD_BUNDLE_EXTERNALS } from "./electron-preload-bundle";
-import { existsSync, rmSync, cpSync, readFileSync, statSync, mkdirSync } from "fs";
+import { copyFileSync, existsSync, rmSync, cpSync, readFileSync, statSync, mkdirSync } from "fs";
 import { createServer } from "net";
 import { join } from "path";
 import * as esbuild from "esbuild";
@@ -752,6 +752,9 @@ async function main(): Promise<void> {
     ...(userDataDir ? [`--user-data-dir=${userDataDir}`] : []),
     "apps/electron",
   ];
+
+  // #1573: package.json `main` is the compile-cache entry shim.
+  copyFileSync(join(ELECTRON_DIR, "src/main/boot.cjs"), join(ELECTRON_DIR, "dist/boot.cjs"));
 
   const electronProc = spawn({
     cmd: [ELECTRON_BIN, ...electronArgs],
