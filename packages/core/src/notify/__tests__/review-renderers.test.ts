@@ -185,7 +185,10 @@ describe('notifications.update_prefs row discriminator', () => {
       prefs: [{ eventType: 'task.task_adding', channel: 'email', enabled: true, kind: 'comment' }],
     })
     expect(mixed.success).toBe(false)
-    const message = mixed.success ? '' : mixed.error.message
+    // `SchemaLike.safeParse` types `error` as `unknown` deliberately
+    // (packages/core/src/commands/registry.ts:27): the registry cannot know whether a
+    // given schema reports a ZodError or a plain Error. Narrow before reading it.
+    const message = mixed.success ? '' : mixed.error instanceof Error ? mixed.error.message : String(mixed.error)
     expect(message).toContain('eventType')
     expect(message).toContain('kind')
     // The mix is blamed, never an unrelated field.
