@@ -37,7 +37,11 @@ export function useFeedScreenSidebar(input: FeedScreenSidebarInput, enabled: boo
   latest.current = input
   const { counts, attention, sources, tags, x, team, activeKey, query, loading, error } = input
   const data = { counts, attention, sources, tags, x, team }
-  const signature = JSON.stringify(data)
+  // Re-serialise only when an input identity changes (FeedPage memoises sources/tags).
+  const sigCache = useRef<{ deps: unknown[]; sig: string } | null>(null)
+  const deps = [counts, attention, sources, tags, x.connected, x.username, team.connected, team.name]
+  if (!sigCache.current || deps.some((d, i) => d !== sigCache.current!.deps[i])) sigCache.current = { deps, sig: JSON.stringify(data) }
+  const signature = sigCache.current.sig
   // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on content signature (page rebuilds arrays each render)
   const sections = useMemo(() => buildFeedSidebarSections(data), [signature])
   const onTarget = useCallback((target: SidebarTarget) => {
@@ -45,6 +49,8 @@ export function useFeedScreenSidebar(input: FeedScreenSidebarInput, enabled: boo
     if (target.kind === 'view') cb.onView(target.viewId as never)
     else if (target.kind === 'source') cb.onSource(target.sourceId)
     else if (target.kind === 'label') cb.onTag(target.label)
+    else if (target.kind === 'filter' && target.filterId === 'conn:x') cb.onView('sources')
+    else if (target.kind === 'filter' && target.filterId === 'conn:team') cb.onView('team')
   }, [])
   const onQuery = useCallback((v: string) => latest.current.onQuery(v), [])
   const onRefresh = useCallback(() => latest.current.onRefresh(), [])

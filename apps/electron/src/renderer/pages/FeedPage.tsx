@@ -104,6 +104,8 @@ function cachedFeed(workspaceId: string | null, caller: FeedCaller): FeedListRes
   return workspaceId ? roxQueryClient().getQueryData<FeedListResult>(roxKeys.feed(workspaceId, caller.preferenceKey)) ?? null : null
 }
 
+const NO_TAGS: readonly { tag: string; count: number }[] = []
+
 type View = FeedView
 type Density = 'list' | 'cards'
 
@@ -562,11 +564,12 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   )
 
   // Shell second sidebar (shell-layout): same data as the legacy portal navigator.
+  const sidebarSources = useMemo(() => data.sources.map((s) => ({ id: s.id, label: sourceLabel(s), kind: s.kind, count: s.itemCount ?? 0, unhealthy: s.paused || sourceHealth(s) === 'error' })), [data.sources])
   useFeedScreenSidebar({
     counts,
     attention,
-    sources: data.sources.map((s) => ({ id: s.id, label: sourceLabel(s), kind: s.kind, count: s.itemCount ?? 0, unhealthy: s.paused || sourceHealth(s) === 'error' })),
-    tags: view === 'sources' ? [] : tabTags,
+    sources: sidebarSources,
+    tags: view === 'sources' ? NO_TAGS : tabTags,
     x: { connected: data.x.state === 'connected', username: data.x.username },
     team: { connected: Boolean(roster.org), name: roster.org ? roster.org.name ?? t('feed.nav.teamLocal') : t('feed.nav.teamNoOrg') },
     activeKey: tagFilter ? `label:${tagFilter}` : view === 'news' && sourceFilter ? `source:${sourceFilter}` : `view:${view}`,

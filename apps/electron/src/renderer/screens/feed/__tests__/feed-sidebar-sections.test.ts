@@ -24,10 +24,11 @@ describe('buildFeedSidebarSections', () => {
     const empty = buildFeedSidebarSections({ ...base, sources: [] }).find((s) => s.id === 'feeds')!
     expect(empty.items.map((i) => i.labelKey)).toEqual(['feed.nav.addFirstSource'])
   })
-  it('X row routes to connect when disconnected, to subscriptions when connected', () => {
-    const x = (c: boolean) => buildFeedSidebarSections({ ...base, x: { connected: c, username: 'me' } }).find((s) => s.id === 'subscriptions')!.items[0]!
-    expect(x(false).target).toEqual({ kind: 'view', viewId: 'sources' })
-    expect(x(true)).toMatchObject({ secondary: '@me', target: { kind: 'view', viewId: 'subscriptions' } })
+  it('connection rows use their own targets, never a «Виды» key', () => {
+    const subs = (c: boolean) => buildFeedSidebarSections({ ...base, x: { connected: c, username: 'me' } }).find((s) => s.id === 'subscriptions')!.items
+    expect(subs(false)[0]!.target).toEqual({ kind: 'filter', filterId: 'conn:x' })
+    expect(subs(true)[0]).toMatchObject({ secondary: '@me', target: { kind: 'filter', filterId: 'conn:x' } })
+    expect(subs(true)[1]!.target).toEqual({ kind: 'filter', filterId: 'conn:team' })
   })
 })
 

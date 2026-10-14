@@ -53,9 +53,11 @@ export function buildFeedSidebarSections(input: FeedSidebarInput): SidebarSectio
     },
   ]
   const subscriptions: SidebarSectionItem[] = [
-    // Not connected → the sources screen hosts the X connect flow.
-    { id: 'conn:x', label: 'X', icon: 'at-sign', ...(input.x.connected ? { secondary: `@${input.x.username ?? ''}` } : { secondaryKey: 'screens.feed.notConnected' }), target: { kind: 'view', viewId: input.x.connected ? 'subscriptions' : 'sources' } },
-    { id: 'conn:team', labelKey: 'feed.tab.team', icon: 'network', secondary: input.team.name, target: { kind: 'view', viewId: 'team' } },
+    // Connection rows open connection management (sources screen hosts the X
+    // connect flow) and use their own filter targets so they never share an
+    // active key with the «Виды» rows.
+    { id: 'conn:x', label: 'X', icon: 'at-sign', ...(input.x.connected ? { secondary: `@${input.x.username ?? ''}` } : { secondaryKey: 'screens.feed.notConnected' }), target: { kind: 'filter', filterId: 'conn:x' } },
+    { id: 'conn:team', labelKey: 'feed.tab.team', icon: 'network', secondary: input.team.name, target: { kind: 'filter', filterId: 'conn:team' } },
   ]
   const tags: SidebarSectionItem[] = input.tags.map(({ tag, count }) => ({ id: `tag:${tag}`, label: `#${tag}`, icon: 'hash', count, target: { kind: 'label', label: tag } }))
   return nonEmptySections([
