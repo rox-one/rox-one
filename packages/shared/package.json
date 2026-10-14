@@ -93,6 +93,7 @@
     "./git/exec": "./src/git/exec.ts",
     "./git/status": "./src/git/status.ts",
     "./i18n": "./src/i18n/index.ts",
+    "./i18n/date-locale": "./src/i18n/date-locale.ts",
     "./i18n/lazy": "./src/i18n/lazy.ts",
     "./i18n/languages": "./src/i18n/languages.ts",
     "./i18n/locales/*": "./src/i18n/locales/*",
