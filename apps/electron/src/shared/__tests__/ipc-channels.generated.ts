@@ -192,6 +192,17 @@ export const EXPECTED_CHANNELS: string[] = [
   'contextDocs:read',
   'contextDocs:readTemplate',
   'contextDocs:write',
+  'cookbooks-lab:catalog',
+  'cookbooks-lab:document',
+  'cookbooks-lab:ensure',
+  'cookbooks-lab:open',
+  'cookbooks-lab:reset',
+  'cookbooks-lab:restart',
+  'cookbooks-lab:run',
+  'cookbooks-lab:run-all',
+  'cookbooks-lab:save',
+  'cookbooks-lab:status',
+  'cookbooks-lab:status-changed',
   'copilot:cancelOAuth',
   'copilot:deviceCode',
   'copilot:getAuthStatus',
@@ -1084,4 +1095,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1080
+export const EXPECTED_CHANNEL_COUNT = 1091

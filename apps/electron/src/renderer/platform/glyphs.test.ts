@@ -39,6 +39,7 @@ const NAV_CONCEPT: Record<string, GlyphConcept> = {
   knowledge: 'knowledge',
   developers: 'developers',
   playbooks: 'playbooks',
+  cookbooks: 'cookbooks',
   settings: 'settings',
 }
 

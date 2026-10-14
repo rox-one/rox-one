@@ -612,6 +612,19 @@ export const CHANNEL_MAP = {
   'extensionSurface.onStateChanged': listener(RPC_CHANNELS.extensionSurface.STATE_CHANGED),
   'extensionSurface.onRemoved': listener(RPC_CHANNELS.extensionSurface.REMOVED),
 
+  // Cookbooks Lab surface — sidecar lifecycle + native data plane (LOCAL_ONLY)
+  'cookbooksLab.ensure': invoke(RPC_CHANNELS.cookbooksLab.ENSURE),
+  'cookbooksLab.status': invoke(RPC_CHANNELS.cookbooksLab.STATUS),
+  'cookbooksLab.restart': invoke(RPC_CHANNELS.cookbooksLab.RESTART),
+  'cookbooksLab.catalog': invoke(RPC_CHANNELS.cookbooksLab.CATALOG),
+  'cookbooksLab.open': invoke(RPC_CHANNELS.cookbooksLab.OPEN),
+  'cookbooksLab.document': invoke(RPC_CHANNELS.cookbooksLab.DOCUMENT),
+  'cookbooksLab.run': invoke(RPC_CHANNELS.cookbooksLab.RUN),
+  'cookbooksLab.runAll': invoke(RPC_CHANNELS.cookbooksLab.RUN_ALL),
+  'cookbooksLab.save': invoke(RPC_CHANNELS.cookbooksLab.SAVE),
+  'cookbooksLab.reset': invoke(RPC_CHANNELS.cookbooksLab.RESET),
+  'cookbooksLab.onStatusChanged': listener(RPC_CHANNELS.cookbooksLab.STATUS_CHANGED),
+
   // Debug logging
   debugLog: invoke(RPC_CHANNELS.debug.LOG),
 
