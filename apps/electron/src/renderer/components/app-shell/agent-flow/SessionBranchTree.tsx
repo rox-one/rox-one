@@ -5,17 +5,28 @@
  */
 import * as React from 'react'
 import { useAtomValue } from 'jotai'
+import { selectAtom } from 'jotai/utils'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronRight, GitBranch } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { navigate, routes } from '@/lib/navigate'
-import { buildBranchTree, flattenBranchTree, type BranchNode } from './branch-tree'
+import { buildBranchTree, flattenBranchTree, type BranchNode, type BranchSessionLike } from './branch-tree'
+
+/** Only the fields the tree reads — streaming ticks (preview aside) don't rebuild it. */
+const branchProjectionAtom = selectAtom(
+  sessionMetaMapAtom,
+  (map): BranchSessionLike[] => Array.from(map.values(), (m) => ({ id: m.id, name: m.name, preview: m.preview, branchFromSessionId: m.branchFromSessionId, createdAt: m.createdAt, isArchived: m.isArchived })),
+  (a, b) => a.length === b.length && a.every((x, i) => {
+    const y = b[i]!
+    return x.id === y.id && x.name === y.name && x.preview === y.preview && x.branchFromSessionId === y.branchFromSessionId && x.createdAt === y.createdAt && x.isArchived === y.isArchived
+  }),
+)
 
 export function SessionBranchTree({ sessionId }: { sessionId: string }) {
   const { t } = useTranslation()
-  const metas = useAtomValue(sessionMetaMapAtom)
-  const tree = React.useMemo(() => buildBranchTree(metas.values(), sessionId), [metas, sessionId])
+  const metas = useAtomValue(branchProjectionAtom)
+  const tree = React.useMemo(() => buildBranchTree(metas, sessionId), [metas, sessionId])
   const [open, setOpen] = React.useState(false)
   const listRef = React.useRef<HTMLUListElement>(null)
   const flat = React.useMemo(() => (tree ? flattenBranchTree(tree.root) : []), [tree])
@@ -45,7 +56,6 @@ export function SessionBranchTree({ sessionId }: { sessionId: string }) {
         role="treeitem"
         aria-level={node.depth + 1}
         aria-current={node.isCurrent ? 'page' : undefined}
-        aria-expanded={node.children.length > 0 ? true : undefined}
         tabIndex={node.id === focusId ? 0 : -1}
         data-node-id={node.id}
         onClick={() => go(node.id)}

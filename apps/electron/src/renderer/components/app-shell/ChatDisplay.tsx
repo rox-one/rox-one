@@ -253,6 +253,8 @@ function getTurnKey(turn: Turn): string {
 interface ChatDisplayProps {
   session: Session | null
   onSendMessage: (message: string, attachments?: FileAttachment[], skillSlugs?: string[], queueMode?: SteeringVerb) => void
+  /** Host forwards onSendMessage's 4th `queueMode` argument; only then is the queue/steer selector shown. */
+  supportsQueueMode?: boolean
   onOpenFile: (path: string) => void
   onOpenUrl: (url: string) => void
   // Model selection
@@ -565,6 +567,7 @@ const EMPTY_SKILLS: LoadedSkill[] = []
 export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>(function ChatDisplay({
   session,
   onSendMessage,
+  supportsQueueMode = false,
   onOpenFile,
   onOpenUrl,
   currentModel,
@@ -1611,7 +1614,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     // Force stick-to-bottom when user sends a message
     isStickToBottomRef.current = true
     beginOutputMotion()
-    onSendMessage(normalizedMessage, attachments, skillSlugs, queueModeFor(midStreamMode, session?.isProcessing === true))
+    onSendMessage(normalizedMessage, attachments, skillSlugs, supportsQueueMode ? queueModeFor(midStreamMode, session?.isProcessing === true) : undefined)
 
     // Persist sent marker on follow-up annotations so TurnCard can distinguish
     // sent vs pending follow-ups. If user edits a follow-up later, TurnCard
@@ -2619,7 +2622,7 @@ const handleFollowUpChipClick = useCallback((item: {
           />
           {/* a2.4: who is typing, directly above the composer. */}
           <SessionTypingIndicator actors={typingActors} />
-          <TurnPhaseBar state={turnPhase} mode={midStreamMode} onModeChange={setMidStreamMode} />
+          <TurnPhaseBar state={turnPhase} mode={midStreamMode} onModeChange={supportsQueueMode ? setMidStreamMode : undefined} />
           {/* === INPUT CONTAINER: FreeForm or Structured Input === */}
           <ChatInputZone
             compactMode={compactMode}

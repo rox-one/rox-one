@@ -1456,6 +1456,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
             <ChatDisplay
               ref={connectChatDisplayRef}
               session={session}
+              supportsQueueMode
               onSendMessage={(message, attachments, skillSlugs, queueMode) => {
                 if (session) {
                   const act = soupChatActResult({ source: 'native', action: 'write', nativeId: session.id })
