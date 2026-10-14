@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { useAtom, useSetAtom, useStore } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { sideSessionByWorkspaceAtom } from '@/atoms/side-session'
@@ -25,13 +25,17 @@ export function usableSideSession(
 export function useSideSession() {
   const { t } = useTranslation()
   const { activeWorkspaceId, onCreateSession } = useAppShellContext()
-  const metas = useAtomValue(sessionMetaMapAtom)
+  // Read metas at call time: no re-render on every streaming meta tick.
+  const store = useStore()
   const [byWs, setByWs] = useAtom(sideSessionByWorkspaceAtom)
   const openOrFocus = useSetAtom(openOrFocusPanelRouteAtom)
 
   return useCallback(async (opts?: { fresh?: boolean; sessionId?: string }) => {
     if (!activeWorkspaceId) return
-    let id = opts?.sessionId ?? (opts?.fresh ? null : usableSideSession(byWs[activeWorkspaceId], metas))
+    const metas = store.get(sessionMetaMapAtom)
+    const remembered = byWs[activeWorkspaceId]
+    // Metas not loaded yet (startup): trust the remembered id instead of creating a duplicate.
+    let id = opts?.sessionId ?? (opts?.fresh ? null : metas.size === 0 && remembered ? remembered : usableSideSession(remembered, metas))
     try {
       if (!id) {
         const session = await onCreateSession(activeWorkspaceId, { name: t('sideSession.defaultName') })
@@ -42,5 +46,5 @@ export function useSideSession() {
     } catch (error) {
       toast.error(t('sideSession.openFailed'), { description: error instanceof Error ? error.message : undefined })
     }
-  }, [activeWorkspaceId, byWs, metas, onCreateSession, openOrFocus, setByWs, t])
+  }, [activeWorkspaceId, byWs, store, onCreateSession, openOrFocus, setByWs, t])
 }
