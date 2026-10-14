@@ -12,10 +12,12 @@ import { Users } from 'lucide-react'
 import { EmptyState } from '@/components/mode-screen/ModeScreen'
 import { TeamOrgSettingsSection, useTeamRoster } from '@/components/team'
 import type { SurfacePageProps } from '@/platform/SurfaceHost'
+import { useMessengerScreenSidebar } from '@/screens/messenger/useMessengerScreenSidebar'
 
 export function TeamSurfacePage(_props: SurfacePageProps) {
   const { t } = useTranslation()
   const roster = useTeamRoster()
+  useMessengerScreenSidebar()
 
   return (
     <div
