@@ -43,7 +43,7 @@ import {
   type StatusFacet,
   type UsageBucket,
 } from '@/lib/memory-model'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import { MemoryListPanel } from '@/components/app-shell/MemoryListPanel'
 import { ImportReviewDialog } from './ImportReviewDialog'
 import { toErrorMessage } from '@/lib/errors'
@@ -177,7 +177,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const { t, i18n } = useTranslation()
   const { navigate } = useNavigation()
   const sessionMap = useAtomValue(sessionMetaMapAtom)
-  const sidebarTarget = useShellSidebarTarget()
+  const sidebarTarget = useSidebarHandledOutside()
   const knowledgeSignals = useKnowledgeSignals({ workspaceId })
   const memoryListTarget = useTourTarget('memory.list', { workspaceId })
   const memoryScopeTarget = useTourTarget('memory.scope', { workspaceId })
@@ -613,7 +613,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const categoryLabel = (c: string) => (BUILTIN.includes(c as LessonCategory) ? t(`memory.category.${c}`) : c)
   const statusLabel = (id: StatusFacet) => (id === 'awaitingDream' ? t('memory.repo.facet.awaitingDream') : t(`memory.screen.statusFacet.${id}`))
   const facets = (
-    <ShellSidebarPortal className={cn(
+    <ShellSidebarPortal bareLabelKey="navigation.barePanel.filters" className={cn(
       'w-[208px] shrink-0 flex-col overflow-y-auto bg-surface-rail px-2 pb-3 pt-2',
       selected ? 'hidden @[920px]/memory:flex' : 'hidden @[760px]/memory:flex',
       filtersOpen && 'absolute inset-y-0 left-0 z-30 flex w-[min(280px,100%)] shadow-modal-small @[760px]/memory:static @[760px]/memory:w-[208px] @[760px]/memory:shadow-none',

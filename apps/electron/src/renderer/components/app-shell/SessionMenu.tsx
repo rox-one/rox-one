@@ -41,6 +41,8 @@ import {
   ThumbsUp,
   ThumbsDown,
   MessageSquarePlus,
+  FolderInput,
+  FolderPlus,
 } from 'lucide-react'
 import { useSetAtom } from 'jotai'
 import { useMenuComponents } from '@/components/ui/menu-context'
@@ -97,6 +99,12 @@ export interface SessionMenuProps {
   projects?: SessionMenuProjectOption[]
   /** Callback for binding/unbinding the session to a project. `null` = unbind. */
   onSetProjectId?: (projectId: string | null) => void
+  /** Chat folders (omit onMoveToFolder to hide the submenu) */
+  folders?: Array<{ id: string; name: string }>
+  /** Current folder of this chat (undefined = Ungrouped) */
+  folderId?: string
+  onMoveToFolder?: (folderId: string | null) => void
+  onNewFolder?: () => void
   /** Callbacks */
   onRename: () => void
   onFlag: () => void
@@ -132,6 +140,10 @@ export function SessionMenu({
   hasTransferTargets,
   projects = [],
   onSetProjectId,
+  folders = [],
+  folderId,
+  onMoveToFolder,
+  onNewFolder,
 }: SessionMenuProps) {
   const { t } = useTranslation()
 
@@ -329,6 +341,39 @@ export function SessionMenu({
                 </MenuItem>
               )
             })}
+          </SubContent>
+        </Sub>
+      )}
+
+      {/* Chat folders submenu — always offered so the first folder can be created from a chat */}
+      {onMoveToFolder && (
+        <Sub>
+          <SubTrigger className="pr-2">
+            <FolderInput className="icon-caption" />
+            <span className="flex-1">{t("chatFolders.moveTo")}</span>
+          </SubTrigger>
+          <SubContent>
+            {folders.map((f) => {
+              const isIn = folderId === f.id
+              return (
+                <MenuItem key={f.id} onClick={() => { if (!isIn) onMoveToFolder(f.id) }}>
+                  {isIn && <Check className="icon-caption" />}
+                  <span className={isIn ? 'flex-1' : 'flex-1 ml-[18px]'}>{f.name}</span>
+                </MenuItem>
+              )
+            })}
+            {folderId && (
+              <MenuItem onClick={() => onMoveToFolder(null)}>
+                <span className="flex-1 ml-[18px]">{t("chatFolders.removeFromFolder")}</span>
+              </MenuItem>
+            )}
+            {folders.length > 0 && onNewFolder && <Separator />}
+            {onNewFolder && (
+              <MenuItem onClick={onNewFolder}>
+                <FolderPlus className="icon-caption" />
+                <span className="flex-1">{t("chatFolders.newFolder")}</span>
+              </MenuItem>
+            )}
           </SubContent>
         </Sub>
       )}
