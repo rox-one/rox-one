@@ -23,7 +23,21 @@ export {
   type Choice,
   type AgentRule,
   type EnvironmentPrefs,
+  WORK_STYLE_AGENTS,
+  WORK_STYLE_FORMATS,
+  normalizeWorkStyle,
+  normalizeOnboardingRoleProfile,
+  type OnboardingRoleProfile,
+  type OnboardingWorkStyle,
+  type WorkStyleAgent,
+  type WorkStyleFormat,
+  type WorkStyleDetail,
+  type WorkStyleLayout,
+  type WorkStyleClarify,
+  type WorkStyleCollaboration,
 } from './types.ts'
+
+export { formatWorkStyleForPrompt } from './work-style-prompt.ts'
 
 export {
   pendingQuestionIds,

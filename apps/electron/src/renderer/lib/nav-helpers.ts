@@ -68,7 +68,8 @@ case 'missions':
       return true
     case 'developers':
     case 'playbooks':
-      // Top-level Dev Space / Playbooks surfaces own the content panel like Home.
+    case 'cookbooks':
+      // Top-level Dev Space / Playbooks / Cookbooks surfaces own the content panel like Home.
     case 'drive':
       // Drive owns the content panel at the root and inside folders; it has no
       // separate navigator column.

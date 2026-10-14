@@ -332,9 +332,9 @@ export function OnboardingWizard({
   const progressStep: OnboardingProgressStep =
     state.step === 'welcome' ? 'profile' : state.step === 'complete' ? 'done' : 'connect'
   const isWelcome = state.step === 'welcome'
-  // The questionnaire is a two-column surface (form + permissions): it gets the
-  // full working width instead of the narrow single-column flow cap.
-  const isWideStep = state.step === 'questionnaire'
+  // The questionnaire is a three-column one-page surface: it gets the full
+  // window width and height instead of the narrow single-column flow cap.
+  const isWideStep = state.step === 'questionnaire' || state.step === 'role'
 
   return (
     <div
@@ -349,16 +349,28 @@ export function OnboardingWizard({
 
       {/* Main content — min-h-full + flex center means: center when content fits,
           natural flow + scroll when content is taller than the viewport (mobile). */}
-      <main className="flex min-h-full items-center justify-center p-4 sm:p-8">
+      <main
+        className={cn(
+          'flex min-h-full items-center justify-center p-4 sm:p-8',
+          // The one-page questionnaire fills the window; its columns scroll
+          // internally, so the page itself does not scroll on desktop sizes.
+          isWideStep && 'lg:h-full lg:min-h-0 lg:items-stretch lg:px-8 lg:pb-6 lg:pt-[50px]',
+        )}
+      >
         {isWelcome ? (
           <div className="mx-auto max-w-lg px-6 py-8">
             <OnboardingStepProgress step={progressStep} className="mb-6" />
             <StepTransition key={state.step}>{renderStep()}</StepTransition>
           </div>
         ) : (
-          <div className={cn('flex w-full flex-col items-center', isWideStep ? 'max-w-6xl' : 'max-w-[28rem]')}>
-            <OnboardingStepProgress step={progressStep} className="mb-6 w-full" />
-            <StepTransition key={state.step} className="w-full">
+          <div
+            className={cn(
+              'flex w-full flex-col items-center',
+              isWideStep ? 'max-w-[1440px] lg:min-h-0' : 'max-w-[28rem]',
+            )}
+          >
+            <OnboardingStepProgress step={progressStep} className={cn('w-full', isWideStep ? 'mb-4' : 'mb-6')} />
+            <StepTransition key={state.step} className={cn('w-full', isWideStep && 'lg:min-h-0 lg:flex-1')}>
               {renderStep()}
             </StepTransition>
           </div>
