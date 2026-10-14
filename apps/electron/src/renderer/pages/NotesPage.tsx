@@ -2658,6 +2658,7 @@ h1,h2,h3{margin-top:1.5em}
     <NotesEditorHeadlineStyles />
     <div ref={setShellEl} className="notes-shell flex h-full min-w-0" data-notes-layout={panelLayoutMode}>
       <ShellSidebarPortal
+        bareLabelKey="navigation.barePanel.vault"
         className="notes-side-surface shrink-0 flex flex-col min-h-0"
         style={{ width: vaultShown ? railLayout.vault : 0 }}
         hidden={!vaultShown}
