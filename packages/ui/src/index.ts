@@ -136,6 +136,8 @@ export {
 export {
   Spinner,
   LoadingIndicator,
+  Skeleton,
+  type SkeletonProps,
   SimpleDropdown,
   SimpleDropdownItem,
   PreviewHeader,

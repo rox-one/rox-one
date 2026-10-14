@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test'
 import { WsRpcServer } from '@rox/server-core/transport/server'
 import { WsRpcClient } from '@rox/server-core/transport/client'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import { registerVoiceClipboardGuiHandlers } from './voice-clipboard'
 import type { HandlerDeps } from './handler-deps'
 

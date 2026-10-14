@@ -118,7 +118,7 @@ answers 403 (`src/rox_cookbooks/host.py:168-169`, `:209-210`).
 - **SIGINT** is the shutdown signal. `serve_lab.py` runs the sleep loop inside
   `try/except KeyboardInterrupt` and calls `lab.stop()` (`scripts/serve_lab.py:27-32`);
   `LabHost.stop` shuts the HTTP server down, closes the socket, and joins the serve thread with a
-  2 s timeout (`src/rox_cookbooks/host.py:395-400`). The process then exits **0**.
+  2 s timeout (`src/rox_cookbooks/host.py:519-528`). The process then exits **0**.
 - **SIGTERM is not handled.** `serve_lab.py` catches `KeyboardInterrupt` only, so `SIGTERM`/`SIGKILL`
   terminate the process without calling `stop()`. Nothing is lost in v1: kernels are one-shot child
   processes (`src/rox_cookbooks/kernel.py:948-958`) and the serve thread is a daemon
@@ -128,10 +128,13 @@ answers 403 (`src/rox_cookbooks/host.py:168-169`, `:209-210`).
 - **Proposal.** Install a `SIGTERM` handler in `serve_lab.py` that calls `lab.stop()` first, so the
   supervisor can use the conventional signal, and/or add `POST /shutdown` (token-gated) for a
   request-level stop.
-- **Proposal.** Interrupt in-flight kernels on shutdown: `KernelManager.shutdown()` exists
-  (`src/rox_cookbooks/kernel.py:1061-1066`) but `LabHost.stop` never calls it, so a Run in flight
-  is only stopped by process exit. The host does not even hold a `KernelManager` today — it builds
-  a throwaway `Kernel` per Run (`execute_code`, `src/rox_cookbooks/kernel.py:1115`).
+- **In-flight runs are killed on shutdown.** `LabHost.stop` cancels every active execution before
+  tearing the server down (`src/rox_cookbooks/host.py:519-528`), killing each cell's process group
+  through the shared `ActiveRuns` registry (`src/rox_cookbooks/kernel.py:1010-1050`). Cell
+  processes start their own session (`start_new_session=True`), so without this they would survive
+  the sidecar; after a normal stop no cell process is left behind. The host still builds a throwaway
+  `Kernel` per Run (`execute_code`, `src/rox_cookbooks/kernel.py:1293`) rather than holding a
+  `KernelManager`.
 
 ### 2.5 Crash and restart
 
@@ -248,13 +251,16 @@ The probe asserts exactly this (`scripts/electron_handshake_probe.py`, §8):
 | 400 | bad itemId/index/flag, unknown item, no kernel for item, corrupt notebook, `CatalogError`/`CopyError`/`NotebookError`/`KernelError` | `:220-357` |
 | 401 | missing/incorrect token on a JSON route | `:175-176`, `:211-212` |
 | 403 | Host header is not loopback | `:168-169`, `:209-210` |
-| 404 | unknown path | `:206`, `:357` |
+| 404 | unknown path; `POST /cancel` for an unknown `itemId` | `:206`, `:357` |
+| 409 | a `/cells/*` mutation arrives while a run is live for the item (`{"error":"notebook is running"}`) | `src/rox_cookbooks/host.py:627-628` |
 | 413 | POST body over 2 MiB | `:30`, `:131-132` |
+| 503 | `/run` or `/run-all` arrives after `LabHost.stop` began (`{"error":"host is shutting down"}`) | `src/rox_cookbooks/host.py:108-125`, `:299`, `:413` |
 
 All error bodies are `{"error": "<message>"}`, so a client can always show `data.error`
 (`src/rox_cookbooks/host.py:150-157`). `/document/<id>` adds `"reset": true` when the copy's
-notebook is corrupt, meaning "offer Reset" (`:201-202`). There is no 5xx: the host maps even
-kernel-start failures to 400 (`plans/011-host-input-safety.md:109-112`).
+notebook is corrupt, meaning "offer Reset" (`:201-202`). The only 5xx is `503` for a `/run` or
+`/run-all` that arrives after shutdown began (below); the host maps even kernel-start failures to
+400 (`plans/011-host-input-safety.md:109-112`).
 
 ### 3.5 API surface
 
@@ -266,13 +272,108 @@ kernel-start failures to 400 (`plans/011-host-input-safety.md:109-112`).
 | GET | `/banner/<itemId>` | — | `{"missing": [key, …]}` (`:189-196`) |
 | GET | `/document/<itemId>` | — | ipynb `{kind,title,cells[{cell_type,source,outputs}],missing,supported}` / md `{kind,title,text,missing,supported:false}` (`:365-393`) |
 | POST | `/open` | `{itemId, newCopy?}` | `{copyId, document}` (`:220-230`) |
-| POST | `/run` | `{itemId, code, index?, store?}` | `{ok,stdout,stderr,returncode,error?,timed_out?,missing}` (`:231-295`) |
+| POST | `/run` | `{itemId, code, index?, store?}` | `{ok,stdout,stderr,returncode,error?,timed_out?,cancelled,missing}` (`src/rox_cookbooks/host.py:238-309`) |
+| POST | `/run-all` | `{itemId, cells:[{index,source}], store?}` | `{ok,timed_out,returncode,cancelled,missing,cells:[…]}` (`src/rox_cookbooks/host.py:310-406`) |
+| POST | `/cancel` | `{itemId}` | `{ok:true, cancelled:<int>}` (`src/rox_cookbooks/host.py:407-419`) |
 | POST | `/reset` | `{itemId, confirm?}` | `{ok:true}` (`:296-307`) |
 | POST | `/save` | `{itemId,index,source}` or `{itemId,text}` | `{ok:true}` (`:308-346`) |
+| POST | `/cells/add` | `{itemId, cellType:"code"\|"markdown", index, source?}` | `{ok:true, index:<inserted>}` (`src/rox_cookbooks/host.py:554-644`) |
+| POST | `/cells/delete` | `{itemId, index}` | `{ok:true, index:<focus>}` (§3.7) |
+| POST | `/cells/move` | `{itemId, from, to}` | `{ok:true, index:to}` (§3.7) |
+| POST | `/cells/duplicate` | `{itemId, index}` | `{ok:true, index:index+1}` (§3.7) |
 | POST | `/store` | `{store:{key:value}}` | `{keys:[…]}` (`:347-356`) |
 
 Card and `missing` payloads carry **credential key names only** (`src/rox_cookbooks/ui.py:65-87`;
 `src/rox_cookbooks/secrets.py:25-36`) — never values.
+
+### 3.6 Cancel (`POST /cancel`)
+
+- `POST /cancel {itemId}` interrupts **every** in-flight execution for that item — both `/run`
+  and `/run-all` — and answers `200 {"ok": true, "cancelled": <int>}`, where the count is how many
+  runs were still live (`src/rox_cookbooks/host.py:407-419`). It is **idempotent**: with nothing
+  running it answers `cancelled: 0`. An `itemId` that does not resolve in the catalog is `404`
+  (like an unknown path); a missing `itemId` is `400`.
+- The host keeps a **thread-safe registry** of in-flight executions keyed by `itemId`
+  (`ActiveRuns`, `src/rox_cookbooks/kernel.py:1033-1080`). Each `/run`/`/run-all` registers its
+  handle **before** resolving the item or spawning, and releases it when the request returns
+  (`LabHost.begin_run`, `src/rox_cookbooks/host.py:92-102`, used at `:276` and `:384`). Cancelling
+  kills the child's **process group** (`_kill_process_tree`, SIGKILL), the same path a cell timeout
+  uses.
+- **Shutdown gate.** `begin_run` refuses (`503`) once `LabHost.stop` has begun: it takes the same
+  lifecycle lock that `stop` holds while it sets the flag and cancels, so a run can never start
+  after the stop-time sweep (`src/rox_cookbooks/host.py:565-573`).
+- `/run` and `/run-all` responses gain an **additive** `"cancelled": true|false` field: `true` when
+  this request's run was stopped by `/cancel`, `false` otherwise (`src/rox_cookbooks/host.py:341`,
+  `:433`). No existing field changes.
+- For `/run-all`, the per-cell records already written to the temp `results.json` are kept, so a
+  partially completed run reports the finished cells; the remaining cells come back `skipped`
+  (`execute_all`, `src/rox_cookbooks/kernel.py:1328-1502`).
+
+### 3.7 Cell mutations (`POST /cells/*`)
+
+Wave 10 adds four structural routes so the notebook page can insert, delete, move and duplicate
+cells without the renderer ever writing to disk: the sidecar stays the only writer of the copy's
+ipynb. All four read-modify-write that file and answer `200 {"ok": true, "index": <int>}` — the
+cell index the caller should focus next. The response carries only the index; Electron main
+re-reads `GET /document/<itemId>` itself and hands the renderer `{document, index}`.
+
+| Method | Path | Body | 200 |
+|---|---|---|---|
+| POST | `/cells/add` | `{itemId, cellType:"code"\|"markdown", index, source?}` | `{ok:true, index:<inserted>}` |
+| POST | `/cells/delete` | `{itemId, index}` | `{ok:true, index:<focus>}` |
+| POST | `/cells/move` | `{itemId, from, to}` | `{ok:true, index:to}` |
+| POST | `/cells/duplicate` | `{itemId, index}` | `{ok:true, index:index+1}` |
+
+**Validation order** (`src/rox_cookbooks/host.py:554-644`) is fixed, so a client can rely on which
+failure it sees first:
+
+1. `itemId` — missing/empty → `400 {"error":"missing itemId"}`.
+2. **catalog item** — an unknown `itemId` → `400` carrying the `CatalogError` message.
+3. **kind** — a `.md` playbook → `400 {"error":"not a notebook"}` (the UI renders no insert row or
+   per-cell menu for a playbook, so nothing would call this anyway).
+4. **field types** — `cellType` outside `{"code","markdown"}` → `400`; a non-string `source` → `400`;
+   a non-integer `index` (or `from`/`to`) → `400`. These run *before* the workspace is touched, so a
+   malformed request never creates a copy.
+5. **bounds** — see the semantics below → `400 {"error":"cell index out of range"}`.
+6. **run-guard** — any live run for the item → `409 {"error":"notebook is running"}`
+   (`src/rox_cookbooks/host.py:627-628`).
+
+**Semantics of `index`:**
+
+- **add** — `0 <= index <= len` (`len` is the length *before* the insert, so `len` appends). `source`
+  defaults to `""`. Answers the inserted index (`index`).
+- **delete** — `0 <= index < len`. Answers the cell that slid into the removed one's slot,
+  `min(index, len-2)` measured before the delete, so deleting the last cell focuses the new last one;
+  deleting the only cell answers `-1` (nothing left to focus).
+- **move** — `0 <= from, to < len`; `from == to` is a successful no-op. The order is
+  remove-then-insert, so `to` is the destination position in the resulting order
+  (`[a,b,c].move(0,2) -> [b,c,a]`). Answers `to`.
+- **duplicate** — `0 <= index < len`; a `copy.deepcopy` of the cell is inserted at `index+1`. A
+  string `id` (nbformat 4.5) is regenerated as a fresh `uuid.uuid4().hex[:12]` so ids stay unique; a
+  cell without an id gets none. Answers `index+1`.
+
+**409 run-guard.** While any run is live for the item (`ActiveRuns.active`,
+`src/rox_cookbooks/kernel.py:1065`), every `/cells/*` call answers `409 {"error":"notebook is
+running"}`. This closes the race the persist path opens: a mutation would shift cell indices under a
+run that is about to write its output back *by index*, landing it in the wrong cell
+(`tests/test_notebook_persist.py:78-79`). The renderer also disables its controls while busy, but the
+host enforces it — a mutation from any other client is refused too.
+
+**Writer serialization (`_document_lock`).** Every read-modify-write of the copy's ipynb takes
+`LabHost._document_lock` (`src/rox_cookbooks/host.py:106`), because `ThreadingHTTPServer` runs
+requests concurrently and such a read-modify-write is not atomic — two overlapping writers would
+clobber each other. The covered sections are:
+
+- `POST /save` (`src/rox_cookbooks/host.py:518`);
+- all four `POST /cells/*` routes (`:604`);
+- the source pre-persist of `POST /run` (`:323`) and `POST /run-all` (`:429`);
+- **run registration** in `LabHost.begin_run` (`:108-125`), which is also the lock's link to the
+  run-guard: without it, "the guard sees `active() == 0`, so mutate" and "`/run` registers, then
+  reads the document" could interleave. Both paths take the locks in the same
+  document-then-lifecycle order, so there is no deadlock.
+
+Cell **execution** (`execute_code`/`execute_all`) deliberately stays outside the lock — a
+60-second run must not block Save; the run-guard above covers that race instead.
 
 ## 4. Sidebar embedding
 
@@ -381,6 +482,13 @@ exactly the line `serve_lab.py` prints (`scripts/serve_lab.py:26`; `README.md:18
   document (`src/rox_cookbooks/notebooks.py:73`, `:296`, `:309`; `src/rox_cookbooks/host.py:322`),
   the venv install marker (`src/rox_cookbooks/kernel.py:708`) and the optional install log
   (`:691`, off by default — §2.6). None of these carries a store value.
+- **The run-all temp files carry no secret value.** A `/run-all` writes a driver script, a job JSON
+  and a `results.json` into a per-run temp dir (`execute_all`, `src/rox_cookbooks/kernel.py:1424-1444`).
+  The job JSON holds the secret env **names** only (`secret_env`; the values stay in the child's
+  environment), is created `0600` and is unlinked by the driver as soon as it has read it;
+  `results.json` is written with the secret values already masked (§5.4), so a kill mid-run leaves
+  neither file holding a raw secret. The whole temp dir is removed when the request returns
+  (`:1474`).
 - **Contract consequence:** the desktop layer that materialises the store file is responsible for
   creating it **mode `0600`** (POSIX) and for its directory being `0700`. The Lab performs no
   `chmod`/`umask` and never tightens permissions — verified: no `chmod`, `os.chmod`, `umask` or
@@ -405,6 +513,12 @@ exactly the line `serve_lab.py` prints (`scripts/serve_lab.py:26`; `README.md:18
   (`src/rox_cookbooks/secrets.py:65-75`; applied at `src/rox_cookbooks/kernel.py:979-989`). It
   replaces **known secret values** longest-first with `***`, using the values laid over this cell's
   final env — i.e. exactly what was injected.
+- **Run-all redacts before the temp write (G4-CBK-01).** The run-all driver is handed the secret
+  env **names** in its job JSON (`secret_env`) and reads the values from its own environment; it
+  masks them from each record **before** appending that record to the temp `results.json`
+  (`_RUN_ALL_DRIVER`, `src/rox_cookbooks/kernel.py:881-956`; job payload built in `execute_all`,
+  `:1402-1432`). A run killed mid-flight — `/cancel` or the overall timeout — therefore cannot
+  leave a raw secret on disk. The caller-side redaction (`:1465-1466`) stays as defense in depth.
 - Redaction is **best-effort** and only sees the captured streams (`docs/spec.md:121`). It does not
   cover: files a cell writes, subprocesses that print to a tty, values a vendor SDK re-encodes, or
   network egress. Do not describe it as a guarantee.
@@ -447,9 +561,11 @@ Notes:
 - **Exit codes of the CLI mirror the same rules** and are useful for a headless smoke:
   `run` → 0 ok / 1 failure / 3 unsupported / 4 markdown / 5 no code cells;
   `reset` → 6 on refusal (`src/rox_cookbooks/ui.py:246-286`; `README.md:54-55`).
-- **No 5xx exists.** If Electron wants to distinguish "the sidecar is broken" from "your request
-  was wrong", it cannot do so from status alone today. **Proposal.** Add a 5xx mapping for internal
-  errors (`plans/011-host-input-safety.md:109-112` suggests doing it in one place).
+- **No unexpected 5xx.** The single 5xx is `503 {"error":"host is shutting down"}` for a
+  `/run`/`/run-all` that arrives after `LabHost.stop` began (`src/rox_cookbooks/host.py:92-102`);
+  every other failure is 4xx. If Electron wants to distinguish "the sidecar is broken" from "your
+  request was wrong", it cannot do so from status alone today. **Proposal.** Add a 5xx mapping for
+  internal errors (`plans/011-host-input-safety.md:109-112` suggests doing it in one place).
 - **Timeouts.** The HTTP host has no request timeout; the only timeout is the cell limit
   (`Kernel`, default 60 s, `src/rox_cookbooks/kernel.py:888`, `:943`). **Proposal.** Set an HTTP
   client timeout ≥ the cell timeout, and pass an explicit cell `timeout` from the UI.
