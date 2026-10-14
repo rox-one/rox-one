@@ -64,8 +64,10 @@ describe('dictation insert target (#12)', () => {
 
 describe('status bar items (#7)', () => {
   it('keeps canonical order and drops unknown ids', () => {
-    expect(normalizeStatusBarItems(['version', 'bogus', 'sync'])).toEqual(['sync', 'version'])
-    expect(normalizeStatusBarItems(null).length).toBe(7)
+    // Legacy plain arrays predate sessions/tasks/model/notifications, which default on.
+    expect(normalizeStatusBarItems(['version', 'bogus', 'sync'])).toEqual(['sync', 'sessions', 'tasks', 'model', 'notifications', 'version'])
+    expect(normalizeStatusBarItems({ v: 2, items: ['version', 'bogus', 'sync'] })).toEqual(['sync', 'version'])
+    expect(normalizeStatusBarItems(null).length).toBe(11)
     expect(normalizeStatusBarItems([])).toEqual([])
   })
 })

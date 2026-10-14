@@ -280,9 +280,9 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
           <span className="truncate">{syncLabel}</span>
         </button>)}
         <Sep />
-        <Counter testId="status-bar-sessions" icon={MessageSquare} label={t('dashboard.sessions')} value={sessionStats.sessions} onClick={() => navigate(routes.view.allSessions())} />
+        {show('sessions') && <Counter testId="status-bar-sessions" icon={MessageSquare} label={t('dashboard.sessions')} value={sessionStats.sessions} onClick={() => navigate(routes.view.allSessions())} />}
         {show('agents') && <Counter testId="status-bar-agents" icon={Bot} label={t('dashboard.activeAgents')} value={sessionStats.agents} accent onClick={() => navigate(routes.view.screen('agents'))} />}
-        <Counter testId="status-bar-tasks" icon={ListTodo} label={t('statusBar.tasks')} title={t('statusBar.tasksToday')} value={tasks} onClick={() => navigate(routes.view.tasks())} />
+        {show('tasks') && <Counter testId="status-bar-tasks" icon={ListTodo} label={t('statusBar.tasks')} title={t('statusBar.tasksToday')} value={tasks} onClick={() => navigate(routes.view.tasks())} />}
         {show('inbox') && <Counter testId="status-bar-inbox" icon={Inbox} label={t('statusBar.inbox')} value={inboxOpen} onClick={() => navigate(routes.view.inbox())} />}
         {show('dictation') && dictation.active && (
           <span data-testid="status-bar-dictation" role="status" className="flex items-center gap-1 px-1.5 text-accent">
@@ -293,7 +293,7 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
       </div>
 
       <div className="flex min-w-0 items-center justify-end gap-0.5">
-        {modelName || connections.length > 0 ? (
+        {show('model') && (modelName || connections.length > 0) ? (
           <Popover>
             <PopoverTrigger asChild>
               <button type="button" data-testid="status-bar-model" className={itemCls} title={t('statusBar.model')}>
@@ -341,6 +341,7 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
           </button>
         ) : null}
         <Sep />
+        {show('notifications') && (
         <button
           type="button"
           data-testid="status-bar-notifications"
@@ -353,6 +354,7 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
           <span className="hidden max-w-[220px] truncate lg:inline">{latest?.title ?? t('statusBar.noEvents')}</span>
           {inboxOpen > 0 ? <span className={cn(numCls, 'rounded-full bg-accent/15 px-1 text-accent')}>{inboxOpen > 99 ? '99+' : inboxOpen}</span> : null}
         </button>
+        )}
         {show('version') && version ? (
           <Popover>
             <PopoverTrigger asChild>
