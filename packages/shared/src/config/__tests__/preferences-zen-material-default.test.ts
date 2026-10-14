@@ -36,6 +36,11 @@ describe('zen shell material default', () => {
     expect(run(dir, 'console.log(p.getZenShellMaterialPreference())').stdout).toBe('opaque')
   }))
 
+  it('keeps legacy glass/opaque picks (only Settings ever wrote them)', () => withDir((dir) => {
+    writeFileSync(join(dir, 'preferences.json'), JSON.stringify({ zenShellMaterialPreference: 'glass' }))
+    expect(run(dir, 'console.log(p.getZenShellMaterialPreference())').stdout).toBe('glass')
+  }))
+
   it('keeps an explicit choice and does not mark unrelated writes explicit', () => withDir((dir) => {
     expect(run(dir, "p.setZenShellPreference({ materialDepth: 'deep' }); console.log(p.getZenShellMaterialPreference())").stdout).toBe('opaque')
     expect(JSON.parse(readFileSync(join(dir, 'preferences.json'), 'utf8')).zenShellMaterialPreferenceExplicit).toBeUndefined()

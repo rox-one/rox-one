@@ -69,8 +69,8 @@ export interface UserPreferences {
   zenShellMaterialPreference?: 'system' | 'glass' | 'opaque';
   /**
    * True once the user picked the window material in Settings. Older builds
-   * persisted the implicit `system` default on any Zen write, so a stored value
-   * without this marker is not a user choice and resolves to the opaque default.
+   * persisted the implicit `system` default on any Zen write, so a stored
+   * `system` without this marker is not a user choice and resolves to opaque.
    */
   zenShellMaterialPreferenceExplicit?: boolean;
   /**
@@ -356,9 +356,11 @@ export const DEFAULT_ZEN_SHELL_MATERIAL_PREFERENCE = 'opaque' as const;
 
 export function getZenShellMaterialPreference(): 'system' | 'glass' | 'opaque' {
   const prefs = loadPreferences();
-  if (prefs.zenShellMaterialPreferenceExplicit !== true) return DEFAULT_ZEN_SHELL_MATERIAL_PREFERENCE;
   const value = prefs.zenShellMaterialPreference;
-  if (value === 'system' || value === 'glass' || value === 'opaque') return value;
+  // `glass`/`opaque` were only ever written from Settings; a `system` without
+  // the marker is the implicit legacy default and resolves to opaque.
+  if (value === 'glass' || value === 'opaque') return value;
+  if (value === 'system' && prefs.zenShellMaterialPreferenceExplicit === true) return value;
   return DEFAULT_ZEN_SHELL_MATERIAL_PREFERENCE;
 }
 
