@@ -46,7 +46,8 @@ import {
 } from '@/components/ui/styled-context-menu'
 import { RenameDialog } from '@/components/ui/rename-dialog'
 import { SEEDED_MODES, type SeededMode } from './modes-seed'
-import { useShellModes } from './useModes'
+import { usePillModel } from './usePillNav'
+import { setNavPlacement } from '../components/app-shell/nav-placement'
 import { resolveLucideIcon } from './lucide-icon'
 import { GLYPH_ICONS_BY_NAME } from './glyphs'
 import { surfaceTabFromRoute } from './layout-snapshot'
@@ -55,16 +56,16 @@ import { handleModePillKeyDown } from './mode-pill-keyboard'
 import {
   PILL_BROWSER_SURFACE_ID,
   activatePillSurface,
+  removeFromPillsTarget,
   recordPillActivation,
   resetPillSessionUsage,
   setPillExcluded,
   setPillPinned,
   usePillPreferences,
-  visiblePillSurfaces,
   type ResolvedPillSurface,
 } from './pill-composition'
 import { canOpenPillBrowser, useOpenPillBrowser } from './pill-activate'
-import { activeScene, applyScene, clearScene, createScene, useScenes, type Scene } from './scenes'
+import { applyScene, clearScene, createScene, useScenes, type Scene } from './scenes'
 
 /**
  * Name → glyph map for seeded modes; the canonical dictionary (`glyphs.ts`).
@@ -147,7 +148,8 @@ function PillItems({
   return (
     <>
       {surfaces.map((surface) => {
-        const Icon = resolveLucideIcon(surface.icon) ?? MODE_ICONS[surface.icon] ?? Inbox
+        const Icon = surface.iconComponent ?? resolveLucideIcon(surface.icon) ?? MODE_ICONS[surface.icon] ?? Inbox
+        const iconOnly = collapsed || surface.iconOnly === true
         const title = t(surface.titleKey)
         const active = surface.id === activeId
         const badge = itemBadge(badges, surface.id)
@@ -167,6 +169,7 @@ function PillItems({
             tabIndex={interactive ? (rovingId === surface.id ? 0 : -1) : -1}
             data-mode={surface.id}
             data-kind={surface.kind}
+            data-icon-only={surface.iconOnly || undefined}
             aria-label={badge ? `${title} · ${t('workbench.mode.badge', { count: badge })}` : title}
             aria-current={active ? 'page' : undefined}
             onFocus={interactive && onFocusItem ? () => onFocusItem(surface.id) : undefined}
@@ -182,7 +185,7 @@ function PillItems({
             className="rox-mode-pill-item titlebar-no-drag"
           >
             <Icon className="rox-mode-pill-icon" aria-hidden />
-            {!collapsed && <span className="rox-mode-pill-label">{title}</span>}
+            {!iconOnly && <span className="rox-mode-pill-label">{title}</span>}
             {badge > 0 && <span className="rox-mode-pill-badge" aria-hidden>{badge > 99 ? '99+' : badge}</span>}
           </button>
         )
@@ -191,14 +194,19 @@ function PillItems({
 
         const menuContent = (
           <StyledContextMenuContent>
-            <StyledContextMenuItem onSelect={() => onTogglePin?.(surface.id)}>
-              {pinned ? <PinOff /> : <Pin />}
-              {t(pinned ? 'workbench.pill.unpin' : 'workbench.pill.pin')}
-            </StyledContextMenuItem>
-            <StyledContextMenuItem onSelect={() => onExclude?.(surface.id)}>
-              <EyeOff />
-              {t('workbench.pill.exclude')}
-            </StyledContextMenuItem>
+            {/* Placement-added screens (not registry modes) are managed in Settings, not by pin. */}
+            {!surface.isActive && (
+              <StyledContextMenuItem onSelect={() => onTogglePin?.(surface.id)}>
+                {pinned ? <PinOff /> : <Pin />}
+                {t(pinned ? 'workbench.pill.unpin' : 'workbench.pill.pin')}
+              </StyledContextMenuItem>
+            )}
+            {!surface.iconOnly && (
+              <StyledContextMenuItem onSelect={() => onExclude?.(surface.id)}>
+                <EyeOff />
+                {t('workbench.pill.exclude')}
+              </StyledContextMenuItem>
+            )}
             <StyledContextMenuSeparator />
             <StyledContextMenuSub>
               <StyledContextMenuSubTrigger>
@@ -239,7 +247,7 @@ function PillItems({
         )
 
         // Expanded + labelled: no tooltip noise; just the context menu.
-        if (!collapsed) {
+        if (!iconOnly) {
           return (
             <ContextMenu key={surface.id}>
               <ContextMenuTrigger asChild>{button}</ContextMenuTrigger>
@@ -269,8 +277,9 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBar
   const { t, i18n } = useTranslation()
   const navState = useNavigationState()
   const { navigate } = useNavigation()
-  const { modes } = useShellModes()
   const prefs = usePillPreferences()
+  // WP6: the shared selector (same list the sidebar/rail fall back from).
+  const { rendered: available, nav: pillNav } = usePillModel(true)
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
   // A workspace switch rebuilds the frozen usage snapshot, so the frequency
   // ordering computed in one room never carries into another.
@@ -278,7 +287,6 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBar
     resetPillSessionUsage()
   }, [workspaceId])
   const sceneState = useScenes()
-  const scene = useMemo(() => activeScene(sceneState), [sceneState])
   const inboxBlocking = useInboxBlockingCount()
   const setOmniboxOpen = useSetAtom(omniboxOpenAtom)
   const primaryRoute = useAtomValue(primaryPanelRouteAtom)
@@ -287,11 +295,6 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBar
   const badges = { inbox: inboxBlocking }
 
   const [focusId, setFocusId] = useState<string | null>(null)
-  const surfaces = useMemo(() => visiblePillSurfaces(modes, prefs, scene), [modes, prefs, scene])
-  const available = useMemo(
-    () => surfaces.filter((surface) => surface.kind !== 'panel' || browserAvailable),
-    [surfaces, browserAvailable],
-  )
 
   const browserActive =
     browserAvailable && surfaceTabFromRoute(primaryRoute ?? '')?.kind === 'browser'
@@ -303,7 +306,7 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBar
       available.find(
         (surface) =>
           surface.kind === 'mode' &&
-          Boolean(surface.mode && seedById[surface.mode.id]?.isActive(navState)),
+          Boolean(surface.mode && (surface.isActive ?? seedById[surface.mode.id]?.isActive)?.(navState)),
       )?.id ?? null
     )
   }, [available, browserActive, navState])
@@ -324,7 +327,14 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBar
     (id: string) => setPillPinned(id, !pinnedIds.has(id)),
     [pinnedIds],
   )
-  const handleExclude = useCallback((id: string) => setPillExcluded(id, true), [])
+  // WP6: «Убрать из пилюль» moves the surface to its default sidebar group
+  // (the one placement store Settings uses) — it stays reachable, never hidden.
+  const handleExclude = useCallback((id: string) => {
+    const surface = available.find((candidate) => candidate.id === id)
+    const target = surface ? removeFromPillsTarget(surface, pillNav.surfaces) : null
+    if (target) setNavPlacement(target.id, target.placement)
+    else setPillExcluded(id, true)
+  }, [available, pillNav])
   const handleOpenPalette = useCallback(() => {
     if (onOpenPalette) onOpenPalette()
     else setOmniboxOpen(true)
@@ -352,7 +362,7 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBar
   const [ready, setReady] = useState(false)
 
   const surfaceKey = available
-    .map((surface) => `${surface.id}:${surface.mode?.rootRoute ? 1 : 0}:${surface.titleKey}`)
+    .map((surface) => `${surface.id}:${surface.mode?.rootRoute ? 1 : 0}:${surface.titleKey}:${surface.iconOnly ? 1 : 0}`)
     .join('|')
 
   // Sliding indicator geometry follows the active segment.

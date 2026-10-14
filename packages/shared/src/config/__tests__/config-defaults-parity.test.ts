@@ -3,7 +3,7 @@
  *
  * Production change that fails this suite:
  * - JSON `thinkingLevel` set to legacy `"think"` (or any non-THINKING_LEVEL_IDS value)
- * - JSON / TS `permissionMode` drifting off `'allow-all'`
+ * - JSON / TS `permissionMode` drifting off `'ask'`
  * - Any other field diverging between the two documents
  */
 import { describe, expect, it } from 'bun:test'
@@ -93,11 +93,12 @@ describe('config-defaults source of truth', () => {
     expect((THINKING_LEVEL_IDS as readonly string[]).includes(thinkingLevel)).toBe(true)
   })
 
-  it('fallback permission mode matches the bundle (allow-all) and cyclable modes match', () => {
+  it('fallback permission mode matches the bundle (ask) and the cycle includes ask', () => {
     const bundled = workspaceDefaults(loadBundledDefaults())
     const fallback = workspaceDefaults(loadFallbackDefaults())
-    expect(bundled.permissionMode).toBe('allow-all')
-    expect(fallback.permissionMode).toBe('allow-all')
+    expect(bundled.permissionMode).toBe('ask')
+    expect(fallback.permissionMode).toBe('ask')
+    expect(bundled.cyclablePermissionModes).toEqual(['safe', 'ask', 'allow-all'])
     expect(fallback.cyclablePermissionModes).toEqual(bundled.cyclablePermissionModes)
   })
 

@@ -139,8 +139,10 @@ export function buildSurfaceTabViews(input: BuildSurfaceTabViewsInput): SurfaceT
       // Navigator panels name themselves from the route (Задачи, Встречи,
       // Rox History…) so the tab never falls back to the generic «Панель».
       // `clipboard-history` keeps its own PanelType (lane policy) but resolves
-      // through the same route → title-key mapping as the legacy navigators.
-      const routeTitle = panelType === 'other' || panelType === 'clipboard-history'
+      // through the same route → title-key mapping as the legacy navigators,
+      // and so does `cookbooks`, whose dedicated PanelType exists for the lane
+      // policy and the tab icon rather than for a different title source.
+      const routeTitle = panelType === 'other' || panelType === 'clipboard-history' || panelType === 'cookbooks'
         ? resolveRouteTitle?.(entry.route)
         : null
       title = routeTitle ?? legacyPanelTitle(panelType, labels)

@@ -114,7 +114,7 @@ function nodeBuiltinStubPlugin() {
  */
 const SIDE_EFFECT_FREE_MODULES = [
   /[\\/]packages[\\/]shared[\\/]src[\\/]i18n[\\/](?:registry\.ts|setupI18n\.ts|locales[\\/][^\\/]+\.json)$/,
-  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]markdown[\\/](?:TiptapMarkdownEditor|MarkdownDatatableBlock|MarkdownSpreadsheetBlock|MarkdownOpenUIBlock)\.tsx$/,
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]markdown[\\/](?:TiptapMarkdownEditor|MarkdownDatatableBlock|MarkdownSpreadsheetBlock|MarkdownOpenUIBlock|Markdown|CodeBlock|MarkdownImageBlock|MarkdownHtmlBlock|MarkdownDocBlock|MarkdownRoversCardBlock|SourcedStatement|CollapsibleSection)\.tsx$/,
   // The diff viewers register a custom element and Shiki themes at module
   // load; marked here so the @rox/ui barrel re-export alone does not pull them
   // (and Shiki) into startup. Wherever they are used, that code still runs.
@@ -133,7 +133,12 @@ const SIDE_EFFECT_FREE_MODULES = [
   /[\\/]packages[\\/]session-tools-core[\\/]src[\\/]validation\.ts$/,
   // WP7: reached only through the `@rox/ui` overlay barrel; the renderer has no
   // eager consumer, yet the barrel alone kept @uiw/react-json-view in startup.
-  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]overlay[\\/](?:JSONPreviewOverlay|ActivityCardsOverlay)\.tsx$/,
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]overlay[\\/](?:JSONPreviewOverlay|ActivityCardsOverlay|ImagePreviewOverlay|PDFPreviewOverlay|LazyPDFPreviewOverlay|CodePreviewOverlay|DocumentFormattedMarkdownOverlay|GenericOverlay|TerminalPreviewOverlay|DataTableOverlay|MermaidPreviewOverlay|HTMLPreviewOverlay|FullscreenOverlayBase|FullscreenOverlayBaseHeader|PreviewOverlay|AnnotatableMarkdownDocument)\.tsx$/,
+  // ChatPage/EditPopover are lazy; boot still imports Spinner/Tooltip from the
+  // `@rox/ui` barrel (session list, AppShell). Without this mark, TurnCard +
+  // markdown (parse5, micromark, motion) ride that barrel into index.html.
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]chat[\\/](?:TurnCard|UserMessageBubble|SessionViewer|ThinkingCard|TurnCardActionsMenu|MessageHoverDock|AcceptPlanDropdown|CompactAcceptPlanDrawer|InlineExecution)\.tsx$/,
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]annotations[\\/].+\.tsx$/,
 ]
 
 /**
@@ -299,10 +304,21 @@ export default defineConfig(({ command }) => ({
   build: {
     outDir: resolve(__dirname, 'dist/renderer'),
     emptyOutDir: true,
-    sourcemap: true,  // Source maps generated for debugging.
+    // Production dist must not ship source maps (S9-11: 68 MB of *.map).
+    // `scripts/boot-manifest.ts` still derives the boot closure from the sibling
+    // maps, so the CI bundle-size job and local manifest regeneration opt back in
+    // with ROX_RENDERER_SOURCEMAP=1 — the packaged app never sets it.
+    sourcemap: process.env.ROX_RENDERER_SOURCEMAP === '1',
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'src/renderer/index.html'),
+        // Keep `playground.html` as a build input even though it is not part of
+        // the shipped product: Rollup derives chunk granularity from the whole
+        // entry set. Dropping it collapses the app's ~50 chunks into one ~2.6 MB
+        // `main` chunk (measured: `main` prefix 2 631 634 B vs a 347 295 B
+        // budget, index closure 19 files instead of 51). Excluding the built
+        // playground page from the distribution is a separate, chunking-aware
+        // change; `vite dev` / playground-dev.ts serve it from disk regardless.
         playground: resolve(__dirname, 'src/renderer/playground.html'),
         'browser-toolbar': resolve(__dirname, 'src/renderer/browser-toolbar.html'),
         'browser-empty-state': resolve(__dirname, 'src/renderer/browser-empty-state.html'),

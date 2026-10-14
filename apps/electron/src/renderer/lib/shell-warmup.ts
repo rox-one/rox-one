@@ -20,7 +20,7 @@ import type { WorkspaceWorkSnapshot } from '@rox/shared/workspace-work'
 import type { ElectronAPI, LoadedSkill, LoadedSource } from '../../shared/types'
 import { ensureSessionMessagesLoadedAtom, loadedSessionsAtom, refreshSessionsMetadataAtom, sessionMetaMapAtom, windowWorkspaceIdAtom } from '@/atoms/sessions'
 import { RAIL_SURFACE_ROUTES, preloadRoute } from '@/components/app-shell/route-pages'
-import { startIdlePreload } from '@/lib/idle-preload'
+import { startIdlePreload, cancelIdlePreload } from '@/lib/idle-preload'
 import { getShellStore, type ShellStore } from '@/platform/shell-store'
 import { roxQueryClient } from '@/lib/query/client'
 import { roxKeys } from '@/lib/query/keys'
@@ -97,6 +97,8 @@ export function installShellWarmup(): () => void {
     stopped = true
     stopIdlePreloadTimer()
     activeQueue?.cancel()
+    // Abort an in-flight idle preload too; the next warmup restarts it.
+    cancelIdlePreload()
   }
 }
 

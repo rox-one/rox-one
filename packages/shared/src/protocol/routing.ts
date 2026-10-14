@@ -15,6 +15,15 @@ import { RPC_CHANNELS } from './channels'
 // ---------------------------------------------------------------------------
 
 export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
+  // cloudHandoff «В облако» — reads local session files + the local encrypted Daytona key
+  RPC_CHANNELS.cloudHandoff.GET_CONFIG,
+  RPC_CHANNELS.cloudHandoff.START,
+  RPC_CHANNELS.cloudHandoff.STATUS,
+  RPC_CHANNELS.cloudHandoff.CANCEL,
+  RPC_CHANNELS.cloudHandoff.END,
+  RPC_CHANNELS.cloudHandoff.SET_KEY,
+  RPC_CHANNELS.cloudHandoff.CLEAR_KEY,
+
   RPC_CHANNELS.voice.COPY_TEXT,
   // Repository capture uses the verified local Electron source owner.
   RPC_CHANNELS.codeIntelligence.PREVIEW,
@@ -525,6 +534,21 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.extensionSurface.STATE_CHANGED,
   RPC_CHANNELS.extensionSurface.REMOVED,
 
+  // cookbooksLab — the vendored Python sidecar and its data plane are
+  // host-local: the process, the bearer token and the loopback URL never leave
+  // main, so no call can be proxied to a remote workspace host.
+  RPC_CHANNELS.cookbooksLab.ENSURE,
+  RPC_CHANNELS.cookbooksLab.STATUS,
+  RPC_CHANNELS.cookbooksLab.RESTART,
+  RPC_CHANNELS.cookbooksLab.CATALOG,
+  RPC_CHANNELS.cookbooksLab.OPEN,
+  RPC_CHANNELS.cookbooksLab.DOCUMENT,
+  RPC_CHANNELS.cookbooksLab.RUN,
+  RPC_CHANNELS.cookbooksLab.RUN_ALL,
+  RPC_CHANNELS.cookbooksLab.SAVE,
+  RPC_CHANNELS.cookbooksLab.RESET,
+  RPC_CHANNELS.cookbooksLab.STATUS_CHANGED,
+
 
   // knowledge — engine status/start + install detect reflect the answering host, never proxied
   RPC_CHANNELS.knowledge.ENGINE_STATUS,
@@ -855,6 +879,7 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.notes.UPDATE_COMMENT,
   RPC_CHANNELS.notes.DELETE_COMMENT,
   RPC_CHANNELS.notes.READ,
+  RPC_CHANNELS.notes.LIST_TASKS,
   RPC_CHANNELS.notes.SAVE,
   RPC_CHANNELS.notes.UPDATE_PROPERTIES,
   RPC_CHANNELS.notes.CREATE,

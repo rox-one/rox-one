@@ -26,6 +26,8 @@ import {
   readOidcConfigFromEnv,
   discoverOidc,
   verifyOidcIdTokenWithJwks,
+  isOidcSubjectAllowed,
+  resolveOidcRedirectUri,
   createPkcePair,
   createRandomToken,
   type OidcConfig,
@@ -46,6 +48,19 @@ import type { PlatformServices } from '../runtime/platform'
 
 // Re-exported for the existing WebUI callers/tests that import it from here.
 export { resolveWebuiFile } from './static-file'
+
+/**
+ * Files the login page may load without a session. The SPA bundle under
+ * `/assets/*` stays gated (S8-04). Vite names the login MPA entry
+ * `login-<hash>.css` / `login-<hash>.js`; fonts referenced from that CSS
+ * are not secrets.
+ */
+export function isUnauthenticatedLoginAssetPath(path: string): boolean {
+  if (path === '/favicon.ico' || path.startsWith('/login-assets/')) return true
+  if (/^\/assets\/login-[A-Za-z0-9_-]+\.(css|js)$/.test(path)) return true
+  if (/^\/assets\/[^/]+\.(woff2?|ttf|otf)$/.test(path)) return true
+  return false
+}
 
 // ---------------------------------------------------------------------------
 // MIME types for static file serving
@@ -336,6 +351,12 @@ export interface OAuthCallbackDeps {
 export interface WebuiHandlerOptions {
   /** Path to built web UI dist/ directory. */
   webuiDir: string
+  /**
+   * Self-authenticating API routes evaluated before the session gate (e.g. the
+   * hosted cloud handoff broker, which uses id.rox.one bearer tokens).
+   * Return null to fall through.
+   */
+  extraRoutes?: (req: Request) => Promise<Response | null>
   /** Secret used to sign JWTs — typically ROX_SERVER_TOKEN (CRAFT_SERVER_TOKEN still works). */
   secret: string
   /** Optional separate web UI password. Falls back to `secret` for verification. */
@@ -523,6 +544,11 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     const path = url.pathname
     const useSecureCookies = oidcPublicUrlIsHttps || shouldUseSecureCookies(req, secureCookies)
 
+    if (options.extraRoutes) {
+      const routed = await options.extraRoutes(req)
+      if (routed) return withWebuiSecurityHeaders(routed)
+    }
+
     // ── Pairing handoff (token only from a header; never from the URL) ──
     if (path === '/handoff' && req.method === 'GET') {
       const token = req.headers.get('x-handoff-token')
@@ -681,7 +707,7 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     }
 
     // ── Static assets that login page needs (no auth) ──
-    if (path === '/favicon.ico' || path.startsWith('/login-assets/')) {
+    if (isUnauthenticatedLoginAssetPath(path)) {
       const safePath = resolveWebuiFile(webuiDir, path)
       if (!safePath) return new Response('Not Found', { status: 404 })
       const file = Bun.file(safePath)
@@ -710,6 +736,9 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
         return loginErrorResponse('Слишком много попыток входа. Попробуйте позже.', 429)
       }
 
+      const redirectUri = resolveOidcRedirectUri(oidc, getRequestHost(req))
+      if (!redirectUri) return loginErrorResponse('Неизвестный адрес облачной сессии. Откройте свежую ссылку из Rox.', 400)
+
       try {
         const discovery = await discoverOidc(oidc.issuer)
         const state = createRandomToken(16)
@@ -721,12 +750,12 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
           const oldest = pendingOidcLogins.keys().next().value
           if (oldest !== undefined) pendingOidcLogins.delete(oldest)
         }
-        pendingOidcLogins.set(state, { codeVerifier, nonce, createdAt: Date.now() })
+        pendingOidcLogins.set(state, { codeVerifier, nonce, redirectUri, createdAt: Date.now() })
 
         const authorizationUrl = new URL(discovery.authorization_endpoint)
         authorizationUrl.searchParams.set('response_type', 'code')
         authorizationUrl.searchParams.set('client_id', oidc.clientId)
-        authorizationUrl.searchParams.set('redirect_uri', `${oidc.publicUrl}/api/auth/callback`)
+        authorizationUrl.searchParams.set('redirect_uri', redirectUri)
         authorizationUrl.searchParams.set('scope', 'openid profile email')
         authorizationUrl.searchParams.set('state', state)
         authorizationUrl.searchParams.set('nonce', nonce)
@@ -781,7 +810,7 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
         const form = new URLSearchParams({
           grant_type: 'authorization_code',
           code,
-          redirect_uri: `${oidc.publicUrl}/api/auth/callback`,
+          redirect_uri: pending.redirectUri ?? `${oidc.publicUrl}/api/auth/callback`,
           client_id: oidc.clientId,
           code_verifier: pending.codeVerifier,
         })
@@ -808,6 +837,11 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
           clientId: oidc.clientId,
           nonce: pending.nonce,
         })
+
+        if (!isOidcSubjectAllowed(oidc, user.sub)) {
+          logger.warn('[webui] OIDC login rejected: subject is not the owner of this session')
+          return loginErrorResponse('Эта облачная сессия принадлежит другому аккаунту Rox ID.', 403, clearStateCookie)
+        }
 
         const jwt = await createSessionToken(secret, {
           sub: user.sub,

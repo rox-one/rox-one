@@ -25,6 +25,14 @@ export const CHANNEL_MAP = {
   getRuntimeTraceSnapshot: invoke(RPC_CHANNELS.runtimeTrace.GET_SNAPSHOT),
   readRuntimeTraceEvents: invoke(RPC_CHANNELS.runtimeTrace.READ_EVENTS),
   readRuntimeTracePayload: invoke(RPC_CHANNELS.runtimeTrace.READ_PAYLOAD),
+  // Cloud handoff «В облако» (docs/cloud-handoff-design.md)
+  getCloudHandoffConfig: invoke(RPC_CHANNELS.cloudHandoff.GET_CONFIG),
+  startCloudHandoff: invoke(RPC_CHANNELS.cloudHandoff.START),
+  getCloudHandoffStatus: invoke(RPC_CHANNELS.cloudHandoff.STATUS),
+  cancelCloudHandoff: invoke(RPC_CHANNELS.cloudHandoff.CANCEL),
+  endCloudHandoff: invoke(RPC_CHANNELS.cloudHandoff.END),
+  setCloudHandoffKey: invoke(RPC_CHANNELS.cloudHandoff.SET_KEY),
+  clearCloudHandoffKey: invoke(RPC_CHANNELS.cloudHandoff.CLEAR_KEY),
   // Cloud Runs (PRD docs/cloud-runs-prd.md, phase G3)
   getCloudRunsConfig: invoke(RPC_CHANNELS.cloudRuns.GET_CONFIG),
   setCloudRunsConfig: invoke(RPC_CHANNELS.cloudRuns.SET_CONFIG),
@@ -457,6 +465,7 @@ export const CHANNEL_MAP = {
   onDevSpaceRunProgress: listener(RPC_CHANNELS.devSpace.RUN_PROGRESS),
   listNotes: invoke(RPC_CHANNELS.notes.LIST),
   readNote: invoke(RPC_CHANNELS.notes.READ),
+  listNoteTasks: invoke(RPC_CHANNELS.notes.LIST_TASKS),
   saveNote: invoke(RPC_CHANNELS.notes.SAVE),
   createNote: invoke(RPC_CHANNELS.notes.CREATE),
   renameNote: invoke(RPC_CHANNELS.notes.RENAME),
@@ -602,6 +611,19 @@ export const CHANNEL_MAP = {
   'extensionSurface.focus': invoke(RPC_CHANNELS.extensionSurface.FOCUS),
   'extensionSurface.onStateChanged': listener(RPC_CHANNELS.extensionSurface.STATE_CHANGED),
   'extensionSurface.onRemoved': listener(RPC_CHANNELS.extensionSurface.REMOVED),
+
+  // Cookbooks Lab surface — sidecar lifecycle + native data plane (LOCAL_ONLY)
+  'cookbooksLab.ensure': invoke(RPC_CHANNELS.cookbooksLab.ENSURE),
+  'cookbooksLab.status': invoke(RPC_CHANNELS.cookbooksLab.STATUS),
+  'cookbooksLab.restart': invoke(RPC_CHANNELS.cookbooksLab.RESTART),
+  'cookbooksLab.catalog': invoke(RPC_CHANNELS.cookbooksLab.CATALOG),
+  'cookbooksLab.open': invoke(RPC_CHANNELS.cookbooksLab.OPEN),
+  'cookbooksLab.document': invoke(RPC_CHANNELS.cookbooksLab.DOCUMENT),
+  'cookbooksLab.run': invoke(RPC_CHANNELS.cookbooksLab.RUN),
+  'cookbooksLab.runAll': invoke(RPC_CHANNELS.cookbooksLab.RUN_ALL),
+  'cookbooksLab.save': invoke(RPC_CHANNELS.cookbooksLab.SAVE),
+  'cookbooksLab.reset': invoke(RPC_CHANNELS.cookbooksLab.RESET),
+  'cookbooksLab.onStatusChanged': listener(RPC_CHANNELS.cookbooksLab.STATUS_CHANGED),
 
   // Debug logging
   debugLog: invoke(RPC_CHANNELS.debug.LOG),

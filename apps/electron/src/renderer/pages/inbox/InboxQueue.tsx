@@ -19,6 +19,7 @@ import { decideRecipientRequest, selectInboxForUser } from '@rox/shared/team'
 import { TEAM_FLAG, dispatchTeam, readTeamState, teamActionContext, useTeamFlag, useTeamState } from '@/components/team/team-store'
 import { useTeamRoster } from '@/components/team/use-team-roster'
 import { useTranslation } from 'react-i18next'
+import { isWebUI } from '@/lib/platform'
 import { navigate, routes } from '@/lib/navigate'
 import { usePanelKeyboardGuard } from '@/lib/usePanelKeyboardGuard'
 import { useInboxItems } from '@/hooks/useInboxItems'
@@ -545,6 +546,8 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
           <span className="min-w-0 flex-1">{t('inbox.sourceError', { sources: errorEntries.map(([key]) => t(key === 'mail' ? 'inbox.kind.mail' : `inbox.source.${key}`)).join(', ') })}</span>
           <Button variant="ghost" disabled={refreshing} onClick={() => void refreshInbox()}>{t('common.retry')}</Button>
         </div>
+      ) : isWebUI ? (
+        <p className="mx-3 mt-2 text-caption text-text-muted" data-testid="inbox-desktop-only-hint">{t('inbox.desktopOnlyHint')}</p>
       ) : null}
       <div role="listbox" aria-label={t('inbox.title')} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="inbox-list">
         {visible.length === 0 ? (

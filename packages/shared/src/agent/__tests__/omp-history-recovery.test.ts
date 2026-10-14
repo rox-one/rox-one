@@ -47,11 +47,13 @@ describe('OMP persistent history and mandatory runtime modes', () => {
   expect((await chatEvents(agent,'retry',30000)).some(e=>e.type==='text_complete')).toBe(true);
   expect(fake.readArgvLog()).toHaveLength(2);expect(fake.readRpcLog().filter(f=>f.type==='prompt')).toHaveLength(1);expect(fake.readRpcLog().filter(f=>f.type==='switch_session')).toHaveLength(2);
  },60000);
- it('applies all three native magic modes on every turn without duplicating existing directives', async () => {
+ it('does not prefix magic modes; honors session thinking level', async () => {
   const {agent}=setup(); await chatEvents(agent,'question one',15000); await chatEvents(agent,'orchestrate workflowz ultrathink\nquestion two',15000);
   const prompts=fake.readRpcLog().filter(f=>f.type==='prompt');
-  for(const p of prompts) for(const word of ['orchestrate','workflowz','ultrathink']) expect(String(p.message).match(new RegExp('\\b'+word+'\\b','g'))).toHaveLength(1);
-  expect(fake.readRpcLog().filter(f=>f.type==='set_thinking_level' && f.level==='max')).toHaveLength(2);
+  expect(String(prompts[0]?.message)).toContain('question one');
+  expect(String(prompts[0]?.message).startsWith('orchestrate workflowz ultrathink')).toBe(false);
+  expect(String(prompts[1]?.message)).toContain('orchestrate workflowz ultrathink\nquestion two');
+  expect(fake.readRpcLog().filter(f=>f.type==='set_thinking_level' && f.level==='medium')).toHaveLength(2);
  },30000);
  it('reconstructs the exact selected ROX prefix when compaction removed a persisted native anchor',async()=>{
   const {agent,config}=setup();const parentDir=join(fake.workspaceRoot,'sessions','compacted-parent','omp');const parentFile=transcript(parentDir,'compacted.jsonl','compacted-parent');const before=readFileSync(parentFile,'utf8');
@@ -83,6 +85,6 @@ describe('OMP identity and legacy reconstruction',()=>{
  it('reads the native OMP18 fixed-width title slot before its session header',()=>{setup();const dir=join(fake.dir,'titled');const file=transcript(dir,'titled.jsonl','titled');const title={type:'title',v:1,title:'native title',updatedAt:'2026-10-03T00:00:00.000Z',pad:''};writeFileSync(file,JSON.stringify(title)+'\n'+readFileSync(file,'utf8'));writeOmpIdentity(dir,'titled',file);expect(readOmpResumeFile(dir,'titled')).toBe(file);});
  it('pins an atomic active identity independently of newer transcript filenames',()=>{setup();const dir=join(fake.dir,'identities');const selected=transcript(dir,'older.jsonl','old');transcript(dir,'newer.jsonl','new');writeOmpIdentity(dir,'old',selected);expect(readOmpResumeFile(dir)).toBe(selected);});
  it('reconstructs complete tool pairs with provenance and preserves every stored message',()=>{setup();const dir=join(fake.dir,'migrated');const file=seedOmpHistory(dir,fake.workspaceRoot,[{id:'u',role:'user',content:'question',timestamp:1},{id:'t',role:'tool',content:'answer',toolName:'read',toolUseId:'call-1',toolInput:{path:'a.txt'},timestamp:2},{id:'a',role:'assistant',content:'result',timestamp:3}],'resume')!;const entries=readFileSync(file,'utf8').trim().split('\n').map(l=>JSON.parse(l));expect(entries[1].customType).toBe('rox-history-reconstruction');expect(entries.filter(e=>e.type==='message').map(e=>e.message.role)).toEqual(['user','assistant','toolResult','assistant']);expect(entries.find(e=>e.message?.role==='toolResult').message.toolCallId).toBe('call-1');});
- it('adds native prose directives when words occur in quoted or fenced first lines',()=>{for(const prefix of ['> ', '``` ', '    ']) {const result=withOmpRequiredModes(prefix+'orchestrate workflowz ultrathink\nquoted task'); expect(result.startsWith('orchestrate workflowz ultrathink\n\n')).toBe(true);}});
- it('adds native prose directives even when matching words occur in a code block',()=>{const result=withOmpRequiredModes('```\norchestrate workflowz ultrathink\n```');expect(result.startsWith('orchestrate workflowz ultrathink\n\n')).toBe(true);});
+ it('leaves quoted or fenced first lines unchanged',()=>{for(const prefix of ['> ', '``` ', '    ']) {const source=prefix+'orchestrate workflowz ultrathink\nquoted task'; expect(withOmpRequiredModes(source)).toBe(source);}});
+ it('leaves a code block unchanged',()=>{const source='```\norchestrate workflowz ultrathink\n```';expect(withOmpRequiredModes(source)).toBe(source);});
 });

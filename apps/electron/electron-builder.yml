@@ -45,6 +45,9 @@ files:
   - packages/shared/src/interceptor-request-utils.ts
   # Include CLI tool Python scripts (platform-independent)
   - resources/scripts/**/*
+  # Cookbooks Lab sidecar snapshot (Python package + catalog + scripts); also
+  # copied to dist/resources/ by build:copy and resolved via getBundledAssetsDir('cookbooks').
+  - resources/cookbooks/**/*
   # Include CLI tool shell wrappers (platform-independent, both Unix and Windows)
   - resources/bin/markitdown
   - resources/bin/markitdown.cmd

@@ -130,7 +130,9 @@ describe('shell title helpers', () => {
   it('consumers read the shared reactive list (no static useMemo([]) map)', () => {
     expect(read('platform/SurfaceTabs.tsx')).toContain('buildRouteTitleKeys(')
     expect(read('platform/SurfaceTabs.tsx')).not.toContain('UNIFIED_MODES')
-    expect(read('platform/useModeHotkeys.ts')).toContain('useShellModes()')
+    // WP6: hotkeys read the shared pill selector, which reads useShellModes().
+    expect(read('platform/useModeHotkeys.ts')).toContain('usePillModel(true)')
+    expect(read('platform/usePillNav.ts')).toContain('useShellModes()')
     expect(read('platform/ModeBar.tsx')).toContain('resolveLucideIcon(surface.icon) ?? MODE_ICONS[surface.icon]')
   })
 })
@@ -365,7 +367,7 @@ describe('W1-07 gates read the <JotaiProvider> store (main.tsx unchanged)', () =
     expect(bridge).toContain('useLayoutEffect(() => connectShellStore(store), [store])')
   })
 
-  it('gates outside React use the shell store; baseline Omnibox providers keep getDefaultStore()', () => {
+  it('gates outside React use the shell store, including Omnibox providers (#1553)', () => {
     expect(read('actions/registry.tsx')).toContain('shellFlags ??= currentShellFlags()')
     expect(read('actions/registry.tsx')).not.toContain('getDefaultStore')
     expect(read('actions/shell-shortcuts.ts')).toContain('isTakeoverActive(takeover, currentShellFlags())')
@@ -373,9 +375,11 @@ describe('W1-07 gates read the <JotaiProvider> store (main.tsx unchanged)', () =
     expect(read('platform/surface-activity.ts')).toContain('store: StoreReader = getShellStore()')
     const bootstrap = read('platform/omnibox-bootstrap.ts')
     expect(bootstrap).toContain('getFlags: () => currentShellFlags()')
-    expect(bootstrap).toContain('const store = getDefaultStore()')
+    expect(bootstrap).toContain('const store = getShellStore()')
+    expect(bootstrap).not.toContain('getDefaultStore()')
     expect(bootstrap).toContain('() => Array.from(store.get(sessionMetaMapAtom).values())')
-    expect(read('platform/OmniboxHost.tsx')).toContain('const store = getDefaultStore()')
+    expect(read('platform/OmniboxHost.tsx')).toContain('const store = getShellStore()')
+    expect(read('platform/OmniboxHost.tsx')).not.toContain('getDefaultStore')
   })
 
   it('a runtime flag flip in the Provider store updates the route gate and the hotkey gate', () => {
@@ -404,6 +408,30 @@ describe('W1-07 gates read the <JotaiProvider> store (main.tsx unchanged)', () =
     disconnect()
     expect(getShellStore()).toBe(getDefaultStore())
     expect(shellFlagBridgeStore()).toBeNull()
+  })
+
+  it('Omnibox session search reads the connected Provider store, not getDefaultStore (#1553)', async () => {
+    const { bootstrapOmnibox, getOmniboxPlatform, __resetOmniboxBootstrapForTests } = await import('../omnibox-bootstrap')
+    const { sessionMetaMapAtom } = await import('@/atoms/sessions')
+    __resetOmniboxBootstrapForTests()
+    const provider = createStore()
+    const disconnect = connectShellStore(provider)
+    try {
+      provider.set(
+        sessionMetaMapAtom,
+        new Map([['s1', { id: 's1', name: 'Memory design', workspaceId: 'ws' }]]),
+      )
+      expect(getDefaultStore().get(sessionMetaMapAtom).size).toBe(0)
+
+      bootstrapOmnibox()
+      const sessions = getOmniboxPlatform().resources.get('craft-sessions')
+      expect(sessions).toBeDefined()
+      const hits = await sessions!.search({ query: 'memory', prefix: '', keys: {} })
+      expect(hits.some((hit) => hit.id === 'session:s1')).toBe(true)
+    } finally {
+      __resetOmniboxBootstrapForTests()
+      disconnect()
+    }
   })
 
   it('the Omnibox shell-flag provider resolves the store per pull (created before connect)', () => {
@@ -504,7 +532,7 @@ describe('«Документы» relabel reaches every Notes label', () => {
     // render case in w1-07-rail-modes.test.tsx.
     const rail = read('platform/ActivityRail.tsx')
     expect(rail).toContain('const { shellFlags } = useShellModes()')
-    expect(rail).toContain('resolvePrimaryNav({ shellFlags, modeFlags })')
+    expect(rail).toContain('resolvePrimaryNav({ shellFlags, modeFlags, placements, pillNavIds })')
     expect(read('platform/InspectorHost.tsx')).toContain('t(navDestinationLabelKey(destination, shellFlags))')
     const compact = read('components/app-shell/CompactWorkspaceMenu.tsx')
     expect(compact).toContain('t(navDestinationLabelKey(service, shellFlags))')

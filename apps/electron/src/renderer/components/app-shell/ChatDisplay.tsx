@@ -1716,6 +1716,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         description: branchErrorDescription(error, {
           fallback: t('toast.createBranchFailed'),
           sameProvider: t('toast.branchSameProvider'),
+          sdkNotReady: t('toast.branchSdkNotReady'),
+          historyUnavailable: t('toast.branchHistoryUnavailable'),
         }),
       })
     } finally {
@@ -1767,6 +1769,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         description: branchErrorDescription(error, {
           fallback: t('toast.createBranchFailed'),
           sameProvider: t('toast.branchSameProvider'),
+          sdkNotReady: t('toast.branchSdkNotReady'),
+          historyUnavailable: t('toast.branchHistoryUnavailable'),
         }),
       })
     } finally {

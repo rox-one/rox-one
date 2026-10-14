@@ -3,7 +3,9 @@ import * as React from 'react'
 import { NotesInspectorToggle, NotesRailTools, NotesResponsiveRail, NotesViewMenu, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
 import { notesAuxiliaryFits, type NotesRail } from './notes/notes-layout'
 import { usePanelWorkspaceLayout, type PanelWorkspaceLayoutMode } from '@/hooks/usePanelWorkspaceLayout'
-import { projectNoteScope, noteInProjectScope, noteCreationFolder, newProjectNoteFolder } from './notes/project-note-scope'
+import { type ProjectNoteScope, noteInProjectScope, noteCreationFolder, newProjectNoteFolder } from './notes/project-note-scope'
+
+const WORKSPACE_NOTE_SCOPE: ProjectNoteScope = { kind: 'workspace' }
 import { EMPTY_COMMENT_DRAFT, noteCommentDraftKey, updateCommentDraft, type NoteCommentDraft } from './notes/comment-drafts'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
@@ -15,7 +17,6 @@ import { useTranslation } from 'react-i18next'
 import { useAtomValue, useStore } from 'jotai'
 import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
-import { workspaceProjectContextsAtom } from '@/atoms/workspace-context'
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@rox/ui'
 import type { Node as PMNode } from 'prosemirror-model'
@@ -26,7 +27,7 @@ import type { BlockTreeResult, NativeMarkerMappingPreview } from '@rox/server-co
 import { applyMarkerMapping as applyBlockMarkerMapping, retainedText, retainSource as retainBlockSource } from '@rox/core/docs'
 import { contentHash as blockContentHash } from '@rox/core/rox2'
 import { parseNoteBlockAddress, resolveNoteBlockId } from '@rox/core/mindmap/derive-note.ts'
-import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteIndexHealth, NoteMutationOptions, NoteRenameImpact, NoteSummary } from '../../shared/types'
+import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteIndexHealth, NoteMutationOptions, NoteRenameImpact, NoteSummary, NoteTasksEntry } from '../../shared/types'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { NavigationContext } from '@/contexts/NavigationContext'
 import { RightSessionShell } from '@/components/session-workbench/RightSessionShell'
@@ -122,6 +123,7 @@ import {
   parseWikiCreateTarget,
   wikiMatchSubtitle,
 } from './notes/wiki-autocomplete'
+import { withClaimRetry } from '../lib/document-writer-retry'
 import { createNativeNotesSyncController } from '../lib/native-notes-sync'
 import { isNativeNoteDocument, writeNoteThroughAuthority } from '../lib/notes-write-authority'
 import { toErrorMessage } from '@/lib/errors'
@@ -405,6 +407,29 @@ function extractTasks(note: NoteDocument | NoteSummary, content: string): NoteTa
   })
 }
 
+/** #1574: max ids per `notes:listTasks` call (mirrors NOTE_TASKS_MAX_IDS). */
+const NOTE_TASKS_BATCH = 200
+
+/**
+ * #1574: only a server that does not know `notes:listTasks` (older remote/SSH
+ * host) triggers the per-note fallback; permission or validation failures do not.
+ */
+function isUnsupportedRpcError(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code
+  if (code === 'CHANNEL_NOT_FOUND' || code === 'UNSUPPORTED_OPERATION') return true
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : ''
+  return /no handler for|unknown channel|not supported|unsupported channel/i.test(message)
+}
+
+/** Task rows from either a full document (readNote) or a server task entry (listNoteTasks). */
+function tasksFromRead(value: NoteDocument | NoteTasksEntry): NoteTask[] {
+  if ('tasks' in value && Array.isArray(value.tasks)) {
+    return value.tasks.map(task => ({ noteId: value.id, noteTitle: value.title, line: task.line, text: task.text, checked: task.checked }))
+  }
+  const document = value as NoteDocument
+  return extractTasks(document, document.content)
+}
+
 function updateMarkdownTitle(content: string, title: string): string {
   const escaped = title.replace(/"/g, '\\"')
   if (/^---\r?\n[\s\S]*?\r?\n---/.test(content)) {
@@ -500,10 +525,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   } = useAppShellContext()
   const store = useStore()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
-  // The selected workspace project owns the note scope; the active chat does not.
-  const workspaceProjects = useAtomValue(workspaceProjectContextsAtom)
-  const activeProjectId = activeWorkspaceId ? workspaceProjects[activeWorkspaceId] ?? undefined : undefined
-  const noteScope = React.useMemo(() => projectNoteScope(activeProjectId, projects), [activeProjectId, projects])
+  // No hidden shared project scope: notes always cover the whole workspace.
+  const noteScope = WORKSPACE_NOTE_SCOPE
   const [rightSessionContext, setRightSessionContext] = React.useState<Rox2Context | null>(null)
   const [openingAgent, setOpeningAgent] = React.useState(false)
   const openingAgentRef = React.useRef(false)
@@ -737,7 +760,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     return () => off?.()
   }, [activeWorkspaceId])
   // PERF-09: reads shared between overlapping passes, keyed by workspace+note+version.
-  const taskInFlightRef = React.useRef<Map<string, Promise<NoteDocument>>>(new Map())
+  const taskInFlightRef = React.useRef<Map<string, Promise<NoteDocument | NoteTasksEntry | undefined>>>(new Map())
   // PERF-09: true while a notes listing read is in flight; its result re-runs the task pass.
   const notesListingPendingRef = React.useRef(false)
   const refreshTasksRef = React.useRef<((sourceNotes?: NoteSummary[]) => Promise<void>) | null>(null)
@@ -1050,7 +1073,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     // PERF-09: prefer the content the listing already carries (principal mode
     // returns whole documents) over a second readNote pass over the corpus.
     const listingPending = notesListingPendingRef.current
-    const reads = new Map<string, Promise<NoteDocument>>()
+    const reads = new Map<string, Promise<NoteDocument | NoteTasksEntry | undefined>>()
+    // #1574: one `notes:listTasks` round trip per batch instead of a readNote
+    // per note (older transports without it keep the per-note reads).
+    const listTasks = typeof window.electronAPI.listNoteTasks === 'function' ? window.electronAPI.listNoteTasks : null
+    const batchIds: Array<{ id: string; key: string }> = []
     for (const note of toFetch) {
       const content = listedNoteContent(note)
       if (content !== null) {
@@ -1068,17 +1095,39 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         reads.set(key, shared)
         continue
       }
+      if (listTasks) {
+        batchIds.push({ id: note.id, key })
+        continue
+      }
       const read = window.electronAPI.readNote(activeWorkspaceId, note.id)
       taskInFlightRef.current.set(key, read)
       const settle = () => { if (taskInFlightRef.current.get(key) === read) taskInFlightRef.current.delete(key) }
       void read.then(settle, settle)
       reads.set(key, read)
     }
+    for (let start = 0; listTasks && start < batchIds.length; start += NOTE_TASKS_BATCH) {
+      const chunk = batchIds.slice(start, start + NOTE_TASKS_BATCH)
+      // A server without `notes:listTasks` (older remote/SSH host) rejects the
+      // batch as unsupported: fall back to per-note reads for that chunk. Any
+      // other failure (e.g. a denial) fails the chunk's notes like a read would.
+      const workspaceId = activeWorkspaceId
+      const batch: Promise<NoteTasksEntry[] | null> = listTasks(workspaceId, chunk.map(item => item.id))
+        .then(entries => entries, (error: unknown) => { if (isUnsupportedRpcError(error)) return null; throw error })
+      for (const { id, key } of chunk) {
+        const read: Promise<NoteDocument | NoteTasksEntry | undefined> = batch.then<NoteDocument | NoteTasksEntry | undefined>(entries => entries
+          ? entries.find(entry => entry.id === id)
+          : window.electronAPI.readNote(workspaceId, id))
+        taskInFlightRef.current.set(key, read)
+        const settle = () => { if (taskInFlightRef.current.get(key) === read) taskInFlightRef.current.delete(key) }
+        void read.then(settle, settle)
+        reads.set(key, read)
+      }
+    }
     const results = await Promise.allSettled([...reads.values()])
     if (request !== taskRequestRef.current || taskCacheWorkspaceRef.current !== activeWorkspaceId) return
     for (const result of results) {
-      if (result.status === 'fulfilled') {
-        taskCacheRef.current.set(result.value.id, extractTasks(result.value, result.value.content))
+      if (result.status === 'fulfilled' && result.value) {
+        taskCacheRef.current.set(result.value.id, tasksFromRead(result.value))
         taskCacheUpdatedAtRef.current.set(result.value.id, result.value.updatedAt)
       }
     }
@@ -1303,7 +1352,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
 
   const saveNativeNote = React.useCallback(async (note: NoteDocument, markdown: string, observation = knowledgeSignals.capture()): Promise<NoteDocument> => {
     const queuedMutation = await nativeNotesSync.queueSave(note, markdown)
-    const receipts = await nativeNotesSync.flush()
+    const receipts = await withClaimRetry(() => nativeNotesSync.flush())
     const receipt = receipts.find(candidate => candidate.operationId === queuedMutation.operationId)
     if (!receipt) throw new Error(`Native Notes operation ${queuedMutation.operationId} remains pending`)
     if (matchesNoteReceipt(receipt, queuedMutation)) {
@@ -1343,19 +1392,19 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
           markdown: async () => {
             const expectedRevision = revisionsRef.current.get(revisionKey)
             if (!expectedRevision || contentResolution?.status !== 'ok') throw new Error(t('notes.content.reloadRequired'))
-            let command = pendingCommitsRef.current.get(revisionKey)
-            if (command) {
+            const pendingCommand = pendingCommitsRef.current.get(revisionKey)
+            if (pendingCommand) {
               // Unknown responses replay the same legacy operation; native retries belong to main's outbox.
-              const replay = await window.electronAPI.commitMarkdown(command)
+              const replay = await withClaimRetry(() => window.electronAPI.commitMarkdown(pendingCommand))
               revisionsRef.current.set(revisionKey, replay.receipt.revision)
               pendingCommitsRef.current.delete(revisionKey)
             }
             if (!isCurrentDocument()) throw new Error(t('notes.content.previewChanged'))
-            command = { workspaceId: activeWorkspaceId, noteId, content: currentContent,
+            const command = { workspaceId: activeWorkspaceId, noteId, content: currentContent,
               expectedRevision: revisionsRef.current.get(revisionKey)!, sourceStoreId: activeNote.sourceStoreId,
               authorityEpoch: contentResolution.origin.authorityEpoch, operationId: crypto.randomUUID() }
             pendingCommitsRef.current.set(revisionKey, command)
-            const result = await window.electronAPI.commitMarkdown(command)
+            const result = await withClaimRetry(() => window.electronAPI.commitMarkdown(command))
             if (result.receipt.operationId === command.operationId && result.receipt.workspaceId === command.workspaceId
               && result.receipt.noteId === command.noteId && result.receipt.previousRevision === command.expectedRevision
               && result.receipt.authorityEpoch === command.authorityEpoch && result.receipt.sourceStoreId === command.sourceStoreId
@@ -1594,7 +1643,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
 // A2: the rail's «Создать заметку» opens a fresh notes panel, which
     // consumes the create request here on mount.
     if (consumePendingCompose('notes')) openCreateNoteDialog()
-  }, [activeProjectId])
+  }, [])
 
   const handleCreateFolder = async () => {
     if (!activeWorkspaceId || !createFolderName.trim()) return
@@ -2250,7 +2299,7 @@ h1,h2,h3{margin-top:1.5em}
   }) => {
     if (!activeWorkspaceId || !activeNote || openingAgentRef.current) return
     if (noteScope.kind === 'unavailable') { toast.error(t('navigation.notes.scopeUnavailable')); return }
-    const intent = opts.intent ?? captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: activeProjectId, tool: 'agent', originPanelId: panelId })
+    const intent = opts.intent ?? captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, tool: 'agent', originPanelId: panelId })
     if (!intent) return
     const entity = bindNativeNote({
       id: activeNote.id,
@@ -2267,7 +2316,7 @@ h1,h2,h3{margin-top:1.5em}
     }
     const reuseSessionId = rightSessionContext?.sessionId
     const reuseMeta = reuseSessionId ? sessionMetaMap.get(reuseSessionId) : undefined
-    if (opts.reuse !== false && reuseSessionId && reuseMeta && reuseMeta.projectId === activeProjectId && describeRightSessionOpen(rightSessionContext, surface) === 'reuse') {
+    if (opts.reuse !== false && reuseSessionId && reuseMeta && reuseMeta.projectId === undefined && describeRightSessionOpen(rightSessionContext, surface) === 'reuse') {
       openWorkspaceTool(store, intent, routes.view.allSessions(reuseSessionId))
       return
     }
@@ -2275,7 +2324,7 @@ h1,h2,h3{margin-top:1.5em}
     setOpeningAgent(true)
     try {
       // The canonical session service resolves this workspace's provider, model and default profile.
-      const session = await onCreateSession(activeWorkspaceId, { name: opts.sessionName, projectId: activeProjectId })
+      const session = await onCreateSession(activeWorkspaceId, { name: opts.sessionName })
       // Prefill the canonical draft only; opening the utility never sends the note automatically.
       onInputChange(session.id, opts.prompt)
       if (openWorkspaceTool(store, intent, routes.view.allSessions(session.id))) {
@@ -2287,11 +2336,11 @@ h1,h2,h3{margin-top:1.5em}
       openingAgentRef.current = false
       setOpeningAgent(false)
     }
-  }, [activeWorkspaceId, activeNote, activeProjectId, noteScope, rightSessionContext, sessionMetaMap, store, panelId, onCreateSession, onInputChange, t])
+  }, [activeWorkspaceId, activeNote, noteScope, rightSessionContext, sessionMetaMap, store, panelId, onCreateSession, onInputChange, t])
 
   const handleAskAgent = React.useCallback(async (mode: AIActionMode = 'extract-tasks') => {
     if (!activeWorkspaceId || !activeNote || openingAgentRef.current) return
-    const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: activeProjectId, tool: 'agent', originPanelId: panelId })
+    const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, tool: 'agent', originPanelId: panelId })
     if (!intent || !await flushBeforeAction()) return
     const { sessionNameKey } = AI_PROMPTS[mode]
     const attachPath = `notes/${activeNote.relativePath}`
@@ -2325,11 +2374,11 @@ h1,h2,h3{margin-top:1.5em}
       chip: { title: attachTitle, path: attachPath },
       intent,
     })
-  }, [activeWorkspaceId, activeNote, activeProjectId, store, panelId, flushBeforeAction, t, activeNoteTasks, content, openNotesRightSession])
+  }, [activeWorkspaceId, activeNote, store, panelId, flushBeforeAction, t, activeNoteTasks, content, openNotesRightSession])
 
   const handleBoundChat = async () => {
     if (!activeWorkspaceId || !activeNote || openingAgentRef.current) return
-    const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: activeProjectId, tool: 'agent', originPanelId: panelId })
+    const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, tool: 'agent', originPanelId: panelId })
     if (!intent || !await flushBeforeAction()) return
     const attachPath = `notes/${activeNote.relativePath}`
     const prompt = [
@@ -2526,10 +2575,10 @@ h1,h2,h3{margin-top:1.5em}
     setCommandQuery(null)
     if (item.subject === 'action' && item.id === 'bang:ask-agent') void handleAskAgent('summarize')
     if (item.subject === 'session' && activeWorkspaceId) {
-      const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: activeProjectId, tool: 'agent', originPanelId: panelId })
+      const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, tool: 'agent', originPanelId: panelId })
       if (intent) openWorkspaceTool(store, intent, routes.view.allSessions(item.insert.replace('@session:', '')))
     }
-  }, [commandQuery, activeWorkspaceId, activeProjectId, store, panelId, handleAskAgent])
+  }, [commandQuery, activeWorkspaceId, store, panelId, handleAskAgent])
 
   const wikiMenu = showWikiMenu ? (
     <div

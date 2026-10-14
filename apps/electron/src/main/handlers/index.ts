@@ -13,6 +13,7 @@ import { registerSettingsGuiHandlers } from './settings'
 import { registerSiyuanHandlers } from './siyuan'
 import { registerExtensionHostHandlers } from './extension-host'
 import { registerExtensionSurfaceHandlers } from './extension-surface'
+import { registerCookbooksHandlers } from './cookbooks'
 import { registerClipboardHistoryGuiHandlers } from './clipboard-history'
 import { registerNativeIntegrationHandlers } from './native-integration'
 import { registerZedThemesHandlers } from './zed-themes'
@@ -33,6 +34,7 @@ export function registerGuiRpcHandlers(server: RpcServer, deps: HandlerDeps): vo
   registerSiyuanHandlers(server, deps)
   registerExtensionHostHandlers(server, deps)
   registerExtensionSurfaceHandlers(server, deps)
+  registerCookbooksHandlers(server, deps)
   registerClipboardHistoryGuiHandlers(server, deps)
   registerNativeIntegrationHandlers(server, deps)
   registerZedThemesHandlers(server, deps)

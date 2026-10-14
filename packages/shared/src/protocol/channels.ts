@@ -16,6 +16,15 @@ export const RPC_CHANNELS = {
     READ_EVENTS: 'runtimeTrace:readEvents',
     READ_PAYLOAD: 'runtimeTrace:readPayload',
   },
+  cloudHandoff: {
+    GET_CONFIG: 'cloudHandoff:getConfig',
+    START: 'cloudHandoff:start',
+    STATUS: 'cloudHandoff:status',
+    CANCEL: 'cloudHandoff:cancel',
+    END: 'cloudHandoff:end',
+    SET_KEY: 'cloudHandoff:setKey',
+    CLEAR_KEY: 'cloudHandoff:clearKey',
+  },
   cloudRuns: {
     GET_CONFIG: 'cloudRuns:getConfig',
     SET_CONFIG: 'cloudRuns:setConfig',
@@ -235,6 +244,7 @@ export const RPC_CHANNELS = {
   notes: {
     LIST: 'notes:list',
     READ: 'notes:read',
+    LIST_TASKS: 'notes:listTasks',
     SAVE: 'notes:save',
     CREATE: 'notes:create',
     LIST_COMMENTS: 'notes:listComments',
@@ -570,6 +580,24 @@ export const RPC_CHANNELS = {
     FOCUS: 'extensionSurface:focus',
     STATE_CHANGED: 'extensionSurface:stateChanged',
     REMOVED: 'extensionSurface:removed',
+  },
+
+  // cookbooksLab — the vendored Cookbooks Python sidecar: lifecycle + the
+  // native ROX surface's data plane (SPEC §Amendment 1). LOCAL_ONLY: the
+  // process, the bearer token and the loopback URL live only in the local
+  // Electron main process, which is the sidecar's only HTTP client.
+  cookbooksLab: {
+    ENSURE: 'cookbooks-lab:ensure',
+    STATUS: 'cookbooks-lab:status',
+    RESTART: 'cookbooks-lab:restart',
+    CATALOG: 'cookbooks-lab:catalog',
+    OPEN: 'cookbooks-lab:open',
+    DOCUMENT: 'cookbooks-lab:document',
+    RUN: 'cookbooks-lab:run',
+    RUN_ALL: 'cookbooks-lab:run-all',
+    SAVE: 'cookbooks-lab:save',
+    RESET: 'cookbooks-lab:reset',
+    STATUS_CHANGED: 'cookbooks-lab:status-changed',
   },
 
   onboarding: {

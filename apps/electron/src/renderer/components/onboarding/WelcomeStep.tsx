@@ -36,6 +36,8 @@ import { BrowserIntelProgress } from './BrowserIntelProgress'
 
 interface WelcomeStepProps {
   onContinue: () => void
+  /** Skip Rox Cloud and open the local workspace. */
+  onContinueLocally?: () => void
   /** Whether this is an existing user updating settings */
   isExistingUser?: boolean
   /** Whether the app is loading (e.g., checking Git Bash on Windows) */
@@ -83,6 +85,7 @@ function CoinBadge({ gold, label }: { gold: boolean; label: string }) {
  */
 export function WelcomeStep({
   onContinue,
+  onContinueLocally,
   isExistingUser = false,
   isLoading = false,
   isFinishing = false,
@@ -270,16 +273,29 @@ export function WelcomeStep({
           : t("onboarding.welcome.description")
       }
       actions={
-        <ContinueButton
-          onClick={() => void handleContinue()}
-          className="w-full"
-          disabled={continueDisabled}
-          loading={continueBusy}
-          aria-busy={continueBusy || undefined}
-          loadingText={isFinishing ? t("onboarding.completion.settingUp") : (preferenceSaving || intelSaving) ? t('common.saving') : t("common.checking")}
-        >
-          {isExistingUser ? t("onboarding.welcome.continue") : t("onboarding.welcome.getStarted")}
-        </ContinueButton>
+        <div className="flex w-full flex-col gap-2">
+          <ContinueButton
+            onClick={() => void handleContinue()}
+            className="w-full"
+            disabled={continueDisabled}
+            loading={continueBusy}
+            aria-busy={continueBusy || undefined}
+            loadingText={isFinishing ? t("onboarding.completion.settingUp") : (preferenceSaving || intelSaving) ? t('common.saving') : t("common.checking")}
+          >
+            {isExistingUser ? t("onboarding.welcome.continue") : t("onboarding.welcome.getStarted")}
+          </ContinueButton>
+          {onContinueLocally && !isExistingUser && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full rounded-full"
+              disabled={continueBusy}
+              onClick={() => void onContinueLocally()}
+            >
+              {t("onboarding.welcome.continueLocally")}
+            </Button>
+          )}
+        </div>
       }
     >
       {!isExistingUser && (

@@ -5,7 +5,7 @@
  * Pre-filled with Ollama defaults (localhost:11434, qwen3-coder).
  */
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -42,8 +42,31 @@ export function LocalModelStep({
   const [baseUrl, setBaseUrl] = useState('http://localhost:11434')
   const [model, setModel] = useState('qwen3-coder')
   const [modelError, setModelError] = useState<string | null>(null)
+  const [discoveredModels, setDiscoveredModels] = useState<string[]>([])
 
   const isDisabled = status === 'validating'
+
+  useEffect(() => {
+    const trimmed = baseUrl.trim()
+    if (!trimmed) return
+    const controller = new AbortController()
+    const timer = setTimeout(() => {
+      const origin = trimmed.replace(/\/v1\/?$/, '')
+      fetch(`${origin}/api/tags`, { signal: controller.signal })
+        .then((response) => response.ok ? response.json() : null)
+        .then((body) => {
+          const names = Array.isArray(body?.models)
+            ? body.models.map((entry: { name?: string }) => entry?.name).filter((name: unknown): name is string => typeof name === 'string' && name.length > 0)
+            : []
+          setDiscoveredModels(names)
+          if (names.length > 0) {
+            setModel((current) => parseModelList(current).some((id) => names.includes(id)) ? current : names[0])
+          }
+        })
+        .catch(() => setDiscoveredModels([]))
+    }, 400)
+    return () => { clearTimeout(timer); controller.abort() }
+  }, [baseUrl])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -123,6 +146,7 @@ export function LocalModelStep({
               id="local-model"
               type="text"
               value={model}
+              list="local-model-discovered"
               onChange={(e) => {
                 setModel(e.target.value)
                 setModelError(null)
@@ -131,6 +155,13 @@ export function LocalModelStep({
               className="border-0 bg-transparent shadow-none"
               disabled={isDisabled}
             />
+            {discoveredModels.length > 0 && (
+              <datalist id="local-model-discovered">
+                {discoveredModels.map((name) => (
+                  <option key={name} value={name} />
+                ))}
+              </datalist>
+            )}
           </div>
           {modelError && (
             <p className="text-xs text-destructive">{modelError}</p>

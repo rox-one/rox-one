@@ -1356,6 +1356,21 @@ function resolveSupportsBranching(managed: ManagedSession): boolean {
   return true // default: branching enabled for all backends
 }
 
+/** User-facing branch preflight errors: never leak OMP/Craft internals into the toast. */
+function describeBranchPreflightFailure(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error)
+  if (/SDK context is not initialized|send one message in (the parent|this) session/i.test(raw)) {
+    return 'Cannot create branch yet: parent session SDK context is not initialized. Send one message in the parent session and try again.'
+  }
+  if (/no native anchor|stored ROX history|stored conversation/i.test(raw)) {
+    return 'Cannot create branch: stored conversation history is not available for this message.'
+  }
+  if (/\bOMP\b|oh-my-pi|ROX/i.test(raw)) {
+    return 'Could not create branch from this message. Try again after the parent turn finishes.'
+  }
+  return `Could not create branch: ${raw}`
+}
+
 const DEFAULT_TOKEN_USAGE = {
   inputTokens: 0, outputTokens: 0, totalTokens: 0,
   contextTokens: 0, costUsd: 0,
@@ -4472,9 +4487,7 @@ export class SessionManager implements ISessionManager {
             deleteStoredSession,
           })
 
-          throw new Error(
-            `Could not create branch: ${error instanceof Error ? error.message : String(error)}`
-          )
+          throw new Error(describeBranchPreflightFailure(error))
         }
       }
     }
@@ -4919,7 +4932,13 @@ export class SessionManager implements ISessionManager {
       if (connection && (!managed.connectionLocked || managed.llmConnection !== connection.slug)) {
         const previousConnection = managed.llmConnection
         managed.llmConnection = connection.slug
-        if (previousConnection !== connection.slug && managed.model !== backendContext.resolvedModel) {
+        // Keep an explicit user model pick; only fill a blank session model
+        // when the resolved connection actually changed.
+        if (
+          previousConnection !== connection.slug
+          && !managed.model
+          && backendContext.resolvedModel
+        ) {
           managed.model = backendContext.resolvedModel
           this.sendEvent({ type: 'session_model_changed', sessionId: managed.id, model: managed.model }, managed.workspace.id)
         }
@@ -5247,7 +5266,10 @@ export class SessionManager implements ISessionManager {
         getRecoveryMessages,
           getResumeMessages: () => selectResumeHistory(managed.messages, managed.activeUserMessageId, managed.messageQueue.map(item => item.messageId).filter((id): id is string => !!id)),
         getBranchResumeMessages: () => managed.branchFromMessageId
-            ? selectResumeHistory(managed.messages, managed.activeUserMessageId, managed.messageQueue.map(item => item.messageId).filter((id): id is string => !!id)) : [],
+            // The child already holds the copied prefix; do not cut it against
+            // the parent's in-flight submission id (that throws and rolls the
+            // reconstruct path back to a generic toast — S3-10).
+            ? selectResumeHistory(managed.messages) : [],
         getBranchFallbackMessages,
         getBranchSeedMessages,
         markBranchSeedApplied,
