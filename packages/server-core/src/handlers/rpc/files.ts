@@ -10,7 +10,6 @@ import { getSessionAttachmentsPath, validateSessionId } from '@rox/shared/sessio
 import { getWorkspaceByNameOrId } from '@rox/shared/config'
 import { resizeImageForAPI, inspectImageBuffer } from '@rox/server-core/services'
 import { sanitizeFilename, validateFilePath, getWorkspaceAllowedDirs } from '@rox/server-core/handlers'
-import { MarkItDown } from 'markitdown-js'
 import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { requestClientOpenFileDialog } from '@rox/server-core/transport'
@@ -405,6 +404,8 @@ export function registerFilesHandlers(server: RpcServer, deps: HandlerDeps): voi
         const mdFileName = `${id}_${safeName}.md`
         const mdPath = join(attachmentsDir, mdFileName)
         try {
+          // Lazy: markitdown-js pulls pdf-parse + xlsx (~13 MB); keep it off the startup path.
+          const { MarkItDown } = await import('markitdown-js')
           const markitdown = new MarkItDown()
           const result = await markitdown.convert(storedPath)
           if (!result || !result.textContent) {

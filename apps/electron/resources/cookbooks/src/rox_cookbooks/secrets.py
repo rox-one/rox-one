@@ -19,6 +19,13 @@ def env_for_item(
         value = source.get(key) or source.get(env_name)
         if value:
             env[env_name] = value
+    # Product policy: the ROX gateway (api.rox.one/v1) is the always-default
+    # OpenAI-compatible provider for notebook code, so the catalog's
+    # ``defaultEnv`` base URLs are layered over every item's kernel env.
+    # ``setdefault`` means an explicit credential value — or any same-named key
+    # already in ``env`` — always wins over a colliding default.
+    for name, value in catalog.default_env.items():
+        env.setdefault(name, value)
     return env
 
 

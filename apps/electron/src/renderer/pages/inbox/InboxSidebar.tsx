@@ -27,7 +27,7 @@ export function sameInboxFilter(a: InboxPageFilter, b: InboxPageFilter): boolean
   return a.kind === b.kind
 }
 
-const KIND_ICONS: Record<InboxKind, LucideIcon> = {
+export const KIND_ICONS: Record<InboxKind, LucideIcon> = {
   permission: ShieldCheck,
   credential: KeyRound,
   plan: FileCheck2,
@@ -61,7 +61,14 @@ const ICON_TONE: Record<Tone, string> = {
   muted: 'bg-foreground/[0.05] text-text-muted',
 }
 
-const FOLDER_ICONS: Record<MailFolderRole, LucideIcon> = {
+/** Sidebar nav icons: bare 16px glyphs (icon-inline), no tinted box. Colour stays
+ *  muted; only danger keeps a quiet hint so errors remain findable. */
+const NAV_ICON_TONE: Record<Tone, string> = {
+  accent: 'text-text-muted', info: 'text-text-muted', success: 'text-text-muted',
+  warning: 'text-text-muted', muted: 'text-text-muted', danger: 'text-destructive/70',
+}
+
+export const FOLDER_ICONS: Record<MailFolderRole, LucideIcon> = {
   inbox: Inbox, flagged: Star, outbox: SendHorizontal, drafts: FilePenLine, sent: Send,
   archive: Archive, junk: ShieldCheck, trash: Trash2,
 }
@@ -82,7 +89,7 @@ function InboxNavButton({ label, count, active, disabled, icon: Icon, tone = 'mu
   return (
 <button type="button" onClick={onClick} disabled={disabled} aria-current={active ? 'page' : undefined} data-testid={testId}
       className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-sm outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'rox-nav-shimmer bg-[var(--state-selected)] text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground', disabled && 'cursor-default opacity-50 hover:bg-transparent hover:text-text-secondary')}>
-      <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-lg', ICON_TONE[tone])}><Icon className="size-3.5" strokeWidth={1.75} /></span>
+      <Icon aria-hidden className={cn('icon-inline', active ? 'text-foreground' : NAV_ICON_TONE[tone])} />
       <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
       <Count count={count} />
     </button>
@@ -98,8 +105,8 @@ function InboxNavGroup({ id, label, icon: Icon, tone, count, urgent, active, ini
   useEffect(() => { if (active && ref.current) ref.current.open = true }, [active])
   return (
     <details ref={ref} open={initialOpen || active} data-testid={`inbox-group-${id}`} className="group/inbox-nav mt-1">
-      <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium text-foreground outline-none transition-colors hover:bg-foreground/[0.05] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-        <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-lg', ICON_TONE[tone])}><Icon className="size-3.5" strokeWidth={1.75} /></span>
+      <summary className="flex min-h-8 cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium text-foreground outline-none transition-colors hover:bg-foreground/[0.05] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+        <Icon aria-hidden className={cn('icon-inline', NAV_ICON_TONE[tone])} />
         <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
         <Count count={count} urgent={urgent} />
         <ChevronRight aria-hidden className="size-3 shrink-0 text-text-muted transition-transform duration-200 group-open/inbox-nav:rotate-90 motion-reduce:transition-none" />

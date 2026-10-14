@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { join } from 'node:path'
-import { resetDom, useDomForFile } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
+import { resetDom, useDomForFile as installDom } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
 import * as React from 'react'
 import { act } from 'react'
 import type { Root } from 'react-dom/client'
@@ -8,8 +8,9 @@ import type { ClipEntryDetail, ClipEntrySummary, ClipListResult, ClipSettings } 
 import type { ClipboardHistoryPanel as PanelComponent } from '../ClipboardHistoryPanel'
 import type { ClipboardHistoryController } from '../use-clipboard-history'
 import type { ClipboardCardProps } from '../ClipboardCard'
+import { getScreenSidebar } from '@/components/shell/screen-sidebar'
 
-useDomForFile()
+installDom()
 
 // Static import cannot work: Bun may evaluate react-dom (CJS) before the shared
 // dom-env body installs `document`, which makes React pick its fallback input
@@ -24,11 +25,13 @@ if (typeof (globalThis as { NodeFilter?: unknown }).NodeFilter === 'undefined') 
   Object.assign(globalThis, { NodeFilter: domNodeFilter ?? { SHOW_ELEMENT: 1, SHOW_ALL: 0xffffffff } })
 }
 
+// Stable `t`, like real react-i18next (memoized sidebar groups depend on it).
+const stableTranslation = {
+  t: (key: string) => key,
+  i18n: { language: 'ru', resolvedLanguage: 'ru', changeLanguage: async () => {} },
+}
 mock.module('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-    i18n: { language: 'ru', resolvedLanguage: 'ru', changeLanguage: async () => {} },
-  }),
+  useTranslation: () => stableTranslation,
   initReactI18next: { type: '3rdParty', init: () => {} },
   Trans: ({ children }: { children?: React.ReactNode }) => children ?? null,
 }))
@@ -171,16 +174,14 @@ describe('ClipboardHistoryPanel', () => {
   })
 
   it('debounces the search query before it reaches the API', async () => {
-    const input = document.querySelector<HTMLInputElement>('[data-testid="clipboard-search"]')!
-    await act(async () => {
-      input.focus()
-      // React tracks the native value; bypass the tracker with the prototype setter.
-      const setValue = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set
-      setValue?.call(input, 'needle')
-      input.dispatchEvent(new window.InputEvent('input', { bubbles: true, data: 'needle' }))
-      input.dispatchEvent(new window.Event('change', { bubbles: true }))
-    })
-    expect(input.value).toBe('needle')
+    // The screen search lives in the shell sidebar config (the in-panel input was removed).
+    const before = getScreenSidebar()!
+    expect(before.screenId).toBe('clipboard')
+    await act(async () => { before.search!.onChange('needle') })
+    const after = getScreenSidebar()!
+    expect(after.search!.value).toBe('needle')
+    // Typing must not rebuild the groups (memoized independently of the query).
+    expect(after.groups).toBe(before.groups)
     // Before the debounce window elapses the API has not seen the query.
     expect(lastListQuery()?.q).toBeUndefined()
 
@@ -193,6 +194,18 @@ describe('ClipboardHistoryPanel', () => {
     await act(async () => { await Promise.resolve() })
 
     expect(lastListQuery()?.q).toBe('needle')
+  })
+
+  it('publishes the sidebar: header actions wired, entry select focuses the card', async () => {
+    await act(async () => { await Promise.resolve() })
+    const config = getScreenSidebar()!
+    expect(config.headerActions!.map((a) => a.id)).toEqual(['refresh', 'settings', 'clear'])
+    const entryRow = config.groups.flatMap((g) => g.items).find((i) => i.ariaKind === 'selected')
+    expect(entryRow).toBeDefined()
+    await act(async () => { entryRow!.onSelect() })
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
+    const card = document.querySelector<HTMLElement>(`[data-testid="clipboard-card"][aria-current="true"]`)
+    expect(card).not.toBeNull()
   })
 
   it('toggles the star optimistically through the API', async () => {

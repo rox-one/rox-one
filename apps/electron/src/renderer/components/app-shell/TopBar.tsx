@@ -45,6 +45,8 @@ import {
   topBarSurfaceTabsSlotAtom,
 } from "@/atoms/unified-shell"
 import { ModeBar, type ModeBarMetrics } from "@/platform/ModeBar"
+import { SplitToggle } from "../shell/SplitToggle"
+import { NotificationCenter } from "../shell/NotificationCenter"
 import { modePillShown, resolveModePillLayout, type ModePillLayout } from "./mode-pill-layout"
 import { useUiAppearance } from "@/lib/ui-appearance-store"
 import { resolveWorkbenchChrome } from "@/platform/workbench-chrome"
@@ -386,7 +388,10 @@ export function TopBar({
           onToggleChatPictureInPicture={onToggleChatPictureInPicture}
         />}
         {isCompact && (
-          <CompactWorkspaceMenu onOpenBrowser={onAddBrowserPanel} showServices={!surfaceNavigationActive} />
+          <>
+            <CompactWorkspaceMenu onOpenBrowser={onAddBrowserPanel} showServices={!surfaceNavigationActive} />
+            <NotificationCenter workspaceId={activeWorkspaceId} />
+          </>
         )}
 
         {/* Workspace selector — rendered in the title bar only when the left
@@ -439,6 +444,8 @@ export function TopBar({
       {!isCompact && (
       <div ref={rightSlotRef} className="rox-topbar-right-actions flex min-w-0 shrink-0 items-center justify-end gap-0.5" style={{ paddingRight: 8, maxWidth: showModePill ? modePillLayout?.rightMax : undefined }}>
         <PanelWorkspaceMenu />
+        <SplitToggle />
+        <NotificationCenter workspaceId={activeWorkspaceId} />
         {!chrome.hideBrowserTabStrip && (
           <div className="rox-topbar-browser-strip min-w-0 shrink overflow-hidden">
             <BrowserTabStrip activeSessionId={activeSessionId} maxVisibleBadges={maxVisibleBrowserBadges} />

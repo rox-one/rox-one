@@ -41,6 +41,12 @@ const rendererPerfHarness = installRendererPerfHarness()
 installErrorJournal(() => routeForJournal(getDefaultStore().get(focusedPanelRouteAtom)))
 seedLiteMode()
 seedDensity()
+// Glass tier + Arc Glass skin: a lazy chunk, off the startup closure.
+// installGlassSkin() itself fires an un-awaited import() of the skin CSS; until
+// it lands (or if either chunk fails) the app keeps the plain, non-glass look.
+void import('@rox/ui/glass/install')
+  .then((m) => m.installGlassSkin())
+  .catch((error: unknown) => console.warn('[glass] skin unavailable, using the plain look', error))
 seedRenderProfile(document.documentElement, window.electronAPI, navigator.userAgent)
 const stopRenderProfileSync = startRenderProfileSync(window.electronAPI, document.documentElement)
 import.meta.hot?.dispose(stopRenderProfileSync)
@@ -225,6 +231,7 @@ import.meta.hot?.dispose(stopRoxQueryRuntime)
 const QuickComposerSurface = React.lazy(
   () => import('./features/native-integrations/QuickComposerSurface'),
 )
+const MiniGlassSurface = React.lazy(() => import('./features/mini-glass/MiniGlassSurface'))
 const rendererSurface = new URLSearchParams(window.location.search).get('surface')
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -235,6 +242,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <ThemeProvider activeWorkspaceId={null}>
             <React.Suspense fallback={null}>
               <QuickComposerSurface />
+            </React.Suspense>
+          </ThemeProvider>
+        ) : rendererSurface === 'mini-glass' ? (
+          <ThemeProvider activeWorkspaceId={null}>
+            <React.Suspense fallback={null}>
+              <MiniGlassSurface />
             </React.Suspense>
           </ThemeProvider>
         ) : (

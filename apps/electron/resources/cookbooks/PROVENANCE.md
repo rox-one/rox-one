@@ -10,7 +10,7 @@ the laboratory's own repository and a re-run of the sync command below.
 |---|---|
 | Source tree | `/Users/t/Projects/2026-10-13-rox-cookbooks-notebooks` |
 | Upstream repo | `rox-one/rox-cookbooks-notebooks` |
-| Snapshot date | 2026-10-14 |
+| Snapshot date | 2026-10-15 |
 | Source revision | **none available.** The upstream laboratory is a plain working copy: it carries **no VCS metadata** (no `.git`, no tag, no archive), so there is no commit SHA to pin. Integrity is therefore asserted by the **sha256 manifest** at the bottom of this file (regenerate + diff), not by a revision. |
 | Interpreter used to validate | `/usr/bin/python3` 3.9.6 (lab runs on ≥ 3.9; cell execution needs ≥ 3.11 — an internal honest lab error, not a resolver gate) |
 
@@ -61,8 +61,8 @@ Verified by `python3 scripts/electron_handshake_probe.py` → `[SUMMARY] 0 faile
 ## sha256 manifest
 
 ```
-48b4a72e556d316431044a44376ad231bb654a70acbb61a5397a31bc25d44eda  ELECTRON-CONTRACT.md
-4e9030a4e3c305131fadc672bd100d56de57d54a81c9159c4f96f347180b8f77  resources/cookbooks/catalog.json
+9c19f86fa709978a07f6fd37cb85cc2427fb0847f143989414a8df3f447c6544  ELECTRON-CONTRACT.md
+67e6251a631dd9cbb383317a994f47b9d67c78ac09424b86982be40c4795b63e  resources/cookbooks/catalog.json
 8f0579ea5450ee9edc4d2efbba5ddc8a8ba2842be70f009068b7821e3a2acedc  resources/cookbooks/LICENSE-NOTES.md
 a4d1b9e08cbcb35a7b89e2b0612a674370303aa4a2c38f24c8474e10d2f9e91b  resources/cookbooks/vendors/anthropic/prompt-playbook.md
 18b3f900c1bcdb1a50f1523517395ee073638dff0bd214e8e902878d61801d8e  resources/cookbooks/vendors/anthropic/tool-use.ipynb
@@ -79,17 +79,17 @@ f1243478f9cc28e70ceaab7e40abc0563142cad2a9a78e0b035358a462663fd0  resources/cook
 04f1cc65f261d3a0148941b64dd594ef92dd4abae4b59de15332fbca1d831850  resources/cookbooks/vendors/weaviate/rag-quickstart.ipynb
 616093dc9df1a297dd9b7ffb4ebcc9ed7559ef511ee73b82e879c71b883b52bd  scripts/electron_handshake_probe.py
 41a79e7433527247f1e8e948b3b165e8f3e50e6eda89a1f0ed608ad476faee43  scripts/serve_lab.py
-9f58bf940b97e65837dfe7afc8febdba0947f96d7e18d668c701b0d33a63de5c  src/rox_cookbooks/catalog.py
+765a094908deb976318972eb7d7f85997f147825b5150e3e64329ddc073ce3e6  src/rox_cookbooks/catalog.py
 3655d558b34a592a558f60d65a6baabdedf3ef873418a9f920131bea2160faa1  src/rox_cookbooks/copies.py
-971a42674845a551d3324543cd4aee36efff5933a0cecc83e4047835ba139b17  src/rox_cookbooks/host.py
+58a3f7a7399ab738a72ee15d91daac9f8495bc89aa5ccc52898602da32f23aa6  src/rox_cookbooks/host.py
 43a95ac989a74c04065c2532dcb2bea458a1286897ebfd4b5dd72aed49b6e251  src/rox_cookbooks/__init__.py
-479b7c9d2ea27760a017809d20da92c2ea3c9959d3fbe80c52920cbed744589f  src/rox_cookbooks/kernel.py
+2f2b4ebab19871d58b3b47a408b714b4f17e89f06daf0a27166b40bdfef382f7  src/rox_cookbooks/kernel.py
 cbc3b59c57e9006a6ccc9e93d456322da3098c998187c9a4d0aa12f69a232581  src/rox_cookbooks/__main__.py
 09ac2d84fc4f6682a91fa9377e3afb1dd75745a479f0daaeaea3371a86b8fc41  src/rox_cookbooks/notebooks.py
 77a378b23f58d67a0d02792114364a98ed8cdcd3f24d164e3cd5fe54c43526ae  src/rox_cookbooks/search.py
-9bf567a606f7ddd56088eed653276791be5b21fe962f683686a49d55ad635e95  src/rox_cookbooks/secrets.py
+c9daa2548fa96ec1c15d5f84c5f16a75ab2e7c97937c70fe90acfbb7375be55b  src/rox_cookbooks/secrets.py
 4a4d0b015ebe4498c6eea4c5dbc3d992408f37e4c6b1f25d3128f035912992ce  src/rox_cookbooks/static/lab.html
-69507583cbf93269291578771a809942d38bc2f3f86c312b66bf070bd306f557  src/rox_cookbooks/ui.py
+13381e7f31b5cc87eb302a75be24077d2fbcae5a46ece84f1cb7bafaab5457e0  src/rox_cookbooks/ui.py
 ```
 
 Regenerate with:

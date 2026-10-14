@@ -6,13 +6,23 @@ import { createRoot, type Root } from 'react-dom/client'
 import { useDomForFile } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { BarePanelContext, PanelHeading, ShellSidebarContext, ShellSidebarPortal, isDuplicatePanelTitle, normalizeHeading, useDedupedPanelTitle, useSidebarHandledOutside } from '../ShellSidebarPortal'
 
 const renderer = join(import.meta.dir, '..', '..', '..')
 const source = (path: string) => readFileSync(join(renderer, path), 'utf8')
 
 // eslint-disable-next-line react-hooks/rules-of-hooks -- test DOM environment setup, not a React hook
 useDomForFile()
+
+// Imported *after* the DOM exists: `dom-env` restores the globals in `afterAll`,
+// so when another file ran first in the same `bun test` process this file's
+// static imports would evaluate with `document` undefined — Radix (popover /
+// FocusScope) feature-detects the document at module scope and then never mounts
+// its content, which made this suite fail only in full-suite runs.
+const {
+  BarePanelContext, PanelHeading, ShellSidebarContext, ShellSidebarPortal,
+  isDuplicatePanelTitle, normalizeHeading, useDedupedPanelTitle, useSidebarHandledOutside,
+} = await import('../ShellSidebarPortal')
+
 // Radix FocusScope (popover) walks the tree with NodeFilter, which the test DOM may not expose globally.
 const scope = globalThis as { NodeFilter?: unknown; window?: { NodeFilter?: unknown } }
 scope.NodeFilter ??= scope.window?.NodeFilter ?? { SHOW_ELEMENT: 1, FILTER_ACCEPT: 1, FILTER_REJECT: 2, FILTER_SKIP: 3 }
@@ -31,6 +41,15 @@ function Title({ value }: { value: string }) {
 
 function Handled() {
   return <span data-testid="handled">{String(useSidebarHandledOutside())}</span>
+}
+
+async function waitForElement(selector: string, timeoutMs = 2000): Promise<Element | null> {
+  const deadline = Date.now() + timeoutMs
+  for (;;) {
+    const found = document.body.querySelector(selector)
+    if (found || Date.now() > deadline) return found
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)) })
+  }
 }
 
 async function render(node: React.ReactNode) {
@@ -63,7 +82,10 @@ describe('split panels without a second sidebar', () => {
     expect(trigger?.getAttribute('data-testid')).toBe('inbox-nav-bare')
     expect(trigger?.getAttribute('aria-label')).toBeTruthy()
     await act(async () => { trigger!.click() })
-    expect(document.body.querySelector('[data-bare-controls-content]')?.textContent).toBe('inbox-tree')
+    // Radix mounts the popover content asynchronously (Presence/FocusScope); under a
+    // loaded full-suite run that can land after the first act flush, so wait for it.
+    const content = await waitForElement('[data-bare-controls-content]')
+    expect(content?.textContent).toBe('inbox-tree')
   })
 
   it('strip mode (Connections) restores the tabs as a compact horizontal strip in the tile header', async () => {

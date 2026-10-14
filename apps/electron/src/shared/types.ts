@@ -1506,7 +1506,8 @@ export interface ElectronAPI {
   getNoteIndexHealth(workspaceId: string): Promise<NoteIndexHealth>
   rebuildNoteIndex(workspaceId: string): Promise<NoteIndexHealth>
   getNoteRenameImpact(workspaceId: string, noteId: string, nextTitle: string): Promise<NoteRenameImpact>
-  getDailyNote(workspaceId: string, date?: string): Promise<NoteDocument>
+  /** `cleanupLegacy` (Notes explicit opens only) strips the pre-overlay sessions block, if the file still has one. */
+  getDailyNote(workspaceId: string, date?: string, options?: { cleanupLegacy?: boolean }): Promise<NoteDocument>
   importNoteAsset(workspaceId: string, attachment: FileAttachment): Promise<NoteAssetImportResult>
   listNoteAssets(workspaceId: string): Promise<NoteAsset[]>
   deleteNoteAsset(workspaceId: string, relativePath: string): Promise<boolean>
@@ -2300,6 +2301,14 @@ export interface ElectronAPI {
   deferSetup(): Promise<{ success: boolean }>
   /** Public handle availability probe for the onboarding identity step. Never assumes available. */
   checkOnboardingHandle(handle: string): Promise<{ status: 'available' | 'taken' | 'reserved' | 'unknown' }>
+  /** rox-id devices/sessions (item 45). Errors are closed codes, never raw server text. */
+  listRoxSessions(): Promise<RoxAccountResult<{ sessions: import('@rox/shared/auth').RoxIdSession[] }>>
+  revokeRoxSession(sessionId: string): Promise<RoxAccountResult<object>>
+  revokeOtherRoxSessions(): Promise<RoxAccountResult<{ revoked: number }>>
+  /** Rotate the per-user inference key (item 46); returns the new prefix only. */
+  rotateRoxKey(): Promise<RoxAccountResult<{ prefix: string }>>
+  /** Claim handle@rox.one (item 44). */
+  setRoxHandle(handle: string): Promise<RoxAccountResult<{ handle: string; handleAddress: string | null }>>
   /** Create the first local conversation with a persisted assistant greeting, once per installation. */
   ensureFirstSessionWelcome(workspaceId: string): Promise<Session | null>
   saveOmpCredential(apiKey: string): Promise<{ success: boolean; ready: boolean; code?: string; error?: string }>
@@ -2927,6 +2936,12 @@ export interface ElectronAPI {
   }>
   teamChatPost(channelId: string, text: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage>
   teamChatMarkRead(channelId: string): Promise<{ ok: true }>
+  teamChatCallJoin(channelId: string, displayName?: string): Promise<{ call: import('@rox/shared/team-chat').TeamChannelCall; url: string; token: string }>
+  teamChatCallLeave(channelId: string): Promise<{ call: import('@rox/shared/team-chat').TeamChannelCall | null; ended: boolean }>
+  teamChatCallSync(channelId: string, participantIds: string[]): Promise<import('@rox/shared/team-chat').TeamChannelCall | null>
+  teamChatCallTranscript(channelId: string, callId: string, segments: import('@rox/shared/team-chat').TeamCallTranscriptSegment[]): Promise<{ added: number }>
+  teamChatCallList(channelId: string): Promise<import('@rox/shared/team-chat').TeamChannelCall[]>
+  teamChatSearch(orgId: string, query: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage[]>
   onTeamChatChanged(callback: (change: { orgId: string; channelId?: string }) => void): () => void
 
   // Organizations (P3.1 team workspaces)
@@ -3125,6 +3140,15 @@ export interface ElectronAPI {
   menuMinimize(): Promise<void>
   menuMaximize(): Promise<void>
   exitMiniWindow(): Promise<boolean>
+  /** Mini glass companion shown while a main window is minimized (macOS). */
+  miniGlass: {
+    setExpanded(expanded: boolean): Promise<boolean>
+    /** Restore the owner window and start a new session (sends when text is non-empty). */
+    submit(text: string | null): Promise<boolean>
+    getEnabled(): Promise<boolean>
+    setEnabled(enabled: boolean): Promise<boolean>
+    onReset(callback: () => void): () => void
+  }
   onPanelFocusDirection(callback: (direction: 'left' | 'right' | 'up' | 'down') => void): () => void
   menuZoomIn(): Promise<void>
   menuZoomOut(): Promise<void>
@@ -3369,6 +3393,8 @@ export interface ElectronAPI {
   changeLanguage(lang: string): Promise<void>
   /** W1-07 (#1504): unified surfaces whose mode flag is on → main's deep-link gate. */
   setUnifiedSurfaceRoutesEnabled?(ids: string[]): Promise<{ ok: true }>
+  /** «Доска» (Canvas): local boards in <workspace>/canvas; state crosses IPC as Yjs updates. */
+  canvas?: CanvasBridge
 
   // Entity links (entities.links.v1): the renderer reports its persisted
   // toggle; main returns the EFFECTIVE state (env override > toggle) that
@@ -3398,7 +3424,7 @@ export interface ElectronAPI {
   saveDiscordCredentials(creds: { token: string }): Promise<void>
   disconnectMessagingPlatform(platform: string): Promise<void>
   forgetMessagingPlatform(platform: string): Promise<void>
-  getMessagingBindings(): Promise<Array<{ id: string; workspaceId: string; sessionId: string; platform: string; channelId: string; threadId?: number; channelName?: string; enabled: boolean; createdAt: number; accessMode?: MessagingBindingAccessMode; allowedSenderIds?: string[]; discordGuildTrigger?: 'mention' | 'all' }>>
+  getMessagingBindings(): Promise<Array<{ id: string; workspaceId: string; sessionId: string; platform: string; channelId: string; threadId?: number; channelName?: string; chatType?: 'direct' | 'group' | 'channel'; enabled: boolean; createdAt: number; accessMode?: MessagingBindingAccessMode; allowedSenderIds?: string[]; discordGuildTrigger?: 'mention' | 'all' }>>
   generateMessagingPairingCode(sessionId: string, platform: string): Promise<{ code: string; expiresAt: number; botUsername?: string }>
   /** Telegram supergroup pairing — returns a code typed in the supergroup to capture its chatId. */
   generateMessagingSupergroupCode(platform: string): Promise<{ code: string; expiresAt: number; botUsername?: string }>
@@ -3707,6 +3733,8 @@ export interface MemoryNavigationState {
 /**
  * Rox History navigator state (clipboard history panel)
  */
+export type RoxAccountResult<T> = ({ ok: true } & T) | { ok: false; error: string }
+
 export interface ClipboardHistoryNavigationState {
   navigator: 'clipboard-history'
   details: null
@@ -4563,4 +4591,24 @@ declare global {
   interface Window {
     electronAPI: ElectronAPI
   }
+}
+
+/** «Доска» board list entry (mirrors `@rox/canvas-core/node` BoardSummary). */
+export interface CanvasBoardSummary { id: string; title: string; createdAt: number; updatedAt: number }
+export interface CanvasTrashedBoard { id: string; stamp: number; title: string; createdAt: number; updatedAt: number }
+export interface CanvasBridge {
+  list(workspaceId: string): Promise<CanvasBoardSummary[]>
+  create(workspaceId: string, title: string): Promise<CanvasBoardSummary>
+  rename(workspaceId: string, boardId: string, title: string): Promise<{ ok: true }>
+  trash(workspaceId: string, boardId: string): Promise<{ ok: true }>
+  /** Full Yjs state of the board. */
+  open(workspaceId: string, boardId: string): Promise<Uint8Array>
+  apply(workspaceId: string, boardId: string, update: Uint8Array): Promise<{ ok: true }>
+  /** Stop receiving updates for a board this renderer had open. */
+  close(workspaceId: string, boardId: string): Promise<{ ok: true }>
+  /** Sync the `workbench.mode.canvas.v1` flag to main (handlers refuse while it is off). */
+  setEnabled(enabled: boolean): Promise<{ ok: true; enabled: boolean }>
+  listTrash(workspaceId: string): Promise<CanvasTrashedBoard[]>
+  restore(workspaceId: string, boardId: string, stamp: number): Promise<CanvasBoardSummary>
+  onUpdate(callback: (workspaceId: string, boardId: string, update: Uint8Array) => void): () => void
 }

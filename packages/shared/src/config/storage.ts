@@ -160,6 +160,10 @@ export interface StoredConfig {
   // Native integration — global accelerator that opens the floating quick
   // composer. `null` = explicitly disabled; missing = default ('Alt+Space').
   quickComposerShortcut?: string | null;
+  /** Mini glass companion on minimize (macOS). Missing → enabled. */
+  miniGlassEnabled?: boolean;
+  /** Last dragged screen position of the mini glass companion. */
+  miniGlassPosition?: { x: number; y: number };
   // Appearance
   colorTheme?: string;  // Selected preset ID; existing profiles without this key retain config-defaults.
   defaultZoomLevel?: number;  // Default app zoom percentage (50-150, default: 90)
@@ -195,7 +199,7 @@ export interface StoredConfig {
     negativeFirst?: boolean;     // distill prompts prefer negative/MUST-NOT lesson formulations (default: true)
     redactExtraPatterns?: string[]; // extra literal strings masked by redactSecrets (project names, paths, …), case-insensitive (default: [])
     ftsLimit?: number;           // top-K results from memory FTS queries (default: 20)
-    semantic?: boolean;          // M2: semantic (episodic) memory via local embeddings model, lazy-downloaded to {configDir}/models (default: false)
+    semantic?: boolean;          // M2: semantic (episodic) memory via local embeddings model, lazy-downloaded to {configDir}/models (default: true; set false to opt out)
     dreamIntervalHours?: number; // dream §9: hours between background dream runs (default: 4)
     dreamModel?: string;         // dream: distillation mini-model id (absent → default mini-model)
     dreamNotes?: boolean;        // dream: run the notes→proposals step (default: true)
@@ -1312,6 +1316,30 @@ export function setQuickComposerShortcut(accelerator: string | null): void {
   saveConfig(config);
 }
 
+/** Whether minimizing shows the mini glass companion. Defaults to true. */
+export function getMiniGlassEnabled(): boolean {
+  return loadStoredConfig()?.miniGlassEnabled !== false;
+}
+
+export function setMiniGlassEnabled(enabled: boolean): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  config.miniGlassEnabled = enabled;
+  saveConfig(config);
+}
+
+export function getMiniGlassPosition(): { x: number; y: number } | null {
+  const position = loadStoredConfig()?.miniGlassPosition;
+  return position && Number.isFinite(position.x) && Number.isFinite(position.y) ? position : null;
+}
+
+export function setMiniGlassPosition(position: { x: number; y: number }): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  config.miniGlassPosition = { x: Math.round(position.x), y: Math.round(position.y) };
+  saveConfig(config);
+}
+
 /**
  * Get whether auto-capitalisation is enabled.
  * Defaults to true if not set.
@@ -1609,7 +1637,7 @@ export function getMemoryConfig(): MemoryConfig {
       typeof raw.ftsLimit === 'number' && Number.isFinite(raw.ftsLimit) && raw.ftsLimit > 0
         ? Math.floor(raw.ftsLimit)
         : DEFAULT_MEMORY_CONFIG.ftsLimit,
-    semantic: raw.semantic !== undefined ? raw.semantic === true : DEFAULT_MEMORY_CONFIG.semantic,
+    semantic: typeof raw.semantic === 'boolean' ? raw.semantic : DEFAULT_MEMORY_CONFIG.semantic,
     dreamIntervalHours:
       typeof raw.dreamIntervalHours === 'number' && Number.isFinite(raw.dreamIntervalHours) && raw.dreamIntervalHours > 0
         ? raw.dreamIntervalHours

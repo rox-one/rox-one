@@ -132,7 +132,7 @@ window.ui001.render({});` : ''}
 `)
   const stubs = new Set([
     '../memory/MemoryScreen', '../memory/MemoryRepoScreen', '../learning/LearningScreen', './ProjectsHomeInMain', './MultiSelectPanel', './collection/CollectionBulkBar',
-    '@/pages/ChatPage', '@/platform/HomeFrontPage', '@/pages/settings/settings-pages', '@/pages/settings/SettingsOverviewPage',
+    '@/pages/ChatPage', '@/platform/HomeFrontPage', '@/platform/SurfaceHost', '@/pages/settings/settings-pages', '@/pages/settings/SettingsOverviewPage',
     '../pages/PageView', './session-heatmap/SessionHeatmapHost', './SendResourceToWorkspaceDialog',
     '../pages/PagesHome', './kanban/KanbanBoardContainer', './session-table/SessionTableHost', '../automations/AutomationEditor',
     '../../knowledge/KnowledgeDiff', '../../knowledge/KnowledgeProposals',
@@ -153,7 +153,9 @@ window.ui001.render({});` : ''}
     // `url()`/`@import` graph is never followed. CSS modules keep their own
     // `local-css` loader — esbuild matches the longest extension, so
     // `.module.css` still resolves to its class-name map rather than `empty`.
-    loader: { '.css': 'empty', '.woff': 'empty', '.woff2': 'empty', '.ttf': 'empty' },
+    // `.eot` is covered too: the legacy font format appears in the same KaTeX
+    // stylesheet and has no default loader either.
+    loader: { '.css': 'empty', '.woff': 'empty', '.woff2': 'empty', '.ttf': 'empty', '.eot': 'empty' },
     metafile: !!process.env.ROX_UI001_COMPONENT_MANIFEST,
     plugins: [...(browser ? [rendererNodeBoundaryPlugin()] : []), {
       // Production barrels import their pdf worker through Vite's `?url` query
@@ -168,6 +170,11 @@ window.ui001.render({});` : ''}
       },
     }, { name: 'UI-001 component boundaries', setup(build) {
       build.onResolve({ filter: /^rox-ui001-bindings$/ }, () => ({ path: 'bindings', namespace: 'ui001' }))
+      // Vite's `?url` imports (pdf.worker for MarkdownPdfBlock / PDFPreviewOverlay)
+      // are URL strings, not modules. Same treatment as the navigation fixture:
+      // resolve to an inert asset module so the bundle carries a string.
+      build.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'ui001-asset' }))
+      build.onLoad({ filter: /.*/, namespace: 'ui001-asset' }, () => ({ contents: 'export default "about:blank"', loader: 'js' }))
       build.onResolve({ filter: /.*/ }, args => {
         // Resolve the same public tooltip exports directly, avoiding unrelated KaTeX barrel assets.
         if (/\/components\/ui\/source-status-indicator\.tsx$/.test(args.importer)) {
@@ -222,8 +229,17 @@ window.ui001.render({});` : ''}
         if (args.path === 'bindings') return { contents: bindings, loader: 'tsx', resolveDir: dirname(main) }
         if (args.path === 'entity-ui') return { contents: entityUi, loader: 'tsx', resolveDir: dirname(main) }
         if (args.path === 'knowledge') return { contents: `${leafSource}\nexport {knowledgeActiveViewIdAtom,knowledgeHomeViewAtom} from 'rox-ui001-bindings';`, loader:'tsx',resolveDir:dirname(main) }
-        const name = args.path.split('/').at(-1)
-        return { contents: `${leafSource}\nexport default leaf(${JSON.stringify(name)});`, loader: 'tsx', resolveDir: dirname(main) }
+        const name = args.path.split('/').at(-1) ?? 'Leaf'
+        // Consumers import a stubbed screen both as the default and by its own
+        // name (e.g. `import { SettingsScreenSidebar } from
+        // '@/pages/settings/SettingsScreenSidebar'`), so expose the leaf under
+        // that identifier too — unless the shared leaf template already declares
+        // it, which would otherwise collide.
+        const identifier = /^[A-Za-z_$][\w$]*$/.test(name)
+        const named = identifier && !new RegExp(`export\\s+const\\s+${name}\\s*=`).test(leafSource)
+          ? `\nexport const ${name} = leaf(${JSON.stringify(name)});`
+          : ''
+        return { contents: `${leafSource}\nexport default leaf(${JSON.stringify(name)});${named}`, loader: 'tsx', resolveDir: dirname(main) }
       })
     } }],
   })

@@ -21,7 +21,7 @@ import {
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import type { ChannelBinding, MessagingLogger, PlatformType } from './types'
-import { normalizeBindingConfig } from './types'
+import { normalizeBindingConfig, normalizeChatType, type ChannelChatType } from './types'
 
 const NOOP_LOGGER: MessagingLogger = {
   info: () => {},
@@ -133,6 +133,19 @@ export class BindingStore {
       channelName,
     })
     return binding
+  }
+
+  /**
+   * Record the platform chat type observed on an incoming message. No-op when
+   * unchanged, so steady traffic doesn't rewrite the file.
+   */
+  recordChatType(bindingId: string, chatType: ChannelChatType | undefined): boolean {
+    if (!chatType) return false
+    const binding = this.bindings.find((b) => b.id === bindingId)
+    if (!binding || binding.chatType === chatType) return false
+    binding.chatType = chatType
+    try { this.save(!!binding.nativeOwner) } catch { return false }
+    return true
   }
 
   /**
@@ -255,7 +268,8 @@ export class BindingStore {
           this.bindings = parsed.map(normalizeBinding)
           const dirty = parsed.some((raw, index) => {
             const previous = (raw as { config?: { accessMode?: unknown } }).config?.accessMode
-            return this.bindings[index]?.config.accessMode !== previous
+            const previousType = (raw as { chatType?: unknown }).chatType
+            return this.bindings[index]?.config.accessMode !== previous || this.bindings[index]?.chatType !== previousType
           })
           if (dirty) this.save()
         }
@@ -299,8 +313,22 @@ export class BindingStore {
 // ---------------------------------------------------------------------------
 
 function normalizeBinding(raw: ChannelBinding): ChannelBinding {
+  const { chatType: rawType, ...rest } = raw
+  const chatType = normalizeChatType(rawType) ?? inferLegacyChatType(raw)
   return {
-    ...raw,
+    ...rest,
+    ...(chatType ? { chatType } : {}),
     config: normalizeBindingConfig(raw.platform, raw.config ?? {}),
   }
+}
+
+/**
+ * Migration for bindings saved before `chatType` existed. Only Telegram ids
+ * are unambiguous (private chats are positive user ids, groups/channels are
+ * negative); other platforms are backfilled by the next incoming message.
+ */
+export function inferLegacyChatType(b: Pick<ChannelBinding, 'platform' | 'channelId' | 'threadId'>): ChannelChatType | undefined {
+  if (b.platform !== 'telegram' || !/^-?\d+$/.test(b.channelId)) return undefined
+  if (b.threadId != null || b.channelId.startsWith('-')) return 'group'
+  return 'direct'
 }

@@ -6,7 +6,9 @@
 import { spawn } from "bun";
 import { copyFileSync, existsSync, readFileSync, statSync, mkdirSync } from "fs";
 import { join } from "path";
-import { ELECTRON_MAIN_CJS_FLAGS } from "./electron-main-cjs";
+import { ELECTRON_MAIN_CJS_FLAGS, MAIN_VENDOR_BUNDLES, mainVendorAliasFlags, vendorExportProbe } from "./electron-main-cjs";
+import { pathToFileURL } from "url";
+import { writeRoxDefaultsModule } from "../apps/electron/scripts/gen-rox-defaults";
 
 const ROOT_DIR = join(import.meta.dir, "..");
 const outIndex = process.argv.indexOf('--outdir');
@@ -445,8 +447,19 @@ async function main(): Promise<void> {
     mkdirSync(DIST_DIR, { recursive: true });
   }
 
+  // Embed shared keys (gitignored module; absent keys produce an empty module, never fail).
+  const keys = spawn({ cmd: ["bun", "apps/electron/scripts/gen-shared-keys.ts"], cwd: ROOT_DIR, stdout: "inherit", stderr: "inherit" });
+  if ((await keys.exited) !== 0) {
+    console.error("❌ gen-shared-keys failed");
+    process.exit(1);
+  }
+
   // Verify session tools core exists (shared utilities for session-scoped tools)
   verifySessionToolsCore();
+
+  // Team calls: write the gitignored build-time defaults module (empty values without creds).
+  const callDefaults = spawn({ cmd: ["bun", "run", join(ROOT_DIR, "apps/electron/scripts/gen-call-defaults.ts")], stdout: "inherit", stderr: "inherit" });
+  if ((await callDefaults.exited) !== 0) { console.error("❌ gen-call-defaults failed"); process.exit(1); }
 
   // Build Pi agent server (subprocess for Pi SDK sessions)
   if (!process.argv.includes('--main-only')) {
@@ -468,6 +481,8 @@ async function main(): Promise<void> {
   await buildBundledSkillsWorker();
   await buildPoolWorker();
 
+  // Shared ROX gateway key → gitignored generated module (value never printed).
+  console.log(`🔑 ROX defaults: ${writeRoxDefaultsModule()}`);
   const buildDefines = getBuildDefines();
 
   console.log("🔨 Building main process...");
@@ -505,6 +520,9 @@ async function main(): Promise<void> {
       // server-core memory FTS uses bun:sqlite (Bun-only); Electron main runs
       // Node whose node:sqlite exposes the same DatabaseSync surface (22.5+).
       "--alias:bun:sqlite=./apps/electron/src/main/shims/node-sqlite.cjs",
+      // Heavy, rarely used deps live in their own dist/vendor/*.cjs (see MAIN_VENDOR_BUNDLES) so
+      // V8 never parses them while loading main.cjs; the code imports them lazily.
+      ...mainVendorAliasFlags(),
       ...buildDefines,
     ],
     cwd: ROOT_DIR,
@@ -537,11 +555,50 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  await buildMainVendorBundles();
+
   // #1573: entry shim enabling the V8 compile cache before main.cjs loads.
   copyFileSync(join(ROOT_DIR, "apps/electron/src/main/boot.cjs"), join(DIST_DIR, "boot.cjs"));
 
   console.log("✅ Build complete and verified");
   process.exit(0);
+}
+
+/** Bundle each MAIN_VENDOR_BUNDLES package into dist/vendor/<file> (CJS, lazily required by main.cjs). */
+async function buildMainVendorBundles(): Promise<void> {
+  for (const { pkg, file, load, exports } of MAIN_VENDOR_BUNDLES) {
+    const outfile = join(DIST_DIR, "vendor", file);
+    const proc = spawn({
+      cmd: [
+        "bun", "run", "esbuild",
+        "--bundle", "--platform=node", "--format=cjs", `--outfile=${outfile}`,
+        `--sourcefile=vendor-${file}.ts`, "--loader=ts",
+        ...ELECTRON_MAIN_CJS_FLAGS,
+        "--external:electron", "--external:sharp",
+      ],
+      cwd: ROOT_DIR,
+      stdin: new Blob([`export * from ${JSON.stringify(pkg)}\n`]),
+      stdout: "inherit",
+      stderr: "inherit",
+    });
+    if ((await proc.exited) !== 0) {
+      console.error(`❌ vendor bundle ${pkg} failed`);
+      process.exit(1);
+    }
+    const verification = await verifyJsFile(outfile);
+    if (!verification.valid) {
+      console.error(`❌ vendor bundle ${pkg} verification failed:`, verification.error);
+      process.exit(1);
+    }
+    // Load each file the way main.cjs does (import() or require()) and check every named export the
+    // call sites use is visible (import() of CJS relies on cjs-module-lexer).
+    const probe = spawn({ cmd: ["node", ...vendorExportProbe(pathToFileURL(outfile).href, exports, load)], stdout: "pipe", stderr: "inherit" });
+    if ((await probe.exited) !== 0) {
+      console.error(`❌ vendor bundle ${pkg} is missing named exports:`, await new Response(probe.stdout).text());
+      process.exit(1);
+    }
+  }
+  console.log(`✅ ${MAIN_VENDOR_BUNDLES.length} main vendor bundles built`);
 }
 
 main();

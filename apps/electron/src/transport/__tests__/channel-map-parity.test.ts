@@ -161,7 +161,8 @@ type ApiToChannelMapKeys = Exclude<
   | 'onOmniboxOpen' // direct IPC listener — embedded BrowserView ⌘K bridge
   | 'remoteTlsInspect' // direct IPC — inspect peer cert before token handshake
   | 'remoteTlsDecide' // direct IPC — accept/reject/rollover enrollment
-  | 'exitMiniWindow' // direct IPC — native window lifecycle
+  | 'miniGlass' // direct IPC — mini glass companion window lifecycle
+  | 'exitMiniWindow' // direct IPC — mini glass companion exit (preload ipcRenderer.invoke('window:exit-mini'))
   | 'publishVoiceLevel' // direct one-way IPC send — renderer-owned overlay level, no WS RPC
   | 'onPanelFocusDirection' // direct IPC — native directional focus shortcut
   | 'getTelemetryConfig' // sync boot config — direct IPC, not a routed channel
