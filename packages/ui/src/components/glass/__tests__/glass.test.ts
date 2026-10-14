@@ -175,7 +175,9 @@ describe('glass fills resolve to real colours', () => {
   })
   it('send icon colour cannot fall back to white', () => {
     expect(uiStyles).toMatch(/--accent-foreground:\s*var\(--canvas\)/)
-    expect(mini).toContain('text-[var(--accent-foreground,var(--canvas,var(--background)))]')
+    expect(mini).toContain('text-[var(--glass-accent-ink,var(--accent-foreground,var(--canvas-opaque)))]')
+    const accent = skin.match(/\[data-glass-tone="accent"\]\s*{([^}]*)}/)?.[1] ?? ''
+    expect(accent).toMatch(/--glass-accent-ink:\s*rgb\(from var\(--background[^;]*\/ 1\)/)
     expect(mini).not.toMatch(/accent-foreground,white/)
   })
   it('no --primary anywhere in the glass work', () => {
