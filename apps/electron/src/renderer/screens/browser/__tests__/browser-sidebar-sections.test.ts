@@ -18,6 +18,12 @@ describe('history + bookmarks helpers', () => {
     expect(b).toHaveLength(1)
     expect(toggleBookmark(b, { url: 'https://a.com', title: 'x', at: 2 })).toEqual([])
   })
+  it('strips query, fragment and credentials from bookmarks like history', () => {
+    const b = toggleBookmark([], { url: 'https://u:p@a.com/cb?code=SECRET#tok', title: 'A', at: 1 })
+    expect(b.map((x) => x.url)).toEqual(['https://a.com/cb'])
+    // A legacy unstripped bookmark is matched (and removed) by its stripped form.
+    expect(toggleBookmark([{ url: 'https://a.com/cb?code=old', title: 'A', at: 0 }], { url: 'https://a.com/cb?x=1', title: 'A', at: 2 })).toEqual([])
+  })
 })
 
 describe('buildBrowserSidebarSections', () => {

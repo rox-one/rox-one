@@ -22,7 +22,7 @@ function hostOf(url: string): string {
  * tab).
  */
 export function buildBrowserSidebarSections(tabs: readonly BrowserSidebarTab[], bookmarks: readonly BrowserLink[], history: readonly BrowserLink[]): SidebarSection[] {
-  const bookmarked = new Set(bookmarks.map((b) => b.url))
+  const bookmarked = new Set(bookmarks.map((b) => historyUrl(b.url)))
   const openUrls = new Set(tabs.map((t) => historyUrl(t.url)))
   const open: SidebarSectionItem[] = tabs.map((tab) => ({
     id: `tab:${tab.id}`,
@@ -31,7 +31,7 @@ export function buildBrowserSidebarSections(tabs: readonly BrowserSidebarTab[], 
     secondary: tab.url ? hostOf(tab.url) : undefined,
     ...(tab.isLoading || tab.agentControlActive ? { badge: 'running' as const } : {}),
     menu: [
-      ...(isRecordableUrl(tab.url) ? [{ id: bookmarked.has(tab.url) ? 'unbookmark' : 'bookmark', labelKey: bookmarked.has(tab.url) ? 'screens.browser.unbookmark' : 'screens.browser.bookmark' }] : []),
+      ...(isRecordableUrl(tab.url) ? [{ id: bookmarked.has(historyUrl(tab.url)) ? 'unbookmark' : 'bookmark', labelKey: bookmarked.has(historyUrl(tab.url)) ? 'screens.browser.unbookmark' : 'screens.browser.bookmark' }] : []),
       { id: 'close', labelKey: 'screens.browser.closeTab', destructive: true },
     ],
     target: { kind: 'view', viewId: tab.id },

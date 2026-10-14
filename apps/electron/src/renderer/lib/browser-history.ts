@@ -48,8 +48,22 @@ export function recordVisit(history: readonly BrowserLink[], visit: BrowserLink,
   return [{ ...visit, url }, ...history.filter((h) => h.url !== url)].slice(0, max)
 }
 
+/**
+ * Bookmarks persist like history, so they get the same privacy stripping
+ * (no query, fragment or credentials). Older unstripped entries are matched
+ * by their stripped form and normalised on the next write.
+ */
 export function toggleBookmark(bookmarks: readonly BrowserLink[], link: BrowserLink): BrowserLink[] {
-  return bookmarks.some((b) => b.url === link.url) ? bookmarks.filter((b) => b.url !== link.url) : [...bookmarks, link]
+  const url = historyUrl(link.url)
+  const seen = new Set<string>()
+  const clean: BrowserLink[] = []
+  for (const b of bookmarks) {
+    const u = historyUrl(b.url)
+    if (seen.has(u)) continue
+    seen.add(u)
+    clean.push(u === b.url ? b : { ...b, url: u })
+  }
+  return seen.has(url) ? clean.filter((b) => b.url !== url) : [...clean, { ...link, url }]
 }
 
 /** History is scoped per workspace; unbound windows share the '_' bucket. */
