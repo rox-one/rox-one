@@ -3,17 +3,15 @@
  * session-filter section / «Показать пустые» persist through AppShell's
  * expanded-sections store (survive a remount).
  *
- * The subject is the *shell's own* session-filter section, so the harness
- * renders `ShellSidebarNav` without the screen-owned sidebar: the shell mounts
- * the focused screen's publisher at `ScreenSidebarHost` (ShellSidebarNav.tsx
- * :165), and the Sessions publisher needs the whole app stack (AppShellContext
- * + NavigationProvider) and, as soon as it publishes, replaces this section
- * with its own config (ShellSidebarNav.tsx:167). That screen-owned sidebar is a
- * different surface with its own tests
- * (components/shell/__tests__/screen-sidebar.test.tsx), so the seam is stubbed
- * here and the filters asserted below stay the real ones.
+ * Сессии owns its sidebar: the shell mounts the focused screen's publisher at
+ * `ScreenSidebarHost` (ShellSidebarNav.tsx:165), and as soon as it publishes,
+ * the nav switches from the shell's own filter list to that config
+ * (ShellSidebarNav.tsx:167). The tests below assert the handover, so the host
+ * runs for real — the harness supplies the AppShell + navigation contexts the
+ * publisher reads. Stubbing the host out would leave `screenConfig` undefined
+ * and make `waitForConfig` unreachable.
  */
-import { afterAll, afterEach, describe, expect, it, mock } from 'bun:test'
+import { afterEach, describe, expect, it } from 'bun:test'
 import * as React from 'react'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -28,10 +26,14 @@ import { NavigationContext, NavigationStatusContext, type NavigationStatus } fro
 import { AppShellProvider, type AppShellContextType } from '@/context/AppShellContext'
 import type { LinkItem, SidebarItem } from '../LeftSidebar'
 
-// Registered before the shell loads, so its screen-publisher slot stays empty.
-mock.module('@/screens/ScreenSidebarHost', () => ({ ScreenSidebarHost: () => null }))
+// The Sessions screen publishes its own sidebar through `ScreenSidebarHost`, and
+// the assertions below wait for exactly that published config
+// (`data-sidebar-content="config"`, ShellSidebarNav.tsx:176). Stubbing the host
+// out makes the wait unreachable: `screenConfig` stays undefined, the nav keeps
+// rendering `data-sidebar-content="sessions"`, and both tests burn the full 3s
+// deadline before failing. The harness below provides the AppShell + navigation
+// contexts the publisher reads, so the real host runs.
 const { SESSION_FILTERS_EMPTY_HIDDEN_ID, SESSION_FILTERS_ID, ShellSidebarNav } = await import('../ShellSidebarNav')
-afterAll(() => { mock.restore() })
 
 // eslint-disable-next-line react-hooks/rules-of-hooks -- test DOM environment setup, not a React hook
 useDomForFile()
