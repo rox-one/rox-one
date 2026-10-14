@@ -113,7 +113,7 @@ function nodeBuiltinStubPlugin() {
  *   js-yaml out of the startup chunks.
  */
 const SIDE_EFFECT_FREE_MODULES = [
-  /[\\/]packages[\\/]shared[\\/]src[\\/]i18n[\\/](?:registry\.ts|setupI18n\.ts|locales[\\/][^\\/]+\.json)$/,
+  /[\\/]packages[\\/]shared[\\/]src[\\/]i18n[\\/](?:registry\.ts|setupI18n\.ts|date-locales\.ts|locales[\\/][^\\/]+\.json)$/,
   /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]markdown[\\/](?:TiptapMarkdownEditor|MarkdownDatatableBlock|MarkdownSpreadsheetBlock|MarkdownOpenUIBlock|Markdown|CodeBlock|MarkdownImageBlock|MarkdownHtmlBlock|MarkdownDocBlock|MarkdownRoversCardBlock|SourcedStatement|CollapsibleSection|ImageCardStack)\.tsx$/,
   // The diff viewers register a custom element and Shiki themes at module
   // load; marked here so the @rox/ui barrel re-export alone does not pull them
@@ -158,7 +158,24 @@ const VENDOR_CHUNKS: ReadonlyArray<readonly [RegExp, string]> = [
   [/^(?:date-fns|@date-fns\/.+)$/, 'vendor-dates'],
 ]
 
+/** date-fns locales the renderer actually loads. Anything else stays out of vendor-dates. */
+const DATE_FNS_LOCALE_CHUNKS = new Set([
+  'ar', 'de', 'es', 'fr', 'hu', 'ja', 'ko', 'pl', 'ru', 'zh-CN', 'zh-TW',
+])
+
 function vendorChunk(id: string): string | undefined {
+  const posix = id.replace(/\\/g, '/')
+  const dateFnsLocale = /\/node_modules\/date-fns\/locale\/([^/.]+)(?:\.js|\/|$)/.exec(posix)
+  if (dateFnsLocale) {
+    const loc = dateFnsLocale[1]
+    // Shared helpers + the English fallback stay in the eager vendor-dates
+    // chunk. Every other UI language is a dynamic `import()` from
+    // date-locale-loaders.ts; pinning those files here would merge them back
+    // into the startup closure (and collide with i18n JSON prefixes `ru`, `de`, …).
+    if (loc === '_lib' || loc === 'en-US') return 'vendor-dates'
+    if (DATE_FNS_LOCALE_CHUNKS.has(loc)) return `date-fns-locale-${loc}`
+    return 'date-fns-locale-other'
+  }
   const pkg = /[\\/]node_modules[\\/]((?:@[^\\/]+[\\/])?[^\\/]+)[\\/]/.exec(id)?.[1]?.replace('\\', '/')
   if (!pkg) return undefined
   return VENDOR_CHUNKS.find(([pattern]) => pattern.test(pkg))?.[1]

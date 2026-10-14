@@ -186,3 +186,25 @@ export function daysUntil(at: number, now: number): number {
   b.setHours(0, 0, 0, 0)
   return Math.round((a.getTime() - b.getTime()) / 86400000)
 }
+
+/** Keyboard list navigation: ↑/↓ step, Home/End jump, PageUp/PageDown move by `page` rows. */
+export function navigateIndex(key: string, index: number, length: number, page = 10): number | null {
+  if (length <= 0) return null
+  const last = length - 1
+  switch (key) {
+    case 'ArrowDown': return index < 0 ? 0 : Math.min(last, index + 1)
+    case 'ArrowUp': return index < 0 ? 0 : Math.max(0, index - 1)
+    case 'Home': return 0
+    case 'End': return last
+    case 'PageDown': return index < 0 ? Math.min(last, page - 1) : Math.min(last, index + page)
+    case 'PageUp': return index < 0 ? 0 : Math.max(0, index - page)
+    default: return null
+  }
+}
+
+/** Deadline flag tone: overdue/today = danger, within 2 days = warning, else muted. */
+export function deadlineTone(days: number): 'danger' | 'warning' | 'muted' {
+  if (days <= 0) return 'danger'
+  if (days <= 2) return 'warning'
+  return 'muted'
+}

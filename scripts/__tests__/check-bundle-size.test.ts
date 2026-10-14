@@ -11,11 +11,11 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { gzipSync } from 'node:zlib'
 import {
-  BUDGET_SLACK_BYTES,
   MAX_NEW_CHUNK_BYTES,
   MAX_NEW_STARTUP_BYTES,
   MIN_BUDGET_BYTES,
   assetKind,
+  budgetSlackBytes,
   buildBudgets,
   bundleTotals,
   chunkPrefix,
@@ -287,7 +287,7 @@ describe('budget evaluation (pure)', () => {
     const below = [chunk('heavy-aaaaaaaa.js', 1_300_000), chunk('heavy-bbbbbbbb.js', 1_200_000)]
     expect(evaluateAssets(below, {})).toEqual([])
 
-    const over = BUDGET_SLACK_BYTES + 1
+    const over = budgetSlackBytes(MAX_NEW_CHUNK_BYTES) + 1
     const failures = evaluateAssets(
       [chunk('heavy-aaaaaaaa.js', 1_300_000), chunk('heavy-bbbbbbbb.js', 1_200_000 + over)],
       {},
@@ -313,7 +313,7 @@ describe('budget evaluation (pure)', () => {
       stylesheets: { main: { totalRawBytes: 100_000, gzipTotalBytes: 20_000 } },
       totals: { cssRawBytes: 100_000 },
     }
-    const grown = 100_000 + BUDGET_SLACK_BYTES + 1
+    const grown = 100_000 + budgetSlackBytes(100_000) + 1
     const failures = evaluateAssets([chunk('main-aaaaaaaa.css', grown)], recorded)
     expect(failures).toEqual([
       {
@@ -338,26 +338,26 @@ describe('budget evaluation (pure)', () => {
 
   it('allows within-slack prefix totals but fails one byte beyond', () => {
     const recorded = { budgets: { main: { totalRawBytes: 1000, gzipTotalBytes: 500 } } }
-    const within = [chunk('main-aaaaaaaa.js', 600), chunk('main-bbbbbbbb.js', 400 + BUDGET_SLACK_BYTES)]
+    const within = [chunk('main-aaaaaaaa.js', 600), chunk('main-bbbbbbbb.js', 400 + budgetSlackBytes(1000))]
     expect(evaluateAssets(within, recorded)).toEqual([])
 
-    const beyond = [chunk('main-aaaaaaaa.js', 600), chunk('main-bbbbbbbb.js', 401 + BUDGET_SLACK_BYTES)]
+    const beyond = [chunk('main-aaaaaaaa.js', 600), chunk('main-bbbbbbbb.js', 401 + budgetSlackBytes(1000))]
     expect(evaluateAssets(beyond, recorded)).toHaveLength(1)
   })
 
   it('allows within-slack bundle totals but fails one byte beyond, leaving slack-free prefixes alone', () => {
     const recorded = { budgets: { main: { totalRawBytes: 1_000_000, gzipTotalBytes: 1 } }, totals: { jsRawBytes: 1000 } }
-    expect(evaluateAssets([chunk('main-aaaaaaaa.js', 1000 + BUDGET_SLACK_BYTES)], recorded)).toEqual([])
+    expect(evaluateAssets([chunk('main-aaaaaaaa.js', 1000 + budgetSlackBytes(1000))], recorded)).toEqual([])
 
-    const failures = evaluateAssets([chunk('main-aaaaaaaa.js', 1001 + BUDGET_SLACK_BYTES)], recorded)
+    const failures = evaluateAssets([chunk('main-aaaaaaaa.js', 1001 + budgetSlackBytes(1000))], recorded)
     expect(failures).toEqual([
       {
         kind: 'js',
         prefix: null,
-        rawBytes: 1001 + BUDGET_SLACK_BYTES,
+        rawBytes: 1001 + budgetSlackBytes(1000),
         budget: 1000,
         file: 'main-aaaaaaaa.js',
-        fileRawBytes: 1001 + BUDGET_SLACK_BYTES,
+        fileRawBytes: 1001 + budgetSlackBytes(1000),
       },
     ])
   })
@@ -402,7 +402,7 @@ describe('CLI exit codes', () => {
 
   it('exits 1 when an unbudgeted prefix TOTAL exceeds the 2.5 MB ceiling', () => {
     const root = tempRoot()
-    const over = BUDGET_SLACK_BYTES + 1
+    const over = budgetSlackBytes(MAX_NEW_CHUNK_BYTES) + 1
     seedBuild(root, { 'lazy-page-aaaaaaaa.js': 1_300_000, 'lazy-page-bbbbbbbb.js': 1_200_000 + over })
     seedBaseline(root, { budgets: {} })
     const result = runCli(root)
@@ -414,25 +414,28 @@ describe('CLI exit codes', () => {
 
   it('exits 1 when the whole-js total regresses even though each prefix is within its budget', () => {
     const root = tempRoot()
-    seedBuild(root, { 'main-aaaaaaaa.js': 10_000 })
+    // Must clear the slack floor to trip the gate: budget + slack + 1, not a nominal 10 KB.
+    const over = 1000 + budgetSlackBytes(1000) + 1
+    seedBuild(root, { 'main-aaaaaaaa.js': over })
     seedBaseline(root, {
-      budgets: { main: { totalRawBytes: 10_000, gzipTotalBytes: 500 } },
+      budgets: { main: { totalRawBytes: over, gzipTotalBytes: 500 } },
       totals: { jsRawBytes: 1000, jsGzipBytes: 1 },
     })
     const result = runCli(root)
     expect(result.code).toBe(1)
-    expect(result.err).toContain('js bundle total is 10000 B, budget 1000 B')
+    expect(result.err).toContain(`js bundle total is ${over} B, budget 1000 B`)
     expect(result.err).toContain('assets/main-aaaaaaaa.js')
     expect(result.err).not.toContain("prefix 'main'")
   })
 
   it('exits 1 when a CSS prefix total regresses', () => {
     const root = tempRoot()
-    seedBuild(root, { 'main-aaaaaaaa.css': 10_000 })
+    const over = 1000 + budgetSlackBytes(1000) + 1
+    seedBuild(root, { 'main-aaaaaaaa.css': over })
     seedBaseline(root, { stylesheets: { main: { totalRawBytes: 1000, gzipTotalBytes: 100 } } })
     const result = runCli(root)
     expect(result.code).toBe(1)
-    expect(result.err).toContain("css prefix 'main' total is 10000 B, budget 1000 B")
+    expect(result.err).toContain(`css prefix 'main' total is ${over} B, budget 1000 B`)
     expect(result.err).toContain('assets/main-aaaaaaaa.css')
   })
 
@@ -517,20 +520,23 @@ describe('startup closure parsing (script src + modulepreload + style preload)',
 describe('startup gate (pure)', () => {
   it('fails when the measured closure exceeds the recorded budget beyond slack', () => {
     const recorded = { 'index.html': { jsRawBytes: 1000, gzipTotalBytes: 10, fileCount: 1 } }
-    expect(evaluateStartup([startupMeasurement('index.html', 1000 + BUDGET_SLACK_BYTES)], recorded)).toEqual([])
+    expect(evaluateStartup([startupMeasurement('index.html', 1000 + budgetSlackBytes(1000))], recorded)).toEqual([])
 
-    const failures = evaluateStartup([startupMeasurement('index.html', 1000 + BUDGET_SLACK_BYTES + 1)], recorded)
+    const failures = evaluateStartup([startupMeasurement('index.html', 1000 + budgetSlackBytes(1000) + 1)], recorded)
     expect(failures).toHaveLength(1)
-    expect(failures[0]).toMatchObject({ html: 'index.html', jsRawBytes: 1001 + BUDGET_SLACK_BYTES, budget: 1000, unbudgeted: false, overBudget: true })
+    expect(failures[0]).toMatchObject({ html: 'index.html', jsRawBytes: 1001 + budgetSlackBytes(1000), budget: 1000, unbudgeted: false, overBudget: true })
     const line = formatStartupFailure(failures[0]!)
-    expect(line).toContain(`startup: index.html static JS closure is ${1001 + BUDGET_SLACK_BYTES} B, budget 1000 B`)
+    expect(line).toContain(`startup: index.html static JS closure is ${1001 + budgetSlackBytes(1000)} B, budget 1000 B`)
     expect(line).toContain('heaviest referenced files for index.html')
   })
 
   it('gates an html file with no recorded entry against MAX_NEW_STARTUP_BYTES', () => {
     expect(evaluateStartup([startupMeasurement('new.html', MAX_NEW_STARTUP_BYTES)], {})).toEqual([])
 
-    const failures = evaluateStartup([startupMeasurement('new.html', MAX_NEW_STARTUP_BYTES + BUDGET_SLACK_BYTES + 1)], {})
+    const failures = evaluateStartup(
+      [startupMeasurement('new.html', MAX_NEW_STARTUP_BYTES + budgetSlackBytes(MAX_NEW_STARTUP_BYTES) + 1)],
+      {},
+    )
     expect(failures).toHaveLength(1)
     expect(failures[0]).toMatchObject({ html: 'new.html', budget: MAX_NEW_STARTUP_BYTES, unbudgeted: true, overBudget: true })
     expect(formatStartupFailure(failures[0]!)).toContain(`ceiling ${MAX_NEW_STARTUP_BYTES} B (unbudgeted entry page)`)
@@ -563,20 +569,25 @@ describe('startup gate (CLI)', () => {
 
   it('exits 1 and prints the top referenced files when an entry closure regresses', () => {
     const root = tempRoot()
+    // The closure must clear the recorded budget's slack floor to trip the gate. `main` carries the
+    // regression and stays the heaviest file, so it must stay below the recorded 1000 B plus that
+    // floor — the remainder lands in `vendor`.
+    const main = 3000
+    const vendor = 1000 + budgetSlackBytes(1000) + 1 - main
     seedStartupBuild(
       root,
       [
         '<script type="module" src="./assets/main-aaaaaaaa.js"></script>',
         '<link rel="modulepreload" href="./assets/vendor-bbbbbbbb.js">',
       ].join('\n'),
-      { 'main-aaaaaaaa.js': 5000, 'vendor-bbbbbbbb.js': 1000 },
+      { 'main-aaaaaaaa.js': main, 'vendor-bbbbbbbb.js': vendor },
     )
     seedBaseline(root, { budgets: {}, startup: { 'index.html': { jsRawBytes: 1000, gzipTotalBytes: 10, fileCount: 1 } } })
     const result = runCli(root)
     expect(result.code).toBe(1)
-    expect(result.err).toContain('startup: index.html static JS closure is 6000 B, budget 1000 B')
+    expect(result.err).toContain(`startup: index.html static JS closure is ${main + vendor} B, budget 1000 B`)
     expect(result.err).toContain('heaviest referenced files for index.html')
-    expect(result.err).toContain('assets/main-aaaaaaaa.js: 5000 B')
+    expect(result.err).toContain(`assets/main-aaaaaaaa.js: ${main} B`)
   })
 
   it('exits 1 when a referenced startup file is missing from the build', () => {

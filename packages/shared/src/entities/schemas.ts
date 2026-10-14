@@ -98,6 +98,8 @@ export const entityLinksRequestSchema = z.discriminatedUnion('op', [
   entityLinksRemoveRequestSchema.extend({ op: z.literal('remove') }),
   entityLinksOutgoingRequestSchema.extend({ op: z.literal('outgoing') }),
   entityLinksBacklinksRequestSchema.extend({ op: z.literal('backlinks') }),
+  /** The actor id this session's link writes are recorded under (`createdBy`), from the server's auth context. */
+  z.object({ op: z.literal('whoami') }).strict(),
 ])
 
 export type EntityResolveRequest = z.infer<typeof entityResolveRequestSchema>

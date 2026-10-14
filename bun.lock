@@ -164,6 +164,7 @@
         "@radix-ui/react-popper": "1.2.8",
         "@radix-ui/react-switch": "^1.2.6",
         "@rox/browser-intel": "workspace:*",
+        "@rox/canvas-core": "workspace:*",
         "@rox/core": "workspace:*",
         "@rox/messaging-gateway": "workspace:*",
         "@rox/rovers-core-lite": "workspace:*",
