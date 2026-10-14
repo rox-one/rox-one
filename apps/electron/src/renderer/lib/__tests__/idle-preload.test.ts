@@ -23,3 +23,34 @@ describe('WP7 idle preload', () => {
     expect(logged).toEqual(['[idle-preload] b failed'])
   })
 })
+
+describe('runIdlePreload cancellation and input deferral', () => {
+  it('stops scheduling after abort', async () => {
+    const ran: string[] = []
+    const ac = new AbortController()
+    const loaders = ['a', 'b', 'c'].map(n => [n, async () => { ran.push(n); if (n === 'a') ac.abort() }] as const)
+    await runIdlePreload(loaders, { requestIdle: cb => cb(), signal: ac.signal, isUserBusy: () => false })
+    expect(ran).toEqual(['a'])
+  })
+
+  it('re-queues while the user is busy, bounded by maxDeferrals', async () => {
+    let idles = 0
+    let busy = 3
+    const ran: string[] = []
+    await runIdlePreload([['x', async () => { ran.push('x') }]], {
+      requestIdle: cb => { idles++; cb() },
+      isUserBusy: () => busy-- > 0,
+    })
+    expect(ran).toEqual(['x'])
+    expect(idles).toBe(4)
+
+    idles = 0
+    await runIdlePreload([['y', async () => { ran.push('y') }]], {
+      requestIdle: cb => { idles++; cb() },
+      isUserBusy: () => true,
+      maxDeferrals: 2,
+    })
+    expect(idles).toBe(3)
+    expect(ran).toEqual(['x', 'y'])
+  })
+})
