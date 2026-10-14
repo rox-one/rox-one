@@ -26,9 +26,38 @@ export const STARTUP_SPLIT_LOADERS: ReadonlyArray<readonly [string, Loader]> = [
 export interface IdlePreloadOptions {
   requestIdle?: (callback: () => void) => unknown
   log?: (message: string, error: unknown) => void
+  /** Stop scheduling further loaders once aborted (an in-flight import still settles). */
+  signal?: AbortSignal
+  /** True while the user is interacting; the slot is re-queued instead of importing. */
+  isUserBusy?: () => boolean
+  /** Upper bound on consecutive re-queues per loader so preload cannot starve forever. */
+  maxDeferrals?: number
 }
 
+/** Input within this window counts as "user busy". */
+export const USER_INPUT_QUIET_MS = 300
+
 let started = false
+let controller: AbortController | null = null
+let lastInputAt = Number.NEGATIVE_INFINITY
+let inputTrackingInstalled = false
+
+function now(): number {
+  return typeof performance !== 'undefined' ? performance.now() : Date.now()
+}
+
+function installInputTracking(): void {
+  if (inputTrackingInstalled || typeof window === 'undefined') return
+  inputTrackingInstalled = true
+  const mark = () => { lastInputAt = now() }
+  for (const type of ['pointerdown', 'keydown', 'wheel', 'touchstart'] as const) {
+    window.addEventListener(type, mark, { capture: true, passive: true })
+  }
+}
+
+function defaultIsUserBusy(): boolean {
+  return now() - lastInputAt < USER_INPUT_QUIET_MS
+}
 
 /** Every loader this module runs in the background, in order. */
 export function idlePreloadLoaders(): Array<readonly [string, Loader]> {
@@ -45,10 +74,23 @@ export function idlePreloadLoaders(): Array<readonly [string, Loader]> {
  */
 export async function runIdlePreload(
   loaders: ReadonlyArray<readonly [string, Loader]>,
-  { requestIdle = defaultRequestIdle, log = (m, e) => console.warn(m, e) }: IdlePreloadOptions = {},
+  {
+    requestIdle = defaultRequestIdle,
+    log = (m, e) => console.warn(m, e),
+    signal,
+    isUserBusy = defaultIsUserBusy,
+    maxDeferrals = 20,
+  }: IdlePreloadOptions = {},
 ): Promise<void> {
   for (const [name, load] of loaders) {
-    await new Promise<void>(resolve => { requestIdle(resolve) })
+    if (signal?.aborted) return
+    let deferrals = 0
+    for (;;) {
+      await new Promise<void>(resolve => { requestIdle(resolve) })
+      if (signal?.aborted) return
+      if (deferrals >= maxDeferrals || !isUserBusy()) break
+      deferrals++
+    }
     try {
       await load()
     } catch (error) {
@@ -61,12 +103,33 @@ export async function runIdlePreload(
 export function startIdlePreload(options?: IdlePreloadOptions): Promise<void> {
   if (started) return Promise.resolve()
   started = true
-  return runIdlePreload(idlePreloadLoaders(), options)
+  installInputTracking()
+  const run = new AbortController()
+  controller = run
+  const signal = options?.signal
+  if (signal) {
+    if (signal.aborted) run.abort()
+    else signal.addEventListener('abort', () => run.abort(), { once: true })
+  }
+  return runIdlePreload(idlePreloadLoaders(), { ...options, signal: run.signal })
+}
+
+/**
+ * Stop the background preload (e.g. on low memory or window teardown). A later
+ * `startIdlePreload()` starts a fresh run; already-loaded chunks stay cached.
+ */
+export function cancelIdlePreload(): void {
+  controller?.abort()
+  controller = null
+  started = false
 }
 
 /** Test hook. */
 export function resetIdlePreloadForTests(): void {
+  controller?.abort()
+  controller = null
   started = false
+  lastInputAt = Number.NEGATIVE_INFINITY
 }
 
 function defaultRequestIdle(callback: () => void): unknown {
