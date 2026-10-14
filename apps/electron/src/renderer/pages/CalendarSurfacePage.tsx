@@ -11,7 +11,7 @@ import type { SurfacePageProps } from '@/platform/SurfaceHost'
 import MeetingsPage from './MeetingsPage'
 
 export function CalendarSurfacePage({ meetingId }: SurfacePageProps) {
-  return <MeetingsPage selectedId={meetingId} />
+  return <MeetingsPage selectedId={meetingId} screenId="calendar" />
 }
 
 export default CalendarSurfacePage

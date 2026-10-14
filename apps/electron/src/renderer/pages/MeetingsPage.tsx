@@ -27,6 +27,7 @@ import type { LocalAsrEngine, LocalMeeting } from '../../shared/meetings-local'
 import type { MeetingGrant } from '@rox/shared/meeting-agents/browser'
 import { LocalMeetingDetail, transcriptTone, type DetailTab } from './meetings/LocalMeetingDetail'
 import { MeetingsSidebar } from './meetings/MeetingsSidebar'
+import { useCalendarScreenSidebar } from '@/screens/calendar/useCalendarScreenSidebar'
 import ProposalInbox from './meetings/ProposalInbox'
 import {
   approveNativeProposalViaRpc,
@@ -77,7 +78,7 @@ const ERROR_KEYS: Record<string, string> = {
   unavailable: 'meetings.local.err.unavailable',
 }
 
-export default function MeetingsPage(props: { selectedId?: string | null; workspaceId?: string | null }) {
+export default function MeetingsPage(props: { selectedId?: string | null; workspaceId?: string | null; /** Shell screen id this page is mounted as (Календарь surface vs legacy Встречи route). */ screenId?: 'calendar' | 'meetings' }) {
   const { t, i18n } = useTranslation()
   const canHandleKeyboard = usePanelKeyboardGuard()
   const shell = useOptionalAppShellContext()
@@ -481,6 +482,23 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     needsAction: t('meetings.local.needsAction'),
   }
 
+  // Shell second sidebar (shell-layout).
+  const sidebarMeetings = useMemo(() => meetings.map((m) => ({ id: m.id, title: m.title, at: meetingTime(m), live: isLiveMeeting(m) })), [meetings])
+  useCalendarScreenSidebar({
+    screenId: props.screenId ?? 'meetings',
+    meetings: sidebarMeetings,
+    counts,
+    now,
+    bucket,
+    selectedMeetingId: selectedId,
+    onBucket: (next) => { setBucket(next); selectMeeting(null) },
+    onMeeting: (id) => selectMeeting(id),
+    onConnectCalendar: () => navigate(routes.view.connections()),
+    onRecord: api ? () => { void handleRecord() } : null,
+    recording: rec.status !== 'idle',
+    onRetry: () => setReload((n) => n + 1),
+    loadState: loadState === 'ready' && loadedWorkspaceId !== workspaceId ? 'loading' : loadState,
+  })
   const navigator = (
     <MeetingsSidebar bucket={bucket} counts={counts} engine={engine} onBucketSelect={setBucket} onConnectCalendar={() => navigate(routes.view.connections())} />
   )
