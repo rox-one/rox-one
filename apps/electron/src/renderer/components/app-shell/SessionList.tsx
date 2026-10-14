@@ -23,6 +23,7 @@ import type { EntityListGroupHeaderOverride } from "@/components/ui/entity-list"
 import { useChatFolders } from "@/hooks/useChatFolders"
 import { FolderGroupHeader } from "./chat-folders/FolderGroupHeader"
 import {
+  REVEAL_CHAT_FOLDER_EVENT,
   UNGROUPED_FOLDER_KEY,
   composeFolderGroups,
   effectiveFolderAssignments,
@@ -338,6 +339,23 @@ export function SessionList({
       else next.add(groupKey)
       return next
     })
+  }, [])
+
+  // Second-sidebar «Папки» row → expand that folder in the list.
+  useEffect(() => {
+    const onReveal = (event: Event) => {
+      const folderId = (event as CustomEvent<{ folderId?: string }>).detail?.folderId
+      if (!folderId) return
+      const key = folderGroupKey(folderId)
+      setCollapsedGroups(prev => {
+        if (!prev.has(key)) return prev
+        const next = new Set(prev)
+        next.delete(key)
+        return next
+      })
+    }
+    window.addEventListener(REVEAL_CHAT_FOLDER_EVENT, onReveal)
+    return () => window.removeEventListener(REVEAL_CHAT_FOLDER_EVENT, onReveal)
   }, [])
 
   // --- Data pipeline (search, filtering, pagination, grouping) ---

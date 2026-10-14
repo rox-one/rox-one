@@ -21,14 +21,19 @@ export interface SessionsSidebarInput {
 export interface SessionsSidebarFolder {
   id: string
   name: string
-  sessionIds: readonly string[]
 }
 
 export interface SessionsSidebarOptions {
   /** Sessions with an open permission request (queue non-empty). */
   pendingPermissionIds?: ReadonlySet<string>
-  /** Chat folders (feat/chat-folders); omitted until that store is available. */
+  /** Chat folders in display order (feat/chat-folders store). */
   folders?: readonly SessionsSidebarFolder[]
+  /** sessionId → folderId (effective assignments: unknown folders already dropped). */
+  folderAssignments?: Readonly<Record<string, string>>
+  /** Raw label entry ("id" or "id::value") → label id. Defaults to identity. */
+  labelIdOf?: (entry: string) => string
+  /** Label id → display name. Defaults to the id. */
+  labelNameOf?: (id: string) => string
 }
 
 export const SESSIONS_SECTION_LIMITS = { pinned: 5, attention: 5, running: 5, folders: 8, recent: 10, labels: 8 } as const
@@ -65,7 +70,6 @@ export function buildSessionsSidebarSections(
   const pending = options.pendingPermissionIds ?? new Set<string>()
   const visible = sessions
     .filter((s) => !s.hidden && !s.isArchived && !s.parentSessionId)
-    .slice()
     .sort((a, b) => ts(b) - ts(a) || a.id.localeCompare(b.id))
 
   const shown = new Set<string>()
@@ -90,26 +94,36 @@ export function buildSessionsSidebarSections(
   for (const s of visible) {
     if (shown.has(s.id)) continue
     if (s.isProcessing || s.sessionStatus === IN_PROGRESS) {
-      running.push(sessionItem(s, s.isProcessing ? 'running' : undefined))
+      // Live turn → running dot; status-only "in progress" → muted status badge.
+      running.push(sessionItem(s, s.isProcessing ? 'running' : 'status'))
       shown.add(s.id)
     }
   }
   for (const s of visible) if (!shown.has(s.id)) recent.push(sessionItem(s))
 
-  const visibleIds = new Set(visible.map((s) => s.id))
+  // Folder counts use the same population the session list groups by folder:
+  // visible top-level sessions (hidden/archived/subtasks are not listed there).
+  const assignments = options.folderAssignments ?? {}
+  const folderCounts = new Map<string, number>()
+  for (const s of visible) {
+    const f = assignments[s.id]
+    if (f) folderCounts.set(f, (folderCounts.get(f) ?? 0) + 1)
+  }
   const folders: SidebarSectionItem[] = (options.folders ?? []).map((f) => ({
     id: `folder:${f.id}`,
     label: f.name,
     icon: 'folder',
-    count: f.sessionIds.filter((id) => visibleIds.has(id)).length,
+    count: folderCounts.get(f.id) ?? 0,
     target: { kind: 'folder', folderId: f.id },
   }))
 
+  const idOf = options.labelIdOf ?? ((e: string) => e)
+  const nameOf = options.labelNameOf ?? ((id: string) => id)
   const labelCounts = new Map<string, number>()
-  for (const s of visible) for (const l of new Set(s.labels ?? [])) labelCounts.set(l, (labelCounts.get(l) ?? 0) + 1)
+  for (const s of visible) for (const l of new Set((s.labels ?? []).map(idOf))) labelCounts.set(l, (labelCounts.get(l) ?? 0) + 1)
   const labels: SidebarSectionItem[] = [...labelCounts.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-    .map(([label, count]) => ({ id: `label:${label}`, label, icon: 'tag', count, target: { kind: 'label', label } }))
+    .map(([label, count]) => ({ id: `label:${label}`, label: nameOf(label), icon: 'tag', count, target: { kind: 'label', label } }))
 
   const L = SESSIONS_SECTION_LIMITS
   return nonEmptySections([

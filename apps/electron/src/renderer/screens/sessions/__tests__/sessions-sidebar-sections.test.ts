@@ -27,6 +27,19 @@ describe('buildSessionsSidebarSections', () => {
     expect(secs.find((s) => s.id === 'pinned')?.items[0]?.badge).toBe('running')
   })
 
+  it('puts status-only in-progress sessions under Running with a muted status badge', () => {
+    const secs = buildSessionsSidebarSections([{ id: 's', sessionStatus: 'in-progress' }])
+    expect(secs.find((s) => s.id === 'running')?.items[0]).toMatchObject({ id: 's', badge: 'status' })
+  })
+
+  it('counts labels by id (values stripped) and shows the configured name', () => {
+    const secs = buildSessionsSidebarSections([{ id: '1', labels: ['prio::high', 'prio::low'] }], {
+      labelIdOf: (e) => e.split('::')[0]!,
+      labelNameOf: (id) => (id === 'prio' ? 'Priority' : id),
+    })
+    expect(secs.find((s) => s.id === 'labels')?.items).toMatchObject([{ label: 'Priority', count: 1, target: { kind: 'label', label: 'prio' } }])
+  })
+
   it('excludes hidden, archived and subtask sessions everywhere', () => {
     const secs = buildSessionsSidebarSections([
       { id: 'h', hidden: true, labels: ['x'] },
@@ -43,7 +56,7 @@ describe('buildSessionsSidebarSections', () => {
         { id: '2', labels: ['b'] },
         { id: '3', labels: ['a'], isArchived: true },
       ],
-      { folders: [{ id: 'f', name: 'Rox', sessionIds: ['1', '3', 'gone'] }] },
+      { folders: [{ id: 'f', name: 'Rox' }], folderAssignments: { '1': 'f', '3': 'f', gone: 'f' } },
     )
     expect(secs.find((s) => s.id === 'labels')?.items.map((i) => [i.label, i.count])).toEqual([
       ['b', 2],

@@ -13,6 +13,9 @@ export { FOLDER_GROUP_PREFIX }
 /** Section header for unfoldered chats; also the "remove from folder" drop target. */
 export const UNGROUPED_FOLDER_KEY = `${FOLDER_GROUP_PREFIX}__none__`
 
+/** Window event asking SessionList to expand a folder: detail `{ folderId }`. */
+export const REVEAL_CHAT_FOLDER_EVENT = 'rox:sessions:reveal-folder'
+
 export function folderGroupKey(folderId: string): string {
   return `${FOLDER_GROUP_PREFIX}${folderId}`
 }

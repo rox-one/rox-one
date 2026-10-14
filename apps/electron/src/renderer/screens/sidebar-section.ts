@@ -2,8 +2,8 @@
  * Screen-agnostic description of one second-sidebar group (ChatGPT-style
  * "Pinned / Projects / Recents"). Screens build these from real data; the
  * shell's secondary sidebar renders them. Kept framework-free so builders are
- * unit-testable. When the shell publishes its own SidebarSection API this
- * module becomes a thin adapter onto it.
+ * unit-testable; `toScreenSidebarGroups` (screen-sidebar-adapter.ts) maps them
+ * onto the shell's ScreenSidebarConfig.
  */
 
 export type SidebarTarget =
@@ -24,13 +24,13 @@ export interface SidebarSectionItem {
   id: string
   /** User data (session title, label name) — rendered as-is. */
   label?: string
-  /** i18n key for built-in items; takes precedence over `label`. */
+  /** i18n key for built-in items; builders set exactly one of label/labelKey. */
   labelKey?: string
   /** lucide icon name */
   icon?: string
   count?: number
   /** Attention dot (unread, needs approval). */
-  badge?: 'unread' | 'attention' | 'running'
+  badge?: 'unread' | 'attention' | 'running' | 'status'
   /** Secondary muted text (time, due date). Already formatted by the caller. */
   secondary?: string
   target: SidebarTarget
