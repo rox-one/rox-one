@@ -3,6 +3,8 @@
 База: origin/main `a87b86505` (2026-10-14). Ветка волны: `feat/cookbooks-wave10` (воркдерево `~/Projects/rox-worktrees/cookbooks-wave10`).
 Точка отката: main до слияния PR волны. Негоциируемые линии: точки отката волн 6–9 сохраняются.
 
+**Статус:** ✅ DONE — влито в main: PR #2050 @ `2b18fe4f` (2026-10-14); все фиксы ревью G3/G4 — в том же коммите `a5de9a58c`.
+
 Норматив: [PRD](PRD.md) · [SPEC](SPEC.md) (+Amd1) · [SPEC-wave7](SPEC-wave7-colab-ux.md) · [SPEC-wave9](SPEC-wave9-colab-controls.md) · [ADR 001](decisions/001-runtime-container-and-secrets.md).
 Вендор-снапшот лаборатории: `apps/electron/resources/cookbooks/` — **read-only**; правки идут только через канон-репо `/Users/t/Projects/2026-10-13-rox-cookbooks-notebooks` + sync-команду из `PROVENANCE.md`.
 

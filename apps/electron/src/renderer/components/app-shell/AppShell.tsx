@@ -214,8 +214,6 @@ import { useProductLearning } from '@/features/product-tour/runtime'
 import { useTourTarget, useTourSignals } from '@/features/product-tour/runtime/hooks'
 import { beginChatSessionCreation } from '@/features/product-tour/adapters/chat'
 import { FabNewChat } from "./FabNewChat"
-import { SendToWorkspaceDialog } from "./SendToWorkspaceDialog"
-import { CreateProjectDialog } from "../projects/CreateProjectDialog"
 import { PublishSessionDialogHost } from "@/components/knowledge/PublishSessionDialogHost"
 import { EditPopover, getEditConfig, type EditContextKey } from "@/components/ui/EditPopover"
 import SettingsNavigator from "@/pages/settings/SettingsNavigator"
@@ -250,6 +248,15 @@ const MessagingDialogHost = React.lazy(() =>
   import("@/components/messaging/MessagingDialogHost").then((m) => ({
     default: m.MessagingDialogHost,
   })),
+)
+
+// Closed until SessionMenu / BatchSessionMenu write sendToWorkspaceAtom, or the
+// Add Project action opens the name prompt. Same gate as PublishSessionDialogHost.
+const SendToWorkspaceDialog = React.lazy(() =>
+  import("./SendToWorkspaceDialog").then((m) => ({ default: m.SendToWorkspaceDialog })),
+)
+const CreateProjectDialog = React.lazy(() =>
+  import("../projects/CreateProjectDialog").then((m) => ({ default: m.CreateProjectDialog })),
 )
 
 // The extra-screens background work is timer-driven (first check 30 s after mount) and renders
@@ -3848,21 +3855,29 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
       </Dialog>
 
       {/* Send to Workspace dialog (driven by sendToWorkspaceAtom) */}
-      <SendToWorkspaceDialog
-        open={sendToWorkspaceIds.length > 0}
-        onOpenChange={(open) => { if (!open) setSendToWorkspaceIds([]) }}
-        sessionIds={sendToWorkspaceIds}
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId}
-        onTransferComplete={handleTransferComplete}
-      />
+      {sendToWorkspaceIds.length > 0 && (
+        <React.Suspense fallback={null}>
+          <SendToWorkspaceDialog
+            open
+            onOpenChange={(open) => { if (!open) setSendToWorkspaceIds([]) }}
+            sessionIds={sendToWorkspaceIds}
+            workspaces={workspaces}
+            activeWorkspaceId={activeWorkspaceId}
+            onTransferComplete={handleTransferComplete}
+          />
+        </React.Suspense>
+      )}
 
       {/* Create Project dialog — prompts for a name so slugs stay meaningful */}
-      <CreateProjectDialog
-        open={createProjectDialogOpen}
-        onCancel={() => setCreateProjectDialogOpen(false)}
-        onSubmit={handleCreateProjectSubmit}
-      />
+      {createProjectDialogOpen && (
+        <React.Suspense fallback={null}>
+          <CreateProjectDialog
+            open
+            onCancel={() => setCreateProjectDialogOpen(false)}
+            onSubmit={handleCreateProjectSubmit}
+          />
+        </React.Suspense>
+      )}
 
       {/* Messaging dialogs (pairing-code + WA connect) — driven by messagingDialogAtom.
           Mounted here so they survive context-menu / dropdown close. */}
