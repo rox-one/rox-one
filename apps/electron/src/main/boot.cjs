@@ -5,16 +5,49 @@
  * re-parsing/compiling main.cjs. Must stay tiny and dependency-free: it is
  * the one file that is always compiled cold.
  *
- * Cache dir: `<tmp>/rox-compile-cache` (Node keys entries by file path +
- * content hash + V8 version, so app updates invalidate naturally). Opt out
- * with ROX_DISABLE_COMPILE_CACHE=1 (also honours NODE_DISABLE_COMPILE_CACHE).
+ * Cache dir is per-user and app-owned (never shared /tmp):
+ *   macOS   ~/Library/Caches/Rox/compile-cache
+ *   Windows %LOCALAPPDATA%\Rox\compile-cache
+ *   Linux   $XDG_CACHE_HOME/rox/compile-cache (default ~/.cache/rox/compile-cache)
+ * Created with mode 0700; on POSIX the cache is skipped unless the dir is owned
+ * by the current user and not group/world-writable. Node keys entries by file
+ * path + content hash + V8 version, so app updates invalidate naturally.
+ * Opt out with ROX_DISABLE_COMPILE_CACHE=1 (Node also honours NODE_DISABLE_COMPILE_CACHE).
  */
+function compileCacheDir() {
+  const { join, isAbsolute } = require('node:path')
+  const os = require('node:os')
+  const home = os.homedir()
+  if (process.platform === 'darwin') return home ? join(home, 'Library', 'Caches', 'Rox', 'compile-cache') : null
+  if (process.platform === 'win32') {
+    const local = process.env.LOCALAPPDATA
+    return local && isAbsolute(local) ? join(local, 'Rox', 'compile-cache') : null
+  }
+  const xdg = process.env.XDG_CACHE_HOME
+  const base = xdg && isAbsolute(xdg) ? xdg : home ? join(home, '.cache') : null
+  return base ? join(base, 'rox', 'compile-cache') : null
+}
+
+/** Returns the dir when it is safe to use, else null. */
+function prepareCacheDir(dir) {
+  const fs = require('node:fs')
+  fs.mkdirSync(dir, { recursive: true, mode: 0o700 })
+  if (process.platform === 'win32') return dir
+  const st = fs.lstatSync(dir)
+  if (!st.isDirectory()) return null
+  if (typeof process.getuid === 'function' && st.uid !== process.getuid()) return null
+  if (st.mode & 0o022) {
+    try { fs.chmodSync(dir, 0o700) } catch { return null }
+  }
+  return dir
+}
+
 try {
   const mod = require('node:module')
-  if (typeof mod.enableCompileCache === 'function' && !process.env.ROX_DISABLE_COMPILE_CACHE) {
-    const { join } = require('node:path')
-    const { tmpdir } = require('node:os')
-    mod.enableCompileCache(join(tmpdir(), 'rox-compile-cache'))
+  if (typeof mod.enableCompileCache === 'function' && process.env.ROX_DISABLE_COMPILE_CACHE !== '1') {
+    const raw = compileCacheDir()
+    const dir = raw && prepareCacheDir(raw)
+    if (dir) mod.enableCompileCache(dir)
   }
 } catch {
   // Never block startup on the cache.
