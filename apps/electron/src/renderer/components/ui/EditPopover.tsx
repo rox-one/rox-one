@@ -12,7 +12,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from 'i18next'
 import { GripHorizontal } from 'lucide-react'
-import { motion, AnimatePresence } from 'motion/react' // motion used for backdrop only
+import { motion, AnimatePresence } from '@/lib/deferred-motion' // motion used for backdrop only
 import { Popover, PopoverTrigger, PopoverContent } from './popover'
 import { Button } from './button'
 import { cn } from '@/lib/utils'

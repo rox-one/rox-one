@@ -8,7 +8,8 @@
  *
  * All channels are LOCAL_ONLY (routing.ts).
  */
-import { RPC_CHANNELS, type CookbooksStatus } from '../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
+import type {CookbooksStatus} from '../../shared/types'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
 import { getCookbooksRuntime, initializeCookbooksRuntime } from '../cookbooks-runtime'

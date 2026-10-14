@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import * as React from "react"
-import { AnimatePresence, motion, useIsPresent, type Variants } from "motion/react"
+import { AnimatePresence, motion, PresenceDiv } from '@/lib/deferred-motion'
+import type { Variants } from 'motion/react'
 import { usePrefersReducedMotion } from "@/lib/render-profile-motion"
 
 import { useTranslation } from "react-i18next"
@@ -428,10 +429,7 @@ const ExpandableSection = React.memo(function ExpandableSection({
 // Remove it from native focus traversal as soon as the disclosure closes.
 const SidebarSectionBody = React.forwardRef<HTMLDivElement, React.ComponentProps<typeof motion.div>>(
   function SidebarSectionBody(props, ref) {
-    const isPresent = useIsPresent()
-    // React 18 supports the native attribute through a string-valued spread;
-    // its HTML types predate inert, and boolean unknown attributes are omitted.
-    return <motion.div {...props} {...(isPresent ? {} : { inert: '' })} ref={ref} aria-hidden={!isPresent} />
+    return <PresenceDiv {...props} ref={ref} />
   },
 )
 

@@ -42,9 +42,9 @@ export function ScreenHeader({
   actions?: React.ReactNode
 }) {
   return (
-    <div className="flex shrink-0 items-baseline gap-2 px-4 pb-2 pt-3">
-      <h1 className="text-xl font-bold">{title}</h1>
-      {subtitle != null && <span className="text-muted-foreground">{subtitle}</span>}
+    <div data-screen-header="" className="flex shrink-0 items-baseline gap-2 px-4 pb-2 pt-3">
+      <h1 data-screen-title="" className="text-xl font-bold">{title}</h1>
+      {subtitle != null && <span data-screen-count="" className="text-muted-foreground">{subtitle}</span>}
       <span className="flex-1" />
       {actions && <div className="flex items-center gap-1.5">{actions}</div>}
     </div>

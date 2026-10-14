@@ -231,7 +231,7 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
 export function InlineCode({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <code className={cn(
-      'px-1 py-0.5 rounded-[4px] bg-surface-input font-mono text-[length:var(--text-code-size)] text-text-primary box-decoration-clone',
+      'px-1 py-0.5 rounded-xs bg-surface-input font-mono text-[length:var(--text-code-size)] text-text-primary box-decoration-clone',
       className
     )}>
       {children}

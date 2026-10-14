@@ -5,7 +5,6 @@ import { useTranslation, Trans } from "react-i18next"
 import { isInternalAgentSession } from "@rox/shared/sessions/internal-prompts"
 import { useRef, useState, useEffect, useCallback, useMemo } from "react"
 import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai"
-import { motion, AnimatePresence } from "motion/react"
 import {
   Archive,
   ChevronDown,
@@ -99,6 +98,7 @@ import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
 import { type ProfileStripData } from "./ProfileStrip"
 import { accountProfileStrip } from "./profile-strip-account"
+import { SidebarNewSessionButton } from "./SidebarNewSessionButton"
 import { SidebarChrome, SidebarHeaderControls } from "./SidebarChrome"
 import { StatusBar } from "./StatusBar"
 import { useUiAppearance } from "@/lib/ui-appearance-store"
@@ -3234,6 +3234,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
               />
               {/* Sidebar Top Section */}
               <div className="flex-1 flex flex-col min-h-0">
+                {!isSidebarCollapsed && <SidebarNewSessionButton hotkey={newChatHotkey} onNewSession={handleNewChat} />}
                 {/* Primary Nav: Sessions → Labels → Projects → Pages | Memory…Knowledge | Automations → Settings */}
                 {/* WP5: the bottom fade shows only while rows remain below the fold
                     (data-scroll-down, set without re-rendering); at the end the last

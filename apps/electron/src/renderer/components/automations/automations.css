@@ -121,14 +121,14 @@
   left: 2px;
   width: 12px;
   height: 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--background);
   transition: transform 140ms ease;
 }
 .rox-autom-switch[aria-checked="true"] { background: var(--success); }
 .rox-autom-switch[aria-checked="true"]::after { transform: translateX(12px); }
 
-.rox-autom-dot { width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0; background: color-mix(in oklch, var(--foreground) 25%, transparent); }
+.rox-autom-dot { width: 7px; height: 7px; border-radius: var(--radius-full); flex-shrink: 0; background: color-mix(in oklch, var(--foreground) 25%, transparent); }
 .rox-autom-dot.is-ok { background: var(--success); }
 .rox-autom-dot.is-error { background: var(--destructive); }
 .rox-autom-dot.is-running { background: var(--accent); animation: rox-autom-pulse 1s ease-in-out infinite; }
@@ -207,7 +207,7 @@
   background: color-mix(in oklch, var(--foreground) 2.5%, transparent);
 }
 .rox-autom-step-num {
-  width: 24px; height: 24px; border-radius: 999px;
+  width: 24px; height: 24px; border-radius: var(--radius-full);
   display: inline-flex; align-items: center; justify-content: center;
   background: color-mix(in oklch, var(--foreground) 9%, transparent);
   font-size: 12px;

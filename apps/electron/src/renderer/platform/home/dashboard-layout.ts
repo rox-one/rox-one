@@ -31,11 +31,13 @@ export const HOME_WIDGET_IDS = [
   'inboxTracker',
   'calls',
   'calendar',
+  'hero',
+  'activity',
 ] as const
 
 export type HomeWidgetId = (typeof HOME_WIDGET_IDS)[number]
-export type HomeWidgetSize = 'S' | 'M' | 'L'
-export const HOME_WIDGET_SIZES: readonly HomeWidgetSize[] = ['S', 'M', 'L']
+export type HomeWidgetSize = 'S' | 'M' | 'L' | 'XL'
+export const HOME_WIDGET_SIZES: readonly HomeWidgetSize[] = ['S', 'M', 'L', 'XL']
 
 export interface HomeWidgetPlacement {
   id: HomeWidgetId
@@ -53,14 +55,28 @@ export interface PersistedHomeLayout extends HomeDashboardLayout {
 }
 /** Picker groups (order = picker order). */
 export const HOME_WIDGET_GROUPS: readonly { id: string; widgets: readonly HomeWidgetId[] }[] = [
-  { id: 'overview', widgets: ['summary', 'quickActions', 'calendar', 'focus'] },
+  { id: 'overview', widgets: ['hero', 'summary', 'quickActions', 'calendar', 'focus'] },
   { id: 'work', widgets: ['taskTracker', 'tasks', 'inboxTracker', 'inbox', 'decisions', 'notes'] },
   { id: 'meetings', widgets: ['meetings', 'calls'] },
-  { id: 'agents', widgets: ['recentSessions', 'agents', 'automations', 'feed', 'radar'] },
+  { id: 'agents', widgets: ['recentSessions', 'activity', 'agents', 'automations', 'feed', 'radar'] },
   { id: 'spend', widgets: ['usage', 'models', 'balance'] },
 ]
 
 export const HOME_LAYOUT_NS = 'home-dashboard'
+
+/**
+ * Sizes each widget may take. XL is reserved for the hero and wide charts; the
+ * hero needs at least L for its greeting, ask input and chips.
+ */
+const SML: readonly HomeWidgetSize[] = ['S', 'M', 'L']
+const WIDE: readonly HomeWidgetSize[] = ['M', 'L', 'XL']
+export const HOME_WIDGET_ALLOWED_SIZES: Record<HomeWidgetId, readonly HomeWidgetSize[]> = Object.fromEntries(
+  HOME_WIDGET_IDS.map((id) => [id, id === 'hero' ? ['L', 'XL'] : id === 'activity' || id === 'usage' || id === 'calendar' ? WIDE : SML]),
+) as Record<HomeWidgetId, readonly HomeWidgetSize[]>
+
+export function isAllowedSize(id: HomeWidgetId, size: HomeWidgetSize): boolean {
+  return HOME_WIDGET_ALLOWED_SIZES[id].includes(size)
+}
 
 /** Natural size of each widget when it is added from the picker. */
 export const HOME_WIDGET_DEFAULT_SIZE: Record<HomeWidgetId, HomeWidgetSize> = {
@@ -84,36 +100,42 @@ export const HOME_WIDGET_DEFAULT_SIZE: Record<HomeWidgetId, HomeWidgetSize> = {
   inboxTracker: 'S',
   calls: 'S',
   calendar: 'L',
+  hero: 'XL',
+  activity: 'M',
 }
 
 /**
- * Default: even 12-column rows at desktop widths (S=3, M=6, L=12). Радар stays
- * in the picker — it needs topics set up on its own screen first.
+ * Default (v3 bento): an XL «Сегодня» hero with two small cards stacked beside
+ * it, then mixed M/S/L shapes. Dense grid flow packs them without holes.
+ * Радар stays in the picker — it needs topics set up on its own screen first.
  */
 export const DEFAULT_HOME_LAYOUT: HomeDashboardLayout = {
   version: 2,
   widgets: [
-    { id: 'summary', size: 'M' },
-    { id: 'quickActions', size: 'M' },
-    { id: 'calendar', size: 'L' },
-    { id: 'taskTracker', size: 'M' },
-    { id: 'inboxTracker', size: 'S' },
-    { id: 'agents', size: 'S' },
-    { id: 'recentSessions', size: 'M' },
-    { id: 'meetings', size: 'S' },
-    { id: 'calls', size: 'S' },
-    { id: 'usage', size: 'M' },
-    { id: 'models', size: 'S' },
+    { id: 'hero', size: 'XL' },
     { id: 'balance', size: 'S' },
+    { id: 'agents', size: 'S' },
+    { id: 'taskTracker', size: 'M' },
+    { id: 'activity', size: 'M' },
+    { id: 'focus', size: 'S' },
+    { id: 'meetings', size: 'S' },
+    { id: 'inboxTracker', size: 'S' },
+    { id: 'calls', size: 'S' },
+    { id: 'calendar', size: 'L' },
+    { id: 'recentSessions', size: 'M' },
+    { id: 'usage', size: 'M' },
     { id: 'automations', size: 'S' },
     { id: 'tasks', size: 'S' },
     { id: 'inbox', size: 'S' },
-    { id: 'focus', size: 'S' },
+    { id: 'models', size: 'S' },
     { id: 'feed', size: 'M' },
     { id: 'notes', size: 'S' },
     { id: 'decisions', size: 'S' },
   ],
 }
+
+/** The previous (pre-bento) v2 default, ids and sizes — untouched copies upgrade. */
+const V2_FLAT_DEFAULT = 'summary:M,quickActions:M,calendar:L,taskTracker:M,inboxTracker:S,agents:S,recentSessions:M,meetings:S,calls:S,usage:M,models:S,balance:S,automations:S,tasks:S,inbox:S,focus:S,feed:M,notes:S,decisions:S'
 
 /** The v1 default (first release of the dashboard) — used to upgrade untouched layouts. */
 const V1_DEFAULT_IDS = 'summary,quickActions,recentSessions,agents,inbox,usage,models,balance,tasks,meetings,focus,automations,feed,notes,decisions'
@@ -125,7 +147,7 @@ export function isHomeWidgetId(value: unknown): value is HomeWidgetId {
 }
 
 function isSize(value: unknown): value is HomeWidgetSize {
-  return value === 'S' || value === 'M' || value === 'L'
+  return value === 'S' || value === 'M' || value === 'L' || value === 'XL'
 }
 
 /** Future or structurally corrupt layouts stay read-only until explicitly recovered. */
@@ -164,6 +186,32 @@ export function cloneLayout(layout: HomeDashboardLayout): HomeDashboardLayout {
   return { version: 2, widgets: layout.widgets.map((w) => ({ ...w, ...(w.appearance ? { appearance: { ...w.appearance } } : {}) })) }
 }
 
+/** True when a stored payload is the untouched pre-bento default (it reads as the bento default). */
+export function isFlatV2Default(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false
+  const value = raw as { version?: unknown; widgets?: unknown }
+  if (value.version !== 2 || !Array.isArray(value.widgets)) return false
+  return value.widgets.map((w: { id?: unknown; size?: unknown; appearance?: unknown }) => (w && !w.appearance ? `${String(w.id)}:${String(w.size)}` : '!')).join(',') === V2_FLAT_DEFAULT
+}
+
+/** Widgets whose stored size is no longer allowed and is shown at the default size. */
+export function coercedSizes(raw: unknown): HomeWidgetId[] {
+  if (!raw || typeof raw !== 'object') return []
+  const list = (raw as { widgets?: unknown }).widgets
+  if (!Array.isArray(list)) return []
+  const out: HomeWidgetId[] = []
+  for (const item of list) {
+    const { id, size } = (item ?? {}) as { id?: unknown; size?: unknown }
+    if (isHomeWidgetId(id) && isSize(size) && !isAllowedSize(id, size) && !out.includes(id)) out.push(id)
+  }
+  return out
+}
+
+/** The pre-bento default, for the one-time «вернуть прежнюю раскладку» action. */
+export function flatV2DefaultLayout(): HomeDashboardLayout {
+  return { version: 2, widgets: V2_FLAT_DEFAULT.split(',').map((pair) => { const [id, size] = pair.split(':'); return { id: id as HomeWidgetId, size: size as HomeWidgetSize } }) }
+}
+
 /** Corrupt/unknown payload → default; unknown ids and duplicates are dropped. */
 export function normalizeHomeLayout(raw: unknown): HomeDashboardLayout {
   if (!raw || typeof raw !== 'object') return cloneLayout(DEFAULT_HOME_LAYOUT)
@@ -176,7 +224,7 @@ export function normalizeHomeLayout(raw: unknown): HomeDashboardLayout {
     const { id, size, appearance } = item as { id?: unknown; size?: unknown; appearance?: unknown }
     if (!isHomeWidgetId(id) || seen.has(id)) continue
     seen.add(id)
-    widgets.push({ id, size: isSize(size) ? size : HOME_WIDGET_DEFAULT_SIZE[id], ...(isWidgetAppearance(appearance) ? { appearance: { ...appearance } } : {}) })
+    widgets.push({ id, size: isSize(size) && isAllowedSize(id, size) ? size : HOME_WIDGET_DEFAULT_SIZE[id], ...(isWidgetAppearance(appearance) ? { appearance: { ...appearance } } : {}) })
   }
   // v1 → v2: an untouched v1 default becomes the richer v2 default; a
   // customised v1 layout keeps the user's arrangement and gains the new widgets.
@@ -206,6 +254,7 @@ export function removeWidget(layout: HomeDashboardLayout, id: HomeWidgetId): Hom
 }
 
 export function resizeWidget(layout: HomeDashboardLayout, id: HomeWidgetId, size: HomeWidgetSize): HomeDashboardLayout {
+  if (!isAllowedSize(id, size)) return layout
   return { version: 2, widgets: layout.widgets.map((w) => (w.id === id ? { ...w, size } : w)) }
 }
 
@@ -283,11 +332,92 @@ export function widgetItemLimit(size: HomeWidgetSize, smallLimit: number, column
 
 /**
  * Column span for a widget size at a container width. Wide (≥1100): S=3,
- * M=6, L=12 (four small widgets per row). Medium (≥760): S=4 is too narrow
+ * M=6, L=12, XL=9 (four small widgets per row; an XL hero is as tall as
+ * L and leaves a 3-column lane that dense flow fills with two stacked S cards). Medium (≥760): S=4 is too narrow
  * against M=6, so S=6/M=6/L=12. Narrow: everything full width.
  */
 export function widgetSpan(size: HomeWidgetSize, containerWidth: number): number {
-  if (containerWidth >= 1100) return size === 'S' ? 3 : size === 'M' ? 6 : 12
-  if (containerWidth >= 760) return size === 'L' ? 12 : 6
+  if (containerWidth >= 1100) return size === 'S' ? 3 : size === 'M' ? 6 : size === 'XL' ? 9 : 12
+  if (containerWidth >= 760) return size === 'L' || size === 'XL' ? 12 : 6
   return 12
+}
+
+export interface PackedCell {
+  /** Zero-based grid column. */
+  col: number
+  /** Zero-based row in widget row units (see `widgetRowSpan`). */
+  row: number
+  span: number
+  rows: number
+}
+
+/**
+ * Explicit bento packing with a forward-only cursor (like CSS sparse auto-flow,
+ * computed here so React can place cells explicitly). Each widget takes the
+ * first free slot at or after the previous widget's slot, row-major, so packed
+ * order always equals data order: DOM order, keyboard order, drag targets and
+ * the saved list are all the visual order, and a ±1 move is always one visible
+ * step. The bento default is arranged to pack without holes.
+ */
+export function packHomeLayout(layout: HomeDashboardLayout, containerWidth: number): { layout: HomeDashboardLayout; cells: Map<HomeWidgetId, PackedCell> } {
+  const occupied: boolean[][] = []
+  const fits = (row: number, col: number, span: number, rows: number) => {
+    for (let y = row; y < row + rows; y += 1) for (let x = col; x < col + span; x += 1) if (occupied[y]?.[x]) return false
+    return true
+  }
+  const cells = new Map<HomeWidgetId, PackedCell>()
+  let cursor = { row: 0, col: 0 }
+  for (const widget of layout.widgets) {
+    const span = Math.min(HOME_GRID_COLUMNS, widgetSpan(widget.size, containerWidth))
+    const rows = widgetRowSpan(widget.size)
+    let placed: PackedCell | null = null
+    for (let row = cursor.row; !placed; row += 1) {
+      for (let col = row === cursor.row ? cursor.col : 0; col + span <= HOME_GRID_COLUMNS && !placed; col += 1) {
+        if (fits(row, col, span, rows)) placed = { col, row, span, rows }
+      }
+    }
+    const cell = placed as PackedCell
+    for (let y = cell.row; y < cell.row + rows; y += 1) {
+      occupied[y] ??= []
+      for (let x = cell.col; x < cell.col + span; x += 1) occupied[y]![x] = true
+    }
+    cells.set(widget.id, cell)
+    cursor = { row: cell.row, col: cell.col + span }
+  }
+  const widgets = layout.widgets.slice()
+  return { layout: { version: 2, widgets }, cells }
+}
+
+/** Per-workspace Главная notices (separate namespace: the layout schema stays strict). */
+export const HOME_META_NS = 'home-dashboard-meta'
+export interface HomeDashboardMeta {
+  /** The user restored the pre-bento arrangement; never upgrade it again. */
+  keepFlat?: boolean
+  /** The one-time «Главная обновлена» notice was shown. */
+  bentoNoticeSeen?: boolean
+}
+export function normalizeHomeMeta(raw: unknown): HomeDashboardMeta {
+  if (!raw || typeof raw !== 'object') return {}
+  const value = raw as Record<string, unknown>
+  return { ...(value.keepFlat === true ? { keepFlat: true } : {}), ...(value.bentoNoticeSeen === true ? { bentoNoticeSeen: true } : {}) }
+}
+/** Untouched pre-bento default → bento default, unless the user chose to keep it. */
+export function upgradeFlatDefault(raw: unknown, layout: HomeDashboardLayout, meta: HomeDashboardMeta): { layout: HomeDashboardLayout; upgraded: boolean } {
+  if (meta.keepFlat || !isFlatV2Default(raw)) return { layout, upgraded: false }
+  return { layout: cloneLayout(DEFAULT_HOME_LAYOUT), upgraded: true }
+}
+
+/**
+ * Drag on screen: packed order equals data order (see `packHomeLayout`), so
+ * the on-screen move is the data move; the result is saved as canonical.
+ */
+export function moveWidgetVisual(layout: HomeDashboardLayout, activeId: HomeWidgetId, overId: HomeWidgetId, containerWidth: number): HomeDashboardLayout {
+  const moved = moveWidget(layout, activeId, overId)
+  return moved === layout ? layout : packHomeLayout(moved, containerWidth).layout
+}
+
+/** Move ±1 on screen: always exactly one visible position (forward-only packing). */
+export function shiftWidgetVisual(layout: HomeDashboardLayout, id: HomeWidgetId, delta: -1 | 1, containerWidth: number): HomeDashboardLayout {
+  const moved = shiftWidget(layout, id, delta)
+  return moved === layout ? layout : packHomeLayout(moved, containerWidth).layout
 }

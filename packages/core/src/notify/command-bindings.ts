@@ -217,6 +217,46 @@ function domainPrefRow(row: Record<string, unknown>): DomainNotificationPrefUpda
 }
 
 /**
+ * The two pref-row axes, as key sets. A canonical row (DATA-MODEL §5.13) carries
+ * `eventType`/`channel`; a legacy `NotificationPrefUpdate` row carries
+ * `kind`/`channels`/`batchMinutes` (the shipped `notification_pref` columns).
+ * They are disjoint by construction, so a row carrying both is *ambiguous* —
+ * it must be rejected, not routed by whichever key happens to be tested first.
+ */
+const DOMAIN_PREF_AXIS_FIELDS = ['eventType', 'channel'] as const
+const LEGACY_PREF_AXIS_FIELDS = ['kind', 'channels', 'batchMinutes'] as const
+
+/** Which axis a pref row is written on — or that it mixes both. */
+export type PrefRowKind = 'domain' | 'legacy' | 'ambiguous'
+
+/**
+ * The ONE discriminator for `notifications.update_prefs` rows. Router
+ * (`NOTIFICATIONS_UPDATE_PREFS_SCHEMA`) and filter (`prefUpdatesForHost`) both
+ * call it, so the accepted-as-canonical and forwarded-as-legacy decisions
+ * cannot drift: a `'domain'` row is validated as canonical and never forwarded,
+ * a `'legacy'` row is validated as legacy and is forwarded.
+ *
+ * A row carrying fields from both axes classifies `'ambiguous'`; callers must
+ * reject it with `ambiguousPrefRowMessage` rather than pick an axis — picking
+ * one is exactly how the two halves of the pipeline silently disagreed before.
+ */
+export function classifyPrefRow(row: object): PrefRowKind {
+  const hasDomain = DOMAIN_PREF_AXIS_FIELDS.some(field => field in row)
+  const hasLegacy = LEGACY_PREF_AXIS_FIELDS.some(field => field in row)
+  if (hasDomain && hasLegacy) return 'ambiguous'
+  return hasDomain ? 'domain' : 'legacy'
+}
+
+/** Rejection naming the mixed fields, so the error never blames an unrelated one. */
+export function ambiguousPrefRowMessage(row: object): string {
+  const mixed = [
+    ...DOMAIN_PREF_AXIS_FIELDS.filter(field => field in row),
+    ...LEGACY_PREF_AXIS_FIELDS.filter(field => field in row),
+  ]
+  return `pref mixes the canonical (${DOMAIN_PREF_AXIS_FIELDS.join('/')}) and legacy (${LEGACY_PREF_AXIS_FIELDS.join('/')}) axes: ${mixed.join(', ')}`
+}
+
+/**
  * Structural strict schema; `@rox/shared/notify/schemas` has the zod twin.
  *
  * Accepts the canonical `{ notificationIds }` (`NOTIFY_DOMAIN_FIELDS`) and the
@@ -282,7 +322,9 @@ export const NOTIFICATIONS_UPDATE_PREFS_SCHEMA: SchemaLike<NotificationsUpdatePr
     const prefs: Array<NotificationPrefUpdate | DomainNotificationPrefUpdate> = []
     for (const row of rows) {
       if (!isPlainObject(row)) return failure('Each pref must be an object')
-      const parsed = 'eventType' in row ? domainPrefRow(row) : legacyPrefRow(row)
+      const shape = classifyPrefRow(row)
+      if (shape === 'ambiguous') return failure(ambiguousPrefRowMessage(row))
+      const parsed = shape === 'domain' ? domainPrefRow(row) : legacyPrefRow(row)
       if (typeof parsed === 'string') return failure(parsed)
       prefs.push(parsed)
     }
@@ -323,7 +365,7 @@ export const NOTIFICATIONS_UPDATE_PREFS_SCHEMA: SchemaLike<NotificationsUpdatePr
  * notify module — not a translation this gateway may fabricate.
  */
 function prefUpdatesForHost(payload: NotificationsUpdatePrefsPayload): readonly NotificationPrefUpdate[] {
-  return payload.prefs.filter((row): row is NotificationPrefUpdate => !('eventType' in row))
+  return payload.prefs.filter((row): row is NotificationPrefUpdate => classifyPrefRow(row) === 'legacy')
 }
 
 // ---------------------------------------------------------------------------

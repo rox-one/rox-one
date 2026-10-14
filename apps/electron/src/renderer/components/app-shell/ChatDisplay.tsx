@@ -118,6 +118,8 @@ function isRoxCliCredentialChatError(code?: string): boolean {
   return code === 'OMP_NO_MODELS' || code === 'OMP_AUTH_REQUIRED' || code === 'OMP_NOT_CONFIGURED'
 }
 import * as storage from "@/lib/local-storage"
+import { computeComposerStats } from "./input/composer-stats"
+import { getModelContextWindow } from "@config/models"
 
 // ============================================================================
 // G5 Dialog Continuum
@@ -1393,6 +1395,13 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     return pending.sort((a, b) => a.createdAt - b.createdAt)
   }, [session?.messages])
 
+  // DSH-style stats line under the composer; only real session data, no fakes.
+  const composerStats = useMemo(() => session ? computeComposerStats({
+    messages: session.messages,
+    tokenUsage: session.tokenUsage,
+    fallbackContextWindow: getModelContextWindow(currentModel),
+  }) : null, [session?.messages, session?.tokenUsage, currentModel])
+
   const followUpInputItems = useMemo(() => {
     return pendingFollowUpAnnotations.map((followUp, idx) => ({
       id: `${followUp.messageId}:${followUp.annotationId}`,
@@ -2599,6 +2608,7 @@ const handleFollowUpChipClick = useCallback((item: {
           {/* === INPUT CONTAINER: FreeForm or Structured Input === */}
           <ChatInputZone
             compactMode={compactMode}
+            stats={composerStats}
             permissionMode={permissionMode}
             onPermissionModeChange={onPermissionModeChange}
             tasks={backgroundTasks}
