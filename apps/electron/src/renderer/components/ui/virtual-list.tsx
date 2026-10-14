@@ -26,6 +26,7 @@ import {
   coveringHeaderIndex,
   flattenEntityListRows,
   groupEndByHeaderKey,
+  observedBlockSize,
   revealEntryScrollTop,
   virtualEntryIndices,
 } from '@/components/app-shell/entity-list-virtualization'
@@ -171,7 +172,7 @@ export function VirtualList<T, G extends VirtualListGroup<T> = VirtualListGroup<
           const registration = observedRef.current.get(entry.target)
           if (!registration) continue
           const key = logicalKeyRef.current.get(registration) ?? registration
-          const height = Math.ceil(entry.contentRect.height)
+          const height = observedBlockSize(entry)
           if (height <= 0 || previous.get(key) === height) continue
           next ??= new Map(previous)
           next.set(key, height)

@@ -1,13 +1,15 @@
 import { formatDistanceToNowStrict } from "date-fns"
 import type { Locale } from "date-fns"
-import { Archive, ArchiveRestore, Check, Flag, Mail, ShieldAlert } from "lucide-react"
+import { Archive, ArchiveRestore, Check, Copy, Flag, GitFork, ShieldAlert } from "lucide-react"
 import { useRef } from "react"
+import { toast } from "sonner"
+import { branchErrorDescription } from "@/lib/branch-error"
+import { latestBranchableMessageId, sessionTranscriptToMarkdown } from "@/lib/session-row-actions"
 import { useTranslation } from "react-i18next"
 import { useActionLabel } from "@/actions"
 import { cn } from "@/lib/utils"
 import { rendererPerf } from "@/lib/perf"
 import { Spinner } from "@rox/ui/spinner"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@rox/ui/tooltip"
 import { EntityRow } from "@/components/ui/entity-row"
 import { EntityListBadge } from "@/components/ui/entity-list-badge"
 import { SessionMenu } from "./SessionMenu"
@@ -86,7 +88,7 @@ export function SessionItem({
   const ctx = useSessionListContext()
   const seProfile = useSuperEngineeringProfile()
   const { t } = useTranslation()
-  const { workspaces, isCompactMode } = useAppShellContext()
+  const { workspaces, isCompactMode, onCreateSession } = useAppShellContext()
   const { density, hoverActions: hoverActionsEnabled } = useAtomValue(collectionDisplayAtom)
   const isComfortable = density === "comfortable"
   const showRowHoverActions = hoverActionsEnabled !== false
@@ -105,11 +107,11 @@ export function SessionItem({
     return ctx.flatLabels.some(l => l.id === labelId)
   }))
   const hasPendingPrompt = ctx.hasPendingPrompt?.(item.id) ?? false
-  const unread = hasUnreadMeta(item)
   const lastActivityText = formatLastActivity(item.lastMessageAt)
-  const showLastActivityInTrailing = Boolean(lastActivityText) && !isComfortable
+  // Relative time sits on the title line in both densities (single-line rows).
+  const showLastActivityInTrailing = Boolean(lastActivityText)
   const previewText = isComfortable
-    ? [lastActivityText, item.model, formatSessionDue(item)].filter(Boolean).join(" · ") || undefined
+    ? [item.model, formatSessionDue(item)].filter(Boolean).join(" · ") || undefined
     : isCompactMode
       ? getSessionPreviewText(item)
       : null
@@ -139,6 +141,63 @@ export function SessionItem({
     void ensureMessagesLoaded(item.id).catch(() => {
       prefetchedTranscriptIds.current.delete(item.id)
     })
+  }
+
+  const forkingRef = useRef(false)
+  const forkSession = async () => {
+    if (forkingRef.current) return
+    forkingRef.current = true
+    try {
+      const session = await ensureMessagesLoaded(item.id)
+      const messageId = session ? latestBranchableMessageId(session.messages) : null
+      if (!session || !messageId) {
+        toast.error(t('toast.couldNotCreateBranch'), { description: t('sessionItem.forkEmpty') })
+        return
+      }
+      const child = await onCreateSession(session.workspaceId, {
+        branchFromMessageId: messageId,
+        branchFromSessionId: session.id,
+        name: t('chat.branchOf', { name: session.name || t('chat.titlePlaceholder') }),
+        llmConnection: session.llmConnection,
+        model: session.model,
+        permissionMode: session.permissionMode,
+        workingDirectory: session.workingDirectory,
+        enabledSourceSlugs: session.enabledSourceSlugs,
+      })
+      navigate(routes.view.allSessions(child.id))
+    } catch (error) {
+      toast.error(t('toast.couldNotCreateBranch'), {
+        description: branchErrorDescription(error, {
+          fallback: t('toast.createBranchFailed'),
+          sameProvider: t('toast.branchSameProvider'),
+          sdkNotReady: t('toast.branchSdkNotReady'),
+          historyUnavailable: t('toast.branchHistoryUnavailable'),
+        }),
+      })
+    } finally {
+      forkingRef.current = false
+    }
+  }
+
+  const copyTranscript = async () => {
+    try {
+      const session = await ensureMessagesLoaded(item.id)
+      const markdown = session ? sessionTranscriptToMarkdown(session, {
+        user: t('sessionItem.transcriptUser'),
+        assistant: t('sessionItem.transcriptAssistant'),
+        tool: t('sessionItem.transcriptTool'),
+      }) : ''
+      if (!markdown.trim()) {
+        toast.error(t('sessionItem.transcriptEmpty'))
+        return
+      }
+      await navigator.clipboard.writeText(markdown)
+      toast.success(t('sessionItem.transcriptCopied'))
+    } catch (error) {
+      toast.error(t('sessionItem.transcriptCopyFailed'), {
+        description: error instanceof Error ? error.message : t('toast.unknownError'),
+      })
+    }
   }
 
   const handleClick = (e: React.MouseEvent) => {
@@ -187,7 +246,7 @@ export function SessionItem({
         onPointerEnter: prefetchTranscript,
         onFocus: prefetchTranscript,
         className: cn(
-          !isComfortable && "py-1.5",
+          "py-[7px]",
           isSelected || isInMultiSelect
             ? "bg-[var(--shell-selected,var(--element-selected,var(--foreground-5)))]"
             : "hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]",
@@ -249,7 +308,7 @@ export function SessionItem({
         />
       )}
       leading={
-        <div className={cn("flex items-center", !isComfortable ? "pt-1.5" : "pt-3")}>
+        <div className="flex h-8 items-center">
           <button
             type="button"
             aria-pressed={isInMultiSelect}
@@ -313,10 +372,10 @@ export function SessionItem({
       title={ctx.searchQuery ? highlightMatch(title, ctx.searchQuery) : title}
       titleTooltip={title}
       titleClassName={cn(
-        "text-base",
+        "text-data",
         (item.isAsyncOperationOngoing || (seProfile && item.isProcessing)) && "animate-shimmer-text",
       )}
-      subtitle={previewText ? <span className="text-text-secondary">{previewText}</span> : undefined}
+      subtitle={previewText ? <span className="text-caption leading-4 text-text-secondary">{previewText}</span> : undefined}
       titleSuffix={
         (projectName || hasMessagingBinding || item.owner || (item.participants?.length ?? 0) > 0) ? (
           <div className="flex items-center gap-1">
@@ -348,58 +407,28 @@ export function SessionItem({
           </div>
         ) : undefined
       }
+      hoverActionSize="compact"
       hoverActions={
         showRowHoverActions ? <>
-          {!unread && (
-            <button
-              type="button"
-              aria-label={t("sessionMenu.markAsUnread")}
-              className="p-1 rounded-[var(--radius-control)] hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]"
-              onClick={(e) => {
-                e.stopPropagation()
-                ctx.onMarkUnread(item.id)
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-          )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-pressed={item.isFlagged}
-              aria-label={item.isFlagged ? t("sessionMenu.unpin") : t("sessionMenu.pin")}
-              className="p-1 rounded-[var(--radius-control)] hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]"
-              onClick={(e) => {
-                e.stopPropagation()
-                if (item.isFlagged) ctx.onUnflag?.(item.id)
-                else ctx.onFlag?.(item.id)
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <Flag className={cn("h-3.5 w-3.5", item.isFlagged ? "text-info" : "text-muted-foreground")} />
-            </button>
-            </TooltipTrigger>
-            <TooltipContent>{item.isFlagged ? t("sessionMenu.unpin") : t("sessionMenu.pin")}</TooltipContent>
-          </Tooltip>
-          <button
-            type="button"
-            aria-label={item.isArchived ? t("sessionMenu.unarchive") : t("sessionMenu.archive")}
-            className="p-1 rounded-[var(--radius-control)] hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))]"
-            onClick={(e) => {
-              e.stopPropagation()
-              if (item.isArchived) ctx.onUnarchive?.(item.id)
-              else ctx.onArchive?.(item.id)
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
+          <SessionRowAction label={t("sessionMenu.fork")} onActivate={() => void forkSession()}>
+            <GitFork />
+          </SessionRowAction>
+          <SessionRowAction label={t("sessionMenu.copyTranscript")} onActivate={() => void copyTranscript()}>
+            <Copy />
+          </SessionRowAction>
+          <SessionRowAction
+            label={item.isArchived ? t("sessionMenu.unarchive") : t("sessionMenu.archive")}
+            onActivate={() => (item.isArchived ? ctx.onUnarchive?.(item.id) : ctx.onArchive?.(item.id))}
           >
-            {item.isArchived ? (
-              <ArchiveRestore className="h-3.5 w-3.5 text-muted-foreground" />
-            ) : (
-              <Archive className="h-3.5 w-3.5 text-muted-foreground" />
-            )}
-          </button>
+            {item.isArchived ? <ArchiveRestore /> : <Archive />}
+          </SessionRowAction>
+          <SessionRowAction
+            label={item.isFlagged ? t("sessionMenu.unpin") : t("sessionMenu.pin")}
+            pressed={!!item.isFlagged}
+            onActivate={() => (item.isFlagged ? ctx.onUnflag?.(item.id) : ctx.onFlag?.(item.id))}
+          >
+            <Flag className={item.isFlagged ? "fill-current text-info" : undefined} />
+          </SessionRowAction>
         </> : undefined
       }
       titleTrailing={hasMatch ? (
@@ -415,16 +444,47 @@ export function SessionItem({
           {chatMatchCount}
         </span>
       ) : item.isFlagged ? (
-        <div className="p-1 flex items-center justify-center">
-          <Flag className="h-3.5 w-3.5 text-info" />
+        <div className="flex h-[18px] items-center justify-center">
+          <Flag className="h-3.5 w-3.5 fill-current text-info" />
         </div>
       ) : showLastActivityInTrailing ? (
-        <span className="text-xs text-text-secondary numeric whitespace-nowrap" title={lastActivityText}>
+        <span className="text-caption leading-4 text-text-secondary numeric whitespace-nowrap" title={lastActivityText}>
           {lastActivityText}
         </span>
       ) : undefined}
       badges={hasLabels ? <SessionBadges item={item} /> : undefined}
     />
     </SessionProjectColorWrapper>
+  )
+}
+
+/** 22px hover button with tooltip + aria-label; never lets the click select the row. */
+export function SessionRowAction({
+  label,
+  pressed,
+  onActivate,
+  children,
+}: {
+  label: string
+  pressed?: boolean
+  onActivate: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      aria-pressed={pressed}
+      data-session-row-action=""
+      className="rounded-[var(--radius-control)] text-muted-foreground hover:bg-[var(--shell-hover,var(--element-hover,var(--foreground-5)))] hover:text-foreground focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_1px_var(--accent)]"
+      onClick={(e) => {
+        e.stopPropagation()
+        onActivate()
+      }}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      {children}
+    </button>
   )
 }
