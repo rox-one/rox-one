@@ -205,6 +205,14 @@ export const actions = {
     defaultHotkey: 'mod+shift+b',
     category: 'View',
   },
+  'view.toggleSplit': {
+    id: 'view.toggleSplit',
+    labelKey: 'shortcuts.action.toggleSplit',
+    description: 'Show two screens side by side, half and half (or leave split)',
+    defaultHotkey: 'mod+alt+\\',
+    category: 'View',
+    when: '!inputFocus && !menuOpen',
+  },
   'view.toggleFocusMode': {
     id: 'view.toggleFocusMode',
     labelKey: 'shortcuts.action.toggleFocusMode',
