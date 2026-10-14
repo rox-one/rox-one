@@ -3888,6 +3888,7 @@
   "inspector.terminalHint": "輸入命令並按 Enter。",
   "inspector.terminalNoBridge": "Shell 橋接無法使用。",
   "inspector.terminalPlaceholder": "命令",
+  "inspector.unpin": "取消釘選檢查器",
   "kanban.a11y.columnRegion": "Column “{{column}}”",
   "kanban.a11y.dragCancel": "已取消移動「{{title}}」",
   "kanban.a11y.dragEnd": "「{{title}}」已移至{{column}}",

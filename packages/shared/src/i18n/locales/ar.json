@@ -3908,6 +3908,7 @@
   "inspector.terminalHint": "اكتب أمرًا ثم اضغط Enter.",
   "inspector.terminalNoBridge": "جسر الصدفة غير متاح.",
   "inspector.terminalPlaceholder": "أمر",
+  "inspector.unpin": "إلغاء تثبيت المفتش",
   "kanban.a11y.columnRegion": "Column “{{column}}”",
   "kanban.a11y.dragCancel": "تم إلغاء نقل \"{{title}}\"",
   "kanban.a11y.dragEnd": "تم نقل \"{{title}}\" إلى {{column}}",
