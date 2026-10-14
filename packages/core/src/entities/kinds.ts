@@ -62,6 +62,7 @@ export const NEW_ENTITY_KINDS = [
   'radar-topic',
   'agent-team',
   'invitation',
+  'canvas',
 ] as const
 
 export type NewEntityKind = (typeof NEW_ENTITY_KINDS)[number]
@@ -103,6 +104,7 @@ export type ModuleId =
   | 'agent-teams'
   | 'licences'
   | 'identity'
+  | 'canvas'
 
 /** Possible authorities for a kind: local store, workspace, or an external system. */
 export type Authority = 'local' | 'workspace' | 'external'
@@ -194,6 +196,7 @@ export const ENTITY_ICON_NAMES = [
   'users-round',
   'video',
   'zap',
+  'presentation',
 ] as const
 
 export type IconName = (typeof ENTITY_ICON_NAMES)[number]
@@ -469,6 +472,12 @@ export const ENTITY_KIND_DESCRIPTORS: Record<EntityKind, KindDescriptor> = {
   invitation: {
     kind: 'invitation', owner: 'identity', authorities: ['workspace'], route: entityRoute,
     icon: 'mail-plus', labelKey: 'entities.kind.invitation', capabilities: LOCAL, searchCategory: 'contacts',
+  },
+
+  // «Доска»: a board; fragment = object id of a card on it.
+  canvas: {
+    kind: 'canvas', owner: 'canvas', authorities: ['local'], route: entityRoute,
+    icon: 'presentation', labelKey: 'entities.kind.canvas', capabilities: LOCAL_EMBEDDABLE,
   },
 }
 
