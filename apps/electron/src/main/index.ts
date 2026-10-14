@@ -1039,7 +1039,10 @@ app.whenReady().then(async () => {
       rendererFilePath: join(__dirname, 'renderer/index.html'),
       devServerUrl: process.env.VITE_DEV_SERVER_URL,
       service: new HomeFetchService({
-        fetch: ((input: string | URL | Request, init?: RequestInit) => net.fetch(input instanceof URL ? input.toString() : input, init)) as typeof globalThis.fetch,
+        // Dedicated in-memory session with no cookies/credentials, so Home widget
+        // fetches never carry the user's browsing or app session state.
+        fetch: ((input: string | URL | Request, init?: RequestInit) =>
+          session.fromPartition('rox-home-fetch', { cache: false }).fetch(input instanceof URL ? input.toString() : input, { ...init, credentials: 'omit' })) as typeof globalThis.fetch,
         now: () => Date.now(),
         isOnline: () => net.isOnline(),
         getExaKey: () => getSharedKeys().exa,
