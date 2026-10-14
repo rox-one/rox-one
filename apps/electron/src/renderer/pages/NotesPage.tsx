@@ -42,6 +42,7 @@ import { navigate, routes } from '@/lib/navigate'
 import { consumePendingCompose } from '@/platform/inspector-compose-events'
 import { captureWorkspaceToolOpen, openWorkspaceTool, type WorkspaceToolOpenIntent } from '@/lib/open-workspace-tool'
 import { cn } from '@/lib/utils'
+import { NotesQuickSections, useNotePins } from '@/screens/notes/NotesQuickSections'
 import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
 import {
   contentHash,
@@ -2186,6 +2187,13 @@ h1,h2,h3{margin-top:1.5em}
     updateWikiQueryAndAnchor()
   }, [updateWikiQueryAndAnchor])
 
+  // «Закреплённое» / «Недавнее» quick sections (shell SidebarSection markup above the tree).
+  const notePins = useNotePins(activeWorkspaceId)
+  const pinnedNoteSet = React.useMemo(() => new Set(notePins.pinned), [notePins.pinned])
+  const isNotePinned = React.useCallback((id: string) => pinnedNoteSet.has(id), [pinnedNoteSet])
+  const quickNotes = scopedNotes
+  const handleOpenNoteRef = React.useRef<(noteId: string) => unknown>(() => {})
+  const openNoteFromQuick = React.useCallback((noteId: string) => { void handleOpenNoteRef.current(noteId) }, [])
   const handleOpenNote = async (noteId: string) => {
     if (!await flushBeforeAction()) return
     navigate(routes.view.notes(noteId))
@@ -2653,6 +2661,7 @@ h1,h2,h3{margin-top:1.5em}
   // The compact view menu measures the toolbar the vault rail leaves behind.
   const toolbarWidth = shellWidth - (vaultShown ? railLayout.vault : 0)
 
+  handleOpenNoteRef.current = handleOpenNote
   return (
     <>
     <NotesEditorHeadlineStyles />
@@ -2724,6 +2733,7 @@ h1,h2,h3{margin-top:1.5em}
             </details>
           )}
         </div>
+        <NotesQuickSections notes={quickNotes} activeNoteId={activeNote?.id} pinned={notePins.pinned} onTogglePin={notePins.toggle} onOpenNote={openNoteFromQuick} />
         <DndContext sensors={dndSensors} onDragEnd={handleSidebarDragEnd}>
         <div ref={notesListViewportRef} className="flex-1 min-h-0 overflow-y-auto p-2">
           <NotesNavigationSidebar
@@ -2745,6 +2755,8 @@ h1,h2,h3{margin-top:1.5em}
             onCopyNoteLink={copyNoteLink}
             onCopyNotePath={copyNotePath}
             onRevealNote={revealNote}
+            isNotePinned={isNotePinned}
+            onTogglePinNote={notePins.toggle}
             workspaceId={activeWorkspaceId}
             emptyMessage={noteScope.kind === 'unavailable' ? t('navigation.notes.scopeUnavailable') : query || selectedTag ? t('notes.vault.noMatches') : t('notes.vault.empty')}
           />

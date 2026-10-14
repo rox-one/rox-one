@@ -1,0 +1,47 @@
+import { memo, useCallback, useMemo } from 'react'
+import { useAtom } from 'jotai'
+import { useTranslation } from 'react-i18next'
+import { FileText } from 'lucide-react'
+import { SidebarSection } from '@/components/shell/SidebarSection'
+import { toScreenSidebarGroups } from '../screen-sidebar-adapter'
+import type { SidebarTarget } from '../sidebar-section'
+import { buildNotesSidebarSections, togglePinnedNote, type NotesSidebarNote } from './notes-sidebar-sections'
+import { notesPinnedByWorkspaceAtom } from './notes-pins'
+
+const ICONS = { 'file-text': FileText } as const
+const NONE: string[] = []
+
+/** Pinned / move a note's pin — shared by the quick sections and the tree's context menu. */
+export function useNotePins(workspaceId: string | null | undefined) {
+  const [byWs, setByWs] = useAtom(notesPinnedByWorkspaceAtom)
+  const pinned = (workspaceId && byWs[workspaceId]) || NONE
+  const toggle = useCallback((noteId: string) => {
+    if (!workspaceId) return
+    setByWs((prev) => ({ ...prev, [workspaceId]: togglePinnedNote(prev[workspaceId] ?? [], noteId) }))
+  }, [setByWs, workspaceId])
+  return { pinned, toggle }
+}
+
+/** «Закреплённое» + «Недавнее» above the Notes folder tree (shell SidebarSection markup). */
+export const NotesQuickSections = memo(function NotesQuickSections({ notes, activeNoteId, pinned, onTogglePin, onOpenNote }: {
+  notes: readonly NotesSidebarNote[]
+  activeNoteId: string | null | undefined
+  pinned: readonly string[]
+  onTogglePin(noteId: string): void
+  onOpenNote(noteId: string): void
+}) {
+  const { t } = useTranslation()
+  const sections = useMemo(() => buildNotesSidebarSections(notes, pinned), [notes, pinned])
+  const onTarget = useCallback((target: SidebarTarget) => { if (target.kind === 'note') onOpenNote(target.path) }, [onOpenNote])
+  const onMenu = useCallback((target: SidebarTarget) => { if (target.kind === 'note') onTogglePin(target.path) }, [onTogglePin])
+  const groups = useMemo(
+    () => toScreenSidebarGroups(sections, { t, icons: ICONS, onTarget, onMenu, activeKey: activeNoteId ? `note:${activeNoteId}` : null }),
+    [sections, t, onTarget, onMenu, activeNoteId],
+  )
+  if (groups.length === 0) return null
+  return (
+    <div className="shrink-0 px-1 pb-1" data-notes-quick-sections="">
+      {groups.map((g) => <SidebarSection key={g.id} screenId="docs" group={g} mode="expanded" />)}
+    </div>
+  )
+})
