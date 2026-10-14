@@ -911,9 +911,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
     }
   }, [store, topLevel, projects])
   const inboxCount = listCount('inbox')
-  const todayCount = listCount('today')
+  const todayListCount = listCount('today')
   const upcomingCount = listCount('upcoming')
-  const sidebarListCounts = useMemo(() => ({ inbox: inboxCount, today: todayCount, upcoming: upcomingCount, trash: trashCount }), [inboxCount, todayCount, upcomingCount, trashCount])
+  const sidebarListCounts = useMemo(() => ({ inbox: inboxCount, today: todayListCount, upcoming: upcomingCount, trash: trashCount }), [inboxCount, todayListCount, upcomingCount, trashCount])
   const sidebarHidden = useSecondarySidebarVisibility() === 'hidden'
   const shellSidebarTarget = useShellSidebarTarget()
   useTasksScreenSidebar({
