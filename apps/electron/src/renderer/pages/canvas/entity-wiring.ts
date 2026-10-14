@@ -6,8 +6,8 @@
  * - Creation goes through each kind's real API (notes, pages, dashboards =
  *   live pages, sessions, personal tasks).
  * - Links: card `{kind:'canvas', id:<board>, fragment:<object>}` --embeds--> entity.
- *   `currentUserId` is learned from the server's `createdBy` on our own link
- *   adds and persisted per workspace, so reconcile can remove only our links.
+ *   `currentUserId` comes from the server (`whoami`, derived from the session's
+ *   auth context), so reconcile can remove only our links.
  */
 import { EntityKindRegistry, EntitySnapshotResolver, type EntityKindAdapter, type EntityLinker, type EntityRef } from '@rox/canvas-core'
 import { ENTITY_KINDS, kindDescriptor, type EntityKind, type EntityPreview, type EntityLink } from '@rox/core/entities'
@@ -87,31 +87,74 @@ export async function searchExisting(workspaceId: string, query: string, limit =
   return (q ? all.filter(e => e.title.toLocaleLowerCase().includes(q)) : all).slice(0, limit)
 }
 
-/** One `entitiesResolve` call per frame for all refs requested in it; results cached per ref. */
-export function createPreviewBatcher(workspaceId: string, schedule: (cb: () => void) => void = cb => { requestAnimationFrame(cb) }) {
-  const cache = new Map<string, Promise<EntityPreview | null>>()
-  let queue: Array<{ ref: EntityRef; resolve: (p: EntityPreview | null) => void }> = []
+/** How long a resolved preview is reused before it is fetched again. */
+export const PREVIEW_TTL_MS = 30_000
+
+/**
+ * One `entitiesResolve` call per frame for all refs requested in it; results
+ * cached per ref for PREVIEW_TTL_MS. Null results and errors are never cached
+ * (the next get() retries), and entity-change events clear the cache.
+ */
+export function createPreviewBatcher(
+  workspaceId: string,
+  schedule: (cb: () => void) => void = cb => { requestAnimationFrame(cb) },
+  now: () => number = () => Date.now(),
+) {
+  const cache = new Map<string, { p: Promise<EntityPreview | null>; at: number }>()
+  let queue: Array<{ k: string; ref: EntityRef; resolve: (p: EntityPreview | null) => void; entry?: { p: Promise<EntityPreview | null>; at: number } }> = []
   const flush = async () => {
     const batch = queue
     queue = []
     const r = api().entitiesResolve
-    let previews: EntityPreview[] = []
-    if (r) { try { previews = await r(workspaceId, { refs: batch.map(b => ({ kind: b.ref.kind as EntityKind, id: b.ref.id })) }) } catch { previews = [] } }
-    batch.forEach((b, i) => b.resolve(previews[i] ?? null))
+    let previews: EntityPreview[] | null = null
+    if (r) { try { previews = await r(workspaceId, { refs: batch.map(b => ({ kind: b.ref.kind as EntityKind, id: b.ref.id })) }) } catch { previews = null } }
+    batch.forEach((b, i) => {
+      const p = previews?.[i] ?? null
+      if (!p && b.entry && cache.get(b.k) === b.entry) cache.delete(b.k) // don't cache misses / errors
+      b.resolve(p)
+    })
   }
   const key = (ref: EntityRef) => `${ref.kind}:${ref.id}`
   return {
     get(ref: EntityRef): Promise<EntityPreview | null> {
       const k = key(ref)
-      let p = cache.get(k)
-      if (!p) {
-        p = new Promise(resolve => { if (!queue.length) schedule(() => void flush()); queue.push({ ref, resolve }) })
-        cache.set(k, p)
-      }
+      const hit = cache.get(k)
+      if (hit && now() - hit.at < PREVIEW_TTL_MS) return hit.p
+      const item: (typeof queue)[number] = { k, ref, resolve: () => {} }
+      const p = new Promise<EntityPreview | null>(resolve => { item.resolve = resolve })
+      const entry = { p, at: now() }
+      item.entry = entry
+      if (!queue.length) schedule(() => void flush())
+      queue.push(item)
+      cache.set(k, entry)
       return p
     },
     invalidate(ref: EntityRef) { cache.delete(key(ref)) },
+    clear() { cache.clear() },
   }
+}
+export type PreviewBatcher = ReturnType<typeof createPreviewBatcher>
+
+interface ChangeEvents {
+  onNotesChanged?: (cb: (p: unknown) => void) => () => void
+  onPagesChanged?: (cb: (ws: string) => void) => () => void
+  onEntitiesLinksChanged?: (cb: (ws: string) => void) => () => void
+  onPersonalTasksChanged?: (cb: () => void) => () => void
+}
+/**
+ * Entity-change events (notes, pages/dashboards, links, personal tasks) clear the
+ * preview cache and call `onChange` so the page can re-resolve its cards.
+ */
+export function watchEntityChanges(workspaceId: string, batcher: PreviewBatcher, onChange: () => void): () => void {
+  const ev = api() as ChangeEvents
+  const fire = () => { batcher.clear(); onChange() }
+  const offs = [
+    ev.onNotesChanged?.(() => fire()),
+    ev.onPagesChanged?.(ws => { if (ws === workspaceId) fire() }),
+    ev.onEntitiesLinksChanged?.(ws => { if (ws === workspaceId) fire() }),
+    ev.onPersonalTasksChanged?.(() => fire()),
+  ]
+  return () => { for (const off of offs) off?.() }
 }
 
 export function createEntityRegistry(workspaceId: string, batcher = createPreviewBatcher(workspaceId)): EntityKindRegistry {
@@ -141,14 +184,31 @@ export function createEntityRegistry(workspaceId: string, batcher = createPrevie
   return registry
 }
 
-const meKey = (ws: string) => `rox.canvas.linkActor.${ws}`
-/** The server-side actor id our link writes are recorded under (learned from our own adds). */
-export function currentLinkActor(workspaceId: string): string | undefined {
-  try { return localStorage.getItem(meKey(workspaceId)) ?? undefined } catch { return undefined }
+const actorCache = new Map<string, Promise<string | undefined>>()
+/**
+ * The actor id our link writes are recorded under (`createdBy`), asked from the
+ * server, which derives it from the session's auth context. Failures are not cached.
+ */
+export function currentLinkActor(workspaceId: string): Promise<string | undefined> {
+  let p = actorCache.get(workspaceId)
+  if (!p) {
+    p = (async () => {
+      const l = api().entitiesLinks
+      if (!l) return undefined
+      const res = await l(workspaceId, { op: 'whoami' }) as { ok?: boolean; actorId?: unknown } | undefined
+      return res?.ok && typeof res.actorId === 'string' && res.actorId ? res.actorId : undefined
+    })().catch(() => undefined)
+    p.then(id => { if (id === undefined) actorCache.delete(workspaceId) })
+    actorCache.set(workspaceId, p)
+  }
+  return p
 }
+/** Tests only. */
+export function __resetLinkActorCacheForTests(): void { actorCache.clear() }
 
-export function createEntityLinker(workspaceId: string, currentUserId: string | undefined = currentLinkActor(workspaceId)): EntityLinker & { readonly currentUserId: string | undefined } {
+export function createEntityLinker(workspaceId: string, currentUserId?: string): EntityLinker & { readonly currentUserId: string | undefined; ready(): Promise<string | undefined> } {
   let me = currentUserId
+  const ready = async () => { if (me === undefined) me = await currentLinkActor(workspaceId); return me }
   const call = async (input: unknown) => {
     const l = api().entitiesLinks
     if (!l) throw new Error('entity links unavailable')
@@ -159,18 +219,14 @@ export function createEntityLinker(workspaceId: string, currentUserId: string | 
   const from = (f: { boardId: string; objectId: string }) => ({ kind: 'canvas', id: f.boardId, fragment: f.objectId })
   return {
     get currentUserId() { return me },
-    async link(f, to) {
-      const res = await call({ op: 'add', from: from(f), to: { kind: to.kind, id: to.id }, relation: 'embeds' })
-      if (res.link?.createdBy && res.link.createdBy !== me) {
-        me = res.link.createdBy
-        try { localStorage.setItem(meKey(workspaceId), me) } catch { /* private mode */ }
-      }
-    },
+    ready,
+    async link(f, to) { await call({ op: 'add', from: from(f), to: { kind: to.kind, id: to.id }, relation: 'embeds' }) },
     async unlink(f, to) { await call({ op: 'remove', from: from(f), to: { kind: to.kind, id: to.id }, relation: 'embeds' }) },
     async list(boardId) {
+      const mine = await ready()
       const res = await call({ op: 'outgoing', ref: { kind: 'canvas', id: boardId } }) as { links?: EntityLink[] }
       return (res.links ?? []).filter(l => l.relation === 'embeds' && l.from.fragment)
-        .map(l => ({ objectId: l.from.fragment!, ref: { kind: l.to.kind, id: l.to.id }, mine: me !== undefined && l.createdBy === me }))
+        .map(l => ({ objectId: l.from.fragment!, ref: { kind: l.to.kind, id: l.to.id }, mine: mine !== undefined && l.createdBy === mine }))
     },
   }
 }

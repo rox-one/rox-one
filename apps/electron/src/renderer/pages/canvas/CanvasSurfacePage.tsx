@@ -16,7 +16,7 @@ import {
 } from '@rox/canvas-core'
 import { ENTITY_KINDS, kindDescriptor, type EntityKind } from '@rox/core/entities'
 import {
-  CREATABLE_KINDS, createEntity, createEntityLinker, createEntityRegistry, deleteEntity, EntitySnapshotResolver, searchExisting, unlinkMyBoardLinks, type CreatableKind,
+  CREATABLE_KINDS, createEntity, createEntityLinker, createEntityRegistry, createPreviewBatcher, watchEntityChanges, deleteEntity, EntitySnapshotResolver, searchExisting, unlinkMyBoardLinks, type CreatableKind,
 } from './entity-wiring'
 import { onCanvasTarget, takeCanvasTarget, type CanvasTarget } from './canvas-target'
 import { resizeRotated } from './geometry'
@@ -283,7 +283,8 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   const index = useMemo(() => (board ? new SpatialIndex(board) : null), [board])
   useEffect(() => () => index?.dispose(), [index])
   // Entity cards: doc holds only {kind, entityId, origin}; previews batched per frame, per viewer.
-  const registry = useMemo(() => createEntityRegistry(workspaceId), [workspaceId])
+  const batcher = useMemo(() => createPreviewBatcher(workspaceId), [workspaceId])
+  const registry = useMemo(() => createEntityRegistry(workspaceId, batcher), [workspaceId, batcher])
   const resolver = useMemo(() => new EntitySnapshotResolver(registry), [registry])
   const linker = useMemo(() => createEntityLinker(workspaceId), [workspaceId])
   const [resolved, setResolved] = useState<Record<string, ResolvedEntity>>({})
@@ -295,9 +296,26 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   useEffect(() => {
     if (!board || !ctx) return
     const unguard = guardEntityCards(board)
-    const watch = watchEntityLinks({ ...ctx, currentUserId: linker.currentUserId }, { debounceMs: 250, onError: e => console.warn('[canvas] entity links', e) })
-    return () => { watch.stop(); unguard() }
+    let watch: { stop(): void } | null = null, alive = true
+    // Our actor id comes from the server's auth context; until it is known nothing counts as "mine".
+    void linker.ready().then(me => {
+      if (!alive) return
+      watch = watchEntityLinks({ ...ctx, currentUserId: me }, { debounceMs: 250, onError: e => console.warn('[canvas] entity links', e) })
+    })
+    return () => { alive = false; watch?.stop(); unguard() }
   }, [board, ctx, linker])
+  // Entity changes elsewhere in Rox: drop cached previews and re-resolve every card on this board.
+  useEffect(() => {
+    if (!board) return
+    return watchEntityChanges(workspaceId, batcher, () => {
+      for (const o of board.list()) {
+        if (o.type !== 'entity') continue
+        const ref = { kind: String(o.props.kind), id: String(o.props.entityId) }
+        resolver.invalidate(ref)
+        void resolver.resolve(ref)
+      }
+    })
+  }, [board, workspaceId, batcher, resolver])
   const [size, setSize] = useState({ w: 1600, h: 1000 })
   useEffect(() => {
     const el = svgRef.current
