@@ -27,7 +27,8 @@
     "./lazy-motion": "./src/lib/lazy-motion.tsx",
     "./styles": "./src/styles/index.css",
     "./primitives": "./src/components/primitives/index.ts",
-    "./glass": "./src/components/glass/index.ts"
+    "./glass": "./src/components/glass/index.ts",
+    "./glass/install": "./src/components/glass/install-glass-skin.ts"
   },
   "dependencies": {
     "@rox/core": "workspace:*",

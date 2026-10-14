@@ -34,6 +34,8 @@ const rendererPerfHarness = installRendererPerfHarness()
 // so every startup screen (loading, onboarding, reauth, workspace picker)
 // renders with the active profile. The snapshot request starts right here.
 seedDensity()
+// Glass tier + Arc Glass skin: a lazy chunk, off the startup closure.
+void import('@rox/ui/glass/install').then((m) => m.installGlassSkin())
 seedRenderProfile(document.documentElement, window.electronAPI, navigator.userAgent)
 const stopRenderProfileSync = startRenderProfileSync(window.electronAPI, document.documentElement)
 import.meta.hot?.dispose(stopRenderProfileSync)

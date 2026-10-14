@@ -81,13 +81,13 @@ export function MiniSessionSurface() {
               ? resolveStatusDisplayLabel(statusConfig, t)
               : t('window.mini.ready'))}
         </span>
-        <button className="rounded p-1 hover:bg-muted" aria-label={t('window.mini.expand')} title={t('window.mini.expand')} onClick={() => void window.electronAPI.exitMiniWindow()}>
+        <button data-glass-slot="mini-button" className="rounded p-1 hover:bg-muted" aria-label={t('window.mini.expand')} title={t('window.mini.expand')} onClick={() => void window.electronAPI.exitMiniWindow()}>
           <ArrowUpRight size={16} />
         </button>
       </header>
       <div className="flex h-[calc(100%-2.5rem)] items-center gap-2 px-3 py-2">
         {session?.isProcessing && sessionId ? (
-          <button className="rounded-md border border-border p-2 hover:bg-muted" aria-label={t('window.mini.stop')} onClick={() => void window.electronAPI.cancelProcessing(sessionId, false)}>
+          <button data-glass-slot="mini-button" className="rounded-md border border-border p-2 hover:bg-muted" aria-label={t('window.mini.stop')} onClick={() => void window.electronAPI.cancelProcessing(sessionId, false)}>
             <Square size={15} />
           </button>
         ) : null}
@@ -106,10 +106,10 @@ export function MiniSessionSurface() {
             }
           }}
         />
-        <button className="rounded-md border border-border p-2 hover:bg-muted disabled:opacity-50" aria-label={t('window.mini.createNote')} title={t('window.mini.createNote')} disabled={creatingNote || (!session?.workspaceId && !context.activeWorkspaceId)} onClick={() => void createNote()}>
+        <button data-glass-slot="mini-button" className="rounded-md border border-border p-2 hover:bg-muted disabled:opacity-50" aria-label={t('window.mini.createNote')} title={t('window.mini.createNote')} disabled={creatingNote || (!session?.workspaceId && !context.activeWorkspaceId)} onClick={() => void createNote()}>
           <FileText size={15} />
         </button>
-        <button className="rounded-md bg-primary p-2 text-primary-foreground disabled:opacity-50" aria-label={t('window.mini.send')} disabled={!sessionId || !draft.trim() || sending} onClick={() => void send()}>
+        <button data-glass-slot="mini-button" className="rounded-md bg-primary p-2 text-primary-foreground disabled:opacity-50" aria-label={t('window.mini.send')} disabled={!sessionId || !draft.trim() || sending} onClick={() => void send()}>
           <Send size={15} />
         </button>
       </div>

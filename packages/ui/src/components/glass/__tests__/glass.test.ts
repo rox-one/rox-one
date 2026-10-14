@@ -57,11 +57,17 @@ describe('closed surface', () => {
   })
 })
 
+const material = strip(readFileSync(join(import.meta.dir, '../../../styles/tokens/material.css'), 'utf8'))
 describe('per-surface intensity', () => {
-  const block = css.split('}')[0]
+  const block = material.slice(material.indexOf('.glass-surface,'))
   it('re-derives every glass token on .glass-surface from --glass-intensity', () => {
     for (const t of ['blur', 'saturate', 'tint', 'edge-alpha', 'specular-alpha'])
       expect(block).toMatch(new RegExp(`--glass-${t}:\\s*calc\\([^;]*var\\(--glass-intensity\\)`))
+  })
+  it('declares derived tokens exactly once (single source)', () => {
+    expect(material.match(/--glass-blur:/g)?.length).toBe(1)
+    expect(css).not.toMatch(/--glass-blur:/)
+    expect(block).toMatch(/--glass-shadow:/)
   })
   it('pressed never overrides the closed state', () => {
     expect(css).toContain('[data-glass-pressed]:not([data-glass-presence="closed"])')
@@ -94,5 +100,38 @@ describe('applyGlassTier ref counting', () => {
     } finally {
       g.matchMedia = prev
     }
+  })
+})
+
+import { isGlassPressKey } from '../use-glass-motion'
+const skin = strip(readFileSync(join(import.meta.dir, '../arc-glass-skin.css'), 'utf8'))
+
+describe('keyboard press', () => {
+  it('Space and Enter press; other keys do not', () => {
+    expect(isGlassPressKey(' ')).toBe(true)
+    expect(isGlassPressKey('Enter')).toBe(true)
+    expect(isGlassPressKey('a')).toBe(false)
+    expect(isGlassPressKey('Tab')).toBe(false)
+  })
+})
+
+describe('Arc Glass skin', () => {
+  it('is scoped to the arc-glass theme', () => {
+    for (const rule of skin.split('}').filter((r) => r.includes('{') && !r.trim().startsWith('@') && !/^\s*(from|to)\b/.test(r.split('{')[0].trim())))
+      if (!/^\s*(from|to)\s*$/.test(rule.split('{')[0])) expect(rule.split('{')[0]).toContain('html[data-theme="arc-glass"]')
+  })
+  it('refraction only on static slots on the full tier, never composer or popovers', () => {
+    const refr = skin.split('}').filter((r) => r.includes('url(#rox-glass-skin-refraction)'))
+    expect(refr.length).toBeGreaterThan(0)
+    for (const r of refr) {
+      expect(r).toContain('[data-glass="full"]')
+      expect(r).not.toMatch(/composer|popover|menu/)
+    }
+  })
+  it('never transitions or animates filters, and does not override the intensity slider', () => {
+    expect(skin).not.toMatch(/transition[^;]*filter/)
+    expect(skin).not.toMatch(/--glass-intensity:/)
+    const kf = skin.slice(skin.indexOf('@keyframes'))
+    expect(kf).not.toMatch(/filter/)
   })
 })
