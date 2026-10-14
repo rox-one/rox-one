@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useAtom, useAtomValue } from 'jotai'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence } from '@/lib/deferred-motion'
 import { MessageSquare, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { seChatPipOpenAtom } from '@/atoms/se-chat-pip'

@@ -1,5 +1,5 @@
 import { useSyncExternalStore, type ReactNode } from 'react'
-import { MotionConfig, useReducedMotion, useReducedMotionConfig } from 'motion/react'
+import { DeferredMotionConfig } from './deferred-motion'
 import type { RenderProfile } from '../../shared/render-profile'
 
 const ATTRIBUTE = 'data-render-profile'
@@ -37,7 +37,11 @@ export function reducedMotionFor(profile: RenderProfile): 'always' | 'user' {
  */
 export function RenderProfileMotionConfig({ children }: { children: ReactNode }) {
   const profile = useRenderProfile()
-  return <MotionConfig reducedMotion={reducedMotionFor(profile)}>{children}</MotionConfig>
+  return (
+    <DeferredMotionConfig reducedMotion={reducedMotionFor(profile)}>
+      {children}
+    </DeferredMotionConfig>
+  )
 }
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
@@ -49,11 +53,23 @@ const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
  * itself (so it also holds outside the root MotionConfig). Use this instead
  * of motion's useReducedMotion(), which reads only the OS setting.
  */
+function osReducedMotionSnapshot(): boolean {
+  return typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia(REDUCED_MOTION_QUERY).matches
+}
+
+function subscribeOsReducedMotion(onChange: () => void): () => void {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return () => {}
+  const mq = window.matchMedia(REDUCED_MOTION_QUERY)
+  mq.addEventListener('change', onChange)
+  return () => mq.removeEventListener('change', onChange)
+}
+
 export function usePrefersReducedMotion(): boolean {
-  const fromConfig = useReducedMotionConfig()
-  const fromOs = useReducedMotion()
+  const fromOs = useSyncExternalStore(subscribeOsReducedMotion, osReducedMotionSnapshot, () => false)
   const profile = useRenderProfile()
-  return Boolean(fromConfig) || Boolean(fromOs) || profile === 'performance'
+  return fromOs || profile === 'performance'
 }
 
 /**

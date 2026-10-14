@@ -24,6 +24,7 @@
     "./dropdown-menu": "./src/components/ui/StyledDropdown.tsx",
     "./ansi-parser": "./src/components/terminal/ansi-parser.ts",
     "./lib/file-classification": "./src/lib/file-classification.ts",
+    "./lazy-motion": "./src/lib/lazy-motion.tsx",
     "./styles": "./src/styles/index.css",
     "./primitives": "./src/components/primitives/index.ts"
   },

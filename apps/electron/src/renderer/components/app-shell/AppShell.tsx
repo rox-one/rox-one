@@ -5,7 +5,6 @@ import { useTranslation, Trans } from "react-i18next"
 import { isInternalAgentSession } from "@rox/shared/sessions/internal-prompts"
 import { useRef, useState, useEffect, useCallback, useMemo } from "react"
 import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai"
-import { motion, AnimatePresence } from "motion/react"
 import {
   Archive,
   ChevronDown,
