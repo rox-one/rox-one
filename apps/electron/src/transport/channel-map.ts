@@ -465,6 +465,7 @@ export const CHANNEL_MAP = {
   onDevSpaceRunProgress: listener(RPC_CHANNELS.devSpace.RUN_PROGRESS),
   listNotes: invoke(RPC_CHANNELS.notes.LIST),
   readNote: invoke(RPC_CHANNELS.notes.READ),
+  listNoteTasks: invoke(RPC_CHANNELS.notes.LIST_TASKS),
   saveNote: invoke(RPC_CHANNELS.notes.SAVE),
   createNote: invoke(RPC_CHANNELS.notes.CREATE),
   renameNote: invoke(RPC_CHANNELS.notes.RENAME),

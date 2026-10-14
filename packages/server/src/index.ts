@@ -464,3 +464,12 @@ const shutdown = async () => {
 
 process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)
+
+// #1586: when hosted in an Electron utilityProcess (ROX_SERVER_UTILITY_PROCESS),
+// main asks for a clean shutdown over parentPort. Absent in standalone runs.
+const parentPort = (process as unknown as {
+  parentPort?: { on(event: 'message', cb: (e: { data?: unknown }) => void): void }
+}).parentPort
+parentPort?.on('message', (e) => {
+  if ((e?.data as { type?: string } | undefined)?.type === 'shutdown') void shutdown()
+})

@@ -174,13 +174,13 @@ export function SessionMenu({
       {/* Share/Shared based on shared state */}
       {!sharedUrl ? (
         <MenuItem onClick={actions.share}>
-          <CloudUpload className="h-3.5 w-3.5" />
+          <CloudUpload className="icon-caption" />
           <span className="flex-1">{t("sessionMenu.share")}</span>
         </MenuItem>
       ) : (
         <Sub>
           <SubTrigger className="pr-2">
-            <CloudUpload className="h-3.5 w-3.5" />
+            <CloudUpload className="icon-caption" />
             <span className="flex-1">{t("sessionMenu.shared")}</span>
           </SubTrigger>
           <SubContent>
@@ -196,22 +196,22 @@ export function SessionMenu({
       )}
 
       <MenuItem onClick={actions.inviteBro}>
-        <UserPlus className="h-3.5 w-3.5" />
+        <UserPlus className="icon-caption" />
         <span className="flex-1">{t('sessionMenu.inviteBro')}</span>
       </MenuItem>
       <MenuItem onClick={() => void actions.exportSession()}>
-        <Download className="h-3.5 w-3.5" />
+        <Download className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.export")}</span>
       </MenuItem>
       <MenuItem onClick={() => void actions.joinSession()}>
-        <Link2 className="h-3.5 w-3.5" />
+        <Link2 className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.join")}</span>
       </MenuItem>
 
       {/* Send to Workspace — visible when at least one other workspace exists */}
       {hasTransferTargets && onSendToWorkspace && (
         <MenuItem onClick={onSendToWorkspace}>
-          <Send className="h-3.5 w-3.5" />
+          <Send className="icon-caption" />
           <span className="flex-1">{t("sessionMenu.sendToWorkspace")}</span>
         </MenuItem>
       )}
@@ -225,7 +225,7 @@ export function SessionMenu({
         disabled={!hasKnowledgeConnection}
         onClick={() => setPublishDialog({ open: true, sessionId })}
       >
-        <BookOpen className="h-3.5 w-3.5" />
+        <BookOpen className="icon-caption" />
         <span className="flex-1">{t('knowledge.publish.menu')}</span>
       </MenuItem>
 
@@ -236,23 +236,23 @@ export function SessionMenu({
           navigate(routes.view.allSessions(sessionId))
         }}
       >
-        <Sparkles className="h-3.5 w-3.5" />
+        <Sparkles className="icon-caption" />
         <span className="flex-1">{t('memory.proposal.learn')}</span>
       </MenuItem>
 
       {/* Rate session — simple 👍/👎 (feeds the gamification rating) */}
       <Sub>
         <SubTrigger className="pr-2">
-          <ThumbsUp className="h-3.5 w-3.5" />
+          <ThumbsUp className="icon-caption" />
           <span className="flex-1">{t('quests.rateSession')}</span>
         </SubTrigger>
         <SubContent>
           <MenuItem onClick={() => void rateSession(sessionId, SESSION_RATING_UP)}>
-            <ThumbsUp className="h-3.5 w-3.5" />
+            <ThumbsUp className="icon-caption" />
             <span className="flex-1">👍</span>
           </MenuItem>
           <MenuItem onClick={() => void rateSession(sessionId, SESSION_RATING_DOWN)}>
-            <ThumbsDown className="h-3.5 w-3.5" />
+            <ThumbsDown className="icon-caption" />
             <span className="flex-1">👎</span>
           </MenuItem>
         </SubContent>
@@ -286,7 +286,7 @@ export function SessionMenu({
       {labels.length > 0 && (
         <Sub>
           <SubTrigger className="pr-2">
-            <Tag className="h-3.5 w-3.5" />
+            <Tag className="icon-caption" />
             <span className="flex-1">{t("sessionMenu.labels")}</span>
             {sessionLabels.length > 0 && (
               <span className="text-xs text-muted-foreground numeric -mr-2.5">
@@ -309,12 +309,12 @@ export function SessionMenu({
       {projects.length > 0 && onSetProjectId && (
         <Sub>
           <SubTrigger className="pr-2">
-            <FolderKanban className="h-3.5 w-3.5" />
+            <FolderKanban className="icon-caption" />
             <span className="flex-1">{t("sessionMenu.projects")}</span>
           </SubTrigger>
           <SubContent>
             <MenuItem onClick={() => onSetProjectId(null)}>
-              {!item.projectId && <Check className="h-3.5 w-3.5" />}
+              {!item.projectId && <Check className="icon-caption" />}
               <span className={item.projectId ? 'flex-1 ml-[18px]' : 'flex-1'}>
                 {t("sessionMenu.noProject")}
               </span>
@@ -324,7 +324,7 @@ export function SessionMenu({
               const isBound = item.projectId === p.id
               return (
                 <MenuItem key={p.id} onClick={() => onSetProjectId(p.id)}>
-                  {isBound && <Check className="h-3.5 w-3.5" />}
+                  {isBound && <Check className="icon-caption" />}
                   <span className={isBound ? 'flex-1' : 'flex-1 ml-[18px]'}>{p.name}</span>
                 </MenuItem>
               )
@@ -369,12 +369,12 @@ export function SessionMenu({
       {/* Flag/Unflag */}
       {!isFlagged ? (
         <MenuItem onClick={onFlag}>
-          <Flag className="h-3.5 w-3.5 text-info" />
+          <Flag className="icon-caption text-info" />
           <span className="flex-1">{t("sessionMenu.flag")}</span>
         </MenuItem>
       ) : (
         <MenuItem onClick={onUnflag}>
-          <FlagOff className="h-3.5 w-3.5" />
+          <FlagOff className="icon-caption" />
           <span className="flex-1">{t("sessionMenu.unflag")}</span>
         </MenuItem>
       )}
@@ -382,12 +382,12 @@ export function SessionMenu({
       {/* Archive/Unarchive */}
       {!isArchived ? (
         <MenuItem onClick={onArchive}>
-          <Archive className="h-3.5 w-3.5" />
+          <Archive className="icon-caption" />
           <span className="flex-1">{t("sessionMenu.archive")}</span>
         </MenuItem>
       ) : (
         <MenuItem onClick={onUnarchive}>
-          <ArchiveRestore className="h-3.5 w-3.5" />
+          <ArchiveRestore className="icon-caption" />
           <span className="flex-1">{t("sessionMenu.unarchive")}</span>
         </MenuItem>
       )}
@@ -395,7 +395,7 @@ export function SessionMenu({
       {/* Mark as Unread - only show if session has been read */}
       {!_hasUnread && _hasMessages && (
         <MenuItem onClick={onMarkUnread}>
-          <MailOpen className="h-3.5 w-3.5" />
+          <MailOpen className="icon-caption" />
           <span className="flex-1">{t("sessionMenu.markAsUnread")}</span>
         </MenuItem>
       )}
@@ -404,13 +404,13 @@ export function SessionMenu({
 
       {/* Rename */}
       <MenuItem onClick={onRename}>
-        <Pencil className="h-3.5 w-3.5" />
+        <Pencil className="icon-caption" />
         <span className="flex-1">{t("common.rename")}</span>
       </MenuItem>
 
       {/* Regenerate Title - AI-generate based on recent messages */}
       <MenuItem onClick={actions.refreshTitle}>
-        <RefreshCw className="h-3.5 w-3.5" />
+        <RefreshCw className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.regenerateTitle")}</span>
       </MenuItem>
 
@@ -418,25 +418,25 @@ export function SessionMenu({
 
       {/* Open in New Panel */}
       <MenuItem onClick={actions.openInNewPanel}>
-        <Columns2 className="h-3.5 w-3.5" />
+        <Columns2 className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.openInNewPanel")}</span>
       </MenuItem>
 
       {/* Open in New Window */}
       <MenuItem onClick={onOpenInNewWindow}>
-        <AppWindow className="h-3.5 w-3.5" />
+        <AppWindow className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.openInNewWindow")}</span>
       </MenuItem>
 
       {/* Show in file manager */}
       <MenuItem onClick={actions.showInFinder}>
-        <FolderOpen className="h-3.5 w-3.5" />
+        <FolderOpen className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.showInFileManager", { fileManager: getFileManagerName() })}</span>
       </MenuItem>
 
       {/* Copy Path */}
       <MenuItem onClick={actions.copyPath}>
-        <Copy className="h-3.5 w-3.5" />
+        <Copy className="icon-caption" />
         <span className="flex-1">{t("sessionMenu.copyPath")}</span>
       </MenuItem>
 
@@ -444,7 +444,7 @@ export function SessionMenu({
 
       {/* Delete */}
       <MenuItem onClick={onDelete} variant="destructive">
-        <Trash2 className="h-3.5 w-3.5" />
+        <Trash2 className="icon-caption" />
         <span className="flex-1">{t("common.delete")}</span>
       </MenuItem>
     </>

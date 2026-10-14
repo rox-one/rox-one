@@ -252,7 +252,7 @@ export function CompactSessionMenu({
             type="button"
             className={cn(
               'flex w-full items-center gap-1 px-2 py-1 rounded-md titlebar-no-drag min-w-0',
-              'hover:bg-foreground/[0.03] transition-colors',
+              'hover:bg-surface-hover transition-colors',
               'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
               'data-[state=open]:bg-foreground/[0.03]',
             )}
@@ -276,7 +276,7 @@ export function CompactSessionMenu({
               {badge}
             </motion.div>
             <span className="shrink-0 flex items-center justify-center">
-              <ChevronDown className="h-3.5 w-3.5 text-foreground/50 translate-y-[1px]" />
+              <ChevronDown className="icon-caption text-foreground/50 translate-y-[1px]" />
             </span>
           </button>
         </DrawerTrigger>
@@ -292,10 +292,10 @@ export function CompactSessionMenu({
             <button
               type="button"
               onClick={() => setView('root')}
-              className="-ml-1 h-8 w-8 rounded-md flex items-center justify-center hover:bg-foreground/5 active:bg-foreground/10 transition-colors text-foreground/50"
+              className="-ml-1 h-8 w-8 rounded-md flex items-center justify-center hover:bg-surface-hover active:bg-foreground/10 transition-colors text-foreground/50"
               aria-label={t('common.back')}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="icon-toolbar" />
             </button>
           )}
           <DrawerTitle className="flex-1 min-w-0 truncate" title={headerTitle}>{headerTitle}</DrawerTitle>
@@ -466,33 +466,33 @@ function RootPane({
     <div className="flex flex-col">
       {/* Share / Shared */}
       {!sharedUrl ? (
-        <Row icon={<CloudUpload className="h-4 w-4" />} label={t('sessionMenu.share')} onTap={onShare} />
+        <Row icon={<CloudUpload className="icon-toolbar" />} label={t('sessionMenu.share')} onTap={onShare} />
       ) : (
         <Row
-          icon={<CloudUpload className="h-4 w-4" />}
+          icon={<CloudUpload className="icon-toolbar" />}
           label={t('sessionMenu.shared')}
           chevron
           onTap={onOpenShareSub}
         />
       )}
 
-      <Row icon={<UserPlus className="h-4 w-4" />} label={t('sessionMenu.inviteBro')} onTap={onInviteBro} />
-      <Row icon={<Download className="h-4 w-4" />} label={t('sessionMenu.export')} onTap={onExport} />
-      <Row icon={<Link2 className="h-4 w-4" />} label={t('sessionMenu.join')} onTap={onJoin} />
+      <Row icon={<UserPlus className="icon-toolbar" />} label={t('sessionMenu.inviteBro')} onTap={onInviteBro} />
+      <Row icon={<Download className="icon-toolbar" />} label={t('sessionMenu.export')} onTap={onExport} />
+      <Row icon={<Link2 className="icon-toolbar" />} label={t('sessionMenu.join')} onTap={onJoin} />
 
       {hasTransferTargets && onSendToWorkspace && (
-        <Row icon={<Send className="h-4 w-4" />} label={t('sessionMenu.sendToWorkspace')} onTap={onSendToWorkspace} />
+        <Row icon={<Send className="icon-toolbar" />} label={t('sessionMenu.sendToWorkspace')} onTap={onSendToWorkspace} />
       )}
 
       <Row
-        icon={<MessageSquare className="h-4 w-4" />}
+        icon={<MessageSquare className="icon-toolbar" />}
         label={t('sessionMenu.connectMessaging')}
         chevron
         onTap={onOpenMessagingSub}
       />
 
       <Row
-        icon={<BookOpen className="h-4 w-4" />}
+        icon={<BookOpen className="icon-toolbar" />}
         label={t('knowledge.publish.menu')}
         disabled={!hasKnowledgeConnection}
         onTap={onPublish}
@@ -509,7 +509,7 @@ function RootPane({
 
       {hasLabels && (
         <Row
-          icon={<Tag className="h-4 w-4" />}
+          icon={<Tag className="icon-toolbar" />}
           label={t('sessionMenu.labels')}
           trailing={labelsCount > 0 ? <CountBadge count={labelsCount} /> : undefined}
           chevron
@@ -518,43 +518,43 @@ function RootPane({
       )}
 
       {!isFlagged ? (
-        <Row icon={<Flag className="h-4 w-4 text-info" />} label={t('sessionMenu.flag')} onTap={onFlag} />
+        <Row icon={<Flag className="icon-toolbar text-info" />} label={t('sessionMenu.flag')} onTap={onFlag} />
       ) : (
-        <Row icon={<FlagOff className="h-4 w-4" />} label={t('sessionMenu.unflag')} onTap={onUnflag} />
+        <Row icon={<FlagOff className="icon-toolbar" />} label={t('sessionMenu.unflag')} onTap={onUnflag} />
       )}
 
       {!isArchived ? (
-        <Row icon={<Archive className="h-4 w-4" />} label={t('sessionMenu.archive')} onTap={onArchive} />
+        <Row icon={<Archive className="icon-toolbar" />} label={t('sessionMenu.archive')} onTap={onArchive} />
       ) : (
-        <Row icon={<ArchiveRestore className="h-4 w-4" />} label={t('sessionMenu.unarchive')} onTap={onUnarchive} />
+        <Row icon={<ArchiveRestore className="icon-toolbar" />} label={t('sessionMenu.unarchive')} onTap={onUnarchive} />
       )}
 
       {!hasUnread && hasMessages && (
-        <Row icon={<MailOpen className="h-4 w-4" />} label={t('sessionMenu.markAsUnread')} onTap={onMarkUnread} />
+        <Row icon={<MailOpen className="icon-toolbar" />} label={t('sessionMenu.markAsUnread')} onTap={onMarkUnread} />
       )}
 
       <Separator />
 
-      <Row icon={<Pencil className="h-4 w-4" />} label={t('common.rename')} onTap={onRename} />
-      <Row icon={<RefreshCw className="h-4 w-4" />} label={t('sessionMenu.regenerateTitle')} onTap={onRefreshTitle} />
+      <Row icon={<Pencil className="icon-toolbar" />} label={t('common.rename')} onTap={onRename} />
+      <Row icon={<RefreshCw className="icon-toolbar" />} label={t('sessionMenu.regenerateTitle')} onTap={onRefreshTitle} />
 
       <Separator />
 
-      <Row icon={<Columns2 className="h-4 w-4" />} label={t('sessionMenu.openInNewPanel')} onTap={onOpenInNewPanel} />
+      <Row icon={<Columns2 className="icon-toolbar" />} label={t('sessionMenu.openInNewPanel')} onTap={onOpenInNewPanel} />
       {onOpenInNewWindow && (
-        <Row icon={<AppWindow className="h-4 w-4" />} label={t('sessionMenu.openInNewWindow')} onTap={onOpenInNewWindow} />
+        <Row icon={<AppWindow className="icon-toolbar" />} label={t('sessionMenu.openInNewWindow')} onTap={onOpenInNewWindow} />
       )}
       <Row
-        icon={<FolderOpen className="h-4 w-4" />}
+        icon={<FolderOpen className="icon-toolbar" />}
         label={t('sessionMenu.showInFileManager', { fileManager: getFileManagerName() })}
         onTap={onShowInFinder}
       />
-      <Row icon={<Copy className="h-4 w-4" />} label={t('sessionMenu.copyPath')} onTap={onCopyPath} />
+      <Row icon={<Copy className="icon-toolbar" />} label={t('sessionMenu.copyPath')} onTap={onCopyPath} />
 
       <Separator />
 
       <Row
-        icon={<Trash2 className="h-4 w-4" />}
+        icon={<Trash2 className="icon-toolbar" />}
         label={t('common.delete')}
         destructive
         onTap={onDelete}
@@ -642,11 +642,11 @@ function SharePane({
   const { t } = useTranslation()
   return (
     <div className="flex flex-col">
-      <Row icon={<Globe className="h-4 w-4" />} label={t('sessionMenu.openInBrowser')} onTap={onOpenInBrowser} />
-      <Row icon={<Copy className="h-4 w-4" />} label={t('sessionMenu.copyLink')} onTap={onCopyLink} />
-      <Row icon={<RefreshCw className="h-4 w-4" />} label={t('sessionMenu.updateShare')} onTap={onUpdateShare} />
+      <Row icon={<Globe className="icon-toolbar" />} label={t('sessionMenu.openInBrowser')} onTap={onOpenInBrowser} />
+      <Row icon={<Copy className="icon-toolbar" />} label={t('sessionMenu.copyLink')} onTap={onCopyLink} />
+      <Row icon={<RefreshCw className="icon-toolbar" />} label={t('sessionMenu.updateShare')} onTap={onUpdateShare} />
       <Separator />
-      <Row icon={<Link2Off className="h-4 w-4" />} label={t('sessionMenu.stopSharing')} destructive onTap={onRevokeShare} />
+      <Row icon={<Link2Off className="icon-toolbar" />} label={t('sessionMenu.stopSharing')} destructive onTap={onRevokeShare} />
     </div>
   )
 }
@@ -654,10 +654,10 @@ function SharePane({
 function MessagingPane({ onConnect }: { onConnect: (platform: MessagingPlatform) => void }) {
   return (
     <div className="flex flex-col">
-      <Row icon={<MessageSquare className="h-4 w-4" />} label="Telegram" onTap={() => onConnect('telegram')} />
-      <Row icon={<MessageSquare className="h-4 w-4" />} label="WhatsApp" onTap={() => onConnect('whatsapp')} />
-      <Row icon={<MessageSquare className="h-4 w-4" />} label="Lark / Feishu" onTap={() => onConnect('lark')} />
-      <Row icon={<MessageSquare className="h-4 w-4" />} label="WeChat" onTap={() => onConnect('wechat')} />
+      <Row icon={<MessageSquare className="icon-toolbar" />} label="Telegram" onTap={() => onConnect('telegram')} />
+      <Row icon={<MessageSquare className="icon-toolbar" />} label="WhatsApp" onTap={() => onConnect('whatsapp')} />
+      <Row icon={<MessageSquare className="icon-toolbar" />} label="Lark / Feishu" onTap={() => onConnect('lark')} />
+      <Row icon={<MessageSquare className="icon-toolbar" />} label="WeChat" onTap={() => onConnect('wechat')} />
     </div>
   )
 }
@@ -695,7 +695,7 @@ function Row({
       disabled={disabled}
       className={cn(
         'flex items-center gap-3 w-full px-3 py-3 rounded-[var(--radius-control)] text-left transition-colors',
-        'hover:bg-foreground/5 active:bg-foreground/10',
+        'hover:bg-surface-hover active:bg-foreground/10',
         destructive && 'text-destructive hover:bg-destructive/10 active:bg-destructive/15',
         disabled && 'opacity-40 pointer-events-none',
       )}
@@ -705,14 +705,14 @@ function Row({
       </span>
       <span className="flex-1 min-w-0 text-sm truncate" title={typeof label === 'string' ? label : undefined}>{label}</span>
       {trailing}
-      {radioSelected && <Check className="h-4 w-4 shrink-0 text-foreground/70" />}
-      {chevron && <ChevronRight className="h-4 w-4 shrink-0 text-foreground/70" />}
+      {radioSelected && <Check className="icon-toolbar shrink-0 text-foreground/70" />}
+      {chevron && <ChevronRight className="icon-toolbar shrink-0 text-foreground/70" />}
     </button>
   )
 }
 
 function Separator() {
-  return <div className="my-1 mx-3 h-px bg-foreground/[0.06]" />
+  return <div className="my-1 mx-3 h-px bg-border-subtle" />
 }
 
 function CountBadge({ count }: { count: number }) {

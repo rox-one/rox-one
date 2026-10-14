@@ -75,7 +75,13 @@ interface TransportClient extends RpcClient {
 // ---------------------------------------------------------------------------
 
 const webContentsId: number = ipcRenderer.sendSync('__get-web-contents-id')
-const isClientOnly = !!process.env.CRAFT_SERVER_URL
+// #1586: with ROX_SERVER_UTILITY_PROCESS set, main may host the server in a
+// utilityProcess and hands URL/token over IPC (never via env). Flag unset →
+// no IPC, behaviour unchanged.
+const serverHostConfig: { url: string; token: string } | null = process.env.ROX_SERVER_UTILITY_PROCESS
+  ? (ipcRenderer.sendSync('__server-host:config') as { url: string; token: string } | null)
+  : null
+const isClientOnly = !!process.env.CRAFT_SERVER_URL || !!serverHostConfig
 const openClawHostControl = createOpenClawHostControlBridge({
   isClientOnly,
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
@@ -89,8 +95,8 @@ if (isClientOnly) {
   // Single WsRpcClient connected directly to the remote server.
   // No local server, no routing — all channels go to remote.
 
-  const wsUrl = process.env.CRAFT_SERVER_URL!
-  const wsToken = process.env.CRAFT_SERVER_TOKEN ?? ''
+  const wsUrl = serverHostConfig?.url ?? process.env.CRAFT_SERVER_URL!
+  const wsToken = serverHostConfig?.token ?? process.env.CRAFT_SERVER_TOKEN ?? ''
 
   // Block unencrypted ws:// to non-localhost servers — tokens would be sent in cleartext
   const parsed = new URL(wsUrl)
