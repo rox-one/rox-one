@@ -1912,11 +1912,11 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     if (!Array.isArray(noteIds) || noteIds.length > NOTE_TASKS_MAX_IDS || !noteIds.every(id => typeof id === 'string')) {
       throw new Error(`notes:listTasks expects at most ${NOTE_TASKS_MAX_IDS} note ids`)
     }
-    const read = rpcNotesReadResult({ source: 'native' })
-    if (!isClaimableLive(read.result)) throw new Error('note read is not live')
     const ids = [...new Set(noteIds as string[])]
     const context = ctx.principal ? nativeNotesContext(deps, ctx, workspaceId, 'read') : null
     const readOne = async (noteId: string): Promise<NoteDocument> => {
+      const read = rpcNotesReadResult({ source: 'native', nativeId: noteId })
+      if (!isClaimableLive(read.result)) throw new Error('note read is not live')
       if (context) {
         const found = await findNativeNote(deps, context, noteId)
         return nativeNoteDocument(deps, context, found.entity, found.file, found.entities)
