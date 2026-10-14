@@ -20,6 +20,12 @@ import {
   widgetContentLayout,
   HOME_GRID_GAP,
   HOME_GRID_ROW_HEIGHT,
+  HOME_WIDGET_ALLOWED_SIZES,
+  flatV2DefaultLayout,
+  isFlatV2Default,
+  normalizeHomeMeta,
+  packHomeLayout,
+  upgradeFlatDefault,
 } from '../home/dashboard-layout'
 
 describe('home dashboard layout', () => {
@@ -196,12 +202,42 @@ describe('home dashboard layout', () => {
     expect(widgetSpan('M', 500)).toBe(12)
   })
 
-  it('upgrades the untouched flat v2 default to the bento default, keeps customised layouts', () => {
-    const flat = 'summary:M,quickActions:M,calendar:L,taskTracker:M,inboxTracker:S,agents:S,recentSessions:M,meetings:S,calls:S,usage:M,models:S,balance:S,automations:S,tasks:S,inbox:S,focus:S,feed:M,notes:S,decisions:S'
-      .split(',').map((p) => { const [id, size] = p.split(':'); return { id, size } })
-    expect(normalizeHomeLayout({ version: 2, widgets: flat })).toEqual(DEFAULT_HOME_LAYOUT)
-    const moved = [flat[1]!, flat[0]!, ...flat.slice(2)]
-    expect(normalizeHomeLayout({ version: 2, widgets: moved }).widgets.map((w): string | undefined => w.id)).toEqual(moved.map((w) => w.id))
+  it('upgrades the untouched flat v2 default unless the user kept it, and keeps customised layouts', () => {
+    const flat = flatV2DefaultLayout()
+    expect(isFlatV2Default(flat)).toBe(true)
+    expect(upgradeFlatDefault(flat, normalizeHomeLayout(flat), {})).toEqual({ layout: DEFAULT_HOME_LAYOUT, upgraded: true })
+    expect(upgradeFlatDefault(flat, normalizeHomeLayout(flat), { keepFlat: true }).upgraded).toBe(false)
+    const moved = { version: 2, widgets: [flat.widgets[1]!, flat.widgets[0]!, ...flat.widgets.slice(2)] }
+    expect(isFlatV2Default(moved)).toBe(false)
+    const tinted = { version: 2, widgets: flat.widgets.map((w, i) => (i === 0 ? { ...w, appearance: { tint: 'accent' } } : w)) }
+    expect(isFlatV2Default(tinted)).toBe(false)
+    expect(normalizeHomeMeta({ keepFlat: true, bentoNoticeSeen: 'x', other: 1 })).toEqual({ keepFlat: true })
+  })
+
+  it('packs explicitly so data order equals visual order, without holes for the bento default', () => {
+    const { layout, cells } = packHomeLayout(DEFAULT_HOME_LAYOUT, 1400)
+    const positions = layout.widgets.map((w) => cells.get(w.id)!)
+    for (let i = 1; i < positions.length; i += 1) {
+      const a = positions[i - 1]!
+      const b = positions[i]!
+      expect(a.row < b.row || (a.row === b.row && a.col < b.col)).toBe(true)
+    }
+    expect(cells.get('hero')).toEqual({ col: 0, row: 0, span: 9, rows: 4 })
+    expect(cells.get('balance')).toEqual({ col: 9, row: 0, span: 3, rows: 2 })
+    expect(cells.get('agents')).toEqual({ col: 9, row: 2, span: 3, rows: 2 })
+    // Re-packing the packed order is stable (what the user sees is what is saved).
+    expect(packHomeLayout(layout, 1400).layout).toEqual(layout)
+    const narrow = packHomeLayout(DEFAULT_HOME_LAYOUT, 500)
+    expect(narrow.layout.widgets.map((w) => w.id)).toEqual(DEFAULT_HOME_LAYOUT.widgets.map((w) => w.id))
+  })
+
+  it('restricts XL to the hero and wide charts and keeps the hero at least L', () => {
+    expect(HOME_WIDGET_ALLOWED_SIZES.hero).toEqual(['L', 'XL'])
+    expect(HOME_WIDGET_ALLOWED_SIZES.tasks).not.toContain('XL')
+    expect(HOME_WIDGET_ALLOWED_SIZES.activity).toContain('XL')
+    expect(resizeWidget(DEFAULT_HOME_LAYOUT, 'hero', 'S')).toBe(DEFAULT_HOME_LAYOUT)
+    expect(normalizeHomeLayout({ version: 2, widgets: [{ id: 'tasks', size: 'XL' }, { id: 'hero', size: 'S' }] }).widgets).toEqual([{ id: 'tasks', size: 'S' }, { id: 'hero', size: 'XL' }])
+    for (const id of HOME_WIDGET_IDS) expect(HOME_WIDGET_ALLOWED_SIZES[id]).toContain(DEFAULT_HOME_LAYOUT.widgets.find((w) => w.id === id)?.size ?? HOME_WIDGET_ALLOWED_SIZES[id][0]!)
   })
 
   it('sizes XL as a 9-column hero on wide screens and full width below', () => {
@@ -210,6 +246,6 @@ describe('home dashboard layout', () => {
     expect(widgetSpan('XL', 500)).toBe(12)
     expect(widgetRowSpan('XL')).toBe(widgetRowSpan('L'))
     expect(isSupportedHomeLayout({ version: 2, widgets: [{ id: 'hero', size: 'XL' }, { id: 'activity', size: 'M' }] })).toBe(true)
-    expect(resizeWidget(DEFAULT_HOME_LAYOUT, 'tasks', 'XL').widgets.find((w) => w.id === 'tasks')!.size).toBe('XL')
+    expect(resizeWidget(DEFAULT_HOME_LAYOUT, 'activity', 'XL').widgets.find((w) => w.id === 'activity')!.size).toBe('XL')
   })
 })

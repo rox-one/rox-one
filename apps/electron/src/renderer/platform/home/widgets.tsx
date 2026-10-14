@@ -16,10 +16,17 @@ import {
   Bot,
   CalendarClock,
   BellDot,
+  Check,
+  ChevronLeft,
+  Clock,
+  CornerUpLeft,
+  Play,
+  Square,
   CalendarDays,
   Coins,
   Cpu,
   FileText,
+  GripVertical,
   Gavel,
   Inbox as InboxIcon,
   LayoutGrid,
@@ -64,7 +71,7 @@ import { formatHotkeyDisplay } from '@/lib/platform'
 import { buildAgentCenter } from '@/pages/extra-screens/agents/agent-center-model'
 import { DECISIONS_NS, loadDecisions } from '@/pages/extra-screens/decisions/decisions-store'
 import { RADAR_NS, loadRadar } from '@/pages/extra-screens/radar/radar-store'
-import { ALL_KINDS, isActive, sortInbox } from '@/pages/inbox/inbox-model'
+import { ALL_KINDS, isActive, markDone, snooze, snoozeTargets, sortInbox } from '@/pages/inbox/inbox-model'
 import { getSessionTitle } from '@/utils/session'
 import { isHomeSessionInWorkspace, pickRecentHomeSessions } from '../home-model'
 import { buildMiniDashboard, formatDashboardCost, formatTokenCount, syncStatusLabelKey } from '../mini-dashboard'
@@ -79,6 +86,11 @@ import {
   type CalendarEventKind,
   buildMeetingsOverview,
   buildActivityHeatmap,
+  agentPhase,
+  dayTimeline,
+  reorderedSlots,
+  todayTasks,
+  averageSessionCost,
   greetingPart,
   heatLevel,
   buildUsageOverview,
@@ -93,6 +105,10 @@ import {
 } from './home-data'
 import { Dot, Ring, SectionLabel, Sparkline, Toggle, WidgetButton, WidgetEmpty, WidgetFrame, WidgetList, WidgetRow, WidgetStat, type WidgetEditProps } from './widget-kit'
 import { QuickTaskInput } from './QuickTaskInput'
+import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { setPersonalTaskDone, setPersonalTaskOrders } from './home-actions'
 import { toErrorMessage } from '@/lib/errors'
 import { cachedNotesList, fetchNotesList, subscribeCachedNotesList } from '@/lib/query/notes-cache'
 
@@ -334,24 +350,36 @@ function RecentSessionsWidget({ edit, width, size = 'S' }: WidgetProps) {
   const fmt = useFormat()
   const now = useNow(60_000)
   const { active } = useHomeSessions()
-  const recent = useMemo(() => pickRecentHomeSessions(active, widgetItemLimit(size, 5, widgetContentLayout(width).listColumns)), [active, width, size])
+  const recent = useMemo(() => pickRecentHomeSessions(active, Math.max(4, widgetItemLimit(size, 5, widgetContentLayout(width).listColumns))), [active, width, size])
+  const track = useRef<HTMLUListElement>(null)
+  const scroll = (dir: -1 | 1) => track.current?.scrollBy({ left: dir * Math.max(160, track.current.clientWidth * 0.8), behavior: 'smooth' })
+  const pager = recent.length > 1 && !edit ? (
+    <span className="flex items-center gap-0.5">
+      <button type="button" onClick={() => scroll(-1)} aria-label={t('workbench.home.recentPrev')} className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-hover hover:text-foreground"><ChevronLeft className="icon-status" /></button>
+      <button type="button" onClick={() => scroll(1)} aria-label={t('workbench.home.recentNext')} className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-hover hover:text-foreground"><ChevronLeft className="icon-status rotate-180" /></button>
+    </span>
+  ) : undefined
   return (
-    <WidgetFrame testId="recentSessions" title={t('workbench.home.recent')} onOpen={() => navigate(routes.view.allSessions())} edit={edit} meta={active.length ? String(active.length) : undefined}>
+    <WidgetFrame testId="recentSessions" title={t('workbench.home.recent')} onOpen={() => navigate(routes.view.allSessions())} edit={edit} meta={active.length ? String(active.length) : undefined} action={pager}>
       {recent.length === 0 ? (
         <WidgetEmpty text={t('workbench.home.emptySessions')} hint={t('workbench.home.recentEmptyHint')} action={{ label: t('workbench.home.quick.newSession'), onClick: () => navigate(routes.action.newSession()) }} />
       ) : (
-        <WidgetList columns={widgetContentLayout(width).listColumns}>
+        <ul ref={track} className="flex h-full min-h-0 snap-x snap-mandatory gap-2 overflow-x-auto overflow-y-hidden pb-1" data-home-carousel="" aria-label={t('workbench.home.recent')}>
           {recent.map((s) => (
-            <WidgetRow
-              key={s.id}
-              testId={s.id}
-              onClick={() => navigate(routes.view.allSessions(s.id))}
-              leading={s.isProcessing ? <Dot tone="accent" /> : s.lastMessageRole === 'error' ? <Dot tone="danger" /> : <MessageSquare className="icon-caption" />}
-              title={getSessionTitle(s)}
-              trailing={s.lastMessageAt || s.createdAt ? fmt.ago(s.lastMessageAt ?? s.createdAt ?? now, now) : undefined}
-            />
+            <li key={s.id} className="flex h-full w-44 shrink-0 snap-start flex-col gap-1 rounded-[var(--radius-card)] bg-surface-hover p-2" data-home-row={s.id}>
+              <span className="flex min-w-0 items-center gap-1.5">
+                {s.isProcessing ? <Dot tone="accent" /> : s.lastMessageRole === 'error' ? <Dot tone="danger" /> : <MessageSquare className="icon-caption shrink-0" />}
+                <span className="min-w-0 truncate text-base font-bold text-foreground" title={getSessionTitle(s)}>{getSessionTitle(s)}</span>
+              </span>
+              <span className="truncate text-xs text-muted-foreground">
+                {s.lastMessageAt || s.createdAt ? fmt.ago(s.lastMessageAt ?? s.createdAt ?? now, now) : ''}
+                {s.model ? ` · ${s.model}` : ''}
+              </span>
+              {s.preview ? <p className="line-clamp-3 min-h-0 flex-1 text-sm text-muted-foreground">{s.preview}</p> : <span className="flex-1" />}
+              <WidgetButton onClick={() => navigate(routes.view.allSessions(s.id))}>{t('workbench.home.continue')}</WidgetButton>
+            </li>
           ))}
-        </WidgetList>
+        </ul>
       )}
     </WidgetFrame>
   )
@@ -393,10 +421,19 @@ function AgentsWidget({ edit, size = 'S' }: WidgetProps) {
     now,
     budget,
   }), [active, pendingPermissions, pendingCredentials, now, budget])
+  const byId = useMemo(() => new Map(active.map((s) => [s.id, s])), [active])
+  const [stopping, setStopping] = useState<Set<string>>(() => new Set())
+  const [stopError, setStopError] = useState(false)
+  const stop = (id: string) => {
+    if (typeof window.electronAPI?.cancelProcessing !== 'function') return
+    setStopError(false)
+    setStopping((cur) => new Set(cur).add(id))
+    window.electronAPI.cancelProcessing(id).catch(() => setStopError(true)).finally(() => setStopping((cur) => { const next = new Set(cur); next.delete(id); return next }))
+  }
   const rows = [
-    ...center.waiting.map((w) => ({ id: w.session.id, name: w.session.name, tone: 'warning' as const, note: t('workbench.home.agents.waitingRow') })),
-    ...center.stuck.map((s) => ({ id: s.id, name: s.name, tone: 'danger' as const, note: t('workbench.home.agents.stuckRow') })),
-    ...center.running.map((s) => ({ id: s.id, name: s.name, tone: 'accent' as const, note: s.lastMessageAt ? fmt.ago(s.lastMessageAt, now) : '' })),
+    ...center.waiting.map((w) => ({ id: w.session.id, name: w.session.name, tone: 'warning' as const, note: t('workbench.home.agents.waitingRow'), running: false })),
+    ...center.stuck.map((s) => ({ id: s.id, name: s.name, tone: 'danger' as const, note: t('workbench.home.agents.stuckRow'), running: false })),
+    ...center.running.map((s) => ({ id: s.id, name: s.name, tone: 'accent' as const, note: t(`workbench.home.agents.phase.${agentPhase(byId.get(s.id)?.lastMessageRole)}`), running: true })),
   ].slice(0, rowsFor(size, 3))
   const open = () => navigate(routes.view.screen('agents'))
   return (
@@ -413,11 +450,24 @@ function AgentsWidget({ edit, size = 'S' }: WidgetProps) {
           <div className="mt-1 min-h-0">
             <WidgetList>
               {rows.map((r) => (
-                <WidgetRow key={r.id} testId={r.id} onClick={() => navigate(routes.view.allSessions(r.id))} leading={<Dot tone={r.tone} />} title={r.name} trailing={r.note} />
+                <WidgetRow
+                  key={r.id}
+                  testId={r.id}
+                  onClick={() => navigate(routes.view.allSessions(r.id))}
+                  leading={<span className={cn('inline-flex', r.running && 'animate-pulse motion-reduce:animate-none')}><Dot tone={r.tone} /></span>}
+                  title={r.name}
+                  trailing={<span data-home-agent-phase={r.running ? agentPhase(byId.get(r.id)?.lastMessageRole) : undefined}>{r.note}</span>}
+                  aside={r.running ? (
+                    <button type="button" onClick={() => stop(r.id)} disabled={stopping.has(r.id)} aria-label={t('workbench.home.agents.stop', { name: r.name })} data-home-agent-stop={r.id} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-destructive/15 hover:text-destructive disabled:opacity-50">
+                      <Square className="icon-status" />
+                    </button>
+                  ) : undefined}
+                />
               ))}
             </WidgetList>
           </div>
         )}
+        {stopError ? <p className="mt-1 text-sm text-destructive" role="alert">{t('workbench.home.agents.stopFailed')}</p> : null}
         <span className="flex-1" />
         <p className="truncate text-sm text-muted-foreground">{t('workbench.home.agents.costToday', { cost: center.budget ? formatUsd(center.budget.spentUsd) : t('common.unavailable') })}</p>
       </div>
@@ -429,10 +479,12 @@ function AgentsWidget({ edit, size = 'S' }: WidgetProps) {
 // Входящие
 // ---------------------------------------------------------------------------
 
+const TRIAGE_BTN = 'flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-hover hover:text-foreground'
+
 function InboxWidget({ edit, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
-  const { items, state, counts, now } = useInboxItems({ withRemote: true })
+  const { items, state, setState, counts, now } = useInboxItems({ withRemote: true })
   const pending = useMemo(() => sortInbox(items.filter((i) => isActive(state, i, now))).slice(0, rowsFor(size, 4)), [items, state, now, size])
   return (
     <WidgetFrame
@@ -445,19 +497,24 @@ function InboxWidget({ edit, size = 'S' }: WidgetProps) {
       {pending.length === 0 ? (
         <WidgetEmpty text={t('workbench.home.inbox.empty')} hint={t('workbench.home.inbox.emptyHint')} />
       ) : (
-        <WidgetList>
+        <ul className="flex flex-col gap-1">
           {pending.map((item) => (
-            <WidgetRow
-              key={item.id}
-              testId={item.id}
-              onClick={() => navigate(routes.view.inbox(item.id))}
-              leading={item.blocking ? <Dot tone="warning" /> : <InboxIcon className="icon-caption" />}
-              title={item.title}
-              sub={item.source}
-              trailing={fmt.ago(item.at, now)}
-            />
+            <li key={item.id} data-home-row={item.id} className="group flex min-w-0 items-center gap-1 rounded-[var(--radius-control)] bg-surface-hover/50 py-0.5 pl-0.5 pr-1 transition-transform duration-150 focus-within:translate-x-0.5 hover:translate-x-0.5 motion-reduce:transition-none">
+              <button type="button" onClick={() => navigate(routes.view.inbox(item.id))} className="rox-home-row flex min-w-0 flex-1 items-center gap-2 rounded-[var(--radius-control)] px-1.5 py-1 text-left">
+                {item.blocking ? <Dot tone="warning" /> : <InboxIcon className="icon-caption shrink-0" />}
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-base text-foreground" title={item.title}>{item.title}</span>
+                  <span className="truncate text-xs text-muted-foreground">{item.source} · {fmt.ago(item.at, now)}</span>
+                </span>
+              </button>
+              <span className="flex shrink-0 items-center opacity-60 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+                <button type="button" className={TRIAGE_BTN} onClick={() => navigate(routes.view.inbox(item.id))} aria-label={t('workbench.home.inbox.reply', { name: item.title })} data-home-triage="reply"><CornerUpLeft className="icon-status" /></button>
+                <button type="button" className={TRIAGE_BTN} onClick={() => setState(snooze(state, item.id, snoozeTargets(now).laterToday))} aria-label={t('workbench.home.inbox.snooze', { name: item.title })} data-home-triage="snooze"><Clock className="icon-status" /></button>
+                <button type="button" className={TRIAGE_BTN} onClick={() => setState(markDone(state, item.id, now))} aria-label={t('workbench.home.inbox.done', { name: item.title })} data-home-triage="done"><Check className="icon-status" /></button>
+              </span>
+            </li>
           ))}
-        </WidgetList>
+        </ul>
       )}
     </WidgetFrame>
   )
@@ -521,6 +578,23 @@ function UsageWidget({ edit, width, size = 'S' }: WidgetProps) {
 // Модели
 // ---------------------------------------------------------------------------
 
+const SHARE_TONES = ['bg-accent', 'bg-success', 'bg-accent/50', 'bg-success/50', 'bg-muted-foreground'] as const
+
+/** Token share per model as one segmented bar (sessions when no tokens). */
+function ModelShareBar({ models }: { models: readonly { model?: string; connection?: string; tokens: number; sessions: number }[] }) {
+  const { t } = useTranslation()
+  const weight = (m: { tokens: number; sessions: number }) => (models.some((x) => x.tokens > 0) ? m.tokens : m.sessions)
+  const total = models.reduce((sum, m) => sum + weight(m), 0)
+  if (total <= 0) return null
+  return (
+    <span className="my-1 flex h-2 overflow-hidden rounded-full bg-surface-hover" role="img" aria-label={t('workbench.home.models.share')} data-home-model-share="">
+      {models.map((m, i) => (
+        <span key={m.model || `@${m.connection}`} className={cn('h-full transition-[width] duration-500 motion-reduce:transition-none', SHARE_TONES[i % SHARE_TONES.length])} style={{ width: `${(weight(m) / total) * 100}%` }} />
+      ))}
+    </span>
+  )
+}
+
 function ModelsWidget({ edit, width, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const now = useNow(5 * 60_000)
@@ -569,10 +643,12 @@ function ModelsWidget({ edit, width, size = 'S' }: WidgetProps) {
           {models.length > 0 ? (
             <div className="min-w-0">
               <SectionLabel>{t('workbench.home.models.used')}</SectionLabel>
+              <ModelShareBar models={models} />
               <WidgetList>
-                {models.map((m) => (
+                {models.map((m, i) => (
                   <WidgetRow
                     key={m.model || `@${m.connection}`}
+                    leading={<span className={cn('inline-block h-2 w-2 rounded-full', SHARE_TONES[i % SHARE_TONES.length])} aria-hidden="true" />}
                     title={m.model || t('workbench.home.models.defaultOf', { name: names.get(m.connection ?? defaultSlug ?? '') || m.connection || defaultSlug || '—' })}
                     trailing={m.tokens > 0 ? formatTokens(m.tokens) : t('workbench.home.models.sessions', { count: m.sessions })}
                   />
@@ -683,41 +759,82 @@ function BalanceWidget({ edit }: WidgetProps) {
 // Задачи
 // ---------------------------------------------------------------------------
 
-function TasksWidget({ edit, width, size = 'S' }: WidgetProps) {
+function TodayTaskRow({ task, overdue, due, disabled }: { task: { id: string; title: string; completedAt?: number }; overdue: boolean; due?: string; disabled: boolean }) {
+  const { t } = useTranslation()
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: task.id, disabled: disabled || Boolean(task.completedAt) })
+  const done = Boolean(task.completedAt)
+  const title = task.title || t('workbench.home.tasks.untitled')
+  return (
+    <li ref={setNodeRef} data-home-row={task.id} style={{ transform: CSS.Translate.toString(transform), transition }} className={cn('group flex min-w-0 items-center gap-1.5 rounded-[var(--radius-control)] px-1 py-0.5', isDragging && 'relative bg-surface-pressed')}>
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={done}
+        aria-label={t(done ? 'workbench.home.tasks.reopen' : 'workbench.home.tasks.complete', { name: title })}
+        onClick={() => setPersonalTaskDone(task.id, !done)}
+        data-home-task-check={task.id}
+        className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-[var(--radius-control)] transition-colors', done ? 'bg-success text-background' : 'bg-surface-hover hover:bg-surface-pressed')}
+      >
+        {done ? <Check className="icon-caption" /> : null}
+      </button>
+      <button type="button" onClick={() => navigate(routes.view.tasks(task.id))} className="min-w-0 flex-1 truncate text-left text-base" title={title}>
+        <span className={cn(done ? 'text-muted-foreground line-through' : 'text-foreground')}>{title}</span>
+      </button>
+      {due ? <span className={cn('shrink-0 text-xs', overdue ? 'text-destructive' : 'text-muted-foreground')}>{due}</span> : null}
+      {!done ? (
+        <button type="button" ref={setActivatorNodeRef} {...attributes} {...listeners} aria-label={t('workbench.home.tasks.drag', { name: title })} className="flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-muted-foreground opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100 active:cursor-grabbing">
+          <GripVertical className="icon-caption" />
+        </button>
+      ) : null}
+    </li>
+  )
+}
+
+function TasksWidget({ edit, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
   const tasks = usePersonalTasks()
-  const focus = useFocusState()
-  const top = useMemo(() => topOpenTasks(tasks, focus.top3, now, widgetItemLimit(size, 5, widgetContentLayout(width).listColumns)), [tasks, focus.top3, now, width, size])
+  const today = useMemo(() => todayTasks(tasks, now), [tasks, now])
+  const shown = today.slice(0, widgetItemLimit(size, 5))
+  const doneCount = today.filter((task) => task.completedAt).length
   const dayStart = startOfLocalDay(now)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }))
+  const open = today.filter((task) => !task.completedAt)
+  const onDragEnd = (event: DragEndEvent) => {
+    const over = event.over ? String(event.over.id) : null
+    if (!over) return
+    setPersonalTaskOrders(reorderedSlots(open, String(event.active.id), over))
+  }
   return (
     <WidgetFrame
       testId="tasks"
       title={t('workbench.home.w.tasks')}
       onOpen={() => navigate(routes.view.tasks())}
       edit={edit}
-      meta={top.open ? t('workbench.home.tasks.open', { count: top.open }) : undefined}
+      meta={today.length ? t('workbench.home.tasks.progress', { done: doneCount, total: today.length }) : undefined}
     >
-      {top.open === 0 ? (
-        <WidgetEmpty text={t('workbench.home.tasks.empty')} hint={t('workbench.home.tasks.emptyHint')} action={{ label: t('workbench.home.tasks.add'), onClick: () => navigate(routes.view.tasks()) }} />
-      ) : (
-        <div className="flex h-full min-h-0 flex-col">
-          {top.overdue > 0 ? <p className="mb-0.5 text-sm font-bold text-destructive">{t('workbench.home.tasks.overdue', { count: top.overdue })}</p> : null}
-          <WidgetList columns={widgetContentLayout(width).listColumns}>
-            {top.top.map((task) => (
-              <WidgetRow
-                key={task.id}
-                testId={task.id}
-                onClick={() => navigate(routes.view.tasks(task.id))}
-                leading={focus.top3.includes(task.id) ? <Dot tone="accent" /> : task.priority === 'high' ? <Dot tone="danger" /> : <ListTodo className="icon-caption" />}
-                title={task.title || t('workbench.home.tasks.untitled')}
-                trailing={task.dueAt != null ? <span className={cn(task.dueAt < dayStart && 'text-destructive')}>{fmt.when(task.dueAt, now)}</span> : undefined}
-              />
-            ))}
-          </WidgetList>
-        </div>
-      )}
+      <div className="flex h-full min-h-0 flex-col gap-1">
+        {today.length > 0 ? (
+          <span className="flex h-1 shrink-0 overflow-hidden rounded-full bg-surface-hover" role="progressbar" aria-valuemin={0} aria-valuemax={today.length} aria-valuenow={doneCount} aria-label={t('workbench.home.tasks.progress', { done: doneCount, total: today.length })}>
+            <span className="rounded-full bg-success transition-[width] duration-500 motion-reduce:transition-none" style={{ width: `${(doneCount / today.length) * 100}%` }} />
+          </span>
+        ) : null}
+        {today.length === 0 ? (
+          <p className="px-1.5 py-2 text-sm text-muted-foreground">{t('workbench.home.tasks.todayEmpty')}</p>
+        ) : (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={shown.filter((task) => !task.completedAt).map((task) => task.id)} strategy={verticalListSortingStrategy}>
+              <ul className="min-h-0 flex-1 overflow-y-auto" aria-label={t('workbench.home.w.tasks')}>
+                {shown.map((task) => (
+                  <TodayTaskRow key={task.id} task={task} disabled={Boolean(edit)} overdue={task.dueAt != null && task.dueAt < dayStart && !task.completedAt} due={task.dueAt != null ? fmt.when(task.dueAt, now) : undefined} />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
+        )}
+        <QuickTaskInput disabled={Boolean(edit)} onCreate={(title, previousAttempt) => createPersonalTaskConfirmed({ title, list: 'today' }, previousAttempt)} />
+      </div>
     </WidgetFrame>
   )
 }
@@ -761,6 +878,7 @@ function MeetingsWidget({ edit, width, size = 'S' }: WidgetProps) {
   const open = (id?: string) => navigate(routes.view.meetings(id))
   const empty = loaded && !overview.live && overview.upcoming.length === 0 && overview.recent.length === 0
   const recent = overview.recent.slice(0, widgetItemLimit(size, overview.upcoming.length > 0 ? 2 : 3))
+  const timeline = useMemo(() => dayTimeline(meetings, now), [meetings, now])
   return (
     <WidgetFrame testId="meetings" title={t('workbench.home.w.meetings')} onOpen={() => open()} edit={edit} action={available ? <RecordButton rec={rec} /> : undefined}>
       {!available ? (
@@ -768,7 +886,27 @@ function MeetingsWidget({ edit, width, size = 'S' }: WidgetProps) {
       ) : empty ? (
         <WidgetEmpty text={t('workbench.home.meetings.empty')} hint={t('workbench.home.meetings.emptyHint')} action={{ label: t('workbench.home.meetings.plan'), onClick: () => open() }} />
       ) : (
-        <div className={cn('grid h-full min-h-0 gap-x-4', widgetContentLayout(width).listColumns === 2 ? 'grid-cols-2' : 'grid-cols-1')}>
+        <div className="flex h-full min-h-0 flex-col gap-1">
+        {timeline.items.length > 0 ? (
+          <div className="relative h-9 shrink-0 rounded-[var(--radius-control)] bg-surface-hover" data-home-timeline="" role="list" aria-label={t('workbench.home.meetings.timeline')}>
+            <span className="absolute inset-y-0 w-0.5 bg-destructive" style={{ left: `${timeline.now * 100}%` }} aria-hidden="true" />
+            {timeline.items.map(({ item, left, width: w }) => (
+              <button
+                key={item.id}
+                type="button"
+                role="listitem"
+                onClick={() => open(item.id)}
+                title={`${item.title} · ${fmt.time(item.startedAt ?? item.scheduledAt ?? now)}`}
+                aria-label={`${item.title} · ${fmt.time(item.startedAt ?? item.scheduledAt ?? now)}`}
+                className={cn('absolute inset-y-1 min-w-2 truncate rounded-[var(--radius-control)] px-1 text-left text-xs font-bold text-foreground transition-transform hover:-translate-y-px motion-reduce:transition-none', item.status === 'recording' || item.id === overview.live?.id ? 'bg-destructive/40' : item.endedAt ? 'bg-surface-pressed' : 'bg-accent/40')}
+                style={{ left: `${left * 100}%`, width: `${w * 100}%` }}
+              >
+                {item.title}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <div className={cn('grid min-h-0 flex-1 gap-x-4', widgetContentLayout(width).listColumns === 2 ? 'grid-cols-2' : 'grid-cols-1')}>
           <div className="min-w-0">
             {overview.live ? (
               <WidgetList>
@@ -781,7 +919,15 @@ function MeetingsWidget({ edit, width, size = 'S' }: WidgetProps) {
             ) : (
               <WidgetList>
                 {overview.upcoming.map((m) => (
-                  <WidgetRow key={m.id} testId={m.id} onClick={() => open(m.id)} leading={<CalendarClock className="icon-caption" />} title={m.title} trailing={m.scheduledAt ? fmt.when(m.scheduledAt, now) : undefined} />
+                  <WidgetRow
+                    key={m.id}
+                    testId={m.id}
+                    onClick={() => open(m.id)}
+                    leading={<CalendarClock className="icon-caption" />}
+                    title={m.title}
+                    trailing={m.scheduledAt ? fmt.when(m.scheduledAt, now) : undefined}
+                    aside={m.scheduledAt != null && m.scheduledAt - now < 15 * 60_000 ? <WidgetButton onClick={() => void rec.record()} disabled={rec.busy || Boolean(rec.recording)}>{t('workbench.home.meetings.record')}</WidgetButton> : undefined}
+                  />
                 ))}
               </WidgetList>
             )}
@@ -804,6 +950,7 @@ function MeetingsWidget({ edit, width, size = 'S' }: WidgetProps) {
               </WidgetList>
             </div>
           ) : null}
+        </div>
         </div>
       )}
     </WidgetFrame>
@@ -988,6 +1135,15 @@ function AutomationsWidget({ edit, size = 'S' }: WidgetProps) {
       },
     )
   }
+  const [runState, setRunState] = useState<Record<string, 'running' | 'ok' | 'error'>>({})
+  const runNow = (item: AutomationListItem) => {
+    if (!workspaceId || typeof window.electronAPI?.testAutomation !== 'function') return
+    setRunState((cur) => ({ ...cur, [item.id]: 'running' }))
+    window.electronAPI.testAutomation({ workspaceId, automationId: item.id, automationName: item.name, actions: item.actions, permissionMode: item.permissionMode, labels: item.labels, telegramTopic: item.telegramTopic }).then(
+      (result) => { setRunState((cur) => ({ ...cur, [item.id]: result.actions?.length && result.actions.every((a) => a.success) ? 'ok' : 'error' })); data.reload() },
+      () => setRunState((cur) => ({ ...cur, [item.id]: 'error' })),
+    )
+  }
   // Rows: scheduled ones by next run, then the rest (event/paused) so every
   // automation can be switched from here.
   const nextAt = new Map(overview.next.map((n) => [n.id, n.at]))
@@ -1030,7 +1186,21 @@ function AutomationsWidget({ edit, size = 'S' }: WidgetProps) {
                   leading={<Workflow className={cn('icon-caption', !a.enabled && 'opacity-50')} />}
                   title={<span className={cn(!a.enabled && 'text-muted-foreground')}>{a.name}</span>}
                   trailing={!a.enabled ? t('workbench.home.automations.paused') : at != null ? fmt.when(at, now) : a.cron ? '—' : t('workbench.home.automations.onEvent')}
-                  aside={<Toggle checked={a.enabled} onChange={(next) => toggle(a, next)} label={t(a.enabled ? 'workbench.home.automations.pause' : 'workbench.home.automations.resume', { name: a.name })} />}
+                  aside={
+                    <span className="flex shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => runNow(a)}
+                        disabled={runState[a.id] === 'running'}
+                        aria-label={t('workbench.home.automations.runNow', { name: a.name })}
+                        data-home-run={runState[a.id] ?? 'idle'}
+                        className={cn('flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] hover:bg-surface-hover disabled:opacity-50', runState[a.id] === 'ok' ? 'text-success' : runState[a.id] === 'error' ? 'text-destructive' : 'text-muted-foreground hover:text-foreground')}
+                      >
+                        {runState[a.id] === 'ok' ? <Check className="icon-status" /> : runState[a.id] === 'error' ? <AlertTriangle className="icon-status" /> : <Play className={cn('icon-status', runState[a.id] === 'running' && 'animate-pulse motion-reduce:animate-none')} />}
+                      </button>
+                      <Toggle checked={a.enabled} onChange={(next) => toggle(a, next)} label={t(a.enabled ? 'workbench.home.automations.pause' : 'workbench.home.automations.resume', { name: a.name })} />
+                    </span>
+                  }
                 />
               )
             })}
@@ -1080,8 +1250,18 @@ function FeedWidget({ edit, width, size = 'S' }: WidgetProps) {
               </WidgetButton>
             </div>
           ) : null}
+          {latest[0] ? (
+            <button type="button" onClick={() => navigate(routes.view.feed(latest[0]!.id))} data-home-feed-highlight={latest[0].id} className="rox-home-tile mb-1 flex w-full min-w-0 flex-col gap-0.5 rounded-[var(--radius-card)] px-2.5 py-2 text-left">
+              <span className="flex min-w-0 items-center gap-1.5 text-xs uppercase caps-label text-muted-foreground">
+                {latest[0].tab === 'agents' ? <Bot className="icon-caption" /> : <Rss className="icon-caption" />}
+                <span className="truncate">{t('workbench.home.feed.highlight')} · {fmt.ago(latest[0].at, now)}</span>
+              </span>
+              <span className="line-clamp-2 text-base font-bold text-foreground">{latest[0].title || latest[0].summary || latest[0].id}</span>
+              {latest[0].title && latest[0].summary ? <span className="line-clamp-2 text-sm text-muted-foreground">{latest[0].summary}</span> : null}
+            </button>
+          ) : null}
           <WidgetList columns={widgetContentLayout(width).listColumns}>
-            {latest.map((item) => (
+            {latest.slice(1).map((item) => (
               <WidgetRow
                 key={item.id}
                 testId={item.id}
@@ -1132,6 +1312,52 @@ function useNotes(workspaceId: string | null): { available: boolean; loaded: boo
   return state
 }
 
+function NotePreview({ workspaceId, noteId }: { workspaceId: string; noteId: string }) {
+  const { t } = useTranslation()
+  const [doc, setDoc] = useState<{ status: 'loading' } | { status: 'error' } | { status: 'ok'; content: string; revision?: string }>({ status: 'loading' })
+  const [draft, setDraft] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(false)
+  const load = useCallback(() => {
+    const api = window.electronAPI
+    if (typeof api?.readNote !== 'function') { setDoc({ status: 'error' }); return }
+    api.readNote(workspaceId, noteId).then((note) => setDoc({ status: 'ok', content: note.content, revision: note.revision }), () => setDoc({ status: 'error' }))
+  }, [workspaceId, noteId])
+  useEffect(() => { load() }, [load])
+  const append = async () => {
+    const line = draft.trim()
+    const api = window.electronAPI
+    if (!line || doc.status !== 'ok' || typeof api?.saveNote !== 'function') return
+    setSaving(true)
+    setSaveError(false)
+    try {
+      // Expected revision: a concurrent edit fails instead of being overwritten.
+      const next = `${doc.content.replace(/\s*$/, '')}\n\n${line}\n`
+      const saved = await api.saveNote(workspaceId, noteId, next, doc.revision)
+      setDoc({ status: 'ok', content: saved.content, revision: saved.revision })
+      setDraft('')
+    } catch {
+      setSaveError(true)
+      load()
+    } finally {
+      setSaving(false)
+    }
+  }
+  if (doc.status === 'loading') return <p className="px-1.5 py-1 text-sm text-muted-foreground">…</p>
+  if (doc.status === 'error') return <p className="px-1.5 py-1 text-sm text-muted-foreground">{t('workbench.home.notes.previewFailed')}</p>
+  const text = doc.content.replace(/^---[\s\S]*?---\s*/, '').trim()
+  return (
+    <div className="flex min-w-0 flex-col gap-1 rounded-[var(--radius-control)] bg-surface-hover/60 p-1.5" data-home-note-preview={noteId}>
+      <p className="line-clamp-4 whitespace-pre-line text-sm text-muted-foreground">{text || t('workbench.home.notes.emptyNote')}</p>
+      <form className="flex min-w-0 items-center gap-1" onSubmit={(event) => { event.preventDefault(); void append() }}>
+        <input value={draft} onChange={(event) => setDraft(event.target.value)} disabled={saving} placeholder={t('workbench.home.notes.appendPlaceholder')} aria-label={t('workbench.home.notes.append')} className="min-w-0 flex-1 rounded-[var(--radius-control)] bg-background px-1.5 py-0.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-accent" />
+        <WidgetButton onClick={() => void append()} disabled={saving || !draft.trim()}>{t('workbench.home.notes.append')}</WidgetButton>
+      </form>
+      {saveError ? <p className="text-xs text-destructive" role="alert">{t('workbench.home.notes.appendFailed')}</p> : null}
+    </div>
+  )
+}
+
 function NotesWidget({ edit, width, size = 'S' }: WidgetProps) {
   const { t } = useTranslation()
   const titleKey = useNotesTitleKey('workbench.home.w.notes')
@@ -1140,6 +1366,7 @@ function NotesWidget({ edit, width, size = 'S' }: WidgetProps) {
   const workspace = useActiveWorkspace()
   const state = useNotes(workspace?.id ?? null)
   const shown = useMemo(() => recentByUpdated(state.notes, widgetItemLimit(size, 5, widgetContentLayout(width).listColumns)), [state.notes, width, size])
+  const [expanded, setExpanded] = useState<string | null>(null)
   return (
     <WidgetFrame testId="notes" title={t(titleKey)} onOpen={() => navigate(routes.view.notes())} edit={edit}>
       {!state.available ? (
@@ -1147,11 +1374,25 @@ function NotesWidget({ edit, width, size = 'S' }: WidgetProps) {
       ) : state.loaded && shown.length === 0 ? (
         <WidgetEmpty text={t('workbench.home.notes.empty')} action={{ label: t('workbench.home.quick.newNote'), onClick: () => navigate(routes.view.notes()) }} />
       ) : (
-        <WidgetList columns={widgetContentLayout(width).listColumns}>
+        <ul className="flex min-w-0 flex-col">
           {shown.map((note) => (
-            <WidgetRow key={note.id} testId={note.id} onClick={() => navigate(routes.view.notes(note.id))} leading={<FileText className="icon-caption" />} title={note.title || t('notes.untitled')} trailing={fmt.ago(note.updatedAt, now)} />
+            <li key={note.id} className="min-w-0" data-home-row={note.id}>
+              <div className="flex min-w-0 items-center gap-1">
+                <button type="button" onClick={() => navigate(routes.view.notes(note.id))} className="rox-home-row flex min-w-0 flex-1 items-center gap-2 rounded-[var(--radius-control)] px-1.5 py-1 text-left">
+                  <FileText className="icon-caption shrink-0" />
+                  <span className="min-w-0 flex-1 truncate text-base text-foreground">{note.title || t('notes.untitled')}</span>
+                  <span className="shrink-0 text-sm text-muted-foreground">{fmt.ago(note.updatedAt, now)}</span>
+                </button>
+                {workspace?.id ? (
+                  <button type="button" onClick={() => setExpanded((cur) => (cur === note.id ? null : note.id))} aria-expanded={expanded === note.id} aria-label={t('workbench.home.notes.preview', { name: note.title || t('notes.untitled') })} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-hover hover:text-foreground">
+                    <ChevronLeft className={cn('icon-status transition-transform motion-reduce:transition-none', expanded === note.id ? '-rotate-90' : 'rotate-180')} />
+                  </button>
+                ) : null}
+              </div>
+              {expanded === note.id && workspace?.id ? <NotePreview workspaceId={workspace.id} noteId={note.id} /> : null}
+            </li>
           ))}
-        </WidgetList>
+        </ul>
       )}
     </WidgetFrame>
   )
@@ -1463,6 +1704,13 @@ function HeroWidget({ edit }: WidgetProps) {
   const rec = useRecordAction()
   const snap = useMemo(() => buildMiniDashboard({ sessions: active, tasks: taskCount, connection }), [active, taskCount, connection])
   const [prompt, setPrompt] = useState('')
+  const { all } = useHomeSessions()
+  const { llmConnections, workspaceDefaultLlmConnection, runtimeSummary } = useAppShellContext()
+  // Sending is immediate (intended): say which model answers and what a session usually costs.
+  const modelName = runtimeSummary?.defaultModel
+    ? runtimeSummary.models?.find((model) => model.id === runtimeSummary.defaultModel)?.name ?? runtimeSummary.defaultModel
+    : llmConnections.find((c) => c.slug === workspaceDefaultLlmConnection)?.defaultModel ?? null
+  const typicalCost = useMemo(() => averageSessionCost(all, startOfLocalDay(now) - 6 * 86_400_000), [all, now])
   const locale = i18n.resolvedLanguage || i18n.language || 'ru'
   const date = useMemo(() => new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long' }).format(now), [locale, now])
   const waiting = counts.decisions + counts.blocking
@@ -1516,6 +1764,11 @@ function HeroWidget({ edit }: WidgetProps) {
             <ArrowUp className="icon-status" />
           </button>
         </form>
+        <p className="-mt-2 truncate px-1 text-xs text-muted-foreground" data-home-hero-estimate="">
+          {t('workbench.home.hero.model', { model: modelName ?? t('workbench.home.models.defaultModel') })}
+          {' · '}
+          {typicalCost != null ? t('workbench.home.hero.estimate', { cost: formatUsd(typicalCost) }) : t('workbench.home.hero.noEstimate')}
+        </p>
         <span className="flex-1" />
         <div className="flex min-w-0 flex-wrap gap-2">
           <button type="button" className={HERO_CHIP} onClick={() => navigate(routes.action.newSession())}><SquarePen className="icon-status" />{t('workbench.home.quick.newSession')}</button>

@@ -32,6 +32,7 @@ import {
   HOME_GRID_GAP,
   HOME_GRID_ROW_HEIGHT,
   HOME_WIDGET_DEFAULT_SIZE,
+  HOME_WIDGET_ALLOWED_SIZES,
   HOME_WIDGET_GROUPS,
   HOME_WIDGET_IDS,
   HOME_LAYOUT_NS,
@@ -50,11 +51,18 @@ import {
   shiftWidget,
   widgetSpan,
   widgetRowSpan,
+  HOME_META_NS,
+  flatV2DefaultLayout,
+  normalizeHomeMeta,
+  packHomeLayout,
+  upgradeFlatDefault,
+  type PackedCell,
   widgetWidth,
   type HomeDashboardLayout,
   type HomeWidgetId,
   type HomeWidgetPlacement,
 } from './home/dashboard-layout'
+import { toast } from 'sonner'
 import { HOME_WIDGETS } from './home/widgets'
 import type { WidgetEditProps } from './home/widget-kit'
 import { widgetAppearanceStyle } from './home/widget-appearance'
@@ -63,6 +71,8 @@ interface HomeLayoutSnapshot {
   layout: HomeDashboardLayout
   raw: string | null
   writable: boolean
+  /** The untouched pre-bento default is shown as the bento default. */
+  upgraded: boolean
 }
 
 function readLayout(workspaceId: string | null): HomeLayoutSnapshot {
@@ -70,11 +80,18 @@ function readLayout(workspaceId: string | null): HomeLayoutSnapshot {
   const snapshot = readWorkspaceJsonSnapshot(HOME_LAYOUT_NS, workspaceId, normalizeHomeLayout)
   let writable = snapshot.available && snapshot.valid
   let layout = snapshot.value
+  let upgraded = false
   if (snapshot.raw !== null && writable) {
     try {
       const raw = JSON.parse(snapshot.raw) as { ownerId?: unknown }
       writable = canReadHomeLayout(raw, ownerId)
       if (!writable) layout = cloneLayout(DEFAULT_HOME_LAYOUT)
+      else {
+        const meta = readWorkspaceJsonSnapshot(HOME_META_NS, workspaceId, normalizeHomeMeta).value
+        const next = upgradeFlatDefault(raw, layout, meta)
+        layout = next.layout
+        upgraded = next.upgraded
+      }
     } catch {
       writable = false
       layout = cloneLayout(DEFAULT_HOME_LAYOUT)
@@ -90,7 +107,7 @@ function readLayout(workspaceId: string | null): HomeLayoutSnapshot {
       }
     }
   }
-  return { layout, raw: snapshot.raw, writable }
+  return { layout, raw: snapshot.raw, writable, upgraded }
 }
 
 function useContainerWidth<T extends HTMLElement>(): [React.RefObject<T>, number] {
@@ -126,6 +143,7 @@ class WidgetBoundary extends React.Component<{ fallback: React.ReactNode; childr
 
 function SortableWidget({
   placement,
+  cell,
   span,
   trackPitch,
   width,
@@ -134,6 +152,8 @@ function SortableWidget({
   layout,
 }: {
   placement: HomeWidgetPlacement
+  /** Explicit packed position; DOM order equals this visual order. */
+  cell: PackedCell
   span: number
   trackPitch: number
   width: number
@@ -147,6 +167,7 @@ function SortableWidget({
   const edit: WidgetEditProps | null = editing
     ? {
         size: placement.size,
+        sizes: HOME_WIDGET_ALLOWED_SIZES[placement.id],
         appearance: placement.appearance,
         onAppearance: (appearance) => onChange(setWidgetAppearance(layout, placement.id, appearance)),
         onResize: (size) => onChange(resizeWidget(layout, placement.id, size)),
@@ -199,7 +220,7 @@ function SortableWidget({
       data-home-cell={placement.id}
       data-home-size={placement.size}
       className={cn('min-h-0 min-w-0', isDragging && 'relative z-10 opacity-80')}
-      style={{ ...widgetAppearanceStyle(placement.appearance), gridColumn: `span ${span} / span ${span}`, gridRow: `span ${Math.ceil((height + HOME_GRID_GAP) / trackPitch)}`, height: contentSized ? 'fit-content' : height, alignSelf: 'start', transform: CSS.Translate.toString(transform), transition }}
+      style={{ ...widgetAppearanceStyle(placement.appearance), gridColumn: `${cell.col + 1} / span ${span}`, gridRow: `${Math.round((cell.row * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP)) / trackPitch) + 1} / span ${Math.ceil((height + HOME_GRID_GAP) / trackPitch)}`, height: contentSized ? 'fit-content' : height, alignSelf: 'start', transform: CSS.Translate.toString(transform), transition }}
     >
       <WidgetBoundary
         fallback={
@@ -222,7 +243,7 @@ function WidgetPreview({ id }: { id: HomeWidgetId }) {
   return (
     <div ref={ref} role="region" className="mt-2 h-[232px] min-w-0 rounded-[var(--radius-card)] border border-foreground/10" data-home-preview={id} aria-label={t('workbench.home.picker.preview')}>
       <WidgetBoundary fallback={<p className="p-3 text-sm text-muted-foreground">{t('workbench.home.widgetFailed')}</p>}>
-        <Preview edit={null} width={width} size="S" />
+        <Preview edit={null} width={width} size={HOME_WIDGET_DEFAULT_SIZE[id]} />
       </WidgetBoundary>
     </div>
   )
@@ -334,7 +355,10 @@ export function HomeFrontPage() {
   const editingRef = useRef(false)
   const editing = draft !== null
   editingRef.current = editing
-  const layout = stored.workspaceId === workspaceId ? (draft ?? stored.snapshot.layout) : readLayout(workspaceId).layout
+  const sourceLayout = stored.workspaceId === workspaceId ? (draft ?? stored.snapshot.layout) : readLayout(workspaceId).layout
+  // Edits operate on the packed (visual) order, so saved order = what the user sees.
+  const packed = useMemo(() => packHomeLayout(sourceLayout, width), [sourceLayout, width])
+  const layout = packed.layout
   const packedGridRef = useRef<HTMLDivElement>(null)
   const [trackPitch, setTrackPitch] = useState(1)
   const hasWidgets = layout.widgets.length > 0
@@ -366,6 +390,31 @@ export function HomeFrontPage() {
       setStored((current) => current.workspaceId === workspaceId ? { workspaceId, snapshot: latest } : current)
     })
   }, [workspaceId])
+
+  // One-time notice for the bento upgrade, with a way back to the old arrangement.
+  const upgraded = stored.workspaceId === workspaceId && stored.snapshot.upgraded && stored.snapshot.writable
+  useEffect(() => {
+    if (!upgraded) return
+    const meta = readWorkspaceJsonSnapshot(HOME_META_NS, workspaceId, normalizeHomeMeta).value
+    if (meta.bentoNoticeSeen) return
+    saveWorkspaceJson(HOME_META_NS, workspaceId, { ...meta, bentoNoticeSeen: true })
+    toast(t('workbench.home.bento.updated'), {
+      id: `home-bento-${workspaceId ?? 'default'}`,
+      action: {
+        label: t('workbench.home.bento.restore'),
+        onClick: () => {
+          const latest = readLayout(workspaceId)
+          if (!latest.writable || !latest.upgraded) return
+          const current = readWorkspaceJsonSnapshot(HOME_META_NS, workspaceId, normalizeHomeMeta).value
+          saveWorkspaceJson(HOME_META_NS, workspaceId, { ...current, keepFlat: true, bentoNoticeSeen: true })
+          saveWorkspaceJsonIfUnchanged(HOME_LAYOUT_NS, workspaceId, latest.raw, persistHomeLayout(flatV2DefaultLayout(), workspaceId ?? 'default', newLocalId('home-layout')))
+          const restored = readLayout(workspaceId)
+          baselineRef.current = restored
+          setStored({ workspaceId, snapshot: restored })
+        },
+      },
+    })
+  }, [upgraded, workspaceId, t])
 
   const beginEditing = useCallback(() => {
     const initial = readLayout(workspaceId)
@@ -556,13 +605,14 @@ export function HomeFrontPage() {
                 <div
                   ref={packedGridRef}
                   className="grid"
-                  style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: '1px', gridAutoFlow: 'row dense', columnGap: HOME_GRID_GAP }}
+                  style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: '1px', columnGap: HOME_GRID_GAP }}
                   data-home-grid=""
                 >
                   {layout.widgets.map((placement) => (
                     <SortableWidget
                       key={placement.id}
                       placement={placement}
+                      cell={packed.cells.get(placement.id)!}
                       span={widgetSpan(placement.size, width)}
                       trackPitch={trackPitch}
                       width={widgetWidth(widgetSpan(placement.size, width), width)}

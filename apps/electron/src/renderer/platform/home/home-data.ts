@@ -516,7 +516,7 @@ export function buildWeekCalendar(input: WeekCalendarInput, now: number, days = 
 export interface ActivityDay {
   /** Local midnight. */
   start: number
-  /** Sessions created or last active that day. */
+  /** Distinct sessions active that day (created or last active; each once). */
   sessions: number
   tokens: number
 }
@@ -525,6 +525,7 @@ export interface ActivityHeatmap {
   /** Columns are weeks (oldest → newest), rows Monday → Sunday; future days are null. */
   weeks: (ActivityDay | null)[][]
   max: number
+  /** Distinct sessions active anywhere in the window. */
   total: number
   /** Consecutive active days ending today (or yesterday when today is still empty). */
   streak: number
@@ -538,28 +539,32 @@ function mondayIndex(ts: number): number {
 }
 
 /**
- * Real session activity over `weeks` calendar weeks. A session counts once on
- * its creation day and once on its last-activity day (if different); its token
- * total is attributed to the last-activity day, as in `buildUsageOverview`.
+ * Real session activity over `weeks` calendar weeks. A session is active on its
+ * creation day and its last-activity day and counts once per such day; `total`
+ * counts each session once. Tokens go to the last-activity day, as in
+ * `buildUsageOverview`.
  */
 export function buildActivityHeatmap(sessions: readonly UsageSessionLike[], now: number, weeks = 16): ActivityHeatmap {
   const todayStart = startOfLocalDay(now)
   const firstDay = startOfLocalDay(todayStart - (mondayIndex(todayStart) + (weeks - 1) * 7) * DAY_MS + DAY_MS / 2)
   const byDay = new Map<number, ActivityDay>()
-  const bump = (ts: number, tokens: number) => {
-    if (!Number.isFinite(ts) || ts <= 0 || ts < firstDay || ts > now) return
+  let total = 0
+  const bump = (ts: number, tokens: number): boolean => {
+    if (!Number.isFinite(ts) || ts <= 0 || ts < firstDay || ts > now) return false
     const start = startOfLocalDay(ts)
     const day = byDay.get(start) ?? { start, sessions: 0, tokens: 0 }
     day.sessions += 1
     day.tokens += tokens
     byDay.set(start, day)
+    return true
   }
   for (const session of sessions) {
     const created = session.createdAt ?? 0
     const last = activityAt(session)
     const tokens = usageOf(session)?.tokens ?? 0
-    if (created && startOfLocalDay(created) !== startOfLocalDay(last)) bump(created, 0)
-    bump(last, tokens)
+    const onCreated = created > 0 && startOfLocalDay(created) !== startOfLocalDay(last) ? bump(created, 0) : false
+    const onLast = bump(last, tokens)
+    if (onCreated || onLast) total += 1
   }
   const grid: (ActivityDay | null)[][] = []
   let cursor = firstDay
@@ -572,11 +577,9 @@ export function buildActivityHeatmap(sessions: readonly UsageSessionLike[], now:
     grid.push(column)
   }
   let max = 0
-  let total = 0
   const perWeekday = [0, 0, 0, 0, 0, 0, 0]
   for (const day of byDay.values()) {
     max = Math.max(max, day.sessions)
-    total += day.sessions
     perWeekday[mondayIndex(day.start)]! += day.sessions
   }
   let streak = 0
@@ -599,4 +602,110 @@ export function heatLevel(sessions: number, max: number): 0 | 1 | 2 | 3 | 4 {
 export function greetingPart(ts: number): 'night' | 'morning' | 'day' | 'evening' {
   const h = new Date(ts).getHours()
   return h < 5 ? 'night' : h < 12 ? 'morning' : h < 18 ? 'day' : 'evening'
+}
+
+/**
+ * Typical cost of one session: the mean cost of sessions last active since
+ * `since` that carry a cost. Null when there is nothing to base it on.
+ */
+export function averageSessionCost(sessions: readonly UsageSessionLike[], since: number): number | null {
+  let sum = 0
+  let n = 0
+  for (const session of sessions) {
+    if (activityAt(session) < since) continue
+    const cost = usageOf(session)?.cost ?? 0
+    if (cost <= 0) continue
+    sum += cost
+    n += 1
+  }
+  return n > 0 ? sum / n : null
+}
+
+// ---------------------------------------------------------------------------
+// Задачи на сегодня (Things-style Today)
+// ---------------------------------------------------------------------------
+
+/**
+ * Today: open tasks in the «Сегодня» list or due by the end of today, plus the
+ * ones completed today (kept, struck through, until tomorrow). Ordered by the
+ * user's manual `order`, then creation — the order drag-reorder writes.
+ */
+export function todayTasks<T extends TaskLike>(tasks: readonly T[], now: number): T[] {
+  const dayStart = startOfLocalDay(now)
+  const dayEnd = dayStart + DAY_MS
+  const inToday = (t: T) => t.list === 'today' || (t.dueAt != null && t.dueAt < dayEnd)
+  return tasks
+    .filter((t) => !t.trashedAt && !t.cancelledAt && inToday(t) && (!t.completedAt || t.completedAt >= dayStart))
+    .sort((a, b) => Number(Boolean(a.completedAt)) - Number(Boolean(b.completedAt)) || (a.order ?? a.createdAt) - (b.order ?? b.createdAt))
+}
+
+/**
+ * New `order` values after moving `activeId` onto `overId` within `ids`: the
+ * same set of order slots is reassigned in the new sequence, so tasks outside
+ * the visible list keep their relative position.
+ */
+export function reorderedSlots(items: readonly { id: string; order?: number; createdAt: number }[], activeId: string, overId: string): Map<string, number> {
+  const from = items.findIndex((i) => i.id === activeId)
+  const to = items.findIndex((i) => i.id === overId)
+  const result = new Map<string, number>()
+  if (from < 0 || to < 0 || from === to) return result
+  const slots = items.map((i) => i.order ?? i.createdAt).sort((a, b) => a - b)
+  // Equal slots (never-ordered tasks) would not reorder: spread them.
+  for (let i = 1; i < slots.length; i += 1) if (slots[i]! <= slots[i - 1]!) slots[i] = slots[i - 1]! + 1
+  const next = items.slice()
+  const [moved] = next.splice(from, 1)
+  next.splice(to, 0, moved!)
+  next.forEach((item, index) => { if (item.order !== slots[index]) result.set(item.id, slots[index]!) })
+  return result
+}
+
+// ---------------------------------------------------------------------------
+// Агенты: фаза хода
+// ---------------------------------------------------------------------------
+
+export type AgentPhase = 'thinking' | 'tool' | 'writing' | 'planning'
+
+/** Live phase of a running session from what it emitted last. */
+export function agentPhase(lastMessageRole: string | undefined): AgentPhase {
+  return lastMessageRole === 'tool' ? 'tool' : lastMessageRole === 'assistant' ? 'writing' : lastMessageRole === 'plan' ? 'planning' : 'thinking'
+}
+
+// ---------------------------------------------------------------------------
+// Встречи: лента дня
+// ---------------------------------------------------------------------------
+
+export interface DayTimelineItem<T> {
+  item: T
+  /** 0…1 position of the start within the visible window. */
+  left: number
+  /** 0…1 width (at least a sliver). */
+  width: number
+}
+
+/**
+ * Today's meetings on an 08:00–20:00 window (widened to fit earlier or later
+ * meetings). Unscheduled meetings and other days are left out.
+ */
+export function dayTimeline<T extends { scheduledAt?: number; startedAt?: number; endedAt?: number; durationMs?: number }>(
+  meetings: readonly T[],
+  now: number,
+): { start: number; end: number; now: number; items: DayTimelineItem<T>[] } {
+  const day = startOfLocalDay(now)
+  const at = (m: T) => m.startedAt ?? m.scheduledAt
+  const todays = meetings.filter((m) => { const s = at(m); return s != null && startOfLocalDay(s) === day })
+  let start = day + 8 * 3_600_000
+  let end = day + 20 * 3_600_000
+  for (const m of todays) {
+    const s = at(m)!
+    const e = m.endedAt ?? s + (m.durationMs ?? 30 * 60_000)
+    start = Math.min(start, s - (s % 3_600_000))
+    end = Math.max(end, Math.min(day + DAY_MS, e))
+  }
+  const span = Math.max(1, end - start)
+  const items = todays.map((m) => {
+    const s = at(m)!
+    const e = m.endedAt ?? s + (m.durationMs ?? 30 * 60_000)
+    return { item: m, left: (s - start) / span, width: Math.max(0.02, Math.min(1, (e - s) / span)) }
+  }).sort((a, b) => a.left - b.left)
+  return { start, end, now: Math.max(0, Math.min(1, (now - start) / span)), items }
 }

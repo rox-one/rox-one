@@ -15,6 +15,8 @@ import { WidgetAppearanceControls } from './widget-appearance-controls'
 
 export interface WidgetEditProps {
   size: HomeWidgetSize
+  /** Sizes this widget allows (defaults to all). */
+  sizes?: readonly HomeWidgetSize[]
   onResize: (size: HomeWidgetSize) => void
   onRemove: () => void
   onShift: (delta: -1 | 1) => void
@@ -87,7 +89,7 @@ export function WidgetFrame({
           <div className="flex shrink-0 items-center gap-1">
             {edit.onAppearance ? <WidgetAppearanceControls title={title} appearance={edit.appearance} onChange={edit.onAppearance} /> : null}
             <div className="flex items-center rounded-[var(--radius-control)] bg-foreground/[0.06] p-0.5" role="radiogroup" aria-label={t('workbench.home.edit.size')}>
-              {HOME_WIDGET_SIZES.map((size) => (
+              {(edit.sizes ?? HOME_WIDGET_SIZES).map((size) => (
                 <button
                   key={size}
                   type="button"

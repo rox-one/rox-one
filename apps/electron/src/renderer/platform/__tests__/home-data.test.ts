@@ -1,4 +1,4 @@
-import { buildActivityHeatmap, greetingPart, heatLevel } from '../home/home-data'
+import { agentPhase, averageSessionCost, buildActivityHeatmap, dayTimeline, greetingPart, heatLevel, reorderedSlots, todayTasks } from '../home/home-data'
 import { describe, expect, it } from 'bun:test'
 import {
   buildAutomationsOverview,
@@ -214,7 +214,7 @@ describe('activity heatmap', () => {
     expect(current[1]!.sessions).toBe(1)
     expect(current[0]!.sessions).toBe(1)
     expect(current[3]).toBeNull()
-    expect(heat.total).toBe(3)
+    expect(heat.total).toBe(2)
     expect(heat.streak).toBe(3)
     expect(heat.max).toBe(1)
   })
@@ -236,5 +236,49 @@ describe('activity heatmap', () => {
     expect(greetingPart(new Date(2026, 0, 1, 9).getTime())).toBe('morning')
     expect(greetingPart(new Date(2026, 0, 1, 13).getTime())).toBe('day')
     expect(greetingPart(new Date(2026, 0, 1, 20).getTime())).toBe('evening')
+  })
+})
+
+describe('round-2 widget models', () => {
+  const now = new Date(2026, 9, 14, 14, 0).getTime()
+  const day = 86_400_000
+  const base = { priority: 'none', createdAt: now - 10 * day }
+  it('todayTasks: today list + due today + done today, open first by manual order', () => {
+    const tasks = [
+      { ...base, id: 'a', title: 'a', list: 'today', order: 5 },
+      { ...base, id: 'b', title: 'b', list: 'inbox', dueAt: now + 3600_000, order: 1 },
+      { ...base, id: 'c', title: 'c', list: 'today', completedAt: now - 3600_000, order: 0 },
+      { ...base, id: 'd', title: 'd', list: 'today', completedAt: now - 2 * day },
+      { ...base, id: 'e', title: 'e', list: 'today', trashedAt: now },
+      { ...base, id: 'f', title: 'f', list: 'upcoming', dueAt: now + 2 * day },
+    ]
+    expect(todayTasks(tasks, now).map((t) => t.id)).toEqual(['b', 'a', 'c'])
+  })
+  it('reorderedSlots reuses the same order slots and spreads ties', () => {
+    const items = [{ id: 'a', order: 1, createdAt: 0 }, { id: 'b', order: 4, createdAt: 0 }, { id: 'c', order: 9, createdAt: 0 }]
+    expect([...reorderedSlots(items, 'c', 'a')]).toEqual([['c', 1], ['a', 4], ['b', 9]])
+    expect(reorderedSlots(items, 'a', 'a').size).toBe(0)
+    const ties = [{ id: 'x', createdAt: 7 }, { id: 'y', createdAt: 7 }]
+    expect([...reorderedSlots(ties, 'y', 'x')]).toEqual([['y', 7], ['x', 8]])
+  })
+  it('agentPhase maps the last emitted role', () => {
+    expect(['tool', 'assistant', 'plan', 'user', undefined].map((r) => agentPhase(r))).toEqual(['tool', 'writing', 'planning', 'thinking', 'thinking'])
+  })
+  it('dayTimeline places today’s meetings on a widened day window', () => {
+    const at = (h: number) => new Date(2026, 9, 14, h).getTime()
+    const tl = dayTimeline([
+      { id: 'm1', scheduledAt: at(10) },
+      { id: 'm2', startedAt: at(7), endedAt: at(8) },
+      { id: 'm3', scheduledAt: at(10) + day },
+      { id: 'm4' },
+    ], now)
+    expect(tl.items.map((i) => i.item.id)).toEqual(['m2', 'm1'])
+    expect(tl.start).toBe(at(7))
+    expect(tl.items[0]!.left).toBe(0)
+    expect(tl.now).toBeCloseTo((now - at(7)) / (at(20) - at(7)))
+  })
+  it('averageSessionCost is the mean of costed recent sessions, null without data', () => {
+    expect(averageSessionCost([{ lastMessageAt: now, tokenUsage: { costUsd: 0.2 } }, { lastMessageAt: now, tokenUsage: { costUsd: 0.4 } }, { lastMessageAt: now - 30 * day, tokenUsage: { costUsd: 9 } }, { lastMessageAt: now }], now - 7 * day)).toBeCloseTo(0.3)
+    expect(averageSessionCost([], now)).toBeNull()
   })
 })
