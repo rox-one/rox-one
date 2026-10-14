@@ -12,7 +12,8 @@ import type { LucideIcon } from 'lucide-react'
 import type { ResolvedPrimaryNavEntry } from '../components/app-shell/primary-nav'
 import type { ExtraScreenDef } from '../pages/extra-screens/registry'
 
-export type AllScreensGroupId = 'navigation' | 'tools' | 'experimental'
+/** `folded`: pills that did not fit the titlebar (top50 #3), listed first. */
+export type AllScreensGroupId = 'navigation' | 'tools' | 'experimental' | 'folded'
 
 export interface AllScreensItem {
   /** Registry id (`home`, `docs`, …) or `screen:<extra id>`. */
@@ -37,6 +38,7 @@ export const ALL_SCREENS_GROUP_LABEL: Readonly<Record<AllScreensGroupId, string>
   navigation: 'sidebar.navigation',
   tools: 'sidebar.tools',
   experimental: 'sidebar.experimentalFeatures',
+  folded: 'workbench.pill.folded',
 }
 
 /** Case/diacritic-insensitive match on the visible title (and the registry id as a fallback). */

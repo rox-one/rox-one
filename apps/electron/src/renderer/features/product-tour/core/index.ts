@@ -4,11 +4,9 @@ import type {
   TourInput, TourProgress, TourSignal, TourStep, Transition, TransitionFunction,
 } from '../contracts'
 
+export { initialRuntimeState } from './initial-state'
+
 /** No clock, DOM, persistence or domain-operation dependencies live in this module. */
-export const initialRuntimeState: RuntimeState = Object.freeze({
-  definition: null, phase: 'idle', attempt: null, progress: null,
-  attemptEvidence: Object.freeze({}), seenEventTokens: Object.freeze([]),
-})
 
 export type Eligibility =
   | { readonly status: 'ready' }

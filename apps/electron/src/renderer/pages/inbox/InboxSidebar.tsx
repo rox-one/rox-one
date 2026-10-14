@@ -3,16 +3,16 @@ import { useTranslation } from 'react-i18next'
 import {
   Archive, AtSign, Bell, BrainCircuit, CalendarDays, CheckCheck, ChevronRight,
   ClipboardCheck, Clock3, FileCheck2, FilePenLine, Inbox, KeyRound, Mail, MessageCircle,
-  Send, ShieldCheck, Sparkles, TriangleAlert, Trash2, UserPlus, UserRoundCheck, Users,
+  Send, SendHorizontal, ShieldCheck, Sparkles, Star, TriangleAlert, Trash2, UserPlus, UserRoundCheck, Users,
   type LucideIcon,
 } from 'lucide-react'
 import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboard'
 import { NavTitle, type Tone } from '@/components/mode-screen/ModeScreen'
 import { cn } from '@/lib/utils'
-import type { MailFolder, MailFolderRole } from '../../../shared/mail-local'
+import { MAIL_STANDARD_ROLES, type MailFolder, type MailFolderRole } from '../../../shared/mail-local'
 import { ACTIVITY_KINDS, DECISION_KINDS, type InboxActivityKind, type InboxFilter, type InboxKind } from './inbox-model'
 import { folderLabel } from './mail/MailPanels'
-import { statusKey } from './mail/mail-view'
+import { mailErrorKey, statusKey } from './mail/mail-view'
 import type { MailController } from './mail/useMail'
 
 export type InboxPageFilter = InboxFilter | { mail: string }
@@ -62,7 +62,7 @@ const ICON_TONE: Record<Tone, string> = {
 }
 
 const FOLDER_ICONS: Record<MailFolderRole, LucideIcon> = {
-  inbox: Inbox, drafts: FilePenLine, sent: Send,
+  inbox: Inbox, flagged: Star, outbox: SendHorizontal, drafts: FilePenLine, sent: Send,
   archive: Archive, junk: ShieldCheck, trash: Trash2,
 }
 
@@ -81,7 +81,7 @@ function InboxNavButton({ label, count, active, disabled, icon: Icon, tone = 'mu
 }) {
   return (
 <button type="button" onClick={onClick} disabled={disabled} aria-current={active ? 'page' : undefined} data-testid={testId}
-      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-sm outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'rox-nav-shimmer bg-surface-hover text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground', disabled && 'cursor-default opacity-50 hover:bg-transparent hover:text-text-secondary')}>
+      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-sm outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'rox-nav-shimmer bg-[var(--state-selected)] text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground', disabled && 'cursor-default opacity-50 hover:bg-transparent hover:text-text-secondary')}>
       <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-lg', ICON_TONE[tone])}><Icon className="size-3.5" strokeWidth={1.75} /></span>
       <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
       <Count count={count} />
@@ -107,6 +107,14 @@ function InboxNavGroup({ id, label, icon: Icon, tone, count, urgent, active, ini
       <div className="ml-5 flex flex-col gap-0.5 border-l border-foreground/10 py-1 pl-2">{children}</div>
     </details>
   )
+}
+
+/**
+ * The standard folder structure shown before an account is connected; ids
+ * match the role so selecting one opens that folder once the mailbox is ready.
+ */
+function standardFolders(t: (key: string) => string): MailFolder[] {
+  return MAIL_STANDARD_ROLES.map((role) => ({ id: role, name: t(`inbox.mail.folder.${role}`), role, total: 0, unread: 0 }))
 }
 
 export interface InboxSidebarCounts {
@@ -169,12 +177,16 @@ export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, o
             <span className="min-w-0 flex-1 select-text truncate text-text-secondary" title={status.address}>{status.address}</span>
             <button type="button" onClick={() => void copyAddress()} className="shrink-0 rounded-md px-1.5 py-1 text-text-muted outline-none hover:bg-foreground/[0.05] focus-visible:ring-2 focus-visible:ring-ring" data-testid="mail-copy">{t(copied ? 'inbox.mail.copied' : 'inbox.mail.copy')}</button>
           </div>
-        ) : <p className="px-2 pb-1 text-xs text-text-muted">{t(statusKey(status), { address: status?.address ?? '', url: status?.serverUrl ?? '', error: status?.error ?? '', flag: status?.flag ?? '' })}</p>}
-        {status?.state === 'ready' ? mail.folders.map((folder) => (
-          <InboxNavButton key={folder.id} label={folderLabel(t, folder)} count={folder.role === 'drafts' || folder.role === 'sent' ? folder.total : folder.unread} active={inMail && filter.mail === folder.id} icon={folder.role ? FOLDER_ICONS[folder.role] : Mail} tone={folder.role === 'junk' || folder.role === 'trash' ? 'muted' : 'info'} onClick={() => onSelectFolder(folder)} testId={`mail-folder-${folder.role ?? folder.id}`} />
-        )) : status?.enabled === false ? (
-          <InboxNavButton label={t('inbox.kind.mail')} disabled icon={Inbox} tone="muted" onClick={() => onSelectFolder({ id: 'inbox', name: t('inbox.mail.folder.inbox'), role: 'inbox', total: 0, unread: 0 })} testId="mail-folder-inbox" />
-        ) : <InboxNavButton label={t('inbox.kind.mail')} active={inMail && filter.mail === 'inbox'} icon={Inbox} tone="muted" onClick={() => onSelectFolder({ id: 'inbox', name: t('inbox.mail.folder.inbox'), role: 'inbox', total: 0, unread: 0 })} testId="mail-folder-inbox" />}
+        ) : status?.state === 'no-mailbox' || status?.state === 'error' ? (
+          // Not connected yet: a clean call to action, never the raw server error.
+          <div className="flex min-w-0 items-center gap-1.5 px-2 pb-1 text-xs" data-testid="mail-connect-row">
+            <span className={cn('min-w-0 flex-1 truncate', status.state === 'error' ? 'text-destructive' : 'text-text-muted')} title={status.state === 'error' ? t(mailErrorKey(status.errorCode)) : undefined} data-code={status.state === 'error' ? status.errorCode ?? 'error' : undefined}>{status.state === 'error' ? t(mailErrorKey(status.errorCode)) : t('inbox.mail.status.error')}</span>
+            <button type="button" onClick={() => void mail.ensure()} className="shrink-0 rounded-md px-1.5 py-1 font-medium text-accent outline-none hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-ring" data-testid="mail-connect">{t('inbox.mail.connect')}</button>
+          </div>
+        ) : <p className="px-2 pb-1 text-xs text-text-muted">{t(statusKey(status), { address: status?.address ?? '', url: status?.serverUrl ?? '', flag: status?.flag ?? '' })}</p>}
+        {(status?.state === 'ready' ? mail.folders : standardFolders(t)).map((folder) => (
+          <InboxNavButton key={folder.id} label={folderLabel(t, folder)} count={folder.role === 'drafts' || folder.role === 'sent' || folder.role === 'outbox' ? folder.total : folder.unread} active={inMail && filter.mail === folder.id} disabled={status?.enabled === false} icon={folder.role ? FOLDER_ICONS[folder.role] : Mail} tone={folder.role === 'junk' || folder.role === 'trash' ? 'muted' : 'info'} onClick={() => onSelectFolder(folder)} testId={`mail-folder-${folder.role ?? folder.id}`} />
+        ))}
       </InboxNavGroup>
       <div className="mt-3 space-y-0.5 border-t border-foreground/[0.06] pt-2">
         <InboxNavButton label={t('inbox.view.snoozed')} count={counts.snoozed} active={filter === 'snoozed'} icon={Clock3} tone="warning" onClick={() => onSelect('snoozed')} testId="inbox-nav-snoozed" />
