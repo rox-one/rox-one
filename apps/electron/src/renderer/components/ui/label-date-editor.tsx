@@ -120,7 +120,7 @@ export default function LabelDateEditor({
                   className={cn(
                     'flex-1 h-7 px-2 text-base',
                     'bg-transparent',
-                    'text-foreground placeholder:text-foreground/30',
+                    'text-foreground placeholder:text-text-muted',
                     'outline-none'
                   )}
                 />
@@ -132,12 +132,12 @@ export default function LabelDateEditor({
                       aria-label={t('labels.selectDate')}
                       className={cn(
                         'flex items-center justify-center w-7 h-7 rounded-[var(--radius-control)]',
-                        'hover:bg-foreground/5 transition-colors cursor-pointer',
+                        'hover:bg-surface-hover transition-colors cursor-pointer',
                         'outline-none',
-                        calendarOpen && 'bg-foreground/5'
+                        calendarOpen && 'bg-surface-hover'
                       )}
                     >
-                      <CalendarDays className="w-3.5 h-3.5 text-foreground/50" />
+                      <CalendarDays className="icon-caption text-muted-foreground" />
                     </button>
                   </PopoverTrigger>
                   <PopoverContent
@@ -165,7 +165,7 @@ export default function LabelDateEditor({
             </div>
             {/* Show the resolved date below the input when parsing succeeds */}
             {parsedDate && (
-              <div className="px-2 text-xs text-foreground/50">
+              <div className="px-2 text-xs text-muted-foreground">
                 {format(parsedDate, 'EEE, MMM d, yyyy', { locale: dateLocale })}
               </div>
             )}
