@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import type { PersonalTask } from '@rox/core/tasks/personal'
-import { applySchedule, timelineRowOrder, dragPatch, dropPatch, epochOf, groupTasks, isoOf, partitionTasks, taskSpan, timelineRange } from '../timeline-model'
+import { applySchedule, dependencyConflicts, dependencyEdges, timelineRowOrder, weekRange, weekTasks, dragPatch, dropPatch, epochOf, groupTasks, isoOf, partitionTasks, taskSpan, timelineRange } from '../timeline-model'
 
 const today = '2026-02-10'
 let n = 0
@@ -121,5 +121,31 @@ describe('timelineRowOrder', () => {
   it('lists scheduled ids in grouped row order', () => {
     const order = timelineRowOrder([], 'none', '2026-02-10')
     expect(order).toEqual([])
+  })
+})
+
+describe('dependencies and Моя неделя', () => {
+  const T = '2026-02-11' // Wednesday
+  it('builds edges and flags finish-to-start violations', () => {
+    const a = task({ id: 'a', list: 'upcoming', startAt: epochOf('2026-02-12'), dueAt: epochOf('2026-02-15') })
+    const b = task({ id: 'b', list: 'upcoming', startAt: epochOf('2026-02-14'), blockedBy: ['a'] })
+    const spans = new Map(partitionTasks([a, b], T).scheduled.map((s) => [s.task.id, s.span]))
+    expect(dependencyEdges([a, b], spans)).toEqual([{ from: 'a', to: 'b', violated: true }])
+    expect(dependencyConflicts([a, b], 'a', T).map((c) => c.blocked.id)).toEqual(['b'])
+    const ok = { ...b, startAt: epochOf('2026-02-15') }
+    expect(dependencyConflicts([a, ok], 'b', T)).toEqual([])
+  })
+  it('ignores completed blockers and unscheduled tasks', () => {
+    const a = task({ id: 'a', list: 'upcoming', startAt: epochOf('2026-02-12'), dueAt: epochOf('2026-02-15'), completedAt: 1 })
+    const b = task({ id: 'b', list: 'upcoming', startAt: epochOf('2026-02-13'), blockedBy: ['a'] })
+    expect(dependencyConflicts([a, b], 'b', T)).toEqual([])
+    expect(dependencyConflicts([task({ id: 'x', blockedBy: ['y'] }), task({ id: 'y' })], 'x', T)).toEqual([])
+  })
+  it('week is Monday–Sunday and keeps overlapping tasks only', () => {
+    expect(weekRange(T)).toEqual({ start: '2026-02-09', end: '2026-02-15' })
+    expect(weekRange('2026-02-15')).toEqual({ start: '2026-02-09', end: '2026-02-15' })
+    const inWeek = task({ id: 'in', list: 'upcoming', startAt: epochOf('2026-02-14') })
+    const later = task({ id: 'later', list: 'upcoming', startAt: epochOf('2026-02-20') })
+    expect(weekTasks([inWeek, later], T).map((x) => x.id)).toEqual(['in'])
   })
 })
