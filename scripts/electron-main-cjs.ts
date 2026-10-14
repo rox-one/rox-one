@@ -15,7 +15,7 @@ export const MAIN_VENDOR_BUNDLES = [
   // (named exports then depend on cjs-module-lexer); a static import inside a lazily imported module
   // becomes require(). `exports`: names the call sites use; the build probes them the same way.
   { pkg: 'markitdown-js', file: 'markitdown-js.cjs', load: 'import', exports: ['MarkItDown'] }, // pdf-parse + xlsx (~13 MB)
-  { pkg: '@larksuiteoapi/node-sdk', file: 'lark-sdk.cjs', load: 'require', exports: ['Client', 'WSClient', 'EventDispatcher'] }, // ~5 MB
+  { pkg: '@larksuiteoapi/node-sdk', file: 'lark-sdk.cjs', load: 'require', exports: ['Client', 'WSClient', 'EventDispatcher', 'Domain', 'LoggerLevel'] }, // ~5 MB
   { pkg: 'beautiful-mermaid', file: 'beautiful-mermaid.cjs', load: 'import', exports: ['renderMermaidSVG'] }, // elkjs (~3.5 MB)
 ] as const
 

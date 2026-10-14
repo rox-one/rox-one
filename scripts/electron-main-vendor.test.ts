@@ -53,4 +53,7 @@ test('the Lark SDK is reached via require (static import inside the lazily impor
   expect(lark?.load).toBe('require')
   const adapter = readFileSync(resolve(repo, 'packages/messaging-gateway/src/adapters/lark/index.ts'), 'utf8')
   expect(adapter).toMatch(/^import \* as lark from '@larksuiteoapi\/node-sdk'/m)
+  // Every lark.<member> the adapter touches is probed at build time.
+  const used = [...new Set([...adapter.matchAll(/\blark\.([A-Za-z]+)/g)].map((m) => m[1]))]
+  for (const name of used) expect(lark?.exports).toContain(name)
 })
