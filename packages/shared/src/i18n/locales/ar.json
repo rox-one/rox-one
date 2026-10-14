@@ -7907,6 +7907,8 @@
   "screenSidebar.connections.denied": "المرفوضة",
   "screenSidebar.connections.auditFilter": "الأحداث: {{name}}",
   "screenSidebar.connections.auditFilterClear": "عرض الكل",
+  "screenSidebar.connections.auditFilterEmpty": "لا توجد أحداث لهذا الاتصال",
+  "screenSidebar.connections.deletedConnection": "اتصال محذوف · {{id}}",
   "screenSidebar.connections.source.github-env": "GitHub (env)",
   "screenSidebar.connections.source.git-helper": "Git credential helper",
   "screenSidebar.connections.source.docker": "Docker",

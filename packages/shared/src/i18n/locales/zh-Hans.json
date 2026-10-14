@@ -7867,6 +7867,8 @@
   "screenSidebar.connections.denied": "已拒绝",
   "screenSidebar.connections.auditFilter": "事件：{{name}}",
   "screenSidebar.connections.auditFilterClear": "显示全部",
+  "screenSidebar.connections.auditFilterEmpty": "此连接没有事件",
+  "screenSidebar.connections.deletedConnection": "已删除的连接 · {{id}}",
   "screenSidebar.connections.source.github-env": "GitHub (env)",
   "screenSidebar.connections.source.git-helper": "Git credential helper",
   "screenSidebar.connections.source.docker": "Docker",

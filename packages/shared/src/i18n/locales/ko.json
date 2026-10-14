@@ -7867,6 +7867,8 @@
   "screenSidebar.connections.denied": "거부됨",
   "screenSidebar.connections.auditFilter": "이벤트: {{name}}",
   "screenSidebar.connections.auditFilterClear": "모두 보기",
+  "screenSidebar.connections.auditFilterEmpty": "이 연결에 대한 이벤트가 없습니다",
+  "screenSidebar.connections.deletedConnection": "삭제된 연결 · {{id}}",
   "screenSidebar.connections.source.github-env": "GitHub (env)",
   "screenSidebar.connections.source.git-helper": "Git credential helper",
   "screenSidebar.connections.source.docker": "Docker",

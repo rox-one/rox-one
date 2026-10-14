@@ -35,7 +35,7 @@ import { GithubDeviceLoginPanel } from './GithubDeviceLoginPanel'
 import { ConnectionsOverview, OverviewGroup, OverviewRow, type OverviewStatus } from './connections-overview'
 import { ProjectAuthorityConnectionPanel } from '@/components/projects/ProjectAuthorityConnectionPanel'
 import { useConnectionsSidebar } from './use-connections-sidebar'
-import { humanizeId } from './connections-sidebar'
+import { connectionDisplayName } from './connections-sidebar'
 
 const TABS = ['services', 'credentials', 'imports', 'policies', 'audit'] as const
 const CONNECT_SOURCES = ['github-env', 'git-helper', 'docker', 'aws', 'keychain', 'adc', 'ssh-agent', 'github-oauth'] as const
@@ -167,11 +167,12 @@ export default function ConnectionsPage() {
     }
   }, [workspace?.id, setSelected])
 
+  // One audit source for the Audit tab and the sidebar's Отклонённые group:
+  // loaded per workspace, on refresh and on tab change (rows are kept while
+  // reloading so the sidebar does not flicker).
   useEffect(() => {
-    if (tab !== 'audit') return
     setAuditSurface('loading')
     setAuditWorkspaceId(null)
-    setAuditRows([])
     const workspaceId = workspace?.id
     const listConnectionAudit = window.electronAPI?.workgraph?.listConnectionAudit
     if (!workspaceId || typeof listConnectionAudit !== 'function') {
@@ -197,7 +198,7 @@ export default function ConnectionsPage() {
     return () => {
       stale = true
     }
-  }, [tab, workspace?.id])
+  }, [tab, workspace?.id, reloadKey])
 
   useEffect(() => {
     if (tab !== 'policies') return
@@ -218,7 +219,7 @@ export default function ConnectionsPage() {
     return () => {
       stale = true
     }
-  }, [tab, workspace?.id])
+  }, [tab, workspace?.id, reloadKey])
 
   useEffect(() => {
     // Audit has its own loading/result evidence; its read does not disable Fabric.
@@ -538,7 +539,7 @@ export default function ConnectionsPage() {
     sources: CONNECT_SOURCES,
     activeSource,
     selectedId: selected?.id ?? null,
-    reloadKey,
+    audit: auditRows,
     onSelectConnection: (row) => { setTab('services'); setSelected(row) },
     onSelectSource: (source) => { setTab('imports'); setActiveSource((current) => current === source ? null : source) },
     onOpenAudit: (connectionId) => {
@@ -1013,17 +1014,22 @@ export default function ConnectionsPage() {
               </ul>
             ) : null}
           </div>
-        ) : tab === 'audit' && auditRows.length > 0 ? (
+        ) : tab === 'audit' && (auditRows.length > 0 || auditConnectionId) ? (
           <div className="space-y-2">
           {auditConnectionId ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground" data-testid="connections-audit-filter">
-              <span>{t('screenSidebar.connections.auditFilter', { name: humanizeId(rows?.find((r) => r.id === auditConnectionId)?.integrationId ?? auditConnectionId) })}</span>
+              <span>{t('screenSidebar.connections.auditFilter', { name: connectionDisplayName(auditConnectionId, rows, t) })}</span>
               <button type="button" className="rounded-md px-2 py-0.5 hover:bg-surface-hover hover:text-foreground" onClick={() => setAuditConnectionId(null)}>
                 {t('screenSidebar.connections.auditFilterClear')}
               </button>
             </div>
           ) : null}
           <ul className="space-y-2 text-sm text-foreground">
+            {auditConnectionId && !auditRows.some((row) => row.connectionId === auditConnectionId) ? (
+              <li className="rounded-[var(--radius-card)] bg-surface-hover px-3 py-2 text-muted-foreground" data-testid="connections-audit-filter-empty">
+                {auditSurface === 'loading' ? t('common.loading') : t('screenSidebar.connections.auditFilterEmpty')}
+              </li>
+            ) : null}
             {(auditConnectionId ? auditRows.filter((row) => row.connectionId === auditConnectionId) : auditRows).map((row) => (
               <li key={`${row.connectionId}:${row.occurredAt}:${row.payloadDigest}`} className="rounded-[var(--radius-card)] bg-surface-hover px-3 py-2">
                 <div className="font-medium">{row.eventType}</div>

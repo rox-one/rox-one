@@ -3,7 +3,7 @@ import { Plus, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useScreenSidebar, type ScreenSidebarConfig } from '@/components/shell/screen-sidebar'
 import { navigate, routes } from '@/lib/navigate'
-import { sanitizeConnectionAuditRows, type ConnectionAuditRow, type ConnectionListRow } from './connections-list'
+import type { ConnectionAuditRow, ConnectionListRow } from './connections-list'
 import { buildConnectionsSidebarGroups, humanizeId } from './connections-sidebar'
 
 export interface ConnectionsSidebarBindings<S extends string> {
@@ -13,8 +13,8 @@ export interface ConnectionsSidebarBindings<S extends string> {
   sources: readonly S[]
   activeSource: S | null
   selectedId: string | null
-  /** Bumped by the page's refresh; refetches the audit-derived Отклонённые group. */
-  reloadKey: number
+  /** The page's audit rows (single source, shared with the Audit tab). */
+  audit: readonly ConnectionAuditRow[]
   onSelectConnection(row: ConnectionListRow): void
   onSelectSource(source: S): void
   onOpenAudit(connectionId: string): void
@@ -22,28 +22,11 @@ export interface ConnectionsSidebarBindings<S extends string> {
   onRefresh(): void
 }
 
-/** Audit rows for the Отклонённые group, independent of the page's audit tab. */
-function useConnectionAudit(workspaceId: string | null, reloadKey: number): ConnectionAuditRow[] {
-  const [audit, setAudit] = React.useState<ConnectionAuditRow[]>([])
-  React.useEffect(() => {
-    const list = window.electronAPI?.workgraph?.listConnectionAudit
-    if (!workspaceId || typeof list !== 'function') { setAudit([]); return undefined }
-    let stale = false
-    list({ workspaceId }).then(
-      (raw) => { if (!stale) setAudit(sanitizeConnectionAuditRows(raw)) },
-      () => { if (!stale) setAudit([]) },
-    )
-    return () => { stale = true }
-  }, [workspaceId, reloadKey])
-  return audit
-}
-
 export function useConnectionsSidebar<S extends string>(b: ConnectionsSidebarBindings<S>): void {
   const { t, i18n } = useTranslation()
-  const audit = useConnectionAudit(b.workspaceId, b.reloadKey)
   const latest = React.useRef(b)
   latest.current = b
-  const { rows, surface, sources, activeSource, selectedId } = b
+  const { rows, surface, sources, activeSource, selectedId, audit } = b
   const groups = React.useMemo(() => {
     const dateFmt = new Intl.DateTimeFormat(i18n.resolvedLanguage ?? i18n.language, { dateStyle: 'short', timeStyle: 'short' })
     return buildConnectionsSidebarGroups<S>({
@@ -70,6 +53,7 @@ export function useConnectionsSidebar<S extends string>(b: ConnectionsSidebarBin
           const key = `screenSidebar.connections.storage.${mode}`
           return i18n.exists(key) ? t(key) : mode
         },
+        deleted: (id) => t('screenSidebar.connections.deletedConnection', { id: id.slice(0, 8) }),
         source: (source) => {
           const key = `screenSidebar.connections.source.${source}`
           return i18n.exists(key) ? t(key) : humanizeId(source)

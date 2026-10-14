@@ -7,7 +7,7 @@ const ev = (connectionId: string, outcome: string, occurredAt: number): Connecti
 const labels = {
   connected: 'C', sources: 'S', denied: 'E', catalog: 'K', catalogAll: 'All', catalogApi: 'API', catalogMcp: 'MCP', catalogLocal: 'Local',
   emptyConnected: 'none', connect: 'Connect', error: 'Err', unavailable: 'NA', deniedAt: (r: ConnectionAuditRow) => String(r.occurredAt),
-  integration: (id: string) => `I:${id}`, storage: (m: string) => `M:${m}`, source: (s: string) => `S:${s}`,
+  integration: (id: string) => `I:${id}`, storage: (m: string) => `M:${m}`, source: (s: string) => `S:${s}`, deleted: (id: string) => `D:${id}`,
 }
 function input(o: Partial<ConnectionsSidebarInput<'aws' | 'docker'>>): ConnectionsSidebarInput<'aws' | 'docker'> {
   return { rows: [], surface: 'ready', audit: [], sources: ['aws', 'docker'], activeSource: null, selectedId: null, labels,
@@ -49,5 +49,12 @@ describe('buildConnectionsSidebarGroups', () => {
     if (empty?.kind === 'empty') empty.action?.onSelect()
     expect(onConnect).toHaveBeenCalled()
     expect(g.some((x) => x.id === 'denied')).toBe(false)
+  })
+})
+
+describe('denied rows for deleted connections', () => {
+  it('get a readable deleted label instead of the raw id', () => {
+    const g = buildConnectionsSidebarGroups(input({ rows: [row('1', 'github')], audit: [ev('gone-1234567890', 'denied', 5)] }))
+    expect(g.find((x) => x.id === 'denied')!.items[0]!.label).toBe('D:gone-1234567890')
   })
 })

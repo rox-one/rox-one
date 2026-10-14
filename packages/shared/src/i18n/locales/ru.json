@@ -7911,6 +7911,8 @@
   "screenSidebar.connections.denied": "Отклонённые",
   "screenSidebar.connections.auditFilter": "События: {{name}}",
   "screenSidebar.connections.auditFilterClear": "Показать все",
+  "screenSidebar.connections.auditFilterEmpty": "Нет событий для этого подключения",
+  "screenSidebar.connections.deletedConnection": "Удалённое подключение · {{id}}",
   "screenSidebar.connections.source.github-env": "GitHub (env)",
   "screenSidebar.connections.source.git-helper": "Git credential helper",
   "screenSidebar.connections.source.docker": "Docker",

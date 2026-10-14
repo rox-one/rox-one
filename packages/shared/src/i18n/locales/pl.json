@@ -7893,6 +7893,8 @@
   "screenSidebar.connections.denied": "Odrzucone",
   "screenSidebar.connections.auditFilter": "Zdarzenia: {{name}}",
   "screenSidebar.connections.auditFilterClear": "Pokaż wszystko",
+  "screenSidebar.connections.auditFilterEmpty": "Brak zdarzeń dla tego połączenia",
+  "screenSidebar.connections.deletedConnection": "Usunięte połączenie · {{id}}",
   "screenSidebar.connections.source.github-env": "GitHub (env)",
   "screenSidebar.connections.source.git-helper": "Git credential helper",
   "screenSidebar.connections.source.docker": "Docker",

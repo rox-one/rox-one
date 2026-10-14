@@ -24,6 +24,8 @@ export interface ConnectionsSidebarLabels {
   integration(integrationId: string): string
   storage(storageMode: string): string
   source(source: string): string
+  /** Label for a denied connection that no longer exists. */
+  deleted(connectionId: string): string
 }
 
 export interface ConnectionsSidebarInput<S extends string> {
@@ -98,7 +100,7 @@ export function buildConnectionsSidebarGroups<S extends string>(input: Connectio
       const conn = input.rows?.find((r) => r.id === row.connectionId)
       return {
         id: `denied-${row.connectionId}`,
-        label: conn ? l.integration(conn.integrationId) : row.connectionId,
+        label: conn ? l.integration(conn.integrationId) : l.deleted(row.connectionId),
         secondary: l.deniedAt(row),
         icon: AlertTriangle,
         onSelect: () => input.onOpenAudit(row.connectionId),
@@ -120,4 +122,14 @@ export function buildConnectionsSidebarGroups<S extends string>(input: Connectio
 /** 'github-oauth' → 'Github Oauth' — fallback for integration ids without a translation. */
 export function humanizeId(id: string): string {
   return id.split(/[-_.\s]+/).filter(Boolean).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || id
+}
+
+/** Readable name for a connection id: its integration, or «deleted connection · id». */
+export function connectionDisplayName(
+  connectionId: string,
+  rows: readonly ConnectionListRow[] | null,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): string {
+  const conn = rows?.find((r) => r.id === connectionId)
+  return conn ? humanizeId(conn.integrationId) : t('screenSidebar.connections.deletedConnection', { id: connectionId.slice(0, 8) })
 }

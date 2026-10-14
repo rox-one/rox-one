@@ -7867,6 +7867,8 @@
   "screenSidebar.connections.denied": "Abgelehnt",
   "screenSidebar.connections.auditFilter": "Ereignisse: {{name}}",
   "screenSidebar.connections.auditFilterClear": "Alle anzeigen",
+  "screenSidebar.connections.auditFilterEmpty": "Keine Ereignisse für diese Verbindung",
+  "screenSidebar.connections.deletedConnection": "Gelöschte Verbindung · {{id}}",
   "screenSidebar.connections.source.github-env": "GitHub (env)",
   "screenSidebar.connections.source.git-helper": "Git credential helper",
   "screenSidebar.connections.source.docker": "Docker",
