@@ -755,6 +755,7 @@ export class ClaudeAgent extends BaseAgent {
     rememberForMinutes?: number;
     commandHash?: string;
     approvalTtlSeconds?: number;
+    preview?: import('@rox/core/types').PermissionPreview;
   }) => void) | null = null;
 
   // Debug callback for status messages
@@ -1508,6 +1509,7 @@ export class ClaudeAgent extends BaseAgent {
                       rememberForMinutes: checkResult.rememberForMinutes,
                       commandHash: checkResult.commandHash,
                       approvalTtlSeconds: checkResult.approvalTtlSeconds,
+                      preview: checkResult.preview,
                     });
                   } else {
                     this.pendingPermissions.delete(requestId);

@@ -17,6 +17,7 @@
  * 6. Ask-mode prompt decision: Determine if user approval is needed
  */
 
+import type { PermissionPreview } from '@rox/core/types';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import {
@@ -599,6 +600,7 @@ export type PreToolUseCheckResult =
       rememberForMinutes?: number;
       commandHash?: string;
       approvalTtlSeconds?: number;
+      preview?: PermissionPreview;
     }
   | { type: 'source_activation_needed'; sourceSlug: string; sourceExists: boolean }
   | { type: 'call_llm_intercept'; input: Record<string, unknown> }
@@ -921,6 +923,7 @@ export function runPreToolUseChecks(ctx: PreToolUseInput): PreToolUseCheckResult
         reason: promptInfo.reason,
         impact: promptInfo.impact,
         requiresSystemPrompt: promptInfo.requiresSystemPrompt,
+        preview: promptInfo.preview,
         rememberForMinutes: promptInfo.rememberForMinutes,
         commandHash: promptInfo.commandHash,
         approvalTtlSeconds: promptInfo.approvalTtlSeconds,
@@ -952,6 +955,44 @@ interface PromptInfo {
   rememberForMinutes?: number;
   commandHash?: string;
   approvalTtlSeconds?: number;
+  preview?: PermissionPreview;
+}
+
+/** Max characters per preview text (the card scrolls; the decision never depends on this). */
+export const PERMISSION_PREVIEW_MAX_CHARS = 4000;
+const PERMISSION_PREVIEW_MAX_HUNKS = 8;
+
+function capText(text: unknown, budget: { left: number; truncated: boolean }): string {
+  const value = typeof text === 'string' ? text : '';
+  if (value.length <= budget.left) { budget.left -= value.length; return value; }
+  budget.truncated = true;
+  const cut = value.slice(0, Math.max(0, budget.left));
+  budget.left = 0;
+  return cut;
+}
+
+/** Diff preview for Edit / MultiEdit / Write inputs; undefined for anything else. */
+export function buildPermissionPreview(toolName: string, input: Record<string, unknown>, filePath: string): PermissionPreview | undefined {
+  const budget = { left: PERMISSION_PREVIEW_MAX_CHARS, truncated: false };
+  if (toolName === 'Edit' && (typeof input.old_string === 'string' || typeof input.new_string === 'string')) {
+    const hunk = { oldText: capText(input.old_string, budget), newText: capText(input.new_string, budget) };
+    return { kind: 'edit', filePath, hunks: [hunk], ...(budget.truncated ? { truncated: true } : {}) };
+  }
+  if (toolName === 'MultiEdit' && Array.isArray(input.edits)) {
+    const hunks: Array<{ oldText: string; newText: string }> = [];
+    for (const edit of input.edits.slice(0, PERMISSION_PREVIEW_MAX_HUNKS)) {
+      if (!edit || typeof edit !== 'object') continue;
+      const e = edit as Record<string, unknown>;
+      hunks.push({ oldText: capText(e.old_string, budget), newText: capText(e.new_string, budget) });
+    }
+    const truncated = budget.truncated || input.edits.length > PERMISSION_PREVIEW_MAX_HUNKS;
+    return { kind: 'edit', filePath, hunks, ...(truncated ? { truncated: true } : {}) };
+  }
+  if (toolName === 'Write' && typeof input.content === 'string') {
+    const newText = capText(input.content, budget);
+    return { kind: 'write', filePath, newText, ...(budget.truncated ? { truncated: true } : {}) };
+  }
+  return undefined;
 }
 
 function toDisplayName(token: string): string {
@@ -1049,6 +1090,7 @@ export function shouldPromptInAskMode(
       promptType: 'file_write',
       description: `${toolName}: ${filePath}`,
       command: filePath,
+      preview: buildPermissionPreview(toolName, input, filePath),
     };
   }
 
