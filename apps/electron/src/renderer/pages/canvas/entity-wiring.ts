@@ -231,12 +231,55 @@ export function createEntityLinker(workspaceId: string, currentUserId?: string):
   }
 }
 
-/** Trashing a board: remove this user's card links (others' links stay; the entities are untouched). */
-export async function unlinkMyBoardLinks(linker: EntityLinker, boardId: string): Promise<number> {
+type MyLink = { objectId: string; ref: EntityRef }
+const trashedKey = (ws: string, boardId: string, me: string) => `rox.canvas.trashedLinks.${ws}.${boardId}.${me}`
+
+/**
+ * Trashing a board: remove this user's card links (others' links stay; the
+ * entities are untouched). The removed links are remembered for this actor so
+ * restoring the board can re-link them (review 6 decision).
+ */
+export async function unlinkMyBoardLinks(linker: EntityLinker & { ready?(): Promise<string | undefined> }, boardId: string, workspaceId?: string): Promise<MyLink[]> {
+  const me = await linker.ready?.()
   const links = (await linker.list?.(boardId)) ?? []
-  let n = 0
-  for (const l of links) if (l.mine) { await linker.unlink({ boardId, objectId: l.objectId }, l.ref); n++ }
-  return n
+  const done: MyLink[] = []
+  for (const l of links) if (l.mine) { await linker.unlink({ boardId, objectId: l.objectId }, l.ref); done.push({ objectId: l.objectId, ref: l.ref }) }
+  if (workspaceId && me && done.length) {
+    try { localStorage.setItem(trashedKey(workspaceId, boardId, me), JSON.stringify(done)) } catch { /* quota */ }
+  }
+  return done
+}
+
+/**
+ * Restoring a board from trash: re-link the cards this user had linked when it
+ * was trashed, only for cards still on the board and entities still visible.
+ */
+export async function relinkMyBoardLinks(
+  linker: EntityLinker & { ready?(): Promise<string | undefined> }, workspaceId: string, boardId: string,
+  opts: { cardExists(objectId: string, ref: EntityRef): boolean; canView(ref: EntityRef): Promise<boolean> },
+): Promise<MyLink[]> {
+  const me = await linker.ready?.()
+  if (!me) return []
+  const k = trashedKey(workspaceId, boardId, me)
+  let saved: MyLink[] = []
+  try { const v = JSON.parse(localStorage.getItem(k) ?? '[]'); if (Array.isArray(v)) saved = v.filter(x => x && typeof x.objectId === 'string' && x.ref && typeof x.ref.kind === 'string' && typeof x.ref.id === 'string') } catch { saved = [] }
+  const done: MyLink[] = []
+  for (const l of saved) {
+    if (!opts.cardExists(l.objectId, l.ref) || !(await opts.canView(l.ref).catch(() => false))) continue
+    try { await linker.link({ boardId, objectId: l.objectId }, l.ref); done.push(l) } catch { /* reconcile retries */ }
+  }
+  try { localStorage.removeItem(k) } catch { /* ignore */ }
+  return done
+}
+
+/**
+ * 'Delete entity' is offered only for a card this user created on this board:
+ * the card's origin is 'created' and its board link was written by this user.
+ */
+export async function canDeleteCardEntity(linker: EntityLinker, boardId: string, card: { id: string; props: Record<string, unknown> }): Promise<boolean> {
+  if (card.props.origin !== 'created') return false
+  const links = (await linker.list?.(boardId).catch(() => [])) ?? []
+  return links.some(l => l.objectId === card.id && l.mine === true && l.ref.kind === String(card.props.kind) && l.ref.id === String(card.props.entityId))
 }
 
 export { EntitySnapshotResolver }

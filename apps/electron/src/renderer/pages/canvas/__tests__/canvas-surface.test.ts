@@ -119,3 +119,69 @@ describe('link actor from the auth context (review 6 #5)', () => {
     expect(await currentLinkActor('ws2')).toBe('u1')
   })
 })
+
+function memStorage() {
+  const m = new Map<string, string>()
+  return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => { m.set(k, v) }, removeItem: (k: string) => { m.delete(k) }, m }
+}
+function fakeLinker(me: string, links: Array<{ objectId: string; ref: { kind: string; id: string }; mine: boolean }>) {
+  const ops: string[] = []
+  return {
+    ops,
+    ready: async () => me,
+    get currentUserId() { return me },
+    link: async (f: { objectId: string }, to: { id: string }) => { ops.push(`link:${f.objectId}:${to.id}`) },
+    unlink: async (f: { objectId: string }, to: { id: string }) => { ops.push(`unlink:${f.objectId}:${to.id}`) },
+    list: async () => links,
+  }
+}
+
+describe('trash → restore re-links own cards (review 6 #6)', () => {
+  it('unlinks only mine on trash and re-links them on restore, skipping gone or hidden cards', async () => {
+    ;(globalThis as any).localStorage = memStorage()
+    const { unlinkMyBoardLinks, relinkMyBoardLinks } = await import('../entity-wiring')
+    const l = fakeLinker('u1', [
+      { objectId: 'o1', ref: { kind: 'note', id: 'n1' }, mine: true },
+      { objectId: 'o2', ref: { kind: 'note', id: 'n2' }, mine: false },
+      { objectId: 'o3', ref: { kind: 'note', id: 'n3' }, mine: true },
+      { objectId: 'o4', ref: { kind: 'note', id: 'n4' }, mine: true },
+    ])
+    const removed = await unlinkMyBoardLinks(l as any, 'b', 'ws')
+    expect(removed.map(r => r.objectId)).toEqual(['o1', 'o3', 'o4'])
+    expect(l.ops).toEqual(['unlink:o1:n1', 'unlink:o3:n3', 'unlink:o4:n4'])
+    l.ops.length = 0
+    const relinked = await relinkMyBoardLinks(l as any, 'ws', 'b', {
+      cardExists: id => id !== 'o3',
+      canView: async ref => ref.id !== 'n4',
+    })
+    expect(relinked.map(r => r.objectId)).toEqual(['o1'])
+    expect(l.ops).toEqual(['link:o1:n1'])
+    // record consumed: a second restore does nothing
+    expect(await relinkMyBoardLinks(l as any, 'ws', 'b', { cardExists: () => true, canView: async () => true })).toEqual([])
+  })
+  it('another user restoring does not re-link my cards', async () => {
+    ;(globalThis as any).localStorage = memStorage()
+    const { unlinkMyBoardLinks, relinkMyBoardLinks } = await import('../entity-wiring')
+    await unlinkMyBoardLinks(fakeLinker('u1', [{ objectId: 'o1', ref: { kind: 'note', id: 'n1' }, mine: true }]) as any, 'b', 'ws')
+    const other = fakeLinker('u2', [])
+    expect(await relinkMyBoardLinks(other as any, 'ws', 'b', { cardExists: () => true, canView: async () => true })).toEqual([])
+    expect(other.ops).toEqual([])
+  })
+})
+
+describe('delete entity only for own created cards (review 6 #7)', () => {
+  it('requires origin "created" and my link on that card', async () => {
+    const { canDeleteCardEntity } = await import('../entity-wiring')
+    const links = [
+      { objectId: 'c1', ref: { kind: 'note', id: 'n1' }, mine: true },
+      { objectId: 'c2', ref: { kind: 'note', id: 'n2' }, mine: false },
+      { objectId: 'c3', ref: { kind: 'note', id: 'n3' }, mine: true },
+    ]
+    const l = fakeLinker('u1', links) as any
+    expect(await canDeleteCardEntity(l, 'b', { id: 'c1', props: { kind: 'note', entityId: 'n1', origin: 'created' } })).toBe(true)
+    expect(await canDeleteCardEntity(l, 'b', { id: 'c2', props: { kind: 'note', entityId: 'n2', origin: 'created' } })).toBe(false)
+    expect(await canDeleteCardEntity(l, 'b', { id: 'c3', props: { kind: 'note', entityId: 'n3', origin: 'linked' } })).toBe(false)
+    expect(await canDeleteCardEntity(l, 'b', { id: 'c9', props: { kind: 'note', entityId: 'n1', origin: 'created' } })).toBe(false)
+    expect(await canDeleteCardEntity({ ...l, list: async () => { throw new Error('x') } }, 'b', { id: 'c1', props: { kind: 'note', entityId: 'n1', origin: 'created' } })).toBe(false)
+  })
+})

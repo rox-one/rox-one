@@ -16,7 +16,7 @@ import {
 } from '@rox/canvas-core'
 import { ENTITY_KINDS, kindDescriptor, type EntityKind } from '@rox/core/entities'
 import {
-  CREATABLE_KINDS, createEntity, createEntityLinker, createEntityRegistry, createPreviewBatcher, watchEntityChanges, deleteEntity, EntitySnapshotResolver, searchExisting, unlinkMyBoardLinks, type CreatableKind,
+  CREATABLE_KINDS, createEntity, createEntityLinker, createEntityRegistry, createPreviewBatcher, watchEntityChanges, deleteEntity, EntitySnapshotResolver, searchExisting, unlinkMyBoardLinks, relinkMyBoardLinks, canDeleteCardEntity, type CreatableKind,
 } from './entity-wiring'
 import { onCanvasTarget, takeCanvasTarget, type CanvasTarget } from './canvas-target'
 import { resizeRotated } from './geometry'
@@ -86,14 +86,28 @@ function CanvasWorkspace({ workspaceId, openId, setOpenId, focusObjectId }: { wo
     if (!window.confirm(t('canvas.boards.trashConfirm', { title: b.title }))) return
     try {
       // Our own embeds links from this board go first (others' stay; reconcile never touches them).
-      await unlinkMyBoardLinks(createEntityLinker(workspaceId), b.id).catch(e => console.warn('[canvas] unlink on trash', e))
+      await unlinkMyBoardLinks(createEntityLinker(workspaceId), b.id, workspaceId).catch(e => console.warn('[canvas] unlink on trash', e))
       await bridge()!.trash(workspaceId, b.id)
       if (openId === b.id) setOpenId(null)
       await refresh()
     } catch { setError(t('canvas.error.save')) }
   }
   const restore = async (b: CanvasTrashedBoard) => {
-    try { await bridge()!.restore(workspaceId, b.id, b.stamp); await refresh() } catch { setError(t('canvas.error.save')) }
+    try { await bridge()!.restore(workspaceId, b.id, b.stamp); await refresh() } catch { setError(t('canvas.error.save')); return }
+    // Re-link this user's own cards that were unlinked when the board was trashed.
+    try {
+      const api = bridge()!
+      const doc = new Y.Doc()
+      Y.applyUpdate(doc, await api.open(workspaceId, b.id), MAIN_ORIGIN)
+      await api.close(workspaceId, b.id).catch(() => {})
+      const restored = new CanvasDoc(doc)
+      const reg = createEntityRegistry(workspaceId)
+      await relinkMyBoardLinks(createEntityLinker(workspaceId), workspaceId, b.id, {
+        cardExists: (id, ref) => { const o = restored.get(id); return !!o && o.type === 'entity' && String(o.props.kind) === ref.kind && String(o.props.entityId) === ref.id },
+        canView: async ref => { const a = reg.get(ref.kind); return !!a && (a.canView ? a.canView(ref) : true) },
+      })
+      doc.destroy()
+    } catch (e) { console.warn('[canvas] relink on restore', e) }
   }
   return (
     <>
@@ -276,6 +290,8 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   const [view, setView] = useState({ x: 0, y: 0, zoom: 1 })
   const [picker, setPicker] = useState(false)
   const [cardDelete, setCardDelete] = useState<CanvasObject | null>(null)
+  /** 'Delete entity' only for cards this user created on this board (link createdBy === me). */
+  const [cardDeleteAllowed, setCardDeleteAllowed] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const drag = useRef<Drag | null>(null)
@@ -287,6 +303,13 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   const registry = useMemo(() => createEntityRegistry(workspaceId, batcher), [workspaceId, batcher])
   const resolver = useMemo(() => new EntitySnapshotResolver(registry), [registry])
   const linker = useMemo(() => createEntityLinker(workspaceId), [workspaceId])
+  useEffect(() => {
+    setCardDeleteAllowed(false)
+    if (!cardDelete) return
+    let alive = true
+    void canDeleteCardEntity(linker, boardId, cardDelete).then(ok => { if (alive) setCardDeleteAllowed(ok) })
+    return () => { alive = false }
+  }, [cardDelete, linker, boardId])
   const [resolved, setResolved] = useState<Record<string, ResolvedEntity>>({})
   useEffect(() => {
     const off = resolver.onChange((k, r) => setResolved(prev => ({ ...prev, [k]: r })))
@@ -382,8 +405,15 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   }
   const confirmCardDelete = async (deleteEntities: boolean) => {
     const o = cardDelete
+    if (!o || !ctx) { setCardDelete(null); return }
+    if (deleteEntities) {
+      if (!cardDeleteAllowed) return
+      const ref = { kind: String(o.props.kind), id: String(o.props.entityId) }
+      const r = resolver.get(ref)
+      const title = r?.state === 'ok' ? r.snapshot.title : ref.id
+      if (!window.confirm(t('canvas.cardDelete.confirmDelete', { title }))) return
+    }
     setCardDelete(null)
-    if (!o || !ctx) return
     setSelected(null)
     try { await removeEntityCards(ctx, [o.id], { deleteEntities }) } catch (e) { console.warn('[canvas] card delete', e); setNotice(t('canvas.error.save')) }
   }
@@ -529,8 +559,10 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
               <p className="mt-1 text-sm text-text-muted">{t('canvas.cardDelete.body')}</p>
               <div className="mt-4 flex justify-end gap-2">
                 <Button variant="ghost" size="sm" onClick={() => setCardDelete(null)}>{t('canvas.cardDelete.cancel')}</Button>
-                <Button variant="ghost" size="sm" className="text-destructive" disabled={!registry.get(String(cardDelete.props.kind))?.delete}
-                  onClick={() => void confirmCardDelete(true)} data-testid="canvas-card-delete-entity">{t('canvas.cardDelete.delete')}</Button>
+                {cardDeleteAllowed && registry.get(String(cardDelete.props.kind))?.delete && (
+                  <Button variant="ghost" size="sm" className="text-destructive"
+                    onClick={() => void confirmCardDelete(true)} data-testid="canvas-card-delete-entity">{t('canvas.cardDelete.delete')}</Button>
+                )}
                 <Button size="sm" autoFocus onClick={() => void confirmCardDelete(false)} data-testid="canvas-card-unlink">{t('canvas.cardDelete.unlink')}</Button>
               </div>
             </div>
