@@ -129,6 +129,7 @@
     "./memory/proposals": "./src/memory/proposals.ts",
     "./memory/repo": "./src/memory/repo.ts",
     "./memory/types": "./src/memory/types.ts",
+    "./memory/graph-provider": "./src/memory/graph-provider.ts",
     "./mentions": "./src/mentions/index.ts",
     "./openclaw": "./src/openclaw/index.ts",
     "./openclaw/types": "./src/openclaw/types.ts",

@@ -12,7 +12,7 @@ import { EntityPanel } from '@/components/ui/entity-panel'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import { skillSelection } from '@/hooks/useEntitySelection'
 import { SkillMenu } from './SkillMenu'
-import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
+import { getEditConfig } from '@/components/ui/edit-config'
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton'
 import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'
 import { getFileManagerName } from '@/lib/platform'
@@ -27,6 +27,9 @@ import { VirtualList } from '@/components/ui/virtual-list'
 
 const SendResourceToWorkspaceDialog = React.lazy(() =>
   import('./SendResourceToWorkspaceDialog').then((m) => ({ default: m.SendResourceToWorkspaceDialog })),
+)
+const EditPopover = React.lazy(() =>
+  import('@/components/ui/EditPopover').then((m) => ({ default: m.EditPopover })),
 )
 
 const RISK_FLAG_ICON: Record<SkillRiskFlag, typeof Network> = {
@@ -306,6 +309,7 @@ export function SkillsListPanel({
       docKey="skills"
     >
       {workspaceRootPath && (
+        <React.Suspense fallback={null}>
         <EditPopover
           align="center"
           trigger={
@@ -315,6 +319,7 @@ export function SkillsListPanel({
           }
           {...getEditConfig('add-skill', workspaceRootPath)}
         />
+        </React.Suspense>
       )}
     </EntityListEmptyScreen>
   )
