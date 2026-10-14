@@ -93,6 +93,9 @@ function getBuildDefines(): string[] {
     "OTEL_EXPORTER_OTLP_ENDPOINT",
     "OTEL_SERVICE_NAME",
     "CRAFT_DEV_RUNTIME",
+    // Shared Rox gateway key for the cognee graph-memory sidecar. Build-time only
+    // (CI secret); no baked default, never committed.
+    "ROX_SHARED_API_KEY",
   ];
 
   const noEnv = process.argv.includes('--no-env');
