@@ -48,12 +48,15 @@ import { measureTargetGeometry } from '@/features/product-tour/ui/geometry'
 import { observeTargetGeometry } from '@/features/product-tour/ui/geometry-observer'
 import { deriveProjectSignals } from '@/features/product-tour/adapters/work/tasks-projects'
 import { toErrorMessage } from '@/lib/errors'
+import { TimelinePanel } from './tasks/TimelinePanel'
+import { applySchedule, type SchedulePatch } from './tasks/timeline-model'
+import { isOpenTask } from '@rox/core/tasks/personal'
 
 interface ProjectInfoPageProps {
   projectSlug: string
 }
 
-type TabKey = 'roadmap' | 'sessions' | 'tasks' | 'assets' | 'settings' | 'okr'
+type TabKey = 'roadmap' | 'sessions' | 'tasks' | 'timeline' | 'assets' | 'settings' | 'okr'
 
 export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const workspace = useActiveWorkspace()
@@ -405,6 +408,13 @@ const projectSummaryRef = useRef<HTMLDivElement | null>(null)
     setNewTaskTitle('')
   }, [project, newTaskTitle])
 
+  const handleScheduleProjectTask = useCallback((id: string, patch: SchedulePatch) => {
+    const next = loadPersonalTaskStore()
+    applySchedule(next, id, patch)
+    persistPersonalTaskStore(next)
+    setTaskStore(next)
+  }, [])
+
   const handleStartSession = useCallback(async () => {
     if (!workspaceId || !project) return
     try {
@@ -616,6 +626,9 @@ const projectSummaryRef = useRef<HTMLDivElement | null>(null)
             <TabButton active={tab === 'tasks'} onClick={() => setTab('tasks')}>
               {t('projectInfo.tabTasks')}
             </TabButton>
+            <TabButton active={tab === 'timeline'} onClick={() => setTab('timeline')}>
+              {t('tasks.timeline.layout')}
+            </TabButton>
             <TabButton active={tab === 'assets'} onClick={() => setTab('assets')}>
               {t('projectInfo.tabAssets')}
             </TabButton>
@@ -626,6 +639,15 @@ const projectSummaryRef = useRef<HTMLDivElement | null>(null)
               {t('projectInfo.tabSettings')}
             </TabButton>
           </div>
+
+          {tab === 'timeline' && (
+            <TimelinePanel
+              testId="project-task-timeline"
+              tasks={projectTasks.filter(isOpenTask)}
+              onSchedule={handleScheduleProjectTask}
+              groupTitle={(group) => (group.id == null ? t('tasks.move.noPlace') : t(`tasks.projection.${group.id}`))}
+            />
+          )}
 
           {tab === 'roadmap' && <ProjectRoadmapPage key={`${workspaceId}:${projectSlug}`} projectSlug={projectSlug} />}
 
