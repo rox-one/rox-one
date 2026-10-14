@@ -29,7 +29,7 @@ export function SplitToggle({ className }: { className?: string }) {
             className,
           )}
         >
-          <Columns2 className="h-4 w-4" aria-hidden />
+          <Columns2 className="icon-toolbar" aria-hidden />
         </button>
       </TooltipTrigger>
       <TooltipContent side="bottom">{label}{hotkey ? ` ${hotkey}` : ''}</TooltipContent>
