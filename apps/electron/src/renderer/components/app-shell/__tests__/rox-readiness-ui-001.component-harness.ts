@@ -132,7 +132,7 @@ window.ui001.render({});` : ''}
 `)
   const stubs = new Set([
     '../memory/MemoryScreen', '../memory/MemoryRepoScreen', '../learning/LearningScreen', './ProjectsHomeInMain', './MultiSelectPanel', './collection/CollectionBulkBar',
-    '@/pages/ChatPage', '@/platform/HomeFrontPage', '@/pages/settings/settings-pages', '@/pages/settings/SettingsOverviewPage',
+    '@/pages/ChatPage', '@/platform/HomeFrontPage', '@/platform/SurfaceHost', '@/pages/settings/settings-pages', '@/pages/settings/SettingsOverviewPage',
     '../pages/PageView', './session-heatmap/SessionHeatmapHost', './SendResourceToWorkspaceDialog',
     '../pages/PagesHome', './kanban/KanbanBoardContainer', './session-table/SessionTableHost', '../automations/AutomationEditor',
     '../../knowledge/KnowledgeDiff', '../../knowledge/KnowledgeProposals',
@@ -213,7 +213,16 @@ window.ui001.render({});` : ''}
         if (args.path === 'entity-ui') return { contents: entityUi, loader: 'tsx', resolveDir: dirname(main) }
         if (args.path === 'knowledge') return { contents: `${leafSource}\nexport {knowledgeActiveViewIdAtom,knowledgeHomeViewAtom} from 'rox-ui001-bindings';`, loader:'tsx',resolveDir:dirname(main) }
         const name = args.path.split('/').at(-1)
-        return { contents: `${leafSource}\nexport default leaf(${JSON.stringify(name)});`, loader: 'tsx', resolveDir: dirname(main) }
+        // Consumers import a stubbed screen both as the default and by its own
+        // name (e.g. `import { SettingsScreenSidebar } from
+        // '@/pages/settings/SettingsScreenSidebar'`), so expose the leaf under
+        // that identifier too — unless the shared leaf template already declares
+        // it, which would otherwise collide.
+        const identifier = /^[A-Za-z_$][\w$]*$/.test(name)
+        const named = identifier && !new RegExp(`export\\s+const\\s+${name}\\s*=`).test(leafSource)
+          ? `\nexport const ${name} = leaf(${JSON.stringify(name)});`
+          : ''
+        return { contents: `${leafSource}\nexport default leaf(${JSON.stringify(name)});${named}`, loader: 'tsx', resolveDir: dirname(main) }
       })
     } }],
   })
