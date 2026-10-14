@@ -43,13 +43,28 @@ function Handled() {
   return <span data-testid="handled">{String(useSidebarHandledOutside())}</span>
 }
 
-async function waitForElement(selector: string, timeoutMs = 2000): Promise<Element | null> {
+/**
+ * Wait for a node, re-opening the popover if the trigger reports it as closed.
+ *
+ * This suite runs inside the shared `bun test` process where a neighbouring
+ * file's Radix layers/timers can dismiss a just-opened popover, and CI runners
+ * mount the portal noticeably later than a warm local run. Waiting longer alone
+ * is not enough when the popover has been closed again, so the trigger is
+ * re-clicked while we wait.
+ */
+async function waitForElement(selector: string, timeoutMs = 8000, reopen?: () => void): Promise<Element | null> {
   const deadline = Date.now() + timeoutMs
   for (;;) {
     const found = document.body.querySelector(selector)
     if (found || Date.now() > deadline) return found
     await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)) })
+    reopen?.()
   }
+}
+
+/** Radix marks a non-modal popover trigger with `data-state="open"` once it opens. */
+function reopenWhenClosed(trigger: HTMLButtonElement): () => void {
+  return () => { if (trigger.getAttribute('data-state') !== 'open') trigger.click() }
 }
 
 async function render(node: React.ReactNode) {
@@ -82,9 +97,10 @@ describe('split panels without a second sidebar', () => {
     expect(trigger?.getAttribute('data-testid')).toBe('inbox-nav-bare')
     expect(trigger?.getAttribute('aria-label')).toBeTruthy()
     await act(async () => { trigger!.click() })
-    // Radix mounts the popover content asynchronously (Presence/FocusScope); under a
-    // loaded full-suite run that can land after the first act flush, so wait for it.
-    const content = await waitForElement('[data-bare-controls-content]')
+    // Radix mounts the popover content asynchronously (Presence/FocusScope);
+    // under a loaded full-suite run that can land after the first act flush,
+    // so wait for it — and re-open if a neighbouring suite's layer dismissed it.
+    const content = await waitForElement('[data-bare-controls-content]', 8000, reopenWhenClosed(trigger!))
     expect(content?.textContent).toBe('inbox-tree')
   })
 
