@@ -1,0 +1,37 @@
+{
+  "name": "Rox Graphite",
+  "description": "Neutral graphite surfaces, large radii and monochrome buttons (palette adapted from the MIT DeepSeek Harness theme)",
+  "author": "Rox One",
+  "license": "MIT",
+  "source": "@deepseek-ai/dsh-client-ui-theme (MIT)",
+  "supportedModes": ["light", "dark"],
+  "uiProfile": "graphite",
+  "shikiTheme": {
+    "light": "github-light",
+    "dark": "github-dark"
+  },
+  "background": "#f9fafb",
+  "foreground": "#0f1115",
+  "accent": "#4176e6",
+  "info": "#4176e6",
+  "success": "#2f9e5b",
+  "destructive": "#d93f3f",
+  "paper": "#ffffff",
+  "navigator": "#f3f4f6",
+  "input": "#ffffff",
+  "popover": "#ffffff",
+  "popoverSolid": "#ffffff",
+  "dark": {
+    "background": "#151517",
+    "foreground": "#f9fafb",
+    "accent": "#5686fe",
+    "info": "#5686fe",
+    "success": "#4cc38a",
+    "destructive": "#f2555a",
+    "paper": "#1c1c1e",
+    "navigator": "#232324",
+    "input": "#2c2c2e",
+    "popover": "#2c2c2e",
+    "popoverSolid": "#2c2c2e"
+  }
+}

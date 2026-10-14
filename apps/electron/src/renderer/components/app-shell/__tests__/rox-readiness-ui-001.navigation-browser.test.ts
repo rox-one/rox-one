@@ -91,7 +91,7 @@ async function bundle() {
     import {useCallback,useEffect,useMemo,useState} from 'react';
     import {createRoot} from 'react-dom/client';
     import {Provider,atom,createStore,useAtomValue,useSetAtom,useStore} from 'jotai';
-    import {NavigationProvider,useNavigation,useNavigationState} from './apps/electron/src/renderer/contexts/NavigationContext';
+    import {NavigationProvider,useNavigation,useNavigationState,useNavigationStatus} from './apps/electron/src/renderer/contexts/NavigationContext';
     import {CompactWorkspaceMenu} from './apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu';
     import {panelRouteKey} from './apps/electron/src/renderer/components/app-shell/panel-route-key';
     import {navigate,routes} from './apps/electron/src/renderer/lib/navigate';
@@ -119,7 +119,9 @@ async function bundle() {
       isTasksNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,
       isAutomationsNavigation,isProjectsNavigation,isPagesNavigation,isBrowserNavigation,isKnowledgeNavigation,
       isDiffNavigation,isExtensionNavigation,isConnectionsNavigation,isHomeNavigation,isCloudRunNavigation,
-      isTerminalNavigation,isScreenNavigation,isSurfaceNavigation,isLearningNavigation} = guards;
+      isTerminalNavigation,isScreenNavigation,isSurfaceNavigation,isLearningNavigation,
+      isClipboardHistoryNavigation,isDevelopersNavigation,isPlaybooksNavigation,
+      isCookbooksNavigation,isMissionsNavigation,isDriveNavigation} = guards;
     const store=createStore(), events=new Set(), labels=new Set(), sources=new Set(), skills=new Set(), calls=[];
     const records=[{id:'s1',workspaceId:'ws-a',name:'Session A'},{id:'s2',workspaceId:'ws-b',name:'Session B'}];
     store.set(sessionMetaMapAtom,new Map(records.map(x=>[x.id,x])));
@@ -157,7 +159,11 @@ async function bundle() {
       InboxPage=leaf('inbox'),FeedPage=leaf('feed'),KnowledgeEntityPage=leaf('knowledge'),ProjectInfoPage=leaf('project'),
       BrowserPanelPage=leaf('browser'),TerminalSurfacePage=leaf('terminal'),CloudRunSurfacePage=leaf('cloud-run'),
       ExtensionSurfacePage=leaf('extension'),PagesHome=leaf('pages'),KanbanBoardContainer=leaf('board'),SessionTableHost=leaf('table'),
-      AutomationEditor=leaf('automation'),KnowledgeDiff=leaf('diff'),KnowledgeHome=leaf('knowledge-home'),KnowledgeProposals=leaf('proposals');
+      AutomationEditor=leaf('automation'),KnowledgeDiff=leaf('diff'),KnowledgeHome=leaf('knowledge-home'),KnowledgeProposals=leaf('proposals'),
+      MemoryRepoScreen=leaf('memory-repo'),ClipboardHistoryPage=leaf('clipboard-history'),
+      DevSpaceRepoPage=leaf('dev-space-repo'),DevSpaceHomePage=leaf('dev-space-home'),
+      PlaybooksHomePage=leaf('playbooks-home'),CookbooksSurfacePage=leaf('cookbooks-surface'),
+      MissionBoard=leaf('mission-board'),DrivePage=leaf('drive');
     const getSettingsPageComponent=()=>leaf('settings'),recordRecentSetting=()=>{};
     const AgentsWorkspacePage=leaf('agents'),SurfaceHost=leaf('surface');
     ${mainFunctions()}

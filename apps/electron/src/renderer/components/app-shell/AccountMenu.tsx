@@ -24,7 +24,7 @@ import {
   Shield,
   Trash2,
 } from 'lucide-react'
-import { AnimatePresence } from 'motion/react'
+import { AnimatePresence } from '@/lib/deferred-motion'
 import { useSetAtom } from 'jotai'
 import { toast } from 'sonner'
 

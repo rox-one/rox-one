@@ -106,7 +106,7 @@ export function NotesRailTools({ tocShown, commentsShown, sheet, onCollapse, onO
 export function NotesInspectorToggle({ inline, open, onToggle }: { inline: boolean; open: boolean; onToggle: () => void }) {
   const { t } = useTranslation()
   if (inline) return null
-  return <button type="button" className="h-7 w-7 shrink-0 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" aria-label={t('notes.inspector.title')} title={t('notes.inspector.title')} aria-haspopup="dialog" aria-expanded={open} onClick={onToggle}><PanelRight className="h-4 w-4" aria-hidden /></button>
+  return <button type="button" className="h-7 w-7 shrink-0 rounded-sm hover:bg-foreground/[0.06] grid place-items-center" aria-label={t('notes.inspector.title')} title={t('notes.inspector.title')} aria-haspopup="dialog" aria-expanded={open} onClick={onToggle}><PanelRight className="h-4 w-4" aria-hidden /></button>
 }
 
 

@@ -1,4 +1,6 @@
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { Tabs } from "@/components/ui/tabs"
 import {
   Dialog,
   DialogContent,
@@ -32,6 +34,12 @@ interface ShortcutSection {
 function useComponentSpecificSections(): ShortcutSection[] {
   const { t } = useTranslation()
   return [
+    {
+      title: t('shortcuts.helpSection'),
+      shortcuts: [
+        { keys: ['?'], description: t('shortcuts.openHelp') },
+      ],
+    },
     {
       title: t('shortcuts.listNavigation'),
       shortcuts: [
@@ -138,10 +146,41 @@ function StaticSection({ section }: { section: ShortcutSection }) {
   )
 }
 
+/** Demo borrowing #48: short glossary of Rox terms next to the shortcuts. */
+export const GLOSSARY_TERMS = [
+  'session',
+  'workspace',
+  'panel',
+  'pill',
+  'source',
+  'skill',
+  'automation',
+  'memory',
+  'permissionMode',
+  'reasoning',
+] as const
+
+function GlossarySection() {
+  const { t } = useTranslation()
+  return (
+    <dl className="space-y-3">
+      {GLOSSARY_TERMS.map((term) => (
+        <div key={term}>
+          <dt className="text-sm font-medium">{t(`shortcuts.glossary.${term}.term`)}</dt>
+          <dd className="text-sm text-muted-foreground">{t(`shortcuts.glossary.${term}.definition`)}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+type HelpTab = 'shortcuts' | 'glossary'
+
 export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcutsDialogProps) {
   const actionsByCategory = useActionsByCategory()
   const { t } = useTranslation()
   const componentSpecificSections = useComponentSpecificSections()
+  const [tab, setTab] = useState<HelpTab>('shortcuts')
 
   // Register with modal context so X button / Cmd+W closes this dialog first
   useRegisterModal(open, () => onOpenChange(false))
@@ -152,7 +191,22 @@ export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcut
         <DialogHeader className="pb-1">
           <DialogTitle className="text-base">{t("shortcuts.title")}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-1">
+        <Tabs
+          variant="segmented"
+          ariaLabel={t("shortcuts.helpTabs")}
+          activeId={tab}
+          items={[
+            { id: 'shortcuts', label: t("shortcuts.tabShortcuts"), controls: 'help-panel-shortcuts' },
+            { id: 'glossary', label: t("shortcuts.tabGlossary"), controls: 'help-panel-glossary' },
+          ]}
+          onSelect={(id) => setTab(id as HelpTab)}
+        />
+        {tab === 'glossary' ? (
+          <div id="help-panel-glossary" role="tabpanel" aria-label={t("shortcuts.tabGlossary")} className="py-1">
+            <GlossarySection />
+          </div>
+        ) : (
+          <div id="help-panel-shortcuts" role="tabpanel" aria-label={t("shortcuts.tabShortcuts")} className="space-y-4 py-1">
           {/* Registry-driven sections */}
           {Object.entries(actionsByCategory).map(([category, actions]) => (
             <RegistrySection
@@ -167,6 +221,7 @@ export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcut
             <StaticSection key={section.title} section={section} />
           ))}
         </div>
+        )}
       </DialogContent>
     </Dialog>
   )

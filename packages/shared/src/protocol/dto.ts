@@ -145,6 +145,8 @@ export interface Session {
     cacheCreationTokens?: number
     /** Model's context window size in tokens (from SDK modelUsage) */
     contextWindow?: number
+    sessionTokens?: number
+    sessionTokensIncomplete?: boolean
   }
   /** When true, session is hidden from session list (e.g., mini edit sessions) */
   hidden?: boolean
