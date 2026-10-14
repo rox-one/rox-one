@@ -85,9 +85,7 @@ import { NARROW_SHELL_THRESHOLD } from './mode-pill-layout'
 import { ShellSidebarNav } from "./ShellSidebarNav"
 import { modePillShown } from "./mode-pill-layout"
 import { useScrollEdgeAttribute } from "@/hooks/useScrollEdgeAttribute"
-import { ShellLayoutMode } from './ShellLayoutMode'
 import { SuperEngineeringShellExtras } from './SuperEngineeringShellExtras'
-import { WorkspaceNavigator } from '@/components/workspace/WorkspaceNavigator'
 import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
 import { useSeEditorZoom } from '@/hooks/useSeEditorZoom'
 import { inspectorEdgeRevealModeAtom } from '@/atoms/panel-auto-hide'
@@ -97,7 +95,7 @@ import { useTerminalDockShortcut } from '@/hooks/useTerminalDockShortcut'
 import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
-import { type ProfileStripData } from "./ProfileStrip"
+import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
 import { accountProfileStrip } from "./profile-strip-account"
 import { SidebarNewSessionButton } from "./SidebarNewSessionButton"
 import { SidebarChrome, SidebarHeaderControls } from "./SidebarChrome"
@@ -493,6 +491,7 @@ function AppShellContent({
   // experimental workbench bar so the two never stack.
   const { statusBarVisible: uiStatusBarVisible } = useUiAppearance()
   const showCompactStatusBar = uiStatusBarVisible && !isAutoCompact && !showStatusBar
+  const statusRowVisible = showStatusBar || showCompactStatusBar
 
   const effectiveSidebarAndNavigatorHidden = isSidebarAndNavigatorHidden || isAutoCompact
 
@@ -684,6 +683,10 @@ function AppShellContent({
   }
   const panelStack = useAtomValue(panelStackAtom)
   const productLearning = useProductLearning()
+  const replayOnboardingTour = React.useMemo(() => {
+    if (!productLearning?.enabled || !productLearning.ready) return undefined
+    return () => { void productLearning.start('OBT-01', productLearning.progress['OBT-01'] ? 'replay' : 'new') }
+  }, [productLearning])
   const tourNewSessionTarget = useTourTarget('session.new', { variant: 'regular' })
   const tourSignals = useTourSignals()
   const panelCount = useAtomValue(panelCountAtom)
@@ -1759,6 +1762,18 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   const profileStripWithSpend = useMemo(
     () => accountProfileStrip(profileStrip, roxCloudAccount, workspaceSpentUsd, t('profile.defaultName')),
     [profileStrip, roxCloudAccount, workspaceSpentUsd, t],
+  )
+  // One profile entry: rail bottom when the status bar is off, otherwise the
+  // left end of the status row.
+  const renderProfileEntry = (placement: 'rail' | 'status') => (
+    <ProfileStrip
+      variant="rail"
+      placement={placement}
+      data={profileStripWithSpend}
+      onClick={() => handleSettingsClick('account')}
+      onOpenSettings={() => handleSettingsClick()}
+      onReplayTour={replayOnboardingTour}
+    />
   )
 
   // Active sessions exclude archived - use this for all counts and filters except archived view
@@ -3142,6 +3157,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
           workspaceUnreadMap={workspaceUnreadMap}
           onWorkspaceCreated={() => onRefreshWorkspaces?.()}
           onWorkspaceRemoved={() => onRefreshWorkspaces?.()}
+          onWorkspaceRenamed={() => onRefreshWorkspaces?.()}
           activeSessionId={effectiveSessionId}
           onNewChat={() => handleNewChat()}
           onNewWindow={() => window.electronAPI.menuNewWindow()}
@@ -3212,20 +3228,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             >
             <PrimaryRail
               secondaryAvailable={secondaryAvailable}
-              avatar={
-                <button
-                  type="button"
-                  data-rail-button=""
-                  data-rail-avatar=""
-                  aria-label={t('shell.rail.account', { name: profileStripWithSpend.displayName })}
-                  onClick={() => handleSettingsClick('account')}
-                  className="flex size-10 items-center justify-center rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  {profileStripWithSpend.avatar
-                    ? <img src={profileStripWithSpend.avatar} alt="" className="size-7 rounded-full object-cover" />
-                    : <span className="flex size-7 items-center justify-center rounded-full bg-[var(--state-selected)] text-caption font-semibold" aria-hidden>{(profileStripWithSpend.displayName || '?').slice(0, 1).toUpperCase()}</span>}
-                </button>
-              }
+              avatar={statusRowVisible ? undefined : renderProfileEntry('rail')}
             />
             <div
               ref={secondaryOverlayRef}
@@ -3266,12 +3269,8 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                   <SettingsNavigator selectedSubpage={navState.subpage ?? null} onSelectSubpage={subpage => handleSettingsClick(subpage)} />,
                   shellSidebarSlot,
                 )}
-<ShellLayoutMode workspaceRootPath={activeWorkspace?.rootPath}>
-                  {(layoutMode) => (
-                    <>
-                      {layoutMode === 'se-workspace' && !isSidebarCollapsed && (
-                        <WorkspaceNavigator workspaceRootPath={activeWorkspace?.rootPath} />
-                      )}
+{/* The workspace name lives in the top switcher; the sidebar carries no
+                    repo/dirty-count block (Mark, t77). */}
                       <ShellSidebarNav
                         baseLinks={sidebarLinks}
                         isCollapsed={isSidebarCollapsed}
@@ -3283,19 +3282,13 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                         pillShown={modePillShown(isAutoCompact)}
                         workspaceIds={recentScopeWorkspaceIds}
                       />
-                    </>
-                  )}
-                </ShellLayoutMode>
                 </div>
                 <div className="shrink-0" data-sidebar-footer="">
                   <SidebarChrome
                     workspaceId={activeWorkspaceId}
-                    profile={profileStripWithSpend}
-                    onProfileClick={() => handleSettingsClick('account')}
                     promoKind={promoKind}
                     onPromoCta={handleMemoryClick}
                     collapsed={isSidebarCollapsed}
-                    onOpenSettings={() => handleSettingsClick()}
                   />
                 </div>
               </div>
@@ -3655,8 +3648,26 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
         </WorkspaceSurfaceHost>
 
       </div>
-      {showStatusBar && <StatusBarHost />}
-      {showCompactStatusBar && <StatusBar account={roxCloudAccount} />}
+      {statusRowVisible && (
+        // The profile anchors the left end of the status bar: the bar extends
+        // out of the profile block at the bottom of the rail (Mark, t77).
+        <div className="flex shrink-0 items-stretch" data-status-row="">
+          {/* No rail (focus / sidebar-hidden / auto-compact): the bar starts at x=0. */}
+          {!effectiveSidebarAndNavigatorHidden && (
+            <div
+              className="chrome-rail flex shrink-0 items-center justify-center"
+              style={{ width: SHELL_RAIL_WIDTH }}
+              data-status-profile=""
+            >
+              {renderProfileEntry('status')}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            {showStatusBar && <StatusBarHost />}
+            {showCompactStatusBar && <StatusBar account={roxCloudAccount} />}
+          </div>
+        </div>
+      )}
       </div>
 
       {/* ============================================================================

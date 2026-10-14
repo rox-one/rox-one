@@ -1,4 +1,4 @@
-import { Check, Columns2, Columns3, Focus, Grid2X2, LayoutGrid, Maximize2, Minimize2, RotateCcw } from 'lucide-react'
+import { Check, Columns2, Columns3, Focus, Grid2X2, LayoutGrid, Maximize2, Minimize2, PanelsTopLeft, RotateCcw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { usePanelWorkspaceLayout, type PanelLayoutPreset, type PanelWorkspaceLayoutMode } from '@/hooks/usePanelWorkspaceLayout'
@@ -45,8 +45,8 @@ export function PanelWorkspaceMenu() {
       <Tooltip>
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
-            <TopBarButton aria-label={t('panelWorkspace.layout')}>
-              <LayoutGrid className="icon-inline" aria-hidden />
+            <TopBarButton aria-label={t('panelWorkspace.layout')} data-panel-layout="">
+              <PanelsTopLeft className="icon-inline" aria-hidden />
             </TopBarButton>
           </DropdownMenuTrigger>
         </TooltipTrigger>
