@@ -29,8 +29,8 @@ describe('buildClipboardSidebarGroups', () => {
     g[2]!.items[0]!.onSelect()
     expect(onOpenEntry).toHaveBeenCalledWith(entries[2]!.id)
     expect(g[3]!.items.map((i) => i.id)).toEqual(['type-text'])
-    expect(g[0]!.items[0]!.kind).toBe('entry')
-    expect(g[3]!.items[0]!.kind).toBe('toggle')
+    expect(g[0]!.items[0]!.ariaKind).toBe('selected')
+    expect(g[3]!.items[0]!.ariaKind).toBe('pressed')
   })
   it('type row toggles back to all when already active', () => {
     const onFilterKind = mock()

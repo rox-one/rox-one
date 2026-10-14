@@ -56,11 +56,11 @@ function useSidebarWindow(enabled: boolean): SidebarWindow & { reload(): void } 
 }
 
 /** Select → scroll the card into view and move focus to it (Space then opens Quick Look). */
-export function focusEntryCard(id: number): void {
+export function focusEntryCard(id: number, root?: ParentNode | null): void {
   if (typeof requestAnimationFrame !== 'function') return
   // Two frames: the first lets a widened filter re-render the list.
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    const card = document.querySelector<HTMLElement>(`[data-testid="clipboard-card"][data-entry-id="${id}"]`)
+    const card = (root ?? document).querySelector<HTMLElement>(`[data-testid="clipboard-card"][data-entry-id="${id}"]`)
     if (!card) return
     card.scrollIntoView({ block: 'nearest' })
     card.focus({ preventScroll: true })
@@ -70,11 +70,11 @@ export function focusEntryCard(id: number): void {
 /** Publishes the Буфер обмена second sidebar, bound to the live controller. */
 export function useClipboardSidebar(
   h: ClipboardHistoryController,
-  actions: { openSettings(): void; openClear(): void },
+  actions: { openSettings(): void; openClear(): void; rootRef?: React.RefObject<HTMLElement | null> },
 ): void {
   const { t } = useTranslation()
   const { setSelectedId, dispatch, refresh } = h
-  const { openSettings, openClear } = actions
+  const { openSettings, openClear, rootRef } = actions
   const win = useSidebarWindow(!h.unavailable)
   const { reload } = win
   // Latest-ref callbacks: controller callbacks change with filters, groups must not.
@@ -93,8 +93,9 @@ export function useClipboardSidebar(
       dispatch({ type: 'reset' })
     }
     setSelectedId(id)
-    focusEntryCard(id)
-  }, [dispatch, setSelectedId])
+    // Scoped to this panel so a retained (keep-alive) clipboard panel is never targeted.
+    focusEntryCard(id, rootRef?.current)
+  }, [dispatch, setSelectedId, rootRef])
   const starredIds = React.useMemo(() => new Set(win.pinned.map((e) => e.id)), [win.pinned])
   const labels = React.useMemo(() => ({
     pinned: t('screenSidebar.clipboard.pinned'),

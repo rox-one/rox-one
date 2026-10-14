@@ -6,7 +6,7 @@
  * The surface is an in-shell panel only — no floating window, blob or tray.
  */
 import * as React from 'react'
-import { RefreshCw, Settings, Trash2 } from 'lucide-react'
+import { RefreshCw, Search, Settings, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { ClipEntrySummary } from '@rox/shared/clipboard-history'
 import { Button, Chip, EmptyState, Tabs } from '@/components/mode-screen/ModeScreen'
@@ -29,6 +29,7 @@ import { ClipboardHistorySettings } from './ClipboardHistorySettings'
 import { ClipboardTagBar, ClipboardTagEditor } from './ClipboardTagBar'
 import { useClipboardHistory } from './use-clipboard-history'
 import { useClipboardSidebar } from './use-clipboard-sidebar'
+import { useScreenSidebarSearchInput } from '@/components/shell/screen-sidebar'
 
 const KINDS = ['all', 'text', 'image'] as const
 const FORMATS: ReadonlyArray<{ value: ClipFormatFilter; label: string }> = [
@@ -48,7 +49,12 @@ export function ClipboardHistoryPanel() {
   const [clearOpen, setClearOpen] = React.useState(false)
   const openSettings = React.useCallback(() => setSettingsOpen(true), [])
   const openClear = React.useCallback(() => setClearOpen(true), [])
-  useClipboardSidebar(h, { openSettings, openClear })
+  const rootRef = React.useRef<HTMLDivElement | null>(null)
+  useClipboardSidebar(h, { openSettings, openClear, rootRef })
+  // The shell renders the search box only while the second sidebar is
+  // expanded; otherwise keep an in-panel search so search never disappears.
+  const shellSearch = useScreenSidebarSearchInput('clipboard')
+  const panelSearchRef = React.useRef<HTMLInputElement | null>(null)
   const [deleteTargetId, setDeleteTargetId] = React.useState<number | null>(null)
 
   const overlayOpen = h.quickLookId !== null || settingsOpen || clearOpen || tagsEntry !== null || deleteTargetId !== null
@@ -57,8 +63,7 @@ export function ClipboardHistoryPanel() {
   const runAction = React.useCallback((action: ClipboardKeyAction) => {
     switch (action) {
       case 'focus-search':
-        // The screen search lives in the shell's second sidebar.
-        document.querySelector<HTMLInputElement>(`input[type="search"][aria-label="${CSS.escape(t('clipboard.search.placeholder'))}"]`)?.focus()
+        ;(shellSearch ?? panelSearchRef.current)?.focus()
         break
       case 'clear-search':
         h.dispatch({ type: 'query', query: '' })
@@ -90,7 +95,7 @@ export function ClipboardHistoryPanel() {
         if (selectedEntry) h.toggleStar(selectedEntry)
         break
     }
-  }, [h, selectedEntry, t])
+  }, [h, selectedEntry, shellSearch])
 
   React.useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -136,7 +141,7 @@ export function ClipboardHistoryPanel() {
   const kind = emptyStateKind(h.filters)
 
   return (
-    <div className="flex h-full min-h-0 flex-col" data-testid="clipboard-history-panel">
+    <div ref={rootRef} className="flex h-full min-h-0 flex-col" data-testid="clipboard-history-panel">
       <header className="flex min-h-[44px] shrink-0 flex-wrap items-center gap-2 px-3 pt-2">
         <h2 className="text-title-sm font-semibold">{t('clipboard.title')}</h2>
         <span className="min-w-0 truncate text-small text-text-muted" data-testid="clipboard-counts">{counts}</span>
@@ -157,6 +162,32 @@ export function ClipboardHistoryPanel() {
       </header>
 
       <div className="flex flex-col gap-2 px-3 pb-2">
+        {shellSearch ? null : (
+          <label className="relative flex min-w-0 items-center">
+            <Search aria-hidden className="pointer-events-none absolute left-2 icon-caption text-text-muted" />
+            <input
+              ref={panelSearchRef}
+              type="search"
+              value={h.filters.query}
+              onChange={(event) => h.dispatch({ type: 'query', query: event.target.value })}
+              placeholder={t('clipboard.search.placeholder')}
+              aria-label={t('clipboard.search.placeholder')}
+              data-testid="clipboard-search"
+              className="h-7 w-full rounded-[var(--radius-control)] border border-border-subtle bg-transparent pl-7 pr-7 text-sm outline-none placeholder:text-text-muted focus-visible:ring-1 focus-visible:ring-ring"
+            />
+            {h.filters.query !== '' ? (
+              <button
+                type="button"
+                aria-label={t('clipboard.search.clear')}
+                data-testid="clipboard-search-clear"
+                onClick={() => h.dispatch({ type: 'query', query: '' })}
+                className="absolute right-1 grid size-5 place-items-center rounded-[var(--radius-control)] text-text-muted outline-none hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <X aria-hidden className="icon-caption" />
+              </button>
+            ) : null}
+          </label>
+        )}
         <div className="flex items-center gap-2">
           <Tabs
             label={t('clipboard.title')}

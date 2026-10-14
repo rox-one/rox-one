@@ -200,7 +200,7 @@ describe('ClipboardHistoryPanel', () => {
     await act(async () => { await Promise.resolve() })
     const config = getScreenSidebar()!
     expect(config.headerActions!.map((a) => a.id)).toEqual(['refresh', 'settings', 'clear'])
-    const entryRow = config.groups.flatMap((g) => g.items).find((i) => i.kind === 'entry')
+    const entryRow = config.groups.flatMap((g) => g.items).find((i) => i.ariaKind === 'selected')
     expect(entryRow).toBeDefined()
     await act(async () => { entryRow!.onSelect() })
     await act(async () => { await new Promise((r) => setTimeout(r, 50)) })
