@@ -5,7 +5,7 @@
 
 import { spawn, type Subprocess } from "bun";
 import { PRELOAD_BUNDLE_ALIAS, PRELOAD_BUNDLE_EXTERNALS } from "./electron-preload-bundle";
-import { existsSync, rmSync, cpSync, readFileSync, statSync, mkdirSync } from "fs";
+import { copyFileSync, watchFile, existsSync, rmSync, cpSync, readFileSync, statSync, mkdirSync } from "fs";
 import { createServer } from "net";
 import { join } from "path";
 import * as esbuild from "esbuild";
@@ -752,6 +752,15 @@ async function main(): Promise<void> {
     ...(userDataDir ? [`--user-data-dir=${userDataDir}`] : []),
     "apps/electron",
   ];
+
+  // #1573: package.json `main` is the compile-cache entry shim.
+  const bootSrc = join(ELECTRON_DIR, "src/main/boot.cjs");
+  const copyBoot = () => copyFileSync(bootSrc, join(ELECTRON_DIR, "dist/boot.cjs"));
+  copyBoot();
+  // Keep dist/boot.cjs in sync while watching (it is not part of any esbuild context).
+  watchFile(bootSrc, { interval: 1000 }, () => {
+    try { copyBoot(); console.log("🔁 boot.cjs updated (restart Electron to apply)"); } catch (error) { console.error("❌ boot.cjs copy failed:", error); }
+  });
 
   const electronProc = spawn({
     cmd: [ELECTRON_BIN, ...electronArgs],
