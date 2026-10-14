@@ -26,11 +26,18 @@ interface ProjectChange {
   after: number | undefined
 }
 
+interface SpawnedRepeat {
+  parent: string
+  id: string
+  /** The copy as created; undo leaves it if it was edited since. */
+  task: PersonalTask
+}
+
 export interface BulkSnapshot {
   changes: TaskChange[]
   projects: ProjectChange[]
   /** Repeat copies spawned for the bulk-completed ids (removed on undo). */
-  spawned: string[]
+  spawned: SpawnedRepeat[]
   /** Ids the operation actually changed (for toasts). */
   affected: string[]
 }
@@ -101,7 +108,7 @@ export function runBulkOperation(
   const beforeTasks = new Map(current.list().filter(touched).map((task) => [task.id, copy(task)]))
   const beforeProjects = new Map(current.projects().map((project) => [project.id, project.trashedAt]))
   const affected: string[] = []
-  const spawned: string[] = []
+  const spawned: SpawnedRepeat[] = []
   for (const id of ids) {
     const task = current.get(id)
     if (!task || opts.pending?.has(id)) continue
@@ -110,7 +117,7 @@ export function runBulkOperation(
         if (task.completedAt || task.cancelledAt) continue
         const hadNext = task.repeatNextId != null
         const { next } = current.completeTask(id, opts.now)
-        if (next && !hadNext) spawned.push(next.id)
+        if (next && !hadNext) spawned.push({ parent: id, id: next.id, task: next })
         break
       }
       case 'trash':
@@ -137,6 +144,7 @@ export function runBulkOperation(
     const before = beforeProjects.get(project.id)
     if (beforeProjects.has(project.id) && before !== project.trashedAt) projects.push({ id: project.id, before, after: project.trashedAt })
   }
+  for (const entry of spawned) entry.task = copy(current.get(entry.id) ?? entry.task)
   return { changes, projects, spawned, affected }
 }
 
@@ -145,7 +153,7 @@ export function runBulkOperation(
  * the action — any changed field no longer holds its post-action value — is left alone.
  */
 export function undoBulkOperation(current: PersonalTaskStore, snapshot: BulkSnapshot): void {
-  for (const id of snapshot.spawned) if (current.get(id)) current.remove(id)
+  const reverted = new Set<string>()
   for (const change of snapshot.changes) {
     const live = current.get(change.id) as unknown as Fields | undefined
     if (!live) continue
@@ -153,10 +161,18 @@ export function undoBulkOperation(current: PersonalTaskStore, snapshot: BulkSnap
     const patch: Fields = {}
     for (const key of Object.keys(change.after)) patch[key] = copy(change.before[key])
     current.update(change.id, patch as Parameters<PersonalTaskStore['update']>[1])
+    reverted.add(change.id)
   }
   for (const change of snapshot.projects) {
     const project = current.projects().find((p) => p.id === change.id)
     if (project && project.trashedAt === change.after) current.updateProject(change.id, { trashedAt: change.before })
+  }
+  // A spawned repeat goes only if its parent's completion was reverted and nobody touched the copy.
+  for (const entry of snapshot.spawned) {
+    const parent = current.get(entry.parent)
+    const live = current.get(entry.id)
+    if (!live || !parent || !reverted.has(entry.parent) || parent.completedAt != null) continue
+    if (same(live, entry.task)) current.remove(entry.id)
   }
 }
 

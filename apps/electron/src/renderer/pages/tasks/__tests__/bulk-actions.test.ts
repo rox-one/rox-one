@@ -27,7 +27,7 @@ describe('bulk operations', () => {
     expect(store.get(a)?.completedAt).toBeUndefined()
     expect(store.get(r)?.completedAt).toBeUndefined()
     expect(store.list().length).toBe(countBefore)
-    for (const id of snap.spawned) expect(store.get(id)).toBeUndefined()
+    for (const entry of snap.spawned) expect(store.get(entry.id)).toBeUndefined()
   })
 
   it('skips tasks that are mid-complete-animation', () => {
@@ -115,7 +115,7 @@ describe('review round 2', () => {
     expect(snap.spawned.length).toBe(1)
     undoBulkOperation(store, snap)
     expect(store.get(other.id)).toBeDefined()
-    expect(store.get(snap.spawned[0]!)).toBeUndefined()
+    expect(store.get(snap.spawned[0]!.id)).toBeUndefined()
   })
 
   it('bulk move of a trashed task in a trashed project restores the project trash state on undo', () => {
@@ -141,5 +141,23 @@ describe('review round 2', () => {
       expect(snap.affected).not.toContain(a)
     }
     expect(store.get(a)?.list).toBe('anytime')
+  })
+})
+
+describe('review round 3', () => {
+  it('keeps the spawned repeat when the parent was edited or the copy was edited', () => {
+    const first = seed()
+    const snap1 = runBulkOperation(first.store, [first.r], 'complete', { now: NOW })
+    first.store.reopen(first.r)
+    undoBulkOperation(first.store, snap1)
+    expect(first.store.get(first.r)?.completedAt).toBeUndefined()
+    expect(first.store.get(snap1.spawned[0]!.id)).toBeDefined()
+
+    const second = seed()
+    const snap2 = runBulkOperation(second.store, [second.r], 'complete', { now: NOW })
+    second.store.update(snap2.spawned[0]!.id, { notes: 'touched' })
+    undoBulkOperation(second.store, snap2)
+    expect(second.store.get(second.r)?.completedAt).toBeUndefined()
+    expect(second.store.get(snap2.spawned[0]!.id)?.notes).toBe('touched')
   })
 })
