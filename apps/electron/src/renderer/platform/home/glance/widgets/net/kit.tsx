@@ -15,8 +15,8 @@ import type { FeedItem } from './parsers'
  * surface hidden by keep-alive (display:none) or scrolled away reads false,
  * so `useHomeFetch(..., { paused: !visible })` stops polling.
  */
-export function useOnScreen<T extends Element>(): [React.RefObject<T | null>, boolean] {
-  const ref = React.useRef<T | null>(null)
+export function useOnScreen<T extends Element>(): [React.RefObject<T>, boolean] {
+  const ref = React.useRef<T>(null)
   const [visible, setVisible] = React.useState(false)
   React.useEffect(() => {
     const el = ref.current

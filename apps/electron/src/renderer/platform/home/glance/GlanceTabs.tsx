@@ -159,7 +159,7 @@ function PopoverMenu({ onClose, className, label, data, children }: { onClose: (
     return () => { if (opener?.isConnected) opener.focus() }
   }, [])
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    const items = [...(ref.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])]
+    const items = Array.from(ref.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])
     const i = items.indexOf(document.activeElement as HTMLElement)
     const go = (n: number) => { e.preventDefault(); items[(n + items.length) % items.length]?.focus() }
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); onClose() }
