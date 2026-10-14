@@ -882,6 +882,16 @@ _RUN_ALL_DRIVER = r'''
 import io, json, os, signal, sys, time, traceback
 
 
+def _redact(text, secrets):
+    # Host-injected secret values must never reach the temp results file: the
+    # caller can be killed (cancel/overall timeout) before it gets to redact the
+    # records itself, so masking happens here, before every write. Longest-first
+    # so a secret that starts with another stays masked whole (secrets policy).
+    for value in sorted({v for v in secrets if v}, key=lambda s: (-len(s), s)):
+        text = text.replace(value, "***")
+    return text
+
+
 def _write(path, payload):
     # tmp + os.replace: the caller never reads a half-written results file.
     tmp = path + ".tmp"
@@ -895,6 +905,7 @@ def main(job_path):
         job = json.load(fh)
     results_path = job["results"]
     per_cell = float(job.get("timeout") or 0)
+    secrets = job.get("secrets") or []
     timer = hasattr(signal, "setitimer")
 
     class CellTimeout(Exception):
@@ -928,7 +939,9 @@ def main(job_path):
             if timer:
                 signal.setitimer(signal.ITIMER_REAL, 0)
             sys.stdout, sys.stderr = old
-        rec["stdout"], rec["stderr"] = out.getvalue(), err.getvalue()
+        rec["stdout"], rec["stderr"] = _redact(out.getvalue(), secrets), _redact(
+            err.getvalue(), secrets
+        )
         rec["duration_ms"] = int((time.monotonic() - start) * 1000)
         records.append(rec)
         _write(results_path, {"cells": records})
@@ -941,6 +954,122 @@ def main(job_path):
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1]))
 '''
+
+
+class RunHandle:
+    """A cancellable in-flight execution, shared between the host and the kernel.
+
+    The host creates one per ``/run``/``/run-all`` request and keys it by the
+    catalog ``itemId``; the kernel binds its child process, so ``POST /cancel``
+    can kill the process group from another request thread. Thread-safe by
+    construction: the HTTP server is threaded, so ``cancel`` runs concurrently
+    with the ``attach`` that happens a moment after ``Popen`` returns.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._proc: subprocess.Popen | None = None
+        self._pid: int | None = None
+        self._cancelled = False
+        self._finished = False
+
+    @property
+    def cancelled(self) -> bool:
+        with self._lock:
+            return self._cancelled
+
+    @property
+    def pid(self) -> int | None:
+        """The child's pid once attached, or ``None`` before ``Popen`` returned.
+
+        Kept after ``finish`` so a caller can still check whether the process is
+        gone (the stop-leak test does exactly that).
+        """
+        with self._lock:
+            return self._pid
+
+    def attach(self, proc: subprocess.Popen) -> None:
+        """Bind the child process; kill it at once if a cancel already landed.
+
+        A ``/cancel`` that arrived between ``Popen`` and this call saw no process
+        to kill, so the flag has to be honoured here or the cell would run on.
+        """
+        with self._lock:
+            self._proc = proc
+            self._pid = proc.pid
+            cancelled = self._cancelled
+        if cancelled:
+            _kill_process_tree(proc)
+
+    def finish(self) -> None:
+        """Mark the execution done so a later ``cancel`` reports nothing to kill."""
+        with self._lock:
+            self._proc = None
+            self._finished = True
+
+    def cancel(self) -> bool:
+        """Mark cancelled and kill the child's process group; False if it is gone.
+
+        Idempotent: a run that finished, or that a previous ``cancel`` already
+        stopped, reports nothing new to kill (so ``/cancel`` answers ``0``).
+        """
+        with self._lock:
+            if self._finished or self._cancelled:
+                return False
+            self._cancelled = True
+            proc = self._proc
+        if proc is not None:
+            _kill_process_tree(proc)
+        return True
+
+
+class ActiveRuns:
+    """Thread-safe registry of in-flight executions keyed by an opaque id.
+
+    One key (the catalog ``itemId``) maps to the runs currently executing for it,
+    so a ``/run`` and any number of ``/run-all`` requests may overlap. ``cancel``
+    kills them all and reports how many were still live, which makes it
+    idempotent: a key with nothing running cancels zero.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._runs: dict[str, set[RunHandle]] = {}
+
+    def register(self, key: str, run: RunHandle) -> RunHandle:
+        with self._lock:
+            self._runs.setdefault(str(key), set()).add(run)
+        return run
+
+    def release(self, key: str, run: RunHandle) -> None:
+        with self._lock:
+            runs = self._runs.get(str(key))
+            if runs is None:
+                return
+            runs.discard(run)
+            if not runs:
+                self._runs.pop(str(key), None)
+
+    def handles(self, key: str) -> list[RunHandle]:
+        """Snapshot of the runs currently registered for ``key``."""
+        with self._lock:
+            return list(self._runs.get(str(key), ()))
+
+    def cancel(self, key: str) -> int:
+        """Kill every live run for ``key``; how many were still in flight."""
+        with self._lock:
+            runs = list(self._runs.get(str(key), ()))
+        return sum(1 for run in runs if run.cancel())
+
+    def cancel_all(self) -> int:
+        """Kill every live run of every key (used by ``LabHost.stop``)."""
+        with self._lock:
+            keys = list(self._runs)
+        return sum(self.cancel(key) for key in keys)
+
+    def __len__(self) -> int:
+        with self._lock:
+            return sum(len(runs) for runs in self._runs.values())
 
 
 class Kernel:
@@ -1005,11 +1134,16 @@ class Kernel:
         """Stop the in-flight cell; the next `execute` starts a fresh process."""
         self.interrupt()
 
-    def execute(self, code: str, *, timeout: float | None = None) -> dict:
+    def execute(
+        self, code: str, *, timeout: float | None = None, run: RunHandle | None = None
+    ) -> dict:
         """Run one cell; never raises for cell failure, timeout or interrupt.
 
         Calling this while a cell is already running raises ``KernelError`` rather
-        than starting a second process (one cell per kernel; plan 010).
+        than starting a second process (one cell per kernel; plan 010). ``run``
+        binds this execution to a host-side ``RunHandle`` so ``POST /cancel`` can
+        kill the child process group from another thread; the result then carries
+        ``cancelled`` (and ``interrupted``) accordingly.
         """
         if not self._run_lock.acquire(blocking=False):
             raise KernelError("kernel busy: a cell is already running")
@@ -1030,6 +1164,10 @@ class Kernel:
                 env=proc_env,
                 start_new_session=(os.name != "nt"),
             )
+            # A `/cancel` may land before this Popen returned; the handle kills
+            # the child itself in that window (see RunHandle.attach).
+            if run is not None:
+                run.attach(proc)
             with self._lock:
                 self._proc = proc
             # An `interrupt()` that landed between `Popen` and the assignment above
@@ -1050,6 +1188,12 @@ class Kernel:
                 with self._lock:
                     self._proc = None
                     interrupted = self._interrupted
+                if run is not None:
+                    run.finish()
+                    cancelled = run.cancelled
+                else:
+                    cancelled = False
+                interrupted = interrupted or cancelled
             # Injected secrets never reach the notebook: redact both streams here and
             # build `error` from the redacted text so a traceback cannot leak a key.
             # Redact the store values as they land in this cell's final env (plan 010).
@@ -1067,6 +1211,7 @@ class Kernel:
                 "language": self.language,
                 "timed_out": timed_out,
                 "interrupted": interrupted,
+                "cancelled": cancelled,
                 "timeout": limit,
             }
             if not result["ok"]:
@@ -1178,15 +1323,19 @@ def execute_code(
     catalog=None,
     item=None,
     store: Mapping[str, str] | None = None,
+    run: RunHandle | None = None,
 ) -> dict:
     """Run one Python cell in the copy venv (one-shot Kernel per call).
 
     Adds the host concerns the Kernel itself does not own: map a missing-credential
     traceback to the ROX message, then write the outputs into the copy's ipynb.
     ``index`` names the executed cell, so its outputs replace that cell's rather
-    than the first cell whose source happens to match (plan 010).
+    than the first cell whose source happens to match (plan 010). ``run`` is the
+    host's cancellable handle for this request (see ``RunHandle``).
     """
-    result = Kernel(copy, env=env, python=python, default_timeout=timeout).execute(code)
+    result = Kernel(copy, env=env, python=python, default_timeout=timeout).execute(
+        code, run=run
+    )
     err = result.get("error")
     if err and catalog is not None and item is not None:
         rewritten = rewrite_missing_secret_error(catalog, item, err, store)
@@ -1208,6 +1357,7 @@ def execute_all(
     catalog=None,
     item=None,
     store: Mapping[str, str] | None = None,
+    run: RunHandle | None = None,
 ) -> dict:
     """Run every ``(index, source)`` job in document order in ONE namespace.
 
@@ -1215,20 +1365,23 @@ def execute_all(
     one child process and one namespace, so a later cell can use the names an
     earlier one defined. Execution stops at the first failure; the remaining
     jobs are reported ``skipped``. Returns ``{"ok", "cells", "returncode",
-    "timed_out", "python"}`` with exactly one cell record per job (input order),
-    each ``{"index", "status": "ok"|"error"|"skipped", "ok", "stdout", "stderr",
-    "error", "timed_out", "duration_ms"}``. ``ok`` is True only when every
-    requested cell ran ok.
+    "timed_out", "cancelled", "python"}`` with exactly one cell record per job
+    (input order), each ``{"index", "status": "ok"|"error"|"skipped", "ok",
+    "stdout", "stderr", "error", "timed_out", "duration_ms"}``. ``ok`` is True
+    only when every requested cell ran ok.
 
     ``timeout`` is the per-cell budget (driver-side ``signal.setitimer``, a
     no-op where unavailable); the whole run is additionally bounded by
     ``timeout * max(len(jobs), 1) + 30`` seconds, and on expiry the process
     group is killed and jobs without a record are ``skipped``. ``env`` is the
     child environment overlay (the copy's declared secrets); its values are
-    redacted from every stream, and failures are mapped to the ROX
-    missing-credential message when ``catalog``/``item`` are given. With
-    ``persist`` the executed cells' outputs are written into the copy's ipynb
-    (``skipped`` cells keep whatever they had).
+    redacted from every stream (in the driver, before each temp write, and again
+    here), and failures are mapped to the ROX missing-credential message when
+    ``catalog``/``item`` are given. With ``persist`` the executed cells' outputs
+    are written into the copy's ipynb (``skipped`` cells keep whatever they had).
+    ``run`` is the host's cancellable handle for this request (see
+    ``RunHandle``); after a ``/cancel`` the records already in ``results.json``
+    are kept and the missing cells stay ``skipped``.
 
     Capture caveat: the driver captures a cell by swapping ``sys.stdout``/
     ``sys.stderr`` for ``io.StringIO``, so a cell that writes through
@@ -1239,7 +1392,14 @@ def execute_all(
     pending = [(int(index), str(source)) for index, source in jobs]
     py, _install_log = ensure_venv(copy, python=python)
     if not pending:
-        return {"ok": True, "cells": [], "returncode": None, "timed_out": False, "python": str(py)}
+        return {
+            "ok": True,
+            "cells": [],
+            "returncode": None,
+            "timed_out": False,
+            "cancelled": False,
+            "python": str(py),
+        }
     proc_env = _subprocess_env(env)
     env_map = dict(env or {})
     # Same redaction policy as `Kernel.execute`: every value this copy declared.
@@ -1256,6 +1416,10 @@ def execute_all(
                 "cells": [[index, source] for index, source in pending],
                 "results": str(results_path),
                 "timeout": float(timeout),
+                # G4-CBK-01: the driver redacts these from every record before it
+                # writes the temp results file, so a kill mid-run cannot leave a
+                # raw secret on disk.
+                "secrets": secret_values,
             }
         ),
         encoding="utf-8",
@@ -1279,6 +1443,8 @@ def execute_all(
             )
         except OSError as exc:
             raise KernelError(f"could not start the run-all driver: {exc}") from exc
+        if run is not None:
+            run.attach(proc)
         try:
             proc.communicate(timeout=limit)
         except subprocess.TimeoutExpired:
@@ -1288,7 +1454,10 @@ def execute_all(
         returncode = proc.returncode
         records = _read_run_all_records(results_path)
     finally:
+        if run is not None:
+            run.finish()
         shutil.rmtree(work_dir, ignore_errors=True)
+    cancelled = run.cancelled if run is not None else False
 
     by_index = {}
     for record in records:
@@ -1349,6 +1518,7 @@ def execute_all(
         "cells": cells,
         "returncode": returncode,
         "timed_out": timed_out,
+        "cancelled": cancelled,
         "python": str(py),
     }
 

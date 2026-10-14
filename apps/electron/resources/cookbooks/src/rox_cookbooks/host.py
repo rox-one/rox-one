@@ -17,7 +17,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 from .catalog import CatalogError, load_catalog
 from .copies import CookbookCopies, CopyError
-from .kernel import KernelError, execute_all, execute_code
+from .kernel import ActiveRuns, KernelError, RunHandle, execute_all, execute_code
 from .notebooks import Notebook, NotebookError, Playbook, load_notebook, source_text
 from .search import search_items
 from .secrets import env_for_item, missing_secrets
@@ -79,6 +79,9 @@ class LabHost:
             self.store.update(loaded)
         self.httpd: ThreadingHTTPServer | None = None
         self.thread: threading.Thread | None = None
+        # In-flight executions keyed by itemId, so POST /cancel can kill them and
+        # stop() can leave no orphaned cell processes (spec wave 9).
+        self.runs = ActiveRuns()
 
     @property
     def url(self) -> str:
@@ -278,6 +281,9 @@ class LabHost:
                     if raw_store:
                         store.update(raw_store)
                     env = env_for_item(lab.catalog, item, store)
+                    # Register before executing so a concurrent POST /cancel can
+                    # kill this run; released in `finally` however it ends.
+                    run = lab.runs.register(item_id, RunHandle())
                     try:
                         result = execute_code(
                             copy,
@@ -287,15 +293,19 @@ class LabHost:
                             item=item,
                             store=store,
                             index=idx,
+                            run=run,
                         )
                     except (NotebookError, CopyError, KernelError) as exc:
                         return self._send(400, {"error": str(exc)})
+                    finally:
+                        lab.runs.release(item_id, run)
                     safe = {
                         k: result[k]
                         for k in ("ok", "stdout", "stderr", "returncode", "error", "timed_out")
                         if k in result
                     }
                     safe["missing"] = missing_secrets(lab.catalog, item, store)
+                    safe["cancelled"] = run.cancelled
                     return self._send(200, safe)
                 if parsed.path == "/run-all":
                     item_id = self._item_id(body)
@@ -356,6 +366,9 @@ class LabHost:
                     if raw_store:
                         store.update(raw_store)
                     env = env_for_item(lab.catalog, item, store)
+                    # Same registry as /run: a cancel kills this run too, and the
+                    # records already written to results.json are kept.
+                    run = lab.runs.register(item_id, RunHandle())
                     try:
                         result = execute_all(
                             copy,
@@ -365,11 +378,15 @@ class LabHost:
                             item=item,
                             store=store,
                             persist=True,
+                            run=run,
                         )
                     except (NotebookError, CopyError, KernelError, CatalogError) as exc:
                         return self._send(400, {"error": str(exc)})
+                    finally:
+                        lab.runs.release(item_id, run)
                     safe = {k: result.get(k) for k in ("ok", "timed_out", "returncode")}
                     safe["missing"] = missing_secrets(lab.catalog, item, store)
+                    safe["cancelled"] = run.cancelled
                     safe["cells"] = [
                         {
                             k: cell.get(k)
@@ -387,6 +404,19 @@ class LabHost:
                         for cell in result.get("cells") or []
                     ]
                     return self._send(200, safe)
+                if parsed.path == "/cancel":
+                    item_id = self._item_id(body)
+                    if item_id is None:
+                        return self._send(400, {"error": "missing itemId"})
+                    try:
+                        lab.catalog.item(item_id)
+                    except CatalogError as exc:
+                        # Unknown itemId is a bad address, like an unknown path.
+                        return self._send(404, {"error": str(exc)})
+                    # Idempotent: kills every live /run and /run-all for the item
+                    # and answers 0 when nothing is running.
+                    cancelled = lab.runs.cancel(item_id)
+                    return self._send(200, {"ok": True, "cancelled": cancelled})
                 if parsed.path == "/reset":
                     item_id = self._item_id(body)
                     if item_id is None:
@@ -487,6 +517,10 @@ class LabHost:
         }
 
     def stop(self) -> None:
+        # Kill every in-flight execution first: cell processes start their own
+        # session (start_new_session=True), so without this they survive the
+        # sidecar shutdown and leak (spec wave 9, "stop leak").
+        self.runs.cancel_all()
         if self.httpd:
             self.httpd.shutdown()
             self.httpd.server_close()

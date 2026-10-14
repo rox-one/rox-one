@@ -118,7 +118,7 @@ answers 403 (`src/rox_cookbooks/host.py:168-169`, `:209-210`).
 - **SIGINT** is the shutdown signal. `serve_lab.py` runs the sleep loop inside
   `try/except KeyboardInterrupt` and calls `lab.stop()` (`scripts/serve_lab.py:27-32`);
   `LabHost.stop` shuts the HTTP server down, closes the socket, and joins the serve thread with a
-  2 s timeout (`src/rox_cookbooks/host.py:395-400`). The process then exits **0**.
+  2 s timeout (`src/rox_cookbooks/host.py:519-528`). The process then exits **0**.
 - **SIGTERM is not handled.** `serve_lab.py` catches `KeyboardInterrupt` only, so `SIGTERM`/`SIGKILL`
   terminate the process without calling `stop()`. Nothing is lost in v1: kernels are one-shot child
   processes (`src/rox_cookbooks/kernel.py:948-958`) and the serve thread is a daemon
@@ -128,10 +128,13 @@ answers 403 (`src/rox_cookbooks/host.py:168-169`, `:209-210`).
 - **Proposal.** Install a `SIGTERM` handler in `serve_lab.py` that calls `lab.stop()` first, so the
   supervisor can use the conventional signal, and/or add `POST /shutdown` (token-gated) for a
   request-level stop.
-- **Proposal.** Interrupt in-flight kernels on shutdown: `KernelManager.shutdown()` exists
-  (`src/rox_cookbooks/kernel.py:1061-1066`) but `LabHost.stop` never calls it, so a Run in flight
-  is only stopped by process exit. The host does not even hold a `KernelManager` today — it builds
-  a throwaway `Kernel` per Run (`execute_code`, `src/rox_cookbooks/kernel.py:1115`).
+- **In-flight runs are killed on shutdown.** `LabHost.stop` cancels every active execution before
+  tearing the server down (`src/rox_cookbooks/host.py:519-528`), killing each cell's process group
+  through the shared `ActiveRuns` registry (`src/rox_cookbooks/kernel.py:1010-1050`). Cell
+  processes start their own session (`start_new_session=True`), so without this they would survive
+  the sidecar; after a normal stop no cell process is left behind. The host still builds a throwaway
+  `Kernel` per Run (`execute_code`, `src/rox_cookbooks/kernel.py:1293`) rather than holding a
+  `KernelManager`.
 
 ### 2.5 Crash and restart
 
@@ -266,13 +269,33 @@ kernel-start failures to 400 (`plans/011-host-input-safety.md:109-112`).
 | GET | `/banner/<itemId>` | — | `{"missing": [key, …]}` (`:189-196`) |
 | GET | `/document/<itemId>` | — | ipynb `{kind,title,cells[{cell_type,source,outputs}],missing,supported}` / md `{kind,title,text,missing,supported:false}` (`:365-393`) |
 | POST | `/open` | `{itemId, newCopy?}` | `{copyId, document}` (`:220-230`) |
-| POST | `/run` | `{itemId, code, index?, store?}` | `{ok,stdout,stderr,returncode,error?,timed_out?,missing}` (`:231-295`) |
+| POST | `/run` | `{itemId, code, index?, store?}` | `{ok,stdout,stderr,returncode,error?,timed_out?,cancelled,missing}` (`src/rox_cookbooks/host.py:238-309`) |
+| POST | `/run-all` | `{itemId, cells:[{index,source}], store?}` | `{ok,timed_out,returncode,cancelled,missing,cells:[…]}` (`src/rox_cookbooks/host.py:310-406`) |
+| POST | `/cancel` | `{itemId}` | `{ok:true, cancelled:<int>}` (`src/rox_cookbooks/host.py:407-419`) |
 | POST | `/reset` | `{itemId, confirm?}` | `{ok:true}` (`:296-307`) |
 | POST | `/save` | `{itemId,index,source}` or `{itemId,text}` | `{ok:true}` (`:308-346`) |
 | POST | `/store` | `{store:{key:value}}` | `{keys:[…]}` (`:347-356`) |
 
 Card and `missing` payloads carry **credential key names only** (`src/rox_cookbooks/ui.py:65-87`;
 `src/rox_cookbooks/secrets.py:25-36`) — never values.
+
+### 3.6 Cancel (`POST /cancel`)
+
+- `POST /cancel {itemId}` interrupts **every** in-flight execution for that item — both `/run`
+  and `/run-all` — and answers `200 {"ok": true, "cancelled": <int>}`, where the count is how many
+  runs were still live (`src/rox_cookbooks/host.py:407-419`). It is **idempotent**: with nothing
+  running it answers `cancelled: 0`. An `itemId` that does not resolve in the catalog is `404`
+  (like an unknown path); a missing `itemId` is `400`.
+- The host keeps a **thread-safe registry** of in-flight executions keyed by `itemId`
+  (`ActiveRuns`, `src/rox_cookbooks/kernel.py:1010-1050`), registered before a run starts and
+  released when it returns (`src/rox_cookbooks/host.py:286`, `:371`). Cancelling kills the child's
+  **process group** (`_kill_process_tree`, SIGKILL), the same path a cell timeout uses.
+- `/run` and `/run-all` responses gain an **additive** `"cancelled": true|false` field: `true` when
+  this request's run was stopped by `/cancel`, `false` otherwise (`src/rox_cookbooks/host.py:308`,
+  `:389`). No existing field changes.
+- For `/run-all`, the per-cell records already written to the temp `results.json` are kept, so a
+  partially completed run reports the finished cells; the remaining cells come back `skipped`
+  (`execute_all`, `src/rox_cookbooks/kernel.py:1328-1502`).
 
 ## 4. Sidebar embedding
 
@@ -405,6 +428,12 @@ exactly the line `serve_lab.py` prints (`scripts/serve_lab.py:26`; `README.md:18
   (`src/rox_cookbooks/secrets.py:65-75`; applied at `src/rox_cookbooks/kernel.py:979-989`). It
   replaces **known secret values** longest-first with `***`, using the values laid over this cell's
   final env — i.e. exactly what was injected.
+- **Run-all redacts before the temp write (G4-CBK-01).** The run-all driver receives the secret
+  values in its job JSON and masks them from each record **before** appending that record to the
+  temp `results.json` (`_RUN_ALL_DRIVER`, `src/rox_cookbooks/kernel.py:881-956`; job payload built
+  in `execute_all`, `:1385-1404`). A run killed mid-flight — `/cancel` or the overall timeout —
+  therefore cannot leave a raw secret on disk. The caller-side redaction (`:1465-1466`) stays as
+  defense in depth.
 - Redaction is **best-effort** and only sees the captured streams (`docs/spec.md:121`). It does not
   cover: files a cell writes, subprocesses that print to a tty, values a vendor SDK re-encodes, or
   network egress. Do not describe it as a guarantee.

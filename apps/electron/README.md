@@ -10,6 +10,10 @@ bun run electron:build   # Build the app
 bun run electron:start   # Build and run
 ```
 
+### Isolated dev run
+
+`bun run electron:dev:isolated` starts the normal dev loop with `config`, `userdata`, and `TMPDIR` redirected into `<repo>/.dev-isolated/` (gitignored), so a second instance never trips the single-instance lock and nothing is written to the real profile (`~/.craft-agent`, `~/rox`). Add `--print` to print the resolved plan as JSON without launching.
+
 ## Architecture
 
 ```
