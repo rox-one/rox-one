@@ -781,8 +781,8 @@ const FALLBACK_CONFIG_DEFAULTS: ConfigDefaults = {
   },
   workspaceDefaults: {
     thinkingLevel: 'medium',
-    permissionMode: 'allow-all',
-    cyclablePermissionModes: ['safe', 'allow-all'],
+    permissionMode: 'ask',
+    cyclablePermissionModes: ['safe', 'ask', 'allow-all'],
     localMcpServers: { enabled: true },
   },
 };
