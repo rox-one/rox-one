@@ -82,4 +82,11 @@ describe('panel strip', () => {
     expect(strip.stripWidthFor(store.get(strip.stripWidthsAtom), 'feed')).toBe(strip.STRIP_MIN_WIDTH)
     expect(strip.stripWidthFor(store.get(strip.stripWidthsAtom), 'tasks')).toBe(strip.STRIP_DEFAULT_WIDTH)
   })
+
+  it('per-screen pause policy overrides the heavy-type default', () => {
+    expect(strip.canHibernate({ route: 'browser/1', panelType: 'browser' } as never, {})).toBe(true)
+    expect(strip.canHibernate({ route: 'browser/1', panelType: 'browser' } as never, { browser: { hibernate: false } })).toBe(false)
+    expect(strip.canHibernate({ route: 'feed', panelType: 'other' } as never, { feed: { hibernate: true } })).toBe(true)
+    expect(strip.canHibernate({ route: 'feed', panelType: 'other' } as never, {})).toBe(false)
+  })
 })

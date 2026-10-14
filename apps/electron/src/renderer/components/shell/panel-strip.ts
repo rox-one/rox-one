@@ -125,6 +125,33 @@ export function usePanelStrip() {
   }
 }
 
+/**
+ * Per-screen pause policy. Default: only HEAVY_PANEL_TYPES pause. A screen
+ * calls `usePanelOptions('<screenKey>', { hibernate: false })` to opt out
+ * (e.g. a live call) or `{ hibernate: true }` to opt in. The registration lives
+ * while the screen is mounted.
+ */
+export interface PanelOptions { hibernate?: boolean }
+export const panelOptionsAtom = atom<Readonly<Record<string, PanelOptions>>>({})
+const setPanelOptionsAtom = atom(null, (get, set, { key, options }: { key: string; options: PanelOptions | null }) => {
+  const next = { ...get(panelOptionsAtom) }
+  if (options) next[key] = options
+  else delete next[key]
+  set(panelOptionsAtom, next)
+})
+export function usePanelOptions(screenKey: string, options: PanelOptions): void {
+  const set = useSetAtom(setPanelOptionsAtom)
+  const hibernate = options.hibernate
+  React.useEffect(() => {
+    set({ key: screenKey, options: { hibernate } })
+    return () => set({ key: screenKey, options: null })
+  }, [set, screenKey, hibernate])
+}
+export function canHibernate(entry: Pick<PanelStackEntry, 'route' | 'panelType'>, options: Readonly<Record<string, PanelOptions>>): boolean {
+  const own = options[stripScreenKey(entry.route)]?.hibernate
+  return own ?? HEAVY_PANEL_TYPES.has(entry.panelType)
+}
+
 /** Ids of panels currently hibernated (unmounted while off-screen). */
 export const hibernatedPanelIdsAtom = atom<ReadonlySet<string>>(new Set<string>())
 
@@ -137,7 +164,8 @@ export function useStripHibernation(viewport: React.RefObject<HTMLElement | null
   const stack = useAtomValue(panelStackAtom)
   const focusedId = useAtomValue(focusedPanelIdAtom)
   const setHibernated = useSetAtom(hibernatedPanelIdsAtom)
-  const heavyIds = React.useMemo(() => stack.filter((entry) => HEAVY_PANEL_TYPES.has(entry.panelType)).map((entry) => entry.id).join('|'), [stack])
+  const options = useAtomValue(panelOptionsAtom)
+  const heavyIds = React.useMemo(() => stack.filter((entry) => canHibernate(entry, options)).map((entry) => entry.id).join('|'), [stack, options])
 
   React.useEffect(() => {
     const root = viewport.current
@@ -169,4 +197,10 @@ export function useScrollFocusedIntoView(viewport: React.RefObject<HTMLElement |
     const element = viewport.current?.querySelector<HTMLElement>(`[data-panel-id="${CSS.escape(focusedId)}"]`)
     element?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
   }, [viewport, enabled, focusedId])
+}
+
+/** Open a screen through the strip (rail, pills, ⌘1…7): new panel on the left or focus the open one. */
+export function useOpenScreen(): (route: string) => void {
+  const openScreen = useSetAtom(openScreenPanelAtom)
+  return React.useCallback((route: string) => { openScreen({ route: route as ViewRoute }) }, [openScreen])
 }
