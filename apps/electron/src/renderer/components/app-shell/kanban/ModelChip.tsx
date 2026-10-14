@@ -55,7 +55,7 @@ export function ModelChip({ model, llmConnection, connection, short = false, cla
       )}
     >
       {iconUrl ? (
-        <img src={iconUrl} alt="" className="h-3 w-3 shrink-0 rounded-[2px]" aria-hidden />
+        <img src={iconUrl} alt="" className="h-3 w-3 shrink-0 rounded-xs" aria-hidden />
       ) : (
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40" aria-hidden />
       )}

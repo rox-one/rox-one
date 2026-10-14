@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { UiAppearanceSnapshot } from '@rox/shared/protocol'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import { getUiPreferences, setUiPreferences, setRenderProfilePreference, setZenShellPreference } from '@rox/shared/config'

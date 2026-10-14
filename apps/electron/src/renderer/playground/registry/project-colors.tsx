@@ -221,7 +221,7 @@ function GroupHeader({
       onClick={onToggle}
       className="w-full py-2 px-4 flex items-center gap-1.5 cursor-pointer relative group"
     >
-      <div className="absolute inset-y-0.5 left-2 right-2 rounded-[6px] group-hover:bg-foreground/[0.03] transition-colors pointer-events-none" />
+      <div className="absolute inset-y-0.5 left-2 right-2 rounded-sm group-hover:bg-foreground/[0.03] transition-colors pointer-events-none" />
       <ChevronRight
         className={cn(
           'h-3 w-3 text-muted-foreground/60 transition-transform relative',

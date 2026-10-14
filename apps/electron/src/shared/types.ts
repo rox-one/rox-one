@@ -1,7 +1,11 @@
 // =============================================================================
 // Protocol re-exports (channels, DTOs, events, wire types)
 // =============================================================================
-export * from '@rox/shared/protocol'
+// Type-only: a value `export *` evaluates dto.ts + channels.ts (~120 KB of
+// protocol source) for every value importer of this barrel, including the
+// renderer boot graph. RPC_CHANNELS / generateMessageId / CodedError come
+// from `@rox/shared/protocol` (or a local helper) instead.
+export type * from '@rox/shared/protocol'
 
 // Cookbooks Lab surface contract (SPEC §Data & API contracts + §Amendment 1):
 // runtime status vocabulary, discovery parser, data-plane DTOs and the typed

@@ -112,10 +112,27 @@ export function useIsPresent(): boolean {
   return true
 }
 
+type PresentDivChildren = ReactNode | ((present: boolean) => ReactNode)
+
+/**
+ * `Record<string, unknown>` keeps these components open to arbitrary forwarded
+ * props, but it also makes @types/react's `PropsWithoutRef<P>`
+ * (`"ref" extends keyof P ? Omit<P, "ref"> : P`) map the props over `keyof P` —
+ * i.e. over the index signature — so the declared `mod`/`children` reach the
+ * render function as `unknown`. The render functions therefore re-assert this
+ * declared shape: deriving the props from a non-index type instead would narrow
+ * the public contract callers rely on (motion.div's children admit MotionValue,
+ * which the plain-DOM fallback cannot render).
+ */
+type PresenceDivProps = { children?: PresentDivChildren } & Record<string, unknown>
+
+type LoadedPresentDivProps = { mod: MotionMod } & PresenceDivProps
+
 const LoadedPresentDiv = React.forwardRef<
   HTMLDivElement,
-  { mod: MotionMod; children?: ReactNode | ((present: boolean) => ReactNode) } & Record<string, unknown>
->(function LoadedPresentDiv({ mod, children, ...props }, ref) {
+  LoadedPresentDivProps
+>(function LoadedPresentDiv(rawProps, ref) {
+  const { mod, children, ...props } = rawProps as LoadedPresentDivProps
   const isPresent = mod.useIsPresent()
   return (
     <mod.motion.div
@@ -132,8 +149,9 @@ const LoadedPresentDiv = React.forwardRef<
 /** motion.div bound to AnimatePresence (inert + aria-hidden on exit). */
 export const PresenceDiv = React.forwardRef<
   HTMLDivElement,
-  Record<string, unknown> & { children?: ReactNode | ((present: boolean) => ReactNode) }
->(function PresenceDiv({ children, ...props }, ref) {
+  PresenceDivProps
+>(function PresenceDiv(rawProps, ref) {
+  const { children, ...props } = rawProps as PresenceDivProps
   const mod = useMotionModule()
   if (!mod) {
     return (

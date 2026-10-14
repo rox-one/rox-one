@@ -167,9 +167,10 @@ export function ProfileStrip({
         <button
           type="button"
           className={cn(
-            'min-w-0 w-full flex items-center overflow-hidden rounded-[var(--radius-control)] border border-border-subtle',
-            'bg-background/35 text-left shadow-minimal',
-            'hover:bg-background/65 hover:border-border-strong transition-[background-color,border-color,box-shadow] duration-200 motion-reduce:transition-none',
+            'min-w-0 w-full flex items-center overflow-hidden rounded-none border-0 border-t border-border-subtle',
+            // Flush with the sidebar edge: an inner card inside the rounded rail would leave corner voids.
+            'bg-transparent text-left',
+            'hover:bg-[var(--state-hover)] transition-[background-color,border-color,box-shadow] duration-200 motion-reduce:transition-none',
             compact ? 'flex-col justify-center gap-1 px-1 py-1' : 'gap-2.5 p-2.5',
             'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             className,

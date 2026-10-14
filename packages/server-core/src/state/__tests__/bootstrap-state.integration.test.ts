@@ -6,9 +6,10 @@ import { DatabaseSync } from '@rox/shared/utils/sqlite-runtime'
 import { createSession, deleteSession, listSessions } from '@rox/shared/sessions'
 import { closeStateStore, openStateStore, stateDatabasePath, stateWriterLockPath, LATEST_STATE_USER_VERSION } from '../state-store.ts'
 import { createSessionStateProjector, sessionIndexFilePath, type SessionIndexFile } from '../sessions-projection.ts'
-// Type-only: erased at runtime, so importing it does not initialize headless-start's
-// module-level LOCK_FILE before the test sets ROX_CONFIG_DIR.
-import type { ServerInstance } from '../../bootstrap/headless-start.ts'
+// A static import is safe: headless-start resolves its `.server.lock` path per
+// call (not at import), so loading it here cannot freeze a config dir the test
+// does not own.
+import { bootstrapServer, type ServerInstance } from '../../bootstrap/headless-start.ts'
 
 const WRITER_LOCK_MODULE = join(import.meta.dir, '..', 'writer-lock.ts')
 
@@ -57,9 +58,6 @@ describe('bootstrap unified state store (integration)', () => {
     process.env.ROX_CONFIG_DIR = configDir
     const token = randomToken()
     process.env.ROX_SERVER_TOKEN = token
-    // Dynamic: the module initializes its `.server.lock` path from the config dir
-    // at load time, so the env override above must precede the import.
-    const { bootstrapServer } = await import('../../bootstrap/headless-start.ts')
     instance = await bootstrapServer<Record<string, never>, Record<string, never>>({
       serverToken: token,
       rpcPort: 0,
@@ -111,6 +109,11 @@ describe('bootstrap unified state store (integration)', () => {
   })
 
   it('refuses a second process while the server holds the lock', async () => {
+    // The single-instance lock must live under THIS test's config dir. It used to
+    // be resolved at module load, so whichever suite imported headless-start first
+    // decided the path: a sibling suite that pointed ROX_CONFIG_DIR at a temp dir
+    // and then deleted it made `bootstrapServer` throw ENOENT here (issue #1955).
+    expect(existsSync(join(configDir, '.server.lock'))).toBe(true)
     const result = await tryAcquireInChild()
     expect(result.outcome).toBe('REFUSED')
     expect(result.detail).toContain('StateLockedError')

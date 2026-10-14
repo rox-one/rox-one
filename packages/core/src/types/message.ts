@@ -596,6 +596,13 @@ export interface AgentEventUsage {
   costUsd?: number;
   /** Model's context window size in tokens (from SDK modelUsage) */
   contextWindow?: number;
+  /**
+   * Sum over every model request of this turn (prompt incl. cache + output).
+   * Absent when the backend could not observe each request; consumers must
+   * then treat any running session total as incomplete.
+   */
+  /** requests: number of model requests summed, when the backend knows it (Claude reports per-model only, so omits it). */
+  requestTotals?: { promptTokens: number; outputTokens: number; requests?: number };
 }
 
 /**
