@@ -113,6 +113,8 @@ import { runPersonalTaskScopeTransition, setPersonalTaskScope } from '@/lib/pers
 import { toErrorMessage } from '@/lib/errors'
 import { markFirstMeaningfulPaint, markRendererOnce } from './lib/startup-perf'
 import { Announcer } from '@/components/a11y/Announcer'
+import { useQuestionMarkHelp } from '@/hooks/useQuestionMarkHelp'
+import { installNoopGuard } from '@/lib/dev/noop-guard'
 
 // #1675: lazy so the dialog's `actions/useVisibleActions` graph is not dragged into the
 // entry chunk; it only renders while the user has the shortcuts dialog open.
@@ -2480,6 +2482,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   const handleOpenKeyboardShortcuts = useCallback(() => {
     setShowShortcuts(true)
   }, [])
+  // Demo borrowing #48: bare `?` opens help; #41: dev-only dead-control guard.
+  useQuestionMarkHelp(handleOpenKeyboardShortcuts)
+  useEffect(() => installNoopGuard(), [])
 
   const handleOpenStoredUserPreferences = useCallback(() => {
     navigate(routes.view.settings('context'))
