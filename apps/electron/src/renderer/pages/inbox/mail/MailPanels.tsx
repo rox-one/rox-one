@@ -29,6 +29,8 @@ import { toErrorMessage } from '@/lib/errors'
 
 const FOLDER_KEYS: Record<MailFolderRole, string> = {
   inbox: 'inbox.mail.folder.inbox',
+  flagged: 'inbox.mail.folder.flagged',
+  outbox: 'inbox.mail.folder.outbox',
   drafts: 'inbox.mail.folder.drafts',
   sent: 'inbox.mail.folder.sent',
   archive: 'inbox.mail.folder.archive',
@@ -163,7 +165,7 @@ export function MailListPanel({ mail, title, selectedId, onSelect, onCompose, on
         />
       </form>
       {s.local ? <LocalNotice domain={s.domain} compact /> : null}
-      {mail.error ? <div role="alert" className="mx-3 mt-1 rounded-[var(--radius-card)] bg-destructive/10 px-2.5 py-1.5 text-sm text-destructive">{mail.error}</div> : null}
+      {mail.error ? <div role="alert" className="mx-3 mt-1 rounded-[var(--radius-card)] bg-destructive/10 px-2.5 py-1.5 text-sm text-destructive">{t('inbox.mail.actionFailed')}</div> : null}
       <div role="listbox" aria-label={title} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onKeys} data-testid="mail-list">
         {mail.items.length === 0 ? (
           <EmptyState
@@ -231,11 +233,11 @@ export function MailStatusBlock({ mail }: { mail: MailController }) {
     <div className="flex flex-col" data-testid="mail-status" data-state={s.state}>
       {s.state === 'no-mailbox' || s.state === 'error' ? (
         <EmptyState
-          title={s.state === 'error' ? t('inbox.mail.status.errorShort') : t('inbox.mail.status.noMailbox')}
+          title={t('inbox.mail.connectTitle')}
           body={s.state === 'no-mailbox'
             ? t('inbox.mail.autoProvisionBody', { domain: s.domain })
             : t('inbox.mail.noMailboxBody', { domain: s.domain })}
-          action={<Button variant="primary" onClick={() => void mail.ensure()} data-testid="mail-get-address">{t('inbox.mail.getAddress')}</Button>}
+          action={<Button variant="primary" onClick={() => void mail.ensure()} data-testid="mail-get-address">{t('inbox.mail.connect')}</Button>}
         />
       ) : s.state === 'provisioning' ? (
         <EmptyState title={t('inbox.mail.status.provisioning')} body={t('inbox.mail.provisioningBody', { domain: s.domain })} />
@@ -244,8 +246,7 @@ export function MailStatusBlock({ mail }: { mail: MailController }) {
       ) : (
         <EmptyState title={t('inbox.mail.status.disabled', { flag: s.flag })} />
       )}
-      {s.state === 'error' && s.error ? <p className="truncate px-4 text-xs text-muted-foreground" title={s.error} data-testid="mail-error-detail">{s.error}</p> : null}
-      {mail.error ? <p role="alert" className="px-4 text-sm text-destructive">{mail.error}</p> : null}
+      {mail.error ? <p role="alert" className="px-4 text-sm text-destructive">{t('inbox.mail.actionFailed')}</p> : null}
       {s.local && s.state !== 'disabled' ? <LocalNotice domain={s.domain} /> : null}
     </div>
   )

@@ -55,7 +55,22 @@ export function isOptionalMailSetup(status: MailStatus | null | undefined): bool
   return status?.configured === false && status.local && !status.address && status.state === 'unreachable'
 }
 
-export type MailFolderRole = 'inbox' | 'sent' | 'drafts' | 'archive' | 'junk' | 'trash'
+/**
+ * Standard folder roles. The six storage roles map 1:1 to JMAP (RFC 8621) /
+ * IMAP special-use (RFC 6154) mailbox roles and are created on the server when
+ * missing. `flagged` ($flagged keyword) and `outbox` (pending
+ * EmailSubmissions) are virtual views over the same account.
+ */
+export type MailFolderRole = 'inbox' | 'flagged' | 'sent' | 'outbox' | 'drafts' | 'archive' | 'junk' | 'trash'
+
+/** Mailbox roles that exist as real server mailboxes. */
+export const MAIL_STORAGE_ROLES = ['inbox', 'sent', 'drafts', 'archive', 'junk', 'trash'] as const satisfies readonly MailFolderRole[]
+
+/** Display order of the standard structure: Входящие, Избранные, Отправленные, Исходящие, Черновики, Архив, Спам, Корзина. */
+export const MAIL_STANDARD_ROLES: readonly MailFolderRole[] = ['inbox', 'flagged', 'sent', 'outbox', 'drafts', 'archive', 'junk', 'trash']
+
+/** Ids of the virtual folders (not server mailboxes). */
+export const MAIL_VIRTUAL_FOLDER_ID: Readonly<Record<'flagged' | 'outbox', string>> = { flagged: 'virtual:flagged', outbox: 'virtual:outbox' }
 
 export interface MailFolder {
   id: string

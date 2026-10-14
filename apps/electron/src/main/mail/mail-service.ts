@@ -34,6 +34,8 @@ import {
   MAIL_DEFAULT_DOMAIN,
   MAIL_DEFAULT_SERVER_URL,
   MAIL_FLAG,
+  MAIL_STORAGE_ROLES,
+  MAIL_VIRTUAL_FOLDER_ID,
   type MailAttachment,
   type MailComposeInput,
   type MailFolder,
@@ -44,6 +46,15 @@ import {
   type MailSummary,
 } from '../../shared/mail-local'
 import { externalRecipients, replySubject, sortFolders, threadHeaders, toFolder, toMessage, toSummary } from './mail-model'
+
+/**
+ * Server-side names for standard mailboxes (IMAP-conventional, so other
+ * clients recognise them); the UI always labels by role in the user's locale.
+ */
+const STANDARD_FOLDER_NAMES: Readonly<Record<MailFolderRole, string>> = {
+  inbox: 'Inbox', flagged: 'Flagged', sent: 'Sent', outbox: 'Outbox',
+  drafts: 'Drafts', archive: 'Archive', junk: 'Junk', trash: 'Trash',
+}
 
 export interface MailConfig {
   serverUrl?: string
@@ -121,6 +132,8 @@ export class MailService {
   private lastError: string | undefined
   private emitTimer: ReturnType<typeof setTimeout> | null = null
   private archiveId: string | null = null
+  /** Standard storage folders were checked/created for the current client. */
+  private standardEnsured = false
 
   constructor(private readonly deps: MailServiceDeps) {
     this.dir = join(deps.configDir, 'mail')
@@ -183,6 +196,7 @@ export class MailService {
     this.push = 'off'
     this.client = null
     this.archiveId = null
+    this.standardEnsured = false
   }
 
   private ownerUuidFallback(): string {
@@ -304,9 +318,13 @@ export class MailService {
       return { ...base, state: 'error', error }
     }
     if (!secret) {
-      const error = 'Mailbox credential is missing from secure storage'
-      this.lastError = error
-      return { ...base, state: 'error', error }
+      // A READY record whose device credential is gone (Keychain reset, app
+      // data reset, a reinstall under another signature) is not a failure the
+      // user can act on: report it as «no mailbox yet» so the renderer's
+      // automatic ensureMailbox() re-adopts the account and mints a fresh
+      // credential. Previously this was a sticky 'error' that blocked the
+      // self-heal forever. A failed re-provision keeps its own lastError.
+      return { ...base, state: this.lastError ? 'error' : 'no-mailbox', error: this.lastError }
     }
     try {
       const fetchImpl = this.deps.fetch ? (i: string, init?: RequestInit) => this.deps.fetch!(i, init) : undefined
@@ -450,9 +468,37 @@ export class MailService {
     if (this.emitTimer) clearTimeout(this.emitTimer)
   }
 
+  /**
+   * Standard structure: every storage role (Входящие, Отправленные, Черновики,
+   * Архив, Спам, Корзина) exists on the server — missing ones are created once
+   * with their JMAP/IMAP special-use role — plus the virtual «Избранные»
+   * ($flagged) and «Исходящие» (pending submissions) views with real counts.
+   */
   async folders(): Promise<MailFolder[]> {
     const c = await this.jmap()
-    return sortFolders((await c.mailboxes()).map(toFolder))
+    let boxes = await c.mailboxes()
+    if (!this.standardEnsured) {
+      const missing = MAIL_STORAGE_ROLES.filter((role) => !boxes.some((b) => b.role === role))
+      if (missing.length > 0) {
+        try {
+          const accountId = await c.accountId()
+          const create = Object.fromEntries(missing.map((role) => [role, { name: STANDARD_FOLDER_NAMES[role], role }]))
+          await c.call([['Mailbox/set', { accountId, create }, 'std']])
+          boxes = await c.mailboxes()
+        } catch (error) {
+          this.deps.log?.('[mail] could not create standard folders', error instanceof Error ? error.message : String(error))
+        }
+      }
+      this.standardEnsured = true
+    }
+    const folders = boxes.map(toFolder)
+    const flagged = await c.flaggedCount().catch(() => ({ total: 0, unread: 0 }))
+    const outbox = await c.outboxEmails(1).catch(() => ({ total: 0, emails: [] }))
+    folders.push(
+      { id: MAIL_VIRTUAL_FOLDER_ID.flagged, name: STANDARD_FOLDER_NAMES.flagged, role: 'flagged', total: flagged.total, unread: flagged.unread },
+      { id: MAIL_VIRTUAL_FOLDER_ID.outbox, name: STANDARD_FOLDER_NAMES.outbox, role: 'outbox', total: outbox.total, unread: 0 },
+    )
+    return sortFolders(folders)
   }
 
   private async folderIdFor(target: MailFolderRole | string): Promise<string> {
@@ -476,6 +522,16 @@ export class MailService {
 
   async list(query: MailListQuery): Promise<{ total: number; items: MailSummary[] }> {
     const c = await this.jmap()
+    const virtual = query.folderId === MAIL_VIRTUAL_FOLDER_ID.flagged || (!query.folderId && query.role === 'flagged') ? 'flagged'
+      : query.folderId === MAIL_VIRTUAL_FOLDER_ID.outbox || (!query.folderId && query.role === 'outbox') ? 'outbox' : null
+    if (virtual === 'outbox') {
+      const res = await c.outboxEmails(Math.min(query.limit ?? 100, 200))
+      return { total: res.total, items: res.emails.map(toSummary) }
+    }
+    if (virtual === 'flagged') {
+      const res = await c.queryEmails({ text: query.text, limit: Math.min(query.limit ?? 100, 200), unseenOnly: query.unseenOnly, flaggedOnly: true })
+      return { total: res.total, items: res.emails.map(toSummary) }
+    }
     let mailboxId = query.folderId
     if (!mailboxId && query.role) mailboxId = await this.folderIdFor(query.role)
     const res = await c.queryEmails({ mailboxId, text: query.text, limit: Math.min(query.limit ?? 100, 200), unseenOnly: query.unseenOnly })
