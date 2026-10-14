@@ -7,6 +7,7 @@
  * (`useTeamRoster`) plus the team collaboration block (`TeamOrgSettingsSection`,
  * which itself gates activity/inbox on their flags).
  */
+import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
 import { useTranslation } from 'react-i18next'
 import { Users } from 'lucide-react'
 import { EmptyState } from '@/components/mode-screen/ModeScreen'
@@ -25,7 +26,7 @@ export function TeamSurfacePage(_props: SurfacePageProps) {
     >
       <header className="flex shrink-0 items-center gap-2 border-b border-border/60 px-4 py-3">
         <Users className="icon-inline text-text-muted" aria-hidden />
-        <h1 className="text-title font-semibold">{t('teamCollab.title')}</h1>
+        <PanelHeading className="text-title font-semibold" titleKey="teamCollab.title">{t('teamCollab.title')}</PanelHeading>
       </header>
 
       <section aria-label={t('teamCollab.members')} className="shrink-0 px-4 py-3">

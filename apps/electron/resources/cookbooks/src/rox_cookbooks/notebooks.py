@@ -159,6 +159,38 @@ def persist_code_output(
     save_notebook(path, nb)
 
 
+def _display_outputs(result: dict[str, Any]) -> list[dict[str, Any]]:
+    """The ``display_data`` outputs of one cell result (Wave 11).
+
+    ``result["displays"]`` is a list of ``{"mime", "data"}`` records from the
+    kernel, already redacted and capped there (and re-checked by the caller). An
+    ``application/json`` record is stored parsed — nbformat wants a JSON value,
+    not its serialisation — and falls back to the raw string when it does not
+    parse; every other mime (base64 for images) is stored verbatim.
+    """
+    outputs: list[dict[str, Any]] = []
+    records = result.get("displays")
+    if not isinstance(records, list):
+        return outputs
+    for record in records:
+        if not isinstance(record, dict):
+            continue
+        mime = record.get("mime")
+        data = record.get("data")
+        if not isinstance(mime, str) or not mime or not isinstance(data, str):
+            continue
+        value: Any = data
+        if mime == "application/json":
+            try:
+                value = json.loads(data)
+            except (TypeError, ValueError):
+                value = data
+        outputs.append(
+            {"output_type": "display_data", "metadata": {}, "data": {mime: value}}
+        )
+    return outputs
+
+
 def _apply_result(cell: dict[str, Any], result: dict[str, Any]) -> None:
     stdout = result.get("stdout") or ""
     stderr = result.get("stderr") or ""
@@ -174,6 +206,9 @@ def _apply_result(cell: dict[str, Any], result: dict[str, Any]) -> None:
                 "text": to_source(stdout if stdout.endswith("\n") else stdout + "\n"),
             }
         )
+    # Wave 11: rich displays sit between the stdout stream and the error/stderr
+    # output, so the ipynb reads back in the order the cell produced it.
+    outputs.extend(_display_outputs(result))
     if not ok:
         tb = (stderr or stdout or result.get("error") or "").splitlines(keepends=True)
         if tb and not str(tb[-1]).endswith("\n"):

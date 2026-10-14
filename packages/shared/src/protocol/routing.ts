@@ -199,6 +199,8 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.theme.GET_COLOR_THEME,
   RPC_CHANNELS.theme.SET_COLOR_THEME,
   RPC_CHANNELS.theme.SET_APP_MATERIAL,
+  RPC_CHANNELS.theme.SET_APP_LAYERS,
+  RPC_CHANNELS.theme.SAVE_USER_PRESET,
   RPC_CHANNELS.theme.BROADCAST_PREFERENCES,
   RPC_CHANNELS.theme.PREFERENCES_CHANGED,
   RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME,
@@ -1203,6 +1205,11 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.labels.UPDATE,
   RPC_CHANNELS.labels.DELETE,
   RPC_CHANNELS.labels.CHANGED,
+
+  // chatFolders — workspace chat-folder grouping (chat-folders.json)
+  RPC_CHANNELS.chatFolders.GET,
+  RPC_CHANNELS.chatFolders.MUTATE,
+  RPC_CHANNELS.chatFolders.CHANGED,
 
   // views — workspace UI views
   RPC_CHANNELS.views.LIST,
