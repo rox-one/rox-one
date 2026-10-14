@@ -19,7 +19,7 @@ markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
 
-import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, safeStorage, session, shell, Tray, webContents, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, net, Notification, safeStorage, session, shell, Tray, webContents, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { createHash, randomUUID } from 'crypto'
 
 
@@ -156,6 +156,9 @@ import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
 import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog, errorLog } from './logger'
 import { registerDeviceDiagnosticsIpc } from './device-diagnostics-ipc'
+import { registerHomeFetchIpc } from './home-fetch/ipc'
+import { HomeFetchService } from './home-fetch/service'
+import { getSharedKeys } from './home-fetch/shared-keys'
 import { registerStorageVisibleRootIpc } from './storage-visible-root-ipc'
 import { registerStorageMigrationNoticeIpc, runVisibleHomeBoot } from './visible-home-boot'
 import { setPerfEnabled, enableDebug } from '@rox/shared/utils'
@@ -197,6 +200,7 @@ import {
 import { registerServiceLifecycleIpc } from './service-lifecycle-ipc'
 import type { MenuBroadcastChannel } from './menu'
 import { aggregateTrayReports, RecordingTrayController, sanitizeTrayReport, TrayController } from './tray'
+import { installCallDefaults } from './team-calls/install-call-defaults'
 
 // Initialize electron-log for renderer process support
 log.initialize()
@@ -402,6 +406,9 @@ if (!(process.env.NODE_ENV === 'test' && process.env.ROX_SKIP_PROTOCOL_REGISTRAT
 
 // Apply network proxy settings early (Node-level only — Electron sessions require app.whenReady)
 import { applyConfiguredProxySettings } from './network-proxy'
+
+// Team calls: shared LiveKit/Exa defaults baked in at build time (gitignored module).
+installCallDefaults()
 void applyConfiguredProxySettings()
 
 // Register thumbnail:// custom protocol for file preview thumbnails in the sidebar.
@@ -1026,6 +1033,23 @@ app.whenReady().then(async () => {
         main: getLogFilePath(),
         messaging: getMessagingGatewayLogFilePath(),
         updates: getAutoUpdateLogFilePath(),
+      }),
+    })
+
+    // Home widgets: all network fetches go through main (cache, rate limits, offline); shared keys stay here.
+    registerHomeFetchIpc({
+      ipcMain,
+      windowManager,
+      rendererFilePath: join(__dirname, 'renderer/index.html'),
+      devServerUrl: process.env.VITE_DEV_SERVER_URL,
+      service: new HomeFetchService({
+        // Dedicated in-memory session with no cookies/credentials, so Home widget
+        // fetches never carry the user's browsing or app session state.
+        fetch: ((input: string | URL | Request, init?: RequestInit) =>
+          session.fromPartition('rox-home-fetch', { cache: false }).fetch(input instanceof URL ? input.toString() : input, { ...init, credentials: 'omit' })) as typeof globalThis.fetch,
+        now: () => Date.now(),
+        isOnline: () => net.isOnline(),
+        getExaKey: () => getSharedKeys().exa,
       }),
     })
 
