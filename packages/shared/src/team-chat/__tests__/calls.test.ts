@@ -37,7 +37,7 @@ describe('team calls', () => {
     // Members who never joined the call can't write into its transcript.
     expect(() => s.appendCallTranscript(general.id, a.call.id, [{ text: 'x', startMs: 0, endMs: 1 }], carol)).toThrow()
     // Non-members can't be injected into the participant list.
-    s.syncCallParticipants(general.id, ['alice', 'bob', 'mallory'], alice)
+    s.syncCallParticipants(general.id, ['alice', 'bob', 'mallory', 'carol'], alice)
     expect(s.listChannels(ORG, alice)[0]!.activeCall!.participantIds.sort()).toEqual(['alice', 'bob'])
     expect(s.leaveCall(general.id, alice).ended).toBe(false)
     expect(s.leaveCall(general.id, bob).ended).toBe(true)

@@ -451,8 +451,10 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       const channel = callChannel(store, channelIdInput, actor)
       const call = activeCallOf(store, channel.id)
       if (!call || !Array.isArray(participantIds)) return { orgId: channel.orgId, call: call ?? null }
-      // Only channel members can be in the call (room access = channel membership).
-      const ids = [...new Set(participantIds.filter((id): id is string => typeof id === 'string' && !!memberOf(store, channel.id, id)))].slice(0, 200)
+      // The client roster can only confirm who is still there (drop peers that left the room)
+      // and mark the actor present; it can never add other people to the call.
+      const seen = new Set(participantIds.filter((id): id is string => typeof id === 'string'))
+      const ids = call.participantIds.filter(id => id === actor.userId || seen.has(id))
       if (!ids.includes(actor.userId)) ids.push(actor.userId)
       call.participantIds = ids
       for (const id of ids) if (!call.everParticipantIds.includes(id)) call.everParticipantIds.push(id)

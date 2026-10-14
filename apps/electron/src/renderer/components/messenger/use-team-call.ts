@@ -123,6 +123,12 @@ export function useTeamCall(opts: { selfName: string }) {
   const channelRef = React.useRef<string | null>(null)
   /** Bumped by every join/leave; a join that is no longer current bails out after each await. */
   const generation = React.useRef(0)
+  /** The channel whose call the user currently wants to be in: a delayed leave never targets it. */
+  const desiredChannel = React.useRef<string | null>(null)
+  const leaveHost = (channelId: string) => {
+    if (desiredChannel.current === channelId) return Promise.resolve()
+    return window.electronAPI.teamChatCallLeave(channelId).then(() => {}, () => {})
+  }
 
   const refresh = React.useCallback(() => {
     const room = roomRef.current
@@ -133,8 +139,9 @@ export function useTeamCall(opts: { selfName: string }) {
   }, [])
 
   const leave = React.useCallback(async () => {
-    const gen = ++generation.current
+    ++generation.current
     const channelId = channelRef.current
+    if (channelId && desiredChannel.current === channelId) desiredChannel.current = null
     const flush = stopAsr.current
     stopAsr.current = null
     const room = roomRef.current
@@ -145,19 +152,20 @@ export function useTeamCall(opts: { selfName: string }) {
     if (channelId) document.querySelectorAll(`audio[data-rox-call-audio="${CSS.escape(channelId)}"]`).forEach(el => el.remove())
     // The last ASR chunk must land before the host closes the call and posts the transcript.
     await flush?.().catch(() => {})
-    // A re-join that happened meanwhile owns the call now: don't let this stale leave remove it.
-    if (channelId && gen === generation.current) await window.electronAPI.teamChatCallLeave(channelId).catch(() => {})
+    // A re-join of the same channel meanwhile owns the call now: don't let this stale leave remove it.
+    if (channelId) await leaveHost(channelId)
   }, [])
 
   const join = React.useCallback(async (channelId: string) => {
     if (roomRef.current || channelRef.current) await leave()
     const gen = ++generation.current
     const stale = () => gen !== generation.current
+    desiredChannel.current = channelId
     channelRef.current = channelId
     setState({ ...IDLE, status: 'connecting', channelId })
     try {
       const { call, url, token } = await window.electronAPI.teamChatCallJoin(channelId, opts.selfName)
-      if (stale()) { void window.electronAPI.teamChatCallLeave(channelId).catch(() => {}); return }
+      if (stale()) { void leaveHost(channelId); return }
       const room = new Room({ adaptiveStream: true, dynacast: true })
       roomRef.current = room
       const sync = () => {
@@ -203,7 +211,8 @@ export function useTeamCall(opts: { selfName: string }) {
       roomRef.current?.disconnect().catch(() => {})
       roomRef.current = null
       setState({ ...IDLE, status: 'error', channelId, error: error instanceof Error ? error.message.replace(/^.*?Error:\s*/s, '') : String(error) })
-      void window.electronAPI.teamChatCallLeave(channelId).catch(() => {})
+      if (desiredChannel.current === channelId) desiredChannel.current = null
+      void leaveHost(channelId)
       channelRef.current = null
     }
   }, [leave, opts.selfName, refresh])
