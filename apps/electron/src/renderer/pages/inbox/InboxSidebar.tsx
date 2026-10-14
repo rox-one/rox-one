@@ -27,7 +27,7 @@ export function sameInboxFilter(a: InboxPageFilter, b: InboxPageFilter): boolean
   return a.kind === b.kind
 }
 
-const KIND_ICONS: Record<InboxKind, LucideIcon> = {
+export const KIND_ICONS: Record<InboxKind, LucideIcon> = {
   permission: ShieldCheck,
   credential: KeyRound,
   plan: FileCheck2,
@@ -61,7 +61,7 @@ const ICON_TONE: Record<Tone, string> = {
   muted: 'bg-foreground/[0.05] text-text-muted',
 }
 
-const FOLDER_ICONS: Record<MailFolderRole, LucideIcon> = {
+export const FOLDER_ICONS: Record<MailFolderRole, LucideIcon> = {
   inbox: Inbox, drafts: FilePenLine, sent: Send,
   archive: Archive, junk: ShieldCheck, trash: Trash2,
 }

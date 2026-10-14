@@ -36,6 +36,7 @@ import {
   type Tone,
 } from '@/components/mode-screen/ModeScreen'
 import {
+  DECISION_KINDS,
   collectInboxFilterStats,
   markDone,
   reopen,
@@ -61,6 +62,7 @@ import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
 import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inbox-feed'
 import { toErrorMessage } from '@/lib/errors'
+import { useInboxScreenSidebar } from '@/screens/inbox/useInboxScreenSidebar'
 
 const KIND_TONE: Record<InboxKind, Tone> = {
   permission: 'warning',
@@ -460,6 +462,26 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   const refreshInbox = async () => {
     await Promise.all([reload(), mail.refreshStatus().then(() => mail.refresh())])
   }
+  // Shell second sidebar (shell-layout): same data as the legacy portal navigator.
+  const sidebarKinds = useMemo(() => [...DECISION_KINDS, ...activityKinds, 'reply', 'error', ...(mailReady ? [] : ['mail'])], [activityKinds, mailReady])
+  const sidebarMailFolders = useMemo(() => mailReady ? mail.folders.map((f) => ({
+    id: f.id, label: folderLabel(t, f), role: f.role,
+    count: f.role === 'drafts' || f.role === 'sent' ? f.total : f.unread,
+  })) : [], [mailReady, mail.folders, t])
+  useInboxScreenSidebar({
+    counts: filteredCounts,
+    kinds: sidebarKinds,
+    mailFolders: sidebarMailFolders,
+    filter,
+    onFilter: setFilter,
+    onMailFolder: (id) => { const f = mail.folders.find((x) => x.id === id); if (f) openFolder(f) },
+    query,
+    onQuery: setQuery,
+    onCompose: mailReady ? () => composeState.start('new', null) : null,
+    onRefresh: () => { void refreshInbox() },
+    loading: initialLoading,
+    error: inboxFailed ? errorEntries.map(([, e]) => String(e)).join(' · ') : null,
+  })
   const resetFilters = () => { setQuery(''); setFilter('all'); setPreferences((previous) => ({ ...previous, signalFilter: 'all', unreadOnly: false })) }
   const narrowed = !!query.trim() || preferences.unreadOnly || preferences.signalFilter !== 'all' || filter !== 'all'
   const mailFolder = inMail ? mail.folders.find((f) => f.id === filter.mail) : undefined
