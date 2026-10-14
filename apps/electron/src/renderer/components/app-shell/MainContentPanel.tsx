@@ -54,7 +54,7 @@ import { buildRouteFromNavigationState } from '../../../shared/route-parser'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
 import { recordRecentSetting } from '@/lib/settings-recent'
 import { automationsAtom } from '@/atoms/automations'
-import { SendResourceToWorkspaceDialog, type SendResourceType } from './SendResourceToWorkspaceDialog'
+import type { SendResourceType } from './SendResourceToWorkspaceDialog'
 import {
   knowledgeActiveViewIdAtom,
   knowledgeHomeViewAtom,
@@ -65,6 +65,10 @@ import { endRouteSwitch } from '@/lib/startup-perf'
 import { RetainedSurfacePane, surfaceKeepAliveCapacity, useKeepAliveSurfaces } from '@/lib/surface-keepalive'
 import { ROUTE_PAGE_LOADERS } from './route-pages'
 export { lazyRoutePage } from '@/lib/route-recovery'
+
+const SendResourceToWorkspaceDialog = React.lazy(() =>
+  import('./SendResourceToWorkspaceDialog').then((m) => ({ default: m.SendResourceToWorkspaceDialog })),
+)
 
 function UnavailableAutomationTour({ workspaceId }: { workspaceId: string | null }) {
   const signals = useTourSignals({ workspaceId: workspaceId ?? '' })
@@ -284,15 +288,19 @@ export function MainContentPanel({
           {entry.node}
         </RetainedSurfacePane>
       ))}
-      <SendResourceToWorkspaceDialog
-        open={sendDialogOpen}
-        onOpenChange={setSendDialogOpen}
-        resourceType={sendResourceType}
-        resourceIds={sendResourceIds}
-        resourceLabel={sendResourceLabel}
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId || ''}
-      />
+      {sendDialogOpen && (
+        <React.Suspense fallback={null}>
+          <SendResourceToWorkspaceDialog
+            open
+            onOpenChange={setSendDialogOpen}
+            resourceType={sendResourceType}
+            resourceIds={sendResourceIds}
+            resourceLabel={sendResourceLabel}
+            workspaces={workspaces}
+            activeWorkspaceId={activeWorkspaceId || ''}
+          />
+        </React.Suspense>
+      )}
     </>
   )
 }
