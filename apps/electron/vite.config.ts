@@ -300,7 +300,10 @@ export default defineConfig(({ command }) => ({
     outDir: resolve(__dirname, 'dist/renderer'),
     emptyOutDir: true,
     // Production dist must not ship source maps (S9-11: 68 MB of *.map).
-    sourcemap: false,
+    // `scripts/boot-manifest.ts` still derives the boot closure from the sibling
+    // maps, so the CI bundle-size job and local manifest regeneration opt back in
+    // with ROX_RENDERER_SOURCEMAP=1 — the packaged app never sets it.
+    sourcemap: process.env.ROX_RENDERER_SOURCEMAP === '1',
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'src/renderer/index.html'),
