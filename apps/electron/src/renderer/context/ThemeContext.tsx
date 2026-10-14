@@ -1023,3 +1023,8 @@ export function useTheme(): ThemeContextType {
   }
   return context
 }
+
+/** Same as useTheme, but null outside a ThemeProvider (palette, isolated tests). */
+export function useOptionalTheme(): ThemeContextType | null {
+  return useContext(ThemeContext) ?? null
+}

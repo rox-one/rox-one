@@ -30,10 +30,12 @@ import { createConationContextKeyProvider } from './omnibox-conation'
 // W1-07 (#1504): live shell flags as context keys (flag-gated commands).
 import { createShellFlagContextKeyProvider } from './unified-flags'
 import { Omnibox } from './Omnibox'
+import { useRecordRecentRoutes } from '@/lib/recent-routes'
 
 export function OmniboxHost() {
   const { t } = useTranslation()
   const [open, setOpen] = useAtom(omniboxOpenAtom)
+  useRecordRecentRoutes()
   const { execute, getHotkeyDisplay } = useActionRegistry()
 
   // Bridge ActionRegistry.execute into command contributions

@@ -30,6 +30,13 @@ import {
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { navigate, type Route } from '@/lib/navigate'
 import { parsePrefix, scoreMatch, type OmniboxPrefix } from './omnibox-helpers'
+import { filterRecent, filterThemes, type RecentRow, type ThemeRow } from './omnibox-extra-sections'
+import { useRecentRoutes } from '@/lib/recent-routes'
+import { useOptionalTheme } from '@/context/ThemeContext'
+import { useAtomValue } from 'jotai'
+import { focusedPanelRouteAtom } from '@/atoms/panel-stack'
+import { PRIMARY_NAV } from '@/components/app-shell/primary-nav'
+import type { PresetTheme } from '@config/theme'
 import type { ActionId } from '@/actions/definitions'
 import { useRegisterModal } from '@/context/ModalContext'
 import { snapshotKeybindingContext } from '@/actions/keybinding-context'
@@ -175,6 +182,40 @@ export function Omnibox({
 
   const close = useCallback(() => onOpenChange(false), [onOpenChange])
 
+  // #6: «Recent» routes and «Themes».
+  const recentRoutes = useRecentRoutes()
+  const activeRoute = useAtomValue(focusedPanelRouteAtom)
+  const routeTitles = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const entry of PRIMARY_NAV) if (entry.route) map.set(String(entry.route()).split(/[/?]/)[0]!, t(entry.labelKey))
+    return map
+  }, [t])
+  const recentHits = useMemo<RecentRow[]>(() => {
+    if (!open || parsed.prefix !== '') return []
+    const rows = recentRoutes.map((route) => {
+      const [root, ...rest] = route.split('?')[0]!.split('/')
+      return { route, title: routeTitles.get(root!) ?? root!, subtitle: rest.length ? rest.join('/') : undefined }
+    })
+    return filterRecent(rows, parsed.query, activeRoute ? String(activeRoute) : null)
+  }, [open, parsed.prefix, parsed.query, recentRoutes, routeTitles, activeRoute])
+  const theme = useOptionalTheme()
+  const effectiveColorTheme = theme?.effectiveColorTheme ?? 'default'
+  const [presetThemes, setPresetThemes] = useState<PresetTheme[]>([])
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    window.electronAPI?.loadPresetThemes?.()
+      ?.then((themes) => { if (!cancelled) setPresetThemes(themes ?? []) })
+      .catch(() => { if (!cancelled) setPresetThemes([]) })
+    return () => { cancelled = true }
+  }, [open])
+  const themeHits = useMemo<ThemeRow[]>(() => {
+    if (!open || parsed.prefix !== '' || !theme) return []
+    const rows = [{ id: 'default', title: t('omnibox.theme.default'), active: effectiveColorTheme === 'default' },
+      ...presetThemes.map((preset) => ({ id: preset.id, title: preset.theme.name ?? preset.id, active: preset.id === effectiveColorTheme }))]
+    return filterThemes(rows, parsed.query)
+  }, [open, parsed.prefix, parsed.query, presetThemes, effectiveColorTheme, theme, t])
+
   const runResource = useCallback(
     async (item: ResourceItem) => {
       try {
@@ -243,6 +284,7 @@ export function Omnibox({
   const showNavigation = parsed.prefix !== '>'
   const emptyHint =
     !loading && resourcesList.length === 0 && commandHits.length === 0
+      && recentHits.length === 0 && themeHits.length === 0
       ? searchFailed ? t('omnibox.searchFailed') : t('omnibox.empty')
       : null
 
@@ -268,6 +310,28 @@ export function Omnibox({
           />
           <CommandList className="max-h-[min(420px,60vh)]">
             {emptyHint && <CommandEmpty>{emptyHint}</CommandEmpty>}
+
+            {recentHits.length > 0 && (
+              <CommandGroup heading={t('omnibox.section.recent')}>
+                {recentHits.map((row) => (
+                  <CommandItem key={`recent:${row.route}`} value={`recent:${row.route}`} onSelect={() => { navigate(row.route as Route); close() }}>
+                    <span className="truncate flex-1" title={row.title}>{row.title}</span>
+                    {row.subtitle && <span className="ml-2 truncate text-data text-muted-foreground" title={row.subtitle}>{row.subtitle}</span>}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+
+            {themeHits.length > 0 && (
+              <CommandGroup heading={t('omnibox.section.themes')}>
+                {themeHits.map((row) => (
+                  <CommandItem key={`theme:${row.id}`} value={`theme:${row.id}`} aria-current={row.active || undefined} onSelect={() => { theme?.setColorTheme(row.id); close() }}>
+                    <span className="truncate flex-1" title={row.title}>{row.title}</span>
+                    {row.active && <span className="ml-2 text-data text-muted-foreground">{t('omnibox.theme.current')}</span>}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
 
             {showNavigation && resourcesList.length > 0 && (
               <CommandGroup
