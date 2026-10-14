@@ -23,7 +23,11 @@ interface Bridge {
   listNotes?: (ws: string) => Promise<Array<{ id: string; title: string }>>
   getPages?: (ws: string) => Promise<Array<{ config: { slug: string; name: string; kind?: string } }>>
   getSessions?: () => Promise<Array<{ id: string; name?: string; workspaceId?: string; isArchived?: boolean }>>
-  personalTasksList?: () => Promise<{ tasks: Array<{ id: string; title: string }> }>
+  personalTasksList?: () => Promise<{ tasks: Array<{ id: string; title: string; revision?: number }> }>
+  deleteNote?: (ws: string, id: string) => Promise<boolean>
+  deletePage?: (ws: string, slug: string) => Promise<unknown>
+  deleteSession?: (id: string) => Promise<void>
+  personalTasksDelete?: (deletes: Array<{ id: string; expectedRevision: number }>) => Promise<unknown>
 }
 const api = (): Bridge => ((window as unknown as { electronAPI?: Bridge }).electronAPI) ?? {}
 
@@ -45,6 +49,23 @@ export async function createEntity(workspaceId: string, kind: CreatableKind, tit
     case 'session': { if (!a.createSession) throw new Error('sessions unavailable'); const s = await a.createSession(workspaceId, { name: title }); return { kind: 'session', id: s.id } }
     case 'task': { const t = await createPersonalTaskConfirmed({ title }); return { kind: 'task', id: t.id } }
   }
+}
+
+/** Delete an entity through its own API (card delete dialog, orphan cleanup). Kinds without one throw. */
+export async function deleteEntity(workspaceId: string, ref: EntityRef): Promise<void> {
+  const a = api()
+  switch (ref.kind) {
+    case 'note': if (a.deleteNote) { await a.deleteNote(workspaceId, ref.id); return } break
+    case 'page': if (a.deletePage) { await a.deletePage(workspaceId, ref.id); return } break
+    case 'session': if (a.deleteSession) { await a.deleteSession(ref.id); return } break
+    case 'task': if (a.personalTasksList && a.personalTasksDelete) {
+      const t = (await a.personalTasksList()).tasks.find(x => x.id === ref.id)
+      if (!t) return
+      await a.personalTasksDelete([{ id: t.id, expectedRevision: t.revision ?? 0 }])
+      return
+    } break
+  }
+  throw new Error(`entity kind not deletable: ${ref.kind}`)
 }
 
 /** Existing entities for the picker (notes, pages, sessions, tasks), filtered by `query`. */
@@ -111,7 +132,10 @@ export function createEntityRegistry(workspaceId: string, batcher = createPrevie
         openEntity(fragment ? { kind: ref.kind as EntityKind, id: ref.id, fragment } : { kind: ref.kind as EntityKind, id: ref.id })
       },
     }
-    if (creatable.has(kind)) adapter.create = async ({ title, workspaceId: ws }) => createEntity(ws, kind as CreatableKind, title)
+    if (creatable.has(kind)) {
+      adapter.create = async ({ title, workspaceId: ws }) => createEntity(ws, kind as CreatableKind, title)
+      adapter.delete = async ref => deleteEntity(workspaceId, ref)
+    }
     registry.register(adapter)
   }
   return registry

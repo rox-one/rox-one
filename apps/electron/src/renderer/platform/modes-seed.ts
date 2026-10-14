@@ -127,7 +127,7 @@ const UNIFIED_MODE_OWNERS: Record<UnifiedSurfaceId, readonly ModuleId[]> = {
   messenger: ['messenger'],
   calendar: ['calendar', 'meetings'],
   goals: ['goals', 'spaces', 'kpis'],
-  canvas: [],
+  canvas: ['canvas'],
 }
 
 function isUnifiedModeActive(surface: UnifiedSurfaceId) {

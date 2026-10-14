@@ -284,7 +284,7 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   { id: WORKBENCH_FLAG.modeMessengerV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.modeCalendarV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.modeGoalsV1, defaultValue: false, dependencies: [], rollbackSafe: true },
-  { id: WORKBENCH_FLAG.modeCanvasV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.modeCanvasV1, defaultValue: true, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.modeContactsV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.docsSharedV1, defaultValue: false, dependencies: [], rollbackSafe: true },
 // Dev Space (spec 2026-10-09): default OFF, inert until explicitly enabled.
