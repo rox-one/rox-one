@@ -11173,6 +11173,7 @@
   "tasks.tagFilter": "Filter by tag",
   "tasks.tagRemove": "Remove tag {{tag}}",
   "tasks.tags": "태그",
+  "tasks.timeline.layout": "타임라인",
   "tasks.title": "제목",
   "tasks.titleLabel": "Task title",
   "tasks.titlePlaceholder": "이 작업의 이름을 지정하세요…",

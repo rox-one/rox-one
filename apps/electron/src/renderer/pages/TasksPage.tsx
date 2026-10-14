@@ -76,7 +76,9 @@ import {
   ModeScreenLayout,
   type Tone,
 } from '@/components/mode-screen/ModeScreen'
-import { tasksViewAtom } from './tasks/atoms'
+import { tasksLayoutAtom, tasksTimelineGroupAtom, tasksTimelineZoomAtom, tasksViewAtom } from './tasks/atoms'
+import { TaskTimeline } from './tasks/TaskTimeline'
+import { isoOf, type SchedulePatch, type TimelineGroup } from './tasks/timeline-model'
 import {
   agentChipFor,
   agentCounts,
@@ -174,6 +176,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const [store, setStore] = useState(loadPersonalTaskStore)
   const detailDrafts = useTaskDetailDrafts(workspace?.id)
   const [view, setView] = useAtom(tasksViewAtom)
+  const [layout, setLayout] = useAtom(tasksLayoutAtom)
+  const [timelineZoom, setTimelineZoom] = useAtom(tasksTimelineZoomAtom)
+  const [timelineGroup, setTimelineGroup] = useAtom(tasksTimelineGroupAtom)
   const [sort, setSort] = useState<TaskSortId>('order')
   const [localSelectedId, setLocalSelectedId] = useState<string | null>(null)
   const [delegating, setDelegating] = useState(false)
@@ -1124,8 +1129,34 @@ export default function TasksPage(props: TasksPageProps = {}) {
         <Button variant="danger" onClick={() => setConfirm({ kind: 'emptyTrash' })} data-testid="tasks-empty-trash">{t('tasks.trash.empty')}</Button>
       ) : null}
       {sortControl}
+      {view.kind !== 'agents' ? (
+        <div role="radiogroup" aria-label={t('tasks.timeline.layout')} className="inline-flex rounded-[var(--radius-control)] border border-border-subtle p-0.5 text-sm">
+          {(['list', 'timeline'] as const).map((id) => (
+            <button key={id} type="button" role="radio" aria-checked={layout === id} data-testid={`tasks-layout-${id}`} onClick={() => setLayout(id)}
+              className={cn('rounded-[var(--radius-control)] px-2 py-0.5', layout === id ? 'bg-accent text-accent-foreground' : 'text-text-secondary hover:bg-surface-hover')}>
+              {t(id === 'list' ? 'collection.view.list' : 'tasks.timeline.layout')}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </>
   )
+
+  const scheduleTask = (id: string, patch: SchedulePatch) => {
+    if (patch.startAt == null && patch.dueAt == null) return
+    mutate((current) => {
+      if (!current.get(id)) return
+      if (patch.startAt != null) current.setWhen(id, { kind: 'date', at: patch.startAt })
+      if (patch.dueAt != null) current.setDeadline(id, patch.dueAt)
+    })
+  }
+  const timelineGroupTitle = (group: TimelineGroup) => {
+    if (group.id == null) return t('tasks.move.noPlace')
+    if (group.kind === 'project') return projectName(group.id)
+    if (group.kind === 'area') return areaName(group.id)
+    return t(`tasks.projection.${group.id}`)
+  }
+  const showTimeline = layout === 'timeline' && view.kind !== 'agents'
 
   const projectToolbar = view.kind === 'project' && currentProject ? (
     <div className="flex flex-wrap items-center gap-1 px-3 pb-1.5">
@@ -1266,7 +1297,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
         aria-label={typeof listTitle === 'string' ? listTitle : undefined}
         tabIndex={0}
         data-testid="tasks-list"
-        className="relative min-h-0 flex-1 overflow-y-auto pb-3 outline-none"
+        className={cn('relative min-h-0 flex-1 outline-none', showTimeline ? 'overflow-hidden' : 'overflow-y-auto pb-3')}
       >
         {view.kind === 'agents' ? (
           agentList.length === 0 ? (
@@ -1282,6 +1313,20 @@ export default function TasksPage(props: TasksPageProps = {}) {
               {session.sessionStatus ? <Badge tone="muted">{String(session.sessionStatus)}</Badge> : null}
             </button>
           ))
+        ) : showTimeline ? (
+          <TaskTimeline
+            tasks={visible.filter(isOpenTask)}
+            today={isoOf(now)}
+            locale={i18n.language}
+            selectedId={selectedId}
+            zoom={timelineZoom}
+            groupBy={timelineGroup}
+            onZoom={setTimelineZoom}
+            onGroupBy={setTimelineGroup}
+            onSelect={selectTask}
+            onSchedule={scheduleTask}
+            groupTitle={timelineGroupTitle}
+          />
         ) : nothing ? (
           <EmptyState title={searching ? t('tasks.search.none') : t(emptyKey)} />
         ) : sections.map(renderSection)}

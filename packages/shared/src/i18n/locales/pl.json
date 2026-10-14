@@ -11213,6 +11213,7 @@
   "tasks.tagFilter": "Filter by tag",
   "tasks.tagRemove": "Remove tag {{tag}}",
   "tasks.tags": "Tagi",
+  "tasks.timeline.layout": "Oś czasu",
   "tasks.title": "Tytuł",
   "tasks.titleLabel": "Task title",
   "tasks.titlePlaceholder": "Nazwij to zadanie…",

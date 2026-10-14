@@ -11189,6 +11189,7 @@
   "tasks.tagFilter": "Filter by tag",
   "tasks.tagRemove": "Remove tag {{tag}}",
   "tasks.tags": "Etiquetas",
+  "tasks.timeline.layout": "Cronograma",
   "tasks.title": "Título",
   "tasks.titleLabel": "Task title",
   "tasks.titlePlaceholder": "Nombra esta tarea…",

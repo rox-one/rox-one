@@ -11173,6 +11173,7 @@
   "tasks.tagFilter": "Filter by tag",
   "tasks.tagRemove": "Remove tag {{tag}}",
   "tasks.tags": "标签",
+  "tasks.timeline.layout": "时间线",
   "tasks.title": "标题",
   "tasks.titleLabel": "Task title",
   "tasks.titlePlaceholder": "为此任务命名…",

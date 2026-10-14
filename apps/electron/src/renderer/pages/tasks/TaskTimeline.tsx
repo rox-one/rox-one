@@ -146,12 +146,14 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
             </button>
           ))}
         </div>
-        <label className="inline-flex items-center gap-1 text-text-secondary">
-          {t('collection.display.groupByLabel')}
-          <select value={groupBy} onChange={(e) => onGroupBy(e.target.value as TimelineGroupBy)} data-testid="timeline-group" className="rounded-[var(--radius-control)] border border-border-subtle bg-transparent px-1 py-0.5 text-sm">
-            {GROUPS.map((g) => <option key={g.id} value={g.id}>{t(g.label)}</option>)}
-          </select>
-        </label>
+        <div role="radiogroup" aria-label={t('collection.display.groupByLabel')} data-testid="timeline-group" className="inline-flex rounded-[var(--radius-control)] border border-border-subtle p-0.5">
+          {GROUPS.map((g) => (
+            <button key={g.id} type="button" role="radio" aria-checked={groupBy === g.id} data-testid={`timeline-group-${g.id}`} onClick={() => onGroupBy(g.id)}
+              className={cn('rounded-[var(--radius-control)] px-2 py-0.5', groupBy === g.id ? 'bg-accent text-accent-foreground' : 'text-text-secondary hover:bg-surface-hover')}>
+              {t(g.label)}
+            </button>
+          ))}
+        </div>
       </div>
       <div ref={scrollRef} className="relative min-h-0 flex-1 overflow-auto" onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerCancel}>
         <div style={{ width: LABEL_COL + trackWidth }} className="relative min-h-full">
