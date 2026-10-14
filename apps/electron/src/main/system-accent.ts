@@ -12,7 +12,7 @@
  */
 
 import { systemPreferences } from 'electron'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { SystemAccentSnapshot } from '@rox/shared/protocol'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 
