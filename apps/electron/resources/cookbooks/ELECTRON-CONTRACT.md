@@ -252,8 +252,9 @@ The probe asserts exactly this (`scripts/electron_handshake_probe.py`, §8):
 | 401 | missing/incorrect token on a JSON route | `:175-176`, `:211-212` |
 | 403 | Host header is not loopback | `:168-169`, `:209-210` |
 | 404 | unknown path; `POST /cancel` for an unknown `itemId` | `:206`, `:357` |
+| 409 | a `/cells/*` mutation arrives while a run is live for the item (`{"error":"notebook is running"}`) | `src/rox_cookbooks/host.py:627-628` |
 | 413 | POST body over 2 MiB | `:30`, `:131-132` |
-| 503 | `/run` or `/run-all` arrives after `LabHost.stop` began (`{"error":"host is shutting down"}`) | `src/rox_cookbooks/host.py:92-102`, `:276-277` |
+| 503 | `/run` or `/run-all` arrives after `LabHost.stop` began (`{"error":"host is shutting down"}`) | `src/rox_cookbooks/host.py:108-125`, `:299`, `:413` |
 
 All error bodies are `{"error": "<message>"}`, so a client can always show `data.error`
 (`src/rox_cookbooks/host.py:150-157`). `/document/<id>` adds `"reset": true` when the copy's
@@ -269,17 +270,26 @@ notebook is corrupt, meaning "offer Reset" (`:201-202`). The only 5xx is `503` f
 | GET | `/catalog` | — | card array (`catalog_cards`, `src/rox_cookbooks/ui.py:65-87`) |
 | GET | `/search` | `?q=` | card array subset (`src/rox_cookbooks/host.py:180-188`) |
 | GET | `/banner/<itemId>` | — | `{"missing": [key, …]}` (`:189-196`) |
-| GET | `/document/<itemId>` | — | ipynb `{kind,title,cells[{cell_type,source,outputs}],missing,supported}` / md `{kind,title,text,missing,supported:false}` (`:365-393`) |
+| GET | `/document/<itemId>` | — | ipynb `{kind,title,cells[{cell_type,source,outputs,execution_count}],missing,supported}` / md `{kind,title,text,missing,supported:false}` (`:365-393`) |
 | POST | `/open` | `{itemId, newCopy?}` | `{copyId, document}` (`:220-230`) |
-| POST | `/run` | `{itemId, code, index?, store?}` | `{ok,stdout,stderr,returncode,error?,timed_out?,cancelled,missing}` (`src/rox_cookbooks/host.py:238-309`) |
-| POST | `/run-all` | `{itemId, cells:[{index,source}], store?}` | `{ok,timed_out,returncode,cancelled,missing,cells:[…]}` (`src/rox_cookbooks/host.py:310-406`) |
+| POST | `/run` | `{itemId, code, index?, store?}` | `{ok,stdout,stderr,returncode,error?,timed_out?,cancelled,displays,missing}` (`src/rox_cookbooks/host.py:238-309`; `displays` §3.8) |
+| POST | `/run-all` | `{itemId, cells:[{index,source}], store?}` | `{ok,timed_out,returncode,cancelled,missing,cells:[{…,displays}]}` (`src/rox_cookbooks/host.py:310-406`; `displays` §3.8) |
 | POST | `/cancel` | `{itemId}` | `{ok:true, cancelled:<int>}` (`src/rox_cookbooks/host.py:407-419`) |
 | POST | `/reset` | `{itemId, confirm?}` | `{ok:true}` (`:296-307`) |
 | POST | `/save` | `{itemId,index,source}` or `{itemId,text}` | `{ok:true}` (`:308-346`) |
+| POST | `/cells/add` | `{itemId, cellType:"code"\|"markdown", index, source?}` | `{ok:true, index:<inserted>}` (`src/rox_cookbooks/host.py:554-644`) |
+| POST | `/cells/delete` | `{itemId, index}` | `{ok:true, index:<focus>}` (§3.7) |
+| POST | `/cells/move` | `{itemId, from, to}` | `{ok:true, index:to}` (§3.7) |
+| POST | `/cells/duplicate` | `{itemId, index}` | `{ok:true, index:index+1}` (§3.7) |
 | POST | `/store` | `{store:{key:value}}` | `{keys:[…]}` (`:347-356`) |
 
 Card and `missing` payloads carry **credential key names only** (`src/rox_cookbooks/ui.py:65-87`;
 `src/rox_cookbooks/secrets.py:25-36`) — never values.
+
+On the ipynb branch of `/document/<itemId>`, each `cells[]` entry carries `execution_count` verbatim
+from the ipynb: an `int` once that cell has run, `null` until then (`document_payload`,
+`src/rox_cookbooks/host.py`). Wave 11: the client seeds its `[N]` run counter from it when it
+opens a document, so saved outputs come back with the right numbers.
 
 ### 3.6 Cancel (`POST /cancel`)
 
@@ -303,6 +313,166 @@ Card and `missing` payloads carry **credential key names only** (`src/rox_cookbo
 - For `/run-all`, the per-cell records already written to the temp `results.json` are kept, so a
   partially completed run reports the finished cells; the remaining cells come back `skipped`
   (`execute_all`, `src/rox_cookbooks/kernel.py:1328-1502`).
+
+### 3.7 Cell mutations (`POST /cells/*`)
+
+Wave 10 adds four structural routes so the notebook page can insert, delete, move and duplicate
+cells without the renderer ever writing to disk: the sidecar stays the only writer of the copy's
+ipynb. All four read-modify-write that file and answer `200 {"ok": true, "index": <int>}` — the
+cell index the caller should focus next. The response carries only the index; Electron main
+re-reads `GET /document/<itemId>` itself and hands the renderer `{document, index}`.
+
+| Method | Path | Body | 200 |
+|---|---|---|---|
+| POST | `/cells/add` | `{itemId, cellType:"code"\|"markdown", index, source?}` | `{ok:true, index:<inserted>}` |
+| POST | `/cells/delete` | `{itemId, index}` | `{ok:true, index:<focus>}` |
+| POST | `/cells/move` | `{itemId, from, to}` | `{ok:true, index:to}` |
+| POST | `/cells/duplicate` | `{itemId, index}` | `{ok:true, index:index+1}` |
+
+**Validation order** (`src/rox_cookbooks/host.py:554-644`) is fixed, so a client can rely on which
+failure it sees first:
+
+1. `itemId` — missing/empty → `400 {"error":"missing itemId"}`.
+2. **catalog item** — an unknown `itemId` → `400` carrying the `CatalogError` message.
+3. **kind** — a `.md` playbook → `400 {"error":"not a notebook"}` (the UI renders no insert row or
+   per-cell menu for a playbook, so nothing would call this anyway).
+4. **field types** — `cellType` outside `{"code","markdown"}` → `400`; a non-string `source` → `400`;
+   a non-integer `index` (or `from`/`to`) → `400`. These run *before* the workspace is touched, so a
+   malformed request never creates a copy.
+5. **bounds** — see the semantics below → `400 {"error":"cell index out of range"}`.
+6. **run-guard** — any live run for the item → `409 {"error":"notebook is running"}`
+   (`src/rox_cookbooks/host.py:627-628`).
+
+**Semantics of `index`:**
+
+- **add** — `0 <= index <= len` (`len` is the length *before* the insert, so `len` appends). `source`
+  defaults to `""`. Answers the inserted index (`index`).
+- **delete** — `0 <= index < len`. Answers the cell that slid into the removed one's slot,
+  `min(index, len-2)` measured before the delete, so deleting the last cell focuses the new last one;
+  deleting the only cell answers `-1` (nothing left to focus).
+- **move** — `0 <= from, to < len`; `from == to` is a successful no-op. The order is
+  remove-then-insert, so `to` is the destination position in the resulting order
+  (`[a,b,c].move(0,2) -> [b,c,a]`). Answers `to`.
+- **duplicate** — `0 <= index < len`; a `copy.deepcopy` of the cell is inserted at `index+1`. A
+  string `id` (nbformat 4.5) is regenerated as a fresh `uuid.uuid4().hex[:12]` so ids stay unique; a
+  cell without an id gets none. Answers `index+1`.
+
+**409 run-guard.** While any run is live for the item (`ActiveRuns.active`,
+`src/rox_cookbooks/kernel.py:1065`), every `/cells/*` call answers `409 {"error":"notebook is
+running"}`. This closes the race the persist path opens: a mutation would shift cell indices under a
+run that is about to write its output back *by index*, landing it in the wrong cell
+(`tests/test_notebook_persist.py:78-79`). The renderer also disables its controls while busy, but the
+host enforces it — a mutation from any other client is refused too.
+
+**Writer serialization (`_document_lock`).** Every read-modify-write of the copy's ipynb takes
+`LabHost._document_lock` (`src/rox_cookbooks/host.py:106`), because `ThreadingHTTPServer` runs
+requests concurrently and such a read-modify-write is not atomic — two overlapping writers would
+clobber each other. The covered sections are:
+
+- `POST /save` (`src/rox_cookbooks/host.py:518`);
+- all four `POST /cells/*` routes (`:604`);
+- the source pre-persist of `POST /run` (`:323`) and `POST /run-all` (`:429`);
+- **run registration** in `LabHost.begin_run` (`:108-125`), which is also the lock's link to the
+  run-guard: without it, "the guard sees `active() == 0`, so mutate" and "`/run` registers, then
+  reads the document" could interleave. Both paths take the locks in the same
+  document-then-lifecycle order, so there is no deadlock.
+
+Cell **execution** (`execute_code`/`execute_all`) deliberately stays outside the lock — a
+60-second run must not block Save; the run-guard above covers that race instead.
+
+### 3.8 Rich displays (`display_data`)
+
+Wave 11: a cell can return **rich output** — images, HTML, JSON — not only its stdout. Every such
+record arrives on `/run` as a top-level `displays` array and on `/run-all` on each cell record
+(`src/rox_cookbooks/host.py:357-369`, `:467-483`). Both fields are **additive**: a client that
+ignores them sees exactly the pre-wave-11 response.
+
+**Record format.** `{"mime": "<type>", "data": "<string>"}` — `data` is always a string, normalised
+once by the child: `bytes` become base64 for `image/*` and utf-8 text otherwise (`_repr_png_`
+returns bytes); a **`str` for `image/svg+xml` is markup** and becomes base64, while a **`str` for any
+other `image/*`** (png/jpeg) is **passed through unchanged** — nbformat convention, it is already
+base64, so `display({"image/png": "<b64>"}, raw=True)` is never encoded twice; a dict/list value is
+`json.dumps`'ed and any other object `str()`'d. Every textual mime travels as its own text and
+`application/json` as its JSON serialisation (`{"a": 1}`). Order is emission order, and a
+representation appends `text/plain` (from `repr()`) when the object has one.
+
+**Results-file transport (shadow, kill-safe).** The one-shot `/run` child no longer reads the bare
+code string: its stdin payload is now an **object** `{"code": <str>, "results": <path|null>,
+`"secret_env": [names]}` (`kernel._RUNNER`; a bare JSON string — the old wire format — is still
+accepted). The child runs the cell and, in a `finally`, writes `{"displays": [{mime, data}, …]}`
+atomic (`tmp` + `os.replace`) to `results`. The caller re-reads, re-validates and re-caps it
+(`kernel._read_displays`; `kernel._cap_displays`) and deletes the temp dir before
+returning. **A killed child writes nothing**, so a timeout, an interrupt or `/cancel` yields
+`displays: []` — never a partial or half-written record set. The read is also **size-gated**
+(G4-F2): a file bigger than our own cap (+64 KiB of JSON slack) is never read, because a cell can
+reach the temp path through `sys.modules["__main__"].results` and a giant file would otherwise let
+one cell OOM the sidecar — a tampered file yields `displays: []`, not a partial read. `/run-all` keeps
+its shape; the driver (`kernel._RUN_ALL_DRIVER`) writes each cell's `displays` into its record
+*before* the record hits `results.json`, so a run killed mid-flight keeps the displays of the cells
+that already finished (§3.6). The block that defines the format, caps, redaction and flush is
+`kernel._DISPLAY_HELPERS`, prepended to **both** children so they cannot drift apart, and it is Python
+3.9-compatible on purpose.
+
+**Mime set & renderer priority.** A record's mime is normalised (`str(mime).strip().lower()`),
+masked (a secret cannot ride in the mime itself) and checked against a fixed set — `text/*`,
+`image/png`, `image/jpeg`, `image/svg+xml`, `application/json`, `application/xml`,
+`application/x-yaml`; anything else is **dropped**, in the child and again by the caller
+(`kernel._cap_displays`), so it can never become a `display_data` key. Records come from three
+sources: the injected `display(*objects, raw=False)` builtin, an object's rich reprs (`_repr_html_`,
+`_repr_svg_`, `_repr_png_`, `_repr_jpeg_`, `_repr_markdown_`, `_repr_json_`), and the value of the
+cell's **last top-level expression**. **One event emits at most one widget mime** — the first it has
+in the single priority order `text/html` → `image/svg+xml` → `image/png` → `image/jpeg` →
+`text/markdown` → `application/json` (that order is `REPR_MIMES`, the one source of truth) — plus a
+`text/plain` record from `repr()` as the text fallback; the other mimes stay out of the transport. A
+raw bundle carrying several widget mimes is reduced the same way.
+
+The two entry points differ for a plain string, deliberately: **`display("caption")` records the
+string itself, without quotes** (the value API), while the trailing expression takes the bundle path,
+so a cell ending in `'x'` records `'x'` and a rich object shows its rich rep. `None` is never
+displayed either way. A renderer therefore **draws every record it receives, in order**: emission
+already guarantees at most one widget mime per event, so no client-side de-duplication is needed (its
+own priority list is only for re-rendering records assembled from another source).
+
+**Caps** (hard, applied in the child and re-applied by the sidecar): **512 KiB** per record, **1.5
+MiB** and **≤ 12 records** per cell/run, and **8 MiB** shared across one `/run-all`. A record over
+the per-record cap is clipped to it; once a cell/run limit is reached the rest is dropped — and in
+either case a single `{"mime": "text/plain", "data": "…[display output truncated]"}` record takes the
+place of the tail. A client can therefore treat `displays` as bounded (≤ 1.5 MiB per cell, ≤ 8 MiB
+per run-all) and must not assume it holds everything the cell tried to show.
+
+**Redaction.** Text mimes (`text/*`, `application/json`, `application/xml`, `application/x-yaml`)
+are masked `***` **in the child, before the temp write**, and masked again by the caller — with the
+same secret values as stdout/stderr (§5.4). `image/*` is **not** redacted: the value is opaque image
+data (base64, passed through as-is) and substituting inside it would corrupt the payload. Treat a
+display as no more trustworthy than a printed string — this is best-effort, not a guarantee (§5.4).
+
+**matplotlib.** The child sets `MPLBACKEND=Agg` before running the cell, so
+`import matplotlib.pyplot` never needs a display. After the cell — on success **and** on exception —
+every still-open figure becomes an `image/png` record (`savefig(BytesIO, format="png",
+bbox_inches="tight")`) and is closed (`close("all")`). The Lab itself never imports matplotlib: a
+cell that does not import `matplotlib.pyplot` pays nothing and cannot fail on a missing matplotlib.
+
+**Renderer policy (client side).** A display record is untrusted content, so the renderer treats it
+as such. `text/html` is shown in a **sandboxed `<iframe>`** — `sandbox="allow-scripts"`,
+`referrerpolicy="no-referrer"`, and an inline CSP of
+`default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:;
+font-src data:; form-action 'none'; base-uri 'none'` — so a cell's HTML cannot reach the network,
+navigate the app, submit forms or load remote assets. `image/png|jpeg|svg+xml` become a
+`data:`-URL `<img>` and `application/json` is pretty-printed. `text/markdown` goes through the
+product's Markdown renderer, the **same policy as markdown cells** — a pre-existing product decision,
+not a property of this protocol, and a known asymmetry with the sandboxed HTML path.
+
+**Persistence.** The executed cell's outputs are written into the copy's ipynb in the order
+`stream(stdout)` → `display_data*` → `error`/`stream(stderr)` (`notebooks.py:194` `_apply_result`;
+`_display_outputs`, `:162` — an `application/json` record is stored **parsed**, everything else as a
+string), so `GET /document/<itemId>` already returns them as ordinary nbformat `display_data`.
+
+**Caveat — `os.write`.** Displays are captured by the runner, not by wrapping the streams, so the
+print-vs-`os.write` distinction does not apply to them. It still applies to `stdout`: on `/run` the
+child's stdout is the pipe the host reads, so `os.write(1, …)` does reach the caller; on `/run-all`
+the driver swaps `sys.stdout`/`sys.stderr` for `io.StringIO`, so bytes written straight to fd 1
+bypass per-cell capture and are discarded (`execute_all` docstring). Use `print` or `display` for
+output you want back.
 
 ## 4. Sidebar embedding
 
@@ -418,6 +588,10 @@ exactly the line `serve_lab.py` prints (`scripts/serve_lab.py:26`; `README.md:18
   `results.json` is written with the secret values already masked (§5.4), so a kill mid-run leaves
   neither file holding a raw secret. The whole temp dir is removed when the request returns
   (`:1474`).
+- **Wave 11: a `/run` gets a per-run temp dir of the same kind.** The child writes its display
+  records to `results.json` there with text mimes already masked (§3.8), the payload it is fed holds
+  secret **names** only, and `Kernel.execute` removes the dir before it returns. An `image/*` record
+  is base64 and is deliberately not redacted (§3.8).
 - **Contract consequence:** the desktop layer that materialises the store file is responsible for
   creating it **mode `0600`** (POSIX) and for its directory being `0700`. The Lab performs no
   `chmod`/`umask` and never tightens permissions — verified: no `chmod`, `os.chmod`, `umask` or
@@ -454,6 +628,9 @@ exactly the line `serve_lab.py` prints (`scripts/serve_lab.py:26`; `README.md:18
 - Redaction is applied **before** persistence, so the value written into the ipynb is the redacted
   text (`src/rox_cookbooks/kernel.py:988-989` → `persist_code_output`,
   `src/rox_cookbooks/notebooks.py:119-147`).
+- **Wave 11 displays follow the same policy** (§3.8): text mimes are masked in the child before the
+  temp write and masked again by the caller with these same values; `image/*` is not redacted at all
+  (opaque image data, passed through as-is — substituting inside it would corrupt the payload).
 
 ### 5.5 Missing credentials
 

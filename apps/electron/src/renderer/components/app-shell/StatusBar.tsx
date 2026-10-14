@@ -296,7 +296,7 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
     <div
       data-slot="status"
       data-testid="compact-status-bar"
-      className="chrome-strip chrome-label-sm label-tracking flex shrink-0 items-center justify-between gap-1 px-1.5 text-muted-foreground"
+      className="chrome-strip chrome-label-sm leading-none label-tracking flex shrink-0 items-center justify-between gap-1 px-1.5 text-muted-foreground"
       style={{ height: STATUS_BAR_HEIGHT }}
     >
       <div className="flex min-w-0 items-center gap-0.5 overflow-hidden">

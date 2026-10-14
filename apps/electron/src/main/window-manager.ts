@@ -680,6 +680,16 @@ export class WindowManager {
     }
   }
 
+  /** Tray «Rox Mini»: toggle the compact window for the last active window. */
+  toggleMiniWindow(): boolean {
+    const window = this.getLastActiveWindow()
+    if (!window || window.isDestroyed()) return false
+    const id = window.webContents.id
+    if (this.miniWindows.has(id)) this.exitMiniWindow(window, id)
+    else this.enterMiniWindow(window, id)
+    return true
+  }
+
   private enterMiniWindow(window: BrowserWindow, webContentsId: number): void {
     if (window.isDestroyed() || this.miniWindows.has(webContentsId)) return
     this.miniWindows.set(webContentsId, {

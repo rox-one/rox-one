@@ -1513,11 +1513,6 @@ html[data-render-profile="performance"] :is(.animate-shimmer-loading, .animate-s
 html[data-render-profile="performance"] .animate-shimmer::after {
   animation: none !important;
 }
-/* The nav sweep freezes at its transparent end; keep a solid hairline instead. */
-html[data-render-profile="performance"] .rox-nav-shimmer::after {
-  animation: none !important;
-  background: var(--accent);
-}
 /* Decorative pulses (skeleton loaders, motion-safe icons) stop too. Spinners
    (animate-spin) keep turning, and pulses that carry live state (recording,
    running) opt out with data-live-indicator. */
@@ -1880,6 +1875,17 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   }
 }
 
+/* top-50 #49: lite / reduced-data mode drops decorative motion and blur. */
+/* Near-zero (not 0s) so transitionend / animationend still fire for code that
+   waits on them. Spinners and loaders keep running at their own speed. */
+:root[data-lite] *:not(.animate-spin, .animate-ping, [role="progressbar"], [data-spinner], .spinner, .loader),
+:root[data-lite] *:not(.animate-spin, .animate-ping, [role="progressbar"], [data-spinner], .spinner, .loader)::before,
+:root[data-lite] *:not(.animate-spin, .animate-ping, [role="progressbar"], [data-spinner], .spinner, .loader)::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+:root[data-lite] { --material-blur-topbar: 0; --material-blur-rail: 0; --material-blur-strip: 0; --material-blur-inspector: 0; --material-blur-sidebar: 0; --material-blur-navigator: 0; --material-blur-chat: 0; --material-blur-composer: 0; --material-blur-popover: 0; }
 
 /* ── Grid-tile density (multi-panel grid + Home widgets) ──────────────────
    One scale, applied by token: every Tailwind text step inside a grid tile
@@ -1965,4 +1971,35 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
 @keyframes rox-shell-overlay-in {
   from { opacity: 0; transform: translateX(calc(var(--spacing) * -3)); }
   to { opacity: 1; transform: none; }
+}
+
+/* Panel container queries (fluid panels). PanelSlot is the `panel` size
+   container (@container/panel), so these tiers follow the panel's own width,
+   not the window: a split view and a full-width surface get the same rhythm at
+   the same panel size. Tokens inherit from the container's direct child; the
+   opt-in primitives below read them. Static layout only (no transitions), so a
+   live resize reflows without animating. */
+.\@container\/panel > * {
+  --panel-gutter: calc(var(--spacing) * 3);
+  --panel-measure: 100%;
+}
+@container panel (min-width: 720px) {
+  .\@container\/panel > * {
+    --panel-gutter: calc(var(--spacing) * 5);
+    --panel-measure: 880px;
+  }
+}
+@container panel (min-width: 1200px) {
+  .\@container\/panel > * {
+    --panel-gutter: calc(var(--spacing) * 8);
+    --panel-measure: 1040px;
+  }
+}
+.rox-panel-gutter {
+  padding-inline: var(--panel-gutter, calc(var(--spacing) * 3));
+}
+.rox-panel-measure {
+  inline-size: 100%;
+  max-inline-size: var(--panel-measure, 100%);
+  margin-inline: auto;
 }
