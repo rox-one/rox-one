@@ -238,7 +238,8 @@ export function SessionList({
   // --- Chat folders (DSH-style): folder groups on top of the normal list ---
   const { state: chatFolders, mutate: mutateChatFolders } = useChatFolders(workspaceId)
   const folderAssignments = useMemo(() => effectiveFolderAssignments(chatFolders), [chatFolders])
-  const foldersActive = chatFolders.folders.length > 0
+  // Folders group the normal list only; search results stay a flat ranked list.
+  const hasChatFolders = chatFolders.folders.length > 0
 
   // Display groupBy drives list grouping when set; legacy per-view grouping
   // mode remains the fallback for groupBy === 'none'.
@@ -397,12 +398,13 @@ export function SessionList({
     collapsedGroups,
     groupingMode: effectiveGroupingMode,
     bucketRepresentatives,
-    folderAssignments: foldersActive ? folderAssignments : undefined,
+    folderAssignments: hasChatFolders ? folderAssignments : undefined,
   })
 
   // FR-45: rank drag under the same rule as the table (orderBy === 'rank');
   // disabled in search mode where relevance owns the order.
   const rankDragEnabled = collectionDisplay.orderBy === 'rank' && !isSearchMode
+  const foldersActive = hasChatFolders && !isSearchMode
 
   const groupedRowData = useMemo(() => {
     // Within-group order: latest activity first — except under rank ordering,
