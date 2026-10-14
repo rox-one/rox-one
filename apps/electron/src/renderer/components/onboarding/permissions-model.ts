@@ -165,6 +165,32 @@ export function canToggle(entry: PermissionEntry, state: PermissionState): Toggl
   return { blocked: false }
 }
 
+const PERMISSION_PLATFORMS: readonly PermissionPlatform[] = ['mac', 'win', 'other']
+const GRANT_STATUSES: readonly GrantStatus[] = ['granted', 'denied', 'not-determined', 'unsupported']
+
+/** Rehydrate a persisted first-run permissions blob. Corrupt input → undefined. */
+export function parsePermissionState(raw: unknown): PermissionState | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  const rec = raw as Record<string, unknown>
+  const platform = PERMISSION_PLATFORMS.includes(rec.platform as PermissionPlatform)
+    ? (rec.platform as PermissionPlatform)
+    : undefined
+  if (!platform) return undefined
+  const enabled: Partial<Record<PermissionId, boolean>> = {}
+  if (rec.enabled && typeof rec.enabled === 'object' && !Array.isArray(rec.enabled)) {
+    for (const [key, value] of Object.entries(rec.enabled as Record<string, unknown>)) {
+      if (typeof value === 'boolean') enabled[key as PermissionId] = value
+    }
+  }
+  const grants: Partial<Record<PermissionId, GrantStatus>> = {}
+  if (rec.grants && typeof rec.grants === 'object' && !Array.isArray(rec.grants)) {
+    for (const [key, value] of Object.entries(rec.grants as Record<string, unknown>)) {
+      if (GRANT_STATUSES.includes(value as GrantStatus)) grants[key as PermissionId] = value as GrantStatus
+    }
+  }
+  return { platform, enabled, grants }
+}
+
 /** Initial state: every visible entry preselected per its `defaultOn`. */
 export function initialPermissionsState(
   platform: PermissionPlatform,
