@@ -31,6 +31,7 @@ export const CodeFenceEnter = Extension.create({
         if (block.type.name !== 'paragraph' || $from.parentOffset !== block.content.size) return false
         const language = codeFenceLanguage(block.textContent)
         if (language === undefined) return false
+        const attributes = language ? { language } : undefined
         // A list item cannot hold a code block as its first child, so lift it
         // out of every enclosing list first (innermost first).
         const listItems: string[] = []
@@ -46,13 +47,13 @@ export const CodeFenceEnter = Extension.create({
         // chain().run() applies earlier steps even when a later command fails, so
         // dry-run first: a refused conversion must never eat the fence text.
         if (listItems.length === 0) {
-          if (!strip(editor.can().chain()).setCodeBlock({ language }).run()) return false
-          return strip(editor.chain()).setCodeBlock({ language }).run()
+          if (!strip(editor.can().chain()).setCodeBlock(attributes).run()) return false
+          return strip(editor.chain()).setCodeBlock(attributes).run()
         }
         // can() cannot see the lifted block, so lifting and retyping are two steps.
         if (!strip(editor.can().chain()).run()) return false
         strip(editor.chain()).run()
-        editor.commands.setCodeBlock({ language })
+        editor.commands.setCodeBlock(attributes)
         return true
       },
     }
