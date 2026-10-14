@@ -65,3 +65,5 @@
 | 2026-10-14 | W9 merge PR #2027 | merge `475034b4` | ✅ влито в main |
 | 2026-10-14 | W10 «Cell Structure» (PR #2050): структурные операции ячеек + hover-«+»/«⋯»/Ctrl+M; sidecar `/cells/*`, run-guard 409, `_document_lock`; IPC `mutate`; фиксы G3/G4 | `a5de9a58c` | ✅ |
 | 2026-10-14 | W10 merge PR #2050 | merge `2b18fe4f` | ✅ влито в main |
+| 2026-10-14 | W11 «Rich Output & Persistence» (PR #2073): display_data end-to-end (display/хвост/matplotlib), персист выводов + execution_count, CSP-iframe, транспорт-бюджеты; фиксы G3/G4 | `8321dc035` | ✅ |
+| 2026-10-14 | W11 merge PR #2073 | merge `cb707f2b` | ✅ влито в main |
