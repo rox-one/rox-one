@@ -1,6 +1,6 @@
 /**
  * Start-screen visuals shared by the first-run onboarding steps: the animated
- * Rox logo, the eye mark used inside the primary button, and a fit-to-viewport
+ * Rox logo and a fit-to-viewport
  * wrapper that scales a step down instead of letting the page scroll.
  *
  * All motion lives in onboarding-start.css and is switched off under
@@ -9,7 +9,6 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 import { CraftAgentsSymbol } from '@/components/icons/CraftAgentsSymbol'
-import roxEyeMark from '@/assets/rox-eye-mark.png'
 
 export function AnimatedRoxLogo({ className }: { className?: string }) {
   return (
@@ -23,19 +22,6 @@ export function AnimatedRoxLogo({ className }: { className?: string }) {
         <CraftAgentsSymbol className="size-[52px]" />
       </span>
     </div>
-  )
-}
-
-/** The grayscale Rox eye (the app-icon crop), round, for buttons. */
-export function RoxEyeMark({ className }: { className?: string }) {
-  return (
-    <img
-      src={roxEyeMark}
-      alt=""
-      aria-hidden="true"
-      draggable={false}
-      className={cn('onb-eye shrink-0 rounded-full', className)}
-    />
   )
 }
 

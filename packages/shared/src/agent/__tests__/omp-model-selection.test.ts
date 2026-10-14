@@ -1,18 +1,49 @@
 import { afterEach, describe, expect, it } from 'bun:test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { createPocketFixture } from '../../auth/__tests__/pocket-test-fixture.ts';
+import { LOCAL_ROX_CALLER, peekRoxAccountAuthority, setRoxAccountAuthority } from '../../auth/rox-account-authority.ts';
 import { OmpAgent } from '../omp-agent.ts';
 import { ompStateHasModel, resolveVerifiedOmpModelTarget } from '../omp-model-selection.ts';
 import { chatEvents, createFakeOmp, makeOmpConfig, useFakeOmpEnv, type FakeOmp } from './omp-fake-cli.ts';
 
 let fake: FakeOmp | undefined;
 let restore: (() => void) | undefined;
+let restoreAuthority: (() => void) | undefined;
+let restoreConfigEnv: (() => void) | undefined;
 let agent: OmpAgent | undefined;
 
-function setup(scenario: string, model = 'rox/standard') {
+async function setup(scenario: string, model = 'rox/standard') {
   fake = createFakeOmp(scenario);
   restore = useFakeOmpEnv(fake);
-  agent = new OmpAgent(makeOmpConfig(fake, { model }));
+  const envKeys = ['ROX_CONFIG_DIR', 'CRAFT_CONFIG_DIR', 'ROX_API_KEY', 'ROX_BASE_URL', 'PI_CODING_AGENT_DIR', 'PI_CONFIG_FILES', 'OMP_PROFILE'] as const;
+  const savedEnv = new Map(envKeys.map(key => [key, process.env[key]]));
+  restoreConfigEnv = () => {
+    for (const [key, value] of savedEnv) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  };
+  const configDir = join(fake.dir, 'config');
+  mkdirSync(configDir);
+  process.env.ROX_CONFIG_DIR = configDir;
+  process.env.CRAFT_CONFIG_DIR = configDir;
+  for (const key of envKeys.slice(2)) delete process.env[key];
+  const previousAuthority = peekRoxAccountAuthority();
+  // The setter assigns its singleton directly; restore an initially unset
+  // singleton too, without loading a host account store.
+  restoreAuthority = () => setRoxAccountAuthority(previousAuthority!);
+  // A public `rox/*` model is only executed behind a trusted caller context.
+  // Without this fixture the agent stops at ROX_TRUSTED_ACCOUNT_REQUIRED and
+  // never starts the peer, which is a different, separately covered contract.
+  const pocket = createPocketFixture();
+  await pocket.authority.start(LOCAL_ROX_CALLER);
+  await pocket.authority.state(LOCAL_ROX_CALLER);
+  setRoxAccountAuthority(pocket.authority);
+  agent = new OmpAgent(makeOmpConfig(fake, {
+    model,
+    roxExecutionContext: await pocket.authority.capture(LOCAL_ROX_CALLER),
+  }));
   return { agent, fake };
 }
 
@@ -26,18 +57,22 @@ async function waitForRpcFrame(fake: FakeOmp, predicate: (frame: Record<string, 
   throw new Error('Expected fake OMP RPC frame did not arrive');
 }
 
-afterEach(() => {
+afterEach(async () => {
   agent?.destroy();
+  restoreAuthority?.();
+  restoreConfigEnv?.();
   restore?.();
-  fake?.cleanup();
+  await fake?.cleanup();
   agent = undefined;
   fake = undefined;
   restore = undefined;
+  restoreAuthority = undefined;
+  restoreConfigEnv = undefined;
 });
 
 describe('OMP requested model before provider execution', () => {
   it('pins and reads back the requested model before the first prompt', async () => {
-    const { agent, fake } = setup('model-public');
+    const { agent, fake } = await setup('model-public');
     const events = await chatEvents(agent, 'QA model selection', 8_000);
     expect(events.some(e => e.type === 'text_complete')).toBe(true);
     const frames = fake.readRpcLog();
@@ -50,7 +85,7 @@ describe('OMP requested model before provider execution', () => {
   });
 
   it('pins again after a real child respawn instead of inheriting its default', async () => {
-    const { agent, fake } = setup('model-public');
+    const { agent, fake } = await setup('model-public');
     await chatEvents(agent, 'first turn', 8_000);
     await agent.reconnect();
     await chatEvents(agent, 'after reconnect', 8_000);
@@ -62,7 +97,7 @@ describe('OMP requested model before provider execution', () => {
 
   for (const scenario of ['model-reject', 'model-wrong-readback', 'model-missing-readback', 'model-legacy-catalog']) {
     it(`does not execute a prompt when the model cannot be verified: ${scenario}`, async () => {
-      const { agent, fake } = setup(scenario);
+      const { agent, fake } = await setup(scenario);
       const events = await chatEvents(agent, 'must not reach another provider', 8_000);
       expect(fake.readRpcLog().filter(f => f.type === 'prompt')).toHaveLength(0);
       expect(events.some(e => e.type === 'error')).toBe(true);
@@ -74,7 +109,7 @@ describe('OMP requested model before provider execution', () => {
 
   for (const model of ['rox/not-kimi-k2', 'rox/invalid-kimi-k3']) {
     it(`does not execute an unknown qualified model sharing a catalog suffix: ${model}`, async () => {
-      const { agent, fake } = setup('model-public', model);
+      const { agent, fake } = await setup('model-public', model);
       const events = await chatEvents(agent, 'invalid exact model must not execute', 8_000);
       expect(fake.readRpcLog().filter((frame) => frame.type === 'prompt')).toHaveLength(0);
       expect(events.some((event) => event.type === 'error')).toBe(true);
@@ -84,7 +119,7 @@ describe('OMP requested model before provider execution', () => {
   }
 
   it('verifies a runtime model update before the next prompt', async () => {
-    const { agent, fake } = setup('model-public');
+    const { agent, fake } = await setup('model-public');
     await chatEvents(agent, 'first turn', 8_000);
     await agent.updateRuntimeConfig({ model: 'rox/kimi-k2' });
     await chatEvents(agent, 'updated turn', 8_000);
@@ -93,7 +128,7 @@ describe('OMP requested model before provider execution', () => {
   });
 
   it('uses the latest runtime update arriving during the initial model pin', async () => {
-    const { agent, fake } = setup('model-delayed');
+    const { agent, fake } = await setup('model-delayed');
     const eventsPending = chatEvents(agent, 'first turn with delayed selection', 8_000);
     await waitForRpcFrame(fake, (frame) => frame.type === 'set_model');
     const updatePending = agent.updateRuntimeConfig({ model: 'rox/kimi-k2' });
@@ -105,7 +140,7 @@ describe('OMP requested model before provider execution', () => {
   });
 
   it('recovers from a rejected selection on a new child without a poisoned queue', async () => {
-    const { agent, fake } = setup('model-reject');
+    const { agent, fake } = await setup('model-reject');
     expect((await chatEvents(agent, 'rejected turn', 8_000))
       .some((event) => event.type === 'error')).toBe(true);
     fake.setScenario('model-public');
@@ -118,7 +153,7 @@ describe('OMP requested model before provider execution', () => {
   });
 
   it('handles an asynchronous stale stdin EPIPE during teardown', async () => {
-    const { agent } = setup('model-public');
+    const { agent } = await setup('model-public');
     await chatEvents(agent, 'first turn', 8_000);
     const child = (agent as any).subprocess;
     await agent.reconnect();
@@ -129,7 +164,7 @@ describe('OMP requested model before provider execution', () => {
   });
 
   it('pins after branch restoration, which can restore a different model', async () => {
-    const { agent, fake } = setup('model-branch');
+    const { agent, fake } = await setup('model-branch');
     const parentSessionPath = join(fake.workspaceRoot, 'sessions', 'parent');
     const parentDir = join(parentSessionPath, 'omp');
     mkdirSync(parentDir, { recursive: true });
