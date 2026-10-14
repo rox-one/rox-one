@@ -22,9 +22,9 @@ import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { cn } from '@/lib/utils'
 import { buildStatusBarModel, countActiveRuns, countPendingApprovals, statusBarPermissionMode } from './status-model'
-import { CHROME_DENSITY } from './chrome-density'
 
-const STATUS_BAR_HEIGHT = CHROME_DENSITY.statusBarHeight
+/** CSS var so the bar follows `data-density`. */
+const STATUS_BAR_HEIGHT = 'var(--chrome-status-height)'
 
 function permissionLabel(
   mode: string,
@@ -92,7 +92,7 @@ function StatusBarInner() {
   return (
     <div
       data-slot="status"
-      className="chrome-strip chrome-label-sm flex shrink-0 items-center justify-between gap-2 px-2.5 text-[var(--chrome-label)]"
+      className="chrome-strip chrome-label-sm leading-none flex shrink-0 items-center justify-between gap-2 px-2.5 text-[var(--chrome-label)]"
       style={{ height: STATUS_BAR_HEIGHT }}
     >
       <div className="flex min-w-0 items-center gap-1.5">

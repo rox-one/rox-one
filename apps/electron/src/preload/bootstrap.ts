@@ -730,6 +730,7 @@ const telemetryBootstrapConfig = (() => {
   vcredistMissing: process.env.CRAFT_VCREDIST_MISSING === '1',
   downloadUrl: process.env.CRAFT_VCREDIST_URL,
 })
+;(api as ElectronAPI).exitMiniWindow = () => ipcRenderer.invoke('window:exit-mini')
 ;(api as ElectronAPI).miniGlass = {
   setExpanded: (expanded: boolean) => ipcRenderer.invoke('mini-glass:set-expanded', expanded),
   submit: (text: string | null) => ipcRenderer.invoke('mini-glass:submit', text),

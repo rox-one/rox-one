@@ -1,7 +1,11 @@
 // =============================================================================
 // Protocol re-exports (channels, DTOs, events, wire types)
 // =============================================================================
-export * from '@rox/shared/protocol'
+// Type-only: a value `export *` evaluates dto.ts + channels.ts (~120 KB of
+// protocol source) for every value importer of this barrel, including the
+// renderer boot graph. RPC_CHANNELS / generateMessageId / CodedError come
+// from `@rox/shared/protocol` (or a local helper) instead.
+export type * from '@rox/shared/protocol'
 
 // Cookbooks Lab surface contract (SPEC §Data & API contracts + §Amendment 1):
 // runtime status vocabulary, discovery parser, data-plane DTOs and the typed
@@ -10,8 +14,12 @@ export { CookbooksApiError } from './cookbooks'
 export type {
   CookbooksCard,
   CookbooksCell,
+  CookbooksCellMutation,
+  CookbooksDisplay,
   CookbooksDocument,
   CookbooksFailureReason,
+  CookbooksMutateInput,
+  CookbooksMutateResult,
   CookbooksOutput,
   CookbooksRunCell,
   CookbooksRunResult,
@@ -22,7 +30,9 @@ export type {
 import type {
   CookbooksCard,
   CookbooksDocument,
-  CookbooksRunCell,
+  CookbooksMutateInput,
+  CookbooksMutateResult,
+  CookbooksRunAllResult,
   CookbooksRunResult,
   CookbooksStatus,
 } from './cookbooks'
@@ -1912,6 +1922,8 @@ export interface ElectronAPI {
   serviceLifecycleUninstall(): Promise<ServiceLifecycleResult>
   /** Push: the local service state changed (tray/menu surfaces). */
   onServiceLifecycleStatusChanged(callback: (status: ServiceStatus) => void): () => void
+  /** Push this window's menu-bar snapshot (badge count, recents, balance, recording) to main. */
+  reportTrayState(report: import('@rox/shared/protocol').TrayStateReport): Promise<void>
   // e1.6: doctor diagnostics (service/port/runtime/config/logs) — host-local.
   runDiagnostics(): Promise<DoctorReport>
   getDiagnosticsLast(): Promise<DoctorReport | null>
@@ -2220,11 +2232,29 @@ export interface ElectronAPI {
     runAll(args: {
       itemId: string
       cells: { index: number; source: string }[]
-    }): Promise<{ cells: CookbooksRunCell[] }>
+    }): Promise<CookbooksRunAllResult>
     /** Persist a cell (`index` + `source`) or the playbook `text`. */
     save(args: { itemId: string; index?: number; source?: string; text?: string }): Promise<void>
     /** Restore the copy from the catalog original (edits are lost). */
     reset(args: { itemId: string }): Promise<void>
+    /**
+     * Interrupt every active execution of `itemId` (both `/run` and `/run-all`).
+     * Idempotent; `cancelled` is the number of kernels stopped. In-flight runs
+     * resolve with `cancelled: true`.
+     */
+    cancel(args: { itemId: string }): Promise<{ ok: boolean; cancelled: number }>
+    /**
+     * Ask the user where to save the built notebook and write it. Resolves
+     * `{saved:false}` when the dialog is dismissed; a failed write rejects.
+     */
+    export(args: { itemId: string; filename: string; content: string }): Promise<{ saved: boolean; path?: string }>
+    /**
+     * Wave 10: apply a structural operation (add/delete/move/duplicate) to the
+     * copy, then resolve the re-read document together with the cell index to
+     * focus. Rejects with a `CookbooksApiError` (400 on a bad request, 409 while
+     * a run of this item is active) carrying the sidecar's own `error` text.
+     */
+    mutate(args: CookbooksMutateInput): Promise<CookbooksMutateResult>
     onStatusChanged(callback: (status: CookbooksStatus) => void): () => void
   }
 
@@ -2883,6 +2913,22 @@ export interface ElectronAPI {
   deleteLabel(workspaceId: string, labelId: string): Promise<{ stripped: number }>
   onLabelsChanged(callback: (workspaceId: string) => void): () => void
 
+  // Team messenger (channels, group chats, subscriptions) — org-scoped
+  teamChatListChannels(orgId: string): Promise<import('@rox/shared/team-chat').TeamChannelView[]>
+  teamChatCreateChannel(input: import('@rox/shared/team-chat').CreateTeamChannelInput): Promise<import('@rox/shared/team-chat').TeamChannelView>
+  teamChatJoin(channelId: string): Promise<import('@rox/shared/team-chat').TeamChannelView>
+  teamChatLeave(channelId: string, orgId: string): Promise<{ ok: true }>
+  teamChatAddMembers(channelId: string, userIds: string[]): Promise<import('@rox/shared/team-chat').TeamChannelView>
+  teamChatSetSubscribed(channelId: string, subscribed: boolean): Promise<import('@rox/shared/team-chat').TeamChannelView>
+  teamChatArchive(channelId: string, orgId: string): Promise<{ ok: true }>
+  teamChatListMessages(input: import('@rox/shared/team-chat').ListTeamMessagesInput): Promise<{
+    channel: import('@rox/shared/team-chat').TeamChannelView
+    messages: import('@rox/shared/team-chat').TeamChannelMessage[]
+  }>
+  teamChatPost(channelId: string, text: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage>
+  teamChatMarkRead(channelId: string): Promise<{ ok: true }>
+  onTeamChatChanged(callback: (change: { orgId: string; channelId?: string }) => void): () => void
+
   // Organizations (P3.1 team workspaces)
   listOrganizations(): Promise<import('@rox/shared/orgs').OrganizationWithMembers[]>
   createOrganization(input: import('@rox/shared/orgs').CreateOrganizationInput): Promise<import('@rox/shared/orgs').OrganizationWithMembers>
@@ -2903,6 +2949,9 @@ export interface ElectronAPI {
   onLlmConnectionsChanged(callback: () => void): () => void
 
   // Views (workspace-scoped, stored in views.json)
+  getChatFolders(workspaceId: string): Promise<import('@rox/shared/chat-folders').ChatFoldersState>
+  mutateChatFolders(workspaceId: string, op: import('@rox/shared/chat-folders').ChatFoldersOp): Promise<import('@rox/shared/chat-folders').ChatFoldersState>
+  onChatFoldersChanged(callback: (workspaceId: string, state: import('@rox/shared/chat-folders').ChatFoldersState) => void): () => void
   listViews(workspaceId: string): Promise<import('@rox/shared/views').ViewConfig[]>
   saveViews(workspaceId: string, views: import('@rox/shared/views').ViewConfig[]): Promise<void>
 
@@ -2920,6 +2969,8 @@ export interface ElectronAPI {
   getColorTheme(): Promise<string>
   setColorTheme(themeId: string): Promise<void>
   setAppMaterial(material: import('@rox/shared/config').MaterialSettings | null): Promise<import('@rox/shared/config').ThemeOverrides | null>
+  setAppLayers(layers: import('@rox/shared/config').ThemeLayers | null): Promise<import('@rox/shared/config').ThemeOverrides | null>
+  saveUserThemePreset(baseId: string, theme: import('@rox/shared/config').ThemeFile): Promise<string>
   getWorkspaceColorTheme(workspaceId: string): Promise<string | null>
   setWorkspaceColorTheme(workspaceId: string, themeId: string | null): Promise<void>
   getAllWorkspaceThemes(): Promise<Record<string, string | undefined>>
@@ -2968,7 +3019,7 @@ export interface ElectronAPI {
   onShellChanged(callback: (snapshot: ZenShellSnapshot) => void): () => void
   /** A6/B10 — persisted «Интерфейс» prefs + the live system accent. */
   getUiPreferences(): Promise<UiAppearanceSnapshot>
-  setUiPreferences(patch: { statusBarVisible?: boolean; accentSource?: 'brand' | 'system' }): Promise<UiAppearanceSnapshot>
+  setUiPreferences(patch: { statusBarVisible?: boolean; modePillVisible?: boolean; accentSource?: 'brand' | 'system' }): Promise<UiAppearanceSnapshot>
   /** B10 — macOS system accent colour push. */
   onAccentChanged(callback: (accent: SystemAccentSnapshot) => void): () => void
 
@@ -3073,6 +3124,7 @@ export interface ElectronAPI {
   menuNewWindow(): Promise<void>
   menuMinimize(): Promise<void>
   menuMaximize(): Promise<void>
+  exitMiniWindow(): Promise<boolean>
   /** Mini glass companion shown while a main window is minimized (macOS). */
   miniGlass: {
     setExpanded(expanded: boolean): Promise<boolean>

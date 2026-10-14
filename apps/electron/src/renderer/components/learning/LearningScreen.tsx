@@ -28,7 +28,7 @@ import type {
 } from '@rox/shared/memory/learning'
 import { cn } from '@/lib/utils'
 import { formatHotkeyDisplay } from '@/lib/platform'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import {
   LEARNING_EVIDENCE_TYPES,
   LEARNING_SCOPES,
@@ -214,7 +214,7 @@ const STATUS_TONE: Record<LearningCandidateStatus, 'muted' | 'accent' | 'warning
 
 export function LearningScreen({ workspaceId }: LearningScreenProps) {
   const { t, i18n } = useTranslation()
-  const sidebarTarget = useShellSidebarTarget()
+  const sidebarTarget = useSidebarHandledOutside()
 
   const [view, setView] = React.useState<LearningView>('dashboard')
   const [candidates, setCandidates] = React.useState<LearningCandidate[] | null>(null)
@@ -458,7 +458,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
 
   // ── Facets ───────────────────────────────────────────────────────────────
   const facets = (
-    <ShellSidebarPortal className={cn(
+    <ShellSidebarPortal bareLabelKey="navigation.barePanel.filters" className={cn(
       'w-[208px] shrink-0 flex-col overflow-y-auto bg-surface-rail px-2 pb-3 pt-2',
       selected ? 'hidden @[920px]/learning:flex' : 'hidden @[760px]/learning:flex',
       filtersOpen && 'absolute inset-y-0 left-0 z-30 flex w-[min(280px,100%)] shadow-modal-small @[760px]/learning:static @[760px]/learning:w-[208px] @[760px]/learning:shadow-none',

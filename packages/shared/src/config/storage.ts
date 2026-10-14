@@ -170,6 +170,7 @@ export interface StoredConfig {
   // «Интерфейс» UI preferences (A6 compact status bar, B10 accent source).
   ui?: {
     statusBar?: boolean;  // Show the compact bottom status bar (default: true)
+    modePill?: boolean;  // Show the titlebar screen pills (default: true)
     accentSource?: 'brand' | 'system';  // Accent source (default: 'brand')
   };
   // Auto-update
@@ -772,7 +773,7 @@ const FALLBACK_CONFIG_DEFAULTS: ConfigDefaults = {
   description: 'Default configuration values for Rox',
   defaults: {
     notificationsEnabled: true,
-    colorTheme: 'rox-ink', // ROX_THEME_ID (literal: config-defaults-parity evaluates this object)
+    colorTheme: 'arc-glass', // ROX_THEME_ID (literal: config-defaults-parity evaluates this object)
     autoCapitalisation: true,
     sendMessageKey: 'enter',
     spellCheck: false,
@@ -1459,28 +1460,33 @@ export function setRichToolDescriptions(enabled: boolean): void {
  * unreadable global config returns the defaults rather than throwing, so the
  * shell renders before the first successful config write.
  */
-export function getUiPreferences(): { statusBarVisible: boolean; accentSource: 'brand' | 'system' } {
+export function getUiPreferences(): { statusBarVisible: boolean; modePillVisible: boolean; accentSource: 'brand' | 'system' } {
   const config = loadStoredConfig();
   const ui = config?.ui;
   return {
     statusBarVisible: ui?.statusBar !== false,
+    modePillVisible: ui?.modePill !== false,
     accentSource: ui?.accentSource === 'system' ? 'system' : 'brand',
   };
 }
 
 /** Persist a UI preference patch; never rewrites the file when unchanged. */
-export function setUiPreferences(patch: { statusBarVisible?: boolean; accentSource?: 'brand' | 'system' }): void {
+export function setUiPreferences(patch: { statusBarVisible?: boolean; modePillVisible?: boolean; accentSource?: 'brand' | 'system' }): void {
   const config = loadStoredConfig();
   if (!config) return;
   const current = getUiPreferences();
   const next = {
     statusBar: patch.statusBarVisible !== undefined ? patch.statusBarVisible : current.statusBarVisible,
+    ...(patch.modePillVisible !== undefined
+      ? { modePill: patch.modePillVisible }
+      : config.ui?.modePill !== undefined ? { modePill: config.ui.modePill } : {}),
     ...(patch.accentSource !== undefined
       ? { accentSource: patch.accentSource }
       : config.ui?.accentSource !== undefined ? { accentSource: config.ui.accentSource } : {}),
   };
   if (
     config.ui?.statusBar === next.statusBar &&
+    config.ui?.modePill === next.modePill &&
     config.ui?.accentSource === next.accentSource &&
     (next.accentSource !== undefined || config.ui?.statusBar !== undefined)
   ) {
@@ -2091,6 +2097,43 @@ export function updateWorkspaceRemoteServer(
   saveConfig(config);
 }
 
+/**
+ * Rename a workspace in the global registry, the record the switcher and
+ * every window list read. The workspace's own config.json `name` is written by
+ * the settings RPC; this keeps both in step.
+ */
+/**
+ * Throws when the registry record can't be renamed (missing, or not accessible
+ * to the current identity). Call before writing the workspace config so a
+ * rename never lands half-way.
+ */
+export function assertWorkspaceRecordRenamable(workspaceId: string): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  const record = config.workspaces.find((workspace) => workspace.id === workspaceId);
+  if (!record) throw new Error('Workspace not found');
+  if (!isWorkspaceAccessibleToCurrentIdentity(normalizeWorkspaceRecord(record))) {
+    throw new Error('Not authorized to rename this workspace');
+  }
+}
+
+export function renameWorkspaceRecord(workspaceId: string, name: string): void {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error('Workspace name must not be empty');
+  const config = loadStoredConfig();
+  if (!config) return;
+  const index = config.workspaces.findIndex(
+    (workspace) => workspace.id === workspaceId,
+  );
+  if (index === -1) throw new Error('Workspace not found');
+  const workspace = normalizeWorkspaceRecord(config.workspaces[index]!);
+  if (!isWorkspaceAccessibleToCurrentIdentity(workspace)) {
+    throw new Error('Not authorized to rename this workspace');
+  }
+  config.workspaces[index] = { ...workspace, name: trimmed };
+  saveConfig(config);
+}
+
 export function setActiveWorkspace(workspaceId: string): void {
   const config = loadStoredConfig();
   if (!config) return;
@@ -2609,7 +2652,7 @@ export function getAllSessionDrafts(): Record<string, SessionDraft> {
 // ============================================
 
 import type { ThemeOverrides, ThemeFile, PresetTheme } from './theme.ts';
-import { ROX_THEME_ID, type MaterialSettings } from './theme.ts';
+import { ROX_INK_THEME_ID, ROX_THEME_ID, type MaterialSettings } from './theme.ts';
 
 const APP_THEME_FILE = join(resolveConfigDir(), 'theme.json');
 const APP_THEMES_DIR = join(resolveConfigDir(), 'themes');
@@ -3750,7 +3793,7 @@ function migrateAppearanceInkDefault(config: StoredConfig, v1Seeded: boolean): b
     || LEGACY_DEFAULT_THEMES.has(config.colorTheme)
     || (v1Seeded && config.colorTheme === 'super-engineering')
   ) {
-    config.colorTheme = ROX_THEME_ID;
+    config.colorTheme = ROX_INK_THEME_ID;
   }
   try {
     const appTheme = loadAppTheme();
@@ -3780,7 +3823,7 @@ function migrateAppearanceDefaults(config: StoredConfig): boolean {
     return false;
   }
   if (config.colorTheme === undefined || config.colorTheme === 'nordfox-opaque' || config.colorTheme === 'haze') {
-    config.colorTheme = ROX_THEME_ID;
+    config.colorTheme = ROX_INK_THEME_ID;
   }
   config.migrationsApplied = [...(config.migrationsApplied ?? []), APPEARANCE_DEFAULTS_MIGRATION];
   return true;
