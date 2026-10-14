@@ -212,7 +212,7 @@ window.ui001.render({});` : ''}
         if (args.path === 'bindings') return { contents: bindings, loader: 'tsx', resolveDir: dirname(main) }
         if (args.path === 'entity-ui') return { contents: entityUi, loader: 'tsx', resolveDir: dirname(main) }
         if (args.path === 'knowledge') return { contents: `${leafSource}\nexport {knowledgeActiveViewIdAtom,knowledgeHomeViewAtom} from 'rox-ui001-bindings';`, loader:'tsx',resolveDir:dirname(main) }
-        const name = args.path.split('/').at(-1)
+        const name = args.path.split('/').at(-1) ?? 'Leaf'
         // Consumers import a stubbed screen both as the default and by its own
         // name (e.g. `import { SettingsScreenSidebar } from
         // '@/pages/settings/SettingsScreenSidebar'`), so expose the leaf under
