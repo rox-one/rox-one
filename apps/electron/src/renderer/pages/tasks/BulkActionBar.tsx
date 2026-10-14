@@ -26,7 +26,7 @@ export function BulkActionBar({ count, onAction, onClear }: BulkActionBarProps) 
       role="toolbar"
       aria-label={t('tasks.bulk.toolbar', { count })}
       data-testid="tasks-bulk-bar"
-      className="pointer-events-auto fixed bottom-6 left-1/2 z-[var(--z-popover)] flex -translate-x-1/2 items-center gap-1 rounded-[var(--radius-card)] border border-border-subtle bg-background/70 px-2 py-1.5 text-sm shadow-strong backdrop-blur-xl"
+      className="pointer-events-auto fixed bottom-6 left-1/2 z-chrome flex -translate-x-1/2 items-center gap-1 rounded-[var(--radius-card)] border border-border-subtle bg-background/70 px-2 py-1.5 text-sm shadow-strong backdrop-blur-xl"
     >
       <span className="px-2 font-medium tabular-nums" aria-live="polite" data-testid="tasks-bulk-count">
         {t('tasks.bulk.selected', { count })}

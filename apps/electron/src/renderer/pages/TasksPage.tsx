@@ -99,6 +99,7 @@ import { QuickEntry, type QuickEntryResult } from './tasks/QuickEntry'
 import { MoveDialog, type MoveDestination } from './tasks/MoveDialog'
 import { BulkActionBar, type BulkAction } from './tasks/BulkActionBar'
 import { orderedSelection, pruneSelection, rangeSelection, toggleInSelection } from './tasks/multi-select'
+import { applyDestinationTo, clearSelection, plainClick, runBulkOperation, selectAll, settleToggle, undoBulkOperation, type BulkSnapshot, type SelectionState } from './tasks/bulk-actions'
 import { TaskDetail } from './tasks/TaskDetail'
 import { useTaskDetailDrafts } from './tasks/use-task-detail-drafts'
 import { TaskSidebar } from './tasks/TaskSidebar'
@@ -602,53 +603,45 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const clearMulti = useCallback(() => setMulti((prev) => (prev.size ? new Set() : prev)), [])
   const bulkIds = multi.size > 1 ? orderedSelection(multi, visibleIds) : []
 
+  const applySelection = (next: SelectionState) => {
+    setMulti(next.multi)
+    if (next.focus !== selectedId) selectTask(next.focus)
+  }
+
+  const onRowMouseDown = (event: React.MouseEvent) => {
+    // Keep ⇧-click from extending the native text selection.
+    if (event.shiftKey) event.preventDefault()
+  }
+
   const onRowClick = (event: React.MouseEvent, id: string) => {
     const mod = event.metaKey || event.ctrlKey
     if (event.shiftKey) {
-      event.preventDefault()
-      setMulti(rangeSelection(visibleIds, anchorRef.current ?? selectedId, id))
-      return
-    }
-    if (mod) {
-      setMulti((prev) => toggleInSelection(prev, id, selectedId))
-      anchorRef.current = id
+      const range = rangeSelection(visibleIds, anchorRef.current ?? selectedId, id)
+      applySelection(range.size > 1 ? { multi: range, focus: selectedId ?? id } : plainClick(id))
       return
     }
     anchorRef.current = id
-    clearMulti()
-    selectTask(id)
+    if (mod) {
+      const next = toggleInSelection(multi, id, selectedId)
+      const focus = selectedId && next.has(selectedId) ? selectedId : next.has(id) ? id : [...next][0] ?? null
+      applySelection(settleToggle(next, focus))
+      return
+    }
+    applySelection(plainClick(id))
   }
 
-  const runBulk = (action: BulkAction) => {
+  const runBulk = (action: BulkAction, dest?: string) => {
     const ids = bulkIds
     if (!ids.length) return
-    if (action === 'move') { setBulkMove(true); return }
-    if (action === 'trash') {
-      mutate((current) => { for (const id of ids) if (current.get(id)) current.trash(id) })
-      toast(t('tasks.bulk.trashed', { count: ids.length }), {
-        action: { label: t('tasks.toast.undo'), onClick: () => mutate((current) => { for (const id of ids) if (current.get(id)) current.restore(id) }) },
+    if (action === 'move' && !dest) { setBulkMove(true); return }
+    let snapshot: BulkSnapshot | null = null
+    mutate((current) => { snapshot = runBulkOperation(current, ids, action, { pending: pendingDone, dest }) })
+    const snap = snapshot as BulkSnapshot | null
+    if (snap && snap.affected.length) {
+      const key = action === 'complete' ? 'tasks.bulk.completed' : action === 'trash' ? 'tasks.bulk.trashed' : 'tasks.bulk.updated'
+      toast(t(key, { count: snap.affected.length }), {
+        action: { label: t('tasks.toast.undo'), onClick: () => mutate((current) => undoBulkOperation(current, snap)) },
       })
-    } else if (action === 'complete') {
-      const done: string[] = []
-      const spawned: string[] = []
-      mutate((current) => {
-        for (const id of ids) {
-          const task = current.get(id)
-          if (!task || task.completedAt || task.cancelledAt) continue
-          done.push(id)
-          const next = current.completeTask(id).next
-          if (next) spawned.push(next.id)
-        }
-      })
-      if (done.length) toast(t('tasks.bulk.completed', { count: done.length }), {
-        action: { label: t('tasks.toast.undo'), onClick: () => mutate((current) => {
-          for (const id of done) if (current.get(id)) current.reopen(id)
-          for (const id of spawned) if (current.get(id)) current.remove(id)
-        }) },
-      })
-    } else {
-      const when: TaskWhen = action === 'today' ? { kind: 'today' } : action === 'evening' ? { kind: 'evening' } : { kind: 'someday' }
-      mutate((current) => { for (const id of ids) if (current.get(id)) current.setWhen(id, when) })
     }
     clearMulti()
   }
@@ -707,25 +700,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }, [areas, personalProjects, projects, store, t])
 
   const applyDestination = useCallback((taskId: string, dest: string) => {
-    const tomorrow = startOfLocalDay(Date.now()) + DAY
-    mutate((current) => {
-      if (!current.get(taskId)) return
-      if (dest === 'list:inbox') current.moveTo(taskId, { list: 'inbox', projectId: null, areaId: null })
-      else if (dest === 'when:today') current.setWhen(taskId, { kind: 'today' })
-      else if (dest === 'when:evening') current.setWhen(taskId, { kind: 'evening' })
-      else if (dest === 'when:tomorrow' || dest === 'when:upcoming') current.setWhen(taskId, { kind: 'date', at: tomorrow })
-      else if (dest === 'when:anytime') current.setWhen(taskId, { kind: 'anytime' })
-      else if (dest === 'when:someday') current.setWhen(taskId, { kind: 'someday' })
-      else if (dest === 'noplace') current.moveTo(taskId, { projectId: null, areaId: null })
-      else if (dest.startsWith('project:')) current.moveTo(taskId, { projectId: dest.slice(8) })
-      else if (dest.startsWith('area:')) current.moveTo(taskId, { areaId: dest.slice(5) })
-      else if (dest.startsWith('heading:')) {
-        const [, pid, hid] = dest.split(':')
-        current.moveTo(taskId, { projectId: pid!, headingId: hid! })
-      } else if (dest === 'trash') current.trash(taskId)
-      else if (dest === 'logbook' && !current.get(taskId)!.completedAt) current.completeTask(taskId)
-      if (current.get(taskId)!.trashedAt != null && dest !== 'trash') current.restore(taskId)
-    })
+    mutate((current) => applyDestinationTo(current, taskId, dest))
   }, [mutate])
 
   // ── Keyboard ────────────────────────────────────────────────────────────
@@ -763,10 +738,10 @@ export default function TasksPage(props: TasksPageProps = {}) {
       void delegate(selected)
       return
     }
-    if (!typing && multi.size && event.key === 'Escape') { event.preventDefault(); clearMulti(); return }
+    if (!typing && multi.size && event.key === 'Escape') { event.preventDefault(); applySelection(clearSelection(selectedId)); return }
     if (!typing && mod && !event.shiftKey && event.code === 'KeyA' && visibleIds.length) {
       event.preventDefault()
-      setMulti(new Set(visibleIds))
+      applySelection(selectAll(visibleIds, selectedId))
       return
     }
     if (typing) {
@@ -1026,7 +1001,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
     const isToday = isOpenTask(task) && matchesProjection(task, now, 'today')
     const place = !inProjectView && !section.onOpen && (task.projectId || task.areaId) ? (task.projectId ? projectName(task.projectId) : areaName(task.areaId)) : null
     const subs = subtasksOf(tasks, task.id)
-    const selectedRow = selectedId === task.id || multi.has(task.id)
+    const focusedRow = selectedId === task.id
+    const selectedRow = focusedRow || multi.has(task.id)
     const showStart = task.startAt != null && showToday && !isToday && !done
     const hasMeta = Boolean(place || progress.total || subs.length || source || showStart || (done && task.completedAt))
     return (
@@ -1059,8 +1035,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
         <div
           role="option"
           aria-selected={selectedRow}
-          tabIndex={selectedRow ? 0 : -1}
+          tabIndex={focusedRow ? 0 : -1}
           data-testid={`task-row-${task.id}`}
+          onMouseDown={onRowMouseDown}
           onClick={(event) => onRowClick(event, task.id)}
           onDoubleClick={() => { selectTask(task.id); window.setTimeout(() => titleRef.current?.focus(), 0) }}
           className={cn(
@@ -1562,7 +1539,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
         <MoveDialog
           title={t('tasks.bulk.moveTitle', { count: bulkIds.length })}
           destinations={moveDestinations}
-          onPick={(dest) => { for (const id of bulkIds) applyDestination(id, dest); setBulkMove(false); clearMulti(); listRef.current?.focus() }}
+          onPick={(dest) => { runBulk('move', dest); setBulkMove(false); listRef.current?.focus() }}
           onClose={() => { setBulkMove(false); listRef.current?.focus() }}
         />
       ) : null}

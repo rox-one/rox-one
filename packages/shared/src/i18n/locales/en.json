@@ -10977,6 +10977,7 @@
   "tasks.bulk.clear": "Clear selection",
   "tasks.bulk.trashed": "Tasks moved to Trash: {{count}}",
   "tasks.bulk.completed": "Tasks completed: {{count}}",
+  "tasks.bulk.updated": "Tasks updated: {{count}}",
   "tasks.toast.undo": "Undo",
   "tasks.toastCreateFailed": "Failed to create the task",
   "tasks.toastCreated": "Task created",
