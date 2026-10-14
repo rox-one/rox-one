@@ -57,7 +57,7 @@ Parallel lanes extended: phases 6–10 run in parallel with each other after Pha
 2. Full 1:1 scope confirmed: the timeline render (ffmpeg licensing/bundling), the stock-provider API terms, and the 150-function formula engine are the biggest effort items.
 3. Arc Glass is not on main yet: token names may change; depend on tokens via semantic aliases.
 4. rox-id/Pocket ID: unknown support for custom token endpoints/JWKS. May need a small sidecar on eu-swiss.
-5. The workspace path: the code uses `~/.rox/workspaces/<ws>`, while the brief says `~/rox`. Confirm.
+5. The workspace path: the code uses the workspace dir from getConfigPaths(), while the brief says `~/rox`. Confirm.
 6. The comment-only scope enforcement on Yjs updates is non-trivial (server-side decode).
 7. Electron renderer perf for 5k objects with rich text; may need WebGL later.
 8. Box memory: no full tsc/build on the box; validation on the Mac.
