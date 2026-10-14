@@ -20,6 +20,8 @@ export const CANVAS_IPC = {
   apply: 'canvas:apply',
   close: 'canvas:close',
   setEnabled: 'canvas:setEnabled',
+  listTrash: 'canvas:listTrash',
+  restore: 'canvas:restore',
   update: 'canvas:update', // main → renderer event
 } as const
 
@@ -111,6 +113,15 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
     guard(event, { flag: false })
     enabled = on === true || process.env.ROX_CANVAS === '1'
     return { ok: true as const, enabled }
+  })
+  ipcMain.handle(CANVAS_IPC.listTrash, async (event, ws: unknown) => {
+    guard(event)
+    return registry.get(ws).listTrash()
+  })
+  ipcMain.handle(CANVAS_IPC.restore, async (event, ws: unknown, id: unknown, stamp: unknown) => {
+    guard(event)
+    if (typeof stamp !== 'number' || !Number.isSafeInteger(stamp)) throw new Error('CANVAS_BAD_STAMP')
+    return registry.get(ws).restoreBoard(boardId(id), stamp)
   })
   ipcMain.handle(CANVAS_IPC.list, async (event, ws: unknown): Promise<BoardSummary[]> => {
     guard(event)

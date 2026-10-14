@@ -4518,6 +4518,7 @@ declare global {
 
 /** «Доска» board list entry (mirrors `@rox/canvas-core/node` BoardSummary). */
 export interface CanvasBoardSummary { id: string; title: string; createdAt: number; updatedAt: number }
+export interface CanvasTrashedBoard { id: string; stamp: number; title: string; createdAt: number; updatedAt: number }
 export interface CanvasBridge {
   list(workspaceId: string): Promise<CanvasBoardSummary[]>
   create(workspaceId: string, title: string): Promise<CanvasBoardSummary>
@@ -4530,5 +4531,7 @@ export interface CanvasBridge {
   close(workspaceId: string, boardId: string): Promise<{ ok: true }>
   /** Sync the `workbench.mode.canvas.v1` flag to main (handlers refuse while it is off). */
   setEnabled(enabled: boolean): Promise<{ ok: true; enabled: boolean }>
+  listTrash(workspaceId: string): Promise<CanvasTrashedBoard[]>
+  restore(workspaceId: string, boardId: string, stamp: number): Promise<CanvasBoardSummary>
   onUpdate(callback: (workspaceId: string, boardId: string, update: Uint8Array) => void): () => void
 }

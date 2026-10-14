@@ -754,6 +754,8 @@ const telemetryBootstrapConfig = (() => {
   apply: (workspaceId, boardId, update) => ipcRenderer.invoke('canvas:apply', workspaceId, boardId, update),
   close: (workspaceId, boardId) => ipcRenderer.invoke('canvas:close', workspaceId, boardId),
   setEnabled: (enabled) => ipcRenderer.invoke('canvas:setEnabled', enabled),
+  listTrash: (workspaceId) => ipcRenderer.invoke('canvas:listTrash', workspaceId),
+  restore: (workspaceId, boardId, stamp) => ipcRenderer.invoke('canvas:restore', workspaceId, boardId, stamp),
   onUpdate: (callback) => {
     const handler = (_event: unknown, workspaceId: unknown, boardId: unknown, update: unknown) => {
       if (typeof workspaceId === 'string' && typeof boardId === 'string' && update instanceof Uint8Array) callback(workspaceId, boardId, update)
