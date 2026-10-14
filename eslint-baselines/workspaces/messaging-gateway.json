@@ -63,7 +63,7 @@
     },
     "@typescript-eslint/no-unused-vars": {
       "severity": "warn",
-      "total": 35
+      "total": 3
     },
     "@typescript-eslint/no-wrapper-object-types": {
       "severity": "warn",
@@ -267,23 +267,11 @@
     }
   },
   "files": {
-    "packages/messaging-gateway/src/adapters/discord/index.ts": {
-      "@typescript-eslint/no-unused-vars": 6
-    },
-    "packages/messaging-gateway/src/adapters/lark/index.ts": {
-      "@typescript-eslint/no-unused-vars": 6
-    },
     "packages/messaging-gateway/src/adapters/telegram/format.ts": {
       "no-useless-escape": 1
     },
-    "packages/messaging-gateway/src/adapters/telegram/index.ts": {
-      "@typescript-eslint/no-unused-vars": 2
-    },
     "packages/messaging-gateway/src/adapters/wechat/ilink/api/api.ts": {
       "no-useless-escape": 2
-    },
-    "packages/messaging-gateway/src/adapters/wechat/ilink/auth/accounts.ts": {
-      "@typescript-eslint/no-unused-vars": 1
     },
     "packages/messaging-gateway/src/adapters/wechat/ilink/auth/login-qr.ts": {
       "prefer-const": 1
@@ -293,12 +281,6 @@
     },
     "packages/messaging-gateway/src/adapters/wechat/ilink/util/redact.ts": {
       "@typescript-eslint/no-unused-vars": 1
-    },
-    "packages/messaging-gateway/src/adapters/wechat/index.ts": {
-      "@typescript-eslint/no-unused-vars": 8
-    },
-    "packages/messaging-gateway/src/adapters/whatsapp/index.ts": {
-      "@typescript-eslint/no-unused-vars": 9
     },
     "packages/messaging-gateway/src/binding-store.ts": {
       "no-empty": 1

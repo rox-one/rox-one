@@ -62,6 +62,8 @@ export interface ProfileStripData {
 interface ProfileStripProps {
   data: ProfileStripData
   onClick: () => void
+  /** Opens app settings from the popover («Настройки»). */
+  onOpenSettings?: () => void
   className?: string
   defaultAvatarFallback?: React.ReactNode
   /** Avatar-only presentation for the collapsed navigation rail. */
@@ -71,6 +73,7 @@ interface ProfileStripProps {
 export function ProfileStrip({
   data,
   onClick,
+  onOpenSettings,
   className,
   defaultAvatarFallback,
   compact = false,
@@ -109,6 +112,7 @@ export function ProfileStrip({
     setOpen(false)
     onClick()
   }, [onClick])
+  const openSettings = React.useMemo(() => onOpenSettings ? () => { setOpen(false); onOpenSettings() } : undefined, [onOpenSettings])
 
   return (
 <Popover open={open} onOpenChange={setOpen}>
@@ -169,6 +173,7 @@ export function ProfileStrip({
           spentLabel={spentLabel}
           avatar={avatar}
           onOpenAccountSettings={openAccountSettings}
+          onOpenSettings={openSettings}
           onClose={() => setOpen(false)}
         />
       </PopoverContent>
