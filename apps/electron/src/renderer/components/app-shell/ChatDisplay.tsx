@@ -2609,7 +2609,7 @@ const handleFollowUpChipClick = useCallback((item: {
           <ChatInputZone
             compactMode={compactMode}
             stats={composerStats}
-            workspaceId={workspaceId}
+            workspaceId={session.workspaceId}
             tokenUsage={session.tokenUsage ? {
               inputTokens: session.tokenUsage.inputTokens,
               outputTokens: session.tokenUsage.outputTokens,
