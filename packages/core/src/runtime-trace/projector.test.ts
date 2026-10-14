@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { createRuntimeTraceFixture } from './fixture'
-import { createRuntimeProjection, reduceRuntimeEvent, projectRuntimeEvents, buildRuntimeGraph, runtimeProjectionCoverage } from './projector'
+import { createRuntimeProjection, reduceRuntimeEvent, projectRuntimeEvents, buildRuntimeGraph, runtimeProjectionCoverage, projectTurnOutline, projectTokenUsage, projectContextPressure, projectContextBreakdown } from './projector'
 import { summarizeUsage } from './metrics'
 import { isRuntimeEvent, isRuntimeAgentObservation } from './validation'
 import { known, unknown, type RuntimeEvent } from './types'
@@ -78,6 +78,89 @@ describe('runtime projection',()=>{
   test('immutable previous state retains normalized entities and event pages',()=>{
     const before=createRuntimeProjection();const after=reduceRuntimeEvent(before,fixture[0]!)
     expect(before.eventCount).toBe(0);expect(before.eventPages).toHaveLength(0);expect(before.nodes).toEqual({});expect(after.eventCount).toBe(1)
+  })
+})
+describe('dsh-p1 usage projections', () => {
+  const step = (seq: number, kind: 'step.started' | 'step.completed', turnId: string, stepNo: number, extra: Partial<RuntimeEvent> = {}) =>
+    event(seq, kind, { turnId, step: stepNo }, extra)
+  const attempt = (seq: number, turnId: string, stepNo: number, usage: Record<string, number | undefined>, extraPayload: Record<string, unknown> = {}, extra: Partial<RuntimeEvent> = {}) =>
+    event(seq, 'llm.attempt.completed', { turnId, step: stepNo, usage, ...extraPayload }, extra)
+  const fullUsage = { uncachedInput: 100, output: 20, cacheRead: 800, cacheWrite: 10, costUsd: 0.01 }
+
+  test('turnOutline counts turns and steps; in-flight steps count; runs do not merge', () => {
+    expect(projectTurnOutline([])).toEqual({ turns: [], turnCount: 0, stepCount: 0 })
+    const events = [
+      step(1, 'step.started', 'turn-a', 1), step(2, 'step.completed', 'turn-a', 1),
+      step(3, 'step.started', 'turn-a', 2), step(4, 'step.completed', 'turn-a', 2),
+      step(5, 'step.started', 'turn-b', 1),
+      attempt(6, 'turn-c', 1, fullUsage),
+    ]
+    const outline = projectTurnOutline(events)
+    expect(outline.turnCount).toBe(3)
+    expect(outline.stepCount).toBe(4) // 2 + 1 in-flight + 1 from the attempt event
+    expect(outline.turns.map(turn => turn.turnId)).toEqual(['turn-a', 'turn-b', 'turn-c'])
+    // Same provider turn id in another run is another outline turn.
+    expect(projectTurnOutline([step(1, 'step.started', 'turn-a', 1), step(2, 'step.started', 'turn-a', 1, { rootRunId: 'other-run' })]).turnCount).toBe(2)
+  })
+
+  test('tokenUsage bills every attempt; retries link but never replace', () => {
+    const events = [
+      attempt(1, 'turn-a', 1, fullUsage, { route: { provider: 'pi', model: 'rox/r1-max' } }),
+      attempt(2, 'turn-a', 2, { ...fullUsage, output: 5 }, { retryOf: 'first' }),
+      attempt(3, 'turn-b', 1, { uncachedInput: 50 }),
+    ]
+    const usage = projectTokenUsage(events)
+    expect(usage.totals.attempts).toBe(3)
+    expect(usage.totals.retries).toBe(1)
+    expect(usage.totals.uncachedInput).toBe(250)
+    expect(usage.totals.output).toBe(25) // only attempts that reported output
+    expect(usage.totals.costUsd).toBe(0.02)
+    expect(usage.totals.partial).toBe(true) // turn-b reported no output
+    expect(usage.perTurn).toHaveLength(2)
+    expect(usage.perTurn[0]).toMatchObject({ turnId: 'turn-a', attempts: 2, retries: 1, output: 25 })
+    expect(usage.attempts[1]!.retryOf).toBe('first')
+  })
+
+  test('missing usage fields stay undefined, never zero-filled', () => {
+    const usage = projectTokenUsage([attempt(1, 'turn-a', 1, {})])
+    expect(usage.totals).toMatchObject({ attempts: 1, retries: 0, uncachedInput: undefined, output: undefined, costUsd: undefined, partial: true })
+    expect(projectTokenUsage([]).totals).toMatchObject({ attempts: 0, output: undefined, costUsd: undefined, partial: false })
+  })
+
+  test('contextPressure pairs newest prompt with newest window', () => {
+    expect(projectContextPressure([])).toMatchObject({ pressureTokens: undefined, percent: undefined })
+    const captured = event(1, 'context.captured', { snapshot: {
+      id: 'ctx', version: 1, capturedAt: known(1, 'test'), originalPrompt: { text: 'hi' }, effectivePrompt: { text: 'hi' },
+      model: { confirmed: known('m', 'test'), contextWindow: known(1000, 'test') }, blocks: [], inputTokens: unknown(),
+      coverage: { state: 'complete', source: 'runtime', missing: [] } } })
+    const pressure = projectContextPressure([captured, attempt(2, 'turn-a', 1, { uncachedInput: 100, cacheRead: 800, cacheWrite: 10 })])
+    expect(pressure).toMatchObject({ pressureTokens: 910, contextWindow: 1000, percent: 91, partial: false })
+    // Attempt-reported window wins when no snapshot exists; percent needs a window.
+    expect(projectContextPressure([attempt(1, 't', 1, { uncachedInput: 50 }, { contextWindow: 200 })])).toMatchObject({ pressureTokens: 50, percent: 25 })
+    expect(projectContextPressure([attempt(1, 't', 1, { output: 5 })]).pressureTokens).toBeUndefined()
+  })
+
+  test('contextBreakdown is a labelled heuristic split, absent without snapshots', () => {
+    expect(projectContextBreakdown([attempt(1, 't', 1, fullUsage)])).toBeUndefined()
+    const snapshot = (blocks: { kind: string; text: string }[]) => event(1, 'context.captured', { snapshot: {
+      id: 'ctx', version: 1, capturedAt: known(1, 'test'), originalPrompt: { text: '' }, effectivePrompt: { text: '' },
+      model: { confirmed: known('m', 'test'), contextWindow: unknown() },
+      blocks: blocks.map((block, order) => ({ id: `b${order}`, kind: block.kind, label: block.kind, source: 'test', order, content: { text: block.text }, included: true })),
+      inputTokens: unknown(), coverage: { state: 'complete', source: 'runtime', missing: [] } } })
+    const breakdown = projectContextBreakdown([snapshot([
+      { kind: 'system', text: 'x'.repeat(400) }, { kind: 'tool-schema', text: 'y'.repeat(40) }, { kind: 'history', text: 'z'.repeat(4) },
+    ])])
+    expect(breakdown?.heuristic).toBe(true)
+    // ceil(400/4)+4=104 system, ceil(40/4)+4=14 tools, ceil(4/4)+4=5 messages.
+    expect(breakdown).toMatchObject({ system: 104, tools: 14, messages: 5 })
+  })
+
+  test('new payloads validate; malformed step/attempt events are rejected', () => {
+    expect(isRuntimeEvent(step(1, 'step.started', 'turn-a', 1))).toBe(true)
+    expect(isRuntimeEvent(attempt(1, 'turn-a', 1, fullUsage, { route: { provider: 'pi', model: 'm' }, retryOf: 'x', contextWindow: 1000, costUsd: 0.5, ttftMs: 10, decodeMs: 20 }))).toBe(true)
+    expect(isRuntimeEvent(step(1, 'step.started', 'turn-a', -1))).toBe(false)
+    expect(isRuntimeEvent(event(1, 'llm.attempt.completed', { turnId: 't', step: 1, usage: { output: -5 } }))).toBe(false)
+    expect(isRuntimeEvent(event(1, 'llm.attempt.completed', { turnId: '', step: 1, usage: {} }))).toBe(false)
   })
 })
 describe('usage',()=>{

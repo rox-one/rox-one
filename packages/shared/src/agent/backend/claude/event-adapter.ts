@@ -523,6 +523,21 @@ export class ClaudeEventAdapter extends BaseEventAdapter {
       ...(turnTotals.totals && { requestTotals: turnTotals.totals }),
     };
 
+    // One journal attempt per turn (the result carries the only full
+    // provider-reported usage; per-message updates are input-side only).
+    events.push({
+      type: 'attempt',
+      turnId: this.currentTurnId || undefined,
+      usage: {
+        inputTokens,
+        ...(typeof msg.usage.output_tokens === 'number' ? { outputTokens: msg.usage.output_tokens } : {}),
+        ...(typeof cacheRead === 'number' ? { cacheReadTokens: cacheRead } : {}),
+        ...(typeof cacheCreation === 'number' ? { cacheCreationTokens: cacheCreation } : {}),
+        ...(typeof msg.total_cost_usd === 'number' ? { costUsd: msg.total_cost_usd } : {}),
+        ...(typeof primaryModelUsage?.contextWindow === 'number' ? { contextWindow: primaryModelUsage.contextWindow } : {}),
+      },
+    });
+
     if (msg.subtype === 'success') {
       events.push({ type: 'complete', usage });
     } else {

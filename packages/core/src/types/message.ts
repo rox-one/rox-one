@@ -673,7 +673,7 @@ export type AgentEvent =
    * `llm.attempt.completed` in the runtime-trace journal. Retries emit
    * another event; `retried` marks attempts from a recovered/replayed run.
    */
-  | { type: 'attempt'; turnId?: string; usage: { inputTokens: number; outputTokens?: number; cacheReadTokens?: number; cacheCreationTokens?: number; reasoningTokens?: number; costUsd?: number; contextWindow?: number }; retried?: boolean }
+  | { type: 'attempt'; turnId?: string; usage: { inputTokens: number; outputTokens?: number; cacheReadTokens?: number; cacheCreationTokens?: number; reasoningTokens?: number; costUsd?: number; contextWindow?: number }; route?: { provider?: string; model?: string }; traceTurnId?: string; step?: number; retried?: boolean }
   | { type: 'working_directory_changed'; workingDirectory: string }
   | { type: 'task_backgrounded'; toolUseId: string; taskId: string; intent?: string; turnId?: string; kind?: 'workflow'; workflowId?: string }
   | { type: 'shell_backgrounded'; toolUseId: string; shellId: string; intent?: string; command?: string; turnId?: string }

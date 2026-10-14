@@ -38,3 +38,21 @@ The vendored snapshot lives under:
 
 See that directory's LICENSE and README.md for the full license text,
 the pinned upstream version, and the list of local adaptations.
+
+---
+
+This product includes logic ported from:
+
+  @deepseek-ai/dsh-token-meter
+  @deepseek-ai/dsh-session-turn-outline
+  Copyright (c) 2026 DeepSeek. All rights reserved.
+  Licensed under the MIT License.
+  https://github.com/deepseek-ai/deepseek-harness
+
+The ported usage projections (turn outline, per-attempt token usage,
+context pressure, heuristic context breakdown) live in
+packages/core/src/runtime-trace/projector.ts and run natively on Rox's
+runtime-trace journal; the DSH/Cordis runtime was not embedded.
+
+See notices/dsh-token-meter.LICENSE for the full license text and the
+list of local adaptations.

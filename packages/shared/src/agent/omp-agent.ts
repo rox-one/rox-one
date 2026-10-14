@@ -2247,6 +2247,9 @@ export class OmpAgent extends BaseAgent {
       this.lastUsage = usage;
       this.turnRequestTotals.add(usage.inputTokens, usage.outputTokens);
     }
+    // Per-message samples stay turn-scoped sums upstream; the single journal
+    // attempt is enqueued at agent_end from the same provider-reported usage
+    // the complete carries (one billed turn, no double counting).
 
     const text = this.extractMessageText(message);
     if (text) {
@@ -2343,6 +2346,12 @@ export class OmpAgent extends BaseAgent {
       }
     }
 
+    if (usage && typeof usage.inputTokens === 'number') {
+      // One journal attempt per turn from the same provider-reported usage the
+      // complete carries (covers Rox R1 Max / DeepSeek over OpenAI-compatible
+      // OMP connections). Per-message samples stay turn-scoped sums upstream.
+      this.eventQueue.enqueue({ type: 'attempt', usage });
+    }
     this.eventQueue.enqueue(usage ? { type: 'complete', usage } : { type: 'complete' });
     this.eventQueue.complete();
 

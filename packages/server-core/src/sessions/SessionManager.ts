@@ -943,6 +943,12 @@ interface ManagedSession {
   turnTokensPending?: number
   /** Runtime-only budget reservation; unresolved reservations survive in AgentBudgetLedger. */
   budgetRunId?: string
+  /**
+   * Runtime-only journal bookkeeping for DSH-P1 step/attempt events: one step
+   * per provider request inside the active journal turn (rootRunId). Reset
+   * whenever a new turn begins. Never persisted.
+   */
+  attemptJournal?: { rootRunId: string; step: number; lastAttemptEventId?: string; retryPending?: boolean }
   /** Session total cost at the beginning of this provider dispatch. */
   budgetCostAtStart?: number
   budgetUsageReported?: boolean
@@ -10509,13 +10515,67 @@ export class SessionManager implements ISessionManager {
           managed.streamingText = ''
           managed.streamingTurnId = undefined
         }
+        // The next journal attempt in this turn is a retry of the discarded one.
+        if (managed.attemptJournal) managed.attemptJournal.retryPending = true
         this.sendEvent({ ...event, sessionId }, workspaceId)
         break
 
       case 'retry':
         // Retry progress is transient; do not persist it as transcript history.
+        // The next journal attempt in this turn links back via retryOf.
+        if (managed.attemptJournal) managed.attemptJournal.retryPending = true
         this.sendEvent({ ...event, sessionId }, workspaceId)
         break
+
+      case 'attempt': {
+        // One provider-reported model request → one journal step with its own
+        // billed llm.attempt.completed. Journal-only: the renderer already
+        // learns session totals via complete/usage_update. REAL numbers only:
+        // a field the provider did not report stays undefined (renders "—").
+        const run = originRun === null ? undefined : (originRun ?? this.runtimeTrace.getActive(sessionId))
+        const usage = event.usage
+        if (run && usage && typeof usage.inputTokens === 'number') {
+          const journal = managed.attemptJournal?.rootRunId === run.rootRunId
+            ? managed.attemptJournal
+            : (managed.attemptJournal = { rootRunId: run.rootRunId, step: 0 })
+          const retried = event.retried ?? journal.retryPending ?? false
+          journal.retryPending = false
+          journal.step += 1
+          const step = journal.step
+          const cacheRead = typeof usage.cacheReadTokens === 'number' ? usage.cacheReadTokens : undefined
+          const cacheWrite = typeof usage.cacheCreationTokens === 'number' ? usage.cacheCreationTokens : undefined
+          const uncached = usage.inputTokens - (cacheRead ?? 0) - (cacheWrite ?? 0)
+          // Route identifies the billed model: connection provider type plus
+          // session model. Unknown stays undefined and renders as "—".
+          const attemptProviderType = managed.llmConnection ? getLlmConnection(managed.llmConnection)?.providerType : undefined
+          const route = {
+            ...(attemptProviderType ? { provider: attemptProviderType } : {}),
+            ...(managed.model ? { model: managed.model } : {}),
+          }
+          const retryOf = retried ? journal.lastAttemptEventId : undefined
+          await this.captureRuntime(async () => {
+            await this.runtimeTrace.record(run, 'step.started', { turnId: run.rootRunId, step })
+            const attemptEvent = await this.runtimeTrace.record(run, 'llm.attempt.completed', {
+              turnId: run.rootRunId,
+              step,
+              usage: {
+                ...(uncached >= 0 ? { uncachedInput: uncached } : {}),
+                ...(typeof usage.outputTokens === 'number' ? { output: usage.outputTokens } : {}),
+                ...(cacheRead !== undefined ? { cacheRead } : {}),
+                ...(cacheWrite !== undefined ? { cacheWrite } : {}),
+                ...(typeof usage.reasoningTokens === 'number' ? { reasoning: usage.reasoningTokens } : {}),
+              },
+              ...(Object.keys(route).length ? { route } : {}),
+              ...(retryOf ? { retryOf } : {}),
+              ...(typeof usage.contextWindow === 'number' ? { contextWindow: usage.contextWindow } : {}),
+              ...(typeof usage.costUsd === 'number' ? { costUsd: usage.costUsd } : {}),
+            })
+            journal.lastAttemptEventId = attemptEvent.eventId
+            await this.runtimeTrace.record(run, 'step.completed', { turnId: run.rootRunId, step })
+          })
+        }
+        break
+      }
 
       case 'text_complete': {
         // Flush any pending deltas before sending complete (ensures renderer has all content)

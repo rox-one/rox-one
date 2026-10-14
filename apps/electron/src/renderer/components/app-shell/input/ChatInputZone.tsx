@@ -9,6 +9,7 @@ import { ActiveOptionBadges } from '../ActiveOptionBadges'
 import { InputContainer } from './InputContainer'
 import { InputErrorBoundary } from './InputErrorBoundary'
 import { ComposerStatsLine } from './ComposerStatsLine'
+import { ComposerUsageStatusLine } from './ComposerUsageStatusLine'
 import type { ComposerStats } from './composer-stats'
 
 interface ChatInputZoneProps {
@@ -33,6 +34,10 @@ interface ChatInputZoneProps {
   onSetProjectId?: (projectId: string | null) => void
   /** Turns/steps/tokens/cache/context line under the composer (hidden in compact mode). */
   stats?: ComposerStats | null
+  /** Workspace scope for the journal-backed usage status line. */
+  workspaceId?: string
+  /** Session token usage (context-window/cost/output fallback for the status line). */
+  tokenUsage?: { inputTokens?: number; outputTokens?: number; contextWindow?: number; costUsd?: number } | null
   className?: string
   inputProps: React.ComponentProps<typeof InputContainer>
 }
@@ -57,6 +62,8 @@ export function ChatInputZone({
   projectId,
   onSetProjectId,
   stats,
+  workspaceId,
+  tokenUsage,
   className,
   inputProps,
 }: ChatInputZoneProps) {
@@ -134,6 +141,9 @@ export function ChatInputZone({
         />
       </InputErrorBoundary>
       {!compactMode && stats && <ComposerStatsLine stats={stats} />}
+      {!compactMode && (
+        <ComposerUsageStatusLine sessionId={sessionId} workspaceId={workspaceId} stats={stats} tokenUsage={tokenUsage} />
+      )}
     </div>
   )
 }
