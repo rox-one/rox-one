@@ -74,3 +74,24 @@ describe('ProfileStrip accessible account details', () => {
     expect(html).not.toContain('<Ada>')
   })
 })
+
+describe('ProfileStrip plan pill and level badge', () => {
+  test('hides the balance row when the balance is unknown', () => {
+    const html = render({ ...profile, balance: null })
+    expect(html).not.toContain('data-testid="profile-strip-balance"')
+    expect(description(html)).toBe(`Pro · Balance ${en['profile.balanceUnknown']}`)
+  })
+
+  test('renders a per-plan pill and a level badge with an XP ring', () => {
+    const html = render({ ...profile, plan: 'max', progress: 0.4 })
+    expect(html).toContain('data-plan="max"')
+    expect(html).toContain('data-testid="profile-strip-level"')
+    expect(html).toContain('stroke-dashoffset')
+    expect(html).toContain(en['profile.level'].replace('{{level}}', '1'))
+  })
+
+  test('level badge without XP shows only the badge track', () => {
+    const html = render({ ...profile, progress: 0 })
+    expect(html).not.toContain('stroke-dashoffset')
+  })
+})
