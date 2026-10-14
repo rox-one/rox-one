@@ -273,7 +273,9 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
 
     // Handle 'name' specially - it's a top-level config property, not in defaults
     if (key === 'name') {
-      config.name = String(normalizedValue).trim()
+      const name = String(normalizedValue ?? '').trim()
+      if (!name) throw new Error('Workspace name must not be empty')
+      config.name = name
     } else if (key === 'localMcpEnabled') {
       // Store in localMcpServers.enabled (top-level, not in defaults)
       config.localMcpServers = config.localMcpServers || { enabled: true }
@@ -299,6 +301,11 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
 
     // Save the config
     saveWorkspaceConfig(workspace.rootPath, config)
+    if (key === 'name') {
+      // The switcher and window lists read the global registry record.
+      const { renameWorkspaceRecord } = await import('@rox/shared/config/storage')
+      renameWorkspaceRecord(workspaceId, config.name)
+    }
     deps.platform.logger.info(`Workspace setting updated: ${key} = ${JSON.stringify(normalizedValue)}`)
   })
 

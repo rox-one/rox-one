@@ -29,6 +29,11 @@ export interface ModePillLayoutInput {
   /** Natural width of the right control group. */
   rightWidth: number
   metrics: ModePillMetrics
+  /**
+   * `center` (legacy): centered in the window. `right`: docked just left of the
+   * right control group, next to the panel-layout button (Mark, t78).
+   */
+  align?: 'center' | 'right'
 }
 
 /**
@@ -45,6 +50,17 @@ export interface ModePillLayout {
 }
 
 export function resolveModePillLayout(input: ModePillLayoutInput): ModePillLayout {
+  if (input.align === 'right') {
+    const room = (pillWidth: number) => input.topbarWidth - input.rightWidth - pillWidth - MODE_PILL_GAP * 2
+    const collapsed = room(input.metrics.full) < input.leftFixedEdge + MODE_PILL_MIN_LEFT_FLEX
+    const pillWidth = collapsed ? input.metrics.compact : input.metrics.full
+    return {
+      collapsed,
+      leftMax: Math.max(0, Math.floor(room(pillWidth) + MODE_PILL_GAP)),
+      // The right group keeps its natural width; the pill docks to its left.
+      rightMax: Math.max(0, Math.floor(input.topbarWidth)),
+    }
+  }
   const centerX = input.topbarWidth / 2 - input.leftInset / 2
   const fits = (pillWidth: number) =>
     centerX - pillWidth / 2 - MODE_PILL_GAP >= input.leftFixedEdge + MODE_PILL_MIN_LEFT_FLEX

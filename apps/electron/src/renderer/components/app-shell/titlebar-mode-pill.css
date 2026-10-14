@@ -17,12 +17,12 @@
   border-radius: var(--radius-full);
   /* Hairline ring shadows kept as single var() refs (the strict-value stylelint
      rule wants box-shadow to be a variable or keyword, not a literal). */
-  --rox-mode-pill-plate-ring: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 8%, transparent);
+  --rox-mode-pill-plate-ring: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 12%, transparent);
   --rox-mode-pill-item-ring: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 6%, transparent);
   --rox-mode-pill-focus-ring: inset 0 0 0 2px var(--focus, var(--accent));
   /* Soft glass plate: translucent tint, hairline ring, muted blur of the
      titlebar material behind it. No accent fill. */
-  background: color-mix(in oklch, var(--foreground) 4%, transparent);
+  background: color-mix(in oklch, var(--foreground) 6%, transparent);
   box-shadow: var(--rox-mode-pill-plate-ring);
   backdrop-filter: blur(var(--chrome-glass-blur)) saturate(1.1);
   -webkit-backdrop-filter: blur(var(--chrome-glass-blur)) saturate(1.1);
@@ -174,6 +174,11 @@ html[data-contrast="high"] .rox-mode-pill-badge {
   display: flex;
   align-items: center;
   z-index: 1;
+}
+
+/* Right-docked (Mark, t78): sits just left of the right control group. */
+.rox-mode-pill-anchor[data-align="right"] {
+  transform: translateY(-50%);
 }
 
 /* Wide browser tabs yield space to the fixed titlebar actions and mode pill. */

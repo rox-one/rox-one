@@ -21,6 +21,7 @@ import {
   CloudOff,
   ExternalLink,
   FolderPlus,
+  Pencil,
   Trash2,
 } from 'lucide-react'
 import { AnimatePresence } from '@/lib/deferred-motion'
@@ -73,6 +74,8 @@ export interface AccountMenuProps {
   onSelectWorkspace: (workspaceId: string, openInNewWindow?: boolean) => void | Promise<void>
   onWorkspaceCreated?: (workspace: Workspace) => void
   onWorkspaceRemoved?: () => void
+  /** Called after the active workspace was renamed (inline or from the menu). */
+  onWorkspaceRenamed?: () => void
   workspaceUnreadMap?: Record<string, boolean>
   /**
    * Creation flow owned by a host that outlives this menu. The compact
@@ -189,6 +192,8 @@ function drawerSectionLabel(text: string) {
 const drawerRowClass =
   'flex w-full items-center gap-3 px-3 py-3 rounded-[var(--radius-control)] text-left text-sm transition-colors hover:bg-foreground/5 outline-none disabled:opacity-50 disabled:pointer-events-none'
 
+const WORKSPACE_NAME_MAX = 64
+
 export function AccountMenu({
   compact = false,
   trigger,
@@ -197,6 +202,7 @@ export function AccountMenu({
   onSelectWorkspace,
   onWorkspaceCreated,
   onWorkspaceRemoved,
+  onWorkspaceRenamed,
   workspaceUnreadMap,
   creationFlow: hostedCreationFlow,
   onOpenCreationScreen,
@@ -320,6 +326,38 @@ export function AccountMenu({
 
   const closeMenu = React.useCallback(() => setOpen(false), [])
 
+  // Workspace rename: inline in the trigger (double-click or the menu item).
+  // Persists through the workspace settings RPC, which writes the workspace
+  // config and the registry record the switcher reads.
+  const [renaming, setRenaming] = React.useState(false)
+  const [renameDraft, setRenameDraft] = React.useState('')
+  const renameInputRef = React.useRef<HTMLInputElement | null>(null)
+  const startRename = React.useCallback(() => {
+    if (!selectedWorkspace) return
+    setOpen(false)
+    setRenameDraft(selectedWorkspace.name)
+    setRenaming(true)
+  }, [selectedWorkspace])
+  React.useEffect(() => {
+    if (!renaming) return
+    const id = window.setTimeout(() => { renameInputRef.current?.focus(); renameInputRef.current?.select() }, 0)
+    return () => window.clearTimeout(id)
+  }, [renaming])
+  const commitRename = React.useCallback(async () => {
+    if (!renaming) return
+    setRenaming(false)
+    const workspace = selectedWorkspace
+    const name = renameDraft.trim().slice(0, WORKSPACE_NAME_MAX)
+    if (!workspace || !name || name === workspace.name) return
+    try {
+      await window.electronAPI.updateWorkspaceSetting(workspace.id, 'name', name)
+      onWorkspaceRenamed?.()
+      toast.success(t('workspace.renamed', { name }))
+    } catch {
+      toast.error(t('workspace.renameFailed'))
+    }
+  }, [onWorkspaceRenamed, renameDraft, renaming, selectedWorkspace, t])
+
   const openAccountsSettings = React.useCallback(() => {
     closeMenu()
     navigate(routes.view.settings('accounts'))
@@ -403,6 +441,26 @@ export function AccountMenu({
   // Hostname-style names (ts-macbook-pro.blenny-gar.ts.net) show their first label; full name in the tooltip.
   const triggerLabel = /^[^\s.]+(\.[^\s.]+)+$/.test(triggerFullLabel) ? triggerFullLabel.split('.')[0]! : triggerFullLabel
 
+  const renameField = (
+    <input
+      ref={renameInputRef}
+      data-workspace-rename=""
+      value={renameDraft}
+      maxLength={WORKSPACE_NAME_MAX}
+      aria-label={t('workspace.renameWorkspace')}
+      placeholder={t('settings.workspace.enterWorkspaceName')}
+      onChange={(e) => setRenameDraft(e.target.value)}
+      onBlur={() => void commitRename()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') { e.preventDefault(); void commitRename() }
+        else if (e.key === 'Escape') { e.preventDefault(); setRenaming(false) }
+      }}
+      className={cn(
+        'titlebar-no-drag ml-1 h-7 min-w-0 max-w-56 flex-1 rounded-[var(--radius-control)] border border-ring/60 bg-[var(--surface-elevated)] px-2 text-caption text-foreground outline-none',
+      )}
+    />
+  )
+
   const triggerButton = (
     <button
       type="button"
@@ -413,6 +471,7 @@ export function AccountMenu({
         compact ? 'flex-1 px-2' : 'flex-1 px-2',
       )}
       aria-label={t('workspace.selectWorkspace')}
+      onDoubleClick={(e) => { e.preventDefault(); startRename() }}
     >
       <WorkspaceAvatar
         workspaceId={selectedWorkspace?.id}
@@ -451,7 +510,7 @@ export function AccountMenu({
         {creationScreen}
 
         <Drawer nested open={open} onOpenChange={handleOpenChange}>
-          <DrawerTrigger asChild>{trigger ?? triggerButton}</DrawerTrigger>
+          {renaming ? renameField : <DrawerTrigger asChild>{trigger ?? triggerButton}</DrawerTrigger>}
 
           <DrawerContent className="max-h-[85vh]">
             <DrawerHeader>
@@ -540,6 +599,16 @@ export function AccountMenu({
                   </div>
                 )
               })}
+              {selectedWorkspace && (
+                <DrawerClose asChild>
+                  <button type="button" className={drawerRowClass} onClick={startRename}>
+                    <div className="h-7 w-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0">
+                      <Pencil className="h-4 w-4 text-foreground/60" />
+                    </div>
+                    <span className="font-medium">{t('workspace.renameWorkspace')}</span>
+                  </button>
+                </DrawerClose>
+              )}
               <DrawerClose asChild>
                 <button type="button" className={drawerRowClass} onClick={handleNewWorkspace}>
                   <div className="h-7 w-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0">
@@ -603,7 +672,7 @@ export function AccountMenu({
       {creationScreen}
 
       <DropdownMenu open={open} onOpenChange={handleOpenChange}>
-        <DropdownMenuTrigger asChild>{trigger ?? triggerButton}</DropdownMenuTrigger>
+        {renaming ? renameField : <DropdownMenuTrigger asChild>{trigger ?? triggerButton}</DropdownMenuTrigger>}
 
         <StyledDropdownMenuContent align="start" sideOffset={6} minWidth="min-w-72">
           {sectionLabel(t('accountMenu.section.workspaces'))}
@@ -680,6 +749,12 @@ export function AccountMenu({
               </StyledDropdownMenuItem>
             )
           })}
+          {selectedWorkspace && (
+            <StyledDropdownMenuItem onSelect={() => startRename()} className="font-sans" data-workspace-rename-item="">
+              <Pencil className="h-4 w-4" />
+              {t('workspace.renameWorkspace')}
+            </StyledDropdownMenuItem>
+          )}
           <StyledDropdownMenuItem onClick={handleNewWorkspace} className="font-sans">
             <FolderPlus className="h-4 w-4" />
             {t('workspace.addWorkspace')}

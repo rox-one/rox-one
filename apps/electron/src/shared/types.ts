@@ -2972,7 +2972,7 @@ export interface ElectronAPI {
   onShellChanged(callback: (snapshot: ZenShellSnapshot) => void): () => void
   /** A6/B10 — persisted «Интерфейс» prefs + the live system accent. */
   getUiPreferences(): Promise<UiAppearanceSnapshot>
-  setUiPreferences(patch: { statusBarVisible?: boolean; accentSource?: 'brand' | 'system' }): Promise<UiAppearanceSnapshot>
+  setUiPreferences(patch: { statusBarVisible?: boolean; modePillVisible?: boolean; accentSource?: 'brand' | 'system' }): Promise<UiAppearanceSnapshot>
   /** B10 — macOS system accent colour push. */
   onAccentChanged(callback: (accent: SystemAccentSnapshot) => void): () => void
 
