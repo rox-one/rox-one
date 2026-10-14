@@ -1,0 +1,50 @@
+/* GlassSurface. Values come from --glass-* tokens (material.css); motion from
+   --motion-spring/--ease-spring (motion.css). Only transform and opacity
+   transition; backdrop-filter is static. */
+.glass-surface {
+  position: relative;
+  border-radius: var(--glass-radius);
+  /* Specular highlight: a static top sheen layered over the tint. */
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white var(--glass-specular-alpha), transparent) 0%,
+      transparent 42%
+    ),
+    color-mix(in srgb, var(--background) var(--glass-tint), transparent);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-shadow);
+  isolation: isolate;
+  transition:
+    transform var(--motion-spring) var(--ease-spring),
+    opacity var(--motion-base) var(--ease-standard);
+}
+
+html[data-glass="full"] .glass-surface[data-glass-refraction] {
+  backdrop-filter: var(--glass-filter) blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
+.glass-surface[data-glass-presence="closed"] {
+  opacity: 0;
+  transform: scale(0.94) translateY(-0.25rem);
+  pointer-events: none;
+  transition-duration: var(--motion-spring-exit), var(--motion-spring-exit);
+  transition-timing-function: var(--ease-exit), var(--ease-exit);
+}
+
+.glass-surface[data-glass-presence="open"] {
+  opacity: 1;
+  transform: none;
+}
+
+.glass-surface[data-glass-pressed] {
+  transform: scale(0.97);
+  transition-duration: var(--motion-fast);
+}
+
+.glass-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
