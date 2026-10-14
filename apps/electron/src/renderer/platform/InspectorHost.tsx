@@ -19,7 +19,8 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useSy
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { Bot, ChevronsRight, Folder, GitBranch, Globe, Info, Link2, ListTree, Pin, PinOff, type LucideIcon } from 'lucide-react'
 import { stripScreenKey } from '@/components/shell/panel-strip'
-import { getScreenInspector, patchScreenInspector, subscribeInspectorPrefs } from '@/components/shell/inspector-prefs'
+import { getScreenInspector, patchScreenInspector, subscribeInspectorPrefs, type ScreenInspectorState } from '@/components/shell/inspector-prefs'
+import { SIDE_PANEL_DEFAULT_WIDTH } from '@/lib/shell-layout-preferences'
 import { useTranslation } from 'react-i18next'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import {
@@ -60,6 +61,7 @@ import {
   inspectorSectionsForMode,
   isSessionInspectorSection,
   normalizeInspectorSection,
+  resolveInspectorDefaults,
   resolveInspectorToggle,
 } from './inspector-model'
 import { InspectorResizeSash } from './InspectorResizeSash'
@@ -227,31 +229,55 @@ export function InspectorHost() {
     () => false,
   )
   const appliedScreenRef = useRef<string | null>(null)
-  const skipSaveRef = useRef(false)
-  // The session-surface entry scenario resets the panel; that reset is not a
-  // user choice and must not overwrite the screen's remembered state.
-  const scenarioResetRef = useRef(false)
+  // One suppress-save marker: the fields a restore or an automatic scenario
+  // just wrote. Saves are skipped until the state matches them (or the next
+  // frame passes), so neither the restore nor a scenario reset is persisted
+  // as the user's choice — and nothing lingers to swallow a later real change.
+  const suppressSaveRef = useRef<{ fields: ScreenInspectorState; frame: number } | null>(null)
+  const suppressSave = useCallback((fields: ScreenInspectorState) => {
+    const prev = suppressSaveRef.current
+    if (prev) cancelAnimationFrame(prev.frame)
+    const marker = { fields: { ...(prev?.fields ?? {}), ...fields }, frame: 0 }
+    marker.frame = requestAnimationFrame(() => {
+      if (suppressSaveRef.current === marker) suppressSaveRef.current = null
+    })
+    suppressSaveRef.current = marker
+  }, [])
+  useEffect(() => () => {
+    if (suppressSaveRef.current) cancelAnimationFrame(suppressSaveRef.current.frame)
+  }, [])
   useLayoutEffect(() => {
     if (!screenKey || appliedScreenRef.current === screenKey) return
     appliedScreenRef.current = screenKey
+    // First visit: start from the defaults, not from the previous screen.
     const saved = getScreenInspector(screenKey)
-    if (!saved) return
-    skipSaveRef.current = true
-    if (saved.visible !== undefined) setVisible(saved.visible)
-    if (saved.chromeCollapsed !== undefined) setChromeCollapsed(saved.chromeCollapsed)
-    if (saved.section) setSection(saved.section as InspectorSectionId)
-    if (saved.width !== undefined) setPanelWidth(saved.width)
-  }, [screenKey, setVisible, setChromeCollapsed, setSection, setPanelWidth])
+    const fresh = resolveInspectorDefaults({})
+    const target: ScreenInspectorState = {
+      visible: saved?.visible ?? fresh.visible,
+      chromeCollapsed: saved?.chromeCollapsed ?? fresh.chromeCollapsed,
+      section: saved?.section ?? sectionIds[0]!,
+      width: saved?.width ?? SIDE_PANEL_DEFAULT_WIDTH,
+    }
+    suppressSave(target)
+    setVisible(target.visible!)
+    setChromeCollapsed(target.chromeCollapsed!)
+    setSection(target.section as InspectorSectionId)
+    setPanelWidth(target.width!)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sectionIds is read for the first-visit default only
+  }, [screenKey, suppressSave, setVisible, setChromeCollapsed, setSection, setPanelWidth])
   useEffect(() => {
     if (!screenKey || appliedScreenRef.current !== screenKey) return
-    if (skipSaveRef.current) {
-      skipSaveRef.current = false
+    const marker = suppressSaveRef.current
+    if (marker) {
+      const current: ScreenInspectorState = { visible, chromeCollapsed, section: sectionRaw }
+      const settled = (['visible', 'chromeCollapsed', 'section'] as const).every((k) => marker.fields[k] === undefined || marker.fields[k] === current[k])
+      if (settled) {
+        cancelAnimationFrame(marker.frame)
+        suppressSaveRef.current = null
+      }
       return
     }
-    if (scenarioResetRef.current) {
-      scenarioResetRef.current = false
-      return
-    }
+    // Only screens the user actually changed get a record.
     patchScreenInspector(screenKey, { visible, chromeCollapsed, section: sectionRaw, width: panelWidth })
   }, [screenKey, visible, chromeCollapsed, sectionRaw, panelWidth])
   const togglePinned = useCallback(() => {
@@ -305,14 +331,13 @@ export function InspectorHost() {
     if (!entered) return
     // A pinned inspector is never closed by a scenario, only by the user.
     if (screenKey && getScreenInspector(screenKey)?.pinned) return
-    // Only arm the skip when the reset actually changes state (else no save runs).
-    if (visible || sectionRaw !== sectionIds[0]) scenarioResetRef.current = true
+    // The scenario reset is not a user choice: keep it out of the screen's record.
+    suppressSave({ visible: false, section: sectionIds[0]! })
     setVisible(false)
     setSection(sectionIds[0]!)
     setUserOpened(false)
     if (navigationState.rightSidebar) updateRightSidebar(undefined)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- visible/sectionRaw are read at entry only
-  }, [sessionMode, sectionIds, navigationState.rightSidebar, screenKey, setVisible, setSection, setUserOpened, updateRightSidebar])
+  }, [sessionMode, sectionIds, navigationState.rightSidebar, screenKey, suppressSave, setVisible, setSection, setUserOpened, updateRightSidebar])
 
   // An explicit open applies to the session it was made in.
   useEffect(() => {
@@ -440,10 +465,12 @@ export function InspectorHost() {
         : `inspector.${activeSection}`
 
   const collapseChrome = useCallback(() => {
+    // Hiding is the explicit user action that ends a pin.
+    if (screenKey && getScreenInspector(screenKey)?.pinned) patchScreenInspector(screenKey, { pinned: false })
     setChromeCollapsed(true)
     setVisible(false)
     setTerminalOpen(false)
-  }, [setChromeCollapsed, setVisible, setTerminalOpen])
+  }, [screenKey, setChromeCollapsed, setVisible, setTerminalOpen])
 
   // G6 «Линзы»: the right-edge sheet behaves as a modal dialog — Escape closes
   // it through the shell's dismissible-layer stack. A menu/picker opened over
