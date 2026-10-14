@@ -9959,7 +9959,7 @@
   "shell.notifications.automationFailed": "Automation “{{name}}” failed",
   "shell.notifications.automationOk": "Automation “{{name}}” ran",
   "shell.notifications.balanceLow": "Balance is running low",
-  "shell.notifications.balanceLowBody": "{{balance}} credits left. Top up in Account settings.",
+  "shell.notifications.balanceLowBody": "{{balance}} left on your balance. Top up in Account settings.",
   "shell.notifications.clear": "Clear",
   "shell.notifications.dismiss": "Dismiss",
   "shell.notifications.empty": "No notifications yet. Agents, automations and your balance report here.",

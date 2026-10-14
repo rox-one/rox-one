@@ -9994,7 +9994,7 @@
   "shell.notifications.automationFailed": "Автоматизация «{{name}}» завершилась ошибкой",
   "shell.notifications.automationOk": "Автоматизация «{{name}}» выполнена",
   "shell.notifications.balanceLow": "Баланс заканчивается",
-  "shell.notifications.balanceLowBody": "Осталось {{balance}} кредитов. Пополнить можно в настройках аккаунта.",
+  "shell.notifications.balanceLowBody": "На балансе {{balance}}. Пополнить можно в настройках аккаунта.",
   "shell.notifications.clear": "Очистить",
   "shell.notifications.dismiss": "Убрать",
   "shell.notifications.empty": "Пока пусто. Сюда пишут агенты, автоматизации и баланс.",

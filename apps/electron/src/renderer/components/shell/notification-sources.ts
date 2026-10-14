@@ -14,8 +14,12 @@ import { routes } from '@/lib/navigate'
 import { parseAutomationsConfig } from '@/components/automations/types'
 import { pushNotification } from './notifications'
 
-/** Credits at or below which the balance counts as low. */
-export const LOW_BALANCE_CREDITS = 10
+/**
+ * Balance (USD) at or below which the balance counts as low. `getRoxBalance`
+ * returns the server's micro-USD ledger as dollars (`availableRox`, 6 decimals);
+ * new accounts start with $1, so warn at 20 cents.
+ */
+export const LOW_BALANCE_USD = 0.2
 const BALANCE_POLL_MS = 5 * 60_000
 const AUTOMATION_POLL_MS = 60_000
 
@@ -50,8 +54,13 @@ export function diffAutomationRuns(
 
 /** Crossing into "low" fires once; recovering above the threshold re-arms it. */
 export function nextBalanceLow(prevLow: boolean | undefined, balance: number): { low: boolean; fire: boolean } {
-  const low = balance <= LOW_BALANCE_CREDITS
+  const low = balance <= LOW_BALANCE_USD + 1e-9
   return { low, fire: low && prevLow !== true }
+}
+
+/** `$0.20`-style amount for the low-balance body. */
+export function formatUsd(balance: number): string {
+  return `$${Math.max(0, balance).toFixed(2)}`
 }
 
 export function useNotificationSources(workspaceId: string | null | undefined): void {
@@ -126,7 +135,7 @@ export function useNotificationSources(workspaceId: string | null | undefined): 
           pushNotification({
             kind: 'balance',
             title: tRef.current('shell.notifications.balanceLow'),
-            body: tRef.current('shell.notifications.balanceLowBody', { balance: Math.max(0, Math.floor(res.balance)) }),
+            body: tRef.current('shell.notifications.balanceLowBody', { balance: formatUsd(res.balance) }),
             route: routes.view.settings('account'),
             dedupeKey: 'balance:low',
           })

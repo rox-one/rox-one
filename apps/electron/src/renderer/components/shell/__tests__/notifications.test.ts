@@ -49,9 +49,12 @@ describe('notification sources', () => {
   })
 
   it('low balance fires once per crossing', () => {
-    expect(src.nextBalanceLow(undefined, 500)).toEqual({ low: false, fire: false })
-    expect(src.nextBalanceLow(false, src.LOW_BALANCE_CREDITS)).toEqual({ low: true, fire: true })
+    expect(src.nextBalanceLow(undefined, 1)).toEqual({ low: false, fire: false })
+    expect(src.nextBalanceLow(false, 0.2)).toEqual({ low: true, fire: true })
     expect(src.nextBalanceLow(true, 0)).toEqual({ low: true, fire: false })
-    expect(src.nextBalanceLow(true, 100)).toEqual({ low: false, fire: false })
+    expect(src.nextBalanceLow(true, 0.21)).toEqual({ low: false, fire: false })
+    expect(src.nextBalanceLow(false, 0.2000001)).toEqual({ low: false, fire: false })
+    expect(src.formatUsd(0.19)).toBe('$0.19')
+    expect(src.formatUsd(-1)).toBe('$0.00')
   })
 })
