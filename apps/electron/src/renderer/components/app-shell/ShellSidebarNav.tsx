@@ -27,6 +27,8 @@ import { isSessionsNavigation, useNavigationState } from '@/contexts/NavigationC
 import { isSeparatorItem, LeftSidebar, type LinkItem, type SidebarItem } from './LeftSidebar'
 import { PRIMARY_NAV } from './primary-nav'
 import { resolveCurrentSurface } from './sidebar-registry'
+import { useCurrentScreenSidebar } from '../shell/screen-sidebar'
+import { ScreenSidebar } from '../shell/ScreenSidebar'
 
 const RecentPinnedSidebar = React.lazy(() => import('./RecentPinnedSidebar'))
 
@@ -93,6 +95,9 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   const { t } = useTranslation()
   const navState = useNavigationState()
   const current = React.useMemo(() => resolveCurrentSurface(navState), [navState])
+  // shell-layout: a screen that published a config owns the whole sidebar.
+  const published = useCurrentScreenSidebar()
+  const screenConfig = published && published.screenId === current.id ? published : null
 
   const rowById = React.useCallback((id: string | null): LinkItem | null => {
     if (!id) return null
@@ -154,6 +159,23 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
     if (surfaceSection) return flattenGroup(surfaceSection.links)
     return null
   }, [isCollapsed, sessionFilters, surfaceSection])
+
+  if (screenConfig) {
+    return (
+      <nav
+        aria-label={screenConfig.title}
+        data-sidebar-primary-nav=""
+        data-tour="guide.sidebar-nav"
+        data-sidebar-surface={current.id ?? undefined}
+        data-sidebar-content="config"
+        className="px-1"
+      >
+        <ScreenSidebar config={screenConfig} mode={isCollapsed ? 'icons' : 'expanded'} />
+        {/* Keep the portal target mounted so a page's portal never loses its node. */}
+        <div ref={slotRef} hidden data-primary-sidebar-context="" />
+      </nav>
+    )
+  }
 
   return (
     <nav
