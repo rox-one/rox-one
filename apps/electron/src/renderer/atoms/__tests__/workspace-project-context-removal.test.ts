@@ -26,7 +26,7 @@ describe('removed sidebar project context', () => {
       expect(readFileSync(join(root, f), 'utf8')).not.toContain('workspaceProjectContextsAtom')
     }
     // Pages keeps its picker local: changing it does not write any cross-screen scope.
-    expect(readFileSync(join(root, 'components/pages/PagesHome.tsx'), 'utf8')).toContain('const changeProjectFilter = React.useCallback((ids: string[]) => setProjectFilter(ids), [setProjectFilter])')
+    expect(readFileSync(join(root, 'components/pages/PagesHome.tsx'), 'utf8')).toContain('setProjectFilters({ workspaceId: activeWorkspaceId, ids })')
   })
 
   it('shell never derives a global scope, so chats and new chats/tools stay unfiltered', () => {

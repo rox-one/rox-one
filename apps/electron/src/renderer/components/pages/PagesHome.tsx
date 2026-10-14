@@ -9,7 +9,7 @@ import { useNavigation } from '@/contexts/NavigationContext'
 import { routes } from '@/lib/navigate'
 import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspace-tool'
 import { pagesCreationProject } from '@/lib/pages-project-context'
-import { pagesAtom, pagesProjectFilterAtom, PAGES_UNASSIGNED_PROJECT } from '@/atoms/pages'
+import { pagesAtom, pagesFilterForWorkspace, pagesProjectFilterAtom, PAGES_UNASSIGNED_PROJECT } from '@/atoms/pages'
 import { projectsAtom } from '@/atoms/projects'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import {
@@ -37,11 +37,15 @@ export function PagesHome() {
   React.useEffect(() => knowledgeSignals.capability('pages.available', pagesAvailable ? { state: 'ready' } : { state: 'unavailable', reason: 'api-unavailable' }), [knowledgeSignals, pagesAvailable])
   React.useEffect(() => knowledgeSignals.capability('pages.entity-present', { state: 'pending', reason: 'missing-entity' }), [knowledgeSignals])
   const projects = useAtomValue(projectsAtom)
-  const [projectFilter, setProjectFilter] = useAtom(pagesProjectFilterAtom)
+  // Per-workspace: another workspace's project ids never filter this library.
+  const [projectFilters, setProjectFilters] = useAtom(pagesProjectFilterAtom)
+  const projectFilter = pagesFilterForWorkspace(projectFilters, activeWorkspaceId) as string[]
   const [pendingDelete, setPendingDelete] = React.useState<LoadedPage | null>(null)
 
   // The Pages project picker is local to Pages: it never sets a shared, cross-screen scope.
-  const changeProjectFilter = React.useCallback((ids: string[]) => setProjectFilter(ids), [setProjectFilter])
+  const changeProjectFilter = React.useCallback((ids: string[]) => {
+    if (activeWorkspaceId) setProjectFilters({ workspaceId: activeWorkspaceId, ids })
+  }, [activeWorkspaceId, setProjectFilters])
 
   const projectOptions = React.useMemo<ProjectFilterOption[]>(
     () => projects.map(p => ({ id: p.config.id, name: p.config.name, color: p.config.color })),
