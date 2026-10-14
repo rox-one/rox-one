@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { PremiumMenu, type PremiumMenuItem } from '@rox/ui'
+import { PremiumMenu, type PremiumMenuItem } from '@rox/ui/premium-menu'
 import { cn } from '@/lib/utils'
 
 export interface CollectionBulkMenuProps {

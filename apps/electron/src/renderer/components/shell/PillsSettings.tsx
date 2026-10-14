@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useShellModes } from '@/platform/useModes'
 import { usePillNav } from '@/platform/usePillNav'
 import { PillsConfigurator, type PillOption } from './PillsConfigurator'
+import { PillsTopBarConfigurator } from './PillsTopBarConfigurator'
 import { applyPillsSelection, currentPillIds } from './pills'
 import { usePills } from './shell-prefs'
 
@@ -23,4 +24,10 @@ export function usePillOptions(): { options: PillOption[]; value: string[]; setV
 export function PillsSettings({ className }: { className?: string }) {
   const { options, value, setValue } = usePillOptions()
   return <PillsConfigurator className={className} options={options} value={value} onChange={setValue} />
+}
+
+/** Onboarding variant: a live miniature of the titlebar pills. */
+export function PillsTopBarSettings({ className }: { className?: string }) {
+  const { options, value, setValue } = usePillOptions()
+  return <PillsTopBarConfigurator className={className} options={options} value={value} onChange={setValue} />
 }

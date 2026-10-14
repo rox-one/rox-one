@@ -480,7 +480,7 @@ export function NoteInspector({
           {assetsUnavailable ? (
             <div data-testid="notes-inspector-assets-unavailable" data-error-code={assetsUnavailable} className="space-y-2">
               <p role="status" className="text-xs text-muted-foreground">{t('common.unavailable')}</p>
-              <button className="h-6 rounded-[6px] px-2 text-xs hover:bg-foreground/[0.06]" onClick={onRetryAssets}>{t('common.retry')}</button>
+              <button className="h-6 rounded-sm px-2 text-xs hover:bg-foreground/[0.06]" onClick={onRetryAssets}>{t('common.retry')}</button>
             </div>
           ) : currentNoteAssets.length ? currentNoteAssets.map(asset => (
             <ContextMenu key={asset.relativePath}>

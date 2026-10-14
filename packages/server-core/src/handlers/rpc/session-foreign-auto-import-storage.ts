@@ -15,9 +15,9 @@ function autoImportPath(workspaceRoot: string): string {
 
 export function readAutoImportFile(workspaceRoot: string): AutoImportFile {
   const path = autoImportPath(workspaceRoot)
-  // New installations import local chats automatically. Explicit saved
-  // opt-outs (and unreadable configurations) remain disabled.
-  if (!existsSync(path)) return { enabled: true }
+  // New installations stay opt-in: importing local AI history reads ~/.omp,
+  // ~/.claude and similar homes, so it must wait for an explicit consent file.
+  if (!existsSync(path)) return { enabled: false }
   try {
     return JSON.parse(readFileSync(path, 'utf8')) as AutoImportFile
   } catch {

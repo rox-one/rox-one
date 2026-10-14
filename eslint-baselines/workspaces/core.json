@@ -63,7 +63,7 @@
     },
     "@typescript-eslint/no-unused-vars": {
       "severity": "warn",
-      "total": 20
+      "total": 4
     },
     "@typescript-eslint/no-wrapper-object-types": {
       "severity": "warn",
@@ -270,12 +270,6 @@
     "packages/core/src/bases/table-surface.ts": {
       "no-control-regex": 1
     },
-    "packages/core/src/calendar/adapters.ts": {
-      "@typescript-eslint/no-unused-vars": 4
-    },
-    "packages/core/src/docs/content-descriptor.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
     "packages/core/src/knowledge/mutations.ts": {
       "no-fallthrough": 1
     },
@@ -292,26 +286,16 @@
       "prefer-const": 1
     },
     "packages/core/src/platform/identity/broker.ts": {
-      "@typescript-eslint/no-unused-vars": 3
+      "@typescript-eslint/no-unused-vars": 1
     },
     "packages/core/src/platform/identity/p0-adapters.ts": {
-      "@typescript-eslint/no-unused-vars": 4
+      "@typescript-eslint/no-unused-vars": 1
     },
     "packages/core/src/platform/identity/revalidation.ts": {
       "@typescript-eslint/no-unused-vars": 1
     },
-    "packages/core/src/platform/identity/workgraph.ts": {
-      "@typescript-eslint/no-unused-vars": 2
-    },
-    "packages/core/src/platform/workbench/memory-host.ts": {
-      "@typescript-eslint/no-unused-vars": 1
-    },
-    "packages/core/src/types/message-mapper.ts": {
-      "@typescript-eslint/no-unused-vars": 2
-    },
     "packages/core/src/utils/debug.ts": {
-      "@typescript-eslint/no-explicit-any": 1,
-      "@typescript-eslint/no-unused-vars": 1
+      "@typescript-eslint/no-explicit-any": 1
     }
   }
 }

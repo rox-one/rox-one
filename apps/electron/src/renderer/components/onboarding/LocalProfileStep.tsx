@@ -48,7 +48,7 @@ export function LocalProfileStep({
     <StepFormLayout
       className="max-w-[30rem]"
       iconElement={
-        <div className="flex size-16 items-center justify-center rounded-[20px] border border-accent/30 bg-accent/10 shadow-tinted">
+        <div className="flex size-16 items-center justify-center rounded-lg border border-accent/30 bg-accent/10 shadow-tinted">
           <UserRound className="size-8 text-accent" />
         </div>
       }
@@ -79,7 +79,7 @@ export function LocalProfileStep({
             autoFocus
             disabled={isBusy}
             aria-invalid={!trimmedName}
-            className="h-11 rounded-xl border-foreground/15 bg-background/70 px-4 text-base shadow-minimal"
+            className="h-11 rounded-lg border-foreground/15 bg-background/70 px-4 text-base shadow-minimal"
           />
           <p className="text-xs text-muted-foreground">
             {trimmedName ? t('onboarding.localProfile.displayNameHelper') : t('onboarding.localProfile.displayNameRequired')}
@@ -90,7 +90,7 @@ export function LocalProfileStep({
           <button
             type="button"
             onClick={onConnectCloud}
-            className="flex w-full items-center justify-between rounded-xl border border-foreground/12 bg-background/45 px-4 py-3 text-left text-sm text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex w-full items-center justify-between rounded-lg border border-foreground/12 bg-background/45 px-4 py-3 text-left text-sm text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <span>{t('onboarding.roxConnect.connect')}</span>
             <Cloud className="size-4" />
@@ -98,7 +98,7 @@ export function LocalProfileStep({
         ) : null}
 
         {errorMessage ? (
-          <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {errorMessage}
           </p>
         ) : null}

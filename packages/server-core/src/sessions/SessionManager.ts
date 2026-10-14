@@ -1,4 +1,5 @@
 import { getRoxAccountAuthority, peekRoxAccountAuthority, type RoxExecutionContext } from '@rox/shared/auth'
+import { accumulateSessionTokens, isModelActivityEvent, markTurnTokensUncounted } from '@rox/shared/sessions'
 import type { EventSink, RpcServer } from '@rox/server-core/transport'
 import { annotationPayloadRejection } from './annotation-payload'
 import { planSteeringSubmit, QueueSteering, type SteeringVerb } from './queue-steering'
@@ -935,7 +936,11 @@ interface ManagedSession {
     cacheCreationTokens?: number
     /** Model's context window size in tokens (from SDK modelUsage) */
     contextWindow?: number
+    sessionTokens?: number
+    sessionTokensIncomplete?: boolean
   }
+  /** Runtime-only: generation of a turn whose usage has not been counted yet (cleared by a usage-bearing complete). */
+  turnTokensPending?: number
   /** Runtime-only budget reservation; unresolved reservations survive in AgentBudgetLedger. */
   budgetRunId?: string
   /** Session total cost at the beginning of this provider dispatch. */
@@ -4932,7 +4937,13 @@ export class SessionManager implements ISessionManager {
       if (connection && (!managed.connectionLocked || managed.llmConnection !== connection.slug)) {
         const previousConnection = managed.llmConnection
         managed.llmConnection = connection.slug
-        if (previousConnection !== connection.slug && managed.model !== backendContext.resolvedModel) {
+        // Keep an explicit user model pick; only fill a blank session model
+        // when the resolved connection actually changed.
+        if (
+          previousConnection !== connection.slug
+          && !managed.model
+          && backendContext.resolvedModel
+        ) {
           managed.model = backendContext.resolvedModel
           this.sendEvent({ type: 'session_model_changed', sessionId: managed.id, model: managed.model }, managed.workspace.id)
         }
@@ -5705,6 +5716,7 @@ export class SessionManager implements ISessionManager {
         rememberForMinutes?: number;
         commandHash?: string;
         approvalTtlSeconds?: number;
+        preview?: import('@rox/core/types').PermissionPreview;
       }) => {
         sessionLog.info(`Permission request for session ${managed.id}:`, request.command)
         let brokerMetadata: {
@@ -7717,6 +7729,13 @@ export class SessionManager implements ISessionManager {
     // resurrecting the still-present file.
     if (deleteStoredSession(workspaceRootPath, sessionId)) {
       sessionPersistenceQueue.unseal(sessionId)
+      // Drop the chat-folder assignment so chat-folders.json does not accumulate orphans.
+      try {
+        const { removeSessionsFromChatFolders } = await import('@rox/shared/chat-folders/storage')
+        removeSessionsFromChatFolders(workspaceRootPath, [sessionId])
+      } catch (error) {
+        sessionLog.warn(`Failed to clear chat-folder assignment for ${sessionId}:`, error)
+      }
     } else {
       sessionLog.warn(`Failed to delete session ${sessionId} from disk; persistence seal retained`)
     }
@@ -8353,6 +8372,11 @@ export class SessionManager implements ISessionManager {
         this.claimTranscriptWriter(managed, chatHandle.runId)
       }
       sessionLog.info('Got chat iterator, starting iteration...')
+      // A previous turn still pending was superseded before its usage arrived.
+      if (managed.turnTokensPending !== undefined) this.markTurnTokensUncounted(managed)
+      // Armed lazily on the first model activity so turns that end before any
+      // request (empty message, auth/billing/rate-limit fallbacks) stay counted.
+      let turnTokensArmed = false
 
       this.assertRoxSessionExecution(sessionId, execution)
       for await (const event of chatIterator) {
@@ -8368,8 +8392,21 @@ export class SessionManager implements ISessionManager {
           }
         }
 
+        if (!turnTokensArmed && isModelActivityEvent(event)) {
+          turnTokensArmed = true
+          if (managed.turnTokensPending !== undefined && managed.turnTokensPending !== myGeneration) {
+            this.markTurnTokensUncounted(managed)
+          }
+          managed.turnTokensPending = myGeneration
+        }
+
         // Process the event first
         await this.processEvent(managed, event, execution, runtimeOrigin)
+        // Only this turn's own usage-bearing complete clears its pending flag
+        // (a superseded turn's late complete must not clear a newer turn's).
+        if (event.type === 'complete' && event.usage && managed.turnTokensPending === myGeneration) {
+          managed.turnTokensPending = undefined
+        }
 
         // Fallback: Capture SDK session ID if the onSdkSessionIdUpdate callback didn't fire.
         // Primary capture happens in getOrCreateAgent() via onSdkSessionIdUpdate callback,
@@ -8534,6 +8571,8 @@ export class SessionManager implements ISessionManager {
       // clears the lock when this run is still the session's active writer, so a
       // newer run's claim is never clobbered by a late release.
       if (writerRunId) this.releaseTranscriptWriter(managed, writerRunId)
+      // Aborted/crashed/early-exit turn never counted its requests: hide the total.
+      if (managed.turnTokensPending === myGeneration) this.markTurnTokensUncounted(managed)
       // Only handle cleanup for unexpected exits (loop break without complete event)
       // Normal completion returns early after calling onProcessingStopped
       // Errors are handled in catch block
@@ -8544,6 +8583,14 @@ export class SessionManager implements ISessionManager {
         this.onProcessingStopped(sessionId, 'interrupted', runtimeOrigin)
       }
     }
+  }
+
+  private markTurnTokensUncounted(managed: ManagedSession): void {
+    managed.turnTokensPending = undefined
+    managed.tokenUsage = markTurnTokensUncounted(managed.tokenUsage, () => ({
+      inputTokens: 0, outputTokens: 0, totalTokens: 0, contextTokens: 0, costUsd: 0,
+    }))
+    this.persistSession(managed)
   }
 
   async cancelProcessing(sessionId: string, silent = false): Promise<void> {
@@ -11288,6 +11335,13 @@ export class SessionManager implements ISessionManager {
           // inputTokens = current context size (full conversation sent this turn), NOT accumulated
           // Each API call sends the full conversation history, so we use the latest value
           managed.tokenUsage.inputTokens = event.usage.inputTokens
+          {
+            // Real session total, counted per request (before outputTokens grows).
+            const next = accumulateSessionTokens(managed.tokenUsage, event.usage.requestTotals)
+            delete managed.tokenUsage.sessionTokens
+            delete managed.tokenUsage.sessionTokensIncomplete
+            Object.assign(managed.tokenUsage, next)
+          }
           // outputTokens and costUsd are accumulated across all turns (total session usage)
           managed.tokenUsage.outputTokens += event.usage.outputTokens
           managed.tokenUsage.totalTokens = managed.tokenUsage.inputTokens + managed.tokenUsage.outputTokens

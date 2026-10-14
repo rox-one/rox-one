@@ -1027,14 +1027,17 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         ? undefined
         : deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId) ?? undefined
     )
-    const workspace = callerWorkspaceId ? getWorkspaceByNameOrId(callerWorkspaceId) : undefined
+    const windowWorkspace = callerWorkspaceId ? getWorkspaceByNameOrId(callerWorkspaceId) : undefined
     const requestedWorkspace = getWorkspaceByNameOrId(workspaceId)
-    if (
-      !ctx.principal
-      || !workspace
-      || !requestedWorkspace
-      || workspace.id !== requestedWorkspace.id
-    ) {
+    const workspace = requestedWorkspace ?? windowWorkspace
+    if (!workspace) {
+      throw new Error('Workspace access denied')
+    }
+    if (ctx.principal) {
+      if (!windowWorkspace || windowWorkspace.id !== workspace.id) {
+        throw new Error('Workspace access denied')
+      }
+    } else if (windowWorkspace && requestedWorkspace && windowWorkspace.id !== requestedWorkspace.id) {
       throw new Error('Workspace access denied')
     }
 

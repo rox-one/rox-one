@@ -17,6 +17,8 @@ import {
   type PremiumMenuVariant,
 } from './premium-menu-model'
 
+export type { PremiumMenuItem, PremiumMenuSide, PremiumMenuVariant } from './premium-menu-model'
+
 export interface PremiumMenuProps {
   open: boolean
   onOpenChange: (open: boolean) => void

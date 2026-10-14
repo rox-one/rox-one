@@ -833,14 +833,14 @@ function ActiveTasksBarContext({ tasks = sampleBackgroundTasks }: ActiveTasksBar
       <div className="flex-1 overflow-auto px-5 py-8 space-y-2.5">
         {/* User message */}
         <div className="pt-3 flex justify-end">
-          <div className="max-w-[80%] rounded-2xl bg-foreground text-background px-4 py-2">
+          <div className="max-w-[80%] rounded-lg bg-foreground text-background px-4 py-2">
             <p className="text-sm">Can you explore the codebase structure and analyze the API endpoints?</p>
           </div>
         </div>
 
         {/* Assistant message */}
         <div className="flex justify-start">
-          <div className="max-w-[80%] rounded-2xl bg-muted px-4 py-2">
+          <div className="max-w-[80%] rounded-lg bg-muted px-4 py-2">
             <p className="text-sm">I'll explore the codebase and analyze the API endpoints. Let me start by running a background task to search for API route definitions...</p>
           </div>
         </div>

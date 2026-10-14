@@ -25,7 +25,7 @@
 
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { motion } from 'motion/react'
+import { motion } from '@/lib/deferred-motion'
 import {
   Archive,
   ArchiveRestore,

@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useMemo } from 'react'
-import { getDefaultStore, useAtom } from 'jotai'
+import { useAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { useAction, useActionRegistry } from '@/actions'
 import {
@@ -29,6 +29,7 @@ import {
 import { createConationContextKeyProvider } from './omnibox-conation'
 // W1-07 (#1504): live shell flags as context keys (flag-gated commands).
 import { createShellFlagContextKeyProvider } from './unified-flags'
+import { getShellStore } from './shell-store'
 import { Omnibox } from './Omnibox'
 
 export function OmniboxHost() {
@@ -59,7 +60,7 @@ export function OmniboxHost() {
   // Pull live workbench.conation.* flags so Fund/Board commands stay hidden
   // while Appearance toggles are off (defaults false).
   useEffect(() => {
-    const store = getDefaultStore()
+    const store = getShellStore()
     return platform.contextKeys.registerProvider(
       createConationContextKeyProvider(() => ({
         shellEnabled: store.get(featureWorkbenchConationShellAtom),

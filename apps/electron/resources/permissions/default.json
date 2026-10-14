@@ -1,5 +1,5 @@
 {
-  "version": "2026-08-07-p3",
+  "version": "2026-10-14-p1",
   "allowedBashPatterns": [
     {
       "pattern": "^ls\\b",
@@ -970,6 +970,38 @@
     {
       "pattern": "knowledge.set_attribute",
       "comment": "P3 knowledge WRITE capability (spec 05 §3.6): proposal-creation tool, blocked in Explore mode."
+    },
+    {
+      "pattern": "mcp__session__rovers_deploy",
+      "comment": "Rovers host tool `rovers_deploy` (spec.md §6.4: write class, agent confirmation required): blocked in Explore mode. The container-socket authorization gate (packages/rovers-core/src/security/gate.ts) re-checks the access class and the ro.rox.rovers.service/ro.rox.rovers.run labels. Union-only."
+    },
+    {
+      "pattern": "mcp__session__rovers_stop",
+      "comment": "Rovers host tool `rovers_stop` (spec.md §6.4: write class, agent confirmation required): blocked in Explore mode. The container-socket authorization gate (packages/rovers-core/src/security/gate.ts) re-checks the access class and the ro.rox.rovers.service/ro.rox.rovers.run labels. Union-only."
+    },
+    {
+      "pattern": "mcp__session__rovers_backup",
+      "comment": "Rovers host tool `rovers_backup` (spec.md §6.4: write class, agent confirmation required): blocked in Explore mode. The container-socket authorization gate (packages/rovers-core/src/security/gate.ts) re-checks the access class and the ro.rox.rovers.service/ro.rox.rovers.run labels. Union-only."
+    },
+    {
+      "pattern": "mcp__session__rovers_init_backup",
+      "comment": "Rovers host tool `rovers_init_backup` (spec.md §6.4: write class, agent confirmation required): blocked in Explore mode. The container-socket authorization gate (packages/rovers-core/src/security/gate.ts) re-checks the access class and the ro.rox.rovers.service/ro.rox.rovers.run labels. Union-only."
+    },
+    {
+      "pattern": "mcp__session__rovers_backup_scope",
+      "comment": "Rovers host tool `rovers_backup_scope` (spec.md §6.4: write class, agent confirmation required): blocked in Explore mode. The container-socket authorization gate (packages/rovers-core/src/security/gate.ts) re-checks the access class and the ro.rox.rovers.service/ro.rox.rovers.run labels. Union-only."
+    },
+    {
+      "pattern": "mcp__session__rovers_schedule",
+      "comment": "Rovers host tool `rovers_schedule` (spec.md §6.4: write class, agent confirmation required): blocked in Explore mode. The container-socket authorization gate (packages/rovers-core/src/security/gate.ts) re-checks the access class and the ro.rox.rovers.service/ro.rox.rovers.run labels. Union-only."
+    },
+    {
+      "pattern": "mcp__session__rovers_offsite_sync",
+      "comment": "Rovers host tool `rovers_offsite_sync` (spec.md §6.4: write class, agent confirmation required): blocked in Explore mode. The container-socket authorization gate (packages/rovers-core/src/security/gate.ts) re-checks the access class and the ro.rox.rovers.service/ro.rox.rovers.run labels. Union-only."
+    },
+    {
+      "pattern": "mcp__session__rovers_restore",
+      "comment": "Rovers host tool `rovers_restore` (spec.md §6.4: destructive class — the only destructive tool, agent confirmation required): blocked in Explore mode. The container-socket authorization gate (packages/rovers-core/src/security/gate.ts) requires both ro.rox.rovers.service/ro.rox.rovers.run labels. Union-only."
     }
   ],
   "allowedApiEndpoints": [],

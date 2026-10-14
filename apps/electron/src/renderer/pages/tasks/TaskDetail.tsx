@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { formatHotkeyDisplay } from '@/lib/platform'
 import { Badge, Button, Card, SectionLabel, Tabs } from '@/components/mode-screen/ModeScreen'
+import { TaskDependencies } from './TaskDependencies'
 import { ConfirmDialog, Glyph, MiniCalendar, TaskCheckbox } from './parts'
 // W1-08 (#1505): «Упоминается в» backlinks (renders nothing while entities.previews.v1 is off).
 import { TaskEntityBacklinks } from '@/components/entities/TaskEntityBacklinks'
@@ -312,6 +313,8 @@ export function TaskDetail(props: TaskDetailProps) {
               className="h-7 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-text-muted"
             />
           </form>
+
+          <TaskDependencies task={task} store={props.store} mutate={mutate} />
 
           {props.subtasks.length ? (
             <>

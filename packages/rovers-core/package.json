@@ -1,0 +1,22 @@
+{
+  "name": "@rox/rovers-core",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "description": "Rox Rovers runtime core: engine config (<configDir>/rovers/engine.json), the local Lima engine (engine-owned cache, user HOME untouched), the Docker Engine API container client, and the container-socket authorization gate.",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

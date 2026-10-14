@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, Globe2, ShieldCheck } from 'lucide-react'
+import { ChevronDown, ShieldCheck } from 'lucide-react'
 import { answerChoice, type BrowserImportCategory } from '@rox/shared/environment'
 import { Button } from '@/components/ui/button'
 import { BrowserImportPreferences } from './BrowserImportPreferences'
+import { ChromeLogo } from './brand-icons'
 
 /** First launch records preferences without discovering profiles or requesting a native grant. */
 export function WelcomeBrowserImportPreferences({ onSavingChange }: { onSavingChange: (saving: boolean) => void }) {
@@ -75,14 +76,14 @@ export function WelcomeBrowserImportPreferences({ onSavingChange }: { onSavingCh
   if (!available) return null
 
   return (
-    <details className="group mt-5 rounded-full border border-border-strong bg-surface-input text-left open:rounded-2xl" data-testid="welcome-browser-import-preferences">
-      <summary className="flex cursor-pointer list-none items-center gap-2.5 rounded-full px-4 py-3 text-sm font-medium outline-none focus-visible:ring-1 focus-visible:ring-foreground/20 [&::-webkit-details-marker]:hidden">
-        <Globe2 className="size-4 text-sky-500" aria-hidden="true" />
+    <details className="onb-glass group mt-3 rounded-full border border-border-strong bg-surface-input text-left open:rounded-lg" data-testid="welcome-browser-import-preferences">
+      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-full py-1.5 pl-1.5 pr-4 text-sm font-medium outline-none focus-visible:ring-1 focus-visible:ring-foreground/20 [&::-webkit-details-marker]:hidden">
+        <ChromeLogo className="size-5 shrink-0" />
         {t('onboarding.environment.browserImport')}
         <ChevronDown className="ml-auto size-4 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
       </summary>
       <div className="space-y-3 px-4 pb-4" aria-busy={loading || saving}>
-        <p className="text-xs text-muted-foreground">{t('settings.browserImport.preferencesHint')}</p>
+        <p className="onb-helper text-xs text-muted-foreground">{t('settings.browserImport.preferencesHint')}</p>
         {categories ? <BrowserImportPreferences selected={categories} onChange={(next) => void save(next)} disabled={loading || saving} /> : null}
         {loading ? <p role="status" className="text-xs text-muted-foreground">{t('common.loading')}</p> : null}
         {failed ? <div className="flex items-center justify-between gap-2">
@@ -94,7 +95,7 @@ export function WelcomeBrowserImportPreferences({ onSavingChange }: { onSavingCh
         </div> : null}
         <div className="flex items-start gap-2 rounded-[var(--radius-card)] bg-foreground/5 p-3">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-500" aria-hidden="true" />
-          <p className="text-xs text-muted-foreground">{t('onboarding.welcome.browserImportPermissionHint')}</p>
+          <p className="onb-helper text-xs text-muted-foreground">{t('onboarding.welcome.browserImportPermissionHint')}</p>
         </div>
       </div>
     </details>

@@ -11,7 +11,7 @@ import {
   StickyNote,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import {
   focusedPanelIndexAtom,
   pushPanelAtom,

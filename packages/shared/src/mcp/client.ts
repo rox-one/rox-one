@@ -100,6 +100,16 @@ export interface McpConnectOptions {
 
 export const DEFAULT_CONNECTION_TIMEOUT_MS = 30_000;
 
+/**
+ * Margin between this client's own deadline timer and the MCP SDK's request
+ * timer. The budget is the authority: the SDK timer is only a backstop and must
+ * never settle a request first. `deadline - Date.now()` truncates to whole
+ * milliseconds, so a backstop armed from the raw remaining budget can expire up
+ * to 1 ms *before* the budget timer — enough to surface the SDK's generic
+ * "MCP error -32001: Request timed out" instead of the client diagnostic.
+ */
+const SDK_BACKSTOP_MARGIN_MS = 1;
+
 function operationBudget(timeoutMs: number, lifetime: AbortSignal, caller: AbortSignal | undefined, label: string) {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new Error(`Invalid ${label} timeout`);
   const controller = new AbortController();
@@ -111,12 +121,20 @@ function operationBudget(timeoutMs: number, lifetime: AbortSignal, caller: Abort
   if (lifetime.aborted) closed();
   else if (caller?.aborted) cancelled();
   const timer = setTimeout(() => controller.abort(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+  const expired = () => {
+    if (Date.now() >= deadline) controller.abort(new Error(`${label} timed out after ${timeoutMs}ms`));
+    controller.signal.throwIfAborted();
+  };
   return {
     signal: controller.signal,
     remaining: () => {
-      if (Date.now() >= deadline) controller.abort(new Error(`${label} timed out after ${timeoutMs}ms`));
-      controller.signal.throwIfAborted();
+      expired();
       return deadline - Date.now();
+    },
+    /** Deadline for the SDK's own request timer; strictly later than this budget's timer. */
+    backstop: () => {
+      expired();
+      return deadline - Date.now() + SDK_BACKSTOP_MARGIN_MS;
     },
     dispose() {
       clearTimeout(timer);
@@ -329,10 +347,10 @@ class McpConnection {
         return abortable(start(), budget.signal, () => budget.signal.reason);
       };
       try {
-        await abortable(this.client.connect(this.transport, { signal: budget.signal, timeout: budget.remaining() }), budget.signal, () => budget.signal.reason);
+        await abortable(this.client.connect(this.transport, { signal: budget.signal, timeout: budget.backstop() }), budget.signal, () => budget.signal.reason);
         budget.signal.throwIfAborted();
         try {
-          await abortable(this.client.listTools(undefined, { signal: budget.signal, timeout: budget.remaining() }), budget.signal, () => budget.signal.reason);
+          await abortable(this.client.listTools(undefined, { signal: budget.signal, timeout: budget.backstop() }), budget.signal, () => budget.signal.reason);
         } catch (error) {
           if (budget.signal.aborted) throw budget.signal.reason;
           throw new Error(`MCP connection failed health check: ${this.safeError(error).message}`);
@@ -583,7 +601,7 @@ export class CraftMcpClient {
       await abortable(this.connect({ signal: budget.signal, timeoutMs: budget.remaining() }), budget.signal, () => budget.signal.reason);
       budget.signal.throwIfAborted();
       // A shared physical request must not be cancelled by one lease's budget.
-      return await abortable(this.connection.listTools(this.shared ? undefined : { signal: budget.signal, timeoutMs: budget.remaining() }), budget.signal, () => budget.signal.reason);
+      return await abortable(this.connection.listTools(this.shared ? undefined : { signal: budget.signal, timeoutMs: budget.backstop() }), budget.signal, () => budget.signal.reason);
     } finally { budget.dispose(); }
   }
 

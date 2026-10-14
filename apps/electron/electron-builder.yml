@@ -45,6 +45,9 @@ files:
   - packages/shared/src/interceptor-request-utils.ts
   # Include CLI tool Python scripts (platform-independent)
   - resources/scripts/**/*
+  # Cookbooks Lab sidecar snapshot (Python package + catalog + scripts); also
+  # copied to dist/resources/ by build:copy and resolved via getBundledAssetsDir('cookbooks').
+  - resources/cookbooks/**/*
   # Include CLI tool shell wrappers (platform-independent, both Unix and Windows)
   - resources/bin/markitdown
   - resources/bin/markitdown.cmd
@@ -224,6 +227,14 @@ mac:
       to: bin/darwin-${arch}/limactl
     - from: resources/bin/darwin-${arch}/lima-driver-vz
       to: bin/darwin-${arch}/lima-driver-vz
+    # Lima runtime assets (guest agent + templates; Apache-2.0), vendored by
+    # downloadLima(). Lima resolves them as <dirname(dir-of-limactl)>/share/lima
+    # (pkg/usrlocal ShareLima(); pkg/templatestore searches the same tree), so for
+    # the shipped Resources/bin/darwin-<arch>/limactl the assets must land at
+    # Resources/bin/share/lima — without them `limactl start` fails ("guest agent
+    # binary could not be found") or resolves `template:` refs over the network.
+    - from: resources/bin/share
+      to: bin/share
   # Positive patterns keep this platform matcher narrow (no implicit **/*).
   files:
     - resources/bin/darwin-${arch}/**/*
@@ -237,6 +248,9 @@ mac:
     - "!resources/bin/darwin-${arch}/lima-driver-vz"
     - "!dist/resources/bin/darwin-${arch}/limactl"
     - "!dist/resources/bin/darwin-${arch}/lima-driver-vz"
+    # Lima runtime assets ship once, through the resources/bin/share mapping above.
+    - "!resources/bin/share/**"
+    - "!dist/resources/bin/share/**"
   # Use predictable naming for macOS packages (applies to zip; dmg uses its own config below)
   artifactName: "Rox-${arch}.${ext}"
   # Code signing & notarization (disabled by default for local builds)

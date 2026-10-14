@@ -87,7 +87,7 @@ export function ReactionsBar({ reactions, onToggle, palette = DEFAULT_REACTION_P
               type="button"
               aria-label={emoji}
               onClick={() => { onToggle?.(emoji); setOpen(false); addRef.current?.focus() }}
-              className={cn('size-8 rounded-[6px] text-title-md', HOVER_TINT, FOCUS_RING)}
+              className={cn('size-8 rounded-sm text-title-md', HOVER_TINT, FOCUS_RING)}
             >
               {emoji}
             </button>

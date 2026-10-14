@@ -259,7 +259,7 @@ function SubtaskCard({
 }) {
   const depTitle = subtask.dependsOn ? earlier.find(s => s.id === subtask.dependsOn)?.title : null
   return (
-    <div className="group rounded-[10px] border border-border/70 bg-foreground/[0.015] p-3">
+    <div className="group rounded-lg border border-border/70 bg-foreground/[0.015] p-3">
       <div className="flex items-start gap-2">
         {/* Drag handle on the left edge — the conventional reorder affordance. */}
         <GripVertical
@@ -359,7 +359,7 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
   return (
     <div className="flex h-full flex-col gap-3 bg-background p-3 text-foreground">
       {/* Header */}
-      <div className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5 shadow-minimal">
+      <div className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 shadow-minimal">
         <Btn variant="ghost" className="px-2">
           <ChevronLeft className="h-4 w-4" strokeWidth={2} /> Board
         </Btn>
@@ -397,17 +397,17 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
       {/* Body: two columns */}
       <div className="grid min-h-0 flex-1 grid-cols-[minmax(380px,2fr)_3fr] gap-3">
         {/* Left — task definition */}
-        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-xl border border-border bg-card p-4 shadow-minimal">
+        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-lg border border-border bg-card p-4 shadow-minimal">
           <div className="text-lg font-bold">Task definition</div>
 
           {/* mode toggle */}
-          <div className="inline-flex w-fit rounded-[9px] bg-foreground/[0.05] p-0.5">
+          <div className="inline-flex w-fit rounded-md bg-foreground/[0.05] p-0.5">
             {(['generate', 'manual'] as Mode[]).map(m => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-sm font-semibold transition-colors',
+                  'inline-flex items-center gap-1.5 rounded-sm px-3 py-1.5 text-sm font-semibold transition-colors',
                   mode === m ? 'bg-card text-foreground shadow-minimal' : 'text-foreground/55 hover:text-foreground/80'
                 )}
               >
@@ -500,7 +500,7 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
         {/* Right — subtask editor (Manual) or AI hand-off (Generate).
             The editable list is a *Manual-mode* affordance: in Generate mode the
             orchestrator authors the subtasks, so there's nothing to hand-edit. */}
-        <div className="flex min-h-0 flex-col rounded-xl border border-border bg-card shadow-minimal">
+        <div className="flex min-h-0 flex-col rounded-lg border border-border bg-card shadow-minimal">
           {mode === 'manual' ? (
             <>
               <div className="flex shrink-0 items-center gap-2 px-4 pt-4">
@@ -528,7 +528,7 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
                   <div className="flex flex-col items-center gap-2 py-6">
                     <button
                       onClick={addSubtask}
-                      className="flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-dashed border-border py-2.5 text-sm font-semibold text-foreground/40 transition-colors hover:border-foreground/30 hover:text-foreground/60"
+                      className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border py-2.5 text-sm font-semibold text-foreground/40 transition-colors hover:border-foreground/30 hover:text-foreground/60"
                     >
                       <Plus className="h-3.5 w-3.5" strokeWidth={2.5} /> Add subtask
                     </button>
@@ -578,12 +578,12 @@ function TaskEditorPreview({ mode: initialMode = 'generate' }: { mode?: Mode }) 
       </div>
 
       {/* Bottom — live YAML (collapsible, to reclaim vertical space) */}
-      <div className="rounded-xl border border-border bg-card shadow-minimal">
+      <div className="rounded-lg border border-border bg-card shadow-minimal">
         <button
           type="button"
           onClick={() => setYamlOpen(o => !o)}
           aria-expanded={yamlOpen}
-          className="flex w-full items-center gap-2 rounded-xl px-4 py-2.5 text-left transition-colors hover:bg-foreground/[0.02]"
+          className="flex w-full items-center gap-2 rounded-lg px-4 py-2.5 text-left transition-colors hover:bg-foreground/[0.02]"
         >
           <ChevronDown
             className={cn('h-4 w-4 shrink-0 text-foreground/45 transition-transform', yamlOpen ? 'rotate-0' : '-rotate-90')}
