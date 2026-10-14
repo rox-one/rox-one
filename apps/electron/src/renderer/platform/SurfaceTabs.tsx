@@ -38,7 +38,6 @@ import { APP_NAV_DESTINATIONS } from '@/components/app-shell/nav-destinations'
 import { EXTRA_SCREENS } from '@/pages/extra-screens/registry'
 import { useShellModes } from './useModes'
 import { buildRouteTitleKeys } from './surface-shell'
-import { CHROME_DENSITY } from './chrome-density'
 import { createKnowledgeTabTitleLoader } from './knowledge-tab-titles'
 import { Tabs, type TabItem } from '@/components/ui/tabs'
 import {
@@ -47,7 +46,8 @@ import {
   type SurfaceTabView,
 } from './surface-tab-model'
 
-const TAB_STRIP_HEIGHT = CHROME_DENSITY.tabStripHeight
+/** CSS var so the strip follows `data-density` (compact 32 / comfortable 36). */
+const TAB_STRIP_HEIGHT = 'var(--chrome-tab-strip-height)'
 
 function tabIcon(tab: SurfaceTabView): LucideIcon {
   if (tab.kind === 'browser') return Globe

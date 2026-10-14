@@ -4,7 +4,8 @@
  * Single-lane panel model for side-by-side content panels.
  */
 
-import { atom } from 'jotai'
+import { markExplicitSessionPanelClose } from '../lib/session-auto-open'
+import { atom, type Getter, type Setter } from 'jotai'
 import { parseRouteToNavigationState, parseRouteToNavigationStateOrUnavailable } from '../../shared/route-parser'
 import { routes, type ViewRoute } from '../../shared/routes'
 
@@ -57,6 +58,57 @@ export interface PanelStackEntry {
 }
 
 export const panelStackAtom = atom<PanelStackEntry[]>([])
+
+/**
+ * Surface identity for de-duplication: one panel per screen. Browser
+ * instances and distinct chat sessions are separate surfaces; retained tool
+ * panels are keyed by tool. Everything else is keyed by the route's first
+ * segment, so `automations` and `automations/<id>` are the same surface.
+ */
+export function panelSurfaceKey(entry: { route: string; tool?: AuxiliaryTool }): string {
+  if (entry.tool) return `tool:${entry.tool}`
+  const clean = entry.route.replace(/^\/+/, '')
+  const head = clean.split(/[/?#]/)[0] || 'home'
+  if (head === 'browser') return clean
+  const sessionId = parseSessionIdFromRoute(entry.route as ViewRoute)
+  if (sessionId) return `session:${sessionId}`
+  return head
+}
+
+/**
+ * Collapse panels showing the same surface. The `preferId` panel (the one just
+ * acted on) wins its surface; otherwise the first occurrence does. Returns the
+ * input array unchanged when there is nothing to collapse.
+ */
+export function collapseDuplicateSurfaces<T extends { id: string; route: string; tool?: AuxiliaryTool; proportion: number }>(
+  stack: readonly T[], preferId?: string | null,
+): T[] {
+  const winner = new Map<string, string>()
+  for (const entry of stack) {
+    const key = panelSurfaceKey(entry)
+    if (!winner.has(key) || entry.id === preferId) winner.set(key, entry.id)
+  }
+  if (winner.size === stack.length) return stack as T[]
+  const kept = stack.filter(entry => winner.get(panelSurfaceKey(entry)) === entry.id)
+  const total = kept.reduce((sum, entry) => sum + entry.proportion, 0)
+  return total > 0 ? kept.map(entry => ({ ...entry, proportion: entry.proportion / total })) : kept.map(entry => ({ ...entry, proportion: 1 / kept.length }))
+}
+
+/** Write a stack with duplicates collapsed, keeping focus valid. */
+function setDeduped(get: Getter, set: Setter, stack: PanelStackEntry[], preferId?: string | null): PanelStackEntry[] {
+  const next = collapseDuplicateSurfaces(stack, preferId)
+  set(panelStackAtom, next)
+  const focused = get(focusedPanelIdValueAtom)
+  if (focused && !next.some(entry => entry.id === focused)) set(focusedPanelIdAtom, preferId ?? next[0]?.id ?? null)
+  const expanded = get(expandedPanelIdAtom)
+  if (expanded && !next.some(entry => entry.id === expanded)) set(expandedPanelIdAtom, null)
+  const primary = get(primaryPanelIdAtom)
+  if (primary && !next.some(entry => entry.id === primary)) {
+    const prefer = next.find(entry => entry.id === preferId && !entry.tool) ?? next.find(entry => !entry.tool)
+    set(primaryPanelIdAtom, prefer?.id ?? null)
+  }
+  return next
+}
 const focusedPanelIdValueAtom = atom<string | null>(null)
 export const primaryPanelIdAtom = atom<string | null>(null)
 export const lastAuxiliaryToolAtom = atom<AuxiliaryTool | null>(null)
@@ -107,8 +159,8 @@ export const updatePrimaryPanelRouteAtom = atom(null, (get, set, route: ViewRout
     set(panelStackAtom, normalizeProportions([entry, ...stack]))
     set(focusedPanelIdAtom, entry.id)
   } else {
-    set(panelStackAtom, stack.map(entry => entry.id === primary.id
-      ? { ...entry, route, panelType: getPanelTypeFromRoute(route) } : entry))
+    setDeduped(get, set, stack.map(entry => entry.id === primary.id
+      ? { ...entry, route, panelType: getPanelTypeFromRoute(route) } : entry), primary.id)
     set(focusedPanelIdAtom, primary.id)
   }
 })
@@ -117,8 +169,8 @@ export const updatePrimaryPanelRouteAtom = atom(null, (get, set, route: ViewRout
 export const updatePanelRouteByIdAtom = atom(null, (get, set, input: { id: string; route: ViewRoute }) => {
   const stack = get(panelStackAtom)
   if (!stack.some(entry => entry.id === input.id)) return false
-  set(panelStackAtom, stack.map(entry => entry.id === input.id
-    ? { ...entry, route: input.route, panelType: getPanelTypeFromRoute(input.route) } : entry))
+  setDeduped(get, set, stack.map(entry => entry.id === input.id
+    ? { ...entry, route: input.route, panelType: getPanelTypeFromRoute(input.route) } : entry), input.id)
   return true
 })
 
@@ -290,6 +342,14 @@ export const pushPanelAtom = atom(
     intent?: OpenIntent
   }) => {
     const stack = get(panelStackAtom)
+    const key = panelSurfaceKey({ route })
+    const same = stack.find(entry => panelSurfaceKey(entry) === key)
+    if (same) {
+      // One panel per surface: retarget and focus the existing one.
+      setDeduped(get, set, stack.map(entry => entry.id === same.id ? { ...entry, route, panelType: getPanelTypeFromRoute(route) } : entry), same.id)
+      set(focusedPanelIdAtom, same.id)
+      return
+    }
     let insertAt = stack.length
     if (afterIndex !== undefined && afterIndex >= 0 && afterIndex < stack.length) {
       insertAt = afterIndex + 1
@@ -318,6 +378,7 @@ export const closePanelAtom = atom(
     const stack = get(panelStackAtom)
     const idx = stack.findIndex(p => p.id === id)
     if (idx === -1) return
+    if (parseSessionIdFromRoute(stack[idx].route)) markExplicitSessionPanelClose()
     // The main surface remains available while a tool is open. Closing it
     // returns to the default inbox rather than leaving an orphan tool stack.
     if (!stack[idx].tool && stack.some(panel => panel.tool) && stack.filter(panel => !panel.tool).length === 1) {
@@ -347,6 +408,23 @@ export const reconcilePanelStackAtom = atom(
     focusedIndex?: number
   }): boolean => {
     if (entries.length === 0) return false
+    {
+      const keep = new Set<string>()
+      const focusTarget = entries[Math.min(focusedIndex ?? 0, entries.length - 1)]
+      const focusKey = focusTarget ? panelSurfaceKey(focusTarget) : null
+      const deduped = entries.filter((entry) => {
+        const key = panelSurfaceKey(entry)
+        if (keep.has(key)) return false
+        if (key === focusKey && entry !== focusTarget) return false
+        keep.add(key)
+        return true
+      })
+      if (deduped.length !== entries.length) {
+        const idx = focusTarget ? deduped.indexOf(focusTarget) : 0
+        entries = deduped
+        focusedIndex = idx < 0 ? 0 : idx
+      }
+    }
 
     const current = get(panelStackAtom)
     const used = new Set<string>()
@@ -460,7 +538,7 @@ export const updateFocusedPanelRouteAtom = atom(
         : p
     )
 
-    set(panelStackAtom, updated)
+    setDeduped(get, set, updated, focused.id)
     set(focusedPanelIdAtom, focused.id)
   }
 )
@@ -526,9 +604,12 @@ export const openOrFocusPanelRouteAtom = atom(
   null,
   (get, set, { route, afterIndex }: OpenOrFocusPanelRouteInput): OpenOrFocusPanelRouteResult => {
     const stack = get(panelStackAtom)
+    const key = panelSurfaceKey({ route })
     const existing = stack.find((entry) => entry.route === route)
+      ?? stack.find((entry) => panelSurfaceKey(entry) === key)
 
     if (existing) {
+      setDeduped(get, set, stack.map(entry => entry.id === existing.id ? { ...entry, route, panelType: getPanelTypeFromRoute(route) } : entry), existing.id)
       set(focusedPanelIdAtom, existing.id)
       return { status: 'focused', panelId: existing.id }
     }

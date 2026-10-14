@@ -2,6 +2,7 @@ import * as React from 'react'
 import { ChevronRight, Folder, FolderOpen, FolderPlus, Inbox, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import {
   ContextMenu,
   ContextMenuTrigger,
@@ -46,24 +47,28 @@ export function FolderGroupHeader({
         data-folder-header="ungrouped"
         onDragOver={onDragOver}
         className={cn(
-          'sticky top-0 z-10 flex items-center gap-1.5 bg-background px-5 py-2',
+          'sticky top-0 z-[var(--z-sticky)] flex items-center gap-1.5 bg-background px-5 py-2',
           isDragging && 'mx-2 rounded-[var(--radius-card)] border border-dashed border-border-subtle',
           isDropTarget && 'border-border-strong bg-surface-hover',
         )}
       >
-        <Inbox className="h-3 w-3 text-muted-foreground/60" aria-hidden />
+        <Inbox className="icon-status text-muted-foreground/60" aria-hidden />
         <span className="flex-1 text-caption font-medium uppercase caps-label text-text-secondary">
           {label} <> · <span className="text-muted-foreground/50 numeric">{count}</span></>
         </span>
-        <button
-          type="button"
-          onClick={onNewFolder}
-          aria-label={t('chatFolders.newFolder')}
-          title={t('chatFolders.newFolder')}
-          className="rounded-full p-1 text-muted-foreground/70 hover:bg-foreground/5 hover:text-foreground"
-        >
-          <FolderPlus className="h-3.5 w-3.5" />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={onNewFolder}
+              aria-label={t('chatFolders.newFolder')}
+              className="rounded-full p-1 text-muted-foreground/70 hover:bg-surface-hover hover:text-foreground"
+            >
+              <FolderPlus className="icon-caption" aria-hidden />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{t('chatFolders.newFolder')}</TooltipContent>
+        </Tooltip>
       </div>
     )
   }
@@ -79,7 +84,7 @@ export function FolderGroupHeader({
           aria-expanded={!isCollapsed}
           onClick={onToggle}
           onDragOver={onDragOver}
-          className="group/header sticky top-0 z-10 flex w-full cursor-pointer items-center gap-1.5 bg-background px-5 py-1.5 text-left"
+          className="group/header sticky top-0 z-[var(--z-sticky)] flex w-full cursor-pointer items-center gap-1.5 bg-background px-5 py-1.5 text-left"
         >
           <div
             className={cn(
@@ -90,13 +95,13 @@ export function FolderGroupHeader({
           <ChevronRight
             aria-hidden
             className={cn(
-              'relative h-3 w-3 text-muted-foreground/60 transition-transform duration-[var(--motion-fast)]',
+              'relative icon-status text-muted-foreground/60 transition-transform duration-[var(--motion-fast)]',
               !isCollapsed && 'rotate-90',
             )}
           />
-          <Icon aria-hidden className="relative h-3.5 w-3.5 text-muted-foreground" />
-          <span className="relative min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">{label}</span>
-          <span className="relative text-[11px] numeric text-muted-foreground/60">{count}</span>
+          <Icon aria-hidden className="relative icon-caption text-muted-foreground" />
+          <span className="relative min-w-0 flex-1 truncate text-body font-medium text-foreground">{label}</span>
+          <span className="relative text-caption numeric text-muted-foreground/60">{count}</span>
         </button>
       </ContextMenuTrigger>
       <StyledContextMenuContent>

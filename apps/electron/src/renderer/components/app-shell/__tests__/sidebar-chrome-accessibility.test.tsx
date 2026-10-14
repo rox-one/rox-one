@@ -98,27 +98,33 @@ describe('compact sidebar rendered accessibility', () => {
     expect(button).toContain('>Rox User</span>')
   })
 
-  it('exposes setup as a closed keyboard popover above a reachable promo slot', () => {
-    const html = render(<SidebarChrome workspaceId="first" profile={profile} onProfileClick={change} promoKind="onboarding" onPromoCta={change} />)
+  it('rail avatar is the single profile entry point: closed keyboard popover with initial fallback', () => {
+    const html = render(<ProfileStrip variant="rail" data={profile} onClick={change} />)
+    const button = buttons(html)[0]!
+    expect(button).toContain('data-rail-avatar=""')
+    expect(button).toContain('aria-haspopup="dialog"')
+    expect(button).toContain('aria-expanded="false"')
+    expect(button).toContain('size-6')
+    expect(button).not.toContain('>Rox User</span>')
+  })
+
+  it('second-sidebar footer carries only a compact promo hint, no profile card', () => {
+    const html = render(<SidebarChrome workspaceId="first" promoKind="onboarding" onPromoCta={change} />)
     const controls = buttons(html)
-    const profileButton = controls.find(button => button.includes('data-tutorial="profile-strip"'))
-    expect(profileButton).toBeDefined()
-    expect(profileButton).toContain('aria-haspopup="dialog"')
-    expect(profileButton).toContain('aria-expanded="false"')
+    expect(html).not.toContain('data-tutorial="profile-strip"')
     expect(controls.every(button => button.includes('type="button"') && !button.includes('tabindex="-1"'))).toBe(true)
     expect(html).toContain('data-promo-slot="onboarding"')
     expect(html).toContain('>Set up memory</div>')
-    expect(html).toContain('>Open memory</button>')
+    expect(html).toContain('>Open memory →</button>')
     expect(controls.find(button => button.includes('aria-label="Dismiss"'))).toBeDefined()
   })
 
-  it('honors a persisted dismissal without removing the profile or another workspace suggestion', () => {
+  it('honors a persisted dismissal without hiding another workspace suggestion', () => {
     dismissSidebarGuidance('first')
-    const props = { profile, onProfileClick: change, promoKind: 'onboarding' as const, onPromoCta: change }
+    const props = { promoKind: 'onboarding' as const, onPromoCta: change }
     const first = render(<SidebarChrome {...props} workspaceId="first" />)
     const second = render(<SidebarChrome {...props} workspaceId="second" />)
-    expect(first).toContain('data-tutorial="profile-strip"')
-    expect(first).not.toContain('data-promo-slot=')
+    expect(first).toBe('')
     expect(first).not.toContain('Set up memory')
     expect(second).toContain('data-promo-slot="onboarding"')
     expect(second).toContain('Set up memory')
@@ -126,11 +132,11 @@ describe('compact sidebar rendered accessibility', () => {
 
   it('keeps measured reminders reachable after setup was dismissed', () => {
     dismissSidebarGuidance('first')
-    const html = render(<SidebarChrome workspaceId="first" profile={profile} onProfileClick={change} promoKind="reminder" reminderDueCount={3} onPromoCta={change} />)
+    const html = render(<SidebarChrome workspaceId="first" promoKind="reminder" reminderDueCount={3} onPromoCta={change} />)
     expect(html).toContain('data-promo-slot="reminder"')
     expect(html).toContain('>Reminders</div>')
-    expect(html).toContain('>3 due</p>')
-    expect(html).toContain('>Review</button>')
+    expect(html).toContain('>3 due</span>')
+    expect(html).toContain('>Review →</button>')
     expect(html).not.toContain('aria-label="Dismiss"')
   })
 

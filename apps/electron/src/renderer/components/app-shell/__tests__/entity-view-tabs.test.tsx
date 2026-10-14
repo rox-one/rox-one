@@ -42,6 +42,7 @@ beforeAll(async () => {
       'entityView.teamChat': 'Team chat',
       'entityView.table': 'Table',
       'entityView.canvas': 'Canvas',
+      'entityView.trajectory': 'Trajectory',
       'entityView.comingSoon': 'Coming soon',
     } } },
   })
@@ -55,9 +56,9 @@ describe('EntityViewTabs renders through the shared tab primitive', () => {
     const html = renderTabs({ value: 'standard', capabilities: defaultSessionEntityCapabilities(), onChange() {} })
     expect(html).toContain('role="tablist"')
     expect(html).toContain('aria-label="Views"')
-    expect(html.match(/role="tab"/g)).toHaveLength(3)
+    expect(html.match(/role="tab"/g)).toHaveLength(4)
     expect(html).toContain('aria-selected="true"')
-    expect(html.match(/tabindex="-1"/g)).toHaveLength(2)
+    expect(html.match(/tabindex="-1"/g)).toHaveLength(3)
     expect(html).toContain('aria-label="Standard"')
   })
 
@@ -101,7 +102,7 @@ describe('EntityViewTabs delegates behaviour to the shared primitive', () => {
     const container = await mount({ value: 'standard', capabilities: defaultSessionEntityCapabilities(), onChange() {} })
     const strip = container.querySelector('[data-tabs="surface"]')
     expect(strip?.getAttribute('role')).toBe('tablist')
-    expect(container.querySelectorAll('[role="tab"]')).toHaveLength(3)
+    expect(container.querySelectorAll('[role="tab"]')).toHaveLength(4)
   })
 
   it('moves the view with arrow keys through the mounted strip', async () => {
@@ -115,8 +116,8 @@ describe('EntityViewTabs delegates behaviour to the shared primitive', () => {
     const standard = tab(container, 'standard')
     standard.focus()
     await press(standard, 'ArrowRight')
-    expect(document.activeElement).toBe(tab(container, 'map'))
-    expect(changed).toEqual(['map'])
+    expect(document.activeElement).toBe(tab(container, 'trajectory'))
+    expect(changed).toEqual(['trajectory'])
   })
 
   it('selects the view when its tab is clicked', async () => {

@@ -72,6 +72,9 @@ const SessionWorkflowEditor = createRetryableRuntimeMapLazy<SessionWorkflowEdito
 const RuntimeMapDock = createRetryableRuntimeMapLazy<RuntimeMapDockProps>(() =>
   import('@/components/runtime-map/RuntimeMapDock').then((m) => ({ default: m.RuntimeMapDock })),
 )
+const TrajectoryView = React.lazy(() =>
+  import('@/components/app-shell/trajectory/TrajectoryView').then((m) => ({ default: m.TrajectoryView })),
+)
 const SessionGitOutline = React.lazy(() =>
   import('@/components/session-workbench/SessionGitOutline').then((m) => ({
     default: m.SessionGitOutline,
@@ -693,6 +696,31 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   )
 
 
+  // "Open in chat" from the Trajectory tab: the standard ChatDisplay mounts
+  // after the view switch (and may still be building its turns), so retry
+  // by message id until the transcript resolves it or ~1s elapses.
+  const pendingChatJumpRef = React.useRef<string | null>(null)
+  React.useEffect(() => {
+    if (sessionView !== 'standard' || pendingChatJumpRef.current === null) return
+    const id = pendingChatJumpRef.current
+    let frame = 0
+    let handle = 0
+    const attempt = () => {
+      if (pendingChatJumpRef.current !== id) return
+      if (ownChatDisplayRef.current?.scrollToMessage(id)) {
+        pendingChatJumpRef.current = null
+        return
+      }
+      if (++frame >= 60) {
+        pendingChatJumpRef.current = null
+        return
+      }
+      handle = requestAnimationFrame(attempt)
+    }
+    handle = requestAnimationFrame(attempt)
+    return () => cancelAnimationFrame(handle)
+  }, [sessionView])
+
   const handleWorkbenchFork = React.useCallback(
     async (messageId: string) => {
       if (!session) return
@@ -878,6 +906,21 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
               </React.Suspense>
             ) : undefined}
           />
+        )
+      }
+      if (sessionView === 'trajectory') {
+        return (
+          <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+            <React.Suspense fallback={<SessionSecondaryFallback />}>
+              <TrajectoryView
+                messages={session?.messages ?? []}
+                onOpenMessage={(id) => {
+                  pendingChatJumpRef.current = id
+                  setSessionView('standard')
+                }}
+              />
+            </React.Suspense>
+          </div>
         )
       }
       if (sessionView === 'outline') {
@@ -1456,11 +1499,12 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
             <ChatDisplay
               ref={connectChatDisplayRef}
               session={session}
-              onSendMessage={(message, attachments, skillSlugs) => {
+              supportsQueueMode
+              onSendMessage={(message, attachments, skillSlugs, queueMode) => {
                 if (session) {
                   const act = soupChatActResult({ source: 'native', action: 'write', nativeId: session.id })
                   if (!isClaimableLive(act)) return
-                  onSendMessage(session.id, message, attachments, skillSlugs)
+                  onSendMessage(session.id, message, attachments, skillSlugs, undefined, queueMode)
                 }
               }}
               onOpenFile={handleOpenFile}

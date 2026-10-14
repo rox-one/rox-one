@@ -64,8 +64,10 @@
   --panel-snap-guide: var(--accent);
 }
 
-/* Density swaps values, never class names. Nothing sets data-density yet;
-   compact stays the default. */
+/* Density swaps values, never class names. `<html data-density="comfortable">`
+   is set by the Appearance setting (density-preference.ts); compact stays the
+   default (no attribute). Rail widths are deliberately not overridden: the
+   shell rail stays fixed (SHELL_RAIL_WIDTH 56px) in every density. */
 html[data-density="comfortable"] {
   --control-sm: 28px;
   --control-md: 32px;
@@ -76,7 +78,6 @@ html[data-density="comfortable"] {
   --chrome-topbar-height: 44px;
   --chrome-panel-header-height: 36px;
   --chrome-tab-strip-height: 36px;
-  --chrome-rail-width: 52px;
 }
 
 /* Coarse pointers get explicit hit-target floors. The floors win over
@@ -93,4 +94,17 @@ html[data-density="comfortable"] {
     /* Coarse rail == topbar height (was 48 rail vs 56 topbar; G8). */
     --chrome-rail-width: 56px;
   }
+}
+
+/* Shell width breakpoints (design: rail breakpoints). Kept outside the
+   compiled blocks above. CSS custom properties cannot drive @media, so the
+   JS mirror is SHELL_BREAKPOINTS in platform/viewport-band.ts (parity test).
+   compact 900: secondary sidebar floats; regular 1280: rail may show labels
+   (icons-only below); wide 1600: labelled rail is the default layout;
+   ultra 2560: wide-monitor tier. */
+:root {
+  --shell-bp-compact: 900px;
+  --shell-bp-regular: 1280px;
+  --shell-bp-wide: 1600px;
+  --shell-bp-ultra: 2560px;
 }

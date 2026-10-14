@@ -35,7 +35,7 @@ afterEach(() => resetUiAppearanceBridge())
 
 describe('ui appearance store', () => {
   it('defaults to a visible status bar and brand accent', () => {
-    expect(getUiAppearance()).toEqual({ statusBarVisible: true, accentSource: 'brand', accent: null })
+    expect(getUiAppearance()).toEqual({ statusBarVisible: true, modePillVisible: true, accentSource: 'brand', accent: null })
   })
 
   it('loads the bridge snapshot once and pushes live accents', async () => {

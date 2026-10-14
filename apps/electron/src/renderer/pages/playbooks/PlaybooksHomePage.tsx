@@ -12,7 +12,7 @@ import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { playbooksEnabledAtom } from '@/atoms/playbooks'
 import { workbenchFlagAtom } from '@/platform/unified-flags'
-import { createNotebook, loadNotebooks, saveNotebooks, type NotebookMode, type PlaybookNotebook } from './notebook-store'
+import { createNotebook, loadNotebooks, saveNotebooks, subscribeNotebooks, subscribeOpenNotebookIntent, takeOpenNotebookIntent, type NotebookMode, type PlaybookNotebook } from './notebook-store'
 import { NotebookHome } from './components/NotebookHome'
 import KnowledgeNotebookPage from './knowledge/KnowledgeNotebookPage'
 import CodebookNotebookPage from './codebook/CodebookNotebookPage'
@@ -51,6 +51,18 @@ export default function PlaybooksHomePage() {
     }
   }, [])
 
+  // Deep links from the Навыки sidebar (open a specific / freshly created notebook).
+  useEffect(() => {
+    const consume = () => {
+      const id = takeOpenNotebookIntent()
+      if (!id) return
+      try { setNotebooks(loadNotebooks()) } catch { /* keep the current list */ }
+      setView({ kind: 'notebook', id })
+    }
+    consume()
+    return subscribeOpenNotebookIntent(consume)
+  }, [])
+
   useEffect(() => {
     const goOnline = () => setOffline(false)
     const goOffline = () => setOffline(true)
@@ -62,7 +74,16 @@ export default function PlaybooksHomePage() {
     }
   }, [])
 
-  const persist = useCallback((next: PlaybookNotebook[]) => {
+  // Stay in sync with notebooks created/edited elsewhere (Навыки sidebar, other windows).
+  useEffect(() => subscribeNotebooks(() => {
+    try { setNotebooks(loadNotebooks()) } catch { /* keep the current list */ }
+  }), [])
+
+  // Every write re-reads the store first and applies the change to it, so a
+  // stale in-memory list can never overwrite a notebook saved elsewhere.
+  const persist = useCallback((mutate: (current: PlaybookNotebook[]) => PlaybookNotebook[]) => {
+    if (typeof localStorage === 'undefined') { setNotebooks((prev) => mutate(prev)); return }
+    const next = mutate(loadNotebooks())
     setNotebooks(next)
     saveNotebooks(next)
   }, [])
@@ -70,20 +91,20 @@ export default function PlaybooksHomePage() {
   const create = useCallback(
     (mode: NotebookMode, name: string) => {
       const notebook = createNotebook(name, mode)
-      persist([notebook, ...notebooks])
+      persist((current) => [notebook, ...current])
       setView({ kind: 'notebook', id: notebook.id })
     },
-    [notebooks, persist],
+    [persist],
   )
 
   const update = useCallback(
     (id: string, patch: Partial<Pick<PlaybookNotebook, 'name' | 'sourceSlugs' | 'note' | 'cells' | 'projectSlug'>>) => {
-      persist(notebooks.map((notebook) => (notebook.id === id ? { ...notebook, ...patch, updatedAt: Date.now() } : notebook)))
+      persist((current) => current.map((notebook) => (notebook.id === id ? { ...notebook, ...patch, updatedAt: Date.now() } : notebook)))
     },
-    [notebooks, persist],
+    [persist],
   )
 
-  const remove = useCallback((id: string) => persist(notebooks.filter((notebook) => notebook.id !== id)), [notebooks, persist])
+  const remove = useCallback((id: string) => persist((current) => current.filter((notebook) => notebook.id !== id)), [persist])
 
   const activeNotebook = useMemo(
     () => (view.kind === 'notebook' ? notebooks.find((notebook) => notebook.id === view.id) ?? null : null),
