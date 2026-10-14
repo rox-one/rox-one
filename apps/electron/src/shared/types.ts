@@ -4526,5 +4526,9 @@ export interface CanvasBridge {
   /** Full Yjs state of the board. */
   open(workspaceId: string, boardId: string): Promise<Uint8Array>
   apply(workspaceId: string, boardId: string, update: Uint8Array): Promise<{ ok: true }>
+  /** Stop receiving updates for a board this renderer had open. */
+  close(workspaceId: string, boardId: string): Promise<{ ok: true }>
+  /** Sync the `workbench.mode.canvas.v1` flag to main (handlers refuse while it is off). */
+  setEnabled(enabled: boolean): Promise<{ ok: true; enabled: boolean }>
   onUpdate(callback: (workspaceId: string, boardId: string, update: Uint8Array) => void): () => void
 }

@@ -1087,6 +1087,7 @@ app.whenReady().then(async () => {
       resolveWorkspaceRoot: (id) => getWorkspaceByNameOrId(id)?.rootPath ?? null,
       isTrustedSender: (event) => isRegisteredRoxRendererWebContents(event.sender),
       listRenderers: () => webContents.getAllWebContents().filter((wc) => isRegisteredRoxRendererWebContents(wc)),
+      rendererById: (id) => webContents.fromId(id) ?? undefined,
     })
 
     // Transport diagnostics bridge — preload reports remote WS connection state changes
