@@ -19,6 +19,7 @@ import {
   CREATABLE_KINDS, createEntity, createEntityLinker, createEntityRegistry, deleteEntity, EntitySnapshotResolver, searchExisting, unlinkMyBoardLinks, type CreatableKind,
 } from './entity-wiring'
 import { onCanvasTarget, takeCanvasTarget, type CanvasTarget } from './canvas-target'
+import { resizeRotated } from './geometry'
 import { Button } from '@/components/ui/button'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
 import { useActiveWorkspace } from '@/context/AppShellContext'
@@ -261,19 +262,10 @@ function useBoard(workspaceId: string, boardId: string) {
 type Drag =
   | { kind: 'pan'; sx: number; sy: number; ox: number; oy: number }
   | { kind: 'move'; id: string; sx: number; sy: number; ox: number; oy: number }
-  | { kind: 'resize'; id: string; corner: 'nw' | 'ne' | 'sw' | 'se'; sx: number; sy: number; o: { x: number; y: number; w: number; h: number } }
+  | { kind: 'resize'; id: string; corner: 'nw' | 'ne' | 'sw' | 'se'; sx: number; sy: number; rotation: number; o: { x: number; y: number; w: number; h: number } }
   | { kind: 'rotate'; id: string; cx: number; cy: number }
 
-const MIN_SIZE = 20
-/** New box for a corner drag by (dx, dy) in world units (unrotated frame), clamped to MIN_SIZE. */
-export function resizeBox(o: { x: number; y: number; w: number; h: number }, corner: 'nw' | 'ne' | 'sw' | 'se', dx: number, dy: number) {
-  let { x, y, w, h } = o
-  if (corner.includes('e')) w = Math.max(MIN_SIZE, o.w + dx)
-  if (corner.includes('s')) h = Math.max(MIN_SIZE, o.h + dy)
-  if (corner.includes('w')) { w = Math.max(MIN_SIZE, o.w - dx); x = o.x + o.w - w }
-  if (corner.includes('n')) { h = Math.max(MIN_SIZE, o.h - dy); y = o.y + o.h - h }
-  return { x, y, w, h }
-}
+export { resizeBox } from './geometry'
 
 function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspaceId: string; boardId: string; focusObjectId?: string; onBack: () => void }) {
   const { t } = useTranslation()
@@ -423,7 +415,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     if (o.locked) return
     drag.current = h === 'rotate'
       ? { kind: 'rotate', id: o.id, cx: o.x + o.w / 2, cy: o.y + o.h / 2 }
-      : { kind: 'resize', id: o.id, corner: h, sx: e.clientX, sy: e.clientY, o: { x: o.x, y: o.y, w: o.w, h: o.h } }
+      : { kind: 'resize', id: o.id, corner: h, sx: e.clientX, sy: e.clientY, rotation: o.rotation ?? 0, o: { x: o.x, y: o.y, w: o.w, h: o.h } }
     svgRef.current?.setPointerCapture(e.pointerId)
   }
   const onMove = (e: ReactPointerEvent) => {
@@ -431,7 +423,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     if (!d || !board) return
     if (d.kind === 'pan') setView(v => ({ ...v, x: d.ox + e.clientX - d.sx, y: d.oy + e.clientY - d.sy }))
     else if (d.kind === 'move') board.update(d.id, { x: d.ox + (e.clientX - d.sx) / view.zoom, y: d.oy + (e.clientY - d.sy) / view.zoom }, LOCAL)
-    else if (d.kind === 'resize') board.update(d.id, resizeBox(d.o, d.corner, (e.clientX - d.sx) / view.zoom, (e.clientY - d.sy) / view.zoom), LOCAL)
+    else if (d.kind === 'resize') board.update(d.id, resizeRotated(d.o, d.rotation, d.corner, (e.clientX - d.sx) / view.zoom, (e.clientY - d.sy) / view.zoom), LOCAL)
     else {
       const p = toWorld(e.clientX, e.clientY)
       let deg = (Math.atan2(p.y - d.cy, p.x - d.cx) * 180) / Math.PI + 90
