@@ -80,6 +80,7 @@ import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { type LinkItem, type SidebarItem as SidebarLinkItem } from "./LeftSidebar"
 import { PrimaryRail, SHELL_RAIL_WIDTH } from '../shell/PrimaryRail'
+import { ShellUnreadSources } from '../shell/ShellUnreadSources'
 import { toggleSecondarySidebar, useSecondarySidebarVisibility } from '../shell/shell-prefs'
 import { ShellSidebarNav } from "./ShellSidebarNav"
 import { modePillShown } from "./mode-pill-layout"
@@ -3163,6 +3164,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                 if (main) store.set(focusedPanelIdAtom, main.id)
               }}
             >
+            <ShellUnreadSources />
             <PrimaryRail
               secondaryAvailable={secondaryAvailable}
               avatar={

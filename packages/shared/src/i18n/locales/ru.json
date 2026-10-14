@@ -11691,6 +11691,7 @@
   "workspace.serverAuthToken": "Токен аутентификации сервера",
   "workspace.serverUrl": "URL сервера",
   "workspace.serverUrlPlaceholder": "ws://192.168.1.100:9100",
+  "workspace.settingsItem": "Настройки пространства",
   "workspace.teamSpace": "Пространство команды",
   "workspace.teamSpaceCreateDesc": "Назовите пространство команды и выберите, где его хранить.",
   "workspace.teamSpaceDesc": "Создать общее командное рабочее пространство.",

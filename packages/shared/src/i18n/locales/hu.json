@@ -11627,6 +11627,7 @@
   "workspace.serverAuthToken": "Szerver hitelesítési token",
   "workspace.serverUrl": "Szerver URL",
   "workspace.serverUrlPlaceholder": "ws://192.168.1.100:9100",
+  "workspace.settingsItem": "Munkaterület beállításai",
   "workspace.teamSpace": "Csapattér",
   "workspace.teamSpaceCreateDesc": "Nevezze el a csapatteret, és válassza ki a tárolás helyét.",
   "workspace.teamSpaceDesc": "Megosztott csapat-munkaterület létrehozása.",

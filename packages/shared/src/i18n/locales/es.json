@@ -11639,6 +11639,7 @@
   "workspace.serverAuthToken": "Token de autenticación del servidor",
   "workspace.serverUrl": "URL del servidor",
   "workspace.serverUrlPlaceholder": "ws://192.168.1.100:9100",
+  "workspace.settingsItem": "Ajustes del espacio de trabajo",
   "workspace.teamSpace": "Espacio de equipo",
   "workspace.teamSpaceCreateDesc": "Nombra el espacio de equipo y elige dónde guardarlo.",
   "workspace.teamSpaceDesc": "Crear un espacio de trabajo compartido del equipo.",

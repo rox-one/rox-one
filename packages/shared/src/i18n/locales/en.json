@@ -11627,6 +11627,7 @@
   "workspace.serverAuthToken": "Server authentication token",
   "workspace.serverUrl": "Server URL",
   "workspace.serverUrlPlaceholder": "ws://192.168.1.100:9100",
+  "workspace.settingsItem": "Workspace settings",
   "workspace.teamSpace": "Team space",
   "workspace.teamSpaceCreateDesc": "Name your team space and choose where to store it.",
   "workspace.teamSpaceDesc": "Create a shared team workspace (Пространство команды).",

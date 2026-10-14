@@ -20,7 +20,7 @@ import { useOpenPillBrowser } from '@/platform/pill-activate'
 import { useShellModes } from '@/platform/useModes'
 import type { NavigationState } from '../../../shared/types'
 import { buildRailModel, type RailScreen } from './rail-model'
-import { toggleRailPin, toggleSecondarySidebar, useRailPins, useSecondarySidebarVisibility, useUnreadCounts } from './shell-prefs'
+import { toggleRailPin, toggleSecondarySidebar, useRailPins, useSecondarySidebarVisibility, useVisibleUnreadCounts, useMarkScreensSeen } from './shell-prefs'
 import { openScreenPanelAtom } from './panel-strip'
 
 export const SHELL_RAIL_WIDTH = 56
@@ -123,7 +123,12 @@ export const PrimaryRail = React.memo(function PrimaryRail({ avatar, secondaryAv
   const { t } = useTranslation()
   const navState = useNavigationState()
   const model = useRailModel()
-  const unread = useUnreadCounts()
+  const unread = useVisibleUnreadCounts()
+  const activeIds = React.useMemo(
+    () => [...model.pinned, ...model.overflow, ...model.bottom].filter((screen) => isRailScreenActive(screen, navState)).map((screen) => screen.id),
+    [model, navState],
+  )
+  useMarkScreensSeen(activeIds)
   const activate = useActivateScreen()
   const secondary = useSecondarySidebarVisibility()
   const [moreOpen, setMoreOpen] = React.useState(false)

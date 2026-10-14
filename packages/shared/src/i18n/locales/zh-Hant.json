@@ -11627,6 +11627,7 @@
   "workspace.serverAuthToken": "伺服器認證令牌",
   "workspace.serverUrl": "伺服器 URL",
   "workspace.serverUrlPlaceholder": "ws://192.168.1.100:9100",
+  "workspace.settingsItem": "工作區設定",
   "workspace.teamSpace": "團隊空間",
   "workspace.teamSpaceCreateDesc": "為團隊空間命名並選擇儲存位置。",
   "workspace.teamSpaceDesc": "建立共用的團隊工作區。",

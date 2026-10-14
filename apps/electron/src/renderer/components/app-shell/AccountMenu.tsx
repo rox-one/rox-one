@@ -21,6 +21,7 @@ import {
   CloudOff,
   ExternalLink,
   FolderPlus,
+  Settings2,
   Shield,
   Trash2,
 } from 'lucide-react'
@@ -609,6 +610,14 @@ export function AccountMenu({
                   <span className="font-medium">{t('workspace.addWorkspace')}</span>
                 </button>
               </DrawerClose>
+              <DrawerClose asChild>
+                <button type="button" className={drawerRowClass} onClick={() => navigate(routes.view.settings('workspace'))} data-workspace-settings-item="">
+                  <div className="h-7 w-7 rounded-full bg-surface-hover flex items-center justify-center shrink-0">
+                    <Settings2 className="icon-inline text-text-muted" />
+                  </div>
+                  <span className="font-medium">{t('workspace.settingsItem')}</span>
+                </button>
+              </DrawerClose>
 
               {drawerSectionLabel(t('accountMenu.section.connections'))}
               <div className="px-3 py-2 text-sm text-foreground/70">
@@ -764,6 +773,10 @@ export function AccountMenu({
           <StyledDropdownMenuItem onClick={handleNewWorkspace} className="font-sans">
             <FolderPlus className="h-4 w-4" />
             {t('workspace.addWorkspace')}
+          </StyledDropdownMenuItem>
+          <StyledDropdownMenuItem onClick={() => navigate(routes.view.settings('workspace'))} className="font-sans" data-workspace-settings-item="">
+            <Settings2 className="icon-inline" />
+            {t('workspace.settingsItem')}
           </StyledDropdownMenuItem>
           <StyledDropdownMenuSeparator />
           {sectionLabel(t('accountMenu.section.connections'))}

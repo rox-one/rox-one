@@ -30,6 +30,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useOpenScreen } from '@/components/shell/panel-strip'
+import { useScreenUnread, useVisibleUnreadCounts } from '@/components/shell/shell-prefs'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { useNavigationState } from '@/contexts/NavigationContext'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
@@ -301,7 +302,9 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette, onOpenBro
   const primaryRoute = useAtomValue(primaryPanelRouteAtom)
   const openBrowser = useOpenPillBrowser()
   const browserAvailable = canOpenPillBrowser()
-  const badges = { inbox: inboxBlocking }
+  useScreenUnread('inbox', inboxBlocking)
+  const visibleUnread = useVisibleUnreadCounts()
+  const badges = useMemo(() => ({ ...visibleUnread, inbox: Math.max(inboxBlocking, visibleUnread.inbox ?? 0) }), [visibleUnread, inboxBlocking])
 
   const [focusId, setFocusId] = useState<string | null>(null)
 

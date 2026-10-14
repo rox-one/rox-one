@@ -11679,6 +11679,7 @@
   "workspace.serverAuthToken": "رمز مصادقة الخادم",
   "workspace.serverUrl": "عنوان الخادم",
   "workspace.serverUrlPlaceholder": "ws://192.168.1.100:9100",
+  "workspace.settingsItem": "إعدادات مساحة العمل",
   "workspace.teamSpace": "مساحة الفريق",
   "workspace.teamSpaceCreateDesc": "سمِّ مساحة فريقك واختر مكان تخزينها.",
   "workspace.teamSpaceDesc": "أنشئ مساحة عمل مشتركة للفريق (مساحة الفريق).",

@@ -112,6 +112,48 @@ export function useUnreadCounts(): Readonly<Record<string, number>> {
   )
 }
 
+/**
+ * «Seen» baselines (top-50 #8): opening a screen resets its badge. The badge
+ * shows only what arrived since the screen was last active; the source count
+ * itself stays owned by the screen. Baselines persist for the session only.
+ */
+let seen: Record<string, number> = {}
+const seenListeners = new Set<Listener>()
+export function markScreenSeen(screenId: string): void {
+  const count = unread[screenId] ?? 0
+  if ((seen[screenId] ?? 0) === count) return
+  seen = { ...seen, [screenId]: count }
+  for (const listener of seenListeners) listener()
+}
+export function visibleUnread(counts: Readonly<Record<string, number>>, baselines: Readonly<Record<string, number>>): Record<string, number> {
+  const out: Record<string, number> = {}
+  for (const [id, count] of Object.entries(counts)) {
+    // A source count that dropped below the baseline (items read elsewhere) re-arms from the new value.
+    const delta = count - Math.min(baselines[id] ?? 0, count)
+    if (delta > 0) out[id] = delta
+  }
+  return out
+}
+function useSeen(): Readonly<Record<string, number>> {
+  return React.useSyncExternalStore(
+    (listener) => { seenListeners.add(listener); return () => { seenListeners.delete(listener) } },
+    () => seen,
+    () => seen,
+  )
+}
+/** Badge counts for rail and pills: unread minus the seen baseline. */
+export function useVisibleUnreadCounts(): Readonly<Record<string, number>> {
+  const counts = useUnreadCounts()
+  const baselines = useSeen()
+  return React.useMemo(() => visibleUnread(counts, baselines), [counts, baselines])
+}
+/** Keep the active screens' badges at zero while they are open (counts may keep growing). */
+export function useMarkScreensSeen(activeIds: readonly string[]): void {
+  const counts = useUnreadCounts()
+  const key = activeIds.join('|')
+  React.useEffect(() => { for (const id of key.split('|')) if (id) markScreenSeen(id) }, [key, counts])
+}
+
 /** Publish an unread count for a screen while mounted (several sources add up). */
 export function useScreenUnread(screenId: string, count: number): void {
   const tokenRef = React.useRef<symbol | null>(null)
@@ -124,6 +166,7 @@ export function useScreenUnread(screenId: string, count: number): void {
 /** Test helper. */
 export function resetShellPrefs(): void {
   railPinsStore.reload(); pillsStore.reload(); secondarySidebarStore.reload()
-  unreadOwners.clear(); unread = {}
+  unreadOwners.clear(); unread = {}; seen = {}
+  for (const listener of seenListeners) listener()
   for (const listener of unreadListeners) listener()
 }

@@ -11627,6 +11627,7 @@
   "workspace.serverAuthToken": "サーバー認証トークン",
   "workspace.serverUrl": "サーバー URL",
   "workspace.serverUrlPlaceholder": "ws://192.168.1.100:9100",
+  "workspace.settingsItem": "ワークスペース設定",
   "workspace.teamSpace": "チームスペース",
   "workspace.teamSpaceCreateDesc": "チームスペースに名前を付け、保存場所を選びます。",
   "workspace.teamSpaceDesc": "共有チームワークスペースを作成します。",
