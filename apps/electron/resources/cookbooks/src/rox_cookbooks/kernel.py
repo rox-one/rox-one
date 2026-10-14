@@ -1062,6 +1062,17 @@ class ActiveRuns:
         with self._lock:
             return list(self._runs.get(str(key), ()))
 
+    def active(self, key: str) -> int:
+        """How many runs are currently registered for ``key``.
+
+        Wave 10 run-guard: the host refuses a cell-structure mutation while this
+        is non-zero, because insert/delete/move shift cell indices under a run
+        that is about to persist its output back into the copy — the write would
+        land in the wrong cell (``tests/test_notebook_persist.py``).
+        """
+        with self._lock:
+            return len(self._runs.get(str(key), ()))
+
     def cancel(self, key: str) -> int:
         """Kill every live run for ``key``; how many were still in flight."""
         with self._lock:

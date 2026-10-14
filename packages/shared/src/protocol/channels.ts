@@ -603,6 +603,9 @@ export const RPC_CHANNELS = {
     RESET: 'cookbooks-lab:reset',
     CANCEL: 'cookbooks-lab:cancel',
     EXPORT: 'cookbooks-lab:export',
+    // Wave 10: one composer for the four structural cell operations
+    // (add/delete/move/duplicate) — a discriminated union input.
+    MUTATE: 'cookbooks-lab:mutate',
     STATUS_CHANGED: 'cookbooks-lab:status-changed',
   },
 
