@@ -45,7 +45,7 @@ import {
   topBarSurfaceTabsSlotAtom,
 } from "@/atoms/unified-shell"
 import { ModeBar, type ModeBarMetrics } from "@/platform/ModeBar"
-import { resolveModePillLayout, type ModePillLayout } from "./mode-pill-layout"
+import { modePillShown, resolveModePillLayout, type ModePillLayout } from "./mode-pill-layout"
 import { resolveWorkbenchChrome } from "@/platform/workbench-chrome"
 
 const RIGHT_SLOT_FULL_BADGES_THRESHOLD = 420
@@ -175,7 +175,7 @@ export function TopBar({
 
   // The mode pill renders on every non-compact surface (2026-10-08: restored
   // on all surfaces); the left rail accompanies it rather than replacing it.
-  const showModePill = !isCompact
+  const showModePill = modePillShown(isCompact)
   const topbarRef = useRef<HTMLDivElement | null>(null)
   const leftFixedRef = useRef<HTMLDivElement | null>(null)
   const [modePillMetrics, setModePillMetrics] = useState<ModeBarMetrics | null>(null)

@@ -29,6 +29,7 @@ import { visibleExtraScreens } from '../pages/extra-screens/registry'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
 import { CHROME_DENSITY } from './chrome-density'
+import { usePillModel } from './usePillNav'
 import { resolvePrimaryNav, type ResolvedPrimaryNavEntry } from '../components/app-shell/primary-nav'
 import { ExtraScreensRailGroup } from '../pages/extra-screens/ExtraScreensRailGroup'
 import { RailRow } from './RailRow'
@@ -168,8 +169,11 @@ export function ActivityRail() {
   const { shellFlags } = useShellModes()
   // The rail has no browser opener (AppShell owns it): action-only entries
   // stay in the sidebar. Settings lives in the rail footer.
-  const entries = resolvePrimaryNav({ shellFlags, modeFlags })
-    .filter((entry) => entry.route !== null && !entry.footer)
+  // The rail sits beside the TopBar pill: pill-placed surfaces it does not render fall back here.
+  const { nav: { placements }, navIds: pillNavIds } = usePillModel(true)
+  // Missions render through MissionsRailGroup; the registry row would duplicate it.
+  const entries = resolvePrimaryNav({ shellFlags, modeFlags, placements, pillNavIds })
+    .filter((entry) => entry.route !== null && !entry.footer && !entry.railOwned)
   const activeId = entries.find((entry) => !entry.disabled && entry.isActive(navState))?.id ?? null
   const primary = entries.filter((entry) => entry.group === 'primary')
   const more = entries.filter((entry) => entry.group === 'more')

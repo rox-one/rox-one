@@ -92,7 +92,9 @@ jobs:
           ROX_OMP_TEST_TIMEOUT_MS: '30000'
       - run: bun run validate:ci
         env:
-          NODE_OPTIONS: --max-old-space-size=4096
+          # validate:ci -> typecheck:all -> apps/electron typecheck, whose
+          # ~4.3 GB peak exceeds a 4 GiB budget; 8 GB is ~2x the observed peak.
+          NODE_OPTIONS: --max-old-space-size=8192
       - run: bun test --timeout 30000 packages/shared/src/agent/__tests__/omp-rpc-transport.test.ts packages/shared/src/agent/__tests__/omp-rpc-frames.test.ts packages/shared/src/agent/__tests__/omp-session-flow.test.ts scripts/build/__tests__ packages/shared/src/voice packages/server-core/src/handlers/rpc/__tests__/voice.test.ts apps/electron/src/renderer/lib/__tests__/message-tts.test.ts
         env:
           ROX_OMP_TEST_TIMEOUT_MS: '30000'
