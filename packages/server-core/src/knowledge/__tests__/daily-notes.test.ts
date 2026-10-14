@@ -12,6 +12,7 @@ import {
   ensureDailyTag,
   formatDateId,
   mergeSessionsBlock,
+  planDailyNoteWrite,
   sessionFallsOnDate,
   sessionsForDate,
 } from '../daily-notes'
@@ -51,10 +52,28 @@ describe('daily notes', () => {
     expect(second.match(/## Sessions/g)?.length).toBe(1)
   })
 
-  test('notes RPC seeds daily notes from install day, today, and sessions', () => {
+  test('notes RPC seeds daily notes from install day and today without storing sessions', () => {
+    // Sessions are a live overlay in the Notes view (pages/notes/daily-sessions.ts);
+    // writing them into the body moved the revision under an open editor.
     const source = readFileSync(join(import.meta.dir, '../../handlers/rpc/notes.ts'), 'utf8')
     expect(source).toContain('ensureDailyNotes')
-    expect(source).toContain('sessionsFromDeps')
     expect(source).toContain('INSTALL_DAY_FILE')
+    expect(source).toContain('planDailyNoteWrite')
+    expect(source).not.toContain('sessionsFromDeps')
+    expect(source).not.toContain('mergeSessionsBlock')
+  })
+})
+
+describe('planDailyNoteWrite', () => {
+  test('creates a missing note from the template without a stored sessions block', () => {
+    const created = planDailyNoteWrite({ date: '2026-10-14', existing: null, template: '' })
+    expect(created).toContain('# 2026-10-14')
+    expect(created).not.toContain(DAILY_SESSIONS_START)
+  })
+
+  test('never rewrites an existing (possibly open) note, so its revision stays put', () => {
+    const existing = buildDailyNoteMarkdown({ date: '2026-10-14' })
+    expect(planDailyNoteWrite({ date: '2026-10-14', existing })).toBeNull()
+    expect(planDailyNoteWrite({ date: '2026-10-14', existing: `${existing}\nmy edits` })).toBeNull()
   })
 })

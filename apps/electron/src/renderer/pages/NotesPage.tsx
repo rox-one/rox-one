@@ -79,6 +79,7 @@ import {
 } from './notes/NotesDocumentChrome'
 import { NotesViewHost } from './notes/NotesViewHost'
 import { convertNote, dailyNoteDestination, parseNotePropertyValue } from './notes/note-views'
+import { dailySessionsFor } from './notes/daily-sessions'
 import {
   loadPersonalTaskStore,
   persistPersonalTaskStore,
@@ -1550,6 +1551,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const propertyProjection = React.useMemo(() => projectFrontmatter(retainSource(content)), [content])
   const richParts = React.useMemo(() => splitFrontmatter(content), [content])
   const dailyDate = parseDailyNoteDate(activeNote?.id)
+  // Live overlay: the day's sessions are rendered, never written into the note body.
+  const dailySessions = React.useMemo(() => dailyDate ? dailySessionsFor(sessionMetaMap.values(), dailyDate) : [], [dailyDate, sessionMetaMap])
   const currentNoteAssets = React.useMemo(() => {
     const refs = new Set(activeNote?.assetRefs.map(ref => ref.replace(/^\.\//, '')) ?? [])
     return allAssets.filter(asset => refs.has(asset.relativePath))
@@ -3008,8 +3011,9 @@ h1,h2,h3{margin-top:1.5em}
             />
             </div></div>
           ) : null}
-            <div className="flex h-full min-h-0" style={noteView === 'standard' ? undefined : { display: 'none' }} aria-hidden={noteView !== 'standard' || undefined} ref={(element) => element?.toggleAttribute('inert', noteView !== 'standard')} data-testid="notes-retained-editor">
-            <div ref={setDocRowEl} className="flex h-full min-h-0">
+            <div className="flex h-full min-h-0 w-full min-w-0 flex-1" style={noteView === 'standard' ? undefined : { display: 'none' }} aria-hidden={noteView !== 'standard' || undefined} ref={(element) => element?.toggleAttribute('inert', noteView !== 'standard')} data-testid="notes-retained-editor">
+            {/* Fills the panel: a shrink-to-fit row left the editor scrollbar as a dark stripe mid-panel in narrow tiles. */}
+            <div ref={setDocRowEl} className="flex h-full min-h-0 w-full min-w-0 flex-1" data-testid="notes-doc-row">
             <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView])} inline={tocShown} open={railSheet === 'toc'} title={t('notes.toc.title')} onClose={() => setRailSheet(null)}>
             <NotesToc
               markdown={content}
@@ -3191,6 +3195,20 @@ h1,h2,h3{margin-top:1.5em}
                 entityNodes={noteEntityMentions.entityNodes}
                 className="notes-editor-prose mx-auto w-full max-w-[70ch] min-h-full"
               />
+              {dailySessions.length > 0 ? (
+                <section data-testid="notes-daily-sessions" aria-label={t('notes.daily.sessions')} className="mx-auto mt-8 w-full max-w-[70ch] border-t border-border/50 pt-4">
+                  <h2 className="mb-2 text-xs font-medium text-muted-foreground">{t('notes.daily.sessions')}</h2>
+                  <ul className="space-y-1">
+                    {dailySessions.map((session) => (
+                      <li key={session.id}>
+                        <button type="button" className="max-w-full truncate text-left text-sm text-foreground/80 hover:text-foreground hover:underline" onClick={() => navigate(routes.view.allSessions(session.id))}>
+                          {session.name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
               {noteEntityMentions.picker}
               <NotesCommentHighlights
                 comments={markdownComments}

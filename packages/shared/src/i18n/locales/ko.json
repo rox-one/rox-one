@@ -6073,6 +6073,7 @@
   "notes.toolbar.exportPdf": "PDF로 내보내기",
   "notes.toolbar.newFolder": "새 폴더",
   "notes.toolbar.newNote": "새 노트",
+  "notes.daily.sessions": "이날의 세션",
   "notes.toolbar.nextDaily": "다음 데일리 노트",
   "notes.toolbar.previousDaily": "이전 데일리 노트",
   "notes.toolbar.rename": "노트 이름 바꾸기",

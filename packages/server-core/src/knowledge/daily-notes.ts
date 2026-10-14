@@ -85,6 +85,12 @@ export function buildDailyNoteMarkdown(input: {
   template?: string
 }): string {
   const date = assertDailyDate(input.date)
+  return mergeSessionsBlock(renderDailyTemplate(date, input.template), sessionsForDate(input.sessions ?? [], date))
+}
+
+/** The daily template with its placeholders filled; no sessions block. */
+export function renderDailyTemplate(dateInput: string, templateInput?: string): string {
+  const date = assertDailyDate(dateInput)
   const fallback = [
     '---',
     'title: "{{date}}"',
@@ -95,12 +101,23 @@ export function buildDailyNoteMarkdown(input: {
     '# {{date}}',
     '',
   ].join('\n')
-  const template = (input.template?.trim() ? input.template : fallback)
+  return (templateInput?.trim() ? templateInput : fallback)
     .replaceAll('{{date}}', date)
     .replaceAll('{{title}}', date)
     .replaceAll('{{yesterday}}', shiftDate(date, -1))
     .replaceAll('{{tomorrow}}', shiftDate(date, 1))
-  return mergeSessionsBlock(template, sessionsForDate(input.sessions ?? [], date))
+}
+
+/**
+ * Content to create for a missing daily note, or `null` when the file exists.
+ * An existing daily note is never rewritten in the background: that moved its
+ * revision under an open editor and the next save failed with a false
+ * «changed outside this editor» conflict. The day's sessions are rendered live
+ * by the Notes view instead of being stored in the body.
+ */
+export function planDailyNoteWrite(input: { date: string; existing: string | null; template?: string }): string | null {
+  if (input.existing !== null) return null
+  return renderDailyTemplate(input.date, input.template)
 }
 
 function escapeRegExp(value: string): string {

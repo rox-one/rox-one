@@ -53,15 +53,12 @@ import {
 } from '../../knowledge/vault-index.ts'
 import {
   assertDailyDate,
-  buildDailyNoteMarkdown,
   datesToEnsure,
   dailyNoteId,
   DAILY_FOLDER,
   formatDateId,
   INSTALL_DAY_FILE,
-  mergeSessionsBlock,
-  sessionsForDate,
-  type DailySessionRef,
+  planDailyNoteWrite,
 } from '../../knowledge/daily-notes.ts'
 
 export const HANDLED_CHANNELS = [
@@ -1140,48 +1137,25 @@ async function readInstallDay(notesRoot: string, now = new Date()): Promise<stri
   return today
 }
 
-async function upsertDailyNote(
-  notesRoot: string,
-  date: string,
-  sessions: readonly DailySessionRef[],
-  writeNative: NativeNoteWriter,
-): Promise<string> {
+async function upsertDailyNote(notesRoot: string, date: string, writeNative: NativeNoteWriter): Promise<string> {
   const dailyDate = assertDailyDate(date)
   const id = dailyNoteId(dailyDate)
   const filePath = notePathFromId(notesRoot, id)
   await mkdir(dirname(filePath), { recursive: true })
-  const daySessions = sessionsForDate(sessions, dailyDate)
-  if (!existsSync(filePath)) {
-    const templatePath = join(notesRoot, TEMPLATES_DIR, DAILY_TEMPLATE_FILE)
-    const template = await readFile(templatePath, 'utf-8').catch(() => '')
-    await writeNative('create', [{ kind: 'write', noteId: id, expectedRevision: null, content: buildDailyNoteMarkdown({ date: dailyDate, sessions: daySessions, template }) }])
-    return id
-  }
-  const existing = await readFile(filePath, 'utf-8')
-  const next = mergeSessionsBlock(existing, daySessions)
-  if (next !== existing) await writeNative('save', [{ kind: 'write', noteId: id, expectedRevision: markdownRevision(existing), content: next }])
+  if (existsSync(filePath)) return id
+  const template = await readFile(join(notesRoot, TEMPLATES_DIR, DAILY_TEMPLATE_FILE), 'utf-8').catch(() => '')
+  const content = planDailyNoteWrite({ date: dailyDate, existing: null, template })
+  if (content !== null) await writeNative('create', [{ kind: 'write', noteId: id, expectedRevision: null, content }])
   return id
 }
 
-async function ensureDailyNotes(notesRoot: string, sessions: readonly DailySessionRef[], writeNative: NativeNoteWriter, now = new Date()): Promise<void> {
+/** Creates missing install-day/today notes; existing ones are never rewritten (see planDailyNoteWrite). */
+async function ensureDailyNotes(notesRoot: string, writeNative: NativeNoteWriter, now = new Date()): Promise<void> {
   await ensureNotesDirs(notesRoot)
   const today = formatDateId(now)
   const install = await readInstallDay(notesRoot, now)
   for (const date of datesToEnsure(install, today)) {
-    await upsertDailyNote(notesRoot, date, sessions, writeNative)
-  }
-}
-
-function sessionsFromDeps(deps: HandlerDeps, workspaceId: string): DailySessionRef[] {
-  try {
-    return deps.sessionManager.getSessions(workspaceId).map((session) => ({
-      id: session.id,
-      name: session.name?.trim() || session.preview?.trim() || session.id,
-      createdAt: session.createdAt,
-      lastMessageAt: session.lastMessageAt,
-    }))
-  } catch {
-    return []
+    await upsertDailyNote(notesRoot, date, writeNative)
   }
 }
 
@@ -1892,7 +1866,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       return documents.sort((a, b) => b.updatedAt - a.updatedAt || a.title.localeCompare(b.title))
     }
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
-    await ensureDailyNotes(notesRoot, sessionsFromDeps(deps, workspaceId), (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
+    await ensureDailyNotes(notesRoot, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
     return listNotes(notesRoot)
   }, { nativeAction: 'read' })
 
@@ -2275,9 +2249,8 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: date || 'daily' })
     if (!isClaimableLive(act)) throw new Error('daily note upsert is not live')
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
-    const sessions = sessionsFromDeps(deps, workspaceId)
-    await ensureDailyNotes(notesRoot, sessions, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
-    const id = await upsertDailyNote(notesRoot, date || formatDateId(new Date()), sessions, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
+    await ensureDailyNotes(notesRoot, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
+    const id = await upsertDailyNote(notesRoot, date || formatDateId(new Date()), (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
     await refreshVaultIndex(notesRoot)
     return readNote(notesRoot, id)
   }, { access: 'localElectron' })

@@ -6082,6 +6082,7 @@
   "notes.toolbar.exportPdf": "Exportar a PDF",
   "notes.toolbar.newFolder": "Nueva carpeta",
   "notes.toolbar.newNote": "Nueva nota",
+  "notes.daily.sessions": "Sesiones del día",
   "notes.toolbar.nextDaily": "Nota diaria siguiente",
   "notes.toolbar.previousDaily": "Nota diaria anterior",
   "notes.toolbar.rename": "Renombrar nota",

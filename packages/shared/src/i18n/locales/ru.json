@@ -6113,6 +6113,7 @@
   "notes.toolbar.exportPdf": "Экспорт в PDF",
   "notes.toolbar.newFolder": "Новая папка",
   "notes.toolbar.newNote": "Новая заметка",
+  "notes.daily.sessions": "Сессии за день",
   "notes.toolbar.nextDaily": "Следующая дневная заметка",
   "notes.toolbar.previousDaily": "Предыдущая дневная заметка",
   "notes.toolbar.rename": "Переименовать заметку",

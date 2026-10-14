@@ -6073,6 +6073,7 @@
   "notes.toolbar.exportPdf": "导出为 PDF",
   "notes.toolbar.newFolder": "新建文件夹",
   "notes.toolbar.newNote": "新建笔记",
+  "notes.daily.sessions": "当天的会话",
   "notes.toolbar.nextDaily": "下一篇每日笔记",
   "notes.toolbar.previousDaily": "上一篇每日笔记",
   "notes.toolbar.rename": "重命名笔记",

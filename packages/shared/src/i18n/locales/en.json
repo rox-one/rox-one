@@ -6073,6 +6073,7 @@
   "notes.toolbar.exportPdf": "Export as PDF",
   "notes.toolbar.newFolder": "New folder",
   "notes.toolbar.newNote": "New note",
+  "notes.daily.sessions": "Sessions this day",
   "notes.toolbar.nextDaily": "Next daily note",
   "notes.toolbar.previousDaily": "Previous daily note",
   "notes.toolbar.rename": "Rename note",

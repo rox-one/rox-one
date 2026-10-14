@@ -6073,6 +6073,7 @@
   "notes.toolbar.exportPdf": "PDF に書き出す",
   "notes.toolbar.newFolder": "新しいフォルダ",
   "notes.toolbar.newNote": "新しいノート",
+  "notes.daily.sessions": "この日のセッション",
   "notes.toolbar.nextDaily": "次のデイリーノート",
   "notes.toolbar.previousDaily": "前のデイリーノート",
   "notes.toolbar.rename": "ノート名を変更",
