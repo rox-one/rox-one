@@ -18,6 +18,10 @@ const en = locales["en"];
 if (!en) throw new Error("en.json is required as the source-of-truth locale");
 
 const otherLangs = Object.entries(locales).filter(([lang]) => lang !== "en");
+// English-only namespaces: these keys ship in en (and ru) only and fall back
+// to English at runtime in every other locale, keeping locale chunks small.
+const EN_FALLBACK_PREFIXES = ["glance."];
+const isEnFallbackKey = (k: string) => EN_FALLBACK_PREFIXES.some((p) => k.startsWith(p));
 const enKeys = Object.keys(en);
 
 // ---------------------------------------------------------------------------
@@ -50,7 +54,7 @@ describe("i18n locale parity", () => {
     const langKeys = Object.keys(translations);
 
     it(`${lang} has all EN keys`, () => {
-      const missing = enKeys.filter((k) => !(k in translations));
+      const missing = enKeys.filter((k) => !(k in translations) && !isEnFallbackKey(k));
       expect(missing).toEqual([]);
     });
 
