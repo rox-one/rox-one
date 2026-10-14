@@ -9,6 +9,8 @@
  */
 import type { IpcMain, IpcMainInvokeEvent, WebContents } from 'electron'
 import * as Y from 'yjs'
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { CanvasFileStore, isValidBoardId, type BoardSummary } from '@rox/canvas-core/node'
 
 export const CANVAS_IPC = {
@@ -65,14 +67,38 @@ function boardId(id: unknown): string {
   return id
 }
 
+/** Mirrors `defaultValue` of `workbench.mode.canvas.v1` in flags.ts. */
+export const CANVAS_FLAG_DEFAULT = true
+export const CANVAS_FLAG_FILE = 'canvas-flag.json'
+/** Last flag value pushed by the renderer; undefined when none / unreadable. */
+export function readCanvasFlag(configDir: string): boolean | undefined {
+  try {
+    const f = join(configDir, CANVAS_FLAG_FILE)
+    if (!existsSync(f)) return undefined
+    const v = JSON.parse(readFileSync(f, 'utf8')) as { enabled?: unknown }
+    return typeof v.enabled === 'boolean' ? v.enabled : undefined
+  } catch { return undefined }
+}
+export function writeCanvasFlag(configDir: string, enabled: boolean): void {
+  try {
+    mkdirSync(configDir, { recursive: true })
+    const f = join(configDir, CANVAS_FLAG_FILE), tmp = `${f}.tmp`
+    writeFileSync(tmp, JSON.stringify({ enabled }))
+    renameSync(tmp, f)
+  } catch { /* best effort: the renderer re-pushes at every start */ }
+}
+
 export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: CanvasIpcDependencies & {
   /** Look up a live renderer by id (forwarding). */
   rendererById?(id: number): WebContents | undefined
-  /** Workbench flag `workbench.mode.canvas.v1`; the renderer syncs it, `ROX_CANVAS=1` forces it on. */
+  /** Override the start-up value of `workbench.mode.canvas.v1` (tests). */
   initiallyEnabled?: boolean
+  /** Config dir: the last flag value the renderer pushed is persisted here and read at init. */
+  configDir?: string
 }) {
   const registry = createCanvasStoreRegistry(deps)
-  let enabled = deps.initiallyEnabled ?? process.env.ROX_CANVAS === '1'
+  const forced = process.env.ROX_CANVAS === '1'
+  let enabled = forced || (deps.initiallyEnabled ?? (deps.configDir ? readCanvasFlag(deps.configDir) : undefined) ?? CANVAS_FLAG_DEFAULT)
   const guard = (event: IpcMainInvokeEvent, opts: { flag?: boolean } = {}) => {
     if (deps.isTrustedSender && !deps.isTrustedSender(event)) throw new Error('IPC_SENDER_DENIED')
     if (opts.flag !== false && !enabled) throw new Error('CANVAS_DISABLED')
@@ -111,7 +137,9 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
 
   ipcMain.handle(CANVAS_IPC.setEnabled, async (event, on: unknown) => {
     guard(event, { flag: false })
-    enabled = on === true || process.env.ROX_CANVAS === '1'
+    if (typeof on !== 'boolean') throw new Error('CANVAS_BAD_FLAG')
+    if (deps.configDir) writeCanvasFlag(deps.configDir, on)
+    enabled = on || forced
     return { ok: true as const, enabled }
   })
   ipcMain.handle(CANVAS_IPC.listTrash, async (event, ws: unknown) => {

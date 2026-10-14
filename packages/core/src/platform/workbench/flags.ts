@@ -59,7 +59,7 @@ export const WORKBENCH_FLAG = {
   modeMessengerV1: 'workbench.mode.messenger.v1',
   modeCalendarV1: 'workbench.mode.calendar.v1',
   modeGoalsV1: 'workbench.mode.goals.v1',
-  /** «Доска» (Canvas) surface — default OFF, inert when off. */
+  /** «Доска» (Canvas) surface — default ON; when off it is absent and main refuses canvas:* IPC. */
   modeCanvasV1: 'workbench.mode.canvas.v1',
   modeContactsV1: 'workbench.mode.contacts.v1',
   /** Notes → «Документы» relabel key + shared Docs (DOC-1 builds on it). */

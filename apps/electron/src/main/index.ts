@@ -1088,6 +1088,7 @@ app.whenReady().then(async () => {
       isTrustedSender: (event) => isRegisteredRoxRendererWebContents(event.sender),
       listRenderers: () => webContents.getAllWebContents().filter((wc) => isRegisteredRoxRendererWebContents(wc)),
       rendererById: (id) => webContents.fromId(id) ?? undefined,
+      configDir: CONFIG_DIR,
     })
 
     // Transport diagnostics bridge — preload reports remote WS connection state changes
