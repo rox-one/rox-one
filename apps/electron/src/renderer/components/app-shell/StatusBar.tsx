@@ -64,12 +64,14 @@ export async function applyDefaultConnection(
   }
 }
 import { buildStatusBarModel, type WorkspaceRuntimeMode } from '@/platform/status-model'
-import { CHROME_DENSITY } from '@/platform/chrome-density'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { RoxAccountSnapshot } from '@rox/shared/auth'
 import type { UpdateInfo } from '@rox/shared/protocol'
+import { useDictationSession } from '@/components/app-shell/input/voice-dictation-state'
+import { useStatusBarItems, type StatusBarItem } from '@/lib/status-bar-items'
 
-const STATUS_BAR_HEIGHT = CHROME_DENSITY.statusBarHeight
+/** CSS var so the bar follows `data-density`. */
+const STATUS_BAR_HEIGHT = 'var(--chrome-status-height)'
 const BALANCE_REFRESH_MS = 60_000
 
 const itemCls = 'inline-flex h-[18px] min-w-0 items-center gap-1 rounded-[4px] px-1.5 text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:pointer-events-none'
@@ -160,6 +162,9 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
   const { t } = useTranslation()
   const shell = useOptionalAppShellContext()
   const transport = useTransportConnectionState()
+  const items = useStatusBarItems()
+  const show = (id: StatusBarItem) => items.includes(id)
+  const dictation = useDictationSession()
   const model = buildStatusBarModel({ transportMode: transport?.mode, transportStatus: transport?.status })
   const balance = useRoxBalance(account)
   const update = useUpdateInfo()
@@ -235,7 +240,7 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
       style={{ height: STATUS_BAR_HEIGHT }}
     >
       <div className="flex min-w-0 items-center gap-0.5 overflow-hidden">
-        <Popover>
+        {show('workspace') && (<Popover>
           <PopoverTrigger asChild>
             <button type="button" data-testid="status-bar-workspace" className={itemCls} title={t('statusBar.connection')}>
               <span aria-hidden className={cn('size-1.5 shrink-0 rounded-full', model.workspaceMode === 'offline' ? 'bg-destructive' : model.syncOk ? 'bg-success' : 'bg-info')} />
@@ -262,8 +267,8 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
               </button>
             </div>
           </PopoverContent>
-        </Popover>
-        <button
+        </Popover>)}
+        {show('sync') && (<button
           type="button"
           data-testid="status-bar-sync"
           className={cn(itemCls, !model.syncOk && 'text-destructive')}
@@ -273,12 +278,18 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
         >
           <RefreshCw className={cn('size-3 shrink-0', reconnecting && 'animate-spin')} />
           <span className="truncate">{syncLabel}</span>
-        </button>
+        </button>)}
         <Sep />
         <Counter testId="status-bar-sessions" icon={MessageSquare} label={t('dashboard.sessions')} value={sessionStats.sessions} onClick={() => navigate(routes.view.allSessions())} />
-        <Counter testId="status-bar-agents" icon={Bot} label={t('dashboard.activeAgents')} value={sessionStats.agents} accent onClick={() => navigate(routes.view.screen('agents'))} />
+        {show('agents') && <Counter testId="status-bar-agents" icon={Bot} label={t('dashboard.activeAgents')} value={sessionStats.agents} accent onClick={() => navigate(routes.view.screen('agents'))} />}
         <Counter testId="status-bar-tasks" icon={ListTodo} label={t('statusBar.tasks')} title={t('statusBar.tasksToday')} value={tasks} onClick={() => navigate(routes.view.tasks())} />
-        <Counter testId="status-bar-inbox" icon={Inbox} label={t('statusBar.inbox')} value={inboxOpen} onClick={() => navigate(routes.view.inbox())} />
+        {show('inbox') && <Counter testId="status-bar-inbox" icon={Inbox} label={t('statusBar.inbox')} value={inboxOpen} onClick={() => navigate(routes.view.inbox())} />}
+        {show('dictation') && dictation.active && (
+          <span data-testid="status-bar-dictation" role="status" className="flex items-center gap-1 px-1.5 text-accent">
+            <span aria-hidden className="size-1.5 rounded-full bg-accent motion-safe:animate-pulse" />
+            {t('statusBar.dictating')}
+          </span>
+        )}
       </div>
 
       <div className="flex min-w-0 items-center justify-end gap-0.5">
@@ -317,7 +328,7 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
             </PopoverContent>
           </Popover>
         ) : null}
-        {balance != null ? (
+        {show('balance') && balance != null ? (
           <button
             type="button"
             data-testid="status-bar-balance"
@@ -342,7 +353,7 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
           <span className="hidden max-w-[220px] truncate lg:inline">{latest?.title ?? t('statusBar.noEvents')}</span>
           {inboxOpen > 0 ? <span className={cn(numCls, 'rounded-full bg-accent/15 px-1 text-accent')}>{inboxOpen > 99 ? '99+' : inboxOpen}</span> : null}
         </button>
-        {version ? (
+        {show('version') && version ? (
           <Popover>
             <PopoverTrigger asChild>
               <button type="button" data-testid="status-bar-version" className={cn(itemCls, updateReady && 'text-accent')} title={t('statusBar.updates')}>

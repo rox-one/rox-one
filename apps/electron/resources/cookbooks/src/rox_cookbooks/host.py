@@ -17,7 +17,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 from .catalog import CatalogError, load_catalog
 from .copies import CookbookCopies, CopyError
-from .kernel import KernelError, execute_all, execute_code
+from .kernel import ActiveRuns, KernelError, RunHandle, execute_all, execute_code
 from .notebooks import Notebook, NotebookError, Playbook, load_notebook, source_text
 from .search import search_items
 from .secrets import env_for_item, missing_secrets
@@ -79,6 +79,27 @@ class LabHost:
             self.store.update(loaded)
         self.httpd: ThreadingHTTPServer | None = None
         self.thread: threading.Thread | None = None
+        # In-flight executions keyed by itemId, so POST /cancel can kill them and
+        # stop() can leave no orphaned cell processes (spec wave 9).
+        self.runs = ActiveRuns()
+        # Shutdown gate: a request registers its run under this lock, and stop()
+        # sets the flag and cancels under the same lock. A run is therefore
+        # either in the stop-time sweep or refused outright — there is no window
+        # in which one can start after the sweep (no orphan).
+        self._lifecycle = threading.Lock()
+        self._stopping = False
+
+    def begin_run(self, item_id: str, run: RunHandle) -> bool:
+        """Register ``run`` for ``item_id`` unless shutdown has already begun.
+
+        False means ``stop`` started, so the caller answers 503 instead of
+        spawning a process the shutdown sweep would miss.
+        """
+        with self._lifecycle:
+            if self._stopping:
+                return False
+            self.runs.register(item_id, run)
+            return True
 
     @property
     def url(self) -> str:
@@ -242,71 +263,89 @@ class LabHost:
                     raw_store = body.get("store")
                     if "store" in body and not isinstance(raw_store, dict):
                         return self._send(400, {"error": "store must be an object"})
+                    # Same string-only rule as POST /store: a non-string value
+                    # would reach redact_output through env_for_item and raise.
+                    if raw_store and not all(
+                        isinstance(value, str) for value in raw_store.values()
+                    ):
+                        return self._send(400, {"error": "store values must be strings"})
+                    # Registered before resolution and the spawn, so a `/cancel`
+                    # that lands this early still finds the run; `begin_run`
+                    # refuses (503) once shutdown has started.
+                    run = RunHandle()
+                    if not lab.begin_run(item_id, run):
+                        return self._send(503, {"error": "host is shutting down"})
                     try:
-                        item = lab.catalog.item(item_id)
-                    except CatalogError as exc:
-                        return self._send(400, {"error": str(exc)})
-                    if not item.supported or item.kind != "ipynb":
-                        return self._send(400, {"error": "no kernel for this item"})
-                    try:
-                        copy = lab.copies.open(item_id)
-                    except (CopyError, CatalogError) as exc:
-                        return self._send(400, {"error": str(exc)})
-                    idx: int | None = None
-                    raw_index = body.get("index")
-                    if raw_index is not None and raw_index != "":
-                        idx = parse_index(raw_index)
-                        if idx is None:
-                            return self._send(400, {"error": "index must be an integer"})
                         try:
-                            nb = Notebook.open(copy)
-                        except NotebookError as exc:
+                            item = lab.catalog.item(item_id)
+                        except CatalogError as exc:
                             return self._send(400, {"error": str(exc)})
-                        if not 0 <= idx < len(nb.cells):
-                            return self._send(400, {"error": "cell index out of range"})
-                        if nb.cell_type(idx) != "code":
-                            return self._send(400, {"error": "cell is not runnable"})
-                        # Persist the edited source BEFORE executing so
-                        # persist_code_output updates this cell in place instead
-                        # of appending a duplicate.
+                        if not item.supported or item.kind != "ipynb":
+                            return self._send(400, {"error": "no kernel for this item"})
                         try:
-                            nb.set_code(idx, code)
-                            nb.save()
-                        except NotebookError as exc:
+                            copy = lab.copies.open(item_id)
+                        except (CopyError, CatalogError) as exc:
                             return self._send(400, {"error": str(exc)})
-                    store = dict(lab.store)
-                    if raw_store:
-                        store.update(raw_store)
-                    env = env_for_item(lab.catalog, item, store)
-                    try:
-                        result = execute_code(
-                            copy,
-                            code,
-                            env=env,
-                            catalog=lab.catalog,
-                            item=item,
-                            store=store,
-                            index=idx,
-                        )
-                    except (NotebookError, CopyError, KernelError) as exc:
-                        return self._send(400, {"error": str(exc)})
-                    safe = {
-                        k: result[k]
-                        for k in ("ok", "stdout", "stderr", "returncode", "error", "timed_out")
-                        if k in result
-                    }
-                    safe["missing"] = missing_secrets(lab.catalog, item, store)
-                    return self._send(200, safe)
+                        idx: int | None = None
+                        raw_index = body.get("index")
+                        if raw_index is not None and raw_index != "":
+                            idx = parse_index(raw_index)
+                            if idx is None:
+                                return self._send(400, {"error": "index must be an integer"})
+                            try:
+                                nb = Notebook.open(copy)
+                            except NotebookError as exc:
+                                return self._send(400, {"error": str(exc)})
+                            if not 0 <= idx < len(nb.cells):
+                                return self._send(400, {"error": "cell index out of range"})
+                            if nb.cell_type(idx) != "code":
+                                return self._send(400, {"error": "cell is not runnable"})
+                            # Persist the edited source BEFORE executing so
+                            # persist_code_output updates this cell in place instead
+                            # of appending a duplicate.
+                            try:
+                                nb.set_code(idx, code)
+                                nb.save()
+                            except NotebookError as exc:
+                                return self._send(400, {"error": str(exc)})
+                        store = dict(lab.store)
+                        if raw_store:
+                            store.update(raw_store)
+                        env = env_for_item(lab.catalog, item, store)
+                        try:
+                            result = execute_code(
+                                copy,
+                                code,
+                                env=env,
+                                catalog=lab.catalog,
+                                item=item,
+                                store=store,
+                                index=idx,
+                                run=run,
+                            )
+                        except (NotebookError, CopyError, KernelError) as exc:
+                            return self._send(400, {"error": str(exc)})
+                        safe = {
+                            k: result[k]
+                            for k in (
+                                "ok",
+                                "stdout",
+                                "stderr",
+                                "returncode",
+                                "error",
+                                "timed_out",
+                            )
+                            if k in result
+                        }
+                        safe["missing"] = missing_secrets(lab.catalog, item, store)
+                        safe["cancelled"] = run.cancelled
+                        return self._send(200, safe)
+                    finally:
+                        lab.runs.release(item_id, run)
                 if parsed.path == "/run-all":
                     item_id = self._item_id(body)
                     if item_id is None:
                         return self._send(400, {"error": "missing itemId"})
-                    try:
-                        item = lab.catalog.item(item_id)
-                    except CatalogError as exc:
-                        return self._send(400, {"error": str(exc)})
-                    if not item.supported or item.kind != "ipynb":
-                        return self._send(400, {"error": "no kernel for this item"})
                     raw_cells = body.get("cells")
                     if not isinstance(raw_cells, list) or not raw_cells:
                         return self._send(400, {"error": "cells must be a non-empty list"})
@@ -330,63 +369,100 @@ class LabHost:
                     raw_store = body.get("store")
                     if "store" in body and not isinstance(raw_store, dict):
                         return self._send(400, {"error": "store must be an object"})
+                    # Same string-only rule as POST /store (/run parity): a
+                    # non-string value would reach redact_output and raise.
+                    if raw_store and not all(
+                        isinstance(value, str) for value in raw_store.values()
+                    ):
+                        return self._send(400, {"error": "store values must be strings"})
                     # Document order, not request order: cells run and are
                     # recorded by ascending index.
                     entries.sort(key=lambda pair: pair[0])
+                    # Registered before resolution and the spawn (/run parity);
+                    # `begin_run` refuses (503) once shutdown has started.
+                    run = RunHandle()
+                    if not lab.begin_run(item_id, run):
+                        return self._send(503, {"error": "host is shutting down"})
                     try:
-                        copy = lab.copies.open(item_id)
-                    except (CopyError, CatalogError) as exc:
-                        return self._send(400, {"error": str(exc)})
-                    try:
-                        nb = Notebook.open(copy)
-                        for idx, _src in entries:
-                            if not 0 <= idx < len(nb.cells):
-                                return self._send(400, {"error": "cell index out of range"})
-                            if nb.cell_type(idx) != "code":
-                                return self._send(400, {"error": "cell is not runnable"})
-                        # Persist the edited sources with ONE save BEFORE
-                        # executing, so persist_code_output updates these cells in
-                        # place instead of appending duplicates (/run parity).
-                        for idx, src in entries:
-                            nb.set_code(idx, src)
-                        nb.save()
-                    except NotebookError as exc:
-                        return self._send(400, {"error": str(exc)})
-                    store = dict(lab.store)
-                    if raw_store:
-                        store.update(raw_store)
-                    env = env_for_item(lab.catalog, item, store)
-                    try:
-                        result = execute_all(
-                            copy,
-                            entries,
-                            env=env,
-                            catalog=lab.catalog,
-                            item=item,
-                            store=store,
-                            persist=True,
-                        )
-                    except (NotebookError, CopyError, KernelError, CatalogError) as exc:
-                        return self._send(400, {"error": str(exc)})
-                    safe = {k: result.get(k) for k in ("ok", "timed_out", "returncode")}
-                    safe["missing"] = missing_secrets(lab.catalog, item, store)
-                    safe["cells"] = [
-                        {
-                            k: cell.get(k)
-                            for k in (
-                                "index",
-                                "status",
-                                "ok",
-                                "stdout",
-                                "stderr",
-                                "error",
-                                "timed_out",
-                                "duration_ms",
+                        try:
+                            item = lab.catalog.item(item_id)
+                        except CatalogError as exc:
+                            return self._send(400, {"error": str(exc)})
+                        if not item.supported or item.kind != "ipynb":
+                            return self._send(400, {"error": "no kernel for this item"})
+                        try:
+                            copy = lab.copies.open(item_id)
+                        except (CopyError, CatalogError) as exc:
+                            return self._send(400, {"error": str(exc)})
+                        try:
+                            nb = Notebook.open(copy)
+                            for idx, _src in entries:
+                                if not 0 <= idx < len(nb.cells):
+                                    return self._send(400, {"error": "cell index out of range"})
+                                if nb.cell_type(idx) != "code":
+                                    return self._send(400, {"error": "cell is not runnable"})
+                            # Persist the edited sources with ONE save BEFORE
+                            # executing, so persist_code_output updates these cells in
+                            # place instead of appending duplicates (/run parity).
+                            for idx, src in entries:
+                                nb.set_code(idx, src)
+                            nb.save()
+                        except NotebookError as exc:
+                            return self._send(400, {"error": str(exc)})
+                        store = dict(lab.store)
+                        if raw_store:
+                            store.update(raw_store)
+                        env = env_for_item(lab.catalog, item, store)
+                        try:
+                            result = execute_all(
+                                copy,
+                                entries,
+                                env=env,
+                                catalog=lab.catalog,
+                                item=item,
+                                store=store,
+                                persist=True,
+                                run=run,
                             )
+                        except (NotebookError, CopyError, KernelError, CatalogError) as exc:
+                            return self._send(400, {"error": str(exc)})
+                        safe = {
+                            k: result.get(k) for k in ("ok", "timed_out", "returncode")
                         }
-                        for cell in result.get("cells") or []
-                    ]
-                    return self._send(200, safe)
+                        safe["missing"] = missing_secrets(lab.catalog, item, store)
+                        safe["cancelled"] = run.cancelled
+                        safe["cells"] = [
+                            {
+                                k: cell.get(k)
+                                for k in (
+                                    "index",
+                                    "status",
+                                    "ok",
+                                    "stdout",
+                                    "stderr",
+                                    "error",
+                                    "timed_out",
+                                    "duration_ms",
+                                )
+                            }
+                            for cell in result.get("cells") or []
+                        ]
+                        return self._send(200, safe)
+                    finally:
+                        lab.runs.release(item_id, run)
+                if parsed.path == "/cancel":
+                    item_id = self._item_id(body)
+                    if item_id is None:
+                        return self._send(400, {"error": "missing itemId"})
+                    try:
+                        lab.catalog.item(item_id)
+                    except CatalogError as exc:
+                        # Unknown itemId is a bad address, like an unknown path.
+                        return self._send(404, {"error": str(exc)})
+                    # Idempotent: kills every live /run and /run-all for the item
+                    # and answers 0 when nothing is running.
+                    cancelled = lab.runs.cancel(item_id)
+                    return self._send(200, {"ok": True, "cancelled": cancelled})
                 if parsed.path == "/reset":
                     item_id = self._item_id(body)
                     if item_id is None:
@@ -487,6 +563,14 @@ class LabHost:
         }
 
     def stop(self) -> None:
+        # Kill every in-flight execution before tearing the server down: cell
+        # processes start their own session (start_new_session=True), so without
+        # this they survive the sidecar (spec wave 9, "stop leak"). Taking the
+        # lifecycle lock closes the race with `begin_run`: any run already
+        # registered is cancelled here, and any later one is refused (503).
+        with self._lifecycle:
+            self._stopping = True
+            self.runs.cancel_all()
         if self.httpd:
             self.httpd.shutdown()
             self.httpd.server_close()

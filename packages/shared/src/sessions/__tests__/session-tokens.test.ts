@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { accumulateSessionTokens, isModelActivityEvent, markTurnTokensUncounted } from '../session-tokens'
+import type { SessionTokensState } from '../session-tokens'
 
 const totals = (p: number, o: number) => ({ promptTokens: p, outputTokens: o })
 
@@ -21,7 +22,11 @@ describe('accumulateSessionTokens', () => {
 })
 
 describe('markTurnTokensUncounted', () => {
-  const init = () => ({ outputTokens: 0 })
+  // Annotated so `T` in `markTurnTokensUncounted` is inferred as the full
+  // `SessionTokensState` rather than the narrower literal this function returns.
+  // Without it, the richer first argument is checked against `{ outputTokens }`
+  // and `sessionTokens` is rejected as an excess property.
+  const init = (): SessionTokensState => ({ outputTokens: 0 })
   it('an aborted turn hides an existing total for good', () => {
     const u = markTurnTokensUncounted({ outputTokens: 40, sessionTokens: 1200 }, init)
     expect(u).toEqual({ outputTokens: 40, sessionTokensIncomplete: true })
@@ -36,8 +41,8 @@ describe('markTurnTokensUncounted', () => {
 
 describe('markTurnTokensUncounted purity', () => {
   it('returns a new object and never mutates the input', () => {
-    const input = Object.freeze({ outputTokens: 40, sessionTokens: 1200 })
-    const u = markTurnTokensUncounted(input, () => ({ outputTokens: 0 }))
+    const input: SessionTokensState = Object.freeze({ outputTokens: 40, sessionTokens: 1200 })
+    const u = markTurnTokensUncounted(input, (): SessionTokensState => ({ outputTokens: 0 }))
     expect(u).not.toBe(input)
     expect(input).toEqual({ outputTokens: 40, sessionTokens: 1200 })
     expect(u).toEqual({ outputTokens: 40, sessionTokensIncomplete: true })

@@ -545,8 +545,7 @@ export interface SendMessageOptions {
 // Bulk session updates (B4) — sessions:bulkUpdate RPC.
 // ---------------------------------------------------------------------------
 
-/** Limit enforced on sessions:bulkUpdate; beyond it the call fails with bulk_limit. */
-export const BULK_UPDATE_MAX_IDS = 200
+export { BULK_UPDATE_MAX_IDS } from './bulk-limit'
 
 export interface BulkUpdateSessionsPatch {
   sessionStatus?: SessionStatus

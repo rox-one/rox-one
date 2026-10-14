@@ -106,3 +106,6 @@ test-results/
 
 # Visual-capture artifacts (bun run visual:capture; hashes live in visual-baselines.json)
 .visual-artifacts/
+
+# Isolated dev run (bun run electron:dev:isolated) — config/userdata/tmp
+.dev-isolated/

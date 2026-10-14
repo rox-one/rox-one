@@ -11,7 +11,7 @@
 
 import type { ServiceState, TrayStatus } from '@rox/shared/service-lifecycle'
 import type { ShellActionPayload } from '@rox/shared/protocol'
-import { RPC_CHANNELS } from '../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 
 export type TrayMenuItemId =
   | 'service-status'
