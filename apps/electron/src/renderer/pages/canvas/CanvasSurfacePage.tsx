@@ -57,8 +57,6 @@ export function CanvasSurfacePage(_props: SurfacePageProps) {
   const [target, setTarget] = useState<CanvasTarget | null>(() => takeCanvasTarget())
   const [openId, setOpenId] = useState<string | null>(target?.boardId ?? null)
   useEffect(() => onCanvasTarget(() => { const tg = takeCanvasTarget(); if (tg) { setTarget(tg); setOpenId(tg.boardId) } }), [])
-  // Main gates canvas:* on the workbench flag; this surface only mounts when it is on.
-  useEffect(() => { void bridge()?.setEnabled(true).catch(() => {}) }, [])
   if (!workspace) {
     return <div className="flex h-full items-center justify-center bg-background text-text-muted" data-testid="canvas-no-workspace">{t('canvas.noWorkspace')}</div>
   }
