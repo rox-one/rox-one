@@ -56,6 +56,7 @@ import { showBackgroundFinishedChipAtom } from '@/atoms/background-finished'
 import { KANBAN_COLUMNS, resolveBoardColumns } from '@/components/app-shell/kanban/status-column'
 import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
+import { ThemeLayersSection } from './ThemeLayersSection'
 
 function appearancePrefLive(): boolean {
   return isClaimableLive(
@@ -786,6 +787,9 @@ export default function AppearanceSettingsPage() {
 
   // Color-theme presets for the restored theme picker (Settings → Внешний вид).
   const [presetThemes, setPresetThemes] = useState<PresetTheme[]>([])
+  // Bumped after «Сохранить как пресет» so the picker lists the new preset.
+  const [presetsVersion, setPresetsVersion] = useState(0)
+  const reloadPresets = useCallback(() => setPresetsVersion((v) => v + 1), [])
   useEffect(() => {
     let cancelled = false
     const pending = window.electronAPI?.loadPresetThemes?.()
@@ -795,7 +799,7 @@ export default function AppearanceSettingsPage() {
         .catch(() => { if (!cancelled) setPresetThemes([]) })
     }
     return () => { cancelled = true }
-  }, [])
+  }, [presetsVersion])
 
   // Tool icon mappings loaded from main process
   const [toolIcons, setToolIcons] = useState<ToolIconMapping[]>([])
@@ -1084,7 +1088,7 @@ export default function AppearanceSettingsPage() {
             <div className="space-y-8">
 
               {/* Theme picker (restored 2026-10-13): the app no longer pins a
-                  single theme; Rox Ink (rox-ink) is the default, Rox Engineering is opt-in. */}
+                  single theme; Arc Glass (arc-glass) is the default for new installs. */}
               <SettingsSection title={t("settings.appearance.colorTheme")}>
                 <SettingsCard>
                   {presetThemes.length === 0 ? (
@@ -1118,6 +1122,9 @@ export default function AppearanceSettingsPage() {
                   )}
                 </SettingsCard>
               </SettingsSection>
+
+              {/* Layer studio: frame / wallpaper / content / accent / glass. */}
+              <ThemeLayersSection onPresetsChanged={reloadPresets} />
 
               {/* Display & accessibility. */}
               <SettingsSection title={t("settings.appearance.display")}>
