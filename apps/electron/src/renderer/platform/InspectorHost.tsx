@@ -228,6 +228,9 @@ export function InspectorHost() {
   )
   const appliedScreenRef = useRef<string | null>(null)
   const skipSaveRef = useRef(false)
+  // The session-surface entry scenario resets the panel; that reset is not a
+  // user choice and must not overwrite the screen's remembered state.
+  const scenarioResetRef = useRef(false)
   useLayoutEffect(() => {
     if (!screenKey || appliedScreenRef.current === screenKey) return
     appliedScreenRef.current = screenKey
@@ -243,6 +246,10 @@ export function InspectorHost() {
     if (!screenKey || appliedScreenRef.current !== screenKey) return
     if (skipSaveRef.current) {
       skipSaveRef.current = false
+      return
+    }
+    if (scenarioResetRef.current) {
+      scenarioResetRef.current = false
       return
     }
     patchScreenInspector(screenKey, { visible, chromeCollapsed, section: sectionRaw, width: panelWidth })
@@ -298,10 +305,13 @@ export function InspectorHost() {
     if (!entered) return
     // A pinned inspector is never closed by a scenario, only by the user.
     if (screenKey && getScreenInspector(screenKey)?.pinned) return
+    // Only arm the skip when the reset actually changes state (else no save runs).
+    if (visible || sectionRaw !== sectionIds[0]) scenarioResetRef.current = true
     setVisible(false)
     setSection(sectionIds[0]!)
     setUserOpened(false)
     if (navigationState.rightSidebar) updateRightSidebar(undefined)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- visible/sectionRaw are read at entry only
   }, [sessionMode, sectionIds, navigationState.rightSidebar, screenKey, setVisible, setSection, setUserOpened, updateRightSidebar])
 
   // An explicit open applies to the session it was made in.
