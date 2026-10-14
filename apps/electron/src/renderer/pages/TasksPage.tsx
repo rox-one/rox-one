@@ -222,6 +222,14 @@ export default function TasksPage(props: TasksPageProps = {}) {
     else setLocalSelectedId(id)
   }, [routeBound])
   const now = Date.now()
+  // Re-render at local midnight so «today» (timeline line, Сегодня) rolls over.
+  const [, setMidnight] = useState(0)
+  useEffect(() => {
+    const next = new Date(now)
+    next.setHours(24, 0, 1, 0)
+    const timer = window.setTimeout(() => setMidnight((n) => n + 1), next.getTime() - now)
+    return () => window.clearTimeout(timer)
+  }, [isoOf(now)]) // eslint-disable-line react-hooks/exhaustive-deps
   const tourRef = useRef(tour)
   tourRef.current = tour
 

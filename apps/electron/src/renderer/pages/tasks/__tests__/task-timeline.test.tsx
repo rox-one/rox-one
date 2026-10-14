@@ -76,3 +76,20 @@ describe('TaskTimeline', () => {
     await act(async () => { root.unmount() })
   })
 })
+
+describe('TaskTimeline keyboard', () => {
+  it('Enter on a tray item schedules it today; Alt+→ moves the start edge; focus selects', async () => {
+    const selected: string[] = []
+    const { container, root, calls } = await mount({ onSelect: (id) => selected.push(id) })
+    await act(async () => { (container.querySelector('[data-testid="timeline-tray-c"]') as HTMLElement).dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })) })
+    expect(calls[0]).toEqual({ id: 'c', patch: { startAt: epochOf(today) } })
+    const bar = container.querySelector('[data-testid="timeline-bar-a"]') as HTMLElement
+    await act(async () => { bar.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, bubbles: true })) })
+    expect(calls[1]).toEqual({ id: 'a', patch: { startAt: epochOf('2026-02-13') } })
+    await act(async () => { bar.focus() })
+    expect(selected).toContain('a')
+    expect(bar.getAttribute('aria-valuenow')).not.toBeNull()
+    expect(bar.getAttribute('aria-valuemax')).not.toBeNull()
+    await act(async () => { root.unmount() })
+  })
+})

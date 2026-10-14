@@ -7,10 +7,10 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PersonalTask } from '@rox/core/tasks/personal'
-import { parseIsoDate } from '@rox/shared/projects/roadmap'
+import { daysBetween, parseIsoDate } from '@rox/shared/projects/roadmap'
 import { cn } from '@/lib/utils'
 import {
-  applySpanDrag, barGeometry, dateAtOffset, ganttTicks, todayOffset, zoomScale, type GanttDragMode, type GanttZoom,
+  applySpanDrag, barGeometry, dateAtOffset, ganttTicks, todayOffset, zoomScale, type GanttDragMode, type GanttRange, type GanttSpan, type GanttZoom,
 } from '@/components/gantt/gantt-engine'
 import { useGanttDrag, useTrackWidth } from '@/components/gantt/use-gantt'
 import {
@@ -62,20 +62,37 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
   const todayLeft = todayOffset(range, today, pxPerDay)
   const groups = React.useMemo(() => groupTasks(scheduled.map((s) => s.task), groupBy), [scheduled, groupBy])
   const byId = React.useMemo(() => new Map(tasks.map((task) => [task.id, task])), [tasks])
-  const { drag, onPointerDown, onPointerMove, onPointerUp, onPointerCancel } = useGanttDrag({
+  const { drag, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture } = useGanttDrag({
     pxPerDay,
     onCommit: (id, mode, days) => { const task = byId.get(id); if (task) onSchedule(id, dragPatch(task, mode, days, today)) },
     onClick: onSelect,
   })
+  // Stable callbacks for memoized rows: they read the latest closures from a ref.
+  const latest = React.useRef({ onPointerDown, onSchedule, onSelect, today })
+  latest.current = { onPointerDown, onSchedule, onSelect, today }
+  const rowHandlers = React.useMemo<RowHandlers>(() => ({
+    pointerDown: (e, id, mode) => latest.current.onPointerDown(e, id, mode),
+    lostCapture: onLostPointerCapture,
+    select: (id) => latest.current.onSelect(id),
+    nudge: (task, mode, days) => latest.current.onSchedule(task.id, dragPatch(task, mode, days, latest.current.today)),
+    // ↑/↓ walk the timeline rows (visual order), not the page's list order.
+    walk: (id, delta) => {
+      const ids = rowOrderRef.current
+      const next = ids[ids.indexOf(id) + delta]
+      if (next) scrollRef.current?.querySelector<HTMLElement>(`[data-testid="timeline-bar-${CSS.escape(next)}"]`)?.focus()
+    },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [])
+  const rowOrderRef = React.useRef<string[]>([])
   const [dropDay, setDropDay] = React.useState<string | null>(null)
   const dateFmt = React.useMemo(() => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }), [locale])
 
-  // Open on today rather than the padded window start.
+  // Open on today rather than the padded window start; again when zoom or the window changes.
   React.useEffect(() => {
     const el = scrollRef.current
     if (el && todayLeft != null) el.scrollLeft = Math.max(0, todayLeft - (el.clientWidth - LABEL_COL) / 3)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoom])
+  }, [zoom, range.start, range.end, viewport > 0])
 
   const dayAt = (clientX: number) => {
     const rect = trackRef.current?.getBoundingClientRect()
@@ -97,43 +114,7 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
     onSchedule(id, dropPatch(day))
   }
 
-  const renderBar = (task: PersonalTask) => {
-    const base = spanById.get(task.id)!
-    const span = drag?.id === task.id ? applySpanDrag(base, drag.mode, drag.deltaDays) : base
-    const { left, width } = barGeometry(range, span, pxPerDay)
-    const startLabel = dateFmt.format(parseIsoDate(span.start))
-    const endLabel = dateFmt.format(parseIsoDate(span.end))
-    const handle = (mode: GanttDragMode, side: 'left-0' | 'right-0') => (
-      <span onPointerDown={(e) => onPointerDown(e, task.id, mode)} className={cn('absolute inset-y-0 w-1.5 cursor-ew-resize opacity-0 group-hover:bg-accent/40 group-hover:opacity-100', side)} />
-    )
-    return (
-      <div
-        role="slider"
-        tabIndex={0}
-        aria-label={t('entities.ui.gantt.bar', { title: task.title, start: startLabel, end: endLabel })}
-        aria-valuetext={`${span.start} — ${span.end}`}
-        data-testid={`timeline-bar-${task.id}`}
-        onPointerDown={(e) => onPointerDown(e, task.id, 'move')}
-        onKeyDown={(e) => {
-          if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
-          e.preventDefault()
-          e.stopPropagation()
-          onSchedule(task.id, dragPatch(task, e.shiftKey ? 'end' : 'move', e.key === 'ArrowLeft' ? -1 : 1, today))
-        }}
-        style={{ left, width }}
-        title={`${task.title} · ${startLabel} — ${endLabel}`}
-        className={cn(
-          'group absolute top-1 bottom-1 cursor-grab overflow-hidden rounded-[var(--radius-control)] border border-accent/40 bg-accent/20 outline-none focus-visible:ring-2 focus-visible:ring-accent/50',
-          selectedId === task.id && 'border-accent bg-accent/35',
-          drag?.id === task.id && 'cursor-grabbing',
-        )}
-      >
-        {width > 72 ? <span className="relative block truncate px-2 text-xs leading-5 text-text-secondary">{startLabel} — {endLabel}</span> : null}
-        {handle('start', 'left-0')}
-        {handle('end', 'right-0')}
-      </div>
-    )
-  }
+  rowOrderRef.current = groups.flatMap((g) => g.tasks.map((task) => task.id))
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="tasks-timeline">
@@ -178,16 +159,15 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
                 {groupBy !== 'none' ? (
                   <div className="sticky left-0 px-3 pt-2 text-xs font-medium uppercase text-text-muted" style={{ width: LABEL_COL }}>{groupTitle(group)}</div>
                 ) : null}
-                {group.tasks.map((task) => (
-                  <div key={task.id} className="flex" style={{ height: ROW_H }}>
-                    <button type="button" onClick={() => onSelect(task.id)} style={{ width: LABEL_COL }}
-                      className={cn('sticky left-0 z-sticky shrink-0 truncate bg-background px-3 text-left text-sm', selectedId === task.id ? 'text-foreground font-medium' : 'text-text-secondary hover:text-foreground')}
-                      title={task.title}>
-                      {task.title}
-                    </button>
-                    <div className="relative" style={{ width: trackWidth }}>{renderBar(task)}</div>
-                  </div>
-                ))}
+                {group.tasks.map((task) => {
+                  const base = spanById.get(task.id)!
+                  const dragging = drag?.id === task.id
+                  return (
+                    <TimelineRow key={task.id} task={task} span={dragging ? applySpanDrag(base, drag.mode, drag.deltaDays) : base}
+                      range={range} totalDays={scale.totalDays} pxPerDay={pxPerDay} trackWidth={trackWidth}
+                      selected={selectedId === task.id} dragging={dragging} dateFmt={dateFmt} handlers={rowHandlers} />
+                  )
+                })}
               </React.Fragment>
             ))}
           </div>
@@ -200,6 +180,13 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
             <button key={task.id} type="button" draggable data-testid={`timeline-tray-${task.id}`}
               onDragStart={(e) => { e.dataTransfer.setData(TIMELINE_DRAG_TYPE, task.id); e.dataTransfer.effectAllowed = 'move' }}
               onClick={() => onSelect(task.id)}
+              onKeyDown={(e) => {
+                // Keyboard scheduling: Enter starts the task today.
+                if (e.key !== 'Enter') return
+                e.preventDefault()
+                e.stopPropagation()
+                onSchedule(task.id, dropPatch(today))
+              }}
               className={cn('max-w-48 truncate rounded-[var(--radius-control)] border border-border-subtle px-2 py-0.5 text-xs hover:bg-surface-hover', selectedId === task.id && 'border-accent')}
               title={task.title}>
               {task.title}
@@ -210,3 +197,83 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
     </div>
   )
 }
+
+interface RowHandlers {
+  pointerDown: (e: React.PointerEvent, id: string, mode: GanttDragMode) => void
+  lostCapture: () => void
+  select: (id: string) => void
+  nudge: (task: PersonalTask, mode: GanttDragMode, days: number) => void
+  walk: (id: string, delta: -1 | 1) => void
+}
+
+interface TimelineRowProps {
+  task: PersonalTask
+  span: GanttSpan
+  range: GanttRange
+  totalDays: number
+  pxPerDay: number
+  trackWidth: number
+  selected: boolean
+  dragging: boolean
+  dateFmt: Intl.DateTimeFormat
+  handlers: RowHandlers
+}
+
+/** One timeline row; memoized so a drag re-renders only the dragged bar. */
+const TimelineRow = React.memo(function TimelineRow({ task, span, range, totalDays, pxPerDay, trackWidth, selected, dragging, dateFmt, handlers }: TimelineRowProps) {
+  const { t } = useTranslation()
+  const { left, width } = barGeometry(range, span, pxPerDay)
+  const startLabel = dateFmt.format(parseIsoDate(span.start))
+  const endLabel = dateFmt.format(parseIsoDate(span.end))
+  const handle = (mode: GanttDragMode, side: 'left-0' | 'right-0') => (
+    <span onPointerDown={(e) => handlers.pointerDown(e, task.id, mode)} className={cn('absolute inset-y-0 w-1.5 cursor-ew-resize opacity-0 group-hover:bg-accent/40 group-hover:opacity-100', side)} />
+  )
+  return (
+    <div className="flex" style={{ height: ROW_H }}>
+      <button type="button" tabIndex={-1} onClick={() => handlers.select(task.id)} style={{ width: LABEL_COL }}
+        className={cn('sticky left-0 z-sticky shrink-0 truncate bg-background px-3 text-left text-sm', selected ? 'font-medium text-foreground' : 'text-text-secondary hover:text-foreground')}
+        title={task.title}>
+        {task.title}
+      </button>
+      <div className="relative" style={{ width: trackWidth }}>
+        <div
+          role="slider"
+          tabIndex={0}
+          aria-label={t('entities.ui.gantt.bar', { title: task.title, start: startLabel, end: endLabel })}
+          aria-valuemin={0}
+          aria-valuemax={Math.max(0, totalDays - 1)}
+          aria-valuenow={daysBetween(range.start, span.start)}
+          aria-valuetext={`${startLabel} — ${endLabel}`}
+          data-testid={`timeline-bar-${task.id}`}
+          onFocus={() => { if (!selected) handlers.select(task.id) }}
+          onPointerDown={(e) => handlers.pointerDown(e, task.id, 'move')}
+          onLostPointerCapture={handlers.lostCapture}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+              e.preventDefault()
+              e.stopPropagation()
+              handlers.walk(task.id, e.key === 'ArrowUp' ? -1 : 1)
+              return
+            }
+            if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+            e.preventDefault()
+            e.stopPropagation()
+            // ←/→ move, ⇧ the deadline edge, ⌥ the start edge.
+            handlers.nudge(task, e.shiftKey ? 'end' : e.altKey ? 'start' : 'move', e.key === 'ArrowLeft' ? -1 : 1)
+          }}
+          style={{ left, width }}
+          title={`${task.title} · ${startLabel} — ${endLabel}`}
+          className={cn(
+            'group absolute top-1 bottom-1 cursor-grab overflow-hidden rounded-[var(--radius-control)] border border-accent/40 bg-accent/20 outline-none focus-visible:ring-2 focus-visible:ring-accent/50',
+            selected && 'border-accent bg-accent/35',
+            dragging && 'cursor-grabbing',
+          )}
+        >
+          {width > 72 ? <span className="relative block truncate px-2 text-xs leading-5 text-text-secondary">{startLabel} — {endLabel}</span> : null}
+          {handle('start', 'left-0')}
+          {handle('end', 'right-0')}
+        </div>
+      </div>
+    </div>
+  )
+})
