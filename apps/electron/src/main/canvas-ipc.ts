@@ -50,6 +50,13 @@ export function createCanvasStoreRegistry(deps: Pick<CanvasIpcDependencies, 'res
       if (!s) { s = new CanvasFileStore(root); stores.set(root, s) }
       return s
     },
+    /** Canonical workspace root (subscriber key); throws like get(). */
+    rootOf(workspaceId: unknown): string {
+      if (typeof workspaceId !== 'string' || !workspaceId) throw new Error('CANVAS_BAD_WORKSPACE')
+      const root = deps.resolveWorkspaceRoot(workspaceId)
+      if (!root) throw new Error('CANVAS_UNKNOWN_WORKSPACE')
+      return root
+    },
     async closeAll(): Promise<void> {
       await Promise.all([...stores.values()].map(s => s.flush().catch(() => {})))
     },
@@ -107,32 +114,53 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
     const boards = await store.listBoards()
     if (!boards.some(b => b.id === id)) throw new Error('CANVAS_UNKNOWN_BOARD')
   }
-  /** "<ws>|<board>" → renderer ids that have the board open. */
+  /**
+   * "<workspace root>|<board>" → renderer ids that have the board open. Keyed by
+   * the canonical root, so a workspace named by id or by name is one entry.
+   */
   const subscribers = new Map<string, Set<number>>()
-  const forwarding = new WeakSet<object>()
-  const key = (ws: string, id: string) => `${ws}|${id}`
-  const subscribe = (ws: string, id: string, wc: WebContents) => {
+  const forwarders = new Map<string, { doc: Y.Doc; handler: (u: Uint8Array, o: unknown) => void }>()
+  const key = (ws: unknown, id: string) => `${registry.rootOf(ws)}|${id}`
+  /** Drop the forwarder and close the board once nobody has it open. */
+  const releaseIfIdle = async (ws: unknown, id: string) => {
+    const k = key(ws, id)
+    if (subscribers.get(k)?.size) return
+    subscribers.delete(k)
+    const f = forwarders.get(k)
+    if (f) { f.doc.off('update', f.handler); forwarders.delete(k) }
+    await registry.get(ws).closeBoard(id).catch(() => {})
+  }
+  const unsubscribe = (ws: unknown, id: string, rid: number) => {
+    const set = subscribers.get(key(ws, id))
+    if (!set?.delete(rid)) return
+    void releaseIfIdle(ws, id)
+  }
+  const subscribe = (ws: unknown, id: string, wc: WebContents) => {
     const k = key(ws, id)
     let set = subscribers.get(k)
     if (!set) { set = new Set(); subscribers.set(k, set) }
     if (!set.has(wc.id)) {
       set.add(wc.id)
-      wc.once?.('destroyed', () => subscribers.get(k)?.delete(wc.id))
+      wc.once?.('destroyed', () => unsubscribe(ws, id, wc.id))
     }
   }
   /** Forward every change of a board doc (renderer edits AND main-origin ones, e.g. rename) to its subscribers. */
-  const ensureForwarding = (ws: string, id: string, doc: Y.Doc) => {
-    if (forwarding.has(doc)) return
-    forwarding.add(doc)
-    doc.on('update', (update: Uint8Array, origin: unknown) => {
+  const ensureForwarding = (ws: unknown, id: string, doc: Y.Doc) => {
+    const k = key(ws, id)
+    const cur = forwarders.get(k)
+    if (cur?.doc === doc) return
+    if (cur) cur.doc.off('update', cur.handler)
+    const handler = (update: Uint8Array, origin: unknown) => {
       const skip = (origin as RendererOrigin | null)?.kind === 'remote' ? (origin as RendererOrigin).senderId : -1
-      for (const rid of subscribers.get(key(ws, id)) ?? []) {
+      for (const rid of subscribers.get(k) ?? []) {
         if (rid === skip) continue
         const wc = deps.rendererById?.(rid) ?? deps.listRenderers?.().find(w => w.id === rid)
-        if (!wc || wc.isDestroyed()) { subscribers.get(key(ws, id))?.delete(rid); continue }
+        if (!wc || wc.isDestroyed()) { unsubscribe(ws, id, rid); continue }
         wc.send(CANVAS_IPC.update, ws, id, update)
       }
-    })
+    }
+    doc.on('update', handler)
+    forwarders.set(k, { doc, handler })
   }
 
   ipcMain.handle(CANVAS_IPC.setEnabled, async (event, on: unknown) => {
@@ -165,9 +193,10 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
     const bid = boardId(id)
     await knownBoard(store, bid)
     const board = await store.openBoard(bid)
-    ensureForwarding(ws as string, bid, board.doc)
+    ensureForwarding(ws, bid, board.doc)
     board.setTitle(cleanTitle(title), { kind: 'user', userId: 'local' })
     await store.flush(bid)
+    await releaseIfIdle(ws, bid)
     return { ok: true as const }
   })
   ipcMain.handle(CANVAS_IPC.trash, async (event, ws: unknown, id: unknown) => {
@@ -175,8 +204,11 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
     const store = registry.get(ws)
     const bid = boardId(id)
     await knownBoard(store, bid)
+    const k = key(ws, bid)
+    subscribers.delete(k)
+    const f = forwarders.get(k)
+    if (f) { f.doc.off('update', f.handler); forwarders.delete(k) }
     await store.trashBoard(bid)
-    subscribers.delete(key(ws as string, bid))
     return { ok: true as const }
   })
   ipcMain.handle(CANVAS_IPC.open, async (event, ws: unknown, id: unknown): Promise<Uint8Array> => {
@@ -185,13 +217,13 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
     const bid = boardId(id)
     await knownBoard(store, bid)
     const board = await store.openBoard(bid)
-    ensureForwarding(ws as string, bid, board.doc)
-    subscribe(ws as string, bid, event.sender)
+    ensureForwarding(ws, bid, board.doc)
+    subscribe(ws, bid, event.sender)
     return Y.encodeStateAsUpdate(board.doc)
   })
   ipcMain.handle(CANVAS_IPC.close, async (event, ws: unknown, id: unknown) => {
     guard(event, { flag: false })
-    if (typeof ws === 'string' && typeof id === 'string') subscribers.get(key(ws, id))?.delete(event.sender.id)
+    if (typeof ws === 'string' && typeof id === 'string' && isValidBoardId(id)) unsubscribe(ws, id, event.sender.id)
     return { ok: true as const }
   })
   ipcMain.handle(CANVAS_IPC.apply, async (event, ws: unknown, id: unknown, update: unknown) => {
@@ -200,12 +232,12 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
     const store = registry.get(ws)
     const bid = boardId(id)
     // Only a renderer that opened this board may write to it (and the board must exist).
-    if (!subscribers.get(key(ws as string, bid))?.has(event.sender.id)) {
+    if (!subscribers.get(key(ws, bid))?.has(event.sender.id)) {
       await knownBoard(store, bid)
       throw new Error('CANVAS_NOT_OPEN')
     }
     const board = await store.openBoard(bid)
-    ensureForwarding(ws as string, bid, board.doc)
+    ensureForwarding(ws, bid, board.doc)
     const origin: RendererOrigin = { kind: 'remote', senderId: event.sender.id }
     Y.applyUpdate(board.doc, update, origin)
     return { ok: true as const }

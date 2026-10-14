@@ -45,3 +45,30 @@ describe('canvas flag sync to main (S5)', () => {
     await expect(a.call(CANVAS_IPC.setEnabled, fakeSender(), 'yes')).rejects.toThrow('CANVAS_BAD_FLAG')
   })
 })
+
+describe('subscriber lifecycle (review 6 #8)', () => {
+  it('closes the board when the last subscriber leaves, and keys by canonical root', async () => {
+    const root = tmp()
+    const a = setup({ root, resolve: ws => (ws === 'id-1' || ws === 'name-1' ? root : null) })
+    const s1 = fakeSender(1), s2 = fakeSender(2)
+    const b = await a.call(CANVAS_IPC.create, s1, 'id-1', 'Board')
+    const store = a.registry.get('id-1')
+    const closed: string[] = []
+    const orig = store.closeBoard.bind(store)
+    ;(store as any).closeBoard = (id: string) => { closed.push(id); return orig(id) }
+    await a.call(CANVAS_IPC.open, s1, 'id-1', b.id)
+    await a.call(CANVAS_IPC.open, s2, 'name-1', b.id)
+    // same board under both names: s2 (opened via name) may apply via id
+    const Y = await import('yjs')
+    const d = new Y.Doc(); d.getMap('x').set('k', 1)
+    await expect(a.call(CANVAS_IPC.apply, s2, 'id-1', b.id, Y.encodeStateAsUpdate(d))).resolves.toEqual({ ok: true })
+    expect(s1.sent.length).toBeGreaterThan(0) // forwarded to the other window
+    await a.call(CANVAS_IPC.close, s1, 'id-1', b.id)
+    expect(closed).toEqual([])
+    s2.destroy()
+    await new Promise(r => setTimeout(r, 10))
+    expect(closed).toEqual([b.id])
+    // after release, no forwarding to stale renderers; apply needs a fresh open
+    await expect(a.call(CANVAS_IPC.apply, s1, 'id-1', b.id, Y.encodeStateAsUpdate(d))).rejects.toThrow('CANVAS_NOT_OPEN')
+  })
+})
