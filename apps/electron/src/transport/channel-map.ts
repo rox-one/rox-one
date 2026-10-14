@@ -922,6 +922,17 @@ export const CHANNEL_MAP = {
 
   // Organizations (P3.1)
   listOrganizations: invoke(RPC_CHANNELS.orgs.LIST),
+  teamChatListChannels: invoke(RPC_CHANNELS.teamChat.LIST_CHANNELS),
+  teamChatCreateChannel: invoke(RPC_CHANNELS.teamChat.CREATE_CHANNEL),
+  teamChatJoin: invoke(RPC_CHANNELS.teamChat.JOIN),
+  teamChatLeave: invoke(RPC_CHANNELS.teamChat.LEAVE),
+  teamChatAddMembers: invoke(RPC_CHANNELS.teamChat.ADD_MEMBERS),
+  teamChatSetSubscribed: invoke(RPC_CHANNELS.teamChat.SET_SUBSCRIBED),
+  teamChatArchive: invoke(RPC_CHANNELS.teamChat.ARCHIVE),
+  teamChatListMessages: invoke(RPC_CHANNELS.teamChat.LIST_MESSAGES),
+  teamChatPost: invoke(RPC_CHANNELS.teamChat.POST),
+  teamChatMarkRead: invoke(RPC_CHANNELS.teamChat.MARK_READ),
+  onTeamChatChanged: listener(RPC_CHANNELS.teamChat.CHANGED),
   createOrganization: invoke(RPC_CHANNELS.orgs.CREATE),
   inviteToOrganization: invoke(RPC_CHANNELS.orgs.INVITE),
   acceptOrganizationInvite: invoke(RPC_CHANNELS.orgs.ACCEPT),
