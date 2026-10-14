@@ -6,7 +6,7 @@
  * states; focus comes from the global :focus-visible system (no local ring).
  */
 import type { ComponentType } from 'react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import { cn } from '@/lib/utils'
 
 export interface RailRowProps {

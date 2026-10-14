@@ -105,7 +105,7 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
     const requests: unknown[][] = []
     const api = {
       getSkills: (...args: unknown[]) => { requests.push(args); return ++reads === 1 ? initial.promise : refreshed.promise },
-      onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+      onSkillsChanged: (...args: unknown[]) => { event = args[0] as typeof event; return () => {} },
     }
     const cleanup = appShellEffect(SKILLS_LOAD_NEEDLE, skillPageBindings(api, {
       activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
@@ -127,7 +127,7 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
     let data: string[] = []
     const cleanup = appShellEffect(SKILLS_LOAD_NEEDLE, skillPageBindings({
       getSkills: () => responses[reads++]!.promise,
-      onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+      onSkillsChanged: (...args: unknown[]) => { event = args[0] as typeof event; return () => {} },
     }, {
       activeWorkspaceId: 'current', activeSessionWorkingDirectory: undefined,
       setSkills: (next: string[]) => { data = next }, setSkillsSyncing: () => {}, console,
@@ -150,7 +150,7 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
     let data: string[] = []
     const cleanup = appShellEffect(SKILLS_LOAD_NEEDLE, skillPageBindings({
       getSkills: () => responses[reads++]!.promise,
-      onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+      onSkillsChanged: (...args: unknown[]) => { event = args[0] as typeof event; return () => {} },
     }, {
       activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
       setSkills: (next: string[]) => { data = next }, setSkillsSyncing: () => {},
@@ -178,7 +178,7 @@ describe('ROX UI-001 actual AppShell workspace callbacks', () => {
     let syncing = false
     const cleanup = appShellEffect(SKILLS_LOAD_NEEDLE, skillPageBindings({
       getSkills: () => ++reads === 1 ? initial.promise : refresh.promise,
-      onSkillsChanged: (callback: typeof event) => { event = callback; return () => {} },
+      onSkillsChanged: (...args: unknown[]) => { event = args[0] as typeof event; return () => {} },
     }, {
       activeWorkspaceId: 'current', activeSessionWorkingDirectory: '/work/project',
       setSkills: (next: string[]) => { data = next }, setSkillsSyncing: (next: boolean) => { syncing = next },

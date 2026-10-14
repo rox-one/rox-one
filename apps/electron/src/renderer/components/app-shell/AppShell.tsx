@@ -51,7 +51,7 @@ import { HeaderIconButton } from "@/components/ui/HeaderIconButton"
 import { resolveInheritedFilterParams, type FilterMode } from "./inherited-filter-params"
 import { HeaderMenu } from "@/components/ui/HeaderMenu"
 import { Separator } from "@/components/ui/separator"
-import { Tooltip, TooltipTrigger, TooltipContent } from "@rox/ui"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@rox/ui/tooltip"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -1688,6 +1688,12 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
     )
   }, [sessionMetaMap, activeWorkspaceId, remoteWorkspaceId])
 
+  // Contextual sidebar «Недавнее» / «Закреплённое» scope (local + remote ids).
+  const recentScopeWorkspaceIds = useMemo(
+    () => [activeWorkspaceId, remoteWorkspaceId].filter((id): id is string => Boolean(id)),
+    [activeWorkspaceId, remoteWorkspaceId],
+  )
+
   // Workspace model spend (sum of per-session cost) for the profile strip —
   // the only place balance/cost is shown.
   const workspaceSpentUsd = useMemo(() => {
@@ -3195,6 +3201,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                         toggleExpanded={toggleExpanded}
                         contextSlotRef={setShellSidebarSlot}
                         pillShown={modePillShown(isAutoCompact)}
+                        workspaceIds={recentScopeWorkspaceIds}
                       />
                     </>
                   )}
