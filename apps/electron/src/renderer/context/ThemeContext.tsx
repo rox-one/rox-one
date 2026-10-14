@@ -222,7 +222,7 @@ function saveTheme(theme: StoredTheme): void {
 
 export function ThemeProvider({
   children,
-  defaultMode = 'dark',
+  defaultMode = 'system',
   defaultColorTheme = ROX_THEME_ID,
   defaultFont = 'rox',
   activeWorkspaceId = null,
@@ -238,7 +238,9 @@ export function ThemeProvider({
 
   // === Preference state (persisted at app level) ===
   const [mode, setModeState] = useState<ThemeMode>(() =>
-    themeLocked ? defaultMode : (stored?.mode ?? defaultMode)
+    // Only an explicit UI choice pins the mode; values auto-saved by older
+    // builds (which defaulted to dark) fall back to following the system.
+    themeLocked ? defaultMode : (stored?.isUserOverride && stored.mode ? stored.mode : defaultMode)
   )
   // Only use localStorage colorTheme if user explicitly set it via UI
   const [colorTheme, setColorThemeState] = useState<string>(() => {
@@ -769,7 +771,7 @@ export function ThemeProvider({
       chatFont,
       terminalFont,
       contrast,
-      isUserOverride: existing?.isUserOverride,
+      isUserOverride: true,
     })
     if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
       window.electronAPI.broadcastThemePreferences({ mode: newMode, colorTheme, font, contrast })

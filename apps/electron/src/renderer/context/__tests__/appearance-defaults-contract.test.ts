@@ -3,11 +3,12 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 /**
- * Appearance defaults contract (2026-10-13): Rox Engineering
- * (`super-engineering`) is the out-of-the-box theme, the app no longer pins a
- * single theme, Settings → Внешний вид offers the color-theme picker again,
- * and legacy installs are migrated once (`appearance-defaults-v1`), which also
- * seeds the deep-glass material default.
+ * Appearance defaults contract (2026-10-14): Rox Ink (`rox-ink`, grayscale
+ * sumi-e, light + dark) is the out-of-the-box theme and follows the system
+ * mode. Rox Engineering stays an opt-in preset. The app does not pin a theme,
+ * Settings → Внешний вид offers the color-theme picker, and installs on the
+ * old defaults (including the v1 Rox Engineering + deep-glass seed) migrate
+ * once via `appearance-defaults-v2-ink`.
  */
 const repo = join(import.meta.dir, '..', '..', '..', '..', '..', '..')
 const themeConfig = readFileSync(join(repo, 'packages/shared/src/config/theme.ts'), 'utf8')
@@ -20,9 +21,8 @@ const appearancePage = readFileSync(
 )
 
 describe('appearance defaults', () => {
-  it('ships Rox Engineering as the default theme id', () => {
-    expect(themeConfig).toContain("export const ROX_THEME_ID = 'super-engineering'")
-    expect(themeConfig).toContain('DEEP_GLASS_MATERIAL_DEFAULT')
+  it('ships Rox Ink as the default theme id', () => {
+    expect(themeConfig).toContain("export const ROX_THEME_ID = 'rox-ink'")
   })
 
   it('no longer pins a fixed theme in the app entry points', () => {
@@ -39,9 +39,12 @@ describe('appearance defaults', () => {
     expect(appearancePage).not.toContain('settings.appearance.workspaceThemes')
   })
 
-  it('migrates legacy selections and seeds deep glass exactly once', () => {
-    expect(storageConfig).toContain("colorTheme: 'super-engineering'")
+  it('migrates legacy selections once and no longer seeds deep glass', () => {
+    expect(storageConfig).toContain('colorTheme: ROX_THEME_ID')
     expect(storageConfig).toContain("APPEARANCE_DEFAULTS_MIGRATION = 'appearance-defaults-v1'")
+    expect(storageConfig).toContain("APPEARANCE_INK_MIGRATION = 'appearance-defaults-v2-ink'")
     expect(storageConfig).toContain('migrateAppearanceDefaults(config)')
+    expect(storageConfig).toContain('migrateAppearanceInkDefault(config)')
+    expect(storageConfig).not.toContain('DEEP_GLASS_MATERIAL_DEFAULT')
   })
 })
