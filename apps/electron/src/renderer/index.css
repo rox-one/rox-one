@@ -1843,7 +1843,7 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
 .rox-screen-enter[data-nav-direction='forward'] { animation-name: rox-screen-from-right; }
 .rox-screen-enter[data-nav-direction='back'] { animation-name: rox-screen-from-left; }
 @keyframes rox-screen-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes rox-screen-from-right { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
-@keyframes rox-screen-from-left { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
+@keyframes rox-screen-from-right { from { opacity: 0; transform: translateX(0.75rem); } to { opacity: 1; transform: none; } }
+@keyframes rox-screen-from-left { from { opacity: 0; transform: translateX(-0.75rem); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .rox-screen-enter { animation: none; } }
 :root[data-render-profile='performance'] .rox-screen-enter { animation: none; }
