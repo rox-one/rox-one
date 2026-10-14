@@ -7968,6 +7968,7 @@
   "screens.badge.inProgress": "进行中",
   "screens.badge.running": "运行中",
   "screens.badge.unread": "新",
+  "screens.notes.groups.folders": "文件夹",
   "screens.notes.groups.pinned": "已置顶",
   "screens.notes.groups.recent": "最近",
   "screens.notes.pin": "置顶笔记",

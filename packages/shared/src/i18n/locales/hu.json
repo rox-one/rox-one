@@ -7968,6 +7968,7 @@
   "screens.badge.inProgress": "Folyamatban",
   "screens.badge.running": "Fut",
   "screens.badge.unread": "Új",
+  "screens.notes.groups.folders": "Mappák",
   "screens.notes.groups.pinned": "Kitűzött",
   "screens.notes.groups.recent": "Legutóbbi",
   "screens.notes.pin": "Jegyzet kitűzése",

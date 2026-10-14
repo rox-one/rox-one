@@ -7977,6 +7977,7 @@
   "screens.badge.inProgress": "En progreso",
   "screens.badge.running": "En curso",
   "screens.badge.unread": "Nuevo",
+  "screens.notes.groups.folders": "Carpetas",
   "screens.notes.groups.pinned": "Fijadas",
   "screens.notes.groups.recent": "Recientes",
   "screens.notes.pin": "Fijar nota",

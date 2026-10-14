@@ -7968,6 +7968,7 @@
   "screens.badge.inProgress": "In progress",
   "screens.badge.running": "Running",
   "screens.badge.unread": "New",
+  "screens.notes.groups.folders": "Folders",
   "screens.notes.groups.pinned": "Pinned",
   "screens.notes.groups.recent": "Recent",
   "screens.notes.pin": "Pin note",

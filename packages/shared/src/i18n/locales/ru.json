@@ -8012,6 +8012,7 @@
   "screens.badge.inProgress": "В работе",
   "screens.badge.running": "Идёт",
   "screens.badge.unread": "Новое",
+  "screens.notes.groups.folders": "Папки",
   "screens.notes.groups.pinned": "Закреплённое",
   "screens.notes.groups.recent": "Недавнее",
   "screens.notes.pin": "Закрепить заметку",

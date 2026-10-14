@@ -7968,6 +7968,7 @@
   "screens.badge.inProgress": "진행 중",
   "screens.badge.running": "실행 중",
   "screens.badge.unread": "새 항목",
+  "screens.notes.groups.folders": "폴더",
   "screens.notes.groups.pinned": "고정됨",
   "screens.notes.groups.recent": "최근",
   "screens.notes.pin": "메모 고정",

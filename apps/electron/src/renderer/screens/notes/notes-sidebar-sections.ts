@@ -51,3 +51,24 @@ export function buildNotesSidebarSections(notes: readonly NotesSidebarNote[], pi
 export function togglePinnedNote(pinned: readonly string[], id: string): string[] {
   return pinned.includes(id) ? pinned.filter((p) => p !== id) : [...pinned, id]
 }
+
+/**
+ * Pins are keyed by vault-relative path: follow renames / moves. With
+ * `folder`, every pin under `from/` moves to `to/`.
+ */
+export function rekeyPinnedNotes(pinned: readonly string[], from: string, to: string, folder = false): string[] {
+  if (from === to) return pinned as string[]
+  let changed = false
+  const out = pinned.map((id) => {
+    if (!folder && id === from) { changed = true; return to }
+    if (folder && id.startsWith(`${from}/`)) { changed = true; return `${to}/${id.slice(from.length + 1)}` }
+    return id
+  })
+  return changed ? [...new Set(out)] : (pinned as string[])
+}
+
+/** Drop pins of a deleted note (or everything under a deleted folder). */
+export function dropPinnedNotes(pinned: readonly string[], target: string, folder = false): string[] {
+  const out = pinned.filter((id) => (folder ? !id.startsWith(`${target}/`) : id !== target))
+  return out.length === pinned.length ? (pinned as string[]) : out
+}

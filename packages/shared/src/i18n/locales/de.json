@@ -7968,6 +7968,7 @@
   "screens.badge.inProgress": "In Arbeit",
   "screens.badge.running": "Läuft",
   "screens.badge.unread": "Neu",
+  "screens.notes.groups.folders": "Ordner",
   "screens.notes.groups.pinned": "Angeheftet",
   "screens.notes.groups.recent": "Zuletzt",
   "screens.notes.pin": "Notiz anheften",

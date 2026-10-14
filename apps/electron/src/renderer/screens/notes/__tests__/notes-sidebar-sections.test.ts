@@ -23,3 +23,15 @@ describe('buildNotesSidebarSections', () => {
     expect(togglePinnedNote(['a', 'b'], 'a')).toEqual(['b'])
   })
 })
+
+describe('note pins follow renames, moves and deletes', () => {
+  it('rekeys a note and a folder subtree; drops deleted', async () => {
+    const { rekeyPinnedNotes, dropPinnedNotes } = await import('../notes-sidebar-sections')
+    const pins = ['a/x.md', 'a/b/y.md', 'c.md']
+    expect(rekeyPinnedNotes(pins, 'c.md', 'd.md')).toEqual(['a/x.md', 'a/b/y.md', 'd.md'])
+    expect(rekeyPinnedNotes(pins, 'a', 'z', true)).toEqual(['z/x.md', 'z/b/y.md', 'c.md'])
+    expect(rekeyPinnedNotes(pins, 'q.md', 'r.md')).toBe(pins)
+    expect(dropPinnedNotes(pins, 'a', true)).toEqual(['c.md'])
+    expect(dropPinnedNotes(pins, 'c.md')).toEqual(['a/x.md', 'a/b/y.md'])
+  })
+})
