@@ -24,6 +24,8 @@ export interface CalendarSidebarInput {
   meetings: readonly CalendarSidebarMeeting[]
   counts: Readonly<Record<MeetingBucketId, number>>
   accounts: readonly CalendarSidebarAccount[]
+  /** Account ids hidden from the views (toggle state). */
+  hiddenAccounts?: ReadonlySet<string>
   now: number
   /** Formats a timestamp as a short local time (caller's locale). */
   formatTime(ts: number): string
@@ -40,7 +42,7 @@ function dayBounds(now: number): [number, number] {
 /**
  * Календарь (with merged Встречи) second sidebar: Сегодня (today's meetings,
  * chronological, live first) → Записи встреч (bucket filters with counts) →
- * Мои календари (connected accounts + a connect row).
+ * Мои календари (connected accounts as visibility toggles + a connect row).
  */
 export function buildCalendarSidebarSections(input: CalendarSidebarInput): SidebarSection[] {
   const [start, end] = dayBounds(input.now)
@@ -68,7 +70,7 @@ export function buildCalendarSidebarSections(input: CalendarSidebarInput): Sideb
       id: `account:${a.id}`,
       label: a.displayName || a.provider,
       icon: 'calendar',
-      secondary: a.provider,
+      ...(input.hiddenAccounts?.has(a.id) ? { secondaryKey: 'screens.calendar.hidden' } : { secondary: a.provider }),
       ...(a.status !== 'connected' ? { badge: 'status' as const } : {}),
       target: { kind: 'source' as const, sourceId: a.id },
     })),

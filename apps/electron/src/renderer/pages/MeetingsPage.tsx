@@ -27,7 +27,8 @@ import type { LocalAsrEngine, LocalMeeting } from '../../shared/meetings-local'
 import type { MeetingGrant } from '@rox/shared/meeting-agents/browser'
 import { LocalMeetingDetail, transcriptTone, type DetailTab } from './meetings/LocalMeetingDetail'
 import { MeetingsSidebar } from './meetings/MeetingsSidebar'
-import { useCalendarScreenSidebar } from '@/screens/calendar/useCalendarScreenSidebar'
+import { useCalendarScreenSidebar, useCalendarVisibility } from '@/screens/calendar/useCalendarScreenSidebar'
+import { startOfDay } from '@/screens/calendar/calendar-visibility'
 import ProposalInbox from './meetings/ProposalInbox'
 import {
   approveNativeProposalViaRpc,
@@ -271,10 +272,16 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     return () => { cancelled = true; request.finish() }
   }, [api, terms, meetings, transcriptText, workspaceId, requestTracker])
 
-  const counts = useMemo(() => localBucketCounts(meetings, now), [meetings, now])
+  // Per-calendar visibility (sidebar toggles) and the mini-calendar day filter.
+  const calendarVisibility = useCalendarVisibility()
+  const { isShown: isCalendarShown } = calendarVisibility
+  const [day, setDay] = useState<number | null>(null)
+  const shownMeetings = useMemo(() => meetings.filter((m) => isCalendarShown(m.calendarEventId)), [meetings, isCalendarShown])
+  const meetingDays = useMemo(() => new Set(shownMeetings.map((m) => startOfDay(meetingTime(m)))), [shownMeetings])
+  const counts = useMemo(() => localBucketCounts(shownMeetings, now), [shownMeetings, now])
   const visible = useMemo(
-    () => meetings.filter((m) => inLocalBucket(m, bucket, now) && meetingMatches(m, terms, transcriptText[m.id])),
-    [meetings, bucket, now, terms, transcriptText],
+    () => shownMeetings.filter((m) => (day == null ? inLocalBucket(m, bucket, now) : startOfDay(meetingTime(m)) === day) && meetingMatches(m, terms, transcriptText[m.id])),
+    [shownMeetings, bucket, now, terms, transcriptText, day],
   )
   const groups = useMemo(() => groupLocalMeetings(visible, now), [visible, now])
   const ordered = useMemo(() => groups.flatMap((g) => g.items), [groups])
@@ -287,6 +294,12 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
       surface: 'meetings', apiAvailable: !!api, workspaceId, selectedId,
       meeting: loadedWorkspaceId === workspaceId ? selected : null,
       loadState: loadState === 'ready' && loadedWorkspaceId !== workspaceId ? 'loading' : loadState,
+    accounts: calendarVisibility.accounts,
+    hiddenAccounts: calendarVisibility.hidden,
+    onToggleAccount: calendarVisibility.toggle,
+    day,
+    onDay: (next) => { setDay(next); selectMeeting(null) },
+    meetingDays,
     })
     const cleanupAvailable = tourSignals.capability('meetings.available', capabilities['meetings.available']!)
     const cleanupArtifact = tourSignals.capability('meeting.artifact-present', capabilities['meeting.artifact-present']!)
@@ -483,7 +496,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   }
 
   // Shell second sidebar (shell-layout).
-  const sidebarMeetings = useMemo(() => meetings.map((m) => ({ id: m.id, title: m.title, at: meetingTime(m), live: isLiveMeeting(m) })), [meetings])
+  const sidebarMeetings = useMemo(() => shownMeetings.map((m) => ({ id: m.id, title: m.title, at: meetingTime(m), live: isLiveMeeting(m) })), [shownMeetings])
   useCalendarScreenSidebar({
     screenId: props.screenId ?? 'meetings',
     meetings: sidebarMeetings,
@@ -491,7 +504,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     now,
     bucket,
     selectedMeetingId: selectedId,
-    onBucket: (next) => { setBucket(next); selectMeeting(null) },
+    onBucket: (next) => { setBucket(next); setDay(null); selectMeeting(null) },
     onMeeting: (id) => selectMeeting(id),
     onConnectCalendar: () => navigate(routes.view.connections()),
     onRecord: api ? () => { void handleRecord() } : null,
@@ -525,7 +538,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
       }}
     >
       <ListHeader
-        title={bucketTitle[bucket]}
+        title={day != null ? dayFmt.format(day) : bucketTitle[bucket]}
         subtitle={dayFmt.format(now)}
         actions={(
           <>
