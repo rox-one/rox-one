@@ -5,7 +5,7 @@
  * the method→channel mapping used by buildClientApi().
  */
 
-import { RPC_CHANNELS } from '../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { ChannelMap } from './build-api'
 
 function invoke(channel: string, transform?: (result: any) => any, timeoutMs?: number) {
@@ -623,6 +623,8 @@ export const CHANNEL_MAP = {
   'cookbooksLab.runAll': invoke(RPC_CHANNELS.cookbooksLab.RUN_ALL),
   'cookbooksLab.save': invoke(RPC_CHANNELS.cookbooksLab.SAVE),
   'cookbooksLab.reset': invoke(RPC_CHANNELS.cookbooksLab.RESET),
+  'cookbooksLab.cancel': invoke(RPC_CHANNELS.cookbooksLab.CANCEL),
+  'cookbooksLab.export': invoke(RPC_CHANNELS.cookbooksLab.EXPORT),
   'cookbooksLab.onStatusChanged': listener(RPC_CHANNELS.cookbooksLab.STATUS_CHANGED),
 
   // Debug logging

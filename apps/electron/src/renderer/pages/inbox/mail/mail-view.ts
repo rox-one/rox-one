@@ -117,7 +117,8 @@ export function statusKey(s: MailStatus | null): string {
     case 'unreachable': return 'inbox.mail.status.unreachable'
     case 'provisioning': return 'inbox.mail.status.provisioning'
     case 'no-mailbox': return 'inbox.mail.status.noMailbox'
-    case 'error': return 'inbox.mail.status.error'
+    // Raw server text stays in the tooltip/details, never the one-line status.
+    case 'error': return 'inbox.mail.status.errorShort'
     case 'ready': return s.local ? 'inbox.mail.status.readyLocal' : 'inbox.mail.status.ready'
     default: return 'inbox.mail.status.disabled'
   }

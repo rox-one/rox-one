@@ -93,7 +93,7 @@ export function MailNavSection({ mail, activeFolderId, onSelectFolder }: {
           </div>
         </div>
       ) : (
-        <div className="px-2 pb-1 text-xs text-text-muted">{t(statusKey(s), { address: s?.address ?? '', url: s?.serverUrl ?? '', error: s?.error ?? '', flag: s?.flag ?? '' })}</div>
+        <div className="truncate px-2 pb-1 text-xs text-text-muted" title={s?.error ?? undefined}>{t(statusKey(s), { address: s?.address ?? '', url: s?.serverUrl ?? '', error: s?.error ?? '', flag: s?.flag ?? '' })}</div>
       )}
       {s?.state === 'ready'
         ? mail.folders.map((f) => (
@@ -231,7 +231,7 @@ export function MailStatusBlock({ mail }: { mail: MailController }) {
     <div className="flex flex-col" data-testid="mail-status" data-state={s.state}>
       {s.state === 'no-mailbox' || s.state === 'error' ? (
         <EmptyState
-          title={s.state === 'error' ? t('inbox.mail.status.error', { error: s.error ?? '' }) : t('inbox.mail.status.noMailbox')}
+          title={s.state === 'error' ? t('inbox.mail.status.errorShort') : t('inbox.mail.status.noMailbox')}
           body={s.state === 'no-mailbox'
             ? t('inbox.mail.autoProvisionBody', { domain: s.domain })
             : t('inbox.mail.noMailboxBody', { domain: s.domain })}
@@ -244,6 +244,7 @@ export function MailStatusBlock({ mail }: { mail: MailController }) {
       ) : (
         <EmptyState title={t('inbox.mail.status.disabled', { flag: s.flag })} />
       )}
+      {s.state === 'error' && s.error ? <p className="truncate px-4 text-xs text-muted-foreground" title={s.error} data-testid="mail-error-detail">{s.error}</p> : null}
       {mail.error ? <p role="alert" className="px-4 text-sm text-destructive">{mail.error}</p> : null}
       {s.local && s.state !== 'disabled' ? <LocalNotice domain={s.domain} /> : null}
     </div>

@@ -9,7 +9,7 @@ import { VOICE_REALTIME_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/v
 import { HANDLED_CHANNELS as DRIVE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/drive'
 import { HANDLED_CHANNELS as ONBOARDING_SUGGEST_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/onboarding-suggest'
 import { HANDLED_CHANNELS as ONBOARDING_PERMISSIONS_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/onboarding-permissions'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 
 const registeredChannels: string[] = []
 

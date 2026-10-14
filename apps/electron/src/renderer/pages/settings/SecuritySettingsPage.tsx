@@ -30,7 +30,7 @@ import { SecuritySnake, filterSecurityFindings } from './security/SecuritySnake'
 import { runConfirmedSecurityAction } from './security/security-actions'
 import { RoxRuntimeCard } from './security/RoxRuntimeCard'
 import { createSecurityResource, type SecurityResourceState } from './security/security-resource'
-import { RPC_CHANNELS } from '../../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import {
   RISK_ACCEPTANCE_MAX_CODE_POINTS,
   getRiskAcceptanceDateLimits,

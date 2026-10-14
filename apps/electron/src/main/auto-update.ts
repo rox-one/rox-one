@@ -26,7 +26,8 @@ import {
   clearDismissedUpdateVersion,
 } from '@rox/shared/config'
 import { readJsonFileSync } from '@rox/shared/utils/files'
-import { RPC_CHANNELS, type UpdateInfo } from '../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
+import type { UpdateInfo } from '../shared/types'
 import type { EventSink } from '@rox/server-core/transport'
 import {
   shouldSuppressUpdateFeed,

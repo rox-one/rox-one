@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it } from 'bun:test'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
+import { gzipSync } from 'node:zlib'
 import {
   BUDGET_SLACK_BYTES,
   MAX_NEW_CHUNK_BYTES,
@@ -169,6 +170,52 @@ describe('measured assets (emitted *.js and *.css; never source maps or the pdf 
       'useTranslation',
       'vendor-react',
     ])
+  })
+})
+
+describe('sourcemap pointer comment is not gated payload (the CI build emits it)', () => {
+  // The CI job builds the renderer with ROX_RENDERER_SOURCEMAP=1, so every emitted chunk ends with
+  // this pointer to a sibling `.map` the gate never measures. It must not count as shipped bytes.
+  const PAYLOAD = 'export const answer = 42;\n'
+  const pointer = (name: string) => `\n//# sourceMappingURL=${name}.map\n`
+
+  it('measures an assets/*.js chunk as its payload, not payload + the //# sourceMappingURL= line', () => {
+    const root = tempRoot()
+    const assets = join(root, 'apps/electron/dist/renderer/assets')
+    mkdirSync(assets, { recursive: true })
+    const name = 'main-aaaaaaaa.js'
+    writeFileSync(join(assets, name), PAYLOAD + pointer(name))
+
+    const [measured] = measureRendererChunks(assets)
+    expect(measured!.file).toBe(name)
+    expect(measured!.rawBytes).toBe(Buffer.byteLength(PAYLOAD))
+    expect(measured!.rawBytes).toBeLessThan(Buffer.byteLength(PAYLOAD + pointer(name)))
+    // gzip is computed over the stripped buffer too, so raw and gzip stay comparable.
+    expect(measured!.gzipBytes).toBe(gzipSync(Buffer.from(PAYLOAD), { level: 9 }).length)
+  })
+
+  it('strips the pointer from a startup-closure file as well', () => {
+    const root = tempRoot()
+    const rendererDist = join(root, 'apps/electron/dist/renderer')
+    const name = 'main-bbbbbbbb.js'
+    mkdirSync(join(rendererDist, 'assets'), { recursive: true })
+    writeFileSync(join(rendererDist, 'index.html'), `<script type="module" src="./assets/${name}"></script>`)
+    writeFileSync(join(rendererDist, 'assets', name), PAYLOAD + pointer(name))
+
+    const [measured] = measureStartup(rendererDist)
+    expect(measured!.jsRawBytes).toBe(Buffer.byteLength(PAYLOAD))
+    expect(measured!.gzipTotalBytes).toBe(gzipSync(Buffer.from(PAYLOAD), { level: 9 }).length)
+  })
+
+  it('leaves a payload that only mentions sourceMappingURL mid-file untouched', () => {
+    const root = tempRoot()
+    const assets = join(root, 'apps/electron/dist/renderer/assets')
+    mkdirSync(assets, { recursive: true })
+    const body = 'const s = "//# sourceMappingURL=nope"\nconsole.log(s)\n'
+    writeFileSync(join(assets, 'main-cccccccc.js'), body)
+
+    const [measured] = measureRendererChunks(assets)
+    expect(measured!.rawBytes).toBe(Buffer.byteLength(body))
   })
 })
 
