@@ -78,6 +78,34 @@ export interface CookbooksDocument {
   text: string | null
 }
 
+// ---------------------------------------------------------------------------
+// Structural cell mutations (SPEC wave 10 §Контракт shared/main/IPC)
+// ---------------------------------------------------------------------------
+
+/**
+ * The four structural notebook operations, addressed by position (the vendored
+ * `.ipynb` carries no stable per-cell id). One discriminated union keeps the
+ * protocol surface at a single `cookbooks-lab:mutate` channel.
+ */
+export type CookbooksCellMutation =
+  | { op: 'add'; cellType: 'code' | 'markdown'; index: number; source?: string }
+  | { op: 'delete'; index: number }
+  | { op: 'move'; from: number; to: number }
+  | { op: 'duplicate'; index: number }
+
+/** Input of `cookbooks-lab:mutate`: the target copy plus the operation. */
+export type CookbooksMutateInput = { itemId: string } & CookbooksCellMutation
+
+/**
+ * Result of a structural mutation: the document re-read after the sidecar
+ * applied it, plus the cell index the renderer should focus (`-1` when a
+ * delete emptied the notebook).
+ */
+export interface CookbooksMutateResult {
+  document: CookbooksDocument
+  index: number
+}
+
 /** Result of running one cell (`POST /run`). */
 export interface CookbooksRunResult {
   ok: boolean
