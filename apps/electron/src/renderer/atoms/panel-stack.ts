@@ -4,6 +4,7 @@
  * Single-lane panel model for side-by-side content panels.
  */
 
+import { markExplicitSessionPanelClose } from '../lib/session-auto-open'
 import { atom } from 'jotai'
 import { parseRouteToNavigationState, parseRouteToNavigationStateOrUnavailable } from '../../shared/route-parser'
 import { routes, type ViewRoute } from '../../shared/routes'
@@ -314,6 +315,7 @@ export const closePanelAtom = atom(
     const stack = get(panelStackAtom)
     const idx = stack.findIndex(p => p.id === id)
     if (idx === -1) return
+    if (parseSessionIdFromRoute(stack[idx].route)) markExplicitSessionPanelClose()
     // The main surface remains available while a tool is open. Closing it
     // returns to the default inbox rather than leaving an orphan tool stack.
     if (!stack[idx].tool && stack.some(panel => panel.tool) && stack.filter(panel => !panel.tool).length === 1) {

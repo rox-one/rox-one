@@ -151,7 +151,7 @@ import { chipsAfterRailChange, railViewNavigation, skipRailChipClearOnce, userSl
 import { compareSessions, filterSessionMeta } from "@rox/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
 import { skillsAtom, skillsSyncingAtom } from "@/atoms/skills"
-import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
+import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, focusedPanelRouteAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
 import { type SessionStatusId, type SessionStatus, statusConfigsToSessionStatuses, resolveStatusDisplayLabel, resolveLabelDisplayName, resolveViewDisplayName, resolveViewDisplayDescription } from "@/config/session-status-config"
 import { useStatuses } from "@/hooks/useStatuses"
 import { useLabels } from "@/hooks/useLabels"
@@ -164,7 +164,7 @@ import { resolveEntityColor } from "@rox/shared/colors"
 import * as storage from "@/lib/local-storage"
 import { commitShellLayout, loadShellLayout, NAVIGATOR_WIDTH_DEFAULT, NAVIGATOR_WIDTH_MAX, NAVIGATOR_WIDTH_MIN, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from "@/lib/shell-layout-preferences"
 import { sessionCatalogOwnsWorkspace } from "@/lib/nav-helpers"
-import { isExplicitPanelClose, pickAutoOpenSessionId, readSessionAutoOpenState, shouldAutoOpenSession, writeSessionAutoOpenState } from "@/lib/session-auto-open"
+import { consumeExplicitSessionPanelClose, isExplicitPanelClose, pickAutoOpenSessionId, readSessionAutoOpenState, shouldAutoOpenSession, writeSessionAutoOpenState } from "@/lib/session-auto-open"
 import { installShellWarmup } from "@/lib/shell-warmup"
 import { readSkillsPage, SKILLS_UI_PAGE_SIZE } from "@/lib/skills-query"
 import { toast } from "sonner"
@@ -1930,6 +1930,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
     if (!activeWorkspaceId) return
     const previous = previousSelectedForAutoOpenRef.current
     previousSelectedForAutoOpenRef.current = selectedSessionIdForAutoOpen
+    const closedByUser = consumeExplicitSessionPanelClose()
     if (selectedSessionIdForAutoOpen) {
       writeSessionAutoOpenState(activeWorkspaceId, { lastSelectedId: selectedSessionIdForAutoOpen, closed: false })
       return
@@ -1939,6 +1940,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
       nextSessionId: selectedSessionIdForAutoOpen,
       stillOnSessionsList: isSessionsNavigation(navState) && (!navState.viewMode || navState.viewMode === 'list'),
       previousSessionStillExists: !!previous && sessionMetaMap.has(previous),
+      closedByUser,
     })) {
       writeSessionAutoOpenState(activeWorkspaceId, { closed: true })
     }
@@ -1959,16 +1961,23 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
       : filteredSessionMetas
     const targetId = pickAutoOpenSessionId(candidates, state.lastSelectedId)
     if (!targetId) return
-    // Opening the chat must not pull focus out of the list search or any other field.
-    const focused = document.activeElement as HTMLElement | null
-    const keepFocus = !!focused && focused !== document.body && focused.matches('input, textarea, [contenteditable="true"]')
-    navigateToSession(targetId)
-    if (keepFocus) {
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        if (focused.isConnected && document.activeElement !== focused) focused.focus({ preventScroll: true })
-      }))
-    }
-  }, [activeWorkspaceId, sessionFilter, navigatorExpanded, isSessionsReady, searchActive, searchQuery, filteredSessionMetas, navigateToSession])
+    // NavigationContext may auto-select in the same pass; defer one frame and
+    // only act if the focused panel still shows no session (no double navigation).
+    const frame = requestAnimationFrame(() => {
+      const currentRoute = store.get(focusedPanelRouteAtom)
+      if (currentRoute && parseSessionIdFromRoute(currentRoute)) return
+      // Opening the chat must not pull focus out of the list search or any other field.
+      const focused = document.activeElement as HTMLElement | null
+      const keepFocus = !!focused && focused !== document.body && focused.matches('input, textarea, [contenteditable="true"]')
+      navigateToSession(targetId)
+      if (keepFocus) {
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          if (focused.isConnected && document.activeElement !== focused) focused.focus({ preventScroll: true })
+        }))
+      }
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [activeWorkspaceId, sessionFilter, navigatorExpanded, isSessionsReady, searchActive, searchQuery, filteredSessionMetas, navigateToSession, store])
 
 
   const viewerHasIdentity = hasViewerIdentity(viewer)

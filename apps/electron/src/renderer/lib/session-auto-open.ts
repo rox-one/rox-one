@@ -86,16 +86,33 @@ export function shouldAutoOpenSession(gate: AutoOpenGate): boolean {
   return gate.catalogOwnsWorkspace && gate.isSessionsReady && !gate.closedByUser && !gate.searchActive
 }
 
+/** A close only counts for the selection change it causes, not a later one. */
+const EXPLICIT_CLOSE_TTL_MS = 1500
+let explicitCloseAt: number | null = null
+
+/** Called by the panel stack when the user closes a panel that shows a session. */
+export function markExplicitSessionPanelClose(now: number = Date.now()): void {
+  explicitCloseAt = now
+}
+
+/** Reads and clears the explicit-close marker (one close → one decision). */
+export function consumeExplicitSessionPanelClose(now: number = Date.now()): boolean {
+  const at = explicitCloseAt
+  explicitCloseAt = null
+  return at != null && now - at <= EXPLICIT_CLOSE_TTL_MS
+}
+
 /**
  * The detail panel went from a session to nothing while staying on the
- * sessions list: that is an explicit close, unless the session vanished
- * (deleted), which is not a preference.
+ * sessions list because the user closed it (not because they clicked
+ * «Сессии» again or the session was deleted, which are not preferences).
  */
 export function isExplicitPanelClose(input: {
   previousSessionId: string | null
   nextSessionId: string | null
   stillOnSessionsList: boolean
   previousSessionStillExists: boolean
+  closedByUser: boolean
 }): boolean {
-  return !!input.previousSessionId && !input.nextSessionId && input.stillOnSessionsList && input.previousSessionStillExists
+  return input.closedByUser && !!input.previousSessionId && !input.nextSessionId && input.stillOnSessionsList && input.previousSessionStillExists
 }

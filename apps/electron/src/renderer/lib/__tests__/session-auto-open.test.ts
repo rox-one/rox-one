@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
 import {
+  consumeExplicitSessionPanelClose,
   isExplicitPanelClose,
+  markExplicitSessionPanelClose,
   pickAutoOpenSessionId,
   readSessionAutoOpenState,
   shouldAutoOpenSession,
@@ -61,11 +63,20 @@ describe('auto-open gate and persistence', () => {
     expect(shouldAutoOpenSession({ ...base, searchActive: true })).toBe(false)
   })
   test('explicit close vs deletion', () => {
-    const base = { previousSessionId: 'a', nextSessionId: null, stillOnSessionsList: true, previousSessionStillExists: true }
+    const base = { previousSessionId: 'a', nextSessionId: null, stillOnSessionsList: true, previousSessionStillExists: true, closedByUser: true }
     expect(isExplicitPanelClose(base)).toBe(true)
     expect(isExplicitPanelClose({ ...base, previousSessionStillExists: false })).toBe(false)
     expect(isExplicitPanelClose({ ...base, stillOnSessionsList: false })).toBe(false)
     expect(isExplicitPanelClose({ ...base, nextSessionId: 'b' })).toBe(false)
     expect(isExplicitPanelClose({ ...base, previousSessionId: null })).toBe(false)
+    // Re-clicking «Сессии» drops the selection too, but is not a close.
+    expect(isExplicitPanelClose({ ...base, closedByUser: false })).toBe(false)
+  })
+  test('close marker is consumed once and expires', () => {
+    markExplicitSessionPanelClose(1000)
+    expect(consumeExplicitSessionPanelClose(1500)).toBe(true)
+    expect(consumeExplicitSessionPanelClose(1500)).toBe(false)
+    markExplicitSessionPanelClose(1000)
+    expect(consumeExplicitSessionPanelClose(5000)).toBe(false)
   })
 })
