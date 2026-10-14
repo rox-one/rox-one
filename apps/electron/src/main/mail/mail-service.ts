@@ -150,6 +150,8 @@ export class MailService {
   private push: MailStatus['push'] = 'off'
   private provisioning: Promise<MailStatus> | null = null
   private lastError: string | undefined
+  /** Error from the most recent failed ensureMailbox(); cleared on success. */
+  private provisionError: { message: string; code: string } | undefined
   private emitTimer: ReturnType<typeof setTimeout> | null = null
   /** Storage folders Rox created lazily for the current client, by role. */
   private readonly createdFolderIds = new Map<MailFolderRole, string>()
@@ -342,7 +344,13 @@ export class MailService {
       // automatic ensureMailbox() re-adopts the account and mints a fresh
       // credential. Previously this was a sticky 'error' that blocked the
       // self-heal forever. A failed re-provision keeps its own lastError.
-      return { ...base, state: this.lastError ? 'error' : 'no-mailbox', error: this.lastError }
+      // Only a failed re-provision blocks the self-heal; a stale lastError
+      // from an unrelated earlier failure must not.
+      if (this.provisionError) {
+        return { ...base, state: 'error', error: this.provisionError.message, errorCode: this.provisionError.code }
+      }
+      this.lastError = undefined
+      return { ...base, state: 'no-mailbox', error: undefined }
     }
     try {
       const fetchImpl = this.deps.fetch ? (i: string, init?: RequestInit) => this.deps.fetch!(i, init) : undefined
@@ -434,10 +442,12 @@ export class MailService {
         this.record = record
         this.persistMailbox(record)
         this.lastError = undefined
+        this.provisionError = undefined
         this.resetClient()
         this.deps.log?.(`[mail] mailbox ready: ${record.address}`)
       } catch (error) {
         this.lastError = error instanceof Error ? error.message : String(error)
+        this.provisionError = { message: this.lastError, code: mailErrorCode(error) }
         this.deps.log?.('[mail] provisioning failed', this.lastError)
       } finally {
         this.provisioning = null

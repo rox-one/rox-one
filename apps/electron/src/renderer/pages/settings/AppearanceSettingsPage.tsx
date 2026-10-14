@@ -739,11 +739,15 @@ export default function AppearanceSettingsPage() {
   } = useTheme()
   const { workspaces, sessionStatuses } = useAppShellContext()
   // A6/B10 — «Интерфейс»: compact status bar + accent source (main-owned).
-  const { statusBarVisible, accentSource } = useUiAppearance()
+  const { statusBarVisible, modePillVisible, accentSource } = useUiAppearance()
   const statusBarItems = useStatusBarItems()
   const handleStatusBarChange = useCallback((checked: boolean) => {
     if (!appearancePrefLive()) return
     void saveUiAppearancePatch({ statusBarVisible: checked })
+  }, [])
+  const handleModePillChange = useCallback((checked: boolean) => {
+    if (!appearancePrefLive()) return
+    void saveUiAppearancePatch({ modePillVisible: checked })
   }, [])
   const handleAccentSourceChange = useCallback((value: string) => {
     if (!appearancePrefLive()) return
@@ -1340,6 +1344,12 @@ export default function AppearanceSettingsPage() {
                       className="pl-6"
                     />
                   ))}
+                  <SettingsToggle
+                    label={t("settings.appearance.modePill")}
+                    description={t("settings.appearance.modePillDesc")}
+                    checked={modePillVisible}
+                    onCheckedChange={handleModePillChange}
+                  />
                   <SettingsRow
                     label={t("settings.appearance.accent")}
                     description={t("settings.appearance.accentDesc")}
