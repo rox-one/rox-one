@@ -2913,6 +2913,22 @@ export interface ElectronAPI {
   deleteLabel(workspaceId: string, labelId: string): Promise<{ stripped: number }>
   onLabelsChanged(callback: (workspaceId: string) => void): () => void
 
+  // Team messenger (channels, group chats, subscriptions) — org-scoped
+  teamChatListChannels(orgId: string): Promise<import('@rox/shared/team-chat').TeamChannelView[]>
+  teamChatCreateChannel(input: import('@rox/shared/team-chat').CreateTeamChannelInput): Promise<import('@rox/shared/team-chat').TeamChannelView>
+  teamChatJoin(channelId: string): Promise<import('@rox/shared/team-chat').TeamChannelView>
+  teamChatLeave(channelId: string, orgId: string): Promise<{ ok: true }>
+  teamChatAddMembers(channelId: string, userIds: string[]): Promise<import('@rox/shared/team-chat').TeamChannelView>
+  teamChatSetSubscribed(channelId: string, subscribed: boolean): Promise<import('@rox/shared/team-chat').TeamChannelView>
+  teamChatArchive(channelId: string, orgId: string): Promise<{ ok: true }>
+  teamChatListMessages(input: import('@rox/shared/team-chat').ListTeamMessagesInput): Promise<{
+    channel: import('@rox/shared/team-chat').TeamChannelView
+    messages: import('@rox/shared/team-chat').TeamChannelMessage[]
+  }>
+  teamChatPost(channelId: string, text: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage>
+  teamChatMarkRead(channelId: string): Promise<{ ok: true }>
+  onTeamChatChanged(callback: (change: { orgId: string; channelId?: string }) => void): () => void
+
   // Organizations (P3.1 team workspaces)
   listOrganizations(): Promise<import('@rox/shared/orgs').OrganizationWithMembers[]>
   createOrganization(input: import('@rox/shared/orgs').CreateOrganizationInput): Promise<import('@rox/shared/orgs').OrganizationWithMembers>

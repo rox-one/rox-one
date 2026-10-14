@@ -15,7 +15,8 @@ import { join } from 'node:path'
 import { createStore } from 'jotai'
 import { __resetModeRegistryForTests, getModeRegistry } from '../mode-registry-bootstrap'
 import { modeForSlot, resolveSeededModes } from '../modes-seed'
-import { enabledShellFlagsAtom, flagContextKeys } from '../unified-flags'
+import { enabledShellFlagsAtom, flagContextKeys, workbenchFlagAtom } from '../unified-flags'
+import { WORKBENCH_FLAG } from '@rox/core/platform'
 import {
   buildRouteFromNavigationState,
   isCompoundRoute,
@@ -36,7 +37,10 @@ const ROUTES = [
 
 function captureModes() {
   __resetModeRegistryForTests()
-  const shellFlags = createStore().get(enabledShellFlagsAtom)
+  // Every W1-07 flag OFF — Мессенджер is default ON, so the baseline turns it off explicitly.
+  const store = createStore()
+  store.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
+  const shellFlags = store.get(enabledShellFlagsAtom)
   const resolved = resolveSeededModes(getModeRegistry().list(flagContextKeys(shellFlags)), {}, shellFlags)
   return {
     modes: resolved.map((m) => ({ id: m.id, order: m.order, titleKey: m.titleKey, icon: m.icon, rootRoute: m.rootRoute, defaultPinned: m.defaultPinned ?? null })),
