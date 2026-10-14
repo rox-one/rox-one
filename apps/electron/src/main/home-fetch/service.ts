@@ -12,12 +12,16 @@ import {
   type HomeSearchHit,
   type HomeSearchRequest,
 } from '../../shared/home-fetch'
+import { lookup } from 'node:dns/promises'
+import { checkUrl, type ResolveHost } from './url-guard'
 
 export interface HomeFetchDeps {
   fetch: typeof globalThis.fetch
   now: () => number
   isOnline: () => boolean
   getExaKey: () => string | undefined
+  /** DNS resolver for the SSRF guard; defaults to the OS resolver (all records). */
+  resolveHost?: ResolveHost
   /** Defaults below; overridable for tests. */
   timeoutMs?: number
   maxBodyBytes?: number
@@ -44,6 +48,10 @@ const USER_AGENT = 'RoxHome/1.0 (+https://rox.one)'
 const EXA_SEARCH_URL = 'https://api.exa.ai/search'
 const SEARCH_MAX_AGE_MS = 10 * 60_000
 const MAX_BACKOFF_MS = 10 * 60_000
+const MAX_REDIRECTS = 5
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308])
+
+const defaultResolve: ResolveHost = async (host) => (await lookup(host, { all: true, verbatim: true })).map((a) => a.address)
 
 export class HomeFetchService {
   private readonly cache = new Map<string, CacheEntry>()
@@ -52,7 +60,7 @@ export class HomeFetchService {
   private readonly buckets = new Map<string, Bucket>()
   private active = 0
   private readonly queue: Array<() => void> = []
-  private readonly opts: Required<Omit<HomeFetchDeps, 'fetch' | 'now' | 'isOnline' | 'getExaKey'>>
+  private readonly opts: Required<Omit<HomeFetchDeps, 'fetch' | 'now' | 'isOnline' | 'getExaKey' | 'resolveHost'>>
 
   constructor(private readonly deps: HomeFetchDeps) {
     this.opts = {
@@ -140,6 +148,7 @@ export class HomeFetchService {
       this.release()
     }
     if (!res.ok) {
+      if (res.reason === 'rate-limited') return withCache({ status: 'error', reason: 'rate-limited', ...(res.retryAfterMs ? { retryAfterMs: res.retryAfterMs } : {}) })
       if (res.httpStatus === 429 || res.httpStatus === 503) {
         const backoff = clamp(res.retryAfterMs ?? 60_000, 1_000, MAX_BACKOFF_MS)
         this.bucket(host).blockedUntil = this.deps.now() + backoff
@@ -155,29 +164,56 @@ export class HomeFetchService {
   private async request(url: string, as: HomeFetchFormat, init: RequestInit): Promise<RawResult> {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), this.opts.timeoutMs)
+    const resolve = this.deps.resolveHost ?? defaultResolve
+    let current = url
+    let currentInit: RequestInit = init
     try {
-      const response = await this.deps.fetch(url, {
-        ...init,
-        redirect: 'follow',
-        signal: controller.signal,
-        headers: {
-          'user-agent': USER_AGENT,
-          accept: as === 'json' ? 'application/json' : 'application/rss+xml, application/atom+xml, application/xml, text/xml, text/html, text/plain, */*;q=0.5',
-          ...(init.headers as Record<string, string> | undefined),
-        },
-      })
-      if (!response.ok) {
-        return { ok: false, reason: 'http', httpStatus: response.status, retryAfterMs: parseRetryAfter(response.headers.get('retry-after'), this.deps.now()) }
-      }
-      const declared = Number(response.headers.get('content-length'))
-      if (Number.isFinite(declared) && declared > this.opts.maxBodyBytes) return { ok: false, reason: 'too-large' }
-      const body = await readLimited(response, this.opts.maxBodyBytes)
-      if (body === null) return { ok: false, reason: 'too-large' }
-      if (as === 'text') return { ok: true, data: body, bytes: body.length * 2 }
-      try {
-        return { ok: true, data: JSON.parse(body) as unknown, bytes: body.length * 2 }
-      } catch {
-        return { ok: false, reason: 'invalid' }
+      for (let hop = 0; ; hop++) {
+        // Re-validate every hop: scheme, port, credentials, hostname and DNS.
+        const verdict = await checkUrl(current, resolve)
+        if (!verdict.ok) return { ok: false, reason: 'blocked' }
+        // The first hop's token is taken by load(); each redirect hop pays its own.
+        if (hop > 0) {
+          const wait = this.takeToken(hostOf(current))
+          if (wait > 0) return { ok: false, reason: 'rate-limited', retryAfterMs: wait }
+        }
+        const response = await this.deps.fetch(current, {
+          ...currentInit,
+          redirect: 'manual',
+          signal: controller.signal,
+          headers: {
+            'user-agent': USER_AGENT,
+            accept: as === 'json' ? 'application/json' : 'application/rss+xml, application/atom+xml, application/xml, text/xml, text/html, text/plain, */*;q=0.5',
+            ...(currentInit.headers as Record<string, string> | undefined),
+          },
+        })
+        if (REDIRECT_STATUSES.has(response.status)) {
+          const location = response.headers.get('location')
+          await response.body?.cancel().catch(() => {})
+          if (!location || hop >= MAX_REDIRECTS) return { ok: false, reason: 'http', httpStatus: response.status }
+          const next = new URL(location, current)
+          const sameOrigin = next.origin === new URL(current).origin
+          const keepBody = response.status === 307 || response.status === 308
+          const headers = { ...(currentInit.headers as Record<string, string> | undefined) }
+          // Never forward credentials (e.g. the Exa key) to another origin.
+          if (!sameOrigin) for (const h of Object.keys(headers)) if (/^(x-api-key|authorization|cookie)$/i.test(h)) delete headers[h]
+          currentInit = keepBody ? { ...currentInit, headers } : { headers, method: 'GET' }
+          current = next.toString()
+          continue
+        }
+        if (!response.ok) {
+          return { ok: false, reason: 'http', httpStatus: response.status, retryAfterMs: parseRetryAfter(response.headers.get('retry-after'), this.deps.now()) }
+        }
+        const declared = Number(response.headers.get('content-length'))
+        if (Number.isFinite(declared) && declared > this.opts.maxBodyBytes) return { ok: false, reason: 'too-large' }
+        const body = await readLimited(response, this.opts.maxBodyBytes)
+        if (body === null) return { ok: false, reason: 'too-large' }
+        if (as === 'text') return { ok: true, data: body, bytes: body.length * 2 }
+        try {
+          return { ok: true, data: JSON.parse(body) as unknown, bytes: body.length * 2 }
+        } catch {
+          return { ok: false, reason: 'invalid' }
+        }
       }
     } catch (error) {
       if (controller.signal.aborted) return { ok: false, reason: 'timeout' }
@@ -256,7 +292,7 @@ export class HomeFetchService {
 
 type RawResult =
   | { ok: true; data: unknown; bytes: number }
-  | { ok: false; reason: 'invalid' | 'timeout' | 'too-large' | 'http' | 'network' | 'offline'; httpStatus?: number; retryAfterMs?: number }
+  | { ok: false; reason: 'invalid' | 'timeout' | 'too-large' | 'http' | 'network' | 'offline' | 'blocked' | 'rate-limited'; httpStatus?: number; retryAfterMs?: number }
 
 function cacheKey(as: HomeFetchFormat, url: string): string {
   return `${as}:${url}`

@@ -22,6 +22,7 @@ export interface HomeFetchRequest {
 
 export type HomeFetchErrorReason =
   | 'invalid'
+  | 'blocked'
   | 'offline'
   | 'rate-limited'
   | 'timeout'
@@ -88,7 +89,8 @@ export function parseHomeFetchRequest(input: unknown): HomeFetchRequest | null {
   } catch {
     return null
   }
-  if ((url.protocol !== 'https:' && url.protocol !== 'http:') || url.username || url.password) return null
+  // https only: no Home widget needs plain http, and the main-process guard rejects it anyway.
+  if (url.protocol !== 'https:' || url.username || url.password) return null
   return {
     url: url.toString(),
     as: v.as,

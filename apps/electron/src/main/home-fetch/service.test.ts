@@ -3,7 +3,7 @@ import { HomeFetchService, parseRetryAfter } from './service'
 import { getSharedKeys, resetSharedKeysForTest } from './shared-keys'
 import { parseHomeFetchRequest, parseHomeSearchRequest } from '../../shared/home-fetch'
 
-function setup(opts: { online?: () => boolean; key?: string; respond?: (url: string, init?: RequestInit) => Response | Promise<Response> } = {}) {
+function setup(opts: { online?: () => boolean; key?: string; resolve?: (host: string) => Promise<string[]>; respond?: (url: string, init?: RequestInit) => Response | Promise<Response> } = {}) {
   let now = 1_000_000
   const calls: { url: string; init?: RequestInit }[] = []
   const fetchImpl = (async (url: string | URL, init?: RequestInit) => {
@@ -15,6 +15,7 @@ function setup(opts: { online?: () => boolean; key?: string; respond?: (url: str
     now: () => now,
     isOnline: opts.online ?? (() => true),
     getExaKey: () => opts.key,
+    resolveHost: opts.resolve ?? (async () => ['93.184.216.34']),
     bucketCapacity: 3,
     bucketRefillMs: 1000,
     timeoutMs: 50,
