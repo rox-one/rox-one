@@ -89,7 +89,7 @@ export function InterestBubbles({
               data-bubble-anchor={item.anchor ? 'true' : undefined}
               onClick={() => toggle(item.id)}
               className={cn(
-                'max-w-full whitespace-normal break-words rounded-full border px-3 py-1.5 text-left text-[13px] leading-tight transition-[background-color,border-color,color,transform,box-shadow] duration-200 ease-out motion-reduce:transition-none',
+                'max-w-full whitespace-normal break-words rounded-full border px-3 py-1.5 text-left text-body leading-tight transition-[background-color,border-color,color,transform,box-shadow] duration-200 ease-out motion-reduce:transition-none',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/55 focus-visible:ring-offset-1 focus-visible:ring-offset-background',
                 isSelected
                   ? 'border-accent/40 bg-accent/15 font-medium text-foreground shadow-minimal scale-[1.02]'

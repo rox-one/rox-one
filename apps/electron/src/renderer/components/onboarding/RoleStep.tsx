@@ -90,7 +90,7 @@ function Chip({
       onClick={onClick}
       data-testid={testId}
       className={cn(
-        'max-w-full whitespace-normal break-words rounded-full border px-3 py-1.5 text-left text-[13px] leading-tight transition-[background-color,border-color,color] motion-reduce:transition-none',
+        'max-w-full whitespace-normal break-words rounded-full border px-3 py-1.5 text-left text-body leading-tight transition-[background-color,border-color,color] motion-reduce:transition-none',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/55',
         selected
           ? 'border-accent/40 bg-accent/15 font-medium text-foreground shadow-minimal'
@@ -121,8 +121,8 @@ function Segmented({
   const labelId = useId()
   return (
     <div className="space-y-1">
-    <p id={labelId} className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/80">{label}</p>
-    <div role="group" aria-labelledby={labelId} data-testid={testId} className="grid grid-cols-2 gap-1 rounded-2xl border border-border/60 bg-background/30 p-1">
+    <p id={labelId} className="text-caption font-medium uppercase tracking-wide text-muted-foreground/80">{label}</p>
+    <div role="group" aria-labelledby={labelId} data-testid={testId} className="grid grid-cols-2 gap-1 rounded-lg border border-border/60 bg-background/30 p-1">
       {options.map((option) => {
         const selected = value === option.value
         return (
@@ -134,7 +134,7 @@ function Segmented({
             data-value={option.value}
             onClick={() => onChange(selected ? undefined : option.value)}
             className={cn(
-              'min-h-8 whitespace-normal break-words rounded-xl px-3 py-1.5 text-[13px] leading-tight transition-colors motion-reduce:transition-none',
+              'min-h-8 whitespace-normal break-words rounded-md px-3 py-1.5 text-body leading-tight transition-colors motion-reduce:transition-none',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/55',
               selected
                 ? 'bg-foreground text-background font-medium shadow-minimal'
@@ -233,7 +233,7 @@ export function RoleStep({ onContinue, onBack, isLoading = false, isFinishing = 
 
       <div className="mt-5 grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-3 lg:content-start">
         <Card testId="role-card-who" title={t('onboarding.role.section.who')}>
-          <div className="grid grid-cols-2 gap-1 rounded-2xl border border-border/60 bg-background/30 p-1" role="group" aria-label={t('onboarding.role.section.who')}>
+          <div className="grid grid-cols-2 gap-1 rounded-lg border border-border/60 bg-background/30 p-1" role="group" aria-label={t('onboarding.role.section.who')}>
             {[true, false].map((value) => (
               <button
                 key={String(value)}
@@ -243,7 +243,7 @@ export function RoleStep({ onContinue, onBack, isLoading = false, isFinishing = 
                 data-testid={value ? 'role-developer-yes' : 'role-developer-no'}
                 onClick={() => setIsDeveloper(value)}
                 className={cn(
-                  'min-h-8 whitespace-normal break-words rounded-xl px-3 py-1.5 text-[13px] leading-tight transition-colors motion-reduce:transition-none',
+                  'min-h-8 whitespace-normal break-words rounded-md px-3 py-1.5 text-body leading-tight transition-colors motion-reduce:transition-none',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/55',
                   isDeveloper === value
                     ? 'bg-foreground text-background font-medium shadow-minimal'
@@ -302,12 +302,12 @@ export function RoleStep({ onContinue, onBack, isLoading = false, isFinishing = 
 
         <Card testId="role-card-style" title={t('onboarding.role.section.style')} hint={t('onboarding.role.styleHint')}>
           <div className="space-y-2">
-            <p className="text-[13px] font-semibold text-foreground">{t('onboarding.role.section.answers')}</p>
+            <p className="text-body font-semibold text-foreground">{t('onboarding.role.section.answers')}</p>
             {pair('detail')}
             {pair('layout')}
           </div>
           <div className="space-y-2 pt-1">
-            <p className="text-[13px] font-semibold text-foreground">{t('onboarding.role.section.collab')}</p>
+            <p className="text-body font-semibold text-foreground">{t('onboarding.role.section.collab')}</p>
             {pair('clarify')}
             {pair('collaboration')}
           </div>

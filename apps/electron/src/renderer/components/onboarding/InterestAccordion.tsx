@@ -144,13 +144,13 @@ export function InterestAccordion({
                 <span
                   aria-hidden="true"
                   className={cn(
-                    'flex size-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-medium tabular-nums',
+                    'flex size-5 shrink-0 items-center justify-center rounded-full border text-caption font-medium tabular-nums',
                     selected.length > 0
                       ? 'border-accent/40 bg-accent/15 text-foreground'
                       : 'border-border/60 text-muted-foreground',
                   )}
                 >
-                  {selected.length > 0 ? <Check className="size-3" /> : index + 1}
+                  {selected.length > 0 ? <Check className="icon-status" /> : index + 1}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold tracking-tight text-foreground">{title}</span>
@@ -167,14 +167,14 @@ export function InterestAccordion({
                   )}
                 </span>
                 {selected.length > 0 ? (
-                  <span className="shrink-0 rounded-full bg-accent/15 px-1.5 text-[11px] font-medium tabular-nums text-foreground">
+                  <span className="shrink-0 rounded-full bg-accent/15 px-1.5 text-caption font-medium tabular-nums text-foreground">
                     {selected.length}
                   </span>
                 ) : null}
                 <ChevronDown
                   aria-hidden="true"
                   className={cn(
-                    'size-4 shrink-0 text-muted-foreground transition-transform motion-reduce:transition-none',
+                    'icon-inline shrink-0 text-muted-foreground transition-transform motion-reduce:transition-none',
                     isOpen && 'rotate-180',
                   )}
                 />
