@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next'
 import * as Y from 'yjs'
 import { ArrowLeft, Circle, Clock, LayoutGrid, Link2, MousePointer2, Pencil, Plus, RotateCcw, Search, Share2, Square, Star, StickyNote, Trash2, Type, ZoomIn } from 'lucide-react'
 import {
-  actorOrigin, applyTextDiff, CanvasDoc, createUndoManager, guardEntityCards, linkEntityCard, removeEntityCards, SpatialIndex, watchEntityLinks,
+  actorOrigin, CanvasDoc, createUndoManager, guardEntityCards, linkEntityCard, removeEntityCards, SpatialIndex, watchEntityLinks,
   type CanvasObject, type EntityCardContext, type EntityRef, type ResolvedEntity,
 } from '@rox/canvas-core'
 import { ENTITY_KINDS, kindDescriptor, type EntityKind } from '@rox/core/entities'
@@ -20,6 +20,7 @@ import {
 } from './entity-wiring'
 import { onCanvasTarget, takeCanvasTarget, type CanvasTarget } from './canvas-target'
 import { resizeRotated } from './geometry'
+import { bindTextArea } from './live-text'
 import { Button } from '@/components/ui/button'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
 import { useActiveWorkspace } from '@/context/AppShellContext'
@@ -573,19 +574,25 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   )
 }
 
-/** Textarea bound live to the object's Y.Text: every input applies a minimal diff, remote edits re-render it. */
+/** Uncontrolled textarea bound live to the object's Y.Text (see live-text.ts: remote deltas keep the caret, IME applies on compositionend). */
 function LiveTextEditor({ board, o, view, placeholder, onDone }: { board: CanvasDoc; o: CanvasObject; view: { x: number; y: number; zoom: number }; placeholder: string; onDone: () => void }) {
+  const ref = useRef<HTMLTextAreaElement>(null)
   const yt = board.textOf(o.id)
-  const value = yt ? yt.toString() : String(o.props.text ?? '')
-  const onInput = (next: string) => {
-    if (yt?.doc) yt.doc.transact(() => applyTextDiff(yt, next), LOCAL)
-    else board.update(o.id, { props: { text: next } }, LOCAL)
-  }
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (yt) return bindTextArea(el, yt, LOCAL)
+    // Legacy object without a Y.Text: plain prop writes.
+    el.value = String(o.props.text ?? '')
+    const onInput = () => board.update(o.id, { props: { text: el.value } }, LOCAL)
+    el.addEventListener('input', onInput)
+    return () => el.removeEventListener('input', onInput)
+  }, [board, o.id, yt])
   return (
-    <textarea autoFocus value={value} placeholder={placeholder} data-testid="canvas-text-editor"
+    <textarea ref={ref} autoFocus defaultValue={yt ? yt.toString() : String(o.props.text ?? '')} placeholder={placeholder} data-testid="canvas-text-editor"
       className="absolute z-10 resize-none rounded border border-accent bg-background p-2 text-sm text-foreground outline-none"
       style={{ left: view.x + o.x * view.zoom, top: view.y + o.y * view.zoom, width: o.w * view.zoom, height: o.h * view.zoom, transform: o.rotation ? `rotate(${o.rotation}deg)` : undefined }}
-      onChange={e => onInput(e.currentTarget.value)} onBlur={onDone}
+      onBlur={onDone}
       onKeyDown={e => { if (e.key === 'Escape') e.currentTarget.blur() }} />
   )
 }
