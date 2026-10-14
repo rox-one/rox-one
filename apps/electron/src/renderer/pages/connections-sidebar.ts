@@ -1,21 +1,29 @@
 /**
  * Second-sidebar groups for Подключения (merged Источники + Соединения):
- * Подключено / Источники / Ошибки / Каталог, from live workgraph data.
+ * Подключено / Источники / Отклонённые / Каталог, from live workgraph data.
  */
 import { AlertTriangle, Blocks, Globe, KeyRound, Plug, Server, Terminal } from 'lucide-react'
 import type { SidebarGroup } from '@/components/shell/screen-sidebar'
 import type { ConnectionAuditRow, ConnectionListRow } from './connections-list'
 
-/** Audit outcomes that mean the connection needs attention. */
-const FAILED_OUTCOMES = new Set(['error', 'failed', 'denied'])
+/**
+ * The workgraph audit writer only emits 'committed' or 'denied' (policy
+ * decision allow/deny), so this group is policy denials — not broken or
+ * expired connections, which would need repair/revalidation state.
+ */
+const DENIED_OUTCOME = 'denied'
 
 export type CatalogFilter = 'all' | 'api' | 'mcp' | 'local'
 
 export interface ConnectionsSidebarLabels {
-  connected: string; sources: string; errors: string; catalog: string
+  connected: string; sources: string; denied: string; catalog: string
   catalogAll: string; catalogApi: string; catalogMcp: string; catalogLocal: string
   emptyConnected: string; connect: string; error: string; unavailable: string
-  failedAt(row: ConnectionAuditRow): string
+  deniedAt(row: ConnectionAuditRow): string
+  /** Human names for raw ids shown in rows. */
+  integration(integrationId: string): string
+  storage(storageMode: string): string
+  source(source: string): string
 }
 
 export interface ConnectionsSidebarInput<S extends string> {
@@ -34,15 +42,15 @@ export interface ConnectionsSidebarInput<S extends string> {
   onRetry(): void
 }
 
-/** Latest failing audit event per connection (newest first). */
-export function failingConnections(audit: readonly ConnectionAuditRow[]): ConnectionAuditRow[] {
+/** Connections whose latest audit event was a policy denial (newest first). */
+export function deniedConnections(audit: readonly ConnectionAuditRow[]): ConnectionAuditRow[] {
   const latest = new Map<string, ConnectionAuditRow>()
   for (const row of audit) {
     const prev = latest.get(row.connectionId)
     if (!prev || row.occurredAt > prev.occurredAt) latest.set(row.connectionId, row)
   }
   return [...latest.values()]
-    .filter((row) => FAILED_OUTCOMES.has(row.outcome))
+    .filter((row) => row.outcome === DENIED_OUTCOME)
     .sort((a, b) => b.occurredAt - a.occurredAt)
 }
 
@@ -64,8 +72,8 @@ export function buildConnectionsSidebarGroups<S extends string>(input: Connectio
       id: 'connected', title: l.connected, initialVisible: 8,
       items: input.rows.map((row) => ({
         id: `conn-${row.id}`,
-        label: row.integrationId,
-        secondary: row.storageMode,
+        label: l.integration(row.integrationId),
+        secondary: l.storage(row.storageMode),
         icon: KeyRound,
         active: row.id === input.selectedId,
         onSelect: () => input.onSelectConnection(row),
@@ -77,21 +85,21 @@ export function buildConnectionsSidebarGroups<S extends string>(input: Connectio
     id: 'sources', title: l.sources, initialVisible: 6,
     items: input.sources.map((source) => ({
       id: `source-${source}`,
-      label: source,
+      label: l.source(source),
       icon: Plug,
       active: input.activeSource === source,
       onSelect: () => input.onSelectSource(source),
     })),
   }
-  const failing = failingConnections(input.audit)
-  const errors: SidebarGroup = {
-    id: 'errors', title: l.errors, initialVisible: 5,
-    items: failing.map((row) => {
+  const deniedRows = deniedConnections(input.audit)
+  const denied: SidebarGroup = {
+    id: 'denied', title: l.denied, initialVisible: 5,
+    items: deniedRows.map((row) => {
       const conn = input.rows?.find((r) => r.id === row.connectionId)
       return {
-        id: `err-${row.connectionId}`,
-        label: conn?.integrationId ?? row.connectionId,
-        secondary: l.failedAt(row),
+        id: `denied-${row.connectionId}`,
+        label: conn ? l.integration(conn.integrationId) : row.connectionId,
+        secondary: l.deniedAt(row),
         icon: AlertTriangle,
         onSelect: () => input.onOpenAudit(row.connectionId),
       }
@@ -106,5 +114,10 @@ export function buildConnectionsSidebarGroups<S extends string>(input: Connectio
       ['local', l.catalogLocal, Terminal],
     ] as const).map(([filter, label, icon]) => ({ id: `catalog-${filter}`, label, icon, onSelect: () => input.onOpenCatalog(filter) })),
   }
-  return [connected, sources, errors, catalog].filter((g) => g.items.length > 0 || g.state !== undefined)
+  return [connected, sources, denied, catalog].filter((g) => g.items.length > 0 || g.state !== undefined)
+}
+
+/** 'github-oauth' → 'Github Oauth' — fallback for integration ids without a translation. */
+export function humanizeId(id: string): string {
+  return id.split(/[-_.\s]+/).filter(Boolean).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || id
 }

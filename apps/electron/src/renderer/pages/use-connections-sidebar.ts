@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useScreenSidebar, type ScreenSidebarConfig } from '@/components/shell/screen-sidebar'
 import { navigate, routes } from '@/lib/navigate'
 import { sanitizeConnectionAuditRows, type ConnectionAuditRow, type ConnectionListRow } from './connections-list'
-import { buildConnectionsSidebarGroups } from './connections-sidebar'
+import { buildConnectionsSidebarGroups, humanizeId } from './connections-sidebar'
 
 export interface ConnectionsSidebarBindings<S extends string> {
   workspaceId: string | null
@@ -13,7 +13,7 @@ export interface ConnectionsSidebarBindings<S extends string> {
   sources: readonly S[]
   activeSource: S | null
   selectedId: string | null
-  /** Bumped by the page's refresh; refetches the audit-derived Ошибки group. */
+  /** Bumped by the page's refresh; refetches the audit-derived Отклонённые group. */
   reloadKey: number
   onSelectConnection(row: ConnectionListRow): void
   onSelectSource(source: S): void
@@ -22,7 +22,7 @@ export interface ConnectionsSidebarBindings<S extends string> {
   onRefresh(): void
 }
 
-/** Audit rows for the Ошибки group, independent of the page's audit tab. */
+/** Audit rows for the Отклонённые group, independent of the page's audit tab. */
 function useConnectionAudit(workspaceId: string | null, reloadKey: number): ConnectionAuditRow[] {
   const [audit, setAudit] = React.useState<ConnectionAuditRow[]>([])
   React.useEffect(() => {
@@ -51,7 +51,7 @@ export function useConnectionsSidebar<S extends string>(b: ConnectionsSidebarBin
       labels: {
         connected: t('screenSidebar.connections.connected'),
         sources: t('screenSidebar.connections.sources'),
-        errors: t('screenSidebar.connections.errors'),
+        denied: t('screenSidebar.connections.denied'),
         catalog: t('screenSidebar.connections.catalog'),
         catalogAll: t('screenSidebar.connections.catalogAll'),
         catalogApi: t('screenSidebar.connections.catalogApi'),
@@ -61,7 +61,19 @@ export function useConnectionsSidebar<S extends string>(b: ConnectionsSidebarBin
         connect: t('connections.connect'),
         error: t('screenSidebar.connections.error'),
         unavailable: t('screenSidebar.connections.unavailable'),
-        failedAt: (row) => dateFmt.format(row.occurredAt),
+        deniedAt: (row) => dateFmt.format(row.occurredAt),
+        integration: (id) => {
+          const key = `screenSidebar.connections.source.${id}`
+          return i18n.exists(key) ? t(key) : humanizeId(id)
+        },
+        storage: (mode) => {
+          const key = `screenSidebar.connections.storage.${mode}`
+          return i18n.exists(key) ? t(key) : mode
+        },
+        source: (source) => {
+          const key = `screenSidebar.connections.source.${source}`
+          return i18n.exists(key) ? t(key) : humanizeId(source)
+        },
       },
       onSelectConnection: (row) => latest.current.onSelectConnection(row),
       onSelectSource: (source) => latest.current.onSelectSource(source),

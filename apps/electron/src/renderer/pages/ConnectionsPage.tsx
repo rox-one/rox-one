@@ -35,6 +35,7 @@ import { GithubDeviceLoginPanel } from './GithubDeviceLoginPanel'
 import { ConnectionsOverview, OverviewGroup, OverviewRow, type OverviewStatus } from './connections-overview'
 import { ProjectAuthorityConnectionPanel } from '@/components/projects/ProjectAuthorityConnectionPanel'
 import { useConnectionsSidebar } from './use-connections-sidebar'
+import { humanizeId } from './connections-sidebar'
 
 const TABS = ['services', 'credentials', 'imports', 'policies', 'audit'] as const
 const CONNECT_SOURCES = ['github-env', 'git-helper', 'docker', 'aws', 'keychain', 'adc', 'ssh-agent', 'github-oauth'] as const
@@ -83,6 +84,8 @@ export default function ConnectionsPage() {
   const auditViewReady = useRef(false)
   const [auditSurface, setAuditSurface] = useState<SurfaceState | 'loading'>('loading')
   const [tab, setTab] = useState<ConnectionsTab>('services')
+  /** Audit tab scoped to one connection (opened from the Отклонённые sidebar group). */
+  const [auditConnectionId, setAuditConnectionId] = useState<string | null>(null)
   const servicesViewport = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     servicesTarget(tab === 'services' ? servicesViewport.current : null)
@@ -541,6 +544,7 @@ export default function ConnectionsPage() {
     onOpenAudit: (connectionId) => {
       const row = rows?.find((r) => r.id === connectionId)
       if (row) setSelected(row)
+      setAuditConnectionId(connectionId)
       setTab('audit')
     },
     onConnect: () => setTab('imports'),
@@ -574,7 +578,7 @@ export default function ConnectionsPage() {
               role="tab"
               aria-selected={tab === id}
               className={`rounded-md px-3 py-1.5 text-left text-sm transition-colors ${tab === id ? 'bg-foreground/[0.07] text-foreground' : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground'}`}
-              onClick={() => setTab(id)}
+              onClick={() => { setAuditConnectionId(null); setTab(id) }}
             >
               {t(`connections.tabs.${id}`)}
             </button>
@@ -1010,8 +1014,17 @@ export default function ConnectionsPage() {
             ) : null}
           </div>
         ) : tab === 'audit' && auditRows.length > 0 ? (
+          <div className="space-y-2">
+          {auditConnectionId ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground" data-testid="connections-audit-filter">
+              <span>{t('screenSidebar.connections.auditFilter', { name: humanizeId(rows?.find((r) => r.id === auditConnectionId)?.integrationId ?? auditConnectionId) })}</span>
+              <button type="button" className="rounded-md px-2 py-0.5 hover:bg-surface-hover hover:text-foreground" onClick={() => setAuditConnectionId(null)}>
+                {t('screenSidebar.connections.auditFilterClear')}
+              </button>
+            </div>
+          ) : null}
           <ul className="space-y-2 text-sm text-foreground">
-            {auditRows.map((row) => (
+            {(auditConnectionId ? auditRows.filter((row) => row.connectionId === auditConnectionId) : auditRows).map((row) => (
               <li key={`${row.connectionId}:${row.occurredAt}:${row.payloadDigest}`} className="rounded-[var(--radius-card)] bg-surface-hover px-3 py-2">
                 <div className="font-medium">{row.eventType}</div>
                 <div className="text-muted-foreground">{row.outcome}</div>
@@ -1021,6 +1034,7 @@ export default function ConnectionsPage() {
               </li>
             ))}
           </ul>
+          </div>
         ) : (
           empty
         )}
