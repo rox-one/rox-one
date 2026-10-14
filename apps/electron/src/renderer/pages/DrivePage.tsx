@@ -21,6 +21,7 @@ import { BackupChooser } from './drive/BackupChooser'
 import { ImportFlowDialog } from './drive/ImportFlowDialog'
 import { DriveFileList, type DriveFileUploadProgress } from './drive/DriveFileList'
 import { isRetryableUploadError, runRendererUpload } from './drive/upload-client'
+import { useDriveSidebar } from './drive/use-drive-sidebar'
 
 export interface DrivePageProps {
   workspaceId: string
@@ -120,6 +121,21 @@ export default function DrivePage({ workspaceId, folderId }: DrivePageProps) {
     }
     await refresh()
   }
+
+  const openBackup = useCallback(() => setBackupOpen(true), [])
+  const openImport = useCallback((provider: ImportProviderId | undefined) => {
+    setImportProvider(provider)
+    setImportOpen(true)
+  }, [])
+  const createFolder = useCallback(() => setFolderDialogOpen(true), [])
+  const pickFiles = useCallback(() => {
+    document.querySelector<HTMLInputElement>('[data-testid="drive-file-input"]')?.click()
+  }, [])
+  const retry = useCallback(() => { void refresh() }, [refresh])
+  useDriveSidebar({
+    listing, quota, currentFolderId, loading, error: errorText,
+    openFolder, openBackup, openImport, createFolder, pickFiles, refresh: retry,
+  })
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto p-4" data-testid="drive-page">
