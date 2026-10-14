@@ -53,10 +53,13 @@ Cancel button aborts and deletes the sandbox.
 - Labels: `rox.cloud-handoff=1`, `rox.cloud-handoff.owner=<sha256(sub) prefix>` (no raw identity), `rox.cloud-handoff.id`.
 
 ## 5. URL scheme
+- Sandbox is **always private** (`public:false`): a public Daytona sandbox exposes every port, including the
+  web terminal on 22222.
 - With web host (`cloudHandoff.webHost` / `ROX_CLOUD_HANDOFF_WEB_HOST`, e.g. `https://cloud.rox.one`):
-  `https://cloud.rox.one/s/<handoffId>/`; sandbox stays **private**, our proxy forwards with Daytona auth.
-- Without: Daytona preview URL `https://9100-<sandboxId>.<proxy-domain>/`; sandbox **public**, the in-app OIDC owner
-  gate is the only door (so SSO config is mandatory: `sso_not_configured` otherwise).
+  `https://cloud.rox.one/s/<handoffId>/`; our proxy forwards to the sandbox with Daytona auth.
+- Without: a **signed, port-scoped** Daytona preview URL for port 9100
+  (`/ports/9100/signed-preview-url?expiresInSeconds=(autoStop+autoDelete)`), `https://9100-<token>.<proxy-domain>/`.
+- Behind either, the in-app id.rox.one OIDC owner gate is mandatory (`sso_not_configured` otherwise).
 - Only https URLs are accepted/opened.
 
 ## 6. SSO / ownership
@@ -81,7 +84,7 @@ Keys are scrubbed from every error string.
 - `autoStopInterval` 30 min idle, `autoDeleteInterval` 24 h after stop.
 - Any failure/cancel after creation deletes the sandbox.
 - Quota: max 2 live handoff sandboxes per owner (label query) before creating.
-- One in-flight handoff per chat (dedupe). Status kept in memory 1 h.
+- One in-flight handoff per app (non-atomic quota), dedupe per chat. Status kept in memory 1 h.
 - Flag default off.
 
 ## 10. Open items needing Mark

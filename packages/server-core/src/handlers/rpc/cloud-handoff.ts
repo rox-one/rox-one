@@ -145,6 +145,11 @@ export class CloudHandoffService {
     this.bySession.set(sessionId, handoffId);
 
     if (cfg?.enabled !== true) return fail(new HandoffError('disabled', 'cloud handoff is disabled'));
+    // One handoff at a time per app: the per-owner Daytona quota check is not
+    // atomic, so parallel starts for different chats could overshoot it.
+    if (this.controllers.size > 0) {
+      return fail(new HandoffError('quota_exceeded', 'another cloud handoff is already running'));
+    }
 
     const ctrl = new AbortController();
     this.controllers.set(handoffId, ctrl);

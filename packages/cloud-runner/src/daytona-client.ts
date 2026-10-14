@@ -49,6 +49,12 @@ export interface DaytonaClient {
   }): Promise<DaytonaSandboxRecord>;
   /** Stable preview URL for a sandbox port (`GET /sandbox/{id}/ports/{port}/preview-url`). */
   getPreviewUrl?(sandboxId: string, port: number): Promise<string>;
+  /**
+   * Signed, port-scoped, expiring preview URL
+   * (`GET /sandbox/{id}/ports/{port}/signed-preview-url?expiresInSeconds=N`). Lets a
+   * private sandbox expose exactly one port without making every port public.
+   */
+  getSignedPreviewUrl?(sandboxId: string, port: number, expiresInSeconds: number): Promise<string>;
   getSandbox(id: string): Promise<DaytonaSandboxRecord>;
   startSandbox(id: string): Promise<DaytonaSandboxRecord>;
   stopSandbox(id: string): Promise<void>;
@@ -115,6 +121,14 @@ export class MemoryDaytonaClient implements DaytonaClient {
   async getPreviewUrl(sandboxId: string, port: number): Promise<string> {
     await this.getSandbox(sandboxId);
     return `https://${port}-${sandboxId}.proxy.memory.daytona.test`;
+  }
+
+  readonly signedPreviewCalls: Array<{ sandboxId: string; port: number; expiresInSeconds: number }> = [];
+
+  async getSignedPreviewUrl(sandboxId: string, port: number, expiresInSeconds: number): Promise<string> {
+    await this.getSandbox(sandboxId);
+    this.signedPreviewCalls.push({ sandboxId, port, expiresInSeconds });
+    return `https://${port}-signed${this.signedPreviewCalls.length}.proxy.memory.daytona.test`;
   }
 
   async getSandbox(id: string): Promise<DaytonaSandboxRecord> {
@@ -290,6 +304,17 @@ export class HttpDaytonaClient implements DaytonaClient {
     );
     const url = String(json.url ?? '');
     if (!/^https:\/\//.test(url)) throw new CloudRunnerError('daytona returned no https preview url', 'provider_error');
+    return url;
+  }
+
+  async getSignedPreviewUrl(sandboxId: string, port: number, expiresInSeconds: number): Promise<string> {
+    const ttl = Math.max(60, Math.trunc(expiresInSeconds));
+    const json = await this.request<{ url?: string }>(
+      'GET',
+      `/sandbox/${encodeURIComponent(sandboxId)}/ports/${Math.trunc(port)}/signed-preview-url?expiresInSeconds=${ttl}`,
+    );
+    const url = String(json.url ?? '');
+    if (!/^https:\/\//.test(url)) throw new CloudRunnerError('daytona returned no https signed preview url', 'provider_error');
     return url;
   }
 

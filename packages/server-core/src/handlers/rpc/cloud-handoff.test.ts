@@ -47,7 +47,7 @@ describe('CloudHandoffService', () => {
     await service.running.get(started.handoffId);
     const done = service.status(started.handoffId)!;
     expect(done.phase).toBe('ready');
-    expect(done.sessionUrl).toMatch(/^https:\/\/9100-/);
+    expect(done.sessionUrl).toMatch(/^https:\/\/9100-signed/);
     expect(done.keySource).toBe('server_default');
     expect(keysUsed).toEqual(['server-default-key-123456']);
     expect(JSON.stringify(done)).not.toContain('server-default-key');
@@ -86,6 +86,8 @@ describe('CloudHandoffService', () => {
     const a = await service.start('sess-1');
     const b = await service.start('sess-1');
     expect(b.handoffId).toBe(a.handoffId);
+    const other = await service.start('sess-2');
+    expect(other.failure?.code).toBe('quota_exceeded');
     await expect(service.start('../etc')).rejects.toThrow('cloudHandoff.invalidSession');
   });
 });

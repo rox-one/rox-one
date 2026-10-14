@@ -125,10 +125,10 @@ export async function runCloudHandoff(input: RunHandoffInput): Promise<RunHandof
         'rox.cloud-handoff.id': input.handoffId,
       },
       env: { ROX_HANDOFF_ID: input.handoffId },
-      // Behind our own web host the sandbox stays private (the proxy holds the
-      // Daytona credential); otherwise the preview is public and the in-app
-      // id.rox.one owner gate is the only door — which is why SSO is mandatory.
-      public: !webHost,
+      // Always private: a public sandbox exposes *every* port (incl. Daytona's
+      // web terminal). Access is via our proxy (web host) or a signed URL scoped
+      // to the session-server port; the in-app id.rox.one owner gate sits behind it.
+      public: false,
       autoStopIntervalMin: limits.autoStopIntervalMin,
       autoDeleteIntervalMin: limits.autoDeleteIntervalMin,
     });
@@ -140,8 +140,13 @@ export async function runCloudHandoff(input: RunHandoffInput): Promise<RunHandof
     if (webHost) {
       publicUrl = `${webHost}/s/${input.handoffId}`;
     } else {
-      if (!client.getPreviewUrl) throw new HandoffError('provider_error', 'Daytona client cannot issue preview URLs');
-      publicUrl = normalizeHttpsBase(await client.getPreviewUrl(sandboxId, HANDOFF_SERVER_PORT), 'preview URL');
+      if (!client.getSignedPreviewUrl) throw new HandoffError('provider_error', 'Daytona client cannot issue signed preview URLs');
+      // Valid for the sandbox's whole possible lifetime (idle stop + delete window).
+      const ttlSec = (limits.autoStopIntervalMin + limits.autoDeleteIntervalMin) * 60;
+      publicUrl = normalizeHttpsBase(
+        await client.getSignedPreviewUrl(sandboxId, HANDOFF_SERVER_PORT, ttlSec),
+        'preview URL',
+      );
     }
 
     progress({ phase: 'packaging' });

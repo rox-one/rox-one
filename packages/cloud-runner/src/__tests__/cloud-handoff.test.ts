@@ -104,7 +104,8 @@ describe('runCloudHandoff', () => {
     const client = new MemoryDaytonaClient();
     const phases: string[] = [];
     const res = await runCloudHandoff(baseInput(client, { onProgress: (p) => phases.push(p.phase) }));
-    expect(res.sessionUrl).toBe(`https://9100-${res.sandboxId}.proxy.memory.daytona.test/`);
+    expect(res.sessionUrl).toBe('https://9100-signed1.proxy.memory.daytona.test/');
+    expect(client.signedPreviewCalls[0]).toMatchObject({ port: 9100, expiresInSeconds: (30 + 1440) * 60 });
     const files = client.files.get(res.sandboxId)!;
     expect([...files.keys()].sort()).toEqual([
       `${HANDOFF_ROOT}/bundle/attachments/pic.txt`,
@@ -118,7 +119,7 @@ describe('runCloudHandoff', () => {
     expect(env).not.toContain(KEY);
     expect(res.manifest.excluded.map((e) => e.reason).sort()).toEqual(['secret_content', 'secret_path', 'unsafe_path']);
     const call = client.createCalls[0]!;
-    expect(call.public).toBe(true);
+    expect(call.public).toBe(false);
     expect(call.autoStopIntervalMin).toBe(30);
     expect((call.labels as Record<string, string>)['rox.cloud-handoff.owner']).not.toContain('user-sub-42');
     expect(phases).toContain('ready');
@@ -188,7 +189,7 @@ describe('HttpDaytonaClient handoff extensions', () => {
       resolveApiKey: async () => KEY,
       fetchImpl: async (url, init) => {
         calls.push({ url, body: init?.body as string | undefined });
-        if (url.endsWith('/preview-url')) return new Response(JSON.stringify({ url: 'https://9100-x.proxy.daytona.works' }));
+        if (url.includes('preview-url')) return new Response(JSON.stringify({ url: 'https://9100-x.proxy.daytona.works' }));
         return new Response(JSON.stringify({ id: 'x', state: 'started' }));
       },
     });
@@ -196,5 +197,7 @@ describe('HttpDaytonaClient handoff extensions', () => {
     expect(JSON.parse(calls[0]!.body!)).toMatchObject({ env: { A: 'b' }, public: false, autoStopInterval: 30 });
     expect(await client.getPreviewUrl('x', 9100)).toBe('https://9100-x.proxy.daytona.works');
     expect(calls[1]!.url).toBe('https://app.daytona.io/api/sandbox/x/ports/9100/preview-url');
+    expect(await client.getSignedPreviewUrl('x', 9100, 3600)).toBe('https://9100-x.proxy.daytona.works');
+    expect(calls[2]!.url).toBe('https://app.daytona.io/api/sandbox/x/ports/9100/signed-preview-url?expiresInSeconds=3600');
   });
 });
