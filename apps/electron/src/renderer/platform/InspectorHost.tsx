@@ -19,7 +19,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { Bot, ChevronsRight, Folder, GitBranch, Globe, Info, Link2, ListTree, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import {
   focusedPanelIdAtom,
   focusedPanelRouteAtom,

@@ -9,7 +9,7 @@
  */
 
 import * as React from 'react'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@rox/ui'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@rox/ui/tooltip'
 import { cn } from '@/lib/utils'
 
 export interface EntityListBadgeProps {
