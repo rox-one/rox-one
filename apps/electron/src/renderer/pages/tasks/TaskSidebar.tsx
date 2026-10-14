@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
 import { useTranslation } from 'react-i18next'
 import {
   BookCheck, Bot, CalendarDays, ChevronRight, ClipboardList, Eye, FolderKanban,
@@ -160,7 +161,7 @@ export function TaskSidebar({
 
   return (
     <div data-task-sidebar="true" onKeyDown={handleSidebarTreeKeyDown} className="flex min-h-0 flex-1 flex-col">
-      <h1 className="px-2 pb-2 text-lg font-semibold">{t('workbench.mode.tasks')}</h1>
+      <PanelHeading className="px-2 pb-2 text-lg font-semibold" titleKey="workbench.mode.tasks">{t('workbench.mode.tasks')}</PanelHeading>
       <TaskSidebarGroup title={t('tasks.nav.statuses')} icon={ClipboardList} tone="accent">
         {LISTS.map(({ id, icon, tone, destination }) => (
           <div key={id} {...dropProps(destination)}>
@@ -181,7 +182,7 @@ export function TaskSidebar({
 
       {areas.length || personalProjects.length ? (
         <TaskSidebarGroup title={t('tasks.nav.projects')} icon={FolderKanban} tone="info">
-          {personalProjects.filter(project => !project.areaId).map(projectItem)}
+          {personalProjects.filter(project => !project.areaId || !areas.some(area => area.id === project.areaId)).map(projectItem)}
           {areas.map(area => {
             const projects = personalProjects.filter(project => project.areaId === area.id)
             const navigation = (

@@ -18,6 +18,7 @@ const enc = encodeURIComponent
 
 /** First path segments that can start an entity route. */
 export const ENTITY_ROUTE_PREFIXES: readonly string[] = [
+  'canvas',
   'allSessions',
   'notes',
   'tasks',
@@ -122,6 +123,7 @@ export const KIND_ROUTE_BUILDERS: Record<EntityKind, (ref: EntityRef) => string>
   'radar-topic': ref => `radar/item/${enc(ref.id)}`,
   'agent-team': ref => `agents/item/${enc(ref.id)}`,
   invitation: ref => `contacts/invitations/${enc(ref.id)}`,
+  canvas: ref => `canvas/board/${enc(ref.id)}${ref.fragment ? `#${encodeURIComponent(ref.fragment)}` : ''}`,
 }
 
 /** Build the app route for a ref. Throws on an unregistered kind. */

@@ -42,7 +42,7 @@ import { navigate, routes } from '@/lib/navigate'
 import { consumePendingCompose } from '@/platform/inspector-compose-events'
 import { captureWorkspaceToolOpen, openWorkspaceTool, type WorkspaceToolOpenIntent } from '@/lib/open-workspace-tool'
 import { cn } from '@/lib/utils'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import {
   contentHash,
   isClaimableLive,
@@ -508,7 +508,7 @@ function SelectedNoteRecovery({ failure, address, onRetry }: {
 }
 
 function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
-  const shellSidebarTarget = useShellSidebarTarget()
+  const shellSidebarTarget = useSidebarHandledOutside()
   const { t } = useTranslation()
   // Panel-layout mode drives which side rails this surface may render.
   const { mode: panelLayoutMode } = usePanelWorkspaceLayout()
@@ -2687,6 +2687,7 @@ h1,h2,h3{margin-top:1.5em}
     <NotesEditorHeadlineStyles />
     <div ref={setShellEl} className="notes-shell flex h-full min-w-0" data-notes-layout={panelLayoutMode}>
       <ShellSidebarPortal
+        bareLabelKey="navigation.barePanel.vault"
         className="notes-side-surface shrink-0 flex flex-col min-h-0"
         style={{ width: vaultShown ? railLayout.vault : 0 }}
         hidden={!vaultShown}

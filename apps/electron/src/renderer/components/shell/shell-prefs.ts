@@ -37,7 +37,7 @@ function readIdList(key: storage.StorageKey, fallback: readonly string[]): strin
 /** Rail: pinned screens in order (Mark / screens-groups.md). Settings is always at the bottom, never pinned. */
 export const DEFAULT_RAIL_PINS: readonly string[] = ['home', 'sessions', 'inbox', 'messenger', 'feed', 'docs', 'tasks', 'calendar', 'browser']
 /** Top pills (zero allowed). Главная renders icon-only. */
-export const DEFAULT_PILLS: readonly string[] = ['home', 'feed', 'sessions', 'docs', 'browser']
+export const DEFAULT_PILLS: readonly string[] = ['home', 'feed', 'messenger', 'sessions', 'docs', 'browser', 'tasks']
 export const RAIL_FIXED_BOTTOM_IDS: ReadonlySet<string> = new Set(['settings'])
 
 export const railPinsStore = createStore<string[]>(

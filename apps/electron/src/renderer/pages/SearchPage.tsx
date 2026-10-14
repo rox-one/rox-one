@@ -1,4 +1,5 @@
 import { useAtomValue } from 'jotai'
+import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
 import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
@@ -179,7 +180,7 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
   return (
     <main className="flex h-full min-h-0 flex-col overflow-hidden">
       <div className="border-b px-6 py-5">
-        <h1 className="mb-4 text-xl font-semibold">{t('searchPage.title')}</h1>
+        <PanelHeading className="mb-4 text-xl font-semibold" titleKey="searchPage.title">{t('searchPage.title')}</PanelHeading>
         <form className="flex gap-2" onSubmit={submit} role="search">
           <div className="relative flex-1">
             <Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

@@ -1,0 +1,5 @@
+export { FxGate, resolveFxMode, type FxGateProps, type FxMode, type FxModeInputs, type FxRenderState } from './FxGate'
+export { FX_LEVELS, FX_LEVEL_STORAGE_KEY, isFxLevel, readFxLevel, setFxLevel, useFxLevel, type FxLevel } from './fx-level'
+export { FX_LIMITS, acquireFxSlot, releaseFxSlot, type FxKind } from './fx-budget'
+export { hasWebGL2, reducedMotionNow } from './fx-env'
+export { ThinkingOrbFx, readAccentInk, type ThinkingOrbFxProps } from './ThinkingOrbFx'

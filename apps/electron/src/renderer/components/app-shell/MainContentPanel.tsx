@@ -54,7 +54,7 @@ import { buildRouteFromNavigationState } from '../../../shared/route-parser'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
 import { recordRecentSetting } from '@/lib/settings-recent'
 import { automationsAtom } from '@/atoms/automations'
-import { SendResourceToWorkspaceDialog, type SendResourceType } from './SendResourceToWorkspaceDialog'
+import type { SendResourceType } from './SendResourceToWorkspaceDialog'
 import {
   knowledgeActiveViewIdAtom,
   knowledgeHomeViewAtom,
@@ -64,7 +64,12 @@ import { lazyRoutePage, RouteErrorBoundary } from '@/lib/route-recovery'
 import { endRouteSwitch } from '@/lib/startup-perf'
 import { RetainedSurfacePane, surfaceKeepAliveCapacity, useKeepAliveSurfaces } from '@/lib/surface-keepalive'
 import { ROUTE_PAGE_LOADERS } from './route-pages'
+import { SettingsScreenSidebar } from '@/pages/settings/SettingsScreenSidebar'
 export { lazyRoutePage } from '@/lib/route-recovery'
+
+const SendResourceToWorkspaceDialog = React.lazy(() =>
+  import('./SendResourceToWorkspaceDialog').then((m) => ({ default: m.SendResourceToWorkspaceDialog })),
+)
 
 function UnavailableAutomationTour({ workspaceId }: { workspaceId: string | null }) {
   const signals = useTourSignals({ workspaceId: workspaceId ?? '' })
@@ -284,15 +289,19 @@ export function MainContentPanel({
           {entry.node}
         </RetainedSurfacePane>
       ))}
-      <SendResourceToWorkspaceDialog
-        open={sendDialogOpen}
-        onOpenChange={setSendDialogOpen}
-        resourceType={sendResourceType}
-        resourceIds={sendResourceIds}
-        resourceLabel={sendResourceLabel}
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId || ''}
-      />
+      {sendDialogOpen && (
+        <React.Suspense fallback={null}>
+          <SendResourceToWorkspaceDialog
+            open
+            onOpenChange={setSendDialogOpen}
+            resourceType={sendResourceType}
+            resourceIds={sendResourceIds}
+            resourceLabel={sendResourceLabel}
+            workspaces={workspaces}
+            activeWorkspaceId={activeWorkspaceId || ''}
+          />
+        </React.Suspense>
+      )}
     </>
   )
 }
@@ -472,6 +481,7 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
     if (navState.subpage === null) {
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
+          <SettingsScreenSidebar subpage={null} />
           <SettingsOverviewPage />
         </Panel>
       )
@@ -479,6 +489,7 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
     const SettingsPageComponent = getSettingsPageComponent(navState.subpage)
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
+        <SettingsScreenSidebar subpage={navState.subpage} />
         <SettingsPageComponent />
       </Panel>
     )

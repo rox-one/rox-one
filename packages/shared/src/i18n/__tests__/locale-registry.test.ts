@@ -3,7 +3,8 @@ import { readdirSync } from "fs";
 import { join } from "path";
 import { LOCALE_REGISTRY, type LanguageCode } from "../registry";
 import { SUPPORTED_LANGUAGE_CODES, LANGUAGES } from "../languages";
-import { getDateLocale } from "../date-locale";
+import { getDateLocale, loadDateLocale } from "../date-locale";
+import { DATE_LOCALE_LOADERS } from "../date-locale-loaders";
 
 // ---------------------------------------------------------------------------
 // Registry completeness — every locale file on disk must be in the registry
@@ -34,6 +35,10 @@ describe("locale registry completeness", () => {
 
   it("contains exactly the approved twelve language codes", () => {
     expect(Object.keys(LOCALE_REGISTRY)).toEqual([...APPROVED_LANGUAGE_CODES]);
+  });
+
+  it("DATE_LOCALE_LOADERS covers every approved language code", () => {
+    expect(Object.keys(DATE_LOCALE_LOADERS)).toEqual([...APPROVED_LANGUAGE_CODES]);
   });
 
   it("every locale file on disk is registered in LOCALE_REGISTRY", () => {
@@ -108,39 +113,34 @@ describe("derived exports", () => {
 // ---------------------------------------------------------------------------
 
 describe("getDateLocale", () => {
-  it("en resolves to English (US)", () => {
+  const expectedCodes: Record<(typeof APPROVED_LANGUAGE_CODES)[number], string> = {
+    en: "en-US",
+    ru: "ru",
+    es: "es",
+    "zh-Hans": "zh-CN",
+    "zh-Hant": "zh-TW",
+    ja: "ja",
+    de: "de",
+    hu: "hu",
+    pl: "pl",
+    fr: "fr",
+    ko: "ko",
+    ar: "ar",
+  };
+
+  it("en resolves to English (US) without preload", () => {
     expect(getDateLocale("en").code).toBe("en-US");
-  });
-
-  it("ru resolves to Russian", () => {
-    expect(getDateLocale("ru").code).toBe("ru");
-  });
-
-  it("es resolves to Spanish", () => {
-    expect(getDateLocale("es").code).toBe("es");
-  });
-
-  it("zh-Hans resolves to Simplified Chinese", () => {
-    expect(getDateLocale("zh-Hans").code).toBe("zh-CN");
-  });
-
-  it("ja resolves to Japanese", () => {
-    expect(getDateLocale("ja").code).toBe("ja");
-  });
-
-  it("de resolves to German", () => {
-    expect(getDateLocale("de").code).toBe("de");
-  });
-
-  it("ko resolves to Korean", () => {
-    expect(getDateLocale("ko").code).toBe("ko");
-  });
-
-  it("ar resolves to Arabic", () => {
-    expect(getDateLocale("ar").code).toBe("ar");
   });
 
   it("unknown locale falls back to English", () => {
     expect(getDateLocale("xx-FAKE").code).toBe("en-US");
   });
+
+  for (const code of APPROVED_LANGUAGE_CODES) {
+    it(`${code} loads to ${expectedCodes[code]}`, async () => {
+      const locale = await loadDateLocale(code);
+      expect(locale.code).toBe(expectedCodes[code]);
+      expect(getDateLocale(code).code).toBe(expectedCodes[code]);
+    });
+  }
 });
