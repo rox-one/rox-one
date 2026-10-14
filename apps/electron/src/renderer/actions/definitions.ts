@@ -195,6 +195,8 @@ export const actions = {
     labelKey: 'shortcuts.action.toggleSidebar',
     defaultHotkey: 'mod+b',
     category: 'View',
+    // ⌘B / Ctrl+B is Bold inside notes and other contenteditable surfaces.
+    when: '!inputFocus',
   },
   'view.toggleFocusMode': {
     id: 'view.toggleFocusMode',

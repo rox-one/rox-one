@@ -505,7 +505,13 @@ export function parseError(
     // refusals without these broad fallbacks.
   ) {
     code = 'model_no_tool_support';
-  } else if (lowerMessage.includes('is not a valid model') || lowerMessage.includes('model not found') || lowerMessage.includes('invalid model') || lowerMessage.includes('model identifier is invalid')) {
+  } else if (
+    lowerMessage.includes('is not a valid model') ||
+    lowerMessage.includes('model not found') ||
+    lowerMessage.includes('model_not_found') ||
+    lowerMessage.includes('invalid model') ||
+    lowerMessage.includes('model identifier is invalid')
+  ) {
     code = 'invalid_model';
   // HTML-intercepted responses (proxy/firewall/captive portal).
   // Must be checked BEFORE status codes: a 502 Cloudflare page or 401 proxy login
@@ -520,6 +526,11 @@ export function parseError(
   // Check for specific HTTP status codes or patterns
   } else if (lowerMessage.includes('402') || lowerMessage.includes('payment required')) {
     code = 'billing_error';
+  } else if (
+    lowerMessage.includes('rox_trusted_account_required')
+    || lowerMessage.includes('trusted account required')
+  ) {
+    code = 'OMP_AUTH_REQUIRED';
   } else if (lowerMessage.includes('401') || lowerMessage.includes('unauthorized') || lowerMessage.includes('invalid api key') || lowerMessage.includes('invalid x-api-key') || lowerMessage.includes('authentication failed') || lowerMessage.includes('token is expired') || lowerMessage.includes('token expired')) {
     // Distinguish between API key and OAuth errors
     if (lowerMessage.includes('oauth') || lowerMessage.includes('token') || lowerMessage.includes('session')) {

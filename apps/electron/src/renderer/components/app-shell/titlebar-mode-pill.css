@@ -14,7 +14,7 @@
   height: var(--control-md);
   padding: 2px;
   border: 0;
-  border-radius: var(--rox-radius-panel);
+  border-radius: var(--radius-full);
   /* Hairline ring shadows kept as single var() refs (the strict-value stylelint
      rule wants box-shadow to be a variable or keyword, not a literal). */
   --rox-mode-pill-plate-ring: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 8%, transparent);
@@ -46,7 +46,7 @@
   height: var(--control-sm);
   padding: 0 9px;
   border: 0;
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-full);
   background: transparent;
   /* Muted monochrome: icons and labels are neutral grey, never per-mode accents. */
   color: color-mix(in oklch, var(--foreground) 55%, transparent);
@@ -63,7 +63,7 @@
   min-width: 15px;
   height: 15px;
   padding: 0 4px;
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-full);
   background: var(--accent);
   color: var(--accent-foreground, white);
   font-size: 10px;
@@ -130,7 +130,7 @@ html[data-contrast="high"] .rox-mode-pill-badge {
   top: 2px;
   left: 0;
   height: var(--control-sm);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-full);
   /* Soft glass highlight for the active segment — neutral, not accent. */
   background: color-mix(in oklch, var(--foreground) 7%, transparent);
   box-shadow: var(--rox-mode-pill-item-ring);
@@ -220,7 +220,7 @@ html[data-contrast="high"] .rox-mode-pill-icon {
   gap: 3px;
   height: 22px;
   padding: 0 6px;
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-full);
   color: color-mix(in oklch, var(--foreground) 55%, transparent);
   font-family: var(--font-sans);
   font-size: var(--chrome-font-size-sm, 11px);

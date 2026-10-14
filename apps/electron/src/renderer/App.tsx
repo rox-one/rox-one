@@ -35,7 +35,6 @@ import { FocusProvider } from '@/context/FocusContext'
 import { ModalProvider } from '@/context/ModalContext'
 import { DismissibleLayerProvider } from '@/context/DismissibleLayerContext'
 import { useWindowCloseHandler } from '@/hooks/useWindowCloseHandler'
-import { useOnboarding } from '@/hooks/useOnboarding'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useSession } from '@/hooks/useSession'
 import { useUpdateChecker } from '@/hooks/useUpdateChecker'
@@ -129,14 +128,12 @@ const KeyboardShortcutsDialog = React.lazy(() =>
   import('@/components/KeyboardShortcutsDialog').then((m) => ({ default: m.KeyboardShortcutsDialog })),
 )
 
-// #1675: the onboarding wizard / its step + APISetup subtree render only
-// outside the `ready` shell (first run, workspace picker, diagnostics). Loading
-// them through React.lazy keeps that subtree out of index.html's preloaded
-// startup closure; each render site gets its own `<Suspense fallback={null}>`,
-// matching the KeyboardShortcutsDialog pattern.
-const OnboardingWizard = React.lazy(() =>
-  import('@/components/onboarding').then((m) => ({ default: m.OnboardingWizard })),
-)
+// #1675 / OC-13: the first-run graph renders only outside the `ready` shell, and
+// `useOnboarding` used to keep it in the startup closure — its 2.02 MB
+// `useOnboarding-*.js` chunk sat in index.html's modulepreload list even though
+// onboarding runs at most once. Wizard AND hook now live in `OnboardingHost`,
+// behind this single lazy edge.
+const OnboardingHost = React.lazy(() => import('./OnboardingHost'))
 const WorkspacePicker = React.lazy(() =>
   import('@/components/workspace').then((m) => ({ default: m.WorkspacePicker })),
 )
@@ -924,16 +921,10 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     }
   }, [windowWorkspaceId, t])
 
-  // Onboarding hook — onConfigSaved fires immediately when billing is saved,
-  // ensuring connection state updates before the wizard closes.
-  const onboarding = useOnboarding({
-    onComplete: handleOnboardingComplete,
-    onConfigSaved: refreshLlmConnections,
-    initialSetupNeeds: setupNeeds || undefined,
-    existingSlugs: existingConnectionSlugs,
-    // Onboarding is the single name screen; provider setup lives in Settings → ИИ.
-    initialStep: 'welcome',
-  })
+  // OC-13: the onboarding state machine lives in the lazy <OnboardingHost />.
+  // Remounting it (below) is how a post-reset run starts clean, so App no
+  // longer needs the hook — and no longer pays for its 2 MB graph at startup.
+  const [onboardingEpoch, setOnboardingEpoch] = useState(0)
 
   // Set when startup published the LLM connection list for a ready local app.
   const startupLlmConnectionsPublishedRef = useRef(false)
@@ -1007,10 +998,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         }
         if (!workspaceProbe.ok) throw workspaceProbe.error
         if (!cloudProbe.ok) throw cloudProbe.error
-        if (cloudProbe.value.required && !cloudProbe.value.connected) {
+        if (cloudProbe.value.required && !cloudProbe.value.connected && !startupSetupNeeds?.isSetupDeferred) {
           startupSetupNeeds = { ...(startupSetupNeeds ?? { needsBillingConfig: false, needsCredentials: false, isFullyConfigured: false }), needsRoxCloud: true, shouldShowOnboardingOnLaunch: true, isFullyConfigured: false }
         }
-        const startupState = decideStartupAppState({ identityProbe, workspaceProbe, cloudProbe })
+        const startupState = decideStartupAppState({
+          identityProbe,
+          workspaceProbe,
+          cloudProbe,
+          setupDeferred: startupSetupNeeds?.isSetupDeferred,
+        })
         if (startupState === 'transport-unavailable') throw new Error('runtime-identity-unavailable')
         let startupConnections: LlmConnectionWithStatus[] | null = null
         let startupRuntimeSummary: StartupRuntimeSummary | null = null
@@ -2516,15 +2512,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         needsCredentials: true,
         isFullyConfigured: false,
       })
-      // Reset onboarding hook state
-      onboarding.reset()
+      // Remount the lazy onboarding host so the wizard starts from scratch.
+      setOnboardingEpoch((epoch) => epoch + 1)
       setAppState('onboarding')
     } catch (error) {
       console.error('Reset failed:', error)
     } finally {
       setShowResetDialog(false)
     }
-  }, [onboarding, initializeSessions])
+  }, [initializeSessions])
 
   // Handle workspace selection
   // - Default: switch workspace in same window (in-window switching)
@@ -2604,11 +2600,6 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   const handleRefreshWorkspaces = useCallback(() => {
     window.electronAPI.getWorkspaces().then(setWorkspaces)
   }, [])
-
-  // Handle cancel during onboarding
-  const handleOnboardingCancel = useCallback(() => {
-    onboarding.handleCancel()
-  }, [onboarding])
 
   // Build context value for AppShell component
   // This is memoized to prevent unnecessary re-renders
@@ -2756,40 +2747,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   // (without this, the close IPC message has no listener and window stays open)
   if (appState === 'onboarding') {
     return (
-      <DismissibleLayerProvider>
-        <ModalProvider>
-          <WindowCloseHandler />
-          <React.Suspense fallback={null}>
-            <OnboardingWizard
-              state={onboarding.state}
-              onContinue={onboarding.handleContinue}
-              onBack={onboarding.handleBack}
-              onSelectProvider={onboarding.handleSelectProvider}
-              roxConnectCodes={onboarding.roxConnectCodes}
-              roxConnectStatus={onboarding.roxConnectStatus}
-              roxConnectError={onboarding.roxConnectError}
-              roxAuthBaseUrl={onboarding.roxAuthBaseUrl}
-              onStartRoxConnect={onboarding.handleStartRoxConnect}
-              onOpenRoxConnectBrowser={onboarding.handleOpenRoxConnectBrowser}
-              onSelectApiSetupMethod={onboarding.handleSelectApiSetupMethod}
-              onSubmitCredential={onboarding.handleSubmitCredential}
-              onSubmitOmpCredential={onboarding.handleSubmitOmpCredential}
-              onSubmitLocalModel={onboarding.handleSubmitLocalModel}
-              onStartOAuth={onboarding.handleStartOAuth}
-              onFinish={onboarding.handleFinish}
-              isWaitingForCode={onboarding.isWaitingForCode}
-              isProviderOAuthPending={onboarding.isProviderOAuthPending}
-              onSubmitAuthCode={onboarding.handleSubmitAuthCode}
-              onCancelOAuth={onboarding.handleCancelOAuth}
-              copilotDeviceCode={onboarding.copilotDeviceCode}
-              onBrowseGitBash={onboarding.handleBrowseGitBash}
-              onUseGitBashPath={onboarding.handleUseGitBashPath}
-              onRecheckGitBash={onboarding.handleRecheckGitBash}
-              onClearError={onboarding.handleClearError}
-            />
-          </React.Suspense>
-        </ModalProvider>
-      </DismissibleLayerProvider>
+      <React.Suspense fallback={null}>
+        <OnboardingHost
+          key={onboardingEpoch}
+          onComplete={handleOnboardingComplete}
+          onConfigSaved={refreshLlmConnections}
+          initialSetupNeeds={setupNeeds || undefined}
+          existingSlugs={existingConnectionSlugs}
+        />
+      </React.Suspense>
     )
   }
 

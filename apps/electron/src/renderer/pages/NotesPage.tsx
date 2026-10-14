@@ -123,6 +123,7 @@ import {
   parseWikiCreateTarget,
   wikiMatchSubtitle,
 } from './notes/wiki-autocomplete'
+import { withClaimRetry } from '../lib/document-writer-retry'
 import { createNativeNotesSyncController } from '../lib/native-notes-sync'
 import { isNativeNoteDocument, writeNoteThroughAuthority } from '../lib/notes-write-authority'
 import { toErrorMessage } from '@/lib/errors'
@@ -1351,7 +1352,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
 
   const saveNativeNote = React.useCallback(async (note: NoteDocument, markdown: string, observation = knowledgeSignals.capture()): Promise<NoteDocument> => {
     const queuedMutation = await nativeNotesSync.queueSave(note, markdown)
-    const receipts = await nativeNotesSync.flush()
+    const receipts = await withClaimRetry(() => nativeNotesSync.flush())
     const receipt = receipts.find(candidate => candidate.operationId === queuedMutation.operationId)
     if (!receipt) throw new Error(`Native Notes operation ${queuedMutation.operationId} remains pending`)
     if (matchesNoteReceipt(receipt, queuedMutation)) {
@@ -1391,19 +1392,19 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
           markdown: async () => {
             const expectedRevision = revisionsRef.current.get(revisionKey)
             if (!expectedRevision || contentResolution?.status !== 'ok') throw new Error(t('notes.content.reloadRequired'))
-            let command = pendingCommitsRef.current.get(revisionKey)
-            if (command) {
+            const pendingCommand = pendingCommitsRef.current.get(revisionKey)
+            if (pendingCommand) {
               // Unknown responses replay the same legacy operation; native retries belong to main's outbox.
-              const replay = await window.electronAPI.commitMarkdown(command)
+              const replay = await withClaimRetry(() => window.electronAPI.commitMarkdown(pendingCommand))
               revisionsRef.current.set(revisionKey, replay.receipt.revision)
               pendingCommitsRef.current.delete(revisionKey)
             }
             if (!isCurrentDocument()) throw new Error(t('notes.content.previewChanged'))
-            command = { workspaceId: activeWorkspaceId, noteId, content: currentContent,
+            const command = { workspaceId: activeWorkspaceId, noteId, content: currentContent,
               expectedRevision: revisionsRef.current.get(revisionKey)!, sourceStoreId: activeNote.sourceStoreId,
               authorityEpoch: contentResolution.origin.authorityEpoch, operationId: crypto.randomUUID() }
             pendingCommitsRef.current.set(revisionKey, command)
-            const result = await window.electronAPI.commitMarkdown(command)
+            const result = await withClaimRetry(() => window.electronAPI.commitMarkdown(command))
             if (result.receipt.operationId === command.operationId && result.receipt.workspaceId === command.workspaceId
               && result.receipt.noteId === command.noteId && result.receipt.previousRevision === command.expectedRevision
               && result.receipt.authorityEpoch === command.authorityEpoch && result.receipt.sourceStoreId === command.sourceStoreId
