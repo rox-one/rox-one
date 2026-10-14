@@ -26,6 +26,8 @@ export interface DriveSidebarInput {
   onImport(provider: 'google-drive' | undefined): void
   onCreateFolder(): void
   onRetry(): void
+  /** Reveal the storage details (the page's quota meter). */
+  onOpenStorage(): void
 }
 
 export function buildDriveSidebarGroups(input: DriveSidebarInput): SidebarGroup[] {
@@ -43,7 +45,9 @@ export function buildDriveSidebarGroups(input: DriveSidebarInput): SidebarGroup[
   }
   const newFolder = { id: 'new-folder', label: l.newFolder, onSelect: input.onCreateFolder }
   let folders: SidebarGroup
-  if (input.error) {
+  // Only a failed listing load replaces the folders; action errors (upload,
+  // move, create) are toasts and keep the loaded list.
+  if (input.error && !input.listing) {
     folders = { id: 'folders', title: l.folders, items: [], state: { kind: 'error', label: l.error, onRetry: input.onRetry } }
   } else if (input.loading && !input.listing) {
     folders = { id: 'folders', title: l.folders, items: [], state: { kind: 'loading' } }
@@ -71,7 +75,7 @@ export function buildDriveSidebarGroups(input: DriveSidebarInput): SidebarGroup[
         id: 'usage',
         ...l.usage(q),
         icon: HardDrive,
-        onSelect: input.onRetry,
+        onSelect: input.onOpenStorage,
       }],
     })
   }

@@ -18,12 +18,13 @@ export interface DriveSidebarBindings {
   createFolder(): void
   pickFiles(): void
   refresh(): void
+  openStorage(): void
 }
 
 /** Publishes the Диск second sidebar from the page's live state. */
 export function useDriveSidebar(b: DriveSidebarBindings): void {
   const { t } = useTranslation()
-  const { listing, quota, currentFolderId, loading, error, openFolder, openBackup, openImport, createFolder, pickFiles, refresh } = b
+  const { listing, quota, currentFolderId, loading, error, openFolder, openBackup, openImport, createFolder, pickFiles, refresh, openStorage } = b
   const config = React.useMemo(() => ({
     screenId: 'drive',
     title: t('screenSidebar.drive.title'),
@@ -44,8 +45,8 @@ export function useDriveSidebar(b: DriveSidebarBindings): void {
         }),
         emptyFolders: t('screenSidebar.drive.emptyFolders'), newFolder: t('drive.list.newFolder'), error: t('screenSidebar.drive.error'),
       },
-      onOpenFolder: openFolder, onBackup: openBackup, onImport: openImport, onCreateFolder: createFolder, onRetry: refresh,
+      onOpenFolder: openFolder, onBackup: openBackup, onImport: openImport, onCreateFolder: createFolder, onRetry: refresh, onOpenStorage: openStorage,
     }),
-  }), [listing, quota, currentFolderId, loading, error, openFolder, openBackup, openImport, createFolder, pickFiles, refresh, t])
+  }), [listing, quota, currentFolderId, loading, error, openFolder, openBackup, openImport, createFolder, pickFiles, refresh, openStorage, t])
   useScreenSidebar(config)
 }

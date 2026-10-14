@@ -10,7 +10,7 @@ const labels = {
 const folder = (id: string, name: string, parentId: string | null) => ({ id, name, parentId, createdAt: '2026-10-01T00:00:00Z' })
 function input(o: Partial<DriveSidebarInput>): DriveSidebarInput {
   return { listing: null, quota: null, currentFolderId: null, loading: false, error: null, labels,
-    onOpenFolder: mock(), onBackup: mock(), onImport: mock(), onCreateFolder: mock(), onRetry: mock(), ...o }
+    onOpenFolder: mock(), onBackup: mock(), onImport: mock(), onCreateFolder: mock(), onRetry: mock(), onOpenStorage: mock(), ...o }
 }
 
 describe('buildDriveSidebarGroups', () => {
@@ -56,5 +56,14 @@ describe('buildDriveSidebarGroups', () => {
     const storage = buildDriveSidebarGroups(input({ quota })).find((x) => x.id === 'storage')!
     expect(storage.items[0]!.label).toBe('3/10')
     expect(storage.items[0]!.secondary).toBe('7')
+    const onOpenStorage = mock()
+    buildDriveSidebarGroups(input({ quota, onOpenStorage })).find((x) => x.id === 'storage')!.items[0]!.onSelect()
+    expect(onOpenStorage).toHaveBeenCalled()
+  })
+  it('an action error keeps the loaded folders', () => {
+    const listing = { folders: [{ id: 'f1', name: 'Docs' }], files: [], path: [] } as never
+    const folders = buildDriveSidebarGroups(input({ listing, error: 'upload failed' })).find((x) => x.id === 'folders')!
+    expect(folders.state).toBeUndefined()
+    expect(folders.items.some((i) => i.label === 'Docs')).toBe(true)
   })
 })

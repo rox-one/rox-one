@@ -5,6 +5,7 @@
  * a delete action. Empty folders show an honest empty state with the two ways
  * to add content (browser upload / device backup), never a fake spinner.
  */
+import type { Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { File as FileIcon, Folder, HardDriveUpload, Loader2, Trash2 } from 'lucide-react'
 import type { DriveFile, DriveListing } from '@rox/shared/drive'
@@ -26,6 +27,8 @@ export interface DriveFileListProps {
   onDeleteFile: (fileId: string) => void
   onCreateFolder: () => void
   onPickFiles: (files: FileList) => void
+  /** The hidden upload input, so the panel's own Upload action targets this list (not another panel's). */
+  fileInputRef?: Ref<HTMLInputElement>
 }
 
 const SOURCE_LABEL_KEY: Record<DriveFile['source'], string> = {
@@ -35,7 +38,7 @@ const SOURCE_LABEL_KEY: Record<DriveFile['source'], string> = {
 }
 
 export function DriveFileList({
-  listing, loading, breadcrumb, activeUploads, onOpenFolder, onDeleteFile, onCreateFolder, onPickFiles,
+  listing, loading, breadcrumb, activeUploads, onOpenFolder, onDeleteFile, onCreateFolder, onPickFiles, fileInputRef,
 }: DriveFileListProps) {
   const { t } = useTranslation()
   return (
@@ -63,6 +66,7 @@ export function DriveFileList({
             type="file"
             multiple
             hidden
+            ref={fileInputRef}
             data-testid="drive-file-input"
             onChange={event => {
               if (event.target.files && event.target.files.length > 0) onPickFiles(event.target.files)
