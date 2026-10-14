@@ -10,6 +10,10 @@
  * number is a deliberate, reviewed change — not a drive-by side effect of a
  * feature PR.
  *
+ * 2026-10-14: raised to 12_500 deliberately (02-SPEC-foundations §11 / O11) to
+ * fit the queued feature PRs #2003, #2007, #2024, #1988 and FX. Supersedes any
+ * 12_300 ceiling proposed in #2024.
+ *
  * Exits 0 within budget; 1 with a diagnostic otherwise.
  */
 
@@ -27,8 +31,8 @@ const EN_LOCALE = resolve(
   'en.json',
 )
 
-/** O11 budget: en.json may not exceed this many keys. */
-export const I18N_KEY_BUDGET = 12_000
+/** O11 budget: en.json may not exceed this many keys. Deliberate bump to 12_500 (02-SPEC-foundations §11 / O11) for queued feature PRs #2003, #2007, #2024, #1988 and FX. */
+export const I18N_KEY_BUDGET = 12_500
 
 const keys = Object.keys(JSON.parse(readFileSync(EN_LOCALE, 'utf8')) as Record<string, string>)
 
