@@ -2,7 +2,7 @@
 import { markStartup, markStartupOnce, recordRendererMark, reportStartupTimelineWhenSettled, whenStartupMark } from './startup-marks'
 import { STARTUP_MARKS, STARTUP_PERF_MARK_CHANNEL, isValidRendererMarkName } from '../shared/startup-perf'
 import { createPocketAccountStore } from './pocket-account-store'
-import { RoxAccountAuthority, setRoxAccountAuthority } from '@rox/shared/auth'
+import { RoxAccountAuthority, selectPocketClient, setRoxAccountAuthority } from '@rox/shared/auth'
 import { validateConfigurationCliEntries } from './configuration-cli-compat'
 import { resolveNumberedUserDataDir } from './numbered-user-data'
 // Load user's shell environment first (before other imports that may use env)
@@ -19,7 +19,7 @@ markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
 
-import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, safeStorage, session, shell, Tray, webContents, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, net, Notification, safeStorage, session, shell, Tray, webContents, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { createHash, randomUUID } from 'crypto'
 
 
@@ -156,6 +156,9 @@ import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
 import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog, errorLog } from './logger'
 import { registerDeviceDiagnosticsIpc } from './device-diagnostics-ipc'
+import { registerHomeFetchIpc } from './home-fetch/ipc'
+import { HomeFetchService } from './home-fetch/service'
+import { getSharedKeys } from './home-fetch/shared-keys'
 import { registerStorageVisibleRootIpc } from './storage-visible-root-ipc'
 import { registerStorageMigrationNoticeIpc, runVisibleHomeBoot } from './visible-home-boot'
 import { setPerfEnabled, enableDebug } from '@rox/shared/utils'
@@ -1033,6 +1036,23 @@ app.whenReady().then(async () => {
       }),
     })
 
+    // Home widgets: all network fetches go through main (cache, rate limits, offline); shared keys stay here.
+    registerHomeFetchIpc({
+      ipcMain,
+      windowManager,
+      rendererFilePath: join(__dirname, 'renderer/index.html'),
+      devServerUrl: process.env.VITE_DEV_SERVER_URL,
+      service: new HomeFetchService({
+        // Dedicated in-memory session with no cookies/credentials, so Home widget
+        // fetches never carry the user's browsing or app session state.
+        fetch: ((input: string | URL | Request, init?: RequestInit) =>
+          session.fromPartition('rox-home-fetch', { cache: false }).fetch(input instanceof URL ? input.toString() : input, { ...init, credentials: 'omit' })) as typeof globalThis.fetch,
+        now: () => Date.now(),
+        isOnline: () => net.isOnline(),
+        getExaKey: () => getSharedKeys().exa,
+      }),
+    })
+
     // Bootstrap IPC handlers — preload uses sendSync for window-local details
     ipcMain.on('__get-web-contents-id', (e) => {
       e.returnValue = e.sender.id
@@ -1407,7 +1427,7 @@ app.whenReady().then(async () => {
         },
         bindRpcServer: (sm, server) => sm.setRpcServer(server),
         createHandlerDeps: ({ sessionManager: sm, platform: p, oauthFlowStore: ofs, nativeAuthority, nativeJournal, collaborationSync }) => {
-          setRoxAccountAuthority(new RoxAccountAuthority(createPocketAccountStore({ directory: join(app.getPath('userData'), 'pocket-accounts'), safeStorage })))
+          setRoxAccountAuthority(new RoxAccountAuthority(createPocketAccountStore({ directory: join(app.getPath('userData'), 'pocket-accounts'), safeStorage }), selectPocketClient({ name: hostname(), platform: process.platform })))
           localNativeAuthority = nativeAuthority
           const browserCredentialPermissions = createBrowserCredentialPermissionAdapter({
             async confirm(request) {

@@ -16,6 +16,8 @@ export interface SessionsSidebarInput {
   hidden?: boolean
   isArchived?: boolean
   parentSessionId?: string
+  /** Viewer/share URL when the session is shared by link. */
+  sharedUrl?: string
 }
 
 export interface SessionsSidebarFolder {
@@ -52,8 +54,19 @@ function sessionItem(s: SessionsSidebarInput, badge?: SidebarSectionItem['badge'
     ...(title ? { label: title } : { labelKey: 'screens.sessions.untitled' }),
     icon: 'message-square',
     ...(badge ? { badge } : s.hasUnread ? { badge: 'unread' as const } : {}),
+    menu: sessionMenu(s),
     target: { kind: 'session', sessionId: s.id },
   }
+}
+
+/** Row menu: open as side session (#20) and share by link (#19). */
+export function sessionMenu(s: Pick<SessionsSidebarInput, 'sharedUrl'>): NonNullable<SidebarSectionItem['menu']> {
+  return [
+    { id: 'open-side', labelKey: 'sideSession.openHere' },
+    ...(s.sharedUrl
+      ? [{ id: 'copy-link', labelKey: 'sessionMenu.copyLink' }, { id: 'stop-sharing', labelKey: 'sessionShare.stop', destructive: true }]
+      : [{ id: 'share', labelKey: 'sessionShare.create' }]),
+  ]
 }
 
 /**

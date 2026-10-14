@@ -65,6 +65,8 @@ export interface PersonalTask {
   // — Things-style additions (all optional; v1 bundles load unchanged) —
   /** Checklist lines. */
   checklist?: ChecklistItem[]
+  /** Ids of tasks that must finish before this one (dependencies; acyclic). */
+  blockedBy?: string[]
   /** Epoch timestamp for the reminder occurrence. */
   reminderAt?: number
   /** IANA timezone in which the reminder's wall-clock time was selected. */

@@ -11,6 +11,8 @@ const PREFIX = 'craft-'
  */
 export const KEYS = {
   featureProductTourV1: 'feature-product-tour-v1',
+  /** Spotlight orientation tour: { status: 'completed' | 'skipped', version, at } */
+  guidedTour: 'guided-tour',
   // Chat sidebar
   sidebarVisible: 'sidebar-visible',
   sidebarPinned: 'sidebar-pinned',

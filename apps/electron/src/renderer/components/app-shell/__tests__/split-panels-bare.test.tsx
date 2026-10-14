@@ -33,6 +33,15 @@ function Handled() {
   return <span data-testid="handled">{String(useSidebarHandledOutside())}</span>
 }
 
+async function waitForElement(selector: string, timeoutMs = 2000): Promise<Element | null> {
+  const deadline = Date.now() + timeoutMs
+  for (;;) {
+    const found = document.body.querySelector(selector)
+    if (found || Date.now() > deadline) return found
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)) })
+  }
+}
+
 async function render(node: React.ReactNode) {
   const host = document.createElement('div')
   document.body.append(host)
@@ -63,7 +72,10 @@ describe('split panels without a second sidebar', () => {
     expect(trigger?.getAttribute('data-testid')).toBe('inbox-nav-bare')
     expect(trigger?.getAttribute('aria-label')).toBeTruthy()
     await act(async () => { trigger!.click() })
-    expect(document.body.querySelector('[data-bare-controls-content]')?.textContent).toBe('inbox-tree')
+    // Radix mounts the popover content asynchronously (Presence/FocusScope); under a
+    // loaded full-suite run that can land after the first act flush, so wait for it.
+    const content = await waitForElement('[data-bare-controls-content]')
+    expect(content?.textContent).toBe('inbox-tree')
   })
 
   it('strip mode (Connections) restores the tabs as a compact horizontal strip in the tile header', async () => {
