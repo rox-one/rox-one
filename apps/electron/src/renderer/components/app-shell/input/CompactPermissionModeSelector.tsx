@@ -12,7 +12,6 @@ import {
   DrawerClose,
 } from '@/components/ui/drawer'
 import { cn } from '@/lib/utils'
-import { isWebUI } from '@/lib/platform'
 import {
   PERMISSION_MODE_CONFIG,
   PERMISSION_MODE_ORDER,
@@ -97,16 +96,14 @@ export function CompactPermissionModeSelector({
             "input-toolbar-btn focus-visible:ring-1 focus-visible:ring-ring motion-reduce:transition-none",
             variant === 'deck'
               ? "min-h-[28px] gap-1 rounded-[var(--radius-control)] flex items-center px-0.5 text-caption font-medium text-text-primary outline-none select-none shrink-0 hover:bg-surface-hover transition-colors duration-[var(--motion-fast)]"
-              : isWebUI
-                ? "min-h-[var(--control-md)] min-w-[var(--control-md)] p-0 text-xs font-medium rounded-[var(--radius-control)] flex items-center justify-center outline-none select-none shrink-0 text-foreground/70 hover:bg-foreground/5 transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)]"
-                : "min-h-[var(--control-md)] pl-2 pr-2.5 text-xs font-medium rounded-[var(--radius-control)] flex items-center gap-1.5 outline-none select-none shrink-0 hover:bg-foreground/5",
-            variant === 'default' && !isWebUI && style.className,
+              : "min-h-[var(--control-md)] pl-2 pr-2.5 text-xs font-medium rounded-[var(--radius-control)] flex items-center gap-1.5 outline-none select-none shrink-0 hover:bg-foreground/5",
+            variant === 'default' && style.className,
           )}
         >
           <ModeIcon mode={permissionMode} className="h-3.5 w-3.5" />
           {variant === 'deck'
             ? <span>{t(MODE_LABEL_KEYS[permissionMode].name)}</span>
-            : !isWebUI && <span>{t(MODE_LABEL_KEYS[permissionMode].short)}</span>}
+            : <span>{t(MODE_LABEL_KEYS[permissionMode].short)}</span>}
         </button>
       </DrawerTrigger>
 

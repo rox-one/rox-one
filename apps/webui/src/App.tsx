@@ -13,7 +13,7 @@ import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { createWebApi } from './adapter/web-api'
 import type { AuthenticatedWebTransportBootstrap } from '../../electron/src/renderer/lib/authenticated-web-bootstrap'
-import { initializeAuthenticatedWebTransport } from './adapter/transport-bootstrap'
+import { WebBootstrapError, initializeAuthenticatedWebTransport, type WebBootstrapErrorCode } from './adapter/transport-bootstrap'
 import { WEBUI_REQUIRES_CONATION_FLAG } from './rox2-webui-surface'
 import { WebModesLanding } from './web-modes-landing'
 import { CloudVmSurface } from './cloud-vm-surface'
@@ -57,13 +57,37 @@ function LoadingScreen() {
   )
 }
 
-function ErrorScreen({ message, onRetry }: { message: string; onRetry: () => void }) {
+/**
+ * A recognised bootstrap failure gets localized, actionable copy; the raw
+ * diagnostic string stays visible underneath so a support report keeps the
+ * exact server wording. Unknown failures show the message alone — a known
+ * reason is never hidden behind a generic sentence.
+ */
+const BOOTSTRAP_ERROR_KEYS: Record<WebBootstrapErrorCode, { text: string; hint: string }> = {
+  unconfigured_workspace: {
+    text: 'webui.errors.unconfiguredWorkspace',
+    hint: 'webui.errors.unconfiguredWorkspaceHint',
+  },
+  workspace_mismatch: {
+    text: 'webui.errors.workspaceMismatch',
+    hint: 'webui.errors.workspaceMismatchHint',
+  },
+}
+
+function ErrorScreen({ message, code, onRetry }: {
+  message: string
+  code: WebBootstrapErrorCode | null
+  onRetry: () => void
+}) {
   const { t } = useTranslation()
+  const keys = code === null ? null : BOOTSTRAP_ERROR_KEYS[code]
 
   return (
     <div className="flex flex-col items-center justify-center h-screen font-sans text-foreground/50 gap-3">
       <p className="text-base font-medium text-destructive">{t("webui.connectionFailed")}</p>
-      <p className="text-base max-w-md text-center">{message}</p>
+      {keys ? <p className="text-base max-w-md text-center">{t(keys.text)}</p> : null}
+      {keys ? <p className="text-base max-w-md text-center text-muted-foreground">{t(keys.hint)}</p> : null}
+      <p className="text-sm max-w-md text-center font-mono break-words text-muted-foreground">{message}</p>
       <div className="flex gap-2 mt-2">
         <button
           onClick={onRetry}
@@ -92,6 +116,9 @@ export default function App() {
   }
   const [phase, setPhase] = useState<Phase>('loading')
   const [error, setError] = useState('')
+  // Set only for failures the shell knows how to explain; null shows the raw
+  // message alone.
+  const [errorCode, setErrorCode] = useState<WebBootstrapErrorCode | null>(null)
   const [attempt, setAttempt] = useState(0)
   const [bootstrap, setBootstrap] = useState<AuthenticatedWebTransportBootstrap | null>(null)
   // null = not yet confirmed. The two-mode landing is offered only to a
@@ -127,6 +154,7 @@ export default function App() {
     let unsubscribe: (() => void) | undefined
     setPhase('loading')
     setError('')
+    setErrorCode(null)
     setBootstrap(null)
     setWebSession(null)
     setModesLanding(null)
@@ -171,6 +199,7 @@ export default function App() {
       unsubscribe = client.onConnectionStateChanged(state => {
         if (state.status === 'connected' && client.getAcknowledgedWorkspaceId() !== verified.workspaceId) {
           setError('Server acknowledged workspace does not match the configured workspace')
+          setErrorCode('workspace_mismatch')
           setPhase('error')
           client.destroy()
         }
@@ -182,6 +211,7 @@ export default function App() {
         return
       }
       setError(err instanceof Error ? err.message : String(err))
+      setErrorCode(err instanceof WebBootstrapError ? err.code : null)
       setPhase('error')
     })
 
@@ -224,7 +254,7 @@ export default function App() {
   useEffect(() => clearOverlayTimers, [])
 
   if (phase === 'loading') return <LoadingScreen />
-  if (phase === 'error') return <ErrorScreen message={error} onRetry={() => setAttempt(value => value + 1)} />
+  if (phase === 'error') return <ErrorScreen message={error} code={errorCode} onRetry={() => setAttempt(value => value + 1)} />
   if (!bootstrap || webSession === null) return <LoadingScreen />
   // The two-mode landing is strictly a web-session entry; direct session deep
   // links and non-web (unconfirmed) sessions mount the renderer as before. A

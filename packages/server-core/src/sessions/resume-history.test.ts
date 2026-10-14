@@ -1,4 +1,6 @@
 import {describe,expect,it} from 'bun:test';
+import {readFileSync} from 'node:fs';
+import {join} from 'node:path';
 import type {Message} from '@rox/core/types';
 import {selectResumeHistory} from './resume-history';
 const messages=[
@@ -20,5 +22,17 @@ describe('native transcript reconstruction input',()=>{
   });
   it('does not fabricate context for a brand-new first turn',()=>{
     expect(selectResumeHistory([messages[3]!],'u2')).toEqual([]);
+  });
+});
+
+describe('OMP branch reconstruct input (S3-10)', () => {
+  it('feeds the copied child prefix into reconstruct, not the parent active submission', () => {
+    const source = readFileSync(join(import.meta.dir, 'SessionManager.ts'), 'utf8');
+    expect(source).toContain('getBranchResumeMessages: () => managed.branchFromMessageId');
+    expect(source).toContain('selectResumeHistory(managed.messages)');
+    expect(source).toContain('describeBranchPreflightFailure');
+    expect(source).not.toMatch(
+      /getBranchResumeMessages: \(\) => managed\.branchFromMessageId\s*\n\s*\? selectResumeHistory\(managed\.messages, managed\.activeUserMessageId/,
+    );
   });
 });

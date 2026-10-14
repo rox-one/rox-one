@@ -68,9 +68,11 @@ jobs:
           apps/electron/src/renderer/platform/__tests__/layout-snapshot.test.ts
       - name: Typecheck Electron renderer and shared contracts
         env:
-          # macOS runners default the V8 old space to ~2 GB and the renderer
-          # typecheck needs more; match the renderer build budget used elsewhere.
-          NODE_OPTIONS: --max-old-space-size=4096
+          # The Electron renderer type graph is ~8.7k files / ~1.6M types and
+          # peaks at ~4.3 GB of V8 old space, so both the runner default
+          # (~2 GB) and the previous 4 GB budget aborted with SIGABRT (134).
+          # 8 GB is roughly 2x the observed peak.
+          NODE_OPTIONS: --max-old-space-size=8192
         run: bun run typecheck:electron
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         continue-on-error: true

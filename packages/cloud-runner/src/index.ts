@@ -77,3 +77,4 @@ export type {
   SandboxArtifact,
   SandboxState,
 } from './daytona-sandbox.ts';
+export * from './handoff/index.ts';

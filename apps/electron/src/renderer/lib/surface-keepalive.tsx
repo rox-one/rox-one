@@ -21,6 +21,35 @@ export const SURFACE_KEEPALIVE_CAPACITY = 5
 /** Retained surfaces on a low-memory machine. */
 export const SURFACE_KEEPALIVE_LOW_MEMORY_CAPACITY = 3
 
+/**
+ * Node budget for the whole retained set (every pane together).
+ *
+ * Provenance: the 2026-10-13 E2E audit measured the retained set at 227 318
+ * nodes / 803 MB renderer heap after 13 rail surfaces — the count cap alone is
+ * not a bound, because weight varies by two orders of magnitude: ordinary
+ * surfaces stay in the 1.4–4 k range, while `settings/extensions` renders
+ * 226 741 nodes and `skills` 177 703. Five catalogs therefore fit inside
+ * `SURFACE_KEEPALIVE_CAPACITY` and still exhaust the renderer.
+ *
+ * Eviction is consequently weight-aware: after the count cap, the LRU set is
+ * trimmed until the summed node weight of the retained surfaces fits here.
+ */
+export const SURFACE_KEEPALIVE_NODE_BUDGET = 20_000
+
+/** Node weight of a retained surface: descendants of its pane, DOM-only and cheap. */
+export function surfaceNodeWeight(root: Element | null | undefined): number {
+  if (!root) return 0
+  return root.querySelectorAll('*').length
+}
+
+/** Weight-aware companion to the count cap; when omitted, weight bounds nothing. */
+export interface RetentionBudget {
+  /** Maximum summed node weight of the retained set. */
+  readonly nodeBudget: number
+  /** Weight of a retained surface; `0` while it has not been measured yet. */
+  readonly weightOf: (key: string) => number
+}
+
 export interface RetentionState {
   /** LRU order: least recently used first, the active key last. */
   readonly keys: readonly string[]
@@ -45,6 +74,7 @@ export function advanceRetention(
   outgoing: { key: string; node: React.ReactNode } | null,
   activeKey: string,
   capacity: number,
+  budget?: RetentionBudget,
 ): RetentionState {
   const snapshots = new Map(state.snapshots)
   const order = state.keys.filter(key => key !== activeKey)
@@ -59,6 +89,19 @@ export function advanceRetention(
   while (order.length > limit) {
     const dropped = order.shift()
     if (dropped !== undefined) snapshots.delete(dropped)
+  }
+  // Weight cap second: a surface small enough to survive the count cap can still
+  // be a 200 k-node catalog, and five of those are what exhausted the renderer.
+  if (budget) {
+    let total = 0
+    for (const key of order) total += budget.weightOf(key)
+    while (total > budget.nodeBudget && order.length > 1) {
+      const oldestRetired = order.findIndex(key => key !== activeKey)
+      if (oldestRetired < 0) break
+      const [dropped] = order.splice(oldestRetired, 1)
+      snapshots.delete(dropped)
+      total -= budget.weightOf(dropped)
+    }
   }
   snapshots.delete(activeKey)
   return { keys: order, snapshots }
@@ -134,6 +177,11 @@ export function useEffectiveVisible(): boolean {
 export interface RetainedSurfacePaneProps {
   active: boolean
   children: React.ReactNode
+  /**
+   * Called with the pane's node weight once it is retired. The host needs it
+   * before the next eviction decides which surface is too heavy to retain.
+   */
+  onWeight?: (weight: number) => void
 }
 
 /**
@@ -141,15 +189,21 @@ export interface RetainedSurfacePaneProps {
  * no layout box); a retired one is `hidden` + `content-visibility: hidden`,
  * inert (no focus, no AT) and provides `active: false` to its subtree.
  */
-export function RetainedSurfacePane({ active, children }: RetainedSurfacePaneProps) {
+export function RetainedSurfacePane({ active, children, onWeight }: RetainedSurfacePaneProps) {
   const container = React.useRef<HTMLDivElement>(null)
+  const reportWeight = React.useRef(onWeight)
+  reportWeight.current = onWeight
   React.useLayoutEffect(() => {
     const element = container.current
     if (!element) return
     element.inert = !active
-    if (!active && element.contains(document.activeElement)) {
+    if (active) return
+    if (element.contains(document.activeElement)) {
       (document.activeElement as HTMLElement | null)?.blur()
     }
+    // Measured on the way out: the retained tree keeps its DOM, so this is the
+    // cost the host must weigh before retaining one more surface alongside it.
+    reportWeight.current?.(surfaceNodeWeight(element))
   }, [active])
   return (
     <div
@@ -171,6 +225,8 @@ export function RetainedSurfacePane({ active, children }: RetainedSurfacePanePro
 export interface RetainedSurfaceEntry {
   key: string
   node: React.ReactNode
+  /** Stable per key — hand it to `RetainedSurfacePane.onWeight`. */
+  reportWeight: (weight: number) => void
 }
 
 /** The retention the host has already applied, plus the key/capacity it belongs to. */
@@ -198,6 +254,7 @@ export function useKeepAliveSurfaces(
   activeKey: string,
   activeNode: React.ReactNode,
   capacity: number,
+  options?: { nodeBudget?: number },
 ): readonly RetainedSurfaceEntry[] {
   const [applied, setApplied] = React.useState<AppliedRetention>(() => ({
     key: activeKey,
@@ -207,27 +264,51 @@ export function useKeepAliveSurfaces(
   // Written only on commit, so it always names the surface that is actually
   // mounted when the next route change needs to snapshot it.
   const committed = React.useRef<{ key: string; node: React.ReactNode } | null>(null)
+  // Weights and reporters are plain refs: a measurement must never trigger a
+  // render, and both are read only where the next eviction is decided.
+  const weights = React.useRef(new Map<string, number>())
+  const reporters = React.useRef(new Map<string, (weight: number) => void>())
+  const nodeBudget = options?.nodeBudget ?? SURFACE_KEEPALIVE_NODE_BUDGET
+  const budget = React.useMemo<RetentionBudget>(() => ({
+    nodeBudget,
+    weightOf: (key: string) => weights.current.get(key) ?? 0,
+  }), [nodeBudget])
   React.useLayoutEffect(() => {
     committed.current = { key: activeKey, node: activeNode }
+    // Drop measurements of evicted surfaces so the maps track the retained set.
+    const retained = new Set(applied.retention.keys)
+    for (const key of weights.current.keys()) {
+      if (retained.has(key)) continue
+      weights.current.delete(key)
+      reporters.current.delete(key)
+    }
   })
 
   if (applied.key !== activeKey || applied.capacity !== capacity) {
     setApplied({
       key: activeKey,
       capacity,
-      retention: advanceRetention(applied.retention, committed.current, activeKey, capacity),
+      retention: advanceRetention(applied.retention, committed.current, activeKey, capacity, budget),
     })
+  }
+
+  const reporterFor = (key: string): ((weight: number) => void) => {
+    const existing = reporters.current.get(key)
+    if (existing) return existing
+    const reporter = (weight: number) => { weights.current.set(key, weight) }
+    reporters.current.set(key, reporter)
+    return reporter
   }
 
   const entries: RetainedSurfaceEntry[] = []
   for (const key of applied.retention.keys) {
     if (key === activeKey) {
-      entries.push({ key, node: activeNode })
+      entries.push({ key, node: activeNode, reportWeight: reporterFor(key) })
       continue
     }
     const node = applied.retention.snapshots.get(key)
     if (node === undefined) continue
-    entries.push({ key, node })
+    entries.push({ key, node, reportWeight: reporterFor(key) })
   }
   return entries
 }
