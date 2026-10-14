@@ -9,7 +9,8 @@
  */
 import * as Y from 'yjs'
 import { SCHEMA_VERSION, validateObject, type CanvasObject, type CanvasObjectInput } from './schema.ts'
-import { isValidIndexKey, keyBetween } from './fractional-index.ts'
+import { isValidIndexKey, keyBetween, keysBetween } from './fractional-index.ts'
+import { wellFormed } from './text.ts'
 
 export type Origin = { kind: 'user'; userId: string } | { kind: 'agent'; sessionId: string } | { kind: 'remote' } | { kind: 'migration' }
 
@@ -71,7 +72,7 @@ export class CanvasDoc {
     if (this.meta.has('schemaVersion')) return
     this.doc.transact(() => {
       this.meta.set('schemaVersion', SCHEMA_VERSION)
-      this.meta.set('title', meta.title)
+      this.meta.set('title', wellFormed(meta.title))
       this.meta.set('createdAt', Date.now())
       if (meta.createdBy) this.meta.set('createdBy', meta.createdBy)
     }, origin)
@@ -88,7 +89,7 @@ export class CanvasDoc {
   }
 
   setTitle(title: string, origin: Origin): void {
-    this.doc.transact(() => this.meta.set('title', title), origin)
+    this.doc.transact(() => this.meta.set('title', wellFormed(title)), origin)
   }
 
   /** Top-most z key among siblings of `parentId`. */
@@ -207,7 +208,7 @@ export class CanvasDoc {
             if (k === 'props' && pk === TEXT_PROP && typeof pv === 'string') {
               const t = nested.get(pk)
               if (t instanceof Y.Text) applyTextDiff(t, pv)
-              else nested.set(pk, new Y.Text(pv))
+              else nested.set(pk, new Y.Text(wellFormed(pv)))
             } else if (!deepEqual(plain(nested.get(pk)), pv)) nested.set(pk, pv)
           }
         } else if (!deepEqual(m.get(k), v)) m.set(k, v)
@@ -311,7 +312,7 @@ function toYMap(o: CanvasObject): Y.Map<unknown> {
       m.set('style', style)
     } else if (k === 'props') {
       const props = new Y.Map<unknown>()
-      for (const [pk, pv] of Object.entries(v as Record<string, unknown>)) props.set(pk, pk === TEXT_PROP && typeof pv === 'string' ? new Y.Text(pv) : pv)
+      for (const [pk, pv] of Object.entries(v as Record<string, unknown>)) props.set(pk, pk === TEXT_PROP && typeof pv === 'string' ? new Y.Text(wellFormed(pv)) : pv)
       m.set('props', props)
     } else if (v !== undefined) m.set(k, v)
   }
@@ -339,14 +340,61 @@ function deepEqual(a: unknown, b: unknown): boolean {
 }
 
 /** Minimal edit: keep the common prefix/suffix so concurrent edits elsewhere survive. */
-export function applyTextDiff(t: Y.Text, next: string): void {
+export function applyTextDiff(t: Y.Text, nextRaw: string): void {
+  const next = wellFormed(nextRaw)
   const prev = t.toString()
   if (prev === next) return
   let start = 0
   const max = Math.min(prev.length, next.length)
   while (start < max && prev.charCodeAt(start) === next.charCodeAt(start)) start++
+  // Never cut inside a surrogate pair (the edit would leave lone halves).
+  if (start > 0 && isHigh(prev.charCodeAt(start - 1))) start--
   let endPrev = prev.length, endNext = next.length
   while (endPrev > start && endNext > start && prev.charCodeAt(endPrev - 1) === next.charCodeAt(endNext - 1)) { endPrev--; endNext-- }
+  if (endPrev < prev.length && isLow(prev.charCodeAt(endPrev))) { endPrev++; endNext++ }
   if (endPrev > start) t.delete(start, endPrev - start)
   if (endNext > start) t.insert(start, next.slice(start, endNext))
+}
+
+const isHigh = (c: number) => c >= 0xd800 && c <= 0xdbff
+const isLow = (c: number) => c >= 0xdc00 && c <= 0xdfff
+
+/**
+ * Legacy boards (pre integer-head keys, or keys from unvalidated peers): give
+ * every object whose z-key is invalid a fresh key above its valid siblings,
+ * keeping the old relative order. Also upgrades plain-object style/props and
+ * plain-string text to the current nested layout. Returns the ids touched.
+ */
+export function migrateLegacy(board: CanvasDoc, origin: Origin = { kind: 'migration' }): string[] {
+  const byParent = new Map<string | null, Array<[string, Y.Map<unknown>]>>()
+  for (const [id, m] of board.objects.entries()) {
+    const p = (m.get('parentId') ?? null) as string | null
+    const list = byParent.get(p) ?? []
+    list.push([id, m])
+    byParent.set(p, list)
+  }
+  const touched = new Set<string>()
+  board.doc.transact(() => {
+    for (const list of byParent.values()) {
+      const bad = list.filter(([, m]) => { const k = m.get('index'); return typeof k !== 'string' || !isValidIndexKey(k) })
+      if (bad.length) {
+        const top = list.map(([, m]) => m.get('index')).filter((k): k is string => typeof k === 'string' && isValidIndexKey(k)).sort().at(-1) ?? null
+        bad.sort(([ia, a], [ib, b]) => { const ka = String(a.get('index') ?? ''), kb = String(b.get('index') ?? ''); return ka < kb ? -1 : ka > kb ? 1 : ia < ib ? -1 : 1 })
+        const keys = keysBetween(top, null, bad.length)
+        bad.forEach(([id, m], i) => { m.set('index', keys[i]!); touched.add(id) })
+      }
+      for (const [id, m] of list) {
+        for (const k of ['style', 'props'] as const) {
+          const v = m.get(k)
+          if (v !== undefined && !(v instanceof Y.Map)) { ensureYMap(m, k); touched.add(id) }
+        }
+        const props = m.get('props')
+        if (props instanceof Y.Map && typeof props.get(TEXT_PROP) === 'string') {
+          props.set(TEXT_PROP, new Y.Text(wellFormed(props.get(TEXT_PROP) as string)))
+          touched.add(id)
+        }
+      }
+    }
+  }, origin)
+  return [...touched]
 }
