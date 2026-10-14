@@ -95,7 +95,7 @@ import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
 import { type ProfileStripData } from "./ProfileStrip"
 import { accountProfileStrip } from "./profile-strip-account"
-import { SidebarChrome } from "./SidebarChrome"
+import { SidebarChrome, SidebarHeaderControls } from "./SidebarChrome"
 import { StatusBar } from "./StatusBar"
 import { useUiAppearance } from "@/lib/ui-appearance-store"
 import { focusServicePanelAtom } from "./service-navigation"
@@ -3158,6 +3158,13 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
               }}
             >
             <div className="flex h-full flex-col select-none">
+              {/* Sidebar v2 header: collapse + pin side by side at the top. */}
+              <SidebarHeaderControls
+                collapsed={isSidebarCollapsed}
+                onToggleSidebar={handleToggleSidebar}
+                pinned={sidebarPinned}
+                onPin={handleToggleSidebarPin}
+              />
               {/* Sidebar Top Section */}
               <div className="flex-1 flex flex-col min-h-0">
                 {/* Primary Nav: Sessions → Labels → Projects → Pages | Memory…Knowledge | Automations → Settings */}
@@ -3217,11 +3224,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                     promoKind={promoKind}
                     onPromoCta={handleMemoryClick}
                     collapsed={isSidebarCollapsed}
-                    onToggleSidebar={handleToggleSidebar}
                     onOpenSettings={() => handleSettingsClick()}
-                    showPin={!isSidebarCollapsed}
-                    pinned={sidebarPinned}
-                    onPin={handleToggleSidebarPin}
                   />
                 </div>
               </div>

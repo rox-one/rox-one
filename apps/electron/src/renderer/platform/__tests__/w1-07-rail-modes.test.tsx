@@ -97,7 +97,9 @@ const railIds = (html: string) => [...html.matchAll(/data-testid="(rail-(?:item|
  * WP5 (#1580): flags off, the rail shows the registry's primary group; «Ещё» is closed.
  * WP6: one surface = one place — Чат and Документы live in the titlebar pill by default.
  */
-const BASELINE_RAIL_IDS = ['inbox', 'tasks', 'projects'].map((id) => `rail-item-${id}`)
+// Sidebar v2: the rail mirrors the sidebar's core order (pill surfaces keep their row; the browser
+// action needs a browser host, absent in this render).
+const BASELINE_RAIL_IDS = ['home', 'inbox', 'sessions', 'feed', 'docs', 'tasks', 'projects', 'meetings'].map((id) => `rail-item-${id}`)
 
 describe('ActivityRail render', () => {
   it('all mode flags off: exactly the registry primary group, no modes group, «Ещё» closed', () => {
@@ -117,8 +119,8 @@ describe('ActivityRail render', () => {
     expect(railModeEntries(pill([...UNIFIED_FLAGS, WIKI_FLAG])).map((mode) => mode.id)).toEqual(['messenger', 'calendar', 'goals', 'wiki'])
     // Projects gives its primary slot to «Цели и проекты» (goals) and moves to «Ещё».
     expect(railIds(html)).toEqual([
-      // WP6: Мессенджер (Команда) and Документы are in the pill; Чат returns to the rail.
-      ...['inbox', 'sessions', 'calendar', 'tasks', 'goals'].map((id) => `rail-item-${id}`),
+      // Sidebar v2: core order; pill surfaces (Мессенджер, Документы…) keep their rail row.
+      ...['home', 'inbox', 'messenger', 'sessions', 'feed', 'docs', 'tasks', 'goals', 'calendar'].map((id) => `rail-item-${id}`),
       'rail-mode-wiki',
     ])
   })

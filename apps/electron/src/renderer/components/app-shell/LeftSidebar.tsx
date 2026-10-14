@@ -207,7 +207,8 @@ const itemVariants: Variants = {
  * - Two-phase drop animation: overlay fades out, ghost fades in
  */
 /** WP4: the one sidebar row hover/active fill (UI-A1 state token). */
-const ROW_FILL = 'bg-[var(--state-hover)]'
+// Sidebar v2: selected ≠ hover — the active row uses the selected token.
+const ROW_FILL = 'bg-[var(--state-selected)] text-foreground font-medium'
 
 export const LeftSidebar = React.memo(function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested, serviceId, onExpand, disclosureColumn = true }: LeftSidebarProps) {
   const slot = !isNested && disclosureColumn

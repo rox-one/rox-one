@@ -73,7 +73,8 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   const enabledExtraScreenIds = useAtomValue(enabledExtraScreenIdsAtom)
 
   const { nav: { placements }, navIds: pillNavIds } = usePillModel(pillShown)
-  const entries = React.useMemo(() => resolvePrimaryNav({ shellFlags, placements, pillNavIds }), [shellFlags, placements, pillNavIds])
+  // Sidebar v2: Settings (registry footer entry) opens from the profile popover only.
+  const entries = React.useMemo(() => resolvePrimaryNav({ shellFlags, placements, pillNavIds }).filter(entry => !entry.footer), [shellFlags, placements, pillNavIds])
 
   const { primaryLinks, moreLinks } = React.useMemo(() => {
     const byId = new Map<string, LinkItem>()
@@ -169,11 +170,16 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   return (
     <>
       {/* WP6 slot 1: the global primary nav — same rows, same order on every screen. */}
-      <LeftSidebar
-        isCollapsed={isCollapsed}
-        onExpand={onExpandPrimary}
-        links={primaryLinks}
-      />
+      <nav aria-label={t('sidebar.navigation')} data-sidebar-primary-nav="" className="px-1">
+        {!isCollapsed && (
+          <div className="px-3 pb-0.5 pt-1 text-[11px] font-semibold uppercase caps-label text-text-muted">{t('sidebar.navigation')}</div>
+        )}
+        <LeftSidebar
+          isCollapsed={isCollapsed}
+          onExpand={onExpandPrimary}
+          links={primaryLinks}
+        />
+      </nav>
       {/* WP6 slot 2: the open surface's contextual navigation, right under the global nav. */}
       {showContext && (
         <section
@@ -209,7 +215,7 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
       />
       {/* «Ещё»: every other destination stays reachable, collapsed by default. */}
       <details
-        className="group/application-sections mx-1 mt-2 rounded-[var(--radius-card)] bg-[var(--state-hover)]"
+        className="group/application-sections mx-1 mt-1"
         data-application-sections
         open={moreOpen}
         onToggle={onMoreToggle}
@@ -223,10 +229,10 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
             'flex cursor-pointer list-none items-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden',
             isCollapsed
               ? 'mx-auto h-7 w-7 justify-center'
-              : 'gap-2 px-3 py-2.5 text-xs font-semibold text-muted-foreground',
+              : 'mx-1 min-h-7 gap-2 rounded-[var(--radius-control)] px-2 py-1 text-base text-muted-foreground transition-colors hover:bg-[var(--state-hover)] hover:text-foreground',
           )}
         >
-          <MoreHorizontal className="icon-caption text-accent" aria-hidden />
+          <MoreHorizontal className="h-4 w-4 shrink-0" aria-hidden />
           {!isCollapsed && <span className="min-w-0 flex-1 truncate">{t('workbench.mode.more')}</span>}
           {!isCollapsed && <ChevronRight className="icon-caption transition-transform group-open/application-sections:rotate-90 motion-reduce:transition-none" aria-hidden />}
         </summary>
