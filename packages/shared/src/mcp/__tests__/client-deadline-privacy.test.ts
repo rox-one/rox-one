@@ -220,9 +220,9 @@ describe('CraftMcpClient lifecycle — real transports', () => {
       clock.advance(100);
       await server.release(healthCheck);
       const discovery = await server.held('tools/list', 2);
-      // The SDK receives exactly the remaining 50ms, not a fresh 350ms.
-      expect(clock.remaining().length).toBeGreaterThan(0);
-      expect(clock.remaining().every(ms => ms === 50)).toBe(true);
+      // Client budget: the remaining 50 ms. SDK request timer: backstop only,
+      // armed one millisecond later so it can never settle the request first.
+      expect(clock.remaining().sort((a, b) => a - b)).toEqual([50, 51]);
       clock.advance(49);
       expect(settled).toBe(false);
       clock.advance(1);
