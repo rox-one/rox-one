@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react'
+import { Suspense, lazy, useEffect, type ReactNode } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { activityRailCollapsedAtom, featureMissionsBoardV1Atom } from '@/atoms/unified-shell'
 import {
@@ -16,7 +16,8 @@ import { ActivityRail } from './ActivityRail'
 import { InspectorHost } from './InspectorHost'
 import { useInspectorSuppressed } from './inspector-suppression'
 import { PanelHost } from './PanelHost'
-import { OrbitBoard } from './OrbitBoard'
+// Lazy: flag-gated pilot (default OFF), keeps ~65 KB out of startup.
+const OrbitBoard = lazy(() => import('./OrbitBoard').then(m => ({ default: m.OrbitBoard })))
 import { SurfaceTabs } from './SurfaceTabs'
 import { resolveWorkbenchAvailability } from './workbench-rollout'
 import { resolveWorkbenchChrome } from './workbench-chrome'
@@ -115,7 +116,7 @@ export function WorkspaceSurfaceHost({
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {/* Orbit board (G1 pilot, default OFF): ON swaps the centre surface
               for the spatial board; OFF renders children byte-identically. */}
-          {orbitBoardEnabled ? <OrbitBoard /> : <>{children}</>}
+          {orbitBoardEnabled ? <Suspense fallback={null}><OrbitBoard /></Suspense> : <>{children}</>}
         </div>
         <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>

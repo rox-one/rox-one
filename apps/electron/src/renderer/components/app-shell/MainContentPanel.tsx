@@ -275,7 +275,11 @@ export function MainContentPanel({
   return (
     <>
       {retainedSurfaces.map(entry => (
-        <RetainedSurfacePane key={entry.key} active={entry.key === routeKey}>
+        <RetainedSurfacePane
+          key={entry.key}
+          active={entry.key === routeKey}
+          onWeight={entry.reportWeight}
+        >
           {entry.node}
         </RetainedSurfacePane>
       ))}

@@ -37,7 +37,7 @@ import { readFileSync, existsSync } from 'node:fs'
 import { version as packageVersion } from '../package.json'
 import { enableDebug } from '@rox/shared/utils/debug'
 import { bootstrapServer, startHealthHttpServer, generateServerToken, maskTokenForDisplay } from '@rox/server-core/bootstrap'
-import { validateSession, createWebuiHandler, nodeHttpAdapter, readWebDefaultWorkspace } from '@rox/server-core/webui'
+import { validateSession, createWebuiHandler, nodeHttpAdapter, readWebDefaultWorkspace, maybeCreateCloudHandoffBroker } from '@rox/server-core/webui'
 import type { WebuiHandler } from '@rox/server-core/webui'
 import { getCredentialManager } from '@rox/shared/credentials'
 import { getWorkspaces, getEnv } from '@rox/shared/config'
@@ -189,6 +189,8 @@ if (webuiEnabled && serverToken) {
     allowedWebUiOrigins: webuiAllowedOrigins,
     getHealthCheck: () => healthCheckFn?.() ?? { status: 'starting' },
     logger: { info: console.log, warn: console.warn, error: console.error } as any,
+    // Hosted-only «В облако» broker; inert unless ROX_CLOUD_HANDOFF_BROKER_ENABLED=1.
+    extraRoutes: maybeCreateCloudHandoffBroker(),
   })
 
   webuiNodeHandler = nodeHttpAdapter(webuiHandler.fetch)

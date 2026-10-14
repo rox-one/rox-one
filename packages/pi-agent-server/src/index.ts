@@ -69,6 +69,7 @@ registerBunOAuthFlows();
 // Model resolution (extracted for testability + custom-endpoint precedence)
 import { resolvePiModel, isDeniedMiniModelId, isModelNotFoundError } from './model-resolution.ts';
 import { pickProviderAppropriateMiniModel } from './pick-mini-model.ts';
+import { shouldShutdownOnStdinClose } from './stdin-close-policy.ts';
 import {
   CRAFT_PI_EPHEMERAL_QUERY_DEADLINE_MS,
   createCraftSettingsManager,
@@ -1946,7 +1947,14 @@ function main(): void {
     }
   });
 
+  // Default: keep serving after stdin EOF (harness/stdio ignore, SSH drop).
+  // Opt in with ROX_SHUTDOWN_ON_STDIN_CLOSE=1 when the parent pipe is the
+  // only lifetime signal (S3-09).
   rl.on('close', () => {
+    if (!shouldShutdownOnStdinClose()) {
+      debugLog('stdin closed (ignored; set ROX_SHUTDOWN_ON_STDIN_CLOSE=1 to exit)');
+      return;
+    }
     debugLog('stdin closed, shutting down');
     handleShutdown();
   });

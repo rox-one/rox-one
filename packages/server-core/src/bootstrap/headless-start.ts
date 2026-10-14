@@ -10,7 +10,8 @@ import { lockHolderMatchesLock, parseTasklistImageName, type LockIdentity } from
 import { acquireStateWriterLock, type StateWriterLock } from '../state/writer-lock.ts'
 import { closeStateStore, openStateStore, stateWriterLockPath } from '../state/state-store.ts'
 import { OAuthFlowStore } from '@rox/shared/auth'
-import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig, getConfigPath, createInitialStoredConfig, getBundledSkillsDisabled, getWorkspaces } from '@rox/shared/config'
+import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig, getConfigPath, createInitialStoredConfig, getBundledSkillsDisabled, getWorkspaces, createAndActivateLocalWorkspace } from '@rox/shared/config'
+import { importCloudHandoffWorkspace } from './cloud-handoff-import'
 import { ensureContextDocs } from '@rox/shared/context-docs'
 import { ensureBundledSkillsInBackground } from '@rox/shared/skills'
 import { setBundledAssetsRoot } from '@rox/shared/utils'
@@ -559,6 +560,16 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
   try {
     stateWriterLock = acquireStateWriterLock(stateWriterLockPath(stateConfigDir), { label: 'rox-server' })
     openStateStore({ configDir: stateConfigDir, lock: stateWriterLock })
+  } catch (error) {
+    releaseServerLock()
+    throw error
+  }
+
+  // Cloud handoff sandbox: register the transferred chat before the session
+  // manager loads workspaces. No-op unless ROX_HANDOFF_WORKSPACE_DIR is set;
+  // a validation failure aborts startup so the health check fails closed.
+  try {
+    await importCloudHandoffWorkspace({ createAndActivateLocalWorkspace, logger: platform.logger })
   } catch (error) {
     releaseServerLock()
     throw error

@@ -713,6 +713,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
           description: branchErrorDescription(error, {
             fallback: t('toast.createBranchFailed'),
             sameProvider: t('toast.branchSameProvider'),
+            sdkNotReady: t('toast.branchSdkNotReady'),
+            historyUnavailable: t('toast.branchHistoryUnavailable'),
           }),
         })
       }
@@ -741,6 +743,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
           description: branchErrorDescription(error, {
             fallback: t('toast.createBranchFailed'),
             sameProvider: t('toast.branchSameProvider'),
+            sdkNotReady: t('toast.branchSdkNotReady'),
+            historyUnavailable: t('toast.branchHistoryUnavailable'),
           }),
         })
       }
@@ -772,6 +776,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
           description: branchErrorDescription(error, {
             fallback: t('toast.createBranchFailed'),
             sameProvider: t('toast.branchSameProvider'),
+            sdkNotReady: t('toast.branchSdkNotReady'),
+            historyUnavailable: t('toast.branchHistoryUnavailable'),
           }),
         })
       }
