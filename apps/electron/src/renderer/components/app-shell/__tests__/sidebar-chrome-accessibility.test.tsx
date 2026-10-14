@@ -104,7 +104,7 @@ describe('compact sidebar rendered accessibility', () => {
     expect(button).toContain('data-rail-avatar=""')
     expect(button).toContain('aria-haspopup="dialog"')
     expect(button).toContain('aria-expanded="false"')
-    expect(button).toContain('size-7')
+    expect(button).toContain('size-6')
     expect(button).not.toContain('>Rox User</span>')
   })
 
