@@ -1052,6 +1052,11 @@ export const RPC_CHANNELS = {
     MARK_READ: 'teamChat:markRead',
     CHANGED: 'teamChat:changed',
   },
+  chatFolders: {
+    GET: 'chatFolders:get',
+    MUTATE: 'chatFolders:mutate',
+    CHANGED: 'chatFolders:changed',
+  },
   views: {
     LIST: 'views:list',
     SAVE: 'views:save',

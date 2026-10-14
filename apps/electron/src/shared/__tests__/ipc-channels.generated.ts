@@ -113,6 +113,9 @@ export const EXPECTED_CHANNELS: string[] = [
   'calendar:googleDisconnect',
   'calendar:googleStatus',
   'calendar:googleSync',
+  'chatFolders:changed',
+  'chatFolders:get',
+  'chatFolders:mutate',
   'chatgpt:cancelOAuth',
   'chatgpt:completeOAuth',
   'chatgpt:getAuthStatus',
@@ -1112,4 +1115,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1108
+export const EXPECTED_CHANNEL_COUNT = 1111
