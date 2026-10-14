@@ -58,17 +58,24 @@ describe('createIncrementalTurnGrouper (#1589)', () => {
     msgs = []; check()
   })
 
-  it('is faster than full regroup per streaming delta on 2000 turns', () => {
+  it('streaming delta on 2000 turns regroups only the open tail (structural, no timing)', () => {
     const msgs = generateLongChat(2000)
     const g = createIncrementalTurnGrouper()
-    g.group(msgs)
+    const first = g.group(msgs)
+    expect(g.lastStats()).toEqual({ regroupedMessages: msgs.length, reusedTurns: 0 })
+    let lastUser = first.length - 1
+    while (first[lastUser]!.type !== 'user') lastUser--
+    const tailMessages = msgs.length - 1 - msgs.map(m => m.role).lastIndexOf('user')
     let cur = [...msgs, { id: 'x', role: 'assistant', content: '', isStreaming: true, timestamp: Number.MAX_SAFE_INTEGER - 100 } as Message]
-    const t0 = performance.now()
-    for (let i = 0; i < 30; i++) { cur = [...cur.slice(0, -1), { ...cur[cur.length - 1]!, content: 'x'.repeat(i) }]; g.group(cur) }
-    const inc = performance.now() - t0
-    const t1 = performance.now()
-    for (let i = 0; i < 30; i++) groupMessagesByTurn(cur)
-    const full = performance.now() - t1
-    expect(inc).toBeLessThan(full)
+    for (let i = 0; i < 30; i++) {
+      cur = [...cur.slice(0, -1), { ...cur[cur.length - 1]!, content: 'x'.repeat(i) }]
+      const turns = g.group(cur)
+      const st = g.lastStats()
+      expect(st.reusedTurns).toBe(lastUser + 1)
+      expect(st.regroupedMessages).toBe(tailMessages + 1)
+      expect(st.regroupedMessages).toBeLessThan(20)
+      for (let k = 0; k <= lastUser; k += 97) expect(turns[k]).toBe(first[k])
+      expect(turns[lastUser]).toBe(first[lastUser])
+    }
   })
 })

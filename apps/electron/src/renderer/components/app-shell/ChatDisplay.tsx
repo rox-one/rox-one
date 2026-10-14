@@ -62,7 +62,7 @@ import {
   type DiffViewerSettings,
 } from "@rox/ui"
 import { useFocusZone } from "@/hooks/keyboard"
-import { computeLaterTurnFlags, isOffscreenEligible, OFFSCREEN_TURN_STYLE } from './chat-timeline-window'
+import { computeLaterTurnFlags, isOffscreenEligible, OFFSCREEN_TURN_STYLE, IDLE_JUMP, beginJump, settleJump, jumpScrollBehavior, scrollIntoViewForJump, PENDING_JUMP_TIMEOUT_MS, type PendingJumpState } from './chat-timeline-window'
 import { useTheme } from "@/hooks/useTheme"
 import type { Session, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, LoadedSource, LoadedSkill } from "../../../shared/types"
 import type { AnnotationV1 } from "@rox/core"
@@ -740,6 +740,27 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Reverse pagination: show last N turns initially, load more on scroll up
   const TURNS_PER_PAGE = 20
   const [visibleTurnCount, setVisibleTurnCount] = React.useState(TURNS_PER_PAGE)
+  // Pending jump (#1589): while set, turns from the target (absolute index) to the
+  // bottom render at real size so jump scroll offsets are exact.
+  const [pendingJump, setPendingJump] = React.useState<PendingJumpState>(IDLE_JUMP)
+  const pendingJumpRef = React.useRef<PendingJumpState>(IDLE_JUMP)
+  const startJump = React.useCallback((absoluteIndex: number) => {
+    const next = beginJump(pendingJumpRef.current, absoluteIndex)
+    pendingJumpRef.current = next
+    setPendingJump(next)
+    const token = next.token
+    setTimeout(() => {
+      const settled = settleJump(pendingJumpRef.current, token)
+      if (settled !== pendingJumpRef.current) { pendingJumpRef.current = settled; setPendingJump(settled) }
+    }, PENDING_JUMP_TIMEOUT_MS)
+    return token
+  }, [])
+  const finishJump = React.useCallback((token: number) => {
+    const next = settleJump(pendingJumpRef.current, token)
+    if (next === pendingJumpRef.current) return
+    pendingJumpRef.current = next
+    setPendingJump(next)
+  }, [])
   // Sticky-bottom: When true, auto-scroll on content changes. Toggled by user scroll behavior.
   const isStickToBottomRef = React.useRef(true)
   // Mirror isFocusedPanel into a ref so the ResizeObserver closure reads the latest value
@@ -1042,17 +1063,20 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       // Scroll the turn into view
       const turnEl = turnRefs.current.get(turnId)
       if (turnEl) {
+        const jumpToken = startJump(turnIndex)
         const rect = turnEl.getBoundingClientRect()
         const buffer = 128
         const isVisible = rect.top >= buffer && rect.bottom <= window.innerHeight - buffer
         if (!isVisible) {
           interruptOutputFollow()
-          turnEl.scrollIntoView({ behavior: 'instant', block: 'center' })
+          scrollIntoViewForJump(turnEl, 'instant', () => finishJump(jumpToken))
+        } else {
+          finishJump(jumpToken)
         }
       }
       shouldScrollToMatchRef.current = false
     }
-  }, [validMatches, currentMatchIndex, session?.id, visibleTurnCount, interruptOutputFollow])
+  }, [validMatches, currentMatchIndex, session?.id, visibleTurnCount, interruptOutputFollow, startJump, finishJump])
 
   // ---------------------------------------------------------------------------
   // CSS Custom Highlight API — non-destructive text highlighting
@@ -1402,6 +1426,10 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
 
         // Measure only after React commits the added turns; a frame may run before that commit.
         pendingHistoryAnchorRef.current = { viewport, owner, height: prevScrollHeight, top: scrollTop }
+        // Note (#1589): prepended turns are measured with 320px content-visibility
+        // placeholders here. When they later scroll into view at real height, the
+        // position correction relies on Chromium scroll anchoring (overflow-anchor
+        // must stay enabled on the chat viewport).
 
         return prev + TURNS_PER_PAGE
       })
@@ -1452,6 +1480,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     if (isSessionSwitch) {
       isStickToBottomRef.current = true
       setVisibleTurnCount(TURNS_PER_PAGE)
+      pendingJumpRef.current = { index: null, token: pendingJumpRef.current.token + 1 }
+      setPendingJump(pendingJumpRef.current)
     }
 
     // Debounced scroll for streaming - waits for layout to settle
@@ -1889,6 +1919,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     interruptOutputFollow()
 
     const ensureVisibleCount = allTurns.length - targetTurnIndex
+    const jumpToken = startJump(targetTurnIndex)
+    const behavior = jumpScrollBehavior(targetTurnIndex, allTurns.length, reducedMotionRef.current)
 
     const scrollToTurn = () => {
       const targetTurn = allTurns[targetTurnIndex]
@@ -1899,7 +1931,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       if (!turnContainer) return false
 
       interruptOutputFollow()
-      turnContainer.scrollIntoView({ behavior: reducedMotionRef.current ? 'instant' : 'smooth', block: 'center' })
+      scrollIntoViewForJump(turnContainer, behavior, () => finishJump(jumpToken))
       return true
     }
 
@@ -1922,7 +1954,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         void scrollToTurn()
       })
     }
-  }, [assistantTurnIndexByMessageId, allTurns, visibleTurnCount, interruptOutputFollow])
+  }, [assistantTurnIndexByMessageId, allTurns, visibleTurnCount, interruptOutputFollow, startJump, finishJump])
 
   const scrollToMessage = useCallback((messageId: string) => {
     if (!messageId) return
@@ -1948,6 +1980,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     interruptOutputFollow()
 
     const ensureVisibleCount = allTurns.length - targetTurnIndex
+    const jumpToken = startJump(targetTurnIndex)
+    const behavior = jumpScrollBehavior(targetTurnIndex, allTurns.length, reducedMotionRef.current)
     const scrollToTurn = () => {
       const targetTurn = allTurns[targetTurnIndex]
       if (!targetTurn) return false
@@ -1958,13 +1992,13 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         const byId = document.getElementById(messageId)
         if (byId) {
           interruptOutputFollow()
-          byId.scrollIntoView({ behavior: reducedMotionRef.current ? 'instant' : 'smooth', block: 'center' })
+          scrollIntoViewForJump(byId, behavior, () => finishJump(jumpToken))
           return true
         }
         return false
       }
       interruptOutputFollow()
-      turnContainer.scrollIntoView({ behavior: reducedMotionRef.current ? 'instant' : 'smooth', block: 'center' })
+      scrollIntoViewForJump(turnContainer, behavior, () => finishJump(jumpToken))
       return true
     }
 
@@ -1980,7 +2014,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     if (!scrollToTurn()) {
       requestAnimationFrame(() => { void scrollToTurn() })
     }
-  }, [allTurns, assistantTurnIndexByMessageId, visibleTurnCount])
+  }, [allTurns, assistantTurnIndexByMessageId, visibleTurnCount, startJump, finishJump])
 
     // Expose navigation via imperative handle (for session list + mindmap click-through)
   React.useImperativeHandle(ref, () => ({
@@ -2179,7 +2213,7 @@ const handleFollowUpChipClick = useCallback((item: {
                     // Virtualized paint (#1589): far-from-bottom, settled turns skip layout/paint
                     // while off screen. DOM stays mounted, so markdown stays eager, search
                     // highlights/scrollIntoView/jump-to-message keep working.
-                    const offscreenStyle = isOffscreenEligible(index, turns.length, turn, isAnyMatch) ? OFFSCREEN_TURN_STYLE : undefined
+                    const offscreenStyle = isOffscreenEligible(index, turns.length, turn, isAnyMatch, pendingJump.index != null ? pendingJump.index - startIndex : null) ? OFFSCREEN_TURN_STYLE : undefined
 
                     // User turns - render with MemoizedMessageBubble
                     // Extra padding creates visual separation from AI responses

@@ -1257,6 +1257,8 @@ export function countTotalActivities(items: (ActivityItem | ActivityGroup)[]): n
 export interface IncrementalTurnGrouper {
   group(messages: Message[], options?: GroupTurnsOptions): Turn[]
   reset(): void
+  /** Work done by the last `group` call (for tests/diagnostics). */
+  lastStats(): { regroupedMessages: number; reusedTurns: number }
 }
 
 interface GrouperCache {
@@ -1295,15 +1297,18 @@ function buildBoundaryIndex(sorted: Message[], turns: Turn[]): Map<number, numbe
 
 export function createIncrementalTurnGrouper(): IncrementalTurnGrouper {
   let cache: GrouperCache | null = null
+  let stats = { regroupedMessages: 0, reusedTurns: 0 }
 
   const full = (sorted: Message[], options: GroupTurnsOptions): Turn[] => {
     const turns = groupMessagesByTurn(sorted, options)
+    stats = { regroupedMessages: sorted.length, reusedTurns: 0 }
     cache = { sorted, turns, boundaryTurnCount: buildBoundaryIndex(sorted, turns) }
     return turns
   }
 
   return {
     reset() { cache = null },
+    lastStats() { return stats },
     group(messages, options = {}) {
       const sorted = sortVisible(messages)
       const prev = cache
@@ -1324,6 +1329,7 @@ export function createIncrementalTurnGrouper(): IncrementalTurnGrouper {
       const tailSorted = sorted.slice(boundary + 1)
       const tailTurns = groupMessagesByTurn(tailSorted, options)
       const turns = prev.turns.slice(0, keptTurnCount).concat(tailTurns)
+      stats = { regroupedMessages: tailSorted.length, reusedTurns: keptTurnCount }
 
       const boundaryTurnCount = new Map<number, number>()
       for (const [idx, count] of prev.boundaryTurnCount) {
