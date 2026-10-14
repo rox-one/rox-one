@@ -97,6 +97,8 @@ import {
 import { ConfirmDialog, Glyph, ProgressPie, TaskCheckbox, prefersReducedMotion } from './tasks/parts'
 import { QuickEntry, type QuickEntryResult } from './tasks/QuickEntry'
 import { MoveDialog, type MoveDestination } from './tasks/MoveDialog'
+import { BulkActionBar, type BulkAction } from './tasks/BulkActionBar'
+import { orderedSelection, pruneSelection, rangeSelection, toggleInSelection } from './tasks/multi-select'
 import { TaskDetail } from './tasks/TaskDetail'
 import { useTaskDetailDrafts } from './tasks/use-task-detail-drafts'
 import { TaskSidebar } from './tasks/TaskSidebar'
@@ -194,6 +196,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
     if (consumePendingCompose('tasks')) setQuickEntry({ initial: '' })
   }, [])
   const [moveFor, setMoveFor] = useState<string | null>(null)
+  const [multi, setMulti] = useState<Set<string>>(() => new Set())
+  const [bulkMove, setBulkMove] = useState(false)
+  const anchorRef = useRef<string | null>(null)
   const [popover, setPopover] = useState<'when' | 'deadline' | null>(null)
   const [confirm, setConfirm] = useState<null | { kind: 'emptyTrash' } | { kind: 'removeArea'; id: string } | { kind: 'removeHeading'; id: string }>(null)
   const [inline, setInline] = useState<InlineDraft | null>(null)
@@ -591,6 +596,62 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }, [view, topLevel, search, tagFilter, sort, pendingDone, showDone, store, projects, i18n.language])
 
   const visible = useMemo(() => sections.flatMap((section) => section.tasks), [sections])
+  const visibleIds = useMemo(() => visible.map((task) => task.id), [visible])
+  // Selection never outlives the rows it points at (view switch, search, completion).
+  useEffect(() => { setMulti((prev) => pruneSelection(prev, visibleIds)) }, [visibleIds])
+  const clearMulti = useCallback(() => setMulti((prev) => (prev.size ? new Set() : prev)), [])
+  const bulkIds = multi.size > 1 ? orderedSelection(multi, visibleIds) : []
+
+  const onRowClick = (event: React.MouseEvent, id: string) => {
+    const mod = event.metaKey || event.ctrlKey
+    if (event.shiftKey) {
+      event.preventDefault()
+      setMulti(rangeSelection(visibleIds, anchorRef.current ?? selectedId, id))
+      return
+    }
+    if (mod) {
+      setMulti((prev) => toggleInSelection(prev, id, selectedId))
+      anchorRef.current = id
+      return
+    }
+    anchorRef.current = id
+    clearMulti()
+    selectTask(id)
+  }
+
+  const runBulk = (action: BulkAction) => {
+    const ids = bulkIds
+    if (!ids.length) return
+    if (action === 'move') { setBulkMove(true); return }
+    if (action === 'trash') {
+      mutate((current) => { for (const id of ids) if (current.get(id)) current.trash(id) })
+      toast(t('tasks.bulk.trashed', { count: ids.length }), {
+        action: { label: t('tasks.toast.undo'), onClick: () => mutate((current) => { for (const id of ids) if (current.get(id)) current.restore(id) }) },
+      })
+    } else if (action === 'complete') {
+      const done: string[] = []
+      const spawned: string[] = []
+      mutate((current) => {
+        for (const id of ids) {
+          const task = current.get(id)
+          if (!task || task.completedAt || task.cancelledAt) continue
+          done.push(id)
+          const next = current.completeTask(id).next
+          if (next) spawned.push(next.id)
+        }
+      })
+      if (done.length) toast(t('tasks.bulk.completed', { count: done.length }), {
+        action: { label: t('tasks.toast.undo'), onClick: () => mutate((current) => {
+          for (const id of done) if (current.get(id)) current.reopen(id)
+          for (const id of spawned) if (current.get(id)) current.remove(id)
+        }) },
+      })
+    } else {
+      const when: TaskWhen = action === 'today' ? { kind: 'today' } : action === 'evening' ? { kind: 'evening' } : { kind: 'someday' }
+      mutate((current) => { for (const id of ids) if (current.get(id)) current.setWhen(id, when) })
+    }
+    clearMulti()
+  }
   const selected = selectedId ? store.get(selectedId) : undefined
   const nativeTasks = personalTasksNativeAvailable()
   const syncState = personalTasksSyncState()
@@ -690,7 +751,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
 
   const onKeyDown = (event: React.KeyboardEvent) => {
     if (event.defaultPrevented || event.nativeEvent.isComposing || !canHandleKeyboard(event.target)) return
-    if (quickEntry || moveFor || confirm) return
+    if (quickEntry || moveFor || bulkMove || confirm) return
     const target = event.target as HTMLElement
     // Portalled navigation still bubbles through this page's React tree.
     // Sidebar buttons and disclosures retain their native Space/Enter behavior.
@@ -700,6 +761,12 @@ export default function TasksPage(props: TasksPageProps = {}) {
     if (mod && event.key === 'Enter' && selected) {
       event.preventDefault()
       void delegate(selected)
+      return
+    }
+    if (!typing && multi.size && event.key === 'Escape') { event.preventDefault(); clearMulti(); return }
+    if (!typing && mod && !event.shiftKey && event.code === 'KeyA' && visibleIds.length) {
+      event.preventDefault()
+      setMulti(new Set(visibleIds))
       return
     }
     if (typing) {
@@ -959,7 +1026,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
     const isToday = isOpenTask(task) && matchesProjection(task, now, 'today')
     const place = !inProjectView && !section.onOpen && (task.projectId || task.areaId) ? (task.projectId ? projectName(task.projectId) : areaName(task.areaId)) : null
     const subs = subtasksOf(tasks, task.id)
-    const selectedRow = selectedId === task.id
+    const selectedRow = selectedId === task.id || multi.has(task.id)
     const showStart = task.startAt != null && showToday && !isToday && !done
     const hasMeta = Boolean(place || progress.total || subs.length || source || showStart || (done && task.completedAt))
     return (
@@ -994,7 +1061,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           aria-selected={selectedRow}
           tabIndex={selectedRow ? 0 : -1}
           data-testid={`task-row-${task.id}`}
-          onClick={() => selectTask(task.id)}
+          onClick={(event) => onRowClick(event, task.id)}
           onDoubleClick={() => { selectTask(task.id); window.setTimeout(() => titleRef.current?.focus(), 0) }}
           className={cn(
             'mx-1.5 flex cursor-default items-start gap-2 rounded-[var(--radius-card)] px-2 py-[5px] outline-none',
@@ -1263,6 +1330,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       <div
         ref={listRef}
         role="listbox"
+        aria-multiselectable="true"
         aria-label={typeof listTitle === 'string' ? listTitle : undefined}
         tabIndex={0}
         data-testid="tasks-list"
@@ -1490,6 +1558,15 @@ export default function TasksPage(props: TasksPageProps = {}) {
           onClose={() => { setMoveFor(null); listRef.current?.focus() }}
         />
       ) : null}
+      {bulkMove && bulkIds.length ? (
+        <MoveDialog
+          title={t('tasks.bulk.moveTitle', { count: bulkIds.length })}
+          destinations={moveDestinations}
+          onPick={(dest) => { for (const id of bulkIds) applyDestination(id, dest); setBulkMove(false); clearMulti(); listRef.current?.focus() }}
+          onClose={() => { setBulkMove(false); listRef.current?.focus() }}
+        />
+      ) : null}
+      {bulkIds.length && !bulkMove ? <BulkActionBar count={bulkIds.length} onAction={runBulk} onClear={() => { clearMulti(); listRef.current?.focus() }} /> : null}
       {confirm?.kind === 'emptyTrash' ? (
         <ConfirmDialog
           title={t('tasks.trash.emptyTitle')}
