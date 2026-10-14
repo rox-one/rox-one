@@ -145,7 +145,9 @@ export class MiniGlassController {
     // Bind before load: the preload's sync proof/workspace channels run on eval.
     this.deps.registerAuxiliaryWindow(window, workspaceId)
     window.on('moved', () => {
-      if (window.isDestroyed()) return
+      // Only user drags of the collapsed buttons define the remembered spot;
+      // the expanded pill may be shifted to stay on screen.
+      if (window.isDestroyed() || this.expanded) return
       const [x, y] = window.getPosition()
       this.deps.writePosition({ x, y })
     })
