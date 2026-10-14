@@ -1456,11 +1456,12 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
             <ChatDisplay
               ref={connectChatDisplayRef}
               session={session}
-              onSendMessage={(message, attachments, skillSlugs) => {
+              supportsQueueMode
+              onSendMessage={(message, attachments, skillSlugs, queueMode) => {
                 if (session) {
                   const act = soupChatActResult({ source: 'native', action: 'write', nativeId: session.id })
                   if (!isClaimableLive(act)) return
-                  onSendMessage(session.id, message, attachments, skillSlugs)
+                  onSendMessage(session.id, message, attachments, skillSlugs, undefined, queueMode)
                 }
               }}
               onOpenFile={handleOpenFile}

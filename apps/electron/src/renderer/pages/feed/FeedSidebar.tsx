@@ -30,7 +30,7 @@ const DOT: Record<Tone, string> = {
   warning: 'bg-[var(--warning,#d9a13b)]', info: 'bg-info', muted: 'bg-text-muted',
 }
 
-const SOURCE_ICONS: Record<FeedSourceKind, LucideIcon> = {
+export const SOURCE_ICONS: Record<FeedSourceKind, LucideIcon> = {
   rss: Rss, atom: Rss, youtube: Youtube, github: Github,
   x: AtSign, page: Globe, unknown: Globe,
 }

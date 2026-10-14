@@ -73,6 +73,7 @@ import {
   buildTeamItems,
   filterView,
   groupOrdered,
+  sourceHealth,
   sourceLabel,
   suggestTags,
   tabCounts,
@@ -96,12 +97,15 @@ import type { FeedSection } from './feed/FeedSectionTabs'
 import { InboxQueue } from './inbox/InboxQueue'
 import { roxQueryClient } from '@/lib/query/client'
 import { roxKeys } from '@/lib/query/keys'
+import { useFeedScreenSidebar } from '@/screens/feed/useFeedScreenSidebar'
 import { cacheWriteEpoch, fencedPatchQueryData, fencedSetQueryData } from '@/lib/query/shared-read'
 
 /** PERF-09: last list per (workspace, actor), memory only; the page revalidates on mount. */
 function cachedFeed(workspaceId: string | null, caller: FeedCaller): FeedListResult | null {
   return workspaceId ? roxQueryClient().getQueryData<FeedListResult>(roxKeys.feed(workspaceId, caller.preferenceKey)) ?? null : null
 }
+
+const NO_TAGS: readonly { tag: string; count: number }[] = []
 
 type View = FeedView
 type Density = 'list' | 'cards'
@@ -561,6 +565,26 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
     />
     </div>
   )
+
+  // Shell second sidebar (shell-layout): same data as the legacy portal navigator.
+  const sidebarSources = useMemo(() => data.sources.map((s) => ({ id: s.id, label: sourceLabel(s), kind: s.kind, count: s.itemCount ?? 0, unhealthy: s.paused || sourceHealth(s) === 'error' })), [data.sources])
+  useFeedScreenSidebar({
+    counts,
+    attention,
+    sources: sidebarSources,
+    tags: view === 'sources' ? NO_TAGS : tabTags,
+    x: { connected: data.x.state === 'connected', username: data.x.username },
+    team: { connected: Boolean(roster.org), name: roster.org ? roster.org.name ?? t('feed.nav.teamLocal') : t('feed.nav.teamNoOrg') },
+    activeKey: tagFilter ? `label:${tagFilter}` : view === 'news' && sourceFilter ? `source:${sourceFilter}` : `view:${view}`,
+    onView: (next) => { switchView(next); if (next !== 'sources') setSourceFilter(null) },
+    onSource: (id) => { switchView('news'); setSourceFilter(id) },
+    onTag: (tag) => setTagFilter(tagFilter?.toLowerCase() === tag.toLowerCase() ? null : tag),
+    query,
+    onQuery: setQuery,
+    onRefresh: () => { void load() },
+    loading: !loaded && !loadError,
+    error: loadError ? t('feed.loadError') : null,
+  }, true)
 
   // ── list: feed tabs ──────────────────────────────────────────────────────
   const metaOf = (item: FeedViewItem) => {
