@@ -1966,3 +1966,19 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   from { opacity: 0; transform: translateX(calc(var(--spacing) * -3)); }
   to { opacity: 1; transform: none; }
 }
+
+/* Rail breakpoints: when the rail expands (auto at >= --shell-bp-regular, or
+   by the user) its labels fade/slide in instead of popping. Opacity and
+   transform only; --motion-disclosure is 0ms under reduced motion and during
+   a live resize (html[data-resizing]), so crossing the breakpoint while
+   dragging the window never animates. */
+.rox-rail-label {
+  animation: rox-rail-label-in var(--motion-disclosure) var(--ease-standard) both;
+}
+html[data-resizing] .rox-rail-label {
+  animation: none;
+}
+@keyframes rox-rail-label-in {
+  from { opacity: 0; transform: translateX(calc(var(--spacing) * -1)); }
+  to { opacity: 1; transform: none; }
+}
