@@ -204,3 +204,64 @@ export function cleanSubreddit(value: string): string | null {
   const name = value.trim().replace(/^\/?r\//i, '')
   return /^[A-Za-z0-9_]{2,21}$/.test(name) ? name : null
 }
+
+// ---------------------------------------------------------------------------
+// GitHub REST (unauthenticated, public data)
+// ---------------------------------------------------------------------------
+
+/** "owner/name" with GitHub's allowed characters. */
+export function cleanRepo(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const v = value.trim().replace(/^https:\/\/github\.com\//i, '').replace(/\.git$|\/$/g, '')
+  return /^[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}$/.test(v) && !v.includes('..') ? v : null
+}
+
+export function parseGithubReleases(raw: unknown, repo: string, includePre = false): FeedItem[] {
+  const list = Array.isArray(raw) ? raw : []
+  const out: FeedItem[] = []
+  for (const r of list) {
+    if (!isRecord(r) || r.draft === true || (!includePre && r.prerelease === true)) continue
+    const url = safeLink(r.html_url)
+    const tag = str(r.tag_name, 100)
+    if (!url || !tag || !url.startsWith('https://github.com/')) continue
+    const at = parseDate(typeof r.published_at === 'string' ? r.published_at : null)
+    const name = str(r.name)
+    out.push({ id: `${repo}@${tag}`, title: `${repo} ${tag}`, url, meta: name && name !== tag ? name : repo, ...(at !== undefined ? { at } : {}) })
+  }
+  return out
+}
+
+export function parseGithubRepo(raw: unknown): FeedItem[] {
+  if (!isRecord(raw)) return []
+  const url = safeLink(raw.html_url)
+  const name = str(raw.full_name, 140)
+  if (!url || !name || !url.startsWith('https://github.com/')) return []
+  const at = parseDate(typeof raw.pushed_at === 'string' ? raw.pushed_at : null)
+  const desc = str(raw.description, 200)
+  return [{
+    id: name,
+    title: name,
+    url,
+    ...(num(raw.stargazers_count) !== undefined ? { score: num(raw.stargazers_count) } : {}),
+    ...(num(raw.open_issues_count) !== undefined ? { comments: num(raw.open_issues_count) } : {}),
+    ...(desc ? { meta: desc } : {}),
+    ...(at !== undefined ? { at } : {}),
+  }]
+}
+
+// ---------------------------------------------------------------------------
+// YouTube channel feeds, Twitch
+// ---------------------------------------------------------------------------
+
+/** Channel id (UC…) or a full channel URL with one. Handles (@name) need an id. */
+export function cleanYoutubeChannel(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const m = value.trim().match(/(?:^|\/channel\/)(UC[A-Za-z0-9_-]{22})(?:$|[/?#])/)
+  return m ? m[1]! : null
+}
+
+export function cleanTwitchLogin(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const v = value.trim().replace(/^https:\/\/(www\.)?twitch\.tv\//i, '').replace(/\/$/, '').toLowerCase()
+  return /^[a-z0-9_]{3,25}$/.test(v) ? v : null
+}

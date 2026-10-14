@@ -20,7 +20,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { AppWindow, Bookmark, ChevronDown, ChevronLeft, ChevronRight, Clock, Columns3, FileText, GripVertical, Layers, LayoutGrid, ListChecks, MessageSquare, Newspaper, Plus, Rss, Settings2, Trash2, X } from 'lucide-react'
+import { AppWindow, Bookmark, ChevronDown, ChevronLeft, ChevronRight, Clock, Columns3, FileText, GitBranch, GripVertical, Layers, LayoutGrid, ListChecks, MessageSquare, Newspaper, Play, Plus, Radio, Rss, Settings2, Tag, Trash2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -68,6 +68,10 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   rss: Rss,
   newspaper: Newspaper,
   'message-square': MessageSquare,
+  play: Play,
+  radio: Radio,
+  tag: Tag,
+  'git-branch': GitBranch,
 }
 
 export function glanceIcon(name: string): React.ComponentType<{ className?: string }> {

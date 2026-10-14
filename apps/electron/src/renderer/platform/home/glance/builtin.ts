@@ -205,4 +205,57 @@ export function registerBuiltinGlanceWidgets(): void {
     network: true,
     load: () => import('./widgets/RedditWidget'),
   })
+
+  registerGlanceWidget({
+    type: 'youtube',
+    category: 'media',
+    title: 'YouTube',
+    icon: 'play',
+    defaultConfig: { channels: [], limit: 15, collapseAfter: 5 },
+    fields: [
+      { key: 'channels', kind: 'strings', labelKey: 'glance.f.channels', hintKey: 'glance.f.youtubeHint', placeholder: 'UC…' },
+      limitField,
+      collapseField,
+    ],
+    network: true,
+    load: () => import('./widgets/YoutubeWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'twitch',
+    category: 'media',
+    title: 'Twitch',
+    icon: 'radio',
+    defaultConfig: { channels: [] },
+    fields: [{ key: 'channels', kind: 'strings', labelKey: 'glance.f.channels', placeholder: 'twitchdev' }],
+    network: true,
+    load: () => import('./widgets/TwitchWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'github-releases',
+    category: 'dev',
+    title: 'GitHub Releases',
+    icon: 'tag',
+    defaultConfig: { repos: [], prereleases: false, limit: 10, collapseAfter: 5 },
+    fields: [
+      { key: 'repos', kind: 'strings', labelKey: 'glance.f.repos', placeholder: 'owner/repo' },
+      { key: 'prereleases', kind: 'boolean', labelKey: 'glance.f.prereleases' },
+      limitField,
+      collapseField,
+    ],
+    network: true,
+    load: () => import('./widgets/GithubReleasesWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'github-repos',
+    category: 'dev',
+    title: 'GitHub',
+    icon: 'git-branch',
+    defaultConfig: { repos: [] },
+    fields: [{ key: 'repos', kind: 'strings', labelKey: 'glance.f.repos', placeholder: 'owner/repo' }],
+    network: true,
+    load: () => import('./widgets/GithubReposWidget'),
+  })
 }

@@ -1,43 +1,17 @@
-/**
- * RSS / Atom: several feeds fetched as text through home-fetch, merged
- * newest-first. One hidden child per feed keeps each on its own cache entry.
- */
+/** RSS / Atom: several feeds fetched as text, merged newest-first. */
 import * as React from 'react'
-import { useTranslation } from 'react-i18next'
 import type { GlanceWidgetProps } from '../registry'
-import { useHomeFetch } from '@/lib/home-fetch'
-import { FeedList, ListSkeleton, NetStatus, clampInt, useOnScreen } from './net/kit'
-import { mergeFeeds, parseFeed, safeLink, type FeedItem } from './net/parsers'
-import type { HomeFetchErrorReason } from '../../../../../shared/home-fetch'
+import { MultiFeed } from './net/MultiFeed'
+import { clampInt } from './net/kit'
+import { parseFeed, safeLink } from './net/parsers'
 
-type Slot = { items: FeedItem[] | null; error: HomeFetchErrorReason | null; refresh: () => void }
+const parse = (raw: unknown, url: string) => (typeof raw === 'string' ? parseFeed(raw, url).items : [])
 
-function FeedSource({ url, paused, onState }: { url: string; paused: boolean; onState: (url: string, slot: Slot) => void }) {
-  const s = useHomeFetch<string>(url, { as: 'text', refreshMs: 15 * 60_000, paused })
-  const items = React.useMemo(() => (typeof s.data === 'string' ? parseFeed(s.data, url).items : null), [s.data, url])
-  React.useEffect(() => onState(url, { items, error: s.error, refresh: s.refresh }), [items, onState, s.error, s.refresh, url])
-  return null
+export function feedUrls(value: unknown, max = 12): string[] {
+  return [...new Set((Array.isArray(value) ? value : []).map((f) => safeLink(f)).filter((f): f is string => !!f))].slice(0, max)
 }
 
 export default function RssWidget({ config }: GlanceWidgetProps) {
-  const { t } = useTranslation()
-  const [ref, visible] = useOnScreen<HTMLDivElement>()
-  const feeds = React.useMemo(
-    () => [...new Set((Array.isArray(config.feeds) ? config.feeds : []).map((f) => safeLink(f)).filter((f): f is string => !!f))].slice(0, 12),
-    [config.feeds],
-  )
-  const [slots, setSlots] = React.useState<Record<string, Slot>>({})
-  const onState = React.useCallback((url: string, slot: Slot) => setSlots((s) => ({ ...s, [url]: slot })), [])
-  const limit = clampInt(config.limit, 1, 100, 20)
-  const live = feeds.map((f) => slots[f]).filter((s): s is Slot => !!s)
-  const lists = live.map((s) => s.items).filter((i): i is FeedItem[] => !!i)
-  const items = mergeFeeds(lists, limit)
-  const failed = live.find((s) => s.error)
-  return (
-    <div ref={ref} className="min-h-[1px]">
-      {feeds.map((url) => <FeedSource key={url} url={url} paused={!visible} onState={onState} />)}
-      {failed && <NetStatus error={failed.error} hasData={lists.length > 0} onRetry={() => live.forEach((s) => s.error && s.refresh())} />}
-      {feeds.length === 0 ? <p className="text-sm text-muted-foreground">{t('glance.configureHint')}</p> : lists.length > 0 ? <FeedList items={items} collapseAfter={clampInt(config.collapseAfter, 0, 100, 5)} /> : !failed && <ListSkeleton />}
-    </div>
-  )
+  const urls = React.useMemo(() => feedUrls(config.feeds), [config.feeds])
+  return <MultiFeed urls={urls} as="text" parse={parse} refreshMs={15 * 60_000} limit={clampInt(config.limit, 1, 100, 20)} collapseAfter={clampInt(config.collapseAfter, 0, 100, 5)} />
 }
