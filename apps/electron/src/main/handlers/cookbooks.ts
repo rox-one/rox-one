@@ -25,6 +25,8 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.cookbooksLab.RUN_ALL,
   RPC_CHANNELS.cookbooksLab.SAVE,
   RPC_CHANNELS.cookbooksLab.RESET,
+  RPC_CHANNELS.cookbooksLab.CANCEL,
+  RPC_CHANNELS.cookbooksLab.EXPORT,
 ] as const
 
 function statusKey(status: CookbooksStatus): string {
@@ -74,5 +76,13 @@ export function registerCookbooksHandlers(server: RpcServer, _deps: HandlerDeps)
   server.handle(
     RPC_CHANNELS.cookbooksLab.RESET,
     (_ctx, input: { itemId: string }) => runtime.apiReset(input.itemId),
+  )
+  server.handle(
+    RPC_CHANNELS.cookbooksLab.CANCEL,
+    (_ctx, input: { itemId: string }) => runtime.apiCancel(input.itemId),
+  )
+  server.handle(
+    RPC_CHANNELS.cookbooksLab.EXPORT,
+    (_ctx, input: { itemId: string; filename: string; content: string }) => runtime.exportNotebook(input),
   )
 }
