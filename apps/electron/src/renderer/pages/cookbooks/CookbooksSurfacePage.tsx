@@ -23,6 +23,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState, type KeyboardE
 import { useTranslation } from 'react-i18next'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { usePlatform } from '@rox/ui'
 import { formatDuration } from '@rox/ui/chat/turn-utils'
 import { Markdown, type RenderMode } from '@/components/markdown'
 import { formatHotkeyDisplay } from '@/lib/platform'
@@ -139,9 +140,15 @@ const CellMarkdown = memo(function CellMarkdown({
   source: string
   testId: string
 }) {
+  // G4-CB-001: route markdown links through the app's platform handlers — the
+  // canonical <a> then preventDefaults both target kinds instead of letting the
+  // click fall through to native window navigation.
+  const { onOpenUrl, onOpenFile } = usePlatform()
   return (
     <div data-testid={testId} data-mode={mode} className={MARKDOWN_CLASS}>
-      <Markdown mode={mode}>{source}</Markdown>
+      <Markdown mode={mode} onUrlClick={onOpenUrl} onFileClick={onOpenFile}>
+        {source}
+      </Markdown>
     </div>
   )
 })
@@ -805,7 +812,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
           data-testid="cookbooks-status"
           role="status"
           aria-live="polite"
-          className="ml-auto inline-flex items-center gap-1.5 text-small text-muted-foreground"
+          className="ml-auto inline-flex items-center gap-1.5 text-small text-muted-foreground numeric"
         >
           {busy ? (
             <>
