@@ -115,4 +115,24 @@ describe('subscriber lifecycle (review 6 #8)', () => {
     const d = new Y.Doc(); d.getMap('x').set('k', 1)
     await expect(a.call(CANVAS_IPC.apply, s1, 'ws', b.id, Y.encodeStateAsUpdate(d))).resolves.toEqual({ ok: true })
   })
+  it('a renderer destroyed while its open is pending does not keep the board open', async () => {
+    const a = setup()
+    const s1 = fakeSender(1)
+    const b = await a.call(CANVAS_IPC.create, s1, 'ws', 'Board')
+    const store = a.registry.get('ws')
+    const closed: string[] = []
+    const orig = store.closeBoard.bind(store)
+    ;(store as any).closeBoard = (id: string) => { closed.push(id); return orig(id) }
+    let release!: () => void
+    const gate = new Promise<void>(r => { release = r })
+    const openOrig = store.openBoard.bind(store)
+    ;(store as any).openBoard = async (id: string) => { await gate; return openOrig(id) }
+    const opening = a.call(CANVAS_IPC.open, s1, 'ws', b.id)
+    s1.isDestroyed = () => true
+    s1.destroy()
+    release()
+    await opening
+    await new Promise(r => setTimeout(r, 20))
+    expect(closed).toEqual([b.id])
+  })
 })

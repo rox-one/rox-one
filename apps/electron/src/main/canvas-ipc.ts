@@ -243,7 +243,8 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
       throw e
     }
     const state = Y.encodeStateAsUpdate(board.doc)
-    const closed = (closeSeq.get(seqKey) ?? 0) !== seq
+    // A renderer destroyed mid-open never fires 'destroyed' for a later subscribe: treat it as closed.
+    const closed = (closeSeq.get(seqKey) ?? 0) !== seq || event.sender.isDestroyed()
     bump(k, -1); if (!bump(seqKey, -1)) closeSeq.delete(seqKey)
     if (closed) {
       // Closed by this renderer while opening: don't leak a subscription / keep the board open.
