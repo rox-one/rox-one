@@ -105,7 +105,11 @@ describe('stripLegacySessionsBlock', () => {
   test('only the explicit open path cleans up, with the current revision', () => {
     const source = readFileSync(join(import.meta.dir, '../../handlers/rpc/notes.ts'), 'utf8')
     expect(source).toContain("expectedRevision: markdownRevision(existing), content: cleaned")
-    expect(source).toMatch(/upsertDailyNote\(notesRoot, date \|\| formatDateId\(new Date\(\)\), [^\n]*, true\)/)
+    expect(source).toMatch(/upsertDailyNote\(notesRoot, date \|\| formatDateId\(new Date\(\)\), [^\n]*, true, /)
     expect(source).toContain('await upsertDailyNote(notesRoot, date, writeNative)\n')
+    // Open copies everywhere are told to re-read (editors ignore 'save' events).
+    const handler = source.slice(source.indexOf('RPC_CHANNELS.notes.GET_DAILY_NOTE, async'), source.indexOf('RPC_CHANNELS.notes.IMPORT_ASSET'))
+    expect(handler).toContain("if (cleaned) changed({ workspaceId, reason: 'external', noteId: id })")
+    expect(handler.indexOf("reason: 'external'")).toBeLessThan(handler.indexOf('return readNote(notesRoot, id)'))
   })
 })

@@ -1142,7 +1142,7 @@ async function readInstallDay(notesRoot: string, now = new Date()): Promise<stri
  * `explicitOpen` is only set by GET_DAILY_NOTE (the user opening the note, which
  * re-reads it afterwards); background passes never rewrite an existing note.
  */
-async function upsertDailyNote(notesRoot: string, date: string, writeNative: NativeNoteWriter, explicitOpen = false): Promise<string> {
+async function upsertDailyNote(notesRoot: string, date: string, writeNative: NativeNoteWriter, explicitOpen = false, onCleaned?: () => void): Promise<string> {
   const dailyDate = assertDailyDate(date)
   const id = dailyNoteId(dailyDate)
   const filePath = notePathFromId(notesRoot, id)
@@ -1151,7 +1151,10 @@ async function upsertDailyNote(notesRoot: string, date: string, writeNative: Nat
     if (!explicitOpen) return id
     const existing = await readFile(filePath, 'utf-8')
     const cleaned = stripLegacySessionsBlock(existing)
-    if (cleaned !== null) await writeNative('save', [{ kind: 'write', noteId: id, expectedRevision: markdownRevision(existing), content: cleaned }])
+    if (cleaned !== null) {
+      await writeNative('save', [{ kind: 'write', noteId: id, expectedRevision: markdownRevision(existing), content: cleaned }])
+      onCleaned?.()
+    }
     return id
   }
   const template = await readFile(join(notesRoot, TEMPLATES_DIR, DAILY_TEMPLATE_FILE), 'utf-8').catch(() => '')
@@ -2261,8 +2264,12 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     if (!isClaimableLive(act)) throw new Error('daily note upsert is not live')
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     await ensureDailyNotes(notesRoot, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
-    const id = await upsertDailyNote(notesRoot, date || formatDateId(new Date()), (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes), true)
+    let cleaned = false
+    const id = await upsertDailyNote(notesRoot, date || formatDateId(new Date()), (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes), true, () => { cleaned = true })
     await refreshVaultIndex(notesRoot)
+    // Every open copy (other panels, tiles, windows) re-reads the cleaned body;
+    // 'save' events are ignored by editors, so this one is announced as external.
+    if (cleaned) changed({ workspaceId, reason: 'external', noteId: id })
     return readNote(notesRoot, id)
   }, { access: 'localElectron' })
 
