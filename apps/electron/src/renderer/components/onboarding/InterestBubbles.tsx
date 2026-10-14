@@ -89,11 +89,11 @@ export function InterestBubbles({
               data-bubble-anchor={item.anchor ? 'true' : undefined}
               onClick={() => toggle(item.id)}
               className={cn(
-                'max-w-full whitespace-normal break-words rounded-full border px-3 py-1.5 text-left text-body leading-tight transition-[background-color,border-color,color,transform,box-shadow] duration-200 ease-out motion-reduce:transition-none',
+                'onb-pill max-w-full whitespace-normal break-words rounded-full border px-2.5 py-1 text-left text-[length:calc(var(--text-body)_-_2pt)] leading-tight transition-[background-color,border-color,color,box-shadow] duration-200 ease-out motion-reduce:transition-none',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/55 focus-visible:ring-offset-1 focus-visible:ring-offset-background',
                 isSelected
-                  ? 'border-accent/40 bg-accent/15 font-medium text-foreground shadow-minimal scale-[1.02]'
-                  : 'border-border/60 bg-background/40 text-muted-foreground hover:border-border hover:bg-surface-hover hover:text-foreground active:scale-[0.98]',
+                  ? 'border-accent/40 bg-accent/15 font-medium text-foreground shadow-minimal'
+                  : 'border-border/60 bg-background/40 text-muted-foreground hover:border-border hover:bg-surface-hover hover:text-foreground',
               )}
             >
               {item[lang]}

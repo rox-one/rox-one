@@ -120,7 +120,7 @@ export function InterestAccordion({
             data-testid={`interest-accordion-${groupId}`}
             data-state={isOpen ? 'open' : 'closed'}
             className={cn(
-              'rounded-[var(--radius-card)] border transition-colors motion-reduce:transition-none',
+              'onb-acc rounded-[var(--radius-card)] border transition-colors motion-reduce:transition-none',
               isOpen ? 'border-border bg-background/60 shadow-minimal' : 'border-border/50 bg-background/25',
             )}
           >
@@ -157,13 +157,13 @@ export function InterestAccordion({
                   {!isOpen ? (
                     <span
                       data-testid={`interest-accordion-summary-${groupId}`}
-                      className="block truncate text-xs text-muted-foreground"
+                      className="onb-helper block truncate text-xs text-muted-foreground"
                       title={summary.length > 0 ? summary.join(', ') : undefined}
                     >
                       {summary.length > 0 ? summary.join(' · ') : t('onboarding.bubbles.summaryEmpty')}
                     </span>
                   ) : (
-                    <span className="block text-xs text-muted-foreground">{t('onboarding.bubbles.hint')}</span>
+                    <span className="onb-helper block truncate text-xs text-muted-foreground">{t('onboarding.bubbles.hint')}</span>
                   )}
                 </span>
                 {selected.length > 0 ? (
@@ -180,12 +180,17 @@ export function InterestAccordion({
                 />
               </button>
             </h3>
+            {/* Grid-rows collapse: a smooth height transition with a stable
+                layout (no measuring, no jump). Collapsed bodies stay mounted
+                but are inert and aria-hidden. */}
+            <div className="onb-collapse" data-open={isOpen ? 'true' : 'false'}>
             <div
               id={panelId}
               role="region"
               aria-labelledby={headerId}
-              hidden={!isOpen}
-              className="px-3 pb-3"
+              aria-hidden={!isOpen || undefined}
+              {...(!isOpen ? { inert: '' } : {})}
+              className={cn('px-3', isOpen ? 'pb-3' : 'pb-0')}
             >
               <InterestBubbles
                 groupId={groupId}
@@ -201,13 +206,14 @@ export function InterestAccordion({
                   data-testid={`interest-accordion-next-${groupId}`}
                   onClick={() => advance(groupId)}
                   className={cn(
-                    'inline-flex h-7 items-center rounded-full border border-border/70 bg-background/60 px-3 text-xs font-medium',
+                    'onb-glass inline-flex h-7 items-center rounded-full border border-border/70 bg-background/60 px-3 text-xs font-medium',
                     'hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/55',
                   )}
                 >
                   {isLast ? t('onboarding.bubbles.done') : t('onboarding.bubbles.next')}
                 </button>
               </div>
+            </div>
             </div>
           </section>
         )

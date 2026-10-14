@@ -339,8 +339,10 @@ export function QuestionnaireStep({
   }
 
   const locale = i18n?.language?.toLowerCase().startsWith('ru') ? 'ru' : 'en'
+  // Section cards; scrollbars are hidden on the start screens (the content
+  // is sized to fit, the wheel still works as a fallback on tiny windows).
   const columnClass =
-    'min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-1 [scrollbar-gutter:stable]'
+    'onb-card min-h-0 p-4 lg:overflow-y-auto lg:overscroll-contain'
 
   return (
     <div
@@ -349,12 +351,12 @@ export function QuestionnaireStep({
     >
       <header className="shrink-0 text-center">
         <h1 className="text-lg font-semibold tracking-tight">{t('onboarding.questionnaire.title')}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t('onboarding.questionnaire.description')}</p>
+        <p className="step-description mt-1 text-sm text-muted-foreground">{t('onboarding.questionnaire.description')}</p>
       </header>
 
       <div
         data-testid="questionnaire-columns"
-        className="mt-5 grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-5"
+        className="mt-5 grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-4"
       >
         <div className={columnClass} data-testid="questionnaire-column-profile">
           <ProfileQuestionnaireColumn
@@ -389,7 +391,7 @@ export function QuestionnaireStep({
           type="button"
           variant="outline"
           data-testid="questionnaire-skip"
-          className="gap-2"
+          className="onb-secondary gap-2 px-5"
           onClick={handleSkip}
         >
           <ChevronsRight className="icon-toolbar" aria-hidden="true" />
@@ -399,7 +401,7 @@ export function QuestionnaireStep({
           type="button"
           data-testid="questionnaire-continue"
           data-state={complete ? 'ready' : 'incomplete'}
-          className={cn('gap-2', complete ? 'opacity-100' : 'opacity-60')}
+          className={cn('onb-primary gap-2 px-6', complete ? 'opacity-100' : 'opacity-60')}
           disabled={!complete}
           onClick={handleContinue}
         >
