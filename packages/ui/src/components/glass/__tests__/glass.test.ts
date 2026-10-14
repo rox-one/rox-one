@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { resolveGlassTier } from '../../../lib/glass-capability'
+import { applyGlassTier, resolveGlassTier } from '../../../lib/glass-capability'
 import { glassPresenceAttrs } from '../use-glass-motion'
 
 const strong = { hardwareConcurrency: 10, deviceMemory: 16, supportsBackdropUrl: true }
@@ -54,5 +54,45 @@ describe('closed surface', () => {
     const closed = css.split('}').find((b) => b.includes('[data-glass-presence="closed"]')) ?? ''
     expect(closed).toMatch(/visibility:\s*hidden/)
     expect(closed).toMatch(/transition-delay:[^;]*var\(--motion-spring-exit\)/)
+  })
+})
+
+describe('per-surface intensity', () => {
+  const block = css.split('}')[0]
+  it('re-derives every glass token on .glass-surface from --glass-intensity', () => {
+    for (const t of ['blur', 'saturate', 'tint', 'edge-alpha', 'specular-alpha'])
+      expect(block).toMatch(new RegExp(`--glass-${t}:\\s*calc\\([^;]*var\\(--glass-intensity\\)`))
+  })
+  it('pressed never overrides the closed state', () => {
+    expect(css).toContain('[data-glass-pressed]:not([data-glass-presence="closed"])')
+  })
+})
+
+describe('applyGlassTier ref counting', () => {
+  it('keeps listeners until the last caller releases (StrictMode double mount)', () => {
+    let added = 0
+    let removed = 0
+    const g = globalThis as { matchMedia?: unknown }
+    const prev = g.matchMedia
+    g.matchMedia = () => ({
+      matches: false,
+      addEventListener: () => { added++ },
+      removeEventListener: () => { removed++ },
+    })
+    try {
+      const root = { dataset: {} as Record<string, string> } as unknown as HTMLElement
+      const a = applyGlassTier(root)
+      a() // StrictMode: mount, unmount…
+      const b = applyGlassTier(root) // …remount
+      const c = applyGlassTier(root) // second consumer
+      expect(root.dataset.glass).toBeDefined()
+      b()
+      b() // release is once-only
+      expect(added - removed).toBe(1)
+      c()
+      expect(added - removed).toBe(0)
+    } finally {
+      g.matchMedia = prev
+    }
   })
 })

@@ -37,16 +37,32 @@ interface BatteryLike {
 type GlassNavigator = Navigator & { deviceMemory?: number; getBattery?: () => Promise<BatteryLike> }
 
 const REDUCED_TRANSPARENCY = '(prefers-reduced-transparency: reduce)'
-const active = new WeakMap<HTMLElement, () => void>()
+const active = new WeakMap<HTMLElement, { refs: number; dispose: () => void }>()
 
 /**
- * Sets html[data-glass] and tracks live changes. Idempotent per root: a second
- * call returns the existing cleanup. The cleanup removes every listener.
+ * Sets html[data-glass] and tracks live changes. Ref-counted per root: every
+ * call returns its own once-only release; listeners are removed when the last
+ * caller releases (safe under StrictMode double mount/unmount).
  */
 export function applyGlassTier(root: HTMLElement = document.documentElement): () => void {
-  const existing = active.get(root)
-  if (existing) return existing
+  let entry = active.get(root)
+  if (!entry) {
+    entry = { refs: 0, dispose: startGlassTier(root) }
+    active.set(root, entry)
+  }
+  entry.refs++
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    const current = active.get(root)
+    if (!current || --current.refs > 0) return
+    active.delete(root)
+    current.dispose()
+  }
+}
 
+function startGlassTier(root: HTMLElement): () => void {
   const nav = navigator as GlassNavigator
   const mq = typeof matchMedia === 'function' ? matchMedia(REDUCED_TRANSPARENCY) : null
   const supportsBackdropUrl = typeof CSS !== 'undefined' && CSS.supports('backdrop-filter', 'url(#a)')
@@ -76,13 +92,10 @@ export function applyGlassTier(root: HTMLElement = document.documentElement): ()
     })
     .catch(() => {})
 
-  const cleanup = () => {
+  return () => {
     disposed = true
     mq?.removeEventListener('change', write)
     battery?.removeEventListener('chargingchange', write)
     battery?.removeEventListener('levelchange', write)
-    active.delete(root)
   }
-  active.set(root, cleanup)
-  return cleanup
 }
