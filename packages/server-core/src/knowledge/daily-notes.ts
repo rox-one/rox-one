@@ -120,24 +120,26 @@ export function planDailyNoteWrite(input: { date: string; existing: string | nul
   return renderDailyTemplate(input.date, input.template)
 }
 
-/** A line the old writer generated inside the block: a plain `- name` bullet. */
-function isGeneratedSessionLine(line: string): boolean {
-  return /^- (?!\[[ xX]\]\s)\S/.test(line) && !/\[\[|\]\(|https?:\/\//.test(line)
+/** The exact line the old writer rendered for a session (see renderSessionsBlock). */
+export function legacySessionLine(session: DailySessionRef): string {
+  return `- ${session.name.replace(/\s+/g, ' ').trim() || session.id}`
 }
 
 /**
  * One-time cleanup for notes created before the live overlay: drops the stored
- * sessions block markers and the generated `- name` lines. Anything else the
- * user wrote inside the block (tasks, links, prose) is kept in place, and so is
+ * sessions block markers and only lines that exactly match `- ${name}` for a
+ * known session. Every other line in the block (other bullets, tasks, links,
+ * prose) is kept in place, and so is
  * the `## Sessions` heading when such lines remain. Returns `null` when there
  * is nothing to strip.
  */
-export function stripLegacySessionsBlock(markdown: string): string | null {
+export function stripLegacySessionsBlock(markdown: string, sessions: readonly DailySessionRef[]): string | null {
   const start = markdown.indexOf(DAILY_SESSIONS_START)
   const end = start < 0 ? -1 : markdown.indexOf(DAILY_SESSIONS_END, start)
   if (start < 0 || end < 0) return null
   const inner = markdown.slice(start + DAILY_SESSIONS_START.length, end)
-  const kept = inner.split('\n').filter(line => line.trim() && !isGeneratedSessionLine(line)).join('\n')
+  const generated = new Set(sessions.map(legacySessionLine))
+  const kept = inner.split('\n').filter(line => line.trim() && !generated.has(line.trimEnd())).join('\n')
   let from = start
   if (!kept) {
     const heading = /(?:^|\n)## Sessions[ \t]*\n+$/.exec(markdown.slice(0, start))

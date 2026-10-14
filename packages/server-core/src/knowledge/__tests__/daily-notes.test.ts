@@ -80,26 +80,27 @@ describe('planDailyNoteWrite', () => {
 })
 
 describe('stripLegacySessionsBlock', () => {
-  test('drops the stored block and its heading, keeping user text around it', () => {
-    const legacy = buildDailyNoteMarkdown({ date: '2026-10-14', sessions: [{ id: 's', name: 'Старая', createdAt: new Date(2026, 9, 14, 9).getTime() }] })
-    const withEdits = `${legacy}\nмои заметки\n`
-    const cleaned = stripLegacySessionsBlock(withEdits)!
+  test('drops the stored block and its heading when only known session lines are inside', () => {
+    const sessions = [{ id: 's', name: 'Старая', createdAt: new Date(2026, 9, 14, 9).getTime() }]
+    const legacy = buildDailyNoteMarkdown({ date: '2026-10-14', sessions })
+    const cleaned = stripLegacySessionsBlock(`${legacy}\nмои заметки\n`, sessions)!
     expect(cleaned).not.toContain(DAILY_SESSIONS_START)
     expect(cleaned).not.toContain('## Sessions')
     expect(cleaned).not.toContain('Старая')
     expect(cleaned).toContain('# 2026-10-14')
     expect(cleaned).toContain('мои заметки')
-    expect(stripLegacySessionsBlock(cleaned)).toBeNull()
+    expect(stripLegacySessionsBlock(cleaned, sessions)).toBeNull()
   })
 
-  test('keeps user lines written inside the block, and the heading above them', () => {
-    const note = `# 2026-10-14\n\n## Sessions\n\n${DAILY_SESSIONS_START}\n- Давайте познакомимся\n- [ ] позвонить\nсвоя мысль\n- [[Проект]]\n- [док](https://example.com)\n${DAILY_SESSIONS_END}\n\nниже\n`
-    expect(stripLegacySessionsBlock(note)).toBe('# 2026-10-14\n\n## Sessions\n\n- [ ] позвонить\nсвоя мысль\n- [[Проект]]\n- [док](https://example.com)\n\nниже\n')
+  test('removes only exact `- name` lines of known sessions; every other bullet stays', () => {
+    const sessions = [{ id: 'a', name: 'Давайте  познакомимся' }, { id: 'b', name: ' ' }]
+    const note = `# 2026-10-14\n\n## Sessions\n\n${DAILY_SESSIONS_START}\n- Давайте познакомимся\n- b\n- Чужой пункт\n- [ ] позвонить\nсвоя мысль\n- [[Проект]]\n- Давайте познакомимся ещё\n${DAILY_SESSIONS_END}\n\nниже\n`
+    expect(stripLegacySessionsBlock(note, sessions)).toBe('# 2026-10-14\n\n## Sessions\n\n- Чужой пункт\n- [ ] позвонить\nсвоя мысль\n- [[Проект]]\n- Давайте познакомимся ещё\n\nниже\n')
   })
 
   test('is a no-op for notes without a complete block', () => {
-    expect(stripLegacySessionsBlock('# 2026-10-14\n')).toBeNull()
-    expect(stripLegacySessionsBlock(`x\n${DAILY_SESSIONS_START}\nno end`)).toBeNull()
+    expect(stripLegacySessionsBlock('# 2026-10-14\n', [])).toBeNull()
+    expect(stripLegacySessionsBlock(`x\n${DAILY_SESSIONS_START}\nno end`, [])).toBeNull()
   })
 
   test('only the explicit open path cleans up, with the current revision', () => {
@@ -111,6 +112,7 @@ describe('stripLegacySessionsBlock', () => {
     const start = source.indexOf('RPC_CHANNELS.notes.GET_DAILY_NOTE, async')
     const handler = source.slice(start, source.indexOf('RPC_CHANNELS.notes.IMPORT_ASSET', start))
     expect(handler).toContain("if (cleaned) changed({ workspaceId, reason: 'external', noteId: id })")
+    expect(handler).toContain('legacySessionRefs(deps, workspaceId)')
     expect(handler.indexOf("reason: 'external'")).toBeLessThan(handler.indexOf('return readNote(notesRoot, id)'))
   })
 })

@@ -59,6 +59,7 @@ import {
   formatDateId,
   INSTALL_DAY_FILE,
   planDailyNoteWrite,
+  type DailySessionRef,
   stripLegacySessionsBlock,
 } from '../../knowledge/daily-notes.ts'
 
@@ -1142,7 +1143,7 @@ async function readInstallDay(notesRoot: string, now = new Date()): Promise<stri
  * `explicitOpen` is only set by GET_DAILY_NOTE (the user opening the note, which
  * re-reads it afterwards); background passes never rewrite an existing note.
  */
-async function upsertDailyNote(notesRoot: string, date: string, writeNative: NativeNoteWriter, explicitOpen = false, onCleaned?: () => void): Promise<string> {
+async function upsertDailyNote(notesRoot: string, date: string, writeNative: NativeNoteWriter, explicitOpen = false, onCleaned?: () => void, knownSessions: readonly DailySessionRef[] = []): Promise<string> {
   const dailyDate = assertDailyDate(date)
   const id = dailyNoteId(dailyDate)
   const filePath = notePathFromId(notesRoot, id)
@@ -1150,7 +1151,7 @@ async function upsertDailyNote(notesRoot: string, date: string, writeNative: Nat
   if (existsSync(filePath)) {
     if (!explicitOpen) return id
     const existing = await readFile(filePath, 'utf-8')
-    const cleaned = stripLegacySessionsBlock(existing)
+    const cleaned = stripLegacySessionsBlock(existing, knownSessions)
     if (cleaned !== null) {
       await writeNative('save', [{ kind: 'write', noteId: id, expectedRevision: markdownRevision(existing), content: cleaned }])
       onCleaned?.()
@@ -1170,6 +1171,18 @@ async function ensureDailyNotes(notesRoot: string, writeNative: NativeNoteWriter
   const install = await readInstallDay(notesRoot, now)
   for (const date of datesToEnsure(install, today)) {
     await upsertDailyNote(notesRoot, date, writeNative)
+  }
+}
+
+/** All of the workspace's sessions, as the old writer named them (cleanup matching only). */
+function legacySessionRefs(deps: HandlerDeps, workspaceId: string): DailySessionRef[] {
+  try {
+    return deps.sessionManager.getSessions(workspaceId).map((session) => ({
+      id: session.id,
+      name: session.name?.trim() || session.preview?.trim() || session.id,
+    }))
+  } catch {
+    return []
   }
 }
 
@@ -2265,7 +2278,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     await ensureDailyNotes(notesRoot, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
     let cleaned = false
-    const id = await upsertDailyNote(notesRoot, date || formatDateId(new Date()), (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes), true, () => { cleaned = true })
+    const id = await upsertDailyNote(notesRoot, date || formatDateId(new Date()), (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes), true, () => { cleaned = true }, legacySessionRefs(deps, workspaceId))
     await refreshVaultIndex(notesRoot)
     // Every open copy (other panels, tiles, windows) re-reads the cleaned body;
     // 'save' events are ignored by editors, so this one is announced as external.
