@@ -10,7 +10,7 @@ import * as React from 'react'
 import { ResponsiveModeScreenLayout, type ResponsiveModeScreen } from './ResponsiveModeScreen'
 import type { PanelWorkspaceLayoutMode } from '@/lib/panel-workspace-layout'
 import { cn } from '@/lib/utils'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useDedupedPanelTitle, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import { Tabs as TabsCore, type TabItem } from '@/components/ui/tabs'
 import { useTranslation } from 'react-i18next'
 import { Archive, Bell, CalendarDays, CheckCheck, ChevronRight, Clock3, Folder, Inbox, ListFilter, Mail, MessageCircle, Newspaper, Radio, ShieldCheck, Sparkles, Tag, Users, type LucideIcon } from 'lucide-react'
@@ -47,7 +47,7 @@ function FallbackModeScreenLayout({
   layout?: PanelWorkspaceLayoutMode
 }) {
   const { t } = useTranslation()
-  const target = useShellSidebarTarget()
+  const target = useSidebarHandledOutside()
   const root = React.useRef<HTMLDivElement | null>(null)
   const [width, setWidth] = React.useState(0)
   const [pane, setPane] = React.useState<'navigation' | 'list' | 'detail'>('list')
@@ -85,7 +85,7 @@ function FallbackModeScreenLayout({
       )}
       <div className="flex min-h-0 flex-1">
         {showNavigator ? (
-          <ShellSidebarPortal className={cn('shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3', narrow ? pane === 'navigation' ? 'w-full' : 'hidden' : 'w-[220px]')}>
+          <ShellSidebarPortal bareLabelKey="navigation.barePanel.folders" className={cn('shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3', narrow ? pane === 'navigation' ? 'w-full' : 'hidden' : 'w-[220px]')}>
             {navigator}
           </ShellSidebarPortal>
         ) : null}
@@ -115,9 +115,10 @@ function FallbackModeScreenLayout({
   )
 }
 
-/** Screen-reader heading only: the shell's second-sidebar header already shows the screen title. */
 export function NavTitle({ children }: { children: React.ReactNode }) {
-  return <h1 className="sr-only">{children}</h1>
+  const shown = useDedupedPanelTitle(children)
+  if (shown == null) return null
+  return <h1 className="px-2 pb-2 text-lg font-semibold">{shown}</h1>
 }
 
 export function NavSection({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
@@ -213,9 +214,10 @@ export function ListHeader({
   subtitle?: React.ReactNode
   actions?: React.ReactNode
 }) {
+  const shownTitle = useDedupedPanelTitle(title)
   return (
     <header className="flex min-h-[44px] shrink-0 flex-wrap items-center gap-2 px-3 pt-2">
-      <h2 className="text-lg font-semibold">{title}</h2>
+      {shownTitle != null ? <h2 className="text-lg font-semibold">{shownTitle}</h2> : null}
       {subtitle ? <span className="truncate text-sm text-text-muted">{subtitle}</span> : null}
       {/* Wrap instead of overflowing: in a narrow list column the action row drops to its own
           line (and wraps internally) so a later button is never clipped by Panel's overflow-hidden. */}
