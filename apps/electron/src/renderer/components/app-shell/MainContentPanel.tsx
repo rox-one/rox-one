@@ -51,7 +51,6 @@ import {
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
 import { isScreenNavigation, isSurfaceNavigation, isMissionsNavigation, type LoadedSource, type LoadedSkill, type NavigationState } from '../../../shared/types'
 import { buildRouteFromNavigationState } from '../../../shared/route-parser'
-import ChatPage from '@/pages/ChatPage'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
 import { recordRecentSetting } from '@/lib/settings-recent'
 import { automationsAtom } from '@/atoms/automations'
@@ -126,6 +125,7 @@ const MissionBoard = lazyRoutePage(ROUTE_PAGE_LOADERS.missionBoard)
 const SettingsOverviewPage = lazyRoutePage(ROUTE_PAGE_LOADERS.settingsOverview)
 const PageView = lazyRoutePage(ROUTE_PAGE_LOADERS.pageView)
 const SessionHeatmapHost = lazyRoutePage(ROUTE_PAGE_LOADERS.sessionHeatmap)
+const ChatPage = lazyRoutePage(ROUTE_PAGE_LOADERS.chat)
 
 type SelectedResourceStatus = 'loading' | 'ready' | 'missing' | 'unavailable'
 
