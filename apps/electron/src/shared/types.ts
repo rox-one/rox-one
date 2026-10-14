@@ -1,7 +1,11 @@
 // =============================================================================
 // Protocol re-exports (channels, DTOs, events, wire types)
 // =============================================================================
-export * from '@rox/shared/protocol'
+// Type-only: a value `export *` evaluates dto.ts + channels.ts (~120 KB of
+// protocol source) for every value importer of this barrel, including the
+// renderer boot graph. RPC_CHANNELS / generateMessageId / CodedError come
+// from `@rox/shared/protocol` (or a local helper) instead.
+export type * from '@rox/shared/protocol'
 
 // Cookbooks Lab surface contract (SPEC §Data & API contracts + §Amendment 1):
 // runtime status vocabulary, discovery parser, data-plane DTOs and the typed
@@ -10,8 +14,11 @@ export { CookbooksApiError } from './cookbooks'
 export type {
   CookbooksCard,
   CookbooksCell,
+  CookbooksCellMutation,
   CookbooksDocument,
   CookbooksFailureReason,
+  CookbooksMutateInput,
+  CookbooksMutateResult,
   CookbooksOutput,
   CookbooksRunCell,
   CookbooksRunResult,
@@ -22,6 +29,8 @@ export type {
 import type {
   CookbooksCard,
   CookbooksDocument,
+  CookbooksMutateInput,
+  CookbooksMutateResult,
   CookbooksRunCell,
   CookbooksRunResult,
   CookbooksStatus,
@@ -1912,6 +1921,8 @@ export interface ElectronAPI {
   serviceLifecycleUninstall(): Promise<ServiceLifecycleResult>
   /** Push: the local service state changed (tray/menu surfaces). */
   onServiceLifecycleStatusChanged(callback: (status: ServiceStatus) => void): () => void
+  /** Push this window's menu-bar snapshot (badge count, recents, balance, recording) to main. */
+  reportTrayState(report: import('@rox/shared/protocol').TrayStateReport): Promise<void>
   // e1.6: doctor diagnostics (service/port/runtime/config/logs) — host-local.
   runDiagnostics(): Promise<DoctorReport>
   getDiagnosticsLast(): Promise<DoctorReport | null>
@@ -2220,11 +2231,29 @@ export interface ElectronAPI {
     runAll(args: {
       itemId: string
       cells: { index: number; source: string }[]
-    }): Promise<{ cells: CookbooksRunCell[] }>
+    }): Promise<{ cells: CookbooksRunCell[]; cancelled?: boolean }>
     /** Persist a cell (`index` + `source`) or the playbook `text`. */
     save(args: { itemId: string; index?: number; source?: string; text?: string }): Promise<void>
     /** Restore the copy from the catalog original (edits are lost). */
     reset(args: { itemId: string }): Promise<void>
+    /**
+     * Interrupt every active execution of `itemId` (both `/run` and `/run-all`).
+     * Idempotent; `cancelled` is the number of kernels stopped. In-flight runs
+     * resolve with `cancelled: true`.
+     */
+    cancel(args: { itemId: string }): Promise<{ ok: boolean; cancelled: number }>
+    /**
+     * Ask the user where to save the built notebook and write it. Resolves
+     * `{saved:false}` when the dialog is dismissed; a failed write rejects.
+     */
+    export(args: { itemId: string; filename: string; content: string }): Promise<{ saved: boolean; path?: string }>
+    /**
+     * Wave 10: apply a structural operation (add/delete/move/duplicate) to the
+     * copy, then resolve the re-read document together with the cell index to
+     * focus. Rejects with a `CookbooksApiError` (400 on a bad request, 409 while
+     * a run of this item is active) carrying the sidecar's own `error` text.
+     */
+    mutate(args: CookbooksMutateInput): Promise<CookbooksMutateResult>
     onStatusChanged(callback: (status: CookbooksStatus) => void): () => void
   }
 

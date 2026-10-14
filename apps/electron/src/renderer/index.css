@@ -1879,3 +1879,90 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
     min-height: 44px;
   }
 }
+
+
+/* ── Grid-tile density (multi-panel grid + Home widgets) ──────────────────
+   One scale, applied by token: every Tailwind text step inside a grid tile
+   drops 4px with a 10px readability floor, so components stay untouched.
+   Set via data-panel-density="grid" on PanelSlot (multi-panel) and Home. */
+[data-panel-density="grid"] {
+  --text-caption: 10px;  --text-caption--line-height: 13px;
+  --text-small: 10px;    --text-small--line-height: 14px;
+  --text-body: 10px;     --text-body--line-height: 14px;
+  --text-reading: 11px;  --text-reading--line-height: 16px;
+  --text-title-sm: 11px; --text-title-sm--line-height: 15px;
+  --text-title: 14px;    --text-title--line-height: 18px;
+  --text-display: 20px;  --text-display--line-height: 26px;
+  --text-xs: 10px;       --text-xs--line-height: 13px;
+  --text-sm: 10px;       --text-sm--line-height: 14px;
+  --text-base: 10px;     --text-base--line-height: 14px;
+  --text-lg: 11px;       --text-lg--line-height: 16px;
+  --text-xl: 14px;       --text-xl--line-height: 18px;
+  --text-2xl: 20px;      --text-2xl--line-height: 26px;
+  --text-3xl: 26px;      --text-3xl--line-height: 32px;
+  --text-data: 10px;     --text-data--line-height: 14px;
+  --text-title-md: 12px; --text-title-md--line-height: 16px;
+  --text-stat: 16px;     --text-stat--line-height: 22px;
+  --text-hero: 40px;     --text-hero--line-height: 44px;
+  --text-floor: 10px;
+  --notes-prose-size: 11px;
+  --notes-title-size: 1.25rem;
+}
+
+/* Grid tile chrome: flush tiles (no inset cards) separated by hairline
+   gradient dividers on the vertical and horizontal gutters. Themes override
+   --grid-divider. Each tile draws its right and bottom edge. */
+:root {
+  --grid-divider: color-mix(in oklch, var(--foreground) 9%, transparent);
+  /* Focus underline for a grid tile header: an accent hairline inset at the
+     bottom edge. A token so the box-shadow value stays on the scale. */
+  --grid-tile-focus-underline: inset 0 -1px 0 color-mix(in oklch, var(--accent) 45%, transparent);
+}
+.rox-grid-tile::before,
+.rox-grid-tile::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  /* Decorative dividers sit one step above the tile's own content. The literal
+     `2` used to be here, which sits between --z-raised (1) and --z-sticky (10)
+     and is not a layer — `tokens-v2.test.ts` requires every non-negative literal
+     z-index in this file to resolve to the layer set. */
+  z-index: var(--z-raised);
+}
+.rox-grid-tile::before {
+  top: 0; bottom: 0; right: 0; width: 0.0625rem;
+  background: linear-gradient(to bottom, transparent, var(--grid-divider) 15%, var(--grid-divider) 85%, transparent);
+}
+.rox-grid-tile::after {
+  left: 0; right: 0; bottom: 0; height: 0.0625rem;
+  background: linear-gradient(to right, transparent, var(--grid-divider) 15%, var(--grid-divider) 85%, transparent);
+}
+.rox-grid-tile[data-focused="true"] .rox-grid-tile-header {
+  box-shadow: var(--grid-tile-focus-underline);
+}
+.rox-grid-tile-header {
+  height: 1.625rem;
+  padding: 0 0.25rem 0 0.625rem;
+}
+
+/* Compact responsive layout: below the threshold a tile drops secondary
+   chrome (inline navigators, secondary toolbars) and keeps the content. */
+@container panel (max-width: 639px) {
+  [data-panel-density="grid"] [data-panel-secondary],
+  [data-panel-density="grid"] [data-secondary-toolbar] {
+    display: none !important;
+  }
+}
+
+/* Fluid shell: below NARROW_SHELL_THRESHOLD the secondary sidebar floats over
+   the content (data-secondary-overlay). Enter with a transform/opacity slide so
+   the breakpoint reads as a reflow, not a pop. Durations come from the motion
+   tokens, which are 0ms under reduced motion and while the shell is resizing
+   (html[data-resizing]), so a live window drag never animates. */
+[data-secondary-overlay="true"] {
+  animation: rox-shell-overlay-in var(--motion-disclosure) var(--ease-emphasis) both;
+}
+@keyframes rox-shell-overlay-in {
+  from { opacity: 0; transform: translateX(calc(var(--spacing) * -3)); }
+  to { opacity: 1; transform: none; }
+}

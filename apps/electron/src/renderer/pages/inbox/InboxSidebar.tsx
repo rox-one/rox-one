@@ -169,7 +169,7 @@ export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, o
             <span className="min-w-0 flex-1 select-text truncate text-text-secondary" title={status.address}>{status.address}</span>
             <button type="button" onClick={() => void copyAddress()} className="shrink-0 rounded-md px-1.5 py-1 text-text-muted outline-none hover:bg-foreground/[0.05] focus-visible:ring-2 focus-visible:ring-ring" data-testid="mail-copy">{t(copied ? 'inbox.mail.copied' : 'inbox.mail.copy')}</button>
           </div>
-        ) : <p className="px-2 pb-1 text-xs text-text-muted">{t(statusKey(status), { address: status?.address ?? '', url: status?.serverUrl ?? '', error: status?.error ?? '', flag: status?.flag ?? '' })}</p>}
+        ) : <p className="truncate px-2 pb-1 text-xs text-text-muted" title={status?.error ?? undefined}>{t(statusKey(status), { address: status?.address ?? '', url: status?.serverUrl ?? '', error: status?.error ?? '', flag: status?.flag ?? '' })}</p>}
         {status?.state === 'ready' ? mail.folders.map((folder) => (
           <InboxNavButton key={folder.id} label={folderLabel(t, folder)} count={folder.role === 'drafts' || folder.role === 'sent' ? folder.total : folder.unread} active={inMail && filter.mail === folder.id} icon={folder.role ? FOLDER_ICONS[folder.role] : Mail} tone={folder.role === 'junk' || folder.role === 'trash' ? 'muted' : 'info'} onClick={() => onSelectFolder(folder)} testId={`mail-folder-${folder.role ?? folder.id}`} />
         )) : status?.enabled === false ? (

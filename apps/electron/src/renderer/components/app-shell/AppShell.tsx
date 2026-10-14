@@ -79,7 +79,9 @@ import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { type LinkItem, type SeparatorItem, type SidebarItem as SidebarLinkItem } from "./LeftSidebar"
 import { PrimaryRail, SHELL_RAIL_WIDTH } from '../shell/PrimaryRail'
-import { toggleSecondarySidebar, useSecondarySidebarVisibility } from '../shell/shell-prefs'
+import { setNarrowShell, setNarrowSidebarOverlayOpen, toggleSecondarySidebar, useNarrowSidebarOverlay, useSecondarySidebarVisibility } from '../shell/shell-prefs'
+import { useNarrowOverlayFocus } from '../shell/narrow-overlay'
+import { NARROW_SHELL_THRESHOLD } from './mode-pill-layout'
 import { ShellSidebarNav } from "./ShellSidebarNav"
 import { modePillShown } from "./mode-pill-layout"
 import { useScrollEdgeAttribute } from "@/hooks/useScrollEdgeAttribute"
@@ -91,6 +93,7 @@ import { useSeEditorZoom } from '@/hooks/useSeEditorZoom'
 import { inspectorEdgeRevealModeAtom } from '@/atoms/panel-auto-hide'
 import { seChatPipOpenAtom } from '@/atoms/se-chat-pip'
 import { inspectorUserOpenedAtom } from '@/atoms/unified-shell'
+import { useTerminalDockShortcut } from '@/hooks/useTerminalDockShortcut'
 import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
@@ -133,6 +136,7 @@ import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchStatusBa
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
+import { TrayStateBridge } from "@/features/native-integrations/TrayStateBridge"
 import { EscapeInterruptProvider, useEscapeInterrupt } from "@/context/EscapeInterruptContext"
 import { useTheme } from "@/context/ThemeContext"
 import { usePanelResize } from "@/hooks/usePanelResize"
@@ -169,6 +173,7 @@ import { installShellWarmup } from "@/lib/shell-warmup"
 import { readSkillsPage, SKILLS_UI_PAGE_SIZE } from "@/lib/skills-query"
 import { toast } from "sonner"
 import { navigate, routes } from "@/lib/navigate"
+import { buildRouteFromNavigationState } from "../../../shared/route-parser"
 import {
   useNavigationActions,
   useNavigationStatus,
@@ -445,6 +450,13 @@ function AppShellContent({
   const shellWidth = useContainerWidth(shellRef)
   const MOBILE_THRESHOLD = 768
   const isAutoCompact = shellWidth > 0 && shellWidth < MOBILE_THRESHOLD
+  // top50 #3: between the mobile layout and NARROW_SHELL_THRESHOLD the second
+  // sidebar stops taking layout width and floats over the content instead.
+  const isNarrowShell = !isAutoCompact && shellWidth > 0 && shellWidth < NARROW_SHELL_THRESHOLD
+  React.useLayoutEffect(() => { setNarrowShell(isNarrowShell) }, [isNarrowShell])
+  React.useEffect(() => () => setNarrowShell(false), [])
+  const narrowOverlay = useNarrowSidebarOverlay()
+  const secondaryOverlayRef = React.useRef<HTMLDivElement>(null)
   // One-surface shell: restored sidebar/list widths must not squeeze the
   // session column below CENTER_MIN_WIDTH when the window is wide enough.
   // Display-only; the persisted widths are untouched. The right inspector
@@ -597,8 +609,23 @@ function AppShellContent({
   // shell-layout: static icon rail + optional second sidebar (none on Главная, user can hide it).
   const secondaryVisibility = useSecondarySidebarVisibility()
   const secondaryAvailable = !isHomeNavigation(navState)
-  const secondaryShown = secondaryAvailable && secondaryVisibility !== 'hidden'
-  const shellLeftWidth = SHELL_RAIL_WIDTH + (secondaryShown ? sidebarWidth : 0)
+  const secondaryOverlayOpen = isNarrowShell && narrowOverlay.open && secondaryAvailable
+  const secondaryShown = secondaryAvailable && (isNarrowShell ? secondaryOverlayOpen : secondaryVisibility !== 'hidden')
+  const shellLeftWidth = SHELL_RAIL_WIDTH + (secondaryShown && !isNarrowShell ? sidebarWidth : 0)
+  // The overlay keeps the user's own width but never covers the whole window.
+  const secondaryOverlayWidth = isSidebarCollapsed ? 52 : Math.max(SIDEBAR_WIDTH_MIN, Math.min(storedSidebarWidth, shellWidth - SHELL_RAIL_WIDTH - 48))
+  useNarrowOverlayFocus(secondaryOverlayRef, secondaryOverlayOpen)
+  // Picking a row in the overlay navigates; the overlay then gets out of the way.
+  // Keyed on the route string (memoized), not a JSON dump of navState per render.
+  const overlayNavKey = React.useMemo(() => {
+    try { return buildRouteFromNavigationState(navState) } catch { return JSON.stringify(navState) }
+  }, [navState])
+  const overlayNavKeyRef = React.useRef(overlayNavKey)
+  React.useEffect(() => {
+    if (overlayNavKeyRef.current === overlayNavKey) return
+    overlayNavKeyRef.current = overlayNavKey
+    setNarrowSidebarOverlayOpen(false)
+  }, [overlayNavKey])
   // No global project scope (the sidebar «Контекст проекта» selector was removed):
   // chats, new chats and tools always cover all projects.
   const liveWorkspace = useRef(activeWorkspaceId)
@@ -1435,6 +1462,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   // Settings
   useAction('app.settings', onOpenSettings)
   useAction('view.toggleSecondarySidebar', toggleSecondarySidebar)
+  useTerminalDockShortcut()
 
   // Keyboard shortcuts
   useAction('app.keyboardShortcuts', onOpenKeyboardShortcuts)
@@ -3091,6 +3119,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
     <TourConnectionPolicyContext.Provider value={learningSourcePolicy?.workspaceId === activeWorkspaceId ? learningSourcePolicy : null}>
     <AppShellProvider value={appShellContextValue}>
       <AuroraField />
+      <TrayStateBridge />
       <WorkspaceBrowserRegistry enabled={browserSurfaceEnabled} />
       <ShellSidebarContext.Provider value={isAutoCompact ? null : shellSidebarSlot}>
         {/* === TOP BAR === */}
@@ -3186,7 +3215,20 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                 </button>
               }
             />
-            <div className={cn("h-full min-w-0 flex-1 flex-col select-none", secondaryShown ? "flex" : "hidden")} data-secondary-sidebar="">
+            <div
+              ref={secondaryOverlayRef}
+              className={cn(
+                "h-full min-w-0 flex-1 flex-col select-none",
+                secondaryShown ? "flex" : "hidden",
+                secondaryOverlayOpen && "rox-shell-pane chrome-rail absolute inset-y-0 z-sticky shadow-strong rox-shell-divider-r",
+              )}
+              style={secondaryOverlayOpen ? { left: SHELL_RAIL_WIDTH, width: secondaryOverlayWidth } : undefined}
+              data-secondary-sidebar=""
+              data-secondary-overlay={secondaryOverlayOpen ? 'true' : undefined}
+              role={secondaryOverlayOpen ? 'dialog' : undefined}
+              aria-modal={secondaryOverlayOpen ? true : undefined}
+              aria-label={secondaryOverlayOpen ? t('shell.rail.sidebarOverlay') : undefined}
+            >
               {/* Sidebar v2 header: collapse + pin side by side at the top. */}
               <SidebarHeaderControls
                 collapsed={isSidebarCollapsed}
@@ -3250,6 +3292,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
           </div>
           }
           sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : shellLeftWidth}
+          sidebarOverflowVisible={secondaryOverlayOpen}
           navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav) ? null : (
             <div
               style={{ width: isAutoCompact || navigatorExpanded ? '100%' : sessionListWidth }}
