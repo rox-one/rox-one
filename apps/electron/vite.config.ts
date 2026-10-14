@@ -257,11 +257,18 @@ export default defineConfig(({ command }) => ({
     outDir: resolve(__dirname, 'dist/renderer'),
     emptyOutDir: true,
     // Production dist must not ship source maps (S9-11: 68 MB of *.map).
-    // `vite dev` / playground-dev.ts still serve playground.html from disk.
     sourcemap: false,
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'src/renderer/index.html'),
+        // Keep `playground.html` as a build input even though it is not part of
+        // the shipped product: Rollup derives chunk granularity from the whole
+        // entry set. Dropping it collapses the app's ~50 chunks into one ~2.6 MB
+        // `main` chunk (measured: `main` prefix 2 631 634 B vs a 347 295 B
+        // budget, index closure 19 files instead of 51). Excluding the built
+        // playground page from the distribution is a separate, chunking-aware
+        // change; `vite dev` / playground-dev.ts serve it from disk regardless.
+        playground: resolve(__dirname, 'src/renderer/playground.html'),
         'browser-toolbar': resolve(__dirname, 'src/renderer/browser-toolbar.html'),
         'browser-empty-state': resolve(__dirname, 'src/renderer/browser-empty-state.html'),
         'voice-overlay': resolve(__dirname, 'src/renderer/voice-overlay.html'),
