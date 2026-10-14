@@ -730,7 +730,17 @@ const telemetryBootstrapConfig = (() => {
   vcredistMissing: process.env.CRAFT_VCREDIST_MISSING === '1',
   downloadUrl: process.env.CRAFT_VCREDIST_URL,
 })
-;(api as ElectronAPI).exitMiniWindow = () => ipcRenderer.invoke('window:exit-mini')
+;(api as ElectronAPI).miniGlass = {
+  setExpanded: (expanded: boolean) => ipcRenderer.invoke('mini-glass:set-expanded', expanded),
+  submit: (text: string | null) => ipcRenderer.invoke('mini-glass:submit', text),
+  getEnabled: () => ipcRenderer.invoke('mini-glass:get-enabled'),
+  setEnabled: (enabled: boolean) => ipcRenderer.invoke('mini-glass:set-enabled', enabled),
+  onReset: (callback: () => void) => {
+    const handler = () => callback()
+    ipcRenderer.on('mini-glass:reset', handler)
+    return () => ipcRenderer.removeListener('mini-glass:reset', handler)
+  },
+}
 ;(api as ElectronAPI).onPanelFocusDirection = (callback) => {
   const handler = (_event: unknown, direction: unknown) => {
     if (direction === 'left' || direction === 'right' || direction === 'up' || direction === 'down') callback(direction)

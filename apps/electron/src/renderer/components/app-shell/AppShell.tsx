@@ -233,7 +233,6 @@ import { isMissionsNavigation, isScreenNavigation, isSurfaceNavigation } from '.
 import { enabledShellFlagsAtom } from '@/platform/unified-flags'
 import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { notesTitleKey, surfaceTitleKey } from '@/platform/surface-shell'
-import { MiniSessionSurface } from "./MiniSessionSurface"
 
 
 /**
@@ -289,28 +288,9 @@ interface AppShellProps {
 }
 
 export function AppShell(props: AppShellProps) {
-  const [mini, setMini] = useState(() => new URLSearchParams(window.location.search).get('mini') === 'true')
-
-  useEffect(() => {
-    const syncMiniMode = () => setMini(new URLSearchParams(window.location.search).get('mini') === 'true')
-    window.addEventListener('resize', syncMiniMode)
-    window.addEventListener('popstate', syncMiniMode)
-    return () => {
-      window.removeEventListener('resize', syncMiniMode)
-      window.removeEventListener('popstate', syncMiniMode)
-    }
-  }, [])
-
   return (
     <EscapeInterruptProvider>
-      {mini ? (
-        <AppShellProvider value={props.contextValue}>
-          <WorkspaceBrowserRegistry />
-          <MiniSessionSurface />
-        </AppShellProvider>
-      ) : (
-        <AppShellContent {...props} />
-      )}
+      <AppShellContent {...props} />
     </EscapeInterruptProvider>
   )
 }

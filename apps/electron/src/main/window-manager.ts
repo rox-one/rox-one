@@ -4,7 +4,8 @@ import { join, resolve, sep } from 'path'
 import { existsSync } from 'fs'
 import { release } from 'os'
 import { fileURLToPath } from 'url'
-import { getWorkspaceByNameOrId, getZenShellMaterialPreference, isZenShellEnabled } from '@rox/shared/config'
+import { getMiniGlassEnabled, getMiniGlassPosition, getWorkspaceByNameOrId, getZenShellMaterialPreference, isZenShellEnabled, setMiniGlassEnabled, setMiniGlassPosition } from '@rox/shared/config'
+import { MiniGlassController } from './mini-glass'
 import { classifyExternalUrl, formatBlockedUrlError } from '@rox/shared/utils/url-safety'
 import { RPC_CHANNELS, type WindowCloseRequestSource } from '../shared/types'
 import { getExtensionHostManager } from './extension-host-manager'
@@ -73,8 +74,14 @@ export class WindowManager {
   private keyboardCloseIntentTimeouts: Map<number, NodeJS.Timeout> = new Map()  // Auto-clear stale keyboard-close intents
   private pendingCloseTimeouts: Map<number, NodeJS.Timeout> = new Map()
   private isAppQuitting = false  // Skip layered close interception during app quit
-  private miniWindows: Map<number, { bounds: Electron.Rectangle; alwaysOnTop: boolean }> = new Map()
-  private miniExitHandlerRegistered = false
+  private miniGlass = new MiniGlassController({
+    registerAuxiliaryWindow: (window, workspaceId) => this.registerAuxiliaryWindow(window, workspaceId),
+    readPosition: getMiniGlassPosition,
+    writePosition: setMiniGlassPosition,
+    isEnabled: getMiniGlassEnabled,
+    writeEnabled: setMiniGlassEnabled,
+    submitToOwner: (owner, text) => this.submitFromMiniGlass(owner, text),
+  })
 
   /**
    * Set the event sink and client resolver for pushing events via the RPC server
@@ -213,7 +220,6 @@ export class WindowManager {
    */
   createWindow(options: CreateWindowOptions): BrowserWindow {
     const { workspaceId, focused = false, initialDeepLink, restoreUrl } = options
-    this.registerMiniWindowExitHandler()
 
     // Load platform-specific app icon
     // In packaged app, resources are at dist/resources/ (same level as __dirname)
@@ -522,15 +528,19 @@ export class WindowManager {
     }
     nativeTheme.on('updated', themeHandler)
 
-    // On macOS, minimize into a compact, in-place session surface rather than
-    // hiding the app. Other platforms retain native minimize behavior.
+    // On macOS, minimizing docks the window natively and floats the mini glass
+    // companion (two circular glass buttons); it hides as soon as the window
+    // comes back. Other platforms retain plain native minimize.
     window.on('minimize', () => {
-      if (process.platform !== 'darwin' || this.isAppQuitting || this.miniWindows.has(webContentsId)) return
-      window.restore()
-      this.enterMiniWindow(window, webContentsId)
+      if (process.platform !== 'darwin' || this.isAppQuitting) return
+      const boundWorkspace = this.windows.get(webContentsId)?.workspaceId ?? workspaceId
+      this.miniGlass.show(window, boundWorkspace)
     })
+    window.on('restore', () => this.miniGlass.hide(window))
+    window.on('show', () => this.miniGlass.hide(window))
     // Handle focus/blur to broadcast window focus state
     window.on('focus', () => {
+      this.miniGlass.hide(window)
       this.lastActiveWindowId = webContentsId
       this.pushToWindow(window, RPC_CHANNELS.window.FOCUS_STATE, true)
     })
@@ -624,7 +634,7 @@ export class WindowManager {
       this.windows.delete(webContentsId)
       if (this.lastActiveWindowId === webContentsId) this.lastActiveWindowId = null
       this.focusedModeWindows.delete(webContentsId)
-      this.miniWindows.delete(webContentsId)
+      this.miniGlass.ownerClosed(window)
       // Re-apply window-title policy — surviving windows revert from workspace
       // name back to app name when the count drops from 2 → 1.
       this.refreshWindowTitles()
@@ -656,55 +666,23 @@ export class WindowManager {
     return window
   }
 
-  private registerMiniWindowExitHandler(): void {
-    if (this.miniExitHandlerRegistered) return
-    this.miniExitHandlerRegistered = true
-    ipcMain.handle('window:exit-mini', (event) => {
-      const managed = this.windows.get(event.sender.id)
-      if (!managed || managed.window.isDestroyed() || !this.miniWindows.has(event.sender.id)) return false
-      this.exitMiniWindow(managed.window, event.sender.id)
-      return true
+  /** Restore the owner and run the regular new-session action (send when text is present). */
+  private submitFromMiniGlass(owner: BrowserWindow, text: string | null): void {
+    if (owner.isDestroyed()) return
+    if (owner.isMinimized()) owner.restore()
+    owner.show()
+    owner.focus()
+    this.pushToWindow(owner, RPC_CHANNELS.deeplink.NAVIGATE, {
+      action: 'new-session',
+      actionParams: text ? { input: text, send: 'true' } : {},
+      source: 'app',
     })
   }
 
-  private setMiniRoute(window: BrowserWindow, mini: boolean): void {
-    try {
-      const url = new URL(window.webContents.getURL())
-      if (mini) url.searchParams.set('mini', 'true')
-      else url.searchParams.delete('mini')
-      void window.webContents.executeJavaScript(`history.replaceState(history.state, '', ${JSON.stringify(url.toString())}); window.dispatchEvent(new Event('resize'))`)
-        .catch((error) => windowLog.warn(`Failed to ${mini ? 'enter' : 'exit'} mini session route:`, error))
-    } catch (error) {
-      windowLog.warn(`Failed to ${mini ? 'enter' : 'exit'} mini session route:`, error)
-    }
+  /** Tear down the companion on quit. */
+  disposeMiniGlass(): void {
+    this.miniGlass.dispose()
   }
-
-  private enterMiniWindow(window: BrowserWindow, webContentsId: number): void {
-    if (window.isDestroyed() || this.miniWindows.has(webContentsId)) return
-    this.miniWindows.set(webContentsId, {
-      bounds: window.getBounds(),
-      alwaysOnTop: window.isAlwaysOnTop(),
-    })
-    this.setMiniRoute(window, true)
-    window.setMinimumSize(320, 100)
-    window.setSize(420, 150, true)
-    window.setAlwaysOnTop(true, 'floating')
-    window.show()
-    window.focus()
-  }
-
-  private exitMiniWindow(window: BrowserWindow, webContentsId: number): void {
-    const previous = this.miniWindows.get(webContentsId)
-    if (!previous || window.isDestroyed()) return
-    this.miniWindows.delete(webContentsId)
-    window.setAlwaysOnTop(previous.alwaysOnTop)
-    window.setMinimumSize(800, 600)
-    window.setBounds(previous.bounds, true)
-    this.setMiniRoute(window, false)
-    window.show()
-    window.focus()
-  }
-
 
   /**
    * Get window by webContents.id (used by IPC handlers instead of BrowserWindow.fromId)
@@ -908,18 +886,11 @@ export class WindowManager {
     return this.getAllWindows().map(managed => {
       const webContentsId = managed.window.webContents.id
       const isFocused = this.focusedModeWindows.has(webContentsId)
-      let url = managed.window.webContents.getURL()
-      try {
-        const parsed = new URL(url)
-        parsed.searchParams.delete('mini')
-        url = parsed.toString()
-      } catch {
-        // Keep malformed/empty URLs absent from restore state.
-      }
+      const url = managed.window.webContents.getURL()
       return {
         type: 'main' as const,
         workspaceId: managed.workspaceId,
-        bounds: this.miniWindows.get(webContentsId)?.bounds ?? managed.window.getNormalBounds(),
+        bounds: managed.window.getNormalBounds(),
         ...(isFocused && { focused: true }),
         ...(url && { url }),
       }
