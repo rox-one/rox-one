@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { clearRegisteredSecretValues, registerSecretValues } from '@rox/shared/secrets'
 import {
   CookbooksRuntime,
   buildCookbooksChildEnv,
@@ -480,7 +481,7 @@ const RUN_ALL_RAW = {
   ],
 }
 
-function startStub() {
+function startStub(options: { storeRejects?: boolean } = {}) {
   const requests: Array<{ path: string; authorization: string | null }> = []
   // Secret-bridge capture: the store snapshots (`POST /store`) and the one-shot
   // store carried by `/run` and `/run-all` payloads.
@@ -517,6 +518,9 @@ function startStub() {
           const store = body.store ?? {}
           storeBodies.push(store)
           firstStore.resolve(store)
+          // A sidecar-side rejection: the client must log the status and key
+          // count, never the sidecar's own text.
+          if (options.storeRejects) return Response.json({ error: 'store must not be empty' }, { status: 400 })
           return Response.json({ keys: Object.keys(store) })
         }
         case '/run': {
@@ -546,11 +550,11 @@ function startStub() {
   return { port, requests, storeBodies, firstStore: firstStore.promise, runBodies, runAllBodies, stop: () => server.stop(true) }
 }
 
-/** Drive a runtime to `running` against `port` through the injected fake spawn. */
-async function runtimeOnPort(
+/** Build a runtime on the injected fake spawn and drive it to `running`. */
+async function startRuntime(
   port: number,
   options: Partial<ConstructorParameters<typeof CookbooksRuntime>[0]> = {},
-): Promise<CookbooksRuntime> {
+): Promise<{ runtime: CookbooksRuntime; children: FakeChild[] }> {
   const children: FakeChild[] = []
   const runtime = new CookbooksRuntime({
     spawn: () => { const child = new FakeChild(); children.push(child); return child },
@@ -566,7 +570,23 @@ async function runtimeOnPort(
   await tick()
   children[0].emit(line(port))
   await ready
-  return runtime
+  return { runtime, children }
+}
+
+/** Drive a runtime to `running` against `port` through the injected fake spawn. */
+async function runtimeOnPort(
+  port: number,
+  options: Partial<ConstructorParameters<typeof CookbooksRuntime>[0]> = {},
+): Promise<CookbooksRuntime> {
+  return (await startRuntime(port, options)).runtime
+}
+
+/**
+ * Drain a promise chain that performs no I/O (a self-restart is sync spawn +
+ * resolved async hooks), so a test can observe an intermediate state.
+ */
+async function drain(): Promise<void> {
+  for (let i = 0; i < 64; i++) await Promise.resolve()
 }
 
 /** A sidecar that accepts the connection and never answers. */
@@ -1010,6 +1030,127 @@ describe('CookbooksRuntime secret bridge', () => {
     } finally {
       await runtime.stop()
       stub.stop()
+    }
+  })
+
+  it('restarts the sidecar to clear the store when the last key goes away', async () => {
+    const stub = startStub()
+    let snapshot: Record<string, string> = { 'openai.api_key': 'sk-one' }
+    const { runtime, children } = await startRuntime(stub.port, { resolveStore: async () => snapshot })
+    try {
+      // Awaited (rather than the stub gate, which resolves before the client sees
+      // the response) so the runtime has definitely recorded a seeded store.
+      await runtime.pushStore()
+      expect(children.length).toBe(1)
+
+      snapshot = {}
+      const push = runtime.pushStore()
+      await drain()
+      // The sidecar refuses an empty store, so clearing it means replacing the
+      // process: the seeded child is stopped and a fresh one is spawned.
+      expect(children.length).toBe(2)
+      expect(children[0].signals).toContain('SIGINT')
+      children[1].emit(line(stub.port))
+      await push
+
+      expect(runtime.getStatus().state).toBe('running')
+      // No empty snapshot was ever POSTed.
+      expect(stub.storeBodies).toContainEqual({ 'openai.api_key': 'sk-one' })
+      expect(stub.storeBodies.every((body) => Object.keys(body).length > 0)).toBe(true)
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('replaces the sidecar store wholesale when only some keys are removed', async () => {
+    const stub = startStub()
+    let snapshot: Record<string, string> = { 'openai.api_key': 'sk-a', 'pinecone.api_key': 'pc-b' }
+    const { runtime, children } = await startRuntime(stub.port, { resolveStore: async () => snapshot })
+    try {
+      await runtime.pushStore()
+
+      snapshot = { 'openai.api_key': 'sk-a' }
+      await runtime.apiCatalog()
+
+      // Still non-empty: a plain replacement push, no restart.
+      expect(children.length).toBe(1)
+      // Deep equality on the recorded body proves the snapshot is a full
+      // replacement (exactly one key), not a merge that keeps the removed one.
+      expect(stub.storeBodies).toContainEqual({ 'openai.api_key': 'sk-a' })
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('does not restart again once an emptied store has been cleared', async () => {
+    const stub = startStub()
+    let snapshot: Record<string, string> = { 'openai.api_key': 'sk-one' }
+    const { runtime, children } = await startRuntime(stub.port, { resolveStore: async () => snapshot })
+    try {
+      await runtime.pushStore()
+
+      snapshot = {}
+      const push = runtime.pushStore()
+      await drain()
+      children[1].emit(line(stub.port))
+      await push
+      expect(children.length).toBe(2)
+
+      // Further reads with an empty store are a no-op: no new sidecar, no POST.
+      await runtime.apiCatalog()
+      await runtime.apiCatalog()
+      expect(children.length).toBe(2)
+      expect(runtime.getStatus().state).toBe('running')
+      expect(stub.storeBodies.every((body) => Object.keys(body).length > 0)).toBe(true)
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('logs a failed store push with its status and key count, never the values', async () => {
+    const stub = startStub({ storeRejects: true })
+    const logs: string[] = []
+    const store = { 'openai.api_key': 'sk-rejected', 'pinecone.api_key': 'pc-rejected' }
+    const runtime = await runtimeOnPort(stub.port, {
+      resolveStore: async () => store,
+      log: (_level, msg) => {
+        logs.push(msg)
+      },
+    })
+    try {
+      await runtime.apiCatalog()
+      const joined = logs.join('\n')
+      expect(joined).toContain('store push failed')
+      expect(joined).toContain('status=400')
+      expect(joined).toContain('2 key(s)')
+      // Neither the values nor the sidecar's own error text may appear.
+      expect(joined).not.toContain('sk-rejected')
+      expect(joined).not.toContain('pc-rejected')
+      expect(joined).not.toContain('store must not be empty')
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('masks registered secret values in sidecar stderr lines', async () => {
+    const registered = 'sk-registered-stderr-canary'
+    registerSecretValues([registered])
+    try {
+      const h = harness()
+      const p = h.runtime.ensure()
+      await tick()
+      h.children[0].emit(line(1))
+      await p
+      h.children[0].emitErr(`provider echoed ${registered} while starting\n`)
+      const joined = h.logs.join('\n')
+      expect(joined).not.toContain(registered)
+      expect(joined).toContain('***REDACTED***')
+    } finally {
+      clearRegisteredSecretValues()
     }
   })
 })

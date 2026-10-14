@@ -20,7 +20,7 @@ import { accessSync, constants, existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { get as httpGet } from 'node:http'
 import { delimiter, join } from 'node:path'
-import { resolveSecretsForSpawn, type SecretRefEntry } from '@rox/shared/secrets'
+import { redactRegisteredSecrets, resolveSecretsForSpawn, type SecretRefEntry } from '@rox/shared/secrets'
 import { getBundledAssetsDir } from '@rox/shared/utils'
 import { resolveConfigDir } from '@rox/shared/config/paths'
 import { getToolchain, withToolchainPathPrefix } from '@rox/shared/toolchain-runtime'
@@ -364,6 +364,12 @@ export class CookbooksRuntime {
   private startInFlight: Promise<CookbooksStatus> | null = null
   private stderrRing: string[] = []
   private stderrRingBytes = 0
+  /**
+   * True while the CURRENT sidecar process holds a non-empty store we seeded.
+   * The sidecar replaces its store per snapshot but refuses an empty one, so an
+   * emptied store can only be cleared by replacing the process (see pushStore).
+   */
+  private storeSeeded = false
   private readonly o: Required<
     Pick<
       CookbooksRuntimeOptions,
@@ -591,19 +597,45 @@ export class CookbooksRuntime {
    * no-op unless the runtime is `running`, and silent on any failure — the
    * lab's key chips and the next one-shot run payload are conveniences, never a
    * reason to fail an IPC call. Only the key NAMES are ever logged.
+   *
+   * The sidecar REPLACES its store with every snapshot, so a partial removal is
+   * just a smaller push. An EMPTY store is different: the sidecar rejects an
+   * empty `/store` body (`host.py:445`) and ignores an empty one-shot store
+   * (`host.py:278`, `:356`). Once we have seeded keys, a store that becomes
+   * empty is therefore cleared by replacing the sidecar process — a fresh
+   * process starts empty, which is what keeps the chips and the injected env
+   * honest instead of resurrecting a key the user just removed.
    */
   async pushStore(): Promise<void> {
     if (this.state !== 'running') return
     const store = await this.resolveStoreSnapshot()
     const keys = Object.keys(store)
-    // An empty store is not pushed: the sidecar rejects an empty object, and
-    // "nothing configured" is already its initial state.
-    if (keys.length === 0) return
+    if (keys.length === 0) {
+      // Claim the transition synchronously (before any await) so two concurrent
+      // pushes cannot both restart the sidecar.
+      const wasSeeded = this.storeSeeded
+      this.storeSeeded = false
+      if (wasSeeded) {
+        this.o.log('info', 'cookbooks-runtime: store is empty; restarting the sidecar to clear it')
+        try {
+          // The restart is asynchronous; a failed one leaves the caller with a
+          // stale store rather than an error it cannot act on.
+          await this.restart()
+        } catch {
+          /* best-effort */
+        }
+      }
+      return
+    }
     try {
       await this.request<unknown>('/store', { method: 'POST', body: { store } })
+      this.storeSeeded = true
       this.o.log('info', `cookbooks-runtime: store pushed (${keys.length} key(s): ${keys.join(', ')})`)
-    } catch {
-      /* best-effort: the store is re-pushed before the next catalog read */
+    } catch (err) {
+      // Observable, but value-free: no sidecar error text (it can echo a body)
+      // and no values — only the HTTP status and how many keys were attempted.
+      const status = err instanceof CookbooksApiError ? err.status : 0
+      this.o.log('warn', `cookbooks-runtime: store push failed (status=${status}, ${keys.length} key(s))`)
     }
   }
 
@@ -800,8 +832,11 @@ export class CookbooksRuntime {
     this.setState('running')
     this.resolveStartWaiters(this.getStatus())
     this.startInFlight = null
-    // Fresh sidecar has an empty in-memory store; seed it so the very first
-    // catalog read (chips/banner) reflects the configured keys. Best-effort.
+    // A fresh sidecar process always starts with an empty store, whatever we
+    // seeded into the one that just exited.
+    this.storeSeeded = false
+    // Seed it so the very first catalog read (chips/banner) reflects the
+    // configured keys. Best-effort.
     void this.pushStore()
   }
 
@@ -890,7 +925,10 @@ export class CookbooksRuntime {
   }
 
   private pushStderr(line: string): void {
-    const redacted = redactCookbooksLogLine(line)
+    // Two layers: `token=` is masked structurally, and any value the secret
+    // chain has registered is masked by identity (the sidecar must never echo a
+    // key, but a traceback can).
+    const redacted = redactRegisteredSecrets(redactCookbooksLogLine(line))
     this.stderrRing.push(redacted)
     this.stderrRingBytes += Buffer.byteLength(redacted, 'utf8') + 1
     while (this.stderrRingBytes > STDERR_RING_MAX_BYTES && this.stderrRing.length > 0) {
