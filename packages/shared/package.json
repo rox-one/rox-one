@@ -197,6 +197,8 @@
     "./voice": "./src/voice/index.ts",
     "./meeting-agents": "./src/meeting-agents/index.ts",
     "./meeting-agents/browser": "./src/meeting-agents/browser.ts",
+    "./chat-folders": "./src/chat-folders/index.ts",
+    "./chat-folders/storage": "./src/chat-folders/storage.ts",
     "./cli": "./src/cli/index.ts",
     "./capabilities": "./src/capabilities/index.ts",
     "./capabilities/packs": "./src/capabilities/packs.ts",

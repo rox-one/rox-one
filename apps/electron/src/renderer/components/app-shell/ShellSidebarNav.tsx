@@ -29,6 +29,7 @@ import { PRIMARY_NAV } from './primary-nav'
 import { resolveCurrentSurface } from './sidebar-registry'
 import { useCurrentScreenSidebar } from '../shell/screen-sidebar'
 import { ScreenSidebar } from '../shell/ScreenSidebar'
+import { ScreenSidebarHost } from '@/screens/ScreenSidebarHost'
 
 const RecentPinnedSidebar = React.lazy(() => import('./RecentPinnedSidebar'))
 
@@ -159,8 +160,14 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
     return null
   }, [isCollapsed, sessionFilters, surfaceSection])
 
+  // Same tree position in both branches so the publisher survives the switch
+  // from fallback → published config (remounting it would clear and loop).
+  const publisherHost = <ScreenSidebarHost key="screen-sidebar-host" screenId={current.id} />
+
   if (screenConfig) {
     return (
+      <>
+      {publisherHost}
       <nav
         aria-label={screenConfig.title}
         data-sidebar-primary-nav=""
@@ -173,10 +180,13 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
         {/* Keep the portal target mounted so a page's portal never loses its node. */}
         <div ref={slotRef} hidden data-primary-sidebar-context="" />
       </nav>
+      </>
     )
   }
 
   return (
+    <>
+    {publisherHost}
     <nav
       aria-label={title ?? t('sidebar.navigation')}
       data-sidebar-primary-nav=""
@@ -233,6 +243,7 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
         </React.Suspense>
       )}
     </nav>
+    </>
   )
 })
 
