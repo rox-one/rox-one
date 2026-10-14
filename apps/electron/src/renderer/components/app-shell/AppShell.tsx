@@ -95,7 +95,6 @@ import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
 import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
-import { useProductLearning } from "@/features/product-tour/runtime"
 import { accountProfileStrip } from "./profile-strip-account"
 import { SidebarChrome, SidebarHeaderControls } from "./SidebarChrome"
 import { StatusBar } from "./StatusBar"
@@ -475,11 +474,6 @@ function AppShellContent({
 
   // Profile strip (gamification footer)
   const promoInsights = usePromoInsights(activeWorkspaceId ?? undefined)
-  const productLearning = useProductLearning()
-  const replayOnboardingTour = React.useMemo(() => {
-    if (!productLearning?.enabled || !productLearning.ready) return undefined
-    return () => { void productLearning.start('OBT-01', productLearning.progress['OBT-01'] ? 'replay' : 'new') }
-  }, [productLearning])
   const [profileStrip, setProfileStrip] = React.useState<ProfileStripData>({
     displayName: '',
     plan: 'standard',
@@ -650,6 +644,10 @@ function AppShellContent({
   }
   const panelStack = useAtomValue(panelStackAtom)
   const productLearning = useProductLearning()
+  const replayOnboardingTour = React.useMemo(() => {
+    if (!productLearning?.enabled || !productLearning.ready) return undefined
+    return () => { void productLearning.start('OBT-01', productLearning.progress['OBT-01'] ? 'replay' : 'new') }
+  }, [productLearning])
   const tourNewSessionTarget = useTourTarget('session.new', { variant: 'regular' })
   const tourSignals = useTourSignals()
   const panelCount = useAtomValue(panelCountAtom)
