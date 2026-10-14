@@ -5384,7 +5384,7 @@
   "messenger.calls.summaryPreview": "ИИ-сводка звонка",
   "messenger.calls.transcribing": "Идёт расшифровка",
   "messenger.calls.transcribingHint": "Ваш микрофон расшифровывается голосовым движком Rox; после звонка расшифровка и ИИ-сводка появятся в канале.",
-  "messenger.calls.transcript": "Расшифровка звонка · строк: {{count}}",
+  "messenger.calls.transcript": "Расшифровка звонка",
   "messenger.calls.transcriptPreview": "Расшифровка звонка",
   "messenger.calls.unmute": "Включить микрофон",
   "messenger.calls.youAreIn": "Вы в звонке",

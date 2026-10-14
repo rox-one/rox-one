@@ -198,7 +198,7 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
                 </Button>
               ) : null}
               {selected.viewerRole && !selected.isDefault ? (
-                <Button variant="ghost" size="icon" title={t('messenger.channels.leave')} aria-label={t('messenger.channels.leave')} onClick={() => void run(async () => { await window.electronAPI.teamChatLeave(selected.id, orgId); setSelectedId(null) })}>
+                <Button variant="ghost" size="icon" title={t('messenger.channels.leave')} aria-label={t('messenger.channels.leave')} onClick={() => void run(async () => { if (call.channelId === selected.id) await call.leave(); await window.electronAPI.teamChatLeave(selected.id, orgId); setSelectedId(null) })}>
                   <LogOut aria-hidden />
                 </Button>
               ) : null}
@@ -206,7 +206,7 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
                 <Button variant="ghost" size="icon" title={t('messenger.channels.archive')} aria-label={t('messenger.channels.archive')}
                   onClick={() => {
                     if (!window.confirm(t('messenger.channels.archiveConfirm', { name: selected.name }))) return
-                    void run(async () => { await window.electronAPI.teamChatArchive(selected.id, orgId); setSelectedId(null) })
+                    void run(async () => { if (call.channelId === selected.id) await call.leave(); await window.electronAPI.teamChatArchive(selected.id, orgId); setSelectedId(null) })
                   }}
                 >
                   <Archive aria-hidden />

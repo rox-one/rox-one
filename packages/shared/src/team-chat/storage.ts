@@ -197,7 +197,7 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     const startMs = Number(v.startMs), endMs = Number(v.endMs)
     if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs < 0 || endMs < startMs) return null
     const speakerId = typeof v.speakerId === 'string' && /^[A-Za-z0-9._:@-]{1,128}$/.test(v.speakerId) ? v.speakerId : fallbackSpeaker
-    const speakerName = typeof v.speakerName === 'string' ? v.speakerName.trim().slice(0, 80) : ''
+    const speakerName = typeof v.speakerName === 'string' ? v.speakerName.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) : ''
     return { speakerId, ...(speakerName ? { speakerName } : {}), text, startMs: Math.round(startMs), endMs: Math.round(endMs) }
   }
 

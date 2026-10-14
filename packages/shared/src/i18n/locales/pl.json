@@ -5366,7 +5366,7 @@
   "messenger.calls.summaryPreview": "AI call summary",
   "messenger.calls.transcribing": "Transcribing",
   "messenger.calls.transcribingHint": "Your microphone is transcribed with your Rox voice engine; the transcript and an AI summary are posted to the channel when the call ends.",
-  "messenger.calls.transcript": "Call transcript · {{count}} lines",
+  "messenger.calls.transcript": "Call transcript",
   "messenger.calls.transcriptPreview": "Call transcript",
   "messenger.calls.unmute": "Unmute",
   "messenger.calls.youAreIn": "You're in the call",

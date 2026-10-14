@@ -60,7 +60,7 @@ export function ChannelInfoPanel({ channel, label, members, presenceOf, nameOf, 
           <div className="rounded-lg border border-success/40 bg-success/5 p-3" data-testid="messenger-active-call">
             <div className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5 text-small text-success"><span className="size-1.5 rounded-full bg-success" aria-hidden />{t('messenger.calls.live')} · <time className="tabular-nums" data-testid="messenger-call-timer">{timer}</time></span>
-              {!inCall ? <Button size="sm" onClick={onJoinCall} disabled={joining || !channel.viewerRole}><Phone aria-hidden />{t('messenger.calls.join')}</Button> : <span className="text-caption text-text-muted">{t('messenger.calls.youAreIn')}</span>}
+              {!inCall ? <Button size="sm" onClick={onJoinCall} disabled={joining || (!channel.viewerRole && channel.visibility !== 'public')}><Phone aria-hidden />{t('messenger.calls.join')}</Button> : <span className="text-caption text-text-muted">{t('messenger.calls.youAreIn')}</span>}
             </div>
             <ul className="mt-2 flex flex-wrap gap-1.5">
               {call.participantIds.map(id => (
@@ -71,7 +71,7 @@ export function ChannelInfoPanel({ channel, label, members, presenceOf, nameOf, 
         ) : (
           <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
             <span className="text-small text-text-muted">{t('messenger.calls.noCall')}</span>
-            <Button size="sm" variant="secondary" onClick={onJoinCall} disabled={joining || !channel.viewerRole}><Phone aria-hidden />{t('messenger.calls.start')}</Button>
+            <Button size="sm" variant="secondary" onClick={onJoinCall} disabled={joining || (!channel.viewerRole && channel.visibility !== 'public')}><Phone aria-hidden />{t('messenger.calls.start')}</Button>
           </div>
         )}
       </section>

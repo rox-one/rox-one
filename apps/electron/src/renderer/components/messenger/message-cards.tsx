@@ -81,7 +81,7 @@ function TranscriptCard({ message }: { message: TeamChannelMessage }) {
       <button type="button" className="flex w-full items-center gap-1.5 text-caption font-medium text-text-secondary" onClick={() => setOpen(v => !v)} aria-expanded={open}>
         {open ? <ChevronDown className="size-3.5" aria-hidden /> : <ChevronRight className="size-3.5" aria-hidden />}
         <ScrollText className="size-3.5" aria-hidden />
-        {t('messenger.calls.transcript', { count: lines.length })}
+        {t('messenger.calls.transcript')} · {lines.length}
       </button>
       <pre className={cn('mt-1 whitespace-pre-wrap break-words font-sans text-small', !open && 'line-clamp-3')}>{message.text}</pre>
     </div>

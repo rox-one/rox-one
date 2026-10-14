@@ -116,7 +116,7 @@ function startOwnMicTranscription(opts: {
   }
 }
 
-export function useTeamCall(opts: { selfName: string; autoTranscribe?: boolean }) {
+export function useTeamCall(opts: { selfName: string }) {
   const [state, setState] = React.useState<TeamCallState>(IDLE)
   const roomRef = React.useRef<Room | null>(null)
   const stopAsr = React.useRef<(() => Promise<void>) | null>(null)
@@ -185,7 +185,7 @@ export function useTeamCall(opts: { selfName: string; autoTranscribe?: boolean }
       setState(prev => ({ ...prev, status: 'connected', call }))
       sync()
       const micTrack = room.localParticipant.getTrackPublication(Track.Source.Microphone)?.track?.mediaStreamTrack
-      if (micTrack && opts.autoTranscribe !== false && typeof MediaRecorder !== 'undefined') {
+      if (micTrack && typeof MediaRecorder !== 'undefined') {
         stopAsr.current = startOwnMicTranscription({
           track: micTrack,
           callStartedAt: call.startedAt,
@@ -204,7 +204,7 @@ export function useTeamCall(opts: { selfName: string; autoTranscribe?: boolean }
       void window.electronAPI.teamChatCallLeave(channelId).catch(() => {})
       channelRef.current = null
     }
-  }, [leave, opts.autoTranscribe, opts.selfName, refresh])
+  }, [leave, opts.selfName, refresh])
 
   const toggle = React.useCallback(async (what: 'mic' | 'camera' | 'screen') => {
     const lp = roomRef.current?.localParticipant

@@ -1041,7 +1041,6 @@ export const RPC_CHANNELS = {
     CALL_LEAVE: 'teamChat:callLeave',
     CALL_SYNC: 'teamChat:callSync',
     CALL_TRANSCRIPT: 'teamChat:callTranscript',
-    CALL_SUMMARY: 'teamChat:callSummary',
     CALL_LIST: 'teamChat:callList',
     SEARCH: 'teamChat:search',
     CHANGED: 'teamChat:changed',

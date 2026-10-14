@@ -36,6 +36,6 @@ export {
   readCallSettings,
   type CallCredentials,
   type CallSettingsFile,
-  type CallSettingsView,
+  type CallCredentialSource,
 } from './call-credentials.ts'
 export { summarizeCall, callSummaryPrompt, CALL_SUMMARY_MODELS, type CallSummaryInput } from './call-summary.ts'

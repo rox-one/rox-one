@@ -926,7 +926,6 @@ export const CHANNEL_MAP = {
   teamChatCallLeave: invoke(RPC_CHANNELS.teamChat.CALL_LEAVE),
   teamChatCallSync: invoke(RPC_CHANNELS.teamChat.CALL_SYNC),
   teamChatCallTranscript: invoke(RPC_CHANNELS.teamChat.CALL_TRANSCRIPT),
-  teamChatCallSummary: invoke(RPC_CHANNELS.teamChat.CALL_SUMMARY),
   teamChatCallList: invoke(RPC_CHANNELS.teamChat.CALL_LIST),
   teamChatSearch: invoke(RPC_CHANNELS.teamChat.SEARCH),
   onTeamChatChanged: listener(RPC_CHANNELS.teamChat.CHANGED),
