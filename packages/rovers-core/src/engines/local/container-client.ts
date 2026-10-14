@@ -249,6 +249,8 @@ export function createDockerEngineClient(options: {
       if (typeof spec.runId !== 'string' || spec.runId.length === 0) {
         throw new RoversContainerSpecError('runId', 'Спецификация контейнера без runId — развёртывание нельзя было бы сопоставить с запуском.')
       }
+      assertStringArrayField('entrypoint', spec.entrypoint)
+      assertStringArrayField('command', spec.command)
 
       const response = await send({
         method: 'POST',
@@ -339,6 +341,28 @@ function assertDigestImage(image: string): void {
 }
 
 /**
+ * `entrypoint`/`command` cross to the Engine API untouched (`Entrypoint`/`Cmd`).
+ * A non-string element would come back as an opaque daemon 400 naming neither
+ * the field nor the spec, so it is refused here with the field name. `null` is
+ * refused too: the TypeScript type is `string[]`, so a `null` can only come from
+ * hand-written or untyped JSON, and naming it beats an Engine decode error.
+ *
+ * A **sparse** array is refused as well: `Array.prototype.some` skips holes, so
+ * `new Array(2)` would slip through a `some`-based check and then serialize to
+ * `[null,null]` — the exact opaque failure this guard exists to prevent.
+ */
+function assertStringArrayField(field: 'entrypoint' | 'command', value: unknown): void {
+  if (value === undefined) return
+  const isDenseArray = Array.isArray(value) && Object.keys(value).length === value.length
+  if (!isDenseArray || !(value as unknown[]).every((part) => typeof part === 'string')) {
+    throw new RoversContainerSpecError(
+      field,
+      `Поле «${field}» должно быть массивом строк (как Docker Entrypoint/Cmd), получено ${describeCause(value)}.`,
+    )
+  }
+}
+
+/**
  * Build the `/containers/create` body from a Rox spec.
  *
  * Ownership labels are written last on purpose: a spec can add labels but can
@@ -370,6 +394,8 @@ function buildContainerBody(spec: RoversContainerSpec): Record<string, unknown> 
   return {
     Image: spec.image,
     name: spec.name,
+    ...(spec.entrypoint === undefined ? {} : { Entrypoint: spec.entrypoint }),
+    ...(spec.command === undefined ? {} : { Cmd: spec.command }),
     Env: Object.entries(spec.env ?? {}).map(([key, value]) => `${key}=${value}`),
     Labels: {
       ...(spec.labels ?? {}),

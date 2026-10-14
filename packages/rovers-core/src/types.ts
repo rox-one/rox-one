@@ -127,6 +127,27 @@ export interface RoversContainerSpec {
   name: string
   /** Must be digest-pinned (`ROVERS_DIGEST_IMAGE_RE`); `latest` is refused. */
   image: string
+  /**
+   * Overrides the image `ENTRYPOINT`, crossing verbatim to the Engine API
+   * (`Entrypoint`).
+   *
+   * Setting a **non-empty** array also suppresses the image `CMD`: the Engine
+   * only adopts the image `Cmd` while `Entrypoint` is empty, so pass `command`
+   * explicitly to supply the entrypoint's arguments. `[]` clears the entrypoint;
+   * `['']` resets it to the image default.
+   */
+  entrypoint?: string[]
+  /**
+   * Overrides the image `CMD`, crossing verbatim to the Engine API (`Cmd`).
+   * Required by any catalog template whose compose sets `command:`.
+   *
+   * Omitting it keeps the image default. Note the asymmetry with
+   * {@link entrypoint}: `[]` here is a **no-op** — the Engine treats an empty
+   * `Cmd` as unset and re-adopts the image `CMD`, so an empty array cannot clear
+   * a command, and a spec cannot express "run nothing". Only a non-empty
+   * `entrypoint` drops the image `CMD`.
+   */
+  command?: string[]
   env?: Record<string, string>
   ports?: RoversPortMapping[]
   volumes?: RoversVolumeMount[]

@@ -296,6 +296,111 @@ describe('createDockerEngineClient › create', () => {
     expect((await roversErrorOf(client.create(baseSpec()))).code).toBe('vm_start_failed')
   })
 
+  it('omits Cmd and Entrypoint entirely when the spec sets neither', async () => {
+    const { client, calls } = createClient(always(okJson({ Id: 'c1' })))
+
+    await client.create(baseSpec())
+
+    // Assert on the RAW body, not the parsed object: `JSON.stringify` drops
+    // `undefined`, so parsing would also accept an unconditional `Cmd: undefined`.
+    const body = calls[0].body ?? ''
+    expect(body).not.toContain('"Cmd"')
+    expect(body).not.toContain('"Entrypoint"')
+    const sent = JSON.parse(body) as Record<string, unknown>
+    expect('Cmd' in sent).toBe(false)
+    expect('Entrypoint' in sent).toBe(false)
+  })
+
+  it('maps spec.command onto the Engine Cmd array', async () => {
+    const { client, calls } = createClient(always(okJson({ Id: 'c1' })))
+
+    await client.create(baseSpec({ command: ['--port', '8080'] }))
+
+    const sent = JSON.parse(calls[0].body ?? '{}') as { Cmd: string[]; Entrypoint?: string[] }
+    expect(sent.Cmd).toEqual(['--port', '8080'])
+    expect(sent.Entrypoint).toBeUndefined()
+  })
+
+  it('maps spec.entrypoint onto the Engine Entrypoint array', async () => {
+    const { client, calls } = createClient(always(okJson({ Id: 'c1' })))
+
+    await client.create(baseSpec({ entrypoint: ['/usr/local/bin/entry.sh'] }))
+
+    const sent = JSON.parse(calls[0].body ?? '{}') as { Cmd?: string[]; Entrypoint: string[] }
+    expect(sent.Entrypoint).toEqual(['/usr/local/bin/entry.sh'])
+    expect(sent.Cmd).toBeUndefined()
+  })
+
+  it('carries command and entrypoint together when both are set', async () => {
+    const { client, calls } = createClient(always(okJson({ Id: 'c1' })))
+
+    await client.create(baseSpec({ entrypoint: ['/bin/sh', '-c'], command: ['echo hi'] }))
+
+    const sent = JSON.parse(calls[0].body ?? '{}') as { Cmd: string[]; Entrypoint: string[] }
+    expect(sent.Entrypoint).toEqual(['/bin/sh', '-c'])
+    expect(sent.Cmd).toEqual(['echo hi'])
+  })
+
+  it('crosses an explicit empty array verbatim — which the Engine reads as unset, not as a clear', async () => {
+    // The Engine's merge (moby daemon/commit.go) tests `len(Cmd) == 0`, not
+    // `Cmd == nil`, so an empty `Cmd` is indistinguishable from an omitted one
+    // and the image CMD is re-adopted. The client's job is only to cross the
+    // value verbatim; clearing a command is not expressible here.
+    const { client, calls } = createClient(always(okJson({ Id: 'c1' })))
+
+    await client.create(baseSpec({ command: [] }))
+
+    const sent = JSON.parse(calls[0].body ?? '{}') as { Cmd: string[] }
+    expect(sent.Cmd).toEqual([])
+  })
+
+  it('refuses a sparse command array (holes serialize to null elements)', async () => {
+    const { client, calls } = createClient(always(okJson({ Id: 'c1' })))
+    const sparse = new Array(2) as unknown as string[]
+    sparse[0] = 'ok'
+
+    const error = await specErrorOf(client.create(baseSpec({ command: sparse })))
+
+    expect(error.field).toBe('command')
+    expect(calls).toHaveLength(0)
+  })
+
+  it('refuses an explicit null command with the field name', async () => {
+    const { client, calls } = createClient(always(okJson({ Id: 'c1' })))
+
+    const error = await specErrorOf(client.create(baseSpec({ command: null as unknown as string[] })))
+
+    expect(error.field).toBe('command')
+    expect(calls).toHaveLength(0)
+  })
+
+  it('refuses a non-string-array command before any request is sent', async () => {
+    const { client, calls } = createClient(always(okJson({ Id: 'c1' })))
+
+    const error = await specErrorOf(client.create(baseSpec({ command: 'echo hi' as unknown as string[] })))
+
+    expect(error.field).toBe('command')
+    expect(calls).toHaveLength(0)
+  })
+
+  it('refuses a command array holding a non-string element', async () => {
+    const { client, calls } = createClient(always(okJson({ Id: 'c1' })))
+
+    const error = await specErrorOf(client.create(baseSpec({ command: ['ok', 7 as unknown as string] })))
+
+    expect(error.field).toBe('command')
+    expect(calls).toHaveLength(0)
+  })
+
+  it('refuses a non-string-array entrypoint under its own field name', async () => {
+    const { client, calls } = createClient(always(okJson({ Id: 'c1' })))
+
+    const error = await specErrorOf(client.create(baseSpec({ entrypoint: [1, 2] as unknown as string[] })))
+
+    expect(error.field).toBe('entrypoint')
+    expect(calls).toHaveLength(0)
+  })
+
   it('maps a 200 response without an Id to a typed vm_start_failed failure', async () => {
     const { client } = createClient(always(ok('{"Warnings":[]}')))
 
