@@ -26,6 +26,11 @@ import { getCredentialManager } from '@rox/shared/credentials'
 import { getDefaultLlmConnection, getLlmConnection } from '@rox/shared/config'
 import { ROX_DEFAULT_CONNECTION_SLUG, ROX_GATEWAY_BASE_URL } from '@rox/shared/config/rox-public-models'
 
+/** What clients get: the live transcript stays on the host. */
+function callView(call: TeamChannelCall | null): TeamChannelCall | null {
+  return call ? { ...call, transcript: [], transcriptSegments: call.transcript.length } : null
+}
+
 /** Summarize an ended call with the user's Rox connection; best effort, never throws. */
 async function summarizeEndedCall(call: TeamChannelCall): Promise<string | null> {
   if (!call.transcript.length) return null
@@ -145,7 +150,7 @@ export function registerTeamChatHandlers(server: RpcServer, _deps: HandlerDeps):
     const token = mintLiveKitToken({ apiKey: creds.livekitApiKey, apiSecret: creds.livekitApiSecret,
       identity: actor.userId, ...(name ? { name } : {}), room: call.roomName })
     changed(orgId, channelId)
-    return { call, url: creds.livekitUrl, token }
+    return { call: callView(call)!, url: creds.livekitUrl, token }
   }, { nativeAction: 'write' })
 
   handle(RPC_CHANNELS.teamChat.CALL_LEAVE, async (ctx, channelId: string) => {
@@ -161,13 +166,13 @@ export function registerTeamChatHandlers(server: RpcServer, _deps: HandlerDeps):
         } catch { /* channel archived meanwhile */ }
       })
     }
-    return { call, ended }
+    return { call: callView(call), ended }
   }, { nativeAction: 'write' })
 
   handle(RPC_CHANNELS.teamChat.CALL_SYNC, async (ctx, channelId: string, participantIds: string[]) => {
     const { orgId, call } = store().syncCallParticipants(channelId, participantIds, actorOf(ctx))
     changed(orgId, channelId)
-    return call
+    return callView(call)
   }, { nativeAction: 'write' })
 
   handle(RPC_CHANNELS.teamChat.CALL_TRANSCRIPT, async (ctx, channelId: string, callId: string, segments: unknown[]) => {

@@ -34,11 +34,8 @@ export {
   setBuiltinCallCredentials,
   resolveCallCredentials,
   readCallSettings,
-  writeCallSettings,
-  callSettingsView,
   type CallCredentials,
   type CallSettingsFile,
   type CallSettingsView,
 } from './call-credentials.ts'
-export { exaSearch, type ExaResult } from './exa.ts'
 export { summarizeCall, callSummaryPrompt, CALL_SUMMARY_MODELS, type CallSummaryInput } from './call-summary.ts'

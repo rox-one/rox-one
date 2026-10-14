@@ -57,8 +57,6 @@ export interface TeamChannelMessage {
   callId?: string
   /** `system` messages: machine-readable event; the UI localizes it. */
   event?: 'call.started' | 'call.ended'
-  /** `transcript` messages: per-speaker segments. */
-  segments?: TeamCallTranscriptSegment[]
 }
 
 export interface TeamCallTranscriptSegment {
@@ -87,6 +85,8 @@ export interface TeamChannelCall {
   transcript: TeamCallTranscriptSegment[]
   transcriptMessageId?: string
   summaryMessageId?: string
+  /** DTO only: number of live transcript segments held by the host (`transcript` is not sent to clients). */
+  transcriptSegments?: number
 }
 
 export interface TeamChatStoreFile {

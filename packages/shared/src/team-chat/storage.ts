@@ -213,9 +213,14 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     appendMessage(store, channel, { senderId: 'system', kind: 'system', event: 'call.ended', callId: call.id, text: 'call.ended' })
     if (call.transcript.length) {
       const sorted = [...call.transcript].sort((a, b) => a.startMs - b.startMs)
-      const msg = appendMessage(store, channel, { senderId: 'system', kind: 'transcript', callId: call.id, text: formatTranscript(sorted), segments: sorted })
+      const msg = appendMessage(store, channel, { senderId: 'system', kind: 'transcript', callId: call.id, text: formatTranscript(sorted) })
       call.transcriptMessageId = msg.id
     }
+  }
+
+  /** Client DTO: the live transcript stays on the host (only its size is shared). */
+  function callDto(call: TeamChannelCall): TeamChannelCall {
+    return { ...call, participantIds: [...call.participantIds], everParticipantIds: [...call.everParticipantIds], transcript: [], transcriptSegments: call.transcript.length }
   }
 
   function lastMessageOf(store: TeamChatStoreFile, channelId: string, canSee: boolean): Pick<TeamChannelView, 'lastMessage'> {
@@ -238,7 +243,7 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       ...(viewer ? { viewerRole: viewer.role } : {}),
       viewerSubscribed: store.subscriptions.some(s => s.channelId === channel.id && s.userId === userId),
       unreadCount: viewer ? Math.max(0, channel.lastSeq - viewer.lastReadSeq) : 0,
-      ...(activeCallOf(store, channel.id) ? { activeCall: activeCallOf(store, channel.id) } : {}),
+      ...(activeCallOf(store, channel.id) ? { activeCall: callDto(activeCallOf(store, channel.id)!) } : {}),
       ...(lastMessageOf(store, channel.id, viewer !== undefined || channel.visibility === 'public')),
     }
   }
@@ -509,7 +514,7 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     listCalls(channelIdInput: unknown, actor: TeamChatActor): TeamChannelCall[] {
       const store = load()
       const channel = visibleChannel(store, requireId(channelIdInput, 'channelId'), actor)
-      return (store.calls ?? []).filter(c => c.channelId === channel.id).sort((a, b) => b.startedAt - a.startedAt)
+      return (store.calls ?? []).filter(c => c.channelId === channel.id).sort((a, b) => b.startedAt - a.startedAt).map(callDto)
     },
 
     /** Case-insensitive search over messages, transcripts and summaries in the actor's visible channels. */

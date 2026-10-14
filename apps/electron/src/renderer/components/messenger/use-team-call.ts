@@ -78,15 +78,18 @@ function startOwnMicTranscription(opts: {
     const startedAt = Date.now()
     const chunks: Blob[] = []
     const muted = opts.isMuted()
-    recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined)
-    recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data) }
-    recorder.onstop = () => {
+    const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined)
+    recorder = rec
+    const timer = setTimeout(() => { if (rec.state === 'recording') rec.stop() }, TRANSCRIBE_CHUNK_MS)
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data) }
+    rec.onstop = () => {
+      clearTimeout(timer)
       const endedAt = Date.now()
       if (!stopped) cycle()
       if (muted || !chunks.length) return
       const job = (async () => {
         try {
-          const blob = new Blob(chunks, { type: recorder?.mimeType || mime || 'audio/webm' })
+          const blob = new Blob(chunks, { type: rec.mimeType || mime || 'audio/webm' })
           const result = await window.electronAPI.transcribeVoice({ audioBase64: await blobToBase64(blob), mimeType: blob.type })
           const text = result.text?.trim()
           if (!text || result.noSpeech) return
@@ -99,8 +102,7 @@ function startOwnMicTranscription(opts: {
       pending.add(job)
       void job.finally(() => pending.delete(job))
     }
-    recorder.start()
-    setTimeout(() => { if (recorder?.state === 'recording') recorder.stop() }, TRANSCRIBE_CHUNK_MS)
+    rec.start()
   }
   cycle()
   /** Stops recording, flushes the last chunk and waits (≤ 30 s) for in-flight ASR to land. */
@@ -119,6 +121,8 @@ export function useTeamCall(opts: { selfName: string; autoTranscribe?: boolean }
   const roomRef = React.useRef<Room | null>(null)
   const stopAsr = React.useRef<(() => Promise<void>) | null>(null)
   const channelRef = React.useRef<string | null>(null)
+  /** Bumped by every join/leave; a join that is no longer current bails out after each await. */
+  const generation = React.useRef(0)
 
   const refresh = React.useCallback(() => {
     const room = roomRef.current
@@ -129,6 +133,7 @@ export function useTeamCall(opts: { selfName: string; autoTranscribe?: boolean }
   }, [])
 
   const leave = React.useCallback(async () => {
+    generation.current++
     const channelId = channelRef.current
     const flush = stopAsr.current
     stopAsr.current = null
@@ -143,11 +148,14 @@ export function useTeamCall(opts: { selfName: string; autoTranscribe?: boolean }
   }, [])
 
   const join = React.useCallback(async (channelId: string) => {
-    if (roomRef.current) await leave()
+    if (roomRef.current || channelRef.current) await leave()
+    const gen = ++generation.current
+    const stale = () => gen !== generation.current
     channelRef.current = channelId
     setState({ ...IDLE, status: 'connecting', channelId })
     try {
       const { call, url, token } = await window.electronAPI.teamChatCallJoin(channelId, opts.selfName)
+      if (stale()) { void window.electronAPI.teamChatCallLeave(channelId).catch(() => {}); return }
       const room = new Room({ adaptiveStream: true, dynacast: true })
       roomRef.current = room
       const sync = () => {
@@ -171,7 +179,9 @@ export function useTeamCall(opts: { selfName: string; autoTranscribe?: boolean }
         .on(RoomEvent.TrackUnsubscribed, (track) => { track.detach().forEach(el => el.remove()) })
         .on(RoomEvent.Disconnected, () => { if (roomRef.current === room) void leave() })
       await room.connect(url, token)
+      if (stale()) { await room.disconnect().catch(() => {}); return }
       await room.localParticipant.setMicrophoneEnabled(true)
+      if (stale()) { await room.disconnect().catch(() => {}); return }
       setState(prev => ({ ...prev, status: 'connected', call }))
       sync()
       const micTrack = room.localParticipant.getTrackPublication(Track.Source.Microphone)?.track?.mediaStreamTrack
@@ -187,6 +197,7 @@ export function useTeamCall(opts: { selfName: string; autoTranscribe?: boolean }
         setState(prev => ({ ...prev, transcribing: true }))
       }
     } catch (error) {
+      if (stale()) return
       roomRef.current?.disconnect().catch(() => {})
       roomRef.current = null
       setState({ ...IDLE, status: 'error', channelId, error: error instanceof Error ? error.message.replace(/^.*?Error:\s*/s, '') : String(error) })

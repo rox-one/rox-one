@@ -33,7 +33,7 @@ describe('team calls', () => {
     ], alice)
     s.appendCallTranscript(general.id, a.call.id, [{ speakerId: 'alice', speakerName: 'Анна', text: 'Тесты закончим к пятнице', startMs: 9000, endMs: 12000 }], bob)
     // A segment can't be attributed to someone else.
-    expect(s.listChannels(ORG, alice)[0]!.activeCall!.transcript.map(x => x.speakerId)).toEqual(['alice', 'bob'])
+    expect(s.listChannels(ORG, alice)[0]!.activeCall).toMatchObject({ transcript: [], transcriptSegments: 2 })
     // Non-members can't be injected into the participant list.
     s.syncCallParticipants(general.id, ['alice', 'bob', 'mallory'], alice)
     expect(s.listChannels(ORG, alice)[0]!.activeCall!.participantIds.sort()).toEqual(['alice', 'bob'])
@@ -43,6 +43,7 @@ describe('team calls', () => {
     const { messages } = s.listMessages({ channelId: general.id }, alice)
     const transcript = messages.find(m => m.kind === 'transcript')!
     expect(transcript.text).toBe('[00:01] Марк: Обсудим релиз звонков\n[00:09] Анна: Тесты закончим к пятнице')
+    expect(transcript).not.toHaveProperty('segments')
     expect(messages.filter(m => m.kind === 'system').map(m => m.event)).toEqual(['call.started', 'call.ended'])
     expect(a.call.roomName).toBe(`rox-ch-${general.id}`)
     const ended = s.listCalls(general.id, alice)[0]!
