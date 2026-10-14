@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import {
   BADGE_HEIGHT_POINTS,
   BADGE_RED,
+  badgeCanvas,
   badgeLabel,
   compositeBadge,
   formatElapsed,
@@ -33,9 +34,22 @@ describe('badge count logic', () => {
     expect(badgeLabel(100)).toBe('99+')
   })
 
-  it('returns the icon untouched when hidden', () => {
+  it('pads the icon onto the badge canvas when hidden, pixels untouched', () => {
     const icon = solidIcon(1, [0, 0, 0, 255])
-    expect(compositeBadge(icon, 0, 1)).toBe(icon)
+    const out = compositeBadge(icon, 0, 1)
+    const canvas = badgeCanvas(1)
+    expect([out.width, out.height]).toEqual([canvas.width, canvas.height])
+    expect(px(out, 0, 0)).toEqual([0, 0, 0, 255])
+    expect(px(out, TRAY_ICON_POINTS - 1, 0)).toEqual([0, 0, 0, 255])
+    expect(px(out, canvas.width - 1, canvas.height - 1)).toEqual([0, 0, 0, 0])
+  })
+
+  it('plain and badged icons share one canvas at every scale and label (no shift)', () => {
+    for (const scale of [1, 2]) {
+      const icon = solidIcon(scale, [0, 0, 0, 255])
+      const sizes = [0, 1, 42, 100].map(n => { const b = compositeBadge(icon, n, scale); return `${b.width}x${b.height}` })
+      expect(new Set(sizes).size).toBe(1)
+    }
   })
 })
 

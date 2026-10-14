@@ -84,25 +84,41 @@ export interface BadgeLayout {
   readonly cell: number
 }
 
+/**
+ * Fixed canvas (pixels) shared by the plain and the badged icon, so the menu-bar
+ * item never changes size or shifts when the badge appears or its label grows.
+ */
+export function badgeCanvas(scale: number): { readonly width: number; readonly height: number; readonly iconSize: number; readonly shadowPad: number } {
+  const s = Math.max(1, Math.round(scale))
+  const iconSize = TRAY_ICON_POINTS * s
+  const shadowPad = Math.ceil((SHADOW_OFFSET_POINTS + SHADOW_BLUR_POINTS) * s)
+  return { width: iconSize + BADGE_OVERHANG_POINTS * s + shadowPad, height: iconSize + shadowPad, iconSize, shadowPad }
+}
+
 /** Integer-pixel layout for a label at a scale factor (1 = non-Retina, 2 = Retina). */
 export function layoutBadge(label: string, scale: number): BadgeLayout {
   const s = Math.max(1, Math.round(scale))
-  const iconSize = TRAY_ICON_POINTS * s
+  const { width, height, iconSize } = badgeCanvas(s)
   const h = BADGE_HEIGHT_POINTS * s
   // At 1× the 7-row glyph fills a 10px pill; at 2× each cell is 2px.
   const cell = s
   const textW = labelCells(label) * cell
   const w = Math.max(h, textW + 2 * BADGE_PAD_POINTS * s)
-  const shadowPad = Math.ceil((SHADOW_OFFSET_POINTS + SHADOW_BLUR_POINTS) * s)
   const x = Math.max(0, iconSize + BADGE_OVERHANG_POINTS * s - w)
   const y = iconSize - h
-  return {
-    width: Math.max(iconSize, x + w) + shadowPad,
-    height: iconSize + shadowPad,
-    iconSize,
-    pill: { x, y, w, h },
-    cell,
+  return { width, height, iconSize, pill: { x, y, w, h }, cell }
+}
+
+/** The icon placed top-left on the fixed badge canvas, with no badge. */
+export function padIcon(icon: Bitmap, scale: number): Bitmap {
+  const { width, height, iconSize } = badgeCanvas(scale)
+  const out = new Uint8Array(width * height * 4)
+  const iw = Math.min(icon.width, iconSize)
+  const ih = Math.min(icon.height, iconSize)
+  for (let y = 0; y < ih; y++) {
+    out.set(icon.data.subarray(y * icon.width * 4, (y * icon.width + iw) * 4), y * width * 4)
   }
+  return { width, height, data: out }
 }
 
 /** Signed distance from a pixel centre to a horizontal capsule (negative inside). */
@@ -136,11 +152,12 @@ function over(out: Uint8Array, i: number, order: ChannelOrder, rgb: readonly [nu
  * Composite a red count badge onto an icon bitmap.
  *
  * `icon` must be `iconSize × iconSize` for the scale (see `layoutBadge`) and
- * premultiplied in `order`. Returns `icon` unchanged when the count is hidden.
+ * premultiplied in `order`. When the count is hidden the icon is only padded
+ * onto the same fixed canvas (see `badgeCanvas`).
  */
 export function compositeBadge(icon: Bitmap, count: number, scale: number, order: ChannelOrder = 'bgra'): Bitmap {
   const label = badgeLabel(count)
-  if (!label) return icon
+  if (!label) return padIcon(icon, scale)
   const layout = layoutBadge(label, scale)
   const { width, height, pill, cell, iconSize } = layout
   const s = Math.max(1, Math.round(scale))

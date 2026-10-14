@@ -2178,14 +2178,8 @@ app.whenReady().then(async () => {
         const iconAt = (scale: number) => iconSource.isEmpty()
           ? null
           : iconSource.resize({ width: 18 * scale, height: 18 * scale, quality: 'best' })
-        const plainIcon = (() => {
-          const image = nativeImage.createEmpty()
-          for (const scale of SCALES) {
-            const at = iconAt(scale)
-            if (at) image.addRepresentation({ scaleFactor: scale, width: 18 * scale, height: 18 * scale, buffer: at.toPNG() })
-          }
-          return image
-        })()
+        // Plain and badged icons share one canvas (compositeBadge pads at 0), so
+        // the item never shifts when the badge appears.
         const badgedIcon = (count: number) => {
           const image = nativeImage.createEmpty()
           for (const scale of SCALES) {
@@ -2198,6 +2192,7 @@ app.whenReady().then(async () => {
           }
           return image
         }
+        const plainIcon = badgedIcon(0)
         const recordingIcon = (() => {
           const image = nativeImage.createEmpty()
           for (const scale of SCALES) {
@@ -2284,7 +2279,10 @@ app.whenReady().then(async () => {
           if (id == null) return
           if (!trayReports.has(id)) {
             const wc = windowManager?.getWindowByWebContentsId(id)?.webContents
-            wc?.once('destroyed', () => { trayReports.delete(id); applyReports() })
+            // Reports from a webContents we can't track would never be cleaned
+            // up (and could pin a stale recording), so ignore them.
+            if (!wc || wc.isDestroyed()) return
+            wc.once('destroyed', () => { trayReports.delete(id); applyReports() })
           }
           trayReports.set(id, sanitizeTrayReport(input))
           applyReports()

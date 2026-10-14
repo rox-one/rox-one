@@ -366,6 +366,9 @@ export class RecordingTrayController {
   private tray: RecordingTrayLike | null = null
   private timer: unknown = null
   private recording: TrayStateReport['recording'] = null
+  /** When the current pause began (null while running), and the paused time so far. */
+  private pausedAt: number | null = null
+  private pausedTotal = 0
 
   constructor(private readonly deps: RecordingTrayDependencies) {}
 
@@ -387,6 +390,10 @@ export class RecordingTrayController {
       const start = this.deps.setInterval ?? ((fn: () => void, ms: number) => setInterval(fn, ms))
       this.timer = start(() => this.tick(), 1000)
     }
+    if (!prev || prev.kind !== recording.kind || prev.startedAt !== recording.startedAt) {
+      this.pausedAt = null
+      this.pausedTotal = 0
+    }
     if (!prev || prev.kind !== recording.kind) {
       this.tray.setToolTip(this.deps.translate(recording.kind === 'voice' ? 'tray.recording.stopVoice' : 'tray.recording.stopMeeting'))
     }
@@ -396,7 +403,16 @@ export class RecordingTrayController {
   private tick(): void {
     if (!this.tray || !this.recording) return
     const now = (this.deps.now ?? Date.now)()
-    this.tray.setTitle(` ${formatElapsed(now - this.recording.startedAt)}`)
+    if (this.recording.paused) {
+      // Freeze the elapsed time at the moment the pause was first seen.
+      if (this.pausedAt === null) this.pausedAt = now
+    } else if (this.pausedAt !== null) {
+      this.pausedTotal += now - this.pausedAt
+      this.pausedAt = null
+    }
+    const end = this.pausedAt ?? now
+    const elapsed = formatElapsed(end - this.recording.startedAt - this.pausedTotal)
+    this.tray.setTitle(this.recording.paused ? ` ❚❚ ${elapsed}` : ` ${elapsed}`)
   }
 
   private hide(): void {

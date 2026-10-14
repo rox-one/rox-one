@@ -263,6 +263,22 @@ describe('recording tray', () => {
     expect(h.log.slice(-2)).toEqual(['clear', 'destroy'])
   })
 
+  it('freezes the elapsed time while paused and resumes without counting the pause', () => {
+    const h = recordingHarness()
+    h.ctrl.set({ kind: 'meeting', startedAt: 58_000, paused: false })
+    expect(h.log.at(-1)).toBe('title: 0:42')
+    h.ctrl.set({ kind: 'meeting', startedAt: 58_000, paused: true })
+    expect(h.log.at(-1)).toBe('title: ❚❚ 0:42')
+    h.advance(5000)
+    h.tick()
+    expect(h.log.at(-1)).toBe('title: ❚❚ 0:42')
+    h.ctrl.set({ kind: 'meeting', startedAt: 58_000, paused: false })
+    expect(h.log.at(-1)).toBe('title: 0:42')
+    h.advance(1000)
+    h.tick()
+    expect(h.log.at(-1)).toBe('title: 0:43')
+  })
+
   it('stops a voice capture as voice', () => {
     const h = recordingHarness()
     h.ctrl.set({ kind: 'voice', startedAt: 100_000, paused: false })
