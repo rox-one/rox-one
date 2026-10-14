@@ -481,6 +481,12 @@
       "when": null
     },
     {
+      "id": "view.toggleSplit",
+      "hotkey": "mod+alt+\\",
+      "category": "View",
+      "when": "!inputFocus && !menuOpen"
+    },
+    {
       "id": "view.toggleFocusMode",
       "hotkey": "mod+.",
       "category": "View",
@@ -710,6 +716,7 @@
     "View": [
       "view.toggleSidebar",
       "view.toggleSecondarySidebar",
+      "view.toggleSplit",
       "view.toggleFocusMode",
       "view.toggleInspector",
       "view.toggleChatPictureInPicture",
@@ -866,6 +873,11 @@
       "id": "view.toggleSecondarySidebar",
       "when": null,
       "hotkey": "mod+shift+b"
+    },
+    {
+      "id": "view.toggleSplit",
+      "when": "!inputFocus && !menuOpen",
+      "hotkey": "mod+alt+\\"
     },
     {
       "id": "view.toggleFocusMode",

@@ -73,6 +73,9 @@ const NEW_LABEL_KEYS = [
   'shortcuts.action.quickPanelContacts',
   'shortcuts.action.quickPanelDocs',
   'shortcuts.action.quickPanelTasks',
+  'shortcuts.action.toggleSecondarySidebar',
+  // top50 #13: split view.
+  'shortcuts.action.toggleSplit',
 ] as const
 
 const ENGLISH_LEFTOVER_LABELS = [
