@@ -87,18 +87,38 @@ async function unmount() {
   root = null
   host?.remove()
 }
-const details = () => host!.querySelector('details[data-application-sections]') as HTMLDetailsElement
 const rowIds = () => Array.from(host!.querySelectorAll('[data-session-filters] [data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))
 
-describe('WP5 fix1 (1): «Ещё» reveals an active destination', () => {
-  it('is closed when nothing inside is active', async () => {
+const toolsSection = () => host!.querySelector('section[data-sidebar-tools]') as HTMLElement
+const toolsHeader = () => toolsSection().querySelector('[data-sidebar-section-header]') as HTMLButtonElement
+const toolsRows = () => Array.from(toolsSection().querySelectorAll('[data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))
+
+describe('sidebar v2 fix1: «Инструменты» replaces the «Ещё» disclosure', () => {
+  it('is expanded by default: former «Ещё» rows show directly', async () => {
     await mount(<Harness store={makeStore()} navigator="memory" memoryActive={false} />)
-    expect(details().open).toBe(false)
+    expect(host!.querySelector('details')).toBeNull()
+    expect(toolsHeader().getAttribute('aria-expanded')).toBe('true')
+    expect(toolsRows()).toContain('nav:memory')
   })
 
-  it('opens when the active destination lives in «Ещё» (deep link / route change)', async () => {
-    await mount(<Harness store={makeStore()} navigator="memory" memoryActive />)
-    expect(details().open).toBe(true)
+  it('the header collapses it and the state persists across a remount', async () => {
+    const store = makeStore()
+    await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
+    await act(async () => { toolsHeader().click() })
+    expect(toolsHeader().getAttribute('aria-expanded')).toBe('false')
+    expect(toolsRows()).toEqual([])
+    await unmount()
+    await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
+    expect(toolsHeader().getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('an active destination inside keeps it open (header locked)', async () => {
+    const store = makeStore()
+    store.toggle('sidebar:section:tools')
+    await mount(<Harness store={store} navigator="memory" memoryActive />)
+    expect(toolsHeader().getAttribute('aria-expanded')).toBe('true')
+    expect(toolsHeader().getAttribute('aria-disabled')).toBe('true')
+    expect(toolsRows()).toContain('nav:memory')
   })
 })
 
@@ -127,43 +147,3 @@ describe('WP5 fix1 (2): session filters persist through the expanded-sections st
   })
 })
 
-const summary = () => details().querySelector('summary') as HTMLElement
-const fireToggle = async () => act(async () => { details().dispatchEvent(new Event('toggle')) })
-
-describe('WP5 fix2 (W): a forced-open «Ещё» cannot desync closed', () => {
-  it('prevents the summary click and re-opens the DOM details if it closes', async () => {
-    const calls: boolean[] = []
-    await mount(<Harness store={makeStore()} navigator="memory" memoryActive onOpenChange={open => calls.push(open)} />)
-    expect(details().open).toBe(true)
-    const click = new MouseEvent('click', { bubbles: true, cancelable: true })
-    await act(async () => { summary().dispatchEvent(click) })
-    expect(click.defaultPrevented).toBe(true)
-    // Native close anyway (e.g. platform quirk): the toggle handler restores it.
-    details().open = false
-    await fireToggle()
-    expect(details().open).toBe(true)
-    expect(calls).toEqual([])
-  })
-})
-
-describe('WP5 fix2 (I1): only user toggles persist', () => {
-  it('a programmatic open (forced) does not report applicationSectionsOpen=true', async () => {
-    const calls: boolean[] = []
-    await mount(<Harness store={makeStore()} navigator="memory" memoryActive onOpenChange={open => calls.push(open)} />)
-    await fireToggle()
-    expect(calls).toEqual([])
-  })
-
-  it('a user summary click while not forced is reported', async () => {
-    const calls: boolean[] = []
-    await mount(<Harness store={makeStore()} navigator="sessions" memoryActive={false} onOpenChange={open => calls.push(open)} />)
-    await fireToggle() // programmatic: ignored
-    expect(calls).toEqual([])
-    const click = new MouseEvent('click', { bubbles: true, cancelable: true })
-    await act(async () => { summary().dispatchEvent(click) })
-    expect(click.defaultPrevented).toBe(false)
-    details().open = true
-    await fireToggle()
-    expect(calls).toEqual([true])
-  })
-})

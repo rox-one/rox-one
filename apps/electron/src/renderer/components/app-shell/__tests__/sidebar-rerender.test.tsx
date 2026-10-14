@@ -35,7 +35,7 @@ i18n.use({
   process(value: string, key: string | string[]) {
     const k = Array.isArray(key) ? key[0] : key
     if (k === 'sidebar.contextNavigation') counts.sidebar++
-    if (k === 'workbench.mode.more') counts.nav++
+    if (k === 'sidebar.tools') counts.nav++
     return value
   },
 })

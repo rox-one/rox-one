@@ -10071,6 +10071,7 @@
   "sidebar.statuses": "الحالات",
   "sidebar.subNavigation": "التنقل الفرعي",
   "sidebar.tasks": "المهام",
+  "sidebar.tools": "الأدوات",
   "sidebar.unknownProject": "مشروع غير معروف",
   "sidebar.view.explore": "استكشاف",
   "sidebar.view.exploreDesc": "جلسات في وضع الاستكشاف (للقراءة فقط)",
@@ -11669,7 +11670,7 @@
   "settings.navPlacement.desc": "Where each section shows: the top pills, the sidebar, «More», or nowhere. Hiding a section keeps its data and links.",
   "settings.navPlacement.pills": "Top pills",
   "settings.navPlacement.primary": "Sidebar",
-  "settings.navPlacement.more": "Sidebar · More",
+  "settings.navPlacement.more": "Sidebar · الأدوات",
   "settings.navPlacement.hidden": "Hidden",
   "settings.navPlacement.default": "Default",
   "settings.navPlacement.reset": "Reset"

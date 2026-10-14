@@ -10031,6 +10031,7 @@
   "sidebar.statuses": "Állapotok",
   "sidebar.subNavigation": "Alnavigáció",
   "sidebar.tasks": "Feladatok",
+  "sidebar.tools": "Eszközök",
   "sidebar.unknownProject": "Ismeretlen projekt",
   "sidebar.view.explore": "Felfedezés",
   "sidebar.view.exploreDesc": "Felfedezés (csak olvasható) módú munkamenetek",
@@ -11629,7 +11630,7 @@
   "settings.navPlacement.desc": "Where each section shows: the top pills, the sidebar, «More», or nowhere. Hiding a section keeps its data and links.",
   "settings.navPlacement.pills": "Top pills",
   "settings.navPlacement.primary": "Sidebar",
-  "settings.navPlacement.more": "Sidebar · More",
+  "settings.navPlacement.more": "Sidebar · Eszközök",
   "settings.navPlacement.hidden": "Hidden",
   "settings.navPlacement.default": "Default",
   "settings.navPlacement.reset": "Reset"

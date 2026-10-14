@@ -15,7 +15,7 @@
 import * as React from 'react'
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import { ChevronRight, ListFilter, MoreHorizontal } from 'lucide-react'
+import { ChevronRight, ListFilter } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { navigate, routes } from '@/lib/navigate'
 import { enabledExtraScreenIdsAtom } from '@/atoms/extra-screens'
@@ -140,45 +140,28 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
     iconColor: EXPERIMENTAL_ICON_COLOR[screen.id] ?? 'var(--info)',
   })), [enabledExtraScreenIds, activeScreen, t])
 
-  // Mirrors ActivityRail: an active destination inside «Ещё» (deep link, ⌘K,
-  // route change) keeps the disclosure open so the selection is visible.
-  const moreForced = hasActiveLink(moreLinks) || hasActiveLink(experimentalLinks)
+  // Sidebar v2 fix1: no «Ещё» disclosure — two labelled, collapsible
+  // sections, both expanded by default (the expanded-sections store records
+  // collapsed ids). An active destination keeps its section open.
   const showContext = !isCollapsed && (sessionFilters !== null || surfaceSection !== null)
-  const moreOpen = applicationSectionsOpen || moreForced
-  // Only a user click on the summary may persist the open state; the toggle
-  // event a programmatic open/close fires must not (review2 I1).
-  const userToggle = React.useRef(false)
-  const onMoreSummaryClick = React.useCallback((event: React.MouseEvent) => {
-    // While forced open the native disclosure must not close (review2 W).
-    if (moreForced) {
-      event.preventDefault()
-      return
-    }
-    userToggle.current = true
-  }, [moreForced])
-  const onMoreToggle = React.useCallback((event: React.SyntheticEvent<HTMLDetailsElement>) => {
-    const element = event.currentTarget
-    if (moreForced && !element.open) {
-      element.open = true
-      return
-    }
-    if (!userToggle.current) return
-    userToggle.current = false
-    onApplicationSectionsOpenChange(element.open)
-  }, [moreForced, onApplicationSectionsOpenChange])
+  const navOpen = isExpanded(SIDEBAR_NAV_SECTION_ID) || hasActiveLink(primaryLinks)
+  const toolsForced = hasActiveLink(moreLinks) || hasActiveLink(experimentalLinks)
+  const toolsOpen = isExpanded(SIDEBAR_TOOLS_SECTION_ID) || toolsForced
+  const toggleNav = React.useCallback(() => toggleExpanded(SIDEBAR_NAV_SECTION_ID), [toggleExpanded])
+  const toggleTools = React.useCallback(() => toggleExpanded(SIDEBAR_TOOLS_SECTION_ID), [toggleExpanded])
+  void applicationSectionsOpen
+  void onApplicationSectionsOpenChange
 
   return (
     <>
       {/* WP6 slot 1: the global primary nav — same rows, same order on every screen. */}
       <nav aria-label={t('sidebar.navigation')} data-sidebar-primary-nav="" className="px-1">
-        {!isCollapsed && (
-          <div className="px-3 pb-0.5 pt-1 text-[11px] font-semibold uppercase caps-label text-text-muted">{t('sidebar.navigation')}</div>
+        {!isCollapsed && <SidebarSectionHeader id="sidebar-section-nav" label={t('sidebar.navigation')} open={navOpen} locked={hasActiveLink(primaryLinks)} onToggle={toggleNav} />}
+        {(isCollapsed || navOpen) && (
+          <div id="sidebar-section-nav">
+            <LeftSidebar isCollapsed={isCollapsed} onExpand={onExpandPrimary} links={primaryLinks} />
+          </div>
         )}
-        <LeftSidebar
-          isCollapsed={isCollapsed}
-          onExpand={onExpandPrimary}
-          links={primaryLinks}
-        />
       </nav>
       {/* WP6 slot 2: the open surface's contextual navigation, right under the global nav. */}
       {showContext && (
@@ -213,41 +196,25 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
         data-primary-sidebar-context=""
         className="mx-1 mt-2 border-t border-border-subtle empty:hidden"
       />
-      {/* «Ещё»: every other destination stays reachable, collapsed by default. */}
-      <details
-        className="group/application-sections mx-1 mt-1"
-        data-application-sections
-        open={moreOpen}
-        onToggle={onMoreToggle}
-      >
-        <summary
-          onClick={onMoreSummaryClick}
-          aria-disabled={moreForced || undefined}
-          aria-label={isCollapsed ? t('workbench.mode.more') : undefined}
-          title={isCollapsed ? t('workbench.mode.more') : undefined}
-          className={cn(
-            'flex cursor-pointer list-none items-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden',
-            isCollapsed
-              ? 'mx-auto h-7 w-7 justify-center'
-              : 'mx-1 min-h-7 gap-2 rounded-[var(--radius-control)] px-2 py-1 text-base text-muted-foreground transition-colors hover:bg-[var(--state-hover)] hover:text-foreground',
+      {/* «Инструменты» (former «Ещё»): every other destination, shown directly. */}
+      {(moreLinks.length > 0 || experimentalLinks.length > 0) && (
+        <section aria-label={t('sidebar.tools')} data-sidebar-tools="" data-application-sections="" className="mt-1 px-1">
+          {isCollapsed
+            ? <div className="mx-auto my-1.5 h-px w-6 bg-border-subtle" role="separator" aria-hidden data-sidebar-section-divider="" />
+            : <SidebarSectionHeader id="sidebar-section-tools" label={t('sidebar.tools')} open={toolsOpen} locked={toolsForced} onToggle={toggleTools} />}
+          {(isCollapsed || toolsOpen) && (
+            <div id="sidebar-section-tools">
+              <LeftSidebar isCollapsed={isCollapsed} onExpand={onExpandMore} links={moreLinks} />
+              {experimentalLinks.length > 0 && (
+                <section className="mt-2" aria-label={t('sidebar.experimentalFeatures')}>
+                  {!isCollapsed && <div className="px-3 pb-0.5 pt-1 text-[11px] font-semibold uppercase caps-label text-text-muted">{t('sidebar.experimentalFeatures')}</div>}
+                  <LeftSidebar isCollapsed={isCollapsed} onExpand={onExpandMore} links={experimentalLinks} />
+                </section>
+              )}
+            </div>
           )}
-        >
-          <MoreHorizontal className="h-4 w-4 shrink-0" aria-hidden />
-          {!isCollapsed && <span className="min-w-0 flex-1 truncate">{t('workbench.mode.more')}</span>}
-          {!isCollapsed && <ChevronRight className="icon-caption transition-transform group-open/application-sections:rotate-90 motion-reduce:transition-none" aria-hidden />}
-        </summary>
-        <LeftSidebar
-          isCollapsed={isCollapsed}
-          onExpand={onExpandMore}
-          links={moreLinks}
-        />
-        {experimentalLinks.length > 0 && (
-          <section className="mx-1 mt-5 py-2" aria-label={t('sidebar.experimentalFeatures')}>
-            {!isCollapsed && <div className="px-3 pb-2 text-xs font-semibold uppercase caps-label text-text-muted">{t('sidebar.experimentalFeatures')}</div>}
-            <LeftSidebar isCollapsed={isCollapsed} onExpand={onExpandMore} links={experimentalLinks} />
-          </section>
-        )}
-      </details>
+        </section>
+      )}
     </>
   )
 })
@@ -295,6 +262,27 @@ export function buildContextSection(row: LinkItem, state: { open: boolean; onTog
     items: row.items,
   }
   return { title: row.title, links: [group] }
+}
+
+export const SIDEBAR_NAV_SECTION_ID = 'sidebar:section:navigation'
+export const SIDEBAR_TOOLS_SECTION_ID = 'sidebar:section:tools'
+
+/** Collapsible section label (persisted via the expanded-sections store). */
+export function SidebarSectionHeader({ id, label, open, locked, onToggle }: { id: string; label: string; open: boolean; locked?: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      aria-controls={id}
+      aria-disabled={locked || undefined}
+      onClick={locked ? undefined : onToggle}
+      data-sidebar-section-header=""
+      className="group/section-header flex h-7 w-full items-center gap-1 rounded-[var(--radius-control)] px-3 text-left text-[11px] font-semibold uppercase caps-label text-text-muted outline-none transition-colors hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+    >
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <ChevronRight className={cn('h-3 w-3 shrink-0 opacity-0 transition-transform group-hover/section-header:opacity-100 group-focus-visible/section-header:opacity-100 motion-reduce:transition-none', open && 'rotate-90')} aria-hidden />
+    </button>
+  )
 }
 
 export const SESSION_FILTERS_ID = 'nav:sessionFilters'

@@ -10031,6 +10031,7 @@
   "sidebar.statuses": "상태",
   "sidebar.subNavigation": "하위 탐색",
   "sidebar.tasks": "작업",
+  "sidebar.tools": "도구",
   "sidebar.unknownProject": "알 수 없는 프로젝트",
   "sidebar.view.explore": "탐색",
   "sidebar.view.exploreDesc": "탐색(읽기 전용) 모드의 세션",
@@ -11629,7 +11630,7 @@
   "settings.navPlacement.desc": "Where each section shows: the top pills, the sidebar, «More», or nowhere. Hiding a section keeps its data and links.",
   "settings.navPlacement.pills": "Top pills",
   "settings.navPlacement.primary": "Sidebar",
-  "settings.navPlacement.more": "Sidebar · More",
+  "settings.navPlacement.more": "Sidebar · 도구",
   "settings.navPlacement.hidden": "Hidden",
   "settings.navPlacement.default": "Default",
   "settings.navPlacement.reset": "Reset"

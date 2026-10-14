@@ -10075,6 +10075,7 @@
   "sidebar.statuses": "Статусы",
   "sidebar.subNavigation": "Вложенная навигация",
   "sidebar.tasks": "Задачи",
+  "sidebar.tools": "Инструменты",
   "sidebar.unknownProject": "Неизвестный проект",
   "sidebar.view.explore": "Обзор",
   "sidebar.view.exploreDesc": "Сессии в режиме Обзор (только чтение)",
@@ -11687,7 +11688,7 @@
   "settings.navPlacement.desc": "Где показывать каждый раздел: в пилюлях сверху, в боковой панели, в «Ещё» или нигде. Скрытый раздел не удаляется: данные и ссылки на него остаются.",
   "settings.navPlacement.pills": "Пилюли сверху",
   "settings.navPlacement.primary": "Боковая панель",
-  "settings.navPlacement.more": "Боковая панель · «Ещё»",
+  "settings.navPlacement.more": "Боковая панель · «Инструменты»",
   "settings.navPlacement.hidden": "Скрыт",
   "settings.navPlacement.default": "По умолчанию",
   "settings.navPlacement.reset": "Сбросить"

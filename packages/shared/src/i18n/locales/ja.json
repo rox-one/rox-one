@@ -10031,6 +10031,7 @@
   "sidebar.statuses": "ステータス",
   "sidebar.subNavigation": "サブナビゲーション",
   "sidebar.tasks": "タスク",
+  "sidebar.tools": "ツール",
   "sidebar.unknownProject": "不明なプロジェクト",
   "sidebar.view.explore": "探索",
   "sidebar.view.exploreDesc": "探索（読み取り専用）モードのセッション",
@@ -11629,7 +11630,7 @@
   "settings.navPlacement.desc": "Where each section shows: the top pills, the sidebar, «More», or nowhere. Hiding a section keeps its data and links.",
   "settings.navPlacement.pills": "Top pills",
   "settings.navPlacement.primary": "Sidebar",
-  "settings.navPlacement.more": "Sidebar · More",
+  "settings.navPlacement.more": "Sidebar · ツール",
   "settings.navPlacement.hidden": "Hidden",
   "settings.navPlacement.default": "Default",
   "settings.navPlacement.reset": "Reset"

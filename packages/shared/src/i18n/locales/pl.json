@@ -10057,6 +10057,7 @@
   "sidebar.statuses": "Statusy",
   "sidebar.subNavigation": "Nawigacja podrzędna",
   "sidebar.tasks": "Zadania",
+  "sidebar.tools": "Narzędzia",
   "sidebar.unknownProject": "Nieznany projekt",
   "sidebar.view.explore": "Eksploruj",
   "sidebar.view.exploreDesc": "Sesje w trybie Eksploruj (tylko odczyt)",
@@ -11655,7 +11656,7 @@
   "settings.navPlacement.desc": "Where each section shows: the top pills, the sidebar, «More», or nowhere. Hiding a section keeps its data and links.",
   "settings.navPlacement.pills": "Top pills",
   "settings.navPlacement.primary": "Sidebar",
-  "settings.navPlacement.more": "Sidebar · More",
+  "settings.navPlacement.more": "Sidebar · Narzędzia",
   "settings.navPlacement.hidden": "Hidden",
   "settings.navPlacement.default": "Default",
   "settings.navPlacement.reset": "Reset"

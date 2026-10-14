@@ -96,7 +96,7 @@ describe('WP6 per-surface sidebar', () => {
   it('renders primary nav → context section → portal slot → «Ещё», sub-items only in the context section', async () => {
     const { slot } = await mount({ navigator: 'sources' })
     const context = host!.querySelector('[data-sidebar-context]')
-    const details = host!.querySelector('details[data-application-sections]')
+    const details = host!.querySelector('section[data-sidebar-tools]')
     expect(context).not.toBeNull()
     expect(ids(context)).toContain('nav:sources:api')
     expect(ids(details)).toContain('nav:sources')
