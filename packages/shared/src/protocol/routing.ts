@@ -373,6 +373,11 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD,
   RPC_CHANNELS.onboarding.GET_ROX_BALANCE,
   RPC_CHANNELS.onboarding.CHECK_HANDLE,
+  RPC_CHANNELS.onboarding.LIST_ROX_SESSIONS,
+  RPC_CHANNELS.onboarding.REVOKE_ROX_SESSION,
+  RPC_CHANNELS.onboarding.REVOKE_OTHER_ROX_SESSIONS,
+  RPC_CHANNELS.onboarding.ROTATE_ROX_KEY,
+  RPC_CHANNELS.onboarding.SET_ROX_HANDLE,
   RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL,
   // permissions & data-access column — OS probes require the local Electron host
   RPC_CHANNELS.onboarding.PERMISSIONS_STATUS,

@@ -65,6 +65,7 @@ import { lazyRoutePage, RouteErrorBoundary } from '@/lib/route-recovery'
 import { endRouteSwitch } from '@/lib/startup-perf'
 import { RetainedSurfacePane, surfaceKeepAliveCapacity, useKeepAliveSurfaces } from '@/lib/surface-keepalive'
 import { ROUTE_PAGE_LOADERS } from './route-pages'
+import { SettingsScreenSidebar } from '@/pages/settings/SettingsScreenSidebar'
 export { lazyRoutePage } from '@/lib/route-recovery'
 
 function UnavailableAutomationTour({ workspaceId }: { workspaceId: string | null }) {
@@ -471,6 +472,7 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
     if (navState.subpage === null) {
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
+          <SettingsScreenSidebar subpage={null} />
           <SettingsOverviewPage />
         </Panel>
       )
@@ -478,6 +480,7 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
     const SettingsPageComponent = getSettingsPageComponent(navState.subpage)
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
+        <SettingsScreenSidebar subpage={navState.subpage} />
         <SettingsPageComponent />
       </Panel>
     )
