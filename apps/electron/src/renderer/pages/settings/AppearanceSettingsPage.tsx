@@ -6,6 +6,7 @@
  * and has no user-selectable mode or color theme.
  */
 
+import { STATUS_BAR_ITEMS, setStatusBarItem, useStatusBarItems } from '@/lib/status-bar-items'
 import { setDensity, useDensity, type UiDensity } from '@/lib/density-preference'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
@@ -740,6 +741,7 @@ export default function AppearanceSettingsPage() {
   const { workspaces, sessionStatuses } = useAppShellContext()
   // A6/B10 — «Интерфейс»: compact status bar + accent source (main-owned).
   const { statusBarVisible, accentSource } = useUiAppearance()
+  const statusBarItems = useStatusBarItems()
   const handleStatusBarChange = useCallback((checked: boolean) => {
     if (!appearancePrefLive()) return
     void saveUiAppearancePatch({ statusBarVisible: checked })
@@ -1336,6 +1338,15 @@ export default function AppearanceSettingsPage() {
                     checked={statusBarVisible}
                     onCheckedChange={handleStatusBarChange}
                   />
+                  {statusBarVisible && STATUS_BAR_ITEMS.map((item) => (
+                    <SettingsToggle
+                      key={item}
+                      label={t(`settings.appearance.statusBarItem.${item}`)}
+                      checked={statusBarItems.includes(item)}
+                      onCheckedChange={(checked) => setStatusBarItem(item, checked)}
+                      className="pl-6"
+                    />
+                  ))}
                   <SettingsRow
                     label={t("settings.appearance.accent")}
                     description={t("settings.appearance.accentDesc")}
