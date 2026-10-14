@@ -8378,6 +8378,11 @@ export class SessionManager implements ISessionManager {
 
         // Process the event first
         await this.processEvent(managed, event, execution, runtimeOrigin)
+        // Only this turn's own usage-bearing complete clears its pending flag
+        // (a superseded turn's late complete must not clear a newer turn's).
+        if (event.type === 'complete' && event.usage && managed.turnTokensPending === myGeneration) {
+          managed.turnTokensPending = undefined
+        }
 
         // Fallback: Capture SDK session ID if the onSdkSessionIdUpdate callback didn't fire.
         // Primary capture happens in getOrCreateAgent() via onSdkSessionIdUpdate callback,
@@ -11308,7 +11313,6 @@ export class SessionManager implements ISessionManager {
           managed.tokenUsage.inputTokens = event.usage.inputTokens
           {
             // Real session total, counted per request (before outputTokens grows).
-            managed.turnTokensPending = undefined
             const next = accumulateSessionTokens(managed.tokenUsage, event.usage.requestTotals)
             delete managed.tokenUsage.sessionTokens
             delete managed.tokenUsage.sessionTokensIncomplete
