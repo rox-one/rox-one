@@ -1960,6 +1960,19 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   }
 }
 
+/* Rail breakpoints: labels slide/fade in only on a collapsed -> expanded
+   disclosure (the rail reports data-rail-state="expanding" for that one
+   transition), never on mount in the expanded state. The animation-name is
+   never toggled by resizing; --motion-disclosure is 0ms under reduced motion
+   and during a live resize (html[data-resizing]). Opacity/transform only. */
+[data-rail-state="expanding"] .rox-rail-label {
+  animation: rox-rail-label-in var(--motion-disclosure) var(--ease-standard) both;
+}
+@keyframes rox-rail-label-in {
+  from { opacity: 0; transform: translateX(calc(var(--spacing) * -1)); }
+  to { opacity: 1; transform: none; }
+}
+
 /* Fluid shell: below NARROW_SHELL_THRESHOLD the secondary sidebar floats over
    the content (data-secondary-overlay). Enter with a transform/opacity slide so
    the breakpoint reads as a reflow, not a pop. Durations come from the motion

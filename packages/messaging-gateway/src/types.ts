@@ -78,9 +78,27 @@ export interface AdapterCapabilities {
 // Messages
 // ---------------------------------------------------------------------------
 
+/**
+ * Normalised platform chat type: Telegram `private`/Lark `p2p`/Discord DM →
+ * 'direct'; groups/supergroups/guild channels → 'group'; broadcast channels →
+ * 'channel'.
+ */
+export type ChannelChatType = 'direct' | 'group' | 'channel'
+
+export function normalizeChatType(raw: unknown): ChannelChatType | undefined {
+  switch (raw) {
+    case 'direct': case 'private': case 'p2p': case 'dm': return 'direct'
+    case 'group': case 'supergroup': return 'group'
+    case 'channel': return 'channel'
+    default: return undefined
+  }
+}
+
 export interface IncomingMessage {
   platform: PlatformType
   channelId: string
+  /** Normalised chat type when the platform reports it (persisted on the binding). */
+  chatType?: ChannelChatType
   /**
    * Telegram supergroup forum topic id (`message_thread_id`). Undefined for
    * DMs, the General topic, and non-forum chats. Only Telegram populates this.
@@ -383,6 +401,8 @@ export interface ChannelBinding {
    */
   threadId?: number
   channelName?: string
+  /** Platform chat type, recorded from incoming messages (see normalizeChatType). */
+  chatType?: ChannelChatType
   enabled: boolean
   createdAt: number
   config: BindingConfig
