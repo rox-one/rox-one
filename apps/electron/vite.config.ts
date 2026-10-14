@@ -1,7 +1,7 @@
 import { defineConfig, type Plugin, type Rollup } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { readFileSync } from 'fs'
+import { readFileSync, writeFileSync } from 'fs'
 import { join, posix, relative, resolve } from 'path'
 
 /**
@@ -131,6 +131,9 @@ const SIDE_EFFECT_FREE_MODULES = [
   // barrel from dragging gray-matter + js-yaml back into startup for any other
   // barrel consumer.
   /[\\/]packages[\\/]session-tools-core[\\/]src[\\/]validation\.ts$/,
+  // WP7: reached only through the `@rox/ui` overlay barrel; the renderer has no
+  // eager consumer, yet the barrel alone kept @uiw/react-json-view in startup.
+  /[\\/]packages[\\/]ui[\\/]src[\\/]components[\\/]overlay[\\/](?:JSONPreviewOverlay|ActivityCardsOverlay)\.tsx$/,
 ]
 
 /**
@@ -144,7 +147,10 @@ const SIDE_EFFECT_FREE_MODULES = [
 const VENDOR_CHUNKS: ReadonlyArray<readonly [RegExp, string]> = [
   [/^(?:react|react-dom|scheduler)$/, 'vendor-react'],
   [/^(?:zod)$/, 'vendor-zod'],
-  [/^(?:date-fns|react-day-picker|chrono-node|@date-fns\/.+)$/, 'vendor-dates'],
+  // WP7: chrono-node and react-day-picker are only used by lazy date editors
+  // (label-date-editor.tsx and lazy pages), so they are NOT pinned here: a
+  // manual chunk would drag them back into the eager vendor-dates chunk.
+  [/^(?:date-fns|@date-fns\/.+)$/, 'vendor-dates'],
 ]
 
 function vendorChunk(id: string): string | undefined {
@@ -219,6 +225,42 @@ function modulePreloadMainChunkPlugin(): Plugin {
   }
 }
 
+/**
+ * WP1 startup-closure report: with ROX_BUNDLE_REPORT=<file>, write every emitted chunk with its static
+ * imports, dynamic imports and per-module rendered bytes, so the eager closure of index.html can be
+ * attributed module by module (`bun scripts/bench/startup-closure-report.ts`). Off by default.
+ */
+function bundleReportPlugin(): Plugin {
+  return {
+    name: 'rox-bundle-report',
+    apply: 'build',
+    generateBundle(_options, bundle) {
+      const out = process.env.ROX_BUNDLE_REPORT
+      if (!out) return
+      const root = resolve(__dirname, '../..')
+      const chunks = Object.values(bundle)
+        .filter((output): output is Rollup.OutputChunk => output.type === 'chunk')
+        .map(chunk => ({
+          fileName: chunk.fileName,
+          isEntry: chunk.isEntry,
+          isDynamicEntry: chunk.isDynamicEntry,
+          imports: chunk.imports,
+          dynamicImports: chunk.dynamicImports,
+          modules: Object.fromEntries(Object.entries(chunk.modules)
+            .map(([id, info]) => [relative(root, id.split('?')[0]).replace(/\\/g, '/'), info.renderedLength])),
+        }))
+      const rel = (id: string) => relative(root, id.split('?')[0]).replace(/\\/g, '/')
+      // ROX_BUNDLE_REPORT_GRAPH=1 adds static import edges per module (WHY a module is eager).
+      const graph: Record<string, string[]> = {}
+      for (const id of process.env.ROX_BUNDLE_REPORT_GRAPH ? this.getModuleIds() : []) {
+        const info = this.getModuleInfo(id)
+        if (info?.importedIds.length) graph[rel(id)] = info.importedIds.map(rel)
+      }
+      writeFileSync(resolve(root, out), JSON.stringify({ chunks, graph }))
+    },
+  }
+}
+
 export default defineConfig(({ command }) => ({
   plugins: [
     react({
@@ -249,6 +291,7 @@ export default defineConfig(({ command }) => ({
     nodeBuiltinStubPlugin(),
     sideEffectFreeModulesPlugin(),
     modulePreloadMainChunkPlugin(),
+    bundleReportPlugin(),
   ],
   root: resolve(__dirname, 'src/renderer'),
   cacheDir: resolve(__dirname, '.vite-worktree'),
