@@ -10520,6 +10520,7 @@
   "statusBar.syncFailed": "Нет синхронизации",
   "statusBar.syncing": "Синхронизация…",
   "statusBar.tasks": "Задачи",
+  "statusBar.tasksToday": "Задачи на сегодня",
   "statusBar.upToDate": "Установлена последняя версия",
   "statusBar.updateAvailable": "Доступна версия {{version}}",
   "statusBar.updates": "Обновления",

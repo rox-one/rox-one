@@ -19,7 +19,8 @@ import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { Bell, Bot, Cpu, Inbox, ListTodo, MessageSquare, RefreshCw, Wallet } from 'lucide-react'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
-import { useWorkspaceTaskCount } from '@/hooks/useWorkspaceTaskCount'
+import { usePersonalTasks } from '@/lib/extra-screens/use-rox-sources'
+import { matchesProjection } from '@rox/core/tasks/personal'
 import { useInboxItems } from '@/hooks/useInboxItems'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
@@ -107,12 +108,12 @@ function useUpdateInfo() {
 
 function Sep() { return <span aria-hidden className={sepCls} /> }
 
-function Counter({ icon: Icon, label, value, onClick, testId, accent }: {
-  icon: typeof Bot; label: string; value: number | null; onClick: () => void; testId: string; accent?: boolean
+function Counter({ icon: Icon, label, title, value, onClick, testId, accent }: {
+  icon: typeof Bot; label: string; title?: string; value: number | null; onClick: () => void; testId: string; accent?: boolean
 }) {
   if (value == null) return null
   return (
-    <button type="button" data-testid={testId} className={itemCls} onClick={onClick} title={label} aria-label={`${label}: ${value}`}>
+    <button type="button" data-testid={testId} className={itemCls} onClick={onClick} title={title ?? label} aria-label={`${title ?? label}: ${value}`}>
       <Icon className="size-3 shrink-0" />
       <span className="hidden truncate xl:inline">{label}</span>
       <span className={cn(numCls, accent && value > 0 && 'text-accent')}>{value}</span>
@@ -142,7 +143,17 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
     }
     return { sessions, agents }
   }, [metaMap, workspace])
-  const tasks = useWorkspaceTaskCount(workspace?.id)
+  // demo.rox.one parity: open personal tasks that land in «Сегодня» (due/started today or overdue).
+  const personalTasks = usePersonalTasks()
+  const [dayTick, setDayTick] = React.useState(() => Date.now())
+  React.useEffect(() => {
+    const timer = window.setInterval(() => setDayTick(Date.now()), BALANCE_REFRESH_MS)
+    return () => window.clearInterval(timer)
+  }, [])
+  const tasks = React.useMemo(
+    () => personalTasks.filter((task) => matchesProjection(task, dayTick, 'today')).length,
+    [personalTasks, dayTick],
+  )
   const inbox = useInboxItems({ withRemote: false })
   const inboxOpen = inbox.counts.all
   const latest = inbox.items.find((item) => !inbox.state.done[item.id] && !inbox.state.snoozed[item.id])
@@ -159,9 +170,12 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
   const runtime = shell?.runtimeSummary
   const currentSlug = shell?.workspaceDefaultLlmConnection ?? runtime?.slug
   const currentConn = connections.find((c) => c.slug === currentSlug)
-  const modelName = runtime?.defaultModel
-    ? runtime.models?.find((m) => m.id === runtime.defaultModel)?.name ?? runtime.defaultModel
-    : currentConn ? `${currentConn.defaultModel ?? currentConn.name}` : null
+  // The selected connection wins so a pick in the popover is reflected immediately.
+  const modelName = currentConn
+    ? currentConn.defaultModel ?? currentConn.name
+    : runtime?.defaultModel
+      ? runtime.models?.find((m) => m.id === runtime.defaultModel)?.name ?? runtime.defaultModel
+      : null
   const [pickBusy, setPickBusy] = React.useState(false)
   const pickConnection = async (slug: string) => {
     const api = window.electronAPI
@@ -231,7 +245,7 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
         <Sep />
         <Counter testId="status-bar-sessions" icon={MessageSquare} label={t('dashboard.sessions')} value={sessionStats.sessions} onClick={() => navigate(routes.view.allSessions())} />
         <Counter testId="status-bar-agents" icon={Bot} label={t('dashboard.activeAgents')} value={sessionStats.agents} accent onClick={() => navigate(routes.view.screen('agents'))} />
-        <Counter testId="status-bar-tasks" icon={ListTodo} label={t('statusBar.tasks')} value={tasks} onClick={() => navigate(routes.view.tasks())} />
+        <Counter testId="status-bar-tasks" icon={ListTodo} label={t('statusBar.tasks')} title={t('statusBar.tasksToday')} value={tasks} onClick={() => navigate(routes.view.tasks())} />
         <Counter testId="status-bar-inbox" icon={Inbox} label={t('statusBar.inbox')} value={inboxOpen} onClick={() => navigate(routes.view.inbox())} />
       </div>
 

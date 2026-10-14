@@ -10468,6 +10468,7 @@
   "statusBar.syncFailed": "Not synced",
   "statusBar.syncing": "Syncing…",
   "statusBar.tasks": "Tasks",
+  "statusBar.tasksToday": "Tasks due today",
   "statusBar.upToDate": "Up to date",
   "statusBar.updateAvailable": "Version {{version}} available",
   "statusBar.updates": "Updates",
