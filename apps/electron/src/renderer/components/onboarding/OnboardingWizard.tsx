@@ -323,7 +323,7 @@ case 'questionnaire':
   const isWelcome = state.step === 'welcome'
   // The questionnaire is a three-column one-page surface: it gets the full
   // window width and height instead of the narrow single-column flow cap.
-  const isWideStep = state.step === 'questionnaire'
+  const isWideStep = state.step === 'questionnaire' || state.step === 'role'
 
   return (
     <div

@@ -7,7 +7,12 @@
  * profile, so soft-signal reminders keep working.
  */
 import { getDefaultStore } from 'jotai'
-import { answerChoice, type EnvironmentPrefs } from '@rox/shared/environment'
+import {
+  answerChoice,
+  normalizeWorkStyle,
+  type EnvironmentPrefs,
+  type OnboardingWorkStyle,
+} from '@rox/shared/environment'
 import type { UsernameAdvanceContext } from './onboarding-username'
 import { devSpaceEnabledAtom, onboardingRoleAtom } from '@/atoms/dev-space'
 
@@ -15,6 +20,8 @@ export interface OnboardingRoleAnswer {
   isDeveloper: boolean
   relatedRoles: string[]
   skipped: boolean
+  /** Agents, formats, answer and collaboration style; feeds the agent prompt. */
+  workStyle?: OnboardingWorkStyle
 }
 
 /** Adjacent roles offered alongside the developer question (multi-select). */
@@ -58,7 +65,12 @@ export async function persistOnboardingRole(
   api: OnboardingRoleApi,
   answer: OnboardingRoleAnswer,
 ): Promise<void> {
-  const profile = { isDeveloper: answer.isDeveloper, relatedRoles: answer.relatedRoles }
+  const workStyle = answer.skipped ? undefined : normalizeWorkStyle(answer.workStyle)
+  const profile = {
+    isDeveloper: answer.isDeveloper,
+    relatedRoles: answer.relatedRoles,
+    ...(workStyle ? { workStyle } : {}),
+  }
   await api.saveEnvironmentSetup({
     role: answer.skipped
       ? { status: 'skipped', value: profile }
