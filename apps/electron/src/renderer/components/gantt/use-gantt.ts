@@ -39,7 +39,8 @@ export interface UseGanttDragOptions {
 export function useGanttDrag({ pxPerDay, onCommit, onClick }: UseGanttDragOptions) {
   const [drag, setDrag] = React.useState<GanttDragState | null>(null)
   const onPointerDown = (e: React.PointerEvent, id: string, mode: GanttDragMode) => {
-    if (pxPerDay <= 0) return
+    // Primary button only: right/middle clicks must not start a drag.
+    if (pxPerDay <= 0 || e.button !== 0) return
     e.preventDefault()
     e.stopPropagation()
     ;(e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId)
@@ -58,5 +59,7 @@ export function useGanttDrag({ pxPerDay, onCommit, onClick }: UseGanttDragOption
     else onClick?.(id)
   }
   const onPointerCancel = () => setDrag(null)
-  return { drag, onPointerDown, onPointerMove, onPointerUp, onPointerCancel }
+  /** Attach to the captured element: capture lost without a pointerup cancels the drag. */
+  const onLostPointerCapture = () => setDrag(null)
+  return { drag, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture }
 }

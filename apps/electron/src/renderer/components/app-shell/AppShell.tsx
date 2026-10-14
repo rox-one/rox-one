@@ -1,4 +1,5 @@
 import { TourConnectionPolicyContext } from '@/features/product-tour/runtime/hooks'
+import { useSideSession } from '@/hooks/useSideSession'
 import * as React from "react"
 import { createPortal } from "react-dom"
 import { useTranslation, Trans } from "react-i18next"
@@ -213,7 +214,7 @@ import { useTourTarget, useTourSignals } from '@/features/product-tour/runtime/h
 import { beginChatSessionCreation } from '@/features/product-tour/adapters/chat'
 import { FabNewChat } from "./FabNewChat"
 import { PublishSessionDialogHost } from "@/components/knowledge/PublishSessionDialogHost"
-import { EditPopover, getEditConfig, type EditContextKey } from "@/components/ui/EditPopover"
+import { getEditConfig } from "@/components/ui/edit-config"
 import SettingsNavigator from "@/pages/settings/SettingsNavigator"
 import {
   PANEL_GAP,
@@ -255,6 +256,11 @@ const SendToWorkspaceDialog = React.lazy(() =>
 )
 const CreateProjectDialog = React.lazy(() =>
   import("../projects/CreateProjectDialog").then((m) => ({ default: m.CreateProjectDialog })),
+)
+// Closed until a sidebar context menu sets editPopoverOpen. Same gate as
+// SendToWorkspaceDialog — a closed Radix Popover still evaluates the module.
+const EditPopover = React.lazy(() =>
+  import("@/components/ui/EditPopover").then((m) => ({ default: m.EditPopover })),
 )
 
 // The extra-screens background work is timer-driven (first check 30 s after mount) and renders
@@ -1468,6 +1474,9 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   // New chat
   useAction('app.newChat', () => handleNewChat())
   useAction('app.newChatInPanel', () => handleNewChat(true))
+  // top50 #20: side session next to any screen.
+  const openSideSession = useSideSession()
+  useAction('session.openSide', () => { void openSideSession() }, undefined, [openSideSession])
 
   // Settings
   useAction('app.settings', onOpenSettings)
@@ -3674,8 +3683,8 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
        * so the popover appears near the triggering item rather than at a fixed location.
        * modal={true} prevents auto-close when focus shifts after context menu closes.
        */}
-      {activeWorkspace && (
-        <>
+      {activeWorkspace && editPopoverOpen && (
+        <React.Suspense fallback={null}>
           {/* Configure Statuses EditPopover - anchored near sidebar */}
           <EditPopover
             open={editPopoverOpen === 'statuses'}
@@ -3841,7 +3850,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
               }
             })()}
           />
-        </>
+        </React.Suspense>
       )}
 
 
