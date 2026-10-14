@@ -11,10 +11,13 @@ import { resolvePillModel, usePillPreferences, type PillModel, type PillNavPlace
 import { canOpenPillBrowser } from './pill-activate'
 import { activeScene, useScenes } from './scenes'
 import { useShellModes } from './useModes'
+import { usePills } from '../components/shell/shell-prefs'
 
 export function usePillNav(shellFlags: ReadonlySet<string>): PillNavPlacement {
   const placements = useNavPlacements()
-  return useMemo(() => ({ surfaces: resolveNavSurfaces({ shellFlags, placements }), placements }), [shellFlags, placements])
+  // Subscribe to the pill order so a pure reorder (Settings/onboarding) re-renders ModeBar live.
+  const pillOrder = usePills()
+  return useMemo(() => ({ surfaces: resolveNavSurfaces({ shellFlags, placements }), placements, pillOrder }), [shellFlags, placements, pillOrder])
 }
 
 /** `pillShown`: the TopBar renders the pill (`modePillShown`). */

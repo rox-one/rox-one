@@ -29,11 +29,11 @@ function pill(shellFlags: ReadonlySet<string>) {
 }
 
 describe('W1-07 flags', () => {
-  it('registers every W1-07 flag default OFF and rollback-safe', () => {
+  it('registers every W1-07 flag default OFF (Мессенджер default ON) and rollback-safe', () => {
     for (const id of W1_07_FLAG_IDS) {
       const definition = WORKBENCH_FEATURE_FLAGS.find((flag) => flag.id === id)
       expect(definition).toBeDefined()
-      expect(definition?.defaultValue).toBe(false)
+      expect(definition?.defaultValue).toBe(id === WORKBENCH_FLAG.modeMessengerV1)
       expect(definition?.rollbackSafe).toBe(true)
     }
   })
@@ -45,10 +45,16 @@ describe('W1-07 flags', () => {
     expect(ids).not.toContain(WORKBENCH_FLAG.conationShell)
   })
 
-  it('a fresh store has no W1-07 flag enabled', () => {
+  it('a fresh store enables only Мессенджер among the W1-07 flags', () => {
     const flags = createStore().get(enabledShellFlagsAtom)
-    for (const id of W1_07_FLAG_IDS) expect(flags.has(id)).toBe(false)
-    expect(enabledUnifiedSurfaces(flags)).toEqual([])
+    for (const id of W1_07_FLAG_IDS) expect(flags.has(id)).toBe(id === WORKBENCH_FLAG.modeMessengerV1)
+    expect(enabledUnifiedSurfaces(flags)).toEqual(['messenger'])
+  })
+
+  it('Мессенджер can still be switched off through its storage-backed atom', () => {
+    const store = createStore()
+    store.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
+    expect(store.get(enabledShellFlagsAtom).has(WORKBENCH_FLAG.modeMessengerV1)).toBe(false)
   })
 
   it('negative: unregistered flag ids never resolve as enabled', () => {
@@ -74,12 +80,12 @@ describe('W1-07 flags', () => {
 })
 
 describe('unified modes', () => {
-  it('flags ON: all nine modes in §3.1 order', () => {
+  it('flags ON: all ten modes in §3.1 order', () => {
     const flags = resolveShellFlags(Object.fromEntries(W1_07_FLAG_IDS.map((id) => [id, true])))
     const modes = pill(flags)
     expect(modes.map((mode) => [mode.id, mode.order])).toEqual([
       ['home', 10], ['chat', 20], ['messenger', 25], ['calendar', 35], ['tasks', 40],
-      ['goals', 45], ['notes', 50], ['feed', 60], ['inbox', 70],
+      ['goals', 45], ['notes', 50], ['canvas', 55], ['feed', 60], ['inbox', 70],
     ])
     expect(modes.find((mode) => mode.id === 'messenger')?.rootRoute).toBe('messenger')
     expect(modes.find((mode) => mode.id === 'notes')?.titleKey).toBe(DOCS_RELABEL_TITLE_KEY)
@@ -94,7 +100,7 @@ describe('unified modes', () => {
 
   it('mode titles are workbench.mode.<id> keys', () => {
     expect(UNIFIED_MODES.map((mode) => mode.contribution.titleKey)).toEqual([
-      'workbench.mode.messenger', 'workbench.mode.calendar', 'workbench.mode.goals',
+      'workbench.mode.messenger', 'workbench.mode.calendar', 'workbench.mode.goals', 'workbench.mode.canvas',
     ])
   })
 

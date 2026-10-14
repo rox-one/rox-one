@@ -42,6 +42,21 @@ describe('parseError proxy interception handling', () => {
 
     expect(parsed.code).toBe('invalid_api_key')
   })
+
+  it('maps the raw Rox Cloud gate to a typed auth-required error', () => {
+    const parsed = parseError(new Error('ROX_TRUSTED_ACCOUNT_REQUIRED'))
+    expect(parsed.code).toBe('OMP_AUTH_REQUIRED')
+    expect(parsed.title.toLowerCase()).toContain('auth')
+    expect(parsed.message.toLowerCase()).not.toContain('rox_trusted_account_required')
+  })
+
+  it('maps gateway rox_model_not_found (underscores) to invalid_model (S3-04)', () => {
+    for (const message of ['rox_model_not_found', 'model_not_found', 'model not found']) {
+      const parsed = parseError(new Error(message))
+      expect(parsed.code).toBe('invalid_model')
+      expect(parsed.message.toLowerCase()).not.toContain('rox_model_not_found')
+    }
+  })
 })
 
 describe('parseError tool-support classification', () => {

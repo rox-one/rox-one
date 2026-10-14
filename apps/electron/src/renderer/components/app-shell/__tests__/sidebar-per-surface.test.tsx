@@ -1,7 +1,7 @@
 /**
- * WP6 (#1533): one slot model on every surface — global primary nav, then the
- * open surface's contextual section (plus the portal slot screens use), then
- * «Ещё». Surface rows never carry their sub-items in the global nav.
+ * Contextual sidebar: the sidebar shows only the CURRENT screen — its title,
+ * primary action and own navigation (context section, page portal, or
+ * «Закреплённое» / «Недавнее»). No global Навигация / Инструменты lists.
  */
 import { afterEach, describe, expect, it } from 'bun:test'
 import * as React from 'react'
@@ -15,7 +15,8 @@ import { useDomForFile } from '../../../../../../../packages/ui/src/components/p
 import { inspectorVisibleAtom } from '@/atoms/unified-shell'
 import { NavigationStatusContext, type NavigationStatus } from '@/contexts/NavigationContext'
 import type { SidebarItem } from '../LeftSidebar'
-import { ShellSidebarNav, buildContextSection, stripContextItems } from '../ShellSidebarNav'
+import { ShellSidebarNav, buildContextSection } from '../ShellSidebarNav'
+import { sessionMetaMapAtom } from '@/atoms/sessions'
 
 // eslint-disable-next-line react-hooks/rules-of-hooks -- test DOM environment setup, not a React hook
 useDomForFile()
@@ -25,7 +26,7 @@ let navRenders = 0
 i18n.use({
   type: 'postProcessor', name: 'count',
   process(value: string, key: string | string[]) {
-    if ((Array.isArray(key) ? key[0] : key) === 'workbench.mode.more') navRenders++
+    if ((Array.isArray(key) ? key[0] : key) === 'sidebar.navigation') navRenders++
     return value
   },
 })
@@ -49,7 +50,7 @@ const status = (navigationState: unknown) => ({
 
 function makeLinks(): SidebarItem[] {
   return [
-    { id: 'nav:allSessions', title: 'Chat', icon: MessageSquare, variant: 'ghost', onClick: noop },
+    { id: 'nav:allSessions', title: 'Chat', icon: MessageSquare, variant: 'ghost', onClick: noop, actions: <button type="button" data-tutorial="new-chat-button">+</button> },
     { id: 'nav:notes', title: 'Docs', icon: Home, variant: 'ghost', onClick: noop },
     {
       id: 'nav:sources', title: 'Sources', icon: Plug, variant: 'default', onClick: noop, expandable: true, expanded: true,
@@ -61,18 +62,18 @@ function makeLinks(): SidebarItem[] {
   ]
 }
 
-function Shell({ slotRef }: { slotRef: (el: HTMLDivElement | null) => void }) {
+function Shell({ slotRef, collapsed = false }: { slotRef: (el: HTMLDivElement | null) => void; collapsed?: boolean }) {
   useAtomValue(inspectorVisibleAtom)
   const links = React.useMemo(makeLinks, [])
   return (
-    <ShellSidebarNav baseLinks={links} isCollapsed={false} onExpand={noop} onOpenBrowser={noop}
-      isExpanded={alwaysOpen} toggleExpanded={noop} applicationSectionsOpen={false}
-      onApplicationSectionsOpenChange={noop} contextSlotRef={slotRef} />
+    <ShellSidebarNav baseLinks={links} isCollapsed={collapsed} onExpand={noop} onOpenBrowser={noop}
+      isExpanded={alwaysOpen} toggleExpanded={noop} contextSlotRef={slotRef} workspaceIds={['ws1']} />
   )
 }
 
-async function mount(navigationState: unknown) {
+async function mount(navigationState: unknown, opts: { collapsed?: boolean; seed?: (store: ReturnType<typeof createStore>) => void } = {}) {
   const store = createStore()
+  opts.seed?.(store)
   let slot: HTMLDivElement | null = null
   const slotRef = (el: HTMLDivElement | null) => { slot = el }
   host = document.createElement('div')
@@ -82,60 +83,91 @@ async function mount(navigationState: unknown) {
     root.render(
       <Provider store={store}>
         <I18nextProvider i18n={i18n}>
-          <NavigationStatusContext.Provider value={status(navigationState)}><Shell slotRef={slotRef} /></NavigationStatusContext.Provider>
+          <NavigationStatusContext.Provider value={status(navigationState)}><Shell slotRef={slotRef} collapsed={opts.collapsed} /></NavigationStatusContext.Provider>
         </I18nextProvider>
       </Provider>,
     )
   })
+  // Let the lazy «Недавнее» chunk resolve.
+  for (let i = 0; i < 5; i++) await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
   return { store, slot: () => slot }
 }
 
 const ids = (el: Element | null | undefined) => Array.from(el?.querySelectorAll('[data-sidebar-link-id]') ?? []).map(n => n.getAttribute('data-sidebar-link-id'))
 
-describe('WP6 per-surface sidebar', () => {
-  it('renders primary nav → context section → portal slot → «Ещё», sub-items only in the context section', async () => {
-    const { slot } = await mount({ navigator: 'sources' })
+const seedSessions = (store: ReturnType<typeof createStore>) => {
+  const meta = (id: string, at: number, over: Record<string, unknown> = {}) => [id, { id, workspaceId: 'ws1', name: `Chat ${id}`, lastMessageAt: at, ...over }] as const
+  store.set(sessionMetaMapAtom, new Map([
+    meta('a', 3), meta('b', 2, { isFlagged: true }), meta('c', 1), meta('z', 9, { isArchived: true }), meta('other', 8, { workspaceId: 'ws2' }),
+  ]) as never)
+}
+
+describe('contextual sidebar', () => {
+  it('a context surface shows its title and its own sub-items — no global surface rows', async () => {
+    await mount({ navigator: 'sources' })
+    const nav = host!.querySelector('[data-sidebar-primary-nav]')
+    expect(nav?.getAttribute('data-sidebar-surface')).toBe('sources')
+    expect(host!.querySelector('[data-sidebar-screen-title]')?.textContent).toBe('sidebar.sources')
     const context = host!.querySelector('[data-sidebar-context]')
-    const details = host!.querySelector('details[data-application-sections]')
-    expect(context).not.toBeNull()
     expect(ids(context)).toContain('nav:sources:api')
-    expect(ids(details)).toContain('nav:sources')
-    expect(ids(details)).not.toContain('nav:sources:api')
-    const s = slot()
-    expect(s?.hasAttribute('data-primary-sidebar-context')).toBe(true)
-    // DOM order: context section, then the slot, then «Ещё».
-    expect(context!.compareDocumentPosition(s!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(s!.compareDocumentPosition(details!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // The global lists are gone.
+    expect(host!.querySelector('[data-sidebar-tools]')).toBeNull()
+    expect(ids(host)).not.toContain('nav:notes')
+    expect(ids(host)).not.toContain('nav:allSessions')
   })
 
-  it('no context section on a surface without sub-navigation', async () => {
-    await mount({ navigator: 'notes' })
+  it('a portal surface hands the sidebar to its page; until the page portals, the fallback shows', async () => {
+    const { slot } = await mount({ navigator: 'notes' }, { seed: seedSessions })
     expect(host!.querySelector('[data-sidebar-context]')).toBeNull()
+    expect(slot()?.hasAttribute('data-primary-sidebar-context')).toBe(true)
+    expect(host!.querySelector('[data-sidebar-recent-pinned]')).not.toBeNull()
+    await act(async () => { const nav = document.createElement('div'); nav.textContent = 'tree'; slot()!.appendChild(nav) })
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
+    expect(host!.querySelector('[data-sidebar-recent-pinned]')).toBeNull()
+    expect(host!.querySelector('[data-sidebar-primary-nav]')?.getAttribute('data-sidebar-content')).toBe('portal')
+  })
+
+  it('a screen without navigation shows «Закреплённое» (flagged) + «Недавнее» for this workspace, and «+ новый чат»', async () => {
+    await mount({ navigator: 'home' }, { seed: seedSessions })
+    const fallback = host!.querySelector('[data-sidebar-recent-pinned]')
+    expect(fallback).not.toBeNull()
+    const [pinned, recent] = Array.from(fallback!.querySelectorAll('section'))
+    expect(ids(pinned)).toEqual(['recent:b'])
+    expect(ids(recent)).toEqual(['recent:a', 'recent:c'])
+    expect(host!.querySelector('[data-sidebar-screen-header] [data-tutorial="new-chat-button"]')).not.toBeNull()
+  })
+
+  it('a portalled navigator wins on a fallback screen too (no stacked «Недавнее»)', async () => {
+    const { slot } = await mount({ navigator: 'home' }, { seed: seedSessions })
+    expect(host!.querySelector('[data-sidebar-recent-pinned]')).not.toBeNull()
+    await act(async () => { slot()!.appendChild(document.createElement('div')) })
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
+    expect(host!.querySelector('[data-sidebar-recent-pinned]')).toBeNull()
+  })
+
+  it('the screen title is a heading whose button returns to the screen root', async () => {
+    await mount({ navigator: 'sources' })
+    const heading = host!.querySelector('[data-sidebar-screen-header] h2')
+    expect(heading?.querySelector('button[data-sidebar-screen-title]')).not.toBeNull()
+  })
+
+  it('collapsed rail: the current screen\'s items as icons, never the global surfaces', async () => {
+    await mount({ navigator: 'sources' }, { collapsed: true })
+    expect(ids(host)).toEqual(expect.arrayContaining(['nav:sources:api', 'nav:sources:mcp']))
+    expect(ids(host)).not.toContain('nav:notes')
+    expect(host!.querySelector('[data-sidebar-screen-header]')).toBeNull()
   })
 
   it('keeps the WP3 gain: unrelated atom changes do not re-render the nav', async () => {
-    const { store } = await mount({ navigator: 'sources' })
+    const { store } = await mount({ navigator: 'home' })
     const before = navRenders
     for (let i = 0; i < 5; i++) await act(async () => { store.set(inspectorVisibleAtom, !store.get(inspectorVisibleAtom)) })
     expect(navRenders).toBe(before)
   })
 })
 
-describe('WP6 helpers', () => {
+describe('context helpers', () => {
   const row = makeLinks()[2] as Extract<SidebarItem, { title: string }>
-  it('stripContextItems drops sub-items; the open surface row navigates to its root', () => {
-    let routed = 0
-    const entry = { route: () => { routed++; return 'sources' as never }, isActive: () => true }
-    const stripped = stripContextItems(row, entry, { navigator: 'sources' } as never)
-    expect(stripped.items).toBeUndefined()
-    expect(stripped.expandable).toBe(false)
-    expect(stripped.onClick).not.toBe(row.onClick)
-    expect(stripped.variant).toBe('default')
-    const inactive = stripContextItems(row, { ...entry, isActive: () => false }, { navigator: 'notes' } as never)
-    expect(inactive.onClick).toBe(row.onClick)
-    expect(routed).toBe(0)
-  })
-
   it('buildContextSection keeps the row title, icon and context menu', () => {
     const { title, links } = buildContextSection(row, { open: true, onToggle: noop })
     expect(title).toBe('Sources')

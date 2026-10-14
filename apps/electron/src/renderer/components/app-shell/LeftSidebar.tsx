@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import * as React from "react"
-import { AnimatePresence, motion, useIsPresent, type Variants } from "motion/react"
+import { AnimatePresence, motion, PresenceDiv } from '@/lib/deferred-motion'
+import type { Variants } from 'motion/react'
 import { usePrefersReducedMotion } from "@/lib/render-profile-motion"
 
 import { useTranslation } from "react-i18next"
@@ -207,7 +208,9 @@ const itemVariants: Variants = {
  * - Two-phase drop animation: overlay fades out, ghost fades in
  */
 /** WP4: the one sidebar row hover/active fill (UI-A1 state token). */
-const ROW_FILL = 'bg-[var(--state-hover)]'
+// Sidebar v2: selected ≠ hover — the active row uses the selected token
+// (the main nav adds weight/colour on its own wrapper).
+const ROW_FILL = 'bg-[var(--state-selected)]'
 
 export const LeftSidebar = React.memo(function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested, serviceId, onExpand, disclosureColumn = true }: LeftSidebarProps) {
   const slot = !isNested && disclosureColumn
@@ -426,10 +429,7 @@ const ExpandableSection = React.memo(function ExpandableSection({
 // Remove it from native focus traversal as soon as the disclosure closes.
 const SidebarSectionBody = React.forwardRef<HTMLDivElement, React.ComponentProps<typeof motion.div>>(
   function SidebarSectionBody(props, ref) {
-    const isPresent = useIsPresent()
-    // React 18 supports the native attribute through a string-valued spread;
-    // its HTML types predate inert, and boolean unknown attributes are omitted.
-    return <motion.div {...props} {...(isPresent ? {} : { inert: '' })} ref={ref} aria-hidden={!isPresent} />
+    return <PresenceDiv {...props} ref={ref} />
   },
 )
 

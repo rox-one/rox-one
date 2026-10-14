@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search, X } from 'lucide-react'
-import { Spinner } from '@rox/ui'
+import { Spinner } from '@rox/ui/spinner'
 
 /**
  * SessionSearchHeader - Presentational component for session list search UI.

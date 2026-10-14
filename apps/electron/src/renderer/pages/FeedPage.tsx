@@ -44,7 +44,6 @@ import {
 import { navigate, routes } from '@/lib/navigate'
 import { usePanelKeyboardGuard } from '@/lib/usePanelKeyboardGuard'
 import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspace-tool'
-import { workspaceProjectContextsAtom } from '@/atoms/workspace-context'
 import { cn } from '@/lib/utils'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { useAutomations } from '@/hooks/useAutomations'
@@ -74,6 +73,7 @@ import {
   buildTeamItems,
   filterView,
   groupOrdered,
+  sourceHealth,
   sourceLabel,
   suggestTags,
   tabCounts,
@@ -84,6 +84,7 @@ import {
   type FeedOrder,
   type FeedViewItem,
 } from './feed/feed-model'
+import { feedDayGroupStyle } from './feed/feed-list-render'
 import { ColorFilter, ColorPicker, FEED_COLOR_HEX, SourceIcon, TagChip, TagEditor } from './feed/FeedParts'
 import { SourceEditor, SourcesView } from './feed/FeedSources'
 import { FeedSidebar, type FeedView } from './feed/FeedSidebar'
@@ -92,16 +93,19 @@ import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inb
 import { useFeedReaderTour } from '@/features/product-tour/adapters/work/inbox-feed/use-feed-reader-tour'
 import { useFeedCaller, type FeedCaller } from './feed/feed-caller'
 import { toErrorMessage } from '@/lib/errors'
-import { FeedSectionTabs, type FeedSection } from './feed/FeedSectionTabs'
+import type { FeedSection } from './feed/FeedSectionTabs'
 import { InboxQueue } from './inbox/InboxQueue'
 import { roxQueryClient } from '@/lib/query/client'
 import { roxKeys } from '@/lib/query/keys'
+import { useFeedScreenSidebar } from '@/screens/feed/useFeedScreenSidebar'
 import { cacheWriteEpoch, fencedPatchQueryData, fencedSetQueryData } from '@/lib/query/shared-read'
 
 /** PERF-09: last list per (workspace, actor), memory only; the page revalidates on mount. */
 function cachedFeed(workspaceId: string | null, caller: FeedCaller): FeedListResult | null {
   return workspaceId ? roxQueryClient().getQueryData<FeedListResult>(roxKeys.feed(workspaceId, caller.preferenceKey)) ?? null : null
 }
+
+const NO_TAGS: readonly { tag: string; count: number }[] = []
 
 type View = FeedView
 type Density = 'list' | 'cards'
@@ -201,7 +205,9 @@ export function FeedStream({ selectedId }: { selectedId?: string | null }) {
 export default function FeedPage({ selectedId, section = 'stream' }: { selectedId?: string | null; section?: FeedSection }) {
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="feed-screen" data-section={section}>
-      <FeedSectionTabs section={section} />
+      {/* No inner «Поток/Входящие» strip: Лента and Входящие are separate
+          surfaces in the rail and the open-tab strip already names the one in
+          view (Mark, t77). The section stays route-driven. */}
       <div className="flex min-h-0 flex-1 flex-col">
         {section === 'inbox' ? <InboxQueue selectedId={selectedId} /> : <FeedStream selectedId={selectedId} />}
       </div>
@@ -482,7 +488,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const openAutomation = (automationId: string) => {
     if (!workspaceId) return
     const rule = automations.automations.find(item => item.id === automationId)
-    const projectId = rule?.context?.projectId ?? store.get(workspaceProjectContextsAtom)[workspaceId] ?? undefined
+    const projectId = rule?.context?.projectId ?? undefined
     const intent = captureWorkspaceToolOpen(store, { workspaceId, projectId, tool: 'automations', originPanelId: shell?.panelId })
     if (intent) openWorkspaceTool(store, intent, routes.view.automations({ automationId }))
   }
@@ -559,6 +565,26 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
     />
     </div>
   )
+
+  // Shell second sidebar (shell-layout): same data as the legacy portal navigator.
+  const sidebarSources = useMemo(() => data.sources.map((s) => ({ id: s.id, label: sourceLabel(s), kind: s.kind, count: s.itemCount ?? 0, unhealthy: s.paused || sourceHealth(s) === 'error' })), [data.sources])
+  useFeedScreenSidebar({
+    counts,
+    attention,
+    sources: sidebarSources,
+    tags: view === 'sources' ? NO_TAGS : tabTags,
+    x: { connected: data.x.state === 'connected', username: data.x.username },
+    team: { connected: Boolean(roster.org), name: roster.org ? roster.org.name ?? t('feed.nav.teamLocal') : t('feed.nav.teamNoOrg') },
+    activeKey: tagFilter ? `label:${tagFilter}` : view === 'news' && sourceFilter ? `source:${sourceFilter}` : `view:${view}`,
+    onView: (next) => { switchView(next); if (next !== 'sources') setSourceFilter(null) },
+    onSource: (id) => { switchView('news'); setSourceFilter(id) },
+    onTag: (tag) => setTagFilter(tagFilter?.toLowerCase() === tag.toLowerCase() ? null : tag),
+    query,
+    onQuery: setQuery,
+    onRefresh: () => { void load() },
+    loading: !loaded && !loadError,
+    error: loadError ? t('feed.loadError') : null,
+  }, true)
 
   // ── list: feed tabs ──────────────────────────────────────────────────────
   const metaOf = (item: FeedViewItem) => {
@@ -770,7 +796,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
       {loadError ? <div role="alert" className="mx-3 mb-1 rounded-[var(--radius-control)] bg-destructive/10 px-2 py-1 text-sm text-destructive">{t('feed.loadError')}</div> : null}
       <div ref={!selected ? readerTourRef : undefined} data-tour-id={!selected ? 'feed.reader' : undefined} role="listbox" aria-label={t(`feed.tab.${tab}`)} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="feed-list" data-density={prefs.density}>
         {visible.length === 0 ? emptyForTab() : groups.map((g) => (
-          <div key={g.key}>
+          <div key={g.key} style={feedDayGroupStyle(g.items.length, prefs.density)} data-testid="feed-day-group">
             <div className="flex items-center gap-2 px-3 pb-1 pt-3 text-xs uppercase caps-label text-text-muted" data-testid="feed-day">
               <span className="truncate">{g.label === 'earlier' ? dayFmt.format(g.day) : t(`feed.day.${g.label}`)}</span>
               <span className="numeric">{g.items.length}</span>

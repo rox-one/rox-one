@@ -12,8 +12,10 @@ import { createInstance } from 'i18next'
 import { I18nextProvider } from 'react-i18next'
 import { Home } from 'lucide-react'
 import { MotionConfig } from 'motion/react'
+import { TooltipProvider } from '@rox/ui'
 import { useDomForFile } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
-import { NavigationStatusContext, type NavigationStatus } from '@/contexts/NavigationContext'
+import { NavigationContext, NavigationStatusContext, type NavigationStatus } from '@/contexts/NavigationContext'
+import { AppShellProvider, type AppShellContextType } from '@/context/AppShellContext'
 import type { LinkItem, SidebarItem } from '../LeftSidebar'
 import { SESSION_FILTERS_EMPTY_HIDDEN_ID, SESSION_FILTERS_ID, ShellSidebarNav } from '../ShellSidebarNav'
 
@@ -37,8 +39,9 @@ const status = (id: string, count: number): LinkItem => ({
   id: `nav:state:${id}`, title: id, label: String(count), count, icon: Home, variant: 'ghost', onClick: noop,
 })
 
-function links(memoryActive: boolean): SidebarItem[] {
+function links(memoryActive: boolean, inboxActive = false): SidebarItem[] {
   return [
+    { id: 'nav:inbox', title: 'Inbox', icon: Home, variant: inboxActive ? 'default' : 'ghost', onClick: noop },
     {
       id: 'nav:allSessions', title: 'Sessions', icon: Home, variant: 'ghost', onClick: noop, expandable: true, expanded: true,
       sortable: { onReorder: noop },
@@ -47,6 +50,9 @@ function links(memoryActive: boolean): SidebarItem[] {
     { id: 'nav:memory', title: 'Memory', icon: Home, variant: memoryActive ? 'default' : 'ghost', onClick: noop },
   ]
 }
+
+const SHELL = { activeWorkspaceId: null, pendingPermissions: new Map(), labels: [] } as unknown as AppShellContextType
+const NAV = { navigate: () => {} } as unknown as React.ContextType<typeof NavigationContext>
 
 /** AppShell's store shape: a set of collapsed ids, persisted across mounts. */
 function makeStore() {
@@ -58,19 +64,25 @@ function makeStore() {
   }
 }
 
-function Harness({ store, navigator, memoryActive, onOpenChange = noop }: { store: ReturnType<typeof makeStore>; navigator: string; memoryActive: boolean; onOpenChange?: (open: boolean) => void }) {
+function Harness({ store, navigator, memoryActive, inboxActive = false }: { store: ReturnType<typeof makeStore>; navigator: string; memoryActive: boolean; inboxActive?: boolean }) {
   // A new isExpanded identity per store change, as AppShell's collapsedItems-based callback.
   const [version, bump] = React.useReducer((n: number) => n + 1, 0)
-  const baseLinks = React.useMemo(() => links(memoryActive), [memoryActive])
+  const baseLinks = React.useMemo(() => links(memoryActive, inboxActive), [memoryActive, inboxActive])
   // eslint-disable-next-line react-hooks/exhaustive-deps -- version invalidates on store change
   const isExpanded = React.useCallback((id: string) => store.isExpanded(id), [store, version])
   const toggleExpanded = React.useCallback((id: string) => { store.toggle(id); bump() }, [store])
   const status = { isReady: true, isSessionsReady: true, unavailableWorkspaceSlug: null, navigationState: { navigator }, navigationRevision: 0, canGoBack: false, canGoForward: false } as unknown as NavigationStatus
+  // The Sessions screen publishes its second sidebar via ScreenSidebarHost, which
+  // reads the workspace from AppShell and navigation; the real shell always provides both.
   return (
+    <AppShellProvider value={SHELL}>
+    <NavigationContext.Provider value={NAV}>
     <NavigationStatusContext.Provider value={status}>
       <ShellSidebarNav baseLinks={baseLinks} isCollapsed={false} onExpand={noop} onOpenBrowser={noop}
-        isExpanded={isExpanded} toggleExpanded={toggleExpanded} applicationSectionsOpen={false} onApplicationSectionsOpenChange={onOpenChange} />
+        isExpanded={isExpanded} toggleExpanded={toggleExpanded} />
     </NavigationStatusContext.Provider>
+    </NavigationContext.Provider>
+    </AppShellProvider>
   )
 }
 
@@ -79,7 +91,7 @@ async function mount(node: React.ReactNode) {
   document.body.appendChild(host)
   await act(async () => {
     root = createRoot(host!)
-    root.render(<Provider store={createStore()}><I18nextProvider i18n={i18n}><MotionConfig reducedMotion="always">{node}</MotionConfig></I18nextProvider></Provider>)
+    root.render(<Provider store={createStore()}><I18nextProvider i18n={i18n}><MotionConfig reducedMotion="always"><TooltipProvider>{node}</TooltipProvider></MotionConfig></I18nextProvider></Provider>)
   })
 }
 async function unmount() {
@@ -87,83 +99,59 @@ async function unmount() {
   root = null
   host?.remove()
 }
-const details = () => host!.querySelector('details[data-application-sections]') as HTMLDetailsElement
-const rowIds = () => Array.from(host!.querySelectorAll('[data-session-filters] [data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))
+async function waitForConfig(timeoutMs = 3000) {
+  const deadline = Date.now() + timeoutMs
+  const ready = () => host!.querySelector('[data-sidebar-primary-nav]')?.getAttribute('data-sidebar-content') === 'config'
+  while (!ready() && Date.now() < deadline) {
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)) })
+  }
+  expect(ready()).toBe(true)
+}
 
-describe('WP5 fix1 (1): «Ещё» reveals an active destination', () => {
-  it('is closed when nothing inside is active', async () => {
-    await mount(<Harness store={makeStore()} navigator="memory" memoryActive={false} />)
-    expect(details().open).toBe(false)
+const allRowIds = () => Array.from(host!.querySelectorAll('[data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))
+
+describe('contextual sidebar replaces «Навигация» / «Инструменты»', () => {
+  it('no global sections on any screen: Сессии shows only its own filters', async () => {
+    await mount(<Harness store={makeStore()} navigator="sessions" memoryActive={false} />)
+    expect(host!.querySelector('section[data-sidebar-tools]')).toBeNull()
+    expect(host!.querySelector('[data-sidebar-section-header]')).toBeNull()
+    expect(allRowIds()).not.toContain('nav:memory')
+    expect(allRowIds()).not.toContain('nav:inbox')
+    // Сессии publishes its own second sidebar (ScreenSidebarConfig); once the lazy
+    // publisher resolves it replaces the legacy filter list, still with no globals.
+    await waitForConfig()
+    expect(host!.querySelector('section[data-sidebar-tools]')).toBeNull()
+    expect(allRowIds()).not.toContain('nav:memory')
   })
 
-  it('opens when the active destination lives in «Ещё» (deep link / route change)', async () => {
+  it('Память (no own nav) shows no other screens in the sidebar', async () => {
     await mount(<Harness store={makeStore()} navigator="memory" memoryActive />)
-    expect(details().open).toBe(true)
+    expect(allRowIds().filter(id => id?.startsWith('nav:'))).toEqual([])
+    expect(host!.querySelector('[data-sidebar-primary-nav]')?.getAttribute('data-sidebar-surface')).toBe('memory')
   })
 })
 
 describe('WP5 fix1 (2): session filters persist through the expanded-sections store', () => {
-  it('«Показать пустые» and the section collapse survive a remount', async () => {
+  // Since #4dea56dff Сессии renders its published ScreenSidebarConfig; the legacy
+  // filter list (with «Показать пустые») is only the fallback until the lazy
+  // publisher resolves. The persisted ids must not leak into the published sidebar
+  // and must still be honoured by the fallback when it is shown.
+  it('the published Sessions sidebar replaces the legacy filters and keeps the stored state', async () => {
     const store = makeStore()
+    store.toggle(SESSION_FILTERS_EMPTY_HIDDEN_ID)
+    store.toggle(SESSION_FILTERS_ID)
     await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
-    expect(rowIds()).not.toContain('nav:state:backlog')
-    const toggle = host!.querySelector('[data-session-filters] button[aria-pressed]') as HTMLButtonElement
-    expect(toggle.getAttribute('aria-pressed')).toBe('false')
-    await act(async () => toggle.click())
+    const fallbackHeader = host!.querySelector(`[data-sidebar-link-id="${SESSION_FILTERS_ID}"]`)
+    if (fallbackHeader) expect(fallbackHeader.getAttribute('aria-expanded')).toBe('false')
+    await waitForConfig()
+    expect(host!.querySelector('[data-session-filters]')).toBeNull()
+    expect(host!.querySelector('[data-sidebar-primary-nav]')?.getAttribute('data-sidebar-surface')).toBe('sessions')
+
+    await unmount()
+    await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
+    await waitForConfig()
+    expect(host!.querySelector('[data-session-filters]')).toBeNull()
     expect(store.collapsed.has(SESSION_FILTERS_EMPTY_HIDDEN_ID)).toBe(true)
-    expect(rowIds()).toContain('nav:state:backlog')
-
-    await unmount()
-    await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
-    expect(rowIds()).toContain('nav:state:backlog')
-
-    const header = host!.querySelector(`[data-sidebar-link-id="${SESSION_FILTERS_ID}"]`) as HTMLButtonElement
-    await act(async () => header.click())
     expect(store.collapsed.has(SESSION_FILTERS_ID)).toBe(true)
-    await unmount()
-    await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
-    expect(host!.querySelector(`[data-sidebar-link-id="${SESSION_FILTERS_ID}"]`)?.getAttribute('aria-expanded')).toBe('false')
-    expect(rowIds()).not.toContain('nav:state:todo')
-  })
-})
-
-const summary = () => details().querySelector('summary') as HTMLElement
-const fireToggle = async () => act(async () => { details().dispatchEvent(new Event('toggle')) })
-
-describe('WP5 fix2 (W): a forced-open «Ещё» cannot desync closed', () => {
-  it('prevents the summary click and re-opens the DOM details if it closes', async () => {
-    const calls: boolean[] = []
-    await mount(<Harness store={makeStore()} navigator="memory" memoryActive onOpenChange={open => calls.push(open)} />)
-    expect(details().open).toBe(true)
-    const click = new MouseEvent('click', { bubbles: true, cancelable: true })
-    await act(async () => { summary().dispatchEvent(click) })
-    expect(click.defaultPrevented).toBe(true)
-    // Native close anyway (e.g. platform quirk): the toggle handler restores it.
-    details().open = false
-    await fireToggle()
-    expect(details().open).toBe(true)
-    expect(calls).toEqual([])
-  })
-})
-
-describe('WP5 fix2 (I1): only user toggles persist', () => {
-  it('a programmatic open (forced) does not report applicationSectionsOpen=true', async () => {
-    const calls: boolean[] = []
-    await mount(<Harness store={makeStore()} navigator="memory" memoryActive onOpenChange={open => calls.push(open)} />)
-    await fireToggle()
-    expect(calls).toEqual([])
-  })
-
-  it('a user summary click while not forced is reported', async () => {
-    const calls: boolean[] = []
-    await mount(<Harness store={makeStore()} navigator="sessions" memoryActive={false} onOpenChange={open => calls.push(open)} />)
-    await fireToggle() // programmatic: ignored
-    expect(calls).toEqual([])
-    const click = new MouseEvent('click', { bubbles: true, cancelable: true })
-    await act(async () => { summary().dispatchEvent(click) })
-    expect(click.defaultPrevented).toBe(false)
-    details().open = true
-    await fireToggle()
-    expect(calls).toEqual([true])
   })
 })

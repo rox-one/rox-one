@@ -10,19 +10,19 @@
   isolation: isolate;
   display: inline-flex;
   align-items: center;
-  gap: 1px;
-  height: var(--control-md);
-  padding: 2px;
+  gap: calc(var(--spacing) * 0.5);
+  height: auto;
+  padding: calc(var(--spacing) * 0.75);
   border: 0;
-  border-radius: var(--rox-radius-panel);
+  border-radius: var(--radius-full);
   /* Hairline ring shadows kept as single var() refs (the strict-value stylelint
      rule wants box-shadow to be a variable or keyword, not a literal). */
-  --rox-mode-pill-plate-ring: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 8%, transparent);
+  --rox-mode-pill-plate-ring: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 12%, transparent);
   --rox-mode-pill-item-ring: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 6%, transparent);
   --rox-mode-pill-focus-ring: inset 0 0 0 2px var(--focus, var(--accent));
   /* Soft glass plate: translucent tint, hairline ring, muted blur of the
      titlebar material behind it. No accent fill. */
-  background: color-mix(in oklch, var(--foreground) 4%, transparent);
+  background: color-mix(in oklch, var(--foreground) 6%, transparent);
   box-shadow: var(--rox-mode-pill-plate-ring);
   backdrop-filter: blur(var(--chrome-glass-blur)) saturate(1.1);
   -webkit-backdrop-filter: blur(var(--chrome-glass-blur)) saturate(1.1);
@@ -43,10 +43,10 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: var(--control-sm);
-  padding: 0 9px;
+  height: calc(var(--spacing) * 7);
+  padding: 0 calc(var(--spacing) * 2.5);
   border: 0;
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-full);
   background: transparent;
   /* Muted monochrome: icons and labels are neutral grey, never per-mode accents. */
   color: color-mix(in oklch, var(--foreground) 55%, transparent);
@@ -63,7 +63,7 @@
   min-width: 15px;
   height: 15px;
   padding: 0 4px;
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-full);
   background: var(--accent);
   color: var(--accent-foreground, white);
   font-size: 10px;
@@ -108,6 +108,7 @@ html[data-contrast="high"] .rox-mode-pill-badge {
 
 .rox-mode-pill-item[aria-current="page"] {
   color: var(--foreground);
+  font-weight: 500;
 }
 
 .rox-mode-pill-item[aria-disabled="true"] {
@@ -120,19 +121,19 @@ html[data-contrast="high"] .rox-mode-pill-badge {
 }
 
 .rox-mode-pill[data-collapsed] .rox-mode-pill-item {
-  width: var(--control-md);
+  width: calc(var(--spacing) * 7);
   padding: 0;
 }
 
 .rox-mode-pill-indicator {
   position: absolute;
   z-index: 0;
-  top: 2px;
+  top: calc(var(--spacing) * 0.75);
   left: 0;
-  height: var(--control-sm);
-  border-radius: var(--radius-control);
+  height: calc(var(--spacing) * 7);
+  border-radius: var(--radius-full);
   /* Soft glass highlight for the active segment — neutral, not accent. */
-  background: color-mix(in oklch, var(--foreground) 7%, transparent);
+  background: color-mix(in oklch, var(--foreground) 13%, transparent);
   box-shadow: var(--rox-mode-pill-item-ring);
   opacity: 0;
   pointer-events: none;
@@ -173,6 +174,11 @@ html[data-contrast="high"] .rox-mode-pill-badge {
   display: flex;
   align-items: center;
   z-index: 1;
+}
+
+/* Right-docked (Mark, t78): sits just left of the right control group. */
+.rox-mode-pill-anchor[data-align="right"] {
+  transform: translateY(-50%);
 }
 
 /* Wide browser tabs yield space to the fixed titlebar actions and mode pill. */
@@ -220,7 +226,7 @@ html[data-contrast="high"] .rox-mode-pill-icon {
   gap: 3px;
   height: 22px;
   padding: 0 6px;
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-full);
   color: color-mix(in oklch, var(--foreground) 55%, transparent);
   font-family: var(--font-sans);
   font-size: var(--chrome-font-size-sm, 11px);

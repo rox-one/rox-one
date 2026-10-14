@@ -34,15 +34,18 @@ export function NotesEditorHeadlineStyles() {
       }
       .notes-editor .ProseMirror {
         color: color-mix(in oklab, var(--foreground) 84%, transparent);
-        font-size: 15px;
+        font-size: var(--notes-prose-size, 15px);
         line-height: 1.7;
       }
       .notes-editor-prose .ProseMirror > h1:first-child {
         color: var(--foreground);
-        font-size: 2rem;
+        /* Scales with the panel (container query units) so a daily title such
+           as 2026-10-14 never wraps mid-date or clips in a narrow grid tile. */
+        font-size: min(var(--notes-title-size, 2rem), max(1rem, 7cqi));
         font-weight: 700;
         letter-spacing: -0.02em;
         line-height: 1.15;
+        overflow-wrap: anywhere;
         margin-top: 0;
         margin-bottom: 1.5rem;
       }
@@ -104,7 +107,7 @@ export function NotesEditorHeadlineStyles() {
       button.notes-comment-hl {
         background: hsl(48 96% 56% / 0.35);
         border-bottom: 1.5px solid hsl(38 92% 50% / 0.9);
-        border-radius: 2px;
+        border-radius: var(--radius-xs);
         cursor: pointer;
         color: inherit;
       }

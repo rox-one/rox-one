@@ -96,6 +96,7 @@ interface UseOnboardingReturn {
 
   // Wizard actions
   handleContinue: () => void
+  handleContinueLocally: () => void
   handleBack: () => void
 
   // Provider select (new flow)
@@ -460,8 +461,8 @@ export function useOnboarding({
   // With the flag OFF the first run jumps straight to finish — byte-identical.
   const layoutEngineEnabled = useAtomValue(featureLayoutEngineAtom)
   const advanceToFinishWithLayout = useCallback(() => {
-    if (layoutEngineEnabled) setState(s => ({ ...s, step: 'layout' }))
-    else void finishFirstRun()
+    // shell-layout: the top-pills configurator is always the last first-run step.
+    setState(s => ({ ...s, step: layoutEngineEnabled ? 'layout' : 'pills' }))
   }, [layoutEngineEnabled, finishFirstRun])
 
   // Continue to next step
@@ -507,7 +508,12 @@ export function useOnboarding({
 
       case 'layout':
         // G4 «Студия»: the starting-layout choice is already persisted by the
-        // step; continuing finishes the first run.
+        // step; the pills configurator follows.
+        setState(s => ({ ...s, step: 'pills' }))
+        break
+
+      case 'pills':
+        // The pill selection is persisted live by the configurator.
         void finishFirstRun()
         break
 
@@ -533,11 +539,14 @@ export function useOnboarding({
     }
     switch (state.step) {
       case 'role':
-        setState(s => ({ ...s, step: 'welcome' }))
+        setState(s => ({ ...s, step: 'questionnaire' }))
         break
       case 'layout':
         // Back from «starting layout» returns to the last profile step.
         setState(s => ({ ...s, step: 'role' }))
+        break
+      case 'pills':
+        setState(s => ({ ...s, step: layoutEngineEnabled ? 'layout' : 'role' }))
         break
       case 'git-bash':
         if (initialStep === 'welcome') {
@@ -569,7 +578,7 @@ export function useOnboarding({
         setState(s => ({ ...s, step: 'provider-select', credentialStatus: 'idle', errorMessage: undefined }))
         break
     }
-  }, [state.step, state.gitBashStatus, initialStep, onDismiss])
+  }, [state.step, state.gitBashStatus, initialStep, onDismiss, layoutEngineEnabled])
 
   // Select API setup method (legacy — kept for direct edit flows)
   const handleSelectApiSetupMethod = useCallback((method: ApiSetupMethod) => {
@@ -1327,9 +1336,20 @@ export function useOnboarding({
     })
   }, [activeProviderOAuthMethod, initialStep, initialApiSetupMethod, isWaitingForCode])
 
+  const handleContinueLocally = useCallback(async () => {
+    try {
+      await window.electronAPI.deferSetup()
+    } catch {
+      // Persistence failure still must not trap the user on the wizard.
+    }
+    saveFirstRunDraft(FIRST_RUN_DRAFT_STORAGE, { completed: true })
+    await finishFirstRun()
+  }, [finishFirstRun])
+
   return {
     state: { ...state, firstRun: firstRunState },
     handleContinue,
+    handleContinueLocally,
     handleBack,
     handleSelectProvider,
     handleSelectApiSetupMethod,

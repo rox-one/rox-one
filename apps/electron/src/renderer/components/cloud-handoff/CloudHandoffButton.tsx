@@ -153,6 +153,7 @@ export function CloudHandoffButton({ sessionId }: { sessionId: string }) {
           disabled={busy || inFlight}
           onClick={() => void start()}
           onContextMenu={(e) => { e.preventDefault(); setDialogOpen(true) }}
+          data-tour="guide.cloud"
           aria-label={keyMissing ? t('cloudHandoff.addKey') : t('cloudHandoff.button')}
         >
           {inFlight ? <Loader2 className="icon-toolbar animate-spin" /> : <CloudUpload className="icon-toolbar" />}

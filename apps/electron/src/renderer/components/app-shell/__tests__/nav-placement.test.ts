@@ -5,7 +5,7 @@ import type { ModeContribution } from '@rox/core/platform'
 import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { resolveNavSurfaces, resolvePrimaryNav, PRIMARY_NAV } from '../primary-nav'
 import {
-  NAV_PLACEMENT_KEY, __resetNavPlacementsForTests, migrateOldPillPreferences, readNavPlacements, resetNavPlacements, setNavPlacement,
+  NAV_PLACEMENT_KEY, __resetNavPlacementsForTests, migrateOldPillPreferences, normalizePlacement, readNavPlacements, resetNavPlacements, setNavPlacement,
   type NavPlacement,
 } from '../nav-placement'
 import { __resetPillCompositionForTests, pillSlotSurfaces, removeFromPillsTarget, resolvePillModel } from '../../../platform/pill-composition'
@@ -40,21 +40,23 @@ beforeEach(clean)
 afterEach(clean)
 
 describe('exclusive placement — one surface, one place', () => {
-  it('defaults: the starter pill surfaces show «Пилюли сверху» and are not duplicated in the sidebar', () => {
+  it('defaults: the starter pill surfaces show «Пилюли сверху» and (sidebar v2) also keep their sidebar row', () => {
     const surfaces = resolveNavSurfaces({ shellFlags: none })
     const placement = (id: string) => surfaces.find(e => e.id === id)?.placement
     for (const id of ['home', 'feed', 'sessions', 'docs', 'browser']) expect(placement(id)).toBe('pills')
     const { pill, sidebar } = model()
-    expect(ids(pill.rendered)).toEqual(['agent', 'feed', 'team', 'notes', 'browser'])
-    for (const id of ['home', 'feed', 'sessions', 'docs', 'browser']) expect(sidebar).not.toContain(id)
+    expect(ids(pill.rendered)).toEqual(['agent', 'feed', 'team', 'notes', 'browser', 'tasks'])
+    for (const id of ['home', 'feed', 'sessions', 'docs', 'browser']) expect(sidebar).toContain(id)
     for (const id of ['inbox', 'tasks', 'projects', 'memory', 'knowledge', 'missions', 'settings']) expect(sidebar).toContain(id)
   })
 
-  it('Messenger on: Команда = Мессенджер in the pill, Чат goes back to the sidebar', () => {
-    const flags = new Set([WORKBENCH_FLAG.modeMessengerV1])
-    const surfaces = resolveNavSurfaces({ shellFlags: flags })
-    expect(surfaces.find(e => e.id === 'messenger')?.placement).toBe('pills')
-    expect(surfaces.find(e => e.id === 'sessions')?.placement).toBe('primary')
+  it('defaults: Главная · Лента · Сессии · Заметки · Браузер · Задачи, plus Мессенджер while its flag is on', () => {
+    for (const flags of [new Set<string>(), new Set([WORKBENCH_FLAG.modeMessengerV1])]) {
+      const surfaces = resolveNavSurfaces({ shellFlags: flags })
+      const pills = surfaces.filter(e => e.placement === 'pills').map(e => e.id).sort()
+      const expected = ['browser', 'docs', 'feed', 'home', 'sessions', 'tasks']
+      expect(pills).toEqual(flags.has(WORKBENCH_FLAG.modeMessengerV1) ? [...expected, 'messenger'].sort() : expected)
+    }
   })
 
   it('every routed surface is reachable (pill or sidebar) by default', () => {
@@ -64,14 +66,16 @@ describe('exclusive placement — one surface, one place', () => {
   })
 
   it('user placement moves a surface out of the pill / into it', () => {
-    const { pill, sidebar, sidebarEntries } = model({ feed: 'more', docs: 'primary', tasks: 'pills', memory: 'pills', inbox: 'hidden' })
+    const { pill, sidebar, sidebarEntries } = model({ feed: 'menu', docs: 'menu', tasks: 'pills', memory: 'pills', inbox: 'hidden' })
     expect(ids(pill.rendered)).not.toContain('feed')
     expect(ids(pill.rendered)).not.toContain('notes')
     expect(ids(pill.rendered)).toContain('tasks')
     expect(ids(pill.rendered)).toContain('memory')
-    expect(sidebarEntries.find(e => e.id === 'feed')?.group).toBe('more')
-    expect(sidebarEntries.find(e => e.id === 'docs')?.group).toBe('primary')
-    expect(sidebar).not.toContain('tasks')
+    expect(sidebarEntries.find(e => e.id === 'feed')?.placement).toBe('menu')
+    expect(sidebarEntries.find(e => e.id === 'docs')?.placement).toBe('menu')
+    // The registry group only sorts the «Все экраны» menu.
+    expect(sidebarEntries.find(e => e.id === 'feed')?.group).toBe('primary')
+    expect(sidebar).toContain('tasks')
     expect(sidebar).not.toContain('inbox')
     expect(ids(pill.rendered)).not.toContain('inbox')
   })
@@ -91,7 +95,7 @@ describe('sidebar fallback follows what the pill actually renders', () => {
     const { pill, sidebar } = model({ tasks: 'pills' }, { scene: { surfaceIds: ['feed'] } })
     expect(ids(pill.rendered)).toEqual(['feed'])
     for (const id of ['home', 'tasks', 'docs', 'sessions']) expect(sidebar).toContain(id)
-    expect(sidebar).not.toContain('feed')
+    expect(sidebar).toContain('feed')
   })
 
   it('a non-navigable mode or an unavailable browser falls back', () => {
@@ -110,19 +114,19 @@ describe('Home pill and ⌘-slots', () => {
     expect(pill.rendered[0]?.id).toBe('agent')
     expect(pill.rendered[0]?.iconOnly).toBe(true)
     expect(pill.rendered[0]?.titleKey).toBe('workbench.mode.home')
-    expect(ids(pill.slots)).toEqual(['feed', 'team', 'notes', 'browser'])
+    expect(ids(pill.slots)).toEqual(['feed', 'team', 'notes', 'browser', 'tasks'])
     expect(ids(pillSlotSurfaces(pill.rendered))).toEqual(ids(pill.slots))
   })
 })
 
 describe('placement store', () => {
   it('drops unknown values and fixed ids', () => {
-    globalThis.localStorage?.setItem(NAV_PLACEMENT_KEY, JSON.stringify({ memory: 'primary', feed: 'nope', settings: 'hidden' }))
-    expect(readNavPlacements()).toEqual({ memory: 'primary' })
+    globalThis.localStorage?.setItem(NAV_PLACEMENT_KEY, JSON.stringify({ memory: 'menu', feed: 'nope', settings: 'hidden' }))
+    expect(readNavPlacements()).toEqual({ memory: 'menu' })
   })
 
   it('setNavPlacement(null) resets to default; reset keeps the key (no re-migration)', () => {
-    setNavPlacement('memory', 'primary')
+    setNavPlacement('memory', 'menu')
     setNavPlacement('memory', null)
     expect(readNavPlacements()).toEqual({})
     resetNavPlacements()
@@ -131,25 +135,56 @@ describe('placement store', () => {
 
   it('migrates old pill hides to the sidebar (still visible there before) and extra pins to the pills; Home stays', () => {
     const migrated = migrateOldPillPreferences(JSON.stringify({ excluded: ['feed', 'team', 'agent'], pinned: ['tasks', 'notes'] }))
-    expect(migrated).toEqual({ feed: 'more', messenger: 'primary', sessions: 'primary', tasks: 'pills', docs: 'pills' })
+    expect(migrated).toEqual({ feed: 'menu', messenger: 'menu', sessions: 'menu', tasks: 'pills', docs: 'pills' })
     expect(migrated.home).toBeUndefined()
   })
 
   it('runs the migration once, on first read', () => {
     globalThis.localStorage?.setItem('craft-workbench-pill-prefs-v1', JSON.stringify({ excluded: ['browser'], pinned: [], usage: {} }))
-    setNavPlacement('memory', 'primary')
-    expect(readNavPlacements()).toEqual({ browser: 'more', memory: 'primary' })
+    setNavPlacement('memory', 'menu')
+    expect(readNavPlacements()).toEqual({ browser: 'menu', memory: 'menu' })
   })
 })
 
 describe('«Убрать из пилюль»', () => {
-  it('moves the surface to its default sidebar group, never hidden', () => {
+  it('moves the surface to the «Все экраны» menu, never hidden', () => {
     const { pill } = model()
     const nav = resolveNavSurfaces({ shellFlags: none })
     const target = (id: string) => removeFromPillsTarget(pill.rendered.find(s => s.id === id)!, nav)
-    expect(target('feed')).toEqual({ id: 'feed', placement: 'more' })
-    expect(target('team')).toEqual({ id: 'sessions', placement: 'primary' })
-    expect(target('notes')).toEqual({ id: 'docs', placement: 'primary' })
-    expect(target('browser')).toEqual({ id: 'browser', placement: 'more' })
+    expect(target('feed')).toEqual({ id: 'feed', placement: 'menu' })
+    expect(target('team')).toEqual({ id: 'sessions', placement: 'menu' })
+    expect(target('notes')).toEqual({ id: 'docs', placement: 'menu' })
+    expect(target('browser')).toEqual({ id: 'browser', placement: 'menu' })
+  })
+})
+
+describe('contextual sidebar: legacy sidebar placements migrate to «menu»', () => {
+  it('old «primary» / «more» values read back as «menu» and keep the surface out of the pills', () => {
+    globalThis.localStorage?.setItem(NAV_PLACEMENT_KEY, JSON.stringify({ docs: 'primary', memory: 'more', tasks: 'pills', inbox: 'hidden' }))
+    const placements = readNavPlacements()
+    expect(placements).toEqual({ docs: 'menu', memory: 'menu', tasks: 'pills', inbox: 'hidden' })
+    const { pill } = model(placements)
+    expect(ids(pill.rendered)).not.toContain('notes')
+    expect(ids(pill.rendered)).toContain('tasks')
+  })
+
+  it('normalizePlacement maps legacy values and rejects unknown ones', () => {
+    expect(normalizePlacement('primary')).toBe('menu')
+    expect(normalizePlacement('more')).toBe('menu')
+    expect(normalizePlacement('pills')).toBe('pills')
+    expect(normalizePlacement('hidden')).toBe('hidden')
+    expect(normalizePlacement('sidebar')).toBeNull()
+    expect(normalizePlacement(3)).toBeNull()
+  })
+
+  it('every default placement is pills or menu', () => {
+    for (const entry of resolveNavSurfaces({ shellFlags: none })) expect(['pills', 'menu']).toContain(entry.placement)
+  })
+
+  it('migrates saved legacy placements (primary/more → menu) and writes them back', () => {
+    localStorage.setItem(NAV_PLACEMENT_KEY, JSON.stringify({ docs: 'primary', tasks: 'more', feed: 'pills', settings: 'menu', x: 'bogus' }))
+    __resetNavPlacementsForTests()
+    setNavPlacement('memory', 'pills')
+    expect(JSON.parse(localStorage.getItem(NAV_PLACEMENT_KEY)!)).toEqual({ docs: 'menu', tasks: 'menu', feed: 'pills', memory: 'pills' })
   })
 })

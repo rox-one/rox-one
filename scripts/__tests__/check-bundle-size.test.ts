@@ -9,12 +9,13 @@ import { afterEach, describe, expect, it } from 'bun:test'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
+import { gzipSync } from 'node:zlib'
 import {
-  BUDGET_SLACK_BYTES,
   MAX_NEW_CHUNK_BYTES,
   MAX_NEW_STARTUP_BYTES,
   MIN_BUDGET_BYTES,
   assetKind,
+  budgetSlackBytes,
   buildBudgets,
   bundleTotals,
   chunkPrefix,
@@ -22,6 +23,7 @@ import {
   evaluateStartup,
   formatFailure,
   formatStartupFailure,
+  formatUpdateDelta,
   measureRendererChunks,
   measureStartup,
   parseHtmlReferences,
@@ -172,6 +174,52 @@ describe('measured assets (emitted *.js and *.css; never source maps or the pdf 
   })
 })
 
+describe('sourcemap pointer comment is not gated payload (the CI build emits it)', () => {
+  // The CI job builds the renderer with ROX_RENDERER_SOURCEMAP=1, so every emitted chunk ends with
+  // this pointer to a sibling `.map` the gate never measures. It must not count as shipped bytes.
+  const PAYLOAD = 'export const answer = 42;\n'
+  const pointer = (name: string) => `\n//# sourceMappingURL=${name}.map\n`
+
+  it('measures an assets/*.js chunk as its payload, not payload + the //# sourceMappingURL= line', () => {
+    const root = tempRoot()
+    const assets = join(root, 'apps/electron/dist/renderer/assets')
+    mkdirSync(assets, { recursive: true })
+    const name = 'main-aaaaaaaa.js'
+    writeFileSync(join(assets, name), PAYLOAD + pointer(name))
+
+    const [measured] = measureRendererChunks(assets)
+    expect(measured!.file).toBe(name)
+    expect(measured!.rawBytes).toBe(Buffer.byteLength(PAYLOAD))
+    expect(measured!.rawBytes).toBeLessThan(Buffer.byteLength(PAYLOAD + pointer(name)))
+    // gzip is computed over the stripped buffer too, so raw and gzip stay comparable.
+    expect(measured!.gzipBytes).toBe(gzipSync(Buffer.from(PAYLOAD), { level: 9 }).length)
+  })
+
+  it('strips the pointer from a startup-closure file as well', () => {
+    const root = tempRoot()
+    const rendererDist = join(root, 'apps/electron/dist/renderer')
+    const name = 'main-bbbbbbbb.js'
+    mkdirSync(join(rendererDist, 'assets'), { recursive: true })
+    writeFileSync(join(rendererDist, 'index.html'), `<script type="module" src="./assets/${name}"></script>`)
+    writeFileSync(join(rendererDist, 'assets', name), PAYLOAD + pointer(name))
+
+    const [measured] = measureStartup(rendererDist)
+    expect(measured!.jsRawBytes).toBe(Buffer.byteLength(PAYLOAD))
+    expect(measured!.gzipTotalBytes).toBe(gzipSync(Buffer.from(PAYLOAD), { level: 9 }).length)
+  })
+
+  it('leaves a payload that only mentions sourceMappingURL mid-file untouched', () => {
+    const root = tempRoot()
+    const assets = join(root, 'apps/electron/dist/renderer/assets')
+    mkdirSync(assets, { recursive: true })
+    const body = 'const s = "//# sourceMappingURL=nope"\nconsole.log(s)\n'
+    writeFileSync(join(assets, 'main-cccccccc.js'), body)
+
+    const [measured] = measureRendererChunks(assets)
+    expect(measured!.rawBytes).toBe(Buffer.byteLength(body))
+  })
+})
+
 describe('budget recording (prefix TOTALS, floor applies to the total)', () => {
   it('records the summed total of every chunk of a prefix once it reaches the floor', () => {
     const chunks = [
@@ -240,7 +288,7 @@ describe('budget evaluation (pure)', () => {
     const below = [chunk('heavy-aaaaaaaa.js', 1_300_000), chunk('heavy-bbbbbbbb.js', 1_200_000)]
     expect(evaluateAssets(below, {})).toEqual([])
 
-    const over = BUDGET_SLACK_BYTES + 1
+    const over = budgetSlackBytes(MAX_NEW_CHUNK_BYTES) + 1
     const failures = evaluateAssets(
       [chunk('heavy-aaaaaaaa.js', 1_300_000), chunk('heavy-bbbbbbbb.js', 1_200_000 + over)],
       {},
@@ -266,7 +314,7 @@ describe('budget evaluation (pure)', () => {
       stylesheets: { main: { totalRawBytes: 100_000, gzipTotalBytes: 20_000 } },
       totals: { cssRawBytes: 100_000 },
     }
-    const grown = 100_000 + BUDGET_SLACK_BYTES + 1
+    const grown = 100_000 + budgetSlackBytes(100_000) + 1
     const failures = evaluateAssets([chunk('main-aaaaaaaa.css', grown)], recorded)
     expect(failures).toEqual([
       {
@@ -291,26 +339,26 @@ describe('budget evaluation (pure)', () => {
 
   it('allows within-slack prefix totals but fails one byte beyond', () => {
     const recorded = { budgets: { main: { totalRawBytes: 1000, gzipTotalBytes: 500 } } }
-    const within = [chunk('main-aaaaaaaa.js', 600), chunk('main-bbbbbbbb.js', 400 + BUDGET_SLACK_BYTES)]
+    const within = [chunk('main-aaaaaaaa.js', 600), chunk('main-bbbbbbbb.js', 400 + budgetSlackBytes(1000))]
     expect(evaluateAssets(within, recorded)).toEqual([])
 
-    const beyond = [chunk('main-aaaaaaaa.js', 600), chunk('main-bbbbbbbb.js', 401 + BUDGET_SLACK_BYTES)]
+    const beyond = [chunk('main-aaaaaaaa.js', 600), chunk('main-bbbbbbbb.js', 401 + budgetSlackBytes(1000))]
     expect(evaluateAssets(beyond, recorded)).toHaveLength(1)
   })
 
   it('allows within-slack bundle totals but fails one byte beyond, leaving slack-free prefixes alone', () => {
     const recorded = { budgets: { main: { totalRawBytes: 1_000_000, gzipTotalBytes: 1 } }, totals: { jsRawBytes: 1000 } }
-    expect(evaluateAssets([chunk('main-aaaaaaaa.js', 1000 + BUDGET_SLACK_BYTES)], recorded)).toEqual([])
+    expect(evaluateAssets([chunk('main-aaaaaaaa.js', 1000 + budgetSlackBytes(1000))], recorded)).toEqual([])
 
-    const failures = evaluateAssets([chunk('main-aaaaaaaa.js', 1001 + BUDGET_SLACK_BYTES)], recorded)
+    const failures = evaluateAssets([chunk('main-aaaaaaaa.js', 1001 + budgetSlackBytes(1000))], recorded)
     expect(failures).toEqual([
       {
         kind: 'js',
         prefix: null,
-        rawBytes: 1001 + BUDGET_SLACK_BYTES,
+        rawBytes: 1001 + budgetSlackBytes(1000),
         budget: 1000,
         file: 'main-aaaaaaaa.js',
-        fileRawBytes: 1001 + BUDGET_SLACK_BYTES,
+        fileRawBytes: 1001 + budgetSlackBytes(1000),
       },
     ])
   })
@@ -355,7 +403,7 @@ describe('CLI exit codes', () => {
 
   it('exits 1 when an unbudgeted prefix TOTAL exceeds the 2.5 MB ceiling', () => {
     const root = tempRoot()
-    const over = BUDGET_SLACK_BYTES + 1
+    const over = budgetSlackBytes(MAX_NEW_CHUNK_BYTES) + 1
     seedBuild(root, { 'lazy-page-aaaaaaaa.js': 1_300_000, 'lazy-page-bbbbbbbb.js': 1_200_000 + over })
     seedBaseline(root, { budgets: {} })
     const result = runCli(root)
@@ -367,25 +415,28 @@ describe('CLI exit codes', () => {
 
   it('exits 1 when the whole-js total regresses even though each prefix is within its budget', () => {
     const root = tempRoot()
-    seedBuild(root, { 'main-aaaaaaaa.js': 10_000 })
+    // Must clear the slack floor to trip the gate: budget + slack + 1, not a nominal 10 KB.
+    const over = 1000 + budgetSlackBytes(1000) + 1
+    seedBuild(root, { 'main-aaaaaaaa.js': over })
     seedBaseline(root, {
-      budgets: { main: { totalRawBytes: 10_000, gzipTotalBytes: 500 } },
+      budgets: { main: { totalRawBytes: over, gzipTotalBytes: 500 } },
       totals: { jsRawBytes: 1000, jsGzipBytes: 1 },
     })
     const result = runCli(root)
     expect(result.code).toBe(1)
-    expect(result.err).toContain('js bundle total is 10000 B, budget 1000 B')
+    expect(result.err).toContain(`js bundle total is ${over} B, budget 1000 B`)
     expect(result.err).toContain('assets/main-aaaaaaaa.js')
     expect(result.err).not.toContain("prefix 'main'")
   })
 
   it('exits 1 when a CSS prefix total regresses', () => {
     const root = tempRoot()
-    seedBuild(root, { 'main-aaaaaaaa.css': 10_000 })
+    const over = 1000 + budgetSlackBytes(1000) + 1
+    seedBuild(root, { 'main-aaaaaaaa.css': over })
     seedBaseline(root, { stylesheets: { main: { totalRawBytes: 1000, gzipTotalBytes: 100 } } })
     const result = runCli(root)
     expect(result.code).toBe(1)
-    expect(result.err).toContain("css prefix 'main' total is 10000 B, budget 1000 B")
+    expect(result.err).toContain(`css prefix 'main' total is ${over} B, budget 1000 B`)
     expect(result.err).toContain('assets/main-aaaaaaaa.css')
   })
 
@@ -470,20 +521,23 @@ describe('startup closure parsing (script src + modulepreload + style preload)',
 describe('startup gate (pure)', () => {
   it('fails when the measured closure exceeds the recorded budget beyond slack', () => {
     const recorded = { 'index.html': { jsRawBytes: 1000, gzipTotalBytes: 10, fileCount: 1 } }
-    expect(evaluateStartup([startupMeasurement('index.html', 1000 + BUDGET_SLACK_BYTES)], recorded)).toEqual([])
+    expect(evaluateStartup([startupMeasurement('index.html', 1000 + budgetSlackBytes(1000))], recorded)).toEqual([])
 
-    const failures = evaluateStartup([startupMeasurement('index.html', 1000 + BUDGET_SLACK_BYTES + 1)], recorded)
+    const failures = evaluateStartup([startupMeasurement('index.html', 1000 + budgetSlackBytes(1000) + 1)], recorded)
     expect(failures).toHaveLength(1)
-    expect(failures[0]).toMatchObject({ html: 'index.html', jsRawBytes: 1001 + BUDGET_SLACK_BYTES, budget: 1000, unbudgeted: false, overBudget: true })
+    expect(failures[0]).toMatchObject({ html: 'index.html', jsRawBytes: 1001 + budgetSlackBytes(1000), budget: 1000, unbudgeted: false, overBudget: true })
     const line = formatStartupFailure(failures[0]!)
-    expect(line).toContain(`startup: index.html static JS closure is ${1001 + BUDGET_SLACK_BYTES} B, budget 1000 B`)
+    expect(line).toContain(`startup: index.html static JS closure is ${1001 + budgetSlackBytes(1000)} B, budget 1000 B`)
     expect(line).toContain('heaviest referenced files for index.html')
   })
 
   it('gates an html file with no recorded entry against MAX_NEW_STARTUP_BYTES', () => {
     expect(evaluateStartup([startupMeasurement('new.html', MAX_NEW_STARTUP_BYTES)], {})).toEqual([])
 
-    const failures = evaluateStartup([startupMeasurement('new.html', MAX_NEW_STARTUP_BYTES + BUDGET_SLACK_BYTES + 1)], {})
+    const failures = evaluateStartup(
+      [startupMeasurement('new.html', MAX_NEW_STARTUP_BYTES + budgetSlackBytes(MAX_NEW_STARTUP_BYTES) + 1)],
+      {},
+    )
     expect(failures).toHaveLength(1)
     expect(failures[0]).toMatchObject({ html: 'new.html', budget: MAX_NEW_STARTUP_BYTES, unbudgeted: true, overBudget: true })
     expect(formatStartupFailure(failures[0]!)).toContain(`ceiling ${MAX_NEW_STARTUP_BYTES} B (unbudgeted entry page)`)
@@ -516,20 +570,25 @@ describe('startup gate (CLI)', () => {
 
   it('exits 1 and prints the top referenced files when an entry closure regresses', () => {
     const root = tempRoot()
+    // The closure must clear the recorded budget's slack floor to trip the gate. `main` carries the
+    // regression and stays the heaviest file, so it must stay below the recorded 1000 B plus that
+    // floor — the remainder lands in `vendor`.
+    const main = 3000
+    const vendor = 1000 + budgetSlackBytes(1000) + 1 - main
     seedStartupBuild(
       root,
       [
         '<script type="module" src="./assets/main-aaaaaaaa.js"></script>',
         '<link rel="modulepreload" href="./assets/vendor-bbbbbbbb.js">',
       ].join('\n'),
-      { 'main-aaaaaaaa.js': 5000, 'vendor-bbbbbbbb.js': 1000 },
+      { 'main-aaaaaaaa.js': main, 'vendor-bbbbbbbb.js': vendor },
     )
     seedBaseline(root, { budgets: {}, startup: { 'index.html': { jsRawBytes: 1000, gzipTotalBytes: 10, fileCount: 1 } } })
     const result = runCli(root)
     expect(result.code).toBe(1)
-    expect(result.err).toContain('startup: index.html static JS closure is 6000 B, budget 1000 B')
+    expect(result.err).toContain(`startup: index.html static JS closure is ${main + vendor} B, budget 1000 B`)
     expect(result.err).toContain('heaviest referenced files for index.html')
-    expect(result.err).toContain('assets/main-aaaaaaaa.js: 5000 B')
+    expect(result.err).toContain(`assets/main-aaaaaaaa.js: ${main} B`)
   })
 
   it('exits 1 when a referenced startup file is missing from the build', () => {
@@ -584,5 +643,78 @@ describe('minify profile closed form', () => {
     ] as const) {
       expect(minifyHangChecksum(sourceChars, iterations)).toBe(minifyHangOracle(sourceChars, iterations))
     }
+  })
+})
+
+describe('--update delta report (an acceptance has to stay readable afterwards)', () => {
+  type Next = Pick<BundleBaseline, 'budgets' | 'stylesheets' | 'totals' | 'startup'>
+  const zeros = { jsRawBytes: 0, jsGzipBytes: 0, cssRawBytes: 0, cssGzipBytes: 0 }
+  const previous = (over: Partial<BundleBaseline> = {}): BundleBaseline => ({
+    description: 'fixture', budgets: {}, stylesheets: {}, totals: zeros, startup: {}, ...over,
+  })
+  const next = (over: Partial<Next> = {}): Next => ({
+    budgets: {}, stylesheets: {}, totals: zeros, startup: {}, ...over,
+  })
+  const entry = (jsRawBytes: number, fileCount: number) => ({ jsRawBytes, gzipTotalBytes: 0, fileCount })
+
+  it('says so when there is no committed baseline to compare against', () => {
+    expect(formatUpdateDelta(undefined, next())).toEqual([
+      'bundle-size: no committed baseline to compare against; this is a first recording',
+    ])
+  })
+
+  it('reports a quiet re-record as such, instead of printing an empty list', () => {
+    expect(formatUpdateDelta(previous(), next())).toEqual(['  (nothing moved)'])
+  })
+
+  it('shows the sign of each byte movement', () => {
+    const lines = formatUpdateDelta(
+      previous({ totals: { ...zeros, jsRawBytes: 1000 }, budgets: { ru: { totalRawBytes: 500, gzipTotalBytes: 0 } } }),
+      next({ totals: { ...zeros, jsRawBytes: 250 }, budgets: { ru: { totalRawBytes: 900, gzipTotalBytes: 0 } } }),
+    )
+    expect(lines).toContain('  js  total: 1000 → 250 B  (-750)')
+    expect(lines).toContain('  js  ru: 500 → 900 B  (+400)')
+  })
+
+  it('omits prefixes that did not move, so the report stays readable', () => {
+    const unchanged = { totalRawBytes: 700, gzipTotalBytes: 0 }
+    const lines = formatUpdateDelta(
+      previous({ budgets: { a: unchanged, b: unchanged } }),
+      next({ budgets: { a: unchanged, b: unchanged } }),
+    )
+    expect(lines).toEqual(['  (nothing moved)'])
+  })
+
+  it('names a prefix that is new in this recording', () => {
+    const lines = formatUpdateDelta(previous(), next({ budgets: { fresh: { totalRawBytes: 42, gzipTotalBytes: 0 } } }))
+    expect(lines).toContain('  js  fresh: new, 42 B')
+  })
+
+  // The one shape a re-record must never bury: bytes alone cannot show it, because a page can shrink
+  // while pulling in more files.
+  it('flags an entry page whose static closure gained files', () => {
+    const lines = formatUpdateDelta(
+      previous({ startup: { 'index.html': entry(1000, 51) } }),
+      next({ startup: { 'index.html': entry(900, 53) } }),
+    )
+    expect(lines).toContain('  startup index.html: 1000 → 900 B  (-100), 51 → 53 file(s)')
+    expect(lines.at(-1)).toContain('! static closure gained file(s): index.html (51 → 53)')
+  })
+
+  it('reports a shrinking closure without the warning', () => {
+    const lines = formatUpdateDelta(
+      previous({ startup: { 'index.html': entry(2663738, 53) } }),
+      next({ startup: { 'index.html': entry(2563903, 51) } }),
+    )
+    expect(lines).toContain('  startup index.html: 2663738 → 2563903 B  (-99835), 53 → 51 file(s)')
+    expect(lines.some((line) => line.includes('!'))).toBe(false)
+  })
+
+  it('reports a byte-only page move without the file-count clause', () => {
+    const lines = formatUpdateDelta(
+      previous({ startup: { 'playground.html': entry(100, 211) } }),
+      next({ startup: { 'playground.html': entry(150, 211) } }),
+    )
+    expect(lines).toEqual(['  startup playground.html: 100 → 150 B  (+50)'])
   })
 })

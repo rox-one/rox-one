@@ -20,7 +20,7 @@ export default function LearningSettingsPage() {
     <div ref={libraryTarget}><PanelHeader title={t('settings.learning.title')} /></div>
     <div ref={scrollContainer} className="min-h-0 flex-1 overflow-auto p-5">
       <p className="mb-5 text-sm text-muted-foreground">{t('productTour.localOnly')}</p>
-      <section ref={preferencesTarget} className="mb-6 space-y-3 rounded-xl border p-4">
+      <section ref={preferencesTarget} className="mb-6 space-y-3 rounded-lg border p-4">
         <label className="flex items-center gap-3"><input data-testid="learning-enable" type="checkbox" checked={learning?.enabled ?? false} onChange={event => learning?.setEnabled(event.target.checked)} />{t('productTour.controls.enabled')}</label>
         {learning?.enabled && <>
           <label className="flex items-center gap-3"><input type="checkbox" checked={learning.preferences.invitationsEnabled} onChange={event => void learning.setPreferences({ invitationsEnabled: event.target.checked })} />{t('productTour.controls.invitations')}</label>
@@ -37,7 +37,7 @@ export default function LearningSettingsPage() {
           const verified = steps.filter(item => item?.verifiedAt !== undefined).length
           const blocked = tour.requires.map(id => learning?.capabilities[id]).find(capability => capability && capability.state !== 'ready')
           const reason = blocked && blocked.state !== 'ready' ? blocked.reason : null
-          return <article data-testid={`learning-tour-${tour.id}`} key={tour.id} className="rounded-xl border p-4">
+          return <article data-testid={`learning-tour-${tour.id}`} key={tour.id} className="rounded-lg border p-4">
             <h2 className="font-semibold">{t(tour.titleKey)}</h2>
             <p className="mt-1 text-sm">{t(tour.goalKey)}</p>
             <p className="mt-1 text-sm text-muted-foreground">{t(tour.whyKey)}</p>

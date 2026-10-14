@@ -31,7 +31,7 @@ export function WidgetAppearanceControls({ title, appearance, onChange }: {
           data-home-design-trigger=""
           aria-label={t('workbench.home.design.open', { name: title })}
           title={t('workbench.home.design.title')}
-          className="flex h-6 w-6 items-center justify-center rounded-[4px] text-muted-foreground hover:bg-foreground/10 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="flex h-6 w-6 items-center justify-center rounded-xs text-muted-foreground hover:bg-foreground/10 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           <Palette className="h-3.5 w-3.5" aria-hidden="true" />
         </button>

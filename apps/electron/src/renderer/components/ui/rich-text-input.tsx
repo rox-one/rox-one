@@ -149,16 +149,16 @@ function renderBadgeHTML(
       iconHtml = `<span class="h-[12px] w-[12px] flex items-center justify-center text-xs leading-none shrink-0">${emoji}</span>`
     } else {
       // Use cached icon as img (data URL or external URL)
-      iconHtml = `<img src="${cachedIconUrl}" class="h-[12px] w-[12px] rounded-[2px] shrink-0" alt="" />`
+      iconHtml = `<img src="${cachedIconUrl}" class="h-[12px] w-[12px] rounded-xs shrink-0" alt="" />`
     }
   } else {
     // Fall back to generic SVG icon based on type
     if (type === 'skill') {
-      iconHtml = `<span class="h-[12px] w-[12px] rounded-[2px] bg-foreground/5 flex items-center justify-center text-foreground/50 shrink-0">${SKILL_ICON_SVG}</span>`
+      iconHtml = `<span class="h-[12px] w-[12px] rounded-xs bg-foreground/5 flex items-center justify-center text-foreground/50 shrink-0">${SKILL_ICON_SVG}</span>`
     } else if (type === 'source') {
-      iconHtml = `<span class="h-[12px] w-[12px] rounded-[2px] bg-foreground/5 flex items-center justify-center text-foreground/50 shrink-0">${SOURCE_ICON_SVG}</span>`
+      iconHtml = `<span class="h-[12px] w-[12px] rounded-xs bg-foreground/5 flex items-center justify-center text-foreground/50 shrink-0">${SOURCE_ICON_SVG}</span>`
     } else if (type === 'knowledge') {
-      iconHtml = `<span class="h-[12px] w-[12px] rounded-[2px] bg-foreground/5 flex items-center justify-center text-foreground/50 shrink-0">${KNOWLEDGE_ICON_SVG}</span>`
+      iconHtml = `<span class="h-[12px] w-[12px] rounded-xs bg-foreground/5 flex items-center justify-center text-foreground/50 shrink-0">${KNOWLEDGE_ICON_SVG}</span>`
     } else if (type === 'file') {
       // Pick code file or generic file icon based on extension (no container, icon carries its own classes)
       iconHtml = isCodeFile(label) ? CODE_FILE_ICON_SVG : FILE_ICON_SVG

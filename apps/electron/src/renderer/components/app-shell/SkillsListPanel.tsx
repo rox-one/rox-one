@@ -12,8 +12,7 @@ import { EntityPanel } from '@/components/ui/entity-panel'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import { skillSelection } from '@/hooks/useEntitySelection'
 import { SkillMenu } from './SkillMenu'
-import { SendResourceToWorkspaceDialog } from './SendResourceToWorkspaceDialog'
-import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
+import { getEditConfig } from '@/components/ui/edit-config'
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton'
 import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'
 import { getFileManagerName } from '@/lib/platform'
@@ -25,6 +24,13 @@ import type { BundledSkillPackStatus, LoadedSkill } from '../../../shared/types'
 import { toErrorMessage } from '@/lib/errors'
 import { useSkillsQuery } from '@/hooks/use-skills-query'
 import { VirtualList } from '@/components/ui/virtual-list'
+
+const SendResourceToWorkspaceDialog = React.lazy(() =>
+  import('./SendResourceToWorkspaceDialog').then((m) => ({ default: m.SendResourceToWorkspaceDialog })),
+)
+const EditPopover = React.lazy(() =>
+  import('@/components/ui/EditPopover').then((m) => ({ default: m.EditPopover })),
+)
 
 const RISK_FLAG_ICON: Record<SkillRiskFlag, typeof Network> = {
   'network': Network,
@@ -303,6 +309,7 @@ export function SkillsListPanel({
       docKey="skills"
     >
       {workspaceRootPath && (
+        <React.Suspense fallback={null}>
         <EditPopover
           align="center"
           trigger={
@@ -312,6 +319,7 @@ export function SkillsListPanel({
           }
           {...getEditConfig('add-skill', workspaceRootPath)}
         />
+        </React.Suspense>
       )}
     </EntityListEmptyScreen>
   )
@@ -659,6 +667,7 @@ export function SkillsListPanel({
                 type="button"
                 role="switch"
                 aria-checked={!pack.disabled}
+                aria-label={t(pack.disabled ? 'capabilityCatalog.enablePack' : 'capabilityCatalog.disablePack', { name: pack.slug })}
                 disabled={packsBusy}
                 onClick={() => void toggleBundledPack(pack.slug, pack.disabled)}
                 className={`shrink-0 relative h-5 w-9 rounded-full transition-colors disabled:opacity-50 ${
@@ -742,16 +751,18 @@ export function SkillsListPanel({
     )}
 
     {/* Send to Workspace dialog */}
-    {sendResourceSlug && (
-      <SendResourceToWorkspaceDialog
-        open={sendDialogOpen}
-        onOpenChange={setSendDialogOpen}
-        resourceType="skill"
-        resourceIds={[sendResourceSlug]}
-        resourceLabel={sendResourceLabel}
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId}
-      />
+    {sendResourceSlug && sendDialogOpen && (
+      <React.Suspense fallback={null}>
+        <SendResourceToWorkspaceDialog
+          open
+          onOpenChange={setSendDialogOpen}
+          resourceType="skill"
+          resourceIds={[sendResourceSlug]}
+          resourceLabel={sendResourceLabel}
+          workspaces={workspaces}
+          activeWorkspaceId={activeWorkspaceId}
+        />
+      </React.Suspense>
     )}
     </div>
   )

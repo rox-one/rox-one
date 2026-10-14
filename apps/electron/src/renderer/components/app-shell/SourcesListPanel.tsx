@@ -13,12 +13,19 @@ import { EntityListBadge } from '@/components/ui/entity-list-badge'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import { sourceSelection } from '@/hooks/useEntitySelection'
 import { SourceMenu } from './SourceMenu'
-import { SendResourceToWorkspaceDialog } from './SendResourceToWorkspaceDialog'
 import { useAppShellContext } from '@/context/AppShellContext'
-import { EditPopover, getEditConfig, type EditContextKey } from '@/components/ui/EditPopover'
+import { getEditConfig, type EditContextKey } from '@/components/ui/edit-config'
 import { cn } from '@/lib/utils'
 import type { LoadedSource, SourceConnectionStatus, SourceFilter } from '../../../shared/types'
 import { toErrorMessage } from '@/lib/errors'
+
+const SendResourceToWorkspaceDialog = React.lazy(() =>
+  import('./SendResourceToWorkspaceDialog').then((m) => ({ default: m.SendResourceToWorkspaceDialog })),
+)
+const EditPopover = React.lazy(() =>
+  import('@/components/ui/EditPopover').then((m) => ({ default: m.EditPopover })),
+)
+
 const SOURCE_TYPE_CONFIG: Record<string, { labelKey: string; colorClass: string }> = {
   mcp: { labelKey: 'sourcesList.typeMcp', colorClass: 'bg-accent/10 text-accent' },
   api: { labelKey: 'sourcesList.typeApi', colorClass: 'bg-success/10 text-success' },
@@ -223,6 +230,7 @@ export function SourcesListPanel({
       docKey="sources"
     >
       {workspaceRootPath && (
+        <React.Suspense fallback={null}>
         <EditPopover
           align="center"
           trigger={
@@ -235,6 +243,7 @@ export function SourcesListPanel({
             workspaceRootPath
           )}
         />
+        </React.Suspense>
       )}
     </EntityListEmptyScreen>
   )
@@ -350,16 +359,18 @@ export function SourcesListPanel({
     )}
 
     {/* Send to Workspace dialog */}
-    {sendResourceSlug && (
-      <SendResourceToWorkspaceDialog
-        open={sendDialogOpen}
-        onOpenChange={setSendDialogOpen}
-        resourceType="source"
-        resourceIds={[sendResourceSlug]}
-        resourceLabel={sendResourceLabel}
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId}
-      />
+    {sendResourceSlug && sendDialogOpen && (
+      <React.Suspense fallback={null}>
+        <SendResourceToWorkspaceDialog
+          open
+          onOpenChange={setSendDialogOpen}
+          resourceType="source"
+          resourceIds={[sendResourceSlug]}
+          resourceLabel={sendResourceLabel}
+          workspaces={workspaces}
+          activeWorkspaceId={activeWorkspaceId}
+        />
+      </React.Suspense>
     )}
     </div>
   )

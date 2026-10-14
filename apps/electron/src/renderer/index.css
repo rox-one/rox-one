@@ -1513,11 +1513,6 @@ html[data-render-profile="performance"] :is(.animate-shimmer-loading, .animate-s
 html[data-render-profile="performance"] .animate-shimmer::after {
   animation: none !important;
 }
-/* The nav sweep freezes at its transparent end; keep a solid hairline instead. */
-html[data-render-profile="performance"] .rox-nav-shimmer::after {
-  animation: none !important;
-  background: var(--accent);
-}
 /* Decorative pulses (skeleton loaders, motion-safe icons) stop too. Spinners
    (animate-spin) keep turning, and pulses that carry live state (recording,
    running) opt out with data-live-indicator. */
@@ -1689,6 +1684,48 @@ html[data-shell-material="solid"] :is([data-home-cell], .rox-home-widget) {
 .rox-home-tile {
   background-color: color-mix(in oklch, var(--foreground) 5%, transparent);
 }
+/* Bento motion: a subtle lift on hover; never under reduced motion or HC. */
+.rox-home-widget {
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+[data-home-cell]:hover > .rox-home-widget {
+  transform: translateY(-0.0625rem);
+  box-shadow: var(--widget-border, none), var(--shadow-minimal);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rox-home-widget { transition: none; }
+  [data-home-cell]:hover > .rox-home-widget { transform: none; }
+}
+html[data-contrast="high"] [data-home-cell]:hover > .rox-home-widget {
+  transform: none;
+}
+/* «Сегодня» hero: accent glow inside the card, input and chips on tone steps. */
+.rox-home-hero-glow {
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in oklch, var(--accent) 26%, transparent), transparent 60%),
+    radial-gradient(90% 120% at 100% 100%, color-mix(in oklch, var(--success) 14%, transparent), transparent 60%);
+}
+html[data-contrast="high"] .rox-home-hero-glow {
+  display: none;
+}
+.rox-home-ask {
+  background-color: color-mix(in oklch, var(--widget-base) 70%, transparent);
+}
+.rox-home-ask:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.rox-home-chip {
+  background-color: color-mix(in oklch, var(--foreground) 7%, transparent);
+}
+.rox-home-chip:hover {
+  background-color: color-mix(in oklch, var(--foreground) 12%, transparent);
+}
+html[data-contrast="high"] .rox-home-ask,
+html[data-contrast="high"] .rox-home-chip {
+  outline: 1px solid var(--foreground);
+  outline-offset: -1px;
+}
 .rox-home-add-cell {
   background-color: color-mix(in oklch, var(--foreground) 2.5%, transparent);
 }
@@ -1836,4 +1873,133 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
     min-width: 44px;
     min-height: 44px;
   }
+}
+
+/* top-50 #49: lite / reduced-data mode drops decorative motion and blur. */
+/* Near-zero (not 0s) so transitionend / animationend still fire for code that
+   waits on them. Spinners and loaders keep running at their own speed. */
+:root[data-lite] *:not(.animate-spin, .animate-ping, [role="progressbar"], [data-spinner], .spinner, .loader),
+:root[data-lite] *:not(.animate-spin, .animate-ping, [role="progressbar"], [data-spinner], .spinner, .loader)::before,
+:root[data-lite] *:not(.animate-spin, .animate-ping, [role="progressbar"], [data-spinner], .spinner, .loader)::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+:root[data-lite] { --material-blur-topbar: 0; --material-blur-rail: 0; --material-blur-strip: 0; --material-blur-inspector: 0; --material-blur-sidebar: 0; --material-blur-navigator: 0; --material-blur-chat: 0; --material-blur-composer: 0; --material-blur-popover: 0; }
+
+/* ── Grid-tile density (multi-panel grid + Home widgets) ──────────────────
+   One scale, applied by token: every Tailwind text step inside a grid tile
+   drops 4px with a 10px readability floor, so components stay untouched.
+   Set via data-panel-density="grid" on PanelSlot (multi-panel) and Home. */
+[data-panel-density="grid"] {
+  --text-caption: 10px;  --text-caption--line-height: 13px;
+  --text-small: 10px;    --text-small--line-height: 14px;
+  --text-body: 10px;     --text-body--line-height: 14px;
+  --text-reading: 11px;  --text-reading--line-height: 16px;
+  --text-title-sm: 11px; --text-title-sm--line-height: 15px;
+  --text-title: 14px;    --text-title--line-height: 18px;
+  --text-display: 20px;  --text-display--line-height: 26px;
+  --text-xs: 10px;       --text-xs--line-height: 13px;
+  --text-sm: 10px;       --text-sm--line-height: 14px;
+  --text-base: 10px;     --text-base--line-height: 14px;
+  --text-lg: 11px;       --text-lg--line-height: 16px;
+  --text-xl: 14px;       --text-xl--line-height: 18px;
+  --text-2xl: 20px;      --text-2xl--line-height: 26px;
+  --text-3xl: 26px;      --text-3xl--line-height: 32px;
+  --text-data: 10px;     --text-data--line-height: 14px;
+  --text-title-md: 12px; --text-title-md--line-height: 16px;
+  --text-stat: 16px;     --text-stat--line-height: 22px;
+  --text-hero: 40px;     --text-hero--line-height: 44px;
+  --text-floor: 10px;
+  --notes-prose-size: 11px;
+  --notes-title-size: 1.25rem;
+}
+
+/* Grid tile chrome: flush tiles (no inset cards) separated by hairline
+   gradient dividers on the vertical and horizontal gutters. Themes override
+   --grid-divider. Each tile draws its right and bottom edge. */
+:root {
+  --grid-divider: color-mix(in oklch, var(--foreground) 9%, transparent);
+  /* Focus underline for a grid tile header: an accent hairline inset at the
+     bottom edge. A token so the box-shadow value stays on the scale. */
+  --grid-tile-focus-underline: inset 0 -1px 0 color-mix(in oklch, var(--accent) 45%, transparent);
+}
+.rox-grid-tile::before,
+.rox-grid-tile::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  /* Decorative dividers sit one step above the tile's own content. The literal
+     `2` used to be here, which sits between --z-raised (1) and --z-sticky (10)
+     and is not a layer — `tokens-v2.test.ts` requires every non-negative literal
+     z-index in this file to resolve to the layer set. */
+  z-index: var(--z-raised);
+}
+.rox-grid-tile::before {
+  top: 0; bottom: 0; right: 0; width: 0.0625rem;
+  background: linear-gradient(to bottom, transparent, var(--grid-divider) 15%, var(--grid-divider) 85%, transparent);
+}
+.rox-grid-tile::after {
+  left: 0; right: 0; bottom: 0; height: 0.0625rem;
+  background: linear-gradient(to right, transparent, var(--grid-divider) 15%, var(--grid-divider) 85%, transparent);
+}
+.rox-grid-tile[data-focused="true"] .rox-grid-tile-header {
+  box-shadow: var(--grid-tile-focus-underline);
+}
+.rox-grid-tile-header {
+  height: 1.625rem;
+  padding: 0 0.25rem 0 0.625rem;
+}
+
+/* Compact responsive layout: below the threshold a tile drops secondary
+   chrome (inline navigators, secondary toolbars) and keeps the content. */
+@container panel (max-width: 639px) {
+  [data-panel-density="grid"] [data-panel-secondary],
+  [data-panel-density="grid"] [data-secondary-toolbar] {
+    display: none !important;
+  }
+}
+
+/* Fluid shell: below NARROW_SHELL_THRESHOLD the secondary sidebar floats over
+   the content (data-secondary-overlay). Enter with a transform/opacity slide so
+   the breakpoint reads as a reflow, not a pop. Durations come from the motion
+   tokens, which are 0ms under reduced motion and while the shell is resizing
+   (html[data-resizing]), so a live window drag never animates. */
+[data-secondary-overlay="true"] {
+  animation: rox-shell-overlay-in var(--motion-disclosure) var(--ease-emphasis) both;
+}
+@keyframes rox-shell-overlay-in {
+  from { opacity: 0; transform: translateX(calc(var(--spacing) * -3)); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Panel container queries (fluid panels). PanelSlot is the `panel` size
+   container (@container/panel), so these tiers follow the panel's own width,
+   not the window: a split view and a full-width surface get the same rhythm at
+   the same panel size. Tokens inherit from the container's direct child; the
+   opt-in primitives below read them. Static layout only (no transitions), so a
+   live resize reflows without animating. */
+.\@container\/panel > * {
+  --panel-gutter: calc(var(--spacing) * 3);
+  --panel-measure: 100%;
+}
+@container panel (min-width: 720px) {
+  .\@container\/panel > * {
+    --panel-gutter: calc(var(--spacing) * 5);
+    --panel-measure: 880px;
+  }
+}
+@container panel (min-width: 1200px) {
+  .\@container\/panel > * {
+    --panel-gutter: calc(var(--spacing) * 8);
+    --panel-measure: 1040px;
+  }
+}
+.rox-panel-gutter {
+  padding-inline: var(--panel-gutter, calc(var(--spacing) * 3));
+}
+.rox-panel-measure {
+  inline-size: 100%;
+  max-inline-size: var(--panel-measure, 100%);
+  margin-inline: auto;
 }

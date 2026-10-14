@@ -3,6 +3,8 @@
  */
 import { entityRoute, type EntityRef } from '@rox/core/entities'
 import { navigate, type Route } from '@/lib/navigate'
+import { routes } from '../../../shared/routes'
+import { setCanvasTarget } from '@/pages/canvas/canvas-target'
 import { ENTITY_ONLY_ROUTE_PREFIXES, isEntityRoutesEnabled } from '../../../shared/route-parser'
 
 /**
@@ -11,6 +13,12 @@ import { ENTITY_ONLY_ROUTE_PREFIXES, isEntityRoutesEnabled } from '../../../shar
  * #1499's `entities.links.v1` route gate is effectively off.
  */
 export function openEntity(ref: EntityRef, options: { newPanel?: boolean } = {}): boolean {
+  // «Доска»: `canvas/board/{id}#{objectId}` opens the board surface focused on the card.
+  if (ref.kind === 'canvas') {
+    setCanvasTarget(ref.fragment ? { boardId: ref.id, objectId: ref.fragment } : { boardId: ref.id })
+    navigate(routes.view.surface('canvas') as Route, options.newPanel ? { newPanel: true } : undefined)
+    return true
+  }
   let route: string
   try { route = entityRoute(ref) } catch { return false }
   const prefix = route.split('?')[0]!.split('/')[0]!

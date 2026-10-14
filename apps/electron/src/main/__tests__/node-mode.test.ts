@@ -30,7 +30,7 @@ mock.module('electron', () => ({
 }))
 
 import { NodeRegistry } from '@rox/server-core/nodes'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import { WsRpcClient } from '../../../../../packages/server-core/src/transport/client.ts'
 import { WsRpcServer } from '../../../../../packages/server-core/src/transport/server.ts'
 import { registerNodeHandlers } from '../../../../../packages/server-core/src/handlers/rpc/nodes.ts'

@@ -562,6 +562,21 @@ export type PermissionRequestType = 'bash' | 'file_write' | 'mcp_mutation' | 'ap
 /**
  * Permission request from agent (e.g., bash command approval)
  */
+/**
+ * What a file-writing tool is about to change, for the permission card's diff
+ * preview. Texts are capped (see `truncated`); never used to make the decision.
+ */
+export type PermissionPreview =
+  | {
+      kind: 'edit'; filePath: string; hunks: Array<{ oldText: string; newText: string }>; truncated?: boolean;
+      /** Set for Edit with replace_all: number of occurrences in the current file (0 if unknown). */
+      replaceAll?: number;
+    }
+  /** Write to a path that does not exist yet: all lines are additions. */
+  | { kind: 'write'; filePath: string; newText: string; truncated?: boolean }
+  /** Write over an existing file: line diff against its current content. */
+  | { kind: 'overwrite'; filePath: string; hunks: Array<{ oldText: string; newText: string }>; truncated?: boolean };
+
 export interface PermissionRequest {
   requestId: string;
   toolName: string;
@@ -582,6 +597,8 @@ export interface PermissionRequest {
   commandHash?: string;
   /** Approval validity window */
   approvalTtlSeconds?: number;
+  /** Diff preview for file writes (Edit / MultiEdit / Write). */
+  preview?: PermissionPreview;
 }
 
 /**
@@ -596,6 +613,13 @@ export interface AgentEventUsage {
   costUsd?: number;
   /** Model's context window size in tokens (from SDK modelUsage) */
   contextWindow?: number;
+  /**
+   * Sum over every model request of this turn (prompt incl. cache + output).
+   * Absent when the backend could not observe each request; consumers must
+   * then treat any running session total as incomplete.
+   */
+  /** requests: number of model requests summed, when the backend knows it (Claude reports per-model only, so omits it). */
+  requestTotals?: { promptTokens: number; outputTokens: number; requests?: number };
 }
 
 /**

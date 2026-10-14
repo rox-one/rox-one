@@ -221,13 +221,14 @@ export class JmapClient {
     return (await this.mailboxes()).find((m) => m.role === role) ?? null
   }
 
-  async queryEmails(opts: { mailboxId?: string; text?: string; limit?: number; position?: number; notInMailboxIds?: string[]; unseenOnly?: boolean } = {}): Promise<{ ids: string[]; total: number; emails: JmapEmailSummary[]; queryState: string }> {
+  async queryEmails(opts: { mailboxId?: string; text?: string; limit?: number; position?: number; notInMailboxIds?: string[]; unseenOnly?: boolean; flaggedOnly?: boolean } = {}): Promise<{ ids: string[]; total: number; emails: JmapEmailSummary[]; queryState: string }> {
     const accountId = await this.accountId()
     const filter: Record<string, unknown> = {}
     if (opts.mailboxId) filter.inMailbox = opts.mailboxId
     if (opts.text?.trim()) filter.text = opts.text.trim()
     if (opts.notInMailboxIds?.length) filter.inMailboxOtherThan = opts.notInMailboxIds
     if (opts.unseenOnly) filter.notKeyword = '$seen'
+    if (opts.flaggedOnly) filter.hasKeyword = '$flagged'
     const responses = await this.call([
       ['Email/query', { accountId, filter, sort: [{ property: 'receivedAt', isAscending: false }], position: opts.position ?? 0, limit: opts.limit ?? 50, calculateTotal: true }, 'q'],
       ['Email/get', { accountId, '#ids': { resultOf: 'q', name: 'Email/query', path: '/ids' }, properties: [...SUMMARY_PROPERTIES] }, 'g'],
@@ -236,6 +237,35 @@ export class JmapClient {
     const g = responses.find((r) => r[2] === 'g')![1]
     const byId = new Map<string, JmapEmailSummary>((g.list ?? []).map((e: JmapEmailSummary) => [e.id, e]))
     return { ids: q.ids ?? [], total: q.total ?? 0, queryState: q.queryState ?? '', emails: (q.ids ?? []).map((id: string) => byId.get(id)).filter(Boolean) as JmapEmailSummary[] }
+  }
+
+  /**
+   * Emails whose submission is still pending (the «Исходящие» view):
+   * EmailSubmission/query `undoStatus: pending` → their emails' summaries.
+   */
+  async outboxEmails(limit = 50): Promise<{ total: number; emails: JmapEmailSummary[] }> {
+    const accountId = await this.accountId()
+    const responses = await this.call([
+      ['EmailSubmission/query', { accountId, filter: { undoStatus: 'pending' }, limit, calculateTotal: true }, 'sq'],
+      ['EmailSubmission/get', { accountId, '#ids': { resultOf: 'sq', name: 'EmailSubmission/query', path: '/ids' }, properties: ['id', 'emailId'] }, 'sg'],
+      ['Email/get', { accountId, '#ids': { resultOf: 'sg', name: 'EmailSubmission/get', path: '/list/*/emailId' }, properties: [...SUMMARY_PROPERTIES] }, 'g'],
+    ])
+    const q = responses.find((r) => r[2] === 'sq')?.[1]
+    const g = responses.find((r) => r[2] === 'g')?.[1]
+    return { total: q?.total ?? 0, emails: (g?.list ?? []) as JmapEmailSummary[] }
+  }
+
+  /** Total of emails carrying the `$flagged` keyword («Избранные»). */
+  async flaggedCount(): Promise<{ total: number; unread: number }> {
+    const accountId = await this.accountId()
+    const responses = await this.call([
+      ['Email/query', { accountId, filter: { hasKeyword: '$flagged' }, limit: 0, calculateTotal: true }, 'a'],
+      ['Email/query', { accountId, filter: { operator: 'AND', conditions: [{ hasKeyword: '$flagged' }, { notKeyword: '$seen' }] }, limit: 0, calculateTotal: true }, 'u'],
+    ])
+    return {
+      total: responses.find((r) => r[2] === 'a')?.[1]?.total ?? 0,
+      unread: responses.find((r) => r[2] === 'u')?.[1]?.total ?? 0,
+    }
   }
 
   async getEmail(id: string): Promise<JmapEmailFull | null> {

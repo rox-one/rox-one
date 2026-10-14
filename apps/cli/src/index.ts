@@ -23,6 +23,11 @@ export function formatCliSessionError(ev: { type: string; error?: unknown }): st
   return null
 }
 
+/** Timeout copy for `rox send` — prefer a session error that arrived without completing. */
+export function formatSendTimeoutMessage(lastError: string | null): string {
+  return lastError ?? 'Send timeout — no completion event received'
+}
+
 // ---------------------------------------------------------------------------
 // Arg parsing
 // ---------------------------------------------------------------------------
@@ -454,6 +459,7 @@ export async function sendAndStream(
 ): Promise<number> {
   let exitCode = 0
   let finished = false
+  let lastError: string | null = null
   const streamJson = args.outputFormat === 'stream-json'
 
   const unsub = client.on('session:event', (event: unknown) => {
@@ -493,6 +499,7 @@ export async function sendAndStream(
       case 'typed_error':
       case 'error': {
         const line = formatCliSessionError(ev)
+        if (line) lastError = line
         if (!streamJson && line) err(line)
         exitCode = 1
         finished = true
@@ -520,7 +527,7 @@ export async function sendAndStream(
   unsub()
 
   if (!finished) {
-    err('Send timeout — no completion event received')
+    err(formatSendTimeoutMessage(lastError))
     exitCode = 1
   }
 
@@ -541,6 +548,11 @@ async function cmdSend(client: CliRpcClient, args: CliArgs): Promise<void> {
   }
 
   await client.connect()
+  const workspaceId = await resolveWorkspace(client, args.workspace)
+  if (!workspaceId) {
+    err('No workspace available. Use --workspace <id>')
+    process.exit(1)
+  }
   const exitCode = await sendAndStream(client, sessionId, message, args)
   client.destroy()
   process.exit(exitCode)

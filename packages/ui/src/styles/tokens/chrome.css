@@ -64,8 +64,10 @@
   --panel-snap-guide: var(--accent);
 }
 
-/* Density swaps values, never class names. Nothing sets data-density yet;
-   compact stays the default. */
+/* Density swaps values, never class names. `<html data-density="comfortable">`
+   is set by the Appearance setting (density-preference.ts); compact stays the
+   default (no attribute). Rail widths are deliberately not overridden: the
+   shell rail stays fixed (SHELL_RAIL_WIDTH 56px) in every density. */
 html[data-density="comfortable"] {
   --control-sm: 28px;
   --control-md: 32px;
@@ -76,7 +78,6 @@ html[data-density="comfortable"] {
   --chrome-topbar-height: 44px;
   --chrome-panel-header-height: 36px;
   --chrome-tab-strip-height: 36px;
-  --chrome-rail-width: 52px;
 }
 
 /* Coarse pointers get explicit hit-target floors. The floors win over

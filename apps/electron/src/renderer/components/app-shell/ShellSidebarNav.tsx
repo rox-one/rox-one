@@ -1,120 +1,120 @@
 /**
- * ShellSidebarNav — the legacy left sidebar's navigation block (WP3, WP5).
+ * ShellSidebarNav — the contextual sidebar (Mark: «сайдбар под текущий экран,
+ * экраны переключаются пилюлями»).
  *
- * WP5 (#1580): the order and grouping come from the single primary-nav
- * registry (`primary-nav.ts`) that also drives the workbench ActivityRail:
- * primary entries first, then the «Ещё» disclosure with the rest. AppShell's
- * memoised `baseLinks` supply the rich rows (counts, children, context menus)
- * by link id; registry entries AppShell has no row for (flag-gated surfaces,
- * the browser action) get a plain navigating row.
+ * The sidebar shows only the CURRENT screen: its title and primary action
+ * (the rich AppShell row's `actions`, e.g. «+ новый чат»), then its own
+ * navigation, chosen through `sidebar-registry.ts`:
+ * - Сессии: the session filters (statuses, Избранное, Архив, Метки);
+ * - Проекты / Страницы / Источники / Автоматизации: the row's sub-items;
+ * - screens that own a navigator portal it into `contextSlotRef`;
+ * - everything else (or a portal screen whose page rendered nothing):
+ *   «Закреплённое» + «Недавнее», loaded lazily.
+ * The global Навигация / Инструменты lists are gone: switching screens is the
+ * titlebar pill and its «Все экраны» menu. The collapsed rail shows the same
+ * current-screen items as icons.
  *
- * WP3: this memoised child owns the atom subscriptions only the sidebar reads
- * (shell flags, enabled extra screens), so unrelated atom changes re-render
- * neither this block nor its rows.
+ * WP3: this memoised child owns the atom subscriptions only the sidebar
+ * reads, so unrelated atom changes re-render neither this block nor its rows;
+ * the portal slot is a stable DOM node, so a route change re-renders this
+ * block and the page, never the whole shell.
  */
 import * as React from 'react'
-import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import { ChevronRight, ListFilter, MoreHorizontal } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { ListFilter } from 'lucide-react'
 import { navigate, routes } from '@/lib/navigate'
-import { enabledExtraScreenIdsAtom } from '@/atoms/extra-screens'
-import { visibleExtraScreens } from '@/pages/extra-screens/registry'
-import { enabledShellFlagsAtom } from '@/platform/unified-flags'
 import { isSessionsNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { isSeparatorItem, LeftSidebar, type LinkItem, type SidebarItem } from './LeftSidebar'
-import { usePillModel } from '@/platform/usePillNav'
-import { PRIMARY_NAV, PRIMARY_NAV_LINK_IDS, resolvePrimaryNav, type ResolvedPrimaryNavEntry } from './primary-nav'
+import { PRIMARY_NAV } from './primary-nav'
+import { resolveCurrentSurface } from './sidebar-registry'
+import { useCurrentScreenSidebar } from '../shell/screen-sidebar'
+import { ScreenSidebar } from '../shell/ScreenSidebar'
+import { ScreenSidebarHost } from '@/screens/ScreenSidebarHost'
 
-/** WP4: experimental screen icon tints from colour tokens (were literal hex). */
-const EXPERIMENTAL_ICON_COLOR: Readonly<Record<string, string>> = {
-  radar: 'var(--accent)',
-  focus: 'var(--success)',
-}
+const RecentPinnedSidebar = React.lazy(() => import('./RecentPinnedSidebar'))
 
 export interface ShellSidebarNavProps {
   /** Memoised AppShell sidebar rows (rich rows reused by link id). */
   baseLinks: SidebarItem[]
   isCollapsed: boolean
-  /** Collapsed-rail click: `inMore` = the link lives in the «Ещё» group. */
+  /** Collapsed-rail click on a current-screen item: expand the sidebar to it. */
   onExpand: (link: LinkItem, inMore: boolean) => void
-  /** Opens the browser surface (registry `action: 'open-browser'`). */
-  onOpenBrowser: () => void
+  /** Kept for API compatibility (the browser opens from the pill now). */
+  onOpenBrowser?: () => void
   /** Persisted expanded-sections store (AppShell `collapsedItems`). */
   isExpanded: (id: string) => boolean
   toggleExpanded: (id: string) => void
-  applicationSectionsOpen: boolean
-  onApplicationSectionsOpenChange: (open: boolean) => void
   /**
-   * WP6: stable ref setter for the per-surface contextual slot. Mode screens,
-   * Notes, Memory, Learning and Settings portal their own navigation into it
-   * (`ShellSidebarPortal`); it sits right under the global primary nav.
+   * Stable ref setter for the per-surface slot. Mode screens, Notes, Memory,
+   * Learning, Connections and Settings portal their own navigation into it
+   * (`ShellSidebarPortal`).
    */
   contextSlotRef?: (element: HTMLDivElement | null) => void
-  /** The TopBar renders the pill (`modePillShown`); pill-placed surfaces it does not render fall back here. */
+  /** Kept for API compatibility. */
   pillShown?: boolean
+  /** Workspace ids (local + remote) scoping «Недавнее» / «Закреплённое». */
+  workspaceIds?: readonly string[]
+}
+
+const NO_WORKSPACES: readonly string[] = []
+
+/** Session filter group → its rows (collapsed rail shows them flat). */
+function flattenGroup(links: readonly SidebarItem[]): LinkItem[] {
+  const out: LinkItem[] = []
+  for (const link of links) {
+    if (isSeparatorItem(link)) continue
+    if (link.items?.length) out.push(...flattenGroup(link.items))
+    else out.push(link)
+  }
+  return out
+}
+
+/** True while a page has portalled content into the slot (observed, no re-render loop). */
+function useSlotFilled(slot: HTMLDivElement | null): boolean {
+  const [filled, setFilled] = React.useState(false)
+  React.useLayoutEffect(() => {
+    if (!slot) { setFilled(false); return }
+    const update = () => setFilled(slot.childElementCount > 0)
+    update()
+    if (typeof MutationObserver === 'undefined') return
+    const observer = new MutationObserver(update)
+    observer.observe(slot, { childList: true })
+    return () => observer.disconnect()
+  }, [slot])
+  return filled
 }
 
 export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   baseLinks,
   isCollapsed,
   onExpand,
-  onOpenBrowser,
   isExpanded,
   toggleExpanded,
-  applicationSectionsOpen,
-  onApplicationSectionsOpenChange,
   contextSlotRef,
-  pillShown = true,
+  workspaceIds = NO_WORKSPACES,
 }: ShellSidebarNavProps) {
   const { t } = useTranslation()
   const navState = useNavigationState()
-  const shellFlags = useAtomValue(enabledShellFlagsAtom)
-  const enabledExtraScreenIds = useAtomValue(enabledExtraScreenIdsAtom)
+  const current = React.useMemo(() => resolveCurrentSurface(navState), [navState])
+  // shell-layout: a screen that published a config owns the whole sidebar.
+  const screenConfig = useCurrentScreenSidebar(current.id)
 
-  const { nav: { placements }, navIds: pillNavIds } = usePillModel(pillShown)
-  const entries = React.useMemo(() => resolvePrimaryNav({ shellFlags, placements, pillNavIds }), [shellFlags, placements, pillNavIds])
+  const rowById = React.useCallback((id: string | null): LinkItem | null => {
+    if (!id) return null
+    const row = baseLinks.find(link => !isSeparatorItem(link) && link.id === id)
+    return row && !isSeparatorItem(row) ? row : null
+  }, [baseLinks])
 
-  const { primaryLinks, moreLinks } = React.useMemo(() => {
-    const byId = new Map<string, LinkItem>()
-    for (const link of baseLinks) if (!isSeparatorItem(link)) byId.set(link.id, link)
-    const linkFor = (entry: ResolvedPrimaryNavEntry): LinkItem => byId.get(entry.linkId) ?? {
-      id: entry.linkId,
-      title: t(entry.labelKey),
-      icon: entry.icon,
-      variant: entry.isActive(navState) ? 'default' : 'ghost',
-      onClick: entry.route ? () => navigate(entry.route!()) : onOpenBrowser,
-    }
-    // WP6: rows never carry their surface's sub-navigation; it moves to the
-    // contextual section under the primary nav while that surface is open.
-    const navRow = (entry: ResolvedPrimaryNavEntry) => stripContextItems(linkFor(entry), entry, navState)
-    const primary = entries.filter(entry => entry.group === 'primary').map(navRow)
-    const more: SidebarItem[] = entries.filter(entry => entry.group === 'more').map(navRow)
-    // Rows the registry does not own keep their AppShell order after the registry's «Ещё».
-    for (const link of baseLinks) {
-      if (!isSeparatorItem(link) && !PRIMARY_NAV_LINK_IDS.has(link.id)) more.push(link)
-    }
-    return { primaryLinks: primary, moreLinks: more }
-  }, [baseLinks, entries, navState, onOpenBrowser, t])
-
-  // WP6: the open surface's sub-navigation (Проекты, Страницы, Источники,
-  // Автоматизации), taken from its rich AppShell row.
-  const contextEntry = React.useMemo(
-    // From the whole registry: a surface placed in the pills (no sidebar row) still gets its context.
-    () => PRIMARY_NAV.find(entry => CONTEXT_SECTION_LINK_IDS.has(entry.linkId) && entry.isActive(navState)) ?? null,
-    [navState],
-  )
+  // Contextual sub-navigation (Проекты, Страницы, Источники, Автоматизации).
   const surfaceSection = React.useMemo(() => {
-    if (!contextEntry) return null
-    const row = baseLinks.find(link => link.id === contextEntry.linkId)
-    if (!row || isSeparatorItem(row) || !row.items?.length) return null
+    if (current.kind !== 'context') return null
+    const row = rowById(current.linkId)
+    if (!row?.items?.length) return null
     return buildContextSection(row, { open: isExpanded(row.id), onToggle: () => toggleExpanded(row.id) })
-  }, [contextEntry, baseLinks, isExpanded, toggleExpanded])
+  }, [current, rowById, isExpanded, toggleExpanded])
 
-  // Session filters (statuses, favourites, archive, labels) are contextual:
-  // they leave the global nav and show as their own section under Sessions.
+  // Session filters (statuses, favourites, archive, labels).
   const inSessions = isSessionsNavigation(navState)
-  // Persisted through the expanded-sections store, like every other section.
   // The store records collapsed ids, so «empty buckets hidden» is the
   // default (expanded) state of SESSION_FILTERS_EMPTY_HIDDEN_ID.
   const filtersOpen = isExpanded(SESSION_FILTERS_ID)
@@ -122,158 +122,130 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   const toggleFilters = React.useCallback(() => toggleExpanded(SESSION_FILTERS_ID), [toggleExpanded])
   const toggleShowEmpty = React.useCallback(() => toggleExpanded(SESSION_FILTERS_EMPTY_HIDDEN_ID), [toggleExpanded])
   const sessionFilters = React.useMemo(() => {
-    const sessions = baseLinks.find(link => link.id === 'nav:allSessions')
-    if (!inSessions || !sessions || isSeparatorItem(sessions) || !sessions.items?.length) return null
+    const sessions = rowById('nav:allSessions')
+    if (!inSessions || !sessions?.items?.length) return null
     return buildSessionFilters(sessions, { showEmpty, open: filtersOpen, onToggle: toggleFilters }, t)
-  }, [baseLinks, inSessions, showEmpty, filtersOpen, toggleFilters, t])
+  }, [rowById, inSessions, showEmpty, filtersOpen, toggleFilters, t])
 
-  const onExpandPrimary = React.useCallback((link: LinkItem) => onExpand(link, false), [onExpand])
-  const onExpandMore = React.useCallback((link: LinkItem) => onExpand(link, true), [onExpand])
+  // Page-owned navigator slot: a portal screen with nothing in it falls back.
+  const [slot, setSlot] = React.useState<HTMLDivElement | null>(null)
+  const slotRef = React.useCallback((element: HTMLDivElement | null) => {
+    setSlot(element)
+    contextSlotRef?.(element)
+  }, [contextSlotRef])
+  const slotFilled = useSlotFilled(slot)
+  // A page that portalled its navigator always wins over «Недавнее».
+  const showFallback = !slotFilled && (
+    current.kind === 'fallback'
+    || current.kind === 'portal'
+    || (current.kind === 'context' && !surfaceSection)
+    || (current.kind === 'sessions' && !sessionFilters))
 
-  const activeScreen = navState.navigator === 'screen' ? navState.screen : null
-  const experimentalLinks = React.useMemo<SidebarItem[]>(() => visibleExtraScreens(enabledExtraScreenIds).map(screen => ({
-    id: `nav:screen:${screen.id}`,
-    title: t(screen.labelKey), icon: screen.icon,
-    variant: activeScreen === screen.id ? 'default' : 'ghost',
-    onClick: () => navigate(routes.view.screen(screen.id)),
-    iconColor: EXPERIMENTAL_ICON_COLOR[screen.id] ?? 'var(--info)',
-  })), [enabledExtraScreenIds, activeScreen, t])
+  // Header primary action: the screen row's own actions; screens without one
+  // (Главная and the other fallback screens) get «+ новый чат» from Сессии.
+  const headerRow = rowById(current.linkId)
+  const headerActions = headerRow?.actions ?? (showFallback || current.kind === 'sessions' ? rowById('nav:allSessions')?.actions : undefined)
+  const title = current.titleKey ? t(current.titleKey) : null
+  const goRoot = React.useCallback(() => {
+    if (current.kind === 'sessions') { navigate(routes.view.allSessions()); return }
+    const entry = PRIMARY_NAV.find(candidate => candidate.id === current.id)
+    if (entry?.route) navigate(entry.route())
+  }, [current])
 
-  // Mirrors ActivityRail: an active destination inside «Ещё» (deep link, ⌘K,
-  // route change) keeps the disclosure open so the selection is visible.
-  const moreForced = hasActiveLink(moreLinks) || hasActiveLink(experimentalLinks)
-  const showContext = !isCollapsed && (sessionFilters !== null || surfaceSection !== null)
-  const moreOpen = applicationSectionsOpen || moreForced
-  // Only a user click on the summary may persist the open state; the toggle
-  // event a programmatic open/close fires must not (review2 I1).
-  const userToggle = React.useRef(false)
-  const onMoreSummaryClick = React.useCallback((event: React.MouseEvent) => {
-    // While forced open the native disclosure must not close (review2 W).
-    if (moreForced) {
-      event.preventDefault()
-      return
-    }
-    userToggle.current = true
-  }, [moreForced])
-  const onMoreToggle = React.useCallback((event: React.SyntheticEvent<HTMLDetailsElement>) => {
-    const element = event.currentTarget
-    if (moreForced && !element.open) {
-      element.open = true
-      return
-    }
-    if (!userToggle.current) return
-    userToggle.current = false
-    onApplicationSectionsOpenChange(element.open)
-  }, [moreForced, onApplicationSectionsOpenChange])
+  const onExpandRow = React.useCallback((link: LinkItem) => onExpand(link, false), [onExpand])
+  const railLinks = React.useMemo(() => {
+    if (!isCollapsed) return null
+    if (sessionFilters) return flattenGroup(sessionFilters.links)
+    if (surfaceSection) return flattenGroup(surfaceSection.links)
+    return null
+  }, [isCollapsed, sessionFilters, surfaceSection])
+
+  // Same tree position in both branches so the publisher survives the switch
+  // from fallback → published config (remounting it would clear and loop).
+  const publisherHost = <ScreenSidebarHost key="screen-sidebar-host" screenId={current.id} />
+
+  if (screenConfig) {
+    return (
+      <>
+      {publisherHost}
+      <nav
+        aria-label={screenConfig.title}
+        data-sidebar-primary-nav=""
+        data-tour="guide.sidebar-nav"
+        data-sidebar-surface={current.id ?? undefined}
+        data-sidebar-content="config"
+        className="px-1"
+      >
+        <ScreenSidebar config={screenConfig} mode={isCollapsed ? 'icons' : 'expanded'} />
+        {/* Keep the portal target mounted so a page's portal never loses its node. */}
+        <div ref={slotRef} hidden data-primary-sidebar-context="" />
+      </nav>
+      </>
+    )
+  }
 
   return (
     <>
-      {/* WP6 slot 1: the global primary nav — same rows, same order on every screen. */}
-      <LeftSidebar
-        isCollapsed={isCollapsed}
-        onExpand={onExpandPrimary}
-        links={primaryLinks}
-      />
-      {/* WP6 slot 2: the open surface's contextual navigation, right under the global nav. */}
-      {showContext && (
-        <section
-          className="mx-1 mt-2 border-t border-border-subtle pt-2"
-          aria-label={sessionFilters ? t('sidebar.sessionFilters') : surfaceSection!.title}
-          data-sidebar-context=""
-          {...(sessionFilters ? { 'data-session-filters': '' } : {})}
-        >
-          {sessionFilters && (
-            <>
-              <LeftSidebar isCollapsed={false} onExpand={onExpandPrimary} links={sessionFilters.links} />
-              {filtersOpen && sessionFilters.emptyCount > 0 && (
-                <button
-                  type="button"
-                  className="ml-8 rounded-[var(--radius-control)] px-2 py-1 text-xs text-muted-foreground hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
-                  aria-pressed={showEmpty}
-                  onClick={toggleShowEmpty}
-                >
-                  {showEmpty ? t('sidebar.hideEmpty') : t('sidebar.showEmpty', { count: sessionFilters.emptyCount })}
-                </button>
-              )}
-            </>
+    {publisherHost}
+    <nav
+      aria-label={title ?? t('sidebar.navigation')}
+      data-sidebar-primary-nav=""
+      data-tour="guide.sidebar-nav"
+      data-sidebar-surface={current.id ?? undefined}
+      data-sidebar-content={showFallback ? 'fallback' : current.kind}
+      className="px-1"
+    >
+      {/* Входящие: the rail icon and the open tab already name the screen —
+          no repeated title here (Mark, t77). */}
+      {!isCollapsed && title && !(current.id === 'inbox' && !headerActions) && (
+        <div className="flex h-8 items-center gap-1 pl-3 pr-1" data-sidebar-screen-header="">
+          <h2 className="min-w-0 flex-1 truncate text-body font-semibold">
+            <button
+              type="button"
+              onClick={goRoot}
+              className="w-full truncate rounded-[var(--radius-control)] text-left text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              data-sidebar-screen-title=""
+            >
+              {title}
+            </button>
+          </h2>
+          {headerActions}
+        </div>
+      )}
+      {railLinks && railLinks.length > 0 && <LeftSidebar isCollapsed onExpand={onExpandRow} links={railLinks} />}
+      {!isCollapsed && sessionFilters && (
+        <section aria-label={t('sidebar.sessionFilters')} data-sidebar-context="" data-session-filters="">
+          <LeftSidebar isCollapsed={false} onExpand={onExpandRow} links={sessionFilters.links} />
+          {filtersOpen && sessionFilters.emptyCount > 0 && (
+            <button
+              type="button"
+              className="ml-8 rounded-[var(--radius-control)] px-2 py-1 text-xs text-muted-foreground hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+              aria-pressed={showEmpty}
+              onClick={toggleShowEmpty}
+            >
+              {showEmpty ? t('sidebar.hideEmpty') : t('sidebar.showEmpty', { count: sessionFilters.emptyCount })}
+            </button>
           )}
-          {surfaceSection && <LeftSidebar isCollapsed={false} onExpand={onExpandPrimary} links={surfaceSection.links} />}
+          {/* chat-folders hook point: the folder tree mounts here (feat/chat-folders). */}
+          <div data-sidebar-folders-slot="" className="empty:hidden" />
+        </section>
+      )}
+      {!isCollapsed && surfaceSection && (
+        <section aria-label={surfaceSection.title} data-sidebar-context="">
+          <LeftSidebar isCollapsed={false} onExpand={onExpandRow} links={surfaceSection.links} />
         </section>
       )}
       {/* Portal target for screens that own their navigation (mode screens, Notes, Memory, Settings…). */}
-      <div
-        ref={contextSlotRef}
-        hidden={isCollapsed}
-        data-primary-sidebar-context=""
-        className="mx-1 mt-2 border-t border-border-subtle empty:hidden"
-      />
-      {/* «Ещё»: every other destination stays reachable, collapsed by default. */}
-      <details
-        className="group/application-sections mx-1 mt-2 rounded-[var(--radius-card)] bg-[var(--state-hover)]"
-        data-application-sections
-        open={moreOpen}
-        onToggle={onMoreToggle}
-      >
-        <summary
-          onClick={onMoreSummaryClick}
-          aria-disabled={moreForced || undefined}
-          aria-label={isCollapsed ? t('workbench.mode.more') : undefined}
-          title={isCollapsed ? t('workbench.mode.more') : undefined}
-          className={cn(
-            'flex cursor-pointer list-none items-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden',
-            isCollapsed
-              ? 'mx-auto h-7 w-7 justify-center'
-              : 'gap-2 px-3 py-2.5 text-xs font-semibold text-muted-foreground',
-          )}
-        >
-          <MoreHorizontal className="icon-caption text-accent" aria-hidden />
-          {!isCollapsed && <span className="min-w-0 flex-1 truncate">{t('workbench.mode.more')}</span>}
-          {!isCollapsed && <ChevronRight className="icon-caption transition-transform group-open/application-sections:rotate-90 motion-reduce:transition-none" aria-hidden />}
-        </summary>
-        <LeftSidebar
-          isCollapsed={isCollapsed}
-          onExpand={onExpandMore}
-          links={moreLinks}
-        />
-        {experimentalLinks.length > 0 && (
-          <section className="mx-1 mt-5 py-2" aria-label={t('sidebar.experimentalFeatures')}>
-            {!isCollapsed && <div className="px-3 pb-2 text-xs font-semibold uppercase caps-label text-text-muted">{t('sidebar.experimentalFeatures')}</div>}
-            <LeftSidebar isCollapsed={isCollapsed} onExpand={onExpandMore} links={experimentalLinks} />
-          </section>
-        )}
-      </details>
+      <div ref={slotRef} hidden={isCollapsed} data-primary-sidebar-context="" className="empty:hidden" />
+      {(showFallback || (isCollapsed && !slotFilled)) && !railLinks?.length && (
+        <React.Suspense fallback={null}>
+          <RecentPinnedSidebar workspaceIds={workspaceIds} isCollapsed={isCollapsed} onExpand={onExpandRow} />
+        </React.Suspense>
+      )}
+    </nav>
     </>
   )
 })
-
-/** Rows whose children become the contextual section while their surface is open. */
-export const CONTEXT_SECTION_LINK_IDS: ReadonlySet<string> = new Set(['nav:projects', 'nav:pages', 'nav:sources', 'nav:automations'])
-
-/**
- * A global nav row is navigation only: its filter tree (sessions) or
- * sub-items (projects, pages, sources, automations) move to the contextual
- * section. Clicking the row of the open surface returns to its root (clears
- * a sub-filter) instead of toggling a section that is no longer there.
- */
-export function stripContextItems(link: LinkItem, entry: Pick<ResolvedPrimaryNavEntry, 'route' | 'isActive'>, navState: Parameters<ResolvedPrimaryNavEntry['isActive']>[0]): LinkItem {
-  const owned = link.id === 'nav:allSessions' || CONTEXT_SECTION_LINK_IDS.has(link.id)
-  if (!owned || !link.items) return link
-  const route = entry.route
-  const active = entry.isActive(navState)
-  const onClick = link.id === 'nav:allSessions'
-    ? () => navigate(routes.view.allSessions())
-    : route && active ? () => navigate(route()) : link.onClick
-  return {
-    ...link,
-    onClick,
-    // On a filtered sub-view (status, source type, a page…) the surface row
-    // stays highlighted — and keeps «Ещё» open — while the child is selected
-    // in the context section.
-    variant: active ? 'default' : link.variant,
-    // Children (and the jump-to-filter highlights they carry) live in the context section only.
-    expandable: false, expanded: false, onToggle: undefined, items: undefined, sortable: undefined,
-  }
-}
 
 /** The contextual section for a surface row: its sub-items under a collapsible header (state persisted per row id). */
 export function buildContextSection(row: LinkItem, state: { open: boolean; onToggle: () => void }): { title: string; links: SidebarItem[] } {
@@ -325,6 +297,11 @@ export function buildSessionFilters(
     items: [...visibleStatuses, ...(trailing.length > 0 ? [{ id: 'separator:session-filters', type: 'separator' as const }, ...trailing] : [])],
   }
   return { links: [group], emptyCount }
+}
+
+/** A collapsed section keeps only its active row(s) (a row is active itself or through a nested row). */
+export function activeRowsOnly(items: readonly SidebarItem[]): SidebarItem[] {
+  return items.filter(item => !isSeparatorItem(item) && hasActiveLink([item]))
 }
 
 /** True when a row, or any of its nested rows, is the active destination. */

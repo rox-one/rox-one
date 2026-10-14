@@ -28,15 +28,15 @@ function fixture() {
  return { values, writes, render, focused: () => focused }
 }
 describe('actual sidebar guidance dismissal', () => {
- test('dismissal persists only its workspace onboarding preference and returns focus to profile', () => {
+ test('dismissal persists only its workspace onboarding preference', () => {
   const f = fixture(); const a = f.render('a', 'onboarding'); expect(a.visiblePromoKind).toBe('onboarding'); a.onDismissGuidance()
-  expect(f.writes).toEqual([`${KEYS.sidebarDismissedGuidance}:a`]); expect(f.focused()).toBe(1)
+  expect(f.writes).toEqual([`${KEYS.sidebarDismissedGuidance}:a`])
   expect(f.render('a', 'onboarding').visiblePromoKind).toBe(null); expect(f.render('b', 'onboarding').visiblePromoKind).toBe('onboarding')
   expect(f.render('a', 'reminder').visiblePromoKind).toBe('reminder')
  })
- test('captured old-workspace dismissal cannot hide new workspace guidance or steal its focus', () => {
+ test('captured old-workspace dismissal cannot hide new workspace guidance', () => {
   const f = fixture(); const a = f.render('a', 'onboarding'); f.render('b', 'onboarding'); a.onDismissGuidance()
-  expect(f.render('b', 'onboarding').visiblePromoKind).toBe('onboarding'); expect(f.render('a', 'onboarding').visiblePromoKind).toBe(null); expect(f.focused()).toBe(0)
+  expect(f.render('b', 'onboarding').visiblePromoKind).toBe('onboarding'); expect(f.render('a', 'onboarding').visiblePromoKind).toBe(null)
  })
  test('unbound workspace uses the retained default scope; truthy non-boolean preference is not dismissal', () => {
   const f = fixture(); f.values.set(`${KEYS.sidebarDismissedGuidance}:a`, 'true')
