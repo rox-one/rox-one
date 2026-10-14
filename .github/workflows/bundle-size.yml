@@ -69,6 +69,10 @@ jobs:
         run: bun run electron:build:renderer
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+          # The boot-manifest step below derives the closure from the sibling
+          # *.js.map files, which the shipped build no longer emits (S9-11).
+          # Only this job measures; the packaged app keeps sourcemap: false.
+          ROX_RENDERER_SOURCEMAP: '1'
       - name: Bundle-size budget gate
         run: bun scripts/check-bundle-size.ts --check
       - name: Boot-manifest reproducibility gate
