@@ -91,7 +91,7 @@ import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inb
 import { useFeedReaderTour } from '@/features/product-tour/adapters/work/inbox-feed/use-feed-reader-tour'
 import { useFeedCaller, type FeedCaller } from './feed/feed-caller'
 import { toErrorMessage } from '@/lib/errors'
-import { FeedSectionTabs, type FeedSection } from './feed/FeedSectionTabs'
+import type { FeedSection } from './feed/FeedSectionTabs'
 import { InboxQueue } from './inbox/InboxQueue'
 import { roxQueryClient } from '@/lib/query/client'
 import { roxKeys } from '@/lib/query/keys'
@@ -200,7 +200,9 @@ export function FeedStream({ selectedId }: { selectedId?: string | null }) {
 export default function FeedPage({ selectedId, section = 'stream' }: { selectedId?: string | null; section?: FeedSection }) {
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="feed-screen" data-section={section}>
-      <FeedSectionTabs section={section} />
+      {/* No inner «Поток/Входящие» strip: Лента and Входящие are separate
+          surfaces in the rail and the open-tab strip already names the one in
+          view (Mark, t77). The section stays route-driven. */}
       <div className="flex min-h-0 flex-1 flex-col">
         {section === 'inbox' ? <InboxQueue selectedId={selectedId} /> : <FeedStream selectedId={selectedId} />}
       </div>

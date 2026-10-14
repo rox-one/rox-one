@@ -185,7 +185,9 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
       data-sidebar-content={showFallback ? 'fallback' : current.kind}
       className="px-1"
     >
-      {!isCollapsed && title && (
+      {/* Входящие: the rail icon and the open tab already name the screen —
+          no repeated title here (Mark, t77). */}
+      {!isCollapsed && title && !(current.id === 'inbox' && !headerActions) && (
         <div className="flex h-8 items-center gap-1 pl-3 pr-1" data-sidebar-screen-header="">
           <h2 className="min-w-0 flex-1 truncate text-body font-semibold">
             <button
