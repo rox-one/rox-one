@@ -1439,7 +1439,7 @@ export default function AppearanceSettingsPage() {
                           />
                           <input
                             type="text"
-                            className="h-8 min-w-0 flex-1 rounded-[var(--radius-control)] border border-foreground/10 bg-transparent px-2 text-base outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                            className="h-8 min-w-0 flex-1 rounded-[var(--radius-control)] border border-border-subtle bg-transparent px-2 text-base outline-none focus-visible:ring-1 focus-visible:ring-accent"
                             placeholder={t('settings.appearance.kanbanColumnStatusCustom')}
                             value={dropStatusId}
                             onChange={(e) => setColumnStatus(column.id, e.target.value)}

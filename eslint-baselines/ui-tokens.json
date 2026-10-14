@@ -154,8 +154,7 @@
       "rox/no-foreground-opacity": 9
     },
     "apps/electron/src/renderer/components/app-shell/CompactSessionMenu.tsx": {
-      "rox/icon-size-tokens": 66,
-      "rox/no-foreground-opacity": 13
+      "rox/no-foreground-opacity": 9
     },
     "apps/electron/src/renderer/components/app-shell/CompactWorkspaceMenu.tsx": {
       "rox/icon-size-tokens": 4
@@ -178,8 +177,8 @@
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/components/app-shell/MemoryListPanel.tsx": {
-      "rox/icon-size-tokens": 10,
-      "rox/no-foreground-opacity": 40,
+      "rox/icon-size-tokens": 1,
+      "rox/no-foreground-opacity": 8,
       "rox/prefer-primitives": 2
     },
     "apps/electron/src/renderer/components/app-shell/MemoryProposalCard.tsx": {
@@ -259,9 +258,6 @@
       "rox/no-hardcoded-z-index": 2,
       "rox/prefer-primitives": 1
     },
-    "apps/electron/src/renderer/components/app-shell/SessionMenu.tsx": {
-      "rox/icon-size-tokens": 54
-    },
     "apps/electron/src/renderer/components/app-shell/SessionMenuParts.tsx": {
       "rox/no-foreground-opacity": 2
     },
@@ -299,8 +295,6 @@
       "rox/icon-size-tokens": 8
     },
     "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx": {
-      "rox/icon-size-tokens": 11,
-      "rox/no-foreground-opacity": 23,
       "rox/no-raw-color": 5,
       "rox/prefer-primitives": 2
     },
@@ -385,8 +379,7 @@
       "rox/no-foreground-opacity": 9
     },
     "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx": {
-      "rox/icon-size-tokens": 46,
-      "rox/no-foreground-opacity": 28
+      "rox/no-foreground-opacity": 16
     },
     "apps/electron/src/renderer/components/app-shell/input/FreeFormInputContextBadge.tsx": {
       "rox/icon-size-tokens": 2,
@@ -465,8 +458,8 @@
       "rox/no-foreground-opacity": 5
     },
     "apps/electron/src/renderer/components/app-shell/kanban/TaskEditor.tsx": {
-      "rox/icon-size-tokens": 81,
-      "rox/no-foreground-opacity": 71,
+      "rox/icon-size-tokens": 31,
+      "rox/no-foreground-opacity": 57,
       "rox/no-raw-color": 18,
       "rox/prefer-primitives": 1
     },
@@ -680,8 +673,8 @@
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/components/memory/MemoryScreen.tsx": {
-      "rox/icon-size-tokens": 18,
-      "rox/no-foreground-opacity": 44,
+      "rox/icon-size-tokens": 1,
+      "rox/no-foreground-opacity": 30,
       "rox/no-hardcoded-z-index": 1,
       "rox/no-raw-color": 10,
       "rox/prefer-primitives": 5
@@ -1230,7 +1223,7 @@
       "rox/no-foreground-opacity": 1
     },
     "apps/electron/src/renderer/pages/ChatPage.tsx": {
-      "rox/icon-size-tokens": 44,
+      "rox/icon-size-tokens": 2,
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/pages/CloudRunSurfacePage.tsx": {
@@ -1241,8 +1234,7 @@
       "rox/prefer-primitives": 1
     },
     "apps/electron/src/renderer/pages/ConnectionsPage.tsx": {
-      "rox/icon-size-tokens": 2,
-      "rox/no-foreground-opacity": 53,
+      "rox/no-foreground-opacity": 4,
       "rox/prefer-primitives": 3
     },
     "apps/electron/src/renderer/pages/FeedPage.tsx": {
@@ -1452,8 +1444,7 @@
       "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx": {
-      "rox/icon-size-tokens": 37,
-      "rox/no-foreground-opacity": 12,
+      "rox/no-foreground-opacity": 6,
       "rox/no-raw-color": 13,
       "rox/prefer-primitives": 1
     },
@@ -1461,7 +1452,6 @@
       "stylelint/declaration-property-unit-disallowed-list": 3
     },
     "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx": {
-      "rox/no-foreground-opacity": 1,
       "rox/prefer-primitives": 2
     },
     "apps/electron/src/renderer/pages/settings/BrowserProfileImportPanel.tsx": {
@@ -1662,8 +1652,7 @@
       "rox/prefer-primitives": 3
     },
     "apps/electron/src/renderer/platform/home/widgets.tsx": {
-      "rox/icon-size-tokens": 40,
-      "rox/no-foreground-opacity": 6,
+      "rox/no-foreground-opacity": 5,
       "rox/no-raw-color": 1,
       "rox/prefer-primitives": 1
     },
