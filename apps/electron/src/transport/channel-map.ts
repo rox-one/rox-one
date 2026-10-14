@@ -25,6 +25,14 @@ export const CHANNEL_MAP = {
   getRuntimeTraceSnapshot: invoke(RPC_CHANNELS.runtimeTrace.GET_SNAPSHOT),
   readRuntimeTraceEvents: invoke(RPC_CHANNELS.runtimeTrace.READ_EVENTS),
   readRuntimeTracePayload: invoke(RPC_CHANNELS.runtimeTrace.READ_PAYLOAD),
+  // Cloud handoff «В облако» (docs/cloud-handoff-design.md)
+  getCloudHandoffConfig: invoke(RPC_CHANNELS.cloudHandoff.GET_CONFIG),
+  startCloudHandoff: invoke(RPC_CHANNELS.cloudHandoff.START),
+  getCloudHandoffStatus: invoke(RPC_CHANNELS.cloudHandoff.STATUS),
+  cancelCloudHandoff: invoke(RPC_CHANNELS.cloudHandoff.CANCEL),
+  endCloudHandoff: invoke(RPC_CHANNELS.cloudHandoff.END),
+  setCloudHandoffKey: invoke(RPC_CHANNELS.cloudHandoff.SET_KEY),
+  clearCloudHandoffKey: invoke(RPC_CHANNELS.cloudHandoff.CLEAR_KEY),
   // Cloud Runs (PRD docs/cloud-runs-prd.md, phase G3)
   getCloudRunsConfig: invoke(RPC_CHANNELS.cloudRuns.GET_CONFIG),
   setCloudRunsConfig: invoke(RPC_CHANNELS.cloudRuns.SET_CONFIG),
@@ -457,6 +465,7 @@ export const CHANNEL_MAP = {
   onDevSpaceRunProgress: listener(RPC_CHANNELS.devSpace.RUN_PROGRESS),
   listNotes: invoke(RPC_CHANNELS.notes.LIST),
   readNote: invoke(RPC_CHANNELS.notes.READ),
+  listNoteTasks: invoke(RPC_CHANNELS.notes.LIST_TASKS),
   saveNote: invoke(RPC_CHANNELS.notes.SAVE),
   createNote: invoke(RPC_CHANNELS.notes.CREATE),
   renameNote: invoke(RPC_CHANNELS.notes.RENAME),

@@ -1234,3 +1234,112 @@ export function countTotalActivities(items: (ActivityItem | ActivityGroup)[]): n
   }
   return count
 }
+
+// ============================================================================
+// Incremental Grouping (#1589)
+// ============================================================================
+
+/**
+ * A stateful wrapper around {@link groupMessagesByTurn} for long chats.
+ *
+ * A `user` or `auth-request` message resets grouping state: once it is pushed
+ * there is no open assistant turn, and nothing later reads or mutates earlier
+ * turns. So when a new message list keeps the same message objects (by
+ * reference) up to some point, every turn up to and including the last such
+ * boundary before the first change is still exact. We keep those turn objects
+ * (stable identity, so memoized rows skip re-rendering) and only regroup the
+ * tail after the boundary.
+ *
+ * Streaming usually only touches the open turn, so each update costs
+ * O(tail + n) cheap reference checks instead of a full regroup with
+ * flushing, sorting and todo extraction for every turn.
+ */
+export interface IncrementalTurnGrouper {
+  group(messages: Message[], options?: GroupTurnsOptions): Turn[]
+  reset(): void
+  /** Work done by the last `group` call (for tests/diagnostics). */
+  lastStats(): { regroupedMessages: number; reusedTurns: number }
+}
+
+interface GrouperCache {
+  sorted: Message[]
+  turns: Turn[]
+  /** For each boundary message index in `sorted`, number of turns emitted through it. */
+  boundaryTurnCount: Map<number, number>
+}
+
+function sortVisible(messages: Message[]): Message[] {
+  return messages.filter(m => !m.hidden).sort((a, b) => a.timestamp - b.timestamp)
+}
+
+function isGroupingBoundary(message: Message): boolean {
+  return message.role === 'user' || message.role === 'auth-request'
+}
+
+function buildBoundaryIndex(sorted: Message[], turns: Turn[]): Map<number, number> {
+  const index = new Map<number, number>()
+  let turnPos = 0
+  for (let i = 0; i < sorted.length; i++) {
+    const message = sorted[i]!
+    if (!isGroupingBoundary(message)) continue
+    // Boundary turns appear in the same order as their messages.
+    while (turnPos < turns.length) {
+      const turn = turns[turnPos]!
+      turnPos++
+      if ((turn.type === 'user' || turn.type === 'auth-request') && turn.message === message) {
+        index.set(i, turnPos)
+        break
+      }
+    }
+  }
+  return index
+}
+
+export function createIncrementalTurnGrouper(): IncrementalTurnGrouper {
+  let cache: GrouperCache | null = null
+  let stats = { regroupedMessages: 0, reusedTurns: 0 }
+
+  const full = (sorted: Message[], options: GroupTurnsOptions): Turn[] => {
+    const turns = groupMessagesByTurn(sorted, options)
+    stats = { regroupedMessages: sorted.length, reusedTurns: 0 }
+    cache = { sorted, turns, boundaryTurnCount: buildBoundaryIndex(sorted, turns) }
+    return turns
+  }
+
+  return {
+    reset() { cache = null },
+    lastStats() { return stats },
+    group(messages, options = {}) {
+      const sorted = sortVisible(messages)
+      const prev = cache
+      if (!prev) return full(sorted, options)
+
+      // First index where the sorted lists diverge by reference.
+      const limit = Math.min(prev.sorted.length, sorted.length)
+      let firstDiff = 0
+      while (firstDiff < limit && prev.sorted[firstDiff] === sorted[firstDiff]) firstDiff++
+      // Last boundary strictly before the divergence point.
+      let boundary = -1
+      for (let i = firstDiff - 1; i >= 0; i--) {
+        if (isGroupingBoundary(sorted[i]!)) { boundary = i; break }
+      }
+      const keptTurnCount = boundary >= 0 ? prev.boundaryTurnCount.get(boundary) : undefined
+      if (keptTurnCount === undefined) return full(sorted, options)
+
+      const tailSorted = sorted.slice(boundary + 1)
+      const tailTurns = groupMessagesByTurn(tailSorted, options)
+      const turns = prev.turns.slice(0, keptTurnCount).concat(tailTurns)
+      stats = { regroupedMessages: tailSorted.length, reusedTurns: keptTurnCount }
+
+      const boundaryTurnCount = new Map<number, number>()
+      for (const [idx, count] of prev.boundaryTurnCount) {
+        if (idx <= boundary) boundaryTurnCount.set(idx, count)
+      }
+      for (const [idx, count] of buildBoundaryIndex(tailSorted, tailTurns)) {
+        boundaryTurnCount.set(boundary + 1 + idx, keptTurnCount + count)
+      }
+      cache = { sorted, turns, boundaryTurnCount }
+      return turns
+    },
+  }
+}

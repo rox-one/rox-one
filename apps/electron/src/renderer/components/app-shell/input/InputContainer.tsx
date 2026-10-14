@@ -10,6 +10,7 @@ import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import type { StructuredInputState, StructuredResponse, InputMode } from './structured/types'
 import { getStructuredInputMaxHeight } from './structured-height'
 import { BackgroundFinishedChip } from '../BackgroundFinishedChip'
+import { CloudHandoffButton } from '@/components/cloud-handoff/CloudHandoffButton'
 import { GitStatusBar } from '@/platform/GitStatusBar'
 import { loadCloudRunsChip } from '@/components/cloud-runs/cloud-runs-chip-loader'
 
@@ -295,6 +296,7 @@ export function InputContainer({
       {showCloudRunsChip && !compactMode && mode === 'freeform' && freeFormProps.sessionId && (
         <div className="relative z-20 mb-1.5 flex justify-end">
           <div className="flex items-center gap-1 rounded-md bg-background p-0.5">
+            <CloudHandoffButton sessionId={freeFormProps.sessionId} />
             <React.Suspense fallback={null}>
               <CloudRunsChip sessionId={freeFormProps.sessionId} />
             </React.Suspense>

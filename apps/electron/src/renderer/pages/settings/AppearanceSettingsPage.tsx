@@ -1076,7 +1076,7 @@ export default function AppearanceSettingsPage() {
             <div className="space-y-8">
 
               {/* Theme picker (restored 2026-10-13): the app no longer pins a
-                  single theme; Rox Engineering (super-engineering) is the default. */}
+                  single theme; Rox Ink (rox-ink) is the default, Rox Engineering is opt-in. */}
               <SettingsSection title={t("settings.appearance.colorTheme")}>
                 <SettingsCard>
                   {presetThemes.length === 0 ? (
@@ -1099,7 +1099,7 @@ export default function AppearanceSettingsPage() {
                               'flex items-center rounded-lg border px-3 py-2 text-left text-sm transition-colors',
                               active
                                 ? 'border-accent/50 bg-accent/10 text-foreground'
-                                : 'border-border/60 text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground',
+                                : 'border-border/60 text-muted-foreground hover:bg-surface-hover hover:text-foreground',
                             )}
                           >
                             <span className="truncate">{preset.theme?.name || preset.id}</span>
@@ -1439,7 +1439,7 @@ export default function AppearanceSettingsPage() {
                           />
                           <input
                             type="text"
-                            className="h-8 min-w-0 flex-1 rounded-[var(--radius-control)] border border-foreground/10 bg-transparent px-2 text-base outline-none focus-visible:ring-1 focus-visible:ring-accent"
+                            className="h-8 min-w-0 flex-1 rounded-[var(--radius-control)] border border-border-subtle bg-transparent px-2 text-base outline-none focus-visible:ring-1 focus-visible:ring-accent"
                             placeholder={t('settings.appearance.kanbanColumnStatusCustom')}
                             value={dropStatusId}
                             onChange={(e) => setColumnStatus(column.id, e.target.value)}

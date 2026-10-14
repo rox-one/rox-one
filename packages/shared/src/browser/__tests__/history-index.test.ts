@@ -15,10 +15,10 @@ describe('appendHistoryIndex', () => {
 
   it('k new rows → k appends, no full rewrite of unrelated urls', () => {
     const existing: IndexedItem[] = [{ kind: 'history', url: 'https://a.example', title: 'a' }]
-    let written: IndexedItem[] | null = null
+    const writes: IndexedItem[][] = []
     const io = {
       read: () => existing,
-      write: (rows: IndexedItem[]) => { written = rows },
+      write: (rows: IndexedItem[]) => { writes.push(rows) },
     }
     const incoming: IndexedItem[] = [
       { kind: 'history', url: 'https://a.example', title: 'a' },
@@ -26,7 +26,7 @@ describe('appendHistoryIndex', () => {
       { kind: 'history', url: 'https://c.example', title: 'c' },
     ]
     expect(appendHistoryIndex(io, incoming)).toEqual({ appended: 2, wrote: true })
-    expect(written).toEqual([
+    expect(writes[0]).toEqual([
       { kind: 'history', url: 'https://a.example', title: 'a' },
       { kind: 'history', url: 'https://b.example', title: 'b' },
       { kind: 'history', url: 'https://c.example', title: 'c' },
