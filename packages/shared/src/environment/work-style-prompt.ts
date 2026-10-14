@@ -48,9 +48,14 @@ export function formatWorkStyleForPrompt(role: Choice<OnboardingRoleProfile> | n
   const lines: string[] = []
 
   const roles = profile.relatedRoles.map((r) => RELATED_ROLE_LABELS[r]).filter(Boolean)
-  lines.push(
-    `- Background: ${profile.isDeveloper ? 'software developer' : 'not a developer — avoid unexplained jargon and code unless asked'}${roles.length ? `; also works as ${roles.join(', ')}` : ''}.`,
-  )
+  // The developer flag defaults to false: only an explicit pick becomes an instruction.
+  if (profile.isDeveloperExplicit === true) {
+    lines.push(
+      `- Background: ${profile.isDeveloper ? 'software developer' : 'not a developer — avoid unexplained jargon and code unless asked'}${roles.length ? `; also works as ${roles.join(', ')}` : ''}.`,
+    )
+  } else if (roles.length) {
+    lines.push(`- Also works as ${roles.join(', ')}.`)
+  }
   if (style?.agents?.length) {
     lines.push(`- Already uses these agent tools: ${style.agents.map((a) => AGENT_LABELS[a]).join(', ')}. Reference their conventions when relevant.`)
   }
@@ -77,5 +82,6 @@ export function formatWorkStyleForPrompt(role: Choice<OnboardingRoleProfile> | n
       ? '- Collaboration: think through the problem together with the user — share options and reasoning.'
       : '- Collaboration: just deliver the result; keep the reasoning brief unless asked.')
   }
+  if (lines.length === 0) return ''
   return ['### How this user wants you to work', ...lines].join('\n')
 }

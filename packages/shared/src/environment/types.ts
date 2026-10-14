@@ -104,6 +104,12 @@ export interface OnboardingWorkStyle {
 export interface OnboardingRoleProfile {
   isDeveloper: boolean
   relatedRoles: string[]
+  /**
+   * True only when the user explicitly picked developer / not a developer.
+   * `isDeveloper` is false by default, so prompts must not treat it as an
+   * answer unless this is set. Absent on older profiles.
+   */
+  isDeveloperExplicit?: boolean
   /** Answer/collaboration preferences that feed the agent's system prompt. */
   workStyle?: OnboardingWorkStyle
 }
@@ -147,6 +153,7 @@ export function normalizeOnboardingRoleProfile(value: OnboardingRoleProfile): On
   return {
     isDeveloper: value.isDeveloper,
     relatedRoles: [...value.relatedRoles],
+    ...(value.isDeveloperExplicit === true ? { isDeveloperExplicit: true } : {}),
     ...(workStyle ? { workStyle } : {}),
   }
 }

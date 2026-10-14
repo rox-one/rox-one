@@ -51,6 +51,7 @@ describe('formatWorkStyleForPrompt', () => {
       status: 'answered',
       value: {
         isDeveloper: true,
+        isDeveloperExplicit: true,
         relatedRoles: ['product'],
         workStyle: {
           agents: ['claudeCode', 'codex'],
@@ -71,8 +72,18 @@ describe('formatWorkStyleForPrompt', () => {
     expect(text).toContain('Act autonomously')
     expect(text).toContain('just deliver the result')
   })
+  it('never turns the default developer flag into an instruction', () => {
+    expect(formatWorkStyleForPrompt({ status: 'answered', value: { isDeveloper: false, relatedRoles: [] } })).toBe('')
+    const roles = formatWorkStyleForPrompt({ status: 'answered', value: { isDeveloper: false, relatedRoles: ['analyst'] } })
+    expect(roles).toContain('Also works as analyst')
+    expect(roles).not.toContain('not a developer')
+  })
+  it('round-trips the explicit flag through normalize', () => {
+    const prefs = normalizeEnvironmentPrefs({ role: { status: 'answered', value: { isDeveloper: false, relatedRoles: [], isDeveloperExplicit: true } } })
+    expect(prefs.role.value).toEqual({ isDeveloper: false, relatedRoles: [], isDeveloperExplicit: true })
+  })
   it('omits lines with no preference', () => {
-    const text = formatWorkStyleForPrompt({ status: 'answered', value: { isDeveloper: false, relatedRoles: [] } })
+    const text = formatWorkStyleForPrompt({ status: 'answered', value: { isDeveloper: false, isDeveloperExplicit: true, relatedRoles: [] } })
     expect(text).toContain('not a developer')
     expect(text).not.toContain('Answer length')
     expect(text).not.toContain('agent tools')

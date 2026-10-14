@@ -65,6 +65,7 @@ describe('RoleStep', () => {
       value: {
         isDeveloper: true,
         relatedRoles: [],
+        isDeveloperExplicit: true,
         workStyle: {
           agents: ['claudeCode', 'geminiCli'],
           formats: ['pdf'],
@@ -74,6 +75,26 @@ describe('RoleStep', () => {
         },
       },
     })
+    await act(async () => { root.unmount() })
+  })
+
+  it('starts with no developer choice and saves it as not explicit', async () => {
+    const patches: unknown[] = []
+    ;(window as unknown as { electronAPI: unknown }).electronAPI = {
+      saveEnvironmentSetup: async (patch: unknown) => { patches.push(patch); return {} },
+    }
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const root = createRoot(container)
+    await act(async () => { root.render(<RoleStep onContinue={() => {}} />) })
+    expect(q(container, '[data-testid="role-developer-yes"]').getAttribute('aria-pressed')).toBe('false')
+    expect(q(container, '[data-testid="role-developer-no"]').getAttribute('aria-pressed')).toBe('false')
+    // Each answer-style pair has a visible label.
+    expect(q(container, '[data-testid="role-pair-detail"]').getAttribute('aria-labelledby')).toBeTruthy()
+    expect(container.textContent).toContain('onboarding.role.pair.detail')
+    const cont = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'common.continue')!
+    await act(async () => { cont.click() })
+    expect((patches[0] as { role: unknown }).role).toEqual({ status: 'answered', value: { isDeveloper: false, relatedRoles: [] } })
     await act(async () => { root.unmount() })
   })
 

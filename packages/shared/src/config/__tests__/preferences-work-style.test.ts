@@ -25,7 +25,7 @@ describe('formatPreferencesForPrompt + work style', () => {
       writeFileSync(join(dir, 'environment.json'), JSON.stringify({
         version: 1,
         seenVersion: 1,
-        role: { status: 'answered', value: { isDeveloper: false, relatedRoles: [], workStyle: { clarify: 'askFirst', formats: ['xlsx'] } } },
+        role: { status: 'answered', value: { isDeveloper: false, isDeveloperExplicit: true, relatedRoles: [], workStyle: { clarify: 'askFirst', formats: ['xlsx'] } } },
       }))
       const r = run(dir)
       expect(r.exitCode).toBe(0)

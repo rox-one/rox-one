@@ -20,6 +20,8 @@ export interface OnboardingRoleAnswer {
   isDeveloper: boolean
   relatedRoles: string[]
   skipped: boolean
+  /** True when the user explicitly picked developer / not a developer. */
+  isDeveloperExplicit?: boolean
   /** Agents, formats, answer and collaboration style; feeds the agent prompt. */
   workStyle?: OnboardingWorkStyle
 }
@@ -69,6 +71,7 @@ export async function persistOnboardingRole(
   const profile = {
     isDeveloper: answer.isDeveloper,
     relatedRoles: answer.relatedRoles,
+    ...(!answer.skipped && answer.isDeveloperExplicit ? { isDeveloperExplicit: true } : {}),
     ...(workStyle ? { workStyle } : {}),
   }
   await api.saveEnvironmentSetup({
