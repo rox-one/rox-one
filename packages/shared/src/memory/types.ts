@@ -223,7 +223,7 @@ export const DEFAULT_MEMORY_CONFIG: MemoryConfig = {
   negativeFirst: true,
   redactExtraPatterns: [],
   ftsLimit: 20,
-  semantic: false,
+  semantic: true,
   dreamIntervalHours: 4,
   dreamNotes: true,
 }
