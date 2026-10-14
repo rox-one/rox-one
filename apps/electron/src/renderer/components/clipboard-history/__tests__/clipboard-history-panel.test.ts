@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { join } from 'node:path'
-import { resetDom, useDomForFile } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
+import { resetDom, useDomForFile as installDom } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
 import * as React from 'react'
 import { act } from 'react'
 import type { Root } from 'react-dom/client'
@@ -10,7 +10,7 @@ import type { ClipboardHistoryController } from '../use-clipboard-history'
 import type { ClipboardCardProps } from '../ClipboardCard'
 import { getScreenSidebar } from '@/components/shell/screen-sidebar'
 
-useDomForFile()
+installDom()
 
 // Static import cannot work: Bun may evaluate react-dom (CJS) before the shared
 // dom-env body installs `document`, which makes React pick its fallback input
