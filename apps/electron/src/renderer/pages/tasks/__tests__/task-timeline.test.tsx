@@ -93,3 +93,22 @@ describe('TaskTimeline keyboard', () => {
     await act(async () => { root.unmount() })
   })
 })
+
+describe('TaskTimeline dependencies and fixed week', () => {
+  it('draws an arrow per dependency, red when violated', async () => {
+    const deps = [
+      mk('a', { startAt: epochOf('2026-02-12'), dueAt: epochOf('2026-02-15') }),
+      mk('d', { startAt: epochOf('2026-02-13'), blockedBy: ['a'] }),
+    ]
+    const { container, root } = await mount({ tasks: deps })
+    const path = container.querySelector('[data-testid="timeline-dep-a-d"]')
+    expect(path).not.toBeNull()
+    expect(path!.getAttribute('data-violated')).toBe('true')
+    await act(async () => { root.unmount() })
+  })
+  it('a fixed range hides the zoom control', async () => {
+    const { container, root } = await mount({ fixedRange: { start: '2026-02-09', end: '2026-02-15' } })
+    expect(container.querySelector('[data-testid="timeline-zoom-week"]')).toBeNull()
+    await act(async () => { root.unmount() })
+  })
+})
