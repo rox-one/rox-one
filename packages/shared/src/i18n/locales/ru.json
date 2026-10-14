@@ -609,6 +609,7 @@
   "calendar.googleConnectHint": "Подключить Google Календарь",
   "calendar.googleConnectedHint": "Google Календарь подключён. Нажмите, чтобы отключить.",
   "calendar.googleUnavailableHint": "{{provider}}: OAuth-клиент не настроен",
+  "calendar.hideOptions": "Свернуть",
   "calendar.kind.event": "Событие",
   "calendar.localReminderPlaceholder": "Напомнить…",
   "calendar.localReminders": "Локальные напоминания",

@@ -607,6 +607,7 @@
   "calendar.googleConnectHint": "Connect Google Calendar",
   "calendar.googleConnectedHint": "Google Calendar is connected. Click to disconnect.",
   "calendar.googleUnavailableHint": "{{provider}}: OAuth client is not configured",
+  "calendar.hideOptions": "Hide",
   "calendar.kind.event": "Event",
   "calendar.localReminderPlaceholder": "Remind me…",
   "calendar.localReminders": "Local reminders",

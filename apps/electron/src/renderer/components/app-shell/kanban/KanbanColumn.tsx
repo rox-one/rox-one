@@ -220,6 +220,9 @@ export function KanbanColumn({
           >
             {tasks.length}
           </span>
+          <span className="max-w-full truncate text-[10px] font-semibold uppercase text-foreground/60" aria-hidden>
+            {label.slice(0, 3)}
+          </span>
             <ChevronRight className="mt-auto h-3.5 w-3.5 text-foreground/70" />
         </button>
         {/* Keep droppable while collapsed so cards can still land here. */}

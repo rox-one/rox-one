@@ -10,8 +10,9 @@
  * - hidden when the toolchain manager is unavailable (headless/remote server)
  * - hidden for `missing` (manager not started yet), `ready` and `outdated`
  *   (the runtime is usable; Settings → Runtime shows the toolchain state)
- * - shown for `downloading` (with percent + progress bar), `installing`,
- *   `error` and `offline` (failure phases add an "Open Runtime settings" shortcut)
+ * - silent for `downloading`/`installing`: routine background maintenance does
+ *   not raise an app-wide strip (Settings → Runtime still shows progress)
+ * - shown for `error` and `offline`, with an "Open Runtime settings" shortcut
  *
  * Visual language matches TransportConnectionBanner (tone-tinted top bar,
  * same paddings/button sizing); the shortcut opens Settings → Runtime (tools).

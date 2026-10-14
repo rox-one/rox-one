@@ -244,6 +244,7 @@ export function MailStatusBlock({ mail }: { mail: MailController }) {
       ) : (
         <EmptyState title={t('inbox.mail.status.disabled', { flag: s.flag })} />
       )}
+      {s.state === 'error' && s.error ? <p className="truncate px-4 text-xs text-muted-foreground" title={s.error} data-testid="mail-error-detail">{s.error}</p> : null}
       {mail.error ? <p role="alert" className="px-4 text-sm text-destructive">{mail.error}</p> : null}
       {s.local && s.state !== 'disabled' ? <LocalNotice domain={s.domain} /> : null}
     </div>

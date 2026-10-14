@@ -96,6 +96,11 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
       <div className={cn('flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1', (status === 'conflict' || status === 'localChanges' || status === 'timezone') && 'text-amber-600')}>
         <span>{t(`calendar.status.${status}`)}</span>
         <CalendarConnectorChips onConnect={connect} />
+        {expanded && !connected && conflicts.length === 0 && proposals.length === 0 ? (
+          <button type="button" className="ml-auto underline" aria-expanded onClick={() => setExpanded(false)}>
+            {t('calendar.hideOptions')}
+          </button>
+        ) : null}
         {store.accounts().filter((account) => account.status === 'connected').map((account) => (
           <button key={account.id} type="button" className="underline" onClick={() => revoke(account.id)}>
             {t('calendar.revoke')} · {t(`calendar.provider.${account.provider}`)}

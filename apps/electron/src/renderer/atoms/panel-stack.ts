@@ -340,9 +340,7 @@ export const pushPanelAtom = atom(
     const same = stack.find(entry => panelSurfaceKey(entry) === key)
     if (same) {
       // One panel per surface: retarget and focus the existing one.
-      if (same.route !== route) {
-        set(panelStackAtom, stack.map(entry => entry.id === same.id ? { ...entry, route, panelType: getPanelTypeFromRoute(route) } : entry))
-      }
+      setDeduped(get, set, stack.map(entry => entry.id === same.id ? { ...entry, route, panelType: getPanelTypeFromRoute(route) } : entry), same.id)
       set(focusedPanelIdAtom, same.id)
       return
     }
@@ -604,9 +602,7 @@ export const openOrFocusPanelRouteAtom = atom(
       ?? stack.find((entry) => panelSurfaceKey(entry) === key)
 
     if (existing) {
-      if (existing.route !== route) {
-        set(panelStackAtom, stack.map(entry => entry.id === existing.id ? { ...entry, route, panelType: getPanelTypeFromRoute(route) } : entry))
-      }
+      setDeduped(get, set, stack.map(entry => entry.id === existing.id ? { ...entry, route, panelType: getPanelTypeFromRoute(route) } : entry), existing.id)
       set(focusedPanelIdAtom, existing.id)
       return { status: 'focused', panelId: existing.id }
     }
