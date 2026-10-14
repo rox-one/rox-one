@@ -83,23 +83,40 @@ export class CanvasDoc {
     return max
   }
 
-  /** Add objects (validated). Missing id/index are generated; returns the stored ids. */
+  /**
+   * Add objects. All inputs are validated before anything is written, so a bad
+   * input never leaves a partial insert. Parents may be existing objects or
+   * earlier entries of the same batch. Missing id/index are generated (the top
+   * z-key of each parent is computed once per call).
+   */
   add(inputs: ReadonlyArray<Omit<CanvasObjectInput, 'id' | 'index' | 'parentId'> & Partial<Pick<CanvasObjectInput, 'id' | 'index' | 'parentId'>>>, origin: Origin): string[] {
-    const ids: string[] = []
-    this.doc.transact(() => {
-      for (const input of inputs) {
-        const id = input.id ?? newObjectId()
-        if (this.objects.has(id)) throw new CanvasValidationError(id, ['duplicate id'])
-        const parentId = input.parentId ?? null
-        if (parentId !== null && !this.objects.has(parentId)) throw new CanvasValidationError(id, [`unknown parent ${parentId}`])
-        const index = input.index ?? keyBetween(this.lastIndex(parentId), null)
-        const res = validateObject({ ...input, id, index, parentId, updatedAt: Date.now() })
-        if (!res.ok) throw new CanvasValidationError(id, res.issues)
-        this.objects.set(id, toYMap(res.value))
-        ids.push(id)
+    const prepared: CanvasObject[] = []
+    const batchIds = new Set<string>()
+    const top = new Map<string | null, string | null>()
+    const now = Date.now()
+    for (const input of inputs) {
+      const id = input.id ?? newObjectId()
+      if (this.objects.has(id) || batchIds.has(id)) throw new CanvasValidationError(id, ['duplicate id'])
+      const parentId = input.parentId ?? null
+      if (parentId !== null && !this.objects.has(parentId) && !batchIds.has(parentId)) throw new CanvasValidationError(id, [`unknown parent ${parentId}`])
+      let index = input.index
+      if (index === undefined) {
+        const last = top.has(parentId) ? top.get(parentId)! : this.lastIndex(parentId)
+        index = keyBetween(last, null)
       }
+      if (isValidIndexKey(index)) {
+        const prev = top.has(parentId) ? top.get(parentId)! : this.lastIndex(parentId)
+        top.set(parentId, prev === null || index > prev ? index : prev)
+      }
+      const res = validateObject({ ...input, id, index, parentId, updatedAt: now })
+      if (!res.ok) throw new CanvasValidationError(id, res.issues)
+      prepared.push(res.value)
+      batchIds.add(id)
+    }
+    this.doc.transact(() => {
+      for (const o of prepared) this.objects.set(o.id, toYMap(o))
     }, origin)
-    return ids
+    return prepared.map(o => o.id)
   }
 
   get(id: string): CanvasObject | undefined {
@@ -150,18 +167,24 @@ export class CanvasDoc {
     if (next.parentId !== null && (next.parentId === id || this.isDescendant(next.parentId, id))) throw new CanvasValidationError(id, ['parent cycle'])
     const res = validateObject(next)
     if (!res.ok) throw new CanvasValidationError(id, res.issues)
+    const value = res.value
     this.doc.transact(() => {
-      for (const [k, v] of Object.entries(res.value)) {
-        if (k === 'props') {
-          const props = m.get('props') as Y.Map<unknown>
-          const val = v as Record<string, unknown>
-          for (const pk of [...props.keys()]) if (!(pk in val)) props.delete(pk)
-          for (const [pk, pv] of Object.entries(val)) {
-            if (pk === TEXT_PROP && typeof pv === 'string') {
-              const t = props.get(pk)
+      for (const [k, v] of Object.entries(value)) {
+        if (k === 'props' || k === 'style') {
+          // Nested maps merge per key: only keys named in the patch are written,
+          // so concurrent edits of other keys survive.
+          const patchPart = (k === 'props' ? patch.props : patch.style) as Record<string, unknown> | undefined
+          if (!patchPart) continue
+          const nested = ensureYMap(m, k)
+          const merged = v as Record<string, unknown>
+          for (const pk of Object.keys(patchPart)) {
+            const pv = merged[pk]
+            if (pv === undefined) { nested.delete(pk); continue }
+            if (k === 'props' && pk === TEXT_PROP && typeof pv === 'string') {
+              const t = nested.get(pk)
               if (t instanceof Y.Text) applyTextDiff(t, pv)
-              else props.set(pk, new Y.Text(pv))
-            } else if (!deepEqual(plain(props.get(pk)), pv)) props.set(pk, pv)
+              else nested.set(pk, new Y.Text(pv))
+            } else if (!deepEqual(plain(nested.get(pk)), pv)) nested.set(pk, pv)
           }
         } else if (!deepEqual(m.get(k), v)) m.set(k, v)
       }
@@ -245,10 +268,24 @@ export class CanvasDoc {
   }
 }
 
+/** Nested Y.Map at `key` (upgrades a legacy plain-object value in place). */
+function ensureYMap(m: Y.Map<unknown>, key: string): Y.Map<unknown> {
+  const cur = m.get(key)
+  if (cur instanceof Y.Map) return cur
+  const next = new Y.Map<unknown>()
+  m.set(key, next)
+  if (cur && typeof cur === 'object') for (const [k, v] of Object.entries(cur as Record<string, unknown>)) next.set(k, v)
+  return next
+}
+
 function toYMap(o: CanvasObject): Y.Map<unknown> {
   const m = new Y.Map<unknown>()
   for (const [k, v] of Object.entries(o)) {
-    if (k === 'props') {
+    if (k === 'style') {
+      const style = new Y.Map<unknown>()
+      for (const [sk, sv] of Object.entries(v as Record<string, unknown>)) if (sv !== undefined) style.set(sk, sv)
+      m.set('style', style)
+    } else if (k === 'props') {
       const props = new Y.Map<unknown>()
       for (const [pk, pv] of Object.entries(v as Record<string, unknown>)) props.set(pk, pk === TEXT_PROP && typeof pv === 'string' ? new Y.Text(pv) : pv)
       m.set('props', props)

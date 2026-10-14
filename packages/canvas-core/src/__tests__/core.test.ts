@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'bun:test'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { appendFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import * as Y from 'yjs'
-import { CanvasDoc, CanvasValidationError, createUndoManager, isValidIndexKey, keyBetween, keysBetween, OBJECT_TYPES, validateObject, type Origin } from '../index.ts'
+import { actorOrigin, CanvasDoc, CanvasValidationError, createUndoManager, isValidIndexKey, keyBetween, keysBetween, OBJECT_TYPES, validateObject, type Origin } from '../index.ts'
 import { CanvasFileStore } from '../node/index.ts'
 
-const me: Origin = { kind: 'user', userId: 'u1' }
+const me: Origin = actorOrigin('user', 'u1')
 const shape = (x = 0) => ({ type: 'shape', x, y: 0, w: 10, h: 10, props: { kind: 'rect' } })
 
 describe('fractional index', () => {
@@ -76,7 +76,7 @@ describe('CanvasDoc', () => {
     expect(b1.get(id!)!.props.text).toBe('XabY')
   })
   test('undo only touches own edits', () => {
-    const other: Origin = { kind: 'agent', sessionId: 's' }
+    const other: Origin = actorOrigin('agent', 's')
     const b = new CanvasDoc()
     const um = createUndoManager(b, me, 0)
     b.add([shape(1)], me)
@@ -179,5 +179,91 @@ describe('file store review fixes', () => {
     await s.flush(id)
     const reopened = await new CanvasFileStore(root).openBoard(id)
     expect(reopened.list().length).toBe(2)
+  })
+})
+
+describe('re-review fixes', () => {
+  test('add() is all-or-nothing', () => {
+    const b = new CanvasDoc()
+    expect(() => b.add([shape(1), { type: 'shape', x: NaN, y: 0, w: 1, h: 1, props: { kind: 'rect' } }], me)).toThrow()
+    expect(b.list()).toEqual([])
+  })
+  test('add() orders a batch and accepts parents from the same batch', () => {
+    const b = new CanvasDoc()
+    const ids = b.add([{ id: 'f', type: 'frame', x: 0, y: 0, w: 1, h: 1 }, { ...shape(1), parentId: 'f' }, { ...shape(2), parentId: 'f' }], me)
+    expect(b.list().map(o => o.id)).toEqual(ids)
+  })
+  test('style merges per key across peers', () => {
+    const d1 = new Y.Doc(), d2 = new Y.Doc()
+    const b1 = new CanvasDoc(d1), b2 = new CanvasDoc(d2)
+    const [id] = b1.add([{ ...shape(), style: { fill: { type: 'solid', color: 'a' } } }], me)
+    Y.applyUpdate(d2, Y.encodeStateAsUpdate(d1))
+    b1.update(id!, { style: { fill: { type: 'solid', color: 'b' } } }, me)
+    b2.update(id!, { style: { stroke: { color: 'c', width: 2 } } }, me)
+    Y.applyUpdate(d2, Y.encodeStateAsUpdate(d1)); Y.applyUpdate(d1, Y.encodeStateAsUpdate(d2))
+    expect(b1.get(id!)!.style).toEqual({ fill: { type: 'solid', color: 'b' }, stroke: { color: 'c', width: 2 } })
+    expect(b2.get(id!)!.style).toEqual(b1.get(id!)!.style)
+  })
+  test('actorOrigin is memoized', () => {
+    expect(actorOrigin('user', 'z')).toBe(actorOrigin('user', 'z'))
+  })
+})
+
+describe('file store re-review fixes', () => {
+  const fresh = async () => {
+    const root = mkdtempSync(join(tmpdir(), 'canvas-'))
+    const errors: string[] = []
+    const s = new CanvasFileStore(root, { onError: (_e, c) => errors.push(c.op) })
+    const { id } = await s.createBoard('B')
+    return { root, s, id, errors }
+  }
+  test('close vs open race: the reopen sees every edit, and stale edits are forwarded', async () => {
+    const { root, s, id, errors } = await fresh()
+    const b = await s.openBoard(id)
+    b.add([shape(1)], me)
+    const closing = s.closeBoard(id)
+    const reopened = s.openBoard(id)
+    await closing
+    const b2 = await reopened
+    expect(b2).not.toBe(b)
+    expect(b2.list().length).toBe(1)
+    b.add([shape(2)], me) // edit on the stale doc
+    expect(errors).toContain('write-after-close')
+    expect(b2.list().length).toBe(2)
+    await s.flush(id)
+  })
+  test('trash blocks a concurrent open', async () => {
+    const { s, id } = await fresh()
+    await s.openBoard(id)
+    const trashing = s.trashBoard(id)
+    const opening = s.openBoard(id)
+    await trashing
+    await expect(opening).rejects.toThrow()
+  })
+  test('corrupt log frame: good prefix kept, bad tail set aside', async () => {
+    const { root, s, id, errors } = await fresh()
+    const b = await s.openBoard(id)
+    b.add([shape(1)], me)
+    await s.flush(id)
+    await s.dispose()
+    appendFileSync(join(root, 'canvas', `${id}.log`), new Uint8Array([200, 0, 0, 0, 1, 2, 3]))
+    const s2 = new CanvasFileStore(root, { onError: (_e, c) => errors.push(c.op) })
+    const b2 = await s2.openBoard(id)
+    expect(b2.list().length).toBe(1)
+    expect(errors).toContain('replay-log')
+    expect(readdirSync(join(root, 'canvas')).some(n => n.includes('.log.corrupt-'))).toBe(true)
+    await s2.dispose()
+  })
+  test('lockfile: a live foreign owner blocks, a stale one is taken over', async () => {
+    const { root, s } = await fresh()
+    await s.dispose()
+    const lock = join(root, 'canvas', '.lock')
+    writeFileSync(lock, String(process.ppid)) // a live process that is not us
+    await expect(new CanvasFileStore(root).createBoard('x')).rejects.toThrow(/CANVAS_LOCKED/)
+    writeFileSync(lock, '999999999') // dead pid
+    const s3 = new CanvasFileStore(root)
+    await s3.createBoard('ok')
+    expect(readFileSync(lock, 'utf8')).toBe(String(process.pid))
+    await s3.dispose()
   })
 })

@@ -43,24 +43,35 @@ export async function atomicWrite(path: string, data: Uint8Array | string, dir: 
   await fsyncDir(dir)
 }
 
-/** Length-prefixed update frames (u32 LE + bytes); a torn tail is ignored. */
+/** Length-prefixed update frames (u32 LE + bytes). */
 function encodeFrame(update: Uint8Array): Uint8Array {
   const out = new Uint8Array(4 + update.length)
   new DataView(out.buffer).setUint32(0, update.length, true)
   out.set(update, 4)
   return out
 }
-function decodeFrames(buf: Uint8Array): Uint8Array[] {
-  const frames: Uint8Array[] = []
+/**
+ * Replay frames into `doc`. Stops at the first torn or unappliable frame and
+ * returns its byte offset (null = the whole log applied cleanly).
+ */
+function replayFrames(buf: Uint8Array, doc: Y.Doc): number | null {
   const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength)
   let off = 0
-  while (off + 4 <= buf.length) {
+  while (off < buf.length) {
+    if (off + 4 > buf.length) return off
     const len = view.getUint32(off, true)
-    if (off + 4 + len > buf.length) break
-    frames.push(buf.subarray(off + 4, off + 4 + len))
+    if (off + 4 + len > buf.length) return off
+    try { Y.applyUpdate(doc, buf.subarray(off + 4, off + 4 + len)) } catch { return off }
     off += 4 + len
   }
-  return frames
+  return null
+}
+
+const LOG_FSYNC_DEBOUNCE_MS = 200
+
+/** True while `pid` is a live process (signal 0 probes without killing). */
+function pidAlive(pid: number): boolean {
+  try { process.kill(pid, 0); return true } catch (e) { return (e as NodeJS.ErrnoException).code === 'EPERM' }
 }
 
 interface OpenEntry {
@@ -69,6 +80,8 @@ interface OpenEntry {
   dirty: boolean
   retries: number
   retryTimer: ReturnType<typeof setTimeout> | null
+  fsyncTimer: ReturnType<typeof setTimeout> | null
+  needsFsync: boolean
   indexStale: boolean
   indexTimer: ReturnType<typeof setTimeout> | null
   detach: () => void
@@ -79,12 +92,52 @@ export class CanvasFileStore {
   readonly dir: string
   private open = new Map<string, OpenEntry>()
   private opening = new Map<string, Promise<CanvasDoc>>()
+  /** Boards being closed or trashed: openBoard waits for these first. */
+  private busy = new Map<string, Promise<unknown>>()
+  /** Per-board chain for updates from docs that were already closed (see `adoptStale`). */
+  private staleChain = new Map<string, Promise<void>>()
+  private lockHeld = false
   private indexChain: Promise<void> = Promise.resolve()
   private onError: StoreErrorHandler
 
   constructor(workspaceRoot: string, opts: { onError?: StoreErrorHandler } = {}) {
     this.dir = join(workspaceRoot, 'canvas')
     this.onError = opts.onError ?? ((e, ctx) => console.error(`[canvas-store] ${ctx.op}${ctx.boardId ? ` ${ctx.boardId}` : ''} failed:`, e))
+  }
+
+  /**
+   * One process per workspace: `canvas/.lock` holds the owner pid. A lock left
+   * by a dead process is taken over; a live owner makes this store refuse to
+   * open boards (CANVAS_LOCKED) instead of corrupting the log.
+   */
+  async acquireLock(): Promise<void> {
+    if (this.lockHeld) return
+    await fs.mkdir(this.dir, { recursive: true })
+    const path = join(this.dir, '.lock')
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const h = await fs.open(path, 'wx')
+        try { await h.writeFile(String(process.pid)); await h.sync() } finally { await h.close() }
+        this.lockHeld = true
+        return
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e
+        const owner = Number((await fs.readFile(path, 'utf8').catch(() => '')).trim())
+        if (owner === process.pid) { this.lockHeld = true; return }
+        if (Number.isInteger(owner) && owner > 0 && pidAlive(owner)) throw new Error(`CANVAS_LOCKED: workspace canvas is in use by process ${owner}`)
+        await fs.rm(path, { force: true }) // stale lock
+      }
+    }
+    throw new Error('CANVAS_LOCKED: could not acquire the workspace lock')
+  }
+
+  /** Close every board and release the lock. */
+  async dispose(): Promise<void> {
+    for (const id of [...this.open.keys()]) await this.closeBoard(id).catch(e => this.onError(e, { boardId: id, op: 'dispose' }))
+    if (this.lockHeld) {
+      await fs.rm(join(this.dir, '.lock'), { force: true })
+      this.lockHeld = false
+    }
   }
 
   private paths(id: string) {
@@ -146,6 +199,7 @@ export class CanvasFileStore {
   }
 
   async createBoard(title: string, createdBy?: string): Promise<BoardSummary> {
+    await this.acquireLock()
     const id = `b_${Date.now().toString(36)}${crypto.getRandomValues(new Uint32Array(1))[0]!.toString(36)}`
     await fs.mkdir(this.dir, { recursive: true })
     const board = new CanvasDoc()
@@ -159,11 +213,19 @@ export class CanvasFileStore {
 
   /** Load (or return the already-open / in-flight) board; local edits persist automatically. */
   openBoard(id: string): Promise<CanvasDoc> {
+    if (!isValidBoardId(id)) return Promise.reject(new Error('canvas: invalid board id'))
+    const busy = this.busy.get(id) // closing/trashing: never hand out the doc being closed
     const existing = this.open.get(id)
-    if (existing) return Promise.resolve(existing.board)
+    if (existing && !busy) return Promise.resolve(existing.board)
     const inflight = this.opening.get(id)
     if (inflight) return inflight
-    const p = this.load(id).finally(() => this.opening.delete(id))
+    const p = (async () => {
+      if (busy) await busy.catch(() => {})
+      const again = this.open.get(id)
+      if (again) return again.board
+      await this.acquireLock()
+      return this.load(id)
+    })().finally(() => this.opening.delete(id))
     this.opening.set(id, p)
     return p
   }
@@ -172,15 +234,23 @@ export class CanvasFileStore {
     const { snap, log } = this.paths(id)
     const doc = new Y.Doc()
     Y.applyUpdate(doc, new Uint8Array(await fs.readFile(snap))) // ENOENT → board doesn't exist
-    try {
-      for (const f of decodeFrames(new Uint8Array(await fs.readFile(log)))) Y.applyUpdate(doc, f)
-    } catch (e) { if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e }
+    let logBytes: Uint8Array | null = null
+    try { logBytes = new Uint8Array(await fs.readFile(log)) } catch (e) { if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e }
+    const badAt = logBytes ? replayFrames(logBytes, doc) : null
     const board = new CanvasDoc(doc)
-    const entry: OpenEntry = { board, pending: 0, dirty: false, retries: 0, retryTimer: null, indexStale: false, indexTimer: null, detach: () => {}, chain: Promise.resolve() }
+    const entry: OpenEntry = { board, pending: 0, dirty: false, retries: 0, retryTimer: null, fsyncTimer: null, needsFsync: false, indexStale: false, indexTimer: null, detach: () => {}, chain: Promise.resolve() }
+    if (logBytes && badAt !== null) {
+      // Keep the unreadable tail aside, then fold the good prefix into a snapshot.
+      const aside = join(this.dir, `${id}.log.corrupt-${Date.now()}`)
+      await fs.writeFile(aside, logBytes.subarray(badAt))
+      this.onError(new Error(`corrupt log frame at byte ${badAt}; tail saved to ${aside}`), { boardId: id, op: 'replay-log' })
+      await this.compactEntry(id, entry)
+    }
     const onUpdate = (update: Uint8Array) => {
       this.enqueue(id, entry, async () => {
         if (entry.dirty) { await this.compactEntry(id, entry); return } // the snapshot includes this update
         await fs.appendFile(log, encodeFrame(update))
+        this.scheduleLogFsync(id, entry)
         entry.pending++
         if (entry.pending >= COMPACT_AFTER) await this.compactEntry(id, entry)
         else this.markIndexStale(id, entry)
@@ -190,6 +260,25 @@ export class CanvasFileStore {
     entry.detach = () => doc.off('update', onUpdate)
     this.open.set(id, entry)
     return board
+  }
+
+  /** fsync the log at most every LOG_FSYNC_DEBOUNCE_MS (flush/close force it). */
+  private scheduleLogFsync(id: string, entry: OpenEntry): void {
+    entry.needsFsync = true
+    if (entry.fsyncTimer) return
+    entry.fsyncTimer = setTimeout(() => {
+      entry.fsyncTimer = null
+      this.enqueue(id, entry, () => this.fsyncLog(id, entry))
+    }, LOG_FSYNC_DEBOUNCE_MS)
+    ;(entry.fsyncTimer as { unref?: () => void }).unref?.()
+  }
+
+  private async fsyncLog(id: string, entry: OpenEntry): Promise<void> {
+    if (!entry.needsFsync) return
+    entry.needsFsync = false
+    const h = await fs.open(this.paths(id).log, 'r').catch(e => { if (e.code === 'ENOENT') return null; throw e })
+    if (!h) return
+    try { await h.sync() } finally { await h.close() }
   }
 
   /** Queue a write step; failures are reported, the board is marked dirty and a snapshot retried. */
@@ -242,6 +331,7 @@ export class CanvasFileStore {
     await fs.rm(log, { force: true })
     await fsyncDir(this.dir)
     entry.pending = 0
+    entry.needsFsync = false
     entry.dirty = false
     entry.retries = 0
     await this.touchEntry(id, entry)
@@ -256,32 +346,78 @@ export class CanvasFileStore {
       const bid = [...this.open.entries()].find(([, v]) => v === e)![0]
       this.enqueue(bid, e, () => this.touchEntry(bid, e))
     }
+    for (const [bid, e] of this.open) {
+      if (!entries.includes(e) || !e.needsFsync) continue
+      if (e.fsyncTimer) { clearTimeout(e.fsyncTimer); e.fsyncTimer = null }
+      this.enqueue(bid, e, () => this.fsyncLog(bid, e))
+    }
     await Promise.all(entries.map(e => e.chain))
     await this.indexChain
     if (entries.some(e => e.dirty)) throw new Error('canvas: unsaved changes (write failed; retrying)')
   }
 
-  async closeBoard(id: string): Promise<void> {
-    const entry = this.open.get(id)
-    if (!entry) return
-    entry.detach()
-    if (entry.retryTimer) clearTimeout(entry.retryTimer)
-    if (entry.indexTimer) clearTimeout(entry.indexTimer)
-    await entry.chain
-    await this.compactEntry(id, entry) // throws to the caller if the final save fails; entry kept open
-    this.open.delete(id)
+  /**
+   * Close a board. The entry leaves `open` first (new opens wait on `busy`),
+   * pending writes drain, and a final snapshot is taken while the listener is
+   * still attached. If the snapshot fails the entry is re-registered (nothing
+   * lost) and the error is thrown. After a successful close, edits made on the
+   * stale doc are forwarded to a re-opened instance or appended to the log.
+   */
+  closeBoard(id: string): Promise<void> {
+    const prev = this.busy.get(id)
+    const p = (async () => {
+      if (prev) await prev.catch(() => {})
+      await this.opening.get(id)?.catch(() => {})
+      const entry = this.open.get(id)
+      if (!entry) return
+      this.open.delete(id)
+      try {
+        for (const t of [entry.retryTimer, entry.indexTimer, entry.fsyncTimer]) if (t) clearTimeout(t)
+        entry.retryTimer = entry.indexTimer = entry.fsyncTimer = null
+        await entry.chain
+        await this.compactEntry(id, entry)
+        await entry.chain // updates that raced the snapshot were appended to the log
+      } catch (e) {
+        this.open.set(id, entry)
+        entry.dirty = true
+        this.scheduleRetry(id, entry)
+        throw e
+      }
+      entry.detach()
+      entry.board.doc.on('update', (update: Uint8Array) => this.adoptStale(id, update))
+    })()
+    const tracked = p.finally(() => { if (this.busy.get(id) === tracked) this.busy.delete(id) })
+    this.busy.set(id, tracked)
+    return tracked
   }
 
-  /** Soft delete: files move to canvas/.trash/<id>-<ts>.*; index entry removed. */
-  async trashBoard(id: string): Promise<void> {
-    await this.closeBoard(id)
-    const { snap, log } = this.paths(id)
-    const trash = join(this.dir, '.trash')
-    await fs.mkdir(trash, { recursive: true })
-    const stamp = Date.now()
-    for (const [src, ext] of [[snap, 'ydoc'], [log, 'log']] as const) {
-      await fs.rename(src, join(trash, `${id}-${stamp}.${ext}`)).catch(e => { if (e.code !== 'ENOENT') throw e })
-    }
-    await this.updateIndex(bs => bs.filter(b => b.id !== id))
+  /** An edit on a closed board's doc: never dropped. */
+  private adoptStale(id: string, update: Uint8Array): void {
+    this.onError(new Error('edit on a closed board; forwarded'), { boardId: id, op: 'write-after-close' })
+    const live = this.open.get(id)
+    if (live) { Y.applyUpdate(live.board.doc, update); return } // persisted by the live listener
+    const prev = this.staleChain.get(id) ?? Promise.resolve()
+    const next = prev.then(() => fs.appendFile(this.paths(id).log, encodeFrame(update))).catch(e => this.onError(e, { boardId: id, op: 'write-after-close' }))
+    this.staleChain.set(id, next)
+  }
+
+  /** Soft delete: files move to canvas/.trash/<id>-<ts>.*; index entry removed. Opens wait meanwhile. */
+  trashBoard(id: string): Promise<void> {
+    assertId(id)
+    const p = (async () => {
+      await this.closeBoard(id)
+      await this.staleChain.get(id)
+      const { snap, log } = this.paths(id)
+      const trash = join(this.dir, '.trash')
+      await fs.mkdir(trash, { recursive: true })
+      const stamp = Date.now()
+      for (const [src, ext] of [[snap, 'ydoc'], [log, 'log']] as const) {
+        await fs.rename(src, join(trash, `${id}-${stamp}.${ext}`)).catch(e => { if (e.code !== 'ENOENT') throw e })
+      }
+      await this.updateIndex(bs => bs.filter(b => b.id !== id))
+    })()
+    const tracked = p.finally(() => { if (this.busy.get(id) === tracked) this.busy.delete(id) })
+    this.busy.set(id, tracked)
+    return tracked
   }
 }
