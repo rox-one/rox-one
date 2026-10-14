@@ -93,6 +93,7 @@ import { useSeEditorZoom } from '@/hooks/useSeEditorZoom'
 import { inspectorEdgeRevealModeAtom } from '@/atoms/panel-auto-hide'
 import { seChatPipOpenAtom } from '@/atoms/se-chat-pip'
 import { inspectorUserOpenedAtom } from '@/atoms/unified-shell'
+import { useTerminalDockShortcut } from '@/hooks/useTerminalDockShortcut'
 import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
@@ -1467,6 +1468,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   // Settings
   useAction('app.settings', onOpenSettings)
   useAction('view.toggleSecondarySidebar', toggleSecondarySidebar)
+  useTerminalDockShortcut()
 
   // Keyboard shortcuts
   useAction('app.keyboardShortcuts', onOpenKeyboardShortcuts)
