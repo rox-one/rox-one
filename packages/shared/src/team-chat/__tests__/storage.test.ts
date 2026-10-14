@@ -86,4 +86,18 @@ describe('team chat store', () => {
     s.archiveChannel(pub.id, alice)
     expect(s.listChannels(ORG, bob).some(c => c.id === pub.id)).toBe(false)
   })
+
+  it('archived channels reject follow and post; leave/archive/post report the channel org', () => {
+    const s = store()
+    const pub = s.createChannel({ orgId: ORG, name: 'ops' }, alice)
+    expect(s.postMessageWithOrg(pub.id, 'hi', alice)).toMatchObject({ orgId: ORG, message: { text: 'hi' } })
+    s.joinChannel(pub.id, bob)
+    expect(s.leaveChannel(pub.id, bob)).toEqual({ orgId: ORG })
+    s.setSubscribed(pub.id, true, carol)
+    expect(s.archiveChannel(pub.id, alice)).toEqual({ orgId: ORG })
+    expect(() => s.setSubscribed(pub.id, true, bob)).toThrow('Channel is archived')
+    expect(() => s.postMessage(pub.id, 'late', alice)).toThrow('Channel is archived')
+    // Unfollowing an archived channel stays allowed.
+    expect(s.setSubscribed(pub.id, false, carol).viewerSubscribed).toBe(false)
+  })
 })

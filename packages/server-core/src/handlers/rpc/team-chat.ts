@@ -65,9 +65,10 @@ export function registerTeamChatHandlers(server: RpcServer, _deps: HandlerDeps):
     return view
   }, { nativeAction: 'write' })
 
-  handle(RPC_CHANNELS.teamChat.LEAVE, async (ctx, channelId: string, orgId: string) => {
-    store().leaveChannel(channelId, actorOf(ctx))
-    if (typeof orgId === 'string') changed(orgId, channelId)
+  // The client-supplied orgId arg is ignored: broadcast with the channel's own org.
+  handle(RPC_CHANNELS.teamChat.LEAVE, async (ctx, channelId: string) => {
+    const { orgId } = store().leaveChannel(channelId, actorOf(ctx))
+    changed(orgId, channelId)
     return { ok: true }
   }, { nativeAction: 'write' })
 
@@ -83,9 +84,10 @@ export function registerTeamChatHandlers(server: RpcServer, _deps: HandlerDeps):
     return view
   }, { nativeAction: 'write' })
 
-  handle(RPC_CHANNELS.teamChat.ARCHIVE, async (ctx, channelId: string, orgId: string) => {
-    store().archiveChannel(channelId, actorOf(ctx))
-    if (typeof orgId === 'string') changed(orgId, channelId)
+  // The client-supplied orgId arg is ignored: broadcast with the channel's own org.
+  handle(RPC_CHANNELS.teamChat.ARCHIVE, async (ctx, channelId: string) => {
+    const { orgId } = store().archiveChannel(channelId, actorOf(ctx))
+    changed(orgId, channelId)
     return { ok: true }
   }, { nativeAction: 'write' })
 
@@ -93,11 +95,8 @@ export function registerTeamChatHandlers(server: RpcServer, _deps: HandlerDeps):
     store().listMessages(input, actorOf(ctx)), { nativeAction: 'read' })
 
   handle(RPC_CHANNELS.teamChat.POST, async (ctx, channelId: string, text: string) => {
-    const s = store()
-    const actor = actorOf(ctx)
-    const message = s.postMessage(channelId, text, actor)
-    const { channel } = s.listMessages({ channelId, limit: 1 }, actor)
-    changed(channel.orgId, channelId)
+    const { message, orgId } = store().postMessageWithOrg(channelId, text, actorOf(ctx))
+    changed(orgId, channelId)
     return message
   }, { nativeAction: 'write' })
 

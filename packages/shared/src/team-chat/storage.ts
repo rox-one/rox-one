@@ -148,6 +148,28 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     }
   }
 
+  /** postMessage plus the channel's orgId (avoids a second store load for the change event). */
+  function postMessageWithOrg(channelIdInput: unknown, textInput: unknown, actor: TeamChatActor): { message: TeamChannelMessage; orgId: string } {
+    const store = load()
+    const channel = visibleChannel(store, requireId(channelIdInput, 'channelId'), actor)
+    if (channel.archivedAt) throw new TeamChatError('INVALID', 'Channel is archived')
+    const member = memberOf(store, channel.id, actor.userId)
+    if (!member) throw new TeamChatError('FORBIDDEN', 'Join the channel to post')
+    const text = cleanText(textInput, TEAM_MESSAGE_MAX, 'text')
+    channel.lastSeq += 1
+    channel.lastMessageAt = now()
+    const message: TeamChannelMessage = { id: randomUUID(), channelId: channel.id, seq: channel.lastSeq, senderId: actor.userId, text, createdAt: channel.lastMessageAt }
+    store.messages.push(message)
+    member.lastReadSeq = channel.lastSeq
+    const inChannel = store.messages.filter(m => m.channelId === channel.id)
+    if (inChannel.length > TEAM_MESSAGES_PER_CHANNEL_MAX) {
+      const drop = new Set(inChannel.slice(0, inChannel.length - TEAM_MESSAGES_PER_CHANNEL_MAX).map(m => m.id))
+      store.messages = store.messages.filter(m => !drop.has(m.id))
+    }
+    save(store)
+    return { message, orgId: channel.orgId }
+  }
+
   function canManage(store: TeamChatStoreFile, channel: TeamChannel, actor: TeamChatActor): boolean {
     const member = memberOf(store, channel.id, actor.userId)
     if (member && member.role !== 'member') return true
@@ -208,7 +230,8 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       return toView(store, channel, actor.userId)
     },
 
-    leaveChannel(channelIdInput: unknown, actor: TeamChatActor): void {
+    /** Returns the channel's own orgId so callers broadcast to the right org. */
+    leaveChannel(channelIdInput: unknown, actor: TeamChatActor): { orgId: string } {
       const store = load()
       const channel = visibleChannel(store, requireId(channelIdInput, 'channelId'), actor)
       if (channel.isDefault) throw new TeamChatError('INVALID', 'The default channel cannot be left')
@@ -217,6 +240,7 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
         store.subscriptions = store.subscriptions.filter(s => !(s.channelId === channel.id && s.userId === actor.userId))
       }
       save(store)
+      return { orgId: channel.orgId }
     },
 
     addMembers(channelIdInput: unknown, userIds: unknown, actor: TeamChatActor): TeamChannelView {
@@ -234,19 +258,22 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     setSubscribed(channelIdInput: unknown, subscribed: unknown, actor: TeamChatActor): TeamChannelView {
       const store = load()
       const channel = visibleChannel(store, requireId(channelIdInput, 'channelId'), actor)
+      if (subscribed === true && channel.archivedAt) throw new TeamChatError('INVALID', 'Channel is archived')
       store.subscriptions = store.subscriptions.filter(s => !(s.channelId === channel.id && s.userId === actor.userId))
       if (subscribed === true) store.subscriptions.push({ channelId: channel.id, userId: actor.userId, createdAt: now() })
       save(store)
       return toView(store, channel, actor.userId)
     },
 
-    archiveChannel(channelIdInput: unknown, actor: TeamChatActor): void {
+    /** Returns the channel's own orgId so callers broadcast to the right org. */
+    archiveChannel(channelIdInput: unknown, actor: TeamChatActor): { orgId: string } {
       const store = load()
       const channel = visibleChannel(store, requireId(channelIdInput, 'channelId'), actor)
       if (channel.isDefault) throw new TeamChatError('INVALID', 'The default channel cannot be archived')
       if (!canManage(store, channel, actor)) throw new TeamChatError('FORBIDDEN', 'Only channel or org admins can archive')
       channel.archivedAt = now()
       save(store)
+      return { orgId: channel.orgId }
     },
 
     listMessages(input: ListTeamMessagesInput, actor: TeamChatActor): { channel: TeamChannelView; messages: TeamChannelMessage[] } {
@@ -262,25 +289,10 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     },
 
     postMessage(channelIdInput: unknown, textInput: unknown, actor: TeamChatActor): TeamChannelMessage {
-      const store = load()
-      const channel = visibleChannel(store, requireId(channelIdInput, 'channelId'), actor)
-      if (channel.archivedAt) throw new TeamChatError('INVALID', 'Channel is archived')
-      const member = memberOf(store, channel.id, actor.userId)
-      if (!member) throw new TeamChatError('FORBIDDEN', 'Join the channel to post')
-      const text = cleanText(textInput, TEAM_MESSAGE_MAX, 'text')
-      channel.lastSeq += 1
-      channel.lastMessageAt = now()
-      const message: TeamChannelMessage = { id: randomUUID(), channelId: channel.id, seq: channel.lastSeq, senderId: actor.userId, text, createdAt: channel.lastMessageAt }
-      store.messages.push(message)
-      member.lastReadSeq = channel.lastSeq
-      const inChannel = store.messages.filter(m => m.channelId === channel.id)
-      if (inChannel.length > TEAM_MESSAGES_PER_CHANNEL_MAX) {
-        const drop = new Set(inChannel.slice(0, inChannel.length - TEAM_MESSAGES_PER_CHANNEL_MAX).map(m => m.id))
-        store.messages = store.messages.filter(m => !drop.has(m.id))
-      }
-      save(store)
-      return message
+      return postMessageWithOrg(channelIdInput, textInput, actor).message
     },
+
+    postMessageWithOrg,
 
     markRead(channelIdInput: unknown, actor: TeamChatActor): void {
       const store = load()

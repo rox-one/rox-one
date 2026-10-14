@@ -6,6 +6,7 @@
  * join / leave / follow-in-Лента controls and a composer. All data comes from
  * teamChat:* (host store, org-membership checked server-side).
  */
+import { onMessengerCreateRequest, takeMessengerCreateRequest } from '@/platform/messenger-create-request'
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Archive, Bell, BellOff, Hash, Lock, LogIn, LogOut, MessagesSquare, Plus, Send, Users } from 'lucide-react'
@@ -41,6 +42,16 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
   const [creating, setCreating] = React.useState<TeamChannelKind | null>(null)
   const [actionError, setActionError] = React.useState<string | null>(null)
+
+  // Global «+» → group/channel: open the create form preset to that kind.
+  React.useEffect(() => {
+    const initial = takeMessengerCreateRequest()
+    if (initial) setCreating(initial)
+    return onMessengerCreateRequest(() => {
+      const kind = takeMessengerCreateRequest()
+      if (kind) setCreating(kind)
+    })
+  }, [])
 
   const selected = channels.channels.find(c => c.id === selectedId) ?? channels.channels[0] ?? null
   const messages = useTeamMessages(selected?.id ?? null)
