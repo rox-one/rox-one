@@ -28,6 +28,41 @@ import { isInternalAgentSession } from '@rox/shared/sessions/internal-prompts'
 import { isHomeSessionInWorkspace } from '@/platform/home-model'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
+import { isActive, type InboxItem, type InboxState } from '@/pages/inbox/inbox-model'
+
+/** First inbox item that is neither done nor still snoozed (expired snoozes count as active, like counts.all). */
+export function pickLatestInboxItem<T extends InboxItem>(items: readonly T[], state: InboxState, now: number): T | undefined {
+  return items.find((item) => isActive(state, item, now))
+}
+
+type DefaultConnectionApi = {
+  setWorkspaceDefaultLlmConnection?: (workspaceId: string, slug: string) => Promise<{ success?: boolean } | undefined | null>
+  setDefaultLlmConnection: (slug: string) => Promise<{ success?: boolean } | undefined | null>
+}
+
+/**
+ * Persist the picked model connection and refresh the list. Never rejects: an
+ * IPC failure is logged and reported as `false`, so the fire-and-forget onClick
+ * cannot raise an unhandled rejection.
+ */
+export async function applyDefaultConnection(
+  api: DefaultConnectionApi,
+  workspaceId: string | undefined,
+  slug: string,
+  refresh?: () => Promise<unknown> | unknown,
+): Promise<boolean> {
+  try {
+    const result = workspaceId && api.setWorkspaceDefaultLlmConnection
+      ? await api.setWorkspaceDefaultLlmConnection(workspaceId, slug)
+      : await api.setDefaultLlmConnection(slug)
+    if (!result?.success) return false
+    await refresh?.()
+    return true
+  } catch (error) {
+    console.warn('[StatusBar] failed to switch model connection', error)
+    return false
+  }
+}
 import { buildStatusBarModel, type WorkspaceRuntimeMode } from '@/platform/status-model'
 import { CHROME_DENSITY } from '@/platform/chrome-density'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -156,7 +191,7 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
   )
   const inbox = useInboxItems({ withRemote: false })
   const inboxOpen = inbox.counts.all
-  const latest = inbox.items.find((item) => !inbox.state.done[item.id] && !inbox.state.snoozed[item.id])
+  const latest = pickLatestInboxItem(inbox.items, inbox.state, inbox.now ?? Date.now())
 
   const reconnect = async () => {
     const api = window.electronAPI
@@ -182,10 +217,7 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
     if (!api) return
     setPickBusy(true)
     try {
-      const result = workspace?.id && api.setWorkspaceDefaultLlmConnection
-        ? await api.setWorkspaceDefaultLlmConnection(workspace.id, slug)
-        : await api.setDefaultLlmConnection(slug)
-      if (result?.success) await shell?.refreshLlmConnections()
+      await applyDefaultConnection(api, workspace?.id, slug, shell?.refreshLlmConnections)
     } finally { setPickBusy(false) }
   }
 
