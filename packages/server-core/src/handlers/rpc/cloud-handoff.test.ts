@@ -3,8 +3,8 @@ import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { HANDOFF_BROKER_URL_ENV, HANDOFF_DEFAULT_KEY_ENV, MemoryDaytonaClient, type SnapshotSource } from '@rox/cloud-runner';
-import { CloudHandoffService, HANDOFF_CLIENT_ID_ENV } from './cloud-handoff';
-import { collectHandoffSources, extractReferencedPaths, isContained } from './cloud-handoff-sources';
+import { CloudHandoffService, HANDOFF_CLIENT_ID_ENV, HANDOFF_DEV_SIGNED_LINKS_ENV, HANDOFF_WEB_HOST_ENV } from './cloud-handoff';
+import { collectHandoffSources, extractReferencedPaths, isContained, stripShareFieldsFromTranscript } from './cloud-handoff-sources';
 
 const enc = new TextEncoder();
 const sources: SnapshotSource[] = [
@@ -30,6 +30,7 @@ function makeService(over: Partial<ConstructorParameters<typeof CloudHandoffServ
       [HANDOFF_CLIENT_ID_ENV]: 'rox-cloud',
       [HANDOFF_BROKER_URL_ENV]: 'https://broker.rox.one',
       [HANDOFF_DEFAULT_KEY_ENV]: 'shared-key-must-never-be-used',
+      [HANDOFF_DEV_SIGNED_LINKS_ENV]: '1',
     },
     readUserKey: async () => userKey,
     writeUserKey: async (k) => { userKey = k; },
@@ -110,6 +111,53 @@ describe('CloudHandoffService', () => {
     expect(daytona.signedPreviewCalls.every((c) => c.expiresInSeconds <= 3600)).toBe(true);
   });
 
+  it('production (no dev flag) requires the web host and never issues signed links', async () => {
+    const env = { [HANDOFF_CLIENT_ID_ENV]: 'rox-cloud', [HANDOFF_BROKER_URL_ENV]: 'https://broker.rox.one' };
+    const prod = makeService({ env });
+    const failed = await settle(prod.service, (await prod.service.start('sess-1')).handoffId);
+    expect(failed.failure?.code).toBe('web_host_required');
+    expect(prod.daytona.createCalls).toHaveLength(0);
+    const hosted = makeService({ env: { ...env, [HANDOFF_WEB_HOST_ENV]: 'https://cloud.rox.one' } });
+    const ok = await settle(hosted.service, (await hosted.service.start('sess-1')).handoffId);
+    expect(ok.linkMode).toBe('web_host');
+    expect(ok.sessionUrl).toBe(`https://cloud.rox.one/s/${ok.handoffId}/`);
+    expect(hosted.daytona.signedPreviewCalls).toHaveLength(0);
+  });
+
+  it('wakes an auto-stopped sandbox (start + start script + health) before issuing a link', async () => {
+    const { service, daytona } = makeService();
+    const ready = await settle(service, (await service.start('sess-1')).handoffId);
+    await daytona.stopSandbox(ready.sandboxId!);
+    const commands: string[] = [];
+    daytona.execOverride = (c) => { commands.push(c); return undefined; };
+    const [a, b] = await Promise.all([service.status(ready.handoffId), service.status(ready.handoffId)]);
+    expect(daytona.sandboxes.get(ready.sandboxId!)!.state).toBe('started');
+    expect(commands.filter((c) => c.startsWith('rox-handoff-start'))).toHaveLength(1); // concurrent polls share one wake-up
+    expect(commands.at(-1)).toMatch(/^rox-handoff-health/);
+    expect(a!.sessionUrl).toMatch(/^https:\/\/9100-signed/);
+    expect(b!.sessionUrl).toMatch(/^https:\/\/9100-signed/);
+  });
+
+  it('no link when the sandbox cannot be woken', async () => {
+    const { service, daytona } = makeService();
+    const ready = await settle(service, (await service.start('sess-1')).handoffId);
+    await daytona.stopSandbox(ready.sandboxId!);
+    daytona.execOverride = (c) => (c.startsWith('rox-handoff-start') ? { exitCode: 1, stdout: '', stderr: 'boom' } as never : undefined);
+    const s = (await service.status(ready.handoffId))!;
+    expect(s.sessionUrl).toBeUndefined();
+    expect(s.failure?.code).toBe('provider_error');
+  });
+
+  it('keeps the previous cloud session when the replacement fails', async () => {
+    const { service, daytona } = makeService();
+    const a = await settle(service, (await service.start('sess-1')).handoffId);
+    daytona.execOverride = (c) => (c.startsWith('rox-handoff-start') ? { exitCode: 1, stdout: '', stderr: 'boom' } as never : undefined);
+    const b = await settle(service, (await service.start('sess-1')).handoffId);
+    expect(b.phase).toBe('failed');
+    expect(daytona.sandboxes.get(a.sandboxId!)!.state).not.toBe('destroyed');
+    expect((await service.status(a.handoffId))!.ended).toBeUndefined();
+  });
+
   it('ends a cloud session and replaces the previous one for the same chat', async () => {
     const { service, daytona } = makeService();
     const a = await settle(service, (await service.start('sess-1')).handoffId);
@@ -165,6 +213,23 @@ describe('collectHandoffSources', () => {
     );
     const out = await collectHandoffSources({ sessionDir, workingDirectory: wd });
     expect(out.map((s) => s.path).sort()).toEqual(['session/attachments/pic.png', 'session/session.jsonl', 'workspace/src/a.ts']);
+  });
+
+  it('strips share capabilities from the transcript header before upload', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'rox-handoff-'));
+    const sessionDir = join(root, 'sess');
+    mkdirSync(sessionDir, { recursive: true });
+    const header = { id: 's', workingDirectory: '/w', sharedOwnerKey: 'OWNERKEY', sharedUrl: 'https://share/x', sharedId: 'x' };
+    writeFileSync(join(sessionDir, 'session.jsonl'), `${JSON.stringify(header)}\n{"m":"sharedOwnerKey stays in body"}\n`);
+    const out = await collectHandoffSources({ sessionDir });
+    const text = new TextDecoder().decode(await out.find((s) => s.path === 'session/session.jsonl')!.read());
+    const [h, body] = text.split('\n');
+    expect(JSON.parse(h!)).toEqual({ id: 's', workingDirectory: '/w' });
+    expect(text).not.toContain('OWNERKEY');
+    expect(body).toBe('{"m":"sharedOwnerKey stays in body"}');
+    const clean = enc.encode('{"id":"s"}\n');
+    expect(stripShareFieldsFromTranscript(clean)).toBe(clean);
+    expect(() => stripShareFieldsFromTranscript(enc.encode('not json\n'))).toThrow();
   });
 
   it('extracts referenced paths under the working dir', () => {

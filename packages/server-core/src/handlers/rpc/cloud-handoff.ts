@@ -15,6 +15,7 @@ import {
   HttpDaytonaClient,
   fetchRoxIdSubject,
   isPlausibleDaytonaKey,
+  ensureSessionRunning,
   issueSignedSessionLink,
   readPersonalHandoffKey,
   runCloudHandoff,
@@ -30,6 +31,8 @@ import type { HandlerDeps } from '../handler-deps';
 export const DEFAULT_ROX_ID_ISSUER = 'https://id.rox.one';
 export const HANDOFF_CLIENT_ID_ENV = 'ROX_CLOUD_HANDOFF_OIDC_CLIENT_ID';
 export const HANDOFF_WEB_HOST_ENV = 'ROX_CLOUD_HANDOFF_WEB_HOST';
+/** Dev only: allow signed Daytona preview links when no web host is configured. */
+export const HANDOFF_DEV_SIGNED_LINKS_ENV = 'ROX_CLOUD_HANDOFF_DEV_SIGNED_LINKS';
 const STATUS_RETENTION_MS = 60 * 60_000;
 const SESSION_ID_RE = /^[A-Za-z0-9_.-]{1,128}$/;
 
@@ -59,6 +62,8 @@ export interface CloudHandoffPublicConfig {
   brokerConfigured: boolean;
   ssoConfigured: boolean;
   webHostConfigured: boolean;
+  /** Dev mode: signed Daytona preview links allowed without a web host. */
+  devSignedLinks: boolean;
 }
 
 interface HandoffRecord extends HandoffStatus {
@@ -79,6 +84,8 @@ export class CloudHandoffService {
   private readonly controllers = new Map<string, AbortController>();
   /** Latest *accepted* handoff per chat (rejected starts never replace it). */
   private readonly bySession = new Map<string, string>();
+  /** In-flight wake-ups of auto-stopped sandboxes, so concurrent status polls share one. */
+  private readonly resuming = new Map<string, Promise<void>>();
   /** Settles once a handoff reaches a terminal phase (also a test seam). */
   readonly running = new Map<string, Promise<void>>();
 
@@ -104,6 +111,10 @@ export class CloudHandoffService {
 
   private webHost(cfg: HandoffConfig | undefined): string | undefined {
     return (cfg?.webHost ?? this.env()[HANDOFF_WEB_HOST_ENV])?.trim() || undefined;
+  }
+
+  private devSignedLinks(): boolean {
+    return this.env()[HANDOFF_DEV_SIGNED_LINKS_ENV] === '1';
   }
 
   private brokerUrl(cfg: HandoffConfig | undefined): string | undefined {
@@ -135,6 +146,7 @@ export class CloudHandoffService {
       brokerConfigured: Boolean(this.brokerUrl(cfg)),
       ssoConfigured: this.sso(cfg) !== null,
       webHostConfigured: Boolean(this.webHost(cfg)),
+      devSignedLinks: this.devSignedLinks(),
     };
   }
 
@@ -165,23 +177,34 @@ export class CloudHandoffService {
     if (!r) return null;
     const view = this.publicView(r);
     if (r.phase === 'ready' && !r.ended && r.sandboxId) {
-      if (r.linkMode === 'web_host') {
-        view.sessionUrl = r.stableUrl;
-      } else {
-        try {
-          const cfg = this.deps.readConfig();
-          const { client } = await this.resolveClient(cfg, r.mode);
-          view.sessionUrl = await issueSignedSessionLink(client, r.sandboxId);
-        } catch (error) {
-          view.sessionUrl = undefined;
-          view.failure = {
-            code: error instanceof HandoffError ? error.code : 'provider_error',
-            message: 'could not issue a session link',
-          };
-        }
+      try {
+        const cfg = this.deps.readConfig();
+        const { client } = await this.resolveClient(cfg, r.mode);
+        // An auto-stopped sandbox is woken (start + idempotent start script +
+        // health) before any link is handed out, so the link never opens a dead session.
+        await this.resume(r, client);
+        view.sessionUrl = r.linkMode === 'web_host' ? r.stableUrl : await issueSignedSessionLink(client, r.sandboxId);
+      } catch (error) {
+        view.sessionUrl = undefined;
+        view.failure = {
+          code: error instanceof HandoffError ? error.code : 'provider_error',
+          message: 'could not open the cloud session',
+        };
       }
     }
     return view;
+  }
+
+  private resume(r: HandoffRecord, client: DaytonaClient): Promise<void> {
+    const key = r.handoffId;
+    let p = this.resuming.get(key);
+    if (!p) {
+      p = ensureSessionRunning(client, r.sandboxId!)
+        .then(() => undefined)
+        .finally(() => this.resuming.delete(key));
+      this.resuming.set(key, p);
+    }
+    return p;
   }
 
   /** Latest accepted handoff for a chat, so the UI can restore the link after reload. */
@@ -273,11 +296,6 @@ export class CloudHandoffService {
     record.keySource = resolved.mode;
     record.mode = resolved.mode;
 
-    // A new handoff for the same chat replaces the previous cloud session.
-    if (prior && prior.phase === 'ready' && !prior.ended) {
-      await this.destroy(prior).catch(() => undefined);
-    }
-
     const sources = await this.deps.resolveSources(record.sessionId);
     const result = await runCloudHandoff({
       client: resolved.client,
@@ -288,6 +306,7 @@ export class CloudHandoffService {
       sources,
       sso: this.sso(cfg),
       webHost: this.webHost(cfg),
+      allowSignedLinks: this.devSignedLinks(),
       snapshot: cfg.daytonaSnapshot,
       region: cfg.daytonaRegion,
       signal: ctrl.signal,
@@ -304,6 +323,11 @@ export class CloudHandoffService {
       excludedCount: result.manifest.excluded.length,
       updatedAt: this.now(),
     });
+    // Replace the chat's previous cloud session only now that the new one is
+    // ready; if this handoff failed above, the old one is left untouched.
+    if (prior && prior.phase === 'ready' && !prior.ended) {
+      await this.destroy(prior).catch(() => undefined);
+    }
   }
 
   private prune(): void {

@@ -934,13 +934,43 @@ describe('OIDC redirect host pattern (rotating signed links)', () => {
 describe('cloud handoff broker mount', () => {
   it('never activates inside Electron or without explicit enablement + shared key', async () => {
     const { maybeCreateCloudHandoffBroker } = await import('../cloud-handoff-broker')
-    const env = { ROX_CLOUD_HANDOFF_BROKER_ENABLED: '1', ROX_CLOUD_HANDOFF_DAYTONA_API_KEY: 'k'.repeat(20) }
+    const env = { ROX_CLOUD_HANDOFF_BROKER_ENABLED: '1', ROX_CLOUD_HANDOFF_DAYTONA_API_KEY: 'k'.repeat(20), ROX_CLOUD_HANDOFF_BROKER_ALLOWED_CLIENT_IDS: 'rox-desktop' }
     expect(maybeCreateCloudHandoffBroker({ env, isElectron: true })).toBeUndefined()
+    // No audience allow-list ⇒ fail closed (not mounted).
+    expect(maybeCreateCloudHandoffBroker({ env: { ...env, ROX_CLOUD_HANDOFF_BROKER_ALLOWED_CLIENT_IDS: ' ' }, isElectron: false })).toBeUndefined()
     expect(maybeCreateCloudHandoffBroker({ env: { ...env, ROX_CLOUD_HANDOFF_BROKER_ENABLED: '0' }, isElectron: false })).toBeUndefined()
     expect(maybeCreateCloudHandoffBroker({ env: { ROX_CLOUD_HANDOFF_BROKER_ENABLED: '1' }, isElectron: false })).toBeUndefined()
     const handler = maybeCreateCloudHandoffBroker({ env, isElectron: false, fetchImpl: async () => new Response('', { status: 401 }) })!
     expect(await handler(new Request('https://h/other'))).toBeNull()
     const res = await handler(new Request('https://h/api/cloud-handoff/v1/sandboxes', { headers: { Authorization: 'Bearer t' } }))
     expect(res!.status).toBe(401)
+  })
+})
+
+describe('cloud handoff broker token audience', () => {
+  const jwt = (claims: Record<string, unknown>) =>
+    `h.${Buffer.from(JSON.stringify(claims)).toString('base64url')}.sig`
+  const idp = (sub: string) => async (url: string) => {
+    if (url.endsWith('/.well-known/openid-configuration')) return Response.json({ userinfo_endpoint: 'https://id.rox.one/userinfo' })
+    return Response.json({ sub })
+  }
+  const env = { ROX_CLOUD_HANDOFF_BROKER_ENABLED: '1', ROX_CLOUD_HANDOFF_DAYTONA_API_KEY: 'k'.repeat(20), ROX_CLOUD_HANDOFF_BROKER_ALLOWED_CLIENT_IDS: 'rox-desktop' }
+  const call = async (token: string) => {
+    const { maybeCreateCloudHandoffBroker } = await import('../cloud-handoff-broker')
+    const handler = maybeCreateCloudHandoffBroker({ env, isElectron: false, fetchImpl: idp('user-1') as never })!
+    return (await handler(new Request('https://h/api/cloud-handoff/v1/nope', { headers: { Authorization: `Bearer ${token}` } })))!.status
+  }
+
+  it('rejects tokens issued to another id.rox.one client, opaque tokens without introspection and sub mismatch', async () => {
+    expect(await call(jwt({ sub: 'user-1', aud: 'other-app', azp: 'other-app' }))).toBe(401)
+    expect(await call('opaque-token-value')).toBe(401)
+    expect(await call(jwt({ sub: 'someone-else', azp: 'rox-desktop' }))).toBe(401)
+    expect(await call(jwt({ sub: 'user-1', iss: 'https://evil.example', azp: 'rox-desktop' }))).toBe(401)
+  })
+
+  it('accepts a token whose aud/azp/client_id is an allowed client', async () => {
+    // Authenticated: reaches the router (unknown route ⇒ 404, not 401) — no Daytona call is made.
+    expect(await call(jwt({ sub: 'user-1', iss: 'https://id.rox.one', aud: ['api', 'rox-desktop'] }))).toBe(404)
+    expect(await call(jwt({ sub: 'user-1', client_id: 'rox-desktop' }))).toBe(404)
   })
 })

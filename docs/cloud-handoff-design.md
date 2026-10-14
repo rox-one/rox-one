@@ -57,12 +57,21 @@ Rejected starts (flag off, another handoff running) are reported but never repla
 
 ## 5. Links
 - Sandbox is **always private** (`public:false`; a public sandbox exposes every port incl. the web terminal 22222).
-- Web host mode (`cloudHandoff.webHost` / `ROX_CLOUD_HANDOFF_WEB_HOST`): stable `https://<host>/s/<handoffId>/`.
-- Signed mode: Daytona signed preview URL for port 9100 with **1 h TTL** (`linkTtlSec`), clamped to Daytona's documented
+- **Production = web host mode only** (`cloudHandoff.webHost` / `ROX_CLOUD_HANDOFF_WEB_HOST`, i.e. `cloud.rox.one`):
+  stable `https://<host>/s/<handoffId>/`. Without a web host the handoff fails with `web_host_required` before any
+  sandbox is created. No wildcard Daytona redirect is registered at id.rox.one (a `9100-*.<daytona proxy>` redirect
+  would be hostable by any Daytona customer).
+- **Dev only** — signed mode, only with `ROX_CLOUD_HANDOFF_DEV_SIGNED_LINKS=1` (desktop; the broker needs the same flag
+  to serve `signed-preview-url`, else 403): Daytona signed preview URL for port 9100 with **1 h TTL** (`linkTtlSec`), clamped to Daytona's documented
   max 86 400 s; re-issued on every `cloudHandoff:status` read, never stored. Because each signed link has a different host,
   the sandbox gets `ROX_WEBUI_PUBLIC_HOST_PATTERN=9100-[a-z0-9-]+\.<proxy-domain>`: the web UI uses the request host as
   OIDC redirect base only if it matches (else 400), and the token exchange reuses the exact redirect_uri from login.
 - Only https URLs are opened.
+- **Waking a stopped sandbox:** every `status`/open of a ready session checks the sandbox state; if it auto-stopped it is
+  started, `rox-handoff-start` is re-run and health is polled before any link is returned (concurrent polls share one
+  wake-up). If this fails, no link is returned.
+- **Restart safety:** `rox-handoff-start` unpacks `bundle/` into the workspace only once (marker
+  `rox-workspace/.rox-handoff-unpacked`), so a restart never overwrites cloud-side messages with the desktop snapshot.
 
 ## 6. SSO / ownership
 - Issuer `https://id.rox.one`, public PKCE client (`cloudHandoff.ssoClientId` / `ROX_CLOUD_HANDOFF_OIDC_CLIENT_ID`).
@@ -77,30 +86,37 @@ Rejected starts (flag off, another handoff running) are reported but never repla
   `/api/cloud-handoff/v1/*`, `Authorization: Bearer <id.rox.one token>`.
 - Broker (server-core `maybeCreateCloudHandoffBroker`, mounted in `packages/server` via `extraRoutes`): active only when
   `ROX_CLOUD_HANDOFF_BROKER_ENABLED=1`, `ROX_CLOUD_HANDOFF_DAYTONA_API_KEY` is set and **not Electron**. It verifies the
-  token via userinfo (60 s cache), then only: list/create/get/start/stop/delete **own** sandboxes (owner label),
-  write files under the handoff root (size-capped), exec exactly `rox-handoff-start|health <root>`, signed link for port
-  9100 only (≤ 1 h). It forces snapshot, `public:false`, TTLs and labels, and rejects a `server.env` whose
+  token via userinfo (60 s cache) **and its audience**: `aud`/`azp`/`client_id` must be in
+  `ROX_CLOUD_HANDOFF_BROKER_ALLOWED_CLIENT_IDS` (required; the broker doesn't mount without it), token `sub`/`iss` must match.
+  JWTs are trusted after userinfo accepted them; opaque tokens need RFC 7662 introspection
+  (`ROX_CLOUD_HANDOFF_INTROSPECTION_CLIENT_ID/SECRET`), otherwise they're refused. Then only: list/create/get/start/stop/delete **own** sandboxes (owner label),
+  write only `bundle/**`, `manifest.json`, `server.env` (paths with empty/`.`/`..` segments or backslashes rejected;
+  bodies capped by Content-Length and while streaming before JSON parse), exec exactly `rox-handoff-start|health <root>`, signed link for port
+  9100 only (≤ 1 h, dev flag only). Create is serialised per owner (quota check + create under a lock) and capped
+  globally (`maxLiveTotal`, default 200 live sandboxes on the shared key). It forces snapshot, `public:false`, TTLs and labels, and rejects a `server.env` whose
   `ROX_WEBUI_OIDC_ALLOWED_SUBS` isn't the caller or whose `ROX_WEBUI_PASSWORD_LOGIN` isn't `0`. Provider errors are not echoed.
 
 ## 8. Errors (ru/en)
-`disabled, no_key («Добавь свой ключ Daytona»), sign_in_required, sso_not_configured, too_large, quota_exceeded, provider_error, start_timeout, cancelled`.
+`disabled, no_key («Добавь свой ключ Daytona»), sign_in_required, sso_not_configured, web_host_required, too_large, quota_exceeded, provider_error, start_timeout, cancelled`.
 
 ## 9. Cleanup / TTL / cost
 - auto-stop 30 min idle, auto-delete 24 h after stop; failure/cancel deletes the sandbox.
 - Quota: 2 **live** (started/creating) sandboxes per owner; stopped ones don't count. Enforced on desktop (personal key)
   and in the broker (shared key).
-- «Завершить» deletes now; a new handoff for the same chat replaces the previous sandbox.
+- «Завершить» deletes now. A new handoff for the same chat deletes the previous sandbox **only after the new one is
+  ready**; if the new one fails, the old session stays.
 - One in-flight handoff per app. Flag default off.
 
 ## 10. Open items for Mark
 - Deploy the broker on a Rox host (`ROX_CLOUD_HANDOFF_BROKER_ENABLED=1` + shared key) and give its URL.
-- id.rox.one: public PKCE client for cloud sessions; redirect URIs `https://<webhost>/s/*/api/auth/callback` and/or the
-  Daytona proxy wildcard `https://9100-*.<proxy-domain>/api/auth/callback`; confirm the desktop Rox token is accepted by
+- id.rox.one: public PKCE client for cloud sessions; redirect URI `https://cloud.rox.one/s/*/api/auth/callback` only (no
+  Daytona wildcard); the desktop's client id for `ROX_CLOUD_HANDOFF_BROKER_ALLOWED_CLIENT_IDS` (+ introspection creds if
+  access tokens are opaque); confirm the desktop Rox token is accepted by
   id.rox.one `userinfo` (if not, the desktop needs its own id.rox.one OIDC login).
-- Web host / proxy (`cloud.rox.one`?) — optional with signed links, but avoids the Daytona preview warning page.
+- Web host / proxy `cloud.rox.one` (`ROX_CLOUD_HANDOFF_WEB_HOST`) — **required for production**.
 - Build/publish `rox-session-server-v1` and run a real E2E. Startup import is wired: `bootstrapServer` calls
   `importCloudHandoffWorkspace` (server-core/src/bootstrap/cloud-handoff-import.ts) before the session manager
   loads, which validates `ROX_HANDOFF_WORKSPACE_DIR` (absolute, real dir, under `ROX_HANDOFF_ALLOWED_ROOT`
-  default /home/daytona) and `ROX_HANDOFF_SESSION_ID`, rewrites the header's `workingDirectory` to `<ws>/project`,
-  strips `sharedOwnerKey/sharedUrl/sharedId`, and registers + activates the workspace idempotently
+  default /home/daytona) and `ROX_HANDOFF_SESSION_ID`, rewrites the header's `workingDirectory` to `<ws>/project` and `sdkCwd` to the session dir,
+  strips `sharedOwnerKey/sharedUrl/sharedId` (already stripped on the desktop before upload; re-done here as defence), and registers + activates the workspace idempotently
   (marker `.rox-handoff-imported`). A validation failure aborts startup, so the health check fails closed.

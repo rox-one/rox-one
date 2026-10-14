@@ -13,7 +13,7 @@ export function phaseLabelKey(phase: CloudHandoffPhase): string {
 }
 
 const KNOWN_FAILURES = new Set([
-  'disabled', 'no_key', 'sign_in_required', 'sso_not_configured', 'too_large',
+  'disabled', 'no_key', 'sign_in_required', 'sso_not_configured', 'web_host_required', 'too_large',
   'quota_exceeded', 'provider_error', 'start_timeout', 'cancelled',
 ])
 

@@ -29,9 +29,14 @@ fi
 
 # Lay the snapshot out as a workspace: session folder + referenced project files.
 WS=/home/daytona/rox-workspace
-mkdir -p "$WS/sessions/$ROX_HANDOFF_SESSION_ID" "$WS/project"
-[ -d "$ROOT/bundle/session" ] && cp -a "$ROOT/bundle/session/." "$WS/sessions/$ROX_HANDOFF_SESSION_ID/"
-[ -d "$ROOT/bundle/workspace" ] && cp -a "$ROOT/bundle/workspace/." "$WS/project/"
+# Unpack exactly once: after auto-stop/restart the cloud transcript has moved on
+# and must never be overwritten by the original desktop snapshot.
+if [ ! -f "$WS/.rox-handoff-unpacked" ]; then
+  mkdir -p "$WS/sessions/$ROX_HANDOFF_SESSION_ID" "$WS/project"
+  if [ -d "$ROOT/bundle/session" ]; then cp -a "$ROOT/bundle/session/." "$WS/sessions/$ROX_HANDOFF_SESSION_ID/"; fi
+  if [ -d "$ROOT/bundle/workspace" ]; then cp -a "$ROOT/bundle/workspace/." "$WS/project/"; fi
+  echo "$ROX_HANDOFF_SESSION_ID" > "$WS/.rox-handoff-unpacked"
+fi
 
 ROX_SERVER_TOKEN="$(openssl rand -hex 32)"
 export ROX_SERVER_TOKEN

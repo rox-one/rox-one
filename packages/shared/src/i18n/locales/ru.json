@@ -1142,6 +1142,7 @@
   "cloudHandoff.error.sso_not_configured": "Вход через id.rox.one для облачных сессий ещё не настроен",
   "cloudHandoff.error.start_timeout": "Облачная сессия не запустилась вовремя",
   "cloudHandoff.error.too_large": "Чат слишком большой для переноса в облако",
+  "cloudHandoff.error.web_host_required": "Облачный хост сессий (cloud.rox.one) ещё не настроен",
   "cloudHandoff.keyConfigured": "Ключ сохранён",
   "cloudHandoff.keyHint": "Свой ключ Daytona хранится зашифрованным на этом устройстве. Без него облако работает через сервер Rox, если он подключён.",
   "cloudHandoff.keyInvalid": "Ключ не похож на ключ Daytona",

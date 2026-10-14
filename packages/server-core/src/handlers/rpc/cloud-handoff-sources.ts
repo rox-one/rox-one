@@ -35,6 +35,32 @@ function fileSource(abs: string, dest: string, size: number, root?: string): Sna
   };
 }
 
+/** Desktop-only share capabilities that must never leave this machine. */
+export const HANDOFF_STRIPPED_HEADER_FIELDS = ['sharedOwnerKey', 'sharedUrl', 'sharedId'] as const;
+
+/** Drop share capabilities from the transcript header line; other lines untouched. */
+export function stripShareFieldsFromTranscript(bytes: Uint8Array): Uint8Array {
+  const text = new TextDecoder().decode(bytes);
+  const nl = text.indexOf('\n');
+  const first = nl === -1 ? text : text.slice(0, nl);
+  let header: unknown;
+  try {
+    header = JSON.parse(first);
+  } catch {
+    throw new Error('session.jsonl header is not valid JSON');
+  }
+  if (!header || typeof header !== 'object' || Array.isArray(header)) throw new Error('session.jsonl header is not an object');
+  const h = header as Record<string, unknown>;
+  if (!HANDOFF_STRIPPED_HEADER_FIELDS.some((f) => f in h)) return bytes;
+  for (const f of HANDOFF_STRIPPED_HEADER_FIELDS) delete h[f];
+  return new TextEncoder().encode(JSON.stringify(h) + (nl === -1 ? '' : text.slice(nl)));
+}
+
+function transcriptSource(abs: string, dest: string, size: number): SnapshotSource {
+  const inner = fileSource(abs, dest, size);
+  return { ...inner, read: async () => stripShareFieldsFromTranscript(await inner.read()) };
+}
+
 async function walk(root: string, prefix: string, out: SnapshotSource[]): Promise<void> {
   const stack = [root];
   let seen = 0;
@@ -55,7 +81,8 @@ async function walk(root: string, prefix: string, out: SnapshotSource[]): Promis
       } else if (entry.isFile()) {
         const st = await lstat(abs).catch(() => null);
         if (!st?.isFile()) continue;
-        out.push(fileSource(abs, `${prefix}/${toPosix(relative(root, abs))}`, st.size));
+        const dest = `${prefix}/${toPosix(relative(root, abs))}`;
+        out.push(dest === 'session/session.jsonl' ? transcriptSource(abs, dest, st.size) : fileSource(abs, dest, st.size));
       }
     }
   }

@@ -35,6 +35,7 @@ function baseInput(client: MemoryDaytonaClient, extra: Partial<Parameters<typeof
       src('../escape.txt', 'x'),
     ],
     sso,
+    allowSignedLinks: true,
     sleep: async () => undefined,
     ...extra,
   };

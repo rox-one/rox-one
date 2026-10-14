@@ -79,6 +79,7 @@ describe('cloud handoff startup import', () => {
     const lines = readFileSync(join(l.ws, 'sessions', SID, 'session.jsonl'), 'utf8').split('\n')
     const header = JSON.parse(lines[0]!)
     expect(header.workingDirectory).toBe(join(l.ws, 'project'))
+    expect(header.sdkCwd).toBe(join(l.ws, 'sessions', SID))
     expect(header.sharedOwnerKey).toBeUndefined()
     expect(header.sharedUrl).toBeUndefined()
     expect(JSON.parse(lines[1]!).content).toBe('привет')

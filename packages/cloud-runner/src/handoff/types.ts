@@ -20,6 +20,7 @@ export type HandoffFailureCode =
   | 'no_key'
   | 'sign_in_required'
   | 'sso_not_configured'
+  | 'web_host_required'
   | 'too_large'
   | 'quota_exceeded'
   | 'provider_error'

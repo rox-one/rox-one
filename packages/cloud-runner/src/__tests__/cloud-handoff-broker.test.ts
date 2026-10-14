@@ -15,7 +15,7 @@ const TOKENS: Record<string, string> = { 'tok-alice': 'alice-sub', 'tok-bob': 'b
 
 function setup() {
   const daytona = new MemoryDaytonaClient();
-  const handler = createHandoffBrokerHandler({ client: daytona, verifyToken: async (t) => TOKENS[t] ?? null });
+  const handler = createHandoffBrokerHandler({ client: daytona, verifyToken: async (t) => TOKENS[t] ?? null, allowSignedPreview: true });
   const fetchImpl = async (input: string, init?: RequestInit) =>
     (await handler(new Request(input, init))) ?? new Response('nope', { status: 404 });
   const clientFor = (token: string) =>
@@ -31,6 +31,7 @@ const input = (client: BrokerDaytonaClient, ownerSub: string, handoffId = 'hf_br
   ownerSub,
   sources: [{ path: 'session/session.jsonl', size: 2, read: async () => enc.encode('{}') }],
   sso,
+  allowSignedLinks: true,
   sleep: async () => undefined,
 });
 

@@ -27,6 +27,53 @@ export interface BrokerHandlerOptions {
   snapshot?: string;
   region?: string;
   limits?: Partial<HandoffLimits>;
+  /** Max live handoff sandboxes across all owners on the shared key (default 200). */
+  maxLiveTotal?: number;
+  /**
+   * Dev only: serve signed Daytona preview links. Off in production, where
+   * sessions are fronted by the web host (cloud.rox.one).
+   */
+  allowSignedPreview?: boolean;
+}
+
+/** Upload targets a desktop may write; everything else (server.pid, logs, …) is off limits. */
+export function normalizeBrokerUploadPath(raw: string): string | null {
+  if (typeof raw !== 'string' || raw.includes('\0') || raw.includes('\\')) return null;
+  const prefix = `${HANDOFF_ROOT}/`;
+  if (!raw.startsWith(prefix)) return null;
+  const segments = raw.slice(prefix.length).split('/');
+  if (segments.some((seg) => seg === '' || seg === '.' || seg === '..')) return null;
+  const rel = segments.join('/');
+  if (rel === 'manifest.json' || rel === 'server.env') return `${prefix}${rel}`;
+  if (segments[0] === 'bundle' && segments.length >= 2) return `${prefix}${rel}`;
+  return null;
+}
+
+class BodyTooLarge extends Error {}
+
+/** Parse a JSON body, refusing (before buffering) anything above `cap` bytes. */
+export async function readJsonCapped(req: Request, cap: number): Promise<unknown> {
+  const declared = Number(req.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > cap) throw new BodyTooLarge();
+  if (!req.body) return null;
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > cap) {
+      await reader.cancel().catch(() => undefined);
+      throw new BodyTooLarge();
+    }
+    chunks.push(value);
+  }
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  } catch {
+    return null;
+  }
 }
 
 const ALLOWED_COMMANDS = new Set([`rox-handoff-start ${HANDOFF_ROOT}`, `rox-handoff-health ${HANDOFF_ROOT}`]);
@@ -55,6 +102,22 @@ export function createHandoffBrokerHandler(options: BrokerHandlerOptions): (req:
   const limits: HandoffLimits = { ...DEFAULT_HANDOFF_LIMITS, ...options.limits };
   const { client } = options;
   const maxB64 = Math.ceil((limits.maxFileBytes * 4) / 3) + 16;
+  const maxBody = maxB64 + 1024;
+  const smallBody = 4096;
+  const maxLiveTotal = options.maxLiveTotal ?? 200;
+  // Serialises quota check + create per owner, and globally caps creates in flight.
+  const ownerLocks = new Map<string, Promise<unknown>>();
+  let creatingTotal = 0;
+  const withOwnerLock = async <T>(owner: string, fn: () => Promise<T>): Promise<T> => {
+    const prev = ownerLocks.get(owner) ?? Promise.resolve();
+    const run = prev.catch(() => undefined).then(fn);
+    ownerLocks.set(owner, run);
+    try {
+      return await run;
+    } finally {
+      if (ownerLocks.get(owner) === run) ownerLocks.delete(owner);
+    }
+  };
 
   async function ownSandbox(id: string, owner: string): Promise<DaytonaSandboxRecord | null> {
     if (!SANDBOX_ID_RE.test(id)) return null;
@@ -86,23 +149,33 @@ export function createHandoffBrokerHandler(options: BrokerHandlerOptions): (req:
       }
 
       if (parts.length === 1 && req.method === 'POST') {
-        const body = (await req.json().catch(() => null)) as { handoffId?: unknown } | null;
+        const body = (await readJsonCapped(req, smallBody)) as { handoffId?: unknown } | null;
         const handoffId = typeof body?.handoffId === 'string' ? body.handoffId : '';
         if (!HANDOFF_ID_RE.test(handoffId)) return fail('invalid_handoff_id', 400);
-        const live = (await client.listSandboxes({ key: HANDOFF_OWNER_LABEL, value: owner }))
-          .filter((s) => s.labels[HANDOFF_OWNER_LABEL] === owner && isLiveSandbox(s));
-        if (live.length >= limits.maxActivePerOwner) return fail('quota_exceeded', 429);
-        const created = await client.createSandbox({
-          name: `rox-handoff-${handoffId}`.toLowerCase(),
-          snapshot: options.snapshot ?? DEFAULT_HANDOFF_SNAPSHOT,
-          region: options.region,
-          labels: { [HANDOFF_LABEL]: '1', [HANDOFF_OWNER_LABEL]: owner, 'rox.cloud-handoff.id': handoffId, 'rox.cloud-handoff.broker': '1' },
-          env: { ROX_HANDOFF_ID: handoffId },
-          public: false,
-          autoStopIntervalMin: limits.autoStopIntervalMin,
-          autoDeleteIntervalMin: limits.autoDeleteIntervalMin,
+        return await withOwnerLock(owner, async () => {
+          if (creatingTotal >= maxLiveTotal) return fail('capacity_exceeded', 503);
+          creatingTotal += 1;
+          try {
+            const live = (await client.listSandboxes({ key: HANDOFF_OWNER_LABEL, value: owner }))
+              .filter((s) => s.labels[HANDOFF_OWNER_LABEL] === owner && isLiveSandbox(s));
+            if (live.length >= limits.maxActivePerOwner) return fail('quota_exceeded', 429);
+            const liveTotal = (await client.listSandboxes({ key: HANDOFF_LABEL, value: '1' })).filter(isLiveSandbox).length;
+            if (liveTotal + creatingTotal - 1 >= maxLiveTotal) return fail('capacity_exceeded', 503);
+            const created = await client.createSandbox({
+              name: `rox-handoff-${handoffId}`.toLowerCase(),
+              snapshot: options.snapshot ?? DEFAULT_HANDOFF_SNAPSHOT,
+              region: options.region,
+              labels: { [HANDOFF_LABEL]: '1', [HANDOFF_OWNER_LABEL]: owner, 'rox.cloud-handoff.id': handoffId, 'rox.cloud-handoff.broker': '1' },
+              env: { ROX_HANDOFF_ID: handoffId },
+              public: false,
+              autoStopIntervalMin: limits.autoStopIntervalMin,
+              autoDeleteIntervalMin: limits.autoDeleteIntervalMin,
+            });
+            return json(created, 201);
+          } finally {
+            creatingTotal -= 1;
+          }
         });
-        return json(created, 201);
       }
 
       const sandbox = parts[1] ? await ownSandbox(parts[1], owner) : null;
@@ -122,12 +195,10 @@ export function createHandoffBrokerHandler(options: BrokerHandlerOptions): (req:
       }
 
       if (action === 'files' && req.method === 'PUT') {
-        const body = (await req.json().catch(() => null)) as { path?: unknown; content?: unknown } | null;
-        const path = typeof body?.path === 'string' ? body.path : '';
+        const body = (await readJsonCapped(req, maxBody)) as { path?: unknown; content?: unknown } | null;
+        const path = normalizeBrokerUploadPath(typeof body?.path === 'string' ? body.path : '');
         const content = typeof body?.content === 'string' ? body.content : '';
-        if (!path.startsWith(`${HANDOFF_ROOT}/`) || path.split('/').includes('..') || path.includes('\0')) {
-          return fail('invalid_path', 400);
-        }
+        if (!path) return fail('invalid_path', 400);
         if (content.length > maxB64) return fail('too_large', 413);
         const bytes = Uint8Array.from(Buffer.from(content, 'base64'));
         if (path === `${HANDOFF_ROOT}/server.env`) {
@@ -143,13 +214,14 @@ export function createHandoffBrokerHandler(options: BrokerHandlerOptions): (req:
       }
 
       if (action === 'exec' && req.method === 'POST') {
-        const body = (await req.json().catch(() => null)) as { command?: unknown } | null;
+        const body = (await readJsonCapped(req, smallBody)) as { command?: unknown } | null;
         const command = typeof body?.command === 'string' ? body.command : '';
         if (!ALLOWED_COMMANDS.has(command)) return fail('command_not_allowed', 403);
         return json(await client.exec(id, command, req.signal));
       }
 
       if (action === 'signed-preview-url' && req.method === 'GET') {
+        if (options.allowSignedPreview !== true) return fail('web_host_required', 403);
         if (Number(url.searchParams.get('port')) !== HANDOFF_SERVER_PORT) return fail('port_not_allowed', 403);
         const requested = Number(url.searchParams.get('expiresInSeconds')) || limits.linkTtlSec;
         const ttl = Math.max(60, Math.min(requested, limits.linkTtlSec, MAX_SIGNED_LINK_TTL_SEC));
@@ -158,7 +230,8 @@ export function createHandoffBrokerHandler(options: BrokerHandlerOptions): (req:
       }
 
       return fail('not_found', 404);
-    } catch {
+    } catch (error) {
+      if (error instanceof BodyTooLarge) return fail('too_large', 413);
       // Never echo provider errors: they may describe the shared account.
       return fail('provider_error', 502);
     }

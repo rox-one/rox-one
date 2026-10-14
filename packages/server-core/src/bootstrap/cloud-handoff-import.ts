@@ -49,9 +49,9 @@ function assertRealDir(path: string, what: string): void {
 
 /**
  * Rewrite the transcript header for the cloud copy: point the working directory
- * at <ws>/project and drop desktop-only share capabilities. Atomic write.
+ * at <ws>/project, sdkCwd at the session dir, and drop desktop-only share capabilities. Atomic write.
  */
-export function rewriteHandoffSessionHeader(sessionFile: string, projectDir: string): void {
+export function rewriteHandoffSessionHeader(sessionFile: string, projectDir: string, sessionDir: string): void {
   const content = readFileSync(sessionFile, 'utf8')
   const newline = content.indexOf('\n')
   const first = newline === -1 ? content : content.slice(0, newline)
@@ -67,6 +67,9 @@ export function rewriteHandoffSessionHeader(sessionFile: string, projectDir: str
   }
   for (const field of STRIPPED_HEADER_FIELDS) delete header[field]
   header.workingDirectory = projectDir
+  // Same as SessionManager's bundle import: sdkCwd always points at the
+  // session's storage dir on *this* host (getSessionPath(root, id)).
+  header.sdkCwd = sessionDir
   const tmp = `${sessionFile}.handoff-tmp`
   writeFileSync(tmp, JSON.stringify(header) + rest, { mode: 0o600 })
   renameSync(tmp, sessionFile)
@@ -104,7 +107,7 @@ export async function importCloudHandoffWorkspace(
   const marker = join(rootPath, IMPORT_MARKER)
   const alreadyImported = existsSync(marker) && readFileSync(marker, 'utf8').trim() === sessionId
   if (!alreadyImported) {
-    rewriteHandoffSessionHeader(sessionFile, projectDir)
+    rewriteHandoffSessionHeader(sessionFile, projectDir, sessionDir)
     writeFileSync(marker, `${sessionId}\n`, { mode: 0o600 })
   }
 

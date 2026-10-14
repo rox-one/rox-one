@@ -1134,6 +1134,7 @@
   "cloudHandoff.error.sso_not_configured": "id.rox.one sign-in for cloud sessions is not configured yet",
   "cloudHandoff.error.start_timeout": "The cloud session did not start in time",
   "cloudHandoff.error.too_large": "This chat is too large to move to the cloud",
+  "cloudHandoff.error.web_host_required": "The cloud session host (cloud.rox.one) is not configured yet",
   "cloudHandoff.keyConfigured": "Key saved",
   "cloudHandoff.keyHint": "Your own Daytona key is stored encrypted on this device. Without it, the cloud runs through the Rox server when one is connected.",
   "cloudHandoff.keyInvalid": "That doesn't look like a Daytona key",

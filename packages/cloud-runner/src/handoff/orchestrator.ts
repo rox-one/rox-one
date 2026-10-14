@@ -38,8 +38,14 @@ export interface RunHandoffInput {
   ownerSub: string | null | undefined;
   sources: readonly SnapshotSource[];
   sso: HandoffSso | null;
-  /** Stable https host fronting sessions (`https://cloud.rox.one`); else Daytona preview URL. */
+  /** Stable https host fronting sessions (`https://cloud.rox.one`). Required unless `allowSignedLinks`. */
   webHost?: string;
+  /**
+   * Dev only: fall back to signed Daytona preview links when no web host is
+   * configured. Production must not use them — id.rox.one would need a wildcard
+   * redirect on a domain any Daytona customer can host on.
+   */
+  allowSignedLinks?: boolean;
   snapshot?: string;
   region?: string;
   limits?: Partial<HandoffLimits>;
@@ -83,6 +89,45 @@ export function signedHostPattern(sessionUrl: string): string {
 }
 
 const HANDOFF_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
+
+export interface ResumeSessionOptions {
+  signal?: AbortSignal;
+  sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
+  limits?: Partial<HandoffLimits>;
+}
+
+/**
+ * Make sure a handoff sandbox is serving before a link is issued. A sandbox
+ * that auto-stopped is started again and `rox-handoff-start` re-run (it unpacks
+ * the snapshot only once, so cloud-side messages survive), then health-polled.
+ * Returns true if a restart was needed.
+ */
+export async function ensureSessionRunning(
+  client: DaytonaClient,
+  sandboxId: string,
+  options: ResumeSessionOptions = {},
+): Promise<boolean> {
+  const limits: HandoffLimits = { ...DEFAULT_HANDOFF_LIMITS, ...options.limits };
+  const sleep = options.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  const now = options.now ?? Date.now;
+  const sandbox = await client.getSandbox(sandboxId);
+  if (sandbox.state === 'started') return false;
+  if (sandbox.state === 'destroyed' || sandbox.state === 'error') {
+    throw new HandoffError('provider_error', `cloud session is ${sandbox.state}`);
+  }
+  if (sandbox.state === 'stopped' || sandbox.state === 'stopping') await client.startSandbox(sandboxId);
+  const started = await client.exec(sandboxId, `rox-handoff-start ${HANDOFF_ROOT}`, options.signal);
+  if (started.exitCode !== 0) throw new HandoffError('provider_error', `session server failed to start (exit ${started.exitCode})`);
+  const deadline = now() + limits.readyTimeoutMs;
+  for (;;) {
+    if (options.signal?.aborted) throw new HandoffError('cancelled', 'cancelled');
+    const health = await client.exec(sandboxId, `rox-handoff-health ${HANDOFF_ROOT}`, options.signal);
+    if (health.exitCode === 0) return true;
+    if (now() >= deadline) throw new HandoffError('start_timeout', 'cloud session did not become ready in time');
+    await sleep(limits.readyPollMs);
+  }
+}
 
 /** Live = consuming resources; stopped/archived sandboxes do not count against quota. */
 export function isLiveSandbox(s: DaytonaSandboxRecord): boolean {
@@ -134,6 +179,9 @@ export async function runCloudHandoff(input: RunHandoffInput): Promise<RunHandof
   }
   const issuer = normalizeHttpsBase(input.sso.issuer, 'SSO issuer');
   const webHost = input.webHost?.trim() ? normalizeHttpsBase(input.webHost, 'cloud web host') : undefined;
+  if (!webHost && input.allowSignedLinks !== true) {
+    throw new HandoffError('web_host_required', 'cloud web host (ROX_CLOUD_HANDOFF_WEB_HOST) is not configured');
+  }
   const ownerLabel = ownerLabelValue(ownerSub);
   const { client } = input;
   let sandboxId: string | undefined;
