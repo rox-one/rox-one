@@ -40,7 +40,7 @@ import { TopBar } from "./TopBar"
 import { openAuxiliaryPanelAtom, closePanelAtom, primaryPanelRouteAtom, openOrFocusBrowserPanelAtom, type AuxiliaryTool } from '@/atoms/panel-stack'
 import { activeBrowserInstanceIdAtom } from '@/atoms/browser-pane'
 import { openOrFocusEmbeddedBrowserPanel } from '@/platform/browser-panel-lifecycle'
-import { workspaceProjectContextsAtom, activeWorkspaceContextAtom } from '@/atoms/workspace-context'
+import { activeWorkspaceContextAtom } from '@/atoms/workspace-context'
 import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspace-tool'
 import { SquarePenRounded } from "../icons/SquarePenRounded"
 import { McpIcon } from "../icons/McpIcon"
@@ -579,10 +579,10 @@ function AppShellContent({
   // UNIFIED NAVIGATION STATE - single source of truth from NavigationContext
   // Derived from focused panel's route — all panels are peers
   const navState = useNavigationState()
-  // The sidebar «Контекст проекта» selector was removed; other surfaces (Pages) may still set
-  // a scope, and with nothing set every surface defaults to all projects.
-  const projectContexts = useAtomValue(workspaceProjectContextsAtom)
-  const selectedProjectId = activeWorkspaceId ? projectContexts[activeWorkspaceId] ?? null : null
+  // The sidebar «Контекст проекта» selector was removed, so the shell has no global project
+  // scope: chats, new chats and tools always cover all projects. Pages/Notes keep their own
+  // session-local project filter (atoms/workspace-context), which never reaches the shell.
+  const selectedProjectId: string | null = null
   const liveWorkspace = useRef(activeWorkspaceId)
   liveWorkspace.current = activeWorkspaceId
   const [openingAgent, setOpeningAgent] = useState(false)
@@ -621,8 +621,7 @@ function AppShellContent({
           .sort((a, b) => (b.lastMessageAt ?? b.createdAt ?? 0) - (a.lastMessageAt ?? a.createdAt ?? 0))
         const previous = sessions[0]
         const created = previous ?? await contextValue.onCreateSession(activeWorkspaceId, { projectId: selectedProjectId ?? undefined })
-        if (generation !== toolIntentGeneration.current || liveWorkspace.current !== context.workspaceId || store.get(primaryPanelRouteAtom) !== context.route
-          || (store.get(workspaceProjectContextsAtom)[context.workspaceId] ?? null) !== (context.projectId ?? null)) return
+        if (generation !== toolIntentGeneration.current || liveWorkspace.current !== context.workspaceId || store.get(primaryPanelRouteAtom) !== context.route) return
         route = routes.view.allSessions(created.id)
         openWorkspaceTool(store, intent, route)
         return
@@ -766,12 +765,6 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   const collectionFilters = useAtomValue(collectionFiltersAtom)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)
   const setCollectionFilterKey = useSetAtom(collectionFilterKeyAtom)
-  useEffect(() => {
-    if (!isSessionsNavigation(navState)) return
-    const current = store.get(collectionFiltersAtom)
-    const projectId = selectedProjectId ? [selectedProjectId] : undefined
-    if (JSON.stringify(current.projectId) !== JSON.stringify(projectId)) setCollectionFilters({ ...current, projectId })
-  }, [selectedProjectId, sessionFilterKey, store, setCollectionFilters])
   const prevKeyRef = React.useRef(sessionFilterKey ?? 'allSessions')
   const skipRailChipClearRef = React.useRef(false)
 

@@ -87,6 +87,7 @@ describe('ProfileStrip plan pill and level badge', () => {
     expect(html).toContain('data-plan="max"')
     expect(html).toContain('data-testid="profile-strip-level"')
     expect(html).toContain('stroke-dashoffset')
+    expect(html).toContain('XP 40%')
     expect(html).toContain(en['profile.level'].replace('{{level}}', '1'))
   })
 

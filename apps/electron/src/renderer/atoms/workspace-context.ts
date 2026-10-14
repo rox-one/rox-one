@@ -1,11 +1,18 @@
-import { atomWithStorage } from 'jotai/utils'
 import { atom } from 'jotai'
 import { createContext, useContext } from 'react'
 import { useAtomValue } from 'jotai'
 export const activeWorkspaceContextAtom = atom<string | null>(null)
 
-/** Explicit workspace-qualified project selection. Never infer ownership from names. */
-const savedWorkspaceProjectsAtom = atomWithStorage<Record<string, string | null>>('rox.workspace-project-context.v1', {})
+/** Legacy persisted global scope from the removed sidebar «Контекст проекта» selector. */
+export const LEGACY_PROJECT_CONTEXT_KEY = 'rox.workspace-project-context.v1'
+/** One-time startup migration: drop the saved global scope so nothing stays silently filtered. */
+export function clearLegacyProjectContext(storage: Pick<Storage, 'removeItem'> | undefined = globalThis.localStorage): void {
+  try { storage?.removeItem(LEGACY_PROJECT_CONTEXT_KEY) } catch { /* storage unavailable */ }
+}
+clearLegacyProjectContext()
+
+/** Session-local, workspace-qualified project filter for Pages/Notes. Not persisted; not a shell-wide scope. */
+const savedWorkspaceProjectsAtom = atom<Record<string, string | null>>({})
 function validProjects(raw: unknown): Record<string, string | null> {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
   return Object.fromEntries(Object.entries(raw).filter(([key, value]) => key && (value === null || typeof value === 'string'))) as Record<string, string | null>

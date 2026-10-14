@@ -74,17 +74,18 @@ function LevelBadge({ level, progress, label }: { level: number; progress: numbe
   const ratio = Number.isFinite(progress) ? Math.min(1, Math.max(0, progress)) : 0
   const r = 8
   const circumference = 2 * Math.PI * r
+  const srLabel = `${label} · XP ${Math.round(ratio * 100)}%`
   return (
-    <span data-testid="profile-strip-level" className="inline-flex items-center" title={label}>
-      <span className="sr-only">{label}</span>
-      <span aria-hidden="true" className="relative inline-flex size-[18px] items-center justify-center">
+    <span data-testid="profile-strip-level" className="inline-flex items-center" title={srLabel}>
+      <span className="sr-only">{srLabel}</span>
+      <span aria-hidden="true" className="relative inline-flex size-5 items-center justify-center">
         <svg viewBox="0 0 20 20" className="absolute inset-0 size-full -rotate-90">
           <circle cx="10" cy="10" r={r} fill="none" strokeWidth="1.75" className="stroke-border-subtle" />
           {ratio > 0 ? <circle cx="10" cy="10" r={r} fill="none" strokeWidth="1.75" strokeLinecap="round"
             className="stroke-amber-500 dark:stroke-amber-400"
             strokeDasharray={circumference} strokeDashoffset={circumference * (1 - ratio)} /> : null}
         </svg>
-        <span className="relative text-[9px] font-bold leading-none text-text-primary numeric">{level}</span>
+        <span className="relative text-[10px] font-bold leading-none text-text-primary numeric">{level}</span>
       </span>
     </span>
   )
