@@ -7,15 +7,15 @@
     },
     "rox/icon-size-tokens": {
       "severity": "warn",
-      "total": 2525
+      "total": 2512
     },
     "rox/no-arbitrary-radius": {
       "severity": "warn",
-      "total": 169
+      "total": 168
     },
     "rox/no-arbitrary-text-size": {
       "severity": "warn",
-      "total": 28
+      "total": 22
     },
     "rox/no-backdrop-on-overlay": {
       "severity": "error",
@@ -23,7 +23,7 @@
     },
     "rox/no-foreground-opacity": {
       "severity": "warn",
-      "total": 2127
+      "total": 2101
     },
     "rox/no-hardcoded-z-index": {
       "severity": "warn",
@@ -304,8 +304,6 @@
       "rox/icon-size-tokens": 8
     },
     "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx": {
-      "rox/icon-size-tokens": 11,
-      "rox/no-foreground-opacity": 23,
       "rox/no-raw-color": 5,
       "rox/prefer-primitives": 2
     },
@@ -792,10 +790,6 @@
     "apps/electron/src/renderer/components/onboarding/ProviderSelectStep.tsx": {
       "rox/icon-size-tokens": 3,
       "rox/no-foreground-opacity": 1
-    },
-    "apps/electron/src/renderer/components/onboarding/ReauthScreen.tsx": {
-      "rox/icon-size-tokens": 2,
-      "rox/no-foreground-opacity": 2
     },
     "apps/electron/src/renderer/components/onboarding/RoxCliCredentialStep.tsx": {
       "rox/icon-size-tokens": 1
@@ -1466,7 +1460,6 @@
       "stylelint/declaration-property-unit-disallowed-list": 3
     },
     "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx": {
-      "rox/no-foreground-opacity": 1,
       "rox/prefer-primitives": 2
     },
     "apps/electron/src/renderer/pages/settings/BrowserProfileImportPanel.tsx": {
@@ -1831,9 +1824,6 @@
     "apps/electron/src/renderer/playground/registry/turn-card.tsx": {
       "rox/no-raw-color": 6
     },
-    "apps/electron/src/renderer/playground/registry/unified-shell.tsx": {
-      "rox/no-arbitrary-radius": 1
-    },
     "apps/electron/src/renderer/playground/registry/zen-shell-qa.tsx": {
       "rox/no-arbitrary-radius": 4,
       "rox/no-raw-color": 1
@@ -1859,11 +1849,9 @@
       "rox/no-foreground-opacity": 7
     },
     "apps/webui/src/App.tsx": {
-      "rox/no-arbitrary-text-size": 4,
       "rox/no-foreground-opacity": 4
     },
     "apps/webui/src/browser-main.tsx": {
-      "rox/no-arbitrary-text-size": 2,
       "rox/no-foreground-opacity": 2
     },
     "apps/webui/src/index.css": {
@@ -2158,14 +2146,14 @@
     "rox/no-raw-error-render": {
       "until": "#1569 (UI-A3: presentError)",
       "messageIds": null,
-      "total": 204
+      "total": 207
     },
     "rox/prefer-primitives": {
       "until": "#1592 (UI-C1: Checkbox primitive)",
       "messageIds": [
         "rawCheckbox"
       ],
-      "total": 46
+      "total": 48
     }
   }
 }
