@@ -20,7 +20,7 @@ import { describe, expect, it } from 'bun:test'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { buildChunkGraph, deriveBootManifest, deriveFromDist, diffBootManifest, distNeedsBuild, parseRoutePageLoaders, parseStringArray, readRouteModules, serializeBootManifest, staticClosure, type BootManifest, type RawChunk } from '../boot-manifest'
+import { buildChunkGraph, deriveBootManifest, deriveFromDist, diffBootManifest, distNeedsBuild, hasSourceMaps, parseRoutePageLoaders, parseStringArray, readRouteModules, rendererBuildEnv, serializeBootManifest, staticClosure, type BootManifest, type RawChunk } from '../boot-manifest'
 
 const ROOT = resolve(import.meta.dir, '..', '..')
 const RENDERER_SRC = join(ROOT, 'apps/electron/src/renderer')
@@ -195,6 +195,58 @@ describe.skipIf(!existsSync(DIST) || !existsSync(MANIFEST_PATH))('boot manifest 
     expect(Object.keys(derived.routes).sort()).toEqual(Object.keys(committed.routes).sort())
     for (const id of Object.keys(derived.routes)) {
       expect(derived.routes[id].sources).toEqual(committed.routes[id].sources)
+    }
+  })
+})
+
+/**
+ * The derivation reads each chunk's sources from its sibling `.js.map`, and the
+ * renderer build only emits those under `ROX_RENDERER_SOURCEMAP=1`. A dist built
+ * without the flag is unreadable, and the failure used to surface as the
+ * misleading "no chunk built from src/renderer/bootstrap.ts" — which is exactly
+ * how the gate was red on main.
+ */
+describe('source-map build input', () => {
+  it('builds the renderer it spawns with source maps, keeping the rest of the caller env', () => {
+    const env = rendererBuildEnv({ PATH: '/usr/bin', ROX_RENDERER_SOURCEMAP: '0' })
+    expect(env.ROX_RENDERER_SOURCEMAP).toBe('1')
+    expect(env.PATH).toBe('/usr/bin')
+    expect(env.NODE_OPTIONS).toBe('--max-old-space-size=4096')
+  })
+
+  it('sees a map-less dist as unreadable and a mapped one as readable', () => {
+    const root = mkdtempSync(join(tmpdir(), 'boot-manifest-maps-'))
+    try {
+      const assets = join(root, 'assets')
+      mkdirSync(assets, { recursive: true })
+      writeFileSync(join(assets, 'entry-abc.js'), 'export const a = 1\n')
+      expect(hasSourceMaps(root)).toBe(false)
+      writeFileSync(join(assets, 'entry-abc.js.map'), '{"sources":["../../src/renderer/bootstrap.ts"]}\n')
+      expect(hasSourceMaps(root)).toBe(true)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  it('reports a chunk graph with no sources as a missing build input, not a missing module', () => {
+    const root = mkdtempSync(join(tmpdir(), 'boot-manifest-nomaps-'))
+    try {
+      const assets = join(root, 'assets')
+      mkdirSync(assets, { recursive: true })
+      // Real emitted chunks, but built without maps: no sibling .js.map files.
+      writeFileSync(join(assets, 'main-abc.js'), 'import "./chunk-xyz.js";export const a = 1\n')
+      writeFileSync(join(assets, 'chunk-xyz.js'), 'export const b = 2\n')
+      let message = ''
+      try {
+        deriveFromDist(root)
+      } catch (error) {
+        message = (error as Error).message
+      }
+      expect(message).toContain('built without ROX_RENDERER_SOURCEMAP=1')
+      // The misleading diagnosis this guard replaces blamed the module instead.
+      expect(message).not.toContain('no chunk built from')
+    } finally {
+      rmSync(root, { recursive: true, force: true })
     }
   })
 })

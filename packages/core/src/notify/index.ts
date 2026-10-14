@@ -130,7 +130,9 @@ export {
   NOTIFICATIONS_UPDATE_PREFS_SCHEMA,
   NOTIFY_COMMAND_TYPES,
   NOTIFY_DOMAIN_FIELDS,
+  ambiguousPrefRowMessage,
   bindNotifyCommands,
+  classifyPrefRow,
   getNotifyCommandHost,
   setNotifyCommandHost,
   type DomainNotificationChannel,
@@ -143,4 +145,5 @@ export {
   type NotifyCommandHost,
   type NotifyCommandResult,
   type NotifyCommandType,
+  type PrefRowKind,
 } from './command-bindings.ts'

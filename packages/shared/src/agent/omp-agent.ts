@@ -1,5 +1,6 @@
 import { getRoxAccountAuthority } from '../auth/rox-account-authority.ts';
 import { redactRegisteredSecrets } from '../secrets/redact.ts';
+import { promptTokens, TurnRequestTotals } from './core/prompt-tokens.ts';
 /**
  * OmpAgent — craft-agents backend driving the OMP CLI (`omp --mode rpc`).
  *
@@ -370,10 +371,11 @@ interface OmpUsage {  input?: number;
   cost?: { total?: number };
 }
 
-function toAgentEventUsage(usage: OmpUsage | undefined): AgentEventUsage | undefined {
+export function toAgentEventUsage(usage: OmpUsage | undefined): AgentEventUsage | undefined {
   if (!usage) return undefined;
   return {
-    inputTokens: usage.input ?? 0,
+    // OMP reports `input` without cache reads/writes; normalize to prompt size.
+    inputTokens: promptTokens(usage.input, usage.cacheRead, usage.cacheWrite),
     outputTokens: usage.output ?? 0,
     cacheReadTokens: usage.cacheRead,
     cacheCreationTokens: usage.cacheWrite,
@@ -617,6 +619,8 @@ export class OmpAgent extends BaseAgent {
   /** Accumulated thinking text for the in-flight thinking block. */
   private thinkingText = '';
   private lastUsage: AgentEventUsage | undefined;
+  /** Per-request prompt/output sums for the current turn (message_end). */
+  private turnRequestTotals = new TurnRequestTotals();
 
   // OMP session identity (reported via get_state after ready)
   private ompSessionId: string | null = null;
@@ -2239,7 +2243,10 @@ export class OmpAgent extends BaseAgent {
     if (!message || message.role !== 'assistant') return;
 
     const usage = toAgentEventUsage(message.usage);
-    if (usage) this.lastUsage = usage;
+    if (usage) {
+      this.lastUsage = usage;
+      this.turnRequestTotals.add(usage.inputTokens, usage.outputTokens);
+    }
 
     const text = this.extractMessageText(message);
     if (text) {
@@ -2315,8 +2322,10 @@ export class OmpAgent extends BaseAgent {
       }
     }
 
-    const usage = this.lastUsage;
+    const lastUsage = this.lastUsage;
     this.lastUsage = undefined;
+    const requestTotals = this.turnRequestTotals.take();
+    const usage = lastUsage && requestTotals ? { ...lastUsage, requestTotals } : lastUsage;
     this._isProcessing = false;
 
     // Branch anchoring (G3): by agent_end OMP has flushed its transcript —
@@ -2390,6 +2399,7 @@ export class OmpAgent extends BaseAgent {
     this.abortReason = undefined;
     this.eventQueue.reset();
     this.lastUsage = undefined;
+    this.turnRequestTotals.reset();
     this.toolNames.clear();
     this.runtimeObservationRunId = this.currentRunId() ?? randomUUID();
     this.runtimeTraceBridge.beginRun(this.runtimeObservationRunId, runtimeUserPrompt, runtimeSkills);

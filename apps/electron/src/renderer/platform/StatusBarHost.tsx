@@ -22,9 +22,9 @@ import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { cn } from '@/lib/utils'
 import { buildStatusBarModel, countActiveRuns, countPendingApprovals, statusBarPermissionMode } from './status-model'
-import { CHROME_DENSITY } from './chrome-density'
 
-const STATUS_BAR_HEIGHT = CHROME_DENSITY.statusBarHeight
+/** CSS var so the bar follows `data-density`. */
+const STATUS_BAR_HEIGHT = 'var(--chrome-status-height)'
 
 function permissionLabel(
   mode: string,

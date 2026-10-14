@@ -1,7 +1,7 @@
 import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { AnimatePresence, motion, useIsPresent } from 'motion/react'
+import { AnimatePresence, motion, PresenceDiv } from '@/lib/deferred-motion'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { AlertCircle, BookOpen, CheckCircle2, Info, MoreHorizontal, Sparkles, X } from 'lucide-react'
 import { headerStatusAtom, dismissHeaderStatusAtom, headerSuggestionAtom } from '@/atoms/header-status'
@@ -40,12 +40,7 @@ export interface HeaderStatusLaneProps {
 export function HeaderStatusPresence({ children, ...props }: Omit<ComponentProps<typeof motion.div>, 'children'> & {
   children: (isPresent: boolean) => ReactNode
 }) {
-  const isPresent = useIsPresent()
-  return (
-    <motion.div {...props} aria-hidden={!isPresent || undefined} {...(!isPresent ? { inert: '' } : {})}>
-      {children(isPresent)}
-    </motion.div>
-  )
+  return <PresenceDiv {...props}>{children}</PresenceDiv>
 }
 
 /** Mount once in the stable header. This lane never moves keyboard focus. */

@@ -29,6 +29,7 @@ import {sessionMetaMapAtom,ensureSessionMessagesLoadedAtom} from ${JSON.stringif
 import {useSession} from ${JSON.stringify(join(renderer, 'hooks/useSession.ts'))};
 import {panelStackAtom} from ${JSON.stringify(join(renderer, 'atoms/panel-stack.ts'))};
 import {PanelSlot} from ${JSON.stringify(join(renderer, 'components/app-shell/PanelSlot.tsx'))};
+import {TooltipProvider} from ${JSON.stringify(join(renderer, '../../../../packages/ui/src/components/tooltip.tsx'))};
 const store=createStore();
 const sourceListeners=new Set(),skillListeners=new Set(),deepLinkListeners=new Set();
 const requests=[],actions=[];
@@ -71,10 +72,12 @@ function Probe(){const nav=useNavigation();const panels=useAtomValue(panelStackA
  window.ui001.selected=()=>session.selected;
  return <><pre id="navigation-state">{JSON.stringify(nav.navigationState)}</pre><pre id="panel-stack">{JSON.stringify(panels)}</pre>{panels.map((entry,index)=><PanelSlot key={entry.id} entry={entry} isOnly={panels.length===1} isFocusedPanel={index===panels.length-1} isSidebarAndNavigatorHidden={false} isAtLeftEdge={true} isAtRightEdge={true} proportion={1}/>)}</>}
 function FullFixture(){return <Provider store={store}><ShellContext.Provider value={{activeWorkspaceId:props.workspace,workspaces:[{id:props.workspace,remoteServer:{remoteWorkspaceId:props.remoteWorkspaceId}}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[]}}>
+ <TooltipProvider delayDuration={0}>
  <NavigationProvider workspaceId={props.workspace} workspaceSlug={props.workspace} isReady={props.ready} isSessionsReady={props.sessionsReady}
   remoteWorkspaceId={props.remoteWorkspaceId} onCreateSession={createSession} onSwitchWorkspaceBySlug={switchWorkspaceBySlug}>
   <Probe/>
- </NavigationProvider></ShellContext.Provider></Provider>}
+ </NavigationProvider>
+ </TooltipProvider></ShellContext.Provider></Provider>}
 function render(){root.render(<React.StrictMode><FullFixture/></React.StrictMode>)}
 window.ui001={navigation:null,ready:()=>{props={...props,ready:true,sessionsReady:true};render()},
  navigate:(route,options)=>window.ui001.navigation.navigate(route,options),
@@ -103,13 +106,25 @@ const results: Array<{ name: string; pass: boolean; error?: string }> = []
 const errors: string[] = []
 page.on('pageerror', error => errors.push(error.message))
 async function check(name: string, action: () => Promise<void>) {
+  const startErrors = errors.length
   try {
     // The shell persists per-workspace URLs in localStorage. Checks share one browser
     // context, so start each check from clean storage to keep them independent.
     if (page.url() !== 'about:blank') await page.evaluate(() => localStorage.clear())
     await action(); results.push({ name, pass: true })
   }
-  catch (error) { results.push({ name, pass: false, error: `${String(error)}; url=${page.url()}; state=${await page.locator('#navigation-state').textContent()}; actions=${JSON.stringify(await page.evaluate(() => (window as any).ui001?.actions()))}` }) }
+  catch (error) {
+    // Diagnostics must never throw: a render-time error that unmounts the whole root
+    // removes #navigation-state, and an undefended textContent() then raised its own
+    // 30s locator timeout that reported the locator instead of the actual cause.
+    // Include this check's page errors so the real error surfaces in the report.
+    const state = await page.locator('#navigation-state').textContent().catch(() => '<#navigation-state absent: root unmounted>')
+    const actions = await page.evaluate(() => {
+      const fixture = window as unknown as { ui001?: { actions(): unknown } }
+      return fixture.ui001?.actions() ?? null
+    }).catch(() => null)
+    results.push({ name, pass: false, error: `${String(error)}; url=${page.url()}; state=${state}; pageErrors=${JSON.stringify(errors.slice(startErrors))}; actions=${JSON.stringify(actions)}` })
+  }
 }
 async function state() { return JSON.parse((await page.locator('#navigation-state').textContent())!) }
 async function selected(navigator: string, id?: string) {

@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Cpu, RefreshCw } from 'lucide-react'
-import { RPC_CHANNELS, type ToolchainToolStatus } from '../../../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
+import type { ToolchainToolStatus } from '../../../../shared/types'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { SettingsCard, SettingsSection } from '@/components/settings'
 import { Button } from '@/components/ui/button'
@@ -61,7 +62,7 @@ export function RoxRuntimeCard({ workspaceId, remote }: { workspaceId?: string; 
     <SettingsCard divided={false} className="p-4" >
       <section data-testid="security-rox-runtime" aria-label={t('security.rox.title')} className="space-y-4">
         <div className="flex items-start gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><Cpu className="size-5" aria-hidden="true" /></span>
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Cpu className="size-5" aria-hidden="true" /></span>
           <div className="min-w-0 flex-1"><p className="text-sm font-semibold">{t('security.rox.description')}</p>
             <p role="status" aria-live="polite" data-testid="security-rox-status" className="mt-1 text-sm text-muted-foreground">{status}{tool?.installedVersion ? ` · v${tool.installedVersion}` : ''}</p>
           </div>

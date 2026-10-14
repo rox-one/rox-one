@@ -27,7 +27,9 @@ import { cn } from '../../lib/utils'
 import { CodeBlock } from './CodeBlock'
 import { ImagePreviewOverlay } from '../overlay/ImagePreviewOverlay'
 import { usePlatform } from '../../context/PlatformContext'
-import { ImageCardStack } from './ImageCardStack'
+const ImageCardStack = React.lazy(() =>
+  import('./ImageCardStack').then((m) => ({ default: m.ImageCardStack })),
+)
 import { useTranslation } from 'react-i18next'
 
 interface PreviewItem {
@@ -241,13 +243,15 @@ export function MarkdownImageBlock({ code, className, onCreateRegionAnnotation: 
             <Maximize2 className="w-3.5 h-3.5" />
           </button>
           {hasMultiple && stackItems.length > 0 && (
-            <ImageCardStack
-              items={stackItems}
-              currentIndex={activeIndex}
-              onIndexChange={setActiveIndex}
-              onTopCardTap={() => setIsFullscreen(true)}
-              className="max-w-full max-h-full"
-            />
+            <React.Suspense fallback={null}>
+              <ImageCardStack
+                items={stackItems}
+                currentIndex={activeIndex}
+                onIndexChange={setActiveIndex}
+                onTopCardTap={() => setIsFullscreen(true)}
+                className="max-w-full max-h-full"
+              />
+            </React.Suspense>
           )}
 
           {!hasMultiple && activeDataUrl && (

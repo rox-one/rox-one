@@ -8,72 +8,10 @@ import { actions } from '../definitions'
 const actionsDir = join(import.meta.dir, '..')
 const localesDir = join(import.meta.dir, '../../../../../../packages/shared/src/i18n/locales')
 
-const EXISTING_LABEL_KEYS = [
-  'settings.appearance.workbenchHarnessAgentTeams',
-  'settings.import.title',
-  'shortcuts.action.clearSelection',
-  'shortcuts.action.collectionViewBoard',
-  'shortcuts.action.collectionViewHeatmap',
-  'shortcuts.action.collectionViewList',
-  'shortcuts.action.collectionViewNext',
-  'shortcuts.action.collectionViewPrev',
-  'shortcuts.action.collectionViewTable',
-  'shortcuts.action.cyclePermissionMode',
-  'shortcuts.action.focusChat',
-  'shortcuts.action.focusNavigator',
-  'shortcuts.action.focusNextPanel',
-  'shortcuts.action.focusNextZone',
-  'shortcuts.action.focusPrevPanel',
-  'shortcuts.action.focusSidebar',
-  'shortcuts.action.goBack',
-  'shortcuts.action.goForward',
-  'shortcuts.action.keyboardShortcuts',
-  'shortcuts.action.newChat',
-  'shortcuts.action.newChatInPanel',
-  'shortcuts.action.newWindow',
-  'shortcuts.action.nextSearchMatch',
-  'shortcuts.action.omnibox',
-  'shortcuts.action.prevSearchMatch',
-  'shortcuts.action.quit',
-  'shortcuts.action.search',
-  'shortcuts.action.selectAll',
-  'shortcuts.action.settings',
-  'shortcuts.action.stopProcessing',
-  'shortcuts.action.toggleChatPictureInPicture',
-  'shortcuts.action.toggleFocusMode',
-  'shortcuts.action.toggleInspector',
-  'shortcuts.action.toggleSidebar',
-  'shortcuts.action.toggleTheme',
-  'workspace.openInEditor',
-] as const
-
-const NEW_LABEL_KEYS = [
-  'shortcuts.action.modeSlot1',
-  'shortcuts.action.modeSlot2',
-  'shortcuts.action.modeSlot3',
-  'shortcuts.action.modeSlot4',
-  'shortcuts.action.modeSlot5',
-  'shortcuts.action.modeSlot6',
-  'shortcuts.action.modeSlot7',
-  'shortcuts.action.advisorReview',
-  'shortcuts.action.focusPanelDown',
-  'shortcuts.action.focusPanelLeft',
-  'shortcuts.action.focusPanelRight',
-  'shortcuts.action.focusPanelUp',
-  'shortcuts.action.sessionWorkflow',
-  'shortcuts.action.simplifyDiff',
-  'shortcuts.action.togglePanelFullScreen',
-  // Wave 2: layout deck + panel swap.
-  'shortcuts.action.swapPanel',
-  'shortcuts.action.layoutDeck',
-  'shortcuts.action.openMissions',
-  // W1-07 (#1504): flag-gated shell actions.
-  'shortcuts.action.findInDoc',
-  'shortcuts.action.quickPanelCalendar',
-  'shortcuts.action.quickPanelContacts',
-  'shortcuts.action.quickPanelDocs',
-  'shortcuts.action.quickPanelTasks',
-] as const
+// The wired label keys are the source of truth: every key an action points at.
+// Never hand-maintain this list — it is derived from `actions` so it cannot
+// drift when actions are added or removed.
+const wiredLabelKeys = Object.values(actions).map((action) => action.labelKey)
 
 const ENGLISH_LEFTOVER_LABELS = [
   "label: 'New Chat'",
@@ -149,8 +87,15 @@ describe('action labels are i18n', () => {
   })
 
   it('every action points at a catalog key', () => {
-    const wired = Object.values(actions).map((action) => action.labelKey)
-    expect(new Set(wired)).toEqual(new Set([...EXISTING_LABEL_KEYS, ...NEW_LABEL_KEYS]))
+    // The real invariant: every labelKey an action wires up must resolve to a
+    // real entry in the English locale catalog. This is behavioural — it holds
+    // as actions are added or removed, and only fails when a labelKey is a
+    // typo, orphaned, or otherwise missing from the catalog.
+    const enCatalog = JSON.parse(
+      readFileSync(join(localesDir, 'en.json'), 'utf8'),
+    ) as Record<string, string>
+    const missing = [...new Set(wiredLabelKeys)].filter((key) => !enCatalog[key]?.length)
+    expect(missing).toEqual([])
   })
 
   it('English locale keeps the existing action labels', async () => {
@@ -194,7 +139,7 @@ describe('action labels are i18n', () => {
     ])
     for (const file of files) {
       const locale = JSON.parse(readFileSync(join(localesDir, file), 'utf8')) as Record<string, string>
-      for (const key of [...EXISTING_LABEL_KEYS, ...NEW_LABEL_KEYS]) {
+      for (const key of new Set(wiredLabelKeys)) {
         expect(locale[key]?.length).toBeGreaterThan(0)
       }
     }

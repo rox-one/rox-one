@@ -26,5 +26,7 @@ export function ShellSidebarPortal({ children, className, ...props }: React.HTML
       </div>, target,
     )
   }
-  return <nav {...props} className={cn('flex flex-col', className)}>{children}</nav>
+  // Inline fallback is secondary chrome: grid tiles below the compact
+  // threshold hide it (index.css, data-panel-density="grid").
+  return <nav data-panel-secondary="" {...props} className={cn('flex flex-col', className)}>{children}</nav>
 }

@@ -181,7 +181,7 @@ export function TopBar({
   const [modePillMetrics, setModePillMetrics] = useState<ModeBarMetrics | null>(null)
   const [modePillLayout, setModePillLayout] = useState<ModePillLayout | null>(null)
   const handleModePillMeasure = useCallback((metrics: ModeBarMetrics) => {
-    setModePillMetrics((prev) => (prev && prev.full === metrics.full && prev.compact === metrics.compact ? prev : metrics))
+    setModePillMetrics((prev) => (prev && prev.full === metrics.full && prev.compact === metrics.compact && (prev.advances ?? []).join() === (metrics.advances ?? []).join() ? prev : metrics))
   }, [])
 
   useEffect(() => {
@@ -202,7 +202,7 @@ export function TopBar({
         rightWidth: rightSlotRef.current?.getBoundingClientRect().width ?? 0,
         metrics: modePillMetrics,
       })
-      setModePillLayout((prev) => (prev && prev.collapsed === next.collapsed && prev.leftMax === next.leftMax && prev.rightMax === next.rightMax ? prev : next))
+      setModePillLayout((prev) => (prev && prev.collapsed === next.collapsed && prev.visibleCount === next.visibleCount && prev.leftMax === next.leftMax && prev.rightMax === next.rightMax ? prev : next))
     }
     const schedule = () => {
       if (frame) cancelAnimationFrame(frame)
@@ -487,7 +487,7 @@ export function TopBar({
           className="rox-mode-pill-anchor"
           style={{ left: `calc(50% - ${leftInset / 2}px)`, visibility: modePillLayout ? undefined : 'hidden' }}
         >
-          <ModeBar collapsed={modePillLayout?.collapsed ?? false} onMeasure={handleModePillMeasure} onOpenBrowser={onOpenBrowserTab} />
+          <ModeBar collapsed={modePillLayout?.collapsed ?? false} visibleCount={modePillLayout?.visibleCount} onMeasure={handleModePillMeasure} onOpenBrowser={onOpenBrowserTab} />
         </div>
       )}
     </div>
