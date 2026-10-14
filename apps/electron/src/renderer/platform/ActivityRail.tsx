@@ -174,18 +174,30 @@ export function railStateFor(prevCollapsed: boolean | null, collapsed: boolean):
 /** Upper bound for the label disclosure (--motion-disclosure is 180ms). */
 const RAIL_EXPANDING_SETTLE_MS = 400
 
-function useRailState(collapsed: boolean): RailState {
-  const prevCollapsed = useRef<boolean | null>(null)
-  const [state, setState] = useState<RailState>(() => railStateFor(null, collapsed))
+/**
+ * Derived during render (React's "adjust state on prop change" pattern), so
+ * the first expanded frame already carries `expanding`: no paint at opacity 1
+ * before the entrance starts. The timer only settles it to `expanded`.
+ */
+export function useRailState(collapsed: boolean): RailState {
+  const [rail, setRail] = useState<{ collapsed: boolean; state: RailState }>(() => ({
+    collapsed,
+    state: railStateFor(null, collapsed),
+  }))
+  let current = rail
+  if (rail.collapsed !== collapsed) {
+    current = { collapsed, state: railStateFor(rail.collapsed, collapsed) }
+    setRail(current)
+  }
+  const expanding = current.state === 'expanding'
   useEffect(() => {
-    const next = railStateFor(prevCollapsed.current, collapsed)
-    prevCollapsed.current = collapsed
-    setState(next)
-    if (next !== 'expanding') return
-    const id = window.setTimeout(() => setState('expanded'), RAIL_EXPANDING_SETTLE_MS)
+    if (!expanding) return
+    const id = window.setTimeout(() => {
+      setRail((prev) => (prev.state === 'expanding' ? { ...prev, state: 'expanded' } : prev))
+    }, RAIL_EXPANDING_SETTLE_MS)
     return () => window.clearTimeout(id)
-  }, [collapsed])
-  return state
+  }, [expanding])
+  return current.state
 }
 
 export function ActivityRail() {
