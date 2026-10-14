@@ -4,7 +4,7 @@
  */
 
 import { spawn } from "bun";
-import { existsSync, readFileSync, statSync, mkdirSync } from "fs";
+import { copyFileSync, existsSync, readFileSync, statSync, mkdirSync } from "fs";
 import { join } from "path";
 import { ELECTRON_MAIN_CJS_FLAGS } from "./electron-main-cjs";
 
@@ -536,6 +536,9 @@ async function main(): Promise<void> {
     console.error("❌ Build verification failed:", verification.error);
     process.exit(1);
   }
+
+  // #1573: entry shim enabling the V8 compile cache before main.cjs loads.
+  copyFileSync(join(ROOT_DIR, "apps/electron/src/main/boot.cjs"), join(DIST_DIR, "boot.cjs"));
 
   console.log("✅ Build complete and verified");
   process.exit(0);

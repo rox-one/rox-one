@@ -4,7 +4,7 @@ import { join, resolve, sep } from 'path'
 import { existsSync } from 'fs'
 import { release } from 'os'
 import { fileURLToPath } from 'url'
-import { getWorkspaceByNameOrId, isZenShellEnabled } from '@rox/shared/config'
+import { getWorkspaceByNameOrId, getZenShellMaterialPreference, isZenShellEnabled } from '@rox/shared/config'
 import { classifyExternalUrl, formatBlockedUrlError } from '@rox/shared/utils/url-safety'
 import { RPC_CHANNELS, type WindowCloseRequestSource } from '../shared/types'
 import { getExtensionHostManager } from './extension-host-manager'
@@ -243,7 +243,10 @@ export class WindowManager {
     const isMac = process.platform === 'darwin'
     const isWindows = process.platform === 'win32'
     const zenEnabled = isZenShellEnabled()
-    const windowsBackgroundMaterial = getWindowsBackgroundMaterial()
+    // Opaque (the default) keeps native glass off on both the Zen and legacy
+    // paths: a see-through window shows other windows under the chrome.
+    const nativeMaterialAllowed = getZenShellMaterialPreference() !== 'opaque'
+    const windowsBackgroundMaterial = nativeMaterialAllowed ? getWindowsBackgroundMaterial() : undefined
 
     const window = new BrowserWindow({
       width: windowWidth,
@@ -312,7 +315,7 @@ export class WindowManager {
       // unless first paint actually arrived.
       const revealWindow = (opts?: { vibrancy?: boolean }) => {
         if (window.isDestroyed() || window.isVisible()) return
-        if (isMac && opts?.vibrancy !== false && !nativeAccessibilityPrefersSolid()) {
+        if (isMac && nativeMaterialAllowed && opts?.vibrancy !== false && !nativeAccessibilityPrefersSolid()) {
           try {
             window.setVibrancy('under-window')
             // setVisualEffectState появился в новых типах Electron; на старых
