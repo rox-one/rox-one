@@ -11,6 +11,7 @@ import type { StructuredInputState, StructuredResponse, InputMode } from './stru
 import { getStructuredInputMaxHeight } from './structured-height'
 import { BackgroundFinishedChip } from '../BackgroundFinishedChip'
 import { CloudRunsChip } from '@/components/cloud-runs/CloudRunsChip'
+import { CloudHandoffButton } from '@/components/cloud-handoff/CloudHandoffButton'
 import { GitStatusBar } from '@/platform/GitStatusBar'
 
 interface InputContainerProps extends Omit<FreeFormInputProps, 'inputRef'> {
@@ -292,6 +293,7 @@ export function InputContainer({
       {showCloudRunsChip && !compactMode && mode === 'freeform' && freeFormProps.sessionId && (
         <div className="relative z-20 mb-1.5 flex justify-end">
           <div className="flex items-center gap-1 rounded-md bg-background p-0.5">
+            <CloudHandoffButton sessionId={freeFormProps.sessionId} />
             <CloudRunsChip sessionId={freeFormProps.sessionId} />
           </div>
         </div>
