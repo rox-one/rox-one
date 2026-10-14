@@ -19,7 +19,7 @@ markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
 
-import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, safeStorage, session, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, safeStorage, session, shell, Tray, webContents, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { createHash, randomUUID } from 'crypto'
 
 
@@ -197,6 +197,7 @@ import {
 import { registerServiceLifecycleIpc } from './service-lifecycle-ipc'
 import type { MenuBroadcastChannel } from './menu'
 import { aggregateTrayReports, RecordingTrayController, sanitizeTrayReport, TrayController } from './tray'
+import { installCallDefaults } from './team-calls/install-call-defaults'
 
 // Initialize electron-log for renderer process support
 log.initialize()
@@ -402,6 +403,9 @@ if (!(process.env.NODE_ENV === 'test' && process.env.ROX_SKIP_PROTOCOL_REGISTRAT
 
 // Apply network proxy settings early (Node-level only — Electron sessions require app.whenReady)
 import { applyConfiguredProxySettings } from './network-proxy'
+
+// Team calls: shared LiveKit/Exa defaults baked in at build time (gitignored module).
+installCallDefaults()
 void applyConfiguredProxySettings()
 
 // Register thumbnail:// custom protocol for file preview thumbnails in the sidebar.
@@ -1080,6 +1084,16 @@ app.whenReady().then(async () => {
     const { registerSurfaceRoutesIpc } = await import('./surface-routes-ipc')
     registerSurfaceRoutesIpc(ipcMain, {
       isTrustedSender: (event) => isRegisteredRoxRendererWebContents(event.sender),
+    })
+
+    // «Доска» (Canvas): local board persistence in <workspace>/canvas (workspace resolved in main).
+    const { registerCanvasIpc } = await import('./canvas-ipc')
+    registerCanvasIpc(ipcMain, {
+      resolveWorkspaceRoot: (id) => getWorkspaceByNameOrId(id)?.rootPath ?? null,
+      isTrustedSender: (event) => isRegisteredRoxRendererWebContents(event.sender),
+      listRenderers: () => webContents.getAllWebContents().filter((wc) => isRegisteredRoxRendererWebContents(wc)),
+      rendererById: (id) => webContents.fromId(id) ?? undefined,
+      configDir: CONFIG_DIR,
     })
 
     // Transport diagnostics bridge — preload reports remote WS connection state changes

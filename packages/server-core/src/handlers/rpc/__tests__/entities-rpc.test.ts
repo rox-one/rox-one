@@ -60,6 +60,19 @@ const note: EntityRef = { kind: 'note', id: 'n1' }
 const task: EntityRef = { kind: 'task', id: 't1' }
 
 describe('entities:links handler', () => {
+  it('whoami returns the actor id from the auth context, flag on or off (canvas review 6 #5)', async () => {
+    delete process.env.CRAFT_FEATURE_ENTITIES_LINKS
+    const f = fixture()
+    expect(await f.links({ op: 'whoami' })).toEqual({ ok: true, op: 'whoami', actorId: 'local' })
+    const authed = { ...f.ctx, actor: { principalId: 'user-42' } } as unknown as RequestContext
+    process.env.CRAFT_FEATURE_ENTITIES_LINKS = '1'
+    expect(await f.links({ op: 'whoami' }, authed)).toEqual({ ok: true, op: 'whoami', actorId: 'user-42' })
+    const added = (await f.links({ op: 'add', from: note, to: task, relation: 'mentions' }, authed)) as { link: { createdBy: string } }
+    expect(added.link.createdBy).toBe('user-42')
+    await expect(f.links({ op: 'whoami', actorId: 'spoof' })).rejects.toThrow()
+    await expect(f.links({ op: 'whoami' }, f.ctx, 'nope')).rejects.toThrow()
+  })
+
   it('is inert while the flag is off', async () => {
     delete process.env.CRAFT_FEATURE_ENTITIES_LINKS
     const f = fixture()
