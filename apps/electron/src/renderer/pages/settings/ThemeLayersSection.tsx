@@ -23,18 +23,17 @@ import {
   frameAlphaForGlass,
   gradientToCSS,
   resolveContrastInputs,
-  RoxThemeFileSchema,
   themeSlug,
   wallpaperToCSS,
   type ContentJoinMode,
   type ContrastPairId,
   type GradientStop,
-  type ThemeFile,
   type ThemeGradient,
   type ThemeLayers,
-  type ThemeOverrides,
   type WallpaperLayer,
-} from '@rox/shared/config'
+} from '@rox/shared/config/theme-layers'
+import { RoxThemeFileSchema } from '@rox/shared/config/theme-layers-schema'
+import type { ThemeFile, ThemeOverrides } from '@rox/shared/config'
 import { SettingsSection, SettingsCard, SettingsRow, SettingsSegmentedControl } from '@/components/settings'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { Button } from '@/components/ui/button'

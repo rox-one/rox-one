@@ -238,7 +238,8 @@ export function gradientToCSS(gradient: ThemeGradient): string {
     .map(([color, pos]) => `${color} ${cssNumber(clamp(pos, 0, 1) * 100, 1)}%`)
     .join(', ');
   if (gradient.type === 'radial') {
-    const [x, y] = (gradient.at ?? [0, 0]).map(v => finiteOr(v, 0));
+    const x = finiteOr(gradient.at?.[0], 0);
+    const y = finiteOr(gradient.at?.[1], 0);
     return `radial-gradient(130% 100% at ${cssNumber(clamp(x, 0, 100), 1)}% ${cssNumber(clamp(y, 0, 100), 1)}%, ${stops})`;
   }
   return `linear-gradient(${cssNumber((finiteOr(gradient.angle, 135) % 360 + 360) % 360, 1)}deg, ${stops})`;
