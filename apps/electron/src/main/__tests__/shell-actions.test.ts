@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 
-import { RPC_CHANNELS } from '../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { WindowManager } from '../window-manager'
 import { dispatchShellAction } from '../shell-actions'
 

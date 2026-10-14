@@ -59,6 +59,8 @@ export const WORKBENCH_FLAG = {
   modeMessengerV1: 'workbench.mode.messenger.v1',
   modeCalendarV1: 'workbench.mode.calendar.v1',
   modeGoalsV1: 'workbench.mode.goals.v1',
+  /** «Доска» (Canvas) surface — default ON; when off it is absent and main refuses canvas:* IPC. */
+  modeCanvasV1: 'workbench.mode.canvas.v1',
   modeContactsV1: 'workbench.mode.contacts.v1',
   /** Notes → «Документы» relabel key + shared Docs (DOC-1 builds on it). */
   docsSharedV1: 'docs.shared.v1',
@@ -279,9 +281,11 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   // Extra screens («Ещё»): workbench.mode.<id>.v1, default ON
   ...EXTRA_SCREEN_FEATURE_FLAGS,
   // W1-07 (#1504): unified mode screens + Docs relabel — default OFF, inert when off.
-  { id: WORKBENCH_FLAG.modeMessengerV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  // Team messenger (channels, group chats) is live on real host data — default ON.
+  { id: WORKBENCH_FLAG.modeMessengerV1, defaultValue: true, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.modeCalendarV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.modeGoalsV1, defaultValue: false, dependencies: [], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.modeCanvasV1, defaultValue: true, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.modeContactsV1, defaultValue: false, dependencies: [], rollbackSafe: true },
   { id: WORKBENCH_FLAG.docsSharedV1, defaultValue: false, dependencies: [], rollbackSafe: true },
 // Dev Space (spec 2026-10-09): default OFF, inert until explicitly enabled.

@@ -46,6 +46,7 @@ export const SIDEBAR_CONTENT_KIND: Readonly<Record<string, SidebarContentKind>> 
   learning: 'portal',
   connections: 'portal',
   settings: 'portal',
+  canvas: 'portal',
 }
 
 export function sidebarContentKind(surfaceId: string | null): SidebarContentKind {

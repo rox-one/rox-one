@@ -25,7 +25,11 @@ export {
   type EnvironmentPrefs,
   WORK_STYLE_AGENTS,
   WORK_STYLE_FORMATS,
+  WORK_STYLE_SCALES,
+  WORK_STYLE_SCALE_MAX,
+  ONBOARDING_OTHER_ROLE_MAX,
   normalizeWorkStyle,
+  normalizeOtherRole,
   normalizeOnboardingRoleProfile,
   type OnboardingRoleProfile,
   type OnboardingWorkStyle,
@@ -35,6 +39,7 @@ export {
   type WorkStyleLayout,
   type WorkStyleClarify,
   type WorkStyleCollaboration,
+  type WorkStyleScaleKey,
 } from './types.ts'
 
 export { formatWorkStyleForPrompt } from './work-style-prompt.ts'
