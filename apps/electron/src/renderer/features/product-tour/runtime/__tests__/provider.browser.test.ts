@@ -28,8 +28,9 @@ beforeAll(async () => {
           ? `import {useSyncExternalStore} from 'react'; export const useNavigation=()=>useSyncExternalStore(window.learningProviderTest.subscribe,()=>window.learningProviderTest.navSnapshot);`
           : args.path === 'i18n' ? `export const useTranslation=()=>({t:key=>key});`
             : `import * as React from 'react';
-              export {createTargetRegistry} from '${resolve(root, 'apps/electron/src/renderer/features/product-tour/ui/target-registry.ts')}';
-              export {TourErrorBoundary} from '${resolve(root, 'apps/electron/src/renderer/features/product-tour/ui/TourErrorBoundary.tsx')}';
+              // Re-export the real presentation surface so this fixture cannot drift from ui/index.ts;
+              // only SpotlightOverlay is overridden below to inject the rendering fault.
+              export * from '${resolve(root, 'apps/electron/src/renderer/features/product-tour/ui/index.ts')}';
               import {SpotlightOverlay as ActualOverlay} from '${resolve(root, 'apps/electron/src/renderer/features/product-tour/ui/SpotlightOverlay.tsx')}';
               export function SpotlightOverlay(props){if(window.learningProviderTest.failPresentation)throw new Error('Intentional presentation fault');return <ActualOverlay {...props}/>;}`,
       }))

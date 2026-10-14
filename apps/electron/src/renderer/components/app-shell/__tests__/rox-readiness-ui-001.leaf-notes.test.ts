@@ -173,7 +173,7 @@ describe('UI-001 selected note recovery retains its canonical address', () => {
 
   it('the recovery UI retry invokes the exact selected note callback and retains block address', async () => {
     const addresses: string[] = []
-    const render = leafComponent(source, 'SelectedNoteRecovery', { React, Button: 'button', routes: { view: { notes: () => 'notes' } }, useNavigation: () => ({ navigate: () => {} }), useTranslation: () => ({ t: (key: string) => key }) })
+    const render = leafComponent(source, 'SelectedNoteRecovery', { React, Button: 'button', routes: { view: { notes: () => 'notes' } }, useNavigation: () => ({ navigate: () => {} }), useNavigationActions: () => ({ navigate: () => {} }), useTranslation: () => ({ t: (key: string) => key }) })
     const tree = render({ failure: { workspaceId: 'workspace-A', noteId: 'note-A', kind: 'missing' }, address: 'note-A#^block-A', onRetry: () => addresses.push('note-A') })
     const status = elementIn(tree, element => element.props['data-testid'] === 'note-surface-missing')
     expect(status?.props['data-note-address']).toBe('note-A#^block-A')
