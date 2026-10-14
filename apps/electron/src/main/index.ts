@@ -2089,6 +2089,7 @@ app.whenReady().then(async () => {
           prefersSolid: nativeAccessibilityPrefersSolid,
         })
         app.once('will-quit', () => disposeQuickComposer())
+        app.once('will-quit', () => windowManager?.disposeMiniGlass())
       }
 
       // Dock menu (macOS): the native integration actions, dispatched as one

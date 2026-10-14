@@ -93,6 +93,10 @@ function ShortcutCapture({
   )
 }
 
+function isMacPlatform(): boolean {
+  return typeof navigator !== 'undefined' && /Mac/i.test(navigator.platform || navigator.userAgent)
+}
+
 export function NativeIntegrationsSettingsSection() {
   const { t } = useTranslation()
   const api = React.useMemo(() => nativeIntegrations(), [])
@@ -100,6 +104,9 @@ export function NativeIntegrationsSettingsSection() {
   const [loginItem, setLoginItem] = React.useState<LoginItemState | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [busy, setBusy] = React.useState(false)
+  const [miniGlass, setMiniGlass] = React.useState<boolean | null>(null)
+  const miniGlassApi = typeof window !== 'undefined' ? window.electronAPI?.miniGlass : undefined
+  const hasMiniGlass = Boolean(miniGlassApi?.getEnabled && miniGlassApi?.setEnabled) && isMacPlatform()
 
   const hasQuickComposer = Boolean(api.quickComposer?.getShortcut && api.quickComposer?.setShortcut)
   const hasLoginItem = Boolean(api.appIntegration?.getLoginItem && api.appIntegration?.setLoginItem)
@@ -125,8 +132,26 @@ export function NativeIntegrationsSettingsSection() {
       setLoginItem(nextLoginItem)
       setLoading(false)
     })()
+    if (hasMiniGlass) {
+      void miniGlassApi!.getEnabled().then((enabled) => { if (active) setMiniGlass(enabled) }).catch(() => undefined)
+    }
     return () => { active = false }
-  }, [api])
+  }, [api, hasMiniGlass, miniGlassApi])
+
+  const applyMiniGlass = React.useCallback(async (enabled: boolean) => {
+    if (busy || !allowed || !miniGlassApi) return
+    setBusy(true)
+    const previous = miniGlass
+    setMiniGlass(enabled)
+    try {
+      setMiniGlass(await miniGlassApi.setEnabled(enabled))
+    } catch {
+      setMiniGlass(previous)
+      toast.error(t('settings.nativeIntegrations.miniGlassFailed'))
+    } finally {
+      setBusy(false)
+    }
+  }, [allowed, busy, miniGlass, miniGlassApi, t])
 
   const applyShortcut = React.useCallback(async (next: string | null) => {
     if (busy || !allowed) return
@@ -159,7 +184,7 @@ export function NativeIntegrationsSettingsSection() {
     }
   }, [api, allowed, busy, loginItem, t])
 
-  if (!hasQuickComposer && !hasLoginItem) return null
+  if (!hasQuickComposer && !hasLoginItem && !hasMiniGlass) return null
 
   const quickComposerEnabled = shortcut !== null
 
@@ -193,6 +218,15 @@ export function NativeIntegrationsSettingsSection() {
               />
             </SettingsRow>
           </>
+        )}
+        {hasMiniGlass && (
+          <SettingsToggle
+            label={t('settings.nativeIntegrations.miniGlass')}
+            description={t('settings.nativeIntegrations.miniGlassDesc')}
+            checked={miniGlass ?? true}
+            disabled={miniGlass === null || busy || !allowed}
+            onCheckedChange={(checked) => void applyMiniGlass(checked)}
+          />
         )}
         {hasLoginItem && (
           <SettingsToggle
