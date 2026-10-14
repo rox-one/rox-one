@@ -185,7 +185,10 @@ describe('notifications.update_prefs row discriminator', () => {
       prefs: [{ eventType: 'task.task_adding', channel: 'email', enabled: true, kind: 'comment' }],
     })
     expect(mixed.success).toBe(false)
-    const message = mixed.success ? '' : mixed.error.message
+    // `SchemaLike.safeParse` types `error` as `unknown` on purpose — `@rox/core`
+    // stays dependency-free and never imports zod — so narrow it rather than cast.
+    if (mixed.success) throw new Error('expected a mixed canonical/legacy row to be rejected')
+    const message = mixed.error instanceof Error ? mixed.error.message : String(mixed.error)
     expect(message).toContain('eventType')
     expect(message).toContain('kind')
     // The mix is blamed, never an unrelated field.
