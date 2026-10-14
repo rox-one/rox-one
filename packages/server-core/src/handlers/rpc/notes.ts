@@ -36,7 +36,6 @@ import {
 } from '@rox/core/rox2'
 import {
   applyVaultWatchTickAsync,
-  attachVaultWatcher,
   ensureVaultIndexAsync,
   getVaultBacklinks,
   getVaultInsights,
