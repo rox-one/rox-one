@@ -12,7 +12,7 @@ import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { playbooksEnabledAtom } from '@/atoms/playbooks'
 import { workbenchFlagAtom } from '@/platform/unified-flags'
-import { createNotebook, loadNotebooks, saveNotebooks, type NotebookMode, type PlaybookNotebook } from './notebook-store'
+import { createNotebook, loadNotebooks, saveNotebooks, subscribeOpenNotebookIntent, takeOpenNotebookIntent, type NotebookMode, type PlaybookNotebook } from './notebook-store'
 import { NotebookHome } from './components/NotebookHome'
 import KnowledgeNotebookPage from './knowledge/KnowledgeNotebookPage'
 import CodebookNotebookPage from './codebook/CodebookNotebookPage'
@@ -49,6 +49,18 @@ export default function PlaybooksHomePage() {
     } finally {
       setLoading(false)
     }
+  }, [])
+
+  // Deep links from the Навыки sidebar (open a specific / freshly created notebook).
+  useEffect(() => {
+    const consume = () => {
+      const id = takeOpenNotebookIntent()
+      if (!id) return
+      try { setNotebooks(loadNotebooks()) } catch { /* keep the current list */ }
+      setView({ kind: 'notebook', id })
+    }
+    consume()
+    return subscribeOpenNotebookIntent(consume)
   }, [])
 
   useEffect(() => {

@@ -17,6 +17,9 @@ export interface SkillsSidebarInput {
   t(key: string): string
   onOpenSkill(skill: LoadedSkill): void
   onOpenPlaybooks(): void
+  onOpenPlaybook(notebook: PlaybookNotebook): void
+  onCreatePlaybook(): void
+  onRetryPlaybooks(): void
   onOpenCatalog(): void
   onOpenMarketplace(): void
 }
@@ -45,15 +48,15 @@ export function buildSkillsSidebarGroups(input: SkillsSidebarInput): SidebarGrou
     id: 'playbooks',
     title: t('screenSidebar.skills.playbooks'),
     initialVisible: 6,
-    actions: [{ id: 'new-playbook', label: t('screenSidebar.skills.newPlaybook'), icon: Plus, onSelect: input.onOpenPlaybooks }],
+    actions: [{ id: 'new-playbook', label: t('screenSidebar.skills.newPlaybook'), icon: Plus, onSelect: input.onCreatePlaybook }],
     items: (input.playbooks ?? [])
       .slice()
       .sort((a, b) => b.updatedAt - a.updatedAt)
-      .map((nb) => ({ id: `pb-${nb.id}`, label: nb.name, icon: Notebook, onSelect: input.onOpenPlaybooks })),
+      .map((nb) => ({ id: `pb-${nb.id}`, label: nb.name, icon: Notebook, onSelect: () => input.onOpenPlaybook(nb) })),
     ...(input.playbooksError
-      ? { state: { kind: 'error' as const, label: t('screenSidebar.skills.playbooksError'), onRetry: input.onOpenPlaybooks } }
+      ? { state: { kind: 'error' as const, label: t('screenSidebar.skills.playbooksError'), onRetry: input.onRetryPlaybooks } }
       : (input.playbooks ?? []).length === 0
-        ? { state: { kind: 'empty' as const, label: t('screenSidebar.skills.playbooksEmpty'), action: { id: 'open', label: t('screenSidebar.skills.newPlaybook'), onSelect: input.onOpenPlaybooks } } }
+        ? { state: { kind: 'empty' as const, label: t('screenSidebar.skills.playbooksEmpty'), action: { id: 'open', label: t('screenSidebar.skills.newPlaybook'), onSelect: input.onCreatePlaybook } } }
         : {}),
   }
   const market: SidebarGroup = {
