@@ -40,7 +40,7 @@ import { TopBar } from "./TopBar"
 import { openAuxiliaryPanelAtom, closePanelAtom, primaryPanelRouteAtom, openOrFocusBrowserPanelAtom, type AuxiliaryTool } from '@/atoms/panel-stack'
 import { activeBrowserInstanceIdAtom } from '@/atoms/browser-pane'
 import { openOrFocusEmbeddedBrowserPanel } from '@/platform/browser-panel-lifecycle'
-import { workspaceProjectContextsAtom, activeWorkspaceContextAtom } from '@/atoms/workspace-context'
+import { activeWorkspaceContextAtom } from '@/atoms/workspace-context'
 import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspace-tool'
 import { SquarePenRounded } from "../icons/SquarePenRounded"
 import { McpIcon } from "../icons/McpIcon"
@@ -592,8 +592,8 @@ function AppShellContent({
   // UNIFIED NAVIGATION STATE - single source of truth from NavigationContext
   // Derived from focused panel's route — all panels are peers
   const navState = useNavigationState()
-  const [projectContexts, setProjectContexts] = useAtom(workspaceProjectContextsAtom)
-  const selectedProjectId = activeWorkspaceId ? projectContexts[activeWorkspaceId] ?? null : null
+  // No global project scope (the sidebar «Контекст проекта» selector was removed):
+  // chats, new chats and tools always cover all projects.
   const liveWorkspace = useRef(activeWorkspaceId)
   liveWorkspace.current = activeWorkspaceId
   const [openingAgent, setOpeningAgent] = useState(false)
@@ -614,22 +614,20 @@ function AppShellContent({
     const existing = store.get(panelStackAtom).find(entry => entry.tool === tool)
     if (existing) { store.set(closePanelAtom, existing.id); return }
     if (!activeWorkspaceId) return
-    const context = { workspaceId: activeWorkspaceId, projectId: selectedProjectId ?? undefined,
-      route: (store.get(primaryPanelRouteAtom) ?? routes.view.inbox()) as import('../../../shared/routes').ViewRoute }
+    const context = { workspaceId: activeWorkspaceId, route: (store.get(primaryPanelRouteAtom) ?? routes.view.inbox()) as import('../../../shared/routes').ViewRoute }
     let route: import('../../../shared/routes').ViewRoute = tool === 'tasks' ? routes.view.tasks() : tool === 'memory' ? routes.view.memory() : routes.view.automations()
     if (tool === 'agent') {
       if (openingAgent) return
-      const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, projectId: selectedProjectId ?? undefined, tool })
+      const intent = captureWorkspaceToolOpen(store, { workspaceId: activeWorkspaceId, tool })
       if (!intent) return
       setOpeningAgent(true)
       try {
         const sessions = Array.from(store.get(sessionMetaMapAtom).values())
-          .filter(meta => meta.workspaceId === activeWorkspaceId && (meta.projectId ?? null) === selectedProjectId && !meta.isArchived && !isInternalAgentSession(meta))
+          .filter(meta => meta.workspaceId === activeWorkspaceId && (meta.projectId ?? null) === null && !meta.isArchived && !isInternalAgentSession(meta))
           .sort((a, b) => (b.lastMessageAt ?? b.createdAt ?? 0) - (a.lastMessageAt ?? a.createdAt ?? 0))
         const previous = sessions[0]
-        const created = previous ?? await contextValue.onCreateSession(activeWorkspaceId, { projectId: selectedProjectId ?? undefined })
-        if (generation !== toolIntentGeneration.current || liveWorkspace.current !== context.workspaceId || store.get(primaryPanelRouteAtom) !== context.route
-          || (store.get(workspaceProjectContextsAtom)[context.workspaceId] ?? null) !== (context.projectId ?? null)) return
+        const created = previous ?? await contextValue.onCreateSession(activeWorkspaceId)
+        if (generation !== toolIntentGeneration.current || liveWorkspace.current !== context.workspaceId || store.get(primaryPanelRouteAtom) !== context.route) return
         route = routes.view.allSessions(created.id)
         openWorkspaceTool(store, intent, route)
         return
@@ -773,12 +771,6 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   const collectionFilters = useAtomValue(collectionFiltersAtom)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)
   const setCollectionFilterKey = useSetAtom(collectionFilterKeyAtom)
-  useEffect(() => {
-    if (!isSessionsNavigation(navState)) return
-    const current = store.get(collectionFiltersAtom)
-    const projectId = selectedProjectId ? [selectedProjectId] : undefined
-    if (JSON.stringify(current.projectId) !== JSON.stringify(projectId)) setCollectionFilters({ ...current, projectId })
-  }, [selectedProjectId, sessionFilterKey, store, setCollectionFilters])
   const prevKeyRef = React.useRef(sessionFilterKey ?? 'allSessions')
   const skipRailChipClearRef = React.useRef(false)
 
@@ -3183,18 +3175,6 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                   data-sidebar-scroll=""
                   className={cn('flex-1 overflow-y-auto min-h-0 pb-2', !(isSettingsNavigation(navState) && !isAutoCompact) && 'sidebar-scroll-fade')}
                 >
-                {/* WP6: the project scope shows where it filters (chats, projects) or whenever a project is picked, so an active scope is never hidden. */}
-                {activeWorkspaceId && !isSidebarCollapsed && (selectedProjectId !== null || isSessionsNavigation(navState) || isProjectsNavigation(navState)) && (
-                  <div className="flex h-[var(--chrome-panel-header-height)] shrink-0 items-center gap-1.5 border-b border-border-subtle px-3">
-                    <label className="shrink-0 text-xs text-muted-foreground" htmlFor="workspace-project-context">{t('navigation.projectContext')}</label>
-                    <select id="workspace-project-context" value={selectedProjectId ?? ''}
-                      className="min-w-0 flex-1 rounded-md border border-border bg-background px-1.5 py-1 text-caption leading-tight"
-                      onChange={event => setProjectContexts(previous => ({ ...previous, [activeWorkspaceId]: event.target.value || null }))}>
-                      <option value="">{t('navigation.allProjects')}</option>
-                      {projects.map(project => <option key={project.config.id} value={project.config.id}>{project.config.name}</option>)}
-                    </select>
-                  </div>
-                )}
                 {/* WP6: Settings uses the same contextual slot as every other surface (under the global nav). */}
                 {shellSidebarSlot && isSettingsNavigation(navState) && !isAutoCompact && createPortal(
                   <SettingsNavigator selectedSubpage={navState.subpage ?? null} onSelectSubpage={subpage => handleSettingsClick(subpage)} />,
