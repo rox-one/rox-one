@@ -109,3 +109,6 @@ test-results/
 
 # Isolated dev run (bun run electron:dev:isolated) — config/userdata/tmp
 .dev-isolated/
+
+# Build-time shared API keys (scripts/gen-shared-keys.ts) — never commit
+apps/electron/src/main/home-fetch/shared-keys.local.ts
