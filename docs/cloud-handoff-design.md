@@ -98,5 +98,9 @@ Rejected starts (flag off, another handoff running) are reported but never repla
   Daytona proxy wildcard `https://9100-*.<proxy-domain>/api/auth/callback`; confirm the desktop Rox token is accepted by
   id.rox.one `userinfo` (if not, the desktop needs its own id.rox.one OIDC login).
 - Web host / proxy (`cloud.rox.one`?) — optional with signed links, but avoids the Daytona preview warning page.
-- Build/publish `rox-session-server-v1`; E2E-verify that the headless server picks up the laid-out workspace
-  (`ROX_HANDOFF_WORKSPACE_DIR`), which is not wired into server bootstrap yet.
+- Build/publish `rox-session-server-v1` and run a real E2E. Startup import is wired: `bootstrapServer` calls
+  `importCloudHandoffWorkspace` (server-core/src/bootstrap/cloud-handoff-import.ts) before the session manager
+  loads, which validates `ROX_HANDOFF_WORKSPACE_DIR` (absolute, real dir, under `ROX_HANDOFF_ALLOWED_ROOT`
+  default /home/daytona) and `ROX_HANDOFF_SESSION_ID`, rewrites the header's `workingDirectory` to `<ws>/project`,
+  strips `sharedOwnerKey/sharedUrl/sharedId`, and registers + activates the workspace idempotently
+  (marker `.rox-handoff-imported`). A validation failure aborts startup, so the health check fails closed.
