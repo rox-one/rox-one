@@ -99,7 +99,7 @@ import { QuickEntry, type QuickEntryResult } from './tasks/QuickEntry'
 import { MoveDialog, type MoveDestination } from './tasks/MoveDialog'
 import { BulkActionBar, type BulkAction } from './tasks/BulkActionBar'
 import { orderedSelection, pruneSelection, rangeSelection, toggleInSelection } from './tasks/multi-select'
-import { applyDestinationTo, clearSelection, plainClick, runBulkOperation, selectAll, settleToggle, undoBulkOperation, type BulkSnapshot, type SelectionState } from './tasks/bulk-actions'
+import { applyDestinationTo, clearSelection, plainClick, rangeFocus, runBulkOperation, selectAll, settlePrune, settleToggle, undoBulkOperation, type BulkSnapshot, type SelectionState } from './tasks/bulk-actions'
 import { TaskDetail } from './tasks/TaskDetail'
 import { useTaskDetailDrafts } from './tasks/use-task-detail-drafts'
 import { TaskSidebar } from './tasks/TaskSidebar'
@@ -599,7 +599,6 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const visible = useMemo(() => sections.flatMap((section) => section.tasks), [sections])
   const visibleIds = useMemo(() => visible.map((task) => task.id), [visible])
   // Selection never outlives the rows it points at (view switch, search, completion).
-  useEffect(() => { setMulti((prev) => pruneSelection(prev, visibleIds)) }, [visibleIds])
   const clearMulti = useCallback(() => setMulti((prev) => (prev.size ? new Set() : prev)), [])
   const bulkIds = multi.size > 1 ? orderedSelection(multi, visibleIds) : []
 
@@ -607,6 +606,12 @@ export default function TasksPage(props: TasksPageProps = {}) {
     setMulti(next.multi)
     if (next.focus !== selectedId) selectTask(next.focus)
   }
+
+  useEffect(() => {
+    const pruned = pruneSelection(multi, visibleIds)
+    if (pruned !== multi) applySelection(settlePrune(pruned, selectedId))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleIds])
 
   const onRowMouseDown = (event: React.MouseEvent) => {
     // Keep ⇧-click from extending the native text selection.
@@ -617,7 +622,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
     const mod = event.metaKey || event.ctrlKey
     if (event.shiftKey) {
       const range = rangeSelection(visibleIds, anchorRef.current ?? selectedId, id)
-      applySelection(range.size > 1 ? { multi: range, focus: selectedId ?? id } : plainClick(id))
+      applySelection(range.size > 1 ? { multi: range, focus: rangeFocus(range, selectedId, id) } : plainClick(id))
       return
     }
     anchorRef.current = id

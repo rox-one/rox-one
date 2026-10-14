@@ -26,6 +26,16 @@ export function BulkActionBar({ count, onAction, onClear }: BulkActionBarProps) 
       role="toolbar"
       aria-label={t('tasks.bulk.toolbar', { count })}
       data-testid="tasks-bulk-bar"
+      onKeyDown={(event) => {
+        if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home' && event.key !== 'End') return
+        const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('button')]
+        const index = buttons.indexOf(document.activeElement as HTMLButtonElement)
+        const last = buttons.length - 1
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? last : event.key === 'ArrowRight' ? (index + 1) % buttons.length : (index - 1 + buttons.length) % buttons.length
+        event.preventDefault()
+        event.stopPropagation()
+        buttons[next]?.focus()
+      }}
       className="pointer-events-auto fixed bottom-6 left-1/2 z-chrome flex -translate-x-1/2 items-center gap-1 rounded-[var(--radius-card)] border border-border-subtle bg-background/70 px-2 py-1.5 text-sm shadow-strong backdrop-blur-xl"
     >
       <span className="px-2 font-medium tabular-nums" aria-live="polite" data-testid="tasks-bulk-count">

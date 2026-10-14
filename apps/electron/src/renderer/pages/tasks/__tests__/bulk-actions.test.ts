@@ -20,14 +20,14 @@ describe('bulk operations', () => {
     const countBefore = store.list().length
     const snap = runBulkOperation(store, [a, r], 'complete', { now: NOW })
     expect(snap.affected).toEqual([a, r])
-    expect(snap.created.length).toBe(1)
+    expect(snap.spawned.length).toBe(1)
     expect(store.get(a)?.completedAt).toBeDefined()
     expect(store.get(r)?.completedAt).toBeDefined()
     undoBulkOperation(store, snap)
     expect(store.get(a)?.completedAt).toBeUndefined()
     expect(store.get(r)?.completedAt).toBeUndefined()
     expect(store.list().length).toBe(countBefore)
-    for (const id of snap.created) expect(store.get(id)).toBeUndefined()
+    for (const id of snap.spawned) expect(store.get(id)).toBeUndefined()
   })
 
   it('skips tasks that are mid-complete-animation', () => {
@@ -83,5 +83,63 @@ describe('selection transitions', () => {
     expect(settleToggle(new Set(), 'a')).toEqual({ multi: new Set(), focus: null })
     const many = toggleInSelection(new Set(), 'c', 'a')
     expect(settleToggle(many, 'a').multi.size).toBe(2)
+  })
+})
+
+describe('review round 2', () => {
+  it('pruning collapses to single selection at ≤ 1 and keeps focus inside the set', async () => {
+    const { settlePrune, rangeFocus } = await import('../bulk-actions')
+    expect(settlePrune(new Set(['b']), 'a')).toEqual({ multi: new Set(), focus: 'b' })
+    expect(settlePrune(new Set(), 'a')).toEqual({ multi: new Set(), focus: 'a' })
+    expect(settlePrune(new Set(['b', 'c']), 'a').focus).toBe('b')
+    expect(settlePrune(new Set(['b', 'c']), 'c').focus).toBe('c')
+    expect(rangeFocus(new Set(['b', 'c']), 'a', 'c')).toBe('c')
+    expect(rangeFocus(new Set(['a', 'b']), 'a', 'b')).toBe('a')
+  })
+
+  it('undo reverts only changed fields and skips tasks edited after the action', () => {
+    const { store, a, b } = seed()
+    const snap = runBulkOperation(store, [a, b], 'evening', { now: NOW })
+    store.update(a, { title: 'renamed' })
+    store.setWhen(b, { kind: 'someday' })
+    undoBulkOperation(store, snap)
+    expect(store.get(a)?.title).toBe('renamed')
+    expect(store.get(a)?.list).toBe('anytime')
+    expect(store.get(b)?.list).toBe('someday')
+  })
+
+  it('undo removes only repeat copies spawned for the completed ids', () => {
+    const { store, a, r } = seed()
+    const other = store.create({ title: 'made later', list: 'inbox' })
+    const snap = runBulkOperation(store, [a, r], 'complete', { now: NOW })
+    expect(snap.spawned.length).toBe(1)
+    undoBulkOperation(store, snap)
+    expect(store.get(other.id)).toBeDefined()
+    expect(store.get(snap.spawned[0]!)).toBeUndefined()
+  })
+
+  it('bulk move of a trashed task in a trashed project restores the project trash state on undo', () => {
+    const { store, a, b } = seed()
+    const project = store.addProject('P')
+    store.moveTo(a, { projectId: project.id })
+    store.trash(a, NOW)
+    store.trashProject(project.id, NOW)
+    const trashedAt = store.projects().find((p) => p.id === project.id)?.trashedAt
+    expect(trashedAt).toBeDefined()
+    const snap = runBulkOperation(store, [a, b], 'move', { dest: 'when:today', now: NOW })
+    expect(store.get(a)?.trashedAt).toBeUndefined()
+    expect(store.projects().find((p) => p.id === project.id)?.trashedAt).toBeUndefined()
+    undoBulkOperation(store, snap)
+    expect(store.projects().find((p) => p.id === project.id)?.trashedAt).toBe(trashedAt)
+    expect(store.get(a)?.trashedAt).toBeDefined()
+  })
+
+  it('every action skips pending ids', () => {
+    const { store, a, b } = seed()
+    for (const kind of ['today', 'trash', 'move'] as const) {
+      const snap = runBulkOperation(store, [a, b], kind, { pending: new Set([a]), dest: 'when:someday', now: NOW })
+      expect(snap.affected).not.toContain(a)
+    }
+    expect(store.get(a)?.list).toBe('anytime')
   })
 })

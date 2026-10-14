@@ -10,11 +10,27 @@ const DAY = 24 * 60 * 60 * 1000
 
 export type BulkKind = 'complete' | 'today' | 'evening' | 'someday' | 'trash' | 'move'
 
+type Fields = Record<string, unknown>
+
+interface TaskChange {
+  id: string
+  /** Previous values of the fields the action changed (undefined = absent). */
+  before: Fields
+  /** Values right after the action; undo skips the task if any of them moved since. */
+  after: Fields
+}
+
+interface ProjectChange {
+  id: string
+  before: number | undefined
+  after: number | undefined
+}
+
 export interface BulkSnapshot {
-  /** Deep copies of every touched task before the operation. */
-  before: PersonalTask[]
-  /** Ids created by the operation (removed on undo). */
-  created: string[]
+  changes: TaskChange[]
+  projects: ProjectChange[]
+  /** Repeat copies spawned for the bulk-completed ids (removed on undo). */
+  spawned: string[]
   /** Ids the operation actually changed (for toasts). */
   affected: string[]
 }
@@ -47,13 +63,32 @@ const WHEN: Record<'today' | 'evening' | 'someday', TaskWhen> = {
   someday: { kind: 'someday' },
 }
 
-function copy(task: PersonalTask): PersonalTask {
-  return JSON.parse(JSON.stringify(task)) as PersonalTask
+function copy<T>(value: T): T {
+  return value === undefined ? value : JSON.parse(JSON.stringify(value)) as T
+}
+
+function same(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+
+function diff(before: PersonalTask, after: PersonalTask): { before: Fields; after: Fields } | null {
+  const keys = new Set([...Object.keys(before), ...Object.keys(after)])
+  const b: Fields = {}
+  const a: Fields = {}
+  for (const key of keys) {
+    if (key === 'id' || key === 'createdAt') continue
+    const prev = (before as unknown as Fields)[key]
+    const next = (after as unknown as Fields)[key]
+    if (same(prev, next)) continue
+    b[key] = copy(prev)
+    a[key] = copy(next)
+  }
+  return Object.keys(b).length ? { before: b, after: a } : null
 }
 
 /**
  * Runs one bulk operation on `current` (already a mutable draft).
- * `pending` holds ids mid-complete-animation; complete skips them.
+ * `pending` holds ids mid-complete-animation; every action skips them.
  */
 export function runBulkOperation(
   current: PersonalTaskStore,
@@ -62,17 +97,22 @@ export function runBulkOperation(
   opts: { pending?: ReadonlySet<string>; dest?: string; now?: number } = {},
 ): BulkSnapshot {
   const idSet = new Set(ids)
-  const existing = new Set(current.list().map((task) => task.id))
-  const before = current.list().filter((task) => idSet.has(task.id) || (task.parentId != null && idSet.has(task.parentId))).map(copy)
+  const touched = (task: PersonalTask) => idSet.has(task.id) || (task.parentId != null && idSet.has(task.parentId))
+  const beforeTasks = new Map(current.list().filter(touched).map((task) => [task.id, copy(task)]))
+  const beforeProjects = new Map(current.projects().map((project) => [project.id, project.trashedAt]))
   const affected: string[] = []
+  const spawned: string[] = []
   for (const id of ids) {
     const task = current.get(id)
-    if (!task) continue
+    if (!task || opts.pending?.has(id)) continue
     switch (kind) {
-      case 'complete':
-        if (task.completedAt || task.cancelledAt || opts.pending?.has(id)) continue
-        current.completeTask(id, opts.now)
+      case 'complete': {
+        if (task.completedAt || task.cancelledAt) continue
+        const hadNext = task.repeatNextId != null
+        const { next } = current.completeTask(id, opts.now)
+        if (next && !hadNext) spawned.push(next.id)
         break
+      }
       case 'trash':
         if (task.trashedAt != null) continue
         current.trash(id, opts.now)
@@ -86,20 +126,37 @@ export function runBulkOperation(
     }
     affected.push(id)
   }
-  const created = current.list().map((task) => task.id).filter((id) => !existing.has(id))
-  return { before, created, affected }
+  const changes: TaskChange[] = []
+  for (const [id, before] of beforeTasks) {
+    const live = current.get(id)
+    const delta = live ? diff(before, live) : null
+    if (delta) changes.push({ id, ...delta })
+  }
+  const projects: ProjectChange[] = []
+  for (const project of current.projects()) {
+    const before = beforeProjects.get(project.id)
+    if (beforeProjects.has(project.id) && before !== project.trashedAt) projects.push({ id: project.id, before, after: project.trashedAt })
+  }
+  return { changes, projects, spawned, affected }
 }
 
-/** Restores every snapshotted task field-for-field and drops spawned tasks. */
+/**
+ * Reverts only the fields the action changed. A task (or project) edited after
+ * the action — any changed field no longer holds its post-action value — is left alone.
+ */
 export function undoBulkOperation(current: PersonalTaskStore, snapshot: BulkSnapshot): void {
-  for (const id of snapshot.created) if (current.get(id)) current.remove(id)
-  for (const saved of snapshot.before) {
-    const live = current.get(saved.id)
+  for (const id of snapshot.spawned) if (current.get(id)) current.remove(id)
+  for (const change of snapshot.changes) {
+    const live = current.get(change.id) as unknown as Fields | undefined
     if (!live) continue
-    const patch: Record<string, unknown> = {}
-    for (const key of Object.keys(live)) if (key !== 'id' && key !== 'createdAt' && !(key in saved)) patch[key] = undefined
-    for (const [key, value] of Object.entries(saved)) if (key !== 'id' && key !== 'createdAt') patch[key] = value
-    current.update(saved.id, patch as Parameters<PersonalTaskStore['update']>[1])
+    if (!Object.entries(change.after).every(([key, value]) => same(live[key], value))) continue
+    const patch: Fields = {}
+    for (const key of Object.keys(change.after)) patch[key] = copy(change.before[key])
+    current.update(change.id, patch as Parameters<PersonalTaskStore['update']>[1])
+  }
+  for (const change of snapshot.projects) {
+    const project = current.projects().find((p) => p.id === change.id)
+    if (project && project.trashedAt === change.after) current.updateProject(change.id, { trashedAt: change.before })
   }
 }
 
@@ -128,4 +185,16 @@ export function clearSelection(focus: string | null): SelectionState {
 
 export function plainClick(id: string): SelectionState {
   return { multi: new Set(), focus: id }
+}
+
+/** Rows left the view: re-settle the pruned set, collapsing to single selection at ≤ 1. */
+export function settlePrune(pruned: Set<string>, focus: string | null): SelectionState {
+  if (pruned.size > 1) return { multi: pruned, focus: focus && pruned.has(focus) ? focus : [...pruned][0]! }
+  const [only] = [...pruned]
+  return { multi: new Set(), focus: only ?? focus }
+}
+
+/** ⇧-click range: keep the focused row if it is inside the range, else focus the clicked row. */
+export function rangeFocus(range: ReadonlySet<string>, focus: string | null, clicked: string): string {
+  return focus && range.has(focus) ? focus : clicked
 }
