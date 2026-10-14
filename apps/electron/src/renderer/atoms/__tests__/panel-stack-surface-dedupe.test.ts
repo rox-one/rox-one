@@ -83,3 +83,17 @@ describe('one panel per surface', () => {
     expect(collapseDuplicateSurfaces(stack)).toBe(stack)
   })
 })
+
+describe('dedupe keeps the primary id valid', () => {
+  it('repoints primary when its panel collapses into a twin', async () => {
+    const { primaryPanelIdAtom } = await import('../panel-stack')
+    const store = createStore()
+    store.set(pushPanelAtom, { route: 'notes' as never })
+    store.set(pushPanelAtom, { route: 'feed' as never })
+    const [notes, feed] = store.get(panelStackAtom)
+    store.set(focusedPanelIdAtom, notes.id)
+    expect(store.get(primaryPanelIdAtom)).toBe(notes.id)
+    store.set(updatePanelRouteByIdAtom, { id: feed.id, route: 'notes/n1' as never })
+    expect(store.get(primaryPanelIdAtom)).toBe(feed.id)
+  })
+})

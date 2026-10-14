@@ -206,8 +206,8 @@ export function KanbanColumn({
           type="button"
           data-no-dnd="true"
           onClick={onToggleCollapsed}
-          title={`${label} · ${t('kanban.column.expand')}`}
-          aria-label={`${label} · ${t('kanban.column.expand')}`}
+          title={`${label} (${tasks.length}) · ${t('kanban.column.expand')}`}
+          aria-label={`${label} (${tasks.length}) · ${t('kanban.column.expand')}`}
           className="flex flex-1 flex-col items-center gap-2 rounded-lg px-1 py-2 transition-colors hover:bg-foreground/[0.04]"
           style={{ backgroundColor: color?.tint }}
         >
@@ -221,7 +221,7 @@ export function KanbanColumn({
             {tasks.length}
           </span>
           <span className="max-w-full truncate text-[10px] font-semibold uppercase text-foreground/60" aria-hidden>
-            {label.slice(0, 3)}
+            {Array.from(label).slice(0, 3).join('')}
           </span>
             <ChevronRight className="mt-auto h-3.5 w-3.5 text-foreground/70" />
         </button>

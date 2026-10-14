@@ -78,7 +78,8 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
   // Unconnected and quiet: a single summary line; providers, the local hint
   // and the reminder form open on demand so they never crowd a narrow panel.
   const connected = store.accounts().some((account) => account.status === 'connected')
-  const showDetails = expanded || connected || conflicts.length > 0 || proposals.length > 0
+  const needsAttention = status === 'conflict' || status === 'localChanges' || status === 'timezone'
+  const showDetails = expanded || connected || needsAttention || conflicts.length > 0 || proposals.length > 0
 
   if (!showDetails) {
     return (

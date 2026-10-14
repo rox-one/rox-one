@@ -101,6 +101,11 @@ function setDeduped(get: Getter, set: Setter, stack: PanelStackEntry[], preferId
   if (focused && !next.some(entry => entry.id === focused)) set(focusedPanelIdAtom, preferId ?? next[0]?.id ?? null)
   const expanded = get(expandedPanelIdAtom)
   if (expanded && !next.some(entry => entry.id === expanded)) set(expandedPanelIdAtom, null)
+  const primary = get(primaryPanelIdAtom)
+  if (primary && !next.some(entry => entry.id === primary)) {
+    const prefer = next.find(entry => entry.id === preferId && !entry.tool) ?? next.find(entry => !entry.tool)
+    set(primaryPanelIdAtom, prefer?.id ?? null)
+  }
   return next
 }
 const focusedPanelIdValueAtom = atom<string | null>(null)
