@@ -30,6 +30,23 @@ const q = (c: HTMLElement, s: string) => {
   return el
 }
 
+/** Set a controlled input's value the way React's change tracking expects. */
+function setNativeValue(input: HTMLInputElement, value: string) {
+  let proto: object | null = Object.getPrototypeOf(input)
+  let setter: ((v: string) => void) | undefined
+  while (proto && !setter) {
+    setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set
+    proto = Object.getPrototypeOf(proto)
+  }
+  // React may use its key-event input polyfill under happy-dom (see the
+  // profile-questionnaire test): focus, write, then fire both event families.
+  input.focus()
+  setter!.call(input, value)
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  input.dispatchEvent(new Event('change', { bubbles: true }))
+  input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'Unidentified' }))
+}
+
 describe('RoleStep', () => {
   it('saves the developer answer with the chosen work style', async () => {
     const patches: unknown[] = []
@@ -47,12 +64,24 @@ describe('RoleStep', () => {
     await click('[data-testid="role-agent-claudeCode"]')
     await click('[data-testid="role-agent-geminiCli"]')
     await click('[data-testid="role-format-pdf"]')
-    await click('[data-testid="role-pair-detail"] [data-value="concise"]')
-    await click('[data-testid="role-pair-layout"] [data-value="bullets"]')
-    // Clicking the active option clears it.
-    await click('[data-testid="role-pair-layout"] [data-value="bullets"]')
-    await click('[data-testid="role-pair-clarify"] [data-value="askFirst"]')
-    await click('[data-testid="role-pair-collaboration"] [data-value="reasonTogether"]')
+    await click('[data-testid="role-format-docx"]')
+    await click('[data-testid="role-related-other"]')
+    const slide = async (key: string, value: number) => {
+      const input = q(container, `[data-testid="role-scale-${key}"] input`) as HTMLInputElement
+      await act(async () => {
+        setNativeValue(input, String(value))
+      })
+    }
+    await slide('detail', 2)
+    await slide('tone', 8)
+    await slide('layout', 9)
+    // Double-click resets a slider to «no preference».
+    await act(async () => { q(container, '[data-testid="role-scale-layout"] input').dispatchEvent(new MouseEvent('dblclick', { bubbles: true })) })
+    const other = q(container, '[data-testid="role-other-input"]') as HTMLInputElement
+    expect(other.maxLength).toBe(32)
+    await act(async () => {
+      setNativeValue(other, 'Бариста')
+    })
 
     expect(q(container, '[data-testid="role-agent-claudeCode"]').getAttribute('aria-pressed')).toBe('true')
     const buttons = Array.from(container.querySelectorAll('button'))
@@ -64,14 +93,14 @@ describe('RoleStep', () => {
       status: 'answered',
       value: {
         isDeveloper: true,
-        relatedRoles: [],
+        relatedRoles: ['other'],
+        otherRole: 'Бариста',
         isDeveloperExplicit: true,
         workStyle: {
           agents: ['claudeCode', 'geminiCli'],
-          formats: ['pdf'],
-          detail: 'concise',
-          clarify: 'askFirst',
-          collaboration: 'reasonTogether',
+          formats: ['docx', 'pdf'],
+          primaryFormat: 'pdf',
+          scales: { detail: 2, tone: 8 },
         },
       },
     })
@@ -89,9 +118,10 @@ describe('RoleStep', () => {
     await act(async () => { root.render(<RoleStep onContinue={() => {}} />) })
     expect(q(container, '[data-testid="role-developer-yes"]').getAttribute('aria-pressed')).toBe('false')
     expect(q(container, '[data-testid="role-developer-no"]').getAttribute('aria-pressed')).toBe('false')
-    // Each answer-style pair has a visible label.
-    expect(q(container, '[data-testid="role-pair-detail"]').getAttribute('aria-labelledby')).toBeTruthy()
-    expect(container.textContent).toContain('onboarding.role.pair.detail')
+    // Each slider is labelled at both ends and starts as «no preference».
+    expect(q(container, '[data-testid="role-scale-detail"]').dataset.set).toBe('false')
+    expect(container.textContent).toContain('onboarding.role.detail.concise')
+    expect(container.textContent).toContain('onboarding.role.detail.detailed')
     const cont = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'common.continue')!
     await act(async () => { cont.click() })
     expect((patches[0] as { role: unknown }).role).toEqual({ status: 'answered', value: { isDeveloper: false, relatedRoles: [] } })
