@@ -324,14 +324,14 @@ export function navIdForPill(surface: Pick<ResolvedPillSurface, 'id' | 'kind' | 
   return nav.find((entry) => entry.modeId !== undefined && entry.modeId === modeId)?.id ?? nav.find((entry) => entry.id === surface.id)?.id ?? null
 }
 
-/** «Убрать из пилюль»: the registry surface and its default sidebar group (never «Скрыт»). */
+/** «Убрать из пилюль»: the registry surface moves to the «Все экраны» menu (never «Скрыт»). */
 export function removeFromPillsTarget(
   surface: Pick<ResolvedPillSurface, 'id' | 'kind' | 'mode'>,
   nav: readonly ResolvedPrimaryNavEntry[],
-): { id: string; placement: 'primary' | 'more' } | null {
+): { id: string; placement: 'menu' } | null {
   const navId = navIdForPill(surface, nav)
   const entry = navId ? nav.find((candidate) => candidate.id === navId) : undefined
-  return entry ? { id: entry.id, placement: entry.group } : null
+  return entry ? { id: entry.id, placement: 'menu' } : null
 }
 
 /**
