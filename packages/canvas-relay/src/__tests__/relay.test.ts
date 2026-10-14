@@ -300,3 +300,92 @@ describe('re-review fixes', () => {
     for (const c of cs) c.ws.close()
   })
 })
+
+describe('review 3', () => {
+  const ADMIN = 'a'.repeat(40)
+  const revokeReq = (port: number | undefined, body: unknown, auth = `Bearer ${ADMIN}`, headers: Record<string, string> = {}) =>
+    fetch(`http://localhost:${port}/admin/revoke`, { method: 'POST', headers: { authorization: auth, 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) })
+
+  test('admin revoke endpoint: auth, validation, closes live sockets', async () => {
+    expect((await revokeReq(relay().port, { room: ROOM, sub: 'x', epoch: 1 })).status).toBe(404) // off by default
+    expect(() => relay({ adminToken: 'short' })).toThrow()
+    expect(() => relay({ adminToken: SECRET })).toThrow()
+    const r = relay({ adminToken: ADMIN })
+    const c = client(r.port, await tok('edit', { sub: 'eve' }))
+    await c.isSynced()
+    expect((await revokeReq(r.port, { room: ROOM, sub: 'eve', epoch: 1 }, 'Bearer ' + 'b'.repeat(40))).status).toBe(401)
+    expect((await revokeReq(r.port, { room: ROOM, sub: 'eve', epoch: 1 }, `Bearer ${ADMIN}`, { origin: 'https://evil.test' })).status).toBe(403)
+    expect((await revokeReq(r.port, { room: '../x', sub: 'eve', epoch: 1 })).status).toBe(400)
+    expect((await revokeReq(r.port, { room: ROOM, sub: 'eve', epoch: 1.5 })).status).toBe(400)
+    const res = await revokeReq(r.port, { room: ROOM, sub: 'eve', epoch: 1 })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ ok: true, closed: 1 })
+    expect(await c.closed).toBe(CLOSE.revoked)
+  })
+
+  test('subprotocol: a bare token is refused and the token is never echoed', async () => {
+    const r = relay()
+    const t = await tok('edit')
+    const ws = new WebSocket(`ws://localhost:${r.port}/r/${ROOM}`, [t])
+    const code = await new Promise<string>(res => { ws.onopen = () => res('open'); ws.onerror = () => res('error'); ws.onclose = () => res('closed') })
+    expect(code).not.toBe('open')
+    const ok = client(r.port, t)
+    await ok.opened
+    expect(ok.ws.protocol).toBe(SUBPROTOCOL)
+    ok.ws.close()
+  })
+
+  test('full sync on open: a client that never sends step 1 still gets the document', async () => {
+    const r = relay()
+    const a = client(r.port, await tok('edit'))
+    await a.isSynced()
+    a.doc.getText('t').insert(0, 'hello')
+    const b = client(r.port, await tok('view'))
+    await b.opened
+    await until(() => b.doc.getText('t').toString() === 'hello', b.subscribe)
+    a.ws.close(); b.ws.close()
+  })
+
+  test('duplicates are not stored; pending structs count toward the cap', async () => {
+    const store = new RoomStore(join(dir, `${Math.random()}.sqlite`))
+    let appends = 0
+    const orig = store.append.bind(store)
+    store.append = (room, u) => { appends++; return orig(room, u) }
+    const r = relay({ store, limits: { maxDocBytes: 3000 } })
+    const a = client(r.port, await tok('edit'))
+    await a.isSynced()
+    const src = new Y.Doc(); src.getText('t').insert(0, 'z'.repeat(100))
+    const first = Y.encodeStateAsUpdate(src)
+    const send = (u: Uint8Array) => { const e = encoding.createEncoder(); encoding.writeVarUint(e, 0); syncProtocol.writeUpdate(e, u); a.send(encoding.toUint8Array(e)) }
+    send(first); send(first); send(first)
+    await Bun.sleep(150)
+    expect(appends).toBe(1)
+    // An update whose dependencies never arrive sits in memory: it must count.
+    const sv = Y.encodeStateVector(src)
+    src.getText('t').insert(0, 'p'.repeat(1000)) // the missing dependency, never sent
+    const sv2 = Y.encodeStateVector(src)
+    src.getText('t').insert(0, 'q'.repeat(1600)); const orphan = Y.encodeStateAsUpdate(src, sv2)
+    void sv
+    send(orphan)
+    send(orphan)
+    expect(await a.closed).toBe(CLOSE.docTooLarge)
+  })
+
+  test('an older-epoch refresh closes', async () => {
+    const r = relay()
+    const c = client(r.port, await tok('edit', { epoch: 2 }))
+    await c.isSynced()
+    const e = encoding.createEncoder(); encoding.writeVarUint(e, MSG_AUTH); encoding.writeVarString(e, await tok('edit', { epoch: 1 })); c.send(encoding.toUint8Array(e))
+    expect(await c.closed).toBe(CLOSE.revoked)
+  })
+
+  test('revocation between verify and open closes the socket', async () => {
+    const store = new RoomStore(join(dir, `${Math.random()}.sqlite`))
+    const r = relay({ store })
+    const origMin = store.minEpoch.bind(store)
+    let calls = 0
+    store.minEpoch = (room, sub) => (++calls === 1 ? 0 : Math.max(1, origMin(room, sub))) // verify passes, open sees the revocation
+    const c = client(r.port, await tok('edit'))
+    expect(await c.closed).toBe(CLOSE.revoked)
+  })
+})

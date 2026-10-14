@@ -28,6 +28,7 @@ import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
 import { verifyRoomToken, type RoomClaims } from './auth.ts'
 import { RoomStore } from './store.ts'
+import { timingSafeEqual } from 'node:crypto'
 
 const MSG_SYNC = 0
 const MSG_AWARENESS = 1
@@ -74,10 +75,17 @@ export interface RelayOptions {
   log?: (msg: string) => void
   /** Test seam: replace the store (e.g. to inject failures). */
   store?: RoomStore
+  /**
+   * Bearer token for POST /admin/revoke (>= 32 chars). Unset = endpoint off.
+   * Body: {"room": "<ws>:<board>", "sub": "<user id>|*", "epoch": <int ≥ 1>}.
+   */
+  adminToken?: string
 }
 
+const EMPTY_UPDATE_LEN = 2 // Y.diffUpdate of nothing new: 0 structs, 0 delete-set clients
+
 interface Bucket { msgs: number; bytes: number; at: number }
-interface Conn { room: string; claims: RoomClaims; controlled: Set<number>; bucket: Bucket; expTimer?: ReturnType<typeof setTimeout>; counted?: boolean }
+interface Conn { room: string; claims: RoomClaims; controlled: Set<number>; bucket: Bucket; expTimer?: ReturnType<typeof setTimeout>; counted?: boolean; closed?: boolean; authSeq?: number }
 type WS = ServerWebSocket<Conn>
 export type RelayConn = Conn
 
@@ -96,6 +104,11 @@ class Room {
   bytes: number
   sinceCompact = 0
   private compactTimer: ReturnType<typeof setTimeout> | null = null
+  /** Bytes of structs waiting for missing dependencies (held in memory, count toward the cap). */
+  pendingBytes(): number {
+    const p = (this.doc.store as unknown as { pendingStructs: { update: Uint8Array } | null; pendingDs: Uint8Array | null })
+    return (p.pendingStructs?.update.length ?? 0) + (p.pendingDs?.length ?? 0)
+  }
   constructor(readonly name: string, readonly doc: Y.Doc, private store: RoomStore, private compactEvery: number, private idleMs: number, private log: (m: string) => void) {
     this.bytes = Y.encodeStateAsUpdate(doc).length
     this.awareness = new awarenessProtocol.Awareness(doc)
@@ -123,10 +136,11 @@ class Room {
    * Persist then apply. Returns false (nothing applied) if the append failed.
    * `growth` is the part of the update the doc did not already contain.
    */
-  write(update: Uint8Array, growth: number, origin: WS): boolean {
-    this.store.append(this.name, update) // throws → caller closes 1011; memory untouched
-    Y.applyUpdate(this.doc, update, origin)
-    this.bytes += growth
+  write(growth: Uint8Array, origin: WS): boolean {
+    // Only the part the doc lacks is stored and applied (duplicates cost nothing).
+    this.store.append(this.name, growth) // throws → caller closes 1011; memory untouched
+    Y.applyUpdate(this.doc, growth, origin)
+    this.bytes += growth.length
     if (++this.sinceCompact >= this.compactEvery) this.scheduleCompact()
     return true
   }
@@ -210,6 +224,8 @@ export function startRelay(opts: RelayOptions) {
     throw new Error(`canvas-relay: secret must be at least ${MIN_SECRET_LENGTH} characters`)
   }
   if (!opts.issuer || !opts.audience) throw new Error('canvas-relay: issuer and audience are required')
+  if (opts.adminToken !== undefined && opts.adminToken.length < MIN_SECRET_LENGTH) throw new Error(`canvas-relay: admin token must be at least ${MIN_SECRET_LENGTH} characters`)
+  if (opts.adminToken !== undefined && opts.adminToken === opts.secret) throw new Error('canvas-relay: admin token must differ from the token secret')
   const limits: RelayLimits = { ...DEFAULT_LIMITS, ...opts.limits }
   const log = opts.log ?? ((m: string) => console.log(`[canvas-relay] ${m}`))
   const store = opts.store ?? new RoomStore(opts.dbPath)
@@ -234,14 +250,53 @@ export function startRelay(opts: RelayOptions) {
   }
 
   const handleAuth = async (ws: WS, token: string) => {
+    const seq = (ws.data.authSeq = (ws.data.authSeq ?? 0) + 1)
     const v = await verify(token, ws.data.room)
+    // The socket may have closed, or a newer refresh started, while verifying.
+    if (ws.data.closed || seq !== ws.data.authSeq) return
     if (!v.ok || v.claims.sub !== ws.data.claims.sub) {
       log(`auth refresh rejected room=${ws.data.room} reason=${v.ok ? 'sub' : v.reason}`)
       ws.close(v.ok || v.reason !== 'revoked' ? CLOSE.expired : CLOSE.revoked, 'auth refresh rejected')
       return
     }
+    // A refresh may change scope/name; it never lowers the epoch already accepted.
+    if ((v.claims.epoch ?? 0) < (ws.data.claims.epoch ?? 0)) { ws.close(CLOSE.revoked, 'stale epoch'); return }
     ws.data.claims = v.claims
     armExpiry(ws, v.claims.exp)
+  }
+
+  const adminOk = (req: Request): boolean => {
+    if (!opts.adminToken) return false
+    const got = Buffer.from((req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, ''))
+    const want = Buffer.from(opts.adminToken)
+    return got.length === want.length && timingSafeEqual(got, want)
+  }
+
+  const handleAdminRevoke = async (req: Request): Promise<Response> => {
+    if (!opts.adminToken) return new Response('not found', { status: 404 })
+    if (req.method !== 'POST') return new Response('method not allowed', { status: 405 })
+    // Server-to-server only: a browser request (Origin present) is never an admin call.
+    if (req.headers.get('origin')) return new Response('forbidden', { status: 403 })
+    if (!adminOk(req)) { log('admin revoke rejected: bad credentials'); return new Response('unauthorized', { status: 401 }) }
+    let body: { room?: unknown; sub?: unknown; epoch?: unknown }
+    try { body = await req.json() as typeof body } catch { return new Response('bad json', { status: 400 }) }
+    const { room, sub, epoch } = body
+    if (typeof room !== 'string' || !ROOM_RE.test(room)) return new Response('bad room', { status: 400 })
+    if (typeof sub !== 'string' || !sub || sub.length > 128) return new Response('bad sub', { status: 400 })
+    if (typeof epoch !== 'number' || !Number.isSafeInteger(epoch) || epoch < 1) return new Response('bad epoch', { status: 400 })
+    const closed = revoke(room, sub, epoch)
+    log(`admin revoke room=${room} sub=${sub === '*' ? '*' : '[sub]'} epoch=${epoch} closed=${closed}`)
+    return Response.json({ ok: true, closed })
+  }
+
+  /** Raise the revocation epoch for a subject ('*' = everyone) and drop live sockets below it. */
+  const revoke = (room: string, sub: string, epoch: number): number => {
+    store.revoke(room, sub, epoch)
+    let n = 0
+    for (const c of rooms.get(room)?.conns ?? []) {
+      if ((sub === '*' || c.data.claims.sub === sub) && (c.data.claims.epoch ?? 0) < epoch) { c.close(CLOSE.revoked, 'revoked'); n++ }
+    }
+    return n
   }
 
   const server = Bun.serve<Conn>({
@@ -255,6 +310,7 @@ export function startRelay(opts: RelayOptions) {
     async fetch(req, srv) {
       const url = new URL(req.url)
       if (url.pathname === '/healthz') return Response.json({ ok: true, rooms: rooms.size, conns: totalConns })
+      if (url.pathname === '/admin/revoke') return handleAdminRevoke(req)
       const m = url.pathname.match(/^\/r\/([^/]+)$/)
       if (!m) return new Response('not found', { status: 404 })
       let room: string
@@ -264,6 +320,9 @@ export function startRelay(opts: RelayOptions) {
       if (origin && opts.allowedOrigins?.length && !opts.allowedOrigins.includes(origin)) return new Response('forbidden origin', { status: 403 })
       const offered = (req.headers.get('sec-websocket-protocol') ?? '').split(',').map(s => s.trim()).filter(Boolean)
       const protoToken = offered.find(s => s.split('.').length === 3)
+      // A token in Sec-WebSocket-Protocol is only accepted next to our protocol
+      // name, which is what we echo — the token itself is never echoed back.
+      if (protoToken && !offered.includes(SUBPROTOCOL)) return new Response(`subprotocol ${SUBPROTOCOL} required`, { status: 400 })
       const token = protoToken ?? url.searchParams.get('token') ?? ''
       const v = await verify(token, room)
       if (!v.ok) { log(`auth rejected room=${room} reason=${v.reason}`); return new Response('unauthorized', { status: 401 }) }
@@ -271,7 +330,6 @@ export function startRelay(opts: RelayOptions) {
       if ((rooms.get(room)?.conns.size ?? 0) >= limits.maxConnsPerRoom) return new Response('room full', { status: 503 })
       const headers = new Headers()
       if (offered.includes(SUBPROTOCOL)) headers.set('Sec-WebSocket-Protocol', SUBPROTOCOL)
-      else if (protoToken) headers.set('Sec-WebSocket-Protocol', protoToken)
       const data: Conn = { room, claims: v.claims, controlled: new Set(), bucket: { msgs: limits.msgsPerSecond * 2, bytes: limits.bytesPerSecond * 2, at: Date.now() } }
       if (srv.upgrade(req, { data, headers })) return undefined
       return new Response('upgrade required', { status: 426 })
@@ -279,6 +337,9 @@ export function startRelay(opts: RelayOptions) {
     websocket: {
       maxPayloadLength: limits.maxMessageBytes,
       open(ws) {
+        // A revocation may have landed between verify (fetch) and open.
+        if ((ws.data.claims.epoch ?? 0) < store.minEpoch(ws.data.room, ws.data.claims.sub)) { ws.close(CLOSE.revoked, 'revoked'); return }
+        if (ws.data.claims.exp * 1000 <= Date.now()) { ws.close(CLOSE.expired, 'token expired'); return }
         // Re-check caps here too: several upgrades can pass fetch() concurrently.
         if (totalConns >= limits.maxConnsTotal) { ws.close(CLOSE.roomFull, 'server full'); return }
         let room: Room
@@ -297,6 +358,12 @@ export function startRelay(opts: RelayOptions) {
         encoding.writeVarUint(enc, MSG_SYNC)
         syncProtocol.writeSyncStep1(enc, room.doc)
         ws.sendBinary(encoding.toUint8Array(enc))
+        // Full sync up front: the whole state as step 2, so a client that never
+        // sends step 1 (or a view-only one) still gets the document.
+        const full = encoding.createEncoder()
+        encoding.writeVarUint(full, MSG_SYNC)
+        syncProtocol.writeSyncStep2(full, room.doc)
+        ws.sendBinary(encoding.toUint8Array(full))
         const states = [...room.awareness.getStates().keys()]
         if (states.length) {
           const a = encoding.createEncoder()
@@ -333,8 +400,9 @@ export function startRelay(opts: RelayOptions) {
               const update = decoding.readVarUint8Array(dec)
               // Only content the doc doesn't have yet counts (and is stored).
               const growth = Y.diffUpdate(update, Y.encodeStateVector(room.doc))
-              if (room.bytes + growth.length > limits.maxDocBytes) { ws.close(CLOSE.docTooLarge, 'document too large'); return }
-              try { room.write(update, growth.length, ws) } catch (e) {
+              if (growth.length <= EMPTY_UPDATE_LEN) return // nothing new
+              if (room.bytes + room.pendingBytes() + growth.length > limits.maxDocBytes) { ws.close(CLOSE.docTooLarge, 'document too large'); return }
+              try { room.write(growth, ws) } catch (e) {
                 log(`append failed room=${room.name}: ${(e as Error).message}`)
                 ws.close(CLOSE.serverError, 'storage error')
                 return
@@ -349,6 +417,7 @@ export function startRelay(opts: RelayOptions) {
         }
       },
       close(ws) {
+        ws.data.closed = true
         if (ws.data.expTimer) clearTimeout(ws.data.expTimer)
         if (!ws.data.counted) return
         ws.data.counted = false
@@ -365,13 +434,7 @@ export function startRelay(opts: RelayOptions) {
   return {
     server,
     port: server.port,
-    /** Raise the revocation epoch for a subject ('*' = everyone) and drop live sockets below it. */
-    revoke(room: string, sub: string, epoch: number) {
-      store.revoke(room, sub, epoch)
-      for (const c of rooms.get(room)?.conns ?? []) {
-        if ((sub === '*' || c.data.claims.sub === sub) && (c.data.claims.epoch ?? 0) < epoch) c.close(CLOSE.revoked, 'revoked')
-      }
-    },
+    revoke,
     stop() {
       server.stop(true)
       for (const r of [...rooms.values()]) dropRoom(r, true)

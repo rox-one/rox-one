@@ -21,3 +21,18 @@ Limits (env): `MAX_MESSAGE_BYTES` (1 MiB), `MAX_DOC_BYTES` (50 MiB), `MAX_CONNS_
 Tokens: HS256 with required `iss`, `aud`, `iat`, `nbf`, `exp`, `sub`, `room`, `scope`; lifetime (`exp - iat`) at most 15 minutes. Clients refresh in-band before expiry by sending `[2, varString(newToken)]`; the same `sub` and room are required. Optional `epoch`: `relay.revoke(room, sub|'*', epoch)` rejects tokens below it and closes live sockets (4003). Share links never carry relay tokens; they're exchanged at the token endpoint for short ones.
 
 Reverse proxy: the Rox desktop client sends the token only as a subprotocol. If you allow `?token=` clients, **disable query-string logging** at the proxy (nginx: log `$uri` instead of `$request`; Caddy: `log { format filter { request>uri query { delete token } } }`).
+
+## Admin revocation
+
+Set `RELAY_ADMIN_TOKEN` (≥ 32 chars, different from `RELAY_SECRET`) to enable
+`POST /admin/revoke` — server-to-server only (requests with an `Origin` header are refused):
+
+```
+curl -X POST https://<relay>/admin/revoke \
+  -H "Authorization: Bearer $RELAY_ADMIN_TOKEN" -H 'content-type: application/json' \
+  -d '{"room":"<workspaceId>:<boardId>","sub":"<userId or *>","epoch":2}'
+```
+
+Live sockets of that subject with a lower token epoch close with 4003; new
+tokens must carry `epoch` ≥ the revoked value. Clients must offer the
+`rox-canvas.v1` subprotocol next to the token; the token is never echoed.

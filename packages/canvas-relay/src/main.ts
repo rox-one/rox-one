@@ -7,6 +7,8 @@
  *                    Requests without an Origin header (desktop app) still need a token.
  *   TOKEN_ISSUER     required, expected `iss` (e.g. https://id.rox.one)
  *   TOKEN_AUDIENCE   required, expected `aud` (e.g. rox-canvas)
+ *   RELAY_ADMIN_TOKEN optional, >= 32 chars, != RELAY_SECRET: enables POST /admin/revoke
+ *                    (Authorization: Bearer …; server-to-server, e.g. from id.rox.one)
  *   PORT (8787), HOST (0.0.0.0), DATA_DIR (./data)
  *   MAX_MESSAGE_BYTES, MAX_DOC_BYTES, MAX_CONNS_PER_ROOM, MAX_CONNS_TOTAL
  */
@@ -38,6 +40,7 @@ const relay = startRelay({
   issuer,
   audience,
   allowedOrigins: origins,
+  adminToken: process.env.RELAY_ADMIN_TOKEN || undefined,
   limits,
 })
 console.log(`rox-canvas-relay listening on :${relay.port}`)
