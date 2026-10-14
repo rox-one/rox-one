@@ -67,4 +67,22 @@ export function useTeamMessages(channelId: string | null) {
   return { ...state, reload }
 }
 
+/** Debounced search over messages, transcripts and AI summaries in visible channels. */
+export function useTeamSearch(orgId: string | null, query: string) {
+  const [state, setState] = React.useState<{ loading: boolean; results: TeamChannelMessage[]; error: string | null }>({ loading: false, results: [], error: null })
+  React.useEffect(() => {
+    const q = query.trim()
+    if (!orgId || q.length < 2) { setState({ loading: false, results: [], error: null }); return }
+    let live = true
+    setState(prev => ({ ...prev, loading: true }))
+    const id = setTimeout(() => {
+      window.electronAPI.teamChatSearch(orgId, q)
+        .then(results => { if (live) setState({ loading: false, results, error: null }) })
+        .catch(error => { if (live) setState({ loading: false, results: [], error: errorText(error) }) })
+    }, 200)
+    return () => { live = false; clearTimeout(id) }
+  }, [orgId, query])
+  return state
+}
+
 export { errorText as teamChatErrorText }
