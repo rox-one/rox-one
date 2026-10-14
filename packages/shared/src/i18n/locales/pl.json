@@ -11967,5 +11967,6 @@
   "canvas.cardDelete.body": "Odłącz usuwa kartę tylko z tej tablicy. Usuń kasuje także sam obiekt.",
   "canvas.cardDelete.unlink": "Odłącz",
   "canvas.cardDelete.delete": "Usuń obiekt",
-  "canvas.cardDelete.cancel": "Anuluj"
+  "canvas.cardDelete.cancel": "Anuluj",
+  "canvas.cardDelete.confirmDelete": "Usunąć „{{title}}” w całym Rox? Tego nie można cofnąć z tablicy."
 }

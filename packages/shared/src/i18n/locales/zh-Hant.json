@@ -11933,5 +11933,6 @@
   "canvas.cardDelete.body": "取消連結只會從此白板移除卡片。刪除也會刪除實體本身。",
   "canvas.cardDelete.unlink": "取消連結",
   "canvas.cardDelete.delete": "刪除實體",
-  "canvas.cardDelete.cancel": "取消"
+  "canvas.cardDelete.cancel": "取消",
+  "canvas.cardDelete.confirmDelete": "要在整個 Rox 中刪除「{{title}}」嗎？無法在畫板上復原。"
 }

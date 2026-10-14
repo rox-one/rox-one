@@ -11999,5 +11999,6 @@
   "canvas.cardDelete.body": "«Отвязать» убирает карточку только с этой доски. «Удалить» удаляет и сам объект.",
   "canvas.cardDelete.unlink": "Отвязать",
   "canvas.cardDelete.delete": "Удалить объект",
-  "canvas.cardDelete.cancel": "Отмена"
+  "canvas.cardDelete.cancel": "Отмена",
+  "canvas.cardDelete.confirmDelete": "Удалить «{{title}}» во всём Rox? С доски это не отменить."
 }

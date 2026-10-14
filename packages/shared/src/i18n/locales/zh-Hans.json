@@ -11933,5 +11933,6 @@
   "canvas.cardDelete.body": "取消关联仅从此白板移除卡片。删除会同时删除实体本身。",
   "canvas.cardDelete.unlink": "取消关联",
   "canvas.cardDelete.delete": "删除实体",
-  "canvas.cardDelete.cancel": "取消"
+  "canvas.cardDelete.cancel": "取消",
+  "canvas.cardDelete.confirmDelete": "要在整个 Rox 中删除“{{title}}”吗？无法在画板上撤销。"
 }
