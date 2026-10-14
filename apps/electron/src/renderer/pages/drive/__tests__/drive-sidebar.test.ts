@@ -66,4 +66,9 @@ describe('buildDriveSidebarGroups', () => {
     expect(folders.state).toBeUndefined()
     expect(folders.items.some((i) => i.label === 'Docs')).toBe(true)
   })
+  it('shows loading instead of the previous folder while another folder loads', () => {
+    const listing = { folderId: 'a', folders: [{ id: 'f1', name: 'Old' }], files: [], path: [{ id: 'r', name: 'R', parentId: null }, { id: 'a', name: 'A', parentId: 'r' }] } as never
+    const folders = buildDriveSidebarGroups(input({ listing, currentFolderId: 'b', loading: true })).find((x) => x.id === 'folders')!
+    expect(folders.state).toEqual({ kind: 'loading' })
+  })
 })

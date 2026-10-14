@@ -49,7 +49,8 @@ export function buildDriveSidebarGroups(input: DriveSidebarInput): SidebarGroup[
   // move, create) are toasts and keep the loaded list.
   if (input.error && !input.listing) {
     folders = { id: 'folders', title: l.folders, items: [], state: { kind: 'error', label: l.error, onRetry: input.onRetry } }
-  } else if (input.loading && !input.listing) {
+  } else if (input.loading && (!input.listing || isStaleListing(input.listing, input.currentFolderId))) {
+    // Navigated into another folder: never show the previous folder's children/«Up».
     folders = { id: 'folders', title: l.folders, items: [], state: { kind: 'loading' } }
   } else {
     const path = input.listing?.path ?? []
@@ -80,4 +81,9 @@ export function buildDriveSidebarGroups(input: DriveSidebarInput): SidebarGroup[
     })
   }
   return groups
+}
+
+/** The loaded listing belongs to a different folder than the one being opened. */
+export function isStaleListing(listing: DriveListing, currentFolderId: string | null): boolean {
+  return currentFolderId !== null ? listing.folderId !== currentFolderId : listing.path.length > 1
 }
