@@ -34,7 +34,9 @@ import { ConnectionLifecyclePanel } from './ConnectionLifecyclePanel'
 import { GithubDeviceLoginPanel } from './GithubDeviceLoginPanel'
 import { ConnectionsOverview, OverviewGroup, OverviewRow, type OverviewStatus } from './connections-overview'
 import { ProjectAuthorityConnectionPanel } from '@/components/projects/ProjectAuthorityConnectionPanel'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { useConnectionsSidebar } from './use-connections-sidebar'
+import { connectionDisplayName } from './connections-sidebar'
+import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
 
 const TABS = ['services', 'credentials', 'imports', 'policies', 'audit'] as const
 const CONNECT_SOURCES = ['github-env', 'git-helper', 'docker', 'aws', 'keychain', 'adc', 'ssh-agent', 'github-oauth'] as const
@@ -83,7 +85,8 @@ export default function ConnectionsPage() {
   const auditViewReady = useRef(false)
   const [auditSurface, setAuditSurface] = useState<SurfaceState | 'loading'>('loading')
   const [tab, setTab] = useState<ConnectionsTab>('services')
-  const sidebarTarget = useShellSidebarTarget()
+  /** Audit tab scoped to one connection (opened from the Отклонённые sidebar group). */
+  const [auditConnectionId, setAuditConnectionId] = useState<string | null>(null)
   const servicesViewport = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     servicesTarget(tab === 'services' ? servicesViewport.current : null)
@@ -165,11 +168,12 @@ export default function ConnectionsPage() {
     }
   }, [workspace?.id, setSelected])
 
+  // One audit source for the Audit tab and the sidebar's Отклонённые group:
+  // loaded per workspace, on refresh and on tab change (rows are kept while
+  // reloading so the sidebar does not flicker).
   useEffect(() => {
-    if (tab !== 'audit') return
     setAuditSurface('loading')
     setAuditWorkspaceId(null)
-    setAuditRows([])
     const workspaceId = workspace?.id
     const listConnectionAudit = window.electronAPI?.workgraph?.listConnectionAudit
     if (!workspaceId || typeof listConnectionAudit !== 'function') {
@@ -195,7 +199,7 @@ export default function ConnectionsPage() {
     return () => {
       stale = true
     }
-  }, [tab, workspace?.id])
+  }, [tab, workspace?.id, reloadKey])
 
   useEffect(() => {
     if (tab !== 'policies') return
@@ -216,7 +220,7 @@ export default function ConnectionsPage() {
     return () => {
       stale = true
     }
-  }, [tab, workspace?.id])
+  }, [tab, workspace?.id, reloadKey])
 
   useEffect(() => {
     // Audit has its own loading/result evidence; its read does not disable Fabric.
@@ -529,11 +533,31 @@ export default function ConnectionsPage() {
     if (workspace?.id) void refreshRows(workspace.id)
   }
 
+  useConnectionsSidebar({
+    workspaceId: workspace?.id ?? null,
+    rows,
+    surface,
+    sources: CONNECT_SOURCES,
+    activeSource,
+    selectedId: selected?.id ?? null,
+    audit: auditRows,
+    onSelectConnection: (row) => { setTab('services'); setSelected(row) },
+    onSelectSource: (source) => { setTab('imports'); setActiveSource((current) => current === source ? null : source) },
+    onOpenAudit: (connectionId) => {
+      const row = rows?.find((r) => r.id === connectionId)
+      if (row) setSelected(row)
+      setAuditConnectionId(connectionId)
+      setTab('audit')
+    },
+    onConnect: () => setTab('imports'),
+    onRefresh: refreshAll,
+  })
+
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="connections-page">
       <div className="mx-auto flex w-full max-w-4xl items-center gap-3 px-6 pt-5 pb-3">
         <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-semibold text-foreground">{t('connections.title')}</h1>
+          <PanelHeading className="text-lg font-semibold text-foreground" titleKey="connections.title">{t('connections.title')}</PanelHeading>
           <p className="truncate text-sm text-muted-foreground">{t('connections.subtitle')}</p>
         </div>
         <Button size="sm" variant="ghost" onClick={refreshAll} aria-label={t('common.refresh')}>
@@ -544,9 +568,9 @@ export default function ConnectionsPage() {
           {t('connections.connect')}
         </Button>
       </div>
-      {/* Contextual sidebar: the tabs are this screen's navigation (inline when no shell slot). */}
-      <ShellSidebarPortal aria-label={t('sidebar.connections')} className="mx-auto w-full max-w-4xl px-3 pb-2">
-        <div role="tablist" aria-label={t('sidebar.connections')} aria-orientation={sidebarTarget ? 'vertical' : 'horizontal'} className={sidebarTarget ? 'flex flex-col gap-0.5' : 'flex gap-1'}>
+      {/* Section tabs stay in the panel; the shell's second sidebar carries the screen groups. */}
+      <div className="mx-auto w-full max-w-4xl px-3 pb-2">
+        <div role="tablist" aria-label={t('sidebar.connections')} aria-orientation="horizontal" className="flex gap-1">
           {TABS.map((id) => (
             <button
               key={id}
@@ -556,13 +580,13 @@ export default function ConnectionsPage() {
               role="tab"
               aria-selected={tab === id}
               className={`rounded-md px-3 py-1.5 text-left text-sm transition-colors ${tab === id ? 'bg-foreground/[0.07] text-foreground' : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground'}`}
-              onClick={() => setTab(id)}
+              onClick={() => { setAuditConnectionId(null); setTab(id) }}
             >
               {t(`connections.tabs.${id}`)}
             </button>
           ))}
         </div>
-      </ShellSidebarPortal>
+      </div>
       <ScrollArea viewportRef={servicesViewport} data-product-tour-target={tab === 'services' ? 'connections.services' : undefined} className="flex-1 min-h-0">
       <div className="mx-auto flex w-full max-w-4xl flex-col px-6 pt-2 pb-16 text-muted-foreground">
         {tab === 'services' && <ProjectAuthorityConnectionPanel />}
@@ -991,9 +1015,23 @@ export default function ConnectionsPage() {
               </ul>
             ) : null}
           </div>
-        ) : tab === 'audit' && auditRows.length > 0 ? (
+        ) : tab === 'audit' && (auditRows.length > 0 || auditConnectionId) ? (
+          <div className="space-y-2">
+          {auditConnectionId ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground" data-testid="connections-audit-filter">
+              <span>{t('screenSidebar.connections.auditFilter', { name: connectionDisplayName(auditConnectionId, rows, t) })}</span>
+              <button type="button" className="rounded-md px-2 py-0.5 hover:bg-surface-hover hover:text-foreground" onClick={() => setAuditConnectionId(null)}>
+                {t('screenSidebar.connections.auditFilterClear')}
+              </button>
+            </div>
+          ) : null}
           <ul className="space-y-2 text-sm text-foreground">
-            {auditRows.map((row) => (
+            {auditConnectionId && !auditRows.some((row) => row.connectionId === auditConnectionId) ? (
+              <li className="rounded-[var(--radius-card)] bg-surface-hover px-3 py-2 text-muted-foreground" data-testid="connections-audit-filter-empty">
+                {auditSurface === 'loading' ? t('common.loading') : t('screenSidebar.connections.auditFilterEmpty')}
+              </li>
+            ) : null}
+            {(auditConnectionId ? auditRows.filter((row) => row.connectionId === auditConnectionId) : auditRows).map((row) => (
               <li key={`${row.connectionId}:${row.occurredAt}:${row.payloadDigest}`} className="rounded-[var(--radius-card)] bg-surface-hover px-3 py-2">
                 <div className="font-medium">{row.eventType}</div>
                 <div className="text-muted-foreground">{row.outcome}</div>
@@ -1003,6 +1041,7 @@ export default function ConnectionsPage() {
               </li>
             ))}
           </ul>
+          </div>
         ) : (
           empty
         )}

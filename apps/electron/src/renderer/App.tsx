@@ -3,11 +3,12 @@ import { DraftPersistence } from '@/lib/draft-persistence'
 import { createBoundedReconnectRepair, DEFAULT_TIMEOUT_MS, waitForTransportConnected } from './lib/transport-wait'
 import { decideStartupAppState, isStartupAuthorityDenial, probeWithRetry } from './lib/startup-setup-needs'
 import { useTranslation } from 'react-i18next'
+import i18n from 'i18next'
 import { useTheme } from '@/hooks/useTheme'
 import type { ThemeOverrides } from '@config/theme'
 import { useSetAtom, useStore, useAtomValue, useAtom } from 'jotai'
 import type { Session, Workspace, SessionEvent, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, SetupNeeds, SessionStatus, NewChatActionParams, ContentBadge, LlmConnectionWithStatus, PermissionModeState } from '../shared/types'
-import type { StartupRuntimeSummary } from '@rox/shared/protocol'
+import type { StartupRuntimeSummary, SteeringVerb } from '@rox/shared/protocol'
 import type { DoctorReport } from '@rox/shared/service-lifecycle'
 import type { SessionDraft, DraftAttachmentRef } from '@rox/shared/config'
 import type { SessionOptions, SessionOptionUpdates } from './hooks/useSessionOptions'
@@ -22,6 +23,8 @@ import { SessionSharingHost } from '@/components/app-shell/SessionSharingHost'
 import { SessionSuggestionsHost } from '@/components/app-shell/SessionSuggestionsHost'
 import { ProductTourProvider, ProductTourHost } from '@/features/product-tour/runtime'
 import { publishTourSignal } from '@/features/product-tour/runtime/bridge'
+import { GuidedTourHost } from '@/features/guided-tour/GuidedTour'
+import { markGuidedTourFirstRun } from '@/features/guided-tour/state'
 import { observeChatSessionEvent, bindChatOptimisticMessage, observeChatPermissionResponse, cancelChatUserTurn, observeChatSessionCreated } from '@/features/product-tour/adapters/chat'
 import { collectionBulkOperationRegistry } from '@/components/app-shell/collection/collection-bulk-optimistic'
 import { viewportBand } from '@/platform/viewport-band'
@@ -86,6 +89,7 @@ import { featureUnifiedShellAtom, featureWorkbenchAtom } from '@/atoms/unified-s
 import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
 import { useEntitiesLinksFlagSync } from '@/lib/entities-links-sync'
 import { getSessionTitle } from '@/utils/session'
+import { pushNotification, resolveNotification } from '@/components/shell/notifications'
 import { extractBadges } from '@/lib/mentions'
 import { getDefaultStore } from 'jotai'
 import { PlatformProvider, ShikiThemeProvider } from '@rox/ui/context'
@@ -338,6 +342,12 @@ function SessionLoadErrorScreen({
       </div>
     </div>
   )
+}
+
+/** The permission was answered (here, in another window, or the turn ended): the bell item is done. */
+function resolveApprovalNotification(sessionId: string): void {
+  // Called from state updaters: defer so store listeners never fire mid-render.
+  queueMicrotask(() => resolveNotification(`approval:${sessionId}`, i18n.t('shell.notifications.approvalAnswered')))
 }
 
 export default function App({ webTransportBootstrap }: { webTransportBootstrap?: AuthenticatedWebTransportBootstrap } = {}) {
@@ -908,6 +918,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         await window.electronAPI.switchWorkspace(workspace.id)
       }
       setWindowWorkspaceId(workspace.id)
+      // The guided tour lands on Home for good after the wizard (no route restore).
+      markGuidedTourFirstRun()
       setAppState('ready')
       return true
     } catch (error) {
@@ -1238,6 +1250,18 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
                 ? `Admin approval required: ${effect.request.appName || effect.request.toolName}`
                 : `Permission required: ${effect.request.toolName}`
               showSessionNotification(notifySession, promptBody)
+              pushNotification({
+                kind: 'approval',
+                title: getSessionTitle(notifySession),
+                body: isAdminPrompt
+                  ? i18n.t('shell.notifications.adminApprovalRequired', { name: effect.request.appName || effect.request.toolName })
+                  : i18n.t('shell.notifications.approvalRequired', { name: effect.request.toolName }),
+                workspaceId: notifySession.workspaceId,
+                route: routes.view.allSessions(sessionId),
+                dedupeKey: `approval:${sessionId}`,
+                // On screen: the prompt is right there, nothing to catch up on.
+                read: store.get(visibleSessionIdsAtom).has(sessionId),
+              })
             }
             break
           }
@@ -1298,6 +1322,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       if (eventType === 'complete') {
         setPendingPermissions(prevPerms => {
           if (prevPerms.has(sessionId)) {
+            resolveApprovalNotification(sessionId)
             const next = new Map(prevPerms)
             next.delete(sessionId)
             return next
@@ -1487,6 +1512,17 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           // events don't fire success-style notifications previewing stale or
           // never-persisted content (#664). Both fields are optional — when
           // absent (older backends) treat as success to preserve prior behavior.
+          if ((event.type === 'error' || event.type === 'typed_error') && !updatedSession.hidden) {
+            pushNotification({
+              kind: 'error',
+              title: getSessionTitle(updatedSession),
+              body: i18n.t('shell.notifications.agentFailed'),
+              workspaceId: updatedSession.workspaceId,
+              route: routes.view.allSessions(sessionId),
+              dedupeKey: `agent:${sessionId}`,
+              read: store.get(visibleSessionIdsAtom).has(sessionId),
+            })
+          }
           if (event.type === 'complete' && !updatedSession.hidden) {
             const completeEvent = event as { reason?: string; didReceiveNewFinalMessage?: boolean }
             const isSuccessfulCompletion =
@@ -1509,6 +1545,16 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
             const rawPreview = lastMessage?.content?.substring(0, 200) || undefined
             const preview = rawPreview ? stripMarkdown(rawPreview).substring(0, 100) || undefined : undefined
             showSessionNotification(updatedSession, preview)
+            // top50 #9: the in-app center keeps it even when the window is focused.
+            pushNotification({
+              kind: 'agent',
+              title: getSessionTitle(updatedSession),
+              body: preview,
+              workspaceId: updatedSession.workspaceId,
+              route: routes.view.allSessions(sessionId),
+              dedupeKey: `agent:${sessionId}`,
+              read: store.get(visibleSessionIdsAtom).has(sessionId),
+            })
 
             // In-app complement to the OS notification: when a *background*
             // session (one not shown in any open panel) finishes, queue a chip
@@ -1884,7 +1930,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     window.electronAPI.sessionCommand(sessionId, { type: 'rename', name })
   }, [updateSessionById])
 
-  const handleSendMessage = useCallback(async (sessionId: string, message: string, attachments?: FileAttachment[], skillSlugs?: string[], externalBadges?: ContentBadge[]) => {
+  const handleSendMessage = useCallback(async (sessionId: string, message: string, attachments?: FileAttachment[], skillSlugs?: string[], externalBadges?: ContentBadge[], queueMode?: SteeringVerb) => {
     const scope = sessionScopeRef.current
     try {
       if (!scope.authority || scope.authority === 'native' && (!scope.workspaceId
@@ -2044,6 +2090,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         skillSlugs,
         badges: persistedBadges,
         optimisticMessageId: userMessage.id,
+        ...(queueMode && sendingMidStream ? { queueMode } : {}),
       })
     } catch (error) {
       console.error('Failed to send message:', error)
@@ -2337,6 +2384,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         const queue = next.get(sessionId) || []
         const remainingQueue = queue.slice(1) // Remove first item
         if (remainingQueue.length === 0) {
+          resolveApprovalNotification(sessionId)
           next.delete(sessionId)
         } else {
           next.set(sessionId, remainingQueue)
@@ -2352,6 +2400,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         const queue = next.get(sessionId) || []
         const remainingQueue = queue.slice(1)
         if (remainingQueue.length === 0) {
+          resolveApprovalNotification(sessionId)
           next.delete(sessionId)
         } else {
           next.set(sessionId, remainingQueue)
@@ -2808,6 +2857,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           {/* Handle window close requests (X button, Cmd+W) - close modal first if open */}
           <ProductTourProvider workspaceId={windowWorkspaceId} shellReady={appState === 'ready' && sessionsLoaded && !showSplash && !sessionLoadError} welcomeSessionId={tourWelcome?.workspaceId === windowWorkspaceId ? tourWelcome.sessionId : null}>
           <ProductTourHost />
+          <GuidedTourHost shellReady={appState === 'ready' && sessionsLoaded && !showSplash && !sessionLoadError} />
           <WindowCloseHandler />
           {/* Native shell actions (menu / tray / global shortcuts) */}
           <ShellActionBridge />

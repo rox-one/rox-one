@@ -13,7 +13,7 @@ import { EscapeInterruptProvider } from '../../../apps/electron/src/renderer/con
 import { ModalProvider } from '../../../apps/electron/src/renderer/context/ModalContext'
 import { TooltipProvider } from '../../../packages/ui/src/components/tooltip'
 import { AppShellProvider, type AppShellContextType } from '../../../apps/electron/src/renderer/context/AppShellContext'
-import { NavigationContext } from '../../../apps/electron/src/renderer/contexts/NavigationContext'
+import { NavigationActionsContext, NavigationContext, NavigationStatusContext, type NavigationActions, type NavigationStatus } from '../../../apps/electron/src/renderer/contexts/NavigationContext'
 import { DEFAULT_NAVIGATION_STATE, type Session, type Message, type FileAttachment, type LoadedSource } from '../../../apps/electron/src/shared/types'
 import type { RuntimeEvent } from '../../../packages/core/src/runtime-trace/types'
 import { createBrowserPerformanceHarness } from './browser-performance'
@@ -133,8 +133,13 @@ function Harness() {
     onOpenFile: () => {}, onOpenUrl: () => {}, onSelectWorkspace: () => {}, onOpenSettings: () => {}, onOpenKeyboardShortcuts: () => {}, onOpenStoredUserPreferences: () => {}, onReset: () => {},
     onSessionOptionsChange: () => {}, onInputChange: (_, value) => setDraft(value), onAttachmentsChange: (_, value) => setAttachments(value), isFocusedPanel: true,
   }
-  const navigation = { navigate: () => {}, isReady: true, navigationState: DEFAULT_NAVIGATION_STATE, navigationRevision: 0,
-    canGoBack: false, canGoForward: false, goBack: () => {}, goForward: () => {}, updateRightSidebar: () => {}, toggleRightSidebar: () => {}, navigateToSource: () => {}, navigateToSession: () => {} }
+  // `NavigationProvider` publishes three contexts; components that were moved to
+  // the stable actions/status selectors read those split contexts, so the fixture
+  // must publish them too, not just the legacy combined one.
+  const navigationActions: NavigationActions = { navigate: () => {}, goBack: () => {}, goForward: () => {},
+    updateRightSidebar: () => {}, toggleRightSidebar: () => {}, navigateToSource: () => {}, navigateToSession: () => {} }
+  const navigationStatus: NavigationStatus = { isReady: true, navigationState: DEFAULT_NAVIGATION_STATE, navigationRevision: 0, canGoBack: false, canGoForward: false }
+  const navigation = { ...navigationActions, ...navigationStatus }
   const chat = <ActualChat events={events} draft={draft} setDraft={setDraft} attachments={attachments} setAttachments={setAttachments} chatRef={chatRef} />
   const openMessage = (messageId: string) => { diagnostics.selectedMessage = messageId; chatRef.current?.scrollToMessage(messageId) }
   const editor = flags.has('editor') ? <React.Suspense fallback={<span role="status">Загрузка существующего редактора</span>}><SessionWorkflowEditor sessionId={scope.sessionId} messages={editorMessages} onOpenMessage={openMessage}
@@ -142,7 +147,7 @@ function Harness() {
   if (catalogMode) return error ? <div role="alert">{error}</div> : catalogSnapshot
     ? <React.Suspense fallback={<span role="status">Загрузка каталога</span>}><CatalogHarness {...catalogSnapshot} mode={catalogMode} withSourceList={flags.get('sourceList') === '1'} /></React.Suspense>
     : <span role="status">Чтение временного каталога</span>
-  return <AppShellProvider value={shell}><NavigationContext.Provider value={navigation}><FocusProvider><EscapeInterruptProvider><ModalProvider><TooltipProvider>
+  return <AppShellProvider value={shell}><NavigationActionsContext.Provider value={navigationActions}><NavigationStatusContext.Provider value={navigationStatus}><NavigationContext.Provider value={navigation}><FocusProvider><EscapeInterruptProvider><ModalProvider><TooltipProvider>
     <div className="runtime-test-shell">
       <div className="runtime-test-banner" role="status">Изолированный тест · детерминированный исполнитель · без запросов к моделям</div>
       <nav className="runtime-test-controls">
@@ -158,7 +163,7 @@ function Harness() {
       <output data-testid="draft-value" className="runtime-test-diagnostics">{draft}</output>
       <output data-testid="attachments-count" className="runtime-test-diagnostics">{attachments.length}</output>
     </div>
-  </TooltipProvider></ModalProvider></EscapeInterruptProvider></FocusProvider></NavigationContext.Provider></AppShellProvider>
+  </TooltipProvider></ModalProvider></EscapeInterruptProvider></FocusProvider></NavigationContext.Provider></NavigationStatusContext.Provider></NavigationActionsContext.Provider></AppShellProvider>
 }
 Object.assign(window, { runtimeDiagnostics: diagnostics, runtimeTestAPI: api, runtimeStore: store, runtimeEditorStorageKeys: editorStorageKeys, runtimePerformance: createBrowserPerformanceHarness(store, scope) })
 createRoot(document.getElementById('root')!).render(<Provider store={store}><ThemeProvider defaultMode={new URL(location.href).searchParams.get('theme') === 'dark' ? 'dark' : 'light'}><Harness /></ThemeProvider></Provider>)

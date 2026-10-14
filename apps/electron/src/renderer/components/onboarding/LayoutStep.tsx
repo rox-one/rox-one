@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { BackButton, ContinueButton, StepFormLayout } from './primitives'
 import { getDefaultLayoutPreset, setDefaultLayoutPreset } from '@/lib/layout-defaults'
+import { ChipCheck } from './start-visuals'
 
 /** The four named arrangements offered as a starting layout (deck order). */
 const STARTING_PRESETS = ['focus', 'dialog', 'triptych', 'wall'] as const
@@ -58,12 +59,13 @@ export function LayoutStep({ onContinue, onBack }: LayoutStepProps) {
             aria-checked={selected === preset}
             onClick={() => setSelected(preset)}
             className={cn(
-              'w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors',
+              'flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors',
               selected === preset
                 ? 'border-accent bg-accent/10'
                 : 'border-transparent bg-foreground-2 hover:bg-surface-hover',
             )}
           >
+            <ChipCheck checked={selected === preset} />
             <span className="font-medium">
               {t(`layout.deck.preset.${preset}`, { defaultValue: preset })}
             </span>

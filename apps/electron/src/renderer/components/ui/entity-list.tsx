@@ -37,6 +37,7 @@ import {
   entityListWindow,
   flattenEntityListRows,
   groupEndByHeaderKey,
+  observedBlockSize,
   revealEntryScrollTop,
   rowEntryIndexByItemKey,
   virtualEntryIndices,
@@ -195,6 +196,8 @@ export interface EntityListProps<T> {
   dropGroupKey?: string | null
   /** Drag over an empty expanded group (drop lane) */
   onEmptyGroupDragOver?: (groupKey: string, event: React.DragEvent) => void
+  /** Custom header for specific groups; return null/undefined to use the default header. */
+  renderGroupHeaderOverride?: EntityListGroupHeaderOverride<T>
   /** Window large lists so the DOM does not grow linearly with the collection. */
   virtualize?: boolean
   /** Estimated row height before the first measurement (virtualized mode). */
@@ -206,6 +209,19 @@ export interface EntityListProps<T> {
   /** Auto-windowed lists: Home/End/Arrows move focus across all rows. */
   keyboardNavigation?: boolean
 }
+
+export interface EntityListGroupHeaderContext {
+  isCollapsed: boolean
+  itemCount: number
+  onToggle?: () => void
+  elementRef?: React.Ref<HTMLElement>
+  style?: React.CSSProperties
+}
+
+export type EntityListGroupHeaderOverride<T> = (
+  group: EntityListGroup<T>,
+  ctx: EntityListGroupHeaderContext,
+) => React.ReactNode | null | undefined
 
 // ============================================================================
 // Section Header
@@ -279,7 +295,7 @@ function CollapsibleGroupHeader({
           ref={elementRef}
           style={style}
           onClick={onToggle}
-          className="sticky top-0 z-10 flex w-full cursor-pointer items-center gap-1.5 bg-background px-5 py-2 group/header relative"
+          className="sticky top-0 z-10 flex w-full cursor-pointer items-center gap-1.5 bg-background px-5 py-2 group/header relative outline-none focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_1px_var(--accent)]"
         >
           <div className="absolute inset-y-0.5 left-2 right-2 rounded-[var(--radius-card)] group-hover/header:bg-surface-hover transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)] pointer-events-none" />
           <ChevronRight
@@ -330,6 +346,7 @@ interface VirtualEntityListBodyProps<T> {
   onSelectGroup?: (groupKey: string) => void
   dropGroupKey?: string | null
   onEmptyGroupDragOver?: (groupKey: string, event: React.DragEvent) => void
+  renderGroupHeaderOverride?: EntityListGroupHeaderOverride<T>
   estimateRowHeight: number
   ensureVisibleKeys?: ReadonlySet<string>
   revealKey?: string | null
@@ -355,6 +372,7 @@ function VirtualEntityListBody<T>({
   onSelectGroup,
   dropGroupKey,
   onEmptyGroupDragOver,
+  renderGroupHeaderOverride,
   estimateRowHeight,
   ensureVisibleKeys,
   revealKey,
@@ -430,7 +448,7 @@ function VirtualEntityListBody<T>({
           const registration = observedRef.current.get(entry.target)
           if (!registration) continue
           const key = logicalKeyRef.current.get(registration) ?? registration
-          const height = Math.ceil(entry.contentRect.height)
+          const height = observedBlockSize(entry)
           if (height <= 0 || previous.get(key) === height) continue
           next ??= new Map(previous)
           next.set(key, height)
@@ -569,7 +587,13 @@ function VirtualEntityListBody<T>({
           }
           return (
             <div key={entry.key} data-windowed-header={group.key} style={headerStyle}>
-              {group.collapsible && onToggleCollapse ? (
+              {renderGroupHeaderOverride?.(group, {
+                isCollapsed: !!isCollapsed,
+                itemCount: groupHeaderCount(!!isCollapsed, group.items.length, group.collapsedCount),
+                onToggle: onToggleCollapse ? () => onToggleCollapse(group.key) : undefined,
+                elementRef: headerRef as React.Ref<HTMLElement>,
+                style: { pointerEvents: 'auto' },
+              }) ?? (group.collapsible && onToggleCollapse ? (
                 <CollapsibleGroupHeader
                   label={group.label}
                   isCollapsed={!!isCollapsed}
@@ -589,7 +613,7 @@ function VirtualEntityListBody<T>({
                   elementRef={headerRef}
                   style={{ pointerEvents: 'auto' }}
                 />
-              )}
+              ))}
             </div>
           )
         }
@@ -640,6 +664,7 @@ function LargeEntityListBody<T>({
   onSelectGroup,
   dropGroupKey,
   onEmptyGroupDragOver,
+  renderGroupHeaderOverride,
   estimateRowHeight,
   ensureVisibleKeys,
   revealKey,
@@ -672,6 +697,14 @@ function LargeEntityListBody<T>({
       keyboardNavigation={keyboardNavigation}
       renderGroupHeader={(group, headerProps) => {
         const isCollapsed = !!group.collapsible && collapsedSet.has(group.key)
+        const override = renderGroupHeaderOverride?.(group, {
+          isCollapsed,
+          itemCount: groupHeaderCount(isCollapsed, group.items.length, group.collapsedCount),
+          onToggle: onToggleCollapse ? () => onToggleCollapse(group.key) : undefined,
+          elementRef: headerProps.ref as React.Ref<HTMLElement>,
+          style: headerProps.style,
+        })
+        if (override != null) return override
         return group.collapsible && onToggleCollapse ? (
           <CollapsibleGroupHeader
             label={group.label}
@@ -737,6 +770,7 @@ export function EntityList<T>({
   onSelectGroup,
   dropGroupKey,
   onEmptyGroupDragOver,
+  renderGroupHeaderOverride,
   virtualize,
   estimateRowHeight,
   ensureVisibleKeys,
@@ -789,6 +823,7 @@ export function EntityList<T>({
                 onSelectGroup={onSelectGroup}
                 dropGroupKey={dropGroupKey}
                 onEmptyGroupDragOver={onEmptyGroupDragOver}
+                renderGroupHeaderOverride={renderGroupHeaderOverride}
                 estimateRowHeight={estimateRowHeight ?? ENTITY_LIST_DEFAULT_ROW_HEIGHT}
                 ensureVisibleKeys={ensureVisibleKeys}
                 revealKey={revealKey}
@@ -807,6 +842,7 @@ export function EntityList<T>({
                 onSelectGroup={onSelectGroup}
                 dropGroupKey={dropGroupKey}
                 onEmptyGroupDragOver={onEmptyGroupDragOver}
+                renderGroupHeaderOverride={renderGroupHeaderOverride}
                 estimateRowHeight={estimateRowHeight ?? ENTITY_LIST_DEFAULT_ROW_HEIGHT}
                 ensureVisibleKeys={ensureVisibleKeys}
                 revealKey={revealKey}
@@ -819,7 +855,11 @@ export function EntityList<T>({
 
                   return (
                     <div key={group.key}>
-                      {group.collapsible && onToggleCollapse ? (
+                      {renderGroupHeaderOverride?.(group, {
+                        isCollapsed: !!isCollapsed,
+                        itemCount: groupHeaderCount(!!isCollapsed, group.items.length, group.collapsedCount),
+                        onToggle: onToggleCollapse ? () => onToggleCollapse(group.key) : undefined,
+                      }) ?? (group.collapsible && onToggleCollapse ? (
                         <CollapsibleGroupHeader
                           label={group.label}
                           isCollapsed={!!isCollapsed}
@@ -835,7 +875,7 @@ export function EntityList<T>({
                           itemCount={group.items.length}
                           onSelectGroup={onSelectGroup ? () => onSelectGroup(group.key) : undefined}
                         />
-                      )}
+                      ))}
                       {!isCollapsed && group.items.length === 0 ? (
                         <div
                           data-empty-group={group.key}

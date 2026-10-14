@@ -1,4 +1,5 @@
 import { TourConnectionPolicyContext } from '@/features/product-tour/runtime/hooks'
+import { useSideSession } from '@/hooks/useSideSession'
 import * as React from "react"
 import { createPortal } from "react-dom"
 import { useTranslation, Trans } from "react-i18next"
@@ -85,18 +86,17 @@ import { NARROW_SHELL_THRESHOLD } from './mode-pill-layout'
 import { ShellSidebarNav } from "./ShellSidebarNav"
 import { modePillShown } from "./mode-pill-layout"
 import { useScrollEdgeAttribute } from "@/hooks/useScrollEdgeAttribute"
-import { ShellLayoutMode } from './ShellLayoutMode'
 import { SuperEngineeringShellExtras } from './SuperEngineeringShellExtras'
-import { WorkspaceNavigator } from '@/components/workspace/WorkspaceNavigator'
 import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
 import { useSeEditorZoom } from '@/hooks/useSeEditorZoom'
 import { inspectorEdgeRevealModeAtom } from '@/atoms/panel-auto-hide'
 import { seChatPipOpenAtom } from '@/atoms/se-chat-pip'
 import { inspectorUserOpenedAtom } from '@/atoms/unified-shell'
+import { useTerminalDockShortcut } from '@/hooks/useTerminalDockShortcut'
 import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
-import { type ProfileStripData } from "./ProfileStrip"
+import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
 import { accountProfileStrip } from "./profile-strip-account"
 import { SidebarNewSessionButton } from "./SidebarNewSessionButton"
 import { SidebarChrome, SidebarHeaderControls } from "./SidebarChrome"
@@ -135,6 +135,7 @@ import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchStatusBa
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
+import { TrayStateBridge } from "@/features/native-integrations/TrayStateBridge"
 import { EscapeInterruptProvider, useEscapeInterrupt } from "@/context/EscapeInterruptContext"
 import { useTheme } from "@/context/ThemeContext"
 import { usePanelResize } from "@/hooks/usePanelResize"
@@ -154,7 +155,7 @@ import { chipsAfterRailChange, railViewNavigation, skipRailChipClearOnce, userSl
 import { compareSessions, filterSessionMeta } from "@rox/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
 import { skillsAtom, skillsSyncingAtom } from "@/atoms/skills"
-import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
+import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, focusedPanelRouteAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
 import { type SessionStatusId, type SessionStatus, statusConfigsToSessionStatuses, resolveStatusDisplayLabel, resolveLabelDisplayName, resolveViewDisplayName, resolveViewDisplayDescription } from "@/config/session-status-config"
 import { useStatuses } from "@/hooks/useStatuses"
 import { useLabels } from "@/hooks/useLabels"
@@ -167,6 +168,7 @@ import { resolveEntityColor } from "@rox/shared/colors"
 import * as storage from "@/lib/local-storage"
 import { commitShellLayout, loadShellLayout, NAVIGATOR_WIDTH_DEFAULT, NAVIGATOR_WIDTH_MAX, NAVIGATOR_WIDTH_MIN, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from "@/lib/shell-layout-preferences"
 import { sessionCatalogOwnsWorkspace } from "@/lib/nav-helpers"
+import { consumeExplicitSessionPanelClose, isExplicitPanelClose, pickAutoOpenSessionId, readSessionAutoOpenState, shouldAutoOpenSession, writeSessionAutoOpenState } from "@/lib/session-auto-open"
 import { installShellWarmup } from "@/lib/shell-warmup"
 import { readSkillsPage, SKILLS_UI_PAGE_SIZE } from "@/lib/skills-query"
 import { toast } from "sonner"
@@ -212,10 +214,8 @@ import { useProductLearning } from '@/features/product-tour/runtime'
 import { useTourTarget, useTourSignals } from '@/features/product-tour/runtime/hooks'
 import { beginChatSessionCreation } from '@/features/product-tour/adapters/chat'
 import { FabNewChat } from "./FabNewChat"
-import { SendToWorkspaceDialog } from "./SendToWorkspaceDialog"
-import { CreateProjectDialog } from "../projects/CreateProjectDialog"
 import { PublishSessionDialogHost } from "@/components/knowledge/PublishSessionDialogHost"
-import { EditPopover, getEditConfig, type EditContextKey } from "@/components/ui/EditPopover"
+import { getEditConfig } from "@/components/ui/edit-config"
 import SettingsNavigator from "@/pages/settings/SettingsNavigator"
 import {
   PANEL_GAP,
@@ -248,6 +248,20 @@ const MessagingDialogHost = React.lazy(() =>
   import("@/components/messaging/MessagingDialogHost").then((m) => ({
     default: m.MessagingDialogHost,
   })),
+)
+
+// Closed until SessionMenu / BatchSessionMenu write sendToWorkspaceAtom, or the
+// Add Project action opens the name prompt. Same gate as PublishSessionDialogHost.
+const SendToWorkspaceDialog = React.lazy(() =>
+  import("./SendToWorkspaceDialog").then((m) => ({ default: m.SendToWorkspaceDialog })),
+)
+const CreateProjectDialog = React.lazy(() =>
+  import("../projects/CreateProjectDialog").then((m) => ({ default: m.CreateProjectDialog })),
+)
+// Closed until a sidebar context menu sets editPopoverOpen. Same gate as
+// SendToWorkspaceDialog — a closed Radix Popover still evaluates the module.
+const EditPopover = React.lazy(() =>
+  import("@/components/ui/EditPopover").then((m) => ({ default: m.EditPopover })),
 )
 
 // The extra-screens background work is timer-driven (first check 30 s after mount) and renders
@@ -479,6 +493,7 @@ function AppShellContent({
   // experimental workbench bar so the two never stack.
   const { statusBarVisible: uiStatusBarVisible } = useUiAppearance()
   const showCompactStatusBar = uiStatusBarVisible && !isAutoCompact && !showStatusBar
+  const statusRowVisible = showStatusBar || showCompactStatusBar
 
   const effectiveSidebarAndNavigatorHidden = isSidebarAndNavigatorHidden || isAutoCompact
 
@@ -670,6 +685,10 @@ function AppShellContent({
   }
   const panelStack = useAtomValue(panelStackAtom)
   const productLearning = useProductLearning()
+  const replayOnboardingTour = React.useMemo(() => {
+    if (!productLearning?.enabled || !productLearning.ready) return undefined
+    return () => { void productLearning.start('OBT-01', productLearning.progress['OBT-01'] ? 'replay' : 'new') }
+  }, [productLearning])
   const tourNewSessionTarget = useTourTarget('session.new', { variant: 'regular' })
   const tourSignals = useTourSignals()
   const panelCount = useAtomValue(panelCountAtom)
@@ -1456,10 +1475,14 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   // New chat
   useAction('app.newChat', () => handleNewChat())
   useAction('app.newChatInPanel', () => handleNewChat(true))
+  // top50 #20: side session next to any screen.
+  const openSideSession = useSideSession()
+  useAction('session.openSide', () => { void openSideSession() }, undefined, [openSideSession])
 
   // Settings
   useAction('app.settings', onOpenSettings)
   useAction('view.toggleSecondarySidebar', toggleSecondarySidebar)
+  useTerminalDockShortcut()
 
   // Keyboard shortcuts
   useAction('app.keyboardShortcuts', onOpenKeyboardShortcuts)
@@ -1745,6 +1768,18 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
     () => accountProfileStrip(profileStrip, roxCloudAccount, workspaceSpentUsd, t('profile.defaultName')),
     [profileStrip, roxCloudAccount, workspaceSpentUsd, t],
   )
+  // One profile entry: rail bottom when the status bar is off, otherwise the
+  // left end of the status row.
+  const renderProfileEntry = (placement: 'rail' | 'status') => (
+    <ProfileStrip
+      variant="rail"
+      placement={placement}
+      data={profileStripWithSpend}
+      onClick={() => handleSettingsClick('account')}
+      onOpenSettings={() => handleSettingsClick()}
+      onReplayTour={replayOnboardingTour}
+    />
+  )
 
   // Active sessions exclude archived - use this for all counts and filters except archived view
   const activeSessionMetas = useMemo(() => {
@@ -1963,6 +1998,65 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
     result.sort((a, b) => compareSessions(a, b, collectionDisplay.orderBy, collectionDisplay.orderDir))
     return result
   }, [workspaceSessionMetas, activeSessionMetas, sessionFilter, labelConfigs, collectionFilters, collectionDisplay.showCompleted, collectionDisplay.orderBy, collectionDisplay.orderDir, effectiveSessionStatuses, involvingMe, ownerFilter, viewer])
+
+  // Sessions split view: opening the list with nothing selected reopens the
+  // last session of this workspace (or the most recent one) in the detail
+  // panel. An explicit close is persisted until a session is opened again.
+  const selectedSessionIdForAutoOpen = isSessionsNavigation(navState) ? navState.details?.sessionId ?? null : null
+  const previousSelectedForAutoOpenRef = React.useRef<string | null>(null)
+  React.useEffect(() => {
+    if (!activeWorkspaceId) return
+    const previous = previousSelectedForAutoOpenRef.current
+    previousSelectedForAutoOpenRef.current = selectedSessionIdForAutoOpen
+    const closedByUser = consumeExplicitSessionPanelClose()
+    if (selectedSessionIdForAutoOpen) {
+      writeSessionAutoOpenState(activeWorkspaceId, { lastSelectedId: selectedSessionIdForAutoOpen, closed: false })
+      return
+    }
+    if (isExplicitPanelClose({
+      previousSessionId: previous,
+      nextSessionId: selectedSessionIdForAutoOpen,
+      stillOnSessionsList: isSessionsNavigation(navState) && (!navState.viewMode || navState.viewMode === 'list'),
+      previousSessionStillExists: !!previous && sessionMetaMap.has(previous),
+      closedByUser,
+    })) {
+      writeSessionAutoOpenState(activeWorkspaceId, { closed: true })
+    }
+  // Only selection transitions matter; the meta map is read at transition time.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeWorkspaceId, selectedSessionIdForAutoOpen])
+  React.useEffect(() => {
+    if (!activeWorkspaceId || !sessionFilter) return
+    const state = readSessionAutoOpenState(activeWorkspaceId)
+    if (!shouldAutoOpenSession({
+      catalogOwnsWorkspace: navigatorExpanded,
+      isSessionsReady: !!isSessionsReady,
+      closedByUser: state.closed,
+      searchActive: searchActive || searchQuery.length > 0,
+    })) return
+    const candidates = sessionFilter.kind === 'archived'
+      ? filteredSessionMetas.map((meta) => ({ ...meta, isArchived: false }))
+      : filteredSessionMetas
+    const targetId = pickAutoOpenSessionId(candidates, state.lastSelectedId)
+    if (!targetId) return
+    // NavigationContext may auto-select in the same pass; defer one frame and
+    // only act if the focused panel still shows no session (no double navigation).
+    const frame = requestAnimationFrame(() => {
+      const currentRoute = store.get(focusedPanelRouteAtom)
+      if (currentRoute && parseSessionIdFromRoute(currentRoute)) return
+      // Opening the chat must not pull focus out of the list search or any other field.
+      const focused = document.activeElement as HTMLElement | null
+      const keepFocus = !!focused && focused !== document.body && focused.matches('input, textarea, [contenteditable="true"]')
+      navigateToSession(targetId)
+      if (keepFocus) {
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          if (focused.isConnected && document.activeElement !== focused) focused.focus({ preventScroll: true })
+        }))
+      }
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [activeWorkspaceId, sessionFilter, navigatorExpanded, isSessionsReady, searchActive, searchQuery, filteredSessionMetas, navigateToSession, store])
+
 
   const viewerHasIdentity = hasViewerIdentity(viewer)
   const sessionOwnerOptions = React.useMemo(() => collectSessionOwnerOptions(activeSessionMetas), [activeSessionMetas])
@@ -3116,6 +3210,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
     <TourConnectionPolicyContext.Provider value={learningSourcePolicy?.workspaceId === activeWorkspaceId ? learningSourcePolicy : null}>
     <AppShellProvider value={appShellContextValue}>
       <AuroraField />
+      <TrayStateBridge />
       <WorkspaceBrowserRegistry enabled={browserSurfaceEnabled} />
       <ShellSidebarContext.Provider value={isAutoCompact ? null : shellSidebarSlot}>
         {/* === TOP BAR === */}
@@ -3126,6 +3221,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
           workspaceUnreadMap={workspaceUnreadMap}
           onWorkspaceCreated={() => onRefreshWorkspaces?.()}
           onWorkspaceRemoved={() => onRefreshWorkspaces?.()}
+          onWorkspaceRenamed={() => onRefreshWorkspaces?.()}
           activeSessionId={effectiveSessionId}
           onNewChat={() => handleNewChat()}
           onNewWindow={() => window.electronAPI.menuNewWindow()}
@@ -3196,22 +3292,10 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             >
             <PrimaryRail
               secondaryAvailable={secondaryAvailable}
-              // One account entry: the sidebar footer card owns it while the
-              // secondary sidebar is visible; the rail avatar only stands in when it is hidden.
-              avatar={secondaryShown ? undefined :
-                <button
-                  type="button"
-                  data-rail-button=""
-                  data-rail-avatar=""
-                  aria-label={t('shell.rail.account', { name: profileStripWithSpend.displayName })}
-                  onClick={() => handleSettingsClick('account')}
-                  className="flex size-10 items-center justify-center rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  {profileStripWithSpend.avatar
-                    ? <img src={profileStripWithSpend.avatar} alt="" className="size-7 rounded-full object-cover" />
-                    : <span className="flex size-7 items-center justify-center rounded-full bg-[var(--state-selected)] text-caption font-semibold" aria-hidden>{(profileStripWithSpend.displayName || '?').slice(0, 1).toUpperCase()}</span>}
-                </button>
-              }
+              // One account entry: the status row's left end owns it while that
+              // row is shown, and the secondary sidebar footer card owns it while
+              // the sidebar is visible; the rail avatar only stands in otherwise.
+              avatar={statusRowVisible || secondaryShown ? undefined : renderProfileEntry('rail')}
             />
             <div
               ref={secondaryOverlayRef}
@@ -3252,12 +3336,8 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                   <SettingsNavigator selectedSubpage={navState.subpage ?? null} onSelectSubpage={subpage => handleSettingsClick(subpage)} />,
                   shellSidebarSlot,
                 )}
-<ShellLayoutMode workspaceRootPath={activeWorkspace?.rootPath}>
-                  {(layoutMode) => (
-                    <>
-                      {layoutMode === 'se-workspace' && !isSidebarCollapsed && (
-                        <WorkspaceNavigator workspaceRootPath={activeWorkspace?.rootPath} />
-                      )}
+{/* The workspace name lives in the top switcher; the sidebar carries no
+                    repo/dirty-count block (Mark, t77). */}
                       <ShellSidebarNav
                         baseLinks={sidebarLinks}
                         isCollapsed={isSidebarCollapsed}
@@ -3269,19 +3349,13 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                         pillShown={modePillShown(isAutoCompact)}
                         workspaceIds={recentScopeWorkspaceIds}
                       />
-                    </>
-                  )}
-                </ShellLayoutMode>
                 </div>
                 <div className="shrink-0" data-sidebar-footer="">
                   <SidebarChrome
                     workspaceId={activeWorkspaceId}
-                    profile={profileStripWithSpend}
-                    onProfileClick={() => handleSettingsClick('account')}
                     promoKind={promoKind}
                     onPromoCta={handleMemoryClick}
                     collapsed={isSidebarCollapsed}
-                    onOpenSettings={() => handleSettingsClick()}
                   />
                 </div>
               </div>
@@ -3641,8 +3715,26 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
         </WorkspaceSurfaceHost>
 
       </div>
-      {showStatusBar && <StatusBarHost />}
-      {showCompactStatusBar && <StatusBar account={roxCloudAccount} />}
+      {statusRowVisible && (
+        // The profile anchors the left end of the status bar: the bar extends
+        // out of the profile block at the bottom of the rail (Mark, t77).
+        <div className="flex shrink-0 items-stretch" data-status-row="">
+          {/* No rail (focus / sidebar-hidden / auto-compact): the bar starts at x=0. */}
+          {!effectiveSidebarAndNavigatorHidden && (
+            <div
+              className="chrome-rail flex shrink-0 items-center justify-center"
+              style={{ width: SHELL_RAIL_WIDTH }}
+              data-status-profile=""
+            >
+              {renderProfileEntry('status')}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            {showStatusBar && <StatusBarHost />}
+            {showCompactStatusBar && <StatusBar account={roxCloudAccount} />}
+          </div>
+        </div>
+      )}
       </div>
 
       {/* ============================================================================
@@ -3654,8 +3746,8 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
        * so the popover appears near the triggering item rather than at a fixed location.
        * modal={true} prevents auto-close when focus shifts after context menu closes.
        */}
-      {activeWorkspace && (
-        <>
+      {activeWorkspace && editPopoverOpen && (
+        <React.Suspense fallback={null}>
           {/* Configure Statuses EditPopover - anchored near sidebar */}
           <EditPopover
             open={editPopoverOpen === 'statuses'}
@@ -3821,7 +3913,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
               }
             })()}
           />
-        </>
+        </React.Suspense>
       )}
 
 
@@ -3846,21 +3938,29 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
       </Dialog>
 
       {/* Send to Workspace dialog (driven by sendToWorkspaceAtom) */}
-      <SendToWorkspaceDialog
-        open={sendToWorkspaceIds.length > 0}
-        onOpenChange={(open) => { if (!open) setSendToWorkspaceIds([]) }}
-        sessionIds={sendToWorkspaceIds}
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId}
-        onTransferComplete={handleTransferComplete}
-      />
+      {sendToWorkspaceIds.length > 0 && (
+        <React.Suspense fallback={null}>
+          <SendToWorkspaceDialog
+            open
+            onOpenChange={(open) => { if (!open) setSendToWorkspaceIds([]) }}
+            sessionIds={sendToWorkspaceIds}
+            workspaces={workspaces}
+            activeWorkspaceId={activeWorkspaceId}
+            onTransferComplete={handleTransferComplete}
+          />
+        </React.Suspense>
+      )}
 
       {/* Create Project dialog — prompts for a name so slugs stay meaningful */}
-      <CreateProjectDialog
-        open={createProjectDialogOpen}
-        onCancel={() => setCreateProjectDialogOpen(false)}
-        onSubmit={handleCreateProjectSubmit}
-      />
+      {createProjectDialogOpen && (
+        <React.Suspense fallback={null}>
+          <CreateProjectDialog
+            open
+            onCancel={() => setCreateProjectDialogOpen(false)}
+            onSubmit={handleCreateProjectSubmit}
+          />
+        </React.Suspense>
+      )}
 
       {/* Messaging dialogs (pairing-code + WA connect) — driven by messagingDialogAtom.
           Mounted here so they survive context-menu / dropdown close. */}

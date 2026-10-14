@@ -67,6 +67,7 @@ import { toast } from 'sonner'
 import { HOME_WIDGETS } from './home/widgets'
 import type { WidgetEditProps } from './home/widget-kit'
 import { widgetAppearanceStyle } from './home/widget-appearance'
+import { HomeGlanceShell } from './home/glance/HomeGlanceShell'
 
 interface HomeLayoutSnapshot {
   layout: HomeDashboardLayout
@@ -318,6 +319,10 @@ function HeaderButton({ children, onClick, primary, pressed, testId }: { childre
 }
 
 export function HomeFrontPage() {
+  return <HomeGlanceShell overview={<HomeOverviewDashboard />} />
+}
+
+function HomeOverviewDashboard() {
   const { t } = useTranslation()
   const workspace = useActiveWorkspace()
   const workspaceId = workspace?.id ?? null

@@ -17,6 +17,7 @@ import { workbenchFlagAtom } from '@/platform/unified-flags'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { SettingsCard, SettingsSection, SettingsToggle } from '@/components/settings'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { DiagnosticsSettings } from './DiagnosticsSettings'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -179,6 +180,8 @@ export default function DeveloperSettingsPage() {
                 </div>
               </SettingsCard>
             </SettingsSection>
+
+            <DiagnosticsSettings />
           </div>
         </ScrollArea>
       </div>

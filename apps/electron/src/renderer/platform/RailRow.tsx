@@ -64,7 +64,7 @@ export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disable
       )}
     >
       <Icon className="icon-toolbar" />
-      {!collapsed && <span className="min-w-0 flex-1 truncate label-tracking" title={label}>{label}</span>}
+      {!collapsed && <span className="rox-rail-label min-w-0 flex-1 truncate label-tracking" title={label}>{label}</span>}
     </button>
   )
 

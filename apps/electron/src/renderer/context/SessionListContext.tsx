@@ -41,6 +41,12 @@ export interface SessionListContextValue {
   activeChatMatchInfo?: { sessionId: string | null; count: number; isHighlighting?: boolean }
   /** Whether a session currently has a pending permission/admin prompt */
   hasPendingPrompt?: (sessionId: string) => boolean
+
+  // Chat folders ("Move to folder" submenu)
+  chatFolders?: Array<{ id: string; name: string }>
+  chatFolderOf?: (sessionId: string) => string | undefined
+  onMoveToFolder?: (sessionId: string, folderId: string | null) => void
+  onNewFolderFor?: (sessionId: string) => void
 }
 
 const SessionListContext = createContext<SessionListContextValue | null>(null)
