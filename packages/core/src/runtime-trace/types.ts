@@ -145,11 +145,42 @@ export interface RuntimeTerminalPayload {
   exitCode?: Measurement<number>
   status?: RuntimeStatus
 }
+export interface AttemptUsage {
+  /** Prompt tokens excluding cache traffic. Absent when the provider did not report cache fields. */
+  uncachedInput?: number
+  output?: number
+  cacheRead?: number
+  cacheWrite?: number
+  reasoning?: number
+}
+export interface AttemptRoute { provider?: string; model?: string }
 export interface RuntimeEventPayloads {
   'run.accepted': { prompt: RuntimeContent; launch: RuntimeLaunch }
   'run.started': { status: RuntimeStatus }
   'run.completed': { status: RuntimeStatus; reason?: string }
   'run.interrupted': { status: 'cancelled' | 'interrupted' | 'failed'; reason?: string }
+  /** DSH turn/step boundary port: one step is one completed model request within a turn. */
+  'step.started': { turnId: string; step: number }
+  'step.completed': { turnId: string; step: number }
+  /**
+   * DSH token-meter port: one provider-reported LLM attempt. Every event is a
+   * separately billed attempt; a retry emits another event with `retryOf`
+   * pointing at the superseded attempt id. Fields the provider did not report
+   * stay undefined and render as "—"; they are never estimated.
+   */
+  'llm.attempt.completed': {
+    turnId: string
+    step: number
+    usage: AttemptUsage
+    route?: AttemptRoute
+    ttftMs?: number
+    decodeMs?: number
+    retryOf?: string
+    /** Model context window reported alongside the attempt, when known. */
+    contextWindow?: number
+    /** Provider-reported cost in USD, when known. No catalog pricing is applied. */
+    costUsd?: number
+  }
   'context.captured': { snapshot: RuntimeContextSnapshot }
   'context.changed': { snapshot: RuntimeContextSnapshot }
   'context.compacted': { snapshot?: RuntimeContextSnapshot; summary?: RuntimeContent }

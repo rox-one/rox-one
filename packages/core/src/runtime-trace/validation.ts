@@ -30,6 +30,12 @@ const plan = shape({ id, version: positive, tasks: array(task) }, { title: strin
 const acceptance = shape({ id, criterion: string, status: oneOf('running', 'passed', 'failed', 'unknown'), evidence: array(content) }, { taskId: id, authorityRef: string })
 const assignment = shape({ agentId: id, name: string, task: content, prompt: content, nativeKind: oneOf('root', 'rox-session', 'task', 'eval', 'restricted', 'unknown') }, { parentAgentId: id, expectedResult: content, model, contextSnapshotId: id, permissionMode: string, tools: array(string), sessionId: id })
 const tool = shape({ name: id }, { input: content, result: content, modelContent: content, status, capability, error: string })
+const stepBoundary = shape({ turnId: id, step: count })
+const attemptUsage = shape({}, { uncachedInput: count, output: count, cacheRead: count, cacheWrite: count, reasoning: count })
+const attemptRoute = shape({}, { provider: string, model: string })
+const nonNegative = (value: unknown): boolean => typeof value === 'number' && Number.isFinite(value) && value >= 0
+const attemptCompleted = shape({ turnId: id, step: count, usage: attemptUsage },
+  { route: attemptRoute, ttftMs: nonNegative, decodeMs: nonNegative, retryOf: id, contextWindow: positive, costUsd: nonNegative })
 const terminal = shape({ command: string }, { shell: string, cwd: string, stdout: content, stderr: content, exitCode: measurement(number), durationMs: numericMeasurement, timedOut: boolean, error: string, execution: oneOf('local', 'sidecar'), status })
 const usage = shape({ providerCallId: id, scope: oneOf('self', 'aggregate'), source: id, inputTokens: numericMeasurement, outputTokens: numericMeasurement, final: boolean }, { cacheReadTokens: numericMeasurement, cacheWriteTokens: numericMeasurement, cost: numericMeasurement, currency: string })
 const artifact = shape({ id, label: string }, { kind: string, uri: string, content, evidenceEventIds: array(id) })
