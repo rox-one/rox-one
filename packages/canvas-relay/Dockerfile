@@ -8,6 +8,7 @@ RUN bun build src/main.ts --compile --minify --outfile /out/rox-canvas-relay
 
 FROM gcr.io/distroless/cc-debian12:nonroot
 COPY --from=build /out/rox-canvas-relay /usr/local/bin/rox-canvas-relay
+# RELAY_SECRET and ALLOWED_ORIGINS must be provided at run time (the binary refuses to start otherwise).
 ENV DATA_DIR=/data PORT=8787
 VOLUME ["/data"]
 EXPOSE 8787
