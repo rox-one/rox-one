@@ -106,7 +106,12 @@ describe('stripLegacySessionsBlock', () => {
   test('only the explicit open path cleans up, with the current revision', () => {
     const source = readFileSync(join(import.meta.dir, '../../handlers/rpc/notes.ts'), 'utf8')
     expect(source).toContain("expectedRevision: markdownRevision(existing), content: cleaned")
-    expect(source).toMatch(/upsertDailyNote\(notesRoot, date \|\| formatDateId\(new Date\(\)\), [^\n]*, true, /)
+    // Opt-in: background readers (Focus day summary) call GET_DAILY_NOTE without the flag.
+    expect(source).toContain('options?: { cleanupLegacy?: boolean }')
+    expect(source).toMatch(/upsertDailyNote\(notesRoot, date \|\| formatDateId\(new Date\(\)\), [^\n]*, options\?\.cleanupLegacy === true, /)
+    const focus = readFileSync(join(import.meta.dir, '../../../../../apps/electron/src/renderer/pages/extra-screens/focus/focus-summary.ts'), 'utf8')
+    expect(focus).toContain('api.getDailyNote(workspaceId)')
+    expect(focus).not.toContain('cleanupLegacy')
     expect(source).toContain('await upsertDailyNote(notesRoot, date, writeNative)\n')
     // Open copies everywhere are told to re-read (editors ignore 'save' events).
     const start = source.indexOf('RPC_CHANNELS.notes.GET_DAILY_NOTE, async')

@@ -1500,7 +1500,8 @@ export interface ElectronAPI {
   getNoteIndexHealth(workspaceId: string): Promise<NoteIndexHealth>
   rebuildNoteIndex(workspaceId: string): Promise<NoteIndexHealth>
   getNoteRenameImpact(workspaceId: string, noteId: string, nextTitle: string): Promise<NoteRenameImpact>
-  getDailyNote(workspaceId: string, date?: string): Promise<NoteDocument>
+  /** `cleanupLegacy` (Notes explicit opens only) strips the pre-overlay sessions block, if the file still has one. */
+  getDailyNote(workspaceId: string, date?: string, options?: { cleanupLegacy?: boolean }): Promise<NoteDocument>
   importNoteAsset(workspaceId: string, attachment: FileAttachment): Promise<NoteAssetImportResult>
   listNoteAssets(workspaceId: string): Promise<NoteAsset[]>
   deleteNoteAsset(workspaceId: string, relativePath: string): Promise<boolean>

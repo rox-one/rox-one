@@ -2271,14 +2271,16 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     return getRenameImpact(getWorkspaceNotesRoot(workspaceId), noteId, nextTitle)
   })
 
-  server.handle(RPC_CHANNELS.notes.GET_DAILY_NOTE, async (ctx, workspaceId: string, date?: string) => {
+  // `cleanupLegacy` is opt-in: only the Notes view's explicit opens set it. Background
+  // readers (e.g. the Focus day summary) never rewrite the note.
+  server.handle(RPC_CHANNELS.notes.GET_DAILY_NOTE, async (ctx, workspaceId: string, date?: string, options?: { cleanupLegacy?: boolean }) => {
     nativeContent.assertScope(ctx, workspaceId)
     const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: date || 'daily' })
     if (!isClaimableLive(act)) throw new Error('daily note upsert is not live')
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     await ensureDailyNotes(notesRoot, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
     let cleaned = false
-    const id = await upsertDailyNote(notesRoot, date || formatDateId(new Date()), (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes), true, () => { cleaned = true }, legacySessionRefs(deps, workspaceId))
+    const id = await upsertDailyNote(notesRoot, date || formatDateId(new Date()), (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes), options?.cleanupLegacy === true, () => { cleaned = true }, options?.cleanupLegacy === true ? legacySessionRefs(deps, workspaceId) : [])
     await refreshVaultIndex(notesRoot)
     // Every open copy (other panels, tiles, windows) re-reads the cleaned body;
     // 'save' events are ignored by editors, so this one is announced as external.
