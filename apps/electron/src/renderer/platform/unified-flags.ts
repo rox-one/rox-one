@@ -66,7 +66,7 @@ const cookbooksEnabledAtom = atomWithStorage<boolean>(
  * key) whose REAL value the shell reports in `enabledShellFlagsAtom` and the
  * Omnibox context keys. Never served by the generic store.
  */
-export const DEDICATED_FLAG_ATOMS: ReadonlyMap<string, Atom<boolean>> = new Map<string, Atom<boolean>>([
+export const DEDICATED_FLAG_ATOMS: ReadonlyMap<string, WritableAtom<boolean, [boolean | typeof RESET], void>> = new Map<string, WritableAtom<boolean, [boolean | typeof RESET], void>>([
   // Appearance → Agent Teams (storage default true).
   [WORKBENCH_FLAG.harnessAgentTeams, featureWorkbenchHarnessAgentTeamsAtom],
   // W1-02 (#1499) owns entities.links.v1: its Settings toggle / storage key.

@@ -123,10 +123,10 @@ export interface CookbooksStatus {
 }
 export interface CookbooksStartup { port: number; token: string; url: string } // main-only; url — полный
 export function parseCookbooksStartupLine(line: string): CookbooksStartup | null
-export function isAllowedCookbooksNavigation(rawUrl: string, port: number): boolean
+// isAllowedCookbooksNavigation — ОТМЕНЕНО Amendment 1 (навигационный allowlist вида удалён вместе с видом)
 ```
 
-Правила парсера: строка целиком матчится `^http://127\.0\.0\.1:(\d{1,5})/lab\.html\?token=([A-Za-z0-9_-]{24,})$`; порт 1–65535 (иначе `null`); при нескольких матчах в буфере — первый; ничего не логируется. `isAllowedCookbooksNavigation(url, port)`: `http:`, host строго `127.0.0.1`, порт === `port`, без credentials; path/query — любые в пределах origin (страница сама ходит только в `/`-ручки).
+Правила парсера: строка целиком матчится `^http://127\.0\.0\.1:(\d{1,5})/lab\.html\?token=([A-Za-z0-9_-]{24,})$`; порт 1–65535 (иначе `null`); при нескольких матчах в буфере — первый; ничего не логируется. *(Навигационный валидатор вида — ОТМЕНЕНО Amendment 1.)*
 
 ### Состояния и тайминги (заморожены)
 
