@@ -57,11 +57,17 @@ describe('closed surface', () => {
   })
 })
 
+const material = strip(readFileSync(join(import.meta.dir, '../../../styles/tokens/material.css'), 'utf8'))
 describe('per-surface intensity', () => {
-  const block = css.split('}')[0]
+  const block = material.slice(material.indexOf('.glass-surface,'))
   it('re-derives every glass token on .glass-surface from --glass-intensity', () => {
     for (const t of ['blur', 'saturate', 'tint', 'edge-alpha', 'specular-alpha'])
       expect(block).toMatch(new RegExp(`--glass-${t}:\\s*calc\\([^;]*var\\(--glass-intensity\\)`))
+  })
+  it('declares derived tokens exactly once (single source)', () => {
+    expect(material.match(/--glass-blur:/g)?.length).toBe(1)
+    expect(css).not.toMatch(/--glass-blur:/)
+    expect(block).toMatch(/--glass-shadow:/)
   })
   it('pressed never overrides the closed state', () => {
     expect(css).toContain('[data-glass-pressed]:not([data-glass-presence="closed"])')
@@ -93,6 +99,93 @@ describe('applyGlassTier ref counting', () => {
       expect(added - removed).toBe(0)
     } finally {
       g.matchMedia = prev
+    }
+  })
+})
+
+import { isGlassPressKey } from '../use-glass-motion'
+const skin = strip(readFileSync(join(import.meta.dir, '../arc-glass-skin.css'), 'utf8'))
+
+describe('keyboard press', () => {
+  it('Space and Enter press; other keys do not', () => {
+    expect(isGlassPressKey(' ')).toBe(true)
+    expect(isGlassPressKey('Enter')).toBe(true)
+    expect(isGlassPressKey('a')).toBe(false)
+    expect(isGlassPressKey('Tab')).toBe(false)
+  })
+})
+
+describe('Arc Glass skin', () => {
+  it('is scoped to the arc-glass theme', () => {
+    for (const rule of skin.split('}').filter((r) => r.includes('{') && !r.trim().startsWith('@') && !/^\s*(from|to)\b/.test(r.split('{')[0].trim())))
+      if (!/^\s*(from|to)\s*$/.test(rule.split('{')[0])) expect(rule.split('{')[0]).toContain('html[data-theme="arc-glass"]')
+  })
+  it('refraction only on static slots on the full tier, never composer or popovers', () => {
+    const refr = skin.split('}').filter((r) => r.includes('url(#rox-glass-skin-refraction)'))
+    expect(refr.length).toBeGreaterThan(0)
+    for (const r of refr) {
+      expect(r).toContain('[data-glass="full"]')
+      expect(r).not.toMatch(/composer|popover|menu/)
+    }
+  })
+  it('pop-in is scoped to the explicit popover slot, with a symmetric exit', () => {
+    expect(skin).not.toMatch(/role="menu"|\.popover-styled/)
+    expect(skin).toMatch(/\[data-glass-slot="popover"\]\[data-state="closed"\]\s*{[^}]*rox-glass-pop-out[^}]*--motion-spring-exit/)
+  })
+  it('accent buttons keep an accent tint and glass buttons get a hover state', () => {
+    expect(skin).toMatch(/\[data-glass-tone="accent"\]\s*{[^}]*--glass-fill:\s*var\(--accent\)/)
+    expect(skin).toMatch(/:hover[^{]*{[^}]*--glass-hover-boost/)
+  })
+  it('never transitions or animates filters, and does not override the intensity slider', () => {
+    expect(skin).not.toMatch(/transition[^;]*filter/)
+    expect(skin).not.toMatch(/--glass-intensity:/)
+    const kf = skin.slice(skin.indexOf('@keyframes'))
+    expect(kf).not.toMatch(/filter/)
+  })
+})
+
+const mini = readFileSync(
+    join(import.meta.dir, '../../../../../../apps/electron/src/renderer/components/app-shell/MiniSessionSurface.tsx'),
+    'utf8',
+  )
+describe('Rox Mini buttons', () => {
+  it('every glass mini button spreads its own useGlassPress (keyboard press feedback)', () => {
+    const buttons = mini.match(/<button data-glass-slot="mini-button"[^>]*>/g) ?? []
+    expect(buttons.length).toBe(4)
+    const spreads = buttons.map((b) => b.match(/\{\.\.\.(\w+Press)\}/)?.[1])
+    for (const s of spreads) expect(s).toBeDefined()
+    expect(new Set(spreads).size).toBe(4)
+    for (const s of spreads) expect(mini).toContain(`const ${s} = useGlassPress`)
+  })
+  it('accent tone: 90% accent, sheen capped at 8% including hover', () => {
+    const accent = skin.match(/\[data-glass-tone="accent"\]\s*{([^}]*)}/)?.[1] ?? ''
+    expect(accent).toMatch(/--glass-fill-mix:\s*90%/)
+    const spec = Number(accent.match(/--glass-specular-alpha:\s*(\d+)%/)?.[1])
+    const hover = Number(skin.match(/\[data-glass-tone="accent"\]:hover[^{]*{[^}]*--glass-hover-boost:\s*(\d+)%/)?.[1])
+    expect(spec + hover).toBeLessThanOrEqual(8)
+  })
+})
+
+describe('glass fills resolve to real colours', () => {
+  const uiStyles = readFileSync(join(import.meta.dir, '../../../styles/index.css'), 'utf8')
+  it('every --glass-fill references a custom property the design system defines', () => {
+    const fills = [...skin.matchAll(/--glass-fill:\s*var\((--[\w-]+)\)/g)].map((m) => m[1])
+    expect(fills.sort()).toEqual(['--accent', '--background', '--background', '--popover'].sort())
+    for (const v of new Set(fills)) expect(uiStyles).toMatch(new RegExp(`\\s${v}:\\s*[^;]+;`))
+  })
+  it('send icon colour cannot fall back to white', () => {
+    expect(uiStyles).toMatch(/--accent-foreground:\s*var\(--canvas\)/)
+    expect(mini).toContain('text-[var(--accent-foreground,var(--canvas,var(--background)))]')
+    expect(mini).not.toMatch(/accent-foreground,white/)
+  })
+  it('no --primary anywhere in the glass work', () => {
+    expect(skin).not.toMatch(/--primary/)
+    expect(mini).not.toMatch(/bg-primary|primary-foreground/)
+  })
+  it('readable surfaces never drop below 70%', () => {
+    for (const slot of ['popover', 'composer']) {
+      const rule = skin.match(new RegExp(`\\[data-glass-slot="${slot}"\\]\\s*{([^}]*)}`))?.[1] ?? ''
+      expect(rule).toMatch(/--glass-fill-mix:\s*max\(70%/)
     }
   })
 })
