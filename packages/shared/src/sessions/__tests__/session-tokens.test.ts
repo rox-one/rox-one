@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { accumulateSessionTokens, markTurnTokensUncounted } from '../session-tokens'
+import { accumulateSessionTokens, isModelActivityEvent, markTurnTokensUncounted } from '../session-tokens'
 
 const totals = (p: number, o: number) => ({ promptTokens: p, outputTokens: o })
 
@@ -31,5 +31,30 @@ describe('markTurnTokensUncounted', () => {
     const u = markTurnTokensUncounted(undefined, init)
     expect(u.sessionTokensIncomplete).toBe(true)
     expect(accumulateSessionTokens(u, totals(100, 10))).toEqual({ sessionTokensIncomplete: true })
+  })
+})
+
+describe('markTurnTokensUncounted purity', () => {
+  it('returns a new object and never mutates the input', () => {
+    const input = Object.freeze({ outputTokens: 40, sessionTokens: 1200 })
+    const u = markTurnTokensUncounted(input, () => ({ outputTokens: 0 }))
+    expect(u).not.toBe(input)
+    expect(input).toEqual({ outputTokens: 40, sessionTokens: 1200 })
+    expect(u).toEqual({ outputTokens: 40, sessionTokensIncomplete: true })
+  })
+})
+
+describe('isModelActivityEvent', () => {
+  it('model output, tool calls and usage arm the pending flag (mid-stream abort stays incomplete)', () => {
+    for (const type of ['text_delta', 'text_complete', 'thinking_delta', 'thinking_complete', 'tool_start', 'tool_result', 'usage_update']) {
+      expect(isModelActivityEvent({ type })).toBe(true)
+    }
+    expect(isModelActivityEvent({ type: 'complete', usage: { inputTokens: 1 } })).toBe(true)
+  })
+  it('pre-request rejections and bare fallbacks do not arm it', () => {
+    for (const type of ['error', 'typed_error', 'info', 'status', 'retry', 'pi_turn_anchor', 'omp_turn_anchor', 'permission_request']) {
+      expect(isModelActivityEvent({ type })).toBe(false)
+    }
+    expect(isModelActivityEvent({ type: 'complete' })).toBe(false)
   })
 })

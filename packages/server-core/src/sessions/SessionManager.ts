@@ -1,5 +1,5 @@
 import { getRoxAccountAuthority, peekRoxAccountAuthority, type RoxExecutionContext } from '@rox/shared/auth'
-import { accumulateSessionTokens, markTurnTokensUncounted } from '@rox/shared/sessions'
+import { accumulateSessionTokens, isModelActivityEvent, markTurnTokensUncounted } from '@rox/shared/sessions'
 import type { EventSink, RpcServer } from '@rox/server-core/transport'
 import { annotationPayloadRejection } from './annotation-payload'
 import { planSteeringSubmit, QueueSteering, type SteeringVerb } from './queue-steering'
@@ -8360,7 +8360,9 @@ export class SessionManager implements ISessionManager {
       sessionLog.info('Got chat iterator, starting iteration...')
       // A previous turn still pending was superseded before its usage arrived.
       if (managed.turnTokensPending !== undefined) this.markTurnTokensUncounted(managed)
-      managed.turnTokensPending = myGeneration
+      // Armed lazily on the first model activity so turns that end before any
+      // request (empty message, auth/billing/rate-limit fallbacks) stay counted.
+      let turnTokensArmed = false
 
       this.assertRoxSessionExecution(sessionId, execution)
       for await (const event of chatIterator) {
@@ -8374,6 +8376,14 @@ export class SessionManager implements ISessionManager {
           } else {
             sessionLog.info('Got event:', event.type)
           }
+        }
+
+        if (!turnTokensArmed && isModelActivityEvent(event)) {
+          turnTokensArmed = true
+          if (managed.turnTokensPending !== undefined && managed.turnTokensPending !== myGeneration) {
+            this.markTurnTokensUncounted(managed)
+          }
+          managed.turnTokensPending = myGeneration
         }
 
         // Process the event first
