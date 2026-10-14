@@ -3888,6 +3888,7 @@
   "inspector.terminalHint": "Type a command and press Enter.",
   "inspector.terminalNoBridge": "Shell bridge is unavailable.",
   "inspector.terminalPlaceholder": "Command",
+  "inspector.unpin": "Unpin inspector",
   "kanban.a11y.columnRegion": "Column “{{column}}”",
   "kanban.a11y.dragCancel": "Move of \"{{title}}\" cancelled",
   "kanban.a11y.dragEnd": "\"{{title}}\" moved to {{column}}",
