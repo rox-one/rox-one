@@ -4,7 +4,7 @@ import { useTourTarget, useTourSignals } from '@/features/product-tour/runtime/h
 import { connectionCapabilities } from '@/features/product-tour/adapters/connections'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
-import { Zap, PackageOpen, Check, ChevronDown, ChevronRight, X, Network, FolderX, KeyRound, TriangleAlert, RefreshCw, Archive, FolderOutput, MoreHorizontal, Search } from 'lucide-react'
+import { Zap, PackageOpen, Check, ChevronDown, ChevronRight, X, Network, FolderX, KeyRound, TriangleAlert, RefreshCw, Archive, FolderOutput, MoreHorizontal, Plus, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { SkillAvatar } from '@/components/ui/skill-avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -25,6 +25,10 @@ import type { BundledSkillPackStatus, LoadedSkill } from '../../../shared/types'
 import { toErrorMessage } from '@/lib/errors'
 import { useSkillsQuery } from '@/hooks/use-skills-query'
 import { VirtualList } from '@/components/ui/virtual-list'
+import { useScreenSidebar } from '@/components/shell/screen-sidebar'
+import { navigate, routes } from '@/lib/navigate'
+import { loadNotebooks, type PlaybookNotebook } from '@/pages/playbooks/notebook-store'
+import { buildSkillsSidebarGroups } from './skills-sidebar'
 
 const RISK_FLAG_ICON: Record<SkillRiskFlag, typeof Network> = {
   'network': Network,
@@ -315,6 +319,33 @@ export function SkillsListPanel({
       )}
     </EntityListEmptyScreen>
   )
+
+  // Second sidebar (shell API): Мои навыки / Плейбуки / Маркетплейс.
+  const [playbooks, setPlaybooks] = React.useState<{ list: PlaybookNotebook[] | null; error: boolean }>({ list: null, error: false })
+  React.useEffect(() => {
+    try { setPlaybooks({ list: loadNotebooks(), error: false }) } catch { setPlaybooks({ list: [], error: true }) }
+  }, [])
+  const onSkillClickRef = React.useRef(onSkillClick)
+  onSkillClickRef.current = onSkillClick
+  const sidebarConfig = React.useMemo(() => ({
+    screenId: 'skills',
+    title: t('screenSidebar.skills.title'),
+    search: { placeholder: t('screenSidebar.skills.search'), value: search, onChange: setSearch },
+    primaryAction: { id: 'browse', label: t('screenSidebar.skills.browse'), icon: Plus, onSelect: () => navigate(routes.view.skills()) },
+    groups: buildSkillsSidebarGroups({
+      skills,
+      syncing: Boolean(syncing),
+      playbooks: playbooks.list,
+      playbooksError: playbooks.error,
+      selectedSlug: selectedSkillSlug ?? null,
+      t,
+      onOpenSkill: (skill) => onSkillClickRef.current(skill),
+      onOpenPlaybooks: () => navigate(routes.view.playbooks()),
+      onOpenCatalog: () => navigate(routes.view.skills()),
+      onOpenMarketplace: () => navigate(routes.view.settings('marketplace')),
+    }),
+  }), [skills, syncing, playbooks, selectedSkillSlug, search, t])
+  useScreenSidebar(sidebarConfig)
 
   return (
     <div ref={skillsTarget} className="flex min-h-0 flex-1 flex-col" data-product-tour-target="skills.list">
