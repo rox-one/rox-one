@@ -1909,18 +1909,33 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   --notes-title-size: 1.25rem;
 }
 
-/* Grid tile chrome: a clear 1px frame, a titled header and even padding. */
-.rox-grid-tile {
-  border: 1px solid color-mix(in oklch, var(--foreground) 12%, transparent);
-  border-radius: 8px;
+/* Grid tile chrome: flush tiles (no inset cards) separated by hairline
+   gradient dividers on the vertical and horizontal gutters. Themes override
+   --grid-divider. Each tile draws its right and bottom edge. */
+:root {
+  --grid-divider: color-mix(in oklch, var(--foreground) 9%, transparent);
 }
-.rox-grid-tile[data-focused="true"] {
-  border-color: color-mix(in oklch, var(--accent) 55%, transparent);
+.rox-grid-tile::before,
+.rox-grid-tile::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 2;
+}
+.rox-grid-tile::before {
+  top: 0; bottom: 0; right: 0; width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--grid-divider) 15%, var(--grid-divider) 85%, transparent);
+}
+.rox-grid-tile::after {
+  left: 0; right: 0; bottom: 0; height: 1px;
+  background: linear-gradient(to right, transparent, var(--grid-divider) 15%, var(--grid-divider) 85%, transparent);
+}
+.rox-grid-tile[data-focused="true"] .rox-grid-tile-header {
+  box-shadow: inset 0 -1px 0 color-mix(in oklch, var(--accent) 45%, transparent);
 }
 .rox-grid-tile-header {
   height: 26px;
   padding: 0 4px 0 10px;
-  border-bottom: 1px solid color-mix(in oklch, var(--foreground) 8%, transparent);
 }
 
 /* Compact responsive layout: below the threshold a tile drops secondary
