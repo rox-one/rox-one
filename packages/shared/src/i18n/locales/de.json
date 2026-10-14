@@ -7969,6 +7969,7 @@
   "screens.badge.running": "Läuft",
   "screens.badge.unread": "Neu",
   "screens.browser.bookmark": "Lesezeichen setzen",
+  "screens.browser.clearHistory": "Verlauf löschen",
   "screens.browser.closeTab": "Tab schließen",
   "screens.browser.empty": "Keine Tabs geöffnet",
   "screens.browser.groups.bookmarks": "Lesezeichen",

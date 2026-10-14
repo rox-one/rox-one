@@ -7978,6 +7978,7 @@
   "screens.badge.running": "En cours",
   "screens.badge.unread": "Nouveau",
   "screens.browser.bookmark": "Ajouter aux favoris",
+  "screens.browser.clearHistory": "Effacer l’historique",
   "screens.browser.closeTab": "Fermer l’onglet",
   "screens.browser.empty": "Aucun onglet ouvert",
   "screens.browser.groups.bookmarks": "Favoris",

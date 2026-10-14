@@ -7969,6 +7969,7 @@
   "screens.badge.running": "執行中",
   "screens.badge.unread": "新",
   "screens.browser.bookmark": "加入書籤",
+  "screens.browser.clearHistory": "清除瀏覽記錄",
   "screens.browser.closeTab": "關閉分頁",
   "screens.browser.empty": "沒有開啟的分頁",
   "screens.browser.groups.bookmarks": "書籤",

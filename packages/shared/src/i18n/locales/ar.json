@@ -8009,6 +8009,7 @@
   "screens.badge.running": "قيد التشغيل",
   "screens.badge.unread": "جديد",
   "screens.browser.bookmark": "إضافة إشارة مرجعية",
+  "screens.browser.clearHistory": "مسح السجل",
   "screens.browser.closeTab": "إغلاق علامة التبويب",
   "screens.browser.empty": "لا توجد علامات تبويب مفتوحة",
   "screens.browser.groups.bookmarks": "الإشارات المرجعية",

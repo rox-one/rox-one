@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import { Bookmark, Bot, Globe, History, Plus } from 'lucide-react'
+import { Bookmark, Bot, Eraser, Globe, History, Plus } from 'lucide-react'
 import { useScreenSidebar, type ScreenSidebarConfig } from '@/components/shell/screen-sidebar'
 import {
   activeBrowserInstanceIdAtom, browserBookmarksAtom, browserHistoryAtom, browserInstancesAtom,
@@ -14,7 +14,8 @@ import { openOrFocusEmbeddedBrowserPanel } from '@/platform/browser-panel-lifecy
 import { useOpenPillBrowser } from '@/platform/pill-activate'
 import { toScreenSidebarGroups } from '../screen-sidebar-adapter'
 import type { SidebarTarget } from '../sidebar-section'
-import { buildBrowserSidebarSections, toggleBookmark } from './browser-sidebar-sections'
+import { historyKey, toggleBookmark } from '@/lib/browser-history'
+import { buildBrowserSidebarSections } from './browser-sidebar-sections'
 
 const ICONS = { globe: Globe, bot: Bot, bookmark: Bookmark, history: History } as const
 
@@ -26,7 +27,11 @@ export function BrowserScreenSidebar() {
   const all = useAtomValue(browserInstancesAtom)
   const registry = useAtomValue(browserPaneRegistryStatusAtom)
   const [bookmarks, setBookmarks] = useAtom(browserBookmarksAtom)
-  const history = useAtomValue(browserHistoryAtom)
+  const [historyAll, setHistoryAll] = useAtom(browserHistoryAtom)
+  const history = useMemo(() => historyAll[historyKey(activeWorkspaceId)] ?? [], [historyAll, activeWorkspaceId])
+  const clearHistory = useCallback(() => {
+    setHistoryAll((all) => ({ ...all, [historyKey(activeWorkspaceId)]: [] }))
+  }, [setHistoryAll, activeWorkspaceId])
   const setActive = useSetAtom(activeBrowserInstanceIdAtom)
   const openOrFocusBrowserPanel = useSetAtom(openOrFocusBrowserPanelAtom)
   const newTab = useOpenPillBrowser()
@@ -77,11 +82,12 @@ export function BrowserScreenSidebar() {
       screenId: 'browser',
       title: t('surfaceTabs.browser'),
       primaryAction: newTabAction,
+      headerActions: [{ id: 'clear-history', label: t('screens.browser.clearHistory'), icon: Eraser, disabled: history.length === 0, onSelect: clearHistory }],
       groups: registry.state === 'unavailable'
         ? [{ id: 'tabs', title: t('screens.browser.groups.tabs'), items: [], state: { kind: 'error', label: t('screens.browser.unavailable'), onRetry: retryRegistry } }, ...groups.filter((g) => g.id !== 'tabs')]
         : groups.length > 0 ? groups : [{ id: 'empty', items: [], state: { kind: 'empty', label: t('screens.browser.empty'), action: newTabAction } }],
     }
-  }, [t, sections, onTarget, onMenu, activeKey, newTab, registry.state, retryRegistry])
+  }, [t, sections, onTarget, onMenu, activeKey, newTab, registry.state, retryRegistry, history.length, clearHistory])
 
   useScreenSidebar(config)
   return null

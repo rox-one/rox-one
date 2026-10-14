@@ -7969,6 +7969,7 @@
   "screens.badge.running": "Running",
   "screens.badge.unread": "New",
   "screens.browser.bookmark": "Bookmark",
+  "screens.browser.clearHistory": "Clear history",
   "screens.browser.closeTab": "Close tab",
   "screens.browser.empty": "No tabs open",
   "screens.browser.groups.bookmarks": "Bookmarks",

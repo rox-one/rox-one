@@ -7969,6 +7969,7 @@
   "screens.badge.running": "运行中",
   "screens.badge.unread": "新",
   "screens.browser.bookmark": "加入书签",
+  "screens.browser.clearHistory": "清除历史记录",
   "screens.browser.closeTab": "关闭标签页",
   "screens.browser.empty": "没有打开的标签页",
   "screens.browser.groups.bookmarks": "书签",

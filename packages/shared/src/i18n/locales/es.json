@@ -7978,6 +7978,7 @@
   "screens.badge.running": "En curso",
   "screens.badge.unread": "Nuevo",
   "screens.browser.bookmark": "Añadir a marcadores",
+  "screens.browser.clearHistory": "Borrar historial",
   "screens.browser.closeTab": "Cerrar pestaña",
   "screens.browser.empty": "No hay pestañas abiertas",
   "screens.browser.groups.bookmarks": "Marcadores",

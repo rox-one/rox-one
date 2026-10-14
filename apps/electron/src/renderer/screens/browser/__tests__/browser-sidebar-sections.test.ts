@@ -9,7 +9,7 @@ describe('history + bookmarks helpers', () => {
     let h = recordVisit([], { url: 'https://a.com', title: 'A', at: 1 })
     h = recordVisit(h, { url: 'https://b.com', title: 'B', at: 2 })
     h = recordVisit(h, { url: 'https://a.com', title: 'A2', at: 3 })
-    expect(h.map((x) => [x.url, x.title])).toEqual([['https://a.com', 'A2'], ['https://b.com', 'B']])
+    expect(h.map((x) => [x.url, x.title])).toEqual([['https://a.com/', 'A2'], ['https://b.com/', 'B']])
     expect(recordVisit(h, { url: 'data:x', title: '', at: 4 })).toBe(h)
     expect(recordVisit(h, { url: 'https://c.com', title: 'C', at: 5 }, 2)).toHaveLength(2)
   })
@@ -37,4 +37,18 @@ describe('buildBrowserSidebarSections', () => {
     expect(recent!.items[0]!.label).toBe('hn.com')
   })
   it('nothing open, nothing saved → no groups', () => expect(buildBrowserSidebarSections([], [], [])).toEqual([]))
+})
+
+describe('history privacy', () => {
+  it('strips query strings, fragments and credentials', async () => {
+    const { historyUrl, isAgentDrivenTab, historyKey } = await import('@/lib/browser-history')
+    expect(historyUrl('https://u:p@x.com/cb?code=SECRET#token=1')).toBe('https://x.com/cb')
+    const h = recordVisit([], { url: 'https://x.com/a?x=1', title: 'X', at: 1 })
+    expect(h[0]!.url).toBe('https://x.com/a')
+    expect(isAgentDrivenTab({ ownerType: 'session' })).toBe(true)
+    expect(isAgentDrivenTab({ ownerType: 'manual', boundSessionId: 's1' })).toBe(true)
+    expect(isAgentDrivenTab({ ownerType: 'manual', agentControlActive: true })).toBe(true)
+    expect(isAgentDrivenTab({ ownerType: 'manual', boundSessionId: null, agentControlActive: false })).toBe(false)
+    expect(historyKey(null)).toBe('_')
+  })
 })

@@ -7969,6 +7969,7 @@
   "screens.badge.running": "Fut",
   "screens.badge.unread": "Új",
   "screens.browser.bookmark": "Könyvjelző hozzáadása",
+  "screens.browser.clearHistory": "Előzmények törlése",
   "screens.browser.closeTab": "Lap bezárása",
   "screens.browser.empty": "Nincs megnyitott lap",
   "screens.browser.groups.bookmarks": "Könyvjelzők",

@@ -8013,6 +8013,7 @@
   "screens.badge.running": "Идёт",
   "screens.badge.unread": "Новое",
   "screens.browser.bookmark": "В закладки",
+  "screens.browser.clearHistory": "Очистить историю",
   "screens.browser.closeTab": "Закрыть вкладку",
   "screens.browser.empty": "Нет открытых вкладок",
   "screens.browser.groups.bookmarks": "Закладки",

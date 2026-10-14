@@ -7995,6 +7995,7 @@
   "screens.badge.running": "Trwa",
   "screens.badge.unread": "Nowe",
   "screens.browser.bookmark": "Dodaj zakładkę",
+  "screens.browser.clearHistory": "Wyczyść historię",
   "screens.browser.closeTab": "Zamknij kartę",
   "screens.browser.empty": "Brak otwartych kart",
   "screens.browser.groups.bookmarks": "Zakładki",

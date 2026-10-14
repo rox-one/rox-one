@@ -7969,6 +7969,7 @@
   "screens.badge.running": "실행 중",
   "screens.badge.unread": "새 항목",
   "screens.browser.bookmark": "북마크 추가",
+  "screens.browser.clearHistory": "기록 지우기",
   "screens.browser.closeTab": "탭 닫기",
   "screens.browser.empty": "열린 탭이 없습니다",
   "screens.browser.groups.bookmarks": "북마크",
