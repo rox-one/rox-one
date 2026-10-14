@@ -624,6 +624,11 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
   server.handle(RPC_CHANNELS.chatFolders.GET, async (ctx, workspaceId: string) => {
     const nativeWorkspace = assertNativeMetadataRead(ctx, deps, server, workspaceId)
     if (nativeWorkspace) return readNativeChatFolders(nativeWorkspace.rootPath)
+    // Local callers read only the workspace their window is bound to (same rule as MUTATE).
+    const callerWorkspaceId = ctx.workspaceId ?? (
+      ctx.webContentsId === null ? undefined : deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId) ?? undefined
+    )
+    if (!workspaceId || callerWorkspaceId !== workspaceId) throw new CodedError('AUTH_FAILED', 'Workspace access denied')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
     const { loadChatFoldersPruned } = await import('@rox/shared/chat-folders/storage')
