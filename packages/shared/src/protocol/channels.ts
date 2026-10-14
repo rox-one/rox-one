@@ -404,6 +404,10 @@ export const RPC_CHANNELS = {
     SET_COLOR_THEME: 'theme:setColorTheme',
     /** Persist the app theme's material (glass) field to theme.json (LOCAL_ONLY). */
     SET_APP_MATERIAL: 'theme:setAppMaterial',
+    /** Persist the app theme's layer tokens (frame/content/wallpaper/…) to theme.json (LOCAL_ONLY). */
+    SET_APP_LAYERS: 'theme:setAppLayers',
+    /** Save a user theme preset into ~/.craft-agent/themes (LOCAL_ONLY). */
+    SAVE_USER_PRESET: 'theme:saveUserPreset',
     BROADCAST_PREFERENCES: 'theme:broadcastPreferences',
     PREFERENCES_CHANGED: 'theme:preferencesChanged',
     GET_WORKSPACE_COLOR_THEME: 'theme:getWorkspaceColorTheme',
@@ -1033,6 +1037,11 @@ export const RPC_CHANNELS = {
     UPDATE_MEMBER_ROLE: 'orgs:updateMemberRole',
     REMOVE_MEMBER: 'orgs:removeMember',
     REVOKE_INVITE: 'orgs:revokeInvite',
+  },
+  chatFolders: {
+    GET: 'chatFolders:get',
+    MUTATE: 'chatFolders:mutate',
+    CHANGED: 'chatFolders:changed',
   },
   views: {
     LIST: 'views:list',
