@@ -112,5 +112,8 @@ apps/electron/src/main/team-calls/call-defaults.generated.ts
 # Isolated dev run (bun run electron:dev:isolated) — config/userdata/tmp
 .dev-isolated/
 
+# Build-time shared ROX gateway key (scripts/gen-rox-defaults.ts) — never commit
+apps/electron/src/main/rox-defaults/rox-defaults.generated.ts
+
 # Build-time shared API keys (scripts/gen-shared-keys.ts) — never commit
 apps/electron/src/main/home-fetch/shared-keys.local.ts

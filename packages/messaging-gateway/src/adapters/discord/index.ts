@@ -461,6 +461,7 @@ export class DiscordAdapter implements PlatformAdapter {
             senderName: ev.senderName,
             senderIsBot: ev.senderIsBot,
             isDM: ev.isDM,
+            ...(typeof ev.isDM === 'boolean' ? { chatType: ev.isDM ? 'direct' as const : 'group' as const } : {}),
             mentionedBot: ev.mentionedBot,
             text: ev.text,
             attachments,
