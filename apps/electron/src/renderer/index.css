@@ -1953,3 +1953,16 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
     display: none !important;
   }
 }
+
+/* Fluid shell: below NARROW_SHELL_THRESHOLD the secondary sidebar floats over
+   the content (data-secondary-overlay). Enter with a transform/opacity slide so
+   the breakpoint reads as a reflow, not a pop. Durations come from the motion
+   tokens, which are 0ms under reduced motion and while the shell is resizing
+   (html[data-resizing]), so a live window drag never animates. */
+[data-secondary-overlay="true"] {
+  animation: rox-shell-overlay-in var(--motion-disclosure) var(--ease-emphasis) both;
+}
+@keyframes rox-shell-overlay-in {
+  from { opacity: 0; transform: translateX(calc(var(--spacing) * -3)); }
+  to { opacity: 1; transform: none; }
+}

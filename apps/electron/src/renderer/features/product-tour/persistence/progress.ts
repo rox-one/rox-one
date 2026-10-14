@@ -3,6 +3,9 @@ import { createDatabaseAccess, failed, memoryOnly, requestValue, saved, transact
 import type { LearningStorageOptions } from './database'
 import { LEARNING_SAFE_REASONS, LEARNING_STEP_IDS } from '../analytics/events'
 import { hasCurrentMemoryLease } from './lease'
+import { LearningLeaseLostError } from './errors'
+
+export { LearningLeaseLostError } from './errors'
 
 export interface LearningLeaseGuard {
   readonly profileId: string
@@ -12,9 +15,6 @@ export interface LearningLeaseGuard {
 export interface LearningProgressRepository extends ProgressRepository {
   apply(scopeKey: string, tour: TourDefinition, mutation: ProgressMutation, guard?: LearningLeaseGuard): Promise<PersistResult<TourProgress>>
   resetScope(scopeKey: string, guard?: LearningLeaseGuard): Promise<PersistResult<void>>
-}
-export class LearningLeaseLostError extends Error {
-  constructor() { super('Learning lease lost'); this.name = 'LearningLeaseLostError' }
 }
 
 const timestamps = ['shownAt', 'acknowledgedAt', 'observedAt', 'verifiedAt', 'skippedAt'] as const
