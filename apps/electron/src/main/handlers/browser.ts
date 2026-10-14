@@ -2,7 +2,8 @@ import {
   BROWSER_COOKIE_IMPORT_PARTITION,
   type BrowserScreenshotOptions,
 } from '../browser-pane-manager'
-import { RPC_CHANNELS, type BrowserPaneCreateOptions, type BrowserEmptyStateLaunchPayload } from '../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
+import type { BrowserPaneCreateOptions, BrowserEmptyStateLaunchPayload } from '../../shared/types'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
 import { getBrowserCookieAutoImporter } from '../browser-cookie-auto-import'
