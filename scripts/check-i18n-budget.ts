@@ -27,8 +27,8 @@ const EN_LOCALE = resolve(
   'en.json',
 )
 
-/** O11 budget: en.json may not exceed this many keys. */
-export const I18N_KEY_BUDGET = 12_000
+/** O11 budget: en.json may not exceed this many keys. Raised 12_000 -> 12_200 deliberately for the Canvas («Доска») surface (~60 keys). */
+export const I18N_KEY_BUDGET = 12_200
 
 const keys = Object.keys(JSON.parse(readFileSync(EN_LOCALE, 'utf8')) as Record<string, string>)
 
