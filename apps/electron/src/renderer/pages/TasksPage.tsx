@@ -93,7 +93,9 @@ import {
   visibleNotes,
   type AgentChip,
   type AgentSessionLike,
+  type TasksView,
 } from './tasks/task-model'
+import { useTasksScreenSidebar } from '@/screens/tasks/useTasksScreenSidebar'
 import { ConfirmDialog, Glyph, ProgressPie, TaskCheckbox, prefersReducedMotion } from './tasks/parts'
 import { QuickEntry, type QuickEntryResult } from './tasks/QuickEntry'
 import { MoveDialog, type MoveDestination } from './tasks/MoveDialog'
@@ -865,25 +867,12 @@ export default function TasksPage(props: TasksPageProps = {}) {
     setNavCreate(null)
     setNavDraft('')
   }
-  const navigator = (
-    <TaskSidebar
-      view={view}
-      onSelect={setView}
-      listCount={listCount}
-      overdueCount={overdueCount}
-      trashCount={trashCount}
-      tasks={topLevel}
-      areas={areas}
-      personalProjects={personalProjects}
-      workspaceProjects={projects.map(project => ({ id: project.config.id, name: project.config.name }))}
-      tags={tags}
-      agents={agents}
-      dropProps={navDropProps}
-      onToggleArea={area => mutate(current => current.updateArea(area.id, { collapsed: !area.collapsed }))}
-      footer={(
+  const createNavRef = useRef(createNav)
+  createNavRef.current = createNav
+  const navFooter = useMemo(() => (
         <div className="mt-auto pt-3">
           {navCreate ? (
-            <form onSubmit={createNav} className="px-1">
+            <form onSubmit={(event) => createNavRef.current(event)} className="px-1">
               <input
                 autoFocus
                 value={navDraft}
@@ -903,7 +892,40 @@ export default function TasksPage(props: TasksPageProps = {}) {
             </div>
           )}
         </div>
-      )}
+  ), [navCreate, navDraft, t])
+  const viewKey = `${view.kind}:${view.id}`
+  const sidebarProject = (p: { id: string; name: string }) => ({ id: p.id, name: p.name, ...projectProgress(topLevel, p.id) })
+  useTasksScreenSidebar({
+    listCounts: { inbox: listCount('inbox'), today: listCount('today'), upcoming: listCount('upcoming'), trash: trashCount },
+    overdue: overdueCount,
+    looseProjects: personalProjects.filter((p) => !p.areaId).map(sidebarProject),
+    areas: areas.map((a) => ({ id: a.id, name: a.name, projects: personalProjects.filter((p) => p.areaId === a.id).map(sidebarProject) })),
+    workspaceProjects: projects.map((p) => sidebarProject({ id: p.config.id, name: p.config.name })),
+    tags,
+    agents,
+    activeViewKey: viewKey,
+    onView: (next) => setView(next as TasksView),
+    onNewTask: () => setQuickEntry({ initial: '' }),
+    search,
+    onSearch: setSearch,
+    footer: navFooter,
+  })
+  const navigator = (
+    <TaskSidebar
+      view={view}
+      onSelect={setView}
+      listCount={listCount}
+      overdueCount={overdueCount}
+      trashCount={trashCount}
+      tasks={topLevel}
+      areas={areas}
+      personalProjects={personalProjects}
+      workspaceProjects={projects.map(project => ({ id: project.config.id, name: project.config.name }))}
+      tags={tags}
+      agents={agents}
+      dropProps={navDropProps}
+      onToggleArea={area => mutate(current => current.updateArea(area.id, { collapsed: !area.collapsed }))}
+      footer={navFooter}
     />
   )
 
