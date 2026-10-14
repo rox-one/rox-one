@@ -53,7 +53,7 @@ export type SidebarGroupState =
   | { kind: 'ready' }
   | { kind: 'loading' }
   | { kind: 'empty'; label: string; action?: SidebarAction }
-  | { kind: 'error'; label: string; onRetry(): void }
+  | { kind: 'error'; label: string; onRetry(): void; /** false when the panel already raises the alert (one role=alert per error). */ announce?: boolean }
 
 export interface SidebarGroup {
   id: string

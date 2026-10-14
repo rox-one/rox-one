@@ -6,7 +6,7 @@
  * The surface is an in-shell panel only — no floating window, blob or tray.
  */
 import * as React from 'react'
-import { RefreshCw, Search, Settings, Trash2, X } from 'lucide-react'
+import { RefreshCw, Settings, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { ClipEntrySummary } from '@rox/shared/clipboard-history'
 import { Button, Chip, EmptyState, Tabs } from '@/components/mode-screen/ModeScreen'
@@ -30,7 +30,6 @@ import { ClipboardTagBar, ClipboardTagEditor } from './ClipboardTagBar'
 import { useClipboardHistory } from './use-clipboard-history'
 import { useClipboardSidebar } from './use-clipboard-sidebar'
 
-const INPUT = 'h-7 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-sm outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 const KINDS = ['all', 'text', 'image'] as const
 const FORMATS: ReadonlyArray<{ value: ClipFormatFilter; label: string }> = [
   { value: 'all', label: 'clipboard.filter.formatAll' },
@@ -43,7 +42,6 @@ export function ClipboardHistoryPanel() {
   const { t } = useTranslation()
   const h = useClipboardHistory()
   const canHandleKeyboard = usePanelKeyboardGuard()
-  const searchRef = React.useRef<HTMLInputElement | null>(null)
   const sentinelRef = React.useRef<HTMLDivElement | null>(null)
   const [tagsEntry, setTagsEntry] = React.useState<ClipEntrySummary | null>(null)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
@@ -59,7 +57,8 @@ export function ClipboardHistoryPanel() {
   const runAction = React.useCallback((action: ClipboardKeyAction) => {
     switch (action) {
       case 'focus-search':
-        searchRef.current?.focus()
+        // The screen search lives in the shell's second sidebar.
+        document.querySelector<HTMLInputElement>(`input[type="search"][aria-label="${CSS.escape(t('clipboard.search.placeholder'))}"]`)?.focus()
         break
       case 'clear-search':
         h.dispatch({ type: 'query', query: '' })
@@ -91,7 +90,7 @@ export function ClipboardHistoryPanel() {
         if (selectedEntry) h.toggleStar(selectedEntry)
         break
     }
-  }, [h, selectedEntry])
+  }, [h, selectedEntry, t])
 
   React.useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -169,31 +168,6 @@ export function ClipboardHistoryPanel() {
             ]}
           />
         </div>
-        <label className="relative flex min-w-0 items-center">
-          <Search aria-hidden className="pointer-events-none absolute left-2 icon-caption text-text-muted" />
-          <input
-            ref={searchRef}
-            value={h.filters.query}
-            onChange={(event) => h.dispatch({ type: 'query', query: event.target.value })}
-            placeholder={t('clipboard.search.placeholder')}
-            aria-label={t('clipboard.search.placeholder')}
-            data-testid="clipboard-search"
-            className={cn(INPUT, 'w-full pl-7 pr-7')}
-          />
-          {h.filters.query !== '' ? (
-            <button
-              type="button"
-              aria-label={t('clipboard.search.clear')}
-              // eslint-disable-next-line rox/prefer-primitives -- native icon button with no forwarded ref for a Radix Tooltip trigger; keep the native title for parity
-              title={t('clipboard.search.clear')}
-              data-testid="clipboard-search-clear"
-              onClick={() => h.dispatch({ type: 'query', query: '' })}
-              className="absolute right-1 grid size-5 place-items-center rounded-[var(--radius-control)] text-text-muted outline-none hover:text-foreground"
-            >
-              <X aria-hidden className="icon-caption" />
-            </button>
-          ) : null}
-        </label>
         <div className="flex flex-wrap items-center gap-1" data-testid="clipboard-kind-filter">
           {KINDS.map((option) => (
             <Chip key={option} active={h.filters.kind === option} onClick={() => h.dispatch({ type: 'kind', kind: option })}>
