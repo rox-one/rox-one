@@ -66,6 +66,12 @@ import {
 } from './pill-composition'
 import { canOpenPillBrowser, useOpenPillBrowser } from './pill-activate'
 import { applyScene, clearScene, createScene, useScenes, type Scene } from './scenes'
+import { AllScreensMenu } from './AllScreensMenu'
+
+/** Measurement stand-in for the overflow pill (same box as an icon-only item). */
+function AllScreensGhost() {
+  return <span className="rox-mode-pill-item"><LayoutGrid className="rox-mode-pill-icon" aria-hidden /></span>
+}
 
 /**
  * Name → glyph map for seeded modes; the canonical dictionary (`glyphs.ts`).
@@ -95,6 +101,8 @@ export interface ModeBarProps {
    * omnibox, so the pill needs no dependency on the W1.3 palette slice.
    */
   onOpenPalette?: () => void
+  /** Host browser opener for the «Все экраны» Браузер row (WebUI has no embedded panel). */
+  onOpenBrowser?: () => void
 }
 
 function itemBadge(badges: Readonly<Record<string, number>> | undefined, id: string): number {
@@ -273,7 +281,7 @@ function PillItems({
   )
 }
 
-export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBarProps = {}) {
+export function ModeBar({ collapsed = false, onMeasure, onOpenPalette, onOpenBrowser }: ModeBarProps = {}) {
   const { t, i18n } = useTranslation()
   const navState = useNavigationState()
   const { navigate } = useNavigation()
@@ -456,6 +464,8 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBar
           onClearScene={clearScene}
           onSaveScene={handleSaveScene}
         />
+        {/* Contextual sidebar: the overflow pill lists every screen, so nothing outside the pills is lost. */}
+        <AllScreensMenu collapsed={collapsed} onOpenBrowser={onOpenBrowser} />
       </nav>
       <RenameDialog
         open={sceneDialogOpen}
@@ -470,9 +480,11 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBar
         <>
           <div ref={fullGhostRef} aria-hidden className="rox-mode-pill rox-mode-pill-ghost">
             <PillItems surfaces={available} activeId={null} collapsed={false} interactive={false} badges={badges} />
+            <AllScreensGhost />
           </div>
           <div ref={compactGhostRef} aria-hidden className="rox-mode-pill rox-mode-pill-ghost" data-collapsed>
             <PillItems surfaces={available} activeId={null} collapsed interactive={false} badges={badges} />
+            <AllScreensGhost />
           </div>
         </>
       )}

@@ -90,46 +90,22 @@ async function unmount() {
 }
 const rowIds = () => Array.from(host!.querySelectorAll('[data-session-filters] [data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))
 
-const toolsSection = () => host!.querySelector('section[data-sidebar-tools]') as HTMLElement
-const toolsHeader = () => toolsSection().querySelector('[data-sidebar-section-header]') as HTMLButtonElement
-const toolsRows = () => Array.from(toolsSection().querySelectorAll('[data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))
+const allRowIds = () => Array.from(host!.querySelectorAll('[data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))
 
-describe('sidebar v2 fix1: «Инструменты» replaces the «Ещё» disclosure', () => {
-  it('is expanded by default: former «Ещё» rows show directly', async () => {
-    await mount(<Harness store={makeStore()} navigator="memory" memoryActive={false} />)
-    expect(host!.querySelector('details')).toBeNull()
-    expect(toolsHeader().getAttribute('aria-expanded')).toBe('true')
-    expect(toolsRows()).toContain('nav:memory')
+describe('contextual sidebar replaces «Навигация» / «Инструменты»', () => {
+  it('no global sections on any screen: Сессии shows only its own filters', async () => {
+    await mount(<Harness store={makeStore()} navigator="sessions" memoryActive={false} />)
+    expect(host!.querySelector('section[data-sidebar-tools]')).toBeNull()
+    expect(host!.querySelector('[data-sidebar-section-header]')).toBeNull()
+    expect(allRowIds()).not.toContain('nav:memory')
+    expect(allRowIds()).not.toContain('nav:inbox')
+    expect(allRowIds()).toContain(SESSION_FILTERS_ID)
   })
 
-  it('the header collapses it and the state persists across a remount', async () => {
-    const store = makeStore()
-    await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
-    await act(async () => { toolsHeader().click() })
-    expect(toolsHeader().getAttribute('aria-expanded')).toBe('false')
-    expect(toolsRows()).toEqual([])
-    await unmount()
-    await mount(<Harness store={store} navigator="sessions" memoryActive={false} />)
-    expect(toolsHeader().getAttribute('aria-expanded')).toBe('false')
-  })
-
-  it('a collapsed section respects the saved state but keeps the active row visible', async () => {
-    const store = makeStore()
-    store.toggle('sidebar:section:tools')
-    await mount(<Harness store={store} navigator="memory" memoryActive />)
-    expect(toolsHeader().getAttribute('aria-expanded')).toBe('false')
-    expect(toolsHeader().hasAttribute('aria-disabled')).toBe(false)
-    expect(toolsRows()).toEqual(['nav:memory'])
-  })
-
-  it('«Навигация» collapses even while one of its rows is active, keeping only that row', async () => {
-    const store = makeStore()
-    await mount(<Harness store={store} navigator="inbox" memoryActive={false} inboxActive />)
-    const nav = () => host!.querySelector('[data-sidebar-primary-nav]') as HTMLElement
-    const header = () => nav().querySelector('[data-sidebar-section-header]') as HTMLButtonElement
-    await act(async () => { header().click() })
-    expect(header().getAttribute('aria-expanded')).toBe('false')
-    expect(Array.from(nav().querySelectorAll('[data-sidebar-link-id]')).map(el => el.getAttribute('data-sidebar-link-id'))).toEqual(['nav:inbox'])
+  it('Память (no own nav) shows no other screens in the sidebar', async () => {
+    await mount(<Harness store={makeStore()} navigator="memory" memoryActive />)
+    expect(allRowIds().filter(id => id?.startsWith('nav:'))).toEqual([])
+    expect(host!.querySelector('[data-sidebar-primary-nav]')?.getAttribute('data-sidebar-surface')).toBe('memory')
   })
 })
 

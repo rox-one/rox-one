@@ -169,7 +169,7 @@ function defaultGroup(entry: PrimaryNavEntry, shellFlags: ReadonlySet<string>): 
 export function defaultPlacement(entry: PrimaryNavEntry, shellFlags: ReadonlySet<string>): NavPlacement {
   if (DEFAULT_PILL_NAV_IDS.has(entry.id)) return 'pills'
   if (entry.id === 'sessions' && !shellFlags.has(WORKBENCH_FLAG.modeMessengerV1)) return 'pills'
-  return defaultGroup(entry, shellFlags)
+  return 'menu'
 }
 
 /** Registry ids of the starter pill composition (`DEFAULT_PILL_SURFACES`); Чат joins while Мессенджер is off. */
@@ -186,8 +186,8 @@ export function resolveNavSurfaces({ shellFlags, modeFlags = {}, placements = {}
     resolved.push({
       ...entry,
       labelKey: entry.id === 'docs' ? notesTitleKey(shellFlags, entry.labelKey) : entry.labelKey,
-      // Pill / hidden surfaces keep their registry group for the sidebar fallback.
-      group: placement === 'primary' || placement === 'more' ? placement : defaultGroup(entry, shellFlags),
+      // The registry group only sorts the «Все экраны» menu (Навигация / Инструменты).
+      group: defaultGroup(entry, shellFlags),
       disabled: entry.modeFlag ? modeFlags[entry.modeFlag] === false : false,
       placement,
     })

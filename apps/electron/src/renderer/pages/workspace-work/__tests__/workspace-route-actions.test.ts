@@ -88,7 +88,7 @@ describe('Tasks routes select either canonical scope in a retained panel', () =>
     let previousId: unknown = Symbol('initial')
     const render = component('WorkspaceTasksPage.tsx', 'WorkspaceTasksPage', {
       React, Suspense: 'Suspense', PersonalTasks: 'PersonalTasks', WorkspaceTasksView: 'WorkspaceTasksView',
-      ShellSidebarContext: { Provider: 'SidebarContext' },
+      ShellSidebarContext: { Provider: 'SidebarContext' }, useShellSidebarTarget: () => null,
       useTranslation: () => ({ t: (key: string) => key }), useAppShellContext: () => ({ activeWorkspaceId: 'workspace' }),
       useWorkspaceProjectContext: () => 'project-b',
       useState: (initial: unknown) => {

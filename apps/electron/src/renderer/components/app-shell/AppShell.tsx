@@ -1682,6 +1682,12 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
     )
   }, [sessionMetaMap, activeWorkspaceId, remoteWorkspaceId])
 
+  // Contextual sidebar «Недавнее» / «Закреплённое» scope (local + remote ids).
+  const recentScopeWorkspaceIds = useMemo(
+    () => [activeWorkspaceId, remoteWorkspaceId].filter((id): id is string => Boolean(id)),
+    [activeWorkspaceId, remoteWorkspaceId],
+  )
+
   // Workspace model spend (sum of per-session cost) for the profile strip —
   // the only place balance/cost is shown.
   const workspaceSpentUsd = useMemo(() => {
@@ -3201,6 +3207,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                         toggleExpanded={toggleExpanded}
                         contextSlotRef={setShellSidebarSlot}
                         pillShown={modePillShown(isAutoCompact)}
+                        workspaceIds={recentScopeWorkspaceIds}
                       />
                     </>
                   )}
