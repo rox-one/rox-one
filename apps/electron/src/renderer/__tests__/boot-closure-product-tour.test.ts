@@ -8,9 +8,11 @@
  * Catalogue + engine + dynamic admission are therefore loaded with import()
  * after the flag is on. Overlay/popover/vignette follow the same gate so the
  * host's static graph keeps only the target registry and error boundary.
- * initialRuntimeState stays in a 4-line module so the host can seed idle
- * state without the engine. `boot-manifest.json` guards the built graph;
- * this is the source-level guard that fails in a plain `bun test` run.
+ * IndexedDB persistence and diagnostics join that gate; the host keeps only
+ * scope-key + lease-lost error leaves. initialRuntimeState stays in a 4-line
+ * module so the host can seed idle state without the engine.
+ * `boot-manifest.json` guards the built graph; this is the source-level
+ * guard that fails in a plain `bun test` run.
  */
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
@@ -59,6 +61,17 @@ describe('product-tour catalogue and engine stay out of the boot closure', () =>
     expect(staticImports).toMatch(/from\s+['"]\.\.\/ui\/target-registry['"]/)
     expect(staticImports).toMatch(/from\s+['"]\.\.\/ui\/TourErrorBoundary['"]/)
     expect(host).toContain("import('../ui/presentation')")
+  })
+
+  it('the host does not statically import persistence or analytics barrels', () => {
+    const host = read('features/product-tour/runtime/ProductTourProvider.tsx')
+    const staticImports = staticImportLines(host)
+    expect(staticImports).not.toMatch(/from\s+['"]\.\.\/persistence['"]/)
+    expect(staticImports).not.toMatch(/from\s+['"]\.\.\/analytics['"]/)
+    expect(staticImports).toMatch(/from\s+['"]\.\.\/persistence\/scope-key['"]/)
+    expect(staticImports).toMatch(/from\s+['"]\.\.\/persistence\/errors['"]/)
+    expect(host).toContain("import('../persistence')")
+    expect(host).toContain("import('../analytics')")
   })
 
   it('validate.ts does not import the static catalogue (dynamic admission would drag it into boot)', () => {

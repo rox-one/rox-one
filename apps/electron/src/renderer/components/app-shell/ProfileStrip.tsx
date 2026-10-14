@@ -59,7 +59,7 @@ function PlanPill({ plan, label }: { plan: string; label: string }) {
       data-testid="profile-strip-plan"
       data-plan={plan}
       className={cn(
-        'inline-flex h-4 max-w-full items-center truncate rounded-full bg-gradient-to-b px-1.5 text-mark font-semibold uppercase leading-none tracking-wide',
+        'inline-flex h-[10px] max-w-full items-center truncate rounded-full bg-gradient-to-b px-1 text-mark font-semibold uppercase leading-none tracking-wide',
         'ring-1 ring-inset shadow-[inset_0_1px_0_rgb(255_255_255/0.55),0_1px_2px_rgb(0_0_0/0.12)] dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(0_0_0/0.4)]',
         PLAN_PILL_TONES[plan] ?? PLAN_PILL_TONES.standard,
       )}
@@ -121,6 +121,12 @@ interface ProfileStripProps {
    * profile popover to the right. No card chrome, name or plan pill.
    */
   variant?: 'strip' | 'rail'
+  /**
+   * `status`: the rail avatar anchored at the left end of the bottom status
+   * bar (the bar extends out of the profile block). Smaller hit area that fits
+   * the status row; the popover opens upward.
+   */
+  placement?: 'rail' | 'status'
   /** Replays the onboarding tour from the popover; row hidden when absent. */
   onReplayTour?: () => void
 }
@@ -133,6 +139,7 @@ export function ProfileStrip({
   defaultAvatarFallback,
   compact = false,
   variant = 'strip',
+  placement = 'rail',
   onReplayTour,
 }: ProfileStripProps) {
   const { t } = useTranslation()
@@ -192,9 +199,12 @@ export function ProfileStrip({
             type="button"
             data-rail-button=""
             data-rail-avatar=""
+            data-profile-placement={placement}
             data-tutorial="profile-strip"
             className={cn(
-              'flex size-8 items-center justify-center rounded-[var(--radius-control)] outline-none',
+              'flex items-center',
+              placement === 'status' ? 'size-6' : 'size-8',
+              'justify-center rounded-[var(--radius-control)] outline-none',
               'hover:bg-[var(--state-hover)] focus-visible:ring-1 focus-visible:ring-ring data-[state=open]:bg-[var(--state-selected)]',
               className,
             )}
@@ -203,7 +213,7 @@ export function ProfileStrip({
             title={`${displayName} · ${accountDetails}`}
           >
             <span id={detailsId} className="sr-only">{accountDetails}</span>
-            <Avatar className="size-6 shrink-0 rounded-full">
+            <Avatar className={cn('shrink-0 rounded-full', placement === 'status' ? 'size-5' : 'size-6')}>
               {data.avatar ? <AvatarImage src={data.avatar} alt="" /> : null}
               <AvatarFallback delayMs={0} className="bg-surface-pressed text-text-primary">
                 {defaultAvatarFallback ?? <RoxInkAvatarArt />}
@@ -211,7 +221,7 @@ export function ProfileStrip({
             </Avatar>
           </button>
         </PopoverTrigger>
-        <PopoverContent side="right" align="end" sideOffset={8} className="w-60 p-1" data-rail-profile-menu="">
+        <PopoverContent side={placement === 'status' ? 'top' : 'right'} align={placement === 'status' ? 'start' : 'end'} sideOffset={8} className="w-60 p-1" data-rail-profile-menu="">
           {popover}
         </PopoverContent>
       </Popover>

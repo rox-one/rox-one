@@ -90,8 +90,8 @@ export function UserProfilePopoverContent({
         <span className="flex size-8 shrink-0 [&>*]:!size-8">{avatar}</span>
         <div className="min-w-0 flex-1">
           <div className="truncate text-caption font-medium leading-4 text-text-primary" title={displayName}>{displayName}</div>
-          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-caption text-muted-foreground">
-            <span className="shrink-0 rounded bg-surface-hover px-1 font-medium text-text-secondary">{planLabel}</span>
+          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-mark text-muted-foreground">
+            <span data-testid="profile-popover-plan" className="inline-flex h-[10px] shrink-0 items-center rounded-full bg-surface-hover px-1 text-mark font-semibold uppercase leading-none tracking-wide text-text-secondary">{planLabel}</span>
             <span className="shrink-0 numeric">{t('profile.level', { level: data.level })}</span>
             <span
               role="progressbar"

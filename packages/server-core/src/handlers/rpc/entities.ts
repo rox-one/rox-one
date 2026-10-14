@@ -45,6 +45,7 @@ export type EntitiesLinksResult =
   | { ok: true; op: 'remove'; removed: boolean }
   | { ok: true; op: 'outgoing'; links: EntityLink[] }
   | { ok: true; op: 'backlinks'; links: EntityLink[]; nextCursor?: string }
+  | { ok: true; op: 'whoami'; actorId: string }
   | { ok: false; reason: 'disabled' }
 
 /**
@@ -192,6 +193,11 @@ export function registerEntitiesHandlers(server: RpcServer, _deps: HandlerDeps, 
 
   server.handle(RPC_CHANNELS.entities.LINKS, async (ctx, workspaceId: string, input: unknown): Promise<EntitiesLinksResult> => {
     const request: EntityLinksRequest = entityLinksRequestSchema.parse(input)
+    if (request.op === 'whoami') {
+      // Identity comes from the request's auth context, never from the client.
+      requireWorkspace(ctx, workspaceId)
+      return { ok: true, op: 'whoami', actorId: actorFor(ctx).id }
+    }
     if (!observeEntitiesLinksEnabled(isEnabled(runtime))) {
       if (request.op === 'add' || request.op === 'remove') return { ok: false, reason: 'disabled' }
       return request.op === 'outgoing'

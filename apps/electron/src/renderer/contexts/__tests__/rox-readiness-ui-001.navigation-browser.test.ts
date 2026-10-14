@@ -389,8 +389,10 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
   })
 
   browserTest('history-switch regression: same-workspace popstate supersedes a pending foreign switch',async()=>{
-    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
-    await page.evaluate(()=>(window as any).ui001nav.navigate('home',{newPanel:true}));await routeIs('home')
+    // The panel stack keeps one panel per screen (a route's first segment), so
+    // the two-panel layout this history request restores needs two screens.
+    await page.goto(base+'/?ws=a&route=home');await routeIs('home')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('notes/note/a',{newPanel:true}));await routeIs('notes/note/a')
     await page.evaluate(()=>{
       const ui=(window as any).ui001nav
       ui.switchMode('hold');ui.pop('?ws=gone&route=notes%2Fnote%2Fforeign')
@@ -403,17 +405,18 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     expect(new URL(page.url()).searchParams.get('route')).toBe('notes/note/current')
     // Focus must update the browser URL after reconciliation, without a normal
     // navigate() call masking a stuck pending-workspace flag.
-    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
-    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/a')
+    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('home')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
     expect(new URL(page.url()).searchParams.get('ws')).toBe('a')
-    expect((await snapshot()).panels.map((panel: {route: string})=>panel.route)).toEqual(['notes/note/a','notes/note/current'])
+    expect((await snapshot()).panels.map((panel: {route: string})=>panel.route)).toEqual(['home','notes/note/current'])
     await page.evaluate(()=>(window as any).ui001nav.focus(1));await routeIs('notes/note/current')
     await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/current')
   })
 
   browserTest('history-switch regression: metadata-blocked same-workspace history retains its newer target',async()=>{
-    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
-    await page.evaluate(()=>(window as any).ui001nav.navigate('home',{newPanel:true}));await routeIs('home')
+    // Two screens again: the restored layout may only hold one panel per screen.
+    await page.goto(base+'/?ws=a&route=home');await routeIs('home')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('notes/note/a',{newPanel:true}));await routeIs('notes/note/a')
     await page.evaluate(()=>{
       const ui=(window as any).ui001nav
       ui.switchMode('hold');ui.pop('?ws=gone&route=notes%2Fnote%2Fforeign')
@@ -427,12 +430,12 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.waitForTimeout(100)
     expect(new URL(page.url()).searchParams.get('ws')).toBe('a')
     expect(new URL(page.url()).searchParams.get('route')).toBe(target)
-    expect((await snapshot()).panels.map((panel: {route: string})=>panel.route)).toEqual(['notes/note/a','home'])
+    expect((await snapshot()).panels.map((panel: {route: string})=>panel.route)).toEqual(['home','notes/note/a'])
     await page.evaluate(()=>(window as any).ui001nav.ready(true,true));await routeIs(target)
     expect((await snapshot()).nav.details.noteId).toBe('current')
     expect(new URL(page.url()).searchParams.get('route')).toBe(target)
-    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
-    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/a')
+    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('home')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
     await page.evaluate(()=>(window as any).ui001nav.focus(1));await routeIs(target)
     await page.waitForFunction(route=>new URL(location.href).searchParams.get('route')===route,target)
   })
@@ -457,8 +460,9 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
   })
 
   browserTest('history-switch regression: workspace ABA cannot revive a failed switch over blocked current history',async()=>{
-    await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
-    await page.evaluate(()=>(window as any).ui001nav.navigate('home',{newPanel:true}));await routeIs('home')
+    // Two screens again: the restored layout may only hold one panel per screen.
+    await page.goto(base+'/?ws=a&route=home');await routeIs('home')
+    await page.evaluate(()=>(window as any).ui001nav.navigate('notes/note/a',{newPanel:true}));await routeIs('notes/note/a')
     await page.evaluate(()=>{
       const ui=(window as any).ui001nav
       ui.switchMode('hold');ui.pop('?ws=gone&route=notes%2Fnote%2Fforeign')
@@ -479,8 +483,8 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.evaluate(()=>(window as any).ui001nav.ready(true,true));await routeIs(target)
     expect((await snapshot()).ws).toBe('ws-a')
     expect((await snapshot()).nav.details.noteId).toBe('current-after-aba')
-    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('notes/note/a')
-    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='notes/note/a')
+    await page.evaluate(()=>(window as any).ui001nav.focus(0));await routeIs('home')
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('route')==='home')
     await page.evaluate(()=>(window as any).ui001nav.focus(1));await routeIs(target)
     await page.waitForFunction(route=>new URL(location.href).searchParams.get('route')===route,target)
   })

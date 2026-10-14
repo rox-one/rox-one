@@ -28,15 +28,15 @@ export function WorkspaceNavigator({ workspaceRootPath, className }: WorkspaceNa
     >
       {/* One compact 32px row: repo name + muted inline dirty-count badge. */}
       <header className="flex h-8 items-center gap-2 rounded-[var(--radius-control)] px-2 text-caption text-text-secondary">
-        <FolderGit2 className="size-3.5 shrink-0 opacity-60" aria-hidden />
+        <FolderGit2 className="icon-caption shrink-0 opacity-60" aria-hidden />
         <span className="min-w-0 flex-1 truncate font-medium" title={git.repoLabel}>{git.repoLabel}</span>
         <span
-          className="inline-flex shrink-0 items-center gap-0.5 rounded bg-surface-hover px-1 text-caption text-muted-foreground numeric"
+          className="inline-flex shrink-0 items-center gap-0.5 rounded bg-surface-hover px-1 text-mark text-muted-foreground numeric"
           title={t('se.workspace.dirtyCount', { count: git.dirtyFileCount })}
           aria-label={t('se.workspace.dirtyCount', { count: git.dirtyFileCount })}
           data-testid="workspace-dirty-count"
         >
-          <GitPullRequest className="size-2.5" aria-hidden />
+          <GitPullRequest className="icon-status" aria-hidden />
           {git.dirtyFileCount}
         </span>
       </header>
