@@ -95,11 +95,12 @@ describe('CanvasFileStore', () => {
     for (let i = 0; i < 250; i++) b.add([shape(i)], me)
     b.setTitle('Plan 2', me)
     await s1.flush(id)
+    await s1.dispose() // one store per workspace: a second one in-process is refused
     const s2 = new CanvasFileStore(root)
     const b2 = await s2.openBoard(id)
     expect(b2.list().length).toBe(250)
     expect((await s2.listBoards())[0]!.title).toBe('Plan 2')
-    await s1.closeBoard(id)
+    await s2.dispose()
     await s1.trashBoard(id)
     expect(await s1.listBoards()).toEqual([])
     await expect(s1.openBoard('../x')).rejects.toThrow()
@@ -177,6 +178,7 @@ describe('file store review fixes', () => {
     rmSync(logPath, { recursive: true })
     b.add([shape(2)], me) // next update triggers a full snapshot
     await s.flush(id)
+    await s.dispose()
     const reopened = await new CanvasFileStore(root).openBoard(id)
     expect(reopened.list().length).toBe(2)
   })
@@ -263,7 +265,7 @@ describe('file store re-review fixes', () => {
     writeFileSync(lock, '999999999') // dead pid
     const s3 = new CanvasFileStore(root)
     await s3.createBoard('ok')
-    expect(readFileSync(lock, 'utf8')).toBe(String(process.pid))
+    expect(readFileSync(lock, 'utf8').startsWith(`${process.pid}:`)).toBe(true)
     await s3.dispose()
   })
 })

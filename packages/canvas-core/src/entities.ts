@@ -11,6 +11,7 @@
  */
 import type { CanvasDoc, Origin } from './doc.ts'
 import type { CanvasObject } from './schema.ts'
+import { clip, wellFormed } from './text.ts'
 
 export interface EntityRef { kind: string; id: string }
 export interface EntitySnapshot { title: string; status?: string; preview?: string; icon?: string; updatedAt?: number }
@@ -36,6 +37,24 @@ export interface EntityKindAdapter {
 export interface EntityLinker {
   link(from: { boardId: string; objectId: string }, to: EntityRef): Promise<void>
   unlink(from: { boardId: string; objectId: string }, to: EntityRef): Promise<void>
+  /** Current canvas links of this board (for reconcile). */
+  list?(boardId: string): Promise<Array<{ objectId: string; ref: EntityRef }>>
+}
+
+/**
+ * What a card may persist in the shared board doc. Board docs replicate to
+ * every member (including view-only relay peers), so only display metadata is
+ * kept — never `preview` or any extra field an adapter returns (bodies,
+ * participants, private notes). Previews are read live through the adapter,
+ * which enforces the viewer's own permissions.
+ */
+export interface PersistedSnapshot { title: string; status?: string; icon?: string; updatedAt?: number }
+export function persistableSnapshot(s: Partial<EntitySnapshot> | null | undefined): PersistedSnapshot {
+  const out: PersistedSnapshot = { title: clip(wellFormed(typeof s?.title === 'string' ? s.title : ''), 200) }
+  if (typeof s?.status === 'string') out.status = clip(wellFormed(s.status), 40)
+  if (typeof s?.icon === 'string') out.icon = clip(s.icon, 64)
+  if (typeof s?.updatedAt === 'number' && Number.isFinite(s.updatedAt)) out.updatedAt = s.updatedAt
+  return out
 }
 
 export class EntityKindRegistry {
@@ -85,7 +104,7 @@ export async function linkEntityCard(ctx: EntityCardContext, ref: EntityRef, at:
 async function placeCard(ctx: EntityCardContext, ref: EntityRef, at: { x: number; y: number }, provenance: 'created' | 'linked', snapshot: EntitySnapshot): Promise<string> {
   const [objectId] = ctx.board.add([{
     type: 'entity', x: at.x, y: at.y, w: CARD_W, h: CARD_H,
-    props: { kind: ref.kind, entityId: ref.id, snapshot, provenance },
+    props: { kind: ref.kind, entityId: ref.id, snapshot: persistableSnapshot(snapshot), provenance },
     links: [{ kind: ref.kind, id: ref.id }],
   }], ctx.origin)
   try {
@@ -101,7 +120,8 @@ async function placeCard(ctx: EntityCardContext, ref: EntityRef, at: { x: number
 export function applyEntitySnapshot(board: CanvasDoc, objectId: string, snap: EntitySnapshot | null, origin: Origin): void {
   const o = board.get(objectId)
   if (!o || o.type !== 'entity') return
-  const next = snap ?? { ...(o.props.snapshot as EntitySnapshot | undefined ?? { title: '' }), status: 'deleted' }
+  const next = snap ? persistableSnapshot(snap) : { ...persistableSnapshot(o.props.snapshot as EntitySnapshot | undefined), status: 'deleted' }
+  if (JSON.stringify(next) === JSON.stringify(o.props.snapshot)) return
   board.update(objectId, { props: { snapshot: next } }, origin)
 }
 
@@ -110,14 +130,33 @@ export function applyEntitySnapshot(board: CanvasDoc, objectId: string, snap: En
  * `deleteEntities: true` (an explicit user choice in the UI).
  */
 export async function removeEntityCards(ctx: EntityCardContext, objectIds: string[], opts: { deleteEntities?: boolean } = {}): Promise<void> {
-  const cards = objectIds.map(id => ctx.board.get(id)).filter((o): o is CanvasObject => !!o && o.type === 'entity')
-  const removed = ctx.board.delete(objectIds, ctx.origin)
-  for (const card of cards) {
-    if (!removed.includes(card.id)) continue
+  const removedCards = new Map(ctx.board.list().filter(o => o.type === 'entity').map(o => [o.id, o]))
+  const removed = new Set(ctx.board.delete(objectIds, ctx.origin))
+  // Descendant cards (inside a deleted frame) are removed too, so collect after delete.
+  const all = [...removed].map(id => removedCards.get(id)).filter((o): o is CanvasObject => !!o)
+  const errors: unknown[] = []
+  for (const card of all) {
     const ref = { kind: String(card.props.kind), id: String(card.props.entityId) }
-    await ctx.linker.unlink({ boardId: ctx.boardId, objectId: card.id }, ref)
-    if (opts.deleteEntities) await ctx.registry.get(ref.kind)?.delete?.(ref)
+    // One failure must not leave the remaining cards linked; reconcile retries the rest later.
+    try { await ctx.linker.unlink({ boardId: ctx.boardId, objectId: card.id }, ref) } catch (e) { errors.push(e); continue }
+    if (opts.deleteEntities) { try { await ctx.registry.get(ref.kind)?.delete?.(ref) } catch (e) { errors.push(e) } }
   }
+  if (errors.length) throw new AggregateError(errors, `entity cards: ${errors.length} unlink/delete step(s) failed`)
+}
+
+/**
+ * Make the link store match the board: every card linked, no link without a
+ * card. Covers deletions by key/undo/remote peers that bypass removeEntityCards,
+ * undo-restored cards, and failed link/unlink calls. Never deletes entities.
+ */
+export async function reconcileEntityLinks(ctx: EntityCardContext): Promise<{ linked: number; unlinked: number; failed: number }> {
+  if (!ctx.linker.list) return { linked: 0, unlinked: 0, failed: 0 }
+  const want = new Map(entityCards(ctx.board).map(c => [`${c.objectId}|${c.ref.kind}|${c.ref.id}`, c]))
+  const have = new Map((await ctx.linker.list(ctx.boardId)).map(c => [`${c.objectId}|${c.ref.kind}|${c.ref.id}`, c]))
+  let linked = 0, unlinked = 0, failed = 0
+  for (const [k, c] of want) if (!have.has(k)) { try { await ctx.linker.link({ boardId: ctx.boardId, objectId: c.objectId }, c.ref); linked++ } catch { failed++ } }
+  for (const [k, c] of have) if (!want.has(k)) { try { await ctx.linker.unlink({ boardId: ctx.boardId, objectId: c.objectId }, c.ref); unlinked++ } catch { failed++ } }
+  return { linked, unlinked, failed }
 }
 
 /** Every entity card on the board (for subscription wiring). */

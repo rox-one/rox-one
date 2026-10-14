@@ -14,7 +14,9 @@
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
 import * as Y from 'yjs'
-import { CanvasDoc } from '../doc.ts'
+import { CanvasDoc, migrateLegacy } from '../doc.ts'
+import { wellFormed } from '../text.ts'
+import { unlinkSync, readFileSync } from 'node:fs'
 
 export interface BoardSummary { id: string; title: string; createdAt: number; updatedAt: number }
 export type StoreErrorHandler = (error: unknown, context: { boardId?: string; op: string }) => void
@@ -97,6 +99,10 @@ export class CanvasFileStore {
   /** Per-board chain for updates from docs that were already closed (see `adoptStale`). */
   private staleChain = new Map<string, Promise<void>>()
   private lockHeld = false
+  private lockToken = `${process.pid}:${crypto.getRandomValues(new Uint32Array(2)).join('-')}`
+  private exitHook: (() => void) | null = null
+  /** Boards trashed by this store: late stale edits go to the trash copy, never resurrect the board. */
+  private trashed = new Map<string, string>()
   private indexChain: Promise<void> = Promise.resolve()
   private onError: StoreErrorHandler
 
@@ -114,30 +120,68 @@ export class CanvasFileStore {
     if (this.lockHeld) return
     await fs.mkdir(this.dir, { recursive: true })
     const path = join(this.dir, '.lock')
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      // Create-exclusive with full content: write a temp file, then hard-link it
+      // into place (link fails if .lock exists), so no reader ever sees an empty lock.
+      const tmp = `${path}.${this.lockToken.replace(/[^0-9a-z-]/gi, '_')}.tmp`
+      await fs.writeFile(tmp, this.lockToken)
       try {
-        const h = await fs.open(path, 'wx')
-        try { await h.writeFile(String(process.pid)); await h.sync() } finally { await h.close() }
+        try { await fs.link(tmp, path) } catch (e) {
+          const code = (e as NodeJS.ErrnoException).code
+          if (code === 'EEXIST') throw e
+          // No hard links on this filesystem: plain create-exclusive.
+          const h = await fs.open(path, 'wx')
+          try { await h.writeFile(this.lockToken); await h.sync() } finally { await h.close() }
+        }
         this.lockHeld = true
+        this.installExitHook(path)
         return
       } catch (e) {
         if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e
-        const owner = Number((await fs.readFile(path, 'utf8').catch(() => '')).trim())
-        if (owner === process.pid) { this.lockHeld = true; return }
-        if (Number.isInteger(owner) && owner > 0 && pidAlive(owner)) throw new Error(`CANVAS_LOCKED: workspace canvas is in use by process ${owner}`)
-        await fs.rm(path, { force: true }) // stale lock
+      } finally { await fs.rm(tmp, { force: true }) }
+      const content = (await fs.readFile(path, 'utf8').catch(() => '')).trim()
+      if (content === this.lockToken) { this.lockHeld = true; return }
+      const owner = Number(content.split(':')[0])
+      if (Number.isInteger(owner) && owner > 0 && owner !== process.pid && pidAlive(owner)) throw new Error(`CANVAS_LOCKED: workspace canvas is in use by process ${owner}`)
+      if (owner === process.pid) throw new Error('CANVAS_LOCKED: workspace canvas is open in another store of this process')
+      // Stale: take it over atomically. rename succeeds for exactly one contender;
+      // re-check that what we moved is still the stale lock (not a fresh one).
+      const aside = `${path}.stale-${this.lockToken.replace(/[^0-9a-z-]/gi, '_')}`
+      try { await fs.rename(path, aside) } catch (e) { if ((e as NodeJS.ErrnoException).code === 'ENOENT') continue; throw e }
+      const moved = (await fs.readFile(aside, 'utf8').catch(() => '')).trim()
+      if (moved !== content) {
+        // We grabbed someone's fresh lock: put it back (link keeps theirs if they already re-created).
+        await fs.link(aside, path).catch(() => {})
       }
+      await fs.rm(aside, { force: true })
     }
     throw new Error('CANVAS_LOCKED: could not acquire the workspace lock')
+  }
+
+  /** Release the lock on process exit (sync; only if the file is still ours). */
+  private installExitHook(path: string): void {
+    if (this.exitHook) return
+    this.exitHook = () => {
+      try { if (readFileSync(path, 'utf8').trim() === this.lockToken) unlinkSync(path) } catch { /* gone */ }
+    }
+    process.once('exit', this.exitHook)
+  }
+
+  private async releaseLock(): Promise<void> {
+    if (!this.lockHeld) return
+    const path = join(this.dir, '.lock')
+    const content = (await fs.readFile(path, 'utf8').catch(() => '')).trim()
+    if (content === this.lockToken) await fs.rm(path, { force: true })
+    this.lockHeld = false
+    if (this.exitHook) { process.removeListener('exit', this.exitHook); this.exitHook = null }
   }
 
   /** Close every board and release the lock. */
   async dispose(): Promise<void> {
     for (const id of [...this.open.keys()]) await this.closeBoard(id).catch(e => this.onError(e, { boardId: id, op: 'dispose' }))
-    if (this.lockHeld) {
-      await fs.rm(join(this.dir, '.lock'), { force: true })
-      this.lockHeld = false
-    }
+    await Promise.all([...this.staleChain.values()])
+    await this.indexChain
+    await this.releaseLock()
   }
 
   private paths(id: string) {
@@ -151,16 +195,28 @@ export class CanvasFileStore {
       if ((e as NodeJS.ErrnoException).code === 'ENOENT') return this.rebuildIndexEntries()
       throw e
     }
+    let indexed: BoardSummary[]
     try {
-      const parsed = JSON.parse(raw) as { boards?: unknown }
-      if (!Array.isArray(parsed.boards)) throw new Error('index.json: boards is not an array')
-      return (parsed.boards as BoardSummary[])
-        .filter(b => b && typeof b.id === 'string' && isValidBoardId(b.id))
-        .sort((a, b) => b.updatedAt - a.updatedAt)
+      const parsed = JSON.parse(raw) as { boards?: unknown } | unknown[]
+      // Legacy v0 index: a bare array of summaries.
+      const boards = Array.isArray(parsed) ? parsed : (parsed as { boards?: unknown }).boards
+      if (!Array.isArray(boards)) throw new Error('index.json: boards is not an array')
+      indexed = (boards as Partial<BoardSummary>[])
+        .filter((b): b is BoardSummary => !!b && typeof b.id === 'string' && isValidBoardId(b.id))
+        .map(b => ({ id: b.id, title: wellFormed(typeof b.title === 'string' ? b.title : ''), createdAt: Number(b.createdAt) || 0, updatedAt: Number(b.updatedAt) || 0 }))
     } catch (e) {
       this.onError(e, { op: 'read-index' })
       return this.rebuildIndexEntries()
     }
+    // The index is a cache of the snapshot files: drop entries whose .ydoc is
+    // gone, recover boards whose .ydoc exists but never made it into the index
+    // (crash between snapshot and index write), and dedupe ids.
+    const names = new Set(await fs.readdir(this.dir).catch(() => [] as string[]))
+    const seen = new Set<string>()
+    const out = indexed.filter(b => names.has(`${b.id}.ydoc`) && !seen.has(b.id) && (seen.add(b.id), true))
+    const missing = [...names].filter(n => n.endsWith('.ydoc') && isValidBoardId(n.slice(0, -5)) && !seen.has(n.slice(0, -5)))
+    if (missing.length) out.push(...await this.summariesFor(missing))
+    return out.sort((a, b) => b.updatedAt - a.updatedAt)
   }
 
   /** Recover the board list from the snapshot files (index missing or corrupt). */
@@ -170,21 +226,23 @@ export class CanvasFileStore {
       if ((e as NodeJS.ErrnoException).code === 'ENOENT') return []
       throw e
     }
+    return (await this.summariesFor(names.filter(n => n.endsWith('.ydoc') && isValidBoardId(n.slice(0, -5))))).sort((a, b) => b.updatedAt - a.updatedAt)
+  }
+
+  private async summariesFor(names: string[]): Promise<BoardSummary[]> {
     const out: BoardSummary[] = []
     for (const name of names) {
-      if (!name.endsWith('.ydoc')) continue
       const id = name.slice(0, -5)
-      if (!isValidBoardId(id)) continue
       try {
         const st = await fs.stat(join(this.dir, name))
         const doc = new Y.Doc()
         Y.applyUpdate(doc, new Uint8Array(await fs.readFile(join(this.dir, name))))
         const meta = new CanvasDoc(doc).getMeta()
-        out.push({ id, title: meta.title, createdAt: meta.createdAt || st.birthtimeMs, updatedAt: st.mtimeMs })
+        out.push({ id, title: wellFormed(meta.title), createdAt: meta.createdAt || st.birthtimeMs, updatedAt: st.mtimeMs })
         doc.destroy()
       } catch (e) { this.onError(e, { op: 'rebuild-index', boardId: id }) }
     }
-    return out.sort((a, b) => b.updatedAt - a.updatedAt)
+    return out
   }
 
   private updateIndex(mut: (boards: BoardSummary[]) => BoardSummary[]): Promise<void> {
@@ -206,7 +264,7 @@ export class CanvasFileStore {
     board.init({ title, createdBy })
     await atomicWrite(this.paths(id).snap, Y.encodeStateAsUpdate(board.doc), this.dir)
     const now = Date.now()
-    const summary = { id, title, createdAt: now, updatedAt: now }
+    const summary = { id, title: board.getMeta().title, createdAt: now, updatedAt: now }
     await this.updateIndex(bs => [...bs.filter(b => b.id !== id), summary])
     return summary
   }
@@ -238,6 +296,9 @@ export class CanvasFileStore {
     try { logBytes = new Uint8Array(await fs.readFile(log)) } catch (e) { if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e }
     const badAt = logBytes ? replayFrames(logBytes, doc) : null
     const board = new CanvasDoc(doc)
+    // Legacy layouts (old z-keys, plain style/props/text) are upgraded before the
+    // listener attaches; a migration that changed anything is folded into a snapshot.
+    const migrated = migrateLegacy(board).length > 0
     const entry: OpenEntry = { board, pending: 0, dirty: false, retries: 0, retryTimer: null, fsyncTimer: null, needsFsync: false, indexStale: false, indexTimer: null, detach: () => {}, chain: Promise.resolve() }
     if (logBytes && badAt !== null) {
       // Keep the unreadable tail aside, then fold the good prefix into a snapshot.
@@ -245,7 +306,7 @@ export class CanvasFileStore {
       await fs.writeFile(aside, logBytes.subarray(badAt))
       this.onError(new Error(`corrupt log frame at byte ${badAt}; tail saved to ${aside}`), { boardId: id, op: 'replay-log' })
       await this.compactEntry(id, entry)
-    }
+    } else if (migrated) await this.compactEntry(id, entry)
     const onUpdate = (update: Uint8Array) => {
       this.enqueue(id, entry, async () => {
         if (entry.dirty) { await this.compactEntry(id, entry); return } // the snapshot includes this update
@@ -397,7 +458,9 @@ export class CanvasFileStore {
     const live = this.open.get(id)
     if (live) { Y.applyUpdate(live.board.doc, update); return } // persisted by the live listener
     const prev = this.staleChain.get(id) ?? Promise.resolve()
-    const next = prev.then(() => fs.appendFile(this.paths(id).log, encodeFrame(update))).catch(e => this.onError(e, { boardId: id, op: 'write-after-close' }))
+    // Resolved at write time: a board trashed meanwhile gets the edit in its trash copy.
+    const target = () => this.trashed.get(id) ?? this.paths(id).log
+    const next = prev.then(() => fs.appendFile(target(), encodeFrame(update))).catch(e => this.onError(e, { boardId: id, op: 'write-after-close' }))
     this.staleChain.set(id, next)
   }
 
@@ -411,9 +474,16 @@ export class CanvasFileStore {
       const trash = join(this.dir, '.trash')
       await fs.mkdir(trash, { recursive: true })
       const stamp = Date.now()
-      for (const [src, ext] of [[snap, 'ydoc'], [log, 'log']] as const) {
-        await fs.rename(src, join(trash, `${id}-${stamp}.${ext}`)).catch(e => { if (e.code !== 'ENOENT') throw e })
+      try { await fs.stat(snap) } catch (e) { if ((e as NodeJS.ErrnoException).code === 'ENOENT') throw new Error('canvas: board not found'); throw e }
+      // Order: log first, snapshot last, so a crash mid-trash never leaves a
+      // snapshot-less log behind; set the stale-edit target before moving.
+      this.trashed.set(id, join(trash, `${id}-${stamp}.log`))
+      const corrupt = (await fs.readdir(this.dir)).filter(n => n.startsWith(`${id}.log.corrupt-`))
+      for (const [src, dst] of [[log, `${id}-${stamp}.log`], ...corrupt.map(n => [join(this.dir, n), `${id}-${stamp}.${n.slice(id.length + 1)}`]), [snap, `${id}-${stamp}.ydoc`]] as const) {
+        await fs.rename(src, join(trash, dst)).catch(e => { if (e.code !== 'ENOENT') throw e })
       }
+      await fsyncDir(trash)
+      await fsyncDir(this.dir)
       await this.updateIndex(bs => bs.filter(b => b.id !== id))
     })()
     const tracked = p.finally(() => { if (this.busy.get(id) === tracked) this.busy.delete(id) })
