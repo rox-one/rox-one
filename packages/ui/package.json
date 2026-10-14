@@ -10,6 +10,7 @@
     ".": "./src/index.ts",
     "./lib/utils": "./src/lib/utils.ts",
     "./chat": "./src/components/chat/index.ts",
+    "./chat/audio-transcript-actions": "./src/components/chat/audio-transcript-actions.tsx",
     "./chat/SessionViewer": "./src/components/chat/SessionViewer.tsx",
     "./chat/TurnCard": "./src/components/chat/TurnCard.tsx",
     "./chat/turn-utils": "./src/components/chat/turn-utils.ts",
@@ -17,6 +18,8 @@
     "./annotations/follow-up-state": "./src/components/annotations/follow-up-state.ts",
     "./ui/drawer": "./src/components/ui/drawer.tsx",
     "./context": "./src/context/index.ts",
+    "./tooltip": "./src/components/tooltip.tsx",
+    "./lib/file-classification": "./src/lib/file-classification.ts",
     "./styles": "./src/styles/index.css",
     "./primitives": "./src/components/primitives/index.ts"
   },
