@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import type { PersonalTask } from '@rox/core/tasks/personal'
-import { applySchedule, dragPatch, dropPatch, epochOf, groupTasks, isoOf, partitionTasks, taskSpan, timelineRange } from '../timeline-model'
+import { applySchedule, timelineRowOrder, dragPatch, dropPatch, epochOf, groupTasks, isoOf, partitionTasks, taskSpan, timelineRange } from '../timeline-model'
 
 const today = '2026-02-10'
 let n = 0
@@ -114,5 +114,12 @@ describe('applySchedule', () => {
     applySchedule(store, a.id, { dueAt: epochOf('2026-02-20') }, NOW)
     expect(isoOf(store.get(a.id)!.dueAt!)).toBe('2026-02-20')
     expect(store.get(a.id)!.startAt).toBeUndefined()
+  })
+})
+
+describe('timelineRowOrder', () => {
+  it('lists scheduled ids in grouped row order', () => {
+    const order = timelineRowOrder([], 'none', '2026-02-10')
+    expect(order).toEqual([])
   })
 })

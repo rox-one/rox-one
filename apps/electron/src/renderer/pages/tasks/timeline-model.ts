@@ -147,3 +147,8 @@ export function applySchedule(store: ScheduleStore, id: string, patch: ScheduleP
   }
   if (patch.dueAt != null) store.setDeadline(id, patch.dueAt)
 }
+
+/** Scheduled task ids in timeline row order (groups, then rows). */
+export function timelineRowOrder(tasks: readonly PersonalTask[], by: TimelineGroupBy, today: string): string[] {
+  return groupTasks(partitionTasks(tasks, today).scheduled.map((s) => s.task), by).flatMap((g) => g.tasks.map((task) => task.id))
+}

@@ -78,7 +78,7 @@ import {
 } from '@/components/mode-screen/ModeScreen'
 import { tasksLayoutAtom, tasksTimelineGroupAtom, tasksTimelineZoomAtom, tasksViewAtom } from './tasks/atoms'
 import { TaskTimeline } from './tasks/TaskTimeline'
-import { applySchedule, isoOf, type SchedulePatch, type TimelineGroup } from './tasks/timeline-model'
+import { applySchedule, isoOf, timelineRowOrder, type SchedulePatch, type TimelineGroup } from './tasks/timeline-model'
 import {
   agentChipFor,
   agentCounts,
@@ -227,7 +227,15 @@ export default function TasksPage(props: TasksPageProps = {}) {
   useEffect(() => {
     const next = new Date(now)
     next.setHours(24, 0, 1, 0)
-    const timer = window.setTimeout(() => setMidnight((n) => n + 1), next.getTime() - now)
+    let timer = 0
+    const arm = (at: number) => {
+      timer = window.setTimeout(() => {
+        // Timers can fire early (sleep/clock drift): re-arm until the day really changed.
+        if (Date.now() < at) arm(at)
+        else setMidnight((n) => n + 1)
+      }, Math.max(1000, at - Date.now()))
+    }
+    arm(next.getTime())
     return () => window.clearTimeout(timer)
   }, [isoOf(now)]) // eslint-disable-line react-hooks/exhaustive-deps
   const tourRef = useRef(tour)
@@ -604,6 +612,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }, [view, topLevel, search, tagFilter, sort, pendingDone, showDone, store, projects, i18n.language])
 
   const visible = useMemo(() => sections.flatMap((section) => section.tasks), [sections])
+  const openTasks = useMemo(() => visible.filter(isOpenTask), [visible])
   const selected = selectedId ? store.get(selectedId) : undefined
   const nativeTasks = personalTasksNativeAvailable()
   const syncState = personalTasksSyncState()
@@ -743,10 +752,11 @@ export default function TasksPage(props: TasksPageProps = {}) {
     if ((mod && event.key === 'Backspace') || (!mod && event.key === 'Delete')) {
       if (selected && selected.trashedAt == null) {
         event.preventDefault()
-        const index = visible.findIndex((task) => task.id === selected.id)
+        // In the timeline, the next selection follows the timeline's row order.
+        const order = showTimeline ? timelineRowOrder(openTasks, timelineGroup, isoOf(now)) : visible.map((task) => task.id)
+        const index = order.indexOf(selected.id)
         trashTask(selected)
-        const next = visible[index + 1] ?? visible[index - 1]
-        selectTask(next ? next.id : null)
+        selectTask(index < 0 ? null : order[index + 1] ?? order[index - 1] ?? null)
       }
       return
     }
@@ -763,7 +773,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
       if (next) selectTask(next.id)
       return
     }
-    if (event.key === ' ' && selected) {
+    // Space activates focused buttons and radios (zoom/group toggles) natively.
+    if (event.key === ' ' && selected && !(target instanceof HTMLElement && target.closest('button, [role="radio"]'))) {
       event.preventDefault()
       toggleComplete(selected)
       return
@@ -1233,7 +1244,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           {magicPlusControl}
         </div>
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 py-1">
-          <span className="min-w-0 text-sm text-text-muted">{t('tasks.status.open', { count: view.kind === 'agents' ? agentList.length : visible.filter(isOpenTask).length })}</span>
+          <span className="min-w-0 text-sm text-text-muted">{t('tasks.status.open', { count: view.kind === 'agents' ? agentList.length : openTasks.length })}</span>
           <div className="flex min-w-0 flex-wrap items-center gap-1">{headerControls}</div>
         </div>
       </header>
@@ -1319,7 +1330,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           ))
         ) : showTimeline ? (
           <TaskTimeline
-            tasks={visible.filter(isOpenTask)}
+            tasks={openTasks}
             today={isoOf(now)}
             locale={i18n.language}
             selectedId={selectedId}
