@@ -28,6 +28,7 @@
  * type size and control height is a ROX token, so the surface follows the app
  * theme in all twelve locales and never drifts into ad-hoc styling.
  */
+import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2 } from 'lucide-react'
@@ -1199,7 +1200,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       data-state="ready"
     >
       <header className="flex items-center gap-2 border-b border-border-subtle px-3 py-2">
-        <h1 className="text-title-sm font-semibold text-foreground">{t('cookbooks.title')}</h1>
+        <PanelHeading className="text-title-sm font-semibold text-foreground" titleKey="cookbooks.title">{t('cookbooks.title')}</PanelHeading>
         <span
           data-testid="cookbooks-status"
           role="status"
