@@ -11623,5 +11623,13 @@
   "xfn.x23.title": "양식 제출 시 작업",
   "xfn.x24.title": "모든 항목에서 회의 시작",
   "xfn.x25.title": "@rox 패널 열기",
-  "xfn.x26.title": "화면 전반의 고정"
+  "xfn.x26.title": "화면 전반의 고정",
+  "settings.navPlacement.title": "Section navigation",
+  "settings.navPlacement.desc": "Where each section shows: the top pills, the sidebar, «More», or nowhere. Hiding a section keeps its data and links.",
+  "settings.navPlacement.pills": "Top pills",
+  "settings.navPlacement.primary": "Sidebar",
+  "settings.navPlacement.more": "Sidebar · More",
+  "settings.navPlacement.hidden": "Hidden",
+  "settings.navPlacement.default": "Default",
+  "settings.navPlacement.reset": "Reset"
 }

@@ -18,6 +18,7 @@ import { NavigationContext } from '@/contexts/NavigationContext'
 import { resolveCompactWorkspaceSelection } from '@/components/app-shell/compact-workspace-navigation'
 import type { PanelStackEntry } from '@/atoms/panel-stack'
 import { ActivityRail } from '../ActivityRail'
+import { setNavPlacement } from '@/components/app-shell/nav-placement'
 import { __resetModeRegistryForTests, getModeRegistry, registerSeededMode } from '../mode-registry-bootstrap'
 import { listShellModes, railModeEntries } from '../surface-shell'
 import { workbenchFlagAtom } from '../unified-flags'
@@ -92,8 +93,11 @@ function renderRail(navigationState: Record<string, unknown> = { navigator: 'ses
 
 const railIds = (html: string) => [...html.matchAll(/data-testid="(rail-(?:item|mode)-[^"]+)"/g)].map((match) => match[1])
 
-/** WP5 (#1580): flags off, the rail shows the registry's primary group; «Ещё» is closed. */
-const BASELINE_RAIL_IDS = ['inbox', 'sessions', 'docs', 'tasks', 'projects'].map((id) => `rail-item-${id}`)
+/**
+ * WP5 (#1580): flags off, the rail shows the registry's primary group; «Ещё» is closed.
+ * WP6: one surface = one place — Чат and Документы live in the titlebar pill by default.
+ */
+const BASELINE_RAIL_IDS = ['inbox', 'tasks', 'projects'].map((id) => `rail-item-${id}`)
 
 describe('ActivityRail render', () => {
   it('all mode flags off: exactly the registry primary group, no modes group, «Ещё» closed', () => {
@@ -113,7 +117,8 @@ describe('ActivityRail render', () => {
     expect(railModeEntries(pill([...UNIFIED_FLAGS, WIKI_FLAG])).map((mode) => mode.id)).toEqual(['messenger', 'calendar', 'goals', 'wiki'])
     // Projects gives its primary slot to «Цели и проекты» (goals) and moves to «Ещё».
     expect(railIds(html)).toEqual([
-      ...['inbox', 'sessions', 'messenger', 'docs', 'calendar', 'tasks', 'goals'].map((id) => `rail-item-${id}`),
+      // WP6: Мессенджер (Команда) and Документы are in the pill; Чат returns to the rail.
+      ...['inbox', 'sessions', 'calendar', 'tasks', 'goals'].map((id) => `rail-item-${id}`),
       'rail-mode-wiki',
     ])
   })
@@ -121,7 +126,9 @@ describe('ActivityRail render', () => {
   it('docs.shared.v1 relabels the rail Notes mode («Документы») without touching the ids', () => {
     const store = getDefaultStore()
     store.set(workbenchFlagAtom(WIKI_FLAG), true)
+    setNavPlacement('docs', 'primary') // WP6: out of the pill, into the rail
     const html = renderRail()
+    setNavPlacement('docs', null)
     expect(html).toContain('workbench.mode.docs')
     expect(html).not.toContain('workbench.mode.notes')
     expect(railIds(html)).toContain('rail-item-docs')

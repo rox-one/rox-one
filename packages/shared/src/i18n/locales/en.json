@@ -11431,7 +11431,7 @@
   "workbench.pill.agent": "Agent",
   "workbench.pill.allSurfaces": "All surfaces…",
   "workbench.pill.browser": "Browser",
-  "workbench.pill.exclude": "Remove from pill",
+  "workbench.pill.exclude": "Remove from pills",
   "workbench.pill.feed": "Feed",
   "workbench.pill.notes": "Notes",
   "workbench.pill.pin": "Pin to pill",
@@ -11623,5 +11623,13 @@
   "xfn.x23.title": "Form submit actions",
   "xfn.x24.title": "Start a meeting from any entity",
   "xfn.x25.title": "Open the @rox panel",
-  "xfn.x26.title": "Pins across surfaces"
+  "xfn.x26.title": "Pins across surfaces",
+  "settings.navPlacement.title": "Section navigation",
+  "settings.navPlacement.desc": "Where each section shows: the top pills, the sidebar, «More», or nowhere. Hiding a section keeps its data and links.",
+  "settings.navPlacement.pills": "Top pills",
+  "settings.navPlacement.primary": "Sidebar",
+  "settings.navPlacement.more": "Sidebar · More",
+  "settings.navPlacement.hidden": "Hidden",
+  "settings.navPlacement.default": "Default",
+  "settings.navPlacement.reset": "Reset"
 }

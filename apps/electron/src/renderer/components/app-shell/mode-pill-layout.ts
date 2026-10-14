@@ -49,3 +49,8 @@ export function resolveModePillLayout(input: ModePillLayoutInput): ModePillLayou
     rightMax: Math.max(0, Math.floor(input.topbarWidth - centerX - pillWidth / 2 - MODE_PILL_GAP)),
   }
 }
+
+/** WP6: the TopBar renders the mode pill on every non-compact window (shared with the sidebar fallback). */
+export function modePillShown(isCompact: boolean | undefined): boolean {
+  return !isCompact
+}
