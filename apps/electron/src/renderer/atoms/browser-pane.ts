@@ -6,6 +6,8 @@
  */
 
 import { atom } from 'jotai'
+import { atomWithStorage } from 'jotai/utils'
+import { recordVisit, type BrowserLink } from '@/screens/browser/browser-sidebar-sections'
 import type { BrowserInstanceInfo } from '../../shared/types'
 
 /** Map of all browser instances by ID */
@@ -97,8 +99,15 @@ export const updateBrowserInstanceAtom = atom(
     }
 
     const map = new Map(get(browserInstancesMapAtom))
+    const previous = map.get(info.id)
     map.set(info.id, info)
     set(browserInstancesMapAtom, map)
+    // Браузер «Недавнее»: record a visit once a page finishes loading.
+    if (!info.isLoading && (previous?.url !== info.url || previous?.isLoading || previous?.title !== info.title)) {
+      const history = get(browserHistoryAtom)
+      const next = recordVisit(history, { url: info.url, title: info.title, at: Date.now() })
+      if (next !== history) set(browserHistoryAtom, next)
+    }
     set(browserPaneRegistryStatusAtom, {
       state: 'fresh',
       lastError: null,
@@ -155,3 +164,8 @@ export const markBrowserPaneRegistryFailedAtom = atom(
     })
   }
 )
+
+/** Браузер «Закладки» (user order) — renderer-local, persisted. */
+export const browserBookmarksAtom = atomWithStorage<BrowserLink[]>('rox.browser.bookmarks.v1', [], undefined, { getOnInit: true })
+/** Браузер «Недавнее» — visits recorded from instance state changes, newest first. */
+export const browserHistoryAtom = atomWithStorage<BrowserLink[]>('rox.browser.history.v1', [], undefined, { getOnInit: true })

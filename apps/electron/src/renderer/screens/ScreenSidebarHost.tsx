@@ -7,6 +7,7 @@ import { lazy, Suspense } from 'react'
  */
 const PUBLISHERS: Record<string, React.LazyExoticComponent<() => null>> = {
   sessions: lazy(() => import('./sessions/SessionsScreenSidebar').then((m) => ({ default: m.SessionsScreenSidebar }))),
+  browser: lazy(() => import('./browser/BrowserScreenSidebar').then((m) => ({ default: m.BrowserScreenSidebar }))),
 }
 
 export function hasScreenSidebarPublisher(screenId: string | null | undefined): boolean {
