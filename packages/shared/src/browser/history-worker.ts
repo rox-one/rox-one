@@ -3,7 +3,9 @@
  */
 import { getWorkerPool, registerWorkerHandler } from '../workers/index.ts'
 import { readNativeBrowserData } from './profile-native-data.ts'
-import type { DiscoveredProfile } from './profile-import.ts'
+import type { DiscoveredProfile, IndexedItem } from './profile-import.ts'
+
+type BrowserHistoryReadResult = { history: IndexedItem[]; bookmarks: IndexedItem[] }
 
 declare module '../workers/handlers.ts' {
   interface WorkerTaskMap {
@@ -15,7 +17,7 @@ declare module '../workers/handlers.ts' {
         bookmarks: boolean
         sinceVisitTime?: number
       }
-      result: { history: { kind: 'history'; url: string; title: string }[]; bookmarks: { kind: 'bookmark'; url: string; title: string }[] }
+      result: BrowserHistoryReadResult
     }
   }
 }
@@ -38,6 +40,6 @@ export async function readBrowserHistoryInPool(payload: {
   history: boolean
   bookmarks: boolean
   sinceVisitTime?: number
-}): Promise<{ history: { kind: 'history'; url: string; title: string }[]; bookmarks: { kind: 'bookmark'; url: string; title: string }[] }> {
+}): Promise<BrowserHistoryReadResult> {
   return getWorkerPool().run('browser.readHistory', payload)
 }

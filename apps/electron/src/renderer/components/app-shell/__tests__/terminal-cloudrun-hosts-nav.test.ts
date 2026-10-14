@@ -67,6 +67,7 @@ function dispatch(route: string): React.ReactElement {
     useCallback: (callback: unknown) => callback, useEffect() {}, useMemo: (callback: () => unknown) => callback(),
     useState: (initial: unknown) => [initial, () => {}], useTranslation: () => ({ t: (key: string) => key }),
     useNavigationState: () => state, useNavigation: () => ({ isSessionsReady: true }),
+    useNavigationStatus: () => ({ isSessionsReady: true, unavailableWorkspaceSlug: null }),
     useAppShellContext: () => ({ activeWorkspaceId: 'workspace-owner', workspaces: [], sessionStatuses: [], projects: [], loadedProjects: [], labels: [], skills: [] }),
     sessionMetaMapAtom, automationsAtom: Symbol(),
     useAtomValue: (atom: symbol | Parameters<typeof store.get>[0]) => typeof atom === 'symbol' ? atom === sessionMetaMapAtom ? new Map() : [] : store.get(atom), useSetAtom: () => () => {},
