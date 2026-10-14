@@ -1099,7 +1099,7 @@ export default function AppearanceSettingsPage() {
                               'flex items-center rounded-lg border px-3 py-2 text-left text-sm transition-colors',
                               active
                                 ? 'border-accent/50 bg-accent/10 text-foreground'
-                                : 'border-border/60 text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground',
+                                : 'border-border/60 text-muted-foreground hover:bg-surface-hover hover:text-foreground',
                             )}
                           >
                             <span className="truncate">{preset.theme?.name || preset.id}</span>
