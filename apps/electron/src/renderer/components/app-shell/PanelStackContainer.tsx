@@ -27,6 +27,7 @@ import { PanelSlot } from './PanelSlot'
 import { TerminalPanel } from './TerminalPanel'
 import { PanelGridResizeSash } from './PanelGridResizeSash'
 import { PanelSwapGripButton } from './PanelSeam'
+import { setStripWidthAtom, persistStripWidthsAtom, panelFocusTimesAtom, nextFocusTick, stripWidthFor, stripWidthsAtom, hibernatedPanelIdsAtom, useStripHibernation, useScrollFocusedIntoView, clampStripWidth } from '@/components/shell/panel-strip'
 import {
   PANEL_GAP,
   PANEL_EDGE_INSET,
@@ -197,7 +198,22 @@ export function PanelStackContainer({
       : panelGridShape(panels.length, singlePanel ? 'focus' : mode)
   }, [panels.length, visibleIds.length, hasTools, singlePanel, mode, engineLayout])
   const tracks = useMemo(() => resolvePanelGridTracks(preferences, shape, panels.map((entry) => entry.proportion)), [preferences, shape, panels])
-  const gridKey = panelGridKey(shape)
+  // Panel strip (shell-layout §2): a single row of multiple panels scrolls
+  // horizontally with per-screen px widths instead of squeezing into fr tracks.
+  const stripMode = !isCompact && !hasTools && !isExpanded && !singlePanel && shape.rows === 1 && !engineLayout
+  const stripWidths = useAtomValue(stripWidthsAtom)
+  const setStripWidth = useSetAtom(setStripWidthAtom)
+  const persistStripWidths = useSetAtom(persistStripWidthsAtom)
+  const setPanelFocusTimes = useSetAtom(panelFocusTimesAtom)
+  // LRU for the open-panel cap: record every focus change, whatever its source.
+  useEffect(() => {
+    if (!focusedPanelId) return
+    setPanelFocusTimes((prev) => ({ ...prev, [focusedPanelId]: nextFocusTick() }))
+  }, [focusedPanelId, setPanelFocusTimes])
+  const hibernatedIds = useAtomValue(hibernatedPanelIdsAtom)
+  useStripHibernation(scrollRef, stripMode)
+  useScrollFocusedIntoView(scrollRef, stripMode)
+  const gridKey = stripMode ? 'strip' : panelGridKey(shape)
   const panelIdentity = `${preferences.workspaceId}:${panelIds.join(':')}`
   // The rails collapse while a panel is promoted so it truly fills the screen.
   const hasSidebar = !isExpanded && !isCompact && !isSidebarAndNavigatorHidden && sidebarWidth > 0
@@ -566,15 +582,15 @@ export function PanelStackContainer({
             className="grid flex-1 min-h-0 isolate"
             style={{
               position: isCompact ? 'absolute' : 'relative',
-              width: '100%',
+              width: stripMode ? 'max-content' : '100%',
               height: isCompact ? undefined : '100%',
               top: isCompact ? COMPACT_PANEL_TOP_GAP : undefined,
               bottom: isCompact ? 0 : undefined,
               left: isCompact ? 0 : undefined,
               zIndex: isCompact ? 10 : undefined,
-              minWidth: gridMinWidth,
+              minWidth: stripMode ? undefined : gridMinWidth,
               minHeight: gridMinHeight,
-              gridTemplateColumns: isExpanded ? 'minmax(0, 1fr)' : hasTools ? visibleIds.map(id => panels.find(entry => entry.id === id)?.tool && visibleIds.length > 1 ? '360px' : 'minmax(0, 1fr)').join(' ') : singlePanel ? 'minmax(0, 1fr)' : tracks.columns.map((weight) => `minmax(${PANEL_GRID_MIN_WIDTH}px, ${weight}fr)`).join(' '),
+              gridTemplateColumns: stripMode ? panels.map((entry) => `${stripWidthFor(stripWidths, entry.route)}px`).join(' ') : isExpanded ? 'minmax(0, 1fr)' : hasTools ? visibleIds.map(id => panels.find(entry => entry.id === id)?.tool && visibleIds.length > 1 ? '360px' : 'minmax(0, 1fr)').join(' ') : singlePanel ? 'minmax(0, 1fr)' : tracks.columns.map((weight) => `minmax(${PANEL_GRID_MIN_WIDTH}px, ${weight}fr)`).join(' '),
               gridTemplateRows: shape.rows === 1 ? 'minmax(0, 1fr)' : tracks.rows.map((weight) => `minmax(${PANEL_GRID_MIN_HEIGHT}px, ${weight}fr)`).join(' '),
               gap: PANEL_GAP,
               pointerEvents: isCompact && !hasSelectedContent ? 'none' : 'auto',
@@ -599,6 +615,7 @@ export function PanelStackContainer({
                   isAtRightEdge={(singlePanel || column === shape.columns - 1) && !isRightSidebarVisible}
                   proportion={entry.proportion}
                   isCompact={isCompact}
+                  hibernated={stripMode && hibernatedIds.has(entry.id) && !isFocused}
                   belowContent={ownsTerminal ? (
                     <div className="flex min-h-0 shrink-0 flex-col" style={{ flexBasis: '50%' }} data-terminal-cell="true">
                       <TerminalPanel autoFocus={terminalFocusOnOpenRef.current} />
@@ -616,7 +633,10 @@ export function PanelStackContainer({
                 />
               )
             })}
-            {!hasTools && !singlePanel && Array.from({ length: shape.columns - 1 }, (_, index) => (
+            {stripMode && panels.map((entry) => (
+              <StripResizeSash key={`strip-sash:${entry.id}`} panelId={entry.id} width={stripWidthFor(stripWidths, entry.route)} onResize={(width, persist) => setStripWidth({ route: entry.route, width, persist })} onResizeEnd={persistStripWidths} />
+            ))}
+            {!stripMode && !hasTools && !singlePanel && Array.from({ length: shape.columns - 1 }, (_, index) => (
               <PanelGridResizeSash key={`${gridKey}:x:${index}:${panelIdentity}`} axis="x" index={index} shape={shape} tracks={tracks} panelIds={panelIds} onTracksChange={setTracks} />
             ))}
             {!hasTools && !singlePanel && Array.from({ length: shape.rows - 1 }, (_, index) => (
@@ -678,5 +698,74 @@ export function PanelStackContainer({
         </div>
       ) : null}
     </div>
+  )
+}
+
+/**
+ * Right-edge resize handle for one strip panel. Pointer drag or keyboard
+ * (←/→ 16px, Shift ×4); width is clamped and persisted per screen.
+ */
+function StripResizeSash({ panelId, width, onResize, onResizeEnd }: { panelId: string; width: number; onResize(width: number, persist?: boolean): void; onResizeEnd(): void }) {
+  const { t } = useTranslation()
+  const ref = useRef<HTMLDivElement>(null)
+  const [left, setLeft] = useState<number | null>(null)
+  useEffect(() => {
+    const grid = ref.current?.parentElement
+    const panel = grid?.querySelector<HTMLElement>(`[data-panel-id="${CSS.escape(panelId)}"]`)
+    if (!grid || !panel) return
+    const update = () => setLeft(panel.offsetLeft + panel.offsetWidth)
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(grid)
+    return () => observer.disconnect()
+  }, [panelId, width])
+  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    const startX = event.clientX
+    const start = width
+    const target = event.currentTarget
+    target.setPointerCapture?.(event.pointerId)
+    // rAF-throttled live updates (no storage writes); persist once on release.
+    let frame = 0
+    let pending: number | null = null
+    const flush = () => { frame = 0; if (pending !== null) { onResize(pending, false); pending = null } }
+    const move = (e: PointerEvent) => {
+      pending = clampStripWidth(start + e.clientX - startX)
+      if (!frame) frame = requestAnimationFrame(flush)
+    }
+    const end = () => {
+      target.removeEventListener('pointermove', move)
+      target.removeEventListener('pointerup', end)
+      target.removeEventListener('pointercancel', end)
+      target.removeEventListener('lostpointercapture', end)
+      if (frame) { cancelAnimationFrame(frame); frame = 0 }
+      if (pending !== null) { onResize(pending, false); pending = null }
+      onResizeEnd()
+    }
+    target.addEventListener('pointermove', move)
+    target.addEventListener('pointerup', end)
+    target.addEventListener('pointercancel', end)
+    target.addEventListener('lostpointercapture', end)
+  }
+  return (
+    <div
+      ref={ref}
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={t('shell.strip.resize')}
+      aria-valuenow={width}
+      aria-valuemin={320}
+      aria-valuemax={1400}
+      tabIndex={0}
+      data-strip-sash={panelId}
+      onPointerDown={onPointerDown}
+      onKeyDown={(event) => {
+        const step = event.shiftKey ? 64 : 16
+        if (event.key === 'ArrowLeft') { event.preventDefault(); onResize(clampStripWidth(width - step)) }
+        if (event.key === 'ArrowRight') { event.preventDefault(); onResize(clampStripWidth(width + step)) }
+      }}
+      className="absolute inset-y-0 w-2 -translate-x-1/2 cursor-col-resize outline-none hover:bg-[var(--state-hover)] focus-visible:bg-[var(--state-selected)]"
+      style={{ left: left ?? -9999, gridRow: 1 }}
+    />
   )
 }

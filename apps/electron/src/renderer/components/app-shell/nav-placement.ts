@@ -10,8 +10,22 @@
  */
 import { useSyncExternalStore } from 'react'
 
-export type NavPlacement = 'pills' | 'primary' | 'more' | 'hidden'
-export const NAV_PLACEMENTS: readonly NavPlacement[] = ['pills', 'primary', 'more', 'hidden']
+/**
+ * Contextual sidebar (#1932 follow-up): the sidebar shows only the CURRENT
+ * screen's own navigation, so a surface lives either in the top pills or in
+ * the «Все экраны» menu (the pill overflow), or nowhere.
+ */
+export type NavPlacement = 'pills' | 'menu' | 'hidden'
+export const NAV_PLACEMENTS: readonly NavPlacement[] = ['pills', 'menu', 'hidden']
+/** Pre-contextual values still found in persisted data: both mean «in the menu». */
+export const LEGACY_MENU_PLACEMENTS: ReadonlySet<string> = new Set(['primary', 'more'])
+
+/** Persisted value → current placement (old sidebar placements become «menu»); unknown → null. */
+export function normalizePlacement(value: unknown): NavPlacement | null {
+  if (typeof value !== 'string') return null
+  if (LEGACY_MENU_PLACEMENTS.has(value)) return 'menu'
+  return (NAV_PLACEMENTS as readonly string[]).includes(value) ? value as NavPlacement : null
+}
 export type NavPlacements = Readonly<Record<string, NavPlacement>>
 
 export const NAV_PLACEMENT_KEY = 'craft-nav-placement-v1'
@@ -24,9 +38,6 @@ export const FIXED_NAV_IDS: ReadonlySet<string> = new Set(['settings'])
 
 const EMPTY: NavPlacements = Object.freeze({})
 
-function isPlacement(value: unknown): value is NavPlacement {
-  return typeof value === 'string' && (NAV_PLACEMENTS as readonly string[]).includes(value)
-}
 
 function storage(): Storage | null {
   try {
@@ -44,7 +55,8 @@ export function readNavPlacements(): NavPlacements {
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return EMPTY
     const out: Record<string, NavPlacement> = {}
     for (const [id, value] of Object.entries(parsed as Record<string, unknown>)) {
-      if (isPlacement(value) && !FIXED_NAV_IDS.has(id)) out[id] = value
+      const placement = normalizePlacement(value)
+      if (placement && !FIXED_NAV_IDS.has(id)) out[id] = placement
     }
     return out
   } catch {
@@ -59,10 +71,10 @@ const listeners = new Set<() => void>()
 const OLD_PILL_PREFS_KEY = 'craft-workbench-pill-prefs-v1'
 /** Old pill surface id → registry id(s) and where the user still saw it (the sidebar). */
 const OLD_PILL_EXCLUDED: Readonly<Record<string, Readonly<Record<string, NavPlacement>>>> = {
-  feed: { feed: 'more' },
-  team: { messenger: 'primary', sessions: 'primary' },
-  notes: { docs: 'primary' },
-  browser: { browser: 'more' },
+  feed: { feed: 'menu' },
+  team: { messenger: 'menu', sessions: 'menu' },
+  notes: { docs: 'menu' },
+  browser: { browser: 'menu' },
 }
 /** Old pinned extra mode id → registry id. */
 const MODE_TO_NAV: Readonly<Record<string, string>> = {
@@ -109,6 +121,14 @@ function get(): NavPlacements {
     return current
   }
   current = readNavPlacements()
+  // Rewrite legacy values ('primary'/'more' → 'menu', dropped unknowns) once so
+  // older builds' data never round-trips through the old vocabulary again.
+  try {
+    const raw = store?.getItem(NAV_PLACEMENT_KEY)
+    if (raw && raw !== JSON.stringify(current)) store?.setItem(NAV_PLACEMENT_KEY, JSON.stringify(current))
+  } catch {
+    /* ignore */
+  }
   return current
 }
 

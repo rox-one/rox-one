@@ -128,7 +128,7 @@ describe('ActivityRail render', () => {
   it('docs.shared.v1 relabels the rail Notes mode («Документы») without touching the ids', () => {
     const store = getDefaultStore()
     store.set(workbenchFlagAtom(WIKI_FLAG), true)
-    setNavPlacement('docs', 'primary') // WP6: out of the pill, into the rail
+    setNavPlacement('docs', 'menu') // WP6: out of the pill, into the rail
     const html = renderRail()
     setNavPlacement('docs', null)
     expect(html).toContain('workbench.mode.docs')
