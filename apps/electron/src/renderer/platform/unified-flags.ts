@@ -40,6 +40,7 @@ export const W1_07_FLAG_IDS = [
   WORKBENCH_FLAG.modeMessengerV1,
   WORKBENCH_FLAG.modeCalendarV1,
   WORKBENCH_FLAG.modeGoalsV1,
+  WORKBENCH_FLAG.modeCanvasV1,
   WORKBENCH_FLAG.modeContactsV1,
   WORKBENCH_FLAG.docsSharedV1,
 ] as const
@@ -200,6 +201,23 @@ export function currentShellFlags(): ReadonlySet<string> {
   return getShellStore().get(enabledShellFlagsAtom)
 }
 
+let lastCanvasFlag: boolean | undefined
+/**
+ * Mirror the real `workbench.mode.canvas.v1` value (true AND false) into main,
+ * which gates every canvas:* handler and persists it for the next start.
+ * Pushed at start-up and on every change; deduped.
+ */
+export function pushCanvasFlagToMain(enabled: boolean): void {
+  if (lastCanvasFlag === enabled) return
+  lastCanvasFlag = enabled
+  try {
+    const api = typeof window !== 'undefined' ? (window as unknown as { electronAPI?: { canvas?: { setEnabled?: (on: boolean) => Promise<unknown> } } }).electronAPI : undefined
+    api?.canvas?.setEnabled?.(enabled)?.catch(err => { lastCanvasFlag = undefined; console.warn('[unified-flags] canvas flag push to main failed', err) })
+  } catch (err) { lastCanvasFlag = undefined; console.warn('[unified-flags] canvas flag push to main failed', err) }
+}
+/** Tests only. */
+export function __resetCanvasFlagPushForTests(): void { lastCanvasFlag = undefined }
+
 let activeBridge: { store: ShellStore; dispose: () => void } | null = null
 
 /**
@@ -234,6 +252,7 @@ export function installShellFlagBridges(store: ShellStore = getShellStore()): ()
     const ids = enabledUnifiedSurfaces(store.get(enabledShellFlagsAtom))
     setUnifiedSurfaceRoutesEnabled(ids)
     pushSurfaceRoutesToMain(ids)
+    pushCanvasFlagToMain(store.get(enabledShellFlagsAtom).has(WORKBENCH_FLAG.modeCanvasV1))
   }
   sync()
   const unsubscribe = store.sub(enabledShellFlagsAtom, sync)

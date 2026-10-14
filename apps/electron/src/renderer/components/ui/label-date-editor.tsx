@@ -12,7 +12,7 @@ import { Calendar } from './calendar'
 import { cn } from '@/lib/utils'
 import { parseDate } from 'chrono-node'
 import { format, parse } from 'date-fns'
-import { getDateLocale } from '@rox/shared/i18n'
+import { getDateLocale } from '@rox/shared/i18n/date-locale'
 
 export interface LabelDateEditorProps {
   inputRef: React.RefObject<HTMLInputElement>

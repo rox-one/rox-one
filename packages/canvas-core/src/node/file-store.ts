@@ -539,4 +539,45 @@ export class CanvasFileStore {
     this.busy.set(id, tracked)
     return tracked
   }
+
+  /** Trashed boards (newest first). Read-only: snapshots are decoded, never modified. */
+  async listTrash(): Promise<Array<BoardSummary & { stamp: number }>> {
+    const trash = join(this.dir, '.trash')
+    const names = await fs.readdir(trash).catch(() => [] as string[])
+    const out: Array<BoardSummary & { stamp: number }> = []
+    for (const n of names) {
+      const m = /^([A-Za-z0-9_-]{1,64})-(\d+)\.ydoc$/.exec(n)
+      if (!m) continue
+      try {
+        const doc = new Y.Doc()
+        Y.applyUpdate(doc, new Uint8Array(await fs.readFile(join(trash, n))))
+        const meta = new CanvasDoc(doc).getMeta()
+        doc.destroy()
+        out.push({ id: m[1]!, stamp: Number(m[2]), title: meta.title, createdAt: meta.createdAt, updatedAt: Number(m[2]) })
+      } catch { /* unreadable snapshot stays in the trash untouched */ }
+    }
+    return out.sort((a, b) => b.stamp - a.stamp)
+  }
+
+  /** Undo trashBoard: log first, snapshot last (mirror of trash); fails if a live board has the id. */
+  async restoreBoard(id: string, stamp: number): Promise<BoardSummary> {
+    assertId(id)
+    if (!Number.isSafeInteger(stamp)) throw new Error('canvas: bad trash stamp')
+    await this.busy.get(id)?.catch(() => {})
+    if ((await this.listBoards()).some(b => b.id === id)) throw new Error('canvas: board exists')
+    const { snap, log } = this.paths(id)
+    const trash = join(this.dir, '.trash')
+    const src = join(trash, `${id}-${stamp}.ydoc`)
+    const doc = new Y.Doc()
+    Y.applyUpdate(doc, new Uint8Array(await fs.readFile(src)))
+    const meta = new CanvasDoc(doc).getMeta()
+    doc.destroy()
+    await fs.rename(join(trash, `${id}-${stamp}.log`), log).catch(e => { if (e.code !== 'ENOENT') throw e })
+    await fs.rename(src, snap)
+    await fsyncDir(this.dir)
+    this.trashed.delete(id)
+    const summary = { id, title: meta.title, createdAt: meta.createdAt, updatedAt: Date.now() }
+    await this.updateIndex(bs => [...bs.filter(b => b.id !== id), summary])
+    return summary
+  }
 }

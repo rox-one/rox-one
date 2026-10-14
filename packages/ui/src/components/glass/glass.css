@@ -2,14 +2,6 @@
    --motion-spring/--ease-spring (motion.css). Only transform and opacity
    transition; backdrop-filter is static. */
 .glass-surface {
-  /* Re-derived here so a per-surface --glass-intensity (the `intensity` prop)
-     takes effect; on :root they would resolve once against the root value. */
-  --glass-blur: calc(8px + 24px * var(--glass-intensity));
-  --glass-saturate: calc(1 + 0.6 * var(--glass-intensity));
-  --glass-tint: calc(4% + 10% * var(--glass-intensity));
-  --glass-edge-alpha: calc(8% + 22% * var(--glass-intensity));
-  --glass-specular-alpha: calc(4% + 16% * var(--glass-intensity));
-
   position: relative;
   border-radius: var(--glass-radius);
   /* Specular highlight: a static top sheen layered over the tint. */
@@ -30,7 +22,7 @@
 }
 
 html[data-glass="full"] .glass-surface[data-glass-refraction] {
-  backdrop-filter: var(--glass-filter) blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: var(--glass-filter,) blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
 
 .glass-surface[data-glass-presence="closed"] {

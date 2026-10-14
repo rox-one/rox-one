@@ -159,6 +159,13 @@ function matchContacts(segments: string[], fragment: string | undefined, query: 
   return kind ? refOf(kind, { kind, id: segments[2]! }) : null
 }
 
+// canvas/board/{id}[#objectId]  («Доска»: a board; fragment = card on it)
+function matchCanvas(segments: string[], fragment: string | undefined, query: Map<string, string>) {
+  if (query.size !== 0 || segments.length !== 3 || segments[1] !== 'board') return null
+  const ref = fragment !== undefined ? { kind: 'canvas' as const, id: segments[2]!, fragment } : { kind: 'canvas' as const, id: segments[2]! }
+  return refOf('canvas', ref)
+}
+
 // workflows/{id} and workflows/run/{id}
 function matchWorkflows(segments: string[], fragment: string | undefined, query: Map<string, string>) {
   if (query.size !== 0 || fragment !== undefined) return null
@@ -228,6 +235,7 @@ function matchHome(segments: string[], fragment: string | undefined, query: Map<
 }
 
 const PREFIX_MATCHERS: Record<string, EntityMatcher> = {
+  canvas: matchCanvas,
   docs: matchDocs,
   messenger: matchMessenger,
   calendar: matchCalendar,
