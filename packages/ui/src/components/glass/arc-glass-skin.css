@@ -22,7 +22,13 @@ html[data-theme="arc-glass"] :is(.rox-mode-pill, [data-glass-slot]) {
 /* Accent buttons (Rox Mini send) stay accent: an accent tint over the glass. */
 html[data-theme="arc-glass"] [data-glass-slot][data-glass-tone="accent"] {
   --glass-fill: var(--primary);
-  --glass-fill-mix: 72%;
+  --glass-fill-mix: 90%;
+  /* Cap the white sheen (hover included) so text-primary-foreground keeps AA. */
+  --glass-specular-alpha: 4%;
+}
+
+html[data-theme="arc-glass"] [data-glass-slot][data-glass-tone="accent"]:hover:not(:disabled) {
+  --glass-hover-boost: 4%;
 }
 
 /* Glass hover: a slightly stronger tint and highlight (paint only). */

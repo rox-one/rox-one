@@ -143,3 +143,25 @@ describe('Arc Glass skin', () => {
     expect(kf).not.toMatch(/filter/)
   })
 })
+
+describe('Rox Mini buttons', () => {
+  const mini = readFileSync(
+    join(import.meta.dir, '../../../../../../apps/electron/src/renderer/components/app-shell/MiniSessionSurface.tsx'),
+    'utf8',
+  )
+  it('every glass mini button spreads its own useGlassPress (keyboard press feedback)', () => {
+    const buttons = mini.match(/<button data-glass-slot="mini-button"[^>]*>/g) ?? []
+    expect(buttons.length).toBe(4)
+    const spreads = buttons.map((b) => b.match(/\{\.\.\.(\w+Press)\}/)?.[1])
+    for (const s of spreads) expect(s).toBeDefined()
+    expect(new Set(spreads).size).toBe(4)
+    for (const s of spreads) expect(mini).toContain(`const ${s} = useGlassPress`)
+  })
+  it('accent tone: 90% primary, sheen capped at 8% including hover', () => {
+    const accent = skin.match(/\[data-glass-tone="accent"\]\s*{([^}]*)}/)?.[1] ?? ''
+    expect(accent).toMatch(/--glass-fill-mix:\s*90%/)
+    const spec = Number(accent.match(/--glass-specular-alpha:\s*(\d+)%/)?.[1])
+    const hover = Number(skin.match(/\[data-glass-tone="accent"\]:hover[^{]*{[^}]*--glass-hover-boost:\s*(\d+)%/)?.[1])
+    expect(spec + hover).toBeLessThanOrEqual(8)
+  })
+})
