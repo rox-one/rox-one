@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
@@ -25,6 +25,10 @@ export { isPermissionsColumnComplete } from './permissions-model'
 
 /**
  * Right-hand onboarding column — permissions & modes.
+ *
+ * Compact rows: switch, title + status badge, a one-line description (full
+ * text in the tooltip and as the switch's accessible description) and the
+ * «Выдать» action inline on the right.
  *
  * Standalone: every native/Electron interaction arrives through props
  * (`onRequestGrant`, `onNotifyBlocked`), so the column renders and tests
@@ -70,6 +74,7 @@ export function PermissionsColumn({
   className,
 }: PermissionsColumnProps) {
   const { t } = useTranslation()
+  const idBase = useId()
   const [internal, setInternal] = useState<PermissionState>(() =>
     initialPermissionsState(platform, defaultGrants),
   )
@@ -107,16 +112,18 @@ export function PermissionsColumn({
         <ShieldCheck className="icon-toolbar shrink-0 text-success" aria-hidden="true" />
         <h3 className="text-sm font-semibold">{t('onboarding.permissions.title')}</h3>
       </div>
-      <p className="text-xs text-muted-foreground">
+      <p className="onb-helper text-xs text-muted-foreground">
         {t('onboarding.permissions.subtitle')}
       </p>
 
-      <div className="divide-y divide-border/60 overflow-hidden rounded-[var(--radius-card)] border border-border/60 bg-background/30">
+      <div className="onb-perm-list divide-y divide-border/60 overflow-hidden rounded-[var(--radius-card)] border border-border/60 bg-background/30">
         {entriesForPlatform(current.platform).map((entry) => {
           const decision = canToggle(entry, current)
           const checked = isEnabled(entry, current)
           const status = permissionStatus(entry, current)
           const title = t(`onboarding.permissions.items.${entry.id}.title`)
+          const description = t(`onboarding.permissions.items.${entry.id}.description`)
+          const descriptionId = `${idBase}-${entry.id}-description`
           const canGrant =
             entry.grantKind === 'tcc' && status !== 'granted' && status !== 'unsupported'
 
@@ -130,7 +137,7 @@ export function PermissionsColumn({
               title={decision.blocked && decision.reasonKey ? t(decision.reasonKey) : undefined}
               onClick={decision.blocked ? () => notifyBlocked(entry.id) : undefined}
               className={cn(
-                'flex items-start gap-3 px-3 py-3 transition-colors motion-reduce:transition-none',
+                'onb-perm-row flex items-center gap-2.5 px-3 py-2 transition-colors motion-reduce:transition-none',
                 decision.blocked && 'cursor-not-allowed bg-foreground-2 opacity-60',
               )}
             >
@@ -139,36 +146,41 @@ export function PermissionsColumn({
                 disabled={decision.blocked}
                 onCheckedChange={(value) => commit(setPermissionEnabled(current, entry.id, value))}
                 aria-label={title}
+                aria-describedby={descriptionId}
                 data-testid={`permission-switch-${entry.id}`}
-                className="mt-0.5"
+                className="shrink-0"
               />
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className="text-sm font-medium">{title}</span>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate text-body font-medium" title={title}>{title}</span>
                   <Badge
                     variant="outline"
                     data-testid={`permission-status-${entry.id}`}
-                    className={cn('px-1.5 py-0 text-caption font-medium', STATUS_CHIP[status])}
+                    className={cn('onb-chip shrink-0 rounded-full px-1.5 py-0 text-caption font-medium', STATUS_CHIP[status])}
                   >
                     {t(`onboarding.permissions.status.${STATUS_KEY[status]}`)}
                   </Badge>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t(`onboarding.permissions.items.${entry.id}.description`)}
+                <p
+                  id={descriptionId}
+                  className="onb-helper truncate text-xs text-muted-foreground"
+                  title={description}
+                >
+                  {description}
                 </p>
-                {canGrant ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="mt-2 h-6 rounded-full px-2.5 text-caption"
-                    data-testid={`permission-grant-${entry.id}`}
-                    onClick={() => onRequestGrant?.(entry.id)}
-                  >
-                    {t('onboarding.permissions.grant')}
-                  </Button>
-                ) : null}
               </div>
+              {canGrant ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="onb-grant h-6 shrink-0 rounded-full px-2.5 text-caption"
+                  data-testid={`permission-grant-${entry.id}`}
+                  onClick={() => onRequestGrant?.(entry.id)}
+                >
+                  {t('onboarding.permissions.grant')}
+                </Button>
+              ) : null}
             </div>
           )
         })}

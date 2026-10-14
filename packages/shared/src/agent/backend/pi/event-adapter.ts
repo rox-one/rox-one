@@ -19,6 +19,7 @@ import type {
 import type { AssistantMessage, AssistantMessageEvent } from '@earendil-works/pi-ai';
 import { isContextOverflow, isRetryableAssistantError } from '@earendil-works/pi-ai';
 import { BaseEventAdapter } from '../base-event-adapter.ts';
+import { promptTokens, TurnRequestTotals } from '../../core/prompt-tokens.ts';
 import { PI_TOOL_NAME_MAP } from './constants.ts';
 import { toolMetadataStore } from '../../../interceptor-common.ts';
 import { createAgentError, parseError } from '../../errors.ts';
@@ -104,6 +105,8 @@ export class PiEventAdapter extends BaseEventAdapter {
   private miniModel: string | undefined;
 
   // Track last usage for emitting with complete event
+  /** Per-request prompt/output sums for the current turn (one per assistant message_end). */
+  private turnRequestTotals = new TurnRequestTotals();
   private lastUsage: { input: number; output: number; cacheRead: number; cacheWrite: number; totalTokens: number; cost: { total: number } } | undefined;
 
   // ============================================================
@@ -337,6 +340,7 @@ export class PiEventAdapter extends BaseEventAdapter {
   }
 
   protected onTurnStart(): void {
+    this.turnRequestTotals.reset();
     this.toolNames.clear();
     this.hasStreamedDeltas = false;
     this.hasEmittedFinalText = false;
@@ -432,8 +436,9 @@ export class PiEventAdapter extends BaseEventAdapter {
           // The retried run finished cleanly.
           this.retryState = 'none';
         }
+        const requestTotals = this.turnRequestTotals.take();
         if (this.lastUsage) {
-          const inputTokens = this.lastUsage.input + (this.lastUsage.cacheRead || 0);
+          const inputTokens = promptTokens(this.lastUsage.input, this.lastUsage.cacheRead, this.lastUsage.cacheWrite);
           yield {
             type: 'complete',
             usage: {
@@ -443,6 +448,7 @@ export class PiEventAdapter extends BaseEventAdapter {
               cacheCreationTokens: this.lastUsage.cacheWrite,
               costUsd: this.lastUsage.cost.total,
               contextWindow: this.contextWindow,
+              ...(requestTotals && { requestTotals }),
             },
           };
         } else {
@@ -573,7 +579,8 @@ export class PiEventAdapter extends BaseEventAdapter {
         // Emit usage_update if the assistant message includes token usage
         if (msg.usage && typeof msg.usage.input === 'number') {
           this.lastUsage = msg.usage;
-          const inputTokens = msg.usage.input + (msg.usage.cacheRead || 0);
+          const inputTokens = promptTokens(msg.usage.input, msg.usage.cacheRead, msg.usage.cacheWrite);
+          this.turnRequestTotals.add(inputTokens, msg.usage.output ?? 0);
           yield {
             type: 'usage_update',
             usage: {

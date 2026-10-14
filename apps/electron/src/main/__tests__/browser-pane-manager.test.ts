@@ -340,11 +340,22 @@ describe('BrowserPaneManager', () => {
     manager.onStateChange((info) => stateEvents.push(info))
 
     const id = manager.createEmbeddedInstance({ workspaceId: 'ws-a' })
+    const beforeAttach = manager.getInstance(id)
+    if (!beforeAttach) throw new Error('Expected embedded browser instance')
+    // Nothing is composited (and no toolbar renderer exists) before first attach.
+    expect(beforeAttach.toolbarView).toBeNull()
+    expect(beforeAttach.nativeOverlayView).toBeNull()
+
     manager.syncEmbeddedBounds(id, { x: 10, y: 20, width: 500, height: 300 }, hostWebContentsId)
 
     const instance = manager.getInstance(id)
     if (!instance) throw new Error('Expected embedded browser instance')
+    // First attach materialises the toolbar; the shared overlay is still absent
+    // because nothing needs it yet.
+    expect(instance.toolbarView).not.toBeNull()
+    expect(instance.nativeOverlayView).toBeNull()
     expect(host.contentView.children).toContain(instance.pageView)
+    expect(host.contentView.children).toContain(instance.toolbarView)
     expect(manager.listInstances().find((item) => item.id === id)).toMatchObject({
       embedded: true,
       isVisible: true,
@@ -353,7 +364,8 @@ describe('BrowserPaneManager', () => {
 
     manager.hide(id)
 
-    expect(host.contentView.removeChildView).toHaveBeenCalledTimes(3)
+    // Page + toolbar only: the overlay is owned per host window, not per panel.
+    expect(host.contentView.removeChildView).toHaveBeenCalledTimes(2)
     expect(host.contentView.children).not.toContain(instance.pageView)
     expect(manager.listInstances().find((item) => item.id === id)).toMatchObject({
       embedded: true,
@@ -361,6 +373,98 @@ describe('BrowserPaneManager', () => {
       workspaceId: 'ws-a',
     })
     expect(stateEvents.some((event) => event.id === id && event.isVisible === false)).toBe(true)
+  })
+
+  it('does not create toolbar or overlay renderers for a panel that is never shown', () => {
+    const id = manager.createEmbeddedInstance({ workspaceId: 'ws-a' })
+    const instance = manager.getInstance(id)
+    if (!instance) throw new Error('Expected embedded browser instance')
+
+    expect(instance.toolbarView).toBeNull()
+    expect(instance.nativeOverlayView).toBeNull()
+  })
+
+  it('releases a cold embedded panel toolbar and re-materialises it on the next attach', () => {
+    const host = createMockWindow({ width: 900, height: 700 })
+    const hostWebContentsId = attachEmbedHost(host)
+
+    const id = manager.createEmbeddedInstance({ workspaceId: 'ws-a' })
+    const instance = manager.getInstance(id)
+    if (!instance) throw new Error('Expected embedded browser instance')
+    expect(instance.toolbarView).toBeNull()
+
+    manager.syncEmbeddedBounds(id, { x: 10, y: 20, width: 500, height: 300 }, hostWebContentsId)
+    const firstToolbar = instance.toolbarView
+    expect(firstToolbar).not.toBeNull()
+
+    manager.hide(id)
+    // Grace period still pending — the panel keeps its toolbar while it is warm.
+    expect(instance.toolbarView).toBe(firstToolbar)
+
+    // Idle release drops the renderer; the next attach re-runs the load handshake.
+    // Private hook — reached structurally, mirroring panePageView() above.
+    const internals = manager as unknown as { releaseEmbeddedToolbar: (instance: unknown) => void }
+    internals.releaseEmbeddedToolbar(instance)
+    expect(instance.toolbarView).toBeNull()
+
+    manager.syncEmbeddedBounds(id, { x: 10, y: 20, width: 500, height: 300 }, hostWebContentsId)
+    expect(instance.toolbarView).not.toBeNull()
+    expect(instance.toolbarView).not.toBe(firstToolbar)
+    expect(host.contentView.children).toContain(instance.toolbarView)
+  })
+
+  it('shares one native overlay renderer between panels on the same host window', () => {
+    const host = createMockWindow({ width: 900, height: 700 })
+    const hostWebContentsId = attachEmbedHost(host)
+
+    const idA = manager.createEmbeddedInstance({ workspaceId: 'ws-a' })
+    const idB = manager.createEmbeddedInstance({ workspaceId: 'ws-a' })
+    manager.syncEmbeddedBounds(idA, { x: 10, y: 20, width: 500, height: 300 }, hostWebContentsId)
+    manager.syncEmbeddedBounds(idB, { x: 10, y: 20, width: 500, height: 300 }, hostWebContentsId)
+
+    const panelA = manager.getInstance(idA)
+    const panelB = manager.getInstance(idB)
+    if (!panelA || !panelB) throw new Error('Expected embedded browser instances')
+    expect(panelA.nativeOverlayView).toBeNull()
+
+    manager.bindSession(idA, 'sess-share-a')
+    manager.bindSession(idB, 'sess-share-b')
+    manager.setAgentControl('sess-share-a', { displayName: 'Panel A' })
+    manager.setAgentControl('sess-share-b', { displayName: 'Panel B' })
+
+    expect(panelA.nativeOverlayView).not.toBeNull()
+    expect(panelB.nativeOverlayView).toBe(panelA.nativeOverlayView)
+
+    const overlayChildren = host.contentView.children.filter(
+      (view: unknown) => view !== panelA.pageView
+        && view !== panelA.toolbarView
+        && view !== panelB.pageView
+        && view !== panelB.toolbarView,
+    )
+    expect(overlayChildren).toHaveLength(1)
+  })
+
+  it('drops the shared overlay when a controlled embedded panel is hidden', async () => {
+    const host = createMockWindow({ width: 900, height: 700 })
+    const hostWebContentsId = attachEmbedHost(host)
+
+    const id = manager.createEmbeddedInstance({ workspaceId: 'ws-a' })
+    manager.syncEmbeddedBounds(id, { x: 10, y: 20, width: 500, height: 300 }, hostWebContentsId)
+    manager.bindSession(id, 'sess-hide-overlay')
+
+    manager.setAgentControl('sess-hide-overlay', { displayName: 'Panel' })
+    await Promise.resolve()
+
+    const instance = manager.getInstance(id)
+    if (!instance) throw new Error('Expected embedded browser instance')
+    const overlay = instance.nativeOverlayView
+    expect(overlay).not.toBeNull()
+    expect(overlay?.setBounds).toHaveBeenLastCalledWith({ x: 10, y: 68, width: 500, height: 252 })
+
+    manager.hide(id)
+
+    // A hidden panel must not keep the shared overlay composited over the app.
+    expect(overlay?.setBounds).toHaveBeenLastCalledWith({ x: 0, y: 0, width: 0, height: 0 })
   })
 
   it('reopens a hidden embedded instance when bounds are synced again', () => {
@@ -470,15 +574,25 @@ describe('BrowserPaneManager', () => {
     expect(preventDefault).toHaveBeenCalledTimes(1)
   })
 
-  it('attaches toolbar/page/overlay via contentView.addChildView', () => {
+  it('attaches page + toolbar eagerly and materialises the shared overlay on demand', async () => {
     manager.createInstance('views-1')
     const instance = (manager as any).instances.get('views-1')
     const children = instance.window.contentView.children
     expect(children).toContain(instance.pageView)
-    expect(children).toContain(instance.nativeOverlayView)
     expect(children).toContain(instance.toolbarView)
     expect(children[children.length - 1]).toBe(instance.toolbarView)
-    expect(instance.window.contentView.addChildView.mock.calls.length).toBeGreaterThanOrEqual(3)
+    // The native overlay is shared per window and only created once needed.
+    expect(instance.nativeOverlayView).toBeNull()
+
+    manager.bindSession('views-1', 'sess-views')
+    manager.setAgentControl('sess-views', { displayName: 'Browser' })
+    await Promise.resolve()
+
+    expect(instance.nativeOverlayView).not.toBeNull()
+    const afterChildren = instance.window.contentView.children
+    expect(afterChildren).toContain(instance.nativeOverlayView)
+    // Toolbar stays the topmost view so its menu is never covered by the overlay.
+    expect(afterChildren[afterChildren.length - 1]).toBe(instance.toolbarView)
   })
 
   it('is idempotent when explicit ID already exists', () => {
@@ -1545,7 +1659,8 @@ describe('BrowserPaneManager', () => {
       manager.clearAgentControl('sess-5')
 
       const instance = (manager as any).instances.get('ac-5')
-      expect(instance.nativeOverlayView.webContents.executeJavaScript).not.toHaveBeenCalled()
+      // Laziness: an instance that never activated the overlay has no overlay renderer.
+      expect(instance.nativeOverlayView).toBeNull()
     })
 
     it('clearVisualsForSession resets agent control state', async () => {
@@ -1567,7 +1682,7 @@ describe('BrowserPaneManager', () => {
 
       const instance = (manager as any).instances.get('ac-7')
       expect(instance.agentControl).toBeNull()
-      expect(instance.nativeOverlayView.webContents.executeJavaScript).not.toHaveBeenCalled()
+      expect(instance.nativeOverlayView).toBeNull()
     })
 
     it('navigate does not trigger overlay by itself', async () => {
@@ -1578,7 +1693,7 @@ describe('BrowserPaneManager', () => {
 
       const instance = (manager as any).instances.get('ac-8')
       expect(instance.agentControl).toBeNull()
-      expect(instance.nativeOverlayView.webContents.executeJavaScript).not.toHaveBeenCalled()
+      expect(instance.nativeOverlayView).toBeNull()
     })
   })
 

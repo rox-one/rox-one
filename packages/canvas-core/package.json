@@ -1,0 +1,27 @@
+{
+  "name": "@rox/canvas-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "Rox \u00ab\u0414\u043e\u0441\u043a\u0430\u00bb canvas document model: schema, Yjs binding, z-order, commands, undo (clean-room).",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "bench": "bun test src/__tests__/perf.test.ts"
+  },
+  "dependencies": {
+    "yjs": "^13.6.33",
+    "zod": "^3.23.0",
+    "rbush": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.6.0",
+    "@types/rbush": "^4.0.0"
+  }
+}

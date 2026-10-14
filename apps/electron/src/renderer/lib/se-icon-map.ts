@@ -31,6 +31,7 @@ export const SE_MONOCHROME_NAV_IDS: Record<AppNavDestinationId, true> = {
   knowledge: true,
   developers: true,
   playbooks: true,
+  cookbooks: true,
   settings: true,
   learning: true,
 }

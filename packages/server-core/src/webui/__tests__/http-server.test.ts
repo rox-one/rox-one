@@ -32,6 +32,9 @@ function createTestWebuiDir(): string {
   writeFileSync(join(dir, 'index.html'), '<!doctype html><html><body>app</body></html>')
   mkdirSync(join(dir, 'login-assets'))
   writeFileSync(join(dir, 'login-assets', 'ok.css'), 'body{}')
+  mkdirSync(join(dir, 'assets'))
+  writeFileSync(join(dir, 'assets', 'login-B74vd4Bn.css'), 'body{color:red}')
+  writeFileSync(join(dir, 'assets', 'index-test.js'), 'export const app = 1')
   return dir
 }
 
@@ -320,6 +323,31 @@ describe('WebUI static path containment', () => {
       const ok = await handler.fetch(new Request('http://127.0.0.1/login-assets/ok.css'))
       expect(ok.status).toBe(200)
       expect(await ok.text()).toBe('body{}')
+    } finally {
+      handler.dispose()
+    }
+  })
+
+  it('serves the login Vite CSS unauthenticated and keeps the SPA bundle gated (S8-04)', async () => {
+    const webuiDir = createTestWebuiDir()
+    const handler = createWebuiHandler({
+      webuiDir,
+      secret: SECRET,
+      password: PASSWORD,
+      wsProtocol: 'ws',
+      wsPort: 9100,
+      getHealthCheck: () => ({ status: 'ok' }),
+      logger,
+    })
+
+    try {
+      const loginCss = await handler.fetch(new Request('http://127.0.0.1/assets/login-B74vd4Bn.css'))
+      expect(loginCss.status).toBe(200)
+      expect(loginCss.headers.get('content-type')).toContain('css')
+      expect(await loginCss.text()).toBe('body{color:red}')
+
+      const spa = await handler.fetch(new Request('http://127.0.0.1/assets/index-test.js'))
+      expect(spa.status).toBe(401)
     } finally {
       handler.dispose()
     }

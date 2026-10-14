@@ -25,6 +25,8 @@
       "@config/*": ["../../packages/shared/src/config/*"],
       "@rox/shared": ["../../packages/shared/src/index.ts"],
       "@rox/shared/*": ["../../packages/shared/src/*"],
+      "@rox/canvas-core": ["../../packages/canvas-core/src/index.ts"],
+      "@rox/canvas-core/node": ["../../packages/canvas-core/src/node/index.ts"],
       "@rox/core": ["../../packages/core/src/index.ts"],
       "@rox/core/*": ["../../packages/core/src/*"],
       "@rox/cloud-runner": ["../../packages/cloud-runner/src/index.ts"],

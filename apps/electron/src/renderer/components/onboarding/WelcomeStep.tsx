@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useAtomValue } from "jotai"
-import { CraftAgentsSymbol } from "@/components/icons/CraftAgentsSymbol"
+import { Check } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -33,9 +33,13 @@ import { TelegramLinkDialog } from "./telegram-link/TelegramLinkDialog"
 import { WelcomeBrowserImportPreferences } from './WelcomeBrowserImportPreferences'
 import { BrowserIntelOptIn } from './BrowserIntelOptIn'
 import { BrowserIntelProgress } from './BrowserIntelProgress'
+import { GithubLogo, TelegramLogo } from './brand-icons'
+import { AnimatedRoxLogo } from './start-visuals'
 
 interface WelcomeStepProps {
   onContinue: () => void
+  /** Skip Rox Cloud and open the local workspace. */
+  onContinueLocally?: () => void
   /** Whether this is an existing user updating settings */
   isExistingUser?: boolean
   /** Whether the app is loading (e.g., checking Git Bash on Windows) */
@@ -63,13 +67,27 @@ function CoinBadge({ gold, label }: { gold: boolean; label: string }) {
       data-state={gold ? "gold" : "grey"}
       title={label}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium numeric",
+        "inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-caption font-medium numeric",
         gold ? "text-status-warning" : "text-muted-foreground/50",
       )}
     >
       <RoxCoinIcon className="size-3.5" />
       <span>{label}</span>
     </span>
+  )
+}
+
+/** Identical size for every identity link button (equal-width grid cells). */
+const LINK_BUTTON_CLASS = "onb-glass h-11 w-full min-w-0 justify-start gap-2 rounded-full pl-3.5 pr-1.5 text-[length:var(--text-body)] font-medium"
+
+/** `rox.one/@name` with a green check — no label, the address speaks for itself. */
+function AddressLine({ address, label, testId }: { address: string; label?: string; testId: string }) {
+  return (
+    <p data-testid={testId} className="flex items-center gap-1.5 pl-4 text-xs font-medium onb-fg-80">
+      <span className="truncate font-mono tracking-tight">{address}</span>
+      {/* eslint-disable-next-line rox/icon-size-tokens -- bold confirm tick: heavier stroke is the design, not a size */}
+      <Check className="icon-caption text-success" strokeWidth={3} aria-hidden={label ? undefined : true} aria-label={label} role={label ? "img" : undefined} />
+    </p>
   )
 }
 
@@ -83,6 +101,7 @@ function CoinBadge({ gold, label }: { gold: boolean; label: string }) {
  */
 export function WelcomeStep({
   onContinue,
+  onContinueLocally,
   isExistingUser = false,
   isLoading = false,
   isFinishing = false,
@@ -181,9 +200,11 @@ export function WelcomeStep({
     telegramLinked,
     githubLinked,
   })
-  const showReserved = shouldShowReservedBlock(usernameStatus) && parsedUsername !== null && effectiveOrganization !== null
-  const addresses = showReserved && parsedUsername && effectiveOrganization
-    ? reservedIdentityAddresses(parsedUsername, effectiveOrganization)
+  // Public addresses appear (with a green check) only for an explicit
+  // 'available' answer; the organization line follows the accepted org.
+  const showReserved = shouldShowReservedBlock(usernameStatus) && parsedUsername !== null
+  const addresses = showReserved && parsedUsername
+    ? reservedIdentityAddresses(parsedUsername, effectiveOrganization ?? parsedUsername)
     : null
   const organizationPlaceholder = parsedUsername
     ? defaultOnboardingOrganization(parsedUsername)
@@ -238,19 +259,19 @@ export function WelcomeStep({
   const usernameHint = (() => {
     switch (usernameStatus) {
       case "checking":
-        return <p className="text-xs text-muted-foreground">{t("onboarding.welcome.usernameChecking")}</p>
+        return <p className="onb-helper text-xs text-muted-foreground">{t("onboarding.welcome.usernameChecking")}</p>
       case "available":
-        return <p className="text-xs text-success">{t("onboarding.welcome.usernameAvailable")}</p>
+        return addresses ? <AddressLine address={addresses.handle} label={t("onboarding.welcome.usernameAvailable")} testId="onboarding-username-address" /> : null
       case "taken":
         return <p className="text-xs text-destructive">{t("onboarding.welcome.usernameTaken")}</p>
       case "reserved":
         return <p className="text-xs text-destructive">{t("onboarding.welcome.usernameReserved")}</p>
       case "unknown":
-        return <p className="text-xs text-muted-foreground">{t("onboarding.welcome.usernameUnknown")}</p>
+        return <p className="onb-helper text-xs text-muted-foreground">{t("onboarding.welcome.usernameUnknown")}</p>
       case "invalid":
         return <p className="text-xs text-destructive">{t("onboarding.welcome.usernameInvalid")}</p>
       default:
-        return <p className="text-xs text-muted-foreground">{t("onboarding.welcome.usernameHint")}</p>
+        return <p className="onb-helper text-xs text-muted-foreground">{t("onboarding.welcome.usernameHint")}</p>
     }
   })()
 
@@ -259,10 +280,9 @@ export function WelcomeStep({
   return (
     <StepFormLayout
       iconElement={
-        <div className="flex size-16 items-center justify-center">
-          <CraftAgentsSymbol className="size-14" />
-        </div>
+        <AnimatedRoxLogo />
       }
+      className={isExistingUser ? undefined : "max-w-[32rem]"}
       title={isExistingUser ? t("onboarding.welcome.updateTitle") : t("onboarding.welcome.title")}
       description={
         isExistingUser
@@ -270,21 +290,34 @@ export function WelcomeStep({
           : t("onboarding.welcome.description")
       }
       actions={
-        <ContinueButton
-          onClick={() => void handleContinue()}
-          className="w-full"
-          disabled={continueDisabled}
-          loading={continueBusy}
-          aria-busy={continueBusy || undefined}
-          loadingText={isFinishing ? t("onboarding.completion.settingUp") : (preferenceSaving || intelSaving) ? t('common.saving') : t("common.checking")}
-        >
-          {isExistingUser ? t("onboarding.welcome.continue") : t("onboarding.welcome.getStarted")}
-        </ContinueButton>
+        <div className="flex w-full flex-row gap-2">
+          <ContinueButton
+            onClick={() => void handleContinue()}
+            className={cn("min-w-0 flex-1", !isExistingUser && "onb-primary")}
+            disabled={continueDisabled}
+            loading={continueBusy}
+            aria-busy={continueBusy || undefined}
+            loadingText={isFinishing ? t("onboarding.completion.settingUp") : (preferenceSaving || intelSaving) ? t('common.saving') : t("common.checking")}
+          >
+            {isExistingUser ? t("onboarding.welcome.continue") : t("onboarding.welcome.getStarted")}
+          </ContinueButton>
+          {onContinueLocally && !isExistingUser && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="onb-secondary min-w-0 flex-1 rounded-full"
+              disabled={continueBusy}
+              onClick={() => void onContinueLocally()}
+            >
+              {t("onboarding.welcome.continueLocally")}
+            </Button>
+          )}
+        </div>
       }
     >
       {!isExistingUser && (
-        <div className="space-y-4 text-left">
-          <div className="space-y-2">
+        <div className="space-y-3 text-left">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
               <Label htmlFor="onboarding-username">{t("onboarding.welcome.username")}</Label>
               <CoinBadge gold={coins.username} label={t("onboarding.welcome.coins.reward", { count: ROX_COIN_REWARDS.username })} />
@@ -299,7 +332,7 @@ export function WelcomeStep({
               maxLength={ONBOARDING_USERNAME_MAX}
               aria-required
               aria-invalid={usernameStatus === "invalid" || usernameStatus === "taken" || usernameStatus === "reserved"}
-              className="h-10 rounded-full border-border-subtle bg-background/40 px-4 shadow-none focus-visible:border-border-strong focus-visible:ring-0"
+              className="onb-input h-10 rounded-full border-border-subtle bg-background/40 px-4 shadow-none focus-visible:border-border-strong focus-visible:ring-0"
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault()
@@ -310,7 +343,7 @@ export function WelcomeStep({
             {usernameHint}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
               <Label htmlFor="onboarding-organization">{t("onboarding.welcome.organization")}</Label>
               <CoinBadge gold={coins.organization} label={t("onboarding.welcome.coins.reward", { count: ROX_COIN_REWARDS.organization })} />
@@ -322,39 +355,35 @@ export function WelcomeStep({
               placeholder={organizationPlaceholder}
               maxLength={ONBOARDING_ORGANIZATION_MAX}
               aria-invalid={organizationInvalid}
-              className="h-10 rounded-full border-border-subtle bg-background/40 px-4 shadow-none focus-visible:border-border-strong focus-visible:ring-0"
+              className="onb-input h-10 rounded-full border-border-subtle bg-background/40 px-4 shadow-none focus-visible:border-border-strong focus-visible:ring-0"
             />
-            {organizationInvalid && (
+            {organizationInvalid ? (
               <p className="text-xs text-destructive">{t("onboarding.welcome.organizationInvalid")}</p>
-            )}
+            ) : addresses && effectiveOrganization ? (
+              <AddressLine address={addresses.organization} testId="onboarding-organization-address" />
+            ) : null}
           </div>
 
-          {addresses && (
-            <div className="space-y-1 rounded-lg border border-status-success/30 bg-status-success/5 p-3 text-xs text-success">
-              <p>{t("onboarding.welcome.reservedUsername")}{" "}<strong className="font-semibold">{addresses.handle}</strong></p>
-              <p>{t("onboarding.welcome.reservedOrganization")}{" "}<strong className="font-semibold">{addresses.organization}</strong></p>
-              <p>{t("onboarding.welcome.reservedEmail")}{" "}<strong className="font-semibold">{addresses.email}</strong></p>
-              <p className="text-caption opacity-70">{t("onboarding.welcome.reservedEmailNote")}</p>
-            </div>
-          )}
 
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="grid grid-cols-2 gap-2 pt-1" data-testid="onboarding-link-buttons">
             <Button
               type="button"
               variant="secondary"
-              className="flex-1 gap-2 rounded-full"
+              className={LINK_BUTTON_CLASS}
               onClick={() => setTelegramOpen(true)}
             >
-              {t("onboarding.welcome.linkTelegram")}
+              <TelegramLogo className="size-[18px]" />
+              <span className="min-w-0 flex-1 truncate text-left">{t("onboarding.welcome.linkTelegram")}</span>
               <CoinBadge gold={coins.telegram} label={t("onboarding.welcome.coins.reward", { count: ROX_COIN_REWARDS.telegram })} />
             </Button>
             <Button
               type="button"
               variant="secondary"
-              className="flex-1 gap-2 rounded-full"
+              className={LINK_BUTTON_CLASS}
               onClick={() => setGithubOpen(true)}
             >
-              {t("onboarding.welcome.linkGithub")}
+              <GithubLogo className="size-[18px] text-foreground" />
+              <span className="min-w-0 flex-1 truncate text-left">{t("onboarding.welcome.linkGithub")}</span>
               <CoinBadge gold={coins.github} label={t("onboarding.welcome.coins.reward", { count: ROX_COIN_REWARDS.github })} />
             </Button>
           </div>
@@ -362,8 +391,8 @@ export function WelcomeStep({
           {error && <p className="text-sm text-destructive">{error}</p>}
 
           <WelcomeBrowserImportPreferences onSavingChange={setPreferenceSaving} />
-          <BrowserIntelOptIn onSavingChange={setIntelSaving} className="mt-5" />
-          <BrowserIntelProgress className="mt-4" />
+          <BrowserIntelOptIn onSavingChange={setIntelSaving} className="mt-3" />
+          <BrowserIntelProgress className="mt-3" />
         </div>
       )}
 

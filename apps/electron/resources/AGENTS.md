@@ -37,6 +37,7 @@ These files are used by electron-builder or the app directly, not synced to user
 | `dmg-background.*` | DMG installer background |
 | `source.png` | Default source icon |
 | `generate-icons.sh` | Icon generation script |
+| `cookbooks/` | Vendored Cookbooks Lab Python sidecar (snapshot). Read at runtime via `getBundledAssetsDir('cookbooks')` and spawned from the main process — **not synced** to `{configDir}`. Layout is load-bearing (`catalog.py` resolves `resources/cookbooks`, `serve_lab.py` resolves `src/`); see [`cookbooks/PROVENANCE.md`](cookbooks/PROVENANCE.md) for the source + sha256 manifest, and [`cookbooks/ELECTRON-CONTRACT.md`](cookbooks/ELECTRON-CONTRACT.md) for the sidecar contract. Do not edit the snapshot by hand — re-sync from the lab repo. |
 | `bridge-mcp-server/` | LEGACY committed Codex/Copilot bundle — **not packaged**. Do not re-add to electron-builder.yml. See `docs/mcp-components.md`. |
 
 ## Single Source of Truth

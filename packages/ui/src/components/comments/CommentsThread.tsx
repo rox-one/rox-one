@@ -65,17 +65,17 @@ function TextComposer({ value, onChange, onSubmit, placeholder, submitLabel, onC
           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); onSubmit() }
           if (e.key === 'Escape' && onCancel) { e.preventDefault(); onCancel() }
         }}
-        className={cn('min-h-12 resize-y rounded-[6px] bg-foreground/[0.04] px-2 py-1.5 text-base placeholder:text-text-muted', FOCUS_RING)}
+        className={cn('min-h-12 resize-y rounded-sm bg-foreground/[0.04] px-2 py-1.5 text-base placeholder:text-text-muted', FOCUS_RING)}
       />
       <div className="flex justify-end gap-1">
         {onCancel ? (
-          <button type="button" onClick={onCancel} className={cn('h-7 rounded-[6px] px-2 text-sm text-text-secondary', HOVER_TINT, FOCUS_RING)}>{cancelLabel}</button>
+          <button type="button" onClick={onCancel} className={cn('h-7 rounded-sm px-2 text-sm text-text-secondary', HOVER_TINT, FOCUS_RING)}>{cancelLabel}</button>
         ) : null}
         <button
           type="button"
           disabled={!value.trim()}
           onClick={onSubmit}
-          className={cn('h-7 rounded-[6px] bg-accent px-3 text-sm font-medium text-[var(--accent-foreground,white)] disabled:opacity-50', MOTION_FAST, FOCUS_RING)}
+          className={cn('h-7 rounded-sm bg-accent px-3 text-sm font-medium text-[var(--accent-foreground,white)] disabled:opacity-50', MOTION_FAST, FOCUS_RING)}
         >
           {submitLabel}
         </button>
@@ -125,7 +125,7 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
   const timeLabel = formatInstant(timeFmt, comment.createdAt)
   const stamp = dayLabel && timeLabel ? `${dayLabel}, ${timeLabel}` : ''
   const replies = comment.replies ?? []
-  const actionClass = cn('h-6 rounded-[6px] px-1.5 text-xs text-text-muted hover:text-foreground', HOVER_TINT, FOCUS_RING)
+  const actionClass = cn('h-6 rounded-sm px-1.5 text-xs text-text-muted hover:text-foreground', HOVER_TINT, FOCUS_RING)
 
   return (
     <li className={cn('flex gap-2', depth > 0 && 'ml-8')} data-comment-id={comment.id}>

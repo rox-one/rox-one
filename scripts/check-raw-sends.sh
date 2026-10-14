@@ -23,9 +23,9 @@ is_allowed_legacy_send() {
     "apps/electron/src/main/ssh-tunnel/ipc.ts|win.webContents.send(SSH_CONNECTION_STATUS_EVENT, s)" ) return 0 ;;
     "apps/electron/src/main/index.ts|try { _event.sender.send('transfer:progress', { sessionIndex: idx, sessionCount: count, chunkSent, chunkTotal }) } catch { /* renderer may be gone */ }" ) return 0 ;;
     "apps/electron/src/main/browser-pane-manager.ts|host.webContents.send('omnibox:open')" ) return 0 ;;
-    "apps/electron/src/main/browser-pane-manager.ts|instance.toolbarView.webContents.send(TOOLBAR_CHANNELS.FORCE_CLOSE_MENU, { reason })" ) return 0 ;;
-    "apps/electron/src/main/browser-pane-manager.ts|instance.toolbarView.webContents.send(TOOLBAR_CHANNELS.STATE_UPDATE, state)" ) return 0 ;;
-    "apps/electron/src/main/browser-pane-manager.ts|instance.toolbarView.webContents.send(TOOLBAR_CHANNELS.THEME_COLOR, color)" ) return 0 ;;
+    "apps/electron/src/main/browser-pane-manager.ts|toolbarView.webContents.send(TOOLBAR_CHANNELS.FORCE_CLOSE_MENU, { reason })" ) return 0 ;;
+    "apps/electron/src/main/browser-pane-manager.ts|toolbarView.webContents.send(TOOLBAR_CHANNELS.STATE_UPDATE, state)" ) return 0 ;;
+    "apps/electron/src/main/browser-pane-manager.ts|toolbarView.webContents.send(TOOLBAR_CHANNELS.THEME_COLOR, color)" ) return 0 ;;
     # Baseline frozen 2026-10-09: the remaining direct sends, all introduced
     # before or in the same wave as this check (385aaf59d, 2026-10-08).
     # New sends must use the typed EventSink (@rox/server-core/transport) or
