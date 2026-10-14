@@ -104,18 +104,24 @@ export function startIdlePreload(options?: IdlePreloadOptions): Promise<void> {
   if (started) return Promise.resolve()
   started = true
   installInputTracking()
-  controller = new AbortController()
+  const run = new AbortController()
+  controller = run
   const signal = options?.signal
   if (signal) {
-    if (signal.aborted) controller.abort()
-    else signal.addEventListener('abort', () => controller?.abort(), { once: true })
+    if (signal.aborted) run.abort()
+    else signal.addEventListener('abort', () => run.abort(), { once: true })
   }
-  return runIdlePreload(idlePreloadLoaders(), { ...options, signal: controller.signal })
+  return runIdlePreload(idlePreloadLoaders(), { ...options, signal: run.signal })
 }
 
-/** Stop the background preload (e.g. on low memory or window teardown). */
+/**
+ * Stop the background preload (e.g. on low memory or window teardown). A later
+ * `startIdlePreload()` starts a fresh run; already-loaded chunks stay cached.
+ */
 export function cancelIdlePreload(): void {
   controller?.abort()
+  controller = null
+  started = false
 }
 
 /** Test hook. */

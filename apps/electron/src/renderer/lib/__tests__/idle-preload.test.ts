@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { runIdlePreload } from '../idle-preload'
+import { cancelIdlePreload, resetIdlePreloadForTests, runIdlePreload, startIdlePreload } from '../idle-preload'
 
 describe('WP7 idle preload', () => {
   it('runs loaders one at a time, each after its own idle callback, and survives failures', async () => {
@@ -52,5 +52,35 @@ describe('runIdlePreload cancellation and input deferral', () => {
     })
     expect(idles).toBe(3)
     expect(ran).toEqual(['x', 'y'])
+  })
+})
+
+describe('startIdlePreload / cancelIdlePreload', () => {
+  it('cancel aborts the run and lets a later start run again', async () => {
+    resetIdlePreloadForTests()
+    let idles = 0
+    const requestIdle = () => { idles++ } // never fires: runs park on their first slot
+    void startIdlePreload({ requestIdle })
+    void startIdlePreload({ requestIdle }) // no-op while started
+    expect(idles).toBe(1)
+    cancelIdlePreload()
+    void startIdlePreload({ requestIdle })
+    expect(idles).toBe(2)
+    resetIdlePreloadForTests()
+  })
+
+  it('a stale caller signal does not abort a later run', async () => {
+    resetIdlePreloadForTests()
+    const stale = new AbortController()
+    const fire: Array<() => void> = []
+    void startIdlePreload({ requestIdle: cb => { fire.push(cb) }, signal: stale.signal })
+    cancelIdlePreload()
+    void startIdlePreload({ requestIdle: cb => { fire.push(cb) }, isUserBusy: () => true, maxDeferrals: 1 })
+    stale.abort()
+    fire[1]!()
+    await Promise.resolve(); await Promise.resolve()
+    // Not aborted: the busy run re-queued its slot instead of returning.
+    expect(fire.length).toBe(3)
+    resetIdlePreloadForTests()
   })
 })
