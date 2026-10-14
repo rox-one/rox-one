@@ -378,6 +378,8 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       if (channel.isDefault) throw new TeamChatError('INVALID', 'The default channel cannot be archived')
       if (!canManage(store, channel, actor)) throw new TeamChatError('FORBIDDEN', 'Only channel or org admins can archive')
       channel.archivedAt = now()
+      const liveCall = activeCallOf(store, channel.id)
+      if (liveCall) endCall(store, channel, liveCall)
       save(store)
       return { orgId: channel.orgId }
     },

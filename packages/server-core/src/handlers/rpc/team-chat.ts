@@ -35,10 +35,13 @@ function callView(call: TeamChannelCall | null): TeamChannelCall | null {
 async function summarizeEndedCall(call: TeamChannelCall): Promise<string | null> {
   if (!call.transcript.length) return null
   try {
-    const slug = getDefaultLlmConnection() ?? ROX_DEFAULT_CONNECTION_SLUG
+    // Rox models only: use the Rox connection (default if it is Rox, else the built-in Rox slug).
+    const def = getDefaultLlmConnection()
+    const defBase = def ? getLlmConnection(def)?.baseUrl : undefined
+    const slug = def && (!defBase || defBase.replace(/\/+$/, '') === ROX_GATEWAY_BASE_URL) ? def : ROX_DEFAULT_CONNECTION_SLUG
     const apiKey = await getCredentialManager().getLlmApiKey(slug)
     if (!apiKey) return null
-    const baseUrl = getLlmConnection(slug)?.baseUrl || ROX_GATEWAY_BASE_URL
+    const baseUrl = ROX_GATEWAY_BASE_URL
     const segments = [...call.transcript].sort((a, b) => a.startMs - b.startMs)
     return (await summarizeCall({ segments, baseUrl, apiKey }))?.text ?? null
   } catch {

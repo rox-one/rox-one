@@ -142,6 +142,7 @@ export function useTeamCall(opts: { selfName: string }) {
     channelRef.current = null
     setState(IDLE)
     if (room) await room.disconnect().catch(() => {})
+    if (channelId) document.querySelectorAll(`audio[data-rox-call-audio="${CSS.escape(channelId)}"]`).forEach(el => el.remove())
     // The last ASR chunk must land before the host closes the call and posts the transcript.
     await flush?.().catch(() => {})
     if (channelId) await window.electronAPI.teamChatCallLeave(channelId).catch(() => {})
