@@ -21,7 +21,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { atom, useAtom, useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import { motion } from 'motion/react'
+import { motion } from '@/lib/deferred-motion'
 import { Check, Columns2, Columns3, Focus, Grid2X2, Plus, RotateCcw, Trash2, X, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAction } from '@/actions'

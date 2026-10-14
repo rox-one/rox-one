@@ -1,4 +1,4 @@
-import { motion } from 'motion/react'
+import { motion } from '@/lib/deferred-motion'
 import { CraftAgentsSymbol } from './icons/CraftAgentsSymbol'
 
 interface SplashScreenProps {

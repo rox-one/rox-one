@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion } from '../../lib/lazy-motion'
 import { cn } from '../../lib/utils'
 import { getDismissibleLayerBridge } from '../../lib/dismissible-layer-bridge'
 

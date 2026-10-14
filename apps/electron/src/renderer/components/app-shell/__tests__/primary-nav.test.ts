@@ -60,10 +60,11 @@ describe('sidebar v2: the sidebar is the complete navigation', () => {
     for (const id of ['home', 'feed', 'sessions', 'docs', 'browser', 'inbox', 'tasks', 'projects']) expect(shown).toContain(id)
   })
 
-  it('only «Скрыт» removes a surface; «Ещё» placement moves a core surface down', () => {
-    const r = resolvePrimaryNav({ shellFlags: new Set(), placements: { feed: 'hidden', browser: 'more' } })
+  it('only «Скрыт» removes a surface; «menu» keeps it listed (in «Все экраны») under its registry group', () => {
+    const r = resolvePrimaryNav({ shellFlags: new Set(), placements: { feed: 'hidden', browser: 'menu' } })
     expect(r.map(e => e.id)).not.toContain('feed')
-    expect(r.find(e => e.id === 'browser')?.group).toBe('more')
+    expect(r.find(e => e.id === 'browser')?.placement).toBe('menu')
+    expect(r.find(e => e.id === 'browser')?.group).toBe('primary')
   })
 
   it('the order is the same whatever the pill shows', () => {
@@ -74,13 +75,11 @@ describe('sidebar v2: the sidebar is the complete navigation', () => {
 })
 
 describe('sidebar v2 fix3: placement decides the section', () => {
-  const groupOf = (placements: Record<string, 'pills' | 'primary' | 'more' | 'hidden'>, id: string) =>
+  const groupOf = (placements: Record<string, 'pills' | 'menu' | 'hidden'>, id: string) =>
     resolvePrimaryNav({ shellFlags: new Set(), placements }).find(e => e.id === id)?.group
-  it('«Боковая панель» → Навигация, «Боковая панель · Инструменты» → Инструменты', () => {
-    expect(groupOf({ memory: 'primary' }, 'memory')).toBe('primary')
-    expect(groupOf({ tasks: 'more' }, 'tasks')).toBe('more')
-    const r = resolvePrimaryNav({ shellFlags: new Set(), placements: { memory: 'primary' } })
-    expect(r.findIndex(e => e.id === 'memory')).toBeLessThan(r.findIndex(e => e.group === 'more'))
+  it('contextual sidebar: «menu» keeps the registry group (the «Все экраны» section)', () => {
+    expect(groupOf({ memory: 'menu' }, 'memory')).toBe('more')
+    expect(groupOf({ tasks: 'menu' }, 'tasks')).toBe('primary')
   })
   it('defaults and pill placement keep the registry group', () => {
     expect(groupOf({}, 'memory')).toBe('more')

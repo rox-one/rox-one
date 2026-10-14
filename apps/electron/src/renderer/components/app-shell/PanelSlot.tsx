@@ -52,6 +52,8 @@ interface PanelSlotProps {
   isHidden?: boolean
   /** Grid placement supplied by the persistent workspace container. */
   layoutStyle?: React.CSSProperties
+  /** Panel strip: off-screen heavy panel unmounted until it scrolls back into view. */
+  hibernated?: boolean
 }
 
 export function PanelSlot({
@@ -65,6 +67,7 @@ export function PanelSlot({
   isCompact,
   isHidden = false,
   layoutStyle,
+  hibernated = false,
 }: PanelSlotProps) {
   const { t } = useTranslation()
   const closePanel = useSetAtom(closePanelAtom)
@@ -189,7 +192,9 @@ export function PanelSlot({
               <NavigationContext.Provider value={panelNavigation}>
                 <ShellSidebarContext.Provider value={entry.tool || (primaryId && primaryId !== entry.id) ? null : sidebarTarget}>
                   <WorkspaceToolContext.Provider value={entry.toolContext ?? null}>
-                    {entry.tool ? <AuxiliaryToolPanel entry={entry} onClose={handleClose} /> : (
+                    {hibernated ? (
+                      <div className="flex h-full items-center justify-center text-caption text-muted-foreground" data-panel-hibernated="">{t('shell.strip.hibernated')}</div>
+                    ) : entry.tool ? <AuxiliaryToolPanel entry={entry} onClose={handleClose} /> : (
                       <MainContentPanel navStateOverride={navState}
                         isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden} panelId={entry.id} />
                     )}

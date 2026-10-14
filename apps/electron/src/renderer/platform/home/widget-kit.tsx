@@ -15,6 +15,8 @@ import { WidgetAppearanceControls } from './widget-appearance-controls'
 
 export interface WidgetEditProps {
   size: HomeWidgetSize
+  /** Sizes this widget allows (defaults to all). */
+  sizes?: readonly HomeWidgetSize[]
   onResize: (size: HomeWidgetSize) => void
   onRemove: () => void
   onShift: (delta: -1 | 1) => void
@@ -87,7 +89,7 @@ export function WidgetFrame({
           <div className="flex shrink-0 items-center gap-1">
             {edit.onAppearance ? <WidgetAppearanceControls title={title} appearance={edit.appearance} onChange={edit.onAppearance} /> : null}
             <div className="flex items-center rounded-[var(--radius-control)] bg-foreground/[0.06] p-0.5" role="radiogroup" aria-label={t('workbench.home.edit.size')}>
-              {HOME_WIDGET_SIZES.map((size) => (
+              {(edit.sizes ?? HOME_WIDGET_SIZES).map((size) => (
                 <button
                   key={size}
                   type="button"
@@ -250,5 +252,38 @@ export function WidgetButton({ children, onClick, tone, disabled, title }: { chi
     >
       {children}
     </button>
+  )
+}
+
+/** Progress ring (0…1). Colour comes from the `className` text colour. */
+export function Ring({ value, label, children, className, trackClassName }: { value: number; label: string; children?: React.ReactNode; className?: string; trackClassName?: string }) {
+  const pct = Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0))
+  const r = 15.5
+  const c = 2 * Math.PI * r
+  return (
+    <div className="relative aspect-square h-full max-h-full" role="img" aria-label={label} data-home-ring={Math.round(pct * 100)}>
+      <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
+        <circle cx="18" cy="18" r={r} fill="none" strokeWidth="3.5" className={cn('stroke-current text-border-subtle', trackClassName)} />
+        <circle
+          cx="18" cy="18" r={r} fill="none" strokeWidth="3.5" strokeLinecap="round"
+          strokeDasharray={`${pct * c} ${c}`}
+          className={cn('stroke-current transition-[stroke-dasharray] duration-500 motion-reduce:transition-none', className ?? 'text-accent')}
+        />
+      </svg>
+      {children ? <div className="absolute inset-0 flex flex-col items-center justify-center text-center">{children}</div> : null}
+    </div>
+  )
+}
+
+/** Tiny line + area chart over evenly spaced values. */
+export function Sparkline({ values, label, className }: { values: readonly number[]; label: string; className?: string }) {
+  const max = Math.max(0, ...values)
+  const n = values.length
+  const pts = values.map((v, i) => `${n <= 1 ? 50 : (i / (n - 1)) * 100},${max > 0 ? 28 - (v / max) * 24 : 28}`)
+  return (
+    <svg viewBox="0 0 100 30" preserveAspectRatio="none" className={cn('h-8 w-full', className ?? 'text-accent')} role="img" aria-label={label}>
+      {n > 1 ? <polygon points={`0,30 ${pts.join(' ')} 100,30`} className="fill-current opacity-15" /> : null}
+      <polyline points={pts.join(' ')} fill="none" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" className="stroke-current" />
+    </svg>
   )
 }
