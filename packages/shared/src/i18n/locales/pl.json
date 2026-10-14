@@ -8007,6 +8007,7 @@
   "screens.sessions.search": "Szukaj sesji",
   "screens.sessions.title": "Sesje",
   "screens.sessions.untitled": "Sesja bez nazwy",
+  "screens.tasks.dropped": "Przeniesiono do: {{target}}",
   "screens.tasks.groups.agents": "Agenci",
   "screens.tasks.groups.focus": "Fokus",
   "screens.tasks.groups.projects": "Projekty",

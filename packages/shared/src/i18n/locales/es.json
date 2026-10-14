@@ -7990,6 +7990,7 @@
   "screens.sessions.search": "Buscar sesiones",
   "screens.sessions.title": "Sesiones",
   "screens.sessions.untitled": "Sesión sin título",
+  "screens.tasks.dropped": "Movido a {{target}}",
   "screens.tasks.groups.agents": "Agentes",
   "screens.tasks.groups.focus": "Enfoque",
   "screens.tasks.groups.projects": "Proyectos",

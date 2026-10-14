@@ -8025,6 +8025,7 @@
   "screens.sessions.search": "Поиск по сессиям",
   "screens.sessions.title": "Сессии",
   "screens.sessions.untitled": "Сессия без названия",
+  "screens.tasks.dropped": "Перемещено в «{{target}}»",
   "screens.tasks.groups.agents": "Агенты",
   "screens.tasks.groups.focus": "Фокус",
   "screens.tasks.groups.projects": "Проекты",

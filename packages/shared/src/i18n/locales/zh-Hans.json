@@ -7981,6 +7981,7 @@
   "screens.sessions.search": "搜索会话",
   "screens.sessions.title": "会话",
   "screens.sessions.untitled": "未命名会话",
+  "screens.tasks.dropped": "已移至 {{target}}",
   "screens.tasks.groups.agents": "智能体",
   "screens.tasks.groups.focus": "专注",
   "screens.tasks.groups.projects": "项目",

@@ -8021,6 +8021,7 @@
   "screens.sessions.search": "البحث في الجلسات",
   "screens.sessions.title": "الجلسات",
   "screens.sessions.untitled": "جلسة بلا عنوان",
+  "screens.tasks.dropped": "نُقل إلى {{target}}",
   "screens.tasks.groups.agents": "الوكلاء",
   "screens.tasks.groups.focus": "التركيز",
   "screens.tasks.groups.projects": "المشاريع",

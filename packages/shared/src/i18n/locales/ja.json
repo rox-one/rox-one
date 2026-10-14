@@ -7981,6 +7981,7 @@
   "screens.sessions.search": "セッションを検索",
   "screens.sessions.title": "セッション",
   "screens.sessions.untitled": "無題のセッション",
+  "screens.tasks.dropped": "{{target}} に移動しました",
   "screens.tasks.groups.agents": "エージェント",
   "screens.tasks.groups.focus": "フォーカス",
   "screens.tasks.groups.projects": "プロジェクト",

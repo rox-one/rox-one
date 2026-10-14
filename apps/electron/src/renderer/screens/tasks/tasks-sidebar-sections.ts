@@ -37,8 +37,7 @@ function projectItem(p: TasksSidebarProject, area?: string): SidebarSectionItem 
     label: p.name,
     icon: 'folder-kanban',
     count: p.open || undefined,
-    ...(p.total > 0 ? { secondary: `${p.done}/${p.total}` } : {}),
-    ...(area ? { secondary: area } : {}),
+    ...(area || p.total > 0 ? { secondary: [area, p.total > 0 ? `${p.done}/${p.total}` : ''].filter(Boolean).join(' · ') } : {}),
     target: { kind: 'view', viewId: `project:${p.id}` },
   }
 }
@@ -95,5 +94,17 @@ export function parseTasksViewKey(key: string): { kind: 'list' | 'project' | 'ar
   if (kind === 'list' && !(TASK_LISTS as readonly string[]).includes(id)) return null
   if (kind === 'agents' && !(TASK_AGENT_VIEWS as readonly string[]).includes(id)) return null
   if (kind === 'list' || kind === 'project' || kind === 'area' || kind === 'tag' || kind === 'agents') return { kind, id }
+  return null
+}
+
+const LIST_DROP: Partial<Record<string, string>> = {
+  'list:inbox': 'list:inbox', 'list:today': 'when:today', 'list:upcoming': 'when:upcoming',
+  'list:anytime': 'when:anytime', 'list:someday': 'when:someday', 'list:logbook': 'logbook', 'list:trash': 'trash',
+}
+
+/** Move destination a task dropped on this sidebar row goes to (null = not a drop target). */
+export function taskDropDestination(itemId: string): string | null {
+  if (LIST_DROP[itemId]) return LIST_DROP[itemId]!
+  if (itemId.startsWith('project:') || itemId.startsWith('area:')) return itemId
   return null
 }

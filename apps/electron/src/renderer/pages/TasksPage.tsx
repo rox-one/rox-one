@@ -101,7 +101,6 @@ import { QuickEntry, type QuickEntryResult } from './tasks/QuickEntry'
 import { MoveDialog, type MoveDestination } from './tasks/MoveDialog'
 import { TaskDetail } from './tasks/TaskDetail'
 import { useTaskDetailDrafts } from './tasks/use-task-detail-drafts'
-import { TaskSidebar } from './tasks/TaskSidebar'
 import { getSessionTitle } from '@/utils/session'
 import { taskDelegationErrorKey, type TaskDelegationErrorKey } from './tasks/delegation-errors'
 
@@ -833,22 +832,6 @@ export default function TasksPage(props: TasksPageProps = {}) {
     if (sourceId) mutate((current) => applySectionContext(current, sourceId, section.context))
   }
 
-  const navDropProps = (dest: string) => ({
-    onDragOver: (event: React.DragEvent) => {
-      if (!event.dataTransfer.types.includes(DRAG_TASK)) return
-      event.preventDefault()
-      event.dataTransfer.dropEffect = 'move'
-      if (dropHint !== `nav:${dest}`) setDropHint(`nav:${dest}`)
-    },
-    onDragLeave: () => setDropHint((hint) => (hint === `nav:${dest}` ? null : hint)),
-    onDrop: (event: React.DragEvent) => {
-      event.preventDefault()
-      setDropHint(null)
-      const sourceId = draggedId(event)
-      if (sourceId) applyDestination(sourceId, dest)
-    },
-    className: cn('rounded-[var(--radius-card)]', dropHint === `nav:${dest}` && 'bg-accent/20 ring-[1.5px] ring-inset ring-accent'),
-  })
 
   // ── Navigator ────────────────────────────────────────────────────────────
   const listCount = (id: TaskFilterId) => countFilter(tasks, now, id)
@@ -909,25 +892,12 @@ export default function TasksPage(props: TasksPageProps = {}) {
     search,
     onSearch: setSearch,
     footer: navFooter,
+    dropTypes: [DRAG_TASK, 'text/task-id'],
+    onDropTask: (destination, data) => {
+      const sourceId = data.getData(DRAG_TASK) || data.getData('text/task-id')
+      if (sourceId) applyDestination(sourceId, destination)
+    },
   })
-  const navigator = (
-    <TaskSidebar
-      view={view}
-      onSelect={setView}
-      listCount={listCount}
-      overdueCount={overdueCount}
-      trashCount={trashCount}
-      tasks={topLevel}
-      areas={areas}
-      personalProjects={personalProjects}
-      workspaceProjects={projects.map(project => ({ id: project.config.id, name: project.config.name }))}
-      tags={tags}
-      agents={agents}
-      dropProps={navDropProps}
-      onToggleArea={area => mutate(current => current.updateArea(area.id, { collapsed: !area.collapsed }))}
-      footer={navFooter}
-    />
-  )
 
   // ── List rows ────────────────────────────────────────────────────────────
   const currentProject = view.kind === 'project' ? store.projects().find((p) => p.id === view.id) : undefined
@@ -1462,7 +1432,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
         layout={layoutMode}
         detailKey={selected?.id}
         responsive={{ selectedId, onBack: () => selectTask(null), backLabel: t('common.backToList'), navigationLabel: t('tasks.navigation'), detailLabel: t('tasks.details') }}
-        navigator={navigator}
+        navigator={null}
         list={list}
         detail={detail}
         status={(

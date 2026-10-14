@@ -39,3 +39,15 @@ describe('buildTasksSidebarSections', () => {
     expect(parseTasksViewKey('project:')).toBeNull()
   })
 })
+
+describe('tasks sidebar drop targets + area progress', () => {
+  it('maps rows to move destinations', async () => {
+    const { taskDropDestination } = await import('../tasks-sidebar-sections')
+    expect(taskDropDestination('list:today')).toBe('when:today')
+    expect(taskDropDestination('list:trash')).toBe('trash')
+    expect(taskDropDestination('project:p1')).toBe('project:p1')
+    expect(taskDropDestination('area:a1')).toBe('area:a1')
+    expect(taskDropDestination('tag:x')).toBeNull()
+    expect(taskDropDestination('agents:board')).toBeNull()
+  })
+})

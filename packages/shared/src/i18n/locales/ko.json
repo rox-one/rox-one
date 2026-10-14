@@ -7981,6 +7981,7 @@
   "screens.sessions.search": "세션 검색",
   "screens.sessions.title": "세션",
   "screens.sessions.untitled": "제목 없는 세션",
+  "screens.tasks.dropped": "{{target}}(으)로 이동함",
   "screens.tasks.groups.agents": "에이전트",
   "screens.tasks.groups.focus": "집중",
   "screens.tasks.groups.projects": "프로젝트",

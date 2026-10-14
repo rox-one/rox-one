@@ -7981,6 +7981,7 @@
   "screens.sessions.search": "Search sessions",
   "screens.sessions.title": "Sessions",
   "screens.sessions.untitled": "Untitled session",
+  "screens.tasks.dropped": "Moved to {{target}}",
   "screens.tasks.groups.agents": "Agents",
   "screens.tasks.groups.focus": "Focus",
   "screens.tasks.groups.projects": "Projects",

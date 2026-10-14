@@ -7981,6 +7981,7 @@
   "screens.sessions.search": "Sitzungen durchsuchen",
   "screens.sessions.title": "Sitzungen",
   "screens.sessions.untitled": "Unbenannte Sitzung",
+  "screens.tasks.dropped": "Verschoben nach {{target}}",
   "screens.tasks.groups.agents": "Agenten",
   "screens.tasks.groups.focus": "Fokus",
   "screens.tasks.groups.projects": "Projekte",
