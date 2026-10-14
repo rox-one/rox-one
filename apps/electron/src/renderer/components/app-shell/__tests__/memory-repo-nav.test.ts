@@ -3,16 +3,44 @@
  *
  * The repository tab owns its own rail item and must never light up together
  * with the lessons «Память» item.
+ *
+ * These are behavioural checks, not source-text pins: real route strings go
+ * through the app's own parser (`parseRouteToNavigationState`) and the exported
+ * nav registries' `isActive` predicates — the very predicates the workbench
+ * rail (`ActivityRail` ← `APP_NAV_DESTINATIONS`) and the classic sidebar
+ * (`ShellSidebarNav` ← `PRIMARY_NAV`) render their highlight from.
  */
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { APP_NAV_DESTINATIONS } from '../nav-destinations'
+import { APP_NAV_DESTINATIONS, APP_NAV_DESTINATIONS_BY_ID } from '../nav-destinations'
+import { PRIMARY_NAV } from '../primary-nav'
 import { parseRouteToNavigationState } from '../../../../shared/route-parser'
 import { routes } from '../../../../shared/routes'
 
 const mainContentSource = readFileSync(join(__dirname, '../MainContentPanel.tsx'), 'utf8')
-const appShellSource = readFileSync(join(__dirname, '../AppShell.tsx'), 'utf8')
+
+/** Parse a route the way `navigate()`/deep links do; fail loudly on a dead route. */
+const parse = (route: string) => {
+  const state = parseRouteToNavigationState(route)
+  if (!state) throw new Error(`route did not parse to a nav state: ${route}`)
+  return state
+}
+
+/** The repository tab — the route family `nav:memoryRepo` must own. */
+const REPO_STATES = [
+  'memory/repo',
+  'memory/repo/commit/9f8e7d6',
+  `memory/repo/file/${encodeURIComponent('lessons/a.md')}`,
+].map(parse)
+
+/** The lessons «Память» tab — the bare memory route plus the dream surface. */
+const LESSONS_STATES = ['memory', 'memory/dream'].map(parse)
+
+/** Surfaces that are not memory at all: neither entry may light up. */
+const NON_MEMORY_STATES = ['notes', 'settings', 'tasks', 'inbox'].map(parse)
+
+const ALL_STATES = [...REPO_STATES, ...LESSONS_STATES, ...NON_MEMORY_STATES]
 
 describe('Memory repository nav and surface', () => {
   it('registers a memoryRepo destination in the More rail group', () => {
@@ -56,27 +84,55 @@ describe('Memory repository nav and surface', () => {
     expect(mainContentSource).toContain("navState.tab === 'dream'")
   })
 
-  it('renders a nav:memoryRepo entry in the classic AppShell sidebar', () => {
-    // The AppShell sidebar is a hand-maintained list, not a map over
-    // APP_NAV_DESTINATIONS — the entry has to exist here to be visible.
-    expect(appShellSource).toContain('id: "nav:memoryRepo"')
-    expect(appShellSource).toContain('APP_NAV_DESTINATIONS_BY_ID.memoryRepo.icon')
-    expect(appShellSource).toContain('APP_NAV_DESTINATIONS_BY_ID.memoryRepo.labelKey')
-    // Same click helper pattern as the «Память» entry → resolves to
-    // routes.view.memory('repo') through APP_NAV_DESTINATIONS_BY_ID.
-    expect(appShellSource).toContain("handleServiceClick('memoryRepo')")
-    expect(APP_NAV_DESTINATIONS.find((entry) => entry.id === 'memoryRepo')?.route?.())
-      .toBe(routes.view.memory('repo'))
+  it('gives the repository tab its own sidebar row identity, distinct from the lessons entry', () => {
+    // The AppShell sidebar row is keyed by `linkId`: `ShellSidebarNav` resolves
+    // the rich row AppShell supplies for that id, and falls back to the
+    // registry row otherwise. So the repository tab must own its own link id,
+    // glyph and label — a shared id or glyph would collapse the two rows.
+    const memory = APP_NAV_DESTINATIONS_BY_ID.memory
+    const memoryRepo = APP_NAV_DESTINATIONS_BY_ID.memoryRepo
+
+    expect(memoryRepo.linkId).toBe('nav:memoryRepo')
+    expect(memory.linkId).toBe('nav:memory')
+
+    expect(memoryRepo.icon).not.toBe(memory.icon)
+    expect(memoryRepo.labelKey).not.toBe(memory.labelKey)
+
+    // Each row navigates to its own surface (the sidebar's click helper
+    // resolves the destination route through `APP_NAV_DESTINATIONS_BY_ID`).
+    expect(memoryRepo.route?.()).toBe(routes.view.memory('repo'))
+    expect(memory.route?.()).toBe(routes.view.memory())
   })
 
-  it('keeps the AppShell memory entries mutually exclusive', () => {
-    // Each sidebar variant reads `isMemoryNavigation(navState)` and then splits
-    // on the repo tab, so the two entries can never both be highlighted.
-    expect(appShellSource).toContain(
-      'isMemoryNavigation(navState) && navState.tab !== \'repo\' ? "default" : "ghost"',
-    )
-    expect(appShellSource).toContain(
-      'isMemoryNavigation(navState) && navState.tab === \'repo\' ? "default" : "ghost"',
-    )
+  it('keeps the two memory entries mutually exclusive on every route', () => {
+    // The workbench rail (`APP_NAV_DESTINATIONS`) and the classic sidebar
+    // (`PRIMARY_NAV`) each carry their own copy of the split; drive the real
+    // nav states through both and prove exactly one (or neither) lights up.
+    const registries = [
+      { memory: APP_NAV_DESTINATIONS_BY_ID.memory, memoryRepo: APP_NAV_DESTINATIONS_BY_ID.memoryRepo },
+      {
+        memory: PRIMARY_NAV.find((entry) => entry.id === 'memory')!,
+        memoryRepo: PRIMARY_NAV.find((entry) => entry.id === 'memoryRepo')!,
+      },
+    ]
+
+    for (const { memory, memoryRepo } of registries) {
+      for (const state of REPO_STATES) {
+        expect(memoryRepo.isActive(state)).toBe(true)
+        expect(memory.isActive(state)).toBe(false)
+      }
+      for (const state of LESSONS_STATES) {
+        expect(memory.isActive(state)).toBe(true)
+        expect(memoryRepo.isActive(state)).toBe(false)
+      }
+      for (const state of NON_MEMORY_STATES) {
+        expect(memory.isActive(state)).toBe(false)
+        expect(memoryRepo.isActive(state)).toBe(false)
+      }
+      // The invariant the two rows rely on: they can never both light up.
+      for (const state of ALL_STATES) {
+        expect(memory.isActive(state) && memoryRepo.isActive(state)).toBe(false)
+      }
+    }
   })
 })
