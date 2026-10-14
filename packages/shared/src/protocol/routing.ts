@@ -20,6 +20,7 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.cloudHandoff.START,
   RPC_CHANNELS.cloudHandoff.STATUS,
   RPC_CHANNELS.cloudHandoff.CANCEL,
+  RPC_CHANNELS.cloudHandoff.END,
   RPC_CHANNELS.cloudHandoff.SET_KEY,
   RPC_CHANNELS.cloudHandoff.CLEAR_KEY,
 

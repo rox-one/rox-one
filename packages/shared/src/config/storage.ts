@@ -130,8 +130,11 @@ export interface StoredConfig {
     daytonaSnapshot?: string;
     daytonaApiUrl?: string;
     daytonaRegion?: string;
-    /** Allow falling back to the server-wide default Daytona key (default true). */
-    allowServerDefaultKey?: boolean;
+    /**
+     * Rox-hosted broker for default-key handoffs (env ROX_CLOUD_HANDOFF_BROKER_URL).
+     * The shared Daytona key lives only there, never on the desktop.
+     */
+    brokerUrl?: string;
   };
   // Visitor access (port-matrix row a1.6). Present + not disabled registers the
   // `visitor-access` access-policy plugin at boot; absent registers nothing.

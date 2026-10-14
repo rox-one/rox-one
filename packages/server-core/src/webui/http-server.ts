@@ -27,6 +27,7 @@ import {
   discoverOidc,
   verifyOidcIdTokenWithJwks,
   isOidcSubjectAllowed,
+  resolveOidcRedirectUri,
   createPkcePair,
   createRandomToken,
   type OidcConfig,
@@ -337,6 +338,12 @@ export interface OAuthCallbackDeps {
 export interface WebuiHandlerOptions {
   /** Path to built web UI dist/ directory. */
   webuiDir: string
+  /**
+   * Self-authenticating API routes evaluated before the session gate (e.g. the
+   * hosted cloud handoff broker, which uses id.rox.one bearer tokens).
+   * Return null to fall through.
+   */
+  extraRoutes?: (req: Request) => Promise<Response | null>
   /** Secret used to sign JWTs — typically ROX_SERVER_TOKEN (CRAFT_SERVER_TOKEN still works). */
   secret: string
   /** Optional separate web UI password. Falls back to `secret` for verification. */
@@ -523,6 +530,11 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     const url = new URL(req.url)
     const path = url.pathname
     const useSecureCookies = oidcPublicUrlIsHttps || shouldUseSecureCookies(req, secureCookies)
+
+    if (options.extraRoutes) {
+      const routed = await options.extraRoutes(req)
+      if (routed) return withWebuiSecurityHeaders(routed)
+    }
 
     // ── Pairing handoff (token only from a header; never from the URL) ──
     if (path === '/handoff' && req.method === 'GET') {
@@ -711,6 +723,9 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
         return loginErrorResponse('Слишком много попыток входа. Попробуйте позже.', 429)
       }
 
+      const redirectUri = resolveOidcRedirectUri(oidc, getRequestHost(req))
+      if (!redirectUri) return loginErrorResponse('Неизвестный адрес облачной сессии. Откройте свежую ссылку из Rox.', 400)
+
       try {
         const discovery = await discoverOidc(oidc.issuer)
         const state = createRandomToken(16)
@@ -722,12 +737,12 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
           const oldest = pendingOidcLogins.keys().next().value
           if (oldest !== undefined) pendingOidcLogins.delete(oldest)
         }
-        pendingOidcLogins.set(state, { codeVerifier, nonce, createdAt: Date.now() })
+        pendingOidcLogins.set(state, { codeVerifier, nonce, redirectUri, createdAt: Date.now() })
 
         const authorizationUrl = new URL(discovery.authorization_endpoint)
         authorizationUrl.searchParams.set('response_type', 'code')
         authorizationUrl.searchParams.set('client_id', oidc.clientId)
-        authorizationUrl.searchParams.set('redirect_uri', `${oidc.publicUrl}/api/auth/callback`)
+        authorizationUrl.searchParams.set('redirect_uri', redirectUri)
         authorizationUrl.searchParams.set('scope', 'openid profile email')
         authorizationUrl.searchParams.set('state', state)
         authorizationUrl.searchParams.set('nonce', nonce)
@@ -782,7 +797,7 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
         const form = new URLSearchParams({
           grant_type: 'authorization_code',
           code,
-          redirect_uri: `${oidc.publicUrl}/api/auth/callback`,
+          redirect_uri: pending.redirectUri ?? `${oidc.publicUrl}/api/auth/callback`,
           client_id: oidc.clientId,
           code_verifier: pending.codeVerifier,
         })

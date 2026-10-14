@@ -6,7 +6,7 @@ import {
   HandoffError,
   normalizeSnapshotPath,
   packSnapshot,
-  resolveHandoffKey,
+  readPersonalHandoffKey,
   runCloudHandoff,
   type SnapshotManifest,
   type SnapshotSource,
@@ -77,25 +77,18 @@ describe('snapshot packaging', () => {
   });
 });
 
-describe('key resolution', () => {
-  it('prefers the user key', async () => {
-    const r = await resolveHandoffKey({ readUserKey: async () => ' user-key ', env: { [HANDOFF_DEFAULT_KEY_ENV]: 'srv' } });
-    expect(r).toEqual({ key: 'user-key', source: 'user' });
+describe('personal key', () => {
+  it('returns the trimmed user key or null, never an env default', async () => {
+    process.env[HANDOFF_DEFAULT_KEY_ENV] = 'must-not-be-used';
+    try {
+      expect(await readPersonalHandoffKey(async () => ' user-key ')).toBe('user-key');
+      expect(await readPersonalHandoffKey(async () => null)).toBeNull();
+    } finally {
+      delete process.env[HANDOFF_DEFAULT_KEY_ENV];
+    }
   });
-  it('falls back to the server default', async () => {
-    const r = await resolveHandoffKey({ readUserKey: async () => null, env: { [HANDOFF_DEFAULT_KEY_ENV]: 'srv' } });
-    expect(r.source).toBe('server_default');
-  });
-  it('fails closed without any key, or when default is disallowed', async () => {
-    await expect(resolveHandoffKey({ readUserKey: async () => '', env: {} })).rejects.toMatchObject({ code: 'no_key' });
-    await expect(
-      resolveHandoffKey({ readUserKey: async () => null, env: { [HANDOFF_DEFAULT_KEY_ENV]: 'srv' }, allowServerDefault: false }),
-    ).rejects.toMatchObject({ code: 'no_key' });
-  });
-  it('does not silently bill the shared key when the store is unreadable', async () => {
-    await expect(
-      resolveHandoffKey({ readUserKey: async () => { throw new Error('locked'); }, env: { [HANDOFF_DEFAULT_KEY_ENV]: 'srv' } }),
-    ).rejects.toMatchObject({ code: 'no_key' });
+  it('maps an unreadable store to no_key', async () => {
+    await expect(readPersonalHandoffKey(async () => { throw new Error('locked'); })).rejects.toMatchObject({ code: 'no_key' });
   });
 });
 

@@ -21,6 +21,7 @@ export const RPC_CHANNELS = {
     START: 'cloudHandoff:start',
     STATUS: 'cloudHandoff:status',
     CANCEL: 'cloudHandoff:cancel',
+    END: 'cloudHandoff:end',
     SET_KEY: 'cloudHandoff:setKey',
     CLEAR_KEY: 'cloudHandoff:clearKey',
   },

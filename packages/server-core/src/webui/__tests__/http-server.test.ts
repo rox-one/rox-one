@@ -914,3 +914,33 @@ describe('OIDC owner pinning config', () => {
     expect(isOidcSubjectAllowed({}, 'anyone')).toBe(true)
   })
 })
+
+describe('OIDC redirect host pattern (rotating signed links)', () => {
+  it('uses the request host only when it matches the pattern', async () => {
+    const { readOidcConfigFromEnv, resolveOidcRedirectUri } = await import('../auth')
+    const cfg = readOidcConfigFromEnv({
+      ROX_WEBUI_OIDC_ISSUER: 'https://id.rox.one',
+      ROX_WEBUI_OIDC_CLIENT_ID: 'c',
+      ROX_WEBUI_PUBLIC_URL: 'https://9100-tok1.proxy.daytona.works',
+      ROX_WEBUI_PUBLIC_HOST_PATTERN: '9100-[a-z0-9-]+\\.proxy\\.daytona\\.works',
+    })!
+    expect(resolveOidcRedirectUri(cfg, '9100-tok2.proxy.daytona.works')).toBe('https://9100-tok2.proxy.daytona.works/api/auth/callback')
+    expect(resolveOidcRedirectUri(cfg, 'evil.example')).toBeNull()
+    expect(resolveOidcRedirectUri(cfg, '9100-x.proxy.daytona.works.evil.example')).toBeNull()
+    expect(resolveOidcRedirectUri({ publicUrl: 'https://a.example' }, 'whatever')).toBe('https://a.example/api/auth/callback')
+  })
+})
+
+describe('cloud handoff broker mount', () => {
+  it('never activates inside Electron or without explicit enablement + shared key', async () => {
+    const { maybeCreateCloudHandoffBroker } = await import('../cloud-handoff-broker')
+    const env = { ROX_CLOUD_HANDOFF_BROKER_ENABLED: '1', ROX_CLOUD_HANDOFF_DAYTONA_API_KEY: 'k'.repeat(20) }
+    expect(maybeCreateCloudHandoffBroker({ env, isElectron: true })).toBeUndefined()
+    expect(maybeCreateCloudHandoffBroker({ env: { ...env, ROX_CLOUD_HANDOFF_BROKER_ENABLED: '0' }, isElectron: false })).toBeUndefined()
+    expect(maybeCreateCloudHandoffBroker({ env: { ROX_CLOUD_HANDOFF_BROKER_ENABLED: '1' }, isElectron: false })).toBeUndefined()
+    const handler = maybeCreateCloudHandoffBroker({ env, isElectron: false, fetchImpl: async () => new Response('', { status: 401 }) })!
+    expect(await handler(new Request('https://h/other'))).toBeNull()
+    const res = await handler(new Request('https://h/api/cloud-handoff/v1/sandboxes', { headers: { Authorization: 'Bearer t' } }))
+    expect(res!.status).toBe(401)
+  })
+})

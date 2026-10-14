@@ -4,7 +4,7 @@
  * Symlinks are never followed; references must stay inside the working dir.
  */
 import { lstat, readFile, readdir, realpath } from 'node:fs/promises';
-import { join, relative, sep } from 'node:path';
+import { isAbsolute, join, relative, sep } from 'node:path';
 import type { SnapshotSource } from '@rox/cloud-runner';
 
 const MAX_WALK_ENTRIES = 10_000;
@@ -14,8 +14,25 @@ function toPosix(rel: string): string {
   return rel.split(sep).join('/');
 }
 
-function fileSource(abs: string, dest: string, size: number): SnapshotSource {
-  return { path: dest, size, read: async () => new Uint8Array(await readFile(abs)) };
+/** Inside `root` (already realpath'd)? Handles '..foo' names and cross-drive absolute results. */
+export function isContained(root: string, target: string): boolean {
+  const rel = relative(root, target);
+  return rel !== '' && !isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${sep}`);
+}
+
+function fileSource(abs: string, dest: string, size: number, root?: string): SnapshotSource {
+  return {
+    path: dest,
+    size,
+    read: async () => {
+      // Re-validate at read time (TOCTOU): still a regular file, not a symlink,
+      // and — for workspace files — still resolving inside the working dir.
+      const st = await lstat(abs);
+      if (!st.isFile()) throw new Error('file changed during handoff');
+      if (root && !isContained(root, await realpath(abs))) throw new Error('file escaped the working directory');
+      return new Uint8Array(await readFile(abs));
+    },
+  };
 }
 
 async function walk(root: string, prefix: string, out: SnapshotSource[]): Promise<void> {
@@ -88,9 +105,8 @@ export async function collectHandoffSources(input: {
       const st = await lstat(candidate);
       if (!st.isFile()) continue;
       const real = await realpath(candidate);
-      const rel = relative(realWd, real);
-      if (!rel || rel.startsWith('..') || rel.includes(`..${sep}`)) continue;
-      out.push(fileSource(real, `workspace/${toPosix(rel)}`, st.size));
+      if (!isContained(realWd, real)) continue;
+      out.push(fileSource(real, `workspace/${toPosix(relative(realWd, real))}`, st.size, realWd));
     } catch {
       // Referenced file no longer exists — skip.
     }

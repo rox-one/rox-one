@@ -50,7 +50,7 @@ export interface HandoffStatus {
   /** Set once the user ended the cloud session (sandbox deleted). */
   ended?: boolean;
   sandboxId?: string;
-  keySource?: 'user' | 'server_default';
+  keySource?: 'user' | 'broker';
   failure?: { code: HandoffFailureCode; message: string };
   excludedCount?: number;
 }

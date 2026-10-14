@@ -1,19 +1,23 @@
 /**
  * «В облако» — cloud handoff RPC (docs/cloud-handoff-design.md).
  *
- * Desktop-only (localElectron): packages the chat, resolves the Daytona key
- * (user's own → server default), runs the orchestrator in the background and
- * exposes polled status with the resulting id.rox.one-gated session URL.
- * Feature flag `cloudHandoff.enabled` defaults to off.
+ * Desktop-only (localElectron). Key policy: the user's own Daytona key talks
+ * to Daytona directly; otherwise everything goes through the Rox-hosted broker
+ * (ROX_CLOUD_HANDOFF_BROKER_URL) with the user's id.rox.one token. The shared
+ * Daytona key is never present on the desktop. Flag `cloudHandoff.enabled`
+ * defaults to off.
  */
 import { randomBytes } from 'node:crypto';
 import {
+  BrokerDaytonaClient,
+  HANDOFF_BROKER_URL_ENV,
   HandoffError,
   HttpDaytonaClient,
+  fetchRoxIdSubject,
   isPlausibleDaytonaKey,
-  resolveHandoffKey,
+  issueSignedSessionLink,
+  readPersonalHandoffKey,
   runCloudHandoff,
-  serverDefaultKeyAvailable,
   type DaytonaClient,
   type HandoffStatus,
   type SnapshotSource,
@@ -30,6 +34,7 @@ const STATUS_RETENTION_MS = 60 * 60_000;
 const SESSION_ID_RE = /^[A-Za-z0-9_.-]{1,128}$/;
 
 type HandoffConfig = NonNullable<StoredConfig['cloudHandoff']>;
+type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
 export interface CloudHandoffServiceDeps {
   readConfig: () => HandoffConfig | undefined;
@@ -37,10 +42,12 @@ export interface CloudHandoffServiceDeps {
   readUserKey: () => Promise<string | null>;
   writeUserKey: (key: string) => Promise<void>;
   deleteUserKey: () => Promise<void>;
-  /** id.rox.one subject of the signed-in Rox account, or null when signed out. */
-  resolveOwnerSub: () => Promise<string | null>;
+  /** The signed-in Rox account's id.rox.one access token, or null when signed out. */
+  getRoxIdAccessToken: () => Promise<string | null>;
   resolveSources: (sessionId: string) => Promise<SnapshotSource[]>;
-  makeClient: (key: string, apiUrl?: string) => DaytonaClient;
+  makeDirectClient: (key: string, apiUrl?: string) => DaytonaClient;
+  makeBrokerClient: (brokerUrl: string, getAccessToken: () => Promise<string>) => DaytonaClient;
+  fetchImpl?: Fetch;
   newId?: () => string;
   now?: () => number;
 }
@@ -48,15 +55,32 @@ export interface CloudHandoffServiceDeps {
 export interface CloudHandoffPublicConfig {
   enabled: boolean;
   userKeyConfigured: boolean;
-  serverDefaultKeyAvailable: boolean;
+  /** Default-key handoffs are available through the Rox broker. */
+  brokerConfigured: boolean;
   ssoConfigured: boolean;
   webHostConfigured: boolean;
 }
 
+interface HandoffRecord extends HandoffStatus {
+  mode?: 'user' | 'broker';
+  /** Stable URL (web host mode only). Signed links are never stored. */
+  stableUrl?: string;
+}
+
+interface ResolvedClient {
+  client: DaytonaClient;
+  mode: 'user' | 'broker';
+  /** Personal key (scrubbed from errors); empty in broker mode. */
+  apiKey: string;
+}
+
 export class CloudHandoffService {
-  private readonly statuses = new Map<string, HandoffStatus>();
+  private readonly records = new Map<string, HandoffRecord>();
   private readonly controllers = new Map<string, AbortController>();
+  /** Latest *accepted* handoff per chat (rejected starts never replace it). */
   private readonly bySession = new Map<string, string>();
+  /** Settles once a handoff reaches a terminal phase (also a test seam). */
+  readonly running = new Map<string, Promise<void>>();
 
   constructor(private readonly deps: CloudHandoffServiceDeps) {}
 
@@ -71,11 +95,35 @@ export class CloudHandoffService {
   private sso(cfg: HandoffConfig | undefined) {
     const clientId = (cfg?.ssoClientId ?? this.env()[HANDOFF_CLIENT_ID_ENV])?.trim();
     if (!clientId) return null;
-    return { issuer: cfg?.ssoIssuer?.trim() || DEFAULT_ROX_ID_ISSUER, clientId };
+    return { issuer: this.issuer(cfg), clientId };
+  }
+
+  private issuer(cfg: HandoffConfig | undefined): string {
+    return cfg?.ssoIssuer?.trim() || DEFAULT_ROX_ID_ISSUER;
   }
 
   private webHost(cfg: HandoffConfig | undefined): string | undefined {
     return (cfg?.webHost ?? this.env()[HANDOFF_WEB_HOST_ENV])?.trim() || undefined;
+  }
+
+  private brokerUrl(cfg: HandoffConfig | undefined): string | undefined {
+    return (cfg?.brokerUrl ?? this.env()[HANDOFF_BROKER_URL_ENV])?.trim() || undefined;
+  }
+
+  private async accessToken(): Promise<string> {
+    const token = await this.deps.getRoxIdAccessToken().catch(() => null);
+    if (!token) throw new HandoffError('sign_in_required', 'sign in with Rox ID to continue in the cloud');
+    return token;
+  }
+
+  private async resolveClient(cfg: HandoffConfig | undefined, mode?: 'user' | 'broker'): Promise<ResolvedClient> {
+    const personal = mode === 'broker' ? null : await readPersonalHandoffKey(this.deps.readUserKey);
+    if (personal) return { client: this.deps.makeDirectClient(personal, cfg?.daytonaApiUrl), mode: 'user', apiKey: personal };
+    const broker = mode === 'user' ? undefined : this.brokerUrl(cfg);
+    if (broker) {
+      return { client: this.deps.makeBrokerClient(broker, () => this.accessToken()), mode: 'broker', apiKey: '' };
+    }
+    throw new HandoffError('no_key', 'add your Daytona key to continue in the cloud');
   }
 
   async getConfig(): Promise<CloudHandoffPublicConfig> {
@@ -84,7 +132,7 @@ export class CloudHandoffService {
     return {
       enabled: cfg?.enabled === true,
       userKeyConfigured: Boolean(userKey),
-      serverDefaultKeyAvailable: cfg?.allowServerDefaultKey !== false && serverDefaultKeyAvailable(this.env()),
+      brokerConfigured: Boolean(this.brokerUrl(cfg)),
       ssoConfigured: this.sso(cfg) !== null,
       webHostConfigured: Boolean(this.webHost(cfg)),
     };
@@ -101,15 +149,43 @@ export class CloudHandoffService {
     return { ok: true };
   }
 
-  status(handoffId: unknown): HandoffStatus | null {
-    this.prune();
-    if (typeof handoffId !== 'string') return null;
-    const s = this.statuses.get(handoffId);
-    return s ? { ...s } : null;
+  private publicView(r: HandoffRecord): HandoffStatus {
+    const { mode: _mode, stableUrl: _stable, ...rest } = r;
+    return { ...rest };
   }
 
-  /** Latest handoff for a chat, so the UI can restore the link after reload. */
-  statusForSession(sessionId: unknown): HandoffStatus | null {
+  /**
+   * Status for a handoff. A ready signed-link session gets a freshly issued
+   * short-TTL link in the response only; it is never stored.
+   */
+  async status(handoffId: unknown): Promise<HandoffStatus | null> {
+    this.prune();
+    if (typeof handoffId !== 'string') return null;
+    const r = this.records.get(handoffId);
+    if (!r) return null;
+    const view = this.publicView(r);
+    if (r.phase === 'ready' && !r.ended && r.sandboxId) {
+      if (r.linkMode === 'web_host') {
+        view.sessionUrl = r.stableUrl;
+      } else {
+        try {
+          const cfg = this.deps.readConfig();
+          const { client } = await this.resolveClient(cfg, r.mode);
+          view.sessionUrl = await issueSignedSessionLink(client, r.sandboxId);
+        } catch (error) {
+          view.sessionUrl = undefined;
+          view.failure = {
+            code: error instanceof HandoffError ? error.code : 'provider_error',
+            message: 'could not issue a session link',
+          };
+        }
+      }
+    }
+    return view;
+  }
+
+  /** Latest accepted handoff for a chat, so the UI can restore the link after reload. */
+  async statusForSession(sessionId: unknown): Promise<HandoffStatus | null> {
     if (typeof sessionId !== 'string') return null;
     const id = this.bySession.get(sessionId);
     return id ? this.status(id) : null;
@@ -122,28 +198,48 @@ export class CloudHandoffService {
     return { ok: Boolean(ctrl) };
   }
 
+  private async destroy(r: HandoffRecord): Promise<void> {
+    if (!r.sandboxId || r.ended) return;
+    const { client } = await this.resolveClient(this.deps.readConfig(), r.mode);
+    await client.deleteSandbox(r.sandboxId).catch((error: unknown) => {
+      // Already gone is fine; anything else surfaces to the caller.
+      if ((error as { code?: string })?.code !== 'not_found') throw error;
+    });
+    Object.assign(r, { ended: true, updatedAt: this.now() });
+  }
+
+  /** «Завершить облачную сессию»: delete the chat's sandbox now. */
+  async end(sessionId: unknown): Promise<{ ok: boolean }> {
+    if (typeof sessionId !== 'string') return { ok: false };
+    const id = this.bySession.get(sessionId);
+    const r = id ? this.records.get(id) : undefined;
+    if (!r || this.controllers.has(r.handoffId)) return { ok: false };
+    await this.destroy(r);
+    return { ok: true };
+  }
+
   /** Starts a handoff in the background; returns immediately with the initial status. */
   async start(sessionId: unknown): Promise<HandoffStatus> {
     if (typeof sessionId !== 'string' || !SESSION_ID_RE.test(sessionId)) throw new Error('cloudHandoff.invalidSession');
     const cfg = this.deps.readConfig();
     const handoffId = this.deps.newId?.() ?? `hf_${randomBytes(12).toString('hex')}`;
     const startedAt = this.now();
-    const status: HandoffStatus = { handoffId, sessionId, phase: 'resolving_key', startedAt, updatedAt: startedAt };
+    const record: HandoffRecord = { handoffId, sessionId, phase: 'resolving_key', startedAt, updatedAt: startedAt };
     const fail = (error: HandoffError): HandoffStatus => {
-      Object.assign(status, {
+      Object.assign(record, {
         phase: error.code === 'cancelled' ? 'cancelled' : 'failed',
         failure: { code: error.code, message: error.message },
         updatedAt: this.now(),
       });
-      return { ...status };
+      return this.publicView(record);
     };
 
-    const existing = this.bySession.get(sessionId);
-    const prior = existing ? this.statuses.get(existing) : undefined;
-    if (prior && this.controllers.has(prior.handoffId)) return { ...prior }; // already in flight
-    this.statuses.set(handoffId, status);
-    this.bySession.set(sessionId, handoffId);
+    const priorId = this.bySession.get(sessionId);
+    const prior = priorId ? this.records.get(priorId) : undefined;
+    if (prior && this.controllers.has(prior.handoffId)) return this.publicView(prior); // already in flight
 
+    // Rejected starts are recorded by id only: they never hide the chat's last ready link.
+    this.records.set(handoffId, record);
     if (cfg?.enabled !== true) return fail(new HandoffError('disabled', 'cloud handoff is disabled'));
     // One handoff at a time per app: the per-owner Daytona quota check is not
     // atomic, so parallel starts for different chats could overshoot it.
@@ -151,65 +247,74 @@ export class CloudHandoffService {
       return fail(new HandoffError('quota_exceeded', 'another cloud handoff is already running'));
     }
 
+    this.bySession.set(sessionId, handoffId);
     const ctrl = new AbortController();
     this.controllers.set(handoffId, ctrl);
-    const run = this.execute(status, cfg, ctrl)
+    const run = this.execute(record, cfg, ctrl, prior)
       .catch((error: unknown) => {
         fail(error instanceof HandoffError ? error : new HandoffError('provider_error', 'cloud handoff failed'));
       })
       .finally(() => this.controllers.delete(handoffId));
     this.running.set(handoffId, run);
-    return { ...status };
+    return this.publicView(record);
   }
 
-  /** Settles once a handoff reaches a terminal phase (also a test seam). */
-  readonly running = new Map<string, Promise<void>>();
+  private async execute(
+    record: HandoffRecord,
+    cfg: HandoffConfig,
+    ctrl: AbortController,
+    prior: HandoffRecord | undefined,
+  ): Promise<void> {
+    const token = await this.accessToken();
+    // Pin the owner to the id.rox.one OIDC subject — the same identifier the
+    // sandbox's web UI receives in the id_token at browser login.
+    const ownerSub = await fetchRoxIdSubject({ issuer: this.issuer(cfg), accessToken: token, fetchImpl: this.deps.fetchImpl });
+    const resolved = await this.resolveClient(cfg);
+    record.keySource = resolved.mode;
+    record.mode = resolved.mode;
 
-  private async execute(status: HandoffStatus, cfg: HandoffConfig, ctrl: AbortController): Promise<void> {
-    {
-      const ownerSub = await this.deps.resolveOwnerSub().catch(() => null);
-      if (!ownerSub) throw new HandoffError('sign_in_required', 'sign in with Rox ID to continue in the cloud');
-      const resolved = await resolveHandoffKey({
-        readUserKey: this.deps.readUserKey,
-        env: this.env(),
-        allowServerDefault: cfg.allowServerDefaultKey !== false,
-      });
-      status.keySource = resolved.source;
-      const sources = await this.deps.resolveSources(status.sessionId);
-      const result = await runCloudHandoff({
-        client: this.deps.makeClient(resolved.key, cfg.daytonaApiUrl),
-        apiKey: resolved.key,
-        handoffId: status.handoffId,
-        sessionId: status.sessionId,
-        ownerSub,
-        sources,
-        sso: this.sso(cfg),
-        webHost: this.webHost(cfg),
-        snapshot: cfg.daytonaSnapshot,
-        region: cfg.daytonaRegion,
-        signal: ctrl.signal,
-        now: this.deps.now,
-        onProgress: (p) => {
-          Object.assign(status, p, { updatedAt: this.now() });
-        },
-      });
-      Object.assign(status, {
-        phase: 'ready',
-        sessionUrl: result.sessionUrl,
-        sandboxId: result.sandboxId,
-        excludedCount: result.manifest.excluded.length,
-        updatedAt: this.now(),
-      });
+    // A new handoff for the same chat replaces the previous cloud session.
+    if (prior && prior.phase === 'ready' && !prior.ended) {
+      await this.destroy(prior).catch(() => undefined);
     }
+
+    const sources = await this.deps.resolveSources(record.sessionId);
+    const result = await runCloudHandoff({
+      client: resolved.client,
+      apiKey: resolved.apiKey,
+      handoffId: record.handoffId,
+      sessionId: record.sessionId,
+      ownerSub,
+      sources,
+      sso: this.sso(cfg),
+      webHost: this.webHost(cfg),
+      snapshot: cfg.daytonaSnapshot,
+      region: cfg.daytonaRegion,
+      signal: ctrl.signal,
+      now: this.deps.now,
+      onProgress: (p) => {
+        Object.assign(record, p, { updatedAt: this.now() });
+      },
+    });
+    Object.assign(record, {
+      phase: 'ready',
+      sandboxId: result.sandboxId,
+      linkMode: result.linkMode,
+      stableUrl: result.linkMode === 'web_host' ? result.sessionUrl : undefined,
+      excludedCount: result.manifest.excluded.length,
+      updatedAt: this.now(),
+    });
   }
 
   private prune(): void {
     const cutoff = this.now() - STATUS_RETENTION_MS;
-    for (const [id, s] of this.statuses) {
-      if (s.updatedAt < cutoff && !this.controllers.has(id)) {
-        this.statuses.delete(id);
+    for (const [id, r] of this.records) {
+      // Keep ready, un-ended sessions: they back the chat's link and «Завершить».
+      const live = r.phase === 'ready' && !r.ended;
+      if (r.updatedAt < cutoff && !live && !this.controllers.has(id)) {
+        this.records.delete(id);
         this.running.delete(id);
-        if (this.bySession.get(s.sessionId) === id) this.bySession.delete(s.sessionId);
+        if (this.bySession.get(r.sessionId) === id) this.bySession.delete(r.sessionId);
       }
     }
   }
@@ -232,12 +337,10 @@ export function registerCloudHandoffHandlers(server: RpcServer, deps: HandlerDep
       const { getCredentialManager } = await import('@rox/shared/credentials');
       await getCredentialManager().delete(KEY_CREDENTIAL_ID);
     },
-    resolveOwnerSub: async () => {
+    getRoxIdAccessToken: async () => {
       const { peekRoxAccountAuthority, LOCAL_ROX_CALLER } = await import('@rox/shared/auth');
       const authority = peekRoxAccountAuthority();
-      if (!authority) return null;
-      const state = await authority.state(LOCAL_ROX_CALLER);
-      return state.connected ? (state.account?.user.id ?? null) : null;
+      return authority ? await authority.accessToken(LOCAL_ROX_CALLER) : null;
     },
     resolveSources: async (sessionId) => {
       const session = await deps.sessionManager.getSession(sessionId);
@@ -251,7 +354,8 @@ export function registerCloudHandoffHandlers(server: RpcServer, deps: HandlerDep
         workingDirectory: session.workingDirectory,
       });
     },
-    makeClient: (key, apiUrl) => new HttpDaytonaClient({ apiUrl, resolveApiKey: async () => key }),
+    makeDirectClient: (key, apiUrl) => new HttpDaytonaClient({ apiUrl, resolveApiKey: async () => key }),
+    makeBrokerClient: (brokerUrl, getAccessToken) => new BrokerDaytonaClient({ brokerUrl, getAccessToken }),
   });
 
   const opts = { access: 'localElectron' } as const;
@@ -263,6 +367,7 @@ export function registerCloudHandoffHandlers(server: RpcServer, deps: HandlerDep
       args?.handoffId !== undefined ? service.status(args.handoffId) : service.statusForSession(args?.sessionId),
     opts,
   );
+  server.handle(RPC_CHANNELS.cloudHandoff.END, (_ctx, args: { sessionId?: unknown }) => service.end(args?.sessionId), opts);
   server.handle(RPC_CHANNELS.cloudHandoff.CANCEL, (_ctx, args: { handoffId?: unknown }) => service.cancel(args?.handoffId), opts);
   server.handle(RPC_CHANNELS.cloudHandoff.SET_KEY, (_ctx, args: { key?: unknown }) => service.setKey(args?.key), opts);
   server.handle(RPC_CHANNELS.cloudHandoff.CLEAR_KEY, () => service.clearKey(), opts);
