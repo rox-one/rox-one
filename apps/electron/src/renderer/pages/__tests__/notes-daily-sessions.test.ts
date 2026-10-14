@@ -43,4 +43,14 @@ describe('daily note sessions overlay', () => {
     expect(handler.indexOf('getDailyNote')).toBeLessThan(handler.indexOf('await openNote(note.id)'))
     expect(handler).toContain('activeNoteIdRef.current === note.id && !dirtyRef.current')
   })
+
+  test('every explicit route open of an existing daily note runs the cleanup before reading', () => {
+    const page = readFileSync(join(import.meta.dir, '../NotesPage.tsx'), 'utf8')
+    const effect = page.slice(page.indexOf('    if (selectedNoteId) {\n      const noteId'), page.indexOf('}, [selectedNoteId, openNote, activeWorkspaceId])'))
+    expect(effect).toContain('notesRef.current.some((note) => note.id === noteId)')
+    expect(effect.indexOf('getDailyNote(workspaceId, openedDailyDate)')).toBeLessThan(effect.indexOf('if (!cancelled) void openNote(noteId)'))
+    // Background re-reads (external change) call openNote directly and never clean up.
+    const external = page.slice(page.indexOf("if (payload.reason !== 'external') return"), page.indexOf('return () => {\n      subscribed = false'))
+    expect(external).not.toContain('getDailyNote')
+  })
 })

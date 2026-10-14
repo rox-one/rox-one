@@ -541,6 +541,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId, rightSessionContext])
   // PERF-09: a revisit paints the cached list at once; refreshNotes revalidates it.
   const [notes, setNotes] = React.useState<NoteSummary[]>(() => cachedNotesList(activeWorkspaceId) ?? [])
+  const notesRef = React.useRef(notes)
+  notesRef.current = notes
   // Stable insertion order for sidebar — only updated on full refreshes, not optimistic saves
   const [sidebarOrder, setSidebarOrder] = React.useState<string[]>(() => (cachedNotesList(activeWorkspaceId) ?? []).map(n => n.id))
   const [searchResults, setSearchResults] = React.useState<NoteSummary[] | null>(null)
@@ -1325,7 +1327,20 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
 
   React.useEffect(() => {
     if (selectedNoteId) {
-      void openNote(parseNoteBlockAddress(selectedNoteId).noteId)
+      const noteId = parseNoteBlockAddress(selectedNoteId).noteId
+      const openedDailyDate = parseDailyNoteDate(noteId)
+      const workspaceId = activeWorkspaceId
+      // Every explicit open (sidebar, search, wikilink, route) of an existing daily
+      // note runs the one-time legacy Sessions cleanup first, server-side and
+      // CAS'd; background re-reads go straight to openNote and never write.
+      if (openedDailyDate && workspaceId && notesRef.current.some((note) => note.id === noteId)) {
+        let cancelled = false
+        void window.electronAPI.getDailyNote(workspaceId, openedDailyDate)
+          .catch(() => undefined)
+          .then(() => { if (!cancelled) void openNote(noteId) })
+        return () => { cancelled = true }
+      }
+      void openNote(noteId)
       return
     }
     setActiveNote(null)
@@ -1337,7 +1352,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     setSaveError(null)
     setContentResolution(null)
     ++openNoteRequestRef.current
-  }, [selectedNoteId, openNote])
+  }, [selectedNoteId, openNote, activeWorkspaceId])
 
   const noteIds = React.useMemo(
     () => `${activeWorkspaceId ?? ''}:${notes.map(n => `${n.id}:${n.updatedAt}`).join(',')}`,
