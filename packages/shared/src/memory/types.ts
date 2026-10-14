@@ -182,7 +182,7 @@ export interface MemoryConfig {
    */
   ftsLimit: number
   /**
-   * M2: semantic (episodic) memory layer — opt-in. When true, distilled
+   * M2: semantic (episodic) memory layer — on by default (false opts out). When true, distilled
    * session summaries are stored as success/failure episodes
    * ({workspace}/memory/episodic.jsonl) and the prompt's workspace-memory
    * block gains a '## Related past sessions' tail with the vector top-3
@@ -223,7 +223,7 @@ export const DEFAULT_MEMORY_CONFIG: MemoryConfig = {
   negativeFirst: true,
   redactExtraPatterns: [],
   ftsLimit: 20,
-  semantic: false,
+  semantic: true,
   dreamIntervalHours: 4,
   dreamNotes: true,
 }
