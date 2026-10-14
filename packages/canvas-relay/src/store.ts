@@ -10,9 +10,11 @@ export class RoomStore {
   private db: Database
   /** Rows per room in the update log (seeded from the DB on load, then kept in memory). */
   private counts = new Map<string, number>()
+  /** Bytes per room in the update log. */
+  private sizes = new Map<string, number>()
   constructor(path: string) {
     this.db = new Database(path, { create: true })
-    this.db.exec('PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;')
+    this.db.exec('PRAGMA journal_mode = WAL; PRAGMA synchronous = FULL;')
     this.db.exec(`CREATE TABLE IF NOT EXISTS snapshots (room TEXT PRIMARY KEY, state BLOB NOT NULL, updated_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS updates (seq INTEGER PRIMARY KEY AUTOINCREMENT, room TEXT NOT NULL, data BLOB NOT NULL, at INTEGER NOT NULL);
       CREATE INDEX IF NOT EXISTS updates_room ON updates(room, seq);
@@ -26,7 +28,9 @@ export class RoomStore {
     for (const row of this.db.query('SELECT data FROM updates WHERE room = ? ORDER BY seq').all(room) as { data: Uint8Array }[]) {
       Y.applyUpdate(doc, new Uint8Array(row.data))
     }
-    this.counts.set(room, (this.db.query('SELECT COUNT(*) AS n FROM updates WHERE room = ?').get(room) as { n: number }).n)
+    const agg = this.db.query('SELECT COUNT(*) AS n, COALESCE(SUM(LENGTH(data)), 0) AS b FROM updates WHERE room = ?').get(room) as { n: number; b: number }
+    this.counts.set(room, agg.n)
+    this.sizes.set(room, agg.b)
     return doc
   }
 
@@ -34,7 +38,13 @@ export class RoomStore {
     this.db.query('INSERT INTO updates (room, data, at) VALUES (?, ?, ?)').run(room, update, Date.now())
     const n = (this.counts.get(room) ?? 0) + 1
     this.counts.set(room, n)
+    this.sizes.set(room, (this.sizes.get(room) ?? 0) + update.length)
     return n
+  }
+
+  /** Rows and bytes currently in the room's update log. */
+  logSize(room: string): { rows: number; bytes: number } {
+    return { rows: this.counts.get(room) ?? 0, bytes: this.sizes.get(room) ?? 0 }
   }
 
   compact(room: string, doc: Y.Doc): void {
@@ -45,6 +55,7 @@ export class RoomStore {
       if (max !== null) this.db.query('DELETE FROM updates WHERE room = ? AND seq <= ?').run(room, max)
     })()
     this.counts.set(room, 0)
+    this.sizes.set(room, 0)
   }
 
   /** Minimum token epoch for (room, sub); '*' revokes everyone in the room. */
@@ -59,7 +70,7 @@ export class RoomStore {
   }
 
   /** Forget the in-memory counter when a room is unloaded. */
-  forget(room: string): void { this.counts.delete(room) }
+  forget(room: string): void { this.counts.delete(room); this.sizes.delete(room) }
 
   close(): void { this.db.close() }
 }

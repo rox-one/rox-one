@@ -9,6 +9,7 @@
  *   TOKEN_AUDIENCE   required, expected `aud` (e.g. rox-canvas)
  *   RELAY_ADMIN_TOKEN optional, >= 32 chars, != RELAY_SECRET: enables POST /admin/revoke
  *                    (Authorization: Bearer …; server-to-server, e.g. from id.rox.one)
+ *   ADMIN_HOST (127.0.0.1; set to the tailnet IP to reach it over tailscale), ADMIN_PORT (8788)
  *   PORT (8787), HOST (0.0.0.0), DATA_DIR (./data)
  *   MAX_MESSAGE_BYTES, MAX_DOC_BYTES, MAX_CONNS_PER_ROOM, MAX_CONNS_TOTAL
  */
@@ -41,6 +42,8 @@ const relay = startRelay({
   audience,
   allowedOrigins: origins,
   adminToken: process.env.RELAY_ADMIN_TOKEN || undefined,
+  adminHostname: process.env.ADMIN_HOST ?? '127.0.0.1',
+  adminPort: Number(process.env.ADMIN_PORT ?? 8788),
   limits,
 })
 console.log(`rox-canvas-relay listening on :${relay.port}`)

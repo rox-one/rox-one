@@ -24,15 +24,27 @@ Reverse proxy: the Rox desktop client sends the token only as a subprotocol. If 
 
 ## Admin revocation
 
-Set `RELAY_ADMIN_TOKEN` (≥ 32 chars, different from `RELAY_SECRET`) to enable
-`POST /admin/revoke` — server-to-server only (requests with an `Origin` header are refused):
+Set `RELAY_ADMIN_TOKEN` (≥ 32 chars, different from `RELAY_SECRET`; compared in
+constant time) to enable `POST /admin/revoke`. It is served on a **separate
+admin listener**, never the public port: `ADMIN_HOST` (default `127.0.0.1`; set
+it to the host's tailnet IP so rox-id can reach it over tailscale) and
+`ADMIN_PORT` (default `8788`). Requests with an `Origin` header are refused.
 
 ```
-curl -X POST https://<relay>/admin/revoke \
+curl -X POST http://127.0.0.1:8788/admin/revoke \
   -H "Authorization: Bearer $RELAY_ADMIN_TOKEN" -H 'content-type: application/json' \
-  -d '{"room":"<workspaceId>:<boardId>","sub":"<userId or *>","epoch":2}'
+  -d '{"room":"<workspaceId>:<boardId>","sub":"<userId or *>"}'
+# → {"ok":true,"closed":<n>,"epoch":<new min epoch>}
 ```
 
+`epoch` is optional (defaults to the current minimum + 1).
 Live sockets of that subject with a lower token epoch close with 4003; new
 tokens must carry `epoch` ≥ the revoked value. Clients must offer the
 `rox-canvas.v1` subprotocol next to the token; the token is never echoed.
+
+## Storage
+
+SQLite with `journal_mode=WAL` and `synchronous=FULL`. Only the part of an
+update the room does not already have is stored; zero-growth updates are
+dropped. Each room's update log is capped (`maxLogRows` 2000 / `maxLogBytes`
+8 MiB); reaching a cap forces an immediate compaction even under steady load.

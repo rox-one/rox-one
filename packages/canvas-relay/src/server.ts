@@ -49,6 +49,8 @@ export interface RelayLimits {
   msgsPerSecond: number
   bytesPerSecond: number
   maxAwarenessBytes: number
+  maxLogRows: number
+  maxLogBytes: number
 }
 export const DEFAULT_LIMITS: RelayLimits = {
   maxMessageBytes: 1024 * 1024,
@@ -58,6 +60,9 @@ export const DEFAULT_LIMITS: RelayLimits = {
   msgsPerSecond: 100,
   bytesPerSecond: 2 * 1024 * 1024,
   maxAwarenessBytes: 4096,
+  /** Per-room update-log caps: reaching either forces an immediate compaction. */
+  maxLogRows: 2000,
+  maxLogBytes: 8 * 1024 * 1024,
 }
 
 export interface RelayOptions {
@@ -77,9 +82,14 @@ export interface RelayOptions {
   store?: RoomStore
   /**
    * Bearer token for POST /admin/revoke (>= 32 chars). Unset = endpoint off.
-   * Body: {"room": "<ws>:<board>", "sub": "<user id>|*", "epoch": <int ≥ 1>}.
+   * Body: {"room": "<ws>:<board>", "sub": "<user id>|*", "epoch"?: <int ≥ 1>}
+   * (epoch defaults to the current minimum + 1). Served on a separate admin
+   * listener bound to `adminHostname` (default 127.0.0.1), never the public port.
    */
   adminToken?: string
+  adminHostname?: string
+  /** Admin listener port (0 = ephemeral). */
+  adminPort?: number
 }
 
 const EMPTY_UPDATE_LEN = 2 // Y.diffUpdate of nothing new: 0 structs, 0 delete-set clients
@@ -109,7 +119,7 @@ class Room {
     const p = (this.doc.store as unknown as { pendingStructs: { update: Uint8Array } | null; pendingDs: Uint8Array | null })
     return (p.pendingStructs?.update.length ?? 0) + (p.pendingDs?.length ?? 0)
   }
-  constructor(readonly name: string, readonly doc: Y.Doc, private store: RoomStore, private compactEvery: number, private idleMs: number, private log: (m: string) => void) {
+  constructor(readonly name: string, readonly doc: Y.Doc, private store: RoomStore, private compactEvery: number, private idleMs: number, private log: (m: string) => void, private logCap: { rows: number; bytes: number } = { rows: Infinity, bytes: Infinity }) {
     this.bytes = Y.encodeStateAsUpdate(doc).length
     this.awareness = new awarenessProtocol.Awareness(doc)
     this.awareness.setLocalState(null)
@@ -141,7 +151,10 @@ class Room {
     this.store.append(this.name, growth) // throws → caller closes 1011; memory untouched
     Y.applyUpdate(this.doc, growth, origin)
     this.bytes += growth.length
-    if (++this.sinceCompact >= this.compactEvery) this.scheduleCompact()
+    const size = this.store.logSize(this.name)
+    // Under sustained load the room never goes idle: force compaction at the cap.
+    if (size.rows >= this.logCap.rows || size.bytes >= this.logCap.bytes) this.compactNow()
+    else if (++this.sinceCompact >= this.compactEvery) this.scheduleCompact()
     return true
   }
 
@@ -238,7 +251,7 @@ export function startRelay(opts: RelayOptions) {
 
   const getRoom = (name: string): Room => {
     let r = rooms.get(name)
-    if (!r) { r = new Room(name, store.load(name), store, opts.compactEvery ?? 500, opts.compactIdleMs ?? 2000, log); rooms.set(name, r) }
+    if (!r) { r = new Room(name, store.load(name), store, opts.compactEvery ?? 500, opts.compactIdleMs ?? 2000, log, { rows: limits.maxLogRows, bytes: limits.maxLogBytes }); rooms.set(name, r) }
     return r
   }
 
@@ -283,10 +296,11 @@ export function startRelay(opts: RelayOptions) {
     const { room, sub, epoch } = body
     if (typeof room !== 'string' || !ROOM_RE.test(room)) return new Response('bad room', { status: 400 })
     if (typeof sub !== 'string' || !sub || sub.length > 128) return new Response('bad sub', { status: 400 })
-    if (typeof epoch !== 'number' || !Number.isSafeInteger(epoch) || epoch < 1) return new Response('bad epoch', { status: 400 })
-    const closed = revoke(room, sub, epoch)
-    log(`admin revoke room=${room} sub=${sub === '*' ? '*' : '[sub]'} epoch=${epoch} closed=${closed}`)
-    return Response.json({ ok: true, closed })
+    if (epoch !== undefined && (typeof epoch !== 'number' || !Number.isSafeInteger(epoch) || epoch < 1)) return new Response('bad epoch', { status: 400 })
+    const e = epoch ?? store.minEpoch(room, sub) + 1
+    const closed = revoke(room, sub, e)
+    log(`admin revoke room=${room} sub=${sub === '*' ? '*' : '[sub]'} epoch=${e} closed=${closed}`)
+    return Response.json({ ok: true, closed, epoch: e })
   }
 
   /** Raise the revocation epoch for a subject ('*' = everyone) and drop live sockets below it. */
@@ -310,7 +324,6 @@ export function startRelay(opts: RelayOptions) {
     async fetch(req, srv) {
       const url = new URL(req.url)
       if (url.pathname === '/healthz') return Response.json({ ok: true, rooms: rooms.size, conns: totalConns })
-      if (url.pathname === '/admin/revoke') return handleAdminRevoke(req)
       const m = url.pathname.match(/^\/r\/([^/]+)$/)
       if (!m) return new Response('not found', { status: 404 })
       let room: string
@@ -431,12 +444,26 @@ export function startRelay(opts: RelayOptions) {
     },
   })
 
+  // Admin API lives on its own listener (loopback/tailnet), never the public port.
+  const admin = opts.adminToken ? Bun.serve({
+    port: opts.adminPort ?? 0,
+    hostname: opts.adminHostname ?? '127.0.0.1',
+    error(err) { log(`admin error: ${err.name}`); return new Response('internal error', { status: 500 }) },
+    fetch(req) {
+      const url = new URL(req.url)
+      if (url.pathname === '/admin/revoke') return handleAdminRevoke(req)
+      return new Response('not found', { status: 404 })
+    },
+  }) : null
+
   return {
     server,
     port: server.port,
+    adminPort: admin?.port,
     revoke,
     stop() {
       server.stop(true)
+      admin?.stop(true)
       for (const r of [...rooms.values()]) dropRoom(r, true)
       store.close()
     },

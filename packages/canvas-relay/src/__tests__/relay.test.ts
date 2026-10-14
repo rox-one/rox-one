@@ -307,19 +307,22 @@ describe('review 3', () => {
     fetch(`http://localhost:${port}/admin/revoke`, { method: 'POST', headers: { authorization: auth, 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) })
 
   test('admin revoke endpoint: auth, validation, closes live sockets', async () => {
-    expect((await revokeReq(relay().port, { room: ROOM, sub: 'x', epoch: 1 })).status).toBe(404) // off by default
+    const off = relay()
+    expect(off.adminPort).toBeUndefined() // off by default
     expect(() => relay({ adminToken: 'short' })).toThrow()
     expect(() => relay({ adminToken: SECRET })).toThrow()
-    const r = relay({ adminToken: ADMIN })
+    const r0 = relay({ adminToken: ADMIN })
+    expect((await revokeReq(r0.port, { room: ROOM, sub: 'x', epoch: 1 })).status).toBe(404) // never on the public port
+    const r = { ...r0, port: r0.port, admin: r0.adminPort }
     const c = client(r.port, await tok('edit', { sub: 'eve' }))
     await c.isSynced()
-    expect((await revokeReq(r.port, { room: ROOM, sub: 'eve', epoch: 1 }, 'Bearer ' + 'b'.repeat(40))).status).toBe(401)
-    expect((await revokeReq(r.port, { room: ROOM, sub: 'eve', epoch: 1 }, `Bearer ${ADMIN}`, { origin: 'https://evil.test' })).status).toBe(403)
-    expect((await revokeReq(r.port, { room: '../x', sub: 'eve', epoch: 1 })).status).toBe(400)
-    expect((await revokeReq(r.port, { room: ROOM, sub: 'eve', epoch: 1.5 })).status).toBe(400)
-    const res = await revokeReq(r.port, { room: ROOM, sub: 'eve', epoch: 1 })
+    expect((await revokeReq(r.admin, { room: ROOM, sub: 'eve', epoch: 1 }, 'Bearer ' + 'b'.repeat(40))).status).toBe(401)
+    expect((await revokeReq(r.admin, { room: ROOM, sub: 'eve', epoch: 1 }, `Bearer ${ADMIN}`, { origin: 'https://evil.test' })).status).toBe(403)
+    expect((await revokeReq(r.admin, { room: '../x', sub: 'eve', epoch: 1 })).status).toBe(400)
+    expect((await revokeReq(r.admin, { room: ROOM, sub: 'eve', epoch: 1.5 })).status).toBe(400)
+    const res = await revokeReq(r.admin, { room: ROOM, sub: 'eve', epoch: 1 })
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ ok: true, closed: 1 })
+    expect(await res.json()).toEqual({ ok: true, closed: 1, epoch: 1 })
     expect(await c.closed).toBe(CLOSE.revoked)
   })
 
@@ -387,5 +390,67 @@ describe('review 3', () => {
     store.minEpoch = (room, sub) => (++calls === 1 ? 0 : Math.max(1, origMin(room, sub))) // verify passes, open sees the revocation
     const c = client(r.port, await tok('edit'))
     expect(await c.closed).toBe(CLOSE.revoked)
+  })
+
+  test('admin: epoch defaults to current + 1, sub "*" revokes everyone; admin bound to loopback', async () => {
+    const r = relay({ adminToken: ADMIN })
+    const a = client(r.port, await tok('edit', { sub: 'a' }))
+    const b = client(r.port, await tok('edit', { sub: 'b' }))
+    await a.isSynced(); await b.isSynced()
+    const res = await revokeReq(r.adminPort, { room: ROOM, sub: '*' })
+    expect(await res.json()).toEqual({ ok: true, closed: 2, epoch: 1 })
+    expect(await a.closed).toBe(CLOSE.revoked)
+    expect(await b.closed).toBe(CLOSE.revoked)
+    expect(((await (await revokeReq(r.adminPort, { room: ROOM, sub: '*' })).json()) as { epoch: number }).epoch).toBe(2)
+  })
+})
+
+describe('review 4', () => {
+  test('SQLite runs with synchronous=FULL', () => {
+    const { Database } = require('bun:sqlite')
+    const p = join(dir, `${Math.random()}.sqlite`)
+    const s = new RoomStore(p)
+    const db = (s as unknown as { db: { query(q: string): { get(): { synchronous: number } } } }).db
+    expect(db.query('PRAGMA synchronous').get().synchronous).toBe(2)
+    s.close(); void Database
+  })
+
+  test('zero-growth updates are not persisted; only growth is', async () => {
+    const store = new RoomStore(join(dir, `${Math.random()}.sqlite`))
+    const r = relay({ store })
+    const a = client(r.port, await tok('edit'))
+    await a.isSynced()
+    a.doc.getText('t').insert(0, 'x')
+    await until(() => store.logSize(ROOM).rows === 1, a.subscribe)
+    const full = Y.encodeStateAsUpdate(a.doc)
+    const enc = encoding.createEncoder()
+    encoding.writeVarUint(enc, 0)
+    syncProtocol.writeUpdate(enc, full)
+    a.ws.send(encoding.toUint8Array(enc)) // duplicate of what the relay has
+    await new Promise(res => setTimeout(res, 150))
+    expect(store.logSize(ROOM).rows).toBe(1)
+    a.ws.close()
+  })
+
+  test('log row cap forces compaction under load (no idle needed)', async () => {
+    const store = new RoomStore(join(dir, `${Math.random()}.sqlite`))
+    const r = relay({ store, compactIdleMs: 60_000, limits: { maxLogRows: 5 } })
+    const a = client(r.port, await tok('edit'))
+    await a.isSynced()
+    for (let i = 0; i < 12; i++) { a.doc.getText('t').insert(0, String(i)); await new Promise(res => setTimeout(res, 10)) }
+    await new Promise(res => setTimeout(res, 150))
+    expect(store.logSize(ROOM).rows).toBeLessThan(5)
+    a.ws.close()
+  })
+
+  test('log byte cap forces compaction', async () => {
+    const store = new RoomStore(join(dir, `${Math.random()}.sqlite`))
+    const r = relay({ store, compactIdleMs: 60_000, limits: { maxLogBytes: 2000 } })
+    const a = client(r.port, await tok('edit'))
+    await a.isSynced()
+    for (let i = 0; i < 5; i++) { a.doc.getText('t').insert(0, 'y'.repeat(900)); await new Promise(res => setTimeout(res, 10)) }
+    await new Promise(res => setTimeout(res, 150))
+    expect(store.logSize(ROOM).bytes).toBeLessThan(2000)
+    a.ws.close()
   })
 })
