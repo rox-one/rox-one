@@ -46,8 +46,8 @@ import {
 } from '@/components/ui/styled-context-menu'
 import { RenameDialog } from '@/components/ui/rename-dialog'
 import { SEEDED_MODES, type SeededMode } from './modes-seed'
-import { useShellModes } from './useModes'
-import { usePillNav } from './usePillNav'
+import { usePillModel } from './usePillNav'
+import { setNavPlacement } from '../components/app-shell/nav-placement'
 import { resolveLucideIcon } from './lucide-icon'
 import { GLYPH_ICONS_BY_NAME } from './glyphs'
 import { surfaceTabFromRoute } from './layout-snapshot'
@@ -56,16 +56,16 @@ import { handleModePillKeyDown } from './mode-pill-keyboard'
 import {
   PILL_BROWSER_SURFACE_ID,
   activatePillSurface,
+  navIdForPill,
   recordPillActivation,
   resetPillSessionUsage,
   setPillExcluded,
   setPillPinned,
   usePillPreferences,
-  visiblePillSurfaces,
   type ResolvedPillSurface,
 } from './pill-composition'
 import { canOpenPillBrowser, useOpenPillBrowser } from './pill-activate'
-import { activeScene, applyScene, clearScene, createScene, useScenes, type Scene } from './scenes'
+import { applyScene, clearScene, createScene, useScenes, type Scene } from './scenes'
 
 /**
  * Name → glyph map for seeded modes; the canonical dictionary (`glyphs.ts`).
@@ -277,9 +277,9 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBar
   const { t, i18n } = useTranslation()
   const navState = useNavigationState()
   const { navigate } = useNavigation()
-  const { modes, shellFlags } = useShellModes()
-  const pillNav = usePillNav(shellFlags)
   const prefs = usePillPreferences()
+  // WP6: the shared selector (same list the sidebar/rail fall back from).
+  const { rendered: available, nav: pillNav } = usePillModel(true)
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
   // A workspace switch rebuilds the frozen usage snapshot, so the frequency
   // ordering computed in one room never carries into another.
@@ -287,7 +287,6 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBar
     resetPillSessionUsage()
   }, [workspaceId])
   const sceneState = useScenes()
-  const scene = useMemo(() => activeScene(sceneState), [sceneState])
   const inboxBlocking = useInboxBlockingCount()
   const setOmniboxOpen = useSetAtom(omniboxOpenAtom)
   const primaryRoute = useAtomValue(primaryPanelRouteAtom)
@@ -296,11 +295,6 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBar
   const badges = { inbox: inboxBlocking }
 
   const [focusId, setFocusId] = useState<string | null>(null)
-  const surfaces = useMemo(() => visiblePillSurfaces(modes, prefs, scene, pillNav), [modes, prefs, scene, pillNav])
-  const available = useMemo(
-    () => surfaces.filter((surface) => surface.kind !== 'panel' || browserAvailable),
-    [surfaces, browserAvailable],
-  )
 
   const browserActive =
     browserAvailable && surfaceTabFromRoute(primaryRoute ?? '')?.kind === 'browser'
@@ -333,7 +327,13 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBar
     (id: string) => setPillPinned(id, !pinnedIds.has(id)),
     [pinnedIds],
   )
-  const handleExclude = useCallback((id: string) => setPillExcluded(id, true), [])
+  // WP6: «Исключить» writes the one placement store (= «Скрыт» in Settings).
+  const handleExclude = useCallback((id: string) => {
+    const surface = available.find((candidate) => candidate.id === id)
+    const navId = surface ? navIdForPill(surface, pillNav.surfaces) : null
+    if (navId) setNavPlacement(navId, 'hidden')
+    else setPillExcluded(id, true)
+  }, [available, pillNav])
   const handleOpenPalette = useCallback(() => {
     if (onOpenPalette) onOpenPalette()
     else setOmniboxOpen(true)

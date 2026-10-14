@@ -130,7 +130,9 @@ describe('shell title helpers', () => {
   it('consumers read the shared reactive list (no static useMemo([]) map)', () => {
     expect(read('platform/SurfaceTabs.tsx')).toContain('buildRouteTitleKeys(')
     expect(read('platform/SurfaceTabs.tsx')).not.toContain('UNIFIED_MODES')
-    expect(read('platform/useModeHotkeys.ts')).toContain('useShellModes()')
+    // WP6: hotkeys read the shared pill selector, which reads useShellModes().
+    expect(read('platform/useModeHotkeys.ts')).toContain('usePillModel(true)')
+    expect(read('platform/usePillNav.ts')).toContain('useShellModes()')
     expect(read('platform/ModeBar.tsx')).toContain('resolveLucideIcon(surface.icon) ?? MODE_ICONS[surface.icon]')
   })
 })
@@ -504,7 +506,7 @@ describe('«Документы» relabel reaches every Notes label', () => {
     // render case in w1-07-rail-modes.test.tsx.
     const rail = read('platform/ActivityRail.tsx')
     expect(rail).toContain('const { shellFlags } = useShellModes()')
-    expect(rail).toContain('resolvePrimaryNav({ shellFlags, modeFlags, placements })')
+    expect(rail).toContain('resolvePrimaryNav({ shellFlags, modeFlags, placements, pillNavIds })')
     expect(read('platform/InspectorHost.tsx')).toContain('t(navDestinationLabelKey(destination, shellFlags))')
     const compact = read('components/app-shell/CompactWorkspaceMenu.tsx')
     expect(compact).toContain('t(navDestinationLabelKey(service, shellFlags))')

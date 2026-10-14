@@ -2,13 +2,18 @@ import * as React from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { handleSidebarTreeKeyDown } from './sidebar-keyboard'
+import { useSurfaceActive } from '@/lib/surface-keepalive'
 
 /** Active panel navigators share the primary sidebar; other panels retain their own navigation. */
 export const ShellSidebarContext = React.createContext<HTMLElement | null>(null)
 
 export function useShellSidebarTarget(): HTMLElement | null {
   const target = React.useContext(ShellSidebarContext)
-  return target
+  // WP6: a retained (kept-alive, inactive) surface must not portal into the
+  // shared slot — Notes showed the Входящие tree. It renders its nav inline in
+  // its hidden pane instead, so the nav state survives until it is active again.
+  const active = useSurfaceActive()
+  return active ? target : null
 }
 
 export function ShellSidebarPortal({ children, className, ...props }: React.HTMLAttributes<HTMLElement>) {

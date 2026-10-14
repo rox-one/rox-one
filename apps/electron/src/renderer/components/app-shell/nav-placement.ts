@@ -55,8 +55,60 @@ export function readNavPlacements(): NavPlacements {
 let current: NavPlacements | null = null
 const listeners = new Set<() => void>()
 
+/** Old titlebar-pill preferences (`pill-composition.ts`, kept for pins/usage). */
+const OLD_PILL_PREFS_KEY = 'craft-workbench-pill-prefs-v1'
+/** Old pill surface id → registry id(s) and where the user still saw it (the sidebar). */
+const OLD_PILL_EXCLUDED: Readonly<Record<string, Readonly<Record<string, NavPlacement>>>> = {
+  feed: { feed: 'more' },
+  team: { messenger: 'primary', sessions: 'primary' },
+  notes: { docs: 'primary' },
+  browser: { browser: 'more' },
+}
+/** Old pinned extra mode id → registry id. */
+const MODE_TO_NAV: Readonly<Record<string, string>> = {
+  inbox: 'inbox', chat: 'sessions', tasks: 'tasks', notes: 'docs', calendar: 'calendar',
+  goals: 'goals', messenger: 'messenger', feed: 'feed', meetings: 'meetings',
+}
+
+/**
+ * One-time migration of the old pill hides/pins into the placement store.
+ * Before WP6 an excluded pill surface was still in the sidebar, so it moves
+ * to its sidebar group (not «Скрыт» — hiding it would remove it from the app);
+ * an extra pinned mode becomes «Пилюли сверху». An old Home exclusion is
+ * dropped: restoring the Главная pill is the point of WP6 (#3).
+ */
+export function migrateOldPillPreferences(raw: string | null): Record<string, NavPlacement> {
+  const out: Record<string, NavPlacement> = {}
+  if (!raw) return out
+  try {
+    const parsed = JSON.parse(raw) as { excluded?: unknown; pinned?: unknown }
+    for (const id of Array.isArray(parsed.excluded) ? parsed.excluded : []) {
+      Object.assign(out, typeof id === 'string' ? OLD_PILL_EXCLUDED[id] ?? {} : {})
+    }
+    for (const id of Array.isArray(parsed.pinned) ? parsed.pinned : []) {
+      const navId = typeof id === 'string' ? MODE_TO_NAV[id] : undefined
+      if (navId && !out[navId]) out[navId] = 'pills'
+    }
+  } catch {
+    /* corrupt old prefs: nothing to migrate */
+  }
+  return out
+}
+
 function get(): NavPlacements {
-  if (!current) current = readNavPlacements()
+  if (current) return current
+  const store = storage()
+  if (store && store.getItem(NAV_PLACEMENT_KEY) === null) {
+    const migrated = migrateOldPillPreferences(store.getItem(OLD_PILL_PREFS_KEY))
+    try {
+      store.setItem(NAV_PLACEMENT_KEY, JSON.stringify(migrated))
+    } catch {
+      /* ignore */
+    }
+    current = Object.keys(migrated).length > 0 ? migrated : EMPTY
+    return current
+  }
+  current = readNavPlacements()
   return current
 }
 
@@ -78,7 +130,8 @@ export function setNavPlacement(id: string, placement: NavPlacement | null): voi
 export function resetNavPlacements(): void {
   current = EMPTY
   try {
-    storage()?.removeItem(NAV_PLACEMENT_KEY)
+    // Keep the (empty) key: its absence would re-run the one-time migration.
+    storage()?.setItem(NAV_PLACEMENT_KEY, '{}')
   } catch {
     /* ignore */
   }

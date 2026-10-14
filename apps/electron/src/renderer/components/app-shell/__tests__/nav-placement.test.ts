@@ -1,89 +1,117 @@
-/** WP6: one placement model for the pill, the sidebar and the rail. */
-import { beforeEach, describe, expect, it } from 'bun:test'
+/** WP6: one exclusive placement model for the pill, the sidebar and the rail. */
+import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { useDomForFile } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
 import type { ModeContribution } from '@rox/core/platform'
+import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { resolveNavSurfaces, resolvePrimaryNav, PRIMARY_NAV } from '../primary-nav'
-import { NAV_PLACEMENT_KEY, __resetNavPlacementsForTests, readNavPlacements, setNavPlacement } from '../nav-placement'
-import { __resetPillCompositionForTests, visiblePillSurfaces } from '../../../platform/pill-composition'
+import {
+  NAV_PLACEMENT_KEY, __resetNavPlacementsForTests, migrateOldPillPreferences, readNavPlacements, resetNavPlacements, setNavPlacement,
+  type NavPlacement,
+} from '../nav-placement'
+import { __resetPillCompositionForTests, pillSlotSurfaces, resolvePillModel } from '../../../platform/pill-composition'
 
 // eslint-disable-next-line react-hooks/rules-of-hooks -- test DOM environment setup (localStorage), not a React hook
 useDomForFile()
 
 const none = new Set<string>()
-const mode = (id: string, order: number): ModeContribution => ({
-  id, titleKey: `workbench.mode.${id}`, icon: 'Circle', rootRoute: `/${id}`, order, defaultPinned: true, layoutProfileId: 'agent',
+const mode = (id: string, order: number, over: Partial<ModeContribution> = {}): ModeContribution => ({
+  id, titleKey: `workbench.mode.${id}`, icon: 'Circle', rootRoute: `/${id}`, order, defaultPinned: true, layoutProfileId: 'agent', ...over,
 })
 const MODES = [mode('home', 10), mode('chat', 20), mode('tasks', 40), mode('notes', 50), mode('feed', 60), mode('inbox', 70)]
 const prefs = { pinned: [], excluded: [], usage: {} }
 const ids = (list: { id: string }[]) => list.map(e => e.id)
 
-beforeEach(() => {
+function model(placements: Record<string, NavPlacement> = {}, over: { modes?: ModeContribution[]; scene?: { surfaceIds: string[] } | null; pillShown?: boolean; browserAvailable?: boolean } = {}) {
+  const nav = { surfaces: resolveNavSurfaces({ shellFlags: none, placements }), placements }
+  const pill = resolvePillModel({ modes: over.modes ?? MODES, prefs, scene: over.scene ?? null, nav, browserAvailable: over.browserAvailable ?? true, pillShown: over.pillShown ?? true })
+  const sidebar = resolvePrimaryNav({ shellFlags: none, placements, pillNavIds: pill.navIds })
+  return { pill, sidebar: ids(sidebar), sidebarEntries: sidebar }
+}
+
+function clean() {
   __resetPillCompositionForTests()
   __resetNavPlacementsForTests()
   globalThis.localStorage?.removeItem(NAV_PLACEMENT_KEY)
-})
+  globalThis.localStorage?.removeItem('craft-workbench-pill-prefs-v1')
+  __resetNavPlacementsForTests()
+}
+beforeEach(clean)
+// Module-level stores: never leak placements into other test files.
+afterEach(clean)
 
-describe('sidebar placement', () => {
-  it('defaults: Home lives in the pills, every other routed surface keeps its sidebar group', () => {
-    const sidebar = ids(resolvePrimaryNav({ shellFlags: none }))
-    expect(sidebar).not.toContain('home')
-    for (const id of ['inbox', 'sessions', 'docs', 'tasks', 'projects', 'memory', 'knowledge', 'missions', 'drive', 'sources', 'settings']) {
-      expect(sidebar).toContain(id)
-    }
-  })
-
-  it('every routed surface is reachable somewhere (pills or sidebar) by default', () => {
+describe('exclusive placement — one surface, one place', () => {
+  it('defaults: the starter pill surfaces show «Пилюли сверху» and are not duplicated in the sidebar', () => {
     const surfaces = resolveNavSurfaces({ shellFlags: none })
-    for (const entry of surfaces) expect(['pills', 'primary', 'more']).toContain(entry.placement)
-    const routed = PRIMARY_NAV.filter(e => (e.route || e.action) && !e.shellFlag).map(e => e.id)
-    expect(ids(surfaces).sort()).toEqual(routed.sort())
+    const placement = (id: string) => surfaces.find(e => e.id === id)?.placement
+    for (const id of ['home', 'feed', 'sessions', 'docs', 'browser']) expect(placement(id)).toBe('pills')
+    const { pill, sidebar } = model()
+    expect(ids(pill.rendered)).toEqual(['agent', 'feed', 'team', 'notes', 'browser'])
+    for (const id of ['home', 'feed', 'sessions', 'docs', 'browser']) expect(sidebar).not.toContain(id)
+    for (const id of ['inbox', 'tasks', 'projects', 'memory', 'knowledge', 'missions', 'settings']) expect(sidebar).toContain(id)
   })
 
-  it('applies the user placement: primary / more / hidden / pills', () => {
-    const placements = { memory: 'primary', inbox: 'more', tasks: 'hidden', drive: 'pills' } as const
-    const nav = resolvePrimaryNav({ shellFlags: none, placements })
-    const group = (id: string) => nav.find(e => e.id === id)?.group
-    expect(group('memory')).toBe('primary')
-    expect(group('inbox')).toBe('more')
-    expect(ids(nav)).not.toContain('tasks')
-    expect(ids(nav)).not.toContain('drive')
-    // Compact window (no pill): pill surfaces fall back to the primary list.
-    const compact = resolvePrimaryNav({ shellFlags: none, placements, pillsVisible: false })
-    expect(compact.find(e => e.id === 'drive')?.group).toBe('primary')
-    expect(compact.find(e => e.id === 'home')?.group).toBe('primary')
+  it('Messenger on: Команда = Мессенджер in the pill, Чат goes back to the sidebar', () => {
+    const flags = new Set([WORKBENCH_FLAG.modeMessengerV1])
+    const surfaces = resolveNavSurfaces({ shellFlags: flags })
+    expect(surfaces.find(e => e.id === 'messenger')?.placement).toBe('pills')
+    expect(surfaces.find(e => e.id === 'sessions')?.placement).toBe('primary')
+  })
+
+  it('every routed surface is reachable (pill or sidebar) by default', () => {
+    const { pill, sidebar } = model()
+    const reachable = new Set([...sidebar, ...pill.navIds])
+    for (const entry of PRIMARY_NAV.filter(e => (e.route || e.action) && !e.shellFlag)) expect(reachable.has(entry.id)).toBe(true)
+  })
+
+  it('user placement moves a surface out of the pill / into it', () => {
+    const { pill, sidebar, sidebarEntries } = model({ feed: 'more', docs: 'primary', tasks: 'pills', memory: 'pills', inbox: 'hidden' })
+    expect(ids(pill.rendered)).not.toContain('feed')
+    expect(ids(pill.rendered)).not.toContain('notes')
+    expect(ids(pill.rendered)).toContain('tasks')
+    expect(ids(pill.rendered)).toContain('memory')
+    expect(sidebarEntries.find(e => e.id === 'feed')?.group).toBe('more')
+    expect(sidebarEntries.find(e => e.id === 'docs')?.group).toBe('primary')
+    expect(sidebar).not.toContain('tasks')
+    expect(sidebar).not.toContain('inbox')
+    expect(ids(pill.rendered)).not.toContain('inbox')
   })
 
   it('settings cannot be moved', () => {
-    const nav = resolvePrimaryNav({ shellFlags: none, placements: { settings: 'hidden' } })
-    expect(ids(nav)).toContain('settings')
+    expect(ids(resolvePrimaryNav({ shellFlags: none, placements: { settings: 'hidden' } }))).toContain('settings')
   })
 })
 
-describe('pill placement', () => {
-  const pill = (placements: Record<string, 'pills' | 'primary' | 'more' | 'hidden'> = {}) =>
-    visiblePillSurfaces(MODES, prefs, null, { surfaces: resolveNavSurfaces({ shellFlags: none, placements }), placements })
-
-  it('Home is an icon-only pill and leads', () => {
-    const list = pill()
-    expect(list[0]?.id).toBe('agent')
-    expect(list[0]?.iconOnly).toBe(true)
-    expect(list[0]?.titleKey).toBe('workbench.mode.home')
+describe('sidebar fallback follows what the pill actually renders', () => {
+  it('compact window (no pill): pill surfaces fall back to the sidebar', () => {
+    const { sidebar } = model({}, { pillShown: false })
+    for (const id of ['home', 'feed', 'sessions', 'docs', 'browser']) expect(sidebar).toContain(id)
   })
 
-  it('an old pill exclusion no longer hides Home', () => {
-    const list = visiblePillSurfaces(MODES, { ...prefs, excluded: ['agent'] }, null, { surfaces: resolveNavSurfaces({ shellFlags: none }), placements: {} })
-    expect(ids(list)).toContain('agent')
+  it('an active scene without them: Главная and pill-placed surfaces fall back', () => {
+    const { pill, sidebar } = model({ tasks: 'pills' }, { scene: { surfaceIds: ['feed'] } })
+    expect(ids(pill.rendered)).toEqual(['feed'])
+    for (const id of ['home', 'tasks', 'docs', 'sessions']) expect(sidebar).toContain(id)
+    expect(sidebar).not.toContain('feed')
   })
 
-  it('surfaces placed elsewhere leave the pill; pill-placed ones join it', () => {
-    const list = ids(pill({ feed: 'more', home: 'hidden', tasks: 'pills', memory: 'pills' }))
-    expect(list).not.toContain('feed')
-    expect(list).not.toContain('agent')
-    expect(list).toContain('tasks')
-    expect(list).toContain('memory')
-    const memory = pill({ memory: 'pills' }).find(s => s.id === 'memory')!
-    expect(memory.mode?.rootRoute).toBeTruthy()
-    expect(memory.isActive?.({ navigator: 'memory' } as never)).toBe(true)
+  it('a non-navigable mode or an unavailable browser falls back', () => {
+    const modes = MODES.map(m => (m.id === 'tasks' ? { ...m, rootRoute: null } : m))
+    const { pill, sidebar } = model({ tasks: 'pills' }, { modes, browserAvailable: false })
+    expect(ids(pill.rendered)).not.toContain('tasks')
+    expect(ids(pill.rendered)).not.toContain('browser')
+    expect(sidebar).toContain('tasks')
+    expect(sidebar).toContain('browser')
+  })
+})
+
+describe('Home pill and ⌘-slots', () => {
+  it('Главная is an icon-only lead and is not numbered', () => {
+    const { pill } = model()
+    expect(pill.rendered[0]?.id).toBe('agent')
+    expect(pill.rendered[0]?.iconOnly).toBe(true)
+    expect(pill.rendered[0]?.titleKey).toBe('workbench.mode.home')
+    expect(ids(pill.slots)).toEqual(['feed', 'team', 'notes', 'browser'])
+    expect(ids(pillSlotSurfaces(pill.rendered))).toEqual(ids(pill.slots))
   })
 })
 
@@ -93,9 +121,23 @@ describe('placement store', () => {
     expect(readNavPlacements()).toEqual({ memory: 'primary' })
   })
 
-  it('setNavPlacement(null) resets to default', () => {
+  it('setNavPlacement(null) resets to default; reset keeps the key (no re-migration)', () => {
     setNavPlacement('memory', 'primary')
     setNavPlacement('memory', null)
     expect(readNavPlacements()).toEqual({})
+    resetNavPlacements()
+    expect(globalThis.localStorage?.getItem(NAV_PLACEMENT_KEY)).toBe('{}')
+  })
+
+  it('migrates old pill hides to the sidebar (still visible there before) and extra pins to the pills; Home stays', () => {
+    const migrated = migrateOldPillPreferences(JSON.stringify({ excluded: ['feed', 'team', 'agent'], pinned: ['tasks', 'notes'] }))
+    expect(migrated).toEqual({ feed: 'more', messenger: 'primary', sessions: 'primary', tasks: 'pills', docs: 'pills' })
+    expect(migrated.home).toBeUndefined()
+  })
+
+  it('runs the migration once, on first read', () => {
+    globalThis.localStorage?.setItem('craft-workbench-pill-prefs-v1', JSON.stringify({ excluded: ['browser'], pinned: [], usage: {} }))
+    setNavPlacement('memory', 'primary')
+    expect(readNavPlacements()).toEqual({ browser: 'more', memory: 'primary' })
   })
 })

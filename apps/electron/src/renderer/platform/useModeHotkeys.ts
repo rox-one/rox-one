@@ -2,31 +2,18 @@
  * ⌘/Ctrl 1…7 — jump to the n-th VISIBLE pill surface (composition order, pins
  * and the session-frozen frequency order), matching what the user sees in the
  * titlebar pill. Disabled / absent surfaces are skipped by the composition, so
- * a slot may map to nothing.
+ * a slot may map to nothing. WP6: the icon-only Главная is not numbered.
  */
-import { useMemo } from 'react'
 import { useAction } from '@/actions'
 import { navigate } from '@/lib/navigate'
-import { useShellModes } from './useModes'
-import { usePillNav } from './usePillNav'
-import {
-  activatePillSurface,
-  pillSurfaceForSlot,
-  recordPillActivation,
-  usePillPreferences,
-  visiblePillSurfaces,
-} from './pill-composition'
+import { usePillModel } from './usePillNav'
+import { activatePillSurface, pillSurfaceForSlot, recordPillActivation } from './pill-composition'
 import { useOpenPillBrowser } from './pill-activate'
-import { activeScene, useScenes } from './scenes'
 
 export function useModeHotkeys(): void {
-  const { modes, shellFlags } = useShellModes()
-  const pillNav = usePillNav(shellFlags)
-  const prefs = usePillPreferences()
-  const scenes = useScenes()
-  const scene = useMemo(() => activeScene(scenes), [scenes])
   const openBrowser = useOpenPillBrowser()
-  const surfaces = useMemo(() => visiblePillSurfaces(modes, prefs, scene, pillNav), [modes, prefs, scene, pillNav])
+  // WP6: Главная leads the pill but is not numbered — ⌘1…7 keep their slots.
+  const { slots: surfaces } = usePillModel(true)
   const go = (slot: number) => () => {
     const surface = pillSurfaceForSlot(surfaces, slot)
     if (!surface) return

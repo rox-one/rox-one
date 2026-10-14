@@ -77,6 +77,8 @@ export interface ResolvedPillSurface {
   iconComponent?: LucideIcon
   /** Active test for registry surfaces that are not seeded modes. */
   isActive?: (navState: NavigationState) => boolean
+  /** Joined through a Settings placement (not the starter composition). */
+  placed?: boolean
 }
 
 function resolveMode(
@@ -315,71 +317,125 @@ export interface PillNavPlacement {
   placements: NavPlacements
 }
 
-/** Registry id a pill surface stands for (its mode, or the browser panel). */
-function navIdForPill(surface: ResolvedPillSurface, nav: readonly ResolvedPrimaryNavEntry[]): string | null {
+/** Registry id a resolved pill surface stands for (its mode, or the browser panel). */
+export function navIdForPill(surface: Pick<ResolvedPillSurface, 'id' | 'kind' | 'mode'>, nav: readonly ResolvedPrimaryNavEntry[]): string | null {
   if (surface.kind === 'panel') return surface.id === PILL_BROWSER_SURFACE_ID ? 'browser' : null
   const modeId = surface.mode?.id
-  return nav.find((entry) => entry.modeId === modeId)?.id ?? nav.find((entry) => entry.id === surface.id)?.id ?? null
+  return nav.find((entry) => entry.modeId !== undefined && entry.modeId === modeId)?.id ?? nav.find((entry) => entry.id === surface.id)?.id ?? null
 }
 
 /**
- * WP6 placement on top of the composition: a surface the user explicitly
- * placed elsewhere (sidebar, «Ещё», hidden) leaves the pill; a surface placed
- * in the pills joins it (registry modes as modes, other screens by their root
- * route). Home leads and ignores the pill's own «exclude» (only the Settings
- * placement hides it).
+ * WP6 exclusive placement: the pill shows exactly the registry surfaces whose
+ * placement is «Пилюли сверху» — the starter composition keeps its spec
+ * (label/icon/fallback) for the ones it declares, every other pill-placed
+ * surface joins by its mode (or its root route). Pins and the frozen usage
+ * order still sort them; the old pill «exclude» list is superseded by the
+ * placement store (migrated once, `nav-placement.ts`).
  */
-export function applyNavPlacement(
-  ordered: readonly ResolvedPillSurface[],
+function placedPillSurfaces(
   modes: readonly ModeContribution[],
+  prefs: PillPreferences,
   nav: PillNavPlacement,
 ): ResolvedPillSurface[] {
-  const placementOf = (id: string | null) => (id ? nav.placements[id] : undefined)
-  const kept = ordered.filter((surface) => {
-    const placement = placementOf(navIdForPill(surface, nav.surfaces))
-    return placement === undefined || placement === 'pills'
-  })
-  const represented = new Set(kept.map((surface) => navIdForPill(surface, nav.surfaces)).filter(Boolean) as string[])
   const byId = new Map(modes.map((mode) => [mode.id, mode]))
+  const pillIds = new Set(nav.surfaces.filter((entry) => entry.placement === 'pills').map((entry) => entry.id))
+  const represented = new Set<string>()
+  const specs: PillSurface[] = []
+  for (const spec of DEFAULT_PILL_SURFACES) {
+    const navId = spec.kind === 'panel'
+      ? (spec.id === PILL_BROWSER_SURFACE_ID ? 'browser' : null)
+      : navIdForPill({ id: spec.id, kind: 'mode', mode: resolveMode(spec, byId) ?? null }, nav.surfaces)
+    if (!navId || !pillIds.has(navId)) continue
+    specs.push(spec)
+    represented.add(navId)
+  }
+  const resolved = resolvePillSurfaces(specs, modes)
   for (const entry of nav.surfaces) {
-    if (entry.placement !== 'pills' || represented.has(entry.id)) continue
+    if (!pillIds.has(entry.id) || represented.has(entry.id)) continue
     if (entry.action === 'open-browser') {
-      kept.push({ id: PILL_BROWSER_SURFACE_ID, kind: 'panel', titleKey: 'workbench.pill.browser', icon: 'Globe', mode: null })
+      resolved.push({ id: PILL_BROWSER_SURFACE_ID, kind: 'panel', titleKey: 'workbench.pill.browser', icon: 'Globe', mode: null })
       continue
     }
     const mode = entry.modeId ? byId.get(entry.modeId) : undefined
     if (mode) {
       if (!isModeNavigable(mode)) continue
-      kept.push({
-        id: mode.id, kind: 'mode', titleKey: entry.labelKey, icon: mode.icon, mode,
+      resolved.push({
+        id: mode.id, kind: 'mode', titleKey: entry.labelKey, icon: mode.icon, mode, placed: true,
         ...(entry.id === 'home' ? { iconOnly: true, titleKey: 'workbench.mode.home' } : {}),
       })
       continue
     }
     if (entry.modeId || !entry.route || entry.disabled) continue
-    const rootRoute = entry.route()
-    kept.push({
-      id: entry.id, kind: 'mode', titleKey: entry.labelKey, icon: '', iconComponent: entry.icon, isActive: entry.isActive,
-      mode: { id: entry.id, titleKey: entry.labelKey, icon: '', rootRoute, order: 1000 } as ModeContribution,
+    resolved.push({
+      id: entry.id, kind: 'mode', titleKey: entry.labelKey, icon: '', iconComponent: entry.icon, isActive: entry.isActive, placed: true,
+      mode: { id: entry.id, titleKey: entry.labelKey, icon: '', rootRoute: entry.route(), order: 1000 } as ModeContribution,
     })
   }
-  const home = kept.findIndex((surface) => surface.iconOnly)
-  if (home > 0) kept.unshift(...kept.splice(home, 1))
-  return kept
+  return orderPillSurfaces(resolved, { ...prefs, excluded: [] }, sessionUsage(prefs.usage))
 }
 
-/** The pill's visible order: composition + extras, minus exclusions, pinned and frequency-sorted, then placement. */
+/** Home (icon-only) leads the rendered pill. */
+function homeFirst(list: ResolvedPillSurface[]): ResolvedPillSurface[] {
+  const home = list.findIndex((surface) => surface.iconOnly)
+  if (home > 0) list.unshift(...list.splice(home, 1))
+  return list
+}
+
+/**
+ * The pill's rendered order. With `nav` (the app): exclusive WP6 placement;
+ * an active Сцена still overrides the composition. Without `nav`: the
+ * pre-WP6 composition (pins, exclusions, frequency) — kept for old callers/tests.
+ */
 export function visiblePillSurfaces(
   modes: readonly ModeContribution[],
   prefs: PillPreferences,
   scene: Pick<Scene, 'surfaceIds'> | null = null,
   nav: PillNavPlacement | null = null,
 ): ResolvedPillSurface[] {
-  if (scene && scene.surfaceIds.length > 0) return scenePillSurfaces(DEFAULT_PILL_SURFACES, modes, scene)
+  if (scene && scene.surfaceIds.length > 0) return homeFirst(scenePillSurfaces(DEFAULT_PILL_SURFACES, modes, scene))
+  if (nav) return homeFirst(placedPillSurfaces(modes, prefs, nav))
   const surfaces = resolvePillSurfaces(DEFAULT_PILL_SURFACES, modes, prefs.pinned)
-  // Home ignores the pill's «exclude» (an old exclusion hid it for good — WP6 restores it).
-  const ordered = orderPillSurfaces(surfaces, { ...prefs, excluded: prefs.excluded.filter((id) => id !== 'agent') }, sessionUsage(prefs.usage))
-  return nav ? applyNavPlacement(ordered, modes, nav) : ordered
+  return orderPillSurfaces(surfaces, prefs, sessionUsage(prefs.usage))
+}
+
+/**
+ * ⌘1…7 slots: Home is not numbered (it is the icon-only lead), so the
+ * remaining surfaces keep the slots they had before Home moved to the front.
+ */
+export function pillSlotSurfaces(rendered: readonly ResolvedPillSurface[]): ResolvedPillSurface[] {
+  return rendered.filter((surface) => !surface.iconOnly)
+}
+
+/**
+ * WP6 shared selector: what the titlebar pill ACTUALLY renders (scene, flags,
+ * non-navigable modes, browser availability, TopBar compact) and which
+ * registry surfaces that covers. The sidebar and the rail show a pill-placed
+ * surface only when it is not in this set, so nothing becomes unreachable.
+ */
+export interface PillModel {
+  rendered: ResolvedPillSurface[]
+  slots: ResolvedPillSurface[]
+  navIds: ReadonlySet<string>
+}
+
+export function resolvePillModel(input: {
+  modes: readonly ModeContribution[]
+  prefs: PillPreferences
+  scene: Pick<Scene, 'surfaceIds'> | null
+  nav: PillNavPlacement
+  browserAvailable: boolean
+  pillShown: boolean
+}): PillModel {
+  const all = visiblePillSurfaces(input.modes, input.prefs, input.scene, input.nav)
+    .filter((surface) => surface.kind !== 'panel' || input.browserAvailable)
+  const navIds = new Set<string>()
+  if (input.pillShown) {
+    for (const surface of all) {
+      const id = navIdForPill(surface, input.nav.surfaces)
+      if (id) navIds.add(id)
+    }
+  }
+  return { rendered: all, slots: pillSlotSurfaces(all), navIds }
 }
 
 /**

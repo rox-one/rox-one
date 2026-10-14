@@ -80,6 +80,7 @@ import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { type LinkItem, type SidebarItem as SidebarLinkItem } from "./LeftSidebar"
 import { ShellSidebarNav } from "./ShellSidebarNav"
+import { modePillShown } from "./mode-pill-layout"
 import { useScrollEdgeAttribute } from "@/hooks/useScrollEdgeAttribute"
 import { ShellLayoutMode } from './ShellLayoutMode'
 import { SuperEngineeringShellExtras } from './SuperEngineeringShellExtras'
@@ -3201,7 +3202,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                         applicationSectionsOpen={applicationSectionsOpen}
                         onApplicationSectionsOpenChange={handleApplicationSectionsOpenChange}
                         contextSlotRef={setShellSidebarSlot}
-                        pillsVisible={!isAutoCompact}
+                        pillShown={modePillShown(isAutoCompact)}
                       />
                     </>
                   )}

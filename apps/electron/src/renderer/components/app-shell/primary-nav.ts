@@ -25,7 +25,8 @@
  *   disabled with a tooltip in the rail (prior rail behaviour); the legacy
  *   sidebar keeps it navigable as before.
  *
- * Nothing here changes routes, deep links, the ⌘1…7 mode-pill slots
+ * WP6: the ⌘1…7 slots follow the pill's slot list (`pillSlotSurfaces`) —
+ * Главная leads the pill but is not numbered. Nothing here changes routes, deep links, the old mode-pill slot data
  * (`modes-seed.ts` order) or persisted rail preferences.
  */
 import { Target, type LucideIcon } from 'lucide-react'
@@ -147,11 +148,12 @@ export interface PrimaryNavContext {
   /** User placements (`nav-placement.ts`); omitted = defaults. */
   placements?: NavPlacements
   /**
-   * The titlebar pill is on screen. When it is not (compact window), surfaces
-   * placed in the pills fall back to the sidebar's primary list so nothing
-   * becomes unreachable. Default true.
+   * Registry ids the titlebar pill actually renders (`resolvePillModel`).
+   * A pill-placed surface missing from it (scene, flag off, compact window…)
+   * falls back to the sidebar's primary list, so nothing is unreachable.
+   * Omitted = every pill-placed surface is assumed to be in the pill.
    */
-  pillsVisible?: boolean
+  pillNavIds?: ReadonlySet<string>
 }
 
 /** Flag-resolved group before any user choice. */
@@ -159,11 +161,19 @@ function defaultGroup(entry: PrimaryNavEntry, shellFlags: ReadonlySet<string>): 
   return entry.demotedWhenShellFlag && shellFlags.has(entry.demotedWhenShellFlag) ? 'more' : entry.group
 }
 
-/** Default placement: Home is the icon-only pill; everything else keeps its registry group. */
+/**
+ * Default placement (exclusive, one surface = one place): the starter pill
+ * surfaces — Главная (icon), Лента, Команда (Мессенджер, else Чат), Заметки,
+ * Браузер — live in the pills; everything else keeps its registry group.
+ */
 export function defaultPlacement(entry: PrimaryNavEntry, shellFlags: ReadonlySet<string>): NavPlacement {
-  if (entry.id === HOME_NAV_ID) return 'pills'
+  if (DEFAULT_PILL_NAV_IDS.has(entry.id)) return 'pills'
+  if (entry.id === 'sessions' && !shellFlags.has(WORKBENCH_FLAG.modeMessengerV1)) return 'pills'
   return defaultGroup(entry, shellFlags)
 }
+
+/** Registry ids of the starter pill composition (`DEFAULT_PILL_SURFACES`); Чат joins while Мессенджер is off. */
+export const DEFAULT_PILL_NAV_IDS: ReadonlySet<string> = new Set([HOME_NAV_ID, 'feed', 'messenger', 'docs', 'browser'])
 
 /** Every surface available under the current flags, with its effective placement (Settings list). */
 export function resolveNavSurfaces({ shellFlags, modeFlags = {}, placements = {} }: PrimaryNavContext): ResolvedPrimaryNavEntry[] {
@@ -176,7 +186,8 @@ export function resolveNavSurfaces({ shellFlags, modeFlags = {}, placements = {}
     resolved.push({
       ...entry,
       labelKey: entry.id === 'docs' ? notesTitleKey(shellFlags, entry.labelKey) : entry.labelKey,
-      group: placement === 'primary' || placement === 'more' ? placement : 'primary',
+      // Pill / hidden surfaces keep their registry group for the sidebar fallback.
+      group: placement === 'primary' || placement === 'more' ? placement : defaultGroup(entry, shellFlags),
       disabled: entry.modeFlag ? modeFlags[entry.modeFlag] === false : false,
       placement,
     })
@@ -190,9 +201,9 @@ export function resolveNavSurfaces({ shellFlags, modeFlags = {}, placements = {}
  * ones return to the primary list while the pill is off screen).
  */
 export function resolvePrimaryNav(context: PrimaryNavContext): ResolvedPrimaryNavEntry[] {
-  const pillsVisible = context.pillsVisible ?? true
+  const inPill = (id: string) => context.pillNavIds ? context.pillNavIds.has(id) : true
   const visible = resolveNavSurfaces(context).filter(entry =>
-    entry.placement === 'primary' || entry.placement === 'more' || (entry.placement === 'pills' && !pillsVisible))
+    entry.placement === 'primary' || entry.placement === 'more' || (entry.placement === 'pills' && !inPill(entry.id)))
   return [...visible.filter(e => e.group === 'primary'), ...visible.filter(e => e.group === 'more')]
 }
 

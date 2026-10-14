@@ -23,7 +23,7 @@ import { visibleExtraScreens } from '@/pages/extra-screens/registry'
 import { enabledShellFlagsAtom } from '@/platform/unified-flags'
 import { isSessionsNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { isSeparatorItem, LeftSidebar, type LinkItem, type SidebarItem } from './LeftSidebar'
-import { useNavPlacements } from './nav-placement'
+import { usePillModel } from '@/platform/usePillNav'
 import { PRIMARY_NAV, PRIMARY_NAV_LINK_IDS, resolvePrimaryNav, type ResolvedPrimaryNavEntry } from './primary-nav'
 
 /** WP4: experimental screen icon tints from colour tokens (were literal hex). */
@@ -51,8 +51,8 @@ export interface ShellSidebarNavProps {
    * (`ShellSidebarPortal`); it sits right under the global primary nav.
    */
   contextSlotRef?: (element: HTMLDivElement | null) => void
-  /** The titlebar pill is on screen (false in compact windows): pill-placed surfaces fall back here. */
-  pillsVisible?: boolean
+  /** The TopBar renders the pill (`modePillShown`); pill-placed surfaces it does not render fall back here. */
+  pillShown?: boolean
 }
 
 export const ShellSidebarNav = React.memo(function ShellSidebarNav({
@@ -65,15 +65,15 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   applicationSectionsOpen,
   onApplicationSectionsOpenChange,
   contextSlotRef,
-  pillsVisible = true,
+  pillShown = true,
 }: ShellSidebarNavProps) {
   const { t } = useTranslation()
   const navState = useNavigationState()
   const shellFlags = useAtomValue(enabledShellFlagsAtom)
   const enabledExtraScreenIds = useAtomValue(enabledExtraScreenIdsAtom)
 
-  const placements = useNavPlacements()
-  const entries = React.useMemo(() => resolvePrimaryNav({ shellFlags, placements, pillsVisible }), [shellFlags, placements, pillsVisible])
+  const { nav: { placements }, navIds: pillNavIds } = usePillModel(pillShown)
+  const entries = React.useMemo(() => resolvePrimaryNav({ shellFlags, placements, pillNavIds }), [shellFlags, placements, pillNavIds])
 
   const { primaryLinks, moreLinks } = React.useMemo(() => {
     const byId = new Map<string, LinkItem>()
