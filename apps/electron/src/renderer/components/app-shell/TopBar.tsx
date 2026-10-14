@@ -487,7 +487,7 @@ export function TopBar({
           className="rox-mode-pill-anchor"
           style={{ left: `calc(50% - ${leftInset / 2}px)`, visibility: modePillLayout ? undefined : 'hidden' }}
         >
-          <ModeBar collapsed={modePillLayout?.collapsed ?? false} onMeasure={handleModePillMeasure} />
+          <ModeBar collapsed={modePillLayout?.collapsed ?? false} onMeasure={handleModePillMeasure} onOpenBrowser={onOpenBrowserTab} />
         </div>
       )}
     </div>

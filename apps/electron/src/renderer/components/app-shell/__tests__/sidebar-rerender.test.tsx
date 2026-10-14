@@ -19,7 +19,7 @@ import { I18nextProvider } from 'react-i18next'
 import { Home, MessageSquare } from 'lucide-react'
 import { useDomForFile } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
 import { inspectorVisibleAtom } from '@/atoms/unified-shell'
-import { devSpaceEnabledAtom } from '@/atoms/dev-space'
+import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { NavigationStatusContext, type NavigationStatus } from '@/contexts/NavigationContext'
 import { LeftSidebar, type SidebarItem } from '../LeftSidebar'
 import { ShellSidebarNav } from '../ShellSidebarNav'
@@ -27,15 +27,16 @@ import { ShellSidebarNav } from '../ShellSidebarNav'
 // eslint-disable-next-line react-hooks/rules-of-hooks -- test DOM environment setup, not a React hook
 useDomForFile()
 
-const counts = { shell: 0, sidebar: 0, nav: 0 }
+const counts = { shell: 0, sidebar: 0, nav: 0, left: 0 }
 const i18n = createInstance()
 i18n.use({
   type: 'postProcessor',
   name: 'renderCounter',
   process(value: string, key: string | string[]) {
     const k = Array.isArray(key) ? key[0] : key
-    if (k === 'sidebar.contextNavigation') counts.sidebar++
-    if (k === 'sidebar.tools') counts.nav++
+    if (k === 'sidebar.recent') counts.sidebar++
+    if (k === 'sidebar.contextNavigation') counts.left++
+    if (k === 'workbench.mode.home') counts.nav++
     return value
   },
 })
@@ -92,6 +93,7 @@ async function mount(node: React.ReactNode) {
   counts.shell = 0
   counts.sidebar = 0
   counts.nav = 0
+  counts.left = 0
   host = document.createElement('div')
   document.body.appendChild(host)
   await act(async () => {
@@ -104,6 +106,8 @@ async function mount(node: React.ReactNode) {
       </Provider>,
     )
   })
+  // The «Недавнее» fallback is a lazy chunk.
+  for (let i = 0; i < 5; i++) await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
   return store
 }
 
@@ -130,24 +134,20 @@ describe('WP3: shell sidebar re-renders', () => {
 
   it('control: the pre-WP3 inline-links shape re-renders the sidebar on every shell render', async () => {
     const store = await mount(<InlineShell />)
-    const sidebarAfterMount = counts.sidebar
+    const leftAfterMount = counts.left
     await toggleUnrelated(store, 5)
-    expect(counts.sidebar).toBe(sidebarAfterMount + 5)
-    console.info(`[WP3] before: LeftSidebar renders +${counts.sidebar - sidebarAfterMount} for 5 unrelated atom changes`)
+    expect(counts.left).toBe(leftAfterMount + 5)
+    console.info(`[WP3] before: LeftSidebar renders +${counts.left - leftAfterMount} for 5 unrelated atom changes`)
   })
 
-  it('a sidebar-only atom re-renders the sidebar, not the shell', async () => {
+  it('a sidebar-only atom (session metas) re-renders the sidebar list, not the shell', async () => {
     const store = await mount(<MemoShell />)
     const shellAfterMount = counts.shell
-    const navAfterMount = counts.nav
-    expect(host!.querySelector('[data-sidebar-link-id="nav:developers"]')).toBeNull()
-    await act(async () => { store.set(devSpaceEnabledAtom, true) })
+    const sidebarAfterMount = counts.sidebar
+    expect(host!.querySelector('[data-sidebar-link-id="recent:s1"]')).toBeNull()
+    await act(async () => { store.set(sessionMetaMapAtom, new Map([['s1', { id: 's1', workspaceId: 'ws', name: 'One', lastMessageAt: 1 }]]) as never) })
     expect(counts.shell).toBe(shellAfterMount)
-    expect(counts.nav).toBeGreaterThan(navAfterMount)
-    const links = Array.from(host!.querySelectorAll('[data-sidebar-link-id]'))
-      .map(el => el.getAttribute('data-sidebar-link-id'))
-    // WP5: Developers sits in «Ещё» after the registry's connections row.
-    expect(links).toContain('nav:developers')
-    expect(links.indexOf('nav:developers')).toBeGreaterThan(links.indexOf('nav:connections'))
+    expect(counts.sidebar).toBeGreaterThan(sidebarAfterMount)
+    expect(host!.querySelector('[data-sidebar-link-id="recent:s1"]')).not.toBeNull()
   })
 })
