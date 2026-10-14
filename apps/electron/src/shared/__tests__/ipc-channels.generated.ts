@@ -113,6 +113,9 @@ export const EXPECTED_CHANNELS: string[] = [
   'calendar:googleDisconnect',
   'calendar:googleStatus',
   'calendar:googleSync',
+  'chatFolders:changed',
+  'chatFolders:get',
+  'chatFolders:mutate',
   'chatgpt:cancelOAuth',
   'chatgpt:completeOAuth',
   'chatgpt:getAuthStatus',
@@ -197,6 +200,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'cookbooks-lab:document',
   'cookbooks-lab:ensure',
   'cookbooks-lab:export',
+  'cookbooks-lab:mutate',
   'cookbooks-lab:open',
   'cookbooks-lab:reset',
   'cookbooks-lab:restart',
@@ -955,6 +959,8 @@ export const EXPECTED_CHANNELS: string[] = [
   'theme:getWorkspaceColorTheme',
   'theme:loadPreset',
   'theme:preferencesChanged',
+  'theme:saveUserPreset',
+  'theme:setAppLayers',
   'theme:setAppMaterial',
   'theme:setColorTheme',
   'theme:setWorkspaceColorTheme',
@@ -972,6 +978,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'transfer:chunk',
   'transfer:commit',
   'transfer:start',
+  'tray:reportState',
   'update:available',
   'update:check',
   'update:dismiss',
@@ -1097,4 +1104,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1093
+export const EXPECTED_CHANNEL_COUNT = 1100

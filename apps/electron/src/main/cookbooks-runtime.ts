@@ -29,9 +29,12 @@ import type {
   CookbooksCancelResult,
   CookbooksCard,
   CookbooksCell,
+  CookbooksDisplay,
   CookbooksDocument,
   CookbooksExportResult,
   CookbooksFailureReason,
+  CookbooksMutateInput,
+  CookbooksMutateResult,
   CookbooksOutput,
   CookbooksRunAllResult,
   CookbooksRunCell,
@@ -111,6 +114,18 @@ const RUN_API_TIMEOUT_MS = 90_000
 const RUN_ALL_CELL_TIMEOUT_MS = 60_000
 const RUN_ALL_OVERHEAD_MS = 30_000
 const RUN_ALL_MAX_TIMEOUT_MS = 15 * 60_000
+
+/**
+ * Wave 11: тот же cap, что у сайдкара — путь чтения недоверенного ipynb не
+ * должен декодировать гигантов (G4-F1: 512 KiB на запись, ≤12 записей, 1.5 MiB
+ * на ячейку/прогон). The sidecar already applied them when it wrote; main
+ * re-applies them so a copy that arrived from outside cannot hang the renderer.
+ */
+export const DISPLAY_MAX_RECORD_CHARS = 524_288
+export const DISPLAY_MAX_RECORDS = 12
+export const DISPLAY_MAX_TOTAL_CHARS = 1_572_864
+/** Byte-for-byte the sidecar's own marker (`kernel.py::_DISPLAY_TRUNCATION_MARKER`). */
+export const DISPLAY_TRUNCATION_MARKER = '…[display output truncated]'
 
 export function buildCookbooksChildEnv(parent: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const out: NodeJS.ProcessEnv = {}
@@ -309,6 +324,97 @@ function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((part): part is string => typeof part === 'string') : []
 }
 
+/**
+ * Wave 11 (G3-3): one canonical record per payload at the DTO boundary — the
+ * mime is `String(mime).trim().toLowerCase()` so a copy may not smuggle the
+ * same thing under `IMAGE/PNG` and ` image/png `, an empty mime is not a record
+ * at all, and byte-identical records are not repeated. Payloads that differ stay
+ * separate records even under one mime: a cell may legitimately display the same
+ * mime twice (`display('a'); display('b')`), and the renderer draws one widget
+ * per record. Runs after the cap, so it only ever walks the bounded list.
+ */
+function normaliseDisplays(entries: CookbooksDisplay[]): CookbooksDisplay[] {
+  const seen = new Set<string>()
+  const unique: CookbooksDisplay[] = []
+  for (const entry of entries) {
+    const mime = String(entry.mime).trim().toLowerCase()
+    if (mime.length === 0) continue
+    const key = `${mime}\u0000${entry.data}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    unique.push({ mime, data: entry.data })
+  }
+  return unique
+}
+
+/**
+ * Wave 11: the runner's own record list (`[{mime, data}]` from the results
+ * file). Entry-wise, like `asStringArray`: only an object carrying string
+ * `mime` and `data` survives, so a malformed entry is dropped rather than
+ * rendered half-built; anything that is not an array — including a pre-wave-11
+ * payload — is simply no display at all.
+ */
+function mapDisplays(value: unknown): CookbooksDisplay[] {
+  if (!Array.isArray(value)) return []
+  const displays: CookbooksDisplay[] = []
+  for (const entry of value) {
+    const record = asRecord(entry)
+    if (typeof record.mime === 'string' && typeof record.data === 'string') {
+      displays.push({ mime: record.mime, data: record.data })
+    }
+  }
+  return normaliseDisplays(capDisplays(displays))
+}
+
+/**
+ * Wave 11 (G4-F1): тот же cap, что у сайдкара — путь чтения недоверенного ipynb
+ * не должен декодировать гигантов. Mirrors the sidecar (`kernel.py::_rox_add` +
+ * `_rox_records`): a record over 512 KiB is clipped in place, the list stops at
+ * 12 records or when the 1.5 MiB budget would be exceeded, and ONE marker record
+ * is appended if anything had to be dropped or clipped; a list that already fits
+ * passes through untouched.
+ */
+function capDisplays(entries: CookbooksDisplay[]): CookbooksDisplay[] {
+  const capped: CookbooksDisplay[] = []
+  let total = 0
+  let truncated = false
+  for (const entry of entries) {
+    if (capped.length >= DISPLAY_MAX_RECORDS) {
+      truncated = true
+      break
+    }
+    const clipped = entry.data.length > DISPLAY_MAX_RECORD_CHARS
+      ? entry.data.slice(0, DISPLAY_MAX_RECORD_CHARS)
+      : entry.data
+    if (clipped !== entry.data) truncated = true
+    if (total + clipped.length > DISPLAY_MAX_TOTAL_CHARS) {
+      truncated = true
+      break
+    }
+    capped.push(clipped === entry.data ? entry : { mime: entry.mime, data: clipped })
+    total += clipped.length
+  }
+  if (truncated) capped.push({ mime: 'text/plain', data: DISPLAY_TRUNCATION_MARKER })
+  return capped
+}
+
+/**
+ * Wave 11: a persisted `display_data` output keeps its mime bundle in `data`
+ * (`{mime: value}`), so a document read flattens that object into the ordered
+ * record list the renderer consumes. A value the runner stored as a JSON
+ * document (nbformat parses `application/json`) is re-serialised; anything that
+ * is not a mime-bundle object — a stream output, a malformed payload — is `[]`.
+ */
+function mapDisplayBundle(value: unknown): CookbooksDisplay[] {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return []
+  const displays: CookbooksDisplay[] = []
+  for (const [mime, entry] of Object.entries(value as RawRecord)) {
+    if (typeof entry === 'string') displays.push({ mime, data: entry })
+    else if (entry !== undefined) displays.push({ mime, data: JSON.stringify(entry) })
+  }
+  return normaliseDisplays(capDisplays(displays))
+}
+
 function mapCard(raw: unknown): CookbooksCard {
   const card = asRecord(raw)
   return {
@@ -328,16 +434,21 @@ function mapOutput(raw: unknown): CookbooksOutput {
   return {
     text: asText(output.text),
     traceback: output.traceback == null ? null : asText(output.traceback),
+    // Wave 11: a persisted `display_data` carries its mime bundle in `data`.
+    displays: mapDisplayBundle(output.data),
   }
 }
 
 function mapCell(raw: unknown): CookbooksCell {
   const cell = asRecord(raw)
+  const count = cell.execution_count
   return {
     // Same rule as the lab page: `code` is runnable, everything else is prose.
     cellType: cell.cell_type === 'code' ? 'code' : 'markdown',
     source: asText(cell.source),
     outputs: Array.isArray(cell.outputs) ? cell.outputs.map(mapOutput) : [],
+    // Wave 11: nbformat writes an int or the literal `null` ("never ran").
+    executionCount: typeof count === 'number' && Number.isInteger(count) ? count : null,
   }
 }
 
@@ -363,6 +474,9 @@ function mapRunResult(raw: unknown): CookbooksRunResult {
     error: typeof result.error === 'string' ? result.error : null,
     timedOut: result.timed_out === true,
     missing: asStringArray(result.missing),
+    // Wave 11: the results-file records, validated entry-wise; a kill/timeout
+    // leaves no file behind and therefore no display.
+    displays: mapDisplays(result.displays),
     // Additive wave-9 field: only present when the sidecar actually sent it, so
     // a pre-wave-9 payload maps to exactly the same object as before.
     ...(typeof cancelled === 'boolean' ? { cancelled } : {}),
@@ -377,6 +491,9 @@ function mapRunCell(raw: unknown): CookbooksRunCell {
     status: cell.status === 'error' ? 'error' : cell.status === 'skipped' ? 'skipped' : 'ok',
     stdout: asText(cell.stdout),
     error: typeof cell.error === 'string' ? cell.error : null,
+    // Wave 11: this cell's own records, validated entry-wise like every other
+    // array main maps (a malformed entry never reaches the renderer).
+    displays: mapDisplays(cell.displays),
   }
 }
 
@@ -790,6 +907,55 @@ export class CookbooksRuntime {
     // The confirmation dialog belongs to the surface; by the time it calls in,
     // the user has already agreed (`/reset` refuses a dirty copy without it).
     await this.request<unknown>('/reset', { method: 'POST', body: { itemId, confirm: true } })
+  }
+
+  /**
+   * Wave 10: `POST /cells/<op>` → the sidecar's `{ok, index}`, then a fresh
+   * `GET /document/<itemId>` (SPEC wave 10 §Контракт shared/main/IPC). The
+   * request body carries exactly the fields of the chosen op — never `op`
+   * itself and never an `undefined` field (an absent `source` stays absent, so
+   * the sidecar applies its own default). A sidecar 400/409 surfaces as the
+   * existing `CookbooksApiError` with the sidecar's own `error` text.
+   */
+  async apiMutate(input: CookbooksMutateInput): Promise<CookbooksMutateResult> {
+    // Defense-in-depth: the compile-time union does not protect a caller that
+    // casts, so an op outside the four routes is rejected before any URL/body
+    // is built (never interpolated into the path).
+    if (input.op !== 'add' && input.op !== 'delete' && input.op !== 'move' && input.op !== 'duplicate') {
+      throw new CookbooksApiError(400, 'unknown op')
+    }
+    const { itemId } = input
+    // switch (not `body: input`) so `op` never reaches the sidecar body.
+    const body: Record<string, unknown> = { itemId }
+    switch (input.op) {
+      case 'add':
+        body.cellType = input.cellType
+        body.index = input.index
+        if (input.source !== undefined) body.source = input.source
+        break
+      case 'delete':
+        body.index = input.index
+        break
+      case 'move':
+        body.from = input.from
+        body.to = input.to
+        break
+      case 'duplicate':
+        body.index = input.index
+        break
+    }
+    const raw = await this.request<unknown>(`/cells/${input.op}`, { method: 'POST', body })
+    // Wave 10: контракт {ok:true, index:int} — битый ответ это протокольная
+    // ошибка, не тихий фолбэк (иначе фокус молча встал бы на ячейку 0).
+    const record = asRecord(raw)
+    const index = record.index
+    if (record.ok !== true || typeof index !== 'number' || !Number.isInteger(index)) {
+      throw new CookbooksApiError(0, 'malformed /cells response')
+    }
+    // Re-read through the document route: the sidecar answers a mutation with
+    // just the focus index, never the whole document.
+    const document = await this.apiDocument(itemId)
+    return { document, index }
   }
 
   // -------------------------------------------------------------------------

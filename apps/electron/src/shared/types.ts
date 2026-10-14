@@ -14,8 +14,12 @@ export { CookbooksApiError } from './cookbooks'
 export type {
   CookbooksCard,
   CookbooksCell,
+  CookbooksCellMutation,
+  CookbooksDisplay,
   CookbooksDocument,
   CookbooksFailureReason,
+  CookbooksMutateInput,
+  CookbooksMutateResult,
   CookbooksOutput,
   CookbooksRunCell,
   CookbooksRunResult,
@@ -26,7 +30,9 @@ export type {
 import type {
   CookbooksCard,
   CookbooksDocument,
-  CookbooksRunCell,
+  CookbooksMutateInput,
+  CookbooksMutateResult,
+  CookbooksRunAllResult,
   CookbooksRunResult,
   CookbooksStatus,
 } from './cookbooks'
@@ -1916,6 +1922,8 @@ export interface ElectronAPI {
   serviceLifecycleUninstall(): Promise<ServiceLifecycleResult>
   /** Push: the local service state changed (tray/menu surfaces). */
   onServiceLifecycleStatusChanged(callback: (status: ServiceStatus) => void): () => void
+  /** Push this window's menu-bar snapshot (badge count, recents, balance, recording) to main. */
+  reportTrayState(report: import('@rox/shared/protocol').TrayStateReport): Promise<void>
   // e1.6: doctor diagnostics (service/port/runtime/config/logs) — host-local.
   runDiagnostics(): Promise<DoctorReport>
   getDiagnosticsLast(): Promise<DoctorReport | null>
@@ -2224,7 +2232,7 @@ export interface ElectronAPI {
     runAll(args: {
       itemId: string
       cells: { index: number; source: string }[]
-    }): Promise<{ cells: CookbooksRunCell[]; cancelled?: boolean }>
+    }): Promise<CookbooksRunAllResult>
     /** Persist a cell (`index` + `source`) or the playbook `text`. */
     save(args: { itemId: string; index?: number; source?: string; text?: string }): Promise<void>
     /** Restore the copy from the catalog original (edits are lost). */
@@ -2240,6 +2248,13 @@ export interface ElectronAPI {
      * `{saved:false}` when the dialog is dismissed; a failed write rejects.
      */
     export(args: { itemId: string; filename: string; content: string }): Promise<{ saved: boolean; path?: string }>
+    /**
+     * Wave 10: apply a structural operation (add/delete/move/duplicate) to the
+     * copy, then resolve the re-read document together with the cell index to
+     * focus. Rejects with a `CookbooksApiError` (400 on a bad request, 409 while
+     * a run of this item is active) carrying the sidecar's own `error` text.
+     */
+    mutate(args: CookbooksMutateInput): Promise<CookbooksMutateResult>
     onStatusChanged(callback: (status: CookbooksStatus) => void): () => void
   }
 
@@ -2918,6 +2933,9 @@ export interface ElectronAPI {
   onLlmConnectionsChanged(callback: () => void): () => void
 
   // Views (workspace-scoped, stored in views.json)
+  getChatFolders(workspaceId: string): Promise<import('@rox/shared/chat-folders').ChatFoldersState>
+  mutateChatFolders(workspaceId: string, op: import('@rox/shared/chat-folders').ChatFoldersOp): Promise<import('@rox/shared/chat-folders').ChatFoldersState>
+  onChatFoldersChanged(callback: (workspaceId: string, state: import('@rox/shared/chat-folders').ChatFoldersState) => void): () => void
   listViews(workspaceId: string): Promise<import('@rox/shared/views').ViewConfig[]>
   saveViews(workspaceId: string, views: import('@rox/shared/views').ViewConfig[]): Promise<void>
 
@@ -2935,6 +2953,8 @@ export interface ElectronAPI {
   getColorTheme(): Promise<string>
   setColorTheme(themeId: string): Promise<void>
   setAppMaterial(material: import('@rox/shared/config').MaterialSettings | null): Promise<import('@rox/shared/config').ThemeOverrides | null>
+  setAppLayers(layers: import('@rox/shared/config').ThemeLayers | null): Promise<import('@rox/shared/config').ThemeOverrides | null>
+  saveUserThemePreset(baseId: string, theme: import('@rox/shared/config').ThemeFile): Promise<string>
   getWorkspaceColorTheme(workspaceId: string): Promise<string | null>
   setWorkspaceColorTheme(workspaceId: string, themeId: string | null): Promise<void>
   getAllWorkspaceThemes(): Promise<Record<string, string | undefined>>
