@@ -351,7 +351,7 @@ const AUTO_ANSWER_METHODS: Record<string, true> = { setWidget: true, cancel: tru
 /** Detect OMP's rejection of a `--model <id>` one-shot (vs. a real failure). */
 function isOmpModelNotFoundError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
-  return /model not found|unknown model|no such model|invalid model/i.test(message);
+  return /model not found|model_not_found|unknown model|no such model|invalid model/i.test(message);
 }
 
 

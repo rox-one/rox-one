@@ -49,6 +49,14 @@ describe('parseError proxy interception handling', () => {
     expect(parsed.title.toLowerCase()).toContain('auth')
     expect(parsed.message.toLowerCase()).not.toContain('rox_trusted_account_required')
   })
+
+  it('maps gateway rox_model_not_found (underscores) to invalid_model (S3-04)', () => {
+    for (const message of ['rox_model_not_found', 'model_not_found', 'model not found']) {
+      const parsed = parseError(new Error(message))
+      expect(parsed.code).toBe('invalid_model')
+      expect(parsed.message.toLowerCase()).not.toContain('rox_model_not_found')
+    }
+  })
 })
 
 describe('parseError tool-support classification', () => {

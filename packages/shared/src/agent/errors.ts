@@ -505,7 +505,13 @@ export function parseError(
     // refusals without these broad fallbacks.
   ) {
     code = 'model_no_tool_support';
-  } else if (lowerMessage.includes('is not a valid model') || lowerMessage.includes('model not found') || lowerMessage.includes('invalid model') || lowerMessage.includes('model identifier is invalid')) {
+  } else if (
+    lowerMessage.includes('is not a valid model') ||
+    lowerMessage.includes('model not found') ||
+    lowerMessage.includes('model_not_found') ||
+    lowerMessage.includes('invalid model') ||
+    lowerMessage.includes('model identifier is invalid')
+  ) {
     code = 'invalid_model';
   // HTML-intercepted responses (proxy/firewall/captive portal).
   // Must be checked BEFORE status codes: a 502 Cloudflare page or 401 proxy login
