@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
-import { ChevronRight, Copy, ExternalLink, FilePlus2, FileText, Folder, FolderInput, FolderOpen, Link2, Moon, Pencil, Trash2 } from 'lucide-react'
+import { ChevronRight, Copy, ExternalLink, FilePlus2, FileText, Folder, FolderInput, FolderOpen, Link2, Moon, Pencil, Pin, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { NoteSummary } from '../../../shared/types'
 import { cn } from '@/lib/utils'
@@ -114,6 +114,9 @@ interface NoteNavigationActions {
   onCopyNoteLink(note: NoteSummary): void
   onCopyNotePath(note: NoteSummary): void
   onRevealNote(note: NoteSummary): void
+  /** Pin toggle for the «Закреплённое» group (omit to hide the menu item). */
+  isNotePinned?(noteId: string): boolean
+  onTogglePinNote?(noteId: string): void
   /** PERF-10 (#1577): workspace the hover/focus document prefetch reads from. */
   workspaceId?: string | null
 }
@@ -199,6 +202,11 @@ function NoteNavigationItem({ note, depth, activeNoteId, dreamNoteIds, ...action
         <StyledContextMenuItem onClick={() => actions.onOpenNote(note.id)}>
           <FileText className="icon-caption" />{t('common.open')}
         </StyledContextMenuItem>
+        {actions.onTogglePinNote ? (
+          <StyledContextMenuItem onClick={() => actions.onTogglePinNote?.(note.id)}>
+            <Pin className="icon-caption" />{t(actions.isNotePinned?.(note.id) ? 'screens.notes.unpin' : 'screens.notes.pin')}
+          </StyledContextMenuItem>
+        ) : null}
         <StyledContextMenuItem onClick={() => actions.onOpenRenameDialogForNote(note)}>
           <Pencil className="icon-caption" />{t('common.rename')}
         </StyledContextMenuItem>

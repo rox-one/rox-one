@@ -10,25 +10,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { SuperEngineeringOnboarding, type SeOnboardingStepId } from './SuperEngineeringOnboarding'
-import { KEYS, getKeyString } from '@/lib/local-storage'
+import { markSeOnboardingCompleted } from './se-onboarding-gate'
+
+export { useSeOnboardingGate } from './se-onboarding-gate'
 
 const STEPS: SeOnboardingStepId[] = ['welcome', 'harness', 'sidebar', 'workspace']
-
-function readCompleted(): boolean {
-  try {
-    return localStorage.getItem(getKeyString(KEYS.seOnboardingComplete)) === '1'
-  } catch {
-    return false
-  }
-}
-
-function markCompleted(): void {
-  try {
-    localStorage.setItem(getKeyString(KEYS.seOnboardingComplete), '1')
-  } catch {
-    /* ignore */
-  }
-}
 
 export interface SuperEngineeringOnboardingDialogProps {
   open: boolean
@@ -41,7 +27,7 @@ export function SuperEngineeringOnboardingDialog({ open, onOpenChange }: SuperEn
   const step = STEPS[stepIndex] ?? 'welcome'
 
   const finish = React.useCallback(() => {
-    markCompleted()
+    markSeOnboardingCompleted()
     onOpenChange(false)
   }, [onOpenChange])
 
@@ -72,22 +58,4 @@ export function SuperEngineeringOnboardingDialog({ open, onOpenChange }: SuperEn
       </DialogContent>
     </Dialog>
   )
-}
-
-export function useSeOnboardingGate(enabled: boolean): { shouldShow: boolean; dismiss: () => void } {
-  const [show, setShow] = React.useState(false)
-  React.useEffect(() => {
-    if (!enabled) {
-      setShow(false)
-      return
-    }
-    setShow(!readCompleted())
-  }, [enabled])
-  return {
-    shouldShow: show,
-    dismiss: () => {
-      markCompleted()
-      setShow(false)
-    },
-  }
 }

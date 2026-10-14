@@ -4,7 +4,7 @@ import { useTourTarget, useTourSignals } from '@/features/product-tour/runtime/h
 import { connectionCapabilities } from '@/features/product-tour/adapters/connections'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
-import { Zap, PackageOpen, Check, ChevronDown, ChevronRight, X, Network, FolderX, KeyRound, TriangleAlert, RefreshCw, Archive, FolderOutput, MoreHorizontal, Search } from 'lucide-react'
+import { Zap, PackageOpen, Check, ChevronDown, ChevronRight, X, Network, FolderX, KeyRound, TriangleAlert, RefreshCw, Archive, FolderOutput, MoreHorizontal, Plus, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { SkillAvatar } from '@/components/ui/skill-avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -24,6 +24,10 @@ import type { BundledSkillPackStatus, LoadedSkill } from '../../../shared/types'
 import { toErrorMessage } from '@/lib/errors'
 import { useSkillsQuery } from '@/hooks/use-skills-query'
 import { VirtualList } from '@/components/ui/virtual-list'
+import { useScreenSidebar } from '@/components/shell/screen-sidebar'
+import { navigate, routes } from '@/lib/navigate'
+import { addNotebook, loadNotebooks, requestOpenNotebook, subscribeNotebooks, type PlaybookNotebook } from '@/pages/playbooks/notebook-store'
+import { buildSkillsSidebarGroups } from './skills-sidebar'
 
 const SendResourceToWorkspaceDialog = React.lazy(() =>
   import('./SendResourceToWorkspaceDialog').then((m) => ({ default: m.SendResourceToWorkspaceDialog })),
@@ -323,6 +327,58 @@ export function SkillsListPanel({
       )}
     </EntityListEmptyScreen>
   )
+
+  // Second sidebar (shell API): Мои навыки / Плейбуки / Маркетплейс.
+  const [playbooks, setPlaybooks] = React.useState<{ list: PlaybookNotebook[] | null; error: boolean }>({ list: null, error: false })
+  const reloadPlaybooks = React.useCallback(() => {
+    try { setPlaybooks({ list: loadNotebooks(), error: false }) } catch { setPlaybooks({ list: [], error: true }) }
+  }, [])
+  React.useEffect(() => {
+    reloadPlaybooks()
+    return subscribeNotebooks(reloadPlaybooks)
+  }, [reloadPlaybooks])
+  // «Каталог» is the bundled skill packs section of this panel; without packs
+  // fall back to the marketplace settings page so the action is never a no-op.
+  const catalogRef = React.useRef<HTMLDivElement>(null)
+  const hasCatalog = Boolean(bundledPacks && bundledPacks.length > 0)
+  const openCatalog = React.useCallback(() => {
+    const section = catalogRef.current
+    if (!hasCatalog || !section) { navigate(routes.view.settings('marketplace')); return }
+    section.scrollIntoView({ block: 'start', behavior: 'smooth' })
+    section.focus({ preventScroll: true })
+  }, [hasCatalog])
+  const onSkillClickRef = React.useRef(onSkillClick)
+  onSkillClickRef.current = onSkillClick
+  const sidebarConfig = React.useMemo(() => ({
+    screenId: 'skills',
+    title: t('screenSidebar.skills.title'),
+    search: { placeholder: t('screenSidebar.skills.search'), value: search, onChange: setSearch },
+    primaryAction: { id: 'browse', label: t('screenSidebar.skills.browse'), icon: Plus, onSelect: openCatalog },
+    groups: buildSkillsSidebarGroups({
+      skills: listedSkills,
+      syncing: listSyncing,
+      playbooks: playbooks.list,
+      playbooksError: playbooks.error,
+      selectedSlug: selectedSkillSlug ?? null,
+      t,
+      onOpenSkill: (skill) => onSkillClickRef.current(skill),
+      onOpenPlaybooks: () => navigate(routes.view.playbooks()),
+      onOpenPlaybook: (notebook) => { requestOpenNotebook(notebook.id); navigate(routes.view.playbooks()) },
+      onCreatePlaybook: () => {
+        try {
+          const notebook = addNotebook(t('playbooks.home.defaultName'), 'knowledge')
+          requestOpenNotebook(notebook.id)
+          navigate(routes.view.playbooks())
+        } catch (error) {
+          toast.error(toErrorMessage(error))
+        }
+      },
+      onRetryPlaybooks: reloadPlaybooks,
+      onOpenCatalog: openCatalog,
+      onOpenMarketplace: () => navigate(routes.view.settings('marketplace')),
+    }),
+  }), [listedSkills, listSyncing, playbooks, selectedSkillSlug, search, t, openCatalog, reloadPlaybooks])
+  useScreenSidebar(sidebarConfig)
 
   return (
     <div ref={skillsTarget} className="flex min-h-0 flex-1 flex-col" data-product-tour-target="skills.list">
@@ -643,7 +699,7 @@ export function SkillsListPanel({
 
     {/* Bundled skill packs — enable/disable presets shipped with the app */}
     {bundledPacks !== null && bundledPacks.length > 0 && (
-      <div className="mb-2 pb-1.5 border-b border-border-subtle" data-list-role="bundled-skill-packs">
+      <div ref={catalogRef} tabIndex={-1} className="mb-2 pb-1.5 border-b border-border-subtle outline-none" data-list-role="bundled-skill-packs">
         <div className="px-2 pb-1 text-xs font-medium uppercase caps-label text-muted-foreground/70">
           {t('settings.context.bundledTitle')}
         </div>

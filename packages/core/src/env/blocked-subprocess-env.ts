@@ -14,6 +14,11 @@
 export const BLOCKED_ENV_VARS = [
   'ANTHROPIC_API_KEY',
   'CLAUDE_CODE_OAUTH_TOKEN',
+  // The app's shared ROX gateway key (installRoxDefaults writes it into the
+  // main-process env on every install) is an org-wide credential: it must
+  // reach the OMP CLI only through that spawn's explicit env map, never by
+  // inheritance into third-party MCP servers or sandboxed scripts.
+  'ROX_API_KEY',
   'AWS_ACCESS_KEY_ID',
   'AWS_SECRET_ACCESS_KEY',
   'AWS_SESSION_TOKEN',
