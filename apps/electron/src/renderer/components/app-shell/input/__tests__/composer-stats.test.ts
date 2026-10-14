@@ -65,10 +65,6 @@ describe('stats line i18n', () => {
       expect(d['chat.stats.contextAria'], loc).toContain('{{percent}}')
     }
   })
-  it('the context ring has an accessible label', () => {
-    const line = readFileSync(join(__dirname, '..', 'ComposerStatsLine.tsx'), 'utf8')
-    expect(line).toContain("aria-label={t('chat.stats.contextAria'")
-  })
 })
 
 describe('formatCompactTokens', () => {

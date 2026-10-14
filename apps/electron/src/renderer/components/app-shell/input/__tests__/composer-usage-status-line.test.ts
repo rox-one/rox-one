@@ -16,7 +16,6 @@ import type { RuntimeEvent } from '@rox/core/runtime-trace/types'
 import {
   ComposerUsageStatusLine,
   computeUsageStatusNumbers,
-  formatUsageCost,
   formatUsageCostBody,
   UsageStatusLineView,
   UsageStatusTooltipContent,
@@ -86,11 +85,10 @@ describe('computeUsageStatusNumbers', () => {
   })
 })
 
-describe('formatUsageCost', () => {
+describe('formatUsageCostBody', () => {
   it('keeps sub-cent costs readable, two decimals otherwise', () => {
     expect(formatUsageCostBody(0.004)).toBe('0.004')
-    expect(formatUsageCost(0.004)).toBe('~$0.004')
-    expect(formatUsageCost(1.5)).toBe('~$1.50')
+    expect(formatUsageCostBody(1.5)).toBe('1.50')
   })
 })
 

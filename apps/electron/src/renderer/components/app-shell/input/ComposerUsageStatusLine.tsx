@@ -56,10 +56,6 @@ export function formatUsageCostBody(cost: number): string {
   return cost < 0.01 ? cost.toPrecision(1) : cost.toFixed(2)
 }
 
-export function formatUsageCost(cost: number): string {
-  return `~$${formatUsageCostBody(cost)}`
-}
-
 function formatRate(output: number, decodeMs: number): string | undefined {
   if (!Number.isFinite(output) || !Number.isFinite(decodeMs) || decodeMs <= 0) return undefined
   const perSecond = output / (decodeMs / 1000)
