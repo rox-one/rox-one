@@ -3201,7 +3201,7 @@ h1,h2,h3{margin-top:1.5em}
                   <ul className="space-y-1">
                     {dailySessions.map((session) => (
                       <li key={session.id}>
-                        <button type="button" className="max-w-full truncate text-left text-sm text-foreground/80 hover:text-foreground hover:underline" onClick={() => navigate(routes.view.allSessions(session.id))}>
+                        <button type="button" className="max-w-full truncate text-left text-sm text-muted-foreground hover:text-foreground hover:underline" onClick={() => navigate(routes.view.allSessions(session.id))}>
                           {session.name}
                         </button>
                       </li>
