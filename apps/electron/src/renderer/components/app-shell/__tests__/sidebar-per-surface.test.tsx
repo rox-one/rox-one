@@ -137,6 +137,20 @@ describe('contextual sidebar', () => {
     expect(host!.querySelector('[data-sidebar-screen-header] [data-tutorial="new-chat-button"]')).not.toBeNull()
   })
 
+  it('a portalled navigator wins on a fallback screen too (no stacked «Недавнее»)', async () => {
+    const { slot } = await mount({ navigator: 'home' }, { seed: seedSessions })
+    expect(host!.querySelector('[data-sidebar-recent-pinned]')).not.toBeNull()
+    await act(async () => { slot()!.appendChild(document.createElement('div')) })
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
+    expect(host!.querySelector('[data-sidebar-recent-pinned]')).toBeNull()
+  })
+
+  it('the screen title is a heading whose button returns to the screen root', async () => {
+    await mount({ navigator: 'sources' })
+    const heading = host!.querySelector('[data-sidebar-screen-header] h2')
+    expect(heading?.querySelector('button[data-sidebar-screen-title]')).not.toBeNull()
+  })
+
   it('collapsed rail: the current screen\'s items as icons, never the global surfaces', async () => {
     await mount({ navigator: 'sources' }, { collapsed: true })
     expect(ids(host)).toEqual(expect.arrayContaining(['nav:sources:api', 'nav:sources:mcp']))

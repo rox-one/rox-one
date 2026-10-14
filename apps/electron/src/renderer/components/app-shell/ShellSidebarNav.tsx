@@ -21,8 +21,7 @@
  */
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronRight, ListFilter } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { ListFilter } from 'lucide-react'
 import { navigate, routes } from '@/lib/navigate'
 import { isSessionsNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { isSeparatorItem, LeftSidebar, type LinkItem, type SidebarItem } from './LeftSidebar'
@@ -130,10 +129,12 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
     contextSlotRef?.(element)
   }, [contextSlotRef])
   const slotFilled = useSlotFilled(slot)
-  const showFallback = current.kind === 'fallback'
-    || (current.kind === 'portal' && !slotFilled)
+  // A page that portalled its navigator always wins over «Недавнее».
+  const showFallback = !slotFilled && (
+    current.kind === 'fallback'
+    || current.kind === 'portal'
     || (current.kind === 'context' && !surfaceSection)
-    || (current.kind === 'sessions' && !sessionFilters)
+    || (current.kind === 'sessions' && !sessionFilters))
 
   // Header primary action: the screen row's own actions; screens without one
   // (Главная and the other fallback screens) get «+ новый чат» from Сессии.
@@ -165,14 +166,16 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
     >
       {!isCollapsed && title && (
         <div className="flex h-8 items-center gap-1 pl-3 pr-1" data-sidebar-screen-header="">
-          <button
-            type="button"
-            onClick={goRoot}
-            className="min-w-0 flex-1 truncate rounded-[var(--radius-control)] text-left text-body font-semibold text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            data-sidebar-screen-title=""
-          >
-            <h2 className="truncate text-body font-semibold">{title}</h2>
-          </button>
+          <h2 className="min-w-0 flex-1 truncate text-body font-semibold">
+            <button
+              type="button"
+              onClick={goRoot}
+              className="w-full truncate rounded-[var(--radius-control)] text-left text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              data-sidebar-screen-title=""
+            >
+              {title}
+            </button>
+          </h2>
           {headerActions}
         </div>
       )}
@@ -210,9 +213,6 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
   )
 })
 
-/** Rows whose children become the contextual section while their surface is open. */
-export const CONTEXT_SECTION_LINK_IDS: ReadonlySet<string> = new Set(['nav:projects', 'nav:pages', 'nav:sources', 'nav:automations'])
-
 /** The contextual section for a surface row: its sub-items under a collapsible header (state persisted per row id). */
 export function buildContextSection(row: LinkItem, state: { open: boolean; onToggle: () => void }): { title: string; links: SidebarItem[] } {
   const group: LinkItem = {
@@ -227,26 +227,6 @@ export function buildContextSection(row: LinkItem, state: { open: boolean; onTog
     items: row.items,
   }
   return { title: row.title, links: [group] }
-}
-
-export const SIDEBAR_NAV_SECTION_ID = 'sidebar:section:navigation'
-export const SIDEBAR_TOOLS_SECTION_ID = 'sidebar:section:tools'
-
-/** Collapsible section label (persisted via the expanded-sections store). */
-export function SidebarSectionHeader({ id, label, open, onToggle }: { id: string; label: string; open: boolean; onToggle: () => void }) {
-  return (
-    <button
-      type="button"
-      aria-expanded={open}
-      aria-controls={id}
-      onClick={onToggle}
-      data-sidebar-section-header=""
-      className="group/section-header flex h-7 w-full items-center gap-1 rounded-[var(--radius-control)] px-3 text-left text-[11px] font-semibold uppercase caps-label text-text-muted outline-none transition-colors hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
-    >
-      <span className="min-w-0 flex-1 truncate">{label}</span>
-      <ChevronRight className={cn('h-3 w-3 shrink-0 opacity-0 transition-transform group-hover/section-header:opacity-100 group-focus-visible/section-header:opacity-100 motion-reduce:transition-none', open && 'rotate-90')} aria-hidden />
-    </button>
-  )
 }
 
 export const SESSION_FILTERS_ID = 'nav:sessionFilters'
