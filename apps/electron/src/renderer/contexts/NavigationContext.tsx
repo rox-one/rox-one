@@ -1314,12 +1314,12 @@ export function NavigationProvider({
         // Replace all params with the saved workspace's URL
         url.search = savedSearch
       } else {
-        // Inbox is the initial working surface; existing saved routes restore above.
+        // Home is the initial working surface; existing saved routes restore above.
         for (const key of [...url.searchParams.keys()]) {
           url.searchParams.delete(key)
         }
         url.searchParams.set('ws', workspaceSlug)
-        url.searchParams.set('route', 'inbox')
+        url.searchParams.set('route', 'home')
       }
 
       // Stored history cannot change the workspace selected by the caller.
@@ -1374,7 +1374,7 @@ export function NavigationProvider({
 
     // If nothing was in the URL, navigate to default
     if (!params.get('route') && !params.has('panels') && (!requested || requested === workspaceSlug)) {
-      navigate(routes.view.inbox())
+      navigate(routes.view.home())
     }
 
     // Initialize history with seq=0 (replaceState so we don't create an extra entry)
