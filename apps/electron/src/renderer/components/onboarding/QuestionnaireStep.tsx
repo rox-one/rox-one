@@ -65,6 +65,26 @@ export const EMPTY_BUBBLE_SELECTIONS: BubbleSelections = BUBBLE_GROUP_IDS.reduce
   {} as BubbleSelections,
 )
 
+/**
+ * S1-06: rehydrate persisted bubble selections. Unknown group ids and
+ * non-string entries drop, so a draft written by an older catalogue can never
+ * widen the type at the call site. Returns undefined when the draft carries
+ * nothing usable (the step then falls back to its empty defaults).
+ */
+export function parseBubbleSelections(raw: unknown): BubbleSelections | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  const record = raw as Record<string, unknown>
+  let seen = false
+  const next: BubbleSelections = { ...EMPTY_BUBBLE_SELECTIONS }
+  for (const id of BUBBLE_GROUP_IDS) {
+    const value = record[id]
+    if (!Array.isArray(value)) continue
+    next[id] = value.filter((entry): entry is string => typeof entry === 'string')
+    seen = true
+  }
+  return seen ? next : undefined
+}
+
 /** Steps the identity/link screens can have earned before the questionnaire. */
 export const DEFAULT_QUESTIONNAIRE_REWARD_STEPS: readonly string[] = ['username', 'org']
 
