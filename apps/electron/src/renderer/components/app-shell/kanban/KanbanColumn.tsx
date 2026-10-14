@@ -220,7 +220,7 @@ export function KanbanColumn({
           >
             {tasks.length}
           </span>
-          <span className="max-w-full truncate text-[10px] font-semibold uppercase text-foreground/60" aria-hidden>
+          <span className="max-w-full truncate text-caption font-semibold uppercase text-foreground/60" aria-hidden>
             {Array.from(label).slice(0, 3).join('')}
           </span>
             <ChevronRight className="mt-auto h-3.5 w-3.5 text-foreground/70" />
