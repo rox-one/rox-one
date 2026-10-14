@@ -281,7 +281,7 @@ export function WelcomeStep({
       iconElement={
         <AnimatedRoxLogo />
       }
-      className={isExistingUser ? undefined : "max-w-[30rem]"}
+      className={isExistingUser ? undefined : "max-w-[32rem]"}
       title={isExistingUser ? t("onboarding.welcome.updateTitle") : t("onboarding.welcome.title")}
       description={
         isExistingUser

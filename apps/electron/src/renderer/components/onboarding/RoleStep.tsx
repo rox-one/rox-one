@@ -272,7 +272,7 @@ export function RoleStep({ onContinue, onBack, isLoading = false, isFinishing = 
     <div data-testid="onboarding-role-step" className="mx-auto flex w-full flex-col lg:h-full lg:min-h-0">
       <header className="shrink-0 text-center">
         <h1 className="text-lg font-semibold tracking-tight">{t('onboarding.role.title')}</h1>
-        <p className="step-description mt-1 text-sm text-muted-foreground">{t('onboarding.role.description')}</p>
+        <p className="onb-subtitle mt-1 text-sm text-muted-foreground">{t('onboarding.role.description')}</p>
       </header>
 
       <div className="mt-4 grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-3 lg:items-start">

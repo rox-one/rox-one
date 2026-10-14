@@ -371,7 +371,7 @@ export function OnboardingWizard({
       >
         {isStartScreen && !isWideStep ? (
           <FitToViewport>
-            <div className={cn('mx-auto flex w-full flex-col items-center px-6', isWelcome ? 'max-w-lg' : state.step === 'pills' ? 'max-w-[46rem]' : 'max-w-[28rem]')}>
+            <div className={cn('mx-auto flex w-full flex-col items-center px-6', isWelcome ? 'max-w-[36rem]' : state.step === 'pills' ? 'max-w-[46rem]' : 'max-w-[28rem]')}>
               <OnboardingStepProgress step={progressStep} className="mb-5 w-full" />
               <StepTransition key={state.step} className="w-full">{renderStep()}</StepTransition>
             </div>

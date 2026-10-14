@@ -76,7 +76,7 @@ export function InterestBubbles({
         <p className="text-xs text-muted-foreground">{t('onboarding.bubbles.dependsOn')}</p>
       ) : null}
 
-      <div role="group" aria-label={title} className="flex flex-wrap gap-1.5">
+      <div role="group" aria-label={title} className="flex flex-wrap gap-1">
         {items.map((item) => {
           const isSelected = selectedSet.has(item.id)
           return (
@@ -89,7 +89,7 @@ export function InterestBubbles({
               data-bubble-anchor={item.anchor ? 'true' : undefined}
               onClick={() => toggle(item.id)}
               className={cn(
-                'onb-pill max-w-full whitespace-normal break-words rounded-full border px-2.5 py-1 text-left text-[length:calc(var(--text-body)_-_2pt)] leading-tight transition-[background-color,border-color,color,box-shadow] duration-200 ease-out motion-reduce:transition-none',
+                'onb-pill max-w-full whitespace-normal break-words rounded-full border px-2.5 py-[3px] text-left text-[length:calc(var(--text-body)_-_2pt)] leading-tight transition-[background-color,border-color,color,box-shadow] duration-200 ease-out motion-reduce:transition-none',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/55 focus-visible:ring-offset-1 focus-visible:ring-offset-background',
                 isSelected
                   ? 'border-accent/40 bg-accent/15 font-medium text-foreground shadow-minimal'

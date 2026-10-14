@@ -39,6 +39,12 @@
   line-height: 1.45;
   color: var(--onb-helper);
 }
+.onb-start .onb-subtitle {
+  font-size: calc(0.875rem - 1pt);
+  color: var(--onb-helper);
+  margin-inline: auto;
+  max-width: 40rem;
+}
 .onb-start .step-description {
   font-size: calc(0.875rem - 1pt);
   color: var(--onb-helper);
@@ -359,7 +365,8 @@ html[data-render-profile="performance"] .onb-collapse { transition: none; }
   border-color: transparent;
   color: var(--foreground);
   background:
-    linear-gradient(180deg, color-mix(in oklab, var(--onb-sel) 16%, transparent), color-mix(in oklab, var(--onb-glow-a) 8%, transparent)) padding-box,
+    linear-gradient(180deg, color-mix(in oklab, var(--onb-sel) 14%, transparent), color-mix(in oklab, var(--onb-glow-a) 7%, transparent)) padding-box,
+    linear-gradient(var(--onb-bg), var(--onb-bg)) padding-box,
     linear-gradient(110deg, color-mix(in oklab, var(--onb-sel) 85%, transparent), color-mix(in oklab, var(--onb-glow-a) 70%, transparent)) border-box;
   box-shadow: 0 0 0 1px color-mix(in oklab, var(--onb-sel) 10%, transparent), 0 6px 22px -10px color-mix(in oklab, var(--onb-sel) 75%, transparent);
 }

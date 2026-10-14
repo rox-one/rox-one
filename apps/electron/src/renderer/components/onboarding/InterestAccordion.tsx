@@ -104,7 +104,7 @@ export function InterestAccordion({
   return (
     <div
       data-testid="interest-accordion"
-      className={cn('flex flex-col gap-1.5', className)}
+      className={cn('flex flex-col gap-1', className)}
     >
       {groupIds.map((groupId, index) => {
         const isOpen = open === groupId
@@ -137,7 +137,7 @@ export function InterestAccordion({
                 onClick={() => setOpen(isOpen ? null : groupId)}
                 onKeyDown={(event) => onHeaderKeyDown(event, index)}
                 className={cn(
-                  'flex w-full items-center gap-2.5 rounded-[var(--radius-card)] px-3 py-2 text-left',
+                  'flex w-full items-center gap-2.5 rounded-[var(--radius-card)] px-3 py-1.5 text-left',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/55',
                 )}
               >
@@ -200,7 +200,7 @@ export function InterestAccordion({
                 locale={locale}
                 hideHeader
               />
-              <div className="mt-3 flex justify-end">
+              <div className="mt-2 flex justify-end">
                 <button
                   type="button"
                   data-testid={`interest-accordion-next-${groupId}`}

@@ -342,7 +342,7 @@ export function QuestionnaireStep({
   // Section cards; scrollbars are hidden on the start screens (the content
   // is sized to fit, the wheel still works as a fallback on tiny windows).
   const columnClass =
-    'onb-card min-h-0 p-4 lg:overflow-y-auto lg:overscroll-contain'
+    'onb-card min-h-0 p-3 lg:overflow-y-auto lg:overscroll-contain'
 
   return (
     <div
@@ -351,7 +351,7 @@ export function QuestionnaireStep({
     >
       <header className="shrink-0 text-center">
         <h1 className="text-lg font-semibold tracking-tight">{t('onboarding.questionnaire.title')}</h1>
-        <p className="step-description mt-1 text-sm text-muted-foreground">{t('onboarding.questionnaire.description')}</p>
+        <p className="onb-subtitle mt-1 text-sm text-muted-foreground">{t('onboarding.questionnaire.description')}</p>
       </header>
 
       <div
