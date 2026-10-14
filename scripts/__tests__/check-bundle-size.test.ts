@@ -23,6 +23,7 @@ import {
   evaluateStartup,
   formatFailure,
   formatStartupFailure,
+  formatUpdateDelta,
   measureRendererChunks,
   measureStartup,
   parseHtmlReferences,
@@ -642,5 +643,78 @@ describe('minify profile closed form', () => {
     ] as const) {
       expect(minifyHangChecksum(sourceChars, iterations)).toBe(minifyHangOracle(sourceChars, iterations))
     }
+  })
+})
+
+describe('--update delta report (an acceptance has to stay readable afterwards)', () => {
+  type Next = Pick<BundleBaseline, 'budgets' | 'stylesheets' | 'totals' | 'startup'>
+  const zeros = { jsRawBytes: 0, jsGzipBytes: 0, cssRawBytes: 0, cssGzipBytes: 0 }
+  const previous = (over: Partial<BundleBaseline> = {}): BundleBaseline => ({
+    description: 'fixture', budgets: {}, stylesheets: {}, totals: zeros, startup: {}, ...over,
+  })
+  const next = (over: Partial<Next> = {}): Next => ({
+    budgets: {}, stylesheets: {}, totals: zeros, startup: {}, ...over,
+  })
+  const entry = (jsRawBytes: number, fileCount: number) => ({ jsRawBytes, gzipTotalBytes: 0, fileCount })
+
+  it('says so when there is no committed baseline to compare against', () => {
+    expect(formatUpdateDelta(undefined, next())).toEqual([
+      'bundle-size: no committed baseline to compare against; this is a first recording',
+    ])
+  })
+
+  it('reports a quiet re-record as such, instead of printing an empty list', () => {
+    expect(formatUpdateDelta(previous(), next())).toEqual(['  (nothing moved)'])
+  })
+
+  it('shows the sign of each byte movement', () => {
+    const lines = formatUpdateDelta(
+      previous({ totals: { ...zeros, jsRawBytes: 1000 }, budgets: { ru: { totalRawBytes: 500, gzipTotalBytes: 0 } } }),
+      next({ totals: { ...zeros, jsRawBytes: 250 }, budgets: { ru: { totalRawBytes: 900, gzipTotalBytes: 0 } } }),
+    )
+    expect(lines).toContain('  js  total: 1000 → 250 B  (-750)')
+    expect(lines).toContain('  js  ru: 500 → 900 B  (+400)')
+  })
+
+  it('omits prefixes that did not move, so the report stays readable', () => {
+    const unchanged = { totalRawBytes: 700, gzipTotalBytes: 0 }
+    const lines = formatUpdateDelta(
+      previous({ budgets: { a: unchanged, b: unchanged } }),
+      next({ budgets: { a: unchanged, b: unchanged } }),
+    )
+    expect(lines).toEqual(['  (nothing moved)'])
+  })
+
+  it('names a prefix that is new in this recording', () => {
+    const lines = formatUpdateDelta(previous(), next({ budgets: { fresh: { totalRawBytes: 42, gzipTotalBytes: 0 } } }))
+    expect(lines).toContain('  js  fresh: new, 42 B')
+  })
+
+  // The one shape a re-record must never bury: bytes alone cannot show it, because a page can shrink
+  // while pulling in more files.
+  it('flags an entry page whose static closure gained files', () => {
+    const lines = formatUpdateDelta(
+      previous({ startup: { 'index.html': entry(1000, 51) } }),
+      next({ startup: { 'index.html': entry(900, 53) } }),
+    )
+    expect(lines).toContain('  startup index.html: 1000 → 900 B  (-100), 51 → 53 file(s)')
+    expect(lines.at(-1)).toContain('! static closure gained file(s): index.html (51 → 53)')
+  })
+
+  it('reports a shrinking closure without the warning', () => {
+    const lines = formatUpdateDelta(
+      previous({ startup: { 'index.html': entry(2663738, 53) } }),
+      next({ startup: { 'index.html': entry(2563903, 51) } }),
+    )
+    expect(lines).toContain('  startup index.html: 2663738 → 2563903 B  (-99835), 53 → 51 file(s)')
+    expect(lines.some((line) => line.includes('!'))).toBe(false)
+  })
+
+  it('reports a byte-only page move without the file-count clause', () => {
+    const lines = formatUpdateDelta(
+      previous({ startup: { 'playground.html': entry(100, 211) } }),
+      next({ startup: { 'playground.html': entry(150, 211) } }),
+    )
+    expect(lines).toEqual(['  startup playground.html: 100 → 150 B  (+50)'])
   })
 })
