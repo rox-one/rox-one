@@ -972,6 +972,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'transfer:chunk',
   'transfer:commit',
   'transfer:start',
+  'tray:reportState',
   'update:available',
   'update:check',
   'update:dismiss',
@@ -1097,4 +1098,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1093
+export const EXPECTED_CHANNEL_COUNT = 1094

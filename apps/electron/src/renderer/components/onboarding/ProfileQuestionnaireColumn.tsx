@@ -247,7 +247,7 @@ export function ProfileQuestionnaireColumn({
       <div data-testid="profile-preferences" className="space-y-2">
         <div className="space-y-1.5">
           <Label htmlFor={preferencesId}>{t('onboarding.profile.preferences')}</Label>
-          <p className="text-xs text-muted-foreground">
+          <p className="onb-helper text-xs text-muted-foreground">
             {t('onboarding.profile.preferencesHint')}
           </p>
           <Textarea
@@ -271,7 +271,7 @@ export function ProfileQuestionnaireColumn({
             aria-busy={suggesting}
             data-testid="profile-suggest-button"
             className={cn(
-              'relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border px-4 py-1.5 text-xs font-medium text-foreground',
+              'onb-magic relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border px-4 py-1.5 text-xs font-medium text-foreground',
               'border-accent/30 bg-background/60 transition-colors duration-[var(--motion-fast)]',
               'hover:border-accent/50 focus-visible:outline-none focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus/55',
               'disabled:cursor-not-allowed disabled:opacity-60',
@@ -283,14 +283,14 @@ export function ProfileQuestionnaireColumn({
               style={{ backgroundImage: SUGGEST_GRADIENT }}
             />
             <span className="relative inline-flex items-center gap-1.5">
+              {suggesting
+                ? t('onboarding.profile.suggesting')
+                : t('onboarding.profile.suggest')}
               {suggesting ? (
                 <Loader2 className="icon-caption animate-spin" aria-hidden="true" />
               ) : (
                 <Sparkles className="icon-caption" aria-hidden="true" />
               )}
-              {suggesting
-                ? t('onboarding.profile.suggesting')
-                : t('onboarding.profile.suggest')}
             </span>
           </button>
 
