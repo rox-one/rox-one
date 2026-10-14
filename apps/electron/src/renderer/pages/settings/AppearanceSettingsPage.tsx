@@ -70,6 +70,7 @@ import {
   type KanbanBoardConfig,
 } from '@rox/shared/kanban/browser'
 import { setProjectColorTreatment, useProjectColorTreatment } from '@/hooks/useProjectColorTreatment'
+import { isFxLevel, setFxLevel, useFxLevel } from '@rox/ui/fx'
 import { PROJECT_COLOR_PALETTE, type ProjectColorTreatment } from '@/utils/project-colors'
 import { Info_DataTable, SortableHeader } from '@/components/info/Info_DataTable'
 import { Info_Badge } from '@/components/info/Info_Badge'
@@ -829,6 +830,7 @@ export default function AppearanceSettingsPage() {
 
   // Project color treatment in the SessionList
   const projectColorTreatment = useProjectColorTreatment()
+  const fxLevel = useFxLevel()
   const handleProjectColorTreatmentChange = useCallback((value: string) => {
     if (!appearancePrefLive()) return
     setProjectColorTreatment(value as ProjectColorTreatment)
@@ -1350,6 +1352,20 @@ export default function AppearanceSettingsPage() {
                       options={[
                         { value: 'brand', label: t("settings.appearance.accentBrand") },
                         { value: 'system', label: t("settings.appearance.accentSystem") },
+                      ]}
+                    />
+                  </SettingsRow>
+                  <SettingsRow
+                    label={t("settings.appearance.fxLevel")}
+                    description={t("settings.appearance.fxLevelDesc")}
+                  >
+                    <SettingsSegmentedControl
+                      value={fxLevel}
+                      onValueChange={(value) => { if (isFxLevel(value)) setFxLevel(value) }}
+                      options={[
+                        { value: 'full', label: t("settings.appearance.fxLevelFull") },
+                        { value: 'reduced', label: t("settings.appearance.fxLevelReduced") },
+                        { value: 'off', label: t("settings.appearance.lowPowerModeOff") },
                       ]}
                     />
                   </SettingsRow>
