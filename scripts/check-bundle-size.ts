@@ -709,6 +709,54 @@ function printStartupTable(measurements: StartupMeasurement[], recorded: Record<
   }
 }
 
+/**
+ * `--update` resets every budget to whatever the build now weighs, which is precisely why the
+ * acceptance has to stay readable afterwards: without a delta, "re-recorded" and "silently grew"
+ * look identical in review.
+ *
+ * Prints only what moved, plus the one shape a re-record must never bury — an entry page whose
+ * static closure gained files, which is how a lazy import quietly turns back into a blocking one.
+ * Byte totals alone cannot show that: a page can shrink while pulling in more files, or grow while
+ * shedding them.
+ */
+export function formatUpdateDelta(
+  previous: BundleBaseline | undefined,
+  next: Pick<BundleBaseline, 'budgets' | 'stylesheets' | 'totals' | 'startup'>,
+): string[] {
+  if (!previous) return ['bundle-size: no committed baseline to compare against; this is a first recording']
+  const lines: string[] = []
+  const signed = (after: number, before: number) => `${after - before < 0 ? '-' : '+'}${Math.abs(after - before)}`
+  const moved = (label: string, before: number | undefined, after: number) => {
+    if (before === undefined) { lines.push(`  ${label}: new, ${after} B`); return }
+    if (before === after) return
+    lines.push(`  ${label}: ${before} → ${after} B  (${signed(after, before)})`)
+  }
+  const prefixes = (kind: 'js' | 'css', after: Record<string, ChunkBudget> | undefined, before: Record<string, ChunkBudget> | undefined) => {
+    for (const [name, entry] of Object.entries(after ?? {}).sort()) {
+      moved(`${kind}  ${name}`, before?.[name]?.totalRawBytes, entry.totalRawBytes)
+    }
+  }
+  moved('js  total', previous.totals?.jsRawBytes, next.totals?.jsRawBytes ?? 0)
+  moved('css total', previous.totals?.cssRawBytes, next.totals?.cssRawBytes ?? 0)
+  prefixes('js', next.budgets, previous.budgets)
+  prefixes('css', next.stylesheets, previous.stylesheets)
+  const grewClosure: string[] = []
+  for (const [html, entry] of Object.entries(next.startup ?? {}).sort()) {
+    const was = previous.startup?.[html]
+    if (was && was.fileCount !== entry.fileCount) {
+      lines.push(`  startup ${html}: ${was.jsRawBytes} → ${entry.jsRawBytes} B  (${signed(entry.jsRawBytes, was.jsRawBytes)}), ${was.fileCount} → ${entry.fileCount} file(s)`)
+      if (entry.fileCount > was.fileCount) grewClosure.push(`${html} (${was.fileCount} → ${entry.fileCount})`)
+      continue
+    }
+    moved(`startup ${html}`, was?.jsRawBytes, entry.jsRawBytes)
+  }
+  if (lines.length === 0) return ['  (nothing moved)']
+  if (grewClosure.length > 0) {
+    lines.push(`  ! static closure gained file(s): ${grewClosure.join(', ')} — confirm this is not a lazy import that became blocking`)
+  }
+  return lines
+}
+
 export function main(argv: string[] = process.argv.slice(2), env: Record<string, string | undefined> = process.env): number {
   const p = paths(env.ROX_BUNDLE_SIZE_ROOT ?? DEFAULT_ROOT)
   const baselineArg = argValue(argv, '--baseline')
@@ -772,6 +820,14 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
   }
 
   if (update) {
+    // Read the outgoing baseline before overwriting it: the delta is the only durable record of what
+    // this acceptance costs, and the write below destroys the evidence.
+    let previous: BundleBaseline | undefined
+    try {
+      previous = readBaseline(baselinePath)
+    } catch {
+      previous = undefined
+    }
     writeJson(baselinePath, {
       description: DESCRIPTION,
       comment: 'Recorded by `bun scripts/check-bundle-size.ts --update` against a real renderer build.',
@@ -793,6 +849,10 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
     console.log(`  css total: raw ${totals.cssRawBytes} B, gzip ${totals.cssGzipBytes} B`)
     for (const [html, entry] of Object.entries(startupEntries).sort()) {
       console.log(`  startup ${html}: js raw ${entry.jsRawBytes} B, gzip ${entry.gzipTotalBytes} B, ${entry.fileCount} file(s)`)
+    }
+    console.log('bundle-size: delta vs the baseline being replaced')
+    for (const line of formatUpdateDelta(previous, { budgets, stylesheets, totals, startup: startupEntries })) {
+      console.log(line)
     }
     return 0
   }
