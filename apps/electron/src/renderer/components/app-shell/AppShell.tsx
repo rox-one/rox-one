@@ -5,7 +5,6 @@ import { useTranslation, Trans } from "react-i18next"
 import { isInternalAgentSession } from "@rox/shared/sessions/internal-prompts"
 import { useRef, useState, useEffect, useCallback, useMemo } from "react"
 import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai"
-import { motion, AnimatePresence } from "motion/react"
 import {
   Archive,
   ChevronDown,
@@ -80,23 +79,25 @@ import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { type LinkItem, type SeparatorItem, type SidebarItem as SidebarLinkItem } from "./LeftSidebar"
 import { PrimaryRail, SHELL_RAIL_WIDTH } from '../shell/PrimaryRail'
-import { toggleSecondarySidebar, useSecondarySidebarVisibility } from '../shell/shell-prefs'
+import { setNarrowShell, setNarrowSidebarOverlayOpen, toggleSecondarySidebar, useNarrowSidebarOverlay, useSecondarySidebarVisibility } from '../shell/shell-prefs'
+import { useNarrowOverlayFocus } from '../shell/narrow-overlay'
+import { NARROW_SHELL_THRESHOLD } from './mode-pill-layout'
 import { ShellSidebarNav } from "./ShellSidebarNav"
 import { modePillShown } from "./mode-pill-layout"
 import { useScrollEdgeAttribute } from "@/hooks/useScrollEdgeAttribute"
-import { ShellLayoutMode } from './ShellLayoutMode'
 import { SuperEngineeringShellExtras } from './SuperEngineeringShellExtras'
-import { WorkspaceNavigator } from '@/components/workspace/WorkspaceNavigator'
 import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
 import { useSeEditorZoom } from '@/hooks/useSeEditorZoom'
 import { inspectorEdgeRevealModeAtom } from '@/atoms/panel-auto-hide'
 import { seChatPipOpenAtom } from '@/atoms/se-chat-pip'
 import { inspectorUserOpenedAtom } from '@/atoms/unified-shell'
+import { useTerminalDockShortcut } from '@/hooks/useTerminalDockShortcut'
 import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
-import { type ProfileStripData } from "./ProfileStrip"
+import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
 import { accountProfileStrip } from "./profile-strip-account"
+import { SidebarNewSessionButton } from "./SidebarNewSessionButton"
 import { SidebarChrome, SidebarHeaderControls } from "./SidebarChrome"
 import { StatusBar } from "./StatusBar"
 import { useUiAppearance } from "@/lib/ui-appearance-store"
@@ -133,6 +134,7 @@ import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchStatusBa
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
+import { TrayStateBridge } from "@/features/native-integrations/TrayStateBridge"
 import { EscapeInterruptProvider, useEscapeInterrupt } from "@/context/EscapeInterruptContext"
 import { useTheme } from "@/context/ThemeContext"
 import { usePanelResize } from "@/hooks/usePanelResize"
@@ -169,6 +171,7 @@ import { installShellWarmup } from "@/lib/shell-warmup"
 import { readSkillsPage, SKILLS_UI_PAGE_SIZE } from "@/lib/skills-query"
 import { toast } from "sonner"
 import { navigate, routes } from "@/lib/navigate"
+import { buildRouteFromNavigationState } from "../../../shared/route-parser"
 import {
   useNavigationActions,
   useNavigationStatus,
@@ -209,8 +212,6 @@ import { useProductLearning } from '@/features/product-tour/runtime'
 import { useTourTarget, useTourSignals } from '@/features/product-tour/runtime/hooks'
 import { beginChatSessionCreation } from '@/features/product-tour/adapters/chat'
 import { FabNewChat } from "./FabNewChat"
-import { SendToWorkspaceDialog } from "./SendToWorkspaceDialog"
-import { CreateProjectDialog } from "../projects/CreateProjectDialog"
 import { PublishSessionDialogHost } from "@/components/knowledge/PublishSessionDialogHost"
 import { EditPopover, getEditConfig, type EditContextKey } from "@/components/ui/EditPopover"
 import SettingsNavigator from "@/pages/settings/SettingsNavigator"
@@ -245,6 +246,15 @@ const MessagingDialogHost = React.lazy(() =>
   import("@/components/messaging/MessagingDialogHost").then((m) => ({
     default: m.MessagingDialogHost,
   })),
+)
+
+// Closed until SessionMenu / BatchSessionMenu write sendToWorkspaceAtom, or the
+// Add Project action opens the name prompt. Same gate as PublishSessionDialogHost.
+const SendToWorkspaceDialog = React.lazy(() =>
+  import("./SendToWorkspaceDialog").then((m) => ({ default: m.SendToWorkspaceDialog })),
+)
+const CreateProjectDialog = React.lazy(() =>
+  import("../projects/CreateProjectDialog").then((m) => ({ default: m.CreateProjectDialog })),
 )
 
 // The extra-screens background work is timer-driven (first check 30 s after mount) and renders
@@ -445,6 +455,13 @@ function AppShellContent({
   const shellWidth = useContainerWidth(shellRef)
   const MOBILE_THRESHOLD = 768
   const isAutoCompact = shellWidth > 0 && shellWidth < MOBILE_THRESHOLD
+  // top50 #3: between the mobile layout and NARROW_SHELL_THRESHOLD the second
+  // sidebar stops taking layout width and floats over the content instead.
+  const isNarrowShell = !isAutoCompact && shellWidth > 0 && shellWidth < NARROW_SHELL_THRESHOLD
+  React.useLayoutEffect(() => { setNarrowShell(isNarrowShell) }, [isNarrowShell])
+  React.useEffect(() => () => setNarrowShell(false), [])
+  const narrowOverlay = useNarrowSidebarOverlay()
+  const secondaryOverlayRef = React.useRef<HTMLDivElement>(null)
   // One-surface shell: restored sidebar/list widths must not squeeze the
   // session column below CENTER_MIN_WIDTH when the window is wide enough.
   // Display-only; the persisted widths are untouched. The right inspector
@@ -469,6 +486,7 @@ function AppShellContent({
   // experimental workbench bar so the two never stack.
   const { statusBarVisible: uiStatusBarVisible } = useUiAppearance()
   const showCompactStatusBar = uiStatusBarVisible && !isAutoCompact && !showStatusBar
+  const statusRowVisible = showStatusBar || showCompactStatusBar
 
   const effectiveSidebarAndNavigatorHidden = isSidebarAndNavigatorHidden || isAutoCompact
 
@@ -597,8 +615,23 @@ function AppShellContent({
   // shell-layout: static icon rail + optional second sidebar (none on Главная, user can hide it).
   const secondaryVisibility = useSecondarySidebarVisibility()
   const secondaryAvailable = !isHomeNavigation(navState)
-  const secondaryShown = secondaryAvailable && secondaryVisibility !== 'hidden'
-  const shellLeftWidth = SHELL_RAIL_WIDTH + (secondaryShown ? sidebarWidth : 0)
+  const secondaryOverlayOpen = isNarrowShell && narrowOverlay.open && secondaryAvailable
+  const secondaryShown = secondaryAvailable && (isNarrowShell ? secondaryOverlayOpen : secondaryVisibility !== 'hidden')
+  const shellLeftWidth = SHELL_RAIL_WIDTH + (secondaryShown && !isNarrowShell ? sidebarWidth : 0)
+  // The overlay keeps the user's own width but never covers the whole window.
+  const secondaryOverlayWidth = isSidebarCollapsed ? 52 : Math.max(SIDEBAR_WIDTH_MIN, Math.min(storedSidebarWidth, shellWidth - SHELL_RAIL_WIDTH - 48))
+  useNarrowOverlayFocus(secondaryOverlayRef, secondaryOverlayOpen)
+  // Picking a row in the overlay navigates; the overlay then gets out of the way.
+  // Keyed on the route string (memoized), not a JSON dump of navState per render.
+  const overlayNavKey = React.useMemo(() => {
+    try { return buildRouteFromNavigationState(navState) } catch { return JSON.stringify(navState) }
+  }, [navState])
+  const overlayNavKeyRef = React.useRef(overlayNavKey)
+  React.useEffect(() => {
+    if (overlayNavKeyRef.current === overlayNavKey) return
+    overlayNavKeyRef.current = overlayNavKey
+    setNarrowSidebarOverlayOpen(false)
+  }, [overlayNavKey])
   // No global project scope (the sidebar «Контекст проекта» selector was removed):
   // chats, new chats and tools always cover all projects.
   const liveWorkspace = useRef(activeWorkspaceId)
@@ -645,6 +678,10 @@ function AppShellContent({
   }
   const panelStack = useAtomValue(panelStackAtom)
   const productLearning = useProductLearning()
+  const replayOnboardingTour = React.useMemo(() => {
+    if (!productLearning?.enabled || !productLearning.ready) return undefined
+    return () => { void productLearning.start('OBT-01', productLearning.progress['OBT-01'] ? 'replay' : 'new') }
+  }, [productLearning])
   const tourNewSessionTarget = useTourTarget('session.new', { variant: 'regular' })
   const tourSignals = useTourSignals()
   const panelCount = useAtomValue(panelCountAtom)
@@ -1435,6 +1472,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   // Settings
   useAction('app.settings', onOpenSettings)
   useAction('view.toggleSecondarySidebar', toggleSecondarySidebar)
+  useTerminalDockShortcut()
 
   // Keyboard shortcuts
   useAction('app.keyboardShortcuts', onOpenKeyboardShortcuts)
@@ -1719,6 +1757,18 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   const profileStripWithSpend = useMemo(
     () => accountProfileStrip(profileStrip, roxCloudAccount, workspaceSpentUsd, t('profile.defaultName')),
     [profileStrip, roxCloudAccount, workspaceSpentUsd, t],
+  )
+  // One profile entry: rail bottom when the status bar is off, otherwise the
+  // left end of the status row.
+  const renderProfileEntry = (placement: 'rail' | 'status') => (
+    <ProfileStrip
+      variant="rail"
+      placement={placement}
+      data={profileStripWithSpend}
+      onClick={() => handleSettingsClick('account')}
+      onOpenSettings={() => handleSettingsClick()}
+      onReplayTour={replayOnboardingTour}
+    />
   )
 
   // Active sessions exclude archived - use this for all counts and filters except archived view
@@ -3091,6 +3141,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
     <TourConnectionPolicyContext.Provider value={learningSourcePolicy?.workspaceId === activeWorkspaceId ? learningSourcePolicy : null}>
     <AppShellProvider value={appShellContextValue}>
       <AuroraField />
+      <TrayStateBridge />
       <WorkspaceBrowserRegistry enabled={browserSurfaceEnabled} />
       <ShellSidebarContext.Provider value={isAutoCompact ? null : shellSidebarSlot}>
         {/* === TOP BAR === */}
@@ -3101,6 +3152,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
           workspaceUnreadMap={workspaceUnreadMap}
           onWorkspaceCreated={() => onRefreshWorkspaces?.()}
           onWorkspaceRemoved={() => onRefreshWorkspaces?.()}
+          onWorkspaceRenamed={() => onRefreshWorkspaces?.()}
           activeSessionId={effectiveSessionId}
           onNewChat={() => handleNewChat()}
           onNewWindow={() => window.electronAPI.menuNewWindow()}
@@ -3171,22 +3223,22 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             >
             <PrimaryRail
               secondaryAvailable={secondaryAvailable}
-              avatar={
-                <button
-                  type="button"
-                  data-rail-button=""
-                  data-rail-avatar=""
-                  aria-label={t('shell.rail.account', { name: profileStripWithSpend.displayName })}
-                  onClick={() => handleSettingsClick('account')}
-                  className="flex size-10 items-center justify-center rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  {profileStripWithSpend.avatar
-                    ? <img src={profileStripWithSpend.avatar} alt="" className="size-7 rounded-full object-cover" />
-                    : <span className="flex size-7 items-center justify-center rounded-full bg-[var(--state-selected)] text-caption font-semibold" aria-hidden>{(profileStripWithSpend.displayName || '?').slice(0, 1).toUpperCase()}</span>}
-                </button>
-              }
+              avatar={statusRowVisible ? undefined : renderProfileEntry('rail')}
             />
-            <div className={cn("h-full min-w-0 flex-1 flex-col select-none", secondaryShown ? "flex" : "hidden")} data-secondary-sidebar="">
+            <div
+              ref={secondaryOverlayRef}
+              className={cn(
+                "h-full min-w-0 flex-1 flex-col select-none",
+                secondaryShown ? "flex" : "hidden",
+                secondaryOverlayOpen && "rox-shell-pane chrome-rail absolute inset-y-0 z-sticky shadow-strong rox-shell-divider-r",
+              )}
+              style={secondaryOverlayOpen ? { left: SHELL_RAIL_WIDTH, width: secondaryOverlayWidth } : undefined}
+              data-secondary-sidebar=""
+              data-secondary-overlay={secondaryOverlayOpen ? 'true' : undefined}
+              role={secondaryOverlayOpen ? 'dialog' : undefined}
+              aria-modal={secondaryOverlayOpen ? true : undefined}
+              aria-label={secondaryOverlayOpen ? t('shell.rail.sidebarOverlay') : undefined}
+            >
               {/* Sidebar v2 header: collapse + pin side by side at the top. */}
               <SidebarHeaderControls
                 collapsed={isSidebarCollapsed}
@@ -3196,6 +3248,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
               />
               {/* Sidebar Top Section */}
               <div className="flex-1 flex flex-col min-h-0">
+                {!isSidebarCollapsed && <SidebarNewSessionButton hotkey={newChatHotkey} onNewSession={handleNewChat} />}
                 {/* Primary Nav: Sessions → Labels → Projects → Pages | Memory…Knowledge | Automations → Settings */}
                 {/* WP5: the bottom fade shows only while rows remain below the fold
                     (data-scroll-down, set without re-rendering); at the end the last
@@ -3211,12 +3264,8 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                   <SettingsNavigator selectedSubpage={navState.subpage ?? null} onSelectSubpage={subpage => handleSettingsClick(subpage)} />,
                   shellSidebarSlot,
                 )}
-<ShellLayoutMode workspaceRootPath={activeWorkspace?.rootPath}>
-                  {(layoutMode) => (
-                    <>
-                      {layoutMode === 'se-workspace' && !isSidebarCollapsed && (
-                        <WorkspaceNavigator workspaceRootPath={activeWorkspace?.rootPath} />
-                      )}
+{/* The workspace name lives in the top switcher; the sidebar carries no
+                    repo/dirty-count block (Mark, t77). */}
                       <ShellSidebarNav
                         baseLinks={sidebarLinks}
                         isCollapsed={isSidebarCollapsed}
@@ -3228,19 +3277,13 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                         pillShown={modePillShown(isAutoCompact)}
                         workspaceIds={recentScopeWorkspaceIds}
                       />
-                    </>
-                  )}
-                </ShellLayoutMode>
                 </div>
                 <div className="shrink-0" data-sidebar-footer="">
                   <SidebarChrome
                     workspaceId={activeWorkspaceId}
-                    profile={profileStripWithSpend}
-                    onProfileClick={() => handleSettingsClick('account')}
                     promoKind={promoKind}
                     onPromoCta={handleMemoryClick}
                     collapsed={isSidebarCollapsed}
-                    onOpenSettings={() => handleSettingsClick()}
                   />
                 </div>
               </div>
@@ -3249,6 +3292,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
           </div>
           }
           sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : shellLeftWidth}
+          sidebarOverflowVisible={secondaryOverlayOpen}
           navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav) ? null : (
             <div
               style={{ width: isAutoCompact || navigatorExpanded ? '100%' : sessionListWidth }}
@@ -3599,8 +3643,26 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
         </WorkspaceSurfaceHost>
 
       </div>
-      {showStatusBar && <StatusBarHost />}
-      {showCompactStatusBar && <StatusBar account={roxCloudAccount} />}
+      {statusRowVisible && (
+        // The profile anchors the left end of the status bar: the bar extends
+        // out of the profile block at the bottom of the rail (Mark, t77).
+        <div className="flex shrink-0 items-stretch" data-status-row="">
+          {/* No rail (focus / sidebar-hidden / auto-compact): the bar starts at x=0. */}
+          {!effectiveSidebarAndNavigatorHidden && (
+            <div
+              className="chrome-rail flex shrink-0 items-center justify-center"
+              style={{ width: SHELL_RAIL_WIDTH }}
+              data-status-profile=""
+            >
+              {renderProfileEntry('status')}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            {showStatusBar && <StatusBarHost />}
+            {showCompactStatusBar && <StatusBar account={roxCloudAccount} />}
+          </div>
+        </div>
+      )}
       </div>
 
       {/* ============================================================================
@@ -3804,21 +3866,29 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
       </Dialog>
 
       {/* Send to Workspace dialog (driven by sendToWorkspaceAtom) */}
-      <SendToWorkspaceDialog
-        open={sendToWorkspaceIds.length > 0}
-        onOpenChange={(open) => { if (!open) setSendToWorkspaceIds([]) }}
-        sessionIds={sendToWorkspaceIds}
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId}
-        onTransferComplete={handleTransferComplete}
-      />
+      {sendToWorkspaceIds.length > 0 && (
+        <React.Suspense fallback={null}>
+          <SendToWorkspaceDialog
+            open
+            onOpenChange={(open) => { if (!open) setSendToWorkspaceIds([]) }}
+            sessionIds={sendToWorkspaceIds}
+            workspaces={workspaces}
+            activeWorkspaceId={activeWorkspaceId}
+            onTransferComplete={handleTransferComplete}
+          />
+        </React.Suspense>
+      )}
 
       {/* Create Project dialog — prompts for a name so slugs stay meaningful */}
-      <CreateProjectDialog
-        open={createProjectDialogOpen}
-        onCancel={() => setCreateProjectDialogOpen(false)}
-        onSubmit={handleCreateProjectSubmit}
-      />
+      {createProjectDialogOpen && (
+        <React.Suspense fallback={null}>
+          <CreateProjectDialog
+            open
+            onCancel={() => setCreateProjectDialogOpen(false)}
+            onSubmit={handleCreateProjectSubmit}
+          />
+        </React.Suspense>
+      )}
 
       {/* Messaging dialogs (pairing-code + WA connect) — driven by messagingDialogAtom.
           Mounted here so they survive context-menu / dropdown close. */}

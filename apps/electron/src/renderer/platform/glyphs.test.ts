@@ -56,6 +56,7 @@ const UNIFIED_CONCEPT: Record<string, GlyphConcept> = {
   messenger: 'team',
   calendar: 'calendar',
   goals: 'goals',
+  canvas: 'canvas',
 }
 
 const PILL_CONCEPT: Record<string, GlyphConcept> = {

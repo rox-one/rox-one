@@ -260,7 +260,14 @@ export function createHooksWakeDispatcher(
 // Startup lock file
 // ---------------------------------------------------------------------------
 
-const LOCK_FILE = join(resolveConfigDir(), '.server.lock')
+// The lock path is resolved per call, never at module load: the config dir is an
+// env override (`ROX_CONFIG_DIR`, legacy `CRAFT_CONFIG_DIR`) and in-process
+// consumers (tests, embedded hosts) repoint it after this module - or any module
+// that imports it - was first evaluated. A module-level snapshot made
+// `bootstrapServer` read/write a lock directory chosen by whichever file imported
+// this module first rather than the caller's own (issue #1955: a stale temp dir
+// deleted by an earlier suite surfaced as ENOENT here). For the real app nothing
+// changes - it sets its config dir before startup and never moves it afterwards.
 
 type LockPayload = LockIdentity
 
@@ -375,9 +382,10 @@ function isLockFromPreviousBoot(startedAt: number): boolean {
 }
 
 function acquireServerLock(logger: PlatformServices['logger']): void {
-  if (existsSync(LOCK_FILE)) {
+  const lockFile = join(resolveConfigDir(), '.server.lock')
+  if (existsSync(lockFile)) {
     try {
-      const content = readFileSync(LOCK_FILE, 'utf-8')
+      const content = readFileSync(lockFile, 'utf-8')
       const lock = parseLockContent(content)
 
       if (lock) {
@@ -400,7 +408,7 @@ function acquireServerLock(logger: PlatformServices['logger']): void {
           } else {
             throw new Error(
               `Another server instance is already running (PID ${lock.pid}). ` +
-              `If this is stale, delete ${LOCK_FILE} and retry. ` +
+              `If this is stale, delete ${lockFile} and retry. ` +
               `To run a parallel instance (e.g. for dev), set CRAFT_CONFIG_DIR to a different path.`
             )
           }
@@ -417,7 +425,7 @@ function acquireServerLock(logger: PlatformServices['logger']): void {
   }
 
   const payload: LockPayload = { pid: process.pid, startedAt: Date.now(), execName: basename(process.execPath) }
-  writeFileSync(LOCK_FILE, JSON.stringify(payload), 'utf-8')
+  writeFileSync(lockFile, JSON.stringify(payload), 'utf-8')
 
   // Safety net: release the lock on unexpected exits (SIGKILL, uncaught exceptions, etc.).
   // process.on('exit') only allows synchronous code — releaseServerLock is fully sync.
@@ -431,11 +439,12 @@ function acquireServerLock(logger: PlatformServices['logger']): void {
  */
 export function releaseServerLock(): void {
   try {
-    if (existsSync(LOCK_FILE)) {
-      const lock = parseLockContent(readFileSync(LOCK_FILE, 'utf-8'))
+    const lockFile = join(resolveConfigDir(), '.server.lock')
+    if (existsSync(lockFile)) {
+      const lock = parseLockContent(readFileSync(lockFile, 'utf-8'))
       // Only delete if it's our lock
       if (lock && lock.pid === process.pid) {
-        unlinkSync(LOCK_FILE)
+        unlinkSync(lockFile)
       }
     }
   } catch {

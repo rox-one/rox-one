@@ -25,7 +25,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { useDirectoryPicker } from '@/hooks/useDirectoryPicker'
-import { RPC_CHANNELS } from '../../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import { toErrorMessage } from '@/lib/errors'
 interface ScanNote { absolutePath: string; relativePath: string; sizeBytes: number }
 interface ScanResult { root: string; notes: ScanNote[]; skippedSymlinks: number; truncated: boolean }

@@ -1,7 +1,10 @@
 /**
- * date-fns locales per UI language. These are small (a few KB each) and are
- * needed synchronously by date formatting, so they stay static; only the large
- * message bundles are loaded lazily.
+ * Eager date-fns locales per UI language.
+ *
+ * Main process and tests import this map through `registry.ts` / `setupI18n()`.
+ * Renderer code must not import this module: `getDateLocale` loads locales on
+ * demand through `date-locale-loaders.ts` so unused languages stay out of the
+ * boot closure.
  */
 import type { Locale } from "date-fns";
 import { ar } from "date-fns/locale/ar";

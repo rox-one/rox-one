@@ -23,7 +23,7 @@ function BannerDemo({
   const [enabled, setEnabled] = React.useState(false)
   return (
     <div className="w-full max-w-[640px] mx-auto p-6">
-      <div className="rounded-2xl border border-border/50 shadow-middle bg-background/40 backdrop-blur-sm">
+      <div className="rounded-lg border border-border/50 shadow-middle bg-background/40 backdrop-blur-sm">
         {!enabled && (
           <ImageSupportWarningBanner
             modelName={modelName}

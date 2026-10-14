@@ -22,9 +22,7 @@ function preferences(value: unknown): LearningPreferences {
   const record = value as Partial<LearningPreferences>
   return { invitationsEnabled: record.invitationsEnabled === true, diagnosticsEnabled: record.diagnosticsEnabled === true }
 }
-export function createLearningScopeKey(clientProfileId: string, workspaceId: string): string {
-  return JSON.stringify([clientProfileId, workspaceId])
-}
+export { createLearningScopeKey } from './scope-key'
 export function createLearningProfileRepository(options: LearningStorageOptions = {}): LearningProfileRepository {
   const database = createDatabaseAccess(options)
   const name = options.databaseName ?? 'rox-product-tour'

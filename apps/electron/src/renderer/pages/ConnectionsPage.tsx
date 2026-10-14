@@ -34,7 +34,7 @@ import { ConnectionLifecyclePanel } from './ConnectionLifecyclePanel'
 import { GithubDeviceLoginPanel } from './GithubDeviceLoginPanel'
 import { ConnectionsOverview, OverviewGroup, OverviewRow, type OverviewStatus } from './connections-overview'
 import { ProjectAuthorityConnectionPanel } from '@/components/projects/ProjectAuthorityConnectionPanel'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useShellSidebarTarget, PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
 
 const TABS = ['services', 'credentials', 'imports', 'policies', 'audit'] as const
 const CONNECT_SOURCES = ['github-env', 'git-helper', 'docker', 'aws', 'keychain', 'adc', 'ssh-agent', 'github-oauth'] as const
@@ -533,7 +533,7 @@ export default function ConnectionsPage() {
     <div className="flex h-full min-h-0 flex-col" data-testid="connections-page">
       <div className="mx-auto flex w-full max-w-4xl items-center gap-3 px-6 pt-5 pb-3">
         <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-semibold text-foreground">{t('connections.title')}</h1>
+          <PanelHeading className="text-lg font-semibold text-foreground" titleKey="connections.title">{t('connections.title')}</PanelHeading>
           <p className="truncate text-sm text-muted-foreground">{t('connections.subtitle')}</p>
         </div>
         <Button size="sm" variant="ghost" onClick={refreshAll} aria-label={t('common.refresh')}>
@@ -545,7 +545,7 @@ export default function ConnectionsPage() {
         </Button>
       </div>
       {/* Contextual sidebar: the tabs are this screen's navigation (inline when no shell slot). */}
-      <ShellSidebarPortal aria-label={t('sidebar.connections')} className="mx-auto w-full max-w-4xl px-3 pb-2">
+      <ShellSidebarPortal bareMode="strip" bareLabelKey="sidebar.connections" aria-label={t('sidebar.connections')} className="mx-auto w-full max-w-4xl px-3 pb-2">
         <div role="tablist" aria-label={t('sidebar.connections')} aria-orientation={sidebarTarget ? 'vertical' : 'horizontal'} className={sidebarTarget ? 'flex flex-col gap-0.5' : 'flex gap-1'}>
           {TABS.map((id) => (
             <button
