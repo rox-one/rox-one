@@ -93,6 +93,7 @@ import { useSeEditorZoom } from '@/hooks/useSeEditorZoom'
 import { inspectorEdgeRevealModeAtom } from '@/atoms/panel-auto-hide'
 import { seChatPipOpenAtom } from '@/atoms/se-chat-pip'
 import { inspectorUserOpenedAtom } from '@/atoms/unified-shell'
+import { useTerminalDockShortcut } from '@/hooks/useTerminalDockShortcut'
 import { ShellSidebarContext } from "./ShellSidebarPortal"
 import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
@@ -135,6 +136,7 @@ import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchStatusBa
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
+import { TrayStateBridge } from "@/features/native-integrations/TrayStateBridge"
 import { EscapeInterruptProvider, useEscapeInterrupt } from "@/context/EscapeInterruptContext"
 import { useTheme } from "@/context/ThemeContext"
 import { usePanelResize } from "@/hooks/usePanelResize"
@@ -1460,6 +1462,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   // Settings
   useAction('app.settings', onOpenSettings)
   useAction('view.toggleSecondarySidebar', toggleSecondarySidebar)
+  useTerminalDockShortcut()
 
   // Keyboard shortcuts
   useAction('app.keyboardShortcuts', onOpenKeyboardShortcuts)
@@ -3116,6 +3119,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
     <TourConnectionPolicyContext.Provider value={learningSourcePolicy?.workspaceId === activeWorkspaceId ? learningSourcePolicy : null}>
     <AppShellProvider value={appShellContextValue}>
       <AuroraField />
+      <TrayStateBridge />
       <WorkspaceBrowserRegistry enabled={browserSurfaceEnabled} />
       <ShellSidebarContext.Provider value={isAutoCompact ? null : shellSidebarSlot}>
         {/* === TOP BAR === */}

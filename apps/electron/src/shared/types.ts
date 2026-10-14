@@ -1921,6 +1921,8 @@ export interface ElectronAPI {
   serviceLifecycleUninstall(): Promise<ServiceLifecycleResult>
   /** Push: the local service state changed (tray/menu surfaces). */
   onServiceLifecycleStatusChanged(callback: (status: ServiceStatus) => void): () => void
+  /** Push this window's menu-bar snapshot (badge count, recents, balance, recording) to main. */
+  reportTrayState(report: import('@rox/shared/protocol').TrayStateReport): Promise<void>
   // e1.6: doctor diagnostics (service/port/runtime/config/logs) — host-local.
   runDiagnostics(): Promise<DoctorReport>
   getDiagnosticsLast(): Promise<DoctorReport | null>

@@ -1420,9 +1420,40 @@ export interface NotificationDeepLink {
  * to one of these actions; the renderer owns the navigation/creation behavior.
  */
 export interface ShellActionPayload {
-  action: 'new-note' | 'new-task' | 'quick-composer' | 'open-inbox' | 'navigate'
+  action:
+    | 'new-note'
+    | 'new-task'
+    | 'quick-composer'
+    | 'open-inbox'
+    | 'navigate'
+    /** Open the unified command palette (search). */
+    | 'search'
+    /** Start a meeting recording, or stop the one in progress. */
+    | 'toggle-meeting-recording'
+    /** Open one session: `deepLink.id` (+ optional `deepLink.workspaceId`). */
+    | 'open-session'
+    /** Switch the window to `deepLink.workspaceId`. */
+    | 'switch-workspace'
   /** Present for `action: 'navigate'` (notification click with a deep link). */
   deepLink?: NotificationDeepLink
+}
+
+/**
+ * Renderer → main snapshot that feeds the macOS menu-bar item: the unread
+ * badge, recent sessions, balance and the live recording indicator. Each
+ * window reports its own; main keeps the latest per window.
+ */
+export interface TrayStateReport {
+  /** Open items in the unified inbox (same count as the in-app bell). */
+  unreadCount: number
+  /** Sessions whose agent is currently working. */
+  activeAgents: number
+  /** Most recent sessions, newest first (main shows at most 5). */
+  recentSessions: { id: string; title: string }[]
+  /** Real rox.one balance, or null when unknown. */
+  balance: number | null
+  /** Live capture in this window, or null. `startedAt` is wall-clock ms of the effective start. */
+  recording: { kind: 'meeting' | 'voice'; startedAt: number; paused: boolean } | null
 }
 
 // ---------------------------------------------------------------------------

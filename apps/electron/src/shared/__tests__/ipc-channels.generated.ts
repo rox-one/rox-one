@@ -973,6 +973,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'transfer:chunk',
   'transfer:commit',
   'transfer:start',
+  'tray:reportState',
   'update:available',
   'update:check',
   'update:dismiss',
