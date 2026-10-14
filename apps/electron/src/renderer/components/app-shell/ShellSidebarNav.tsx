@@ -155,7 +155,7 @@ export const ShellSidebarNav = React.memo(function ShellSidebarNav({
       <nav aria-label={t('sidebar.navigation')} data-sidebar-primary-nav="" className="px-1">
         {!isCollapsed && <SidebarSectionHeader id="sidebar-section-nav" label={t('sidebar.navigation')} open={navOpen} onToggle={toggleNav} />}
         {navRows.length > 0 && (
-          <div id="sidebar-section-nav" data-section-open={navOpen ? '' : undefined}>
+          <div id="sidebar-section-nav" data-section-open={navOpen ? '' : undefined} className="[&_[aria-current=page]]:font-medium [&_[aria-current=page]]:text-foreground">
             <LeftSidebar isCollapsed={isCollapsed} onExpand={onExpandPrimary} links={navRows} />
           </div>
         )}

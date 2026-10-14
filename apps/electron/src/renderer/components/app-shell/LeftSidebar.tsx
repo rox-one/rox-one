@@ -207,8 +207,9 @@ const itemVariants: Variants = {
  * - Two-phase drop animation: overlay fades out, ghost fades in
  */
 /** WP4: the one sidebar row hover/active fill (UI-A1 state token). */
-// Sidebar v2: selected ≠ hover — the active row uses the selected token.
-const ROW_FILL = 'bg-[var(--state-selected)] text-foreground font-medium'
+// Sidebar v2: selected ≠ hover — the active row uses the selected token
+// (the main nav adds weight/colour on its own wrapper).
+const ROW_FILL = 'bg-[var(--state-selected)]'
 
 export const LeftSidebar = React.memo(function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested, serviceId, onExpand, disclosureColumn = true }: LeftSidebarProps) {
   const slot = !isNested && disclosureColumn

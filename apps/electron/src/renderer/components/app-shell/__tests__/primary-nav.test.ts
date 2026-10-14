@@ -72,3 +72,29 @@ describe('sidebar v2: the sidebar is the complete navigation', () => {
     expect(a).toEqual(b)
   })
 })
+
+describe('sidebar v2 fix3: placement decides the section', () => {
+  const groupOf = (placements: Record<string, 'pills' | 'primary' | 'more' | 'hidden'>, id: string) =>
+    resolvePrimaryNav({ shellFlags: new Set(), placements }).find(e => e.id === id)?.group
+  it('«Боковая панель» → Навигация, «Боковая панель · Инструменты» → Инструменты', () => {
+    expect(groupOf({ memory: 'primary' }, 'memory')).toBe('primary')
+    expect(groupOf({ tasks: 'more' }, 'tasks')).toBe('more')
+    const r = resolvePrimaryNav({ shellFlags: new Set(), placements: { memory: 'primary' } })
+    expect(r.findIndex(e => e.id === 'memory')).toBeLessThan(r.findIndex(e => e.group === 'more'))
+  })
+  it('defaults and pill placement keep the registry group', () => {
+    expect(groupOf({}, 'memory')).toBe('more')
+    expect(groupOf({}, 'tasks')).toBe('primary')
+    expect(groupOf({ memory: 'pills' }, 'memory')).toBe('more')
+    expect(groupOf({ tasks: 'pills' }, 'tasks')).toBe('primary')
+  })
+  it('no locale still names the removed «Ещё» screens group', () => {
+    const root = resolve(import.meta.dir, '../../../../../../../packages/shared/src/i18n/locales')
+    for (const locale of ['ar', 'de', 'en', 'es', 'fr', 'hu', 'ja', 'ko', 'pl', 'ru', 'zh-Hans', 'zh-Hant']) {
+      const d = JSON.parse(readFileSync(resolve(root, `${locale}.json`), 'utf8')) as Record<string, string>
+      for (const key of ['extraScreens.settingsTitle', 'extraScreens.disabledBody', 'extraScreens.decisions.whatPlaceholder']) {
+        expect(d[key]).not.toMatch(/Ещё|More/)
+      }
+    }
+  })
+})
