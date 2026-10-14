@@ -11,6 +11,14 @@ export type SidebarTarget =
   | { kind: 'folder'; folderId: string }
   | { kind: 'label'; label: string }
   | { kind: 'view'; viewId: string }
+  | { kind: 'filter'; filterId: string }
+  | { kind: 'source'; sourceId: string }
+  | { kind: 'project'; projectId: string }
+  | { kind: 'note'; path: string }
+  | { kind: 'task'; taskId: string }
+  | { kind: 'thread'; threadId: string }
+  | { kind: 'url'; url: string }
+  | { kind: 'date'; isoDate: string }
 
 export interface SidebarSectionItem {
   id: string
@@ -23,6 +31,8 @@ export interface SidebarSectionItem {
   count?: number
   /** Attention dot (unread, needs approval). */
   badge?: 'unread' | 'attention' | 'running'
+  /** Secondary muted text (time, due date). Already formatted by the caller. */
+  secondary?: string
   target: SidebarTarget
 }
 
@@ -38,4 +48,10 @@ export interface SidebarSection {
 /** Drop empty groups — the spec hides them instead of rendering headers. */
 export function nonEmptySections(sections: SidebarSection[]): SidebarSection[] {
   return sections.filter((s) => s.items.length > 0)
+}
+
+/** Stable key for a target, e.g. to mark the active row or persist pins. */
+export function targetKey(t: SidebarTarget): string {
+  const { kind, ...rest } = t
+  return `${kind}:${Object.values(rest).join(':')}`
 }

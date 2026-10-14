@@ -59,3 +59,11 @@ describe('buildSessionsSidebarSections', () => {
     expect(items[1]).toMatchObject({ label: 'hi' })
   })
 })
+
+describe('targetKey', () => {
+  it('is stable per target', async () => {
+    const { targetKey } = await import('../../sidebar-section')
+    expect(targetKey({ kind: 'session', sessionId: 'a' })).toBe('session:a')
+    expect(targetKey({ kind: 'label', label: 'x' })).toBe('label:x')
+  })
+})
