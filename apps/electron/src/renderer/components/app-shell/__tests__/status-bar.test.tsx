@@ -32,6 +32,7 @@ await i18n.init({
   } } },
 })
 
+import { resolveStatusBalance } from '../StatusBar'
 const account = { balance: { availableRox: '12.500000' } } as RoxAccountSnapshot
 const render = (node: React.ReactNode) => renderToStaticMarkup(<I18nextProvider i18n={i18n}>{node}</I18nextProvider>)
 
@@ -46,5 +47,26 @@ describe('compact status bar', () => {
     // { amount }) received the account value: a missing value would render the
     // raw {{amount}} template instead.
     expect(html).toContain('Balance 12.5')
+  })
+
+  it('hides the balance instead of showing a no-data placeholder', () => {
+    const html = render(<StatusBar account={null} />)
+    expect(html).not.toContain('status-bar-balance')
+    expect(html).not.toContain('No data')
+  })
+
+  it('renders every visible item as a button', () => {
+    const html = render(<StatusBar account={account} />)
+    for (const id of ['status-bar-workspace', 'status-bar-sync', 'status-bar-sessions', 'status-bar-agents', 'status-bar-inbox', 'status-bar-balance', 'status-bar-notifications']) {
+      expect(html).toMatch(new RegExp(`<button[^>]*data-testid="${id}"`))
+    }
+  })
+})
+
+describe('resolveStatusBalance', () => {
+  it('prefers the api.rox.one balance and falls back to the account snapshot', () => {
+    expect(resolveStatusBalance({ status: 'ok', balance: 3 }, account)).toBe(3)
+    expect(resolveStatusBalance({ status: 'error' }, account)).toBe(12.5)
+    expect(resolveStatusBalance({ status: 'disconnected' }, null)).toBeNull()
   })
 })
