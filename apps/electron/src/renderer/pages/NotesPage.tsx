@@ -42,6 +42,9 @@ import { navigate, routes } from '@/lib/navigate'
 import { consumePendingCompose } from '@/platform/inspector-compose-events'
 import { captureWorkspaceToolOpen, openWorkspaceTool, type WorkspaceToolOpenIntent } from '@/lib/open-workspace-tool'
 import { cn } from '@/lib/utils'
+import { NotesQuickSections, useNotePins } from '@/screens/notes/NotesQuickSections'
+import { useNotesScreenSidebar } from '@/screens/notes/useNotesScreenSidebar'
+import { SlotPortal } from '@/screens/content-slot'
 import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import {
   contentHash,
@@ -1740,6 +1743,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
           mutationOptions(activeWorkspaceId, noteId, renamedDocument.nativeRevision),
         )
         nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, noteId), renamed.note.nativeRevision ?? null)
+        notePins.rekey(noteId, renamed.note.id)
         await refreshNotes()
         if (activeNote?.id === noteId) navigate(routes.view.notes(renamed.note.id))
         return
@@ -1829,6 +1833,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         mutationOptions(activeWorkspaceId, moveTargetNote.id, document.nativeRevision),
       )
       nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, moved.note.id), moved.note.nativeRevision ?? null)
+      notePins.rekey(moveTargetNote.id, moved.note.id)
       setMoveDialogOpen(false)
       setMoveTargetNote(null)
       setMoveFolderName('')
@@ -1852,6 +1857,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         mutationOptions(activeWorkspaceId, note.id, document.nativeRevision),
       )
       nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, moved.note.id), moved.note.nativeRevision ?? null)
+      notePins.rekey(note.id, moved.note.id)
       await refreshNotes()
       navigate(routes.view.notes(moved.note.id))
       toast.success(t('notes.toast.moved'))
@@ -1888,6 +1894,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     if (!noteCreationFolder(noteScope, renameFolderTarget).allowed || !noteCreationFolder(noteScope, target).allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
     try {
       await window.electronAPI.renameFolderNote(activeWorkspaceId, renameFolderTarget, renameFolderName.trim())
+      notePins.rekey(renameFolderTarget, target, true)
       setRenameFolderDialogOpen(false)
       setRenameFolderTarget('')
       setRenameFolderName('')
@@ -1909,6 +1916,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     if (!noteCreationFolder(noteScope, deleteFolderTarget).allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
     try {
       const result = await window.electronAPI.deleteFolderNote(activeWorkspaceId, deleteFolderTarget)
+      notePins.drop(deleteFolderTarget, true)
       setDeleteFolderDialogOpen(false)
       setDeleteFolderTarget('')
       if (activeNote && result.deletedNotes.includes(activeNote.id)) {
@@ -1978,6 +1986,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       mutationOptions(activeWorkspaceId, activeNote.id, activeNote.nativeRevision),
     )
     nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, activeNote.id), result.note.nativeRevision ?? null)
+    notePins.rekey(activeNote.id, result.note.id)
     setRenameDialogOpen(false)
     await refreshNotes()
     navigate(routes.view.notes(result.note.id))
@@ -2001,6 +2010,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       activeNote.id,
       mutationOptions(activeWorkspaceId, activeNote.id, activeNote.nativeRevision),
     )
+    notePins.drop(activeNote.id)
     setDeleteDialogOpen(false)
     await refreshNotes()
     navigate(routes.view.notes())
@@ -2186,6 +2196,13 @@ h1,h2,h3{margin-top:1.5em}
     updateWikiQueryAndAnchor()
   }, [updateWikiQueryAndAnchor])
 
+  // «Закреплённое» / «Недавнее» quick sections (shell SidebarSection markup above the tree).
+  const notePins = useNotePins(activeWorkspaceId)
+  const pinnedNoteSet = React.useMemo(() => new Set(notePins.pinned), [notePins.pinned])
+  const isNotePinned = React.useCallback((id: string) => pinnedNoteSet.has(id), [pinnedNoteSet])
+  const quickNotes = scopedNotes
+  const handleOpenNoteRef = React.useRef<(noteId: string) => unknown>(() => {})
+  const openNoteFromQuick = React.useCallback((noteId: string) => { void handleOpenNoteRef.current(noteId) }, [])
   const handleOpenNote = async (noteId: string) => {
     if (!await flushBeforeAction()) return
     navigate(routes.view.notes(noteId))
@@ -2621,6 +2638,24 @@ h1,h2,h3{margin-top:1.5em}
     </div>
   ) : null
 
+  const notesSidebarSlots = useNotesScreenSidebar({
+    enabled: !!shellSidebarTarget && !!activeWorkspaceId && !readUnavailable,
+    title: t(notesHeaderTitleKey),
+    query,
+    onQuery: setQuery,
+    onDaily: () => { void handleDaily() },
+    onNewFolder: () => setCreateFolderDialogOpen(true),
+    onNewNote: () => openCreateNoteDialog(),
+    tags: allTags,
+    selectedTag,
+    onTag: setSelectedTag,
+    notes: quickNotes,
+    pinned: notePins.pinned,
+    onTogglePin: notePins.toggle,
+    onOpenNote: openNoteFromQuick,
+    activeNoteId: activeNote?.id,
+  })
+
   if (!activeWorkspaceId) {
     return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t('notes.empty.selectWorkspace')}</div>
   }
@@ -2653,10 +2688,57 @@ h1,h2,h3{margin-top:1.5em}
   // The compact view menu measures the toolbar the vault rail leaves behind.
   const toolbarWidth = shellWidth - (vaultShown ? railLayout.vault : 0)
 
+  // Shared ScreenSidebar: while this surface owns the shell sidebar the tree
+  // goes through the group content slot (collapse / icons mode apply); a
+  // kept-alive or shell-less surface keeps the inline navigator below.
+  const notesTree = (
+    <div onKeyDown={shellSidebarTarget ? handleSidebarTreeKeyDown : undefined} className={shellSidebarTarget ? "min-h-0" : "flex min-h-0 flex-1 flex-col"}>
+        <DndContext sensors={dndSensors} onDragEnd={handleSidebarDragEnd}>
+        <div ref={notesListViewportRef} className={shellSidebarTarget ? "max-h-[60vh] min-h-0 overflow-y-auto p-1" : "flex-1 min-h-0 overflow-y-auto p-2"}>
+          <NotesNavigationSidebar
+            notes={visibleNotes}
+            activeNoteId={activeNote?.id}
+            dreamNoteIds={dreamNoteIds}
+            collapsedFolders={collapsedFolders}
+            onToggleFolder={toggleFolder}
+            viewportRef={notesListViewportRef}
+            onOpenNote={handleOpenNote}
+            onOpenCreateNoteDialog={openCreateNoteDialog}
+            onOpenRenameFolder={openRenameFolderDialog}
+            onOpenDeleteFolder={openDeleteFolderDialog}
+            onOpenMoveDialog={openMoveDialog}
+            onOpenRenameDialogForNote={openRenameDialogForNote}
+            onOpenDeleteDialogForNote={openDeleteDialogForNote}
+            onDuplicateNote={duplicateNote}
+            onCollectToMemory={collectToMemory}
+            onCopyNoteLink={copyNoteLink}
+            onCopyNotePath={copyNotePath}
+            onRevealNote={revealNote}
+            isNotePinned={isNotePinned}
+            onTogglePinNote={notePins.toggle}
+            workspaceId={activeWorkspaceId}
+            emptyMessage={noteScope.kind === 'unavailable' ? t('navigation.notes.scopeUnavailable') : query || selectedTag ? t('notes.vault.noMatches') : t('notes.vault.empty')}
+          />
+        </div>
+        </DndContext>
+    </div>
+  )
+  const notesFooter = (
+        <div className="shrink-0 px-3 py-2 text-xs text-muted-foreground/80">
+          {t('notes.vault.noteCount', { count: scopedNotes.length })} · {assetsUnavailable
+            ? `${t('notes.inspector.assets')}: ${t('common.unavailable')}`
+            : t('notes.vault.assetCount', { count: allAssets.length })}
+        </div>
+  )
+
+  handleOpenNoteRef.current = handleOpenNote
   return (
     <>
     <NotesEditorHeadlineStyles />
     <div ref={setShellEl} className="notes-shell flex h-full min-w-0" data-notes-layout={panelLayoutMode}>
+      <SlotPortal target={notesSidebarSlots.treeTarget}>{notesTree}</SlotPortal>
+      <SlotPortal target={notesSidebarSlots.footerTarget}>{notesFooter}</SlotPortal>
+      {!shellSidebarTarget && (
       <ShellSidebarPortal
         bareLabelKey="navigation.barePanel.vault"
         className="notes-side-surface shrink-0 flex flex-col min-h-0"
@@ -2725,38 +2807,11 @@ h1,h2,h3{margin-top:1.5em}
             </details>
           )}
         </div>
-        <DndContext sensors={dndSensors} onDragEnd={handleSidebarDragEnd}>
-        <div ref={notesListViewportRef} className="flex-1 min-h-0 overflow-y-auto p-2">
-          <NotesNavigationSidebar
-            notes={visibleNotes}
-            activeNoteId={activeNote?.id}
-            dreamNoteIds={dreamNoteIds}
-            collapsedFolders={collapsedFolders}
-            onToggleFolder={toggleFolder}
-            viewportRef={notesListViewportRef}
-            onOpenNote={handleOpenNote}
-            onOpenCreateNoteDialog={openCreateNoteDialog}
-            onOpenRenameFolder={openRenameFolderDialog}
-            onOpenDeleteFolder={openDeleteFolderDialog}
-            onOpenMoveDialog={openMoveDialog}
-            onOpenRenameDialogForNote={openRenameDialogForNote}
-            onOpenDeleteDialogForNote={openDeleteDialogForNote}
-            onDuplicateNote={duplicateNote}
-            onCollectToMemory={collectToMemory}
-            onCopyNoteLink={copyNoteLink}
-            onCopyNotePath={copyNotePath}
-            onRevealNote={revealNote}
-            workspaceId={activeWorkspaceId}
-            emptyMessage={noteScope.kind === 'unavailable' ? t('navigation.notes.scopeUnavailable') : query || selectedTag ? t('notes.vault.noMatches') : t('notes.vault.empty')}
-          />
-        </div>
-        </DndContext>
-        <div className="shrink-0 px-3 py-2 text-xs text-muted-foreground/80">
-          {t('notes.vault.noteCount', { count: scopedNotes.length })} · {assetsUnavailable
-            ? `${t('notes.inspector.assets')}: ${t('common.unavailable')}`
-            : t('notes.vault.assetCount', { count: allAssets.length })}
-        </div>
+        <NotesQuickSections notes={quickNotes} activeNoteId={activeNote?.id} pinned={notePins.pinned} onTogglePin={notePins.toggle} onOpenNote={openNoteFromQuick} />
+        {notesTree}
+        {notesFooter}
       </ShellSidebarPortal>
+      )}
       {railsAllowed.vault && !vaultStarvedForMode && !shellSidebarTarget && <NotesRailSash
         width={railLayout.vault}
         onWidth={(vault) => setRailLayout({ vault })}

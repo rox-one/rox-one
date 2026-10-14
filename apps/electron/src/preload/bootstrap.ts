@@ -59,6 +59,7 @@ import { OPEN_DESIGN_IPC_CHANNELS } from '../shared/open-design'
 import { peerTrustOptionsForRemote } from '../shared/remote-tls-client-options.ts'
 import { createOpenClawHostControlBridge } from './openclaw-host-control'
 import { createDeviceDiagnosticsBridge } from './device-diagnostics'
+import { createHomeFetchBridge } from './home-fetch'
 
 // ---------------------------------------------------------------------------
 // Client interface — common surface for both RoutedClient and WsRpcClient
@@ -918,6 +919,9 @@ contextBridge.exposeInMainWorld('electronAPI', api)
 // Host diagnostics always describe this device, including for remote workspaces.
 if (process.isMainFrame) {
   contextBridge.exposeInMainWorld('deviceDiagnostics', createDeviceDiagnosticsBridge(
+    (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+  ))
+  contextBridge.exposeInMainWorld('roxHomeFetch', createHomeFetchBridge(
     (channel, ...args) => ipcRenderer.invoke(channel, ...args),
   ))
 }

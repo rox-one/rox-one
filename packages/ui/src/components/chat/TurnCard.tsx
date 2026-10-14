@@ -303,7 +303,20 @@ export type OpenAnnotationRequest = {
   nonce: number
 }
 
+/** Extra overflow action on a completed response (e.g. «Создать задачу»). */
+export interface ResponseExtraAction {
+  id: string
+  label: string
+  icon?: React.ReactNode
+  onSelect: (text: string, messageId?: string) => void
+}
+
 export interface TurnCardProps {
+  /** Extra overflow actions for the response card. */
+  responseActions?: ResponseExtraAction[]
+  /** Optional row rendered under the response text (e.g. object chips). */
+  renderResponseFooter?: (text: string, messageId?: string) => React.ReactNode
+
   /** Session ID for state persistence (optional in shared context) */
   sessionId?: string
   /** Turn ID for state persistence */
@@ -1612,6 +1625,8 @@ export interface ResponseCardProps {
   compactMode?: boolean
   /** Callback to branch the session from this response */
   onBranch?: (options?: { newPanel?: boolean }) => void
+  extraActions?: ResponseExtraAction[]
+  footer?: React.ReactNode
   onShowRuntimeMap?: () => void
   onQuote?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
@@ -1826,6 +1841,8 @@ export function ResponseCard({
   showAcceptPlan = true,
   compactMode = false,
   onBranch,
+  extraActions,
+  footer,
   onShowRuntimeMap,
   onQuote,
   onLearnFromMessage,
@@ -2645,6 +2662,9 @@ export function ResponseCard({
         onSelect: () => onBranch({ newPanel: true }),
       })
     }
+    for (const action of extraActions ?? []) {
+      overflowActions.push({ id: action.id, label: action.label, icon: action.icon, onSelect: () => action.onSelect(text, messageId) })
+    }
     const hoverDock = (
       <MessageHoverDock
           reactionCounts={reactionCounts}
@@ -2724,6 +2744,7 @@ export function ResponseCard({
               </Markdown>
               {annotationOverlayLayer}
             </div>
+            {footer && !isStreaming ? <div className="mt-2">{footer}</div> : null}
           </div>
 
           {/* Desktop footer with actions (Copy / Markdown / Accept Plan / Branch).
@@ -2988,6 +3009,8 @@ export const TurnCard = React.memo(function TurnCard({
   animateResponse = false,
   compactMode = false,
   onBranch,
+  responseActions,
+  renderResponseFooter,
   onShowRuntimeMap,
   onQuote,
   onLearnFromMessage,
@@ -3428,6 +3451,8 @@ export const TurnCard = React.memo(function TurnCard({
                 compactMode={compactMode}
                 onShowRuntimeMap={onShowRuntimeMap && response.messageId ? () => onShowRuntimeMap(response.messageId!) : undefined}
                 onBranch={onBranch && response.messageId ? (options?: { newPanel?: boolean }) => onBranch(response.messageId!, options) : undefined}
+            extraActions={responseActions}
+            footer={renderResponseFooter?.(response.text, response.messageId)}
                 sendMessageKey={sendMessageKey}
                 onQuote={onQuote}
                 onLearnFromMessage={onLearnFromMessage}
@@ -3468,6 +3493,8 @@ export const TurnCard = React.memo(function TurnCard({
             compactMode={compactMode}
             onShowRuntimeMap={onShowRuntimeMap && response.messageId ? () => onShowRuntimeMap(response.messageId!) : undefined}
             onBranch={onBranch && response.messageId ? (options?: { newPanel?: boolean }) => onBranch(response.messageId!, options) : undefined}
+            extraActions={responseActions}
+            footer={renderResponseFooter?.(response.text, response.messageId)}
             sendMessageKey={sendMessageKey}
             onQuote={onQuote}
             onLearnFromMessage={onLearnFromMessage}

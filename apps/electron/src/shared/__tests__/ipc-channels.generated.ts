@@ -687,9 +687,14 @@ export const EXPECTED_CHANNELS: string[] = [
   'onboarding:getRoxBalance',
   'onboarding:getRoxCloudState',
   'onboarding:hasClaudeOAuthState',
+  'onboarding:listRoxSessions',
   'onboarding:openPermissionSettings',
   'onboarding:permissionsStatus',
+  'onboarding:revokeOtherRoxSessions',
+  'onboarding:revokeRoxSession',
+  'onboarding:rotateRoxKey',
   'onboarding:saveOmpCredential',
+  'onboarding:setRoxHandle',
   'onboarding:startClaudeOAuth',
   'onboarding:startMcpOAuth',
   'onboarding:startRoxConnect',
@@ -947,6 +952,11 @@ export const EXPECTED_CHANNELS: string[] = [
   'tasks:validate',
   'teamChat:addMembers',
   'teamChat:archive',
+  'teamChat:callJoin',
+  'teamChat:callLeave',
+  'teamChat:callList',
+  'teamChat:callSync',
+  'teamChat:callTranscript',
   'teamChat:changed',
   'teamChat:createChannel',
   'teamChat:join',
@@ -955,6 +965,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'teamChat:listMessages',
   'teamChat:markRead',
   'teamChat:post',
+  'teamChat:search',
   'teamChat:setSubscribed',
   'tg-link:start',
   'tg-link:status',
@@ -1115,4 +1126,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1111
+export const EXPECTED_CHANNEL_COUNT = 1122

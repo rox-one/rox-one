@@ -362,7 +362,6 @@ export function AccountMenu({
       toast.error(t('workspace.renameFailed'))
     }
   }, [onWorkspaceRenamed, renameDraft, renaming, selectedWorkspace, t])
-
   const openAccountsSettings = React.useCallback(() => {
     closeMenu()
     navigate(routes.view.settings('accounts'))

@@ -27,6 +27,7 @@ import type {
   MessagingLogger,
   SendOptions,
 } from '../../types'
+import { normalizeChatType } from '../../types'
 import {
   formatForLarkPost,
   wrapAsTrivialPost,
@@ -627,6 +628,7 @@ export class LarkAdapter implements PlatformAdapter {
       const msg: IncomingMessage = {
         platform: 'lark',
         channelId: message.chat_id,
+        ...(normalizeChatType(message.chat_type) ? { chatType: normalizeChatType(message.chat_type) } : {}),
         messageId: message.message_id,
         senderId,
         text: cleaned,
@@ -698,6 +700,7 @@ export class LarkAdapter implements PlatformAdapter {
     const msg: IncomingMessage = {
       platform: 'lark',
       channelId: message.chat_id,
+      ...(normalizeChatType(message.chat_type) ? { chatType: normalizeChatType(message.chat_type) } : {}),
       messageId: message.message_id,
       senderId,
       text: '',

@@ -28,8 +28,9 @@ import { ClipboardQuickLook } from './ClipboardQuickLook'
 import { ClipboardHistorySettings } from './ClipboardHistorySettings'
 import { ClipboardTagBar, ClipboardTagEditor } from './ClipboardTagBar'
 import { useClipboardHistory } from './use-clipboard-history'
+import { useClipboardSidebar } from './use-clipboard-sidebar'
+import { useScreenSidebarSearchInput } from '@/components/shell/screen-sidebar'
 
-const INPUT = 'h-7 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2 text-sm outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 const KINDS = ['all', 'text', 'image'] as const
 const FORMATS: ReadonlyArray<{ value: ClipFormatFilter; label: string }> = [
   { value: 'all', label: 'clipboard.filter.formatAll' },
@@ -42,11 +43,18 @@ export function ClipboardHistoryPanel() {
   const { t } = useTranslation()
   const h = useClipboardHistory()
   const canHandleKeyboard = usePanelKeyboardGuard()
-  const searchRef = React.useRef<HTMLInputElement | null>(null)
   const sentinelRef = React.useRef<HTMLDivElement | null>(null)
   const [tagsEntry, setTagsEntry] = React.useState<ClipEntrySummary | null>(null)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
   const [clearOpen, setClearOpen] = React.useState(false)
+  const openSettings = React.useCallback(() => setSettingsOpen(true), [])
+  const openClear = React.useCallback(() => setClearOpen(true), [])
+  const rootRef = React.useRef<HTMLDivElement | null>(null)
+  useClipboardSidebar(h, { openSettings, openClear, rootRef })
+  // The shell renders the search box only while the second sidebar is
+  // expanded; otherwise keep an in-panel search so search never disappears.
+  const shellSearch = useScreenSidebarSearchInput('clipboard')
+  const panelSearchRef = React.useRef<HTMLInputElement | null>(null)
   const [deleteTargetId, setDeleteTargetId] = React.useState<number | null>(null)
 
   const overlayOpen = h.quickLookId !== null || settingsOpen || clearOpen || tagsEntry !== null || deleteTargetId !== null
@@ -55,7 +63,7 @@ export function ClipboardHistoryPanel() {
   const runAction = React.useCallback((action: ClipboardKeyAction) => {
     switch (action) {
       case 'focus-search':
-        searchRef.current?.focus()
+        ;(shellSearch ?? panelSearchRef.current)?.focus()
         break
       case 'clear-search':
         h.dispatch({ type: 'query', query: '' })
@@ -87,7 +95,7 @@ export function ClipboardHistoryPanel() {
         if (selectedEntry) h.toggleStar(selectedEntry)
         break
     }
-  }, [h, selectedEntry])
+  }, [h, selectedEntry, shellSearch])
 
   React.useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -133,7 +141,7 @@ export function ClipboardHistoryPanel() {
   const kind = emptyStateKind(h.filters)
 
   return (
-    <div className="flex h-full min-h-0 flex-col" data-testid="clipboard-history-panel">
+    <div ref={rootRef} className="flex h-full min-h-0 flex-col" data-testid="clipboard-history-panel">
       <header className="flex min-h-[44px] shrink-0 flex-wrap items-center gap-2 px-3 pt-2">
         <h2 className="text-title-sm font-semibold">{t('clipboard.title')}</h2>
         <span className="min-w-0 truncate text-small text-text-muted" data-testid="clipboard-counts">{counts}</span>
@@ -154,6 +162,32 @@ export function ClipboardHistoryPanel() {
       </header>
 
       <div className="flex flex-col gap-2 px-3 pb-2">
+        {shellSearch ? null : (
+          <label className="relative flex min-w-0 items-center">
+            <Search aria-hidden className="pointer-events-none absolute left-2 icon-caption text-text-muted" />
+            <input
+              ref={panelSearchRef}
+              type="search"
+              value={h.filters.query}
+              onChange={(event) => h.dispatch({ type: 'query', query: event.target.value })}
+              placeholder={t('clipboard.search.placeholder')}
+              aria-label={t('clipboard.search.placeholder')}
+              data-testid="clipboard-search"
+              className="h-7 w-full rounded-[var(--radius-control)] border border-border-subtle bg-transparent pl-7 pr-7 text-sm outline-none placeholder:text-text-muted focus-visible:ring-1 focus-visible:ring-ring"
+            />
+            {h.filters.query !== '' ? (
+              <button
+                type="button"
+                aria-label={t('clipboard.search.clear')}
+                data-testid="clipboard-search-clear"
+                onClick={() => h.dispatch({ type: 'query', query: '' })}
+                className="absolute right-1 grid size-5 place-items-center rounded-[var(--radius-control)] text-text-muted outline-none hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <X aria-hidden className="icon-caption" />
+              </button>
+            ) : null}
+          </label>
+        )}
         <div className="flex items-center gap-2">
           <Tabs
             label={t('clipboard.title')}
@@ -165,31 +199,6 @@ export function ClipboardHistoryPanel() {
             ]}
           />
         </div>
-        <label className="relative flex min-w-0 items-center">
-          <Search aria-hidden className="pointer-events-none absolute left-2 icon-caption text-text-muted" />
-          <input
-            ref={searchRef}
-            value={h.filters.query}
-            onChange={(event) => h.dispatch({ type: 'query', query: event.target.value })}
-            placeholder={t('clipboard.search.placeholder')}
-            aria-label={t('clipboard.search.placeholder')}
-            data-testid="clipboard-search"
-            className={cn(INPUT, 'w-full pl-7 pr-7')}
-          />
-          {h.filters.query !== '' ? (
-            <button
-              type="button"
-              aria-label={t('clipboard.search.clear')}
-              // eslint-disable-next-line rox/prefer-primitives -- native icon button with no forwarded ref for a Radix Tooltip trigger; keep the native title for parity
-              title={t('clipboard.search.clear')}
-              data-testid="clipboard-search-clear"
-              onClick={() => h.dispatch({ type: 'query', query: '' })}
-              className="absolute right-1 grid size-5 place-items-center rounded-[var(--radius-control)] text-text-muted outline-none hover:text-foreground"
-            >
-              <X aria-hidden className="icon-caption" />
-            </button>
-          ) : null}
-        </label>
         <div className="flex flex-wrap items-center gap-1" data-testid="clipboard-kind-filter">
           {KINDS.map((option) => (
             <Chip key={option} active={h.filters.kind === option} onClick={() => h.dispatch({ type: 'kind', kind: option })}>

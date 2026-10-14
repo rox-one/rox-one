@@ -375,6 +375,11 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD,
   RPC_CHANNELS.onboarding.GET_ROX_BALANCE,
   RPC_CHANNELS.onboarding.CHECK_HANDLE,
+  RPC_CHANNELS.onboarding.LIST_ROX_SESSIONS,
+  RPC_CHANNELS.onboarding.REVOKE_ROX_SESSION,
+  RPC_CHANNELS.onboarding.REVOKE_OTHER_ROX_SESSIONS,
+  RPC_CHANNELS.onboarding.ROTATE_ROX_KEY,
+  RPC_CHANNELS.onboarding.SET_ROX_HANDLE,
   RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL,
   // permissions & data-access column — OS probes require the local Electron host
   RPC_CHANNELS.onboarding.PERMISSIONS_STATUS,
@@ -620,6 +625,15 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.teamChat.LIST_MESSAGES,
   RPC_CHANNELS.teamChat.POST,
   RPC_CHANNELS.teamChat.MARK_READ,
+  // Team calls (LiveKit join/leave/sync, transcripts, call list) and org-wide
+  // message search read/write the same org-scoped local messenger store and go
+  // through the same org authorization path as the messenger channels above.
+  RPC_CHANNELS.teamChat.CALL_JOIN,
+  RPC_CHANNELS.teamChat.CALL_LEAVE,
+  RPC_CHANNELS.teamChat.CALL_SYNC,
+  RPC_CHANNELS.teamChat.CALL_TRANSCRIPT,
+  RPC_CHANNELS.teamChat.CALL_LIST,
+  RPC_CHANNELS.teamChat.SEARCH,
   RPC_CHANNELS.teamChat.CHANGED,
 
   // identity — profile + service connections (Identity Center, S-07)

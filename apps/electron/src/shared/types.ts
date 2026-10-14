@@ -2300,6 +2300,14 @@ export interface ElectronAPI {
   deferSetup(): Promise<{ success: boolean }>
   /** Public handle availability probe for the onboarding identity step. Never assumes available. */
   checkOnboardingHandle(handle: string): Promise<{ status: 'available' | 'taken' | 'reserved' | 'unknown' }>
+  /** rox-id devices/sessions (item 45). Errors are closed codes, never raw server text. */
+  listRoxSessions(): Promise<RoxAccountResult<{ sessions: import('@rox/shared/auth').RoxIdSession[] }>>
+  revokeRoxSession(sessionId: string): Promise<RoxAccountResult<object>>
+  revokeOtherRoxSessions(): Promise<RoxAccountResult<{ revoked: number }>>
+  /** Rotate the per-user inference key (item 46); returns the new prefix only. */
+  rotateRoxKey(): Promise<RoxAccountResult<{ prefix: string }>>
+  /** Claim handle@rox.one (item 44). */
+  setRoxHandle(handle: string): Promise<RoxAccountResult<{ handle: string; handleAddress: string | null }>>
   /** Create the first local conversation with a persisted assistant greeting, once per installation. */
   ensureFirstSessionWelcome(workspaceId: string): Promise<Session | null>
   saveOmpCredential(apiKey: string): Promise<{ success: boolean; ready: boolean; code?: string; error?: string }>
@@ -2927,6 +2935,12 @@ export interface ElectronAPI {
   }>
   teamChatPost(channelId: string, text: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage>
   teamChatMarkRead(channelId: string): Promise<{ ok: true }>
+  teamChatCallJoin(channelId: string, displayName?: string): Promise<{ call: import('@rox/shared/team-chat').TeamChannelCall; url: string; token: string }>
+  teamChatCallLeave(channelId: string): Promise<{ call: import('@rox/shared/team-chat').TeamChannelCall | null; ended: boolean }>
+  teamChatCallSync(channelId: string, participantIds: string[]): Promise<import('@rox/shared/team-chat').TeamChannelCall | null>
+  teamChatCallTranscript(channelId: string, callId: string, segments: import('@rox/shared/team-chat').TeamCallTranscriptSegment[]): Promise<{ added: number }>
+  teamChatCallList(channelId: string): Promise<import('@rox/shared/team-chat').TeamChannelCall[]>
+  teamChatSearch(orgId: string, query: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage[]>
   onTeamChatChanged(callback: (change: { orgId: string; channelId?: string }) => void): () => void
 
   // Organizations (P3.1 team workspaces)
@@ -3409,7 +3423,7 @@ export interface ElectronAPI {
   saveDiscordCredentials(creds: { token: string }): Promise<void>
   disconnectMessagingPlatform(platform: string): Promise<void>
   forgetMessagingPlatform(platform: string): Promise<void>
-  getMessagingBindings(): Promise<Array<{ id: string; workspaceId: string; sessionId: string; platform: string; channelId: string; threadId?: number; channelName?: string; enabled: boolean; createdAt: number; accessMode?: MessagingBindingAccessMode; allowedSenderIds?: string[]; discordGuildTrigger?: 'mention' | 'all' }>>
+  getMessagingBindings(): Promise<Array<{ id: string; workspaceId: string; sessionId: string; platform: string; channelId: string; threadId?: number; channelName?: string; chatType?: 'direct' | 'group' | 'channel'; enabled: boolean; createdAt: number; accessMode?: MessagingBindingAccessMode; allowedSenderIds?: string[]; discordGuildTrigger?: 'mention' | 'all' }>>
   generateMessagingPairingCode(sessionId: string, platform: string): Promise<{ code: string; expiresAt: number; botUsername?: string }>
   /** Telegram supergroup pairing — returns a code typed in the supergroup to capture its chatId. */
   generateMessagingSupergroupCode(platform: string): Promise<{ code: string; expiresAt: number; botUsername?: string }>
@@ -3718,6 +3732,8 @@ export interface MemoryNavigationState {
 /**
  * Rox History navigator state (clipboard history panel)
  */
+export type RoxAccountResult<T> = ({ ok: true } & T) | { ok: false; error: string }
+
 export interface ClipboardHistoryNavigationState {
   navigator: 'clipboard-history'
   details: null
