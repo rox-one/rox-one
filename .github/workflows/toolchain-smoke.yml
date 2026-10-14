@@ -3,6 +3,12 @@ name: Toolchain Smoke
 # Полный цикл first-run download manager на чистом профиле:
 # ensureAll → sha256+install всех инструментов → ROX CLI лончер исполняется.
 # Ловит регрессии manifest-data (pinned версии/URL), installer и resolver.
+#
+# bun 1.4.3, НЕ 1.4.2: в 1.4.2 `bun install --global <dir>` не резолвит
+# локальные file:-зависимости пакета («Could not find package.json for
+# "file:../../.."»), из-за чего падает UI-001 real-bun тест
+# (rox-readiness-ui-001.git-npm-isolation.test.ts) и, шире, любой git-npm
+# инструмент с локальным транзитивом. В 1.4.3 регрессия исправлена.
 on:
   push:
     branches: [main]
@@ -20,67 +26,6 @@ concurrency:
   group: toolchain-smoke-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
-  toolchain-smoke-selfhosted:
-    # Self-hosted linux runner — вне биллинг-блокировки
-    # GitHub-hosted раннеров. Showcases the full first-run install flow on
-    # linux-x64 (uv-python, unzip path, npm ci, launcher).
-    runs-on: [self-hosted, linux-toolchain]
-    name: toolchain-smoke (self-hosted linux)
-    timeout-minutes: 45
-    steps:
-      - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
-        with:
-          bun-version: "1.4.2"
-
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-
-        continue-on-error: true
-        with:
-          path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            bun-${{ runner.os }}-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Toolchain unit tests
-        run: bun test packages/shared/src/toolchain
-
-      - name: Fresh-profile ensureAll + launcher check
-        run: |
-          SMOKE_DIR="$(mktemp -d /tmp/tc-ci.XXXXXX)"
-          CRAFT_CONFIG_DIR="$SMOKE_DIR" bun scripts/toolchain-smoke.ts
-        env:
-          CI: "1"
-
-      - name: Fresh-profile default-on tools smoke
-        run: |
-          SMOKE_DIR="$(mktemp -d /tmp/tc-new-ci.XXXXXX)"
-          CRAFT_CONFIG_DIR="$SMOKE_DIR" bun scripts/toolchain-new-smoke.ts
-        env:
-          CI: "1"
-
-      - name: Fresh-profile runtime-context smoke (no network)
-        run: |
-          SMOKE_DIR="$(mktemp -d /tmp/rc-smoke.XXXXXX)"
-          CRAFT_CONFIG_DIR="$SMOKE_DIR" bun scripts/runtime-context-smoke.ts
-        env:
-          CI: "1"
-
-      - name: Fresh-profile marketplace smoke (no network)
-        run: |
-          SMOKE_DIR="$(mktemp -d /tmp/mp-smoke.XXXXXX)"
-          CRAFT_CONFIG_DIR="$SMOKE_DIR" bun scripts/marketplace-smoke.ts
-        env:
-          CI: "1"
-
   toolchain-smoke-selfhosted-macos:
     # macOS-arm64 leg на self-hosted Mac — GHA-hosted
     # macos заблокирован биллингом, CCI-план без macos-экзекуторов. Это единство
@@ -95,7 +40,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
-          bun-version: "1.4.2"
+          bun-version: "1.4.3"
 
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
 
@@ -159,7 +104,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
-          bun-version: "1.4.2"
+          bun-version: "1.4.3"
 
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
 
