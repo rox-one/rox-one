@@ -271,7 +271,7 @@ export const SidebarSection = React.memo(function SidebarSection({ screenId, gro
             {t('shell.sidebar.loading')}
           </p>
         ) : state.kind === 'error' ? (
-          <div role="alert" className="flex items-center gap-2 px-2 py-1 text-caption text-destructive" data-sidebar-group-state="error">
+          <div role={state.announce === false ? undefined : 'alert'} className="flex items-center gap-2 px-2 py-1 text-caption text-destructive" data-sidebar-group-state="error">
             <span className="min-w-0 flex-1 truncate">{state.label}</span>
             <button type="button" onClick={state.onRetry} className="shrink-0 rounded-[var(--radius-control)] px-1.5 text-foreground underline-offset-2 hover:underline focus-visible:ring-1 focus-visible:ring-ring">
               {t('shell.sidebar.retry')}

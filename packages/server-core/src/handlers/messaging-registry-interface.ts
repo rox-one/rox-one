@@ -16,6 +16,8 @@ export interface MessagingBindingInfo {
   /** Telegram supergroup forum topic id; undefined for DMs / non-Telegram. */
   threadId?: number
   channelName?: string
+  /** Platform chat type recorded from incoming messages ('direct' | 'group' | 'channel'). */
+  chatType?: 'direct' | 'group' | 'channel'
   enabled: boolean
   createdAt: number
   /**
