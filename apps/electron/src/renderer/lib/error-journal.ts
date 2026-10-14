@@ -35,23 +35,44 @@ export function redact(text: string): string {
     .replace(/\bsk-[A-Za-z0-9_-]{8,}/g, 'sk-[redacted]')
 }
 
+/** Path only: drops query string and hash (draft input, search text, callback params). */
+export function routeForJournal(route: unknown): string | undefined {
+  if (route === null || route === undefined) return undefined
+  const path = String(route).split(/[?#]/, 1)[0]!.slice(0, 200)
+  return path ? redact(path) : undefined
+}
+
 export function toEntry(kind: JournalEntry['kind'], reason: unknown, route?: string, now = Date.now()): JournalEntry {
   const err = reason instanceof Error ? reason : null
   const message = redact(String(err ? err.message : typeof reason === 'string' ? reason : (() => { try { return JSON.stringify(reason) } catch { return String(reason) } })())).slice(0, MESSAGE_MAX)
   const stack = err?.stack ? redact(err.stack.split('\n').slice(0, STACK_LINES).join('\n')) : undefined
-  return { at: now, kind, message: message || '(no message)', ...(stack ? { stack } : {}), ...(route ? { route } : {}) }
+  const safeRoute = routeForJournal(route)
+  return { at: now, kind, message: message || '(no message)', ...(stack ? { stack } : {}), ...(safeRoute ? { route: safeRoute } : {}) }
+}
+
+/** Benign browser noise that would otherwise flood the journal. */
+const IGNORED = /^ResizeObserver loop/
+
+let persistTimer: ReturnType<typeof setTimeout> | null = null
+function schedulePersist(): void {
+  // Batch writes so an error storm does not rewrite localStorage on every event.
+  if (persistTimer) return
+  persistTimer = setTimeout(() => { persistTimer = null; storage.set(storage.KEYS.errorJournal, entries) }, 1000)
 }
 
 export function recordError(entry: JournalEntry): void {
-  const last = entries[entries.length - 1]
-  // Collapse an identical error repeating in a tight loop.
-  if (last && last.message === entry.message && entry.at - last.at < 1000) return
+  if (IGNORED.test(entry.message)) return
+  // Collapse a message already seen in the last second (also alternating storms).
+  for (let i = entries.length - 1; i >= 0 && entry.at - entries[i]!.at < 1000; i--) {
+    if (entries[i]!.message === entry.message) return
+  }
   entries = [...entries, entry].slice(-JOURNAL_MAX)
-  storage.set(storage.KEYS.errorJournal, entries)
+  schedulePersist()
   for (const l of listeners) l()
 }
 
 export function clearErrorJournal(): void {
+  if (persistTimer) { clearTimeout(persistTimer); persistTimer = null }
   entries = []
   storage.set(storage.KEYS.errorJournal, [])
   for (const l of listeners) l()

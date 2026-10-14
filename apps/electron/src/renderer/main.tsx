@@ -22,7 +22,7 @@ import { syncMainProcessLanguage } from './lib/main-language-sync'
 import { ShellStoreBridge } from './platform/ShellStoreBridge'
 import { RenderProfileMotionConfig } from './lib/render-profile-motion'
 import { seedRenderProfile, startRenderProfileSync } from './lib/render-profile-dom'
-import { installErrorJournal } from './lib/error-journal'
+import { installErrorJournal, routeForJournal } from './lib/error-journal'
 import { seedLiteMode } from './lib/lite-mode'
 import { getDefaultStore } from 'jotai'
 import { focusedPanelRouteAtom } from './atoms/panel-stack'
@@ -35,7 +35,8 @@ const rendererPerfHarness = installRendererPerfHarness()
 // PERF-07: own `data-render-profile` at the root, before React and AppShell,
 // so every startup screen (loading, onboarding, reauth, workspace picker)
 // renders with the active profile. The snapshot request starts right here.
-installErrorJournal(() => { const route = getDefaultStore().get(focusedPanelRouteAtom); return route ? String(route) : undefined })
+// Route is reduced to its path (routeForJournal): no query, draft text or callback params.
+installErrorJournal(() => routeForJournal(getDefaultStore().get(focusedPanelRouteAtom)))
 seedLiteMode()
 seedRenderProfile(document.documentElement, window.electronAPI, navigator.userAgent)
 const stopRenderProfileSync = startRenderProfileSync(window.electronAPI, document.documentElement)
