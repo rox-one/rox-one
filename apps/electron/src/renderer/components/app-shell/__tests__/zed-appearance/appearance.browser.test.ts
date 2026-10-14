@@ -6,6 +6,7 @@ import { homedir } from 'node:os'
 import { resolve } from 'node:path'
 import { chromium, expect as playwrightExpect, type Browser, type BrowserContext, type Page } from 'playwright/test'
 import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
+import { WEB_CHROME_PREFERENCE_KEY, type WebChromePreference } from '../../../../lib/web-chrome-preference'
 
 const fixture = import.meta.dirname
 const repository = resolve(fixture, '../../../../../../../..')
@@ -51,6 +52,26 @@ async function availablePort(): Promise<number> {
 }
 
 const executablePath = await browserExecutable()
+
+// #2080: #1901 made browser glass opt-in by flipping the renderer's built-in
+// web-chrome default to `opaque`, so a profile that never stored a preference
+// now resolves `solid`. This fixture exists to keep the glass path under test,
+// so every page it opens opts in explicitly — it seeds the pre-#1901 default
+// `{ enabled: true, preference: 'system' }` (which `resolveWebChromeMaterial`
+// resolves to `glass` on the web runtime) before the renderer reads it, via a
+// Playwright init script that runs ahead of every page's own scripts. The seed
+// is idempotent: it only fills an ABSENT key, so a preference a case commits
+// through the real settings UI still survives that case's own reloads and the
+// write-seam cases below can still prove what the app itself wrote (or refused
+// to write). The warmup page intentionally boots unseeded, so the product
+// default stays exercised at least once per run.
+const SEEDED_GLASS_PREFERENCE = { enabled: true, preference: 'system' } as const satisfies WebChromePreference
+const SEEDED_GLASS_PREFERENCE_JSON = JSON.stringify(SEEDED_GLASS_PREFERENCE)
+const seedGlassPreference = (target: BrowserContext) => target.addInitScript(({ key, serialized }) => {
+  try {
+    if (!window.localStorage.getItem(key)) window.localStorage.setItem(key, serialized)
+  } catch { /* Restricted storage: the renderer keeps its own default. */ }
+}, { key: WEB_CHROME_PREFERENCE_KEY, serialized: SEEDED_GLASS_PREFERENCE_JSON })
 
 // This proves production renderer behavior under browser CSS and synthetic
 // transport. Native vibrancy/GPU/compositor paint and real config-server
@@ -162,6 +183,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
   beforeEach(async () => {
     pageErrors.length = 0
     context = await browser.newContext({ viewport: { width: 1720, height: 900 }, colorScheme: 'light' })
+    await seedGlassPreference(context)
     page = await context.newPage()
     page.setDefaultTimeout(15_000)
     page.setDefaultNavigationTimeout(30_000)
@@ -426,6 +448,7 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
   it('uses a 24px coarse-pointer hit area with zero flow gap and working touch capture', async () => {
     await context.close()
     context = await browser.newContext({ viewport: { width: 1720, height: 900 }, hasTouch: true, colorScheme: 'light' })
+    await seedGlassPreference(context)
     page = await context.newPage()
     page.setDefaultTimeout(15_000)
     page.setDefaultNavigationTimeout(30_000)
@@ -659,6 +682,9 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     await expectDOM(page.getByTestId('shell-settings').getByRole('switch', { name: 'Enable Zen Shell', exact: true })).toBeChecked()
     expect((await computed()).topbar.rgba).toEqual(initial.topbar.rgba)
     await expectDOM(page.locator('html')).toHaveAttribute('data-shell-css-material', 'glass')
+    // The rejected write never reached storage, so the committed preference is
+    // still the explicitly seeded glass value (never the toggled-off patch).
+    expect(await page.evaluate(key => localStorage.getItem(key), WEB_CHROME_PREFERENCE_KEY)).toBe(SEEDED_GLASS_PREFERENCE_JSON)
   }, 45_000)
 
   it('browser settings reject a silently ignored persistence write after readback', async () => {
@@ -680,7 +706,12 @@ describe.skipIf(!executablePath)('Zed appearance integrated browser regression',
     await expectDOM(settings.getByRole('switch', { name: 'Enable Zen Shell', exact: true })).toBeChecked()
     expect((await computed()).topbar.rgba).toEqual(initial.topbar.rgba)
     await expectDOM(page.locator('html')).toHaveAttribute('data-shell-css-material', 'glass')
-    expect(await page.evaluate(() => localStorage.getItem('rox-web-chrome-material-v1'))).toBeNull()
+    // The readback seam rejected the toggle's write, so storage still holds the
+    // preference committed before the click. Comparing against the seeded glass
+    // value proves the ignored write never landed; this is strictly stronger
+    // than the former `toBeNull()`, which only described an unset key — and an
+    // unset key stopped meaning glass when #1901 made `opaque` the default.
+    expect(await page.evaluate(key => localStorage.getItem(key), WEB_CHROME_PREFERENCE_KEY)).toBe(SEEDED_GLASS_PREFERENCE_JSON)
   }, 45_000)
 
   it.each(['gpu-failure', 'no-healthy-paint', 'reduce-transparency', 'high-contrast', 'user-opaque', 'zen-disabled', 'unavailable'])('honors a synthetic desktop %s fallback without letting browser capability override it', async (fallback) => {

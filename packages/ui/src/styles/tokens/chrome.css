@@ -95,3 +95,16 @@ html[data-density="comfortable"] {
     --chrome-rail-width: 56px;
   }
 }
+
+/* Shell width breakpoints (design: rail breakpoints). Kept outside the
+   compiled blocks above. CSS custom properties cannot drive @media, so the
+   JS mirror is SHELL_BREAKPOINTS in platform/viewport-band.ts (parity test).
+   compact 900: secondary sidebar floats; regular 1280: rail may show labels
+   (icons-only below); wide 1600: labelled rail is the default layout;
+   ultra 2560: wide-monitor tier. */
+:root {
+  --shell-bp-compact: 900px;
+  --shell-bp-regular: 1280px;
+  --shell-bp-wide: 1600px;
+  --shell-bp-ultra: 2560px;
+}

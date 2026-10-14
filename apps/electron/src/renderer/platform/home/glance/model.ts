@@ -17,6 +17,9 @@ export const GLANCE_MAX_PAGES = 12
 export const GLANCE_MAX_COLUMNS = 3
 export const GLANCE_MAX_FULL_COLUMNS = 2
 export const GLANCE_MAX_WIDGETS_PER_COLUMN = 24
+export const GLANCE_MAX_GROUP_CHILDREN = 12
+export const GLANCE_MIN_HEIGHT = 80
+export const GLANCE_MAX_HEIGHT = 1600
 
 export type GlanceColumnSize = 'small' | 'full'
 export type GlancePageWidth = 'default' | 'wide' | 'slim'
@@ -28,6 +31,8 @@ export interface GlanceWidgetInstance {
   title?: string
   /** Collapsed cards show only their header. */
   collapsed?: boolean
+  /** Fixed body height in px set by drag-resize; unset = natural height. */
+  height?: number
   config: GlanceConfig
   /** Only for `type === 'group'`. */
   children?: GlanceWidgetInstance[]
@@ -105,9 +110,10 @@ function normalizeWidget(raw: unknown, seen: Set<string>, allowGroup: boolean): 
   const widget: GlanceWidgetInstance = { id, type: raw.type, config: sanitizeConfig(raw.config) }
   if (typeof raw.title === 'string' && raw.title.trim()) widget.title = raw.title.trim().slice(0, 120)
   if (raw.collapsed === true) widget.collapsed = true
+  if (typeof raw.height === 'number' && Number.isFinite(raw.height)) widget.height = clamp(raw.height, GLANCE_MIN_HEIGHT, GLANCE_MAX_HEIGHT)
   if (raw.type === 'group') {
     const kids = Array.isArray(raw.children) ? raw.children : []
-    widget.children = kids.map((k) => normalizeWidget(k, seen, false)).filter((k): k is GlanceWidgetInstance => k !== null).slice(0, 12)
+    widget.children = kids.map((k) => normalizeWidget(k, seen, false)).filter((k): k is GlanceWidgetInstance => k !== null).slice(0, GLANCE_MAX_GROUP_CHILDREN)
   }
   return widget
 }
@@ -308,7 +314,7 @@ export function removeWidgetInstance(layout: GlanceLayout, widgetId: string): Gl
 export function updateWidgetInstance(
   layout: GlanceLayout,
   widgetId: string,
-  patch: { title?: string | null; config?: GlanceConfig; collapsed?: boolean },
+  patch: { title?: string | null; config?: GlanceConfig; collapsed?: boolean; height?: number | null },
 ): GlanceLayout {
   const apply = (w: GlanceWidgetInstance): GlanceWidgetInstance => {
     if (w.id !== widgetId) return w.children ? { ...w, children: w.children.map(apply) } : w
@@ -316,6 +322,8 @@ export function updateWidgetInstance(
     if (patch.title === null || (typeof patch.title === 'string' && !patch.title.trim())) delete next.title
     else if (typeof patch.title === 'string') next.title = patch.title.trim().slice(0, 120)
     if (patch.config) next.config = sanitizeConfig(patch.config)
+    if (patch.height === null) delete next.height
+    else if (typeof patch.height === 'number' && Number.isFinite(patch.height)) next.height = clamp(patch.height, GLANCE_MIN_HEIGHT, GLANCE_MAX_HEIGHT)
     if (patch.collapsed !== undefined) {
       if (patch.collapsed) next.collapsed = true
       else delete next.collapsed
@@ -353,6 +361,46 @@ export function shiftWidgetInstance(layout: GlanceLayout, widgetId: string, delt
 }
 
 // ---------------------------------------------------------------------------
+// Group children
+// ---------------------------------------------------------------------------
+
+function mapGroup(layout: GlanceLayout, groupId: string, fn: (kids: GlanceWidgetInstance[]) => GlanceWidgetInstance[]): GlanceLayout {
+  let changed = false
+  const next = mapAllColumns(layout, (c) => ({
+    ...c,
+    widgets: c.widgets.map((w) => {
+      if (w.id !== groupId || w.type !== 'group') return w
+      const kids = fn(w.children ?? [])
+      if (kids === w.children) return w
+      changed = true
+      return { ...w, children: kids.slice(0, GLANCE_MAX_GROUP_CHILDREN) }
+    }),
+  }))
+  return changed ? next : layout
+}
+
+/** Append a child tab to a group (groups never nest). */
+export function addGroupChild(layout: GlanceLayout, groupId: string, child: Omit<GlanceWidgetInstance, 'id'> & { id?: string }): GlanceLayout {
+  if (child.type === 'group') return layout
+  const ids = collectIds(layout)
+  const fresh = normalizeWidget({ ...cloneGlance(child), id: child.id && !ids.has(child.id) ? child.id : glanceId('w') }, new Set(ids), false)
+  if (!fresh) return layout
+  return mapGroup(layout, groupId, (kids) => (kids.length >= GLANCE_MAX_GROUP_CHILDREN ? kids : [...kids, fresh]))
+}
+
+/** Move a group child one slot left/right. */
+export function shiftGroupChild(layout: GlanceLayout, groupId: string, childId: string, delta: -1 | 1): GlanceLayout {
+  return mapGroup(layout, groupId, (kids) => {
+    const i = kids.findIndex((k) => k.id === childId)
+    const j = i + delta
+    if (i < 0 || j < 0 || j >= kids.length) return kids
+    const next = [...kids]
+    ;[next[i], next[j]] = [next[j]!, next[i]!]
+    return next
+  })
+}
+
+// ---------------------------------------------------------------------------
 // Import / export
 // ---------------------------------------------------------------------------
 
@@ -383,6 +431,27 @@ export function mergeImportedPages(layout: GlanceLayout, pages: readonly GlanceP
   const ids = collectIds(base)
   const room = GLANCE_MAX_PAGES - base.pages.length
   return { ...base, pages: [...base.pages, ...pages.slice(0, Math.max(0, room)).map((p) => reId(cloneGlance(p), ids))] }
+}
+
+/** Replace one page in place with an imported page (fresh ids, same position). */
+export function replacePage(layout: GlanceLayout, pageId: string, page: GlancePage): GlanceLayout {
+  const index = layout.pages.findIndex((p) => p.id === pageId)
+  if (index < 0) return layout
+  const rest = { ...layout, pages: layout.pages.filter((p) => p.id !== pageId) }
+  const fresh = reId(cloneGlance(page), collectIds(rest))
+  const pages = [...rest.pages]
+  pages.splice(index, 0, fresh)
+  return { ...layout, pages }
+}
+
+/** Snap a column to small/full from a horizontal drag; returns the same layout when below threshold or forbidden. */
+export function resizeColumnByDrag(layout: GlanceLayout, pageId: string, columnId: string, dx: number, threshold = 48): GlanceLayout {
+  const page = layout.pages.find((p) => p.id === pageId)
+  const column = page?.columns.find((c) => c.id === columnId)
+  if (!page || !column || Math.abs(dx) < threshold) return layout
+  const want: GlanceColumnSize = dx > 0 ? 'full' : 'small'
+  if (want === column.size) return layout
+  return setColumnSize(layout, pageId, columnId, want)
 }
 
 // ---------------------------------------------------------------------------
