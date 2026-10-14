@@ -72,6 +72,9 @@ const SessionWorkflowEditor = createRetryableRuntimeMapLazy<SessionWorkflowEdito
 const RuntimeMapDock = createRetryableRuntimeMapLazy<RuntimeMapDockProps>(() =>
   import('@/components/runtime-map/RuntimeMapDock').then((m) => ({ default: m.RuntimeMapDock })),
 )
+const TrajectoryView = React.lazy(() =>
+  import('@/components/app-shell/trajectory/TrajectoryView').then((m) => ({ default: m.TrajectoryView })),
+)
 const SessionGitOutline = React.lazy(() =>
   import('@/components/session-workbench/SessionGitOutline').then((m) => ({
     default: m.SessionGitOutline,
@@ -878,6 +881,21 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
               </React.Suspense>
             ) : undefined}
           />
+        )
+      }
+      if (sessionView === 'trajectory') {
+        return (
+          <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+            <React.Suspense fallback={<SessionSecondaryFallback />}>
+              <TrajectoryView
+                messages={session?.messages ?? []}
+                onOpenMessage={(id) => {
+                  setSessionView('standard')
+                  handleMindMapNavigate({ kind: 'message', id })
+                }}
+              />
+            </React.Suspense>
+          </div>
         )
       }
       if (sessionView === 'outline') {
