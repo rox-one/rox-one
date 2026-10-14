@@ -62,9 +62,8 @@ describe('panel stack single-lane behavior', () => {
     expect(stack[2].route).toBe('allSessions/session/s2')
   })
 
-  it('reconcile focuses by focusedIndex first when duplicate routes exist', () => {
+  it('reconcile collapses duplicate routes into one focused panel', () => {
     const store = createStore()
-
     const changed = store.set(reconcilePanelStackAtom, {
       entries: [
         { route: 'allSessions/session/s1', proportion: 0.5 },
@@ -72,40 +71,22 @@ describe('panel stack single-lane behavior', () => {
       ],
       focusedIndex: 1,
     })
-
     expect(changed).toBe(true)
-
     const stack = getStack(store)
-    expect(stack).toHaveLength(2)
-    const focusedId = store.get(focusedPanelIdAtom)
-    expect(focusedId).toBe(stack[1].id)
+    expect(stack).toHaveLength(1)
+    expect(store.get(focusedPanelIdAtom)).toBe(stack[0].id)
   })
 
-  it('reconcile no-op keeps focused index target with duplicate routes', () => {
+  it('reconcile with duplicate routes is a stable no-op on repeat', () => {
     const store = createStore()
-
-    store.set(reconcilePanelStackAtom, {
-      entries: [
-        { route: 'allSessions/session/s1', proportion: 0.5 },
-        { route: 'allSessions/session/s1', proportion: 0.5 },
-      ],
-      focusedIndex: 1,
-    })
-
-    const stack = getStack(store)
-    const firstId = stack[0].id
-    const secondId = stack[1].id
-    expect(firstId).not.toBe(secondId)
-
-    const changed = store.set(reconcilePanelStackAtom, {
-      entries: [
-        { route: 'allSessions/session/s1', proportion: 0.5 },
-        { route: 'allSessions/session/s1', proportion: 0.5 },
-      ],
-      focusedIndex: 1,
-    })
-
-    expect(changed).toBe(false)
-    expect(store.get(focusedPanelIdAtom)).toBe(secondId)
+    const entries = [
+      { route: 'allSessions/session/s1' as const, proportion: 0.5 },
+      { route: 'allSessions/session/s1' as const, proportion: 0.5 },
+    ]
+    store.set(reconcilePanelStackAtom, { entries, focusedIndex: 1 })
+    const id = getStack(store)[0].id
+    expect(store.set(reconcilePanelStackAtom, { entries, focusedIndex: 1 })).toBe(false)
+    expect(getStack(store).map(p => p.id)).toEqual([id])
+    expect(store.get(focusedPanelIdAtom)).toBe(id)
   })
 })

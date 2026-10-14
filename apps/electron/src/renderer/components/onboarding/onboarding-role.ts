@@ -7,7 +7,13 @@
  * profile, so soft-signal reminders keep working.
  */
 import { getDefaultStore } from 'jotai'
-import { answerChoice, type EnvironmentPrefs } from '@rox/shared/environment'
+import {
+  answerChoice,
+  normalizeOtherRole,
+  normalizeWorkStyle,
+  type EnvironmentPrefs,
+  type OnboardingWorkStyle,
+} from '@rox/shared/environment'
 import type { UsernameAdvanceContext } from './onboarding-username'
 import { devSpaceEnabledAtom, onboardingRoleAtom } from '@/atoms/dev-space'
 
@@ -15,10 +21,21 @@ export interface OnboardingRoleAnswer {
   isDeveloper: boolean
   relatedRoles: string[]
   skipped: boolean
+  /** True when the user explicitly picked developer / not a developer. */
+  isDeveloperExplicit?: boolean
+  /** Free text typed for «Другое» (kept only while «Другое» is selected). */
+  otherRole?: string
+  /** Agents, formats, answer and collaboration style; feeds the agent prompt. */
+  workStyle?: OnboardingWorkStyle
 }
 
 /** Adjacent roles offered alongside the developer question (multi-select). */
-export const ONBOARDING_RELATED_ROLES = ['analyst', 'designer', 'product', 'other'] as const
+export const ONBOARDING_RELATED_ROLES = [
+  'analyst', 'designer', 'product', 'dataScientist', 'mlEngineer', 'devops', 'qa', 'security',
+  'projectManager', 'founder', 'executive', 'marketer', 'sales', 'support', 'operations',
+  'researcher', 'scientist', 'student', 'teacher', 'writer', 'creator', 'lawyer', 'finance',
+  'hr', 'doctor', 'consultant', 'engineer', 'other',
+] as const
 export type OnboardingRelatedRole = (typeof ONBOARDING_RELATED_ROLES)[number]
 
 /** Minimal environment API the step needs; `window.electronAPI` satisfies it. */
@@ -58,7 +75,17 @@ export async function persistOnboardingRole(
   api: OnboardingRoleApi,
   answer: OnboardingRoleAnswer,
 ): Promise<void> {
-  const profile = { isDeveloper: answer.isDeveloper, relatedRoles: answer.relatedRoles }
+  const workStyle = answer.skipped ? undefined : normalizeWorkStyle(answer.workStyle)
+  const otherRole = !answer.skipped && answer.relatedRoles.includes('other')
+    ? normalizeOtherRole(answer.otherRole)
+    : undefined
+  const profile = {
+    isDeveloper: answer.isDeveloper,
+    relatedRoles: answer.relatedRoles,
+    ...(otherRole ? { otherRole } : {}),
+    ...(!answer.skipped && answer.isDeveloperExplicit ? { isDeveloperExplicit: true } : {}),
+    ...(workStyle ? { workStyle } : {}),
+  }
   await api.saveEnvironmentSetup({
     role: answer.skipped
       ? { status: 'skipped', value: profile }

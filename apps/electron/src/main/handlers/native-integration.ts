@@ -5,7 +5,7 @@
  */
 
 import { app, webContents as electronWebContents } from 'electron'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
 import { getQuickComposerController } from '../quick-composer'

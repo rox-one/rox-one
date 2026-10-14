@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { handleDeepLink } from '../deep-link'
-import { RPC_CHANNELS } from '../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { EventSink } from '@rox/server-core/transport'
 import type { WindowManager } from '../window-manager'
 

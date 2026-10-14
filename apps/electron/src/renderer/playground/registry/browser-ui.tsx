@@ -318,7 +318,7 @@ function BrowserTraceSidebarSample({ scenario, runState, sidebarWidth, hdrEffect
   const turns = getScenarioTurns(scenario).map((items, index) => applyRunState(items, runState))
 
   return (
-    <div className="w-full h-[700px] rounded-xl border border-border overflow-hidden bg-background shadow-sm flex">
+    <div className="w-full h-[700px] rounded-lg border border-border overflow-hidden bg-background shadow-sm flex">
       <div className="flex-1 relative overflow-hidden">
         {/* Base placeholder browser content */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900" />
@@ -413,7 +413,7 @@ function BrowserFramePlayground({
   const liveFx = getLiveFxPayloadFromAgentState(scenario, agentState)
 
   return (
-    <div className="w-full h-[700px] rounded-xl border border-border overflow-hidden bg-background shadow-sm flex">
+    <div className="w-full h-[700px] rounded-lg border border-border overflow-hidden bg-background shadow-sm flex">
       <div className="flex-1 min-w-0">
         <BrowserControls
           url={url}
@@ -509,7 +509,7 @@ function BrowserEmptyStatePlayground({
   showSafetyHint: boolean
 }) {
   return (
-    <div className="w-full h-[700px] rounded-xl border border-border overflow-hidden bg-background shadow-sm flex">
+    <div className="w-full h-[700px] rounded-lg border border-border overflow-hidden bg-background shadow-sm flex">
       <div className="relative h-full w-full bg-foreground-2 overflow-hidden">
         <BrowserMockPageSurface
           className="absolute inset-0 p-8"
@@ -870,7 +870,7 @@ function BrowserTabStripPlayground({
 
   if (resolvedMode === 'live' && !hasBrowserPaneBridge) {
     return (
-      <div className="w-full max-w-[900px] p-6 rounded-xl border border-border bg-background shadow-sm">
+      <div className="w-full max-w-[900px] p-6 rounded-lg border border-border bg-background shadow-sm">
         <div className="text-sm font-medium mb-2">Top Bar Browser Strip</div>
         <p className="text-xs text-foreground/60">
           Live mode requires Electron preload APIs (`window.electronAPI.browserPane`), which are not available in plain browser context.
@@ -881,7 +881,7 @@ function BrowserTabStripPlayground({
   }
 
   return (
-    <div className="w-full max-w-[900px] p-6 rounded-xl border border-border bg-background shadow-sm">
+    <div className="w-full max-w-[900px] p-6 rounded-lg border border-border bg-background shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-medium">Top Bar Browser Strip</h3>
         <span className="text-xs text-foreground/50">

@@ -103,6 +103,7 @@ const BASELINE_RAIL_IDS = ['home', 'inbox', 'sessions', 'feed', 'docs', 'tasks',
 
 describe('ActivityRail render', () => {
   it('all mode flags off: exactly the registry primary group, no modes group, «Ещё» closed', () => {
+    getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
     const html = renderRail()
     expect(railIds(html)).toEqual(BASELINE_RAIL_IDS)
     expect(html).not.toContain('data-testid="rail-modes"')

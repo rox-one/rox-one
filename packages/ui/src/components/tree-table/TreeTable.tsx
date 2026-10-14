@@ -147,7 +147,7 @@ export function TreeTable({ rows, columns, label, defaultExpandedIds, expandedId
                           tabIndex={-1}
                           aria-label={item.expanded ? t('entities.ui.tree.collapse', { title: item.row.title }) : t('entities.ui.tree.expand', { title: item.row.title })}
                           onClick={() => setExpanded(item.row.id, !item.expanded)}
-                          className={cn('inline-flex size-5 shrink-0 items-center justify-center rounded-[4px] text-text-muted', HOVER_TINT, FOCUS_RING)}
+                          className={cn('inline-flex size-5 shrink-0 items-center justify-center rounded-xs text-text-muted', HOVER_TINT, FOCUS_RING)}
                         >
                           <span aria-hidden="true" className={cn('inline-block transition-transform duration-[120ms] motion-reduce:transition-none', item.expanded && 'rotate-90')}>›</span>
                         </button>

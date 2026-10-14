@@ -12,7 +12,6 @@ import { EntityPanel } from '@/components/ui/entity-panel'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import { skillSelection } from '@/hooks/useEntitySelection'
 import { SkillMenu } from './SkillMenu'
-import { SendResourceToWorkspaceDialog } from './SendResourceToWorkspaceDialog'
 import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton'
 import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'
@@ -29,6 +28,10 @@ import { useScreenSidebar } from '@/components/shell/screen-sidebar'
 import { navigate, routes } from '@/lib/navigate'
 import { addNotebook, loadNotebooks, requestOpenNotebook, subscribeNotebooks, type PlaybookNotebook } from '@/pages/playbooks/notebook-store'
 import { buildSkillsSidebarGroups } from './skills-sidebar'
+
+const SendResourceToWorkspaceDialog = React.lazy(() =>
+  import('./SendResourceToWorkspaceDialog').then((m) => ({ default: m.SendResourceToWorkspaceDialog })),
+)
 
 const RISK_FLAG_ICON: Record<SkillRiskFlag, typeof Network> = {
   'network': Network,
@@ -715,6 +718,7 @@ export function SkillsListPanel({
                 type="button"
                 role="switch"
                 aria-checked={!pack.disabled}
+                aria-label={t(pack.disabled ? 'capabilityCatalog.enablePack' : 'capabilityCatalog.disablePack', { name: pack.slug })}
                 disabled={packsBusy}
                 onClick={() => void toggleBundledPack(pack.slug, pack.disabled)}
                 className={`shrink-0 relative h-5 w-9 rounded-full transition-colors disabled:opacity-50 ${
@@ -798,16 +802,18 @@ export function SkillsListPanel({
     )}
 
     {/* Send to Workspace dialog */}
-    {sendResourceSlug && (
-      <SendResourceToWorkspaceDialog
-        open={sendDialogOpen}
-        onOpenChange={setSendDialogOpen}
-        resourceType="skill"
-        resourceIds={[sendResourceSlug]}
-        resourceLabel={sendResourceLabel}
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId}
-      />
+    {sendResourceSlug && sendDialogOpen && (
+      <React.Suspense fallback={null}>
+        <SendResourceToWorkspaceDialog
+          open
+          onOpenChange={setSendDialogOpen}
+          resourceType="skill"
+          resourceIds={[sendResourceSlug]}
+          resourceLabel={sendResourceLabel}
+          workspaces={workspaces}
+          activeWorkspaceId={activeWorkspaceId}
+        />
+      </React.Suspense>
     )}
     </div>
   )

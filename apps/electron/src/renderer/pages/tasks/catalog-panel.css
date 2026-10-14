@@ -64,7 +64,7 @@
   cursor: pointer;
   list-style: none;
   font-weight: 500;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 .catalog-disclosure > summary::-webkit-details-marker { display: none; }

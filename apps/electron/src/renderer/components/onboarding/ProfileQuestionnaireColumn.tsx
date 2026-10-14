@@ -66,10 +66,10 @@ function ProfileSelect({
 }) {
   const id = React.useId()
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger id={id} className="w-full">
+        <SelectTrigger id={id} className="h-9 w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -177,34 +177,36 @@ export function ProfileQuestionnaireColumn({
   return (
     <div
       data-testid="profile-questionnaire-column"
-      className={cn('flex flex-col gap-5', className)}
+      className={cn('flex flex-col gap-3.5', className)}
     >
-      <div className="space-y-2">
-        <Label htmlFor={fullNameId}>{t('onboarding.profile.fullName')}</Label>
-        <Input
-          id={fullNameId}
-          value={value.fullName ?? ''}
-          onChange={(event) => update({ fullName: event.target.value })}
-          placeholder={t('onboarding.profile.fullNamePlaceholder')}
-          disabled={disabled}
-          className="w-full"
-        />
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <div className="space-y-1.5">
+          <Label htmlFor={fullNameId}>{t('onboarding.profile.fullName')}</Label>
+          <Input
+            id={fullNameId}
+            value={value.fullName ?? ''}
+            onChange={(event) => update({ fullName: event.target.value })}
+            placeholder={t('onboarding.profile.fullNamePlaceholder')}
+            disabled={disabled}
+            className="h-9 w-full"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor={birthDateId}>{t('onboarding.profile.birthDate')}</Label>
+          <Input
+            id={birthDateId}
+            type="date"
+            value={value.birthDate ?? ''}
+            max={todayIso}
+            onChange={(event) => update({ birthDate: event.target.value })}
+            disabled={disabled}
+            className="h-9 w-full"
+          />
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor={birthDateId}>{t('onboarding.profile.birthDate')}</Label>
-        <Input
-          id={birthDateId}
-          type="date"
-          value={value.birthDate ?? ''}
-          max={todayIso}
-          onChange={(event) => update({ birthDate: event.target.value })}
-          disabled={disabled}
-          className="w-full"
-        />
-      </div>
-
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         <ProfileSelect
           label={t('onboarding.profile.uiLanguage')}
           value={value.uiLanguage}
@@ -225,7 +227,7 @@ export function ProfileQuestionnaireColumn({
         />
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         <ProfileSelect
           label={t('onboarding.profile.city')}
           value={value.city ?? ''}
@@ -242,10 +244,10 @@ export function ProfileQuestionnaireColumn({
         />
       </div>
 
-      <div data-testid="profile-preferences" className="space-y-3">
-        <div className="space-y-2">
+      <div data-testid="profile-preferences" className="space-y-2">
+        <div className="space-y-1.5">
           <Label htmlFor={preferencesId}>{t('onboarding.profile.preferences')}</Label>
-          <p className="text-xs text-muted-foreground">
+          <p className="onb-helper text-xs text-muted-foreground">
             {t('onboarding.profile.preferencesHint')}
           </p>
           <Textarea
@@ -253,7 +255,8 @@ export function ProfileQuestionnaireColumn({
             value={value.preferences}
             onChange={(event) => update({ preferences: event.target.value })}
             placeholder={t('onboarding.profile.preferencesPlaceholder')}
-            rows={6}
+            rows={3}
+            className="min-h-[4.5rem] resize-y"
             disabled={disabled}
           />
         </div>
@@ -268,7 +271,7 @@ export function ProfileQuestionnaireColumn({
             aria-busy={suggesting}
             data-testid="profile-suggest-button"
             className={cn(
-              'relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border px-4 py-1.5 text-xs font-medium text-foreground',
+              'onb-magic relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border px-4 py-1.5 text-xs font-medium text-foreground',
               'border-accent/30 bg-background/60 transition-colors duration-[var(--motion-fast)]',
               'hover:border-accent/50 focus-visible:outline-none focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus/55',
               'disabled:cursor-not-allowed disabled:opacity-60',
@@ -280,14 +283,14 @@ export function ProfileQuestionnaireColumn({
               style={{ backgroundImage: SUGGEST_GRADIENT }}
             />
             <span className="relative inline-flex items-center gap-1.5">
+              {suggesting
+                ? t('onboarding.profile.suggesting')
+                : t('onboarding.profile.suggest')}
               {suggesting ? (
                 <Loader2 className="icon-caption animate-spin" aria-hidden="true" />
               ) : (
                 <Sparkles className="icon-caption" aria-hidden="true" />
               )}
-              {suggesting
-                ? t('onboarding.profile.suggesting')
-                : t('onboarding.profile.suggest')}
             </span>
           </button>
 

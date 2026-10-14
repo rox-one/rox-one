@@ -72,7 +72,7 @@ function BrowserScreenStory() {
       />
 
       <main className="min-h-0 flex-1 bg-foreground-2 p-4">
-        <div className="h-full overflow-hidden rounded-xl border border-border/60 bg-background shadow-thin">
+        <div className="h-full overflow-hidden rounded-lg border border-border/60 bg-background shadow-thin">
           <BrowserEmptyStateCard
             title="Open Design runtime"
             description="URL-backed BrowserView surface for the separately running Open Design web app and daemon."

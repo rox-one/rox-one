@@ -16,6 +16,13 @@ permissions:
 jobs:
   validate:
     strategy:
+      # Both legs must always report. Without this, a failure on one platform
+      # cancels the other leg, so the cancelled platform's result is invisible
+      # and its own independent failure hides behind the other one — that is
+      # exactly how the ubuntu-only server-lock failure stayed invisible for
+      # days (issue #1955). Every other multi-OS matrix in this repo already
+      # sets fail-fast: false.
+      fail-fast: false
       matrix:
         include:
           - os: blacksmith-4vcpu-ubuntu-2404

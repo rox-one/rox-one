@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { dismissSidebarGuidance, isSidebarGuidanceDismissed } from './sidebar-guidance'
-import { ProfileStrip, type ProfileStripData } from './ProfileStrip'
 import { PromoSlot } from './PromoSlot'
 import type { PromoKind } from '@/platform/promo-slot'
 import { useTranslation } from 'react-i18next'
@@ -9,47 +8,38 @@ import { cn } from '@/lib/utils'
 
 interface SidebarChromeProps {
   workspaceId?: string | null
-  profile: ProfileStripData
-  onProfileClick: () => void
   promoKind: PromoKind | null
   reminderDueCount?: number
   onPromoCta: () => void
   collapsed?: boolean
-  /** Sidebar v2: «Настройки» opens from the profile popover (no footer gear). */
-  onOpenSettings?: () => void
 }
 
+/**
+ * Second-sidebar footer. The profile lives only in the primary rail (one
+ * 28px avatar → profile popover with Settings, plan/balance and tour), so
+ * this footer carries just the compact promo hint and renders nothing when
+ * there is no hint to show.
+ */
 export function SidebarChrome({
   workspaceId,
-  profile,
-  onProfileClick,
   promoKind,
   reminderDueCount,
   onPromoCta,
   collapsed = false,
-  onOpenSettings,
 }: SidebarChromeProps) {
-  const { t } = useTranslation()
   const [, invalidateGuidance] = React.useState(0)
-  const profileContainerRef = React.useRef<HTMLDivElement>(null)
   const guidanceDismissed = isSidebarGuidanceDismissed(workspaceId)
   const visiblePromoKind = promoKind === 'onboarding' && guidanceDismissed ? null : promoKind
   const onDismissGuidance = React.useCallback(() => {
     dismissSidebarGuidance(workspaceId)
     invalidateGuidance(revision => revision + 1)
-    const container = profileContainerRef.current
-    if (container?.isConnected && container.dataset.guidanceWorkspace === (workspaceId || '_default')
-      && !container.closest('[hidden], [inert], [aria-hidden="true"]')) {
-      container.querySelector<HTMLButtonElement>('button')?.focus()
-    }
+    // The hint unmounts; hand focus to the rail profile avatar (the only profile entry point).
+    if (typeof document !== 'undefined') document.querySelector<HTMLElement>('[data-rail-avatar]')?.focus()
   }, [workspaceId])
+  if (!visiblePromoKind || collapsed) return null
   return (
-    <div className="rox-shell-divider-t shrink-0 space-y-2 px-1.5 py-2 pb-3" data-testid="sidebar-footer">
-      {visiblePromoKind && !collapsed ? (
-        <PromoSlot kind={visiblePromoKind} reminderDueCount={reminderDueCount} onCta={onPromoCta} onDismiss={visiblePromoKind === 'onboarding' ? onDismissGuidance : undefined} />
-      ) : null}
-      {/* Flat account row: no outline/shadow card, subtle hover fill only. Lowest element in the rail. */}
-      <div ref={profileContainerRef} data-guidance-workspace={workspaceId || '_default'} className="w-full"><ProfileStrip data={profile} onClick={onProfileClick} onOpenSettings={onOpenSettings} compact={collapsed} className={cn('w-full', collapsed ? "px-0" : "px-2")} /></div>
+    <div className="shrink-0 px-2 py-2" data-testid="sidebar-footer">
+      <PromoSlot kind={visiblePromoKind} reminderDueCount={reminderDueCount} onCta={onPromoCta} onDismiss={visiblePromoKind === 'onboarding' ? onDismissGuidance : undefined} />
     </div>
   )
 }

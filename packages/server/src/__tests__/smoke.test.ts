@@ -4,7 +4,7 @@
  * use minimal HTML fixtures. Every child owns a fresh config root and token.
  */
 import { afterEach, describe, expect, it } from 'bun:test'
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import type { Subprocess } from 'bun'
@@ -29,6 +29,11 @@ interface SpawnedServer {
   logs: () => string
   tokenWasLogged: () => boolean
   stop: (mode?: 'graceful' | 'cleanup') => Promise<void>
+}
+
+interface TestProfile {
+  root: string
+  webuiDir: string
 }
 
 async function within<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
@@ -71,7 +76,41 @@ function createServerStop(proc: Subprocess, drains: Promise<unknown>, logs: () =
   }
 }
 
-function createProfile(): { root: string; webuiDir: string } {
+/**
+ * Readiness is "the child answers its own /health", not "the child printed a
+ * line". The bootstrap logs `CRAFT_SERVER_URL=` and starts listening, and only
+ * then runs its bundled-skills hash-merge inline on the same event loop
+ * (PERF-02); that job starves HTTP/WebSocket work for seconds afterwards, so a
+ * request issued straight after the log line races startup instead of testing
+ * the lifecycle contract. Retry until the process is genuinely serving, and
+ * fail with the child's logs when it never is.
+ */
+async function waitUntilServing(server: SpawnedServer): Promise<void> {
+  const deadline = Date.now() + STARTUP_TIMEOUT
+  let lastError = 'no probe completed'
+  while (Date.now() < deadline) {
+    if (server.proc.exitCode !== null) {
+      throw new Error(`Server exited (${server.proc.exitCode}) before serving /health`)
+    }
+    try {
+      // Short per-attempt deadline: an attempt that lands inside the startup
+      // job cannot complete anyway, and a long one would only add dead time.
+      const response = await request(server, '/health', { signal: AbortSignal.timeout(1_000) })
+      if (response.ok) return
+      lastError = `/health returned ${response.status}`
+      await response.body?.cancel()
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error)
+    }
+    // Integration gate against a real child process: fake timers cannot advance
+    // another process's startup, so the retry paces itself on the platform
+    // clock (bounded by the STARTUP_TIMEOUT deadline above).
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
+  throw new Error(`Server did not serve /health within ${STARTUP_TIMEOUT}ms (last probe: ${lastError})`)
+}
+
+function createProfile(): TestProfile {
   const root = mkdtempSync(join(tmpdir(), 'rox-server-lifecycle-'))
   PROFILES.push(root)
   copyFileSync(join(REPO_ROOT, 'apps/electron/resources/config-defaults.json'), join(root, 'config-defaults.json'))
@@ -89,7 +128,7 @@ function createProfile(): { root: string; webuiDir: string } {
   return { root, webuiDir }
 }
 
-async function spawnTestServer(profile: ReturnType<typeof createProfile>, token: string): Promise<SpawnedServer> {
+async function spawnTestServer(profile: TestProfile, token: string): Promise<SpawnedServer> {
   // The WebUI config uses the configured RPC port. Reserve a loopback port
   // before launching, then assert that the child actually binds that port.
   const reservation = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch: () => new Response() })
@@ -151,6 +190,7 @@ async function spawnTestServer(profile: ReturnType<typeof createProfile>, token:
       proc.exited.then(code => { throw new Error(`Server exited before readiness (${code})`) }),
     ]), STARTUP_TIMEOUT, 'Server startup timed out')
     expect(url).toBe(server.url)
+    await waitUntilServing(server)
     return server
   } catch (error) {
     await server.stop('cleanup')
@@ -161,22 +201,55 @@ async function spawnTestServer(profile: ReturnType<typeof createProfile>, token:
 function connectWs(url: string, token: string): Promise<WebSocket> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(url)
-    const timer = setTimeout(() => { ws.terminate(); reject(new Error('WebSocket handshake timed out')) }, 5_000)
+    // Frames that are not protocol envelopes. They are never allowed to throw
+    // out of the event handler (an uncaught parse error aborts the whole test
+    // file) and are reported only when the handshake ends without a verdict.
+    const malformed: string[] = []
+    const timer = setTimeout(() => {
+      ws.terminate()
+      reject(new Error(`WebSocket handshake timed out${malformed.length ? ` after ${malformed.length} unparseable frame(s): ${malformed.join(', ')}` : ''}`))
+    }, 5_000)
     ws.on('open', () => ws.send(JSON.stringify({
       id: crypto.randomUUID(), type: 'handshake', protocolVersion: PROTOCOL_VERSION, token,
     })))
     ws.on('message', data => {
-      const message = JSON.parse(data.toString())
-      if (message.type === 'handshake_ack') { clearTimeout(timer); resolve(ws) }
-      else if (message.type === 'error') { clearTimeout(timer); ws.close(); reject(new Error('Handshake rejected')) }
+      const text = data.toString()
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(text)
+      } catch {
+        malformed.push(JSON.stringify(text.slice(0, 120)))
+        return
+      }
+      if (typeof parsed !== 'object' || parsed === null) return
+      const type = 'type' in parsed ? parsed.type : undefined
+      if (type === 'handshake_ack') { clearTimeout(timer); resolve(ws); return }
+      if (type !== 'error') return
+      // The server refuses an unacceptable credential with a typed `error`
+      // envelope before closing (transport/server.ts:1140-1153). Report that
+      // code so a caller can assert the refusal reason, not just "it threw".
+      const error = 'error' in parsed ? parsed.error : undefined
+      const code = typeof error === 'object' && error !== null && 'code' in error && typeof error.code === 'string'
+        ? error.code
+        : 'unknown'
+      clearTimeout(timer)
+      ws.close()
+      reject(new Error(`Handshake rejected (${code})`))
     })
     ws.on('error', error => { clearTimeout(timer); reject(error) })
-    ws.on('close', code => { clearTimeout(timer); reject(new Error(`WebSocket closed: ${code}`)) })
+    ws.on('close', code => {
+      clearTimeout(timer)
+      reject(new Error(`WebSocket closed: ${code}${malformed.length ? ` (ignored ${malformed.length} unparseable frame(s): ${malformed.join(', ')})` : ''}`))
+    })
   })
 }
 
 function request(server: SpawnedServer, path: string, options: RequestInit = {}): Promise<Response> {
-  return fetch(server.httpUrl + path, { ...options, redirect: 'manual', signal: AbortSignal.timeout(5_000) })
+  return fetch(server.httpUrl + path, {
+    ...options,
+    redirect: 'manual',
+    signal: options.signal ?? AbortSignal.timeout(5_000),
+  })
 }
 
 afterEach(async () => {
@@ -223,18 +296,26 @@ describe('headless server lifecycle smoke', () => {
     expect(await html.text()).toBe(readFileSync(join(profile.webuiDir, 'index.html'), 'utf8'))
     const ws = await connectWs(server.url, token)
     expect(ws.readyState).toBe(WebSocket.OPEN)
-    await expect(connectWs(server.url, 'wrong-token-that-is-long-enough')).rejects.toThrow()
+    // A wrong token must be refused by the server's own AUTH_FAILED envelope —
+    // not by a timeout, a transport close, or an unparseable frame.
+    await expect(connectWs(server.url, 'wrong-token-that-is-long-enough')).rejects.toThrow(/Handshake rejected \(AUTH_FAILED\)/)
     // Keep an authenticated socket open to exercise shutdown with a live client.
     await server.stop()
     expect(ws.readyState).toBe(WebSocket.CLOSED)
     await expect(request(server, '/health')).rejects.toThrow()
-    expect(existsSync(join(profile.root, 'config.json'))).toBe(true)
-    const savedConfig = readFileSync(join(profile.root, 'config.json'), 'utf8')
+    // A graceful stop must leave the workspace registry behind for the next
+    // start. On a miss, name what the profile actually holds before asserting.
+    const configPath = join(profile.root, 'config.json')
+    if (!existsSync(configPath)) {
+      console.error(`[smoke] ${configPath} missing after stop; profile holds: ${readdirSync(profile.root).join(', ') || '<empty>'}\n${server.logs()}`)
+    }
+    expect(existsSync(configPath)).toBe(true)
+    const savedConfig = readFileSync(configPath, 'utf8')
     const restarted = await spawnTestServer(profile, token)
     expect((await request(restarted, '/health')).status).toBe(200)
     expect((await request(restarted, '/api/config', { headers: { cookie } })).status).toBe(200)
     // Startup may add migration receipts; it must retain the existing config.
-    expect(JSON.parse(readFileSync(join(profile.root, 'config.json'), 'utf8'))).toMatchObject(JSON.parse(savedConfig))
+    expect(JSON.parse(readFileSync(configPath, 'utf8'))).toMatchObject(JSON.parse(savedConfig))
     expect(server.tokenWasLogged()).toBe(false)
     expect(restarted.tokenWasLogged()).toBe(false)
     await restarted.stop()

@@ -18,7 +18,7 @@
  */
 
 import * as React from 'react'
-import { motion } from 'motion/react'
+import { motion } from '@/lib/deferred-motion'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 
 const SNAPPY_SPRING = { type: 'spring' as const, stiffness: 400, damping: 36, mass: 0.8 }

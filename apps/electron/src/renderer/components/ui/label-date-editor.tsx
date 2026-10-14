@@ -12,7 +12,7 @@ import { Calendar } from './calendar'
 import { cn } from '@/lib/utils'
 import { parseDate } from 'chrono-node'
 import { format, parse } from 'date-fns'
-import { getDateLocale } from '@rox/shared/i18n'
+import { getDateLocale } from '@rox/shared/i18n/date-locale'
 
 export interface LabelDateEditorProps {
   inputRef: React.RefObject<HTMLInputElement>
@@ -120,7 +120,7 @@ export default function LabelDateEditor({
                   className={cn(
                     'flex-1 h-7 px-2 text-base',
                     'bg-transparent',
-                    'text-foreground placeholder:text-text-muted',
+                    'text-foreground placeholder:text-muted-foreground',
                     'outline-none'
                   )}
                 />
@@ -134,7 +134,7 @@ export default function LabelDateEditor({
                         'flex items-center justify-center w-7 h-7 rounded-[var(--radius-control)]',
                         'hover:bg-surface-hover transition-colors cursor-pointer',
                         'outline-none',
-                        calendarOpen && 'bg-surface-hover'
+                        calendarOpen && 'bg-surface-selected'
                       )}
                     >
                       <CalendarDays className="icon-caption text-muted-foreground" />

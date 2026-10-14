@@ -10,6 +10,7 @@
  */
 import {
   Activity,
+  BookMarked,
   BookOpen,
   Bot,
   Brain,
@@ -57,6 +58,7 @@ import {
   SquareTerminal,
   Table,
   Target,
+  PenTool,
   Timer,
   Upload,
   UserPlus,
@@ -87,6 +89,7 @@ import {
  */
 const ICON_COMPONENTS: Record<string, LucideIcon> = {
   Activity,
+  BookMarked,
   BookOpen,
   Bot,
   Brain,
@@ -135,6 +138,7 @@ const ICON_COMPONENTS: Record<string, LucideIcon> = {
   SquareTerminal,
   Table,
   Target,
+  PenTool,
   Timer,
   Upload,
   UserPlus,

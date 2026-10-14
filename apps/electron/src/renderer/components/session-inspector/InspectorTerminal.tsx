@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
-import { parseAnsi } from '@rox/ui'
+import { parseAnsi } from '@rox/ui/ansi-parser'
 import { toErrorMessage } from '@/lib/errors'
 
 /**

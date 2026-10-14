@@ -12,13 +12,15 @@ import { useSyncExternalStore } from 'react'
 export interface UiAppearanceState {
   /** A6 — show the compact bottom status bar (default: visible). */
   statusBarVisible: boolean
+  /** Show the titlebar screen pills (default: visible). */
+  modePillVisible: boolean
   /** B10 — accent source (default: brand). */
   accentSource: 'brand' | 'system'
   /** B10 — last system accent snapshot (null before first read). */
   accent: SystemAccentSnapshot | null
 }
 
-const DEFAULT_STATE: UiAppearanceState = { statusBarVisible: true, accentSource: 'brand', accent: null }
+const DEFAULT_STATE: UiAppearanceState = { statusBarVisible: true, modePillVisible: true, accentSource: 'brand', accent: null }
 
 let state: UiAppearanceState = DEFAULT_STATE
 const listeners = new Set<() => void>()
@@ -35,15 +37,17 @@ export function subscribeUiAppearance(listener: () => void): () => void {
 function publish(patch: Partial<UiAppearanceState>): void {
   const next = { ...state, ...patch }
   if (next.statusBarVisible === state.statusBarVisible
+    && next.modePillVisible === state.modePillVisible
     && next.accentSource === state.accentSource
     && next.accent === state.accent) return
   state = next
   for (const listener of listeners) listener()
 }
 
-function applySnapshot(snapshot: { statusBarVisible?: boolean; accentSource?: 'brand' | 'system'; accent?: SystemAccentSnapshot | null }): void {
+function applySnapshot(snapshot: { statusBarVisible?: boolean; modePillVisible?: boolean; accentSource?: 'brand' | 'system'; accent?: SystemAccentSnapshot | null }): void {
   publish({
     ...(typeof snapshot.statusBarVisible === 'boolean' ? { statusBarVisible: snapshot.statusBarVisible } : {}),
+    ...(typeof snapshot.modePillVisible === 'boolean' ? { modePillVisible: snapshot.modePillVisible } : {}),
     ...(snapshot.accentSource === 'brand' || snapshot.accentSource === 'system' ? { accentSource: snapshot.accentSource } : {}),
     ...(snapshot.accent !== undefined ? { accent: snapshot.accent } : {}),
   })
@@ -73,7 +77,7 @@ export function resetUiAppearanceBridge(): void {
 
 /** Persist a patch through the main process; publish only after it is saved. */
 export async function saveUiAppearancePatch(
-  patch: { statusBarVisible?: boolean; accentSource?: 'brand' | 'system' },
+  patch: { statusBarVisible?: boolean; modePillVisible?: boolean; accentSource?: 'brand' | 'system' },
   api: ElectronAPI | undefined = typeof window !== 'undefined' ? window.electronAPI : undefined,
 ): Promise<boolean> {
   if (!api?.setUiPreferences) return false
