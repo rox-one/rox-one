@@ -152,3 +152,63 @@ export function applySchedule(store: ScheduleStore, id: string, patch: ScheduleP
 export function timelineRowOrder(tasks: readonly PersonalTask[], by: TimelineGroupBy, today: string): string[] {
   return groupTasks(partitionTasks(tasks, today).scheduled.map((s) => s.task), by).flatMap((g) => g.tasks.map((task) => task.id))
 }
+
+// ── Dependencies (finish-to-start) ──
+
+export interface DependencyEdge {
+  from: string
+  to: string
+  /** The blocked task starts before its blocker ends (same day is fine). */
+  violated: boolean
+}
+
+/** Edges between scheduled tasks (blocker → blocked) for the timeline arrows. */
+export function dependencyEdges(tasks: readonly PersonalTask[], spans: ReadonlyMap<string, GanttSpan>): DependencyEdge[] {
+  const out: DependencyEdge[] = []
+  for (const task of tasks) {
+    const to = spans.get(task.id)
+    if (!to) continue
+    for (const blocker of task.blockedBy ?? []) {
+      const from = spans.get(blocker)
+      if (from) out.push({ from: blocker, to: task.id, violated: to.start < from.end })
+    }
+  }
+  return out
+}
+
+/**
+ * Finish-to-start conflicts touching `id` (as blocked or as blocker) among open
+ * tasks; used to warn after a reschedule. Unscheduled tasks never conflict.
+ */
+export function dependencyConflicts(tasks: readonly PersonalTask[], id: string, today: string): { blocker: PersonalTask; blocked: PersonalTask }[] {
+  const byId = new Map(tasks.map((task) => [task.id, task]))
+  const out: { blocker: PersonalTask; blocked: PersonalTask }[] = []
+  const check = (blocked: PersonalTask, blocker: PersonalTask | undefined) => {
+    if (!blocker || blocker.completedAt != null) return
+    const a = taskSpan(blocker, today), b = taskSpan(blocked, today)
+    if (a && b && b.start < a.end) out.push({ blocker, blocked })
+  }
+  const self = byId.get(id)
+  if (!self) return out
+  for (const blocker of self.blockedBy ?? []) check(self, byId.get(blocker))
+  for (const task of tasks) if (task.blockedBy?.includes(id)) check(task, self)
+  return out
+}
+
+/** Monday–Sunday (local) containing `today`, as ISO dates. */
+export function weekRange(today: string): GanttRange {
+  const date = parseIsoDate(today)
+  const offset = (date.getDay() + 6) % 7
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - offset)
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6)
+  return { start: toIsoDate(start), end: toIsoDate(end) }
+}
+
+/** Open tasks whose span overlaps the week (any project/area). */
+export function weekTasks(tasks: readonly PersonalTask[], today: string): PersonalTask[] {
+  const week = weekRange(today)
+  return tasks.filter((task) => {
+    const span = taskSpan(task, today)
+    return span != null && span.start <= week.end && span.end >= week.start
+  })
+}
