@@ -211,7 +211,8 @@ export const actions = {
     description: 'Show two screens side by side, half and half (or leave split)',
     defaultHotkey: 'mod+alt+\\',
     category: 'View',
-    when: '!inputFocus && !menuOpen',
+    // A modifier chord types nothing, so it also works from the composer.
+    when: '!menuOpen',
   },
   'view.toggleFocusMode': {
     id: 'view.toggleFocusMode',

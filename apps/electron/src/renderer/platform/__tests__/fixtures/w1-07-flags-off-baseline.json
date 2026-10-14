@@ -484,7 +484,7 @@
       "id": "view.toggleSplit",
       "hotkey": "mod+alt+\\",
       "category": "View",
-      "when": "!inputFocus && !menuOpen"
+      "when": "!menuOpen"
     },
     {
       "id": "view.toggleFocusMode",
@@ -876,7 +876,7 @@
     },
     {
       "id": "view.toggleSplit",
-      "when": "!inputFocus && !menuOpen",
+      "when": "!menuOpen",
       "hotkey": "mod+alt+\\"
     },
     {

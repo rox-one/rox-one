@@ -45,4 +45,24 @@ describe('split mode (top50 #13)', () => {
     expect(split.splitPanelWidth(1000, 8)).toBe(496)
     expect(split.splitPanelWidth(300, 8)).toBe(320)
   })
+
+  it('leaving split keeps a companion the user touched or navigated', () => {
+    const store = createStore()
+    store.set(panelStackAtom, [panel('a', 'docs')])
+    store.set(focusedPanelIdAtom, 'a')
+    store.set(split.toggleSplitAtom)
+    const companion = store.get(split.activeSplitIdsAtom)![0]
+    store.set(split.markSplitPanelTouchedAtom, companion)
+    store.set(split.toggleSplitAtom)
+    expect(store.get(panelStackAtom).length).toBe(2)
+
+    const nav = createStore()
+    nav.set(panelStackAtom, [panel('a', 'docs')])
+    nav.set(focusedPanelIdAtom, 'a')
+    nav.set(split.toggleSplitAtom)
+    const id = nav.get(split.activeSplitIdsAtom)![0]
+    nav.set(panelStackAtom, nav.get(panelStackAtom).map((p) => (p.id === id ? { ...p, route: 'allSessions/session/x' } : p)))
+    nav.set(split.toggleSplitAtom)
+    expect(nav.get(panelStackAtom).length).toBe(2)
+  })
 })

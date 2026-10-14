@@ -27,7 +27,7 @@ import { PanelSlot } from './PanelSlot'
 import { TerminalPanel } from './TerminalPanel'
 import { PanelGridResizeSash } from './PanelGridResizeSash'
 import { PanelSwapGripButton } from './PanelSeam'
-import { activeSplitIdsAtom, exitSplitAtom, splitPanelWidth, splitStateAtom } from '@/components/shell/split-mode'
+import { activeSplitIdsAtom, exitSplitAtom, markSplitPanelTouchedAtom, splitPanelWidth, splitStateAtom } from '@/components/shell/split-mode'
 import { setStripWidthAtom, persistStripWidthsAtom, panelFocusTimesAtom, nextFocusTick, stripWidthFor, stripWidthsAtom, hibernatedPanelIdsAtom, useStripHibernation, useScrollFocusedIntoView, clampStripWidth } from '@/components/shell/panel-strip'
 import {
   PANEL_GAP,
@@ -194,6 +194,23 @@ export function PanelStackContainer({
   const splitState = useAtomValue(splitStateAtom)
   const exitSplit = useSetAtom(exitSplitAtom)
   useEffect(() => { if (splitState && !splitIds) exitSplit() }, [splitState, splitIds, exitSplit])
+  // Interacting inside the companion keeps it when split is turned off.
+  const markSplitTouched = useSetAtom(markSplitPanelTouchedAtom)
+  const companionId = splitIds && splitState?.openedId && !splitState.touched ? splitState.openedId : null
+  useEffect(() => {
+    const root = layoutRef.current
+    if (!companionId || !root) return
+    const onInteract = (event: Event) => {
+      const target = event.target instanceof Element ? event.target : null
+      if (target?.closest(`[data-panel-id="${CSS.escape(companionId)}"]`)) markSplitTouched(companionId)
+    }
+    root.addEventListener('pointerdown', onInteract, true)
+    root.addEventListener('keydown', onInteract, true)
+    return () => {
+      root.removeEventListener('pointerdown', onInteract, true)
+      root.removeEventListener('keydown', onInteract, true)
+    }
+  }, [companionId, markSplitTouched])
   const singlePanel = isExpanded || (hasTools
     ? visibleIds.length <= 1
     : isCompact || panels.length <= 1 || (!splitIds && (engineLayout ? engineLayout.singlePanel : mode === 'focus')))
@@ -219,6 +236,7 @@ export function PanelStackContainer({
   }, [focusedPanelId, setPanelFocusTimes])
   const hibernatedIds = useAtomValue(hibernatedPanelIdsAtom)
   useStripHibernation(scrollRef, stripMode)
+  // layoutRef excludes the docked inspector (a sibling in the shell), so this is the strip viewport.
   const splitWidth = splitPanelWidth(Math.max(0, availableWidth - (isSidebarAndNavigatorHidden ? 0 : sidebarWidth + navigatorWidth)), PANEL_GAP)
   const panelStripWidth = (entry: { id: string; route: string }) =>
     splitIds && splitIds.includes(entry.id) ? splitWidth : stripWidthFor(stripWidths, entry.route)

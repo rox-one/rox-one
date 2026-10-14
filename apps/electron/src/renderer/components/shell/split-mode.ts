@@ -7,8 +7,9 @@
  *   when Sessions is the current one) and fits both to the viewport;
  * - two or more open → pairs the focused panel with its neighbour and fits
  *   the pair to the viewport;
- * - toggle again → leaves split; a companion split opened itself is closed,
- *   panels the user opened are kept.
+ * - toggle again → leaves split; a companion split opened itself is closed
+ *   only while the user has not navigated or interacted in it, otherwise it
+ *   is kept like any panel the user opened.
  *
  * Widths while split are display-only: per-screen strip widths are untouched,
  * and dragging a split panel's sash leaves split and resizes as usual.
@@ -22,8 +23,12 @@ import { openScreenPanelAtom, stripScreenKey, STRIP_MIN_WIDTH } from './panel-st
 export interface SplitState {
   /** The pair, in strip order. */
   ids: readonly [string, string]
-  /** Panel split opened itself (closed when split ends), or null. */
+  /** Panel split opened itself (closed when split ends, if untouched), or null. */
   openedId: string | null
+  /** Route the companion was opened on; a different route means the user navigated. */
+  openedRoute: string | null
+  /** The user clicked or typed inside the companion. */
+  touched: boolean
 }
 
 export const splitStateAtom = atom<SplitState | null>(null)
@@ -50,8 +55,9 @@ export const toggleSplitAtom = atom(null, (get, set) => {
   const current = get(splitStateAtom)
   if (current && get(activeSplitIdsAtom)) {
     set(splitStateAtom, null)
-    if (current.openedId && get(panelStackAtom).some((entry) => entry.id === current.openedId)) {
-      set(closePanelAtom, current.openedId)
+    const companion = current.openedId ? get(panelStackAtom).find((entry) => entry.id === current.openedId) : undefined
+    if (companion && !current.touched && companion.route === current.openedRoute) {
+      set(closePanelAtom, companion.id)
     }
     return false
   }
@@ -63,15 +69,22 @@ export const toggleSplitAtom = atom(null, (get, set) => {
   if (screens.length >= 2) {
     const partner = screens[index + 1] ?? screens[index - 1]!
     const ordered = screens.indexOf(partner) > index ? [focused.id, partner.id] as const : [partner.id, focused.id] as const
-    set(splitStateAtom, { ids: ordered, openedId: null })
+    set(splitStateAtom, { ids: ordered, openedId: null, openedRoute: null, touched: false })
     return true
   }
   // The strip opens a new screen on the left of the current one.
   const openedId = set(openScreenPanelAtom, { route: splitCompanionRoute(focused.route) })
   if (openedId === focused.id) return false
-  set(splitStateAtom, { ids: [openedId, focused.id], openedId })
+  const openedRoute = get(panelStackAtom).find((entry) => entry.id === openedId)?.route ?? null
+  set(splitStateAtom, { ids: [openedId, focused.id], openedId, openedRoute, touched: false })
   return true
 })
 
 /** Leave split without closing anything (e.g. the user starts resizing). */
 export const exitSplitAtom = atom(null, (_get, set) => { set(splitStateAtom, null) })
+
+/** The user interacted inside a panel; marks the split companion as kept. */
+export const markSplitPanelTouchedAtom = atom(null, (get, set, panelId: string) => {
+  const state = get(splitStateAtom)
+  if (state && !state.touched && state.openedId === panelId) set(splitStateAtom, { ...state, touched: true })
+})
