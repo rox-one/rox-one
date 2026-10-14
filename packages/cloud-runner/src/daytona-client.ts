@@ -40,7 +40,15 @@ export interface DaytonaClient {
     projectId?: string;
     labels: Record<string, string>;
     autoDeleteIntervalMin: number;
+    /** Non-secret sandbox environment (cloud handoff passes OIDC/public URL config). */
+    env?: Record<string, string>;
+    /** HTTP preview visibility; defaults to Daytona's private. */
+    public?: boolean;
+    /** Auto-stop after N idle minutes (0 disables). */
+    autoStopIntervalMin?: number;
   }): Promise<DaytonaSandboxRecord>;
+  /** Stable preview URL for a sandbox port (`GET /sandbox/{id}/ports/{port}/preview-url`). */
+  getPreviewUrl?(sandboxId: string, port: number): Promise<string>;
   getSandbox(id: string): Promise<DaytonaSandboxRecord>;
   startSandbox(id: string): Promise<DaytonaSandboxRecord>;
   stopSandbox(id: string): Promise<void>;
@@ -69,6 +77,10 @@ export class MemoryDaytonaClient implements DaytonaClient {
   /** Delay applied to `rox-run` so cancel can win in conformance. */
   execDelayMs: number;
   lastExecCommand = '';
+  /** Every createSandbox call, for assertions on env/public/intervals. */
+  readonly createCalls: Array<Record<string, unknown>> = [];
+  /** Test seam: return a result to override exec for a command, or undefined for the default. */
+  execOverride?: (command: string) => DaytonaExecResult | undefined;
   private seq = 0;
 
   constructor(opts?: { execDelayMs?: number }) {
@@ -83,7 +95,11 @@ export class MemoryDaytonaClient implements DaytonaClient {
     projectId?: string;
     labels: Record<string, string>;
     autoDeleteIntervalMin: number;
+    env?: Record<string, string>;
+    public?: boolean;
+    autoStopIntervalMin?: number;
   }): Promise<DaytonaSandboxRecord> {
+    this.createCalls.push({ ...opts });
     const id = `sbx-${Date.now().toString(36)}-${(this.seq += 1)}`;
     const record: DaytonaSandboxRecord = {
       id,
@@ -94,6 +110,11 @@ export class MemoryDaytonaClient implements DaytonaClient {
     this.sandboxes.set(id, record);
     this.files.set(id, new Map());
     return record;
+  }
+
+  async getPreviewUrl(sandboxId: string, port: number): Promise<string> {
+    await this.getSandbox(sandboxId);
+    return `https://${port}-${sandboxId}.proxy.memory.daytona.test`;
   }
 
   async getSandbox(id: string): Promise<DaytonaSandboxRecord> {
@@ -158,6 +179,8 @@ export class MemoryDaytonaClient implements DaytonaClient {
   async exec(sandboxId: string, command: string, signal?: AbortSignal): Promise<DaytonaExecResult> {
     this.lastExecCommand = command;
     await this.getSandbox(sandboxId);
+    const overridden = this.execOverride?.(command);
+    if (overridden) return overridden;
     if (command === 'rox-run' || command.startsWith('rox-run ')) {
       if (this.execDelayMs > 0) {
         await abortableSleep(this.execDelayMs, signal);
@@ -240,6 +263,9 @@ export class HttpDaytonaClient implements DaytonaClient {
     projectId?: string;
     labels: Record<string, string>;
     autoDeleteIntervalMin: number;
+    env?: Record<string, string>;
+    public?: boolean;
+    autoStopIntervalMin?: number;
   }): Promise<DaytonaSandboxRecord> {
     const body: Record<string, unknown> = {
       name: opts.name,
@@ -250,8 +276,21 @@ export class HttpDaytonaClient implements DaytonaClient {
     if (opts.image) body.image = opts.image;
     if (opts.region) body.target = opts.region;
     if (opts.projectId) body.projectId = opts.projectId;
+    if (opts.env) body.env = opts.env;
+    if (opts.public !== undefined) body.public = opts.public;
+    if (opts.autoStopIntervalMin !== undefined) body.autoStopInterval = opts.autoStopIntervalMin;
     const json = await this.request<Record<string, unknown>>('POST', '/sandbox', body);
     return this.parseSandbox(json);
+  }
+
+  async getPreviewUrl(sandboxId: string, port: number): Promise<string> {
+    const json = await this.request<{ url?: string }>(
+      'GET',
+      `/sandbox/${encodeURIComponent(sandboxId)}/ports/${Math.trunc(port)}/preview-url`,
+    );
+    const url = String(json.url ?? '');
+    if (!/^https:\/\//.test(url)) throw new CloudRunnerError('daytona returned no https preview url', 'provider_error');
+    return url;
   }
 
   async getSandbox(id: string): Promise<DaytonaSandboxRecord> {
