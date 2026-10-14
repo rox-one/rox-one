@@ -2,7 +2,7 @@ import { join } from 'node:path'
 import { resolveConfigDir } from '@rox/shared/config'
 
 import { CredentialRefRegistry } from '@rox/core/platform'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import {
   InProcessCredentialBroker,
   LocalFileSecretProvider,

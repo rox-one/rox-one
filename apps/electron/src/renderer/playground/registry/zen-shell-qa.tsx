@@ -63,14 +63,14 @@ function ZenShellQaFixtureView() {
 
   return (
     <div
-      className="flex h-[720px] min-w-[800px] overflow-hidden rounded-[8px] bg-[var(--shell-content,#f4f4f5)]"
+      className="flex h-[720px] min-w-[800px] overflow-hidden rounded-md bg-[var(--shell-content,#f4f4f5)]"
       data-testid="zen-shell-qa-fixture"
       data-shell-style="zen"
       style={{ gap: 8, padding: 4 }}
     >
       <aside
         id="zen-shell-qa-sidebar"
-        className="flex min-h-0 flex-col overflow-hidden rounded-[8px]"
+        className="flex min-h-0 flex-col overflow-hidden rounded-md"
         data-shell-role="chrome"
         data-testid="zen-shell-qa-sidebar"
         style={{ width }}
@@ -122,7 +122,7 @@ function ZenShellQaFixtureView() {
       />
       <div className="grid min-w-[440px] flex-1 grid-cols-2 gap-2">
         <section
-          className="flex flex-col rounded-[8px] p-3"
+          className="flex flex-col rounded-md p-3"
           data-shell-role="content"
           data-testid="zen-shell-qa-draft"
         >
@@ -137,7 +137,7 @@ function ZenShellQaFixtureView() {
           />
         </section>
         <section
-          className="flex flex-col rounded-[8px] p-3"
+          className="flex flex-col rounded-md p-3"
           data-shell-role="content"
           data-testid="zen-shell-qa-browser"
         >
