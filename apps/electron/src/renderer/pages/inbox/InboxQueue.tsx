@@ -54,7 +54,7 @@ import {
 import { isOptionalMailSetup, type MailFolder } from '../../../shared/mail-local'
 import { useMail } from './mail/useMail'
 import { MailCompose, MailListPanel, MailReader, folderLabel, useComposeState } from './mail/MailPanels'
-import { emailIdFromItem, mailItemId, mailToInboxItem, statusKey } from './mail/mail-view'
+import { emailIdFromItem, mailItemId, mailErrorKey, mailToInboxItem, statusKey } from './mail/mail-view'
 import type { TeamInboxItem } from '@rox/shared/team'
 import { InboxSidebar, InboxKindIcon, isMailFilter, type InboxPageFilter } from './InboxSidebar'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
@@ -206,7 +206,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   const openFolder = (f: MailFolder) => {
     if (contextRef.current !== actorContext || !actorContext.actorKey) return
     setFilter({ mail: f.id })
-    mail.setFolder({ folderId: f.id === 'inbox' ? null : f.id, role: f.role })
+    mail.setFolder({ folderId: f.id === 'inbox' || f.id === f.role ? null : f.id, role: f.role })
     selectMail(null)
   }
   const mailNext = (id: string) => {
@@ -385,8 +385,8 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
         const m = mail.message && mail.message.id === mailSelected ? mail.message : null
         if (!m || composeState.compose) return
         const next = mailNext(m.id)
-        if (event.key === 'e') { event.preventDefault(); void mail.act((a) => a.move([m.id], 'archive')).then(() => { if (contextRef.current === actorContext) selectMail(next) }, (e) => { if (contextRef.current === actorContext) mail.setError(String(e)) }) }
-        if (event.key === '#') { event.preventDefault(); void mail.act((a) => a.remove([m.id])).then(() => { if (contextRef.current === actorContext) selectMail(next) }, (e) => { if (contextRef.current === actorContext) mail.setError(String(e)) }) }
+        if (event.key === 'e') { event.preventDefault(); void mail.act((a) => a.move([m.id], 'archive')).then(() => { if (contextRef.current === actorContext) selectMail(next) }, (e) => { if (contextRef.current === actorContext) mail.setError(e) }) }
+        if (event.key === '#') { event.preventDefault(); void mail.act((a) => a.remove([m.id])).then(() => { if (contextRef.current === actorContext) selectMail(next) }, (e) => { if (contextRef.current === actorContext) mail.setError(e) }) }
         if (event.key === 'r') { event.preventDefault(); composeState.start('reply', m) }
         if (event.key === 'Escape') selectMail(null)
         return
@@ -445,7 +445,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   }
 
   const optionalMailSetup = isOptionalMailSetup(mail.status)
-  const mailFailure = optionalMailSetup && !inMail ? null : mail.error ?? (mail.status?.enabled && (mail.status.state === 'error' || mail.status.state === 'unreachable') ? mail.status.error ?? t(statusKey(mail.status)) : null)
+  const mailFailure = optionalMailSetup && !inMail ? null : mail.error ? t(mailErrorKey(mail.errorCode)) : mail.status?.enabled && mail.status.state === 'error' ? t(mailErrorKey(mail.status.errorCode)) : mail.status?.enabled && mail.status.state === 'unreachable' ? t(statusKey(mail.status), { url: mail.status.serverUrl }) : null
   const errorEntries = [...Object.entries(errors).filter(([, value]) => value), ...(mailFailure ? [['mail', mailFailure]] : [])]
   const initialLoading = !!workspaceId && (!loaded.memory || !loaded.skills || !loaded.senders)
     || mail.statusLoading || mail.status?.state === 'provisioning' || mailReady && mail.loading && mail.unread.length === 0
@@ -477,7 +477,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   ) : (
     <>
       <ListHeader
-        title={filter === 'all' ? t('inbox.title') : typeof filter === 'object' ? kindLabel(filter.kind) : t(`inbox.view.${filter}`)}
+        title={filter === 'all' ? t('inbox.view.all') : typeof filter === 'object' ? kindLabel(filter.kind) : t(`inbox.view.${filter}`)}
         subtitle={visibleBlockingCount ? t('inbox.blockingCount', { count: visibleBlockingCount }) : undefined}
         actions={<Button variant="ghost" disabled={refreshing} onClick={() => void refreshInbox()}>{refreshing ? <LoaderCircle aria-hidden className="icon-caption animate-spin motion-reduce:animate-none" /> : null}{t('inbox.refresh')}</Button>}
       />
@@ -778,7 +778,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   const status = (
     <>
       {counts.blocking > 0 ? <span>{t('inbox.status.blocking', { count: counts.blocking })}</span> : null}
-      {mail.available && (mailReady || inMail || mailFailure) ? <span className="truncate" data-testid="mail-status" title={mail.status?.error ?? undefined}>{t(statusKey(mail.status), { address: mail.status?.address ?? '', url: mail.status?.serverUrl ?? '', error: mail.status?.error ?? '', flag: mail.status?.flag ?? '' })}</span> : null}
+      {mail.available && (mailReady || inMail || mailFailure) ? <span className="truncate" data-testid="mail-status">{t(statusKey(mail.status), { address: mail.status?.address ?? '', url: mail.status?.serverUrl ?? '', flag: mail.status?.flag ?? '' })}</span> : null}
     </>
   )
   const hasDetail = !!(selected || currentId || mailSelected || composeState.compose)
