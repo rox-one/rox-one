@@ -12,11 +12,12 @@
 
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { LogOut, RotateCcw, SlidersHorizontal } from 'lucide-react'
+import { GraduationCap, LogOut, RotateCcw, SlidersHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
 import type { ProfileStripData } from './ProfileStrip'
+import { requestGuidedTour } from '@/features/guided-tour/model'
 
 /** Row styling mirrors `StyledDropdownMenuItem` so the popover matches native menus. */
 const rowClass = cn(
@@ -129,6 +130,10 @@ export function UserProfilePopoverContent({
         <button type="button" className={rowClass} onClick={openSettings} data-testid="profile-open-settings">
           <SlidersHorizontal className="icon-caption shrink-0 text-muted-foreground" aria-hidden />
           <span>{t('sidebar.settings')}</span>
+        </button>
+        <button type="button" className={rowClass} onClick={() => { onClose?.(); requestGuidedTour() }} data-testid="profile-start-tour">
+          <GraduationCap className="icon-caption shrink-0 text-muted-foreground" aria-hidden />
+          <span>{t('guidedTour.relaunch')}</span>
         </button>
         {onReplayTour ? (
           <button type="button" className={rowClass} onClick={onReplayTour} data-testid="profile-replay-tour">
