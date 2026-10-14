@@ -130,7 +130,9 @@ describe('shell title helpers', () => {
   it('consumers read the shared reactive list (no static useMemo([]) map)', () => {
     expect(read('platform/SurfaceTabs.tsx')).toContain('buildRouteTitleKeys(')
     expect(read('platform/SurfaceTabs.tsx')).not.toContain('UNIFIED_MODES')
-    expect(read('platform/useModeHotkeys.ts')).toContain('useShellModes()')
+    // WP6: hotkeys read the shared pill selector, which reads useShellModes().
+    expect(read('platform/useModeHotkeys.ts')).toContain('usePillModel(true)')
+    expect(read('platform/usePillNav.ts')).toContain('useShellModes()')
     expect(read('platform/ModeBar.tsx')).toContain('resolveLucideIcon(surface.icon) ?? MODE_ICONS[surface.icon]')
   })
 })
@@ -498,13 +500,13 @@ describe('«Документы» relabel reaches every Notes label', () => {
   })
 
   it('rail, inspector, compact menu and sidebar link use the flag-aware key', () => {
-    // The rail renders the core modes (not APP_NAV_DESTINATIONS), so its
-    // Notes title is relabelled through the flag-aware `resolveSeededModes(…,
-    // shellFlags)`; pinned end-to-end by the «docs.shared.v1 relabels the rail
-    // Notes mode» render case in w1-07-rail-modes.test.tsx.
+    // WP5: the rail renders the primary-nav registry, whose Docs entry is
+    // relabelled through the flag-aware `resolvePrimaryNav({ shellFlags })`;
+    // pinned end-to-end by the «docs.shared.v1 relabels the rail Notes mode»
+    // render case in w1-07-rail-modes.test.tsx.
     const rail = read('platform/ActivityRail.tsx')
     expect(rail).toContain('const { shellFlags } = useShellModes()')
-    expect(rail).toContain('modeFlags,\n    shellFlags,')
+    expect(rail).toContain('resolvePrimaryNav({ shellFlags, modeFlags, placements, pillNavIds })')
     expect(read('platform/InspectorHost.tsx')).toContain('t(navDestinationLabelKey(destination, shellFlags))')
     const compact = read('components/app-shell/CompactWorkspaceMenu.tsx')
     expect(compact).toContain('t(navDestinationLabelKey(service, shellFlags))')

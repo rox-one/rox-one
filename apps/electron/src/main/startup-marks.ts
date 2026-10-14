@@ -81,9 +81,15 @@ export function getStartupTimeline(): StartupTimeline {
   return {
     timeOriginEpochMs: performance.timeOrigin,
     platform: process.platform,
+    compileCache: readBootCompileCache(),
     marks: marks.map(mark => ({ ...mark })),
     eventLoopDelay,
   }
+}
+
+function readBootCompileCache(): StartupTimeline['compileCache'] {
+  const value = (globalThis as { __roxBoot?: { compileCache?: unknown } }).__roxBoot?.compileCache
+  return value === 'enabled' || value === 'disabled' || value === 'failed' || value === 'unsupported' || value === 'unsafe-dir' ? value : null
 }
 
 export function isMainPerfEnabled(): boolean {
@@ -134,6 +140,12 @@ export function resetStartupMarksForTests(): void {
   timeline: getStartupTimeline,
 }
 
+// #1573: the boot.cjs entry shim records when it started, before main.cjs was
+// read and compiled; absent when main.cjs is launched directly.
+const boot = (globalThis as { __roxBoot?: { atMs?: unknown } }).__roxBoot
+if (boot && typeof boot.atMs === 'number' && Number.isFinite(boot.atMs)) {
+  push({ name: STARTUP_MARKS.mainBoot, atMs: boot.atMs, source: 'main' })
+}
 markStartup(STARTUP_MARKS.mainEntry)
 
 if (perfEnabled) {

@@ -139,6 +139,7 @@ export const fork = (..._args: unknown[]) => obj()
 export const format = fn
 export const fstatSync = binaryOrEmpty
 export const fsyncSync = binaryOrEmpty
+export const ftruncateSync = binaryOrEmpty
 export const freemem = fn
 export const generateKeyPairSync = binaryOrEmpty
 export const get = (..._args: unknown[]) => obj()

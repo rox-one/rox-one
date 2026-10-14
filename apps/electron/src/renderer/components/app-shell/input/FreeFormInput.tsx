@@ -2091,7 +2091,7 @@ export function FreeFormInput({
                               <button
                                 type="button"
                                 aria-label={`${t('chat.selectedText')} ${chipIndex}: ${tooltipText}`}
-                                className="input-toolbar-btn inline-flex h-6 min-w-6 cursor-pointer items-center justify-center rounded-[var(--radius-control)] px-1 text-xs font-medium text-muted-foreground hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                className="input-toolbar-btn inline-flex h-6 min-w-6 cursor-pointer items-center justify-center rounded-[var(--radius-control)] px-1 text-xs font-medium text-muted-foreground hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 onMouseDown={(event) => {
                                   event.preventDefault()
                                   event.stopPropagation()
@@ -2111,7 +2111,7 @@ export function FreeFormInput({
                           </Tooltip>
                           <button
                             type="button"
-                            className="input-toolbar-btn min-h-6 min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-[var(--radius-control)] px-1.5 text-left hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            className="input-toolbar-btn min-h-6 min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-[var(--radius-control)] px-1.5 text-left hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             onClick={(event) => {
                               const rect = event.currentTarget.getBoundingClientRect()
                               onFollowUpClick?.(item, {
@@ -2328,7 +2328,7 @@ export function FreeFormInput({
           // Container styling - only when not wrapped by InputContainer
           !unstyled && 'rounded-[var(--radius-composer)] shadow-middle',
           !unstyled && 'bg-background',
-          isDraggingOver && 'ring-2 ring-foreground ring-offset-2 ring-offset-background bg-foreground/5'
+          isDraggingOver && 'ring-2 ring-foreground ring-offset-2 ring-offset-background bg-surface-hover'
         )}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -2413,7 +2413,7 @@ export function FreeFormInput({
             {magicWorkflows.map((workflow) => (
               <Tooltip key={workflow.id} delayDuration={200}>
                 <TooltipTrigger asChild>
-                  <span className="inline-flex max-w-full items-center gap-1 rounded-[var(--radius-control)] bg-foreground/5 px-2 py-0.5 text-sm text-foreground/80">
+                  <span className="inline-flex max-w-full items-center gap-1 rounded-[var(--radius-control)] bg-surface-hover px-2 py-0.5 text-sm text-foreground/80">
                     {t(`workflows.label.${workflow.id}`)}
                     <span className="text-foreground/50">{t(`workflows.cost.${workflow.costClass}`)}</span>
                   </span>
@@ -2535,7 +2535,7 @@ export function FreeFormInput({
             </>
           )}
           <span ref={attachTarget} className="inline-flex shrink-0"><FreeFormInputContextBadge
-            icon={<Paperclip className="h-4 w-4" />}
+            icon={<Paperclip className="icon-toolbar" />}
             label={attachments.length > 0
               ? t("chat.filesCount", { count: attachments.length })
               : t('chat.attachFiles')
@@ -2556,7 +2556,7 @@ export function FreeFormInput({
           />
           {isWebUI && (
             <FreeFormInputContextBadge
-              icon={<Globe className="h-4 w-4" />}
+              icon={<Globe className="icon-toolbar" />}
               label={t("browser.open")}
               isExpanded={false}
               hasSelection={false}
@@ -2567,7 +2567,7 @@ export function FreeFormInput({
             />
           )}
           <FreeFormInputContextBadge
-            icon={<Globe className="h-4 w-4" />}
+            icon={<Globe className="icon-toolbar" />}
             label={t("browser.open")}
             isExpanded={false}
             hasSelection={false}
@@ -2582,7 +2582,7 @@ export function FreeFormInput({
                 buttonRef={sourceButtonRef}
                 icon={
                   optimisticSourceSlugs.length === 0 ? (
-                    <DatabaseZap className="h-4 w-4" />
+                    <DatabaseZap className="icon-toolbar" />
                   ) : (
                     <div className="flex items-center -ml-0.5">
                       {(() => {
@@ -2665,7 +2665,7 @@ export function FreeFormInput({
           <div className="flex items-center gap-1 min-w-32 shrink overflow-hidden">
           {/* 1. Attach Files Badge */}
           <span ref={attachTarget} className="inline-flex shrink-0"><FreeFormInputContextBadge
-            icon={<Paperclip className="h-4 w-4" />}
+            icon={<Paperclip className="icon-toolbar" />}
             label={attachments.length > 0
               ? t("chat.filesCount", { count: attachments.length })
               : t("chat.attachFiles")
@@ -2686,7 +2686,7 @@ export function FreeFormInput({
 
           {isWebUI && (
             <FreeFormInputContextBadge
-              icon={<Globe className="h-4 w-4" />}
+              icon={<Globe className="icon-toolbar" />}
               label={t("browser.open")}
               isExpanded={false}
               hasSelection={false}
@@ -2697,7 +2697,7 @@ export function FreeFormInput({
             />
           )}
           <FreeFormInputContextBadge
-            icon={<Globe className="h-4 w-4" />}
+            icon={<Globe className="icon-toolbar" />}
             label={t("browser.open")}
             isExpanded={isEmptySession}
             hasSelection={false}
@@ -2714,7 +2714,7 @@ export function FreeFormInput({
                 buttonRef={sourceButtonRef}
                 icon={
                   optimisticSourceSlugs.length === 0 ? (
-                    <DatabaseZap className="h-4 w-4" />
+                    <DatabaseZap className="icon-toolbar" />
                   ) : (
                     <div className="flex items-center -ml-0.5">
                       {(() => {
@@ -2807,9 +2807,9 @@ export function FreeFormInput({
                   aria-busy={improvingPrompt}
                   onClick={() => { void handleImprovePrompt() }}
                   aria-label={t('chat.improvePromptAria')}
-                  className="input-toolbar-btn inline-flex items-center h-6 px-1.5 shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/5 transition-colors disabled:opacity-40"
+                  className="input-toolbar-btn inline-flex items-center h-6 px-1.5 shrink-0 rounded-[var(--radius-control)] hover:bg-surface-hover transition-colors disabled:opacity-40"
                 >
-                  {improvingPrompt ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                  {improvingPrompt ? <Spinner className="icon-toolbar" /> : <Sparkles className="icon-toolbar" />}
                 </button>
               </TooltipTrigger>
               <TooltipContent>
@@ -2827,9 +2827,9 @@ export function FreeFormInput({
               onClick={onRequestExpand}
               onMouseEnter={onRequestExpand}
               aria-label={t('chat.tapToType')}
-              className="flex-1 h-6 mx-1 flex items-center justify-center text-foreground/30 hover:text-foreground/60 transition-colors cursor-pointer rounded-[var(--radius-control)] hover:bg-foreground/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="flex-1 h-6 mx-1 flex items-center justify-center text-foreground/30 hover:text-foreground/60 transition-colors cursor-pointer rounded-[var(--radius-control)] hover:bg-surface-hover focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
-              <ChevronUp className="h-4 w-4" />
+              <ChevronUp className="icon-toolbar" />
             </button>
           ) : (
             <div className="flex-1" />
@@ -2851,21 +2851,21 @@ export function FreeFormInput({
                     type="button"
                     aria-label={`${t('common.model')}: ${connectionUnavailable ? t('common.unavailable') : currentModelDisplayName}`}
                     className={cn(
-                      "input-toolbar-btn inline-flex items-center h-6 px-1.5 gap-0.5 text-xs shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/5 transition-colors select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                      modelDropdownOpen && "bg-foreground/5",
+                      "input-toolbar-btn inline-flex items-center h-6 px-1.5 gap-0.5 text-xs shrink-0 rounded-[var(--radius-control)] hover:bg-surface-hover transition-colors select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                      modelDropdownOpen && "bg-surface-selected",
                       connectionUnavailable && "text-destructive",
                     )}
                   >
                     {connectionUnavailable ? (
                       <>
-                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                        <AlertCircle className="icon-caption shrink-0" />
                         {t('common.unavailable')}
                       </>
                     ) : (
                       <>
                         {effectiveConnectionDetails && llmConnections.length > 1 && storage.get(storage.KEYS.showConnectionIcons, true) && <ConnectionIcon connection={effectiveConnectionDetails} size={14} showTooltip />}
                         {currentModelDisplayName}
-                        {pickerMode !== 'locked-single' && <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />}
+                        {pickerMode !== 'locked-single' && <ChevronDown className="icon-status opacity-50 shrink-0" />}
                       </>
                     )}
                   </button>
@@ -2879,7 +2879,7 @@ export function FreeFormInput({
               {/* Connection unavailable message */}
               {pickerMode === 'unavailable' ? (
                 <div className="flex flex-col items-center justify-center py-6 px-4 text-center">
-                  <AlertCircle className="h-8 w-8 text-destructive mb-2" />
+                  <AlertCircle className="icon-empty text-destructive mb-2" />
                   <div className="font-medium text-sm mb-1">{t('chat.connectionUnavailable')}</div>
                   <div className="text-xs text-muted-foreground">
                     {t('chat.connectionUnavailableDescription')}
@@ -2902,14 +2902,14 @@ export function FreeFormInput({
                             disabled={!isAuthenticated}
                             className={cn(
                               "flex items-center justify-between px-2 py-2 rounded-lg",
-                              isCurrentConnection && "bg-foreground/5"
+                              isCurrentConnection && "bg-surface-selected"
                             )}
                           >
                             <div className="text-left flex-1">
                               <div className="font-medium text-sm flex items-center gap-1.5">
                                 <ConnectionIcon connection={conn} size={14} />
                                 {conn.name}
-                                {isCurrentConnection && <Check className="h-3 w-3 text-foreground" />}
+                                {isCurrentConnection && <Check className="icon-status text-foreground" />}
                               </div>
                               {connectionMeta && (
                                 <div className="text-xs text-muted-foreground truncate mt-0.5">{connectionMeta}</div>
@@ -2954,7 +2954,7 @@ export function FreeFormInput({
                                               aria-label={visionOn
                                                 ? t('chat.modelPicker.supportsImagesOn')
                                                 : t('chat.modelPicker.supportsImagesOff')}
-                                              className="inline-flex items-center justify-center p-1 rounded hover:bg-foreground/5 cursor-pointer"
+                                              className="inline-flex items-center justify-center p-1 rounded hover:bg-surface-hover cursor-pointer"
                                               onClick={(e) => {
                                                 e.preventDefault()
                                                 e.stopPropagation()
@@ -2969,7 +2969,7 @@ export function FreeFormInput({
                                               }}
                                             >
                                               <ImageIcon className={cn(
-                                                "h-3.5 w-3.5",
+                                                "icon-caption",
                                                 visionOn ? "text-foreground/70" : "text-foreground/30"
                                               )} />
                                             </span>
@@ -2982,7 +2982,7 @@ export function FreeFormInput({
                                         </Tooltip>
                                       )}
                                       {isSelectedModel && (
-                                        <Check className="h-3 w-3 text-foreground" />
+                                        <Check className="icon-status text-foreground" />
                                       )}
                                     </div>
                                   </StyledDropdownMenuItem>
@@ -3024,7 +3024,7 @@ export function FreeFormInput({
                                 aria-label={visionOn
                                   ? t('chat.modelPicker.supportsImagesOn')
                                   : t('chat.modelPicker.supportsImagesOff')}
-                                className="inline-flex items-center justify-center p-1 rounded pointer-events-auto opacity-100 hover:bg-foreground/5 cursor-pointer"
+                                className="inline-flex items-center justify-center p-1 rounded pointer-events-auto opacity-100 hover:bg-surface-hover cursor-pointer"
                                 onClick={(e) => {
                                   e.preventDefault()
                                   e.stopPropagation()
@@ -3039,7 +3039,7 @@ export function FreeFormInput({
                                 }}
                               >
                                 <ImageIcon className={cn(
-                                  "h-3.5 w-3.5",
+                                  "icon-caption",
                                   visionOn ? "text-foreground/70" : "text-foreground/30"
                                 )} />
                               </span>
@@ -3051,7 +3051,7 @@ export function FreeFormInput({
                             </TooltipContent>
                           </Tooltip>
                         )}
-                        <Check className="h-3 w-3 text-foreground" />
+                        <Check className="icon-status text-foreground" />
                       </div>
                     </StyledDropdownMenuItem>
                   )
@@ -3106,7 +3106,7 @@ export function FreeFormInput({
                                   aria-label={visionOn
                                     ? t('chat.modelPicker.supportsImagesOn')
                                     : t('chat.modelPicker.supportsImagesOff')}
-                                  className="inline-flex items-center justify-center p-1 rounded hover:bg-foreground/5 cursor-pointer"
+                                  className="inline-flex items-center justify-center p-1 rounded hover:bg-surface-hover cursor-pointer"
                                   onClick={(e) => {
                                     e.preventDefault()
                                     e.stopPropagation()
@@ -3121,7 +3121,7 @@ export function FreeFormInput({
                                   }}
                                 >
                                   <ImageIcon className={cn(
-                                    "h-3.5 w-3.5",
+                                    "icon-caption",
                                     visionOn ? "text-foreground/70" : "text-foreground/30"
                                   )} />
                                 </span>
@@ -3134,7 +3134,7 @@ export function FreeFormInput({
                             </Tooltip>
                           )}
                           {isSelected && (
-                            <Check className="h-3 w-3 text-foreground" />
+                            <Check className="icon-status text-foreground" />
                           )}
                         </div>
                       </StyledDropdownMenuItem>
@@ -3170,7 +3170,7 @@ export function FreeFormInput({
                               <div className="text-xs text-muted-foreground">{t(descriptionKey)}</div>
                             </div>
                             {isSelected && (
-                              <Check className="h-3 w-3 text-foreground shrink-0 ml-3" />
+                              <Check className="icon-status text-foreground shrink-0 ml-3" />
                             )}
                           </StyledDropdownMenuItem>
                         )
@@ -3265,7 +3265,7 @@ export function FreeFormInput({
               className="send-btn h-7 w-7 rounded-full shrink-0 hover:bg-foreground/15 active:bg-foreground/20 ml-1"
               onClick={() => handleStop(false)}
             >
-              <Square className="h-3 w-3 fill-current" />
+              <Square className="icon-status fill-current" />
             </Button>
           ) : (
             <Button
@@ -3277,7 +3277,7 @@ export function FreeFormInput({
               disabled={!hasContent || disabled || disableSend || transcriptionPending}
               data-tutorial="send-button"
             >
-              <ArrowUp className="h-4 w-4" />
+              <ArrowUp className="icon-toolbar" />
             </Button>
           )}
           </div>

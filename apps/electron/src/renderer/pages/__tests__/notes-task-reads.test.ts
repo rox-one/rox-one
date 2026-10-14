@@ -58,7 +58,7 @@ const effectCallback = (name: string, kind: 'useEffect' | 'useLayoutEffect', dep
   return `const ${name} = ${callback.getText(ast)};`
 }
 const executable = ts.transpileModule(
-  moduleHelper('listedNoteContent') + '\n' + moduleHelper('extractTasks') + '\n'
+  moduleHelper('listedNoteContent') + '\n' + moduleHelper('extractTasks') + '\n' + moduleHelper('isUnsupportedRpcError') + '\n' + moduleHelper('tasksFromRead') + '\nconst NOTE_TASKS_BATCH = 200;\n'
   + callback('refreshNotes') + callback('refreshTasks') + '\n'
   + effectCallback('resetEffect', 'useLayoutEffect', '[activeWorkspaceId]', 'cachedNotesList(activeWorkspaceId)') + '\n'
   + effectCallback('syncClaimEffect', 'useEffect', '[notes]') + '\n'
@@ -113,7 +113,7 @@ const documents = (updatedAtById: Record<string, number>) =>
   Object.keys(updatedAtById).map(id => document(id, updatedAtById[id]!, CONTENT[id]!))
 
 /** A fixture whose reads are answered by the test, never by timers. */
-function fixture(options: { cachedTasks?: NoteTask[] } = {}): TaskReadFixture {
+function fixture(options: { cachedTasks?: NoteTask[]; listNoteTasks?: (workspaceId: string, ids: string[]) => Promise<unknown[]> } = {}): TaskReadFixture {
   resetRoxQueryClientForTests(createRoxQueryClient())
   const state = { notes: [] as NoteSummary[], allTasks: [] as NoteTask[][] }
   const reads = new Map<string, Pending<NoteDocument>>()
@@ -130,6 +130,7 @@ function fixture(options: { cachedTasks?: NoteTask[] } = {}): TaskReadFixture {
       reads.set(noteId, read)
       return read.promise
     },
+    ...(options.listNoteTasks ? { listNoteTasks: options.listNoteTasks } : {}),
   }
   const refs = {
     notesListRequestRef: { current: 0 }, readWorkspaceRef: { current: 'ws' as string | undefined },
@@ -431,5 +432,54 @@ describe('PERF-09 round 4: a task pass never mixes workspaces', () => {
     expect(ensureNotesTaskCache<NoteTask>('ws-b').tasks.size).toBe(3)
     expect(ensureNotesTaskCache<NoteTask>('ws').tasks.size).toBe(3)
     expect(taskTexts().sort()).toEqual(['alpha', 'beta', 'gamma'])
+  })
+})
+describe('#1574 notes:listTasks replaces the per-note read loop', () => {
+  test('metadata-only listing: one listNoteTasks call, no readNote', async () => {
+    const calls: string[][] = []
+    const batched = fixture({ listNoteTasks: async (_ws, ids) => {
+      calls.push(ids)
+      return ids.map(id => ({ id, title: `Note ${id}`, updatedAt: 100, tasks: id === 'n1' ? [{ line: 1, text: 'alpha', checked: false }] : [] }))
+    } })
+    try {
+      const mounted = batched.refreshNotes({ mount: true })
+      batched.listing.resolve([summary('n1', 100), summary('n3', 100)])
+      await mounted
+      await settle()
+      expect(calls).toEqual([['n1', 'n3']])
+      expect([...batched.readCount]).toEqual([])
+      expect(batched.state.allTasks.at(-1)?.map(task => task.text)).toEqual(['alpha'])
+    } finally {
+      batched.stop()
+    }
+  })
+
+  test('a server without notes:listTasks falls back to per-note reads', async () => {
+    const legacy = fixture({ listNoteTasks: async () => { throw Object.assign(new Error('No handler for: notes:listTasks'), { code: 'CHANNEL_NOT_FOUND' }) } })
+    try {
+      const mounted = legacy.refreshNotes({ mount: true })
+      legacy.listing.resolve([summary('n1', 100), summary('n2', 200)])
+      await mounted
+      await settle()
+      expect([...legacy.readCount.keys()].sort()).toEqual(['n1', 'n2'])
+      legacy.resolveReads({ n1: 100, n2: 200 })
+      await settle()
+      expect(legacy.state.allTasks.at(-1)?.map(task => task.text).sort()).toEqual(['alpha', 'beta', 'gamma'])
+    } finally {
+      legacy.stop()
+    }
+  })
+
+  test('a denial does not fan out into per-note reads', async () => {
+    const denied = fixture({ listNoteTasks: async () => { throw Object.assign(new Error('forbidden'), { code: 'PERMISSION_DENIED' }) } })
+    try {
+      const mounted = denied.refreshNotes({ mount: true })
+      denied.listing.resolve([summary('n1', 100), summary('n2', 200)])
+      await mounted
+      await settle()
+      expect([...denied.readCount]).toEqual([])
+    } finally {
+      denied.stop()
+    }
   })
 })

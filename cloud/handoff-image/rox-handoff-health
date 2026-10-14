@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Ready only when the session server is up AND its auth surface is OIDC-only:
+#   /health 200, password route POST /api/auth -> 404, /api/auth/login -> 302 to the issuer.
+set -euo pipefail
+ROOT="${1:-}"
+[ "$ROOT" = "/home/daytona/rox-handoff" ] || exit 2
+PORT="$(sed -n 's/^ROX_HANDOFF_PORT=//p' "$ROOT/server.env")"; PORT="${PORT:-9100}"
+PUBLIC_URL="$(sed -n 's/^ROX_WEBUI_PUBLIC_URL=//p' "$ROOT/server.env")"
+ISSUER="$(sed -n 's/^ROX_WEBUI_OIDC_ISSUER=//p' "$ROOT/server.env")"
+HOST="${PUBLIC_URL#https://}"; HOST="${HOST%%/*}"
+BASE="http://127.0.0.1:$PORT"
+
+curl -fsS -o /dev/null --max-time 3 "$BASE/health"
+code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 -X POST -H 'Content-Type: application/json' -d '{}' "$BASE/api/auth")"
+[ "$code" = "404" ] || { echo "password login is reachable ($code)" >&2; exit 5; }
+loc="$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' --max-time 5 -H "Host: $HOST" -H 'X-Forwarded-Proto: https' "$BASE/api/auth/login")"
+case "$loc" in "302 $ISSUER"*) ;; *) echo "OIDC login not wired ($loc)" >&2; exit 6 ;; esac

@@ -40,6 +40,7 @@ import { ROX_REVALIDATE_AFTER_MS, roxQueryClient } from '@/lib/query/client'
 import { roxKeys } from '@/lib/query/keys'
 import { sharedRead } from '@/lib/query/shared-read'
 import { useEffectiveVisible } from '@/lib/surface-keepalive'
+import { isWebUI } from '@/lib/platform'
 
 const EMPTY_MAP = new Map<string, never[]>()
 /**
@@ -178,7 +179,12 @@ export function useInboxItems(options: {
           ? shared.data
           : await sharedRead(client, queryKey, async () => {
             const request = fn()
-            if (!request) throw new Error('This source is unavailable in the current runtime')
+            // Knowledge / skills / messenger senders are desktop-only. On web
+            // a missing host API is not a load failure (S8-07).
+            if (!request) {
+              if (isWebUI) return [] as unknown as T
+              throw new Error('This source is unavailable in the current runtime')
+            }
             return (await request) ?? ([] as unknown as T)
           }, { join: reuse })
         if (!current()) return

@@ -11,15 +11,16 @@
 
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Trash2, CalendarDays, ExternalLink } from 'lucide-react'
+import { Trash2, ExternalLink } from 'lucide-react'
 import { Popover, PopoverTrigger, PopoverContent } from './popover'
-import { Calendar } from './calendar'
 import { cn } from '@/lib/utils'
 import { openLabelLink } from '@/lib/open-label-link'
-import { parseDate } from 'chrono-node'
 import { format, parse } from 'date-fns'
 import { getDateLocale } from '@rox/shared/i18n'
 import type { LabelConfig } from '@rox/shared/labels'
+import { loadLabelDateEditor } from './label-date-editor-loader'
+
+const LabelDateEditor = React.lazy(loadLabelDateEditor)
 
 export interface LabelValuePopoverProps {
   /** Label configuration (color, name, valueType) */
@@ -118,50 +119,6 @@ export function LabelValuePopover({
     }
   }, [commitValue, onOpenChange, value])
 
-  /**
-   * For date labels: parse the draft text with chrono-node to get a resolved Date.
-   * Returns null if the text can't be parsed as a date.
-   */
-  const parsedDate = React.useMemo(() => {
-    if (label.valueType !== 'date' || !draft.trim()) return null
-    return parseDate(draft.trim())
-  }, [label.valueType, draft])
-
-  // The date to highlight in the calendar: prefer the live-parsed draft,
-  // fall back to the committed value prop (YYYY-MM-DD format).
-  const calendarDate = React.useMemo(() => {
-    if (parsedDate) return parsedDate
-    if (label.valueType === 'date' && value) {
-      try {
-        return parse(value, 'yyyy-MM-dd', new Date())
-      } catch {
-        return undefined
-      }
-    }
-    return undefined
-  }, [parsedDate, label.valueType, value])
-
-  /** Handle keyboard in the date input */
-  const handleDateKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      if (parsedDate) {
-        // Commit the resolved date and close
-        onValueChange?.(format(parsedDate, 'yyyy-MM-dd'))
-        onOpenChange(false)
-      } else if (!draft.trim()) {
-        // Empty input clears the value
-        onValueChange?.(undefined)
-        onOpenChange(false)
-      }
-      // If unparseable non-empty text, keep popover open
-    } else if (e.key === 'Escape') {
-      e.preventDefault()
-      setDraft(value ?? '')
-      onOpenChange(false)
-    }
-  }, [parsedDate, draft, onOpenChange, onValueChange, value])
-
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
@@ -180,89 +137,21 @@ export function LabelValuePopover({
         // to the session button's onMouseDown handler, causing unintended session selection.
         onPointerDown={(e) => e.stopPropagation()}
       >
-        {/* Date value editor — natural language input with nested calendar popover */}
+        {/* Date value editor (chrono-node + react-day-picker): lazy so the date
+            stack stays out of index.html's startup closure (WP7); warmed on idle. */}
         {label.valueType === 'date' && (
-          <div className="px-1.5 py-1.5 border-b border-border/50">
-            {/* Text input with calendar popover trigger on the right */}
-            <div className="flex items-center gap-1">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={draft}
-                  onChange={(e) => {
-                    setDraft(e.target.value)
-                  }}
-                  onKeyDown={(e) => {
-                    // ArrowDown opens the calendar (matches shadcn pattern)
-                    if (e.key === 'ArrowDown') {
-                      e.preventDefault()
-                      setCalendarOpen(true)
-                    } else {
-                      handleDateKeyDown(e)
-                    }
-                  }}
-                  onBlur={() => {
-                    // Commit parsed date on blur, or clear if empty
-                    if (parsedDate) {
-                      onValueChange?.(format(parsedDate, 'yyyy-MM-dd'))
-                    } else if (!draft.trim()) {
-                      onValueChange?.(undefined)
-                    }
-                  }}
-                  placeholder={t('labels.datePlaceholder')}
-                  className={cn(
-                    'flex-1 h-7 px-2 text-base',
-                    'bg-transparent',
-                    'text-foreground placeholder:text-foreground/30',
-                    'outline-none'
-                  )}
-                />
-                {/* Calendar icon opens a nested popover with the date picker */}
-                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label={t('labels.selectDate')}
-                      className={cn(
-                        'flex items-center justify-center w-7 h-7 rounded-[var(--radius-control)]',
-                        'hover:bg-foreground/5 transition-colors cursor-pointer',
-                        'outline-none',
-                        calendarOpen && 'bg-foreground/5'
-                      )}
-                    >
-                      <CalendarDays className="w-3.5 h-3.5 text-foreground/50" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="w-[220px] overflow-hidden p-0"
-                    side="top"
-                    align="end"
-                    sideOffset={8}
-                  >
-                    <Calendar
-                      mode="single"
-                      selected={calendarDate}
-                      captionLayout="dropdown"
-                      defaultMonth={calendarDate}
-                      onSelect={(date) => {
-                        if (date) {
-                          // Commit directly and update draft for display
-                          onValueChange?.(format(date, 'yyyy-MM-dd'))
-                          setDraft(format(date, 'MMMM d, yyyy'))
-                          setCalendarOpen(false)
-                        }
-                      }}
-                    />
-                  </PopoverContent>
-                </Popover>
-            </div>
-            {/* Show the resolved date below the input when parsing succeeds */}
-            {parsedDate && (
-              <div className="px-2 text-xs text-foreground/50">
-                {format(parsedDate, 'EEE, MMM d, yyyy', { locale: dateLocale })}
-              </div>
-            )}
-          </div>
+          <React.Suspense fallback={<div className="h-10 border-b border-border/50" />}>
+            <LabelDateEditor
+              inputRef={inputRef}
+              draft={draft}
+              setDraft={setDraft}
+              value={value}
+              onValueChange={onValueChange}
+              onOpenChange={onOpenChange}
+              calendarOpen={calendarOpen}
+              setCalendarOpen={setCalendarOpen}
+            />
+          </React.Suspense>
         )}
 
         {/* Non-date value editor (number/string) */}

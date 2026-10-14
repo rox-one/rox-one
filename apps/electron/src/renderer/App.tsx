@@ -15,6 +15,7 @@ import { defaultSessionOptions, mergeSessionOptions } from './hooks/useSessionOp
 import { generateMessageId } from '../shared/types'
 import { useEventProcessor } from './event-processor'
 import { ingestRuntimeTraceEvent, ingestRuntimeTraceHealth, removeRuntimeTraceSession } from './event-processor/runtime-trace-ingress'
+import { createStreamDeltaCoalescer } from './event-processor/stream-delta-coalescer'
 import type { AgentEvent, Effect } from './event-processor'
 import { AppShell } from '@/components/app-shell/AppShell'
 import { SessionSharingHost } from '@/components/app-shell/SessionSharingHost'
@@ -1323,7 +1324,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     }
 
     const eventScope = sessionScopeRef.current
-    const cleanup = window.electronAPI.onSessionEvent((event: SessionEvent) => {
+    // #1589: text/thinking deltas are merged and applied once per frame.
+    const coalescer = createStreamDeltaCoalescer<SessionEvent>((event: SessionEvent) => {
       const scope = eventScope
       if (sessionScopeRef.current !== scope || !scope.authority || scope.workspaceId !== windowWorkspaceId) return
       if (event.type === 'runtime_trace_health') {
@@ -1563,8 +1565,15 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       newMetaMap.set(sessionId, extractSessionMeta(updatedSession))
       store.set(sessionMetaMapAtom, newMetaMap)
     })
+    const unsubscribe = window.electronAPI.onSessionEvent(coalescer.push)
 
-    return cleanup
+    return () => {
+      unsubscribe()
+      // Flushes through this effect's closure. On a scope switch (authority or
+      // workspace) its guard drops up to one frame of queued deltas; that is
+      // fine because the new scope reloads its sessions from the server.
+      coalescer.dispose()
+    }
   }, [
     processAgentEvent,
     callerAuthority,
@@ -2872,11 +2881,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
                 />
               )}
               <ToolchainStatusBanner />
-              {webTransportBootstrap && (
-                <div role="status" data-host-session-capability="unavailable" className="border-b border-border px-4 py-2 text-sm text-muted-foreground">
-                  {t('sidebar.allSessions')}: {t('common.unavailable')}
-                </div>
-              )}
+              {/* WebUI host inventory is skipped on purpose; bound-workspace
+                  sessions load through RPC. Do not toast that as "unavailable"
+                  (S8-07). Desktop-only inbox sources are omitted in useInboxItems. */}
               {sessionLoadError && callerAuthority === 'native' && (
                 <div role="alert" className="flex items-center gap-3 border-b border-border bg-muted px-4 py-2 text-sm text-muted-foreground">
                   <span className="min-w-0 flex-1">{sessionLoadError}</span>
