@@ -31,6 +31,8 @@ import {
   type AutomationTrigger,
 } from './types'
 import { formatShortRelativeTime } from './utils'
+import { buildAutomationsSidebarGroups, type ScheduleTemplate } from './automations-sidebar'
+import { useScreenSidebar } from '@/components/shell/screen-sidebar'
 import './automations.css'
 
 const { useSelection: useAutomationSelection } = automationSelection
@@ -207,6 +209,50 @@ export function AutomationsListPanel({
       setCreating(false)
     }
   }, [activeWorkspaceId, creating, onlyGroup, t, onAutomationClick])
+
+  // Second sidebar (shell API): groups + schedule templates (top-50 #34).
+  const [creatingTemplate, setCreatingTemplate] = useState<string | null>(null)
+  const latest = React.useRef({ handleCreate, onAutomationClick })
+  latest.current = { handleCreate, onAutomationClick }
+  const createFromTemplate = useCallback(async (tpl: ScheduleTemplate) => {
+    if (!activeWorkspaceId || creatingTemplate) return
+    setCreatingTemplate(tpl.id)
+    try {
+      const created = await window.electronAPI.createAutomation(activeWorkspaceId, {
+        event: 'SchedulerTick',
+        matcher: {
+          name: t(tpl.nameKey),
+          enabled: false,
+          cron: tpl.cron,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          permissionMode: 'safe',
+          actions: [{ type: 'prompt', prompt: t(tpl.promptKey) }],
+        },
+      })
+      latest.current.onAutomationClick(created.id)
+    } catch {
+      toast.error(t('automations.createFailed'))
+    } finally {
+      setCreatingTemplate(null)
+    }
+  }, [activeWorkspaceId, creatingTemplate, t])
+  const sidebarConfig = React.useMemo(() => ({
+    screenId: 'automations',
+    title: t('screenSidebar.automations.title'),
+    primaryAction: { id: 'new', label: t('automations.newAutomation'), icon: Plus, disabled: creating, onSelect: () => void latest.current.handleCreate() },
+    search: { placeholder: t('screenSidebar.automations.search'), value: query, onChange: setQuery },
+    groups: buildAutomationsSidebarGroups({
+      automations,
+      selectedId: selectedAutomationId ?? null,
+      creatingTemplate,
+      t,
+      relative: (at) => formatShortRelativeTime(at, t),
+      onOpen: (id) => latest.current.onAutomationClick(id),
+      onCreateFromTemplate: (tpl) => void createFromTemplate(tpl),
+      onCreate: () => void latest.current.handleCreate(),
+    }),
+  }), [automations, selectedAutomationId, creatingTemplate, creating, query, t, locale, createFromTemplate])
+  useScreenSidebar(sidebarConfig)
 
   return (
     <div className={cn('rox-autom-list', className)} data-testid="automations-list">
