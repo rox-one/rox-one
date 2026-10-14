@@ -24,6 +24,13 @@
  * `cookbooks-lab:cancel` and reports whatever the in-flight run answers, so a
  * stopped cell is a result, not a guess.
  *
+ * Wave 10 («Cell Structure») adds Colab's structural editing: a hover insert row
+ * before every cell (and after the last one), a per-cell «⋯» disclosure with
+ * move/duplicate/delete, `Ctrl+M` to insert a code cell below, and focus +
+ * autoscroll onto the cell a mutation lands on. Everything routes through the
+ * one `cookbooks-lab:mutate` channel: unsaved edits are flushed first, and the
+ * fresh document the sidecar answers with replaces the surface wholesale.
+ *
  * Every string comes from `cookbooks.*` through `t()` and every colour, radius,
  * type size and control height is a ROX token, so the surface follows the app
  * theme in all twelve locales and never drifts into ad-hoc styling.
@@ -41,6 +48,7 @@ import { cn } from '@/lib/utils'
 import {
   buildNotebookExport,
   type CookbooksCard,
+  type CookbooksCellMutation,
   type CookbooksDocument,
   type CookbooksRunCell,
   type CookbooksStatus,
@@ -66,7 +74,7 @@ const HELP_KEYS: readonly string[] = [
 /**
  * R7: the shortcut block appended to the help disclosure, in R5 order, plus
  * Q2A's R-A navigation line and wave 9's stop key — the cheatsheet mirrors
- * exactly what is bound.
+ * exactly what is bound. Wave 10 adds the `Ctrl+M` insert key.
  */
 const SHORTCUT_KEYS: readonly string[] = [
   'cookbooks.help.shortcutRun',
@@ -74,6 +82,7 @@ const SHORTCUT_KEYS: readonly string[] = [
   'cookbooks.help.shortcutRunAll',
   'cookbooks.help.shortcutNav',
   'cookbooks.help.shortcutStop',
+  'cookbooks.help.shortcutInsert',
 ]
 
 /**
@@ -256,6 +265,60 @@ function CellOutput({
   )
 }
 
+/**
+ * Wave 10: the Colab hover-insert row — «+ Код» / «+ Текст» drawn before every
+ * cell and once after the last one, so `index` is the document position the new
+ * cell lands at. The row reveals itself on hover/focus, except in an empty
+ * notebook where it is the only thing on screen and stays visible.
+ */
+function InsertRow({
+  index,
+  alwaysVisible,
+  disabled,
+  busyHint,
+  onInsert,
+}: {
+  index: number
+  /** `true` in an empty notebook: the lone row never hides. */
+  alwaysVisible: boolean
+  disabled: boolean
+  /** Hint shown while an action is in flight; omitted when the row is idle. */
+  busyHint?: string
+  onInsert: (cellType: 'code' | 'markdown') => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <div
+      data-testid={`cookbooks-insert-${index}`}
+      className={cn(
+        'group/insert flex h-6 items-center justify-center gap-2 opacity-0 transition-opacity hover:opacity-100 focus-within:opacity-100 motion-reduce:transition-none',
+        alwaysVisible && 'opacity-100',
+      )}
+    >
+      <button
+        type="button"
+        data-testid={`cookbooks-insert-code-${index}`}
+        title={busyHint}
+        disabled={disabled}
+        onClick={() => onInsert('code')}
+        className={ACTION_CLASS}
+      >
+        {t('cookbooks.insert.code')}
+      </button>
+      <button
+        type="button"
+        data-testid={`cookbooks-insert-text-${index}`}
+        title={busyHint}
+        disabled={disabled}
+        onClick={() => onInsert('markdown')}
+        className={ACTION_CLASS}
+      >
+        {t('cookbooks.insert.text')}
+      </button>
+    </div>
+  )
+}
+
 export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }: CookbooksSurfacePageProps = {}) {
   const { t } = useTranslation()
   const api = window.electronAPI.cookbooksLab
@@ -274,6 +337,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   const [editingCells, setEditingCells] = useState<Record<number, boolean>>({})
   /** R-B: per-cell «показан полностью» state; absent means collapsed for long output. */
   const [expandedOutputs, setExpandedOutputs] = useState<Record<number, boolean>>({})
+  /** Wave 10: the one cell whose «⋯» actions row is disclosed, or null. */
+  const [menuOpen, setMenuOpen] = useState<number | null>(null)
   const [playbookText, setPlaybookText] = useState('')
   const [playbookEditing, setPlaybookEditing] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
@@ -282,6 +347,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   const [runStartedAt, setRunStartedAt] = useState<number | null>(null)
   const [elapsedMs, setElapsedMs] = useState(0)
   const documentRef = useRef<HTMLElement | null>(null)
+  /** Wave 10: the document index a structural mutation lands on, focused next pass. */
+  const pendingFocusRef = useRef<number | null>(null)
 
   // ensure() on mount + push subscription: main is the only source of truth.
   useEffect(() => {
@@ -358,6 +425,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
     setSources(nextSources)
     setOutputs({})
     setExpandedOutputs({})
+    // Wave 10: a re-read document invalidates the cell the menu pointed at.
+    setMenuOpen(null)
     // Counters and edit modes belong to the document that was open, not to the
     // surface: a freshly opened copy starts from a clean slate.
     setRuns({})
@@ -391,6 +460,29 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
 
   /** R6: the autoscroll target of a run — the cell itself. */
   const scrollToCell = useCallback((index: number) => scrollToBlock(`cookbooks-cell-${index}`), [scrollToBlock])
+
+  /**
+   * Wave 10: land focus on the cell a structural mutation points at. The effect
+   * keys off `doc` and `editingCells`, so a markdown cell — which only grows a
+   * `<textarea>` once its edit mode is on — is focused on the second pass;
+   * `-1` (a delete that emptied the notebook) clears the request without focus.
+   */
+  useEffect(() => {
+    const target = pendingFocusRef.current
+    if (target === null) return
+    if (target === -1) {
+      pendingFocusRef.current = null
+      return
+    }
+    const field = documentRef.current?.querySelector<HTMLTextAreaElement>(
+      `[data-testid="cookbooks-source-${target}"]`,
+    )
+    // Markdown in read mode has no field yet: wait for the edit-mode pass.
+    if (!field) return
+    pendingFocusRef.current = null
+    scrollToCell(target)
+    field.focus()
+  }, [doc, editingCells, scrollToCell])
 
   /** R5: move focus to the next runnable cell at or after `from`. */
   const focusCellSource = useCallback(
@@ -573,6 +665,37 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   }, [api, openItemId])
 
   /**
+   * Wave 10: the one structural-mutation path (add/delete/move/duplicate).
+   * Anything unsaved is flushed first, in ascending document order, so the
+   * sidecar shifts a document that already holds the edits on screen; a failed
+   * save aborts the mutation before the sidecar is ever asked. The fresh
+   * document the sidecar answers with replaces the surface wholesale and the
+   * returned `index` becomes the next focus target.
+   */
+  const mutateCell = useCallback(
+    async (mutation: CookbooksCellMutation) => {
+      if (!openItemId || !doc || busy !== null) return
+      await runWithBusy('mutate', async () => {
+        for (let index = 0; index < doc.cells.length; index += 1) {
+          const edited = sources[index] ?? doc.cells[index].source
+          if (edited === doc.cells[index].source) continue
+          await api.save({ itemId: openItemId, index, source: sources[index] ?? '' })
+        }
+        const result = await api.mutate({ itemId: openItemId, ...mutation })
+        applyDocument(result.document)
+        pendingFocusRef.current = result.index
+        // Wave 10: only an insert opens the markdown editor — delete/move/
+        // duplicate must not steal into edit.
+        const target = result.document.cells[result.index]
+        if (mutation.op === 'add' && target?.cellType === 'markdown') {
+          setEditingCells((previous) => ({ ...previous, [result.index]: true }))
+        }
+      })
+    },
+    [api, applyDocument, busy, doc, openItemId, runWithBusy, sources],
+  )
+
+  /**
    * R5: Colab-parity keys, scoped to the document container. Every combination
    * that starts work is a no-op while another action is in flight, and nothing
    * is bound globally.
@@ -585,10 +708,19 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
    * in flight it asks the sidecar to kill the executions of this item and
    * swallows the key (a browser would otherwise leave fullscreen / close a
    * dialog on it).
+   *
+   * Wave 10: `Esc` first closes the open cell menu (that takes priority); `Ctrl+M`
+   * inserts a code cell below the focused one, or appends it to the notebook.
    */
   const handleDocumentKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLElement>) => {
       if (event.key === 'Escape') {
+        // Wave 10: an open disclosure is the innermost thing Esc dismisses.
+        if (menuOpen !== null) {
+          event.preventDefault()
+          setMenuOpen(null)
+          return
+        }
         if (busy === null) return
         event.preventDefault()
         void cancelRun()
@@ -604,6 +736,23 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         // With no cell focused the chord enters the document from its nearest
         // end: ↓ lands on the first code cell, ↑ on the last one.
         focusAdjacentCodeCell(Number.isInteger(current) ? current : direction === 1 ? -1 : doc.cells.length, direction)
+        return
+      }
+      // Wave 10: Ctrl+M inserts a code cell below the focused one (Colab's own
+      // binding); with nothing focused it appends to the end of the notebook.
+      // A structural edit is not a run, so it needs no kernel support — same
+      // gate as the insert/menu controls.
+      if (event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'm') {
+        if (doc?.kind !== 'ipynb' || busy !== null) return
+        event.preventDefault()
+        const target = event.target as HTMLElement | null
+        const rawIndex = target?.tagName === 'TEXTAREA' ? target.getAttribute('data-cell-index') : null
+        const current = rawIndex === null ? Number.NaN : Number(rawIndex)
+        void mutateCell({
+          op: 'add',
+          cellType: 'code',
+          index: Number.isInteger(current) ? current + 1 : doc.cells.length,
+        })
         return
       }
       if (event.key !== 'Enter') return
@@ -632,7 +781,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         void runCell(index)
       }
     },
-    [busy, cancelRun, doc, focusAdjacentCodeCell, runAllCells, runCell],
+    [busy, cancelRun, doc, focusAdjacentCodeCell, menuOpen, mutateCell, runAllCells, runCell],
   )
 
   const saveCell = useCallback(
@@ -1013,7 +1162,16 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
               // of this one — empty means there is nothing to run over there.
               const above = codeIndices.filter((codeIndex) => codeIndex < index)
               const below = codeIndices.filter((codeIndex) => codeIndex > index)
-              return (
+              return [
+                // Wave 10: the insert row sits above each cell, at its index.
+                <InsertRow
+                  key={`insert-${index}`}
+                  index={index}
+                  alwaysVisible={false}
+                  disabled={busy !== null}
+                  busyHint={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                  onInsert={(cellType) => void mutateCell({ op: 'add', cellType, index })}
+                />,
                 <article
                   key={index}
                   data-testid={`cookbooks-cell-${index}`}
@@ -1049,6 +1207,20 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                         {cell.cellType}
                       </span>
                       <span className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+                        {/* Wave 10: the per-cell «⋯» disclosure — up/down/
+                            duplicate/delete, revealed inside the cell. */}
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-menu-${index}`}
+                          aria-label={t('cookbooks.actions.menu')}
+                          aria-expanded={menuOpen === index}
+                          title={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                          disabled={busy !== null}
+                          onClick={() => setMenuOpen((current) => (current === index ? null : index))}
+                          className={ACTION_CLASS}
+                        >
+                          ⋯
+                        </button>
                         {isMarkdown ? (
                           <button
                             type="button"
@@ -1130,6 +1302,65 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                         )}
                       </span>
                     </div>
+                    {/* Wave 10: the disclosed actions row — up/down at the
+                        document edges, duplicate, and a confirmed delete. */}
+                    {menuOpen === index ? (
+                      <div data-testid={`cookbooks-menu-row-${index}`} className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-move-up-${index}`}
+                          title={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                          disabled={busy !== null || index === 0}
+                          onClick={() => {
+                            setMenuOpen(null)
+                            void mutateCell({ op: 'move', from: index, to: index - 1 })
+                          }}
+                          className={ACTION_CLASS}
+                        >
+                          {t('cookbooks.actions.moveUp')}
+                        </button>
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-move-down-${index}`}
+                          title={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                          disabled={busy !== null || index === doc.cells.length - 1}
+                          onClick={() => {
+                            setMenuOpen(null)
+                            void mutateCell({ op: 'move', from: index, to: index + 1 })
+                          }}
+                          className={ACTION_CLASS}
+                        >
+                          {t('cookbooks.actions.moveDown')}
+                        </button>
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-duplicate-${index}`}
+                          title={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                          disabled={busy !== null}
+                          onClick={() => {
+                            setMenuOpen(null)
+                            void mutateCell({ op: 'duplicate', index })
+                          }}
+                          className={ACTION_CLASS}
+                        >
+                          {t('cookbooks.actions.duplicate')}
+                        </button>
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-delete-${index}`}
+                          title={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                          disabled={busy !== null}
+                          onClick={() => {
+                            setMenuOpen(null)
+                            if (!window.confirm(t('cookbooks.cell.deleteConfirm'))) return
+                            void mutateCell({ op: 'delete', index })
+                          }}
+                          className={ACTION_CLASS}
+                        >
+                          {t('cookbooks.actions.delete')}
+                        </button>
+                      </div>
+                    ) : null}
                     {isMarkdown && !editing ? (
                       <CellMarkdown mode="minimal" source={source} testId={`cookbooks-markdown-${index}`} />
                     ) : (
@@ -1183,9 +1414,18 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                       </div>
                     ) : null}
                   </div>
-                </article>
-              )
+                </article>,
+              ]
             })}
+            {/* Wave 10: the tail insert row — appends to the end of the
+                notebook, and is the lone row of an empty one. */}
+            <InsertRow
+              index={doc.cells.length}
+              alwaysVisible={doc.cells.length === 0}
+              disabled={busy !== null}
+              busyHint={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+              onInsert={(cellType) => void mutateCell({ op: 'add', cellType, index: doc.cells.length })}
+            />
           </div>
         )}
       </>

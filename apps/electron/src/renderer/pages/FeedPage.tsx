@@ -83,6 +83,7 @@ import {
   type FeedOrder,
   type FeedViewItem,
 } from './feed/feed-model'
+import { feedDayGroupStyle } from './feed/feed-list-render'
 import { ColorFilter, ColorPicker, FEED_COLOR_HEX, SourceIcon, TagChip, TagEditor } from './feed/FeedParts'
 import { SourceEditor, SourcesView } from './feed/FeedSources'
 import { FeedSidebar, type FeedView } from './feed/FeedSidebar'
@@ -771,7 +772,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
       {loadError ? <div role="alert" className="mx-3 mb-1 rounded-[var(--radius-control)] bg-destructive/10 px-2 py-1 text-sm text-destructive">{t('feed.loadError')}</div> : null}
       <div ref={!selected ? readerTourRef : undefined} data-tour-id={!selected ? 'feed.reader' : undefined} role="listbox" aria-label={t(`feed.tab.${tab}`)} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="feed-list" data-density={prefs.density}>
         {visible.length === 0 ? emptyForTab() : groups.map((g) => (
-          <div key={g.key}>
+          <div key={g.key} style={feedDayGroupStyle(g.items.length, prefs.density)} data-testid="feed-day-group">
             <div className="flex items-center gap-2 px-3 pb-1 pt-3 text-xs uppercase caps-label text-text-muted" data-testid="feed-day">
               <span className="truncate">{g.label === 'earlier' ? dayFmt.format(g.day) : t(`feed.day.${g.label}`)}</span>
               <span className="numeric">{g.items.length}</span>
