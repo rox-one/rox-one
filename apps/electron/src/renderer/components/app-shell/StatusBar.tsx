@@ -15,10 +15,10 @@ import { useTranslation } from 'react-i18next'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { cn } from '@/lib/utils'
 import { buildStatusBarModel, type WorkspaceRuntimeMode } from '@/platform/status-model'
-import { CHROME_DENSITY } from '@/platform/chrome-density'
 import type { RoxAccountSnapshot } from '@rox/shared/auth'
 
-const STATUS_BAR_HEIGHT = CHROME_DENSITY.statusBarHeight
+/** CSS var so the bar follows `data-density`. */
+const STATUS_BAR_HEIGHT = 'var(--chrome-status-height)'
 
 function workspaceModeLabel(mode: WorkspaceRuntimeMode, t: (key: string) => string): string {
   switch (mode) {
@@ -68,9 +68,12 @@ export function StatusBar({ account }: { account: RoxAccountSnapshot | null }) {
         <span>{model.syncOk ? t('workbench.status.syncOk') : t('workbench.status.offline')}</span>
       </div>
       <div className="flex min-w-0 items-center justify-end gap-1.5">
-        <span data-testid="status-bar-balance" className="numeric">
-          {t('profile.balanceLabel')} {balanceKnown ? t('profile.balance', { amount: balance }) : t('profile.balanceUnknown')}
-        </span>
+        {/* No placeholder: an unknown balance (signed out / not loaded) hides the row. */}
+        {balanceKnown ? (
+          <span data-testid="status-bar-balance" className="numeric">
+            {t('profile.balanceLabel')} {t('profile.balance', { amount: balance })}
+          </span>
+        ) : null}
         {version ? (
           <span data-testid="status-bar-version" className="numeric">
             {t('statusBar.version', { version })}

@@ -26,6 +26,7 @@ import { installErrorJournal, routeForJournal } from './lib/error-journal'
 import { seedLiteMode } from './lib/lite-mode'
 import { getDefaultStore } from 'jotai'
 import { focusedPanelRouteAtom } from './atoms/panel-stack'
+import { seedDensity } from './lib/density-preference'
 import { seedEntitiesLinksGate } from './lib/entities-links-sync'
 import { subscribeNavigateEvents } from './lib/navigate'
 import { drainLearningEventsToTelemetry } from './components/onboarding/learning-curve'
@@ -38,6 +39,7 @@ const rendererPerfHarness = installRendererPerfHarness()
 // Route is reduced to its path (routeForJournal): no query, draft text or callback params.
 installErrorJournal(() => routeForJournal(getDefaultStore().get(focusedPanelRouteAtom)))
 seedLiteMode()
+seedDensity()
 seedRenderProfile(document.documentElement, window.electronAPI, navigator.userAgent)
 const stopRenderProfileSync = startRenderProfileSync(window.electronAPI, document.documentElement)
 import.meta.hot?.dispose(stopRenderProfileSync)

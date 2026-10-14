@@ -1147,13 +1147,13 @@ function KanbanBoardContainerInner() {
 
   return (
     <div className="flex h-full flex-col bg-background">
-      <div className="flex items-center justify-between gap-2 px-4 py-2.5">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span className="text-sm font-medium">{t('kanban.allTasks')}</span>
+      <div className="flex min-w-0 items-center justify-between gap-2 px-4 py-2.5 @max-[520px]/panel:px-2.5 @max-[520px]/panel:py-1.5">
+        <div className="flex min-w-0 items-center gap-2.5 overflow-hidden">
+          <span className="shrink-0 whitespace-nowrap text-sm font-medium">{t('kanban.allTasks')}</span>
           {projectOptions.length > 0 && (
             <KanbanProjectFilter projects={projectOptions} value={projectFilter} onChange={setProjectFilter} />
           )}
-          <div className="inline-flex items-center gap-0.5 rounded-lg border border-border/60 bg-card p-0.5 text-xs">
+          <div data-secondary-toolbar="" className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-lg border border-border/60 bg-card p-0.5 text-xs @max-[640px]/panel:hidden">
             <button
               type="button"
               onClick={() => handleGroupByChange('none')}
@@ -1178,14 +1178,16 @@ function KanbanBoardContainerInner() {
             </button>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={() => setEditorTarget({ mode: 'create', initialProjectId: projectFilter[0] })}
             disabled={!activeWorkspaceId}
-            className="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-control)] bg-foreground/[0.06] px-2.5 text-base font-semibold text-foreground transition-colors hover:bg-foreground/[0.1] disabled:opacity-50"
+            aria-label={t('kanban.newTask')}
+            title={t('kanban.newTask')}
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-control)] bg-foreground/[0.06] px-2.5 text-base font-semibold text-foreground transition-colors hover:bg-foreground/[0.1] disabled:opacity-50"
           >
-            <Plus className="h-3.5 w-3.5" strokeWidth={2.5} /> {t('kanban.newTask')}
+            <Plus className="h-3.5 w-3.5" strokeWidth={2.5} /> <span className="@max-[520px]/panel:sr-only">{t('kanban.newTask')}</span>
           </button>
           <CollectionViewChrome
             workspaceId={activeWorkspaceId}

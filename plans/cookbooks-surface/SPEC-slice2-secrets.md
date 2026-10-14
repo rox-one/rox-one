@@ -1,6 +1,7 @@
 # SPEC — Срез 2: «Секретный мост» (кукбуки × креды ROX) + волна Q2A (Colab-микро)
 
 База: origin/main `221bb13f+`. Ветка волны: `feature/cookbooks-secrets` (воркдерева `~/Projects/rox-worktrees/cookbooks-secrets`).
+**Статус:** ✅ DONE — влито в main: PR #2010 @ `074b820f` (2026-10-14). Точка отката: `487223e32`. Остаток (лаб-репо): G4-CBK-01 — редактировать run-all-драйвер до записи temp-файла.
 Норматив волн 6–7: [PRD](PRD.md) · [SPEC](SPEC.md) (+Amendment 1) · [ADR 001](decisions/001-runtime-container-and-secrets.md) §6 · [SPEC-wave7](SPEC-wave7-colab-ux.md).
 
 ## Срез 2 «Секретный мост» (E-sec2)
