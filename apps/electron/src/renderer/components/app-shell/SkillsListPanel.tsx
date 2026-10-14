@@ -384,7 +384,7 @@ export function SkillsListPanel({
       header={(
         <div className="px-2 pb-1.5 space-y-1">
           <label className="relative block">
-            <Search className="absolute left-2 top-2 size-3.5 text-muted-foreground" />
+            <Search className="absolute left-2 top-2 icon-caption text-muted-foreground" />
             <input
               type="search"
               value={search}
