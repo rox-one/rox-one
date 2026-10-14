@@ -139,6 +139,7 @@ function failure(message: string): { success: false; error: Error } {
 }
 
 /** Mirrors `idSchema` (`packages/shared/src/domain/common.ts`). */
+// eslint-disable-next-line no-control-regex -- intentionally rejects C0 controls and DEL in domain ids
 const DOMAIN_ID_CONTROL_RE = /[\u0000-\u001f\u007f]/
 function isDomainId(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= 256 && !DOMAIN_ID_CONTROL_RE.test(value)
