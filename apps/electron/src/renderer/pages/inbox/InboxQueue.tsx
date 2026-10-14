@@ -465,7 +465,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   // Shell second sidebar (shell-layout): same data as the legacy portal navigator.
   const sidebarKinds = useMemo(() => [...DECISION_KINDS, ...activityKinds, 'reply', 'error', ...(mailReady ? [] : ['mail'])], [activityKinds, mailReady])
   const sidebarMailFolders = useMemo(() => mailReady ? mail.folders.map((f) => ({
-    id: f.id, label: folderLabel(t, f), role: f.role,
+    id: f.id, label: folderLabel(t, f), role: f.role ?? undefined,
     count: f.role === 'drafts' || f.role === 'sent' ? f.total : f.unread,
   })) : [], [mailReady, mail.folders, t])
   useInboxScreenSidebar({
