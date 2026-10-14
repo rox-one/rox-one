@@ -29,6 +29,8 @@ export interface AutomationsSidebarInput {
   creatingTemplate: string | null
   t(key: string): string
   relative(at: number): string
+  /** UI locale, so the order matches the list panel's sort. */
+  locale?: string
   onOpen(id: string): void
   onCreateFromTemplate(template: ScheduleTemplate): void
   onCreate(): void
@@ -56,7 +58,7 @@ export function buildAutomationsSidebarGroups(input: AutomationsSidebarInput): S
     initialVisible: 8,
     items: byGroup[g]
       .slice()
-      .sort((a, b) => Number(b.enabled) - Number(a.enabled) || a.name.localeCompare(b.name))
+      .sort((a, b) => Number(b.enabled && !b.contextPause) - Number(a.enabled && !a.contextPause) || a.name.localeCompare(b.name, input.locale))
       .map((a) => ({
         id: `auto-${a.id}`,
         label: a.name,

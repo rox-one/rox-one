@@ -212,10 +212,14 @@ export function AutomationsListPanel({
 
   // Second sidebar (shell API): groups + schedule templates (top-50 #34).
   const [creatingTemplate, setCreatingTemplate] = useState<string | null>(null)
+  // In-flight guard lives in a ref: state read from the closure is stale on a
+  // fast double click and would create two automations.
+  const creatingTemplateRef = React.useRef(false)
   const latest = React.useRef({ handleCreate, onAutomationClick })
   latest.current = { handleCreate, onAutomationClick }
   const createFromTemplate = useCallback(async (tpl: ScheduleTemplate) => {
-    if (!activeWorkspaceId || creatingTemplate) return
+    if (!activeWorkspaceId || creatingTemplateRef.current) return
+    creatingTemplateRef.current = true
     setCreatingTemplate(tpl.id)
     try {
       const created = await window.electronAPI.createAutomation(activeWorkspaceId, {
@@ -230,12 +234,26 @@ export function AutomationsListPanel({
         },
       })
       latest.current.onAutomationClick(created.id)
+      // Templates are created disabled on purpose; say so and offer to enable.
+      const workspaceId = activeWorkspaceId
+      toast.success(t('screenSidebar.automations.templateCreated', { name: t(tpl.nameKey) }), {
+        description: t('screenSidebar.automations.templateCreatedHint'),
+        action: {
+          label: t('screenSidebar.automations.enable'),
+          onClick: () => {
+            window.electronAPI.setAutomationEnabled(workspaceId, created.event, created.matcherIndex, true)
+              .then(() => toast.success(t('screenSidebar.automations.enabled', { name: t(tpl.nameKey) })))
+              .catch(() => toast.error(t('automations.createFailed')))
+          },
+        },
+      })
     } catch {
       toast.error(t('automations.createFailed'))
     } finally {
+      creatingTemplateRef.current = false
       setCreatingTemplate(null)
     }
-  }, [activeWorkspaceId, creatingTemplate, t])
+  }, [activeWorkspaceId, t])
   const sidebarConfig = React.useMemo(() => ({
     screenId: 'automations',
     title: t('screenSidebar.automations.title'),
@@ -247,6 +265,7 @@ export function AutomationsListPanel({
       creatingTemplate,
       t,
       relative: (at) => formatShortRelativeTime(at, t),
+      locale,
       onOpen: (id) => latest.current.onAutomationClick(id),
       onCreateFromTemplate: (tpl) => void createFromTemplate(tpl),
       onCreate: () => void latest.current.handleCreate(),
