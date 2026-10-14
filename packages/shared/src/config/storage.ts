@@ -160,6 +160,10 @@ export interface StoredConfig {
   // Native integration — global accelerator that opens the floating quick
   // composer. `null` = explicitly disabled; missing = default ('Alt+Space').
   quickComposerShortcut?: string | null;
+  /** Mini glass companion on minimize (macOS). Missing → enabled. */
+  miniGlassEnabled?: boolean;
+  /** Last dragged screen position of the mini glass companion. */
+  miniGlassPosition?: { x: number; y: number };
   // Appearance
   colorTheme?: string;  // Selected preset ID; existing profiles without this key retain config-defaults.
   defaultZoomLevel?: number;  // Default app zoom percentage (50-150, default: 90)
@@ -1309,6 +1313,30 @@ export function setQuickComposerShortcut(accelerator: string | null): void {
   const config = loadStoredConfig();
   if (!config) return;
   config.quickComposerShortcut = accelerator;
+  saveConfig(config);
+}
+
+/** Whether minimizing shows the mini glass companion. Defaults to true. */
+export function getMiniGlassEnabled(): boolean {
+  return loadStoredConfig()?.miniGlassEnabled !== false;
+}
+
+export function setMiniGlassEnabled(enabled: boolean): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  config.miniGlassEnabled = enabled;
+  saveConfig(config);
+}
+
+export function getMiniGlassPosition(): { x: number; y: number } | null {
+  const position = loadStoredConfig()?.miniGlassPosition;
+  return position && Number.isFinite(position.x) && Number.isFinite(position.y) ? position : null;
+}
+
+export function setMiniGlassPosition(position: { x: number; y: number }): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  config.miniGlassPosition = { x: Math.round(position.x), y: Math.round(position.y) };
   saveConfig(config);
 }
 
