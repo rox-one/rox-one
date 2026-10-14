@@ -8,6 +8,7 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 - **Workspace navigation and appearance** — Rounded glass panels, a single expandable contextual sidebar, a persistent user profile and seven primary navigation pills with Cmd/Ctrl+1–7 shortcuts. Widgets now resize vertically and offer saved color, saturation and contrast presets. [#1391](https://github.com/rox-one/rox-one/pull/1391) · `ddf97e3`
 - **Transcription and meeting follow-up** — Deepgram transcription selects the latest prerecorded model and diarizer, with speaker-separated paragraphs and timestamps. Meeting tasks and decisions are extracted automatically and remain editable. Shared services become available when their server credentials are configured. [#1391](https://github.com/rox-one/rox-one/pull/1391) · `ddf97e3`
 - **Public ROX model endpoints** — The default Rox CLI connection lists the public ROX endpoints (`rox/r1-max`, `rox/explore`, `rox/standard`, `rox/max`, `rox/vision`, `rox/fast`); child sessions spawned without an explicit model use `rox/fast`.
+- **Cookbooks surface** — The sidebar «Ещё» group gains a **Cookbooks** destination: the vendored notebook catalog opens inside the app, reports the local runtime honestly (preparing, Python missing, failed, stopped) and starts and stops with the app. Gated by the `cookbooks.v1` kill-switch.
 
 ## Improvements
 

@@ -47,6 +47,7 @@ export const ROUTE_PAGE_LOADERS = {
   devSpaceHome: () => import('@/pages/dev-space/DevSpaceHomePage'),
   devSpaceRepo: () => import('@/pages/dev-space/DevSpaceRepoPage'),
   playbooksHome: () => import('@/pages/playbooks/PlaybooksHomePage'),
+  cookbooks: () => import('@/pages/cookbooks/CookbooksSurfacePage'),
   // #1675: these eight route screens used to be static imports in
   // MainContentPanel, so their subtrees (incl. the shiki diff stack behind
   // memory/ImportReviewDialog) rode index.html's preloaded startup closure.
