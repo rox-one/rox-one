@@ -20,6 +20,13 @@ export const actions = {
     defaultHotkey: 'mod+t',
     category: 'General',
   },
+  'session.openSide': {
+    id: 'session.openSide',
+    labelKey: 'shortcuts.action.openSideSession',
+    description: 'Open the side session next to the current screen',
+    defaultHotkey: 'mod+shift+j',
+    category: 'General',
+  },
   'app.settings': {
     id: 'app.settings',
     labelKey: 'shortcuts.action.settings',
@@ -204,6 +211,15 @@ export const actions = {
     description: 'Show or hide the screen sidebar next to the rail',
     defaultHotkey: 'mod+shift+b',
     category: 'View',
+  },
+  'view.toggleSplit': {
+    id: 'view.toggleSplit',
+    labelKey: 'shortcuts.action.toggleSplit',
+    description: 'Show two screens side by side, half and half (or leave split)',
+    defaultHotkey: 'mod+alt+\\',
+    category: 'View',
+    // A modifier chord types nothing, so it also works from the composer.
+    when: '!menuOpen',
   },
   'view.toggleTerminal': {
     id: 'view.toggleTerminal',
