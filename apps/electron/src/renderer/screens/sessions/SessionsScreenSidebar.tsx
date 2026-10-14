@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Archive, Folder, MessageSquare, Search, SquarePen, Tag } from 'lucide-react'
 import { useScreenSidebar, type ScreenSidebarConfig, type SidebarAction } from '@/components/shell/screen-sidebar'
@@ -15,6 +15,11 @@ import { copySessionLink, presentSessionLink } from '@/lib/session-sharing'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useStore } from 'jotai'
 import { toast } from 'sonner'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import type { SessionShareProvider } from '@/lib/session-share-provider'
+
+interface PendingShare { sessionId: string; title: string; provider: SessionShareProvider }
 
 const ICONS = { 'message-square': MessageSquare, folder: Folder, tag: Tag } as const
 
@@ -41,6 +46,18 @@ export function SessionsScreenSidebar() {
 
   const openSide = useSideSession()
   const store = useStore()
+  // «Поделиться» publishes a chat (possibly private data): always confirm and
+  // show who will be able to open the link before publishing.
+  const [pendingShare, setPendingShare] = useState<PendingShare | null>(null)
+  const confirmShare = useCallback(() => {
+    const pending = pendingShare
+    setPendingShare(null)
+    if (!pending) return
+    const write = (text: string) => navigator.clipboard.writeText(text)
+    void pending.provider.create(pending.sessionId)
+      .then(async (link) => presentSessionLink({ kind: 'share', url: link.url, expiresAt: link.expiresAt, copied: await copySessionLink(link.url, write) }))
+      .catch(() => toast.error(t('toast.failedToShare')))
+  }, [pendingShare, t])
   const onMenu = useCallback((target: SidebarTarget, actionId: string) => {
     if (target.kind !== 'session') return
     const id = target.sessionId
@@ -54,9 +71,8 @@ export function SessionsScreenSidebar() {
     const provider = defaultShareProvider()
     if (!provider) { toast.error(t('sessionShare.unavailable')); return }
     if (actionId === 'share') {
-      void provider.create(id)
-        .then(async (link) => presentSessionLink({ kind: 'share', url: link.url, expiresAt: link.expiresAt, copied: await copySessionLink(link.url, write) }))
-        .catch(() => toast.error(t('toast.failedToShare')))
+      const meta = store.get(sessionMetaMapAtom).get(id)
+      setPendingShare({ sessionId: id, title: (meta?.name || meta?.preview || '').trim() || t('sessionShare.untitled'), provider })
     } else if (actionId === 'stop-sharing') {
       void provider.revoke(id)
         .then(() => toast.success(t('sessionShare.stopped')))
@@ -99,5 +115,21 @@ export function SessionsScreenSidebar() {
   }, [t, sections, onTarget, onMenu, activeKey, navigate, chatFoldersError, retryChatFolders])
 
   useScreenSidebar(config)
-  return null
+  return (
+    <Dialog open={pendingShare != null} onOpenChange={(open) => { if (!open) setPendingShare(null) }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('sessionShare.confirmTitle')}</DialogTitle>
+          <DialogDescription>
+            {pendingShare ? t(pendingShare.provider.id === 'rox-id' ? 'sessionShare.scopeAccount' : 'sessionShare.scopePublic', { title: pendingShare.title }) : null}
+          </DialogDescription>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">{t('sessionShare.revokeHint')}</p>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setPendingShare(null)}>{t('common.cancel')}</Button>
+          <Button onClick={confirmShare} data-testid="session-share-confirm">{t('sessionShare.confirm')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }
