@@ -3888,7 +3888,7 @@
   "inspector.terminalHint": "명령을 입력하고 Enter를 누르세요.",
   "inspector.terminalNoBridge": "셸 브리지를 사용할 수 없습니다.",
   "inspector.terminalPlaceholder": "명령",
-  "inspector.unpin": "Unpin inspector",
+  "inspector.unpin": "인스펙터 고정 해제",
   "kanban.a11y.columnRegion": "Column “{{column}}”",
   "kanban.a11y.dragCancel": "\"{{title}}\" 이동이 취소되었습니다",
   "kanban.a11y.dragEnd": "\"{{title}}\"을(를) {{column}}으로 이동했습니다",
