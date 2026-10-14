@@ -3828,6 +3828,7 @@
   "inspector.terminalHint": "Escribe un comando y pulsa Enter.",
   "inspector.terminalNoBridge": "El puente de shell no está disponible.",
   "inspector.terminalPlaceholder": "Comando",
+  "inspector.unpin": "Desanclar inspector",
   "kanban.a11y.columnRegion": "Column “{{column}}”",
   "kanban.a11y.dragCancel": "Movimiento de «{{title}}» cancelado",
   "kanban.a11y.dragEnd": "«{{title}}» movida a {{column}}",

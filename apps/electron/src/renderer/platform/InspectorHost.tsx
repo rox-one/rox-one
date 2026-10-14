@@ -15,9 +15,11 @@
  * Mounted by `WorkspaceSurfaceHost` / `UnifiedShellLayout` when the
  * workbench rollout or harness inspector flag is enabled.
  */
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { Bot, ChevronsRight, Folder, GitBranch, Globe, Info, Link2, ListTree, type LucideIcon } from 'lucide-react'
+import { Bot, ChevronsRight, Folder, GitBranch, Globe, Info, Link2, ListTree, Pin, PinOff, type LucideIcon } from 'lucide-react'
+import { stripScreenKey } from '@/components/shell/panel-strip'
+import { getScreenInspector, patchScreenInspector, subscribeInspectorPrefs } from '@/components/shell/inspector-prefs'
 import { useTranslation } from 'react-i18next'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import {
@@ -216,6 +218,45 @@ export function InspectorHost() {
   const [userOpened, setUserOpened] = useAtom(inspectorUserOpenedAtom)
   const setAutoCollapsed = useSetAtom(inspectorAutoCollapsedAtom)
 
+  // top50 #1/#2 — per-screen inspector: visibility, chrome, section, width
+  // and pin are remembered per strip screen key and restored before paint.
+  const screenKey = route ? stripScreenKey(route) : null
+  const pinned = useSyncExternalStore(
+    subscribeInspectorPrefs,
+    () => (screenKey ? getScreenInspector(screenKey)?.pinned === true : false),
+    () => false,
+  )
+  const appliedScreenRef = useRef<string | null>(null)
+  const skipSaveRef = useRef(false)
+  useLayoutEffect(() => {
+    if (!screenKey || appliedScreenRef.current === screenKey) return
+    appliedScreenRef.current = screenKey
+    const saved = getScreenInspector(screenKey)
+    if (!saved) return
+    skipSaveRef.current = true
+    if (saved.visible !== undefined) setVisible(saved.visible)
+    if (saved.chromeCollapsed !== undefined) setChromeCollapsed(saved.chromeCollapsed)
+    if (saved.section) setSection(saved.section as InspectorSectionId)
+    if (saved.width !== undefined) setPanelWidth(saved.width)
+  }, [screenKey, setVisible, setChromeCollapsed, setSection, setPanelWidth])
+  useEffect(() => {
+    if (!screenKey || appliedScreenRef.current !== screenKey) return
+    if (skipSaveRef.current) {
+      skipSaveRef.current = false
+      return
+    }
+    patchScreenInspector(screenKey, { visible, chromeCollapsed, section: sectionRaw, width: panelWidth })
+  }, [screenKey, visible, chromeCollapsed, sectionRaw, panelWidth])
+  const togglePinned = useCallback(() => {
+    if (!screenKey) return
+    const next = !pinned
+    patchScreenInspector(screenKey, next ? { pinned: true, visible: true, chromeCollapsed: false } : { pinned: false })
+    if (next) {
+      setChromeCollapsed(false)
+      setVisible(true)
+    }
+  }, [screenKey, pinned, setChromeCollapsed, setVisible])
+
   // One-surface shell: an empty session Files panel is collapsed by default.
   // Re-count files when the session changes or finishes a turn.
   const [fileCount, setFileCount] = useState<number | null>(null)
@@ -255,11 +296,13 @@ export function InspectorHost() {
     const entered = sessionMode && !onSessionSurfaceRef.current
     onSessionSurfaceRef.current = sessionMode
     if (!entered) return
+    // A pinned inspector is never closed by a scenario, only by the user.
+    if (screenKey && getScreenInspector(screenKey)?.pinned) return
     setVisible(false)
     setSection(sectionIds[0]!)
     setUserOpened(false)
     if (navigationState.rightSidebar) updateRightSidebar(undefined)
-  }, [sessionMode, sectionIds, navigationState.rightSidebar, setVisible, setSection, setUserOpened, updateRightSidebar])
+  }, [sessionMode, sectionIds, navigationState.rightSidebar, screenKey, setVisible, setSection, setUserOpened, updateRightSidebar])
 
   // An explicit open applies to the session it was made in.
   useEffect(() => {
@@ -300,7 +343,7 @@ export function InspectorHost() {
 
   const layout = resolveInspectorLayout({
     visible,
-    userOpened,
+    userOpened: userOpened || pinned,
     sessionMode,
     activeSection,
     fileCount,
@@ -315,7 +358,7 @@ export function InspectorHost() {
   // G6 «Линзы»: docked column ⇄ right-edge sheet ⇄ counter strip. The docked
   // decision uses the derived --lens-dock-min-width; the squeeze guard
   // (layout.overlay) still wins so the centre column never drops below min.
-  const lensMode = resolveLensMode({ effectiveWidth: viewportWidth, userOpened })
+  const lensMode = resolveLensMode({ effectiveWidth: viewportWidth, userOpened: userOpened || pinned })
   const overlayMode = lensMorph ? layout.overlay || lensMode === 'overlay' : layout.overlay
   // G6 «Линзы»: only the flag-aware right-edge sheet is a modal dialog. The
   // legacy overlay (lensMorph OFF) keeps its byte-identical complementary
@@ -551,6 +594,25 @@ export function InspectorHost() {
           />
           <div className="rox-shell-divider-b flex h-8 shrink-0 items-center justify-between gap-2 pl-2.5 pr-1.5">
             <span className="chrome-label truncate font-medium label-tracking" title={t(titleKey)}>{t(titleKey)}</span>
+            <div className="flex shrink-0 items-center gap-0.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={t(pinned ? 'inspector.unpin' : 'inspector.pin')}
+                  aria-pressed={pinned}
+                  data-inspector-pin={pinned ? 'on' : 'off'}
+                  onClick={togglePinned}
+                  className={cn(
+                    'flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] transition-colors hover:bg-foreground/5 hover:text-foreground',
+                    pinned ? 'text-accent' : 'text-muted-foreground/60',
+                  )}
+                >
+                  {pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="left">{t(pinned ? 'inspector.unpin' : 'inspector.pin')}</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -564,6 +626,7 @@ export function InspectorHost() {
               </TooltipTrigger>
               <TooltipContent side="left">{t('inspector.hide')}</TooltipContent>
             </Tooltip>
+            </div>
           </div>
           {lensMorph ? (
             <LensShell

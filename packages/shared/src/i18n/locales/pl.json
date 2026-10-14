@@ -3837,6 +3837,7 @@
   "inspector.terminalHint": "Wpisz polecenie i naciśnij Enter.",
   "inspector.terminalNoBridge": "Mostek powłoki jest niedostępny.",
   "inspector.terminalPlaceholder": "Polecenie",
+  "inspector.unpin": "Unpin inspector",
   "kanban.a11y.columnRegion": "Column “{{column}}”",
   "kanban.a11y.dragCancel": "Przenoszenie „{{title}}” anulowane",
   "kanban.a11y.dragEnd": "„{{title}}” przeniesiono do {{column}}",

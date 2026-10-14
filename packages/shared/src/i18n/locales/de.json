@@ -3823,6 +3823,7 @@
   "inspector.terminalHint": "Befehl eingeben und Enter drücken.",
   "inspector.terminalNoBridge": "Shell-Brücke ist nicht verfügbar.",
   "inspector.terminalPlaceholder": "Befehl",
+  "inspector.unpin": "Inspektor lösen",
   "kanban.a11y.columnRegion": "Column “{{column}}”",
   "kanban.a11y.dragCancel": "Verschieben von „{{title}}“ abgebrochen",
   "kanban.a11y.dragEnd": "„{{title}}“ nach {{column}} verschoben",

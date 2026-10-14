@@ -3823,6 +3823,7 @@
   "inspector.terminalHint": "输入命令并按 Enter。",
   "inspector.terminalNoBridge": "Shell 桥接不可用。",
   "inspector.terminalPlaceholder": "命令",
+  "inspector.unpin": "Unpin inspector",
   "kanban.a11y.columnRegion": "Column “{{column}}”",
   "kanban.a11y.dragCancel": "已取消移动“{{title}}”",
   "kanban.a11y.dragEnd": "“{{title}}”已移至{{column}}",

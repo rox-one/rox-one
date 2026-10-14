@@ -3828,6 +3828,7 @@
   "inspector.terminalHint": "Saisissez une commande et appuyez sur Entrée.",
   "inspector.terminalNoBridge": "Le pont shell est indisponible.",
   "inspector.terminalPlaceholder": "Commande",
+  "inspector.unpin": "Détacher l’inspecteur",
   "kanban.a11y.columnRegion": "Column “{{column}}”",
   "kanban.a11y.dragCancel": "Déplacement de « {{title}} » annulé",
   "kanban.a11y.dragEnd": "« {{title}} » déplacée vers {{column}}",

@@ -3823,6 +3823,7 @@
   "inspector.terminalHint": "Írj be egy parancsot, majd nyomj Entert.",
   "inspector.terminalNoBridge": "A shell-híd nem elérhető.",
   "inspector.terminalPlaceholder": "Parancs",
+  "inspector.unpin": "Unpin inspector",
   "kanban.a11y.columnRegion": "Column “{{column}}”",
   "kanban.a11y.dragCancel": "„{{title}}” áthelyezése megszakítva",
   "kanban.a11y.dragEnd": "„{{title}}” áthelyezve ide: {{column}}",

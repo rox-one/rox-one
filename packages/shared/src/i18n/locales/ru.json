@@ -3839,6 +3839,7 @@
   "inspector.terminalHint": "Введите команду и нажмите Enter.",
   "inspector.terminalNoBridge": "Мост к оболочке недоступен.",
   "inspector.terminalPlaceholder": "Команда",
+  "inspector.unpin": "Открепить инспектор",
   "kanban.a11y.columnRegion": "Колонка «{{column}}»",
   "kanban.a11y.dragCancel": "Перемещение «{{title}}» отменено",
   "kanban.a11y.dragEnd": "«{{title}}» перемещена в {{column}}",
