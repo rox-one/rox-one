@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Bot } from 'lucide-react'
 import { FOCUS_RING, HOVER_TINT } from '@rox/ui/primitives'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import { EntityChip } from '@/components/entities/EntityChip'
 import { cn } from '@/lib/utils'
 import type { MessageObject } from './message-objects'
@@ -23,15 +24,19 @@ export function MessageObjectChips({ objects, workspaceId, onDelegate }: Message
         <li key={object.ref} className="inline-flex items-center gap-0.5">
           <EntityChip entityRef={object.ref} label={object.label ?? undefined} workspaceId={workspaceId} />
           {onDelegate ? (
-            <button
-              type="button"
-              className={cn('inline-flex min-h-[var(--control-hit-min)] min-w-[var(--control-hit-min)] items-center justify-center rounded-[var(--radius-card)] text-muted-foreground hover:text-foreground', HOVER_TINT, FOCUS_RING)}
-              aria-label={t('chat.objects.delegate', { name: object.label ?? object.ref })}
-              title={t('chat.objects.delegateShort')}
-              onClick={() => onDelegate(object)}
-            >
-              <Bot className="h-3.5 w-3.5" aria-hidden />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className={cn('inline-flex min-h-[var(--control-hit-min)] min-w-[var(--control-hit-min)] items-center justify-center rounded-[var(--radius-card)] text-muted-foreground hover:text-foreground', HOVER_TINT, FOCUS_RING)}
+                  aria-label={t('chat.objects.delegate', { name: object.label ?? object.ref })}
+                  onClick={() => onDelegate(object)}
+                >
+                  <Bot className="icon-caption" aria-hidden />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{t('chat.objects.delegateShort')}</TooltipContent>
+            </Tooltip>
           ) : null}
         </li>
       ))}
