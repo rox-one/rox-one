@@ -10,6 +10,7 @@
  * decision is made (optimistic), so the card can crossfade its footer while
  * the continuum confirms. `error` always wins over a local decision.
  */
+import { PermissionDiffPreview } from './PermissionDiffPreview'
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, ShieldAlert, X } from 'lucide-react'
@@ -194,7 +195,9 @@ export function InlineApprovalCard({
         </div>
       </div>
 
-      {request.command && (
+      {request.preview ? (
+        <div className="px-3 pt-2.5"><PermissionDiffPreview preview={request.preview} /></div>
+      ) : request.command && (
         <div className="px-3 pt-2.5">
           <pre className="max-h-24 overflow-auto whitespace-pre-wrap break-all rounded-[var(--radius-control)] bg-surface-input px-3 py-2 font-mono text-caption leading-[var(--text-body-leading)] text-text-primary">
             {request.command}

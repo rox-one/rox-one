@@ -33,7 +33,7 @@ mock.module('../logger', () => {
 // before the mocks above register; sibling tests load the module under test
 // with `await import` after mocking for exactly this reason.
 const { WindowManager } = await import('../window-manager')
-const { RPC_CHANNELS } = await import('../../shared/types')
+const { RPC_CHANNELS } = await import('@rox/shared/protocol/channels')
 
 function createWindow(id: number, destroyed = false) {
   const sent: Array<unknown[]> = []

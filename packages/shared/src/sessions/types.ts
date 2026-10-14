@@ -113,6 +113,10 @@ export interface SessionTokenUsage {
   cacheCreationTokens?: number;
   /** Model's context window size in tokens (from SDK modelUsage) */
   contextWindow?: number;
+  /** Sum of prompt+output over every request; absent until tracked from the first turn. */
+  sessionTokens?: number;
+  /** Set once a turn could not be counted; the session total stays hidden. */
+  sessionTokensIncomplete?: boolean;
 }
 
 /**

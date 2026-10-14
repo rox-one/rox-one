@@ -8,7 +8,8 @@
  *
  * All channels are LOCAL_ONLY (routing.ts).
  */
-import { RPC_CHANNELS, type CookbooksStatus } from '../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
+import type {CookbooksStatus} from '../../shared/types'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
 import { getCookbooksRuntime, initializeCookbooksRuntime } from '../cookbooks-runtime'
@@ -24,6 +25,8 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.cookbooksLab.RUN_ALL,
   RPC_CHANNELS.cookbooksLab.SAVE,
   RPC_CHANNELS.cookbooksLab.RESET,
+  RPC_CHANNELS.cookbooksLab.CANCEL,
+  RPC_CHANNELS.cookbooksLab.EXPORT,
 ] as const
 
 function statusKey(status: CookbooksStatus): string {
@@ -73,5 +76,13 @@ export function registerCookbooksHandlers(server: RpcServer, _deps: HandlerDeps)
   server.handle(
     RPC_CHANNELS.cookbooksLab.RESET,
     (_ctx, input: { itemId: string }) => runtime.apiReset(input.itemId),
+  )
+  server.handle(
+    RPC_CHANNELS.cookbooksLab.CANCEL,
+    (_ctx, input: { itemId: string }) => runtime.apiCancel(input.itemId),
+  )
+  server.handle(
+    RPC_CHANNELS.cookbooksLab.EXPORT,
+    (_ctx, input: { itemId: string; filename: string; content: string }) => runtime.exportNotebook(input),
   )
 }

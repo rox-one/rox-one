@@ -5,7 +5,7 @@
  * theme catalog; both are device-local filesystem work, never remote-eligible.
  */
 
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { ZedThemeImportRequest } from '@rox/shared/protocol'
 import type { RpcServer } from '@rox/server-core/transport'
 import { scanZedThemes, importZedTheme } from '../zed-themes-import'

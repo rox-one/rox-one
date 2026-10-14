@@ -1,19 +1,29 @@
 /**
- * CookbooksSurfacePage — the native «Кукбуки» surface (SPEC Amendment 1).
+ * CookbooksSurfacePage — the native «Кукбуки» surface (SPEC Amendment 1 + wave 7).
  *
  * Covers every honest runtime state, the two-pane catalog + document UI, the
  * per-cell and run-all execution paths, save/reset/new-copy, the missing-key
- * banner and the busy indicator. Strings are compared through the same i18n
- * instance the page uses, so a missing translation or a wrong interpolation
- * parameter fails here rather than silently rendering the raw key.
+ * banner and the busy indicator, plus the wave-7 notebook behaviour: markdown
+ * cells and playbooks behind the «Изменить»/«Просмотр» toggle (R1), session run
+ * counters (R2), measured durations and the ticking elapsed status (R3), busy
+ * spinners (R4), the Colab-parity keys (R5), the sticky header, output actions
+ * and autoscroll (R6) and the shortcut help (R7). Q2A «Colab-микро» adds the
+ * Alt+↑/↓ cell navigation (R-A), collapsing of long outputs (R-B) and
+ * «Очистить все выводы» (R-C). Wave 9 adds the control + navigation half of
+ * Colab parity: stop (per cell, run-all and Esc), the outline, «выполнить
+ * выше/ниже» subsets, autoscroll of a single run, `\r`-shaped output,
+ * «копировать исходник» and the `.ipynb` export — the export runs through the
+ * real shared builder, so the JSON this file inspects is the shipped one.
+ * Strings are compared through
+ * the same i18n instance the page uses, so a missing translation or a wrong
+ * interpolation parameter fails here rather than silently rendering the raw key.
  *
  * Harness mirrors the sibling suites: happy-dom globals via `useDomForFile`,
  * the real RU i18n bundle through `setupI18n`, and `react-dom/client` imported
  * after the DOM exists.
  */
 import { useDomForFile, resetDom } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
-import * as React from 'react'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, mock, vi } from 'bun:test'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { initReactI18next, setI18n } from 'react-i18next'
@@ -25,13 +35,42 @@ import type {
   CookbooksRunResult,
   CookbooksStatus,
 } from '../../../../shared/cookbooks'
-import type { CookbooksSurfacePage as CookbooksSurfacePageComponent } from '../CookbooksSurfacePage'
+import type {
+  CookbooksSurfacePage as CookbooksSurfacePageComponent,
+  CookbooksSurfacePageProps,
+} from '../CookbooksSurfacePage'
 
 useDomForFile()
 const i18n = setupI18n([initReactI18next])
 setI18n(i18n)
 
 const t = (key: string, params?: Record<string, unknown>): string => i18n.t(key, params) as string
+
+/** Toast calls the page makes, captured instead of rendered. */
+const toasts: string[] = []
+mock.module('sonner', () => ({
+  toast: {
+    success: (message: string) => {
+      toasts.push(`success:${message}`)
+    },
+    error: (message: string) => {
+      toasts.push(`error:${message}`)
+    },
+    info: (message: string) => {
+      toasts.push(`info:${message}`)
+    },
+  },
+}))
+
+/** R6 autoscroll spy: the test id of every element the page scrolls into view. */
+const scrollCalls: string[] = []
+Object.defineProperty(Element.prototype, 'scrollIntoView', {
+  configurable: true,
+  writable: true,
+  value: function scrollIntoView(this: Element) {
+    scrollCalls.push(this.getAttribute('data-testid') ?? this.tagName)
+  },
+})
 
 let CookbooksSurfacePage: typeof CookbooksSurfacePageComponent
 let mounted: Root | null = null
@@ -57,6 +96,8 @@ afterEach(async () => {
 
 beforeEach(() => {
   Reflect.deleteProperty(window, 'electronAPI')
+  toasts.length = 0
+  scrollCalls.length = 0
 })
 
 // ---------------------------------------------------------------------------
@@ -135,6 +176,26 @@ const FALLBACK_DOC: CookbooksDocument = {
   text: null,
 }
 
+/**
+ * Wave 9 outline fixture: headings spread over two markdown cells, an H4 the
+ * outline must skip and a trailing `####` run it must strip.
+ */
+const OUTLINED: CookbooksDocument = {
+  ...NOTEBOOK,
+  cells: [
+    { cellType: 'markdown', source: '# Первая\n\nтекст\n## Вторая\n#### Слишком глубоко', outputs: [] },
+    { cellType: 'code', source: 'print(1)', outputs: [] },
+    { cellType: 'markdown', source: '### Третья ###', outputs: [] },
+    { cellType: 'code', source: 'print(2)', outputs: [] },
+  ],
+}
+
+/** Wave 9: a notebook whose markdown carries no heading at all. */
+const HEADINGLESS: CookbooksDocument = {
+  ...NOTEBOOK,
+  cells: [{ cellType: 'code', source: 'print(1)', outputs: [] }],
+}
+
 const RUN_OK: CookbooksRunResult = { ok: true, stdout: '42\n', error: null, timedOut: false, missing: [] }
 const RUN_ERROR: CookbooksRunResult = {
   ok: false,
@@ -157,6 +218,12 @@ const RUN_ALL_PAYLOAD = [
   { index: 2, source: 'raise ValueError("boom")' },
   { index: 3, source: 'print(3)' },
 ]
+
+/** R-B: a chatty result, well past the 600-character collapse threshold. */
+const LONG_STDOUT = `${'строка вывода — заведомо длиннее порога\n'.repeat(20)}конец`
+const LONG_RUN: CookbooksRunResult = { ok: true, stdout: LONG_STDOUT, error: null, timedOut: false, missing: [] }
+
+const RUNNING: CookbooksStatus = { state: 'running', reason: null, port: 51234 }
 
 // ---------------------------------------------------------------------------
 // window.electronAPI.cookbooksLab double
@@ -184,13 +251,20 @@ interface SaveCall {
 interface ItemCall {
   itemId: string
 }
+interface ExportCall {
+  itemId: string
+  filename: string
+  content: string
+}
 
 interface ApiModel {
   status: CookbooksStatus
   cards?: CookbooksCard[]
   documents?: Record<string, CookbooksDocument>
   run?: (call: RunCall) => Promise<CookbooksRunResult>
-  runAll?: (call: RunAllCall) => Promise<{ cells: CookbooksRunCell[] }>
+  runAll?: (call: RunAllCall) => Promise<{ cells: CookbooksRunCell[]; cancelled?: boolean }>
+  cancel?: (call: ItemCall) => Promise<{ ok: boolean; cancelled: number }>
+  export?: (call: ExportCall) => Promise<{ saved: boolean; path?: string }>
 }
 
 interface ApiCounts {
@@ -204,6 +278,8 @@ interface ApiCounts {
   runAll: RunAllCall[]
   save: SaveCall[]
   reset: ItemCall[]
+  cancel: ItemCall[]
+  export: ExportCall[]
 }
 
 function installApi(model: ApiModel) {
@@ -218,6 +294,8 @@ function installApi(model: ApiModel) {
     runAll: [],
     save: [],
     reset: [],
+    cancel: [],
+    export: [],
   }
   const listeners = new Set<(status: CookbooksStatus) => void>()
   const documents = new Map(Object.entries(model.documents ?? {}))
@@ -262,6 +340,14 @@ function installApi(model: ApiModel) {
     reset: async (call: ItemCall) => {
       counts.reset.push(call)
     },
+    cancel: async (call: ItemCall) => {
+      counts.cancel.push(call)
+      return model.cancel ? model.cancel(call) : { ok: true, cancelled: 1 }
+    },
+    export: async (call: ExportCall) => {
+      counts.export.push(call)
+      return model.export ? model.export(call) : { saved: true, path: '/tmp/rox-analytics.ipynb' }
+    },
     onStatusChanged: (callback: (status: CookbooksStatus) => void) => {
       listeners.add(callback)
       return () => {
@@ -293,13 +379,13 @@ async function flush(times = 3): Promise<void> {
   }
 }
 
-async function render(): Promise<HTMLElement> {
+async function render(props: CookbooksSurfacePageProps = {}): Promise<HTMLElement> {
   const container = document.createElement('div')
   document.body.appendChild(container)
   const root = createRoot(container)
   mounted = root
   await act(async () => {
-    root.render(React.createElement(CookbooksSurfacePage))
+    root.render(<CookbooksSurfacePage {...props} />)
   })
   await flush()
   return container
@@ -340,6 +426,17 @@ async function type(container: HTMLElement, id: string, value: string): Promise<
   await flush()
 }
 
+/**
+ * Wave 9: a faithful `run-all` double — it answers exactly the cells it was
+ * asked for, the way the sidecar does, so a subset run can never pick up
+ * another cell's result.
+ */
+function answerRequestedCells(call: RunAllCall): Promise<{ cells: CookbooksRunCell[] }> {
+  return Promise.resolve({
+    cells: call.cells.map((cell) => ({ index: cell.index, status: 'ok', stdout: `ok-${cell.index}`, error: null })),
+  })
+}
+
 function stubConfirm(answer: boolean): { calls: string[] } {
   const calls: string[] = []
   Object.defineProperty(window, 'confirm', {
@@ -354,11 +451,29 @@ function stubConfirm(answer: boolean): { calls: string[] } {
 }
 
 /** Ready page with the catalog loaded and the notebook open. */
-async function renderNotebook(model: Partial<ApiModel> = {}) {
-  const api = installApi({ status: { state: 'running', reason: null, port: 51234 }, cards: CARDS, documents: { 'rox-analytics': NOTEBOOK }, ...model })
-  const container = await render()
+async function renderNotebook(model: Partial<ApiModel> = {}, props: CookbooksSurfacePageProps = {}) {
+  const api = installApi({ status: RUNNING, cards: CARDS, documents: { 'rox-analytics': NOTEBOOK }, ...model })
+  const container = await render(props)
   await click(container, 'cookbooks-card-rox-analytics')
   return { api, container }
+}
+
+/**
+ * The status templates carry a measured duration, so an exact string compare
+ * would be flaky: split the frozen template around its `{{duration}}` hole,
+ * assert both halves, and require the hole to have been filled with the
+ * `formatDuration` shape — an un-interpolated `{{duration}}` fails here.
+ */
+async function expectStatus(
+  container: HTMLElement,
+  key: string,
+  params: Record<string, string | number> = {},
+): Promise<void> {
+  const [head, tail = ''] = t(key, { ...params, duration: '\u0000D' }).split('\u0000D')
+  const text = testId(container, 'cookbooks-status')?.textContent ?? ''
+  expect(text).toContain(head)
+  expect(text.slice(text.indexOf(head) + head.length)).toMatch(/^(\d+\.\d+s|\d+m \d+s|\d+m\+|--)$/)
+  expect(text).toContain(tail)
 }
 
 // ---------------------------------------------------------------------------
@@ -412,7 +527,7 @@ describe('CookbooksSurfacePage runtime states', () => {
     const container = await render()
     expect(surface(container)?.getAttribute('data-state')).toBe('starting')
     await act(async () => {
-      api.emitStatus({ state: 'running', reason: null, port: 51234 })
+      api.emitStatus(RUNNING)
     })
     await flush()
     expect(surface(container)?.getAttribute('data-state')).toBe('ready')
@@ -425,7 +540,7 @@ describe('CookbooksSurfacePage runtime states', () => {
 
 describe('CookbooksSurfacePage catalog', () => {
   it('loads the catalog once running, renders the counter and the cards', async () => {
-    const api = installApi({ status: { state: 'running', reason: null, port: 51234 }, cards: CARDS })
+    const api = installApi({ status: RUNNING, cards: CARDS })
     const container = await render()
     expect(surface(container)?.getAttribute('data-state')).toBe('ready')
     expect(api.counts.catalog).toBe(1)
@@ -436,7 +551,7 @@ describe('CookbooksSurfacePage catalog', () => {
   })
 
   it('renders kind pills, key chips with status dots and the disabled reason', async () => {
-    installApi({ status: { state: 'running', reason: null, port: 51234 }, cards: CARDS })
+    installApi({ status: RUNNING, cards: CARDS })
     const container = await render()
     const notebookCard = testId(container, 'cookbooks-card-rox-analytics')!
     expect(notebookCard.getAttribute('data-kind')).toBe('ipynb')
@@ -454,7 +569,7 @@ describe('CookbooksSurfacePage catalog', () => {
   })
 
   it('filters the catalog client-side and updates the counter', async () => {
-    installApi({ status: { state: 'running', reason: null, port: 51234 }, cards: CARDS })
+    installApi({ status: RUNNING, cards: CARDS })
     const container = await render()
     await type(container, 'cookbooks-filter', 'churn')
     expect(allTestIds(container, 'cookbooks-card-')).toHaveLength(1)
@@ -466,11 +581,7 @@ describe('CookbooksSurfacePage catalog', () => {
   })
 
   it('opens a card into the document pane and reports «Открыто»', async () => {
-    const api = installApi({
-      status: { state: 'running', reason: null, port: 51234 },
-      cards: CARDS,
-      documents: { 'rox-analytics': NOTEBOOK },
-    })
+    const api = installApi({ status: RUNNING, cards: CARDS, documents: { 'rox-analytics': NOTEBOOK } })
     const container = await render()
     await click(container, 'cookbooks-card-rox-analytics')
 
@@ -495,7 +606,7 @@ describe('CookbooksSurfacePage catalog', () => {
 describe('CookbooksSurfacePage execution', () => {
   it('runs one cell: sends the edited source and renders the output with its status', async () => {
     const api = installApi({
-      status: { state: 'running', reason: null, port: 51234 },
+      status: RUNNING,
       cards: CARDS,
       documents: { 'rox-analytics': NOTEBOOK },
       run: async () => RUN_OK,
@@ -511,12 +622,12 @@ describe('CookbooksSurfacePage execution', () => {
     expect(output.getAttribute('data-status')).toBe('ok')
     expect(output.getAttribute('aria-label')).toBe(t('cookbooks.cell.outputLabel', { index: 1 }))
     expect(output.textContent).toContain('42')
-    expect(testId(container, 'cookbooks-status')?.textContent).toContain(t('cookbooks.status.cellOk', { index: 1 }))
+    await expectStatus(container, 'cookbooks.status.cellOk', { index: 1 })
   })
 
   it('renders a failing cell with data-status="error" and the failure copy', async () => {
     installApi({
-      status: { state: 'running', reason: null, port: 51234 },
+      status: RUNNING,
       cards: CARDS,
       documents: { 'rox-analytics': NOTEBOOK },
       run: async () => RUN_ERROR,
@@ -528,15 +639,11 @@ describe('CookbooksSurfacePage execution', () => {
     const output = testId(container, 'cookbooks-output-2')!
     expect(output.getAttribute('data-status')).toBe('error')
     expect(output.textContent).toContain('ValueError: boom')
-    expect(testId(container, 'cookbooks-status')?.textContent).toContain(t('cookbooks.status.cellError', { index: 2 }))
+    await expectStatus(container, 'cookbooks.status.cellError', { index: 2 })
   })
 
   it('runs all code cells: skips markdown in the payload and renders skipped/error outputs', async () => {
-    const api = installApi({
-      status: { state: 'running', reason: null, port: 51234 },
-      cards: CARDS,
-      documents: { 'rox-analytics': NOTEBOOK },
-    })
+    const api = installApi({ status: RUNNING, cards: CARDS, documents: { 'rox-analytics': NOTEBOOK } })
     const container = await render()
     await click(container, 'cookbooks-card-rox-analytics')
     await click(container, 'cookbooks-run-all')
@@ -556,14 +663,12 @@ describe('CookbooksSurfacePage execution', () => {
     expect(testId(container, 'cookbooks-output-3')!.textContent).toBe(t('cookbooks.output.skipped'))
     // The markdown cell was never executed, so it keeps the pre-run hint.
     expect(testId(container, 'cookbooks-output-0')!.getAttribute('data-status')).toBe('idle')
-    expect(testId(container, 'cookbooks-status')?.textContent).toContain(
-      t('cookbooks.status.runAll', { count: 3, ok: 1, failed: 1, skipped: 1 }),
-    )
+    await expectStatus(container, 'cookbooks.status.runAll', { count: 3, ok: 1, failed: 1, skipped: 1 })
   })
 
   it('shows an empty-output placeholder when a successful cell prints nothing', async () => {
     installApi({
-      status: { state: 'running', reason: null, port: 51234 },
+      status: RUNNING,
       cards: CARDS,
       documents: { 'rox-analytics': NOTEBOOK },
       run: async () => ({ ok: true, stdout: '', error: null, timedOut: false, missing: [] }),
@@ -574,10 +679,10 @@ describe('CookbooksSurfacePage execution', () => {
     expect(testId(container, 'cookbooks-output-1')!.textContent).toBe(t('cookbooks.output.empty'))
   })
 
-  it('disables the acting control and shows the running status while a cell runs', async () => {
+  it('disables the acting control and ticks the elapsed status while a cell runs', async () => {
     const gate = Promise.withResolvers<CookbooksRunResult>()
     installApi({
-      status: { state: 'running', reason: null, port: 51234 },
+      status: RUNNING,
       cards: CARDS,
       documents: { 'rox-analytics': NOTEBOOK },
       run: () => gate.promise,
@@ -591,7 +696,9 @@ describe('CookbooksSurfacePage execution', () => {
     await flush(1)
 
     expect((testId(container, 'cookbooks-run-1') as HTMLButtonElement).disabled).toBe(true)
-    expect(testId(container, 'cookbooks-status')?.textContent).toContain(t('cookbooks.status.running'))
+    const [head] = t('cookbooks.status.runningElapsed', { duration: '\u0000D' }).split('\u0000D')
+    expect(testId(container, 'cookbooks-status')!.textContent).toContain(head)
+    expect(testId(container, 'cookbooks-status')!.textContent).toMatch(/\d+\.\d+s$/)
 
     await act(async () => {
       gate.resolve(RUN_OK)
@@ -600,6 +707,1030 @@ describe('CookbooksSurfacePage execution', () => {
     await flush()
     expect((testId(container, 'cookbooks-run-1') as HTMLButtonElement).disabled).toBe(false)
     expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('ok')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// R1 — markdown rendering
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage markdown cells (R1)', () => {
+  it('renders a markdown cell as markdown and toggles into the editor and back', async () => {
+    const { container } = await renderNotebook()
+
+    const rendered = testId(container, 'cookbooks-markdown-0')!
+    // `mode="minimal"` is the md-cell contract: the editor is not mounted at all.
+    expect(rendered.getAttribute('data-mode')).toBe('minimal')
+    expect(rendered.querySelector('h1')?.textContent).toBe('Заметка')
+    expect(testId(container, 'cookbooks-source-0')).toBeNull()
+    expect((testId(container, 'cookbooks-mode-0') as HTMLButtonElement).textContent).toBe(t('cookbooks.cell.editMode'))
+
+    await click(container, 'cookbooks-mode-0')
+    const field = testId(container, 'cookbooks-source-0') as HTMLTextAreaElement
+    expect(field.value).toBe('# Заметка')
+    expect(testId(container, 'cookbooks-markdown-0')).toBeNull()
+    expect((testId(container, 'cookbooks-mode-0') as HTMLButtonElement).textContent).toBe(t('cookbooks.cell.readMode'))
+
+    await click(container, 'cookbooks-mode-0')
+    expect(testId(container, 'cookbooks-markdown-0')).not.toBeNull()
+    expect((testId(container, 'cookbooks-mode-0') as HTMLButtonElement).getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('re-renders the edited markdown once the cell is back in read mode', async () => {
+    const { container } = await renderNotebook()
+    await click(container, 'cookbooks-mode-0')
+    await type(container, 'cookbooks-source-0', '# Заголовок\n\nтело')
+    await click(container, 'cookbooks-mode-0')
+
+    const rendered = testId(container, 'cookbooks-markdown-0')!
+    expect(rendered.querySelector('h1')?.textContent).toBe('Заголовок')
+    expect(rendered.textContent).toContain('тело')
+  })
+
+  it('keeps code cells in a plain textarea with no markdown renderer', async () => {
+    const { container } = await renderNotebook()
+    expect(testId(container, 'cookbooks-source-1')?.tagName.toLowerCase()).toBe('textarea')
+    expect(testId(container, 'cookbooks-markdown-1')).toBeNull()
+    expect(testId(container, 'cookbooks-mode-1')).toBeNull()
+  })
+
+  it('reads a playbook as a document, edits it through the toggle and saves its text', async () => {
+    const api = installApi({ status: RUNNING, cards: CARDS, documents: { 'churn-playbook': PLAYBOOK } })
+    const container = await render()
+    await click(container, 'cookbooks-card-churn-playbook')
+
+    const rendered = testId(container, 'cookbooks-playbook-markdown')!
+    // The playbook is long-form content: `mode="full"`, not the md-cell mode.
+    expect(rendered.getAttribute('data-mode')).toBe('full')
+    expect(rendered.querySelector('h1')?.textContent).toBe('Churn')
+    expect(testId(container, 'cookbooks-playbook-text')).toBeNull()
+
+    await click(container, 'cookbooks-playbook-toggle')
+    const field = testId(container, 'cookbooks-playbook-text') as HTMLTextAreaElement
+    expect(field.getAttribute('aria-label')).toBe(t('cookbooks.playbook.textLabel'))
+    expect(field.value).toBe('# Churn\nШаги плейбука')
+
+    await type(container, 'cookbooks-playbook-text', '# Churn\nПравка')
+    await click(container, 'cookbooks-playbook-save')
+    expect(api.counts.save).toEqual([{ itemId: 'churn-playbook', text: '# Churn\nПравка' }])
+    expect(testId(container, 'cookbooks-status')?.textContent).toContain(t('cookbooks.status.saved'))
+
+    await click(container, 'cookbooks-playbook-toggle')
+    expect(testId(container, 'cookbooks-playbook-markdown')?.textContent).toContain('Правка')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// R2 — session run counters
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage run counters (R2)', () => {
+  it('counts a single run on its own cell only', async () => {
+    const { container } = await renderNotebook({ run: async () => RUN_OK })
+    expect(testId(container, 'cookbooks-runs-1')!.textContent).toBe('[ ]')
+    expect(testId(container, 'cookbooks-runs-1')!.getAttribute('aria-label')).toBe(
+      t('cookbooks.cell.runs', { count: 0 }),
+    )
+
+    await click(container, 'cookbooks-run-1')
+    expect(testId(container, 'cookbooks-runs-1')!.textContent).toBe('[1]')
+    expect(testId(container, 'cookbooks-runs-2')!.textContent).toBe('[ ]')
+
+    await click(container, 'cookbooks-run-1')
+    expect(testId(container, 'cookbooks-runs-1')!.textContent).toBe('[2]')
+    expect(testId(container, 'cookbooks-runs-1')!.getAttribute('aria-label')).toBe(
+      t('cookbooks.cell.runs', { count: 2 }),
+    )
+  })
+
+  it('counts every executed cell of a run-all and none of the skipped ones', async () => {
+    const { api, container } = await renderNotebook()
+    await click(container, 'cookbooks-run-all')
+
+    expect(api.counts.runAll).toHaveLength(1)
+    expect(testId(container, 'cookbooks-runs-1')!.textContent).toBe('[1]')
+    expect(testId(container, 'cookbooks-runs-2')!.textContent).toBe('[1]')
+    // Skipped never ran; the markdown cell is not executable at all.
+    expect(testId(container, 'cookbooks-runs-3')!.textContent).toBe('[ ]')
+    expect(testId(container, 'cookbooks-runs-0')!.textContent).toBe('[ ]')
+  })
+
+  it('resets the counters when another copy is opened', async () => {
+    const { container } = await renderNotebook({ run: async () => RUN_OK })
+    await click(container, 'cookbooks-run-1')
+    expect(testId(container, 'cookbooks-runs-1')!.textContent).toBe('[1]')
+
+    await click(container, 'cookbooks-new-copy')
+    expect(testId(container, 'cookbooks-runs-1')!.textContent).toBe('[ ]')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// R3 — measured durations
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage durations (R3)', () => {
+  it('appends the measured duration to a successful cell status', async () => {
+    const { container } = await renderNotebook({ run: async () => RUN_OK })
+    await click(container, 'cookbooks-run-1')
+    await expectStatus(container, 'cookbooks.status.cellOk', { index: 1 })
+  })
+
+  it('appends the measured duration to a failing cell status', async () => {
+    const { container } = await renderNotebook({ run: async () => RUN_ERROR })
+    await click(container, 'cookbooks-run-2')
+    await expectStatus(container, 'cookbooks.status.cellError', { index: 2 })
+  })
+
+  it('appends the measured duration to the run-all status', async () => {
+    const { container } = await renderNotebook()
+    await click(container, 'cookbooks-run-all')
+    await expectStatus(container, 'cookbooks.status.runAll', { count: 3, ok: 1, failed: 1, skipped: 1 })
+  })
+
+  it('ticks the elapsed status every 250 ms while the run is in flight', async () => {
+    const gate = Promise.withResolvers<CookbooksRunResult>()
+    const { container } = await renderNotebook({ run: () => gate.promise })
+
+    vi.useFakeTimers()
+    try {
+      await act(async () => {
+        ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
+      })
+      expect(testId(container, 'cookbooks-status')!.textContent).toBe(
+        t('cookbooks.status.runningElapsed', { duration: '0.0s' }),
+      )
+
+      await act(async () => {
+        vi.advanceTimersByTime(1000)
+      })
+      expect(testId(container, 'cookbooks-status')!.textContent).toBe(
+        t('cookbooks.status.runningElapsed', { duration: '1.0s' }),
+      )
+
+      await act(async () => {
+        gate.resolve(RUN_OK)
+        await gate.promise
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+    await flush()
+    await expectStatus(container, 'cookbooks.status.cellOk', { index: 1 })
+  })
+
+  it('keeps the static running copy for actions that are not runs', async () => {
+    const api = await renderNotebook()
+    await click(api.container, 'cookbooks-new-copy')
+    // The action finished; a fresh open never reports a run duration.
+    expect(testId(api.container, 'cookbooks-status')!.textContent).toContain(t('cookbooks.status.newCopy'))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// R4 — busy cells
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage busy cells (R4)', () => {
+  it('spins the running cell, disables its actions and releases them afterwards', async () => {
+    const gate = Promise.withResolvers<CookbooksRunResult>()
+    const { container } = await renderNotebook({ run: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
+    })
+    await flush(1)
+
+    const spinner = testId(container, 'cookbooks-busy-1')
+    expect(spinner).not.toBeNull()
+    expect(spinner!.getAttribute('aria-hidden')).toBe('true')
+    expect(testId(container, 'cookbooks-busy-2')).toBeNull()
+    expect((testId(container, 'cookbooks-run-1') as HTMLButtonElement).disabled).toBe(true)
+    expect((testId(container, 'cookbooks-save-1') as HTMLButtonElement).disabled).toBe(true)
+
+    await act(async () => {
+      gate.resolve(RUN_OK)
+      await gate.promise
+    })
+    await flush()
+    expect(testId(container, 'cookbooks-busy-1')).toBeNull()
+    expect((testId(container, 'cookbooks-run-1') as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('spins every executable cell of a run-all and blocks the header actions', async () => {
+    const gate = Promise.withResolvers<{ cells: CookbooksRunCell[] }>()
+    const { container } = await renderNotebook({ runAll: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-all') as HTMLButtonElement).click()
+    })
+    await flush(1)
+
+    expect(testId(container, 'cookbooks-busy-1')).not.toBeNull()
+    expect(testId(container, 'cookbooks-busy-2')).not.toBeNull()
+    expect(testId(container, 'cookbooks-busy-3')).not.toBeNull()
+    expect(testId(container, 'cookbooks-busy-0')).toBeNull()
+    expect((testId(container, 'cookbooks-run-all') as HTMLButtonElement).disabled).toBe(true)
+    expect((testId(container, 'cookbooks-reset') as HTMLButtonElement).disabled).toBe(true)
+
+    await act(async () => {
+      gate.resolve({ cells: RUN_ALL })
+      await gate.promise
+    })
+    await flush()
+    expect(testId(container, 'cookbooks-busy-1')).toBeNull()
+    expect((testId(container, 'cookbooks-run-all') as HTMLButtonElement).disabled).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// R5 — Colab-parity keys
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage keyboard (R5)', () => {
+  it('Shift+Enter runs the cell and moves focus to the next code cell', async () => {
+    const { api, container } = await renderNotebook({ run: async () => RUN_OK })
+    const first = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    first.focus()
+
+    await act(async () => {
+      first.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true }))
+    })
+    await flush()
+
+    expect(api.counts.run).toHaveLength(1)
+    expect(api.counts.run[0]).toMatchObject({ itemId: 'rox-analytics', index: 1, code: 'print(1)' })
+    expect(document.activeElement).toBe(testId(container, 'cookbooks-source-2'))
+  })
+
+  it('Ctrl/Cmd+Enter runs the cell and leaves focus on it', async () => {
+    const { api, container } = await renderNotebook({ run: async () => RUN_OK })
+    const first = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    first.focus()
+
+    await act(async () => {
+      first.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', metaKey: true, bubbles: true }))
+    })
+    await flush()
+
+    expect(api.counts.run).toHaveLength(1)
+    expect(document.activeElement).toBe(first)
+  })
+
+  it('Ctrl/Cmd+Shift+Enter anywhere in the document runs every cell', async () => {
+    const { api, container } = await renderNotebook()
+    const documentPane = testId(container, 'cookbooks-document')!
+
+    await act(async () => {
+      documentPane.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', metaKey: true, shiftKey: true, bubbles: true }))
+    })
+    await flush()
+
+    expect(api.counts.runAll).toHaveLength(1)
+    expect(api.counts.runAll[0].cells).toEqual(RUN_ALL_PAYLOAD)
+  })
+
+  it('leaves run-all inert where the document does not support it', async () => {
+    const api = installApi({ status: RUNNING, cards: CARDS, documents: { 'churn-playbook': PLAYBOOK } })
+    const container = await render()
+    await click(container, 'cookbooks-card-churn-playbook')
+
+    await act(async () => {
+      testId(container, 'cookbooks-document')!.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', metaKey: true, shiftKey: true, bubbles: true }),
+      )
+    })
+    await flush()
+    expect(api.counts.runAll).toHaveLength(0)
+  })
+
+  it('is a no-op while another action is in flight', async () => {
+    const gate = Promise.withResolvers<CookbooksRunResult>()
+    const { api, container } = await renderNotebook({ run: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
+    })
+    await flush(1)
+
+    const second = testId(container, 'cookbooks-source-2') as HTMLTextAreaElement
+    second.focus()
+    await act(async () => {
+      second.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true }))
+      testId(container, 'cookbooks-document')!.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', metaKey: true, shiftKey: true, bubbles: true }),
+      )
+    })
+    await flush(1)
+
+    expect(api.counts.run).toHaveLength(1)
+    expect(api.counts.runAll).toHaveLength(0)
+    expect(document.activeElement).toBe(second)
+
+    await act(async () => {
+      gate.resolve(RUN_OK)
+      await gate.promise
+    })
+    await flush()
+  })
+
+  it('titles the run button with its shortcut', async () => {
+    const { container } = await renderNotebook()
+    expect((testId(container, 'cookbooks-run-1') as HTMLButtonElement).getAttribute('title')).toMatch(/Enter|↵/)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// R-A — Alt+Arrow cell navigation
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage cell navigation (R-A)', () => {
+  it('enters the notebook from its nearest end and swallows the chord', async () => {
+    const { container } = await renderNotebook()
+    const pane = testId(container, 'cookbooks-document')!
+
+    const down = new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true, cancelable: true })
+    await act(async () => {
+      pane.dispatchEvent(down)
+    })
+    // Cell 0 is markdown: the first code cell is the target, never the md cell.
+    expect(document.activeElement).toBe(testId(container, 'cookbooks-source-1'))
+    expect(down.defaultPrevented).toBe(true)
+
+    const up = new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true, cancelable: true })
+    await act(async () => {
+      pane.dispatchEvent(up)
+    })
+    expect(document.activeElement).toBe(testId(container, 'cookbooks-source-3'))
+    expect(up.defaultPrevented).toBe(true)
+  })
+
+  it('moves between code cells and skips markdown entries', async () => {
+    const { container } = await renderNotebook()
+    const first = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    first.focus()
+
+    await act(async () => {
+      first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true, cancelable: true }))
+    })
+    expect(document.activeElement).toBe(testId(container, 'cookbooks-source-2'))
+
+    await act(async () => {
+      ;(document.activeElement as HTMLElement).dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true, cancelable: true }),
+      )
+    })
+    expect(document.activeElement).toBe(testId(container, 'cookbooks-source-1'))
+
+    // Nothing runnable above cell 1: focus stays put rather than landing on md.
+    await act(async () => {
+      first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true, cancelable: true }))
+    })
+    expect(document.activeElement).toBe(first)
+  })
+
+  it('navigates while another action is in flight', async () => {
+    const gate = Promise.withResolvers<CookbooksRunResult>()
+    const { container } = await renderNotebook({ run: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
+    })
+    await flush(1)
+
+    const first = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    await act(async () => {
+      first.focus()
+      first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, bubbles: true, cancelable: true }))
+    })
+    expect(document.activeElement).toBe(testId(container, 'cookbooks-source-2'))
+
+    await act(async () => {
+      gate.resolve(RUN_OK)
+      await gate.promise
+    })
+    await flush()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// R6 — output actions, header, autoscroll
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage output actions and header (R6)', () => {
+  it('copies the output the cell is showing and toasts the result', async () => {
+    const copied: string[] = []
+    const { container } = await renderNotebook({ run: async () => RUN_OK }, {
+      writeClipboard: async (text) => {
+        copied.push(text)
+      },
+    })
+    await click(container, 'cookbooks-run-1')
+    await click(container, 'cookbooks-copy-output-1')
+
+    expect(copied).toEqual(['42\n'])
+    expect(toasts).toContain(`success:${t('toast.copied')}`)
+  })
+
+  it('toasts a failure when the clipboard write rejects', async () => {
+    const { container } = await renderNotebook({ run: async () => RUN_OK }, {
+      writeClipboard: async () => {
+        throw new Error('denied')
+      },
+    })
+    await click(container, 'cookbooks-run-1')
+    await click(container, 'cookbooks-copy-output-1')
+
+    expect(toasts).toContain(`error:${t('toast.copyFailed')}`)
+  })
+
+  it('clears the output back to the pre-run hint', async () => {
+    const { container } = await renderNotebook({ run: async () => RUN_OK })
+    // No output yet: neither output action is offered.
+    expect(testId(container, 'cookbooks-copy-output-1')).toBeNull()
+    expect(testId(container, 'cookbooks-clear-output-1')).toBeNull()
+
+    await click(container, 'cookbooks-run-1')
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('ok')
+
+    await click(container, 'cookbooks-clear-output-1')
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('idle')
+    expect(testId(container, 'cookbooks-output-1')!.textContent).toBe(t('cookbooks.output.hint'))
+    expect(testId(container, 'cookbooks-copy-output-1')).toBeNull()
+  })
+
+  it('keeps the document header sticky and counts the cells it shows', async () => {
+    const { container } = await renderNotebook()
+    const header = testId(container, 'cookbooks-document-title')!.closest('header')!
+    expect(header.className).toContain('sticky')
+    expect(header.className).toContain('top-0')
+    expect(header.className).toContain('z-sticky')
+    expect(testId(container, 'cookbooks-header-cells')!.textContent).toBe(t('cookbooks.header.cells', { count: 4 }))
+    expect(testId(container, 'cookbooks-copy-id')!.textContent).toBe('rox-analytics-copy')
+  })
+
+  it('scrolls to the first code cell on run-all and to the first failure after it', async () => {
+    const gate = Promise.withResolvers<{ cells: CookbooksRunCell[] }>()
+    const { container } = await renderNotebook({ runAll: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-all') as HTMLButtonElement).click()
+    })
+    await flush(1)
+    expect(scrollCalls).toEqual(['cookbooks-cell-1'])
+
+    await act(async () => {
+      gate.resolve({ cells: RUN_ALL })
+      await gate.promise
+    })
+    await flush()
+    expect(scrollCalls).toEqual(['cookbooks-cell-1', 'cookbooks-cell-2'])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// R-B — collapsing a long output
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage output collapsing (R-B)', () => {
+  it('collapses a long output and toggles it between «Показать полностью» and «Свернуть»', async () => {
+    const { container } = await renderNotebook({ run: async () => LONG_RUN })
+    await click(container, 'cookbooks-run-1')
+
+    const output = testId(container, 'cookbooks-output-1')!
+    expect(output.getAttribute('data-collapsed')).toBe('true')
+    // The collapsed block still carries the whole text: the clamp is visual only.
+    expect(output.textContent).toBe(LONG_STDOUT)
+
+    const toggle = testId(container, 'cookbooks-output-toggle-1') as HTMLButtonElement
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(toggle.textContent).toBe(t('cookbooks.cell.expandOutput'))
+
+    await click(container, 'cookbooks-output-toggle-1')
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-collapsed')).toBe('false')
+    const expanded = testId(container, 'cookbooks-output-toggle-1') as HTMLButtonElement
+    expect(expanded.getAttribute('aria-expanded')).toBe('true')
+    expect(expanded.textContent).toBe(t('cookbooks.cell.collapseOutput'))
+
+    await click(container, 'cookbooks-output-toggle-1')
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-collapsed')).toBe('true')
+    expect(
+      (testId(container, 'cookbooks-output-toggle-1') as HTMLButtonElement).getAttribute('aria-expanded'),
+    ).toBe('false')
+  })
+
+  it('offers no toggle for a short output', async () => {
+    const { container } = await renderNotebook({ run: async () => RUN_OK })
+    await click(container, 'cookbooks-run-1')
+    expect(testId(container, 'cookbooks-output-toggle-1')).toBeNull()
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-collapsed')).toBe('false')
+  })
+
+  it('copies the full text even while the output is collapsed', async () => {
+    const copied: string[] = []
+    const { container } = await renderNotebook(
+      { run: async () => LONG_RUN },
+      {
+        writeClipboard: async (text) => {
+          copied.push(text)
+        },
+      },
+    )
+    await click(container, 'cookbooks-run-1')
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-collapsed')).toBe('true')
+
+    await click(container, 'cookbooks-copy-output-1')
+    expect(copied).toEqual([LONG_STDOUT])
+  })
+
+  it('keeps the expansion state per cell', async () => {
+    const { container } = await renderNotebook({ run: async () => LONG_RUN })
+    await click(container, 'cookbooks-run-1')
+    await click(container, 'cookbooks-run-3')
+    await click(container, 'cookbooks-output-toggle-1')
+
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-collapsed')).toBe('false')
+    expect(testId(container, 'cookbooks-output-3')!.getAttribute('data-collapsed')).toBe('true')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// R-C — clearing every output
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage clear-all (R-C)', () => {
+  it('offers «Очистить все выводы» exactly while an output exists and resets it to the hint', async () => {
+    const { container } = await renderNotebook({ run: async () => RUN_OK })
+    expect(testId(container, 'cookbooks-clear-all-outputs')).toBeNull()
+
+    await click(container, 'cookbooks-run-1')
+    expect(testId(container, 'cookbooks-clear-all-outputs')).not.toBeNull()
+
+    await click(container, 'cookbooks-clear-all-outputs')
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('idle')
+    expect(testId(container, 'cookbooks-output-1')!.textContent).toBe(t('cookbooks.output.hint'))
+    expect(testId(container, 'cookbooks-copy-output-1')).toBeNull()
+    expect(testId(container, 'cookbooks-clear-all-outputs')).toBeNull()
+  })
+
+  it('clears a whole run-all result set at once, keeping the run counters', async () => {
+    const { container } = await renderNotebook()
+    await click(container, 'cookbooks-run-all')
+    expect(testId(container, 'cookbooks-output-2')!.getAttribute('data-status')).toBe('error')
+
+    await click(container, 'cookbooks-clear-all-outputs')
+    for (const index of [1, 2, 3]) {
+      expect(testId(container, `cookbooks-output-${index}`)!.getAttribute('data-status')).toBe('idle')
+      expect(testId(container, `cookbooks-output-${index}`)!.textContent).toBe(t('cookbooks.output.hint'))
+    }
+    expect(testId(container, 'cookbooks-clear-all-outputs')).toBeNull()
+    // Clearing results never rewinds the session counters — same as a single clear.
+    expect(testId(container, 'cookbooks-runs-1')!.textContent).toBe('[1]')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// R7 — help
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage help (R7)', () => {
+  it('lists the shortcut lines under their own title, including R-A navigation and wave-9 stop', async () => {
+    installApi({ status: RUNNING, cards: CARDS })
+    const container = await render()
+
+    const block = testId(container, 'cookbooks-help-shortcuts')!
+    expect(block.querySelectorAll('li')).toHaveLength(5)
+    for (const key of [
+      'cookbooks.help.shortcutRun',
+      'cookbooks.help.shortcutRunStay',
+      'cookbooks.help.shortcutRunAll',
+      'cookbooks.help.shortcutNav',
+      'cookbooks.help.shortcutStop',
+    ]) {
+      expect(block.textContent).toContain(t(key))
+    }
+    expect(container.textContent).toContain(t('cookbooks.help.shortcutsTitle'))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Wave 9 — stop
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage stop (wave 9)', () => {
+  it('offers a stop control on the running cell only, and drops it once the run settles', async () => {
+    const gate = Promise.withResolvers<CookbooksRunResult>()
+    const { container } = await renderNotebook({ run: () => gate.promise })
+
+    expect(testId(container, 'cookbooks-stop-1')).toBeNull()
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
+    })
+    await flush(1)
+
+    const stop = testId(container, 'cookbooks-stop-1') as HTMLButtonElement
+    expect(stop).not.toBeNull()
+    expect(stop.textContent).toBe(t('cookbooks.actions.stop'))
+    expect(stop.getAttribute('aria-label')).toBe(t('cookbooks.cell.stopLabel', { index: 1 }))
+    // The stop control is the one action a running cell keeps enabled.
+    expect(stop.disabled).toBe(false)
+    expect((testId(container, 'cookbooks-run-1') as HTMLButtonElement).disabled).toBe(true)
+    // Nothing else is running, so no other cell and no batch control shows one.
+    expect(testId(container, 'cookbooks-stop-2')).toBeNull()
+    expect(testId(container, 'cookbooks-stop-all')).toBeNull()
+
+    await act(async () => {
+      gate.resolve(RUN_OK)
+      await gate.promise
+    })
+    await flush()
+    expect(testId(container, 'cookbooks-stop-1')).toBeNull()
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('ok')
+  })
+
+  it('stops the running cell through the runtime and reports the cancelled result', async () => {
+    const gate = Promise.withResolvers<CookbooksRunResult>()
+    const { api, container } = await renderNotebook({ run: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
+    })
+    await flush(1)
+    await click(container, 'cookbooks-stop-1')
+    expect(api.counts.cancel).toEqual([{ itemId: 'rox-analytics' }])
+
+    await act(async () => {
+      gate.resolve({ ...RUN_OK, cancelled: true })
+      await gate.promise
+    })
+    await flush()
+
+    const output = testId(container, 'cookbooks-output-1')!
+    expect(output.getAttribute('data-status')).toBe('cancelled')
+    expect(output.textContent).toBe(t('cookbooks.cell.cancelled'))
+    await expectStatus(container, 'cookbooks.status.cellCancelled', { index: 1 })
+    // The interrupted execution still counts: the cell did run.
+    expect(testId(container, 'cookbooks-runs-1')!.textContent).toBe('[1]')
+    expect(testId(container, 'cookbooks-stop-1')).toBeNull()
+  })
+
+  it('stops a run-all from the header and marks the cells the stop cut short', async () => {
+    const gate = Promise.withResolvers<{ cells: CookbooksRunCell[]; cancelled?: boolean }>()
+    const { api, container } = await renderNotebook({ runAll: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-all') as HTMLButtonElement).click()
+    })
+    await flush(1)
+
+    expect(testId(container, 'cookbooks-stop-all')).not.toBeNull()
+    expect((testId(container, 'cookbooks-run-above-3') as HTMLButtonElement).disabled).toBe(true)
+
+    await click(container, 'cookbooks-stop-all')
+    expect(api.counts.cancel).toEqual([{ itemId: 'rox-analytics' }])
+
+    // What the sidecar really answers after a stop: one record per requested
+    // cell, the ones the stop cut short marked `skipped`, run-wide cancelled.
+    await act(async () => {
+      gate.resolve({
+        cells: [
+          { index: 1, status: 'ok', stdout: 'ok-1', error: null },
+          { index: 2, status: 'skipped', stdout: '', error: null },
+          { index: 3, status: 'skipped', stdout: '', error: null },
+        ],
+        cancelled: true,
+      })
+      await gate.promise
+    })
+    await flush()
+
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('ok')
+    for (const index of [2, 3]) {
+      const output = testId(container, `cookbooks-output-${index}`)!
+      // Stopped, not skipped — a stopped batch has no skipped cells.
+      expect(output.getAttribute('data-status')).toBe('cancelled')
+      expect(output.textContent).toBe(t('cookbooks.cell.cancelled'))
+    }
+    expect(testId(container, 'cookbooks-status')!.textContent).toContain(t('cookbooks.notice.runCancelled'))
+    expect(testId(container, 'cookbooks-stop-all')).toBeNull()
+    // Only the cell that answered ran — the stopped ones never moved a counter.
+    expect(testId(container, 'cookbooks-runs-1')!.textContent).toBe('[1]')
+    expect(testId(container, 'cookbooks-runs-2')!.textContent).toBe('[ ]')
+  })
+
+  it('marks a requested cell the stopped response never mentioned as cancelled too', async () => {
+    const { container } = await renderNotebook({
+      runAll: async () => ({
+        cells: [{ index: 1, status: 'ok', stdout: 'ok-1', error: null }],
+        cancelled: true,
+      }),
+    })
+
+    await click(container, 'cookbooks-run-all')
+
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('ok')
+    for (const index of [2, 3]) {
+      expect(testId(container, `cookbooks-output-${index}`)!.getAttribute('data-status')).toBe('cancelled')
+    }
+    expect(testId(container, 'cookbooks-status')!.textContent).toContain(t('cookbooks.notice.runCancelled'))
+  })
+
+  it('cancels the run in flight on Esc, and leaves the key alone while nothing runs', async () => {
+    const gate = Promise.withResolvers<CookbooksRunResult>()
+    const { api, container } = await renderNotebook({ run: () => gate.promise })
+    const pane = testId(container, 'cookbooks-document')!
+
+    const idle = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    await act(async () => {
+      pane.dispatchEvent(idle)
+    })
+    expect(idle.defaultPrevented).toBe(false)
+    expect(api.counts.cancel).toHaveLength(0)
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
+    })
+    await flush(1)
+
+    const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    await act(async () => {
+      pane.dispatchEvent(escape)
+    })
+    await flush(1)
+    expect(escape.defaultPrevented).toBe(true)
+    expect(api.counts.cancel).toEqual([{ itemId: 'rox-analytics' }])
+
+    await act(async () => {
+      gate.resolve({ ...RUN_OK, cancelled: true })
+      await gate.promise
+    })
+    await flush()
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('cancelled')
+    await expectStatus(container, 'cookbooks.status.cellCancelled', { index: 1 })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Wave 9 — outline
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage outline (wave 9)', () => {
+  it('lists the H1–H3 headings of the markdown cells in document order', async () => {
+    const { container } = await renderNotebook({ documents: { 'rox-analytics': OUTLINED } })
+
+    const outline = testId(container, 'cookbooks-outline')!
+    expect(outline.tagName.toLowerCase()).toBe('details')
+    expect(outline.querySelector('summary')!.textContent).toBe(t('cookbooks.outline.title'))
+
+    const items = allTestIds(container, 'cookbooks-outline-item-') as HTMLElement[]
+    // The H4 and the trailing `###` run are not outline material.
+    expect(items.map((item) => item.textContent)).toEqual(['Первая', 'Вторая', 'Третья'])
+    expect(items[0].getAttribute('aria-label')).toBe(t('cookbooks.outline.itemLabel', { title: 'Первая' }))
+    expect(items[2].getAttribute('aria-label')).toBe(t('cookbooks.outline.itemLabel', { title: 'Третья' }))
+  })
+
+  it('scrolls to the block the heading belongs to', async () => {
+    const { container } = await renderNotebook({ documents: { 'rox-analytics': OUTLINED } })
+    expect(scrollCalls).toEqual([])
+
+    await click(container, 'cookbooks-outline-item-2')
+    expect(scrollCalls).toEqual(['cookbooks-cell-2'])
+
+    // Both headings of cell 0 point at that one article.
+    await click(container, 'cookbooks-outline-item-1')
+    expect(scrollCalls).toEqual(['cookbooks-cell-2', 'cookbooks-cell-0'])
+  })
+
+  it('is hidden while the document has no headings', async () => {
+    const { container } = await renderNotebook({ documents: { 'rox-analytics': HEADINGLESS } })
+    expect(testId(container, 'cookbooks-outline')).toBeNull()
+  })
+
+  it('lists a playbook body and scrolls to its own block', async () => {
+    const api = installApi({ status: RUNNING, cards: CARDS, documents: { 'churn-playbook': PLAYBOOK } })
+    const container = await render()
+    await click(container, 'cookbooks-card-churn-playbook')
+
+    const items = allTestIds(container, 'cookbooks-outline-item-') as HTMLElement[]
+    // `# Churn` is the only heading of the playbook body.
+    expect(items.map((item) => item.textContent)).toEqual(['Churn'])
+
+    await click(container, 'cookbooks-outline-item-0')
+    expect(scrollCalls).toEqual(['cookbooks-playbook-markdown'])
+    expect(api.counts.open).toHaveLength(1)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Wave 9 — «выполнить выше/ниже»
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage subset runs (wave 9)', () => {
+  it('runs the code cells strictly above the clicked one', async () => {
+    const { api, container } = await renderNotebook({ runAll: answerRequestedCells })
+
+    await click(container, 'cookbooks-run-above-3')
+
+    expect(api.counts.runAll).toHaveLength(1)
+    expect(api.counts.runAll[0].itemId).toBe('rox-analytics')
+    expect(api.counts.runAll[0].cells).toEqual([
+      { index: 1, source: 'print(1)' },
+      { index: 2, source: 'raise ValueError("boom")' },
+    ])
+
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('ok')
+    expect(testId(container, 'cookbooks-output-2')!.getAttribute('data-status')).toBe('ok')
+    // Cell 3 was not in the batch — it keeps its pre-run hint and its counter.
+    expect(testId(container, 'cookbooks-output-3')!.getAttribute('data-status')).toBe('idle')
+    expect(testId(container, 'cookbooks-runs-3')!.textContent).toBe('[ ]')
+    // The batch counts only what it ran.
+    await expectStatus(container, 'cookbooks.status.runAll', { count: 2, ok: 2, failed: 0, skipped: 0 })
+  })
+
+  it('runs the code cells strictly below, and disables the empty side', async () => {
+    const { api, container } = await renderNotebook({ runAll: answerRequestedCells })
+
+    // Nothing above the first code cell, nothing below the last one.
+    expect((testId(container, 'cookbooks-run-above-1') as HTMLButtonElement).disabled).toBe(true)
+    expect((testId(container, 'cookbooks-run-below-3') as HTMLButtonElement).disabled).toBe(true)
+    expect((testId(container, 'cookbooks-run-below-1') as HTMLButtonElement).disabled).toBe(false)
+    // A markdown cell has nothing to execute — neither subset action exists.
+    expect(testId(container, 'cookbooks-run-above-0')).toBeNull()
+    expect(testId(container, 'cookbooks-run-below-0')).toBeNull()
+
+    await click(container, 'cookbooks-run-below-1')
+    expect(api.counts.runAll[0].cells).toEqual([
+      { index: 2, source: 'raise ValueError("boom")' },
+      { index: 3, source: 'print(3)' },
+    ])
+    expect(testId(container, 'cookbooks-output-2')!.getAttribute('data-status')).toBe('ok')
+    expect(testId(container, 'cookbooks-runs-2')!.textContent).toBe('[1]')
+    // The cell above the subset was never run, so it keeps its hint.
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('idle')
+    expect(testId(container, 'cookbooks-runs-1')!.textContent).toBe('[ ]')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Wave 9 — autoscroll and `\r`
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage autoscroll (wave 9)', () => {
+  it('scrolls the cell into view when a single run starts', async () => {
+    const { container } = await renderNotebook({ run: async () => RUN_OK })
+    await click(container, 'cookbooks-run-3')
+    expect(scrollCalls).toEqual(['cookbooks-cell-3'])
+  })
+
+  it('renders a carriage-return progress bar as its final frame', async () => {
+    const { container } = await renderNotebook({
+      run: async () => ({ ok: true, stdout: '10%|  | 1/2\r100%|##| 2/2\n', error: null, timedOut: false, missing: [] }),
+    })
+    await click(container, 'cookbooks-run-1')
+    expect(testId(container, 'cookbooks-output-1')!.textContent).toBe('100%|##| 2/2\n')
+  })
+
+  it('copies the output exactly as shown, carriage returns normalized', async () => {
+    const copied: string[] = []
+    const { container } = await renderNotebook(
+      { run: async () => ({ ok: true, stdout: 'первый кадр\rпоследний кадр\n', error: null, timedOut: false, missing: [] }) },
+      {
+        writeClipboard: async (text) => {
+          copied.push(text)
+        },
+      },
+    )
+    await click(container, 'cookbooks-run-1')
+
+    const shown = testId(container, 'cookbooks-output-1')!.textContent
+    expect(shown).toBe('последний кадр\n')
+    await click(container, 'cookbooks-copy-output-1')
+    expect(copied).toEqual([shown])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Wave 9 — copy source
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage copy source (wave 9)', () => {
+  it('copies the source as shown, code and markdown alike, and toasts', async () => {
+    const copied: string[] = []
+    const { container } = await renderNotebook(
+      {},
+      {
+        writeClipboard: async (text) => {
+          copied.push(text)
+        },
+      },
+    )
+    await type(container, 'cookbooks-source-1', 'print(9)')
+    await click(container, 'cookbooks-copy-source-1')
+
+    expect(copied).toEqual(['print(9)'])
+    expect(toasts).toContain(`success:${t('cookbooks.notice.sourceCopied')}`)
+
+    // A markdown cell copies its markdown source, not its rendering.
+    await click(container, 'cookbooks-copy-source-0')
+    expect(copied).toEqual(['print(9)', '# Заметка'])
+  })
+
+  it('toasts a failure when the clipboard write rejects', async () => {
+    const { container } = await renderNotebook(
+      {},
+      {
+        writeClipboard: async () => {
+          throw new Error('denied')
+        },
+      },
+    )
+    await click(container, 'cookbooks-copy-source-1')
+    expect(toasts).toContain(`error:${t('toast.copyFailed')}`)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Wave 9 — .ipynb export
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage export (wave 9)', () => {
+  it('is offered for a supported notebook only', async () => {
+    const { container } = await renderNotebook({
+      documents: { 'rox-analytics': NOTEBOOK, 'churn-playbook': PLAYBOOK },
+    })
+    expect(testId(container, 'cookbooks-export')!.textContent).toBe(t('cookbooks.actions.export'))
+
+    // A playbook is not a notebook: nothing to export.
+    await click(container, 'cookbooks-card-churn-playbook')
+    expect(testId(container, 'cookbooks-export')).toBeNull()
+  })
+
+  it('is withheld for an unsupported notebook', async () => {
+    const { container } = await renderNotebook({
+      documents: { 'rox-analytics': { ...NOTEBOOK, supported: false } },
+    })
+    expect(testId(container, 'cookbooks-export')).toBeNull()
+    expect(testId(container, 'cookbooks-run-all')).toBeNull()
+    // A batch the sidecar would refuse is not offered as a subset either.
+    expect((testId(container, 'cookbooks-run-above-3') as HTMLButtonElement).disabled).toBe(true)
+    expect((testId(container, 'cookbooks-run-below-1') as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('builds the notebook from the current sources, counters and outputs', async () => {
+    const { api, container } = await renderNotebook({ run: async (call) => (call.index === 2 ? RUN_ERROR : RUN_OK) })
+    await click(container, 'cookbooks-run-2')
+    await click(container, 'cookbooks-run-1')
+    await type(container, 'cookbooks-source-3', 'print(42)')
+    await click(container, 'cookbooks-export')
+
+    expect(api.counts.export).toHaveLength(1)
+    const call = api.counts.export[0]
+    expect(call.itemId).toBe('rox-analytics')
+    expect(call.filename).toBe('ROX-Analytics.ipynb')
+
+    const notebook = JSON.parse(call.content) as {
+      nbformat: number
+      nbformat_minor: number
+      metadata: { title: string }
+      cells: Record<string, unknown>[]
+    }
+    expect(notebook.nbformat).toBe(4)
+    expect(notebook.nbformat_minor).toBe(5)
+    expect(notebook.metadata.title).toBe('ROX Analytics')
+    expect(notebook.cells).toHaveLength(4)
+
+    // The markdown cell carries no execution count and no outputs.
+    expect(notebook.cells[0]).toMatchObject({ cell_type: 'markdown', source: ['# Заметка'] })
+    // A run cell carries its counter and its stdout as a stream output.
+    expect(notebook.cells[1]).toMatchObject({ cell_type: 'code', execution_count: 1 })
+    expect(notebook.cells[1].outputs).toEqual([{ output_type: 'stream', name: 'stdout', text: ['42\n'] }])
+    // A failure lands as stderr, the cell's own traceback.
+    expect(notebook.cells[2].outputs).toEqual([
+      { output_type: 'stream', name: 'stderr', text: ['ValueError: boom'] },
+    ])
+    // An unsaved edit is exported as it stands, with no run behind it.
+    expect(notebook.cells[3]).toMatchObject({ source: ['print(42)'], execution_count: null, outputs: [] })
+
+    expect(testId(container, 'cookbooks-status')!.textContent).toContain(
+      t('cookbooks.export.saved', { path: '/tmp/rox-analytics.ipynb' }),
+    )
+  })
+
+  it('reports a cancelled save dialog without an error', async () => {
+    const { container } = await renderNotebook({ export: async () => ({ saved: false }) })
+    await click(container, 'cookbooks-export')
+    expect(testId(container, 'cookbooks-status')!.textContent).toContain(t('cookbooks.export.cancelled'))
+  })
+
+  it('reports a failed write', async () => {
+    const { container } = await renderNotebook({
+      export: async () => {
+        throw new Error('EACCES: permission denied')
+      },
+    })
+    await click(container, 'cookbooks-export')
+    expect(testId(container, 'cookbooks-status')!.textContent).toContain(t('cookbooks.export.failed'))
   })
 })
 
@@ -647,34 +1778,8 @@ describe('CookbooksSurfacePage mutations', () => {
     expect(testId(api.container, 'cookbooks-status')?.textContent).toContain(t('cookbooks.status.newCopy'))
   })
 
-  it('renders a playbook as one textarea and saves its text', async () => {
-    const api = installApi({
-      status: { state: 'running', reason: null, port: 51234 },
-      cards: CARDS,
-      documents: { 'churn-playbook': PLAYBOOK },
-    })
-    const container = await render()
-    await click(container, 'cookbooks-card-churn-playbook')
-
-    const text = testId(container, 'cookbooks-playbook-text') as HTMLTextAreaElement
-    expect(text.getAttribute('aria-label')).toBe(t('cookbooks.playbook.textLabel'))
-    expect(text.value).toBe('# Churn\nШаги плейбука')
-    expect(allTestIds(container, 'cookbooks-cell-')).toHaveLength(0)
-    // A playbook has no runnable cells, so the notebook-only action is absent.
-    expect(testId(container, 'cookbooks-run-all')).toBeNull()
-
-    await type(container, 'cookbooks-playbook-text', '# Churn\nПравка')
-    await click(container, 'cookbooks-playbook-save')
-    expect(api.counts.save).toEqual([{ itemId: 'churn-playbook', text: '# Churn\nПравка' }])
-    expect(testId(container, 'cookbooks-status')?.textContent).toContain(t('cookbooks.status.saved'))
-  })
-
   it('hides «Запустить всё» for an unsupported notebook', async () => {
-    installApi({
-      status: { state: 'running', reason: null, port: 51234 },
-      cards: CARDS,
-      documents: { 'rox-analytics': { ...NOTEBOOK, supported: false } },
-    })
+    installApi({ status: RUNNING, cards: CARDS, documents: { 'rox-analytics': { ...NOTEBOOK, supported: false } } })
     const container = await render()
     await click(container, 'cookbooks-card-rox-analytics')
     expect(testId(container, 'cookbooks-run-all')).toBeNull()
@@ -689,24 +1794,18 @@ describe('CookbooksSurfacePage mutations', () => {
 
 describe('CookbooksSurfacePage chrome', () => {
   it('banners the missing ROX keys of the opened document', async () => {
-    installApi({
-      status: { state: 'running', reason: null, port: 51234 },
-      cards: CARDS,
-      documents: { 'rox-analytics': { ...NOTEBOOK, missing: ['ROX_API_KEY', 'ROX_WORKSPACE_ID'] } },
-    })
+    installApi({ status: RUNNING, cards: CARDS, documents: { 'rox-analytics': { ...NOTEBOOK, missing: ['ROX_API_KEY', 'ROX_WORKSPACE_ID'] } } })
     const container = await render()
     await click(container, 'cookbooks-card-rox-analytics')
 
     const banner = testId(container, 'cookbooks-missing-keys')
     expect(banner).not.toBeNull()
     expect(banner!.getAttribute('role')).toBe('alert')
-    expect(banner!.textContent).toBe(
-      t('cookbooks.missingKeys', { keys: 'ROX_API_KEY, ROX_WORKSPACE_ID' }),
-    )
+    expect(banner!.textContent).toBe(t('cookbooks.missingKeys', { keys: 'ROX_API_KEY, ROX_WORKSPACE_ID' }))
   })
 
   it('renders the compact help disclosure with all seven keys', async () => {
-    installApi({ status: { state: 'running', reason: null, port: 51234 }, cards: CARDS })
+    installApi({ status: RUNNING, cards: CARDS })
     const container = await render()
     expect(testId(container, 'cookbooks-help')?.tagName.toLowerCase()).toBe('details')
     expect(container.textContent).toContain(t('cookbooks.help.title'))
@@ -730,5 +1829,46 @@ describe('CookbooksSurfacePage chrome', () => {
     expect(html).not.toContain('token=')
     expect(html).not.toContain('http://')
     expect(html).not.toContain('lab.html')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Wave-7 i18n contract — the frozen RU copy this surface renders through `t()`.
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage wave-7 copy', () => {
+  it('carries the eleven new keys with their frozen RU values', () => {
+    expect(t('cookbooks.cell.editMode')).toBe('Изменить')
+    expect(t('cookbooks.cell.readMode')).toBe('Просмотр')
+    expect(t('cookbooks.cell.clearOutput')).toBe('Очистить вывод')
+    expect(t('cookbooks.cell.copyOutput')).toBe('Копировать вывод')
+    expect(t('cookbooks.cell.runs', { count: 3 })).toBe('Выполнений: 3')
+    expect(t('cookbooks.header.cells', { count: 4 })).toBe('Ячеек: 4')
+    expect(t('cookbooks.status.runningElapsed', { duration: '1.0s' })).toBe('выполняется… 1.0s')
+    expect(t('cookbooks.help.shortcutsTitle')).toBe('Клавиши')
+    expect(t('cookbooks.help.shortcutRun')).toContain('Shift+Enter')
+    expect(t('cookbooks.help.shortcutRunStay')).toContain('Ctrl/Cmd+Enter')
+    expect(t('cookbooks.help.shortcutRunAll')).toContain('Ctrl/Cmd+Shift+Enter')
+  })
+
+  it('carries the duration suffix on the three edited status keys', () => {
+    expect(t('cookbooks.status.cellOk', { index: 7, duration: '1.2s' })).toBe('Ячейка 7: успешно · 1.2s')
+    expect(t('cookbooks.status.cellError', { index: 7, duration: '1.2s' })).toBe('Ячейка 7: ошибка · 1.2s')
+    expect(t('cookbooks.status.runAll', { count: 3, ok: 1, failed: 1, skipped: 1, duration: '1.2s' })).toBe(
+      'Запущено 3 ячеек: 1 успешно · 1 с ошибкой · 1 пропущено · 1.2s',
+    )
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Q2A i18n contract — the frozen RU copy of the Colab-микро wave (R-A/R-B/R-C).
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage Q2A copy', () => {
+  it('carries the four new keys with their frozen RU values', () => {
+    expect(t('cookbooks.actions.clearAllOutputs')).toBe('Очистить все выводы')
+    expect(t('cookbooks.cell.expandOutput')).toBe('Показать полностью')
+    expect(t('cookbooks.cell.collapseOutput')).toBe('Свернуть')
+    expect(t('cookbooks.help.shortcutNav')).toContain('Alt+↑/↓')
   })
 })

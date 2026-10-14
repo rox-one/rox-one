@@ -94,7 +94,7 @@ export function PeopleList({ people, selectedIds, multi = false, onPick, onEscap
         aria-label={t('entities.ui.person.search')}
         aria-controls={listId}
         aria-activedescendant={visible[clampedActive] ? `${listId}-${visible[clampedActive]!.id}` : undefined}
-        className={cn('h-8 rounded-[6px] bg-foreground/[0.05] px-2 text-base placeholder:text-text-muted', FOCUS_RING)}
+        className={cn('h-8 rounded-sm bg-foreground/[0.05] px-2 text-base placeholder:text-text-muted', FOCUS_RING)}
       />
       <ul id={listId} role="listbox" aria-multiselectable={multi || undefined} aria-label={t('entities.ui.person.search')} className="max-h-[240px] overflow-y-auto">
         {visible.length === 0 ? (
@@ -109,7 +109,7 @@ export function PeopleList({ people, selectedIds, multi = false, onPick, onEscap
               aria-selected={selected}
               onMouseEnter={() => setActive(index)}
               onMouseDown={(e) => { e.preventDefault(); onPick(person) }}
-              className={cn('flex h-9 cursor-default items-center gap-2 rounded-[6px] px-2', HOVER_TINT, index === clampedActive && SELECTED_TINT)}
+              className={cn('flex h-9 cursor-default items-center gap-2 rounded-sm px-2', HOVER_TINT, index === clampedActive && SELECTED_TINT)}
             >
               <PersonAvatar person={person} size={24} />
               <span className="min-w-0 flex-1">

@@ -22,7 +22,7 @@ import {
   type SandboxExtensionDescriptor,
 } from '@rox/shared/extensions'
 import type { PushTarget } from '@rox/shared/protocol'
-import { RPC_CHANNELS } from '../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import { getExtensionHostManager } from '../extension-host-manager'
 import { loadSandboxExtensionDescriptors } from './descriptors'
 import { resolveExtensionGrantsFromPermissions } from './grants'

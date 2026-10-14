@@ -1,7 +1,11 @@
 // =============================================================================
 // Protocol re-exports (channels, DTOs, events, wire types)
 // =============================================================================
-export * from '@rox/shared/protocol'
+// Type-only: a value `export *` evaluates dto.ts + channels.ts (~120 KB of
+// protocol source) for every value importer of this barrel, including the
+// renderer boot graph. RPC_CHANNELS / generateMessageId / CodedError come
+// from `@rox/shared/protocol` (or a local helper) instead.
+export type * from '@rox/shared/protocol'
 
 // Cookbooks Lab surface contract (SPEC §Data & API contracts + §Amendment 1):
 // runtime status vocabulary, discovery parser, data-plane DTOs and the typed
@@ -2220,11 +2224,22 @@ export interface ElectronAPI {
     runAll(args: {
       itemId: string
       cells: { index: number; source: string }[]
-    }): Promise<{ cells: CookbooksRunCell[] }>
+    }): Promise<{ cells: CookbooksRunCell[]; cancelled?: boolean }>
     /** Persist a cell (`index` + `source`) or the playbook `text`. */
     save(args: { itemId: string; index?: number; source?: string; text?: string }): Promise<void>
     /** Restore the copy from the catalog original (edits are lost). */
     reset(args: { itemId: string }): Promise<void>
+    /**
+     * Interrupt every active execution of `itemId` (both `/run` and `/run-all`).
+     * Idempotent; `cancelled` is the number of kernels stopped. In-flight runs
+     * resolve with `cancelled: true`.
+     */
+    cancel(args: { itemId: string }): Promise<{ ok: boolean; cancelled: number }>
+    /**
+     * Ask the user where to save the built notebook and write it. Resolves
+     * `{saved:false}` when the dialog is dismissed; a failed write rejects.
+     */
+    export(args: { itemId: string; filename: string; content: string }): Promise<{ saved: boolean; path?: string }>
     onStatusChanged(callback: (status: CookbooksStatus) => void): () => void
   }
 
