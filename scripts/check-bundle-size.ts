@@ -6,8 +6,10 @@
  * chunks — and fails when a known chunk-name *prefix* grows past its recorded raw-byte budget, when an
  * unbudgeted prefix grows past MAX_NEW_CHUNK_BYTES, or when a whole-extension total grows past its
  * recorded total. Raw `Buffer.byteLength` of the emitted files is the gated number; gzip (level 9) is
- * recorded and reported alongside. Source maps are not emitted in production and the pdf worker
- * are never measured.
+ * recorded and reported alongside. `.map` files and the pdf worker are never measured, and the trailing
+ * `//# sourceMappingURL=` pointer comment is stripped before any byte is counted — this gate also runs in
+ * the CI job that builds with `ROX_RENDERER_SOURCEMAP=1` (.github/workflows/bundle-size.yml), so the
+ * emitted chunks carry that pointer even though the packaged app emits no source maps at all.
  *
  * A budget is the TOTAL of every measured chunk sharing a prefix, not the largest one: real `index-*`
  * builds emit a handful of chunks, so gating only the max lets a secondary chunk grow unbounded up to
@@ -223,8 +225,8 @@ export function chunkPrefix(baseName: string): string {
 
 /**
  * The measured-asset kind of a file name, or `undefined` when it is not measured: only emitted
- * `*.js` / `*.css` chunks are. `.js.map` / `.css.map` (not emitted in production) and the pdf worker are
- * excluded explicitly as well as by extension.
+ * `*.js` / `*.css` chunks are. `.js.map` / `.css.map` siblings and the pdf worker are excluded
+ * explicitly as well as by extension.
  */
 export function assetKind(baseName: string): AssetKind | undefined {
   if (baseName.startsWith('pdf.worker')) return undefined
@@ -232,6 +234,37 @@ export function assetKind(baseName: string): AssetKind | undefined {
   if (baseName.endsWith('.js')) return 'js'
   if (baseName.endsWith('.css')) return 'css'
   return undefined
+}
+
+/**
+ * A trailing sourcemap pointer comment: `//# sourceMappingURL=<file>.map` (Rollup/Vite also emit the
+ * legacy `//@` form and `//# sourceMappingURL=data:...` inline URIs). Only the document's final line is
+ * ever tested against it, so a `sourceMappingURL` string deeper in the payload is left untouched.
+ */
+const SOURCEMAP_COMMENT = /^\/\/[#@]\s*sourceMappingURL=/
+
+/**
+ * Drop a trailing `//# sourceMappingURL=…` comment line from a measured chunk and return the payload
+ * buffer. The pointer names a sibling `.map` file the gate never measures, but the CI job builds with
+ * `ROX_RENDERER_SOURCEMAP=1`, so every emitted chunk carries it — counting it would add ~40-58 B per
+ * chunk of pure pointer noise. Byte-oriented and conservative: only the last line is removed, and only
+ * when it is exactly that comment (together with the line break separating it from the payload and any
+ * trailing newline). The input is returned unchanged when there is no such line — nothing is
+ * minified, rewritten or otherwise altered.
+ */
+export function stripSourceMapComment(content: Buffer): Buffer {
+  // The pointer, when present, is the document's final line; a trailing newline still belongs to it.
+  let end = content.length
+  if (end > 0 && content[end - 1] === 0x0a) end--
+  if (end > 0 && content[end - 1] === 0x0d) end--
+  let start = end
+  while (start > 0 && content[start - 1] !== 0x0a) start--
+  if (!SOURCEMAP_COMMENT.test(content.subarray(start, end).toString('latin1'))) return content
+  // Remove the comment line and the line break that separates it from the payload.
+  let cut = start
+  if (cut > 0 && content[cut - 1] === 0x0a) cut--
+  if (cut > 0 && content[cut - 1] === 0x0d) cut--
+  return content.subarray(0, cut)
 }
 
 /** Raw + gzip bytes of every measured `assets/*` chunk, sorted by file name. */
@@ -248,7 +281,8 @@ export function measureRendererChunks(assetsDir: string = paths().assets): Measu
     const kind = assetKind(file)
     if (!kind) continue
     try {
-      const content = readFileSync(join(assetsDir, file))
+      // The emitted `//# sourceMappingURL=` pointer (present in the CI build) is not payload.
+      const content = stripSourceMapComment(readFileSync(join(assetsDir, file)))
       chunks.push({
         file,
         prefix: chunkPrefix(file),
@@ -352,7 +386,8 @@ export function measureStartup(rendererDist: string = paths().rendererDist): Sta
         const file = relative(rendererDist, resolved) || html
         let content: Buffer
         try {
-          content = readFileSync(resolved)
+          // The referenced chunk carries the same `//# sourceMappingURL=` pointer the CI build emits.
+          content = stripSourceMapComment(readFileSync(resolved))
         } catch {
           missing.push(file)
           continue
@@ -753,8 +788,16 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
   const startupFailures = evaluateStartup(startup, startupRecorded)
   printStartupTable(startup, startupRecorded)
   if (failures.length > 0 || startupFailures.length > 0) {
-    for (const failure of failures) console.error(formatFailure(failure))
-    for (const failure of startupFailures) console.error(formatStartupFailure(failure))
+    const reports = [
+      ...failures.map((failure) => formatFailure(failure)),
+      ...startupFailures.map((failure) => formatStartupFailure(failure)),
+    ]
+    for (const message of reports) {
+      console.error(message)
+      // Also emit a workflow command so the byte deltas reach the GitHub check-run annotations
+      // (`%`, CR and LF must be percent-encoded or the annotation truncates at the first newline).
+      console.log(`::error::${message.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`)
+    }
     console.error(
       `bundle-size: ${failures.length + startupFailures.length} budget(s) over limit. If the growth is ` +
         `intended, owner-approve it and re-record with \`bun scripts/check-bundle-size.ts --update\`.`,
