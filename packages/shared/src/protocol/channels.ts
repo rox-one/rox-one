@@ -601,6 +601,8 @@ export const RPC_CHANNELS = {
     RUN_ALL: 'cookbooks-lab:run-all',
     SAVE: 'cookbooks-lab:save',
     RESET: 'cookbooks-lab:reset',
+    CANCEL: 'cookbooks-lab:cancel',
+    EXPORT: 'cookbooks-lab:export',
     STATUS_CHANGED: 'cookbooks-lab:status-changed',
   },
 

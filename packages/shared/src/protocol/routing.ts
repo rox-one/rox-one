@@ -549,6 +549,8 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.cookbooksLab.RUN_ALL,
   RPC_CHANNELS.cookbooksLab.SAVE,
   RPC_CHANNELS.cookbooksLab.RESET,
+  RPC_CHANNELS.cookbooksLab.CANCEL,
+  RPC_CHANNELS.cookbooksLab.EXPORT,
   RPC_CHANNELS.cookbooksLab.STATUS_CHANGED,
 
 

@@ -22,6 +22,7 @@ import { parseRouteToNavigationStateOrUnavailable } from '../../../shared/route-
 import { closePanelAtom, focusedPanelIdAtom, primaryPanelIdAtom, type PanelStackEntry } from '@/atoms/panel-stack'
 import { useAppShellContext, AppShellProvider } from '@/context/AppShellContext'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@rox/ui/tooltip'
 import { MainContentPanel } from './MainContentPanel'
 import { PANEL_MIN_WIDTH } from './panel-constants'
 import { NavigationContext } from '@/contexts/NavigationContext'
@@ -110,7 +111,7 @@ export function PanelSlot({
   const closeButton = useMemo(() => {
     return (
       <PanelHeaderCenterButton
-        icon={<X className="h-4 w-4" />}
+        icon={<X className="icon-toolbar" />}
         onClick={handleClose}
         tooltip={t("common.close")}
       />
@@ -123,7 +124,7 @@ export function PanelSlot({
     if (!isCompact) return undefined
     return (
       <PanelHeaderCenterButton
-        icon={<ChevronLeft className="h-4 w-4" />}
+        icon={<ChevronLeft className="icon-toolbar" />}
         onClick={handleClose}
         tooltip={t("common.backToList")}
       />
@@ -209,18 +210,22 @@ export function PanelSlot({
         <div className="h-full flex flex-col">
           {gridTile ? (
             <div className="rox-grid-tile-header flex shrink-0 items-center gap-1" data-testid="grid-tile-header">
-              <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground/80">
+              <span className="min-w-0 flex-1 truncate text-xs font-medium text-text-secondary">
                 {titleKey ? t(titleKey) : t('navigation.mainSurface')}
               </span>
-              <button
-                type="button"
-                onClick={handleClose}
-                aria-label={t('common.close')}
-                title={t('common.close')}
-                className="inline-flex size-5 shrink-0 items-center justify-center rounded text-foreground/60 hover:bg-foreground/[0.08] hover:text-foreground"
-              >
-                <X className="size-3" aria-hidden />
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    aria-label={t('common.close')}
+                    className="inline-flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-surface-hover hover:text-foreground"
+                  >
+                    <X className="icon-status" aria-hidden />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{t('common.close')}</TooltipContent>
+              </Tooltip>
             </div>
           ) : null}
           <div className="flex min-h-0 flex-1 flex-col">
