@@ -117,8 +117,7 @@ export function RoadmapTimeline({
   const today = toIsoDate(new Date())
 
   // Keep the window stable while dragging so the bar follows the pointer.
-  const baseRange = React.useMemo(() => roadmapTimelineRange(milestones, today), [milestones, today])
-  const range = baseRange
+  const range = React.useMemo(() => roadmapTimelineRange(milestones, today), [milestones, today])
   const scale = ganttScale(range, trackWidth)
   const { totalDays, pxPerDay } = scale
   const { drag, onPointerDown: startDrag, onPointerMove, onPointerUp, onPointerCancel } = useGanttDrag({
@@ -132,6 +131,7 @@ export function RoadmapTimeline({
     () => (drag ? milestones.map((m) => (m.id === drag.id ? applyDrag(m, drag.mode, drag.deltaDays) : m)) : milestones),
     [milestones, drag],
   )
+  const todayLeft = range ? todayOffset(range, today, pxPerDay) : null
   const dated = preview.filter((m) => m.startDate || m.dueDate)
   const undated = preview.filter((m) => !m.startDate && !m.dueDate)
 
@@ -228,10 +228,10 @@ export function RoadmapTimeline({
             )
           })}
           {/* today marker */}
-          {todayOffset(range, today, pxPerDay) != null ? (
+          {todayLeft != null ? (
             <div
               className="pointer-events-none absolute inset-y-0 w-px bg-accent/70"
-              style={{ left: LABEL_COL + todayOffset(range, today, pxPerDay)! }}
+              style={{ left: LABEL_COL + todayLeft }}
               title={t('projectRoadmap.today')}
             />
           ) : null}
