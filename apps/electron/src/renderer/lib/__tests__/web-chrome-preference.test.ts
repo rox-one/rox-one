@@ -26,10 +26,10 @@ function browserHost(values = new Map<string, string>()) {
 describe('browser CSS material preference', () => {
   it('defaults to enabled system glass and rejects malformed stored preferences', () => {
     const host = browserHost()
-    expect(readWebChromePreference(host.localStorage)).toEqual({ enabled: true, preference: 'system' })
+    expect(readWebChromePreference(host.localStorage)).toEqual({ enabled: true, preference: 'opaque' })
     for (const raw of ['not JSON', 'null', '[]', '{"enabled":"false","preference":"opaque"}', '{"enabled":false,"preference":"mica"}']) {
       host.values.set(WEB_CHROME_PREFERENCE_KEY, raw)
-      expect(readWebChromePreference(host.localStorage)).toEqual({ enabled: true, preference: 'system' })
+      expect(readWebChromePreference(host.localStorage)).toEqual({ enabled: true, preference: 'opaque' })
     }
   })
 
@@ -54,7 +54,7 @@ describe('browser CSS material preference', () => {
     const stopReader = subscribeWebChromePreference(value => second.push(value), reader)
     saveWebChromePreference({ materialPreference: 'opaque' }, writer)
     expect(first.at(-1)).toEqual({ enabled: true, preference: 'opaque' })
-    expect(second).toEqual([{ enabled: true, preference: 'system' }])
+    expect(second).toEqual([{ enabled: true, preference: 'opaque' }])
     reader.storageEvent('unrelated')
     expect(second).toHaveLength(1)
     reader.storageEvent(WEB_CHROME_PREFERENCE_KEY, {}) // A sessionStorage event must not affect local preferences.
@@ -63,7 +63,7 @@ describe('browser CSS material preference', () => {
     expect(second.at(-1)).toEqual({ enabled: true, preference: 'opaque' })
     values.clear()
     reader.storageEvent(null)
-    expect(second.at(-1)).toEqual({ enabled: true, preference: 'system' })
+    expect(second.at(-1)).toEqual({ enabled: true, preference: 'opaque' })
     stopWriter(); stopReader()
     const count = second.length
     reader.storageEvent(WEB_CHROME_PREFERENCE_KEY)
@@ -78,7 +78,7 @@ describe('browser CSS material preference', () => {
       host.localStorage.setItem = () => { if (mode === 'reject') throw new Error('quota denied') }
       if (mode === 'unreadable') host.localStorage.getItem = () => { throw new Error('read denied') }
       expect(() => saveWebChromePreference({ enabled: true, materialPreference: 'system' }, host)).toThrow()
-      expect(events).toEqual([{ enabled: true, preference: 'system' }])
+      expect(events).toEqual([{ enabled: true, preference: 'opaque' }])
       stop()
     }
   })

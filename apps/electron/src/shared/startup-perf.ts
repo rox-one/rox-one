@@ -8,6 +8,8 @@ export const STARTUP_PERF_MARK_CHANNEL = '__perf:mark'
 
 /** Well-known marks. All times are milliseconds since the main process started. */
 export const STARTUP_MARKS = {
+  /** Entry shim (dist/boot.cjs) started; `main:entry − main:boot` = main bundle load + compile (#1573). */
+  mainBoot: 'main:boot',
   /** First line of the main bundle evaluated (module load + require cost before it). */
   mainEntry: 'main:entry',
   /** Every main-bundle module evaluated; login-shell env kicked off / applied from cache (macOS). */
@@ -68,6 +70,8 @@ export interface StartupTimeline {
   marks: StartupMarkRecord[]
   /** Main event-loop delay while booting (ms), when ROX_PERF is on. */
   eventLoopDelay?: { p50: number; p99: number; max: number } | null
+  /** V8 compile-cache state set by the boot.cjs entry shim (#1573); null when launched without it. */
+  compileCache?: 'enabled' | 'disabled' | 'failed' | 'unsupported' | 'unsafe-dir' | null
 }
 
 /**
