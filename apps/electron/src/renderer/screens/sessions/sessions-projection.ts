@@ -5,7 +5,7 @@ import type { SessionsSidebarInput } from './sessions-sidebar-sections'
  * Streaming ticks that touch other fields (token counts, previews of other
  * fields…) keep the same projection, so nothing rebuilds or republishes.
  */
-const PROJECTED_KEYS = ['id', 'name', 'preview', 'lastMessageAt', 'createdAt', 'isProcessing', 'isFlagged', 'hasUnread', 'labels', 'sessionStatus', 'hidden', 'isArchived', 'parentSessionId'] as const
+const PROJECTED_KEYS = ['id', 'name', 'preview', 'lastMessageAt', 'createdAt', 'isProcessing', 'isFlagged', 'hasUnread', 'labels', 'sessionStatus', 'hidden', 'isArchived', 'parentSessionId', 'sharedUrl'] as const
 
 export function projectSessionsSidebarInput(metas: Iterable<SessionsSidebarInput>): SessionsSidebarInput[] {
   const out: SessionsSidebarInput[] = []

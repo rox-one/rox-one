@@ -37,7 +37,7 @@ function readIdList(key: storage.StorageKey, fallback: readonly string[]): strin
 /** Rail: pinned screens in order (Mark / screens-groups.md). Settings is always at the bottom, never pinned. */
 export const DEFAULT_RAIL_PINS: readonly string[] = ['home', 'sessions', 'inbox', 'messenger', 'feed', 'docs', 'tasks', 'calendar', 'browser']
 /** Top pills (zero allowed). Главная renders icon-only. */
-export const DEFAULT_PILLS: readonly string[] = ['home', 'feed', 'sessions', 'docs', 'browser']
+export const DEFAULT_PILLS: readonly string[] = ['home', 'feed', 'messenger', 'sessions', 'docs', 'browser', 'tasks']
 export const RAIL_FIXED_BOTTOM_IDS: ReadonlySet<string> = new Set(['settings'])
 
 export const railPinsStore = createStore<string[]>(
@@ -75,7 +75,44 @@ export function setPills(ids: readonly string[]): void {
   pillsStore.set([...new Set(ids)])
 }
 
+// ---- narrow window (top50 #3): the second sidebar becomes an overlay ----
+// Not persisted: on a narrow window the overlay starts closed and the saved
+// wide-window preference is left untouched.
+let narrowShell = false
+let narrowOverlayOpen = false
+const narrowListeners = new Set<Listener>()
+function emitNarrow() { for (const listener of narrowListeners) listener() }
+const subscribeNarrow = (listener: Listener) => { narrowListeners.add(listener); return () => { narrowListeners.delete(listener) } }
+
+export function setNarrowShell(narrow: boolean): void {
+  if (narrowShell === narrow && (narrow || !narrowOverlayOpen)) return
+  narrowShell = narrow
+  narrowOverlayOpen = false
+  emitNarrow()
+}
+export function setNarrowSidebarOverlayOpen(open: boolean): void {
+  if (narrowOverlayOpen === open) return
+  narrowOverlayOpen = open
+  emitNarrow()
+}
+export function isNarrowShell(): boolean { return narrowShell }
+export function useNarrowSidebarOverlay(): { narrow: boolean; open: boolean } {
+  const narrow = React.useSyncExternalStore(subscribeNarrow, () => narrowShell, () => false)
+  const open = React.useSyncExternalStore(subscribeNarrow, () => narrowOverlayOpen, () => false)
+  return { narrow, open }
+}
+/** What the user sees: on a narrow window the overlay state, otherwise the saved preference. */
+export function useEffectiveSecondaryVisibility(): SecondarySidebarVisibility {
+  const saved = useSecondarySidebarVisibility()
+  const { narrow, open } = useNarrowSidebarOverlay()
+  return narrow ? (open ? 'shown' : 'hidden') : saved
+}
+
 export function toggleSecondarySidebar(): void {
+  if (narrowShell) {
+    setNarrowSidebarOverlayOpen(!narrowOverlayOpen)
+    return
+  }
   secondarySidebarStore.set(secondarySidebarStore.get() === 'hidden' ? 'shown' : 'hidden')
 }
 

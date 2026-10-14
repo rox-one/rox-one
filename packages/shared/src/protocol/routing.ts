@@ -199,6 +199,8 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.theme.GET_COLOR_THEME,
   RPC_CHANNELS.theme.SET_COLOR_THEME,
   RPC_CHANNELS.theme.SET_APP_MATERIAL,
+  RPC_CHANNELS.theme.SET_APP_LAYERS,
+  RPC_CHANNELS.theme.SAVE_USER_PRESET,
   RPC_CHANNELS.theme.BROADCAST_PREFERENCES,
   RPC_CHANNELS.theme.PREFERENCES_CHANGED,
   RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME,
@@ -547,6 +549,10 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.cookbooksLab.RUN_ALL,
   RPC_CHANNELS.cookbooksLab.SAVE,
   RPC_CHANNELS.cookbooksLab.RESET,
+  RPC_CHANNELS.cookbooksLab.CANCEL,
+  RPC_CHANNELS.cookbooksLab.EXPORT,
+  // Wave 10: structural cell mutations write the host-local personal copy.
+  RPC_CHANNELS.cookbooksLab.MUTATE,
   RPC_CHANNELS.cookbooksLab.STATUS_CHANGED,
 
 
@@ -601,6 +607,29 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.orgs.UPDATE_MEMBER_ROLE,
   RPC_CHANNELS.orgs.REMOVE_MEMBER,
   RPC_CHANNELS.orgs.REVOKE_INVITE,
+
+  // teamChat — the team messenger store is org-scoped and authorized against the
+  // host org store (orgs.json), so it is classified with orgs:*.
+  RPC_CHANNELS.teamChat.LIST_CHANNELS,
+  RPC_CHANNELS.teamChat.CREATE_CHANNEL,
+  RPC_CHANNELS.teamChat.JOIN,
+  RPC_CHANNELS.teamChat.LEAVE,
+  RPC_CHANNELS.teamChat.ADD_MEMBERS,
+  RPC_CHANNELS.teamChat.SET_SUBSCRIBED,
+  RPC_CHANNELS.teamChat.ARCHIVE,
+  RPC_CHANNELS.teamChat.LIST_MESSAGES,
+  RPC_CHANNELS.teamChat.POST,
+  RPC_CHANNELS.teamChat.MARK_READ,
+  // Team calls (LiveKit join/leave/sync, transcripts, call list) and org-wide
+  // message search read/write the same org-scoped local messenger store and go
+  // through the same org authorization path as the messenger channels above.
+  RPC_CHANNELS.teamChat.CALL_JOIN,
+  RPC_CHANNELS.teamChat.CALL_LEAVE,
+  RPC_CHANNELS.teamChat.CALL_SYNC,
+  RPC_CHANNELS.teamChat.CALL_TRANSCRIPT,
+  RPC_CHANNELS.teamChat.CALL_LIST,
+  RPC_CHANNELS.teamChat.SEARCH,
+  RPC_CHANNELS.teamChat.CHANGED,
 
   // identity — profile + service connections (Identity Center, S-07)
   RPC_CHANNELS.identity.CONNECT,
@@ -674,6 +703,9 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.serviceLifecycle.RESTART,
   RPC_CHANNELS.serviceLifecycle.UNINSTALL,
   RPC_CHANNELS.serviceLifecycle.STATUS_CHANGED,
+
+  // tray — the menu-bar item lives in the local Electron main process.
+  RPC_CHANNELS.tray.REPORT_STATE,
 
   // diagnostics — host doctor checks read local service/port/config/log state.
   RPC_CHANNELS.diagnostics.RUN,

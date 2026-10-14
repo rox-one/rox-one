@@ -67,6 +67,7 @@ import { toast } from 'sonner'
 import { HOME_WIDGETS } from './home/widgets'
 import type { WidgetEditProps } from './home/widget-kit'
 import { widgetAppearanceStyle } from './home/widget-appearance'
+import { HomeGlanceShell } from './home/glance/HomeGlanceShell'
 
 interface HomeLayoutSnapshot {
   layout: HomeDashboardLayout
@@ -318,6 +319,10 @@ function HeaderButton({ children, onClick, primary, pressed, testId }: { childre
 }
 
 export function HomeFrontPage() {
+  return <HomeGlanceShell overview={<HomeOverviewDashboard />} />
+}
+
+function HomeOverviewDashboard() {
   const { t } = useTranslation()
   const workspace = useActiveWorkspace()
   const workspaceId = workspace?.id ?? null
@@ -505,7 +510,7 @@ export function HomeFrontPage() {
   const hasMore = availableWidgets(layout).length > 0
 
   return (
-    <div className="h-full overflow-y-auto overflow-x-hidden" data-home-dashboard={editing ? 'edit' : 'view'}>
+    <div className="h-full overflow-y-auto overflow-x-hidden" data-home-dashboard={editing ? 'edit' : 'view'} data-panel-density="grid">
       <div className="mx-auto flex w-full max-w-[1920px] flex-col gap-3 px-6 pb-8 pt-5">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-baseline gap-2">

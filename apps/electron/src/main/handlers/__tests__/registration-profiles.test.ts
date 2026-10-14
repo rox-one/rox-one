@@ -9,7 +9,7 @@ import { VOICE_REALTIME_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/v
 import { HANDLED_CHANNELS as DRIVE_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/drive'
 import { HANDLED_CHANNELS as ONBOARDING_SUGGEST_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/onboarding-suggest'
 import { HANDLED_CHANNELS as TG_LINK_HANDLED_CHANNELS } from '@rox/server-core/handlers/rpc/tg-link'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 
 const registeredChannels: string[] = []
 
@@ -122,6 +122,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     files,
     labels,
     orgs,
+    teamChat,
     llm,
     memory,
     memoryIo,
@@ -186,6 +187,7 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     import('@rox/server-core/handlers/rpc/files'),
     import('@rox/server-core/handlers/rpc/labels'),
     import('@rox/server-core/handlers/rpc/orgs'),
+    import('@rox/server-core/handlers/rpc/team-chat'),
     import('@rox/server-core/handlers/rpc/llm-connections'),
     import('@rox/server-core/handlers/rpc/memory'),
     import('@rox/server-core/handlers/rpc/memory-io'),
@@ -270,6 +272,7 @@ import('@rox/server-core/playbooks/jobs'),
     ...files.HANDLED_CHANNELS,
     ...labels.HANDLED_CHANNELS,
     ...orgs.HANDLED_CHANNELS,
+    ...teamChat.HANDLED_CHANNELS,
     ...llm.HANDLED_CHANNELS,
     ...memory.HANDLED_CHANNELS,
     ...memoryIo.HANDLED_CHANNELS,

@@ -9,7 +9,7 @@
  */
 
 import { join } from 'node:path'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import { CONFIG_DIR } from '@rox/shared/config'
 import { ROX_DEEPLINK_SCHEME } from '@rox/shared/identity'
 import { pushTyped, type RequestContext, type RpcServer } from '@rox/server-core/transport'

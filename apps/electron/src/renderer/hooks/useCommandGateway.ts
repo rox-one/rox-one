@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { RPC_CHANNELS } from '../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { PendingCommand } from '@rox/server-core/command-gateway'
 import { toErrorMessage } from '@/lib/errors'
 

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
 import { useTranslation } from 'react-i18next'
 import { ArrowDownUp, ChevronDown, ChevronRight, PackageOpen, Search, Zap } from 'lucide-react'
 import { toast } from 'sonner'
@@ -126,7 +127,7 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
       style={{ '--muted-foreground': 'color-mix(in oklch, var(--foreground) 78%, var(--background))' } as React.CSSProperties}>
       <div data-screen-body="" className="mx-auto w-full max-w-[1440px] space-y-6 p-4 md:p-6">
         <header data-screen-header="" className="flex flex-wrap items-start justify-between gap-3">
-          <div><h1 data-screen-title="" className="flex items-center gap-2 text-base font-semibold"><Zap className="icon-inline" />{t('capabilityCatalog.skillsTitle')}</h1><p data-screen-subtitle="" className="mt-1 text-xs text-muted-foreground">{t('capabilityCatalog.skillsDescription')}</p></div>
+          <div><PanelHeading data-screen-title="" className="flex items-center gap-2 text-base font-semibold" titleKey="capabilityCatalog.skillsTitle"><Zap className="icon-inline" />{t('capabilityCatalog.skillsTitle')}</PanelHeading><p data-screen-subtitle="" className="mt-1 text-xs text-muted-foreground">{t('capabilityCatalog.skillsDescription')}</p></div>
           {workspaceRootPath && <EditPopover trigger={<Button variant="outline" size="sm">{t('skillsList.addSkill')}</Button>} {...getEditConfig('add-skill', workspaceRootPath)} />}
         </header>
         {error && <p role="alert" className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive">{error}</p>}
