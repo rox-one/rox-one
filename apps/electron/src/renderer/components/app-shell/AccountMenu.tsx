@@ -21,7 +21,6 @@ import {
   CloudOff,
   ExternalLink,
   FolderPlus,
-  Shield,
   Trash2,
 } from 'lucide-react'
 import { AnimatePresence } from '@/lib/deferred-motion'
@@ -58,37 +57,7 @@ import { waitForTransportConnected } from '@/lib/transport-wait'
 import { useWorkspaceIcons } from '@/hooks/useWorkspaceIcon'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { isSshBackedWorkspace } from '../../../shared/ssh'
-import blackInkAvatar from '@/assets/rox-avatar-ink-black.png'
-import whiteInkAvatar from '@/assets/rox-avatar-ink-white.png'
-import { useOptionalAppShellContext } from '@/context/AppShellContext'
-import { resolveDisplayName } from './profile-strip-account'
 import type { CredentialHealthStatus, IdentityState, Workspace } from '../../../shared/types'
-
-/**
- * Round identity avatar for the Identity Center profile header: the user's own
- * image when present, otherwise the Rox ink mark (black on light surfaces,
- * white on dark ones — a theme-aware pair, never `dark:invert`).
- */
-function ProfileAvatar({ src, className }: { src?: string; className?: string }) {
-  return (
-    <span className={cn('relative block shrink-0 overflow-hidden rounded-full bg-surface-pressed', className)}>
-      {src ? (
-        <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
-      ) : (
-        <>
-          <img src={blackInkAvatar} alt="" draggable={false} className="h-full w-full object-cover dark:hidden" />
-          <img
-            src={whiteInkAvatar}
-            alt=""
-            aria-hidden="true"
-            draggable={false}
-            className="hidden h-full w-full object-cover dark:block"
-          />
-        </>
-      )}
-    </span>
-  )
-}
 
 export interface AccountMenuProps {
   /**
@@ -233,9 +202,6 @@ export function AccountMenu({
   onOpenCreationScreen,
 }: AccountMenuProps) {
   const { t } = useTranslation()
-  // The shell already tracks the signed-in Rox cloud account; reuse it so the
-  // menu shows the same merged name as the profile strip.
-  const roxAccount = useOptionalAppShellContext()?.roxAccount ?? null
   const tourWorkspaceTarget = useTourTarget('workspace.switcher', { scope: 'shell', workspaceId: activeWorkspaceId ?? undefined, variant: compact ? 'compact' : 'regular' })
   const [open, setOpen] = React.useState(false)
   const ownCreationFlow = useWorkspaceCreationFlow({ activeWorkspaceId, onSelectWorkspace, onWorkspaceCreated })
@@ -354,11 +320,6 @@ export function AccountMenu({
 
   const closeMenu = React.useCallback(() => setOpen(false), [])
 
-  const openAccountPage = React.useCallback(() => {
-    closeMenu()
-    navigate(routes.view.settings('account'))
-  }, [closeMenu])
-
   const openAccountsSettings = React.useCallback(() => {
     closeMenu()
     navigate(routes.view.settings('accounts'))
@@ -376,18 +337,12 @@ export function AccountMenu({
     }
   }, [closeMenu, t])
 
-  const profile = identity?.profile
-  // Same merge as the profile strip: the name the user signed in with wins.
-  const displayName = resolveDisplayName(roxAccount, profile?.displayName, t('profile.defaultName'))
   const connections = identity?.connections ?? []
   const connectedCount = connections.filter(
     (connection) => connection.status === 'connected' || connection.status === 'syncing',
   ).length
   const expiredCount = connections.filter((connection) => connection.status === 'expired').length
   const errorCount = connections.filter((connection) => connection.status === 'error').length
-  const profileModeLabel = t('accountMenu.profileMode', {
-    mode: profile?.mode ?? 'local',
-  })
   const connectionsSummary = t('accountMenu.connectionsSummary', {
     connected: connectedCount,
     expired: expiredCount,
@@ -444,7 +399,9 @@ export function AccountMenu({
   }
 
 
-  const triggerLabel = selectedWorkspace?.name || t('workspace.selectWorkspace')
+  const triggerFullLabel = selectedWorkspace?.name || t('workspace.selectWorkspace')
+  // Hostname-style names (ts-macbook-pro.blenny-gar.ts.net) show their first label; full name in the tooltip.
+  const triggerLabel = /^[^\s.]+(\.[^\s.]+)+$/.test(triggerFullLabel) ? triggerFullLabel.split('.')[0]! : triggerFullLabel
 
   const triggerButton = (
     <button
@@ -452,8 +409,8 @@ export function AccountMenu({
       ref={tourWorkspaceTarget}
       data-account-menu={compact ? 'compact' : 'topbar'}
       className={cn(
-        'header-icon-btn titlebar-no-drag ml-1 flex min-w-0 items-center justify-start gap-0.5 h-[30px] rounded-[var(--radius-control)] border border-border/50 bg-[var(--surface-elevated)] text-base text-foreground/70 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground',
-        compact ? 'flex-1 px-2' : 'flex-1 px-3',
+        'header-icon-btn titlebar-no-drag ml-1 flex min-w-0 items-center justify-start gap-0.5 h-7 max-w-56 rounded-[var(--radius-control)] border border-border/40 bg-[var(--surface-elevated)] text-caption text-foreground/70 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground',
+        compact ? 'flex-1 px-2' : 'flex-1 px-2',
       )}
       aria-label={t('workspace.selectWorkspace')}
     >
@@ -461,10 +418,10 @@ export function AccountMenu({
         workspaceId={selectedWorkspace?.id}
         workspaceName={selectedWorkspace?.name || triggerLabel}
         src={selectedWorkspace ? workspaceIconMap.get(selectedWorkspace.id) : undefined}
-        className="h-4 w-4 mr-1.5 rounded-full ring-1 ring-border/50"
+        className="h-3.5 w-3.5 mr-1 rounded-full ring-1 ring-border/50"
         fallbackClassName="rounded-full"
       />
-      <span className="truncate min-w-0 flex-1 text-left" title={triggerLabel}>{triggerLabel}</span>
+      <span className="truncate min-w-0 flex-1 text-left" title={triggerFullLabel}>{triggerLabel}</span>
       {selectedWorkspace?.remoteServer &&
         (isRemoteDisconnected(selectedWorkspace.id) ? (
           <CloudOff
@@ -502,24 +459,6 @@ export function AccountMenu({
             </DrawerHeader>
 
             <div className="flex-1 min-h-0 overflow-y-auto px-2 pb-6 flex flex-col gap-0.5">
-              {drawerSectionLabel(t('accountMenu.section.profile'))}
-              <div className="flex items-center gap-3 px-3 py-3">
-                <ProfileAvatar src={profile?.avatar} className="h-7 w-7 shadow-minimal" />
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-medium" title={displayName}>
-                    {displayName}
-                  </div>
-                  <div className="text-xs text-foreground/50">
-                    {profileModeLabel}
-                  </div>
-                </div>
-              </div>
-              <DrawerClose asChild>
-                <button type="button" className={drawerRowClass} onClick={openAccountPage}>
-                  <span className="font-medium">{t('accountMenu.editProfile')}</span>
-                </button>
-              </DrawerClose>
-
               {drawerSectionLabel(t('accountMenu.section.workspaces'))}
               {workspaces.map((workspace) => {
                 const disconnected = isRemoteDisconnected(workspace.id)
@@ -637,12 +576,6 @@ export function AccountMenu({
               </DrawerClose>
 
               {drawerSectionLabel(t('accountMenu.section.security'))}
-              <DrawerClose asChild>
-                <button type="button" className={drawerRowClass} onClick={openAccountsSettings}>
-                  <Shield className="h-4 w-4 text-foreground/60 shrink-0" />
-                  <span className="font-medium">{t('accountMenu.openAccountsSettings')}</span>
-                </button>
-              </DrawerClose>
               <div className="px-3 py-2 text-sm text-foreground/70">
                 {t('accountMenu.credentialHealth', { status: healthLabel })}
               </div>
@@ -673,20 +606,6 @@ export function AccountMenu({
         <DropdownMenuTrigger asChild>{trigger ?? triggerButton}</DropdownMenuTrigger>
 
         <StyledDropdownMenuContent align="start" sideOffset={6} minWidth="min-w-72">
-          {sectionLabel(t('accountMenu.section.profile'))}
-          <div className="flex items-center gap-3 px-2 py-1.5">
-            <ProfileAvatar src={profile?.avatar} className="h-8 w-8 shadow-minimal" />
-            <div className="min-w-0">
-              <div className="truncate text-sm font-medium" title={displayName}>
-                {displayName}
-              </div>
-              <div className="text-xs text-muted-foreground">{profileModeLabel}</div>
-            </div>
-          </div>
-          <StyledDropdownMenuItem onClick={openAccountPage} className="font-sans">
-            {t('accountMenu.editProfile')}
-          </StyledDropdownMenuItem>
-          <StyledDropdownMenuSeparator />
           {sectionLabel(t('accountMenu.section.workspaces'))}
           {workspaces.map((workspace) => {
             const disconnected = isRemoteDisconnected(workspace.id)
@@ -791,10 +710,6 @@ export function AccountMenu({
           </StyledDropdownMenuItem>
           <StyledDropdownMenuSeparator />
           {sectionLabel(t('accountMenu.section.security'))}
-          <StyledDropdownMenuItem onClick={openAccountsSettings} className="font-sans">
-            <Shield className="h-4 w-4" />
-            {t('accountMenu.openAccountsSettings')}
-          </StyledDropdownMenuItem>
           <div className="px-2 py-1.5 text-xs text-muted-foreground">
             {t('accountMenu.credentialHealth', { status: healthLabel })}
           </div>
