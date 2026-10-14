@@ -6,7 +6,7 @@ import { useAtomValue, useSetAtom } from "jotai"
 import { isToday, isYesterday, format, startOfDay } from "date-fns"
 import { getDateLocale } from "@rox/shared/i18n"
 import { useAction } from "@/actions"
-import { Inbox, Archive, ChevronRight, GripVertical, ListFilter } from "lucide-react"
+import { Inbox, Archive, ChevronRight, FolderPlus, GripVertical, ListFilter } from "lucide-react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
@@ -19,6 +19,21 @@ import * as MultiSelect from "@/hooks/useMultiSelect"
 import { EntityListEmptyScreen } from "@/components/ui/entity-list-empty"
 import { EntityList, type EntityListGroup } from "@/components/ui/entity-list"
 import { RenameDialog } from "@/components/ui/rename-dialog"
+import type { EntityListGroupHeaderOverride } from "@/components/ui/entity-list"
+import { useChatFolders } from "@/hooks/useChatFolders"
+import { FolderGroupHeader } from "./chat-folders/FolderGroupHeader"
+import {
+  UNGROUPED_FOLDER_KEY,
+  composeFolderGroups,
+  effectiveFolderAssignments,
+  folderGroupKey,
+  folderIdFromGroupKey,
+  folderOf,
+  isFolderGroupKey,
+  newChatFolderId,
+  snapshotFolder,
+  type FolderHeaderMeta,
+} from "./chat-folders/chat-folders-model"
 import { SessionSearchHeader } from "./SessionSearchHeader"
 import { SessionItem } from "./SessionItem"
 import { SessionLanes } from "./SessionLanes"
@@ -220,6 +235,11 @@ export function SessionList({
   const refreshMetadata = useSetAtom(refreshSessionsMetadataAtom)
   const loadedSessionIds = useAtomValue(loadedSessionsAtom)
 
+  // --- Chat folders (DSH-style): folder groups on top of the normal list ---
+  const { state: chatFolders, mutate: mutateChatFolders } = useChatFolders(workspaceId)
+  const folderAssignments = useMemo(() => effectiveFolderAssignments(chatFolders), [chatFolders])
+  const foldersActive = chatFolders.folders.length > 0
+
   // Display groupBy drives list grouping when set; legacy per-view grouping
   // mode remains the fallback for groupBy === 'none'.
   const effectiveGroupingMode: ListGroupingMode = resolveListGroupingMode(
@@ -362,7 +382,7 @@ export function SessionList({
     otherResultItems,
     exceededSearchLimit,
     flatItems,
-    collapsedGroupsMeta,
+    collapsedGroupsMeta: allCollapsedGroupsMeta,
     searchInputRef,
   } = useSessionSearch({
     items,
@@ -377,6 +397,7 @@ export function SessionList({
     collapsedGroups,
     groupingMode: effectiveGroupingMode,
     bucketRepresentatives,
+    folderAssignments: foldersActive ? folderAssignments : undefined,
   })
 
   // FR-45: rank drag under the same rule as the table (orderBy === 'rank');
@@ -423,8 +444,22 @@ export function SessionList({
     // when member activity spans several date buckets, in every grouping mode.
     // Family position inside the bucket = family lastActivity (max). Branch
     // rows of collapsed families are dropped from the stream (root stays).
-    const familyUnits = groupIntoFamilyUnits(flatItems, familyBySessionId, collapsedGroups)
+    const allFamilyUnits = groupIntoFamilyUnits(flatItems, familyBySessionId, collapsedGroups)
+    // Chat folders: a family lives in the folder of its bucket representative
+    // (same rule as the collapse keys in useSessionSearch). Everything else is
+    // grouped by the active list mode below, under the Ungrouped header.
+    const folderUnits = new Map<string, FamilyUnit<SessionMeta>[]>()
+    const familyUnits: FamilyUnit<SessionMeta>[] = []
+    for (const unit of allFamilyUnits) {
+      const fid = foldersActive ? folderOf(folderAssignments, unit.bucketItem.id) : undefined
+      if (!fid) { familyUnits.push(unit); continue }
+      const bucket = folderUnits.get(fid)
+      if (bucket) bucket.push(unit)
+      else folderUnits.set(fid, [unit])
+    }
+    const collapsedGroupsMeta = allCollapsedGroupsMeta.filter(m => !isFolderGroupKey(m.key))
 
+    const modeResult = ((): { rows: SessionListRow[]; groups: EntityListGroup<SessionListRow>[] } => {
     if (effectiveGroupingMode === 'unread') {
       // Two fixed buckets: unread on top, read below. Within each, items keep
       // the same `lastMessageAt`-descending order they already arrive in.
@@ -786,7 +821,27 @@ export function SessionList({
       rows: orderedGroups.flatMap(g => g.items),
       groups: orderedGroups,
     }
-  }, [isSearchMode, matchingFilterItems, otherResultItems, flatItems, effectiveGroupingMode, rankDragEnabled, sessionStatuses, projects, flatLabels, collapsedGroupsMeta, collapsedGroups, familyBySessionId, t])
+    })()
+
+    if (!foldersActive) return modeResult
+    const folderRows = new Map<string, SessionListRow[]>()
+    for (const [fid, units] of folderUnits) {
+      sortUnitsByActivity(units)
+      folderRows.set(fid, hydrateFamilyRows(units))
+    }
+    const composed = composeFolderGroups({
+      folders: chatFolders.folders,
+      folderRows,
+      collapsedMeta: allCollapsedGroupsMeta,
+      modeGroups: modeResult.groups,
+      ungroupedLabel: t('chatFolders.ungrouped'),
+    })
+    return {
+      rows: composed.groups.flatMap(g => g.items),
+      groups: composed.groups,
+      folderHeaders: composed.headers,
+    }
+  }, [isSearchMode, matchingFilterItems, otherResultItems, flatItems, effectiveGroupingMode, rankDragEnabled, sessionStatuses, projects, flatLabels, allCollapsedGroupsMeta, collapsedGroups, familyBySessionId, foldersActive, folderAssignments, chatFolders.folders, t])
 
   const emptyBuckets = useMemo(
     () => emptyListGroupBuckets({
@@ -806,7 +861,7 @@ export function SessionList({
       collectionDisplay.showEmptyGroups,
       emptyBuckets,
     )
-    return { rows: groupedRowData.rows, groups }
+    return { rows: groupedRowData.rows, groups, folderHeaders: (groupedRowData as { folderHeaders?: Map<string, FolderHeaderMeta> }).folderHeaders }
   }, [groupedRowData, isSearchMode, collectionDisplay.showEmptyGroups, emptyBuckets])
 
   const flatRows = rowData.rows
@@ -825,8 +880,9 @@ export function SessionList({
       const now = Date.now()
       items.forEach(item => allKeys.add(getListGroupKey(item, effectiveGroupingMode, now)))
     }
+    if (foldersActive) chatFolders.folders.forEach(f => allKeys.add(folderGroupKey(f.id)))
     setCollapsedGroups(allKeys)
-  }, [items, effectiveGroupingMode, projects, familyBySessionId])
+  }, [items, effectiveGroupingMode, projects, familyBySessionId, foldersActive, chatFolders.folders])
   const expandAllGroups = useCallback(() => {
     setCollapsedGroups(new Set())
   }, [])
@@ -847,17 +903,62 @@ export function SessionList({
 
   // Bucket keys follow the family representative so drag validation matches
   // the rendered grouping (a whole family lives in ONE bucket).
+  // Folder-aware: a foldered family's bucket is `folder:<id>` in every mode.
+  const listKeyFor = useCallback((rep: SessionMeta, now: number): string => {
+    const fid = foldersActive ? folderOf(folderAssignments, rep.id) : undefined
+    return fid ? folderGroupKey(fid) : getListGroupKey(rep, effectiveGroupingMode, now)
+  }, [foldersActive, folderAssignments, effectiveGroupingMode])
+
   const groupKeyOf = useCallback((id: string, now: number): string => {
     const meta = itemById.get(id)
     if (!meta) return ''
-    return getListGroupKey(bucketRepresentatives.get(id) ?? meta, effectiveGroupingMode, now)
-  }, [itemById, bucketRepresentatives, effectiveGroupingMode])
+    return listKeyFor(bucketRepresentatives.get(id) ?? meta, now)
+  }, [itemById, bucketRepresentatives, listKeyFor])
+
+  /**
+   * Folder move implied by dragging `dragKey` onto `targetKey`:
+   * folder id, null (= remove from folder), or undefined (not a folder move).
+   */
+  const folderMoveTarget = useCallback((dragKey: string, targetKey: string): string | null | undefined => {
+    if (!foldersActive || !dragKey || dragKey === targetKey) return undefined
+    const target = folderIdFromGroupKey(targetKey)
+    if (target !== undefined) return target
+    return isFolderGroupKey(dragKey) ? null : undefined
+  }, [foldersActive])
+
+  // Whole session family moves together (it renders in ONE bucket).
+  const familyIdsOf = useCallback((id: string): string[] => {
+    const family = familyBySessionId.get(id)
+    return family ? [...family.memberIds] : [id]
+  }, [familyBySessionId])
+
+  const moveSessionsToFolder = useCallback(async (sessionIds: string[], folderId: string | null) => {
+    if (sessionIds.length === 0) return
+    const ok = await mutateChatFolders({ kind: 'move', sessionIds, folderId })
+    if (!ok) toast.error(t('chatFolders.error'))
+  }, [mutateChatFolders, t])
+
+  const [isDraggingFromFolder, setIsDraggingFromFolder] = useState(false)
 
   const handleRowDragStart = useCallback((id: string) => {
     dragIdRef.current = id
-  }, [])
+    setIsDraggingFromFolder(foldersActive && isFolderGroupKey(groupKeyOf(id, Date.now())))
+  }, [foldersActive, groupKeyOf])
 
   const handleRowDragOver = useCallback((id: string, e: React.DragEvent) => {
+    const folderDragId = dragIdRef.current
+    if (folderDragId && folderDragId !== id) {
+      const now = Date.now()
+      const targetKey = groupKeyOf(id, now)
+      const folderTarget = folderMoveTarget(groupKeyOf(folderDragId, now), targetKey)
+      if (folderTarget !== undefined) {
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+        setDropTarget(null)
+        setDropGroupKey(folderTarget === null ? UNGROUPED_FOLDER_KEY : folderGroupKey(folderTarget))
+        return
+      }
+    }
     if (!rankDragEnabled) return
     const dragId = dragIdRef.current
     if (dragId && dragId !== id) {
@@ -880,7 +981,7 @@ export function SessionList({
     const before = e.clientY < rect.top + rect.height / 2
     setDropGroupKey(null)
     setDropTarget({ sessionId: id, before })
-  }, [rankDragEnabled, groupKeyOf, effectiveGroupingMode])
+  }, [rankDragEnabled, groupKeyOf, effectiveGroupingMode, folderMoveTarget])
 
   const finalizeReorder = useCallback(
     async (targetId: string, before: boolean) => {
@@ -952,7 +1053,7 @@ export function SessionList({
                 const keyMeta = representative
                   ? (refreshedItems.find(m => m.id === representative.id) ?? representative)
                   : meta
-                return getListGroupKey(keyMeta, effectiveGroupingMode, Date.now()) === targetKey
+                return listKeyFor(keyMeta, Date.now()) === targetKey
               })
             const retry = listRankReorderRequest(dragId, targetId, before, reorderedPeers)
             if (retry) {
@@ -972,10 +1073,25 @@ export function SessionList({
         toast.error(t('collection.bulk.failed', { message: toErrorMessage(error) }))
       }
     },
-    [rankDragEnabled, itemById, groupKeyOf, effectiveGroupingMode, flatRows, items, updateMeta, refreshMetadata, loadedSessionIds, bucketRepresentatives, t],
+    [rankDragEnabled, itemById, groupKeyOf, listKeyFor, effectiveGroupingMode, flatRows, items, updateMeta, refreshMetadata, loadedSessionIds, bucketRepresentatives, t],
   )
 
   const handleEmptyGroupDragOver = useCallback((groupKey: string, e: React.DragEvent) => {
+    const folderDragId = dragIdRef.current
+    if (folderDragId && foldersActive && isFolderGroupKey(groupKey)) {
+      const folderTarget = folderMoveTarget(groupKeyOf(folderDragId, Date.now()), groupKey)
+      if (folderTarget === undefined) {
+        // Already in this folder (or Ungrouped chat over Ungrouped): no-op drop.
+        setDropGroupKey(null)
+        e.dataTransfer.dropEffect = 'none'
+        return
+      }
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'move'
+      setDropTarget(null)
+      setDropGroupKey(groupKey)
+      return
+    }
     if (!rankDragEnabled) return
     const dragId = dragIdRef.current
     if (!dragId || !listCrossGroupDropAction(effectiveGroupingMode, groupKey)) {
@@ -987,13 +1103,19 @@ export function SessionList({
     e.dataTransfer.dropEffect = 'move'
     setDropTarget(null)
     setDropGroupKey(groupKey)
-  }, [rankDragEnabled, effectiveGroupingMode])
+  }, [rankDragEnabled, effectiveGroupingMode, foldersActive, folderMoveTarget, groupKeyOf])
 
   const finalizeEmptyGroupDrop = useCallback(async (groupKey: string) => {
     const dragId = dragIdRef.current
     dragIdRef.current = null
     setDropTarget(null)
     setDropGroupKey(null)
+    setIsDraggingFromFolder(false)
+    const folderTarget = folderIdFromGroupKey(groupKey)
+    if (folderTarget !== undefined) {
+      if (dragId) await moveSessionsToFolder(familyIdsOf(dragId), folderTarget)
+      return
+    }
     if (!dragId || !rankDragEnabled) return
     const dragMeta = itemById.get(dragId)
     const action = listCrossGroupDropAction(effectiveGroupingMode, groupKey)
@@ -1012,7 +1134,7 @@ export function SessionList({
       updateMeta(dragId, previousMetadataPatch)
       toast.error(t('collection.bulk.failed', { message: toErrorMessage(error) }))
     }
-  }, [rankDragEnabled, itemById, effectiveGroupingMode, updateMeta, t])
+  }, [rankDragEnabled, itemById, effectiveGroupingMode, updateMeta, t, moveSessionsToFolder, familyIdsOf])
 
   const handleListDrop = useCallback(
     (e: React.DragEvent) => {
@@ -1025,6 +1147,7 @@ export function SessionList({
         dragIdRef.current = null
         setDropTarget(null)
         setDropGroupKey(null)
+        setIsDraggingFromFolder(false)
       }
     },
     [dropGroupKey, dropTarget, finalizeEmptyGroupDrop, finalizeReorder],
@@ -1034,7 +1157,96 @@ export function SessionList({
     dragIdRef.current = null
     setDropTarget(null)
     setDropGroupKey(null)
+    setIsDraggingFromFolder(false)
   }, [])
+
+  // --- Chat folder management (create / rename / delete with undo) ---
+  const [folderDialog, setFolderDialog] = useState<
+    { mode: 'create'; moveSessionIds?: string[] } | { mode: 'rename'; folderId: string } | null
+  >(null)
+  const [folderDialogName, setFolderDialogName] = useState('')
+
+  const openNewFolderDialog = useCallback((moveSessionIds?: string[]) => {
+    setFolderDialogName('')
+    setFolderDialog({ mode: 'create', moveSessionIds })
+  }, [])
+
+  const openRenameFolderDialog = useCallback((folderId: string) => {
+    const folder = chatFolders.folders.find(f => f.id === folderId)
+    if (!folder) return
+    setFolderDialogName(folder.name)
+    setFolderDialog({ mode: 'rename', folderId })
+  }, [chatFolders.folders])
+
+  const submitFolderDialog = useCallback(async () => {
+    const name = folderDialogName.trim()
+    const dialog = folderDialog
+    if (!dialog || !name) return
+    setFolderDialog(null)
+    if (dialog.mode === 'create') {
+      const id = newChatFolderId()
+      const ok = await mutateChatFolders({ kind: 'create', name, id })
+      if (!ok) { toast.error(t('chatFolders.error')); return }
+      if (dialog.moveSessionIds?.length) await moveSessionsToFolder(dialog.moveSessionIds, id)
+    } else {
+      const ok = await mutateChatFolders({ kind: 'rename', folderId: dialog.folderId, name })
+      if (!ok) toast.error(t('chatFolders.error'))
+    }
+  }, [folderDialog, folderDialogName, mutateChatFolders, moveSessionsToFolder, t])
+
+  // Delete is immediate (chats fall back to Ungrouped) with an Undo toast
+  // that restores the folder at its position with the chats it held.
+  const deleteFolderWithUndo = useCallback(async (folderId: string) => {
+    const snap = snapshotFolder(chatFolders, folderId)
+    if (!snap) return
+    const ok = await mutateChatFolders({ kind: 'delete', folderId })
+    if (!ok) { toast.error(t('chatFolders.error')); return }
+    toast(t('chatFolders.deleted', { name: snap.folder.name }), {
+      action: {
+        label: t('chatFolders.undo'),
+        onClick: () => {
+          void mutateChatFolders({
+            kind: 'restore',
+            folderId: snap.folder.id,
+            name: snap.folder.name,
+            index: snap.index,
+            sessionIds: snap.sessionIds,
+          }).then(restored => { if (!restored) toast.error(t('chatFolders.error')) })
+        },
+      },
+    })
+  }, [chatFolders, mutateChatFolders, t])
+
+  const listCollapsedGroups = useMemo(
+    // The Ungrouped header is header-only: keep it "collapsed" so EntityList
+    // never draws an empty drop lane under it.
+    () => (foldersActive ? new Set([...collapsedGroups, UNGROUPED_FOLDER_KEY]) : collapsedGroups),
+    [foldersActive, collapsedGroups],
+  )
+
+  const folderHeaders = rowData.folderHeaders
+  const renderFolderHeader = useCallback<EntityListGroupHeaderOverride<SessionListRow>>((group, ctx) => {
+    const meta = folderHeaders?.get(group.key)
+    if (!meta) return null
+    const folderId = meta.folder?.id
+    return (
+      <FolderGroupHeader
+        kind={meta.kind}
+        label={group.label}
+        count={meta.count}
+        isCollapsed={meta.kind === 'folder' ? ctx.isCollapsed : false}
+        isDropTarget={dropGroupKey === group.key}
+        isDragging={meta.kind === 'ungrouped' && isDraggingFromFolder}
+        onToggle={meta.kind === 'folder' ? ctx.onToggle : undefined}
+        onDragOver={(e) => handleEmptyGroupDragOver(group.key, e)}
+        onNewFolder={() => openNewFolderDialog()}
+        onRename={folderId ? () => openRenameFolderDialog(folderId) : undefined}
+        onDelete={folderId ? () => void deleteFolderWithUndo(folderId) : undefined}
+        elementRef={ctx.elementRef}
+        style={ctx.style}
+      />
+    )
+  }, [folderHeaders, dropGroupKey, isDraggingFromFolder, handleEmptyGroupDragOver, openNewFolderDialog, openRenameFolderDialog, deleteFolderWithUndo])
 
   // --- Action handlers with toast feedback ---
   const {
@@ -1231,6 +1443,10 @@ export function SessionList({
     contentSearchResults,
     activeChatMatchInfo,
     hasPendingPrompt,
+    chatFolders: workspaceId ? chatFolders.folders : undefined,
+    chatFolderOf: (id: string) => folderOf(folderAssignments, id),
+    onMoveToFolder: workspaceId ? (id: string, folderId: string | null) => void moveSessionsToFolder(familyIdsOf(id), folderId) : undefined,
+    onNewFolderFor: workspaceId ? (id: string) => openNewFolderDialog(familyIdsOf(id)) : undefined,
   }), [
     handleRenameClick, onSessionStatusChange,
     onFlag, handleFlagWithToast, onUnflag, handleUnflagWithToast,
@@ -1241,6 +1457,7 @@ export function SessionList({
     sessionStatuses, flatLabels, labels, resolvedSearchQuery,
     focusedSessionId, selectionStore.state.selected, isMultiSelectActive,
     sessionOptions, contentSearchResults, activeChatMatchInfo, hasPendingPrompt, tourSignals,
+    workspaceId, chatFolders.folders, folderAssignments, moveSessionsToFolder, familyIdsOf, openNewFolderDialog,
   ])
 
   // --- Empty state (non-search) — keep search bar pinned above empty UI ---
@@ -1401,7 +1618,20 @@ export function SessionList({
               </div>
             )
           }
-          if (!rankDragEnabled) return decorated
+          if (!rankDragEnabled && !foldersActive) return decorated
+          if (!rankDragEnabled) {
+            // Folder drag only (no rank reorder): no grip, no before/after line.
+            return (
+              <div
+                draggable
+                onDragStart={() => handleRowDragStart(row.item.id)}
+                onDragOver={(e) => handleRowDragOver(row.item.id, e)}
+                onDragEnd={handleListDragEnd}
+              >
+                {decorated}
+              </div>
+            )
+          }
           const indicator = dropTarget?.sessionId === row.item.id
             ? (dropTarget.before ? 'before' : 'after')
             : null
@@ -1445,6 +1675,19 @@ export function SessionList({
               exceededLimit={exceededSearchLimit}
               inputRef={searchInputRef}
             />
+            {!foldersActive && !isSearchMode && workspaceId && (
+              // No folders yet: a quiet entry point (DSH shows its folder header always).
+              <div className="flex items-center px-5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => openNewFolderDialog()}
+                  className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-caption text-muted-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+                >
+                  <FolderPlus className="h-3.5 w-3.5" aria-hidden />
+                  {t('chatFolders.newFolder')}
+                </button>
+              </div>
+            )}
             {isSearchMode && matchingFilterItems.length === 0 && otherResultItems.length > 0 && (
               <div className="px-4 py-3 text-sm text-muted-foreground">
                 {t("session.noResultsInFilter")}
@@ -1477,11 +1720,12 @@ export function SessionList({
           'aria-label': 'Sessions',
           onDrop: handleListDrop,
           onDragOver: (e: React.DragEvent) => {
-            if (rankDragEnabled) e.preventDefault()
+            if (rankDragEnabled || foldersActive) e.preventDefault()
           },
         }}
         scrollAreaClassName="select-none mask-fade-top-short"
-        collapsedGroups={collapsedGroups}
+        collapsedGroups={listCollapsedGroups}
+        renderGroupHeaderOverride={foldersActive ? renderFolderHeader : undefined}
         onToggleCollapse={toggleGroupCollapse}
         onCollapseAll={collapseAllGroups}
         onExpandAll={expandAllGroups}
@@ -1502,6 +1746,17 @@ export function SessionList({
         statuses={sessionStatuses}
         projects={projects}
         labels={bulkLabelOptions}
+      />
+
+      {/* Chat folder create / rename */}
+      <RenameDialog
+        open={folderDialog !== null}
+        onOpenChange={(open) => { if (!open) setFolderDialog(null) }}
+        title={folderDialog?.mode === 'rename' ? t('chatFolders.renameTitle') : t('chatFolders.newFolderTitle')}
+        value={folderDialogName}
+        onValueChange={setFolderDialogName}
+        onSubmit={() => void submitFolderDialog()}
+        placeholder={t('chatFolders.namePlaceholder')}
       />
 
       {/* Rename Dialog */}

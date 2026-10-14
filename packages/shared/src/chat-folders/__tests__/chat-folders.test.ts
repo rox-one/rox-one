@@ -85,3 +85,33 @@ describe('chat folders storage', () => {
     }
   })
 })
+
+describe('chat folders pruning', () => {
+  it('prunes assignments of deleted sessions on delete and on load', async () => {
+    const { mkdirSync } = await import('fs')
+    const { removeSessionsFromChatFolders, loadChatFoldersPruned } = await import('../storage.ts')
+    const root = mkdtempSync(join(tmpdir(), 'chat-folders-prune-'))
+    try {
+      expect(removeSessionsFromChatFolders(root, ['x'])).toBe(false) // no file → no write
+      mutateChatFolders(root, { kind: 'create', name: 'W', id: 'w' })
+      mutateChatFolders(root, { kind: 'move', sessionIds: ['live', 'gone', 'del'], folderId: 'w' })
+      expect(removeSessionsFromChatFolders(root, ['del'])).toBe(true)
+      expect(Object.keys(loadChatFolders(root).assignments).sort()).toEqual(['gone', 'live'])
+      // No sessions dir yet → never wipe.
+      expect(Object.keys(loadChatFoldersPruned(root).assignments).sort()).toEqual(['gone', 'live'])
+      mkdirSync(join(root, 'sessions', 'live'), { recursive: true })
+      expect(Object.keys(loadChatFoldersPruned(root).assignments)).toEqual(['live'])
+      expect(Object.keys(loadChatFolders(root).assignments)).toEqual(['live'])
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  it('restore re-creates at index and rejects bad ids', () => {
+    const s = applyChatFoldersOp(base(), { kind: 'restore', folderId: 'z', name: 'Z', index: 1, sessionIds: ['s1'] })
+    expect(s.folders.map(f => f.id)).toEqual(['a', 'z', 'b'])
+    expect(s.assignments.s1).toBe('z')
+    expect(() => applyChatFoldersOp(base(), { kind: 'restore', folderId: 'a', name: 'dup', index: 0, sessionIds: [] })).toThrow()
+    expect(() => applyChatFoldersOp(base(), { kind: 'move', sessionIds: ['..'], folderId: 'a' })).toThrow()
+  })
+})

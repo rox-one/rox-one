@@ -216,6 +216,10 @@ export function SessionItem({
           onDelete={() => ctx.onDelete(item.id)}
           projects={ctx.projects}
           onSetProjectId={ctx.onSetProjectId ? (pid) => ctx.onSetProjectId!(item.id, pid) : undefined}
+          folders={ctx.chatFolders}
+          folderId={ctx.chatFolderOf?.(item.id)}
+          onMoveToFolder={ctx.onMoveToFolder ? (fid) => ctx.onMoveToFolder!(item.id, fid) : undefined}
+          onNewFolder={ctx.onNewFolderFor ? () => ctx.onNewFolderFor!(item.id) : undefined}
         />
       }
       contextMenuContent={ctx.isMultiSelectActive && isInMultiSelect ? <BatchSessionMenu /> : undefined}

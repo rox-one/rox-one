@@ -626,15 +626,23 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     if (nativeWorkspace) return readNativeChatFolders(nativeWorkspace.rootPath)
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
-    const { loadChatFolders } = await import('@rox/shared/chat-folders/storage')
+    const { loadChatFoldersPruned } = await import('@rox/shared/chat-folders/storage')
     assertNativeMetadataRead(ctx, deps, server, workspaceId, workspace.rootPath)
-    return loadChatFolders(workspace.rootPath)
+    return loadChatFoldersPruned(workspace.rootPath)
   }, { nativeAction: 'read' })
 
   // Apply one validated op (create/rename/delete/move/reorder) and broadcast the new state
-  server.handle(RPC_CHANNELS.chatFolders.MUTATE, async (_ctx, workspaceId: string, op: import('@rox/shared/chat-folders').ChatFoldersOp) => {
+  server.handle(RPC_CHANNELS.chatFolders.MUTATE, async (ctx, workspaceId: string, op: import('@rox/shared/chat-folders').ChatFoldersOp) => {
+    // Caller must be bound to the workspace it writes (no cross-workspace writes).
+    const callerWorkspaceId = ctx.workspaceId ?? (
+      ctx.webContentsId === null ? undefined : deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId) ?? undefined
+    )
+    if (!workspaceId || callerWorkspaceId !== workspaceId) throw new CodedError('AUTH_FAILED', 'Workspace access denied')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
+    // Sidebar metadata is host-owned: native/remote principals (read-only or
+    // not) never mutate it — same policy as views:save / labels:create.
+    if (ctx.principal) throw new CodedError('FORBIDDEN', 'Workspace metadata is read-only for remote clients')
     const { mutateChatFolders } = await import('@rox/shared/chat-folders/storage')
     const next = mutateChatFolders(workspace.rootPath, op)
     pushTyped(server, RPC_CHANNELS.chatFolders.CHANGED, { to: 'workspace', workspaceId }, workspaceId, next)
