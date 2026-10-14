@@ -413,7 +413,8 @@ function tasksFromRead(value: NoteDocument | NoteTasksEntry): NoteTask[] {
   if ('tasks' in value && Array.isArray(value.tasks)) {
     return value.tasks.map(task => ({ noteId: value.id, noteTitle: value.title, line: task.line, text: task.text, checked: task.checked }))
   }
-  return extractTasks(value, (value as NoteDocument).content)
+  const document = value as NoteDocument
+  return extractTasks(document, document.content)
 }
 
 function updateMarkdownTitle(content: string, title: string): string {
@@ -1098,9 +1099,9 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       // A server without `notes:listTasks` (older remote/SSH host) rejects the
       // batch: fall back to the per-note reads for that chunk.
       const workspaceId = activeWorkspaceId
-      const batch = listTasks(workspaceId, chunk.map(item => item.id)).then(entries => entries, () => null)
+      const batch: Promise<NoteTasksEntry[] | null> = listTasks(workspaceId, chunk.map(item => item.id)).then(entries => entries, () => null)
       for (const { id, key } of chunk) {
-        const read = batch.then(entries => entries
+        const read: Promise<NoteDocument | NoteTasksEntry | undefined> = batch.then<NoteDocument | NoteTasksEntry | undefined>(entries => entries
           ? entries.find(entry => entry.id === id)
           : window.electronAPI.readNote(workspaceId, id))
         taskInFlightRef.current.set(key, read)
