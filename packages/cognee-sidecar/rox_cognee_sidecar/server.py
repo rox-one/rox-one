@@ -16,9 +16,10 @@ from typing import Any, Awaitable, Callable, Protocol
 
 from . import PROTOCOL_VERSION
 
-MAX_LINE_BYTES = 8 * 1024 * 1024
-MAX_DOC_CHARS = 200_000
-MAX_DOCS_PER_ADD = 200
+# Worst case per add: 100 docs x 100k chars x 4 bytes (UTF-8) = 40 MB < 64 MiB.
+MAX_LINE_BYTES = 64 * 1024 * 1024
+MAX_DOC_CHARS = 100_000
+MAX_DOCS_PER_ADD = 100
 VALID_SOURCES = {"session", "notes", "tasks", "chats", "calls", "mail", "files", "lessons"}
 VALID_MODES = {"chunks", "graph_completion", "insights"}
 
@@ -46,7 +47,10 @@ def validate_docs(raw: Any) -> list[dict[str, Any]]:
         if not isinstance(d, dict):
             raise RpcError("bad_params", "doc must be an object")
         doc_id, source, text = d.get("id"), d.get("source"), d.get("text")
-        origin = (d.get("provenance") or {}).get("originClass")
+        prov = d.get("provenance")
+        if prov is not None and not isinstance(prov, dict):
+            raise RpcError("bad_params", "doc.provenance must be an object")
+        origin = (prov or {}).get("originClass")
         if not isinstance(doc_id, str) or not doc_id or len(doc_id) > 512:
             raise RpcError("bad_params", "doc.id must be a non-empty string")
         if source not in VALID_SOURCES:

@@ -4,7 +4,7 @@ import asyncio
 import os
 import sys
 
-from .server import serve
+from .server import MAX_LINE_BYTES, serve
 
 
 async def _amain() -> int:
@@ -18,9 +18,14 @@ async def _amain() -> int:
 
         backend = CogneeBackend(SidecarConfig.from_env())
     loop = asyncio.get_running_loop()
-    reader = asyncio.StreamReader(limit=16 * 1024 * 1024)
-    await loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), sys.stdin)
-    await serve(backend, reader.readline)
+    stdin = sys.stdin.buffer
+
+    # Thread-based reads work on every platform (Windows' Proactor loop has no
+    # connect_read_pipe for stdin).
+    async def read_line() -> bytes:
+        return await loop.run_in_executor(None, stdin.readline, MAX_LINE_BYTES + 1)
+
+    await serve(backend, read_line)
     return 0
 
 

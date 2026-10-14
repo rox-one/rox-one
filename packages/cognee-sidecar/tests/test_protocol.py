@@ -41,8 +41,9 @@ class ProtocolTest(unittest.TestCase):
             {"id": 4, "method": "nope"},
             "not json\n",
             {"id": 5, "method": "add", "params": {"docs": [{"id": "a", "source": "evil", "text": "t"}]}},
+            {"id": 6, "method": "add", "params": {"docs": [{"id": "a", "source": "notes", "text": "t", "provenance": "owner"}]}},
         ])
-        for i in (1, 2, 3, 5):
+        for i in (1, 2, 3, 5, 6):
             self.assertEqual(out[i]["error"]["code"], "bad_params")
         self.assertEqual(out[4]["error"]["code"], "unknown_method")
         self.assertEqual(out[None]["error"]["code"], "bad_json")

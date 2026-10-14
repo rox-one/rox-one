@@ -62,22 +62,30 @@ class CogneeBackend:
             json.dump(self._ids, f)
         os.replace(tmp, self.map_path)
 
-    def _use_model(self, model: str) -> None:
-        self._model = model
-        self.cognee.config.set_llm_model(f"openai/{model}")
+    def _llm_config(self, model: str):
+        from cognee.infrastructure.llm.config import LLMConfig
+
+        return LLMConfig(
+            llm_provider="custom",
+            llm_model=f"openai/{model}",
+            llm_endpoint=self.cfg.llm_endpoint,
+            llm_api_key=self.cfg.llm_api_key,
+        )
 
     async def _with_fallback(self, fn):
+        """Run ``fn(llm_config)`` on the primary model, retrying once on the fallback.
+
+        The model is scoped per call (cognee's ``llm_config=`` argument), so
+        concurrent requests never observe another request's fallback.
+        """
         try:
-            return await fn()
+            return await fn(self._llm_config(self.cfg.llm_model))
         except Exception as err:  # noqa: BLE001
-            if self._model == self.cfg.llm_fallback_model or not _is_llm_error(err):
+            if self.cfg.llm_fallback_model == self.cfg.llm_model or not _is_llm_error(err):
                 raise
             print("[rox-cognee] primary LLM failed, retrying with fallback model", file=sys.stderr)
-            self._use_model(self.cfg.llm_fallback_model)
-            try:
-                return await fn()
-            finally:
-                self._use_model(self.cfg.llm_model)
+            self._model = self.cfg.llm_fallback_model
+            return await fn(self._llm_config(self.cfg.llm_fallback_model))
 
     async def add(self, docs: list[dict[str, Any]]) -> dict[str, Any]:
         by_source: dict[str, list[str]] = {}
@@ -88,9 +96,13 @@ class CogneeBackend:
                 f.write(d["text"])
             by_source.setdefault(d["source"], []).append(path)
             self._ids[name] = {"id": d["id"], "source": d["source"]}
-        for source, paths in by_source.items():
-            await self.cognee.add(paths, dataset_name=dataset_for(source))
-        self._save_map()
+        try:
+            for source, paths in by_source.items():
+                await self.cognee.add(paths, dataset_name=dataset_for(source))
+        finally:
+            # Persist even on partial failure: map and doc files stay consistent,
+            # and a retry of the same ids is idempotent (same file names).
+            self._save_map()
         return {"added": len(docs)}
 
     async def cognify(self, sources: list[str] | None) -> dict[str, Any]:
@@ -99,7 +111,7 @@ class CogneeBackend:
             return {"datasets": []}
         async with self._cognify_lock:
             try:
-                await self._with_fallback(lambda: self.cognee.cognify(datasets=datasets))
+                await self._with_fallback(lambda llm: self.cognee.cognify(datasets=datasets, llm_config=llm))
                 self.last_error = None
             except Exception as err:
                 self.last_error = type(err).__name__
@@ -130,6 +142,8 @@ class CogneeBackend:
                     doc = self._ids[base]
                     break
         hid = doc["id"] if doc else "x-" + hashlib.sha256(text.encode("utf-8")).hexdigest()[:24]
+        # cognee does not expose a stable relevance score across modes; the host
+        # fuses by rank (RRF), so ``score`` is rank-derived by contract.
         return {"id": hid, "source": doc["source"] if doc else "notes", "text": text, "score": 1.0 / (rank + 1), "known": doc is not None}
 
     async def search(self, query: str, mode: str, limit: int) -> list[dict[str, Any]]:
@@ -140,7 +154,7 @@ class CogneeBackend:
         if not datasets:
             return []
         results = await self._with_fallback(
-            lambda: self.cognee.search(query_text=query, query_type=stype, datasets=datasets, top_k=limit)
+            lambda llm: self.cognee.search(query_text=query, query_type=stype, datasets=datasets, top_k=limit, llm_config=llm)
         )
         hits: list[dict[str, Any]] = []
         for i, item in enumerate(results or []):
@@ -155,10 +169,13 @@ class CogneeBackend:
         from cognee.api.v1.datasets.datasets import datasets as ds_api
 
         wanted = {doc_file_name(i) for i in ids}
+        wanted_ds = {dataset_for(self._ids[n]["source"]) for n in wanted if n in self._ids}
         removed = 0
+        if not wanted_ds:
+            return {"removed": 0}
         all_ds = await ds_api.list_datasets()
         for ds in all_ds:
-            if not str(getattr(ds, "name", "")).startswith("rox_"):
+            if str(getattr(ds, "name", "")) not in wanted_ds:
                 continue
             for data in await ds_api.list_data(ds.id):
                 name = os.path.basename(str(getattr(data, "name", "")))
