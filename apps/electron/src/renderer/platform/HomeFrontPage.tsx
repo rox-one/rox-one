@@ -505,7 +505,7 @@ export function HomeFrontPage() {
   const hasMore = availableWidgets(layout).length > 0
 
   return (
-    <div className="h-full overflow-y-auto overflow-x-hidden" data-home-dashboard={editing ? 'edit' : 'view'}>
+    <div className="h-full overflow-y-auto overflow-x-hidden" data-home-dashboard={editing ? 'edit' : 'view'} data-panel-density="grid">
       <div className="mx-auto flex w-full max-w-[1920px] flex-col gap-3 px-6 pb-8 pt-5">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-baseline gap-2">

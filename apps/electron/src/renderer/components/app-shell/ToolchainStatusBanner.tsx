@@ -132,6 +132,10 @@ export function ToolchainStatusBanner() {
 
   const copy = tool ? getToolchainBannerCopy(tool) : null
   if (!phase || !copy || phase === dismissedPhase) return null
+  // Routine background updates (download/install) stay silent: a full-width
+  // strip above every panel for normal maintenance was noise. Only problems
+  // that need the user (offline/error) raise the banner.
+  if (copy.tone === 'info') return null
 
   const toneClasses = copy.tone === 'error'
     ? 'border-destructive/30 bg-destructive/10 text-destructive'
