@@ -11382,6 +11382,7 @@
   "tasks.tagFilter": "Filter by tag",
   "tasks.tagRemove": "Remove tag {{tag}}",
   "tasks.tags": "Étiquettes",
+  "tasks.timeline.layout": "Chronologie",
   "tasks.title": "Title",
   "tasks.titleLabel": "Task title",
   "tasks.titlePlaceholder": "Name this task…",

@@ -11368,6 +11368,7 @@
   "tasks.tagFilter": "Filter by tag",
   "tasks.tagRemove": "Remove tag {{tag}}",
   "tasks.tags": "タグ",
+  "tasks.timeline.layout": "タイムライン",
   "tasks.title": "タイトル",
   "tasks.titleLabel": "Task title",
   "tasks.titlePlaceholder": "タスク名を入力…",

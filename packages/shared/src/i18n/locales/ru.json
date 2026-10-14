@@ -11434,6 +11434,7 @@
   "tasks.tagFilter": "Фильтр по тегу",
   "tasks.tagRemove": "Убрать тег {{tag}}",
   "tasks.tags": "Теги",
+  "tasks.timeline.layout": "Таймлайн",
   "tasks.title": "Название",
   "tasks.titleLabel": "Название задачи",
   "tasks.titlePlaceholder": "Назовите задачу…",

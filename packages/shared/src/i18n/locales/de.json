@@ -11368,6 +11368,7 @@
   "tasks.tagFilter": "Filter by tag",
   "tasks.tagRemove": "Remove tag {{tag}}",
   "tasks.tags": "Tags",
+  "tasks.timeline.layout": "Zeitleiste",
   "tasks.title": "Titel",
   "tasks.titleLabel": "Task title",
   "tasks.titlePlaceholder": "Aufgabe benennen…",

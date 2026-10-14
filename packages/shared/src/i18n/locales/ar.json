@@ -11428,6 +11428,7 @@
   "tasks.tagFilter": "Filter by tag",
   "tasks.tagRemove": "Remove tag {{tag}}",
   "tasks.tags": "الوسوم",
+  "tasks.timeline.layout": "المخطط الزمني",
   "tasks.title": "العنوان",
   "tasks.titleLabel": "Task title",
   "tasks.titlePlaceholder": "سمِّ هذه المهمة…",

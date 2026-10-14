@@ -11368,6 +11368,7 @@
   "tasks.tagFilter": "Filter by tag",
   "tasks.tagRemove": "Remove tag {{tag}}",
   "tasks.tags": "Címkék",
+  "tasks.timeline.layout": "Idővonal",
   "tasks.title": "Cím",
   "tasks.titleLabel": "Task title",
   "tasks.titlePlaceholder": "Nevezd el a feladatot…",
