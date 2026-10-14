@@ -43,6 +43,10 @@ COPY packages/cloud-runner/package.json packages/cloud-runner/
 # Манифест-слой должен покрывать ВСЕ воркспейсы из bun.lock, иначе frozen-install
 # видит неполный набор. Ниже — те, которых здесь не хватало.
 COPY packages/browser-intel/package.json packages/browser-intel/
+# The canvas workspaces arrived with the canvas PRs; without their manifests the
+# frozen install fails on the workspace set (see Dockerfile.server for the same fix).
+COPY packages/canvas-core/package.json packages/canvas-core/
+COPY packages/canvas-relay/package.json packages/canvas-relay/
 COPY packages/rovers-core/package.json packages/rovers-core/
 COPY packages/rovers-core-lite/package.json packages/rovers-core-lite/
 COPY packages/test-harness/package.json packages/test-harness/
