@@ -30,12 +30,12 @@ export function ComposerStatsLine({ stats, className }: { stats: ComposerStats; 
       className={cn('flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-1.5 text-xs numeric text-muted-foreground', className)}
     >
       <span className="inline-flex items-center gap-1.5" data-stat="turns">
-        <Activity className="size-3.5" aria-hidden />
+        <Activity className="icon-caption" aria-hidden />
         {t('chat.stats.turns', { count: stats.turns })} {t('chat.stats.steps', { count: stats.steps })}
       </span>
       {stats.sessionTokens != null && (
         <span className="inline-flex items-center gap-1.5" data-stat="tokens">
-          <Database className="size-3.5" aria-hidden />
+          <Database className="icon-caption" aria-hidden />
           {t('chat.stats.sessionTokens', { tokens: formatCompactTokens(stats.sessionTokens) })}
           {stats.cacheHitPercent != null && (
             <span data-stat="cache">{t('chat.stats.cacheHit', { percent: stats.cacheHitPercent })}</span>

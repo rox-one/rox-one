@@ -4,7 +4,6 @@ import { existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { buildOmpLaunchSpec, OmpAgent } from '../omp-agent.ts';
-import { withOmpRequiredModes } from '../omp-history.ts';
 import { chatEvents, createFakeOmp, makeOmpConfig, useFakeOmpEnv, type FakeOmp } from './omp-fake-cli.ts';
 
 let fake: FakeOmp | null = null;
@@ -39,8 +38,8 @@ describe('OMP launch argv isolation', () => {
     const calls = fake.readArgvLog();
     expect(calls).toHaveLength(1);
     expect(calls[0]).toEqual([
-      '--no-session', '--thinking', 'max', '--model', model, '-p',
-      withOmpRequiredModes(`system\n"quoted"\n\n${prompt}`),
+      '--no-session', '--thinking', 'medium', '--model', model, '-p',
+      `system\n"quoted"\n\n${prompt}`,
     ]);
     expect(existsSync(sentinel)).toBe(false);
   });

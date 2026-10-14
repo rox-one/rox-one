@@ -4,6 +4,9 @@ import * as React from 'react'
 import { MarkdownMermaidBlock } from '../MarkdownMermaidBlock'
 import { RichBlockShell } from '../RichBlockShell'
 import { RICH_BLOCK_EDIT_EVENT } from '../rich-block-events'
+import { fenceCodeAttribute, promoteFencedBlocks, serializeLegacyFence } from './legacy-fence'
+
+const MERMAID_LANGUAGES = new Set(['mermaid'])
 
 export const MermaidBlock = Node.create({
   name: 'mermaidBlock',
@@ -15,8 +18,18 @@ export const MermaidBlock = Node.create({
 
   addAttributes() {
     return {
-      code: {
-        default: '',
+      code: fenceCodeAttribute,
+    }
+  },
+
+  addStorage() {
+    return {
+      markdown: {
+        serialize: (state: Parameters<typeof serializeLegacyFence>[0], node: { attrs?: { code?: string } }) =>
+          serializeLegacyFence(state, node, 'mermaid'),
+        parse: {
+          updateDOM: (element: HTMLElement) => promoteFencedBlocks(element, MERMAID_LANGUAGES, 'mermaid-block'),
+        },
       },
     }
   },

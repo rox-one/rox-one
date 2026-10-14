@@ -27,7 +27,7 @@ export function SidebarNewSessionButton({
         aria-label={t('session.newSession')}
         className="relative flex h-10 w-full items-center justify-center gap-2 rounded-[var(--radius-control)] border border-[var(--graphite-border-strong,var(--border-strong))] bg-[var(--graphite-fill,var(--surface-hover))] text-sm font-medium text-text-primary transition-colors hover:bg-[var(--graphite-fill-hover,var(--surface-pressed))] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       >
-        <CirclePlus className="size-4" aria-hidden />
+        <CirclePlus className="icon-toolbar" aria-hidden />
         <span>{t('session.newSession')}</span>
         {hotkey && (
           <span className="absolute right-3 text-xs text-muted-foreground" aria-hidden>{hotkey}</span>

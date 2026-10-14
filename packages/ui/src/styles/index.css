@@ -602,12 +602,13 @@ html[data-ui-profile="graphite"] {
   --border-subtle: var(--graphite-border);
   --border-strong: var(--graphite-border-strong);
   --chrome-plate-border: var(--graphite-border);
+  --graphite-input-shadow: inset 0 0 0 1px var(--graphite-border-strong), 0 6px 24px -12px rgb(0 0 0 / 0.35);
 }
 html[data-ui-profile="graphite"] [data-slot="button"] {
   border-radius: var(--radius-control);
 }
 html[data-ui-profile="graphite"] .input-container {
-  box-shadow: inset 0 0 0 1px var(--graphite-border-strong), 0 6px 24px -12px rgb(0 0 0 / 0.35);
+  box-shadow: var(--graphite-input-shadow);
 }
 html[data-ui-profile="graphite"] .send-btn {
   width: 2rem;
@@ -619,36 +620,36 @@ html[data-ui-profile="graphite"] [data-sidebar-new-session] {
 }
 /* Screen and catalog headers: generous inset, larger title, muted counts. */
 html[data-ui-profile="graphite"] [data-screen-header] {
-  padding: 40px 40px 12px;
+  padding: calc(var(--spacing) * 10) calc(var(--spacing) * 10) calc(var(--spacing) * 3);
 }
 html[data-ui-profile="graphite"] [data-screen-title] {
-  font-size: 20px;
-  line-height: 28px;
+  font-size: var(--text-stat);
+  line-height: var(--text-stat--line-height);
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 html[data-ui-profile="graphite"] [data-screen-subtitle] {
-  margin-top: 6px;
-  font-size: 13px;
-  line-height: 20px;
+  margin-top: calc(var(--spacing) * 1.5);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
 }
 /* A padded page wrapper owns the inset; its header then adds none, so the
    title lines up with the sections below (no double inset). */
 html[data-ui-profile="graphite"] [data-screen-body] {
-  padding: 40px;
+  padding: calc(var(--spacing) * 10);
 }
 html[data-ui-profile="graphite"] [data-screen-body] [data-screen-header] {
   padding: 0;
 }
 html[data-ui-profile="graphite"] [data-screen-section-title] {
-  font-size: 15px;
+  font-size: var(--text-title-sm);
   font-weight: 500;
 }
 html[data-ui-profile="graphite"] [data-screen-count] {
   background: transparent;
   padding: 0;
-  margin-left: 6px;
-  font-size: 15px;
+  margin-left: calc(var(--spacing) * 1.5);
+  font-size: var(--text-title-sm);
 }
 
 /* --- Concentric radii (all profiles) --------------------------------------

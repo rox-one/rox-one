@@ -96,7 +96,7 @@ import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
 import { type ProfileStripData } from "./ProfileStrip"
 import { accountProfileStrip } from "./profile-strip-account"
 import { SidebarNewSessionButton } from "./SidebarNewSessionButton"
-import { SidebarChrome } from "./SidebarChrome"
+import { SidebarChrome, SidebarHeaderControls } from "./SidebarChrome"
 import { StatusBar } from "./StatusBar"
 import { useUiAppearance } from "@/lib/ui-appearance-store"
 import { focusServicePanelAtom } from "./service-navigation"
@@ -231,6 +231,7 @@ import { buildNewDocumentCreateArgs, pickOpenNotebook } from "../../knowledge/kn
 import { isMissionsNavigation, isScreenNavigation, isSurfaceNavigation } from '../../../shared/types'
 // W1-07 (#1504): unified mode roots + Docs relabel.
 import { enabledShellFlagsAtom } from '@/platform/unified-flags'
+import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { notesTitleKey, surfaceTitleKey } from '@/platform/surface-shell'
 import { MiniSessionSurface } from "./MiniSessionSurface"
 
@@ -587,16 +588,12 @@ function AppShellContent({
   const [openingAgent, setOpeningAgent] = useState(false)
   const toolIntentGeneration = React.useRef(0)
   const shellFlags = useAtomValue(enabledShellFlagsAtom)
-  const contextualSidebarKey = navState.navigator === 'screen' ? `screen:${navState.screen}` : navState.navigator
-  const [applicationSectionsOpenFor, setApplicationSectionsOpenFor] = useState<string | null>(null)
   const pendingSidebarRevealId = React.useRef<string | null>(null)
-  const handleExpandNavigation = useCallback((link: LinkItem, inMore: boolean) => {
+  // Sidebar v2: both sections always render (a collapsed one keeps its active row), so expanding only reveals + focuses the link.
+  const handleExpandNavigation = useCallback((link: LinkItem) => {
     pendingSidebarRevealId.current = link.id
     setIsSidebarVisible(true)
-    // Only the «Ещё» disclosure opens — and only for its own links —
-    // so the primary group stays as is on expand (WP5 registry groups).
-    setApplicationSectionsOpenFor(inMore ? contextualSidebarKey : null)
-  }, [contextualSidebarKey])
+  }, [])
 
   const store = useStore()
   const sidebarScrollRef = useScrollEdgeAttribute()
@@ -1308,7 +1305,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
     if (!button) return
     button.focus()
     pendingSidebarRevealId.current = null
-  }, [isSidebarCollapsed, applicationSectionsOpenFor, sidebarRef])
+  }, [isSidebarCollapsed, sidebarRef])
 
   // Global keyboard shortcuts using centralized action registry
   // Actions are defined in @/actions/definitions.ts
@@ -2890,7 +2887,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
       variant: isClipboardHistoryNavigation(navState) ? "default" : "ghost",
       onClick: () => handleServiceClick('clipboardHistory'),
     },
-    {
+    ...(shellFlags.has(WORKBENCH_FLAG.modeCalendarV1) ? [{
       id: "nav:meetings",
       // W3.2 (Согласованность-20261009): Встречи merged into the calendar
       // surface — the entry keeps id/link/route and opens it, active while the
@@ -2899,7 +2896,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
       icon: APP_NAV_DESTINATIONS_BY_ID.meetings.icon,
       variant: isSurfaceNavigation(navState) && navState.surface === 'calendar' ? "default" : "ghost",
       onClick: handleMeetingsClick,
-    },
+    }] : []),
     // --- Sources ---
     {
       id: "nav:sources",
@@ -3071,10 +3068,6 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   ], [
     activeWorkspaceId, archivedCount, automationFilter, automationTypeCounts, automations.length, buildLabelSidebarItems, collectionFilters.projectId, effectiveSessionStatuses, flaggedCount, handleAddLabel, handleAllSessionsClick, handleArchivedClick, handleAutomationsAgenticClick, handleAutomationsClick, handleAutomationsEventClick, handleAutomationsScheduledClick, handleFlaggedClick, handleJumpToProjectSessions, handleLabelClick, handleLearningClick, handleMeetingsClick, handleMemoryClick, handleMemoryRepoClick, handleNewChat, handleNotesClick, handlePagesClick, handleProjectsClick, handleServiceClick, handleSessionStatusClick, handleSettingsClick, handleSkillsClick, handleSourcesApiClick, handleSourcesClick, handleSourcesLocalClick, handleSourcesMcpClick, handleStatusReorder, handleTasksClick, isExpanded, labelTree, navState, newChatHotkey, openAddAutomation, openAddProject, openAddSkill, openAddSource, openConfigureLabels, openConfigureStatuses, pages, projects, sessionFilter, sessionStatusCounts, setSessionMetaMap, shellFlags, skills.length, sourceFilter, sourceTypeCounts, sources.length, t, toggleExpanded, toggleSidebarSection, tourNewSessionTarget, unseenStatuses, workspaceSessionMetas.length,
   ])
-  const applicationSectionsOpen = applicationSectionsOpenFor === contextualSidebarKey
-  const handleApplicationSectionsOpenChange = useCallback((open: boolean) => {
-    setApplicationSectionsOpenFor(open ? contextualSidebarKey : null)
-  }, [contextualSidebarKey])
 
   return (
     <TourConnectionPolicyContext.Provider value={learningSourcePolicy?.workspaceId === activeWorkspaceId ? learningSourcePolicy : null}>
@@ -3159,6 +3152,13 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
               }}
             >
             <div className="flex h-full flex-col select-none">
+              {/* Sidebar v2 header: collapse + pin side by side at the top. */}
+              <SidebarHeaderControls
+                collapsed={isSidebarCollapsed}
+                onToggleSidebar={handleToggleSidebar}
+                pinned={sidebarPinned}
+                onPin={handleToggleSidebarPin}
+              />
               {/* Sidebar Top Section */}
               <div className="flex-1 flex flex-col min-h-0">
                 {!isSidebarCollapsed && <SidebarNewSessionButton hotkey={newChatHotkey} onNewSession={handleNewChat} />}
@@ -3202,8 +3202,6 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                         onOpenBrowser={openBrowserTab}
                         isExpanded={isExpanded}
                         toggleExpanded={toggleExpanded}
-                        applicationSectionsOpen={applicationSectionsOpen}
-                        onApplicationSectionsOpenChange={handleApplicationSectionsOpenChange}
                         contextSlotRef={setShellSidebarSlot}
                         pillShown={modePillShown(isAutoCompact)}
                       />
@@ -3219,11 +3217,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                     promoKind={promoKind}
                     onPromoCta={handleMemoryClick}
                     collapsed={isSidebarCollapsed}
-                    onToggleSidebar={handleToggleSidebar}
                     onOpenSettings={() => handleSettingsClick()}
-                    showPin={!isSidebarCollapsed}
-                    pinned={sidebarPinned}
-                    onPin={handleToggleSidebarPin}
                   />
                 </div>
               </div>

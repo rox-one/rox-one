@@ -19,7 +19,7 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "severity": "warn",
-      "total": 14
+      "total": 13
     },
     "@typescript-eslint/no-extra-non-null-assertion": {
       "severity": "warn",
@@ -63,7 +63,7 @@
     },
     "@typescript-eslint/no-unused-vars": {
       "severity": "warn",
-      "total": 4
+      "total": 0
     },
     "@typescript-eslint/no-wrapper-object-types": {
       "severity": "warn",
@@ -289,14 +289,9 @@
     "apps/webui/src/shims/open.ts": {
       "@typescript-eslint/no-explicit-any": 1
     },
-    "apps/webui/src/shims/sentry-electron.ts": {
-      "@typescript-eslint/no-explicit-any": 1,
-      "@typescript-eslint/no-unused-vars": 1
-    },
     "apps/webui/src/shims/ws.ts": {
       "@typescript-eslint/no-explicit-any": 1,
-      "@typescript-eslint/no-unsafe-function-type": 1,
-      "@typescript-eslint/no-unused-vars": 3
+      "@typescript-eslint/no-unsafe-function-type": 1
     }
   }
 }

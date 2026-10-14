@@ -12,7 +12,7 @@
 
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { LogOut, Settings } from 'lucide-react'
+import { LogOut, Settings, SlidersHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
@@ -43,6 +43,8 @@ export interface UserProfilePopoverContentProps {
   /** Pre-rendered round avatar element (kept in a single place by ProfileStrip). */
   avatar: React.ReactNode
   onOpenAccountSettings: () => void
+  /** Sidebar v2: app settings live here (no gear in the sidebar footer). */
+  onOpenSettings?: () => void
   onClose: () => void
 }
 
@@ -54,6 +56,7 @@ export function UserProfilePopoverContent({
   spentLabel,
   avatar,
   onOpenAccountSettings,
+  onOpenSettings,
   onClose,
 }: UserProfilePopoverContentProps) {
   const { t } = useTranslation()
@@ -131,6 +134,12 @@ export function UserProfilePopoverContent({
 
       <div className="mx-1 my-0.5 h-px bg-border-subtle" />
 
+      {onOpenSettings ? (
+        <button type="button" className={rowClass} onClick={onOpenSettings} data-testid="profile-open-settings">
+          <SlidersHorizontal className="icon-toolbar shrink-0 text-muted-foreground" aria-hidden />
+          <span className="font-medium">{t('sidebar.settings')}</span>
+        </button>
+      ) : null}
       <button type="button" className={rowClass} onClick={onOpenAccountSettings}>
         <Settings className="icon-toolbar shrink-0 text-muted-foreground" aria-hidden />
         <span className="font-medium">{t('profile.accountSettings')}</span>

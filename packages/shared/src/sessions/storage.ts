@@ -44,6 +44,11 @@ import { readSessionHeader, readSessionJsonl } from './jsonl.ts';
 import { recoverSessionJournal } from './journal-recover.ts';
 import { sessionPersistenceQueue } from './persistence-queue.ts';
 import { sessionProjectIds, sessionBelongsToProject, withProjectMembership } from './membership.ts';
+import {
+  invalidateSessionLoadCache,
+  readSessionLoadCache,
+  writeSessionLoadCache,
+} from './session-load-cache.ts';
 
 // Re-export types for convenience
 export type { SessionConfig } from './types.ts';
@@ -324,6 +329,7 @@ export async function getOrCreateSessionById(
 export async function saveSession(session: StoredSession): Promise<void> {
   sessionPersistenceQueue.enqueue(session);
   await sessionPersistenceQueue.flush(session.id);
+  invalidateSessionLoadCache(session.workspaceRootPath, session.id);
 }
 
 /**
@@ -342,14 +348,38 @@ export function loadSession(workspaceRootPath: string, sessionId: string): Store
 
   const jsonlPath = getSessionFilePath(workspaceRootPath, sessionId);
   recoverSessionJournal(jsonlPath);
-  if (existsSync(jsonlPath)) {
-    const session = readSessionJsonl(jsonlPath);
-    if (session) {
-      end();
-      return session;
-    }
+  if (!existsSync(jsonlPath)) {
+    invalidateSessionLoadCache(workspaceRootPath, sessionId);
+    end();
+    return null;
   }
 
+  let mtimeMs = 0;
+  let size = 0;
+  try {
+    const stats = statSync(jsonlPath);
+    mtimeMs = stats.mtimeMs;
+    size = stats.size;
+  } catch {
+    invalidateSessionLoadCache(workspaceRootPath, sessionId);
+    end();
+    return null;
+  }
+
+  const cached = readSessionLoadCache(workspaceRootPath, sessionId, mtimeMs, size);
+  if (cached) {
+    end();
+    return cached;
+  }
+
+  const session = readSessionJsonl(jsonlPath);
+  if (session) {
+    writeSessionLoadCache(workspaceRootPath, sessionId, { mtimeMs, size, session });
+    end();
+    return session;
+  }
+
+  invalidateSessionLoadCache(workspaceRootPath, sessionId);
   end();
   return null;
 }
@@ -483,6 +513,7 @@ export function listSessionsFromHeaders(
  */
 export function deleteSession(workspaceRootPath: string, sessionId: string): boolean {
   try {
+    invalidateSessionLoadCache(workspaceRootPath, sessionId);
     // Delete session directory (includes session.json, attachments, plans)
     const sessionDir = getSessionPath(workspaceRootPath, sessionId);
     if (existsSync(sessionDir)) {

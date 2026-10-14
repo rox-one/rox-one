@@ -3,6 +3,29 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'path'
 
+/**
+ * Partition the viewer bundle so the monolith stops being a single chunk.
+ *
+ * Only the foundation runtime is grouped; everything else is left to Rollup's
+ * default code-splitting. A broader grouping is a trap here: the viewer loads
+ * Shiki grammars, Mermaid and PDF previews through dynamic `import()`, and
+ * folding those modules into a named chunk makes it a *static* dependency of
+ * the entry — turning a lazy 10 MB into an eager one.
+ *
+ * Locale JSON is intentionally not grouped: it is pulled through dynamic
+ * `import()` by `@rox/shared/i18n/lazy`, so each language must stay its own
+ * on-demand chunk rather than being merged back into one eager bundle.
+ */
+function manualChunks(id: string): string | undefined {
+  const path = id.replace(/\\/g, '/')
+  if (!path.includes('node_modules')) return undefined
+  if (/node_modules\/(react|react-dom|scheduler)\//.test(path)) return 'vendor-react'
+  if (/node_modules\/(i18next|react-i18next|i18next-browser-languagedetector)\//.test(path)) {
+    return 'vendor-i18n'
+  }
+  return undefined
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -27,6 +50,11 @@ export default defineConfig({
     outDir: 'dist',
     emptyDirBeforeWrite: true,
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks,
+      },
+    },
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
