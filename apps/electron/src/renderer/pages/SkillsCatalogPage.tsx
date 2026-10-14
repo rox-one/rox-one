@@ -13,6 +13,7 @@ import type { SkillUsageMap } from '@rox/shared/memory/types'
 import type { LoadedSkill, BundledSkillPackStatus } from '../../shared/types'
 import { useSkillsQuery } from '@/hooks/use-skills-query'
 import { readSkillsPage } from '@/lib/skills-query'
+import { skillsCatalogRowWindow } from './skills-catalog-window'
 
 export interface SkillsCatalogPageProps {
   workspaceId: string
@@ -100,6 +101,26 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
     } catch (err) { if ((currentWorkspace.current === capturedWorkspace && currentGuard.current === capturedGuard)) toast.error(t('skillsList.roxCliExportFailed'), { description: err instanceof Error ? err.message : undefined }) }
     finally { if ((currentWorkspace.current === capturedWorkspace && currentGuard.current === capturedGuard)) setBusy(null) }
   }
+  const tableViewportRef = React.useRef<HTMLDivElement>(null)
+  const [tableScroll, setTableScroll] = React.useState({ top: 0, height: 600 })
+  React.useEffect(() => {
+    const el = tableViewportRef.current
+    if (!el) return
+    const sync = () => setTableScroll({ top: el.scrollTop, height: el.clientHeight || 600 })
+    sync()
+    el.addEventListener('scroll', sync, { passive: true })
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(sync)
+    ro?.observe(el)
+    return () => {
+      el.removeEventListener('scroll', sync)
+      ro?.disconnect()
+    }
+  }, [rows.length])
+  const catalogWindow = React.useMemo(
+    () => skillsCatalogRowWindow(rows.length, tableScroll.top, tableScroll.height),
+    [rows.length, tableScroll.top, tableScroll.height],
+  )
+  const visibleRows = rows.slice(catalogWindow.start, catalogWindow.end)
   return (
     <div className="h-full overflow-auto min-w-0" data-testid="skills-catalog"
       style={{ '--muted-foreground': 'color-mix(in oklch, var(--foreground) 78%, var(--background))' } as React.CSSProperties}>
@@ -128,15 +149,19 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
             <select aria-label={t('capabilityCatalog.category')} value={category} onChange={e => setCategory(e.target.value as typeof category)} className="h-8 max-w-full rounded-md border border-border/60 bg-background px-2 text-xs"><option value="all">{t('capabilityCatalog.allCategories')}</option>{CAPABILITY_CATEGORIES.map(item => <option key={item} value={item}>{t(`capabilityCatalog.categories.${item}`)}</option>)}</select>
             <select aria-label={t('capabilityCatalog.scope')} value={scope} onChange={e => setScope(e.target.value as typeof scope)} className="h-8 rounded-md border border-border/60 bg-background px-2 text-xs"><option value="all">{t('capabilityCatalog.allScopes')}</option>{(['workspace', 'project', 'global', 'omp'] as const).map(item => <option key={item} value={item}>{t(`capabilityCatalog.scopes.${item}`)}</option>)}</select>
           </div>
-          <div className="overflow-x-auto rounded-xl border border-border/60"><table className="w-full min-w-[680px] border-collapse text-left text-xs" aria-label={t('capabilityCatalog.individualSkills')}>
-            <thead className="bg-foreground/[0.025] text-muted-foreground"><tr>{['name', 'description', 'category', 'usage', 'author', 'updated'].map(key => <th key={key} scope="col" className="border-b border-border/60 px-3 py-2.5 font-medium" aria-sort={key === 'name' && sort === 'name' ? 'ascending' : key === 'usage' && sort === 'usage' ? 'descending' : undefined}>{key === 'name' || key === 'usage' ? <button type="button" className="flex items-center gap-1" onClick={() => setSort(key === 'name' ? 'name' : 'usage')}>{t(`capabilityCatalog.columns.${key}`)}<ArrowDownUp className="size-3" /></button> : t(`capabilityCatalog.columns.${key}`)}</th>)}</tr></thead>
-            <tbody>{rows.map(row => <React.Fragment key={row.key}><tr className="border-b border-border/40 hover:bg-foreground/[0.025]" data-testid="catalog-skill-row">
-              <td className="px-3 py-3"><div className="flex items-center gap-2"><input type="checkbox" aria-label={t('capabilityCatalog.selectResource', { name: row.ref.label })} checked={selection.isSelected(row.ref.id)} onChange={() => selection.toggle(row.ref.id, rows.indexOf(row))} /><SkillAvatar skill={row.skill!} size="sm" workspaceId={workspaceId} /><button type="button" className="text-left font-medium hover:underline" onClick={() => navigate(routes.view.skills(row.ref.id))}>{row.ref.label}<span className="mt-0.5 block text-xs font-normal text-muted-foreground">@{row.ref.id} · {t(`capabilityCatalog.scopes.${row.ref.scope}`)}</span></button></div></td>
+          <div ref={tableViewportRef} className="max-h-[min(32rem,100%)] overflow-auto rounded-xl border border-border/60"><table className="w-full min-w-[680px] border-collapse text-left text-xs" aria-label={t('capabilityCatalog.individualSkills')}>
+            <thead className="sticky top-0 z-10 bg-background text-muted-foreground"><tr>{['name', 'description', 'category', 'usage', 'author', 'updated'].map(key => <th key={key} scope="col" className="border-b border-border/60 px-3 py-2.5 font-medium" aria-sort={key === 'name' && sort === 'name' ? 'ascending' : key === 'usage' && sort === 'usage' ? 'descending' : undefined}>{key === 'name' || key === 'usage' ? <button type="button" className="flex items-center gap-1" onClick={() => setSort(key === 'name' ? 'name' : 'usage')}>{t(`capabilityCatalog.columns.${key}`)}<ArrowDownUp className="size-3" /></button> : t(`capabilityCatalog.columns.${key}`)}</th>)}</tr></thead>
+            <tbody>
+            {catalogWindow.padTop > 0 && <tr aria-hidden="true" data-catalog-spacer="top"><td colSpan={6} style={{ height: catalogWindow.padTop, padding: 0, border: 0 }} /></tr>}
+            {visibleRows.map((row, offset) => <React.Fragment key={row.key}><tr className="border-b border-border/40 hover:bg-foreground/[0.025]" data-testid="catalog-skill-row">
+              <td className="px-3 py-3"><div className="flex items-center gap-2"><input type="checkbox" aria-label={t('capabilityCatalog.selectResource', { name: row.ref.label })} checked={selection.isSelected(row.ref.id)} onChange={() => selection.toggle(row.ref.id, catalogWindow.start + offset)} /><SkillAvatar skill={row.skill!} size="sm" workspaceId={workspaceId} /><button type="button" className="text-left font-medium hover:underline" onClick={() => navigate(routes.view.skills(row.ref.id))}>{row.ref.label}<span className="mt-0.5 block text-xs font-normal text-muted-foreground">@{row.ref.id} · {t(`capabilityCatalog.scopes.${row.ref.scope}`)}</span></button></div></td>
               <td className="max-w-60 px-3 py-3"><button type="button" onClick={() => setExpanded(expanded === row.key ? null : row.key)} aria-expanded={expanded === row.key} aria-label={t('capabilityCatalog.showDetails', { name: row.ref.label })} className="flex items-center gap-1 text-left text-muted-foreground"><span className="line-clamp-2">{row.description}</span>{expanded === row.key ? <ChevronDown className="size-3 shrink-0" /> : <ChevronRight className="size-3 shrink-0" />}</button></td>
               <td className="px-3 py-3"><span className="rounded border border-border/60 bg-foreground/[0.025] px-1.5 py-0.5 text-xs text-muted-foreground">{row.categories.map(item => t(`capabilityCatalog.categories.${item}`)).join(', ')}</span></td>
               <td className="px-3 py-3 text-muted-foreground" title={t('capabilityCatalog.promptHitsHint')}>{row.promptHits === undefined ? '—' : t('capabilityCatalog.promptHits', { count: row.promptHits })}{row.usedInRun && <span className="block">{t('capabilityCatalog.usedInRun')}</span>}</td>
               <td className="px-3 py-3 text-muted-foreground">{row.author ?? '—'}</td><td className="px-3 py-3 whitespace-nowrap text-muted-foreground">{row.updatedAt ? new Date(row.updatedAt).toLocaleDateString(i18n.resolvedLanguage) : '—'}</td>
-            </tr>{expanded === row.key && <tr className="border-b border-border/50 bg-foreground/[0.02]"><td colSpan={6} className="space-y-2 px-4 py-3"><p>{row.description}</p><p className="text-muted-foreground">{t('capabilityCatalog.dependencies')}: {row.requiredSources.join(', ') || '—'}</p><p className="text-muted-foreground">{t(`capabilityCatalog.status.${row.status}`)}{row.lastPromptHit ? ` · ${new Date(row.lastPromptHit).toLocaleDateString(i18n.resolvedLanguage)}` : ''}</p>{row.skill?.source === 'omp' && <Button variant="outline" size="sm" disabled={busy !== null} onClick={() => void exportOmp(row.skill!)}>{t('skillsList.roxCliExport')}</Button>}</td></tr>}</React.Fragment>)}</tbody>
+            </tr>{expanded === row.key && <tr className="border-b border-border/50 bg-foreground/[0.02]"><td colSpan={6} className="space-y-2 px-4 py-3"><p>{row.description}</p><p className="text-muted-foreground">{t('capabilityCatalog.dependencies')}: {row.requiredSources.join(', ') || '—'}</p><p className="text-muted-foreground">{t(`capabilityCatalog.status.${row.status}`)}{row.lastPromptHit ? ` · ${new Date(row.lastPromptHit).toLocaleDateString(i18n.resolvedLanguage)}` : ''}</p>{row.skill?.source === 'omp' && <Button variant="outline" size="sm" disabled={busy !== null} onClick={() => void exportOmp(row.skill!)}>{t('skillsList.roxCliExport')}</Button>}</td></tr>}</React.Fragment>)}
+            {catalogWindow.padBottom > 0 && <tr aria-hidden="true" data-catalog-spacer="bottom"><td colSpan={6} style={{ height: catalogWindow.padBottom, padding: 0, border: 0 }} /></tr>}
+            </tbody>
           </table></div>
           {(loading || queried.loading) && <p role="status" className="py-4 text-center text-xs text-muted-foreground">{t('common.loading')}</p>}
           {queried.hasMore && (

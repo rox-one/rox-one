@@ -659,6 +659,7 @@ export function SkillsListPanel({
                 type="button"
                 role="switch"
                 aria-checked={!pack.disabled}
+                aria-label={t(pack.disabled ? 'capabilityCatalog.enablePack' : 'capabilityCatalog.disablePack', { name: pack.slug })}
                 disabled={packsBusy}
                 onClick={() => void toggleBundledPack(pack.slug, pack.disabled)}
                 className={`shrink-0 relative h-5 w-9 rounded-full transition-colors disabled:opacity-50 ${
