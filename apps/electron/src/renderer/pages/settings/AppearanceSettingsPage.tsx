@@ -56,6 +56,7 @@ import { showBackgroundFinishedChipAtom } from '@/atoms/background-finished'
 import { KANBAN_COLUMNS, resolveBoardColumns } from '@/components/app-shell/kanban/status-column'
 import { isClaimableLive } from '@rox/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
+import { ThemeLayersSection } from './ThemeLayersSection'
 
 function appearancePrefLive(): boolean {
   return isClaimableLive(
@@ -70,6 +71,7 @@ import {
   type KanbanBoardConfig,
 } from '@rox/shared/kanban/browser'
 import { setProjectColorTreatment, useProjectColorTreatment } from '@/hooks/useProjectColorTreatment'
+import { isFxLevel, setFxLevel, useFxLevel } from '@rox/ui/fx'
 import { PROJECT_COLOR_PALETTE, type ProjectColorTreatment } from '@/utils/project-colors'
 import { Info_DataTable, SortableHeader } from '@/components/info/Info_DataTable'
 import { Info_Badge } from '@/components/info/Info_Badge'
@@ -785,6 +787,9 @@ export default function AppearanceSettingsPage() {
 
   // Color-theme presets for the restored theme picker (Settings → Внешний вид).
   const [presetThemes, setPresetThemes] = useState<PresetTheme[]>([])
+  // Bumped after «Сохранить как пресет» so the picker lists the new preset.
+  const [presetsVersion, setPresetsVersion] = useState(0)
+  const reloadPresets = useCallback(() => setPresetsVersion((v) => v + 1), [])
   useEffect(() => {
     let cancelled = false
     const pending = window.electronAPI?.loadPresetThemes?.()
@@ -794,7 +799,7 @@ export default function AppearanceSettingsPage() {
         .catch(() => { if (!cancelled) setPresetThemes([]) })
     }
     return () => { cancelled = true }
-  }, [])
+  }, [presetsVersion])
 
   // Tool icon mappings loaded from main process
   const [toolIcons, setToolIcons] = useState<ToolIconMapping[]>([])
@@ -829,6 +834,7 @@ export default function AppearanceSettingsPage() {
 
   // Project color treatment in the SessionList
   const projectColorTreatment = useProjectColorTreatment()
+  const fxLevel = useFxLevel()
   const handleProjectColorTreatmentChange = useCallback((value: string) => {
     if (!appearancePrefLive()) return
     setProjectColorTreatment(value as ProjectColorTreatment)
@@ -1082,7 +1088,7 @@ export default function AppearanceSettingsPage() {
             <div className="space-y-8">
 
               {/* Theme picker (restored 2026-10-13): the app no longer pins a
-                  single theme; Rox Ink (rox-ink) is the default, Rox Engineering is opt-in. */}
+                  single theme; Arc Glass (arc-glass) is the default for new installs. */}
               <SettingsSection title={t("settings.appearance.colorTheme")}>
                 <SettingsCard>
                   {presetThemes.length === 0 ? (
@@ -1116,6 +1122,9 @@ export default function AppearanceSettingsPage() {
                   )}
                 </SettingsCard>
               </SettingsSection>
+
+              {/* Layer studio: frame / wallpaper / content / accent / glass. */}
+              <ThemeLayersSection onPresetsChanged={reloadPresets} />
 
               {/* Display & accessibility. */}
               <SettingsSection title={t("settings.appearance.display")}>
@@ -1350,6 +1359,20 @@ export default function AppearanceSettingsPage() {
                       options={[
                         { value: 'brand', label: t("settings.appearance.accentBrand") },
                         { value: 'system', label: t("settings.appearance.accentSystem") },
+                      ]}
+                    />
+                  </SettingsRow>
+                  <SettingsRow
+                    label={t("settings.appearance.fxLevel")}
+                    description={t("settings.appearance.fxLevelDesc")}
+                  >
+                    <SettingsSegmentedControl
+                      value={fxLevel}
+                      onValueChange={(value) => { if (isFxLevel(value)) setFxLevel(value) }}
+                      options={[
+                        { value: 'full', label: t("settings.appearance.fxLevelFull") },
+                        { value: 'reduced', label: t("settings.appearance.fxLevelReduced") },
+                        { value: 'off', label: t("settings.appearance.lowPowerModeOff") },
                       ]}
                     />
                   </SettingsRow>
