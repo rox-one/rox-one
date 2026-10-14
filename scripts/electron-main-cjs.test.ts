@@ -3,7 +3,7 @@ import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import ts from 'typescript'
-import { ELECTRON_MAIN_CJS_FLAGS } from './electron-main-cjs'
+import { ELECTRON_MAIN_CJS_FLAGS, mainVendorAliasFlags } from './electron-main-cjs'
 
 const repo = resolve(import.meta.dir, '..')
 const roots: string[] = []
@@ -37,8 +37,8 @@ function mainBuildCommand(): string[] {
     compilerOptions: { target: ts.ScriptTarget.ESNext },
   }).outputText
   // The production define function sees an empty object; no credential is read.
-  return new Function('process', 'ELECTRON_MAIN_CJS_FLAGS', 'OUTPUT_FILE', `${code}; return actual;`)(
-    { env: {}, argv: [] }, ELECTRON_MAIN_CJS_FLAGS, join(repo, 'apps/electron/dist/main.cjs'),
+  return new Function('process', 'ELECTRON_MAIN_CJS_FLAGS', 'OUTPUT_FILE', 'mainVendorAliasFlags', `${code}; return actual;`)(
+    { env: {}, argv: [] }, ELECTRON_MAIN_CJS_FLAGS, join(repo, 'apps/electron/dist/main.cjs'), mainVendorAliasFlags,
   )
 }
 
