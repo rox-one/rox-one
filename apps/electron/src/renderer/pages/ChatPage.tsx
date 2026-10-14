@@ -721,6 +721,17 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     return () => cancelAnimationFrame(handle)
   }, [sessionView])
 
+  // Composer usage status line click (DSH P1) dispatches `trajectory.open`;
+  // switch this session to the Траектория view when it targets us.
+  React.useEffect(() => {
+    const onOpen = (event: Event) => {
+      const detail = (event as CustomEvent<{ sessionId?: string }>).detail
+      if (detail?.sessionId === sessionId) setSessionView('trajectory')
+    }
+    window.addEventListener('trajectory.open', onOpen)
+    return () => window.removeEventListener('trajectory.open', onOpen)
+  }, [sessionId, setSessionView])
+
   const handleWorkbenchFork = React.useCallback(
     async (messageId: string) => {
       if (!session) return
