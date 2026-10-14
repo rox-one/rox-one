@@ -6,8 +6,10 @@
  * chunks — and fails when a known chunk-name *prefix* grows past its recorded raw-byte budget, when an
  * unbudgeted prefix grows past MAX_NEW_CHUNK_BYTES, or when a whole-extension total grows past its
  * recorded total. Raw `Buffer.byteLength` of the emitted files is the gated number; gzip (level 9) is
- * recorded and reported alongside. Source maps (vite.config.ts `sourcemap: true`) and the pdf worker
- * are never measured.
+ * recorded and reported alongside. `.map` files and the pdf worker are never measured, and the trailing
+ * `//# sourceMappingURL=` pointer comment is stripped before any byte is counted — this gate also runs in
+ * the CI job that builds with `ROX_RENDERER_SOURCEMAP=1` (.github/workflows/bundle-size.yml), so the
+ * emitted chunks carry that pointer even though the packaged app emits no source maps at all.
  *
  * A budget is the TOTAL of every measured chunk sharing a prefix, not the largest one: real `index-*`
  * builds emit a handful of chunks, so gating only the max lets a secondary chunk grow unbounded up to
@@ -60,11 +62,36 @@ export const MAX_NEW_CHUNK_BYTES = 2_500_000
 export const MIN_BUDGET_BYTES = 250_000
 
 /**
- * Cross-platform slack on every budget AND every whole-extension total: the same source builds to
- * slightly different byte counts on macOS and Linux (observed <= 91 B on the 900 KB `main` chunk), so
- * the gate compares against `recorded + BUDGET_SLACK_BYTES` and reports the raw recorded number.
+ * Proportional slack on every budget AND every whole-extension total, as a fraction of that budget.
+ * A constant allowance does not scale with the bundle: the previous 4,096 B is 0.012% of the ~35 MB
+ * js total, far tighter than the build reproduces — the same source differs across platforms by
+ * ~91 B on the 900 KB `main` chunk. One fraction prices the tolerance in the unit being budgeted,
+ * instead of at a precision the bundle never had.
+ *
+ * The fraction is deliberately ~5x that measured platform noise (91 / 900,000 = 0.01%) and no more.
+ * Slack exists to absorb build non-determinism, not ordinary code growth: the totals were observed
+ * drifting 6,158 B up to 79,135 B between adjacent commits on the ~35 MB total, and a slack wide
+ * enough to pass those would be a gate that never fires. At 0.05% the js total is allowed 17,504 B
+ * and playground.html 8,558 B, so real growth of that size still fails.
  */
-export const BUDGET_SLACK_BYTES = 4096
+export const BUDGET_SLACK_RATIO = 0.0005
+
+/**
+ * Absolute floor of that slack, so a small css chunk or a test fixture is not gated at a byte
+ * precision its build cannot reproduce. Kept at the historical 4 KiB: a larger floor does not
+ * merely protect small chunks, it *dominates* them — 64 KiB is 7% of a 900 KB chunk and 0.18% of
+ * the ~35 MB js total, which is wide enough to swallow the 6-79 KB drift the gate exists to catch.
+ */
+export const BUDGET_SLACK_MIN_BYTES = 4 * 1024
+
+/**
+ * Slack allowed on a recorded budget: `max(BUDGET_SLACK_MIN_BYTES, BUDGET_SLACK_RATIO * budget)`,
+ * rounded up so the gate is never more permissive than the stated fraction. The gate compares against
+ * `recorded + budgetSlackBytes(recorded)` and still reports the raw recorded number.
+ */
+export function budgetSlackBytes(budget: number): number {
+  return Math.ceil(Math.max(BUDGET_SLACK_MIN_BYTES, budget * BUDGET_SLACK_RATIO))
+}
 
 /**
  * An entry page (html file) that exists in the build but has no recorded `startup` entry may not pull
@@ -223,8 +250,8 @@ export function chunkPrefix(baseName: string): string {
 
 /**
  * The measured-asset kind of a file name, or `undefined` when it is not measured: only emitted
- * `*.js` / `*.css` chunks are. `.js.map` / `.css.map` (sourcemap: true) and the pdf worker are
- * excluded explicitly as well as by extension.
+ * `*.js` / `*.css` chunks are. `.js.map` / `.css.map` siblings and the pdf worker are excluded
+ * explicitly as well as by extension.
  */
 export function assetKind(baseName: string): AssetKind | undefined {
   if (baseName.startsWith('pdf.worker')) return undefined
@@ -232,6 +259,37 @@ export function assetKind(baseName: string): AssetKind | undefined {
   if (baseName.endsWith('.js')) return 'js'
   if (baseName.endsWith('.css')) return 'css'
   return undefined
+}
+
+/**
+ * A trailing sourcemap pointer comment: `//# sourceMappingURL=<file>.map` (Rollup/Vite also emit the
+ * legacy `//@` form and `//# sourceMappingURL=data:...` inline URIs). Only the document's final line is
+ * ever tested against it, so a `sourceMappingURL` string deeper in the payload is left untouched.
+ */
+const SOURCEMAP_COMMENT = /^\/\/[#@]\s*sourceMappingURL=/
+
+/**
+ * Drop a trailing `//# sourceMappingURL=…` comment line from a measured chunk and return the payload
+ * buffer. The pointer names a sibling `.map` file the gate never measures, but the CI job builds with
+ * `ROX_RENDERER_SOURCEMAP=1`, so every emitted chunk carries it — counting it would add ~40-58 B per
+ * chunk of pure pointer noise. Byte-oriented and conservative: only the last line is removed, and only
+ * when it is exactly that comment (together with the line break separating it from the payload and any
+ * trailing newline). The input is returned unchanged when there is no such line — nothing is
+ * minified, rewritten or otherwise altered.
+ */
+export function stripSourceMapComment(content: Buffer): Buffer {
+  // The pointer, when present, is the document's final line; a trailing newline still belongs to it.
+  let end = content.length
+  if (end > 0 && content[end - 1] === 0x0a) end--
+  if (end > 0 && content[end - 1] === 0x0d) end--
+  let start = end
+  while (start > 0 && content[start - 1] !== 0x0a) start--
+  if (!SOURCEMAP_COMMENT.test(content.subarray(start, end).toString('latin1'))) return content
+  // Remove the comment line and the line break that separates it from the payload.
+  let cut = start
+  if (cut > 0 && content[cut - 1] === 0x0a) cut--
+  if (cut > 0 && content[cut - 1] === 0x0d) cut--
+  return content.subarray(0, cut)
 }
 
 /** Raw + gzip bytes of every measured `assets/*` chunk, sorted by file name. */
@@ -248,7 +306,8 @@ export function measureRendererChunks(assetsDir: string = paths().assets): Measu
     const kind = assetKind(file)
     if (!kind) continue
     try {
-      const content = readFileSync(join(assetsDir, file))
+      // The emitted `//# sourceMappingURL=` pointer (present in the CI build) is not payload.
+      const content = stripSourceMapComment(readFileSync(join(assetsDir, file)))
       chunks.push({
         file,
         prefix: chunkPrefix(file),
@@ -352,7 +411,8 @@ export function measureStartup(rendererDist: string = paths().rendererDist): Sta
         const file = relative(rendererDist, resolved) || html
         let content: Buffer
         try {
-          content = readFileSync(resolved)
+          // The referenced chunk carries the same `//# sourceMappingURL=` pointer the CI build emits.
+          content = stripSourceMapComment(readFileSync(resolved))
         } catch {
           missing.push(file)
           continue
@@ -393,8 +453,8 @@ export function buildStartupEntries(measurements: StartupMeasurement[]): Record<
 
 /**
  * Pure startup gate. Fails an entry page when its measured static JS closure exceeds its recorded total
- * (or MAX_NEW_STARTUP_BYTES when unbudgeted), each with BUDGET_SLACK_BYTES of platform noise allowed,
- * and fails any entry page referencing a file that is missing from the build.
+ * (or MAX_NEW_STARTUP_BYTES when unbudgeted) plus that budget's `budgetSlackBytes`, and fails any
+ * entry page referencing a file that is missing from the build.
  */
 export function evaluateStartup(
   measurements: StartupMeasurement[],
@@ -405,7 +465,7 @@ export function evaluateStartup(
     const entry = recorded[measurement.html]
     const budget = entry?.jsRawBytes ?? MAX_NEW_STARTUP_BYTES
     const unbudgeted = entry?.jsRawBytes === undefined
-    const overBudget = measurement.jsRawBytes > budget + BUDGET_SLACK_BYTES
+    const overBudget = measurement.jsRawBytes > budget + budgetSlackBytes(budget)
     if (!overBudget && measurement.missing.length === 0) continue
     failures.push({
       html: measurement.html,
@@ -503,8 +563,8 @@ export function buildBudgets(chunks: MeasuredChunk[], kind: AssetKind): Record<s
 /**
  * Pure gate. Fails when (1) a budgeted prefix's TOTAL exceeds its recorded total, (2) an unbudgeted
  * prefix's TOTAL exceeds MAX_NEW_CHUNK_BYTES, or (3) either gated extension total exceeds its recorded
- * total — each with BUDGET_SLACK_BYTES of platform noise allowed. Kept free of filesystem access so it
- * is unit-testable without a build.
+ * total — each compared against `budget + budgetSlackBytes(budget)`. Kept free of filesystem access so
+ * it is unit-testable without a build.
  */
 export function evaluateAssets(chunks: MeasuredChunk[], recorded: RecordedBudgets): BudgetFailure[] {
   const failures: BudgetFailure[] = []
@@ -516,7 +576,7 @@ export function evaluateAssets(chunks: MeasuredChunk[], recorded: RecordedBudget
       // `?? MAX_NEW_CHUNK_BYTES` also guards a baseline recorded in an older shape (a missing
       // `totalRawBytes` would otherwise compare as NaN and pass silently).
       const budget = recordedPrefixes[group.prefix]?.totalRawBytes ?? MAX_NEW_CHUNK_BYTES
-      if (group.rawBytes > budget + BUDGET_SLACK_BYTES) {
+      if (group.rawBytes > budget + budgetSlackBytes(budget)) {
         failures.push({
           kind,
           prefix: group.prefix,
@@ -530,7 +590,7 @@ export function evaluateAssets(chunks: MeasuredChunk[], recorded: RecordedBudget
     const recordedTotal = kind === 'js' ? recorded.totals?.jsRawBytes : recorded.totals?.cssRawBytes
     if (recordedTotal === undefined) continue
     const total = kindChunks.reduce((sum, chunk) => sum + chunk.rawBytes, 0)
-    if (total <= recordedTotal + BUDGET_SLACK_BYTES) continue
+    if (total <= recordedTotal + budgetSlackBytes(recordedTotal)) continue
     const largest = kindChunks.reduce((max, chunk) => (chunk.rawBytes > max.rawBytes ? chunk : max), kindChunks[0]!)
     failures.push({
       kind,
@@ -753,8 +813,16 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
   const startupFailures = evaluateStartup(startup, startupRecorded)
   printStartupTable(startup, startupRecorded)
   if (failures.length > 0 || startupFailures.length > 0) {
-    for (const failure of failures) console.error(formatFailure(failure))
-    for (const failure of startupFailures) console.error(formatStartupFailure(failure))
+    const reports = [
+      ...failures.map((failure) => formatFailure(failure)),
+      ...startupFailures.map((failure) => formatStartupFailure(failure)),
+    ]
+    for (const message of reports) {
+      console.error(message)
+      // Also emit a workflow command so the byte deltas reach the GitHub check-run annotations
+      // (`%`, CR and LF must be percent-encoded or the annotation truncates at the first newline).
+      console.log(`::error::${message.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`)
+    }
     console.error(
       `bundle-size: ${failures.length + startupFailures.length} budget(s) over limit. If the growth is ` +
         `intended, owner-approve it and re-record with \`bun scripts/check-bundle-size.ts --update\`.`,

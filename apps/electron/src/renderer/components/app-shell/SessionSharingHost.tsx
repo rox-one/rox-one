@@ -255,7 +255,7 @@ export function SessionSharingHost({ activeWorkspaceId, onSwitchWorkspace }: {
               <p>{t('sessionSharing.publishedAt', { date: new Date(remoteSession.publishedAt).toLocaleString() })}</p>
               {remoteSession.transcriptTruncated && <p>{t('sessionSharing.transcriptTruncated')}</p>}
             </div>
-            <div className="max-h-[60vh] overflow-y-auto rounded-[var(--radius-card)] border border-border p-4" aria-live="polite">
+            <div className="max-h-[60vh] overflow-y-auto rounded-[var(--radius-card)] border border-border p-4">
               {remoteSession.messages.map(message => (
                 <article key={message.id} className="mb-5 last:mb-0" data-message-role={message.role}>
                   <p className="mb-1 text-xs text-muted-foreground">{message.role === 'user' ? t('sessionSharing.messageUser') : t('sessionSharing.messageAssistant')}</p>

@@ -1,7 +1,8 @@
 /**
- * Primary rail (shell-layout): a static 56 px icon column. Pinned screens on
+ * Primary rail (shell-layout): a static 48 px icon column. Pinned screens on
  * top, «⋯» popover with every other screen (icon + label + pin toggle),
- * Settings and the avatar at the bottom. Hover tooltips, active highlight,
+ * the sidebar toggle and the profile avatar at the bottom (Settings lives in the
+ * avatar popover, no gear). Hover tooltips, active highlight,
  * unread dot. Arrow keys move between rail buttons (roving tabindex).
  */
 import * as React from 'react'
@@ -20,11 +21,11 @@ import { useOpenPillBrowser } from '@/platform/pill-activate'
 import { useShellModes } from '@/platform/useModes'
 import type { NavigationState } from '../../../shared/types'
 import { buildRailModel, type RailScreen } from './rail-model'
-import { toggleRailPin, toggleSecondarySidebar, useRailPins, useSecondarySidebarVisibility, useUnreadCounts } from './shell-prefs'
+import { toggleRailPin, toggleSecondarySidebar, useRailPins, useEffectiveSecondaryVisibility, useUnreadCounts } from './shell-prefs'
 import { openScreenPanelAtom } from './panel-strip'
 import { setKnownScreenIds } from './screen-sidebar'
 
-export const SHELL_RAIL_WIDTH = 56
+export const SHELL_RAIL_WIDTH = 48
 
 export function isRailScreenActive(screen: RailScreen, navState: NavigationState): boolean {
   if (screen.extra) return navState.navigator === 'screen' && navState.screen === screen.extra.id
@@ -93,13 +94,13 @@ const RailButton = React.memo(function RailButton({ screen, active, unread, onAc
           aria-disabled={screen.disabled || undefined}
           onClick={() => onActivate(screen)}
           className={cn(
-            'relative flex size-10 items-center justify-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring',
+            'relative flex size-8 items-center justify-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring',
             active ? 'bg-[var(--state-selected)] text-foreground' : 'text-muted-foreground hover:bg-[var(--state-hover)] hover:text-foreground',
             screen.disabled && 'opacity-50',
           )}
         >
           <Icon className="icon-rail" aria-hidden />
-          {unread > 0 && <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-accent" data-rail-unread="" aria-hidden />}
+          {unread > 0 && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-accent" data-rail-unread="" aria-hidden />}
         </button>
       </TooltipTrigger>
       <TooltipContent side="right">{screen.title}</TooltipContent>
@@ -148,7 +149,7 @@ export const PrimaryRail = React.memo(function PrimaryRail({ avatar, secondaryAv
   const model = useRailModel()
   const unread = useUnreadCounts()
   const activate = useActivateScreen()
-  const secondary = useSecondarySidebarVisibility()
+  const secondary = useEffectiveSecondaryVisibility()
   const [moreOpen, setMoreOpen] = React.useState(false)
   const overflowActive = model.overflow.some((screen) => isRailScreenActive(screen, navState))
   const overflowUnread = model.overflow.some((screen) => (unread[screen.id] ?? 0) > 0)
@@ -189,12 +190,12 @@ export const PrimaryRail = React.memo(function PrimaryRail({ avatar, secondaryAv
                   aria-label={t('shell.rail.more')}
                   aria-haspopup="dialog"
                   className={cn(
-                    'relative flex size-10 items-center justify-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                    'relative flex size-8 items-center justify-center rounded-[var(--radius-control)] outline-none focus-visible:ring-1 focus-visible:ring-ring',
                     overflowActive ? 'bg-[var(--state-selected)] text-foreground' : 'text-muted-foreground hover:bg-[var(--state-hover)] hover:text-foreground',
                   )}
                 >
                   <MoreHorizontal className="icon-rail" aria-hidden />
-                  {overflowUnread && <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-accent" aria-hidden />}
+                  {overflowUnread && <span className="absolute right-1 top-1 size-1.5 rounded-full bg-accent" aria-hidden />}
                 </button>
               </PopoverTrigger>
             </TooltipTrigger>
@@ -222,7 +223,7 @@ export const PrimaryRail = React.memo(function PrimaryRail({ avatar, secondaryAv
                 aria-label={secondary === 'hidden' ? t('shell.rail.showSidebar') : t('shell.rail.hideSidebar')}
                 aria-pressed={secondary !== 'hidden'}
                 onClick={toggleSecondarySidebar}
-                className="flex size-10 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground outline-none hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+                className="flex size-8 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground outline-none hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
               >
                 <PanelLeft className="icon-rail" aria-hidden />
               </button>
@@ -230,9 +231,7 @@ export const PrimaryRail = React.memo(function PrimaryRail({ avatar, secondaryAv
             <TooltipContent side="right">{secondary === 'hidden' ? t('shell.rail.showSidebar') : t('shell.rail.hideSidebar')}</TooltipContent>
           </Tooltip>
         )}
-        {model.bottom.map((screen) => (
-          <RailButton key={screen.id} screen={screen} active={isRailScreenActive(screen, navState)} unread={unread[screen.id] ?? 0} onActivate={activate} />
-        ))}
+        {/* No gear: Settings opens only from the avatar's profile popover (Mark's decision). */}
         {avatar}
       </div>
     </nav>

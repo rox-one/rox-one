@@ -63,7 +63,7 @@ import {
 import { anthropicDriver } from './internal/drivers/anthropic.ts';
 import { piDriver } from './internal/drivers/pi.ts';
 import { ompDriver } from './internal/drivers/omp.ts';
-import { selectOmpSessionConnection, selectOmpSessionModel } from './omp-session-policy.ts';
+import { isBringYourOwnSessionConnection, selectOmpSessionConnection, selectOmpSessionModel } from './omp-session-policy.ts';
 
 const DRIVER_REGISTRY: Record<AgentProvider, ProviderDriver> = {
   anthropic: anthropicDriver,
@@ -400,7 +400,11 @@ export function resolveBackendContext(args: {
   };
 }
 
-/** Every ROX session, task and auxiliary agent uses the OMP execution engine. */
+function honorBringYourOwnContext(context: ResolvedBackendContext): boolean {
+  return context.provider !== 'omp' && !!context.connection && isBringYourOwnSessionConnection(context.connection);
+}
+
+/** Session routing: OMP for Rox Cloud, native backend for local/BYO connections. */
 export function resolveOmpSessionContext(args: {
   sessionConnectionSlug?: string;
   workspaceDefaultConnectionSlug?: string;
@@ -411,17 +415,31 @@ export function resolveOmpSessionContext(args: {
     connections: getLlmConnections(), sessionSlug: args.sessionConnectionSlug,
     workspaceSlug: args.workspaceDefaultConnectionSlug, defaultSlug: getDefaultLlmConnection(),
   });
+  const wasSameConnection = !args.sessionConnectionSlug || prior?.slug === args.sessionConnectionSlug;
+  if (isBringYourOwnSessionConnection(connection) && connection.providerType !== 'omp') {
+    const provider = connectionToAgentProvider(connection);
+    return {
+      connection,
+      provider,
+      authType: connectionAuthTypeToBackendAuthType(connection.authType),
+      resolvedModel: selectOmpSessionModel(connection, args.managedModel, wasSameConnection),
+      capabilities: BACKEND_CAPABILITIES[provider],
+    };
+  }
   return {connection,provider:'omp',authType:connectionAuthTypeToBackendAuthType(connection.authType),
     resolvedModel:selectOmpSessionModel(connection,args.managedModel,
-      prior?.providerType==='omp' && (!args.sessionConnectionSlug || prior.slug===args.sessionConnectionSlug)),
+      prior?.providerType==='omp' && wasSameConnection),
     capabilities:BACKEND_CAPABILITIES.omp};
 }
 
 export function createOmpSessionBackendFromResolvedContext(args: Parameters<typeof createBackendFromResolvedContext>[0]): AgentBackend {
+  if (honorBringYourOwnContext(args.context)) {
+    return createBackendFromResolvedContext(args);
+  }
   const context = args.context.provider === 'omp' ? args.context : resolveOmpSessionContext({
     sessionConnectionSlug:args.context.connection?.slug, managedModel:args.context.resolvedModel,
   });
-  const coreConfig = args.context.provider === 'omp' ? args.coreConfig : {
+  const coreConfig = args.context.provider === 'omp' || honorBringYourOwnContext(context) ? args.coreConfig : {
     ...args.coreConfig,
     miniModel: getMiniModel(context.connection!) ?? context.connection!.defaultModel,
   };
@@ -433,11 +451,21 @@ export function createOmpSessionBackendFromConnection(
   hostRuntime?: BackendHostRuntimeContext, providerOptions?: BackendProviderOptions,
 ): AgentBackend {
   const context=resolveOmpSessionContext({sessionConnectionSlug:connectionSlug,managedModel:baseConfig.model});
-  const coreConfig = getLlmConnection(connectionSlug)?.providerType === 'omp' ? baseConfig : {
+  const coreConfig = getLlmConnection(connectionSlug)?.providerType === 'omp' || honorBringYourOwnContext(context) ? baseConfig : {
     ...baseConfig,
     miniModel: getMiniModel(context.connection!) ?? context.connection!.defaultModel,
   };
   if(hostRuntime)return createOmpSessionBackendFromResolvedContext({context,coreConfig,hostRuntime,providerOptions});
+  if (honorBringYourOwnContext(context)) {
+    return createBackend({
+      ...coreConfig,
+      provider: context.provider,
+      providerType: context.connection!.providerType,
+      authType: context.authType,
+      connectionSlug: context.connection!.slug,
+      model: context.resolvedModel,
+    });
+  }
   return createBackend({...coreConfig,provider:'omp',providerType:'omp',authType:context.authType,
     connectionSlug:context.connection!.slug,model:context.resolvedModel});
 }

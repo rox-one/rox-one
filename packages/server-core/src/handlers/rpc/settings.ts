@@ -271,9 +271,15 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
       throw new Error(`Failed to load workspace config: ${workspaceId}`)
     }
 
+    const previousName = config.name
     // Handle 'name' specially - it's a top-level config property, not in defaults
     if (key === 'name') {
-      config.name = String(normalizedValue).trim()
+      const name = String(normalizedValue ?? '').trim()
+      if (!name) throw new Error('Workspace name must not be empty')
+      const { assertWorkspaceRecordRenamable } = await import('@rox/shared/config/storage')
+      // Validate the registry record first so a refused rename writes nothing.
+      assertWorkspaceRecordRenamable(workspaceId)
+      config.name = name
     } else if (key === 'localMcpEnabled') {
       // Store in localMcpServers.enabled (top-level, not in defaults)
       config.localMcpServers = config.localMcpServers || { enabled: true }
@@ -299,6 +305,22 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
 
     // Save the config
     saveWorkspaceConfig(workspace.rootPath, config)
+    if (key === 'name') {
+      // The switcher and window lists read the global registry record.
+      const { renameWorkspaceRecord } = await import('@rox/shared/config/storage')
+      try {
+        renameWorkspaceRecord(workspaceId, config.name)
+      } catch (error) {
+        // Roll config.json back so disk and registry never disagree.
+        config.name = previousName
+        try {
+          saveWorkspaceConfig(workspace.rootPath, config)
+        } catch (rollbackError) {
+          deps.platform.logger.error('Workspace rename rollback failed', rollbackError)
+        }
+        throw error
+      }
+    }
     deps.platform.logger.info(`Workspace setting updated: ${key} = ${JSON.stringify(normalizedValue)}`)
   })
 

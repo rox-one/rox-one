@@ -10,6 +10,7 @@
     ".": "./src/index.ts",
     "./lib/utils": "./src/lib/utils.ts",
     "./chat": "./src/components/chat/index.ts",
+    "./chat/audio-transcript-actions": "./src/components/chat/audio-transcript-actions.tsx",
     "./chat/SessionViewer": "./src/components/chat/SessionViewer.tsx",
     "./chat/TurnCard": "./src/components/chat/TurnCard.tsx",
     "./chat/turn-utils": "./src/components/chat/turn-utils.ts",
@@ -17,8 +18,19 @@
     "./annotations/follow-up-state": "./src/components/annotations/follow-up-state.ts",
     "./ui/drawer": "./src/components/ui/drawer.tsx",
     "./context": "./src/context/index.ts",
+    "./tooltip": "./src/components/tooltip.tsx",
+    "./spinner": "./src/components/ui/LoadingIndicator.tsx",
+    "./premium-menu": "./src/components/ui/PremiumMenu.tsx",
+    "./dropdown-menu": "./src/components/ui/StyledDropdown.tsx",
+    "./ansi-parser": "./src/components/terminal/ansi-parser.ts",
+    "./lib/file-classification": "./src/lib/file-classification.ts",
+    "./lazy-motion": "./src/lib/lazy-motion.tsx",
     "./styles": "./src/styles/index.css",
-    "./primitives": "./src/components/primitives/index.ts"
+    "./primitives": "./src/components/primitives/index.ts",
+    "./fx": "./src/fx/index.ts",
+    "./glass": "./src/components/glass/index.ts",
+    "./glass/install": "./src/components/glass/install-glass-skin.ts",
+    "./glass/press": "./src/components/glass/use-glass-motion.ts"
   },
   "dependencies": {
     "@rox/core": "workspace:*",
@@ -29,6 +41,7 @@
     "@uiw/react-json-view": "^2.0.0-alpha.40",
     "fflate": "^0.8.2",
     "nice-ticks": "^1.0.2",
+    "thinking-orbs": "0.3.2",
     "unified": "^11.0.0",
     "unist-util-visit": "^5.0.0"
   },

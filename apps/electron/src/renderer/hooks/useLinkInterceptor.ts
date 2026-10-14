@@ -16,7 +16,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import i18n from 'i18next'
-import { classifyFile, type FilePreviewType } from '@rox/ui'
+import { classifyFile, type FilePreviewType } from '@rox/ui/lib/file-classification'
 import { classifyLinkPolicy } from '@rox/shared/utils/url-safety'
 import { getLanguageFromPath } from '@/lib/file-utils'
 

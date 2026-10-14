@@ -12,15 +12,20 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from 'i18next'
 import { GripHorizontal } from 'lucide-react'
-import { motion, AnimatePresence } from 'motion/react' // motion used for backdrop only
+import { motion, AnimatePresence } from '@/lib/deferred-motion' // motion used for backdrop only
 import { Popover, PopoverTrigger, PopoverContent } from './popover'
 import { Button } from './button'
 import { cn } from '@/lib/utils'
-import { usePlatform } from '@rox/ui'
+import { usePlatform } from '@rox/ui/context'
 import type { ContentBadge, Session, CreateSessionOptions } from '../../../shared/types'
 import { useActiveWorkspace, useAppShellContext, useSession, usePendingPermission, usePendingCredential } from '@/context/AppShellContext'
 import { useEscapeInterrupt } from '@/context/EscapeInterruptContext'
-import { ChatDisplay } from '../app-shell/ChatDisplay'
+// Boot closure: AppShell mounts EditPopover for labels/statuses even when closed.
+// ChatDisplay is the session transcript graph (TurnCard, markdown, overlays) and
+// only renders after the user opens the popover. Same lazy idiom as OnboardingDialog.
+const ChatDisplay = React.lazy(() =>
+  import('../app-shell/ChatDisplay').then((m) => ({ default: m.ChatDisplay })),
+)
 
 /** Rotating placeholder keys for compact mode input - short, action-oriented */
 const COMPACT_PLACEHOLDER_KEYS = [
@@ -1080,21 +1085,23 @@ export function EditPopover({
 
               {/* Content area - always uses compact ChatDisplay */}
               <div className="flex-1 flex flex-col bg-foreground-2" style={{ height: '100%' }}>
-                <ChatDisplay
-                  session={displaySession}
-                  onSendMessage={inlineExecution ? handleInlineSendMessage : handleLegacySendMessage}
-                  onOpenFile={onOpenFile || (() => {})}
-                  onOpenUrl={onOpenUrl || (() => {})}
-                  currentModel={currentModel}
-                  onModelChange={setCurrentModel}
-                  pendingPermission={pendingPermission}
-                  onRespondToPermission={onRespondToPermission}
-                  pendingCredential={pendingCredential}
-                  onRespondToCredential={onRespondToCredential}
-                  compactMode={true}
-                  placeholder={placeholder}
-                  emptyStateLabel={displayLabel || context.label}
-                />
+                <React.Suspense fallback={null}>
+                  <ChatDisplay
+                    session={displaySession}
+                    onSendMessage={inlineExecution ? handleInlineSendMessage : handleLegacySendMessage}
+                    onOpenFile={onOpenFile || (() => {})}
+                    onOpenUrl={onOpenUrl || (() => {})}
+                    currentModel={currentModel}
+                    onModelChange={setCurrentModel}
+                    pendingPermission={pendingPermission}
+                    onRespondToPermission={onRespondToPermission}
+                    pendingCredential={pendingCredential}
+                    onRespondToCredential={onRespondToCredential}
+                    compactMode={true}
+                    placeholder={placeholder}
+                    emptyStateLabel={displayLabel || context.label}
+                  />
+                </React.Suspense>
               </div>
             </div>
 

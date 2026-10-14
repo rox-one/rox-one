@@ -69,11 +69,20 @@ jobs:
         run: bun run electron:build:renderer
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+          # The boot-manifest step below derives the closure from the sibling
+          # *.js.map files, which the shipped build no longer emits (S9-11).
+          # Only this job measures; the packaged app keeps sourcemap: false.
+          ROX_RENDERER_SOURCEMAP: '1'
       - name: Bundle-size budget gate
         run: bun scripts/check-bundle-size.ts --check
+      # The three checks below are independent of the budget gate: run them even when it fails so a
+      # red gate never masks a boot-manifest or unit-test regression (issue #1926, run #797).
       - name: Boot-manifest reproducibility gate
+        if: always()
         run: bun run scripts/boot-manifest.ts --check --no-build
       - name: Bundle-size unit tests
+        if: always()
         run: bun test scripts/__tests__/check-bundle-size.test.ts
       - name: Boot-manifest + stale-chunk unit tests
+        if: always()
         run: bun test scripts/__tests__/boot-manifest.test.ts apps/electron/src/renderer/lib/__tests__/stale-chunk-reload.test.ts

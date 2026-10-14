@@ -1291,12 +1291,18 @@ export default function AiSettingsPage() {
                     ))
                   )}
                 </SettingsCard>
-                <div className="pt-0">
+                <div className="flex flex-wrap gap-2 pt-0">
                   <button
                     onClick={() => openApiSetup()}
                     className="inline-flex items-center h-8 px-3 text-sm rounded-lg bg-background shadow-minimal hover:bg-surface-hover transition-colors"
                   >
                     {t("settings.ai.addConnection")}
+                  </button>
+                  <button
+                    onClick={() => handleAddProviderAccount('local')}
+                    className="inline-flex items-center h-8 px-3 text-sm rounded-lg bg-background shadow-minimal hover:bg-surface-hover transition-colors"
+                  >
+                    {t("settings.ai.addOllama")}
                   </button>
                 </div>
               </SettingsSection>

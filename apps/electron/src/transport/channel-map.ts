@@ -5,7 +5,7 @@
  * the method→channel mapping used by buildClientApi().
  */
 
-import { RPC_CHANNELS } from '../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { ChannelMap } from './build-api'
 
 function invoke(channel: string, transform?: (result: any) => any, timeoutMs?: number) {
@@ -234,6 +234,9 @@ export const CHANNEL_MAP = {
   serviceLifecycleRestart: invoke(RPC_CHANNELS.serviceLifecycle.RESTART),
   serviceLifecycleUninstall: invoke(RPC_CHANNELS.serviceLifecycle.UNINSTALL),
   onServiceLifecycleStatusChanged: listener(RPC_CHANNELS.serviceLifecycle.STATUS_CHANGED),
+
+  // Menu-bar tray snapshot (local host)
+  reportTrayState: invoke(RPC_CHANNELS.tray.REPORT_STATE),
 
   // Diagnostics (local host doctor checks)
   runDiagnostics: invoke(RPC_CHANNELS.diagnostics.RUN),
@@ -617,6 +620,26 @@ export const CHANNEL_MAP = {
   'extensionSurface.onStateChanged': listener(RPC_CHANNELS.extensionSurface.STATE_CHANGED),
   'extensionSurface.onRemoved': listener(RPC_CHANNELS.extensionSurface.REMOVED),
 
+  // Cookbooks Lab surface — sidecar lifecycle + native data plane (LOCAL_ONLY)
+  'cookbooksLab.ensure': invoke(RPC_CHANNELS.cookbooksLab.ENSURE),
+  'cookbooksLab.status': invoke(RPC_CHANNELS.cookbooksLab.STATUS),
+  'cookbooksLab.restart': invoke(RPC_CHANNELS.cookbooksLab.RESTART),
+  'cookbooksLab.catalog': invoke(RPC_CHANNELS.cookbooksLab.CATALOG),
+  'cookbooksLab.open': invoke(RPC_CHANNELS.cookbooksLab.OPEN),
+  'cookbooksLab.document': invoke(RPC_CHANNELS.cookbooksLab.DOCUMENT),
+  // Wave 11: 30-с дефолт транспорта рубил легитимные долгие прогоны (холодный
+  // импорт matplotlib) — бюджет > runtime runApiTimeoutMs
+  'cookbooksLab.run': invoke(RPC_CHANNELS.cookbooksLab.RUN, undefined, 120_000),
+  // Wave 11: тот же дефолт рубил run-all на холодном ядре — бюджет > runtime-капа
+  'cookbooksLab.runAll': invoke(RPC_CHANNELS.cookbooksLab.RUN_ALL, undefined, 16 * 60_000),
+  'cookbooksLab.save': invoke(RPC_CHANNELS.cookbooksLab.SAVE),
+  'cookbooksLab.reset': invoke(RPC_CHANNELS.cookbooksLab.RESET),
+  'cookbooksLab.cancel': invoke(RPC_CHANNELS.cookbooksLab.CANCEL),
+  'cookbooksLab.export': invoke(RPC_CHANNELS.cookbooksLab.EXPORT),
+  // Wave 10: structural cell operations (add/delete/move/duplicate)
+  'cookbooksLab.mutate': invoke(RPC_CHANNELS.cookbooksLab.MUTATE),
+  'cookbooksLab.onStatusChanged': listener(RPC_CHANNELS.cookbooksLab.STATUS_CHANGED),
+
   // Debug logging
   debugLog: invoke(RPC_CHANNELS.debug.LOG),
 
@@ -904,6 +927,17 @@ export const CHANNEL_MAP = {
 
   // Organizations (P3.1)
   listOrganizations: invoke(RPC_CHANNELS.orgs.LIST),
+  teamChatListChannels: invoke(RPC_CHANNELS.teamChat.LIST_CHANNELS),
+  teamChatCreateChannel: invoke(RPC_CHANNELS.teamChat.CREATE_CHANNEL),
+  teamChatJoin: invoke(RPC_CHANNELS.teamChat.JOIN),
+  teamChatLeave: invoke(RPC_CHANNELS.teamChat.LEAVE),
+  teamChatAddMembers: invoke(RPC_CHANNELS.teamChat.ADD_MEMBERS),
+  teamChatSetSubscribed: invoke(RPC_CHANNELS.teamChat.SET_SUBSCRIBED),
+  teamChatArchive: invoke(RPC_CHANNELS.teamChat.ARCHIVE),
+  teamChatListMessages: invoke(RPC_CHANNELS.teamChat.LIST_MESSAGES),
+  teamChatPost: invoke(RPC_CHANNELS.teamChat.POST),
+  teamChatMarkRead: invoke(RPC_CHANNELS.teamChat.MARK_READ),
+  onTeamChatChanged: listener(RPC_CHANNELS.teamChat.CHANGED),
   createOrganization: invoke(RPC_CHANNELS.orgs.CREATE),
   inviteToOrganization: invoke(RPC_CHANNELS.orgs.INVITE),
   acceptOrganizationInvite: invoke(RPC_CHANNELS.orgs.ACCEPT),
@@ -918,6 +952,9 @@ export const CHANNEL_MAP = {
   onLlmConnectionsChanged: listener(RPC_CHANNELS.llmConnections.CHANGED),
 
   // Views
+  getChatFolders: invoke(RPC_CHANNELS.chatFolders.GET),
+  mutateChatFolders: invoke(RPC_CHANNELS.chatFolders.MUTATE),
+  onChatFoldersChanged: listener(RPC_CHANNELS.chatFolders.CHANGED),
   listViews: invoke(RPC_CHANNELS.views.LIST),
   saveViews: invoke(RPC_CHANNELS.views.SAVE),
 
@@ -935,6 +972,8 @@ export const CHANNEL_MAP = {
   getColorTheme: invoke(RPC_CHANNELS.theme.GET_COLOR_THEME),
   setColorTheme: invoke(RPC_CHANNELS.theme.SET_COLOR_THEME),
   setAppMaterial: invoke(RPC_CHANNELS.theme.SET_APP_MATERIAL),
+  setAppLayers: invoke(RPC_CHANNELS.theme.SET_APP_LAYERS),
+  saveUserThemePreset: invoke(RPC_CHANNELS.theme.SAVE_USER_PRESET),
   getWorkspaceColorTheme: invoke(RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME),
   setWorkspaceColorTheme: invoke(RPC_CHANNELS.theme.SET_WORKSPACE_COLOR_THEME),
   getAllWorkspaceThemes: invoke(RPC_CHANNELS.theme.GET_ALL_WORKSPACE_THEMES),

@@ -65,6 +65,19 @@ function typescriptRules() {
 export function workspaceConfig({ react = false } = {}) {
   const plugins = { '@typescript-eslint': tsPlugin }
   const rules = asWarnings(typescriptRules())
+  // `_`-prefixed bindings are this repo's established "deliberately unused" marker, and the
+  // canonical use is dropping fields through a rest sibling:
+  //   const { mode: _mode, stableUrl: _stable, ...rest } = record
+  // (memory/LessonStore.ts, docs/block-tree-service.ts, docs/descriptor-resolver.ts,
+  // knowledge/links-store.ts already do this). Without these options the rule flags an
+  // intentional, documented pattern as a new violation — see #1925.
+  rules['@typescript-eslint/no-unused-vars'] = ['warn', {
+    argsIgnorePattern: '^_',
+    varsIgnorePattern: '^_',
+    caughtErrorsIgnorePattern: '^_',
+    destructuredArrayIgnorePattern: '^_',
+    ignoreRestSiblings: true,
+  }]
   if (react) {
     plugins['react-hooks'] = reactHooksPlugin
     // rules-of-hooks has no current violation and catches real bugs: keep it an error.

@@ -8,6 +8,8 @@ import type { BackgroundTask } from '../ActiveTasksBar'
 import { ActiveOptionBadges } from '../ActiveOptionBadges'
 import { InputContainer } from './InputContainer'
 import { InputErrorBoundary } from './InputErrorBoundary'
+import { ComposerStatsLine } from './ComposerStatsLine'
+import type { ComposerStats } from './composer-stats'
 
 interface ChatInputZoneProps {
   compactMode?: boolean
@@ -29,6 +31,8 @@ interface ChatInputZoneProps {
   projects?: Array<{ id: string; slug: string; name: string; color?: string }>
   projectId?: string | null
   onSetProjectId?: (projectId: string | null) => void
+  /** Turns/steps/tokens/cache/context line under the composer (hidden in compact mode). */
+  stats?: ComposerStats | null
   className?: string
   inputProps: React.ComponentProps<typeof InputContainer>
 }
@@ -52,6 +56,7 @@ export function ChatInputZone({
   projects,
   projectId,
   onSetProjectId,
+  stats,
   className,
   inputProps,
 }: ChatInputZoneProps) {
@@ -128,6 +133,7 @@ export function ChatInputZone({
           currentSessionStatus={currentSessionStatus}
         />
       </InputErrorBoundary>
+      {!compactMode && stats && <ComposerStatsLine stats={stats} />}
     </div>
   )
 }

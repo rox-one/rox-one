@@ -260,7 +260,7 @@ export const SIDEBAR_COLLAPSED_WIDTH = 56
 export const SIDEBAR_AUTO_COLLAPSE_WIDTH = 56
 export const SIDEBAR_SNAP_TO_COLLAPSED = 200
 
-/** The collapse control «« / ⌘B (the existing `view.toggleSidebar`). */
+/** The collapse control «« / ⌘B outside editors (the existing `view.toggleSidebar`). */
 export const SIDEBAR_TOGGLE_COMMAND: CommandType = 'view.toggleSidebar'
 
 export const SIDEBAR_FOOTERS = ['quota', 'org', 'accounts', 'agent-status'] as const

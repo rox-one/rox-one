@@ -12,6 +12,6 @@ test('ProfileStrip preserves its translated accessibility contracts in isolation
   const output = `${result.stdout ?? ''}${result.stderr ?? ''}`
   expect(result.error, output).toBeUndefined()
   expect(result.status, output).toBe(0)
-  expect(output).toContain('5 pass')
+  expect(output).toContain('8 pass')
   expect(output).toContain('0 fail')
 }, 20_000)

@@ -117,7 +117,8 @@ export function statusKey(s: MailStatus | null): string {
     case 'unreachable': return 'inbox.mail.status.unreachable'
     case 'provisioning': return 'inbox.mail.status.provisioning'
     case 'no-mailbox': return 'inbox.mail.status.noMailbox'
-    case 'error': return 'inbox.mail.status.error'
+    // Raw server text stays in the tooltip/details, never the one-line status.
+    case 'error': return 'inbox.mail.status.errorShort'
     case 'ready': return s.local ? 'inbox.mail.status.readyLocal' : 'inbox.mail.status.ready'
     default: return 'inbox.mail.status.disabled'
   }
@@ -154,4 +155,30 @@ export function meetingNoteLine(m: Pick<MailSummary, 'id' | 'subject' | 'from' |
   const pad = (n: number) => String(n).padStart(2, '0')
   const when = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
   return `${label}: «${m.subject.trim() || noSubject}» — ${fromLabel(m)}, ${when} (mail:${m.id})`
+}
+
+/** Failure codes whose fix is reconnecting the mailbox (fresh device credential). */
+export const MAIL_RECONNECT_CODES: ReadonlySet<string> = new Set(['credential-revoked', 'keychain-locked', 'no-mailbox'])
+
+const MAIL_ERROR_KEYS: Readonly<Record<string, string>> = {
+  'external-blocked': 'inbox.mail.error.externalBlocked',
+  quota: 'inbox.mail.error.quota',
+  'not-found': 'inbox.mail.error.notFound',
+  'credential-revoked': 'inbox.mail.error.credentialRevoked',
+  auth: 'inbox.mail.error.credentialRevoked',
+  'keychain-locked': 'inbox.mail.error.keychainLocked',
+  'too-large': 'inbox.mail.error.tooLarge',
+  network: 'inbox.mail.error.network',
+  'no-mailbox': 'inbox.mail.status.error',
+}
+
+/** The stable code carried by a mail failure (bridge result or thrown error), if any. */
+export function mailErrorCodeOf(failure: unknown): string | null {
+  if (failure && typeof failure === 'object' && 'code' in failure && typeof (failure as { code: unknown }).code === 'string') return (failure as { code: string }).code
+  return null
+}
+
+/** i18n key for a failure code: a specific Russian text for known codes, the generic one otherwise. Never raw server text. */
+export function mailErrorKey(code: string | null | undefined): string {
+  return (code && MAIL_ERROR_KEYS[code]) || 'inbox.mail.actionFailed'
 }

@@ -2,12 +2,17 @@ import { getRenderedAttributes } from '@tiptap/core'
 import TaskItem from '@tiptap/extension-task-item'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { ANIMATED_TASK_ITEM_TOKENS } from './animated-task-item.tokens'
+import { taskCheckboxInputRule } from './task-checkbox-input-rule'
 
 /**
  * Custom TaskItem node view that keeps TipTap behavior but renders
  * an SVG checkmark path element so CSS can animate stroke-dashoffset.
  */
 export const AnimatedTaskItem = TaskItem.extend({
+  addInputRules() {
+    return [...(this.parent?.() ?? []), taskCheckboxInputRule()]
+  },
+
   addNodeView() {
     return ({ node, HTMLAttributes, getPos, editor }) => {
       const listItem = document.createElement('li')

@@ -512,6 +512,14 @@ export function ThemeProvider({
       delete root.dataset.blurred
     }
 
+    // Theme layers: the wallpaper switch turns the frame into glass over it,
+    // the join mode decides how content meets the frame (see tokens/layers.css).
+    const layers = resolvedTheme.layers
+    if (layers?.wallpaper && !isScenic) root.dataset.wallpaper = layers.wallpaper.type
+    else delete root.dataset.wallpaper
+    if (layers?.content?.join) root.dataset.contentJoin = layers.content.join
+    else delete root.dataset.contentJoin
+
     const uiProfile = resolveUiProfile(presetTheme)
     if (uiProfile) {
       root.dataset.uiProfile = uiProfile

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test'
+import { getDateLocale } from '../date-locale'
 import { LOCALE_REGISTRY } from '../registry'
 import {
   getLoadedLocaleCodes,
@@ -52,6 +53,8 @@ describe('setupRendererI18n', () => {
   it('translates synchronously from preloaded bundles and loads other locales on demand', async () => {
     await preloadRendererLocales(['ru', 'en'])
     expect(getLoadedLocaleCodes().sort()).toEqual(['en', 'ru'])
+    expect(getDateLocale('ru').code).toBe('ru')
+    expect(getDateLocale('en').code).toBe('en-US')
 
     const detector = { type: 'languageDetector' as const, init() {}, detect: () => 'ru', cacheUserLanguage() {} }
     const instance = setupRendererI18n([detector])
@@ -68,6 +71,7 @@ describe('setupRendererI18n', () => {
     await instance.changeLanguage('de')
     expect(instance.language).toBe('de')
     expect(instance.t(key!)).toBe(valueAt(deMessages, key!) as string)
+    expect(getDateLocale('de').code).toBe('de')
     expect(getLoadedLocaleCodes()).toContain('de')
     expect(getLoadedLocaleCodes()).not.toContain('ja')
   })

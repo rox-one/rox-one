@@ -49,13 +49,12 @@ import {
   isTerminalNavigation,
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
-import { isScreenNavigation, isSurfaceNavigation, isMissionsNavigation, type LoadedSource, type LoadedSkill, type NavigationState } from '../../../shared/types'
+import { isScreenNavigation, isSurfaceNavigation, isMissionsNavigation, isCookbooksNavigation, type LoadedSource, type LoadedSkill, type NavigationState } from '../../../shared/types'
 import { buildRouteFromNavigationState } from '../../../shared/route-parser'
-import ChatPage from '@/pages/ChatPage'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
 import { recordRecentSetting } from '@/lib/settings-recent'
 import { automationsAtom } from '@/atoms/automations'
-import { SendResourceToWorkspaceDialog, type SendResourceType } from './SendResourceToWorkspaceDialog'
+import type { SendResourceType } from './SendResourceToWorkspaceDialog'
 import {
   knowledgeActiveViewIdAtom,
   knowledgeHomeViewAtom,
@@ -67,6 +66,10 @@ import { RetainedSurfacePane, surfaceKeepAliveCapacity, useKeepAliveSurfaces } f
 import { ROUTE_PAGE_LOADERS } from './route-pages'
 import { SettingsScreenSidebar } from '@/pages/settings/SettingsScreenSidebar'
 export { lazyRoutePage } from '@/lib/route-recovery'
+
+const SendResourceToWorkspaceDialog = React.lazy(() =>
+  import('./SendResourceToWorkspaceDialog').then((m) => ({ default: m.SendResourceToWorkspaceDialog })),
+)
 
 function UnavailableAutomationTour({ workspaceId }: { workspaceId: string | null }) {
   const signals = useTourSignals({ workspaceId: workspaceId ?? '' })
@@ -115,6 +118,7 @@ const KnowledgeProposals = lazyRoutePage(ROUTE_PAGE_LOADERS.knowledgeProposals)
 const DevSpaceHomePage = lazyRoutePage(ROUTE_PAGE_LOADERS.devSpaceHome)
 const DevSpaceRepoPage = lazyRoutePage(ROUTE_PAGE_LOADERS.devSpaceRepo)
 const PlaybooksHomePage = lazyRoutePage(ROUTE_PAGE_LOADERS.playbooksHome)
+const CookbooksSurfacePage = lazyRoutePage(ROUTE_PAGE_LOADERS.cookbooks)
 // #1675: these eight screens were static imports, so their subtrees (including
 // the shiki diff stack behind memory/ImportReviewDialog) rode main.tsx's eager
 // startup closure, which index.html preloads whole. Same lazy idiom as above.
@@ -127,6 +131,7 @@ const MissionBoard = lazyRoutePage(ROUTE_PAGE_LOADERS.missionBoard)
 const SettingsOverviewPage = lazyRoutePage(ROUTE_PAGE_LOADERS.settingsOverview)
 const PageView = lazyRoutePage(ROUTE_PAGE_LOADERS.pageView)
 const SessionHeatmapHost = lazyRoutePage(ROUTE_PAGE_LOADERS.sessionHeatmap)
+const ChatPage = lazyRoutePage(ROUTE_PAGE_LOADERS.chat)
 
 type SelectedResourceStatus = 'loading' | 'ready' | 'missing' | 'unavailable'
 
@@ -284,15 +289,19 @@ export function MainContentPanel({
           {entry.node}
         </RetainedSurfacePane>
       ))}
-      <SendResourceToWorkspaceDialog
-        open={sendDialogOpen}
-        onOpenChange={setSendDialogOpen}
-        resourceType={sendResourceType}
-        resourceIds={sendResourceIds}
-        resourceLabel={sendResourceLabel}
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId || ''}
-      />
+      {sendDialogOpen && (
+        <React.Suspense fallback={null}>
+          <SendResourceToWorkspaceDialog
+            open
+            onOpenChange={setSendDialogOpen}
+            resourceType={sendResourceType}
+            resourceIds={sendResourceIds}
+            resourceLabel={sendResourceLabel}
+            workspaces={workspaces}
+            activeWorkspaceId={activeWorkspaceId || ''}
+          />
+        </React.Suspense>
+      )}
     </>
   )
 }
@@ -719,6 +728,14 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <PlaybooksHomePage />
+      </Panel>
+    )
+  }
+
+  if (isCookbooksNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <CookbooksSurfacePage />
       </Panel>
     )
   }

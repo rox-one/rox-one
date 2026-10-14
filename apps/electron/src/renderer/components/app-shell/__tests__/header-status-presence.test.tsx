@@ -1,8 +1,11 @@
-import { describe, expect, it } from 'bun:test'
+import { beforeAll, describe, expect, it } from 'bun:test'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { PresenceContext } from 'motion/react'
+import { loadMotion } from '@/lib/deferred-motion'
 import { HeaderStatusPresence } from '../HeaderStatusLane'
+
+beforeAll(() => loadMotion())
 
 function renderNotice(isPresent: boolean) {
   return renderToStaticMarkup(
