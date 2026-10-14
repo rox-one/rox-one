@@ -113,4 +113,96 @@ export function registerBuiltinGlanceWidgets(): void {
     fields: [{ key: 'text', kind: 'textarea', labelKey: 'clipboard.filter.text' }],
     load: () => import('./widgets/TextWidget'),
   })
+
+  const limitField = { key: 'limit', kind: 'number', labelKey: 'glance.f.limit', min: 1, max: 50 } as const
+  const collapseField = { key: 'collapseAfter', kind: 'number', labelKey: 'glance.f.collapseAfter', min: 0, max: 50 } as const
+
+  registerGlanceWidget({
+    type: 'rss',
+    category: 'news',
+    title: 'RSS',
+    icon: 'rss',
+    defaultConfig: { feeds: [], limit: 20, collapseAfter: 5 },
+    fields: [
+      { key: 'feeds', kind: 'strings', labelKey: 'screens.feed.groups.feeds', placeholder: 'https://example.com/feed.xml' },
+      { ...limitField, max: 100 },
+      collapseField,
+    ],
+    network: true,
+    load: () => import('./widgets/RssWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'hacker-news',
+    category: 'news',
+    title: 'Hacker News',
+    icon: 'newspaper',
+    defaultConfig: { feed: 'top', limit: 15, collapseAfter: 5 },
+    fields: [
+      {
+        key: 'feed',
+        kind: 'select',
+        labelKey: 'learning.screen.sort',
+        options: [
+          { value: 'top', labelKey: 'glance.o.top' },
+          { value: 'new', labelKey: 'sidebar.view.new' },
+          { value: 'show', labelKey: 'glance.o.showHn' },
+          { value: 'ask', labelKey: 'glance.o.askHn' },
+        ],
+      },
+      limitField,
+      collapseField,
+    ],
+    network: true,
+    load: () => import('./widgets/HackerNewsWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'lobsters',
+    category: 'news',
+    title: 'Lobsters',
+    icon: 'newspaper',
+    defaultConfig: { sort: 'hot', tag: '', limit: 15, collapseAfter: 5 },
+    fields: [
+      {
+        key: 'sort',
+        kind: 'select',
+        labelKey: 'learning.screen.sort',
+        options: [
+          { value: 'hot', labelKey: 'glance.o.hot' },
+          { value: 'new', labelKey: 'sidebar.view.new' },
+        ],
+      },
+      { key: 'tag', kind: 'text', labelKey: 'glance.f.tag', placeholder: 'rust' },
+      limitField,
+      collapseField,
+    ],
+    network: true,
+    load: () => import('./widgets/LobstersWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'reddit',
+    category: 'news',
+    title: 'Reddit',
+    icon: 'message-square',
+    defaultConfig: { subreddit: '', sort: 'hot', limit: 15, collapseAfter: 5 },
+    fields: [
+      { key: 'subreddit', kind: 'text', labelKey: 'glance.f.subreddit', placeholder: 'r/selfhosted' },
+      {
+        key: 'sort',
+        kind: 'select',
+        labelKey: 'learning.screen.sort',
+        options: [
+          { value: 'hot', labelKey: 'glance.o.hot' },
+          { value: 'new', labelKey: 'sidebar.view.new' },
+          { value: 'top', labelKey: 'glance.o.top' },
+        ],
+      },
+      limitField,
+      collapseField,
+    ],
+    network: true,
+    load: () => import('./widgets/RedditWidget'),
+  })
 }
