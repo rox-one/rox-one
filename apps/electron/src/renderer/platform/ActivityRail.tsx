@@ -28,6 +28,7 @@ import { enabledExtraScreenIdsAtom } from '@/atoms/extra-screens'
 import { visibleExtraScreens } from '../pages/extra-screens/registry'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
+import { SHELL_BREAKPOINTS } from './viewport-band'
 import { CHROME_DENSITY } from './chrome-density'
 import { usePillModel } from './usePillNav'
 import { resolvePrimaryNav, type ResolvedPrimaryNavEntry } from '../components/app-shell/primary-nav'
@@ -55,8 +56,9 @@ export function activityRailWidth(collapsed: boolean): number {
  * Below this shell-root width the expanded rail would push sidebar (180) +
  * navigator (240) + centre (420) + workspace/inspector rails past the edge,
  * so the rail auto-collapses to icons (display-only; persisted state kept).
+ * Tied to the shell "regular" breakpoint (--shell-bp-regular, 1280).
  */
-export const RAIL_AUTO_COLLAPSE_BELOW = 1140
+export const RAIL_AUTO_COLLAPSE_BELOW = SHELL_BREAKPOINTS.regular
 
 /**
  * Container-aware narrow check: measures the shell root (the rail's parent)

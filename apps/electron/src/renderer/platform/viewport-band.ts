@@ -5,6 +5,14 @@ export const VIEWPORT_COMPACT_MAX = 768
 export const VIEWPORT_THREE_PANE = 1280
 export const VIEWPORT_WIDE_MIN = 1800
 
+/** Shell width breakpoints; mirrors --shell-bp-* in packages/ui tokens/chrome.css. */
+export const SHELL_BREAKPOINTS = {
+  compact: 900,
+  regular: 1280,
+  wide: 1600,
+  ultra: 2560,
+} as const
+
 export type ViewportBand = 'narrow' | 'compact' | 'three-pane' | 'wide'
 
 export function viewportBand(width: number): ViewportBand {
