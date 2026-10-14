@@ -24,6 +24,7 @@ export const STARTUP_SPLIT_LOADERS: ReadonlyArray<readonly [string, Loader]> = [
   ['rox-cli-credential-step', () => import('@/components/onboarding/RoxCliCredentialStep')],
   ['workspace-creation-screen', () => import('@/components/workspace/WorkspaceCreationScreen')],
   ['file-preview-host', () => import('@/FilePreviewHost')],
+  ['motion', () => import('@/lib/deferred-motion').then((m) => m.loadMotion())],
 ]
 
 export interface IdlePreloadOptions {

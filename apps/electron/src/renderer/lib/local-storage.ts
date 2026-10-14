@@ -18,6 +18,12 @@ export const KEYS = {
   sidebarWidth: 'sidebar-width',
   sessionListWidth: 'session-list-width',
   sidebarMode: 'sidebar-mode',
+  // Shell layout (rail pins, pills, second-sidebar groups/mode, panel strip)
+  shellSidebarGroups: 'shell-sidebar-groups-v1',
+  shellSidebarMode: 'shell-sidebar-mode-v1',
+  shellRailPins: 'shell-rail-pins-v1',
+  shellPills: 'shell-pills-v1',
+  shellPanels: 'shell-panels-v1',
   listFilter: 'list-filter',
   labelFilter: 'label-filter',
   viewFilters: 'view-filters', // Per-view filter map: { [viewKey]: { statuses, labels } }
