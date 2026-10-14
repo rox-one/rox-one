@@ -3,11 +3,8 @@ import { useStore } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Archive, Flag, Layers, X } from 'lucide-react'
-import {
-  BULK_UPDATE_MAX_IDS,
-  type BulkUpdateSessionsPatch,
-  type SessionPriority,
-} from '@rox/shared/protocol'
+import { BULK_UPDATE_MAX_IDS } from '@rox/shared/protocol/bulk-limit'
+import type { BulkUpdateSessionsPatch, SessionPriority } from '@rox/shared/protocol'
 import { extractSessionMeta, sessionMetaMapAtom } from '@/atoms/sessions'
 import { sessionSelection } from '@/hooks/useEntitySelection'
 import type { SessionStatus, SessionStatusId } from '@/config/session-status-config'

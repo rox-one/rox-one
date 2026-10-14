@@ -36,6 +36,25 @@ import {
 } from './chunk-index'
 import { loadXenovaEmbedder, type Embedder } from './episodic-memory'
 import { resolveConfigDir } from '@rox/shared/config/paths'
+import {
+  GRAPH_SEARCH_BUDGET_MS,
+  graphHitToSearchHit,
+  isFusableGraphHit,
+  rrfFuse,
+  withBudget,
+  type GraphMemoryHit,
+  type GraphMemoryProvider,
+} from '@rox/shared/memory/graph-provider'
+
+/** Resolves the graph-memory provider for a workspace (null = none). Set once by bootstrap. */
+export type GraphMemoryProviderResolver = (ctx: { workspaceRoot: string; workspaceId?: string }) => GraphMemoryProvider | null
+
+let graphProviderResolver: GraphMemoryProviderResolver | null = null
+
+/** Register (or clear with null) the process-wide graph-memory provider resolver. */
+export function setGraphMemoryProviderResolver(resolver: GraphMemoryProviderResolver | null): void {
+  graphProviderResolver = resolver
+}
 
 /** Persisted index state sidecar. */
 export interface MemoryIndexMeta {
@@ -61,7 +80,7 @@ export interface MemoryIndexServiceDeps {
   logger?: { warn: (msg: string, err?: unknown) => void }
   /** Test seam: override source collection. */
   collectDocs?: (workspaceRoot: string) => ChunkSourceDoc[]
-  /** c1.3: opt-in semantic (vector) leg, config `memory.semantic`. Off by default. */
+  /** c1.3: opt-in semantic (vector) leg, config `memory.semantic` (default on). */
   semantic?: boolean
   /** c1.3 DI seam: a ready-made embedder (tests / future providers). */
   embedder?: Embedder
@@ -69,6 +88,10 @@ export interface MemoryIndexServiceDeps {
   loadEmbedder?: () => Promise<Embedder | null>
   /** c1.3: config dir holding the model cache; defaults to CRAFT_CONFIG_DIR || resolveConfigDir(). */
   configDir?: string
+  /** Graph-memory DI seam; defaults to the registered resolver (see setGraphMemoryProviderResolver). */
+  graphProvider?: GraphMemoryProvider | null
+  /** Budget for one graph search (ms); late results are dropped. Default 300. */
+  graphBudgetMs?: number
 }
 
 const SNIPPET_CHARS = 240
@@ -422,6 +445,50 @@ export class MemoryIndexService {
    * turn a working lexical recall into an error.
    */
   async searchSemantic(query: string, limit = 8): Promise<MemorySearchResult> {
+    const trimmed = typeof query === 'string' ? query.trim() : ''
+    const provider = trimmed ? this.graphProvider() : null
+    if (!provider) return this.searchNative(query, limit)
+    const controller = new AbortController()
+    // Promise.resolve().then(): a provider that throws synchronously or returns
+    // a non-promise still degrades to native results.
+    const graphP = Promise.resolve()
+      .then(() => provider.search(trimmed, { limit, signal: controller.signal }))
+      .catch((err: unknown) => {
+        this.logger.warn('MemoryIndexService: graph search failed', err)
+        return [] as GraphMemoryHit[]
+      })
+    const [native, graph] = await Promise.all([
+      this.searchNative(trimmed, limit),
+      withBudget(graphP, this.deps.graphBudgetMs ?? GRAPH_SEARCH_BUDGET_MS, [] as GraphMemoryHit[], () => controller.abort()),
+    ])
+    try {
+      const graphHits = (Array.isArray(graph) ? graph : []).filter(isFusableGraphHit).map(h => graphHitToSearchHit(h))
+      if (graphHits.length === 0) return native
+      return { hits: rrfFuse([native.hits, graphHits], limit), capability: native.capability }
+    } catch (err) {
+      this.logger.warn('MemoryIndexService: graph fusion failed', err)
+      return native
+    }
+  }
+
+  private graphProvider(): GraphMemoryProvider | null {
+    try {
+      const p =
+        this.deps.graphProvider !== undefined
+          ? this.deps.graphProvider
+          : (graphProviderResolver?.({
+              workspaceRoot: this.deps.workspaceRoot,
+              ...(this.deps.workspaceId ? { workspaceId: this.deps.workspaceId } : {}),
+            }) ?? null)
+      if (!p || p.status().state === 'disabled') return null
+      return p
+    } catch (err) {
+      this.logger.warn('MemoryIndexService: graph provider unavailable', err)
+      return null
+    }
+  }
+
+  private async searchNative(query: string, limit: number): Promise<MemorySearchResult> {
     if (!this.semanticEnabled) return this.search(query, limit)
     const trimmed = typeof query === 'string' ? query.trim() : ''
     if (!trimmed) return this.search(query, limit)

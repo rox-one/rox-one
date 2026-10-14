@@ -4,7 +4,8 @@
  * `setupI18n()` statically imports all twelve locales (~7 MB of JSON), which
  * made every renderer window parse them before first paint. This module keeps
  * the same i18next configuration but holds only the active language and its
- * fallback chain (Russian, then English) in memory:
+ * fallback chain (Russian, then English) in memory. Date-fns locales follow
+ * the same chain via `loadDateLocale` so unused languages stay out of boot.
  *
  *   1. `preloadRendererLocales()` — call and await before the first render
  *      (bootstrap.ts does this before importing main.tsx). It fetches the
@@ -30,6 +31,9 @@ import {
   type LanguageCode,
 } from "./languages";
 import { LOCALE_MESSAGE_LOADERS, type LocaleMessages } from "./locale-loaders";
+
+const loadDateLocale = (lang: string): Promise<unknown> =>
+  import("./date-locale").then((m) => m.loadDateLocale(lang));
 
 /** localStorage key written by i18next-browser-languagedetector. */
 export const I18N_STORAGE_KEY = "i18nextLng";
@@ -106,7 +110,10 @@ export function startupLanguages(initial: LanguageCode = resolveInitialLanguage(
 export async function preloadRendererLocales(
   languages: readonly LanguageCode[] = startupLanguages(),
 ): Promise<void> {
-  await Promise.all(languages.map((code) => loadLocaleMessages(code).catch(() => undefined)));
+  await Promise.all([
+    ...languages.map((code) => loadLocaleMessages(code).catch(() => undefined)),
+    ...languages.map((code) => loadDateLocale(code).catch(() => undefined)),
+  ]);
 }
 
 /** i18next backend that resolves bundles through the lazy loaders. */
@@ -118,8 +125,11 @@ export const lazyLocaleBackend: BackendModule = {
       callback(null, {});
       return;
     }
-    loadLocaleMessages(language).then(
-      (messages) => callback(null, messages),
+    Promise.all([
+      loadLocaleMessages(language),
+      loadDateLocale(language).catch(() => undefined),
+    ]).then(
+      ([messages]) => callback(null, messages),
       (error: unknown) => callback(error instanceof Error ? error : new Error(String(error)), false),
     );
   },

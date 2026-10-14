@@ -28,10 +28,17 @@ describe('sidebar v2 chrome', () => {
     expect(collapsed).toContain('aria-label="Expand"')
   })
 
-  it('footer: just the profile card — no gear, pin or collapse buttons', () => {
-    const html = render(<SidebarChrome profile={profile} onProfileClick={noop} onOpenSettings={noop} promoKind={null} onPromoCta={noop} />)
-    for (const id of ['rail-settings', 'rail-pin', 'rail-toggle']) expect(html).not.toContain(id)
-    expect(html).toContain('data-tutorial="profile-strip"')
+  it('footer: no profile card, gear, pin or collapse buttons; empty without a hint', () => {
+    expect(render(<SidebarChrome promoKind={null} onPromoCta={noop} />)).toBe('')
+    const html = render(<SidebarChrome promoKind="reminder" reminderDueCount={1} onPromoCta={noop} />)
+    for (const id of ['rail-settings', 'rail-pin', 'rail-toggle', 'profile-strip']) expect(html).not.toContain(id)
+  })
+
+  it('rail: no gear — Settings is reached only from the avatar popover', () => {
+    const rail = readFileSync(resolve(import.meta.dir, '../../shell/PrimaryRail.tsx'), 'utf8')
+    expect(rail).not.toContain('model.bottom.map')
+    const shell = readFileSync(resolve(import.meta.dir, '../AppShell.tsx'), 'utf8')
+    expect(shell).toContain('variant="rail"')
   })
 
   it('the profile popover offers «Настройки»', () => {

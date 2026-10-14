@@ -20,7 +20,7 @@ import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@rox/ui'
 import type { Node as PMNode } from 'prosemirror-model'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import { applyPropertyPatch, previewPropertyPatch, previewPropertyDictionary, projectFrontmatter, retainSource, retainedSourceHash, type MarkdownCommitCommand, type PropertyDictionaryPreview, type PropertyValue } from '@rox/core/docs'
 import type { ContentFailure, ContentResolution } from '@rox/server-core/docs/descriptor-resolver'
 import type { BlockTreeResult, NativeMarkerMappingPreview } from '@rox/server-core/docs/block-tree-service'
@@ -45,7 +45,7 @@ import { cn } from '@/lib/utils'
 import { NotesQuickSections, useNotePins } from '@/screens/notes/NotesQuickSections'
 import { useNotesScreenSidebar } from '@/screens/notes/useNotesScreenSidebar'
 import { SlotPortal } from '@/screens/content-slot'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import {
   contentHash,
   isClaimableLive,
@@ -510,7 +510,7 @@ function SelectedNoteRecovery({ failure, address, onRetry }: {
 }
 
 function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
-  const shellSidebarTarget = useShellSidebarTarget()
+  const shellSidebarTarget = useSidebarHandledOutside()
   const { t } = useTranslation()
   // Panel-layout mode drives which side rails this surface may render.
   const { mode: panelLayoutMode } = usePanelWorkspaceLayout()
@@ -2740,6 +2740,7 @@ h1,h2,h3{margin-top:1.5em}
       <SlotPortal target={notesSidebarSlots.footerTarget}>{notesFooter}</SlotPortal>
       {!shellSidebarTarget && (
       <ShellSidebarPortal
+        bareLabelKey="navigation.barePanel.vault"
         className="notes-side-surface shrink-0 flex flex-col min-h-0"
         style={{ width: vaultShown ? railLayout.vault : 0 }}
         hidden={!vaultShown}
