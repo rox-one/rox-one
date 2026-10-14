@@ -111,6 +111,9 @@ export function saveNotebooks(notebooks: readonly PlaybookNotebook[]): void {
 export const NOTEBOOKS_CHANGED_EVENT = 'rox:playbooks-notebooks-changed'
 const OPEN_INTENT_EVENT = 'rox:playbooks-open-intent'
 let pendingOpenId: string | null = null
+let pendingOpenTimer: ReturnType<typeof setTimeout> | null = null
+/** An intent nobody consumed (navigation blocked) expires instead of firing on a later visit. */
+const OPEN_INTENT_TTL_MS = 5_000
 
 /** Subscribe to notebook list changes from this window or another one. */
 export function subscribeNotebooks(listener: () => void): () => void {
@@ -131,12 +134,15 @@ export function subscribeNotebooks(listener: () => void): () => void {
  */
 export function requestOpenNotebook(id: string): void {
   pendingOpenId = id
+  if (pendingOpenTimer) clearTimeout(pendingOpenTimer)
+  pendingOpenTimer = setTimeout(() => { pendingOpenId = null; pendingOpenTimer = null }, OPEN_INTENT_TTL_MS)
   if (typeof window !== 'undefined') window.dispatchEvent(new Event(OPEN_INTENT_EVENT))
 }
 
 export function takeOpenNotebookIntent(): string | null {
   const id = pendingOpenId
   pendingOpenId = null
+  if (pendingOpenTimer) { clearTimeout(pendingOpenTimer); pendingOpenTimer = null }
   return id
 }
 
