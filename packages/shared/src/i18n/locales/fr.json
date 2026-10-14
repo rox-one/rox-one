@@ -8423,6 +8423,7 @@
   "settings.account.rox.rotate": "Changer la clé",
   "settings.account.rox.rotateConfirm": "Changer la clé ? L’ancienne cessera de fonctionner sous une minute.",
   "settings.account.rox.rotated": "Clé changée",
+  "settings.account.rox.signInAgainHint": "Reconnecte-toi à ton compte Rox pour gérer ton adresse, ta clé et tes appareils.",
   "settings.account.rox.thisDevice": "cet appareil",
   "settings.account.rox.unknownDevice": "Appareil inconnu",
   "settings.account.source.automationRan": "Run an automation · +15",

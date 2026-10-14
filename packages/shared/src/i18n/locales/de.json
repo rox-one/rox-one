@@ -8414,6 +8414,7 @@
   "settings.account.rox.rotate": "Schlüssel wechseln",
   "settings.account.rox.rotateConfirm": "Schlüssel wechseln? Der alte funktioniert in einer Minute nicht mehr.",
   "settings.account.rox.rotated": "Schlüssel gewechselt",
+  "settings.account.rox.signInAgainHint": "Melde dich erneut bei deinem Rox-Konto an, um Adresse, Schlüssel und Geräte zu verwalten.",
   "settings.account.rox.thisDevice": "dieses Gerät",
   "settings.account.rox.unknownDevice": "Unbekanntes Gerät",
   "settings.account.source.automationRan": "Run an automation · +15",

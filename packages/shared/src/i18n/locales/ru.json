@@ -8460,6 +8460,7 @@
   "settings.account.rox.rotate": "Сменить ключ",
   "settings.account.rox.rotateConfirm": "Сменить ключ? Старый перестанет работать в течение минуты.",
   "settings.account.rox.rotated": "Ключ сменён",
+  "settings.account.rox.signInAgainHint": "Войди в аккаунт Rox заново в разделе «Аккаунт», чтобы управлять адресом, ключом и устройствами.",
   "settings.account.rox.thisDevice": "это устройство",
   "settings.account.rox.unknownDevice": "Неизвестное устройство",
   "settings.account.source.automationRan": "Запустить автоматизацию · +15",

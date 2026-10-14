@@ -53,12 +53,18 @@ export function RoxAccountManagement({ handle, keyPrefix, onAccountChanged }: { 
   const fmt = React.useMemo(() => new Intl.DateTimeFormat(i18n.resolvedLanguage ?? i18n.language, { dateStyle: 'medium', timeStyle: 'short' }), [i18n.resolvedLanguage, i18n.language])
   const when = (iso: string | null) => { const at = iso ? Date.parse(iso) : NaN; return Number.isFinite(at) ? fmt.format(at) : '—' }
 
-  const run = async (id: string, action: () => Promise<{ ok: true } | { ok: false; error: string }>, success: string) => {
+  // An expired session makes every action fail: lock the controls and say so.
+  const [expiredByAction, setExpiredByAction] = React.useState(false)
+  const expired = expiredByAction || (sessions.kind === 'error' && sessions.code === 'ROX_AUTH_EXPIRED')
+  const run = async <R extends { ok: true } | { ok: false; error: string }>(id: string, action: () => Promise<R>, success: string | ((res: Extract<R, { ok: true }>) => string)) => {
     setBusy(id)
     try {
       const res = await action().catch(() => ({ ok: false as const, error: 'ROX_AUTH_REQUEST_FAILED' }))
-      if (res.ok) toast.success(success)
-      else toast.error(t(errorKey(res.error)))
+      if (res.ok) toast.success(typeof success === 'function' ? success(res as Extract<R, { ok: true }>) : success)
+      else {
+        if (res.error === 'ROX_AUTH_EXPIRED') setExpiredByAction(true)
+        toast.error(t(errorKey(res.error)))
+      }
       return res.ok
     } finally { setBusy(null) }
   }
@@ -67,7 +73,7 @@ export function RoxAccountManagement({ handle, keyPrefix, onAccountChanged }: { 
     const res = await window.electronAPI.setRoxHandle(draft)
     if (res.ok) { setHandleDraft(res.handle); onAccountChanged?.() }
     return res
-  }, t('settings.account.rox.handleSaved', { address: `${draft}@rox.one` }))
+  }, (res) => t('settings.account.rox.handleSaved', { address: res.handleAddress ?? `${res.handle}@rox.one` }))
 
   const rotate = () => {
     if (!window.confirm(t('settings.account.rox.rotateConfirm'))) return
@@ -91,6 +97,11 @@ export function RoxAccountManagement({ handle, keyPrefix, onAccountChanged }: { 
     <>
       <SettingsSection title={t('settings.account.rox.addressSection')}>
         <SettingsCard>
+          {expired ? (
+            <SettingsRow label={t('settings.account.rox.errors.expired')} description={t('settings.account.rox.signInAgainHint')}>
+              <span data-testid="rox-session-expired" />
+            </SettingsRow>
+          ) : null}
           <SettingsRow label={t('settings.account.rox.handle')} description={t('settings.account.rox.handleHint')}>
             <div className="flex min-w-[260px] items-center gap-2">
               <Input
@@ -98,12 +109,13 @@ export function RoxAccountManagement({ handle, keyPrefix, onAccountChanged }: { 
                 onChange={(e) => setHandleDraft(e.target.value)}
                 aria-label={t('settings.account.rox.handle')}
                 aria-invalid={draft !== '' && !handleValid}
+                disabled={expired}
                 className="h-8"
                 maxLength={30}
                 data-testid="rox-handle-input"
               />
               <span className="shrink-0 text-sm text-muted-foreground">@rox.one</span>
-              <Button size="sm" variant="outline" disabled={!handleValid || draft === handle || busy !== null} onClick={claimHandle} data-testid="rox-handle-save">
+              <Button size="sm" variant="outline" disabled={expired || !handleValid || draft === handle || busy !== null} onClick={claimHandle} data-testid="rox-handle-save">
                 {t('settings.account.rox.handleSave')}
               </Button>
             </div>
@@ -111,7 +123,7 @@ export function RoxAccountManagement({ handle, keyPrefix, onAccountChanged }: { 
           <SettingsRow label={t('settings.account.rox.key')} description={t('settings.account.rox.keyHint')}>
             <div className="flex items-center gap-2">
               <span className="font-mono text-sm" data-testid="rox-key-prefix">{prefix ? `${prefix}…` : '—'}</span>
-              <Button size="sm" variant="outline" disabled={busy !== null || !prefix} onClick={rotate} data-testid="rox-key-rotate">
+              <Button size="sm" variant="outline" disabled={expired || busy !== null || !prefix} onClick={rotate} data-testid="rox-key-rotate">
                 {t('settings.account.rox.rotate')}
               </Button>
             </div>
@@ -136,7 +148,7 @@ export function RoxAccountManagement({ handle, keyPrefix, onAccountChanged }: { 
                 description={t('settings.account.rox.deviceMeta', { platform: s.platform ?? s.kind, seen: when(s.lastSeenAt ?? s.createdAt) })}
               >
                 {s.current ? <span className="text-sm text-muted-foreground">{t('settings.account.rox.thisDevice')}</span> : (
-                  <Button size="sm" variant="outline" disabled={busy !== null} onClick={() => revoke(s)} data-testid="rox-session-revoke">
+                  <Button size="sm" variant="outline" disabled={expired || busy !== null} onClick={() => revoke(s)} data-testid="rox-session-revoke">
                     {t('settings.account.rox.revoke')}
                   </Button>
                 )}
@@ -145,7 +157,7 @@ export function RoxAccountManagement({ handle, keyPrefix, onAccountChanged }: { 
           )}
           {others > 0 ? (
             <SettingsRow label={t('settings.account.rox.revokeOthersLabel', { count: others })}>
-              <Button size="sm" variant="outline" disabled={busy !== null} onClick={revokeOthers} data-testid="rox-session-revoke-others">
+              <Button size="sm" variant="outline" disabled={expired || busy !== null} onClick={revokeOthers} data-testid="rox-session-revoke-others">
                 {t('settings.account.rox.revokeOthers')}
               </Button>
             </SettingsRow>

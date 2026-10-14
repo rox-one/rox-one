@@ -8458,6 +8458,7 @@
   "settings.account.rox.rotate": "تغيير المفتاح",
   "settings.account.rox.rotateConfirm": "تغيير المفتاح؟ سيتوقف القديم خلال دقيقة.",
   "settings.account.rox.rotated": "تم تغيير المفتاح",
+  "settings.account.rox.signInAgainHint": "سجّل الدخول إلى حساب Rox مرة أخرى لإدارة عنوانك ومفتاحك وأجهزتك.",
   "settings.account.rox.thisDevice": "هذا الجهاز",
   "settings.account.rox.unknownDevice": "جهاز غير معروف",
   "settings.account.source.automationRan": "Run an automation · +15",

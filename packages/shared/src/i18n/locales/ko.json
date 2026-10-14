@@ -8414,6 +8414,7 @@
   "settings.account.rox.rotate": "키 교체",
   "settings.account.rox.rotateConfirm": "키를 교체할까요? 이전 키는 1분 안에 작동을 멈춥니다.",
   "settings.account.rox.rotated": "키 교체됨",
+  "settings.account.rox.signInAgainHint": "주소, 키, 기기를 관리하려면 Rox 계정에 다시 로그인하세요.",
   "settings.account.rox.thisDevice": "이 기기",
   "settings.account.rox.unknownDevice": "알 수 없는 기기",
   "settings.account.source.automationRan": "Run an automation · +15",

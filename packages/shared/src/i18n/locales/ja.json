@@ -8414,6 +8414,7 @@
   "settings.account.rox.rotate": "キーを更新",
   "settings.account.rox.rotateConfirm": "キーを更新しますか？古いキーは 1 分以内に無効になります。",
   "settings.account.rox.rotated": "キーを更新しました",
+  "settings.account.rox.signInAgainHint": "アドレス・キー・デバイスを管理するには、Rox アカウントに再度サインインしてください。",
   "settings.account.rox.thisDevice": "このデバイス",
   "settings.account.rox.unknownDevice": "不明なデバイス",
   "settings.account.source.automationRan": "Run an automation · +15",

@@ -8423,6 +8423,7 @@
   "settings.account.rox.rotate": "Rotar clave",
   "settings.account.rox.rotateConfirm": "¿Rotar la clave? La anterior dejará de funcionar en un minuto.",
   "settings.account.rox.rotated": "Clave rotada",
+  "settings.account.rox.signInAgainHint": "Vuelve a iniciar sesión en tu cuenta de Rox para gestionar tu dirección, clave y dispositivos.",
   "settings.account.rox.thisDevice": "este dispositivo",
   "settings.account.rox.unknownDevice": "Dispositivo desconocido",
   "settings.account.source.automationRan": "Run an automation · +15",

@@ -8414,6 +8414,7 @@
   "settings.account.rox.rotate": "Rotate key",
   "settings.account.rox.rotateConfirm": "Rotate the key? The old one stops working within a minute.",
   "settings.account.rox.rotated": "Key rotated",
+  "settings.account.rox.signInAgainHint": "Sign in to your Rox account again to manage your address, key and devices.",
   "settings.account.rox.thisDevice": "this device",
   "settings.account.rox.unknownDevice": "Unknown device",
   "settings.account.source.automationRan": "Run an automation · +15",

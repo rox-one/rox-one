@@ -8442,6 +8442,7 @@
   "settings.account.rox.rotate": "Zmień klucz",
   "settings.account.rox.rotateConfirm": "Zmienić klucz? Stary przestanie działać w ciągu minuty.",
   "settings.account.rox.rotated": "Klucz zmieniony",
+  "settings.account.rox.signInAgainHint": "Zaloguj się ponownie do konta Rox, aby zarządzać adresem, kluczem i urządzeniami.",
   "settings.account.rox.thisDevice": "to urządzenie",
   "settings.account.rox.unknownDevice": "Nieznane urządzenie",
   "settings.account.source.automationRan": "Run an automation · +15",

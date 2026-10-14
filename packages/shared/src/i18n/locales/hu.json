@@ -8414,6 +8414,7 @@
   "settings.account.rox.rotate": "Kulcscsere",
   "settings.account.rox.rotateConfirm": "Lecseréled a kulcsot? A régi egy percen belül megszűnik.",
   "settings.account.rox.rotated": "Kulcs lecserélve",
+  "settings.account.rox.signInAgainHint": "Jelentkezz be újra a Rox-fiókodba a cím, a kulcs és az eszközök kezeléséhez.",
   "settings.account.rox.thisDevice": "ez az eszköz",
   "settings.account.rox.unknownDevice": "Ismeretlen eszköz",
   "settings.account.source.automationRan": "Run an automation · +15",

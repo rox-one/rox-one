@@ -8414,6 +8414,7 @@
   "settings.account.rox.rotate": "轮换密钥",
   "settings.account.rox.rotateConfirm": "轮换密钥？旧密钥将在一分钟内失效。",
   "settings.account.rox.rotated": "密钥已轮换",
+  "settings.account.rox.signInAgainHint": "请重新登录 Rox 账户以管理地址、密钥和设备。",
   "settings.account.rox.thisDevice": "此设备",
   "settings.account.rox.unknownDevice": "未知设备",
   "settings.account.source.automationRan": "Run an automation · +15",
