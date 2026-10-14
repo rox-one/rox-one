@@ -132,7 +132,7 @@ window.ui001.render({});` : ''}
 `)
   const stubs = new Set([
     '../memory/MemoryScreen', '../memory/MemoryRepoScreen', '../learning/LearningScreen', './ProjectsHomeInMain', './MultiSelectPanel', './collection/CollectionBulkBar',
-    '@/pages/ChatPage', '@/platform/HomeFrontPage', '@/pages/settings/settings-pages', '@/pages/settings/SettingsOverviewPage',
+    '@/pages/ChatPage', '@/platform/HomeFrontPage', '@/platform/SurfaceHost', '@/pages/settings/settings-pages', '@/pages/settings/SettingsOverviewPage',
     '../pages/PageView', './session-heatmap/SessionHeatmapHost', './SendResourceToWorkspaceDialog',
     '../pages/PagesHome', './kanban/KanbanBoardContainer', './session-table/SessionTableHost', '../automations/AutomationEditor',
     '../../knowledge/KnowledgeDiff', '../../knowledge/KnowledgeProposals',
