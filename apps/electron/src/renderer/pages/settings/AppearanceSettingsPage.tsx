@@ -1076,7 +1076,7 @@ export default function AppearanceSettingsPage() {
             <div className="space-y-8">
 
               {/* Theme picker (restored 2026-10-13): the app no longer pins a
-                  single theme; Rox Engineering (super-engineering) is the default. */}
+                  single theme; Rox Ink (rox-ink) is the default, Rox Engineering is opt-in. */}
               <SettingsSection title={t("settings.appearance.colorTheme")}>
                 <SettingsCard>
                   {presetThemes.length === 0 ? (
