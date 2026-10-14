@@ -159,11 +159,41 @@ function RailSection({ collapsed, children }: { collapsed: boolean; children: Re
   )
 }
 
+export type RailState = 'collapsed' | 'expanding' | 'expanded'
+
+/**
+ * Labels animate only on a collapsed -> expanded transition: the rail reports
+ * `expanding` for that one disclosure, then settles on `expanded`. A rail that
+ * mounts expanded (first paint, surface switch) never animates.
+ */
+export function railStateFor(prevCollapsed: boolean | null, collapsed: boolean): RailState {
+  if (collapsed) return 'collapsed'
+  return prevCollapsed === true ? 'expanding' : 'expanded'
+}
+
+/** Upper bound for the label disclosure (--motion-disclosure is 180ms). */
+const RAIL_EXPANDING_SETTLE_MS = 400
+
+function useRailState(collapsed: boolean): RailState {
+  const prevCollapsed = useRef<boolean | null>(null)
+  const [state, setState] = useState<RailState>(() => railStateFor(null, collapsed))
+  useEffect(() => {
+    const next = railStateFor(prevCollapsed.current, collapsed)
+    prevCollapsed.current = collapsed
+    setState(next)
+    if (next !== 'expanding') return
+    const id = window.setTimeout(() => setState('expanded'), RAIL_EXPANDING_SETTLE_MS)
+    return () => window.clearTimeout(id)
+  }, [collapsed])
+  return state
+}
+
 export function ActivityRail() {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { collapsed, toggle, railRef } = useEffectiveRailCollapsed()
   const toggleLabel = collapsed ? t('rail.expand') : t('rail.collapse')
+  const railState = useRailState(collapsed)
   const navState = useNavigationState()
   const modeFlags = useAtomValue(modeScreenFlagsAtom)
   const layoutEngineOn = useAtomValue(featureLayoutEngineAtom)
@@ -197,7 +227,7 @@ export function ActivityRail() {
       )}
       style={{ width: activityRailWidth(collapsed) }}
       data-shell-role="activity-rail"
-      data-rail-state={collapsed ? 'collapsed' : 'expanded'}
+      data-rail-state={railState}
     >
       {/* G3 «Миссии» pilot: flag-gated section above the primary group. */}
       <MissionsRailGroup collapsed={collapsed} />

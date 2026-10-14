@@ -8,7 +8,7 @@ export const VIEWPORT_WIDE_MIN = 1800
 /** Shell width breakpoints; mirrors --shell-bp-* in packages/ui tokens/chrome.css. */
 export const SHELL_BREAKPOINTS = {
   compact: 900,
-  regular: 1280,
+  regular: VIEWPORT_THREE_PANE,
   wide: 1600,
   ultra: 2560,
 } as const
