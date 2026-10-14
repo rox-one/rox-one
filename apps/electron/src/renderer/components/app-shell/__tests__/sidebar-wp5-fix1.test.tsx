@@ -2,8 +2,18 @@
  * WP5 review1 fixes: «Ещё» opens for an active destination inside it, and the
  * session-filter section / «Показать пустые» persist through AppShell's
  * expanded-sections store (survive a remount).
+ *
+ * The subject is the *shell's own* session-filter section, so the harness
+ * renders `ShellSidebarNav` without the screen-owned sidebar: the shell mounts
+ * the focused screen's publisher at `ScreenSidebarHost` (ShellSidebarNav.tsx
+ * :165), and the Sessions publisher needs the whole app stack (AppShellContext
+ * + NavigationProvider) and, as soon as it publishes, replaces this section
+ * with its own config (ShellSidebarNav.tsx:167). That screen-owned sidebar is a
+ * different surface with its own tests
+ * (components/shell/__tests__/screen-sidebar.test.tsx), so the seam is stubbed
+ * here and the filters asserted below stay the real ones.
  */
-import { afterEach, describe, expect, it } from 'bun:test'
+import { afterAll, afterEach, describe, expect, it, mock } from 'bun:test'
 import * as React from 'react'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -15,7 +25,11 @@ import { MotionConfig } from 'motion/react'
 import { useDomForFile } from '../../../../../../../packages/ui/src/components/primitives/__tests__/dom-env'
 import { NavigationStatusContext, type NavigationStatus } from '@/contexts/NavigationContext'
 import type { LinkItem, SidebarItem } from '../LeftSidebar'
-import { SESSION_FILTERS_EMPTY_HIDDEN_ID, SESSION_FILTERS_ID, ShellSidebarNav } from '../ShellSidebarNav'
+
+// Registered before the shell loads, so its screen-publisher slot stays empty.
+mock.module('@/screens/ScreenSidebarHost', () => ({ ScreenSidebarHost: () => null }))
+const { SESSION_FILTERS_EMPTY_HIDDEN_ID, SESSION_FILTERS_ID, ShellSidebarNav } = await import('../ShellSidebarNav')
+afterAll(() => { mock.restore() })
 
 // eslint-disable-next-line react-hooks/rules-of-hooks -- test DOM environment setup, not a React hook
 useDomForFile()
@@ -24,12 +38,18 @@ const i18n = createInstance()
 await i18n.init({ lng: 'en', fallbackLng: 'en', resources: { en: { translation: {} } } })
 
 let root: Root | null = null
+/**
+ * The sidebar DOM of the current test. Cleanup detaches the node but keeps the
+ * reference: a test body the runner aborts (timeout) keeps running past
+ * `afterEach`, and nulling this made that stray continuation die with the CI
+ * error `TypeError: null is not an object (evaluating 'host.querySelector')`.
+ * `mount` replaces it, so cleanup can never hand a continuation a null node.
+ */
 let host: HTMLDivElement | null = null
 afterEach(() => {
   if (root) act(() => root!.unmount())
   host?.remove()
   root = null
-  host = null
 })
 
 const noop = () => {}
@@ -82,6 +102,9 @@ async function mount(node: React.ReactNode) {
     root = createRoot(host!)
     root.render(<Provider store={createStore()}><I18nextProvider i18n={i18n}><MotionConfig reducedMotion="always">{node}</MotionConfig></I18nextProvider></Provider>)
   })
+  // Let the lazy «Недавнее» fallback chunk resolve (sidebar-per-surface.test.tsx:92),
+  // so no assertion below races a chunk that is still loading.
+  for (let i = 0; i < 5; i++) await act(async () => { await Bun.sleep(0) })
 }
 async function unmount() {
   await act(async () => root!.unmount())

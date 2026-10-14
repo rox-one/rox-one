@@ -145,8 +145,28 @@ window.ui001.render({});` : ''}
     entryPoints: [entry], outdir, entryNames: '[name].bundle', target: 'es2022',
     platform: browser ? 'browser' : 'node', format: 'esm', bundle: true, jsx: 'automatic',
     external: browser ? [] : ['react', 'react/jsx-runtime', 'jotai'],
+    // This fixture renders component behaviour, never styling, so asset modules
+    // must not need real loaders. Markdown/KaTeX barrels reach
+    // `katex/dist/katex.min.css`, whose `url()` fonts previously failed the whole
+    // build with "No loader is configured for \".woff2\" files". Fonts become
+    // empty modules instead of copied binaries, and `.css` is inert so its
+    // `url()`/`@import` graph is never followed. CSS modules keep their own
+    // `local-css` loader — esbuild matches the longest extension, so
+    // `.module.css` still resolves to its class-name map rather than `empty`.
+    loader: { '.css': 'empty', '.woff': 'empty', '.woff2': 'empty', '.ttf': 'empty' },
     metafile: !!process.env.ROX_UI001_COMPONENT_MANIFEST,
-    plugins: [...(browser ? [rendererNodeBoundaryPlugin()] : []), { name: 'UI-001 component boundaries', setup(build) {
+    plugins: [...(browser ? [rendererNodeBoundaryPlugin()] : []), {
+      // Production barrels import their pdf worker through Vite's `?url` query
+      // (`pdfjs-dist/build/pdf.worker.min.mjs?url`). esbuild cannot evaluate that
+      // query: it parses the raw `.mjs` and fails the build with "No matching
+      // export ... for import \"default\"". A behaviour fixture never starts a
+      // worker, so the request resolves to an inert placeholder — the same
+      // boundary the navigation fixture already applies.
+      name: 'ui001-inert-asset-urls', setup(pluginBuild) {
+        pluginBuild.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'ui001-asset' }))
+        pluginBuild.onLoad({ filter: /.*/, namespace: 'ui001-asset' }, () => ({ contents: 'export default "about:blank"', loader: 'js' }))
+      },
+    }, { name: 'UI-001 component boundaries', setup(build) {
       build.onResolve({ filter: /^rox-ui001-bindings$/ }, () => ({ path: 'bindings', namespace: 'ui001' }))
       build.onResolve({ filter: /.*/ }, args => {
         // Resolve the same public tooltip exports directly, avoiding unrelated KaTeX barrel assets.
