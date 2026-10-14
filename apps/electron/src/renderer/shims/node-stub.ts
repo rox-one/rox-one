@@ -164,6 +164,7 @@ export const open = fn
 export const openSync = binaryOrEmpty
 export const parse = fn
 export const pathToFileURL = fn
+export const pbkdf2 = fn
 export const pbkdf2Sync = binaryOrEmpty
 export const pid = fn as never
 export const pipeline = fn

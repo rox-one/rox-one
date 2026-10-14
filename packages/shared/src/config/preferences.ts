@@ -65,8 +65,14 @@ export interface UserPreferences {
    * Not exposed via `update_user_preferences`.
    */
   zenShellEnabled?: boolean;
-  /** User material preference while Zen Shell is on. Default `system`. */
+  /** User material preference while Zen Shell is on. Default `opaque` (see getZenShellMaterialPreference). */
   zenShellMaterialPreference?: 'system' | 'glass' | 'opaque';
+  /**
+   * True once the user picked the window material in Settings. Older builds
+   * persisted the implicit `system` default on any Zen write, so a stored value
+   * without this marker is not a user choice and resolves to the opaque default.
+   */
+  zenShellMaterialPreferenceExplicit?: boolean;
   /**
    * A3 — macOS vibrancy depth (mirrors ShellMaterialDepth; kept a literal union
    * so packages/shared does not import app code). Default `standard`.
@@ -340,10 +346,20 @@ export function isZenShellEnabled(): boolean {
   return value === undefined || value === true;
 }
 
+/**
+ * Window material preference. A fresh install (and any value older builds
+ * persisted implicitly) is `opaque`: native vibrancy/Mica behind translucent
+ * chrome let other windows and stale frames show through the shell (ghost
+ * menu/text under the surfaces). Glass is opt-in from Settings.
+ */
+export const DEFAULT_ZEN_SHELL_MATERIAL_PREFERENCE = 'opaque' as const;
+
 export function getZenShellMaterialPreference(): 'system' | 'glass' | 'opaque' {
-  const value = loadPreferences().zenShellMaterialPreference;
+  const prefs = loadPreferences();
+  if (prefs.zenShellMaterialPreferenceExplicit !== true) return DEFAULT_ZEN_SHELL_MATERIAL_PREFERENCE;
+  const value = prefs.zenShellMaterialPreference;
   if (value === 'system' || value === 'glass' || value === 'opaque') return value;
-  return 'system';
+  return DEFAULT_ZEN_SHELL_MATERIAL_PREFERENCE;
 }
 
 /** A3 — macOS vibrancy depth; unknown or missing resolves to `standard`. */
@@ -366,25 +382,32 @@ export function setZenShellPreference(patch: {
   const enabled = patch.enabled !== undefined
     ? patch.enabled === true
     : current.zenShellEnabled === undefined || current.zenShellEnabled === true;
-  const materialPreference =
+  const explicitMaterial =
     patch.materialPreference === 'system' || patch.materialPreference === 'glass' || patch.materialPreference === 'opaque'
-      ? patch.materialPreference
-      : getZenShellMaterialPreference();
+  const materialPreference = explicitMaterial
+    ? patch.materialPreference!
+    : getZenShellMaterialPreference();
+  const materialExplicit = explicitMaterial || current.zenShellMaterialPreferenceExplicit === true;
+  // Unrelated writes keep the raw stored value: an implicit legacy value stays
+  // unmarked (and resolves to the default) instead of being rewritten.
+  const storedMaterial = explicitMaterial ? materialPreference : current.zenShellMaterialPreference;
   const materialDepth =
     patch.materialDepth === 'light' || patch.materialDepth === 'standard' || patch.materialDepth === 'deep'
       ? patch.materialDepth
       : getZenShellMaterialDepth();
   if (
     current.zenShellEnabled === enabled &&
-    current.zenShellMaterialPreference === materialPreference &&
-    current.zenShellMaterialDepth === materialDepth
+    current.zenShellMaterialPreference === storedMaterial &&
+    current.zenShellMaterialDepth === materialDepth &&
+    (current.zenShellMaterialPreferenceExplicit === true) === materialExplicit
   ) {
     return { enabled, materialPreference, materialDepth };
   }
   savePreferences({
     ...current,
     zenShellEnabled: enabled,
-    zenShellMaterialPreference: materialPreference,
+    zenShellMaterialPreference: storedMaterial,
+    ...(materialExplicit ? { zenShellMaterialPreferenceExplicit: true } : {}),
     zenShellMaterialDepth: materialDepth,
   });
   return { enabled, materialPreference, materialDepth };
