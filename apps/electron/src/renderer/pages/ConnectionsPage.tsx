@@ -36,7 +36,7 @@ import { ConnectionsOverview, OverviewGroup, OverviewRow, type OverviewStatus } 
 import { ProjectAuthorityConnectionPanel } from '@/components/projects/ProjectAuthorityConnectionPanel'
 import { useConnectionsSidebar } from './use-connections-sidebar'
 import { connectionDisplayName } from './connections-sidebar'
-import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
+import { PanelHeading, ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
 
 const TABS = ['services', 'credentials', 'imports', 'policies', 'audit'] as const
 const CONNECT_SOURCES = ['github-env', 'git-helper', 'docker', 'aws', 'keychain', 'adc', 'ssh-agent', 'github-oauth'] as const
@@ -553,6 +553,30 @@ export default function ConnectionsPage() {
     onRefresh: refreshAll,
   })
 
+  // The section tabs are this panel's own navigation: the shell's second
+  // sidebar carries the screen groups, so the tabs never portal into it.
+  // A bare split panel has no sidebar column at all and gets them as a compact
+  // strip in its tile header instead (bare strip mode of ShellSidebarPortal).
+  const sidebarTarget = useShellSidebarTarget()
+  const sectionTabs = (
+    <div role="tablist" aria-label={t('sidebar.connections')} aria-orientation="horizontal" className="flex gap-1">
+      {TABS.map((id) => (
+        <button
+          key={id}
+          ref={id === 'audit' ? auditTarget : undefined}
+          data-product-tour-target={id === 'audit' ? 'connections.audit' : undefined}
+          type="button"
+          role="tab"
+          aria-selected={tab === id}
+          className={`rounded-md px-3 py-1.5 text-left text-sm transition-colors ${tab === id ? 'bg-foreground/[0.07] text-foreground' : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground'}`}
+          onClick={() => { setAuditConnectionId(null); setTab(id) }}
+        >
+          {t(`connections.tabs.${id}`)}
+        </button>
+      ))}
+    </div>
+  )
+
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="connections-page">
       <div className="mx-auto flex w-full max-w-4xl items-center gap-3 px-6 pt-5 pb-3">
@@ -568,25 +592,14 @@ export default function ConnectionsPage() {
           {t('connections.connect')}
         </Button>
       </div>
-      {/* Section tabs stay in the panel; the shell's second sidebar carries the screen groups. */}
-      <div className="mx-auto w-full max-w-4xl px-3 pb-2">
-        <div role="tablist" aria-label={t('sidebar.connections')} aria-orientation="horizontal" className="flex gap-1">
-          {TABS.map((id) => (
-            <button
-              key={id}
-              ref={id === 'audit' ? auditTarget : undefined}
-              data-product-tour-target={id === 'audit' ? 'connections.audit' : undefined}
-              type="button"
-              role="tab"
-              aria-selected={tab === id}
-              className={`rounded-md px-3 py-1.5 text-left text-sm transition-colors ${tab === id ? 'bg-foreground/[0.07] text-foreground' : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground'}`}
-              onClick={() => { setAuditConnectionId(null); setTab(id) }}
-            >
-              {t(`connections.tabs.${id}`)}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Section tabs stay in the panel; the shell's second sidebar carries the
+          screen groups. A bare split panel has no sidebar column, so it gets the
+          tabs as a compact strip in its tile header instead. */}
+      {sidebarTarget ? (
+        <div className="mx-auto w-full max-w-4xl px-3 pb-2">{sectionTabs}</div>
+      ) : (
+        <ShellSidebarPortal bareMode="strip" bareLabelKey="sidebar.connections" aria-label={t('sidebar.connections')} className="mx-auto w-full max-w-4xl px-3 pb-2">{sectionTabs}</ShellSidebarPortal>
+      )}
       <ScrollArea viewportRef={servicesViewport} data-product-tour-target={tab === 'services' ? 'connections.services' : undefined} className="flex-1 min-h-0">
       <div className="mx-auto flex w-full max-w-4xl flex-col px-6 pt-2 pb-16 text-muted-foreground">
         {tab === 'services' && <ProjectAuthorityConnectionPanel />}
