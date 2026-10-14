@@ -41,8 +41,14 @@ export interface HandoffStatus {
   updatedAt: number;
   uploaded?: number;
   total?: number;
-  /** Present once phase === 'ready'. */
+  /**
+   * Present once phase === 'ready'. For signed links this is freshly issued on
+   * each status read and never persisted; for a web host it is stable.
+   */
   sessionUrl?: string;
+  linkMode?: 'signed' | 'web_host';
+  /** Set once the user ended the cloud session (sandbox deleted). */
+  ended?: boolean;
   sandboxId?: string;
   keySource?: 'user' | 'server_default';
   failure?: { code: HandoffFailureCode; message: string };
@@ -70,6 +76,8 @@ export interface HandoffLimits {
   autoDeleteIntervalMin: number;
   readyTimeoutMs: number;
   readyPollMs: number;
+  /** Lifetime of a signed session link; re-issued on demand, never stored. */
+  linkTtlSec: number;
 }
 
 export const DEFAULT_HANDOFF_LIMITS: HandoffLimits = {
@@ -81,7 +89,11 @@ export const DEFAULT_HANDOFF_LIMITS: HandoffLimits = {
   autoDeleteIntervalMin: 24 * 60,
   readyTimeoutMs: 120_000,
   readyPollMs: 2_000,
+  linkTtlSec: 3_600,
 };
+
+/** Daytona's documented maximum for signed preview URL expiry (24 h). */
+export const MAX_SIGNED_LINK_TTL_SEC = 86_400;
 
 export const HANDOFF_LABEL = 'rox.cloud-handoff';
 export const HANDOFF_OWNER_LABEL = 'rox.cloud-handoff.owner';

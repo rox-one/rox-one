@@ -6,10 +6,11 @@
  * `MemoryDaytonaClient`), local files are injected `SnapshotSource`s.
  */
 import { createHash } from 'node:crypto';
-import type { DaytonaClient } from '../daytona-client.ts';
+import type { DaytonaClient, DaytonaSandboxRecord } from '../daytona-client.ts';
 import { packSnapshot, type SnapshotManifest, type SnapshotSource } from './snapshot.ts';
 import {
   DEFAULT_HANDOFF_LIMITS,
+  MAX_SIGNED_LINK_TTL_SEC,
   DEFAULT_HANDOFF_SNAPSHOT,
   HANDOFF_LABEL,
   HANDOFF_OWNER_LABEL,
@@ -52,10 +53,41 @@ export interface RunHandoffInput {
 export interface RunHandoffResult {
   sandboxId: string;
   sessionUrl: string;
+  linkMode: 'signed' | 'web_host';
   manifest: SnapshotManifest;
 }
 
+/** Issue a short-lived signed link to the session-server port (never stored). */
+export async function issueSignedSessionLink(
+  client: DaytonaClient,
+  sandboxId: string,
+  ttlSec: number = DEFAULT_HANDOFF_LIMITS.linkTtlSec,
+): Promise<string> {
+  if (!client.getSignedPreviewUrl) throw new HandoffError('provider_error', 'Daytona client cannot issue signed preview URLs');
+  const ttl = Math.max(60, Math.min(Math.trunc(ttlSec), MAX_SIGNED_LINK_TTL_SEC));
+  return `${normalizeHttpsBase(await client.getSignedPreviewUrl(sandboxId, HANDOFF_SERVER_PORT, ttl), 'preview URL')}/`;
+}
+
+/**
+ * Host pattern the in-sandbox web UI accepts as its OIDC redirect base:
+ * `<port>-<token>.<proxy-domain>`, so re-issued signed links keep working.
+ */
+export function signedHostPattern(sessionUrl: string): string {
+  const host = new URL(sessionUrl).hostname.toLowerCase();
+  const dot = host.indexOf('.');
+  const proxyDomain = dot > 0 ? host.slice(dot + 1) : '';
+  if (!proxyDomain || !host.startsWith(`${HANDOFF_SERVER_PORT}-`)) {
+    throw new HandoffError('provider_error', 'unexpected signed preview host');
+  }
+  return `${HANDOFF_SERVER_PORT}-[a-z0-9-]+\\.${proxyDomain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`;
+}
+
 const HANDOFF_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
+
+/** Live = consuming resources; stopped/archived sandboxes do not count against quota. */
+export function isLiveSandbox(s: DaytonaSandboxRecord): boolean {
+  return s.state === 'started' || s.state === 'creating';
+}
 
 export function ownerLabelValue(sub: string): string {
   return createHash('sha256').update(`rox-handoff-owner:${sub}`).digest('hex').slice(0, 32);
@@ -96,6 +128,7 @@ export async function runCloudHandoff(input: RunHandoffInput): Promise<RunHandof
   if (!HANDOFF_ID_RE.test(input.handoffId)) throw new HandoffError('provider_error', 'invalid handoff id');
   const ownerSub = input.ownerSub?.trim();
   if (!ownerSub) throw new HandoffError('sign_in_required', 'sign in with Rox ID to continue in the cloud');
+  if (/[\r\n\0,]/.test(ownerSub)) throw new HandoffError('sign_in_required', 'invalid Rox ID subject');
   if (!input.sso?.clientId?.trim() || !input.sso.issuer?.trim()) {
     throw new HandoffError('sso_not_configured', 'Rox ID SSO client for cloud sessions is not configured');
   }
@@ -108,7 +141,7 @@ export async function runCloudHandoff(input: RunHandoffInput): Promise<RunHandof
   try {
     // Quota first: cheap, and refuses before any spend.
     const live = (await client.listSandboxes({ key: HANDOFF_OWNER_LABEL, value: ownerLabel }))
-      .filter((s) => s.labels[HANDOFF_LABEL] === '1' && s.state !== 'destroyed' && s.state !== 'error');
+      .filter((s) => s.labels[HANDOFF_LABEL] === '1' && isLiveSandbox(s));
     if (live.length >= limits.maxActivePerOwner) {
       throw new HandoffError('quota_exceeded', `already ${live.length} active cloud sessions (limit ${limits.maxActivePerOwner})`);
     }
@@ -140,13 +173,7 @@ export async function runCloudHandoff(input: RunHandoffInput): Promise<RunHandof
     if (webHost) {
       publicUrl = `${webHost}/s/${input.handoffId}`;
     } else {
-      if (!client.getSignedPreviewUrl) throw new HandoffError('provider_error', 'Daytona client cannot issue signed preview URLs');
-      // Valid for the sandbox's whole possible lifetime (idle stop + delete window).
-      const ttlSec = (limits.autoStopIntervalMin + limits.autoDeleteIntervalMin) * 60;
-      publicUrl = normalizeHttpsBase(
-        await client.getSignedPreviewUrl(sandboxId, HANDOFF_SERVER_PORT, ttlSec),
-        'preview URL',
-      );
+      publicUrl = (await issueSignedSessionLink(client, sandboxId, limits.linkTtlSec)).replace(/\/$/, '');
     }
 
     progress({ phase: 'packaging' });
@@ -183,6 +210,9 @@ export async function runCloudHandoff(input: RunHandoffInput): Promise<RunHandof
       `ROX_WEBUI_OIDC_CLIENT_ID=${assertEnvValue('client id', input.sso.clientId.trim())}`,
       `ROX_WEBUI_PUBLIC_URL=${assertEnvValue('public url', publicUrl)}`,
       `ROX_WEBUI_OIDC_ALLOWED_SUBS=${assertEnvValue('owner', ownerSub)}`,
+      // OIDC only: the shared-password route must not exist in a cloud session.
+      'ROX_WEBUI_PASSWORD_LOGIN=0',
+      ...(webHost ? [] : [`ROX_WEBUI_PUBLIC_HOST_PATTERN=${assertEnvValue('host pattern', signedHostPattern(`${publicUrl}/`))}`]),
       `ROX_HANDOFF_SESSION_ID=${assertEnvValue('session id', input.sessionId)}`,
       `ROX_HANDOFF_PORT=${HANDOFF_SERVER_PORT}`,
       '',
@@ -207,7 +237,7 @@ export async function runCloudHandoff(input: RunHandoffInput): Promise<RunHandof
     }
 
     progress({ phase: 'ready' });
-    return { sandboxId, sessionUrl: `${publicUrl}/`, manifest };
+    return { sandboxId, sessionUrl: `${publicUrl}/`, linkMode: webHost ? 'web_host' : 'signed', manifest };
   } catch (error) {
     if (sandboxId) {
       // No half-migrated sandboxes left running on anyone's bill.

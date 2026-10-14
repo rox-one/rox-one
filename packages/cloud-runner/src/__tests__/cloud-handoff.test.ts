@@ -105,7 +105,7 @@ describe('runCloudHandoff', () => {
     const phases: string[] = [];
     const res = await runCloudHandoff(baseInput(client, { onProgress: (p) => phases.push(p.phase) }));
     expect(res.sessionUrl).toBe('https://9100-signed1.proxy.memory.daytona.test/');
-    expect(client.signedPreviewCalls[0]).toMatchObject({ port: 9100, expiresInSeconds: (30 + 1440) * 60 });
+    expect(client.signedPreviewCalls[0]).toMatchObject({ port: 9100, expiresInSeconds: 3600 });
     const files = client.files.get(res.sandboxId)!;
     expect([...files.keys()].sort()).toEqual([
       `${HANDOFF_ROOT}/bundle/attachments/pic.txt`,
@@ -117,6 +117,13 @@ describe('runCloudHandoff', () => {
     expect(env).toContain('ROX_WEBUI_OIDC_ALLOWED_SUBS=user-sub-42');
     expect(env).toContain('ROX_WEBUI_OIDC_ISSUER=https://id.rox.one');
     expect(env).not.toContain(KEY);
+    expect(env).toContain('ROX_WEBUI_PASSWORD_LOGIN=0');
+    const pattern = /ROX_WEBUI_PUBLIC_HOST_PATTERN=(.*)/.exec(env)![1]!;
+    const re = new RegExp(`^(?:${pattern})$`, 'i');
+    expect(re.test(new URL(res.sessionUrl).host)).toBe(true);
+    expect(re.test('9100-othertoken.proxy.memory.daytona.test')).toBe(true);
+    expect(re.test('22222-x.proxy.memory.daytona.test')).toBe(false);
+    expect(re.test('9100-x.evil.test')).toBe(false);
     expect(res.manifest.excluded.map((e) => e.reason).sort()).toEqual(['secret_content', 'secret_path', 'unsafe_path']);
     const call = client.createCalls[0]!;
     expect(call.public).toBe(false);
