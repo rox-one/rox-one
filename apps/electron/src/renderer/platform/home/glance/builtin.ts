@@ -113,4 +113,149 @@ export function registerBuiltinGlanceWidgets(): void {
     fields: [{ key: 'text', kind: 'textarea', labelKey: 'clipboard.filter.text' }],
     load: () => import('./widgets/TextWidget'),
   })
+
+  const limitField = { key: 'limit', kind: 'number', labelKey: 'glance.f.limit', min: 1, max: 50 } as const
+  const collapseField = { key: 'collapseAfter', kind: 'number', labelKey: 'glance.f.collapseAfter', min: 0, max: 50 } as const
+
+  registerGlanceWidget({
+    type: 'rss',
+    category: 'news',
+    title: 'RSS',
+    icon: 'rss',
+    defaultConfig: { feeds: [], limit: 20, collapseAfter: 5 },
+    fields: [
+      { key: 'feeds', kind: 'strings', labelKey: 'screens.feed.groups.feeds', placeholder: 'https://example.com/feed.xml' },
+      { ...limitField, max: 100 },
+      collapseField,
+    ],
+    network: true,
+    load: () => import('./widgets/RssWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'hacker-news',
+    category: 'news',
+    title: 'Hacker News',
+    icon: 'newspaper',
+    defaultConfig: { feed: 'top', limit: 15, collapseAfter: 5 },
+    fields: [
+      {
+        key: 'feed',
+        kind: 'select',
+        labelKey: 'learning.screen.sort',
+        options: [
+          { value: 'top', labelKey: 'glance.o.top' },
+          { value: 'new', labelKey: 'sidebar.view.new' },
+          { value: 'show', labelKey: 'glance.o.showHn' },
+          { value: 'ask', labelKey: 'glance.o.askHn' },
+        ],
+      },
+      limitField,
+      collapseField,
+    ],
+    network: true,
+    load: () => import('./widgets/HackerNewsWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'lobsters',
+    category: 'news',
+    title: 'Lobsters',
+    icon: 'newspaper',
+    defaultConfig: { sort: 'hot', tag: '', limit: 15, collapseAfter: 5 },
+    fields: [
+      {
+        key: 'sort',
+        kind: 'select',
+        labelKey: 'learning.screen.sort',
+        options: [
+          { value: 'hot', labelKey: 'glance.o.hot' },
+          { value: 'new', labelKey: 'sidebar.view.new' },
+        ],
+      },
+      { key: 'tag', kind: 'text', labelKey: 'glance.f.tag', placeholder: 'rust' },
+      limitField,
+      collapseField,
+    ],
+    network: true,
+    load: () => import('./widgets/LobstersWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'reddit',
+    category: 'news',
+    title: 'Reddit',
+    icon: 'message-square',
+    defaultConfig: { subreddit: '', sort: 'hot', limit: 15, collapseAfter: 5 },
+    fields: [
+      { key: 'subreddit', kind: 'text', labelKey: 'glance.f.subreddit', placeholder: 'r/selfhosted' },
+      {
+        key: 'sort',
+        kind: 'select',
+        labelKey: 'learning.screen.sort',
+        options: [
+          { value: 'hot', labelKey: 'glance.o.hot' },
+          { value: 'new', labelKey: 'sidebar.view.new' },
+          { value: 'top', labelKey: 'glance.o.top' },
+        ],
+      },
+      limitField,
+      collapseField,
+    ],
+    network: true,
+    load: () => import('./widgets/RedditWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'youtube',
+    category: 'media',
+    title: 'YouTube',
+    icon: 'play',
+    defaultConfig: { channels: [], limit: 15, collapseAfter: 5 },
+    fields: [
+      { key: 'channels', kind: 'strings', labelKey: 'glance.f.channels', hintKey: 'glance.f.youtubeHint', placeholder: 'UC…' },
+      limitField,
+      collapseField,
+    ],
+    network: true,
+    load: () => import('./widgets/YoutubeWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'twitch',
+    category: 'media',
+    title: 'Twitch',
+    icon: 'radio',
+    defaultConfig: { channels: [] },
+    fields: [{ key: 'channels', kind: 'strings', labelKey: 'glance.f.channels', placeholder: 'twitchdev' }],
+    network: true,
+    load: () => import('./widgets/TwitchWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'github-releases',
+    category: 'dev',
+    title: 'GitHub Releases',
+    icon: 'tag',
+    defaultConfig: { repos: [], prereleases: false, limit: 10, collapseAfter: 5 },
+    fields: [
+      { key: 'repos', kind: 'strings', labelKey: 'glance.f.repos', placeholder: 'owner/repo' },
+      { key: 'prereleases', kind: 'boolean', labelKey: 'glance.f.prereleases' },
+      limitField,
+      collapseField,
+    ],
+    network: true,
+    load: () => import('./widgets/GithubReleasesWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'github-repos',
+    category: 'dev',
+    title: 'GitHub',
+    icon: 'git-branch',
+    defaultConfig: { repos: [] },
+    fields: [{ key: 'repos', kind: 'strings', labelKey: 'glance.f.repos', placeholder: 'owner/repo' }],
+    network: true,
+    load: () => import('./widgets/GithubReposWidget'),
+  })
 }

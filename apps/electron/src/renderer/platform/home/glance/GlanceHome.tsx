@@ -20,24 +20,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import {
-  AppWindow,
-  Bookmark,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Columns3,
-  FileText,
-  GripVertical,
-  Layers,
-  LayoutGrid,
-  ListChecks,
-  Plus,
-  Settings2,
-  Trash2,
-  X,
-} from 'lucide-react'
+import { AppWindow, Bookmark, ChevronDown, ChevronLeft, ChevronRight, Clock, Columns3, FileText, GitBranch, GripVertical, Layers, LayoutGrid, ListChecks, MessageSquare, Newspaper, Play, Plus, Radio, Rss, Settings2, Tag, Trash2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -65,7 +48,7 @@ import {
   type GlancePage,
   type GlanceWidgetInstance,
 } from './model'
-import { GLANCE_CATEGORIES, getGlanceWidget, listGlanceWidgets, resolveConfig, type GlanceField, type GlanceWidgetDef } from './registry'
+import { GLANCE_CATEGORIES, getGlanceWidget, glanceWidgetTitle, listGlanceWidgets, resolveConfig, type GlanceField, type GlanceWidgetDef } from './registry'
 import { registerBuiltinGlanceWidgets } from './builtin'
 
 /** Category labels reuse existing generic catalogue keys where the English text is identical. */
@@ -82,6 +65,13 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   'app-window': AppWindow,
   'file-text': FileText,
   layers: Layers,
+  rss: Rss,
+  newspaper: Newspaper,
+  'message-square': MessageSquare,
+  play: Play,
+  radio: Radio,
+  tag: Tag,
+  'git-branch': GitBranch,
 }
 
 export function glanceIcon(name: string): React.ComponentType<{ className?: string }> {
@@ -311,7 +301,7 @@ function GlanceColumnView({
           {t('workbench.home.edit.addWidget')}
         </button>
       ) : null}
-      {editing && !last ? <ColumnResizeHandle onResize={(dx) => onChange(resizeColumnByDrag(layout, page.id, column.id, dx))} /> : null}
+      {editing && !last ? <ColumnResizeHandle size={column.size} onResize={(dx) => onChange(resizeColumnByDrag(layout, page.id, column.id, dx))} /> : null}
     </section>
   )
 }
@@ -401,7 +391,7 @@ function GlanceCard({
   const [previewHeight, setPreviewHeight] = useState<number | undefined>(undefined)
   const width = useWidth(viewRef)
   const def = widget.type === 'group' ? null : getGlanceWidget(widget.type)
-  const title = widget.title ?? (widget.type === 'group' ? t('sidebar.group') : def ? t(def.titleKey) : widget.type)
+  const title = widget.title ?? (widget.type === 'group' ? t('sidebar.group') : def ? glanceWidgetTitle(def, t) : widget.type)
   const frameless = !!def?.frameless && !editing
   const chrome = (
     <header className="flex h-7 shrink-0 items-center gap-1 px-3">
@@ -478,7 +468,7 @@ function GlanceCard({
 }
 
 /** Drag the column's right edge: right → full, left → small (snap, column rules apply). */
-function ColumnResizeHandle({ onResize }: { onResize: (dx: number) => void }) {
+function ColumnResizeHandle({ size, onResize }: { size: 'small' | 'full'; onResize: (dx: number) => void }) {
   const { t } = useTranslation()
   const start = useRef<number | null>(null)
   return (
@@ -486,9 +476,10 @@ function ColumnResizeHandle({ onResize }: { onResize: (dx: number) => void }) {
       role="separator"
       aria-orientation="vertical"
       aria-label={t('glance.resizeColumn')}
-      title={t('glance.resizeColumn')}
+      aria-valuetext={t(size === 'small' ? 'glance.column.small' : 'glance.column.full')}
+      title={`${t('glance.resizeColumn')}: ${t(size === 'small' ? 'glance.column.small' : 'glance.column.full')}`}
       tabIndex={0}
-      data-glance-column-resize=""
+      data-glance-column-resize={size}
       className="absolute inset-y-0 -right-1 z-raised w-2 cursor-col-resize hover:bg-surface-pressed focus-visible:bg-surface-pressed"
       onPointerDown={(e) => { start.current = e.clientX; e.currentTarget.setPointerCapture(e.pointerId) }}
       onPointerUp={(e) => { if (start.current !== null) onResize(e.clientX - start.current); start.current = null }}
@@ -555,7 +546,7 @@ function GroupBody({ group, column, width, layout, onChange }: { group: GlanceWi
       <div className="flex flex-wrap gap-1" role="tablist">
         {kids.map((kid, i) => {
           const kidDef = getGlanceWidget(kid.type)
-          const label = kid.title ?? (kidDef ? t(kidDef.titleKey) : kid.type)
+          const label = kid.title ?? (kidDef ? glanceWidgetTitle(kidDef, t) : kid.type)
           return (
             // eslint-disable-next-line rox/prefer-primitives -- see tablist above
             <button key={kid.id} type="button" role="tab" aria-selected={i === active} onClick={() => setActive(i)} className={cn('h-6 rounded-[var(--radius-control)] px-2 text-xs font-bold', i === active ? 'bg-surface-selected text-foreground' : 'text-muted-foreground hover:text-foreground')}>
@@ -578,7 +569,7 @@ function GlanceWidgetPicker({ onPick, onPickGroup, onClose }: { onPick: (def: Gl
   const [query, setQuery] = useState('')
   const all = listGlanceWidgets()
   const q = query.trim().toLowerCase()
-  const match = (def: GlanceWidgetDef) => !q || t(def.titleKey).toLowerCase().includes(q) || def.type.includes(q)
+  const match = (def: GlanceWidgetDef) => !q || glanceWidgetTitle(def, t).toLowerCase().includes(q) || def.type.includes(q)
   return (
     <Modal title={t('workbench.home.picker.title')} onClose={onClose} testId="glance-picker">
       <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('glance.searchWidgets')} aria-label={t('glance.searchWidgets')} className="h-8 w-full rounded-[var(--radius-control)] bg-surface-hover px-2 text-sm outline-none" />
@@ -598,7 +589,7 @@ function GlanceWidgetPicker({ onPick, onPickGroup, onClose }: { onPick: (def: Gl
                       <button type="button" onClick={() => onPick(def)} className="rox-home-tile flex w-full items-start gap-2 rounded-[var(--radius-card)] px-2.5 py-2 text-left" data-glance-pick={def.type}>
                         <Icon className="mt-0.5 icon-toolbar shrink-0 text-muted-foreground" />
                         <span className="flex min-w-0 flex-col">
-                          <span className="truncate text-sm font-bold text-foreground">{t(def.titleKey)}</span>
+                          <span className="truncate text-sm font-bold text-foreground">{glanceWidgetTitle(def, t)}</span>
                         </span>
                       </button>
                     </li>
@@ -659,7 +650,7 @@ function GlanceSettingsDialog({
   const def = widget.type === 'group' ? null : getGlanceWidget(widget.type)
   const [title, setTitle] = useState(widget.title ?? '')
   const [config, setConfig] = useState<GlanceConfig>(() => (def ? resolveConfig(def, widget.config) : widget.config))
-  const name = widget.title ?? (def ? t(def.titleKey) : t('sidebar.group'))
+  const name = widget.title ?? (def ? glanceWidgetTitle(def, t) : t('sidebar.group'))
   return (
     <Modal title={t('glance.settings', { name })} onClose={onClose} testId="glance-settings">
       <form
@@ -670,7 +661,7 @@ function GlanceSettingsDialog({
         }}
       >
         <Labeled label={t('collection.table.column.title')}>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={def ? t(def.titleKey) : ''} className={INPUT} />
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={def ? glanceWidgetTitle(def, t) : ''} className={INPUT} />
         </Labeled>
         {def?.fields.map((field) => (
           <FieldEditor key={field.key} field={field} value={config[field.key]} onChange={(v) => setConfig((c) => ({ ...c, [field.key]: v }))} />
@@ -764,7 +755,7 @@ function GroupEditor({ group, onAdd, onRemove, onShift, onSettings }: { group: G
       <ul className="flex flex-col gap-0.5">
         {(group.children ?? []).map((kid, i, all) => {
           const def = getGlanceWidget(kid.type)
-          const name = kid.title ?? (def ? t(def.titleKey) : kid.type)
+          const name = kid.title ?? (def ? glanceWidgetTitle(def, t) : kid.type)
           return (
             <li key={kid.id} className="flex items-center gap-1 text-sm" data-glance-group-child={kid.id}>
               <span className="flex-1 truncate">{name}</span>
@@ -777,7 +768,7 @@ function GroupEditor({ group, onAdd, onRemove, onShift, onSettings }: { group: G
         })}
       </ul>
       <div className="flex gap-1">
-        <GlanceSelect label={t('glance.groupAdd')} value={type} placeholder={t('glance.groupAdd')} onChange={setType} options={defs.map((d) => ({ value: d.type, label: t(d.titleKey) }))} className="flex-1" />
+        <GlanceSelect label={t('glance.groupAdd')} value={type} placeholder={t('glance.groupAdd')} onChange={setType} options={defs.map((d) => ({ value: d.type, label: glanceWidgetTitle(d, t) }))} className="flex-1" />
         <button type="button" disabled={!type} onClick={() => { const d = getGlanceWidget(type); if (d) onAdd(d); setType('') }} className="h-8 rounded-[var(--radius-control)] px-2 text-sm font-bold text-foreground hover:bg-surface-pressed disabled:opacity-40">
           <Plus className="icon-toolbar" />
         </button>

@@ -74,7 +74,16 @@ export function HomePageTabs({
     } else {
       const next = mergeImportedPages(layout, pages, mode === 'replace' ? 'replace' : 'append')
       onChange(next)
-      if (mode === 'replace') onSelect(next.pages[0]?.id ?? null)
+      if (mode === 'replace') {
+        const before = layout
+        const beforeActive = activeId
+        onSelect(next.pages[0]?.id ?? null)
+        toast.success(t('glance.import.done'), {
+          action: { label: t('menu.undo'), onClick: () => { onChange(before); onSelect(beforeActive) } },
+          duration: 10_000,
+        })
+        return
+      }
     }
     toast.success(t('glance.import.done'))
   }
@@ -113,22 +122,62 @@ export function HomePageTabs({
         }}
       />
       {pendingImport ? (
-        <div className="rox-home-widget absolute right-0 top-full z-popover mt-1 flex w-[280px] flex-col gap-1 rounded-[var(--radius-card)] p-2 shadow-middle" role="menu" aria-label={t('glance.importAction')} data-home-import-mode="">
+        <PopoverMenu onClose={() => setPendingImport(null)} className="right-0 w-[280px]" label={t('glance.importAction')} data="import-mode">
           <ImportChoice onClick={() => applyImport('append')} mode="append">{t('glance.import.append')}</ImportChoice>
-          {activePage ? <ImportChoice onClick={() => applyImport('page')} mode="page">{t('glance.import.replacePage')}</ImportChoice> : null}
+          {activePage ? (
+            <ImportChoice onClick={() => applyImport('page')} mode="page">
+              {t('glance.import.replacePage')}
+              {pendingImport.length > 1 ? <span className="block text-xs font-normal text-destructive" data-home-import-warning="">{t('glance.import.firstPageOnly', { count: pendingImport.length })}</span> : null}
+            </ImportChoice>
+          ) : null}
           <ImportChoice onClick={() => applyImport('replace')} mode="replace">{t('glance.import.replaceAll')}</ImportChoice>
           <ImportChoice onClick={() => setPendingImport(null)} mode="cancel">{t('common.cancel')}</ImportChoice>
-        </div>
+        </PopoverMenu>
       ) : null}
       {presetsOpen ? (
-        <div className="rox-home-widget absolute left-0 top-full z-popover mt-1 flex w-[320px] flex-col gap-1 rounded-[var(--radius-card)] p-2 shadow-middle" role="menu" data-home-presets="">
+        <PopoverMenu onClose={() => setPresetsOpen(false)} className="left-0 w-[320px]" label={t('glance.addPage')} data="presets">
           {GLANCE_PRESETS.map((preset) => (
             <button key={preset.id} type="button" role="menuitem" onClick={() => addFromPreset(preset.id)} className="flex flex-col rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-surface-pressed" data-home-preset={preset.id}>
               <span className="text-sm font-bold text-foreground">{t(preset.titleKey)}</span>
             </button>
           ))}
-        </div>
+        </PopoverMenu>
       ) : null}
+    </div>
+  )
+}
+
+/**
+ * Small menu popover: focuses the first item on open, Arrow/Home/End move
+ * between items, Escape closes and returns focus to the opener.
+ */
+function PopoverMenu({ onClose, className, label, data, children }: { onClose: () => void; className: string; label: string; data: string; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  React.useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    ref.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus()
+    return () => { if (opener?.isConnected) opener.focus() }
+  }, [])
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const items = Array.from(ref.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])
+    const i = items.indexOf(document.activeElement as HTMLElement)
+    const go = (n: number) => { e.preventDefault(); items[(n + items.length) % items.length]?.focus() }
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); onClose() }
+    else if (e.key === 'ArrowDown') go(i + 1)
+    else if (e.key === 'ArrowUp') go(i < 0 ? -1 : i - 1)
+    else if (e.key === 'Home') go(0)
+    else if (e.key === 'End') go(-1)
+  }
+  return (
+    <div
+      ref={ref}
+      role="menu"
+      aria-label={label}
+      onKeyDown={onKeyDown}
+      {...{ [`data-home-${data}`]: '' }}
+      className={cn('rox-home-widget absolute top-full z-popover mt-1 flex flex-col gap-1 rounded-[var(--radius-card)] p-2 shadow-middle', className)}
+    >
+      {children}
     </div>
   )
 }
