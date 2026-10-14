@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   GUIDED_TOUR_START_EVENT, GUIDED_TOUR_STEPS, GUIDED_TOUR_VERSION, findShowableIndex, isUsableRect, parseGuidedTourRecord,
-  placeCard, requestGuidedTour, resolveStepRect, shouldAutoStartGuidedTour,
+  legacyTourInvitationAllowed, placeCard, requestGuidedTour, resolveStepRect, shouldAutoStartGuidedTour,
 } from '../model'
 
 const vp = { width: 1280, height: 800 }
@@ -75,5 +75,11 @@ describe('guided tour model', () => {
       expect(messages['guidedTour.counter']).toContain('{{current}}')
       expect(messages['guidedTour.counter']).toContain('{{total}}')
     }
+  })
+
+  it('legacy invitations only after the guided tour was skipped', () => {
+    expect(legacyTourInvitationAllowed(null)).toBe(false)
+    expect(legacyTourInvitationAllowed({ status: 'completed', version: GUIDED_TOUR_VERSION })).toBe(false)
+    expect(legacyTourInvitationAllowed({ status: 'skipped', version: GUIDED_TOUR_VERSION })).toBe(true)
   })
 })

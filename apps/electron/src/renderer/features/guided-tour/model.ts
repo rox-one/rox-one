@@ -21,6 +21,8 @@ export interface GuidedTourStep {
   readonly selectors: readonly string[]
   readonly titleKey: string
   readonly bodyKey: string
+  /** When no selector matches, show a centred card instead of skipping. */
+  readonly fallbackCentered?: boolean
 }
 
 export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
@@ -56,8 +58,11 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     titleKey: 'guidedTour.composer.title', bodyKey: 'guidedTour.composer.body',
   },
   {
+    // The cloud button only renders inside a session; on Home the step falls
+    // back to a centred card instead of being skipped.
     id: 'cloud',
     selectors: ['[data-tour="guide.cloud"]'],
+    fallbackCentered: true,
     titleKey: 'guidedTour.cloud.title', bodyKey: 'guidedTour.cloud.body',
   },
   { id: 'search', selectors: [], titleKey: 'guidedTour.search.title', bodyKey: 'guidedTour.search.body' },
@@ -101,7 +106,7 @@ export function resolveStepRect(step: GuidedTourStep, query: TargetQuery, viewpo
     const rect = query(selector)
     if (isUsableRect(rect, viewport)) return rect
   }
-  return null
+  return step.fallbackCentered ? undefined : null
 }
 
 /**
@@ -136,6 +141,16 @@ export function placeCard(
   if (rect.top - gap - card.height >= margin) return { left: centreX, top: rect.top - gap - card.height, side: 'top' }
   if (rect.left - gap - card.width >= margin) return { left: rect.left - gap - card.width, top: centreY, side: 'left' }
   return { left: (viewport.width - card.width) / 2, top: (viewport.height - card.height) / 2, side: 'center' }
+}
+
+/**
+ * Legacy product-tour invitations are superseded by the guided tour: allowed
+ * only after the user explicitly skipped the current guided tour version.
+ * Pending (never finished) and completed both suppress them.
+ */
+export function legacyTourInvitationAllowed(record: unknown): boolean {
+  const parsed = parseGuidedTourRecord(record)
+  return !!parsed && parsed.version >= GUIDED_TOUR_VERSION && parsed.status === 'skipped'
 }
 
 /** Request the tour from anywhere (profile popover, command palette). */

@@ -23,6 +23,7 @@ import { SessionSuggestionsHost } from '@/components/app-shell/SessionSuggestion
 import { ProductTourProvider, ProductTourHost } from '@/features/product-tour/runtime'
 import { publishTourSignal } from '@/features/product-tour/runtime/bridge'
 import { GuidedTourHost } from '@/features/guided-tour/GuidedTour'
+import { markGuidedTourFirstRun } from '@/features/guided-tour/state'
 import { observeChatSessionEvent, bindChatOptimisticMessage, observeChatPermissionResponse, cancelChatUserTurn, observeChatSessionCreated } from '@/features/product-tour/adapters/chat'
 import { collectionBulkOperationRegistry } from '@/components/app-shell/collection/collection-bulk-optimistic'
 import { viewportBand } from '@/platform/viewport-band'
@@ -916,6 +917,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         await window.electronAPI.switchWorkspace(workspace.id)
       }
       setWindowWorkspaceId(workspace.id)
+      // The guided tour lands on Home for good after the wizard (no route restore).
+      markGuidedTourFirstRun()
       setAppState('ready')
       return true
     } catch (error) {

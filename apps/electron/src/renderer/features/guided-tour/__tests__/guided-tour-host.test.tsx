@@ -12,15 +12,23 @@ mock.module('@/contexts/NavigationContext', () => ({
   useNavigationActions: () => ({ navigate: (route: string) => { navigated.push(route) } }),
 }))
 
+let currentRoute: string | null = null
+const realJotai = await import('jotai')
+const realPanelStack = await import('@/atoms/panel-stack')
+const routeStore = { get: (atom: unknown) => atom === realPanelStack.focusedPanelRouteAtom ? currentRoute : realJotai.getDefaultStore().get(atom as never) }
+mock.module('jotai', () => ({ ...realJotai, useStore: () => routeStore }))
+
 let GuidedTourHost: typeof import('../GuidedTour').GuidedTourHost
 let model: typeof import('../model')
+let state: typeof import('../state')
 beforeAll(async () => {
+  state = await import('../state')
   ;({ GuidedTourHost } = await import('../GuidedTour'))
   model = await import('../model')
 })
 
 let root: Root | null = null
-afterEach(() => { act(() => root?.unmount()); root = null; resetDom(); localStorage.clear(); navigated.length = 0 })
+afterEach(() => { act(() => root?.unmount()); root = null; resetDom(); localStorage.clear(); navigated.length = 0; currentRoute = null })
 
 function target(attr: string, value: string) {
   const el = document.createElement('div')
@@ -55,7 +63,9 @@ describe('GuidedTourHost', () => {
     expect(document.querySelector('[data-guided-tour] rect')).not.toBeNull()
     await key('ArrowLeft')
     expect(step()).toBe('welcome')
-    await key('ArrowRight'); await key('ArrowRight') // tools…profile are missing → search (centred)
+    await key('ArrowRight'); await key('ArrowRight') // tools…composer missing → cloud (centred fallback)
+    expect(step()).toBe('cloud')
+    await key('ArrowRight')
     expect(step()).toBe('search')
     await key('ArrowRight')
     expect(card()).toBeNull()
@@ -84,5 +94,35 @@ describe('GuidedTourHost', () => {
     other.remove()
     await wait(600)
     expect(step()).toBe('welcome')
+  })
+
+  it('existing users: restores the previous route when the tour ends', async () => {
+    currentRoute = 'settings/app'
+    await mount()
+    expect(navigated).toEqual(['home'])
+    expect(state.getGuidedTourStatus()).toBe('running')
+    await key('Escape')
+    expect(navigated).toEqual(['home', 'settings/app'])
+    expect(state.getGuidedTourStatus()).toBe('idle')
+  })
+
+  it('first run: stays on Home after the tour', async () => {
+    currentRoute = 'settings/app'
+    state.markGuidedTourFirstRun()
+    await mount()
+    await key('Escape')
+    expect(navigated).toEqual(['home'])
+  })
+
+  it('ignores repeated start requests while pending or running', async () => {
+    localStorage.setItem('craft-guided-tour', JSON.stringify({ status: 'skipped', version: model.GUIDED_TOUR_VERSION, at: 1 }))
+    await mount()
+    act(() => { model.requestGuidedTour(); model.requestGuidedTour() })
+    expect(state.getGuidedTourStatus()).toBe('pending')
+    await wait(600)
+    expect(step()).toBe('welcome')
+    act(() => model.requestGuidedTour())
+    await wait(600)
+    expect(document.querySelectorAll('[data-guided-tour]').length).toBe(1)
   })
 })
