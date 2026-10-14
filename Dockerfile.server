@@ -86,6 +86,11 @@ COPY packages/rovers-core-lite/package.json packages/rovers-core-lite/
 # cover every workspace or the frozen install sees an incomplete workspace set.
 COPY packages/rovers-core/package.json packages/rovers-core/
 COPY packages/test-harness/package.json packages/test-harness/
+# Canvas packages are workspaces listed in bun.lock too. They were added after this
+# list was written, and the frozen install failed with "workspace ... is listed in
+# bun.lock but not on disk" until they were named here.
+COPY packages/canvas-core/package.json packages/canvas-core/
+COPY packages/canvas-relay/package.json packages/canvas-relay/
 COPY apps/electron/package.json apps/electron/
 COPY apps/cli/package.json apps/cli/
 COPY apps/viewer/package.json apps/viewer/

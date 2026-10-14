@@ -12,8 +12,38 @@
  * The repo runner (`bun run test`) runs one process per file, so this is
  * belt-and-braces for ad-hoc multi-file `bun test` runs.
  */
-import { afterAll } from 'bun:test'
+import { afterAll, mock } from 'bun:test'
+import * as React from 'react'
 import { Window } from 'happy-dom'
+
+/**
+ * Radix reads `globalThis.document` once, while
+ * `@radix-ui/react-use-layout-effect` is first evaluated, and falls back to a
+ * permanent no-op outside a DOM:
+ *
+ *   var useLayoutEffect2 = globalThis?.document ? React.useLayoutEffect : () => {};
+ *
+ * Installing the DOM per file can therefore be too late. `useDomForFile()`
+ * below restores the original globals in its `afterAll`, so the *next* file in
+ * the same `bun test` process evaluates its imports while `document` is absent
+ * — including the import chain that reaches Radix. Every Radix layout effect
+ * then stays a no-op for the rest of the process: `Portal` never flips its
+ * `mounted` state, so popovers/dialogs/context menus render nothing anywhere.
+ * (Seen as `split-panels-bare.test.tsx` losing `[data-bare-controls-content]`
+ * whenever another DOM file ran first; the same reason the entities harness
+ * re-binds it in `components/entities/__tests__/test-env.tsx`.)
+ *
+ * Bun patches already-loaded modules in place, so re-bind the module and
+ * decide per call instead, exactly like Radix does at load: React's hook while
+ * a DOM is installed, a no-op otherwise — DOM-less suites later in the process
+ * still see Radix's original behaviour.
+ */
+const noopLayoutEffect = () => {}
+
+mock.module('@radix-ui/react-use-layout-effect', () => ({
+  useLayoutEffect: (...args: Parameters<typeof React.useLayoutEffect>) =>
+    (globalThis.document ? React.useLayoutEffect : noopLayoutEffect)(...args),
+}))
 
 const GLOBAL_KEYS = [
   'window', 'document', 'navigator', 'Node', 'Text', 'Element', 'HTMLElement', 'HTMLFormElement', 'HTMLInputElement',
