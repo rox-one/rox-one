@@ -4,7 +4,8 @@ import { join, resolve, sep } from 'path'
 import { existsSync } from 'fs'
 import { release } from 'os'
 import { fileURLToPath } from 'url'
-import { getWorkspaceByNameOrId, getZenShellMaterialPreference, isZenShellEnabled } from '@rox/shared/config'
+import { getMiniGlassEnabled, getMiniGlassPosition, getWorkspaceByNameOrId, getZenShellMaterialPreference, isZenShellEnabled, setMiniGlassEnabled, setMiniGlassPosition } from '@rox/shared/config'
+import { MiniGlassController } from './mini-glass'
 import { classifyExternalUrl, formatBlockedUrlError } from '@rox/shared/utils/url-safety'
 import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { WindowCloseRequestSource } from '../shared/types'
@@ -76,6 +77,16 @@ export class WindowManager {
   private isAppQuitting = false  // Skip layered close interception during app quit
   private miniWindows: Map<number, { bounds: Electron.Rectangle; alwaysOnTop: boolean }> = new Map()
   private miniExitHandlerRegistered = false
+  private miniGlass = new MiniGlassController({
+    registerAuxiliaryWindow: (window, workspaceId) => this.registerAuxiliaryWindow(window, workspaceId),
+    readPosition: getMiniGlassPosition,
+    writePosition: setMiniGlassPosition,
+    isEnabled: getMiniGlassEnabled,
+    isMainWindowSender: (webContentsId) => this.windows.has(webContentsId),
+    writeEnabled: setMiniGlassEnabled,
+    pushToWindow: (window, channel, ...args) => this.pushToWindow(window, channel, ...args),
+    submitToOwner: (owner, text) => this.submitFromMiniGlass(owner, text),
+  })
 
   /**
    * Set the event sink and client resolver for pushing events via the RPC server
@@ -523,15 +534,20 @@ export class WindowManager {
     }
     nativeTheme.on('updated', themeHandler)
 
-    // On macOS, minimize into a compact, in-place session surface rather than
-    // hiding the app. Other platforms retain native minimize behavior.
+    // On macOS, minimizing docks the window natively and floats the mini glass
+    // companion (two circular glass buttons); it hides as soon as the window
+    // comes back. The in-place compact surface stays reachable from the tray
+    // («Rox Mini», main #2022). Other platforms retain plain native minimize.
     window.on('minimize', () => {
-      if (process.platform !== 'darwin' || this.isAppQuitting || this.miniWindows.has(webContentsId)) return
-      window.restore()
-      this.enterMiniWindow(window, webContentsId)
+      if (process.platform !== 'darwin' || this.isAppQuitting) return
+      const boundWorkspace = this.windows.get(webContentsId)?.workspaceId ?? workspaceId
+      this.miniGlass.show(window, boundWorkspace)
     })
+    window.on('restore', () => this.miniGlass.hide(window))
+    window.on('show', () => this.miniGlass.hide(window))
     // Handle focus/blur to broadcast window focus state
     window.on('focus', () => {
+      this.miniGlass.hide(window)
       this.lastActiveWindowId = webContentsId
       this.pushToWindow(window, RPC_CHANNELS.window.FOCUS_STATE, true)
     })
@@ -626,6 +642,7 @@ export class WindowManager {
       if (this.lastActiveWindowId === webContentsId) this.lastActiveWindowId = null
       this.focusedModeWindows.delete(webContentsId)
       this.miniWindows.delete(webContentsId)
+      this.miniGlass.ownerClosed(window)
       // Re-apply window-title policy — surviving windows revert from workspace
       // name back to app name when the count drops from 2 → 1.
       this.refreshWindowTitles()
@@ -714,6 +731,24 @@ export class WindowManager {
     this.setMiniRoute(window, false)
     window.show()
     window.focus()
+  }
+
+  /** Restore the owner and run the regular new-session action (send when text is present). */
+  private submitFromMiniGlass(owner: BrowserWindow, text: string | null): void {
+    if (owner.isDestroyed()) return
+    if (owner.isMinimized()) owner.restore()
+    owner.show()
+    owner.focus()
+    this.pushToWindow(owner, RPC_CHANNELS.deeplink.NAVIGATE, {
+      action: 'new-session',
+      actionParams: text ? { input: text, send: 'true' } : {},
+      source: 'app',
+    })
+  }
+
+  /** Tear down the mini glass companion on quit. */
+  disposeMiniGlass(): void {
+    this.miniGlass.dispose()
   }
 
 

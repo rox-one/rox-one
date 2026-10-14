@@ -3139,6 +3139,15 @@ export interface ElectronAPI {
   menuMinimize(): Promise<void>
   menuMaximize(): Promise<void>
   exitMiniWindow(): Promise<boolean>
+  /** Mini glass companion shown while a main window is minimized (macOS). */
+  miniGlass: {
+    setExpanded(expanded: boolean): Promise<boolean>
+    /** Restore the owner window and start a new session (sends when text is non-empty). */
+    submit(text: string | null): Promise<boolean>
+    getEnabled(): Promise<boolean>
+    setEnabled(enabled: boolean): Promise<boolean>
+    onReset(callback: () => void): () => void
+  }
   onPanelFocusDirection(callback: (direction: 'left' | 'right' | 'up' | 'down') => void): () => void
   menuZoomIn(): Promise<void>
   menuZoomOut(): Promise<void>
