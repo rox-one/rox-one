@@ -2074,6 +2074,21 @@ export function updateWorkspaceRemoteServer(
  * every window list read. The workspace's own config.json `name` is written by
  * the settings RPC; this keeps both in step.
  */
+/**
+ * Throws when the registry record can't be renamed (missing, or not accessible
+ * to the current identity). Call before writing the workspace config so a
+ * rename never lands half-way.
+ */
+export function assertWorkspaceRecordRenamable(workspaceId: string): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  const record = config.workspaces.find((workspace) => workspace.id === workspaceId);
+  if (!record) throw new Error('Workspace not found');
+  if (!isWorkspaceAccessibleToCurrentIdentity(normalizeWorkspaceRecord(record))) {
+    throw new Error('Not authorized to rename this workspace');
+  }
+}
+
 export function renameWorkspaceRecord(workspaceId: string, name: string): void {
   const trimmed = name.trim();
   if (!trimmed) throw new Error('Workspace name must not be empty');

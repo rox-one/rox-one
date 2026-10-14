@@ -23,7 +23,7 @@ import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import type { LocalMeeting } from '../../../../shared/meetings-local'
 import type { MailAttachment, MailFolder, MailFolderRole, MailMessage, MailPickedFile, MailSummary } from '../../../../shared/mail-local'
 import { mailSrcdoc, sanitizeMailHtml } from './mail-sanitize'
-import { addressLabel, addressLine, buildDraft, draftFromMessage, draftHasContent, formatBytes, formatStorageBytes, fromLabel, meetingNoteLine, statusKey, type ComposeDraft, type ComposeMode } from './mail-view'
+import { addressLabel, addressLine, buildDraft, draftFromMessage, draftHasContent, formatBytes, formatStorageBytes, fromLabel, meetingNoteLine, mailErrorCodeOf, mailErrorKey, MAIL_RECONNECT_CODES, statusKey, type ComposeDraft, type ComposeMode } from './mail-view'
 import type { MailController } from './useMail'
 import { toErrorMessage } from '@/lib/errors'
 
@@ -165,7 +165,7 @@ export function MailListPanel({ mail, title, selectedId, onSelect, onCompose, on
         />
       </form>
       {s.local ? <LocalNotice domain={s.domain} compact /> : null}
-      {mail.error ? <div role="alert" className="mx-3 mt-1 rounded-[var(--radius-card)] bg-destructive/10 px-2.5 py-1.5 text-sm text-destructive">{t('inbox.mail.actionFailed')}</div> : null}
+      {mail.error ? <div role="alert" className="mx-3 mt-1 flex items-center gap-2 rounded-[var(--radius-card)] bg-destructive/10 px-2.5 py-1.5 text-sm text-destructive" data-testid="mail-error" data-code={mail.errorCode ?? undefined}><span className="min-w-0 flex-1">{t(mailErrorKey(mail.errorCode))}</span>{mail.errorCode && MAIL_RECONNECT_CODES.has(mail.errorCode) ? <Button variant="ghost" onClick={() => void mail.ensure()} data-testid="mail-reconnect">{t('inbox.mail.reconnect')}</Button> : null}</div> : null}
       <div role="listbox" aria-label={title} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onKeys} data-testid="mail-list">
         {mail.items.length === 0 ? (
           <EmptyState
@@ -216,7 +216,7 @@ export function MailStatusBlock({ mail }: { mail: MailController }) {
     setSaving(true)
     try {
       const r = await window.electronAPI.mailLocal!.setServer(url)
-      if (!r.ok) mail.setError(r.message)
+      if (!r.ok) mail.setError(r)
       else await mail.refreshStatus()
     } finally {
       setSaving(false)
@@ -231,12 +231,16 @@ export function MailStatusBlock({ mail }: { mail: MailController }) {
   )
   return (
     <div className="flex flex-col" data-testid="mail-status" data-state={s.state}>
-      {s.state === 'no-mailbox' || s.state === 'error' ? (
+      {s.state === 'error' ? (
+        <EmptyState
+          title={t(mailErrorKey(s.errorCode))}
+          body={t('inbox.mail.noMailboxBody', { domain: s.domain })}
+          action={<Button variant="primary" onClick={() => void mail.ensure()} data-testid="mail-get-address">{t(s.errorCode && MAIL_RECONNECT_CODES.has(s.errorCode) ? 'inbox.mail.reconnect' : 'inbox.mail.connect')}</Button>}
+        />
+      ) : s.state === 'no-mailbox' ? (
         <EmptyState
           title={t('inbox.mail.connectTitle')}
-          body={s.state === 'no-mailbox'
-            ? t('inbox.mail.autoProvisionBody', { domain: s.domain })
-            : t('inbox.mail.noMailboxBody', { domain: s.domain })}
+          body={t('inbox.mail.autoProvisionBody', { domain: s.domain })}
           action={<Button variant="primary" onClick={() => void mail.ensure()} data-testid="mail-get-address">{t('inbox.mail.connect')}</Button>}
         />
       ) : s.state === 'provisioning' ? (
@@ -246,7 +250,7 @@ export function MailStatusBlock({ mail }: { mail: MailController }) {
       ) : (
         <EmptyState title={t('inbox.mail.status.disabled', { flag: s.flag })} />
       )}
-      {mail.error ? <p role="alert" className="px-4 text-sm text-destructive">{t('inbox.mail.actionFailed')}</p> : null}
+      {mail.error ? <p role="alert" className="px-4 text-sm text-destructive" data-code={mail.errorCode ?? undefined}>{t(mailErrorKey(mail.errorCode))}</p> : null}
       {s.local && s.state !== 'disabled' ? <LocalNotice domain={s.domain} /> : null}
     </div>
   )
@@ -342,7 +346,7 @@ export function MailReader({ mail, message, onCompose, onEditDraft, onAfterRemov
     void mail.getThread(message.threadId).then((messages) => {
       if (active) setThreadMessages(messages.length ? messages : [message])
     }).catch((e) => {
-      if (active) setNotice({ text: toErrorMessage(e) })
+      if (active) setNotice({ text: t(mailErrorKey(mailErrorCodeOf(e))) })
     })
     return () => { active = false }
   }, [message, mail.getThread])
@@ -356,7 +360,7 @@ export function MailReader({ mail, message, onCompose, onEditDraft, onAfterRemov
       await fn()
       after?.()
     } catch (e) {
-      setNotice({ text: toErrorMessage(e) })
+      setNotice({ text: t(mailErrorKey(mailErrorCodeOf(e))) })
     } finally {
       setBusy(false)
     }
@@ -501,12 +505,12 @@ export function MailCompose({ mail, draft, source, onClose }: {
     const run = (async () => {
       try {
         const r = await window.electronAPI.mailLocal!.saveDraft(input())
-        if (!r.ok) throw new Error(r.message)
+        if (!r.ok) throw r
         draftId.current = r.value.draftId
         dirty.current = false
         setSavedAt(Date.now())
       } catch (e) {
-        if (!quiet) setError(toErrorMessage(e))
+        if (!quiet) setError(t(mailErrorKey(mailErrorCodeOf(e))))
       } finally {
         if (!quiet) setBusy(null)
       }
@@ -514,7 +518,7 @@ export function MailCompose({ mail, draft, source, onClose }: {
     saving.current = run
     await run
     if (saving.current === run) saving.current = null
-  }, [d, input])
+  }, [d, input, t])
 
   // Autosave to Drafts 4 s after the last edit.
   useEffect(() => {
@@ -532,7 +536,7 @@ export function MailCompose({ mail, draft, source, onClose }: {
     try {
       if (saving.current) await saving.current
       const r = await window.electronAPI.mailLocal!.send({ ...input(), draftId: draftId.current })
-      if (!r.ok) throw new Error(r.code === 'external-blocked' ? `${t('inbox.mail.externalBlocked', { domain })}: ${r.message.match(/\(([^)]+)\)\s*$/)?.[1] ?? ''}` : r.message)
+      if (!r.ok) throw new Error(r.code === 'external-blocked' ? `${t('inbox.mail.externalBlocked', { domain })}: ${r.message.match(/\(([^)]+)\)\s*$/)?.[1] ?? ''}` : t(mailErrorKey(r.code)))
       void mail.refresh()
       onClose(true)
     } catch (e) {
@@ -550,7 +554,7 @@ export function MailCompose({ mail, draft, source, onClose }: {
       if (draftId.current) await mail.act((api) => api.remove([draftId.current!]))
       onClose(false)
     } catch (e) {
-      setError(toErrorMessage(e))
+      setError(t(mailErrorKey(mailErrorCodeOf(e))))
     } finally {
       setBusy(null)
     }

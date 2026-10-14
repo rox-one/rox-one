@@ -91,7 +91,7 @@ export function UserProfilePopoverContent({
         <div className="min-w-0 flex-1">
           <div className="truncate text-caption font-medium leading-4 text-text-primary" title={displayName}>{displayName}</div>
           <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] leading-3 text-muted-foreground">
-            <span data-testid="profile-popover-plan" className="inline-flex h-2.5 shrink-0 items-center rounded-full bg-surface-hover px-1 text-[7px] font-semibold uppercase leading-none tracking-wide text-text-secondary">{planLabel}</span>
+            <span data-testid="profile-popover-plan" className="inline-flex h-[10px] shrink-0 items-center rounded-full bg-surface-hover px-1 text-[8px] font-semibold uppercase leading-none tracking-wide text-text-secondary">{planLabel}</span>
             <span className="shrink-0 numeric">{t('profile.level', { level: data.level })}</span>
             <span
               role="progressbar"

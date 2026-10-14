@@ -466,6 +466,19 @@ export function AccountMenu({
     />
   )
 
+  // A custom trigger (the titlebar logo switcher) gets the same double-click
+  // rename as the default button; its own handler runs first and can opt out.
+  const customTrigger = trigger
+    ? React.cloneElement(trigger as React.ReactElement<React.HTMLAttributes<HTMLElement>>, {
+        onDoubleClick: (e: React.MouseEvent<HTMLElement>) => {
+          ;(trigger.props as React.HTMLAttributes<HTMLElement>).onDoubleClick?.(e)
+          if (e.defaultPrevented) return
+          e.preventDefault()
+          startRename()
+        },
+      })
+    : null
+
   const triggerButton = (
     <button
       type="button"
@@ -515,7 +528,7 @@ export function AccountMenu({
         {creationScreen}
 
         <Drawer nested open={open} onOpenChange={handleOpenChange}>
-          {renaming ? renameField : <DrawerTrigger asChild>{trigger ?? triggerButton}</DrawerTrigger>}
+          {renaming ? renameField : <DrawerTrigger asChild>{customTrigger ?? triggerButton}</DrawerTrigger>}
 
           <DrawerContent className="max-h-[85vh]">
             <DrawerHeader>
@@ -677,7 +690,7 @@ export function AccountMenu({
       {creationScreen}
 
       <DropdownMenu open={open} onOpenChange={handleOpenChange}>
-        {renaming ? renameField : <DropdownMenuTrigger asChild>{trigger ?? triggerButton}</DropdownMenuTrigger>}
+        {renaming ? renameField : <DropdownMenuTrigger asChild>{customTrigger ?? triggerButton}</DropdownMenuTrigger>}
 
         <StyledDropdownMenuContent align="start" sideOffset={6} minWidth="min-w-72">
           {sectionLabel(t('accountMenu.section.workspaces'))}

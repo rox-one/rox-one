@@ -3636,13 +3636,16 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
         // The profile anchors the left end of the status bar: the bar extends
         // out of the profile block at the bottom of the rail (Mark, t77).
         <div className="flex shrink-0 items-stretch" data-status-row="">
-          <div
-            className="chrome-rail flex shrink-0 items-center justify-center"
-            style={{ width: SHELL_RAIL_WIDTH }}
-            data-status-profile=""
-          >
-            {renderProfileEntry('status')}
-          </div>
+          {/* No rail (focus / sidebar-hidden / auto-compact): the bar starts at x=0. */}
+          {!effectiveSidebarAndNavigatorHidden && (
+            <div
+              className="chrome-rail flex shrink-0 items-center justify-center"
+              style={{ width: SHELL_RAIL_WIDTH }}
+              data-status-profile=""
+            >
+              {renderProfileEntry('status')}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             {showStatusBar && <StatusBarHost />}
             {showCompactStatusBar && <StatusBar account={roxCloudAccount} />}

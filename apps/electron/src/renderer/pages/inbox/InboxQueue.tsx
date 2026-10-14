@@ -54,7 +54,7 @@ import {
 import { isOptionalMailSetup, type MailFolder } from '../../../shared/mail-local'
 import { useMail } from './mail/useMail'
 import { MailCompose, MailListPanel, MailReader, folderLabel, useComposeState } from './mail/MailPanels'
-import { emailIdFromItem, mailItemId, mailToInboxItem, statusKey } from './mail/mail-view'
+import { emailIdFromItem, mailItemId, mailErrorKey, mailToInboxItem, statusKey } from './mail/mail-view'
 import type { TeamInboxItem } from '@rox/shared/team'
 import { InboxSidebar, InboxKindIcon, isMailFilter, type InboxPageFilter } from './InboxSidebar'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
@@ -385,8 +385,8 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
         const m = mail.message && mail.message.id === mailSelected ? mail.message : null
         if (!m || composeState.compose) return
         const next = mailNext(m.id)
-        if (event.key === 'e') { event.preventDefault(); void mail.act((a) => a.move([m.id], 'archive')).then(() => { if (contextRef.current === actorContext) selectMail(next) }, (e) => { if (contextRef.current === actorContext) mail.setError(String(e)) }) }
-        if (event.key === '#') { event.preventDefault(); void mail.act((a) => a.remove([m.id])).then(() => { if (contextRef.current === actorContext) selectMail(next) }, (e) => { if (contextRef.current === actorContext) mail.setError(String(e)) }) }
+        if (event.key === 'e') { event.preventDefault(); void mail.act((a) => a.move([m.id], 'archive')).then(() => { if (contextRef.current === actorContext) selectMail(next) }, (e) => { if (contextRef.current === actorContext) mail.setError(e) }) }
+        if (event.key === '#') { event.preventDefault(); void mail.act((a) => a.remove([m.id])).then(() => { if (contextRef.current === actorContext) selectMail(next) }, (e) => { if (contextRef.current === actorContext) mail.setError(e) }) }
         if (event.key === 'r') { event.preventDefault(); composeState.start('reply', m) }
         if (event.key === 'Escape') selectMail(null)
         return
@@ -445,7 +445,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   }
 
   const optionalMailSetup = isOptionalMailSetup(mail.status)
-  const mailFailure = optionalMailSetup && !inMail ? null : mail.error ?? (mail.status?.enabled && mail.status.state === 'unreachable' ? t(statusKey(mail.status), { url: mail.status.serverUrl }) : null)
+  const mailFailure = optionalMailSetup && !inMail ? null : mail.error ? t(mailErrorKey(mail.errorCode)) : mail.status?.enabled && mail.status.state === 'error' ? t(mailErrorKey(mail.status.errorCode)) : mail.status?.enabled && mail.status.state === 'unreachable' ? t(statusKey(mail.status), { url: mail.status.serverUrl }) : null
   const errorEntries = [...Object.entries(errors).filter(([, value]) => value), ...(mailFailure ? [['mail', mailFailure]] : [])]
   const initialLoading = !!workspaceId && (!loaded.memory || !loaded.skills || !loaded.senders)
     || mail.statusLoading || mail.status?.state === 'provisioning' || mailReady && mail.loading && mail.unread.length === 0

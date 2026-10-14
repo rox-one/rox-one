@@ -48,12 +48,31 @@ import {
 import { externalRecipients, replySubject, sortFolders, threadHeaders, toFolder, toMessage, toSummary } from './mail-model'
 
 /**
- * Server-side names for standard mailboxes (IMAP-conventional, so other
- * clients recognise them); the UI always labels by role in the user's locale.
+ * Server-side names for folders Rox creates (Russian, consistently); the UI
+ * always labels by role in the user's locale.
  */
 const STANDARD_FOLDER_NAMES: Readonly<Record<MailFolderRole, string>> = {
-  inbox: 'Inbox', flagged: 'Flagged', sent: 'Sent', outbox: 'Outbox',
-  drafts: 'Drafts', archive: 'Archive', junk: 'Junk', trash: 'Trash',
+  inbox: 'Входящие', flagged: 'Избранные', sent: 'Отправленные', outbox: 'Исходящие',
+  drafts: 'Черновики', archive: 'Архив', junk: 'Спам', trash: 'Корзина',
+}
+
+/** Names (lower-case) an existing role-less folder may carry for each role. */
+const STANDARD_FOLDER_ALIASES: Readonly<Partial<Record<MailFolderRole, readonly string[]>>> = {
+  inbox: ['inbox', 'входящие'],
+  sent: ['sent', 'sent items', 'sent messages', 'sent mail', 'отправленные'],
+  drafts: ['drafts', 'draft', 'черновики'],
+  archive: ['archive', 'archives', 'архив'],
+  junk: ['junk', 'spam', 'junk e-mail', 'junk email', 'спам', 'нежелательные'],
+  trash: ['trash', 'deleted', 'deleted items', 'deleted messages', 'bin', 'корзина', 'удалённые', 'удаленные'],
+}
+
+/** Match an existing mailbox for a standard role: by special-use role first, then by localized name. */
+export function findStandardMailbox<T extends { role?: string | null; name: string }>(boxes: readonly T[], role: string): T | undefined {
+  const byRole = boxes.find((b) => b.role === role)
+  if (byRole) return byRole
+  const aliases = STANDARD_FOLDER_ALIASES[role as MailFolderRole]
+  if (!aliases) return undefined
+  return boxes.find((b) => !b.role && aliases.includes(b.name.trim().toLowerCase()))
 }
 
 export interface MailConfig {
@@ -131,9 +150,8 @@ export class MailService {
   private provisioning: Promise<MailStatus> | null = null
   private lastError: string | undefined
   private emitTimer: ReturnType<typeof setTimeout> | null = null
-  private archiveId: string | null = null
-  /** Standard storage folders were checked/created for the current client. */
-  private standardEnsured = false
+  /** Storage folders Rox created lazily for the current client, by role. */
+  private readonly createdFolderIds = new Map<MailFolderRole, string>()
 
   constructor(private readonly deps: MailServiceDeps) {
     this.dir = join(deps.configDir, 'mail')
@@ -195,8 +213,7 @@ export class MailService {
     this.stopPush = null
     this.push = 'off'
     this.client = null
-    this.archiveId = null
-    this.standardEnsured = false
+    this.createdFolderIds.clear()
   }
 
   private ownerUuidFallback(): string {
@@ -315,7 +332,7 @@ export class MailService {
     } catch {
       const error = 'Secure mailbox credentials are unavailable'
       this.lastError = error
-      return { ...base, state: 'error', error }
+      return { ...base, state: 'error', error, errorCode: 'keychain-locked' }
     }
     if (!secret) {
       // A READY record whose device credential is gone (Keychain reset, app
@@ -343,7 +360,7 @@ export class MailService {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Mail server rejected the mailbox connection'
       this.lastError = message
-      return { ...base, state: 'error', error: message }
+      return { ...base, state: 'error', error: message, errorCode: mailErrorCode(error) }
     }
   }
 
@@ -469,28 +486,15 @@ export class MailService {
   }
 
   /**
-   * Standard structure: every storage role (Входящие, Отправленные, Черновики,
-   * Архив, Спам, Корзина) exists on the server — missing ones are created once
-   * with their JMAP/IMAP special-use role — plus the virtual «Избранные»
-   * ($flagged) and «Исходящие» (pending submissions) views with real counts.
+   * Standard structure: the server's storage folders (Входящие, Отправленные,
+   * Черновики, Архив, Спам, Корзина) plus the virtual «Избранные» ($flagged)
+   * and «Исходящие» (pending submissions) views with real counts. Listing never
+   * creates anything; a missing storage folder is created lazily on first use
+   * (see folderIdFor), and only on Rox-provisioned mailboxes.
    */
   async folders(): Promise<MailFolder[]> {
     const c = await this.jmap()
-    let boxes = await c.mailboxes()
-    if (!this.standardEnsured) {
-      const missing = MAIL_STORAGE_ROLES.filter((role) => !boxes.some((b) => b.role === role))
-      if (missing.length > 0) {
-        try {
-          const accountId = await c.accountId()
-          const create = Object.fromEntries(missing.map((role) => [role, { name: STANDARD_FOLDER_NAMES[role], role }]))
-          await c.call([['Mailbox/set', { accountId, create }, 'std']])
-          boxes = await c.mailboxes()
-        } catch (error) {
-          this.deps.log?.('[mail] could not create standard folders', error instanceof Error ? error.message : String(error))
-        }
-      }
-      this.standardEnsured = true
-    }
+    const boxes = await c.mailboxes()
     const folders = boxes.map(toFolder)
     const flagged = await c.flaggedCount().catch(() => ({ total: 0, unread: 0 }))
     const outbox = await c.outboxEmails(1).catch(() => ({ total: 0, emails: [] }))
@@ -501,20 +505,36 @@ export class MailService {
     return sortFolders(folders)
   }
 
-  private async folderIdFor(target: MailFolderRole | string): Promise<string> {
+  /** Mailbox Rox itself provisioned (address on the configured Rox domain). */
+  private isRoxProvisioned(): boolean {
+    const record = this.record
+    if (!record) return false
+    const domain = (this.config().domain || MAIL_DEFAULT_DOMAIN).toLowerCase()
+    return record.domain.toLowerCase() === domain && record.address.toLowerCase().endsWith(`@${domain}`)
+  }
+
+  private async folderIdFor(target: MailFolderRole | string, opts: { create?: boolean } = {}): Promise<string> {
     const c = await this.jmap()
     const boxes = await c.mailboxes()
-    const byRole = boxes.find((b) => b.role === target)
-    if (byRole) return byRole.id
-    const byId = boxes.find((b) => b.id === target)
-    if (byId) return byId.id
-    if (target === 'archive') {
-      if (this.archiveId) return this.archiveId
+    const found = findStandardMailbox(boxes, target) ?? boxes.find((b) => b.id === target)
+    if (found) return found.id
+    const role = target as MailFolderRole
+    if ((MAIL_STORAGE_ROLES as readonly string[]).includes(target) && role !== 'inbox' && opts.create !== false) {
+      const cached = this.createdFolderIds.get(role)
+      if (cached) return cached
+      if (!this.isRoxProvisioned()) {
+        this.deps.log?.(`[mail] not creating «${STANDARD_FOLDER_NAMES[role]}»: mailbox is not Rox-provisioned`)
+        throw new MailError('not-found', `Folder ${target} not found`)
+      }
       const accountId = await c.accountId()
-      const [[, res]] = await c.call([['Mailbox/set', { accountId, create: { a: { name: 'Архив', role: 'archive' } } }, 'a']])
-      const id = res.created?.a?.id as string | undefined
-      if (!id) throw new MailError('server', 'Could not create the Archive folder')
-      this.archiveId = id
+      const [[, res]] = await c.call([['Mailbox/set', { accountId, create: { f: { name: STANDARD_FOLDER_NAMES[role], role } } }, 'f']])
+      const id = res.created?.f?.id as string | undefined
+      if (!id) {
+        const refusal = res.notCreated?.f
+        this.deps.log?.(`[mail] server refused to create «${STANDARD_FOLDER_NAMES[role]}»`, refusal ? JSON.stringify(refusal) : 'no reason given')
+        throw new MailError('server', `Could not create the ${role} folder`)
+      }
+      this.createdFolderIds.set(role, id)
       return id
     }
     throw new MailError('not-found', `Folder ${target} not found`)
@@ -569,8 +589,9 @@ export class MailService {
   async remove(ids: string[]): Promise<number> {
     const c = await this.jmap()
     const boxes = await c.mailboxes()
-    const trash = boxes.find((b) => b.role === 'trash')
-    const drafts = boxes.find((b) => b.role === 'drafts')
+    const trashId = await this.folderIdFor('trash').catch(() => null)
+    const trash = trashId ? { id: trashId } : undefined
+    const drafts = findStandardMailbox(boxes, 'drafts')
     const accountId = await c.accountId()
     const [[, got]] = await c.call([['Email/get', { accountId, ids, properties: ['mailboxIds'] }, 'g']])
     const destroy: string[] = []
@@ -673,8 +694,25 @@ export class MailError extends Error {
   }
 }
 
+/**
+ * Stable code for a failure, so the renderer can show a specific Russian text
+ * (never the raw server message). Unknown failures map to 'error'.
+ */
+export function mailErrorCode(error: unknown): string {
+  if (error instanceof MailError) return error.code
+  if (error instanceof JmapError) {
+    if (error.code === 'auth') return 'credential-revoked'
+    if (error.code === 'network') return 'network'
+    const text = error.message
+    if (/overQuota|quota/i.test(text)) return 'quota'
+    if (/notFound|not found/i.test(text)) return 'not-found'
+    if (/tooLarge/i.test(text)) return 'too-large'
+    return error.code
+  }
+  return 'error'
+}
+
 export function errorResult(error: unknown): { ok: false; code: string; message: string } {
-  if (error instanceof MailError) return { ok: false, code: error.code, message: error.message }
-  if (error instanceof JmapError) return { ok: false, code: error.code, message: error.message }
+  if (error instanceof MailError || error instanceof JmapError) return { ok: false, code: mailErrorCode(error), message: error.message }
   return { ok: false, code: 'error', message: error instanceof Error ? error.message : String(error) }
 }
