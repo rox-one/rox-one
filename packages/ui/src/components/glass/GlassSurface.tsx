@@ -13,14 +13,31 @@ export interface GlassSurfaceProps extends React.HTMLAttributes<HTMLElement> {
   refraction?: boolean
 }
 
+/**
+ * Edge-lensing displacement map: neutral grey (no shift) across the body, with
+ * the red (x) and green (y) channels ramping only in a thin band at each edge,
+ * so the backdrop bends at the rim like a lens and stays undistorted inside.
+ */
+const EDGE_MAP =
+  'data:image/svg+xml,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" preserveAspectRatio="none">' +
+      '<linearGradient id="x"><stop offset="0" stop-color="#000"/><stop offset=".12" stop-color="#800000"/>' +
+      '<stop offset=".88" stop-color="#800000"/><stop offset="1" stop-color="#f00"/></linearGradient>' +
+      '<linearGradient id="y" x2="0" y2="1"><stop offset="0" stop-color="#000"/><stop offset=".12" stop-color="#008000"/>' +
+      '<stop offset=".88" stop-color="#008000"/><stop offset="1" stop-color="#0f0"/></linearGradient>' +
+      '<rect width="100" height="100" fill="url(#x)"/>' +
+      '<rect width="100" height="100" fill="url(#y)" style="mix-blend-mode:screen"/></svg>',
+  )
+
 /** Per-surface hidden filter (unique id), so unmounting one surface never breaks another. */
 export function GlassRefractionDefs({ id }: { id: string }) {
   return (
     <svg aria-hidden width="0" height="0" className="glass-defs">
-      <filter id={id} x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
-        <feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves={1} seed={3} result="n" />
-        <feGaussianBlur in="n" stdDeviation="6" result="m" />
-        <feDisplacementMap in="SourceGraphic" in2="m" scale={18} xChannelSelector="R" yChannelSelector="G" />
+      {/* Region padded past the box so displaced edge samples never read transparent. */}
+      <filter id={id} x="-10%" y="-10%" width="120%" height="120%" colorInterpolationFilters="sRGB">
+        <feImage href={EDGE_MAP} x="0%" y="0%" width="100%" height="100%" preserveAspectRatio="none" result="map" />
+        <feDisplacementMap in="SourceGraphic" in2="map" scale={16} xChannelSelector="R" yChannelSelector="G" />
       </filter>
     </svg>
   )
@@ -33,7 +50,7 @@ export const GlassSurface = React.forwardRef<HTMLElement, GlassSurfaceProps>(fun
   const Tag = as as 'div'
   const filterId = `rox-glass-${React.useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
   const vars: Record<string, string> = {}
-  if (intensity !== undefined) vars['--glass-intensity'] = String(Math.min(1, Math.max(0, intensity)))
+  if (intensity !== undefined && Number.isFinite(intensity)) vars['--glass-intensity'] = String(Math.min(1, Math.max(0, intensity)))
   if (refraction) vars['--glass-filter'] = `url(#${filterId})`
   return (
     <Tag

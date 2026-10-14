@@ -17,7 +17,8 @@
   isolation: isolate;
   transition:
     transform var(--motion-spring) var(--ease-spring),
-    opacity var(--motion-base) var(--ease-standard);
+    opacity var(--motion-base) var(--ease-standard),
+    visibility 0s linear 0s;
 }
 
 html[data-glass="full"] .glass-surface[data-glass-refraction] {
@@ -27,9 +28,12 @@ html[data-glass="full"] .glass-surface[data-glass-refraction] {
 .glass-surface[data-glass-presence="closed"] {
   opacity: 0;
   transform: scale(0.94) translateY(-0.25rem);
+  visibility: hidden;
   pointer-events: none;
-  transition-duration: var(--motion-spring-exit), var(--motion-spring-exit);
-  transition-timing-function: var(--ease-exit), var(--ease-exit);
+  /* Visibility flips only after the exit finishes, so the fade is seen. */
+  transition-duration: var(--motion-spring-exit), var(--motion-spring-exit), 0s;
+  transition-timing-function: var(--ease-exit), var(--ease-exit), linear;
+  transition-delay: 0s, 0s, var(--motion-spring-exit);
 }
 
 .glass-surface[data-glass-presence="open"] {
@@ -39,7 +43,7 @@ html[data-glass="full"] .glass-surface[data-glass-refraction] {
 
 .glass-surface[data-glass-pressed] {
   transform: scale(0.97);
-  transition-duration: var(--motion-fast);
+  transition-duration: var(--motion-fast), var(--motion-base), 0s;
 }
 
 .glass-defs {
