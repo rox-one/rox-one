@@ -1057,25 +1057,25 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         {sharedUrl ? (
           <>
             <StyledDropdownMenuItem onClick={handleOpenInBrowser}>
-              <Globe className="h-3.5 w-3.5" />
+              <Globe className="icon-caption" />
               <span className="flex-1">{t('sessionMenu.openInBrowser')}</span>
             </StyledDropdownMenuItem>
             <StyledDropdownMenuItem onClick={handleCopyLink}>
-              <Copy className="h-3.5 w-3.5" />
+              <Copy className="icon-caption" />
               <span className="flex-1">{t('sessionMenu.copyLink')}</span>
             </StyledDropdownMenuItem>
             <StyledDropdownMenuItem onClick={handleUpdateShare}>
-              <RefreshCw className="h-3.5 w-3.5" />
+              <RefreshCw className="icon-caption" />
               <span className="flex-1">{t('sessionMenu.updateShare')}</span>
             </StyledDropdownMenuItem>
             <StyledDropdownMenuSeparator />
             <StyledDropdownMenuItem onClick={handleRevokeShare} variant="destructive">
-              <Link2Off className="h-3.5 w-3.5" />
+              <Link2Off className="icon-caption" />
               <span className="flex-1">{t('sessionMenu.stopSharing')}</span>
             </StyledDropdownMenuItem>
             <StyledDropdownMenuSeparator />
             <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl('https://thecraftagents.com/docs/go-further/sharing')}>
-              <Info className="h-3.5 w-3.5" />
+              <Info className="icon-caption" />
               <span className="flex-1">{t('chat.learnMore')}</span>
             </StyledDropdownMenuItem>
           </>
@@ -1089,7 +1089,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
             </StyledDropdownMenuItem>
             <StyledDropdownMenuSeparator />
             <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl('https://thecraftagents.com/docs/go-further/sharing')}>
-              <Info className="h-3.5 w-3.5" />
+              <Info className="icon-caption" />
               <span className="flex-1">{t('chat.learnMore')}</span>
             </StyledDropdownMenuItem>
           </>
@@ -1108,7 +1108,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         presentation={isCompactMode ? "drawer" : "popover"}
         trigger={(
           <PanelHeaderCenterButton
-            icon={<Info className="h-4 w-4" />}
+            icon={<Info className="icon-toolbar" />}
             aria-label={t("chat.sessionInfo")}
           />
         )}
@@ -1148,7 +1148,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     if (!isTaskOrchestrator) return undefined
     return (
       <PanelHeaderCenterButton
-        icon={<Pencil className="h-4 w-4" />}
+        icon={<Pencil className="icon-toolbar" />}
         tooltip={t('kanban.editTask')}
         onClick={handleEditTask}
       />
@@ -1162,10 +1162,10 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     const nextMode = mode === 'persistent' ? 'incognito' : mode === 'incognito' ? 'temporary' : 'persistent'
     const label = t(`memory.mode.${mode}`)
     const icon = mode === 'persistent'
-      ? <Eye className="h-4 w-4" />
+      ? <Eye className="icon-toolbar" />
       : mode === 'incognito'
-        ? <EyeOff className="h-4 w-4" />
-        : <SquareSlash className="h-4 w-4" />
+        ? <EyeOff className="icon-toolbar" />
+        : <SquareSlash className="icon-toolbar" />
     return (
       <PanelHeaderCenterButton
         icon={icon}
@@ -1186,7 +1186,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <PanelHeaderCenterButton
-          icon={<MoreHorizontal className="h-4 w-4" />}
+          icon={<MoreHorizontal className="icon-toolbar" />}
           aria-label={t('common.more')}
           title={t('common.more')}
         />
@@ -1194,41 +1194,41 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       <StyledDropdownMenuContent align="end" sideOffset={8}>
         {isTaskOrchestrator && (
           <StyledDropdownMenuItem onClick={handleEditTask}>
-            <Pencil className="h-3.5 w-3.5" />
+            <Pencil className="icon-caption" />
             <span className="flex-1">{t('kanban.editTask')}</span>
           </StyledDropdownMenuItem>
         )}
         <StyledDropdownMenuItem onClick={() => { void window.electronAPI.setMemoryMode(sessionId, memoryModeNext) }}>
           {memoryModeNow === 'persistent'
-            ? <Eye className="h-3.5 w-3.5" />
+            ? <Eye className="icon-caption" />
             : memoryModeNow === 'incognito'
-              ? <EyeOff className="h-3.5 w-3.5" />
-              : <SquareSlash className="h-3.5 w-3.5" />}
+              ? <EyeOff className="icon-caption" />
+              : <SquareSlash className="icon-caption" />}
           <span className="flex-1">{t(`memory.mode.${memoryModeNow}`)}</span>
         </StyledDropdownMenuItem>
         <StyledDropdownMenuSeparator />
         {sharedUrl ? (
           <>
             <StyledDropdownMenuItem onClick={handleOpenInBrowser}>
-              <Globe className="h-3.5 w-3.5" />
+              <Globe className="icon-caption" />
               <span className="flex-1">{t('sessionMenu.openInBrowser')}</span>
             </StyledDropdownMenuItem>
             <StyledDropdownMenuItem onClick={handleCopyLink}>
-              <Copy className="h-3.5 w-3.5" />
+              <Copy className="icon-caption" />
               <span className="flex-1">{t('sessionMenu.copyLink')}</span>
             </StyledDropdownMenuItem>
             <StyledDropdownMenuItem onClick={handleUpdateShare}>
-              <RefreshCw className="h-3.5 w-3.5" />
+              <RefreshCw className="icon-caption" />
               <span className="flex-1">{t('sessionMenu.updateShare')}</span>
             </StyledDropdownMenuItem>
             <StyledDropdownMenuItem onClick={handleRevokeShare} variant="destructive">
-              <Link2Off className="h-3.5 w-3.5" />
+              <Link2Off className="icon-caption" />
               <span className="flex-1">{t('sessionMenu.stopSharing')}</span>
             </StyledDropdownMenuItem>
           </>
         ) : (
           <StyledDropdownMenuItem onClick={handleShare}>
-            <Globe className="h-3.5 w-3.5" />
+            <Globe className="icon-caption" />
             <span className="flex-1">{t('chat.shareOnline')}</span>
           </StyledDropdownMenuItem>
         )}
