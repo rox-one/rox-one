@@ -44,7 +44,6 @@ import {
 import { navigate, routes } from '@/lib/navigate'
 import { usePanelKeyboardGuard } from '@/lib/usePanelKeyboardGuard'
 import { captureWorkspaceToolOpen, openWorkspaceTool } from '@/lib/open-workspace-tool'
-import { workspaceProjectContextsAtom } from '@/atoms/workspace-context'
 import { cn } from '@/lib/utils'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { useAutomations } from '@/hooks/useAutomations'
@@ -482,7 +481,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const openAutomation = (automationId: string) => {
     if (!workspaceId) return
     const rule = automations.automations.find(item => item.id === automationId)
-    const projectId = rule?.context?.projectId ?? store.get(workspaceProjectContextsAtom)[workspaceId] ?? undefined
+    const projectId = rule?.context?.projectId ?? undefined
     const intent = captureWorkspaceToolOpen(store, { workspaceId, projectId, tool: 'automations', originPanelId: shell?.panelId })
     if (intent) openWorkspaceTool(store, intent, routes.view.automations({ automationId }))
   }

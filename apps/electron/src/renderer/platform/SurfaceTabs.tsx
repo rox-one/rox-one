@@ -62,6 +62,8 @@ function tabIcon(tab: SurfaceTabView): LucideIcon {
       return Zap
     case 'knowledge':
       return BookOpen
+    case 'cookbooks':
+      return BookOpen
     default:
       return PanelTop
   }

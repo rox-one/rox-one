@@ -4,8 +4,12 @@
  * or the ref kind, never the generic "Panel" fallback.
  */
 import { describe, it, expect } from 'bun:test'
+import { setupI18n } from '@rox/shared/i18n'
+import { APP_NAV_DESTINATIONS } from '../../components/app-shell/nav-destinations'
+import { EXTRA_SCREENS } from '../../pages/extra-screens/registry'
+import { buildRouteTitleKeys } from '../surface-shell'
 import { routes, type ViewRoute } from '../../../shared/routes'
-import type { PanelStackEntry } from '../../atoms/panel-stack'
+import { getPanelTypeFromRoute, type PanelStackEntry } from '../../atoms/panel-stack'
 import {
   buildSurfaceTabViews,
   knowledgeRefKey,
@@ -124,6 +128,49 @@ describe('buildSurfaceTabViews: navigator panels', () => {
       labels: LABELS,
     })
     expect(tab.title).toBe(LABELS.panel)
+  })
+})
+
+describe('buildSurfaceTabViews: cookbooks surface', () => {
+  // The real chain SurfaceTabs wires — APP_NAV_DESTINATIONS → buildRouteTitleKeys
+  // → t — so both halves of the tab label are covered: the destination entry
+  // that maps the route root, and the panel type that must ask for it. Missing
+  // either one leaves the tab reading «Панель».
+  const i18n = setupI18n()
+  const routeTitleKeys = buildRouteTitleKeys({
+    destinations: APP_NAV_DESTINATIONS,
+    modes: [],
+    extraScreens: EXTRA_SCREENS,
+  })
+  const labels: SurfaceTabLabels = { ...LABELS, panel: i18n.t('surfaceTabs.panel') }
+
+  function cookbooksTab() {
+    const route = routes.view.cookbooks()
+    return buildSurfaceTabViews({
+      entries: [
+        { id: 'p-cookbooks', route, proportion: 1, panelType: getPanelTypeFromRoute(route), laneId: 'main' },
+      ],
+      focusedPanelId: null,
+      resolveSessionTitle: () => null,
+      resolveRouteTitle: (r) => {
+        const key = routeTitleKeys.get(r.split('?')[0].split('/')[0])
+        return key ? i18n.t(key) : null
+      },
+      labels,
+    })[0]
+  }
+
+  it('labels the tab from the route (ru «Кукбуки»), never the generic «Панель»', () => {
+    const tab = cookbooksTab()
+    // The dedicated PanelType is what gives the tab its glyph in SurfaceTabs.
+    expect(tab.panelType).toBe('cookbooks')
+    expect(tab.title).toBe('Кукбуки')
+    expect(tab.title).not.toBe(labels.panel)
+  })
+
+  it('keeps the route → labelKey mapping that names the surface', () => {
+    expect(routeTitleKeys.get('cookbooks')).toBe('sidebar.cookbooks')
+    expect(i18n.t('sidebar.cookbooks')).toBe('Кукбуки')
   })
 })
 
