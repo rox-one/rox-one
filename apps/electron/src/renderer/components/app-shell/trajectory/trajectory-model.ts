@@ -309,9 +309,9 @@ export function sortTimelineLanes(model: TrajectoryTimelineModel | null): Trajec
 }
 
 /**
- * Cull spans outside the visible domain and merge spans that would occupy the
- * pixels (each span is at least minSpanPx wide), so DOM cost is bounded by track width (≈ 3 lanes × width
- * px) rather than by record count. A merged span keeps the first record's
+ * Cull spans outside the visible domain and merge spans whose pixels overlap
+ * (each span is at least minSpanPx wide), so DOM cost is bounded by track
+ * width (≤ 3 lanes × width / minSpanPx) rather than by record count. A merged span keeps the first record's
  * index (click target), is an error if any member is, and reports `count`.
  */
 export function cullTimelineSpans(
