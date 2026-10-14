@@ -19,11 +19,14 @@ import {
 } from '@/atoms/panel-stack'
 import type { ViewRoute } from '../../../shared/routes'
 import * as storage from '@/lib/local-storage'
+import { isLiteActive } from '@/lib/lite-mode'
 
 export const STRIP_MIN_WIDTH = 320
 export const STRIP_MAX_WIDTH = 1400
 export const STRIP_DEFAULT_WIDTH = 640
 export const HIBERNATE_AFTER_MS = 30_000
+/** Lite / reduced-data mode pauses off-screen heavy panels sooner. */
+export const HIBERNATE_AFTER_MS_LITE = 5_000
 /**
  * Panel types whose host keeps instance state outside React (unmount is safe).
  * Only the browser qualifies: BrowserPanelPage persists and unmount just
@@ -225,7 +228,7 @@ export function useStripHibernation(viewport: React.RefObject<HTMLElement | null
         if (!id || !ids.has(id)) continue
         clearTimeout(timers.get(id)); timers.delete(id)
         if (record.isIntersecting || id === focusedId) { wake(id); continue }
-        timers.set(id, setTimeout(() => setHibernated((prev) => { const next = new Set(prev); next.add(id); return next }), HIBERNATE_AFTER_MS))
+        timers.set(id, setTimeout(() => setHibernated((prev) => { const next = new Set(prev); next.add(id); return next }), isLiteActive() ? HIBERNATE_AFTER_MS_LITE : HIBERNATE_AFTER_MS))
       }
     }, { root, threshold: 0 })
     for (const element of Array.from(root.querySelectorAll<HTMLElement>('[data-panel-id]'))) if (ids.has(element.dataset.panelId ?? '')) observer.observe(element)

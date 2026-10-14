@@ -19,7 +19,8 @@
  * whole registry with it anyway.
  */
 
-import { RPC_CHANNELS, type SiyuanSurfaceState } from '../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
+import type {SiyuanSurfaceState} from '../../shared/types'
 import type { EmbeddedBoundsRect } from '../browser-pane-manager'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import { bumpKnowledgeMetric } from '@rox/server-core/knowledge'

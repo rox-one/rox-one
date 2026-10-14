@@ -39,6 +39,7 @@ const NAV_CONCEPT: Record<string, GlyphConcept> = {
   knowledge: 'knowledge',
   developers: 'developers',
   playbooks: 'playbooks',
+  cookbooks: 'cookbooks',
   settings: 'settings',
 }
 
@@ -55,6 +56,7 @@ const UNIFIED_CONCEPT: Record<string, GlyphConcept> = {
   messenger: 'team',
   calendar: 'calendar',
   goals: 'goals',
+  canvas: 'canvas',
 }
 
 const PILL_CONCEPT: Record<string, GlyphConcept> = {

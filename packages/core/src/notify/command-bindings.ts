@@ -7,6 +7,29 @@
  * `system.ping`: a structural schema in dependency-free `@rox/core` plus a zod
  * twin in `@rox/shared/notify/schemas` for untrusted input.
  *
+ * PAYLOAD CONTRACT — `packages/shared/src/domain/notify/schema.ts`
+ * (`NOTIFY_COMMAND_SCHEMAS`; TECH-SPEC §4.14 / DATA-MODEL §5.13) is the source
+ * of truth for what these three commands accept. The domain module binds it
+ * (`DOMAIN_SCHEMA_COMMAND_MODULE` → `bindDomainSchemas`), but a notify-host
+ * process binds this module *after* it (last-wins: `COMMAND_MODULES` in
+ * `server-core/src/commands/registry.ts`), so this structural schema is what
+ * the workspace service really validates with. It re-issues the domain
+ * contract by hand because `@rox/core` is dependency-free by contract and may
+ * not import `@rox/shared` (which in turn imports `@rox/core/notify`).
+ *
+ * That hand copy is exactly what drifted: the gateway used to reject the
+ * documented `{ notificationIds }` payload with `Unknown notifications.mark_read
+ * field`. The mirrored field names now live in `NOTIFY_DOMAIN_FIELDS`, and
+ * `packages/server-core/src/work/__tests__/notify-contract-drift.test.ts`
+ * compares that list with the domain zod schema — adding a field to the domain
+ * schema without adding it here fails CI instead of silently rejecting the
+ * documented payload.
+ *
+ * The legacy, non-domain spellings this gateway accepted before it followed the
+ * contract (`{ ids }`, `{ kind }`, `{ prefs: [{ kind, … }] }`) stay accepted so
+ * existing callers keep working; the canonical spelling is preferred. Each
+ * schema documents which is which.
+ *
  * The handlers run on the workspace authority and delegate to the host
  * (workspace-service `modules/notify`), which owns the store and the realtime
  * push. Without a host the commands stay unbound (`not_bound`, honest
@@ -26,22 +49,76 @@ export const NOTIFY_COMMAND_TYPES = [
 
 export type NotifyCommandType = (typeof NOTIFY_COMMAND_TYPES)[number]
 
-/** Highest number of notifications one mark-read command may address. */
-export const MAX_MARK_READ_IDS = 256
-/** Highest number of pref rows one update may carry. */
-export const MAX_PREF_UPDATES = 64
+/**
+ * Canonical top-level payload fields per command, mirrored from
+ * `packages/shared/src/domain/notify/schema.ts` (the source of truth).
+ * `work/__tests__/notify-contract-drift.test.ts` compares this with the domain
+ * zod schema's `shape`, so a field added there and forgotten here fails CI.
+ */
+export const NOTIFY_DOMAIN_FIELDS: Readonly<Record<NotifyCommandType, readonly string[]>> = {
+  'notifications.mark_read': ['notificationIds'],
+  'notifications.mark_all_read': ['before'],
+  'notifications.update_prefs': ['prefs', 'quietHours'],
+}
+
+/**
+ * Highest number of notifications one mark-read command may address.
+ *
+ * The domain number wins: the contract is
+ * `z.array(idSchema).min(1).max(500)`, and a payload the documented schema
+ * accepts must not be rejected here — that mismatch was the bug. 256 was a
+ * divergent re-implementation. The notify HTTP/zod twin
+ * (`@rox/shared/notify/schemas.ts`) reads this constant, so both boundaries
+ * move together. The domain schema lets ids repeat; this gateway collapses
+ * duplicates instead of rejecting them (marking one row read twice is
+ * idempotent), while the legacy `{ ids }` spelling keeps rejecting duplicates
+ * so its zod twin keeps agreeing with it.
+ */
+export const MAX_MARK_READ_IDS = 500
+/**
+ * Highest number of pref rows one update may carry — same reconciliation as
+ * `MAX_MARK_READ_IDS`: the domain contract is `.min(1).max(500)`, so 500 wins
+ * over the old 64 (a smaller gateway bound would reject documented payloads).
+ */
+export const MAX_PREF_UPDATES = 500
+
+/** Canonical `notifications.update_prefs` channel (`notificationChannelSchema`). */
+export type DomainNotificationChannel = 'in_app' | 'email' | 'push' | 'desktop'
+
+/** Canonical `notifications.update_prefs` row (DATA-MODEL §5.13 `notification_pref`). */
+export interface DomainNotificationPrefUpdate {
+  eventType: string
+  channel: DomainNotificationChannel
+  enabled: boolean
+}
+
+/** Canonical quiet-hours window (`{ start, end }` as `HH:MM`). */
+export interface DomainQuietHours {
+  start: string
+  end: string
+}
 
 export interface NotificationsMarkReadPayload {
+  /** Canonical `notificationIds`, normalised onto the host port's `ids`. */
   ids: readonly string[]
 }
 
 export interface NotificationsMarkAllReadPayload {
-  /** Optional kind filter: mark only that kind read (the Notifications tab chips). */
+  /** Legacy kind filter: mark only that kind read (the Notifications tab chips). */
   kind?: NotificationKind
+  /** Canonical `before`: the read marker's cut-off instant. */
+  before?: string
 }
 
 export interface NotificationsUpdatePrefsPayload {
-  prefs: readonly NotificationPrefUpdate[]
+  /**
+   * `NotificationPrefUpdate` rows (the `notification_pref` model — `kind`,
+   * `channels`, `batchMinutes`) or canonical domain rows
+   * (`{ eventType, channel, enabled }`). See `prefUpdatesForHost`.
+   */
+  prefs: readonly (NotificationPrefUpdate | DomainNotificationPrefUpdate)[]
+  /** Canonical quiet-hours window (`null` clears it). */
+  quietHours?: DomainQuietHours | null
 }
 
 export interface NotifyCommandResult {
@@ -57,6 +134,18 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return proto === Object.prototype || proto === null
 }
 
+function failure(message: string): { success: false; error: Error } {
+  return { success: false, error: new Error(message) }
+}
+
+/** Mirrors `idSchema` (`packages/shared/src/domain/common.ts`). */
+// eslint-disable-next-line no-control-regex -- intentionally rejects C0 controls and DEL in domain ids
+const DOMAIN_ID_CONTROL_RE = /[\u0000-\u001f\u007f]/
+function isDomainId(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= 256 && !DOMAIN_ID_CONTROL_RE.test(value)
+}
+
+/** Legacy `{ ids }`: 1…MAX unique non-empty strings — the `@rox/shared/notify/schemas` twin's rule. */
 function idList(value: unknown): string[] | null {
   if (!Array.isArray(value) || value.length === 0 || value.length > MAX_MARK_READ_IDS) return null
   const ids: string[] = []
@@ -69,61 +158,214 @@ function idList(value: unknown): string[] | null {
   return ids
 }
 
-/** Structural strict schema; `@rox/shared/notify/schemas` has the zod twin. */
+/** Canonical `notificationIds`: the domain `z.array(idSchema).min(1).max(500)`, duplicates collapsed. */
+function canonicalIdList(value: unknown): string[] | null {
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_MARK_READ_IDS) return null
+  const ids: string[] = []
+  const seen = new Set<string>()
+  for (const entry of value) {
+    if (!isDomainId(entry)) return null
+    if (seen.has(entry)) continue
+    seen.add(entry)
+    ids.push(entry)
+  }
+  return ids
+}
+
+/** Mirrors `isoDateTimeSchema` (`z.iso.datetime({ offset: true })`). */
+const ISO_DATE_TIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/
+function isIsoDateTime(value: unknown): value is string {
+  return typeof value === 'string' && ISO_DATE_TIME_RE.test(value) && !Number.isNaN(Date.parse(value))
+}
+
+/** Mirrors `notificationChannelSchema` (`packages/shared/src/domain/notify/schema.ts`). */
+const DOMAIN_NOTIFICATION_CHANNELS: Readonly<Record<string, true>> = { in_app: true, email: true, push: true, desktop: true }
+function isDomainNotificationChannel(value: unknown): value is DomainNotificationChannel {
+  return typeof value === 'string' && DOMAIN_NOTIFICATION_CHANNELS[value] === true
+}
+
+/** `quietHours.start` / `.end` (`HH:MM`). */
+const QUIET_HOURS_RE = /^\d{2}:\d{2}$/
+
+/** Legacy pref row: the `notification_pref` model (`kind`, `channels`, `batchMinutes`). */
+function legacyPrefRow(row: Record<string, unknown>): NotificationPrefUpdate | string {
+  if (Object.keys(row).some(key => !['kind', 'enabled', 'channels', 'batchMinutes'].includes(key))) return 'Unknown notification pref field'
+  if (!isNotificationKind(row.kind)) return 'pref.kind must be a notification kind'
+  if (row.enabled !== undefined && typeof row.enabled !== 'boolean') return 'pref.enabled must be a boolean'
+  if (row.channels !== undefined) {
+    if (!Array.isArray(row.channels) || row.channels.some(channel => !isNotificationChannel(channel))) {
+      return 'pref.channels must be a list of known channel names'
+    }
+  }
+  if (row.batchMinutes !== undefined && (typeof row.batchMinutes !== 'number' || !Number.isInteger(row.batchMinutes) || row.batchMinutes < 0 || row.batchMinutes > 1440)) {
+    return 'pref.batchMinutes must be an integer 0…1440'
+  }
+  const update: NotificationPrefUpdate = { kind: row.kind }
+  if (row.enabled !== undefined) update.enabled = row.enabled
+  if (row.channels !== undefined) update.channels = row.channels
+  if (row.batchMinutes !== undefined) update.batchMinutes = row.batchMinutes
+  return update
+}
+
+/** Canonical row: `{ eventType, channel, enabled }` — DATA-MODEL §5.13, exactly as the domain schema. */
+function domainPrefRow(row: Record<string, unknown>): DomainNotificationPrefUpdate | string {
+  if (Object.keys(row).some(key => !['eventType', 'channel', 'enabled'].includes(key))) return 'Unknown notification pref field'
+  if (typeof row.eventType !== 'string' || row.eventType.length === 0 || row.eventType.length > 128) return 'pref.eventType must be 1…128 characters'
+  if (!isDomainNotificationChannel(row.channel)) return 'pref.channel must be in_app, email, push or desktop'
+  if (typeof row.enabled !== 'boolean') return 'pref.enabled must be a boolean'
+  return { eventType: row.eventType, channel: row.channel, enabled: row.enabled }
+}
+
+/**
+ * The two pref-row axes, as key sets. A canonical row (DATA-MODEL §5.13) carries
+ * `eventType`/`channel`; a legacy `NotificationPrefUpdate` row carries
+ * `kind`/`channels`/`batchMinutes` (the shipped `notification_pref` columns).
+ * They are disjoint by construction, so a row carrying both is *ambiguous* —
+ * it must be rejected, not routed by whichever key happens to be tested first.
+ */
+const DOMAIN_PREF_AXIS_FIELDS = ['eventType', 'channel'] as const
+const LEGACY_PREF_AXIS_FIELDS = ['kind', 'channels', 'batchMinutes'] as const
+
+/** Which axis a pref row is written on — or that it mixes both. */
+export type PrefRowKind = 'domain' | 'legacy' | 'ambiguous'
+
+/**
+ * The ONE discriminator for `notifications.update_prefs` rows. Router
+ * (`NOTIFICATIONS_UPDATE_PREFS_SCHEMA`) and filter (`prefUpdatesForHost`) both
+ * call it, so the accepted-as-canonical and forwarded-as-legacy decisions
+ * cannot drift: a `'domain'` row is validated as canonical and never forwarded,
+ * a `'legacy'` row is validated as legacy and is forwarded.
+ *
+ * A row carrying fields from both axes classifies `'ambiguous'`; callers must
+ * reject it with `ambiguousPrefRowMessage` rather than pick an axis — picking
+ * one is exactly how the two halves of the pipeline silently disagreed before.
+ */
+export function classifyPrefRow(row: object): PrefRowKind {
+  const hasDomain = DOMAIN_PREF_AXIS_FIELDS.some(field => field in row)
+  const hasLegacy = LEGACY_PREF_AXIS_FIELDS.some(field => field in row)
+  if (hasDomain && hasLegacy) return 'ambiguous'
+  return hasDomain ? 'domain' : 'legacy'
+}
+
+/** Rejection naming the mixed fields, so the error never blames an unrelated one. */
+export function ambiguousPrefRowMessage(row: object): string {
+  const mixed = [
+    ...DOMAIN_PREF_AXIS_FIELDS.filter(field => field in row),
+    ...LEGACY_PREF_AXIS_FIELDS.filter(field => field in row),
+  ]
+  return `pref mixes the canonical (${DOMAIN_PREF_AXIS_FIELDS.join('/')}) and legacy (${LEGACY_PREF_AXIS_FIELDS.join('/')}) axes: ${mixed.join(', ')}`
+}
+
+/**
+ * Structural strict schema; `@rox/shared/notify/schemas` has the zod twin.
+ *
+ * Accepts the canonical `{ notificationIds }` (`NOTIFY_DOMAIN_FIELDS`) and the
+ * legacy `{ ids }`, normalising both onto the host port's `{ ids }`.
+ */
 export const NOTIFICATIONS_MARK_READ_SCHEMA: SchemaLike<NotificationsMarkReadPayload> = {
   safeParse(value: unknown) {
-    if (!isPlainObject(value)) return { success: false, error: new Error('notifications.mark_read payload must be an object') }
-    if (Object.keys(value).some(key => key !== 'ids')) return { success: false, error: new Error('Unknown notifications.mark_read field') }
-    const ids = idList(value.ids)
-    if (!ids) return { success: false, error: new Error(`ids must be 1…${MAX_MARK_READ_IDS} unique non-empty strings`) }
+    if (!isPlainObject(value)) return failure('notifications.mark_read payload must be an object')
+    if (Object.keys(value).some(key => key !== 'notificationIds' && key !== 'ids')) return failure('Unknown notifications.mark_read field')
+    const canonical = 'notificationIds' in value
+    if (canonical && 'ids' in value) return failure('notifications.mark_read takes notificationIds (canonical) or ids (legacy), not both')
+    const ids = canonical ? canonicalIdList(value.notificationIds) : idList(value.ids)
+    if (!ids) return failure(`ids must be 1…${MAX_MARK_READ_IDS} non-empty strings`)
     return { success: true, data: { ids } }
   },
 }
 
+/**
+ * Structural strict schema; `@rox/shared/notify/schemas` has the zod twin.
+ *
+ * Both filters are served because they are genuinely different cuts and
+ * neither may be dropped silently: `before` is the canonical
+ * `notifications.mark_all_read` payload, `kind` is the legacy chip filter the
+ * Notifications tab and the workspace-service host use (callers that depend on
+ * it: `apps/workspace-service/test/notify.test.ts` "mark_all_read with a kind
+ * only touches that kind", `apps/workspace-service/src/modules/notify/service.ts`
+ * `markAllRead({ kind, context })`, `review-renderers.test.ts`).
+ */
 export const NOTIFICATIONS_MARK_ALL_READ_SCHEMA: SchemaLike<NotificationsMarkAllReadPayload> = {
   safeParse(value: unknown) {
-    if (!isPlainObject(value)) return { success: false, error: new Error('notifications.mark_all_read payload must be an object') }
-    const keys = Object.keys(value)
-    if (keys.some(key => key !== 'kind')) return { success: false, error: new Error('Unknown notifications.mark_all_read field') }
-    const kind = value.kind
-    if (kind === undefined) return { success: true, data: {} }
-    if (!isNotificationKind(kind)) return { success: false, error: new Error('kind must be a notification kind') }
-    return { success: true, data: { kind } }
+    if (!isPlainObject(value)) return failure('notifications.mark_all_read payload must be an object')
+    if (Object.keys(value).some(key => key !== 'kind' && key !== 'before')) return failure('Unknown notifications.mark_all_read field')
+    const data: NotificationsMarkAllReadPayload = {}
+    if (value.kind !== undefined) {
+      if (!isNotificationKind(value.kind)) return failure('kind must be a notification kind')
+      data.kind = value.kind
+    }
+    if (value.before !== undefined) {
+      if (!isIsoDateTime(value.before)) return failure('before must be an ISO-8601 instant')
+      data.before = value.before
+    }
+    return { success: true, data }
   },
 }
 
+/**
+ * Structural strict schema; `@rox/shared/notify/schemas` has the zod twin.
+ *
+ * Top level is the domain shape (`{ prefs, quietHours? }`). A row is either the
+ * canonical domain row (`{ eventType, channel, enabled }`) or the legacy
+ * `NotificationPrefUpdate` (`kind` + `enabled` / `channels` / `batchMinutes`).
+ * The two are different axes and are NOT translated into each other — see
+ * `prefUpdatesForHost`.
+ */
 export const NOTIFICATIONS_UPDATE_PREFS_SCHEMA: SchemaLike<NotificationsUpdatePrefsPayload> = {
   safeParse(value: unknown) {
-    if (!isPlainObject(value)) return { success: false, error: new Error('notifications.update_prefs payload must be an object') }
-    if (Object.keys(value).some(key => key !== 'prefs')) return { success: false, error: new Error('Unknown notifications.update_prefs field') }
+    if (!isPlainObject(value)) return failure('notifications.update_prefs payload must be an object')
+    if (Object.keys(value).some(key => key !== 'prefs' && key !== 'quietHours')) return failure('Unknown notifications.update_prefs field')
     const rows = value.prefs
     if (!Array.isArray(rows) || rows.length === 0 || rows.length > MAX_PREF_UPDATES) {
-      return { success: false, error: new Error(`prefs must be 1…${MAX_PREF_UPDATES} entries`) }
+      return failure(`prefs must be 1…${MAX_PREF_UPDATES} entries`)
     }
-    const prefs: NotificationPrefUpdate[] = []
+    const prefs: Array<NotificationPrefUpdate | DomainNotificationPrefUpdate> = []
     for (const row of rows) {
-      if (!isPlainObject(row)) return { success: false, error: new Error('Each pref must be an object') }
-      if (Object.keys(row).some(key => !['kind', 'enabled', 'channels', 'batchMinutes'].includes(key))) {
-        return { success: false, error: new Error('Unknown notification pref field') }
-      }
-      if (!isNotificationKind(row.kind)) return { success: false, error: new Error('pref.kind must be a notification kind') }
-      if (row.enabled !== undefined && typeof row.enabled !== 'boolean') return { success: false, error: new Error('pref.enabled must be a boolean') }
-      if (row.channels !== undefined) {
-        if (!Array.isArray(row.channels) || row.channels.some(channel => !isNotificationChannel(channel))) {
-          return { success: false, error: new Error('pref.channels must be a list of known channel names') }
-        }
-      }
-      if (row.batchMinutes !== undefined && (typeof row.batchMinutes !== 'number' || !Number.isInteger(row.batchMinutes) || row.batchMinutes < 0 || row.batchMinutes > 1440)) {
-        return { success: false, error: new Error('pref.batchMinutes must be an integer 0…1440') }
-      }
-      const update: NotificationPrefUpdate = { kind: row.kind }
-      if (row.enabled !== undefined) update.enabled = row.enabled
-      if (row.channels !== undefined) update.channels = row.channels
-      if (row.batchMinutes !== undefined) update.batchMinutes = row.batchMinutes
-      prefs.push(update)
+      if (!isPlainObject(row)) return failure('Each pref must be an object')
+      const shape = classifyPrefRow(row)
+      if (shape === 'ambiguous') return failure(ambiguousPrefRowMessage(row))
+      const parsed = shape === 'domain' ? domainPrefRow(row) : legacyPrefRow(row)
+      if (typeof parsed === 'string') return failure(parsed)
+      prefs.push(parsed)
     }
-    return { success: true, data: { prefs } }
+    let quietHours: DomainQuietHours | null | undefined
+    if (value.quietHours !== undefined) {
+      if (value.quietHours === null) quietHours = null
+      else {
+        if (!isPlainObject(value.quietHours)) return failure('quietHours must be an object or null')
+        if (Object.keys(value.quietHours).some(key => key !== 'start' && key !== 'end')) return failure('Unknown notification quiet-hours field')
+        const { start, end } = value.quietHours
+        if (typeof start !== 'string' || typeof end !== 'string' || !QUIET_HOURS_RE.test(start) || !QUIET_HOURS_RE.test(end)) {
+          return failure('quietHours.start and quietHours.end must be HH:MM')
+        }
+        quietHours = { start, end }
+      }
+    }
+    const data: NotificationsUpdatePrefsPayload = { prefs }
+    if (quietHours !== undefined) data.quietHours = quietHours
+    return { success: true, data }
   },
+}
+
+/**
+ * The ONE place a validated `notifications.update_prefs` payload meets the host
+ * port's `NotificationPrefUpdate` shape.
+ *
+ * The canonical row is `{ eventType, channel, enabled }` (DATA-MODEL §5.13), the
+ * port takes `{ kind, channels, batchMinutes }` (the shipped `506-notify.sql`
+ * `notification_pref`). `eventType` is a domain *event* type — many have no
+ * notification trigger at all (`./triggers.ts` does not map `task.task_adding`)
+ * — and `channel` is one of `in_app|email|push|desktop`, while `kind` is one of
+ * the 28 notification kinds and `channels` one of the nine
+ * `notification_pref.channels` values. No lossless translation exists, so this
+ * does NOT invent one: legacy rows pass through unchanged, and a canonical row
+ * has no counterpart on the port, so it is not forwarded (`updated` then counts
+ * only what the host really wrote). `quietHours` has no port field either.
+ * Making canonical rows effective is a store/port change in the workspace-service
+ * notify module — not a translation this gateway may fabricate.
+ */
+function prefUpdatesForHost(payload: NotificationsUpdatePrefsPayload): readonly NotificationPrefUpdate[] {
+  return payload.prefs.filter((row): row is NotificationPrefUpdate => classifyPrefRow(row) === 'legacy')
 }
 
 // ---------------------------------------------------------------------------
@@ -144,7 +386,13 @@ export interface NotifyCommandContext {
 
 export interface NotifyCommandHost {
   markRead(input: { ids: readonly string[]; context: NotifyCommandContext }): Promise<NotifyCommandResult>
-  markAllRead(input: { kind?: NotificationKind; context: NotifyCommandContext }): Promise<NotifyCommandResult>
+  /**
+   * `kind` is the legacy chip filter, `before` the canonical
+   * `notifications.mark_all_read` cut-off (`@rox/shared/domain/notify/schema.ts`).
+   * Both are optional and independent; a host that cannot honour `before` must
+   * reject rather than silently mark everything read.
+   */
+  markAllRead(input: { kind?: NotificationKind; before?: string; context: NotifyCommandContext }): Promise<NotifyCommandResult>
   updatePrefs(input: { updates: readonly NotificationPrefUpdate[]; context: NotifyCommandContext }): Promise<NotifyCommandResult>
 }
 
@@ -192,12 +440,16 @@ export function bindNotifyCommands(registry: CommandRegistry): void {
   }
   if (!registry.handler('notifications.mark_all_read')) {
     registry.bind<NotificationsMarkAllReadPayload, NotifyCommandResult>('notifications.mark_all_read', async ctx => ({
-      result: await requireHost().markAllRead({ ...(ctx.payload.kind ? { kind: ctx.payload.kind } : {}), context: contextOf(ctx) }),
+      result: await requireHost().markAllRead({
+        ...(ctx.payload.kind ? { kind: ctx.payload.kind } : {}),
+        ...(ctx.payload.before ? { before: ctx.payload.before } : {}),
+        context: contextOf(ctx),
+      }),
     }))
   }
   if (!registry.handler('notifications.update_prefs')) {
     registry.bind<NotificationsUpdatePrefsPayload, NotifyCommandResult>('notifications.update_prefs', async ctx => ({
-      result: await requireHost().updatePrefs({ updates: ctx.payload.prefs, context: contextOf(ctx) }),
+      result: await requireHost().updatePrefs({ updates: prefUpdatesForHost(ctx.payload), context: contextOf(ctx) }),
     }))
   }
 }

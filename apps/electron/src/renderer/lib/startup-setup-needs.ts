@@ -77,6 +77,8 @@ export function decideStartupAppState(input: {
   identityProbe: ProbeResult<{ authority: 'native' | 'local'; name?: string } | null>
   workspaceProbe: ProbeResult<string | null>
   cloudProbe?: ProbeResult<{ required: boolean; connected: boolean }>
+  /** User chose «Continue locally» — do not re-open the cloud-required wizard. */
+  setupDeferred?: boolean
 }): StartupAppState {
   const { identityProbe, workspaceProbe } = input
   if (!identityProbe.ok || !workspaceProbe.ok) return 'transport-unavailable'
@@ -84,7 +86,7 @@ export function decideStartupAppState(input: {
   if (!identity || identity.authority !== 'native' && identity.authority !== 'local') return 'transport-unavailable'
   if (input.cloudProbe) {
     if (!input.cloudProbe.ok) return 'transport-unavailable'
-    if (input.cloudProbe.value.required && !input.cloudProbe.value.connected) return 'onboarding'
+    if (input.cloudProbe.value.required && !input.cloudProbe.value.connected && !input.setupDeferred) return 'onboarding'
   } else if (!identity.name?.trim()) return 'onboarding'
   return workspaceProbe.value ? 'ready' : 'workspace-picker'
 }

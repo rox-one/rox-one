@@ -1705,6 +1705,11 @@ export const MaterialSurfaceHintsSchema = z.object(Object.fromEntries(
   MATERIAL_SURFACE_HINT_KEYS.map(key => [key, MaterialRangeSchema(0, 1)]),
 )).strict();
 
+// Theme layer schemas live in a browser-safe module (no fs/path/storage) so the
+// renderer's theme import can validate without pulling the config barrel.
+import { ThemeLayersSchema, RoxThemeFileSchema } from './theme-layers-schema.ts';
+export { ThemeLayersSchema, RoxThemeFileSchema };
+
 /**
  * Zod schema for app-level theme override files (~/.craft-agent/theme.json).
  * Allows partial overrides but rejects unknown keys.
@@ -1720,6 +1725,8 @@ export const ThemeOverrideSchema = z.object({
   material: MaterialSettingsSchema.optional(),
   // Zed role alpha hints consumed by the blurred auto-glass resolver
   surfaces: MaterialSurfaceHintsSchema.optional(),
+  // Layer tokens (frame/content/elevation/wallpaper/accent/glass)
+  layers: ThemeLayersSchema.optional(),
 }).strict()
   .refine(
     (data) => {
@@ -1754,6 +1761,8 @@ export const PresetThemeSchema = z.object({
   material: MaterialSettingsSchema.optional(),
   // Zed role alpha hints consumed by the blurred auto-glass resolver
   surfaces: MaterialSurfaceHintsSchema.optional(),
+  // Layer tokens (frame/content/elevation/wallpaper/accent/glass)
+  layers: ThemeLayersSchema.optional(),
   // Shiki theme for syntax highlighting
   shikiTheme: z.object({
     light: z.string().optional(),

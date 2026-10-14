@@ -103,8 +103,8 @@ describe('OmpAgent.queryLlm — model honesty', () => {
 
     const printCalls = fake.readArgvLog().filter((argv) => argv.includes('-p'));
     const prompt = printCalls[0]![printCalls[0]!.indexOf('-p') + 1]!;
-    expect(prompt).toBe('orchestrate workflowz ultrathink\n\nSYSTEM-PART\n\nUSER-PART');
-    expect(printCalls[0]![printCalls[0]!.indexOf('--thinking') + 1]).toBe('max');
+    expect(prompt).toBe('SYSTEM-PART\n\nUSER-PART');
+    expect(printCalls[0]![printCalls[0]!.indexOf('--thinking') + 1]).toBe('medium');
   });
 
   it('propagates non-model failures instead of silently falling back', async () => {
@@ -124,7 +124,7 @@ describe('OmpAgent.runMiniCompletion', () => {
     setRoxAccountAuthority(pocket.authority);
     const {agent,fake}=setup('healthy', { model: 'rox/standard', miniModel: 'claude-haiku-4-5', roxExecutionContext: await pocket.authority.capture(LOCAL_ROX_CALLER) });
     expect(await agent.runMiniCompletion('title')).toContain('fake-omp answer');const argv=fake.readArgvLog().find(a=>a.includes('-p'))!;
-    expect(argv[argv.indexOf('--model')+1]).toBe('rox/fast');expect(argv[argv.indexOf('-p')+1]).toBe('orchestrate workflowz ultrathink\n\ntitle');
+    expect(argv[argv.indexOf('--model')+1]).toBe('rox/fast');expect(argv[argv.indexOf('-p')+1]).toBe('title');
   });
   it('ownerless public titles cannot dispatch a one-shot child', async () => {
     const { agent, fake } = setup('healthy', { model: 'rox/standard' });

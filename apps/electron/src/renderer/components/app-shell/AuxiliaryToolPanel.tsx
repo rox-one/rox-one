@@ -10,7 +10,7 @@ import { primaryPanelRouteAtom, parseSessionIdFromRoute, updatePanelRouteByIdAto
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { automationsAtom } from '@/atoms/automations'
 import { MainContentPanel } from './MainContentPanel'
-import { activeWorkspaceContextAtom, workspaceProjectContextsAtom } from '@/atoms/workspace-context'
+import { activeWorkspaceContextAtom } from '@/atoms/workspace-context'
 import { useWorkspaceWork } from '@/lib/useWorkspaceWork'
 
 export function AuxiliaryToolPanel({ entry, onClose }: { entry: PanelStackEntry; onClose: () => void }) {
@@ -50,7 +50,7 @@ export function AuxiliaryToolPanel({ entry, onClose }: { entry: PanelStackEntry;
     if (!sessionId || !workspaceId) return
     const route = store.get(primaryPanelRouteAtom)
     if (!route) return
-    const reference = t('navigation.contextMessage', { workspaceId, projectId: store.get(workspaceProjectContextsAtom)[workspaceId] ?? '', route })
+    const reference = t('navigation.contextMessage', { workspaceId, projectId: entry.toolContext?.projectId ?? '', route })
     const draft = shell.getDraft(sessionId)
     shell.onInputChange(sessionId, `${draft}${draft ? '\n\n' : ''}${reference}`)
   }

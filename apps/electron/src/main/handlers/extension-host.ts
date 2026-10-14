@@ -17,7 +17,7 @@ import { dirname, join } from 'node:path'
 import { parseExtensionManifest } from '@rox/shared/extensions'
 import { assertPathAllowlisted, resolveSandboxRoots } from '../extension-host/path-allowlist'
 import { resolveConfigDir } from '@rox/shared/config/paths'
-import { RPC_CHANNELS } from '../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
 import {

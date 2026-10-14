@@ -6,7 +6,7 @@
  * states; focus comes from the global :focus-visible system (no local ring).
  */
 import type { ComponentType } from 'react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import { cn } from '@/lib/utils'
 
 export interface RailRowProps {
@@ -64,7 +64,7 @@ export function RailRow({ icon: Icon, label, tooltip, collapsed, active, disable
       )}
     >
       <Icon className="icon-toolbar" />
-      {!collapsed && <span className="min-w-0 flex-1 truncate label-tracking" title={label}>{label}</span>}
+      {!collapsed && <span className="rox-rail-label min-w-0 flex-1 truncate label-tracking" title={label}>{label}</span>}
     </button>
   )
 

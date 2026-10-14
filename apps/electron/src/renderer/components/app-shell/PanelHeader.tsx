@@ -31,7 +31,7 @@ import * as React from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
-import { motion } from 'motion/react'
+import { motion } from '@/lib/deferred-motion'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { ChevronDown, Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -56,6 +56,7 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
+import { useDedupedPanelTitle } from './ShellSidebarPortal'
 import { AccountMenu, useWorkspaceCreationFlow } from './AccountMenu'
 
 // Padding to compensate for macOS traffic lights (stoplight buttons)
@@ -291,7 +292,7 @@ export interface PanelHeaderProps {
  * Standardized panel header with title and actions
  */
 export function PanelHeader({
-  title,
+  title: rawTitle,
   badge,
   titleMenu,
   compactTitleMenu,
@@ -307,6 +308,8 @@ export function PanelHeader({
   identity,
   status,
 }: PanelHeaderProps) {
+  // Bare split panels already show the surface name in the tile header.
+  const title = useDedupedPanelTitle(rawTitle)
   const reduceMotion = usePrefersReducedMotion()
   const lanesEnabled = useAtomValue(featureSessionLanesV1Atom)
   // Fall back to AppShellContext.leadingAction so per-panel back buttons (set by

@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { ArrowLeftRight } from 'lucide-react'
 import { visibleWorkspacePanels } from './auxiliary-layout'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { motion } from 'motion/react'
+import { motion } from '@/lib/deferred-motion'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { panelStackAtom, primaryPanelIdAtom, lastAuxiliaryToolAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, expandedPanelIdAtom, type PanelSpatialDirection, type PanelStackEntry } from '@/atoms/panel-stack'
 import { bottomTerminalOpenAtom, featureLayoutEngineAtom, featurePanelSwapV1Atom } from '@/atoms/unified-shell'
@@ -27,6 +27,8 @@ import { PanelSlot } from './PanelSlot'
 import { TerminalPanel } from './TerminalPanel'
 import { PanelGridResizeSash } from './PanelGridResizeSash'
 import { PanelSwapGripButton } from './PanelSeam'
+import { activeSplitIdsAtom, exitSplitAtom, markSplitPanelTouchedAtom, splitPanelWidth, splitStateAtom } from '@/components/shell/split-mode'
+import { OneTimeHint } from '@/components/shell/OneTimeHint'
 import { setStripWidthAtom, persistStripWidthsAtom, panelFocusTimesAtom, nextFocusTick, stripWidthFor, stripWidthsAtom, hibernatedPanelIdsAtom, useStripHibernation, useScrollFocusedIntoView, clampStripWidth } from '@/components/shell/panel-strip'
 import {
   PANEL_GAP,
@@ -90,6 +92,8 @@ const COMPACT_PANEL_TOP_GAP = 0
 interface PanelStackContainerProps {
   sidebarSlot: React.ReactNode
   sidebarWidth: number
+  /** top50 #3: the narrow-window second sidebar overlay spills over the content. */
+  sidebarOverflowVisible?: boolean
   navigatorSlot: React.ReactNode
   navigatorWidth: number
   /** Absolute separators share the panels' coordinate and scroll owner. */
@@ -105,6 +109,7 @@ interface PanelStackContainerProps {
 export function PanelStackContainer({
   sidebarSlot,
   sidebarWidth,
+  sidebarOverflowVisible = false,
   navigatorSlot,
   navigatorWidth,
   resizeHandles,
@@ -188,19 +193,42 @@ export function PanelStackContainer({
   // writer while mounted; the atom setter identity is stable, so this fires on
   // unmount only.
   useEffect(() => () => setPanelLayoutGeometry(null), [setPanelLayoutGeometry])
+  // top50 #13: an active split always shows its pair side by side.
+  const splitIds = useAtomValue(activeSplitIdsAtom)
+  const splitState = useAtomValue(splitStateAtom)
+  const exitSplit = useSetAtom(exitSplitAtom)
+  useEffect(() => { if (splitState && !splitIds) exitSplit() }, [splitState, splitIds, exitSplit])
+  // Interacting inside the companion keeps it when split is turned off.
+  const markSplitTouched = useSetAtom(markSplitPanelTouchedAtom)
+  const companionId = splitIds && splitState?.openedId && !splitState.touched ? splitState.openedId : null
+  useEffect(() => {
+    const root = layoutRef.current
+    if (!companionId || !root) return
+    const onInteract = (event: Event) => {
+      const target = event.target instanceof Element ? event.target : null
+      if (target?.closest(`[data-panel-id="${CSS.escape(companionId)}"]`)) markSplitTouched(companionId)
+    }
+    root.addEventListener('pointerdown', onInteract, true)
+    root.addEventListener('keydown', onInteract, true)
+    return () => {
+      root.removeEventListener('pointerdown', onInteract, true)
+      root.removeEventListener('keydown', onInteract, true)
+    }
+  }, [companionId, markSplitTouched])
   const singlePanel = isExpanded || (hasTools
     ? visibleIds.length <= 1
-    : isCompact || panels.length <= 1 || (engineLayout ? engineLayout.singlePanel : mode === 'focus'))
+    : isCompact || panels.length <= 1 || (!splitIds && (engineLayout ? engineLayout.singlePanel : mode === 'focus')))
   const shape = useMemo(() => {
     if (hasTools) return panelGridShape(visibleIds.length, singlePanel ? 'focus' : 'columns')
+    if (splitIds) return { columns: panels.length, rows: 1 }
     return engineLayout
       ? { columns: engineLayout.columns, rows: engineLayout.rows }
       : panelGridShape(panels.length, singlePanel ? 'focus' : mode)
-  }, [panels.length, visibleIds.length, hasTools, singlePanel, mode, engineLayout])
+  }, [panels.length, visibleIds.length, hasTools, singlePanel, mode, engineLayout, splitIds])
   const tracks = useMemo(() => resolvePanelGridTracks(preferences, shape, panels.map((entry) => entry.proportion)), [preferences, shape, panels])
   // Panel strip (shell-layout §2): a single row of multiple panels scrolls
   // horizontally with per-screen px widths instead of squeezing into fr tracks.
-  const stripMode = !isCompact && !hasTools && !isExpanded && !singlePanel && shape.rows === 1 && !engineLayout
+  const stripMode = !isCompact && !hasTools && !isExpanded && !singlePanel && shape.rows === 1 && (!engineLayout || !!splitIds)
   const stripWidths = useAtomValue(stripWidthsAtom)
   const setStripWidth = useSetAtom(setStripWidthAtom)
   const persistStripWidths = useSetAtom(persistStripWidthsAtom)
@@ -212,6 +240,21 @@ export function PanelStackContainer({
   }, [focusedPanelId, setPanelFocusTimes])
   const hibernatedIds = useAtomValue(hibernatedPanelIdsAtom)
   useStripHibernation(scrollRef, stripMode)
+  // layoutRef excludes the docked inspector (a sibling in the shell), so this is the strip viewport.
+  const splitWidth = splitPanelWidth(Math.max(0, availableWidth - (isSidebarAndNavigatorHidden ? 0 : sidebarWidth + navigatorWidth)), PANEL_GAP)
+  const panelStripWidth = (entry: { id: string; route: string }) =>
+    splitIds && splitIds.includes(entry.id) ? splitWidth : stripWidthFor(stripWidths, entry.route)
+  // Bring the split pair into view (left panel at the viewport start).
+  const splitKey = splitIds ? splitIds.join('|') : ''
+  useEffect(() => {
+    if (!splitKey || !stripMode) return
+    const first = splitKey.split('|')[0]
+    const frame = requestAnimationFrame(() => {
+      const el = scrollRef.current?.querySelector<HTMLElement>(`[data-panel-role="content"][data-panel-id="${CSS.escape(first!)}"]`)
+      el?.scrollIntoView({ inline: 'start', block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [splitKey, stripMode, reduceMotion])
   useScrollFocusedIntoView(scrollRef, stripMode)
   const gridKey = stripMode ? 'strip' : panelGridKey(shape)
   const panelIdentity = `${preferences.workspaceId}:${panelIds.join(':')}`
@@ -524,8 +567,8 @@ export function PanelStackContainer({
           transition={transition}
           aria-hidden={!hasSidebar || undefined}
           {...(!hasSidebar ? { inert: '' } : {})}
-          className={`h-full relative shrink-0 overflow-hidden rox-shell-pane ${hasSidebar ? 'rox-shell-divider-r' : ''}`}
-          style={{ overflowX: 'clip', overflowY: 'visible', display: isCompact ? 'none' : undefined }}
+          className={`h-full relative shrink-0 ${sidebarOverflowVisible ? 'overflow-visible z-sticky' : 'overflow-hidden'} rox-shell-pane ${hasSidebar ? 'rox-shell-divider-r' : ''}`}
+          style={{ overflowX: sidebarOverflowVisible ? 'visible' : 'clip', overflowY: 'visible', display: isCompact ? 'none' : undefined }}
         >
           <div className="h-full" style={{ width: sidebarWidth }}>{sidebarSlot}</div>
         </motion.div>
@@ -590,7 +633,7 @@ export function PanelStackContainer({
               zIndex: isCompact ? 10 : undefined,
               minWidth: stripMode ? undefined : gridMinWidth,
               minHeight: gridMinHeight,
-              gridTemplateColumns: stripMode ? panels.map((entry) => `${stripWidthFor(stripWidths, entry.route)}px`).join(' ') : isExpanded ? 'minmax(0, 1fr)' : hasTools ? visibleIds.map(id => panels.find(entry => entry.id === id)?.tool && visibleIds.length > 1 ? '360px' : 'minmax(0, 1fr)').join(' ') : singlePanel ? 'minmax(0, 1fr)' : tracks.columns.map((weight) => `minmax(${PANEL_GRID_MIN_WIDTH}px, ${weight}fr)`).join(' '),
+              gridTemplateColumns: stripMode ? panels.map((entry) => `${panelStripWidth(entry)}px`).join(' ') : isExpanded ? 'minmax(0, 1fr)' : hasTools ? visibleIds.map(id => panels.find(entry => entry.id === id)?.tool && visibleIds.length > 1 ? '360px' : 'minmax(0, 1fr)').join(' ') : singlePanel ? 'minmax(0, 1fr)' : tracks.columns.map((weight) => `minmax(${PANEL_GRID_MIN_WIDTH}px, ${weight}fr)`).join(' '),
               gridTemplateRows: shape.rows === 1 ? 'minmax(0, 1fr)' : tracks.rows.map((weight) => `minmax(${PANEL_GRID_MIN_HEIGHT}px, ${weight}fr)`).join(' '),
               gap: PANEL_GAP,
               pointerEvents: isCompact && !hasSelectedContent ? 'none' : 'auto',
@@ -634,7 +677,7 @@ export function PanelStackContainer({
               )
             })}
             {stripMode && panels.map((entry) => (
-              <StripResizeSash key={`strip-sash:${entry.id}`} panelId={entry.id} width={stripWidthFor(stripWidths, entry.route)} onResize={(width, persist) => setStripWidth({ route: entry.route, width, persist })} onResizeEnd={persistStripWidths} />
+              <StripResizeSash key={`strip-sash:${entry.id}`} panelId={entry.id} width={panelStripWidth(entry)} onResize={(width, persist) => { if (splitIds?.includes(entry.id)) exitSplit(); setStripWidth({ route: entry.route, width, persist }) }} onResizeEnd={persistStripWidths} />
             ))}
             {!stripMode && !hasTools && !singlePanel && Array.from({ length: shape.columns - 1 }, (_, index) => (
               <PanelGridResizeSash key={`${gridKey}:x:${index}:${panelIdentity}`} axis="x" index={index} shape={shape} tracks={tracks} panelIds={panelIds} onTracksChange={setTracks} />
@@ -683,6 +726,14 @@ export function PanelStackContainer({
               </div>
             ) : null}
           </motion.div>
+          {stripMode && (
+            <OneTimeHint
+              id="strip.intro"
+              title={t('shell.hint.stripTitle')}
+              body={t('shell.hint.stripBody')}
+              className="absolute bottom-3 right-3"
+            />
+          )}
         </div>
         {resizeHandles && !isExpanded && resizeHandles}
       </motion.div>

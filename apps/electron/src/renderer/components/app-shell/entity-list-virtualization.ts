@@ -187,3 +187,16 @@ export function revealEntryScrollTop(
   if (bottom > scrollTop + viewportHeight) return Math.max(0, bottom - viewportHeight)
   return scrollTop
 }
+/**
+ * Border-box height of an observed element. `contentRect` excludes padding,
+ * so a padded sticky header (py-2) was measured ~16px short: every following
+ * slot started too early and collapsed group headers piled onto each other.
+ */
+export function observedBlockSize(entry: Pick<ResizeObserverEntry, 'contentRect' | 'target'> & { borderBoxSize?: ReadonlyArray<{ blockSize: number }> }): number {
+  const box = entry.borderBoxSize?.[0]
+  if (box && box.blockSize > 0) return Math.ceil(box.blockSize)
+  const target = entry.target as Element | null
+  const rect = target && typeof target.getBoundingClientRect === 'function' ? target.getBoundingClientRect() : null
+  if (rect && rect.height > 0) return Math.ceil(rect.height)
+  return Math.ceil(entry.contentRect.height)
+}

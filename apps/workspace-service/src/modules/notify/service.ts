@@ -28,7 +28,7 @@ import {
 } from '../../../../../packages/core/src/notify/index.ts'
 import { NotificationFanout, type NotifyPush } from './fanout.ts'
 import { NotifyEmailWorker, type NotificationEmailTransport } from './email-worker.ts'
-import { InMemoryNotificationStore, type NotificationPageOptions, type NotificationStore } from './store.ts'
+import { InMemoryNotificationStore, type NotificationMarkAllFilter, type NotificationPageOptions, type NotificationStore } from './store.ts'
 import type { AudienceReader } from './audience-adapter.ts'
 
 export interface NotifyServiceOptions {
@@ -114,10 +114,10 @@ export class NotifyService {
     return { updated: changed.length, readAt, unread }
   }
 
-  async markAllRead(workspaceId: string, principalId: string, kind: NotificationKind | undefined, readAt = this.now().toISOString()): Promise<NotificationReadResult> {
-    const changed = await this.store.markAllRead(workspaceId, principalId, kind, readAt)
+  async markAllRead(workspaceId: string, principalId: string, filter: NotificationMarkAllFilter, readAt = this.now().toISOString()): Promise<NotificationReadResult> {
+    const changed = await this.store.markAllRead(workspaceId, principalId, filter, readAt)
     const unread = await this.store.unreadCount(workspaceId, principalId)
-    if (changed.length > 0) this.publish(workspaceId, principalId, { all: true, ...(kind ? { kind } : {}), readAt, unread })
+    if (changed.length > 0) this.publish(workspaceId, principalId, { all: true, ...(filter.kind ? { kind: filter.kind } : {}), readAt, unread })
     return { updated: changed.length, readAt, unread }
   }
 
@@ -153,8 +153,8 @@ export function createNotifyServiceHost(service: NotifyService): NotifyCommandHo
       const result = await service.markRead(context.workspaceId, context.principalId, ids)
       return { updated: result.updated, readAt: result.readAt }
     },
-    markAllRead: async ({ kind, context }) => {
-      const result = await service.markAllRead(context.workspaceId, context.principalId, kind)
+    markAllRead: async ({ kind, before, context }) => {
+      const result = await service.markAllRead(context.workspaceId, context.principalId, { kind, before })
       return { updated: result.updated, readAt: result.readAt }
     },
     updatePrefs: async ({ updates, context }) => {
@@ -169,7 +169,7 @@ export function notifyHttpAuthority(service: NotifyService): WorkspaceNotifyHttp
   return {
     list: (actor, workspaceId, options) => service.list(workspaceId, actor.principalId, options),
     markRead: (actor, workspaceId, ids) => service.markRead(workspaceId, actor.principalId, ids),
-    markAllRead: (actor, workspaceId, kind) => service.markAllRead(workspaceId, actor.principalId, kind as NotificationKind | undefined),
+    markAllRead: (actor, workspaceId, kind) => service.markAllRead(workspaceId, actor.principalId, { kind: kind as NotificationKind | undefined }),
   }
 }
 

@@ -44,7 +44,7 @@ export function SubscribersPicker({ people, subscriberIds, onChange, notifyEvery
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={cn('inline-flex h-8 items-center gap-2 rounded-[6px] px-2 text-sm', HOVER_TINT, MOTION_FAST, FOCUS_RING)}
+        className={cn('inline-flex h-8 items-center gap-2 rounded-sm px-2 text-sm', HOVER_TINT, MOTION_FAST, FOCUS_RING)}
       >
         <span className="flex -space-x-1.5" aria-hidden="true">
           {subscribers.slice(0, 3).map((p) => <PersonAvatar key={p.id} person={p} size={20} />)}

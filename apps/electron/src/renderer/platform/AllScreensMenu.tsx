@@ -18,14 +18,19 @@ import { useNavigationState } from '@/contexts/NavigationContext'
 import { enabledExtraScreenIdsAtom } from '@/atoms/extra-screens'
 import { visibleExtraScreens } from '@/pages/extra-screens/registry'
 import { resolvePrimaryNav } from '../components/app-shell/primary-nav'
-import { buildAllScreensGroups, type AllScreensItem } from './all-screens-model'
+import { ALL_SCREENS_GROUP_LABEL, buildAllScreensGroups, type AllScreensItem } from './all-screens-model'
 import { usePillNav } from './usePillNav'
 import { useShellModes } from './useModes'
 import { useOpenPillBrowser } from './pill-activate'
 
 export const ALL_SCREENS_TRIGGER_ID = 'all-screens'
 
-export function AllScreensMenu({ collapsed = false, onOpenBrowser }: { collapsed?: boolean; onOpenBrowser?: () => void }) {
+export function AllScreensMenu({ collapsed = false, onOpenBrowser, foldedIds = [] }: {
+  collapsed?: boolean
+  onOpenBrowser?: () => void
+  /** top50 #3: pills that did not fit the titlebar; listed first, with a «+N» on the trigger. */
+  foldedIds?: readonly string[]
+}) {
   const { t } = useTranslation()
   const navState = useNavigationState()
   const { shellFlags } = useShellModes()
@@ -37,12 +42,24 @@ export function AllScreensMenu({ collapsed = false, onOpenBrowser }: { collapsed
   const [activeIndex, setActiveIndex] = React.useState(0)
   const listId = React.useId()
 
-  const groups = React.useMemo(() => open ? buildAllScreensGroups({
-    surfaces: resolvePrimaryNav({ shellFlags, placements: nav.placements }),
-    extraScreens: visibleExtraScreens(enabledExtra),
-    t,
-    query,
-  }) : [], [open, shellFlags, nav.placements, enabledExtra, t, query])
+  const foldedKey = foldedIds.join('|')
+  const groups = React.useMemo(() => {
+    if (!open) return []
+    const base = buildAllScreensGroups({
+      surfaces: resolvePrimaryNav({ shellFlags, placements: nav.placements }),
+      extraScreens: visibleExtraScreens(enabledExtra),
+      t,
+      query,
+    })
+    const folded = foldedKey ? foldedKey.split('|') : []
+    if (folded.length === 0) return base
+    const byId = new Map(base.flatMap(group => group.items).map(item => [item.id, item]))
+    const items = folded.flatMap(id => {
+      const item = byId.get(id)
+      return item ? [{ ...item, id: `folded:${item.id}` }] : []
+    })
+    return items.length > 0 ? [{ id: 'folded' as const, labelKey: ALL_SCREENS_GROUP_LABEL.folded, items }, ...base] : base
+  }, [open, shellFlags, nav.placements, enabledExtra, t, query, foldedKey])
   const flat = React.useMemo(() => groups.flatMap(group => group.items), [groups])
   React.useEffect(() => { setActiveIndex(0) }, [query, open])
 
@@ -83,12 +100,13 @@ export function AllScreensMenu({ collapsed = false, onOpenBrowser }: { collapsed
               data-mode={ALL_SCREENS_TRIGGER_ID}
               data-tour="guide.sidebar-tools"
               data-all-screens-trigger=""
-              aria-label={label}
+              aria-label={foldedIds.length > 0 ? `${label} · ${t('workbench.pill.foldedCount', { count: foldedIds.length })}` : label}
               aria-haspopup="dialog"
               className="rox-mode-pill-item titlebar-no-drag"
             >
               <LayoutGrid className="rox-mode-pill-icon" aria-hidden />
               {!collapsed && <span className="sr-only">{label}</span>}
+              {foldedIds.length > 0 && <span className="rox-mode-pill-badge" data-folded-count={foldedIds.length} aria-hidden>+{foldedIds.length}</span>}
             </button>
           </PopoverTrigger>
         </TooltipTrigger>

@@ -1,7 +1,41 @@
 // =============================================================================
 // Protocol re-exports (channels, DTOs, events, wire types)
 // =============================================================================
-export * from '@rox/shared/protocol'
+// Type-only: a value `export *` evaluates dto.ts + channels.ts (~120 KB of
+// protocol source) for every value importer of this barrel, including the
+// renderer boot graph. RPC_CHANNELS / generateMessageId / CodedError come
+// from `@rox/shared/protocol` (or a local helper) instead.
+export type * from '@rox/shared/protocol'
+
+// Cookbooks Lab surface contract (SPEC §Data & API contracts + §Amendment 1):
+// runtime status vocabulary, discovery parser, data-plane DTOs and the typed
+// API error live in their own module.
+export { CookbooksApiError } from './cookbooks'
+export type {
+  CookbooksCard,
+  CookbooksCell,
+  CookbooksCellMutation,
+  CookbooksDisplay,
+  CookbooksDocument,
+  CookbooksFailureReason,
+  CookbooksMutateInput,
+  CookbooksMutateResult,
+  CookbooksOutput,
+  CookbooksRunCell,
+  CookbooksRunResult,
+  CookbooksStartup,
+  CookbooksState,
+  CookbooksStatus,
+} from './cookbooks'
+import type {
+  CookbooksCard,
+  CookbooksDocument,
+  CookbooksMutateInput,
+  CookbooksMutateResult,
+  CookbooksRunAllResult,
+  CookbooksRunResult,
+  CookbooksStatus,
+} from './cookbooks'
 
 // =============================================================================
 // Package re-exports (convenience for renderer imports)
@@ -1888,6 +1922,8 @@ export interface ElectronAPI {
   serviceLifecycleUninstall(): Promise<ServiceLifecycleResult>
   /** Push: the local service state changed (tray/menu surfaces). */
   onServiceLifecycleStatusChanged(callback: (status: ServiceStatus) => void): () => void
+  /** Push this window's menu-bar snapshot (badge count, recents, balance, recording) to main. */
+  reportTrayState(report: import('@rox/shared/protocol').TrayStateReport): Promise<void>
   // e1.6: doctor diagnostics (service/port/runtime/config/logs) — host-local.
   runDiagnostics(): Promise<DoctorReport>
   getDiagnosticsLast(): Promise<DoctorReport | null>
@@ -2171,6 +2207,57 @@ export interface ElectronAPI {
     onRemoved(callback: (id: string) => void): () => void
   }
 
+  /**
+   * Cookbooks surface (SPEC §Amendment 1). Main owns the vendored Python
+   * sidecar lifecycle and is its only HTTP client, so the renderer works
+   * entirely through these typed data calls. All channels are LOCAL_ONLY; the
+   * bearer token and the loopback URL never cross this boundary (every payload
+   * here is document data, never a URL).
+   */
+  cookbooksLab: {
+    /** Idempotent: resolves Python and spawns the sidecar when needed. */
+    ensure(): Promise<CookbooksStatus>
+    status(): Promise<CookbooksStatus>
+    /** stop + ensure (the surface's «Повторить»). */
+    restart(): Promise<CookbooksStatus>
+    /** The read-only catalog (13 cards today). */
+    catalog(): Promise<CookbooksCard[]>
+    /** Resume (or create with `newCopy`) the personal copy and read it back. */
+    open(args: { itemId: string; newCopy?: boolean }): Promise<{ copyId: string; document: CookbooksDocument }>
+    /** The stored document of an already-open copy. */
+    document(args: { itemId: string }): Promise<CookbooksDocument>
+    /** Run one cell's current source. */
+    run(args: { itemId: string; code: string; index: number }): Promise<CookbooksRunResult>
+    /** Run the given cells in order, one process; stops at the first failure. */
+    runAll(args: {
+      itemId: string
+      cells: { index: number; source: string }[]
+    }): Promise<CookbooksRunAllResult>
+    /** Persist a cell (`index` + `source`) or the playbook `text`. */
+    save(args: { itemId: string; index?: number; source?: string; text?: string }): Promise<void>
+    /** Restore the copy from the catalog original (edits are lost). */
+    reset(args: { itemId: string }): Promise<void>
+    /**
+     * Interrupt every active execution of `itemId` (both `/run` and `/run-all`).
+     * Idempotent; `cancelled` is the number of kernels stopped. In-flight runs
+     * resolve with `cancelled: true`.
+     */
+    cancel(args: { itemId: string }): Promise<{ ok: boolean; cancelled: number }>
+    /**
+     * Ask the user where to save the built notebook and write it. Resolves
+     * `{saved:false}` when the dialog is dismissed; a failed write rejects.
+     */
+    export(args: { itemId: string; filename: string; content: string }): Promise<{ saved: boolean; path?: string }>
+    /**
+     * Wave 10: apply a structural operation (add/delete/move/duplicate) to the
+     * copy, then resolve the re-read document together with the cell index to
+     * focus. Rejects with a `CookbooksApiError` (400 on a bad request, 409 while
+     * a run of this item is active) carrying the sidecar's own `error` text.
+     */
+    mutate(args: CookbooksMutateInput): Promise<CookbooksMutateResult>
+    onStatusChanged(callback: (status: CookbooksStatus) => void): () => void
+  }
+
   // Onboarding
   getAuthState(): Promise<AuthState>
   getSetupNeeds(): Promise<SetupNeeds>
@@ -2213,6 +2300,14 @@ export interface ElectronAPI {
   deferSetup(): Promise<{ success: boolean }>
   /** Public handle availability probe for the onboarding identity step. Never assumes available. */
   checkOnboardingHandle(handle: string): Promise<{ status: 'available' | 'taken' | 'reserved' | 'unknown' }>
+  /** rox-id devices/sessions (item 45). Errors are closed codes, never raw server text. */
+  listRoxSessions(): Promise<RoxAccountResult<{ sessions: import('@rox/shared/auth').RoxIdSession[] }>>
+  revokeRoxSession(sessionId: string): Promise<RoxAccountResult<object>>
+  revokeOtherRoxSessions(): Promise<RoxAccountResult<{ revoked: number }>>
+  /** Rotate the per-user inference key (item 46); returns the new prefix only. */
+  rotateRoxKey(): Promise<RoxAccountResult<{ prefix: string }>>
+  /** Claim handle@rox.one (item 44). */
+  setRoxHandle(handle: string): Promise<RoxAccountResult<{ handle: string; handleAddress: string | null }>>
   /** Create the first local conversation with a persisted assistant greeting, once per installation. */
   ensureFirstSessionWelcome(workspaceId: string): Promise<Session | null>
   saveOmpCredential(apiKey: string): Promise<{ success: boolean; ready: boolean; code?: string; error?: string }>
@@ -2826,6 +2921,28 @@ export interface ElectronAPI {
   deleteLabel(workspaceId: string, labelId: string): Promise<{ stripped: number }>
   onLabelsChanged(callback: (workspaceId: string) => void): () => void
 
+  // Team messenger (channels, group chats, subscriptions) — org-scoped
+  teamChatListChannels(orgId: string): Promise<import('@rox/shared/team-chat').TeamChannelView[]>
+  teamChatCreateChannel(input: import('@rox/shared/team-chat').CreateTeamChannelInput): Promise<import('@rox/shared/team-chat').TeamChannelView>
+  teamChatJoin(channelId: string): Promise<import('@rox/shared/team-chat').TeamChannelView>
+  teamChatLeave(channelId: string, orgId: string): Promise<{ ok: true }>
+  teamChatAddMembers(channelId: string, userIds: string[]): Promise<import('@rox/shared/team-chat').TeamChannelView>
+  teamChatSetSubscribed(channelId: string, subscribed: boolean): Promise<import('@rox/shared/team-chat').TeamChannelView>
+  teamChatArchive(channelId: string, orgId: string): Promise<{ ok: true }>
+  teamChatListMessages(input: import('@rox/shared/team-chat').ListTeamMessagesInput): Promise<{
+    channel: import('@rox/shared/team-chat').TeamChannelView
+    messages: import('@rox/shared/team-chat').TeamChannelMessage[]
+  }>
+  teamChatPost(channelId: string, text: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage>
+  teamChatMarkRead(channelId: string): Promise<{ ok: true }>
+  teamChatCallJoin(channelId: string, displayName?: string): Promise<{ call: import('@rox/shared/team-chat').TeamChannelCall; url: string; token: string }>
+  teamChatCallLeave(channelId: string): Promise<{ call: import('@rox/shared/team-chat').TeamChannelCall | null; ended: boolean }>
+  teamChatCallSync(channelId: string, participantIds: string[]): Promise<import('@rox/shared/team-chat').TeamChannelCall | null>
+  teamChatCallTranscript(channelId: string, callId: string, segments: import('@rox/shared/team-chat').TeamCallTranscriptSegment[]): Promise<{ added: number }>
+  teamChatCallList(channelId: string): Promise<import('@rox/shared/team-chat').TeamChannelCall[]>
+  teamChatSearch(orgId: string, query: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage[]>
+  onTeamChatChanged(callback: (change: { orgId: string; channelId?: string }) => void): () => void
+
   // Organizations (P3.1 team workspaces)
   listOrganizations(): Promise<import('@rox/shared/orgs').OrganizationWithMembers[]>
   createOrganization(input: import('@rox/shared/orgs').CreateOrganizationInput): Promise<import('@rox/shared/orgs').OrganizationWithMembers>
@@ -2846,6 +2963,9 @@ export interface ElectronAPI {
   onLlmConnectionsChanged(callback: () => void): () => void
 
   // Views (workspace-scoped, stored in views.json)
+  getChatFolders(workspaceId: string): Promise<import('@rox/shared/chat-folders').ChatFoldersState>
+  mutateChatFolders(workspaceId: string, op: import('@rox/shared/chat-folders').ChatFoldersOp): Promise<import('@rox/shared/chat-folders').ChatFoldersState>
+  onChatFoldersChanged(callback: (workspaceId: string, state: import('@rox/shared/chat-folders').ChatFoldersState) => void): () => void
   listViews(workspaceId: string): Promise<import('@rox/shared/views').ViewConfig[]>
   saveViews(workspaceId: string, views: import('@rox/shared/views').ViewConfig[]): Promise<void>
 
@@ -2863,6 +2983,8 @@ export interface ElectronAPI {
   getColorTheme(): Promise<string>
   setColorTheme(themeId: string): Promise<void>
   setAppMaterial(material: import('@rox/shared/config').MaterialSettings | null): Promise<import('@rox/shared/config').ThemeOverrides | null>
+  setAppLayers(layers: import('@rox/shared/config').ThemeLayers | null): Promise<import('@rox/shared/config').ThemeOverrides | null>
+  saveUserThemePreset(baseId: string, theme: import('@rox/shared/config').ThemeFile): Promise<string>
   getWorkspaceColorTheme(workspaceId: string): Promise<string | null>
   setWorkspaceColorTheme(workspaceId: string, themeId: string | null): Promise<void>
   getAllWorkspaceThemes(): Promise<Record<string, string | undefined>>
@@ -2911,7 +3033,7 @@ export interface ElectronAPI {
   onShellChanged(callback: (snapshot: ZenShellSnapshot) => void): () => void
   /** A6/B10 — persisted «Интерфейс» prefs + the live system accent. */
   getUiPreferences(): Promise<UiAppearanceSnapshot>
-  setUiPreferences(patch: { statusBarVisible?: boolean; accentSource?: 'brand' | 'system' }): Promise<UiAppearanceSnapshot>
+  setUiPreferences(patch: { statusBarVisible?: boolean; modePillVisible?: boolean; accentSource?: 'brand' | 'system' }): Promise<UiAppearanceSnapshot>
   /** B10 — macOS system accent colour push. */
   onAccentChanged(callback: (accent: SystemAccentSnapshot) => void): () => void
 
@@ -3261,6 +3383,8 @@ export interface ElectronAPI {
   changeLanguage(lang: string): Promise<void>
   /** W1-07 (#1504): unified surfaces whose mode flag is on → main's deep-link gate. */
   setUnifiedSurfaceRoutesEnabled?(ids: string[]): Promise<{ ok: true }>
+  /** «Доска» (Canvas): local boards in <workspace>/canvas; state crosses IPC as Yjs updates. */
+  canvas?: CanvasBridge
 
   // Entity links (entities.links.v1): the renderer reports its persisted
   // toggle; main returns the EFFECTIVE state (env override > toggle) that
@@ -3599,6 +3723,8 @@ export interface MemoryNavigationState {
 /**
  * Rox History navigator state (clipboard history panel)
  */
+export type RoxAccountResult<T> = ({ ok: true } & T) | { ok: false; error: string }
+
 export interface ClipboardHistoryNavigationState {
   navigator: 'clipboard-history'
   details: null
@@ -3652,6 +3778,13 @@ export interface DevelopersNavigationState {
 /** Playbooks notebook surface navigation state (2026-10-09 pack, D12). */
 export interface PlaybooksNavigationState {
   navigator: 'playbooks'
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
+/** Cookbooks Lab surface navigation state (`cookbooks`, no parameters in v1). */
+export interface CookbooksNavigationState {
+  navigator: 'cookbooks'
   details: null
   rightSidebar?: RightSidebarPanel
 }
@@ -3823,6 +3956,7 @@ export type NavigationState =
   | ConnectionsNavigationState
   | DevelopersNavigationState
   | PlaybooksNavigationState
+  | CookbooksNavigationState
   | HomeNavigationState
   | MissionsNavigationState
   | DriveNavigationState
@@ -3908,6 +4042,10 @@ export const isDevelopersNavigation = (
 export const isPlaybooksNavigation = (
   state: NavigationState
 ): state is PlaybooksNavigationState => state.navigator === 'playbooks'
+
+export const isCookbooksNavigation = (
+  state: NavigationState
+): state is CookbooksNavigationState => state.navigator === 'cookbooks'
 
 export const isScreenNavigation = (
   state: NavigationState
@@ -4048,6 +4186,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'playbooks') {
     return 'playbooks'
+  }
+  if (state.navigator === 'cookbooks') {
+    return 'cookbooks'
   }
   if (state.navigator === 'home') {
     return 'home'
@@ -4298,6 +4439,7 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
   if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'home') return { navigator: 'home', details: null }
 if (key === 'playbooks') return { navigator: 'playbooks', details: null }
+  if (key === 'cookbooks') return { navigator: 'cookbooks', details: null }
   if (key === 'developers') return { navigator: 'developers', details: null }
   if (key.startsWith('developers?repo=')) {
     const devSpaceRepoId = decodeURIComponent(key.slice('developers?repo='.length))
@@ -4439,4 +4581,24 @@ declare global {
   interface Window {
     electronAPI: ElectronAPI
   }
+}
+
+/** «Доска» board list entry (mirrors `@rox/canvas-core/node` BoardSummary). */
+export interface CanvasBoardSummary { id: string; title: string; createdAt: number; updatedAt: number }
+export interface CanvasTrashedBoard { id: string; stamp: number; title: string; createdAt: number; updatedAt: number }
+export interface CanvasBridge {
+  list(workspaceId: string): Promise<CanvasBoardSummary[]>
+  create(workspaceId: string, title: string): Promise<CanvasBoardSummary>
+  rename(workspaceId: string, boardId: string, title: string): Promise<{ ok: true }>
+  trash(workspaceId: string, boardId: string): Promise<{ ok: true }>
+  /** Full Yjs state of the board. */
+  open(workspaceId: string, boardId: string): Promise<Uint8Array>
+  apply(workspaceId: string, boardId: string, update: Uint8Array): Promise<{ ok: true }>
+  /** Stop receiving updates for a board this renderer had open. */
+  close(workspaceId: string, boardId: string): Promise<{ ok: true }>
+  /** Sync the `workbench.mode.canvas.v1` flag to main (handlers refuse while it is off). */
+  setEnabled(enabled: boolean): Promise<{ ok: true; enabled: boolean }>
+  listTrash(workspaceId: string): Promise<CanvasTrashedBoard[]>
+  restore(workspaceId: string, boardId: string, stamp: number): Promise<CanvasBoardSummary>
+  onUpdate(callback: (workspaceId: string, boardId: string, update: Uint8Array) => void): () => void
 }

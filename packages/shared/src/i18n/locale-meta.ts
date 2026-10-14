@@ -3,7 +3,7 @@
  *
  * Kept separate from `registry.ts` (which statically imports every locale's
  * messages, ~7 MB of JSON) so UI code that only needs the language list, the
- * language codes, or the date-fns locale does not pull every translation into
+ * language codes, does not pull every translation into
  * the renderer's startup bundle. Message bundles are loaded on demand through
  * `./locale-loaders` (renderer) or eagerly through `./registry` (main process,
  * tests).

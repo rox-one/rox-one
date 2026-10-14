@@ -21,6 +21,17 @@ project.
 
 ---
 
+The chat Trajectory view under
+apps/electron/src/renderer/components/app-shell/trajectory/ ports the
+timeline projection, interaction model and layout of
+@deepseek-ai/dsh-client-ui-trajectory (DeepSeek Harness,
+https://github.com/deepseek-ai/deepseek-harness, packages/client/ui-trajectory),
+Copyright (c) 2026 DeepSeek, licensed under the MIT License (see
+notices/dsh-client-ui-trajectory.LICENSE). Modifications are licensed under
+Apache-2.0 along with the rest of this project.
+
+---
+
 Third-party dependencies are listed in package.json files and are subject
 to their respective licenses.
 

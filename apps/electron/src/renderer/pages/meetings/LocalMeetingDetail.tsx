@@ -523,7 +523,7 @@ export function LocalMeetingDetail(props: {
             value={m.recipeId ?? 'standup'}
             disabled={extractionBusy(m)}
             onChange={(event) => void update({ recipeId: event.target.value as MeetingProfileId })}
-            className="h-7 rounded-[6px] bg-foreground/[0.05] px-2 text-sm"
+            className="h-7 rounded-sm bg-foreground/[0.05] px-2 text-sm"
           >
             {MEETING_PROFILE_IDS.map(id => <option key={id} value={id}>{t(`meetings.local.profile.${id}`)}</option>)}
           </select>
@@ -535,7 +535,7 @@ export function LocalMeetingDetail(props: {
           value={recipeSlash}
           disabled={extractionBusy(m)}
           onChange={(event) => setRecipeSlash(event.target.value)}
-          className="h-7 min-w-0 rounded-[6px] bg-foreground/[0.05] px-2 text-sm"
+          className="h-7 min-w-0 rounded-sm bg-foreground/[0.05] px-2 text-sm"
         />
         {m.summary?.generated ? <span className="text-xs text-text-muted">{t('meetings.local.generatedLabel')}</span> : null}
         <Button
@@ -660,7 +660,7 @@ export function LocalMeetingDetail(props: {
   // Transcript
   const transcriptTab = (
     <div className="flex flex-col gap-2">
-      {engine?.missing.includes('cloud-consent') ? <div className="rounded-xl bg-accent/10 p-4 text-sm">
+      {engine?.missing.includes('cloud-consent') ? <div className="rounded-lg bg-accent/10 p-4 text-sm">
         <p>{t('meetings.local.deepgramConsent')}</p>
         <Button onClick={() => { void (async () => {
           try {
@@ -1013,7 +1013,7 @@ export function LocalMeetingDetail(props: {
               }}>{t('meetings.local.toTask')}</Button>
             )}
             <Button variant="ghost" aria-label={t('meetings.local.remove')} className="opacity-0 group-hover:opacity-100 focus:opacity-100" onClick={() => void saveAction(a.id, undefined, true)}>×</Button>
-            {taskChoice?.actionId === a.id && <form className="basis-full space-y-2 rounded-[6px] border border-border/60 p-3" data-testid="meeting-task-choice" onSubmit={event => { event.preventDefault(); void confirmActionTask() }}>
+            {taskChoice?.actionId === a.id && <form className="basis-full space-y-2 rounded-sm border border-border/60 p-3" data-testid="meeting-task-choice" onSubmit={event => { event.preventDefault(); void confirmActionTask() }}>
               <p className="text-sm text-text-muted">{t('navigation.meetingTask.hint')}</p>
               <label className="flex flex-col gap-1 text-sm">{t('navigation.meetingTask.scope')}<select className={input} value={taskChoice.scope} disabled={taskChoice.pending || Boolean(taskChoice.knownRef)} onChange={event => setTaskChoice({ ...taskChoice, scope: event.target.value as 'personal' | 'workspace', error: undefined })}>
                 <option value="personal">{t('navigation.taskScopes.personal')}</option><option value="workspace" disabled={!workspaceId || m.workspaceId !== workspaceId}>{t('navigation.taskScopes.workspace')}</option>

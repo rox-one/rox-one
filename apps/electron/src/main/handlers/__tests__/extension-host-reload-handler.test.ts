@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { RpcServer } from '@rox/server-core/transport'
-import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 
 const workspaceRoots = new Map<string, string>()
 const actualConfigExports = await import('@rox/shared/config')
