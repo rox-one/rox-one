@@ -95,6 +95,7 @@ import { handleSidebarTreeKeyDown } from "./sidebar-keyboard"
 import { DevSpaceNudgeBanner } from "@/components/dev-space/DevSpaceNudgeBanner"
 import { type ProfileStripData } from "./ProfileStrip"
 import { accountProfileStrip } from "./profile-strip-account"
+import { SidebarNewSessionButton } from "./SidebarNewSessionButton"
 import { SidebarChrome } from "./SidebarChrome"
 import { StatusBar } from "./StatusBar"
 import { useUiAppearance } from "@/lib/ui-appearance-store"
@@ -3160,6 +3161,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
             <div className="flex h-full flex-col select-none">
               {/* Sidebar Top Section */}
               <div className="flex-1 flex flex-col min-h-0">
+                {!isSidebarCollapsed && <SidebarNewSessionButton hotkey={newChatHotkey} onNewSession={handleNewChat} />}
                 {/* Primary Nav: Sessions → Labels → Projects → Pages | Memory…Knowledge | Automations → Settings */}
                 {/* WP5: the bottom fade shows only while rows remain below the fold
                     (data-scroll-down, set without re-rendering); at the end the last

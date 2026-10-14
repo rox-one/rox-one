@@ -248,7 +248,7 @@ function TaskWindowOverlay({ windowProps, onClose }: { windowProps: TaskWindowPr
     <div className="absolute inset-0 z-20 flex items-center justify-center">
       <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" onClick={onClose} aria-hidden />
       <div
-        className="relative z-10 flex h-[88%] w-[90%] max-w-2xl flex-col overflow-hidden rounded-xl border border-border/60 bg-background shadow-2xl"
+        className="relative z-10 flex h-[88%] w-[90%] max-w-2xl flex-col overflow-hidden rounded-lg border border-border/60 bg-background shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-border/40 bg-foreground/[0.02] px-3 py-1.5">
