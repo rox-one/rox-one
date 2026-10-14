@@ -29,7 +29,7 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
 import { primaryPanelRouteAtom } from '@/atoms/panel-stack'
