@@ -22,6 +22,9 @@ const STAGING_VARS: Record<string, string> = {
   ROX_SECRET_TEST_OTHER: 'another-staged-secret',
   INFISICAL_TOKEN: 'infisical-token-value',
   ANTHROPIC_API_KEY: 'should-be-blocked',
+  // The app's shared ROX gateway key (installRoxDefaults) lands in the
+  // main-process env on every install; a stdio MCP server must not inherit it.
+  ROX_API_KEY: 'rox-shared-gateway-key',
   MCP_PROBE_SAFE_VAR: 'visible-to-child',
 }
 
@@ -60,6 +63,7 @@ describe('stdio MCP subprocess env blocklist', () => {
     const env = spawnedEnv(client)
 
     expect(env.ANTHROPIC_API_KEY).toBeUndefined()
+    expect(env.ROX_API_KEY).toBeUndefined()
     expect(env.INFISICAL_TOKEN).toBeUndefined()
     expect(env.ROX_SECRET_TEST_DB).toBeUndefined()
     expect(env.ROX_SECRET_TEST_OTHER).toBeUndefined()
@@ -97,6 +101,7 @@ describe('stdio MCP subprocess env blocklist', () => {
       // Asserted inside the SPAWNED process — disabling the blocklist flips
       // these to true and fails the test (no false-green).
       expect(presence.ANTHROPIC_API_KEY).toBe(false)
+      expect(presence.ROX_API_KEY).toBe(false)
       expect(presence.INFISICAL_TOKEN).toBe(false)
       expect(presence.ROX_SECRET_TEST_DB).toBe(false)
       expect(presence.ROX_SECRET_TEST_OTHER).toBe(false)

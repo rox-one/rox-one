@@ -106,6 +106,7 @@ import { useTurnCardExpansion } from "@/hooks/useTurnCardExpansion"
 import { useContextualSuggestions } from "@/hooks/useContextualSuggestions"
 import { useNavigationActions } from "@/contexts/NavigationContext"
 import { useAppShellContext } from "@/context/AppShellContext"
+import { useObjectActions } from "./object-actions/useObjectActions"
 import { navigate, routes } from "@/lib/navigate"
 import { SideThreadPreviewDialog, type SideThreadPreview } from "@/components/chat/SideThreadPreviewDialog"
 import { buildSideThreadPrompt, type SideThreadAction } from "@rox/shared/side-threads"
@@ -680,6 +681,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
 
   // Panel focus state (for multi-panel auto-scroll behavior)
   const appShellContext = useAppShellContext()
+  const objectActions = useObjectActions(session)
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
   const runtimePanelId = (appShellContext as typeof appShellContext & { panelId?: string })?.panelId
   const prefersReducedMotion = usePrefersReducedMotion()
@@ -2429,6 +2431,8 @@ const handleFollowUpChipClick = useCallback((item: {
                         onOpenUrl={onOpenUrl}
                         onSendPrompt={(text) => handleSubmit(text)}
                         onListen={(text) => { void handleListen(text, turn.turnId) }}
+                        responseActions={objectActions.responseActions}
+                        renderResponseFooter={objectActions.renderResponseFooter}
                         isListening={listeningTurnId === turn.turnId}
                         isLastResponse={isLastResponse}
                         compactMode={compactMode}
