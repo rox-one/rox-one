@@ -13,7 +13,9 @@ let installed: (() => void) | null = null
 export function installGlassSkin(doc: Document = document): () => void {
   if (installed) return installed
   // Un-awaited: the skin only restyles; a failed CSS chunk leaves the plain look.
-  import('./arc-glass-skin.css').catch(() => {})
+  import('./arc-glass-skin.css').catch((error: unknown) => {
+    console.warn('[glass] Arc Glass skin CSS failed to load; keeping the plain look', error)
+  })
   const releaseTier = applyGlassTier(doc.documentElement)
   const svgNS = 'http://www.w3.org/2000/svg'
   const svg = doc.createElementNS(svgNS, 'svg')
