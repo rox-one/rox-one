@@ -114,7 +114,7 @@
     }
   },
   "totals": {
-    "jsRawBytes": 35011995,
+    "jsRawBytes": 35091130,
     "jsGzipBytes": 9641680,
     "cssRawBytes": 853124,
     "cssGzipBytes": 129674
@@ -136,8 +136,8 @@
       "fileCount": 53
     },
     "playground.html": {
-      "jsRawBytes": 17116287,
-      "gzipTotalBytes": 4930513,
+      "jsRawBytes": 17143166,
+      "gzipTotalBytes": 4939169,
       "fileCount": 212
     },
     "voice-overlay.html": {
