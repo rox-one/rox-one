@@ -1,5 +1,5 @@
 import { getRoxAccountAuthority, peekRoxAccountAuthority, type RoxExecutionContext } from '@rox/shared/auth'
-import { accumulateSessionTokens } from '@rox/shared/sessions'
+import { accumulateSessionTokens, markTurnTokensUncounted } from '@rox/shared/sessions'
 import type { EventSink, RpcServer } from '@rox/server-core/transport'
 import { annotationPayloadRejection } from './annotation-payload'
 import { planSteeringSubmit, QueueSteering, type SteeringVerb } from './queue-steering'
@@ -939,6 +939,8 @@ interface ManagedSession {
     sessionTokens?: number
     sessionTokensIncomplete?: boolean
   }
+  /** Runtime-only: generation of a turn whose usage has not been counted yet (cleared by a usage-bearing complete). */
+  turnTokensPending?: number
   /** Runtime-only budget reservation; unresolved reservations survive in AgentBudgetLedger. */
   budgetRunId?: string
   /** Session total cost at the beginning of this provider dispatch. */
@@ -8356,6 +8358,9 @@ export class SessionManager implements ISessionManager {
         this.claimTranscriptWriter(managed, chatHandle.runId)
       }
       sessionLog.info('Got chat iterator, starting iteration...')
+      // A previous turn still pending was superseded before its usage arrived.
+      if (managed.turnTokensPending !== undefined) this.markTurnTokensUncounted(managed)
+      managed.turnTokensPending = myGeneration
 
       this.assertRoxSessionExecution(sessionId, execution)
       for await (const event of chatIterator) {
@@ -8537,6 +8542,8 @@ export class SessionManager implements ISessionManager {
       // clears the lock when this run is still the session's active writer, so a
       // newer run's claim is never clobbered by a late release.
       if (writerRunId) this.releaseTranscriptWriter(managed, writerRunId)
+      // Aborted/crashed/early-exit turn never counted its requests: hide the total.
+      if (managed.turnTokensPending === myGeneration) this.markTurnTokensUncounted(managed)
       // Only handle cleanup for unexpected exits (loop break without complete event)
       // Normal completion returns early after calling onProcessingStopped
       // Errors are handled in catch block
@@ -8547,6 +8554,14 @@ export class SessionManager implements ISessionManager {
         this.onProcessingStopped(sessionId, 'interrupted', runtimeOrigin)
       }
     }
+  }
+
+  private markTurnTokensUncounted(managed: ManagedSession): void {
+    managed.turnTokensPending = undefined
+    managed.tokenUsage = markTurnTokensUncounted(managed.tokenUsage, () => ({
+      inputTokens: 0, outputTokens: 0, totalTokens: 0, contextTokens: 0, costUsd: 0,
+    }))
+    this.persistSession(managed)
   }
 
   async cancelProcessing(sessionId: string, silent = false): Promise<void> {
@@ -11293,6 +11308,7 @@ export class SessionManager implements ISessionManager {
           managed.tokenUsage.inputTokens = event.usage.inputTokens
           {
             // Real session total, counted per request (before outputTokens grows).
+            managed.turnTokensPending = undefined
             const next = accumulateSessionTokens(managed.tokenUsage, event.usage.requestTotals)
             delete managed.tokenUsage.sessionTokens
             delete managed.tokenUsage.sessionTokensIncomplete

@@ -21,3 +21,19 @@ export function accumulateSessionTokens(
   const add = Math.max(0, requestTotals.promptTokens || 0) + Math.max(0, requestTotals.outputTokens || 0)
   return { sessionTokens: (prev.sessionTokens ?? 0) + add }
 }
+
+/**
+ * A turn ended (abort, crash, early exit) without a usage-bearing complete
+ * event: its model requests were never counted, so the total is no longer
+ * real. Mark the session incomplete for good instead of showing an
+ * understated number.
+ */
+export function markTurnTokensUncounted<T extends SessionTokensState>(
+  usage: T | undefined,
+  init: () => T,
+): T {
+  const next = usage ?? init()
+  delete next.sessionTokens
+  next.sessionTokensIncomplete = true
+  return next
+}

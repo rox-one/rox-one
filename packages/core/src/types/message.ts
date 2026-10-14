@@ -601,7 +601,8 @@ export interface AgentEventUsage {
    * Absent when the backend could not observe each request; consumers must
    * then treat any running session total as incomplete.
    */
-  requestTotals?: { promptTokens: number; outputTokens: number; requests: number };
+  /** requests: number of model requests summed, when the backend knows it (Claude reports per-model only, so omits it). */
+  requestTotals?: { promptTokens: number; outputTokens: number; requests?: number };
 }
 
 /**

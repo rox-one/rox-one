@@ -75,7 +75,7 @@ export function buildWindowsSkillsDirError(errorText: string): { type: 'typed_er
 export function claudeTurnTotals(
   modelUsage: Record<string, { inputTokens?: number; outputTokens?: number; cacheReadInputTokens?: number; cacheCreationInputTokens?: number }> | null | undefined,
   previous: { promptTokens: number; outputTokens: number } | null,
-): { totals?: { promptTokens: number; outputTokens: number; requests: number }; snapshot: { promptTokens: number; outputTokens: number } | null } {
+): { totals?: { promptTokens: number; outputTokens: number }; snapshot: { promptTokens: number; outputTokens: number } | null } {
   const entries = Object.values(modelUsage ?? {});
   let prompt = 0;
   let output = 0;
@@ -86,7 +86,7 @@ export function claudeTurnTotals(
   if (entries.length === 0 || prompt + output === 0) return { snapshot: previous };
   const base = previous && prompt >= previous.promptTokens && output >= previous.outputTokens ? previous : { promptTokens: 0, outputTokens: 0 };
   return {
-    totals: { promptTokens: prompt - base.promptTokens, outputTokens: output - base.outputTokens, requests: entries.length },
+    totals: { promptTokens: prompt - base.promptTokens, outputTokens: output - base.outputTokens },
     snapshot: { promptTokens: prompt, outputTokens: output },
   };
 }
