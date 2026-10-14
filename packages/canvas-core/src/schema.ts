@@ -63,7 +63,7 @@ export const baseObjectSchema = z.object({
   hidden: z.boolean().default(false),
   name: z.string().optional(),
   style: styleSchema.default({}),
-  props: z.record(z.unknown()).default({}),
+  props: z.record(z.string(), z.unknown()).default({}),
   links: z.array(entityLinkSchema).default([]),
   createdBy: z.string().optional(),
   updatedAt: z.number().int().nonnegative().optional(),
