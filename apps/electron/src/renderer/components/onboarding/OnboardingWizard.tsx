@@ -3,13 +3,14 @@ import { cn } from "@/lib/utils"
 import { WelcomeStep } from "./WelcomeStep"
 import { RoleStep } from "./RoleStep"
 import { LayoutStep } from "./LayoutStep"
-import { QuestionnaireStep, type QuestionnaireStepPayload } from "./QuestionnaireStep"
+import { QuestionnaireStep, parseBubbleSelections, type QuestionnaireStepPayload } from "./QuestionnaireStep"
 import {
   loadFirstRunDraft,
   saveFirstRunDraft,
   type OnboardingDraftStorage,
 } from "./identity-model"
 import { parseProfileQuestionnaire } from "./profile-questionnaire-model"
+import { parsePermissionState } from "./permissions-model"
 import type { RewardLedger } from "./onboarding-rewards"
 import { OnboardingStepProgress, type OnboardingProgressStep } from './OnboardingStepProgress'
 import type { ApiSetupMethod } from "./APISetupStep"
@@ -218,7 +219,8 @@ export function OnboardingWizard({
         return (
           <QuestionnaireStep
             questionnaire={draft?.questionnaire ? parseProfileQuestionnaire(draft.questionnaire) : undefined}
-            bubbles={draft?.bubbles}
+            bubbles={parseBubbleSelections(draft?.bubbles)}
+            permissions={parsePermissionState(draft?.permissions)}
             onContinue={(payload) => {
               persistQuestionnaireDraft(payload)
               onContinue()
