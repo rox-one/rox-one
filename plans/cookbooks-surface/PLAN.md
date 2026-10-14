@@ -59,3 +59,9 @@
 | 2026-10-14 | W2–W4: интеграция, повторные гейты, G3 принято (ре-ревью), G4 без блокеров, merge PR #1956 | merge `964b2d9e` | ✅ влито в main |
 | 2026-10-14 | W7 «Colab-UX» (PR #1972): R1–R7 + фиксы ревью (ссылки через usePlatform, numeric) | `4de92ad66` | ✅ |
 | 2026-10-14 | W7 merge PR #1972 | merge `24147e9f8` | ✅ влито в main |
+| 2026-10-14 | W8 «Срез 2» (PR #2010): секретный мост (креды → ядро, in-memory) + Colab-микро; фиксы ревью (пустой стор→рестарт, ред-регистр stderr, наблюдаемость, гвард P3) | `2d4e9ac0d` | ✅ |
+| 2026-10-14 | W8 merge PR #2010 | merge `074b820f` | ✅ влито в main |
+| 2026-10-14 | W9 «Colab Controls & Navigation» (PR #2027): стоп/Esc, оглавление, выше/ниже, `\r`, копия исходника, экспорт `.ipynb`; sidecar `/cancel`, CBK-01, dev:isolated; фиксы G3/G4 | `4c0959082` | ✅ |
+| 2026-10-14 | W9 merge PR #2027 | merge `475034b4` | ✅ влито в main |
+| 2026-10-14 | W10 «Cell Structure» (PR #2050): структурные операции ячеек + hover-«+»/«⋯»/Ctrl+M; sidecar `/cells/*`, run-guard 409, `_document_lock`; IPC `mutate`; фиксы G3/G4 | `a5de9a58c` | ✅ |
+| 2026-10-14 | W10 merge PR #2050 | merge `2b18fe4f` | ✅ влито в main |

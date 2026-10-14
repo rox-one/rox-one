@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { RPC_CHANNELS } from '../../shared/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import { CHANNEL_MAP } from '../channel-map'
 
 describe('credential migration transport mapping', () => {

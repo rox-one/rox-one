@@ -9,23 +9,33 @@
  *
  * SECURITY: the bearer token and the full loopback URL live ONLY in this module
  * and are exposed to main through `getStartup()`; the renderer contract
- * (`CookbooksStatus`) never carries either. Nothing here imports Electron, so
- * the supervisor is unit-testable with an injected spawn/timers.
+ * (`CookbooksStatus`) never carries either. Vendor secret VALUES likewise never
+ * leave main: they are pushed to the sidecar over loopback and are neither
+ * logged, returned in a status/IPC payload, nor written to disk. Nothing here
+ * imports Electron, so the supervisor is unit-testable with an injected
+ * spawn/timers.
  */
 import { spawn as nodeSpawn } from 'node:child_process'
 import { accessSync, constants, existsSync } from 'node:fs'
+import { readFile, writeFile as fsWriteFile } from 'node:fs/promises'
 import { get as httpGet } from 'node:http'
 import { delimiter, join } from 'node:path'
+import { redactRegisteredSecrets, resolveSecretsForSpawn, type SecretRefEntry } from '@rox/shared/secrets'
 import { getBundledAssetsDir } from '@rox/shared/utils'
 import { resolveConfigDir } from '@rox/shared/config/paths'
 import { getToolchain, withToolchainPathPrefix } from '@rox/shared/toolchain-runtime'
 import { CookbooksApiError, parseCookbooksStartupLine } from '../shared/cookbooks'
 import type {
+  CookbooksCancelResult,
   CookbooksCard,
   CookbooksCell,
   CookbooksDocument,
+  CookbooksExportResult,
   CookbooksFailureReason,
+  CookbooksMutateInput,
+  CookbooksMutateResult,
   CookbooksOutput,
+  CookbooksRunAllResult,
   CookbooksRunCell,
   CookbooksRunResult,
   CookbooksStartup,
@@ -58,6 +68,12 @@ export interface CookbooksRuntimeOptions {
   getWorkspaceDir?: () => string
   /** Allowlisted child env (default: PATH via toolchain prefix + HOME/TMPDIR/LANG/LC_ALL). */
   buildEnv?: () => Promise<NodeJS.ProcessEnv>
+  /**
+   * Fresh lab-key → secret-value snapshot for the sidecar (default:
+   * `defaultCookbooksStore`). Values resolved here never leave this process
+   * except in loopback requests to the sidecar.
+   */
+  resolveStore?: () => Promise<CookbooksStore>
   /** Liveness probe for the parsed port (default: HTTP `GET /lab.html` → 200). */
   checkHealth?: (port: number) => Promise<boolean>
   log?: (level: 'info' | 'warn' | 'error', msg: string) => void
@@ -132,6 +148,52 @@ export function redactCookbooksLogLine(line: string): string {
   return line.replace(/token=[^\s&]+/gi, 'token=***')
 }
 
+// ---------------------------------------------------------------------------
+// Secret bridge (SPEC-slice2 §Транспорт)
+//
+// Vendor API keys reach the lab's kernel through the sidecar's own store map
+// (`openai.api_key` → value). Values live ONLY in this process and in loopback
+// requests to 127.0.0.1: they are never logged (only the key NAMES are), never
+// returned through a status/IPC payload and never written to disk — the sidecar
+// keeps them in memory and `/store` does not persist.
+// ---------------------------------------------------------------------------
+
+/** Lab-key → secret-value snapshot (`openai.api_key` → `sk-…`). */
+export type CookbooksStore = Record<string, string>
+
+/**
+ * Default store source: the vendored catalog's `secretMap` (read through
+ * `getBundledAssetsDir`) resolved through the canonical chain — environment
+ * (`ROX_SECRET_<ENV>`) → local-encrypted → infisical. A key that no provider
+ * holds is simply absent; an unreadable catalog or a resolver failure yields an
+ * empty store. Never throws.
+ */
+export async function defaultCookbooksStore(dir?: string): Promise<CookbooksStore> {
+  try {
+    const root = dir ?? getBundledAssetsDir('cookbooks')
+    if (!root) return {}
+    const catalog: unknown = JSON.parse(
+      await readFile(join(root, 'resources', 'cookbooks', 'catalog.json'), 'utf8'),
+    )
+    const rawMap = asRecord(asRecord(catalog).secretMap)
+    const secretMap: Record<string, string> = {}
+    for (const [labKey, envName] of Object.entries(rawMap)) {
+      if (typeof envName === 'string' && envName.length > 0) secretMap[labKey] = envName
+    }
+    const entries: SecretRefEntry[] = Object.values(secretMap).map((envVar) => ({ name: envVar, envVar }))
+    if (entries.length === 0) return {}
+    const resolved = await resolveSecretsForSpawn(entries)
+    const store: CookbooksStore = {}
+    for (const [labKey, envName] of Object.entries(secretMap)) {
+      const value = resolved.env[envName]
+      if (typeof value === 'string' && value.length > 0) store[labKey] = value
+    }
+    return store
+  } catch {
+    return {}
+  }
+}
+
 function isExecutableFile(path: string | null | undefined): path is string {
   if (!path) return false
   try {
@@ -188,6 +250,39 @@ function defaultCheckHealth(port: number): Promise<boolean> {
   })
   return promise
 }
+
+// ---------------------------------------------------------------------------
+// Notebook export dependencies (SPEC wave 9 §3)
+//
+// Injected so the save flow can be exercised without Electron. The default
+// dialog uses `await import('electron')` rather than a static import: this
+// module is loaded by unit tests under plain `bun` (no Electron runtime), so
+// an eager `import ... from 'electron'` would make the whole supervisor
+// unloadable there. The default writer is `fs/promises.writeFile`.
+// ---------------------------------------------------------------------------
+
+export interface CookbooksSaveDialogOptions {
+  defaultPath: string
+  filters: { name: string; extensions: string[] }[]
+}
+
+export interface CookbooksSaveDialogResult {
+  canceled: boolean
+  filePath?: string
+}
+
+export interface CookbooksExportDeps {
+  showSaveDialog?: (options: CookbooksSaveDialogOptions) => Promise<CookbooksSaveDialogResult>
+  writeFile?: (path: string, data: string, encoding: 'utf8') => Promise<void>
+}
+
+async function defaultShowSaveDialog(options: CookbooksSaveDialogOptions): Promise<CookbooksSaveDialogResult> {
+  const { dialog } = await import('electron')
+  return dialog.showSaveDialog(options)
+}
+
+const defaultWriteFile: NonNullable<CookbooksExportDeps['writeFile']> = (path, data, encoding) =>
+  fsWriteFile(path, data, encoding)
 
 type TimerHandle = unknown
 
@@ -263,12 +358,16 @@ function mapDocument(itemId: string, raw: unknown): CookbooksDocument {
 
 function mapRunResult(raw: unknown): CookbooksRunResult {
   const result = asRecord(raw)
+  const cancelled = result.cancelled
   return {
     ok: result.ok === true,
     stdout: asText(result.stdout),
     error: typeof result.error === 'string' ? result.error : null,
     timedOut: result.timed_out === true,
     missing: asStringArray(result.missing),
+    // Additive wave-9 field: only present when the sidecar actually sent it, so
+    // a pre-wave-9 payload maps to exactly the same object as before.
+    ...(typeof cancelled === 'boolean' ? { cancelled } : {}),
   }
 }
 
@@ -307,6 +406,12 @@ export class CookbooksRuntime {
   private startInFlight: Promise<CookbooksStatus> | null = null
   private stderrRing: string[] = []
   private stderrRingBytes = 0
+  /**
+   * True while the CURRENT sidecar process holds a non-empty store we seeded.
+   * The sidecar replaces its store per snapshot but refuses an empty one, so an
+   * emptied store can only be cleared by replacing the process (see pushStore).
+   */
+  private storeSeeded = false
   private readonly o: Required<
     Pick<
       CookbooksRuntimeOptions,
@@ -330,6 +435,7 @@ export class CookbooksRuntime {
     getCookbooksDir: () => string | undefined
     getWorkspaceDir: () => string
     buildEnv: () => Promise<NodeJS.ProcessEnv>
+    resolveStore: () => Promise<CookbooksStore>
     checkHealth: (port: number) => Promise<boolean>
     log: (level: 'info' | 'warn' | 'error', msg: string) => void
     onStatusChanged?: (status: CookbooksStatus) => void
@@ -359,6 +465,7 @@ export class CookbooksRuntime {
       getCookbooksDir: options.getCookbooksDir ?? (() => getBundledAssetsDir('cookbooks')),
       getWorkspaceDir: options.getWorkspaceDir ?? (() => resolveConfigDir()),
       buildEnv: options.buildEnv ?? defaultBuildEnv,
+      resolveStore: options.resolveStore ?? (() => defaultCookbooksStore()),
       checkHealth: options.checkHealth ?? defaultCheckHealth,
       log: options.log ?? (() => {}),
       onStatusChanged: options.onStatusChanged,
@@ -513,8 +620,75 @@ export class CookbooksRuntime {
     }
   }
 
+  /**
+   * A fresh store snapshot. A failing resolver is an empty store: the lab then
+   * reports the affected keys as missing instead of the surface erroring out.
+   * The error text is never logged — it could echo a value.
+   */
+  private async resolveStoreSnapshot(): Promise<CookbooksStore> {
+    try {
+      return await this.o.resolveStore()
+    } catch {
+      this.o.log('warn', 'cookbooks-runtime: store resolve failed; using an empty store')
+      return {}
+    }
+  }
+
+  /**
+   * Best-effort refresh of the sidecar's in-memory store (`POST /store`). A
+   * no-op unless the runtime is `running`, and silent on any failure — the
+   * lab's key chips and the next one-shot run payload are conveniences, never a
+   * reason to fail an IPC call. Only the key NAMES are ever logged.
+   *
+   * The sidecar REPLACES its store with every snapshot, so a partial removal is
+   * just a smaller push. An EMPTY store is different: the sidecar rejects an
+   * empty `/store` body (`host.py:445`) and ignores an empty one-shot store
+   * (`host.py:278`, `:356`). Once we have seeded keys, a store that becomes
+   * empty is therefore cleared by replacing the sidecar process — a fresh
+   * process starts empty, which is what keeps the chips and the injected env
+   * honest instead of resurrecting a key the user just removed.
+   */
+  async pushStore(): Promise<void> {
+    if (this.state !== 'running') return
+    const store = await this.resolveStoreSnapshot()
+    const keys = Object.keys(store)
+    if (keys.length === 0) {
+      // Claim the transition synchronously (before any await) so two concurrent
+      // pushes cannot both restart the sidecar.
+      const wasSeeded = this.storeSeeded
+      this.storeSeeded = false
+      if (wasSeeded) {
+        // resolveStoreSnapshot() awaits file I/O and the provider chain; the
+        // runtime may have stopped meanwhile (app quit, racing stop()). A
+        // restart then would spawn a sidecar that nothing ever stops.
+        if (this.state !== 'running') return
+        this.o.log('info', 'cookbooks-runtime: store is empty; restarting the sidecar to clear it')
+        try {
+          // The restart is asynchronous; a failed one leaves the caller with a
+          // stale store rather than an error it cannot act on.
+          await this.restart()
+        } catch {
+          /* best-effort */
+        }
+      }
+      return
+    }
+    try {
+      await this.request<unknown>('/store', { method: 'POST', body: { store } })
+      this.storeSeeded = true
+      this.o.log('info', `cookbooks-runtime: store pushed (${keys.length} key(s): ${keys.join(', ')})`)
+    } catch (err) {
+      // Observable, but value-free: no sidecar error text (it can echo a body)
+      // and no values — only the HTTP status and how many keys were attempted.
+      const status = err instanceof CookbooksApiError ? err.status : 0
+      this.o.log('warn', `cookbooks-runtime: store push failed (status=${status}, ${keys.length} key(s))`)
+    }
+  }
+
   /** `GET /catalog` → the read-only catalog cards (13 items today). */
   async apiCatalog(): Promise<CookbooksCard[]> {
+    // Refresh the store first so the chips/banner reflect the current keys.
+    await this.pushStore()
     const raw = await this.request<unknown[]>('/catalog')
     return Array.isArray(raw) ? raw.map(mapCard) : []
   }
@@ -539,9 +713,12 @@ export class CookbooksRuntime {
 
   /** `POST /run` → one cell's output. */
   async apiRun(itemId: string, code: string, index: number): Promise<CookbooksRunResult> {
+    // One-shot store: the freshest snapshot at launch, merged by the sidecar
+    // into its in-memory store for this run only.
+    const store = await this.resolveStoreSnapshot()
     const raw = await this.request<unknown>(
       '/run',
-      { method: 'POST', body: { itemId, code, index } },
+      { method: 'POST', body: { itemId, code, index, store } },
       this.o.runApiTimeoutMs,
     )
     return mapRunResult(raw)
@@ -551,14 +728,58 @@ export class CookbooksRuntime {
   async apiRunAll(
     itemId: string,
     cells: { index: number; source: string }[],
-  ): Promise<{ cells: CookbooksRunCell[] }> {
+  ): Promise<CookbooksRunAllResult> {
+    const store = await this.resolveStoreSnapshot()
     const raw = await this.request<unknown>(
       '/run-all',
-      { method: 'POST', body: { itemId, cells } },
+      { method: 'POST', body: { itemId, cells, store } },
       this.o.runAllTimeoutMs(cells.length),
     )
-    const records = asRecord(raw).cells
-    return { cells: Array.isArray(records) ? records.map(mapRunCell) : [] }
+    const payload = asRecord(raw)
+    const records = payload.cells
+    const cancelled = payload.cancelled
+    return {
+      cells: Array.isArray(records) ? records.map(mapRunCell) : [],
+      // Top-level, additive wave-9 flag: cells left without a record were cancelled.
+      ...(typeof cancelled === 'boolean' ? { cancelled } : {}),
+    }
+  }
+
+  /**
+   * `POST /cancel` → interrupts every active execution of `itemId` (both `/run`
+   * and `/run-all`). Idempotent: `cancelled: 0` when nothing was running.
+   */
+  async apiCancel(itemId: string): Promise<CookbooksCancelResult> {
+    const raw = await this.request<unknown>('/cancel', { method: 'POST', body: { itemId } })
+    const payload = asRecord(raw)
+    const cancelled = typeof payload.cancelled === 'number' ? payload.cancelled : Number(payload.cancelled)
+    return { ok: payload.ok === true, cancelled: Number.isInteger(cancelled) ? cancelled : 0 }
+  }
+
+  /**
+   * Main-side `.ipynb` export: ask the user where to save `content`, then write
+   * it. `dialog`/`fs` are injected so the flow is unit-testable without
+   * Electron; the defaults are the real `dialog.showSaveDialog` and
+   * `fsPromises.writeFile` (imported lazily — this module must not pull in
+   * Electron at load time). A dismissed dialog resolves `{saved:false}`; a
+   * failed write rejects, and the renderer turns that into a notice.
+   */
+  async exportNotebook(
+    input: { itemId: string; filename: string; content: string },
+    deps: CookbooksExportDeps = {},
+  ): Promise<CookbooksExportResult> {
+    const showSaveDialog = deps.showSaveDialog ?? defaultShowSaveDialog
+    const writeFile = deps.writeFile ?? defaultWriteFile
+    const result = await showSaveDialog({
+      defaultPath: input.filename,
+      filters: [{ name: 'Jupyter Notebook', extensions: ['ipynb'] }],
+    })
+    const filePath = result.filePath
+    if (result.canceled || typeof filePath !== 'string' || filePath.length === 0) {
+      return { saved: false }
+    }
+    await writeFile(filePath, input.content, 'utf8')
+    return { saved: true, path: filePath }
   }
 
   /** `POST /save` → persists a cell source (`index`+`source`) or a playbook `text`. */
@@ -571,6 +792,55 @@ export class CookbooksRuntime {
     // The confirmation dialog belongs to the surface; by the time it calls in,
     // the user has already agreed (`/reset` refuses a dirty copy without it).
     await this.request<unknown>('/reset', { method: 'POST', body: { itemId, confirm: true } })
+  }
+
+  /**
+   * Wave 10: `POST /cells/<op>` → the sidecar's `{ok, index}`, then a fresh
+   * `GET /document/<itemId>` (SPEC wave 10 §Контракт shared/main/IPC). The
+   * request body carries exactly the fields of the chosen op — never `op`
+   * itself and never an `undefined` field (an absent `source` stays absent, so
+   * the sidecar applies its own default). A sidecar 400/409 surfaces as the
+   * existing `CookbooksApiError` with the sidecar's own `error` text.
+   */
+  async apiMutate(input: CookbooksMutateInput): Promise<CookbooksMutateResult> {
+    // Defense-in-depth: the compile-time union does not protect a caller that
+    // casts, so an op outside the four routes is rejected before any URL/body
+    // is built (never interpolated into the path).
+    if (input.op !== 'add' && input.op !== 'delete' && input.op !== 'move' && input.op !== 'duplicate') {
+      throw new CookbooksApiError(400, 'unknown op')
+    }
+    const { itemId } = input
+    // switch (not `body: input`) so `op` never reaches the sidecar body.
+    const body: Record<string, unknown> = { itemId }
+    switch (input.op) {
+      case 'add':
+        body.cellType = input.cellType
+        body.index = input.index
+        if (input.source !== undefined) body.source = input.source
+        break
+      case 'delete':
+        body.index = input.index
+        break
+      case 'move':
+        body.from = input.from
+        body.to = input.to
+        break
+      case 'duplicate':
+        body.index = input.index
+        break
+    }
+    const raw = await this.request<unknown>(`/cells/${input.op}`, { method: 'POST', body })
+    // Wave 10: контракт {ok:true, index:int} — битый ответ это протокольная
+    // ошибка, не тихий фолбэк (иначе фокус молча встал бы на ячейку 0).
+    const record = asRecord(raw)
+    const index = record.index
+    if (record.ok !== true || typeof index !== 'number' || !Number.isInteger(index)) {
+      throw new CookbooksApiError(0, 'malformed /cells response')
+    }
+    // Re-read through the document route: the sidecar answers a mutation with
+    // just the focus index, never the whole document.
+    const document = await this.apiDocument(itemId)
+    return { document, index }
   }
 
   // -------------------------------------------------------------------------
@@ -700,6 +970,12 @@ export class CookbooksRuntime {
     this.setState('running')
     this.resolveStartWaiters(this.getStatus())
     this.startInFlight = null
+    // A fresh sidecar process always starts with an empty store, whatever we
+    // seeded into the one that just exited.
+    this.storeSeeded = false
+    // Seed it so the very first catalog read (chips/banner) reflects the
+    // configured keys. Best-effort.
+    void this.pushStore()
   }
 
   private killChild(child: CookbooksChild): void {
@@ -787,7 +1063,10 @@ export class CookbooksRuntime {
   }
 
   private pushStderr(line: string): void {
-    const redacted = redactCookbooksLogLine(line)
+    // Two layers: `token=` is masked structurally, and any value the secret
+    // chain has registered is masked by identity (the sidecar must never echo a
+    // key, but a traceback can).
+    const redacted = redactRegisteredSecrets(redactCookbooksLogLine(line))
     this.stderrRing.push(redacted)
     this.stderrRingBytes += Buffer.byteLength(redacted, 'utf8') + 1
     while (this.stderrRingBytes > STDERR_RING_MAX_BYTES && this.stderrRing.length > 0) {

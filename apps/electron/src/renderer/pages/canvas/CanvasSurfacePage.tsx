@@ -327,9 +327,9 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     const unguard = guardEntityCards(board)
     let watch: { stop(): void } | null = null, alive = true
     // Our actor id comes from the server's auth context; until it is known nothing counts as "mine".
-    void linker.ready().then(me => {
+    void linker.ready().then(() => {
       if (!alive) return
-      watch = watchEntityLinks({ ...ctx, currentUserId: me }, { debounceMs: 250, onError: e => console.warn('[canvas] entity links', e) })
+      watch = watchEntityLinks(ctx, { debounceMs: 250, onError: e => console.warn('[canvas] entity links', e) })
     })
     return () => { alive = false; watch?.stop(); unguard() }
   }, [board, ctx, linker])
