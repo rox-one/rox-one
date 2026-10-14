@@ -56,7 +56,7 @@ import { handleModePillKeyDown } from './mode-pill-keyboard'
 import {
   PILL_BROWSER_SURFACE_ID,
   activatePillSurface,
-  navIdForPill,
+  removeFromPillsTarget,
   recordPillActivation,
   resetPillSessionUsage,
   setPillExcluded,
@@ -327,11 +327,12 @@ export function ModeBar({ collapsed = false, onMeasure, onOpenPalette }: ModeBar
     (id: string) => setPillPinned(id, !pinnedIds.has(id)),
     [pinnedIds],
   )
-  // WP6: «Исключить» writes the one placement store (= «Скрыт» in Settings).
+  // WP6: «Убрать из пилюль» moves the surface to its default sidebar group
+  // (the one placement store Settings uses) — it stays reachable, never hidden.
   const handleExclude = useCallback((id: string) => {
     const surface = available.find((candidate) => candidate.id === id)
-    const navId = surface ? navIdForPill(surface, pillNav.surfaces) : null
-    if (navId) setNavPlacement(navId, 'hidden')
+    const target = surface ? removeFromPillsTarget(surface, pillNav.surfaces) : null
+    if (target) setNavPlacement(target.id, target.placement)
     else setPillExcluded(id, true)
   }, [available, pillNav])
   const handleOpenPalette = useCallback(() => {

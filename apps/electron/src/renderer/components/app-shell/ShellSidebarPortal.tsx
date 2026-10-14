@@ -11,7 +11,8 @@ export function useShellSidebarTarget(): HTMLElement | null {
   const target = React.useContext(ShellSidebarContext)
   // WP6: a retained (kept-alive, inactive) surface must not portal into the
   // shared slot — Notes showed the Входящие tree. It renders its nav inline in
-  // its hidden pane instead, so the nav state survives until it is active again.
+  // its hidden pane instead (portal ↔ inline remounts the nav subtree, so the
+  // nav's local UI state resets on activation; the surface's own state stays).
   const active = useSurfaceActive()
   return active ? target : null
 }

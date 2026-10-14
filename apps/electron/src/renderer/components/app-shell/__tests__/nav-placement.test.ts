@@ -8,7 +8,7 @@ import {
   NAV_PLACEMENT_KEY, __resetNavPlacementsForTests, migrateOldPillPreferences, readNavPlacements, resetNavPlacements, setNavPlacement,
   type NavPlacement,
 } from '../nav-placement'
-import { __resetPillCompositionForTests, pillSlotSurfaces, resolvePillModel } from '../../../platform/pill-composition'
+import { __resetPillCompositionForTests, pillSlotSurfaces, removeFromPillsTarget, resolvePillModel } from '../../../platform/pill-composition'
 
 // eslint-disable-next-line react-hooks/rules-of-hooks -- test DOM environment setup (localStorage), not a React hook
 useDomForFile()
@@ -139,5 +139,17 @@ describe('placement store', () => {
     globalThis.localStorage?.setItem('craft-workbench-pill-prefs-v1', JSON.stringify({ excluded: ['browser'], pinned: [], usage: {} }))
     setNavPlacement('memory', 'primary')
     expect(readNavPlacements()).toEqual({ browser: 'more', memory: 'primary' })
+  })
+})
+
+describe('«Убрать из пилюль»', () => {
+  it('moves the surface to its default sidebar group, never hidden', () => {
+    const { pill } = model()
+    const nav = resolveNavSurfaces({ shellFlags: none })
+    const target = (id: string) => removeFromPillsTarget(pill.rendered.find(s => s.id === id)!, nav)
+    expect(target('feed')).toEqual({ id: 'feed', placement: 'more' })
+    expect(target('team')).toEqual({ id: 'sessions', placement: 'primary' })
+    expect(target('notes')).toEqual({ id: 'docs', placement: 'primary' })
+    expect(target('browser')).toEqual({ id: 'browser', placement: 'more' })
   })
 })
