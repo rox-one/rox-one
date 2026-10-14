@@ -13,7 +13,9 @@
  * route→chunk mapping:
  *   1. read every JS chunk Vite emitted under apps/electron/dist/renderer,
  *   2. read each chunk's static and dynamic import edges from its code and its
- *      source files from the sibling `.js.map`,
+ *      source files from the sibling `.js.map` (so the dist MUST be built with
+ *      `ROX_RENDERER_SOURCEMAP=1`; see `rendererBuildEnv` — the script sets it
+ *      for the build it spawns, and refuses to read a dist that lacks maps),
  *   3. identify the boot entry (`src/renderer/bootstrap.ts`), the modules the
  *      boot always loads dynamically (`src/renderer/main.tsx`), and each boot
  *      route's chunk from `ROUTE_PAGE_LOADERS`,
@@ -40,7 +42,10 @@
  * Usage:
  *   bun run scripts/boot-manifest.ts           # build if needed, (re)write the manifest
  *   bun run scripts/boot-manifest.ts --check   # derive and diff; write nothing (idempotent)
- *   bun run scripts/boot-manifest.ts --no-build # never build; fail if dist is missing
+ *   bun run scripts/boot-manifest.ts --no-build # never build; fail if dist is missing, stale or map-less
+ *
+ * "Build if needed" includes a dist that exists but carries no source maps: the
+ * spawn below sets `ROX_RENDERER_SOURCEMAP=1` for exactly that reason.
  */
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join, posix, relative, resolve } from 'node:path'
@@ -341,6 +346,26 @@ function readSources(mapPath: string): string[] {
   }
 }
 
+/**
+ * Does this dist carry the `*.js.map` files the derivation reads sources from?
+ * The shipped renderer build omits them (S9-11), so a dist produced by
+ * `bun run electron:build:renderer` alone is unreadable here: every chunk's
+ * source set comes out empty and the real failure ("built without source maps")
+ * shows up far downstream as "no chunk built from src/renderer/bootstrap.ts".
+ */
+export function hasSourceMaps(distDir: string): boolean {
+  const stack = [distDir]
+  while (stack.length > 0) {
+    const dir = stack.pop()!
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name)
+      if (entry.isDirectory()) stack.push(full)
+      else if (entry.name.endsWith('.js') && existsSync(`${full}.map`)) return true
+    }
+  }
+  return false
+}
+
 /** Read the on-disk bundle as raw chunks (deterministic order). */
 export function readRawChunks(distDir: string): RawChunk[] {
   return listJsChunks(distDir)
@@ -391,7 +416,17 @@ function closureSources(graph: ReadonlyMap<string, ChunkGraphEntry>, files: read
 }
 
 export function deriveFromDist(distDir: string): BootManifest {
-  const graph = buildChunkGraph(readRawChunks(distDir))
+  const raw = readRawChunks(distDir)
+  // A dist built without source maps parses into chunks that carry no sources at
+  // all, and `chunkForModule` then matches nothing — which used to be reported
+  // as "no chunk built from src/renderer/bootstrap.ts", blaming the module
+  // instead of the missing build input.
+  if (raw.length > 0 && raw.every(chunk => chunk.sources.length === 0)) {
+    throw new Error(
+      `boot-manifest: none of the ${raw.length} chunks under ${distDir} carry source-map sources — the renderer was built without ROX_RENDERER_SOURCEMAP=1, and the closure is derived from those sources`,
+    )
+  }
+  const graph = buildChunkGraph(raw)
   return deriveBootManifest({ graph, routeModules: readRouteModules() })
 }
 
@@ -446,24 +481,43 @@ export function distNeedsBuild(distEntry: string, roots: readonly string[] = STA
   return roots.some((root) => newestMtimeMs(isAbsolute(root) ? root : join(ROOT, root)) > entry.mtimeMs)
 }
 
+/**
+ * Env for the renderer build this script spawns. The derivation reads every
+ * chunk's source list from its sibling `.js.map`, and `apps/electron/vite.config.ts`
+ * only emits those under `ROX_RENDERER_SOURCEMAP=1` (the shipped dist stays
+ * map-free, S9-11). Building without the flag produced a dist this script cannot
+ * read at all, so it always opts in — the flag affects only the build's output,
+ * never the product.
+ */
+export function rendererBuildEnv(env: NodeJS.ProcessEnv = process.env): Record<string, string | undefined> {
+  return { ...env, NODE_OPTIONS: '--max-old-space-size=4096', ROX_RENDERER_SOURCEMAP: '1' }
+}
+
 async function ensureDist(allowBuild: boolean): Promise<void> {
   const distEntry = join(DIST_DIR, 'index.html')
   const present = existsSync(DIST_DIR)
-  if (present && !distNeedsBuild(distEntry)) return
+  const missing = !present
+  const stale = !missing && distNeedsBuild(distEntry)
+  // A fresh-but-mapless dist (e.g. `bun run electron:build:renderer`) is just as
+  // unusable as a missing one: same rebuild, same fix.
+  const unmapped = !missing && !stale && !hasSourceMaps(DIST_DIR)
+  if (!missing && !stale && !unmapped) return
   if (!allowBuild) {
     throw new Error(
-      present
-        ? `boot-manifest: ${DIST_DIR} is older than the renderer sources and --no-build was given (rebuild with \`bun run vite build\` or drop --no-build)`
-        : `boot-manifest: ${DIST_DIR} is missing and --no-build was given`,
+      missing
+        ? `boot-manifest: ${DIST_DIR} is missing and --no-build was given`
+        : stale
+          ? `boot-manifest: ${DIST_DIR} is older than the renderer sources and --no-build was given (rebuild with \`bun run vite build\` or drop --no-build)`
+          : `boot-manifest: ${DIST_DIR} has no *.js.map files and the closure is derived from them — rebuild with ROX_RENDERER_SOURCEMAP=1, or drop --no-build`,
     )
   }
-  console.log(`[boot-manifest] dist ${present ? 'is older than the renderer sources' : 'missing'} — building the renderer (vite build)…`)
+  console.log(`[boot-manifest] dist ${missing ? 'missing' : stale ? 'is older than the renderer sources' : 'has no source maps'} — building the renderer (vite build)…`)
   const proc = Bun.spawn({
     cmd: ['bun', 'run', 'vite', 'build', '--config', 'apps/electron/vite.config.ts'],
     cwd: ROOT,
     stdout: 'inherit',
     stderr: 'inherit',
-    env: { ...process.env, NODE_OPTIONS: '--max-old-space-size=4096' },
+    env: rendererBuildEnv(),
   })
   const code = await proc.exited
   if (code !== 0) throw new Error(`boot-manifest: renderer build failed (exit ${code})`)

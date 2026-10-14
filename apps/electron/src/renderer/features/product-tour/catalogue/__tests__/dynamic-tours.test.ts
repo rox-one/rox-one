@@ -77,7 +77,7 @@ describe('TOUR-DYN dynamic catalogue source (D9)', () => {
     expect(validateDynamicTourCatalogue([devSpaceTour()])).toEqual([])
     expect(validateDynamicTourCatalogue([devSpaceTour({ id: 'DS-repo-overview' as TourDefinition['id'] })])).toContain('catalogue[0].id: unknown identifier')
     expect(validateDynamicTourCatalogue([devSpaceTour({ steps: [] })])).toContain('catalogue[0].steps: expected ordered steps')
-    expect(validateProductTourCatalogue()).toEqual([])
+    expect(validateProductTourCatalogue(productTourCatalogue)).toEqual([])
     expect(productTourCatalogue).toHaveLength(25)
   })
 

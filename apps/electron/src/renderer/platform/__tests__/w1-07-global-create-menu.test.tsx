@@ -2,7 +2,7 @@
  * W1-07 (#1504): the rail «+» renders the baseline button until a flagged
  * global-create entry is visible, then becomes the §3.2 menu trigger.
  */
-import { afterEach, describe, expect, it } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createInstance } from 'i18next'
@@ -32,8 +32,14 @@ function renderMenu() {
   )
 }
 
+beforeEach(() => {
+  // Мессенджер is default ON (its «new message» entry); these cases start from every flag OFF.
+  getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
+})
+
 afterEach(() => {
   getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeGoalsV1), RESET)
+  getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), RESET)
   __resetSlotRegistryForTests()
 })
 

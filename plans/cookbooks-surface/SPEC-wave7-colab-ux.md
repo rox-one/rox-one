@@ -2,6 +2,7 @@
 
 Нормативные документы программы: [PRD](PRD.md) · [SPEC](SPEC.md) (+Amendment 1) · [ADR 001](decisions/001-runtime-container-and-secrets.md).
 **База:** origin/main `2d756b0a0` (содержит PR #1956). **Ветка:** `feature/cookbooks-colab-ux`, воркдерева `~/Projects/rox-worktrees/cookbooks-colab-ux`.
+**Статус:** ✅ DONE — влито в main: PR #1972 @ `24147e9f8` (2026-10-14). Точка отката: `24147e9f8^1`.
 Цель: сделать поверхность удобнее и информативнее в духе Google Colab — **строго в дизайн-системе ROX**, без новых зависимостей и без изменений main/IPC/i18n-контракта прошлых волн.
 
 ## Решения (recon-факты, использовать как есть)
