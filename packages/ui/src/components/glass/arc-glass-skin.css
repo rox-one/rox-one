@@ -19,9 +19,22 @@ html[data-theme="arc-glass"] :is(.rox-mode-pill, [data-glass-slot]) {
   box-shadow: var(--glass-shadow);
 }
 
+/* Readable surfaces: popovers/menus and the composer carry their own surface
+   colour at a high mix (lightly scaled by intensity, never below 70%); the
+   pill and Rox Mini buttons keep the lighter glass tint. */
+html[data-theme="arc-glass"] [data-glass-slot="popover"] {
+  --glass-fill: var(--popover);
+  --glass-fill-mix: max(70%, calc(86% - 10% * var(--glass-intensity)));
+}
+
+html[data-theme="arc-glass"] [data-glass-slot="composer"] {
+  --glass-fill: var(--background);
+  --glass-fill-mix: max(70%, calc(81% - 10% * var(--glass-intensity)));
+}
+
 /* Accent buttons (Rox Mini send) stay accent: an accent tint over the glass. */
 html[data-theme="arc-glass"] [data-glass-slot][data-glass-tone="accent"] {
-  --glass-fill: var(--primary);
+  --glass-fill: var(--accent);
   --glass-fill-mix: 90%;
   /* Cap the white sheen (hover included) so text-primary-foreground keeps AA. */
   --glass-specular-alpha: 4%;

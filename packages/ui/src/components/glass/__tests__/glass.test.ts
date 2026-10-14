@@ -133,7 +133,7 @@ describe('Arc Glass skin', () => {
     expect(skin).toMatch(/\[data-glass-slot="popover"\]\[data-state="closed"\]\s*{[^}]*rox-glass-pop-out[^}]*--motion-spring-exit/)
   })
   it('accent buttons keep an accent tint and glass buttons get a hover state', () => {
-    expect(skin).toMatch(/\[data-glass-tone="accent"\]\s*{[^}]*--glass-fill:\s*var\(--primary\)/)
+    expect(skin).toMatch(/\[data-glass-tone="accent"\]\s*{[^}]*--glass-fill:\s*var\(--accent\)/)
     expect(skin).toMatch(/:hover[^{]*{[^}]*--glass-hover-boost/)
   })
   it('never transitions or animates filters, and does not override the intensity slider', () => {
@@ -144,11 +144,11 @@ describe('Arc Glass skin', () => {
   })
 })
 
-describe('Rox Mini buttons', () => {
-  const mini = readFileSync(
+const mini = readFileSync(
     join(import.meta.dir, '../../../../../../apps/electron/src/renderer/components/app-shell/MiniSessionSurface.tsx'),
     'utf8',
   )
+describe('Rox Mini buttons', () => {
   it('every glass mini button spreads its own useGlassPress (keyboard press feedback)', () => {
     const buttons = mini.match(/<button data-glass-slot="mini-button"[^>]*>/g) ?? []
     expect(buttons.length).toBe(4)
@@ -157,11 +157,30 @@ describe('Rox Mini buttons', () => {
     expect(new Set(spreads).size).toBe(4)
     for (const s of spreads) expect(mini).toContain(`const ${s} = useGlassPress`)
   })
-  it('accent tone: 90% primary, sheen capped at 8% including hover', () => {
+  it('accent tone: 90% accent, sheen capped at 8% including hover', () => {
     const accent = skin.match(/\[data-glass-tone="accent"\]\s*{([^}]*)}/)?.[1] ?? ''
     expect(accent).toMatch(/--glass-fill-mix:\s*90%/)
     const spec = Number(accent.match(/--glass-specular-alpha:\s*(\d+)%/)?.[1])
     const hover = Number(skin.match(/\[data-glass-tone="accent"\]:hover[^{]*{[^}]*--glass-hover-boost:\s*(\d+)%/)?.[1])
     expect(spec + hover).toBeLessThanOrEqual(8)
+  })
+})
+
+describe('glass fills resolve to real colours', () => {
+  const uiStyles = readFileSync(join(import.meta.dir, '../../../styles/index.css'), 'utf8')
+  it('every --glass-fill references a custom property the design system defines', () => {
+    const fills = [...skin.matchAll(/--glass-fill:\s*var\((--[\w-]+)\)/g)].map((m) => m[1])
+    expect(fills.sort()).toEqual(['--accent', '--background', '--background', '--popover'].sort())
+    for (const v of new Set(fills)) expect(uiStyles).toMatch(new RegExp(`\\s${v}:\\s*[^;]+;`))
+  })
+  it('no --primary anywhere in the glass work', () => {
+    expect(skin).not.toMatch(/--primary/)
+    expect(mini).not.toMatch(/bg-primary|primary-foreground/)
+  })
+  it('readable surfaces never drop below 70%', () => {
+    for (const slot of ['popover', 'composer']) {
+      const rule = skin.match(new RegExp(`\\[data-glass-slot="${slot}"\\]\\s*{([^}]*)}`))?.[1] ?? ''
+      expect(rule).toMatch(/--glass-fill-mix:\s*max\(70%/)
+    }
   })
 })
