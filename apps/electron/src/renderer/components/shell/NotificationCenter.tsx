@@ -67,9 +67,9 @@ export function NotificationCenter({ workspaceId, className }: { workspaceId?: s
               data-unread={unread || undefined}
               className={cn('titlebar-no-drag relative flex h-7 w-7 items-center justify-center rounded-[var(--radius-control)] text-text-secondary hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring', className)}
             >
-              <Bell className="h-4 w-4" aria-hidden />
+              <Bell className="icon-toolbar" aria-hidden />
               {unread > 0 && (
-                <span aria-hidden className="absolute -right-0.5 -top-0.5 min-w-[15px] rounded-full bg-destructive px-1 text-center text-[10px] font-semibold leading-[15px] text-white numeric">
+                <span aria-hidden className="absolute -right-0.5 -top-0.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-destructive px-1 text-mark font-semibold leading-none text-white numeric">
                   {unread > 99 ? '99+' : unread}
                 </span>
               )}
@@ -81,7 +81,7 @@ export function NotificationCenter({ workspaceId, className }: { workspaceId?: s
       <PopoverContent align="end" className="w-[380px] p-0" aria-label={t('shell.notifications.title')} data-testid="notification-center">
         <div className="flex items-center gap-1 border-b border-border-subtle px-3 py-2">
           <h2 className="min-w-0 flex-1 truncate text-body font-semibold">{t('shell.notifications.title')}</h2>
-          <div role="radiogroup" aria-label={t('shell.notifications.filter')} className="flex rounded-[var(--radius-control)] bg-foreground/5 p-0.5 text-caption">
+          <div role="radiogroup" aria-label={t('shell.notifications.filter')} className="flex rounded-[var(--radius-control)] bg-surface-hover p-0.5 text-caption">
             {(['all', 'unread'] as const).map((id) => (
               <button
                 key={id}
@@ -89,32 +89,40 @@ export function NotificationCenter({ workspaceId, className }: { workspaceId?: s
                 role="radio"
                 aria-checked={filter === id}
                 onClick={() => setFilter(id)}
-                className={cn('rounded-[calc(var(--radius-control)-2px)] px-2 py-0.5', filter === id ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}
+                className={cn('rounded-xs px-2 py-0.5', filter === id ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}
               >
                 {t(id === 'all' ? 'shell.notifications.all' : 'shell.notifications.unreadFilter')}
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            aria-label={t('shell.notifications.markAll')}
-            title={t('shell.notifications.markAll')}
-            disabled={unread === 0}
-            onClick={() => markAllNotificationsRead(workspaceId)}
-            className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-foreground/5 hover:text-foreground disabled:opacity-40"
-          >
-            <CheckCheck className="h-3.5 w-3.5" aria-hidden />
-          </button>
-          <button
-            type="button"
-            aria-label={t('shell.notifications.clear')}
-            title={t('shell.notifications.clear')}
-            disabled={items.length === 0}
-            onClick={() => clearNotifications(workspaceId)}
-            className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-foreground/5 hover:text-foreground disabled:opacity-40"
-          >
-            <Trash2 className="h-3.5 w-3.5" aria-hidden />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={t('shell.notifications.markAll')}
+                disabled={unread === 0}
+                onClick={() => markAllNotificationsRead(workspaceId)}
+                className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-hover hover:text-foreground disabled:opacity-40"
+              >
+                <CheckCheck className="icon-caption" aria-hidden />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t('shell.notifications.markAll')}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={t('shell.notifications.clear')}
+                disabled={items.length === 0}
+                onClick={() => clearNotifications(workspaceId)}
+                className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-hover hover:text-foreground disabled:opacity-40"
+              >
+                <Trash2 className="icon-caption" aria-hidden />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t('shell.notifications.clear')}</TooltipContent>
+          </Tooltip>
         </div>
         <ul className="max-h-[min(60vh,480px)] overflow-y-auto p-1" aria-live="polite">
           {shown.length === 0 && (
@@ -133,7 +141,7 @@ export function NotificationCenter({ workspaceId, className }: { workspaceId?: s
                   data-notification-kind={n.kind}
                   className={cn('flex w-full items-start gap-2 rounded-[var(--radius-control)] px-2 py-1.5 pr-8 text-left hover:bg-[var(--state-hover)] focus-visible:ring-1 focus-visible:ring-ring', !n.read && 'bg-accent/5')}
                 >
-                  <Icon className={cn('mt-0.5 h-4 w-4 shrink-0', n.kind === 'error' ? 'text-destructive' : n.kind === 'approval' || n.kind === 'balance' ? 'text-status-warning' : 'text-muted-foreground')} aria-hidden />
+                  <Icon className={cn('mt-0.5 icon-toolbar shrink-0', n.kind === 'error' ? 'text-destructive' : n.kind === 'approval' || n.kind === 'balance' ? 'text-status-warning' : 'text-muted-foreground')} aria-hidden />
                   <span className="min-w-0 flex-1">
                     <span className={cn('block truncate text-body', !n.read && 'font-medium')}>{n.title}</span>
                     {n.body && <span className="line-clamp-2 block text-small text-muted-foreground">{n.body}</span>}
@@ -145,9 +153,9 @@ export function NotificationCenter({ workspaceId, className }: { workspaceId?: s
                   type="button"
                   aria-label={t('shell.notifications.dismiss')}
                   onClick={() => removeNotification(n.id)}
-                  className="absolute right-1 top-1.5 flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground opacity-0 hover:bg-foreground/5 hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                  className="absolute right-1 top-1.5 flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground opacity-0 hover:bg-surface-hover hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
                 >
-                  <X className="h-3.5 w-3.5" aria-hidden />
+                  <X className="icon-caption" aria-hidden />
                 </button>
               </li>
             )
