@@ -13,6 +13,7 @@ import { useSetAtom } from 'jotai'
 import { Archive, Bell, BellOff, Hash, Lock, LogIn, LogOut, MessagesSquare, PanelRight, Phone, Plus, ScrollText, Search, Send, Sparkles, Users } from 'lucide-react'
 import type { TeamChannelKind, TeamChannelMessage, TeamChannelView, TeamChannelVisibility } from '@rox/shared/team-chat'
 import type { TeamMemberRef } from '@rox/shared/team'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { messengerStatusAtom } from '@/atoms/messenger-status'
@@ -182,15 +183,19 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
                 </Button>
               ) : null}
               {selected.visibility === 'public' ? (
-                <Button
-                  variant="ghost" size="icon"
-                  aria-pressed={selected.viewerSubscribed}
-                  title={selected.viewerSubscribed ? t('messenger.channels.unfollow') : t('messenger.channels.follow')}
-                  aria-label={selected.viewerSubscribed ? t('messenger.channels.unfollow') : t('messenger.channels.follow')}
-                  onClick={() => void run(() => window.electronAPI.teamChatSetSubscribed(selected.id, !selected.viewerSubscribed))}
-                >
-                  {selected.viewerSubscribed ? <BellOff aria-hidden /> : <Bell aria-hidden />}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost" size="icon"
+                      aria-pressed={selected.viewerSubscribed}
+                      aria-label={selected.viewerSubscribed ? t('messenger.channels.unfollow') : t('messenger.channels.follow')}
+                      onClick={() => void run(() => window.electronAPI.teamChatSetSubscribed(selected.id, !selected.viewerSubscribed))}
+                    >
+                      {selected.viewerSubscribed ? <BellOff aria-hidden /> : <Bell aria-hidden />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{selected.viewerSubscribed ? t('messenger.channels.unfollow') : t('messenger.channels.follow')} — {t('messenger.channels.followHint')}</TooltipContent>
+                </Tooltip>
               ) : null}
               {!selected.viewerRole && selected.visibility === 'public' ? (
                 <Button size="sm" variant="secondary" onClick={() => void run(() => window.electronAPI.teamChatJoin(selected.id))}>
@@ -203,14 +208,19 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
                 </Button>
               ) : null}
               {!selected.isDefault && (selected.viewerRole === 'owner' || selected.viewerRole === 'admin' || viewerOrgRole === 'owner' || viewerOrgRole === 'admin') ? (
-                <Button variant="ghost" size="icon" title={t('messenger.channels.archive')} aria-label={t('messenger.channels.archive')}
-                  onClick={() => {
-                    if (!window.confirm(t('messenger.channels.archiveConfirm', { name: selected.name }))) return
-                    void run(async () => { if (call.channelId === selected.id) await call.leave(); await window.electronAPI.teamChatArchive(selected.id, orgId); setSelectedId(null) })
-                  }}
-                >
-                  <Archive aria-hidden />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label={t('messenger.channels.archive')}
+                      onClick={() => {
+                        if (!window.confirm(t('messenger.channels.archiveConfirm', { name: selected.name }))) return
+                        void run(async () => { if (call.channelId === selected.id) await call.leave(); await window.electronAPI.teamChatArchive(selected.id, orgId); setSelectedId(null) })
+                      }}
+                    >
+                      <Archive aria-hidden />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('messenger.channels.archive')}</TooltipContent>
+                </Tooltip>
               ) : null}
               <Button variant="ghost" size="icon" aria-pressed={infoOpen} onClick={() => setInfoOpen(v => !v)} title={t('messenger.info.title')} aria-label={t('messenger.info.title')}>
                 <PanelRight aria-hidden />
@@ -306,7 +316,7 @@ function SectionHeader({ title, onAdd, addLabel }: { title: string; onAdd: () =>
     <div className="flex items-center justify-between px-2 pb-1 pt-1">
       <h3 className="text-caption font-medium uppercase caps-label text-text-muted">{title}</h3>
       <button type="button" className="rounded p-0.5 text-text-muted hover:bg-surface-hover hover:text-text-primary" onClick={onAdd} aria-label={addLabel} title={addLabel}>
-        <Plus className="size-3.5" aria-hidden />
+        <Plus className="icon-caption" aria-hidden />
       </button>
     </div>
   )
@@ -332,8 +342,8 @@ function ChannelRow({ channel, active, label, onSelect, preview, locale }: { cha
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5">
             <span className={cn('min-w-0 flex-1 truncate text-body', (active || channel.unreadCount > 0) && 'font-medium')}>{label}</span>
-            {channel.activeCall ? <Phone className="size-3 shrink-0 text-success" aria-label={channel.activeCall ? 'call' : undefined} /> : null}
-            {channel.viewerSubscribed ? <Bell className="size-3 shrink-0 text-text-muted" aria-hidden /> : null}
+            {channel.activeCall ? <Phone className="icon-status shrink-0 text-success" aria-hidden /> : null}
+            {channel.viewerSubscribed ? <Bell className="icon-status shrink-0 text-text-muted" aria-hidden /> : null}
             {time ? <span className="shrink-0 text-caption text-text-muted">{time}</span> : null}
           </span>
           {preview ? (
@@ -392,7 +402,7 @@ function CreateChannelForm({ kind, members, onCancel, onCreate }: {
             {(['public', 'private'] as const).map(v => (
               <button key={v} type="button" role="radio" aria-checked={visibility === v} onClick={() => setVisibility(v)}
                 className={cn('flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1 text-caption', visibility === v ? 'border-border-strong bg-surface-hover text-text-primary' : 'border-border text-text-secondary')}>
-                {v === 'public' ? <Hash className="size-3" aria-hidden /> : <Lock className="size-3" aria-hidden />}
+                {v === 'public' ? <Hash className="icon-status" aria-hidden /> : <Lock className="icon-status" aria-hidden />}
                 {t(v === 'public' ? 'messenger.channels.public' : 'messenger.channels.private')}
               </button>
             ))}
@@ -435,7 +445,7 @@ function MessageList({ loading, error, messages, nameOf, locale }: {
       {error ? <p className="text-small text-destructive" role="alert">{error}</p> : null}
       {!loading && !error && messages.length === 0 ? (
         <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-text-muted">
-          <MessagesSquare className="size-6" aria-hidden />
+          <MessagesSquare className="icon-empty" aria-hidden />
           <p className="text-small">{t('messenger.channels.noMessages')}</p>
         </div>
       ) : null}
@@ -482,9 +492,14 @@ function Composer({ placeholder, onSend }: { placeholder: string; onSend: (text:
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); void send() } }}
           className="max-h-40 min-h-9 flex-1 resize-none rounded-md border border-border bg-surface-input px-3 py-2 text-body"
         />
-        <Button size="icon" onClick={() => void send()} disabled={!text.trim() || busy} aria-label={t('messenger.channels.send')} title={t('messenger.channels.send')}>
-          <Send aria-hidden />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button size="icon" onClick={() => void send()} disabled={!text.trim() || busy} aria-label={t('messenger.channels.send')}>
+              <Send aria-hidden />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t('messenger.channels.send')}</TooltipContent>
+        </Tooltip>
       </div>
     </div>
   )

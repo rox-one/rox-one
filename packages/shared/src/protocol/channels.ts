@@ -404,6 +404,10 @@ export const RPC_CHANNELS = {
     SET_COLOR_THEME: 'theme:setColorTheme',
     /** Persist the app theme's material (glass) field to theme.json (LOCAL_ONLY). */
     SET_APP_MATERIAL: 'theme:setAppMaterial',
+    /** Persist the app theme's layer tokens (frame/content/wallpaper/…) to theme.json (LOCAL_ONLY). */
+    SET_APP_LAYERS: 'theme:setAppLayers',
+    /** Save a user theme preset into ~/.craft-agent/themes (LOCAL_ONLY). */
+    SAVE_USER_PRESET: 'theme:saveUserPreset',
     BROADCAST_PREFERENCES: 'theme:broadcastPreferences',
     PREFERENCES_CHANGED: 'theme:preferencesChanged',
     GET_WORKSPACE_COLOR_THEME: 'theme:getWorkspaceColorTheme',
@@ -597,6 +601,11 @@ export const RPC_CHANNELS = {
     RUN_ALL: 'cookbooks-lab:run-all',
     SAVE: 'cookbooks-lab:save',
     RESET: 'cookbooks-lab:reset',
+    CANCEL: 'cookbooks-lab:cancel',
+    EXPORT: 'cookbooks-lab:export',
+    // Wave 10: one composer for the four structural cell operations
+    // (add/delete/move/duplicate) — a discriminated union input.
+    MUTATE: 'cookbooks-lab:mutate',
     STATUS_CHANGED: 'cookbooks-lab:status-changed',
   },
 
@@ -989,6 +998,10 @@ export const RPC_CHANNELS = {
     UNINSTALL: 'serviceLifecycle:uninstall',
     STATUS_CHANGED: 'serviceLifecycle:statusChanged',
   },
+  // tray — renderer → main snapshot for the macOS menu-bar item (badge, recents, recording).
+  tray: {
+    REPORT_STATE: 'tray:reportState',
+  },
   // diagnostics — local host doctor checks (service/port/runtime/config/logs).
   diagnostics: {
     RUN: 'diagnostics:run',
@@ -1044,6 +1057,11 @@ export const RPC_CHANNELS = {
     CALL_LIST: 'teamChat:callList',
     SEARCH: 'teamChat:search',
     CHANGED: 'teamChat:changed',
+  },
+  chatFolders: {
+    GET: 'chatFolders:get',
+    MUTATE: 'chatFolders:mutate',
+    CHANGED: 'chatFolders:changed',
   },
   views: {
     LIST: 'views:list',

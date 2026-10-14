@@ -211,9 +211,10 @@ describe('CraftMcpClient lifecycle — real transports', () => {
       clock.advance(100);
       await server.release(healthCheck);
       const discovery = await server.held('tools/list', 2);
-      // The outer listTools budget and the nested connect budget both receive
-      // exactly the remaining 50ms, never a fresh 350ms.
-      expect(clock.remaining()).toEqual([50, 50]);
+      // The client budget holds the remaining 50 ms; the SDK's own request timer
+      // is only a backstop, armed one millisecond later so it can never settle
+      // the request first. Neither is a fresh 350 ms.
+      expect(clock.remaining()).toEqual([50, 51]);
       clock.advance(49);
       expect(settled).toBe(false);
       clock.advance(1);

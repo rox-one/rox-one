@@ -199,6 +199,8 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.theme.GET_COLOR_THEME,
   RPC_CHANNELS.theme.SET_COLOR_THEME,
   RPC_CHANNELS.theme.SET_APP_MATERIAL,
+  RPC_CHANNELS.theme.SET_APP_LAYERS,
+  RPC_CHANNELS.theme.SAVE_USER_PRESET,
   RPC_CHANNELS.theme.BROADCAST_PREFERENCES,
   RPC_CHANNELS.theme.PREFERENCES_CHANGED,
   RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME,
@@ -547,6 +549,10 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.cookbooksLab.RUN_ALL,
   RPC_CHANNELS.cookbooksLab.SAVE,
   RPC_CHANNELS.cookbooksLab.RESET,
+  RPC_CHANNELS.cookbooksLab.CANCEL,
+  RPC_CHANNELS.cookbooksLab.EXPORT,
+  // Wave 10: structural cell mutations write the host-local personal copy.
+  RPC_CHANNELS.cookbooksLab.MUTATE,
   RPC_CHANNELS.cookbooksLab.STATUS_CHANGED,
 
 
@@ -688,6 +694,9 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.serviceLifecycle.RESTART,
   RPC_CHANNELS.serviceLifecycle.UNINSTALL,
   RPC_CHANNELS.serviceLifecycle.STATUS_CHANGED,
+
+  // tray — the menu-bar item lives in the local Electron main process.
+  RPC_CHANNELS.tray.REPORT_STATE,
 
   // diagnostics — host doctor checks read local service/port/config/log state.
   RPC_CHANNELS.diagnostics.RUN,
@@ -1210,6 +1219,11 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.labels.UPDATE,
   RPC_CHANNELS.labels.DELETE,
   RPC_CHANNELS.labels.CHANGED,
+
+  // chatFolders — workspace chat-folder grouping (chat-folders.json)
+  RPC_CHANNELS.chatFolders.GET,
+  RPC_CHANNELS.chatFolders.MUTATE,
+  RPC_CHANNELS.chatFolders.CHANGED,
 
   // views — workspace UI views
   RPC_CHANNELS.views.LIST,

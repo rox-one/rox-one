@@ -3,10 +3,10 @@
  * plus local-mode guards. No I/O (unit-tested).
  */
 import type { JmapAddress, JmapEmailFull, JmapEmailSummary, JmapMailbox } from '@rox/shared/mail'
-import type { MailAddress, MailAttachment, MailFolder, MailFolderRole, MailMessage, MailSummary } from '../../shared/mail-local'
+import { MAIL_STANDARD_ROLES, MAIL_STORAGE_ROLES, type MailAddress, type MailAttachment, type MailFolder, type MailFolderRole, type MailMessage, type MailSummary } from '../../shared/mail-local'
 
-const ROLES: ReadonlySet<string> = new Set(['inbox', 'sent', 'drafts', 'archive', 'junk', 'trash'])
-const ROLE_ORDER: MailFolderRole[] = ['inbox', 'drafts', 'sent', 'archive', 'junk', 'trash']
+const ROLES: ReadonlySet<string> = new Set(MAIL_STORAGE_ROLES)
+const ROLE_ORDER: readonly MailFolderRole[] = MAIL_STANDARD_ROLES
 
 export function toFolder(m: JmapMailbox): MailFolder {
   const role = m.role && ROLES.has(m.role) ? (m.role as MailFolderRole) : null

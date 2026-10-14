@@ -8,14 +8,15 @@
  * which itself gates activity/inbox on their flags).
  */
 import * as React from 'react'
+import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
 import { useTranslation } from 'react-i18next'
 import { MessagesSquare } from 'lucide-react'
 import { EmptyState } from '@/components/mode-screen/ModeScreen'
 import { TeamOrgSettingsSection, useTeamRoster } from '@/components/team'
 import { MessengerChannels } from '@/components/messenger/MessengerChannels'
 import { Button } from '@/components/ui/button'
+import { Tabs as TabsCore } from '@/components/ui/tabs'
 import { navigate, routes } from '@/lib/navigate'
-import { cn } from '@/lib/utils'
 import type { SurfacePageProps } from '@/platform/SurfaceHost'
 
 type MessengerTab = 'channels' | 'members'
@@ -34,17 +35,20 @@ export function TeamSurfacePage(_props: SurfacePageProps) {
     >
       <header className="flex shrink-0 items-center gap-3 border-b border-border/60 px-4 py-2">
         <MessagesSquare className="icon-inline text-text-muted" aria-hidden />
-        <h1 className="text-title font-semibold">{t('messenger.channels.title')}</h1>
-        <div className="ms-2 flex gap-1" role="tablist" aria-label={t('messenger.channels.title')}>
-          {(['channels', 'members'] as const).map(id => (
-            <button
-              key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-              className={cn('rounded-md px-2 py-1 text-small', tab === id ? 'bg-surface-hover font-medium text-text-primary' : 'text-text-secondary hover:bg-surface-hover')}
-            >
-              {id === 'channels' ? t('messenger.channels.channelsTab') : t('teamCollab.members')}
-            </button>
-          ))}
-        </div>
+        <PanelHeading className="text-title font-semibold" titleKey="messenger.channels.title">{t('messenger.channels.title')}</PanelHeading>
+        <TabsCore
+          items={[
+            { id: 'channels', label: t('messenger.channels.channelsTab') },
+            { id: 'members', label: t('teamCollab.members') },
+          ]}
+          activeId={tab}
+          variant="surface"
+          density="compact"
+          keyboard
+          ariaLabel={t('messenger.channels.title')}
+          className="ms-2"
+          onSelect={id => setTab(id as MessengerTab)}
+        />
       </header>
 
       {tab === 'channels' ? (

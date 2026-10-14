@@ -12,7 +12,7 @@
  * - AsyncGenerator for streaming: Consistent with existing CraftAgent API
  */
 
-import type { AgentEvent } from '@rox/core/types';
+import type { AgentEvent, PermissionPreview } from '@rox/core/types';
 import type { FileAttachment } from '../../utils/files.ts';
 import type { ThinkingLevel } from '../thinking-levels.ts';
 import type { PermissionMode } from '../mode-manager.ts';
@@ -83,6 +83,7 @@ export type PermissionCallback = (request: {
   rememberForMinutes?: number;
   commandHash?: string;
   approvalTtlSeconds?: number;
+  preview?: PermissionPreview;
 }) => void;
 
 /**
