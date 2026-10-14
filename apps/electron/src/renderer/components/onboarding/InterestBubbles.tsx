@@ -21,6 +21,8 @@ export interface InterestBubblesProps {
   rankedIds?: string[]
   /** Label language; defaults to the active i18n language. */
   locale?: BubbleLocale
+  /** Hide the title/hint row (the accordion renders its own header). */
+  hideHeader?: boolean
   className?: string
 }
 
@@ -39,6 +41,7 @@ export function InterestBubbles({
   onChange,
   rankedIds,
   locale,
+  hideHeader = false,
   className,
 }: InterestBubblesProps) {
   const { t, i18n } = useTranslation()
@@ -62,16 +65,18 @@ export function InterestBubbles({
       className={cn('space-y-3', className)}
       data-testid={`interest-bubbles-${groupId}`}
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h3 className="text-sm font-semibold tracking-tight text-foreground">{title}</h3>
-        <p className="text-xs text-muted-foreground">{t('onboarding.bubbles.hint')}</p>
-      </div>
+      {hideHeader ? null : (
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <h3 className="text-sm font-semibold tracking-tight text-foreground">{title}</h3>
+          <p className="text-xs text-muted-foreground">{t('onboarding.bubbles.hint')}</p>
+        </div>
+      )}
 
       {group.dependsOn ? (
         <p className="text-xs text-muted-foreground">{t('onboarding.bubbles.dependsOn')}</p>
       ) : null}
 
-      <div role="group" aria-label={title} className="flex flex-wrap gap-2">
+      <div role="group" aria-label={title} className="flex flex-wrap gap-1.5">
         {items.map((item) => {
           const isSelected = selectedSet.has(item.id)
           return (
@@ -84,7 +89,7 @@ export function InterestBubbles({
               data-bubble-anchor={item.anchor ? 'true' : undefined}
               onClick={() => toggle(item.id)}
               className={cn(
-                'rounded-full border px-3 py-1.5 text-sm leading-none transition-[background-color,border-color,color,transform,box-shadow] duration-200 ease-out motion-reduce:transition-none',
+                'rounded-full border px-3 py-1.5 text-[13px] leading-none transition-[background-color,border-color,color,transform,box-shadow] duration-200 ease-out motion-reduce:transition-none',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/55 focus-visible:ring-offset-1 focus-visible:ring-offset-background',
                 isSelected
                   ? 'border-accent/40 bg-accent/15 font-medium text-foreground shadow-minimal scale-[1.02]'
