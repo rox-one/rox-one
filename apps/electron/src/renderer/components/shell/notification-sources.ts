@@ -6,6 +6,11 @@
  * Automations: every automation's last-run timestamp is compared with a
  * per-workspace baseline in localStorage, so runs that happened while the app
  * was closed still show up; the very first look only records the baseline.
+ *
+ * With several Rox windows open only one leader polls each feed (Web Locks:
+ * one lock per workspace for automations, one account-wide lock for the
+ * balance); the store itself syncs to the other windows via `storage` events.
+ * When the leader window closes, its lock is released and another takes over.
  */
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
@@ -63,15 +68,47 @@ export function formatUsd(balance: number): string {
   return `$${Math.max(0, balance).toFixed(2)}`
 }
 
+/**
+ * True while this window holds the named Web Lock (held until unmount).
+ * Without the Locks API (tests, old runtimes) every window leads.
+ */
+export function useLeaderLock(name: string | null): boolean {
+  const [leader, setLeader] = React.useState(false)
+  React.useEffect(() => {
+    setLeader(false)
+    if (!name) return
+    const locks = typeof navigator === 'undefined' ? undefined : (navigator as Navigator & { locks?: LockManager }).locks
+    if (!locks || typeof locks.request !== 'function') {
+      setLeader(true)
+      return
+    }
+    const controller = new AbortController()
+    let release: (() => void) | undefined
+    locks.request(name, { signal: controller.signal }, () => new Promise<void>((resolve) => {
+      release = resolve
+      if (controller.signal.aborted) resolve()
+      else setLeader(true)
+    })).catch(() => { /* aborted while waiting */ })
+    return () => {
+      controller.abort()
+      release?.()
+      setLeader(false)
+    }
+  }, [name])
+  return leader
+}
+
 export function useNotificationSources(workspaceId: string | null | undefined): void {
   const { t } = useTranslation()
   const tRef = React.useRef(t)
   tRef.current = t
+  const automationLeader = useLeaderLock(workspaceId ? `rox-notify-automations:${workspaceId}` : null)
+  const balanceLeader = useLeaderLock('rox-notify-balance')
 
   // Automation runs.
   React.useEffect(() => {
     const api = typeof window === 'undefined' ? undefined : window.electronAPI
-    if (!workspaceId || typeof api?.getAutomationLastExecuted !== 'function' || typeof api.getAutomations !== 'function') return
+    if (!automationLeader || !workspaceId || typeof api?.getAutomationLastExecuted !== 'function' || typeof api.getAutomations !== 'function') return
     let cancelled = false
     let running = false
     const check = async () => {
@@ -118,12 +155,12 @@ export function useNotificationSources(workspaceId: string | null | undefined): 
       : undefined
     const timer = window.setInterval(() => void check(), AUTOMATION_POLL_MS)
     return () => { cancelled = true; off?.(); window.clearInterval(timer) }
-  }, [workspaceId])
+  }, [workspaceId, automationLeader])
 
   // Balance running low (account-wide).
   React.useEffect(() => {
     const api = typeof window === 'undefined' ? undefined : window.electronAPI
-    if (typeof api?.getRoxBalance !== 'function') return
+    if (!balanceLeader || typeof api?.getRoxBalance !== 'function') return
     let cancelled = false
     const check = async () => {
       try {
@@ -148,5 +185,5 @@ export function useNotificationSources(workspaceId: string | null | undefined): 
     const onFocus = () => void check()
     window.addEventListener('focus', onFocus)
     return () => { cancelled = true; window.clearInterval(timer); window.removeEventListener('focus', onFocus) }
-  }, [])
+  }, [balanceLeader])
 }

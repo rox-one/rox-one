@@ -87,7 +87,7 @@ import { featureUnifiedShellAtom, featureWorkbenchAtom } from '@/atoms/unified-s
 import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
 import { useEntitiesLinksFlagSync } from '@/lib/entities-links-sync'
 import { getSessionTitle } from '@/utils/session'
-import { pushNotification } from '@/components/shell/notifications'
+import { pushNotification, resolveNotification } from '@/components/shell/notifications'
 import { extractBadges } from '@/lib/mentions'
 import { getDefaultStore } from 'jotai'
 import { PlatformProvider, ShikiThemeProvider } from '@rox/ui/context'
@@ -338,6 +338,12 @@ function SessionLoadErrorScreen({
       </div>
     </div>
   )
+}
+
+/** The permission was answered (here, in another window, or the turn ended): the bell item is done. */
+function resolveApprovalNotification(sessionId: string): void {
+  // Called from state updaters: defer so store listeners never fire mid-render.
+  queueMicrotask(() => resolveNotification(`approval:${sessionId}`, i18n.t('shell.notifications.approvalAnswered')))
 }
 
 export default function App({ webTransportBootstrap }: { webTransportBootstrap?: AuthenticatedWebTransportBootstrap } = {}) {
@@ -1241,10 +1247,14 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
               pushNotification({
                 kind: 'approval',
                 title: getSessionTitle(notifySession),
-                body: promptBody,
+                body: isAdminPrompt
+                  ? i18n.t('shell.notifications.adminApprovalRequired', { name: effect.request.appName || effect.request.toolName })
+                  : i18n.t('shell.notifications.approvalRequired', { name: effect.request.toolName }),
                 workspaceId: notifySession.workspaceId,
                 route: routes.view.allSessions(sessionId),
                 dedupeKey: `approval:${sessionId}`,
+                // On screen: the prompt is right there, nothing to catch up on.
+                read: store.get(visibleSessionIdsAtom).has(sessionId),
               })
             }
             break
@@ -1306,6 +1316,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       if (eventType === 'complete') {
         setPendingPermissions(prevPerms => {
           if (prevPerms.has(sessionId)) {
+            resolveApprovalNotification(sessionId)
             const next = new Map(prevPerms)
             next.delete(sessionId)
             return next
@@ -2366,6 +2377,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         const queue = next.get(sessionId) || []
         const remainingQueue = queue.slice(1) // Remove first item
         if (remainingQueue.length === 0) {
+          resolveApprovalNotification(sessionId)
           next.delete(sessionId)
         } else {
           next.set(sessionId, remainingQueue)
@@ -2381,6 +2393,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         const queue = next.get(sessionId) || []
         const remainingQueue = queue.slice(1)
         if (remainingQueue.length === 0) {
+          resolveApprovalNotification(sessionId)
           next.delete(sessionId)
         } else {
           next.set(sessionId, remainingQueue)

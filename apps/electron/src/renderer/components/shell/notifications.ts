@@ -65,10 +65,31 @@ function read(): readonly ShellNotification[] {
   return items
 }
 
+/** Mutations start from storage, so another window's latest writes are never dropped. */
+function fresh(): readonly ShellNotification[] {
+  items = null
+  return read()
+}
+
+function emit(): void {
+  for (const listener of listeners) listener()
+}
+
 function write(next: readonly ShellNotification[]): void {
   items = next
   storage.set(storage.KEYS.shellNotifications, next)
-  for (const listener of listeners) listener()
+  emit()
+}
+
+// Cross-window sync: every Rox window shares this localStorage; the `storage`
+// event fires in the *other* windows, which drop their cache and re-render.
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    // `key === null` is a storage.clear() elsewhere.
+    if (event.key !== null && event.key !== storage.getKeyString(storage.KEYS.shellNotifications)) return
+    items = null
+    emit()
+  })
 }
 
 export function getNotifications(): readonly ShellNotification[] { return read() }
@@ -77,32 +98,43 @@ export function pushNotification(input: NotificationInput): ShellNotification {
   const at = input.at ?? Date.now()
   seq += 1
   const entry: ShellNotification = { ...input, at, id: `n-${at.toString(36)}-${seq}`, read: input.read === true }
-  const rest = input.dedupeKey ? read().filter((n) => n.dedupeKey !== input.dedupeKey) : read()
+  const list = fresh()
+  const rest = input.dedupeKey ? list.filter((n) => n.dedupeKey !== input.dedupeKey) : list
   write([entry, ...rest].slice(0, MAX_NOTIFICATIONS))
   return entry
 }
 
 export function markNotificationRead(id: string): void {
-  const list = read()
+  const list = fresh()
   if (!list.some((n) => n.id === id && !n.read)) return
   write(list.map((n) => (n.id === id ? { ...n, read: true } : n)))
 }
 
 /** Marks everything visible in `scope` (a workspace) read; account-wide items included. */
 export function markAllNotificationsRead(workspaceId?: string | null): void {
-  const list = read()
+  const list = fresh()
   if (!list.some((n) => !n.read && inScope(n, workspaceId))) return
   write(list.map((n) => (inScope(n, workspaceId) ? { ...n, read: true } : n)))
 }
 
+/**
+ * The thing a notification asked for was handled elsewhere (e.g. the
+ * permission was answered): mark it read and swap the body to say so.
+ */
+export function resolveNotification(dedupeKey: string, body: string): void {
+  const list = fresh()
+  if (!list.some((n) => n.dedupeKey === dedupeKey && (!n.read || n.body !== body))) return
+  write(list.map((n) => (n.dedupeKey === dedupeKey ? { ...n, read: true, body } : n)))
+}
+
 export function removeNotification(id: string): void {
-  const list = read()
+  const list = fresh()
   if (!list.some((n) => n.id === id)) return
   write(list.filter((n) => n.id !== id))
 }
 
 export function clearNotifications(workspaceId?: string | null): void {
-  const list = read()
+  const list = fresh()
   const next = list.filter((n) => !inScope(n, workspaceId))
   if (next.length !== list.length) write(next)
 }

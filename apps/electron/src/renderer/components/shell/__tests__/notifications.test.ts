@@ -34,6 +34,20 @@ describe('notification center model (top50 #9)', () => {
     expect(n.getNotifications().length).toBe(n.MAX_NOTIFICATIONS)
   })
 
+  it('resolves an answered approval: read, body swapped', () => {
+    n.pushNotification({ kind: 'approval', title: 'S', body: 'Permission required: Bash', dedupeKey: 'approval:s1' })
+    n.resolveNotification('approval:s1', 'Answered')
+    expect(n.getNotifications().map((x) => [x.read, x.body])).toEqual([[true, 'Answered']])
+  })
+
+  it('mutations start from storage, so another window\'s writes survive', () => {
+    n.pushNotification({ kind: 'agent', title: 'mine' })
+    const foreign = [{ id: 'f1', kind: 'agent', title: 'theirs', at: Date.now() + 1, read: false }, ...JSON.parse(localStorage.getItem(Object.keys(localStorage).find((k) => k.endsWith('shell-notifications-v1'))!)!)]
+    localStorage.setItem(Object.keys(localStorage).find((k) => k.endsWith('shell-notifications-v1'))!, JSON.stringify(foreign))
+    n.pushNotification({ kind: 'agent', title: 'mine2' })
+    expect(n.getNotifications().map((x) => x.title).sort()).toEqual(['mine', 'mine2', 'theirs'])
+  })
+
   it('drops malformed persisted entries', () => {
     expect(n.sanitizeNotifications([{ id: 'x', title: 't', at: 1, kind: 'nope' }, null, { id: 'y', title: 't', at: 2, kind: 'agent' }]).map((x) => x.id)).toEqual(['y'])
   })
