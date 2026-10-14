@@ -55,3 +55,6 @@ export const inboxPreferencesAtom = atomWithStorage<InboxPreferences>(
   undefined,
   { getOnInit: true },
 )
+
+/** Входящие second sidebar: pinned source filters (`kind:<kind>` / `mail:<folderId>`), display order. */
+export const inboxPinnedFiltersAtom = atomWithStorage<string[]>('rox.inbox.pinnedFilters.v1', [], undefined, { getOnInit: true })
