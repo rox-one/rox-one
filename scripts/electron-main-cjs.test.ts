@@ -89,3 +89,8 @@ test('Electron main CommonJS module URL follows a relocated bundle with spaces a
   expect(result.runtime).toMatch(/^Node (22|24)\./)
   expect(result).toMatchObject({ phase: 'write', rows: 1, rollback: true, readonly: true, reopen: true })
 }, 15_000)
+
+test('the canonical main build command keeps every heavy vendor package out of main.cjs', () => {
+  const command = mainBuildCommand()
+  for (const flag of mainVendorAliasFlags()) expect(command).toContain(flag)
+})
