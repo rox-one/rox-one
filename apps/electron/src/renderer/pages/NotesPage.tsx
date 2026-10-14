@@ -26,7 +26,7 @@ import type { BlockTreeResult, NativeMarkerMappingPreview } from '@rox/server-co
 import { applyMarkerMapping as applyBlockMarkerMapping, retainedText, retainSource as retainBlockSource } from '@rox/core/docs'
 import { contentHash as blockContentHash } from '@rox/core/rox2'
 import { parseNoteBlockAddress, resolveNoteBlockId } from '@rox/core/mindmap/derive-note.ts'
-import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteIndexHealth, NoteMutationOptions, NoteRenameImpact, NoteSummary } from '../../shared/types'
+import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteIndexHealth, NoteMutationOptions, NoteRenameImpact, NoteSummary, NoteTasksEntry } from '../../shared/types'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { NavigationContext } from '@/contexts/NavigationContext'
 import { RightSessionShell } from '@/components/session-workbench/RightSessionShell'
@@ -405,6 +405,17 @@ function extractTasks(note: NoteDocument | NoteSummary, content: string): NoteTa
   })
 }
 
+/** #1574: max ids per `notes:listTasks` call (mirrors NOTE_TASKS_MAX_IDS). */
+const NOTE_TASKS_BATCH = 200
+
+/** Task rows from either a full document (readNote) or a server task entry (listNoteTasks). */
+function tasksFromRead(value: NoteDocument | NoteTasksEntry): NoteTask[] {
+  if ('tasks' in value && Array.isArray(value.tasks)) {
+    return value.tasks.map(task => ({ noteId: value.id, noteTitle: value.title, line: task.line, text: task.text, checked: task.checked }))
+  }
+  return extractTasks(value, (value as NoteDocument).content)
+}
+
 function updateMarkdownTitle(content: string, title: string): string {
   const escaped = title.replace(/"/g, '\\"')
   if (/^---\r?\n[\s\S]*?\r?\n---/.test(content)) {
@@ -737,7 +748,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     return () => off?.()
   }, [activeWorkspaceId])
   // PERF-09: reads shared between overlapping passes, keyed by workspace+note+version.
-  const taskInFlightRef = React.useRef<Map<string, Promise<NoteDocument>>>(new Map())
+  const taskInFlightRef = React.useRef<Map<string, Promise<NoteDocument | NoteTasksEntry | undefined>>>(new Map())
   // PERF-09: true while a notes listing read is in flight; its result re-runs the task pass.
   const notesListingPendingRef = React.useRef(false)
   const refreshTasksRef = React.useRef<((sourceNotes?: NoteSummary[]) => Promise<void>) | null>(null)
@@ -1050,7 +1061,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     // PERF-09: prefer the content the listing already carries (principal mode
     // returns whole documents) over a second readNote pass over the corpus.
     const listingPending = notesListingPendingRef.current
-    const reads = new Map<string, Promise<NoteDocument>>()
+    const reads = new Map<string, Promise<NoteDocument | NoteTasksEntry | undefined>>()
+    // #1574: one `notes:listTasks` round trip per batch instead of a readNote
+    // per note (older transports without it keep the per-note reads).
+    const listTasks = typeof window.electronAPI.listNoteTasks === 'function' ? window.electronAPI.listNoteTasks : null
+    const batchIds: Array<{ id: string; key: string }> = []
     for (const note of toFetch) {
       const content = listedNoteContent(note)
       if (content !== null) {
@@ -1068,17 +1083,37 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         reads.set(key, shared)
         continue
       }
+      if (listTasks) {
+        batchIds.push({ id: note.id, key })
+        continue
+      }
       const read = window.electronAPI.readNote(activeWorkspaceId, note.id)
       taskInFlightRef.current.set(key, read)
       const settle = () => { if (taskInFlightRef.current.get(key) === read) taskInFlightRef.current.delete(key) }
       void read.then(settle, settle)
       reads.set(key, read)
     }
+    for (let start = 0; listTasks && start < batchIds.length; start += NOTE_TASKS_BATCH) {
+      const chunk = batchIds.slice(start, start + NOTE_TASKS_BATCH)
+      // A server without `notes:listTasks` (older remote/SSH host) rejects the
+      // batch: fall back to the per-note reads for that chunk.
+      const workspaceId = activeWorkspaceId
+      const batch = listTasks(workspaceId, chunk.map(item => item.id)).then(entries => entries, () => null)
+      for (const { id, key } of chunk) {
+        const read = batch.then(entries => entries
+          ? entries.find(entry => entry.id === id)
+          : window.electronAPI.readNote(workspaceId, id))
+        taskInFlightRef.current.set(key, read)
+        const settle = () => { if (taskInFlightRef.current.get(key) === read) taskInFlightRef.current.delete(key) }
+        void read.then(settle, settle)
+        reads.set(key, read)
+      }
+    }
     const results = await Promise.allSettled([...reads.values()])
     if (request !== taskRequestRef.current || taskCacheWorkspaceRef.current !== activeWorkspaceId) return
     for (const result of results) {
-      if (result.status === 'fulfilled') {
-        taskCacheRef.current.set(result.value.id, extractTasks(result.value, result.value.content))
+      if (result.status === 'fulfilled' && result.value) {
+        taskCacheRef.current.set(result.value.id, tasksFromRead(result.value))
         taskCacheUpdatedAtRef.current.set(result.value.id, result.value.updatedAt)
       }
     }
