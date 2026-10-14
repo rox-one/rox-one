@@ -35,7 +35,7 @@ export default function TodoWidget({ config, onConfig }: GlanceWidgetProps) {
           aria-label={t('glance.todo.placeholder')}
           className="min-w-0 flex-1 rounded-[var(--radius-control)] bg-surface-hover px-2 py-1 text-sm outline-none focus:bg-surface-pressed"
         />
-        <button type="submit" className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-pressed hover:text-foreground" aria-label={t('glance.todo.add')}>
+        <button type="submit" className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-pressed hover:text-foreground" aria-label={t('extraScreens.common.add')}>
           <Plus className="icon-toolbar" />
         </button>
       </form>

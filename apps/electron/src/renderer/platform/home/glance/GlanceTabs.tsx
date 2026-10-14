@@ -62,13 +62,13 @@ export function HomePageTabs({
   }
   return (
     <div className="relative flex min-w-0 flex-wrap items-center gap-1" role="tablist" aria-label={t('glance.pages')} data-home-tabs="">
-      <TabButton active={activeId === null} onClick={() => onSelect(null)}>{t('glance.overview')}</TabButton>
+      <TabButton active={activeId === null} onClick={() => onSelect(null)}>{t('devSpace.repo.tabs.overview')}</TabButton>
       {layout.pages.map((page, i) => (
         <span key={page.id} className="flex items-center">
           {editing && activeId === page.id && i > 0 ? (
             <IconButton label={t('glance.moveLeft')} onClick={() => onChange(movePage(layout, page.id, -1))}><ChevronLeft className="icon-caption" /></IconButton>
           ) : null}
-          <TabButton active={activeId === page.id} onClick={() => onSelect(page.id)} pageId={page.id}>{page.title || t('glance.untitled')}</TabButton>
+          <TabButton active={activeId === page.id} onClick={() => onSelect(page.id)} pageId={page.id}>{page.title || t('notes.untitled')}</TabButton>
           {editing && activeId === page.id && i < layout.pages.length - 1 ? (
             <IconButton label={t('glance.moveRight')} onClick={() => onChange(movePage(layout, page.id, 1))}><ChevronRight className="icon-caption" /></IconButton>
           ) : null}

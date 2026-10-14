@@ -28,7 +28,10 @@ const EN_LOCALE = resolve(
 )
 
 /** O11 budget: en.json may not exceed this many keys. */
-export const I18N_KEY_BUDGET = 12_000
+// Raised 12 000 → 12 040 for the Home (Glance) framework (#2038): main sat at
+// 11 989 keys and Home adds 46 unique keys after reusing 21 generic ones;
+// 12 035 needed + 5 headroom.
+export const I18N_KEY_BUDGET = 12_040
 
 const keys = Object.keys(JSON.parse(readFileSync(EN_LOCALE, 'utf8')) as Record<string, string>)
 

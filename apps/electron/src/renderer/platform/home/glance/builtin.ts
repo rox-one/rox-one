@@ -20,7 +20,7 @@ export function registerBuiltinGlanceWidgets(): void {
       {
         key: 'widget',
         kind: 'select',
-        labelKey: 'glance.f.roxWidget',
+        labelKey: 'glance.w.rox',
         options: HOME_WIDGET_IDS.filter((id) => id !== 'hero').map((id) => ({ value: id, labelKey: id === 'recentSessions' ? 'workbench.home.recent' : `workbench.home.w.${id}` })),
       },
       {
@@ -73,7 +73,7 @@ export function registerBuiltinGlanceWidgets(): void {
   registerGlanceWidget({
     type: 'bookmarks',
     category: 'essentials',
-    titleKey: 'glance.w.bookmarks',
+    titleKey: 'onboarding.environment.browserImportBookmarks',
     icon: 'bookmark',
     defaultConfig: { links: [], style: 'list' },
     fields: [
@@ -83,7 +83,7 @@ export function registerBuiltinGlanceWidgets(): void {
         kind: 'select',
         labelKey: 'glance.f.style',
         options: [
-          { value: 'list', labelKey: 'glance.o.list' },
+          { value: 'list', labelKey: 'collection.view.list' },
           { value: 'grid', labelKey: 'glance.o.grid' },
         ],
       },
@@ -98,7 +98,7 @@ export function registerBuiltinGlanceWidgets(): void {
     icon: 'app-window',
     defaultConfig: { url: '', height: 300 },
     fields: [
-      { key: 'url', kind: 'url', labelKey: 'glance.f.url', placeholder: 'https://' },
+      { key: 'url', kind: 'url', labelKey: 'common.url', placeholder: 'https://' },
       { key: 'height', kind: 'number', labelKey: 'glance.f.heightPx', min: 80, max: 1600 },
     ],
     load: () => import('./widgets/IframeWidget'),
@@ -107,10 +107,10 @@ export function registerBuiltinGlanceWidgets(): void {
   registerGlanceWidget({
     type: 'html',
     category: 'advanced',
-    titleKey: 'glance.w.text',
+    titleKey: 'clipboard.filter.text',
     icon: 'file-text',
     defaultConfig: { text: '' },
-    fields: [{ key: 'text', kind: 'textarea', labelKey: 'glance.f.text' }],
+    fields: [{ key: 'text', kind: 'textarea', labelKey: 'clipboard.filter.text' }],
     load: () => import('./widgets/TextWidget'),
   })
 }

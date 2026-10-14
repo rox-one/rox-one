@@ -63,6 +63,10 @@ import {
 import { GLANCE_CATEGORIES, getGlanceWidget, listGlanceWidgets, resolveConfig, type GlanceField, type GlanceWidgetDef } from './registry'
 import { registerBuiltinGlanceWidgets } from './builtin'
 
+/** Category labels reuse existing generic catalogue keys where the English text is identical. */
+const CATEGORY_LABEL_KEY: Record<string, string> = {'rox': 'onboarding.providerSelect.rox', 'news': 'feed.tab.news', 'media': 'rovers.category.media', 'dev': 'label.default.development', 'system': 'inspector.context.system', 'advanced': 'settings.workspace.advanced'}
+
+
 registerBuiltinGlanceWidgets()
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -146,17 +150,17 @@ export function GlancePageView({
             value={page.title}
             onChange={(e) => onChange(updatePage(layout, page.id, { title: e.target.value }))}
             aria-label={t('glance.pageTitle')}
-            placeholder={t('glance.untitled')}
+            placeholder={t('notes.untitled')}
             className="h-7 w-48 rounded-[var(--radius-control)] bg-surface-hover px-2 text-sm font-bold outline-none focus:bg-surface-pressed"
           />
           <GlanceSelect
             label={t('glance.pageWidth')}
             value={page.width}
             onChange={(v) => onChange(updatePage(layout, page.id, { width: v as GlancePage['width'] }))}
-            options={(['slim', 'default', 'wide'] as const).map((w) => ({ value: w, label: t(w === 'default' ? 'glance.width.default' : w === 'slim' ? 'glance.column.small' : 'glance.column.full') }))}
+            options={(['slim', 'default', 'wide'] as const).map((w) => ({ value: w, label: t(w === 'default' ? 'common.default' : w === 'slim' ? 'glance.column.small' : 'glance.column.full') }))}
             className="w-32"
           />
-          <IconButton label={t('glance.addColumn')} onClick={() => onChange(addColumn(layout, page.id))} testId="add-column"><Columns3 className="icon-toolbar" /></IconButton>
+          <IconButton label={t('kanban.column.add')} onClick={() => onChange(addColumn(layout, page.id))} testId="add-column"><Columns3 className="icon-toolbar" /></IconButton>
           <span className="flex-1" />
           <IconButton
             label={t('common.delete')}
@@ -296,7 +300,7 @@ function GlanceColumnView({
           <IconButton label={t('glance.moveRight')} onClick={() => onChange(moveColumn(layout, page.id, column.id, 1))}><ChevronRight className="icon-caption" /></IconButton>
           <span className="flex-1" />
           {page.columns.length > 1 ? (
-            <IconButton label={t('glance.removeColumn')} danger onClick={() => onChange(removeColumn(layout, page.id, column.id))}><X className="icon-caption" /></IconButton>
+            <IconButton label={t('kanban.column.remove')} danger onClick={() => onChange(removeColumn(layout, page.id, column.id))}><X className="icon-caption" /></IconButton>
           ) : null}
         </div>
       ) : null}
@@ -402,7 +406,7 @@ function GlanceCard({
   const [viewRef, near] = useNearViewport<HTMLDivElement>()
   const width = useWidth(viewRef)
   const def = widget.type === 'group' ? null : getGlanceWidget(widget.type)
-  const title = widget.title ?? (widget.type === 'group' ? t('glance.w.group') : def ? t(def.titleKey) : widget.type)
+  const title = widget.title ?? (widget.type === 'group' ? t('sidebar.group') : def ? t(def.titleKey) : widget.type)
   const frameless = !!def?.frameless && !editing
   const chrome = (
     <header className="flex h-7 shrink-0 items-center gap-1 px-3">
@@ -523,11 +527,11 @@ function GlanceWidgetPicker({ onPick, onPickGroup, onClose }: { onPick: (def: Gl
       <div className="mt-2 flex max-h-[60vh] flex-col gap-3 overflow-y-auto">
         {GLANCE_CATEGORIES.map((cat) => {
           const defs = all.filter((d) => d.category === cat && match(d))
-          const showGroup = cat === 'advanced' && (!q || t('glance.w.group').toLowerCase().includes(q))
+          const showGroup = cat === 'advanced' && (!q || t('sidebar.group').toLowerCase().includes(q))
           if (defs.length === 0 && !showGroup) return null
           return (
             <div key={cat}>
-              <h3 className="pb-1 text-xs font-bold uppercase caps-label text-muted-foreground">{t(`glance.cat.${cat}`)}</h3>
+              <h3 className="pb-1 text-xs font-bold uppercase caps-label text-muted-foreground">{t(CATEGORY_LABEL_KEY[cat] ?? `glance.cat.${cat}`)}</h3>
               <ul className="grid gap-1" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
                 {defs.map((def) => {
                   const Icon = glanceIcon(def.icon)
@@ -547,7 +551,7 @@ function GlanceWidgetPicker({ onPick, onPickGroup, onClose }: { onPick: (def: Gl
                     <button type="button" onClick={onPickGroup} className="rox-home-tile flex w-full items-start gap-2 rounded-[var(--radius-card)] px-2.5 py-2 text-left" data-glance-pick="group">
                       <Layers className="mt-0.5 icon-toolbar shrink-0 text-muted-foreground" />
                       <span className="flex min-w-0 flex-col">
-                        <span className="truncate text-sm font-bold text-foreground">{t('glance.w.group')}</span>
+                        <span className="truncate text-sm font-bold text-foreground">{t('sidebar.group')}</span>
                       </span>
                     </button>
                   </li>
@@ -593,7 +597,7 @@ function GlanceSettingsDialog({
   const def = widget.type === 'group' ? null : getGlanceWidget(widget.type)
   const [title, setTitle] = useState(widget.title ?? '')
   const [config, setConfig] = useState<GlanceConfig>(() => (def ? resolveConfig(def, widget.config) : widget.config))
-  const name = widget.title ?? (def ? t(def.titleKey) : t('glance.w.group'))
+  const name = widget.title ?? (def ? t(def.titleKey) : t('sidebar.group'))
   return (
     <Modal title={t('glance.settings', { name })} onClose={onClose} testId="glance-settings">
       <form
@@ -603,7 +607,7 @@ function GlanceSettingsDialog({
           onSave({ title: title.trim() || null, config: def ? resolveConfig(def, config) : config })
         }}
       >
-        <Labeled label={t('glance.f.title')}>
+        <Labeled label={t('collection.table.column.title')}>
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={def ? t(def.titleKey) : ''} className={INPUT} />
         </Labeled>
         {def?.fields.map((field) => (

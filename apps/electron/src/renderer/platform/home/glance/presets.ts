@@ -60,7 +60,7 @@ export const GLANCE_PRESETS: readonly GlancePreset[] = [
   },
   {
     id: 'personal',
-    titleKey: 'glance.preset.personal',
+    titleKey: 'chrome.section.personal',
     build: (title) => ({
       title,
       width: 'slim',
