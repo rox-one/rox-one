@@ -10,7 +10,7 @@ export interface MessengerBindingInput {
   channelName?: string
   enabled: boolean
   createdAt: number
-  /** Platform chat type, once the server records it on the binding. */
+  /** Platform chat type recorded by the server ('direct' | 'group' | 'channel'). */
   chatType?: string
 }
 
@@ -24,9 +24,10 @@ export interface MessengerSessionInput {
 export type MessengerChatKind = 'thread' | 'channel' | 'direct' | 'chat'
 
 /**
- * Classify a binding by the platform chat type the server records
- * (`chatType`). Until the server persists it, a binding without a type goes
- * into the neutral «Чаты» group: no guessing from id conventions.
+ * Classify a binding by the chat type the server records on it (`chatType`,
+ * normalised by the messaging gateway; Telegram legacy bindings are migrated
+ * from their id sign, others are backfilled on the next incoming message).
+ * A binding without a type goes into the neutral «Чаты» group.
  */
 export function classifyBinding(b: Pick<MessengerBindingInput, 'threadId' | 'chatType'>): MessengerChatKind {
   if (b.threadId != null) return 'thread'
