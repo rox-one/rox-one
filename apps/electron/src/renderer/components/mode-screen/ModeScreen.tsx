@@ -119,7 +119,7 @@ function FallbackModeScreenLayout({
 export function NavTitle({ children }: { children: React.ReactNode }) {
   const shown = useDedupedPanelTitle(children)
   if (shown == null) return null
-  return <h1 className="px-2 pb-2 text-lg font-semibold">{shown}</h1>
+  return <h1 className="sr-only">{shown}</h1>
 }
 
 export function NavSection({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {

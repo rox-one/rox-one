@@ -44,7 +44,6 @@ export function FeedSectionTabs({ section }: { section: FeedSection }) {
         variant="segmented"
         density="compact"
         keyboard
-        tone="accent"
         ariaLabel={t('feed.section.label')}
         onSelect={(id) => navigate(id === 'inbox' ? routes.view.inbox() : routes.view.feed())}
       />
