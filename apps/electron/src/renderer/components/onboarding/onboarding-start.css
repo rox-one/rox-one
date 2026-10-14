@@ -398,6 +398,16 @@ html[data-render-profile="performance"] .onb-collapse { transition: none; }
   transform: scale(1.04);
 }
 .onb-start .onb-check[data-checked="true"] path { stroke-dashoffset: 0; }
+/* Compact variant for chips, tags and cards. */
+.onb-start .onb-check.onb-check-sm { width: 14px; height: 14px; border-radius: 999px; border-width: 1px; }
+.onb-start .onb-check.onb-check-sm svg { width: 10px; height: 10px; stroke-width: 2.6; }
+.onb-start .onb-check.onb-check-sm[data-checked="false"] { border-color: oklch(1 0 0 / 0.16); background: transparent; }
+
+/* Fallback when a start screen would need to shrink below the minimum scale:
+   a visible thin scrollbar instead of silently clipped content. */
+.onb-start .onb-thin-scroll { scrollbar-width: thin; scrollbar-color: oklch(1 0 0 / 0.22) transparent; }
+.onb-start .onb-thin-scroll::-webkit-scrollbar { display: block; width: 6px; }
+.onb-start .onb-thin-scroll::-webkit-scrollbar-thumb { background: oklch(1 0 0 / 0.22); border-radius: 999px; }
 
 /* Glow tiles (brand / illustration) */
 .onb-start .onb-tile {

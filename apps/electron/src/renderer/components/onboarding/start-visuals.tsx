@@ -39,15 +39,28 @@ export function RoxEyeMark({ className }: { className?: string }) {
   )
 }
 
+/** Smallest transform scale before the start screens fall back to a thin scroll. */
+export const FIT_MIN_SCALE = 0.75
+
 /**
  * Scales its child down (never up) so it always fits the available height.
  * The child keeps its natural layout; only a transform is applied, so focus
- * order, hit-testing and accessibility are unchanged.
+ * order, hit-testing and accessibility are unchanged. Below `minScale` the
+ * text would become unreadable, so the scale is clamped and the frame shows a
+ * visible thin scrollbar instead of clipping silently.
  */
-export function FitToViewport({ children, className }: { children: React.ReactNode; className?: string }) {
+export function FitToViewport({
+  children,
+  className,
+  minScale = FIT_MIN_SCALE,
+}: {
+  children: React.ReactNode
+  className?: string
+  minScale?: number
+}) {
   const outerRef = React.useRef<HTMLDivElement>(null)
   const innerRef = React.useRef<HTMLDivElement>(null)
-  const [scale, setScale] = React.useState(1)
+  const [fit, setFit] = React.useState({ scale: 1, natural: 0, overflow: false })
 
   React.useLayoutEffect(() => {
     const outer = outerRef.current
@@ -57,26 +70,57 @@ export function FitToViewport({ children, className }: { children: React.ReactNo
       const available = outer.clientHeight
       const natural = inner.offsetHeight
       if (available <= 0 || natural <= 0) return
-      const next = Math.min(1, available / natural)
-      setScale((prev) => (Math.abs(prev - next) < 0.005 ? prev : next))
+      const ideal = Math.min(1, available / natural)
+      const scale = Math.max(minScale, ideal)
+      const overflow = ideal < minScale
+      setFit((prev) =>
+        Math.abs(prev.scale - scale) < 0.005 && prev.overflow === overflow && Math.abs(prev.natural - natural) < 1
+          ? prev
+          : { scale, natural, overflow },
+      )
     }
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(outer)
     observer.observe(inner)
     return () => observer.disconnect()
-  }, [])
+  }, [minScale])
 
+  const { scale, natural, overflow } = fit
   return (
-    <div ref={outerRef} className={cn('relative flex min-h-0 w-full flex-1 justify-center overflow-hidden', scale < 1 ? 'items-start' : 'items-center', className)}>
-      <div
-        ref={innerRef}
-        data-fit-scale={scale.toFixed(3)}
-        className="w-full shrink-0"
-        style={scale < 1 ? { transform: `scale(${scale})`, transformOrigin: 'top center' } : undefined}
-      >
-        {children}
+    <div
+      ref={outerRef}
+      data-fit-overflow={overflow ? 'true' : undefined}
+      className={cn(
+        'relative flex min-h-0 w-full flex-1 justify-center',
+        overflow ? 'onb-thin-scroll overflow-y-auto overflow-x-hidden' : 'overflow-hidden',
+        scale < 1 ? 'items-start' : 'items-center',
+        className,
+      )}
+    >
+      {/* Reserves the scaled height so a clamped frame scrolls exactly to the end. */}
+      <div className="w-full shrink-0" style={overflow ? { height: natural * scale } : undefined}>
+        <div
+          ref={innerRef}
+          data-fit-scale={scale.toFixed(3)}
+          className="w-full"
+          style={scale < 1 ? { transform: `scale(${scale})`, transformOrigin: 'top center' } : undefined}
+        >
+          {children}
+        </div>
       </div>
     </div>
+  )
+}
+
+/**
+ * Small animated check shown on every selectable chip, card and tag of the
+ * start screens. Space is always reserved so selecting never shifts layout.
+ */
+export function ChipCheck({ checked, className }: { checked: boolean; className?: string }) {
+  return (
+    <span aria-hidden="true" className={cn('onb-check onb-check-sm', className)} data-checked={checked ? 'true' : 'false'}>
+      <svg viewBox="0 0 16 16"><path d="M3.5 8.4l3 3 6-6.6" /></svg>
+    </span>
   )
 }

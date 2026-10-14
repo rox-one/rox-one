@@ -339,15 +339,15 @@ export function QuestionnaireStep({
   }
 
   const locale = i18n?.language?.toLowerCase().startsWith('ru') ? 'ru' : 'en'
-  // Section cards; scrollbars are hidden on the start screens (the content
-  // is sized to fit, the wheel still works as a fallback on tiny windows).
+  // Section cards at natural height: the wizard's FitToViewport scales the
+  // whole page to one viewport (min 0.75, then a visible thin scroll).
   const columnClass =
-    'onb-card min-h-0 p-3 lg:overflow-y-auto lg:overscroll-contain'
+    'onb-card min-h-0 p-3'
 
   return (
     <div
       data-testid="onboarding-questionnaire-step"
-      className={cn('mx-auto flex w-full flex-col lg:h-full lg:min-h-0', className)}
+      className={cn('mx-auto flex w-full flex-col', className)}
     >
       <header className="shrink-0 text-center">
         <h1 className="text-lg font-semibold tracking-tight">{t('onboarding.questionnaire.title')}</h1>
@@ -356,7 +356,7 @@ export function QuestionnaireStep({
 
       <div
         data-testid="questionnaire-columns"
-        className="mt-5 grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-4"
+        className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)] lg:items-start lg:gap-3"
       >
         <div className={columnClass} data-testid="questionnaire-column-profile">
           <ProfileQuestionnaireColumn

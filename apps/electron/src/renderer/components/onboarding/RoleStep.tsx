@@ -24,6 +24,7 @@ import {
   type WorkStyleScaleKey,
 } from '@rox/shared/environment'
 import { BackButton, ContinueButton } from './primitives'
+import { ChipCheck } from './start-visuals'
 import {
   ONBOARDING_RELATED_ROLES,
   persistOnboardingRole,
@@ -70,12 +71,19 @@ const AGENT_ORDER: readonly WorkStyleAgent[] = ([
 
 const FORMAT_NAMES: Partial<Record<WorkStyleFormat, string>> = {
   pdf: 'PDF',
-  pptx: 'PPTX',
-  xlsx: 'XLSX',
-  docx: 'DOCX',
+  pptx: 'PPTX · PowerPoint',
+  xlsx: 'XLSX · Excel',
+  docx: 'DOCX · Word',
   json: 'JSON',
   markdown: 'Markdown',
 }
+
+/**
+ * Legacy values kept for stored answers only: «Документы» and «Офисные
+ * документы» overlapped DOCX/XLSX/PPTX, so they are offered only when already
+ * selected, and can be unticked.
+ */
+const LEGACY_FORMATS: readonly WorkStyleFormat[] = ['docs', 'office']
 
 /** Slider ends: [left, right] label keys; 0 = left, 10 = right. */
 const SCALE_ENDS: Record<WorkStyleScaleKey, readonly [string, string]> = {
@@ -102,14 +110,12 @@ function Chip({
   onClick,
   disabled,
   testId,
-  trailing,
 }: {
   selected: boolean
   label: string
   onClick: () => void
   disabled: boolean
   testId?: string
-  trailing?: ReactNode
 }) {
   return (
     <button
@@ -119,15 +125,15 @@ function Chip({
       onClick={onClick}
       data-testid={testId}
       className={cn(
-        'inline-flex max-w-full items-center gap-1 whitespace-normal break-words rounded-full border px-2.5 py-1 text-left text-xs leading-tight transition-[background-color,border-color,color] motion-reduce:transition-none',
+        'inline-flex max-w-full items-center gap-1.5 whitespace-normal break-words rounded-full border py-1 pl-1.5 pr-2.5 text-left text-xs leading-tight transition-[background-color,border-color,color] motion-reduce:transition-none',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/55',
         selected
           ? 'border-accent/40 bg-accent/15 font-medium text-foreground shadow-minimal'
           : 'border-border/60 bg-background/40 text-muted-foreground hover:bg-surface-hover hover:text-foreground',
       )}
     >
+      <ChipCheck checked={selected} />
       {label}
-      {trailing}
     </button>
   )
 }
@@ -184,7 +190,7 @@ function Card({ title, hint, children, testId }: { title: string; hint?: string;
   return (
     <section
       data-testid={testId}
-      className="onb-card flex min-h-0 flex-col gap-3 rounded-[var(--radius-card)] border border-border/60 bg-background/30 p-4 lg:overflow-y-auto"
+      className="onb-card flex min-h-0 flex-col gap-3 rounded-[var(--radius-card)] border border-border/60 bg-background/30 p-3"
     >
       <div>
         <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
@@ -269,13 +275,13 @@ export function RoleStep({ onContinue, onBack, isLoading = false, isFinishing = 
   }
 
   return (
-    <div data-testid="onboarding-role-step" className="mx-auto flex w-full flex-col lg:h-full lg:min-h-0">
+    <div data-testid="onboarding-role-step" className="mx-auto flex w-full flex-col">
       <header className="shrink-0 text-center">
         <h1 className="text-lg font-semibold tracking-tight">{t('onboarding.role.title')}</h1>
         <p className="onb-subtitle mt-1 text-sm text-muted-foreground">{t('onboarding.role.description')}</p>
       </header>
 
-      <div className="mt-4 grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-3 lg:items-start">
+      <div className="mt-3 grid gap-3 lg:grid-cols-3 lg:items-start">
         <Card testId="role-card-who" title={t('onboarding.role.section.who')}>
           <div className="grid grid-cols-2 gap-1 rounded-full border border-border/60 bg-background/30 p-1" role="group" aria-label={t('onboarding.role.section.who')}>
             {[true, false].map((value) => (
@@ -348,35 +354,37 @@ export function RoleStep({ onContinue, onBack, isLoading = false, isFinishing = 
               <p className="onb-helper text-xs text-muted-foreground">{t('onboarding.role.formatsHint')}</p>
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {WORK_STYLE_FORMATS.filter((format) => format !== 'docs').map((format) => {
+              {WORK_STYLE_FORMATS.filter((format) => !LEGACY_FORMATS.includes(format) || formats.includes(format)).map((format) => {
                 const isSelected = formats.includes(format)
                 const isPrimary = workStyle.primaryFormat === format
+                const label = FORMAT_NAMES[format] ?? t(`onboarding.role.format.${format}`)
                 return (
-                  <Chip
-                    key={format}
-                    testId={`role-format-${format}`}
-                    selected={isSelected}
-                    label={FORMAT_NAMES[format] ?? t(`onboarding.role.format.${format}`)}
-                    onClick={() => toggleFormat(format)}
-                    disabled={busy}
-                    trailing={isPrimary ? (
-                      <span data-testid="role-format-primary" className="ml-0.5 rounded-full bg-accent/25 px-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-foreground">
-                        {t('onboarding.role.formatPrimary')}
-                      </span>
-                    ) : isSelected ? (
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        title={t('onboarding.role.formatMakePrimary')}
-                        aria-label={t('onboarding.role.formatMakePrimary')}
-                        onClick={(event) => { event.stopPropagation(); makePrimary(format) }}
-                        onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); makePrimary(format) } }}
-                        className="ml-0.5 text-muted-foreground hover:text-foreground"
+                  <span key={format} className="inline-flex max-w-full items-center gap-0.5">
+                    <Chip
+                      testId={`role-format-${format}`}
+                      selected={isSelected}
+                      label={label}
+                      onClick={() => toggleFormat(format)}
+                      disabled={busy}
+                    />
+                    {isSelected ? (
+                      <button
+                        type="button"
+                        data-testid={isPrimary ? 'role-format-primary' : `role-format-make-primary-${format}`}
+                        aria-pressed={isPrimary}
+                        disabled={busy || isPrimary}
+                        title={isPrimary ? t('onboarding.role.formatPrimaryTooltip') : t('onboarding.role.formatMakePrimary')}
+                        aria-label={`${label}: ${isPrimary ? t('onboarding.role.formatPrimaryTooltip') : t('onboarding.role.formatMakePrimary')}`}
+                        onClick={() => makePrimary(format)}
+                        className={cn(
+                          'grid size-6 place-items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/55',
+                          isPrimary ? 'text-amber-300' : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
+                        )}
                       >
-                        <Star className="size-3" aria-hidden="true" />
-                      </span>
+                        <Star className="size-3.5" fill={isPrimary ? 'currentColor' : 'none'} aria-hidden="true" />
+                      </button>
                     ) : null}
-                  />
+                  </span>
                 )
               })}
             </div>
