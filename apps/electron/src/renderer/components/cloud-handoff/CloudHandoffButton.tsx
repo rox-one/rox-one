@@ -112,7 +112,7 @@ export function CloudHandoffButton({ sessionId }: { sessionId: string }) {
           onClick={() => void api.openUrl(url)}
           title={url}
         >
-          <ExternalLink className="h-4 w-4" />
+          <ExternalLink className="icon-toolbar" />
           {t('cloudHandoff.openInBrowser')}
         </Button>
       ) : (
@@ -126,7 +126,7 @@ export function CloudHandoffButton({ sessionId }: { sessionId: string }) {
           onContextMenu={(e) => { e.preventDefault(); setDialogOpen(true) }}
           aria-label={t('cloudHandoff.button')}
         >
-          {inFlight ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudUpload className="h-4 w-4" />}
+          {inFlight ? <Loader2 className="icon-toolbar animate-spin" /> : <CloudUpload className="icon-toolbar" />}
           {inFlight && status
             ? t(phaseLabelKey(status.phase), { uploaded: status.uploaded ?? 0, total: status.total ?? 0 })
             : t('cloudHandoff.button')}
