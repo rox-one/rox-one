@@ -179,4 +179,11 @@ describe('contextual sidebar: legacy sidebar placements migrate to «menu»', ()
   it('every default placement is pills or menu', () => {
     for (const entry of resolveNavSurfaces({ shellFlags: none })) expect(['pills', 'menu']).toContain(entry.placement)
   })
+
+  it('migrates saved legacy placements (primary/more → menu) and writes them back', () => {
+    localStorage.setItem(NAV_PLACEMENT_KEY, JSON.stringify({ docs: 'primary', tasks: 'more', feed: 'pills', settings: 'menu', x: 'bogus' }))
+    __resetNavPlacementsForTests()
+    setNavPlacement('memory', 'pills')
+    expect(JSON.parse(localStorage.getItem(NAV_PLACEMENT_KEY)!)).toEqual({ docs: 'menu', tasks: 'menu', feed: 'pills', memory: 'pills' })
+  })
 })
