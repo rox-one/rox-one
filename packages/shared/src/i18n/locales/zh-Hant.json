@@ -7297,6 +7297,7 @@
   "profile.defaultName": "使用者",
   "profile.level": "等級 {{level}}",
   "profile.openMenu": "開啟 {{name}} 的個人資料選單",
+  "profile.replayTour": "重新播放導覽",
   "profile.spent": "已花費 {{amount}}",
   "profile.spentTooltip": "此工作區所有工作階段的模型總花費",
   "profile.xpMax": "{{xp}} XP",

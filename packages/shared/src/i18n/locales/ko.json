@@ -7297,6 +7297,7 @@
   "profile.defaultName": "사용자",
   "profile.level": "레벨 {{level}}",
   "profile.openMenu": "{{name}} 프로필 메뉴 열기",
+  "profile.replayTour": "투어 다시 보기",
   "profile.spent": "사용액 {{amount}}",
   "profile.spentTooltip": "이 워크스페이스 세션의 총 모델 사용 비용",
   "profile.xpMax": "{{xp}} XP",

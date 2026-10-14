@@ -7323,6 +7323,7 @@
   "profile.defaultName": "Użytkownik",
   "profile.level": "Poz. {{level}}",
   "profile.openMenu": "Otwórz menu profilu: {{name}}",
+  "profile.replayTour": "Powtórz przewodnik",
   "profile.spent": "Wydano {{amount}}",
   "profile.spentTooltip": "Łączny koszt modeli w sesjach tego obszaru roboczego",
   "profile.xpMax": "{{xp}} XP",
