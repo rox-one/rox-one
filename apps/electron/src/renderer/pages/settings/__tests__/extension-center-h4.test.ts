@@ -26,6 +26,8 @@ describe('H4 Extension Center', () => {
     expect(page).toContain('extensions.developer.hint')
     expect(page).toContain('extensions.registries.hint')
     expect(page).toContain('role="switch"')
+    expect(page).toContain('aria-label={`${name}: ${')
+    expect(page).toContain('WindowedCards')
     expect(page).toContain('craft:open-vps-browser')
   })
 

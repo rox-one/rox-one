@@ -329,6 +329,17 @@ export interface OidcConfig {
   clientSecret?: string
   /** Public base URL of this web UI, without a trailing slash. */
   publicUrl: string
+  /**
+   * When set, only these OIDC subjects may sign in (cloud handoff pins the
+   * sandbox to its owner). Absent/empty keeps any verified issuer user.
+   */
+  allowedSubs?: readonly string[]
+  /**
+   * When set, the OIDC redirect base is taken from the request host if it fully
+   * matches this pattern (rotating signed Daytona preview hosts); otherwise
+   * `publicUrl` is used. Always https.
+   */
+  publicHostPattern?: RegExp
 }
 
 /** `iss`/`aud`/`exp`/`nonce`-verified OIDC user identity. */
@@ -351,6 +362,8 @@ export interface OidcDiscovery {
 export interface OidcLoginState {
   codeVerifier: string
   nonce: string
+  /** Exact redirect_uri sent at login; reused for the token exchange. */
+  redirectUri?: string
 }
 
 const OIDC_CACHE_TTL_MS = 300_000
@@ -378,11 +391,18 @@ export function readOidcConfigFromEnv(env: Record<string, string | undefined> = 
   const publicUrl = env.ROX_WEBUI_PUBLIC_URL?.trim()
   if (!issuer || !clientId || !publicUrl) return null
   const clientSecret = env.ROX_WEBUI_OIDC_CLIENT_SECRET?.trim()
+  const publicHostPattern = compileHostPattern(env.ROX_WEBUI_PUBLIC_HOST_PATTERN)
+  const allowedSubs = (env.ROX_WEBUI_OIDC_ALLOWED_SUBS ?? '')
+    .split(',')
+    .map((sub) => sub.trim())
+    .filter((sub) => sub.length > 0)
   return {
     issuer: issuer.replace(/\/+$/, ''),
     clientId,
     publicUrl: publicUrl.replace(/\/+$/, ''),
     ...(clientSecret ? { clientSecret } : {}),
+    ...(allowedSubs.length > 0 ? { allowedSubs } : {}),
+    ...(publicHostPattern ? { publicHostPattern } : {}),
   }
 }
 
@@ -634,4 +654,40 @@ export class HandoffTokenStore {
   storedDigests(): string[] {
     return [...this.digests.keys()]
   }
+}
+
+/** Whether a verified OIDC subject may open this web UI (owner pinning). */
+export function isOidcSubjectAllowed(config: Pick<OidcConfig, 'allowedSubs'>, sub: string): boolean {
+  const allowed = config.allowedSubs
+  if (!allowed || allowed.length === 0) return true
+  return allowed.some((candidate) => constantTimeStringEqual(candidate, sub))
+}
+
+function constantTimeStringEqual(a: string, b: string): boolean {
+  const ha = createHash('sha256').update(a).digest()
+  const hb = createHash('sha256').update(b).digest()
+  return timingSafeEqual(ha, hb) && a.length === b.length
+}
+
+/** Anchored, case-insensitive host pattern; invalid patterns disable the feature. */
+function compileHostPattern(raw: string | undefined): RegExp | undefined {
+  const source = raw?.trim()
+  if (!source) return undefined
+  try {
+    return new RegExp(`^(?:${source})$`, 'i')
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * The OIDC redirect URI for a login request: the request host when it matches
+ * `publicHostPattern` (https only), else the configured public URL.
+ * Returns null when a pattern is configured and the host does not match.
+ */
+export function resolveOidcRedirectUri(config: Pick<OidcConfig, 'publicUrl' | 'publicHostPattern'>, requestHost: string | null): string | null {
+  if (!config.publicHostPattern) return `${config.publicUrl}/api/auth/callback`
+  const host = requestHost?.trim().toLowerCase() ?? ''
+  if (!host || !/^[a-z0-9.-]+(?::\d+)?$/.test(host) || !config.publicHostPattern.test(host)) return null
+  return `https://${host}/api/auth/callback`
 }

@@ -59,7 +59,7 @@ import { SendResourceToWorkspaceDialog, type SendResourceType } from './SendReso
 import {
   knowledgeActiveViewIdAtom,
   knowledgeHomeViewAtom,
-} from '../../knowledge/KnowledgeHome'
+} from '../../knowledge/knowledge-home-model'
 
 import { lazyRoutePage, RouteErrorBoundary } from '@/lib/route-recovery'
 import { endRouteSwitch } from '@/lib/startup-perf'
@@ -275,7 +275,11 @@ export function MainContentPanel({
   return (
     <>
       {retainedSurfaces.map(entry => (
-        <RetainedSurfacePane key={entry.key} active={entry.key === routeKey}>
+        <RetainedSurfacePane
+          key={entry.key}
+          active={entry.key === routeKey}
+          onWeight={entry.reportWeight}
+        >
           {entry.node}
         </RetainedSurfacePane>
       ))}

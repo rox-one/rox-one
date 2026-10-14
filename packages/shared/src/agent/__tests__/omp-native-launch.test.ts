@@ -4,7 +4,6 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, symlinkSync, writeFil
 import { basename, dirname, join } from 'node:path';
 import { OmpAgent } from '../omp-agent.ts';
 import { AbortReason } from '../backend/types.ts';
-import { withOmpRequiredModes } from '../omp-history.ts';
 import { createPocketFixture } from '../../auth/__tests__/pocket-test-fixture.ts';
 import { setRoxAccountAuthority, LOCAL_ROX_CALLER } from '../../auth/rox-account-authority.ts';
 import { getCredentialManager } from '../../credentials/manager.ts';
@@ -243,14 +242,14 @@ describe.skipIf(!hasNativeSource)('managed OMP native invocation boundaries (cac
     await agent.updateRuntimeConfig({ model: 'rox/kimi-k2' });
     await chatEvents(agent, 'updated model', 30_000);
     expect(fake.readRpcLog().filter(frame => frame.type === 'prompt').at(-1)?.observedModel).toEqual({ provider: 'rox', id: 'kimi-k2' });
-    expect(fake.readRpcLog().filter(frame => frame.type === 'set_thinking_level' && frame.level === 'max')).toHaveLength(3);
+    expect(fake.readRpcLog().filter(frame => frame.type === 'set_thinking_level' && frame.level === 'medium')).toHaveLength(3);
   }, 40_000);
 
   it('one-shot keeps main mandatory model/thinking/directive argv and cleans both owners on exit', async () => {
     const { agent, fake, observation } = await setup();
     const prompt = 'Русский\n" & | %PATH% !literal! \\';
     expect(await agent.runMiniCompletion(prompt)).toContain('fake-omp answer');
-    expect(fake.readArgvLog()[0]).toEqual(['--no-session', '--thinking', 'max', '--model', 'rox/fast', '-p', withOmpRequiredModes(prompt)]);
+    expect(fake.readArgvLog()[0]).toEqual(['--no-session', '--thinking', 'medium', '--model', 'rox/fast', '-p', prompt]);
     const seen = JSON.parse(readFileSync(observation, 'utf8').trim());
     expect(seen.entry).toContain(join('omp-native', 'rox-native-policy-'));
     expect(seen.attribution).toBe('rox');

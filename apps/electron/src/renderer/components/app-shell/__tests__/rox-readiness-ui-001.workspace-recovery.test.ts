@@ -7,7 +7,10 @@ import * as realStorage from '../../../lib/local-storage'
 import { loadShellLayout as realLoadShellLayout } from '../../../lib/shell-layout-preferences'
 
 function skillPageBindings(
-  api: { getSkills: (...args: unknown[]) => Promise<unknown>; onSkillsChanged: (...args: unknown[]) => () => void },
+  api: {
+    getSkills: (...args: unknown[]) => Promise<unknown>
+    onSkillsChanged: (callback: (workspace: string, data: string[]) => void) => () => void
+  },
   extra: Record<string, unknown> = {},
 ) {
   return {

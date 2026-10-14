@@ -342,7 +342,6 @@ export function prepareOmpRoxRuntimeConfig(input: {
       config.modelRoles = { ...config.modelRoles, default: requestedModel };
     }
     config.magicKeywords = { ...config.magicKeywords, enabled: true, ultrathink: true, orchestrate: true, workflow: true };
-    config.providers = { ...config.providers, autoThinkingMaxEffort: 'max' };
     const workerPolicyPath = join(agentDir, 'rox-worker-policy.js');
     writeFileSync(workerPolicyPath, OMP_WORKER_POLICY_SOURCE, { mode: 0o600 });
     config.extensions = [...(Array.isArray(config.extensions) ? config.extensions : []), workerPolicyPath];
@@ -358,7 +357,7 @@ export function prepareOmpRoxRuntimeConfig(input: {
     // switches off these keywords, without rewriting that workspace file.
     writeFileSync(join(agentDir, 'rox-runtime-policy.yml'), stringifyYaml({
       magicKeywords: config.magicKeywords,
-      providers: { autoThinkingMaxEffort: 'max' },
+      providers: config.providers,
       task: { maxEffort: 'max' },
       extensions: config.extensions,
       eval: { js: true, tools: { enabled: true } },
