@@ -42,8 +42,9 @@ export function teamCallRoomName(channelId: string): string {
 }
 
 /**
- * Messenger contract v1 call event (`content` of a kind-9 message tagged ["rox","call"]),
- * for the relay bridge. Returns null for non-call messages.
+ * Messenger contract v1 call event (`content` of a kind-9 message tagged ["rox","call"]).
+ * Consumed by Rox Messenger's relay bridge / service-event endpoint (their PRs); tested here
+ * so the payload shape stays in lockstep with /workspace contract v1. Null for non-call messages.
  */
 export function toMessengerCallEvent(message: TeamChannelMessage, call: TeamChannelCall, opts: { transcriptUrl?: string; summary?: string } = {}):
   | { type: 'call.started'; roomName: string; startedBy: string; ts: number }
@@ -467,10 +468,15 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       const call = (store.calls ?? []).find(c => c.id === callId && c.channelId === channel.id)
       if (!call) throw new TeamChatError('NOT_FOUND', 'Call not found')
       if (call.endedAt) throw new TeamChatError('INVALID', 'Call has ended')
+      // Only people who joined this call may add to its transcript (late chunks after leaving are fine).
+      if (!call.everParticipantIds.includes(actor.userId)) throw new TeamChatError('FORBIDDEN', 'Not in this call')
+      const maxMs = Math.max(0, now() - call.startedAt) + 60_000
       const segments = (Array.isArray(segmentsInput) ? segmentsInput : []).slice(0, 500)
         .map(v => cleanSegment(v, actor.userId)).filter((v): v is TeamCallTranscriptSegment => !!v)
         // Each participant transcribes only their own microphone: no speaking for others.
         .map(v => ({ ...v, speakerId: actor.userId }))
+        .filter(v => v.startMs <= maxMs)
+        .map(v => ({ ...v, endMs: Math.min(v.endMs, maxMs) }))
       // Idempotent: the same segment can arrive from several windows.
       const key = (s: TeamCallTranscriptSegment) => `${s.speakerId}|${s.startMs}|${s.text}`
       const seen = new Set(call.transcript.map(key))
@@ -482,20 +488,6 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       }
       if (added) save(store)
       return { orgId: channel.orgId, added }
-    },
-
-    /** Post the AI summary of an ended call (once). */
-    postCallSummary(channelIdInput: unknown, callIdInput: unknown, summaryInput: unknown, actor: TeamChatActor): { orgId: string; message: TeamChannelMessage | null } {
-      const store = load()
-      const channel = callChannel(store, channelIdInput, actor)
-      const call = (store.calls ?? []).find(c => c.id === requireId(callIdInput, 'callId') && c.channelId === channel.id)
-      if (!call) throw new TeamChatError('NOT_FOUND', 'Call not found')
-      if (!call.endedAt || call.summaryMessageId) return { orgId: channel.orgId, message: null }
-      const text = cleanText(summaryInput, TEAM_SUMMARY_MAX, 'summary')
-      const message = appendMessage(store, channel, { senderId: 'system', kind: 'summary', callId: call.id, text })
-      call.summaryMessageId = message.id
-      save(store)
-      return { orgId: channel.orgId, message }
     },
 
     /** Host-internal: post the AI summary for an ended call (no actor; once). Returns false if already posted. */

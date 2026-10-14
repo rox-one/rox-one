@@ -48,7 +48,7 @@ function view(p: Participant, isLocal: boolean): CallParticipantView {
     speaking: p.isSpeaking,
     micOn: !!pub(Track.Source.Microphone) && !pub(Track.Source.Microphone)!.isMuted,
     cameraOn: !!pub(Track.Source.Camera) && !pub(Track.Source.Camera)!.isMuted,
-    screenOn: !!pub(Track.Source.ScreenShare),
+    screenOn: !!pub(Track.Source.ScreenShare) && !pub(Track.Source.ScreenShare)!.isMuted,
   }
 }
 
@@ -133,7 +133,7 @@ export function useTeamCall(opts: { selfName: string }) {
   }, [])
 
   const leave = React.useCallback(async () => {
-    generation.current++
+    const gen = ++generation.current
     const channelId = channelRef.current
     const flush = stopAsr.current
     stopAsr.current = null
@@ -145,7 +145,8 @@ export function useTeamCall(opts: { selfName: string }) {
     if (channelId) document.querySelectorAll(`audio[data-rox-call-audio="${CSS.escape(channelId)}"]`).forEach(el => el.remove())
     // The last ASR chunk must land before the host closes the call and posts the transcript.
     await flush?.().catch(() => {})
-    if (channelId) await window.electronAPI.teamChatCallLeave(channelId).catch(() => {})
+    // A re-join that happened meanwhile owns the call now: don't let this stale leave remove it.
+    if (channelId && gen === generation.current) await window.electronAPI.teamChatCallLeave(channelId).catch(() => {})
   }, [])
 
   const join = React.useCallback(async (channelId: string) => {

@@ -34,6 +34,8 @@ describe('team calls', () => {
     s.appendCallTranscript(general.id, a.call.id, [{ speakerId: 'alice', speakerName: 'Анна', text: 'Тесты закончим к пятнице', startMs: 9000, endMs: 12000 }], bob)
     // A segment can't be attributed to someone else.
     expect(s.listChannels(ORG, alice)[0]!.activeCall).toMatchObject({ transcript: [], transcriptSegments: 2 })
+    // Members who never joined the call can't write into its transcript.
+    expect(() => s.appendCallTranscript(general.id, a.call.id, [{ text: 'x', startMs: 0, endMs: 1 }], carol)).toThrow()
     // Non-members can't be injected into the participant list.
     s.syncCallParticipants(general.id, ['alice', 'bob', 'mallory'], alice)
     expect(s.listChannels(ORG, alice)[0]!.activeCall!.participantIds.sort()).toEqual(['alice', 'bob'])
@@ -50,8 +52,8 @@ describe('team calls', () => {
     const events = messages.map(m => toMessengerCallEvent(m, ended)?.type)
     expect(events).toEqual(['call.started', 'call.ended', 'call.transcript'])
     expect(toMessengerCallEvent(messages.find(m => m.event === 'call.ended')!, ended)).toMatchObject({ participants: ['alice', 'bob'] })
-    expect(s.postCallSummary(general.id, a.call.id, '- Релиз на этой неделе', alice).message?.kind).toBe('summary')
-    expect(s.postCallSummary(general.id, a.call.id, 'again', alice).message).toBeNull()
+    expect(s.postCallSummaryAsSystem(general.id, a.call.id, '- Релиз на этой неделе')).toBe(true)
+    expect(s.postCallSummaryAsSystem(general.id, a.call.id, 'again')).toBe(false)
     expect(s.searchMessages(ORG, 'пятниц', carol).map(m => m.kind)).toEqual(['transcript'])
     expect(s.searchMessages(ORG, 'релиз', carol).map(m => m.kind).sort()).toEqual(['summary', 'transcript'])
   })
