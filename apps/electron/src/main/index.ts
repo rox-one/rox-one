@@ -682,6 +682,13 @@ app.whenReady().then(async () => {
   // main settles only once the server is listening and its sinks are wired —
   // so no renderer RPC is issued before the server, while the window is on
   // screen throughout.
+  // #1586: off by default. Only when ROX_SERVER_UTILITY_PROCESS=1 is the
+  // server forked into a utilityProcess; success sets CRAFT_SERVER_URL so the
+  // existing thin-client path below takes over. Flag off → no import, no-op.
+  if (process.env.ROX_SERVER_UTILITY_PROCESS) {
+    const { maybeStartServerHost } = await import('./server-host')
+    await maybeStartServerHost((level, msg) => mainLog[level](msg))
+  }
   const isClientOnly = !!process.env.CRAFT_SERVER_URL
   const isHeadless = !!process.env.CRAFT_HEADLESS
   try {
@@ -2387,6 +2394,15 @@ async function performQuitCleanup(): Promise<void> {
       await openDesignRuntime.stop()
     } catch (err) {
       mainLog.warn('[open-design] shutdown failed:', err instanceof Error ? err.message : err)
+    }
+  }
+
+  if (process.env.ROX_SERVER_UTILITY_PROCESS) {
+    try {
+      const { stopServerHost } = await import('./server-host')
+      await stopServerHost()
+    } catch (err) {
+      mainLog.warn('[server-host] stop on quit failed:', err)
     }
   }
 

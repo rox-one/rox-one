@@ -37,7 +37,8 @@
     "dist:win": "powershell -ExecutionPolicy Bypass -File scripts/build-win.ps1",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "build:extension-host-worker": "esbuild src/main/extension-host/worker.ts --bundle --platform=node --format=cjs --outfile=dist/extension-host-worker.cjs --external:electron"
+    "build:extension-host-worker": "esbuild src/main/extension-host/worker.ts --bundle --platform=node --format=cjs --outfile=dist/extension-host-worker.cjs --external:electron",
+    "build:server-host-worker": "esbuild ../../packages/server/src/index.ts --bundle --platform=node --format=cjs --outfile=dist/server-host-worker.cjs --external:electron"
   },
   "dependencies": {
     "@rox/browser-intel": "workspace:*",
