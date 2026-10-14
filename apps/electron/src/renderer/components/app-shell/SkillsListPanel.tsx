@@ -12,7 +12,6 @@ import { EntityPanel } from '@/components/ui/entity-panel'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import { skillSelection } from '@/hooks/useEntitySelection'
 import { SkillMenu } from './SkillMenu'
-import { SendResourceToWorkspaceDialog } from './SendResourceToWorkspaceDialog'
 import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton'
 import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'
@@ -25,6 +24,10 @@ import type { BundledSkillPackStatus, LoadedSkill } from '../../../shared/types'
 import { toErrorMessage } from '@/lib/errors'
 import { useSkillsQuery } from '@/hooks/use-skills-query'
 import { VirtualList } from '@/components/ui/virtual-list'
+
+const SendResourceToWorkspaceDialog = React.lazy(() =>
+  import('./SendResourceToWorkspaceDialog').then((m) => ({ default: m.SendResourceToWorkspaceDialog })),
+)
 
 const RISK_FLAG_ICON: Record<SkillRiskFlag, typeof Network> = {
   'network': Network,
@@ -743,16 +746,18 @@ export function SkillsListPanel({
     )}
 
     {/* Send to Workspace dialog */}
-    {sendResourceSlug && (
-      <SendResourceToWorkspaceDialog
-        open={sendDialogOpen}
-        onOpenChange={setSendDialogOpen}
-        resourceType="skill"
-        resourceIds={[sendResourceSlug]}
-        resourceLabel={sendResourceLabel}
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId}
-      />
+    {sendResourceSlug && sendDialogOpen && (
+      <React.Suspense fallback={null}>
+        <SendResourceToWorkspaceDialog
+          open
+          onOpenChange={setSendDialogOpen}
+          resourceType="skill"
+          resourceIds={[sendResourceSlug]}
+          resourceLabel={sendResourceLabel}
+          workspaces={workspaces}
+          activeWorkspaceId={activeWorkspaceId}
+        />
+      </React.Suspense>
     )}
     </div>
   )
