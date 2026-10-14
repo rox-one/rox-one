@@ -562,6 +562,14 @@ export type PermissionRequestType = 'bash' | 'file_write' | 'mcp_mutation' | 'ap
 /**
  * Permission request from agent (e.g., bash command approval)
  */
+/**
+ * What a file-writing tool is about to change, for the permission card's diff
+ * preview. Texts are capped (see `truncated`); never used to make the decision.
+ */
+export type PermissionPreview =
+  | { kind: 'edit'; filePath: string; hunks: Array<{ oldText: string; newText: string }>; truncated?: boolean }
+  | { kind: 'write'; filePath: string; newText: string; truncated?: boolean };
+
 export interface PermissionRequest {
   requestId: string;
   toolName: string;
@@ -582,6 +590,8 @@ export interface PermissionRequest {
   commandHash?: string;
   /** Approval validity window */
   approvalTtlSeconds?: number;
+  /** Diff preview for file writes (Edit / MultiEdit / Write). */
+  preview?: PermissionPreview;
 }
 
 /**
