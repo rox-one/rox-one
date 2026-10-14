@@ -212,6 +212,15 @@ export const actions = {
     defaultHotkey: 'mod+shift+b',
     category: 'View',
   },
+  'view.toggleSplit': {
+    id: 'view.toggleSplit',
+    labelKey: 'shortcuts.action.toggleSplit',
+    description: 'Show two screens side by side, half and half (or leave split)',
+    defaultHotkey: 'mod+alt+\\',
+    category: 'View',
+    // A modifier chord types nothing, so it also works from the composer.
+    when: '!menuOpen',
+  },
   'view.toggleTerminal': {
     id: 'view.toggleTerminal',
     labelKey: 'shortcuts.action.toggleTerminal',

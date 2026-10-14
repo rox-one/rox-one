@@ -182,7 +182,7 @@ export function TaskSidebar({
 
       {areas.length || personalProjects.length ? (
         <TaskSidebarGroup title={t('tasks.nav.projects')} icon={FolderKanban} tone="info">
-          {personalProjects.filter(project => !project.areaId).map(projectItem)}
+          {personalProjects.filter(project => !project.areaId || !areas.some(area => area.id === project.areaId)).map(projectItem)}
           {areas.map(area => {
             const projects = personalProjects.filter(project => project.areaId === area.id)
             const navigation = (
