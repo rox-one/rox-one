@@ -252,8 +252,9 @@ The probe asserts exactly this (`scripts/electron_handshake_probe.py`, §8):
 | 401 | missing/incorrect token on a JSON route | `:175-176`, `:211-212` |
 | 403 | Host header is not loopback | `:168-169`, `:209-210` |
 | 404 | unknown path; `POST /cancel` for an unknown `itemId` | `:206`, `:357` |
+| 409 | a `/cells/*` mutation arrives while a run is live for the item (`{"error":"notebook is running"}`) | `src/rox_cookbooks/host.py:627-628` |
 | 413 | POST body over 2 MiB | `:30`, `:131-132` |
-| 503 | `/run` or `/run-all` arrives after `LabHost.stop` began (`{"error":"host is shutting down"}`) | `src/rox_cookbooks/host.py:92-102`, `:276-277` |
+| 503 | `/run` or `/run-all` arrives after `LabHost.stop` began (`{"error":"host is shutting down"}`) | `src/rox_cookbooks/host.py:108-125`, `:299`, `:413` |
 
 All error bodies are `{"error": "<message>"}`, so a client can always show `data.error`
 (`src/rox_cookbooks/host.py:150-157`). `/document/<id>` adds `"reset": true` when the copy's
@@ -276,6 +277,10 @@ notebook is corrupt, meaning "offer Reset" (`:201-202`). The only 5xx is `503` f
 | POST | `/cancel` | `{itemId}` | `{ok:true, cancelled:<int>}` (`src/rox_cookbooks/host.py:407-419`) |
 | POST | `/reset` | `{itemId, confirm?}` | `{ok:true}` (`:296-307`) |
 | POST | `/save` | `{itemId,index,source}` or `{itemId,text}` | `{ok:true}` (`:308-346`) |
+| POST | `/cells/add` | `{itemId, cellType:"code"\|"markdown", index, source?}` | `{ok:true, index:<inserted>}` (`src/rox_cookbooks/host.py:554-644`) |
+| POST | `/cells/delete` | `{itemId, index}` | `{ok:true, index:<focus>}` (§3.7) |
+| POST | `/cells/move` | `{itemId, from, to}` | `{ok:true, index:to}` (§3.7) |
+| POST | `/cells/duplicate` | `{itemId, index}` | `{ok:true, index:index+1}` (§3.7) |
 | POST | `/store` | `{store:{key:value}}` | `{keys:[…]}` (`:347-356`) |
 
 Card and `missing` payloads carry **credential key names only** (`src/rox_cookbooks/ui.py:65-87`;
@@ -303,6 +308,72 @@ Card and `missing` payloads carry **credential key names only** (`src/rox_cookbo
 - For `/run-all`, the per-cell records already written to the temp `results.json` are kept, so a
   partially completed run reports the finished cells; the remaining cells come back `skipped`
   (`execute_all`, `src/rox_cookbooks/kernel.py:1328-1502`).
+
+### 3.7 Cell mutations (`POST /cells/*`)
+
+Wave 10 adds four structural routes so the notebook page can insert, delete, move and duplicate
+cells without the renderer ever writing to disk: the sidecar stays the only writer of the copy's
+ipynb. All four read-modify-write that file and answer `200 {"ok": true, "index": <int>}` — the
+cell index the caller should focus next. The response carries only the index; Electron main
+re-reads `GET /document/<itemId>` itself and hands the renderer `{document, index}`.
+
+| Method | Path | Body | 200 |
+|---|---|---|---|
+| POST | `/cells/add` | `{itemId, cellType:"code"\|"markdown", index, source?}` | `{ok:true, index:<inserted>}` |
+| POST | `/cells/delete` | `{itemId, index}` | `{ok:true, index:<focus>}` |
+| POST | `/cells/move` | `{itemId, from, to}` | `{ok:true, index:to}` |
+| POST | `/cells/duplicate` | `{itemId, index}` | `{ok:true, index:index+1}` |
+
+**Validation order** (`src/rox_cookbooks/host.py:554-644`) is fixed, so a client can rely on which
+failure it sees first:
+
+1. `itemId` — missing/empty → `400 {"error":"missing itemId"}`.
+2. **catalog item** — an unknown `itemId` → `400` carrying the `CatalogError` message.
+3. **kind** — a `.md` playbook → `400 {"error":"not a notebook"}` (the UI renders no insert row or
+   per-cell menu for a playbook, so nothing would call this anyway).
+4. **field types** — `cellType` outside `{"code","markdown"}` → `400`; a non-string `source` → `400`;
+   a non-integer `index` (or `from`/`to`) → `400`. These run *before* the workspace is touched, so a
+   malformed request never creates a copy.
+5. **bounds** — see the semantics below → `400 {"error":"cell index out of range"}`.
+6. **run-guard** — any live run for the item → `409 {"error":"notebook is running"}`
+   (`src/rox_cookbooks/host.py:627-628`).
+
+**Semantics of `index`:**
+
+- **add** — `0 <= index <= len` (`len` is the length *before* the insert, so `len` appends). `source`
+  defaults to `""`. Answers the inserted index (`index`).
+- **delete** — `0 <= index < len`. Answers the cell that slid into the removed one's slot,
+  `min(index, len-2)` measured before the delete, so deleting the last cell focuses the new last one;
+  deleting the only cell answers `-1` (nothing left to focus).
+- **move** — `0 <= from, to < len`; `from == to` is a successful no-op. The order is
+  remove-then-insert, so `to` is the destination position in the resulting order
+  (`[a,b,c].move(0,2) -> [b,c,a]`). Answers `to`.
+- **duplicate** — `0 <= index < len`; a `copy.deepcopy` of the cell is inserted at `index+1`. A
+  string `id` (nbformat 4.5) is regenerated as a fresh `uuid.uuid4().hex[:12]` so ids stay unique; a
+  cell without an id gets none. Answers `index+1`.
+
+**409 run-guard.** While any run is live for the item (`ActiveRuns.active`,
+`src/rox_cookbooks/kernel.py:1065`), every `/cells/*` call answers `409 {"error":"notebook is
+running"}`. This closes the race the persist path opens: a mutation would shift cell indices under a
+run that is about to write its output back *by index*, landing it in the wrong cell
+(`tests/test_notebook_persist.py:78-79`). The renderer also disables its controls while busy, but the
+host enforces it — a mutation from any other client is refused too.
+
+**Writer serialization (`_document_lock`).** Every read-modify-write of the copy's ipynb takes
+`LabHost._document_lock` (`src/rox_cookbooks/host.py:106`), because `ThreadingHTTPServer` runs
+requests concurrently and such a read-modify-write is not atomic — two overlapping writers would
+clobber each other. The covered sections are:
+
+- `POST /save` (`src/rox_cookbooks/host.py:518`);
+- all four `POST /cells/*` routes (`:604`);
+- the source pre-persist of `POST /run` (`:323`) and `POST /run-all` (`:429`);
+- **run registration** in `LabHost.begin_run` (`:108-125`), which is also the lock's link to the
+  run-guard: without it, "the guard sees `active() == 0`, so mutate" and "`/run` registers, then
+  reads the document" could interleave. Both paths take the locks in the same
+  document-then-lifecycle order, so there is no deadlock.
+
+Cell **execution** (`execute_code`/`execute_all`) deliberately stays outside the lock — a
+60-second run must not block Save; the run-guard above covers that race instead.
 
 ## 4. Sidebar embedding
 
