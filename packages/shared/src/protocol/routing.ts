@@ -1206,6 +1206,11 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.labels.DELETE,
   RPC_CHANNELS.labels.CHANGED,
 
+  // chatFolders — workspace chat-folder grouping (chat-folders.json)
+  RPC_CHANNELS.chatFolders.GET,
+  RPC_CHANNELS.chatFolders.MUTATE,
+  RPC_CHANNELS.chatFolders.CHANGED,
+
   // views — workspace UI views
   RPC_CHANNELS.views.LIST,
   RPC_CHANNELS.views.SAVE,

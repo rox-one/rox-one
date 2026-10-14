@@ -1,14 +1,24 @@
 /**
- * `buildNotebookExport` — unit tests (SPEC wave 9 §4, §Testing).
+ * `buildNotebookExport` — unit tests (SPEC wave 9 §4, §Testing; wave 11 §16).
  *
  * The builder is pure and deterministic: these tests pin the nbformat 4.5
  * shape, the exact line-splitting rule ("every line keeps its `\n` except the
- * last"; empty text → `[]`), the stdout/stderr stream mapping and the
- * `execution_count ?? null` rule, then round-trip the output through
- * `JSON.parse` the way a notebook reader would.
+ * last"; empty text → `[]`), the stdout/stderr stream mapping, the wave-11
+ * `display_data` records that follow them and the `execution_count ?? null`
+ * rule, then round-trip the output through `JSON.parse` the way a notebook
+ * reader would.
  */
 import { describe, expect, it } from 'bun:test'
 import { buildNotebookExport } from '../cookbooks'
+
+/** One output record as it lands in the file: a stream or a display record. */
+interface ParsedOutput {
+  output_type: string
+  name?: string
+  text?: string[]
+  metadata?: Record<string, unknown>
+  data?: Record<string, unknown>
+}
 
 /** The parsed notebook shape this file asserts against. */
 interface ParsedCell {
@@ -16,7 +26,7 @@ interface ParsedCell {
   source: string[]
   execution_count?: number | null
   metadata: Record<string, unknown>
-  outputs?: Array<{ output_type: string; name: string; text: string[] }>
+  outputs?: ParsedOutput[]
 }
 
 interface ParsedNotebook {
@@ -91,7 +101,7 @@ describe('buildNotebookExport', () => {
     expect(notebook.cells.map((cell) => cell.execution_count)).toEqual([null, 0, 42])
   })
 
-  it('maps a markdown cell to just cell_type/metadata/source', () => {
+  it('writes a markdown cell to just cell_type/metadata/source', () => {
     const notebook = parse(
       buildNotebookExport({ title: 'T', cells: [{ cellType: 'markdown', source: '# Heading\n\nBody' }] }),
     )
@@ -100,6 +110,91 @@ describe('buildNotebookExport', () => {
     ])
     expect(notebook.cells[0]).not.toHaveProperty('execution_count')
     expect(notebook.cells[0]).not.toHaveProperty('outputs')
+  })
+
+  // Wave 11: rich records (SPEC §16) land as `display_data` after the streams.
+  it('writes one display_data record per display, after the stream output', () => {
+    const notebook = parse(
+      buildNotebookExport({
+        title: 'T',
+        cells: [
+          {
+            cellType: 'code',
+            source: 'display("42")',
+            executionCount: 1,
+            stdout: 'out\n',
+            displays: [
+              { mime: 'text/plain', data: '42' },
+              { mime: 'image/png', data: 'QUJD' },
+            ],
+          },
+        ],
+      }),
+    )
+    expect(notebook.cells[0].outputs).toEqual([
+      { output_type: 'stream', name: 'stdout', text: ['out\n'] },
+      { output_type: 'display_data', metadata: {}, data: { 'text/plain': '42' } },
+      { output_type: 'display_data', metadata: {}, data: { 'image/png': 'QUJD' } },
+    ])
+  })
+
+  it('keeps the stream → stderr → display_data order for a failing cell', () => {
+    const notebook = parse(
+      buildNotebookExport({
+        title: 'T',
+        cells: [
+          {
+            cellType: 'code',
+            source: 'x',
+            executionCount: 2,
+            stdout: 'partial\n',
+            error: 'ValueError: boom',
+            displays: [{ mime: 'text/html', data: '<b>hi</b>' }],
+          },
+        ],
+      }),
+    )
+    expect(notebook.cells[0].outputs).toEqual([
+      { output_type: 'stream', name: 'stdout', text: ['partial\n'] },
+      { output_type: 'stream', name: 'stderr', text: ['ValueError: boom'] },
+      { output_type: 'display_data', metadata: {}, data: { 'text/html': '<b>hi</b>' } },
+    ])
+  })
+
+  it('stores an application/json display parsed, and one that does not parse verbatim', () => {
+    const notebook = parse(
+      buildNotebookExport({
+        title: 'T',
+        cells: [
+          {
+            cellType: 'code',
+            source: 'x',
+            displays: [
+              { mime: 'application/json', data: '{"answer":[1,2]}' },
+              { mime: 'application/json', data: 'not json' },
+            ],
+          },
+        ],
+      }),
+    )
+    expect(notebook.cells[0].outputs).toEqual([
+      { output_type: 'display_data', metadata: {}, data: { 'application/json': { answer: [1, 2] } } },
+      { output_type: 'display_data', metadata: {}, data: { 'application/json': 'not json' } },
+    ])
+  })
+
+  it('writes no display_data for an absent or empty display list', () => {
+    const notebook = parse(
+      buildNotebookExport({
+        title: 'T',
+        cells: [
+          { cellType: 'code', source: 'a', displays: [] },
+          { cellType: 'code', source: 'b' },
+        ],
+      }),
+    )
+    expect(notebook.cells[0].outputs).toEqual([])
+    expect(notebook.cells[1].outputs).toEqual([])
   })
 
   it('splits multiline text so every line but the last ends with a newline', () => {

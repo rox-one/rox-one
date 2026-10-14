@@ -5,6 +5,10 @@ import { join } from 'node:path'
 import { clearRegisteredSecretValues, registerSecretValues } from '@rox/shared/secrets'
 import {
   CookbooksRuntime,
+  DISPLAY_MAX_RECORD_CHARS,
+  DISPLAY_MAX_RECORDS,
+  DISPLAY_MAX_TOTAL_CHARS,
+  DISPLAY_TRUNCATION_MARKER,
   buildCookbooksChildEnv,
   computeCookbooksBackoffMs,
   computeCookbooksRunAllTimeoutMs,
@@ -453,7 +457,17 @@ const DOCUMENT_RAW = {
     {
       cell_type: 'code',
       source: ['print(1)\n', 'print(2)'],
-      outputs: [{ text: ['a', 'b'] }, { traceback: ['Traceback\n', 'Error: boom'] }],
+      execution_count: 3,
+      outputs: [
+        { text: ['a', 'b'] },
+        { traceback: ['Traceback\n', 'Error: boom'] },
+        // Wave 11: a persisted `display_data` keeps its mime bundle in `data`.
+        {
+          output_type: 'display_data',
+          metadata: {},
+          data: { 'text/plain': '42', 'image/png': 'QUJD', 'application/json': { answer: 42 } },
+        },
+      ],
     },
     { cell_type: 'markdown', source: '# Heading', outputs: [] },
   ],
@@ -468,6 +482,11 @@ const RUN_RAW = {
   returncode: 0,
   timed_out: false,
   missing: ['pinecone.api_key'],
+  // Wave 11: the runner's own record list, straight from its results file.
+  displays: [
+    { mime: 'text/plain', data: '42' },
+    { mime: 'image/png', data: 'QUJD' },
+  ],
 }
 
 const RUN_ALL_RAW = {
@@ -476,10 +495,47 @@ const RUN_ALL_RAW = {
   returncode: 0,
   missing: [],
   cells: [
-    { index: 0, status: 'ok', ok: true, stdout: 'first\n', stderr: '', error: null, timed_out: false, duration_ms: 3 },
+    {
+      index: 0,
+      status: 'ok',
+      ok: true,
+      stdout: 'first\n',
+      stderr: '',
+      error: null,
+      timed_out: false,
+      duration_ms: 3,
+      displays: [{ mime: 'image/png', data: 'QUJD' }],
+    },
     { index: 2, status: 'skipped', ok: false, stdout: null, stderr: null, error: null, timed_out: false, duration_ms: null },
   ],
 }
+
+/** Wave 11 (G4-F1): a 2 MiB payload — four times the per-record cap. */
+const HUGE_DISPLAY = 'a'.repeat(2 * 1024 * 1024)
+
+/** One mime bundle holding more entries than the per-cell record cap allows. */
+const MANY_MIME_RECORDS: Record<string, string> = Object.fromEntries(
+  Array.from({ length: 20 }, (_unused, index) => [`application/x-record-${index}`, `record-${index}`]),
+)
+
+/** The capped form of `MANY_MIME_RECORDS`: the first 12 records, in order. */
+const MANY_MIME_RECORDS_CAPPED = Array.from({ length: DISPLAY_MAX_RECORDS }, (_unused, index) => ({
+  mime: `application/x-record-${index}`,
+  data: `record-${index}`,
+}))
+
+/**
+ * The run path's own over-cap payload: one giant record, then 20 more. The
+ * mimes are distinct on purpose — one mime maps to one record, so a repeated
+ * mime would legitimately collapse in `dedupeDisplays` before the cap applies.
+ */
+const HUGE_RUN_DISPLAYS = [
+  { mime: 'image/png', data: HUGE_DISPLAY },
+  ...Array.from({ length: 20 }, (_unused, index) => ({
+    mime: `application/x-record-${index}`,
+    data: `record-${index}`,
+  })),
+]
 
 function startStub(options: { storeRejects?: boolean } = {}) {
   const requests: Array<{ path: string; authorization: string | null }> = []
@@ -507,7 +563,82 @@ function startStub(options: { storeRejects?: boolean } = {}) {
           return Response.json([CATALOG_CARD_RAW])
         case '/document/probe-item':
           return Response.json(DOCUMENT_RAW)
-        // 400 with no `error` field — the client must fall back to the status text.
+        // Wave 11: a `display_data` bundle with a non-string mime value, one
+        // whose `data` is not a bundle at all, and a plain stream output.
+        case '/document/bad-displays':
+          return Response.json({
+            kind: 'ipynb',
+            title: 'Malformed',
+            cells: [
+              {
+                cell_type: 'code',
+                source: 'x',
+                execution_count: null,
+                outputs: [
+                  { output_type: 'display_data', metadata: {}, data: { 'application/json': [1, 2] } },
+                  { output_type: 'display_data', metadata: {}, data: 'not-a-bundle' },
+                  { output_type: 'stream', name: 'stdout', text: 'plain\n' },
+                ],
+              },
+            ],
+            missing: [],
+            supported: true,
+          })
+        // Wave 11 (G4-F1): the read path must cap an untrusted copy — one 2 MiB
+        // record, and one mime bundle with more entries than the record cap.
+        case '/document/huge-displays':
+          return Response.json({
+            kind: 'ipynb',
+            title: 'Huge',
+            cells: [
+              {
+                cell_type: 'code',
+                source: 'x',
+                execution_count: 1,
+                outputs: [{ output_type: 'display_data', metadata: {}, data: { 'text/plain': HUGE_DISPLAY } }],
+              },
+            ],
+            missing: [],
+            supported: true,
+          })
+        case '/document/many-displays':
+          return Response.json({
+            kind: 'ipynb',
+            title: 'Many',
+            cells: [
+              {
+                cell_type: 'code',
+                source: 'x',
+                execution_count: 1,
+                outputs: [{ output_type: 'display_data', metadata: {}, data: MANY_MIME_RECORDS }],
+              },
+            ],
+            missing: [],
+            supported: true,
+          })
+        // Wave 11 (G3-3): one mime spelled four ways — case, whitespace and an
+        // exact repeat must collapse to the two canonical records.
+        case '/document/mime-case':
+          return Response.json({
+            kind: 'ipynb',
+            title: 'Mime case',
+            cells: [
+              {
+                cell_type: 'code',
+                source: 'x',
+                execution_count: 1,
+                outputs: [
+                  {
+                    output_type: 'display_data',
+                    metadata: {},
+                    data: { 'IMAGE/PNG': 'QUJD', ' image/png ': 'QUJD', '': 'dropped', 'Text/Plain ': '42' },
+                  },
+                ],
+              },
+            ],
+            missing: [],
+            supported: true,
+          })
         case '/document/no-error':
           return new Response(null, { status: 400 })
         // 200 that is not JSON at all — a broken sidecar, not a request error.
@@ -533,10 +664,57 @@ function startStub(options: { storeRejects?: boolean } = {}) {
           if (body.itemId === 'unsupported') {
             return Response.json({ error: 'no kernel for this item' }, { status: 400 })
           }
+          // Wave 11: a payload without `displays` at all (a pre-wave-11 sidecar)…
+          if (body.itemId === 'legacy-run') {
+            return Response.json({ ok: true, stdout: 'hi\n', timed_out: false, missing: [] })
+          }
+          // …and one whose record list is not `[{mime, data}]` strings.
+          if (body.itemId === 'garbage-displays') {
+            return Response.json({
+              ok: true,
+              stdout: '',
+              timed_out: false,
+              missing: [],
+              displays: [{ mime: 1, data: null }, 'nope', null],
+            })
+          }
+          // Wave 11 (G4-F1): an over-cap record list from the runner.
+          if (body.itemId === 'huge-displays') {
+            return Response.json({
+              ok: true,
+              stdout: '',
+              timed_out: false,
+              missing: [],
+              displays: HUGE_RUN_DISPLAYS,
+            })
+          }
+          // Wave 11 (G3-3): the run path normalises and dedupes mimes too — and
+          // keeps two payloads that share one mime (a cell may display twice).
+          if (body.itemId === 'mime-case') {
+            return Response.json({
+              ok: true,
+              stdout: '',
+              timed_out: false,
+              missing: [],
+              displays: [
+                { mime: 'IMAGE/PNG', data: 'QUJD' },
+                { mime: 'image/png', data: 'QUJD' },
+                { mime: '  Text/Plain ', data: 'a' },
+                { mime: 'text/plain', data: 'b' },
+                { mime: '   ', data: 'dropped' },
+              ],
+            })
+          }
           return Response.json(RUN_RAW)
         }
         case '/run-all': {
-          runAllBodies.push((await request.json()) as Record<string, unknown>)
+          const body = (await request.json()) as { itemId?: string }
+          runAllBodies.push(body as Record<string, unknown>)
+          if (body.itemId === 'garbage-displays') {
+            return Response.json({
+              cells: [{ index: 0, status: 'ok', stdout: '', error: null, displays: 'nope' }],
+            })
+          }
           return Response.json(RUN_ALL_RAW)
         }
         case '/save':
@@ -665,16 +843,117 @@ describe('CookbooksRuntime data plane', () => {
           {
             cellType: 'code',
             source: 'print(1)\nprint(2)',
+            executionCount: 3,
             outputs: [
-              { text: 'ab', traceback: null },
-              { text: '', traceback: 'Traceback\nError: boom' },
+              { text: 'ab', traceback: null, displays: [] },
+              { text: '', traceback: 'Traceback\nError: boom', displays: [] },
+              {
+                text: '',
+                traceback: null,
+                displays: [
+                  { mime: 'text/plain', data: '42' },
+                  { mime: 'image/png', data: 'QUJD' },
+                  // Wave 11: a JSON bundle nbformat stored parsed comes back as a string.
+                  { mime: 'application/json', data: '{"answer":42}' },
+                ],
+              },
             ],
           },
-          { cellType: 'markdown', source: '# Heading', outputs: [] },
+          { cellType: 'markdown', source: '# Heading', executionCount: null, outputs: [] },
         ],
         text: null,
       })
       expect(stub.requests[0].path).toBe('/document/probe-item')
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiDocument normalises a display bundle and drops a malformed one', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const document = await runtime.apiDocument('bad-displays')
+      expect(document.cells[0].executionCount).toBeNull()
+      expect(document.cells[0].outputs).toEqual([
+        // A non-string mime value is re-serialised, not lost.
+        { text: '', traceback: null, displays: [{ mime: 'application/json', data: '[1,2]' }] },
+        // `data` that is not a mime bundle at all contributes no display.
+        { text: '', traceback: null, displays: [] },
+        // A stream output never carries displays.
+        { text: 'plain\n', traceback: null, displays: [] },
+      ])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('reads a display bundle that fits byte-identical, with no marker (G4-F1)', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const document = await runtime.apiDocument('probe-item')
+      expect(document.cells[0].outputs[2].displays).toEqual([
+        { mime: 'text/plain', data: '42' },
+        { mime: 'image/png', data: 'QUJD' },
+        { mime: 'application/json', data: '{"answer":42}' },
+      ])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('caps a giant display record read from the document (G4-F1)', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const document = await runtime.apiDocument('huge-displays')
+      const displays = document.cells[0].outputs[0].displays
+      // The clipped record survives — the cap never drops data silently — and
+      // exactly one marker follows it.
+      expect(displays).toEqual([
+        { mime: 'text/plain', data: HUGE_DISPLAY.slice(0, DISPLAY_MAX_RECORD_CHARS) },
+        { mime: 'text/plain', data: DISPLAY_TRUNCATION_MARKER },
+      ])
+      expect(displays.reduce((total, display) => total + display.data.length, 0)).toBeLessThanOrEqual(
+        DISPLAY_MAX_TOTAL_CHARS,
+      )
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('stops a document display list at the record cap and appends one marker (G4-F1)', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const document = await runtime.apiDocument('many-displays')
+      const displays = document.cells[0].outputs[0].displays
+      expect(displays).toEqual([
+        ...MANY_MIME_RECORDS_CAPPED,
+        { mime: 'text/plain', data: DISPLAY_TRUNCATION_MARKER },
+      ])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('normalises mime spellings to one canonical record (G3-3)', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const document = await runtime.apiDocument('mime-case')
+      // `IMAGE/PNG` → `image/png`, ` image/png ` is the same record, the empty
+      // key is not a record at all, `Text/Plain ` → `text/plain`.
+      expect(document.cells[0].outputs[0].displays).toEqual([
+        { mime: 'image/png', data: 'QUJD' },
+        { mime: 'text/plain', data: '42' },
+      ])
     } finally {
       await runtime.stop()
       stub.stop()
@@ -706,7 +985,83 @@ describe('CookbooksRuntime data plane', () => {
         error: null,
         timedOut: false,
         missing: ['pinecone.api_key'],
+        // Wave 11: the runner's records pass straight through.
+        displays: [
+          { mime: 'text/plain', data: '42' },
+          { mime: 'image/png', data: 'QUJD' },
+        ],
       })
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiRun maps an absent or malformed display list to []', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      // A pre-wave-11 sidecar: the field is simply not there.
+      expect(await runtime.apiRun('legacy-run', 'print(1)', 0)).toEqual({
+        ok: true,
+        stdout: 'hi\n',
+        error: null,
+        timedOut: false,
+        missing: [],
+        displays: [],
+      })
+      // A record list that is not `[{mime, data}]` strings is dropped whole.
+      expect(await runtime.apiRun('garbage-displays', 'print(1)', 0)).toEqual({
+        ok: true,
+        stdout: '',
+        error: null,
+        timedOut: false,
+        missing: [],
+        displays: [],
+      })
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('caps an over-cap run display list the same way (G4-F1)', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const result = await runtime.apiRun('huge-displays', 'print(1)', 0)
+      // Defense in depth over the sidecar's own caps: the first record is
+      // clipped in place, the list stops at the cap and one marker follows.
+      expect(result.displays).toHaveLength(DISPLAY_MAX_RECORDS + 1)
+      expect(result.displays[0]).toEqual({
+        mime: 'image/png',
+        data: HUGE_DISPLAY.slice(0, DISPLAY_MAX_RECORD_CHARS),
+      })
+      expect(result.displays[DISPLAY_MAX_RECORDS]).toEqual({
+        mime: 'text/plain',
+        data: DISPLAY_TRUNCATION_MARKER,
+      })
+      expect(result.displays.reduce((total, display) => total + display.data.length, 0)).toBeLessThanOrEqual(
+        DISPLAY_MAX_TOTAL_CHARS,
+      )
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('normalises and dedupes the run path’s record list the same way (G3-3)', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const result = await runtime.apiRun('mime-case', 'print(1)', 0)
+      // Case/whitespace normalised, the exact repeat collapsed, the empty mime
+      // dropped — while two payloads under one mime both survive.
+      expect(result.displays).toEqual([
+        { mime: 'image/png', data: 'QUJD' },
+        { mime: 'text/plain', data: 'a' },
+        { mime: 'text/plain', data: 'b' },
+      ])
     } finally {
       await runtime.stop()
       stub.stop()
@@ -719,9 +1074,23 @@ describe('CookbooksRuntime data plane', () => {
     try {
       expect(await runtime.apiRunAll('probe-item', [{ index: 0, source: 'print(1)' }])).toEqual({
         cells: [
-          { index: 0, status: 'ok', stdout: 'first\n', error: null },
-          { index: 2, status: 'skipped', stdout: '', error: null },
+          { index: 0, status: 'ok', stdout: 'first\n', error: null, displays: [{ mime: 'image/png', data: 'QUJD' }] },
+          // Wave 11: a cell without displays (or a pre-wave-11 record) maps to [].
+          { index: 2, status: 'skipped', stdout: '', error: null, displays: [] },
         ],
+      })
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiRunAll drops a cell display list that is not a record array', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      expect(await runtime.apiRunAll('garbage-displays', [{ index: 0, source: 'x' }])).toEqual({
+        cells: [{ index: 0, status: 'ok', stdout: '', error: null, displays: [] }],
       })
     } finally {
       await runtime.stop()
