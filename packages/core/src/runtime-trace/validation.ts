@@ -53,6 +53,7 @@ const payloads: Record<string, Check> = {
   'agent.assigned': shape({ assignment }), 'agent.started': shape({ status }, { name: string }), 'agent.completed': shape({ status }, { result: content }),
   'skill.selected': shape({ capability }, { content }), 'skill.loaded': shape({ capability }, { content }), 'skill.applied': shape({ capability }, { content }),
   'tool.started': tool, 'tool.output': tool, 'tool.completed': tool,
+  'step.started': stepBoundary, 'step.completed': stepBoundary, 'llm.attempt.completed': attemptCompleted,
   'terminal.started': terminal, 'terminal.output': terminal, 'terminal.completed': terminal,
   'reasoning.output': shape({ content, provenance: oneOf('provider', 'summary', 'explicit') }, { complete: boolean }),
   'decision.recorded': shape({ content, provenance: oneOf('explicit', 'summary') }, { evidenceEventIds: array(id) }),

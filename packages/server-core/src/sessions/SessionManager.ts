@@ -1,5 +1,5 @@
 import { getRoxAccountAuthority, peekRoxAccountAuthority, type RoxExecutionContext } from '@rox/shared/auth'
-import { accumulateSessionTokens, isModelActivityEvent, markTurnTokensUncounted } from '@rox/shared/sessions'
+import { accumulateAttemptSessionUsage, accumulateSessionTokens, isModelActivityEvent, markTurnTokensUncounted } from '@rox/shared/sessions'
 import type { EventSink, RpcServer } from '@rox/server-core/transport'
 import { annotationPayloadRejection } from './annotation-payload'
 import { planSteeringSubmit, QueueSteering, type SteeringVerb } from './queue-steering'
@@ -11327,27 +11327,24 @@ export class SessionManager implements ISessionManager {
           }
           // inputTokens = current context size (full conversation sent this turn), NOT accumulated
           // Each API call sends the full conversation history, so we use the latest value
-          managed.tokenUsage.inputTokens = event.usage.inputTokens
+          Object.assign(managed.tokenUsage, accumulateAttemptSessionUsage(managed.tokenUsage, {
+            inputTokens: event.usage.inputTokens,
+            outputTokens: event.usage.outputTokens,
+            cacheReadTokens: event.usage.cacheReadTokens,
+            cacheCreationTokens: event.usage.cacheCreationTokens,
+            costUsd: event.usage.costUsd,
+            // Update context window (use latest value - may change if model switches)
+            contextWindow: event.usage.contextWindow ? event.usage.contextWindow : undefined,
+          }))
+          if (managed.budgetRunId && typeof event.usage.costUsd === 'number') {
+            managed.budgetUsageReported = true
+          }
           {
             // Real session total, counted per request (before outputTokens grows).
             const next = accumulateSessionTokens(managed.tokenUsage, event.usage.requestTotals)
             delete managed.tokenUsage.sessionTokens
             delete managed.tokenUsage.sessionTokensIncomplete
             Object.assign(managed.tokenUsage, next)
-          }
-          // outputTokens and costUsd are accumulated across all turns (total session usage)
-          managed.tokenUsage.outputTokens += event.usage.outputTokens
-          managed.tokenUsage.totalTokens = managed.tokenUsage.inputTokens + managed.tokenUsage.outputTokens
-          managed.tokenUsage.costUsd += event.usage.costUsd ?? 0
-          if (managed.budgetRunId && typeof event.usage.costUsd === 'number') {
-            managed.budgetUsageReported = true
-          }
-          // Cache tokens reflect current state, not accumulated
-          managed.tokenUsage.cacheReadTokens = event.usage.cacheReadTokens ?? 0
-          managed.tokenUsage.cacheCreationTokens = event.usage.cacheCreationTokens ?? 0
-          // Update context window (use latest value - may change if model switches)
-          if (event.usage.contextWindow) {
-            managed.tokenUsage.contextWindow = event.usage.contextWindow
           }
         }
         break

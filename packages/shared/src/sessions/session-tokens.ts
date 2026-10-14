@@ -23,8 +23,51 @@ export function accumulateSessionTokens(
 }
 
 /**
+ * One `complete`-branch accumulation step, shared by SessionManager and the
+ * journal-agreement test. Semantics: input/cache/window are last-wins (the
+ * current prompt), output and cost accumulate (every billed request), total
+ * is their sum. Missing provider fields fall back exactly as the manager did
+ * historically (output required, cost/cache default to 0, window kept).
+ */
+export interface AttemptSessionUsageInput {
+  inputTokens: number
+  outputTokens: number
+  cacheReadTokens?: number
+  cacheCreationTokens?: number
+  costUsd?: number
+  contextWindow?: number
+}
+export interface AttemptSessionUsageState {
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+  contextTokens: number
+  costUsd: number
+  cacheReadTokens?: number
+  cacheCreationTokens?: number
+  contextWindow?: number
+}
+export function accumulateAttemptSessionUsage<T extends AttemptSessionUsageState>(
+  prev: T,
+  attempt: AttemptSessionUsageInput,
+): T {
+  const inputTokens = attempt.inputTokens
+  const outputTokens = prev.outputTokens + attempt.outputTokens
+  return {
+    ...prev,
+    inputTokens,
+    outputTokens,
+    totalTokens: inputTokens + outputTokens,
+    costUsd: prev.costUsd + (attempt.costUsd ?? 0),
+    cacheReadTokens: attempt.cacheReadTokens ?? 0,
+    cacheCreationTokens: attempt.cacheCreationTokens ?? 0,
+    ...(attempt.contextWindow !== undefined ? { contextWindow: attempt.contextWindow } : { contextWindow: prev.contextWindow }),
+  }
+}
+
+/**
  * True once the turn has visibly reached the model (streamed text/thinking,
- * a tool call, or reported usage). Turns that end before any such event
+ * a tool call, a reported attempt, or reported usage). Turns that end before any such event
  * (empty-message rejection, auth/billing/rate-limit fallbacks, no-activity
  * runtime turns) made no counted request and must not hide the total.
  */
@@ -36,6 +79,7 @@ export function isModelActivityEvent(event: { type: string; usage?: unknown }): 
     case 'thinking_complete':
     case 'tool_start':
     case 'tool_result':
+    case 'attempt':
     case 'usage_update':
       return true
     case 'complete':

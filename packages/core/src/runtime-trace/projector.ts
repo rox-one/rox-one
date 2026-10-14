@@ -187,3 +187,123 @@ export function buildRuntimeGraph(state: RuntimeProjection): RuntimeGraph {
   }
   return {nodes,edges,lanes:buildAgentLanes(state),topologyVersion:state.topologyVersion}
 }
+
+/** DSH token-meter / turn-outline port (MIT, see notices/dsh-token-meter.LICENSE).
+ *
+ * Pure folds over journal events. Every number is provider-reported: a field a
+ * provider did not report stays undefined and renders as "—". Only the context
+ * breakdown is a labelled heuristic (≈, density ported from DSH estimate.js);
+ * it never feeds totals or cost. Cost is provider-reported costUsd summed over
+ * attempts; no catalog pricing exists, so unknown cost is omitted, never
+ * estimated. A retry emits another `llm.attempt.completed` (linked via
+ * `retryOf`); every attempt event bills separately, none replaces another.
+ */
+export interface TurnOutlineEntry { turnId: string; firstSeq: number; steps: number }
+export interface TurnOutline { turns: TurnOutlineEntry[]; turnCount: number; stepCount: number }
+/** Distinct turns in first-seen order; steps per turn is the highest step seen (started or completed). */
+export function projectTurnOutline(events: readonly RuntimeEvent[]): TurnOutline {
+  const order = new Map<string, TurnOutlineEntry>()
+  for (const event of events) {
+    if (event.kind !== 'step.started' && event.kind !== 'step.completed' && event.kind !== 'llm.attempt.completed') continue
+    const key = `${event.rootRunId} ${event.payload.turnId}`
+    const entry = order.get(key) ?? { turnId: event.payload.turnId, firstSeq: event.seq, steps: 0 }
+    if (event.payload.step > entry.steps) entry.steps = event.payload.step
+    order.set(key, entry)
+  }
+  const turns = [...order.values()]
+  return { turns, turnCount: turns.length, stepCount: turns.reduce((sum, turn) => sum + turn.steps, 0) }
+}
+
+export interface AttemptRecord {
+  eventId: string; seq: number; turnId: string; turnKey: string; step: number
+  usage: { uncachedInput?: number; output?: number; cacheRead?: number; cacheWrite?: number; reasoning?: number }
+  route?: { provider?: string; model?: string }
+  ttftMs?: number; decodeMs?: number; retryOf?: string; contextWindow?: number; costUsd?: number
+}
+export interface TurnTokenUsage {
+  turnId: string; turnKey: string; attempts: number; retries: number
+  uncachedInput?: number; output?: number; cacheRead?: number; cacheWrite?: number; reasoning?: number; costUsd?: number
+}
+export interface TokenUsageTotals extends Omit<TurnTokenUsage, 'turnId' | 'turnKey'> { partial: boolean }
+export interface TokenUsageProjection { totals: TokenUsageTotals; perTurn: TurnTokenUsage[]; attempts: AttemptRecord[] }
+function sumKnown(values: (number | undefined)[]): number | undefined {
+  let total: number | undefined
+  for (const value of values) if (typeof value === 'number') total = (total ?? 0) + value
+  return total
+}
+/** Totals and per-turn/per-attempt usage. Retries bill as separate attempts. */
+export function projectTokenUsage(events: readonly RuntimeEvent[]): TokenUsageProjection {
+  const attempts: AttemptRecord[] = []
+  for (const event of events) {
+    if (event.kind !== 'llm.attempt.completed') continue
+    attempts.push({ eventId: event.eventId, seq: event.seq, turnId: event.payload.turnId, turnKey: `${event.rootRunId} ${event.payload.turnId}`,
+      step: event.payload.step, usage: { ...event.payload.usage }, ...(event.payload.route ? { route: { ...event.payload.route } } : {}),
+      ...(event.payload.ttftMs !== undefined ? { ttftMs: event.payload.ttftMs } : {}),
+      ...(event.payload.decodeMs !== undefined ? { decodeMs: event.payload.decodeMs } : {}),
+      ...(event.payload.retryOf !== undefined ? { retryOf: event.payload.retryOf } : {}),
+      ...(event.payload.contextWindow !== undefined ? { contextWindow: event.payload.contextWindow } : {}),
+      ...(event.payload.costUsd !== undefined ? { costUsd: event.payload.costUsd } : {}) })
+  }
+  const perTurnOrder = new Map<string, AttemptRecord[]>()
+  for (const attempt of attempts) {
+    const list = perTurnOrder.get(attempt.turnKey) ?? []
+    list.push(attempt)
+    perTurnOrder.set(attempt.turnKey, list)
+  }
+  const perTurn: TurnTokenUsage[] = [...perTurnOrder.entries()].map(([turnKey, list]) => ({
+    turnId: list[0]!.turnId, turnKey, attempts: list.length, retries: list.filter(item => item.retryOf !== undefined).length,
+    uncachedInput: sumKnown(list.map(item => item.usage.uncachedInput)), output: sumKnown(list.map(item => item.usage.output)),
+    cacheRead: sumKnown(list.map(item => item.usage.cacheRead)), cacheWrite: sumKnown(list.map(item => item.usage.cacheWrite)),
+    reasoning: sumKnown(list.map(item => item.usage.reasoning)), costUsd: sumKnown(list.map(item => item.costUsd)),
+  }))
+  const partial = attempts.some(item => item.usage.uncachedInput === undefined || item.usage.output === undefined)
+  return { attempts,
+    perTurn,
+    totals: { attempts: attempts.length, retries: attempts.filter(item => item.retryOf !== undefined).length,
+      uncachedInput: sumKnown(attempts.map(item => item.usage.uncachedInput)), output: sumKnown(attempts.map(item => item.usage.output)),
+      cacheRead: sumKnown(attempts.map(item => item.usage.cacheRead)), cacheWrite: sumKnown(attempts.map(item => item.usage.cacheWrite)),
+      reasoning: sumKnown(attempts.map(item => item.usage.reasoning)), costUsd: sumKnown(attempts.map(item => item.costUsd)), partial } }
+}
+
+export interface ContextPressure { pressureTokens?: number; contextWindow?: number; percent?: number; partial: boolean }
+/** Prompt-side pressure from the newest attempt against the newest known window. */
+export function projectContextPressure(events: readonly RuntimeEvent[]): ContextPressure {
+  let contextWindow: number | undefined
+  let last: AttemptRecord | undefined
+  for (const event of events) {
+    if ((event.kind === 'context.captured' || event.kind === 'context.changed') && event.payload.snapshot.model.contextWindow.state === 'known') {
+      contextWindow = event.payload.snapshot.model.contextWindow.value
+    } else if (event.kind === 'llm.attempt.completed') {
+      if (event.payload.contextWindow !== undefined) contextWindow = event.payload.contextWindow
+      last = { eventId: event.eventId, seq: event.seq, turnId: event.payload.turnId, turnKey: '', step: event.payload.step, usage: event.payload.usage }
+    }
+  }
+  if (!last || last.usage.uncachedInput === undefined) return { ...(contextWindow !== undefined ? { contextWindow } : {}), partial: last !== undefined }
+  const pressureTokens = last.usage.uncachedInput + (last.usage.cacheRead ?? 0) + (last.usage.cacheWrite ?? 0)
+  const partial = last.usage.cacheRead === undefined || last.usage.cacheWrite === undefined
+  return { pressureTokens, ...(contextWindow !== undefined ? { contextWindow } : {}),
+    ...(contextWindow ? { percent: Math.min(100, Math.round((pressureTokens / contextWindow) * 100)) } : {}), partial }
+}
+
+/** Fixed text-density estimate (≈ heuristic, ported from DSH estimate.js). */
+export const approximateTextTokens = (text: string): number => Math.ceil(text.length / 4) + 4
+export interface ContextBreakdown { system: number; tools: number; messages: number; heuristic: true }
+/** Labelled-heuristic (≈) composition of the newest captured context. Never feeds totals. */
+export function projectContextBreakdown(events: readonly RuntimeEvent[]): ContextBreakdown | undefined {
+  let blocks: { kind: string; included: boolean; text?: string }[] | undefined
+  for (const event of events) {
+    if ((event.kind === 'context.captured' || event.kind === 'context.changed') && event.payload.snapshot) {
+      blocks = event.payload.snapshot.blocks.map(block => ({ kind: block.kind, included: block.included, text: block.content.text }))
+    }
+  }
+  if (!blocks) return undefined
+  let system = 0; let tools = 0; let messages = 0
+  for (const block of blocks) {
+    if (!block.included || !block.text) continue
+    const tokens = approximateTextTokens(block.text)
+    if (block.kind === 'system' || block.kind === 'rules' || block.kind === 'memory') system += tokens
+    else if (block.kind === 'tool-schema') tools += tokens
+    else messages += tokens
+  }
+  return { system, tools, messages, heuristic: true as const }
+}

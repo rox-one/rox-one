@@ -588,6 +588,23 @@ export class PiEventAdapter extends BaseEventAdapter {
               contextWindow: this.contextWindow,
             },
           };
+          // One journal attempt per provider request (message usage is
+          // per-request). Retried runs re-enter with retryState 'recovering',
+          // so the service can link retryOf without guessing.
+          yield {
+            type: 'attempt',
+            turnId: this.currentTurnId ?? undefined,
+            usage: {
+              inputTokens,
+              ...(typeof msg.usage.output === 'number' ? { outputTokens: msg.usage.output } : {}),
+              ...(typeof msg.usage.cacheRead === 'number' ? { cacheReadTokens: msg.usage.cacheRead } : {}),
+              ...(typeof msg.usage.cacheWrite === 'number' ? { cacheWriteTokens: msg.usage.cacheWrite } : {}),
+              ...(typeof msg.usage.reasoning === 'number' ? { reasoningTokens: msg.usage.reasoning } : {}),
+              ...(typeof msg.usage.cost?.total === 'number' ? { costUsd: msg.usage.cost.total } : {}),
+              ...(this.contextWindow !== undefined ? { contextWindow: this.contextWindow } : {}),
+            },
+            ...(this.retryState === 'recovering' ? { retried: true as const } : {}),
+          };
         }
         break;
       }
