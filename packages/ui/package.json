@@ -26,7 +26,8 @@
     "./lib/file-classification": "./src/lib/file-classification.ts",
     "./lazy-motion": "./src/lib/lazy-motion.tsx",
     "./styles": "./src/styles/index.css",
-    "./primitives": "./src/components/primitives/index.ts"
+    "./primitives": "./src/components/primitives/index.ts",
+    "./fx": "./src/fx/index.ts"
   },
   "dependencies": {
     "@rox/core": "workspace:*",
@@ -37,6 +38,7 @@
     "@uiw/react-json-view": "^2.0.0-alpha.40",
     "fflate": "^0.8.2",
     "nice-ticks": "^1.0.2",
+    "thinking-orbs": "0.3.2",
     "unified": "^11.0.0",
     "unist-util-visit": "^5.0.0"
   },
