@@ -1172,9 +1172,12 @@ export default function TasksPage(props: TasksPageProps = {}) {
 
   const scheduleTask = (id: string, patch: SchedulePatch) => {
     if (patch.startAt == null && patch.dueAt == null) return
+    const today = isoOf(Date.now())
+    const key = (c: { blocker: PersonalTask; blocked: PersonalTask }) => `${c.blocker.id}>${c.blocked.id}`
+    const before = new Set(dependencyConflicts(storeRef.current.list().filter(isOpenTask), id, today).map(key))
     mutate((current) => applySchedule(current, id, patch))
-    // Finish-to-start: warn (don't auto-shift) when a move breaks a dependency.
-    const conflict = dependencyConflicts(storeRef.current.list().filter(isOpenTask), id, isoOf(Date.now()))[0]
+    // Finish-to-start: warn (don't auto-shift) only for conflicts this move created.
+    const conflict = dependencyConflicts(storeRef.current.list().filter(isOpenTask), id, today).find((c) => !before.has(key(c)))
     if (conflict) toast.warning(t('tasks.deps.conflict', { title: conflict.blocked.title, blocker: conflict.blocker.title }))
   }
   const timelineGroupTitle = (group: TimelineGroup) => {

@@ -690,7 +690,6 @@ export class PersonalTaskStore {
     return id
   }
 
-  /** Remove tasks (and their subtasks) from the bundle. */
   // ── Dependencies ──
 
   /** True when `id` transitively depends on `target` (follows blockedBy). */
@@ -732,6 +731,7 @@ export class PersonalTaskStore {
     return true
   }
 
+  /** Remove tasks (and their subtasks) from the bundle. */
   remove(id: string): string[] {
     const ids = new Set([id])
     let grew = true

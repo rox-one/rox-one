@@ -319,12 +319,15 @@ function DependencyArrows({ edges, rows, spans, range, pxPerDay, trackWidth }: {
         return (
           <path key={`${edge.from}>${edge.to}`} data-testid={`timeline-dep-${edge.from}-${edge.to}`} data-violated={edge.violated || undefined}
             d={`M${x1},${y1} H${elbow} V${y2} H${x2}`} fill="none" strokeWidth={1.25}
-            className={edge.violated ? 'stroke-destructive' : 'stroke-text-muted'} markerEnd="url(#timeline-dep-head)" />
+            className={edge.violated ? 'stroke-destructive' : 'stroke-text-muted'} markerEnd={edge.violated ? 'url(#timeline-dep-head-bad)' : 'url(#timeline-dep-head)'} />
         )
       })}
       <defs>
         <marker id="timeline-dep-head" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="6" markerHeight="6" orient="auto">
           <path d="M0,0 L6,3 L0,6 z" className="fill-text-muted" />
+        </marker>
+        <marker id="timeline-dep-head-bad" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L6,3 L0,6 z" className="fill-destructive" />
         </marker>
       </defs>
     </svg>

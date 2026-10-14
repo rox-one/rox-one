@@ -14,3 +14,14 @@ describe('dependencyCandidates', () => {
     expect(dependencyCandidates(s, s.get(c.id)!).map((x) => x.title)).toEqual(['a'])
   })
 })
+
+describe('dependencyCandidates reverse walk', () => {
+  it('excludes transitive dependents only', () => {
+    const s = new PersonalTaskStore()
+    const a = s.create({ title: 'a' }), b = s.create({ title: 'b' }), c = s.create({ title: 'c' }), d = s.create({ title: 'd' })
+    s.addDependency(b.id, a.id)
+    s.addDependency(c.id, b.id)
+    expect(dependencyCandidates(s, s.get(a.id)!).map((x) => x.title)).toEqual(['d'])
+    expect(dependencyCandidates(s, s.get(d.id)!).map((x) => x.title)).toEqual(['a', 'b', 'c'])
+  })
+})
