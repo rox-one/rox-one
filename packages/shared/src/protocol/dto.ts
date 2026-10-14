@@ -1591,6 +1591,8 @@ export type SuggestPreferencesResult =
 export interface UiAppearancePreferences {
   /** Show the compact bottom status bar (A6). Default: visible. */
   statusBarVisible: boolean
+  /** Show the titlebar screen pills. Default: visible. */
+  modePillVisible: boolean
   /** Accent source (B10): brand palette or the macOS system accent. */
   accentSource: 'brand' | 'system'
 }

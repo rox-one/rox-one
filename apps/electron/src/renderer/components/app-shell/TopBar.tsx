@@ -47,6 +47,7 @@ import {
 import { ModeBar, type ModeBarMetrics } from "@/platform/ModeBar"
 import { NotificationCenter } from "../shell/NotificationCenter"
 import { modePillShown, resolveModePillLayout, type ModePillLayout } from "./mode-pill-layout"
+import { useUiAppearance } from "@/lib/ui-appearance-store"
 import { resolveWorkbenchChrome } from "@/platform/workbench-chrome"
 
 const RIGHT_SLOT_FULL_BADGES_THRESHOLD = 420
@@ -59,6 +60,8 @@ interface TopBarProps {
   workspaceUnreadMap?: Record<string, boolean>
   onWorkspaceCreated?: (workspace: Workspace) => void
   onWorkspaceRemoved?: () => void
+  /** Called after the active workspace was renamed from the switcher. */
+  onWorkspaceRenamed?: () => void
   activeSessionId?: string | null
   onNewChat: () => void
   onNewWindow?: () => void
@@ -100,6 +103,7 @@ export function TopBar({
   workspaceUnreadMap,
   onWorkspaceCreated,
   onWorkspaceRemoved,
+  onWorkspaceRenamed,
   activeSessionId,
   onNewChat,
   onNewWindow,
@@ -136,6 +140,7 @@ export function TopBar({
       onSelectWorkspace={onSelectWorkspace}
       onWorkspaceCreated={onWorkspaceCreated}
       onWorkspaceRemoved={onWorkspaceRemoved}
+              onWorkspaceRenamed={onWorkspaceRenamed}
       workspaceUnreadMap={workspaceUnreadMap}
       trigger={
         <button
@@ -176,11 +181,13 @@ export function TopBar({
 
   // The mode pill renders on every non-compact surface (2026-10-08: restored
   // on all surfaces); the left rail accompanies it rather than replacing it.
-  const showModePill = modePillShown(isCompact)
+  const { modePillVisible } = useUiAppearance()
+  const showModePill = modePillShown(isCompact) && modePillVisible
   const topbarRef = useRef<HTMLDivElement | null>(null)
   const leftFixedRef = useRef<HTMLDivElement | null>(null)
   const [modePillMetrics, setModePillMetrics] = useState<ModeBarMetrics | null>(null)
   const [modePillLayout, setModePillLayout] = useState<ModePillLayout | null>(null)
+  const [modePillRight, setModePillRight] = useState(0)
   const handleModePillMeasure = useCallback((metrics: ModeBarMetrics) => {
     setModePillMetrics((prev) => (prev && prev.full === metrics.full && prev.compact === metrics.compact && (prev.advances ?? []).join() === (metrics.advances ?? []).join() ? prev : metrics))
   }, [])
@@ -202,7 +209,9 @@ export function TopBar({
         leftFixedEdge: leftFixed ? leftFixed.right - rootRect.left : 0,
         rightWidth: rightSlotRef.current?.getBoundingClientRect().width ?? 0,
         metrics: modePillMetrics,
+        align: 'right',
       })
+      setModePillRight(rightSlotRef.current?.getBoundingClientRect().width ?? 0)
       setModePillLayout((prev) => (prev && prev.collapsed === next.collapsed && prev.visibleCount === next.visibleCount && prev.leftMax === next.leftMax && prev.rightMax === next.rightMax ? prev : next))
     }
     const schedule = () => {
@@ -401,6 +410,7 @@ export function TopBar({
               onSelectWorkspace={onSelectWorkspace}
               onWorkspaceCreated={onWorkspaceCreated}
               onWorkspaceRemoved={onWorkspaceRemoved}
+              onWorkspaceRenamed={onWorkspaceRenamed}
               workspaceUnreadMap={workspaceUnreadMap}
             />
           </div>
@@ -484,13 +494,15 @@ export function TopBar({
       )}
       </div>
 
-      {/* === CENTER: one segmented pill for every screen mode, centered in
-          the window (not between the side groups). The anchor stays in the
-          drag region; the pill itself is no-drag. === */}
+      {/* === RIGHT-DOCKED: one segmented pill for every screen mode, docked
+          just left of the right control group (next to the panel-layout
+          button). The anchor stays in the drag region; the pill is no-drag.
+          Hideable from Settings → Интерфейс. === */}
       {showModePill && (
         <div
           className="rox-mode-pill-anchor"
-          style={{ left: `calc(50% - ${leftInset / 2}px)`, visibility: modePillLayout ? undefined : 'hidden' }}
+          data-align="right"
+          style={{ right: modePillRight + 8, visibility: modePillLayout ? undefined : 'hidden' }}
         >
           <ModeBar collapsed={modePillLayout?.collapsed ?? false} visibleCount={modePillLayout?.visibleCount} onMeasure={handleModePillMeasure} onOpenBrowser={onOpenBrowserTab} />
         </div>

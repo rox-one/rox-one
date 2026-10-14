@@ -553,7 +553,8 @@ html[data-contrast="high"] :focus-visible {
 html[data-ui-profile="super-engineering"] {
   /* Glass is the profile's signature — wider blur, still chrome-only. Kept at
      the end of the G8 material section so it wins over the ladder steps. */
-  --rox-radius-panel: var(--radius-md);
+  /* Panels stay flush and square inside the grid in every profile (Mark, t77). */
+  --rox-radius-panel: 0px;
   --rox-radius-composer: var(--radius-lg);
   --font-size-base: 13px;
   --shell-motion-disclosure: 320ms;
@@ -1416,27 +1417,15 @@ html[data-contrast="high"] :is(
   -webkit-backdrop-filter: none;
 }
 
-/* Active navigation marker: a thin looping accent sweep on the selected rail
-   row replaces the heavy accent fill and 2px accent bar. Static tint + position
-   come from the caller; this only paints the animated hairline. Kill-switches:
-   html[data-render-profile="performance"] (renderer/index.css) and
-   prefers-reduced-motion below, which leave a solid hairline. */
+/* Active navigation marker: the selected row is a subtle rounded fill
+   (caller's ROW_FILL / --state-selected). No underline or accent hairline
+   (Mark, t77): the class stays as a stable hook and paints nothing extra. */
 .rox-nav-shimmer {
   position: relative;
 }
 
 .rox-nav-shimmer::after {
-  content: '';
-  position: absolute;
-  left: 0.5rem;
-  right: 0.5rem;
-  bottom: 0.125rem;
-  height: 0.125rem;
-  border-radius: var(--radius-full);
-  background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
-  background-size: 200% 100%;
-  animation: shimmer 2.4s ease-in-out infinite;
-  pointer-events: none;
+  content: none;
 }
 
 .chrome-label {
@@ -1580,14 +1569,8 @@ html[data-shell-material="solid"] {
   }
 
   .spinner-cube,
-  .animate-shimmer::after,
-  .rox-nav-shimmer::after {
+  .animate-shimmer::after {
     animation: none !important;
-  }
-
-  /* The sweep freezes at its transparent end; keep a solid hairline instead. */
-  .rox-nav-shimmer::after {
-    background: var(--accent);
   }
 
   /* Product tour demo (D10): static vignette gradient, no target pulse. */
