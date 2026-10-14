@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { registerSecretValues } from '../secrets/redact.ts'
 import type { RoxCloudOwner } from '../credentials/manager.ts'
 import { RoxConnectFlow } from './rox-connect-flow.ts'
+import { createRoxIdClient } from './rox-id-client.ts'
 import { getRoxAuthBaseUrl, isRoxCloudRequired } from './rox-cloud.ts'
 import { startPocketDeviceFlow, waitForPocketApproval, refreshPocketSession, logoutPocketSession, fetchPocketAccount, fetchPocketCredential, type PocketProof, type PocketApproval, type RoxAccountSnapshot, type RoxInferenceCredential } from './rox-pocket-client.ts'
 
@@ -30,7 +31,23 @@ export interface PocketClient {
   start: typeof startPocketDeviceFlow; wait: typeof waitForPocketApproval; refresh: typeof refreshPocketSession
   logout: typeof logoutPocketSession; account: typeof fetchPocketAccount; credential: typeof fetchPocketCredential
 }
-const defaultClient: PocketClient = { start: startPocketDeviceFlow, wait: waitForPocketApproval, refresh: refreshPocketSession, logout: logoutPocketSession, account: fetchPocketAccount, credential: fetchPocketCredential }
+/** Legacy rox.one website device flow — the default identity backend. */
+export const legacyPocketClient: PocketClient = { start: startPocketDeviceFlow, wait: waitForPocketApproval, refresh: refreshPocketSession, logout: logoutPocketSession, account: fetchPocketAccount, credential: fetchPocketCredential }
+/**
+ * Identity backend. Legacy stays the default; rox-id (passkeys-only id.rox.one,
+ * contract v1) is an explicit opt-in via ROX_IDENTITY_BACKEND=rox-id until the
+ * server is live and verified.
+ */
+export function isRoxIdBackendEnabled(env: Record<string, string | undefined> = process.env): boolean {
+  return env.ROX_IDENTITY_BACKEND === 'rox-id'
+}
+/** The rox-id client is created lazily so tests that inject a client never touch it. */
+export function selectPocketClient(device: { name?: string; platform?: string } = {}): PocketClient {
+  if (!isRoxIdBackendEnabled()) return legacyPocketClient
+  const c = createRoxIdClient(undefined, device)
+  return { start: c.start, wait: c.wait, refresh: c.refresh, logout: c.logout, account: c.account, credential: c.credential }
+}
+const defaultClient: PocketClient = legacyPocketClient
 const callerKey = (caller: RoxCloudOwner) => JSON.stringify([caller.issuer, caller.subject])
 // Errors that mean the broker rejected this grant, not that it was unreachable.
 // Everything else (offline, timeout, 5xx) keeps the last confirmed snapshot.
