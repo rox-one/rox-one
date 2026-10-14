@@ -22,6 +22,7 @@ import { SessionSharingHost } from '@/components/app-shell/SessionSharingHost'
 import { SessionSuggestionsHost } from '@/components/app-shell/SessionSuggestionsHost'
 import { ProductTourProvider, ProductTourHost } from '@/features/product-tour/runtime'
 import { publishTourSignal } from '@/features/product-tour/runtime/bridge'
+import { GuidedTourHost } from '@/features/guided-tour/GuidedTour'
 import { observeChatSessionEvent, bindChatOptimisticMessage, observeChatPermissionResponse, cancelChatUserTurn, observeChatSessionCreated } from '@/features/product-tour/adapters/chat'
 import { collectionBulkOperationRegistry } from '@/components/app-shell/collection/collection-bulk-optimistic'
 import { viewportBand } from '@/platform/viewport-band'
@@ -2843,6 +2844,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           {/* Handle window close requests (X button, Cmd+W) - close modal first if open */}
           <ProductTourProvider workspaceId={windowWorkspaceId} shellReady={appState === 'ready' && sessionsLoaded && !showSplash && !sessionLoadError} welcomeSessionId={tourWelcome?.workspaceId === windowWorkspaceId ? tourWelcome.sessionId : null}>
           <ProductTourHost />
+          <GuidedTourHost shellReady={appState === 'ready' && sessionsLoaded && !showSplash && !sessionLoadError} />
           <WindowCloseHandler />
           {/* Native shell actions (menu / tray / global shortcuts) */}
           <ShellActionBridge />
