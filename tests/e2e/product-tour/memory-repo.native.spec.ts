@@ -185,7 +185,7 @@ async function observedState(page: Page): Promise<string> {
         .map((node) => node.getAttribute('data-testid') ?? ''),
       pillMounted: pill !== null,
       pillReady: pill?.hasAttribute('data-ready') ?? false,
-      toasts: toasts.map((toast) => (toast.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 120)),
+      toasts: toasts.map((toast) => `${toast.getAttribute('data-type') ?? 'toast'}: ${(toast.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 120)}`),
       shownSurface: document.querySelector('[data-surface-active="true"] [data-testid]')?.getAttribute('data-testid') ?? null,
       text: (wizard?.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 300),
     }
@@ -255,16 +255,23 @@ async function completeFirstRun(page: Page): Promise<string[]> {
  * here asserts: a renamed or removed affordance fails, naming itself, instead of
  * being swallowed into a poll on the destination screen.
  *
+ * Both gestures go through the notification-aware retry (`clickRepoControl`):
+ * the pill is right-docked where the notification top layer paints (`TopBar.tsx:
+ * 503-511`), so a toast raised mid-gesture — the documented dream-run outcome —
+ * would otherwise hold the click for its whole timeout. The menu's own entry is
+ * clicked with `dismissNotifications` only, because the menu is itself a
+ * `role=dialog` popover that `dismissDialogs` would Escape shut.
+ *
  * Returns the entry's visible label, captured before the click navigates.
  */
-async function openScreenViaAllScreens(page: Page, screenId: string): Promise<string> {
+async function openScreenViaAllScreens(page: Page, screenId: string, seen: string[]): Promise<string> {
   // The pill belongs to the shell, not to the wizard: wait on the app's own
   // readiness signal (named budget) rather than asserting the moment the wizard
   // is dismissed. A pill that genuinely never appears still fails loudly.
   await waitForTitlebarPill(page, PILL_READY_BUDGET_MS)
   const trigger = page.locator('[data-testid="titlebar-mode-pill"] [data-all-screens-trigger]')
   await expect(trigger, `the titlebar «Все экраны» pill (to open ${screenId})`).toBeVisible()
-  await trigger.click()
+  await clickRepoControl(page, seen, trigger, `the titlebar «Все экраны» pill (to open ${screenId})`)
   const menu = page.locator('[data-testid="all-screens-menu"]')
   await expect(menu, 'the «Все экраны» menu').toBeVisible()
   // Every non-hidden surface is listed exactly once, so this waits for the real
@@ -272,7 +279,7 @@ async function openScreenViaAllScreens(page: Page, screenId: string): Promise<st
   const entry = menu.locator(`[data-screen-id="${screenId}"]`)
   await expect(entry, `the «Все экраны» entry ${screenId}`).toHaveCount(1)
   const label = ((await entry.innerText()) ?? '').replace(/\s+/g, ' ').trim()
-  await entry.click()
+  await clickRepoControl(page, seen, entry, `the «Все экраны» entry ${screenId}`, dismissNotifications)
   return label
 }
 
@@ -287,24 +294,43 @@ function collect(page: Page): { consoleErrors: string[]; pageErrors: string[] } 
 }
 
 /**
- * Close any overlay that intercepts pointer events over the shell: onboarding /
- * memory-intro dialogs and Sonner notifications. Records what it had to close
- * for the report.
+ * Sonner's toast root. The app mounts its `<Toaster position="top-right">`
+ * (`components/ui/sonner.tsx:11-16`) into a react-aria top layer
+ * (`data-react-aria-top-layer`), so a toast paints above the shell's chrome and
+ * intercepts pointer events over the right-docked titlebar pill.
+ */
+const TOAST_SELECTOR = '[data-sonner-toast]:visible'
+
+/**
+ * Close every notification the app has raised, recording its copy in `seen`.
+ *
+ * Sonner holds a toast open while the pointer rests on it (`data-expanded`), and
+ * a click parks the pointer on its own target — so a toast raised over the
+ * header while a gesture is being clicked never auto-dismisses and blocks that
+ * gesture for the whole action timeout (MEMREPO-NATIVE-03, where the pill
+ * trigger stayed unclickable for 30 s behind a `data-type="error"` toast whose
+ * `<li>` was the resolved hit target).
+ */
+async function dismissNotifications(page: Page, seen: string[]): Promise<void> {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const toast = page.locator(TOAST_SELECTOR).first()
+    if ((await toast.count()) === 0) return
+    seen.push(`toast: ${(((await toast.innerText().catch(() => '')) || '').replace(/\s+/g, ' ').trim().slice(0, 400))}`)
+    const close = toast.locator('[data-close-button]').first()
+    if ((await close.count()) > 0) await close.click({ timeout: 2_000 }).catch(() => {})
+    await page.waitForTimeout(200)
+  }
+}
+
+/**
+ * Close any overlay that intercepts pointer events over the shell: the Sonner
+ * notification layer first (it paints in the app's top layer, above the chrome),
+ * then onboarding / memory-intro dialogs. Records what it had to close for the
+ * report.
  */
 async function dismissDialogs(page: Page, seen: string[]): Promise<void> {
+  await dismissNotifications(page, seen)
   for (let attempt = 0; attempt < 4; attempt += 1) {
-    // Sonner toasts live in their own top-layer (`aria-label="Notifications"`),
-    // not under `role=dialog`, and their expanded panel covers the header
-    // controls — a dream run whose 30 s transport timeout rejects while the run
-    // keeps going server-side raises one. Dismiss it through its close button.
-    const toast = page.locator('[data-sonner-toast]:visible').first()
-    if ((await toast.count()) > 0) {
-      seen.push(`toast: ${(((await toast.innerText().catch(() => '')) || '').replace(/\s+/g, ' ').trim().slice(0, 400))}`)
-      const close = toast.locator('[data-close-button]').first()
-      if ((await close.count()) > 0) await close.click({ timeout: 2_000 }).catch(() => {})
-      await page.waitForTimeout(200)
-      continue
-    }
     const dialog = page.locator('[role="dialog"]:visible').first()
     if ((await dialog.count()) === 0) return
     seen.push(((await dialog.innerText().catch(() => '')) || '').replace(/\s+/g, ' ').trim().slice(0, 400))
@@ -334,11 +360,22 @@ const CLICK_THROUGH_BUDGET_MS = NATIVE_BUDGETS.actionMs
  * reaches the control underneath. Re-dismiss the layer and retry within one
  * named budget; a control that is genuinely missing still fails, naming itself
  * and the state that was observed.
+ *
+ * `dismiss` is the layer cleared between attempts. The default also presses
+ * Escape on a visible dialog, which a menu that is itself a `role=dialog`
+ * popover (the «Все экраны» menu) would not survive — that call site passes
+ * `dismissNotifications` instead.
  */
-async function clickRepoControl(page: Page, seen: string[], target: Locator, description: string): Promise<void> {
+async function clickRepoControl(
+  page: Page,
+  seen: string[],
+  target: Locator,
+  description: string,
+  dismiss: (page: Page, seen: string[]) => Promise<void> = dismissDialogs,
+): Promise<void> {
   const deadline = Date.now() + CLICK_THROUGH_BUDGET_MS
   for (;;) {
-    await dismissDialogs(page, seen)
+    await dismiss(page, seen)
     try {
       await target.click({ timeout: CLICK_ATTEMPT_MS })
       return
@@ -391,7 +428,7 @@ async function onboardAndOpenRepoViaPill(page: Page, observed: Record<string, un
   // failure — nothing is wrapped, so a missing affordance can never be retried
   // into a silent timeout again.
   await dismissDialogs(page, dialogs)
-  const label = await openScreenViaAllScreens(page, 'memoryRepo')
+  const label = await openScreenViaAllScreens(page, 'memoryRepo', dialogs)
   await expect(shownSurface(page).locator('[data-testid="memory-repo-screen"]')).toBeVisible()
   await dismissDialogs(page, dialogs)
   return label
@@ -744,7 +781,7 @@ test('MEMREPO-NATIVE-03: an edited repository file surfaces the import banner an
     //    «Память» entry); mounting it triggers the real status refresh. ──
     const banner = shownSurface(page).locator('[data-testid="memory-repo-import-banner"]')
     await dismissDialogs(page, dialogs)
-    const openedLabel = await openScreenViaAllScreens(page, 'memory')
+    const openedLabel = await openScreenViaAllScreens(page, 'memory', dialogs)
     observed.screenEntry = openedLabel
     expect(openedLabel).toContain('Память')
     // The banner waits for the screen's own status call — a real wait, not a
