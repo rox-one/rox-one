@@ -11,12 +11,13 @@
 import { afterEach, describe, expect, it } from 'bun:test'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { gzipSync } from 'node:zlib'
 import {
   BUDGET_SLACK_MIN_BYTES,
   BUDGET_SLACK_RATIO,
   DESCRIPTION,
+  MANIFEST_RELATIVE_PATH,
   MAX_NEW_CHUNK_BYTES,
   MAX_NEW_STARTUP_BYTES,
   MIN_BUDGET_BYTES,
@@ -39,6 +40,7 @@ import {
   parseHtmlReferences,
   payloadSlackBytes,
   readLocalePayloads,
+  readManifestPrefixes,
   recordProvenance,
   type BundleBaseline,
   type LocalePayloads,
@@ -73,6 +75,17 @@ function seedBuild(root: string, files: Record<string, number>, withIndexHtml = 
   mkdirSync(join(rendererDist, 'assets'), { recursive: true })
   if (withIndexHtml) writeFileSync(join(rendererDist, 'index.html'), '<!doctype html>')
   for (const [name, size] of Object.entries(files)) writeFileSync(join(rendererDist, 'assets', name), Buffer.alloc(size))
+}
+
+/**
+ * A throwaway build manifest, in the shape `build.manifest: true` emits: keyed by the chunk's source
+ * path, each entry carrying the emitted `file` and the Rollup chunk `name` (absent for emitted assets
+ * such as CSS, which is why the gate keeps a regex fallback for them).
+ */
+function seedManifest(root: string, manifest: Record<string, Record<string, unknown>>): void {
+  const dir = join(root, 'apps/electron/dist/renderer', MANIFEST_RELATIVE_PATH)
+  mkdirSync(dirname(dir), { recursive: true })
+  writeFileSync(dir, JSON.stringify(manifest, null, 2))
 }
 
 function seedBaseline(root: string, baseline: Partial<BundleBaseline>): void {
@@ -190,6 +203,121 @@ describe('measured assets (emitted *.js and *.css; never source maps or the pdf 
       'useTranslation',
       'vendor-react',
     ])
+  })
+})
+
+/**
+ * The build already knows each chunk's real name — Vite writes it to `.vite/manifest.json` under
+ * `build.manifest: true`. Reading that name replaces the `-<8-char hash>` guess, which silently
+ * mis-keys (and so un-budgets) a chunk the moment Rollup's hash length or separator changes. The regex
+ * stays as the fallback for a file the manifest does not cover: a stale dist, a fixture tree, or CSS
+ * (Vite emits CSS as an asset with no `name`).
+ */
+describe('budget prefixes come from the build manifest, with the hash-suffix regex as fallback', () => {
+  const dist = (root: string) => join(root, 'apps/electron/dist/renderer')
+
+  it('maps each emitted file to the chunk name the build recorded', () => {
+    const root = tempRoot()
+    seedManifest(root, {
+      'src/renderer/index.html': { file: 'assets/index-B3-J8HY7.js', name: 'index', src: 'src/renderer/index.html', isEntry: true },
+      'src/renderer/main.tsx': { file: 'assets/main-qrX9lp_n.js', name: 'main', src: 'src/renderer/main.tsx' },
+      'src/renderer/locale/ar.ts': { file: 'assets/ar-BZQWQe49.js', name: 'ar', isDynamicEntry: true },
+    })
+    const prefixes = readManifestPrefixes(dist(root))
+    expect(prefixes.get('index-B3-J8HY7.js')).toBe('index')
+    expect(prefixes.get('main-qrX9lp_n.js')).toBe('main')
+    expect(prefixes.get('ar-BZQWQe49.js')).toBe('ar')
+  })
+
+  it('skips entries Vite emits as assets (no `name`), leaving them to the regex', () => {
+    const root = tempRoot()
+    seedManifest(root, {
+      // CSS is emitted as an asset: `file` + `src`, no `name` to key a budget by.
+      'src/renderer/index.css': { file: 'assets/index-Cj-Yxrsl.css', src: 'src/renderer/index.css' },
+      // A truncated/odd entry must not throw either.
+      'src/renderer/odd.ts': { name: 'odd' },
+    })
+    const prefixes = readManifestPrefixes(dist(root))
+    expect(prefixes.has('index-Cj-Yxrsl.css')).toBe(false)
+    expect(prefixes.size).toBe(0)
+  })
+
+  it('degrades to no mapping when the manifest is missing or malformed', () => {
+    const missing = tempRoot()
+    mkdirSync(dist(missing), { recursive: true })
+    expect(readManifestPrefixes(dist(missing)).size).toBe(0)
+
+    const malformed = tempRoot()
+    mkdirSync(join(dist(malformed), '.vite'), { recursive: true })
+    writeFileSync(join(dist(malformed), MANIFEST_RELATIVE_PATH), '{ not json')
+    expect(readManifestPrefixes(dist(malformed)).size).toBe(0)
+  })
+
+  it('keys a chunk by the manifest name, and by the regex when the manifest does not cover it', () => {
+    const root = tempRoot()
+    const assets = join(dist(root), 'assets')
+    mkdirSync(assets, { recursive: true })
+    for (const name of ['index-B3-J8HY7.js', 'lazy-page-bbbbbbbb.js']) writeFileSync(join(assets, name), Buffer.alloc(64))
+    seedManifest(root, { 'src/renderer/index.html': { file: 'assets/index-B3-J8HY7.js', name: 'index' } })
+
+    const measured = measureRendererChunks(assets, readManifestPrefixes(dist(root)))
+    expect(measured.map((entry) => [entry.file, entry.prefix])).toEqual([
+      ['index-B3-J8HY7.js', 'index'],
+      // Not in the manifest: the built-in fallback still names it.
+      ['lazy-page-bbbbbbbb.js', 'lazy-page'],
+    ])
+  })
+
+  it('fixes a chunk the hash-suffix regex would mis-key, without changing today`s keys', () => {
+    const root = tempRoot()
+    const assets = join(dist(root), 'assets')
+    mkdirSync(assets, { recursive: true })
+    // A 10-character hash: the `-<8-char hash>` guess cannot strip it and leaves the name untouched.
+    const file = 'index-D3f4gH5jK6.js'
+    writeFileSync(join(assets, file), Buffer.alloc(64))
+    expect(chunkPrefix(file)).toBe('index-D3f4gH5jK6')
+    seedManifest(root, { 'src/renderer/index.html': { file: `assets/${file}`, name: 'index' } })
+
+    const [measured] = measureRendererChunks(assets, readManifestPrefixes(dist(root)))
+    expect(measured!.prefix).toBe('index')
+    // An 8-character hash — today's shape — keys the same either way, so the baselines do not move.
+    expect(chunkPrefix('index-B3-J8HY7.js')).toBe('index')
+  })
+
+  it('CLI: a manifest name keeps a grown prefix budgeted where the regex silently un-budgets it', () => {
+    // Two chunks whose names the regex only partly recovers: one 10-char hash (mis-keyed), one 8-char
+    // (correct). Together they are over the recorded `index` budget; split across two prefixes, each
+    // stays under the 2.5 MB ceiling.
+    const files = { 'index-D3f4gH5jK6.js': 200_000, 'index-B3-J8HY7.js': 200_000 }
+    const baseline = { budgets: { index: { totalRawBytes: 330_000, gzipTotalBytes: 1 } } }
+
+    const withManifest = tempRoot()
+    seedBuild(withManifest, files)
+    seedManifest(withManifest, {
+      'src/renderer/a.tsx': { file: 'assets/index-D3f4gH5jK6.js', name: 'index' },
+      'src/renderer/b.tsx': { file: 'assets/index-B3-J8HY7.js', name: 'index' },
+    })
+    seedBaseline(withManifest, baseline)
+    const gated = runCli(withManifest)
+    expect(gated.code).toBe(1)
+    expect(gated.err).toContain("js prefix 'index' total is 400000 B, budget 330000 B")
+
+    // Without a manifest the 10-char-hash chunk becomes a brand-new unbudgeted prefix, so the same
+    // growth that should have failed the `index` budget slips through on the 2.5 MB ceiling alone.
+    const blind = tempRoot()
+    seedBuild(blind, files)
+    seedBaseline(blind, baseline)
+    expect(runCli(blind).code).toBe(0)
+  })
+
+  it('CLI: --print keys by the manifest, so a printed baseline carries today`s names', () => {
+    const root = tempRoot()
+    seedBuild(root, { 'index-D3f4gH5jK6.js': 300_000 })
+    seedManifest(root, { 'src/renderer/index.html': { file: 'assets/index-D3f4gH5jK6.js', name: 'index' } })
+    const out = join(root, 'printed.json')
+    expect(runCli(root, ['--print', out]).code).toBe(0)
+    const written = JSON.parse(readFileSync(out, 'utf8')) as BundleBaseline
+    expect(Object.keys(written.budgets)).toEqual(['index'])
   })
 })
 
