@@ -20,76 +20,43 @@ on:
       - 'scripts/runtime-context-smoke.ts'
       - 'scripts/marketplace-smoke.ts'
       - '.github/workflows/toolchain-smoke.yml'
+  schedule:
+    # Ночной прогон: smoke проверяет сетевые манифесты (pinned версии/URL), которые
+    # апстримы могут сломать без единого коммита в репозиторий. 03:41 UTC —
+    # свободный слот (native 03:17, nightly 03:00, perf-budgets 03:23, visual 03:30).
+    - cron: '41 3 * * *'
   workflow_dispatch:
 
 concurrency:
-  group: toolchain-smoke-${{ github.event.pull_request.number || github.ref }}
+  # `github.event_name` обязателен в группе: без него push-прогон и ночной schedule
+  # делят одну группу и сериализуются. Триггера `pull_request` у воркфлоу нет, поэтому
+  # прежняя ссылка на `github.event.pull_request.number` всегда пустела и группа
+  # вырождалась в `toolchain-smoke-<ref>` — push-прогоны вставали в очередь друг за
+  # другом, а зависший прогон держал очередь сутки.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
-  toolchain-smoke-selfhosted-macos:
-    # macOS-arm64 leg на self-hosted Mac — GHA-hosted
-    # macos заблокирован биллингом, CCI-план без macos-экзекуторов. Это единство
-    # енственное бесплатное mac-покрытие.
-    runs-on: [self-hosted, macos-toolchain]
-    name: toolchain-smoke (self-hosted macos)
-    timeout-minutes: 45
-    steps:
-      - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
-        with:
-          bun-version: "1.4.3"
-
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-
-        continue-on-error: true
-        with:
-          path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            bun-${{ runner.os }}-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Toolchain unit tests
-        run: bun test packages/shared/src/toolchain
-
-      - name: Fresh-profile ensureAll + launcher check
-        run: |
-          SMOKE_DIR="$(mktemp -d /tmp/tc-ci.XXXXXX)"
-          CRAFT_CONFIG_DIR="$SMOKE_DIR" bun scripts/toolchain-smoke.ts
-        env:
-          CI: "1"
-
-      - name: Fresh-profile default-on tools smoke
-        run: |
-          SMOKE_DIR="$(mktemp -d /tmp/tc-new-ci.XXXXXX)"
-          CRAFT_CONFIG_DIR="$SMOKE_DIR" bun scripts/toolchain-new-smoke.ts
-        env:
-          CI: "1"
-
-      - name: Fresh-profile runtime-context smoke (no network)
-        run: |
-          SMOKE_DIR="$(mktemp -d /tmp/rc-smoke.XXXXXX)"
-          CRAFT_CONFIG_DIR="$SMOKE_DIR" bun scripts/runtime-context-smoke.ts
-        env:
-          CI: "1"
-
-      - name: Fresh-profile marketplace smoke (no network)
-        run: |
-          SMOKE_DIR="$(mktemp -d /tmp/mp-smoke.XXXXXX)"
-          CRAFT_CONFIG_DIR="$SMOKE_DIR" bun scripts/marketplace-smoke.ts
-        env:
-          CI: "1"
-
+  # Removed 2026-10-16 (w-ci-drain): the standalone `toolchain-smoke-macos` job ran
+  # macOS TWICE per trigger. Its steps were step-for-step identical to the
+  # `blacksmith-6vcpu-macos-15` leg of the matrix below — same checkout, same bun
+  # 1.4.3 pin, same cache, same `bun install --frozen-lockfile`, same
+  # `bun test packages/shared/src/toolchain`, and the same four `mktemp -d`
+  # fresh-profile smokes. The matrix leg carries strictly more (it also guards with
+  # `if: runner.os != 'Windows'` and dumps state on failure).
+  #
+  # History agrees there was no unique signal to lose: across the last six runs BOTH
+  # macOS jobs were red or cancelled together (runs 37930721180, 37934857004,
+  # 38051517768, 38073635563, 38642846061, 38729031438) — the standalone job only
+  # ever reached a runner twice, and failed both times.
+  #
+  # Its comment claimed "GHA-hosted macos is locked by billing, this is the only
+  # free mac coverage". That is stale: the matrix macOS leg has run on hosted
+  # `blacksmith-6vcpu-macos-15` since 2026-10-03 (run 37162310140).
   toolchain-smoke:
-    # macos/ubuntu/windows — заблокированы GitHub billing lock (см.
-    # run 31126113869); оставлены для разблокировки по биллингу.
+    # Все три лега — hosted Blacksmith и диспатчатся штатно (run 37162310140 от
+    # 2026-10-03: ubuntu/macos/windows исполнили шаги за ~1-2 мин). Прежняя запись
+    # про «GitHub billing lock» устарела. Красные здесь — настоящие падения
+    # ассертов smoke, а не отказ в раннере.
     strategy:
       fail-fast: false
       matrix:

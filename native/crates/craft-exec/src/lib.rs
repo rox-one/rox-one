@@ -87,10 +87,7 @@ fn truncate(text: String) -> (String, bool) {
     if text.chars().count() <= MAX_OUTPUT_CHARS {
         return (text, false);
     }
-    (
-        text.chars().take(MAX_OUTPUT_CHARS).collect(),
-        true,
-    )
+    (text.chars().take(MAX_OUTPUT_CHARS).collect(), true)
 }
 
 fn read_capped<R: Read>(mut reader: R) -> String {
@@ -144,9 +141,9 @@ fn resolve_cwd(req: &ExecRequest) -> ExecResult<std::path::PathBuf> {
             root.display()
         )));
     }
-    let root = root.canonicalize().map_err(|e| {
-        ExecError::invalid(format!("bash workspace root is not accessible: {e}"))
-    })?;
+    let root = root
+        .canonicalize()
+        .map_err(|e| ExecError::invalid(format!("bash workspace root is not accessible: {e}")))?;
     if cwd != root && !cwd.starts_with(&root) {
         return Err(ExecError::invalid(
             "bash working directory is outside the workspace.",
@@ -259,7 +256,9 @@ mod tests {
         assert!(!result.timed_out);
         assert_eq!(result.exit_code, Some(0));
         assert!(result.stdout.contains("craft-exec-ok"));
-        assert!(result.stdout.contains(dir.path().to_string_lossy().as_ref()));
+        assert!(result
+            .stdout
+            .contains(dir.path().to_string_lossy().as_ref()));
     }
 
     #[test]
@@ -299,7 +298,11 @@ mod tests {
         std::fs::create_dir(&outside).unwrap();
         let err = run(ExecRequest {
             command: "echo no".into(),
-            cwd: workspace.join("..").join("outside").to_string_lossy().into_owned(),
+            cwd: workspace
+                .join("..")
+                .join("outside")
+                .to_string_lossy()
+                .into_owned(),
             timeout_ms: None,
             workspace_root: Some(workspace.to_string_lossy().into_owned()),
         })
