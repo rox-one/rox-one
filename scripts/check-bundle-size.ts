@@ -62,16 +62,19 @@
  * the ceiling, when an entry page's static JS closure exceeds its recorded budget or MAX_NEW_STARTUP_BYTES,
  * when an entry page references a file missing from the build, when a listed chunk or entry page could not
  * be read, or when `--prefix` is malformed, unknown or used without `--update`; 0 otherwise. Budgets are
- * keyed by the chunk-name prefix
- * (basename.replace(/\.(?:js|css)$/, '').replace(/-[A-Za-z0-9_-]{8}$/, '')) — never the content hash —
- * so a rebuild that only changes hashes does not move the budget. JS prefixes live under `budgets` and
+ * keyed by the chunk-name prefix — never the content hash — so a rebuild that only changes hashes does
+ * not move the budget. The prefix is the name the build itself recorded for the file, read from Vite's
+ * build manifest (`build.manifest: true` -> `<rendererDist>/.vite/manifest.json`, see
+ * `readManifestPrefixes`); only when a file is not in the manifest (a stale dist, a fixture tree, or a
+ * CSS asset, which Vite emits without a `name`) is it derived by stripping a hash suffix with
+ * `chunkPrefix`'s `-<8-char hash>` guess. JS prefixes live under `budgets` and
  * CSS prefixes under `stylesheets`, so the two extensions can never collide; entry pages live under
  * `startup`, keyed by html file name. `--check` prints one startup line per html file and, on failure,
  * the 5 heaviest referenced files behind each offending page.
  */
 import { spawnSync } from 'node:child_process'
 import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
-import { dirname, join, relative, resolve } from 'node:path'
+import { basename, dirname, join, relative, resolve } from 'node:path'
 import { gzipSync } from 'node:zlib'
 
 /** Default repo root, overridden in tests (and CI sandboxes) by ROX_BUNDLE_SIZE_ROOT. */
@@ -311,6 +314,65 @@ export function chunkPrefix(baseName: string): string {
 }
 
 /**
+ * Vite's build manifest, relative to the renderer dist (`build.manifest: true` emits it here).
+ * The gate prefers it over `chunkPrefix`'s regex: the manifest is the build's own record of the name
+ * Rollup gave each emitted chunk, so the gate never has to guess where a content hash begins.
+ */
+export const MANIFEST_RELATIVE_PATH = join('.vite', 'manifest.json')
+
+/**
+ * One entry of Vite's build manifest, keyed by the chunk's source path. Only the fields the gate reads
+ * are declared: `file` is the emitted path relative to the renderer dist (e.g. `assets/index-B3-J8HY7.js`)
+ * and `name` is the Rollup chunk name — the budget prefix. `name` is absent for emitted *assets*: with
+ * the default `cssCodeSplit` Vite emits each chunk's CSS as an asset, so CSS files carry no `name` and
+ * keep the regex fallback.
+ */
+export interface ManifestChunk {
+  file: string
+  name?: string
+}
+
+/**
+ * Emitted-file basename -> budget prefix, taken from the build manifest at
+ * `<rendererDist>/.vite/manifest.json`.
+ *
+ * The manifest reports the *real* chunk name, so the gate stops relying on the hash-suffix guess: Vite
+ * names each chunk file `assets/[name]-[hash].js` (its default `chunkFileNames`), and Rollup does not
+ * de-duplicate a name once `[hash]` is in the pattern — two chunks can both be `index`, distinguished
+ * only by their file names. Reading `name` therefore yields exactly the prefix the regex produces today,
+ * but keeps doing so when the hash length or the separator changes (the change that would silently
+ * re-key — and so un-budget — a prefix under the regex).
+ *
+ * A missing or unreadable manifest is not an error: a stale dist or a fixture tree simply has none, so
+ * every file falls back to `chunkPrefix` (see `measureRendererChunks`). Malformed JSON degrades the
+ * same way. Assets Vite emits without a `name` (CSS, fonts, images) are skipped, leaving them to the regex.
+ */
+export function readManifestPrefixes(rendererDist: string = paths().rendererDist): Map<string, string> {
+  const prefixes = new Map<string, string>()
+  let raw: string
+  try {
+    raw = readFileSync(join(rendererDist, MANIFEST_RELATIVE_PATH), 'utf8')
+  } catch {
+    // No manifest: a dist built before `build.manifest: true`, or a throwaway fixture tree.
+    return prefixes
+  }
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    // A truncated/partial manifest is not worth failing the gate over; the regex fallback covers it.
+    return prefixes
+  }
+  // `null`/`[]`/a scalar are all valid JSON but not a manifest; only an object maps files to names.
+  if (parsed === null || typeof parsed !== 'object') return prefixes
+  for (const entry of Object.values(parsed) as Array<ManifestChunk | null>) {
+    if (!entry || typeof entry.file !== 'string' || typeof entry.name !== 'string' || entry.name.length === 0) continue
+    prefixes.set(basename(entry.file), entry.name)
+  }
+  return prefixes
+}
+
+/**
  * The renderer emits one entry chunk per locale (`ar`, `de`, …, `zh-Hant`) and each embeds its own
  * i18n payload, so a translation merge moves twelve "code" budgets and the js total in lockstep.
  * That is why every feature merge used to end in a re-record (#2031, #2063, #2104, #2120 all exist
@@ -411,8 +473,17 @@ export class UnreadableFileError extends Error {
   }
 }
 
-/** Raw + gzip bytes of every measured `assets/*` chunk, sorted by file name. */
-export function measureRendererChunks(assetsDir: string = paths().assets): MeasuredChunk[] {
+/**
+ * Raw + gzip bytes of every measured `assets/*` chunk, sorted by file name.
+ *
+ * `manifestPrefixes` (from `readManifestPrefixes`) names the budget prefix from the build manifest;
+ * a file it does not cover — a CSS asset, a stale dist with no manifest, a fixture tree — keeps the
+ * `chunkPrefix` hash-suffix regex, which is the only behaviour when no manifest is passed at all.
+ */
+export function measureRendererChunks(
+  assetsDir: string = paths().assets,
+  manifestPrefixes?: ReadonlyMap<string, string>,
+): MeasuredChunk[] {
   let files: string[]
   try {
     files = readdirSync(assetsDir)
@@ -434,7 +505,7 @@ export function measureRendererChunks(assetsDir: string = paths().assets): Measu
     }
     chunks.push({
       file,
-      prefix: chunkPrefix(file),
+      prefix: manifestPrefixes?.get(file) ?? chunkPrefix(file),
       kind,
       rawBytes: content.length,
       // Bun accepts `mtime: 0` (deterministic gzip) beyond Node's ZlibOptions type.
@@ -1045,7 +1116,8 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
   let chunks: MeasuredChunk[]
   let startup: StartupMeasurement[]
   try {
-    chunks = measureRendererChunks(p.assets)
+    // The build manifest names each chunk; without one (a stale dist) every file keeps the regex.
+    chunks = measureRendererChunks(p.assets, readManifestPrefixes(p.rendererDist))
     startup = measureStartup(p.rendererDist)
   } catch (error) {
     // A file the build listed that cannot be read is fatal in every mode (see UnreadableFileError):
