@@ -66,6 +66,28 @@ async function start(page: Page, kind: 'voice' | 'fabric') {
   }
 }
 async function next(page: Page) { await page.locator('[data-product-tour-popover]').getByRole('button', { name: 'Next', exact: true }).click() }
+/**
+ * Clicks a section tab and returns the index of the audit read it issued. One read feeds
+ * the section and the sidebar's denied group, so a tab change reads exactly once — the
+ * assertion fails when the page reads more.
+ */
+async function openSection(page: Page, name: string) {
+  const before = (await page.evaluate(() => window.nativeHandoff.snapshot())).calls.audit
+  await page.getByRole('tab', { name, exact: true }).click()
+  await page.waitForFunction(expected => window.nativeHandoff.snapshot().calls.audit >= expected, before + 1)
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+  expect((await page.evaluate(() => window.nativeHandoff.snapshot())).calls.audit).toBe(before + 1)
+  return before
+}
+/** Switches workspace and returns the index of the audit read the new workspace issued. */
+async function switchToWorkspace(page: Page, workspaceId: string) {
+  const before = (await page.evaluate(() => window.nativeHandoff.snapshot())).calls.audit
+  await page.evaluate(target => window.nativeHandoff.switchWorkspace(target), workspaceId)
+  await page.waitForFunction(expected => window.nativeHandoff.snapshot().calls.audit >= expected, before + 1)
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+  expect((await page.evaluate(() => window.nativeHandoff.snapshot())).calls.audit).toBe(before + 1)
+  return before
+}
 async function blurHeldPrompt(page: Page) {
   await page.waitForFunction(() => window.nativeHandoff.snapshot().calls.microphone === 1)
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
@@ -188,30 +210,34 @@ for (const height of [900, 1100]) browserTest(`T-CONNECTIONS-SERVICES tall nativ
 browserTest('T-CONNECTIONS-AUDIT first native Audit read retains Fabric availability and completes its captured current attempt', async () => {
   const page = await pageFor('fabric')
   try {
+    // The page keeps one audit source for the section and the sidebar's denied group, so
+    // it reads on mount with Overview selected; opening Audit adds exactly one more read,
+    // captured against the attempt that is waiting for it.
+    await page.waitForFunction(() => window.nativeHandoff.snapshot().calls.audit === 1)
     await start(page, 'fabric'); await next(page)
     await page.locator('[data-product-tour-step="connections.audit"]').waitFor()
     const token = (await page.evaluate(() => window.nativeHandoff.snapshot())).state.attempt!.binding.runToken
-    await page.getByRole('tab', { name: 'Audit', exact: true }).click()
-    await page.waitForFunction(() => window.nativeHandoff.snapshot().calls.audit === 1)
-    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+    const read = await openSection(page, 'Audit')
     const pending = await page.evaluate(() => window.nativeHandoff.snapshot())
     expect(pending.capabilities['connection-fabric.available']).toEqual({ state: 'ready' })
     expect(['presenting', 'waiting-action']).toContain(pending.state.phase)
     expect(pending.state.attempt?.binding.runToken).toBe(token)
-    await page.evaluate(() => window.nativeHandoff.settleAudit(0))
+    expect(pending.state.attemptEvidence['connections.audit']?.level).toBeUndefined()
+    expect(await page.getByText(`public-event-${read}`, { exact: true }).count()).toBe(0)
+    await page.evaluate(index => window.nativeHandoff.settleAudit(index), read)
     await page.waitForFunction(() => window.nativeHandoff.snapshot().state.phase === 'finished')
-    expect(await page.getByText('public-event-0', { exact: true }).count()).toBe(1)
+    expect(await page.getByText(`public-event-${read}`, { exact: true }).count()).toBe(1)
     expect((await page.evaluate(() => window.nativeHandoff.snapshot())).calls.writes).toBe(0)
   } finally { await page.close() }
 })
 browserTest('T-CONNECTIONS-AUDIT refusal supplies no visible evidence while a genuine list failure remains unavailable', async () => {
   const page = await pageFor('fabric')
   try {
+    await page.waitForFunction(() => window.nativeHandoff.snapshot().calls.audit === 1)
     await start(page, 'fabric'); await next(page)
     await page.locator('[data-product-tour-step="connections.audit"]').waitFor()
-    await page.getByRole('tab', { name: 'Audit', exact: true }).click()
-    await page.waitForFunction(() => window.nativeHandoff.snapshot().calls.audit === 1)
-    await page.evaluate(() => window.nativeHandoff.settleAudit(0, 'denied'))
+    const read = await openSection(page, 'Audit')
+    await page.evaluate(({ index, outcome }) => window.nativeHandoff.settleAudit(index, outcome), { index: read, outcome: 'denied' })
     await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
     await page.getByText('No connections yet', { exact: true }).waitFor()
     const denied = await page.evaluate(() => window.nativeHandoff.snapshot())
@@ -223,37 +249,59 @@ browserTest('T-CONNECTIONS-AUDIT refusal supplies no visible evidence while a ge
   const unavailable = await pageFor('fabric', '&list-failure=1')
   try {
     await unavailable.waitForFunction(() => window.nativeHandoff.snapshot().capabilities['connection-fabric.available']?.state === 'unavailable')
+    // That mounted read belongs to the sidebar, not to walkthrough progress: a Fabric that
+    // never becomes available must not add another one and must never complete the step.
+    await unavailable.waitForFunction(() => window.nativeHandoff.snapshot().calls.audit === 1)
+    const sidebarReads = (await unavailable.evaluate(() => window.nativeHandoff.snapshot())).calls.audit
     await unavailable.evaluate(() => window.nativeHandoff.controller.start('OBT-24'))
-    expect((await unavailable.evaluate(() => window.nativeHandoff.snapshot())).state.phase).not.toBe('finished')
-    expect((await unavailable.evaluate(() => window.nativeHandoff.snapshot())).calls.audit).toBe(0)
+    await unavailable.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+    const blocked = await unavailable.evaluate(() => window.nativeHandoff.snapshot())
+    expect(blocked.state.phase).not.toBe('finished')
+    expect(blocked.state.attemptEvidence['connections.audit']?.level).toBeUndefined()
+    expect(blocked.calls.audit).toBe(sidebarReads)
   } finally { await unavailable.close() }
 })
 browserTest('T-CONNECTIONS-AUDIT an obsolete workspace Audit response cannot complete a replacement attempt or replace its current rows', async () => {
   const page = await pageFor('fabric')
   try {
-    await start(page, 'fabric'); await next(page)
-    await page.getByRole('tab', { name: 'Audit', exact: true }).click()
     await page.waitForFunction(() => window.nativeHandoff.snapshot().calls.audit === 1)
+    await start(page, 'fabric'); await next(page)
+    await page.locator('[data-product-tour-step="connections.audit"]').waitFor()
+    const openingRead = await openSection(page, 'Audit')
     const oldToken = (await page.evaluate(() => window.nativeHandoff.snapshot())).state.attempt!.binding.runToken
-    await page.evaluate(() => window.nativeHandoff.switchWorkspace('workspace-b'))
-    await page.waitForFunction(() => window.nativeHandoff.snapshot().calls.audit === 2)
-    await page.evaluate(() => window.nativeHandoff.switchWorkspace('workspace-a'))
-    await page.waitForFunction(() => window.nativeHandoff.snapshot().calls.audit === 3)
-    await page.getByRole('tab', { name: 'Overview', exact: true }).click()
+    const foreignRead = await switchToWorkspace(page, 'workspace-b')
+    const returningRead = await switchToWorkspace(page, 'workspace-a')
+    const abandonedRead = await openSection(page, 'Overview')
     await page.evaluate(() => window.nativeHandoff.controller.start('OBT-24', 'replay'))
     await page.locator('[data-product-tour-step="connections.services"]').waitFor(); await next(page)
-    await page.getByRole('tab', { name: 'Audit', exact: true }).click()
-    await page.waitForFunction(() => window.nativeHandoff.snapshot().calls.audit === 4)
+    await page.locator('[data-product-tour-step="connections.audit"]').waitFor()
+    const replacementRead = await openSection(page, 'Audit')
     expect((await page.evaluate(() => window.nativeHandoff.snapshot())).state.attempt?.binding.runToken).not.toBe(oldToken)
-    await page.evaluate(() => { window.nativeHandoff.settleAudit(0); window.nativeHandoff.settleAudit(1); window.nativeHandoff.settleAudit(2) })
+    // Responses for another workspace, or superseded before the replacement attempt began,
+    // must neither complete it nor put rows on screen.
+    await page.evaluate(indices => { for (const index of indices) window.nativeHandoff.settleAudit(index) }, [openingRead, foreignRead, returningRead, abandonedRead])
     await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
     const pending = await page.evaluate(() => window.nativeHandoff.snapshot())
     expect(pending.state.phase).not.toBe('finished')
     expect(pending.state.attemptEvidence['connections.audit']?.level).toBeUndefined()
-    expect(await page.getByText('public-event-0', { exact: true }).count()).toBe(0)
-    await page.evaluate(() => window.nativeHandoff.settleAudit(3))
+    for (const index of [openingRead, foreignRead, returningRead, abandonedRead]) {
+      expect(await page.getByText(`public-event-${index}`, { exact: true }).count()).toBe(0)
+    }
+    await page.evaluate(index => window.nativeHandoff.settleAudit(index), replacementRead)
     await page.waitForFunction(() => window.nativeHandoff.snapshot().state.phase === 'finished')
-    expect(await page.getByText('public-event-3', { exact: true }).count()).toBe(1)
+    expect(await page.getByText(`public-event-${replacementRead}`, { exact: true }).count()).toBe(1)
+    // Rows survive a reload in progress, and the superseded response of the previous visit
+    // cannot replace them.
+    const staleReload = await openSection(page, 'Overview')
+    const reload = await openSection(page, 'Audit')
+    expect(await page.getByText(`public-event-${replacementRead}`, { exact: true }).count()).toBe(1)
+    await page.evaluate(index => window.nativeHandoff.settleAudit(index), staleReload)
+    await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+    expect(await page.getByText(`public-event-${staleReload}`, { exact: true }).count()).toBe(0)
+    expect(await page.getByText(`public-event-${replacementRead}`, { exact: true }).count()).toBe(1)
+    await page.evaluate(index => window.nativeHandoff.settleAudit(index), reload)
+    await page.getByText(`public-event-${reload}`, { exact: true }).waitFor()
+    expect(await page.getByText(`public-event-${replacementRead}`, { exact: true }).count()).toBe(0)
   } finally { await page.close() }
 })
 if (isolatedCase && !registered) test('requested native handoff fixture case exists', () => { throw new Error(`Unknown native handoff case: ${isolatedCase}`) })
