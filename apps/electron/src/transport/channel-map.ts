@@ -638,6 +638,12 @@ export const CHANNEL_MAP = {
   'cookbooksLab.export': invoke(RPC_CHANNELS.cookbooksLab.EXPORT),
   // Wave 10: structural cell operations (add/delete/move/duplicate)
   'cookbooksLab.mutate': invoke(RPC_CHANNELS.cookbooksLab.MUTATE),
+  // Wave 15: live streaming. The invokes answer `{runId}` as soon as the sidecar
+  // accepts the run, so the transport default is plenty; the NDJSON frames
+  // arrive on the push channel below.
+  'cookbooksLab.runStream': invoke(RPC_CHANNELS.cookbooksLab.RUN_STREAM),
+  'cookbooksLab.runAllStream': invoke(RPC_CHANNELS.cookbooksLab.RUN_ALL_STREAM),
+  'cookbooksLab.onRunEvent': listener(RPC_CHANNELS.cookbooksLab.RUN_EVENT),
   'cookbooksLab.onStatusChanged': listener(RPC_CHANNELS.cookbooksLab.STATUS_CHANGED),
 
   // Debug logging

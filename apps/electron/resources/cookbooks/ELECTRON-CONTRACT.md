@@ -13,7 +13,7 @@ Two kinds of statement appear here:
   made. Labelled `Proposal`; not implemented today.
 
 Evidence: `scripts/electron_handshake_probe.py` spawns the sidecar exactly as described in §2/§3
-and asserts the handshake below. Its expected output is in §8.
+and asserts the handshake below. Its check groups and expected result (`[SUMMARY] 0 failed`) are in §8.
 
 ## 1. Topology
 
@@ -262,6 +262,14 @@ notebook is corrupt, meaning "offer Reset" (`:201-202`). The only 5xx is `503` f
 `/run-all` that arrives after shutdown began (below); the host maps even kernel-start failures to
 400 (`plans/011-host-input-safety.md:109-112`).
 
+**Streaming responses are `200` too, but a different shape (wave 15).** `POST /run-stream` and
+`POST /run-all-stream` (§3.9) answer `200` with `Content-Type: application/x-ndjson; charset=utf-8`
+and **no `Content-Length`**: the body is a sequence of newline-delimited JSON frames, delimited by
+connection close. `protocol_version` is left at the `HTTP/1.0` default, so the reader cannot rely on
+a length header or on keep-alive framing — it must read until EOF (or the terminal `end`/`error`
+frame). An error raised *before* the first frame is the ordinary 4xx JSON body, not NDJSON
+(`src/rox_cookbooks/host.py`, `do_POST`).
+
 ### 3.5 API surface
 
 | Method | Path | Body / query | Response |
@@ -274,6 +282,8 @@ notebook is corrupt, meaning "offer Reset" (`:201-202`). The only 5xx is `503` f
 | POST | `/open` | `{itemId, newCopy?}` | `{copyId, document}` (`:220-230`) |
 | POST | `/run` | `{itemId, code, index?, store?}` | `{ok,stdout,stderr,returncode,error?,timed_out?,cancelled,displays,missing}` (`src/rox_cookbooks/host.py:238-309`; `displays` §3.8) |
 | POST | `/run-all` | `{itemId, cells:[{index,source}], store?}` | `{ok,timed_out,returncode,cancelled,missing,cells:[{…,displays}]}` (`src/rox_cookbooks/host.py:310-406`; `displays` §3.8) |
+| POST | `/run-stream` | `{itemId, code, index?, store?}` | **NDJSON** `200` — frames `start`, `stdout`/`stderr`, `display`, `end` (wave 15; §3.9) |
+| POST | `/run-all-stream` | `{itemId, cells:[{index,source}], store?}` | **NDJSON** `200` — frames `start`, `cell-start`, `stdout`/`stderr`, `cell-end`, `end` (wave 15; §3.9) |
 | POST | `/cancel` | `{itemId}` | `{ok:true, cancelled:<int>}` (`src/rox_cookbooks/host.py:407-419`) |
 | POST | `/reset` | `{itemId, confirm?}` | `{ok:true}` (`:296-307`) |
 | POST | `/save` | `{itemId,index,source}` or `{itemId,text}` | `{ok:true}` (`:308-346`) |
@@ -493,6 +503,76 @@ the driver swaps `sys.stdout`/`sys.stderr` for `io.StringIO`, so bytes written s
 bypass per-cell capture and are discarded (`execute_all` docstring). Use `print` or `display` for
 output you want back.
 
+### 3.9 Streaming runs (`POST /run-stream`, `POST /run-all-stream`)
+
+Wave 15 adds two **additive** NDJSON routes beside `/run`/`/run-all`; the synchronous pair is
+unchanged byte-for-byte. Both routes emit one JSON object per line, `write`-flushed per frame, with
+`Content-Type: application/x-ndjson; charset=utf-8` and **no `Content-Length`** — the body ends when
+the connection closes (`src/rox_cookbooks/host.py`, `do_POST`; §3.4). Validation and every gate are
+1:1 with the synchronous routes (itemId → catalog item → kind → `parse_index` → `MAX_RUN_ALL_CELLS`
+= 100 → `begin_run` 503 → `_document_lock` pre-persist → redaction set → `missing_secrets`), so a
+request that fails validation gets the **same 4xx JSON** it would from `/run`/`/run-all` — never a
+half-open NDJSON stream.
+
+```
+POST /run-stream      {"itemId": str, "code": str, "index"?: int, "store"?: {str: str}}
+POST /run-all-stream  {"itemId": str, "cells": [{"index": int, "source": str}], "store"?: {…}}
+```
+
+**Frame contract** (frozen, wave 15). Field names are sidecar-native `snake_case` — the same
+convention as `timed_out`/`duration_ms`/`returncode` in the existing responses. IPC events convert
+to `camelCase` (`timedOut`/`durationMs`) at the Electron boundary (`mapRunResult`), never here.
+
+| `t` | Fields | Emitted by |
+|---|---|---|
+| `start` | `itemId` (str), `index` (int\|null), `cells` ([int]\|null), `timeout` (float) | route |
+| `cell-start` | `index` (int) — `/run-all-stream` only | driver |
+| `stdout` | `index` (int\|null), `data` (redacted str) | kernel (`/run-stream`) / driver (`/run-all-stream`) |
+| `stderr` | `index` (int\|null), `data` (redacted str) | kernel / driver |
+| `display` | `index` (int\|null), `mime` (str), `data` (str) — one record = one frame, `/run-stream` only | route |
+| `cell-end` | `index` (int), `status` (`ok`\|`error`\|`skipped`), `ok` (bool), `timed_out` (bool), `duration_ms` (int), `returncode` (int\|null), `error` (str\|null), `stdout`, `stderr`, `displays` ([…]) — a full `cells[]` record, `/run-all-stream` only | driver |
+| `end` | `ok` (bool), `returncode` (int\|null), `timed_out` (bool), `cancelled` (bool), `missing` ([str]), `duration_ms` (int\|null), `result` (full result object) | route |
+| `error` | `status` (int), `error` (str) — a per-frame error raised *after* `start` | route |
+
+**Invariants.**
+
+- `start` is always first and `end` is always last — including on cancel and timeout
+  (`cancelled: true`).
+- `index` is `null` on every `/run-stream` frame (that route has no `cell-start`/`cell-end`).
+- The terminal `end` always carries `result`: a full `CookbooksRunResult` (+ additive `durationMs`)
+  for `/run-stream`, a full `CookbooksRunAllResult` for `/run-all-stream`. The renderer replaces its
+  live buffers with this authoritative object.
+- `display` frames exist **only** on `/run-stream` — one per record of `result.displays`, emitted
+  immediately before `end`. `/run-all-stream` has no `display` frames; its `cell-end` carries the
+  whole cell record, `displays` included.
+- `stdout`/`stderr` frame data is **already redacted** (§5.4), one frame per emitted chunk, with a
+  per-stream holdback so a secret split across a chunk or line boundary cannot leak (§5.4's
+  streaming redactor).
+
+**Who emits what.** The route (host) forms `start` and `end` — the kernel never emits them.
+`/run-stream`: the kernel emits `stdout`/`stderr` fragments (already redacted, holdback applied) and
+the route adds the `display` frames and the terminal `end`. `/run-all-stream`: the driver
+(`Kernel.execute_all_stream`) emits `cell-start`/`stdout`/`stderr` (whole lines, redacted, teed to
+the preserved real stdout) and each `cell-end`; the route relays those frames and wraps them with its
+own `start`/`end`. A non-JSON line the driver's own code writes straight to fd 1 becomes an `stderr`
+frame for the current cell and is **not** merged into the final result — parity with `/run-all`
+(§3.8's `os.write` caveat).
+
+**Cancel.** `POST /cancel {itemId}` is unchanged and interrupts streaming runs too (§3.6): the
+process group is killed, partial `stdout` already emitted is kept, and the stream still finishes with
+`end.cancelled: true` (within ~2 s). For `/run-all-stream`, cells that already finished keep their
+`cell-end`; the rest arrive `skipped` in the final `result`, exactly as §3.6 describes.
+
+**Client disconnect.** If the client closes the connection mid-stream (window close, `AbortController`),
+the handler kills the run's child process group (`RunHandle` → `_kill_process_tree`) and stops
+producing frames; no orphan process is left behind (§6).
+
+**Errors.** A failure *before* the first frame (bad/unknown `itemId`, corrupt notebook, no kernel for
+the item, body over 2 MiB, missing token) is the ordinary **4xx JSON** body, not NDJSON (§3.4). A
+failure *after* `start` has been sent arrives as an `{"t":"error","status":<int>,"error":"…"}` frame
+followed by the terminal `end`, so a client can always tell "never started" (4xx) from "failed
+mid-stream" (`error` frame + `end`).
+
 ## 4. Sidebar embedding
 
 ### 4.1 The URL to load
@@ -526,8 +606,19 @@ exactly the line `serve_lab.py` prints (`scripts/serve_lab.py:26`; `README.md:18
 
 ### 4.3 Focus and visibility
 
-- The host has **no push channel** — no WebSocket, no SSE, no long-poll. Every refresh is a fresh
-  HTTP call (`src/rox_cookbooks/static/lab.html:110-127`).
+- **Long-lived responses exist now — but only client-initiated.** Wave 15's `/run-stream` and
+  `/run-all-stream` (§3.9) are streaming `200`s: one HTTP response that stays open for the length of
+  the run and carries NDJSON frames as they are produced (`src/rox_cookbooks/host.py`, `do_POST`).
+  What is still **absent** is any *server push channel* — no WebSocket, no SSE, no long-poll — so
+  nothing ever arrives except in response to a request the client already made. A stream is not a
+  subscription: it is never re-established by the server, and if it drops the run is cancelled
+  (§3.9) with the client left to start a new one. Everything that is not a run — catalog, search,
+  open, save — remains a fresh, short HTTP call (`src/rox_cookbooks/static/lab.html:110-127`).
+- **Client read policy.** While a stream is open the client reads `response.body` to EOF (or to the
+  terminal `end`/`error` frame); there is no `Content-Length` to stop at (§3.4). It must abort the
+  read on window close/unmount so the sidecar kills the child (§3.9). The absolute budgets are the
+  client's — run ≈ 90 s, run-all `min(900 s, 60 s × cells + 30 s)` — the host enforces only the
+  per-cell timeout (§6).
 - The page fetches on load only: `runSearch()` runs once at script end
   (`src/rox_cookbooks/static/lab.html:274`), and search re-fetches on input with a 200 ms debounce
   (`:266-273`). Nothing re-reads on `focus`/`visibilitychange`.
@@ -713,6 +804,9 @@ exactly the line `serve_lab.py` prints (`scripts/serve_lab.py:26`; `README.md:18
 | Port in use | `start()` calls `ThreadingHTTPServer(...)` on port `0`, so the OS picks a free port; a bind failure raises out of `start()` and `serve_lab.py` dies with a traceback (`src/rox_cookbooks/host.py:360`; `scripts/serve_lab.py:25`) | Treat "no startup line within N s" as a failed launch; surface stderr and retry (§2.5) |
 | Kernel/cell crash | One-shot process; `execute` never raises — returns `ok:false` with `stderr`/`error` (`src/rox_cookbooks/kernel.py:934-1002`, `:1145-1157`) | Cell shows the error; rerun the cell (no restart action in v1, `docs/spec.md:49`) |
 | Cell timeout | Killed as a process tree, `timed_out:true`, timeout message (`src/rox_cookbooks/kernel.py:971-974`, `:1146-1150`) | Show "timed out after Ns"; suggest raising the timeout |
+| Cell timeout during a stream | Same kill path (`_kill_process_tree`), but the partial `stdout`/`stderr` frames already sent are kept and the stream ends with `end.timed_out:true` (§3.9) | Live text up to the timeout stays on screen; show "timed out after Ns" |
+| Client disconnects mid-stream | The handler kills the run's child process group (`RunHandle` → `_kill_process_tree`) and stops writing frames (`src/rox_cookbooks/host.py`, `do_POST`); no orphan child is left behind | Treat as a cancelled run: keep the partial text, do not auto-resume — start a new stream (§3.9) |
+| Error after the first frame | The `200` NDJSON head is already out, so a 4xx cannot be sent; the host emits `{"t":"error","status":…,"error":…}` and then the terminal `end` (§3.9) | Render the `error` frame; the run is over (`end` still arrives) |
 | Corrupt ipynb | `/document` 400 `{error, reset:true}` (`src/rox_cookbooks/host.py:201-202`) | Offer Reset (`docs/spec.md:116`) |
 | Catalog file missing | Item stays, flagged `disabled` + `disabledReason:"file missing"` (`src/rox_cookbooks/catalog.py:132-140`; cards `src/rox_cookbooks/ui.py:80-84`) | Render the card disabled with the reason; other items unaffected |
 | Unsupported item (GPU/Docker) | `/run` 400 `{"error":"no kernel for this item"}` (`src/rox_cookbooks/host.py:245-246`) | No Run button (`docs/spec.md:135`); CLI exits 3 (`src/rox_cookbooks/ui.py:248-250`) |
@@ -734,6 +828,11 @@ Notes:
 - **Timeouts.** The HTTP host has no request timeout; the only timeout is the cell limit
   (`Kernel`, default 60 s, `src/rox_cookbooks/kernel.py:888`, `:943`). **Proposal.** Set an HTTP
   client timeout ≥ the cell timeout, and pass an explicit cell `timeout` from the UI.
+- **Stream budgets (wave 15).** The streaming routes add no host-side request timeout either — the
+  only server-side bound is the per-cell timeout above. The client's absolute budgets (run ≈ 90 s,
+  run-all `min(900 s, 60 s × cells + 30 s)`) live in Electron main; a stream that outlives its
+  budget is aborted by the client, which cancels the run (§3.9). The synchronous `/run`/`/run-all`
+  keep their pre-existing transport ceiling — which is exactly why the page migrates to streams.
 
 ## 7. Open questions / decisions needed
 
@@ -777,39 +876,47 @@ Notes:
     retry logic on top of it.
 16. **Access log.** The host logs nothing (`src/rox_cookbooks/host.py:90-91`). Do we want a
     diagnostic log file for support, and where does it live?
+17. **Stream re-attach / resumability.** A dropped stream cancels the run (§3.9) — there is no run
+    id to re-subscribe to and the host buffers no frames for a client that joins late. Is
+    "restart the cell" acceptable for v1, or do we want a resumable run handle?
+18. **Live `display()`.** v1 emits `display` frames only as the run finishes on `/run-stream`
+    (§3.9) — a mid-cell `display()` is not streamed, and `/run-all-stream` carries displays solely
+    inside `cell-end`. Promote displays to live frames, or keep them batched?
+19. **Stream backpressure.** The host writes frames as fast as the child produces them and does not
+    watch the socket; a slow reader is absorbed only by the OS buffer. Is client-side coalescing
+    (rAF/80 ms) enough, or does the host need write-side backpressure / a coalescing policy?
 
 ## 8. Probe
 
 `scripts/electron_handshake_probe.py` spawns the sidecar exactly as Electron main must (ephemeral
-port, read the startup line, HTTP over loopback), asserts §3.3's table plus the security headers and
-clean SIGINT shutdown, and exits 0 on success / 1 on failure:
+port, read the startup line, HTTP over loopback), runs its assertion groups, and exits 0 on success /
+1 on failure:
 
 ```bash
 python3 scripts/electron_handshake_probe.py            # default: fresh temp workspace
 python3 scripts/electron_handshake_probe.py --workspace /tmp/lab-probe
 ```
 
-Expected output (this machine, 2026-10-14, Python 3.9.6 — run verbatim, port/token/pid differ
-per run):
+It prints one `[PASS]`/`[FAIL]` line per check and ends with a `[SUMMARY] N failed` line; the
+expected result is **`[SUMMARY] 0 failed`**. The checks are grouped as:
 
-```text
-[INFO] spawned /Library/Developer/CommandLineTools/usr/bin/python3 /Users/t/Projects/2026-10-13-rox-cookbooks-notebooks/scripts/serve_lab.py --workspace /var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-lab-probe-yprep1x1 (pid 41608)
-[PASS] sidecar prints its loopback URL at startup — first stdout line: 'http://127.0.0.1:53571/lab.html?token=Vp8nKRpGFFowEL0dgFnlbFyV6sxoxyot'
-[PASS] startup URL carries a token — port=53571 path=/lab.html
-[PASS] GET /lab.html without token -> 200 (page is not token-gated) — status=200
-[PASS] lab document served — 9983 bytes
-[PASS] GET /lab.html?token=<token> -> 200 — status=200
-[PASS] GET /catalog without token -> 401 — status=401
-[PASS] GET /catalog with wrong token -> 401 — status=401
-[PASS] GET /catalog with Authorization: Bearer <token> -> 200 JSON array — status=200 items=13
-[PASS] GET /catalog?token=<token> -> 200 JSON array — status=200 items=13
-[PASS] framing/cache security headers present — X-Frame-Options=DENY, Cache-Control=no-store, X-Content-Type-Options=nosniff, Referrer-Policy=no-referrer
-[PASS] unknown route -> 404 — status=404
-[PASS] SIGINT stops the host cleanly (exit 0) — exit code=0
-[SUMMARY] 0 failed
-```
+- **Startup / discovery** — the sidecar prints exactly one loopback line
+  `http://127.0.0.1:<port>/lab.html?token=<token>`; the URL carries both a port and a token.
+- **Page** — `GET /lab.html` (no token) → 200 HTML; `GET /lab.html?token=<token>` → 200.
+- **Auth** — `GET /catalog` with no token → 401; with a wrong token → 401; with
+  `Authorization: Bearer <token>` → 200 JSON array; with `?token=<token>` → 200.
+- **Security headers** — `X-Frame-Options: DENY`, `Cache-Control: no-store`,
+  `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`.
+- **Routing** — unknown route with a token → 404.
+- **Streaming routes (wave 15)** — `POST /run-stream` and `POST /run-all-stream` **without a token →
+  401**; malformed bodies → the same 4xx the synchronous `/run`/`/run-all` return (validation
+  parity); a well-formed request advertises `Content-Type: application/x-ndjson`. These checks are
+  handshake/shape only — they execute no cell code.
+- **Shutdown** — `SIGINT` stops the host cleanly (exit 0).
 
-Exit status 0.
+A verbatim transcript is **not** reproduced here: the port, token and pid differ per run, and the
+check list grows as the surface does. Re-generate the full output from the probe when the vendored
+snapshot is refreshed (`PROVENANCE.md`).
 
 The probe does not import product code — it exercises the process boundary only, which is the
 boundary this document describes.

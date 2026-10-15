@@ -70,6 +70,16 @@
  * rendered as display math through the product `<Markdown>`, numbered outline
  * entries (`numberHeadings`) and the batch's own size while it runs.
  *
+ * Wave 15 («Live Streaming & Honest Progress») replaces the two synchronous run
+ * calls with the stream: `runStream`/`runAllStream` answer a fast `{runId}` and
+ * the frames arrive over `cookbooks-lab:run-event`. The cell's own text lands in
+ * a live buffer (`live-stream.ts`, coalesced through rAF), a `cell-end` folds a
+ * finished cell into `outputs`/`durations` the moment it closes, and the `end`
+ * frame finalizes the run — replacing a full batch, merging a subset, and keeping
+ * the partial text of a cell a stop cut short. The batch's «N из M» counter comes
+ * from the frames, the page follows the run to the cell it is on unless the
+ * reader scrolled by hand, and every late frame is dropped by its own `runId`.
+ *
  * Every string comes from `cookbooks.*` through `t()` and every colour, radius,
  * type size and control height is a ROX token, so the surface follows the app
  * theme in all twelve locales and never drifts into ad-hoc styling.
@@ -93,10 +103,26 @@ import {
   type CookbooksCellMutation,
   type CookbooksDisplay,
   type CookbooksDocument,
+  type CookbooksRunAllResult,
   type CookbooksRunCell,
+  type CookbooksRunResult,
   type CookbooksStatus,
 } from '../../../shared/cookbooks'
 import { normalizeOutputText } from './output-text'
+import {
+  applyRunEvent,
+  clearLive,
+  createCoalescer,
+  createLiveStreamState,
+  interruptedCells,
+  liveTextFor,
+  normalizeStatus,
+  progressFor,
+  retainLive,
+  type Coalescer,
+  type CookbooksStreamFrame,
+  type LiveStreamState,
+} from './live-stream'
 import { computeMatches, replaceAllInSources, replaceMatch, type CookbooksFindMatch } from './find-replace'
 import { numberHeadings, pickActiveEntry } from './scroll-spy'
 import {
@@ -493,11 +519,19 @@ type CookbooksPageUi = 'starting' | 'ready' | 'unavailable' | 'failed' | 'stoppe
  *
  * Wave 11: `saved` is the fourth local value — a result that came from the copy
  * when the document was opened, not from a run of this session.
+ *
+ * Wave 15: `running` is the fifth — the cell a live run is currently streaming
+ * into, which has no terminal status yet.
  */
-type CookbooksCellStatus = CookbooksRunCell['status'] | 'cancelled' | 'saved'
+type CookbooksCellStatus = CookbooksRunCell['status'] | 'cancelled' | 'saved' | 'running'
 
-/** One rendered cell result: the run-all DTO widened with the local status. */
-type CookbooksCellResult = Omit<CookbooksRunCell, 'status'> & { status: CookbooksCellStatus }
+/**
+ * One rendered cell result: the run-all DTO widened with the local status, plus
+ * the wave-15 live buffer — the raw text a streaming cell is showing right now.
+ * `live` is transient: a cell's run closes by clearing it, except for a cell a
+ * stop cut short, whose partial text stays on screen.
+ */
+type CookbooksCellResult = Omit<CookbooksRunCell, 'status'> & { status: CookbooksCellStatus; live?: string }
 
 /**
  * Frozen status → screen mapping: `idle|starting` → preparing; `running` → the
@@ -529,6 +563,46 @@ type CookbooksNotice =
 
 function describeFailure(cause: unknown): string {
   return cause instanceof Error && cause.message.length > 0 ? cause.message : String(cause)
+}
+
+/**
+ * Wave 15: how long a hand scroll keeps autoscroll off (SPEC §8 — «отключается
+ * любым скроллом»; the reader is not yanked back mid-read).
+ */
+const MANUAL_SCROLL_GRACE_MS = 2000
+
+/** The keys that move the reader — a press yields autoscroll for the grace window. */
+const MANUAL_SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'])
+
+/**
+ * Wave 15 (F5): one in-flight streamed run. `promise` settles on the run's own
+ * `end` frame (or rejects on an `error` frame), which is what keeps the busy
+ * state alive for the whole execution while the invoke itself already resolved.
+ */
+interface RunSession {
+  runId: string
+  itemId: string
+  mode: 'single' | 'run-all'
+  /** The cell a single run owns (`null` for a batch). */
+  index: number | null
+  /** Whether a batch covers only a subset («выполнить выше/ниже»). */
+  subset: boolean
+  /** The document indices the run covers, in order. */
+  requested: number[]
+  promise: Promise<CookbooksStreamFrame>
+  resolve: (frame: CookbooksStreamFrame) => void
+  reject: (cause: unknown) => void
+  /**
+   * Wave 15: the push subscription, held on the session so the unmount cleanup
+   * can drop it even while the run is still in flight (a surface that goes away
+   * mid-run never reaches its own `finally`).
+   */
+  unsubscribe: (() => void) | null
+}
+
+function createRunSession(init: Omit<RunSession, 'promise' | 'resolve' | 'reject' | 'unsubscribe'>): RunSession {
+  const { promise, resolve, reject } = Promise.withResolvers<CookbooksStreamFrame>()
+  return { ...init, promise, resolve, reject, unsubscribe: null }
 }
 
 /**
@@ -718,52 +792,72 @@ function DisplayRecord({ index, display }: { index: number; display: CookbooksDi
  * Wave 11: the block is a column — the text `<pre>` first, then one widget per
  * rich display record the cell carries. The wrapper keeps the test id, status,
  * collapse flag and label the surface has always published.
+ *
+ * Wave 15 (F7): while a run streams, `cell.live` holds the raw text the cell has
+ * produced so far — it leads the same `<pre>` (checked before
+ * `normalizeOutputText`, so the incremental buffer is shown as it arrives) and
+ * gives way to the authoritative text the moment the run closes.
+ *
+ * Wave 15 (perf): the block is memoized on `(cell, liveLength, collapsed)`. A
+ * live publish hands the streaming cell a fresh result object (its `live` grew),
+ * so that cell re-renders while every other cell — whose `cell` reference and
+ * collapse flags did not move — is skipped, and a page this large never repaints
+ * for a chunk that belongs to one block.
  */
-function CellOutput({
-  index,
-  cell,
-  outputText,
-  long,
-  expanded,
-}: {
-  index: number
-  cell: CookbooksCellResult | undefined
-  outputText: OutputTextReader
-  long: boolean
-  expanded: boolean
-}) {
-  const { t } = useTranslation()
-  const collapsed = long && !expanded
-  // Wave 11: the rich records the cell carries, in emission order — one widget
-  // per event, text/plain excluded (it is the block's own fallback text) and so
-  // is every mime this surface does not draw.
-  const displays = (cell?.displays ?? []).filter((display) => RENDERABLE_MIMES.includes(display.mime))
+const CellOutput = memo(
+  function CellOutput({
+    index,
+    cell,
+    outputText,
+    long,
+    expanded,
+  }: {
+    index: number
+    cell: CookbooksCellResult | undefined
+    outputText: OutputTextReader
+    long: boolean
+    expanded: boolean
+  }) {
+    const { t } = useTranslation()
+    const collapsed = long && !expanded
+    // Wave 11: the rich records the cell carries, in emission order — one widget
+    // per event, text/plain excluded (it is the block's own fallback text) and so
+    // is every mime this surface does not draw.
+    const displays = (cell?.displays ?? []).filter((display) => RENDERABLE_MIMES.includes(display.mime))
 
-  return (
-    <div
-      data-testid={`cookbooks-output-${index}`}
-      data-status={cell?.status ?? 'idle'}
-      data-collapsed={collapsed ? 'true' : 'false'}
-      aria-label={t('cookbooks.cell.outputLabel', { index })}
-      className="flex flex-col gap-1.5"
-    >
-      <pre
-        className={cn(
-          OUTPUT_PRE_CLASS,
-          // A short block keeps the wave-7 cap; a long one is clamped while
-          // collapsed and shown in full once expanded.
-          long ? (expanded ? '' : 'max-h-[120px]') : 'max-h-[320px]',
-          cell?.status === 'error' ? 'text-destructive-text' : 'text-muted-foreground',
-        )}
+    return (
+      <div
+        data-testid={`cookbooks-output-${index}`}
+        data-status={cell?.status ?? 'idle'}
+        data-collapsed={collapsed ? 'true' : 'false'}
+        aria-label={t('cookbooks.cell.outputLabel', { index })}
+        className="flex flex-col gap-1.5"
       >
-        {normalizeOutputText(outputText(cell))}
-      </pre>
-      {displays.map((display, position) => (
-        <DisplayRecord key={`${position}:${display.mime}`} index={index} display={display} />
-      ))}
-    </div>
-  )
-}
+        <pre
+          className={cn(
+            OUTPUT_PRE_CLASS,
+            // A short block keeps the wave-7 cap; a long one is clamped while
+            // collapsed and shown in full once expanded.
+            long ? (expanded ? '' : 'max-h-[120px]') : 'max-h-[320px]',
+            cell?.status === 'error' ? 'text-destructive-text' : 'text-muted-foreground',
+          )}
+        >
+          {cell?.live !== undefined && cell.live.length > 0 ? cell.live : normalizeOutputText(outputText(cell))}
+        </pre>
+        {displays.map((display, position) => (
+          <DisplayRecord key={`${position}:${display.mime}`} index={index} display={display} />
+        ))}
+      </div>
+    )
+  },
+  (previous, next) =>
+    previous.index === next.index &&
+    previous.cell === next.cell &&
+    (previous.cell?.live?.length ?? 0) === (next.cell?.live?.length ?? 0) &&
+    previous.outputText === next.outputText &&
+    previous.long === next.long &&
+    previous.expanded === next.expanded,
+)
 
 /**
  * Wave 10: the Colab hover-insert row — «+ Код» / «+ Текст» drawn before every
@@ -880,12 +974,17 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   const [dropGap, setDropGap] = useState<number | null>(null)
   /**
    * Wave 14 (F4): the batch's own size, shown next to «Запустить всё» while it
-   * runs. The sidecar answers a whole batch in ONE response, so a monotone
-   * «N of M» counter is not something this surface can honestly claim — what it
-   * does know is how many cells it asked for, and that is what it shows. The
-   * element is gone the moment the batch lands (the summary notice takes over).
+   * runs. Wave 15 (F6) turns it into a real counter: the frames report every
+   * cell as it closes (`cell-end`), so «Выполнено N из M» is now a number this
+   * surface can honestly show. The element is gone the moment the run lands.
    */
-  const [runProgress, setRunProgress] = useState<number | null>(null)
+  const [runProgress, setRunProgress] = useState<{ done: number; total: number } | null>(null)
+  /**
+   * Wave 15 (F7): the live buffer of the run in flight — the raw text each cell
+   * has produced, folded from the frames by `live-stream.ts` and coalesced so a
+   * chatty cell costs one render per frame instead of one per chunk.
+   */
+  const [live, setLive] = useState<LiveStreamState>(() => createLiveStreamState(null))
   /** Wave 14 (F6): the structural undo/redo stack (`cell-history.ts`). */
   const [history, setHistory] = useState<History>(() => createHistory())
   /**
@@ -923,6 +1022,48 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   const scrollSpyFrameRef = useRef<number | null>(null)
   /** Wave 10: the document index a structural mutation lands on, focused next pass. */
   const pendingFocusRef = useRef<number | null>(null)
+  /** Wave 15 (F7): the authoritative live state the coalescer publishes from. */
+  const liveRef = useRef<LiveStreamState>(live)
+  /** Wave 15 (F7): the pending live publish — one render per frame, not per chunk. */
+  const liveCoalescerRef = useRef<Coalescer | null>(null)
+  /** Wave 15 (F5): the run this page currently owns, or null between runs. */
+  const runSessionRef = useRef<RunSession | null>(null)
+  /** Wave 15: false once the surface unmounts — late frames are dropped. */
+  const mountedRef = useRef(true)
+  /** Wave 15: the item whose run frames are still welcome (rejects doc switches). */
+  const openItemIdRef = useRef<string | null>(null)
+  /** Wave 15 (F6): when the reader last scrolled by hand (0 = never). */
+  const manualScrollAtRef = useRef(0)
+  /** Wave 15 (F6): the last cell autoscroll brought into view (dedupes it). */
+  const lastAutoScrollRef = useRef<number | null>(null)
+
+  const noteManualScroll = useCallback(() => {
+    manualScrollAtRef.current = Date.now()
+  }, [])
+
+  // Wave 15 (F7): the coalescer owns the one rAF-timed live publish, so a burst
+  // of stdout chunks costs a single render per frame. It is torn down with the
+  // surface, so no pending frame ever runs into an unmounted page.
+  useEffect(() => {
+    mountedRef.current = true
+    liveCoalescerRef.current = createCoalescer(() => setLive(liveRef.current))
+    return () => {
+      mountedRef.current = false
+      liveCoalescerRef.current?.cancel()
+      liveCoalescerRef.current = null
+      // A surface that goes away mid-run never reaches its own `finally`, so the
+      // push subscription is dropped here.
+      runSessionRef.current?.unsubscribe?.()
+      runSessionRef.current = null
+    }
+  }, [])
+
+  // Wave 15 (F5): a switched document is a different world — a late frame from
+  // the previous run must never append to it (the frame's own runId is checked
+  // as well, so a stale run of the same item is dropped too).
+  useEffect(() => {
+    openItemIdRef.current = openItemId
+  }, [openItemId])
 
   // ensure() on mount + push subscription: main is the only source of truth.
   useEffect(() => {
@@ -1082,6 +1223,12 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         // Wave 14 (F6): a freshly opened document has no gestures behind it —
         // the stack describes the copy that was open, not this one.
         setHistory(createHistory())
+        // Wave 15 (F7): a freshly opened document has no run in flight — the
+        // live buffers describe the copy that was open, not this one.
+        liveRef.current = createLiveStreamState(null)
+        liveCoalescerRef.current?.cancel()
+        setLive(liveRef.current)
+        lastAutoScrollRef.current = null
         setOpenItemId(itemId)
         setNotice({ source: 'key', key: newCopy ? 'cookbooks.status.newCopy' : 'cookbooks.status.opened' })
       })
@@ -1160,6 +1307,216 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
     [doc],
   )
 
+  /**
+   * Wave 15 (F5): fold one streamed frame into the surface. A frame is dropped
+   * unless it belongs to the run this page still owns — a stale `runId`, another
+   * item, or an unmounted surface — so a late push can never append to a document
+   * it does not describe.
+   */
+  const handleRunFrame = useCallback(
+    (session: RunSession, frame: CookbooksStreamFrame) => {
+      if (!mountedRef.current) return
+      // A frame from a run this page no longer owns (a finished run's late push,
+      // or a subscription torn down and replaced) never touches the surface.
+      if (runSessionRef.current !== session) return
+      if (frame.runId !== session.runId) return
+      if (openItemIdRef.current !== session.itemId) return
+      // F7: the live buffer is folded first — coalesced so a chatty cell renders
+      // once per frame, not once per chunk.
+      liveRef.current = applyRunEvent(liveRef.current, frame)
+      liveCoalescerRef.current?.schedule()
+      switch (frame.t) {
+        case 'cell-start':
+          // R6/F6: follow the batch to the cell it is on now, unless the reader
+          // scrolled by hand inside the grace window (a repeat of the cell
+          // already in view is not a move).
+          if (
+            typeof frame.index === 'number' &&
+            frame.index !== lastAutoScrollRef.current &&
+            Date.now() - manualScrollAtRef.current > MANUAL_SCROLL_GRACE_MS
+          ) {
+            lastAutoScrollRef.current = frame.index
+            scrollToCell(frame.index)
+          }
+          break
+        case 'cell-end': {
+          if (typeof frame.index !== 'number') break
+          const index = frame.index
+          // F5: an incremental merge, so a finished cell shows its own output
+          // the moment it lands instead of waiting for the whole batch.
+          setOutputs((previous) => ({
+            ...previous,
+            [index]: {
+              index,
+              status: normalizeStatus(frame.status),
+              stdout: frame.stdout ?? '',
+              error: frame.error ?? null,
+              displays: (frame.displays as CookbooksDisplay[] | undefined) ?? [],
+            },
+          }))
+          if (typeof frame.durationMs === 'number') {
+            const duration = frame.durationMs
+            setDurations((previous) => ({ ...previous, [index]: duration }))
+          }
+          // The cell's own record has landed: its live buffer gives way to the
+          // authoritative text, so the block shows the normalized output from
+          // here on (only a cell the stop never closed keeps streaming).
+          liveRef.current = clearLive(liveRef.current, index)
+          // F6: N/M counts the cells that closed.
+          setRunProgress(progressFor(liveRef.current))
+          break
+        }
+        case 'end':
+          session.resolve(frame)
+          break
+        case 'error':
+          session.reject(new Error(typeof frame.error === 'string' && frame.error.length > 0 ? frame.error : String(frame.status ?? 'run failed')))
+          break
+        default:
+          break
+      }
+    },
+    [scrollToCell],
+  )
+
+  /**
+   * Wave 15 (F5): finalize a single run from its `end` frame. The run is closed,
+   * so the live buffer gives way to the authoritative text — a stopped run lands
+   * on `cancelled` (the wave-9 outcome), a successful one on `ok`.
+   */
+  const finalizeSingleRun = useCallback((frame: CookbooksStreamFrame, index: number, started: number) => {
+    const result = (frame.result ?? null) as CookbooksRunResult | null
+    if (result === null) throw new Error('run ended without a result')
+    const cancelled = frame.cancelled === true || result.cancelled === true
+    const duration = performance.now() - started
+    setOutputs((previous) => ({
+      ...previous,
+      [index]: {
+        index,
+        status: cancelled ? 'cancelled' : result.ok ? 'ok' : 'error',
+        stdout: result.stdout,
+        error: result.error,
+        displays: result.displays,
+      },
+    }))
+    setRuns((previous) => ({ ...previous, [index]: (previous[index] ?? 0) + 1 }))
+    // Wave 13 (F6): the status bar's run summary — for a single run the outcome
+    // counts are its own, and the duration is the clock this surface started.
+    setLastRun({
+      at: Date.now(),
+      ok: cancelled || !result.ok ? 0 : 1,
+      failed: cancelled || result.ok ? 0 : 1,
+      durationMs: duration,
+    })
+    setNotice({
+      source: 'key',
+      key: cancelled ? 'cookbooks.status.cellCancelled' : result.ok ? 'cookbooks.status.cellOk' : 'cookbooks.status.cellError',
+      params: { index, duration: formatDuration(duration) },
+    })
+    liveRef.current = clearLive(liveRef.current, index)
+    liveCoalescerRef.current?.flush()
+  }, [])
+
+  /**
+   * Wave 15 (F5): finalize a batch from its `end` frame — a full run replaces
+   * every output as before, a subset merges into the ones already shown. A cell
+   * a stop cut short keeps the partial text it managed to print (SPEC §8).
+   */
+  const finalizeRunAll = useCallback(
+    (frame: CookbooksStreamFrame, context: { subset: boolean; requested: number[]; started: number }) => {
+      const result = (frame.result ?? null) as CookbooksRunAllResult | null
+      if (result === null) throw new Error('run ended without a result')
+      const cancelled = frame.cancelled === true || result.cancelled === true
+      const duration = performance.now() - context.started
+      const nextOutputs: Record<number, CookbooksCellResult> = {}
+      for (const cell of result.cells) nextOutputs[cell.index] = cell
+      if (cancelled) {
+        // The sidecar answers one record per requested cell; the cells a stop cut
+        // short come back as `skipped` (a natural error-stop keeps
+        // `cancelled:false`, so during a cancellation those are exactly the cells
+        // that never ran). They are stopped, not skipped.
+        for (const cell of result.cells) {
+          if (cell.status !== 'skipped') continue
+          nextOutputs[cell.index] = { ...cell, status: 'cancelled' }
+        }
+        // Defence in depth: a cell the response never mentioned was stopped just
+        // the same.
+        for (const index of context.requested) {
+          if (nextOutputs[index]) continue
+          nextOutputs[index] = { index, status: 'cancelled', stdout: '', error: null, displays: [] }
+        }
+      }
+      // F7: a cell the stop cut short keeps the text it did print — its live
+      // buffer survives this finalize, so the partial output stays on screen.
+      const interrupted = interruptedCells(liveRef.current)
+      for (const index of interrupted) {
+        const partial = liveRef.current.live[index] ?? ''
+        nextOutputs[index] = {
+          index,
+          status: nextOutputs[index]?.status ?? (cancelled ? 'cancelled' : 'error'),
+          stdout: partial,
+          error: null,
+          displays: [],
+        }
+      }
+      setOutputs((previous) => (context.subset ? { ...previous, ...nextOutputs } : nextOutputs))
+      // R2: every executed cell counts once, in document order; a skipped — or
+      // stopped — cell never produced a result, so it does not move its counter.
+      setRuns((previous) => {
+        const next = { ...previous }
+        for (const cell of [...result.cells].sort((left, right) => left.index - right.index)) {
+          if (cell.status === 'skipped' || cell.status === 'cancelled') continue
+          next[cell.index] = (next[cell.index] ?? 0) + 1
+        }
+        return next
+      })
+      // Wave 13 (F7): the batch carries the sidecar's own per-cell timing — the
+      // surface draws it as it arrived and leaves a session-only cell (one with
+      // no `durationMs`) with whatever it already showed.
+      setDurations((previous) => {
+        const next = { ...previous }
+        for (const cell of result.cells) {
+          if (typeof cell.durationMs === 'number') next[cell.index] = cell.durationMs
+        }
+        return next
+      })
+      // Wave 13 (F6): the summary of the whole batch, wall clock included.
+      setLastRun({
+        at: Date.now(),
+        ok: result.cells.filter((cell) => cell.status === 'ok').length,
+        failed: result.cells.filter((cell) => cell.status === 'error').length,
+        durationMs: duration,
+      })
+      if (cancelled) {
+        setNotice({ source: 'key', key: 'cookbooks.notice.runCancelled' })
+      } else {
+        setNotice({
+          source: 'key',
+          key: 'cookbooks.status.runAll',
+          params: {
+            count: result.cells.length,
+            ok: result.cells.filter((cell) => cell.status === 'ok').length,
+            failed: result.cells.filter((cell) => cell.status === 'error').length,
+            skipped: result.cells.filter((cell) => cell.status === 'skipped').length,
+            duration: formatDuration(duration),
+          },
+        })
+      }
+      // The live buffers drop except the interrupted ones, whose partial text the
+      // block keeps showing until the next run.
+      liveRef.current = retainLive(liveRef.current, interrupted)
+      liveCoalescerRef.current?.flush()
+      // R6: land on the first failure when the batch has one (unless the run is
+      // already sitting on it).
+      const firstError = result.cells.find((cell) => cell.status === 'error')
+      if (firstError && firstError.index !== lastAutoScrollRef.current) {
+        lastAutoScrollRef.current = firstError.index
+        scrollToCell(firstError.index)
+      }
+    },
+    [scrollToCell],
+  )
+
   const runCell = useCallback(
     async (index: number, options: { focusNext?: boolean } = {}) => {
       if (!doc || !openItemId || busy !== null) return
@@ -1168,59 +1525,57 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       const started = performance.now()
       setRunStartedAt(started)
       // R6/wave 9: the running cell is brought into view the moment it starts.
+      lastAutoScrollRef.current = index
       scrollToCell(index)
       if (options.focusNext) focusCellSource(index + 1)
+      // Wave 15 (F5): the run id is minted here and sent with the invoke, so the
+      // push subscription below can never race the fast `{runId}` answer.
+      const runId = crypto.randomUUID()
+      const session = createRunSession({
+        runId,
+        itemId: openItemId,
+        mode: 'single',
+        index,
+        subset: false,
+        requested: [index],
+      })
+      runSessionRef.current = session
+      liveRef.current = createLiveStreamState(runId, { mode: 'single', singleIndex: index, order: [index] })
+      liveCoalescerRef.current?.cancel()
+      setLive(liveRef.current)
       try {
         await runWithBusy(`cell:${index}:run`, async () => {
-          // Wave 9: a stopped run answers `cancelled` — an outcome, not a failure.
-          const result = await api.run({ itemId: openItemId, code, index })
-          const cancelled = result.cancelled === true
-          setOutputs((previous) => ({
-            ...previous,
-            [index]: {
-              index,
-              status: cancelled ? 'cancelled' : result.ok ? 'ok' : 'error',
-              stdout: result.stdout,
-              error: result.error,
-              // Wave 11: the rich records this run emitted travel with its text.
-              displays: result.displays,
-            },
-          }))
-          setRuns((previous) => ({ ...previous, [index]: (previous[index] ?? 0) + 1 }))
-          // Wave 13 (F6): the status bar's run summary — for a single run the
-          // outcome counts are its own, and the duration is the clock this
-          // surface started above (`/run` answers no duration of its own).
-          setLastRun({
-            at: Date.now(),
-            ok: cancelled || !result.ok ? 0 : 1,
-            failed: cancelled || result.ok ? 0 : 1,
-            durationMs: performance.now() - started,
-          })
-          setNotice({
-            source: 'key',
-            key: cancelled
-              ? 'cookbooks.status.cellCancelled'
-              : result.ok
-                ? 'cookbooks.status.cellOk'
-                : 'cookbooks.status.cellError',
-            params: { index, duration: formatDuration(performance.now() - started) },
-          })
+          session.unsubscribe = api.onRunEvent((frame) => handleRunFrame(session, frame))
+          try {
+            // A fast start — the run is busy until its own `end`, never for the
+            // whole execution (that is the 60-s transport cap this obeys).
+            await api.runStream({ runId, itemId: openItemId, code, index })
+            const endFrame = await session.promise
+            finalizeSingleRun(endFrame, index, started)
+          } finally {
+            session.unsubscribe?.()
+            session.unsubscribe = null
+          }
         })
       } finally {
+        runSessionRef.current = null
+        liveCoalescerRef.current?.cancel()
         setRunStartedAt(null)
         // Wave 13 (F7): the client-side measurement of one run — recorded even
         // when the run was stopped or failed, because it did take that long.
         setDurations((previous) => ({ ...previous, [index]: performance.now() - started }))
       }
     },
-    [api, busy, doc, focusCellSource, openItemId, runWithBusy, scrollToCell, sources],
+    [api, busy, doc, finalizeSingleRun, focusCellSource, handleRunFrame, openItemId, runWithBusy, scrollToCell, sources],
   )
 
   /**
    * Wave 7: «Запустить всё». Wave 9: the same batch behind «выполнить выше» /
    * «выполнить ниже» — `indices` restricts it to those document indices, and
-   * the empty-subset guard keeps a subset with nothing to run inert. Busy
-   * token, counters, statuses and autoscroll stay exactly the batch's own.
+   * the empty-subset guard keeps a subset with nothing to run inert. Wave 15
+   * (F5/F6): the batch is streamed — every cell folds in as it closes and the
+   * header counts them as they land. Busy token, counters, statuses and
+   * autoscroll stay exactly the batch's own.
    */
   const runAllCells = useCallback(
     async (indices?: number[]) => {
@@ -1237,107 +1592,56 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         .map(({ index, source }) => ({ index, source }))
       if (cells.length === 0) return
       const subset = indices !== undefined
+      const requested = cells.map((cell) => cell.index)
       const started = performance.now()
       setRunStartedAt(started)
       // R6: the batch starts at the first runnable cell.
+      lastAutoScrollRef.current = cells[0].index
       scrollToCell(cells[0].index)
-      // Wave 14 (F4): the batch's own size — subsets «выше/ниже» count only their
-      // own cells. The sidecar answers the whole batch in one response, so this
-      // is the run's SIZE, shown for as long as the run lasts.
-      setRunProgress(cells.length)
+      // Wave 15 (F6): the run's own size — the frames then report every cell as
+      // it closes, so this counter only ever grows.
+      setRunProgress({ done: 0, total: cells.length })
+      const runId = crypto.randomUUID()
+      const session = createRunSession({
+        runId,
+        itemId: openItemId,
+        mode: 'run-all',
+        index: null,
+        subset,
+        requested,
+      })
+      runSessionRef.current = session
+      liveRef.current = createLiveStreamState(runId, { mode: 'run-all', order: requested })
+      liveCoalescerRef.current?.cancel()
+      setLive(liveRef.current)
       try {
         await runWithBusy('run-all', async () => {
-          // Wave 9: a stopped batch answers `cancelled` and omits the cells it
-          // never reached.
-          const result = await api.runAll({ itemId: openItemId, cells })
-          const nextOutputs: Record<number, CookbooksCellResult> = {}
-          for (const cell of result.cells) nextOutputs[cell.index] = cell
-          if (result.cancelled === true) {
-            // The sidecar answers one record per requested cell; the cells a
-            // stop cut short come back as `skipped` (a natural error-stop keeps
-            // `cancelled:false`, so during a cancellation those are exactly the
-            // cells that never ran). They are stopped, not skipped.
-            for (const cell of result.cells) {
-              if (cell.status !== 'skipped') continue
-              nextOutputs[cell.index] = { ...cell, status: 'cancelled' }
-            }
-            // Defence in depth: a cell the response never mentioned was stopped
-            // just the same.
-            for (const cell of cells) {
-              if (nextOutputs[cell.index]) continue
-              nextOutputs[cell.index] = {
-                index: cell.index,
-                status: 'cancelled',
-                stdout: '',
-                error: null,
-                displays: [],
-              }
-            }
+          session.unsubscribe = api.onRunEvent((frame) => handleRunFrame(session, frame))
+          try {
+            await api.runAllStream({ runId, itemId: openItemId, cells })
+            const endFrame = await session.promise
+            finalizeRunAll(endFrame, { subset, requested, started })
+          } finally {
+            session.unsubscribe?.()
+            session.unsubscribe = null
           }
-          // A subset run owns only its own cells: the rest of the document
-          // keeps the outputs it already showed.
-          setOutputs((previous) => (subset ? { ...previous, ...nextOutputs } : nextOutputs))
-          // R2: every executed cell counts once, in document order; a skipped —
-          // or stopped — cell never produced a result, so it does not move its
-          // counter.
-          setRuns((previous) => {
-            const next = { ...previous }
-            for (const cell of [...result.cells].sort((left, right) => left.index - right.index)) {
-              if (cell.status === 'skipped' || cell.status === 'cancelled') continue
-              next[cell.index] = (next[cell.index] ?? 0) + 1
-            }
-            return next
-          })
-          // Wave 13 (F7): the batch carries the sidecar's own per-cell timing —
-          // the surface draws it as it arrived and leaves a session-only cell
-          // (one with no `durationMs`) with whatever it already showed.
-          setDurations((previous) => {
-            const next = { ...previous }
-            for (const cell of result.cells) {
-              if (typeof cell.durationMs === 'number') next[cell.index] = cell.durationMs
-            }
-            return next
-          })
-          // Wave 13 (F6): the summary of the whole batch, wall clock included.
-          setLastRun({
-            at: Date.now(),
-            ok: result.cells.filter((cell) => cell.status === 'ok').length,
-            failed: result.cells.filter((cell) => cell.status === 'error').length,
-            durationMs: performance.now() - started,
-          })
-          if (result.cancelled === true) {
-            setNotice({ source: 'key', key: 'cookbooks.notice.runCancelled' })
-          } else {
-            setNotice({
-              source: 'key',
-              key: 'cookbooks.status.runAll',
-              params: {
-                count: result.cells.length,
-                ok: result.cells.filter((cell) => cell.status === 'ok').length,
-                failed: result.cells.filter((cell) => cell.status === 'error').length,
-                skipped: result.cells.filter((cell) => cell.status === 'skipped').length,
-                duration: formatDuration(performance.now() - started),
-              },
-            })
-          }
-          // R6: land on the first failure when the batch has one.
-          const firstError = result.cells.find((cell) => cell.status === 'error')
-          if (firstError) scrollToCell(firstError.index)
         })
       } finally {
+        runSessionRef.current = null
+        liveCoalescerRef.current?.cancel()
         setRunStartedAt(null)
-        // Wave 14 (F4): the progress counter lives exactly as long as the batch.
+        // Wave 15 (F6): the progress counter lives exactly as long as the batch.
         setRunProgress(null)
       }
     },
-    [api, busy, doc, openItemId, runWithBusy, scrollToCell, sources],
+    [api, busy, doc, finalizeRunAll, handleRunFrame, openItemId, runWithBusy, scrollToCell, sources],
   )
 
   /**
    * Wave 9: stop what is running. The sidecar kills every live execution of
-   * this item, so the pending `run`/`runAll` promise answers `cancelled:true`
-   * and the surface reports that result — nothing is guessed locally, and the
-   * busy state is left to the run that owns it.
+   * this item, so the run's own stream answers its `end` frame with
+   * `cancelled:true` and the surface reports that result — nothing is guessed
+   * locally, and the busy state is left to the run that owns it.
    */
   const cancelRun = useCallback(async () => {
     if (!openItemId) return
@@ -2128,6 +2432,9 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       const inField = tag === 'TEXTAREA' || tag === 'INPUT' || tag === 'SELECT'
       const mod = event.metaKey || event.ctrlKey
       const noMod = !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey
+      // Wave 15 (F6): a scroll key is the reader steering — autoscroll yields for
+      // the grace window instead of yanking the view back to the running cell.
+      if (MANUAL_SCROLL_KEYS.has(event.key)) noteManualScroll()
 
       if (event.key === 'Escape') {
         // Wave 13 (F1): the find panel is the outermost Esc target, then the
@@ -2404,6 +2711,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       moveSelection,
       mutateCell,
       mutateMany,
+      noteManualScroll,
       pasteCells,
       redo,
       runAllCells,
@@ -2835,11 +3143,10 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
               {t('cookbooks.actions.runAll')}
             </button>
           ) : null}
-          {/* Wave 14 (F4): the batch's own size, right next to «Запустить всё».
-              It exists only while a batch is in flight — a single run shows
-              nothing — and reports how many cells the run covers, not a count
-              of what has landed: the sidecar answers the batch in one response,
-              so «done» is not a number this surface can honestly show. */}
+          {/* Wave 14 (F4) / wave 15 (F6): the batch's own progress, right next
+              to «Запустить всё». It exists only while a batch is in flight — a
+              single run shows nothing — and reports how many cells have closed
+              so far out of how many the run covers, straight from the frames. */}
           {runProgress !== null ? (
             <span
               data-testid="cookbooks-run-progress"
@@ -2847,7 +3154,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
               aria-label={t('cookbooks.run.progressAria')}
               className="shrink-0 text-caption numeric text-text-secondary"
             >
-              {t('cookbooks.run.batch', { total: runProgress })}
+              {t('cookbooks.run.progress', { done: runProgress.done, total: runProgress.total })}
             </span>
           ) : null}
           {/* Wave 9: while a batch runs, the header is where it is stopped. */}
@@ -2991,11 +3298,28 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
               const editing = isMarkdown && (editingCells[index] ?? false)
               const source = sources[index] ?? cell.source
               const output = outputs[index]
+              // Wave 15 (F7): the cell result the block draws — the settled
+              // output, widened with the run's live buffer while one is
+              // streaming into it. A cell the run is on right now reports
+              // `running`; a stopped one keeps the status the finalize gave it.
+              const liveText = liveTextFor(live, index)
+              const baseOutput: CookbooksCellResult = output ?? {
+                index,
+                status: 'running',
+                stdout: '',
+                error: null,
+                displays: [],
+              }
+              const outputWithLive: CookbooksCellResult | undefined =
+                liveText !== undefined && liveText.length > 0
+                  ? { ...baseOutput, status: live.finished ? baseOutput.status : 'running', live: liveText }
+                  : output
               const runCount = runs[index] ?? 0
               // R-B: only a real result can be long; the pre-run hint never is.
               // The length is the one on screen — `\r` frames are already gone.
               const outputLong =
-                output !== undefined && normalizeOutputText(outputText(output)).length > OUTPUT_COLLAPSE_THRESHOLD
+                outputWithLive !== undefined &&
+                normalizeOutputText(outputText(outputWithLive)).length > OUTPUT_COLLAPSE_THRESHOLD
               const outputExpanded = outputLong && (expandedOutputs[index] ?? false)
               // R4: a single-run cell spins for itself; a batch spins every
               // executable cell. Both reserve the gutter slot, so nothing jumps.
@@ -3377,7 +3701,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                     )}
                     <CellOutput
                       index={index}
-                      cell={output}
+                      cell={outputWithLive}
                       outputText={outputText}
                       long={outputLong}
                       expanded={outputExpanded}
@@ -3737,6 +4061,10 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
             tabIndex={-1}
             onKeyDown={handleDocumentKeyDown}
             onScroll={scheduleOutlineMeasure}
+            // Wave 15 (F6): a wheel/touch gesture is the reader steering —
+            // autoscroll stands down for the grace window.
+            onWheel={noteManualScroll}
+            onTouchMove={noteManualScroll}
             className="min-h-0 flex-1 overflow-y-auto outline-none"
           >
             {renderDocument()}

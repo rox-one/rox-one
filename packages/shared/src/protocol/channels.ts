@@ -606,6 +606,13 @@ export const RPC_CHANNELS = {
     // Wave 10: one composer for the four structural cell operations
     // (add/delete/move/duplicate) — a discriminated union input.
     MUTATE: 'cookbooks-lab:mutate',
+    // Wave 15: live streaming. RUN_STREAM/RUN_ALL_STREAM are fast invokes (they
+    // resolve `{runId}` as soon as the sidecar accepts the run — the 60 s
+    // transport ceiling never applies to the run itself); the sidecar's NDJSON
+    // frames arrive on RUN_EVENT with a monotonic `seq`.
+    RUN_STREAM: 'cookbooks-lab:run-stream',
+    RUN_ALL_STREAM: 'cookbooks-lab:run-all-stream',
+    RUN_EVENT: 'cookbooks-lab:run-event',
     STATUS_CHANGED: 'cookbooks-lab:status-changed',
   },
 

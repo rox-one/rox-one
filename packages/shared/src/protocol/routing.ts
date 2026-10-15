@@ -558,6 +558,11 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.cookbooksLab.EXPORT,
   // Wave 10: structural cell mutations write the host-local personal copy.
   RPC_CHANNELS.cookbooksLab.MUTATE,
+  // Wave 15: the stream reader lives in main (it owns the bearer token and the
+  // loopback origin), so the fast invokes and the frame push stay host-local.
+  RPC_CHANNELS.cookbooksLab.RUN_STREAM,
+  RPC_CHANNELS.cookbooksLab.RUN_ALL_STREAM,
+  RPC_CHANNELS.cookbooksLab.RUN_EVENT,
   RPC_CHANNELS.cookbooksLab.STATUS_CHANGED,
 
 
