@@ -5,7 +5,7 @@
 Норматив: [PRD](PRD.md) · [SPEC](SPEC.md) · SPEC-wave9/10/11/13/14 · [ADR 001](decisions/001-runtime-container-and-secrets.md).
 **Вендор-снапшот `apps/electron/resources/cookbooks/**` в этой волне МЕНЯЕТСЯ:** правки вносятся в лабораторию `/Users/t/Projects/2026-10-13-rox-cookbooks-notebooks` (plain-каталог, без VCS — так задумано, `plans/README.md:88`), затем ре-вендор по `PROVENANCE.md:29-44` + перегенерация sha256-манифеста и `Snapshot date`. Тесты лаборатории в снапшот не входят.
 
-**Статус:** 🚧 в работе (фриз скоупа 2026-10-16).
+**Статус:** ✅ влито в main — PR #2178 (merge `8543add56`); слайсы L1/L2/L3 (лаборатория) · M1 (main) · R1 (renderer) · V1 (ре-вендор) · I1 (E2E).
 
 ## Цель
 

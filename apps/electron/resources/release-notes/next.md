@@ -12,6 +12,7 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 - **Cookbooks convenience** — Notebooks and playbooks autosave a second after the last edit, and the surface now says what is on disk: a status bar reports the save state, the document's own sizes and how the last run went, while «Перезапустить и выполнить» clears every result and runs the notebook again in one click.
 - **Cookbooks cell manipulation** — Cells reorder by dragging the gutter handle, select as a range with Shift+click or Shift+↑/↓, and copy, cut and paste as a block. Structural operations undo and redo one gesture at a time (`Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`), cells fold to hide their code, `Alt+Enter` runs a cell and inserts a fresh one below, `Tab`/`Shift+Tab` indent and outdent code, the outline numbers its headings (1, 1.1, …), and a batch run reports its own scope in the header.
 - **Cookbooks downloads** — The «Скачать» menu exports the open notebook as a `.ipynb` file or as a Jupytext-style `.py` script with `# %%` cell markers and markdown as comments.
+- **Cookbooks live output** — Cell output streams in as it is printed: a running cell shows its stdout line by line, and a batch run counts finished cells honestly («Выполнено N из M») while each cell's output lands as it finishes. The new stream transport also lifts the old 60-second ceiling on long runs, and «Остановить» still interrupts a cell immediately without leaving a process behind.
 
 ## Improvements
 
