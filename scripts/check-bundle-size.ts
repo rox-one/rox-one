@@ -15,6 +15,16 @@
  * builds emit a handful of chunks, so gating only the max lets a secondary chunk grow unbounded up to
  * its sibling's size.
  *
+ * Locale entries (`ar`, `de`, …, `zh-Hant`) each embed their own i18n payload, so before the split a
+ * translation merge moved twelve per-prefix budgets plus the js total at once and every one of them
+ * ended in a re-record (#2031, #2063, #2104, #2120). Those prefixes and the js total are now gated on
+ * CODE — the measured total minus the payload that entry embeds, measured from
+ * `packages/shared/src/i18n/locales/<locale>.json` — and the payload gets one budget of its own
+ * (`i18n.totalRawBytes`, slack 3% + 32 KB) that still fails a runaway. A baseline recorded before the
+ * split carries none of the new fields and keeps comparing raw totals, exactly as it was recorded: the
+ * subtraction is decided by the recorded shape, never by the presence of locale files. See
+ * `LocalePayloads`.
+ *
  * The `startup` section gates a different regression class (issue #1675): a heavy chunk added to an
  * entry page's STATIC closure ships eagerly even when every chunk-prefix budget still passes. Each
  * `*.html` in the renderer dist is parsed for `<script src>` and `<link rel="modulepreload" href>`
