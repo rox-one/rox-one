@@ -14,6 +14,7 @@ import {
   resolveRouteNavigationState,
   setEntityRoutesEnabled,
 } from '../route-parser'
+import { resetUnifiedSurfaceRoutes } from '../surface-routes'
 
 const ENTITY_ROUTES = ['goals/goal/g-1', 'docs/file/f-1', 'messenger/c-1', 'calendar/event/e-1', 'contacts/person/p-1', 'workflows/wf-1', 'base/b-1', 'forms/fm-1', 'comments/cm-1']
 
@@ -29,8 +30,22 @@ const BASE_ROUTES: Array<[string, boolean]> = [
 ]
 
 describe('entity routes flag gate', () => {
-  beforeEach(() => resetEntityRoutesEnabled())
-  afterEach(() => resetEntityRoutesEnabled())
+  // `isCompoundRoutePrefix` consults TWO independent module-global gates: the
+  // entity override below, and `surface-routes`' `enabledSurfaces` — reached via
+  // `isOpenUnifiedSurfaceRoot`, which returns before the entity check and covers
+  // `messenger` / `calendar` / `goals` (all in ENTITY_PREFIXES). That second gate
+  // is driven from production code (`platform/unified-flags.ts`), so another file
+  // in the same bun process can leave it open; reset both, as the sibling
+  // flag-off suites already do (`w1-07-flags-off-baseline`, `w1-15-flags-off-baseline`,
+  // `surface-routes.test`, `w1-07-review-fixes`).
+  beforeEach(() => {
+    resetEntityRoutesEnabled()
+    resetUnifiedSurfaceRoutes()
+  })
+  afterEach(() => {
+    resetEntityRoutesEnabled()
+    resetUnifiedSurfaceRoutes()
+  })
 
   test('flag off by default (inert)', () => {
     expect(isEntityRoutesEnabled()).toBe(false)
