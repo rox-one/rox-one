@@ -229,11 +229,11 @@ try {
     assert.equal(await page.evaluate(() => (window as any).ui001.chatMounts().length), before)
     await page.evaluate(() => (window as any).ui001.completeWorkspaceSwitch())
     // The rebuilt shell opens the new workspace's own address (no saved URL in this
-    // fixture: the initial inbox) instead of adopting the former workspace's session
+    // fixture: the initial home) instead of adopting the former workspace's session
     // route. Its sessions stay reachable only through an explicit new-owner navigation.
     await page.waitForFunction(() => new URL(location.href).searchParams.get('ws') === 'workspace-b')
-    await selected('inbox')
-    assert.equal(new URL(page.url()).searchParams.get('route'), 'inbox')
+    await selected('home')
+    assert.equal(new URL(page.url()).searchParams.get('route'), 'home')
     assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 0)
     assert.equal(await page.evaluate(() => (window as any).ui001.chatMounts().length), before)
     await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/foreign'))
@@ -261,7 +261,7 @@ try {
     // new workspace's own address and the shell loader stays silent for the cleared
     // metadata. An explicit new-owner selection is what reaches the loader.
     await page.waitForFunction(() => new URL(location.href).searchParams.get('ws') === 'workspace-b')
-    await selected('inbox')
+    await selected('home')
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
     assert.equal(await page.evaluate(() => (window as any).ui001.selected()), null)
     assert.equal(await page.evaluate(() => (window as any).ui001.requests().filter((row: string[]) => row[0] === 'messages').length), before)
