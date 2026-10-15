@@ -237,11 +237,13 @@ browserTest('T-CONNECTIONS-AUDIT refusal supplies no visible evidence while a ge
     await start(page, 'fabric'); await next(page)
     await page.locator('[data-product-tour-step="connections.audit"]').waitFor()
     const read = await openSection(page, 'Audit')
-    // The outcome is not plain `string`: the fixture types the parameter as a union, and the
-    // untyped object literal made `tsc --noEmit` fail (TS2345) in both apps/electron and apps/webui.
+    // `as const` narrows the ARGUMENT (so Playwright infers the page function's parameter
+    // from it) instead of annotating the parameter — annotating the parameter narrower than
+    // the argument literal fails overload resolution with TS2769, and leaving it untyped
+    // widens `outcome` to `string` against the fixture's `'ready' | 'denied'` (TS2345).
     await page.evaluate(
-      ({ index, outcome }: { index: number; outcome: 'denied' }) => window.nativeHandoff.settleAudit(index, outcome),
-      { index: read, outcome: 'denied' },
+      ({ index, outcome }) => window.nativeHandoff.settleAudit(index, outcome),
+      { index: read, outcome: 'denied' as const },
     )
     await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
     await page.getByText('No connections yet', { exact: true }).waitFor()
