@@ -7,6 +7,8 @@ import { NATIVE_REPLICA_IPC } from '../../../packages/shared/src/protocol/native
 
 const marker = 'rox-product-tour-application-test-only'
 const flag = 'craft-feature-product-tour-v1'
+// The one workspace this App window is bound to (scripts/product-tour/serve-application.ts:43).
+const BOUND_WORKSPACE_ID = 'product-tour-owned-workspace'
 // Readiness waits use the App's own signals with a named budget — never a fixed
 // sleep, and never a label that only some app revision renders.
 //
@@ -134,6 +136,31 @@ async function evidence(page: Page) {
 async function attachEvidence(page: Page, info: TestInfo) {
   await info.attach('application-evidence', { body: Buffer.from(JSON.stringify(await evidence(page), null, 2)), contentType: 'application/json' })
 }
+/**
+ * The App's host-inventory read. Over the App's own RPC surface that call is
+ * either answered with the window's bound workspace only, or refused with the
+ * transport's typed wire error (`{ code, message }`, build-api.ts:54-59 makes
+ * the shape explicit). Capturing the refusal is what keeps this case an
+ * explicit contract instead of Playwright's opaque `page.evaluate: Object`; a
+ * refusal is reported, never converted into a pass.
+ */
+async function readHostSessionInventory(page: Page): Promise<Array<Record<string, unknown>>> {
+  const read = await page.evaluate(async () => {
+    try {
+      return { served: true as const, sessions: (await window.electronAPI.getSessions()) as unknown as Array<Record<string, unknown>> }
+    } catch (error) {
+      return {
+        served: false as const,
+        code: (error as { code?: string } | null)?.code ?? null,
+        message: (error as { message?: string } | null)?.message ?? null,
+      }
+    }
+  })
+  if (!read.served) {
+    throw new Error(`The App refused its host-inventory read with the typed error ${JSON.stringify({ code: read.code, message: read.message })} instead of answering with the bound workspace's sessions.`)
+  }
+  return read.sessions
+}
 
 test.afterEach(async ({ page }, info) => {
   if (info.status !== info.expectedStatus) await attachEvidence(page, info).catch(() => {})
@@ -163,9 +190,16 @@ test('APP-05: authenticated WebUI keeps host inventory unavailable while native 
   await waitForAppReady(page)
   await expect(page.locator('[data-shell-role="chrome"]').first()).toBeVisible()
   const store = (await evidence(page)).sessionStore as { ownedSessionId: string; foreignSessionId: string }
-  const sessions = await page.evaluate(() => window.electronAPI.getSessions())
+  // Host inventory is not on this surface. The App's own renderer path never
+  // asks for it (authenticated-web-bootstrap.ts:60 settles startup with
+  // markHostSessionsUnavailable, so lib/caller-session-loading.ts:18 refuses
+  // before any request), and the RPC read below answers with the bound
+  // workspace alone. A refusal would be typed and is reported by the helper.
+  const sessions = await readHostSessionInventory(page)
   expect(sessions).toHaveLength(1)
-  expect(sessions[0]).toMatchObject({ id: store.ownedSessionId, name: 'Owned native metadata', workspaceId: 'product-tour-owned-workspace' })
+  expect(sessions[0]).toMatchObject({ id: store.ownedSessionId, name: 'Owned native metadata', workspaceId: BOUND_WORKSPACE_ID })
+  // The whole response is scoped: no other workspace's session, and no host path.
+  expect(sessions.every(session => session.workspaceId === BOUND_WORKSPACE_ID)).toBe(true)
   expect(JSON.stringify(sessions)).not.toContain(store.foreignSessionId)
   for (const hostField of ['workspaceRootPath', 'sessionFolderPath', 'workingDirectory', 'sdkCwd']) {
     expect(sessions[0]).not.toHaveProperty(hostField)
