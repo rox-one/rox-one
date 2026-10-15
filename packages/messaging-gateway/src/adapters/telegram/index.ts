@@ -21,6 +21,7 @@ import type {
   ButtonPress,
   MessagingLogger,
 } from '../../types'
+import { normalizeChatType } from '../../types'
 import { formatForTelegram } from './format'
 
 /**
@@ -279,6 +280,7 @@ export class TelegramAdapter implements PlatformAdapter {
         platform: 'telegram',
         channelId: String(ctx.chat.id),
         ...(threadId !== undefined ? { threadId } : {}),
+        ...(normalizeChatType(ctx.chat.type) ? { chatType: normalizeChatType(ctx.chat.type) } : {}),
         messageId: String(ctx.message.message_id),
         senderId: String(ctx.from?.id ?? ''),
         senderName: ctx.from?.first_name ?? undefined,
@@ -533,6 +535,7 @@ export class TelegramAdapter implements PlatformAdapter {
       platform: 'telegram',
       channelId: String(ctx.chat.id),
       ...(threadId !== undefined ? { threadId } : {}),
+      ...(normalizeChatType(ctx.chat.type) ? { chatType: normalizeChatType(ctx.chat.type) } : {}),
       messageId: String(ctx.message.message_id),
       senderId: String(ctx.from?.id ?? ''),
       senderName: ctx.from?.first_name ?? undefined,

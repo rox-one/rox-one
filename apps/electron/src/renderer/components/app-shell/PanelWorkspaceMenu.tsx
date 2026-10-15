@@ -40,12 +40,16 @@ export function PanelWorkspaceMenu() {
   const { execute } = useActionRegistry()
   const panelIds = useAtomValue(panelStackAtom).map((panel) => panel.id)
   const expanded = reconcilePanelFullScreen(useAtomValue(expandedPanelIdAtom), panelIds) !== null
+  // Deliberately no `data-panel-layout` on the layout button in this subtree: that
+  // attribute belongs to PanelStackContainer, and LayoutDeck resolves it with a bare
+  // `querySelector` (first document-order match). A second carrier — this 24px
+  // top-bar button — makes the deck measure the button instead of the columns area.
   return (
     <DropdownMenu>
       <Tooltip>
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
-            <TopBarButton aria-label={t('panelWorkspace.layout')} data-panel-layout="">
+            <TopBarButton aria-label={t('panelWorkspace.layout')}>
               <PanelsTopLeft className="icon-inline" aria-hidden />
             </TopBarButton>
           </DropdownMenuTrigger>

@@ -1700,14 +1700,7 @@ html[data-contrast="high"] [data-home-cell]:hover > .rox-home-widget {
   transform: none;
 }
 /* «Сегодня» hero: accent glow inside the card, input and chips on tone steps. */
-.rox-home-hero-glow {
-  background:
-    radial-gradient(120% 140% at 0% 0%, color-mix(in oklch, var(--accent) 26%, transparent), transparent 60%),
-    radial-gradient(90% 120% at 100% 100%, color-mix(in oklch, var(--success) 14%, transparent), transparent 60%);
-}
-html[data-contrast="high"] .rox-home-hero-glow {
-  display: none;
-}
+/* Hero is a flat glass panel (Mark 2026-10-14): no radial glow layer. */
 .rox-home-ask {
   background-color: color-mix(in oklch, var(--widget-base) 70%, transparent);
 }
@@ -1958,6 +1951,19 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   [data-panel-density="grid"] [data-secondary-toolbar] {
     display: none !important;
   }
+}
+
+/* Rail breakpoints: labels slide/fade in only on a collapsed -> expanded
+   disclosure (the rail reports data-rail-state="expanding" for that one
+   transition), never on mount in the expanded state. The animation-name is
+   never toggled by resizing; --motion-disclosure is 0ms under reduced motion
+   and during a live resize (html[data-resizing]). Opacity/transform only. */
+[data-rail-state="expanding"] .rox-rail-label {
+  animation: rox-rail-label-in var(--motion-disclosure) var(--ease-standard) both;
+}
+@keyframes rox-rail-label-in {
+  from { opacity: 0; transform: translateX(calc(var(--spacing) * -1)); }
+  to { opacity: 1; transform: none; }
 }
 
 /* Fluid shell: below NARROW_SHELL_THRESHOLD the secondary sidebar floats over

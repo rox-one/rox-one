@@ -37,7 +37,10 @@ export type GlanceCategory = 'rox' | 'essentials' | 'news' | 'media' | 'dev' | '
 export interface GlanceWidgetDef {
   type: string
   category: GlanceCategory
-  titleKey: string
+  /** i18n key for the title; omit when `title` is a brand name that is never translated. */
+  titleKey?: string
+  /** Literal, untranslated title (brand names: Hacker News, Reddit, YouTube…). */
+  title?: string
   descriptionKey?: string
   icon: string
   defaultConfig: GlanceConfig
@@ -126,4 +129,9 @@ export function resolveConfig(def: GlanceWidgetDef, config: GlanceConfig): Glanc
     }
   }
   return out
+}
+
+/** Display title for a widget definition. */
+export function glanceWidgetTitle(def: GlanceWidgetDef, t: (key: string) => string): string {
+  return def.title ?? (def.titleKey ? t(def.titleKey) : def.type)
 }

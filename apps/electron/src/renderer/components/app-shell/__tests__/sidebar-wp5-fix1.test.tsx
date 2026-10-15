@@ -2,6 +2,14 @@
  * WP5 review1 fixes: «Ещё» opens for an active destination inside it, and the
  * session-filter section / «Показать пустые» persist through AppShell's
  * expanded-sections store (survive a remount).
+ *
+ * Сессии owns its sidebar: the shell mounts the focused screen's publisher at
+ * `ScreenSidebarHost` (ShellSidebarNav.tsx:165), and as soon as it publishes,
+ * the nav switches from the shell's own filter list to that config
+ * (ShellSidebarNav.tsx:167). The tests below assert the handover, so the host
+ * runs for real — the harness supplies the AppShell + navigation contexts the
+ * publisher reads. Stubbing the host out would leave `screenConfig` undefined
+ * and make `waitForConfig` unreachable.
  */
 import { afterEach, describe, expect, it } from 'bun:test'
 import * as React from 'react'
@@ -17,7 +25,15 @@ import { useDomForFile } from '../../../../../../../packages/ui/src/components/p
 import { NavigationContext, NavigationStatusContext, type NavigationStatus } from '@/contexts/NavigationContext'
 import { AppShellProvider, type AppShellContextType } from '@/context/AppShellContext'
 import type { LinkItem, SidebarItem } from '../LeftSidebar'
-import { SESSION_FILTERS_EMPTY_HIDDEN_ID, SESSION_FILTERS_ID, ShellSidebarNav } from '../ShellSidebarNav'
+
+// The Sessions screen publishes its own sidebar through `ScreenSidebarHost`, and
+// the assertions below wait for exactly that published config
+// (`data-sidebar-content="config"`, ShellSidebarNav.tsx:176). Stubbing the host
+// out makes the wait unreachable: `screenConfig` stays undefined, the nav keeps
+// rendering `data-sidebar-content="sessions"`, and both tests burn the full 3s
+// deadline before failing. The harness below provides the AppShell + navigation
+// contexts the publisher reads, so the real host runs.
+const { SESSION_FILTERS_EMPTY_HIDDEN_ID, SESSION_FILTERS_ID, ShellSidebarNav } = await import('../ShellSidebarNav')
 
 // eslint-disable-next-line react-hooks/rules-of-hooks -- test DOM environment setup, not a React hook
 useDomForFile()
@@ -26,12 +42,18 @@ const i18n = createInstance()
 await i18n.init({ lng: 'en', fallbackLng: 'en', resources: { en: { translation: {} } } })
 
 let root: Root | null = null
+/**
+ * The sidebar DOM of the current test. Cleanup detaches the node but keeps the
+ * reference: a test body the runner aborts (timeout) keeps running past
+ * `afterEach`, and nulling this made that stray continuation die with the CI
+ * error `TypeError: null is not an object (evaluating 'host.querySelector')`.
+ * `mount` replaces it, so cleanup can never hand a continuation a null node.
+ */
 let host: HTMLDivElement | null = null
 afterEach(() => {
   if (root) act(() => root!.unmount())
   host?.remove()
   root = null
-  host = null
 })
 
 const noop = () => {}
@@ -93,6 +115,9 @@ async function mount(node: React.ReactNode) {
     root = createRoot(host!)
     root.render(<Provider store={createStore()}><I18nextProvider i18n={i18n}><MotionConfig reducedMotion="always"><TooltipProvider>{node}</TooltipProvider></MotionConfig></I18nextProvider></Provider>)
   })
+  // Let the lazy «Недавнее» fallback chunk resolve (sidebar-per-surface.test.tsx:92),
+  // so no assertion below races a chunk that is still loading.
+  for (let i = 0; i < 5; i++) await act(async () => { await Bun.sleep(0) })
 }
 async function unmount() {
   await act(async () => root!.unmount())

@@ -42,6 +42,9 @@ import { navigate, routes } from '@/lib/navigate'
 import { consumePendingCompose } from '@/platform/inspector-compose-events'
 import { captureWorkspaceToolOpen, openWorkspaceTool, type WorkspaceToolOpenIntent } from '@/lib/open-workspace-tool'
 import { cn } from '@/lib/utils'
+import { NotesQuickSections, useNotePins } from '@/screens/notes/NotesQuickSections'
+import { useNotesScreenSidebar } from '@/screens/notes/useNotesScreenSidebar'
+import { SlotPortal } from '@/screens/content-slot'
 import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import {
   contentHash,
@@ -79,6 +82,7 @@ import {
 } from './notes/NotesDocumentChrome'
 import { NotesViewHost } from './notes/NotesViewHost'
 import { convertNote, dailyNoteDestination, parseNotePropertyValue } from './notes/note-views'
+import { dailySessionsFor } from './notes/daily-sessions'
 import {
   loadPersonalTaskStore,
   persistPersonalTaskStore,
@@ -540,6 +544,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId, rightSessionContext])
   // PERF-09: a revisit paints the cached list at once; refreshNotes revalidates it.
   const [notes, setNotes] = React.useState<NoteSummary[]>(() => cachedNotesList(activeWorkspaceId) ?? [])
+  // Daily note handleDaily just cleaned up, so the route open that follows skips it.
+  const cleanedDailyNoteRef = React.useRef<string | null>(null)
   // Stable insertion order for sidebar — only updated on full refreshes, not optimistic saves
   const [sidebarOrder, setSidebarOrder] = React.useState<string[]>(() => (cachedNotesList(activeWorkspaceId) ?? []).map(n => n.id))
   const [searchResults, setSearchResults] = React.useState<NoteSummary[] | null>(null)
@@ -1324,7 +1330,24 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
 
   React.useEffect(() => {
     if (selectedNoteId) {
-      void openNote(parseNoteBlockAddress(selectedNoteId).noteId)
+      const noteId = parseNoteBlockAddress(selectedNoteId).noteId
+      const openedDailyDate = parseDailyNoteDate(noteId)
+      const workspaceId = activeWorkspaceId
+      // Explicit opens (sidebar, search, wikilink, route) read first, then ask the
+      // server for the opt-in legacy cleanup; the server checks the file on disk
+      // and writes only if the old block is there, announcing an external change
+      // so every open copy re-reads. With unsaved edits nothing is sent: the next
+      // open retries. handleDaily already cleaned up, so it is not called twice.
+      if (openedDailyDate && workspaceId) {
+        let cancelled = false
+        void openNote(noteId).then(() => {
+          if (cancelled || activeNoteIdRef.current !== noteId || dirtyRef.current) return
+          if (cleanedDailyNoteRef.current === noteId) { cleanedDailyNoteRef.current = null; return }
+          void window.electronAPI.getDailyNote(workspaceId, openedDailyDate, { cleanupLegacy: true }).catch(() => undefined)
+        })
+        return () => { cancelled = true }
+      }
+      void openNote(noteId)
       return
     }
     setActiveNote(null)
@@ -1336,7 +1359,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     setSaveError(null)
     setContentResolution(null)
     ++openNoteRequestRef.current
-  }, [selectedNoteId, openNote])
+  }, [selectedNoteId, openNote, activeWorkspaceId])
 
   const noteIds = React.useMemo(
     () => `${activeWorkspaceId ?? ''}:${notes.map(n => `${n.id}:${n.updatedAt}`).join(',')}`,
@@ -1550,6 +1573,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const propertyProjection = React.useMemo(() => projectFrontmatter(retainSource(content)), [content])
   const richParts = React.useMemo(() => splitFrontmatter(content), [content])
   const dailyDate = parseDailyNoteDate(activeNote?.id)
+  // Live overlay: the day's sessions are rendered, never written into the note body.
+  const dailySessions = React.useMemo(() => dailyDate ? dailySessionsFor(sessionMetaMap.values(), dailyDate, activeWorkspaceId) : [], [dailyDate, sessionMetaMap, activeWorkspaceId])
   const currentNoteAssets = React.useMemo(() => {
     const refs = new Set(activeNote?.assetRefs.map(ref => ref.replace(/^\.\//, '')) ?? [])
     return allAssets.filter(asset => refs.has(asset.relativePath))
@@ -1667,8 +1692,15 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const handleDaily = async (date?: string) => {
     if (!activeWorkspaceId) return
     if (!await flushBeforeAction()) return
-    const note = await window.electronAPI.getDailyNote(activeWorkspaceId, date)
+    // Explicit open: flushBeforeAction left no unsaved edits, so the server may
+    // strip a legacy sessions block if the file on disk still has one.
+    const cleanupLegacy = !dirtyRef.current
+    const note = await window.electronAPI.getDailyNote(activeWorkspaceId, date, { cleanupLegacy })
+    if (cleanupLegacy) cleanedDailyNoteRef.current = note.id
     await refreshNotes()
+    // Opening may strip a legacy sessions block; an already-open clean copy must
+    // re-read it, or its next save would CAS against the pre-cleanup revision.
+    if (activeNoteIdRef.current === note.id && !dirtyRef.current) await openNote(note.id)
     navigate(routes.view.notes(note.id))
   }
 
@@ -1740,6 +1772,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
           mutationOptions(activeWorkspaceId, noteId, renamedDocument.nativeRevision),
         )
         nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, noteId), renamed.note.nativeRevision ?? null)
+        notePins.rekey(noteId, renamed.note.id)
         await refreshNotes()
         if (activeNote?.id === noteId) navigate(routes.view.notes(renamed.note.id))
         return
@@ -1829,6 +1862,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         mutationOptions(activeWorkspaceId, moveTargetNote.id, document.nativeRevision),
       )
       nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, moved.note.id), moved.note.nativeRevision ?? null)
+      notePins.rekey(moveTargetNote.id, moved.note.id)
       setMoveDialogOpen(false)
       setMoveTargetNote(null)
       setMoveFolderName('')
@@ -1852,6 +1886,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         mutationOptions(activeWorkspaceId, note.id, document.nativeRevision),
       )
       nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, moved.note.id), moved.note.nativeRevision ?? null)
+      notePins.rekey(note.id, moved.note.id)
       await refreshNotes()
       navigate(routes.view.notes(moved.note.id))
       toast.success(t('notes.toast.moved'))
@@ -1888,6 +1923,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     if (!noteCreationFolder(noteScope, renameFolderTarget).allowed || !noteCreationFolder(noteScope, target).allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
     try {
       await window.electronAPI.renameFolderNote(activeWorkspaceId, renameFolderTarget, renameFolderName.trim())
+      notePins.rekey(renameFolderTarget, target, true)
       setRenameFolderDialogOpen(false)
       setRenameFolderTarget('')
       setRenameFolderName('')
@@ -1909,6 +1945,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     if (!noteCreationFolder(noteScope, deleteFolderTarget).allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
     try {
       const result = await window.electronAPI.deleteFolderNote(activeWorkspaceId, deleteFolderTarget)
+      notePins.drop(deleteFolderTarget, true)
       setDeleteFolderDialogOpen(false)
       setDeleteFolderTarget('')
       if (activeNote && result.deletedNotes.includes(activeNote.id)) {
@@ -1978,6 +2015,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       mutationOptions(activeWorkspaceId, activeNote.id, activeNote.nativeRevision),
     )
     nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, activeNote.id), result.note.nativeRevision ?? null)
+    notePins.rekey(activeNote.id, result.note.id)
     setRenameDialogOpen(false)
     await refreshNotes()
     navigate(routes.view.notes(result.note.id))
@@ -2001,6 +2039,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       activeNote.id,
       mutationOptions(activeWorkspaceId, activeNote.id, activeNote.nativeRevision),
     )
+    notePins.drop(activeNote.id)
     setDeleteDialogOpen(false)
     await refreshNotes()
     navigate(routes.view.notes())
@@ -2186,6 +2225,13 @@ h1,h2,h3{margin-top:1.5em}
     updateWikiQueryAndAnchor()
   }, [updateWikiQueryAndAnchor])
 
+  // «Закреплённое» / «Недавнее» quick sections (shell SidebarSection markup above the tree).
+  const notePins = useNotePins(activeWorkspaceId)
+  const pinnedNoteSet = React.useMemo(() => new Set(notePins.pinned), [notePins.pinned])
+  const isNotePinned = React.useCallback((id: string) => pinnedNoteSet.has(id), [pinnedNoteSet])
+  const quickNotes = scopedNotes
+  const handleOpenNoteRef = React.useRef<(noteId: string) => unknown>(() => {})
+  const openNoteFromQuick = React.useCallback((noteId: string) => { void handleOpenNoteRef.current(noteId) }, [])
   const handleOpenNote = async (noteId: string) => {
     if (!await flushBeforeAction()) return
     navigate(routes.view.notes(noteId))
@@ -2621,6 +2667,24 @@ h1,h2,h3{margin-top:1.5em}
     </div>
   ) : null
 
+  const notesSidebarSlots = useNotesScreenSidebar({
+    enabled: !!shellSidebarTarget && !!activeWorkspaceId && !readUnavailable,
+    title: t(notesHeaderTitleKey),
+    query,
+    onQuery: setQuery,
+    onDaily: () => { void handleDaily() },
+    onNewFolder: () => setCreateFolderDialogOpen(true),
+    onNewNote: () => openCreateNoteDialog(),
+    tags: allTags,
+    selectedTag,
+    onTag: setSelectedTag,
+    notes: quickNotes,
+    pinned: notePins.pinned,
+    onTogglePin: notePins.toggle,
+    onOpenNote: openNoteFromQuick,
+    activeNoteId: activeNote?.id,
+  })
+
   if (!activeWorkspaceId) {
     return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t('notes.empty.selectWorkspace')}</div>
   }
@@ -2653,10 +2717,57 @@ h1,h2,h3{margin-top:1.5em}
   // The compact view menu measures the toolbar the vault rail leaves behind.
   const toolbarWidth = shellWidth - (vaultShown ? railLayout.vault : 0)
 
+  // Shared ScreenSidebar: while this surface owns the shell sidebar the tree
+  // goes through the group content slot (collapse / icons mode apply); a
+  // kept-alive or shell-less surface keeps the inline navigator below.
+  const notesTree = (
+    <div onKeyDown={shellSidebarTarget ? handleSidebarTreeKeyDown : undefined} className={shellSidebarTarget ? "min-h-0" : "flex min-h-0 flex-1 flex-col"}>
+        <DndContext sensors={dndSensors} onDragEnd={handleSidebarDragEnd}>
+        <div ref={notesListViewportRef} className={shellSidebarTarget ? "max-h-[60vh] min-h-0 overflow-y-auto p-1" : "flex-1 min-h-0 overflow-y-auto p-2"}>
+          <NotesNavigationSidebar
+            notes={visibleNotes}
+            activeNoteId={activeNote?.id}
+            dreamNoteIds={dreamNoteIds}
+            collapsedFolders={collapsedFolders}
+            onToggleFolder={toggleFolder}
+            viewportRef={notesListViewportRef}
+            onOpenNote={handleOpenNote}
+            onOpenCreateNoteDialog={openCreateNoteDialog}
+            onOpenRenameFolder={openRenameFolderDialog}
+            onOpenDeleteFolder={openDeleteFolderDialog}
+            onOpenMoveDialog={openMoveDialog}
+            onOpenRenameDialogForNote={openRenameDialogForNote}
+            onOpenDeleteDialogForNote={openDeleteDialogForNote}
+            onDuplicateNote={duplicateNote}
+            onCollectToMemory={collectToMemory}
+            onCopyNoteLink={copyNoteLink}
+            onCopyNotePath={copyNotePath}
+            onRevealNote={revealNote}
+            isNotePinned={isNotePinned}
+            onTogglePinNote={notePins.toggle}
+            workspaceId={activeWorkspaceId}
+            emptyMessage={noteScope.kind === 'unavailable' ? t('navigation.notes.scopeUnavailable') : query || selectedTag ? t('notes.vault.noMatches') : t('notes.vault.empty')}
+          />
+        </div>
+        </DndContext>
+    </div>
+  )
+  const notesFooter = (
+        <div className="shrink-0 px-3 py-2 text-xs text-muted-foreground/80">
+          {t('notes.vault.noteCount', { count: scopedNotes.length })} · {assetsUnavailable
+            ? `${t('notes.inspector.assets')}: ${t('common.unavailable')}`
+            : t('notes.vault.assetCount', { count: allAssets.length })}
+        </div>
+  )
+
+  handleOpenNoteRef.current = handleOpenNote
   return (
     <>
     <NotesEditorHeadlineStyles />
     <div ref={setShellEl} className="notes-shell flex h-full min-w-0" data-notes-layout={panelLayoutMode}>
+      <SlotPortal target={notesSidebarSlots.treeTarget}>{notesTree}</SlotPortal>
+      <SlotPortal target={notesSidebarSlots.footerTarget}>{notesFooter}</SlotPortal>
+      {!shellSidebarTarget && (
       <ShellSidebarPortal
         bareLabelKey="navigation.barePanel.vault"
         className="notes-side-surface shrink-0 flex flex-col min-h-0"
@@ -2725,38 +2836,11 @@ h1,h2,h3{margin-top:1.5em}
             </details>
           )}
         </div>
-        <DndContext sensors={dndSensors} onDragEnd={handleSidebarDragEnd}>
-        <div ref={notesListViewportRef} className="flex-1 min-h-0 overflow-y-auto p-2">
-          <NotesNavigationSidebar
-            notes={visibleNotes}
-            activeNoteId={activeNote?.id}
-            dreamNoteIds={dreamNoteIds}
-            collapsedFolders={collapsedFolders}
-            onToggleFolder={toggleFolder}
-            viewportRef={notesListViewportRef}
-            onOpenNote={handleOpenNote}
-            onOpenCreateNoteDialog={openCreateNoteDialog}
-            onOpenRenameFolder={openRenameFolderDialog}
-            onOpenDeleteFolder={openDeleteFolderDialog}
-            onOpenMoveDialog={openMoveDialog}
-            onOpenRenameDialogForNote={openRenameDialogForNote}
-            onOpenDeleteDialogForNote={openDeleteDialogForNote}
-            onDuplicateNote={duplicateNote}
-            onCollectToMemory={collectToMemory}
-            onCopyNoteLink={copyNoteLink}
-            onCopyNotePath={copyNotePath}
-            onRevealNote={revealNote}
-            workspaceId={activeWorkspaceId}
-            emptyMessage={noteScope.kind === 'unavailable' ? t('navigation.notes.scopeUnavailable') : query || selectedTag ? t('notes.vault.noMatches') : t('notes.vault.empty')}
-          />
-        </div>
-        </DndContext>
-        <div className="shrink-0 px-3 py-2 text-xs text-muted-foreground/80">
-          {t('notes.vault.noteCount', { count: scopedNotes.length })} · {assetsUnavailable
-            ? `${t('notes.inspector.assets')}: ${t('common.unavailable')}`
-            : t('notes.vault.assetCount', { count: allAssets.length })}
-        </div>
+        <NotesQuickSections notes={quickNotes} activeNoteId={activeNote?.id} pinned={notePins.pinned} onTogglePin={notePins.toggle} onOpenNote={openNoteFromQuick} />
+        {notesTree}
+        {notesFooter}
       </ShellSidebarPortal>
+      )}
       {railsAllowed.vault && !vaultStarvedForMode && !shellSidebarTarget && <NotesRailSash
         width={railLayout.vault}
         onWidth={(vault) => setRailLayout({ vault })}
@@ -3009,8 +3093,9 @@ h1,h2,h3{margin-top:1.5em}
             />
             </div></div>
           ) : null}
-            <div className="flex h-full min-h-0" style={noteView === 'standard' ? undefined : { display: 'none' }} aria-hidden={noteView !== 'standard' || undefined} ref={(element) => element?.toggleAttribute('inert', noteView !== 'standard')} data-testid="notes-retained-editor">
-            <div ref={setDocRowEl} className="flex h-full min-h-0">
+            <div className="flex h-full min-h-0 w-full min-w-0 flex-1" style={noteView === 'standard' ? undefined : { display: 'none' }} aria-hidden={noteView !== 'standard' || undefined} ref={(element) => element?.toggleAttribute('inert', noteView !== 'standard')} data-testid="notes-retained-editor">
+            {/* Fills the panel: a shrink-to-fit row left the editor scrollbar as a dark stripe mid-panel in narrow tiles. */}
+            <div ref={setDocRowEl} className="flex h-full min-h-0 w-full min-w-0 flex-1" data-testid="notes-doc-row">
             <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView])} inline={tocShown} open={railSheet === 'toc'} title={t('notes.toc.title')} onClose={() => setRailSheet(null)}>
             <NotesToc
               markdown={content}
@@ -3192,6 +3277,20 @@ h1,h2,h3{margin-top:1.5em}
                 entityNodes={noteEntityMentions.entityNodes}
                 className="notes-editor-prose mx-auto w-full max-w-[70ch] min-h-full"
               />
+              {dailySessions.length > 0 ? (
+                <section data-testid="notes-daily-sessions" aria-label={t('notes.daily.sessions')} className="mx-auto mt-8 w-full max-w-[70ch] border-t border-border/50 pt-4">
+                  <h2 className="mb-2 text-xs font-medium text-muted-foreground">{t('notes.daily.sessions')}</h2>
+                  <ul className="space-y-1">
+                    {dailySessions.map((session) => (
+                      <li key={session.id}>
+                        <button type="button" className="max-w-full truncate text-left text-sm text-muted-foreground hover:text-foreground hover:underline" onClick={() => navigate(routes.view.allSessions(session.id))}>
+                          {session.name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
               {noteEntityMentions.picker}
               <NotesCommentHighlights
                 comments={markdownComments}

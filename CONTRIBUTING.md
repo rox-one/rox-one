@@ -23,13 +23,23 @@ Thank you for your interest in contributing to ROX! This document provides guide
    bun install
    ```
 
-3. Set up environment variables:
+3. Install the git hooks (recommended):
+   ```bash
+   bun run hooks:install
+   ```
+   This points `core.hooksPath` at `.githooks/`. The `pre-commit` hook auto-fixes
+   the two generators that otherwise only fail later in CI, on someone else's PR:
+   `lint:i18n:sorted` (locale key order) and `ipc-inventory` (the frozen
+   `RPC_CHANNELS` snapshot). It runs only when your staged diff can affect them
+   and never blocks the commit. Skip this step if you prefer to run them by hand.
+
+4. Set up environment variables:
    ```bash
    cp .env.example .env
    # Edit .env with your credentials
    ```
 
-4. Run in development mode:
+5. Run in development mode:
    ```bash
    bun run electron:dev
    ```
