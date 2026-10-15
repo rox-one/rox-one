@@ -42,6 +42,17 @@
  * (`status: 'saved'`) and from nbformat `execution_count`, so a reopened notebook
  * shows its saved results and its `[N]` counters before anything runs.
  *
+ * Wave 13 («Colab Convenience & Informativity») completes the parity work in two
+ * passes over this file. The first (F1–F4) adds the keyboard half: command mode
+ * with `j`/`k`/`a`/`b`/`dd`/`y`/`m`, find & replace behind `Ctrl/Cmd+F`
+ * (`find-replace.ts`) and markdown cells that open on a double click. The second
+ * (F5–F9) adds the informational half: autosave on a one-second debounce with a
+ * status-bar indicator, `Ctrl/Cmd+S` through the same save core, the surface
+ * status bar (save state, document sizes, the last run), per-cell run durations
+ * — the sidecar's own measurement where the batch carries one, this session's
+ * clock for a single run — the outline scroll-spy (`scroll-spy.ts`) and
+ * «Перезапустить и выполнить» (clear every output, then run the batch again).
+ *
  * Every string comes from `cookbooks.*` through `t()` and every colour, radius,
  * type size and control height is a ROX token, so the surface follows the app
  * theme in all twelve locales and never drifts into ad-hoc styling.
@@ -54,6 +65,7 @@ import { toast } from 'sonner'
 import { usePlatform } from '@rox/ui'
 import { formatDuration } from '@rox/ui/chat/turn-utils'
 import { Markdown, type RenderMode } from '@/components/markdown'
+import { useAction } from '@/actions/useAction'
 import { formatHotkeyDisplay } from '@/lib/platform'
 import { prefersReducedMotionNow } from '@/lib/render-profile-motion'
 import { cn } from '@/lib/utils'
@@ -67,6 +79,8 @@ import {
   type CookbooksStatus,
 } from '../../../shared/cookbooks'
 import { normalizeOutputText } from './output-text'
+import { computeMatches, replaceAllInSources, replaceMatch, type CookbooksFindMatch } from './find-replace'
+import { pickActiveEntry } from './scroll-spy'
 
 /** Catalog/kind labels — the pill text is a per-kind i18n key, never a literal. */
 const KIND_LABEL_KEY: Record<CookbooksCard['kind'], string> = {
@@ -87,7 +101,8 @@ const HELP_KEYS: readonly string[] = [
 /**
  * R7: the shortcut block appended to the help disclosure, in R5 order, plus
  * Q2A's R-A navigation line and wave 9's stop key — the cheatsheet mirrors
- * exactly what is bound. Wave 10 adds the `Ctrl+M` insert key.
+ * exactly what is bound. Wave 10 adds the `Ctrl+M` insert key. Wave 13 adds the
+ * command-mode keys (find/select/edit/type) and `Ctrl+S`.
  */
 const SHORTCUT_KEYS: readonly string[] = [
   'cookbooks.help.shortcutRun',
@@ -96,6 +111,11 @@ const SHORTCUT_KEYS: readonly string[] = [
   'cookbooks.help.shortcutNav',
   'cookbooks.help.shortcutStop',
   'cookbooks.help.shortcutInsert',
+  'cookbooks.help.shortcutFind',
+  'cookbooks.help.shortcutSelect',
+  'cookbooks.help.shortcutEdit',
+  'cookbooks.help.shortcutType',
+  'cookbooks.help.shortcutSave',
 ]
 
 /**
@@ -139,6 +159,41 @@ const ACTION_CLASS =
 /** Shared editable-source chrome: the cell editor and the playbook editor. */
 const SOURCE_CLASS =
   'w-full resize-y rounded-[var(--radius-control)] border border-border-subtle bg-surface-input px-2 py-1.5 font-mono text-small text-foreground outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground'
+
+/**
+ * Wave 13 (F5): how long the surface waits after the last edit before it writes
+ * the dirty cells itself. One named constant — the debounce is the contract, not
+ * a tuning knob, and `Ctrl/Cmd+S` is the explicit way to skip the wait.
+ */
+const SAVE_DEBOUNCE_MS = 1000
+
+/**
+ * Wave 13 (F5/F6): the four states the status bar reports. `saved` is the
+ * resting state, `dirty` means edits are waiting on the debounce, `saving` a
+ * flush in flight, and `error` the last flush's failure — which only a later
+ * success clears.
+ */
+type CookbooksSaveState = 'saved' | 'dirty' | 'saving' | 'error'
+
+/** F6: the indicator dot of each save state — shape is shared, colour is the state. */
+const SAVE_DOT_CLASS: Record<CookbooksSaveState, string> = {
+  saved: 'bg-success',
+  dirty: 'bg-status-warning',
+  saving: 'bg-muted-foreground',
+  error: 'bg-destructive',
+}
+
+/**
+ * F6: the last run the surface witnessed — its wall-clock time, the two
+ * outcome counts and how long it took. A single run always reports `1`/`0` or
+ * `0`/`1`; a batch counts its own cells.
+ */
+interface CookbooksLastRun {
+  at: number
+  ok: number
+  failed: number
+  durationMs: number
+}
 
 /** Read-only markdown surface (md cell in `minimal`, playbook in `full`). */
 const MARKDOWN_CLASS =
@@ -219,17 +274,31 @@ const CellMarkdown = memo(function CellMarkdown({
   mode,
   source,
   testId,
+  onActivate,
 }: {
   mode: RenderMode
   source: string
   testId: string
+  /**
+   * Wave 13 (F4): double-click to edit. Passed ONLY for a cell's markdown
+   * surface (never a rich display), and its presence is what reveals the
+   * «Двойной клик — редактировать» hint on the wrapper.
+   */
+  onActivate?: () => void
 }) {
   // G4-CB-001: route markdown links through the app's platform handlers — the
   // canonical <a> then preventDefaults both target kinds instead of letting the
   // click fall through to native window navigation.
   const { onOpenUrl, onOpenFile } = usePlatform()
+  const { t } = useTranslation()
   return (
-    <div data-testid={testId} data-mode={mode} className={MARKDOWN_CLASS}>
+    <div
+      data-testid={testId}
+      data-mode={mode}
+      className={MARKDOWN_CLASS}
+      onDoubleClick={onActivate}
+      title={onActivate ? t('cookbooks.cell.editHint') : undefined}
+    >
       <Markdown mode={mode} onUrlClick={onOpenUrl} onFileClick={onOpenFile}>
         {source}
       </Markdown>
@@ -474,7 +543,42 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   /** R3: start of the active run, or null when no run is in flight. */
   const [runStartedAt, setRunStartedAt] = useState<number | null>(null)
   const [elapsedMs, setElapsedMs] = useState(0)
+  /** Wave 13 (F5): what the status bar says about the document on disk. */
+  const [saveState, setSaveState] = useState<CookbooksSaveState>('saved')
+  /** F5: wall-clock time (`Date.now()`) of the last successful write, or null before one. */
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null)
+  /** F7: session-local run duration per document index, in milliseconds. */
+  const [durations, setDurations] = useState<Record<number, number>>({})
+  /** F6: the most recent run this surface watched, or null before the first. */
+  const [lastRun, setLastRun] = useState<CookbooksLastRun | null>(null)
+  /** F8: the outline entry the scroll position is currently inside. */
+  const [activeEntry, setActiveEntry] = useState<number | null>(null)
+  /** Wave 13 (F1): the command-mode selection — any cell (code or markdown), or null. */
+  const [selectedCell, setSelectedCell] = useState<number | null>(null)
+  /** Wave 13 (F2): the find & replace panel — visible only for an `ipynb`. */
+  const [findOpen, setFindOpen] = useState(false)
+  const [findQuery, setFindQuery] = useState('')
+  const [findReplacement, setFindReplacement] = useState('')
+  const [findCase, setFindCase] = useState(false)
+  /** The index of the current match within `findMatches` (clamped to the list). */
+  const [findCurrent, setFindCurrent] = useState(0)
   const documentRef = useRef<HTMLElement | null>(null)
+  /** Wave 13 (F2): the surface the `app.search` takeover is scoped to. */
+  const surfaceRef = useRef<HTMLDivElement | null>(null)
+  /** Wave 13 (F2): the `kind` the `app.search` takeover gates on, read at event time. */
+  const docRef = useRef<CookbooksDocument | null>(null)
+  /** Wave 13 (F2): the find input, focused on open and after a jump. */
+  const findInputRef = useRef<HTMLInputElement | null>(null)
+  /** Wave 13 (F2): the selection a jump must paint once its cell editor exists. */
+  const pendingSelectionRef = useRef<{ index: number; start: number; end: number } | null>(null)
+  /** Wave 13 (F1): the timestamp of the first `d` of a `dd` delete (0 = disarmed). */
+  const ddRef = useRef(0)
+  /** Wave 13 (F5): single-flight latch — one flush at a time, whoever asked. */
+  const flushingRef = useRef(false)
+  /** F5: one `toast.error` per failure episode; a success re-arms the report. */
+  const saveErrorNotifiedRef = useRef(false)
+  /** Wave 13 (F8): the pending scroll-spy frame, so a scroll storm costs one layout. */
+  const scrollSpyFrameRef = useRef<number | null>(null)
   /** Wave 10: the document index a structural mutation lands on, focused next pass. */
   const pendingFocusRef = useRef<number | null>(null)
 
@@ -583,6 +687,29 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
     setEditingCells({})
     setPlaybookEditing(false)
     setPlaybookText(next.text ?? '')
+    // Wave 13 (F7): a run duration and a run summary belong to the document that
+    // produced them, so a re-read document starts with neither.
+    setDurations({})
+    setLastRun(null)
+    // Wave 13 (F8): the outline of the document that just arrived has not been
+    // scrolled through yet.
+    setActiveEntry(null)
+    // Wave 13 (F5): a freshly read document is exactly what is on disk — the
+    // autosave indicator starts honest, with no timestamp of its own.
+    setSaveState('saved')
+    setLastSavedAt(null)
+    // Wave 13 (F2): a re-read document closes the find panel and clears its
+    // query — a match offset belongs to the document it was found in.
+    setFindOpen(false)
+    setFindQuery('')
+    setFindReplacement('')
+    setFindCurrent(0)
+    // Wave 13 (F1): keep a selection inside the new document's bounds.
+    setSelectedCell((current) => {
+      if (current === null) return null
+      if (next.cells.length === 0) return null
+      return Math.min(current, next.cells.length - 1)
+    })
   }, [])
 
   const openItem = useCallback(
@@ -591,6 +718,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         const result = await api.open(newCopy ? { itemId, newCopy: true } : { itemId })
         setCopyId(result.copyId)
         applyDocument(result.document)
+        // Wave 13 (F1): a freshly opened document starts with no selection.
+        setSelectedCell(null)
         setOpenItemId(itemId)
         setNotice({ source: 'key', key: newCopy ? 'cookbooks.status.newCopy' : 'cookbooks.status.opened' })
       })
@@ -696,6 +825,15 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
             },
           }))
           setRuns((previous) => ({ ...previous, [index]: (previous[index] ?? 0) + 1 }))
+          // Wave 13 (F6): the status bar's run summary — for a single run the
+          // outcome counts are its own, and the duration is the clock this
+          // surface started above (`/run` answers no duration of its own).
+          setLastRun({
+            at: Date.now(),
+            ok: cancelled || !result.ok ? 0 : 1,
+            failed: cancelled || result.ok ? 0 : 1,
+            durationMs: performance.now() - started,
+          })
           setNotice({
             source: 'key',
             key: cancelled
@@ -708,6 +846,9 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         })
       } finally {
         setRunStartedAt(null)
+        // Wave 13 (F7): the client-side measurement of one run — recorded even
+        // when the run was stopped or failed, because it did take that long.
+        setDurations((previous) => ({ ...previous, [index]: performance.now() - started }))
       }
     },
     [api, busy, doc, focusCellSource, openItemId, runWithBusy, scrollToCell, sources],
@@ -781,6 +922,23 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
             }
             return next
           })
+          // Wave 13 (F7): the batch carries the sidecar's own per-cell timing —
+          // the surface draws it as it arrived and leaves a session-only cell
+          // (one with no `durationMs`) with whatever it already showed.
+          setDurations((previous) => {
+            const next = { ...previous }
+            for (const cell of result.cells) {
+              if (typeof cell.durationMs === 'number') next[cell.index] = cell.durationMs
+            }
+            return next
+          })
+          // Wave 13 (F6): the summary of the whole batch, wall clock included.
+          setLastRun({
+            at: Date.now(),
+            ok: result.cells.filter((cell) => cell.status === 'ok').length,
+            failed: result.cells.filter((cell) => cell.status === 'error').length,
+            durationMs: performance.now() - started,
+          })
           if (result.cancelled === true) {
             setNotice({ source: 'key', key: 'cookbooks.notice.runCancelled' })
           } else {
@@ -843,14 +1001,314 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         applyDocument(result.document)
         pendingFocusRef.current = result.index
         // Wave 10: only an insert opens the markdown editor — delete/move/
-        // duplicate must not steal into edit.
+        // duplicate must not steal into edit. Wave 13 (F3): a conversion to
+        // markdown does open it, since the cell just became text.
+        const op = mutation.op as string
         const target = result.document.cells[result.index]
-        if (mutation.op === 'add' && target?.cellType === 'markdown') {
+        if ((op === 'add' || op === 'convert') && target?.cellType === 'markdown') {
           setEditingCells((previous) => ({ ...previous, [result.index]: true }))
         }
       })
     },
     [api, applyDocument, busy, doc, openItemId, runWithBusy, sources],
+  )
+
+  // -------------------------------------------------------------------------
+  // Wave 13 — command mode (F1), find & replace (F2), md-micro (F4), the
+  // autosave core and its indicator (F5), run durations (F7)
+  // -------------------------------------------------------------------------
+
+  /** Keep the event-time `doc` snapshot the `app.search` takeover gates on. */
+  useEffect(() => {
+    docRef.current = doc
+  }, [doc])
+
+  /** The matches of the current query over the open notebook's sources. */
+  const findMatches = useMemo<CookbooksFindMatch[]>(() => {
+    if (doc?.kind !== 'ipynb') return []
+    return computeMatches(
+      doc.cells.map((cell, index) => sources[index] ?? cell.source),
+      findQuery,
+      findCase,
+    )
+  }, [doc, sources, findQuery, findCase])
+
+  /** The current match index follows the list: clamped, and 0 when empty. */
+  useEffect(() => {
+    setFindCurrent((current) => (findMatches.length === 0 ? 0 : Math.min(current, findMatches.length - 1)))
+  }, [findMatches.length])
+
+  /** Focus the query field the moment the panel opens (a repeated `Ctrl+F`). */
+  useEffect(() => {
+    if (!findOpen) return
+    findInputRef.current?.focus()
+  }, [findOpen])
+
+  /**
+   * Wave 13 (F2): show the current match — its cell is scrolled into view, a
+   * markdown cell is switched into edit, and the span is painted inside the
+   * cell editor WITHOUT moving focus off the query field. A markdown cell has
+   * no editor until the edit-mode pass, so the span is queued for the effect
+   * below.
+   */
+  useEffect(() => {
+    if (!findOpen) return
+    const match = findMatches[findCurrent]
+    if (!match) {
+      // No current match — drop any selection a previous jump left queued.
+      pendingSelectionRef.current = null
+      return
+    }
+    if (docRef.current?.cells[match.cell]?.cellType === 'markdown') {
+      setEditingCells((previous) => (previous[match.cell] ? previous : { ...previous, [match.cell]: true }))
+    }
+    scrollToCell(match.cell)
+    pendingSelectionRef.current = { index: match.cell, start: match.start, end: match.end }
+  }, [findOpen, findMatches, findCurrent, scrollToCell])
+
+  /** Paint a queued selection once its cell editor exists in the DOM. */
+  useEffect(() => {
+    const pending = pendingSelectionRef.current
+    if (!pending) return
+    const field = documentRef.current?.querySelector<HTMLTextAreaElement>(
+      `[data-testid="cookbooks-source-${pending.index}"]`,
+    )
+    if (!field) return
+    pendingSelectionRef.current = null
+    field.setSelectionRange(pending.start, pending.end)
+  }, [doc, editingCells, findMatches, findCurrent])
+
+  /** Wrap-around move over the match list. */
+  const goToMatch = useCallback(
+    (direction: 1 | -1) => {
+      if (findMatches.length === 0) return
+      setFindCurrent((current) => (current + direction + findMatches.length) % findMatches.length)
+    },
+    [findMatches.length],
+  )
+
+  /** Replace the current match in its own cell; the matches recompute after. */
+  const replaceCurrent = useCallback(() => {
+    const match = findMatches[findCurrent]
+    if (!match || !doc) return
+    const source = sources[match.cell] ?? doc.cells[match.cell]?.source ?? ''
+    setSource(match.cell, replaceMatch(source, match.start, match.end, findReplacement))
+  }, [doc, findCurrent, findMatches, findReplacement, setSource, sources])
+
+  /** «Заменить всё» over every cell; a zero count is a genuine no-op. */
+  const replaceAll = useCallback(() => {
+    if (!doc) return
+    const { updates, count } = replaceAllInSources(
+      doc.cells.map((cell, index) => sources[index] ?? cell.source),
+      findQuery,
+      findReplacement,
+      findCase,
+    )
+    if (count === 0) return
+    setSources((previous) => ({ ...previous, ...updates }))
+    setNotice({ source: 'key', key: 'cookbooks.find.replaced', params: { count } })
+  }, [doc, findCase, findQuery, findReplacement, sources])
+
+  /**
+   * The find panel's own keys. It sits outside the document `<section>`, so its
+   * `Enter`/`Esc` never reach `handleDocumentKeyDown`: `Enter`/`Shift+Enter`
+   * step through the matches (wrapping) and `Esc` closes the panel.
+   */
+  const handleFindKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLElement>) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setFindOpen(false)
+        return
+      }
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        goToMatch(event.shiftKey ? -1 : 1)
+      }
+    },
+    [goToMatch],
+  )
+
+  /** Keep the caret in the query field — the panel's buttons never steal it. */
+  const refocusFind = useCallback(() => findInputRef.current?.focus(), [])
+
+  /** Move the command-mode selection by one cell, clamping at both ends. */
+  const moveSelection = useCallback(
+    (direction: -1 | 1) => {
+      if (!doc || doc.cells.length === 0) return
+      setSelectedCell((current) => {
+        if (current === null) return direction === 1 ? 0 : doc.cells.length - 1
+        return Math.min(Math.max(current + direction, 0), doc.cells.length - 1)
+      })
+    },
+    [doc],
+  )
+
+  /** Land DOM focus on the selected cell (a structural mutation points it away). */
+  useEffect(() => {
+    if (selectedCell === null || pendingFocusRef.current !== null) return
+    documentRef.current?.querySelector<HTMLElement>(`[data-testid="cookbooks-cell-${selectedCell}"]`)?.focus()
+  }, [selectedCell])
+
+  /**
+   * Wave 13 (F5): stamp a successful save's fingerprint into `doc`. This is the
+   * only writer of a cell's `source` outside `applyDocument`, and it is what
+   * keeps «грязно» meaning exactly `sources[i] !== doc.cells[i].source` — the
+   * autosave flush and every manual «Сохранить» go through it, so the indicator
+   * is honest whichever one wrote the file.
+   */
+  const stampCellSaved = useCallback((index: number, source: string) => {
+    setDoc((previous) =>
+      previous
+        ? { ...previous, cells: previous.cells.map((cell, at) => (at === index ? { ...cell, source } : cell)) }
+        : previous,
+    )
+  }, [])
+
+  /** F5: the playbook's twin — the document's own text is its server fingerprint. */
+  const stampPlaybookSaved = useCallback((text: string) => {
+    setDoc((previous) => (previous ? { ...previous, text } : previous))
+  }, [])
+
+  /** F4: save the markdown cell and drop back to read mode; a failure stays in edit. */
+  const saveMarkdownAndClose = useCallback(
+    async (index: number) => {
+      if (!openItemId) return
+      const source = sources[index] ?? ''
+      await runWithBusy(`cell:${index}:save`, async () => {
+        await api.save({ itemId: openItemId, index, source })
+        stampCellSaved(index, source)
+        setNotice({ source: 'key', key: 'cookbooks.status.cellSaved', params: { index } })
+        setEditingCells((previous) => ({ ...previous, [index]: false }))
+      })
+    },
+    [api, openItemId, runWithBusy, sources, stampCellSaved],
+  )
+
+  /** F4: the playbook's twin — save its text and leave the editor. */
+  const savePlaybookAndClose = useCallback(async () => {
+    if (!openItemId) return
+    await runWithBusy('playbook:save', async () => {
+      await api.save({ itemId: openItemId, text: playbookText })
+      stampPlaybookSaved(playbookText)
+      setNotice({ source: 'key', key: 'cookbooks.status.saved' })
+      setPlaybookEditing(false)
+    })
+  }, [api, openItemId, playbookText, runWithBusy, stampPlaybookSaved])
+
+  /**
+   * Wave 13 (F5): the one save core — the autosave debounce and `Ctrl/Cmd+S`
+   * both land here, so there is a single definition of «save what is dirty».
+   *
+   * Every dirty cell goes to the sidecar as its own `api.save`, in ascending
+   * document order, and the playbook is written last; each success stamps the
+   * server fingerprint into `doc` (see `stampCellSaved`). Single-flight: a flush
+   * already in flight swallows the next request — the newer edits are still
+   * dirty afterwards, so the debounce picks them up. A clean document is a
+   * genuine no-op: no call, no notice. A failure leaves `saveState: 'error'`
+   * and reports once per episode, re-arming on the next success.
+   */
+  const flushChanges = useCallback(async () => {
+    if (!doc || !openItemId || flushingRef.current) return
+    const dirtyIndices =
+      doc.kind === 'ipynb'
+        ? doc.cells.flatMap((cell, index) => ((sources[index] ?? cell.source) !== cell.source ? [index] : []))
+        : []
+    const playbookDirty = doc.kind === 'md' && playbookText !== (doc.text ?? '')
+    if (dirtyIndices.length === 0 && !playbookDirty) return
+    flushingRef.current = true
+    setSaveState('saving')
+    try {
+      for (const index of dirtyIndices) {
+        const source = sources[index] ?? doc.cells[index].source
+        await api.save({ itemId: openItemId, index, source })
+        stampCellSaved(index, source)
+      }
+      if (playbookDirty) {
+        await api.save({ itemId: openItemId, text: playbookText })
+        stampPlaybookSaved(playbookText)
+      }
+      saveErrorNotifiedRef.current = false
+      // A wall-clock stamp, because both places that read it — the status bar's
+      // copy and its `title` — print a time of day (`toLocaleTimeString`); a
+      // `performance.now()` reading would render as an epoch-shaped “01:00:00”.
+      setLastSavedAt(Date.now())
+      setSaveState('saved')
+    } catch {
+      setSaveState('error')
+      if (!saveErrorNotifiedRef.current) {
+        saveErrorNotifiedRef.current = true
+        toast.error(t('cookbooks.save.error'))
+      }
+    } finally {
+      flushingRef.current = false
+    }
+  }, [api, doc, openItemId, playbookText, sources, stampCellSaved, stampPlaybookSaved, t])
+
+  /**
+   * F5: what is still unsaved, as one number — a notebook counts its dirty
+   * cells, a playbook its (single) dirty text. The status bar reports it
+   * verbatim, and the autosave effect keys off «is there anything at all».
+   */
+  const dirtyCount =
+    doc === null
+      ? 0
+      : doc.kind === 'md'
+        ? playbookText === (doc.text ?? '')
+          ? 0
+          : 1
+        : doc.cells.reduce((count, cell, index) => count + ((sources[index] ?? cell.source) === cell.source ? 0 : 1), 0)
+  const isDirty = dirtyCount > 0
+
+  /**
+   * F5: the autosave debounce. Any change to the sources, the playbook or the
+   * document re-arms a one-second timer; `Ctrl/Cmd+S` calls the same core
+   * without waiting. While another action is in flight the timer is not armed at
+   * all — the action's own flush must not be raced — and the effect re-arms the
+   * moment `busy` clears again.
+   */
+  useEffect(() => {
+    if (!doc || !openItemId) return
+    if (!isDirty) {
+      // Nothing to write: the indicator rests on «saved», unless a flush is
+      // still in flight or the last one failed — only the core may leave those.
+      setSaveState((current) => (current === 'saving' || current === 'error' ? current : 'saved'))
+      return
+    }
+    if (busy !== null) return
+    setSaveState((current) => (current === 'saving' ? current : 'dirty'))
+    // The global timer, not `window.setTimeout`: identical inside the renderer
+    // (where `globalThis` IS `window`), but this is the timer a test can fake.
+    const timer = setTimeout(() => {
+      void flushChanges()
+    }, SAVE_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [busy, doc, flushChanges, isDirty, openItemId])
+
+  /**
+   * Wave 13 (F2): `Ctrl/Cmd+F` is bound THROUGH THE ACTION REGISTRY, never a
+   * local handler. The registry listens to `keydown` in the CAPTURE phase on
+   * `window` (actions/registry.tsx) and `app.search` (`mod+f`, no flag) is
+   * intercepted there before React ever sees the event — a section-local `f`
+   * handler could not run. Priority 20 raises this takeover above the app's
+   * other `app.search` handlers while the surface is focused on a notebook;
+   * `enabled` keeps the key inert everywhere else (no notebook focused).
+   */
+  useAction(
+    'app.search',
+    () => {
+      setFindOpen(true)
+      // A repeat `Ctrl+F` while the panel is already open must re-focus the query
+      // field; on the first open the panel is not mounted yet, so the effect
+      // above lands the focus instead.
+      findInputRef.current?.focus()
+    },
+    {
+      enabled: () =>
+        surfaceRef.current?.contains(document.activeElement) === true && docRef.current?.kind === 'ipynb',
+      priority: 20,
+    },
+    [],
   )
 
   /**
@@ -867,28 +1325,64 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
    * swallows the key (a browser would otherwise leave fullscreen / close a
    * dialog on it).
    *
-   * Wave 10: `Esc` first closes the open cell menu (that takes priority); `Ctrl+M`
-   * inserts a code cell below the focused one, or appends it to the notebook.
+   * Wave 10: `Ctrl+M` inserts a code cell below the focused one, or appends it
+   * to the notebook.
+   *
+   * Wave 13 (F1): the command mode. Esc unwinds in priority order (find panel →
+   * open menu → the running action → the focused editor, which blurs back into
+   * command mode); `↑`/`j` and `↓`/`k` move the selection; `Enter` edits it;
+   * `Shift+Enter` runs it and steps to the next code cell without focusing an
+   * editor; `Ctrl/Cmd+Enter` runs it in place; the bare letters `a`/`b`/`dd`/
+   * `y`/`m` act on the selection and are strictly modifier-free; `Ctrl/Cmd+S`
+   * flushes every dirty cell.
    */
   const handleDocumentKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLElement>) => {
+      const target = event.target as HTMLElement | null
+      const tag = target?.tagName
+      const inField = tag === 'TEXTAREA' || tag === 'INPUT' || tag === 'SELECT'
+      const mod = event.metaKey || event.ctrlKey
+      const noMod = !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey
+
       if (event.key === 'Escape') {
-        // Wave 10: an open disclosure is the innermost thing Esc dismisses.
+        // Wave 13 (F1): the find panel is the outermost Esc target, then the
+        // open cell menu (wave 10), then the running action (wave 9), and only
+        // then the focused editor — which blurs back into command mode.
+        if (findOpen) {
+          event.preventDefault()
+          setFindOpen(false)
+          return
+        }
         if (menuOpen !== null) {
           event.preventDefault()
           setMenuOpen(null)
           return
         }
-        if (busy === null) return
-        event.preventDefault()
-        void cancelRun()
+        if (busy !== null) {
+          event.preventDefault()
+          void cancelRun()
+          return
+        }
+        if (inField) {
+          event.preventDefault()
+          const rawIndex = target?.getAttribute('data-cell-index')
+          const index = rawIndex === null || rawIndex === undefined ? Number.NaN : Number(rawIndex)
+          const article = Number.isInteger(index)
+            ? documentRef.current?.querySelector<HTMLElement>(`[data-testid="cookbooks-cell-${index}"]`)
+            : null
+          target?.blur()
+          if (Number.isInteger(index)) setSelectedCell(index)
+          // Wave 13 smoke fix: land DOM focus on the cell even when it was
+          // already the selection — otherwise the selection-change effect never
+          // re-runs and command-mode keys stop reaching the document handler.
+          article?.focus()
+        }
         return
       }
       if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
         if (!doc || doc.cells.length === 0) return
         event.preventDefault()
         const direction: -1 | 1 = event.key === 'ArrowDown' ? 1 : -1
-        const target = event.target as HTMLElement | null
         const rawIndex = target?.tagName === 'TEXTAREA' ? target.getAttribute('data-cell-index') : null
         const current = rawIndex === null ? Number.NaN : Number(rawIndex)
         // With no cell focused the chord enters the document from its nearest
@@ -903,7 +1397,6 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       if (event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'm') {
         if (doc?.kind !== 'ipynb' || busy !== null) return
         event.preventDefault()
-        const target = event.target as HTMLElement | null
         const rawIndex = target?.tagName === 'TEXTAREA' ? target.getAttribute('data-cell-index') : null
         const current = rawIndex === null ? Number.NaN : Number(rawIndex)
         void mutateCell({
@@ -913,33 +1406,143 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         })
         return
       }
-      if (event.key !== 'Enter') return
-      const mod = event.metaKey || event.ctrlKey
-      if (mod && event.shiftKey) {
-        if (!(doc?.kind === 'ipynb' && doc.supported)) return
+      // Wave 13 (F5): Ctrl/Cmd+S is the explicit flush — the same core the
+      // autosave debounce calls, only without the wait. While another action
+      // owns the sidecar the key is a no-op: the pending edits stay dirty and
+      // the debounce writes them once that action lands.
+      if (mod && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 's') {
+        event.preventDefault()
         if (busy !== null) return
-        event.preventDefault()
-        void runAllCells()
+        void flushChanges()
         return
       }
-      const target = event.target as HTMLElement | null
-      if (target?.tagName !== 'TEXTAREA') return
-      const rawIndex = target.getAttribute('data-cell-index')
-      if (rawIndex === null) return
-      const index = Number(rawIndex)
-      if (!Number.isInteger(index) || doc?.cells[index]?.cellType !== 'code') return
-      if (busy !== null) return
-      if (event.shiftKey) {
+      if (event.key === 'Enter') {
+        if (mod && event.shiftKey) {
+          if (!(doc?.kind === 'ipynb' && doc.supported)) return
+          if (busy !== null) return
+          event.preventDefault()
+          void runAllCells()
+          return
+        }
+        if (inField) {
+          // Editor context: the cell (or playbook) the caret sits in.
+          const rawIndex = target?.getAttribute('data-cell-index')
+          if (rawIndex === null || rawIndex === undefined) {
+            // The playbook editor carries no cell index — Shift/Ctrl+Enter saves.
+            if (event.shiftKey || mod) {
+              event.preventDefault()
+              void savePlaybookAndClose()
+            }
+            return
+          }
+          const index = Number(rawIndex)
+          if (!Number.isInteger(index)) return
+          if (busy !== null) return
+          const cellType = doc?.cells[index]?.cellType
+          if ((event.shiftKey && !mod) || (mod && !event.shiftKey)) {
+            event.preventDefault()
+            if (cellType === 'code') void runCell(index, { focusNext: event.shiftKey })
+            else if (cellType === 'markdown') void saveMarkdownAndClose(index)
+          }
+          return
+        }
+        // Command context: Enter edits the selection; Shift/Ctrl+Enter run it.
+        if (doc?.kind !== 'ipynb' || selectedCell === null) return
+        const selectedType = doc.cells[selectedCell]?.cellType
+        if (event.shiftKey && !mod) {
+          if (selectedType !== 'code' || busy !== null) return
+          event.preventDefault()
+          void runCell(selectedCell)
+          // Step onto the next code cell — the editor never takes focus.
+          for (let index = selectedCell + 1; index < doc.cells.length; index += 1) {
+            if (doc.cells[index].cellType !== 'code') continue
+            setSelectedCell(index)
+            break
+          }
+          return
+        }
+        if (mod && !event.shiftKey) {
+          if (selectedType !== 'code' || busy !== null) return
+          event.preventDefault()
+          void runCell(selectedCell)
+          return
+        }
+        if (event.shiftKey || mod) return
         event.preventDefault()
-        void runCell(index, { focusNext: true })
+        if (selectedType === 'markdown') {
+          // The editor only exists once edit mode renders — queue the focus.
+          setEditingCells((previous) => ({ ...previous, [selectedCell]: true }))
+          pendingFocusRef.current = selectedCell
+          return
+        }
+        // A code cell already has its editor — focus it in place.
+        documentRef.current
+          ?.querySelector<HTMLTextAreaElement>(`[data-testid="cookbooks-source-${selectedCell}"]`)
+          ?.focus()
         return
       }
-      if (mod) {
+      // Wave 13 (F1): command-mode selection keys — modifier-free only, and only
+      // while no text field, the find panel or the cell menu owns the keyboard.
+      if (!noMod || inField || findOpen || menuOpen !== null) return
+      if (event.key === 'ArrowUp' || event.key === 'k') {
         event.preventDefault()
-        void runCell(index)
+        moveSelection(-1)
+        return
+      }
+      if (event.key === 'ArrowDown' || event.key === 'j') {
+        event.preventDefault()
+        moveSelection(1)
+        return
+      }
+      // The mutating commands share one gate: a notebook, nothing in flight.
+      if (doc?.kind !== 'ipynb' || busy !== null) return
+      if (event.key === 'a' || event.key === 'b') {
+        event.preventDefault()
+        const at = selectedCell === null ? doc.cells.length : event.key === 'a' ? selectedCell : selectedCell + 1
+        void mutateCell({ op: 'add', cellType: 'code', index: at })
+        return
+      }
+      if (event.key === 'd') {
+        if (selectedCell === null) return
+        const now = Date.now()
+        if (now - ddRef.current <= 900) {
+          ddRef.current = 0
+          event.preventDefault()
+          if (!window.confirm(t('cookbooks.cell.deleteConfirm'))) return
+          void mutateCell({ op: 'delete', index: selectedCell })
+          return
+        }
+        // The first `d` arms the 900 ms window; the second is the delete.
+        ddRef.current = now
+        return
+      }
+      if (event.key === 'y' || event.key === 'm') {
+        if (selectedCell === null) return
+        const cellType = event.key === 'y' ? 'code' : 'markdown'
+        if (doc.cells[selectedCell]?.cellType === cellType) return
+        event.preventDefault()
+        // Wave 13 (F3): `convert` joins the mutation union in slice B; this
+        // renderer is written against the frozen SPEC shape and cast until then.
+        void mutateCell({ op: 'convert', index: selectedCell, cellType } as unknown as CookbooksCellMutation)
       }
     },
-    [busy, cancelRun, doc, focusAdjacentCodeCell, menuOpen, mutateCell, runAllCells, runCell],
+    [
+      busy,
+      cancelRun,
+      doc,
+      findOpen,
+      flushChanges,
+      focusAdjacentCodeCell,
+      menuOpen,
+      moveSelection,
+      mutateCell,
+      runAllCells,
+      runCell,
+      saveMarkdownAndClose,
+      savePlaybookAndClose,
+      selectedCell,
+      t,
+    ],
   )
 
   const saveCell = useCallback(
@@ -948,19 +1551,22 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       const source = sources[index] ?? ''
       await runWithBusy(`cell:${index}:save`, async () => {
         await api.save({ itemId: openItemId, index, source })
+        // F5: a manual save clears the cell's dirtiness exactly like autosave.
+        stampCellSaved(index, source)
         setNotice({ source: 'key', key: 'cookbooks.status.cellSaved', params: { index } })
       })
     },
-    [api, openItemId, runWithBusy, sources],
+    [api, openItemId, runWithBusy, sources, stampCellSaved],
   )
 
   const savePlaybook = useCallback(async () => {
     if (!openItemId) return
     await runWithBusy('playbook:save', async () => {
       await api.save({ itemId: openItemId, text: playbookText })
+      stampPlaybookSaved(playbookText)
       setNotice({ source: 'key', key: 'cookbooks.status.saved' })
     })
-  }, [api, openItemId, playbookText, runWithBusy])
+  }, [api, openItemId, playbookText, runWithBusy, stampPlaybookSaved])
 
   /** The exact text a cell shows — the output block and «Копировать вывод» share it. */
   const outputText = useCallback<OutputTextReader>(
@@ -1136,6 +1742,54 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
     return entries
   }, [doc, playbookText, sources])
 
+  /**
+   * Wave 13 (F8): ask the outline which entry the scroll position is inside.
+   * Every entry's offset is measured against the scroll container itself
+   * (`rect.top - sectionRect.top + scrollTop`), so it stays valid wherever the
+   * pane sits on the page and however the document reflows. An entry whose
+   * block is missing from the DOM keeps its predecessor's offset — the outline
+   * is derived from those very cells, so this only guards a mid-render read.
+   */
+  const measureOutline = useCallback(() => {
+    const section = documentRef.current
+    if (!section || outline.length === 0) {
+      setActiveEntry(null)
+      return
+    }
+    const sectionTop = section.getBoundingClientRect().top
+    let carried = 0
+    const offsets = outline.map((entry) => {
+      const element = section.querySelector<HTMLElement>(`[data-testid="${entry.testId}"]`)
+      if (element) carried = element.getBoundingClientRect().top - sectionTop + section.scrollTop
+      return carried
+    })
+    setActiveEntry(pickActiveEntry(offsets, section.scrollTop))
+  }, [outline])
+
+  /**
+   * F8: the scroll listener is rAF-throttled — a fast scroll costs one layout
+   * per frame instead of one per event. Only the frame id is held, so the
+   * unmount below always has something to cancel.
+   */
+  const scheduleOutlineMeasure = useCallback(() => {
+    if (scrollSpyFrameRef.current !== null) return
+    scrollSpyFrameRef.current = window.requestAnimationFrame(() => {
+      scrollSpyFrameRef.current = null
+      measureOutline()
+    })
+  }, [measureOutline])
+
+  /** F8: never leave a frame behind — it would run into an unmounted surface. */
+  useEffect(
+    () => () => {
+      if (scrollSpyFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollSpyFrameRef.current)
+        scrollSpyFrameRef.current = null
+      }
+    },
+    [],
+  )
+
   /** R-C: «Очистить все выводы» is offered exactly while one cell has a result. */
   const hasAnyOutput = Object.keys(outputs).length > 0
 
@@ -1206,6 +1860,23 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
             {t('cookbooks.header.cells', { count: cellCount })}
           </span>
           <span className="flex-1" />
+          {/* Wave 13 (F9): «Перезапустить и выполнить» — there is no kernel to
+              restart, so the honest reading is «drop every result, run again». */}
+          {canRunAll ? (
+            <button
+              type="button"
+              data-testid="cookbooks-restart-run-all"
+              disabled={busy !== null}
+              onClick={() => {
+                clearAllOutputs()
+                setRuns({})
+                void runAllCells()
+              }}
+              className={ACTION_CLASS}
+            >
+              {t('cookbooks.actions.restartRunAll')}
+            </button>
+          ) : null}
           {/* «Запустить всё» is offered only where the sidecar says it is supported. */}
           {canRunAll ? (
             <button
@@ -1351,7 +2022,20 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                   data-testid={`cookbooks-cell-${index}`}
                   data-cell-type={cell.cellType}
                   data-status={output?.status ?? 'idle'}
-                  className="flex gap-2 rounded-[var(--radius-card)] border border-border-subtle bg-surface-elevated px-2.5 py-2"
+                  data-selected={selectedCell === index ? 'true' : undefined}
+                  aria-current={selectedCell === index ? 'true' : undefined}
+                  tabIndex={-1}
+                  onClick={(event) => {
+                    // Wave 13 (F1): a click on the cell body selects it; a click
+                    // on any control inside it stays a control click.
+                    if ((event.target as HTMLElement).closest('button,textarea,input,a,select')) return
+                    setSelectedCell(index)
+                    event.currentTarget.focus()
+                  }}
+                  className={cn(
+                    'flex gap-2 rounded-[var(--radius-card)] border border-border-subtle bg-surface-elevated px-2.5 py-2 outline-none',
+                    selectedCell === index && 'outline outline-2 outline-foreground',
+                  )}
                 >
                   <div
                     data-testid={`cookbooks-gutter-${index}`}
@@ -1374,6 +2058,19 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                         />
                       ) : null}
                     </span>
+                    {/* Wave 13 (F7): how long this cell's last run took — the
+                        sidecar's own measurement after a batch, this session's
+                        clock after a single run. The slot is reserved by the
+                        column's own gap, so nothing jumps when it appears. */}
+                    {durations[index] === undefined ? null : (
+                      <span
+                        data-testid={`cookbooks-duration-${index}`}
+                        title={t('cookbooks.cell.lastDuration', { duration: formatDuration(durations[index]) })}
+                        className="font-mono text-caption numeric text-text-secondary"
+                      >
+                        {formatDuration(durations[index])}
+                      </span>
+                    )}
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col gap-2">
                     <div className="flex items-center gap-2">
@@ -1519,6 +2216,23 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                         >
                           {t('cookbooks.actions.duplicate')}
                         </button>
+                        {/* Wave 13 (F3): turn the cell into the other type — a
+                            label that names the target, gated like every other
+                            structural edit. */}
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-convert-${index}`}
+                          title={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                          disabled={busy !== null}
+                          onClick={() => {
+                            setMenuOpen(null)
+                            const cellType = cell.cellType === 'code' ? 'markdown' : 'code'
+                            void mutateCell({ op: 'convert', index, cellType } as unknown as CookbooksCellMutation)
+                          }}
+                          className={ACTION_CLASS}
+                        >
+                          {cell.cellType === 'code' ? t('cookbooks.actions.toText') : t('cookbooks.actions.toCode')}
+                        </button>
                         <button
                           type="button"
                           data-testid={`cookbooks-delete-${index}`}
@@ -1536,7 +2250,16 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                       </div>
                     ) : null}
                     {isMarkdown && !editing ? (
-                      <CellMarkdown mode="minimal" source={source} testId={`cookbooks-markdown-${index}`} />
+                      <CellMarkdown
+                        mode="minimal"
+                        source={source}
+                        testId={`cookbooks-markdown-${index}`}
+                        onActivate={() => {
+                          // Wave 13 (F4): a double-click opens the editor and lands focus in it.
+                          setEditingCells((previous) => ({ ...previous, [index]: true }))
+                          pendingFocusRef.current = index
+                        }}
+                      />
                     ) : (
                       <textarea
                         data-testid={`cookbooks-source-${index}`}
@@ -1608,6 +2331,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
 
   return (
     <div
+      ref={surfaceRef}
       className="flex h-full w-full min-h-0 flex-col bg-background"
       data-testid="cookbooks-surface"
       data-state="ready"
@@ -1737,8 +2461,16 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                       type="button"
                       data-testid={`cookbooks-outline-item-${n}`}
                       aria-label={t('cookbooks.outline.itemLabel', { title: entry.title })}
+                      // Wave 13 (F8): the entry the scroll position is inside —
+                      // the same `aria-current` the selected cell wears.
+                      aria-current={activeEntry === n ? 'true' : undefined}
                       onClick={() => scrollToBlock(entry.testId)}
-                      className="block w-full truncate text-left hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
+                      className={cn(
+                        'block w-full truncate text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground',
+                        activeEntry === n
+                          ? 'text-foreground font-medium hover:text-foreground'
+                          : 'text-muted-foreground hover:text-foreground',
+                      )}
                     >
                       {entry.title}
                     </button>
@@ -1771,16 +2503,176 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
           </details>
         </aside>
 
-        <section
-          ref={documentRef}
-          data-testid="cookbooks-document"
-          data-kind={doc?.kind}
-          onKeyDown={handleDocumentKeyDown}
-          className="min-h-0 flex-1 overflow-y-auto"
-        >
-          {renderDocument()}
-        </section>
+        {/* Wave 13 (F2): the document column — a non-scrolling find panel sits
+            above the scrolling <section>, which keeps its testid/ref/onKeyDown. */}
+        <div className="flex min-h-0 flex-1 flex-col">
+          {doc?.kind === 'ipynb' && findOpen ? (
+            <div
+              data-testid="cookbooks-find"
+              onKeyDown={handleFindKeyDown}
+              className="flex flex-wrap items-center gap-1.5 border-b border-border-subtle bg-surface-hover px-3 py-1.5"
+            >
+              <input
+                ref={findInputRef}
+                data-testid="cookbooks-find-input"
+                type="text"
+                value={findQuery}
+                onChange={(event) => setFindQuery(event.target.value)}
+                placeholder={t('cookbooks.find.placeholder')}
+                aria-label={t('cookbooks.find.placeholder')}
+                className="h-[var(--control-md)] min-w-[160px] rounded-[var(--radius-control)] border border-border-subtle bg-surface-input px-2 text-small text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
+              />
+              <span
+                data-testid="cookbooks-find-count"
+                aria-live="polite"
+                className="shrink-0 text-caption numeric text-muted-foreground"
+              >
+                {findQuery.length === 0
+                  ? ''
+                  : findMatches.length === 0
+                    ? t('cookbooks.find.noMatches')
+                    : t('cookbooks.find.count', { current: findCurrent + 1, total: findMatches.length })}
+              </span>
+              <button
+                type="button"
+                data-testid="cookbooks-find-prev"
+                aria-label={t('cookbooks.find.previous')}
+                onClick={() => {
+                  goToMatch(-1)
+                  refocusFind()
+                }}
+                className={ACTION_CLASS}
+              >
+                ▲
+              </button>
+              <button
+                type="button"
+                data-testid="cookbooks-find-next"
+                aria-label={t('cookbooks.find.next')}
+                onClick={() => {
+                  goToMatch(1)
+                  refocusFind()
+                }}
+                className={ACTION_CLASS}
+              >
+                ▼
+              </button>
+              <button
+                type="button"
+                data-testid="cookbooks-find-case"
+                aria-pressed={findCase}
+                aria-label={t('cookbooks.find.caseSensitive')}
+                onClick={() => {
+                  setFindCase((value) => !value)
+                  refocusFind()
+                }}
+                className={ACTION_CLASS}
+              >
+                Aa
+              </button>
+              <span className="flex-1" />
+              <input
+                data-testid="cookbooks-find-replace-input"
+                type="text"
+                value={findReplacement}
+                onChange={(event) => setFindReplacement(event.target.value)}
+                placeholder={t('cookbooks.find.replacePlaceholder')}
+                aria-label={t('cookbooks.find.replacePlaceholder')}
+                className="h-[var(--control-md)] min-w-[160px] rounded-[var(--radius-control)] border border-border-subtle bg-surface-input px-2 text-small text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground"
+              />
+              <button
+                type="button"
+                data-testid="cookbooks-find-replace"
+                onClick={() => {
+                  replaceCurrent()
+                  refocusFind()
+                }}
+                className={ACTION_CLASS}
+              >
+                {t('cookbooks.find.replace')}
+              </button>
+              <button
+                type="button"
+                data-testid="cookbooks-find-replace-all"
+                onClick={() => {
+                  replaceAll()
+                  refocusFind()
+                }}
+                className={ACTION_CLASS}
+              >
+                {t('cookbooks.find.replaceAll')}
+              </button>
+              <button
+                type="button"
+                data-testid="cookbooks-find-close"
+                aria-label={t('cookbooks.find.close')}
+                onClick={() => setFindOpen(false)}
+                className={ACTION_CLASS}
+              >
+                ✕
+              </button>
+            </div>
+          ) : null}
+          <section
+            ref={documentRef}
+            data-testid="cookbooks-document"
+            data-kind={doc?.kind}
+            tabIndex={-1}
+            onKeyDown={handleDocumentKeyDown}
+            onScroll={scheduleOutlineMeasure}
+            className="min-h-0 flex-1 overflow-y-auto outline-none"
+          >
+            {renderDocument()}
+          </section>
+        </div>
       </div>
+
+      {/* Wave 13 (F6): the surface status bar — one line under the panes, and
+          only while a document is open (the early return above owns every
+          other state). It reports the save state, what the document holds and
+          what the last run did. */}
+      {doc && openItemId ? (
+        <footer
+          data-testid="cookbooks-statusbar"
+          className="flex items-center gap-3 border-t border-border-subtle px-3 py-1 text-caption text-muted-foreground numeric"
+        >
+          <span
+            data-testid="cookbooks-save-state"
+            title={lastSavedAt === null ? undefined : new Date(lastSavedAt).toLocaleTimeString()}
+            className="inline-flex items-center gap-1.5"
+          >
+            <span aria-hidden="true" className={cn('size-1.5 shrink-0 rounded-full', SAVE_DOT_CLASS[saveState])} />
+            {saveState === 'saving'
+              ? t('cookbooks.save.saving')
+              : saveState === 'error'
+                ? t('cookbooks.save.error')
+                : saveState === 'dirty'
+                  ? t('cookbooks.save.dirty', { count: dirtyCount })
+                  : t('cookbooks.save.saved', {
+                      time: lastSavedAt === null ? '—' : new Date(lastSavedAt).toLocaleTimeString(),
+                    })}
+          </span>
+          <span className="flex-1" />
+          {doc.kind === 'ipynb' ? (
+            <span data-testid="cookbooks-statusbar-cells">
+              {t('cookbooks.statusbar.cells', {
+                total: doc.cells.length,
+                code: doc.cells.filter((cell) => cell.cellType === 'code').length,
+              })}
+            </span>
+          ) : null}
+          {lastRun === null ? null : (
+            <span data-testid="cookbooks-last-run">
+              {t('cookbooks.statusbar.lastRun', {
+                time: new Date(lastRun.at).toLocaleTimeString(),
+                ok: lastRun.ok,
+                failed: lastRun.failed,
+                duration: formatDuration(lastRun.durationMs),
+              })}
+            </span>
+          )}
+        </footer>
+      ) : null}
     </div>
   )
 }
