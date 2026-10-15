@@ -36,3 +36,33 @@ export function pickActiveEntry(offsets: readonly number[], scrollTop: number): 
   }
   return active
 }
+
+/**
+ * Wave 14 (F11): the outline numerals of a document's headings.
+ *
+ * One counter per heading level, joined with dots: the first H1 is `1`, the H2
+ * under it `1.1`, the H3 under that `1.1.1` — and a heading of a shallower level
+ * RESETS every counter below it, so the H1 after `1.1.1` numbers `2` and the
+ * next H2 under it `2.1` (Markdown's own outline numbering). A level that was
+ * skipped on the way down (an H1 followed by an H3, which `HEADING_PATTERN`
+ * allows) counts as the first child of the missing level, so the numerals stay
+ * contiguous instead of carrying a hole.
+ *
+ * The input is one level per heading, in document order — the page keeps
+ * measuring and rendering, this function owns the numbering.
+ *
+ * @param levels The heading levels — one `#` count each, in document order.
+ * @returns One dotted numeral per heading, in the same order.
+ */
+export function numberHeadings(levels: readonly number[]): string[] {
+  const counters: number[] = []
+  return levels.map((rawLevel) => {
+    const depth = Math.min(Math.max(Math.trunc(rawLevel), 1), 6)
+    // Dropping the tail is the reset: every deeper counter starts over.
+    counters.length = depth
+    counters[depth - 1] = (counters[depth - 1] ?? 0) + 1
+    // `Array.from` (not `.map`) — the counters above the first one are array
+    // HOLES, and `.map` skips holes, which would leave empty dot segments.
+    return Array.from(counters, (count) => count ?? 1).join('.')
+  })
+}

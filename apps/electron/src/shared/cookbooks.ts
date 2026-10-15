@@ -315,3 +315,41 @@ export function buildNotebookExport(input: {
   })
   return JSON.stringify({ cells, metadata: { title: input.title }, nbformat: 4, nbformat_minor: 5 }, null, 2)
 }
+
+/**
+ * Split `text` into raw lines for the `.py` builder: `\n`-separated, with a
+ * single trailing newline folded away (so `'a\n'` and `'a'` both yield `['a']`).
+ * Empty text yields no lines at all — never a phantom `['']`.
+ */
+function toScriptLines(text: string): string[] {
+  if (text.length === 0) return []
+  const lines = text.split('\n')
+  if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop()
+  return lines
+}
+
+/**
+ * Build a deterministic `.py` script from the notebook cells (wave 14 §8).
+ *
+ * Layout: a `# <title>` header comment, then one block per cell, each opened by
+ * a `# %%` cell marker (the Jupytext / VS Code "percent" format). A code cell is
+ * written verbatim; a markdown cell becomes `# `-prefixed comments, line by
+ * line. Execution counts and outputs have no place in a script.
+ *
+ * Pure: no `Date`, no randomness, so the same input always renders byte-equal.
+ * The script always ends with exactly one `\n`.
+ */
+export function buildPythonScript(input: { title: string; cells: CookbooksExportCell[] }): string {
+  const lines: string[] = [input.title.length === 0 ? '#' : `# ${input.title}`]
+  for (const cell of input.cells) {
+    lines.push('# %%')
+    const sourceLines = toScriptLines(cell.source)
+    if (cell.cellType === 'markdown') {
+      // A markdown cell becomes line-by-line comments; a blank line is a bare `#`.
+      for (const sourceLine of sourceLines) lines.push(sourceLine.length === 0 ? '#' : `# ${sourceLine}`)
+    } else {
+      for (const sourceLine of sourceLines) lines.push(sourceLine)
+    }
+  }
+  return `${lines.join('\n')}\n`
+}
