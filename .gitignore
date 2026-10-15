@@ -117,3 +117,6 @@ apps/electron/src/main/rox-defaults/rox-defaults.generated.ts
 
 # Build-time shared API keys (scripts/gen-shared-keys.ts) — never commit
 apps/electron/src/main/home-fetch/shared-keys.local.ts
+
+# Boot-manifest debug sibling (scripts/boot-manifest.ts) — per-build chunk hashes, never commit
+apps/electron/src/renderer/boot-manifest.local.json
