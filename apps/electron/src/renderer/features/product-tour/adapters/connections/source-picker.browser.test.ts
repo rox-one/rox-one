@@ -3,7 +3,7 @@ import { chromium, type Browser } from '@playwright/test'
 import { build } from 'esbuild'
 import { fileURLToPath } from 'node:url'
 import type { TourCapability } from '../../contracts'
-import { noteNativeBrowserStage as stage, runNativeBrowserProcess } from '../work/meetings-automations/native-browser-process'
+import { NATIVE_BROWSER_BUDGET_MS, NATIVE_BROWSER_PARENT_TIMEOUT_MS, nativeBrowserCaseCommand, noteNativeBrowserStage as stage, runNativeBrowserProcess } from '../work/meetings-automations/native-browser-process'
 import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
 declare global { interface Window { sourcePickerTest: { stats: { paused: number; captured: number; committed: number; selected: string[]; nativeLayers(): number; readiness: TourCapability | null }; mount(enabled: boolean, localMcpEnabled?: boolean | null, compact?: boolean, preselected?: boolean): void } } }
 const isolatedCase = process.env.ROX_PRODUCT_TOUR_SOURCE_PICKER_CASE
@@ -12,15 +12,24 @@ let browser: Browser
 let server: ReturnType<typeof Bun.serve>
 beforeAll(async () => {
   if (!isolatedCase) return
-  const built = await build({ entryPoints: [fileURLToPath(new URL('./source-picker.browser.tsx', import.meta.url))], bundle: true, platform: 'browser', format: 'esm', write: false, outdir: 'source-picker-browser', loader: { '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl', '.svg': 'dataurl', '.png': 'dataurl' }, plugins: [{ name: 'unused-vite-url-assets', setup(build) { build.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'unused-url-asset' })); build.onLoad({ filter: /.*/, namespace: 'unused-url-asset' }, () => ({ contents: "export default 'about:blank'", loader: 'js' })) } }], tsconfig: fileURLToPath(new URL('../../../../../../tsconfig.json', import.meta.url)) })
+  const built = await build({ entryPoints: [fileURLToPath(new URL('./source-picker.browser.tsx', import.meta.url))], bundle: true, platform: 'browser', format: 'esm', write: false, outdir: 'source-picker-browser', loader: { '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl', '.svg': 'dataurl', '.png': 'dataurl' }, plugins: [
+    { name: 'unused-vite-url-assets', setup(build) { build.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'unused-url-asset' })); build.onLoad({ filter: /.*/, namespace: 'unused-url-asset' }, () => ({ contents: "export default 'about:blank'", loader: 'js' })) } },
+    // `@openuidev/react-lang` (reached through the app's markdown renderer) auto-mounts its
+    // inspector in any non-production build, and that inspector is fetched from jsDelivr at
+    // runtime. It installs a document-capture Escape handler that calls stopPropagation, so
+    // whether the harness loads it before an Escape press decides the result: the native
+    // layer stays registered and the case fails. This fixture asserts product behaviour,
+    // never the vendor inspector.
+    { name: 'no-vendor-devtools', setup(build) { build.onResolve({ filter: /^@openuidev\/devtools$/ }, () => ({ path: 'openui-devtools', namespace: 'test-only' })); build.onLoad({ filter: /.*/, namespace: 'test-only' }, () => ({ contents: 'export function OpenUIDevtools(){return null}', loader: 'js' })) } },
+  ], tsconfig: fileURLToPath(new URL('../../../../../../tsconfig.json', import.meta.url)) })
   const script = built.outputFiles.find(file => file.path.endsWith('.js'))!.text
   stage('source-picker:bundle:ready')
   server = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch(request) { return new URL(request.url).pathname === '/script.js' ? new Response(script, { headers: { 'content-type': 'text/javascript' } }) : new Response('<!doctype html><html><body><div id="root"></div><script type="module" src="/script.js"></script></body></html>', { headers: { 'content-type': 'text/html' } }) } })
   stage('source-picker:browser:launch')
   browser = await chromium.launch({ executablePath: await resolveChromiumExecutable(), headless: true, args: ['--no-sandbox'] })
   stage('source-picker:browser:ready')
-}, 30_000)
-afterAll(async () => { await browser?.close(); server?.stop(true) }, 30_000)
+}, NATIVE_BROWSER_BUDGET_MS)
+afterAll(async () => { await browser?.close(); server?.stop(true) }, NATIVE_BROWSER_BUDGET_MS)
 
 // Keep the production bundle, browser lifecycle and native registries independent of
 // other suites' Bun module caches and Playwright cleanup. Each child runs real assertions.
@@ -29,11 +38,11 @@ function browserTest(name: string, operation: () => Promise<void>) {
   if (isolatedCase) registeredIsolatedCase = true
   test(name, async () => {
     if (isolatedCase === name) return operation()
-    const exitCode = await runNativeBrowserProcess([process.execPath, 'test', fileURLToPath(import.meta.url)], {
-      label: name, env: { ...process.env, ROX_PRODUCT_TOUR_SOURCE_PICKER_CASE: name }, deadlineMs: 35_000,
+    const exitCode = await runNativeBrowserProcess(nativeBrowserCaseCommand(fileURLToPath(import.meta.url)), {
+      label: name, env: { ...process.env, ROX_PRODUCT_TOUR_SOURCE_PICKER_CASE: name },
     })
     expect(exitCode).toBe(0)
-  }, isolatedCase ? 30_000 : 100_000)
+  }, isolatedCase ? NATIVE_BROWSER_BUDGET_MS : NATIVE_BROWSER_PARENT_TIMEOUT_MS)
 }
 
 browserTest('T-SOURCES-SELECT custom portal owns native handoff so source click captures and commits before any outside pause', async () => {
