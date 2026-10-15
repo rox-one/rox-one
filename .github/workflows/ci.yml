@@ -2,11 +2,15 @@ name: CI Validate Alias
 on:
   push:
     branches: [main]
+  # NO path filter, deliberately. Ruleset 24843533 makes these jobs required
+  # (`validate (macos-15)`, `validate (ubuntu-24.04)`, `unified-gates`), and a
+  # required check that a path filter prevents from ever reporting leaves the pull
+  # request permanently unmergeable — a docs-only or markdown-only PR could not be
+  # landed at all (hit on #2153, and the `docs/**` filter also hid real executable
+  # tooling: `docs/final-readiness/**/*.ts` are fixtures CI itself runs). The
+  # skipped path set is cheap to validate (~3 min per platform), so the honest fix
+  # is to report, not to filter.
   pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-      - 'plans/**'
   workflow_dispatch:
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
