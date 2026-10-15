@@ -1,9 +1,14 @@
 name: Bundle Size
-# Renderer bundle-size budget gate (perf-baselines/bundle-size.json): the raw bytes of the largest
-# emitted chunk of each name prefix may not grow past its recorded budget, and an unbudgeted chunk
-# may not exceed 2.5 MB. The gate measures apps/electron/dist/renderer/assets/*.js only (never
-# source maps or the pdf worker), so it needs a real renderer build first. Blocking: no
-# continue-on-error.
+# Renderer bundle-size budget gate (perf-baselines/bundle-size.json) over the emitted
+# apps/electron/dist/renderer/assets chunks (js and css; never source maps or the pdf worker), so it
+# needs a real renderer build first. What `bun scripts/check-bundle-size.ts --check` gates:
+#   * a budget is the TOTAL raw bytes of every measured chunk sharing one chunk-name prefix, NOT the
+#     largest chunk, so a budgeted prefix (`budgets` for js, `stylesheets` for css) may not grow past
+#     its recorded total and an unbudgeted prefix may not pass MAX_NEW_CHUNK_BYTES (2,500,000 B);
+#   * each whole-extension total may not grow past its recorded `totals` entry;
+#   * the `startup` section gates an entry page's deduped static JS closure: it may not grow past its
+#     recorded total, or MAX_NEW_STARTUP_BYTES (8,000,000 B) for an html file with no recorded entry.
+# Blocking: no continue-on-error.
 on:
   push:
     branches: [main]
@@ -43,8 +48,13 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: bundle-size-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # Main pushes get their own group per commit, so a superseded push runs to completion in parallel
+  # instead of queueing behind the run it replaces; PRs keep one stable group per ref
+  # (refs/pull/<n>/merge), so a newer push to the same PR cancels the older run. Cancel-in-progress is
+  # therefore a no-op on main (every sha has a unique group) and the PR behaviour it was written for is
+  # unchanged.
+  group: bundle-size-${{ github.ref }}-${{ github.event_name == 'push' && github.sha || 'pr' }}
+  cancel-in-progress: true
 jobs:
   bundle-size:
     name: Renderer bundle-size budget
