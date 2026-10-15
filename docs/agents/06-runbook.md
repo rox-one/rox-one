@@ -103,7 +103,13 @@ gh pr view <N> --json mergeStateStatus,statusCheckRollup
 Обязательная проверка — `freshness` (`main-freshness.yml`, runs-on `blacksmith-4vcpu-ubuntu-2404`,
 ~секунды) со **strict**: устаревшую ветку слить нельзя. Перед merge: `update-branch` + дождаться
 `freshness`; `BEHIND`/`DIRTY` → **стоп**. Тяжёлые лейны: `ci.yml` (matrix ubuntu-24.04+macos-15, timeout 30 мин),
-`validate-server.yml` (macos-15, timeout 45 мин), `native.yml` (часто cancelled).
+`validate-server.yml` (macos-15, timeout 45 мин), `native.yml` (ubuntu, timeout 30 мин).
+
+> До 2026-10-15 здесь стояло «`native.yml` (часто cancelled)». Это было следствием не самого воркфлоу,
+> а единственного self-hosted раннера: джоб мог ждать в очереди 24 ч и умирал по лимиту GitHub,
+> ни разу не исполнив шага. Все четыре self-hosted потребителя (`native`, `perf-budgets`,
+> `toolchain-smoke`, `license-gate`) переведены на hosted, у каждого появился ночной `schedule` —
+> см. PR #2174 и §6.5 `lane-process.md`.
 
 ---
 
