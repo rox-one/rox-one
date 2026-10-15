@@ -52,8 +52,9 @@ describe('W1-08 stories', () => {
             // Glass paint hooks are presentational and asserted in
             // packages/ui/src/components/glass/__tests__ — strip them so these
             // snapshots keep guarding the entities' structure, not the wave's slot
-            // attributes (the rest of this file was already stale pre-wave; the
-            // inherited drift stays visible rather than being absorbed here).
+            // attributes. The inherited pin drift accumulated after 2026-10-13
+            // (token normalisation, label changes) was refreshed deliberately in
+            // the dedicated snapshot-refresh change, not absorbed silently here.
             const structural = html.replace(/ data-glass-[a-z-]+(?:="[^"]*")?/g, '')
             expect(structural).not.toContain('entities.ui.')
             expect(structural).toMatchSnapshot()
