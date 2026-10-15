@@ -357,6 +357,36 @@ class Notebook:
         self.cells.insert(index + 1, cell)
         return index + 1
 
+    # -- Wave 13: cell-type conversion -------------------------------------- #
+
+    def convert_cell(self, index: int, cell_type: str) -> int:
+        """Switch cell ``index`` to ``cell_type`` and return the focus index.
+
+        The cell keeps its position, its source, its ``metadata`` and — when
+        nbformat 4.5 stamped one — its ``id``; only the run state moves with the
+        type. ``code -> markdown`` drops ``outputs``/``execution_count`` (an md
+        cell is ``{cell_type, metadata, source}``), ``markdown -> code`` adds
+        ``execution_count: None`` and ``outputs: []`` so the result is a
+        well-formed code cell. Converting to the type the cell already has is a
+        successful no-op (``index`` comes back unchanged), which keeps ``y```
+        /``m`` idempotent in the renderer.
+        """
+        if cell_type not in ("code", "markdown"):
+            raise NotebookError("cellType must be 'code' or 'markdown'")
+        if not 0 <= index < len(self.cells):
+            raise NotebookError(f"cell index out of range: {index}")
+        if self.cell_type(index) == cell_type:
+            return index
+        cell = self.cells[index]
+        if cell_type == "markdown":
+            cell.pop("outputs", None)
+            cell.pop("execution_count", None)
+        else:
+            cell["execution_count"] = None
+            cell["outputs"] = []
+        cell["cell_type"] = cell_type
+        return index
+
     def save(self) -> None:
         save_notebook(self.path, self.data)
 
