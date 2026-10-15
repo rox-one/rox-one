@@ -90,6 +90,33 @@ describe('DaytonaProvider (memory client)', () => {
     });
   });
 
+  test('an unreadable state file is corruption, not a missing run', async () => {
+    await withDir(async (dir) => {
+      const client = new MemoryDaytonaClient({ execDelayMs: 5 });
+      const provider = new DaytonaProvider({ baseDir: dir, client });
+      const spec = {
+        id: `corrupt-${Date.now().toString(36)}`,
+        name: 'corrupt',
+        subtasks: [{ id: 't1', prompt: 'p' }],
+        limits: { maxWallClockSec: 60 },
+      };
+      await provider.createRun(spec);
+      for await (const _ of provider.subscribeEvents(spec.id)) {
+        /* drain to terminal */
+      }
+      // A record truncated mid-write: the run is alive and terminal, so
+      // reporting `not_found` would tell the UI the run was never created.
+      await writeFile(join(dir, spec.id, 'state.json'), `{"id":"${spec.id}","state":"run`);
+      const failure = await provider.getStatus(spec.id).then(
+        () => null,
+        (error: unknown) => error,
+      );
+      expect(failure).toBeInstanceOf(CloudRunnerError);
+      if (!(failure instanceof CloudRunnerError)) throw new Error('expected a CloudRunnerError');
+      expect(failure.code).not.toBe('not_found');
+    });
+  });
+
   test('watchdog expires a run past the wall-clock budget', async () => {
     await withDir(async (dir) => {
       const client = new MemoryDaytonaClient({ execDelayMs: 2_000 });

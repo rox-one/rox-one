@@ -5,7 +5,7 @@
  * Credentials arrive only through resolveApiKey / an injected client.
  * A Daytona failure never selects another provider.
  */
-import { appendFile, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import type {
@@ -68,7 +68,15 @@ export function boundConcurrency(value?: number): number {
   return Math.min(DAYTONA_MAX_CONCURRENCY, Math.floor(value));
 }
 
-function boundLimits(spec: RunSpec): { maxWallClockSec: number; maxLlmTokens: number; maxArtifactsBytes: number; ttlSec: number } {
+/** Clamped budgets the provider actually enforces for one run. */
+export interface RunBounds {
+  maxWallClockSec: number;
+  maxLlmTokens: number;
+  maxArtifactsBytes: number;
+  ttlSec: number;
+}
+
+function boundLimits(spec: RunSpec): RunBounds {
   const limits = resolveLimits(spec.limits);
   return {
     maxWallClockSec: Math.min(limits.maxWallClockSec, DAYTONA_MAX_WALL_CLOCK_SEC),
@@ -78,15 +86,50 @@ function boundLimits(spec: RunSpec): { maxWallClockSec: number; maxLlmTokens: nu
   };
 }
 
-async function readJson<T>(path: string): Promise<T | null> {
-  const raw = await readFile(path, 'utf8').catch(() => null);
-  if (raw === null) return null;
+/**
+ * A JSON read where "the file is not there" and "the file is there but
+ * unreadable" are different answers. Collapsing both into `null` is how a
+ * torn/corrupt `state.json` used to surface as `run not found` for a run that
+ * is alive, which callers (and the UI) treat as a deletion.
+ */
+type JsonRead<T> =
+  | { status: 'ok'; value: T }
+  | { status: 'missing' }
+  | { status: 'corrupt'; detail: string };
+
+async function readJsonResult<T>(path: string): Promise<JsonRead<T>> {
+  let raw: string;
   try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
+    raw = await readFile(path, 'utf8');
+  } catch (error) {
+    // Only "there is no such file" means missing; any other read failure is a
+    // real filesystem problem and must not be reported as a deleted run.
+    const missing =
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      typeof error.code === 'string' &&
+      error.code === 'ENOENT';
+    if (missing) return { status: 'missing' };
+    throw error;
+  }
+  try {
+    return { status: 'ok', value: JSON.parse(raw) as T };
+  } catch (error) {
+    return { status: 'corrupt', detail: error instanceof Error ? error.message : String(error) };
   }
 }
+
+function corruptStateError(id: string, detail: string): CloudRunnerError {
+  return new CloudRunnerError(`run state is unreadable: ${id} (${detail})`, 'provider_error');
+}
+
+/**
+ * Monotonic generation counter. Every `createRun` claims a fresh value, so a
+ * pump or watchdog left over from a superseded lifecycle compares unequal and
+ * is refused by `advanceState` instead of writing into the new run's state.
+ */
+let runGenerationSeq = 0;
 
 export class DaytonaProvider implements CloudRunProvider {
   readonly providerId = 'daytona';
@@ -101,6 +144,10 @@ export class DaytonaProvider implements CloudRunProvider {
   private readonly pollMs: number;
   private readonly aborts = new Map<string, AbortController>();
   private readonly pumps = new Map<string, Promise<void>>();
+  /** One async mutex per run: serializes every read-modify-write of state.json. */
+  private readonly stateLocks = new Map<string, Promise<void>>();
+  /** Generation of the lifecycle that currently owns each run id. */
+  private readonly generations = new Map<string, number>();
 
   constructor(opts: DaytonaProviderOptions) {
     this.baseDir = resolve(opts.baseDir);
@@ -131,7 +178,9 @@ export class DaytonaProvider implements CloudRunProvider {
       throw new CloudRunnerError('spec.subtasks must not be empty', 'invalid_spec');
     }
     const dir = this.runDir(spec.id);
-    const existing = await readJson<RunRecord>(join(dir, 'state.json'));
+    const existingRead = await readJsonResult<RunRecord>(join(dir, 'state.json'));
+    if (existingRead.status === 'corrupt') throw corruptStateError(spec.id, existingRead.detail);
+    const existing = existingRead.status === 'ok' ? existingRead.value : null;
     if (existing && isActiveRunState(existing.state)) {
       return { id: spec.id, provider: this.providerId, createdAt: existing.startedAt ?? Date.now() };
     }
@@ -154,7 +203,14 @@ export class DaytonaProvider implements CloudRunProvider {
     };
     await writeFile(join(dir, 'spec.json'), JSON.stringify(safeSpec, null, 2));
     const startedAt = Date.now();
-    await this.setState(dir, { id: spec.id, state: 'start', startedAt });
+    // A resubmitted (or resumed) run id starts a new lifecycle: this write is
+    // allowed to replace a terminal state, and the fresh generation makes any
+    // writer left over from the previous lifecycle unable to touch this run.
+    const generation = (runGenerationSeq += 1);
+    this.generations.set(spec.id, generation);
+    await this.withStateLock(spec.id, () =>
+      this.writeState(dir, { id: spec.id, state: 'start', startedAt }),
+    );
 
     const sandbox = await this.client.createSandbox({
       name: this.sandboxName ? `${this.sandboxName}-${spec.id}` : `rox-${spec.id}`.slice(0, 63),
@@ -172,20 +228,27 @@ export class DaytonaProvider implements CloudRunProvider {
 
     const abort = new AbortController();
     this.aborts.set(spec.id, abort);
-    const pump = this.pump(spec.id, dir, sandbox.id, bounds, abort.signal);
+    const pump = this.pump(spec.id, dir, sandbox.id, bounds, abort.signal, generation);
     this.pumps.set(spec.id, pump);
     void pump.finally(() => {
+      // Only the newest lifecycle may retire the run's abort handle: a pump
+      // that lost its generation must not disown its successor's controller.
+      if (this.pumps.get(spec.id) !== pump) return;
       this.aborts.delete(spec.id);
       this.pumps.delete(spec.id);
+      this.generations.delete(spec.id);
     });
 
     return { id: spec.id, provider: this.providerId, createdAt: startedAt };
   }
 
   async getStatus(id: string): Promise<RunStatus> {
-    const state = await readJson<RunRecord>(join(this.runDir(id), 'state.json'));
-    if (!state) throw new CloudRunnerError(`run not found: ${id}`, 'not_found');
-    return state;
+    const read = await readJsonResult<RunRecord>(join(this.runDir(id), 'state.json'));
+    if (read.status === 'missing') throw new CloudRunnerError(`run not found: ${id}`, 'not_found');
+    // A record we cannot parse is an anomaly, not a deleted run: reporting it
+    // as `not_found` made a live run look cancelled to the UI.
+    if (read.status === 'corrupt') throw corruptStateError(id, read.detail);
+    return read.value;
   }
 
   async cancel(id: string): Promise<void> {
@@ -203,7 +266,8 @@ export class DaytonaProvider implements CloudRunProvider {
     for (const sandbox of sandboxes) {
       const ageSec = (now - sandbox.createdAt) / 1000;
       const runId = sandbox.labels['rox.runId'];
-      const record = runId ? await readJson<RunRecord>(join(this.runDir(runId), 'state.json')) : null;
+      const read = runId ? await readJsonResult<RunRecord>(join(this.runDir(runId), 'state.json')) : null;
+      const record = read?.status === 'ok' ? read.value : null;
       const ttl = record ? boundTtl(undefined) : this.ttlSec;
       const terminal = record ? isTerminalRunState(record.state) : true;
       if (ageSec > ttl || terminal) {
@@ -280,34 +344,104 @@ export class DaytonaProvider implements CloudRunProvider {
     return join(this.baseDir, id);
   }
 
-  private async setState(dir: string, status: RunRecord): Promise<void> {
-    await writeFile(join(dir, 'state.json'), JSON.stringify(status, null, 2));
+  /**
+   * Per-run async mutex. Every state transition is a read-modify-write, so
+   * `terminate` and the pump must not interleave: without it the pump can read
+   * a non-terminal record, lose the race to `terminate`, and then rename its
+   * stale record over the terminal one — resurrecting a cancelled run.
+   */
+  private async withStateLock<T>(id: string, fn: () => Promise<T>): Promise<T> {
+    const prior = this.stateLocks.get(id) ?? Promise.resolve();
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const tail = prior.then(() => gate, () => gate);
+    this.stateLocks.set(id, tail);
+    await prior;
+    try {
+      return await fn();
+    } finally {
+      release();
+      if (this.stateLocks.get(id) === tail) this.stateLocks.delete(id);
+    }
+  }
+
+  /**
+   * Atomic write: a plain `writeFile` truncates in place, so a reader racing
+   * the write sees a half-written file. Writing a sibling temp file and
+   * renaming it over the target means readers only ever observe one complete
+   * version or the other.
+   */
+  private async writeState(dir: string, status: RunRecord): Promise<void> {
+    const target = join(dir, 'state.json');
+    const temp = join(dir, `.state.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`);
+    await writeFile(temp, JSON.stringify(status, null, 2));
+    try {
+      await rename(temp, target);
+    } catch (error) {
+      await rm(temp, { force: true }).catch(() => undefined);
+      throw error;
+    }
     await appendFile(join(dir, 'events.jsonl'), `${JSON.stringify({ type: 'state', status })}\n`);
+  }
+
+  /**
+   * The only way the pump may move a run forward. Read, decision and write all
+   * happen while holding the run's lock, so the `isActiveRunState` check can no
+   * longer be stale by the time the write lands, and a record that already
+   * reached a terminal state is never overwritten. Returns the record now in
+   * force, or `null` when this writer no longer owns the run and must stop.
+   */
+  private async advanceState(
+    id: string,
+    dir: string,
+    generation: number,
+    mutate: (current: RunRecord) => RunRecord,
+  ): Promise<RunRecord | null> {
+    return this.withStateLock(id, async () => {
+      if (this.generations.get(id) !== generation) return null;
+      const read = await readJsonResult<RunRecord>(join(dir, 'state.json'));
+      // Never rewrite a record we cannot parse: the previous transition's
+      // content is unknown, so overwriting could destroy a terminal outcome.
+      if (read.status !== 'ok' || isTerminalRunState(read.value.state)) return null;
+      const next = mutate(read.value);
+      await this.writeState(dir, next);
+      return next;
+    });
   }
 
   private async terminate(
     id: string,
     state: 'cancelled' | 'expired' | 'failed',
     reason: RunRecord['failureReason'],
+    generation?: number,
   ): Promise<void> {
     const dir = this.runDir(id);
-    const current = await readJson<RunRecord>(join(dir, 'state.json'));
-    if (!current) throw new CloudRunnerError(`run not found: ${id}`, 'not_found');
-    if (isTerminalRunState(current.state)) return;
-    this.aborts.get(id)?.abort();
-    const meta = await readJson<SandboxMeta>(join(dir, 'sandbox.json'));
-    if (meta?.sandboxId) {
-      try {
-        await this.client.deleteSandbox(meta.sandboxId);
-      } catch {
-        /* already gone */
+    await this.withStateLock(id, async () => {
+      const read = await readJsonResult<RunRecord>(join(dir, 'state.json'));
+      if (read.status === 'missing') throw new CloudRunnerError(`run not found: ${id}`, 'not_found');
+      if (read.status === 'corrupt') throw corruptStateError(id, read.detail);
+      // Terminal outcomes are absorbing: a second cancel/expiry keeps the first
+      // one, and an already-finished run is never reopened.
+      if (isTerminalRunState(read.value.state)) return;
+      // A watchdog from a superseded lifecycle must not kill the new run.
+      if (generation !== undefined && this.generations.get(id) !== generation) return;
+      this.aborts.get(id)?.abort();
+      const meta = await readJsonResult<SandboxMeta>(join(dir, 'sandbox.json'));
+      if (meta.status === 'ok' && meta.value.sandboxId) {
+        try {
+          await this.client.deleteSandbox(meta.value.sandboxId);
+        } catch {
+          /* already gone */
+        }
       }
-    }
-    await this.setState(dir, {
-      ...current,
-      state,
-      failureReason: reason,
-      finishedAt: Date.now(),
+      await this.writeState(dir, {
+        ...read.value,
+        state,
+        failureReason: reason,
+        finishedAt: Date.now(),
+      });
     });
   }
 
@@ -315,25 +449,28 @@ export class DaytonaProvider implements CloudRunProvider {
     id: string,
     dir: string,
     sandboxId: string,
-    bounds: ReturnType<typeof boundLimits>,
+    bounds: RunBounds,
     signal: AbortSignal,
+    generation: number,
   ): Promise<void> {
     const watchdog = setTimeout(() => {
-      void this.terminate(id, 'expired', 'expired');
+      void this.terminate(id, 'expired', 'expired', generation);
     }, bounds.maxWallClockSec * 1000);
     watchdog.unref();
     try {
       if (signal.aborted) return;
       await this.client.startSandbox(sandboxId);
-      const current = await readJson<RunRecord>(join(dir, 'state.json'));
-      if (!current || !isActiveRunState(current.state)) return;
-      await this.setState(dir, { ...current, state: 'ready' });
+      // Each phase is a serialized compare-and-write: if `cancel` committed a
+      // terminal state first, the phase is refused and the pump stops instead
+      // of renaming its stale non-terminal record over the terminal one.
+      if (!(await this.advanceState(id, dir, generation, (current) => ({ ...current, state: 'ready' })))) return;
 
       const specBytes = await readFile(join(dir, 'spec.json'));
       await this.client.writeFile(sandboxId, '/run/spec.json', specBytes);
       await this.seedSandboxFromHost(dir, sandboxId);
       if (signal.aborted) return;
-      await this.setState(dir, { ...(await readJson<RunRecord>(join(dir, 'state.json')))!, state: 'running' });
+      if (!(await this.advanceState(id, dir, generation, (current) => ({ ...current, state: 'running' })))) return;
+
       const spec = JSON.parse(specBytes.toString('utf8')) as RunSpec;
       const concurrency = boundConcurrency(spec.concurrency);
       const mode = spec.agenticMode === 'omp' ? 'omp' : 'loop';
@@ -341,14 +478,14 @@ export class DaytonaProvider implements CloudRunProvider {
 
       await this.importArtifacts(dir, sandboxId, bounds.maxArtifactsBytes);
       if (signal.aborted) return;
-      const done: RunRecord = {
+      const done = await this.advanceState(id, dir, generation, (current) => ({
         id,
         state: 'done',
-        startedAt: current?.startedAt,
+        startedAt: current.startedAt,
         finishedAt: Date.now(),
         progress: { completed: 1, total: 1 },
-      };
-      await this.setState(dir, done);
+      }));
+      if (!done) return;
       try {
         await this.client.deleteSandbox(sandboxId);
       } catch {
@@ -356,15 +493,13 @@ export class DaytonaProvider implements CloudRunProvider {
       }
     } catch (error) {
       if (signal.aborted) return;
-      const current = (await readJson<RunRecord>(join(dir, 'state.json'))) ?? { id, state: 'failed' as const };
-      if (isTerminalRunState(current.state)) return;
       const reason = error instanceof CloudRunnerError && error.code === 'cancelled' ? 'cancelled' : 'provider_error';
-      await this.setState(dir, {
+      await this.advanceState(id, dir, generation, (current) => ({
         ...current,
         state: reason === 'cancelled' ? 'cancelled' : 'failed',
         failureReason: reason,
         finishedAt: Date.now(),
-      });
+      }));
       try {
         await this.client.deleteSandbox(sandboxId);
       } catch {
