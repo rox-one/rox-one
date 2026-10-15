@@ -40,7 +40,7 @@ export function SessionTableGroupHeader({
           role="row"
           data-glass-slot="toolbar"
           className={cn(
-            'sticky top-[29px] z-[5] flex min-h-8 items-center gap-2 border-b border-border/40 px-3 py-1.5 text-xs font-semibold text-foreground/80',
+            'sticky top-[29px] z-[5] flex min-h-8 items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-1.5 text-xs font-semibold text-foreground/80 backdrop-blur',
           )}
           style={style}
         >

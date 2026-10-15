@@ -2920,6 +2920,7 @@ function ErrorMessage({ message, onOpenUrl, sessionId, onRetry }: { message: Mes
     <div className="flex justify-start mt-4">
       {/* Subtle bg (3% opacity) + tinted shadow for softer error appearance */}
       <div
+        data-glass-slot="card"
         className="max-w-[80%] shadow-tinted rounded-[var(--radius-card)] pl-5 pr-4 pt-2 pb-2.5 break-words"
         style={{
           backgroundColor: 'oklch(from var(--destructive) l c h / 0.03)',
@@ -3038,7 +3039,7 @@ function MessageBubble({
   if (message.role === 'assistant') {
     return (
       <div className="flex justify-start group">
-        <div className="relative max-w-[90%] bg-background shadow-minimal rounded-[var(--radius-card)] pl-6 pr-4 py-3 break-words min-w-0 select-text">
+        <div data-glass-slot="card" className="relative max-w-[90%] bg-background shadow-minimal rounded-[var(--radius-card)] pl-6 pr-4 py-3 break-words min-w-0 select-text">
           {/* Pop-out button - visible on hover */}
           {onPopOut && !message.isStreaming && (
             <button

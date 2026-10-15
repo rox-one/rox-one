@@ -170,10 +170,10 @@ export function TaskTile({
         }
       }}
       className={cn(
-        'group relative overflow-hidden rounded-lg border border-border/60',
+        'group relative overflow-hidden rounded-lg border border-border/60 bg-card shadow-minimal',
         'cursor-pointer transition-colors hover:border-border focus-visible:outline-none',
         'focus-visible:ring-2 focus-visible:ring-ring/50',
-        selected && 'border-foreground/60',
+        selected && 'border-foreground/60 bg-foreground/[0.045]',
         isLive && 'shadow-panel-focused',
       )}
     >

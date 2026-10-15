@@ -246,7 +246,12 @@ function SectionHeader({
   return (
     <ContextMenu modal>
       <ContextMenuTrigger asChild>
-<div ref={elementRef} style={style} className="sticky top-0 z-10 bg-background px-5 py-2">
+        <div
+          ref={elementRef}
+          style={style}
+          data-glass-slot="toolbar"
+          className="sticky top-0 z-10 bg-background px-5 py-2"
+        >
           <span className="text-caption font-medium text-text-secondary uppercase caps-label">
             {label} <> · <span className="text-muted-foreground/50 numeric">{itemCount}</span></>
           </span>
@@ -294,6 +299,7 @@ function CollapsibleGroupHeader({
         <button
           ref={elementRef}
           style={style}
+          data-glass-slot="toolbar"
           onClick={onToggle}
           className="sticky top-0 z-10 flex w-full cursor-pointer items-center gap-1.5 bg-background px-5 py-2 group/header relative outline-none focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_1px_var(--accent)]"
         >
@@ -623,6 +629,7 @@ function VirtualEntityListBody<T>({
             <div key={entry.key} style={style} ref={measureRef(`e:${entry.bucket.key}`, MEASURE_EMPTY_LANE_KEY)}>
               <div
                 data-empty-group={group?.key ?? entry.bucket.key}
+                data-glass-slot="empty"
                 className={cn(
                   'mx-3 rounded-[var(--radius-card)] border border-dashed px-3 py-2 text-caption text-muted-foreground/70',
                   dropGroupKey === entry.bucket.key
@@ -730,6 +737,7 @@ function LargeEntityListBody<T>({
       renderEmptyGroup={(group) => (
         <div
           data-empty-group={group.key}
+          data-glass-slot="empty"
           className={cn(
             'mx-3 rounded-[var(--radius-card)] border border-dashed px-3 py-2 text-caption text-muted-foreground/70',
             dropGroupKey === group.key
@@ -787,7 +795,11 @@ export function EntityList<T>({
   // Empty state — rendered outside everything for proper centering
   if (isEmpty && emptyState) {
     return (
-      <div className={cn('flex flex-col flex-1 min-h-0', className)} data-state={resolvedState}>
+      <div
+        className={cn('flex flex-col flex-1 min-h-0', className)}
+        data-state={resolvedState}
+        data-glass-slot="empty"
+      >
         {header}
         {emptyState}
       </div>
@@ -801,7 +813,11 @@ export function EntityList<T>({
   const autoWindowed = !windowed && itemCount > ENTITY_LIST_AUTO_VIRTUALIZE_THRESHOLD
 
   return (
-    <div className={cn('flex flex-col flex-1 min-h-0', className)} data-state={resolvedState}>
+    <div
+      className={cn('flex flex-col flex-1 min-h-0', className)}
+      data-state={resolvedState}
+      data-glass-slot="table"
+    >
       {header}
       <ScrollArea className={cn('flex-1', scrollAreaClassName)} viewportRef={viewportRef}>
         <div
@@ -879,6 +895,7 @@ export function EntityList<T>({
                       {!isCollapsed && group.items.length === 0 ? (
                         <div
                           data-empty-group={group.key}
+                          data-glass-slot="empty"
                           className={cn(
                             'mx-3 mb-2 rounded-[var(--radius-card)] border border-dashed px-3 py-2 text-caption text-muted-foreground/70',
                             dropGroupKey === group.key

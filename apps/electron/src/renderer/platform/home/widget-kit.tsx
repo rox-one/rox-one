@@ -52,6 +52,7 @@ export function WidgetFrame({
     <section
       className={cn('rox-home-widget flex min-h-0 min-w-0 flex-col rounded-[var(--radius-card)] px-3 pb-3 pt-2', fitContent ? 'h-auto' : 'h-full')}
       data-home-widget={testId}
+      data-glass-slot="card"
       aria-label={title}
     >
       <header className="flex h-7 shrink-0 items-center gap-1">
@@ -172,7 +173,7 @@ export function WidgetList({ children, columns = 1 }: { children: React.ReactNod
 /** Honest empty state: what is missing and why, plus at most one action. */
 export function WidgetEmpty({ text, hint, action }: { text: string; hint?: string; action?: { label: string; onClick: () => void } }) {
   return (
-    <div className="flex h-full min-h-0 flex-col items-start justify-center gap-1 text-base" data-home-empty="">
+    <div className="flex h-full min-h-0 flex-col items-start justify-center gap-1 text-base" data-home-empty="" data-glass-slot="empty">
       <p className="text-foreground">{text}</p>
       {hint ? <p className="text-sm text-muted-foreground">{hint}</p> : null}
       {action ? (

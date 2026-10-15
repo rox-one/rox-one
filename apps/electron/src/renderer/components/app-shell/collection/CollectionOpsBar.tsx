@@ -47,7 +47,7 @@ export function CollectionOpsBar({
       data-layout="collection-ops"
       data-glass-slot="toolbar"
       className={cn(
-        'flex min-h-10 flex-wrap items-center justify-between gap-2 px-3 py-1',
+        'flex min-h-10 flex-wrap items-center justify-between gap-2 border-b border-border-subtle bg-surface-elevated px-3 py-1',
         className,
       )}
     >

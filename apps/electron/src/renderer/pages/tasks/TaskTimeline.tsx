@@ -169,7 +169,7 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
       </div>
       <div ref={scrollRef} className="relative min-h-0 flex-1 overflow-auto" onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerCancel}>
         <div style={{ width: LABEL_COL + trackWidth }} className="relative min-h-full">
-          <div data-glass-slot="toolbar" className="sticky top-0 z-sticky flex">
+          <div data-glass-slot="toolbar" className="sticky top-0 z-sticky flex bg-background">
             <div style={{ width: LABEL_COL }} className="sticky left-0 z-sticky shrink-0 bg-background" />
             <div className="relative h-6 select-none" style={{ width: trackWidth }}>
               {ticks.map((tick) => (

@@ -1194,7 +1194,10 @@ export default function TasksPage(props: TasksPageProps = {}) {
           onMouseDown={onRowMouseDown}
           onClick={(event) => onRowClick(event, task.id)}
           onDoubleClick={() => { selectTask(task.id); window.setTimeout(() => titleRef.current?.focus(), 0) }}
-          className="mx-1.5 flex cursor-default items-start gap-2 rounded-[var(--radius-card)] px-2 py-[5px] outline-none"
+          className={cn(
+            'mx-1.5 flex cursor-default items-start gap-2 rounded-[var(--radius-card)] px-2 py-[5px] outline-none',
+            selectedRow ? 'relative bg-accent/15 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:rounded-l-[var(--radius-control)] before:bg-accent' : 'hover:bg-foreground/[0.04]',
+          )}
         >
           <TaskCheckbox checked={done} pending={pending} cancelled={Boolean(task.cancelledAt)} onToggle={() => toggleComplete(task)} label={t('tasks.complete')} testId={`task-check-${task.id}`} />
           <div className="min-w-0 flex-1">

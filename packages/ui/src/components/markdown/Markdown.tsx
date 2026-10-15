@@ -536,7 +536,7 @@ function createComponents(
       },
       // Clean tables
       table: ({ children }) => (
-        <div className="my-3 overflow-x-auto rounded-md border border-border-subtle">
+        <div data-glass-slot="table" className="my-3 overflow-x-auto rounded-md border border-border-subtle">
           <table className="min-w-full text-data">{children}</table>
         </div>
       ),
@@ -553,7 +553,7 @@ function createComponents(
       h3: ({ children }) => <h3 className="font-sans text-lg font-semibold mt-4 mb-2">{children}</h3>,
       // Blockquotes
       blockquote: ({ children }) => (
-        <blockquote className="border-l-2 border-border-strong pl-3 my-2 prose-body text-text-secondary">
+        <blockquote data-glass-slot="card" className="border-l-2 border-border-strong pl-3 my-2 prose-body text-text-secondary">
           {children}
         </blockquote>
       ),
@@ -681,7 +681,7 @@ function createComponents(
     ),
     // Beautiful tables
     table: ({ children }) => (
-      <div className="my-4 overflow-x-auto rounded-md border">
+      <div data-glass-slot="table" className="my-4 overflow-x-auto rounded-md border">
         <table className="min-w-full text-data divide-y divide-border">{children}</table>
       </div>
     ),
@@ -694,7 +694,7 @@ function createComponents(
       <td className="py-3 px-4">{children}</td>
     ),
     tr: ({ children }) => (
-      <tr className="hover:bg-muted/30 transition-colors">{children}</tr>
+      <tr data-glass-slot="row" className="hover:bg-muted/30 transition-colors">{children}</tr>
     ),
     // Rich headings - H1/H2 same size, differentiated by weight
     h1: ({ children }) => (
@@ -711,7 +711,7 @@ function createComponents(
     ),
     // Styled blockquotes
     blockquote: ({ children }) => (
-      <blockquote className="border-l-2 border-border-strong bg-surface-input pl-4 pr-3 py-2 my-3 rounded-r-md prose-body text-text-secondary">
+      <blockquote data-glass-slot="card" className="border-l-2 border-border-strong bg-surface-input pl-4 pr-3 py-2 my-3 rounded-r-md prose-body text-text-secondary">
         {children}
       </blockquote>
     ),

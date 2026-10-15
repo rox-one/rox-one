@@ -208,7 +208,7 @@ export function MemoryRepoFilesPanel({
       data-testid="memory-repo-files-tree"
       data-glass-slot="panel"
       onKeyDown={handleSidebarTreeKeyDown}
-      className="flex min-h-0 w-[248px] shrink-0 flex-col overflow-y-auto border-r border-border-subtle py-2"
+      className="flex min-h-0 w-[248px] shrink-0 flex-col overflow-y-auto border-r border-border-subtle bg-foreground-2 py-2"
     >
       {loading && tree.length === 0 ? (
         <div
@@ -221,7 +221,7 @@ export function MemoryRepoFilesPanel({
         <div
           data-testid="memory-repo-files-empty"
           data-glass-slot="empty"
-          className="mx-3 mt-2 flex flex-col items-center gap-3 rounded-[var(--radius-control)] px-4 py-8 text-center"
+          className="mx-3 mt-2 flex flex-col items-center gap-3 rounded-[var(--radius-control)] bg-background/60 px-4 py-8 text-center"
         >
           <span className="grid size-10 place-items-center rounded-[var(--radius-control)] bg-accent/10 text-accent">
             <FolderClosed aria-hidden="true" className="icon-rail" />

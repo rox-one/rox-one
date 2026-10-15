@@ -85,7 +85,7 @@ function FacetItem({ label, count, active, onClick, tone, testId, icon: Icon }: 
       onClick={onClick}
       className={cn(
         'flex min-h-8 w-full min-w-0 items-center gap-2 rounded-[var(--radius-control)] px-2 text-left text-base outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
-        active ? 'font-semibold text-foreground' : 'text-text-secondary hover:text-foreground',
+        active ? 'bg-foreground/[0.09] font-semibold text-foreground' : 'text-text-secondary hover:bg-surface-hover hover:text-foreground',
       )}
     >
       {Icon ? <Icon aria-hidden="true" className={cn('size-4 shrink-0', tone === 'danger' ? 'text-destructive' : active ? 'text-accent' : 'text-text-muted')} /> : null}
@@ -1145,7 +1145,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   ) : null
 
   return (
-    <div className="@container/memory relative flex h-full w-full min-h-0 min-w-0 font-sans text-base text-foreground" data-testid="memory-screen">
+    <div className="@container/memory relative flex h-full w-full min-h-0 min-w-0 bg-background font-sans text-base text-foreground" data-testid="memory-screen">
       {facets}
       {filesView ? (
         <section className="min-w-0 flex-1 overflow-y-auto px-2 py-2" data-testid="memory-files">
@@ -1159,7 +1159,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
           ) : (
             <ul className="flex flex-col gap-2">
               {archivedLessons.map((entry) => (
-                <li key={entry.id} data-testid="memory-archive-row" data-glass-slot="card" className="flex items-start gap-3 rounded-[var(--radius-control)] p-3">
+                <li key={entry.id} data-testid="memory-archive-row" data-glass-slot="card" className="flex items-start gap-3 rounded-[var(--radius-control)] bg-surface-hover p-3">
                   <div className="min-w-0 flex-1">
                     <p className="whitespace-pre-wrap break-words">{entry.lesson.rule}</p>
                     <p className="mt-1 text-xs text-text-muted">{t(entry.lesson.scope === 'global' ? 'memory.screen.scopeGlobal' : 'memory.screen.scopeWorkspace')} · {fmt(entry.lesson.ts)}</p>
@@ -1173,7 +1173,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       ) : (
         <>
           {list}
-          {selected ? <section data-glass-slot="panel" className="flex min-w-0 w-full flex-1 flex-col overflow-y-auto @[920px]/memory:w-[clamp(300px,36%,440px)] @[920px]/memory:flex-none @[920px]/memory:border-l @[920px]/memory:border-foreground/7" onKeyDown={(event) => { if (event.key === 'Escape' && !editing) { event.stopPropagation(); closeDetails() } }} aria-label={t('memory.screen.properties')}>{detail}</section> : null}
+          {selected ? <section data-glass-slot="panel" className="flex min-w-0 w-full flex-1 flex-col overflow-y-auto bg-background @[920px]/memory:w-[clamp(300px,36%,440px)] @[920px]/memory:flex-none @[920px]/memory:border-l @[920px]/memory:border-foreground/7" onKeyDown={(event) => { if (event.key === 'Escape' && !editing) { event.stopPropagation(); closeDetails() } }} aria-label={t('memory.screen.properties')}>{detail}</section> : null}
         </>
       )}
       {confirmDialog}

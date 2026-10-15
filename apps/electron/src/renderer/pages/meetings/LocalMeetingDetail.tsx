@@ -1104,7 +1104,7 @@ export function LocalMeetingDetail(props: {
   useEffect(() => { setConfirmTrash(false) }, [m.id])
 
   return (
-    <div className="flex min-h-full flex-col" data-glass-slot="panel" data-testid="meeting-detail" data-meeting-id={m.id}>
+    <div className="flex min-h-full flex-col" data-glass-slot="panel" data-glass-side="none" data-testid="meeting-detail" data-meeting-id={m.id}>
       {header}
       <div className="flex-1 px-5 pb-4 pt-2">
         {tab === 'overview' ? overview

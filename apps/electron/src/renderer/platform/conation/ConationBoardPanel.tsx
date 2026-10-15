@@ -20,6 +20,7 @@ export function ConationBoardPanel({ enabled = true }: Props) {
     return (
       <div
         data-conation-board="off"
+        data-glass-slot="panel"
         className="rox-shell-pane flex min-h-0 flex-1 flex-col items-center justify-center bg-background p-6 text-sm text-muted-foreground"
       >
         {t('conation.board.off')}
@@ -41,9 +42,10 @@ export function ConationBoardPanel({ enabled = true }: Props) {
   return (
     <div
       data-conation-board="deeplink"
+      data-glass-slot="panel"
       className="rox-shell-pane flex min-h-0 flex-1 flex-col overflow-hidden bg-background"
     >
-      <div className="flex h-8 shrink-0 items-center border-b border-border/40 px-3">
+      <div className="flex h-8 shrink-0 items-center border-b border-border/40 px-3" data-glass-slot="toolbar">
         <span className="chrome-label truncate text-xs font-medium text-foreground/80" title={t('conation.board.title', { defaultValue: 'Board' })}>
           {t('conation.board.title', { defaultValue: 'Board' })}
         </span>

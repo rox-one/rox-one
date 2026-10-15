@@ -175,6 +175,7 @@ function PopoverMenu({ onClose, className, label, data, children }: { onClose: (
       aria-label={label}
       onKeyDown={onKeyDown}
       {...{ [`data-home-${data}`]: '' }}
+      data-glass-slot="popover"
       className={cn('rox-home-widget absolute top-full z-popover mt-1 flex flex-col gap-1 rounded-[var(--radius-card)] p-2 shadow-middle', className)}
     >
       {children}

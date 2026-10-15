@@ -241,7 +241,7 @@ export function AutomationGraphEditor({
           </div>
         </div>
 
-        <aside className="flex w-56 shrink-0 flex-col border-l border-border/60" data-glass-slot="panel">
+        <aside className="flex w-56 shrink-0 flex-col border-l border-border/60" data-glass-slot="panel" data-glass-side="left">
           <div className="min-h-0 flex-1 space-y-3 overflow-auto p-3">
             {selectedNode ? (
               <>

@@ -862,7 +862,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
 
       {/* Insights / stats at bottom */}
       {!insightsQuiet && insights && (
-        <div data-glass-slot="card" className="mx-1 mt-2 space-y-1 rounded-[var(--radius-card)] p-2" data-list-role="memory-insights">
+        <div data-glass-slot="card" className="mx-1 mt-2 space-y-1 rounded-[var(--radius-card)] bg-surface-hover p-2" data-list-role="memory-insights">
           <div className="px-0.5 text-xs text-muted-foreground">
             {t('memory.insightsLine', {
               lessonsAdded7d: insights.lessonsAdded7d,

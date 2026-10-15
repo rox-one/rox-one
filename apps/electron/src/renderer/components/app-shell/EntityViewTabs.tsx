@@ -213,7 +213,7 @@ export function EntityViewTabs({ value, onChange, capabilities, className, varia
       density="full"
       keyboard
       ariaLabel={t('entityView.tabsLabel')}
-      className={cn('px-3 py-1.5 border-b border-border/40 shrink-0', className)}
+      className={cn('px-3 py-1.5 border-b border-border/40 bg-background/40 shrink-0', className)}
       onSelect={(id) => onChange(id as EntityViewId)}
     />
   )

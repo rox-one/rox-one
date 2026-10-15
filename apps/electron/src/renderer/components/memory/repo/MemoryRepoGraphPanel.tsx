@@ -176,6 +176,7 @@ export function MemoryRepoGraphPanel({ graph, onOpenFile }: MemoryRepoGraphPanel
               maxZoom={1.5}
               defaultViewport={{ x: 24, y: 24, zoom: 1 }}
               proOptions={{ hideAttribution: true }}
+              className="bg-background"
             >
               <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
             </ReactFlow>

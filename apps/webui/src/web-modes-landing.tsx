@@ -52,7 +52,7 @@ export function WebModesLanding({ host, onEnter }: WebModesLandingProps) {
     cloud.status === 'available' || cloud.status === 'unavailable' ? cloud.provider : undefined
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-6 py-10 font-sans text-foreground">
+    <div className="flex min-h-screen items-center justify-center px-6 py-10 font-sans text-foreground">
       <div className="flex w-full max-w-2xl flex-col gap-6">
         <header className="flex flex-col gap-2 text-center">
           <h1 className="text-xl font-semibold">{t('webui.modes.title')}</h1>

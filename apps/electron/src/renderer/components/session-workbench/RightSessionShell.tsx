@@ -45,7 +45,7 @@ export function RightSessionShell({
   return (
     <aside
       data-glass-slot="panel"
-      className="w-[380px] shrink-0 border-l border-border/60 flex flex-col min-h-0"
+      className="w-[380px] shrink-0 border-l border-border/60 bg-muted/[0.10] flex flex-col min-h-0"
       data-testid={RIGHT_SESSION_SHELL_TEST_ID}
       data-session-id={context.sessionId}
       data-surface-id={context.surfaceId}
@@ -82,7 +82,7 @@ export function RightSessionShell({
           data-glass-slot="editor"
           value={prompt}
           onChange={(e) => onPromptChange(e.target.value)}
-          className="min-h-0 flex-1 w-full resize-none rounded-[var(--radius-card)] p-2.5 text-xs outline-none focus-visible:border-foreground/30"
+          className="min-h-0 flex-1 w-full resize-none rounded-[var(--radius-card)] bg-background p-2.5 text-xs outline-none focus-visible:border-foreground/30"
           placeholder={t('notes.sideSession.promptPlaceholder')}
         />
         <div className="flex items-center justify-end gap-2 shrink-0">

@@ -21,7 +21,7 @@ export function ScreenSidebar({ config, mode, headerTrailing }: ScreenSidebarPro
   return (
     <div className="flex min-h-0 flex-col gap-1" data-screen-sidebar={config.screenId} data-sidebar-mode={mode}>
       {mode === 'expanded' ? (
-        <div className="flex h-8 items-center gap-1 pl-2 pr-1" data-sidebar-screen-header="">
+        <div className="flex h-8 items-center gap-1 pl-2 pr-1" data-sidebar-screen-header="" data-glass-slot="toolbar">
           <h2 className="min-w-0 flex-1 truncate text-body font-semibold">{config.title}</h2>
           <SidebarActions actions={config.headerActions} />
           {headerTrailing}
@@ -60,7 +60,7 @@ export function ScreenSidebar({ config, mode, headerTrailing }: ScreenSidebarPro
           />
         </label>
       )}
-      <div className="flex min-h-0 flex-col">
+      <div className="flex min-h-0 flex-col" data-glass-slot="panel">
         {config.groups.map((group) => (
           <SidebarSection key={group.id} screenId={config.screenId} group={group} mode={mode} />
         ))}

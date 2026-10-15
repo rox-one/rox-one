@@ -120,7 +120,7 @@ export function MemoryRepoDreamsPanel({ status, log, running, onRunNow }: Memory
       </header>
 
       <div className="grid gap-2 sm:grid-cols-2">
-        <div data-glass-slot="card" className="rounded-[var(--radius-control)] px-3 py-2" data-testid="memory-repo-dreams-last-run">
+        <div data-glass-slot="card" className="rounded-[var(--radius-control)] bg-background px-3 py-2" data-testid="memory-repo-dreams-last-run">
           <div className="mb-1 text-caption font-medium uppercase caps-label text-text-muted/70">{t('memory.repo.lastDream')}</div>
           {lastRun ? (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-small">
@@ -139,7 +139,7 @@ export function MemoryRepoDreamsPanel({ status, log, running, onRunNow }: Memory
           )}
         </div>
 
-        <div data-glass-slot="card" className="rounded-[var(--radius-control)] px-3 py-2" data-testid="memory-repo-dreams-schedule">
+        <div data-glass-slot="card" className="rounded-[var(--radius-control)] bg-background px-3 py-2" data-testid="memory-repo-dreams-schedule">
           <dl className="flex flex-col gap-1 text-small">
             <div className="flex items-center gap-2">
               <dt className="text-text-muted">{t('memory.repo.dreams.interval')}</dt>
@@ -170,7 +170,7 @@ export function MemoryRepoDreamsPanel({ status, log, running, onRunNow }: Memory
         </div>
       ) : null}
 
-      <div data-glass-slot="card" className="min-h-[160px] rounded-[var(--radius-control)]">
+      <div data-glass-slot="card" className="min-h-[160px] rounded-[var(--radius-control)] bg-background">
         <div className="border-b border-border-subtle px-3 py-1.5 text-caption font-medium uppercase caps-label text-text-muted/70">{t('memory.repo.dreams.stream')}</div>
         <div ref={streamRef} className="max-h-[280px] overflow-y-auto px-3 py-1.5" data-testid="memory-repo-dreams-stream">
           {log.length === 0 ? (

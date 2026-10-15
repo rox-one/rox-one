@@ -277,7 +277,7 @@ export function SessionHeatmapHost() {
   }, [focusedKey])
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-background">
       <CollectionViewChrome
         workspaceId={activeWorkspaceId}
         viewMode="heatmap"

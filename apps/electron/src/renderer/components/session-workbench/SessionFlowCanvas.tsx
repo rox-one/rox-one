@@ -66,7 +66,7 @@ export function SessionFlowCanvas({
   const selected = graph.scenes.find((s) => s.id === selectedId) ?? null
 
   return (
-    <div className="relative h-full min-h-0 min-w-0 flex-1">
+    <div className="relative h-full min-h-0 min-w-0 flex-1 bg-background">
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center gap-2 px-3 py-1.5 text-xs">
         <span className="text-muted-foreground">{t('entityView.flowLive')}</span>
         <span className="text-muted-foreground">· {graph.scenes.length}</span>
