@@ -715,16 +715,31 @@ function startStub(options: { storeRejects?: boolean } = {}) {
               cells: [{ index: 0, status: 'ok', stdout: '', error: null, displays: 'nope' }],
             })
           }
+          // Wave 13: only a finite numeric `duration_ms` becomes a `durationMs`
+          // — a string, a JSON null and a missing key all map to `undefined`,
+          // and a fractional value rounds to whole milliseconds.
+          if (body.itemId === 'durations-item') {
+            return Response.json({
+              cells: [
+                { index: 0, status: 'ok', stdout: '', error: null, duration_ms: 'nope' },
+                { index: 1, status: 'ok', stdout: '', error: null, duration_ms: 1.6 },
+                { index: 2, status: 'ok', stdout: '', error: null, duration_ms: null },
+                { index: 3, status: 'ok', stdout: '', error: null },
+              ],
+            })
+          }
           return Response.json(RUN_ALL_RAW)
         }
         case '/save':
         case '/reset':
           return Response.json({ ok: true })
         // Wave 10: the four structural cell ops (SPEC wave 10 §Контракт HTTP).
+        // Wave 13 adds the fifth, `convert`.
         case '/cells/add':
         case '/cells/delete':
         case '/cells/move':
-        case '/cells/duplicate': {
+        case '/cells/duplicate':
+        case '/cells/convert': {
           const body = (await request.json()) as Record<string, unknown>
           cellsBodies.push({ path: url.pathname, method: request.method, body })
           // Run-guard: an active run makes every mutation conflict.
@@ -1072,13 +1087,38 @@ describe('CookbooksRuntime data plane', () => {
     const stub = startStub()
     const runtime = await runtimeOnPort(stub.port)
     try {
-      expect(await runtime.apiRunAll('probe-item', [{ index: 0, source: 'print(1)' }])).toEqual({
+      const result = await runtime.apiRunAll('probe-item', [{ index: 0, source: 'print(1)' }])
+      expect(result).toEqual({
         cells: [
-          { index: 0, status: 'ok', stdout: 'first\n', error: null, displays: [{ mime: 'image/png', data: 'QUJD' }] },
+          {
+            index: 0,
+            status: 'ok',
+            stdout: 'first\n',
+            error: null,
+            displays: [{ mime: 'image/png', data: 'QUJD' }],
+            // Wave 13: the sidecar's per-cell timing now reaches the renderer.
+            durationMs: 3,
+          },
           // Wave 11: a cell without displays (or a pre-wave-11 record) maps to [].
           { index: 2, status: 'skipped', stdout: '', error: null, displays: [] },
         ],
       })
+      // A record without a timing keeps the field absent rather than 0 ms.
+      expect(result.cells[1].durationMs).toBeUndefined()
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiRunAll rounds a fractional duration and drops a non-finite one', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      // Wave 13: `duration_ms` is trusted only as a finite number; everything
+      // else (a string, NaN, Infinity, null, a missing key) is `undefined`.
+      const result = await runtime.apiRunAll('durations-item', [{ index: 0, source: 'x' }])
+      expect(result.cells.map((cell) => cell.durationMs)).toEqual([undefined, 2, undefined, undefined])
     } finally {
       await runtime.stop()
       stub.stop()
@@ -1120,6 +1160,8 @@ describe('CookbooksRuntime data plane', () => {
       await runtime.apiMutate({ itemId: 'probe-item', op: 'delete', index: 1 })
       await runtime.apiMutate({ itemId: 'probe-item', op: 'move', from: 0, to: 1 })
       await runtime.apiMutate({ itemId: 'probe-item', op: 'duplicate', index: 0 })
+      // Wave 13: convert carries the target type, never a `source`.
+      await runtime.apiMutate({ itemId: 'probe-item', op: 'convert', index: 1, cellType: 'markdown' })
       expect(stub.cellsBodies).toEqual([
         // No `op` field, and an absent `source` stays absent.
         { path: '/cells/add', method: 'POST', body: { itemId: 'probe-item', cellType: 'code', index: 1 } },
@@ -1127,7 +1169,53 @@ describe('CookbooksRuntime data plane', () => {
         { path: '/cells/delete', method: 'POST', body: { itemId: 'probe-item', index: 1 } },
         { path: '/cells/move', method: 'POST', body: { itemId: 'probe-item', from: 0, to: 1 } },
         { path: '/cells/duplicate', method: 'POST', body: { itemId: 'probe-item', index: 0 } },
+        { path: '/cells/convert', method: 'POST', body: { itemId: 'probe-item', index: 1, cellType: 'markdown' } },
       ])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiMutate convert re-reads the document and keeps the converted index', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const result = await runtime.apiMutate({
+        itemId: 'probe-item',
+        op: 'convert',
+        index: 1,
+        cellType: 'markdown',
+      })
+      expect(result.index).toBe(1)
+      expect(result.document.itemId).toBe('probe-item')
+      expect(stub.requests.map((r) => r.path)).toEqual(['/cells/convert', '/document/probe-item'])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiMutate convert surfaces the sidecar 400/409 with its own message', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const conflict = await runtime
+        .apiMutate({ itemId: 'busy-item', op: 'convert', index: 0, cellType: 'markdown' })
+        .catch((err: unknown) => err)
+      expect(conflict).toBeInstanceOf(CookbooksApiError)
+      expect((conflict as CookbooksApiError).status).toBe(409)
+      expect((conflict as CookbooksApiError).message).toBe('notebook is running')
+
+      const badRequest = await runtime
+        .apiMutate({ itemId: 'reject-item', op: 'convert', index: 9, cellType: 'code' })
+        .catch((err: unknown) => err)
+      expect(badRequest).toBeInstanceOf(CookbooksApiError)
+      expect((badRequest as CookbooksApiError).status).toBe(400)
+      expect((badRequest as CookbooksApiError).message).toBe('index out of range')
+
+      // A refused conversion never re-reads the document.
+      expect(stub.requests.map((r) => r.path)).toEqual(['/cells/convert', '/cells/convert'])
     } finally {
       await runtime.stop()
       stub.stop()
@@ -1150,7 +1238,7 @@ describe('CookbooksRuntime data plane', () => {
     }
   })
 
-  it('apiMutate rejects an op outside the four routes before any request', async () => {
+  it('apiMutate rejects an op outside the five routes before any request', async () => {
     const stub = startStub()
     const runtime = await runtimeOnPort(stub.port)
     try {
