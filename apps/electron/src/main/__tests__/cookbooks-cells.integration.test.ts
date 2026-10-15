@@ -1,14 +1,19 @@
 /**
  * Cookbooks sidecar — structural cell mutations integration test (SPEC wave 10).
  *
- * End-to-end proof that the four `/cells/*` routes mutate the REAL vendored
- * document through the runtime: add → duplicate → move → delete each answer
+ * End-to-end proof that the `/cells/*` routes mutate the REAL vendored document
+ * through the runtime: add → duplicate → move → delete each answer
  * `{ok, index}` and the re-read document reflects the change; while a run of
  * the same item is active every mutation is refused with a sidecar 409.
  *
- * The scenario is GATED on the vendored sidecar actually exposing `/cells/add`
- * (added by the `P1` lab slice): until that snapshot is re-vendored this test
- * skips with a named reason rather than failing. Same for a missing interpreter.
+ * Wave 13 adds the `convert` scenario: a ran code cell switched to markdown
+ * loses its outputs/execution_count, a markdown cell switched to code keeps its
+ * source and gains empty run state, and a same-type conversion is a no-op.
+ *
+ * The scenarios are GATED on the vendored sidecar actually exposing the route
+ * (`/cells/add` for wave 10, `/cells/convert` for wave 13): until that snapshot
+ * is re-vendored the scenario skips with a named reason rather than failing.
+ * Same for a missing interpreter.
  */
 import { afterAll, expect, it } from 'bun:test'
 import { spawn as nodeSpawn } from 'node:child_process'
@@ -39,18 +44,15 @@ async function detectPython(): Promise<string | null> {
   return null
 }
 
-/** Does the vendored host expose the wave-10 `/cells/add` route yet? */
-function sidecarSupportsCells(): boolean {
-  try {
-    return /["']\/cells\/add["']/.test(readFileSync(HOST_PY, 'utf8'))
-  } catch {
-    return false
-  }
-}
-
 const pythonPath = await detectPython()
-const hasCellsRoutes = sidecarSupportsCells()
+// Is the vendored snapshot carrying the wave-10 / wave-13 cell routes yet? A
+// snapshot that predates one of them skips its scenario with a named reason
+// instead of failing, until `PROVENANCE.md` §Sync command re-vendors the lab.
+const hostSource = existsSync(HOST_PY) ? readFileSync(HOST_PY, 'utf8') : ''
+const hasCellsRoutes = hostSource.includes('/cells/add')
+const hasConvertRoute = hostSource.includes('/cells/convert')
 const cellsIt = pythonPath && hasCellsRoutes ? it : it.skip
+const convertIt = pythonPath && hasConvertRoute ? it : it.skip
 
 const tempDirs: string[] = []
 afterAll(async () => {
@@ -158,6 +160,106 @@ cellsIt(
       const after = await runtime.apiMutate({ itemId, op: 'add', cellType: 'markdown', index: 0, source: '# Title' })
       expect(after.index).toBe(0)
       expect(after.document.cells).toHaveLength(before + 2)
+    } finally {
+      await runtime.stop()
+    }
+  },
+  60_000,
+)
+
+const convertSkipReason = !pythonPath
+  ? 'python-not-found'
+  : !hasConvertRoute
+    ? 'sidecar /cells/convert not vendored yet (waits on the wave-13 re-vendor)'
+    : undefined
+
+/**
+ * Wave 13: type conversion against the REAL sidecar. A code cell that has run is
+ * switched to markdown (its outputs/execution_count are gone from the re-read
+ * document) and a markdown cell is switched to code (its source survives, its
+ * run state is initialised); converting to the type a cell already has is a
+ * no-op that still answers the same focus index.
+ */
+convertIt(
+  convertSkipReason ?? 'converts a real cell between code and markdown end-to-end',
+  async () => {
+    const workspace = await mkdtemp(join(tmpdir(), 'rox-cookbooks-convert-it-'))
+    tempDirs.push(workspace)
+    if (!existsSync(COOKBOOKS_DIR)) throw new Error(`vendored snapshot missing: ${COOKBOOKS_DIR}`)
+
+    const spawn: CookbooksSpawnFn = (command, args, options) =>
+      nodeSpawn(command, args, options) as unknown as CookbooksChild
+
+    const runtime = new CookbooksRuntime({
+      spawn,
+      resolvePython: async () => pythonPath,
+      getCookbooksDir: () => COOKBOOKS_DIR,
+      getWorkspaceDir: () => workspace,
+      resolveStore: async () => ({}),
+    })
+
+    try {
+      expect((await runtime.ensure()).state).toBe('running')
+
+      const cards = await runtime.apiCatalog()
+      const notebook = cards.find((card) => card.kind === 'ipynb' && !card.disabled)
+      expect(notebook).toBeDefined()
+      const itemId = notebook!.id
+      const opened = await runtime.apiOpen(itemId)
+
+      // Find a code cell and give it real run state first: convert must be
+      // dropping outputs that actually exist, not an empty list.
+      const codeIndex = opened.document.cells.findIndex((cell) => cell.cellType === 'code')
+      expect(codeIndex).toBeGreaterThanOrEqual(0)
+      const ran = await runtime.apiRun(itemId, 'print("converted")', codeIndex)
+      expect(ran.ok).toBe(true)
+      const dirty = await runtime.apiDocument(itemId)
+      expect(dirty.cells[codeIndex].outputs.length).toBeGreaterThan(0)
+      expect(dirty.cells[codeIndex].executionCount).toBeGreaterThan(0)
+
+      // code → markdown: the cell keeps its text, loses its run state.
+      const toMarkdown = await runtime.apiMutate({
+        itemId,
+        op: 'convert',
+        index: codeIndex,
+        cellType: 'markdown',
+      })
+      expect(toMarkdown.index).toBe(codeIndex)
+      const markdownCell = toMarkdown.document.cells[codeIndex]
+      expect(markdownCell.cellType).toBe('markdown')
+      expect(markdownCell.source).toContain('print("converted")')
+      expect(markdownCell.outputs).toEqual([])
+      expect(markdownCell.executionCount).toBeNull()
+
+      // Converting to the type it already has is a successful no-op.
+      const again = await runtime.apiMutate({
+        itemId,
+        op: 'convert',
+        index: codeIndex,
+        cellType: 'markdown',
+      })
+      expect(again.index).toBe(codeIndex)
+      expect(again.document.cells[codeIndex].source).toBe(markdownCell.source)
+
+      // markdown → code: the source survives, the run state is initialised.
+      const toCode = await runtime.apiMutate({
+        itemId,
+        op: 'convert',
+        index: codeIndex,
+        cellType: 'code',
+      })
+      expect(toCode.index).toBe(codeIndex)
+      const codeCell = toCode.document.cells[codeIndex]
+      expect(codeCell.cellType).toBe('code')
+      expect(codeCell.source).toContain('print("converted")')
+      expect(codeCell.outputs).toEqual([])
+      expect(codeCell.executionCount).toBeNull()
+      // The conversion is persisted, not just echoed: a fresh read agrees.
+      const reread = await runtime.apiDocument(itemId)
+      expect(reread.cells[codeIndex].cellType).toBe('code')
+      expect(reread.cells[codeIndex].source).toBe(codeCell.source)
+      expect(reread.cells[codeIndex].outputs).toEqual([])
+      expect(reread.cells[codeIndex].executionCount).toBeNull()
     } finally {
       await runtime.stop()
     }
