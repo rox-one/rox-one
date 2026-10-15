@@ -80,8 +80,11 @@ run bun test packages/server-core/src/handlers/rpc/__tests__/nodes-rpc.test.ts
 # 8. Renderer boot manifest (row b1.2): the committed route→chunk boundary must
 #    match the fresh build. A stale manifest means a rail surface silently
 #    joined the boot graph (or moved), which the idle warm-up cannot heal.
-#    `--check` builds the renderer only when dist is missing.
-run bun run scripts/boot-manifest.ts --check
+#    `--no-build` keeps the suite honest about its own inputs: a build spawned
+#    from inside a ~2 minute gate run turned it into a 10+ minute one and
+#    rewrote the very file under test. Run `bun run scripts/boot-manifest.ts`
+#    once (it builds) when the dist is missing or stale.
+run bun run scripts/boot-manifest.ts --check --no-build
 run bun test scripts/__tests__/boot-manifest.test.ts
 run bun test apps/electron/src/renderer/lib/__tests__/stale-chunk-reload.test.ts
 
