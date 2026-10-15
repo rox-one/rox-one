@@ -117,6 +117,7 @@ export const StyledContextMenuSubContent = React.forwardRef<
   <ContextMenuPortal>
     <ContextMenuPrimitive.SubContent
       ref={ref}
+      data-glass-slot="popover"
       sideOffset={sideOffset}
       className={cn(
         "popover-styled w-fit font-sans whitespace-nowrap text-xs flex flex-col gap-0.5 z-island overflow-hidden p-1",

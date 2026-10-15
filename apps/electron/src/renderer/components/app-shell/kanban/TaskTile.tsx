@@ -145,6 +145,7 @@ export function TaskTile({
       role="button"
       tabIndex={0}
       aria-pressed={onSelect ? selected : undefined}
+      data-glass-slot="card"
       onClick={event => {
         if (
           onSelect &&
@@ -169,10 +170,10 @@ export function TaskTile({
         }
       }}
       className={cn(
-        'group relative overflow-hidden rounded-lg border border-border/60 bg-card shadow-minimal',
+        'group relative overflow-hidden rounded-lg border border-border/60',
         'cursor-pointer transition-colors hover:border-border focus-visible:outline-none',
         'focus-visible:ring-2 focus-visible:ring-ring/50',
-        selected && 'border-foreground/60 bg-foreground/[0.045]',
+        selected && 'border-foreground/60',
         isLive && 'shadow-panel-focused',
       )}
     >

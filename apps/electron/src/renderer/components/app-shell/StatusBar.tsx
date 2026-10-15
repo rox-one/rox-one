@@ -75,7 +75,7 @@ export async function applyDefaultConnection(
 const STATUS_BAR_HEIGHT = 'var(--chrome-status-height)'
 const BALANCE_REFRESH_MS = 60_000
 
-const itemCls = 'inline-flex h-[18px] min-w-0 items-center gap-1 rounded-xs px-1.5 text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:pointer-events-none'
+const itemCls = 'inline-flex h-[18px] min-w-0 items-center gap-1 rounded-xs px-1.5 text-muted-foreground transition-colors hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:pointer-events-none'
 const numCls = 'numeric font-semibold text-foreground'
 const sepCls = 'h-3 w-px shrink-0 bg-border-subtle'
 const popCls = 'w-64 p-2 text-xs'

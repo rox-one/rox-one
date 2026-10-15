@@ -82,7 +82,7 @@ export function BackupChooser({ workspaceId, api, onClose, onUploaded }: BackupC
   }
 
   return (
-    <section data-testid="drive-backup-chooser" className="rounded-lg border border-border/60 bg-card/60 p-4">
+    <section data-testid="drive-backup-chooser" data-glass-slot="card" className="rounded-lg border border-border/60 bg-card/60 p-4">
       <header className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <HardDriveDownload className="icon-toolbar text-primary" />
@@ -104,6 +104,7 @@ export function BackupChooser({ workspaceId, api, onClose, onUploaded }: BackupC
                 type="button"
                 data-testid={`drive-backup-source-${kind}`}
                 onClick={() => void pickSource(kind)}
+                data-glass-slot="card"
                 className="flex items-center gap-2 rounded-lg border border-border/60 px-3 py-2 text-left text-sm hover:border-primary/50"
               >
                 <FolderLock className="icon-toolbar text-muted-foreground" />

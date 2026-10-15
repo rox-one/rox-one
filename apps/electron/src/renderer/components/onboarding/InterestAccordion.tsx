@@ -119,6 +119,7 @@ export function InterestAccordion({
             key={groupId}
             data-testid={`interest-accordion-${groupId}`}
             data-state={isOpen ? 'open' : 'closed'}
+            data-glass-slot="card"
             className={cn(
               'onb-acc rounded-[var(--radius-card)] border transition-colors motion-reduce:transition-none',
               isOpen ? 'border-border bg-background/60 shadow-minimal' : 'border-border/50 bg-background/25',

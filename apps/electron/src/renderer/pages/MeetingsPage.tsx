@@ -527,6 +527,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   const listPanel = (
     <div
       className={cn('flex min-h-0 flex-1 flex-col pb-16', dropActive && 'bg-accent/[0.05] ring-1 ring-inset ring-accent')}
+      data-glass-slot="panel"
       onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDropActive(true) } }}
       onDragLeave={() => setDropActive(false)}
       onDrop={(e) => {

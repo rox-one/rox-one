@@ -119,6 +119,7 @@ export function ProviderSelectStep({ onSelect }: ProviderSelectStepProps) {
           <button
             key={option.id}
             onClick={() => onSelect(option.id)}
+            data-glass-slot="card"
             className={cn(
               "flex w-full items-center gap-3 rounded-[var(--radius-control)] bg-foreground-2 p-3 text-left transition-all",
               "sm:items-start sm:gap-4 sm:p-4",

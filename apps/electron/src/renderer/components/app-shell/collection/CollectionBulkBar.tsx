@@ -282,7 +282,7 @@ export function CollectionBulkBar({
       role="toolbar"
       aria-label={`${t('collection.bulk.title')}: ${t('collection.bulk.selected', { count: visibleSelection.count })}`}
     >
-      <div data-layout="collection-controls" className="inline-flex max-w-[calc(100vw-24px)] flex-wrap items-center gap-1.5 rounded-[var(--radius-overlay)] border border-border-subtle bg-surface-popover px-3 py-2 shadow-modal-small">
+      <div data-layout="collection-controls" data-glass-slot="toast" className="inline-flex max-w-[calc(100vw-24px)] flex-wrap items-center gap-1.5 rounded-[var(--radius-overlay)] px-3 py-2">
         <span className="text-xs font-semibold text-foreground/90" aria-live="polite">
           {t('collection.bulk.selected', { count: visibleSelection.count })}
         </span>

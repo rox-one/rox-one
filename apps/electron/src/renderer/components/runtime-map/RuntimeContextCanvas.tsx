@@ -15,14 +15,14 @@ type GroupNode = Node<GroupData, 'contextGroup'>
 const ContextGroupCard = React.memo(function ContextGroupCard({ data }: NodeProps<GroupNode>) {
   const { t } = useTranslation()
   const rows = data.group.rows.slice(0, data.limit)
-  return <article className="runtime-context-group" data-testid="runtime-context-group" data-context-group={data.group.id}>
+  return <article className="runtime-context-group" data-glass-slot="card" data-testid="runtime-context-group" data-context-group={data.group.id}>
     <Handle type="target" position={Position.Left} isConnectable={false} />
     <header><button type="button" className="nodrag nopan" aria-expanded={!data.collapsed} onClick={() => data.onToggle(data.group.id)}>{data.collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}<strong>{t(data.group.titleKey)}</strong><span title={t('runtimeMap.contextGroup.rowCount', { count: data.group.rows.length })}>{data.group.rows.length}</span></button></header>
     {!data.collapsed && <div className="runtime-context-group-rows">
       {!rows.length && <p className="runtime-context-group-empty">{t(data.searching ? 'runtimeMap.noMatches' : 'runtimeMap.notRecorded')}</p>}
       {rows.map(row => {
         const Status = row.status === 'succeeded' ? CheckCircle2 : row.status === 'failed' || row.status === 'interrupted' ? XCircle : row.status === 'waiting-approval' || row.status === 'queued' || row.status === 'blocked' ? Clock3 : Circle
-        return <button key={row.id} type="button" className="runtime-context-group-row nodrag nopan" data-testid="runtime-context-row" data-source-event-id={row.sourceEventId} data-source-node-id={row.node.id} data-source-agent-id={row.sourceAgentId} data-context-snapshot-id={row.contextSnapshotId} data-selected={data.selectedId === row.node.id} onClick={() => data.onSelect(row.node)}>
+        return <button key={row.id} type="button" className="runtime-context-group-row nodrag nopan" data-glass-slot="row" data-testid="runtime-context-row" data-source-event-id={row.sourceEventId} data-source-node-id={row.node.id} data-source-agent-id={row.sourceAgentId} data-context-snapshot-id={row.contextSnapshotId} data-selected={data.selectedId === row.node.id} data-state={data.selectedId === row.node.id ? 'selected' : undefined} onClick={() => data.onSelect(row.node)}>
           <FileText size={14} /><span><strong>{row.titleKey ? t(row.titleKey) : row.title}</strong>{(row.status || row.summary || row.summaryKey || row.capability?.version) && <small title={row.measurement?.state === 'known' ? safeDisplayText(`${row.summary} · ${t(`runtimeMap.measurementOrigin.${row.measurement.origin}`)} · ${row.measurement.source}`) : undefined}>{row.status ? `${t(`runtimeMap.status.${row.status}`)}${row.summary || row.summaryKey ? ' · ' : ''}` : ''}{row.summaryKey ? t(row.summaryKey) : row.summary}{row.measurement?.state === 'known' ? ` · ${t(`runtimeMap.measurementOrigin.${row.measurement.origin}`)}` : ''}{row.capability?.version ? ` · ${t('runtimeMap.version')}: ${safePreview(row.capability.version, 40)}` : ''}</small>}</span>
           {row.status && <span className="runtime-context-row-status" data-status={row.status} title={t(`runtimeMap.status.${row.status}`)}><Status size={13} /></span>}
         </button>

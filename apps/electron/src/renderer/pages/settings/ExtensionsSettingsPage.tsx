@@ -200,7 +200,7 @@ function ExtensionCard({
       typeof onOpenCompat === 'function')
 
   return (
-    <div className="border rounded-lg p-4 space-y-3 bg-background/40">
+    <div className="border rounded-lg p-4 space-y-3 bg-background/40" data-glass-slot="card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">

@@ -64,6 +64,7 @@ export function SettingsRow({
       onClick={onClick}
       data-testid={testId}
       data-layout="settings-row"
+      data-glass-slot={onClick ? 'row' : undefined}
       className={cn(
         settingsUI.row,
         inCard ? settingsUI.rowPadding : settingsUI.rowPaddingStandalone,

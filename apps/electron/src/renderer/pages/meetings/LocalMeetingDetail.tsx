@@ -375,7 +375,7 @@ export function LocalMeetingDetail(props: {
   const sourceLabel = m.source === 'import' ? t('meetings.local.source.import') : m.source === 'microphone' ? t('meetings.local.source.mic') : m.source === 'calendar' ? t('meetings.local.source.calendar') : t('meetings.local.source.none')
 
   const header = (
-    <header className="px-5 pt-4">
+    <header className="px-5 pt-4" data-glass-slot="toolbar">
       <div className="flex items-center gap-2">
         <input
           key={`${m.id}:${m.title}`}
@@ -463,6 +463,7 @@ export function LocalMeetingDetail(props: {
       ) : null}
       <textarea
         data-testid="meeting-summary"
+        data-glass-slot="editor"
         value={summaryDraft}
         aria-label={t('meetings.local.summary')}
         onChange={(e) => { summaryDirty.current = true; setSummaryDraft(e.target.value) }}
@@ -491,6 +492,7 @@ export function LocalMeetingDetail(props: {
           <section
             data-testid="meeting-rolling-summary"
             aria-label={t('meetings.local.summary.rolling')}
+            data-glass-slot="card"
             className="flex flex-col gap-1 rounded-[var(--radius-card)] bg-surface-hover p-2"
           >
             <div className="flex flex-wrap items-center gap-2 text-caption text-text-muted">
@@ -507,7 +509,7 @@ export function LocalMeetingDetail(props: {
         <>
           <SectionLabel>{t('meetings.local.openQuestions')}</SectionLabel>
           {m.summary.questions.map((question) => (
-            <div key={question.id} className="rounded-[var(--radius-card)] bg-foreground/[0.04] px-2 py-1">
+            <div key={question.id} className="rounded-[var(--radius-card)] bg-foreground/[0.04] px-2 py-1" data-glass-slot="card">
               <p className="text-base">{question.text}</p>
               {m.summary?.sourceTranscriptRevision === transcript?.revision ? renderSourceLinks(question.sourceSegmentIds) : null}
             </div>
@@ -565,6 +567,7 @@ export function LocalMeetingDetail(props: {
       <textarea
         key={`${m.id}:notes`}
         data-testid="meeting-notes"
+        data-glass-slot="editor"
         defaultValue={m.notes}
         placeholder={t('meetings.local.notesPlaceholder')}
         onBlur={(e) => { if (e.target.value !== m.notes) void update({ notes: e.target.value }) }}
@@ -706,7 +709,7 @@ export function LocalMeetingDetail(props: {
             </span>
           </div>
           {transcript.history?.some((version) => version.revision < transcript.revision) ? (
-            <section className="flex flex-col gap-1 rounded-[var(--radius-card)] bg-foreground/[0.03] p-2" aria-label={t('meetings.local.tr.history')}>
+            <section className="flex flex-col gap-1 rounded-[var(--radius-card)] bg-foreground/[0.03] p-2" data-glass-slot="card" aria-label={t('meetings.local.tr.history')}>
               <SectionLabel>{t('meetings.local.tr.history')}</SectionLabel>
               {transcript.history
                 .filter((version) => version.revision < transcript.revision)
@@ -762,6 +765,8 @@ export function LocalMeetingDetail(props: {
                     type="button"
                     onClick={() => seek(s.startMs)}
                     disabled={!audioUrl}
+                    data-glass-slot="row"
+                    data-state={s.id === activeId ? 'selected' : undefined}
                     className={cn('flex w-full items-start gap-2 rounded-[var(--radius-control)] border-l-2 border-transparent px-2 py-1 text-left hover:bg-foreground/[0.04]', s.id === activeId && 'border-accent bg-accent/10')}
                   >
                     <span className="w-12 shrink-0 pt-px font-mono text-xs numeric text-text-muted">{formatRecClock(s.startMs)}</span>
@@ -884,7 +889,7 @@ export function LocalMeetingDetail(props: {
       {decisions.length ? <SectionLabel>{t('meetings.local.decisionsMade')}</SectionLabel> : null}
       <ul className="flex flex-col" data-testid="meeting-decisions">
         {decisions.map((d) => (
-          <li key={d.id} className="group flex items-start gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]">
+          <li key={d.id} className="group flex items-start gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]" data-glass-slot="row">
             <span aria-hidden className={cn('mt-2 size-1.5 shrink-0 rounded-full', d.status === 'accepted' ? 'bg-success' : 'bg-text-muted')} />
             <span className="min-w-0 flex-1">
               {decisionEdit?.id === d.id ? decisionEditor(d.id, false) : <><button type="button" className="block text-left text-base" onClick={() => setDecisionEdit({ id: d.id, candidate: false, title: d.title, why: d.why })}>{d.title}</button>{d.why ? <span className="block text-sm text-text-secondary">{d.why}</span> : null}</>}
@@ -991,7 +996,7 @@ export function LocalMeetingDetail(props: {
       {m.actions.length === 0 ? <EmptyState title={t('meetings.local.actionsEmptyTitle')} body={t('meetings.local.actionsEmptyBody')} /> : null}
       <ul className="flex flex-col" data-testid="meeting-actions">
         {m.actions.map((a) => (
-          <li key={a.id} className="group flex flex-wrap items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]">
+          <li key={a.id} className="group flex flex-wrap items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]" data-glass-slot="row">
             <input type="checkbox" className="accent-[var(--accent)]" checked={a.done} aria-label={a.text} onChange={(e) => void saveAction(a.id, { done: e.target.checked })} />
             <div className={cn('min-w-0 flex-1 text-base', actionEdit?.id === a.id && 'basis-[calc(100%-32px)]', a.done && 'text-text-muted line-through')}>
               {actionEdit?.id === a.id ? (
@@ -1013,7 +1018,7 @@ export function LocalMeetingDetail(props: {
               }}>{t('meetings.local.toTask')}</Button>
             )}
             <Button variant="ghost" aria-label={t('meetings.local.remove')} className="opacity-0 group-hover:opacity-100 focus:opacity-100" onClick={() => void saveAction(a.id, undefined, true)}>×</Button>
-            {taskChoice?.actionId === a.id && <form className="basis-full space-y-2 rounded-sm border border-border/60 p-3" data-testid="meeting-task-choice" onSubmit={event => { event.preventDefault(); void confirmActionTask() }}>
+            {taskChoice?.actionId === a.id && <form className="basis-full space-y-2 rounded-sm border border-border/60 p-3" data-glass-slot="card" data-testid="meeting-task-choice" onSubmit={event => { event.preventDefault(); void confirmActionTask() }}>
               <p className="text-sm text-text-muted">{t('navigation.meetingTask.hint')}</p>
               <label className="flex flex-col gap-1 text-sm">{t('navigation.meetingTask.scope')}<select className={input} value={taskChoice.scope} disabled={taskChoice.pending || Boolean(taskChoice.knownRef)} onChange={event => setTaskChoice({ ...taskChoice, scope: event.target.value as 'personal' | 'workspace', error: undefined })}>
                 <option value="personal">{t('navigation.taskScopes.personal')}</option><option value="workspace" disabled={!workspaceId || m.workspaceId !== workspaceId}>{t('navigation.taskScopes.workspace')}</option>
@@ -1060,6 +1065,7 @@ export function LocalMeetingDetail(props: {
   const documentsTab = (
     <div
       className={cn('flex min-h-[160px] flex-col gap-1 rounded-[var(--radius-control)]', dragOver && 'bg-accent/[0.06] outline outline-1 outline-accent')}
+      data-glass-slot="card"
       onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDragOver(true) } }}
       onDragLeave={() => setDragOver(false)}
       onDrop={(e) => {
@@ -1079,7 +1085,7 @@ export function LocalMeetingDetail(props: {
       ) : (
         <ul className="flex flex-col pt-1">
           {m.documents.map((d) => (
-            <li key={d.id} className="group flex items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]">
+            <li key={d.id} className="group flex items-center gap-2 rounded-[var(--radius-control)] px-2 py-1 hover:bg-foreground/[0.04]" data-glass-slot="row">
               <button type="button" className="min-w-0 flex-1 truncate text-left text-base" onClick={() => void api?.openDocument(m.id, d.id)} title={t('meetings.local.open')}>{d.name}</button>
               <span className="shrink-0 text-xs numeric text-text-muted">{formatBytes(d.bytes)} · {shortFmt.format(d.addedAt)}</span>
               <span className="flex shrink-0 gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
@@ -1098,7 +1104,7 @@ export function LocalMeetingDetail(props: {
   useEffect(() => { setConfirmTrash(false) }, [m.id])
 
   return (
-    <div className="flex min-h-full flex-col" data-testid="meeting-detail" data-meeting-id={m.id}>
+    <div className="flex min-h-full flex-col" data-glass-slot="panel" data-testid="meeting-detail" data-meeting-id={m.id}>
       {header}
       <div className="flex-1 px-5 pb-4 pt-2">
         {tab === 'overview' ? overview

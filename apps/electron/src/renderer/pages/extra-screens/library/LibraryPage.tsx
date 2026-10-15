@@ -149,6 +149,7 @@ export default function LibraryPage({ itemId }: { itemId: string | null }) {
                     key={`${group.section.id}:${row.id}`}
                     type="button"
                     onClick={() => openEntry(row)}
+                    data-glass-slot="row"
                     className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-surface-hover"
                   >
                     <span className="min-w-0 flex-1 truncate" title={row.title}>{row.title}</span>

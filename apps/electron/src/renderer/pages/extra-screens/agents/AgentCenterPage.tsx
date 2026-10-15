@@ -292,7 +292,7 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
           </Card></div>
 
           {nothingActive && (
-            <div className="mt-4 rounded-[var(--radius-card)] bg-foreground/[0.03] px-4 py-3 text-muted-foreground" role="status">{t('extraScreens.agents.allQuiet')}</div>
+            <div data-glass-slot="empty" className="mt-4 rounded-[var(--radius-card)] bg-foreground/[0.03] px-4 py-3 text-muted-foreground" role="status">{t('extraScreens.agents.allQuiet')}</div>
           )}
 
           {center.waiting.length > 0 && (
@@ -376,7 +376,7 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
 
 function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'warn' | 'err' }) {
   return (
-    <div className="rounded-[var(--radius-card)] bg-foreground/[0.04] px-3.5 py-3">
+    <div data-glass-slot="card" className="rounded-[var(--radius-card)] bg-foreground/[0.04] px-3.5 py-3">
       <div className="text-sm text-muted-foreground">{label}</div>
       <div className={cn('mt-0.5 text-stat font-bold numeric', tone === 'warn' && 'text-status-warning', tone === 'err' && 'text-destructive')}>{value}</div>
       {sub && <div className="text-sm text-muted-foreground">{sub}</div>}

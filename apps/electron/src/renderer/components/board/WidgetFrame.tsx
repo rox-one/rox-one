@@ -163,8 +163,9 @@ export function WidgetFrame({
         role="alert"
         data-testid="widget-frame-failure"
         data-failure-code={failure.code}
+        data-glass-slot="empty"
         className={cn(
-          'flex h-full w-full flex-col items-center justify-center gap-1.5 rounded-[var(--radius-card)] border border-dashed border-border bg-card px-4 py-6 text-center',
+          'flex h-full w-full flex-col items-center justify-center gap-1.5 rounded-[var(--radius-card)] border border-dashed border-border px-4 py-6 text-center',
           className,
         )}
       >

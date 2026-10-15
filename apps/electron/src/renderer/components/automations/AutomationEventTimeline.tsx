@@ -94,14 +94,14 @@ export function AutomationEventTimeline({ entries, className, onReplay }: Automa
 
   if (entries.length === 0) {
     return (
-      <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+      <div data-glass-slot="empty" className="px-4 py-6 text-center text-sm text-muted-foreground">
         {t('automations.noActivityYet')}
       </div>
     )
   }
 
   return (
-    <div className={cn('divide-y divide-border/30', className)}>
+    <div data-glass-slot="table" className={cn('divide-y divide-border/30', className)}>
       {entries.map((entry) => {
         const config = statusConfig[entry.status]
         const StatusIcon = config.icon
@@ -119,6 +119,7 @@ export function AutomationEventTimeline({ entries, className, onReplay }: Automa
         return (
           <div key={entry.id}>
             <div
+              data-glass-slot={isWebhook ? 'row' : undefined}
               className={cn(
                 'flex items-center gap-3 px-4 py-2.5 text-sm',
                 isWebhook && 'cursor-pointer hover:bg-foreground/[0.03] transition-colors',
@@ -172,7 +173,7 @@ export function AutomationEventTimeline({ entries, className, onReplay }: Automa
 
             {/* Expanded webhook details */}
             {isExpanded && entry.webhookDetails && (
-              <div className="mx-4 mb-3 mt-0.5 rounded-md border border-border/40 bg-foreground/[0.02] px-3 py-2.5 text-xs relative">
+              <div data-glass-slot="editor" className="mx-4 mb-3 mt-0.5 rounded-md border border-border/40 bg-foreground/[0.02] px-3 py-2.5 text-xs relative">
                 <div className="absolute top-2 right-2">
                   <CopyButton details={entry.webhookDetails} />
                 </div>

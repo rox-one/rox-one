@@ -60,6 +60,7 @@ function Tile({
       type="button"
       data-testid={testId}
       onClick={onClick}
+      data-glass-slot="card"
       className={`group flex flex-col justify-between gap-3 rounded-lg border border-border/60 bg-card/60 p-4 text-left transition-colors hover:border-primary/50 hover:bg-card ${className ?? ''}`}
     >
       <div className="flex items-start gap-3">

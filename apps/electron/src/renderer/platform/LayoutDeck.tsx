@@ -344,6 +344,7 @@ export function LayoutDeck({ open, onOpenChange }: LayoutDeckProps) {
         initial={reduceMotion ? false : { opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: reduceMotion ? 0 : 0.12, ease: [0.2, 0.8, 0.2, 1] }}
+        data-glass-slot="sheet"
         data-layout-deck
         data-layout-deck-preset={preset}
         data-layout-deck-effective={currentLayout?.effective ?? 'auto'}
@@ -358,7 +359,7 @@ export function LayoutDeck({ open, onOpenChange }: LayoutDeckProps) {
             type="button"
             aria-label={t('layout.deck.close', { defaultValue: 'Закрыть' })}
             onClick={close}
-            className="grid h-[var(--control-hit-min)] w-[var(--control-hit-min)] place-items-center rounded-[var(--radius-control)] text-text-secondary hover:bg-surface-hover hover:text-text-primary focus-visible:ring-2 focus-visible:ring-focus"
+            className="grid h-[var(--control-hit-min)] w-[var(--control-hit-min)] place-items-center rounded-[var(--radius-control)] text-text-secondary hover:bg-[var(--state-hover)] hover:text-text-primary focus-visible:ring-2 focus-visible:ring-focus"
           >
             <X className="icon-caption" aria-hidden />
           </button>
@@ -400,7 +401,7 @@ export function LayoutDeck({ open, onOpenChange }: LayoutDeckProps) {
                   feasible
                     ? current
                       ? 'border-focus bg-surface-selected'
-                      : 'border-border-subtle bg-canvas hover:border-border-strong hover:bg-surface-hover'
+                      : 'border-border-subtle bg-canvas hover:border-border-strong hover:bg-[var(--state-hover)]'
                     : 'cursor-not-allowed border-border-subtle bg-canvas text-text-disabled',
                 )}
               >
@@ -458,7 +459,7 @@ export function LayoutDeck({ open, onOpenChange }: LayoutDeckProps) {
                       aria-label={`${profilesApply}: ${profile.name}`}
                       title={profilesApply}
                       onClick={() => applyProfile(profile.id)}
-                      className="grid h-[var(--control-hit-min)] w-[var(--control-hit-min)] shrink-0 place-items-center rounded-[var(--radius-control)] text-text-secondary hover:bg-surface-hover hover:text-text-primary focus-visible:ring-2 focus-visible:ring-focus"
+                      className="grid h-[var(--control-hit-min)] w-[var(--control-hit-min)] shrink-0 place-items-center rounded-[var(--radius-control)] text-text-secondary hover:bg-[var(--state-hover)] hover:text-text-primary focus-visible:ring-2 focus-visible:ring-focus"
                     >
                       <Check className="icon-caption" aria-hidden />
                     </button>
@@ -467,7 +468,7 @@ export function LayoutDeck({ open, onOpenChange }: LayoutDeckProps) {
                       aria-label={`${profilesDelete}: ${profile.name}`}
                       title={profilesDelete}
                       onClick={() => deleteProfile(profile.id)}
-                      className="grid h-[var(--control-hit-min)] w-[var(--control-hit-min)] shrink-0 place-items-center rounded-[var(--radius-control)] text-text-secondary hover:bg-surface-hover hover:text-destructive focus-visible:ring-2 focus-visible:ring-focus"
+                      className="grid h-[var(--control-hit-min)] w-[var(--control-hit-min)] shrink-0 place-items-center rounded-[var(--radius-control)] text-text-secondary hover:bg-[var(--state-hover)] hover:text-destructive focus-visible:ring-2 focus-visible:ring-focus"
                     >
                       <Trash2 className="icon-caption" aria-hidden />
                     </button>
@@ -493,7 +494,7 @@ export function LayoutDeck({ open, onOpenChange }: LayoutDeckProps) {
             <button
               type="button"
               onClick={saveCurrentProfile}
-              className="inline-flex shrink-0 items-center gap-1 rounded-[var(--radius-control)] border border-border-subtle bg-canvas px-2 py-1 text-caption text-text-primary hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-focus"
+              className="inline-flex shrink-0 items-center gap-1 rounded-[var(--radius-control)] border border-border-subtle bg-canvas px-2 py-1 text-caption text-text-primary hover:bg-[var(--state-hover)] focus-visible:ring-2 focus-visible:ring-focus"
             >
               <Plus className="icon-caption" aria-hidden />
               <span>{profilesSave}</span>
@@ -504,7 +505,7 @@ export function LayoutDeck({ open, onOpenChange }: LayoutDeckProps) {
             <button
               type="button"
               onClick={resetToDefault}
-              className="inline-flex shrink-0 items-center gap-1 rounded-[var(--radius-control)] px-2 py-1 text-caption text-text-secondary hover:bg-surface-hover hover:text-text-primary focus-visible:ring-2 focus-visible:ring-focus"
+              className="inline-flex shrink-0 items-center gap-1 rounded-[var(--radius-control)] px-2 py-1 text-caption text-text-secondary hover:bg-[var(--state-hover)] hover:text-text-primary focus-visible:ring-2 focus-visible:ring-focus"
             >
               <RotateCcw className="icon-caption" aria-hidden />
               <span>{profilesReset}</span>

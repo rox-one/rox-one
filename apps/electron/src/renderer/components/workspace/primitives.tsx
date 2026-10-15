@@ -32,7 +32,7 @@ interface AddWorkspaceContainerProps {
  */
 export function AddWorkspaceContainer({ children, className }: AddWorkspaceContainerProps) {
   return (
-    <div className={cn(
+    <div data-glass-slot="card" className={cn(
       "flex w-full max-w-[28rem] flex-col items-center",
       "bg-background rounded-[var(--radius-overlay)] shadow-strong p-8",
       className

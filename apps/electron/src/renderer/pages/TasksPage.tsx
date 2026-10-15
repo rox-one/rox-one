@@ -1190,13 +1190,11 @@ export default function TasksPage(props: TasksPageProps = {}) {
           aria-selected={selectedRow}
           tabIndex={focusedRow ? 0 : -1}
           data-testid={`task-row-${task.id}`}
+          data-glass-slot="row"
           onMouseDown={onRowMouseDown}
           onClick={(event) => onRowClick(event, task.id)}
           onDoubleClick={() => { selectTask(task.id); window.setTimeout(() => titleRef.current?.focus(), 0) }}
-          className={cn(
-            'mx-1.5 flex cursor-default items-start gap-2 rounded-[var(--radius-card)] px-2 py-[5px] outline-none',
-            selectedRow ? 'relative bg-accent/15 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:rounded-l-[var(--radius-control)] before:bg-accent' : 'hover:bg-foreground/[0.04]',
-          )}
+          className="mx-1.5 flex cursor-default items-start gap-2 rounded-[var(--radius-card)] px-2 py-[5px] outline-none"
         >
           <TaskCheckbox checked={done} pending={pending} cancelled={Boolean(task.cancelledAt)} onToggle={() => toggleComplete(task)} label={t('tasks.complete')} testId={`task-check-${task.id}`} />
           <div className="min-w-0 flex-1">
@@ -1425,8 +1423,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
   )
 
   const list = (
-    <div className="relative flex h-full min-h-0 flex-col">
-      <header className="shrink-0 px-3 pt-2" data-testid="tasks-list-header">
+    <div data-glass-slot="table" className="relative flex h-full min-h-0 flex-col">
+      <header data-glass-slot="toolbar" className="shrink-0 px-3 pt-2" data-testid="tasks-list-header">
         <div className="flex min-w-0 items-center gap-2">
           <h2 className="min-w-0 flex-1 truncate text-lg font-semibold">{titleNode}</h2>
           {magicPlusControl}
@@ -1635,7 +1633,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       setPopover={setPopover}
     />
   ) : (
-    <div className="flex flex-col gap-3 px-5 py-6">
+    <div data-glass-slot="empty" className="flex flex-col gap-3 px-5 py-6">
       <p className="text-text-muted" role="status" data-testid={selectedId ? 'tasks-not-found' : 'tasks-select-hint'}>
         {t(selectedId ? 'tasks.notFound' : 'tasks.selectHint')}
       </p>

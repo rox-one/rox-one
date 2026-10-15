@@ -539,7 +539,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
   )
 
   return (
-    <div className={`flex flex-col gap-2 px-1 pb-4 overflow-y-auto ${className ?? ''}`} data-list-role="memory">
+    <div data-glass-slot="panel" className={`flex flex-col gap-2 px-1 pb-4 overflow-y-auto ${className ?? ''}`} data-list-role="memory">
       {lessonsUi && (<>
       {/* Title row: Global left, Remember right */}
       <div className="mx-1 flex items-center gap-2 pt-1">
@@ -854,7 +854,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
       )}
 
       {(lessonsUi ? lessons.length === 0 : true) && !formOpen && !preferences && !context && (
-        <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-muted-foreground">
+        <div data-glass-slot="empty" className="flex flex-col items-center gap-2 px-4 py-8 text-center text-muted-foreground">
           <Brain className="size-6 opacity-40" />
           <span className="text-sm">{t('memory.emptyHint')}</span>
         </div>
@@ -862,7 +862,7 @@ export function MemoryListPanel({ workspaceId, className, variant = 'full' }: Me
 
       {/* Insights / stats at bottom */}
       {!insightsQuiet && insights && (
-        <div className="mx-1 mt-2 space-y-1 rounded-[var(--radius-card)] border border-border-subtle bg-surface-hover p-2" data-list-role="memory-insights">
+        <div data-glass-slot="card" className="mx-1 mt-2 space-y-1 rounded-[var(--radius-card)] p-2" data-list-role="memory-insights">
           <div className="px-0.5 text-xs text-muted-foreground">
             {t('memory.insightsLine', {
               lessonsAdded7d: insights.lessonsAdded7d,

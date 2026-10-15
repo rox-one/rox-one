@@ -79,6 +79,7 @@ export function SettingsRadioGroup<T extends string = string>({
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy ?? (ariaLabel ? undefined : field.labelId)}
         aria-describedby={field.descriptionId}
+        data-glass-slot="card"
         className={cn(
           settingsUI.card,
           className
@@ -158,6 +159,7 @@ export function SettingsRadioCard({
 
   return (
     <div
+      data-glass-slot={needsCardStyling ? 'card' : undefined}
       className={cn(
         'overflow-hidden transition-colors',
         needsCardStyling && settingsUI.card,
@@ -167,6 +169,7 @@ export function SettingsRadioCard({
       )}
     >
       <label
+        data-glass-slot="row"
         className={cn(
           settingsUI.rowPadding,
           'relative min-h-[44px] w-full text-left flex items-start gap-3',
@@ -289,6 +292,7 @@ export function SettingsRadioOption({
 
   return (
     <label
+      data-glass-slot="row"
       className={cn(
         settingsUI.rowPadding,
         'relative min-h-[44px] w-full text-left flex items-center gap-3',

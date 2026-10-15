@@ -126,7 +126,7 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
     <div className="h-full overflow-auto min-w-0" data-testid="skills-catalog"
       style={{ '--muted-foreground': 'color-mix(in oklch, var(--foreground) 78%, var(--background))' } as React.CSSProperties}>
       <div data-screen-body="" className="mx-auto w-full max-w-[1440px] space-y-6 p-4 md:p-6">
-        <header data-screen-header="" className="flex flex-wrap items-start justify-between gap-3">
+        <header data-screen-header="" data-glass-slot="toolbar" className="flex flex-wrap items-start justify-between gap-3">
           <div><PanelHeading data-screen-title="" className="flex items-center gap-2 text-base font-semibold" titleKey="capabilityCatalog.skillsTitle"><Zap className="icon-inline" />{t('capabilityCatalog.skillsTitle')}</PanelHeading><p data-screen-subtitle="" className="mt-1 text-xs text-muted-foreground">{t('capabilityCatalog.skillsDescription')}</p></div>
           {workspaceRootPath && <EditPopover trigger={<Button variant="outline" size="sm">{t('skillsList.addSkill')}</Button>} {...getEditConfig('add-skill', workspaceRootPath)} />}
         </header>
@@ -134,7 +134,7 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
         {packs.length > 0 && <section aria-label={t('settings.context.bundledTitle')}>
           <h2 className="mb-3 text-sm font-medium">{t('settings.context.bundledTitle')}</h2>
           <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))]">
-            {packs.map(pack => <article key={pack.slug} className="rounded-lg border border-border/60 p-3.5" data-testid="catalog-skill-pack">
+            {packs.map(pack => <article key={pack.slug} data-glass-slot="card" className="rounded-lg border border-border/60 p-3.5" data-testid="catalog-skill-pack">
               <div className="mb-3 flex items-center justify-between gap-2"><PackageOpen className="icon-toolbar text-muted-foreground" /><Button variant="outline" size="sm" disabled={busy !== null} onClick={() => void togglePack(pack)} aria-label={t(pack.disabled ? 'capabilityCatalog.enablePack' : 'capabilityCatalog.disablePack', { name: pack.slug })}>{t(pack.disabled ? 'capabilityCatalog.enable' : 'capabilityCatalog.disable')}</Button></div>
               <h3 className="text-sm font-medium break-words">{pack.slug}</h3>
               <p className="mt-1.5 line-clamp-2 text-xs text-muted-foreground" title={pack.skills.join(', ')}>{pack.skills.slice(0, 5).map(slug => skills.find(skill => skill.slug === slug)?.metadata.name ?? slug).join(', ')}</p>
@@ -150,11 +150,11 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
             <select aria-label={t('capabilityCatalog.category')} value={category} onChange={e => setCategory(e.target.value as typeof category)} className="h-8 max-w-full rounded-md border border-border/60 bg-background px-2 text-xs"><option value="all">{t('capabilityCatalog.allCategories')}</option>{CAPABILITY_CATEGORIES.map(item => <option key={item} value={item}>{t(`capabilityCatalog.categories.${item}`)}</option>)}</select>
             <select aria-label={t('capabilityCatalog.scope')} value={scope} onChange={e => setScope(e.target.value as typeof scope)} className="h-8 rounded-md border border-border/60 bg-background px-2 text-xs"><option value="all">{t('capabilityCatalog.allScopes')}</option>{(['workspace', 'project', 'global', 'omp'] as const).map(item => <option key={item} value={item}>{t(`capabilityCatalog.scopes.${item}`)}</option>)}</select>
           </div>
-          <div ref={tableViewportRef} className="max-h-[min(32rem,100%)] overflow-auto rounded-lg border border-border/60"><table className="w-full min-w-[680px] border-collapse text-left text-xs" aria-label={t('capabilityCatalog.individualSkills')}>
-            <thead className="sticky top-0 z-sticky bg-background text-muted-foreground"><tr>{['name', 'description', 'category', 'usage', 'author', 'updated'].map(key => <th key={key} scope="col" className="border-b border-border/60 px-3 py-2.5 font-medium" aria-sort={key === 'name' && sort === 'name' ? 'ascending' : key === 'usage' && sort === 'usage' ? 'descending' : undefined}>{key === 'name' || key === 'usage' ? <button type="button" className="flex items-center gap-1" onClick={() => setSort(key === 'name' ? 'name' : 'usage')}>{t(`capabilityCatalog.columns.${key}`)}<ArrowDownUp className="icon-status" /></button> : t(`capabilityCatalog.columns.${key}`)}</th>)}</tr></thead>
+          <div ref={tableViewportRef} data-glass-slot="table" className="max-h-[min(32rem,100%)] overflow-auto rounded-lg border border-border/60"><table className="w-full min-w-[680px] border-collapse text-left text-xs" aria-label={t('capabilityCatalog.individualSkills')}>
+            <thead data-glass-slot="toolbar" className="sticky top-0 z-sticky bg-background text-muted-foreground"><tr>{['name', 'description', 'category', 'usage', 'author', 'updated'].map(key => <th key={key} scope="col" className="border-b border-border/60 px-3 py-2.5 font-medium" aria-sort={key === 'name' && sort === 'name' ? 'ascending' : key === 'usage' && sort === 'usage' ? 'descending' : undefined}>{key === 'name' || key === 'usage' ? <button type="button" className="flex items-center gap-1" onClick={() => setSort(key === 'name' ? 'name' : 'usage')}>{t(`capabilityCatalog.columns.${key}`)}<ArrowDownUp className="icon-status" /></button> : t(`capabilityCatalog.columns.${key}`)}</th>)}</tr></thead>
             <tbody>
             {catalogWindow.padTop > 0 && <tr aria-hidden="true" data-catalog-spacer="top"><td colSpan={6} style={{ height: catalogWindow.padTop, padding: 0, border: 0 }} /></tr>}
-            {visibleRows.map((row, offset) => <React.Fragment key={row.key}><tr className="border-b border-border/40 hover:bg-foreground/[0.025]" data-testid="catalog-skill-row">
+            {visibleRows.map((row, offset) => <React.Fragment key={row.key}><tr data-glass-slot="row" className="border-b border-border/40 hover:bg-foreground/[0.025]" data-testid="catalog-skill-row">
               <td className="px-3 py-3"><div className="flex items-center gap-2"><input type="checkbox" aria-label={t('capabilityCatalog.selectResource', { name: row.ref.label })} checked={selection.isSelected(row.ref.id)} onChange={() => selection.toggle(row.ref.id, catalogWindow.start + offset)} /><SkillAvatar skill={row.skill!} size="sm" workspaceId={workspaceId} /><button type="button" className="text-left font-medium hover:underline" onClick={() => navigate(routes.view.skills(row.ref.id))}>{row.ref.label}<span className="mt-0.5 block text-xs font-normal text-muted-foreground">@{row.ref.id} · {t(`capabilityCatalog.scopes.${row.ref.scope}`)}</span></button></div></td>
               <td className="max-w-60 px-3 py-3"><button type="button" onClick={() => setExpanded(expanded === row.key ? null : row.key)} aria-expanded={expanded === row.key} aria-label={t('capabilityCatalog.showDetails', { name: row.ref.label })} className="flex items-center gap-1 text-left text-muted-foreground"><span className="line-clamp-2">{row.description}</span>{expanded === row.key ? <ChevronDown className="icon-status shrink-0" /> : <ChevronRight className="icon-status shrink-0" />}</button></td>
               <td className="px-3 py-3"><span className="rounded border border-border/60 bg-foreground/[0.025] px-1.5 py-0.5 text-xs text-muted-foreground">{row.categories.map(item => t(`capabilityCatalog.categories.${item}`)).join(', ')}</span></td>
@@ -170,7 +170,7 @@ export default function SkillsCatalogPage({ workspaceId, workingDirectory, works
               <Button variant="outline" size="sm" onClick={() => queried.loadMore()}>{t('common.more')}</Button>
             </div>
           )}
-          {!loading && !queried.loading && rows.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">{t('capabilityCatalog.noResults')}</p>}
+          {!loading && !queried.loading && rows.length === 0 && <p data-glass-slot="empty" className="rounded-lg px-6 py-6 text-center text-xs text-muted-foreground">{t('capabilityCatalog.noResults')}</p>}
         </section>
       </div>
     </div>

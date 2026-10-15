@@ -124,7 +124,7 @@ export function ConnectionLifecyclePanel({ connection, workspaceId }: { connecti
 
   if (connection.workspaceId !== workspaceId || !fields) return <section role="alert">{t('chat.connectionUnavailable')}</section>
   const field = (label: string, value: string) => <div className="min-w-0"><dt className="text-xs text-muted-foreground">{t(label)}</dt><dd className="break-all font-mono text-xs text-foreground">{value || '—'}</dd></div>
-  return <section data-testid="connection-lifecycle" data-connection-id={connection.id} className="space-y-3 px-2.5 py-2 text-foreground">
+  return <section data-testid="connection-lifecycle" data-connection-id={connection.id} data-glass-slot="panel" className="space-y-3 px-2.5 py-2 text-foreground">
     <dl className="grid grid-cols-1 gap-2">
       {field('inspector.field.provider', fields.provider)}
       {field('inspector.field.tenant', workspaceId)}

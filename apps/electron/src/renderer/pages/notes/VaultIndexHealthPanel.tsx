@@ -38,7 +38,7 @@ export function VaultIndexHealthPanel({
         <Activity className="h-3.5 w-3.5" />
         {t('notes.inspector.indexHealth')}
       </div>
-      <div className="space-y-1 rounded-[var(--radius-card)] border border-border/60 px-2 py-1.5">
+      <div data-glass-slot="card" className="space-y-1 rounded-[var(--radius-card)] border border-border/60 px-2 py-1.5">
         <div className="text-xs font-medium">
           {health.ok ? t('notes.inspector.indexOk') : t('notes.inspector.indexUnavailable')}
         </div>

@@ -172,7 +172,7 @@ export function TaskDetail(props: TaskDetailProps) {
   }
 
   return (
-    <div className="flex flex-col px-5 py-4" data-testid="task-detail">
+    <div className="flex flex-col px-5 py-4" data-testid="task-detail" data-glass-slot="editor">
       {trashed ? (
         <div className="mb-3 flex items-center gap-2 rounded-[var(--radius-control)] bg-destructive/10 px-3 py-2 text-sm" role="status" data-testid="task-trashed">
           <span className="min-w-0 flex-1">{t('tasks.trash.inTrash')}</span>

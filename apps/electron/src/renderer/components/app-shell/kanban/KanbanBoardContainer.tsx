@@ -1147,8 +1147,8 @@ function KanbanBoardContainerInner() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-background">
-      <div className="flex min-w-0 items-center justify-between gap-2 px-4 py-2.5 @max-[520px]/panel:px-2.5 @max-[520px]/panel:py-1.5">
+    <div className="flex h-full flex-col">
+      <div data-glass-slot="toolbar" className="flex min-w-0 items-center justify-between gap-2 px-4 py-2.5 @max-[520px]/panel:px-2.5 @max-[520px]/panel:py-1.5">
         <div className="flex min-w-0 items-center gap-2.5 overflow-hidden">
           <span className="shrink-0 whitespace-nowrap text-sm font-medium">{t('kanban.allTasks')}</span>
           {projectOptions.length > 0 && (

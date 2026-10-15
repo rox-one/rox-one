@@ -82,7 +82,7 @@ export function NotebookHome({ notebooks, loading, error, recentPodcasts, offlin
             <Button type="button" variant="outline" size="sm" onClick={onRetry}>{t('playbooks.home.retry')}</Button>
           </div>
         ) : notebooks.length === 0 ? (
-          <Empty>
+          <Empty data-glass-slot="empty">
             <EmptyHeader>
               <EmptyMedia variant="icon"><BookOpen aria-hidden /></EmptyMedia>
               <EmptyTitle>{t('playbooks.home.emptyTitle')}</EmptyTitle>
@@ -105,7 +105,7 @@ export function NotebookHome({ notebooks, loading, error, recentPodcasts, offlin
             <ul className="grid list-none gap-3 p-0 sm:grid-cols-2 xl:grid-cols-3" data-testid="playbooks-home-list">
               {visible.map((notebook) => (
                 <li key={notebook.id} className="min-w-0">
-                  <div className="flex h-full flex-col rounded-[var(--radius-card)] border border-border-subtle p-3 transition-colors duration-[var(--motion-fast)] hover:bg-surface-hover motion-reduce:transition-none">
+                  <div data-glass-slot="card" className="flex h-full flex-col rounded-[var(--radius-card)] border border-border-subtle p-3 transition-colors duration-[var(--motion-fast)] hover:bg-surface-hover motion-reduce:transition-none">
                     <button type="button" className="min-w-0 flex-1 text-left" onClick={() => onOpen(notebook.id)} data-testid={`playbooks-home-notebook-${notebook.id}`}>
                       <span className="block truncate text-sm font-medium">{notebook.name}</span>
                       <span className="mt-1 block text-caption text-muted-foreground">
@@ -158,6 +158,7 @@ export function NotebookHome({ notebooks, loading, error, recentPodcasts, offlin
                 <button
                   type="button"
                   onClick={() => onOpen(notebooks[0].id)}
+                  data-glass-slot="row"
                   className="w-full rounded-[var(--radius-control)] px-2 py-1 text-left text-xs text-muted-foreground transition-colors duration-[var(--motion-fast)] hover:bg-surface-hover motion-reduce:transition-none focus-visible:ring-1 focus-visible:ring-ring"
                   data-testid={`playbooks-home-preset-${id}`}
                 >

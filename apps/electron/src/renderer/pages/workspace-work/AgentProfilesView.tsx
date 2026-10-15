@@ -117,7 +117,7 @@ export function AgentProfilesView({ workspaceId }: { workspaceId: string; projec
   }
 
   return <section className="flex h-full min-h-0 flex-col bg-background font-sans text-base" data-testid="agent-profiles-view">
-    <header className="flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3">
+    <header data-glass-slot="toolbar" className="flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3">
       <Bot className="size-4 text-accent" aria-hidden /><h2 className="mr-auto text-lg font-semibold">{t('navigation.work.profiles.title')}</h2>
       <button type="button" className={buttonClass} disabled={work.loading} onClick={() => { void work.refresh(); void catalogQuery.refetch() }} aria-label={t('navigation.work.refresh')}><RefreshCw className="size-3.5" aria-hidden /></button>
       <button type="button" className={buttonClass} disabled={!canManage || busy} onClick={() => begin()}><Plus className="size-3.5" aria-hidden />{t('navigation.work.profiles.new')}</button>
@@ -128,17 +128,17 @@ export function AgentProfilesView({ workspaceId }: { workspaceId: string; projec
       {work.error && <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">{t(`navigation.work.errors.${work.error.code}`)}</div>}
       {snapshot && !canManage && <p role="status" className="text-muted-foreground">{t('navigation.work.readOnly')}</p>}
       {snapshot && <div className="space-y-1" role="list">
-        {snapshot.profiles.map(profile => <div role="listitem" key={profile.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-border/60 p-3">
+        {snapshot.profiles.map(profile => <div role="listitem" key={profile.id} data-glass-slot="card" className="flex flex-wrap items-center gap-2 rounded-lg border border-border/60 p-3">
           <button type="button" className="min-w-0 flex-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => begin(profile)}><span className="block font-medium">{profile.name}</span><span className="block truncate text-muted-foreground" title={profile.role}>{profile.role}</span></button>
           {snapshot.defaultProfileId === profile.id && <span className="inline-flex items-center gap-1 text-accent"><Star className="size-3" aria-hidden />{t('navigation.work.profiles.default')}</span>}
           {snapshot.defaultProfileId !== profile.id && <button type="button" className={buttonClass} disabled={!canManage || busy} onClick={() => void work.write({ kind: 'setDefaultProfile', profileId: profile.id })}>{t('navigation.work.profiles.makeDefault')}</button>}
           <button type="button" className={buttonClass} disabled={!canManage || !snapshot.access.canDelete || busy} onClick={() => setDeleteTarget(profile.id)} aria-label={t('navigation.work.profiles.deleteNamed', { name: profile.name })}><Trash2 className="size-3.5" aria-hidden /></button>
           {deleteTarget === profile.id && <div className="flex w-full flex-wrap items-center gap-2" role="alert"><span>{t('navigation.work.profiles.deleteConfirm')}</span><button type="button" className={buttonClass} disabled={busy} onClick={() => void work.remove({ kind: 'profile', id: profile.id }).then(ok => { if (ok) { setDeleteTarget(null); if (draft?.id === profile.id) setDraft(null) } })}>{t('navigation.work.delete')}</button><button type="button" className={buttonClass} onClick={() => setDeleteTarget(null)}>{t('navigation.work.cancel')}</button></div>}
         </div>)}
-        {!snapshot.profiles.length && <p className="rounded-lg border border-dashed border-border p-4 text-muted-foreground">{t('navigation.work.profiles.empty')}</p>}
+        {!snapshot.profiles.length && <p data-glass-slot="empty" className="rounded-lg border border-dashed border-border p-4 text-muted-foreground">{t('navigation.work.profiles.empty')}</p>}
         {snapshot.defaultProfileId && <button type="button" className={buttonClass} disabled={!canManage || busy} onClick={() => void work.write({ kind: 'setDefaultProfile', profileId: null })}>{t('navigation.work.profiles.clearDefault')}</button>}
       </div>}
-      {draft && <form className="max-w-3xl space-y-4 rounded-lg border border-border/70 p-4" onSubmit={event => { event.preventDefault(); void save() }}>
+      {draft && <form data-glass-slot="editor" className="max-w-3xl space-y-4 rounded-lg border border-border/70 p-4" onSubmit={event => { event.preventDefault(); void save() }}>
         <h3 className="font-semibold">{t(draft.id ? 'navigation.work.profiles.edit' : 'navigation.work.profiles.new')}</h3>
         {!profileExists && <p role="alert" className="text-destructive">{t('navigation.work.profiles.deleted')}</p>}
         <label className="block space-y-1"><span>{t('navigation.work.profiles.name')}</span><input required maxLength={200} className={fieldClass} value={draft.name} disabled={!canManage || busy || !profileExists} onChange={event => setDraft({ ...draft, name: event.target.value })} /></label>

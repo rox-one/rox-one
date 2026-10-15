@@ -206,8 +206,9 @@ export function MemoryRepoFilesPanel({
       ref={viewportRef}
       data-focus-zone="sidebar"
       data-testid="memory-repo-files-tree"
+      data-glass-slot="panel"
       onKeyDown={handleSidebarTreeKeyDown}
-      className="flex min-h-0 w-[248px] shrink-0 flex-col overflow-y-auto border-r border-border-subtle bg-foreground-2 py-2"
+      className="flex min-h-0 w-[248px] shrink-0 flex-col overflow-y-auto border-r border-border-subtle py-2"
     >
       {loading && tree.length === 0 ? (
         <div
@@ -219,7 +220,8 @@ export function MemoryRepoFilesPanel({
       ) : tree.length === 0 ? (
         <div
           data-testid="memory-repo-files-empty"
-          className="mx-3 mt-2 flex flex-col items-center gap-3 rounded-[var(--radius-control)] border border-dashed border-border-strong bg-background/60 px-4 py-8 text-center"
+          data-glass-slot="empty"
+          className="mx-3 mt-2 flex flex-col items-center gap-3 rounded-[var(--radius-control)] px-4 py-8 text-center"
         >
           <span className="grid size-10 place-items-center rounded-[var(--radius-control)] bg-accent/10 text-accent">
             <FolderClosed aria-hidden="true" className="icon-rail" />
@@ -260,7 +262,7 @@ export function MemoryRepoFilesPanel({
     if (!file) {
       if (selectedPath) {
         return (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 px-5 text-center" data-testid="memory-repo-files-not-found" role="alert">
+          <div data-glass-slot="empty" className="flex flex-1 flex-col items-center justify-center gap-2 px-5 text-center" data-testid="memory-repo-files-not-found" role="alert">
             <TriangleAlert aria-hidden="true" className="icon-rail text-status-warning" />
             <p className="text-body text-text-secondary">{t('memory.repo.state.fileNotFound')}</p>
           </div>
@@ -269,7 +271,7 @@ export function MemoryRepoFilesPanel({
       return <div className="px-5 py-6 text-body text-text-muted" data-testid="memory-repo-files-no-selection">{t('memory.repo.file.selectFile')}</div>
     }
     return (
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4" data-testid="memory-repo-file-viewer">
+      <div data-glass-slot="editor" className="min-h-0 flex-1 overflow-y-auto px-5 py-4" data-testid="memory-repo-file-viewer">
         <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2">
           <span className="min-w-0 flex-1 truncate text-body font-medium" title={file.path}>{file.path}</span>
           {file.edited ? <Badge tone="edited" label={t('memory.repo.file.badgeEdited')} /> : null}
@@ -285,7 +287,7 @@ export function MemoryRepoFilesPanel({
           </div>
         ) : null}
         {parsed && parsed.entries.length > 0 ? (
-          <table className="mb-4 w-full table-fixed border-collapse overflow-hidden rounded-[var(--radius-control)] text-caption" data-testid="memory-repo-files-frontmatter">
+          <table data-glass-slot="table" className="mb-4 w-full table-fixed border-collapse overflow-hidden rounded-[var(--radius-control)] text-caption" data-testid="memory-repo-files-frontmatter">
             <caption className="pb-1 text-left text-caption font-medium uppercase caps-label text-text-muted/70">
               {t('memory.repo.file.frontmatter')}
             </caption>

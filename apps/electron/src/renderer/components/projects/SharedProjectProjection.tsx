@@ -160,7 +160,7 @@ export function SharedProjectsSection({ workspaceId }: { workspaceId: string }) 
     {state !== 'ready' && <p className="mt-2 text-sm" role="status">{t(readError ? projectAuthorityErrorMessageKey(readError) : messageKey(state))}
       {readError && <span className="mt-1 block text-xs">{readError}</span>}
     </p>}
-    {(pendingIntent.state === 'queued' || pendingIntent.state === 'uncertain') && <div className="mt-2 rounded-md border border-foreground/10 p-2" role="status"
+    {(pendingIntent.state === 'queued' || pendingIntent.state === 'uncertain') && <div data-glass-slot="card" className="mt-2 rounded-md border border-foreground/10 p-2" role="status"
       data-testid="shared-project-queued" data-state={pendingIntent.state} data-command-id={pendingIntent.command.commandId} data-idempotency-key={pendingIntent.command.idempotencyKey}>
       <p className="text-sm">{t(pendingIntent.state === 'queued' ? 'sharedProjects.offlineQueued' : 'sharedProjects.uncertainQueued')}</p>
       <p className="mt-1 truncate text-sm">{pendingIntent.command.payload.name}</p>
@@ -177,6 +177,7 @@ export function SharedProjectsSection({ workspaceId }: { workspaceId: string }) 
     </div>}
     {state === 'ready' && entries.length === 0 && <p className="mt-2 text-sm">{t('sharedProjects.empty')}</p>}
     {entries.map(({ project }) => <button key={project.entity.entityId} type="button" data-testid="shared-project-row" data-entity-ref={project.entity.entityId}
+      data-glass-slot="row"
       className="mt-2 flex w-full items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-foreground/5"
       onClick={() => navigate(routes.view.projects(project.entity.entityId))}>
       {project.visibility === 'private' ? <Lock size={15} /> : <FolderKanban size={15} />}

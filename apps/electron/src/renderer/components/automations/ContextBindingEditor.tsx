@@ -56,7 +56,7 @@ export function ContextBindingEditor({ workspaceId, value, paused, projects, obj
     try { await onSave(reference); setFeedback('saved') } catch { setFeedback('failed') } finally { setBusy(false) }
   }
   const controlClass = 'w-full rounded-md border border-foreground/15 bg-background px-2 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'
-  return <section className="space-y-3 rounded-lg border border-foreground/10 p-3" aria-labelledby={`${id}-title`}>
+  return <section className="space-y-3 rounded-lg border border-foreground/10 p-3" data-glass-slot="card" aria-labelledby={`${id}-title`}>
     <h3 id={`${id}-title`} className="text-sm font-medium">{t('automations.context.title')}</h3>
     <p className="text-xs text-muted-foreground">{t('automations.context.help')}</p>
     {paused && <p role="status" className="text-xs text-amber-600">{t(paused.reason === 'target-deleted' ? 'automations.context.pausedDeleted' : 'automations.context.pausedOutOfScope')}</p>}

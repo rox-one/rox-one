@@ -528,7 +528,7 @@ export default function ContextSettingsPage() {
                                 ? ` · v${currentDoc.templateVersion}`
                                 : ''}
                             </div>
-                            <pre className="w-full min-h-[320px] max-h-[480px] overflow-auto rounded-md border border-input bg-muted/30 px-3 py-2 font-mono text-xs leading-relaxed whitespace-pre-wrap">
+                            <pre className="w-full min-h-[320px] max-h-[480px] overflow-auto rounded-md border border-input bg-muted/30 px-3 py-2 font-mono text-xs leading-relaxed whitespace-pre-wrap" data-glass-slot="editor">
                               {templatePreview}
                             </pre>
                           </div>
@@ -541,6 +541,7 @@ export default function ContextSettingsPage() {
                               value={draft}
                               onChange={(e) => setDraft(e.target.value)}
                               spellCheck={false}
+                              data-glass-slot="editor"
                               className="w-full min-h-[320px] max-h-[480px] rounded-md border border-input bg-background px-3 py-2 font-mono text-xs leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             />
                           </div>
@@ -550,6 +551,7 @@ export default function ContextSettingsPage() {
                           value={draft}
                           onChange={(e) => setDraft(e.target.value)}
                           spellCheck={false}
+                          data-glass-slot="editor"
                           className="w-full min-h-[400px] rounded-md border border-input bg-background px-3 py-2 font-mono text-xs leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                         />
                       )}

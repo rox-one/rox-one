@@ -154,7 +154,9 @@ export function InboxSidebar({ filter, counts, onSelect, mail, onSelectFolder, o
   }
   const kindButton = (kind: InboxKind) => <InboxNavButton key={kind} label={t(`inbox.kind.${kind}`)} count={counts.byKind[kind]} active={sameInboxFilter(filter, { kind })} icon={KIND_ICONS[kind]} tone={KIND_TONES[kind]} onClick={() => onSelect({ kind })} testId={`inbox-nav-${kind}`} />
   return (
-    <div data-inbox-sidebar data-focus-zone="sidebar" onKeyDown={handleSidebarTreeKeyDown}>
+    // Arc Glass: the navigator rail is a `panel` surface (tint + seam
+    // hairline, static blur) — see packages/ui/src/components/glass/.
+    <div data-inbox-sidebar data-glass-slot="panel" data-focus-zone="sidebar" onKeyDown={handleSidebarTreeKeyDown}>
       <NavTitle>{t('inbox.title')}</NavTitle>
       <InboxNavButton label={t('inbox.view.all')} count={counts.all} active={filter === 'all'} icon={Inbox} tone="accent" onClick={() => onSelect('all')} testId="inbox-nav-all" />
       <InboxNavGroup id="decisions" label={t('inbox.view.decisions')} icon={ShieldCheck} tone="warning" count={counts.decisions} urgent={counts.blocking > 0} initialOpen active={filter === 'decisions' || !!selectedKind && DECISION_KINDS.includes(selectedKind)}>

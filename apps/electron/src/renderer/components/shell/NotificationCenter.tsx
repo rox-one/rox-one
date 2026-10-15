@@ -81,7 +81,7 @@ export function NotificationCenter({ workspaceId, className }: { workspaceId?: s
       <PopoverContent align="end" className="w-[380px] p-0" aria-label={t('shell.notifications.title')} data-testid="notification-center">
         <div className="flex items-center gap-1 border-b border-border-subtle px-3 py-2">
           <h2 className="min-w-0 flex-1 truncate text-body font-semibold">{t('shell.notifications.title')}</h2>
-          <div role="radiogroup" aria-label={t('shell.notifications.filter')} className="flex rounded-[var(--radius-control)] bg-surface-hover p-0.5 text-caption">
+          <div role="radiogroup" aria-label={t('shell.notifications.filter')} className="flex rounded-[var(--radius-control)] bg-[var(--state-hover)] p-0.5 text-caption">
             {(['all', 'unread'] as const).map((id) => (
               <button
                 key={id}
@@ -102,7 +102,7 @@ export function NotificationCenter({ workspaceId, className }: { workspaceId?: s
                 aria-label={t('shell.notifications.markAll')}
                 disabled={unread === 0}
                 onClick={() => markAllNotificationsRead(workspaceId)}
-                className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-hover hover:text-foreground disabled:opacity-40"
+                className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-[var(--state-hover)] hover:text-foreground disabled:opacity-40"
               >
                 <CheckCheck className="icon-caption" aria-hidden />
               </button>
@@ -116,7 +116,7 @@ export function NotificationCenter({ workspaceId, className }: { workspaceId?: s
                 aria-label={t('shell.notifications.clear')}
                 disabled={items.length === 0}
                 onClick={() => clearNotifications(workspaceId)}
-                className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-hover hover:text-foreground disabled:opacity-40"
+                className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-[var(--state-hover)] hover:text-foreground disabled:opacity-40"
               >
                 <Trash2 className="icon-caption" aria-hidden />
               </button>
@@ -153,7 +153,7 @@ export function NotificationCenter({ workspaceId, className }: { workspaceId?: s
                   type="button"
                   aria-label={t('shell.notifications.dismiss')}
                   onClick={() => removeNotification(n.id)}
-                  className="absolute right-1 top-1.5 flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground opacity-0 hover:bg-surface-hover hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                  className="absolute right-1 top-1.5 flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground opacity-0 hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
                 >
                   <X className="icon-caption" aria-hidden />
                 </button>

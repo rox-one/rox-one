@@ -87,7 +87,8 @@ export function MemoryProposalCard({ proposal, workspaceId, onChanged }: MemoryP
   return (
     <article
       data-memory-proposal={proposal.id}
-      className="rounded-lg border border-info/30 bg-info/10 px-3 py-2 text-sm text-foreground"
+      data-glass-slot="card"
+      className="rounded-lg border border-info/30 px-3 py-2 text-sm text-foreground"
     >
       <p className="line-clamp-3 text-base">{editing ? null : proposal.text}</p>
       {editing && (

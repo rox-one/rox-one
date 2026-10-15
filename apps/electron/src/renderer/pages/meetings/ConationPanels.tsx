@@ -18,7 +18,7 @@ export function ConationPanels(props: ConationPanelProps) {
 
   return (
     <div className="mt-4 grid gap-3" data-testid="meeting-conation-panels">
-      <section data-testid="meeting-mail-panel" className="border p-3">
+      <section data-testid="meeting-mail-panel" data-glass-slot="card" className="border p-3">
         <h3>{t('meetings.mail.title')}</h3>
         <p>{t('meetings.mail.recipients')}: {(props.mail?.to ?? []).join(', ')}</p>
         <p data-testid="meeting-mail-status">{t(`meetings.conation.${mailStatus === 'queued' ? 'queued' : mailStatus === 'unknown' ? 'unknown' : 'blocked'}`)}</p>
@@ -28,20 +28,20 @@ export function ConationPanels(props: ConationPanelProps) {
           {t('meetings.mail.send')}
         </button>
       </section>
-      <section data-testid="meeting-crm-panel" className="border p-3">
+      <section data-testid="meeting-crm-panel" data-glass-slot="card" className="border p-3">
         <h3>{t('meetings.crm.title')}</h3>
         <p data-entity-id={props.crm ? `crm-company:${props.crm.remoteId}` : undefined}>
           {props.crm ? `${props.crm.accountId}:${props.crm.remoteType}:${props.crm.remoteId}` : t('meetings.crm.useIds')}
         </p>
         <p>{t('meetings.crm.blocked')}</p>
       </section>
-      <section data-testid="meeting-calendar-panel" className="border p-3">
+      <section data-testid="meeting-calendar-panel" data-glass-slot="card" className="border p-3">
         <h3>{t('meetings.calendar.title')}</h3>
         <p>{props.calendar?.occurrenceKey}</p>
         <p>{t('meetings.calendar.blocked')}</p>
         <p data-testid="meeting-no-dialer">{t('meetings.calendar.noDialer')}</p>
       </section>
-      <section data-testid="meeting-room-panel" className="border p-3">
+      <section data-testid="meeting-room-panel" data-glass-slot="card" className="border p-3">
         <h3>{t('meetings.rooms.undecided')}</h3>
         <button type="button" data-testid="meeting-room-join" disabled>
           {t('meetings.rooms.undecided')}

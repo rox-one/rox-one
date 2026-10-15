@@ -92,6 +92,7 @@ function OptionButton({
   return (
     <button
       onClick={() => onSelect(option.id)}
+      data-glass-slot="card"
       className={cn(
         "flex w-full items-start gap-4 rounded-[var(--radius-card)] p-4 text-left transition-all",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -265,7 +266,7 @@ export function APISetupStep({
       />
 
       {/* Segment description */}
-      <div className="bg-foreground-2 rounded-[var(--radius-card)] p-4 mb-3">
+      <div data-glass-slot="card" className="bg-foreground-2 rounded-[var(--radius-card)] p-4 mb-3">
         <p className="text-sm text-muted-foreground text-center">
           {SEGMENT_DESCRIPTIONS[activeSegment]}
         </p>

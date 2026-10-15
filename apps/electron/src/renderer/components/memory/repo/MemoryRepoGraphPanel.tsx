@@ -150,7 +150,7 @@ export function MemoryRepoGraphPanel({ graph, onOpenFile }: MemoryRepoGraphPanel
 
   if (!graph || graph.nodes.length === 0) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-5 text-center" data-testid="memory-repo-graph-empty">
+      <div data-glass-slot="empty" className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-5 text-center" data-testid="memory-repo-graph-empty">
         <span className="grid size-12 place-items-center rounded-[var(--radius-control)] bg-accent/10 text-accent">
           <Network aria-hidden="true" className="icon-empty" />
         </span>
@@ -176,7 +176,6 @@ export function MemoryRepoGraphPanel({ graph, onOpenFile }: MemoryRepoGraphPanel
               maxZoom={1.5}
               defaultViewport={{ x: 24, y: 24, zoom: 1 }}
               proOptions={{ hideAttribution: true }}
-              className="bg-background"
             >
               <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
             </ReactFlow>

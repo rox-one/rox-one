@@ -161,6 +161,10 @@ function NoteNavigationItem({ note, depth, activeNoteId, dreamNoteIds, ...action
           type="button"
           aria-current={activeNoteId === note.id ? 'page' : undefined}
           data-note-id={note.id}
+          /* Arc Glass: interactive row — transparent base; hover/selected paint
+             come from arc-glass-surfaces.css, not a local fill. */
+          data-glass-slot="row"
+          data-state={activeNoteId === note.id ? 'selected' : undefined}
           onClick={() => actions.onOpenNote(note.id)}
           style={{ paddingLeft: `${10 + depth * 12}px` }}
           className={cn(
@@ -266,6 +270,7 @@ function FolderNavigationItem({ node, depth, expanded, onToggleFolder, ...action
           ref={setNodeRef}
           type="button"
           aria-expanded={expanded}
+          data-glass-slot="row"
           data-notes-folder={node.fullPath}
           title={node.fullPath}
           onClick={() => onToggleFolder(node.fullPath)}
@@ -352,7 +357,7 @@ export function NotesNavigationSidebar({ notes, emptyMessage, viewportRef, ...pr
           {...(viewportRef ? { viewportRef } : {})}
           scrollToKey={notesScrollToKey(props.activeNoteId)}
         />
-      ) : <div className="px-3 py-10 text-center text-xs text-muted-foreground">{emptyMessage}</div>}
+      ) : <div data-glass-slot="empty" className="mx-1 rounded-[var(--radius-card)] px-3 py-10 text-center text-xs text-muted-foreground">{emptyMessage}</div>}
     </>
   )
 }

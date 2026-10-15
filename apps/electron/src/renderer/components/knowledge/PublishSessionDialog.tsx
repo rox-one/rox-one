@@ -429,7 +429,12 @@ export function PublishSessionDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
-        <DialogHeader className="shrink-0 space-y-1 border-b border-border/60 px-6 py-4">
+        <DialogHeader
+          className="shrink-0 space-y-1 border-b border-border/60 px-6 py-4"
+          // Arc Glass: the dialog surface itself is slotted in ui/dialog.tsx;
+          // its glued step header is a toolbar bar.
+          data-glass-slot="toolbar"
+        >
           <DialogTitle className="flex items-center gap-2">
             <BookOpen className="h-4 w-4" />
             {t('knowledge.publish.title')}
@@ -531,7 +536,12 @@ export function PublishSessionDialog({
                 <h3 className="text-sm font-semibold">{draft.title}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">{draft.summary}</p>
               </div>
-              <div className="max-h-[40vh] overflow-y-auto rounded-md border border-border/60 p-3 text-sm">
+              <div
+                className="max-h-[40vh] overflow-y-auto rounded-md border border-border/60 p-3 text-sm"
+                // Arc Glass: markdown preview = a reading surface (`editor`:
+                // dense fill + sheen, never blur).
+                data-glass-slot="editor"
+              >
                 <Markdown mode="minimal">{draft.markdown}</Markdown>
               </div>
             </div>
@@ -568,7 +578,11 @@ export function PublishSessionDialog({
           )}
         </div>
 
-        <DialogFooter className="shrink-0 border-t border-border/60 px-6 py-3 sm:justify-between">
+        <DialogFooter
+          className="shrink-0 border-t border-border/60 px-6 py-3 sm:justify-between"
+          // Arc Glass: glued action bar inside the dialog — toolbar material.
+          data-glass-slot="toolbar"
+        >
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
             {t('knowledge.publish.action.close')}
           </Button>
@@ -680,6 +694,8 @@ function DistillStep({
           value={editMarkdown}
           onChange={(e) => onEditMarkdown(e.target.value)}
           disabled={busy}
+          // Arc Glass: draft editor = a reading/editing surface (`editor`).
+          data-glass-slot="editor"
           className="min-h-[240px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         <Button size="sm" variant="secondary" disabled={busy} onClick={onToggleEdit}>

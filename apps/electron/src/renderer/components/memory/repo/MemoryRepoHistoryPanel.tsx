@@ -52,12 +52,13 @@ export function MemoryRepoHistoryPanel({
   const list = (
     <div
       data-testid="memory-repo-history-list"
-      className="flex min-h-0 w-[268px] shrink-0 flex-col overflow-y-auto border-r border-border-subtle bg-foreground-2 py-2"
+      data-glass-slot="panel"
+      className="flex min-h-0 w-[268px] shrink-0 flex-col overflow-y-auto border-r border-border-subtle py-2"
     >
       {loading ? (
         <div className="px-4 py-4 text-body text-text-muted" data-testid="memory-repo-history-loading">{t('memory.repo.state.loading')}</div>
       ) : commits.length === 0 ? (
-        <div className="mx-3 mt-2 flex flex-col items-center gap-3 rounded-[var(--radius-control)] border border-dashed border-border-strong bg-background/60 px-4 py-8 text-center" data-testid="memory-repo-history-empty">
+        <div className="mx-3 mt-2 flex flex-col items-center gap-3 rounded-[var(--radius-control)] px-4 py-8 text-center" data-testid="memory-repo-history-empty" data-glass-slot="empty">
           <span className="grid size-10 place-items-center rounded-[var(--radius-control)] bg-accent/10 text-accent">
             <GitCommitHorizontal aria-hidden="true" className="icon-rail" />
           </span>

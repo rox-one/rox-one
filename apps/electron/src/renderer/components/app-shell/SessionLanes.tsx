@@ -223,7 +223,7 @@ export function SessionLanes({ rows, selectedId, onSelect, className, density = 
         const unreadCount = lane.items.filter(hasUnreadMeta).length
         return (
           <div key={lane.id} role="group" aria-label={t(`session.lane.${lane.id}`, { defaultValue: lane.id })} data-lane={lane.id} data-lane-count={lane.items.length}>
-            <div className="sticky top-0 z-sticky flex h-7 items-center gap-1 bg-surface-canvas px-2">
+            <div data-glass-slot="toolbar" className="sticky top-0 z-sticky flex h-7 items-center gap-1 px-2">
               <button
                 type="button"
                 onClick={() => toggleLane(lane.id)}
@@ -331,6 +331,8 @@ function LaneItem({
   return (
     <div
       role="listitem"
+      data-glass-slot="row"
+      data-state={selected ? 'selected' : undefined}
       data-session-id={item.id}
       data-session-status={laneStatus}
       data-session-unread={unread || undefined}
@@ -338,7 +340,6 @@ function LaneItem({
       className={cn(
         'group/row relative flex min-h-[var(--control-lg)] items-stretch',
         !isFirst && 'border-t border-border-subtle/60',
-        selected ? 'bg-[var(--state-selected)]' : 'hover:bg-[var(--state-hover)]',
       )}
     >
       <LaneRule status={laneStatus} active={laneStatus !== 'idle' && laneStatus !== 'done'} />

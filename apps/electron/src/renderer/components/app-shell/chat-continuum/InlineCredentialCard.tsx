@@ -43,6 +43,7 @@ export function InlineCredentialCard({
   return (
     <section
       data-g05-credential={disabled ? 'disabled' : 'ready'}
+      data-glass-slot="card"
       aria-labelledby={headingId}
       aria-disabled={disabled || undefined}
       className={cn(

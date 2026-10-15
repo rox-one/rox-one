@@ -71,6 +71,7 @@ export function AddWorkspaceStep_OpenFolder({
       <div className="mt-6 w-full space-y-6">
         {/* Browse folder row */}
         <div
+          data-glass-slot="card"
           className={cn(
             "flex items-center justify-between gap-4 p-4 rounded-[var(--radius-control)]",
             "border border-border/50 bg-background"

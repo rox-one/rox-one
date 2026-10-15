@@ -83,7 +83,7 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
 
   if (!showDetails) {
     return (
-      <div className="flex min-w-0 items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground" data-testid="calendar-status-strip">
+      <div data-glass-slot="toolbar" className="flex min-w-0 items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground" data-testid="calendar-status-strip">
         <span className="min-w-0 truncate">{t(`calendar.status.${status}`)}</span>
         <button type="button" className="shrink-0 underline" aria-expanded={false} onClick={() => setExpanded(true)}>
           {t('calendar.showOptions')}
@@ -93,7 +93,7 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-1.5 px-3 py-2 text-xs" data-testid="calendar-status-strip">
+    <div data-glass-slot="toolbar" className="flex min-w-0 flex-col gap-1.5 px-3 py-2 text-xs" data-testid="calendar-status-strip">
       <div className={cn('flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1', (status === 'conflict' || status === 'localChanges' || status === 'timezone') && 'text-amber-600')}>
         <span>{t(`calendar.status.${status}`)}</span>
         <CalendarConnectorChips onConnect={connect} />

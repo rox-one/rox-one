@@ -25,8 +25,12 @@ function MeetingsNavButton({ label, count, active, icon, tone, onClick, testId }
   label: string; count?: number; active?: boolean; icon: LucideIcon; tone: IconTone
   onClick: () => void; testId: string
 }) {
+  // The row recipe's transparent base drops the local active fill, so the
+  // active destination is republished as the recipe's selected state.
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined} data-testid={testId}
+      data-glass-slot="row"
+      data-state={active ? 'selected' : undefined}
       className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-sm outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'bg-[var(--state-selected)] text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
       <NavIcon icon={icon} tone={tone} />
       <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
@@ -67,7 +71,7 @@ export function MeetingsSidebar({ bucket, counts, engine, onBucketSelect, onConn
     <MeetingsNavButton label={t(value === 'needsAction' ? 'meetings.local.needsAction' : `meetings.screen.${value}`)} count={counts[value]} active={bucket === value} icon={icon} tone={tone} onClick={() => onBucketSelect(value)} testId={`meetings-nav-${value}`} />
   )
   return (
-    <div data-meetings-sidebar data-focus-zone="sidebar" onKeyDown={handleSidebarTreeKeyDown}>
+    <div data-meetings-sidebar data-focus-zone="sidebar" data-glass-slot="panel" onKeyDown={handleSidebarTreeKeyDown}>
       <style>{`
         @supports (interpolate-size: allow-keywords) {
           [data-meetings-sidebar] details { interpolate-size: allow-keywords; }

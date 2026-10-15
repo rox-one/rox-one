@@ -130,7 +130,7 @@ export function TelegramSupergroupPairingDialog({ open, onOpenChange, botUsernam
             <p className="text-sm text-destructive text-center">{error}</p>
           ) : code ? (
             <>
-              <div className="rounded-lg bg-muted px-6 py-4 font-mono text-3xl font-bold tracking-[0.3em]">
+              <div data-glass-slot="editor" className="rounded-lg bg-muted px-6 py-4 font-mono text-3xl font-bold tracking-[0.3em]">
                 {code}
               </div>
 

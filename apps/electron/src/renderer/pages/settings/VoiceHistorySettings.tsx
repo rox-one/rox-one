@@ -136,7 +136,7 @@ export function VoiceHistorySettings() {
           <label>{t('voice.history.revision')}<select aria-label={t('voice.history.revision')} value={revisionId ?? ''} disabled={busy} onChange={event => { const chosenRevisionId = event.target.value; mutate(() => window.electronAPI.selectVoiceTranscript({ id: detail.recording.id, expectedRevisionId: revisionId!, revisionId: chosenRevisionId })) }}>
             {detail.revisions.map(revision => <option key={revision.id} value={revision.id}>{revision.kind} · {new Date(revision.createdAt).toLocaleString()}</option>)}
           </select></label>
-          <textarea aria-label={t('voice.history.transcript')} value={text} onChange={event => setText(event.target.value)} className="min-h-32 w-full rounded border bg-transparent p-2" disabled={busy} />
+          <textarea aria-label={t('voice.history.transcript')} value={text} onChange={event => setText(event.target.value)} data-glass-slot="editor" className="min-h-32 w-full rounded border bg-transparent p-2" disabled={busy} />
           <div className="flex flex-wrap gap-3 text-sm">
             <button type="button" disabled={busy || !revisionId || !text.trim()} onClick={() => mutate(() => window.electronAPI.editVoiceTranscript({ id: detail.recording.id, expectedRevisionId: revisionId!, text }))}>{t('voice.history.saveRevision')}</button>
             <button type="button" disabled={busy || !text.trim()} onClick={copy}>{t('voice.history.copy')}</button>

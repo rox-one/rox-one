@@ -284,7 +284,7 @@ export default function App() {
       </div>
       {cloudVmOpen && (
         // eslint-disable-next-line rox/prefer-primitives -- the cloud-VM mode surface is a fullscreen layer, not a modal dialog: the shared renderer stays mounted underneath (inert + aria-hidden) and "Перейти в чат" returns to it; Dialog/Sheet/FullscreenOverlayBase portal to a new root and trap focus, which would break that contract
-        <div className="fixed inset-0 z-fullscreen overflow-auto bg-background" data-cloud-vm-surface-overlay="true" role="dialog" aria-modal="true">
+        <div data-glass-slot="dialog" className="fixed inset-0 z-fullscreen overflow-auto bg-background" data-cloud-vm-surface-overlay="true" role="dialog" aria-modal="true">
           <CloudVmSurface
             host={window.electronAPI}
             onOpenRun={(id) => {

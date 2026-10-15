@@ -123,7 +123,7 @@ export function CredentialsStep({
         }
       >
         <div className="space-y-4">
-          <div className="rounded-[var(--radius-card)] bg-foreground-2 p-4 text-sm text-muted-foreground">
+          <div data-glass-slot="card" className="rounded-[var(--radius-card)] bg-foreground-2 p-4 text-sm text-muted-foreground">
             <p>{t("onboarding.credentials.chatGPTInstructions")}</p>
           </div>
           {status === 'error' && errorMessage && (
@@ -170,7 +170,7 @@ export function CredentialsStep({
       >
         <div className="space-y-4">
           {copilotDeviceCode ? (
-            <div className="rounded-[var(--radius-card)] bg-foreground-2 p-4 text-sm space-y-3">
+            <div data-glass-slot="card" className="rounded-[var(--radius-card)] bg-foreground-2 p-4 text-sm space-y-3">
               <p className="text-muted-foreground text-center">
                 {t("onboarding.credentials.enterCodeOnGitHub")}
               </p>
@@ -192,7 +192,7 @@ export function CredentialsStep({
               </p>
             </div>
           ) : (
-            <div className="rounded-[var(--radius-card)] bg-foreground-2 p-4 text-sm text-muted-foreground text-center">
+            <div data-glass-slot="card" className="rounded-[var(--radius-card)] bg-foreground-2 p-4 text-sm text-muted-foreground text-center">
               <p>{t("onboarding.credentials.clickToSignInGitHub")}</p>
             </div>
           )}

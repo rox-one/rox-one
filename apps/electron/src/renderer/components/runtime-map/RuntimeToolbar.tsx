@@ -17,7 +17,7 @@ export interface RuntimeToolbarProps {
 export function RuntimeToolbar(props: RuntimeToolbarProps) {
   const { t } = useTranslation()
   const filters = ['all', 'agent', 'tool', 'skill', 'terminal', 'plan', 'acceptance', 'memory', 'result', 'errors', 'waiting']
-  return <div className="runtime-toolbar">
+  return <div className="runtime-toolbar" data-glass-slot="toolbar">
     <div className="runtime-toolbar-title"><strong>{t('runtimeMap.title')}</strong><span className={`runtime-coverage runtime-coverage-${props.coverage.state}`} title={coverageMissingText(props.coverage.missing, t)}>{t(`runtimeMap.coverage.${props.coverage.state}`)}</span><span className="runtime-toolbar-spacer" />{props.onClose && <button type="button" className="runtime-icon-button" title={t('runtimeMap.close')} aria-label={t('runtimeMap.close')} onClick={props.onClose}><X size={15} /></button>}</div>
     <div className="runtime-tabs" role="tablist" aria-label={t('runtimeMap.view')} onKeyDown={event => {
       if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return

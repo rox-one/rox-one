@@ -32,7 +32,7 @@ export function ElementInspectConfirm({
   const { t } = useTranslation()
 
   return (
-    <div className="flex flex-col gap-2 border-t border-border bg-background/90 px-3 py-2">
+    <div data-glass-slot="toolbar" className="flex flex-col gap-2 border-t border-border bg-background/90 px-3 py-2">
       <div className="flex items-center gap-2">
         <button
           type="button"

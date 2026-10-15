@@ -192,6 +192,7 @@ function Card({ title, hint, children, testId }: { title: string; hint?: string;
   return (
     <section
       data-testid={testId}
+      data-glass-slot="card"
       className="onb-card flex min-h-0 flex-col gap-3 rounded-[var(--radius-card)] border border-border/60 bg-background/30 p-3"
     >
       <div>

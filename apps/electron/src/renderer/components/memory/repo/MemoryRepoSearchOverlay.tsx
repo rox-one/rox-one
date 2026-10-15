@@ -277,7 +277,7 @@ export function MemoryRepoSearchOverlay({
     // eslint-disable-next-line rox/prefer-primitives -- inline ⌘K palette: it mounts inside its host and owns ↑/↓/Enter/Esc; a portaled Dialog/Sheet would move the DOM out of the mount container the overlay suite queries and add a focus trap this keyboard-first palette does not use
     <div className="fixed inset-0 z-modal flex justify-center bg-black/30 pt-[10vh]" role="dialog" aria-modal="true" aria-label={t('memory.repo.search.placeholder')} data-testid="memory-repo-search" onKeyDown={onKeyDown}>
       <div className="absolute inset-0" onClick={close} aria-hidden="true" />
-      <div className="relative m-0 h-fit w-[min(640px,92vw)] overflow-hidden rounded-[var(--radius-control)] border border-border bg-popover shadow-2xl">
+      <div data-glass-slot="dialog" className="relative m-0 h-fit w-[min(640px,92vw)] overflow-hidden rounded-[var(--radius-control)] border border-border">
         <div className="flex items-center gap-2 border-b border-border/60 px-3">
           <Search aria-hidden="true" className="icon-toolbar shrink-0 text-text-muted" />
           <input

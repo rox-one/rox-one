@@ -1,0 +1,216 @@
+/* Arc Glass content surfaces — the screen vocabulary (frozen contract,
+   docs/plans/2026-10-15-glass-all-screens.md §"Контракт стеклянных
+   поверхностей"). Markup tags the root of a surface with
+   `data-glass-slot="<slot>"`; this file paints it.
+
+   Loaded lazily by installGlassSkin() together with arc-glass-skin.css (one
+   install, both un-awaited dynamic imports) and active only under
+   `html[data-theme="arc-glass"]`.
+
+   Rules of the material:
+   - Tokens only. Every value is a `var(--…)` reference; the raw numbers live in
+     styles/tokens/material.css and derive from --glass-intensity.
+   - Blur is STATIC — `backdrop-filter` never appears in a transition or an
+     animation. Motion is transform/opacity through --motion-* tokens.
+   - Only panel / toolbar / dialog / sheet / toast blur. Cards, tables, rows,
+     empty states and editors are tint + sheen + hairline (cheap, sharp, and
+     readable over the wallpaper).
+   - Hairlines are inset box-shadows, never borders: adopting a slot can never
+     move layout. Radius stays the component's own business (islands, cards and
+     overlays each carry their radius token), so nothing here forces one.
+   - Each inset shadow is hoisted into a local custom property
+     (`--glass-panel-edge`, `--glass-surface-ring`, …): stylelint's
+     strict-value rule flags the `inset` keyword on bare box-shadow
+     declarations, and custom properties sit outside the ratchet — the same
+     pattern the token files use.
+   - `body` in the selectors lifts these recipes over the skin's generic
+     `[data-glass-slot]` rule (equal-specificity tie otherwise).
+
+   Slots: panel | toolbar | card | table | row | empty | editor | dialog |
+   sheet | toast. The floating popover/composer/mini-button vocabulary lives in
+   arc-glass-skin.css and is untouched here. */
+
+/* --- panel: rails / inspectors inside content ---------------------------- */
+/* Background-family tint + a seam-side hairline; blur is allowed (static). */
+html[data-theme="arc-glass"] body [data-glass-slot="panel"] {
+  --glass-fill: var(--glass-card-fill);
+  --glass-fill-mix: var(--glass-panel-mix);
+  --glass-panel-edge: inset -1px 0 0 var(--glass-hairline), var(--glass-card-shadow);
+  backdrop-filter: blur(var(--glass-blur-tight)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-panel-edge);
+}
+
+/* --- toolbar: sticky headers / toolbars --------------------------------- */
+/* Blur + a bottom hairline. The blur is a static paint: no transition lists it. */
+html[data-theme="arc-glass"] body [data-glass-slot="toolbar"] {
+  --glass-fill: var(--background);
+  --glass-fill-mix: var(--glass-toolbar-mix);
+  --glass-toolbar-edge: inset 0 -1px 0 var(--glass-hairline);
+  backdrop-filter: blur(var(--glass-blur-tight)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-toolbar-edge);
+}
+
+/* --- card: cards / tiles ------------------------------------------------ */
+/* Elev-1 tint + top specular sheen + hairline inset. No blur. Hover only
+   raises --glass-hover-boost, so the paint changes and nothing reflows;
+   `data-glass-state="hover"` mirrors the same state statically for galleries
+   and screenshot matrices (the data-glass-pressed idiom from the skin). */
+html[data-theme="arc-glass"] body [data-glass-slot="card"] {
+  --glass-fill: var(--glass-card-fill);
+  --glass-fill-mix: var(--glass-card-mix);
+  --glass-specular-alpha: var(--glass-sheen);
+  --glass-surface-ring: inset 0 0 0 1px var(--glass-hairline), var(--glass-card-shadow);
+  backdrop-filter: none;
+  box-shadow: var(--glass-surface-ring);
+}
+
+html[data-theme="arc-glass"] body [data-glass-slot="card"]:is(:hover, [data-glass-state="hover"]):not(:disabled) {
+  --glass-hover-boost: 6%;
+}
+
+/* --- table: table containers ------------------------------------------- */
+/* Container tint + hairline; the separators are the grid hairline, drawn as an
+   inset shadow so no row gains a millimetre of height. */
+html[data-theme="arc-glass"] body [data-glass-slot="table"] {
+  --glass-fill: var(--glass-card-fill);
+  --glass-fill-mix: var(--glass-table-mix);
+  --glass-surface-ring: inset 0 0 0 1px var(--glass-hairline), var(--glass-card-shadow);
+  backdrop-filter: none;
+  box-shadow: var(--glass-surface-ring);
+}
+
+html[data-theme="arc-glass"] body [data-glass-slot="table"] :is(tr, [data-glass-slot="row"]) + :is(tr, [data-glass-slot="row"]) {
+  --glass-table-divider: inset 0 1px 0 var(--grid-divider);
+  box-shadow: var(--glass-table-divider);
+}
+
+/* --- row: interactive rows --------------------------------------------- */
+/* Fully transparent base — a row is a hit target, not a surface. Hover and
+   selection reuse the state layers (tokens/state.css), including the static
+   selection marker, so a row reads the same on any surface. */
+html[data-theme="arc-glass"] body [data-glass-slot="row"] {
+  --glass-fill: transparent;
+  --glass-fill-mix: 0%;
+  --glass-specular-alpha: 0%;
+  --glass-hover-boost: 0%;
+  background: transparent;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+html[data-theme="arc-glass"] body [data-glass-slot="row"]:hover:not(:disabled) {
+  background: var(--state-hover);
+}
+
+html[data-theme="arc-glass"] body [data-glass-slot="row"]:is([aria-selected="true"], [data-state="selected"]) {
+  --glass-row-marker: inset var(--state-marker-width) 0 0 var(--accent);
+  background: var(--state-selected);
+  box-shadow: var(--glass-row-marker);
+}
+
+/* --- empty: empty states ----------------------------------------------- */
+/* A soft slab: the lightest tint of the family, a hairline and the sheen. */
+html[data-theme="arc-glass"] body [data-glass-slot="empty"] {
+  --glass-fill: var(--glass-card-fill);
+  --glass-fill-mix: var(--glass-empty-mix);
+  --glass-specular-alpha: var(--glass-sheen);
+  --glass-surface-ring: inset 0 0 0 1px var(--glass-hairline), var(--glass-card-shadow);
+  backdrop-filter: none;
+  box-shadow: var(--glass-surface-ring);
+}
+
+/* --- editor: reading / editing surfaces -------------------------------- */
+/* Dense fill (--glass-editor-mix never drops below 80%) + sheen, so text keeps
+   its AA contrast over the wallpaper. Never blur. */
+html[data-theme="arc-glass"] body [data-glass-slot="editor"] {
+  --glass-fill: var(--glass-card-fill);
+  --glass-fill-mix: var(--glass-editor-mix);
+  --glass-specular-alpha: var(--glass-sheen);
+  --glass-surface-ring: inset 0 0 0 1px var(--glass-hairline), var(--glass-card-shadow);
+  backdrop-filter: none;
+  box-shadow: var(--glass-surface-ring);
+}
+
+/* --- dialog / sheet / toast: overlays ---------------------------------- */
+/* Floating: blur + the elev-3 shadow family + a hairline. Entrance reuses the
+   skin's pop pattern (rox-glass-pop-in/out) and its motion tokens — no new
+   keyframes, and no animation touches a filter. */
+html[data-theme="arc-glass"] body :is(
+    [data-glass-slot="dialog"],
+    [data-glass-slot="sheet"],
+    [data-glass-slot="toast"],
+    [data-sonner-toast]
+  ) {
+  --glass-fill: var(--glass-overlay-fill);
+  --glass-fill-mix: var(--glass-overlay-mix);
+  --glass-overlay-edge: inset 0 0 0 1px var(--glass-hairline), var(--glass-overlay-shadow);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-overlay-edge);
+}
+
+html[data-theme="arc-glass"] body :is([data-glass-slot="toast"], [data-sonner-toast]) {
+  animation: rox-glass-pop-in var(--motion-spring) var(--ease-spring) both;
+}
+
+html[data-theme="arc-glass"] body :is([data-glass-slot="dialog"], [data-glass-slot="sheet"]):is([data-state="open"], [data-state="delayed-open"]) {
+  animation: rox-glass-pop-in var(--motion-spring) var(--ease-spring) both;
+}
+
+html[data-theme="arc-glass"] body :is([data-glass-slot="dialog"], [data-glass-slot="sheet"])[data-state="closed"] {
+  animation: rox-glass-pop-out var(--motion-spring-exit) var(--ease-exit) both;
+}
+
+/* --- content card edge (float join) ------------------------------------ */
+/* The content area is one rounded card floating over the frame; give it a top
+   inset highlight so the join reads as a glass edge. Same declaration list as
+   layers.css plus that highlight, so nothing else changes. */
+html[data-theme="arc-glass"][data-content-join="float"] [data-panel-grid-viewport] {
+  --glass-content-edge: inset 0 1px 0 var(--glass-hairline), var(--content-shadow);
+  box-shadow: var(--glass-content-edge);
+}
+
+/* --- degradations ------------------------------------------------------ */
+/* Reduced transparency, high contrast and the basic glass tier: solid fills
+   (100% mix) with the sheen flattened and blur off. High contrast also
+   re-points the hairline at the stronger edge colour, so every slot's existing
+   inset ring gets crisper without a second declaration. The low-power render
+   profile keeps the tint and drops only the blur. Nothing here transitions
+   backdrop-filter, so zeroing the tokens is the whole fix. */
+html[data-theme="arc-glass"][data-contrast="high"] body [data-glass-slot],
+html[data-theme="arc-glass"][data-glass="basic"] body [data-glass-slot] {
+  --glass-fill-mix: 100%;
+  --glass-specular-alpha: 0%;
+  --glass-hover-boost: 0%;
+  --glass-blur: 0px;
+  --glass-blur-tight: 0px;
+  backdrop-filter: none;
+}
+
+html[data-theme="arc-glass"][data-contrast="high"] body [data-glass-slot] {
+  --glass-hairline: var(--border-strong);
+}
+
+html[data-theme="arc-glass"][data-render-profile="performance"] body [data-glass-slot] {
+  --glass-blur: 0px;
+  --glass-blur-tight: 0px;
+  backdrop-filter: none;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html[data-theme="arc-glass"] body [data-glass-slot] {
+    --glass-fill-mix: 100%;
+    --glass-specular-alpha: 0%;
+    --glass-hover-boost: 0%;
+    --glass-blur: 0px;
+    --glass-blur-tight: 0px;
+    backdrop-filter: none;
+  }
+
+  html[data-theme="arc-glass"][data-content-join="float"] [data-panel-grid-viewport] {
+    box-shadow: var(--content-shadow);
+  }
+}
+
+html[data-theme="arc-glass"][data-contrast="high"][data-content-join="float"] [data-panel-grid-viewport] {
+  box-shadow: var(--content-shadow);
+}

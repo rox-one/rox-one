@@ -82,12 +82,24 @@ export function KnowledgeMapDocView({ node, workspaceId }: KnowledgeMapDocViewPr
   }, [node, workspaceId])
 
   if (!node) {
-    return <p className="px-1 py-6 text-sm text-muted-foreground">{t('knowledgeMap.unavailable')}</p>
+    return (
+      <p
+        className="px-1 py-6 text-sm text-muted-foreground"
+        // Arc Glass: no selected node = the `empty` slab.
+        data-glass-slot="empty"
+      >
+        {t('knowledgeMap.unavailable')}
+      </p>
+    )
   }
 
   return (
     <div className="space-y-3">
-      <div className="flex items-baseline justify-between gap-3 border-b border-border pb-2">
+      <div
+        className="flex items-baseline justify-between gap-3 border-b border-border pb-2"
+        // Arc Glass: document title strip = toolbar material.
+        data-glass-slot="toolbar"
+      >
         <h4 className="truncate text-sm font-medium" title={node.relPath ?? node.label}>
           {node.label}
         </h4>
@@ -100,16 +112,30 @@ export function KnowledgeMapDocView({ node, workspaceId }: KnowledgeMapDocViewPr
           <Spinner className="w-4 h-4" />
         </div>
       ) : error ? (
-        <p className="px-1 py-6 text-sm text-muted-foreground" role="alert">
+        <p
+          className="px-1 py-6 text-sm text-muted-foreground"
+          // Arc Glass: read failure = the `empty` slab.
+          data-glass-slot="empty"
+          role="alert"
+        >
           {t('knowledgeMap.error')}
         </p>
       ) : content === null ? (
-        <div className="flex items-center gap-2 px-1 py-6 text-sm text-muted-foreground">
+        <div
+          className="flex items-center gap-2 px-1 py-6 text-sm text-muted-foreground"
+          // Arc Glass: unreadable source = the `empty` slab.
+          data-glass-slot="empty"
+        >
           <FileWarning className="icon-toolbar" aria-hidden />
           <span>{t('knowledgeMap.unavailable')}</span>
         </div>
       ) : (
-        <div className="prose prose-sm max-w-none dark:prose-invert">
+        <div
+          className="prose prose-sm max-w-none dark:prose-invert"
+          // Arc Glass: markdown reader = an `editor` surface (dense fill +
+          // sheen, never blur — the AA floor holds over the wallpaper).
+          data-glass-slot="editor"
+        >
           <Markdown mode="minimal">{content}</Markdown>
         </div>
       )}

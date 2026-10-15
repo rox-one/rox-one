@@ -235,6 +235,7 @@ export default function KnowledgeSettingsPage() {
                     )}
                   </span>
                   <textarea
+                    data-glass-slot="editor"
                     className="h-16 w-full rounded-[var(--radius-card)] border border-border/60 bg-background px-2 py-1.5 text-xs"
                     value={aiPrompts[mode] ?? ''}
                     placeholder={t(NOTES_AI_PROMPT_KEYS[mode])}
