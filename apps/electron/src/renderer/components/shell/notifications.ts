@@ -12,6 +12,12 @@ import * as storage from '@/lib/local-storage'
 
 export type NotificationKind = 'agent' | 'approval' | 'error' | 'automation' | 'balance'
 
+/**
+ * Panel view filter. Lives with the model (not in `NotificationPanel.tsx`) so
+ * the eager bell can own the state without a runtime edge to the lazy panel.
+ */
+export type NotificationFilter = 'all' | 'unread'
+
 export interface ShellNotification {
   id: string
   kind: NotificationKind

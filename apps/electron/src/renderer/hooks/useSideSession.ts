@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { sideSessionByWorkspaceAtom } from '@/atoms/side-session'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { openOrFocusPanelRouteAtom } from '@/atoms/panel-stack'
-import { useAppShellContext } from '@/context/AppShellContext'
+import type { AppShellContextType } from '@/context/AppShellContext'
 import { routes } from '@/lib/navigate'
 
 /** Pure: which remembered side session is still usable. */
@@ -19,12 +19,19 @@ export function usableSideSession(
 }
 
 /**
+ * The shell values this hook acts through. They arrive as an argument instead
+ * of through `useAppShellContext()` because React reads context at the CALL
+ * SITE: the shell's own `AppShellContent` renders the `AppShellProvider` in its
+ * return value, so a hook it calls in its own body cannot see that provider.
+ */
+export type SideSessionScope = Pick<AppShellContextType, 'activeWorkspaceId' | 'onCreateSession'>
+
+/**
  * Open the workspace's side session in a panel next to whatever screen is
  * current; creates (and remembers) one when there is none.
  */
-export function useSideSession() {
+export function useSideSession({ activeWorkspaceId, onCreateSession }: SideSessionScope) {
   const { t } = useTranslation()
-  const { activeWorkspaceId, onCreateSession } = useAppShellContext()
   // Read metas at call time: no re-render on every streaming meta tick.
   const store = useStore()
   const [byWs, setByWs] = useAtom(sideSessionByWorkspaceAtom)
