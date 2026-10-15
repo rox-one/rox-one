@@ -69,3 +69,5 @@
 | 2026-10-14 | W11 merge PR #2073 | merge `cb707f2b` | ✅ влито в main |
 | 2026-10-15 | W12 «Rox R1 Max defaults» (PR #2093): общий ROX-ключ в клиенте (gen-rox-defaults + installRoxDefaults, CI-секрет), `api.rox.one/v1` в ядрах кукбуков (lab defaultEnv + credential-only redaction), вендор-ресинк; фикс G3 (P2 redaction, P3 доки) | `2d59d871f` | ✅ |
 | 2026-10-15 | W12 merge PR #2093 | merge `52d427a22` | ✅ влито в main |
+| 2026-10-15 | W13 «Colab Convenience & Informativity» (PR #2127): командный режим, поиск/замена, автосейв+индикатор, статус-бар, длительности, scroll-spy, «Перезапустить и выполнить», md-микро, конвертация ячеек; + fix AppShellProvider, re-record bundle-size | `f1352a97c` | ✅ |
+| 2026-10-15 | W13 merge PR #2127 | merge `3fcb612d4` | ✅ влито в main |
