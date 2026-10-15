@@ -1,7 +1,13 @@
 /**
  * DaytonaProvider — in-memory client conformance, lifecycle, secrets, zombies.
+ *
+ * Hermetic: every case below drives an injected `MemoryDaytonaClient`, and the
+ * offline seam is imported first so `globalThis.fetch` is already a throwing
+ * stub by the time the provider modules are evaluated — a provider built without
+ * a client can no longer reach api.github.com/Daytona from a unit run.
  */
-import { describe, expect, test } from 'bun:test';
+import { blockedFetchUrls, liveFetch, withLiveNetwork } from './helpers/offline-network.ts';
+import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -30,6 +36,28 @@ describe('public cloud-run registry', () => {
     expect(coercePublicCloudRunProvider('modal')).toBe('daytona');
     expect(coercePublicCloudRunProvider('e2b')).toBe('daytona');
     expect(coercePublicCloudRunProvider('local')).toBe('local');
+  });
+});
+
+describe('offline test network', () => {
+  test('the seam owns global fetch and records every blocked url', async () => {
+    expect(globalThis.fetch).not.toBe(liveFetch);
+    const url = 'https://api.github.com/repos/rox-one/rox-one';
+    await expect(fetch(url)).rejects.toThrow(/offline test network/);
+    expect(blockedFetchUrls).toContain(url);
+  });
+
+  test('a provider built without an injected client cannot reach the network', async () => {
+    await withDir(async (dir) => {
+      const provider = new DaytonaProvider({ baseDir: dir, resolveApiKey: async () => 'test-key' });
+      const spec = {
+        id: `offline-${Date.now().toString(36)}`,
+        name: 'offline',
+        subtasks: [{ id: 't1', prompt: 'no network' }],
+        limits: { maxWallClockSec: 60 },
+      };
+      await expect(provider.createRun(spec)).rejects.toThrow(/offline test network/);
+    });
   });
 });
 
@@ -237,29 +265,56 @@ describe('HttpDaytonaClient', () => {
   });
 });
 
-const live = process.env.DAYTONA_LIVE === '1' && Boolean(process.env.DAYTONA_API_KEY);
+/**
+ * The seam patches a process global; hand the real fetch back so files that run
+ * after this one in the same `bun test` process are unaffected.
+ */
+afterAll(() => {
+  globalThis.fetch = liveFetch;
+});
+
+/**
+ * Live sandbox leg — attended local runs only, never on CI.
+ *
+ * The nightly conformance job used to export DAYTONA_LIVE from the API-key
+ * secret, which made this file depend on real credentials and unrestricted
+ * egress on a hosted runner: the un-mocked call then surfaces as GitHub's
+ * `Resource not accessible by integration` instead of a deterministic result.
+ * The leg is therefore an explicit local command:
+ *
+ *   DAYTONA_LIVE=1 DAYTONA_API_KEY=... bun test packages/cloud-runner/src/__tests__/daytona-provider.test.ts
+ *
+ * `withLiveNetwork` re-arms the real fetch the offline seam captured.
+ */
+const live =
+  process.env.DAYTONA_LIVE === '1' &&
+  Boolean(process.env.DAYTONA_API_KEY) &&
+  process.env.CI !== 'true' &&
+  process.env.CI !== '1';
 
 describe('DaytonaProvider live sandbox', () => {
   test.skipIf(!live)('start then cancel terminates the sandbox with a cleanup receipt', async () => {
-    await withDir(async (dir) => {
-      const provider = new DaytonaProvider({
-        baseDir: dir,
-        resolveApiKey: async () => process.env.DAYTONA_API_KEY ?? '',
-        ttlSec: 300,
+    await withLiveNetwork(async () => {
+      await withDir(async (dir) => {
+        const provider = new DaytonaProvider({
+          baseDir: dir,
+          resolveApiKey: async () => process.env.DAYTONA_API_KEY ?? '',
+          ttlSec: 300,
+        });
+        const spec = {
+          id: `live-${Date.now().toString(36)}`,
+          name: 'live-cancel',
+          subtasks: [{ id: 't1', prompt: 'bounded live cancel' }],
+          limits: { maxWallClockSec: 120 },
+          ttlSec: 300,
+        };
+        await provider.createRun(spec);
+        await provider.cancel(spec.id);
+        const status = await provider.getStatus(spec.id);
+        expect(status.state).toBe('cancelled');
+        const receipt = await provider.sweepZombies();
+        expect(Array.isArray(receipt.deletedSandboxIds)).toBe(true);
       });
-      const spec = {
-        id: `live-${Date.now().toString(36)}`,
-        name: 'live-cancel',
-        subtasks: [{ id: 't1', prompt: 'bounded live cancel' }],
-        limits: { maxWallClockSec: 120 },
-        ttlSec: 300,
-      };
-      await provider.createRun(spec);
-      await provider.cancel(spec.id);
-      const status = await provider.getStatus(spec.id);
-      expect(status.state).toBe('cancelled');
-      const receipt = await provider.sweepZombies();
-      expect(Array.isArray(receipt.deletedSandboxIds)).toBe(true);
     });
   });
 });

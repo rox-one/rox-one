@@ -3,17 +3,25 @@
  *
  * The gate cases are exercised both through the real CLI (exit codes as CI sees them) on throwaway
  * renderer trees and against the pure `evaluateAssets`, which aggregates js/css prefix TOTALS and the
- * whole-extension totals; prefix derivation and the recording floor are pure-function cases.
+ * whole-extension totals; prefix derivation and the recording floor are pure-function cases. The
+ * recording itself is covered too: `--update --prefix=` must move only the prefixes it names, every
+ * write must carry provenance the gate ignores, and a chunk the build listed but cannot be read must
+ * fail rather than vanish from the measurement.
  */
 import { afterEach, describe, expect, it } from 'bun:test'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { gzipSync } from 'node:zlib'
 import {
+  BUDGET_SLACK_MIN_BYTES,
+  BUDGET_SLACK_RATIO,
+  DESCRIPTION,
   MAX_NEW_CHUNK_BYTES,
   MAX_NEW_STARTUP_BYTES,
   MIN_BUDGET_BYTES,
+  RECORDED_COMMENT,
+  UnreadableFileError,
   assetKind,
   budgetSlackBytes,
   buildBudgets,
@@ -24,11 +32,14 @@ import {
   formatFailure,
   formatStartupFailure,
   formatUpdateDelta,
+  gitHeadSha,
   measureRendererChunks,
   measureStartup,
+  mergePrefixBudgets,
   parseHtmlReferences,
   payloadSlackBytes,
   readLocalePayloads,
+  recordProvenance,
   type BundleBaseline,
   type LocalePayloads,
   type MeasuredChunk,
@@ -70,6 +81,11 @@ function seedBaseline(root: string, baseline: Partial<BundleBaseline>): void {
     join(root, 'perf-baselines/bundle-size.json'),
     JSON.stringify({ description: 'test', ...baseline }),
   )
+}
+
+/** The baseline as recorded on disk, for the cases that assert what a write actually wrote. */
+function readRecorded(root: string): BundleBaseline {
+  return JSON.parse(readFileSync(join(root, 'perf-baselines/bundle-size.json'), 'utf8')) as BundleBaseline
 }
 
 /** A synthetic startup measurement for the pure gate, with one js file of `jsRawBytes`. */
@@ -842,5 +858,292 @@ describe('i18n payload is budgeted apart from the code it rides with', () => {
     expect(code.code).toBe(1)
     expect(code.err).toContain("js prefix 'ru'")
     expect(code.err).toContain('budget 200000 B')
+  })
+})
+
+/**
+ * Slack is a fraction of the budget floored at the historical 4 KiB. A constant allowance does not
+ * scale: 4 KiB is 0.012% of the ~36.7 MB js total, tighter than the same source reproduces across
+ * platforms, while the fraction is 0.05% of it. The floor is what keeps small chunks where they were.
+ */
+describe('proportional slack (0.05% of the budget, floored at 4 KiB)', () => {
+  it('floors small budgets at the historical 4 KiB, so no prefix is gated more loosely than before', () => {
+    expect(budgetSlackBytes(0)).toBe(BUDGET_SLACK_MIN_BYTES)
+    expect(budgetSlackBytes(MIN_BUDGET_BYTES)).toBe(BUDGET_SLACK_MIN_BYTES)
+    // The heaviest js prefix (2.3 MB) and the heaviest css one (459 KB) both land on the floor, so the
+    // proportional rule does not widen a single per-prefix budget.
+    expect(budgetSlackBytes(2_346_835)).toBe(BUDGET_SLACK_MIN_BYTES)
+    expect(budgetSlackBytes(459_071)).toBe(BUDGET_SLACK_MIN_BYTES)
+  })
+
+  it('prices the slack in the budget above the floor, at the stated fraction', () => {
+    expect(budgetSlackBytes(12_000_000)).toBe(6_000)
+    // 0.05% of the recorded 36,760,622 B js total is 18,380.311 B — rounded to the byte, not up.
+    expect(budgetSlackBytes(36_760_622)).toBe(Math.round(BUDGET_SLACK_RATIO * 36_760_622))
+    expect(budgetSlackBytes(36_760_622)).toBe(18_380)
+  })
+
+  it('gates a whole-extension total at recorded + proportional slack, and one byte beyond it fails', () => {
+    const recorded = 20_000_000
+    const slack = budgetSlackBytes(recorded)
+    expect(slack).toBe(10_000)
+    const baseline = {
+      budgets: { main: { totalRawBytes: recorded + 100_000, gzipTotalBytes: 1 } },
+      totals: { jsRawBytes: recorded },
+    }
+    expect(evaluateAssets([chunk('main-aaaaaaaa.js', recorded + slack)], baseline)).toEqual([])
+
+    const failures = evaluateAssets([chunk('main-aaaaaaaa.js', recorded + slack + 1)], baseline)
+    expect(failures).toHaveLength(1)
+    expect(failures[0]).toMatchObject({ prefix: null, rawBytes: recorded + slack + 1, budget: recorded })
+  })
+})
+
+/** The fixture build and recording the selective-accept cases narrow: every prefix moves if rewritten. */
+const ACCEPT_BUILD = {
+  'main-aaaaaaaa.js': 300_000,
+  'index-bbbbbbbb.js': 260_000,
+  'main-cccccccc.css': 300_000,
+  'index-dddddddd.css': 260_000,
+}
+const ACCEPT_RECORDED: Partial<BundleBaseline> = {
+  budgets: {
+    main: { totalRawBytes: 100_000, gzipTotalBytes: 1, codeRawBytes: 90_000 },
+    index: { totalRawBytes: 999_999, gzipTotalBytes: 2 },
+  },
+  stylesheets: {
+    main: { totalRawBytes: 100_000, gzipTotalBytes: 3 },
+    index: { totalRawBytes: 888_888, gzipTotalBytes: 4 },
+  },
+  totals: { jsRawBytes: 1_099_999, jsGzipBytes: 5, cssRawBytes: 988_888, cssGzipBytes: 6 },
+  startup: { 'index.html': { jsRawBytes: 1234, gzipTotalBytes: 7, fileCount: 3 } },
+}
+
+/**
+ * `--update --prefix=<p1,p2>` accepts only the prefixes it names. The point is reviewable diffs: a
+ * translation or unrelated-prefix merge re-records its own prefix instead of every budget at once, and
+ * a selective run must never quietly re-baseline a prefix the reviewer is not looking at.
+ */
+describe('--update --prefix accepts only the named prefixes', () => {
+  it('merges one prefix into the recording, leaving every other entry object untouched', () => {
+    const recorded = {
+      main: { totalRawBytes: 100_000, gzipTotalBytes: 1, codeRawBytes: 90_000 },
+      ru: { totalRawBytes: 900_000, gzipTotalBytes: 2, codeRawBytes: 700_000 },
+    }
+    const measured = { main: { totalRawBytes: 300_000, gzipTotalBytes: 3 }, ru: { totalRawBytes: 905_000, gzipTotalBytes: 4, codeRawBytes: 705_000 } }
+    expect(mergePrefixBudgets(recorded, measured, ['main'])).toEqual({
+      main: { totalRawBytes: 300_000, gzipTotalBytes: 3 },
+      // Not accepted: byte for byte what was recorded, i18n-split field included.
+      ru: { totalRawBytes: 900_000, gzipTotalBytes: 2, codeRawBytes: 700_000 },
+    })
+    // An accepted prefix new to the recording is added after the recorded ones, so nothing is reordered.
+    expect(Object.keys(mergePrefixBudgets(recorded, measured, ['zzz']))).toEqual(['main', 'ru'])
+    expect(Object.keys(mergePrefixBudgets(recorded, { ...measured, zzz: { totalRawBytes: 1, gzipTotalBytes: 1 } }, ['zzz']))).toEqual([
+      'main',
+      'ru',
+      'zzz',
+    ])
+    // A named prefix the build no longer emits is not a recording of nothing: it keeps its entry.
+    expect(mergePrefixBudgets(recorded, measured, ['gone'])).toEqual(recorded)
+  })
+
+  it('re-records exactly the named prefix and keeps every other section as recorded', () => {
+    const root = tempRoot()
+    seedBuild(root, ACCEPT_BUILD)
+    seedBaseline(root, ACCEPT_RECORDED)
+    const result = runCli(root, ['--update', '--prefix=main'])
+    expect(result.code).toBe(0)
+    // Anything the gate reports is prefixed; the run itself is silent on success.
+    expect(result.err).not.toContain('bundle-size:')
+
+    const recorded = readRecorded(root)
+    // `--prefix` names a chunk-name prefix, and `main` is one in both maps: both are accepted.
+    expect(recorded.budgets.main?.totalRawBytes).toBe(300_000)
+    expect(recorded.stylesheets?.main?.totalRawBytes).toBe(300_000)
+    // Every other prefix keeps its recorded entry, field for field.
+    expect(recorded.budgets.index).toEqual({ totalRawBytes: 999_999, gzipTotalBytes: 2 })
+    expect(recorded.stylesheets?.index).toEqual({ totalRawBytes: 888_888, gzipTotalBytes: 4 })
+    // Whole-build numbers describe one build, so a selective accept leaves them as recorded.
+    expect(recorded.totals).toEqual(ACCEPT_RECORDED.totals)
+    expect(recorded.startup).toEqual(ACCEPT_RECORDED.startup)
+    // The one thing a selective accept does canonicalise is the file's own header: `description` and
+    // `comment` are the module constants this writer always records, exactly as a full --update writes
+    // them (the fixture's `description: 'test'` is not preserved any more than `--update` preserved it).
+    expect(recorded.description).toBe(DESCRIPTION)
+    expect(recorded.comment).toBe(RECORDED_COMMENT)
+
+    // Provenance is on the write, and the fixture tree is not a checkout, so `source` is the invocation.
+    expect(new Date(recorded.recordedAt!).toISOString()).toBe(recorded.recordedAt)
+    expect(recorded.recordedAt ?? '').toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
+    expect(recorded.source).toBe('bun scripts/check-bundle-size.ts --update --prefix=main')
+  })
+
+  it('accepts several comma-separated prefixes and reports a named prefix the build no longer emits', () => {
+    const root = tempRoot()
+    seedBuild(root, ACCEPT_BUILD)
+    seedBaseline(root, {
+      ...ACCEPT_RECORDED,
+      budgets: { ...(ACCEPT_RECORDED.budgets ?? {}), gone: { totalRawBytes: 500_000, gzipTotalBytes: 8 } },
+    })
+    const result = runCli(root, ['--update', '--prefix=main,index,gone'])
+    expect(result.code).toBe(0)
+    expect(result.out).toContain('gone: not in this build')
+
+    const recorded = readRecorded(root)
+    expect(recorded.budgets.main?.totalRawBytes).toBe(300_000)
+    expect(recorded.budgets.index?.totalRawBytes).toBe(260_000)
+    expect(recorded.stylesheets?.index?.totalRawBytes).toBe(260_000)
+    // Nothing to measure, so the recorded entry stands rather than being dropped or zeroed.
+    expect(recorded.budgets.gone).toEqual({ totalRawBytes: 500_000, gzipTotalBytes: 8 })
+  })
+
+  it('still rewrites every section when no --prefix is given', () => {
+    const root = tempRoot()
+    seedBuild(root, ACCEPT_BUILD)
+    seedBaseline(root, ACCEPT_RECORDED)
+    expect(runCli(root, ['--update']).code).toBe(0)
+
+    const recorded = readRecorded(root)
+    expect(recorded.budgets.main?.totalRawBytes).toBe(300_000)
+    expect(recorded.budgets.index?.totalRawBytes).toBe(260_000)
+    expect(recorded.stylesheets?.main?.totalRawBytes).toBe(300_000)
+    expect(recorded.stylesheets?.index?.totalRawBytes).toBe(260_000)
+    // Whole-build numbers are re-measured, not carried over.
+    expect(recorded.totals?.jsRawBytes).toBe(560_000)
+    expect(recorded.totals?.cssRawBytes).toBe(560_000)
+    expect(recorded.startup?.['index.html']?.jsRawBytes).toBe(0)
+    // A full rewrite records provenance too, and here it names the invocation as it ran.
+    expect(new Date(recorded.recordedAt!).toISOString()).toBe(recorded.recordedAt)
+    expect(recorded.source).toBe('bun scripts/check-bundle-size.ts --update')
+    // Same canonical header as the selective accept: both writer paths (check-bundle-size.ts:1092 for
+    // --print, :1153 for --update) take `description`/`comment` from the module constants.
+    expect(recorded.description).toBe(DESCRIPTION)
+    expect(recorded.comment).toBe(RECORDED_COMMENT)
+  })
+
+  it('refuses a prefix that is in neither the build nor the baseline, and writes nothing', () => {
+    const root = tempRoot()
+    seedBuild(root, ACCEPT_BUILD)
+    seedBaseline(root, ACCEPT_RECORDED)
+    const before = readFileSync(join(root, 'perf-baselines/bundle-size.json'), 'utf8')
+
+    const result = runCli(root, ['--update', '--prefix=mani'])
+    expect(result.code).toBe(1)
+    expect(result.err).toContain('mani')
+    // A refused accept must not half-write: accepting nothing while looking like it accepted is the
+    // silent failure the flag exists to prevent.
+    expect(readFileSync(join(root, 'perf-baselines/bundle-size.json'), 'utf8')).toBe(before)
+  })
+
+  it('refuses --prefix without --update, and an empty --prefix list', () => {
+    const root = tempRoot()
+    seedBuild(root, ACCEPT_BUILD)
+    seedBaseline(root, ACCEPT_RECORDED)
+
+    const check = runCli(root, ['--check', '--prefix=main'])
+    expect(check.code).toBe(1)
+    expect(check.err).toContain('--prefix narrows --update only')
+
+    const empty = runCli(root, ['--update', '--prefix='])
+    expect(empty.code).toBe(1)
+    expect(empty.err).toContain('--prefix needs the chunk-name prefix(es) to accept')
+
+    const bare = runCli(root, ['--update', '--prefix'])
+    expect(bare.code).toBe(1)
+    expect(bare.err).toContain('--prefix needs the chunk-name prefix(es) to accept')
+  })
+
+  it('refuses --prefix when there is no recording to narrow', () => {
+    const root = tempRoot()
+    seedBuild(root, ACCEPT_BUILD)
+    const result = runCli(root, ['--update', '--prefix=main'])
+    expect(result.code).toBe(1)
+    expect(result.err).toContain('--prefix needs the baseline it narrows')
+    // Writing only the named prefix into an empty baseline would un-budget every other prefix.
+    expect(() => readRecorded(root)).toThrow()
+  })
+})
+
+/**
+ * Every write labels itself: `recordedAt` (ISO-8601 UTC) and `source` (the git sha at the measured
+ * root, else the invocation). The gate reads budgets only, so this metadata must never move a
+ * threshold — provenance churn between two recordings of the same bundle is not a regression.
+ */
+describe('provenance is recorded on every write and never gated', () => {
+  it('labels the write with the git sha when the measured root is a checkout', () => {
+    expect(gitHeadSha(ROOT) ?? '').toMatch(/^[0-9a-f]{7,40}$/)
+    expect(gitHeadSha(tempRoot())).toBeUndefined()
+  })
+
+  it('falls back to the invocation when the measured tree is not a checkout', () => {
+    const provenance = recordProvenance(tempRoot(), ['--update', '--prefix=main'])
+    expect(provenance.source).toBe('bun scripts/check-bundle-size.ts --update --prefix=main')
+    expect(new Date(provenance.recordedAt).toISOString()).toBe(provenance.recordedAt)
+  })
+
+  it('is ignored by the gate, even when the metadata is nonsense', () => {
+    const recorded = 1_000_000
+    const chunks = [chunk('main-aaaaaaaa.js', recorded + budgetSlackBytes(recorded))]
+    const baseline = { budgets: { main: { totalRawBytes: recorded, gzipTotalBytes: 1 } } }
+    const labelled: BundleBaseline = { description: 'fixture', recordedAt: 'not-a-date', source: '', ...baseline }
+    expect(evaluateAssets(chunks, baseline)).toEqual([])
+    expect(evaluateAssets(chunks, labelled)).toEqual([])
+
+    const beyond = [chunk('main-aaaaaaaa.js', recorded + budgetSlackBytes(recorded) + 1)]
+    expect(evaluateAssets(beyond, baseline)).toHaveLength(1)
+    expect(evaluateAssets(beyond, labelled)).toHaveLength(1)
+  })
+
+  it('CLI: a baseline carrying provenance checks exactly like one without, and --print writes it too', () => {
+    const root = tempRoot()
+    seedBuild(root, { 'main-aaaaaaaa.js': 300_000 })
+    seedBaseline(root, {
+      budgets: { main: { totalRawBytes: 400_000, gzipTotalBytes: 1 } },
+      recordedAt: '2026-01-01T00:00:00.000Z',
+      source: 'abc1234',
+    })
+    const checked = runCli(root)
+    expect(checked.code).toBe(0)
+    expect(checked.err).not.toContain('bundle-size:')
+
+    const printed = runCli(root, ['--print', join(root, 'printed.json')])
+    expect(printed.code).toBe(0)
+    const written = JSON.parse(readFileSync(join(root, 'printed.json'), 'utf8')) as BundleBaseline
+    expect(new Date(written.recordedAt!).toISOString()).toBe(written.recordedAt)
+    expect(written.source).toBe(`bun scripts/check-bundle-size.ts --print ${join(root, 'printed.json')}`)
+    expect(written.budgets.main?.totalRawBytes).toBe(300_000)
+    // A printed file is a valid baseline: canonical `description`, provenance, and no `comment` — the
+    // comment belongs to `--update` alone (check-bundle-size.ts:1154).
+    expect(written.description).toBe(DESCRIPTION)
+    expect(written.comment).toBeUndefined()
+  })
+})
+
+/**
+ * A chunk `readdirSync` listed must be read or the run must fail: skipping one understates the bundle
+ * and records a budget no build has to stay under, which is the bug class the gate exists for.
+ */
+describe('a chunk that cannot be read is fatal, never silently skipped', () => {
+  it('throws naming the path instead of dropping the entry from the measured bundle', () => {
+    const root = tempRoot()
+    const assets = join(root, 'apps/electron/dist/renderer/assets')
+    // Listed by readdirSync and named like a chunk, but unreadable as one (as a chunk gone between the
+    // listing and the read is: the same read failure, whichever errno the platform reports).
+    mkdirSync(join(assets, 'main-aaaaaaaa.js'), { recursive: true })
+    writeFileSync(join(assets, 'index-bbbbbbbb.js'), Buffer.alloc(64))
+
+    expect(() => measureRendererChunks(assets)).toThrow(UnreadableFileError)
+    expect(() => measureRendererChunks(assets)).toThrow(join(assets, 'main-aaaaaaaa.js'))
+  })
+
+  it('CLI: exits 1 with the offending path in the message', () => {
+    const root = tempRoot()
+    seedBuild(root, { 'index-bbbbbbbb.js': 64 })
+    mkdirSync(join(root, 'apps/electron/dist/renderer/assets/main-aaaaaaaa.js'), { recursive: true })
+
+    const result = runCli(root)
+    expect(result.code).toBe(1)
+    expect(result.err).toContain('cannot read')
+    expect(result.err).toContain(join(root, 'apps/electron/dist/renderer/assets/main-aaaaaaaa.js'))
   })
 })
