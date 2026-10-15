@@ -4,7 +4,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-import { extractArtifact, generateNpmWrappers, installTool, npmInstallDeps } from '../installer';
+import { extractArtifact, generateNpmWrappers, installTool, npmInstallDeps, windowsZipExtractCommand, zipEntryEscapesDest } from '../installer';
 import { toolchainPaths } from '../manifest';
 import type { ToolchainPaths } from '../types';
 import { whichTool } from '../exec';
@@ -76,6 +76,63 @@ describe('installer', () => {
     const dest = path.join(tmpDir, 'zip');
     await extractArtifact(path.join(FIXTURES, 'demo-1.0.0.zip'), 'zip', dest);
     expect(fs.readFileSync(path.join(dest, 'bin', 'demo'), 'utf8')).toContain('fixture-bin');
+    // Голая запись каталога `bin/` — ровно та, на которой win32-guard давал
+    // ложный zip-slip; она обязана оставаться внутри destDir.
+    expect(fs.statSync(path.join(dest, 'bin')).isDirectory()).toBe(true);
+  });
+
+  describe('windows zip-slip guard', () => {
+    // Путь с 8.3-коротким профилем CI-раннера — форма, на которой сломалось
+    // сравнение `Resolve-Path` с `GetFullPath`.
+    const WIN_DEST = 'C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\opencode\\Rox\\bootstrap';
+
+    it('keeps every entry of the benign fixture inside destDir', () => {
+      for (const entry of ['bin/', 'bin\\demo', 'bin/demo', 'README.txt']) {
+        expect(zipEntryEscapesDest(WIN_DEST, entry)).toBe(false);
+      }
+    });
+
+    it('flags traversal, rooted and sibling-prefix entries as escapes', () => {
+      for (const entry of [
+        '../escape.txt',
+        '..\\escape.txt',
+        'bin/../../escape.txt',
+        'C:/evil.txt',
+        'C:\\evil.txt',
+        '\\\\server\\share\\evil.txt',
+        '..\\bootstrap-other\\evil.txt',
+      ]) {
+        expect(zipEntryEscapesDest(WIN_DEST, entry)).toBe(true);
+      }
+    });
+
+    it('compares case-insensitively, as the win32 filesystem does', () => {
+      expect(zipEntryEscapesDest('C:\\Temp\\Rox', 'BIN\\demo')).toBe(false);
+      expect(zipEntryEscapesDest('C:\\TEMP\\ROX', 'bin/demo')).toBe(false);
+      // `..`, который остаётся внутри destDir, — не побег.
+      expect(zipEntryEscapesDest('C:\\Temp\\Rox', 'BIN\\..\\DEMO\\x')).toBe(false);
+    });
+
+    it('canonicalizes dest and candidate through one API and stays fail-closed', () => {
+      const script = windowsZipExtractCommand("C:\\tmp\\o'brien.zip", "C:\\tmp\\o'brien dest").join(' ');
+      // Смешение двух API канонизации и было причиной ложного срабатывания.
+      expect(script).not.toContain('Resolve-Path');
+      expect(script).toContain("$dest = [IO.Path]::GetFullPath('C:\\tmp\\o''brien dest') + [IO.Path]::DirectorySeparatorChar;");
+      expect(script).toContain('$out = [IO.Path]::GetFullPath([IO.Path]::Combine($dest, $e.FullName));');
+      expect(script).toContain('$out.StartsWith($dest, [StringComparison]::OrdinalIgnoreCase)');
+      // Проверка остаётся блокирующей, а не предупреждающей.
+      expect(script).toContain('throw "zip-slip blocked: $($e.FullName)"');
+    });
+
+    it.skipIf(process.platform !== 'darwin' && process.platform !== 'win32')(
+      'rejects the malicious fixture without letting ../ escape destDir',
+      async () => {
+        const dest = path.join(tmpDir, 'slip-demo');
+        await expect(extractArtifact(path.join(FIXTURES, 'slip-demo-1.0.0.zip'), 'zip', dest)).rejects.toThrow();
+        expect(fs.existsSync(path.join(tmpDir, 'escape.txt'))).toBe(false);
+        expect(fs.readdirSync(dest)).toEqual(['bin']);
+      },
+    );
   });
 
   it('installTool (tar.gz): layout, chmod +x, current symlink, cleanup старых версий', async () => {
