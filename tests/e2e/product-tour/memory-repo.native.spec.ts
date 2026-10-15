@@ -102,32 +102,33 @@ function workspaceRepoDir(workspaceId: string): string {
 }
 
 /**
- * Real user gesture: open the «Разделы приложения» disclosure (collapsed by
- * default) and click the sidebar entry for `linkId`. Returns the entry's
- * accessible label, captured before the click flips the active navigator.
+ * Real user gesture: switch screens through the SHIPPED affordance — the
+ * titlebar «Все экраны» pill. Its trigger is `AllScreensMenu.tsx:98-110`
+ * (inside the pill `ModeBar.tsx:456`), the menu it opens is
+ * `AllScreensMenu.tsx:115`, and every screen it lists is a `data-screen-id`
+ * cell (`AllScreensMenu.tsx:151`) whose click runs the registry route
+ * (`primary-nav.ts:113-114` for `memory` / `memoryRepo`).
  *
- * The classic AppShell sidebar renders one `[data-sidebar-link-id]` button per
- * hardcoded link; a collapsed icon rail consumes the first click to reveal the
- * labels, so the caller polls this helper while the shell settles.
+ * The contextual sidebar renders only the CURRENT screen's own rows
+ * (`ShellSidebarNav.tsx:13`), so the global-nav `[data-sidebar-link-id]` row
+ * this spec used to click no longer exists in product source at all. Every step
+ * here asserts: a renamed or removed affordance fails, naming itself, instead of
+ * being swallowed into a poll on the destination screen.
+ *
+ * Returns the entry's visible label, captured before the click navigates.
  */
-async function clickSidebarDestination(page: Page, linkId: string): Promise<string> {
-  const entry = page.locator(`[data-sidebar-link-id="${linkId}"]`)
-  // A collapsed icon rail still renders the buttons, but the click only expands.
-  if ((await entry.count()) === 0 || !(await entry.first().isVisible().catch(() => false))) {
-    const railToggle = page.locator('[data-testid="rail-toggle"]')
-    if ((await railToggle.count()) > 0) await railToggle.first().click({ timeout: 2_000 }).catch(() => {})
-  }
-  const sections = page.locator('details[data-application-sections]')
-  const open = (await sections.count()) > 0
-    && await sections.first().evaluate((node) => (node as HTMLDetailsElement).open).catch(() => false)
-  if (!open && (await sections.count()) > 0) {
-    await sections.locator('summary').first().click({ timeout: 5_000 })
-    await page.waitForTimeout(150)
-  }
-  const target = entry.first()
-  await target.waitFor({ state: 'visible', timeout: 5_000 })
-  const label = ((await target.getAttribute('aria-label')) ?? (await target.innerText())).trim()
-  await target.click({ timeout: 5_000 })
+async function openScreenViaAllScreens(page: Page, screenId: string): Promise<string> {
+  const trigger = page.locator('[data-testid="titlebar-mode-pill"] [data-all-screens-trigger]')
+  await expect(trigger, `the titlebar «Все экраны» pill (to open ${screenId})`).toBeVisible()
+  await trigger.click()
+  const menu = page.locator('[data-testid="all-screens-menu"]')
+  await expect(menu, 'the «Все экраны» menu').toBeVisible()
+  // Every non-hidden surface is listed exactly once, so this waits for the real
+  // menu contents instead of retrying a gesture that can never work.
+  const entry = menu.locator(`[data-screen-id="${screenId}"]`)
+  await expect(entry, `the «Все экраны» entry ${screenId}`).toHaveCount(1)
+  const label = ((await entry.innerText()) ?? '').replace(/\s+/g, ' ').trim()
+  await entry.click()
   return label
 }
 
@@ -171,11 +172,12 @@ async function dismissDialogs(page: Page, seen: string[]): Promise<void> {
 }
 
 /**
- * Real first-run onboarding (the macOS name screen) followed by a real click
- * on the sidebar entry that opens the repository screen. Returns the entry's
- * label so the caller can assert it really was the visible sidebar item.
+ * Real first-run onboarding (the macOS name screen) followed by a real switch
+ * to the repository screen through the titlebar pill. Returns the pill entry's
+ * label so the caller can assert it really was the visible «Репозиторий памяти»
+ * entry.
  */
-async function onboardAndOpenRepoViaSidebar(page: Page, dialogs: string[]): Promise<string> {
+async function onboardAndOpenRepoViaPill(page: Page, dialogs: string[]): Promise<string> {
   const username = page.locator('#onboarding-username')
   // A freshly re-provisioned profile can still be probing its transport; the
   // app shows its own «Повторить» recovery for that, so click it like a user
@@ -197,23 +199,23 @@ async function onboardAndOpenRepoViaSidebar(page: Page, dialogs: string[]): Prom
 
   // The unified first-run flow continues into «Немного о вас» — the profile +
   // permissions questionnaire (`onboarding-questionnaire-step`). It is a
-  // full-screen wizard step, not a dialog, so the shell (and its sidebar) is
-  // not mounted until it is left. A real user leaves it with «Заполнить позже»,
-  // which applies the preselected permissions and then finishes first-run.
+  // full-screen wizard step, not a dialog, so the shell (and the titlebar pill
+  // this spec navigates with) is not mounted until it is left. A real user
+  // leaves it with «Заполнить позже», which applies the preselected permissions
+  // and then finishes first-run.
   const questionnaireSkip = page.locator('[data-testid="questionnaire-skip"]')
   await questionnaireSkip.waitFor({ state: 'visible', timeout: 30_000 })
   await questionnaireSkip.click()
 
-  const screen = page.locator('[data-testid="memory-repo-screen"]')
-  let clickedEntry = ''
-  await expect.poll(async () => {
-    await dismissDialogs(page, dialogs).catch(() => {})
-    clickedEntry = await clickSidebarDestination(page, 'nav:memoryRepo').catch(() => clickedEntry)
-    return screen.count()
-  }, { timeout: 90_000, intervals: [500, 750, 1000] }).toBeGreaterThan(0)
-  await expect(screen).toBeVisible()
+  // The shell mounts behind the wizard; clear whatever still covers the titlebar
+  // (intro dialogs, toasts) before reaching for the pill. The switch itself is a
+  // single gesture whose own assertion owns the failure — nothing is wrapped, so
+  // a missing affordance can never be retried into a silent timeout again.
   await dismissDialogs(page, dialogs)
-  return clickedEntry
+  const label = await openScreenViaAllScreens(page, 'memoryRepo')
+  await expect(page.locator('[data-testid="memory-repo-screen"]')).toBeVisible()
+  await dismissDialogs(page, dialogs)
+  return label
 }
 
 /**
@@ -290,13 +292,13 @@ test('MEMREPO-NATIVE-01: «Память: репозиторий» renders and ma
   try {
     await expect(page.locator('#root')).not.toBeEmpty()
 
-    // ── Reach the shell and the new screen by clicking the real sidebar entry. ──
+    // ── Reach the shell and the new screen through the app's own screen switcher. ──
     const screen = page.locator('[data-testid="memory-repo-screen"]')
-    const clickedEntry = await onboardAndOpenRepoViaSidebar(page, dialogs)
-    observed.sidebarEntry = clickedEntry
-    observed.sidebarEntryCount = await page.locator('[data-sidebar-link-id="nav:memoryRepo"]').count()
+    const clickedEntry = await onboardAndOpenRepoViaPill(page, dialogs)
+    observed.screenEntry = clickedEntry
+    observed.screenEntryVia = '[data-testid="all-screens-menu"] [data-screen-id="memoryRepo"]'
     expect(clickedEntry).toContain('Репозиторий памяти')
-    assertions.push('sidebar: the visible «Репозиторий памяти» (nav:memoryRepo) entry opened the screen')
+    assertions.push('«Все экраны» pill: the visible «Репозиторий памяти» (memoryRepo) entry opened the screen')
 
     // Header + bank switcher + status + HEAD.
     await expect(page.locator('[data-testid="memory-repo-bank"]')).toBeVisible()
@@ -408,7 +410,7 @@ test('MEMREPO-NATIVE-02: ⌘K search finds a materialized repository file', asyn
 
   try {
     await expect(page.locator('#root')).not.toBeEmpty()
-    expect(await onboardAndOpenRepoViaSidebar(page, dialogs)).toContain('Репозиторий памяти')
+    expect(await onboardAndOpenRepoViaPill(page, dialogs)).toContain('Репозиторий памяти')
     await materializeWorkspaceBank(page, dialogs)
     await dismissDialogs(page, dialogs)
     await page.locator('[data-testid="memory-repo-tab-files"]').click()
@@ -514,7 +516,7 @@ test('MEMREPO-NATIVE-03: an edited repository file surfaces the import banner an
     await expect(page.locator('#root')).not.toBeEmpty()
 
     // ── Reach the shell (repo screen) and materialize the workspace projection. ──
-    expect(await onboardAndOpenRepoViaSidebar(page, dialogs)).toContain('Репозиторий памяти')
+    expect(await onboardAndOpenRepoViaPill(page, dialogs)).toContain('Репозиторий памяти')
     const { workspace, repoDir } = await materializeWorkspaceBank(page, dialogs)
     observed.workspace = workspace
     observed.workspaceRepoDir = repoDir
@@ -529,20 +531,18 @@ test('MEMREPO-NATIVE-03: an edited repository file surfaces the import banner an
     observed.editOnDisk = readFileSync(lesson.absPath, 'utf8').includes(marker)
     expect(observed.editOnDisk).toBe(true)
 
-    // ── Open the memory screen as a user would (its sidebar «Память» entry);
-    //    mounting it triggers the real status refresh. ──
+    // ── Open the memory screen as a user would (the «Все экраны» pill's
+    //    «Память» entry); mounting it triggers the real status refresh. ──
     const banner = page.locator('[data-testid="memory-repo-import-banner"]')
-    let openedLabel = ''
-    await expect.poll(async () => {
-      await dismissDialogs(page, dialogs).catch(() => {})
-      openedLabel = await clickSidebarDestination(page, 'nav:memory').catch(() => openedLabel)
-      return banner.count()
-    }, { timeout: 60_000, intervals: [500, 750, 1000] }).toBeGreaterThan(0)
-    observed.sidebarEntry = openedLabel
+    await dismissDialogs(page, dialogs)
+    const openedLabel = await openScreenViaAllScreens(page, 'memory')
+    observed.screenEntry = openedLabel
     expect(openedLabel).toContain('Память')
+    // The banner waits for the screen's own status call — a real wait, not a
+    // click retried under `catch`.
     await expect(banner).toBeVisible()
     await expect(page.locator('[data-testid="memory-list"]')).toBeVisible()
-    assertions.push('sidebar: the «Память» (nav:memory) entry opened the memory screen with the import banner')
+    assertions.push('«Все экраны» pill: the «Память» (memory) entry opened the memory screen with the import banner')
 
     const bannerText = ((await banner.innerText()) || '').replace(/\s+/g, ' ').trim()
     observed.bannerText = bannerText
