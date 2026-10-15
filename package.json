@@ -86,6 +86,7 @@
     "lint:i18n:budget": "bun run scripts/check-i18n-budget.ts",
     "sort-locales": "bun scripts/sort-locales.ts",
     "lint:i18n:sorted": "bun scripts/sort-locales.ts --check",
+    "hooks:install": "git config core.hooksPath .githooks",
     "lint": "bun run lint:ipc-sends && bun run lint:tool-name-checks && bun run lint:electron && bun run lint:shared && bun run lint:ui && bun run lint:rovers-strings",
     "link": "bun link",
     "electron:clean": "bun run scripts/electron-clean.ts",
