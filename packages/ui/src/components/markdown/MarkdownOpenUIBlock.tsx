@@ -25,6 +25,10 @@
  * lazily-imported module) themed through the ROX token bridge in
  * `openui-theme.ts`.
  */
+// Must be evaluated before any `@openuidev/*` import: it claims the library's
+// auto-mount flag so the CDN devtools widget (and its global capture-phase
+// Escape handler) never enters the renderer. See the module for the details.
+import './openui-devtools-optout'
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import {

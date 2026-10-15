@@ -16,6 +16,11 @@ beforeAll(async () => {
   const compiled = process.env.ROX_PROJECT_COLLECTION_BASELINE_BUNDLE ? null : await build({
     entryPoints: [resolve(import.meta.dir, 'fixtures/project-collection.browser.tsx')], bundle: true, write: false,
     platform: 'browser', format: 'iife', jsx: 'automatic', tsconfig: resolve(root, 'apps/electron/tsconfig.json'),
+    // A non-minified bundle folds `process.env.NODE_ENV` to "development", which
+    // switches on @openuidev/react-lang's dev-only auto-mount: it fetches
+    // devtools.browser.js from jsDelivr and that widget stops Escape propagation
+    // document-wide. The production renderer has no such mount.
+    define: { 'process.env.NODE_ENV': '"test"' },
     loader: { '.css': 'empty', '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl' },
     plugins: [{ name: 'readonly-component-bootstrap', setup(builder) {
       builder.onResolve({ filter: /.*/ }, args => {
