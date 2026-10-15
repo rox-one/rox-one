@@ -1475,8 +1475,10 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   // New chat
   useAction('app.newChat', () => handleNewChat())
   useAction('app.newChatInPanel', () => handleNewChat(true))
-  // top50 #20: side session next to any screen.
-  const openSideSession = useSideSession()
+  // top50 #20: side session next to any screen. `contextValue` is passed
+  // explicitly: this body renders the AppShellProvider below, and a hook reads
+  // context where it is called, not what its component returns.
+  const openSideSession = useSideSession(contextValue)
   useAction('session.openSide', () => { void openSideSession() }, undefined, [openSideSession])
 
   // Settings
