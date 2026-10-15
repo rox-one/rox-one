@@ -39,23 +39,42 @@
  *   bun scripts/check-bundle-size.ts              # --check (default): fail on any budget overrun
  *   bun scripts/check-bundle-size.ts --check      # same, explicit
  *   bun scripts/check-bundle-size.ts --update     # re-record perf-baselines/bundle-size.json
+ *   bun scripts/check-bundle-size.ts --update --prefix=index,main   # re-record only those prefixes
  *   bun scripts/check-bundle-size.ts --print <out.json>   # write current budgets, compare nothing
  *
  * Options:
  *   --baseline <file>   baseline path (default perf-baselines/bundle-size.json)
+ *   --prefix <p1,p2>    with --update: accept (re-record) only the named chunk-name prefixes. Every
+ *                       other prefix keeps its recorded budget byte for byte, and the totals, the
+ *                       startup entries and the payload are left as recorded too; a name in neither
+ *                       the build nor the baseline is refused rather than silently accepting nothing.
+ *                       The `--prefix=<p1,p2>` spelling is accepted as well. Without --prefix,
+ *                       --update rewrites every section exactly as it always has.
+ *
+ * Every write also records `recordedAt` (ISO-8601 UTC) and `source` (the git sha at the recorded root,
+ * else the invocation) next to the `comment`. Those two are provenance for the reviewer, not budgets:
+ * the gate reads `budgets`/`stylesheets`/`totals`/`i18n` only, so metadata churn never moves a
+ * threshold. A chunk that `readdirSync` listed but `readFileSync` could not read is a hard failure
+ * naming the path — a silently skipped chunk understates the bundle, which is the bug class this gate
+ * exists for (the same holds for an entry page that vanished before its markup was read).
  *
  * Exit code: 1 when the renderer build is missing, when any prefix/extension total exceeds its budget or
  * the ceiling, when an entry page's static JS closure exceeds its recorded budget or MAX_NEW_STARTUP_BYTES,
- * or when an entry page references a file missing from the build; 0 otherwise. Budgets are keyed by the
- * chunk-name prefix
- * (basename.replace(/\.(?:js|css)$/, '').replace(/-[A-Za-z0-9_-]{8}$/, '')) — never the content hash —
- * so a rebuild that only changes hashes does not move the budget. JS prefixes live under `budgets` and
+ * when an entry page references a file missing from the build, when a listed chunk or entry page could not
+ * be read, or when `--prefix` is malformed, unknown or used without `--update`; 0 otherwise. Budgets are
+ * keyed by the chunk-name prefix — never the content hash — so a rebuild that only changes hashes does
+ * not move the budget. The prefix is the name the build itself recorded for the file, read from Vite's
+ * build manifest (`build.manifest: true` -> `<rendererDist>/.vite/manifest.json`, see
+ * `readManifestPrefixes`); only when a file is not in the manifest (a stale dist, a fixture tree, or a
+ * CSS asset, which Vite emits without a `name`) is it derived by stripping a hash suffix with
+ * `chunkPrefix`'s `-<8-char hash>` guess. JS prefixes live under `budgets` and
  * CSS prefixes under `stylesheets`, so the two extensions can never collide; entry pages live under
  * `startup`, keyed by html file name. `--check` prints one startup line per html file and, on failure,
  * the 5 heaviest referenced files behind each offending page.
  */
+import { spawnSync } from 'node:child_process'
 import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
-import { dirname, join, relative, resolve } from 'node:path'
+import { basename, dirname, join, relative, resolve } from 'node:path'
 import { gzipSync } from 'node:zlib'
 
 /** Default repo root, overridden in tests (and CI sandboxes) by ROX_BUNDLE_SIZE_ROOT. */
@@ -95,12 +114,17 @@ export const BUDGET_SLACK_RATIO = 0.0005
 export const BUDGET_SLACK_MIN_BYTES = 4 * 1024
 
 /**
- * Slack allowed on a recorded budget: `max(BUDGET_SLACK_MIN_BYTES, BUDGET_SLACK_RATIO * budget)`,
- * rounded up so the gate is never more permissive than the stated fraction. The gate compares against
+ * Slack allowed on a recorded budget: `max(BUDGET_SLACK_MIN_BYTES, round(BUDGET_SLACK_RATIO * budget))`
+ * — the stated fraction, to the nearest byte. The gate compares against
  * `recorded + budgetSlackBytes(recorded)` and still reports the raw recorded number.
+ *
+ * The fraction only bites above 8,192,000 B, so every chunk-prefix budget still lands on the 4 KiB
+ * floor (the heaviest is ~2.3 MB) and no prefix is gated more loosely than it was at a flat 4 KiB.
+ * The budgets it does move are the whole-js total (~36.7 MB -> ~18 KB) and the ~17.8 MB playground.html
+ * closure, which is the point of pricing the tolerance in the unit being budgeted.
  */
 export function budgetSlackBytes(budget: number): number {
-  return Math.ceil(Math.max(BUDGET_SLACK_MIN_BYTES, budget * BUDGET_SLACK_RATIO))
+  return Math.max(BUDGET_SLACK_MIN_BYTES, Math.round(budget * BUDGET_SLACK_RATIO))
 }
 
 /**
@@ -161,6 +185,10 @@ export interface BundleBaseline {
   description: string
   /** Human note (e.g. how the seed values were recorded); ignored by the gate. */
   comment?: string
+  /** ISO-8601 UTC instant of the write that produced this file; provenance, never compared. */
+  recordedAt?: string
+  /** Short provenance of that write: the git sha at the recorded root, else the invocation. Never compared. */
+  source?: string
   /** JS chunk-name prefix -> total budget. */
   budgets: Record<string, ChunkBudget>
   /** CSS chunk-name prefix -> total budget (separate map, so the keys never collide with `budgets`). */
@@ -286,6 +314,65 @@ export function chunkPrefix(baseName: string): string {
 }
 
 /**
+ * Vite's build manifest, relative to the renderer dist (`build.manifest: true` emits it here).
+ * The gate prefers it over `chunkPrefix`'s regex: the manifest is the build's own record of the name
+ * Rollup gave each emitted chunk, so the gate never has to guess where a content hash begins.
+ */
+export const MANIFEST_RELATIVE_PATH = join('.vite', 'manifest.json')
+
+/**
+ * One entry of Vite's build manifest, keyed by the chunk's source path. Only the fields the gate reads
+ * are declared: `file` is the emitted path relative to the renderer dist (e.g. `assets/index-B3-J8HY7.js`)
+ * and `name` is the Rollup chunk name — the budget prefix. `name` is absent for emitted *assets*: with
+ * the default `cssCodeSplit` Vite emits each chunk's CSS as an asset, so CSS files carry no `name` and
+ * keep the regex fallback.
+ */
+export interface ManifestChunk {
+  file: string
+  name?: string
+}
+
+/**
+ * Emitted-file basename -> budget prefix, taken from the build manifest at
+ * `<rendererDist>/.vite/manifest.json`.
+ *
+ * The manifest reports the *real* chunk name, so the gate stops relying on the hash-suffix guess: Vite
+ * names each chunk file `assets/[name]-[hash].js` (its default `chunkFileNames`), and Rollup does not
+ * de-duplicate a name once `[hash]` is in the pattern — two chunks can both be `index`, distinguished
+ * only by their file names. Reading `name` therefore yields exactly the prefix the regex produces today,
+ * but keeps doing so when the hash length or the separator changes (the change that would silently
+ * re-key — and so un-budget — a prefix under the regex).
+ *
+ * A missing or unreadable manifest is not an error: a stale dist or a fixture tree simply has none, so
+ * every file falls back to `chunkPrefix` (see `measureRendererChunks`). Malformed JSON degrades the
+ * same way. Assets Vite emits without a `name` (CSS, fonts, images) are skipped, leaving them to the regex.
+ */
+export function readManifestPrefixes(rendererDist: string = paths().rendererDist): Map<string, string> {
+  const prefixes = new Map<string, string>()
+  let raw: string
+  try {
+    raw = readFileSync(join(rendererDist, MANIFEST_RELATIVE_PATH), 'utf8')
+  } catch {
+    // No manifest: a dist built before `build.manifest: true`, or a throwaway fixture tree.
+    return prefixes
+  }
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    // A truncated/partial manifest is not worth failing the gate over; the regex fallback covers it.
+    return prefixes
+  }
+  // `null`/`[]`/a scalar are all valid JSON but not a manifest; only an object maps files to names.
+  if (parsed === null || typeof parsed !== 'object') return prefixes
+  for (const entry of Object.values(parsed) as Array<ManifestChunk | null>) {
+    if (!entry || typeof entry.file !== 'string' || typeof entry.name !== 'string' || entry.name.length === 0) continue
+    prefixes.set(basename(entry.file), entry.name)
+  }
+  return prefixes
+}
+
+/**
  * The renderer emits one entry chunk per locale (`ar`, `de`, …, `zh-Hant`) and each embeds its own
  * i18n payload, so a translation merge moves twelve "code" budgets and the js total in lockstep.
  * That is why every feature merge used to end in a re-record (#2031, #2063, #2104, #2120 all exist
@@ -372,8 +459,31 @@ export function stripSourceMapComment(content: Buffer): Buffer {
   return content.subarray(0, cut)
 }
 
-/** Raw + gzip bytes of every measured `assets/*` chunk, sorted by file name. */
-export function measureRendererChunks(assetsDir: string = paths().assets): MeasuredChunk[] {
+/**
+ * A file the build listed that could not then be read — a chunk gone between `readdirSync` and
+ * `readFileSync` (a concurrent build rewriting the assets dir), or any other read failure. Skipping it
+ * would silently understate the bundle and record a budget no build has to stay under, which is exactly
+ * the bug class this gate exists for, so the read is fatal and the message names the offending path.
+ */
+export class UnreadableFileError extends Error {
+  constructor(file: string, cause: unknown) {
+    const code = (cause as { code?: unknown } | null)?.code
+    super(`bundle-size: cannot read ${file} (${typeof code === 'string' ? code : String(cause)}) - re-run the renderer build if it changed while this ran`)
+    this.name = 'UnreadableFileError'
+  }
+}
+
+/**
+ * Raw + gzip bytes of every measured `assets/*` chunk, sorted by file name.
+ *
+ * `manifestPrefixes` (from `readManifestPrefixes`) names the budget prefix from the build manifest;
+ * a file it does not cover — a CSS asset, a stale dist with no manifest, a fixture tree — keeps the
+ * `chunkPrefix` hash-suffix regex, which is the only behaviour when no manifest is passed at all.
+ */
+export function measureRendererChunks(
+  assetsDir: string = paths().assets,
+  manifestPrefixes?: ReadonlyMap<string, string>,
+): MeasuredChunk[] {
   let files: string[]
   try {
     files = readdirSync(assetsDir)
@@ -385,20 +495,22 @@ export function measureRendererChunks(assetsDir: string = paths().assets): Measu
   for (const file of files.sort()) {
     const kind = assetKind(file)
     if (!kind) continue
+    let content: Buffer
     try {
       // The emitted `//# sourceMappingURL=` pointer (present in the CI build) is not payload.
-      const content = stripSourceMapComment(readFileSync(join(assetsDir, file)))
-      chunks.push({
-        file,
-        prefix: chunkPrefix(file),
-        kind,
-        rawBytes: content.length,
-        // Bun accepts `mtime: 0` (deterministic gzip) beyond Node's ZlibOptions type.
-        gzipBytes: gzipSync(content, { level: 9, mtime: 0 } as unknown as Parameters<typeof gzipSync>[1]).length,
-      })
-    } catch {
-      // Vanished between listing and reading (concurrent build) — ignore this entry.
+      content = stripSourceMapComment(readFileSync(join(assetsDir, file)))
+    } catch (error) {
+      // Never skip a listed chunk: a skipped one is a chunk the gate stops seeing (see UnreadableFileError).
+      throw new UnreadableFileError(join(assetsDir, file), error)
     }
+    chunks.push({
+      file,
+      prefix: manifestPrefixes?.get(file) ?? chunkPrefix(file),
+      kind,
+      rawBytes: content.length,
+      // Bun accepts `mtime: 0` (deterministic gzip) beyond Node's ZlibOptions type.
+      gzipBytes: gzipSync(content, { level: 9, mtime: 0 } as unknown as Parameters<typeof gzipSync>[1]).length,
+    })
   }
   return chunks
 }
@@ -471,9 +583,10 @@ export function measureStartup(rendererDist: string = paths().rendererDist): Sta
     let text: string
     try {
       text = readFileSync(join(rendererDist, html), 'utf8')
-    } catch {
-      // Vanished between listing and reading (concurrent build) — skip this page.
-      continue
+    } catch (error) {
+      // Skipping the page would drop its `startup` entry from the next --update and quietly un-gate it
+      // against the 8 MB ceiling, so a page that vanished between listing and reading is fatal.
+      throw new UnreadableFileError(join(rendererDist, html), error)
     }
     const refs = parseHtmlReferences(text)
     const htmlDir = dirname(join(rendererDist, html))
@@ -756,13 +869,99 @@ function argValue(args: string[], name: string): string | undefined {
   return index >= 0 ? args[index + 1] : undefined
 }
 
-const DESCRIPTION =
+const PREFIX_FLAG = '--prefix'
+
+/**
+ * The `--prefix` value: `--prefix=<p1,p2>` (the spelling in the usage block) or a following word, the
+ * way `--baseline`/`--print` take theirs. A repeated flag resolves to its last occurrence, and a bare
+ * trailing `--prefix` yields the empty string so the caller refuses it instead of silently rewriting
+ * everything — the one outcome a selective accept must never fall back to.
+ */
+function prefixArg(args: string[]): string | undefined {
+  let value: string | undefined
+  for (const [index, arg] of args.entries()) {
+    if (arg.startsWith(`${PREFIX_FLAG}=`)) value = arg.slice(PREFIX_FLAG.length + 1)
+    else if (arg === PREFIX_FLAG) value = args[index + 1] ?? ''
+  }
+  return value
+}
+
+/**
+ * The `--update --prefix=` accept: the recorded budgets with only the named prefixes replaced by what
+ * the build now weighs. Every other prefix keeps its recorded entry untouched (including a
+ * `codeRawBytes` from the i18n split), a named prefix the build no longer emits keeps its recorded
+ * entry too, and a named prefix new to the build is added. Recorded order is preserved and new names
+ * are appended in prefix order, so a selective accept rewrites the named entry and nothing else.
+ */
+export function mergePrefixBudgets(
+  recorded: Record<string, ChunkBudget>,
+  measured: Record<string, ChunkBudget>,
+  accepted: readonly string[],
+): Record<string, ChunkBudget> {
+  const pending = new Set(accepted)
+  const merged: Record<string, ChunkBudget> = {}
+  for (const [name, entry] of Object.entries(recorded)) {
+    if (!pending.has(name)) {
+      merged[name] = entry
+      continue
+    }
+    pending.delete(name)
+    merged[name] = measured[name] ?? entry
+  }
+  for (const name of [...pending].sort()) {
+    const entry = measured[name]
+    if (entry) merged[name] = entry
+  }
+  return merged
+}
+
+/** The two provenance fields every write records; the gate never compares them (see `BundleBaseline`). */
+export interface Provenance {
+  /** ISO-8601 UTC instant of the write (`Date#toISOString`). */
+  recordedAt: string
+  /** Short provenance of the write: the git sha at the recorded root, else how the script was invoked. */
+  source: string
+}
+
+/**
+ * The short git HEAD sha at `root`, or `undefined` when `root` is not a checkout (a throwaway fixture
+ * tree, an exported tarball) or git is unavailable. Provenance labels the recording; it is never a gate
+ * input, so a missing sha degrades to the invocation instead of failing the run.
+ */
+export function gitHeadSha(root: string): string | undefined {
+  try {
+    const result = spawnSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: root, encoding: 'utf8' })
+    if (result.error || result.status !== 0) return undefined
+    const sha = result.stdout.trim()
+    return sha.length > 0 ? sha : undefined
+  } catch {
+    // git missing, or `root` gone: provenance is a label, so fall back to the invocation.
+    return undefined
+  }
+}
+
+/** The provenance of a write: the sha of the measured tree when it is a checkout, else the invocation. */
+export function recordProvenance(root: string, argv: string[]): Provenance {
+  return {
+    recordedAt: new Date().toISOString(),
+    source: gitHeadSha(root) ?? ['bun scripts/check-bundle-size.ts', ...argv].join(' '),
+  }
+}
+
+export const DESCRIPTION =
   'Renderer bundle-size budgets. Generated by `bun scripts/check-bundle-size.ts --update`; each entry is ' +
   'the TOTAL rawBytes of every emitted assets chunk sharing that chunk-name prefix (js under `budgets`, ' +
   'css under `stylesheets`), gzip reported alongside, plus `totals` summing each extension. Over a ' +
   'recorded total the gate fails (or 2,500,000 B for an unbudgeted prefix). `startup` records, per entry ' +
   'html file, the raw + gzip bytes of the deduped static JS closure (`<script src>` + modulepreload); ' +
   'the gate fails when it grows past the recorded total, or 8,000,000 B for an html file with no entry.'
+
+/**
+ * The `comment` every `--update` writes. Both this and `DESCRIPTION` are canonical values rather than
+ * per-recording notes: they are rewritten on every write, selective accept included, so a file that
+ * carried its own text is canonicalised rather than kept.
+ */
+export const RECORDED_COMMENT = 'Recorded by `bun scripts/check-bundle-size.ts --update` against a real renderer build.'
 
 /** The largest prefix totals, with their gate budget, for the success table (top 5 by raw bytes). */
 function topPrefixes(
@@ -855,8 +1054,14 @@ export function formatUpdateDelta(
       moved(`${kind}  ${name}`, before?.[name]?.totalRawBytes, entry.totalRawBytes)
     }
   }
-  moved('js  total', previous.totals?.jsRawBytes, next.totals?.jsRawBytes ?? 0)
-  moved('css total', previous.totals?.cssRawBytes, next.totals?.cssRawBytes ?? 0)
+  // A total neither side recorded is not "new": a selective accept leaves `totals` as recorded, and an
+  // old baseline may not carry one at all.
+  if (previous.totals?.jsRawBytes !== undefined || next.totals?.jsRawBytes !== undefined) {
+    moved('js  total', previous.totals?.jsRawBytes, next.totals?.jsRawBytes ?? 0)
+  }
+  if (previous.totals?.cssRawBytes !== undefined || next.totals?.cssRawBytes !== undefined) {
+    moved('css total', previous.totals?.cssRawBytes, next.totals?.cssRawBytes ?? 0)
+  }
   prefixes('js', next.budgets, previous.budgets)
   prefixes('css', next.stylesheets, previous.stylesheets)
   const grewClosure: string[] = []
@@ -882,9 +1087,20 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
   const baselinePath = baselineArg ? resolve(p.root, baselineArg) : p.baseline
   const printArg = argValue(argv, '--print')
   const update = argv.includes('--update')
+  const prefixArgValue = prefixArg(argv)
+  const accepted = prefixArgValue?.split(',').map((name) => name.trim()).filter(Boolean)
+  const acceptedNames = accepted ? new Set(accepted) : undefined
 
   if (argv.includes('--print') && !printArg) {
     console.error('bundle-size: --print needs an output path: --print <out.json>')
+    return 1
+  }
+  if (prefixArgValue !== undefined && !update) {
+    console.error('bundle-size: --prefix narrows --update only: bun scripts/check-bundle-size.ts --update --prefix=<p1,p2>')
+    return 1
+  }
+  if (accepted?.length === 0) {
+    console.error('bundle-size: --prefix needs the chunk-name prefix(es) to accept: --prefix=<p1,p2>')
     return 1
   }
 
@@ -897,7 +1113,19 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
     return 1
   }
 
-  const chunks = measureRendererChunks(p.assets)
+  let chunks: MeasuredChunk[]
+  let startup: StartupMeasurement[]
+  try {
+    // The build manifest names each chunk; without one (a stale dist) every file keeps the regex.
+    chunks = measureRendererChunks(p.assets, readManifestPrefixes(p.rendererDist))
+    startup = measureStartup(p.rendererDist)
+  } catch (error) {
+    // A file the build listed that cannot be read is fatal in every mode (see UnreadableFileError):
+    // whatever the gate skipped is a chunk it would stop budgeting.
+    if (!(error instanceof UnreadableFileError)) throw error
+    console.error(error.message)
+    return 1
+  }
   if (chunks.length === 0) {
     console.error('no renderer build found - run bun run electron:build:renderer first')
     return 1
@@ -908,7 +1136,6 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
   const budgets = buildBudgets(chunks, 'js', payloads)
   const stylesheets = buildBudgets(chunks, 'css')
   const totals = bundleTotals(chunks, payloads)
-  const startup = measureStartup(p.rendererDist)
   const startupEntries = buildStartupEntries(startup)
 
   // A reference that resolves to nothing on disk means the build is incomplete: recording 0 bytes for it
@@ -933,7 +1160,15 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
   }
 
   if (printArg) {
-    writeJson(resolve(printArg), { description: DESCRIPTION, budgets, stylesheets, totals, startup: startupEntries, i18n: payloads })
+    writeJson(resolve(printArg), {
+      description: DESCRIPTION,
+      ...recordProvenance(p.root, argv),
+      budgets,
+      stylesheets,
+      totals,
+      startup: startupEntries,
+      i18n: payloads,
+    })
     console.log(
       `bundle-size: wrote ${Object.keys(budgets).length} js + ${Object.keys(stylesheets).length} css prefix budget(s) ` +
         `and ${Object.keys(startupEntries).length} startup entry page(s) to ${printArg}`,
@@ -950,35 +1185,96 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
     } catch {
       previous = undefined
     }
+
+    // `--prefix` narrows a recording it has to preserve, so it needs one: writing only the named
+    // prefixes into an empty baseline would silently un-budget every other prefix.
+    if (accepted && !previous) {
+      console.error(
+        `bundle-size: --prefix needs the baseline it narrows (${relative(p.root, baselinePath)}) to keep every other recorded budget`,
+      )
+      return 1
+    }
+    // The prefixes this build emits, floor or no floor: a name below MIN_BUDGET_BYTES is a real prefix
+    // the recording simply has no entry for, which is not the same as a name that does not exist.
+    const measuredPrefixes = new Set(chunks.map((entry) => entry.prefix))
+    if (accepted) {
+      // A name in neither the build nor the recording would accept nothing while looking like it did.
+      const unknown = accepted.filter(
+        (name) =>
+          !measuredPrefixes.has(name) &&
+          previous?.budgets?.[name] === undefined &&
+          previous?.stylesheets?.[name] === undefined,
+      )
+      if (unknown.length > 0) {
+        console.error(
+          `bundle-size: --prefix names chunk-name prefix(es) that are neither in the build nor in the baseline: ` +
+            `${unknown.join(', ')}; known: ${[...measuredPrefixes, ...Object.keys(previous?.budgets ?? {}), ...Object.keys(previous?.stylesheets ?? {})].sort().join(', ')}`,
+        )
+        return 1
+      }
+    }
+
+    const nextBudgets = accepted ? mergePrefixBudgets(previous?.budgets ?? {}, budgets, accepted) : budgets
+    const nextStylesheets = accepted ? mergePrefixBudgets(previous?.stylesheets ?? {}, stylesheets, accepted) : stylesheets
+    // `totals`, `startup` and `i18n` are whole-build numbers: a selective accept leaves them exactly as
+    // recorded rather than mixing one fresh measurement into a partly-old file.
+    const nextTotals = accepted ? previous?.totals : totals
+    const nextStartup = accepted ? previous?.startup : startupEntries
+    const nextI18n = accepted ? previous?.i18n : payloads
     writeJson(baselinePath, {
       description: DESCRIPTION,
-      comment: 'Recorded by `bun scripts/check-bundle-size.ts --update` against a real renderer build.',
-      budgets,
-      stylesheets,
-      totals,
-      startup: startupEntries,
-      i18n: payloads,
+      comment: RECORDED_COMMENT,
+      ...recordProvenance(p.root, argv),
+      budgets: nextBudgets,
+      stylesheets: nextStylesheets,
+      totals: nextTotals,
+      startup: nextStartup,
+      i18n: nextI18n,
     })
     console.log(
-      `bundle-size: wrote ${relative(p.root, baselinePath)} (${Object.keys(budgets).length} js + ${Object.keys(stylesheets).length} css prefix budget(s))`,
+      `bundle-size: wrote ${relative(p.root, baselinePath)} (${Object.keys(nextBudgets).length} js + ${Object.keys(nextStylesheets).length} css prefix budget(s))`,
     )
-    for (const [prefix, budget] of Object.entries(budgets).sort()) {
+    for (const [prefix, budget] of Object.entries(nextBudgets).sort()) {
+      if (acceptedNames && !acceptedNames.has(prefix)) continue
       console.log(`  js  ${prefix}: raw ${budget.totalRawBytes} B, gzip ${budget.gzipTotalBytes} B`)
     }
-    for (const [prefix, budget] of Object.entries(stylesheets).sort()) {
+    for (const [prefix, budget] of Object.entries(nextStylesheets).sort()) {
+      if (acceptedNames && !acceptedNames.has(prefix)) continue
       console.log(`  css ${prefix}: raw ${budget.totalRawBytes} B, gzip ${budget.gzipTotalBytes} B`)
     }
-    console.log(`  js  total: raw ${totals.jsRawBytes} B, gzip ${totals.jsGzipBytes} B`)
-    console.log(
-      `  js  total code (raw minus i18n payload): ${totals.jsCodeRawBytes ?? totals.jsRawBytes} B; ` +
-        `i18n payload ${payloads.totalRawBytes} B over ${Object.keys(payloads.byLocale).length} locale(s)`,
-    )
-    console.log(`  css total: raw ${totals.cssRawBytes} B, gzip ${totals.cssGzipBytes} B`)
-    for (const [html, entry] of Object.entries(startupEntries).sort()) {
-      console.log(`  startup ${html}: js raw ${entry.jsRawBytes} B, gzip ${entry.gzipTotalBytes} B, ${entry.fileCount} file(s)`)
+    if (accepted) {
+      console.log(
+        `bundle-size: --prefix=${accepted.join(',')} accepted only those prefixes; every other budget, plus ` +
+          `\`totals\`, \`startup\` and \`i18n\`, stays exactly as recorded`,
+      )
+      const notInBuild = accepted.filter((name) => !measuredPrefixes.has(name))
+      if (notInBuild.length > 0) {
+        console.log(`  ${notInBuild.join(', ')}: not in this build, so its recorded budget was kept`)
+      }
+      const belowFloor = accepted.filter(
+        (name) => measuredPrefixes.has(name) && budgets[name] === undefined && stylesheets[name] === undefined,
+      )
+      if (belowFloor.length > 0) {
+        console.log(`  ${belowFloor.join(', ')}: below the ${MIN_BUDGET_BYTES} B recording floor, so it has no entry to accept`)
+      }
+    } else {
+      console.log(`  js  total: raw ${totals.jsRawBytes} B, gzip ${totals.jsGzipBytes} B`)
+      console.log(
+        `  js  total code (raw minus i18n payload): ${totals.jsCodeRawBytes ?? totals.jsRawBytes} B; ` +
+          `i18n payload ${payloads.totalRawBytes} B over ${Object.keys(payloads.byLocale).length} locale(s)`,
+      )
+      console.log(`  css total: raw ${totals.cssRawBytes} B, gzip ${totals.cssGzipBytes} B`)
+      for (const [html, entry] of Object.entries(startupEntries).sort()) {
+        console.log(`  startup ${html}: js raw ${entry.jsRawBytes} B, gzip ${entry.gzipTotalBytes} B, ${entry.fileCount} file(s)`)
+      }
     }
     console.log('bundle-size: delta vs the baseline being replaced')
-    for (const line of formatUpdateDelta(previous, { budgets, stylesheets, totals, startup: startupEntries })) {
+    for (const line of formatUpdateDelta(previous, {
+      budgets: nextBudgets,
+      stylesheets: nextStylesheets,
+      totals: nextTotals,
+      startup: nextStartup,
+    })) {
       console.log(line)
     }
     return 0
