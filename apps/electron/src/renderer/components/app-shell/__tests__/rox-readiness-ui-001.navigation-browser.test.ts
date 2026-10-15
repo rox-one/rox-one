@@ -271,6 +271,12 @@ function fixtureBundleSource(main: string, shell: string, tabs: string) {
       PlaybooksHomePage=leaf('playbooks-home'),CookbooksSurfacePage=leaf('cookbooks-surface'),
       MissionBoard=leaf('mission-board'),DrivePage=leaf('drive');
     const getSettingsPageComponent=()=>leaf('settings'),recordRecentSetting=()=>{};
+    // MainContentPanel renders the settings nav beside its content on settings
+    // routes; this suite drives link/panel restoration, so the nav is a declared
+    // fixture seam like the panel leaves above (an unbound identifier here throws
+    // ReferenceError while every panel renders and the suite then fails on an
+    // unrelated waitFor timeout).
+    const SettingsScreenSidebar=props=>React.createElement('div',{'data-leaf':'settings-sidebar','data-subpage':props.subpage??''},null);
     const AgentsWorkspacePage=leaf('agents'),SurfaceHost=leaf('surface');
     ${main}
     ${shell}

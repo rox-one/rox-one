@@ -76,6 +76,11 @@ COPY packages/messaging-whatsapp-worker/package.json packages/messaging-whatsapp
 COPY packages/messaging-discord-worker/package.json packages/messaging-discord-worker/
 COPY packages/cloud-runner/package.json packages/cloud-runner/
 COPY packages/browser-intel/package.json packages/browser-intel/
+# The canvas workspaces arrived with the canvas PRs; their manifests must be in
+# this layer too, or the frozen install fails on the workspace set
+# ("@rox/electron depends on workspace @rox/canvas-core … but not on disk").
+COPY packages/canvas-core/package.json packages/canvas-core/
+COPY packages/canvas-relay/package.json packages/canvas-relay/
 COPY packages/rovers-core-lite/package.json packages/rovers-core-lite/
 # `packages/rovers-core` is a workspace listed in bun.lock; the manifest layer must
 # cover every workspace or the frozen install sees an incomplete workspace set.

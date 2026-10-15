@@ -14,7 +14,7 @@ import {
 } from '@/components/gantt/gantt-engine'
 import { useGanttDrag, useTrackWidth } from '@/components/gantt/use-gantt'
 import {
-  dependencyEdges, dragPatch, dropPatch, groupTasks, type DependencyEdge, partitionTasks, timelineRange, type SchedulePatch, type TimelineGroup, type TimelineGroupBy,
+  dependencyEdges, dragPatch, dropPatch, epochOf, groupTasks, type DependencyEdge, partitionTasks, timelineRange, type SchedulePatch, type TimelineGroup, type TimelineGroupBy,
 } from './timeline-model'
 
 export const TIMELINE_DRAG_TYPE = 'application/x-rox-timeline-task'
@@ -48,9 +48,15 @@ export interface TaskTimelineProps {
   groupTitle: (group: TimelineGroup) => string
   /** Fixed window (e.g. Моя неделя, Mon–Sun) fitted to the width; hides the zoom control. */
   fixedRange?: GanttRange
+  /** Groupings offered in the control (default: all). */
+  groupings?: readonly TimelineGroupBy[]
+  /** No drag, resize, tray drag or keyboard moves; bars stay focusable and clickable. */
+  readOnly?: boolean
+  /** Deadline-only rows: no resizing, and tray scheduling sets the deadline. */
+  deadlineOnly?: boolean
 }
 
-export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, onZoom, onGroupBy, onSelect, onSchedule, groupTitle, fixedRange }: TaskTimelineProps) {
+export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, onZoom, onGroupBy, onSelect, onSchedule, groupTitle, fixedRange, groupings, readOnly = false, deadlineOnly = false }: TaskTimelineProps) {
   const { t } = useTranslation()
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const trackRef = React.useRef<HTMLDivElement>(null)
@@ -68,17 +74,24 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
   const byId = React.useMemo(() => new Map(tasks.map((task) => [task.id, task])), [tasks])
   const { drag, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onLostPointerCapture } = useGanttDrag({
     pxPerDay,
-    onCommit: (id, mode, days) => { const task = byId.get(id); if (task) onSchedule(id, dragPatch(task, mode, days, today)) },
+    onCommit: (id, mode, days) => { const task = byId.get(id); if (task && !readOnly) onSchedule(id, dragPatch(task, mode, days, today)) },
     onClick: onSelect,
   })
   // Stable callbacks for memoized rows: they read the latest closures from a ref.
-  const latest = React.useRef({ onPointerDown, onSchedule, onSelect, today })
-  latest.current = { onPointerDown, onSchedule, onSelect, today }
+  const latest = React.useRef({ onPointerDown, onSchedule, onSelect, today, readOnly, deadlineOnly })
+  latest.current = { onPointerDown, onSchedule, onSelect, today, readOnly, deadlineOnly }
   const rowHandlers = React.useMemo<RowHandlers>(() => ({
-    pointerDown: (e, id, mode) => latest.current.onPointerDown(e, id, mode),
+    pointerDown: (e, id, mode) => {
+      // Read-only: a press only selects (no drag). Deadline-only: no edge resize.
+      if (latest.current.readOnly || (latest.current.deadlineOnly && mode !== 'move')) { if (e.button === 0) latest.current.onSelect(id); return }
+      latest.current.onPointerDown(e, id, mode)
+    },
     lostCapture: onLostPointerCapture,
     select: (id) => latest.current.onSelect(id),
-    nudge: (task, mode, days) => latest.current.onSchedule(task.id, dragPatch(task, mode, days, latest.current.today)),
+    nudge: (task, mode, days) => {
+      if (latest.current.readOnly || (latest.current.deadlineOnly && mode !== 'move')) return
+      latest.current.onSchedule(task.id, dragPatch(task, mode, days, latest.current.today))
+    },
     // ↑/↓ walk the timeline rows (visual order), not the page's list order.
     walk: (id, delta) => {
       const ids = rowOrderRef.current
@@ -102,8 +115,9 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
     const rect = trackRef.current?.getBoundingClientRect()
     return rect ? dateAtOffset(range, clientX - rect.left, pxPerDay) : null
   }
+  const trayPatch = (day: string): SchedulePatch => (deadlineOnly ? { dueAt: epochOf(day) } : dropPatch(day))
   const onTrackDragOver = (event: React.DragEvent) => {
-    if (!event.dataTransfer.types.includes(TIMELINE_DRAG_TYPE)) return
+    if (readOnly || !event.dataTransfer.types.includes(TIMELINE_DRAG_TYPE)) return
     event.preventDefault()
     event.dataTransfer.dropEffect = 'move'
     const day = dayAt(event.clientX)
@@ -113,9 +127,9 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
     const id = event.dataTransfer.getData(TIMELINE_DRAG_TYPE)
     const day = dayAt(event.clientX)
     setDropDay(null)
-    if (!id || !day) return
+    if (readOnly || !id || !day) return
     event.preventDefault()
-    onSchedule(id, dropPatch(day))
+    onSchedule(id, trayPatch(day))
   }
 
   rowOrderRef.current = groups.flatMap((g) => g.tasks.map((task) => task.id))
@@ -145,7 +159,7 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
           ))}
         </div>}
         <div role="radiogroup" aria-label={t('collection.display.groupByLabel')} data-testid="timeline-group" className="inline-flex rounded-[var(--radius-control)] border border-border-subtle p-0.5">
-          {GROUPS.map((g) => (
+          {GROUPS.filter((g) => !groupings || groupings.includes(g.id)).map((g) => (
             <button key={g.id} type="button" role="radio" aria-checked={groupBy === g.id} data-testid={`timeline-group-${g.id}`} onClick={() => onGroupBy(g.id)}
               className={cn('rounded-[var(--radius-control)] px-2 py-0.5', groupBy === g.id ? 'bg-accent text-accent-foreground' : 'text-text-secondary hover:bg-surface-hover')}>
               {t(g.label)}
@@ -183,7 +197,7 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
                   return (
                     <TimelineRow key={task.id} task={task} span={dragging ? applySpanDrag(base, drag.mode, drag.deltaDays) : base}
                       range={range} totalDays={scale.totalDays} pxPerDay={pxPerDay} trackWidth={trackWidth}
-                      selected={selectedId === task.id} dragging={dragging} dateFmt={dateFmt} handlers={rowHandlers} />
+                      selected={selectedId === task.id} dragging={dragging} dateFmt={dateFmt} handlers={rowHandlers} fixed={readOnly} noResize={deadlineOnly} />
                   )
                 })}
               </React.Fragment>
@@ -195,15 +209,15 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
         <div className="mb-1 text-xs font-medium uppercase text-text-muted">{t('tasks.bucket.unscheduled')} · {unscheduled.length}</div>
         <div className="flex max-h-24 flex-wrap gap-1 overflow-y-auto">
           {unscheduled.map((task) => (
-            <button key={task.id} type="button" draggable data-testid={`timeline-tray-${task.id}`}
+            <button key={task.id} type="button" draggable={!readOnly} data-testid={`timeline-tray-${task.id}`}
               onDragStart={(e) => { e.dataTransfer.setData(TIMELINE_DRAG_TYPE, task.id); e.dataTransfer.effectAllowed = 'move' }}
               onClick={() => onSelect(task.id)}
               onKeyDown={(e) => {
                 // Keyboard scheduling: Enter starts the task today.
-                if (e.key !== 'Enter') return
+                if (e.key !== 'Enter' || readOnly) return
                 e.preventDefault()
                 e.stopPropagation()
-                onSchedule(task.id, dropPatch(today))
+                onSchedule(task.id, trayPatch(today))
               }}
               className={cn('max-w-48 truncate rounded-[var(--radius-control)] border border-border-subtle px-2 py-0.5 text-xs hover:bg-surface-hover', selectedId === task.id && 'border-accent')}
               title={task.title}>
@@ -235,10 +249,12 @@ interface TimelineRowProps {
   dragging: boolean
   dateFmt: Intl.DateTimeFormat
   handlers: RowHandlers
+  fixed?: boolean
+  noResize?: boolean
 }
 
 /** One timeline row; memoized so a drag re-renders only the dragged bar. */
-const TimelineRow = React.memo(function TimelineRow({ task, span, range, totalDays, pxPerDay, trackWidth, selected, dragging, dateFmt, handlers }: TimelineRowProps) {
+const TimelineRow = React.memo(function TimelineRow({ task, span, range, totalDays, pxPerDay, trackWidth, selected, dragging, dateFmt, handlers, fixed = false, noResize = false }: TimelineRowProps) {
   const { t } = useTranslation()
   const { left, width } = barGeometry(range, span, pxPerDay)
   const startLabel = dateFmt.format(parseIsoDate(span.start))
@@ -262,6 +278,7 @@ const TimelineRow = React.memo(function TimelineRow({ task, span, range, totalDa
           aria-valuemax={Math.max(0, totalDays - 1)}
           aria-valuenow={daysBetween(range.start, span.start)}
           aria-valuetext={`${startLabel} — ${endLabel}`}
+          aria-readonly={fixed || undefined}
           data-testid={`timeline-bar-${task.id}`}
           onFocus={() => { if (!selected) handlers.select(task.id) }}
           onPointerDown={(e) => handlers.pointerDown(e, task.id, 'move')}
@@ -282,14 +299,14 @@ const TimelineRow = React.memo(function TimelineRow({ task, span, range, totalDa
           style={{ left, width }}
           title={`${task.title} · ${startLabel} — ${endLabel}`}
           className={cn(
-            'group absolute top-1 bottom-1 cursor-grab overflow-hidden rounded-[var(--radius-control)] border border-accent/40 bg-accent/20 outline-none focus-visible:ring-2 focus-visible:ring-accent/50',
+            'group absolute top-1 bottom-1 overflow-hidden rounded-[var(--radius-control)] border border-accent/40 bg-accent/20 outline-none focus-visible:ring-2 focus-visible:ring-accent/50',
             selected && 'border-accent bg-accent/35',
-            dragging && 'cursor-grabbing',
+            fixed ? 'cursor-pointer' : dragging ? 'cursor-grabbing' : 'cursor-grab',
           )}
         >
           {width > 72 ? <span className="relative block truncate px-2 text-xs leading-5 text-text-secondary">{startLabel} — {endLabel}</span> : null}
-          {handle('start', 'left-0')}
-          {handle('end', 'right-0')}
+          {fixed || noResize ? null : handle('start', 'left-0')}
+          {fixed || noResize ? null : handle('end', 'right-0')}
         </div>
       </div>
     </div>

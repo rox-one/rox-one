@@ -3,10 +3,16 @@ import { useTranslation } from 'react-i18next'
 import { ListTodo, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import { WORKSPACE_TASK_STATUSES, type WorkspaceTask, type WorkspaceTaskInput, type WorkspaceTaskLink, type WorkspaceTaskStatus } from '@rox/shared/workspace-work'
 import { useWorkspaceWork } from '@/lib/useWorkspaceWork'
+import { isOpenTask } from '@rox/core/tasks/personal'
+import { cn } from '@/lib/utils'
+import { TimelinePanel } from '../tasks/TimelinePanel'
+import { withOptimisticDue, workspaceDuePatch, workspaceTaskToTimeline } from '../tasks/timeline-adapters'
+import type { SchedulePatch, TimelineGroup } from '../tasks/timeline-model'
 import { localDateTimeInput, parseLocalDateTime, workspaceProjectOptions, type WorkspaceProjectOption } from '@/lib/workspace-work-client'
 
 const fieldClass = 'w-full rounded-lg border border-border/70 bg-background px-2.5 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
 const buttonClass = 'inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-border/70 px-2.5 py-1.5 text-base transition-colors motion-reduce:transition-none hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none'
+const WORKSPACE_GROUPINGS = ['none', 'project'] as const
 type TaskDraft = { id: string | null; title: string; description: string; status: WorkspaceTaskStatus; assigneeId: string; projectId: string; due: string; links: WorkspaceTaskLink[]; expectedRevision: number }
 
 export function WorkspaceTasksView({ workspaceId, projectId, selectedTaskId }: { workspaceId: string; projectId?: string; selectedTaskId?: string }) {
@@ -22,6 +28,7 @@ export function WorkspaceTasksView({ workspaceId, projectId, selectedTaskId }: {
   const [comment, setComment] = useState('')
   const openedTask = useRef<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [layout, setLayout] = useState<'list' | 'timeline'>('list')
 
   useEffect(() => { openedTask.current = null; setDraft(null); setComment(''); setDeleteTarget(null); setQuery(''); setFilter('all') }, [workspaceId, projectId])
   useEffect(() => {
@@ -73,6 +80,22 @@ export function WorkspaceTasksView({ workspaceId, projectId, selectedTaskId }: {
     const ok = await work.write(draft.id ? { kind: 'updateTask', id: draft.id, patch: input } : { kind: 'createTask', input }, draft.expectedRevision)
     if (ok) setDraft(null)
   }
+  // Timeline: open workspace tasks across projects, one-day bars on their deadlines.
+  // Optimistic deadlines shown until the next snapshot arrives (or the write is rejected).
+  const [overlay, setOverlay] = useState<ReadonlyMap<string, number>>(() => new Map())
+  useEffect(() => { setOverlay(new Map()) }, [snapshot])
+  const timelineTasks = useMemo(() => withOptimisticDue(tasks, overlay).map(workspaceTaskToTimeline).filter(isOpenTask), [tasks, overlay])
+  const schedule = (id: string, patch: SchedulePatch) => {
+    const task = snapshot?.tasks.find(item => item.id === id)
+    const dueAt = task ? workspaceDuePatch(patch, task.dueAt) : null
+    if (!snapshot || !canWrite || work.pending || dueAt == null) return
+    setOverlay(prev => new Map(prev).set(id, dueAt))
+    // A rejection clears the overlay; the hook's error surfaces in the banner above.
+    void work.write({ kind: 'updateTask', id, patch: { dueAt } }, snapshot.revision).then(ok => {
+      if (!ok) setOverlay(prev => { const next = new Map(prev); next.delete(id); return next })
+    })
+  }
+  const projectTitle = (group: TimelineGroup) => (group.id == null ? t('navigation.work.tasks.noProject') : projects.find(project => project.id === group.id)?.name ?? t('navigation.work.tasks.missingProject'))
   const members = new Map<string, string>(snapshot?.members.map(member => [member.id, member.name]))
   const comments = draft?.id ? snapshot?.comments.filter(item => item.taskId === draft.id) ?? [] : []
   const time = (at: number) => new Date(at).toLocaleString(i18n.resolvedLanguage ?? i18n.language)
@@ -81,6 +104,10 @@ export function WorkspaceTasksView({ workspaceId, projectId, selectedTaskId }: {
     <header className="flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3">
       <ListTodo className="size-4 text-accent" aria-hidden /><h2 className="mr-auto text-lg font-semibold">{t('navigation.work.tasks.title')}</h2>
       <button type="button" className={buttonClass} disabled={work.loading} onClick={() => { void work.refresh(); setProjectReload(value => value + 1) }} aria-label={t('navigation.work.refresh')}><RefreshCw className="size-3.5" aria-hidden /></button>
+      <div role="radiogroup" aria-label={t('tasks.timeline.layout')} className="inline-flex rounded-[var(--radius-control)] border border-border-subtle p-0.5 text-sm">
+        {(['list', 'timeline'] as const).map(id => <button key={id} type="button" role="radio" aria-checked={layout === id} data-testid={`workspace-tasks-layout-${id}`} onClick={() => setLayout(id)}
+          className={cn('rounded-[var(--radius-control)] px-2 py-0.5', layout === id ? 'bg-accent text-accent-foreground' : 'text-text-secondary hover:bg-surface-hover')}>{t(id === 'list' ? 'collection.view.list' : 'tasks.timeline.layout')}</button>)}
+      </div>
       <button type="button" className={buttonClass} disabled={!canWrite || busy} onClick={() => begin()}><Plus className="size-3.5" aria-hidden />{t('navigation.work.tasks.new')}</button>
     </header>
     <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
@@ -89,7 +116,9 @@ export function WorkspaceTasksView({ workspaceId, projectId, selectedTaskId }: {
       {work.error && <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">{t(`navigation.work.errors.${work.error.code}`)}</div>}
       {snapshot && !canWrite && <p role="status" className="text-muted-foreground">{t('navigation.work.readOnly')}</p>}
       <div className="grid gap-2 sm:grid-cols-2"><input type="search" className={fieldClass} value={query} onChange={event => setQuery(event.target.value)} aria-label={t('navigation.work.tasks.search')} placeholder={t('navigation.work.tasks.search')} /><select className={fieldClass} value={filter} onChange={event => setFilter(event.target.value as WorkspaceTaskStatus | 'all')} aria-label={t('navigation.work.tasks.status')}><option value="all">{t('navigation.work.tasks.all')}</option>{WORKSPACE_TASK_STATUSES.map(status => <option key={status} value={status}>{t(`navigation.work.status.${status}`)}</option>)}</select></div>
-      {snapshot && <div className="max-h-80 space-y-1 overflow-y-auto" role="list">
+      {snapshot && layout === 'timeline' && <TimelinePanel testId="workspace-task-timeline" tasks={timelineTasks} defaultGroupBy="project" groupings={WORKSPACE_GROUPINGS} readOnly={!canWrite || work.pending} deadlineOnly groupTitle={projectTitle} onSchedule={schedule}
+        selectedId={draft?.id ?? null} onSelect={id => { const task = snapshot.tasks.find(item => item.id === id); if (task) begin(task) }} />}
+      {snapshot && layout === 'list' && <div className="max-h-80 space-y-1 overflow-y-auto" role="list">
         {tasks.map(task => <div role="listitem" key={task.id}><button type="button" data-testid={`workspace-task-${task.id}`} className={`${buttonClass} w-full justify-start text-left ${draft?.id === task.id ? 'border-accent bg-accent/10' : ''}`} onClick={() => begin(task)}>
           <span className="min-w-0 flex-1"><span className="block break-words font-medium">{task.title}</span><span className="block text-xs text-muted-foreground">{t(`navigation.work.status.${task.status}`)}{task.assigneeId ? ` · ${members.get(task.assigneeId) ?? t('navigation.work.tasks.missingMember')}` : ''}{task.dueAt ? ` · ${time(task.dueAt)}` : ''}</span></span>
         </button></div>)}

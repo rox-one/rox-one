@@ -15,6 +15,16 @@
  * builds emit a handful of chunks, so gating only the max lets a secondary chunk grow unbounded up to
  * its sibling's size.
  *
+ * Locale entries (`ar`, `de`, …, `zh-Hant`) each embed their own i18n payload, so before the split a
+ * translation merge moved twelve per-prefix budgets plus the js total at once and every one of them
+ * ended in a re-record (#2031, #2063, #2104, #2120). Those prefixes and the js total are now gated on
+ * CODE — the measured total minus the payload that entry embeds, measured from
+ * `packages/shared/src/i18n/locales/<locale>.json` — and the payload gets one budget of its own
+ * (`i18n.totalRawBytes`, slack 3% + 32 KB) that still fails a runaway. A baseline recorded before the
+ * split carries none of the new fields and keeps comparing raw totals, exactly as it was recorded: the
+ * subtraction is decided by the recorded shape, never by the presence of locale files. See
+ * `LocalePayloads`.
+ *
  * The `startup` section gates a different regression class (issue #1675): a heavy chunk added to an
  * entry page's STATIC closure ships eagerly even when every chunk-prefix budget still passes. Each
  * `*.html` in the renderer dist is parsed for `<script src>` and `<link rel="modulepreload" href>`
@@ -44,7 +54,7 @@
  * `startup`, keyed by html file name. `--check` prints one startup line per html file and, on failure,
  * the 5 heaviest referenced files behind each offending page.
  */
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { gzipSync } from 'node:zlib'
 
@@ -94,6 +104,19 @@ export function budgetSlackBytes(budget: number): number {
 }
 
 /**
+ * Slack on the recorded i18n payload. A feature merge adds keys to every locale, so the payload is
+ * *meant* to move — the code budgets must not see it, and this one must not fail the merge that
+ * added a screen's worth of strings. It still catches a runaway: a payload that doubles, a locale
+ * that stops being split out, or a source file copied into every locale by mistake.
+ */
+export const PAYLOAD_SLACK_RATIO = 0.03
+export const PAYLOAD_SLACK_MIN_BYTES = 32 * 1024
+
+export function payloadSlackBytes(budget: number): number {
+  return Math.ceil(Math.max(PAYLOAD_SLACK_MIN_BYTES, budget * PAYLOAD_SLACK_RATIO))
+}
+
+/**
  * An entry page (html file) that exists in the build but has no recorded `startup` entry may not pull
  * more than this many raw bytes of static JS into its `<script src>` + modulepreload closure. Bounds
  * the blast radius of a brand-new unbudgeted entry page; real index.html sits near 6.4 MB.
@@ -115,6 +138,13 @@ export type AssetKind = (typeof ASSET_KINDS)[number]
 export interface ChunkBudget {
   totalRawBytes: number
   gzipTotalBytes: number
+  /**
+   * `totalRawBytes` minus the i18n payload for a locale entry (absent for code-only prefixes). The
+   * gate compares THIS when it is recorded: the renderer emits one entry chunk per locale and each
+   * embeds its own translations, so comparing the raw total reads every translation merge as twelve
+   * code regressions at once.
+   */
+  codeRawBytes?: number
 }
 
 /** Whole-bundle byte counts, summed over every measured chunk of each extension. */
@@ -123,6 +153,8 @@ export interface BundleTotals {
   jsGzipBytes: number
   cssRawBytes: number
   cssGzipBytes: number
+  /** `jsRawBytes` minus the i18n payload: what the js-total gate compares. */
+  jsCodeRawBytes?: number
 }
 
 export interface BundleBaseline {
@@ -137,6 +169,8 @@ export interface BundleBaseline {
   totals?: BundleTotals
   /** Entry-page (html file name) -> static JS closure total. Absent in pre-startup baselines. */
   startup?: Record<string, StartupEntry>
+  /** The i18n payload, recorded apart from the code it rides with (see `LocalePayloads`). */
+  i18n?: LocalePayloads
 }
 
 /** One recorded entry page: its deduped static JS closure totals. */
@@ -154,6 +188,7 @@ export interface RecordedBudgets {
   budgets?: Record<string, ChunkBudget>
   stylesheets?: Record<string, ChunkBudget>
   totals?: Partial<BundleTotals>
+  i18n?: Partial<LocalePayloads>
 }
 
 export interface MeasuredChunk {
@@ -171,6 +206,8 @@ export interface BudgetFailure {
   kind: AssetKind
   /** Chunk-name prefix, or `null` for a whole-extension total overrun. */
   prefix: string | null
+  /** Overrides the scope wording of the report (e.g. the i18n payload, which is not a chunk prefix). */
+  label?: string
   /** The gated byte count: the prefix total, or the whole-extension total. */
   rawBytes: number
   /** Recorded total, or MAX_NEW_CHUNK_BYTES for an unbudgeted prefix. */
@@ -246,6 +283,49 @@ export function paths(root: string = DEFAULT_ROOT): Paths {
 /** The stable chunk-name prefix (never the hash): `main-BCWHcyRa.js` -> `main`, `main.css` -> `main`. */
 export function chunkPrefix(baseName: string): string {
   return baseName.replace(ASSET_EXTENSION, '').replace(HASH_SUFFIX, '')
+}
+
+/**
+ * The renderer emits one entry chunk per locale (`ar`, `de`, …, `zh-Hant`) and each embeds its own
+ * i18n payload, so a translation merge moves twelve "code" budgets and the js total in lockstep.
+ * That is why every feature merge used to end in a re-record (#2031, #2063, #2104, #2120 all exist
+ * for it). The payload is measured from its source of truth — `packages/shared/src/i18n/locales/
+ * <locale>.json` — and budgeted apart from the code it rides with: locale prefixes and the js total
+ * are gated on `codeRawBytes`/`jsCodeRawBytes` (total minus payload), and the payload itself is
+ * gated once, with slack wide enough for the keys a feature merge adds.
+ */
+export interface LocalePayloads {
+  /** Locale id (the entry chunk's prefix) -> source JSON bytes. */
+  byLocale: Record<string, number>
+  /** Sum over every locale. */
+  totalRawBytes: number
+}
+
+export const I18N_LOCALES_DIR = join('packages', 'shared', 'src', 'i18n', 'locales')
+
+/** Reads the locale payload sizes. An absent directory (a throwaway fixture tree) means "no payload". */
+export function readLocalePayloads(root: string): LocalePayloads {
+  const dir = join(root, I18N_LOCALES_DIR)
+  const byLocale: Record<string, number> = {}
+  let totalRawBytes = 0
+  let files: string[]
+  try {
+    files = readdirSync(dir).sort()
+  } catch {
+    return { byLocale, totalRawBytes }
+  }
+  for (const file of files) {
+    if (!file.endsWith('.json')) continue
+    const size = statSync(join(dir, file)).size
+    byLocale[file.slice(0, -'.json'.length)] = size
+    totalRawBytes += size
+  }
+  return { byLocale, totalRawBytes }
+}
+
+/** The gated code bytes of a chunk that embeds a payload: its measured total minus that payload. */
+export function codeBytesOf(rawBytes: number, payloadRawBytes: number | undefined): number {
+  return payloadRawBytes === undefined ? rawBytes : Math.max(0, rawBytes - payloadRawBytes)
 }
 
 /**
@@ -532,7 +612,7 @@ function groupByPrefix(chunks: MeasuredChunk[]): PrefixGroup[] {
 }
 
 /** Whole-bundle totals for `--update` / `--print`. */
-export function bundleTotals(chunks: MeasuredChunk[]): BundleTotals {
+export function bundleTotals(chunks: MeasuredChunk[], payloads?: LocalePayloads): BundleTotals {
   const totals: BundleTotals = { jsRawBytes: 0, jsGzipBytes: 0, cssRawBytes: 0, cssGzipBytes: 0 }
   for (const chunk of chunks) {
     if (chunk.kind === 'js') {
@@ -543,6 +623,7 @@ export function bundleTotals(chunks: MeasuredChunk[]): BundleTotals {
       totals.cssGzipBytes += chunk.gzipBytes
     }
   }
+  if (payloads) totals.jsCodeRawBytes = codeBytesOf(totals.jsRawBytes, payloads.totalRawBytes)
   return totals
 }
 
@@ -551,11 +632,16 @@ export function bundleTotals(chunks: MeasuredChunk[]): BundleTotals {
  * prefix (a prefix such as `index` covers several entry chunks; gating only the largest let a sibling
  * grow to its size unnoticed). Prefixes whose total is below MIN_BUDGET_BYTES are omitted.
  */
-export function buildBudgets(chunks: MeasuredChunk[], kind: AssetKind): Record<string, ChunkBudget> {
+export function buildBudgets(chunks: MeasuredChunk[], kind: AssetKind, payloads?: LocalePayloads): Record<string, ChunkBudget> {
   const budgets: Record<string, ChunkBudget> = {}
   for (const group of groupByPrefix(chunks.filter((chunk) => chunk.kind === kind))) {
     if (group.rawBytes < MIN_BUDGET_BYTES) continue
-    budgets[group.prefix] = { totalRawBytes: group.rawBytes, gzipTotalBytes: group.gzipBytes }
+    const payload = payloads?.byLocale[group.prefix]
+    budgets[group.prefix] = {
+      totalRawBytes: group.rawBytes,
+      gzipTotalBytes: group.gzipBytes,
+      ...(payload === undefined ? {} : { codeRawBytes: codeBytesOf(group.rawBytes, payload) }),
+    }
   }
   return budgets
 }
@@ -566,21 +652,31 @@ export function buildBudgets(chunks: MeasuredChunk[], kind: AssetKind): Record<s
  * total — each compared against `budget + budgetSlackBytes(budget)`. Kept free of filesystem access so
  * it is unit-testable without a build.
  */
-export function evaluateAssets(chunks: MeasuredChunk[], recorded: RecordedBudgets): BudgetFailure[] {
+export function evaluateAssets(
+  chunks: MeasuredChunk[],
+  recorded: RecordedBudgets,
+  payloads?: LocalePayloads,
+): BudgetFailure[] {
   const failures: BudgetFailure[] = []
   for (const kind of ASSET_KINDS) {
     const kindChunks = chunks.filter((chunk) => chunk.kind === kind)
     if (kindChunks.length === 0) continue
     const recordedPrefixes = (kind === 'js' ? recorded.budgets : recorded.stylesheets) ?? {}
     for (const group of groupByPrefix(kindChunks)) {
+      const recordedEntry = recordedPrefixes[group.prefix]
+      // A locale entry embeds its payload: gate the code it carries, not the translations it
+      // re-exports (see LocalePayloads). A baseline recorded before the split has no `codeRawBytes`,
+      // so it keeps comparing raw totals — the same shape it was recorded in.
+      const recordedCode = recordedEntry?.codeRawBytes
+      const gated = recordedCode === undefined ? group.rawBytes : codeBytesOf(group.rawBytes, payloads?.byLocale[group.prefix])
       // `?? MAX_NEW_CHUNK_BYTES` also guards a baseline recorded in an older shape (a missing
       // `totalRawBytes` would otherwise compare as NaN and pass silently).
-      const budget = recordedPrefixes[group.prefix]?.totalRawBytes ?? MAX_NEW_CHUNK_BYTES
-      if (group.rawBytes > budget + budgetSlackBytes(budget)) {
+      const budget = recordedCode ?? recordedEntry?.totalRawBytes ?? MAX_NEW_CHUNK_BYTES
+      if (gated > budget + budgetSlackBytes(budget)) {
         failures.push({
           kind,
           prefix: group.prefix,
-          rawBytes: group.rawBytes,
+          rawBytes: gated,
           budget,
           file: group.largest.file,
           fileRawBytes: group.largest.rawBytes,
@@ -590,16 +686,38 @@ export function evaluateAssets(chunks: MeasuredChunk[], recorded: RecordedBudget
     const recordedTotal = kind === 'js' ? recorded.totals?.jsRawBytes : recorded.totals?.cssRawBytes
     if (recordedTotal === undefined) continue
     const total = kindChunks.reduce((sum, chunk) => sum + chunk.rawBytes, 0)
-    if (total <= recordedTotal + budgetSlackBytes(recordedTotal)) continue
+    // The js total carries the same twelve payloads, so compare the code once a build recorded it.
+    const recordedCode = kind === 'js' ? recorded.totals?.jsCodeRawBytes : undefined
+    const gatedTotal = recordedCode === undefined ? total : codeBytesOf(total, payloads?.totalRawBytes ?? 0)
+    const gatedBudget = recordedCode ?? recordedTotal
+    if (gatedTotal <= gatedBudget + budgetSlackBytes(gatedBudget)) continue
     const largest = kindChunks.reduce((max, chunk) => (chunk.rawBytes > max.rawBytes ? chunk : max), kindChunks[0]!)
     failures.push({
       kind,
       prefix: null,
-      rawBytes: total,
-      budget: recordedTotal,
+      rawBytes: gatedTotal,
+      budget: gatedBudget,
       file: largest.file,
       fileRawBytes: largest.rawBytes,
     })
+  }
+  if (payloads && payloads.totalRawBytes > 0) {
+    const recordedPayload = recorded.i18n?.totalRawBytes
+    if (recordedPayload !== undefined && payloads.totalRawBytes > recordedPayload + payloadSlackBytes(recordedPayload)) {
+      const largestLocale = Object.entries(payloads.byLocale).reduce(
+        (max, entry) => (entry[1] > max[1] ? entry : max),
+        ['', 0] as [string, number],
+      )
+      failures.push({
+        kind: 'js',
+        prefix: null,
+        label: 'i18n payload total',
+        rawBytes: payloads.totalRawBytes,
+        budget: recordedPayload,
+        file: `${largestLocale[0]}.json`,
+        fileRawBytes: largestLocale[1],
+      })
+    }
   }
   return failures
 }
@@ -611,9 +729,10 @@ export function evaluateAssets(chunks: MeasuredChunk[], recorded: RecordedBudget
 export function formatFailure(failure: BudgetFailure): string {
   const diff = failure.rawBytes - failure.budget
   const scope =
-    failure.prefix === null
+    failure.label ??
+    (failure.prefix === null
       ? `${failure.kind} bundle total`
-      : `${failure.kind} prefix '${failure.prefix}' total`
+      : `${failure.kind} prefix '${failure.prefix}' total`)
   return (
     `bundle-size: ${scope} is ${failure.rawBytes} B, budget ${failure.budget} B (+${diff} B); largest chunk ` +
     `assets/${failure.file} is ${failure.fileRawBytes} B. Shrink it (move the payload behind a lazy import - ` +
@@ -783,9 +902,12 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
     console.error('no renderer build found - run bun run electron:build:renderer first')
     return 1
   }
-  const budgets = buildBudgets(chunks, 'js')
+  // The i18n payload is measured from its source of truth, so a locale entry's gate compares the
+  // code it carries instead of the translations it embeds (see LocalePayloads).
+  const payloads = readLocalePayloads(p.root)
+  const budgets = buildBudgets(chunks, 'js', payloads)
   const stylesheets = buildBudgets(chunks, 'css')
-  const totals = bundleTotals(chunks)
+  const totals = bundleTotals(chunks, payloads)
   const startup = measureStartup(p.rendererDist)
   const startupEntries = buildStartupEntries(startup)
 
@@ -811,7 +933,7 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
   }
 
   if (printArg) {
-    writeJson(resolve(printArg), { description: DESCRIPTION, budgets, stylesheets, totals, startup: startupEntries })
+    writeJson(resolve(printArg), { description: DESCRIPTION, budgets, stylesheets, totals, startup: startupEntries, i18n: payloads })
     console.log(
       `bundle-size: wrote ${Object.keys(budgets).length} js + ${Object.keys(stylesheets).length} css prefix budget(s) ` +
         `and ${Object.keys(startupEntries).length} startup entry page(s) to ${printArg}`,
@@ -835,6 +957,7 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
       stylesheets,
       totals,
       startup: startupEntries,
+      i18n: payloads,
     })
     console.log(
       `bundle-size: wrote ${relative(p.root, baselinePath)} (${Object.keys(budgets).length} js + ${Object.keys(stylesheets).length} css prefix budget(s))`,
@@ -846,6 +969,10 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
       console.log(`  css ${prefix}: raw ${budget.totalRawBytes} B, gzip ${budget.gzipTotalBytes} B`)
     }
     console.log(`  js  total: raw ${totals.jsRawBytes} B, gzip ${totals.jsGzipBytes} B`)
+    console.log(
+      `  js  total code (raw minus i18n payload): ${totals.jsCodeRawBytes ?? totals.jsRawBytes} B; ` +
+        `i18n payload ${payloads.totalRawBytes} B over ${Object.keys(payloads.byLocale).length} locale(s)`,
+    )
     console.log(`  css total: raw ${totals.cssRawBytes} B, gzip ${totals.cssGzipBytes} B`)
     for (const [html, entry] of Object.entries(startupEntries).sort()) {
       console.log(`  startup ${html}: js raw ${entry.jsRawBytes} B, gzip ${entry.gzipTotalBytes} B, ${entry.fileCount} file(s)`)
@@ -864,11 +991,11 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
     // No recorded baseline yet: every prefix is judged against MAX_NEW_CHUNK_BYTES only.
     baseline = { description: DESCRIPTION, budgets: {} }
   }
-  const failures = evaluateAssets(chunks, {
-    budgets: baseline.budgets ?? {},
-    stylesheets: baseline.stylesheets ?? {},
-    totals: baseline.totals,
-  })
+  const failures = evaluateAssets(
+    chunks,
+    { budgets: baseline.budgets ?? {}, stylesheets: baseline.stylesheets ?? {}, totals: baseline.totals, i18n: baseline.i18n },
+    payloads,
+  )
   const startupRecorded = baseline.startup ?? {}
   const startupFailures = evaluateStartup(startup, startupRecorded)
   printStartupTable(startup, startupRecorded)
