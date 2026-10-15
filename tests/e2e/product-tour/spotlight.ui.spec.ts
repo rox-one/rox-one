@@ -38,12 +38,26 @@ test('UI-05/UI-09: production mask follows measured target geometry after move a
   const box = await page.locator('[data-product-tour-popover]').boundingBox()
   expect(box!.x).toBeGreaterThanOrEqual(0); expect(box!.y).toBeGreaterThanOrEqual(0)
   expect(box!.x + box!.width).toBeLessThanOrEqual(1100); expect(box!.y + box!.height).toBeLessThanOrEqual(800)
+  // Reduced motion is delivered as an app-wide clamp, not as literal `0s`. Under
+  // `prefers-reduced-motion: reduce` every element carries
+  // `animation-duration/transition-duration: 0.01ms !important`
+  // (packages/ui/src/styles/index.css:1561-1570, reached from
+  // apps/electron/src/renderer/index.css:14), which Chromium computes as `1e-05s` — a
+  // 1600th of a 60Hz frame, so imperceptible, but never `0`. The clamp also outranks the
+  // popover's own `motion-reduce:animate-none motion-reduce:transition-none`
+  // (TourPopover.tsx:69), because an `!important` longhand beats a shorthand. Assert the
+  // clamp the product actually applies; any perceptible duration still fails.
+  const reducedMotionCeilingSeconds = 0.01 / 1000
+  const durationsInSeconds = (list: string) => list.split(',').map(value => {
+    const amount = Number.parseFloat(value)
+    return value.trim().endsWith('ms') ? amount / 1000 : amount
+  })
   const motion = await page.locator('[data-product-tour-popover]').evaluate(element => {
     const style = getComputedStyle(element)
     return { animation: style.animationDuration, transition: style.transitionDuration }
   })
-  expect(motion.animation.split(',').every(duration => parseFloat(duration) === 0)).toBe(true)
-  expect(motion.transition.split(',').every(duration => parseFloat(duration) === 0)).toBe(true)
+  expect(Math.max(...durationsInSeconds(motion.animation))).toBeLessThanOrEqual(reducedMotionCeilingSeconds)
+  expect(Math.max(...durationsInSeconds(motion.transition))).toBeLessThanOrEqual(reducedMotionCeilingSeconds)
 })
 
 test('UI-08: a normal outside application click executes and pauses the production overlay', async ({ page }) => {
