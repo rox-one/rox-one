@@ -70,6 +70,56 @@ regenerate and prove it with the pinned bun version:
 git checkout --theirs bun.lock && bun install && bun install --frozen-lockfile
 ```
 
+### Renderer Bundle-Size Budgets
+
+The `Bundle Size` job (`.github/workflows/bundle-size.yml`) builds the renderer and runs
+`scripts/check-bundle-size.ts` against the budgets recorded in `perf-baselines/bundle-size.json`.
+It measures raw bytes of the emitted JS and CSS chunks under `apps/electron/dist/renderer/assets`,
+so always build first — a stale `dist/` measures the wrong thing:
+
+```bash
+bun install
+ROX_RENDERER_SOURCEMAP=1 bun run electron:build:renderer
+bun scripts/check-bundle-size.ts --check
+```
+
+`bun run perf:bundle-size` runs the same gate. Three modes:
+
+- `--check` (default) — fail on any overrun.
+- `--update` — re-record `perf-baselines/bundle-size.json`.
+- `--print <out.json>` — write the current budgets, compare nothing.
+
+What is gated:
+
+- JS chunk prefixes (`budgets`) and CSS prefixes (`stylesheets`). A budget is keyed by the chunk-name
+  prefix — never the content hash — so a rebuild that only changes hashes does not move the budget.
+- The whole-extension `totals`.
+- Locale entries embed an i18n payload, so those prefixes and the js total are held to CODE: the
+  measured total minus the payload read from `packages/shared/src/i18n/locales/<locale>.json`. The
+  payload gets one budget of its own, `i18n.totalRawBytes` (slack 3% + 32 KB).
+- `startup`, the static closure of each `*.html` — the chunks that load before the first frame.
+
+When the gate fails, find out what grew before re-recording:
+
+- **Payload only.** One budget moved, `i18n.totalRawBytes`. That is expected when a feature merge
+  adds strings to all twelve locales; bump that budget and move on.
+- **Code.** A prefix or a total grew. That is a real size decision — lazy-import, split, or drop it
+  deliberately instead of re-recording.
+
+Re-record after a forward merge of `main`:
+
+```bash
+bun install
+ROX_RENDERER_SOURCEMAP=1 bun run electron:build:renderer
+bun run scripts/boot-manifest.ts --no-build
+bun scripts/check-bundle-size.ts --update
+```
+
+Commit the regenerated `perf-baselines/bundle-size.json` and `boot-manifest.json` with the merge.
+
+Gotcha: in the job the budget gate runs before the unit tests, so a red job is not evidence that the
+tests failed. Read which step failed — never take a budget red for a test red.
+
 ### Code Style
 
 - We use TypeScript throughout the codebase
