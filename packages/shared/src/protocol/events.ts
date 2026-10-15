@@ -230,6 +230,39 @@ export interface BroadcastEventMap {
     port: number | null
   }]
 
+  // Cookbooks Lab live run frames (wave 15, global, local-only). One push per
+  // NDJSON frame of `/run-stream` / `/run-all-stream`, carrying the renderer's
+  // own `runId` and a monotonic `seq`. Declared inline for the same reason as
+  // STATUS_CHANGED above — the canonical `CookbooksRunStreamEvent` union lives
+  // in apps/electron's shared contract.
+  [RPC_CHANNELS.cookbooksLab.RUN_EVENT]: [payload: {
+    t: 'start' | 'cell-start' | 'stdout' | 'stderr' | 'display' | 'cell-end' | 'end' | 'error'
+    runId: string
+    seq: number
+    /** `start` */
+    itemId?: string
+    index?: number | null
+    cells?: number[] | null
+    timeout?: number
+    /** `stdout` / `stderr` / `display` */
+    data?: string
+    mime?: string
+    /** `cell-end` (`status` is a word) / `error` (`status` is an HTTP code). */
+    status?: number | 'ok' | 'error' | 'skipped'
+    ok?: boolean
+    timedOut?: boolean
+    durationMs?: number | null
+    returncode?: number | null
+    error?: string | null
+    stdout?: string
+    stderr?: string
+    displays?: { mime: string; data: string }[]
+    /** `end` */
+    cancelled?: boolean
+    missing?: string[]
+    result?: unknown
+  }]
+
   // Navigation events (per-window)
   [RPC_CHANNELS.notification.NAVIGATE]: [data: { workspaceId: string; sessionId: string }]
   [RPC_CHANNELS.deeplink.NAVIGATE]: [navigation: DeepLinkNavigation]

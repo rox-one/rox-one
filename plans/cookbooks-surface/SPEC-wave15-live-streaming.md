@@ -43,21 +43,25 @@ POST /run-all-stream  {"itemId": str, "cells": [{"index": int, "source": str}], 
 Ответ: `200`, `Content-Type: application/x-ndjson`, кадры (по одному JSON-объекту на строку):
 
 ```
-{"t":"start",      "itemId":str, "cellIndex":int|null, "cells":[int]|null, "timeout":float}
+{"t":"start",      "itemId":str, "index":int|null, "cells":[int]|null, "timeout":float}
 {"t":"cell-start", "index":int}                                    # только run-all-stream
 {"t":"stdout",     "index":int|null, "data":"<redacted>"}
 {"t":"stderr",     "index":int|null, "data":"<redacted>"}
-{"t":"display",    "index":int|null, "mime":str, "data":"<string>"}   # 1 запись = 1 кадр
-{"t":"cell-end",   "index":int, "status":"ok|error|skipped", "ok":bool, "timedOut":bool,
-                   "durationMs":int, "returncode":int|null, "error":str|null,
+{"t":"display",    "index":int|null, "mime":str, "data":"<string>"}   # 1 запись = 1 кадр (/run-stream)
+{"t":"cell-end",   "index":int, "status":"ok|error|skipped", "ok":bool, "timed_out":bool,
+                   "duration_ms":int, "returncode":int|null, "error":str|null,
                    "stdout":str, "stderr":str, "displays":[…] }    # полная запись (как элемент cells[]), только run-all-stream
-{"t":"end",        "ok":bool, "returncode":int|null, "timedOut":bool, "cancelled":bool,
-                   "missing":[str], "durationMs":int|null,
-                   "result": <CookbooksRunResult | CookbooksRunAllResult> }   # авторитетный финал
+{"t":"end",        "ok":bool, "returncode":int|null, "timed_out":bool, "cancelled":bool,
+                   "missing":[str], "duration_ms":int|null,
+                   "result": <нативный результат /run или /run-all + duration_ms> }   # авторитетный финал
 {"t":"error",      "status":int, "error":str}                      # пофреймовая ошибка после старта
 ```
 
+Полевые имена кадров — sidecar-native snake_case (как `timed_out`/`duration_ms`/`returncode` в существующих ответах). IPC-события — camelCase (`timedOut`/`durationMs`); конверсию делает main (как уже делает `mapRunResult`).
+
 Инварианты: `start` первый, `end` последний (в т.ч. cancel/timeout — `cancelled:true`); `index` для `/run-stream` = `null` (кроме `cell-end`, которого там нет); кадр `end` всегда несёт `result` (для `/run-stream` — `CookbooksRunResult` + `durationMs`, для `/run-all-stream` — `CookbooksRunAllResult`); ошибки ДО первого кадра — обычный 4xx JSON `{"error":…}` (не NDJSON); обрыв клиента → хендлер убивает процесс (RunHandle) и завершает поток.
+
+**Эмиссия (кто что формирует):** `start` и `end` формирует маршрут (host) — kernel их не эмитит. `/run-stream`: kernel эмитит `stdout`/`stderr`-фрагменты (уже редуцированные, с holdback), маршрут — `display`-кадры (по одному на запись из `result.displays`, непосредственно перед `end`) и `end`. `/run-all-stream`: драйвер эмитит `cell-start`/`stdout`/`stderr` (полные строки, редуцированные, tee), `cell-end` с полной записью (включая `displays`) — отдельных `display`-кадров в run-all нет; маршрут ретранслирует кадры драйвера и формирует `start`/`end`.
 
 IPC-событие (main → renderer, `cookbooks-lab:run-event`): `{ runId, seq, ...кадр }` (кадры 1:1, плюс `runId`/`seq`).
 

@@ -206,6 +206,9 @@ export const EXPECTED_CHANNELS: string[] = [
   'cookbooks-lab:restart',
   'cookbooks-lab:run',
   'cookbooks-lab:run-all',
+  'cookbooks-lab:run-all-stream',
+  'cookbooks-lab:run-event',
+  'cookbooks-lab:run-stream',
   'cookbooks-lab:save',
   'cookbooks-lab:status',
   'cookbooks-lab:status-changed',
@@ -1126,4 +1129,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1122
+export const EXPECTED_CHANNEL_COUNT = 1125

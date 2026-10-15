@@ -139,6 +139,12 @@ export interface CookbooksRunResult {
    * SPEC wave 9 §1). Absent on a sidecar that predates the field.
    */
   cancelled?: boolean
+  /**
+   * Wave 15: how long the cell took, in whole milliseconds. Measured host-side
+   * and carried by the stream's `end` frame; `undefined` when it is unknown (a
+   * pre-wave-15 payload, or a sidecar that sent no usable number).
+   */
+  durationMs?: number
 }
 
 /** Result of a "Run all" (`POST /run-all`): per-cell records + the run-wide flag. */
@@ -146,6 +152,11 @@ export interface CookbooksRunAllResult {
   cells: CookbooksRunCell[]
   /** `true` when the whole run was interrupted; cells without a record were cancelled. */
   cancelled?: boolean
+  /**
+   * Wave 15: the batch's total wall time in whole milliseconds, carried by the
+   * stream's `end` frame. `undefined` when the sidecar sent no usable number.
+   */
+  durationMs?: number
 }
 
 /** Result of `POST /cancel` — how many active executions it stopped. */
@@ -175,6 +186,139 @@ export interface CookbooksRunCell {
    */
   durationMs?: number
 }
+
+// ---------------------------------------------------------------------------
+// Wave 15: live streaming (SPEC wave 15 §Решения 7 + §Контракт кадров)
+//
+// `runStream`/`runAllStream` are FAST invokes: they resolve `{runId}` as soon
+// as the sidecar accepts the run, so the 60 s transport ceiling never applies
+// to the run itself. The frames then arrive on `cookbooks-lab:run-event`,
+// converted from the sidecar's snake_case NDJSON to these camelCase events.
+//
+// The renderer mints `runId` (crypto.randomUUID) and passes it in the input,
+// which removes the "event before the invoke answer" race.
+// ---------------------------------------------------------------------------
+
+/** Input of `cookbooks-lab:run-stream` — one cell's current source. */
+export interface CookbooksRunStreamInput {
+  /** Renderer-minted id; every event of this run carries it back. */
+  runId: string
+  itemId: string
+  code: string
+  index?: number
+}
+
+/** Input of `cookbooks-lab:run-all-stream` — the ordered cells of a batch run. */
+export interface CookbooksRunAllStreamInput {
+  runId: string
+  itemId: string
+  cells: { index: number; source: string }[]
+}
+
+/** The fast invoke answer: the caller's own `runId`, echoed back. */
+export interface CookbooksRunStreamHandle {
+  runId: string
+}
+
+/** `start` — the first frame of every stream (the sidecar accepted the run). */
+interface CookbooksRunStreamStartEvent {
+  t: 'start'
+  runId: string
+  seq: number
+  itemId: string
+  /** `null` for `/run-stream`; the submitted document indexes for run-all. */
+  index: number | null
+  cells: number[] | null
+  timeout: number
+}
+
+/** `cell-start` — a batch run moved on to this cell (`/run-all-stream` only). */
+interface CookbooksRunStreamCellStartEvent {
+  t: 'cell-start'
+  runId: string
+  seq: number
+  index: number
+}
+
+/** `stdout`/`stderr` — one already-REDACTED live fragment. */
+interface CookbooksRunStreamOutputEvent {
+  t: 'stdout' | 'stderr'
+  runId: string
+  seq: number
+  index: number | null
+  data: string
+}
+
+/** `display` — one rich record, emitted just before `end` (`/run-stream`). */
+interface CookbooksRunStreamDisplayEvent {
+  t: 'display'
+  runId: string
+  seq: number
+  index: number | null
+  mime: string
+  data: string
+}
+
+/**
+ * `cell-end` — the full record of one batch cell (the same shape as one entry
+ * of `CookbooksRunAllResult.cells`), so the renderer can merge it incrementally.
+ */
+interface CookbooksRunStreamCellEndEvent {
+  t: 'cell-end'
+  runId: string
+  seq: number
+  index: number
+  status: 'ok' | 'error' | 'skipped'
+  ok: boolean
+  timedOut: boolean
+  durationMs?: number
+  returncode: number | null
+  error: string | null
+  stdout: string
+  stderr: string
+  displays: CookbooksDisplay[]
+}
+
+/**
+ * `end` — the authoritative final frame (also sent on cancel/timeout, with
+ * `cancelled: true`). `result` is the complete run DTO, so the surface replaces
+ * its live buffers with the runner's own record.
+ */
+interface CookbooksRunStreamEndEvent {
+  t: 'end'
+  runId: string
+  seq: number
+  ok: boolean
+  returncode: number | null
+  timedOut: boolean
+  cancelled: boolean
+  missing: string[]
+  durationMs: number | null
+  result: CookbooksRunResult | CookbooksRunAllResult
+}
+
+/**
+ * `error` — a per-frame failure after the stream started. Main also emits it
+ * itself (with `status: 0`) when the connection breaks or the reader hits its
+ * budget, so the surface never waits for an `end` that cannot arrive.
+ */
+interface CookbooksRunStreamErrorEvent {
+  t: 'error'
+  runId: string
+  seq: number
+  status: number
+  error: string
+}
+
+/** One push of `cookbooks-lab:run-event`: a frame plus its identity and order. */
+export type CookbooksRunStreamEvent =
+  | CookbooksRunStreamStartEvent
+  | CookbooksRunStreamCellStartEvent
+  | CookbooksRunStreamOutputEvent
+  | CookbooksRunStreamDisplayEvent
+  | CookbooksRunStreamCellEndEvent
+  | CookbooksRunStreamEndEvent
+  | CookbooksRunStreamErrorEvent
 
 // ---------------------------------------------------------------------------
 // Errors

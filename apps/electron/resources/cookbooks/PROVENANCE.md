@@ -10,7 +10,7 @@ the laboratory's own repository and a re-run of the sync command below.
 |---|---|
 | Source tree | `/Users/t/Projects/2026-10-13-rox-cookbooks-notebooks` |
 | Upstream repo | `rox-one/rox-cookbooks-notebooks` |
-| Snapshot date | 2026-10-15 |
+| Snapshot date | 2026-10-16 |
 | Source revision | **none available.** The upstream laboratory is a plain working copy: it carries **no VCS metadata** (no `.git`, no tag, no archive), so there is no commit SHA to pin. Integrity is therefore asserted by the **sha256 manifest** at the bottom of this file (regenerate + diff), not by a revision. |
 | Interpreter used to validate | `/usr/bin/python3` 3.9.6 (lab runs on ≥ 3.9; cell execution needs ≥ 3.11 — an internal honest lab error, not a resolver gate) |
 
@@ -22,7 +22,7 @@ file (identical output = intact):
 
 ```sh
 cd apps/electron/resources/cookbooks
-find . -type f ! -name PROVENANCE.md | sort \
+find . -type f ! -name PROVENANCE.md | LC_ALL=C sort \
   | while read -r f; do printf '%s  %s\n' "$(shasum -a 256 "$f" | awk '{print $1}')" "${f#./}"; done
 ```
 
@@ -56,14 +56,14 @@ The **relative layout is load-bearing** and must not be flattened:
   items must stay under `resources/cookbooks/`.
 
 Verified by `python3 scripts/electron_handshake_probe.py` → `[SUMMARY] 0 failed`
-(12/12 checks, 13 catalog items).
+(16/16 checks, 13 catalog items).
 
 ## sha256 manifest
 
 ```
-8cd793bdbf4064de33248169b9319d263a70d19f2d7952c831a33594ebe14860  ELECTRON-CONTRACT.md
-67e6251a631dd9cbb383317a994f47b9d67c78ac09424b86982be40c4795b63e  resources/cookbooks/catalog.json
+04a764221874baf6b36fc50e93deeb1ca4b890069572074292492521c7e26ed3  ELECTRON-CONTRACT.md
 8f0579ea5450ee9edc4d2efbba5ddc8a8ba2842be70f009068b7821e3a2acedc  resources/cookbooks/LICENSE-NOTES.md
+67e6251a631dd9cbb383317a994f47b9d67c78ac09424b86982be40c4795b63e  resources/cookbooks/catalog.json
 a4d1b9e08cbcb35a7b89e2b0612a674370303aa4a2c38f24c8474e10d2f9e91b  resources/cookbooks/vendors/anthropic/prompt-playbook.md
 18b3f900c1bcdb1a50f1523517395ee073638dff0bd214e8e902878d61801d8e  resources/cookbooks/vendors/anthropic/tool-use.ipynb
 1ba7bc7aa2a1916bc40cce3d7fb6386497b018888e4e2a29fe5503107f952500  resources/cookbooks/vendors/langchain/agents.ipynb
@@ -77,17 +77,17 @@ f1243478f9cc28e70ceaab7e40abc0563142cad2a9a78e0b035358a462663fd0  resources/cook
 3bbb9328cd7e2026077f90db825311337a83e12c9e4a7d6795d2d4bab1d43a70  resources/cookbooks/vendors/pinecone/rag-quickstart.ipynb
 1e5b8a8f3cac4b4767899af523196ef855e4081ae9096a1f3aefcde60e76e1dd  resources/cookbooks/vendors/weaviate/multi-tenancy.ipynb
 04f1cc65f261d3a0148941b64dd594ef92dd4abae4b59de15332fbca1d831850  resources/cookbooks/vendors/weaviate/rag-quickstart.ipynb
-616093dc9df1a297dd9b7ffb4ebcc9ed7559ef511ee73b82e879c71b883b52bd  scripts/electron_handshake_probe.py
+58c6711fa3f51868d1602b8a8592cf964cbefa7bf0995bf83dc8a28bae872eae  scripts/electron_handshake_probe.py
 41a79e7433527247f1e8e948b3b165e8f3e50e6eda89a1f0ed608ad476faee43  scripts/serve_lab.py
+43a95ac989a74c04065c2532dcb2bea458a1286897ebfd4b5dd72aed49b6e251  src/rox_cookbooks/__init__.py
+cbc3b59c57e9006a6ccc9e93d456322da3098c998187c9a4d0aa12f69a232581  src/rox_cookbooks/__main__.py
 765a094908deb976318972eb7d7f85997f147825b5150e3e64329ddc073ce3e6  src/rox_cookbooks/catalog.py
 3655d558b34a592a558f60d65a6baabdedf3ef873418a9f920131bea2160faa1  src/rox_cookbooks/copies.py
-d6cf92ba8b6fc75ab3dee6407ddf4dcc484aecf0aa5cbe4dbc0499e37ef30ba9  src/rox_cookbooks/host.py
-43a95ac989a74c04065c2532dcb2bea458a1286897ebfd4b5dd72aed49b6e251  src/rox_cookbooks/__init__.py
-2f2b4ebab19871d58b3b47a408b714b4f17e89f06daf0a27166b40bdfef382f7  src/rox_cookbooks/kernel.py
-cbc3b59c57e9006a6ccc9e93d456322da3098c998187c9a4d0aa12f69a232581  src/rox_cookbooks/__main__.py
+c0f8b3b2e8e7f071ad1154c16bbb63e183547f19c3420843672df48475975cac  src/rox_cookbooks/host.py
+9889f52e1683052d431398d74d52d6244a717abcac549073c203421439f8ad97  src/rox_cookbooks/kernel.py
 7a6adaf00321cd2c21824df8fddd40735b95dcde511379d32d4bf75622710256  src/rox_cookbooks/notebooks.py
 77a378b23f58d67a0d02792114364a98ed8cdcd3f24d164e3cd5fe54c43526ae  src/rox_cookbooks/search.py
-c9daa2548fa96ec1c15d5f84c5f16a75ab2e7c97937c70fe90acfbb7375be55b  src/rox_cookbooks/secrets.py
+c016d27fdfc07ac70155186439292835ef453c944691091157eab78f669ac741  src/rox_cookbooks/secrets.py
 4a4d0b015ebe4498c6eea4c5dbc3d992408f37e4c6b1f25d3128f035912992ce  src/rox_cookbooks/static/lab.html
 13381e7f31b5cc87eb302a75be24077d2fbcae5a46ece84f1cb7bafaab5457e0  src/rox_cookbooks/ui.py
 ```
@@ -95,6 +95,6 @@ c9daa2548fa96ec1c15d5f84c5f16a75ab2e7c97937c70fe90acfbb7375be55b  src/rox_cookbo
 Regenerate with:
 
 ```sh
-cd apps/electron/resources/cookbooks && find . -type f ! -name PROVENANCE.md | sort \
+cd apps/electron/resources/cookbooks && find . -type f ! -name PROVENANCE.md | LC_ALL=C sort \
   | while read -r f; do printf '%s  %s\n' "$(shasum -a 256 "$f" | awk '{print $1}')" "${f#./}"; done
 ```
