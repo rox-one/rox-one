@@ -53,12 +53,29 @@
  * clock for a single run — the outline scroll-spy (`scroll-spy.ts`) and
  * «Перезапустить и выполнить» (clear every output, then run the batch again).
  *
+ * Wave 14 («Cell Manipulation & Focus», slice A) adds the manipulation half of
+ * Colab parity: native HTML5 drag & drop of a cell (the gutter handle, the
+ * existing insert rows and a cell's own midline as drop zones), a multi-cell
+ * selection with a range anchor (`cell-selection.ts`, `Shift+click`/`Shift+↑↓`),
+ * an in-renderer cell buffer (`Ctrl+C`/`Ctrl+X`/`Ctrl+V` and the per-cell menu),
+ * `Alt+Enter` (run the focused cell, then insert a fresh code cell below) and a
+ * run-all progress counter in the header. The command-mode selection stays the
+ * surface's one `selectedCell` — the anchor is a sibling, so every existing
+ * gesture keeps its meaning.
+ *
+ * Wave 14 (slice E) adds the focus half of the same parity: structural undo/redo
+ * (`cell-history.ts`) over every gesture the surface performs, per-cell folding
+ * (a `Set` of collapsed indices, session-only), the «Скачать» menu with its
+ * `.py` entry, two-space Tab indentation in a code editor, `text/latex` outputs
+ * rendered as display math through the product `<Markdown>`, numbered outline
+ * entries (`numberHeadings`) and the batch's own size while it runs.
+ *
  * Every string comes from `cookbooks.*` through `t()` and every colour, radius,
  * type size and control height is a ROX token, so the surface follows the app
  * theme in all twelve locales and never drifts into ad-hoc styling.
  */
 import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -71,6 +88,7 @@ import { prefersReducedMotionNow } from '@/lib/render-profile-motion'
 import { cn } from '@/lib/utils'
 import {
   buildNotebookExport,
+  buildPythonScript,
   type CookbooksCard,
   type CookbooksCellMutation,
   type CookbooksDisplay,
@@ -80,7 +98,25 @@ import {
 } from '../../../shared/cookbooks'
 import { normalizeOutputText } from './output-text'
 import { computeMatches, replaceAllInSources, replaceMatch, type CookbooksFindMatch } from './find-replace'
-import { pickActiveEntry } from './scroll-spy'
+import { numberHeadings, pickActiveEntry } from './scroll-spy'
+import {
+  canRedo,
+  canUndo,
+  createHistory,
+  invertOp,
+  pushEntry,
+  redoStep,
+  undoStep,
+  type History,
+  type HistoryEntry,
+  type HistoryOp,
+} from './cell-history'
+import {
+  clampIndex,
+  extendSelection,
+  selectedIndices,
+  type CellSelection,
+} from './cell-selection'
 
 /** Catalog/kind labels — the pill text is a per-kind i18n key, never a literal. */
 const KIND_LABEL_KEY: Record<CookbooksCard['kind'], string> = {
@@ -116,6 +152,14 @@ const SHORTCUT_KEYS: readonly string[] = [
   'cookbooks.help.shortcutEdit',
   'cookbooks.help.shortcutType',
   'cookbooks.help.shortcutSave',
+  // Wave 14 (F1–F3): the manipulation keys this slice binds.
+  'cookbooks.shortcuts.altEnter',
+  'cookbooks.shortcuts.multi',
+  'cookbooks.shortcuts.cellBuffer',
+  // Wave 14 (F6/F9): structural undo/redo and the code-editor indent.
+  'cookbooks.shortcuts.undo',
+  'cookbooks.shortcuts.tab',
+  'cookbooks.shortcuts.drag',
 ]
 
 /**
@@ -125,21 +169,40 @@ const SHORTCUT_KEYS: readonly string[] = [
  */
 const HEADING_PATTERN = /^(#{1,3})\s+(.+?)\s*#*$/
 
-/** The H1–H3 titles of one markdown block, in the order it writes them. */
-function headingsOf(source: string): string[] {
-  const titles: string[] = []
+/** One heading as the outline reads it — its level and its title. */
+interface CookbooksHeading {
+  /** The `#` count, 1–3 (wave 14 F11 numbers the outline by it). */
+  level: number
+  title: string
+}
+
+/** The H1–H3 headings of one markdown block, in the order it writes them. */
+function headingsOf(source: string): CookbooksHeading[] {
+  const headings: CookbooksHeading[] = []
   for (const line of source.split('\n')) {
     const match = HEADING_PATTERN.exec(line)
-    if (match) titles.push(match[2].trim())
+    if (match) headings.push({ level: match[1].length, title: match[2].trim() })
   }
-  return titles
+  return headings
 }
 
 /** One outline entry: its title and the element its click scrolls to. */
-interface CookbooksOutlineEntry {
-  title: string
+interface CookbooksOutlineEntry extends CookbooksHeading {
+  /** Wave 14 (F11): the dotted numeral `numberHeadings` gave this entry. */
+  number: string
   /** `data-testid` of the block the heading belongs to. */
   testId: string
+}
+
+/**
+ * Wave 14 (F11): the outline indent of a heading level — one step per level
+ * below the first, so an H1 sits flush, an H2 one step in and an H3 two. A
+ * record (not an inline style) keeps the spacing a token choice the theme owns.
+ */
+const OUTLINE_INDENT_CLASS: Record<number, string> = {
+  1: '',
+  2: 'pl-2',
+  3: 'pl-4',
 }
 
 /** The only `disabledReason` the contract names; anything else is shown raw. */
@@ -151,6 +214,226 @@ const FILE_MISSING_REASON = 'file missing'
  * constant — the copy block and «Копировать вывод» always keep the full text.
  */
 const OUTPUT_COLLAPSE_THRESHOLD = 600
+
+/**
+ * Wave 14 (F1): the `dataTransfer` type a cell drag carries. A custom type (plus
+ * a `text/plain` twin) keeps the gesture from colliding with a text drag the
+ * user may start inside an editor — the drop zones only ever accept this one.
+ */
+const DRAG_MIME = 'application/x-rox-cookbooks-cell'
+
+/**
+ * Wave 14 (F2): the in-renderer cell buffer — the type and on-screen source of
+ * every cell a copy/cut captured. Deliberately NOT the system clipboard (SPEC
+ * §4): the surface never has to ask the OS for permission and a rich cell keeps
+ * its type, while `Ctrl+C`/`Ctrl+X`/`Ctrl+V` inside a text field stay native.
+ */
+type CellBuffer = { cellType: 'code' | 'markdown'; source: string }[]
+
+/** Wave 14 (F1): which side of a drop target the indicator line marks. */
+type DropPosition = 'above' | 'below'
+
+/**
+ * Wave 14 (F6): the `HistoryOp` one structural mutation records.
+ *
+ * A `delete` and a `duplicate` name only an index, so the cell's type — and, for
+ * a delete, its on-screen source — has to come from the document as it stands:
+ * that state is what an undo has to put back. Returns `null` for an op whose
+ * cell is gone, which the caller reads as «nothing to record» (the mutation is
+ * still sent; only the stack is left alone).
+ */
+function historyOpForMutation(
+  mutation: CookbooksCellMutation,
+  cells: CookbooksDocument['cells'],
+  sources: Record<number, string>,
+): HistoryOp | null {
+  switch (mutation.op) {
+    case 'add':
+      // An insert that carried no source (the insert rows, `Ctrl+M`,
+      // `Alt+Enter`) records an empty one, so its redo rebuilds the same cell.
+      return { kind: 'add', index: mutation.index, cellType: mutation.cellType, source: mutation.source ?? '' }
+    case 'delete': {
+      const cell = cells[mutation.index]
+      if (!cell) return null
+      return {
+        kind: 'delete',
+        index: mutation.index,
+        cellType: cell.cellType,
+        source: sources[mutation.index] ?? cell.source,
+      }
+    }
+    case 'move':
+      return { kind: 'move', from: mutation.from, to: mutation.to }
+    case 'duplicate':
+      return cells[mutation.index] ? { kind: 'duplicate', index: mutation.index } : null
+    case 'convert': {
+      const cell = cells[mutation.index]
+      return {
+        kind: 'convert',
+        index: mutation.index,
+        fromType: cell?.cellType ?? (mutation.cellType === 'code' ? 'markdown' : 'code'),
+        toType: mutation.cellType,
+      }
+    }
+  }
+}
+
+/**
+ * Wave 14 (F6): the history entry one gesture records — `mutations` exactly as
+ * the surface performs them (`redo`), plus their inverses in REVERSE gesture
+ * order (`undo`).
+ *
+ * The order is what makes a group replayable: the sidecar refuses an `add`
+ * index above the document's length, so a delete group — recorded in descending
+ * index order, the order the deletes themselves need — has to be undone with its
+ * adds ASCENDING. `duplicate` has no positional inverse (`invertOp` answers
+ * `null`), so the page builds that one pair itself: the sidecar copies a cell
+ * into `index + 1`, which is exactly the index an undo deletes.
+ */
+function historyEntryFor(
+  mutations: readonly CookbooksCellMutation[],
+  labelKey: string,
+  cells: CookbooksDocument['cells'],
+  sources: Record<number, string>,
+): HistoryEntry | null {
+  const redo: HistoryOp[] = []
+  for (const mutation of mutations) {
+    const op = historyOpForMutation(mutation, cells, sources)
+    if (!op) return null
+    redo.push(op)
+  }
+  const undo: HistoryOp[] = []
+  for (const op of [...redo].reverse()) {
+    if (op.kind === 'duplicate') {
+      const cell = cells[op.index]
+      if (!cell) return null
+      undo.push({
+        kind: 'delete',
+        index: op.index + 1,
+        cellType: cell.cellType,
+        source: sources[op.index] ?? cell.source,
+      })
+      continue
+    }
+    const inverse = invertOp(op)
+    if (!inverse) return null
+    undo.push(inverse)
+  }
+  return { labelKey, undo, redo }
+}
+
+/** Wave 14 (F6): the wire mutation that replays one history op. */
+function mutationOfHistoryOp(op: HistoryOp): CookbooksCellMutation {
+  switch (op.kind) {
+    case 'add':
+      return { op: 'add', cellType: op.cellType, index: op.index, source: op.source }
+    case 'delete':
+      return { op: 'delete', index: op.index }
+    case 'move':
+      return { op: 'move', from: op.from, to: op.to }
+    case 'duplicate':
+      return { op: 'duplicate', index: op.index }
+    case 'convert':
+      return { op: 'convert', index: op.index, cellType: op.toType }
+  }
+}
+
+/**
+ * Wave 14 (F9): the two spaces one Tab press (and one Shift+Tab) moves a line by
+ * — the Colab/Python convention, and the reason `\t` never reaches the file.
+ */
+const INDENT_UNIT = '  '
+
+/** Wave 14 (F9): the value and the caret/selection an indent gesture lands on. */
+interface IndentResult {
+  value: string
+  start: number
+  end: number
+}
+
+/**
+ * Wave 14 (F9): Tab / Shift+Tab inside a code editor.
+ *
+ * A collapsed caret inserts `INDENT_UNIT` (Shift+Tab removes up to two leading
+ * spaces, or one tab, from its own line); a selection indents or dedents EVERY
+ * line it touches, and the selection travels with them. A selection that ends
+ * exactly at the start of a line does not touch that line — the standard
+ * editor rule, and what keeps a repeated Tab from indenting one line too many.
+ */
+function indentCode(value: string, start: number, end: number, outdent: boolean): IndentResult {
+  const lines = value.split('\n')
+  const lineStarts: number[] = [0]
+  for (let at = 0; at < value.length; at += 1) {
+    if (value[at] === '\n') lineStarts.push(at + 1)
+  }
+  const lineOf = (position: number): number => {
+    let index = 0
+    for (let at = 0; at < lineStarts.length; at += 1) {
+      if (lineStarts[at] <= position) index = at
+    }
+    return index
+  }
+
+  if (start === end) {
+    const line = lineOf(start)
+    if (!outdent) {
+      return {
+        value: `${value.slice(0, start)}${INDENT_UNIT}${value.slice(end)}`,
+        start: start + INDENT_UNIT.length,
+        end: end + INDENT_UNIT.length,
+      }
+    }
+    const match = /^( {1,2}|\t)/.exec(lines[line])
+    if (!match) return { value, start, end }
+    const removed = match[0].length
+    lines[line] = lines[line].slice(removed)
+    const caret = Math.max(lineStarts[line], start - removed)
+    return { value: lines.join('\n'), start: caret, end: caret }
+  }
+
+  const firstLine = lineOf(start)
+  const endLine = lineOf(end)
+  const lastLine = endLine > firstLine && end === lineStarts[endLine] ? endLine - 1 : endLine
+  const deltas: number[] = []
+  for (let line = firstLine; line <= lastLine; line += 1) {
+    if (outdent) {
+      const match = /^( {1,2}|\t)/.exec(lines[line])
+      const removed = match ? match[0].length : 0
+      lines[line] = lines[line].slice(removed)
+      deltas.push(-removed)
+    } else {
+      lines[line] = `${INDENT_UNIT}${lines[line]}`
+      deltas.push(INDENT_UNIT.length)
+    }
+  }
+  const shift = deltas.reduce((total, delta) => total + delta, 0)
+  return { value: lines.join('\n'), start: start + deltas[0], end: end + shift }
+}
+
+/**
+ * Wave 14 (F9, slice F): the index of the CODE cell editor that holds focus at
+ * THIS instant, or `null` when the focus is anywhere else.
+ *
+ * Read at event time from the DOM — the same ref-at-event shape the
+ * `app.search` takeover uses — because the action registry decides whether to
+ * swallow the key before React renders anything. A markdown cell's editor is
+ * deliberately excluded: it keeps the platform's own `Tab` (SPEC §9).
+ */
+function focusedCodeCellIndex(
+  surface: HTMLElement | null,
+  doc: CookbooksDocument | null,
+): number | null {
+  if (doc?.kind !== 'ipynb') return null
+  const active = document.activeElement
+  if (!(active instanceof HTMLTextAreaElement)) return null
+  if (surface?.contains(active) !== true) return null
+  const raw = active.dataset.cellIndex
+  if (raw === undefined) return null
+  const index = Number(raw)
+  if (!Number.isInteger(index) || index < 0) return null
+  if (doc.cells[index]?.cellType !== 'code') return null
+  return index
+}
 
 /** Shared control chrome: ROX hit target, radius, hover and focus tokens. */
 const ACTION_CLASS =
@@ -319,8 +602,14 @@ const OUTPUT_PRE_CLASS =
  * one event can never carry two of them; the renderer draws every record it
  * receives, in emission order. `text/plain` is deliberately absent — it is not a
  * widget: it is the plain-text fallback the block itself shows (`outputText`) —
- * and a mime outside this list (latex, yaml, …) is carried by the document and
- * the export but not rendered.
+ * and a mime outside this list (yaml, …) is carried by the document and the
+ * export but not rendered.
+ *
+ * Wave 14 (F10): `text/latex` joins the list. It is no longer «carried but not
+ * rendered»: a record that was already persisted by an earlier copy draws as
+ * display math, through the same product `<Markdown>` a `$$` block in a
+ * markdown cell takes (`MarkdownLatexBlock` / the lazy KaTeX plugin) — the
+ * surface still imports no math library of its own.
  */
 const RENDERABLE_MIMES: readonly string[] = [
   'text/html',
@@ -328,6 +617,7 @@ const RENDERABLE_MIMES: readonly string[] = [
   'image/png',
   'image/jpeg',
   'text/markdown',
+  'text/latex',
   'application/json',
 ]
 
@@ -397,6 +687,19 @@ function DisplayRecord({ index, display }: { index: number; display: CookbooksDi
       >
         {prettyJson(display.data)}
       </pre>
+    )
+  }
+  if (display.mime === 'text/latex') {
+    // Wave 14 (F10): the record's LaTeX travels into the product renderer as a
+    // `$$` display-math block — the wrapper is what makes KaTeX draw it, and an
+    // empty payload is skipped rather than rendered as an empty formula.
+    if (display.data.trim().length === 0) return null
+    return (
+      <CellMarkdown
+        mode="minimal"
+        source={`$$\n${display.data}\n$$`}
+        testId={`cookbooks-display-latex-${index}`}
+      />
     )
   }
   // `text/markdown` — the only remaining mime of the priority list.
@@ -473,6 +776,10 @@ function InsertRow({
   alwaysVisible,
   disabled,
   busyHint,
+  dropActive = false,
+  onDragOver,
+  onDragLeave,
+  onDrop,
   onInsert,
 }: {
   index: number
@@ -481,15 +788,25 @@ function InsertRow({
   disabled: boolean
   /** Hint shown while an action is in flight; omitted when the row is idle. */
   busyHint?: string
+  /** Wave 14 (F1): the drag in flight would land at this very gap. */
+  dropActive?: boolean
+  onDragOver?: (event: ReactDragEvent<HTMLElement>) => void
+  onDragLeave?: (event: ReactDragEvent<HTMLElement>) => void
+  onDrop?: (event: ReactDragEvent<HTMLElement>) => void
   onInsert: (cellType: 'code' | 'markdown') => void
 }) {
   const { t } = useTranslation()
   return (
     <div
       data-testid={`cookbooks-insert-${index}`}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
       className={cn(
         'group/insert flex h-6 items-center justify-center gap-2 opacity-0 transition-opacity hover:opacity-100 focus-within:opacity-100 motion-reduce:transition-none',
         alwaysVisible && 'opacity-100',
+        // Wave 14 (F1): the indicator line the drop would land on.
+        dropActive && 'opacity-100 outline outline-2 outline-foreground',
       )}
     >
       <button
@@ -555,6 +872,29 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   const [activeEntry, setActiveEntry] = useState<number | null>(null)
   /** Wave 13 (F1): the command-mode selection — any cell (code or markdown), or null. */
   const [selectedCell, setSelectedCell] = useState<number | null>(null)
+  /** Wave 14 (F2): the range anchor that turns the focus into a multi-cell selection. */
+  const [selectionAnchor, setSelectionAnchor] = useState<number | null>(null)
+  /** Wave 14 (F2): the internal cell buffer a copy/cut filled, or null when empty. */
+  const [cellBuffer, setCellBuffer] = useState<CellBuffer | null>(null)
+  /** Wave 14 (F1): the gap a drag in flight would drop into, or null when none. */
+  const [dropGap, setDropGap] = useState<number | null>(null)
+  /**
+   * Wave 14 (F4): the batch's own size, shown next to «Запустить всё» while it
+   * runs. The sidecar answers a whole batch in ONE response, so a monotone
+   * «N of M» counter is not something this surface can honestly claim — what it
+   * does know is how many cells it asked for, and that is what it shows. The
+   * element is gone the moment the batch lands (the summary notice takes over).
+   */
+  const [runProgress, setRunProgress] = useState<number | null>(null)
+  /** Wave 14 (F6): the structural undo/redo stack (`cell-history.ts`). */
+  const [history, setHistory] = useState<History>(() => createHistory())
+  /**
+   * Wave 14 (F7): the folded cells, by document index. Session-only — the
+   * `.ipynb` carries no fold state (SPEC §7, a recorded limitation).
+   */
+  const [collapsedCells, setCollapsedCells] = useState<ReadonlySet<number>>(() => new Set<number>())
+  /** Wave 14 (F8): the «Скачать» menu's own disclosure state. */
+  const [exportMenuOpen, setExportMenuOpen] = useState(false)
   /** Wave 13 (F2): the find & replace panel — visible only for an `ipynb`. */
   const [findOpen, setFindOpen] = useState(false)
   const [findQuery, setFindQuery] = useState('')
@@ -573,6 +913,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   const pendingSelectionRef = useRef<{ index: number; start: number; end: number } | null>(null)
   /** Wave 13 (F1): the timestamp of the first `d` of a `dd` delete (0 = disarmed). */
   const ddRef = useRef(0)
+  /** Wave 14 (F1): the document index a drag started from, or null when idle. */
+  const dragIndexRef = useRef<number | null>(null)
   /** Wave 13 (F5): single-flight latch — one flush at a time, whoever asked. */
   const flushingRef = useRef(false)
   /** F5: one `toast.error` per failure episode; a success re-arms the report. */
@@ -710,6 +1052,21 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       if (next.cells.length === 0) return null
       return Math.min(current, next.cells.length - 1)
     })
+    // Wave 14 (F2): the range anchor follows the same clamp — a re-read document
+    // can never leave the selection address a cell that no longer exists.
+    setSelectionAnchor((current) => {
+      if (current === null) return null
+      if (next.cells.length === 0) return null
+      return Math.min(current, next.cells.length - 1)
+    })
+    // Wave 14 (F1): a drag whose target just vanished has no gap to mark.
+    setDropGap(null)
+    // Wave 14 (F7): a fold is a statement about the cells this document was
+    // read with — and an op that inserted or deleted one shifts every index
+    // below it, so a re-read document starts unfolded rather than folding the
+    // wrong cell. Wave 14 (F8): and the download menu closes with it.
+    setCollapsedCells(new Set<number>())
+    setExportMenuOpen(false)
   }, [])
 
   const openItem = useCallback(
@@ -720,6 +1077,11 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         applyDocument(result.document)
         // Wave 13 (F1): a freshly opened document starts with no selection.
         setSelectedCell(null)
+        // Wave 14 (F2): and no range anchor either.
+        setSelectionAnchor(null)
+        // Wave 14 (F6): a freshly opened document has no gestures behind it —
+        // the stack describes the copy that was open, not this one.
+        setHistory(createHistory())
         setOpenItemId(itemId)
         setNotice({ source: 'key', key: newCopy ? 'cookbooks.status.newCopy' : 'cookbooks.status.opened' })
       })
@@ -879,6 +1241,10 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       setRunStartedAt(started)
       // R6: the batch starts at the first runnable cell.
       scrollToCell(cells[0].index)
+      // Wave 14 (F4): the batch's own size — subsets «выше/ниже» count only their
+      // own cells. The sidecar answers the whole batch in one response, so this
+      // is the run's SIZE, shown for as long as the run lasts.
+      setRunProgress(cells.length)
       try {
         await runWithBusy('run-all', async () => {
           // Wave 9: a stopped batch answers `cancelled` and omits the cells it
@@ -960,6 +1326,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         })
       } finally {
         setRunStartedAt(null)
+        // Wave 14 (F4): the progress counter lives exactly as long as the batch.
+        setRunProgress(null)
       }
     },
     [api, busy, doc, openItemId, runWithBusy, scrollToCell, sources],
@@ -981,25 +1349,43 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   }, [api, openItemId])
 
   /**
+   * Wave 14 (F6): flush every cell the surface holds an edit for, in ascending
+   * document order, so the sidecar shifts a document that already holds the
+   * edits on screen. Shared by every structural path — a fresh gesture, a
+   * buffer paste and a history replay — because all three mutate the same file.
+   */
+  const flushSourceEdits = useCallback(async () => {
+    if (!openItemId || !doc) return
+    for (let index = 0; index < doc.cells.length; index += 1) {
+      const edited = sources[index] ?? doc.cells[index].source
+      if (edited === doc.cells[index].source) continue
+      await api.save({ itemId: openItemId, index, source: sources[index] ?? '' })
+    }
+  }, [api, doc, openItemId, sources])
+
+  /**
    * Wave 10: the one structural-mutation path (add/delete/move/duplicate).
    * Anything unsaved is flushed first, in ascending document order, so the
    * sidecar shifts a document that already holds the edits on screen; a failed
    * save aborts the mutation before the sidecar is ever asked. The fresh
    * document the sidecar answers with replaces the surface wholesale and the
    * returned `index` becomes the next focus target.
+   *
+   * Wave 14 (F6): the gesture is recorded on the undo stack — once, and only
+   * after the sidecar accepted it — so every caller (the insert rows, the ⋯
+   * menu, `Ctrl+M`, `Alt+Enter`, `y`/`m`, a drag and a drop) is undoable
+   * without repeating the bookkeeping.
    */
   const mutateCell = useCallback(
     async (mutation: CookbooksCellMutation) => {
       if (!openItemId || !doc || busy !== null) return
+      const entry = historyEntryFor([mutation], `cookbooks.op.${mutation.op}`, doc.cells, sources)
       await runWithBusy('mutate', async () => {
-        for (let index = 0; index < doc.cells.length; index += 1) {
-          const edited = sources[index] ?? doc.cells[index].source
-          if (edited === doc.cells[index].source) continue
-          await api.save({ itemId: openItemId, index, source: sources[index] ?? '' })
-        }
+        await flushSourceEdits()
         const result = await api.mutate({ itemId: openItemId, ...mutation })
         applyDocument(result.document)
         pendingFocusRef.current = result.index
+        if (entry) setHistory((current) => pushEntry(current, entry))
         // Wave 10: only an insert opens the markdown editor — delete/move/
         // duplicate must not steal into edit. Wave 13 (F3): a conversion to
         // markdown does open it, since the cell just became text.
@@ -1009,7 +1395,364 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         }
       })
     },
-    [api, applyDocument, busy, doc, openItemId, runWithBusy, sources],
+    [api, applyDocument, busy, doc, flushSourceEdits, openItemId, runWithBusy, sources],
+  )
+
+  // -------------------------------------------------------------------------
+  // Wave 14 (slice A) — multi-selection (F2), the cell buffer (F2), drag & drop
+  // (F1) and Alt+Enter (F3)
+  // -------------------------------------------------------------------------
+
+  /** The cell count the selection arithmetic clamps against (a playbook has none). */
+  const cellCount = doc?.kind === 'ipynb' ? doc.cells.length : 0
+  /** Wave 14 (F2): the focus+anchor pair the pure `cell-selection` module reads. */
+  const selection = useMemo<CellSelection | null>(
+    () => (selectedCell === null ? null : { focus: selectedCell, anchor: selectionAnchor }),
+    [selectedCell, selectionAnchor],
+  )
+  /** Wave 14 (F2): every selected index, ascending — the one read path. */
+  const selectedAll = useMemo(() => selectedIndices(selection, cellCount), [cellCount, selection])
+
+  /** Wave 14 (F2): land a single-cell selection (the anchor always drops). */
+  const selectSingle = useCallback((index: number) => {
+    setSelectedCell(index)
+    setSelectionAnchor(null)
+  }, [])
+
+  /** Wave 14 (F2): extend the range to `index` (anchor = current focus if unset). */
+  const selectRange = useCallback(
+    (index: number) => {
+      if (cellCount === 0) return
+      if (selectedCell === null) {
+        setSelectedCell(clampIndex(index, cellCount))
+        setSelectionAnchor(null)
+        return
+      }
+      const next = extendSelection(
+        { focus: selectedCell, anchor: selectionAnchor },
+        clampIndex(index, cellCount),
+      )
+      setSelectedCell(next.focus)
+      setSelectionAnchor(next.anchor)
+    },
+    [cellCount, selectedCell, selectionAnchor],
+  )
+
+  /** Wave 14 (F2): `Shift+↑/↓` — move the focus, keeping the range anchor. */
+  const extendByArrow = useCallback(
+    (direction: -1 | 1) => {
+      if (cellCount === 0) return
+      if (selectedCell === null) {
+        setSelectedCell(direction === 1 ? 0 : cellCount - 1)
+        setSelectionAnchor(null)
+        return
+      }
+      const next = extendSelection(
+        { focus: selectedCell, anchor: selectionAnchor },
+        clampIndex(selectedCell + direction, cellCount),
+      )
+      setSelectedCell(next.focus)
+      setSelectionAnchor(next.anchor)
+    },
+    [cellCount, selectedCell, selectionAnchor],
+  )
+
+  /** Wave 14 (F2): drop the whole selection (Esc). */
+  const clearSelection = useCallback(() => {
+    setSelectedCell(null)
+    setSelectionAnchor(null)
+  }, [])
+
+  /**
+   * Wave 14 (F2): apply a group of structural ops as one gesture. The sidecar is
+   * asked once per op, in the order given — a delete group is passed in
+   * descending index order by its caller, so every op still names the cell it
+   * means once its predecessors are gone. Unsaved edits are flushed first,
+   * exactly like a single mutation, and the document re-read after the last op
+   * is the one on screen.
+   *
+   * Wave 14 (F6): the whole group is ONE history entry. `labelKey` names the
+   * gesture for the toast — a paste is not an insert, even though it is sent as
+   * a run of `add` ops.
+   */
+  const mutateMany = useCallback(
+    async (mutations: CookbooksCellMutation[], labelKey?: string) => {
+      if (mutations.length === 0) return
+      if (!openItemId || !doc || busy !== null) return
+      const entry = historyEntryFor(
+        mutations,
+        labelKey ?? `cookbooks.op.${mutations[0].op}`,
+        doc.cells,
+        sources,
+      )
+      await runWithBusy('mutate', async () => {
+        await flushSourceEdits()
+        let landed = 0
+        for (const mutation of mutations) {
+          const result = await api.mutate({ itemId: openItemId, ...mutation })
+          applyDocument(result.document)
+          landed = result.index
+        }
+        pendingFocusRef.current = landed
+        if (entry) setHistory((current) => pushEntry(current, entry))
+      })
+    },
+    [api, applyDocument, busy, doc, flushSourceEdits, openItemId, runWithBusy, sources],
+  )
+
+  /** Wave 14 (F2): the on-screen type+source of each named cell, in order. */
+  const snapshotCells = useCallback(
+    (indices: number[]): CellBuffer =>
+      indices.flatMap((index) => {
+        const cell = doc?.cells[index]
+        if (!cell) return []
+        return [{ cellType: cell.cellType, source: sources[index] ?? cell.source }]
+      }),
+    [doc, sources],
+  )
+
+  /** Wave 14 (F2): `Ctrl+C` / «Копировать ячейку» — capture, never touch the doc. */
+  const copyCells = useCallback(
+    (indices: number[] = selectedAll) => {
+      const buffer = snapshotCells(indices)
+      if (buffer.length === 0) return
+      setCellBuffer(buffer)
+      setNotice({ source: 'key', key: 'cookbooks.buffer.copied', params: { count: buffer.length } })
+    },
+    [selectedAll, snapshotCells],
+  )
+
+  /** Wave 14 (F2): `Ctrl+X` / «Вырезать ячейку» — capture, then delete the block. */
+  const cutCells = useCallback(
+    (indices: number[] = selectedAll) => {
+      const buffer = snapshotCells(indices)
+      if (buffer.length === 0) return
+      setCellBuffer(buffer)
+      setNotice({ source: 'key', key: 'cookbooks.buffer.cut', params: { count: buffer.length } })
+      const descending = [...indices].sort((left, right) => right - left)
+      clearSelection()
+      void mutateMany(descending.map((index) => ({ op: 'delete', index })))
+    },
+    [clearSelection, mutateMany, selectedAll, snapshotCells],
+  )
+
+  /** Wave 14 (F2): `Ctrl+V` / «Вставить после» — append the buffer after the focus. */
+  const pasteCells = useCallback(
+    async (after?: number) => {
+      if (!doc || doc.kind !== 'ipynb') return
+      if (!cellBuffer || cellBuffer.length === 0) {
+        setNotice({ source: 'key', key: 'cookbooks.buffer.empty' })
+        return
+      }
+      // Paste lands after the explicit anchor (the menu's own cell) or after the
+      // selection block; with neither it appends.
+      const at = after ?? (selectedAll.length > 0 ? selectedAll[selectedAll.length - 1] : doc.cells.length - 1)
+      const mutations: CookbooksCellMutation[] = cellBuffer.map((cell, offset) => ({
+        op: 'add',
+        cellType: cell.cellType,
+        index: at + 1 + offset,
+        source: cell.source,
+      }))
+      setNotice({ source: 'key', key: 'cookbooks.buffer.pasted', params: { count: cellBuffer.length } })
+      // Wave 14 (F6): the block is one entry, and the toast names it «вставка
+      // из буфера» rather than the `add` ops it is sent as.
+      await mutateMany(mutations, 'cookbooks.op.paste')
+      // Selection becomes the pasted block: its first cell is the focus, its last
+      // the anchor, so the range reads as the block that just landed.
+      const first = at + 1
+      setSelectedCell(first)
+      setSelectionAnchor(cellBuffer.length > 1 ? first + cellBuffer.length - 1 : null)
+    },
+    [cellBuffer, doc, mutateMany, selectedAll],
+  )
+
+  /** Wave 14 (F1): the drag start — the handle hands its index to the drop zones. */
+  const handleDragStart = useCallback(
+    (event: ReactDragEvent<HTMLElement>, index: number) => {
+      // A busy surface has no legal drop: the handle never starts a drag.
+      if (busy !== null) {
+        event.preventDefault()
+        return
+      }
+      dragIndexRef.current = index
+      const transfer = event.dataTransfer
+      if (transfer) {
+        transfer.effectAllowed = 'move'
+        transfer.setData(DRAG_MIME, String(index))
+        transfer.setData('text/plain', String(index))
+      }
+    },
+    [busy],
+  )
+
+  /** Wave 14 (F1): dragend always runs — a cancelled drag (Esc) drops its gap. */
+  const handleDragEnd = useCallback(() => {
+    dragIndexRef.current = null
+    setDropGap(null)
+  }, [])
+
+  /** Wave 14 (F1): a hovered insert row is the gap at its own index. */
+  const handleGapDragOver = useCallback(
+    (event: ReactDragEvent<HTMLElement>, gap: number) => {
+      if (dragIndexRef.current === null || busy !== null) return
+      event.preventDefault()
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+      setDropGap(gap)
+    },
+    [busy],
+  )
+
+  /** Wave 14 (F1): a hovered cell splits at its midline — above or below. */
+  const handleArticleDragOver = useCallback(
+    (event: ReactDragEvent<HTMLElement>, index: number) => {
+      if (dragIndexRef.current === null || busy !== null) return
+      event.preventDefault()
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+      const rect = event.currentTarget.getBoundingClientRect()
+      setDropGap(event.clientY < rect.top + rect.height / 2 ? index : index + 1)
+    },
+    [busy],
+  )
+
+  /** Wave 14 (F1): leaving a zone for anything outside it clears the indicator. */
+  const handleDragLeave = useCallback((event: ReactDragEvent<HTMLElement>) => {
+    const next = event.relatedTarget as Node | null
+    if (next && event.currentTarget.contains(next)) return
+    setDropGap(null)
+  }, [])
+
+  /** Wave 14 (F1): the drop translates a gap into the `move` op's target index. */
+  const handleDrop = useCallback(
+    (event: ReactDragEvent<HTMLElement>) => {
+      event.preventDefault()
+      const from = dragIndexRef.current
+      const gap = dropGap
+      dragIndexRef.current = null
+      setDropGap(null)
+      if (from === null || gap === null || busy !== null) return
+      // A gap above the dragged cell shifts that cell down by one; a gap at or
+      // below it is already the destination index.
+      const to = gap > from ? gap - 1 : gap
+      if (to === from || to < 0) return
+      void mutateCell({ op: 'move', from, to })
+    },
+    [busy, dropGap, mutateCell],
+  )
+
+  // -------------------------------------------------------------------------
+  // Wave 14 (slice E) — undo/redo (F6), fold (F7), the download menu (F8),
+  // Tab indentation (F9)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Wave 14 (F6): replay a history entry's ops — consecutive `api.mutate` calls
+   * in the order the entry carries, exactly like a fresh group gesture. The
+   * entry's own order is the contract (`historyEntryFor`), so nothing is sorted
+   * here; the document re-read after the last op is the one on screen, and the
+   * last landing index becomes the focus target.
+   */
+  const replayHistoryOps = useCallback(
+    async (ops: HistoryOp[]) => {
+      if (!openItemId) return
+      await flushSourceEdits()
+      let landed = 0
+      for (const op of ops) {
+        const result = await api.mutate({ itemId: openItemId, ...mutationOfHistoryOp(op) })
+        applyDocument(result.document)
+        landed = result.index
+      }
+      pendingFocusRef.current = landed
+    },
+    [api, applyDocument, flushSourceEdits, openItemId],
+  )
+
+  /**
+   * Wave 14 (F6): the two directions, behind one core.
+   *
+   * The stack moves FIRST — the gesture is what the user asked for — and a
+   * replay that fails drops the whole history rather than leaving a stack that
+   * no longer describes the document on screen (a later undo would then replay
+   * the wrong ops). The `{{action}}` of the toast is the recorded gesture's own
+   * label, and the busy gate is the caller's: while `busy` is set the buttons
+   * are disabled and this is never reached.
+   */
+  const stepHistory = useCallback(
+    async (direction: 'undo' | 'redo') => {
+      if (busy !== null) return
+      const step = direction === 'undo' ? undoStep(history) : redoStep(history)
+      if (!step) return
+      setHistory(step.history)
+      await runWithBusy('history', async () => {
+        try {
+          await replayHistoryOps(direction === 'undo' ? step.entry.undo : step.entry.redo)
+          toast.success(
+            t(direction === 'undo' ? 'cookbooks.undo.done' : 'cookbooks.redo.done', {
+              action: t(step.entry.labelKey),
+            }),
+          )
+        } catch (cause: unknown) {
+          setHistory(createHistory())
+          setNotice({ source: 'text', text: describeFailure(cause) })
+        }
+      })
+    },
+    [busy, history, replayHistoryOps, runWithBusy, t],
+  )
+
+  const undo = useCallback(() => stepHistory('undo'), [stepHistory])
+  const redo = useCallback(() => stepHistory('redo'), [stepHistory])
+
+  /** Wave 14 (F7): hide/show one cell's editor and rendering. */
+  const toggleCellFold = useCallback((index: number) => {
+    setCollapsedCells((previous) => {
+      const next = new Set(previous)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }, [])
+
+  /**
+   * Wave 14 (F9): the caret an indent gesture must paint once React has
+   * committed the new source — a controlled `<textarea>` moves its caret to the
+   * end on every re-render, so the range is restored here, after the value.
+   */
+  const pendingCaretRef = useRef<{ index: number; start: number; end: number } | null>(null)
+
+  useEffect(() => {
+    const pending = pendingCaretRef.current
+    if (!pending) return
+    const field = documentRef.current?.querySelector<HTMLTextAreaElement>(
+      `[data-testid="cookbooks-source-${pending.index}"]`,
+    )
+    if (!field) return
+    pendingCaretRef.current = null
+    field.setSelectionRange(pending.start, pending.end)
+  }, [sources])
+
+  /**
+   * Wave 14 (F9): `Tab`/`Shift+Tab` inside a CODE editor indents or dedents by
+   * `INDENT_UNIT`. Bound on the code textarea only (a markdown editor keeps the
+   * browser's own Tab), and the key is always swallowed there — a Tab that moved
+   * focus out of the editor would be a trap. `preventDefault` therefore happens
+   * for every Tab this handler sees, and only for the code editor's own events.
+   */
+  const handleCodeTab = useCallback(
+    (event: ReactKeyboardEvent<HTMLTextAreaElement>, index: number) => {
+      if (event.key !== 'Tab') return
+      event.preventDefault()
+      const field = event.currentTarget
+      const result = indentCode(
+        field.value,
+        field.selectionStart ?? field.value.length,
+        field.selectionEnd ?? field.value.length,
+        event.shiftKey,
+      )
+      if (result.value === field.value) return
+      pendingCaretRef.current = { index, start: result.start, end: result.end }
+      setSource(index, result.value)
+    },
+    [setSource],
   )
 
   // -------------------------------------------------------------------------
@@ -1135,6 +1878,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   const moveSelection = useCallback(
     (direction: -1 | 1) => {
       if (!doc || doc.cells.length === 0) return
+      // Wave 14 (F2): a plain move is a single-cell selection — the range anchor drops.
+      setSelectionAnchor(null)
       setSelectedCell((current) => {
         if (current === null) return direction === 1 ? 0 : doc.cells.length - 1
         return Math.min(Math.max(current + direction, 0), doc.cells.length - 1)
@@ -1311,6 +2056,47 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
   )
 
   /**
+   * Wave 14 (F9, slice F): `Shift+Tab` inside a CODE editor DEDENTS — and the
+   * key never reaches the textarea's own React handler.
+   *
+   * It cannot: `chat.cyclePermissionMode` owns `shift+tab` and the registry
+   * binds it on `window` in the CAPTURE phase (actions/registry.tsx), so the
+   * registry swallows the chord before React dispatches it — left alone, the
+   * editor's `Shift+Tab` flipped the chat's permission mode instead. This is the
+   * `app.search` takeover above applied to the second key the surface needs for
+   * itself: registered at priority 20, and `enabled` keeps it inert unless the
+   * focused element is THIS surface's code-cell editor, so everywhere else the
+   * chat action behaves exactly as before. The dedent reuses `indentCode` and
+   * the pending-caret pass of `handleCodeTab`; forward `Tab` stays on
+   * `handleCodeTab` untouched.
+   */
+  useAction(
+    'chat.cyclePermissionMode',
+    () => {
+      const index = focusedCodeCellIndex(surfaceRef.current, docRef.current)
+      if (index === null) return
+      const field = documentRef.current?.querySelector<HTMLTextAreaElement>(
+        `[data-testid="cookbooks-source-${index}"]`,
+      )
+      if (!field) return
+      const result = indentCode(
+        field.value,
+        field.selectionStart ?? field.value.length,
+        field.selectionEnd ?? field.value.length,
+        true,
+      )
+      if (result.value === field.value) return
+      pendingCaretRef.current = { index, start: result.start, end: result.end }
+      setSource(index, result.value)
+    },
+    {
+      enabled: () => focusedCodeCellIndex(surfaceRef.current, docRef.current) !== null,
+      priority: 20,
+    },
+    [],
+  )
+
+  /**
    * R5: Colab-parity keys, scoped to the document container. Every combination
    * that starts work is a no-op while another action is in flight, and nothing
    * is bound globally.
@@ -1357,6 +2143,12 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
           setMenuOpen(null)
           return
         }
+        // Wave 14 (F8): the download menu unwinds exactly like the cell menu.
+        if (exportMenuOpen) {
+          event.preventDefault()
+          setExportMenuOpen(false)
+          return
+        }
         if (busy !== null) {
           event.preventDefault()
           void cancelRun()
@@ -1375,7 +2167,30 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
           // already the selection — otherwise the selection-change effect never
           // re-runs and command-mode keys stop reaching the document handler.
           article?.focus()
+          return
         }
+        // Wave 14 (F2): the lowest-priority Esc target — a bare Esc drops the
+        // whole selection (both the focus and the range anchor).
+        if (selectedCell !== null) {
+          event.preventDefault()
+          clearSelection()
+        }
+        return
+      }
+      // Wave 14 (F3): Alt+Enter runs the focused cell, then inserts a fresh
+      // (empty) code cell right below it — Colab's own «run and advance». The
+      // new cell becomes the selection, exactly like a plain `b` insert.
+      if (event.altKey && event.key === 'Enter') {
+        if (doc?.kind !== 'ipynb' || busy !== null) return
+        const rawIndex = target?.tagName === 'TEXTAREA' ? target.getAttribute('data-cell-index') : null
+        const current = rawIndex === null ? Number.NaN : Number(rawIndex)
+        const focusIndex = Number.isInteger(current) ? current : selectedCell
+        if (focusIndex === null || doc.cells[focusIndex]?.cellType !== 'code') return
+        event.preventDefault()
+        void (async () => {
+          await runCell(focusIndex)
+          await mutateCell({ op: 'add', cellType: 'code', index: focusIndex + 1 })
+        })()
         return
       }
       if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
@@ -1403,6 +2218,38 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
           cellType: 'code',
           index: Number.isInteger(current) ? current + 1 : doc.cells.length,
         })
+        return
+      }
+      // Wave 14 (F2): the cell buffer. `Ctrl+C`/`Ctrl+X`/`Ctrl+V` act on the
+      // selection in command mode only — inside a text field they stay NATIVE
+      // (the browser's own cut/copy/paste of the caret's text), which is what
+      // `inField` guards here. Copy/cut of an empty selection is a no-op.
+      if (
+        mod &&
+        !event.shiftKey &&
+        !event.altKey &&
+        (event.key.toLowerCase() === 'c' || event.key.toLowerCase() === 'x' || event.key.toLowerCase() === 'v')
+      ) {
+        if (inField) return
+        if (doc?.kind !== 'ipynb' || busy !== null) return
+        event.preventDefault()
+        const key = event.key.toLowerCase()
+        if (key === 'c') copyCells()
+        else if (key === 'x') cutCells()
+        else void pasteCells()
+        return
+      }
+      // Wave 14 (F6): structural undo/redo. Like the buffer keys it acts in
+      // command mode only — inside a text field `Ctrl+Z` stays the browser's own
+      // character undo (SPEC §5: content edits are not on this stack). The keys
+      // are swallowed even with an empty stack, so the platform never treats the
+      // chord as something else.
+      if (mod && !event.altKey && event.key.toLowerCase() === 'z') {
+        if (inField) return
+        if (doc?.kind !== 'ipynb') return
+        event.preventDefault()
+        if (busy !== null) return
+        void (event.shiftKey ? redo() : undo())
         return
       }
       // Wave 13 (F5): Ctrl/Cmd+S is the explicit flush — the same core the
@@ -1455,6 +2302,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
           // Step onto the next code cell — the editor never takes focus.
           for (let index = selectedCell + 1; index < doc.cells.length; index += 1) {
             if (doc.cells[index].cellType !== 'code') continue
+            // Wave 14 (F2): a single-cell step collapses any range onto it.
+            setSelectionAnchor(null)
             setSelectedCell(index)
             break
           }
@@ -1480,6 +2329,14 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
           ?.focus()
         return
       }
+      // Wave 14 (F2): `Shift+↑/↓` extends the selection range; a bare ↑/↓/j/k
+      // (below) collapses back to a single cell.
+      if (event.shiftKey && !mod && !event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+        if (inField || findOpen || menuOpen !== null) return
+        event.preventDefault()
+        extendByArrow(event.key === 'ArrowDown' ? 1 : -1)
+        return
+      }
       // Wave 13 (F1): command-mode selection keys — modifier-free only, and only
       // while no text field, the find panel or the cell menu owns the keyboard.
       if (!noMod || inField || findOpen || menuOpen !== null) return
@@ -1497,6 +2354,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       if (doc?.kind !== 'ipynb' || busy !== null) return
       if (event.key === 'a' || event.key === 'b') {
         event.preventDefault()
+        // Wave 14 (F2): a single-cell action collapses the range onto its focus.
+        setSelectionAnchor(null)
         const at = selectedCell === null ? doc.cells.length : event.key === 'a' ? selectedCell : selectedCell + 1
         void mutateCell({ op: 'add', cellType: 'code', index: at })
         return
@@ -1508,7 +2367,11 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
           ddRef.current = 0
           event.preventDefault()
           if (!window.confirm(t('cookbooks.cell.deleteConfirm'))) return
-          void mutateCell({ op: 'delete', index: selectedCell })
+          // Wave 14 (F2): `dd` deletes every selected cell as one gesture, in
+          // descending index order so each op still names its own cell.
+          const descending = [...selectedAll].sort((left, right) => right - left)
+          clearSelection()
+          void mutateMany(descending.map((index) => ({ op: 'delete', index })))
           return
         }
         // The first `d` arms the 900 ms window; the second is the delete.
@@ -1520,25 +2383,37 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         const cellType = event.key === 'y' ? 'code' : 'markdown'
         if (doc.cells[selectedCell]?.cellType === cellType) return
         event.preventDefault()
+        // Wave 14 (F2): a conversion is a single-cell action — drop the anchor.
+        setSelectionAnchor(null)
         void mutateCell({ op: 'convert', index: selectedCell, cellType })
       }
     },
     [
       busy,
       cancelRun,
+      clearSelection,
+      copyCells,
+      cutCells,
       doc,
+      exportMenuOpen,
+      extendByArrow,
       findOpen,
       flushChanges,
       focusAdjacentCodeCell,
       menuOpen,
       moveSelection,
       mutateCell,
+      mutateMany,
+      pasteCells,
+      redo,
       runAllCells,
       runCell,
       saveMarkdownAndClose,
       savePlaybookAndClose,
+      selectedAll,
       selectedCell,
       t,
+      undo,
     ],
   )
 
@@ -1663,6 +2538,9 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
     await runWithBusy('reset', async () => {
       await api.reset({ itemId: openItemId })
       applyDocument(await api.document({ itemId: openItemId }))
+      // Wave 14 (F6): the copy is back to the catalog original — the gestures
+      // recorded against the edited one no longer describe it.
+      setHistory(createHistory())
       setNotice({ source: 'key', key: 'cookbooks.status.reset' })
     })
   }, [api, applyDocument, openItemId, runWithBusy, t])
@@ -1681,62 +2559,103 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
     )
   }, [cards, filter])
 
+  /** Wave 14 (F8): the file-name stem both exports share — the `.ipynb` name minus its suffix. */
+  const exportStem = doc === null ? '' : doc.title.replace(/[^\w\d\-.]+/g, '-')
+
   /**
-   * Wave 9: «Скачать .ipynb». The renderer assembles the notebook from what the
-   * copy holds right now — edited sources, session counters and run outputs —
-   * through the shared pure builder, and main owns the save dialog. A cancelled
-   * dialog is an outcome (`saved:false`), a failed write is the only error.
+   * The cells both exports are assembled from, as they stand on screen right
+   * now: an edited source, this session's counter and this session's results.
+   */
+  const exportCells = useCallback(
+    () =>
+      doc === null
+        ? []
+        : doc.cells.map((cell, index) => ({
+            cellType: cell.cellType,
+            source: sources[index] ?? cell.source,
+            executionCount: runs[index] ?? null,
+            stdout: outputs[index]?.stdout,
+            error: outputs[index]?.error ?? undefined,
+            // Wave 11: the rich records of this session travel into the file as
+            // `display_data` outputs, after the cell's stream records (SPEC §16).
+            displays: outputs[index]?.displays,
+          })),
+    [doc, outputs, runs, sources],
+  )
+
+  /**
+   * Wave 9: one download. Main owns the save dialog, so the surface only has to
+   * name the file and hand over the bytes; a cancelled dialog is an outcome
+   * (`saved:false`), a failed write is the only error.
+   *
+   * Wave 14 (F8): both menu entries land here — the extension of `filename` is
+   * what main turns into the dialog's filter.
+   */
+  const saveExport = useCallback(
+    async (filename: string, content: string) => {
+      if (!openItemId) return
+      await runWithBusy('export', async () => {
+        try {
+          const result = await api.export({ itemId: openItemId, filename, content })
+          setNotice(
+            result.saved
+              ? { source: 'key', key: 'cookbooks.export.saved', params: { path: result.path ?? '' } }
+              : { source: 'key', key: 'cookbooks.export.cancelled' },
+          )
+        } catch {
+          setNotice({ source: 'key', key: 'cookbooks.export.failed' })
+        }
+      })
+    },
+    [api, openItemId, runWithBusy],
+  )
+
+  /**
+   * Wave 9: «Ноутбук (.ipynb)». The renderer assembles the notebook from what
+   * the copy holds right now, through the shared pure builder.
    */
   const exportNotebook = useCallback(async () => {
     if (!doc || !openItemId) return
     if (!(doc.kind === 'ipynb' && doc.supported)) return
-    const content = buildNotebookExport({
-      title: doc.title,
-      cells: doc.cells.map((cell, index) => ({
-        cellType: cell.cellType,
-        source: sources[index] ?? cell.source,
-        executionCount: runs[index] ?? null,
-        stdout: outputs[index]?.stdout,
-        error: outputs[index]?.error ?? undefined,
-        // Wave 11: the rich records of this session travel into the file as
-        // `display_data` outputs, after the cell's stream records (SPEC §16).
-        displays: outputs[index]?.displays,
-      })),
-    })
-    const filename = `${doc.title.replace(/[^\w\d\-.]+/g, '-')}.ipynb`
-    await runWithBusy('export', async () => {
-      try {
-        const result = await api.export({ itemId: openItemId, filename, content })
-        setNotice(
-          result.saved
-            ? { source: 'key', key: 'cookbooks.export.saved', params: { path: result.path ?? '' } }
-            : { source: 'key', key: 'cookbooks.export.cancelled' },
-        )
-      } catch {
-        setNotice({ source: 'key', key: 'cookbooks.export.failed' })
-      }
-    })
-  }, [api, doc, openItemId, outputs, runWithBusy, runs, sources])
+    const content = buildNotebookExport({ title: doc.title, cells: exportCells() })
+    await saveExport(`${exportStem}.ipynb`, content)
+  }, [doc, exportCells, exportStem, openItemId, saveExport])
+
+  /**
+   * Wave 14 (F8): «Скрипт Python (.py)» — the same cells, written by the shared
+   * `.py` builder: code verbatim, markdown as comments, `# %%` cell markers.
+   */
+  const exportPython = useCallback(async () => {
+    if (!doc || !openItemId) return
+    if (!(doc.kind === 'ipynb' && doc.supported)) return
+    const content = buildPythonScript({ title: doc.title, cells: exportCells() })
+    await saveExport(`${exportStem}.py`, content)
+  }, [doc, exportCells, exportStem, openItemId, saveExport])
 
   /**
    * Wave 9: the outline of the open document — the H1–H3 headings of its
    * markdown cells in document order, or of the playbook body, which has no
    * cells and scrolls to its own block. An edited source is what the outline
    * lists, exactly as the document pane renders it.
+   *
+   * Wave 14 (F11): every entry carries the dotted numeral its level earns
+   * (`numberHeadings`), numbered over the whole document — not per cell.
    */
   const outline = useMemo<CookbooksOutlineEntry[]>(() => {
     if (!doc) return []
-    if (doc.kind === 'md') {
-      return headingsOf(playbookText).map((title) => ({ title, testId: 'cookbooks-playbook-markdown' }))
-    }
-    const entries: CookbooksOutlineEntry[] = []
-    doc.cells.forEach((cell, index) => {
-      if (cell.cellType !== 'markdown') return
-      for (const title of headingsOf(sources[index] ?? cell.source)) {
-        entries.push({ title, testId: `cookbooks-cell-${index}` })
-      }
-    })
-    return entries
+    const found: { level: number; title: string; testId: string }[] =
+      doc.kind === 'md'
+        ? headingsOf(playbookText).map((heading) => ({ ...heading, testId: 'cookbooks-playbook-markdown' }))
+        : doc.cells.flatMap((cell, index) =>
+            cell.cellType !== 'markdown'
+              ? []
+              : headingsOf(sources[index] ?? cell.source).map((heading) => ({
+                  ...heading,
+                  testId: `cookbooks-cell-${index}`,
+                })),
+          )
+    const numbers = numberHeadings(found.map((entry) => entry.level))
+    return found.map((entry, position) => ({ ...entry, number: numbers[position] }))
   }, [doc, playbookText, sources])
 
   /**
@@ -1858,6 +2777,34 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
             {t('cookbooks.header.cells', { count: cellCount })}
           </span>
           <span className="flex-1" />
+          {/* Wave 14 (F6): structural undo/redo, next to the document's other
+              structural controls. A notebook only — a playbook has no cells to
+              insert, move or delete — and disabled while the stack is empty or
+              an action is in flight. */}
+          {doc.kind === 'ipynb' ? (
+            <>
+              <button
+                type="button"
+                data-testid="cookbooks-undo"
+                title={formatHotkeyDisplay('mod+z')}
+                disabled={busy !== null || !canUndo(history)}
+                onClick={() => void undo()}
+                className={ACTION_CLASS}
+              >
+                {t('cookbooks.undo')}
+              </button>
+              <button
+                type="button"
+                data-testid="cookbooks-redo"
+                title={formatHotkeyDisplay('mod+shift+z')}
+                disabled={busy !== null || !canRedo(history)}
+                onClick={() => void redo()}
+                className={ACTION_CLASS}
+              >
+                {t('cookbooks.redo')}
+              </button>
+            </>
+          ) : null}
           {/* Wave 13 (F9): «Перезапустить и выполнить» — there is no kernel to
               restart, so the honest reading is «drop every result, run again». */}
           {canRunAll ? (
@@ -1888,23 +2835,75 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
               {t('cookbooks.actions.runAll')}
             </button>
           ) : null}
+          {/* Wave 14 (F4): the batch's own size, right next to «Запустить всё».
+              It exists only while a batch is in flight — a single run shows
+              nothing — and reports how many cells the run covers, not a count
+              of what has landed: the sidecar answers the batch in one response,
+              so «done» is not a number this surface can honestly show. */}
+          {runProgress !== null ? (
+            <span
+              data-testid="cookbooks-run-progress"
+              role="progressbar"
+              aria-label={t('cookbooks.run.progressAria')}
+              className="shrink-0 text-caption numeric text-text-secondary"
+            >
+              {t('cookbooks.run.batch', { total: runProgress })}
+            </span>
+          ) : null}
           {/* Wave 9: while a batch runs, the header is where it is stopped. */}
           {busy === 'run-all' ? (
             <button type="button" data-testid="cookbooks-stop-all" onClick={() => void cancelRun()} className={ACTION_CLASS}>
               {t('cookbooks.actions.stop')}
             </button>
           ) : null}
-          {/* Wave 9: the notebook as it stands right now, saved by main. */}
+          {/* Wave 9 + wave 14 (F8): the download menu — the trigger keeps its
+              testid and opens the two write paths, the notebook and the script.
+              A playbook has neither. */}
           {canRunAll ? (
-            <button
-              type="button"
-              data-testid="cookbooks-export"
-              disabled={busy !== null}
-              onClick={() => void exportNotebook()}
-              className={ACTION_CLASS}
-            >
-              {t('cookbooks.actions.export')}
-            </button>
+            <>
+              <button
+                type="button"
+                data-testid="cookbooks-export"
+                aria-expanded={exportMenuOpen}
+                aria-haspopup="true"
+                disabled={busy !== null}
+                onClick={() => setExportMenuOpen((open) => !open)}
+                className={ACTION_CLASS}
+              >
+                {t('cookbooks.export.menu')}
+              </button>
+              {exportMenuOpen ? (
+                <span
+                  data-testid="cookbooks-export-menu"
+                  className="flex flex-wrap items-center gap-1.5"
+                >
+                  <button
+                    type="button"
+                    data-testid="cookbooks-export-ipynb"
+                    disabled={busy !== null}
+                    onClick={() => {
+                      setExportMenuOpen(false)
+                      void exportNotebook()
+                    }}
+                    className={ACTION_CLASS}
+                  >
+                    {t('cookbooks.export.ipynb')}
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="cookbooks-export-py"
+                    disabled={busy !== null}
+                    onClick={() => {
+                      setExportMenuOpen(false)
+                      void exportPython()
+                    }}
+                    className={ACTION_CLASS}
+                  >
+                    {t('cookbooks.export.py')}
+                  </button>
+                </span>
+              ) : null}
+            </>
           ) : null}
           {/* R-C: the whole-document clear appears only while something ran. */}
           {hasAnyOutput ? (
@@ -2005,14 +3004,26 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
               // of this one — empty means there is nothing to run over there.
               const above = codeIndices.filter((codeIndex) => codeIndex < index)
               const below = codeIndices.filter((codeIndex) => codeIndex > index)
+              // Wave 14 (F1): the drop indicator — the gap lands above this cell,
+              // below it, or nowhere near it.
+              const dropPosition: DropPosition | undefined =
+                dropGap === index ? 'above' : dropGap === index + 1 ? 'below' : undefined
+              // Wave 14 (F7): a folded cell hides its editor/rendering behind one
+              // line of copy — its controls, its gutter and its output stay.
+              const folded = collapsedCells.has(index)
               return [
                 // Wave 10: the insert row sits above each cell, at its index.
+                // Wave 14 (F1): it is also the drop zone for that gap.
                 <InsertRow
                   key={`insert-${index}`}
                   index={index}
                   alwaysVisible={false}
                   disabled={busy !== null}
                   busyHint={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                  dropActive={dropGap === index}
+                  onDragOver={(event) => handleGapDragOver(event, index)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
                   onInsert={(cellType) => void mutateCell({ op: 'add', cellType, index })}
                 />,
                 <article
@@ -2021,25 +3032,59 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                   data-cell-type={cell.cellType}
                   data-status={output?.status ?? 'idle'}
                   data-glass-slot="editor"
-                  data-selected={selectedCell === index ? 'true' : undefined}
+                  // Wave 14 (F2): every selected cell (the whole range) is marked;
+                  // the focus alone carries `data-anchor`/`aria-current`.
+                  data-selected={selectedAll.includes(index) ? 'true' : undefined}
+                  data-anchor={selectedCell === index ? 'true' : undefined}
                   aria-current={selectedCell === index ? 'true' : undefined}
+                  // Wave 14 (F1): the drop indicator — the line above or below.
+                  data-drop-position={dropPosition}
+                  // Wave 14 (F7): a folded cell says so on its own article.
+                  data-collapsed={folded ? 'true' : undefined}
                   tabIndex={-1}
+                  onDragOver={(event) => handleArticleDragOver(event, index)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
                   onClick={(event) => {
                     // Wave 13 (F1): a click on the cell body selects it; a click
                     // on any control inside it stays a control click.
                     if ((event.target as HTMLElement).closest('button,textarea,input,a,select')) return
-                    setSelectedCell(index)
+                    // Wave 14 (F2): Shift+click extends the range; a plain click
+                    // (or a Ctrl/Cmd+click, which the range model folds into a
+                    // single select) resets the anchor.
+                    if (event.shiftKey) selectRange(index)
+                    else selectSingle(index)
                     event.currentTarget.focus()
                   }}
                   className={cn(
                     'flex gap-2 rounded-[var(--radius-card)] border border-border-subtle bg-surface-elevated px-2.5 py-2 outline-none',
-                    selectedCell === index && 'outline outline-2 outline-foreground',
+                    selectedAll.includes(index) && 'outline outline-2 outline-foreground',
+                    // Wave 14 (F1): the line the drop would land on.
+                    dropGap === index && 'border-t-2 border-t-foreground',
+                    dropGap === index + 1 && 'border-b-2 border-b-foreground',
                   )}
                 >
                   <div
                     data-testid={`cookbooks-gutter-${index}`}
                     className="flex w-10 shrink-0 flex-col items-center gap-1"
                   >
+                    {/* Wave 14 (F1): the drag handle — the gutter is where a cell
+                        is grabbed. Native HTML5 drag; a busy surface refuses it. */}
+                    <span
+                      data-testid={`cookbooks-drag-handle-${index}`}
+                      draggable={busy === null}
+                      aria-disabled={busy !== null ? 'true' : undefined}
+                      aria-label={t('cookbooks.cell.dragHandle')}
+                      title={busy !== null ? t('cookbooks.actions.busyHint') : t('cookbooks.cell.dragHandle')}
+                      onDragStart={(event) => handleDragStart(event, index)}
+                      onDragEnd={handleDragEnd}
+                      className={cn(
+                        'select-none text-caption leading-none text-text-secondary',
+                        busy === null ? 'cursor-grab' : 'cursor-default opacity-50',
+                      )}
+                    >
+                      ⠿
+                    </span>
                     {/* R2: session-local run counter — `[ ]` until the first run. */}
                     <span
                       data-testid={`cookbooks-runs-${index}`}
@@ -2077,6 +3122,18 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                         {cell.cellType}
                       </span>
                       <span className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+                        {/* Wave 14 (F7): «Свернуть код» — the fold toggle of this
+                            cell. It never disables: hiding a cell is a view
+                            gesture, legal while a run is in flight. */}
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-fold-${index}`}
+                          aria-pressed={folded}
+                          onClick={() => toggleCellFold(index)}
+                          className={ACTION_CLASS}
+                        >
+                          {folded ? t('cookbooks.cell.unfold') : t('cookbooks.cell.fold')}
+                        </button>
                         {/* Wave 10: the per-cell «⋯» disclosure — up/down/
                             duplicate/delete, revealed inside the cell. */}
                         <button
@@ -2176,6 +3233,45 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                         document edges, duplicate, and a confirmed delete. */}
                     {menuOpen === index ? (
                       <div data-testid={`cookbooks-menu-row-${index}`} className="flex flex-wrap items-center gap-1.5">
+                        {/* Wave 14 (F2): the buffer commands, keyed to this cell
+                            when it is not already part of a multi-cell selection. */}
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-cellmenu-copy-${index}`}
+                          onClick={() => {
+                            setMenuOpen(null)
+                            copyCells(selectedAll.includes(index) ? selectedAll : [index])
+                          }}
+                          className={ACTION_CLASS}
+                        >
+                          {t('cookbooks.cellmenu.copy')}
+                        </button>
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-cellmenu-cut-${index}`}
+                          title={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                          disabled={busy !== null}
+                          onClick={() => {
+                            setMenuOpen(null)
+                            cutCells(selectedAll.includes(index) ? selectedAll : [index])
+                          }}
+                          className={ACTION_CLASS}
+                        >
+                          {t('cookbooks.cellmenu.cut')}
+                        </button>
+                        <button
+                          type="button"
+                          data-testid={`cookbooks-cellmenu-paste-${index}`}
+                          title={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+                          disabled={busy !== null}
+                          onClick={() => {
+                            setMenuOpen(null)
+                            void pasteCells(index)
+                          }}
+                          className={ACTION_CLASS}
+                        >
+                          {t('cookbooks.cellmenu.paste')}
+                        </button>
                         <button
                           type="button"
                           data-testid={`cookbooks-move-up-${index}`}
@@ -2248,7 +3344,13 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                         </button>
                       </div>
                     ) : null}
-                    {isMarkdown && !editing ? (
+                    {folded ? (
+                      // Wave 14 (F7): one line in place of the editor — the
+                      // cell's text is hidden, its output below is not.
+                      <p className="rounded-[var(--radius-control)] border border-dashed border-border-subtle px-2.5 py-1.5 text-caption text-muted-foreground">
+                        {t('cookbooks.cell.folded')}
+                      </p>
+                    ) : isMarkdown && !editing ? (
                       <CellMarkdown
                         mode="minimal"
                         source={source}
@@ -2266,6 +3368,9 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                         aria-label={t('cookbooks.cell.sourceLabel', { index })}
                         value={source}
                         onChange={(event) => setSource(index, event.target.value)}
+                        // Wave 14 (F9): Tab indents a code cell only — a markdown
+                        // editor keeps the browser's own Tab (SPEC §9).
+                        onKeyDown={isMarkdown ? undefined : (event) => handleCodeTab(event, index)}
                         spellCheck={false}
                         className={cn(SOURCE_CLASS, 'min-h-[var(--control-lg)]')}
                       />
@@ -2320,6 +3425,10 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
               alwaysVisible={doc.cells.length === 0}
               disabled={busy !== null}
               busyHint={busy !== null ? t('cookbooks.actions.busyHint') : undefined}
+              dropActive={dropGap === doc.cells.length}
+              onDragOver={(event) => handleGapDragOver(event, doc.cells.length)}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               onInsert={(cellType) => void mutateCell({ op: 'add', cellType, index: doc.cells.length })}
             />
           </div>
@@ -2458,7 +3567,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                 {/* `${n}` is the entry's zero-based position in this list —
                     the same convention as `cookbooks-cell-${index}`. */}
                 {outline.map((entry, n) => (
-                  <li key={`${n}:${entry.title}`}>
+                  <li key={`${n}:${entry.title}`} className={OUTLINE_INDENT_CLASS[entry.level] ?? ''}>
                     <button
                       type="button"
                       data-testid={`cookbooks-outline-item-${n}`}
@@ -2474,6 +3583,12 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                           : 'text-muted-foreground hover:text-foreground',
                       )}
                     >
+                      {/* Wave 14 (F11): the entry's own numeral, then its title.
+                          The number is decoration — the entry's accessible name
+                          stays the heading itself. */}
+                      <span aria-hidden="true" className="numeric text-text-secondary">
+                        {entry.number}{' '}
+                      </span>
                       {entry.title}
                     </button>
                   </li>

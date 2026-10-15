@@ -1793,3 +1793,79 @@ describe('CookbooksRuntime secret bridge', () => {
     }
   })
 })
+
+// ---------------------------------------------------------------------------
+// Notebook / script export (SPEC wave 9 §3; wave 14 §8)
+//
+// `exportNotebook` never touches the sidecar — it only drives the injected
+// save dialog and writer, so these tests exercise it without a running child.
+// ---------------------------------------------------------------------------
+
+describe('CookbooksRuntime.exportNotebook', () => {
+  /** Drive one export, capturing the dialog options and the disk write. */
+  async function exportWith(filename: string, options: { canceled?: boolean; filePath?: string } = {}) {
+    const dialogs: { defaultPath: string; filters: { name: string; extensions: string[] }[] }[] = []
+    const writes: { path: string; data: string; encoding: string }[] = []
+    const { runtime } = harness()
+    const result = await runtime.exportNotebook(
+      { itemId: 'probe-item', filename, content: 'BODY' },
+      {
+        showSaveDialog: async (dialogOptions) => {
+          dialogs.push(dialogOptions)
+          return { canceled: options.canceled ?? false, filePath: options.filePath ?? '/tmp/out' }
+        },
+        writeFile: async (path, data, encoding) => {
+          writes.push({ path, data, encoding })
+        },
+      },
+    )
+    return { dialogs, writes, result }
+  }
+
+  it('filters a .py export as a Python script and writes the content verbatim', async () => {
+    const { dialogs, writes, result } = await exportWith('probe.py')
+    expect(dialogs).toEqual([
+      { defaultPath: 'probe.py', filters: [{ name: 'Python Script', extensions: ['py'] }] },
+    ])
+    expect(writes).toEqual([{ path: '/tmp/out', data: 'BODY', encoding: 'utf8' }])
+    expect(result).toEqual({ saved: true, path: '/tmp/out' })
+  })
+
+  it('keeps the Jupyter filter for an .ipynb export', async () => {
+    const { dialogs } = await exportWith('probe.ipynb')
+    expect(dialogs[0].filters).toEqual([{ name: 'Jupyter Notebook', extensions: ['ipynb'] }])
+  })
+
+  it('filters an .html export as HTML', async () => {
+    const { dialogs } = await exportWith('probe.html')
+    expect(dialogs[0].filters).toEqual([{ name: 'HTML', extensions: ['html'] }])
+  })
+
+  it('falls back to the All Files filter for an unknown or absent extension', async () => {
+    expect((await exportWith('probe.txt')).dialogs[0].filters).toEqual([{ name: 'All Files', extensions: ['*'] }])
+    expect((await exportWith('README')).dialogs[0].filters).toEqual([{ name: 'All Files', extensions: ['*'] }])
+  })
+
+  it('reads the extension case-insensitively', async () => {
+    expect((await exportWith('PROBE.PY')).dialogs[0].filters).toEqual([
+      { name: 'Python Script', extensions: ['py'] },
+    ])
+  })
+
+  it('always passes the renderer-supplied filename as defaultPath', async () => {
+    const { dialogs } = await exportWith('custom-name.py')
+    expect(dialogs[0].defaultPath).toBe('custom-name.py')
+  })
+
+  it('resolves saved:false and writes nothing when the dialog is dismissed', async () => {
+    const { writes, result } = await exportWith('probe.py', { canceled: true })
+    expect(result).toEqual({ saved: false })
+    expect(writes).toEqual([])
+  })
+
+  it('resolves saved:false when the dialog returns no path', async () => {
+    const { writes, result } = await exportWith('probe.py', { filePath: '' })
+    expect(result).toEqual({ saved: false })
+    expect(writes).toEqual([])
+  })
+})

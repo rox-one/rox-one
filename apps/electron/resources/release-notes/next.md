@@ -10,6 +10,8 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 - **Public ROX model endpoints** — The default Rox CLI connection lists the public ROX endpoints (`rox/r1-max`, `rox/explore`, `rox/standard`, `rox/max`, `rox/vision`, `rox/fast`); child sessions spawned without an explicit model use `rox/fast`.
 - **Cookbooks surface** — The sidebar «Ещё» group gains a **Cookbooks** destination: the vendored notebook catalog opens inside the app, reports the local runtime honestly (preparing, Python missing, failed, stopped) and starts and stops with the app. Gated by the `cookbooks.v1` kill-switch.
 - **Cookbooks convenience** — Notebooks and playbooks autosave a second after the last edit, and the surface now says what is on disk: a status bar reports the save state, the document's own sizes and how the last run went, while «Перезапустить и выполнить» clears every result and runs the notebook again in one click.
+- **Cookbooks cell manipulation** — Cells reorder by dragging the gutter handle, select as a range with Shift+click or Shift+↑/↓, and copy, cut and paste as a block. Structural operations undo and redo one gesture at a time (`Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`), cells fold to hide their code, `Alt+Enter` runs a cell and inserts a fresh one below, `Tab`/`Shift+Tab` indent and outdent code, the outline numbers its headings (1, 1.1, …), and a batch run reports its own scope in the header.
+- **Cookbooks downloads** — The «Скачать» menu exports the open notebook as a `.ipynb` file or as a Jupytext-style `.py` script with `# %%` cell markers and markdown as comments.
 
 ## Improvements
 
