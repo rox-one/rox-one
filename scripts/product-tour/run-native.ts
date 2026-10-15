@@ -3,6 +3,11 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { runNativeProcess } from './native-process'
+// The lane budgets live with the Playwright config; this script only enforces the
+// outer one. `NATIVE_PROCESS_DEADLINE_MS` is derived there from the inner
+// `globalTimeoutMs` plus report-flush headroom, so it is always the larger number:
+// a parent that died first would SIGKILL the CLI before it wrote the failure summary.
+import { NATIVE_BUDGETS, NATIVE_PROCESS_DEADLINE_MS } from '../../tests/e2e/product-tour/native.config'
 
 const repository = resolve(import.meta.dirname, '../..')
 const evidenceDirectory = resolve(repository, 'test-results/product-tour')
@@ -11,21 +16,15 @@ const sha = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repository, encoding:
 const dirty = !!spawnSync('git', ['status', '--porcelain', '--untracked-files=no'], { cwd: repository, encoding: 'utf8' }).stdout.trim()
 const platform = process.platform
 const available = platform === 'darwin' || platform === 'win32'
-/**
- * The lane's own budgets triple in CI (`tests/e2e/product-tour/native.config.ts`)
- * because Windows needs minutes inside its first native open. The supervisor
- * must outlive that declared budget: a tighter parent deadline kills a suite
- * that is still inside its own, and the CLI's JSON report — the evidence this
- * lane exists to ship — dies with it. Four real Electron profiles plus the
- * real repository materialization no longer fit 300 s on either runner.
- */
-const cliGlobalTimeoutMs = Math.max(450_000, 170_000 * (process.env.CI ? 3 : 1))
-/** Report writing, Electron teardown and process-tree reaping after that budget. */
-const supervisorTimeoutMs = cliGlobalTimeoutMs + 60_000
 const report = {
   commitSha: sha, trackedWorktreeDirty: dirty, platform, status: 'NOT_RUN', releaseBlocking: true,
   automatedSmoke: { status: 'NOT_RUN', scope: 'Real Electron fresh setup / no automatic tour', exitCode: null as number | null,
-    runner: 'node-playwright-cli', timeoutMs: supervisorTimeoutMs, elapsedMs: 0, timedOut: false, signal: null as NodeJS.Signals | null, error: null as string | null },
+    runner: 'node-playwright-cli',
+    // The inner run budget (tests/e2e/product-tour/native.config.ts) and the outer
+    // deadline this script enforces — recorded together so the relationship is
+    // readable from the evidence alone.
+    globalTimeoutMs: NATIVE_BUDGETS.globalTimeoutMs, timeoutMs: NATIVE_PROCESS_DEADLINE_MS,
+    elapsedMs: 0, timedOut: false, signal: null as NodeJS.Signals | null, error: null as string | null },
   cases: [
     { id: 'NATIVE-01', status: 'NOT_RUN', reason: 'Full macOS Start/Pause/Resume, menu and native-dialog acceptance needs recorded platform evidence.' },
     { id: 'NATIVE-02', status: 'NOT_RUN', reason: 'Full Windows Start/Pause/Resume, Git Bash, menu and drawer acceptance needs recorded platform evidence.' },
@@ -42,7 +41,7 @@ if (!available) {
 } else {
   report.automatedSmoke.status = 'RUNNING'; save()
   // The previous Bun CLI invocation stalled on Windows before any test startup output.
-  console.error(`Native smoke: launching the official Node Playwright CLI; parent deadline ${report.automatedSmoke.timeoutMs} ms.`)
+  console.error(`Native smoke: launching the official Node Playwright CLI; inner globalTimeout ${NATIVE_BUDGETS.globalTimeoutMs} ms, parent deadline ${NATIVE_PROCESS_DEADLINE_MS} ms.`)
   const started = Date.now()
   const result = await runNativeProcess('node', [resolve(repository, 'node_modules/@playwright/test/cli.js'), 'test', '--config', 'tests/e2e/product-tour/native.config.ts'], repository, report.automatedSmoke.timeoutMs)
   report.automatedSmoke.elapsedMs = Date.now() - started

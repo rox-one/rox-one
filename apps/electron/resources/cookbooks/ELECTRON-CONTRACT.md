@@ -281,6 +281,7 @@ notebook is corrupt, meaning "offer Reset" (`:201-202`). The only 5xx is `503` f
 | POST | `/cells/delete` | `{itemId, index}` | `{ok:true, index:<focus>}` (§3.7) |
 | POST | `/cells/move` | `{itemId, from, to}` | `{ok:true, index:to}` (§3.7) |
 | POST | `/cells/duplicate` | `{itemId, index}` | `{ok:true, index:index+1}` (§3.7) |
+| POST | `/cells/convert` | `{itemId, index, cellType:"code"\|"markdown"}` | `{ok:true, index}` (§3.7) |
 | POST | `/store` | `{store:{key:value}}` | `{keys:[…]}` (`:347-356`) |
 
 Card and `missing` payloads carry **credential key names only** (`src/rox_cookbooks/ui.py:65-87`;
@@ -322,12 +323,17 @@ ipynb. All four read-modify-write that file and answer `200 {"ok": true, "index"
 cell index the caller should focus next. The response carries only the index; Electron main
 re-reads `GET /document/<itemId>` itself and hands the renderer `{document, index}`.
 
+Wave 13 adds a fifth op on the same allowlist, `/cells/convert`, which switches an existing cell
+between code and markdown in place (Colab's `y`/`m`). It is the same read-modify-write under
+`_document_lock` and answers the same `{ok:true, index}` shape.
+
 | Method | Path | Body | 200 |
 |---|---|---|---|
 | POST | `/cells/add` | `{itemId, cellType:"code"\|"markdown", index, source?}` | `{ok:true, index:<inserted>}` |
 | POST | `/cells/delete` | `{itemId, index}` | `{ok:true, index:<focus>}` |
 | POST | `/cells/move` | `{itemId, from, to}` | `{ok:true, index:to}` |
 | POST | `/cells/duplicate` | `{itemId, index}` | `{ok:true, index:index+1}` |
+| POST | `/cells/convert` | `{itemId, index, cellType:"code"\|"markdown"}` | `{ok:true, index}` |
 
 **Validation order** (`src/rox_cookbooks/host.py:554-644`) is fixed, so a client can rely on which
 failure it sees first:
@@ -338,7 +344,8 @@ failure it sees first:
    per-cell menu for a playbook, so nothing would call this anyway).
 4. **field types** — `cellType` outside `{"code","markdown"}` → `400`; a non-string `source` → `400`;
    a non-integer `index` (or `from`/`to`) → `400`. These run *before* the workspace is touched, so a
-   malformed request never creates a copy.
+   malformed request never creates a copy. `convert` checks `cellType` first and then `index`, the
+   same order as `add`.
 5. **bounds** — see the semantics below → `400 {"error":"cell index out of range"}`.
 6. **run-guard** — any live run for the item → `409 {"error":"notebook is running"}`
    (`src/rox_cookbooks/host.py:627-628`).
@@ -356,6 +363,17 @@ failure it sees first:
 - **duplicate** — `0 <= index < len`; a `copy.deepcopy` of the cell is inserted at `index+1`. A
   string `id` (nbformat 4.5) is regenerated as a fresh `uuid.uuid4().hex[:12]` so ids stay unique; a
   cell without an id gets none. Answers `index+1`.
+- **convert** — `0 <= index < len`; the cell keeps its slot and answers `index`.
+  `Notebook.convert_cell` (Wave 13, `src/rox_cookbooks/notebooks.py`) preserves `source`,
+  `metadata` and — when nbformat 4.5 stamped one — the cell `id`, and moves only the run state:
+  `code → markdown` drops `outputs` and `execution_count` (the result is
+  `{cell_type, metadata, source}`, and a persisted output that survived would be rejected by
+  nbformat's md-cell schema), while `markdown → code` adds `execution_count: None` and
+  `outputs: []`, i.e. a well-formed code cell that has never run. Converting a cell to the type it
+  already has is a successful **no-op** that still answers `200 {"ok":true, "index":<index>}`, so the
+  renderer's `y`/`m` keys stay idempotent and never need a "is this dirty?" pre-check. The op returns
+  the same index (nothing is inserted, removed or reordered), so the renderer keeps its focus where
+  it was.
 
 **409 run-guard.** While any run is live for the item (`ActiveRuns.active`,
 `src/rox_cookbooks/kernel.py:1065`), every `/cells/*` call answers `409 {"error":"notebook is
@@ -370,7 +388,7 @@ requests concurrently and such a read-modify-write is not atomic — two overlap
 clobber each other. The covered sections are:
 
 - `POST /save` (`src/rox_cookbooks/host.py:518`);
-- all four `POST /cells/*` routes (`:604`);
+- all five `POST /cells/*` routes (`:604`; `convert` added by wave 13);
 - the source pre-persist of `POST /run` (`:323`) and `POST /run-all` (`:429`);
 - **run registration** in `LabHost.begin_run` (`:108-125`), which is also the lock's link to the
   run-guard: without it, "the guard sees `active() == 0`, so mutate" and "`/run` registers, then

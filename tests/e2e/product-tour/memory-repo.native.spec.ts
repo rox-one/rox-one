@@ -1,4 +1,4 @@
-import { test, expect, type Locator, type Page } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { createHash } from 'node:crypto'
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
@@ -101,94 +101,35 @@ function workspaceRepoDir(workspaceId: string): string {
   return resolve(profile, 'config', 'memory', 'repos', dir, 'local')
 }
 
-/** The repository screen's tab strip is the shared `Tabs` primitive (`data-tab-item`). */
-function memoryRepoTab(page: Page, id: string): Locator {
-  return page.locator(`[data-tab-item="${id}"]`)
-}
-
-/** What the switcher click observed: the entry's visible label and how many entries matched. */
-interface SwitcherEntry { label: string; count: number }
-
 /**
- * Each first-run step's own advance action, in the order `useOnboarding
- * .handleContinue` reaches them: questionnaire → role → layout (only with the
- * layout-engine flag on) → Git Bash (Windows without it installed) → the
- * top-pills configurator, which is always last.
- */
-function firstRunAdvanceActions(page: Page): Array<{ name: string; action: Locator }> {
-  return [
-    { name: 'questionnaire «Заполнить позже»', action: page.locator('[data-testid="questionnaire-skip"]') },
-    { name: 'role «Пропустить»', action: page.locator('[data-testid="role-skip"]') },
-    { name: 'layout «Продолжить»', action: page.getByRole('button', { name: 'Продолжить', exact: true }) },
-    { name: 'git-bash «Проверить снова»', action: page.getByRole('button', { name: 'Проверить снова', exact: true }) },
-    { name: 'pills «Готово»', action: page.locator('[data-onboarding-pills-continue]') },
-  ]
-}
-
-/**
- * Leave every first-run step the way a user would. `App.tsx` mounts the wizard
- * INSTEAD of the ready shell, so the titlebar screen switcher cannot exist
- * until the walk finishes: that switcher is both the completion signal and the
- * navigation this spec uses next. Returns the actions taken.
+ * Real user gesture: switch screens through the SHIPPED affordance — the
+ * titlebar «Все экраны» pill. Its trigger is `AllScreensMenu.tsx:98-110`
+ * (inside the pill `ModeBar.tsx:456`), the menu it opens is
+ * `AllScreensMenu.tsx:115`, and every screen it lists is a `data-screen-id`
+ * cell (`AllScreensMenu.tsx:151`) whose click runs the registry route
+ * (`primary-nav.ts:113-114` for `memory` / `memoryRepo`).
  *
- * A step whose action stops advancing (Git Bash stays missing, a flagged
- * layout step fails to save) is retried a bounded number of times instead of
- * spinning forever; the caller reports the walk in its evidence.
- */
-async function completeFirstRun(page: Page): Promise<string[]> {
-  const switcher = page.locator('[data-all-screens-trigger]')
-  const taken: string[] = []
-  const clicks: Record<string, number> = {}
-  const deadline = Date.now() + 120_000
-  while (Date.now() < deadline && (await switcher.count()) === 0) {
-    let advanced = false
-    for (const step of firstRunAdvanceActions(page)) {
-      if ((clicks[step.name] ?? 0) >= 3) continue
-      const button = step.action.first()
-      if (!(await button.isVisible().catch(() => false))) continue
-      await button.click({ timeout: 5_000 }).catch(() => {})
-      clicks[step.name] = (clicks[step.name] ?? 0) + 1
-      taken.push(step.name)
-      advanced = true
-      // Let the step settle: a click on a step that is still finishing would
-      // otherwise be counted as another attempt against the same action.
-      await page.waitForTimeout(1_000)
-      break
-    }
-    if (!advanced) await page.waitForTimeout(500)
-  }
-  if ((await switcher.count()) === 0) {
-    // The wizard exposes no step name and `PillsStep` renders no error region,
-    // so a stuck walk has to ship what the user could actually see.
-    const visible = ((await page.locator('body').innerText().catch(() => '')) || '').replace(/\s+/g, ' ').trim().slice(0, 800)
-    throw new Error(`first-run wizard never reached the ready shell; actions taken: ${taken.join(' → ') || 'none'}; visible: ${visible}`)
-  }
-  return taken
-}
-
-/**
- * Real user gesture: open the titlebar pill's «Все экраны» menu and click the
- * `surfaceId` entry in it. The sidebar is contextual now — it renders only the
- * current screen's own navigation (`ShellSidebarNav`), never a global surface
- * list — so the pill overflow is the app's one screen switcher.
+ * The contextual sidebar renders only the CURRENT screen's own rows
+ * (`ShellSidebarNav.tsx:13`), so the global-nav `[data-sidebar-link-id]` row
+ * this spec used to click no longer exists in product source at all. Every step
+ * here asserts: a renamed or removed affordance fails, naming itself, instead of
+ * being swallowed into a poll on the destination screen.
  *
- * Radix keeps the popover mounted between attempts, so an already-open menu is
- * reused instead of toggled shut; the caller polls this helper while the shell
- * settles.
+ * Returns the entry's visible label, captured before the click navigates.
  */
-async function clickAllScreensDestination(page: Page, surfaceId: string): Promise<SwitcherEntry> {
+async function openScreenViaAllScreens(page: Page, screenId: string): Promise<string> {
+  const trigger = page.locator('[data-testid="titlebar-mode-pill"] [data-all-screens-trigger]')
+  await expect(trigger, `the titlebar «Все экраны» pill (to open ${screenId})`).toBeVisible()
+  await trigger.click()
   const menu = page.locator('[data-testid="all-screens-menu"]')
-  if (!(await menu.isVisible().catch(() => false))) {
-    await page.locator('[data-all-screens-trigger]').first().click({ timeout: 5_000 })
-    await menu.waitFor({ state: 'visible', timeout: 5_000 })
-  }
-  const entries = menu.locator(`[data-screen-id="${surfaceId}"]`)
-  const count = await entries.count()
-  const target = entries.first()
-  await target.waitFor({ state: 'visible', timeout: 5_000 })
-  const label = ((await target.innerText()) || '').trim()
-  await target.click({ timeout: 5_000 })
-  return { label, count }
+  await expect(menu, 'the «Все экраны» menu').toBeVisible()
+  // Every non-hidden surface is listed exactly once, so this waits for the real
+  // menu contents instead of retrying a gesture that can never work.
+  const entry = menu.locator(`[data-screen-id="${screenId}"]`)
+  await expect(entry, `the «Все экраны» entry ${screenId}`).toHaveCount(1)
+  const label = ((await entry.innerText()) ?? '').replace(/\s+/g, ' ').trim()
+  await entry.click()
+  return label
 }
 
 function collect(page: Page): { consoleErrors: string[]; pageErrors: string[] } {
@@ -231,13 +172,12 @@ async function dismissDialogs(page: Page, seen: string[]): Promise<void> {
 }
 
 /**
- * Real first-run onboarding (the macOS name screen) walked to the ready shell
- * — the questionnaire, role and top-pills steps a fresh profile now stops on —
- * followed by a real click on the «Все экраны» switcher entry that opens the
- * repository screen. Returns the entry so the caller can assert it really was
- * the app's own visible switcher item.
+ * Real first-run onboarding (the macOS name screen) followed by a real switch
+ * to the repository screen through the titlebar pill. Returns the pill entry's
+ * label so the caller can assert it really was the visible «Репозиторий памяти»
+ * entry.
  */
-async function onboardAndOpenRepoViaAllScreens(page: Page, dialogs: string[], firstRun: string[] = []): Promise<SwitcherEntry> {
+async function onboardAndOpenRepoViaPill(page: Page, dialogs: string[]): Promise<string> {
   const username = page.locator('#onboarding-username')
   // A freshly re-provisioned profile can still be probing its transport; the
   // app shows its own «Повторить» recovery for that, so click it like a user
@@ -257,23 +197,25 @@ async function onboardAndOpenRepoViaAllScreens(page: Page, dialogs: string[], fi
   await expect(startButton).toBeEnabled()
   await startButton.click()
 
-  // The unified first-run flow continues through its own steps — «Немного о
-  // вас» (the profile + permissions questionnaire), «Кто вы?» and the top-pills
-  // configurator — each of which is a full-screen wizard step, not a dialog.
-  // `App.tsx` mounts this wizard INSTEAD of the ready shell, so nothing the
-  // spec navigates lives in the DOM until the walk finishes.
-  firstRun.push(...await completeFirstRun(page))
+  // The unified first-run flow continues into «Немного о вас» — the profile +
+  // permissions questionnaire (`onboarding-questionnaire-step`). It is a
+  // full-screen wizard step, not a dialog, so the shell (and the titlebar pill
+  // this spec navigates with) is not mounted until it is left. A real user
+  // leaves it with «Заполнить позже», which applies the preselected permissions
+  // and then finishes first-run.
+  const questionnaireSkip = page.locator('[data-testid="questionnaire-skip"]')
+  await questionnaireSkip.waitFor({ state: 'visible', timeout: 30_000 })
+  await questionnaireSkip.click()
 
-  const screen = page.locator('[data-testid="memory-repo-screen"]')
-  let clicked: SwitcherEntry = { label: '', count: 0 }
-  await expect.poll(async () => {
-    await dismissDialogs(page, dialogs).catch(() => {})
-    clicked = await clickAllScreensDestination(page, 'memoryRepo').catch(() => clicked)
-    return screen.count()
-  }, { timeout: 90_000, intervals: [500, 750, 1000] }).toBeGreaterThan(0)
-  await expect(screen).toBeVisible()
+  // The shell mounts behind the wizard; clear whatever still covers the titlebar
+  // (intro dialogs, toasts) before reaching for the pill. The switch itself is a
+  // single gesture whose own assertion owns the failure — nothing is wrapped, so
+  // a missing affordance can never be retried into a silent timeout again.
   await dismissDialogs(page, dialogs)
-  return clicked
+  const label = await openScreenViaAllScreens(page, 'memoryRepo')
+  await expect(page.locator('[data-testid="memory-repo-screen"]')).toBeVisible()
+  await dismissDialogs(page, dialogs)
+  return label
 }
 
 /**
@@ -350,17 +292,13 @@ test('MEMREPO-NATIVE-01: «Память: репозиторий» renders and ma
   try {
     await expect(page.locator('#root')).not.toBeEmpty()
 
-    // ── Reach the shell and the new screen by clicking the app's own switcher entry. ──
+    // ── Reach the shell and the new screen through the app's own screen switcher. ──
     const screen = page.locator('[data-testid="memory-repo-screen"]')
-    const firstRunSteps: string[] = []
-    const clickedEntry = await onboardAndOpenRepoViaAllScreens(page, dialogs, firstRunSteps)
-    observed.firstRunSteps = firstRunSteps
-    observed.switcherEntry = clickedEntry.label
-    observed.switcherEntryCount = clickedEntry.count
-    expect(clickedEntry.count).toBe(1)
-    expect(clickedEntry.label).toContain('Репозиторий памяти')
-    assertions.push(`first-run: left ${firstRunSteps.length} wizard step(s) to the ready shell`)
-    assertions.push('switcher: the «Все экраны» entry «Репозиторий памяти» (memoryRepo) opened the screen')
+    const clickedEntry = await onboardAndOpenRepoViaPill(page, dialogs)
+    observed.screenEntry = clickedEntry
+    observed.screenEntryVia = '[data-testid="all-screens-menu"] [data-screen-id="memoryRepo"]'
+    expect(clickedEntry).toContain('Репозиторий памяти')
+    assertions.push('«Все экраны» pill: the visible «Репозиторий памяти» (memoryRepo) entry opened the screen')
 
     // Header + bank switcher + status + HEAD.
     await expect(page.locator('[data-testid="memory-repo-bank"]')).toBeVisible()
@@ -371,17 +309,17 @@ test('MEMREPO-NATIVE-01: «Память: репозиторий» renders and ma
 
     // Four tabs.
     const tabs: Array<[string, string]> = [
-      ['files', 'Файлы'],
-      ['history', 'История'],
-      ['dreams', 'Сны'],
-      ['graph', 'Граф'],
+      ['memory-repo-tab-files', 'Файлы'],
+      ['memory-repo-tab-history', 'История'],
+      ['memory-repo-tab-dreams', 'Сны'],
+      ['memory-repo-tab-graph', 'Граф'],
     ]
     observed.tabs = {}
-    for (const [id, label] of tabs) {
-      const tab = memoryRepoTab(page, id)
+    for (const [testid, label] of tabs) {
+      const tab = page.locator(`[data-testid="${testid}"]`)
       await expect(tab).toBeVisible()
       await expect(tab).toHaveText(label)
-      ;(observed.tabs as Record<string, string>)[id] = (await tab.textContent())?.trim() ?? ''
+      ;(observed.tabs as Record<string, string>)[testid] = (await tab.textContent())?.trim() ?? ''
     }
     assertions.push('tabs: Файлы / История / Сны / Граф with matching Russian labels')
 
@@ -405,22 +343,22 @@ test('MEMREPO-NATIVE-01: «Память: репозиторий» renders and ma
 
     // ── The other tabs mount without errors (route still plain `memory/repo`). ──
     await dismissDialogs(page, dialogs)
-    await memoryRepoTab(page, 'history').click()
+    await page.locator('[data-testid="memory-repo-tab-history"]').click()
     await expect(page.locator('[data-testid="memory-repo-history-panel"]')).toBeVisible()
     await expect(page.locator('[data-testid^="memory-repo-commit-"]').first()).toBeVisible({ timeout: 30_000 })
     assertions.push('История tab: commit list renders at least one commit')
 
-    await memoryRepoTab(page, 'dreams').click()
+    await page.locator('[data-testid="memory-repo-tab-dreams"]').click()
     await expect(page.locator('[data-testid="memory-repo-dreams-panel"]')).toBeVisible()
     observed.dreamPanel = (await page.locator('[data-testid="memory-repo-dreams-panel"]').innerText().catch(() => ''))?.replace(/\s+/g, ' ').trim().slice(0, 400) ?? null
     assertions.push('Сны tab: dreams panel renders')
 
-    await memoryRepoTab(page, 'graph').click()
+    await page.locator('[data-testid="memory-repo-tab-graph"]').click()
     await expect(page.locator('[data-testid="memory-repo-graph-panel"]')).toBeVisible()
     assertions.push('Граф tab: graph panel renders')
 
     await dismissDialogs(page, dialogs)
-    await memoryRepoTab(page, 'files').click()
+    await page.locator('[data-testid="memory-repo-tab-files"]').click()
     await expect(memoryFile).toBeVisible()
 
     // ── Open a file: viewer + frontmatter/body. ──
@@ -472,10 +410,10 @@ test('MEMREPO-NATIVE-02: ⌘K search finds a materialized repository file', asyn
 
   try {
     await expect(page.locator('#root')).not.toBeEmpty()
-    expect((await onboardAndOpenRepoViaAllScreens(page, dialogs)).label).toContain('Репозиторий памяти')
+    expect(await onboardAndOpenRepoViaPill(page, dialogs)).toContain('Репозиторий памяти')
     await materializeWorkspaceBank(page, dialogs)
     await dismissDialogs(page, dialogs)
-    await memoryRepoTab(page, 'files').click()
+    await page.locator('[data-testid="memory-repo-tab-files"]').click()
 
     // Real keyboard shortcut — the component's own document listener, not its
     // internal state. ⌘K first (the documented macOS shortcut); the
@@ -578,7 +516,7 @@ test('MEMREPO-NATIVE-03: an edited repository file surfaces the import banner an
     await expect(page.locator('#root')).not.toBeEmpty()
 
     // ── Reach the shell (repo screen) and materialize the workspace projection. ──
-    expect((await onboardAndOpenRepoViaAllScreens(page, dialogs)).label).toContain('Репозиторий памяти')
+    expect(await onboardAndOpenRepoViaPill(page, dialogs)).toContain('Репозиторий памяти')
     const { workspace, repoDir } = await materializeWorkspaceBank(page, dialogs)
     observed.workspace = workspace
     observed.workspaceRepoDir = repoDir
@@ -593,20 +531,18 @@ test('MEMREPO-NATIVE-03: an edited repository file surfaces the import banner an
     observed.editOnDisk = readFileSync(lesson.absPath, 'utf8').includes(marker)
     expect(observed.editOnDisk).toBe(true)
 
-    // ── Open the memory screen as a user would (its «Все экраны» switcher
-    //    entry); mounting it triggers the real status refresh. ──
+    // ── Open the memory screen as a user would (the «Все экраны» pill's
+    //    «Память» entry); mounting it triggers the real status refresh. ──
     const banner = page.locator('[data-testid="memory-repo-import-banner"]')
-    let opened: SwitcherEntry = { label: '', count: 0 }
-    await expect.poll(async () => {
-      await dismissDialogs(page, dialogs).catch(() => {})
-      opened = await clickAllScreensDestination(page, 'memory').catch(() => opened)
-      return banner.count()
-    }, { timeout: 60_000, intervals: [500, 750, 1000] }).toBeGreaterThan(0)
-    observed.switcherEntry = opened.label
-    expect(opened.label).toContain('Память')
+    await dismissDialogs(page, dialogs)
+    const openedLabel = await openScreenViaAllScreens(page, 'memory')
+    observed.screenEntry = openedLabel
+    expect(openedLabel).toContain('Память')
+    // The banner waits for the screen's own status call — a real wait, not a
+    // click retried under `catch`.
     await expect(banner).toBeVisible()
     await expect(page.locator('[data-testid="memory-list"]')).toBeVisible()
-    assertions.push('switcher: the «Все экраны» entry «Память» (memory) opened the memory screen with the import banner')
+    assertions.push('«Все экраны» pill: the «Память» (memory) entry opened the memory screen with the import banner')
 
     const bannerText = ((await banner.innerText()) || '').replace(/\s+/g, ' ').trim()
     observed.bannerText = bannerText

@@ -25,6 +25,34 @@ export function noteNativeBrowserStage(stage: string): void {
   console.error(`[native-browser] ${stage}`)
 }
 
+/**
+ * One budget for every native browser case, shared by the child process, the
+ * bun test timeout that bounds it and the Playwright page default timeout.
+ * The chain is ordered so a slow, lazily-split renderer reports its own
+ * failure instead of being killed by its own supervisor:
+ * one Playwright action < one isolated case < the child kill deadline < the
+ * supervising test.
+ */
+export const NATIVE_BROWSER_BUDGET_MS = 60_000
+/** Derived: a single Playwright action inside one case. */
+export const NATIVE_BROWSER_ACTION_TIMEOUT_MS = NATIVE_BROWSER_BUDGET_MS / 10
+/** Derived: graceful shutdown plus final diagnostics for a child that already failed. */
+const NATIVE_BROWSER_TEARDOWN_MS = 15_000
+/** Derived: the child is killed only after its own case budget has expired. */
+export const NATIVE_BROWSER_DEADLINE_MS = NATIVE_BROWSER_BUDGET_MS + NATIVE_BROWSER_TEARDOWN_MS
+/** Derived: the supervising test must outlive the child kill deadline. */
+export const NATIVE_BROWSER_PARENT_TIMEOUT_MS = NATIVE_BROWSER_DEADLINE_MS + NATIVE_BROWSER_TEARDOWN_MS
+
+/**
+ * The child `bun test` invocation for one browser case. Building the argv here
+ * keeps the budget the single owner of the child's per-test and per-hook
+ * timeouts: a bare `bun test <file>` falls back to bun's 5 s defaults, which a
+ * loaded machine blows through even when the parent passes its own `--timeout`.
+ */
+export function nativeBrowserCaseCommand(file: string): string[] {
+  return [process.execPath, 'test', '--timeout', String(NATIVE_BROWSER_BUDGET_MS), file]
+}
+
 export async function runNativeBrowserProcess(command: string[], options: {
   label: string
   env?: Record<string, string | undefined>
@@ -49,7 +77,7 @@ export async function runNativeBrowserProcess(command: string[], options: {
       // The deadline must settle independently of that child process's exit.
       child.kill()
       resolve(null)
-    }, options.deadlineMs ?? 40_000)
+    }, options.deadlineMs ?? NATIVE_BROWSER_DEADLINE_MS)
   })
   let drainTimeout: ReturnType<typeof setTimeout> | undefined
   try {
