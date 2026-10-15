@@ -134,7 +134,7 @@ export function NotesImportButton({ workspaceId, onImported }: NotesImportButton
               : ''}
           </p>
 
-          <div className="max-h-64 overflow-auto rounded-md border p-2 font-mono text-xs">
+          <div data-glass-slot="table" className="max-h-64 overflow-auto rounded-md border p-2 font-mono text-xs">
             {preview?.notes.map((n) => (
               <div key={n.absolutePath} className="flex justify-between gap-2 py-0.5">
                 <span className="truncate">{n.relativePath}</span>

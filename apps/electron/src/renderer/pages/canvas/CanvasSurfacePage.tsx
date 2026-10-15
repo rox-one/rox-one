@@ -61,7 +61,7 @@ export function CanvasSurfacePage(_props: SurfacePageProps) {
   const [openId, setOpenId] = useState<string | null>(target?.boardId ?? null)
   useEffect(() => onCanvasTarget(() => { const tg = takeCanvasTarget(); if (tg) { setTarget(tg); setOpenId(tg.boardId) } }), [])
   if (!workspace) {
-    return <div className="flex h-full items-center justify-center bg-background text-text-muted" data-testid="canvas-no-workspace">{t('canvas.noWorkspace')}</div>
+    return <div data-glass-slot="empty" className="flex h-full items-center justify-center bg-background text-text-muted" data-testid="canvas-no-workspace">{t('canvas.noWorkspace')}</div>
   }
   return <CanvasWorkspace key={workspace.id} workspaceId={workspace.id} openId={openId} setOpenId={id => { setTarget(null); setOpenId(id) }} focusObjectId={target?.boardId === openId ? target?.objectId : undefined} />
 }
@@ -130,7 +130,7 @@ function CanvasSidebar({ boards, trashed, favs, recent, openId, onOpen, onRestor
   const byId = new Map(boards.map(b => [b.id, b]))
   const match = (title: string) => !q.trim() || title.toLocaleLowerCase().includes(q.trim().toLocaleLowerCase())
   const row = (b: CanvasBoardSummary, testid: string) => (
-    <button key={`${testid}-${b.id}`} data-testid={testid} onClick={() => onOpen(b.id)} aria-current={openId === b.id ? 'page' : undefined}
+    <button key={`${testid}-${b.id}`} data-testid={testid} onClick={() => onOpen(b.id)} aria-current={openId === b.id ? 'page' : undefined} data-glass-slot="row" data-state={openId === b.id ? 'selected' : undefined}
       className={`flex w-full items-center gap-2 truncate rounded-md px-2 py-1 text-left text-sm ${openId === b.id ? 'bg-accent/15 text-accent' : 'text-foreground hover:bg-surface-hover'}`}>
       <span className="truncate">{b.title}</span>
     </button>
@@ -152,7 +152,7 @@ function CanvasSidebar({ boards, trashed, favs, recent, openId, onOpen, onRestor
           className="min-w-0 flex-1 bg-transparent text-sm outline-none" data-testid="canvas-sidebar-search" />
       </div>
       {section(<LayoutGrid className="icon-caption" />, t('canvas.sidebar.all'), <>
-        <button className={`w-full rounded-md px-2 py-1 text-left text-sm ${openId === null ? 'bg-accent/15 text-accent' : 'hover:bg-surface-hover'}`} onClick={() => onOpen(null)}>{t('canvas.boards.title')}</button>
+        <button data-glass-slot="row" data-state={openId === null ? 'selected' : undefined} className={`w-full rounded-md px-2 py-1 text-left text-sm ${openId === null ? 'bg-accent/15 text-accent' : 'hover:bg-surface-hover'}`} onClick={() => onOpen(null)}>{t('canvas.boards.title')}</button>
         {boards.filter(b => match(b.title)).map(b => row(b, 'canvas-sidebar-board'))}
       </>, 'canvas-sidebar-all')}
       {section(<Star className="icon-caption" />, t('canvas.sidebar.favorites'), favBoards.length ? favBoards.map(b => row(b, 'canvas-sidebar-fav')) : empty(t('canvas.sidebar.favoritesEmpty')), 'canvas-sidebar-favorites')}
@@ -192,10 +192,10 @@ function BoardList({ workspaceId, boards, error, setError, favs, onToggleFav, on
         <Button onClick={create} data-testid="canvas-new-board"><Plus />{t('canvas.boards.new')}</Button>
       </div>
       {error && <div className="mx-6 mb-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">{error}</div>}
-      {boards && boards.length === 0 && <div className="flex flex-1 items-center justify-center text-text-muted">{t('canvas.boards.empty')}</div>}
+      {boards && boards.length === 0 && <div data-glass-slot="empty" className="flex flex-1 items-center justify-center text-text-muted">{t('canvas.boards.empty')}</div>}
       <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 overflow-auto px-6 pb-6">
         {boards?.map(b => (
-          <div key={b.id} className="group flex flex-col rounded-lg border border-border bg-surface-hover/40 hover:bg-surface-hover" data-testid="canvas-board-card">
+          <div key={b.id} data-glass-slot="card" className="group flex flex-col rounded-lg border border-border bg-surface-hover/40 hover:bg-surface-hover" data-testid="canvas-board-card">
             <button className="h-28 rounded-t-lg bg-surface-selected text-left" onClick={() => onOpen(b.id)} aria-label={b.title} />
             <div className="flex items-center gap-1 px-3 py-2">
               {renaming === b.id ? (
@@ -514,7 +514,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
 
   return (
     <div className="relative flex h-full min-h-0 flex-col bg-background text-foreground" data-testid="canvas-editor">
-      <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+      <div data-glass-slot="toolbar" className="flex items-center gap-2 border-b border-border px-3 py-2">
         <Button variant="ghost" size="sm" onClick={onBack} data-testid="canvas-back"><ArrowLeft />{t('canvas.action.back')}</Button>
         <div className="truncate text-sm font-medium">{title}</div>
         <div className="ml-auto text-xs text-text-muted">{t('canvas.objects', { count: all.length })}</div>
@@ -523,7 +523,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       {/* Stage container: overlays (text editor, picker) are positioned relative to it, so no header offset is assumed. */}
       <div className="relative min-h-0 flex-1" data-testid="canvas-stage-wrap">
         {(error || notice) && <div className="absolute left-1/2 top-3 z-chrome -translate-x-1/2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert" onClick={() => setNotice(null)}>{notice ?? t(error === 'load' ? 'canvas.error.load' : 'canvas.error.save')}</div>}
-        <div className="absolute left-3 top-1/2 z-sticky flex -translate-y-1/2 flex-col gap-1 rounded-lg border border-border bg-background p-1 shadow-sm" role="toolbar">
+        <div data-glass-slot="toolbar" className="absolute left-3 top-1/2 z-sticky flex -translate-y-1/2 flex-col gap-1 rounded-lg border border-border bg-background p-1 shadow-sm" role="toolbar">
           {tools.map(({ id, icon: Icon, label }) => (
             <button key={id} title={label} aria-label={label} aria-pressed={tool === id} data-testid={`canvas-tool-${id}`}
               className={`rounded-md p-2 ${tool === id ? 'bg-accent/15 text-accent' : 'text-text-muted hover:bg-surface-hover'}`} onClick={() => setTool(id)}>
@@ -561,7 +561,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
         {picker && <EntityPicker workspaceId={workspaceId} onCreate={(k, n) => void createAndPlace(k, n)} onPick={ref => void placeRef(ref)} onClose={() => setPicker(false)} />}
         {cardDelete && (
           <div className="absolute inset-0 z-sash flex items-center justify-center bg-black/30" role="dialog" aria-modal="true" aria-labelledby="canvas-card-delete-title" data-testid="canvas-card-delete">
-            <div className="w-[360px] rounded-lg border border-border bg-background p-4 shadow-lg">
+            <div data-glass-slot="dialog" className="w-[360px] rounded-lg border border-border bg-background p-4 shadow-lg">
               <h2 id="canvas-card-delete-title" className="text-sm font-semibold">{t('canvas.cardDelete.title')}</h2>
               <p className="mt-1 text-sm text-text-muted">{t('canvas.cardDelete.body')}</p>
               <div className="mt-4 flex justify-end gap-2">
@@ -595,7 +595,7 @@ function LiveTextEditor({ board, o, view, placeholder, onDone }: { board: Canvas
     return () => el.removeEventListener('input', onInput)
   }, [board, o.id, yt])
   return (
-    <textarea ref={ref} autoFocus defaultValue={yt ? yt.toString() : String(o.props.text ?? '')} placeholder={placeholder} data-testid="canvas-text-editor"
+    <textarea ref={ref} autoFocus defaultValue={yt ? yt.toString() : String(o.props.text ?? '')} placeholder={placeholder} data-testid="canvas-text-editor" data-glass-slot="editor"
       className="absolute z-sticky resize-none rounded border border-accent bg-background p-2 text-sm text-foreground outline-none"
       style={{ left: view.x + o.x * view.zoom, top: view.y + o.y * view.zoom, width: o.w * view.zoom, height: o.h * view.zoom, transform: o.rotation ? `rotate(${o.rotation}deg)` : undefined }}
       onBlur={onDone}
@@ -639,7 +639,7 @@ function EntityPicker({ workspaceId, onCreate, onPick, onClose }: { workspaceId:
       className={`flex-1 rounded-md px-2 py-1 text-sm ${tab === id ? 'bg-accent/15 text-accent' : 'text-text-muted hover:bg-surface-hover'}`}>{t(`canvas.picker.${id}`)}</button>
   )
   return (
-    <div className="absolute left-16 top-3 z-chrome flex max-h-[70%] w-[320px] flex-col rounded-lg border border-border bg-background p-2 shadow-lg" data-testid="canvas-picker"
+    <div data-glass-slot="popover" className="absolute left-16 top-3 z-chrome flex max-h-[70%] w-[320px] flex-col rounded-lg border border-border bg-background p-2 shadow-lg" data-testid="canvas-picker"
       onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); onClose() } }}>
       <div className="flex gap-1" role="group">{tabBtn('create')}{tabBtn('existing')}</div>
       {tab === 'create' ? (
@@ -663,7 +663,7 @@ function EntityPicker({ workspaceId, onCreate, onPick, onClose }: { workspaceId:
             {items?.map(it => (
               <button key={`${it.ref.kind}:${it.ref.id}`} draggable data-testid="canvas-picker-item"
                 onDragStart={e => { e.dataTransfer.setData(ENTITY_DRAG_MIME, JSON.stringify(it.ref)); e.dataTransfer.setData('text/plain', `${it.ref.kind}:${it.ref.id}`) }}
-                onClick={() => onPick(it.ref)} className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-surface-hover">
+                onClick={() => onPick(it.ref)} data-glass-slot="row" className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-surface-hover">
                 <span className="w-16 shrink-0 truncate text-xs text-text-muted">{kindLabel(t, it.ref.kind)}</span>
                 <span className="truncate">{it.title}</span>
               </button>

@@ -579,7 +579,7 @@ const projectSummaryRef = useRef<HTMLDivElement | null>(null)
     return (
       <Info_Page>
         <Info_Page.Header title={projectSlug} />
-        <div role="status" aria-live="polite" data-testid="project-surface-unavailable" className="flex flex-1 flex-col items-center justify-center gap-3 p-4 text-center text-muted-foreground">
+        <div role="status" aria-live="polite" data-testid="project-surface-unavailable" data-glass-slot="empty" className="flex flex-1 flex-col items-center justify-center gap-3 p-4 text-center text-muted-foreground">
           <p className="text-sm">{error}</p>
           <button type="button" data-testid="project-surface-retry" onClick={() => void loadProject()} className="rounded-md border border-border px-3 py-1 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             {t('common.retry')}
@@ -723,7 +723,7 @@ const projectSummaryRef = useRef<HTMLDivElement | null>(null)
             <Info_Section title={t('projectOkr.tab')}>
               <div className="space-y-4 px-4 py-3">
                 <p className="text-sm text-muted-foreground">{t('projectOkr.guidance')}</p>
-                <details className="rounded-md border border-border/60 px-3 py-2 text-sm">
+                <details data-glass-slot="card" className="rounded-md border border-border/60 px-3 py-2 text-sm">
                   <summary className="cursor-pointer font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{t('projectOkr.examplesTitle')}</summary>
                   <p className="mt-2 text-muted-foreground">{t('projectOkr.examplesBody')}</p>
                 </details>
@@ -813,7 +813,7 @@ const projectSummaryRef = useRef<HTMLDivElement | null>(null)
                     {selectedCycle && selectedCycle.objectives.map((objective, objectiveIndex) => {
                       const objectiveResult = selectedCycleCalculation?.objectives.find((item) => item.id === objective.id)
                       return (
-                        <section key={objective.id} className="space-y-3 rounded-lg border border-border/70 p-3" aria-labelledby={`objective-${objective.id}`}>
+                        <section key={objective.id} data-glass-slot="card" className="space-y-3 rounded-lg border border-border/70 p-3" aria-labelledby={`objective-${objective.id}`}>
                           <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[minmax(10rem,1fr)_6rem_minmax(8rem,0.6fr)_auto_auto_auto_auto]">
                             <Input
                               id={`objective-${objective.id}`}
@@ -876,7 +876,7 @@ const projectSummaryRef = useRef<HTMLDivElement | null>(null)
                               const result = objectiveResult?.keyResults.find((item) => item.id === keyResult.id)
                               const measurement = keyResult.measurement
                               return (
-                                <div key={keyResult.id} className="space-y-2 rounded-md bg-foreground/[0.025] p-3">
+                                <div key={keyResult.id} data-glass-slot="card" className="space-y-2 rounded-md bg-foreground/[0.025] p-3">
                                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(10rem,1fr)_5rem_minmax(8rem,0.6fr)_auto_auto]">
                                     <Input
                                       aria-label={t('projectOkr.keyResult')}
@@ -1028,7 +1028,7 @@ const projectSummaryRef = useRef<HTMLDivElement | null>(null)
                       </fieldset>
                     )}
                     {selectedCycleCalculation && (
-                      <div className="rounded-md border border-border/70 p-3 text-sm" aria-live="polite">
+                      <div data-glass-slot="card" className="rounded-md border border-border/70 p-3 text-sm" aria-live="polite">
                         <strong>{t('projectOkr.cycleProgress')}:</strong> {formatOkrProgress(selectedCycleCalculation.progress, t('projectOkr.unknownProgress'))}
                         <span className="ml-2 text-muted-foreground">
                           {t('projectOkr.knownContribution', { value: (selectedCycleCalculation.progress.knownContribution * 100).toFixed(1) })}; {t('projectOkr.coverage', { value: (selectedCycleCalculation.progress.coverage * 100).toFixed(1) })}
@@ -1038,7 +1038,7 @@ const projectSummaryRef = useRef<HTMLDivElement | null>(null)
                   </>
                 )}
                 {!okrLoading && okrCycles.length === 0 && (
-                  <p className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">{t('projectOkr.empty')}</p>
+                  <p data-glass-slot="empty" className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">{t('projectOkr.empty')}</p>
                 )}
                 <div className="flex flex-wrap justify-end gap-2 border-t border-border/50 pt-3">
                   <Button type="button" variant="outline" disabled={!okrDocument || okrSaving} onClick={() => { setOkrCycles(okrDocument?.cycles ?? []); setOkrError(null) }}>

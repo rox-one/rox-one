@@ -619,10 +619,11 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
           tabIndex={isSel ? 0 : -1}
           data-testid={`feed-row-${item.kind}`}
           data-color={item.color}
+          data-glass-slot="card"
           onClick={() => selectFeedItem(item)}
           className={cn(
             'relative mx-2 mb-2 flex cursor-default gap-3 rounded-[var(--radius-card)] py-3 pl-4 pr-3 outline-none',
-            isSel ? 'bg-foreground/[0.09] ring-2 ring-inset ring-accent' : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
+            isSel ? 'bg-foreground/[0.09] outline-2 -outline-offset-2 outline-accent' : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
           )}
         >
           {colorBar}
@@ -654,6 +655,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
         tabIndex={isSel ? 0 : -1}
         data-testid={`feed-row-${item.kind}`}
         data-color={item.color}
+        data-glass-slot="row"
         onClick={() => selectFeedItem(item)}
         className={cn(
           'relative mx-1 flex cursor-default items-start gap-2 rounded-[var(--radius-card)] py-2 pl-3 pr-2 outline-none',
@@ -704,7 +706,11 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const refreshTarget = tab === 'subscriptions' ? 'x' : tab === 'news' ? sourceFilter : undefined
   const feedList = (
     <>
-      <header className="flex min-h-[44px] shrink-0 items-center gap-2 px-3 pt-2">
+      {/* Arc Glass: the title row and the filter row below are the screen's
+          sticky toolbar block (`toolbar` = blur + a bottom hairline); the list
+          is the `table` container and every item is a `row`
+          (packages/ui/src/components/glass/arc-glass-surfaces.css). */}
+      <header data-glass-slot="toolbar" className="flex min-h-[44px] shrink-0 items-center gap-2 px-3 pt-2">
         <h2 className="min-w-0 truncate text-lg font-semibold" title={sourceFilter && sourceById.get(sourceFilter) ? sourceLabel(sourceById.get(sourceFilter)!) : t(`feed.tab.${tab}`)}>{sourceFilter && sourceById.get(sourceFilter) ? sourceLabel(sourceById.get(sourceFilter)!) : t(`feed.tab.${tab}`)}</h2>
         {data.generatedAt ? <span className="hidden shrink-0 text-xs text-text-muted min-[1600px]:inline">{t('feed.updatedAt', { time: timeFmt.format(data.generatedAt) })}</span> : null}
         <div className="ml-auto flex shrink-0 items-center gap-1">
@@ -741,7 +747,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
           </Button>
         </div>
       </header>
-      <div className="flex flex-col gap-2 px-3 pb-2" data-testid="feed-toolbar">
+      <div data-glass-slot="toolbar" className="flex flex-col gap-2 px-3 pb-2" data-testid="feed-toolbar">
         <div className="flex items-center gap-2">
           <label className="relative flex min-w-0 flex-1 items-center">
             <Search aria-hidden className="pointer-events-none absolute left-2 size-3.5 text-text-muted" />
@@ -794,7 +800,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
         </div>
       </div>
       {loadError ? <div role="alert" className="mx-3 mb-1 rounded-[var(--radius-control)] bg-destructive/10 px-2 py-1 text-sm text-destructive">{t('feed.loadError')}</div> : null}
-      <div ref={!selected ? readerTourRef : undefined} data-tour-id={!selected ? 'feed.reader' : undefined} role="listbox" aria-label={t(`feed.tab.${tab}`)} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="feed-list" data-density={prefs.density}>
+      <div ref={!selected ? readerTourRef : undefined} data-tour-id={!selected ? 'feed.reader' : undefined} role="listbox" aria-label={t(`feed.tab.${tab}`)} data-glass-slot="table" className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="feed-list" data-density={prefs.density}>
         {visible.length === 0 ? emptyForTab() : groups.map((g) => (
           <div key={g.key} style={feedDayGroupStyle(g.items.length, prefs.density)} data-testid="feed-day-group">
             <div className="flex items-center gap-2 px-3 pb-1 pt-3 text-xs uppercase caps-label text-text-muted" data-testid="feed-day">
@@ -851,7 +857,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const retryState = selected?.automationId ? automations.automationTestResults[selected.automationId]?.state : undefined
   const selSource = selected?.sourceId ? sourceById.get(selected.sourceId) : undefined
   const itemDetail = selected ? (
-    <div ref={readerTourRef} data-tour-id="feed.reader" className="flex flex-col px-6 py-4" data-testid="feed-detail" data-kind={selected.kind}>
+    <div ref={readerTourRef} data-tour-id="feed.reader" data-glass-slot="editor" className="flex flex-col px-6 py-4" data-testid="feed-detail" data-kind={selected.kind}>
       <div className="flex min-w-0 items-center gap-2 text-sm text-text-muted">
         {selSource ? <SourceIcon source={selSource} size={20} /> : null}
         <span className="min-w-0 truncate" title={selected.author ?? (selSource ? sourceLabel(selSource) : selected.sourceTitle) ?? ''}>{selected.author ?? (selSource ? sourceLabel(selSource) : selected.sourceTitle) ?? ''}</span>

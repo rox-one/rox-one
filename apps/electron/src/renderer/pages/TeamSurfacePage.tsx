@@ -35,7 +35,7 @@ export function TeamSurfacePage(_props: SurfacePageProps) {
       data-testid="team-surface-page"
       data-surface="messenger"
     >
-      <header className="flex shrink-0 items-center gap-3 border-b border-border/60 px-4 py-2">
+      <header data-glass-slot="toolbar" className="flex shrink-0 items-center gap-3 border-b border-border/60 px-4 py-2">
         <MessagesSquare className="icon-inline text-text-muted" aria-hidden />
         <PanelHeading className="text-title font-semibold" titleKey="messenger.channels.title">{t('messenger.channels.title')}</PanelHeading>
         <TabsCore

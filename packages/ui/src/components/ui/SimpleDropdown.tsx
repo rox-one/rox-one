@@ -316,6 +316,7 @@ export function SimpleDropdown({
         <SimpleDropdownContext.Provider value={contextValue}>
           <div
             ref={menuRef}
+            data-glass-slot="popover"
             className={cn(
               'fixed z-island min-w-[140px] p-1',
               'bg-background rounded-md shadow-strong border border-border/50',

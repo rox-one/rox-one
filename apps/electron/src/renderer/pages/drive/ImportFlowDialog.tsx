@@ -144,6 +144,7 @@ export function ImportFlowDialog({ open, onOpenChange, api, auth, initialProvide
                   type="button"
                   data-testid={`drive-import-provider-${provider.id}`}
                   onClick={() => controller?.start(provider.id)}
+                  data-glass-slot="card"
                   className="rounded-lg border border-border/60 px-3 py-2 text-left text-sm hover:border-primary/50"
                 >
                   {t(provider.labelKey)}

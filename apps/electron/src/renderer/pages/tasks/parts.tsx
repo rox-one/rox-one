@@ -124,6 +124,7 @@ export function Overlay({
         aria-modal="true"
         aria-label={label}
         data-testid={testId}
+        data-glass-slot="dialog"
         style={{ width, maxWidth: '100%' }}
         className="flex max-h-[76vh] flex-col overflow-hidden rounded-[var(--radius-card)] bg-background font-sans text-base text-foreground shadow-strong"
       >

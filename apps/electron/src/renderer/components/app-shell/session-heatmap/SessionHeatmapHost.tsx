@@ -427,7 +427,7 @@ export function SessionHeatmapHost() {
           </div>
 
           {daySessions.length === 0 ? (
-            <div className="flex min-h-[120px] flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
+            <div data-glass-slot="empty" className="flex min-h-[120px] flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
               <p className="text-sm">{t('collection.heatmap.emptyDay')}</p>
               {Object.keys(filters).length > 0 && (
                 <button
@@ -440,8 +440,8 @@ export function SessionHeatmapHost() {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <div className="flex items-center gap-2 border-b border-border/40 px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+            <div className="overflow-x-auto" data-glass-slot="table">
+              <div className="flex items-center gap-2 border-b border-border/40 px-2 py-1.5 text-xs font-semibold text-muted-foreground" data-glass-slot="toolbar">
                 <span className="w-6 shrink-0" />
                 {DAY_COLUMNS.map((column) => (
                   <button
@@ -464,6 +464,8 @@ export function SessionHeatmapHost() {
                 {daySessions.map((session, index) => (
                   <li
                     key={session.id}
+                    data-glass-slot="row"
+                    aria-selected={isSelected(session.id)}
                     className="flex items-center gap-2 border-b border-border/30 px-2 py-1.5 text-sm hover:bg-foreground/[0.02]"
                   >
                     <span className="w-6 shrink-0">

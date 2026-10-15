@@ -172,6 +172,7 @@ export function EntityCard({ variant = 'card', className, ...props }: EntityCard
   const kind = entityKindLabel(t, props.entityRef.kind, props.preview?.kindLabel)
   return (
     <section
+      data-glass-slot="card"
       className={cn('max-w-[420px] rounded-md border border-border bg-background p-3', className)}
       data-entity-card={variant}
       data-entity-restricted={restricted ? 'true' : undefined}

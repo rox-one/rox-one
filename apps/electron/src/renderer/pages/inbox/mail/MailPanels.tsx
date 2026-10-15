@@ -166,7 +166,7 @@ export function MailListPanel({ mail, title, selectedId, onSelect, onCompose, on
       </form>
       {s.local ? <LocalNotice domain={s.domain} compact /> : null}
       {mail.error ? <div role="alert" className="mx-3 mt-1 flex items-center gap-2 rounded-[var(--radius-card)] bg-destructive/10 px-2.5 py-1.5 text-sm text-destructive" data-testid="mail-error" data-code={mail.errorCode ?? undefined}><span className="min-w-0 flex-1">{t(mailErrorKey(mail.errorCode))}</span>{mail.errorCode && MAIL_RECONNECT_CODES.has(mail.errorCode) ? <Button variant="ghost" onClick={() => void mail.ensure()} data-testid="mail-reconnect">{t('inbox.mail.connect')}</Button> : null}</div> : null}
-      <div role="listbox" aria-label={title} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onKeys} data-testid="mail-list">
+      <div role="listbox" aria-label={title} data-glass-slot="table" className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onKeys} data-testid="mail-list">
         {mail.items.length === 0 ? (
           <EmptyState
             testId="mail-empty"
@@ -377,7 +377,7 @@ export function MailReader({ mail, message, onCompose, onEditDraft, onAfterRemov
   })
 
   return (
-    <div className="flex min-h-full flex-col px-5 py-4" data-testid="mail-reader" data-id={message.id}>
+    <div data-glass-slot="editor" className="flex min-h-full flex-col px-5 py-4" data-testid="mail-reader" data-id={message.id}>
       <div className="flex flex-wrap items-center gap-1.5">
         {message.draft && onEditDraft ? <Button variant="primary" onClick={() => onEditDraft(message)} data-testid="mail-edit-draft">{t('inbox.mail.editDraft')}</Button> : null}
         <Button variant={message.draft ? 'secondary' : 'primary'} onClick={() => onCompose('reply')} data-testid="mail-reply">{t('inbox.mail.reply')}</Button>
@@ -423,7 +423,7 @@ export function MailReader({ mail, message, onCompose, onEditDraft, onAfterRemov
         <AddressRow label={t('inbox.mail.cc')} value={addressLine(message.cc)} />
       </div>
       {threadMessages.filter((entry) => entry.id !== message.id).map((entry) => (
-        <article key={entry.id} className="mt-3 rounded-[var(--radius-card)] bg-foreground/[0.03] p-3" data-testid="mail-thread-message">
+        <article key={entry.id} data-glass-slot="card" className="mt-3 rounded-[var(--radius-card)] bg-foreground/[0.03] p-3" data-testid="mail-thread-message">
           <div className="flex items-center gap-2 text-sm">
             <span className="font-semibold">{addressLine(entry.from) || '—'}</span>
             <span className="ml-auto numeric text-text-muted">{fmt.full(entry.receivedAt)}</span>
@@ -578,6 +578,7 @@ export function MailCompose({ mail, draft, source, onClose }: {
   const title = d.mode === 'reply' ? t('inbox.mail.reply') : d.mode === 'replyAll' ? t('inbox.mail.replyAll') : d.mode === 'forward' ? t('inbox.mail.forward') : t('inbox.mail.compose')
   return (
     <form
+      data-glass-slot="editor"
       className="flex min-h-full flex-col gap-1 px-5 py-4"
       data-testid="mail-composer"
       onSubmit={(e) => { e.preventDefault(); void send() }}

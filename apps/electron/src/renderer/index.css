@@ -572,11 +572,17 @@ html .popover-styled {
 
 [data-sonner-toast] {
   box-shadow: var(--shadow-modal-small) !important;
-  /* Opaque like every other overlay (PERF-07 / UI-AUDIT P1-10). */
-  background-color: oklch(from var(--popover) l c h / 1) !important;
   -webkit-app-region: no-drag !important;
   /* Fixed width to ensure text truncation works */
   width: 356px !important;
+}
+
+/* Opaque like every other overlay (PERF-07 / UI-AUDIT P1-10). Arc Glass paints
+   the toast surface itself (`data-glass-slot="toast"` / `[data-sonner-toast]`
+   in packages/ui/src/components/glass/arc-glass-surfaces.css), so the opaque
+   fill is scoped to the other themes. */
+html:not([data-theme="arc-glass"]) [data-sonner-toast] {
+  background-color: oklch(from var(--popover) l c h / 1) !important;
 }
 
 /* Hide icon container to remove leftover padding */
@@ -1447,8 +1453,15 @@ html[data-contrast="high"] :is(.popover-styled, [data-slot="popover-content"], .
    runtime keeps the reset — Electron never gets a CSS blur — and the hard
    a11y/performance gates above still reset the popover when they are active.
    With the layer off the popover stays opaque exactly as before.
+
+   Arc Glass (`html[data-theme="arc-glass"]`) is the second exception: its
+   overlay slots (data-glass-slot dialog/sheet/toast/popover, and sonner's
+   [data-sonner-toast]) draw their own opaque-enough fill and static blur in
+   packages/ui/src/components/glass/arc-glass-*.css, so the reset would cancel
+   the material. The a11y/performance gates still turn that blur off — see the
+   degradation blocks in those two stylesheets.
 ============================================================================= */
-html :is(
+html:not([data-theme="arc-glass"]) :is(
   [data-sonner-toast],
   [data-slot="tooltip-content"],
   [data-slot="hover-card-content"],
@@ -1466,7 +1479,7 @@ html :is(
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-html:not([data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])) [data-slot="popover-content"] {
+html:not([data-theme="arc-glass"]):not([data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])) [data-slot="popover-content"] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }

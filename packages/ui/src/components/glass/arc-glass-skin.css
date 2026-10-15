@@ -86,6 +86,47 @@ html[data-theme="arc-glass"] :is(.rox-mode-pill-item, [data-glass-slot="mini-but
   transition-duration: var(--motion-fast);
 }
 
+/* --- degradations -------------------------------------------------------- */
+/* Reduced transparency, high contrast and the low-power render profile: the
+   glass goes solid (100% fill, no sheen) and blur drops to zero; high contrast
+   re-points the hairline at the stronger edge colour. The `basic` glass tier
+   (low core count / memory, unplugged below 20%, no backdrop url() support) is
+   the same solid, blur-free material — it already loses refraction, so it loses
+   the blur too. Declared before the keyframes on purpose: the blur is a static
+   paint, so nothing here ever transitions backdrop-filter. */
+html[data-theme="arc-glass"][data-contrast="high"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot]),
+html[data-theme="arc-glass"][data-glass="basic"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot]) {
+  --glass-tint: 100%;
+  --glass-fill-mix: 100%;
+  --glass-specular-alpha: 0%;
+  --glass-hover-boost: 0%;
+  --glass-blur: 0px;
+  --glass-blur-tight: 0px;
+  backdrop-filter: none;
+}
+
+html[data-theme="arc-glass"][data-contrast="high"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot]) {
+  --glass-hairline: var(--border-strong);
+}
+
+html[data-theme="arc-glass"][data-render-profile="performance"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot]) {
+  --glass-blur: 0px;
+  --glass-blur-tight: 0px;
+  backdrop-filter: none;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html[data-theme="arc-glass"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot]) {
+    --glass-tint: 100%;
+    --glass-fill-mix: 100%;
+    --glass-specular-alpha: 0%;
+    --glass-hover-boost: 0%;
+    --glass-blur: 0px;
+    --glass-blur-tight: 0px;
+    backdrop-filter: none;
+  }
+}
+
 @keyframes rox-glass-pop-in {
   from {
     opacity: 0;

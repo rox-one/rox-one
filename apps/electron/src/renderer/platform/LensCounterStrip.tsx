@@ -43,7 +43,7 @@ export function LensCounterStrip({ expandLabel, counters, onExpand, onSelect, se
         type="button"
         aria-label={expandLabel}
         onClick={onExpand}
-        className="grid h-7 w-7 place-items-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        className="grid h-7 w-7 place-items-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         <PanelRight className="icon-caption" />
       </button>
@@ -57,7 +57,7 @@ export function LensCounterStrip({ expandLabel, counters, onExpand, onSelect, se
             onClick={() => (onSelect ? onSelect(entry.id) : onExpand())}
             aria-label={`${entry.label}: ${entry.value}`}
             data-lens-strip-counter={entry.id}
-            className="flex min-h-[var(--control-hit-min)] w-full flex-col items-center justify-center gap-0.5 rounded-[var(--radius-xs)] py-1 text-caption numeric text-text-secondary hover:bg-surface-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            className="flex min-h-[var(--control-hit-min)] w-full flex-col items-center justify-center gap-0.5 rounded-[var(--radius-xs)] py-1 text-caption numeric text-text-secondary hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <Icon className="icon-caption" aria-hidden="true" />
             <span>{entry.value}</span>

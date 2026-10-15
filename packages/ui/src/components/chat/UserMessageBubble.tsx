@@ -417,7 +417,7 @@ function AudioTranscriptBlock({
       )}
 
       {transcript.status === 'done' && (
-        <div className="rounded-[var(--radius-card)] bg-user-message-bubble px-5 py-3.5 text-sm break-words min-w-0 select-text w-full">
+        <div data-glass-slot="card" className="rounded-[var(--radius-card)] bg-user-message-bubble px-5 py-3.5 text-sm break-words min-w-0 select-text w-full">
           <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase caps-label text-muted-foreground">
             <Mic className="icon-status" aria-hidden="true" />
             {t('chat.audioTranscript')}
@@ -687,6 +687,7 @@ export function UserMessageBubble({
           while the chip and pulsing icon make the waiting state obvious
           (#616 follow-up). */}
       <div
+        data-glass-slot="card"
         className={cn(
           "max-w-[80%] bg-user-message-bubble rounded-[var(--radius-card)] break-words min-w-0 select-text [&_p]:m-0",
           compactMode ? "px-4 py-2" : "px-5 py-3.5"

@@ -33,6 +33,7 @@ export function SettingsCard({ children, className, divided = true }: SettingsCa
 
   return (
     <div
+      data-glass-slot="card"
       className={cn(
         settingsUI.card,
         className
@@ -84,6 +85,7 @@ export function SettingsCardFooter({
   const { t } = useTranslation()
   return (
     <div
+      data-glass-slot="toolbar"
       className={cn(
         settingsUI.rowPadding,
         'border-t border-border-subtle bg-surface-input flex flex-wrap items-center justify-end gap-2',

@@ -27,6 +27,7 @@ export default function TerminalSurfacePage({ terminalId }: TerminalSurfacePageP
         className="flex h-full flex-col items-center justify-center gap-3 p-6 text-muted-foreground"
         data-terminal-surface="empty"
         data-testid="terminal-surface-empty"
+        data-glass-slot="empty"
       >
         <p className="text-sm">{t('terminal.surface.noTerminalSelected')}</p>
         <p className="max-w-md text-center text-xs text-muted-foreground/80">
@@ -53,6 +54,7 @@ export default function TerminalSurfacePage({ terminalId }: TerminalSurfacePageP
       data-terminal-surface="unavailable"
       data-terminal-id={terminalId}
       data-testid="terminal-surface-unavailable"
+      data-glass-slot="empty"
       role="status"
       aria-live="polite"
     >

@@ -58,6 +58,7 @@ export function LayoutStep({ onContinue, onBack }: LayoutStepProps) {
             role="radio"
             aria-checked={selected === preset}
             onClick={() => setSelected(preset)}
+            data-glass-slot="card"
             className={cn(
               'flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors',
               selected === preset

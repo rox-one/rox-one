@@ -28,7 +28,7 @@ export function AddWorkspace_RadioOption({
   action
 }: AddWorkspace_RadioOptionProps) {
   return (
-    <label className={cn(
+    <label data-glass-slot="card" className={cn(
       "flex items-center gap-3 p-3 rounded-lg cursor-pointer",
       "bg-background shadow-minimal",
       "transition-all duration-150",

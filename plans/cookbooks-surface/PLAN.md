@@ -71,3 +71,5 @@
 | 2026-10-15 | W12 merge PR #2093 | merge `52d427a22` | ✅ влито в main |
 | 2026-10-15 | W13 «Colab Convenience & Informativity» (PR #2127): командный режим, поиск/замена, автосейв+индикатор, статус-бар, длительности, scroll-spy, «Перезапустить и выполнить», md-микро, конвертация ячеек; + fix AppShellProvider, re-record bundle-size | `f1352a97c` | ✅ |
 | 2026-10-15 | W13 merge PR #2127 | merge `3fcb612d4` | ✅ влито в main |
+| 2026-10-15 | W14 «Cell Manipulation & Focus» (PR #2165): DnD-перестановка ячеек, мультивыделение + ячеечный буфер (copy/cut/paste), undo/redo структурных операций (Shift+Tab — takeover реестра), fold, меню «Скачать» (.ipynb/.py), Alt+Enter, Tab-индент, прогресс batch, latex-вывод, нумерация оглавления; + re-record bundle-size | `cd7f26803` + `d2519b5ac` | ✅ |
+| 2026-10-15 | W14 merge PR #2165 | merge `f56d3e747` | ✅ влито в main |

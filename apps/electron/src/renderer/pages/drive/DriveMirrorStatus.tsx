@@ -97,6 +97,7 @@ export function DriveMirrorStatusCard({ view, busy, onStart, onPause, onCancel }
     <div
       data-testid="drive-mirror-status"
       className="mt-2 rounded-md border border-border/60 bg-card/40 px-3 py-2"
+      data-glass-slot="card"
     >
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs font-medium">{t('drive.mirror.title')}</span>

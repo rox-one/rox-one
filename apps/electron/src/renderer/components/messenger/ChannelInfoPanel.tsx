@@ -43,7 +43,7 @@ export function ChannelInfoPanel({ channel, label, members, presenceOf, nameOf, 
   const sorted = [...channel.memberIds].sort((a, b) => order[presenceOf(a)] - order[presenceOf(b)] || nameOf(a).localeCompare(nameOf(b), locale))
   const created = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long' }).format(channel.createdAt)
   return (
-    <aside className="flex w-72 shrink-0 flex-col overflow-y-auto border-s border-border/60" aria-label={t('messenger.info.title')} data-testid="messenger-channel-info">
+    <aside data-glass-slot="panel" className="flex w-72 shrink-0 flex-col overflow-y-auto border-s border-border/60" aria-label={t('messenger.info.title')} data-testid="messenger-channel-info">
       <div className="flex items-center justify-between px-4 py-2.5">
         <h2 className="text-body font-semibold">{t('messenger.info.title')}</h2>
         <button type="button" className="rounded p-1 text-text-muted hover:bg-surface-hover" onClick={onClose} aria-label={t('common.close')}><X className="icon-toolbar" aria-hidden /></button>

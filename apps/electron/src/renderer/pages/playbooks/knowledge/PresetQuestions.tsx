@@ -37,6 +37,7 @@ export function PresetQuestions({ disabled, onSelect }: { disabled: boolean; onS
                 type="button"
                 disabled={disabled}
                 onClick={() => onSelect(id)}
+                data-glass-slot="row"
                 className={cn(
                   'w-full rounded-[var(--radius-control)] px-2 py-1 text-left text-xs transition-colors duration-[var(--motion-fast)] motion-reduce:transition-none',
                   'hover:bg-surface-hover focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50',

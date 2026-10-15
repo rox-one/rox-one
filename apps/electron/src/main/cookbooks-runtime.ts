@@ -318,6 +318,28 @@ async function defaultShowSaveDialog(options: CookbooksSaveDialogOptions): Promi
 const defaultWriteFile: NonNullable<CookbooksExportDeps['writeFile']> = (path, data, encoding) =>
   fsWriteFile(path, data, encoding)
 
+/**
+ * Wave 14 §8: the save dialog's filter list follows the export's own file
+ * extension, so a `.py` script is saved as a Python file and an `.ipynb` as a
+ * notebook. The extension is read from the basename (`/a.b/c.py` → `py`,
+ * case-insensitively); an unknown or absent extension falls back to `*`.
+ */
+function exportSaveFilters(filename: string): { name: string; extensions: string[] }[] {
+  const basename = filename.slice(Math.max(filename.lastIndexOf('/'), filename.lastIndexOf('\\')) + 1)
+  const dot = basename.lastIndexOf('.')
+  const extension = dot === -1 ? '' : basename.slice(dot + 1).toLowerCase()
+  switch (extension) {
+    case 'ipynb':
+      return [{ name: 'Jupyter Notebook', extensions: ['ipynb'] }]
+    case 'py':
+      return [{ name: 'Python Script', extensions: ['py'] }]
+    case 'html':
+      return [{ name: 'HTML', extensions: ['html'] }]
+    default:
+      return [{ name: 'All Files', extensions: ['*'] }]
+  }
+}
+
 type TimerHandle = unknown
 
 // ---------------------------------------------------------------------------
@@ -900,12 +922,15 @@ export class CookbooksRuntime {
   }
 
   /**
-   * Main-side `.ipynb` export: ask the user where to save `content`, then write
-   * it. `dialog`/`fs` are injected so the flow is unit-testable without
-   * Electron; the defaults are the real `dialog.showSaveDialog` and
-   * `fsPromises.writeFile` (imported lazily — this module must not pull in
-   * Electron at load time). A dismissed dialog resolves `{saved:false}`; a
-   * failed write rejects, and the renderer turns that into a notice.
+   * Main-side notebook/script export: ask the user where to save `content`,
+   * then write it. The save dialog's filter is derived from the filename's own
+   * extension (wave 14 §8: `.ipynb` → Jupyter Notebook, `.py` → Python Script,
+   * `.html` → HTML, anything else → All Files). `dialog`/`fs` are injected so
+   * the flow is unit-testable without Electron; the defaults are the real
+   * `dialog.showSaveDialog` and `fsPromises.writeFile` (imported lazily — this
+   * module must not pull in Electron at load time). A dismissed dialog resolves
+   * `{saved:false}`; a failed write rejects, and the renderer turns that into a
+   * notice.
    */
   async exportNotebook(
     input: { itemId: string; filename: string; content: string },
@@ -915,7 +940,7 @@ export class CookbooksRuntime {
     const writeFile = deps.writeFile ?? defaultWriteFile
     const result = await showSaveDialog({
       defaultPath: input.filename,
-      filters: [{ name: 'Jupyter Notebook', extensions: ['ipynb'] }],
+      filters: exportSaveFilters(input.filename),
     })
     const filePath = result.filePath
     if (result.canceled || typeof filePath !== 'string' || filePath.length === 0) {

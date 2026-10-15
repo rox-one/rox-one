@@ -2327,6 +2327,10 @@ export function FreeFormInput({
     <form onSubmit={handleSubmit}>
       <div
         ref={containerRef}
+        // Arc Glass: the standalone branch IS the composer surface. InputContainer
+        // (the app path) always passes `unstyled` and carries the slot itself, so
+        // this attribute is inert there and only paints unwrapped composers.
+        data-glass-slot={unstyled ? undefined : 'composer'}
         className={cn(
           'overflow-hidden transition-colors motion-reduce:transition-none',
           // Container styling - only when not wrapped by InputContainer

@@ -184,7 +184,7 @@ function NotesTableView({
 
   return (
     <div className="h-full overflow-auto p-4" data-testid="notes-table-view">
-      <div className="mb-3 flex flex-wrap items-center gap-2" data-testid="notes-table-toolbar">
+      <div className="mb-3 flex flex-wrap items-center gap-2" data-testid="notes-table-toolbar" data-glass-slot="toolbar">
         <label className="flex items-center gap-1 text-xs text-muted-foreground">
           {t('notes.views.savedLayout')}
           <PremiumMenuSelect
@@ -274,7 +274,7 @@ function NotesTableView({
           </button>
         ))}
       </div>
-      <table className="w-full text-left text-xs">
+      <table className="w-full text-left text-xs" data-glass-slot="table">
         <thead>
           <tr className="text-xs uppercase caps-label text-muted-foreground">
             <th className="px-2 py-1">{t('notes.views.colTitle')}</th>
@@ -370,7 +370,7 @@ function NotesTableView({
         ))}
       </table>
       {visible.length === 0 ? (
-        <p className="mt-6 text-center text-sm text-muted-foreground">{t('notes.views.tableEmpty')}</p>
+        <p data-glass-slot="empty" className="mx-auto mt-6 max-w-md rounded-[var(--radius-card)] px-6 py-8 text-center text-sm text-muted-foreground">{t('notes.views.tableEmpty')}</p>
       ) : null}
     </div>
   )
@@ -548,6 +548,7 @@ function NotesCanvasView({
           <button
             key={node.id}
             type="button"
+            data-glass-slot="card"
             className="absolute cursor-grab rounded-lg border border-border/60 bg-card/90 p-2 text-left text-xs shadow-thin active:cursor-grabbing"
             style={{ left: node.x, top: node.y, width: node.width, minHeight: node.height }}
             onPointerDown={(event) => {
@@ -653,11 +654,11 @@ function NotesOutlineView({
     if (id.startsWith('block:')) onOpenBlock?.(id.slice('block:'.length))
   }
   return (
-    <div className="h-full overflow-y-auto p-6" data-testid="notes-outline-view">
+    <div className="h-full overflow-y-auto p-6" data-testid="notes-outline-view" data-glass-slot="editor">
       {tree ? (
         <OutlineTree node={tree} onToggle={(id) => { if (id.startsWith('block:')) toggleCollapsed(id) }} onOpenBlock={openSource} />
       ) : (
-        <div className="flex flex-col items-start gap-3">
+        <div data-glass-slot="empty" className="flex max-w-md flex-col items-start gap-3 rounded-[var(--radius-card)] px-6 py-8">
           <p className="text-sm text-text-secondary">{t('notes.blocks.unavailable')}</p>
           {active ? (
             <Button type="button" size="sm" onClick={() => onOpenNote(active.id)}>
@@ -691,7 +692,7 @@ function NotesGraphView({
   }, [activeNoteId, kind, limit, nearby, notes])
   return (
     <div className="flex h-full min-h-0" data-testid="notes-graph-view">
-      <aside className="w-[220px] shrink-0 overflow-y-auto border-r border-border/50 p-3">
+      <aside data-glass-slot="panel" className="w-[220px] shrink-0 overflow-y-auto border-r border-border/50 p-3">
         <div className="mb-2 text-xs font-medium uppercase caps-label text-muted-foreground">
           {t('entityView.graph')}
         </div>
@@ -740,6 +741,8 @@ function NotesGraphView({
             <button
               key={node.id}
               type="button"
+              data-glass-slot="row"
+              data-state={node.id === activeNoteId ? 'selected' : undefined}
               className={cn(
                 'mb-0.5 w-full truncate rounded-[var(--radius-control)] px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
                 node.id === activeNoteId && 'bg-foreground/[0.08]',

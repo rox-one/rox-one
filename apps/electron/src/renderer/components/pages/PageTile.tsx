@@ -90,6 +90,7 @@ export function PageTile({ page, project, onOpen, onDelete }: PageTileProps) {
           type="button"
           onClick={onOpen}
           aria-label={config.name}
+          data-glass-slot="card"
           className={cn(
             'group relative flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-foreground/[0.08] bg-card text-left shadow-minimal',
             'cursor-pointer transition-colors duration-150 hover:border-foreground/20 hover:bg-foreground/[0.02]',

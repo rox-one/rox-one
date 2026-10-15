@@ -84,7 +84,7 @@ export function MissionBoard() {
         </header>
 
         {missions.length === 0 ? (
-          <div className="flex flex-col items-start gap-1 rounded-[var(--radius-card)] border border-border bg-card px-4 py-6" data-missions-empty="">
+          <div className="flex flex-col items-start gap-1 rounded-[var(--radius-card)] border border-border bg-card px-4 py-6" data-missions-empty="" data-glass-slot="empty">
             <p className="text-body font-bold text-foreground">{t('missions.board.empty')}</p>
             <p className="text-small text-muted-foreground">{t('missions.board.emptyHint')}</p>
           </div>
@@ -95,6 +95,7 @@ export function MissionBoard() {
                 key={mission.id}
                 data-mission-row={mission.id}
                 data-active={mission.id === selectedMissionId || undefined}
+                data-glass-slot="card"
                 className={cn(
                   'flex min-h-[64px] flex-col gap-2 rounded-[var(--radius-card)] border border-border bg-card px-3 py-2.5',
                   mission.id === selectedMissionId && 'ring-1 ring-accent',
@@ -135,7 +136,7 @@ export function MissionBoard() {
                       data-lane-chip={lane.sessionId}
                       title={lane.name}
                       onClick={() => void navigate(routes.view.allSessions(lane.sessionId) as Route)}
-                      className="flex min-h-[var(--control-hit-min)] max-w-[184px] items-center gap-1.5 rounded-[var(--radius-control)] border border-border px-2 text-small text-foreground transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)] hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                      className="flex min-h-[var(--control-hit-min)] max-w-[184px] items-center gap-1.5 rounded-[var(--radius-control)] border border-border px-2 text-small text-foreground transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)] hover:bg-[var(--state-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                     >
                       <span aria-hidden className={cn('h-2 w-2 shrink-0 rounded-full', LANE_DOT_CLASS[lane.state])} />
                       <span className="min-w-0 truncate">{lane.name}</span>

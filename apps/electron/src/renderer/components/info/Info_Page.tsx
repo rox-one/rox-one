@@ -95,7 +95,7 @@ function Info_PageRoot({
       <div data-layout="info-page" className={cn('h-full min-h-0 flex flex-col bg-surface-document', className)}>
         {header}
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
-          <p className="text-sm">{empty}</p>
+          <p data-glass-slot="empty" className="rounded-[var(--radius-card)] px-6 py-4 text-sm">{empty}</p>
         </div>
       </div>
     )

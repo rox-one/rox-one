@@ -208,6 +208,7 @@ export function KanbanColumn({
           onClick={onToggleCollapsed}
           title={`${label} (${tasks.length}) · ${t('kanban.column.expand')}`}
           aria-label={`${label} (${tasks.length}) · ${t('kanban.column.expand')}`}
+          data-glass-slot="table"
           className="flex flex-1 flex-col items-center gap-2 rounded-lg px-1 py-2 transition-colors hover:bg-foreground/[0.04]"
           style={{ backgroundColor: color?.tint }}
         >
@@ -272,6 +273,7 @@ export function KanbanColumn({
         tabIndex={-1}
         role="group"
         aria-label={t('kanban.a11y.columnRegion', { column: label })}
+        data-glass-slot="table"
         className={cn(
           'flex flex-1 flex-col gap-2 overflow-y-auto rounded-lg p-2 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70',
           isOver && color && 'shadow-panel-focused',
@@ -318,6 +320,7 @@ export function KanbanColumn({
         })()}
         {tasks.length === 0 ? (
           <p
+            data-glass-slot="empty"
             className="px-1 py-6 text-center text-xs text-muted-foreground"
             data-testid="kanban-column-empty"
           >

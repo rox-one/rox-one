@@ -40,7 +40,7 @@ export function FileViewer({ path }: FileViewerProps) {
 
   if (!path) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8 text-center">
+      <div data-glass-slot="empty" className="flex flex-col items-center justify-center h-full text-muted-foreground p-8 text-center">
         <div className="size-16 bg-muted rounded-[var(--radius-control)] flex items-center justify-center mb-4">
           <FileText className="size-8 text-muted-foreground/50" />
         </div>
@@ -53,7 +53,7 @@ export function FileViewer({ path }: FileViewerProps) {
   return (
     <div className="h-full flex flex-col">
       {/* File path header */}
-      <div className="px-4 py-3 bg-muted/50 border-b flex items-center gap-2 shrink-0">
+      <div data-glass-slot="toolbar" className="px-4 py-3 bg-muted/50 border-b flex items-center gap-2 shrink-0">
         <FileText className="size-4 text-muted-foreground shrink-0" />
         <p className="text-xs font-mono text-muted-foreground truncate select-all" title={path}>
           {path}

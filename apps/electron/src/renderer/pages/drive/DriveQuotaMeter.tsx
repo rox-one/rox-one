@@ -34,6 +34,7 @@ export function DriveQuotaMeter({ quota }: { quota: DriveQuota | null }) {
       data-level={level}
       aria-label={t('drive.quota.label')}
       className="rounded-lg border border-border/60 bg-card/60 px-4 py-3"
+      data-glass-slot="card"
     >
       <div className="flex items-baseline justify-between gap-3">
         <div className="flex items-baseline gap-2">

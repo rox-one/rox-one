@@ -323,7 +323,7 @@ export function AddWorkspaceStep_ConnectRemote({
         </div>
 
         {(tlsGate === 'review' || tlsGate === 'rollover') && pendingInspect && (
-          <div className="space-y-3 rounded-lg border border-border px-3 py-3 text-sm">
+          <div data-glass-slot="card" className="space-y-3 rounded-lg border border-border px-3 py-3 text-sm">
             <div className="space-y-1">
               <div className="font-medium text-foreground">
                 {tlsGate === 'rollover' ? t('workspace.tlsRolloverTitle') : t('workspace.tlsReviewTitle')}

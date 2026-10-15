@@ -190,7 +190,7 @@ export default function DevSpaceHomePage() {
             <Button type="button" variant="outline" size="sm" onClick={() => void load()}>{t('devSpace.home.retry')}</Button>
           </div>
         ) : repositories.length === 0 ? (
-          <Empty>
+          <Empty data-glass-slot="empty">
             <EmptyHeader>
               <EmptyMedia variant="icon"><Plus aria-hidden /></EmptyMedia>
               <EmptyTitle>{t('devSpace.home.emptyTitle')}</EmptyTitle>

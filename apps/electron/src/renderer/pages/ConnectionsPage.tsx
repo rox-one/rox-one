@@ -524,7 +524,7 @@ export default function ConnectionsPage() {
 
   const empty = (
     <div className="flex flex-1 items-center justify-center">
-      <p className="text-sm">{t('connections.empty')}</p>
+      <p data-glass-slot="empty" className="rounded-[var(--radius-card)] px-6 py-4 text-sm">{t('connections.empty')}</p>
     </div>
   )
 
@@ -579,7 +579,7 @@ export default function ConnectionsPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="connections-page">
-      <div className="mx-auto flex w-full max-w-4xl items-center gap-3 px-6 pt-5 pb-3">
+      <div data-glass-slot="toolbar" className="mx-auto flex w-full max-w-4xl items-center gap-3 px-6 pt-5 pb-3">
         <div className="min-w-0 flex-1">
           <PanelHeading className="text-lg font-semibold text-foreground" titleKey="connections.title">{t('connections.title')}</PanelHeading>
           <p className="truncate text-sm text-muted-foreground">{t('connections.subtitle')}</p>
@@ -771,7 +771,7 @@ export default function ConnectionsPage() {
             </ImportPanel>
             <ul className="space-y-2">
               {visiblePreviews.map((row) => (
-                <li key={`${row.source}:${row.candidateId}`} className="flex items-center justify-between rounded-[var(--radius-control)] bg-surface-hover px-3 py-2">
+                <li key={`${row.source}:${row.candidateId}`} data-glass-slot="card" className="flex items-center justify-between rounded-[var(--radius-control)] bg-surface-hover px-3 py-2">
                   <div>
                     <div className="font-medium">{row.label}</div>
                     <div className="font-mono text-xs text-muted-foreground">{row.maskedSummary}</div>
@@ -865,7 +865,7 @@ export default function ConnectionsPage() {
             </OverviewGroup>
             {selected && workspace?.id && selected.workspaceId === workspace.id && <ConnectionLifecyclePanel connection={selected} workspaceId={workspace.id} />}
             {showCreate ? (
-              <div data-testid="connections-create-form" className="grid gap-3 rounded-[var(--radius-card)] bg-surface-hover p-4 sm:grid-cols-3">
+              <div data-testid="connections-create-form" data-glass-slot="card" className="grid gap-3 rounded-[var(--radius-card)] bg-surface-hover p-4 sm:grid-cols-3">
                 <label className="block">
                   <span className="text-xs text-muted-foreground">{t('connections.createIntegration')}</span>
                   <input
@@ -906,7 +906,7 @@ export default function ConnectionsPage() {
         ) : tab === 'credentials' && credentialRows.length > 0 ? (
           <ul className="space-y-2 text-sm text-foreground">
             {credentialRows.map((row) => (
-              <li key={row.id} className="flex items-center gap-2 rounded-[var(--radius-control)] bg-surface-hover px-3 py-2">
+              <li key={row.id} data-glass-slot="card" className="flex items-center gap-2 rounded-[var(--radius-control)] bg-surface-hover px-3 py-2">
                 <div className="min-w-0 flex-1">
                   <div className="font-medium">{row.integrationId}</div>
                   <div className="font-mono text-xs">{row.credentialRefId}</div>
@@ -936,7 +936,7 @@ export default function ConnectionsPage() {
           </ul>
         ) : tab === 'policies' ? (
           <div className="space-y-4 text-sm text-foreground">
-            <div data-testid="connections-grant-form" className="space-y-2 rounded-[var(--radius-card)] bg-surface-hover p-4">
+            <div data-testid="connections-grant-form" data-glass-slot="card" className="space-y-2 rounded-[var(--radius-card)] bg-surface-hover p-4">
               <label className="block">
                 <span className="text-muted-foreground">{t('connections.grantConsumer')}</span>
                 <input
@@ -993,7 +993,7 @@ export default function ConnectionsPage() {
             {policyRows.length > 0 ? (
               <ul className="space-y-2">
                 {policyRows.map((row) => (
-                  <li key={row.id} className="rounded-[var(--radius-card)] bg-surface-hover px-3 py-2">
+                  <li key={row.id} data-glass-slot="card" className="rounded-[var(--radius-card)] bg-surface-hover px-3 py-2">
                     <div className="font-medium">{row.integrationId}</div>
                     <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
                   </li>
@@ -1003,7 +1003,7 @@ export default function ConnectionsPage() {
             {bindingRows.length > 0 ? (
               <ul className="space-y-2">
                 {bindingRows.map((row) => (
-                  <li key={row.id} className="flex items-center gap-2 rounded-[var(--radius-control)] bg-surface-hover px-3 py-2">
+                  <li key={row.id} data-glass-slot="card" className="flex items-center gap-2 rounded-[var(--radius-control)] bg-surface-hover px-3 py-2">
                     <div className="min-w-0 flex-1">
                       <div className="font-medium">{row.consumerId}</div>
                       <div className="text-muted-foreground">{row.purpose}</div>
@@ -1045,7 +1045,7 @@ export default function ConnectionsPage() {
               </li>
             ) : null}
             {(auditConnectionId ? auditRows.filter((row) => row.connectionId === auditConnectionId) : auditRows).map((row) => (
-              <li key={`${row.connectionId}:${row.occurredAt}:${row.payloadDigest}`} className="rounded-[var(--radius-card)] bg-surface-hover px-3 py-2">
+              <li key={`${row.connectionId}:${row.occurredAt}:${row.payloadDigest}`} data-glass-slot="card" className="rounded-[var(--radius-card)] bg-surface-hover px-3 py-2">
                 <div className="font-medium">{row.eventType}</div>
                 <div className="text-muted-foreground">{row.outcome}</div>
                 <div className="font-mono text-xs">{row.connectionId}</div>

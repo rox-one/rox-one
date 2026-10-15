@@ -273,9 +273,9 @@ export function NotesDialogs({
               </Button>
             </div>
           </div>
-          <div className="max-h-[420px] overflow-y-auto rounded-md border border-border/60">
+          <div data-glass-slot="table" className="max-h-[420px] overflow-y-auto rounded-md border border-border/60">
             {assetsUnavailable ? (
-              <div className="space-y-2 px-3 py-10 text-center text-xs text-muted-foreground" data-testid="notes-dialog-assets-unavailable" data-error-code={assetsUnavailable}>
+              <div data-glass-slot="empty" className="space-y-2 px-3 py-10 text-center text-xs text-muted-foreground" data-testid="notes-dialog-assets-unavailable" data-error-code={assetsUnavailable}>
                 <p role="status">{t('common.unavailable')}</p>
                 <Button variant="outline" size="sm" onClick={onRetryAssets}>{t('common.retry')}</Button>
               </div>
@@ -300,7 +300,7 @@ export function NotesDialogs({
                 </div>
               )
             }) : (
-              <div className="px-3 py-10 text-center text-xs text-muted-foreground">{t('notes.dialog.noAssetsYet')}</div>
+              <div data-glass-slot="empty" className="px-3 py-10 text-center text-xs text-muted-foreground">{t('notes.dialog.noAssetsYet')}</div>
             )}
           </div>
           <DialogFooter>

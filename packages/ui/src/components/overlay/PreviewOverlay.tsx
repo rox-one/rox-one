@@ -193,6 +193,7 @@ export function PreviewOverlay({
       }}
     >
       <div
+        data-glass-slot="dialog"
         className={`flex flex-col ${bgClass} shadow-3xl overflow-hidden smooth-corners`}
         style={{
           width: '90vw',

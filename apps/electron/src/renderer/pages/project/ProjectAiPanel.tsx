@@ -216,7 +216,7 @@ export function ProjectAiPanel({
   )
 
   return (
-    <div className="min-w-0 rounded-lg bg-foreground/[0.03] p-2" data-testid="project-ai-panel">
+    <div data-glass-slot="card" className="min-w-0 rounded-lg bg-foreground/[0.03] p-2" data-testid="project-ai-panel">
       <div className="flex min-w-0 items-center gap-2 px-1 pb-1">
         <Sparkles className="h-3.5 w-3.5 shrink-0 text-accent" />
         <span className="text-base font-semibold text-foreground/90">{t('projectRoadmap.ai.title')}</span>
@@ -243,6 +243,7 @@ export function ProjectAiPanel({
         data-testid="project-ai-brief"
         aria-label={t('projectRoadmap.ai.briefLabel')}
         placeholder={t('projectRoadmap.ai.briefPlaceholder')}
+        data-glass-slot="editor"
         className="block w-full resize-y rounded-md bg-background/70 px-2 py-1.5 text-base text-foreground outline-none placeholder:text-muted-foreground/70 focus:bg-background disabled:opacity-60"
       />
 
@@ -265,7 +266,7 @@ export function ProjectAiPanel({
       {error ? <p className="mt-1 px-1 text-sm text-destructive" role="alert">{error}</p> : null}
 
       {briefImprove !== null ? (
-        <div className="mt-2 min-w-0 rounded-md bg-background/60 p-2">
+        <div data-glass-slot="editor" className="mt-2 min-w-0 rounded-md bg-background/60 p-2">
           <div className="mb-1 flex items-center gap-2">
             <span className="text-sm font-medium">{t('projectRoadmap.ai.improvedBrief')}</span>
             <div className="ml-auto">
@@ -283,7 +284,7 @@ export function ProjectAiPanel({
       ) : null}
 
       {improve ? (
-        <div className="mt-2 min-w-0 rounded-md bg-background/60 p-2" data-testid="project-ai-field-improve">
+        <div data-glass-slot="editor" className="mt-2 min-w-0 rounded-md bg-background/60 p-2" data-testid="project-ai-field-improve">
           <div className="mb-1 flex items-center gap-2">
             <span className="text-sm font-medium">{t(`projectRoadmap.ai.improvedField.${improve.target}`)}</span>
             <div className="ml-auto">
@@ -466,7 +467,7 @@ function ProposalList({
       {sectionTitle(title)}
       <div className="flex flex-col">
         {visible.map((item) => (
-          <div key={proposalItemId(item.key)} className={cn('flex min-w-0 items-start gap-2 rounded-md px-1 py-1 text-base hover:bg-foreground/[0.03]')}>
+          <div key={proposalItemId(item.key)} data-glass-slot="row" className={cn('flex min-w-0 items-start gap-2 rounded-md px-1 py-1 text-base hover:bg-foreground/[0.03]')}>
             <div className="min-w-0 flex-1">{item.body}</div>
             <ItemActions onAccept={() => decide([item.key], true)} onReject={() => decide([item.key], false)} />
           </div>

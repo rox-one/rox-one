@@ -21,7 +21,7 @@ export const LearningNodeCard = React.memo(function LearningNodeCard({ data, sel
   const node = data.learning
   const Icon = icons[node.kind]
   const sourceId = node.provenance.candidateId ?? node.provenance.evidenceId ?? node.provenance.outcomeId
-  return <article className={`runtime-node runtime-node-${node.kind} runtime-learning-node`} data-learning-kind={node.kind} data-learning-role={node.role} data-selected={selected} data-testid="runtime-learning-node" data-runtime-id={node.id} title={LEARNING_NODE_REGISTRY[node.kind].description}>
+  return <article className={`runtime-node runtime-node-${node.kind} runtime-learning-node`} data-glass-slot="card" data-learning-kind={node.kind} data-learning-role={node.role} data-selected={selected} data-testid="runtime-learning-node" data-runtime-id={node.id} title={LEARNING_NODE_REGISTRY[node.kind].description}>
     <Handle type="target" position={Position.Left} isConnectable={false} />
     <header><span className="runtime-node-icon"><Icon size={15} /></span><strong>{node.label}</strong><span className="runtime-learning-kind">{kindLabel(node.kind, t)}</span></header>
     <div className="runtime-node-detail"><p>{node.subtitle || LEARNING_NODE_REGISTRY[node.kind].description}</p></div>

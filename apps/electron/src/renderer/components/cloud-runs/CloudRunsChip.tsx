@@ -307,7 +307,7 @@ function CloudRunsChipInner({
               </div>
             )}
 
-            <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
+            <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3" data-glass-slot="card">
               <div className="text-xs font-medium text-muted-foreground">{t('cloudRuns.sectionNewRun')}</div>
               <div className="flex flex-wrap gap-2">
                 <PremiumMenuSelect
@@ -385,7 +385,7 @@ function CloudRunsChipInner({
 
             <div className="space-y-1">
               {runs.length === 0 && (
-                <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+                <div className="flex flex-col items-center justify-center gap-3 py-10 text-center" data-glass-slot="empty">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full border border-dashed border-border/70 bg-muted/30">
                     <Cloud className="h-5 w-5 text-muted-foreground/70" />
                   </div>
@@ -415,7 +415,7 @@ function CloudRunsChipInner({
                 const progress = run.status?.progress
                 const hasActions = state === 'running' || state === 'queued' || state === 'start' || state === 'ready' || state === 'failed' || state === 'done'
                 return (
-                  <div key={run.id} className="flex items-start gap-2 rounded-md border border-border/50 px-2 py-2 text-sm">
+                  <div key={run.id} className="flex items-start gap-2 rounded-md border border-border/50 px-2 py-2 text-sm" data-glass-slot="card">
                     <div className="min-w-0 flex-1">
                       <p className="whitespace-normal break-words" title={run.topic}>{run.name}</p>
                       {run.status?.failureReason && (

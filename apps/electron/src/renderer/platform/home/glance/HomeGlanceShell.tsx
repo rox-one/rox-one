@@ -27,7 +27,7 @@ export function HomeGlanceShell({ overview }: { overview: React.ReactNode }) {
   useEffect(() => setEditing(false), [activeId, workspaceId])
   return (
     <div className="flex h-full min-h-0 flex-col" data-home-shell="">
-      <div className="mx-auto flex w-full max-w-[1920px] shrink-0 items-center gap-2 px-6 pt-3">
+      <div className="mx-auto flex w-full max-w-[1920px] shrink-0 items-center gap-2 px-6 pt-3" data-glass-slot="toolbar">
         <HomePageTabs layout={layout} activeId={page?.id ?? null} onSelect={setActiveId} onChange={setLayout} editing={editing} />
         {page ? (
           <button

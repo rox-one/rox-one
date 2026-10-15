@@ -1,5 +1,6 @@
 /**
- * `buildNotebookExport` — unit tests (SPEC wave 9 §4, §Testing; wave 11 §16).
+ * `buildNotebookExport` / `buildPythonScript` — unit tests (SPEC wave 9 §4,
+ * §Testing; wave 11 §16; wave 14 §8).
  *
  * The builder is pure and deterministic: these tests pin the nbformat 4.5
  * shape, the exact line-splitting rule ("every line keeps its `\n` except the
@@ -9,7 +10,7 @@
  * reader would.
  */
 import { describe, expect, it } from 'bun:test'
-import { buildNotebookExport } from '../cookbooks'
+import { buildNotebookExport, buildPythonScript } from '../cookbooks'
 
 /** One output record as it lands in the file: a stream or a display record. */
 interface ParsedOutput {
@@ -249,5 +250,79 @@ describe('buildNotebookExport', () => {
     expect(notebook.metadata.title).toBe('Mixed')
     expect(notebook.cells.map((cell) => cell.cell_type)).toEqual(['markdown', 'code', 'markdown'])
     expect(notebook.cells[1].outputs?.map((output) => output.name)).toEqual(['stdout', 'stderr'])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Wave 14 §8 — `.py` script builder
+// ---------------------------------------------------------------------------
+
+describe('buildPythonScript', () => {
+  it('writes a # <title> header, one # %% block and a single trailing newline', () => {
+    const script = buildPythonScript({ title: 'Probe script', cells: [{ cellType: 'code', source: 'print(1)' }] })
+    expect(script).toBe('# Probe script\n# %%\nprint(1)\n')
+    expect(script.endsWith('\n')).toBe(true)
+    expect(script.endsWith('\n\n')).toBe(false)
+  })
+
+  it('opens every cell with a # %% marker, in document order', () => {
+    const script = buildPythonScript({
+      title: 'T',
+      cells: [
+        { cellType: 'markdown', source: 'Intro' },
+        { cellType: 'code', source: 'x = 1' },
+        { cellType: 'markdown', source: 'Outro' },
+      ],
+    })
+    expect(script.split('\n').filter((line) => line === '# %%')).toHaveLength(3)
+    expect(script).toBe('# T\n# %%\n# Intro\n# %%\nx = 1\n# %%\n# Outro\n')
+  })
+
+  it('writes a code cell verbatim', () => {
+    const script = buildPythonScript({ title: 'T', cells: [{ cellType: 'code', source: 'a = 1\nprint(a)' }] })
+    expect(script).toBe('# T\n# %%\na = 1\nprint(a)\n')
+  })
+
+  it('writes a markdown cell as line-by-line comments, a blank line as a bare #', () => {
+    const script = buildPythonScript({
+      title: 'T',
+      cells: [{ cellType: 'markdown', source: '# Heading\n\nBody' }],
+    })
+    expect(script).toBe('# T\n# %%\n# # Heading\n#\n# Body\n')
+  })
+
+  it('folds a trailing newline the code cell carried into the script single one', () => {
+    const script = buildPythonScript({ title: 'T', cells: [{ cellType: 'code', source: 'a\nb\n' }] })
+    expect(script).toBe('# T\n# %%\na\nb\n')
+    expect(script.endsWith('\n\n')).toBe(false)
+  })
+
+  it('keeps an empty cell as its # %% block with no content', () => {
+    const script = buildPythonScript({
+      title: 'T',
+      cells: [
+        { cellType: 'code', source: '' },
+        { cellType: 'markdown', source: '' },
+      ],
+    })
+    expect(script).toBe('# T\n# %%\n# %%\n')
+  })
+
+  it('renders a cell-less script as just the title comment', () => {
+    expect(buildPythonScript({ title: 'T', cells: [] })).toBe('# T\n')
+    expect(buildPythonScript({ title: '', cells: [] })).toBe('#\n')
+  })
+
+  it('is deterministic — identical input renders byte-equal output', () => {
+    const input = {
+      title: 'Deterministic',
+      cells: [
+        { cellType: 'code' as const, source: 'print(1)' },
+        { cellType: 'markdown' as const, source: 'notes' },
+      ],
+    }
+    expect(buildPythonScript(input)).toBe(buildPythonScript(input))
+    // No Date/random leaks into the serialised script.
+    expect(buildPythonScript(input)).not.toMatch(/\d{4}-\d{2}-\d{2}T/)
   })
 })

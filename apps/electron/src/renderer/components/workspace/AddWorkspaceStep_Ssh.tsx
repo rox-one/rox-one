@@ -285,7 +285,7 @@ export function AddWorkspaceStep_Ssh({ onBack, onCreate }: AddWorkspaceStep_SshP
 
       <div className="mt-6 w-full space-y-2">
         {hosts.length === 0 && (
-          <div className="rounded-[var(--radius-card)] bg-foreground/5 p-4 text-center text-xs opacity-70">
+          <div data-glass-slot="empty" className="rounded-[var(--radius-card)] bg-foreground/5 p-4 text-center text-xs opacity-70">
             {t("ssh.empty")}
           </div>
         )}
@@ -293,6 +293,7 @@ export function AddWorkspaceStep_Ssh({ onBack, onCreate }: AddWorkspaceStep_SshP
           return (
             <div
               key={host.id}
+              data-glass-slot="card"
               className="flex items-center gap-3 rounded-[var(--radius-control)] bg-foreground/5 p-3"
             >
               <Server className="h-4 w-4 shrink-0 opacity-60" />

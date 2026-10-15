@@ -5,7 +5,7 @@
 Норматив: [PRD](PRD.md) · [SPEC](SPEC.md)(+Amd1) · [SPEC-wave7](SPEC-wave7-colab-ux.md) · [SPEC-wave9](SPEC-wave9-colab-controls.md) · [SPEC-wave10](SPEC-wave10-cell-structure.md) · [SPEC-wave11](SPEC-wave11-rich-output.md) · [ADR 001](decisions/001-runtime-container-and-secrets.md).
 Вендор-снапшот лаборатории: `apps/electron/resources/cookbooks/` — **read-only**; правки идут только через канон-репо `/Users/t/Projects/2026-10-13-rox-cookbooks-notebooks` + sync-команду из `PROVENANCE.md`.
 
-**Статус:** ⏳ W13 (этот файл — фриз скоупа 2026-10-15; батчи A/B/C/E — см. §Слайсы).
+**Статус:** ✅ влито в main — PR #2127 (merge `3fcb612d4`). Этот файл — фриз скоупа 2026-10-15; батчи A/B/C/E — см. §Слайсы.
 
 ## Цель
 

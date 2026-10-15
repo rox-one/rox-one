@@ -28,6 +28,7 @@ function TooltipContent({
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content
         data-slot="tooltip-content"
+        data-glass-slot="popover"
         sideOffset={sideOffset}
         className={cn(
           "popover-styled z-tooltip max-w-[min(320px,calc(100vw-24px))] overflow-hidden rounded-[var(--radius-card)] px-2.5 py-1.5 text-xs leading-relaxed",

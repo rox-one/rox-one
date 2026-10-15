@@ -25,7 +25,7 @@ export function SessionGitPanel({ cwd }: { cwd: string | undefined }) {
 
   if (!cwd || !status.isRepo) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
+      <div data-glass-slot="empty" className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
         <GitBranch className="h-6 w-6 text-muted-foreground/40" />
         <span className="text-base text-muted-foreground/70">{t('inspector.git.notRepo')}</span>
       </div>

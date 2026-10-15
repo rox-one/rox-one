@@ -110,7 +110,7 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
 
   return (
     <div className="flex min-h-0 flex-1" data-testid="messenger-channels">
-      <aside className="flex w-64 shrink-0 flex-col border-e border-border/60" aria-label={t('messenger.channels.listLabel')}>
+      <aside data-glass-slot="panel" className="flex w-64 shrink-0 flex-col border-e border-border/60" aria-label={t('messenger.channels.listLabel')}>
         <div className="px-2 pt-2">
           <label className="flex h-8 items-center gap-2 rounded-md bg-surface-input px-2 text-small text-text-muted">
             <Search className="icon-caption shrink-0" aria-hidden />
@@ -163,7 +163,7 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
           <p className="p-4 text-small text-text-secondary">{t('messenger.channels.empty')}</p>
         ) : (
           <>
-            <header className="flex shrink-0 items-center gap-2 border-b border-border/60 px-4 py-2">
+            <header data-glass-slot="toolbar" className="flex shrink-0 items-center gap-2 border-b border-border/60 px-4 py-2">
               <ChannelIcon channel={selected} className="text-text-muted" />
               <div className="flex min-w-0 flex-1 items-baseline gap-2">
                 <h2 className="truncate text-body font-semibold">{channelLabel(selected, t)}</h2>
@@ -332,6 +332,8 @@ function ChannelRow({ channel, active, label, onSelect, preview, locale }: { cha
         onClick={onSelect}
         aria-current={active ? 'true' : undefined}
         data-channel-id={channel.id}
+        data-glass-slot="row"
+        data-state={active ? 'selected' : undefined}
         className={cn(
           'flex w-full items-start gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-start hover:bg-surface-hover',
           active && 'bg-surface-hover',
@@ -444,7 +446,7 @@ function MessageList({ loading, error, messages, nameOf, locale }: {
       {loading ? <p className="text-small text-text-secondary" role="status">{t('teamCollab.loading')}</p> : null}
       {error ? <p className="text-small text-destructive" role="alert">{error}</p> : null}
       {!loading && !error && messages.length === 0 ? (
-        <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-text-muted">
+        <div data-glass-slot="empty" className="flex h-full flex-col items-center justify-center gap-2 text-center text-text-muted">
           <MessagesSquare className="icon-empty" aria-hidden />
           <p className="text-small">{t('messenger.channels.noMessages')}</p>
         </div>

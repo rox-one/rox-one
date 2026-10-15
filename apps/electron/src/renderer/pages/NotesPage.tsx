@@ -903,7 +903,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     } finally { setMarkerBusy(false) }
   }
   const blockToolbar = (
-    <div className="shrink-0 border-b border-border/50 px-3 py-2" data-testid="notes-block-toolbar">
+    <div className="shrink-0 border-b border-border/50 px-3 py-2" data-testid="notes-block-toolbar" data-glass-slot="toolbar">
       <Button variant="outline" size="sm" disabled={markerBusy || dirty || !visibleBlockTree
         || visibleBlockTree.identity.status !== 'ok' || contentResolution?.status !== 'ok' || !contentResolution.capabilities.write}
         onClick={() => void prepareMarkers()}>{t('notes.blocks.prepare')}</Button>
@@ -2628,6 +2628,9 @@ h1,h2,h3{margin-top:1.5em}
 
   const wikiMenu = showWikiMenu ? (
     <div
+      /* Arc Glass: floating [[ autocomplete menu — the skin's readable popover
+         fill + spring pop; keeps its own testid/anchor placement. */
+      data-glass-slot="popover"
       className="absolute z-20 w-80 rounded-md border border-border/70 bg-popover p-1 shadow-strong"
       data-testid="notes-wiki-menu"
       style={wikiAnchor
@@ -2770,6 +2773,8 @@ h1,h2,h3{margin-top:1.5em}
       {!shellSidebarTarget && (
       <ShellSidebarPortal
         bareLabelKey="navigation.barePanel.vault"
+        /* Arc Glass: the vault navigator is a content panel (tint + seam hairline). */
+        data-glass-slot="panel"
         className="notes-side-surface shrink-0 flex flex-col min-h-0"
         style={{ width: vaultShown ? railLayout.vault : 0 }}
         hidden={!vaultShown}
@@ -2850,7 +2855,7 @@ h1,h2,h3{margin-top:1.5em}
       />}
 
       <main className="notes-content-surface flex-1 min-w-0 flex flex-col">
-        <div className="h-[42px] shrink-0 px-3 flex items-center gap-2">
+        <div className="h-[42px] shrink-0 px-3 flex items-center gap-2" data-glass-slot="toolbar">
           <div className="min-w-0 flex-1 flex items-center gap-2 overflow-hidden">
             {activeNote ? (
               <NotesBreadcrumbs noteId={activeNote.id} title={activeNote.title} onOpenFolder={(folder) => setQuery(folder ?? '')} />
@@ -2904,13 +2909,15 @@ h1,h2,h3{margin-top:1.5em}
         </div>
 
         {noteScope.kind === 'unavailable' ? (
-          <div role="status" className="mx-3 mb-2 rounded-md bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground">{t('navigation.notes.scopeUnavailable')}</div>
+          <div role="status" data-glass-slot="card" className="mx-3 mb-2 rounded-md bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground">
+            {t('navigation.notes.scopeUnavailable')}
+          </div>
         ) : activeNote && !noteInProjectScope(activeNote.id, noteScope) ? (
-          <div role="status" data-testid="notes-outside-project" className="mx-3 mb-2 rounded-md bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground">{t('navigation.notes.currentOutsideProject', { project: noteScope.kind === 'project' ? noteScope.name : '' })}</div>
+          <div role="status" data-glass-slot="card" data-testid="notes-outside-project" className="mx-3 mb-2 rounded-md bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground">{t('navigation.notes.currentOutsideProject', { project: noteScope.kind === 'project' ? noteScope.name : '' })}</div>
         ) : null}
 
         {assetsUnavailable && (
-          <div className="mx-3 mb-2 flex min-w-0 items-center justify-between gap-2 rounded-md bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground"
+          <div data-glass-slot="card" className="mx-3 mb-2 flex min-w-0 items-center justify-between gap-2 rounded-md bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground"
             data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code}>
             <p role="status">{t('notes.inspector.assets')}: {t('common.unavailable')}</p>
             <Button variant="ghost" size="sm" onClick={() => { void refreshAssets() }}>{t('common.retry')}</Button>
@@ -2989,7 +2996,7 @@ h1,h2,h3{margin-top:1.5em}
               ) : selectedReadError ? (
                 <SelectedNoteRecovery failure={selectedReadError} address={selectedNoteId} onRetry={() => void openNote(selectedReadError.noteId)} />
               ) : (
-                <div className="w-[420px] max-w-[calc(100%-48px)] p-4 text-center" data-notes-empty="">
+                <div data-glass-slot="empty" className="w-[420px] max-w-[calc(100%-48px)] rounded-[var(--radius-card)] p-6 text-center" data-notes-empty="">
                   <div className="text-sm font-medium">{t('notes.empty.noNote')}</div>
                   <div className="mt-1 text-xs text-muted-foreground">{t('notes.empty.noNoteHint')}</div>
                   {/* Flat, wrapping action row: never wider than the empty state. */}
@@ -3134,6 +3141,7 @@ h1,h2,h3{margin-top:1.5em}
             /> : null}
             <div
               ref={noteEditorTarget}
+              data-glass-slot="editor"
               className="notes-editor relative h-full min-w-0 flex-1 overflow-y-auto px-10 pb-16 pt-8"
               onMouseUp={(event) => {
                 const quote = selectedNoteQuote(event.currentTarget.querySelector('.ProseMirror'), event.currentTarget.ownerDocument.getSelection())

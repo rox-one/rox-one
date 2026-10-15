@@ -50,10 +50,18 @@ export function KnowledgeMapTree({
       {groups.map((group) => {
         const open = !collapsed.has(group.area)
         return (
-          <div key={group.area} className="rounded-lg border border-border overflow-hidden">
+          <div
+            key={group.area}
+            className="rounded-lg border border-border overflow-hidden"
+            // Arc Glass: an area group is a `table` container (tint + hairline);
+            // its rows are `row` surfaces.
+            data-glass-slot="table"
+          >
             <button
               type="button"
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium hover:bg-muted/40 transition-colors motion-reduce:transition-none"
+              // Arc Glass: disclosure header = an interactive `row`.
+              data-glass-slot="row"
               aria-expanded={open}
               onClick={() => toggle(group.area)}
             >
@@ -74,6 +82,10 @@ export function KnowledgeMapTree({
                       className={`flex min-w-0 flex-1 items-center gap-3 px-3 py-2 pl-8 text-left text-sm hover:bg-muted/40 transition-colors motion-reduce:transition-none ${
                         node.id === selectedId ? 'bg-muted/50' : ''
                       }`}
+                      // Arc Glass: doc row = `row` surface; the selected node
+                      // carries `data-state` for the accent marker + state fill.
+                      data-glass-slot="row"
+                      data-state={node.id === selectedId ? 'selected' : undefined}
                       onClick={() => onSelectNode(node.id)}
                       onDoubleClick={() => onOpenNode(node.id)}
                     >

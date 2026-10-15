@@ -95,14 +95,14 @@ export default function IntegrationsCatalogPage({ workspaceId, workspaceRootPath
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden" data-testid="integrations-catalog"
       style={{ '--muted-foreground': 'color-mix(in oklch, var(--foreground) 78%, var(--background))' } as React.CSSProperties}>
-      <header data-screen-header="" className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border/50 p-4">
+      <header data-screen-header="" data-glass-slot="toolbar" className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border/50 p-4">
         <div className="mr-auto"><PanelHeading data-screen-title="" className="flex items-center gap-2 text-base font-semibold" titleKey="capabilityCatalog.integrationsTitle"><DatabaseZap className="size-4" />{t('capabilityCatalog.integrationsTitle')}</PanelHeading><p data-screen-subtitle="" className="mt-1 text-xs text-muted-foreground">{t('capabilityCatalog.integrationsDescription')}</p></div>
         <label className="relative"><Search className="absolute left-2 top-2 size-3.5 text-muted-foreground" /><input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t('capabilityCatalog.searchIntegrations')} aria-label={t('capabilityCatalog.searchIntegrations')} className="h-8 w-52 max-w-full rounded-md border border-border/60 bg-transparent pl-7 pr-2 text-xs" /></label>
         <Button variant="outline" size="sm" onClick={() => navigate(routes.view.connections())}><Settings2 className="mr-1 size-3.5" />{t('capabilityCatalog.credentialsAndPolicies')}</Button>
         {workspaceRootPath && <EditPopover trigger={<Button variant="outline" size="sm">{t('sourcesList.addSource')}</Button>} {...getEditConfig('add-source', workspaceRootPath)} />}
       </header>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col md:flex-row">
-        <nav aria-label={t('capabilityCatalog.category')} className="flex shrink-0 gap-1 overflow-x-auto border-b border-border/40 p-2 md:w-44 md:flex-col md:overflow-y-auto md:border-b-0 md:border-r md:p-3">
+        <nav aria-label={t('capabilityCatalog.category')} data-glass-slot="panel" className="flex shrink-0 gap-1 overflow-x-auto border-b border-border/40 p-2 md:w-44 md:flex-col md:overflow-y-auto md:border-b-0 md:border-r md:p-3">
           <button type="button" aria-pressed={category === 'all' && !connectedOnly} onClick={() => { setCategory('all'); setConnectedOnly(false) }} className={`shrink-0 rounded-md px-2.5 py-2 text-left text-xs ${category === 'all' && !connectedOnly ? 'bg-foreground/5 text-foreground' : 'text-muted-foreground hover:bg-foreground/[0.03]'}`}>{t('capabilityCatalog.all')}</button>
           <button type="button" aria-pressed={connectedOnly} onClick={() => setConnectedOnly(value => !value)} className={`shrink-0 rounded-md px-2.5 py-2 text-left text-xs ${connectedOnly ? 'bg-foreground/5 text-foreground' : 'text-muted-foreground hover:bg-foreground/[0.03]'}`}>{t('capabilityCatalog.status.connected')}</button>
           <span className="hidden px-2.5 pb-1 pt-4 text-xs uppercase caps-label text-muted-foreground md:block">{t('capabilityCatalog.category')}</span>
@@ -115,7 +115,7 @@ export default function IntegrationsCatalogPage({ workspaceId, workspaceRootPath
             {rows.map(row => {
               const StatusIcon = STATUS_ICON[row.status]
               const actionKey = row.model ? 'capabilityCatalog.configure' : row.status === 'needs_auth' ? row.source?.config.lastTestedAt ? 'capabilityCatalog.reconnect' : 'capabilityCatalog.connect' : row.status === 'connected' ? 'capabilityCatalog.open' : 'capabilityCatalog.configure'
-              return <article key={row.key} className="flex min-w-0 flex-col rounded-lg border border-border/60 p-3.5" data-testid="catalog-integration-card" data-source-id={row.ref.id} data-connection-status={row.status}>
+              return <article key={row.key} data-glass-slot="card" className="flex min-w-0 flex-col rounded-lg border border-border/60 p-3.5" data-testid="catalog-integration-card" data-source-id={row.ref.id} data-connection-status={row.status}>
                 <div className="flex items-start gap-2.5">{row.source ? <SourceAvatar source={row.source} size="sm" /> : <div className="flex size-7 items-center justify-center rounded-md bg-foreground/5"><ZapModelIcon /></div>}<div className="min-w-0"><h3 className="truncate text-sm font-medium" title={row.ref.label}>{row.ref.label}</h3><span className="block truncate text-xs text-muted-foreground">{t(`capabilityCatalog.types.${row.technicalType}`)} · {row.ref.id}</span></div></div>
                 <p className="mb-3 mt-3 line-clamp-2 text-xs text-muted-foreground">{row.description || '—'}</p>
                 <div className="mt-auto space-y-2"><p className="flex items-center gap-1.5 text-xs text-muted-foreground"><StatusIcon className={`size-3.5 ${row.status === 'connected' ? 'text-success' : row.status === 'failed' ? 'text-destructive' : ''}`} />{t(`capabilityCatalog.status.${row.status}`)}</p>{row.source && <p className="text-xs text-muted-foreground">{t('capabilityCatalog.permissionRequirement', { auth: row.source.config.mcp?.authType ?? row.source.config.api?.authType ?? t('capabilityCatalog.noAuth') })}</p>}{row.usedInRun && <p className="text-xs text-muted-foreground">{t('capabilityCatalog.usedInRun')}</p>}<Button className="h-7 w-full" variant="outline" size="sm" disabled={busySlug !== null} onClick={() => void handleConnection(row)} aria-label={t('capabilityCatalog.resourceAction', { action: t(actionKey), name: row.ref.label })}>{t(actionKey)}</Button>{row.source && <button type="button" className="block text-xs text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground" onClick={() => navigate(routes.view.sources({ sourceSlug: row.ref.id }))}>{t('capabilityCatalog.details')}</button>}</div>
@@ -123,7 +123,7 @@ export default function IntegrationsCatalogPage({ workspaceId, workspaceRootPath
             })}
           </div>
           {loading && <p role="status" className="py-5 text-center text-xs text-muted-foreground">{t('common.loading')}</p>}
-          {!loading && rows.length === 0 && <p className="py-8 text-center text-xs text-muted-foreground">{t('capabilityCatalog.noResults')}</p>}
+          {!loading && rows.length === 0 && <p data-glass-slot="empty" className="rounded-lg px-6 py-8 text-center text-xs text-muted-foreground">{t('capabilityCatalog.noResults')}</p>}
         </main>
       </div>
       <ReconnectCredentialDialog workspaceId={workspaceId} source={credentialTarget} onClose={() => { setCredentialTarget(null); setRefresh(value => value + 1) }} />

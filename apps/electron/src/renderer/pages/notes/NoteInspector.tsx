@@ -244,7 +244,7 @@ export function NoteInspector({
 
   if (collapsed) {
     return (
-      <aside className="w-8 shrink-0 bg-muted/[0.12] flex flex-col items-center pt-2">
+      <aside data-glass-slot="panel" className="w-8 shrink-0 bg-muted/[0.12] flex flex-col items-center pt-2">
         <button
           className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
           onClick={onToggleCollapsed}
@@ -258,7 +258,7 @@ export function NoteInspector({
 
   if (!activeNote) {
     return (
-      <aside className="w-[320px] shrink-0 border-l border-border/60 overflow-y-auto bg-muted/[0.12] p-3">
+      <aside data-glass-slot="panel" className="w-[320px] shrink-0 border-l border-border/60 overflow-y-auto bg-muted/[0.12] p-3">
         <div className="mb-2 flex items-center justify-end">
           <button
             className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
@@ -268,7 +268,7 @@ export function NoteInspector({
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
-        <div className="rounded-[var(--radius-card)] border border-dashed border-border/70 bg-background/50 p-4 text-center">
+        <div data-glass-slot="empty" className="rounded-[var(--radius-card)] border border-dashed border-border/70 bg-background/50 p-4 text-center">
           <div className="text-sm font-medium">{t('notes.inspector.title')}</div>
           <div className="mt-1 text-xs text-muted-foreground">{t('notes.inspector.emptyHint')}</div>
         </div>
@@ -286,7 +286,7 @@ export function NoteInspector({
   ).slice(0, 12)
 
   return (
-    <aside className="w-[320px] shrink-0 border-l border-border/60 overflow-y-auto bg-muted/[0.12] p-3">
+    <aside data-glass-slot="panel" className="w-[320px] shrink-0 border-l border-border/60 overflow-y-auto bg-muted/[0.12] p-3">
       <div className="mb-3 flex items-center justify-end">
         <button
           className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
@@ -369,6 +369,7 @@ export function NoteInspector({
             <button
               key={`${task.noteId}:${task.line}:${task.text}`}
               onClick={() => onToggleTask(task)}
+              data-glass-slot="row"
               className="flex w-full items-start gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
             >
               <span className={cn(
@@ -398,7 +399,7 @@ export function NoteInspector({
         <div className="space-y-1.5">
           {propertyProjection.status === 'readOnly' && <p role="status" className="text-xs text-muted-foreground">{t('notes.content.propertySourceReadOnly')}</p>}
           {propertyProjection.status === 'ok' && propertyProjection.properties.filter(binding => binding.keyPath[0] !== 'tags').map(binding => (
-            <div key={`${activeNote.id}:${JSON.stringify(binding.keyPath)}:${typeof binding.value}:${String(binding.value)}`} className="rounded-[var(--radius-card)] bg-background/80 px-2 py-1.5 ring-1 ring-border/50">
+            <div key={`${activeNote.id}:${JSON.stringify(binding.keyPath)}:${typeof binding.value}:${String(binding.value)}`} data-glass-slot="card" className="rounded-[var(--radius-card)] bg-background/80 px-2 py-1.5 ring-1 ring-border/50">
               <ScalarPropertyField binding={binding} writable={propertiesWritable} onSave={onUpdateScalarProperty} />
               {binding.keyPath.length === 1 && !binding.readOnly && propertiesWritable && <button
                 type="button"
@@ -408,7 +409,7 @@ export function NoteInspector({
             </div>
           ))}
           {propertyEntries.filter(([key]) => propertyProjection.status === 'ok' && !propertyProjection.properties.some(binding => binding.keyPath[0] === key)).map(([key, value]) => (
-            <div key={key} className="rounded-[var(--radius-card)] bg-background/80 px-2 py-1.5 ring-1 ring-border/50">
+            <div key={key} data-glass-slot="card" className="rounded-[var(--radius-card)] bg-background/80 px-2 py-1.5 ring-1 ring-border/50">
               <div className="mb-1 flex items-center justify-between gap-2">
                 <div className="truncate text-xs text-muted-foreground">{key}</div>
                 <button
@@ -486,6 +487,7 @@ export function NoteInspector({
             <ContextMenu key={asset.relativePath}>
               <ContextMenuTrigger asChild>
                 <button
+                  data-glass-slot="row"
                   className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
                   onClick={() => onOpenFile(asset.path)}
                 >
@@ -502,6 +504,7 @@ export function NoteInspector({
             <ContextMenu key={ref}>
               <ContextMenuTrigger asChild>
                 <button
+                  data-glass-slot="row"
                   className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
                   onClick={() => onOpenFile(resolveNoteAssetPath(activeNote, ref))}
                 >
@@ -542,6 +545,7 @@ export function NoteInspector({
             <button
               key={target}
               onClick={() => onMissingLink(target)}
+              data-glass-slot="row"
               className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
             >
               <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -562,6 +566,7 @@ export function NoteInspector({
             <button
               key={`${backlink.noteId}-${index}`}
               onClick={() => onOpenNote(backlink.noteId)}
+              data-glass-slot="row"
               className="w-full rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
             >
               <div className="truncate text-xs font-medium" title={backlink.title}>{backlink.title}</div>
@@ -585,6 +590,7 @@ export function NoteInspector({
                 // Prefer open by resolved note if caller has it; otherwise missing-link flow
                 onMissingLink(link.target)
               }}
+              data-glass-slot="row"
               className="w-full rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
             >
               <div className="truncate text-xs font-medium">[[{link.target}]]</div>

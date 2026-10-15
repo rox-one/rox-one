@@ -74,7 +74,11 @@ export function KnowledgeProposals({ className }: { className?: string }) {
 
   return (
     <div className={cn('flex min-h-0 flex-col', className)}>
-      <div className="flex items-center gap-1 overflow-x-auto px-3 pb-2 pt-1">
+      <div
+        className="flex items-center gap-1 overflow-x-auto px-3 pb-2 pt-1"
+        // Arc Glass: status filter chips + refresh = toolbar material.
+        data-glass-slot="toolbar"
+      >
         {PROPOSAL_STATUS_FILTERS.map((s) => (
           <button
             key={s}
@@ -128,6 +132,8 @@ export function KnowledgeProposals({ className }: { className?: string }) {
               'flex w-full flex-col gap-1 rounded-md px-3 py-2 text-left',
               'hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             )}
+            // Arc Glass: proposal row = `row` surface (transparent, state hover).
+            data-glass-slot="row"
           >
             <span className="flex items-center gap-2">
               <FileDiff className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />

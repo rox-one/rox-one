@@ -52,13 +52,13 @@ export function CellOutput({ result, workspaceId, projectSlug }: CellOutputProps
       </div>
 
       {result.output?.text ? (
-        <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-[var(--radius-control)] bg-surface-pressed p-2 font-mono text-caption">{result.output.text}</pre>
+        <pre data-glass-slot="editor" className="max-h-40 overflow-auto whitespace-pre-wrap rounded-[var(--radius-control)] bg-surface-pressed p-2 font-mono text-caption">{result.output.text}</pre>
       ) : null}
 
       {result.output?.stderr ? (
         <div>
           <span className="text-caption uppercase caps-label text-muted-foreground">{t('playbooks.codebook.output.stderr')}</span>
-          <pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded-[var(--radius-control)] bg-surface-pressed p-2 font-mono text-caption text-destructive">{result.output.stderr}</pre>
+          <pre data-glass-slot="editor" className="max-h-32 overflow-auto whitespace-pre-wrap rounded-[var(--radius-control)] bg-surface-pressed p-2 font-mono text-caption text-destructive">{result.output.stderr}</pre>
         </div>
       ) : null}
 
@@ -83,7 +83,7 @@ export function CellOutput({ result, workspaceId, projectSlug }: CellOutputProps
 
       {artifactError ? <p className="text-destructive" role="alert">{artifactError}</p> : null}
       {artifactText ? (
-        <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-[var(--radius-control)] bg-surface-pressed p-2 font-mono text-caption" data-testid={`playbooks-codebook-artifact-text-${result.cellId}`}>{artifactText}</pre>
+        <pre data-glass-slot="editor" className="max-h-40 overflow-auto whitespace-pre-wrap rounded-[var(--radius-control)] bg-surface-pressed p-2 font-mono text-caption" data-testid={`playbooks-codebook-artifact-text-${result.cellId}`}>{artifactText}</pre>
       ) : null}
 
       {result.output?.sessionId ? (

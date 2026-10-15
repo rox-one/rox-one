@@ -358,7 +358,7 @@ export function QuestionnaireStep({
         data-testid="questionnaire-columns"
         className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)] lg:items-start lg:gap-3"
       >
-        <div className={columnClass} data-testid="questionnaire-column-profile">
+        <div className={columnClass} data-glass-slot="card" data-testid="questionnaire-column-profile">
           <ProfileQuestionnaireColumn
             value={value}
             onChange={setQuestionnaire}
@@ -366,7 +366,7 @@ export function QuestionnaireStep({
           />
         </div>
 
-        <div className={columnClass} data-testid="questionnaire-column-interests">
+        <div className={columnClass} data-glass-slot="card" data-testid="questionnaire-column-interests">
           <InterestAccordion
             groupIds={BUBBLE_GROUP_IDS}
             selection={selection}
@@ -376,7 +376,7 @@ export function QuestionnaireStep({
           />
         </div>
 
-        <div className={columnClass} data-testid="questionnaire-column-permissions">
+        <div className={columnClass} data-glass-slot="card" data-testid="questionnaire-column-permissions">
           <PermissionsColumn
             platform={resolvedPlatform}
             state={permissionState}

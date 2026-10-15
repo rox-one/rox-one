@@ -33,7 +33,7 @@ function LinkCard({ url }: { url: string }) {
   const { title, host } = linkLabel(url)
   const Icon = kind === 'file' ? FileText : Link2
   return (
-    <a href={url} target="_blank" rel="noreferrer noopener" data-testid={`messenger-${kind}-card`}
+    <a href={url} target="_blank" rel="noreferrer noopener" data-testid={`messenger-${kind}-card`} data-glass-slot="card"
       className="mt-1.5 flex max-w-md items-center gap-2 rounded-md border border-border/60 bg-surface-raised px-2.5 py-1.5 text-small hover:bg-surface-hover">
       <Icon className="size-3.5 shrink-0 text-accent" aria-hidden />
       <span className="min-w-0 flex-1 truncate text-accent">{title}</span>
@@ -77,7 +77,7 @@ function TranscriptCard({ message }: { message: TeamChannelMessage }) {
   const [open, setOpen] = React.useState(false)
   const lines = message.text.split('\n')
   return (
-    <div className="max-w-2xl rounded-md border border-border/60 bg-surface-raised px-3 py-2" data-testid="messenger-call-transcript">
+    <div data-glass-slot="editor" className="max-w-2xl rounded-md border border-border/60 bg-surface-raised px-3 py-2" data-testid="messenger-call-transcript">
       <button type="button" className="flex w-full items-center gap-1.5 text-caption font-medium text-text-secondary" onClick={() => setOpen(v => !v)} aria-expanded={open}>
         {open ? <ChevronDown className="icon-caption" aria-hidden /> : <ChevronRight className="icon-caption" aria-hidden />}
         <ScrollText className="icon-caption" aria-hidden />

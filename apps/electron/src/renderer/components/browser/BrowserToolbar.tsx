@@ -49,7 +49,7 @@ export function BrowserToolbar({
   onDiscardEdit,
 }: BrowserToolbarProps) {
   return (
-    <div className="flex min-w-0 flex-col">
+    <div className="flex min-w-0 flex-col" data-glass-slot="toolbar">
       <BrowserControls
         url={instanceInfo?.url ?? ''}
         loading={instanceInfo?.isLoading ?? false}

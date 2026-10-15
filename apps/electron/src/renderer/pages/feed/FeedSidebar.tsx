@@ -96,7 +96,9 @@ export function FeedSidebar({ view, sourceFilter, tagFilter, sources, tags, coun
   const countFor = (tab: FeedTab) => view === tab ? visibleCount : counts[tab]
   const inNews = view === 'news' || view === 'sources'
   return (
-    <div data-feed-sidebar data-focus-zone="sidebar" onKeyDown={handleSidebarTreeKeyDown}>
+    // Arc Glass: the navigator rail is a `panel` surface (tint + seam
+    // hairline, static blur) — see packages/ui/src/components/glass/.
+    <div data-feed-sidebar data-glass-slot="panel" data-focus-zone="sidebar" onKeyDown={handleSidebarTreeKeyDown}>
       <NavTitle>{t('feed.title')}</NavTitle>
       <FeedNavButton testId="feed-nav-agents" label={t('feed.tab.agents')} icon={Bot} tone="violet" count={countFor('agents')} dot={attention ? 'warning' : undefined} active={view === 'agents'} onClick={() => onViewSelect('agents')} />
       <FeedNavButton testId="feed-nav-team" label={t('feed.tab.team')} icon={Users} tone="sky" count={countFor('team')} active={view === 'team'} onClick={() => onViewSelect('team')} />

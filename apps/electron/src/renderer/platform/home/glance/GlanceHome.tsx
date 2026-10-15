@@ -436,6 +436,7 @@ function GlanceCard({
       className={cn('rox-grid-tile relative min-w-0', isDragging && 'z-raised opacity-80')}
       data-glance-widget={widget.type}
       data-glance-id={widget.id}
+      data-glass-slot={def?.frameless ? undefined : 'card'}
       aria-label={title}
     >
       {frameless ? null : chrome}
