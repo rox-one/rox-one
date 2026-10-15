@@ -38,7 +38,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: product-tour-native-${{ github.event.pull_request.number || github.ref }}
+  # Main pushes get their own group per commit. With one group per ref, a push run was cancelled the
+  # moment the next push entered the group — 81 of the last 84 push runs on 2026-10-14..15 were
+  # cancelled that way, which is how this workflow stayed red for six days while every PR showed
+  # "cancelled" instead of the failure. PRs keep one stable group per refs/pull/<n>/merge, so a newer
+  # push to the same PR still cancels the older run — the behaviour the old expression was written for.
+  group: product-tour-native-${{ github.ref }}-${{ github.event_name == 'push' && github.sha || 'pr' }}
   cancel-in-progress: true
 
 jobs:
