@@ -7,7 +7,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronRight, Loader2, MoreHorizontal, Circle } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import { cn } from '@/lib/utils'
 import * as storage from '@/lib/local-storage'
 import { announce } from '@/lib/a11y/announcer'
