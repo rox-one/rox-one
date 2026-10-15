@@ -582,6 +582,9 @@ class LabHost:
                         "/cells/delete",
                         "/cells/move",
                         "/cells/duplicate",
+                        # Wave 13: type conversion is a `convert` op, not a fifth
+                        # route dialect — same allowlist, same validation order.
+                        "/cells/convert",
                     ):
                         return self._send(404, {"error": "not found"})
                     op = parsed.path.rsplit("/", 1)[-1]
@@ -605,6 +608,17 @@ class LabHost:
                         source = body.get("source", "")
                         if not isinstance(source, str):
                             return self._send(400, {"error": "source must be a string"})
+                        index = parse_index(body.get("index"))
+                        if index is None:
+                            return self._send(400, {"error": "index must be an integer"})
+                    elif op == "convert":
+                        # Wave 13: same field names and order as `add` — the type
+                        # is checked before the index, and both before the copy.
+                        cell_type = body.get("cellType")
+                        if cell_type not in ("code", "markdown"):
+                            return self._send(
+                                400, {"error": "cellType must be 'code' or 'markdown'"}
+                            )
                         index = parse_index(body.get("index"))
                         if index is None:
                             return self._send(400, {"error": "index must be an integer"})
@@ -652,6 +666,8 @@ class LabHost:
                                     focused = nb.add_markdown_cell(source, index=index)
                             elif op == "delete":
                                 focused = nb.delete_cell(index)
+                            elif op == "convert":
+                                focused = nb.convert_cell(index, cell_type)
                             elif op == "move":
                                 focused = nb.move_cell(from_index, to_index)
                             else:

@@ -507,6 +507,7 @@ function mapRunResult(raw: unknown): CookbooksRunResult {
 function mapRunCell(raw: unknown): CookbooksRunCell {
   const cell = asRecord(raw)
   const index = typeof cell.index === 'number' ? cell.index : Number(cell.index)
+  const duration = cell.duration_ms
   return {
     index: Number.isInteger(index) ? index : 0,
     status: cell.status === 'error' ? 'error' : cell.status === 'skipped' ? 'skipped' : 'ok',
@@ -515,6 +516,12 @@ function mapRunCell(raw: unknown): CookbooksRunCell {
     // Wave 11: this cell's own records, validated entry-wise like every other
     // array main maps (a malformed entry never reaches the renderer).
     displays: mapDisplays(cell.displays),
+    // Wave 13: the sidecar has always timed each cell of a batch run; main used
+    // to drop it. A non-finite/absent value stays `undefined` (never 0, which
+    // would read as "instant"), so the renderer shows a duration only when there
+    // really is one.
+    durationMs:
+      typeof duration === 'number' && Number.isFinite(duration) ? Math.round(duration) : undefined,
   }
 }
 
@@ -940,9 +947,15 @@ export class CookbooksRuntime {
    */
   async apiMutate(input: CookbooksMutateInput): Promise<CookbooksMutateResult> {
     // Defense-in-depth: the compile-time union does not protect a caller that
-    // casts, so an op outside the four routes is rejected before any URL/body
+    // casts, so an op outside the five routes is rejected before any URL/body
     // is built (never interpolated into the path).
-    if (input.op !== 'add' && input.op !== 'delete' && input.op !== 'move' && input.op !== 'duplicate') {
+    if (
+      input.op !== 'add' &&
+      input.op !== 'delete' &&
+      input.op !== 'move' &&
+      input.op !== 'duplicate' &&
+      input.op !== 'convert'
+    ) {
       throw new CookbooksApiError(400, 'unknown op')
     }
     const { itemId } = input
@@ -963,6 +976,12 @@ export class CookbooksRuntime {
         break
       case 'duplicate':
         body.index = input.index
+        break
+      // Wave 13: same fields as `add` minus `source` — the cell keeps its own
+      // text and only its type changes.
+      case 'convert':
+        body.index = input.index
+        body.cellType = input.cellType
         break
     }
     const raw = await this.request<unknown>(`/cells/${input.op}`, { method: 'POST', body })

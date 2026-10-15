@@ -326,7 +326,13 @@ export function AppShell(props: AppShellProps) {
           <MiniSessionSurface />
         </AppShellProvider>
       ) : (
-        <AppShellContent {...props} />
+        // W13 repair: AppShellContent's own hooks (e.g. useSideSession) read the
+        // AppShellContext, so the non-mini branch must provide it exactly like
+        // the mini branch does — without this every shell render throws
+        // «useAppShellContext must be used within an AppShellProvider».
+        <AppShellProvider value={props.contextValue}>
+          <AppShellContent {...props} />
+        </AppShellProvider>
       )}
     </EscapeInterruptProvider>
   )
