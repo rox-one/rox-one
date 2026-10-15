@@ -163,8 +163,34 @@ const DATE_FNS_LOCALE_CHUNKS = new Set([
   'ar', 'de', 'es', 'fr', 'hu', 'ja', 'ko', 'pl', 'ru', 'zh-CN', 'zh-TW',
 ])
 
+/** Repo root — the directory bun hoists the workspace's dependencies into (`<root>/node_modules`). */
+const REPO_ROOT = resolve(__dirname, '../..')
+
+/** `<repo root>/node_modules/` — the hoisted install every workspace package resolves to by default. */
+const HOISTED_NODE_MODULES = `${REPO_ROOT.replace(/\\/g, '/')}/node_modules/`
+
+/**
+ * A nested install (`packages/canvas-core/node_modules/zod`) is a *different version* from the hoisted
+ * copy at the repo root (`node_modules/zod`) — canvas-core pins zod ^3 while the workspace hoists ^4.
+ * Chunk rules below key on the package NAME, so without this split both copies share one chunk, and the
+ * shared chunk is the one the boot graph already loads: canvas-core's lazy zod v3 rode `vendor-zod` into
+ * every `index.html` load (#2129). Nested copies get their own `<name>-nested` chunk and stay reachable
+ * only through the module that actually imports them.
+ */
+function isNestedInstall(posixPath: string): boolean {
+  // The commonjs plugin proxies a hoisted CJS file through a `\0`-prefixed virtual id carrying the same
+  // absolute path; drop the marker so the proxy is classified like the file it stands for.
+  const path = posixPath.startsWith('\0') ? posixPath.slice(1) : posixPath
+  return !path.startsWith(HOISTED_NODE_MODULES)
+}
+
 function vendorChunk(id: string): string | undefined {
   const posix = id.replace(/\\/g, '/')
+  const name = vendorChunkName(posix)
+  return name && isNestedInstall(posix) ? `${name}-nested` : name
+}
+
+function vendorChunkName(posix: string): string | undefined {
   const dateFnsLocale = /\/node_modules\/date-fns\/locale\/([^/.]+)(?:\.js|\/|$)/.exec(posix)
   if (dateFnsLocale) {
     const loc = dateFnsLocale[1]
@@ -176,7 +202,7 @@ function vendorChunk(id: string): string | undefined {
     if (DATE_FNS_LOCALE_CHUNKS.has(loc)) return `date-fns-locale-${loc}`
     return 'date-fns-locale-other'
   }
-  const pkg = /[\\/]node_modules[\\/]((?:@[^\\/]+[\\/])?[^\\/]+)[\\/]/.exec(id)?.[1]?.replace('\\', '/')
+  const pkg = /[\\/]node_modules[\\/]((?:@[^\\/]+[\\/])?[^\\/]+)[\\/]/.exec(posix)?.[1]?.replace('\\', '/')
   if (!pkg) return undefined
   return VENDOR_CHUNKS.find(([pattern]) => pattern.test(pkg))?.[1]
 }
@@ -259,7 +285,6 @@ function bundleReportPlugin(): Plugin {
     generateBundle(_options, bundle) {
       const out = process.env.ROX_BUNDLE_REPORT
       if (!out) return
-      const root = resolve(__dirname, '../..')
       const chunks = Object.values(bundle)
         .filter((output): output is Rollup.OutputChunk => output.type === 'chunk')
         .map(chunk => ({
@@ -269,16 +294,16 @@ function bundleReportPlugin(): Plugin {
           imports: chunk.imports,
           dynamicImports: chunk.dynamicImports,
           modules: Object.fromEntries(Object.entries(chunk.modules)
-            .map(([id, info]) => [relative(root, id.split('?')[0]).replace(/\\/g, '/'), info.renderedLength])),
+            .map(([id, info]) => [relative(REPO_ROOT, id.split('?')[0]).replace(/\\/g, '/'), info.renderedLength])),
         }))
-      const rel = (id: string) => relative(root, id.split('?')[0]).replace(/\\/g, '/')
+      const rel = (id: string) => relative(REPO_ROOT, id.split('?')[0]).replace(/\\/g, '/')
       // ROX_BUNDLE_REPORT_GRAPH=1 adds static import edges per module (WHY a module is eager).
       const graph: Record<string, string[]> = {}
       for (const id of process.env.ROX_BUNDLE_REPORT_GRAPH ? this.getModuleIds() : []) {
         const info = this.getModuleInfo(id)
         if (info?.importedIds.length) graph[rel(id)] = info.importedIds.map(rel)
       }
-      writeFileSync(resolve(root, out), JSON.stringify({ chunks, graph }))
+      writeFileSync(resolve(REPO_ROOT, out), JSON.stringify({ chunks, graph }))
     },
   }
 }

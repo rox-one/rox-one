@@ -26,7 +26,7 @@ const ICONS = { 'message-square': MessageSquare, folder: Folder, tag: Tag } as c
 /** Publishes the Sessions second sidebar (renders nothing itself). */
 export function SessionsScreenSidebar() {
   const { t } = useTranslation()
-  const { activeWorkspaceId } = useAppShellContext()
+  const { activeWorkspaceId, onCreateSession } = useAppShellContext()
   const { navigate } = useNavigation()
   const navState = useNavigationState()
   const { state: chatFolders, error: chatFoldersError, retry: retryChatFolders } = useChatFolders(activeWorkspaceId ?? undefined)
@@ -44,7 +44,7 @@ export function SessionsScreenSidebar() {
     }
   }, [navigate])
 
-  const openSide = useSideSession()
+  const openSide = useSideSession({ activeWorkspaceId, onCreateSession })
   const store = useStore()
   // «Поделиться» publishes a chat (possibly private data): always confirm and
   // show who will be able to open the link before publishing.
