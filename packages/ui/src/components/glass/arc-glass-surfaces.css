@@ -31,13 +31,24 @@
    arc-glass-skin.css and is untouched here. */
 
 /* --- panel: rails / inspectors inside content ---------------------------- */
-/* Background-family tint + a seam-side hairline; blur is allowed (static). */
+/* Background-family tint + a seam-side hairline; blur is allowed (static).
+   The default seam is the right edge (a rail on the left of its region);
+   `data-glass-side="left"` flips it for inspectors that hug the right edge,
+   and `data-glass-side="none"` keeps just the shadow for flush panes. */
 html[data-theme="arc-glass"] body [data-glass-slot="panel"] {
   --glass-fill: var(--glass-card-fill);
   --glass-fill-mix: var(--glass-panel-mix);
   --glass-panel-edge: inset -1px 0 0 var(--glass-hairline), var(--glass-card-shadow);
   backdrop-filter: blur(var(--glass-blur-tight)) saturate(var(--glass-saturate));
   box-shadow: var(--glass-panel-edge);
+}
+
+html[data-theme="arc-glass"] body [data-glass-slot="panel"][data-glass-side="left"] {
+  --glass-panel-edge: inset 1px 0 0 var(--glass-hairline), var(--glass-card-shadow);
+}
+
+html[data-theme="arc-glass"] body [data-glass-slot="panel"][data-glass-side="none"] {
+  --glass-panel-edge: var(--glass-card-shadow);
 }
 
 /* --- toolbar: sticky headers / toolbars --------------------------------- */
@@ -98,7 +109,7 @@ html[data-theme="arc-glass"] body [data-glass-slot="row"] {
   box-shadow: none;
 }
 
-html[data-theme="arc-glass"] body [data-glass-slot="row"]:hover:not(:disabled) {
+html[data-theme="arc-glass"] body [data-glass-slot="row"]:hover:not(:disabled):not([aria-selected="true"]):not([data-state="selected"]) {
   background: var(--state-hover);
 }
 
