@@ -5,7 +5,7 @@
 Норматив: [PRD](PRD.md) · [SPEC](SPEC.md) · [SPEC-wave13](SPEC-wave13-colab-convenience.md) · [ADR 001](decisions/001-runtime-container-and-secrets.md).
 Вендор-снапшот `apps/electron/resources/cookbooks/**` — **read-only**; лаборатория и вендор в этой волне не меняются.
 
-**Статус:** фриз скоупа 2026-10-15. Слайсы: A (рендер, батч 1) · B (модуль истории) · C (i18n) · D (shared+main) · E (рендер, батч 2 — строго после A).
+**Статус:** ✅ влито в main — PR #2165 (merge `f56d3e747`; фича — `cd7f26803`, re-record — `d2519b5ac`). Фриз скоупа был 2026-10-15; слайсы A (рендер, батч 1) · B (модуль истории) · C (i18n) · D (shared+main) · E (рендер, батч 2) · F (fix-up: takeover Shift+Tab).
 
 ## Цель
 
