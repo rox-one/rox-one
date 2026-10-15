@@ -346,6 +346,13 @@ export default defineConfig(({ command }) => ({
   build: {
     outDir: resolve(__dirname, 'dist/renderer'),
     emptyOutDir: true,
+    // Emit `.vite/manifest.json` next to the chunks. It is the build's own statement of every
+    // chunk's real name (`name`) and emitted file (`file`), which is what scripts/check-bundle-size.ts
+    // reads to name a budget prefix. Without it that gate falls back to stripping a `-<8-char hash>`
+    // suffix — a guess about Rollup's naming that silently mis-keys (and so un-budgets) a chunk the
+    // moment the hash length or separator changes. Nothing else consumes this file, and it is not a
+    // measured asset (the gate only weighs emitted *.js/*.css).
+    manifest: true,
     // Production dist must not ship source maps (S9-11: 68 MB of *.map).
     // `scripts/boot-manifest.ts` still derives the boot closure from the sibling
     // maps, so the CI bundle-size job and local manifest regeneration opt back in
