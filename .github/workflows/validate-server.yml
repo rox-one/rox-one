@@ -70,6 +70,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+
+      # The RPC channel snapshot is derived from `packages/shared/src/protocol`, so this
+      # job is the one that must own it: its `pull_request.paths` already cover
+      # `packages/**`, while `product-tour-native.yml` — whose `test:product-tour` script
+      # runs the equivalent test as its last `&&` clause — does NOT watch the protocol
+      # subtree. A protocol-only pull request therefore reached neither, and its only
+      # gate was the opt-in `pre-commit` hook, which is silent when it is not installed.
+      # `--check` exits 1 with the exact regeneration command; see scripts/ipc-inventory.ts.
+      - name: RPC channel inventory is current
+        run: bun run scripts/ipc-inventory.ts --check
+
       - name: Build agent subprocess
         run: bun run server:build:subprocess
 
