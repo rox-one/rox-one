@@ -27,7 +27,10 @@ import {
   measureRendererChunks,
   measureStartup,
   parseHtmlReferences,
+  payloadSlackBytes,
+  readLocalePayloads,
   type BundleBaseline,
+  type LocalePayloads,
   type MeasuredChunk,
   type StartupMeasurement,
 } from '../check-bundle-size'
@@ -716,5 +719,128 @@ describe('--update delta report (an acceptance has to stay readable afterwards)'
       next({ startup: { 'playground.html': entry(150, 211) } }),
     )
     expect(lines).toEqual(['  startup playground.html: 100 → 150 B  (+50)'])
+  })
+})
+
+/**
+ * The renderer emits one entry chunk per locale and each embeds its own i18n payload, so before this
+ * split every translation merge moved twelve code budgets plus the js total and ended in a re-record
+ * (#2031, #2063, #2104, #2120). These cases pin the contract that replaces it.
+ */
+describe('i18n payload is budgeted apart from the code it rides with', () => {
+  const LOCALES = join('packages', 'shared', 'src', 'i18n', 'locales')
+
+  function seedLocales(root: string, sizes: Record<string, number>): void {
+    mkdirSync(join(root, LOCALES), { recursive: true })
+    for (const [locale, size] of Object.entries(sizes)) {
+      writeFileSync(join(root, LOCALES, `${locale}.json`), Buffer.alloc(size))
+    }
+  }
+
+  const payloads = (byLocale: Record<string, number>): LocalePayloads => ({
+    byLocale,
+    totalRawBytes: Object.values(byLocale).reduce((sum, size) => sum + size, 0),
+  })
+
+  it('reads one payload per locale JSON, ignoring other files in the directory', () => {
+    const root = tempRoot()
+    seedLocales(root, { ru: 1000, de: 2000 })
+    writeFileSync(join(root, LOCALES, 'README.md'), 'not a payload')
+    expect(readLocalePayloads(root)).toEqual({ byLocale: { de: 2000, ru: 1000 }, totalRawBytes: 3000 })
+  })
+
+  it('treats a tree with no locale files (a throwaway fixture build) as no payload at all', () => {
+    expect(readLocalePayloads(tempRoot())).toEqual({ byLocale: {}, totalRawBytes: 0 })
+  })
+
+  it('records code bytes for a locale prefix and leaves every other prefix on its raw total', () => {
+    const chunks = [chunk('ru-9gJEvcUc.js', 900_000), chunk('main-uOHJX_ma.js', 300_000)]
+    const budgets = buildBudgets(chunks, 'js', payloads({ ru: 700_000 }))
+    expect(budgets.ru).toEqual({ totalRawBytes: 900_000, gzipTotalBytes: 225_000, codeRawBytes: 200_000 })
+    expect(budgets.main?.codeRawBytes).toBeUndefined()
+    expect(bundleTotals(chunks, payloads({ ru: 700_000 })).jsCodeRawBytes).toBe(500_000)
+  })
+
+  it('does not read a translation-only merge as a regression — the whole point of the split', () => {
+    const before = payloads({ ru: 700_000, de: 700_000 })
+    // A feature merge adds ~9 KB of keys to every locale: both the payload source and the entry
+    // chunks that embed it grow, the code does not.
+    const after = payloads({ ru: 709_234, de: 709_234 })
+    const recordedChunks = [chunk('ru-9gJEvcUc.js', 900_000), chunk('de-Dp4A7dEn.js', 900_000), chunk('main-uOHJX_ma.js', 400_000)]
+    const grownChunks = [chunk('ru-9gJEvcUc.js', 909_234), chunk('de-Dp4A7dEn.js', 909_234), chunk('main-uOHJX_ma.js', 400_000)]
+    const failures = evaluateAssets(grownChunks, {
+      budgets: buildBudgets(recordedChunks, 'js', before),
+      totals: bundleTotals(recordedChunks, before),
+      i18n: before,
+    }, after)
+    expect(failures).toEqual([])
+  })
+
+  it('still fails the locale prefix whose code grows with the payload held constant', () => {
+    const payload = payloads({ ru: 700_000 })
+    const recorded = [chunk('ru-9gJEvcUc.js', 900_000)]
+    const grown = [chunk('ru-9gJEvcUc.js', 960_000)]
+    const failures = evaluateAssets(grown, {
+      budgets: buildBudgets(recorded, 'js', payload),
+      totals: bundleTotals(recorded, payload),
+      i18n: payload,
+    }, payload)
+    const prefixFailure = failures.find((failure) => failure.prefix === 'ru')
+    expect(prefixFailure?.rawBytes).toBe(260_000)
+    expect(prefixFailure?.budget).toBe(200_000)
+    // The js total carries the same growth, so it reports too.
+    expect(failures.some((failure) => failure.prefix === null)).toBe(true)
+  })
+
+  it('fails a runaway payload that the slack cannot absorb, naming it as the payload', () => {
+    const before = payloads({ ru: 700_000 })
+    const runaway = payloads({ ru: 1_500_000 })
+    const recorded = [chunk('ru-9gJEvcUc.js', 900_000)]
+    const grown = [chunk('ru-9gJEvcUc.js', 1_700_000)]
+    const failures = evaluateAssets(grown, {
+      budgets: buildBudgets(recorded, 'js', before),
+      totals: bundleTotals(recorded, before),
+      i18n: before,
+    }, runaway)
+    expect(failures.map((failure) => failure.label)).toEqual(['i18n payload total'])
+    expect(failures[0]?.rawBytes).toBe(1_500_000)
+    expect(failures[0]?.budget).toBe(700_000)
+    expect(formatFailure(failures[0]!)).toContain('i18n payload total is 1500000 B')
+    expect(payloadSlackBytes(700_000)).toBeLessThan(1_500_000 - 700_000)
+  })
+
+  it('keeps the legacy contract for a baseline recorded before the split', () => {
+    const payload = payloads({ ru: 700_000 })
+    const recorded = [chunk('ru-9gJEvcUc.js', 900_000)]
+    // No `codeRawBytes` / `jsCodeRawBytes` / `i18n`: the raw totals are gated exactly as before.
+    const legacy = {
+      budgets: { ru: { totalRawBytes: 900_000, gzipTotalBytes: 225_000 } },
+      totals: { jsRawBytes: 900_000 },
+    }
+    expect(evaluateAssets(recorded, legacy, payload)).toEqual([])
+    const failures = evaluateAssets([chunk('ru-9gJEvcUc.js', 990_000)], legacy, payload)
+    expect(failures[0]?.prefix).toBe('ru')
+    expect(failures[0]?.rawBytes).toBe(990_000)
+  })
+
+  it('CLI: a payload-only growth stays green, the same growth in code goes red', () => {
+    const root = tempRoot()
+    seedLocales(root, { ru: 700_000 })
+    seedBuild(root, { 'ru-9gJEvcUc.js': 900_000, 'main-uOHJX_ma.js': 300_000 })
+    expect(runCli(root, ['--update']).code).toBe(0)
+    expect(runCli(root, ['--check']).code).toBe(0)
+
+    // The translation merge: source and embedded copy both grow, the code does not.
+    seedLocales(root, { ru: 709_234 })
+    seedBuild(root, { 'ru-9gJEvcUc.js': 909_234, 'main-uOHJX_ma.js': 300_000 })
+    const translated = runCli(root, ['--check'])
+    expect(translated.code).toBe(0)
+
+    // The code merge: the entry grows with the payload held constant.
+    seedBuild(root, { 'ru-9gJEvcUc.js': 960_000, 'main-uOHJX_ma.js': 300_000 })
+    const code = runCli(root, ['--check'])
+    expect(code.code).toBe(1)
+    expect(code.err).toContain("js prefix 'ru'")
+    expect(code.err).toContain('budget 200000 B')
   })
 })
