@@ -27,7 +27,22 @@ permissions:
 jobs:
   audit:
     environment: release-license-review
-    runs-on: [self-hosted, macos-toolchain]
+    # Hosted эфемерный Linux-раннер. Доверие к гейту даёт НЕ машина, а
+    # environment `release-license-review` (защищённые ревьюеры + environment-scoped
+    # vars LICENSE_REVIEW_REVISION / LICENSE_AUDITOR_REVISION, недоступные продюсеру)
+    # вместе с пиннингом SHA всех трёх ревизий и чтением source/review как данных
+    # (`persist-credentials: false`, `--ignore-scripts`). Джоб только сверяет эти
+    # trust roots и байты продюсерского артефакта; никакого локального состояния
+    # раннера (ключи, keychain, кэши, железо) он не использует, поэтому конкретная
+    # машина не добавляет ни одного свойства, которого не даёт environment.
+    # Наоборот: self-hosted Mac здесь ХУЖЕ — джоб исполняет сторонний код действий
+    # (checkout / setup-bun / download-artifact) и разбирает продюсерский архив,
+    # оставляя след на личной машине, тогда как hosted VM одноразова.
+    # macOS не требуется: чекер (scripts/compliance/generate-sbom.ts) платформенно
+    # нейтрален — node:crypto, node:zlib, tar, zod, typescript; нет codesign,
+    # hdiutil, spctl, process.platform. Если гейт начнёт проверять подписи Apple —
+    # переводить на blacksmith-6vcpu-macos-15.
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     outputs:
       audit-sha256: ${{ steps.binding.outputs.audit-sha256 }}

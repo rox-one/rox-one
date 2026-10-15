@@ -29,36 +29,81 @@ on:
       - 'packages/shared/src/skills/bundled*.ts'
       - '.github/workflows/perf-budgets.yml'
   pull_request:
+    # Narrowed 2026-10-16 (w-ci-drain), because only two jobs in this file are GATED on a
+    # PR: `budgets` and `renderer-dom-budgets`. `electron-startup` / `warmup-probe` are
+    # report-only and now run on main/schedule only (see their `if:` below), so a PR path
+    # that only feeds them is a guaranteed-false-positive trigger.
+    #
+    # `pull_request.paths` now lists exactly what a gated job consumes, transitively:
+    #   budgets               → apps/electron/src/renderer/perf/**, lib/warmup.ts,
+    #                           lib/surface-keepalive.tsx, packages/server-core/src/observability/**
+    #                           (whose rpc-call-counter.test.ts:3 imports ../transport/server.ts),
+    #                           scripts/bench/renderer-perf-report.ts
+    #   renderer-dom-budgets  → tests/perf/**, perf-dom.html, perf-dom.tsx, and the two
+    #                           production primitives perf/dom-scenario.tsx:5,8 mounts:
+    #                           components/ui/entity-list.tsx, pages/notes/NotesNavigationSidebar.tsx
+    #
+    # Removed paths and the measurement behind each — `git log --name-only --since=2026-09-15`
+    # on ci/runner-drain, counting commits that touch the path | of those, commits that touch
+    # NO perf-relevant file (renderer/perf, tests/perf, observability, renderer-perf-report,
+    # scripts/perf); a high "without perf" share is a false positive:
+    #   apps/electron/src/renderer/main.tsx                               25 | 23 (92%) REMOVED
+    #   .../renderer/components/app-shell/MainContentPanel.tsx            56 | 53 (95%) REMOVED
+    #   .../renderer/components/app-shell/route-pages.ts                   4 |  3 (75%) REMOVED
+    #   .../renderer/lib/shell-warmup.ts                                   5 |  4 (80%) REMOVED
+    #   .../renderer/lib/route-preload.ts                          (not imported by any gate) REMOVED
+    #   apps/electron/src/shared/rail-surfaces.ts                  (not imported by any gate) REMOVED
+    #   apps/electron/scripts/perf/**                  (feeds only the report-only probes) REMOVED
+    #   apps/electron/src/main/index.ts                                   93 | 91 (98%) REMOVED
+    #   apps/electron/src/main/shell-env.ts                                3 |  3       REMOVED
+    #   apps/electron/src/main/windows-bootstrap.ts                        5 |  5       REMOVED
+    #   apps/electron/src/shared/startup-perf.ts                           5 |  3       REMOVED
+    #   packages/shared/src/skills/bundled*.ts                            12 | 12       REMOVED
+    # (`apps/electron/src/main/startup-marks.ts` was 2 | 0 but is main-process-only and feeds
+    #  only the report-only startup probe, so it moved out with the other main-process paths.)
+    #
+    # The task brief predicted NotesNavigationSidebar.tsx was too broad; the measurement agrees
+    # (14 | 12) but perf/dom-scenario.tsx:8 mounts the production component, so a change there
+    # really can move the gated dom_notes_navigator_first_render budget — it stays.
+    # `push.paths` above is deliberately unchanged: main must stay fully checked.
     paths:
       - 'apps/electron/src/renderer/perf/**'
       - 'apps/electron/src/renderer/perf-dom.html'
       - 'apps/electron/src/renderer/perf-dom.tsx'
       - 'apps/electron/src/renderer/components/ui/entity-list.tsx'
       - 'apps/electron/src/renderer/pages/notes/NotesNavigationSidebar.tsx'
-      - 'tests/perf/**'
-      - 'apps/electron/src/renderer/main.tsx'
       - 'apps/electron/src/renderer/lib/surface-keepalive.tsx'
-      - 'apps/electron/src/renderer/lib/route-preload.ts'
       - 'apps/electron/src/renderer/lib/warmup.ts'
-      - 'apps/electron/src/renderer/lib/shell-warmup.ts'
-      - 'apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx'
-      - 'apps/electron/src/renderer/components/app-shell/route-pages.ts'
-      - 'apps/electron/src/shared/rail-surfaces.ts'
+      - 'tests/perf/**'
       - 'packages/server-core/src/observability/**'
       - 'packages/server-core/src/transport/server.ts'
       - 'scripts/bench/renderer-perf-report.ts'
-      - 'apps/electron/scripts/perf/**'
-      - 'apps/electron/src/main/index.ts'
-      - 'apps/electron/src/main/startup-marks.ts'
-      - 'apps/electron/src/main/shell-env.ts'
-      - 'apps/electron/src/main/windows-bootstrap.ts'
-      - 'apps/electron/src/shared/startup-perf.ts'
-      - 'packages/shared/src/skills/bundled*.ts'
       - '.github/workflows/perf-budgets.yml'
   workflow_dispatch:
+  # Daily backstop: main is checked once a day regardless of push storms.
+  schedule:
+    - cron: '23 3 * * *'
+
+concurrency:
+  # `github.event_name` is in the group so a push cannot cancel the nightly schedule run.
+  group: perf-budgets-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  # Gated. Pure Bun/JS: `bun test apps/electron/src/renderer/perf packages/server-core/src/observability`
+  # plus `renderer-perf-report.ts --ci`. macOS is NOT needed — checked, cross-platform evidence:
+  #   - The only gated absolute-ms budgets are deterministic, not wall-clock:
+  #     apps/electron/src/renderer/perf/surface-sim.ts:126-129 pins surface_first_warm/surface_revisit
+  #     to fixed model constants (26 / 2 / 140+130 ms) — no clock, no machine.
+  #   - The other gated budget, `cached_session_switch` (budgets.ts:15-25, p95Ms 120), times a
+  #     `Map.get` + 3 counter increments (switch-sim.ts:37-48): microseconds on any runner.
+  #     Its in-test assertion (__tests__/cached-session-switch.test.ts:37) is < 120ms — never flake-prone.
+  #   - ciGate:false rows (cold_ready etc.) may read performance.now() but cannot fail CI (evaluate.ts:85).
+  #   - No `/Users/`, no codesign, no keychain, no local service in this job's steps; nothing is
+  #     preinstalled on the self-hosted box that it needs.
+  # Runner: hosted Linux `blacksmith-4vcpu-ubuntu-2404` — the repo's standard Ubuntu runner.
   budgets:
-    runs-on: [self-hosted, macos-toolchain]
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -92,8 +137,20 @@ jobs:
   # `window-created` mark is dominated by Electron process launch + main-bundle
   # evaluation (≈1.0 s to `main:entry` on the runner) — flip this step to
   # `--strict` (and drop `continue-on-error`) once the ×4 budget is cleared.
+  #
+  # Report-only → main/schedule only (`if:` below). It builds and *launches* the packaged
+  # Electron app (`bun run electron:build` then `perf:startup`, i.e. `_electron.launch` in
+  # apps/electron/scripts/perf/startup-bench.ts:175), which needs a real display + the
+  # macOS login keychain: startup-bench.ts:139-143 deliberately keeps the keychain reachable
+  # so Chromium safeStorage can answer, and `startupBudgetFor(..., process.platform, ...)`
+  # (:214-216) keys the ×4 budgets per platform. -> macOS runner.
+  # Runner: hosted macOS `blacksmith-6vcpu-macos-15` — the repo's standard macOS runner
+  # (ci.yml validate matrix, desktop-release.yml, toolchain-smoke.yml), NOT the single
+  # self-hosted `ts-macbook-rox` box. Nothing here needs that specific machine: there is no
+  # preinstalled toolchain, no local cache and no local service it relies on.
   electron-startup:
-    runs-on: [self-hosted, macos-toolchain]
+    if: github.event_name != 'pull_request'
+    runs-on: blacksmith-6vcpu-macos-15
     timeout-minutes: 30
     continue-on-error: true
     steps:
@@ -124,8 +181,14 @@ jobs:
   # growth (≤ 25 MB), idle CPU (≤ 1.5 s), longest slice (≤ 50 ms) and long
   # tasks. Report-only: the probe exits 1 when it cannot measure (no queue on a
   # first-run profile, no CDP session) and the JSON is archived either way.
+  # Report-only → main/schedule only (`if:` below). Same reasoning as `electron-startup`:
+  # it builds and launches the packaged Electron app (warmup-heap-probe.ts:365
+  # `_electron.launch`) and drives it over CDP, so it needs a display + the macOS keychain
+  # (startup-bench.ts keeps the login keychain reachable for Chromium safeStorage).
+  # Runner: hosted macOS `blacksmith-6vcpu-macos-15` — the repo's standard macOS runner.
   warmup-probe:
-    runs-on: [self-hosted, macos-toolchain]
+    if: github.event_name != 'pull_request'
+    runs-on: blacksmith-6vcpu-macos-15
     timeout-minutes: 30
     continue-on-error: true
     steps:
@@ -146,8 +209,20 @@ jobs:
   # W3.4c: real-DOM renderer budgets in Chromium (2,000-row session list +
   # 5,000-note navigator). Gated marks live in
   # apps/electron/src/renderer/perf/dom-budgets.ts.
+  # macOS is NOT needed — checked, cross-platform evidence:
+  #   - tests/perf/playwright.config.ts is plain Playwright: absolute repo paths via
+  #     `resolve(import.meta.dirname, '../..')` (:4), `127.0.0.1` baseURL (:23), an explicit
+  #     `locale`/`timezoneId`/`reducedMotion`/`deviceScaleFactor` (:24-32) so timings are
+  #     comparable across machines, and a `bun run scripts/playground-dev.ts` web server (:35).
+  #     No `/Users/`, no `electron`, no osascript.
+  #   - scripts/playground-dev.ts:18 branches only on `win32` (BIN_EXT); the `--no-open` flag
+  #     (playwright.config.ts:36) keeps it headless — no browser window, so no macOS display.
+  #   - The gated DOM rows are wall-clock p95 but each carries 4-7x headroom on the observed
+  #     value (dom-budgets.ts:45-89), which is exactly the hosted-runner slack this comment
+  #     describes. Chromium is installed by the job itself (`bunx playwright install chromium`).
+  # Runner: hosted Linux `blacksmith-4vcpu-ubuntu-2404` — the repo's standard Ubuntu runner.
   renderer-dom-budgets:
-    runs-on: [self-hosted, macos-toolchain]
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -156,5 +231,9 @@ jobs:
       - run: bun install --frozen-lockfile
         env: { GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}' }
       - name: Install Playwright Chromium
-        run: bunx playwright install chromium
+        # `--with-deps` matches every other ubuntu-hosted Playwright job in this repo
+        # (visual-capture.yml:59, ui-route-recovery.yml:87, nightly-test-all.yml:92, …):
+        # the self-hosted macOS box had the system libs preinstalled, a fresh ubuntu runner
+        # does not, so a bare `install chromium` would fail to launch the browser.
+        run: bunx playwright install --with-deps chromium
       - run: bun run test:perf:dom
