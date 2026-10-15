@@ -2,7 +2,7 @@
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { Columns2 } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import { useAction, useActionLabel } from '@/actions'
 import { cn } from '@/lib/utils'
 import { activeSplitIdsAtom, toggleSplitAtom } from './split-mode'
