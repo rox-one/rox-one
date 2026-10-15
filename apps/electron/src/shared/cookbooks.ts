@@ -97,7 +97,7 @@ export interface CookbooksDocument {
 // ---------------------------------------------------------------------------
 
 /**
- * The four structural notebook operations, addressed by position (the vendored
+ * The structural notebook operations, addressed by position (the vendored
  * `.ipynb` carries no stable per-cell id). One discriminated union keeps the
  * protocol surface at a single `cookbooks-lab:mutate` channel.
  */
@@ -106,6 +106,8 @@ export type CookbooksCellMutation =
   | { op: 'delete'; index: number }
   | { op: 'move'; from: number; to: number }
   | { op: 'duplicate'; index: number }
+  /** Wave 13: switch a cell between code and markdown in place (Colab's y/m). */
+  | { op: 'convert'; index: number; cellType: 'code' | 'markdown' }
 
 /** Input of `cookbooks-lab:mutate`: the target copy plus the operation. */
 export type CookbooksMutateInput = { itemId: string } & CookbooksCellMutation
@@ -166,6 +168,12 @@ export interface CookbooksRunCell {
   error: string | null
   /** Wave 11: rich records this cell produced (`[]` when it produced none). */
   displays: CookbooksDisplay[]
+  /**
+   * Wave 13: the sidecar's own `duration_ms` for this cell, rounded to whole
+   * milliseconds. `undefined` when the record carries no usable number — a
+   * cell the runner never timed (a skipped one), or a malformed value.
+   */
+  durationMs?: number
 }
 
 // ---------------------------------------------------------------------------
