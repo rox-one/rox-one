@@ -326,7 +326,13 @@ export function AppShell(props: AppShellProps) {
           <MiniSessionSurface />
         </AppShellProvider>
       ) : (
-        <AppShellContent {...props} />
+        // W13 repair: AppShellContent's own hooks (e.g. useSideSession) read the
+        // AppShellContext, so the non-mini branch must provide it exactly like
+        // the mini branch does — without this every shell render throws
+        // «useAppShellContext must be used within an AppShellProvider».
+        <AppShellProvider value={props.contextValue}>
+          <AppShellContent {...props} />
+        </AppShellProvider>
       )}
     </EscapeInterruptProvider>
   )
@@ -1475,8 +1481,10 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
   // New chat
   useAction('app.newChat', () => handleNewChat())
   useAction('app.newChatInPanel', () => handleNewChat(true))
-  // top50 #20: side session next to any screen.
-  const openSideSession = useSideSession()
+  // top50 #20: side session next to any screen. `contextValue` is passed
+  // explicitly: this body renders the AppShellProvider below, and a hook reads
+  // context where it is called, not what its component returns.
+  const openSideSession = useSideSession(contextValue)
   useAction('session.openSide', () => { void openSideSession() }, undefined, [openSideSession])
 
   // Settings
