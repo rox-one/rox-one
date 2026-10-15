@@ -271,7 +271,7 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.evaluate(()=>(window as any).ui001nav.delete('first-a'))
     expect((await snapshot()).nav.details.sessionId).toBe('first-a')
     await page.goForward();await routeIs('notes/note/note-a')
-    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('inbox')
+    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('home')
     await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'));await routeIs('notes/note/note-a')
   })
 
@@ -321,14 +321,14 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
       // Use timer polling while RAF is intentionally held, so the observation
       // does not depend on the callback whose race is being exercised.
       await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-workspace')==='ws-b'
-        &&document.querySelector('output')?.getAttribute('data-route')==='inbox',null,{polling:50})
+        &&document.querySelector('output')?.getAttribute('data-route')==='home',null,{polling:50})
       const restored=await page.evaluate(()=>({
         sequence:history.state.seq,route:new URL(location.href).searchParams.get('route'),
         workspace:new URL(location.href).searchParams.get('ws'),
         heldFrames:(window as any).__ui001HeldRestoreFrames.callbacks.length,
       }))
       expect(restored.workspace).toBe('b')
-      expect(restored.route).toBe('inbox')
+      expect(restored.route).toBe('home')
       expect(restored.heldFrames).toBeGreaterThan(0)
       await page.evaluate(async()=>{
         await (window as any).ui001nav.navigate('sources/source/two')
@@ -342,7 +342,7 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
       expect(new URL(page.url()).searchParams.get('ws')).toBe('b')
       expect((await snapshot()).nav.details.sourceSlug).toBe('two')
       await page.goBack()
-      await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-route')==='inbox',null,{polling:50})
+      await page.waitForFunction(()=>document.querySelector('output')?.getAttribute('data-route')==='home',null,{polling:50})
       expect(new URL(page.url()).searchParams.get('ws')).toBe('b')
       expect(new URL(page.url()).searchParams.get('route')).toBe(restored.route)
       expect(await page.evaluate(()=>history.state.seq)).toBe(restored.sequence)
@@ -521,7 +521,7 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.evaluate(()=>(window as any).ui001nav.resolvePages(0,[{id:'stale-a'}]))
     expect(await page.evaluate(()=>(window as any).ui001nav.pages())).toEqual([])
     await page.evaluate(()=>(window as any).ui001nav.emitPages('other-workspace',[]))
-    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('inbox')
+    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('home')
     expect(await page.evaluate(()=>(window as any).ui001nav.pages())).toEqual([])
     await page.evaluate(()=>(window as any).ui001nav.resolvePages(2,[{id:'page-b'}]))
     await page.waitForFunction(()=>(window as any).ui001nav.pages()[0]?.id==='page-b')
@@ -539,7 +539,7 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
 
   browserTest('queued page broadcast from the former A owner cannot publish after A to B to A',async()=>{
     await page.goto(base+'/?ws=a&route=home');await routeIs('home')
-    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('inbox')
+    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('home')
     await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'));await routeIs('home')
     await page.evaluate(()=>(window as any).ui001nav.emitPages('ws-a',[{id:'current-a'}]))
     await page.evaluate(()=>(window as any).ui001nav.emitOldPages(0,'ws-a',[{id:'old-a'}]))
@@ -563,7 +563,7 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
   browserTest('workspace restoration waits for full readiness and resize cannot overwrite stored selection',async()=>{
     await page.goto(base+'/?ws=a&route=home');await routeIs('home')
     await page.evaluate(()=>(window as any).ui001nav.navigate('notes/note/a'));await routeIs('notes/note/a')
-    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('inbox')
+    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('home')
     await page.evaluate(()=>(window as any).ui001nav.navigate('notes/note/b'));await routeIs('notes/note/b')
     await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'));await routeIs('notes/note/a')
     await page.evaluate(()=>(window as any).ui001nav.ready(false,true))
@@ -588,7 +588,7 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     })
     await page.waitForFunction(()=>(window as any).ui001nav.creations().length===2)
     expect(await page.evaluate(()=>(window as any).ui001nav.creations())).toEqual([{workspaceId:'ws-a'},{workspaceId:'ws-a'}])
-    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('inbox')
+    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('home')
     await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'));await routeIs('home')
     await page.evaluate(()=>{
       (window as any).ui001nav.resolveCreate(0,'late-prefill');
@@ -614,7 +614,7 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.evaluate(()=>(window as any).ui001nav.resolveCreate(1,'created-send'))
     await page.waitForFunction(()=>(window as any).ui001nav.timers()===2)
     await routeIs('allSessions/session/created-send')
-    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('inbox')
+    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('home')
     await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'));await routeIs('allSessions/session/created-send')
     await page.evaluate(()=>(window as any).ui001nav.fireActionTimers())
     expect(await page.evaluate(()=>(window as any).ui001nav.actionCalls())).toEqual({commands:[],inputs:[],messages:[]})
@@ -729,7 +729,7 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
 
   browserTest('retained deep-link listener cannot create or send in a former workspace',async()=>{
     await page.goto(base+'/?ws=a&route=home');await routeIs('home')
-    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('inbox')
+    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('home')
     await page.waitForFunction(()=>(window as any).ui001nav.deepListeners().at(-1)?.workspaceId==='ws-b')
     const formerB=await page.evaluate(()=>(window as any).ui001nav.deepListeners().at(-1).index)
     await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'));await routeIs('home')
@@ -743,7 +743,7 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
   browserTest('retained deep-link listeners stay disposed after workspace ABA and same-workspace readiness reinstall',async()=>{
     await page.goto(base+'/?ws=a&route=home');await routeIs('home')
     const formerA=await page.evaluate(()=>(window as any).ui001nav.deepListeners().at(-1).index)
-    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('inbox')
+    await page.evaluate(()=>(window as any).ui001nav.workspace('ws-b','b'));await routeIs('home')
     await page.evaluate(()=>(window as any).ui001nav.workspace('ws-a','a'));await routeIs('home')
     await page.evaluate(index=>(window as any).ui001nav.deepRetained(index,{view:'notes/note/stale-a'}),formerA)
     await page.waitForTimeout(100)
