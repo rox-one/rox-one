@@ -12,7 +12,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Bell } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { useNotificationList, type NotificationFilter } from './notifications'
