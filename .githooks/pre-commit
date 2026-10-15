@@ -1,0 +1,51 @@
+#!/usr/bin/env sh
+#
+# Pre-commit guard for the two generators that have repeatedly reddened `main`
+# because nothing forced the author to run them:
+#
+#   lint:i18n:sorted   locale keys must be sorted   — bit main twice (#1898 → #1917, then #2021)
+#   ipc-inventory      RPC_CHANNELS is frozen       — bit main once (#2058)
+#
+# Both are real checks in `validate`, but they only ever fire *after* the merge,
+# on somebody else's PR, and they fix nothing themselves. This hook runs the
+# generator only when the staged diff can affect it, re-stages what it rewrites,
+# and never blocks the commit.
+#
+# Install once per clone:  bun run hooks:install
+#
+# Deliberately dependency-free: `git config core.hooksPath .githooks` instead of
+# a husky devDependency, so adopting it does not touch `bun.lock`.
+
+set -u
+
+command -v bun >/dev/null 2>&1 || exit 0
+command -v git >/dev/null 2>&1 || exit 0
+
+staged=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null) || exit 0
+[ -n "$staged" ] || exit 0
+
+matches() {
+  printf '%s\n' "$staged" | grep -qE "$1"
+}
+
+# Locale keys are sorted by the generator, so the check can only fail when
+# someone hand-edits a locale file — fix it rather than report it.
+if matches '^packages/shared/src/i18n/locales/'; then
+  if ! bun run lint:i18n:sorted >/dev/null 2>&1; then
+    echo "pre-commit: locale keys are not sorted — fixing and staging"
+    bun run sort-locales >/dev/null 2>&1 || exit 1
+    git add packages/shared/src/i18n/locales/
+  fi
+fi
+
+# The snapshot is derived from `@rox/shared/protocol`, so only that subtree can
+# make it stale.
+if matches '^packages/shared/src/protocol/'; then
+  if ! bun run scripts/ipc-inventory.ts --check >/dev/null 2>&1; then
+    echo "pre-commit: IPC channel inventory is stale — regenerating and staging"
+    bun run scripts/ipc-inventory.ts >/dev/null 2>&1 || exit 1
+    git add apps/electron/src/shared/__tests__/ipc-channels.generated.ts
+  fi
+fi
+
+exit 0
