@@ -4,7 +4,7 @@ import { build } from 'esbuild'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readFile } from 'node:fs/promises'
-import { runNativeBrowserProcess } from '../../adapters/work/meetings-automations/native-browser-process'
+import { NATIVE_BROWSER_ACTION_TIMEOUT_MS, NATIVE_BROWSER_BUDGET_MS, NATIVE_BROWSER_PARENT_TIMEOUT_MS, nativeBrowserCaseCommand, runNativeBrowserProcess } from '../../adapters/work/meetings-automations/native-browser-process'
 import { resolveChromiumExecutable } from '../../../../test-utils/chromium-executable'
 
 const root = resolve(import.meta.dir, '../../../../../../../..')
@@ -20,6 +20,12 @@ beforeAll(async () => {
     plugins: [{ name: 'readonly-component-bootstrap', setup(builder) {
       builder.onResolve({ filter: /.*/ }, args => {
         if (args.path.endsWith('?url')) return { path: 'asset', namespace: 'test-only' }
+        // `@openuidev/react-lang` (reached through the markdown renderer) auto-mounts its
+        // inspector in any non-production build, and that inspector is fetched from jsDelivr
+        // at runtime. It installs a document-capture Escape handler that calls
+        // stopPropagation, which swallows the app's own dismissal path and pins the tour in
+        // `handed-off`. The fixture asserts product behaviour, never the vendor inspector.
+        if (args.path === '@openuidev/devtools') return { path: args.path, namespace: 'test-only' }
         if (['@/contexts/NavigationContext', 'react-i18next', '@/actions/useHotkeyLabel', '@/context/AppShellContext', '@/lib/navigate',
           '@/context/ThemeContext', '@rox/shared/projects', '@rox/core/rox2', '@/components/projects/SharedProjectProjection', '@/components/app-shell/PanelHeader', '@/lib/personal-tasks', '@/pages/ProjectRoadmapPage'].includes(args.path)
           || args.path === './ProjectRoadmapPage') return { path: args.path, namespace: 'test-only' }
@@ -39,6 +45,7 @@ beforeAll(async () => {
           : args.path === '@/components/app-shell/PanelHeader' ? `${common}export const PanelHeader=props=><header>{props.title}{props.actions}</header>;`
           : args.path === '@/lib/personal-tasks' ? `import {PersonalTaskStore} from '${resolve(root, 'packages/core/src/tasks/personal/index.ts')}';export const loadPersonalTaskStore=()=>new PersonalTaskStore();export const persistPersonalTaskStore=()=>{throw new Error('Unexpected write')};export const subscribePersonalTasks=()=>()=>{};export const tasksForWorkspaceProject=()=>[];`
           : args.path === 'asset' ? `export default 'about:blank';`
+          : args.path === '@openuidev/devtools' ? `export function OpenUIDevtools(){return null}`
           : `${common}export default function ReadonlyRoadmap(){return null}`
         return { contents, loader: 'tsx', resolveDir: root }
       })
@@ -51,24 +58,24 @@ beforeAll(async () => {
       : new Response('<!doctype html><html><head><style>svg{width:16px;height:16px}.pt-6{padding-top:24px}button{padding:6px}header{padding:10px}h2{margin:8px 0}[data-product-tour-popover]{background:white;border:1px solid black;width:240px;padding:12px}</style></head><body><div id="root"></div><script src="/script.js"></script></body></html>', {headers:{'Content-Type':'text/html'}})
   } })
   browser = await chromium.launch({ executablePath: await resolveChromiumExecutable(), args: ['--no-sandbox'] })
-}, 30_000)
-afterAll(async () => { await browser?.close(); server?.stop(true) }, 30_000)
+}, NATIVE_BROWSER_BUDGET_MS)
+afterAll(async () => { await browser?.close(); server?.stop(true) }, NATIVE_BROWSER_BUDGET_MS)
 function browserTest(name: string, operation: (page: Page) => Promise<void>) {
   if (isolatedCase && isolatedCase !== name) return
   test(name, async () => {
     if (!isolatedCase) {
-      expect(await runNativeBrowserProcess([process.execPath, 'test', fileURLToPath(import.meta.url)], {
-        label: name, env: { ...process.env, ROX_PRODUCT_TOUR_PROJECT_COLLECTION_CASE: name }, deadlineMs: 35_000,
+      expect(await runNativeBrowserProcess(nativeBrowserCaseCommand(fileURLToPath(import.meta.url)), {
+        label: name, env: { ...process.env, ROX_PRODUCT_TOUR_PROJECT_COLLECTION_CASE: name },
       })).toBe(0)
       return
     }
     const page = await browser.newPage({ viewport: { width: 1400, height: 1100 } })
-    page.setDefaultTimeout(6000)
+    page.setDefaultTimeout(NATIVE_BROWSER_ACTION_TIMEOUT_MS)
     page.on('pageerror', error => console.error('Project/collection fixture error:', error.message))
     try { await page.goto(server.url.href); await page.waitForFunction(() => (window as any).projectCollectionTest?.controller?.ready); await operation(page) }
     catch(error) { console.error('Provider state:', JSON.stringify(await page.evaluate(()=> {const f=(window as any).projectCollectionTest;return {phase:f?.controller?.state.phase,attempt:f?.controller?.state.attempt,evidence:f?.controller?.state.attemptEvidence,capability:f?.controller?.capabilities['projects.available'],body:document.body.innerText}}))); throw error }
     finally { await page.close() }
-  }, isolatedCase ? 30_000 : 40_000)
+  }, isolatedCase ? NATIVE_BROWSER_BUDGET_MS : NATIVE_BROWSER_PARENT_TIMEOUT_MS)
 }
 const state = (page: Page) => page.evaluate(() => (window as any).projectCollectionTest.controller.state)
 async function startProject(page: Page, empty = false) {
