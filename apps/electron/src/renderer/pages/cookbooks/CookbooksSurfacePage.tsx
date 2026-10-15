@@ -1003,9 +1003,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         // Wave 10: only an insert opens the markdown editor — delete/move/
         // duplicate must not steal into edit. Wave 13 (F3): a conversion to
         // markdown does open it, since the cell just became text.
-        const op = mutation.op as string
         const target = result.document.cells[result.index]
-        if ((op === 'add' || op === 'convert') && target?.cellType === 'markdown') {
+        if ((mutation.op === 'add' || mutation.op === 'convert') && target?.cellType === 'markdown') {
           setEditingCells((previous) => ({ ...previous, [result.index]: true }))
         }
       })
@@ -1521,9 +1520,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
         const cellType = event.key === 'y' ? 'code' : 'markdown'
         if (doc.cells[selectedCell]?.cellType === cellType) return
         event.preventDefault()
-        // Wave 13 (F3): `convert` joins the mutation union in slice B; this
-        // renderer is written against the frozen SPEC shape and cast until then.
-        void mutateCell({ op: 'convert', index: selectedCell, cellType } as unknown as CookbooksCellMutation)
+        void mutateCell({ op: 'convert', index: selectedCell, cellType })
       }
     },
     [
@@ -2227,7 +2224,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                           onClick={() => {
                             setMenuOpen(null)
                             const cellType = cell.cellType === 'code' ? 'markdown' : 'code'
-                            void mutateCell({ op: 'convert', index, cellType } as unknown as CookbooksCellMutation)
+                            void mutateCell({ op: 'convert', index, cellType })
                           }}
                           className={ACTION_CLASS}
                         >
